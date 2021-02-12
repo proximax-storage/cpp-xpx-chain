@@ -87,7 +87,7 @@ namespace catapult { namespace partialtransaction {
 				state.packetIoPickers().insert(*pWriters, ionet::NodeRoles::Api);
 
 				// add tasks
-				state.tasks().push_back(CreateConnectPeersTask(state, *pWriters));
+				state.peerConnectionTasks().push_back(CreateConnectPeersTask(state, *pWriters));
 				state.tasks().push_back(CreatePullPtTask(locator, state, *pWriters));
 			}
 		};

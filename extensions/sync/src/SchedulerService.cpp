@@ -48,7 +48,11 @@ namespace catapult { namespace sync {
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
 				auto pScheduler = state.pool().pushServiceGroup(Service_Name)->pushService(thread::CreateScheduler);
+
 				for (const auto& task : state.tasks())
+					pScheduler->addTask(schedule(task));
+
+				for (const auto& task : state.peerConnectionTasks())
 					pScheduler->addTask(schedule(task));
 
 				locator.registerService(Service_Name, pScheduler);

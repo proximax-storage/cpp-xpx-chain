@@ -117,6 +117,12 @@ namespace catapult { namespace model {
 		/// Time per each committee phase.
 		utils::TimeSpan CommitteePhaseTime;
 
+		/// Time interval between committee message broadcasts.
+		utils::TimeSpan CommitteeMessageBroadcastInterval;
+
+		/// Time interval between committee requests.
+		utils::TimeSpan CommitteeRequestInterval;
+
 		/// Minimal time per each committee phase.
 		utils::TimeSpan MinCommitteePhaseTime;
 

@@ -276,12 +276,19 @@ namespace catapult { namespace test {
 	void RunTaskTestPostBoot(TTestContext& context, size_t numExpectedTasks, const std::string& taskName, TAction action) {
 		// Sanity: expected number of tasks should be registered
 		const auto& tasks = context.testState().state().tasks();
-		EXPECT_EQ(numExpectedTasks, tasks.size());
+		const auto& peerConnectionTasks = context.testState().state().peerConnectionTasks();
+		EXPECT_EQ(numExpectedTasks, tasks.size() + peerConnectionTasks.size());
 
 		// Act: find the desired task
 		auto iter = std::find_if(tasks.cbegin(), tasks.cend(), [&taskName](const auto& task) {
 			return taskName == task.Name;
 		});
+
+		if (tasks.cend() == iter) {
+			iter = std::find_if(peerConnectionTasks.cbegin(), peerConnectionTasks.cend(), [&taskName](const auto& task) {
+				return taskName == task.Name;
+			});
+		}
 
 		if (tasks.cend() == iter)
 			CATAPULT_THROW_RUNTIME_ERROR_1("unable to find task with name", taskName);

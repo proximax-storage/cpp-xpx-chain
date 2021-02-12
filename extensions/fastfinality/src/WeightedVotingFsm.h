@@ -30,12 +30,15 @@ namespace catapult { namespace fastfinality {
 			: m_pPool(std::move(pPool))
 			, m_timer(m_pPool->ioContext())
 			, m_sm(boost::sml::sm<WeightedVotingTransitionTable>(m_actions))
+			, m_strand(m_pPool->ioContext())
 			, m_stopped(false)
 		{}
 
 	public:
 		void start() {
-			processEvent(StartLocalChainCheck{});
+			boost::asio::post(m_strand, [this] {
+				processEvent(StartLocalChainCheck{});
+			});
 		}
 
 		template<typename TEvent>
@@ -93,6 +96,15 @@ namespace catapult { namespace fastfinality {
 			return m_stopped;
 		}
 
+		void setPeerConnectionTasks(extensions::ServiceState& state) {
+			m_peerConnectionTasks = state.peerConnectionTasks();
+			state.peerConnectionTasks().clear();
+		}
+
+		const auto& peerConnectionTasks() {
+			return m_peerConnectionTasks;
+		}
+
 	private:
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
 		boost::asio::system_timer m_timer;
@@ -100,6 +112,8 @@ namespace catapult { namespace fastfinality {
 		boost::sml::sm<WeightedVotingTransitionTable> m_sm;
 		std::unique_ptr<ChainSyncData> m_pChainSyncData;
 		CommitteeData m_committeeData;
+		std::vector<thread::Task> m_peerConnectionTasks;
+		boost::asio::io_context::strand m_strand;
 		bool m_stopped;
 	};
 }}

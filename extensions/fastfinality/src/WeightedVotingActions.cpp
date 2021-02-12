@@ -66,6 +66,11 @@ namespace catapult { namespace fastfinality {
 				callback();
 			});
 		}
+
+		void UpdateConnections(std::shared_ptr<WeightedVotingFsm> pFsmShared) {
+			for (const auto& task : pFsmShared->peerConnectionTasks())
+				task.Callback();
+		}
 	}
 
 	action CreateDefaultCheckLocalChainAction(
@@ -75,6 +80,8 @@ namespace catapult { namespace fastfinality {
 			const supplier<Height>& localHeightSupplier) {
 		return [pFsmWeak, retriever, pConfigHolder, localHeightSupplier]() {
 			TRY_GET_FSM()
+
+			UpdateConnections(pFsmShared);
 
 			pFsmShared->resetChainSyncData();
 			pFsmShared->resetCommitteeData();
@@ -102,7 +109,7 @@ namespace catapult { namespace fastfinality {
 					pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 				}
 			} else {
-				DelayAction(pFsmShared, config.MinCommitteePhaseTime.millis(),
+				DelayAction(pFsmShared, config.CommitteeRequestInterval.millis(),
 					[pFsmWeak] {
 						TRY_GET_FSM()
 						pFsmShared->processEvent(NetworkHeightDetectionFailure{});
@@ -276,8 +283,9 @@ namespace catapult { namespace fastfinality {
 
 	namespace {
 		void OnStageDetectionFailed(std::shared_ptr<WeightedVotingFsm> pFsmShared, const model::NetworkConfiguration& config) {
+			UpdateConnections(pFsmShared);
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak = pFsmShared;
-			DelayAction(pFsmShared, config.MinCommitteePhaseTime.millis(),
+			DelayAction(pFsmShared, config.CommitteeRequestInterval.millis(),
 				[pFsmWeak] {
 					TRY_GET_FSM()
 					pFsmShared->processEvent(StageDetectionFailed{});
@@ -346,6 +354,8 @@ namespace catapult { namespace fastfinality {
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return [pFsmWeak, &committeeManager, pConfigHolder]() {
 			TRY_GET_FSM()
+
+			UpdateConnections(pFsmShared);
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto stage = committeeData.committeeStage();
@@ -614,15 +624,15 @@ namespace catapult { namespace fastfinality {
 	namespace {
 		void ScheduleBroadcast(
 				const std::shared_ptr<boost::asio::system_timer>& pTimer,
-				const std::shared_ptr<std::atomic_bool>& pStopBroadcast,
-				utils::TimePoint startPoint,
+				utils::TimePoint endPoint,
 				const std::chrono::milliseconds& interval,
 				action broadcast) {
-			if (pStopBroadcast->load())
+			auto expireTime = utils::ToTimePoint(utils::NetworkTime()) + interval;
+			if (expireTime >= endPoint)
 				return;
 
-			pTimer->expires_at(startPoint);
-			pTimer->async_wait([pTimer, pStopBroadcast, broadcast, startPoint, interval](const boost::system::error_code& ec) {
+			pTimer->expires_at(expireTime);
+			pTimer->async_wait([pTimer, broadcast, endPoint, interval](const boost::system::error_code& ec) {
 				if (ec) {
 					if (ec == boost::asio::error::operation_aborted) {
 						return;
@@ -633,7 +643,7 @@ namespace catapult { namespace fastfinality {
 
 				broadcast();
 
-				ScheduleBroadcast(pTimer, pStopBroadcast, startPoint + interval, interval, broadcast);
+				ScheduleBroadcast(pTimer, endPoint, interval, broadcast);
 			});
 		}
 	}
@@ -646,37 +656,31 @@ namespace catapult { namespace fastfinality {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
-			auto pTimer = std::make_shared<boost::asio::system_timer>(pFsmShared->ioContext());
-			auto pStopBroadcast = std::make_shared<std::atomic_bool>(false);
+			const auto& stage = committeeData.committeeStage();
 
 			DelayAction(
 				pFsmShared,
-				committeeData.committeeStage().PhaseTimeMillis,
-				[pFsmWeak, pTimer, pStopBroadcast] {
-					pStopBroadcast->store(true);
-					pTimer->cancel();
+				stage.PhaseTimeMillis,
+				[pFsmWeak] {
 					TRY_GET_FSM()
 
 					pFsmShared->processEvent(ProposalPhaseEnded{});
 				}
 			);
 
-			auto startPoint = committeeData.committeeStage().RoundStart;
-			auto interval = std::chrono::milliseconds(pConfigHolder->Config().Network.MinCommitteePhaseTime.millis() / 3);
+			auto pTimer = std::make_shared<boost::asio::system_timer>(pFsmShared->ioContext());
+			auto interval = std::chrono::milliseconds(pConfigHolder->Config().Network.CommitteeMessageBroadcastInterval.millis());
+			auto endPoint = stage.RoundStart + std::chrono::milliseconds(stage.PhaseTimeMillis) - 2 * interval;
 			ScheduleBroadcast(
 				pTimer,
-				pStopBroadcast,
-				startPoint,
+				endPoint,
 				interval,
-				[pFsmWeak, packetPayloadSink, pStopBroadcast]() {
+				[pFsmWeak, packetPayloadSink]() {
 					auto pFsmShared = pFsmWeak.lock();
-					if (!pFsmShared) {
-						pStopBroadcast->store(true);
+					if (!pFsmShared)
 						return;
-					}
 
-					const auto& committeeData = pFsmShared->committeeData();
-					auto pBlock = committeeData.proposedBlock();
+					auto pBlock = pFsmShared->committeeData().proposedBlock();
 					if (pBlock)
 						packetPayloadSink(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Push_Proposed_Block, pBlock));
 				}
@@ -710,17 +714,14 @@ namespace catapult { namespace fastfinality {
 
 				const auto& config = pluginManager.configHolder()->Config().Network;
 				auto& committeeData = pFsmShared->committeeData();
-				auto delay = delaySupplier(committeeData.committeeStage().PhaseTimeMillis, config);
+				const auto& stage = committeeData.committeeStage();
+				auto delay = delaySupplier(stage.PhaseTimeMillis, config);
 				const auto& committeeManager = pluginManager.getCommitteeManager();
-				auto pTimer = std::make_shared<boost::asio::system_timer>(pFsmShared->ioContext());
-				auto pStopBroadcast = std::make_shared<std::atomic_bool>(false);
 
 				DelayAction(
 					pFsmShared,
 					delay,
-					[pFsmWeak, committeeApproval = config.CommitteeApproval, &committeeManager, voteSupplier, pTimer, pStopBroadcast] {
-						pStopBroadcast->store(true);
-						pTimer->cancel();
+					[pFsmWeak, committeeApproval = config.CommitteeApproval, &committeeManager, voteSupplier] {
 						TRY_GET_FSM()
 
 						const auto& committeeData = pFsmShared->committeeData();
@@ -732,19 +733,17 @@ namespace catapult { namespace fastfinality {
 					}
 				);
 
-				auto startPoint = committeeData.committeeStage().RoundStart;
-				auto interval = std::chrono::milliseconds(config.MinCommitteePhaseTime.millis() / 3);
+				auto pTimer = std::make_shared<boost::asio::system_timer>(pFsmShared->ioContext());
+				auto interval = std::chrono::milliseconds(config.CommitteeMessageBroadcastInterval.millis());
+				auto endPoint = stage.RoundStart + std::chrono::milliseconds(delay) - 2 * interval;
 				ScheduleBroadcast(
 					pTimer,
-					pStopBroadcast,
-					startPoint,
+					endPoint,
 					interval,
-					[pFsmWeak, packetPayloadSink, voteSupplier, pStopBroadcast]() {
+					[pFsmWeak, packetPayloadSink, voteSupplier]() {
 						auto pFsmShared = pFsmWeak.lock();
-						if (!pFsmShared) {
-							pStopBroadcast->store(true);
+						if (!pFsmShared)
 							return;
-						}
 
 						auto votes = voteSupplier(pFsmShared->committeeData());
 						for (const auto& pair : votes)
@@ -871,7 +870,8 @@ namespace catapult { namespace fastfinality {
 			if (!pBlock)
 				CATAPULT_THROW_RUNTIME_ERROR("commit confirmed block failed, no block");
 
-			if (committeeData.committeeStage().Round != pBlock->Round ||
+			const auto& stage = committeeData.committeeStage();
+			if (stage.Round != pBlock->Round ||
 				!ValidateBlockCosignatures(pBlock, committeeManager, pConfigHolder->Config().Network.CommitteeApproval)) {
 				pFsmShared->processEvent(CommitBlockFailed{});
 				return;
@@ -895,31 +895,24 @@ namespace catapult { namespace fastfinality {
 			bool success = pPromise->get_future().get();
 
 			if (success) {
-				auto pTimer = std::make_shared<boost::asio::system_timer>(pFsmShared->ioContext());
-				auto pStopBroadcast = std::make_shared<std::atomic_bool>(false);
-
-				auto roundEndTimeMillis = 3 * pFsmShared->committeeData().committeeStage().PhaseTimeMillis;
-				DelayAction(pFsmShared, roundEndTimeMillis, [pFsmWeak, pTimer, pStopBroadcast] {
-					pStopBroadcast->store(true);
-					pTimer->cancel();
+				auto roundEndTimeMillis = 3 * stage.PhaseTimeMillis;
+				DelayAction(pFsmShared, roundEndTimeMillis, [pFsmWeak] {
 					TRY_GET_FSM()
 
 					pFsmShared->processEvent(CommitBlockSucceeded{});
 				});
 
-				auto startPoint = committeeData.committeeStage().RoundStart;
-				auto interval = std::chrono::milliseconds(pConfigHolder->Config().Network.MinCommitteePhaseTime.millis() / 3);
+				auto pTimer = std::make_shared<boost::asio::system_timer>(pFsmShared->ioContext());
+				auto interval = std::chrono::milliseconds(pConfigHolder->Config().Network.CommitteeMessageBroadcastInterval.millis());
+				auto endPoint = stage.RoundStart + std::chrono::milliseconds(roundEndTimeMillis) - 2 * interval;
 				ScheduleBroadcast(
 					pTimer,
-					pStopBroadcast,
-					startPoint,
+					endPoint,
 					interval,
-					[pFsmWeak, packetPayloadSink, pStopBroadcast]() {
+					[pFsmWeak, packetPayloadSink]() {
 						auto pFsmShared = pFsmWeak.lock();
-						if (!pFsmShared) {
-							pStopBroadcast->store(true);
+						if (!pFsmShared)
 							return;
-						}
 
 						auto pBlock = pFsmShared->committeeData().confirmedBlock();
 						if (pBlock)

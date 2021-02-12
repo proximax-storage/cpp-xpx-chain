@@ -60,6 +60,14 @@ namespace catapult { namespace config {
 			if (config.FeeInterestDenominator < config.FeeInterest)
 				CATAPULT_THROW_VALIDATION_ERROR("FeeInterestDenominator must be not less than FeeInterest");
 		}
+
+		void ValidateConfiguration(const ExtensionsConfiguration& config) {
+			const auto& names = config.Names;
+			bool harvesting = (std::find(names.cbegin(), names.cend(), "extension.harvesting") != names.cend());
+			bool fastfinality = (std::find(names.cbegin(), names.cend(), "extension.fastfinality") != names.cend());
+			if (harvesting && fastfinality)
+				CATAPULT_THROW_VALIDATION_ERROR("harvesting and fastfinality extensions can't be loaded simultaneously");
+		}
 	}
 
 	void ValidateConfiguration(const BlockchainConfiguration& config) {
@@ -67,6 +75,7 @@ namespace catapult { namespace config {
 		ValidateConfiguration(config.Network);
 		ValidateConfiguration(config.Network, config.Immutable, config.Inflation);
 		ValidateConfiguration(config.Node);
+		ValidateConfiguration(config.Extensions);
 	}
 
 #undef CATAPULT_THROW_VALIDATION_ERROR

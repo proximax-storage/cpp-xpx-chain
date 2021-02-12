@@ -51,6 +51,9 @@ namespace catapult { namespace extensions {
 		/// Requires all packet handlers to be registered.
 		Post_Packet_Handlers,
 
+		/// Requires all packet readers to be registered.
+		Post_Packet_Readers,
+
 		/// Requires all tasks to be registered.
 		Post_Tasks
 	};

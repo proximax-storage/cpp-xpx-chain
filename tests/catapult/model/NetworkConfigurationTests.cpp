@@ -77,7 +77,9 @@ namespace catapult { namespace model {
 							{ "committeeSize", "21" },
 							{ "committeeApproval", "0.67" },
 							{ "committeePhaseTime", "5s" },
-							{ "minCommitteePhaseTime", "300ms" },
+							{ "committeeMessageBroadcastInterval", "100ms" },
+							{ "committeeRequestInterval", "300ms" },
+							{ "minCommitteePhaseTime", "1s" },
 							{ "committeePrecommitWait", "0.8" },
 							{ "committeeTimeAdjustment", "1.1" },
 						}
@@ -115,6 +117,8 @@ namespace catapult { namespace model {
 					"committeeSize",
 					"committeeApproval",
 					"committeePhaseTime",
+					"committeeMessageBroadcastInterval",
+					"committeeRequestInterval",
 					"minCommitteePhaseTime",
 					"committeePrecommitWait",
 					"committeeTimeAdjustment",
@@ -152,6 +156,8 @@ namespace catapult { namespace model {
 				EXPECT_EQ(0u, config.CommitteeSize);
 				EXPECT_EQ(0.0, config.CommitteeApproval);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteePhaseTime);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteeMessageBroadcastInterval);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteeRequestInterval);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.MinCommitteePhaseTime);
 				EXPECT_EQ(0.0, config.CommitteePrecommitWait);
 				EXPECT_EQ(0.0, config.CommitteeTimeAdjustment);
@@ -190,7 +196,9 @@ namespace catapult { namespace model {
 				EXPECT_EQ(21u, config.CommitteeSize);
 				EXPECT_EQ(0.67, config.CommitteeApproval);
 				EXPECT_EQ(utils::TimeSpan::FromSeconds(5), config.CommitteePhaseTime);
-				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(300), config.MinCommitteePhaseTime);
+				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(100), config.CommitteeMessageBroadcastInterval);
+				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(300), config.CommitteeRequestInterval);
+				EXPECT_EQ(utils::TimeSpan::FromSeconds(1), config.MinCommitteePhaseTime);
 				EXPECT_EQ(0.8, config.CommitteePrecommitWait);
 				EXPECT_EQ(1.1, config.CommitteeTimeAdjustment);
 

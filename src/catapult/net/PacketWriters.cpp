@@ -241,7 +241,7 @@ namespace catapult { namespace net {
 				if (ionet::SocketOperationCode::Success == code)
 					return;
 
-				CATAPULT_LOG(warning) << "calling error handler due to " << operation << " error";
+				CATAPULT_LOG(warning) << "calling error handler due to " << operation << " error " << code;
 				handler();
 			}
 

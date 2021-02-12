@@ -163,6 +163,11 @@ namespace catapult { namespace extensions {
 			return m_tasks;
 		}
 
+		/// Gets the peer connection tasks.
+		auto& peerConnectionTasks() {;
+			return m_peerConnectionTasks;
+		}
+
 		/// Gets the packet handlers.
 		auto& packetHandlers() {
 			return m_packetHandlers;
@@ -208,6 +213,7 @@ namespace catapult { namespace extensions {
 
 		// owned
 		std::vector<thread::Task> m_tasks;
+		std::vector<thread::Task> m_peerConnectionTasks;
 		ionet::ServerPacketHandlers m_packetHandlers;
 		ServerHooks m_hooks;
 		net::PacketIoPickerContainer m_packetIoPickers;

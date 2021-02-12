@@ -19,6 +19,8 @@
 namespace catapult { namespace fastfinality {
 
 	namespace {
+		constexpr auto Service_Name = "weightedvoting";
+
 		std::shared_ptr<harvesting::UnlockedAccounts> CreateUnlockedAccounts(const harvesting::HarvestingConfiguration& config) {
 			auto pUnlockedAccounts = std::make_shared<harvesting::UnlockedAccounts>(config.MaxUnlockedAccounts);
 			if (config.IsAutoHarvestingEnabled) {
@@ -40,10 +42,9 @@ namespace catapult { namespace fastfinality {
 				auto timeout = utils::TimeSpan::FromSeconds(5);
 
 				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
-				if (packetIoPairs.empty()) {
-					CATAPULT_LOG(warning) << "could not find any peer for detecting chain heights";
+				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for detecting chain heights";
+				if (packetIoPairs.empty())
 					return thread::make_ready_future(std::vector<Height>());
-				}
 
 				for (const auto& packetIoPair : packetIoPairs) {
 					auto pPacketIo = packetIoPair.io();
@@ -65,10 +66,9 @@ namespace catapult { namespace fastfinality {
 				auto timeout = utils::TimeSpan::FromSeconds(5);
 
 				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
-				if (packetIoPairs.empty()) {
-					CATAPULT_LOG(warning) << "could not find any peer for pulling block hashes";
+				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling block hashes";
+				if (packetIoPairs.empty())
 					return thread::make_ready_future(std::vector<std::pair<Hash256, Key>>());
-				}
 
 				for (const auto& packetIoPair : packetIoPairs) {
 					auto pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(packetIoPair);
@@ -91,10 +91,9 @@ namespace catapult { namespace fastfinality {
 				auto timeout = utils::TimeSpan::FromSeconds(5);
 
 				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
-				if (packetIoPairs.empty()) {
-					CATAPULT_LOG(warning) << "could not find any peer for detecting committee stage";
+				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for detecting committee stage";
+				if (packetIoPairs.empty())
 					return thread::make_ready_future(std::vector<CommitteeStage>());
-				}
 
 				for (const auto& packetIoPair : packetIoPairs) {
 					auto pPacketIo = packetIoPair.io();
@@ -118,34 +117,6 @@ namespace catapult { namespace fastfinality {
 			return harvesting::CreateHarvesterBlockGenerator(strategy, utFacadeFactory, state.utCache());
 		}
 
-		class WeightedVotingService {
-		public:
-			explicit WeightedVotingService(std::shared_ptr<thread::IoThreadPool> pPool)
-				: m_pFsm(std::make_shared<WeightedVotingFsm>(pPool))
-				, m_strand(pPool->ioContext())
-			{}
-
-		public:
-			void start() {
-				boost::asio::post(m_strand, [this] {
-					m_pFsm->start();
-				});
-			}
-
-			void shutdown() {
-				m_pFsm->shutdown();
-				m_pFsm = nullptr;
-			}
-
-			const std::shared_ptr<WeightedVotingFsm>& fsm() {
-				return m_pFsm;
-			}
-
-		private:
-			std::shared_ptr<WeightedVotingFsm> m_pFsm;
-			boost::asio::io_context::strand m_strand;
-		};
-
 		class WeightedVotingServiceRegistrar : public extensions::ServiceRegistrar {
 		public:
 			explicit WeightedVotingServiceRegistrar(const harvesting::HarvestingConfiguration& config) : m_harvestingConfig(config)
@@ -159,21 +130,24 @@ namespace catapult { namespace fastfinality {
 				// no additional counters
 			}
 
-			void registerServices(extensions::ServiceLocator&, extensions::ServiceState& state) override {
+			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
+				if (!state.config().Network.EnableWeightedVoting)
+					CATAPULT_THROW_RUNTIME_ERROR("weighted voting is not enabled");
+
 				auto pValidatorPool = state.pool().pushIsolatedPool("proposal validator");
 
 				auto pServiceGroup = state.pool().pushServiceGroup("weighted voting");
-				auto pService = pServiceGroup->pushService([](std::shared_ptr<thread::IoThreadPool> pPool) {
-					return std::make_shared<WeightedVotingService>(pPool);
+				auto pFsmShared = pServiceGroup->pushService([](std::shared_ptr<thread::IoThreadPool> pPool) {
+					return std::make_shared<WeightedVotingFsm>(pPool);
 				});
-				auto pFsmShared = pService->fsm();
+				locator.registerService(Service_Name, pFsmShared);
 
 				auto& packetHandlers = state.packetHandlers();
 				const auto& pluginManager = state.pluginManager();
 				const auto& pConfigHolder = pluginManager.configHolder();
 				const auto& packetIoPickers = state.packetIoPickers();
 				const auto& packetPayloadSink = state.hooks().packetPayloadSink();
-				auto timeSupplier = state.timeSupplier();
+				auto blockRangeConsumer = state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Remote_Pull);
 				auto lastBlockElementSupplier = [&storage = state.storage()]() {
 					auto storageView = storage.view();
 					return storageView.loadBlockElement(storageView.chainHeight());
@@ -190,7 +164,6 @@ namespace catapult { namespace fastfinality {
 				committeeData.setUnlockedAccounts(CreateUnlockedAccounts(m_harvestingConfig));
 				committeeData.setBeneficiary(crypto::ParseKey(m_harvestingConfig.Beneficiary));
 				auto& actions = pFsmShared->actions();
-				auto blockRangeConsumer = state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Remote_Pull);
 
 				actions.CheckLocalChain = CreateDefaultCheckLocalChainAction(
 					pFsmShared,
@@ -211,7 +184,7 @@ namespace catapult { namespace fastfinality {
 					pFsmShared,
 					CreateRemoteCommitteeStagesRetriever(packetIoPickers),
 					pConfigHolder,
-					timeSupplier,
+					state.timeSupplier(),
 					lastBlockElementSupplier,
 					pluginManager.getCommitteeManager());
 				actions.SelectCommittee = CreateDefaultSelectCommitteeAction(
@@ -245,16 +218,40 @@ namespace catapult { namespace fastfinality {
 				actions.IncrementRound = CreateDefaultIncrementRoundAction(pFsmShared, pConfigHolder);
 				actions.ResetRound = CreateDefaultResetRoundAction(pFsmShared, pConfigHolder, pluginManager.getCommitteeManager());
 				actions.WaitForConfirmedBlock = CreateDefaultWaitForConfirmedBlockAction(pFsmShared, lastBlockElementSupplier);
-
-				pService->start();
 			}
 
 		private:
 			harvesting::HarvestingConfiguration m_harvestingConfig;
 		};
+
+		std::shared_ptr<WeightedVotingFsm> GetWeightedVotingFsm(const extensions::ServiceLocator& locator) {
+			return locator.service<WeightedVotingFsm>(Service_Name);
+		}
+
+		class WeightedVotingStartServiceRegistrar : public extensions::ServiceRegistrar {
+		public:
+			extensions::ServiceRegistrarInfo info() const override {
+				return { "WeightedVotingStart", extensions::ServiceRegistrarPhase::Post_Packet_Readers };
+			}
+
+			void registerServiceCounters(extensions::ServiceLocator&) override {
+				// no additional counters
+			}
+
+			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
+				auto pFsmShared = GetWeightedVotingFsm(locator);
+
+				pFsmShared->setPeerConnectionTasks(state);
+				pFsmShared->start();
+			}
+		};
 	}
 
 	DECLARE_SERVICE_REGISTRAR(WeightedVoting)(const harvesting::HarvestingConfiguration& config) {
 		return std::make_unique<WeightedVotingServiceRegistrar>(config);
+	}
+
+	DECLARE_SERVICE_REGISTRAR(WeightedVotingStart)() {
+		return std::make_unique<WeightedVotingStartServiceRegistrar>();
 	}
 }}

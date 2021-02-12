@@ -110,7 +110,7 @@ namespace catapult { namespace sync {
 				auto& packetWriters = *GetPacketWriters(locator);
 
 				// add tasks
-				state.tasks().push_back(CreateConnectPeersTask(state, packetWriters));
+				state.peerConnectionTasks().push_back(CreateConnectPeersTask(state, packetWriters));
 				state.tasks().push_back(CreateSynchronizerTask(state, packetWriters));
 				state.tasks().push_back(CreatePullUtTask(state, packetWriters));
 			}
