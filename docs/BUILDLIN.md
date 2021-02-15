@@ -13,10 +13,7 @@ NOTE: Commands are using `\` as marker for line continuations
 
 ## Dependencies
 Below, there are listed multiple required dependencies with manual installation. If possible, 
-prefer your favourite package manager for simplicity and to avoid unwanted sudos, except:
-
- * [mongo-cxx-driver@r3.4.0-nem](https://github.com/nemtech/mongo-cxx-driver)
- * [rocksdb@v6.6.4-nem](https://github.com/nemtech/rocksdb)
+prefer your favourite package manager for simplicity and to avoid unwanted sudos.
 
 ### Boost
 
@@ -95,7 +92,7 @@ make
 sudo make install
 
 cd ../..
-rm -rf mongocxx
+rm -rf mongo-cxx-driver
 ```
 
 ### ZMQ
@@ -149,7 +146,7 @@ cd ../..
 rm -rf rocksdb
 ```
 
-### Catapult
+### Siriuschain
 
 NOTE: Ensure correct path is passed to DBOOST_ROOT, it should be equal to DIR from Boost intallation. 
 ```sh
