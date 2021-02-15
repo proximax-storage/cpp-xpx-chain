@@ -158,5 +158,5 @@ cd cpp-xpx-chain
 
 mkdir _build && cd _build
 cmake -DBOOST_ROOT=~/boost-build-1.71.0 -DCMAKE_BUILD_TYPE=Release ..
-make publish && make -j 4
+make publish && make -j $(expr (nproc) - 2)
 ```
