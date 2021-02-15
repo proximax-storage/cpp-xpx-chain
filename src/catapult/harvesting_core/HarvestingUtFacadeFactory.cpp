@@ -134,8 +134,10 @@ namespace catapult { namespace harvesting {
 				validators::ValidatingNotificationSubscriber validatingSubscriber(validator, validatorContext);
 				publisher.publish(weakEntityInfo, validatingSubscriber);
 
-				if (!validators::IsValidationResultSuccess(validatingSubscriber.result()))
+				if (!validators::IsValidationResultSuccess(validatingSubscriber.result())) {
+					CATAPULT_LOG(warning) << "validation of " << weakEntityInfo.type() << " failed with error " << validatingSubscriber.result();
 					return false;
+				}
 
 				// execute entity
 				observers::ObservingNotificationSubscriber observingSubscriber(observer, observerContext);
