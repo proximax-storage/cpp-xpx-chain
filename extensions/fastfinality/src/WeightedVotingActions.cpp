@@ -36,7 +36,7 @@ namespace catapult { namespace fastfinality {
 			for (const auto& valueWrapper : values) {
 				const auto& value = adapter(valueWrapper);
 				auto frequency = ++valueFrequencies[value];
-				if (maxFrequency < frequency) {
+				if (maxFrequency <= frequency) {
 					maxFrequency = frequency;
 					mostFrequentValue = value;
 				}
@@ -310,6 +310,7 @@ namespace catapult { namespace fastfinality {
 			std::vector<CommitteeStage> stages;
 			{
 				stages = retriever().get();
+				std::sort(stages.begin(), stages.end());
 			}
 
 			auto pair = FindMostFrequentValue<CommitteeStage>(stages, [] (const auto& stage) { return stage; });
@@ -321,20 +322,20 @@ namespace catapult { namespace fastfinality {
 			auto committeePhaseTime = ((Height(1) == block.Height) || (block.EntityVersion() < 4u)) ?
 				config.CommitteePhaseTime.millis() : block.CommitteePhaseTime;
 			if (!PeerNumberSufficient(pair.second, config)) {
+				if (CommitteePhase::Prepare == pair.first.Phase && CommitteePhase::None == committeeData.committeeStage().Phase) {
+					committeeData.setCommitteeStage(CommitteeStage{
+						0u,
+						CommitteePhase::Prepare,
+						utils::ToTimePoint(timeSupplier()),
+						committeePhaseTime
+					});
+				}
+
 				OnStageDetectionFailed(pFsmShared, config);
 			} else if (CommitteePhase::None == pair.first.Phase) {
 				committeeData.setCommitteeStage(CommitteeStage{
 					0u,
 					CommitteePhase::Prepare,
-					utils::ToTimePoint(timeSupplier()),
-					committeePhaseTime
-				});
-
-				OnStageDetectionFailed(pFsmShared, config);
-			} else if (CommitteePhase::Prepare == pair.first.Phase) {
-				committeeData.setCommitteeStage(CommitteeStage{
-					0u,
-					CommitteePhase::Propose,
 					utils::ToTimePoint(timeSupplier()),
 					committeePhaseTime
 				});
@@ -351,16 +352,25 @@ namespace catapult { namespace fastfinality {
 	action CreateDefaultSelectCommitteeAction(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			chain::CommitteeManager& committeeManager,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return [pFsmWeak, &committeeManager, pConfigHolder]() {
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+			const chain::TimeSupplier& timeSupplier) {
+		return [pFsmWeak, &committeeManager, pConfigHolder, timeSupplier]() {
 			TRY_GET_FSM()
 
 			UpdateConnections(pFsmShared);
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto stage = committeeData.committeeStage();
-			if (CommitteePhase::Prepare >= stage.Phase)
+			if (CommitteePhase::None == stage.Phase) {
 				CATAPULT_THROW_RUNTIME_ERROR("committee phase is not set");
+			} else if (CommitteePhase::Prepare == stage.Phase) {
+				committeeData.setCommitteeStage(CommitteeStage{
+					0u,
+					CommitteePhase::Propose,
+					utils::ToTimePoint(timeSupplier()),
+					stage.PhaseTimeMillis
+				});
+			}
 
 			if (committeeManager.committee().Round > stage.Round)
 				CATAPULT_THROW_RUNTIME_ERROR_2("invalid committee round", committeeManager.committee().Round, stage.Round);

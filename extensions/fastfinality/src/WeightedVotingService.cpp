@@ -147,6 +147,7 @@ namespace catapult { namespace fastfinality {
 				const auto& pConfigHolder = pluginManager.configHolder();
 				const auto& packetIoPickers = state.packetIoPickers();
 				const auto& packetPayloadSink = state.hooks().packetPayloadSink();
+				auto timeSupplier = state.timeSupplier();
 				auto blockRangeConsumer = state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Remote_Pull);
 				auto lastBlockElementSupplier = [&storage = state.storage()]() {
 					auto storageView = storage.view();
@@ -184,13 +185,14 @@ namespace catapult { namespace fastfinality {
 					pFsmShared,
 					CreateRemoteCommitteeStagesRetriever(packetIoPickers),
 					pConfigHolder,
-					state.timeSupplier(),
+					timeSupplier,
 					lastBlockElementSupplier,
 					pluginManager.getCommitteeManager());
 				actions.SelectCommittee = CreateDefaultSelectCommitteeAction(
 					pFsmShared,
 					pluginManager.getCommitteeManager(),
-					pConfigHolder);
+					pConfigHolder,
+					timeSupplier);
 				actions.ProposeBlock = CreateDefaultProposeBlockAction(
 					pFsmShared,
 					state.cache(),

@@ -67,7 +67,8 @@ namespace catapult { namespace fastfinality {
 	action CreateDefaultSelectCommitteeAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		chain::CommitteeManager& committeeManager,
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+		const chain::TimeSupplier& timeSupplier);
 
 	action CreateDefaultProposeBlockAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
