@@ -85,30 +85,6 @@ namespace catapult { namespace fastfinality {
 			};
 		}
 
-		auto CreateRemoteCommitteeStagesRetriever(const net::PacketIoPickerContainer& packetIoPickers) {
-			return [&packetIoPickers]() {
-				std::vector<thread::future<CommitteeStage>> committeeStageFutures;
-				auto timeout = utils::TimeSpan::FromSeconds(5);
-
-				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
-				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for detecting committee stage";
-				if (packetIoPairs.empty())
-					return thread::make_ready_future(std::vector<CommitteeStage>());
-
-				for (const auto& packetIoPair : packetIoPairs) {
-					auto pPacketIo = packetIoPair.io();
-					api::RemoteRequestDispatcher dispatcher{*pPacketIo};
-					committeeStageFutures.push_back(dispatcher.dispatch(CommitteeStageTraits{}).then([pPacketIo](auto&& stageFuture) {
-						return stageFuture.get();
-					}));
-				}
-
-				return thread::when_all(std::move(committeeStageFutures)).then([](auto&& completedFutures) {
-					return thread::get_all_ignore_exceptional(completedFutures.get());
-				});
-			};
-		}
-
 		auto CreateHarvesterBlockGenerator(extensions::ServiceState& state) {
 			auto strategy = state.config().Node.TransactionSelectionStrategy;
 			auto executionConfig = extensions::CreateExecutionConfiguration(state.pluginManager());
@@ -155,7 +131,6 @@ namespace catapult { namespace fastfinality {
 				};
 				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
 
-				RegisterPullCommitteeStageHandler(pFsmShared, packetHandlers);
 				RegisterPushProposedBlockHandler(pFsmShared, packetHandlers, pluginManager);
 				RegisterPushConfirmedBlockHandler(pFsmShared, packetHandlers, pluginManager);
 				RegisterPushPrevoteMessageHandler(pFsmShared, packetHandlers);
@@ -183,7 +158,6 @@ namespace catapult { namespace fastfinality {
 					pluginManager.getCommitteeManager());
 				actions.DetectStage = CreateDefaultDetectStageAction(
 					pFsmShared,
-					CreateRemoteCommitteeStagesRetriever(packetIoPickers),
 					pConfigHolder,
 					timeSupplier,
 					lastBlockElementSupplier,

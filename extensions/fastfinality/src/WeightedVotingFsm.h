@@ -90,6 +90,7 @@ namespace catapult { namespace fastfinality {
 			m_committeeData.setProposedBlock(nullptr);
 			m_committeeData.setConfirmedBlock(nullptr);
 			m_committeeData.clearVotes();
+			m_committeeData.setSumOfPrevotesSufficient(false);
 		}
 
 		bool stopped() const {

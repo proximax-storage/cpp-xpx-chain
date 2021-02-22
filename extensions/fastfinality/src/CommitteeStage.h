@@ -13,7 +13,7 @@ namespace catapult { namespace fastfinality {
 #pragma pack(push, 1)
 
 	struct CommitteeStage {
-		int16_t Round = -1;
+		int64_t Round = -1;
 		CommitteePhase Phase = CommitteePhase::None;
 		utils::TimePoint RoundStart = utils::ToTimePoint(utils::NetworkTime());
 		uint64_t PhaseTimeMillis = 0u;

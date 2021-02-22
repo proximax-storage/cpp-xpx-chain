@@ -31,6 +31,7 @@ namespace catapult { namespace fastfinality {
 			: m_stage(CommitteeStage{})
 			, m_pBlockProposer(nullptr)
 			, m_totalSumOfVotes(0.0)
+			, m_sumOfPrevotesSufficient(false)
 		{}
 
 	public:
@@ -147,6 +148,14 @@ namespace catapult { namespace fastfinality {
 			}
 		}
 
+		void setSumOfPrevotesSufficient(bool value) {
+			m_sumOfPrevotesSufficient = value;
+		}
+
+		bool sumOfPrevotesSufficient() {
+			return m_sumOfPrevotesSufficient;
+		}
+
 	private:
 		Key m_beneficiary;
 		std::shared_ptr<harvesting::UnlockedAccounts> m_pUnlockedAccounts;
@@ -164,5 +173,7 @@ namespace catapult { namespace fastfinality {
 		VoteMap<PrevoteMessagePacket> m_prevotes;
 		VoteMap<PrecommitMessagePacket> m_precommits;
 		mutable std::mutex m_mutex;
+
+		bool m_sumOfPrevotesSufficient;
 	};
 }}

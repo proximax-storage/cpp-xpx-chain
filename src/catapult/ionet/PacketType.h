@@ -66,20 +66,17 @@ namespace catapult { namespace ionet {
 	/* Sub cache merkle roots have been requested. */ \
 	ENUM_VALUE(Sub_Cache_Merkle_Roots, 12) \
 	\
-	/* Committee stage has been requested by a peer. */ \
-	ENUM_VALUE(Pull_Committee_Stage, 13) \
-	\
 	/* A block proposed by committee has been pushed by a peer. */ \
-	ENUM_VALUE(Push_Proposed_Block, 14) \
+	ENUM_VALUE(Push_Proposed_Block, 13) \
 	\
 	/* A prevote message has been pushed by a peer. */ \
-	ENUM_VALUE(Push_Prevote_Message, 15) \
+	ENUM_VALUE(Push_Prevote_Message, 14) \
 	\
 	/* A precommit message has been pushed by a peer. */ \
-	ENUM_VALUE(Push_Precommit_Message, 16) \
+	ENUM_VALUE(Push_Precommit_Message, 15) \
 	\
 	/* A block confirmed by committee has been pushed by a peer. */ \
-	ENUM_VALUE(Push_Confirmed_Block, 17) \
+	ENUM_VALUE(Push_Confirmed_Block, 16) \
 	\
 	/* api only packets have types [500, 600) */ \
 	\

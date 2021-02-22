@@ -14,9 +14,6 @@ namespace catapult { namespace fastfinality {
 	/* Committee phase is unknown. */ \
 	ENUM_VALUE(None) \
 	\
-	/* Prepare for committee selection. */ \
-	ENUM_VALUE(Prepare) \
-	\
 	/* Propose a block. */ \
 	ENUM_VALUE(Propose) \
 	\

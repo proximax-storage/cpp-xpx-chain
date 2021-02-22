@@ -36,7 +36,9 @@ committeeSize = 21
 committeeApproval = 0.67
 committeePhaseTime = 5s
 minCommitteePhaseTime = 300ms
-committeePrecommitWait = 0.8
+maxCommitteePhaseTime = 1m
+committeeMessageBroadcastInterval = 100ms
+committeeRequestInterval = 300ms
 committeeTimeAdjustment = 1.1
 
 [plugin:catapult.plugins.accountlink]

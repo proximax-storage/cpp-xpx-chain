@@ -53,7 +53,6 @@ namespace catapult { namespace fastfinality {
 				sml::state<BlocksDownloading> + sml::event<DownloadBlocksSucceeded> = sml::state<LocalChainCheck>,
 
 				sml::state<StageDetection> + sml::on_entry<sml::_> / ACTION(DetectStage),
-				sml::state<StageDetection> + sml::event<StageDetectionFailed> = sml::state<StageDetection>,
 				sml::state<StageDetection> + sml::event<StageDetectionSucceeded> = sml::state<CommitteeSelection>,
 
 				sml::state<CommitteeSelection> + sml::on_entry<sml::_> / ACTION(SelectCommittee),
@@ -79,7 +78,7 @@ namespace catapult { namespace fastfinality {
 				sml::state<ProposalPhaseEndWaiting> + sml::event<ProposalPhaseEnded> / ACTION(AddPrevote) = sml::state<Prevote>,
 
 				sml::state<Prevote> + sml::on_entry<sml::_> / ACTION(WaitForPrevotes),
-				sml::state<Prevote> + sml::event<SumOfPrevotesInsufficient> = sml::state<ConfirmedBlockWaiting>,
+				sml::state<Prevote> + sml::event<SumOfPrevotesInsufficient> = sml::state<Precommit>,
 				sml::state<Prevote> + sml::event<SumOfPrevotesSufficient> / ACTION(AddPrecommit) = sml::state<Precommit>,
 
 				sml::state<Precommit> + sml::on_entry<sml::_> / ACTION(WaitForPrecommits),

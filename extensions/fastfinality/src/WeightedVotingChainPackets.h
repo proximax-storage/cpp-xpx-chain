@@ -16,39 +16,6 @@ namespace catapult { namespace fastfinality {
 
 #pragma pack(push, 1)
 
-	struct CommitteeStageResponse : public ionet::Packet {
-		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Pull_Committee_Stage;
-
-		int16_t Round = -1;
-		CommitteePhase Phase = CommitteePhase::None;
-		Timestamp RoundStart;
-		uint64_t PhaseTimeMillis = 0u;
-	};
-
-	struct CommitteeStageTraits {
-	public:
-		using ResultType = CommitteeStage;
-		static constexpr auto Packet_Type = ionet::PacketType::Pull_Committee_Stage;
-		static constexpr auto Friendly_Name = "committee stage";
-
-		static auto CreateRequestPacketPayload() {
-			return ionet::PacketPayload(Packet_Type);
-		}
-
-	public:
-		bool tryParseResult(const ionet::Packet& packet, ResultType& result) const {
-			const auto* pResponse = ionet::CoercePacket<CommitteeStageResponse>(&packet);
-			if (!pResponse)
-				return false;
-
-			result.Round = pResponse->Round;
-			result.Phase = pResponse->Phase;
-			result.RoundStart = utils::ToTimePoint(pResponse->RoundStart);
-			result.PhaseTimeMillis = pResponse->PhaseTimeMillis;
-			return true;
-		}
-	};
-
 	enum class CommitteeMessageType : uint8_t {
 		Prevote,
 		Precommit,

@@ -39,6 +39,7 @@
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/version/version.h"
+#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace tools { namespace nemgen {
 
@@ -268,6 +269,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		pBlock->Type = model::Entity_Type_Nemesis_Block;
 		pBlock->FeeInterest = 1;
 		pBlock->FeeInterestDenominator = 1;
+		pBlock->Timestamp = utils::NetworkTime();
 		extensions::BlockExtensions(config.NemesisGenerationHash).signFullBlock(signer, *pBlock);
 		return pBlock;
 	}

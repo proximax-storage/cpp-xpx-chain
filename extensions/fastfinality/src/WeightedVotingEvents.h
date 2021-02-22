@@ -24,7 +24,6 @@ namespace catapult { namespace fastfinality {
 	struct DownloadBlocksFailed{};
 	struct DownloadBlocksSucceeded{};
 
-	struct StageDetectionFailed{};
 	struct StageDetectionSucceeded{};
 
 	struct CommitteeSelectionResult{

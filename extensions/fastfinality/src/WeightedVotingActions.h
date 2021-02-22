@@ -58,7 +58,6 @@ namespace catapult { namespace fastfinality {
 
 	action CreateDefaultDetectStageAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const RemoteCommitteeStagesRetriever& retriever,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const chain::TimeSupplier& timeSupplier,
 		const model::BlockElementSupplier& lastBlockElementSupplier,

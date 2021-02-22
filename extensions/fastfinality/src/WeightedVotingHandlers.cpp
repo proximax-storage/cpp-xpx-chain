@@ -12,33 +12,6 @@
 
 namespace catapult { namespace fastfinality {
 
-	void RegisterPullCommitteeStageHandler(
-			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			ionet::ServerPacketHandlers& handlers) {
-		handlers.registerHandler(ionet::PacketType::Pull_Committee_Stage, [pFsmWeak](
-				const auto& packet,
-				auto& context) {
-			using ResponseType = CommitteeStageResponse;
-			if (!ionet::IsPacketValid(packet, ResponseType::Packet_Type)) {
-				CATAPULT_LOG(warning) << "rejecting invalid packet: " << packet;
-				return;
-			}
-
-			CATAPULT_LOG(trace) << "received valid " << packet;
-
-			TRY_GET_FSM()
-
-			auto pResponsePacket = ionet::CreateSharedPacket<ResponseType>();
-			auto stage = pFsmShared->committeeData().committeeStage();
-			pResponsePacket->Round = stage.Round;
-			pResponsePacket->Phase = stage.Phase;
-			pResponsePacket->RoundStart = utils::FromTimePoint(stage.RoundStart);
-			pResponsePacket->PhaseTimeMillis = stage.PhaseTimeMillis;
-
-			context.response(ionet::PacketPayload(pResponsePacket));
-		});
-	}
-
 	void RegisterPushProposedBlockHandler(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			ionet::ServerPacketHandlers& handlers,

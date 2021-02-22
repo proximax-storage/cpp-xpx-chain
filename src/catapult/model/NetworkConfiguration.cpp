@@ -91,14 +91,14 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeApproval);
 		config.CommitteePhaseTime = utils::TimeSpan::FromSeconds(5);
 		TRY_LOAD_CHAIN_PROPERTY(CommitteePhaseTime);
+		config.MinCommitteePhaseTime = utils::TimeSpan::FromMilliseconds(300);
+		TRY_LOAD_CHAIN_PROPERTY(MinCommitteePhaseTime);
+		config.MaxCommitteePhaseTime = utils::TimeSpan::FromMinutes(1);;
+		TRY_LOAD_CHAIN_PROPERTY(MaxCommitteePhaseTime);
 		config.CommitteeMessageBroadcastInterval = utils::TimeSpan::FromMilliseconds(100);
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeMessageBroadcastInterval);
 		config.CommitteeRequestInterval = utils::TimeSpan::FromMilliseconds(300);
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeRequestInterval);
-		config.MinCommitteePhaseTime = utils::TimeSpan::FromSeconds(1);
-		TRY_LOAD_CHAIN_PROPERTY(MinCommitteePhaseTime);
-		config.CommitteePrecommitWait = 0.8;
-		TRY_LOAD_CHAIN_PROPERTY(CommitteePrecommitWait);
 		config.CommitteeTimeAdjustment = 1.1;
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeTimeAdjustment);
 

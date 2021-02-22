@@ -302,7 +302,7 @@ namespace catapult { namespace model {
 		/// \a feeInterest and \a feeInterestDenominator.
 		 BlockCosignaturesNotification(
 			const Key& signer,
-			int16_t round,
+			int64_t round,
 			size_t numCosignatures,
 			const Cosignature* pCosignatures,
 			uint32_t feeInterest,
@@ -321,7 +321,7 @@ namespace catapult { namespace model {
 		const Key& Signer;
 
 		/// Committee round (number of attempts to generate this block).
-		int16_t Round;
+		int64_t Round;
 
 		/// Number of block cosignatures.
 		size_t NumCosignatures;
