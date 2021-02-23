@@ -119,7 +119,7 @@ cd cppzmq
 git checkout v4.4.1
 
 mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCPPZMQ_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
 make
 sudo make install
 
@@ -156,4 +156,6 @@ cd cpp-xpx-chain
 mkdir _build && cd _build
 cmake -DBOOST_ROOT=~/boost-build-1.71.0 -DCMAKE_BUILD_TYPE=Release ..
 make publish && make -j $(expr (nproc) - 2)
+// or 
+make publish && make -j $((`nproc`-2))
 ```
