@@ -103,7 +103,7 @@ cd cppzmq.git
 git checkout v4.4.1
 
 mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCPPZMQ_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
 make
 sudo make install
 ```
