@@ -130,7 +130,7 @@ namespace catapult { namespace model {
 	DEFINE_CORE_NOTIFICATION(Balance_Credit_v1, 0x000E, All);
 
 	/// Block cosignatures.
-	DEFINE_CORE_NOTIFICATION(Block_Cosignatures_v1, 0x0011, Validator);
+	DEFINE_CORE_NOTIFICATION(Block_Committee_v1, 0x0011, All);
 
 #undef DEFINE_CORE_NOTIFICATION
 

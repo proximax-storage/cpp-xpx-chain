@@ -19,6 +19,6 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(RemoveHarvester, model::RemoveHarvesterNotification<1>)();
 
 	/// Observes changes triggered by block cosignatures notifications
-	DECLARE_OBSERVER(UpdateHarvesters, model::BlockCosignaturesNotification<1>)(
+	DECLARE_OBSERVER(UpdateHarvesters, model::BlockCommitteeNotification<1>)(
 		const std::shared_ptr<chain::WeightedVotingCommitteeManager>& pCommitteeManager);
 }}

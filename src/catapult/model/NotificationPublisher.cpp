@@ -93,11 +93,10 @@ namespace catapult { namespace model {
 				// raise an entity notification
 				switch (block.EntityVersion()) {
 				case 4: {
+					sub.notify(BlockCommitteeNotification<1>(block.Round, block.FeeInterest, block.FeeInterestDenominator));
+
 					auto pCosignature = block.CosignaturesPtr();
 					auto cosignaturesCount = block.CosignaturesCount();
-
-					sub.notify(BlockCosignaturesNotification<1>(block.Signer, block.Round, cosignaturesCount, pCosignature, block.FeeInterest, block.FeeInterestDenominator));
-
 					for (auto i = 0u; i < cosignaturesCount; ++i, ++pCosignature)
 						sub.notify(SignatureNotification<1>(pCosignature->Signer, pCosignature->Signature, blockData));
 

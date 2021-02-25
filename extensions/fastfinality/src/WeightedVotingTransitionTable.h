@@ -65,7 +65,6 @@ namespace catapult { namespace fastfinality {
 				sml::state<BlockProposing> + sml::event<BlockProposingSucceeded> = sml::state<ProposalPhaseEndWaiting>,
 
 				sml::state<ProposalWaiting> + sml::on_entry<sml::_> / ACTION(WaitForProposal),
-				sml::state<ProposalWaiting> + sml::event<UnexpectedBlockHeight> = sml::state<LocalChainCheck>,
 				sml::state<ProposalWaiting> + sml::event<ProposalNotReceived> = sml::state<ConfirmedBlockWaiting>,
 				sml::state<ProposalWaiting> + sml::event<ProposalReceived> = sml::state<ProposalValidation>,
 

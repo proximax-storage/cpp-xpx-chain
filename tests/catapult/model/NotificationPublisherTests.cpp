@@ -289,17 +289,16 @@ namespace catapult { namespace model {
 		// Arrange:
 		auto numCosignatures = 3;
 		auto pBlock = GenerateBlockWithTransactionSizes({ Amount(numCosignatures * sizeof(Cosignature)) });
+		pBlock->Round = 10;
 		pBlock->FeeInterest = 2;
 		pBlock->FeeInterestDenominator = 2;
 		// Convert transaction into cosignatures.
 		pBlock->TransactionPayloadSize = 0u;
 
 		// Act:
-		PublishOne<BlockCosignaturesNotification<1>>(*pBlock, [&block = *pBlock, numCosignatures](const auto& notification) {
+		PublishOne<BlockCommitteeNotification<1>>(*pBlock, [&block = *pBlock, numCosignatures](const auto& notification) {
 			// Assert:
-			EXPECT_EQ(block.Signer, notification.Signer);
-			EXPECT_EQ(numCosignatures, notification.NumCosignatures);
-			EXPECT_EQ(block.CosignaturesPtr(), notification.CosignaturesPtr);
+			EXPECT_EQ(10, notification.Round);
 			EXPECT_EQ(2, notification.FeeInterest);
 			EXPECT_EQ(2, notification.FeeInterestDenominator);
 		});
@@ -337,7 +336,7 @@ namespace catapult { namespace model {
 			auto i = 0u;
 			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[i++]);
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(Core_Block_Cosignatures_v1_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Core_Block_Committee_v1_Notification, sub.notificationTypes()[i++]);
 			for (auto k = 0u; k < numCosignatures; ++k)
 				EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);

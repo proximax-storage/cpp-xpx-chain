@@ -77,9 +77,7 @@ namespace catapult { namespace fastfinality {
 		const model::BlockElementSupplier& lastBlockElementSupplier);
 
 	action CreateDefaultWaitForProposalAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-		const model::BlockElementSupplier& lastBlockElementSupplier);
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
 
 	action CreateDefaultValidateProposalAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,

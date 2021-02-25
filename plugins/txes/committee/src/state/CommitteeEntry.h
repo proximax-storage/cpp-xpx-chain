@@ -79,6 +79,11 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets the account data.
+		AccountData& data() {
+			return m_data;
+		}
+
+		/// Gets the account data.
 		const AccountData& data() const {
 			return m_data;
 		}

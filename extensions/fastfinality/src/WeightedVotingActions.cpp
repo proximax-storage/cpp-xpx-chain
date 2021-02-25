@@ -326,8 +326,7 @@ namespace catapult { namespace fastfinality {
 			auto pLastBlockElement = lastBlockElementSupplier();
 			const auto& block = pLastBlockElement->Block;
 			const auto& config = pConfigHolder->Config().Network;
-			auto phaseTimeMillis = ((Height(1) == block.Height) || (block.EntityVersion() < 4u)) ?
-				config.CommitteePhaseTime.millis() : block.CommitteePhaseTime;
+			auto phaseTimeMillis = block.CommitteePhaseTime ? block.CommitteePhaseTime : config.CommitteePhaseTime.millis();
 
 			auto roundStart = block.Timestamp + Timestamp(CommitteePhaseCount * phaseTimeMillis);
 			auto currentTime = timeSupplier();
@@ -500,16 +499,12 @@ namespace catapult { namespace fastfinality {
 	}
 
 	action CreateDefaultWaitForProposalAction(
-			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			const model::BlockElementSupplier& lastBlockElementSupplier) {
-		return [pFsmWeak, pConfigHolder, lastBlockElementSupplier]() {
+			std::weak_ptr<WeightedVotingFsm> pFsmWeak) {
+		return [pFsmWeak]() {
 			TRY_GET_FSM()
 
-			pFsmShared->committeeData().setProposedBlock(nullptr);
-
 			DelayAction(pFsmShared, GetPhaseEndTimeMillis(pFsmShared->committeeData().committeeStage()),
-				[pFsmWeak, pConfigHolder, lastBlockElementSupplier] {
+				[pFsmWeak] {
 					TRY_GET_FSM()
 
 					pFsmShared->processEvent(ProposalNotReceived{});
@@ -517,11 +512,7 @@ namespace catapult { namespace fastfinality {
 				[pFsmWeak] {
 					TRY_GET_FSM()
 
-					if (pFsmShared->committeeData().proposedBlock()) {
-						pFsmShared->processEvent(ProposalReceived{});
-					} else {
-						pFsmShared->processEvent(ProposalNotReceived{});
-					}
+					pFsmShared->processEvent(ProposalReceived{});
 				}
 			);
 		};
@@ -622,7 +613,8 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, &state, lastBlockElementSupplier, pValidatorPool]() {
 			TRY_GET_FSM()
 
-			auto pProposedBlock = pFsmShared->committeeData().proposedBlock();
+			auto& committeeData = pFsmShared->committeeData();
+			auto pProposedBlock = committeeData.proposedBlock();
 			if (!pProposedBlock)
 				CATAPULT_THROW_RUNTIME_ERROR("no proposal to validate");
 
@@ -635,6 +627,7 @@ namespace catapult { namespace fastfinality {
 			if (pProposedBlock->Signer != committee.BlockProposer) {
 				CATAPULT_LOG(warning) << "rejecting proposal, signer " << pProposedBlock->Signer
 					<< " invalid, expected " << committee.BlockProposer;
+				committeeData.setProposedBlock(nullptr);
 				pFsmShared->processEvent(ProposalInvalid{});
 				return;
 			}
@@ -642,6 +635,7 @@ namespace catapult { namespace fastfinality {
 			if (pProposedBlock->Round != committee.Round) {
 				CATAPULT_LOG(warning) << "rejecting proposal, round " << pProposedBlock->Round
 					<< " invalid, expected " << committee.Round;
+				committeeData.setProposedBlock(nullptr);
 				pFsmShared->processEvent(ProposalInvalid{});
 				return;
 			}
@@ -649,6 +643,7 @@ namespace catapult { namespace fastfinality {
 			if (ValidateProposedBlock(pProposedBlock, state, lastBlockElementSupplier, pValidatorPool)) {
 				pFsmShared->processEvent(ProposalValid{});
 			} else {
+				committeeData.setProposedBlock(nullptr);
 				pFsmShared->processEvent(ProposalInvalid{});
 			}
 		};

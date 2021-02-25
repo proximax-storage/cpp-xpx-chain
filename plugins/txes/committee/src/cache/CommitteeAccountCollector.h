@@ -21,11 +21,6 @@ namespace catapult { namespace cache {
 			m_accounts.insert_or_assign(entry.key(), entry.data());
 		}
 
-		/// Removes account with \a key.
-		void removeAccount(const Key& key) {
-			m_accounts.erase(key);
-		}
-
 		/// Returns collected accounts.
 		AccountMap& accounts() {
 			return m_accounts;

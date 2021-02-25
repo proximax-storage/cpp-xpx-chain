@@ -78,12 +78,29 @@ namespace catapult { namespace test {
 	public:
 		explicit TestWeightedVotingCommitteeManager(const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector)
 			: chain::WeightedVotingCommitteeManager(pAccountCollector)
+			, m_round(-1)
 		{}
 
 	public:
-		void setCommittee(const chain::Committee& committee) {
-			m_committee = committee;
+		const chain::Committee& selectCommittee(const model::NetworkConfiguration&) override {
+			m_round++;
+			m_committee = m_committees.at(m_round);
+			return m_committee;
 		}
+
+		void reset() override {
+			m_round = -1;
+			m_committee = chain::Committee();
+		}
+
+	public:
+		void setCommittee(int64_t round, const chain::Committee& committee) {
+			m_committees[round] = committee;
+		}
+
+	private:
+		int64_t m_round;
+		std::map<int64_t, chain::Committee> m_committees;
 	};
 }}
 

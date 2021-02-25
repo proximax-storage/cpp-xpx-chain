@@ -97,23 +97,11 @@ namespace catapult { namespace cache {
 		}
 
 		void updateAccountCollector(const std::shared_ptr<CommitteeAccountCollector>& pAccountCollector) const {
-			auto deltas = m_pDeltaKeys->deltas();
-			auto added = deltas.Added;
-			added.insert(deltas.Copied.begin(), deltas.Copied.end());
-			auto removed = deltas.Removed;
-
-			for (const auto& key : added) {
-				if (removed.find(key) != removed.end()) {
-					removed.erase(key);
-				} else {
-					auto iter = m_pCommitteeEntries->find(key);
-					auto pEntry = iter.get();
-					pAccountCollector->addAccount(*pEntry);
-				}
-			}
-
-			for (const auto& key : removed) {
-				pAccountCollector->removeAccount(key);
+			pAccountCollector->accounts().clear();
+			for (const auto& key : keys()) {
+				auto iter = m_pCommitteeEntries->find(key);
+				auto pEntry = iter.get();
+				pAccountCollector->addAccount(*pEntry);
 			}
 		}
 

@@ -196,7 +196,7 @@ namespace catapult { namespace model {
 				EXPECT_EQ(21u, config.CommitteeSize);
 				EXPECT_EQ(0.67, config.CommitteeApproval);
 				EXPECT_EQ(utils::TimeSpan::FromSeconds(5), config.CommitteePhaseTime);
-				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(300), config.MinCommitteePhaseTime);
+				EXPECT_EQ(utils::TimeSpan::FromSeconds(1), config.MinCommitteePhaseTime);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(1), config.MaxCommitteePhaseTime);
 				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(100), config.CommitteeMessageBroadcastInterval);
 				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(300), config.CommitteeRequestInterval);

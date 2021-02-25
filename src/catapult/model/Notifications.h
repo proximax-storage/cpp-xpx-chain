@@ -289,45 +289,30 @@ namespace catapult { namespace model {
 
 	/// Notifies the cosignatures of a block.
 	template<VersionType version>
-	struct BlockCosignaturesNotification;
+	struct BlockCommitteeNotification;
 
 	template<>
-	struct BlockCosignaturesNotification<1> : public Notification {
+	struct BlockCommitteeNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Block_Cosignatures_v1_Notification;
+		static constexpr auto Notification_Type = Core_Block_Committee_v1_Notification;
 
 	public:
 		/// Creates a block notification around \a signer, \a numCosignatures, \a pCosignatures,
 		/// \a feeInterest and \a feeInterestDenominator.
-		 BlockCosignaturesNotification(
-			const Key& signer,
+		 BlockCommitteeNotification(
 			int64_t round,
-			size_t numCosignatures,
-			const Cosignature* pCosignatures,
 			uint32_t feeInterest,
 			uint32_t feeInterestDenominator)
-				: Notification(Notification_Type, sizeof(BlockCosignaturesNotification<1>))
-				, Signer(signer)
+				: Notification(Notification_Type, sizeof(BlockCommitteeNotification<1>))
 				, Round(round)
-				, NumCosignatures(numCosignatures)
-				, CosignaturesPtr(pCosignatures)
 				, FeeInterest(feeInterest)
 				, FeeInterestDenominator(feeInterestDenominator)
 		{}
 
 	public:
-		/// Block signer.
-		const Key& Signer;
-
 		/// Committee round (number of attempts to generate this block).
 		int64_t Round;
-
-		/// Number of block cosignatures.
-		size_t NumCosignatures;
-
-		/// Block cosignatures.
-		const Cosignature* CosignaturesPtr;
 
 		/// The part of the transaction fee harvester is willing to get.
 		uint32_t FeeInterest;

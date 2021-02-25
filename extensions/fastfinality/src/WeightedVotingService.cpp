@@ -173,7 +173,7 @@ namespace catapult { namespace fastfinality {
 					pConfigHolder,
 					CreateHarvesterBlockGenerator(state),
 					lastBlockElementSupplier);
-				actions.WaitForProposal = CreateDefaultWaitForProposalAction(pFsmShared, pConfigHolder, lastBlockElementSupplier);
+				actions.WaitForProposal = CreateDefaultWaitForProposalAction(pFsmShared);
 				actions.ValidateProposal = CreateDefaultValidateProposalAction(
 					pFsmShared,
 					state,
