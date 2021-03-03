@@ -233,8 +233,13 @@ namespace catapult { namespace fastfinality {
 						*packetIoPair.io(),
 						identityKey,
 						state.pluginManager().transactionRegistry());
-					auto blockRange = pRemoteChainApi->blocksFrom(startHeight, blocksFromOptions).get();
-					blocks = model::EntityRange<model::Block>::ExtractEntitiesFromRange(std::move(blockRange));
+
+					try {
+						auto blockRange = pRemoteChainApi->blocksFrom(startHeight, blocksFromOptions).get();
+						blocks = model::EntityRange<model::Block>::ExtractEntitiesFromRange(std::move(blockRange));
+					} catch (...) {
+						continue;
+					}
 				}
 
 				bool success = false;

@@ -7,7 +7,6 @@
 #include "WeightedVotingService.h"
 #include "WeightedVotingFsm.h"
 #include "catapult/api/RemoteChainApi.h"
-#include "catapult/api/RemoteRequestDispatcher.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "catapult/extensions/ServiceLocator.h"
