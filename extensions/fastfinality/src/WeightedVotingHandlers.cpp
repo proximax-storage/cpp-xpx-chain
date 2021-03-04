@@ -45,7 +45,7 @@ namespace catapult { namespace fastfinality {
 
 			committeeData.setProposedBlock(pBlock);
 
-			pFsmShared->timer().cancel();
+			pFsmShared->proposalWaitTimer().cancel();
 		});
 	}
 
@@ -82,7 +82,7 @@ namespace catapult { namespace fastfinality {
 
 			committeeData.setConfirmedBlock(pBlock);
 
-			pFsmShared->timer().cancel();
+			pFsmShared->confirmedBlockWaitTimer().cancel();
 		});
 	}
 

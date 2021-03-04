@@ -47,8 +47,12 @@ namespace catapult { namespace fastfinality {
 			return std::make_pair(mostFrequentValue, maxFrequency);
 		}
 
-		void DelayAction(std::shared_ptr<WeightedVotingFsm> pFsmShared, uint64_t delay, action callback, action cancelledCallback = [](){}) {
-			auto& timer = pFsmShared->timer();
+		void DelayAction(
+				std::shared_ptr<WeightedVotingFsm> pFsmShared,
+				boost::asio::system_timer& timer,
+				uint64_t delay,
+				action callback,
+				action cancelledCallback = [](){}) {
 			auto& committeeData = pFsmShared->committeeData();
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak = pFsmShared;
 			timer.expires_at(committeeData.committeeStage().RoundStart + std::chrono::milliseconds(delay));
@@ -111,7 +115,7 @@ namespace catapult { namespace fastfinality {
 					pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 				}
 			} else {
-				DelayAction(pFsmShared, config.CommitteeRequestInterval.millis(),
+				DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeRequestInterval.millis(),
 					[pFsmWeak] {
 						TRY_GET_FSM()
 						pFsmShared->processEvent(NetworkHeightDetectionFailure{});
@@ -508,7 +512,7 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak]() {
 			TRY_GET_FSM()
 
-			DelayAction(pFsmShared, GetPhaseEndTimeMillis(pFsmShared->committeeData().committeeStage()),
+			DelayAction(pFsmShared, pFsmShared->proposalWaitTimer(), GetPhaseEndTimeMillis(pFsmShared->committeeData().committeeStage()),
 				[pFsmWeak] {
 					TRY_GET_FSM()
 
@@ -694,6 +698,7 @@ namespace catapult { namespace fastfinality {
 
 			DelayAction(
 				pFsmShared,
+				pFsmShared->timer(),
 				phaseEndTimeMillis,
 				[pFsmWeak] {
 					TRY_GET_FSM()
@@ -754,6 +759,7 @@ namespace catapult { namespace fastfinality {
 
 				DelayAction(
 					pFsmShared,
+					pFsmShared->timer(),
 					delay,
 					[pFsmWeak, committeeApproval = config.CommitteeApproval, &committeeManager, voteSupplier, onVoteResult] {
 						TRY_GET_FSM()
@@ -944,7 +950,7 @@ namespace catapult { namespace fastfinality {
 
 			if (success) {
 				auto roundEndTimeMillis = GetPhaseEndTimeMillis(stage);
-				DelayAction(pFsmShared, roundEndTimeMillis, [pFsmWeak] {
+				DelayAction(pFsmShared, pFsmShared->timer(), roundEndTimeMillis, [pFsmWeak] {
 					TRY_GET_FSM()
 
 					pFsmShared->processEvent(CommitBlockSucceeded{});
@@ -1031,6 +1037,7 @@ namespace catapult { namespace fastfinality {
 			SetPhase(pFsmShared, CommitteePhase::Commit);
 			DelayAction(
 				pFsmShared,
+				pFsmShared->confirmedBlockWaitTimer(),
 				GetPhaseEndTimeMillis(committeeData.committeeStage()),
 				[pFsmWeak] {
 					TRY_GET_FSM()
