@@ -79,35 +79,67 @@ namespace catapult { namespace chain {
 		double CalculateWeight(const state::AccountData& accountData) {
 			return 1.0 / (1.0 + std::exp(-accountData.Activity));
 		}
+
+		void LogAccountData(const cache::AccountMap& accounts, utils::LogLevel logLevel) {
+			for (const auto& pair : accounts) {
+				const auto& data = pair.second;
+				CATAPULT_LOG_LEVEL(logLevel) << "committee account " << pair.first << " data: "
+					<< CalculateWeight(data) << "|" << data.Activity << data.Greed << "|" << data.LastSigningBlockHeight << "|"
+					<< data.CanHarvest << "|" << data.EffectiveBalance;
+			}
+		}
+
+		void DecreaseActivity(const Key& key, cache::AccountMap& accounts, const config::CommitteeConfiguration& config, utils::LogLevel logLevel) {
+			auto& data = accounts.at(key);
+			auto& activity = data.Activity;
+			activity -= config.ActivityCommitteeNotCosignedDelta;
+
+			CATAPULT_LOG_LEVEL(logLevel) << "committee account " << key << ": activity " << activity << ", weight " << CalculateWeight(data);
+		}
 	}
 
 	WeightedVotingCommitteeManager::WeightedVotingCommitteeManager(const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector)
 		: m_pHasher(std::make_unique<DefaultHasher>())
 		, m_pAccountCollector(pAccountCollector)
+		, m_accounts(m_pAccountCollector->accounts())
+		, m_logLevel(utils::LogLevel::Debug)
 	{}
 
 	void WeightedVotingCommitteeManager::reset() {
 		m_hashes.clear();
 		m_committee = Committee();
+		m_accounts = m_pAccountCollector->accounts();
 	}
 
 	double WeightedVotingCommitteeManager::weight(const Key& accountKey) const {
-		const auto& accounts = m_pAccountCollector->accounts();
-		auto iter = accounts.find(accountKey);
+		auto iter = m_accounts.find(accountKey);
 
-		return (accounts.end() != iter) ? CalculateWeight(iter->second) : 0.0;
+		return (m_accounts.end() != iter) ? CalculateWeight(iter->second) : 0.0;
+	}
+
+	void WeightedVotingCommitteeManager::decreaseActivities(const config::CommitteeConfiguration& config) {
+		CATAPULT_LOG_LEVEL(m_logLevel) << "decreasing activities of previous committee accounts";
+		DecreaseActivity(m_committee.BlockProposer, m_accounts, config, m_logLevel);
+		for (const auto& cosigner : m_committee.Cosigners) {
+			DecreaseActivity(cosigner, m_accounts, config, m_logLevel);
+		}
 	}
 
 	const Committee& WeightedVotingCommitteeManager::selectCommittee(const model::NetworkConfiguration& networkConfig) {
-		auto generationHash = lastBlockElementSupplier()()->GenerationHash;
-		const auto& accounts = m_pAccountCollector->accounts();
 		auto previousRound = m_committee.Round;
+		CATAPULT_LOG_LEVEL(m_logLevel) << "selecting committee for round " << previousRound + 1;
+		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
+		if (previousRound < 0) {
+			LogAccountData(m_accounts, m_logLevel);
+		} else {
+			decreaseActivities(config);
+		}
+
 		m_committee = Committee(previousRound + 1);
-		CATAPULT_LOG(debug) << "selecting committee for round " << m_committee.Round;
 
 		// Compute account rates and sort them in descending order.
 		std::multimap<double, Key, std::greater<>> rates;
-		for (const auto& pair : accounts) {
+		for (const auto& pair : m_accounts) {
 			const auto& accountData = pair.second;
 			if (!accountData.CanHarvest)
 				continue;
@@ -115,7 +147,7 @@ namespace catapult { namespace chain {
 			const auto& key = pair.first;
 			auto weight = CalculateWeight(accountData);
 			const auto& hash = previousRound < 0 ?
-				m_pHasher->calculateHash(m_hashes[key], generationHash, key) :
+				m_pHasher->calculateHash(m_hashes[key], lastBlockElementSupplier()()->GenerationHash, key) :
 				m_pHasher->calculateHash(m_hashes.at(key));
 			auto hit = *reinterpret_cast<const uint64_t*>(hash.data());
 			if (hit == 0u)
@@ -127,7 +159,6 @@ namespace catapult { namespace chain {
 
 		// The 21st account may be followed by the accounts with the same rate, select them all as candidates for
 		// the committee.
-		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
 		auto endRateIter = rates.begin();
 		for (auto i = 0u; i < networkConfig.CommitteeSize && endRateIter != rates.end(); ++i, ++endRateIter);
 		if (endRateIter != rates.end())
@@ -146,7 +177,7 @@ namespace catapult { namespace chain {
 			const auto& key = candidateIter->second;
 			m_committee.Cosigners.insert(key);
 
-			auto greed = std::max(accounts.at(key).Greed, config.MinGreed);
+			auto greed = std::max(m_accounts.at(key).Greed, config.MinGreed);
 			auto hit = *reinterpret_cast<const uint64_t*>(m_hashes.at(key).data());
 			blockProposerCandidates.emplace(Rate(greed * hit, key, *m_pHasher), key);
 		}
@@ -156,6 +187,10 @@ namespace catapult { namespace chain {
 
 		m_committee.BlockProposer = blockProposerCandidates.begin()->second;
 		m_committee.Cosigners.erase(m_committee.BlockProposer);
+
+		CATAPULT_LOG_LEVEL(m_logLevel) << "committee: block proposer " << m_committee.BlockProposer;
+		for (const auto& cosigner : m_committee.Cosigners)
+			CATAPULT_LOG_LEVEL(m_logLevel) << "committee: cosigner " << cosigner;
 
 		return m_committee;
 	}

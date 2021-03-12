@@ -281,13 +281,11 @@ namespace catapult { namespace fastfinality {
 				}
 
 				if (success) {
-					committeeManager.reset();
 					pFsmShared->processEvent(DownloadBlocksSucceeded{});
 					return;
 				}
 			}
 
-			committeeManager.reset();
 			pFsmShared->processEvent(DownloadBlocksFailed{});
 		};
 	}

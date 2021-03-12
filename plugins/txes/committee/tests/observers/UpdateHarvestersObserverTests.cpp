@@ -112,7 +112,7 @@ namespace catapult { namespace observers {
 			{ state::CommitteeEntry(initialEntries[2].key(), test::CreateAccountData(Initial_Height, Importance(120), true, Initial_Activity - Activity_Committee_Not_Cosigned_Delta + Activity_Delta)) },
 			{ state::CommitteeEntry(initialEntries[3].key(), test::CreateAccountData(Initial_Height, Importance(160), true, Initial_Activity - Activity_Committee_Not_Cosigned_Delta + Activity_Committee_Cosigned_Delta + Activity_Delta)) },
 			{ state::CommitteeEntry(initialEntries[4].key(), test::CreateAccountData(Initial_Height, Importance(200), true, Initial_Activity + Activity_Committee_Cosigned_Delta - Activity_Delta)) },
-			{ state::CommitteeEntry(initialEntries[5].key(), test::CreateAccountData(Initial_Height, Importance(240), true, 0.0)) },
+			{ state::CommitteeEntry(initialEntries[5].key(), test::CreateAccountData(Initial_Height, Importance(240), true, -Activity_Delta)) },
 		};
 
 		// Act:

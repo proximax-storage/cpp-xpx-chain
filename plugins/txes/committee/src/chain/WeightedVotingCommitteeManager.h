@@ -8,6 +8,8 @@
 #include "catapult/chain/CommitteeManager.h"
 #include "src/cache/CommitteeAccountCollector.h"
 
+namespace catapult { namespace config { class CommitteeConfiguration; } }
+
 namespace catapult { namespace chain {
 
 	class Hasher {
@@ -33,9 +35,16 @@ namespace catapult { namespace chain {
 		double weight(const Key& accountKey) const override;
 
 	public:
-		const std::shared_ptr<cache::CommitteeAccountCollector>& accountCollector() {
-			return m_pAccountCollector;
+		cache::AccountMap& accounts() {
+			return m_accounts;
 		}
+
+		void setLogLevel(utils::LogLevel logLevel) {
+			m_logLevel = logLevel;
+		}
+
+	protected:
+		void decreaseActivities(const config::CommitteeConfiguration& config);
 
 	protected:
 		std::unique_ptr<Hasher> m_pHasher;
@@ -43,5 +52,7 @@ namespace catapult { namespace chain {
 	private:
 		std::shared_ptr<cache::CommitteeAccountCollector> m_pAccountCollector;
 		std::map<Key, Hash256> m_hashes;
+		cache::AccountMap m_accounts;
+		utils::LogLevel m_logLevel;
 	};
 }}

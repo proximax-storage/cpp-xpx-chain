@@ -130,7 +130,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, WeightedVotingCommitteeManager_AssertWhenLastBlockElementSupplierNotSet) {
 		// Arrange:
-		auto pCommitteeManager = std::make_shared<TestWeightedVotingCommitteeManager>(nullptr);
+		auto pCommitteeManager = std::make_shared<TestWeightedVotingCommitteeManager>(std::make_shared<cache::CommitteeAccountCollector>());
 
 		// Act + Assert:
 		EXPECT_THROW(pCommitteeManager->lastBlockElementSupplier(), catapult_runtime_error);
@@ -138,7 +138,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, WeightedVotingCommitteeManager_SetLastBlockElementSupplier) {
 		// Arrange:
-		auto pCommitteeManager = std::make_shared<TestWeightedVotingCommitteeManager>(nullptr);
+		auto pCommitteeManager = std::make_shared<TestWeightedVotingCommitteeManager>(std::make_shared<cache::CommitteeAccountCollector>());
 		pCommitteeManager->setLastBlockElementSupplier([]() { return nullptr; });
 
 		// Act:
