@@ -21,17 +21,16 @@
 #include "Validators.h"
 #include "src/config/NamespaceConfiguration.h"
 #include "catapult/utils/Hashers.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::RootNamespaceNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(RootNamespace, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(RootNamespace, [](const auto& notification, const auto& context) {
-			// note that zero duration is acceptable because it is eternal
-            const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::NamespaceConfiguration>();
-			auto maxDuration = pluginConfig.MaxNamespaceDuration.blocks(context.Config.Network.BlockGenerationTargetTime);
-			return maxDuration < notification.Duration ? Failure_Namespace_Invalid_Duration : ValidationResult::Success;
-		});
-	}
+	DEFINE_STATELESS_VALIDATOR(RootNamespace, [](const auto& notification, const StatelessValidatorContext& context) {
+		// note that zero duration is acceptable because it is eternal
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::NamespaceConfiguration>();
+		auto maxDuration = pluginConfig.MaxNamespaceDuration.blocks(context.Config.Network.BlockGenerationTargetTime);
+		return maxDuration < notification.Duration ? Failure_Namespace_Invalid_Duration : ValidationResult::Success;
+	})
 }}

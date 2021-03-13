@@ -23,6 +23,7 @@
 #include "src/model/LockHashUtils.h"
 #include "catapult/model/NetworkConfiguration.h"
 #include "catapult/validators/ValidatorUtils.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -37,17 +38,15 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(ProofSecret, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(ProofSecret, [](const auto& notification, const auto& context) {
-			if (!SupportedHash(notification.HashAlgorithm))
-				return Failure_LockSecret_Hash_Not_Implemented;
+	DEFINE_STATELESS_VALIDATOR(ProofSecret, [](const auto& notification, const StatelessValidatorContext& context) {
+		if (!SupportedHash(notification.HashAlgorithm))
+			return Failure_LockSecret_Hash_Not_Implemented;
 
-			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SecretLockConfiguration>();
-			if (notification.Proof.Size < pluginConfig.MinProofSize || notification.Proof.Size > pluginConfig.MaxProofSize)
-				return Failure_LockSecret_Proof_Size_Out_Of_Bounds;
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SecretLockConfiguration>();
+		if (notification.Proof.Size < pluginConfig.MinProofSize || notification.Proof.Size > pluginConfig.MaxProofSize)
+			return Failure_LockSecret_Proof_Size_Out_Of_Bounds;
 
-			auto secret = model::CalculateHash(notification.HashAlgorithm, notification.Proof);
-			return notification.Secret == secret ? ValidationResult::Success : Failure_LockSecret_Secret_Mismatch;
-		});
-	}
+		auto secret = model::CalculateHash(notification.HashAlgorithm, notification.Proof);
+		return notification.Secret == secret ? ValidationResult::Success : Failure_LockSecret_Secret_Mismatch;
+	})
 }}

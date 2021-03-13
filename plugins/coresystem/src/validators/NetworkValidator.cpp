@@ -20,14 +20,13 @@
 
 #include "Validators.h"
 #include "catapult/model/VerifiableEntity.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::EntityNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(Network, Notification)(model::NetworkIdentifier networkIdentifier) {
-		return MAKE_STATELESS_VALIDATOR(Network, [networkIdentifier](const auto& notification) {
-			return networkIdentifier == notification.NetworkIdentifier ? ValidationResult::Success : Failure_Core_Wrong_Network;
-		});
-	}
+	DEFINE_STATELESS_VALIDATOR(Network, [](const auto& notification, const StatelessValidatorContext& context) {
+		return context.NetworkIdentifier == notification.NetworkIdentifier ? ValidationResult::Success : Failure_Core_Wrong_Network;
+	});
 }}

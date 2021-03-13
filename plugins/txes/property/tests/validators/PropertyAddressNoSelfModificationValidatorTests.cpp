@@ -22,13 +22,14 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "catapult/model/Address.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {
 
 #define TEST_CLASS PropertyAddressNoSelfModificationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(PropertyAddressNoSelfModification, model::NetworkIdentifier::Zero)
+	DEFINE_COMMON_VALIDATOR_TESTS(PropertyAddressNoSelfModification, )
 
 	namespace {
 		constexpr auto Add = model::PropertyModificationType::Add;
@@ -40,10 +41,14 @@ namespace catapult { namespace validators {
 				const model::PropertyModification<UnresolvedAddress>& modification) {
 			// Arrange:
 			model::ModifyAddressPropertyValueNotification_v1 notification(signer, model::PropertyType::Address, modification);
-			auto pValidator = CreatePropertyAddressNoSelfModificationValidator(model::NetworkIdentifier::Zero);
+			auto pValidator = CreatePropertyAddressNoSelfModificationValidator();
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Immutable.NetworkIdentifier = model::NetworkIdentifier::Zero;
+			auto config = mutableConfig.ToConst();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto context = StatelessValidatorContext(config);
+			auto result = test::ValidateNotification(*pValidator, notification, context);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

@@ -20,7 +20,7 @@
 
 #include "Validators.h"
 #include "src/cache/NamespaceCache.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 		template<typename TValidatorTraits>
 		ValidationResult UnlinkAliasedDataConsistencyValidator(
 				const typename TValidatorTraits::NotificationType& notification,
-				const ValidatorContext& context) {
+				const StatefulValidatorContext& context) {
 			if (model::AliasAction::Unlink != notification.AliasAction)
 				return ValidationResult::Success;
 

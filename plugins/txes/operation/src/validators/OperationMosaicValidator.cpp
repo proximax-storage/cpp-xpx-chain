@@ -11,7 +11,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::OperationMosaicNotification<1>;
 
-	DEFINE_STATELESS_VALIDATOR(OperationMosaic, [](const auto& notification) {
+	DEFINE_STATELESS_VALIDATOR(OperationMosaic, [](const auto& notification, const StatelessValidatorContext& context) {
 		std::set<UnresolvedMosaicId> mosaicIds;
 		auto pMosaic = notification.MosaicsPtr;
 		for (auto i = 0u; i < notification.MosaicCount; ++i, ++pMosaic) {

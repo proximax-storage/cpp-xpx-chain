@@ -11,7 +11,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::EndFileDownloadNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(EndFileDownload, [](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(EndFileDownload, [](const Notification& notification, const StatefulValidatorContext& context) {
 		if (!notification.FileCount)
 			return Failure_Service_No_Files_To_Download;
 

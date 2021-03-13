@@ -28,6 +28,7 @@
 #include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/ionet/BroadcastUtils.h"
 #include "catapult/model/EntityHasher.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
@@ -80,7 +81,7 @@ namespace catapult { namespace partialtransaction {
 				return m_name;
 			}
 
-			ValidationResult validate(const TNotification&) const override {
+			ValidationResult validate(const TNotification&, const validators::StatelessValidatorContext&) const override {
 				return m_result;
 			}
 
@@ -102,7 +103,7 @@ namespace catapult { namespace partialtransaction {
 			using BaseMockStatelessNotificationValidator<model::AggregateCosignaturesNotification<1>>::BaseMockStatelessNotificationValidator;
 
 		public:
-			ValidationResult validate(const model::AggregateCosignaturesNotification<1>& notification) const override {
+			ValidationResult validate(const model::AggregateCosignaturesNotification<1>& notification, const validators::StatelessValidatorContext&) const override {
 				return HasAllCosignatures(notification) ? ValidationResult::Success : validators::Failure_Aggregate_Missing_Cosigners;
 			}
 		};
@@ -114,13 +115,13 @@ namespace catapult { namespace partialtransaction {
 			using BaseMockStatelessNotificationValidator<model::AggregateEmbeddedTransactionNotification<1>>::BaseMockStatelessNotificationValidator;
 
 		public:
-			ValidationResult validate(const model::AggregateEmbeddedTransactionNotification<1>& notification) const override {
+			ValidationResult validate(const model::AggregateEmbeddedTransactionNotification<1>& notification, const validators::StatelessValidatorContext&) const override {
 				return HasAllCosignatures(notification) ? ValidationResult::Success : validators::Failure_Aggregate_Ineligible_Cosigners;
 			}
 		};
 
 		template<typename TNotification>
-		std::unique_ptr<const validators::NotificationValidatorT<TNotification>> CreateStatelessValidator(ValidationResult validationResult) {
+		std::unique_ptr<const validators::stateless::NotificationValidatorT<TNotification>> CreateStatelessValidator(ValidationResult validationResult) {
 			return std::make_unique<MockStatelessNotificationValidator<TNotification>>(validationResult);
 		}
 

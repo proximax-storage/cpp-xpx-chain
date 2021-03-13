@@ -21,7 +21,7 @@
 #pragma once
 #include "Results.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "src/config/HashLockConfiguration.h"
 #include "src/model/HashLockNotifications.h"

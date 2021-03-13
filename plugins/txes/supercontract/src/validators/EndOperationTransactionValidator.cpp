@@ -12,7 +12,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::AggregateEmbeddedTransactionNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(EndOperationTransaction, [](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(EndOperationTransaction, [](const Notification& notification, const StatefulValidatorContext& context) {
 		if (model::Entity_Type_EndOperation == notification.Transaction.Type) {
 			const auto& superContractCache = context.Cache.sub<cache::SuperContractCache>();
 			if (superContractCache.contains(notification.Transaction.Signer))

@@ -45,8 +45,8 @@ namespace catapult { namespace extensions {
 	std::unique_ptr<const validators::stateless::AggregateEntityValidator> CreateStatelessValidator(
 			const plugins::PluginManager& manager) {
 		// create an aggregate entity validator of one
-		auto validators = validators::ValidatorVectorT<>();
-		validators.push_back(MakeAdapter<validators::NotificationValidatorAdapter>(manager, manager.createStatelessValidator()));
+		auto validators = validators::ValidatorVectorT<const validators::StatelessValidatorContext&>();
+		validators.push_back(MakeAdapter<validators::NotificationStatelessValidatorAdapter>(manager, manager.createStatelessValidator()));
 		return std::make_unique<validators::stateless::AggregateEntityValidator>(std::move(validators));
 	}
 

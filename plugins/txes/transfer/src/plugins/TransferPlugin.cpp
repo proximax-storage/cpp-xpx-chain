@@ -35,13 +35,12 @@ namespace catapult { namespace plugins {
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
+				.add(validators::CreateTransferMessageValidator())
+				.add(validators::CreateTransferMosaicsValidator())
 				.add(validators::CreateTransferPluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([](auto& builder) {
-			builder
-				.add(validators::CreateTransferMessageValidator())
-				.add(validators::CreateTransferMosaicsValidator());
 		});
 	}
 }}

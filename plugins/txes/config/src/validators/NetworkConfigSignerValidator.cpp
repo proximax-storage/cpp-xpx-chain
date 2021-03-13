@@ -6,13 +6,13 @@
 
 #include "src/model/NetworkConfigNotifications.h"
 #include "Validators.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::NetworkConfigSignerNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(NetworkConfigSigner, [](const auto& notification, const ValidatorContext& context) {
+	DEFINE_STATELESS_VALIDATOR(NetworkConfigSigner, [](const auto& notification, const StatelessValidatorContext& context) {
 		if (notification.Signer != context.Network.PublicKey)
 			return Failure_NetworkConfig_Invalid_Signer;
 

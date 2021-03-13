@@ -21,7 +21,8 @@
 #pragma once
 #include "catapult/model/NetworkConfiguration.h"
 #include "catapult/validators/NotificationValidator.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatelessValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
 
@@ -30,11 +31,11 @@ namespace catapult { namespace test {
 	// region CreateValidatorContext
 
 	/// Creates a validator context around a \a height, \a network and \a cache.
-	inline validators::ValidatorContext CreateValidatorContext(
+	inline validators::StatefulValidatorContext CreateValidatorContext(
 			const config::BlockchainConfiguration& config,
 			Height height,
 			const cache::ReadOnlyCatapultCache& cache) {
-		return validators::ValidatorContext(config, height, Timestamp(0), CreateResolverContextXor(), cache);
+		return validators::StatefulValidatorContext(config, height, Timestamp(0), CreateResolverContextXor(), cache);
 	}
 
 	// endregion
@@ -44,9 +45,26 @@ namespace catapult { namespace test {
 	/// Validates \a notification with \a validator.
 	template<typename TNotification>
 	validators::ValidationResult ValidateNotification(
-			const validators::stateless::NotificationValidatorT<TNotification>& validator,
+			const validators::NotificationValidatorT<TNotification>& validator,
 			const TNotification& notification) {
 		return validator.validate(notification);
+	}
+
+	/// Validates \a notification with stateless \a validator.
+	template<typename TNotification>
+	validators::ValidationResult ValidateNotification(
+			const validators::stateless::NotificationValidatorT<TNotification>& validator,
+			const TNotification& notification) {
+		return validator.validate(notification, validators::StatelessValidatorContext(config::BlockchainConfiguration::Uninitialized()));
+	}
+
+	/// Validates \a notification with stateless \a validator and \a context.
+	template<typename TNotification>
+	validators::ValidationResult ValidateNotification(
+			const validators::stateless::NotificationValidatorT<TNotification>& validator,
+			const TNotification& notification,
+			const validators::StatelessValidatorContext& context) {
+		return validator.validate(notification, context);
 	}
 
 	/// Validates \a notification with \a validator using \a context.
@@ -54,7 +72,7 @@ namespace catapult { namespace test {
 	validators::ValidationResult ValidateNotification(
 			const validators::stateful::NotificationValidatorT<TNotification>& validator,
 			const TNotification& notification,
-			const validators::ValidatorContext& context) {
+			const validators::StatefulValidatorContext& context) {
 		return validator.validate(notification, context);
 	}
 

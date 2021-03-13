@@ -6,14 +6,14 @@
 
 #include "Validators.h"
 #include "src/cache/ContractCache.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::ModifyContractNotification<1>;
 
 #define DEFINE_INVALID_CONTRACTORS_VALIDATOR(CONTRACTOR_TYPE) \
-	DEFINE_STATEFUL_VALIDATOR(ModifyContractInvalid##CONTRACTOR_TYPE##s, [](const auto& notification, const ValidatorContext& context) { \
+	DEFINE_STATEFUL_VALIDATOR(ModifyContractInvalid##CONTRACTOR_TYPE##s, [](const auto& notification, const StatefulValidatorContext& context) { \
 		const auto& contractCache = context.Cache.sub<cache::ContractCache>(); \
 		if (!contractCache.contains(notification.Multisig)) { \
 			return ValidationResult::Success; \

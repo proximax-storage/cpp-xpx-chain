@@ -20,13 +20,13 @@
 
 #include "Validators.h"
 #include "src/cache/MultisigCache.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::ModifyMultisigCosignersNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(ModifyMultisigInvalidCosigners, [](const auto& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(ModifyMultisigInvalidCosigners, [](const auto& notification, const StatefulValidatorContext& context) {
 		const auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
 		const auto* pModifications = notification.ModificationsPtr;
 

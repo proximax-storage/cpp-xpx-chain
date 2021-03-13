@@ -19,35 +19,34 @@
 **/
 
 #include "Validators.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 #include "catapult/utils/ArraySet.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::AggregateCosignaturesNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, ([](const auto& notification, const auto& context) {
-			if (0 == notification.TransactionsCount)
-				return Failure_Aggregate_No_Transactions;
+	DEFINE_STATELESS_VALIDATOR(BasicAggregateCosignatures, ([](const auto& notification, const StatelessValidatorContext& context) {
+		if (0 == notification.TransactionsCount)
+			return Failure_Aggregate_No_Transactions;
 
-			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
-			if (pluginConfig.MaxTransactionsPerAggregate < notification.TransactionsCount)
-				return Failure_Aggregate_Too_Many_Transactions;
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
+		if (pluginConfig.MaxTransactionsPerAggregate < notification.TransactionsCount)
+			return Failure_Aggregate_Too_Many_Transactions;
 
-			if (pluginConfig.MaxCosignaturesPerAggregate < notification.CosignaturesCount + 1)
-				return Failure_Aggregate_Too_Many_Cosignatures;
+		if (pluginConfig.MaxCosignaturesPerAggregate < notification.CosignaturesCount + 1)
+			return Failure_Aggregate_Too_Many_Cosignatures;
 
-			utils::KeyPointerSet cosigners;
-			cosigners.insert(&notification.Signer);
-			const auto* pCosignature = notification.CosignaturesPtr;
-			for (auto i = 0u; i < notification.CosignaturesCount; ++i) {
-				if (!cosigners.insert(&pCosignature->Signer).second)
-					return Failure_Aggregate_Redundant_Cosignatures;
+		utils::KeyPointerSet cosigners;
+		cosigners.insert(&notification.Signer);
+		const auto* pCosignature = notification.CosignaturesPtr;
+		for (auto i = 0u; i < notification.CosignaturesCount; ++i) {
+			if (!cosigners.insert(&pCosignature->Signer).second)
+				return Failure_Aggregate_Redundant_Cosignatures;
 
-				++pCosignature;
-			}
+			++pCosignature;
+		}
 
-			return ValidationResult::Success;
-		}));
-	}
+		return ValidationResult::Success;
+	}))
 }}

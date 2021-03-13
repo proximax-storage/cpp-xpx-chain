@@ -36,12 +36,13 @@ namespace catapult { namespace plugins {
 		});
 
 		manager.addStatelessValidatorHook([](auto& builder) {
-			builder.add(validators::CreateNetworkConfigPluginConfigValidator());
+			builder
+				.add(validators::CreateNetworkConfigSignerValidator())
+				.add(validators::CreateNetworkConfigPluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([&manager](auto& builder) {
 			builder
-				.add(validators::CreateNetworkConfigSignerValidator())
 				.add(validators::CreateNetworkConfigValidator(manager));
 		});
 

@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DEFINE_STATELESS_VALIDATOR(PropertyType, [](const auto& notification) {
+	DEFINE_STATELESS_VALIDATOR(PropertyType, [](const auto& notification, const StatelessValidatorContext& context) {
 		return IsValidPropertyType(notification.PropertyType) ? ValidationResult::Success : Failure_Property_Invalid_Property_Type;
 	});
 }}

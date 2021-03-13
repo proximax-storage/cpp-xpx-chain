@@ -59,11 +59,9 @@ namespace catapult { namespace extensions {
 		EXPECT_EQ(expectedObserverNames, config.pObserver->names());
 
 		std::vector<std::string> expectedValidatorNames{
-			"EntityVersionValidator",
 			"DeadlineValidator",
 			"AddressValidator",
 			"BalanceTransferValidator",
-			"MaxTransactionsValidator",
 			"EligibleHarvesterValidator",
 			"UniqueTransactionHashValidator",
 			"BalanceDebitValidator",

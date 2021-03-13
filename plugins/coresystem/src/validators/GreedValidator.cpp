@@ -11,7 +11,7 @@ namespace catapult { namespace validators {
 	using Notification = model::BlockNotification<1>;
 
 	DECLARE_STATELESS_VALIDATOR(Greed, Notification)() {
-		return MAKE_STATELESS_VALIDATOR(Greed, [](const auto& notification) {
+		return MAKE_STATELESS_VALIDATOR(Greed, [](const auto& notification, const StatelessValidatorContext& context) {
 			if (notification.FeeInterestDenominator == 0)
 				return Failure_Core_Invalid_FeeInterestDenominator;
 
