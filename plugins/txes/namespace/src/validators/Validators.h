@@ -23,7 +23,7 @@
 #include "src/model/AliasNotifications.h"
 #include "src/model/NamespaceNotifications.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include <unordered_set>
 
@@ -38,12 +38,12 @@ namespace catapult { namespace validators {
 	/// - namespace name consists only of allowed characters
 	/// - for root namespaces, name is not in \a reservedRootNamespaceNames
 	/// - for child namespaces, the parent id is not an id that can be generated from \a reservedRootNamespaceNames
-	DECLARE_STATEFUL_VALIDATOR(NamespaceName, model::NamespaceNameNotification<1>)();
+	DECLARE_STATELESS_VALIDATOR(NamespaceName, model::NamespaceNameNotification<1>)();
 
 	/// A validator implementation that applies to root namespace notifications and validates that:
 	/// - namespace duration is less than or equal to \a maxDuration for root namespace
 	/// - namespace duration is zero for child namespace
-	DECLARE_STATEFUL_VALIDATOR(RootNamespace, model::RootNamespaceNotification<1>)();
+	DECLARE_STATELESS_VALIDATOR(RootNamespace, model::RootNamespaceNotification<1>)();
 
 	/// A validator implementation that applies to root register namespace transactions and validates that:
 	/// - the namespace is available and can be created or renewed given \a maxNamespaceDuration

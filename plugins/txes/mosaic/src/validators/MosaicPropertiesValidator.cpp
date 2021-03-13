@@ -21,6 +21,7 @@
 #include "Validators.h"
 #include "catapult/constants.h"
 #include "catapult/model/NetworkConfiguration.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 #include "src/config/MosaicConfiguration.h"
 
 namespace catapult { namespace validators {
@@ -51,17 +52,15 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(MosaicProperties, ([](const auto& notification, const auto& context) {
-			if (!IsValidFlags(notification.PropertiesHeader.Flags))
-				return Failure_Mosaic_Invalid_Flags;
+	DEFINE_STATELESS_VALIDATOR(MosaicProperties, ([](const auto& notification, const StatelessValidatorContext& context) {
+		if (!IsValidFlags(notification.PropertiesHeader.Flags))
+			return Failure_Mosaic_Invalid_Flags;
 
-			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MosaicConfiguration>();
-			if (notification.PropertiesHeader.Divisibility > pluginConfig.MaxMosaicDivisibility)
-				return Failure_Mosaic_Invalid_Divisibility;
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MosaicConfiguration>();
+		if (notification.PropertiesHeader.Divisibility > pluginConfig.MaxMosaicDivisibility)
+			return Failure_Mosaic_Invalid_Divisibility;
 
-			auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(context.Config.Network.BlockGenerationTargetTime);
-			return CheckOptionalProperties(notification, maxMosaicDuration);
-		}));
-	}
+		auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(context.Config.Network.BlockGenerationTargetTime);
+		return CheckOptionalProperties(notification, maxMosaicDuration);
+	}))
 }}

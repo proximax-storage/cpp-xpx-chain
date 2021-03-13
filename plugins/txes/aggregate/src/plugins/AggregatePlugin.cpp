@@ -39,14 +39,14 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Bonded, pConfigHolder));
 
 		manager.addStatelessValidatorHook([](auto& builder) {
-			builder.add(validators::CreateAggregatePluginConfigValidator());
+			builder
+				.add(validators::CreateStrictAggregateCosignaturesValidator())
+				.add(validators::CreateBasicAggregateCosignaturesValidator())
+				.add(validators::CreateAggregateTransactionTypeValidator())
+				.add(validators::CreateAggregatePluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([](auto& builder) {
-			builder
-				.add(validators::CreateBasicAggregateCosignaturesValidator())
-				.add(validators::CreateStrictAggregateCosignaturesValidator())
-				.add(validators::CreateAggregateTransactionTypeValidator());
 		});
 	}
 }}

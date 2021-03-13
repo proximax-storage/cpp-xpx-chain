@@ -10,7 +10,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::FailedBlockHashesNotification<1>;
 
-	DEFINE_STATELESS_VALIDATOR(FailedBlockHashes, [](const Notification& notification) {
+	DEFINE_STATELESS_VALIDATOR(FailedBlockHashes, [](const Notification& notification, const StatelessValidatorContext& context) {
 		if (notification.BlockHashCount <= 0)
 			return Failure_Service_Failed_Block_Hashes_Missing;
 

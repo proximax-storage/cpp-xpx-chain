@@ -13,7 +13,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::DriveFileSystemNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(DriveFileSystem, [](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(DriveFileSystem, [](const Notification& notification, const StatefulValidatorContext& context) {
 		if (!notification.RemoveActionsCount)
 			return ValidationResult::Success;
 

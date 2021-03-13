@@ -23,7 +23,7 @@
 #include "src/cache/MosaicCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 

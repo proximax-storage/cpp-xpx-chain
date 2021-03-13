@@ -43,7 +43,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(ExchangeV1, model::ExchangeNotification<1>, ([](const model::ExchangeNotification<1>& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(ExchangeV1, model::ExchangeNotification<1>, ([](const model::ExchangeNotification<1>& notification, const StatefulValidatorContext& context) {
 		if (notification.OfferCount == 0)
 			return Failure_Exchange_No_Offers;
 
@@ -80,7 +80,7 @@ namespace catapult { namespace validators {
 		return ValidationResult::Success;
 	}));
 
-	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(ExchangeV2, model::ExchangeNotification<2>, ([](const model::ExchangeNotification<2>& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(ExchangeV2, model::ExchangeNotification<2>, ([](const model::ExchangeNotification<2>& notification, const StatefulValidatorContext& context) {
 	  if (notification.OfferCount == 0)
 		  return Failure_Exchange_No_Offers;
 

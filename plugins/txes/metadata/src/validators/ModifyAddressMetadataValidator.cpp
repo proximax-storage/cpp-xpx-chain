@@ -7,7 +7,7 @@
 #include "Validators.h"
 #include "src/catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -20,7 +20,7 @@ namespace catapult { namespace validators {
 			return dest;
 		}
 		namespace {
-			ValidationResult validate(const Notification& notification, const ValidatorContext& context) {
+			ValidationResult validate(const Notification& notification, const StatefulValidatorContext& context) {
 				auto address = model::PublicKeyToAddress(notification.Signer, context.NetworkIdentifier);
 
 				if (address != CopyToAddress(notification.MetadataId))
@@ -41,7 +41,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DEFINE_STATEFUL_VALIDATOR(ModifyAddressMetadata, [](const auto& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(ModifyAddressMetadata, [](const auto& notification, const StatefulValidatorContext& context) {
 		return validate(notification, context);
 	});
 }}

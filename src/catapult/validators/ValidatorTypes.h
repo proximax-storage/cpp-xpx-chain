@@ -31,7 +31,8 @@
 
 namespace catapult { namespace validators {
 
-	struct ValidatorContext;
+	struct StatelessValidatorContext;
+	struct StatefulValidatorContext;
 
 	template<typename... TArgs>
 	class AggregateEntityValidatorT;
@@ -58,39 +59,40 @@ namespace catapult { namespace validators {
 
 	namespace stateless {
 		template<typename TNotification>
-		using NotificationValidatorT = catapult::validators::NotificationValidatorT<TNotification>;
-
-		template<typename TNotification>
-		using NotificationValidatorPointerT = std::unique_ptr<const NotificationValidatorT<TNotification>>;
-
-		template<typename TNotification>
-		using FunctionalNotificationValidatorT = catapult::validators::FunctionalNotificationValidatorT<TNotification>;
-
-		using EntityValidator = EntityValidatorT<>;
-		using NotificationValidator = NotificationValidatorT<model::Notification>;
-
-		using AggregateEntityValidator = AggregateEntityValidatorT<>;
-		using AggregateNotificationValidator = AggregateNotificationValidatorT<model::Notification>;
-		using DemuxValidatorBuilder = DemuxValidatorBuilderT<>;
-	}
-
-	namespace stateful {
-		template<typename TNotification>
-		using NotificationValidatorT = catapult::validators::NotificationValidatorT<TNotification, const ValidatorContext&>;
+		using NotificationValidatorT = catapult::validators::NotificationValidatorT<TNotification, const StatelessValidatorContext&>;
 
 		template<typename TNotification>
 		using NotificationValidatorPointerT = std::unique_ptr<const NotificationValidatorT<TNotification>>;
 
 		template<typename TNotification>
 		using FunctionalNotificationValidatorT =
-				catapult::validators::FunctionalNotificationValidatorT<TNotification, const ValidatorContext&>;
+				catapult::validators::FunctionalNotificationValidatorT<TNotification, const StatelessValidatorContext&>;
 
-		using EntityValidator = EntityValidatorT<const ValidatorContext&>;
+		using EntityValidator = EntityValidatorT<const StatelessValidatorContext&>;
 		using NotificationValidator = NotificationValidatorT<model::Notification>;
 
-		using AggregateEntityValidator = AggregateEntityValidatorT<const ValidatorContext&>;
-		using AggregateNotificationValidator = AggregateNotificationValidatorT<model::Notification, const ValidatorContext&>;
-		using DemuxValidatorBuilder = DemuxValidatorBuilderT<const ValidatorContext&>;
+		using AggregateEntityValidator = AggregateEntityValidatorT<const StatelessValidatorContext&>;
+		using AggregateNotificationValidator = AggregateNotificationValidatorT<model::Notification, const StatelessValidatorContext&>;
+		using DemuxValidatorBuilder = DemuxValidatorBuilderT<const StatelessValidatorContext&>;
+	}
+
+	namespace stateful {
+		template<typename TNotification>
+		using NotificationValidatorT = catapult::validators::NotificationValidatorT<TNotification, const StatefulValidatorContext&>;
+
+		template<typename TNotification>
+		using NotificationValidatorPointerT = std::unique_ptr<const NotificationValidatorT<TNotification>>;
+
+		template<typename TNotification>
+		using FunctionalNotificationValidatorT =
+				catapult::validators::FunctionalNotificationValidatorT<TNotification, const StatefulValidatorContext&>;
+
+		using EntityValidator = EntityValidatorT<const StatefulValidatorContext&>;
+		using NotificationValidator = NotificationValidatorT<model::Notification>;
+
+		using AggregateEntityValidator = AggregateEntityValidatorT<const StatefulValidatorContext&>;
+		using AggregateNotificationValidator = AggregateNotificationValidatorT<model::Notification, const StatefulValidatorContext&>;
+		using DemuxValidatorBuilder = DemuxValidatorBuilderT<const StatefulValidatorContext&>;
 	}
 
 /// Declares a stateless validator with \a NAME for notifications of type \a NOTIFICATION_TYPE.

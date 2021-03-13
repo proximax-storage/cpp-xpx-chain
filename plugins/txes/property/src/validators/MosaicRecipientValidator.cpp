@@ -22,13 +22,13 @@
 #include "AccountPropertyView.h"
 #include "src/cache/PropertyCache.h"
 #include "catapult/model/Address.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::BalanceTransferNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(MosaicRecipient, [](const auto& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(MosaicRecipient, [](const auto& notification, const StatefulValidatorContext& context) {
 		AccountPropertyView view(context.Cache);
 		if (!view.initialize(context.Resolvers.resolve(notification.Recipient)))
 			return ValidationResult::Success;

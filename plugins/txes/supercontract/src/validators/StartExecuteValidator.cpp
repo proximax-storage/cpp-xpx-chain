@@ -11,7 +11,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::StartExecuteNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(StartExecute, [](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(StartExecute, [](const Notification& notification, const StatefulValidatorContext& context) {
 		const auto& superContractCache = context.Cache.sub<cache::SuperContractCache>();
 		auto superContractCacheIter = superContractCache.find(notification.SuperContract);
 		auto& superContractEntry = superContractCacheIter.get();

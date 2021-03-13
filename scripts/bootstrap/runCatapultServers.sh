@@ -64,8 +64,8 @@ generate_nem()
       echo "no need to run nemgen"
     fi
 
-    $WORK_DIR/bin/sirius.bc $WORK_DIR/config-build/$1/userconfig & > /dev/null 2>&1 &
-    echo "You can find logs in '$WORK_DIR/data/$1/'"
+#    $WORK_DIR/bin/sirius.bc $WORK_DIR/config-build/$1/userconfig & > /dev/null 2>&1 &
+#    echo "You can find logs in '$WORK_DIR/data/$1/'"
 }
 
 generate_nem "api-node-0"

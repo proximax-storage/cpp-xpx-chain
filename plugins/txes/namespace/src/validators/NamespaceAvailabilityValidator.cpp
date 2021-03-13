@@ -21,7 +21,7 @@
 #include "Validators.h"
 #include "src/cache/NamespaceCache.h"
 #include "src/model/NamespaceLifetimeConstraints.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 #include "catapult/constants.h"
 
 namespace catapult { namespace validators {
@@ -41,7 +41,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(RootNamespaceAvailability, [](
 				const auto& notification,
-				const ValidatorContext& context) {
+				const StatefulValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::NamespaceCache>();
 			auto height = context.Height;
 			const auto& networkConfig = context.Config.Network;

@@ -18,25 +18,23 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <src/catapult/validators/ValidatorContext.h>
+#include "src/catapult/validators/StatelessValidatorContext.h"
 #include "Validators.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::EntityNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(EntityVersion, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(EntityVersion, [](const auto& notification, const auto& context) {
-			const auto& supportedVersions = context.Config.SupportedEntityVersions;
-			auto entityIter = supportedVersions.find(notification.EntityType);
+	DEFINE_STATELESS_VALIDATOR(EntityVersion, [](const auto& notification, const StatelessValidatorContext& context) {
+		const auto& supportedVersions = context.Config.SupportedEntityVersions;
+		auto entityIter = supportedVersions.find(notification.EntityType);
 
-			if (entityIter == supportedVersions.end()) {
-				return Failure_Core_Invalid_Version;
-			}
-			auto iter = entityIter->second.find(notification.EntityVersion);
-			return (iter == entityIter->second.end())
-				   ? Failure_Core_Invalid_Version
-				   : ValidationResult::Success;
-		});
-	}
+		if (entityIter == supportedVersions.end()) {
+			return Failure_Core_Invalid_Version;
+		}
+		auto iter = entityIter->second.find(notification.EntityVersion);
+		return (iter == entityIter->second.end())
+			   ? Failure_Core_Invalid_Version
+			   : ValidationResult::Success;
+	})
 }}

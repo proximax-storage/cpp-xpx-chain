@@ -84,18 +84,17 @@ namespace catapult { namespace plugins {
 		AddAccountStateCache(manager);
 		AddBlockDifficultyCache(manager);
 
-		auto networkIdentifier = pConfigHolder->Config().Immutable.NetworkIdentifier;
-		manager.addStatelessValidatorHook([networkIdentifier](auto& builder) {
+		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateNetworkValidator(networkIdentifier))
+				.add(validators::CreateNetworkValidator())
+				.add(validators::CreateMaxTransactionsValidator())
+				.add(validators::CreateEntityVersionValidator())
 				.add(validators::CreateTransactionFeeValidator());
 		});
 
-		manager.addStatefulValidatorHook([networkIdentifier](auto& builder) {
+		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateEntityVersionValidator())
-				.add(validators::CreateMaxTransactionsValidator())
-				.add(validators::CreateAddressValidator(networkIdentifier))
+				.add(validators::CreateAddressValidator())
 				.add(validators::CreateDeadlineValidator())
 //				We using nemesis account to update the network
 //				.add(validators::CreateNemesisSinkValidator())

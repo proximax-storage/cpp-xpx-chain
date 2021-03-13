@@ -25,7 +25,7 @@ namespace catapult { namespace chain {
 
 	ProcessingNotificationSubscriber::ProcessingNotificationSubscriber(
 			const validators::stateful::NotificationValidator& validator,
-			const validators::ValidatorContext& validatorContext,
+			const validators::StatefulValidatorContext& validatorContext,
 			const observers::NotificationObserver& observer,
 			observers::ObserverContext& observerContext)
 			: m_validator(validator)

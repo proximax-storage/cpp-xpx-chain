@@ -6,13 +6,13 @@
 
 #include "Validators.h"
 #include "src/cache/DriveCache.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::DriveFileSystemNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(DriveFileSystem, [](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(DriveFileSystem, [](const Notification& notification, const StatefulValidatorContext& context) {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		auto driveIter = driveCache.find(notification.DriveKey);
 		const auto& driveEntry = driveIter.get();

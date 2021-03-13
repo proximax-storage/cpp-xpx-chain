@@ -23,7 +23,7 @@
 #include "Results.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/utils/TimeSpan.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace validators {
@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all account address notifications and validates that:
 	/// - the address is valid and targets the expected network (\a networkIdentifier)
-	DECLARE_STATEFUL_VALIDATOR(Address, model::AccountAddressNotification<1>)(model::NetworkIdentifier networkIdentifier);
+	DECLARE_STATEFUL_VALIDATOR(Address, model::AccountAddressNotification<1>)();
 
 	// endregion
 
@@ -44,11 +44,11 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all entity notifications and validates that:
 	/// - the entity targets the expected network (\a networkIdentifier)
-	DECLARE_STATELESS_VALIDATOR(Network, model::EntityNotification<1>)(model::NetworkIdentifier networkIdentifier);
+	DECLARE_STATELESS_VALIDATOR(Network, model::EntityNotification<1>)();
 
 	/// A validator implementation that applies to entity notifications and validates that:
 	/// - the entity version is within supported range.
-	DECLARE_STATEFUL_VALIDATOR(EntityVersion, model::EntityNotification<1>)();
+	DECLARE_STATELESS_VALIDATOR(EntityVersion, model::EntityNotification<1>)();
 
 	// endregion
 
@@ -61,7 +61,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the block does not contain more than \a maxTransactions transactions
-	DECLARE_STATEFUL_VALIDATOR(MaxTransactions, model::BlockNotification<1>)();
+	DECLARE_STATELESS_VALIDATOR(MaxTransactions, model::BlockNotification<1>)();
 
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the block has valid FeeInterest and FeeInterestDenominator

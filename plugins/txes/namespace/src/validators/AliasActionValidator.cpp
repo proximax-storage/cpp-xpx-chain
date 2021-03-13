@@ -25,7 +25,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::AliasOwnerNotification<1>;
 
-	DEFINE_STATELESS_VALIDATOR(AliasAction, [](const auto& notification) {
+	DEFINE_STATELESS_VALIDATOR(AliasAction, [](const auto& notification, const StatelessValidatorContext& context) {
 		return ValidateLessThanOrEqual(notification.AliasAction, model::AliasAction::Unlink, Failure_Namespace_Alias_Invalid_Action);
 	});
 }}

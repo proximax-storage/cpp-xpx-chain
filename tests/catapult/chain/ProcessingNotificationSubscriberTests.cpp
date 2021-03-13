@@ -128,7 +128,7 @@ namespace catapult { namespace chain {
 			cache::CatapultCacheDelta m_cacheDelta;
 			state::CatapultState m_state;
 
-			validators::ValidatorContext m_validatorContext;
+			validators::StatefulValidatorContext m_validatorContext;
 			observers::ObserverContext m_observerContext;
 
 			ProcessingNotificationSubscriber m_sub;

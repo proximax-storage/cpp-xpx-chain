@@ -58,11 +58,11 @@ namespace catapult { namespace validators {
 			test::MutableBlockchainConfiguration mutableConfig;
 			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
-			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pValidator = CreateStrictAggregateCosignaturesValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
+			auto context = StatelessValidatorContext(config);
+			auto result = test::ValidateNotification(*pValidator, notification, context);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

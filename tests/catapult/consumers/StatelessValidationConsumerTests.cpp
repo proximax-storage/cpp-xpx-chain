@@ -24,6 +24,7 @@
 #include "catapult/model/TransactionStatus.h"
 #include "catapult/validators/AggregateEntityValidator.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 #include "tests/TestHarness.h"
@@ -146,14 +147,16 @@ namespace catapult { namespace consumers {
 		struct BlockTestContext {
 		public:
 			explicit BlockTestContext(const RequiresValidationPredicate& requiresValidationPredicate = RequiresAllPredicate)
-					: pValidator(std::make_shared<stateless::AggregateEntityValidator>(ValidatorVectorT<>()))
+					: pValidator(std::make_shared<stateless::AggregateEntityValidator>(ValidatorVectorT<const StatelessValidatorContext&>()))
 					, pPolicy(std::make_shared<MockParallelShortCircuitValidationPolicy>())
-					, Consumer(CreateBlockStatelessValidationConsumer(pValidator, pPolicy, requiresValidationPredicate))
+					, pConfigHolder(config::CreateMockConfigurationHolder())
+					, Consumer(CreateBlockStatelessValidationConsumer(pValidator, pPolicy, pConfigHolder, requiresValidationPredicate))
 			{}
 
 		public:
 			std::shared_ptr<stateless::AggregateEntityValidator> pValidator;
 			std::shared_ptr<MockParallelShortCircuitValidationPolicy> pPolicy;
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder;
 			disruptor::ConstBlockConsumer Consumer;
 		};
 
@@ -301,11 +304,13 @@ namespace catapult { namespace consumers {
 		struct TransactionTestContext {
 		public:
 			TransactionTestContext()
-					: pValidator(std::make_shared<stateless::AggregateEntityValidator>(ValidatorVectorT<>()))
+					: pValidator(std::make_shared<stateless::AggregateEntityValidator>(ValidatorVectorT<const StatelessValidatorContext&>()))
 					, pPolicy(std::make_shared<MockParallelAllValidationPolicy>())
+					, pConfigHolder(config::CreateMockConfigurationHolder())
 					, Consumer(CreateTransactionStatelessValidationConsumer(
 							pValidator,
 							pPolicy,
+							pConfigHolder,
 							[this](const auto& transaction, const Height&, const auto& hash, auto result) {
 								// notice that transaction.Deadline is used as transaction marker
 								FailedTransactionStatuses.emplace_back(hash, utils::to_underlying_type(result), transaction.Deadline);
@@ -315,6 +320,7 @@ namespace catapult { namespace consumers {
 		public:
 			std::shared_ptr<stateless::AggregateEntityValidator> pValidator;
 			std::shared_ptr<MockParallelAllValidationPolicy> pPolicy;
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder;
 			std::vector<model::TransactionStatus> FailedTransactionStatuses;
 			disruptor::TransactionConsumer Consumer;
 		};

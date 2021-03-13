@@ -90,7 +90,7 @@ namespace catapult { namespace mocks {
 			return m_name;
 		}
 
-		validators::ValidationResult validate(const TNotification& notification) const override {
+		validators::ValidationResult validate(const TNotification& notification, const validators::StatelessValidatorContext&) const override {
 			// stateless validators need to be threadsafe, so guard getResultForType, which is not
 			std::lock_guard<std::mutex> guard(m_mutex);
 			return getResultForType(notification.Type);
@@ -122,7 +122,7 @@ namespace catapult { namespace mocks {
 
 		validators::ValidationResult validate(
 				const TNotification& notification,
-				const validators::ValidatorContext& context) const override {
+				const validators::StatefulValidatorContext& context) const override {
 			m_contextPointers.push_back(&context);
 			return getResultForType(notification.Type);
 		}
@@ -135,7 +135,7 @@ namespace catapult { namespace mocks {
 
 	private:
 		std::string m_name;
-		mutable std::vector<const validators::ValidatorContext*> m_contextPointers;
+		mutable std::vector<const validators::StatefulValidatorContext*> m_contextPointers;
 	};
 
 	using MockNotificationValidator = MockNotificationValidatorT<model::Notification>;

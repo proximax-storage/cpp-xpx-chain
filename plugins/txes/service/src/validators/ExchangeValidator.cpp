@@ -14,7 +14,7 @@ namespace catapult { namespace validators {
 
 	namespace {
 		template<typename Notification>
-		ValidationResult validate_v1(const Notification& notification, const ValidatorContext& context) {
+		ValidationResult validate_v1(const Notification& notification, const StatefulValidatorContext& context) {
 			const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 			if (!driveCache.contains(notification.Signer))
 				return ValidationResult::Success;

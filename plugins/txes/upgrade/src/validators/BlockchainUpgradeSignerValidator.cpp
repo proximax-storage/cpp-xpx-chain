@@ -5,13 +5,13 @@
 **/
 
 #include "Validators.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::BlockchainUpgradeSignerNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(BlockchainUpgradeSigner, [](const auto& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(BlockchainUpgradeSigner, [](const auto& notification, const StatefulValidatorContext& context) {
 		if (notification.Signer != context.Network.PublicKey)
 			return Failure_BlockchainUpgrade_Invalid_Signer;
 

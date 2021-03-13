@@ -21,7 +21,7 @@
 #include "Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/ImportanceView.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(EligibleHarvester, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(EligibleHarvester, [](
 				const auto& notification,
-				const ValidatorContext& context) {
+				const StatefulValidatorContext& context) {
 			cache::ImportanceView view(context.Cache.sub<cache::AccountStateCache>());
 			const model::NetworkConfiguration& config = context.Config.Network;
 			return view.canHarvest(notification.Signer, context.Height, config.MinHarvesterBalance)

@@ -25,6 +25,7 @@
 #include "catapult/validators/AggregateEntityValidator.h"
 #include "catapult/validators/AggregateValidationResult.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 
 namespace catapult { namespace consumers {
 
@@ -32,9 +33,11 @@ namespace catapult { namespace consumers {
 		template<typename TExtractAndProcess>
 		auto MakeConsumer(
 				const std::shared_ptr<const validators::stateless::AggregateEntityValidator>& pValidator,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				TExtractAndProcess extractAndProcess) {
-			validators::stateless::AggregateEntityValidator::DispatchForwarder dispatcher(pValidator->curry());
-			return [pValidator, extractAndProcess, dispatcher](auto& elements) {
+			return [pValidator, extractAndProcess, pConfigHolder](auto& elements) {
+			  validators::StatelessValidatorContext context(pConfigHolder->Config());
+			  validators::stateless::AggregateEntityValidator::DispatchForwarder dispatcher(pValidator->curry(std::cref(context)));
 				if (elements.empty())
 					return Abort(Failure_Consumer_Empty_Input);
 
@@ -66,8 +69,9 @@ namespace catapult { namespace consumers {
 	disruptor::ConstBlockConsumer CreateBlockStatelessValidationConsumer(
 			const std::shared_ptr<const validators::stateless::AggregateEntityValidator>& pValidator,
 			const std::shared_ptr<const validators::ParallelValidationPolicy>& pValidationPolicy,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const RequiresValidationPredicate& requiresValidationPredicate) {
-		return MakeConsumer(pValidator, [pValidationPolicy, requiresValidationPredicate](const auto& elements, auto dispatch) {
+		return MakeConsumer(pValidator, pConfigHolder, [pValidationPolicy, requiresValidationPredicate](const auto& elements, auto dispatch) {
 			model::WeakEntityInfos entityInfos;
 			ExtractMatchingEntityInfos(elements, entityInfos, requiresValidationPredicate);
 
@@ -78,8 +82,9 @@ namespace catapult { namespace consumers {
 	disruptor::TransactionConsumer CreateTransactionStatelessValidationConsumer(
 			const std::shared_ptr<const validators::stateless::AggregateEntityValidator>& pValidator,
 			const std::shared_ptr<const validators::ParallelValidationPolicy>& pValidationPolicy,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const chain::FailedTransactionSink& failedTransactionSink) {
-		return MakeConsumer(pValidator, [pValidationPolicy, failedTransactionSink](auto& elements, auto dispatch) {
+		return MakeConsumer(pValidator, pConfigHolder, [pValidationPolicy, failedTransactionSink](auto& elements, auto dispatch) {
 			model::WeakEntityInfos entityInfos;
 			std::vector<size_t> entityInfoElementIndexes;
 			ExtractEntityInfos(elements, entityInfos, entityInfoElementIndexes, config::HEIGHT_OF_LATEST_CONFIG);

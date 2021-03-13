@@ -21,7 +21,7 @@
 #include "Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -47,7 +47,7 @@ namespace catapult { namespace validators {
 		}
 
 		template<typename TNotification>
-		ValidationResult CheckBalance(const TNotification& notification, const ValidatorContext& context) {
+		ValidationResult CheckBalance(const TNotification& notification, const StatefulValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::AccountStateCache>();
 
 			Amount amount;

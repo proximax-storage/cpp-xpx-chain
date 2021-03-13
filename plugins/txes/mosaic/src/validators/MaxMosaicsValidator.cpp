@@ -21,7 +21,7 @@
 #include "Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/state/AccountBalances.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 #include "catapult/model/NetworkConfiguration.h"
 #include "src/config/MosaicConfiguration.h"
 
@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 	namespace {
 		template<typename TKey>
-		ValidationResult CheckAccount(uint16_t maxMosaics, MosaicId mosaicId, const TKey& key, const ValidatorContext& context) {
+		ValidationResult CheckAccount(uint16_t maxMosaics, MosaicId mosaicId, const TKey& key, const StatefulValidatorContext& context) {
 			const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 			auto accountStateIter = accountStateCache.find(key);
 			const auto& balances = accountStateIter.get().Balances;

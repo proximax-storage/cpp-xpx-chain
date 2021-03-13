@@ -20,15 +20,14 @@
 
 #include "Validators.h"
 #include "src/config/TransferConfiguration.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::TransferMessageNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(TransferMessage, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(TransferMessage, [](const auto& notification, const auto& context) {
-			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::TransferConfiguration>();
-			return notification.MessageSize > pluginConfig.MaxMessageSize ? Failure_Transfer_Message_Too_Large : ValidationResult::Success;
-		});
-	}
+	DEFINE_STATELESS_VALIDATOR(TransferMessage, [](const auto& notification, const StatelessValidatorContext& context) {
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::TransferConfiguration>();
+		return notification.MessageSize > pluginConfig.MaxMessageSize ? Failure_Transfer_Message_Too_Large : ValidationResult::Success;
+	})
 }}

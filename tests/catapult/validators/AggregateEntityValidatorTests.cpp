@@ -44,7 +44,7 @@ namespace catapult { namespace validators {
 				return m_name;
 			}
 
-			ValidationResult validate(const model::WeakEntityInfo&, const ValidatorContext& context) const override {
+			ValidationResult validate(const model::WeakEntityInfo&, const StatefulValidatorContext& context) const override {
 				m_breadcrumbs.push_back(m_name + std::to_string(context.Height.unwrap()));
 				return ValidationResult::Success;
 			}
@@ -86,7 +86,7 @@ namespace catapult { namespace validators {
 			Validate(validator, model::VerifiableEntity());
 		}
 
-		using AggregateEntityValidatorBuilder = ValidatorVectorT<const ValidatorContext&>;
+		using AggregateEntityValidatorBuilder = ValidatorVectorT<const StatefulValidatorContext&>;
 
 		auto CreateAggregateValidator(AggregateEntityValidatorBuilder&& builder) {
 			return std::make_unique<stateful::AggregateEntityValidator>(std::move(builder));

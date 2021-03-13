@@ -19,17 +19,16 @@
 **/
 
 #include "Validators.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::BlockNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(MaxTransactions, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(MaxTransactions, [](const auto& notification, const auto& context) {
-			const model::NetworkConfiguration& config = context.Config.Network;
-			return notification.NumTransactions <= config.MaxTransactionsPerBlock
-					? ValidationResult::Success
-					: Failure_Core_Too_Many_Transactions;
-		});
-	}
+	DEFINE_STATELESS_VALIDATOR(MaxTransactions, [](const auto& notification, const StatelessValidatorContext& context) {
+		const model::NetworkConfiguration& config = context.Config.Network;
+		return notification.NumTransactions <= config.MaxTransactionsPerBlock
+				? ValidationResult::Success
+				: Failure_Core_Too_Many_Transactions;
+	})
 }}

@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/validators/ValidatingNotificationSubscriber.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/other/mocks/MockNotificationValidator.h"
 #include "tests/TestHarness.h"
@@ -41,7 +42,8 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, ResultIsInitiallySuccess) {
 		// Arrange:
 		MockNotificationValidator validator;
-		ValidatingNotificationSubscriber subscriber(validator);
+		ValidatingNotificationSubscriber<const validators::StatelessValidatorContext&>
+		        subscriber(validator, validators::StatelessValidatorContext(config::BlockchainConfiguration::Uninitialized()));
 
 		// Act:
 		auto result = subscriber.result();
@@ -53,7 +55,8 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SubscriberDoesNotForwardNotificationsWithWrongChannel) {
 		// Arrange:
 		MockNotificationValidator validator;
-		ValidatingNotificationSubscriber subscriber(validator);
+		ValidatingNotificationSubscriber<const validators::StatelessValidatorContext&>
+				subscriber(validator, validators::StatelessValidatorContext(config::BlockchainConfiguration::Uninitialized()));
 
 		// Act: send a notification without the validation channel set
 		subscriber.notify(test::CreateNotification(MakeNotificationType(1, false)));
@@ -67,7 +70,8 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SubscriberForwardsNotificationsWithMatchingChannel) {
 		// Arrange:
 		MockNotificationValidator validator;
-		ValidatingNotificationSubscriber subscriber(validator);
+		ValidatingNotificationSubscriber<const validators::StatelessValidatorContext&>
+				subscriber(validator, validators::StatelessValidatorContext(config::BlockchainConfiguration::Uninitialized()));
 
 		// Act:
 		subscriber.notify(test::CreateNotification(MakeNotificationType(1)));
@@ -82,7 +86,8 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SubscriberShortCircuitsOnFailure) {
 		// Arrange:
 		MockNotificationValidator validator;
-		ValidatingNotificationSubscriber subscriber(validator);
+		ValidatingNotificationSubscriber<const validators::StatelessValidatorContext&>
+				subscriber(validator, validators::StatelessValidatorContext(config::BlockchainConfiguration::Uninitialized()));
 
 		// Act: S, N, F, F, N, S
 		subscriber.notify(test::CreateNotification(MakeNotificationType(1)));

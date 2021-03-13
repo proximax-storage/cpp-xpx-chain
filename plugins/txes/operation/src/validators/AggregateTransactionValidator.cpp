@@ -21,7 +21,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DEFINE_STATELESS_VALIDATOR(AggregateTransaction, [](const auto& notification) {
+	DEFINE_STATELESS_VALIDATOR(AggregateTransaction, [](const auto& notification, const StatelessValidatorContext& context) {
 		return AggregateTransactionValidator(notification);
 	})
 }}
