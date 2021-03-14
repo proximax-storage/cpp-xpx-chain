@@ -16,7 +16,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(MaxFilesOnDrive, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(MaxFilesOnDrive, [](
 				const Notification& notification,
-				const ValidatorContext& context) {
+				const StatefulValidatorContext& context) {
 			const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 
 			auto driveIter = driveCache.find(notification.DriveKey);

@@ -153,10 +153,10 @@ FROM debian
 COPY --from=0 /deps /
 
 # copy executables
-COPY --from=0 /catapult/_build/bin /catapult/bin
+COPY --from=0 /catapult/_build/bin /sirius/bin
 
 # sirius.bc as the entry point
-ENTRYPOINT ["/catapult/bin/sirius.bc"]
+ENTRYPOINT ["/sirius/bin/sirius.bc"]
 
 # set the config directory by default
-CMD ["/catapultconfig"]
+CMD ["/chainconfig"]

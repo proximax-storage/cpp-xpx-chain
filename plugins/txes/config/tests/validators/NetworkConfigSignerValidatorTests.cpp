@@ -21,15 +21,13 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(const Key& signer, const Key& networkKey, const ValidationResult& expectedResult) {
 			// Arrange:
 			auto notification = model::NetworkConfigSignerNotification<1>(signer);
-			auto cache = test::CreateEmptyCatapultCache();
-			auto cacheView = cache.createView();
-			auto readOnlyCache = cacheView.toReadOnly();
-			test::MutableBlockchainConfiguration config;
-			config.Network.Info.PublicKey = networkKey;
-			auto context = test::CreateValidatorContext(config.ToConst(), Height(), readOnlyCache);
+			test::MutableBlockchainConfiguration mutateConfig;
+			mutateConfig.Network.Info.PublicKey = networkKey;
+			auto config = mutateConfig.ToConst();
 			auto pValidator = CreateNetworkConfigSignerValidator();
 
 			// Act:
+			auto context = StatelessValidatorContext(config);
 			auto result = test::ValidateNotification(*pValidator, notification, context);
 
 			// Assert:

@@ -21,7 +21,7 @@
 #include "Validators.h"
 #include "src/cache/MosaicCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 #include "catapult/model/NetworkConfiguration.h"
 
 namespace catapult { namespace validators {
@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, [](
 				const auto& notification,
-				const ValidatorContext& context) {
+				const StatefulValidatorContext& context) {
 			// notice that MosaicChangeAllowedValidator is required to run first, so both mosaic and owning account must exist
 			auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
 			const auto& cache = context.Cache.sub<cache::MosaicCache>();

@@ -19,7 +19,7 @@
 **/
 
 #include "Validators.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 #include "catapult/types.h"
 
 namespace catapult { namespace validators {
@@ -35,17 +35,15 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(Deadline, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(Deadline, [](const auto& notification, const auto& context) {
-		  const model::NetworkConfiguration& config = context.Config.Network;
-		  if (!config.EnableDeadlineValidation) {
-			  return ValidationResult::Success;
-		  }
+	DEFINE_STATEFUL_VALIDATOR(Deadline, [](const auto& notification, const StatefulValidatorContext& context) {
+	  const model::NetworkConfiguration& config = context.Config.Network;
+	  if (!config.EnableDeadlineValidation) {
+		  return ValidationResult::Success;
+	  }
 
-		  return ValidateTransactionDeadline(
-				  context.BlockTime,
-				  notification.Deadline,
-				  utils::TimeSpan() == notification.MaxLifetime ? config.MaxTransactionLifetime : notification.MaxLifetime);
-		});
-	}
+	  return ValidateTransactionDeadline(
+			  context.BlockTime,
+			  notification.Deadline,
+			  utils::TimeSpan() == notification.MaxLifetime ? config.MaxTransactionLifetime : notification.MaxLifetime);
+	});
 }}

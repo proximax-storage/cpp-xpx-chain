@@ -22,7 +22,7 @@
 #include "src/cache/PropertyCache.h"
 #include "src/config/PropertyConfiguration.h"
 #include "catapult/model/Address.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -48,7 +48,7 @@ namespace catapult { namespace validators {
 		}
 
 		template<typename TPropertyValue, typename TNotification>
-		ValidationResult Validate(uint16_t maxPropertyValues, const TNotification& notification, const ValidatorContext& context) {
+		ValidationResult Validate(uint16_t maxPropertyValues, const TNotification& notification, const StatefulValidatorContext& context) {
 			if (maxPropertyValues < notification.ModificationsCount)
 				return Failure_Property_Modification_Count_Exceeded;
 

@@ -259,7 +259,7 @@ namespace catapult { namespace validators {
 				return m_name;
 			}
 
-			ValidationResult validate(const TNotification&, const ValidatorContext&) const override {
+			ValidationResult validate(const TNotification&, const StatefulValidatorContext&) const override {
 				m_breadcrumbs.push_back(m_name);
 				return ValidationResult::Success;
 			}

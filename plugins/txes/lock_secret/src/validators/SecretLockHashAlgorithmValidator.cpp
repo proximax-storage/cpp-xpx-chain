@@ -25,7 +25,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::SecretLockHashAlgorithmNotification<1>;
 
-	DEFINE_STATELESS_VALIDATOR(SecretLockHashAlgorithm, [](const auto& notification) {
+	DEFINE_STATELESS_VALIDATOR(SecretLockHashAlgorithm, [](const auto& notification, const StatelessValidatorContext& context) {
 		return ValidateLessThanOrEqual(
 				notification.HashAlgorithm,
 				model::LockHashAlgorithm::Op_Hash_256,

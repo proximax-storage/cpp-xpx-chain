@@ -79,7 +79,7 @@ namespace catapult { namespace chain {
 			}
 
 		public:
-			std::unique_ptr<const stateless::NotificationValidator> create(FailureMode failureMode = FailureMode::Default) {
+			std::unique_ptr<const NotificationValidatorT<model::Notification>> create(FailureMode failureMode = FailureMode::Default) {
 				m_pluginManager.addMosaicResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 					resolved = MosaicId(unresolved.unwrap() * (test::IsMarkedCache(cache) ? 2 : 0));
 					return true;

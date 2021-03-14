@@ -21,7 +21,7 @@
 #include "Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/state/AccountState.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 

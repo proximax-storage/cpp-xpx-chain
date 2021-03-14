@@ -21,29 +21,53 @@
 #pragma once
 #include "ValidatorTypes.h"
 #include "catapult/model/NotificationPublisher.h"
+#include "NotificationValidatorAdapter.h"
+#include "ValidatingNotificationSubscriber.h"
+#include "catapult/model/TransactionPlugin.h"
+#include <utility>
 
 namespace catapult { namespace model { class TransactionRegistry; } }
 
 namespace catapult { namespace validators {
 
-	/// A stateless notification validator to entity validator adapter.
-	/// \note This adapter intentionally only supports stateless validators.
-	class NotificationValidatorAdapter : public stateless::EntityValidator {
-	private:
-		using NotificationValidatorPointer = std::unique_ptr<const stateless::NotificationValidator>;
+	/// A notification validator to entity validator adapter.
+	template<typename... TArgs>
+	class NotificationValidatorAdapter : public EntityValidatorT<TArgs...> {
+	protected:
+		using NotificationValidatorPointer = std::unique_ptr<const catapult::validators::NotificationValidatorT<model::Notification, TArgs...>>;
 		using NotificationPublisherPointer = std::unique_ptr<const model::NotificationPublisher>;
 
 	public:
 		/// Creates a new adapter around \a pValidator and \a pPublisher.
-		NotificationValidatorAdapter(NotificationValidatorPointer&& pValidator, NotificationPublisherPointer&& pPublisher);
+		NotificationValidatorAdapter(NotificationValidatorPointer&& pValidator, NotificationPublisherPointer&& pPublisher)
+			: m_pValidator(std::move(pValidator))
+			, m_pPublisher(std::move(pPublisher))
+		{}
 
 	public:
-		const std::string& name() const override;
+		const std::string& name() const override {
+			return m_pValidator->name();
+		}
 
-		ValidationResult validate(const model::WeakEntityInfo& entityInfo) const override;
+		ValidationResult validate(const model::WeakEntityInfo& entityInfo, TArgs&&... args) const override {
+			ValidatingNotificationSubscriber<TArgs...> sub(*m_pValidator, args...);
+			m_pPublisher->publish(entityInfo, sub);
+			return sub.result();
+		};
 
 	private:
 		NotificationValidatorPointer m_pValidator;
 		NotificationPublisherPointer m_pPublisher;
+	};
+
+	/// A stateless notification validator to entity validator adapter.
+	/// \note This adapter intentionally only supports stateless validators.
+	class NotificationStatelessValidatorAdapter : public NotificationValidatorAdapter<const StatelessValidatorContext&> {
+	public:
+		/// Creates a new adapter around \a pValidator and \a pPublisher.
+		NotificationStatelessValidatorAdapter(NotificationValidatorPointer&& pValidator, NotificationPublisherPointer&& pPublisher)
+			: NotificationValidatorAdapter<const StatelessValidatorContext&>(
+					  static_cast<NotificationValidatorPointer&&>(pValidator),
+					  static_cast<NotificationPublisherPointer&&>(pPublisher)) {}
 	};
 }}

@@ -26,7 +26,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(RemoveOfferV1, model::RemoveOfferNotification<1>, ([](const model::RemoveOfferNotification<1>& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(RemoveOfferV1, model::RemoveOfferNotification<1>, ([](const model::RemoveOfferNotification<1>& notification, const StatefulValidatorContext& context) {
 		if (notification.OfferCount == 0)
 			return Failure_Exchange_No_Offered_Mosaics_To_Remove;
 
@@ -59,7 +59,7 @@ namespace catapult { namespace validators {
 		return ValidationResult::Success;
 	}));
 
-	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(RemoveOfferV2, model::RemoveOfferNotification<2>, ([](const model::RemoveOfferNotification<2>& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(RemoveOfferV2, model::RemoveOfferNotification<2>, ([](const model::RemoveOfferNotification<2>& notification, const StatefulValidatorContext& context) {
 	  if (notification.OfferCount == 0)
 		  return Failure_Exchange_No_Offered_Mosaics_To_Remove;
 

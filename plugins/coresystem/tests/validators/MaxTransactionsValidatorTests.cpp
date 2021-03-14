@@ -43,11 +43,11 @@ namespace catapult { namespace validators {
 			test::MutableBlockchainConfiguration mutableConfig;
 			mutableConfig.Network.MaxTransactionsPerBlock = Max_Transactions;
 			auto config = mutableConfig.ToConst();
-			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pValidator = CreateMaxTransactionsValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
+			auto context = StatelessValidatorContext(config);
+			auto result = test::ValidateNotification(*pValidator, notification, context);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

@@ -54,13 +54,13 @@ namespace catapult { namespace plugins {
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateSecretLockHashAlgorithmValidator())
+				.add(validators::CreateProofSecretValidator())
 				.add(validators::CreateSecretLockPluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateSecretLockDurationValidator())
-				.add(validators::CreateProofSecretValidator())
 				.add(validators::CreateSecretLockCacheUniqueValidator())
 				.add(validators::CreateProofValidator());
 		});

@@ -20,7 +20,7 @@
 
 #include "Validators.h"
 #include "src/cache/MosaicCache.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 #include "catapult/model/NetworkConfiguration.h"
 #include "src/config/MosaicConfiguration.h"
 
@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 	using Notification = model::MosaicDefinitionNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(MosaicDuration, [](const auto& notification, const ValidatorContext& context) {
+		return MAKE_STATEFUL_VALIDATOR(MosaicDuration, [](const auto& notification, const StatefulValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::MosaicCache>();
 
 			// always allow a new mosaic (MosaicPropertiesValidator checks for valid duration in this case)

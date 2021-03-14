@@ -22,7 +22,7 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Block.h"
 #include "catapult/model/NetworkConfiguration.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"

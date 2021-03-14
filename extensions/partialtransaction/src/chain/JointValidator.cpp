@@ -21,7 +21,9 @@
 #include "JointValidator.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/plugins/PluginManager.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatelessValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/NotificationValidator.h"
 
 using namespace catapult::validators;
 
@@ -34,7 +36,7 @@ namespace catapult { namespace chain {
 			return out.str();
 		}
 
-		class JointValidator : public stateless::NotificationValidator {
+		class JointValidator : public NotificationValidatorT<model::Notification> {
 		public:
 			JointValidator(
 					const cache::CatapultCache& cache,
@@ -69,7 +71,9 @@ namespace catapult { namespace chain {
 
 		private:
 			ValidationResult validateStateless(const model::Notification& notification) const {
-				return m_pStatelessValidator->validate(notification);
+				const auto& config = m_pConfigHolder->Config();
+				StatelessValidatorContext context(config);
+				return m_pStatelessValidator->validate(notification, context);
 			}
 
 			ValidationResult validateStateful(const model::Notification& notification) const {
@@ -77,7 +81,7 @@ namespace catapult { namespace chain {
 				auto readOnlyCache = cacheView.toReadOnly();
 				auto resolverContext = m_resolverContextFactory(readOnlyCache);
 				const auto& config = m_pConfigHolder->Config();
-				auto validatorContext = ValidatorContext(config, cacheView.height(), m_timeSupplier(), resolverContext, readOnlyCache);
+				auto validatorContext = StatefulValidatorContext(config, cacheView.height(), m_timeSupplier(), resolverContext, readOnlyCache);
 				return m_pStatefulValidator->validate(notification, validatorContext);
 			}
 
@@ -92,7 +96,7 @@ namespace catapult { namespace chain {
 		};
 	}
 
-	std::unique_ptr<const stateless::NotificationValidator> CreateJointValidator(
+	std::unique_ptr<const NotificationValidatorT<model::Notification>> CreateJointValidator(
 			const cache::CatapultCache& cache,
 			const TimeSupplier& timeSupplier,
 			const plugins::PluginManager& pluginManager,

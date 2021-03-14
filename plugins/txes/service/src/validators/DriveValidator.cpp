@@ -12,7 +12,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::DriveNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(Drive, [](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(Drive, [](const Notification& notification, const StatefulValidatorContext& context) {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		if (!driveCache.contains(notification.DriveKey))
 			return Failure_Service_Drive_Does_Not_Exist;

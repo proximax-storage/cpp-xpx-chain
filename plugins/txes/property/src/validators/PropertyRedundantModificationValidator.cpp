@@ -21,7 +21,7 @@
 #include "Validators.h"
 #include "src/cache/PropertyCache.h"
 #include "catapult/model/Address.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -48,7 +48,7 @@ namespace catapult { namespace validators {
 		}
 
 		template<typename TPropertyValue, typename TNotification, typename THasher>
-		ValidationResult Validate(const TNotification& notification, const ValidatorContext& context) {
+		ValidationResult Validate(const TNotification& notification, const StatefulValidatorContext& context) {
 			const auto* pModifications = notification.ModificationsPtr;
 			auto modificationsInfo = ExtractModificationsInfo<TPropertyValue, THasher>(pModifications, notification.ModificationsCount);
 			if (modificationsInfo.HasRedundantModification)

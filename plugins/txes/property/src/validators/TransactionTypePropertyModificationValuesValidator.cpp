@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DEFINE_STATELESS_VALIDATOR(TransactionTypePropertyModificationValues, [](const auto& notification) {
+	DEFINE_STATELESS_VALIDATOR(TransactionTypePropertyModificationValues, [](const auto& notification, const StatelessValidatorContext& context) {
 		return AreAllPropertyValuesValid(notification.ModificationsPtr, notification.ModificationsCount)
 				? ValidationResult::Success
 				: Failure_Property_Value_Invalid;

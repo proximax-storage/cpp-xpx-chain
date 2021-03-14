@@ -24,6 +24,7 @@
 #include "plugins/txes/aggregate/src/validators/Results.h"
 #include "catapult/model/WeakCosignedTransactionInfo.h"
 #include "catapult/plugins/PluginManager.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 #include "catapult/validators/NotificationValidatorAdapter.h"
 #include "catapult/validators/ValidatingNotificationSubscriber.h"
 
@@ -54,7 +55,8 @@ namespace catapult { namespace chain {
 					const cache::CatapultCache& cache,
 					const TimeSupplier& timeSupplier,
 					const plugins::PluginManager& pluginManager)
-					: m_transactionValidator(
+					: m_configHolder(pluginManager.configHolder())
+					, m_transactionValidator(
 							CreateJointValidator(cache, timeSupplier, pluginManager, IsMissingCosignersResult),
 							pluginManager.createNotificationPublisher(model::PublicationMode::Basic))
 					, m_statelessTransactionValidator(
@@ -72,7 +74,10 @@ namespace catapult { namespace chain {
 				auto result = m_transactionValidator.validate(weakEntityInfo);
 				if (IsValidationResultSuccess(result)) {
 					// - check custom stateless validators
-					result = m_statelessTransactionValidator.validate(weakEntityInfo);
+					result = m_statelessTransactionValidator.validate(
+							weakEntityInfo,
+							validators::StatelessValidatorContext(m_configHolder->Config())
+					);
 					if (IsValidationResultSuccess(result))
 						return { result, true };
 				}
@@ -88,10 +93,11 @@ namespace catapult { namespace chain {
 			}
 
 		private:
-			NotificationValidatorAdapter m_transactionValidator;
-			NotificationValidatorAdapter m_statelessTransactionValidator;
+			std::shared_ptr<config::BlockchainConfigurationHolder> m_configHolder;
+			NotificationValidatorAdapter<> m_transactionValidator;
+			NotificationStatelessValidatorAdapter m_statelessTransactionValidator;
 			AggregateCosignersNotificationPublisher m_aggregatePublisher;
-			std::unique_ptr<const stateless::NotificationValidator> m_pCosignersValidator;
+			std::unique_ptr<const NotificationValidatorT<model::Notification>> m_pCosignersValidator;
 		};
 	}
 

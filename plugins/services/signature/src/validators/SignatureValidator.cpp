@@ -20,19 +20,17 @@
 
 #include "Validators.h"
 #include "catapult/crypto/Signer.h"
+#include "catapult/validators/StatelessValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::SignatureNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(Signature, Notification)(const GenerationHash& generationHash) {
-		return MAKE_STATELESS_VALIDATOR(Signature, [generationHash](const auto& notification) {
+	DEFINE_STATELESS_VALIDATOR(Signature, [](const auto& notification, const StatelessValidatorContext& context) {
+		auto isVerified = Notification::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
+				? crypto::Verify(notification.Signer, { context.Config.Immutable.GenerationHash, notification.Data }, notification.Signature)
+				: crypto::Verify(notification.Signer, notification.Data, notification.Signature);
 
-			auto isVerified = Notification::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
-					? crypto::Verify(notification.Signer, { generationHash, notification.Data }, notification.Signature)
-					: crypto::Verify(notification.Signer, notification.Data, notification.Signature);
-
-			return isVerified ? ValidationResult::Success : Failure_Signature_Not_Verifiable;
-		});
-	}
+		return isVerified ? ValidationResult::Success : Failure_Signature_Not_Verifiable;
+	});
 }}

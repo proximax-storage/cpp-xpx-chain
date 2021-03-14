@@ -22,7 +22,7 @@
 #include "src/cache/MultisigCache.h"
 #include "src/cache/MultisigCacheUtils.h"
 #include "src/config/MultisigConfiguration.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -64,7 +64,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, [](
 					const auto& notification,
-					const ValidatorContext& context) {
+					const StatefulValidatorContext& context) {
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MultisigConfiguration>();
 			auto checker = LoopAndLevelChecker(context.Cache.sub<cache::MultisigCache>(), pluginConfig.MaxMultisigDepth);
 			return checker.validate(notification.MultisigAccountKey, notification.CosignatoryKey);

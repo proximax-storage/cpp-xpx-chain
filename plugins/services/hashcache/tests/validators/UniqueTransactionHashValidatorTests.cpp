@@ -22,7 +22,7 @@
 #include "src/cache/HashCache.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/model/EntityHasher.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/validators/StatefulValidatorContext.h"
 #include "tests/test/HashCacheTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"

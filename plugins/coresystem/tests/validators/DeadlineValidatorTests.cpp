@@ -49,7 +49,7 @@ namespace catapult { namespace validators {
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
-			auto context = ValidatorContext(config, Height(123), Block_Time, resolverContext, readOnlyCache);
+			auto context = StatefulValidatorContext(config, Height(123), Block_Time, resolverContext, readOnlyCache);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateDeadlineValidator();
 
