@@ -36,8 +36,7 @@ namespace catapult { namespace consumers {
 				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				TExtractAndProcess extractAndProcess) {
 			return [pValidator, extractAndProcess, pConfigHolder](auto& elements) {
-			  validators::StatelessValidatorContext context(pConfigHolder->Config());
-			  validators::stateless::AggregateEntityValidator::DispatchForwarder dispatcher(pValidator->curry(std::cref(context)));
+			  	validators::stateless::AggregateEntityValidator::DispatchForwarder dispatcher(pValidator->curryStateless(pConfigHolder));
 				if (elements.empty())
 					return Abort(Failure_Consumer_Empty_Input);
 

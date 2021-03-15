@@ -6,7 +6,8 @@
 
 #pragma once
 #include "catapult/config/BlockchainConfiguration.h"
-#include <mutex>
+#include <mutex>  // For std::unique_lock
+#include <shared_mutex>
 
 namespace catapult { namespace cache { class CatapultCache; } }
 
@@ -29,13 +30,13 @@ namespace catapult { namespace config {
 		static boost::filesystem::path GetResourcesPath(int argc, const char** argv);
 
 		/// Get \a config at \a height
-		virtual const BlockchainConfiguration& Config(const Height& height);
+		virtual const BlockchainConfiguration& Config(const Height& height) const;
 
 		/// Get latest available config
-		virtual const BlockchainConfiguration& Config();
+		virtual const BlockchainConfiguration& Config() const;
 
 		/// Get config at \a height or latest available config
-		virtual const BlockchainConfiguration& ConfigAtHeightOrLatest(const Height& height);
+		virtual const BlockchainConfiguration& ConfigAtHeightOrLatest(const Height& height) const;
 
 		void SetCache(cache::CatapultCache* pCache) {
 			m_pCache = pCache;
@@ -52,6 +53,6 @@ namespace catapult { namespace config {
 		std::map<Height, BlockchainConfiguration> m_configs;
 		cache::CatapultCache* m_pCache;
 		PluginInitializer m_pluginInitializer;
-		std::mutex m_mutex;
+		mutable std::shared_mutex m_mutex;
 	};
 }}
