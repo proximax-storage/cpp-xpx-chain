@@ -40,8 +40,8 @@ namespace catapult { namespace config {
 		return boost::filesystem::path(argc > 1 ? argv[1] : "..") / "resources";
 	}
 
-	const BlockchainConfiguration& BlockchainConfigurationHolder::Config(const Height& height) {
-		std::lock_guard<std::mutex> guard(m_mutex);
+	const BlockchainConfiguration& BlockchainConfigurationHolder::Config(const Height& height) const {
+		std::shared_lock lock(m_mutex);
 
 		auto iter = m_configs.lower_bound(height);
 
@@ -59,18 +59,18 @@ namespace catapult { namespace config {
 		return iter->second;
 	}
 
-	const BlockchainConfiguration& BlockchainConfigurationHolder::Config() {
+	const BlockchainConfiguration& BlockchainConfigurationHolder::Config() const {
 		return Config(m_pCache != nullptr ? m_pCache->configHeight() : Height(0));
 	}
 
-	const BlockchainConfiguration& BlockchainConfigurationHolder::ConfigAtHeightOrLatest(const Height& height) {
+	const BlockchainConfiguration& BlockchainConfigurationHolder::ConfigAtHeightOrLatest(const Height& height) const {
 		if (height == HEIGHT_OF_LATEST_CONFIG)
 			return Config();
 		return Config(height);
 	}
 
 	void BlockchainConfigurationHolder::InsertConfig(const Height& height, const std::string& strConfig, const std::string& supportedVersion) {
-		std::lock_guard<std::mutex> guard(m_mutex);
+		std::unique_lock lock(m_mutex);
 
 		try {
 			std::istringstream inputBlock(strConfig);
@@ -101,7 +101,7 @@ namespace catapult { namespace config {
 	}
 
 	void BlockchainConfigurationHolder::RemoveConfig(const Height& height){
-		std::lock_guard<std::mutex> guard(m_mutex);
+		std::unique_lock lock(m_mutex);
 		m_configs.erase(height);
 	}
 }}
