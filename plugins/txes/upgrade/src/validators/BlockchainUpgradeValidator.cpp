@@ -5,7 +5,7 @@
 **/
 
 #include "Validators.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/version/version.h"
 #include "src/cache/BlockchainUpgradeCache.h"
 #include "src/config/BlockchainUpgradeConfiguration.h"
@@ -15,7 +15,7 @@ namespace catapult { namespace validators {
 	using Notification = model::BlockchainUpgradeVersionNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(BlockchainUpgrade, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(BlockchainUpgrade, ([](const Notification& notification, const StatefulValidatorContext& context) {
+		return MAKE_STATEFUL_VALIDATOR(BlockchainUpgrade, ([](const Notification& notification, const ValidatorContext& context) {
 			auto upgradePeriod = notification.UpgradePeriod.unwrap();
             const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::BlockchainUpgradeConfiguration>();
 			if (pluginConfig.MinUpgradePeriod.unwrap() > upgradePeriod)

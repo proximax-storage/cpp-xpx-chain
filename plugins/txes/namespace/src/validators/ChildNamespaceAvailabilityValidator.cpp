@@ -20,13 +20,13 @@
 
 #include "Validators.h"
 #include "src/cache/NamespaceCache.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::ChildNamespaceNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(ChildNamespaceAvailability, [](const auto& notification, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(ChildNamespaceAvailability, [](const auto& notification, const ValidatorContext& context) {
 		const auto& cache = context.Cache.sub<cache::NamespaceCache>();
 		auto height = context.Height;
 

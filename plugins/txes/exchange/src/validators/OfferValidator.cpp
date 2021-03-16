@@ -12,7 +12,7 @@ namespace catapult { namespace validators {
 
 	namespace {
 		template<VersionType version>
-		ValidationResult OfferValidator(const model::OfferNotification<version> &notification, const StatefulValidatorContext& context) {
+		ValidationResult OfferValidator(const model::OfferNotification<version> &notification, const ValidatorContext &context) {
 			if (notification.OfferCount == 0)
 				return Failure_Exchange_No_Offers;
 
@@ -74,7 +74,7 @@ namespace catapult { namespace validators {
 	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(OfferV1, model::OfferNotification<1>, OfferValidator<1>)
 	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(OfferV2, model::OfferNotification<2>, OfferValidator<2>)
 	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(OfferV3, model::OfferNotification<3>, OfferValidator<3>)
-	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(OfferV4, model::OfferNotification<4>, ([](const model::OfferNotification<4>& notification, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(OfferV4, model::OfferNotification<4>, ([](const model::OfferNotification<4>& notification, const ValidatorContext& context) {
 	  if (notification.OfferCount == 0)
 		  return Failure_Exchange_No_Offers;
 

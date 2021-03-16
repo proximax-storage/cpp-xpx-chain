@@ -43,12 +43,12 @@ namespace catapult { namespace validators {
 			mutableConfig.Network.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pValidator = CreateRootNamespaceValidator();
 			auto notification = model::RootNamespaceNotification<1>(Key(), NamespaceId(), BlockDuration(duration));
 
 			// Act:
-			auto context = StatelessValidatorContext(config);
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "duration " << duration << ", maxDuration " << maxDuration;

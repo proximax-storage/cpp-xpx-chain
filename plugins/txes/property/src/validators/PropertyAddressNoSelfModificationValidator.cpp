@@ -21,16 +21,17 @@
 #include "Validators.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/ResolverContext.h"
-#include "catapult/validators/StatelessValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::ModifyAddressPropertyValueNotification_v1;
 
-	DEFINE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, [](const auto& notification, const StatelessValidatorContext& context) {
-		auto address = model::PublicKeyToAddress(notification.Key, context.NetworkIdentifier);
-		return address != model::ResolverContext().resolve(notification.Modification.Value)
-				? ValidationResult::Success
-				: Failure_Property_Modification_Address_Invalid;
-	});
+	DECLARE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, Notification)(model::NetworkIdentifier networkIdentifier) {
+		return MAKE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, [networkIdentifier](const auto& notification) {
+			auto address = model::PublicKeyToAddress(notification.Key, networkIdentifier);
+			return address != model::ResolverContext().resolve(notification.Modification.Value)
+					? ValidationResult::Success
+					: Failure_Property_Modification_Address_Invalid;
+		});
+	}
 }}

@@ -22,7 +22,7 @@
 #include "Results.h"
 #include "src/model/PropertyNotifications.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace validators {
@@ -56,7 +56,8 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to address property value property modification notifications and validates that:
 	/// - property modification value for network with id \a networkIdentifier is valid
-	DECLARE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, model::ModifyAddressPropertyValueNotification_v1)();
+	DECLARE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, model::ModifyAddressPropertyValueNotification_v1)(
+			model::NetworkIdentifier networkIdentifier);
 
 	/// A validator implementation that applies to address interaction notifications and validates that:
 	/// - the source address is allowed to interact with all participant addresses

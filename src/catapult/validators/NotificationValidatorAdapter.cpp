@@ -18,18 +18,26 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "Validators.h"
-#include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "NotificationValidatorAdapter.h"
+#include "ValidatingNotificationSubscriber.h"
+#include "catapult/model/TransactionPlugin.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::AliasedAddressNotification_v1;
+	NotificationValidatorAdapter::NotificationValidatorAdapter(
+			NotificationValidatorPointer&& pValidator,
+			NotificationPublisherPointer&& pPublisher)
+			: m_pValidator(std::move(pValidator))
+			, m_pPublisher(std::move(pPublisher))
+	{}
 
-	DEFINE_STATEFUL_VALIDATOR(AddressAlias, [](const auto& notification, const auto& context) {
-		const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
-		auto accountStateIter = accountStateCache.find(notification.AliasedData);
+	const std::string& NotificationValidatorAdapter::name() const {
+		return m_pValidator->name();
+	}
 
-		return accountStateIter.tryGet() ? ValidationResult::Success : Failure_Namespace_Alias_Invalid_Address;
-	})
+	ValidationResult NotificationValidatorAdapter::validate(const model::WeakEntityInfo& entityInfo) const {
+		ValidatingNotificationSubscriber sub(*m_pValidator);
+		m_pPublisher->publish(entityInfo, sub);
+		return sub.result();
+	}
 }}

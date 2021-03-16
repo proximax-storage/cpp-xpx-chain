@@ -348,7 +348,7 @@ namespace catapult { namespace validators {
 	// region forwarding to validators
 
 	namespace {
-		class MockPassThroughValidator : public EntityValidatorT<> {
+		class MockPassThroughValidator : public stateless::EntityValidator {
 		public:
 			MockPassThroughValidator(size_t numEntities, const std::string& name)
 					: m_entityInfos(numEntities)

@@ -20,8 +20,7 @@
 
 #pragma once
 #include "MockNotificationValidator.h"
-#include "catapult/validators/StatelessValidatorContext.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 
@@ -80,9 +79,9 @@ namespace catapult { namespace mocks {
 		using BaseType::MockStatelessNotificationValidatorT;
 
 	public:
-		validators::ValidationResult validate(const TNotification& notification, const validators::StatelessValidatorContext& context) const override {
+		validators::ValidationResult validate(const TNotification& notification) const override {
 			const_cast<MockCapturingStatelessNotificationValidator*>(this)->push(notification);
-			return BaseType::validate(notification, context);
+			return BaseType::validate(notification);
 		}
 	};
 
@@ -90,7 +89,7 @@ namespace catapult { namespace mocks {
 	struct StatefulNotificationValidatorParams {
 	public:
 		/// Creates params around \a notification and \a context.
-		explicit StatefulNotificationValidatorParams(const model::Notification& notification, const validators::StatefulValidatorContext& context)
+		explicit StatefulNotificationValidatorParams(const model::Notification& notification, const validators::ValidatorContext& context)
 				: NotificationPtr(&notification)
 				, TransactionNotificationInfo(notification)
 				, Height(context.Height)
@@ -137,7 +136,7 @@ namespace catapult { namespace mocks {
 	public:
 		validators::ValidationResult validate(
 				const TNotification& notification,
-				const validators::StatefulValidatorContext& context) const override {
+				const validators::ValidatorContext& context) const override {
 			const_cast<MockCapturingStatefulNotificationValidator*>(this)->push(notification, context);
 			return BaseType::validate(notification, context);
 		}

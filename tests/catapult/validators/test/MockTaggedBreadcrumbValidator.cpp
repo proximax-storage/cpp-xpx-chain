@@ -40,7 +40,7 @@ namespace catapult { namespace mocks {
 
 			validators::ValidationResult validate(
 					const TTaggedNotification& notification,
-					const validators::StatefulValidatorContext&) const override {
+					const validators::ValidatorContext&) const override {
 				m_breadcrumbs.push_back(static_cast<uint16_t>(notification.Tag << 8 | m_tag));
 				return m_result;
 			}

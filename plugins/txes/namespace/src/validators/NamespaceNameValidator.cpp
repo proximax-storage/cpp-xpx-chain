@@ -23,30 +23,31 @@
 #include "src/model/NameChecker.h"
 #include "src/model/NamespaceIdGenerator.h"
 #include "catapult/utils/Hashers.h"
-#include "catapult/validators/StatelessValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::NamespaceNameNotification<1>;
 	using NameSet = std::unordered_set<std::string>;
 
-	DEFINE_STATELESS_VALIDATOR(NamespaceName, ([](const auto& notification, const StatelessValidatorContext& context) {
-		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::NamespaceConfiguration>();
-		std::unordered_set<NamespaceId, utils::BaseValueHasher<NamespaceId>> reservedRootIds;
-		for (const auto& name : pluginConfig.ReservedRootNamespaceNames)
-			reservedRootIds.emplace(model::GenerateNamespaceId(Namespace_Base_Id, name));
+	DECLARE_STATEFUL_VALIDATOR(NamespaceName, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(NamespaceName, ([](const auto& notification, const auto& context) {
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::NamespaceConfiguration>();
+			std::unordered_set<NamespaceId, utils::BaseValueHasher<NamespaceId>> reservedRootIds;
+			for (const auto& name : pluginConfig.ReservedRootNamespaceNames)
+				reservedRootIds.emplace(model::GenerateNamespaceId(Namespace_Base_Id, name));
 
-		if (pluginConfig.MaxNameSize < notification.NameSize || !model::IsValidName(notification.NamePtr, notification.NameSize))
-			return Failure_Namespace_Invalid_Name;
+			if (pluginConfig.MaxNameSize < notification.NameSize || !model::IsValidName(notification.NamePtr, notification.NameSize))
+				return Failure_Namespace_Invalid_Name;
 
-		auto name = utils::RawString(reinterpret_cast<const char*>(notification.NamePtr), notification.NameSize);
-		if (notification.NamespaceId != model::GenerateNamespaceId(notification.ParentId, name))
-			return Failure_Namespace_Name_Id_Mismatch;
+			auto name = utils::RawString(reinterpret_cast<const char*>(notification.NamePtr), notification.NameSize);
+			if (notification.NamespaceId != model::GenerateNamespaceId(notification.ParentId, name))
+				return Failure_Namespace_Name_Id_Mismatch;
 
-		auto namespaceId = Namespace_Base_Id == notification.ParentId ? notification.NamespaceId : notification.ParentId;
-		if (reservedRootIds.cend() != reservedRootIds.find(namespaceId))
-			return Failure_Namespace_Root_Name_Reserved;
+			auto namespaceId = Namespace_Base_Id == notification.ParentId ? notification.NamespaceId : notification.ParentId;
+			if (reservedRootIds.cend() != reservedRootIds.find(namespaceId))
+				return Failure_Namespace_Root_Name_Reserved;
 
-		return ValidationResult::Success;
-	}))
+			return ValidationResult::Success;
+		}));
+	}
 }}

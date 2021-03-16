@@ -5,7 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "src/catapult/validators/StatelessValidatorContext.h"
 #include "src/config/AggregateConfiguration.h"
 #include "src/model/AggregateEntityType.h"
 
@@ -13,11 +12,13 @@ namespace catapult { namespace validators {
 
 	using Notification = model::AggregateTransactionTypeNotification<1>;
 
-	DEFINE_STATELESS_VALIDATOR(AggregateTransactionType, ([](const auto& notification, const StatelessValidatorContext& context) {
-		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
-		if (notification.Type == model::Entity_Type_Aggregate_Bonded && !pluginConfig.EnableBondedAggregateSupport)
-			return Failure_Aggregate_Bonded_Not_Enabled;
+	DECLARE_STATEFUL_VALIDATOR(AggregateTransactionType, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(AggregateTransactionType, ([](const auto& notification, const auto& context) {
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
+			if (notification.Type == model::Entity_Type_Aggregate_Bonded && !pluginConfig.EnableBondedAggregateSupport)
+				return Failure_Aggregate_Bonded_Not_Enabled;
 
-		return ValidationResult::Success;
-	}))
+			return ValidationResult::Success;
+		}));
+	}
 }}

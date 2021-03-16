@@ -21,7 +21,7 @@
 #include "Validators.h"
 #include "src/cache/MultisigCache.h"
 #include "src/config/MultisigConfiguration.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosignedAccounts, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosignedAccounts, [](
 				const auto& notification,
-				const StatefulValidatorContext& context) {
+				const ValidatorContext& context) {
 			const auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
 			if (!multisigCache.contains(notification.CosignatoryKey))
 				return ValidationResult::Success;

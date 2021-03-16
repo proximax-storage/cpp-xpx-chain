@@ -22,7 +22,7 @@
 #include "Results.h"
 #include "src/model/SecretLockNotifications.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace validators {
@@ -43,7 +43,7 @@ namespace catapult { namespace validators {
 	/// - hash algorithm is supported
 	/// - proof size is within inclusive bounds of \a minProofSize and \a maxProofSize
 	/// - hash of proof matches secret
-	DECLARE_STATELESS_VALIDATOR(ProofSecret, model::ProofSecretNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(ProofSecret, model::ProofSecretNotification<1>)();
 
 	/// A validator implementation that applies to proof notifications and validates that:
 	/// - secret obtained from proof is present in cache

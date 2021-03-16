@@ -12,7 +12,7 @@ namespace catapult { namespace validators {
 	using Notification = model::DriveFilesRewardNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(DriveFilesReward, Notification)(const MosaicId& streamingMosaicId) {
-		return MAKE_STATEFUL_VALIDATOR(DriveFilesReward, [streamingMosaicId](const Notification &notification, const StatefulValidatorContext&context) {
+		return MAKE_STATEFUL_VALIDATOR(DriveFilesReward, [streamingMosaicId](const Notification &notification, const ValidatorContext &context) {
 			const auto &driveCache = context.Cache.sub<cache::DriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			const auto &driveEntry = driveIter.get();

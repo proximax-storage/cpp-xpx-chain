@@ -12,7 +12,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::DeployNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(Deploy, [](const Notification& notification, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(Deploy, [](const Notification& notification, const ValidatorContext& context) {
 		const auto& superContractCache = context.Cache.sub<cache::SuperContractCache>();
 		if (superContractCache.contains(notification.SuperContract))
 			return Failure_SuperContract_Super_Contract_Already_Exists;

@@ -51,9 +51,10 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		manager.addStatelessValidatorHook([](auto& builder) {
+		auto networkIdentifier = pConfigHolder->Config().Immutable.NetworkIdentifier;
+		manager.addStatelessValidatorHook([networkIdentifier](auto& builder) {
 			builder
-				.add(validators::CreatePropertyAddressNoSelfModificationValidator())
+				.add(validators::CreatePropertyAddressNoSelfModificationValidator(networkIdentifier))
 				.add(validators::CreatePropertyTypeValidator())
 				.add(validators::CreateAddressPropertyModificationTypesValidator())
 				.add(validators::CreateMosaicPropertyModificationTypesValidator())

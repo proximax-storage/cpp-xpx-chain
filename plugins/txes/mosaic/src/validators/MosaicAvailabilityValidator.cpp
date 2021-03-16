@@ -21,7 +21,7 @@
 #include "Validators.h"
 #include "src/cache/MosaicCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DEFINE_STATEFUL_VALIDATOR(MosaicAvailability, [](const auto& notification, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(MosaicAvailability, [](const auto& notification, const ValidatorContext& context) {
 		const auto& cache = context.Cache.sub<cache::MosaicCache>();
 
 		// always allow a new mosaic

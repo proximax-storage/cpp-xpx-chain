@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS AddressValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Address, )
+	DEFINE_COMMON_VALIDATOR_TESTS(Address, static_cast<model::NetworkIdentifier>(123))
 
 	namespace {
 		constexpr auto Network_Identifier = static_cast<model::NetworkIdentifier>(123);
@@ -39,12 +39,10 @@ namespace catapult { namespace validators {
 			auto cache = test::CreateEmptyCatapultCache();
 
 			model::AccountAddressNotification<notificationVersion> notification(test::UnresolveXor(address));
-			auto pValidator = CreateAddressValidator();
-			auto config = config::BlockchainConfiguration::Uninitialized();
-			const_cast<model::NetworkIdentifier&>(config.Immutable.NetworkIdentifier) = Network_Identifier;
+			auto pValidator = CreateAddressValidator(Network_Identifier);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "address " << address;

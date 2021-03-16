@@ -26,7 +26,7 @@
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/validators/AggregateEntityValidator.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/nodeps/ParamsCapture.h"
@@ -166,7 +166,7 @@ namespace catapult { namespace test {
 
 	struct StatefulValidateParams {
 	public:
-		explicit StatefulValidateParams(const MockNotification& notification, const validators::StatefulValidatorContext& context)
+		explicit StatefulValidateParams(const MockNotification& notification, const validators::ValidatorContext& context)
 				: HashCopy(notification.Hash)
 				, SequenceId(notification.Id)
 				, Context(context)
@@ -177,7 +177,7 @@ namespace catapult { namespace test {
 	public:
 		const Hash256 HashCopy;
 		const size_t SequenceId;
-		const validators::StatefulValidatorContext Context;
+		const validators::ValidatorContext Context;
 		const bool IsPassedMarkedCache;
 		const size_t NumDifficultyInfos;
 	};
@@ -204,7 +204,7 @@ namespace catapult { namespace test {
 
 		validators::ValidationResult validate(
 				const model::Notification& notification,
-				const validators::StatefulValidatorContext& context) const override {
+				const validators::ValidatorContext& context) const override {
 			const auto& mockNotification = CastToDerivedNotification<MockNotification>(notification);
 			const_cast<MockAggregateNotificationValidator*>(this)->push(mockNotification, context);
 

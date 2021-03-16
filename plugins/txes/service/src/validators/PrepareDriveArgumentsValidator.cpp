@@ -11,7 +11,7 @@ namespace catapult { namespace validators {
 	namespace {
 
 		template<VersionType version>
-		ValidationResult handler_v1(const model::PrepareDriveNotification<version> &notification, const StatelessValidatorContext& context) {
+		ValidationResult handler_v1(const model::PrepareDriveNotification<version> &notification) {
 			if (notification.Duration.unwrap() <= 0)
 				return Failure_Service_Drive_Invalid_Duration;
 
