@@ -11,7 +11,7 @@
 
 namespace catapult { namespace validators {
 
-	void VerificationStatus(const state::DriveEntry& driveEntry, const validators::StatefulValidatorContext& context, bool& started, bool& active) {
+	void VerificationStatus(const state::DriveEntry& driveEntry, const validators::ValidatorContext& context, bool& started, bool& active) {
 		const auto& secretLockCache = context.Cache.template sub<cache::SecretLockInfoCache>();
 		auto driveAddress = PublicKeyToAddress(driveEntry.key(), context.NetworkIdentifier);
 		auto key = model::CalculateSecretLockInfoHash(Hash256(), driveAddress);

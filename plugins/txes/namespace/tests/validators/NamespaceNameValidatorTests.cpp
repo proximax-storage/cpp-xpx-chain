@@ -56,13 +56,13 @@ namespace catapult { namespace validators {
 		void AssertSizeValidationResult(ValidationResult expectedResult, uint8_t nameSize, uint8_t maxNameSize) {
 			// Arrange:
 			auto config = CreateConfig(maxNameSize, {});
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pValidator = CreateNamespaceNameValidator();
 			auto name = std::string(nameSize, 'a');
 			auto notification = CreateNamespaceNameNotification(nameSize, reinterpret_cast<const uint8_t*>(name.data()));
 
 			// Act:
-			auto context = StatelessValidatorContext(config);
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result)
@@ -100,14 +100,14 @@ namespace catapult { namespace validators {
 		void AssertNameValidationResult(ValidationResult expectedResult, const std::string& name) {
 			// Arrange:
 			auto config = CreateConfig(static_cast<uint8_t>(name.size()), {});
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pValidator = CreateNamespaceNameValidator();
 			auto notification = CreateNamespaceNameNotification(
 					static_cast<uint8_t>(name.size()),
 					reinterpret_cast<const uint8_t*>(name.data()));
 
 			// Act:
-			auto context = StatelessValidatorContext(config);
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "namespace with name " << name;
@@ -133,6 +133,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SuccessWhenValidatingNamespaceWithMatchingNameAndId) {
 		// Arrange: note that CreateNamespaceNameNotification creates proper id
 		auto config = CreateConfig(100, {});
+		auto cache = test::CreateEmptyCatapultCache(config);
 		auto pValidator = CreateNamespaceNameValidator();
 		auto name = std::string(10, 'a');
 		auto notification = CreateNamespaceNameNotification(
@@ -140,8 +141,7 @@ namespace catapult { namespace validators {
 				reinterpret_cast<const uint8_t*>(name.data()));
 
 		// Act:
-		auto context = StatelessValidatorContext(config);
-		auto result = test::ValidateNotification(*pValidator, notification, context);
+		auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 		// Assert:
 		EXPECT_EQ(ValidationResult::Success, result);
@@ -150,6 +150,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenValidatingNamespaceWithMismatchedNameAndId) {
 		// Arrange: corrupt the id
 		auto config = CreateConfig(100, {});
+		auto cache = test::CreateEmptyCatapultCache(config);
 		auto pValidator = CreateNamespaceNameValidator();
 		auto name = std::string(10, 'a');
 		auto notification = CreateNamespaceNameNotification(
@@ -158,8 +159,7 @@ namespace catapult { namespace validators {
 		notification.NamespaceId = notification.NamespaceId + NamespaceId(1);
 
 		// Act:
-		auto context = StatelessValidatorContext(config);
-		auto result = test::ValidateNotification(*pValidator, notification, context);
+		auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 		// Assert:
 		EXPECT_EQ(Failure_Namespace_Name_Id_Mismatch, result);
@@ -192,12 +192,12 @@ namespace catapult { namespace validators {
 				const std::function<model::NamespaceNameNotification<1>(const std::string&)>& createNotification) {
 			// Arrange:
 			auto config = CreateConfig(20, { "foo", "foobar" });
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pValidator = CreateNamespaceNameValidator();
 			auto notification = createNotification(name);
 
 			// Act:
-			auto context = StatelessValidatorContext(config);
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "namespace with name " << name;

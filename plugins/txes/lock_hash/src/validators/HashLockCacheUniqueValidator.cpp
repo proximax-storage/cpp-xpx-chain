@@ -20,7 +20,7 @@
 
 #include "Validators.h"
 #include "src/cache/HashLockInfoCache.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 

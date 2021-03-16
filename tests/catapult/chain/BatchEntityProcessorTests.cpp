@@ -249,7 +249,7 @@ namespace catapult { namespace chain {
 	}
 
 	namespace {
-		void AssertValidatorContext(const validators::StatefulValidatorContext& context, Height height, Timestamp blockTime) {
+		void AssertValidatorContext(const validators::ValidatorContext& context, Height height, Timestamp blockTime) {
 			EXPECT_EQ(height, context.Height);
 			EXPECT_EQ(blockTime, context.BlockTime);
 		}

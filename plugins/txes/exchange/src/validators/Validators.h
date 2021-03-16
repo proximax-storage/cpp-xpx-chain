@@ -8,7 +8,7 @@
 #include "Results.h"
 #include "src/model/ExchangeNotifications.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace validators {

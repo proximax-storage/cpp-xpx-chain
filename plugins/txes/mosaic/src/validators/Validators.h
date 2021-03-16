@@ -23,7 +23,7 @@
 #include "src/model/MosaicNotifications.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/model/Notifications.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include <unordered_set>
 
@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 	/// - definition has divisibility no greater than \a maxDivisibility
 	/// - mosaic duration has a value not larger than \a maxMosaicDuration
 	/// - optional mosaic properties are sorted, known and not duplicative
-	DECLARE_STATELESS_VALIDATOR(MosaicProperties, model::MosaicPropertiesNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, model::MosaicPropertiesNotification<1>)();
 
 	/// A validator implementation that applies to mosaic nonce notifications and validates that:
 	/// - mosaic id is the expected id generated from signer and nonce

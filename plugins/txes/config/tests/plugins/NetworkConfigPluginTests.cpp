@@ -59,12 +59,12 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
 					"NetworkConfigPluginConfigValidator",
-					"NetworkConfigSignerValidator",
 				};
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
+					"NetworkConfigSignerValidator",
 					"NetworkConfigValidator",
 				};
 			}

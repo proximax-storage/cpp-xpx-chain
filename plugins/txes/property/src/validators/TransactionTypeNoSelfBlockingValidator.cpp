@@ -23,7 +23,7 @@
 #include "src/cache/PropertyCache.h"
 #include "src/model/TransactionTypePropertyTransaction.h"
 #include "catapult/model/Address.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 	namespace {
 		constexpr auto Relevant_Entity_Type = model::TransactionTypePropertyTransaction::Entity_Type;
 
-		bool Validate(const Notification& notification, const StatefulValidatorContext& context) {
+		bool Validate(const Notification& notification, const ValidatorContext& context) {
 			AccountPropertyView view(context.Cache);
 			auto isRelevantEntityType = Relevant_Entity_Type == notification.Modification.Value;
 			auto isAllow = state::OperationType::Allow == notification.PropertyDescriptor.operationType();
@@ -56,7 +56,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DEFINE_STATEFUL_VALIDATOR(TransactionTypeNoSelfBlocking, [](const auto& notification, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(TransactionTypeNoSelfBlocking, [](const auto& notification, const ValidatorContext& context) {
 		return Validate(notification, context) ? ValidationResult::Success : Failure_Property_Modification_Not_Allowed;
 	});
 }}

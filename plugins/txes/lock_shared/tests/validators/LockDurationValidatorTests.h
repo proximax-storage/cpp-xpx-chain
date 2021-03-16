@@ -59,7 +59,7 @@ namespace catapult { namespace validators {
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
 			auto pConfigHolder = TTraits::CreateConfigHolder(MaxDuration());
-			auto context = StatefulValidatorContext(pConfigHolder->Config(), Height(123), Timestamp(8888), resolverContext, readOnlyCache);
+			auto context = ValidatorContext(pConfigHolder->Config(), Height(123), Timestamp(8888), resolverContext, readOnlyCache);
 			typename TTraits::NotificationType notification(notificationDuration);
 			auto pValidator = TTraits::CreateValidator();
 

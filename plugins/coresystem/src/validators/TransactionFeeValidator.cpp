@@ -24,7 +24,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::TransactionFeeNotification<1>;
 
-	DEFINE_STATELESS_VALIDATOR(TransactionFee, [](const auto& notification, const StatelessValidatorContext& context) {
+	DEFINE_STATELESS_VALIDATOR(TransactionFee, [](const auto& notification) {
 		if (notification.Fee > notification.MaxFee)
 			return Failure_Core_Invalid_Transaction_Fee;
 

@@ -34,7 +34,7 @@ namespace catapult { namespace validators {
 	}
 
 #define DEFINE_PROPERTY_MODIFICATION_TYPE_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE, PROPERTY_VALUE_TYPE) \
-	DEFINE_STATELESS_VALIDATOR_WITH_TYPE(VALIDATOR_NAME, NOTIFICATION_TYPE, [](const auto& notification, const StatelessValidatorContext& context) { \
+	DEFINE_STATELESS_VALIDATOR_WITH_TYPE(VALIDATOR_NAME, NOTIFICATION_TYPE, [](const auto& notification) { \
 		return AreAllPropertyModificationTypesValid<PROPERTY_VALUE_TYPE>(notification.ModificationsPtr, notification.ModificationsCount) \
 				? ValidationResult::Success \
 				: Failure_Property_Modification_Type_Invalid; \

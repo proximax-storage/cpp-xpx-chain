@@ -6,7 +6,7 @@
 
 #pragma once
 #include "Results.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "src/model/SuperContractNotifications.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"

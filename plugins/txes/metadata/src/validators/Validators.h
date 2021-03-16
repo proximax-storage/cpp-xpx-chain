@@ -10,7 +10,7 @@
 #include "Results.h"
 #include "plugins/txes/metadata/src/model/MetadataNotifications.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace validators {
@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATELESS_VALIDATOR(MetadataType, model::MetadataTypeNotification<1>)();
 
 	/// A validator implementation that applies to metadata field modification and validates that
-	DECLARE_STATELESS_VALIDATOR(MetadataFieldModification, model::ModifyMetadataFieldNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(MetadataFieldModification, model::ModifyMetadataFieldNotification<1>)();
 
 	/// A validator implementation that applies to metadata modifications check that modification is valid
 	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, model::MetadataModificationsNotification<1>)();

@@ -8,7 +8,7 @@
 #include "Results.h"
 #include "src/model/OperationNotifications.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 

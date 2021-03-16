@@ -22,7 +22,7 @@
 #include "Validators.h"
 #include "src/cache/MultisigCache.h"
 #include "catapult/model/TransactionPlugin.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -109,7 +109,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(MultisigAggregateEligibleCosigners, Notification)(const model::TransactionRegistry& transactionRegistry) {
 		return MAKE_STATEFUL_VALIDATOR(MultisigAggregateEligibleCosigners, [&transactionRegistry](
 				const Notification& notification,
-				const StatefulValidatorContext& context) {
+				const ValidatorContext& context) {
 			AggregateCosignaturesChecker checker(notification, transactionRegistry, context.Cache.sub<cache::MultisigCache>(), context.Config);
 			return checker.hasIneligibleCosigners() ? Failure_Aggregate_Ineligible_Cosigners : ValidationResult::Success;
 		});

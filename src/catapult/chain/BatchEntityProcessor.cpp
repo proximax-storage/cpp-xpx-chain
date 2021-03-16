@@ -44,8 +44,7 @@ namespace catapult { namespace chain {
 				const auto& config = m_config.ConfigSupplier(height);
 				auto readOnlyCache = state.Cache.toReadOnly();
 				auto resolverContext = m_config.ResolverContextFactory(readOnlyCache);
-				auto validatorContext =
-						StatefulValidatorContext(config, height, timestamp, resolverContext, readOnlyCache);
+				auto validatorContext = ValidatorContext(config, height, timestamp, resolverContext, readOnlyCache);
 				auto observerContext = observers::ObserverContext(state, config, height, observers::NotifyMode::Commit, resolverContext);
 
 				ProcessingNotificationSubscriber sub(*m_config.pValidator, validatorContext, *m_config.pObserver, observerContext);

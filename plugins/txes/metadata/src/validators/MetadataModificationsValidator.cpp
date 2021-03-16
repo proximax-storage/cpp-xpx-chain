@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <src/catapult/validators/StatefulValidatorContext.h>
+#include <src/catapult/validators/ValidatorContext.h>
 #include "Validators.h"
 #include "plugins/txes/metadata/src/model/MetadataTypes.h"
 #include "plugins/txes/metadata/src/cache/MetadataCache.h"
@@ -15,7 +15,7 @@ namespace catapult { namespace validators {
 
 
 	namespace {
-		ValidationResult validate(const Notification& notification, const StatefulValidatorContext& context, const uint8_t& maxFields) {
+		ValidationResult validate(const Notification& notification, const ValidatorContext& context, const uint8_t& maxFields) {
 			const auto& metadataCache = context.Cache.sub<cache::MetadataCache>();
 			auto it = metadataCache.find(notification.MetadataId);
 
@@ -73,7 +73,7 @@ namespace catapult { namespace validators {
 	}
 
 	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(MetadataModifications, [](const Notification& notification, const StatefulValidatorContext& context) {
+		return MAKE_STATEFUL_VALIDATOR(MetadataModifications, [](const Notification& notification, const ValidatorContext& context) {
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MetadataConfiguration>();
 			return validate(notification, context, pluginConfig.MaxFields);
 		});

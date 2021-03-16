@@ -22,7 +22,7 @@
 #include "src/model/AccountLinkTransaction.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/state/AccountState.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include <algorithm>
 
 namespace catapult { namespace validators {

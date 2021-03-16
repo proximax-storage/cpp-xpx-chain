@@ -32,8 +32,8 @@ namespace catapult { namespace test {
 	using WaitFunction = consumer<boost::asio::io_context&, const ShouldWaitPredicate&>;
 
 	/// Creates a synchronous wait function that waits for intervals of \a waitMillis ms.
-	WaitFunction CreateSyncWaitFunction(std::uint32_t waitMillis);
+	WaitFunction CreateSyncWaitFunction(uint32_t waitMillis);
 
 	/// Creates an asynchronous wait function that waits for intervals of \a waitMillis ms.
-	WaitFunction CreateAsyncWaitFunction(std::uint32_t waitMillis);
+	WaitFunction CreateAsyncWaitFunction(uint32_t waitMillis);
 }}

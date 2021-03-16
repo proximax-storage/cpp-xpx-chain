@@ -13,7 +13,7 @@
 namespace catapult { namespace validators {
 	/// A validator implementation that applies to network config signer notification and validates that:
 	/// - signer is nemesis account
-	DECLARE_STATELESS_VALIDATOR(NetworkConfigSigner, model::NetworkConfigSignerNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(NetworkConfigSigner, model::NetworkConfigSignerNotification<1>)();
 
 	/// A validator implementation that applies to network config notification and validates that:
 	/// - blockchain configuration data size does not exceed the limit

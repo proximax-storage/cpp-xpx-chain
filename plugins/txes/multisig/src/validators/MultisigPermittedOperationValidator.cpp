@@ -20,13 +20,13 @@
 
 #include "Validators.h"
 #include "src/cache/MultisigCache.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::TransactionNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(MultisigPermittedOperation, [](const auto& notification, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(MultisigPermittedOperation, [](const auto& notification, const ValidatorContext& context) {
 		const auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
 		if (!multisigCache.contains(notification.Signer))
 			return ValidationResult::Success;

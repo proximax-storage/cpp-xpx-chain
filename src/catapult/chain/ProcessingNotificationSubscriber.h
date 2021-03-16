@@ -20,7 +20,7 @@
 
 #pragma once
 #include "ProcessingUndoNotificationSubscriber.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace chain {
@@ -31,7 +31,7 @@ namespace catapult { namespace chain {
 		/// Creates a subscriber around \a validator, \a validatorContext, \a observer and \a observerContext.
 		ProcessingNotificationSubscriber(
 				const validators::stateful::NotificationValidator& validator,
-				const validators::StatefulValidatorContext& validatorContext,
+				const validators::ValidatorContext& validatorContext,
 				const observers::NotificationObserver& observer,
 				observers::ObserverContext& observerContext);
 
@@ -55,7 +55,7 @@ namespace catapult { namespace chain {
 
 	private:
 		const validators::stateful::NotificationValidator& m_validator;
-		const validators::StatefulValidatorContext& m_validatorContext;
+		const validators::ValidatorContext& m_validatorContext;
 		const observers::NotificationObserver& m_observer;
 		observers::ObserverContext& m_observerContext;
 

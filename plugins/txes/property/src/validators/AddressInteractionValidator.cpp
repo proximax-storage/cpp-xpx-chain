@@ -22,7 +22,7 @@
 #include "AccountPropertyView.h"
 #include "src/cache/PropertyCache.h"
 #include "catapult/model/Address.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DEFINE_STATEFUL_VALIDATOR(AddressInteraction, [](const auto& notification, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(AddressInteraction, [](const auto& notification, const ValidatorContext& context) {
 		auto networkIdentifier = context.NetworkIdentifier;
 		auto sourceAddress = model::PublicKeyToAddress(notification.Source, networkIdentifier);
 		for (const auto& address : notification.ParticipantsByAddress) {

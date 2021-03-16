@@ -20,13 +20,13 @@
 
 #include "Validators.h"
 #include "ActiveMosaicView.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::MosaicRequiredNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(ProperMosaic, [](const auto& notification, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(ProperMosaic, [](const auto& notification, const ValidatorContext& context) {
 		auto view = ActiveMosaicView(context.Cache);
 
 		auto mosaicId = notification.MosaicId;

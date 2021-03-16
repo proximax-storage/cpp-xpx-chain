@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 	}
 
 #define DEFINE_CONTRACTORS_VALIDATOR(CONTRACTOR_TYPE) \
-	DEFINE_STATELESS_VALIDATOR(ModifyContract##CONTRACTOR_TYPE##s, [](const auto& notification, const StatelessValidatorContext& context) { \
+	DEFINE_STATELESS_VALIDATOR(ModifyContract##CONTRACTOR_TYPE##s, [](const auto& notification) { \
 		utils::KeyPointerSet addedAccounts; \
 		utils::KeyPointerSet removedAccounts; \
 		const auto* pModifications = notification.CONTRACTOR_TYPE##ModificationsPtr; \

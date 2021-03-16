@@ -20,7 +20,6 @@
 
 #include "src/validators/Validators.h"
 #include "catapult/model/VerifiableEntity.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -28,7 +27,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS NetworkValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Network, )
+	DEFINE_COMMON_VALIDATOR_TESTS(Network, static_cast<model::NetworkIdentifier>(123))
 
 	namespace {
 		constexpr auto Network_Identifier = static_cast<model::NetworkIdentifier>(123);
@@ -36,14 +35,10 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(ValidationResult expectedResult, uint8_t networkIdentifier) {
 			// Arrange:
 			model::EntityNotification<1> notification(static_cast<model::NetworkIdentifier>(networkIdentifier), model::EntityType{0}, 0);
-			auto pValidator = CreateNetworkValidator();
-			test::MutableBlockchainConfiguration mutableConfig;
-			mutableConfig.Immutable.NetworkIdentifier = Network_Identifier;
-			auto config = mutableConfig.ToConst();
+			auto pValidator = CreateNetworkValidator(Network_Identifier);
 
 			// Act:
-			auto context = StatelessValidatorContext(config);
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "network identifier " << networkIdentifier;

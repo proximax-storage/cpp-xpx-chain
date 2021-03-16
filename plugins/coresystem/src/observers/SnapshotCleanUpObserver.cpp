@@ -24,8 +24,7 @@ namespace catapult { namespace observers {
 			auto updatedAddresses = cache.updatedAddresses();
 
 			for (const auto& address : updatedAddresses) {
-				auto iter = cache.find(address);
-				auto pAccountState = iter.tryGet();
+				auto pAccountState = cache.find(address).tryGet();
 
 				if (!pAccountState)
 					continue;

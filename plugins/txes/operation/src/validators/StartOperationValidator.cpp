@@ -11,7 +11,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::StartOperationNotification<1>;
 
-	DEFINE_STATELESS_VALIDATOR(StartOperation, [](const auto& notification, const StatelessValidatorContext& context) {
+	DEFINE_STATELESS_VALIDATOR(StartOperation, [](const auto& notification) {
 		std::set<Key> executors;
 		auto pExecutor = notification.ExecutorsPtr;
 		for (auto i = 0u; i < notification.ExecutorCount; ++i, ++pExecutor) {

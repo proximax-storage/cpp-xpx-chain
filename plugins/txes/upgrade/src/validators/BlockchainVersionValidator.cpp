@@ -5,7 +5,7 @@
 **/
 
 #include "Validators.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/version/version.h"
 #include "plugins/txes/upgrade/src/cache/BlockchainUpgradeCache.h"
 #include "plugins/txes/upgrade/src/state/BlockchainUpgradeEntry.h"
@@ -14,10 +14,9 @@ namespace catapult { namespace validators {
 
 	using Notification = model::BlockNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(BlockchainVersion, [](const auto&, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(BlockchainVersion, [](const auto&, const ValidatorContext& context) {
 		const auto& cache = context.Cache.sub<cache::BlockchainUpgradeCache>();
-		auto iter = cache.find(context.Height);
-		const auto& entry = iter.tryGet();
+		const auto& entry = cache.find(context.Height).tryGet();
 		if (entry && entry->blockChainVersion() > version::CurrentBlockchainVersion)
 			return Failure_BlockchainUpgrade_Invalid_Current_Version;
 

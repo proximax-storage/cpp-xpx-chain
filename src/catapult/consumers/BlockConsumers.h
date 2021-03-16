@@ -64,7 +64,6 @@ namespace catapult { namespace consumers {
 	disruptor::ConstBlockConsumer CreateBlockStatelessValidationConsumer(
 			const std::shared_ptr<const validators::stateless::AggregateEntityValidator>& pValidator,
 			const std::shared_ptr<const validators::ParallelValidationPolicy>& pValidationPolicy,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const RequiresValidationPredicate& requiresValidationPredicate);
 
 	/// Creates a consumer that attempts to synchronize a remote chain with the local chain, which is composed of
