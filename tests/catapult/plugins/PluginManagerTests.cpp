@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/plugins/PluginManager.h"
-#include "catapult/validators/StatelessValidatorContext.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "tests/test/cache/SimpleCache.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
@@ -301,12 +300,12 @@ namespace catapult { namespace plugins {
 			std::string m_name;
 		};
 
-		std::unique_ptr<const validators::NotificationValidatorT<model::AccountPublicKeyNotification<1>, const validators::StatelessValidatorContext&>> CreateNamedStatelessValidator(const std::string& name) {
-			return std::make_unique<NamedValidatorT<model::AccountPublicKeyNotification<1>, const validators::StatelessValidatorContext&>>(name);
+		std::unique_ptr<const validators::NotificationValidatorT<model::AccountPublicKeyNotification<1>>> CreateNamedStatelessValidator(const std::string& name) {
+			return std::make_unique<NamedValidatorT<model::AccountPublicKeyNotification<1>>>(name);
 		}
 
-		std::unique_ptr<const validators::NotificationValidatorT<model::AccountPublicKeyNotification<1>, const validators::StatefulValidatorContext&>> CreateNamedStatefulValidator(const std::string& name) {
-			return std::make_unique<NamedValidatorT<model::AccountPublicKeyNotification<1>, const validators::StatefulValidatorContext&>>(name);
+		std::unique_ptr<const validators::NotificationValidatorT<model::AccountPublicKeyNotification<1>, const validators::ValidatorContext&>> CreateNamedStatefulValidator(const std::string& name) {
+			return std::make_unique<NamedValidatorT<model::AccountPublicKeyNotification<1>, const validators::ValidatorContext&>>(name);
 		}
 	}
 
@@ -340,7 +339,7 @@ namespace catapult { namespace plugins {
 					? manager.createStatelessValidator([](auto) { return true; })
 					: manager.createStatelessValidator();
 			auto notification = model::AccountPublicKeyNotification<1>(test::GenerateRandomByteArray<Key>());
-			return pValidator->validate(notification, validators::StatelessValidatorContext(config::BlockchainConfiguration::Uninitialized()));
+			return pValidator->validate(notification);
 		}
 	}
 

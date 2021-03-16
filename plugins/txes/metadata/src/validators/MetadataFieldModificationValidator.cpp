@@ -7,26 +7,27 @@
 #include "Validators.h"
 #include "plugins/txes/metadata/src/model/MetadataTypes.h"
 #include "src/config/MetadataConfiguration.h"
-#include "catapult/validators/StatelessValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::ModifyMetadataFieldNotification<1>;
 
-	DEFINE_STATELESS_VALIDATOR(MetadataFieldModification, ([](const Notification& notification, const StatelessValidatorContext& context) {
-		if (notification.ModificationType > model::MetadataModificationType::Del) {
-			return Failure_Metadata_Modification_Type_Invalid;
-		}
+	DECLARE_STATEFUL_VALIDATOR(MetadataFieldModification, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(MetadataFieldModification, ([](const Notification& notification, const auto& context) {
+			if (notification.ModificationType > model::MetadataModificationType::Del) {
+				return Failure_Metadata_Modification_Type_Invalid;
+			}
 
-		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MetadataConfiguration>();
-		if (notification.KeySize <= 0 || notification.KeySize > pluginConfig.MaxFieldKeySize) {
-			return Failure_Metadata_Modification_Key_Invalid;
-		}
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MetadataConfiguration>();
+			if (notification.KeySize <= 0 || notification.KeySize > pluginConfig.MaxFieldKeySize) {
+				return Failure_Metadata_Modification_Key_Invalid;
+			}
 
-		if ((notification.ModificationType == model::MetadataModificationType::Add && notification.ValueSize <= 0) || notification.ValueSize > pluginConfig.MaxFieldValueSize) {
-			return Failure_Metadata_Modification_Value_Invalid;
-		}
+			if ((notification.ModificationType == model::MetadataModificationType::Add && notification.ValueSize <= 0) || notification.ValueSize > pluginConfig.MaxFieldValueSize) {
+				return Failure_Metadata_Modification_Value_Invalid;
+			}
 
-		return ValidationResult::Success;
-	}))
+			return ValidationResult::Success;
+		}));
+	}
 }}

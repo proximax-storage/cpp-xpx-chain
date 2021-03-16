@@ -19,7 +19,7 @@
 **/
 
 #include "catapult/model/NetworkConfiguration.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/TestHarness.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
@@ -50,8 +50,7 @@ namespace catapult { namespace validators {
 		auto cacheView = cache.createView();
 		auto readOnlyCache = cacheView.toReadOnly();
 		auto config = CreateBlockchainConfiguration();
-		auto context =
-				StatefulValidatorContext(config, Height(1234), Timestamp(987), CreateResolverContext(), readOnlyCache);
+		auto context = ValidatorContext(config, Height(1234), Timestamp(987), CreateResolverContext(), readOnlyCache);
 
 		// Assert:
 		EXPECT_EQ(Height(1234), context.Height);

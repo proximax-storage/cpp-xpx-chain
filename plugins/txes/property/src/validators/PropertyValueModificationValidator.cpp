@@ -21,7 +21,7 @@
 #include "Validators.h"
 #include "src/cache/PropertyCache.h"
 #include "catapult/model/Address.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -36,7 +36,7 @@ namespace catapult { namespace validators {
 		}
 
 		template<typename TPropertyValue, typename TNotification>
-		ValidationResult Validate(const TNotification& notification, const StatefulValidatorContext& context) {
+		ValidationResult Validate(const TNotification& notification, const ValidatorContext& context) {
 			auto address = model::PublicKeyToAddress(notification.Key, context.NetworkIdentifier);
 			const auto& cache = context.Cache.template sub<cache::PropertyCache>();
 			if (!cache.contains(address))

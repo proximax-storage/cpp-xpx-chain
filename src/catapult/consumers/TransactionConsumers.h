@@ -49,7 +49,6 @@ namespace catapult { namespace consumers {
 	disruptor::TransactionConsumer CreateTransactionStatelessValidationConsumer(
 			const std::shared_ptr<const validators::stateless::AggregateEntityValidator>& pValidator,
 			const std::shared_ptr<const validators::ParallelValidationPolicy>& pValidationPolicy,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const chain::FailedTransactionSink& failedTransactionSink);
 
 	/// Prototype for a function that is called with new transactions.

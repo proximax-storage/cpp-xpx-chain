@@ -6,13 +6,13 @@
 
 #include "Validators.h"
 #include "src/cache/ContractCache.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::ModifyContractNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(ModifyContractDuration, [](const auto& notification, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(ModifyContractDuration, [](const auto& notification, const ValidatorContext& context) {
 		const auto& contractCache = context.Cache.sub<cache::ContractCache>();
 		if (!contractCache.contains(notification.Multisig) && (notification.DurationDelta <= 0))
             return Failure_Contract_Modify_Invalid_Duration;

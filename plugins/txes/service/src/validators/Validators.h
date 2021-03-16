@@ -6,7 +6,7 @@
 
 #pragma once
 #include "Results.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "src/model/ServiceNotifications.h"
 #include "src/state/DriveEntry.h"
@@ -15,7 +15,7 @@
 
 namespace catapult { namespace validators {
 
-	void VerificationStatus(const state::DriveEntry& driveEntry, const validators::StatefulValidatorContext& context, bool& started, bool& active);
+	void VerificationStatus(const state::DriveEntry& driveEntry, const validators::ValidatorContext& context, bool& started, bool& active);
 
 	/// A validator implementation that applies to prepare drive notifications and validates that:
 	/// - drive duration is not zero

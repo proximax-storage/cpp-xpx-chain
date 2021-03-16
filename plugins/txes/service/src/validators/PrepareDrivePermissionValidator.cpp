@@ -10,7 +10,7 @@
 namespace catapult { namespace validators {
 	namespace {
 		template<VersionType version>
-		ValidationResult handler_v1(const model::PrepareDriveNotification<version> &notification, const StatefulValidatorContext& context) {
+		ValidationResult handler_v1(const model::PrepareDriveNotification<version> &notification, const ValidatorContext& context) {
 			const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 			if (driveCache.contains(notification.DriveKey))
 				return Failure_Service_Drive_Already_Exists;

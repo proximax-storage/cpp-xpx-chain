@@ -13,7 +13,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::AggregateEmbeddedTransactionNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(DrivePermittedOperation, [](const Notification& notification, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(DrivePermittedOperation, [](const Notification& notification, const ValidatorContext& context) {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		if (!driveCache.contains(notification.Transaction.Signer))
 			return ValidationResult::Success;

@@ -55,11 +55,11 @@ namespace catapult { namespace validators {
 			auto signer = test::GenerateRandomByteArray<Key>();
 			model::AggregateCosignaturesNotification<1> notification(signer, numTransactions, nullptr, 0, nullptr);
 			auto config = CreateConfig(maxTransactions, std::numeric_limits<uint8_t>::max());
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pValidator = CreateBasicAggregateCosignaturesValidator();
 
 			// Act:
-			auto context = StatelessValidatorContext(config);
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "txes " << numTransactions << ", max " << maxTransactions;
@@ -99,11 +99,11 @@ namespace catapult { namespace validators {
 			auto cosignatures = GenerateRandomCosignatures(numCosignatures);
 			model::AggregateCosignaturesNotification<1> notification(signer, 3, nullptr, numCosignatures, cosignatures.data());
 			auto config = CreateConfig(std::numeric_limits<uint32_t>::max(), maxCosignatures);
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pValidator = CreateBasicAggregateCosignaturesValidator();
 
 			// Act:
-			auto context = StatelessValidatorContext(config);
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result)
@@ -148,11 +148,11 @@ namespace catapult { namespace validators {
 			auto config = CreateConfig(
 				std::numeric_limits<uint32_t>::max(),
 				std::numeric_limits<uint8_t>::max());
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pValidator = CreateBasicAggregateCosignaturesValidator();
 
 			// Act:
-			auto context = StatelessValidatorContext(config);
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

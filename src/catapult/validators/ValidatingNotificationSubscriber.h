@@ -22,32 +22,15 @@
 #include "AggregateValidationResult.h"
 #include "ValidatorTypes.h"
 #include "catapult/model/NotificationSubscriber.h"
-#include "catapult/model/Notifications.h"
-
-namespace helper
-{
-	template <int... Is>
-	struct index {};
-
-	template <int N, int... Is>
-	struct gen_seq : gen_seq<N - 1, N - 1, Is...> {};
-
-	template <int... Is>
-	struct gen_seq<0, Is...> : index<Is...> {};
-}
 
 namespace catapult { namespace validators {
 
 	/// A notification subscriber that validates notifications.
-	template<typename... TArgs>
 	class ValidatingNotificationSubscriber : public model::NotificationSubscriber {
 	public:
 		/// Creates a validating notification subscriber around \a validator.
-		explicit ValidatingNotificationSubscriber(
-				const catapult::validators::NotificationValidatorT<model::Notification, TArgs...>& validator,
-				TArgs&&... args)
+		explicit ValidatingNotificationSubscriber(const stateless::NotificationValidator& validator)
 				: m_validator(validator)
-				, m_args(std::forward<TArgs>(args)...)
 				, m_result(ValidationResult::Success)
 		{}
 
@@ -65,27 +48,12 @@ namespace catapult { namespace validators {
 			if (IsValidationResultFailure(m_result))
 				return;
 
-			auto result = validate(notification);
+			auto result = m_validator.validate(notification);
 			AggregateValidationResult(m_result, result);
 		}
 
 	private:
-		const catapult::validators::NotificationValidatorT<model::Notification, TArgs...>& m_validator;
-		std::tuple<TArgs...> m_args;
+		const stateless::NotificationValidator& m_validator;
 		ValidationResult m_result;
-
-		template <typename... Args, int... Is>
-		ValidationResult func(const model::Notification& notification, std::tuple<Args...>& tup, helper::index<Is...>)
-		{
-			return m_validator.validate(notification, std::get<Is>(tup)...);
-		}
-
-		ValidationResult func(const model::Notification& notification, std::tuple<TArgs...>& tup) {
-			return func(notification, tup, helper::gen_seq<sizeof...(TArgs)>{});
-		}
-
-		ValidationResult validate(const model::Notification& notification) {
-			return func(notification, m_args);
-		}
 	};
 }}

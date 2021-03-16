@@ -21,7 +21,7 @@
 #include "Validators.h"
 #include "src/cache/NamespaceCache.h"
 #include "src/config/NamespaceConfiguration.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, ([](
 				const auto& notification,
-				const StatefulValidatorContext& context) {
+				const ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::NamespaceCache>();
 			auto namespaceIter = cache.find(notification.ParentId);
 			const auto& parentEntry = namespaceIter.get();

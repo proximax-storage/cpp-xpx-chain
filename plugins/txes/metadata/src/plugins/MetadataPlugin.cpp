@@ -39,12 +39,12 @@ namespace catapult { namespace plugins {
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateMetadataTypeValidator())
-				.add(validators::CreateMetadataFieldModificationValidator())
 				.add(validators::CreateMetadataPluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
+				.add(validators::CreateMetadataFieldModificationValidator())
 				.add(validators::CreateModifyAddressMetadataValidator())
 				.add(validators::CreateModifyMosaicMetadataValidator())
 				.add(validators::CreateModifyNamespaceMetadataValidator())

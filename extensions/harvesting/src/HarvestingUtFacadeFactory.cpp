@@ -100,7 +100,7 @@ namespace catapult { namespace harvesting {
 	private:
 		using Processor = predicate<
 			const validators::stateful::NotificationValidator&,
-			const validators::StatefulValidatorContext&,
+			const validators::ValidatorContext&,
 			const observers::NotificationObserver&,
 			observers::ObserverContext&>;
 
@@ -118,7 +118,7 @@ namespace catapult { namespace harvesting {
 			auto notifyMode = observers::NotifyMode::Commit;
 
 			auto resolverContext = m_executionConfig.ResolverContextFactory(readOnlyCache);
-			auto validatorContext = validators::StatefulValidatorContext(config, height(), m_blockTime, resolverContext, readOnlyCache);
+			auto validatorContext = validators::ValidatorContext(config, height(), m_blockTime, resolverContext, readOnlyCache);
 			auto observerContext = observers::ObserverContext(observerState, config, height(), notifyMode, resolverContext);
 
 			const auto& validator = *m_executionConfig.pValidator;

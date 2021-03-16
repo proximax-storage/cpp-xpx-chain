@@ -6,13 +6,13 @@
 
 #include "Validators.h"
 #include "plugins/txes/mosaic/src/cache/MosaicCache.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::ModifyMosaicMetadataNotification_v1;
 
-	DEFINE_STATEFUL_VALIDATOR(ModifyMosaicMetadata, [](const auto& notification, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(ModifyMosaicMetadata, [](const auto& notification, const ValidatorContext& context) {
 		constexpr uint64_t mask = 1ull << 63;
 		if (notification.MetadataId.unwrap() & mask)
 			return Failure_Metadata_MosaicId_Malformed;

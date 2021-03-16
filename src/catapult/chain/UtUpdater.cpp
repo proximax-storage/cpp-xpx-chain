@@ -151,7 +151,7 @@ namespace catapult { namespace chain {
 				const std::vector<model::TransactionInfo>& utInfos,
 				TransactionSource transactionSource,
 				const predicate<const model::TransactionInfo&>& filter) {
-			using validators::StatefulValidatorContext;
+			using validators::ValidatorContext;
 			using observers::ObserverContext;
 
 			auto currentTime = m_timeSupplier();
@@ -163,8 +163,7 @@ namespace catapult { namespace chain {
 			auto effectiveHeight = m_detachedCatapultCache.height() + Height(1);
 			auto resolverContext = m_executionConfig.ResolverContextFactory(readOnlyCache);
 			const auto& config = m_executionConfig.ConfigSupplier(effectiveHeight);
-			auto validatorContext =
-					StatefulValidatorContext(config, effectiveHeight, currentTime, resolverContext, readOnlyCache);
+			auto validatorContext = ValidatorContext(config, effectiveHeight, currentTime, resolverContext, readOnlyCache);
 
 			// note that the "real" state is currently only required by block observers, so a dummy state can be used
 			auto& cache = applyState.UnconfirmedCatapultCache;

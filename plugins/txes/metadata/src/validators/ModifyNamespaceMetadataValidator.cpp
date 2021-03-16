@@ -6,13 +6,13 @@
 
 #include "Validators.h"
 #include "plugins/txes/namespace/src/cache/NamespaceCache.h"
-#include "catapult/validators/StatefulValidatorContext.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::ModifyNamespaceMetadataNotification_v1;
 
-	DEFINE_STATEFUL_VALIDATOR(ModifyNamespaceMetadata, [](const auto& notification, const StatefulValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(ModifyNamespaceMetadata, [](const auto& notification, const ValidatorContext& context) {
 		constexpr uint64_t mask = 1ull << 63;
 		if (!(notification.MetadataId.unwrap() & mask))
 			return Failure_Metadata_NamespaceId_Malformed;

@@ -48,11 +48,11 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "TransferPluginConfigValidator", "TransferMessageValidator", "TransferMosaicsValidator" };
+				return { "TransferPluginConfigValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
-				return {};
+				return { "TransferMessageValidator", "TransferMosaicsValidator" };
 			}
 		};
 	}

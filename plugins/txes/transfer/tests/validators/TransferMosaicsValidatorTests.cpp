@@ -42,11 +42,11 @@ namespace catapult { namespace validators {
 			test::MutableBlockchainConfiguration mutableConfig;
 			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pValidator = CreateTransferMosaicsValidator();
 
 			// Act:
-			auto context = StatelessValidatorContext(config);
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

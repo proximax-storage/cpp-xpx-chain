@@ -20,35 +20,36 @@
 
 #include "Validators.h"
 #include "src/config/TransferConfiguration.h"
-#include "catapult/validators/StatelessValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::TransferMosaicsNotification<1>;
 
-	DEFINE_STATELESS_VALIDATOR(TransferMosaics, [](const auto& notification, const StatelessValidatorContext& context) {
-		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::TransferConfiguration>();
+	DECLARE_STATEFUL_VALIDATOR(TransferMosaics, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(TransferMosaics, [](const auto& notification, const auto& context) {
+            const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::TransferConfiguration>();
 
-		// check strict ordering of mosaics
-		if (1 > notification.MosaicsCount)
+			// check strict ordering of mosaics
+			if (1 > notification.MosaicsCount)
+				return ValidationResult::Success;
+
+			if (pluginConfig.MaxMosaicsSize < notification.MosaicsCount)
+				return Failure_Transfer_Too_Many_Mosaics;
+
+			auto pMosaics = notification.MosaicsPtr;
+			UnresolvedMosaicId lastMosaicId;
+			for (auto i = 0u; i < notification.MosaicsCount; ++i) {
+				auto currentMosaicId = pMosaics[i].MosaicId;
+				if (i != 0 && lastMosaicId >= currentMosaicId)
+					return Failure_Transfer_Out_Of_Order_Mosaics;
+
+				if (1 > pMosaics[i].Amount.unwrap())
+					return Failure_Transfer_Zero_Amount;
+
+				lastMosaicId = currentMosaicId;
+			}
+
 			return ValidationResult::Success;
-
-		if (pluginConfig.MaxMosaicsSize < notification.MosaicsCount)
-			return Failure_Transfer_Too_Many_Mosaics;
-
-		auto pMosaics = notification.MosaicsPtr;
-		UnresolvedMosaicId lastMosaicId;
-		for (auto i = 0u; i < notification.MosaicsCount; ++i) {
-			auto currentMosaicId = pMosaics[i].MosaicId;
-			if (i != 0 && lastMosaicId >= currentMosaicId)
-				return Failure_Transfer_Out_Of_Order_Mosaics;
-
-			if (1 > pMosaics[i].Amount.unwrap())
-				return Failure_Transfer_Zero_Amount;
-
-			lastMosaicId = currentMosaicId;
-		}
-
-		return ValidationResult::Success;
-	})
+		});
+	}
 }}

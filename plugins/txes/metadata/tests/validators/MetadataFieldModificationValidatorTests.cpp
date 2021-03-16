@@ -40,8 +40,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateMetadataFieldModificationValidator();
 
 			// Act:
-			auto context = StatelessValidatorContext(config);
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
