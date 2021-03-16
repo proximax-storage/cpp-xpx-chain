@@ -22,7 +22,6 @@
 #include "ValidatorTypes.h"
 #include "catapult/model/VerifiableEntity.h"
 #include "catapult/utils/NamedObject.h"
-#include "StatelessValidatorContext.h"
 #include <memory>
 
 namespace catapult { namespace validators {
@@ -74,19 +73,6 @@ namespace catapult { namespace validators {
 			for (const auto& pValidator : m_validators) {
 				validationFunctions.emplace_back([&pValidator, forwardedArgs](const auto& entityInfo) {
 					return pValidator->validate(entityInfo, std::get<TArgs>(forwardedArgs)...);
-				});
-			}
-
-			return DispatchForwarder(std::move(validationFunctions));
-		}
-
-		DispatchForwarder curryStateless(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) const {
-			ValidationFunctions validationFunctions;
-			validationFunctions.reserve(m_validators.size());
-			for (const auto& pValidator : m_validators) {
-				validationFunctions.emplace_back([&pValidator, &pConfigHolder](const model::WeakEntityInfo& entityInfo) {
-				  	validators::StatelessValidatorContext context(pConfigHolder->Config(entityInfo.associatedHeight()));
-					return pValidator->validate(entityInfo, context);
 				});
 			}
 

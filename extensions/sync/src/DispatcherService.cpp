@@ -221,7 +221,6 @@ namespace catapult { namespace sync {
 				m_consumers.push_back(CreateBlockStatelessValidationConsumer(
 						extensions::CreateStatelessValidator(m_state.pluginManager()),
 						validators::CreateParallelValidationPolicy(pValidatorPool),
-						m_state.pluginManager().configHolder(),
 						ToRequiresValidationPredicate(m_state.hooks().knownHashPredicate(m_state.utCache()))));
 
 				auto disruptorConsumers = DisruptorConsumersFromBlockConsumers(m_consumers);
@@ -297,7 +296,6 @@ namespace catapult { namespace sync {
 				m_consumers.push_back(CreateTransactionStatelessValidationConsumer(
 						extensions::CreateStatelessValidator(m_state.pluginManager()),
 						validators::CreateParallelValidationPolicy(pValidatorPool),
-						m_state.pluginManager().configHolder(),
 						extensions::SubscriberToSink(m_state.transactionStatusSubscriber())));
 
 				auto disruptorConsumers = DisruptorConsumersFromTransactionConsumers(m_consumers);
