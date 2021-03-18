@@ -132,6 +132,10 @@ namespace catapult { namespace model {
 		/// Time adjustment after each committee round.
 		double CommitteeTimeAdjustment;
 
+		/// Sum of positive vote weights of running nodes compared to total sum of all polled nodes
+		/// required for synchronization approval.
+		double CommitteeEndSyncApproval;
+
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
 
