@@ -146,10 +146,6 @@ namespace catapult { namespace fastfinality {
 					pConfigHolder,
 					[&state] { return state.storage().view().chainHeight(); });
 				actions.ResetLocalChain = CreateDefaultResetLocalChainAction();
-				actions.SelectPeers = CreateDefaultSelectPeersAction(
-					pFsmShared,
-					CreateRemoteBlockHashesIoRetriever(packetIoPickers),
-					pConfigHolder);
 				actions.DownloadBlocks = CreateDefaultDownloadBlocksAction(
 					pFsmShared,
 					state,

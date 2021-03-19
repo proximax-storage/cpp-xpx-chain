@@ -18,7 +18,6 @@ namespace catapult { namespace fastfinality {
 	struct WeightedVotingActions {
 		action CheckLocalChain = [] {};
 		action ResetLocalChain = [] {};
-		action SelectPeers = [] {};
 		action DownloadBlocks = [] {};
 		action DetectStage = [] {};
 		action SelectCommittee = [] {};
@@ -44,11 +43,6 @@ namespace catapult { namespace fastfinality {
 		const supplier<Height>& localHeightSupplier);
 
 	action CreateDefaultResetLocalChainAction();
-
-	action CreateDefaultSelectPeersAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const RemoteBlockHashesRetriever& retriever,
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	action CreateDefaultDownloadBlocksAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,

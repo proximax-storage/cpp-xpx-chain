@@ -131,38 +131,6 @@ namespace catapult { namespace fastfinality {
 		};
 	}
 
-	action CreateDefaultSelectPeersAction(
-			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			const RemoteBlockHashesRetriever& retriever,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return [pFsmWeak, retriever, pConfigHolder]() {
-			TRY_GET_FSM()
-
-			pFsmShared->chainSyncData().NodeIdentityKeys.clear();
-			auto maxBlocksPerSyncAttempt = pConfigHolder->Config().Node.MaxBlocksPerSyncAttempt;
-			auto& chainSyncData = pFsmShared->chainSyncData();
-			auto targetHeight = std::min(chainSyncData.NetworkHeight, chainSyncData.LocalHeight + Height(maxBlocksPerSyncAttempt));
-
-			std::vector<std::pair<Hash256, Key>> hashIoPairs;
-			{
-				hashIoPairs = retriever(targetHeight).get();
-			}
-
-			auto pair = FindMostFrequentValue<Hash256>(hashIoPairs, [] (const auto& pair) { return pair.first; });
-			if (PeerNumberSufficient(pair.second, pConfigHolder->Config().Network)) {
-				const auto& blockHash = pair.first;
-				auto& nodeIdentityKeys = pFsmShared->chainSyncData().NodeIdentityKeys;
-				for (const auto& hashIoPair : hashIoPairs) {
-					if (hashIoPair.first == blockHash)
-						nodeIdentityKeys.push_back(hashIoPair.second);
-				}
-				pFsmShared->processEvent(PeersSelectionSucceeded{});
-			} else {
-				pFsmShared->processEvent(PeersSelectionFailed{});
-			}
-		};
-	}
-
 	namespace {
 		bool ValidateBlockCosignatures(
 				const std::shared_ptr<model::Block>& pBlock,
