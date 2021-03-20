@@ -167,4 +167,31 @@ namespace catapult { namespace fastfinality {
 			handlers,
 			"push precommit message");
 	}
+
+	void RegisterPullRemoteNodeStateHandler(
+			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+			ionet::ServerPacketHandlers& handlers,
+			const model::BlockElementSupplier& lastBlockElementSupplier) {
+		handlers.registerHandler(ionet::PacketType::Pull_Remote_Node_State, [pFsmWeak, lastBlockElementSupplier](
+				const auto& packet,
+				auto& context) {
+			using ResponseType = RemoteNodeStateResponse;
+			if (!ionet::IsPacketValid(packet, ResponseType::Packet_Type)) {
+				CATAPULT_LOG(warning) << "rejecting invalid packet: " << packet;
+				return;
+			}
+
+			CATAPULT_LOG(trace) << "received valid " << packet;
+
+			TRY_GET_FSM()
+
+			auto pResponsePacket = ionet::CreateSharedPacket<ResponseType>();
+			auto pBlockElement = lastBlockElementSupplier();
+			pResponsePacket->ChainHeight = pBlockElement->Block.Height;
+			pResponsePacket->BlockHash = pBlockElement->EntityHash;
+			pResponsePacket->NodeWorkState = pFsmShared->nodeWorkState();
+
+			context.response(ionet::PacketPayload(pResponsePacket));
+		});
+	}
 }}

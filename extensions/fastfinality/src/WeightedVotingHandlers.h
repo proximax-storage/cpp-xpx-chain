@@ -50,4 +50,11 @@ namespace catapult { namespace fastfinality {
 	void RegisterPushPrecommitMessageHandler(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers);
+
+	// TODO: Add proper description for RegisterPullRemoteNodeStateHandler
+	///
+	void RegisterPullRemoteNodeStateHandler(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		ionet::ServerPacketHandlers& handlers,
+		const model::BlockElementSupplier& lastBlockElementSupplier);
 }}
