@@ -21,6 +21,51 @@ namespace catapult { namespace fastfinality {
 		Precommit,
 	};
 
+	enum class NodeWorkState : uint8_t {
+		None,
+		Synchronizing,
+		Running,
+	};
+
+	struct RemoteNodeState {
+		Height ChainHeight;
+		Hash256 BlockHash;
+		NodeWorkState NodeWorkState;
+		Key PublicKey;
+	};
+
+	struct RemoteNodeStateResponse : public ionet::Packet {
+		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Pull_Remote_Node_State;
+
+		Height ChainHeight;
+		Hash256 BlockHash;
+		NodeWorkState NodeWorkState = NodeWorkState::None;
+	};
+
+	struct RemoteNodeStateTraits {
+	public:
+		using ResultType = RemoteNodeState;
+		static constexpr auto Packet_Type = ionet::PacketType::Pull_Remote_Node_State;
+		static constexpr auto Friendly_Name = "remote node state";
+
+		static auto CreateRequestPacketPayload() {
+			return ionet::PacketPayload(Packet_Type);
+		}
+
+	public:
+		bool tryParseResult(const ionet::Packet& packet, ResultType& result) const {
+			const auto* pResponse = ionet::CoercePacket<RemoteNodeStateResponse>(&packet);
+			if (!pResponse)
+				return false;
+
+			result.ChainHeight = pResponse->ChainHeight;
+			result.BlockHash = pResponse->BlockHash;
+			result.NodeWorkState = pResponse->NodeWorkState;
+
+			return true;
+		}
+	};
+
 	struct CommitteeMessage {
 		CommitteeMessageType Type;
 		Hash256 BlockHash;
