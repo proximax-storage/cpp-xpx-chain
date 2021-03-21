@@ -38,7 +38,7 @@ namespace catapult { namespace fastfinality {
 
 	action CreateDefaultCheckLocalChainAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const RemoteChainHeightsRetriever& retriever,
+		const RemoteNodeStateRetriever& retriever,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const supplier<Height>& localHeightSupplier);
 

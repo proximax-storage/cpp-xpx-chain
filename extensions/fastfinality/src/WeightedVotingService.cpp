@@ -36,55 +36,6 @@ namespace catapult { namespace fastfinality {
 			return pUnlockedAccounts;
 		}
 
-		auto CreateRemoteChainHeightsRetriever(const net::PacketIoPickerContainer& packetIoPickers) {
-			return [&packetIoPickers]() {
-				std::vector<thread::future<Height>> heightFutures;
-				auto timeout = utils::TimeSpan::FromSeconds(5);
-
-				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
-				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for detecting chain heights";
-				if (packetIoPairs.empty())
-					return thread::make_ready_future(std::vector<Height>());
-
-				for (const auto& packetIoPair : packetIoPairs) {
-					auto pPacketIo = packetIoPair.io();
-					auto pChainApi = api::CreateRemoteChainApiWithoutRegistry(*pPacketIo);
-					heightFutures.push_back(pChainApi->chainInfo().then([pPacketIo](auto&& infoFuture) {
-						return infoFuture.get().Height;
-					}));
-				}
-
-				return thread::when_all(std::move(heightFutures)).then([](auto&& completedFutures) {
-					return thread::get_all_ignore_exceptional(completedFutures.get());
-				});
-			};
-		}
-
-		auto CreateRemoteBlockHashesIoRetriever(const net::PacketIoPickerContainer& packetIoPickers) {
-			return [&packetIoPickers](const Height& height) {
-				std::vector<thread::future<std::pair<Hash256, Key>>> futures;
-				auto timeout = utils::TimeSpan::FromSeconds(5);
-
-				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
-				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling block hashes";
-				if (packetIoPairs.empty())
-					return thread::make_ready_future(std::vector<std::pair<Hash256, Key>>());
-
-				for (const auto& packetIoPair : packetIoPairs) {
-					auto pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(packetIoPair);
-					auto pChainApi = api::CreateRemoteChainApiWithoutRegistry(*pPacketIoPair->io());
-					futures.push_back(pChainApi->hashesFrom(height, 1u).then([pPacketIoPair](auto&& hashesFuture) {
-						auto hash = *hashesFuture.get().cbegin();
-						return std::make_pair(hash, pPacketIoPair->node().identityKey());
-					}));
-				}
-
-				return thread::when_all(std::move(futures)).then([](auto&& completedFutures) {
-					return thread::get_all_ignore_exceptional(completedFutures.get());
-				});
-			};
-		}
-
 		auto CreateRemoteNodeStateRetriever(const net::PacketIoPickerContainer& packetIoPickers) {
 			return [&packetIoPickers]() {
 				std::vector<thread::future<RemoteNodeState>> remoteNodeStateFutures;
