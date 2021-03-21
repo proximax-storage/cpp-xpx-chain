@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <catapult/api/RemoteRequestDispatcher.h>
 #include "WeightedVotingService.h"
 #include "WeightedVotingFsm.h"
 #include "catapult/api/RemoteChainApi.h"
@@ -84,6 +85,34 @@ namespace catapult { namespace fastfinality {
 			};
 		}
 
+		auto CreateRemoteNodeStateRetriever(const net::PacketIoPickerContainer& packetIoPickers) {
+			return [&packetIoPickers]() {
+				std::vector<thread::future<RemoteNodeState>> remoteNodeStateFutures;
+				auto timeout = utils::TimeSpan::FromSeconds(5);
+
+				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
+				// TODO: Reconsider log phrasing
+				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling remote node states";
+				if (packetIoPairs.empty())
+					return thread::make_ready_future(std::vector<RemoteNodeState>());
+
+				// TODO: Double-check
+				for (const auto& packetIoPair : packetIoPairs) {
+					auto pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(packetIoPair);
+					api::RemoteRequestDispatcher dispatcher{*pPacketIoPair->io()};
+					remoteNodeStateFutures.push_back(dispatcher.dispatch(RemoteNodeStateTraits{}).then([pPacketIoPair](auto&& stateFuture) {
+						auto remoteNodeState = stateFuture.get();
+						remoteNodeState.PublicKey = pPacketIoPair->node().identityKey();
+						return remoteNodeState;
+					}));
+				}
+
+				return thread::when_all(std::move(remoteNodeStateFutures)).then([](auto&& completedFutures) {
+					return thread::get_all_ignore_exceptional(completedFutures.get());
+				});
+			};
+		}
+
 		auto CreateHarvesterBlockGenerator(extensions::ServiceState& state) {
 			auto strategy = state.config().Node.TransactionSelectionStrategy;
 			auto executionConfig = extensions::CreateExecutionConfiguration(state.pluginManager());
@@ -143,7 +172,7 @@ namespace catapult { namespace fastfinality {
 
 				actions.CheckLocalChain = CreateDefaultCheckLocalChainAction(
 					pFsmShared,
-					CreateRemoteChainHeightsRetriever(packetIoPickers),
+					CreateRemoteNodeStateRetriever(packetIoPickers),
 					pConfigHolder,
 					[&state] { return state.storage().view().chainHeight(); });
 				actions.ResetLocalChain = CreateDefaultResetLocalChainAction();
