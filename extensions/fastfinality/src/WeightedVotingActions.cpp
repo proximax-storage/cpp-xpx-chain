@@ -47,6 +47,29 @@ namespace catapult { namespace fastfinality {
 			return std::make_pair(mostFrequentValue, maxFrequency);
 		}
 
+		/*
+		template<typename TValue, typename TNorm, typename TValueArray, typename TValueAdapter, typename TNormAdapter>
+		auto FindUniqueMaxValues(
+				const TValueArray& values,
+				const TValueAdapter& valueAdapter,
+				const TNormAdapter& normAdapter) {
+			TNorm maxNorm(0);
+			std::set<TValue> valuesWithMaxNorm;
+			for (const auto& valueWrapper : values) {	// reference?
+				const auto norm = normAdapter(valueWrapper);	// reference?
+				if (norm > maxNorm) {
+					maxNorm = norm;
+					valuesWithMaxNorm.clear();
+					valuesWithMaxNorm.insert(valueAdapter(valueWrapper));
+				} else if (norm == maxNorm) {
+					valuesWithMaxNorm.insert(valueAdapter(valueWrapper));
+				}
+			}
+
+			return std::make_pair(maxNorm, valuesWithMaxNorm);
+		}
+		*/
+
 		void DelayAction(
 				std::shared_ptr<WeightedVotingFsm> pFsmShared,
 				boost::asio::system_timer& timer,
@@ -87,16 +110,61 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, retriever, pConfigHolder, localHeightSupplier]() {
 			TRY_GET_FSM()
 
+			// TODO: Determine when to set a NodeWorkState
+			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
+
 			UpdateConnections(pFsmShared);
 
 			pFsmShared->resetChainSyncData();
 			pFsmShared->resetCommitteeData();
 
-			std::vector<Height> heights;
+			std::vector<RemoteNodeState> remoteNodeStates;
 			{
-				heights = retriever().get();
+				remoteNodeStates = retriever().get();
 			}
 
+			if (remoteNodeStates.empty())
+				pFsmShared->processEvent(NetworkHeightDetectionFailure{});
+
+			/*
+			auto pair = FindUniqueMaxValues<Hash256, Height>(
+					remoteNodeStates,
+					[] (const RemoteNodeState& state) { return state.BlockHash; },
+					[] (const RemoteNodeState& state) { return state.ChainHeight; }
+ 			);	// returns std::make_pair<Height, std::set<Hash256>>
+			*/
+
+			// TODO: Change to an unordered_map, double-check
+
+			/// Mapping each BlockHash of greatest ChainHeight to a vector of PublicKeys of nodes
+			/// which provided such BlockHash-ChainHeight pair.
+		  	std::map<Hash256, std::vector<Key>> candidateIdentityKeys;
+			Height networkHeight(0);
+			for (const auto& state : remoteNodeStates) {
+				const auto &height = state.ChainHeight;
+				if (height >= networkHeight) {
+					if (height > networkHeight) {
+						networkHeight = height;
+						candidateIdentityKeys.clear();
+					}
+					candidateIdentityKeys[state.BlockHash].push_back(state.PublicKey);
+				}
+			}
+
+			/// Choosing a target BlockHash based on stakes.
+			Hash256 targetBlockHash;
+			if (candidateIdentityKeys.size() > 1) {
+				// TODO: Get weights, find BlockHash with greatest total weight, set it as a targetBlockHash
+			} else {
+				targetBlockHash = candidateIdentityKeys.begin()->first;
+			}
+
+			/// Setting PublicKeys of nodes which provided target BlockHash and largest ChainHeight
+			/// as .
+			auto& chainSyncData = pFsmShared->chainSyncData();
+			chainSyncData.NodeIdentityKeys = std::move(candidateIdentityKeys[targetBlockHash]);
+
+			/*
 			const auto& config = pConfigHolder->Config().Network;
 			auto pair = FindMostFrequentValue<Height>(heights, [] (const Height& height) { return height; });
 			if (PeerNumberSufficient(pair.second, config)) {
@@ -122,6 +190,7 @@ namespace catapult { namespace fastfinality {
 					}
 				);
 			}
+			*/
 		};
 	}
 
@@ -294,6 +363,9 @@ namespace catapult { namespace fastfinality {
 			chain::CommitteeManager& committeeManager) {
 		return [pFsmWeak, pConfigHolder, timeSupplier, lastBlockElementSupplier, &committeeManager]() {
 			TRY_GET_FSM()
+
+		  	// TODO: Determine when to set a NodeWorkState
+		  	pFsmShared->setNodeWorkState(NodeWorkState::Running);
 
 			pFsmShared->resetChainSyncData();
 			committeeManager.reset();
