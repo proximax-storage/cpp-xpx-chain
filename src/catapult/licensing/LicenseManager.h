@@ -15,7 +15,7 @@ namespace catapult { namespace licensing {
 
 	struct LicenseManager {
 	public:
-		virtual bool blockGeneratingAllowedAt(const Height& height) = 0;
+		virtual bool blockGeneratingAllowedAt(const Height& height, const Hash256& stateHash) = 0;
 		virtual bool blockConsumingAllowedAt(const Height& height) = 0;
 	};
 

@@ -120,7 +120,7 @@ namespace catapult { namespace harvesting {
 		if (!pHarvesterKeyPair)
 			return nullptr;
 
-		if (!m_pLicenseManager->blockGeneratingAllowedAt(context.Height)) {
+		if (!m_pLicenseManager->blockGeneratingAllowedAt(context.Height, context.ParentBlock.StateHash)) {
 			CATAPULT_LOG(warning) << "harvest block at " << context.Height << " is not allowed due to license invalid or expired";
 			return nullptr;
 		}
