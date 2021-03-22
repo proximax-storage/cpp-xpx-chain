@@ -125,7 +125,8 @@ namespace catapult { namespace fastfinality {
 					pFsmShared,
 					CreateRemoteNodeStateRetriever(packetIoPickers),
 					pConfigHolder,
-					[&state] { return state.storage().view().chainHeight(); });
+					lastBlockElementSupplier,
+					pluginManager.getCommitteeManager());
 				actions.ResetLocalChain = CreateDefaultResetLocalChainAction();
 				actions.DownloadBlocks = CreateDefaultDownloadBlocksAction(
 					pFsmShared,

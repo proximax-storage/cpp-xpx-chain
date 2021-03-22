@@ -24,10 +24,11 @@ namespace catapult { namespace fastfinality {
 	namespace {
 		constexpr auto CommitteePhaseCount = 4u;
 
-		bool PeerNumberSufficient(
-				uint32_t peerNumber,
+		bool SyncVotesSufficient(
+				const double approvalVotes,
+				const double totalVotes,
 				const model::NetworkConfiguration& config) {
-			return peerNumber >= std::floor(config.CommitteeApproval * config.CommitteeSize);
+			return approvalVotes / totalVotes >= config.CommitteeEndSyncApproval;
 		}
 
 		template<typename TValue, typename TValueArray, typename TValueAdapter>
@@ -106,8 +107,9 @@ namespace catapult { namespace fastfinality {
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			const RemoteNodeStateRetriever& retriever,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			const supplier<Height>& localHeightSupplier) {
-		return [pFsmWeak, retriever, pConfigHolder, localHeightSupplier]() {
+			const model::BlockElementSupplier& lastBlockElementSupplier,
+			const chain::CommitteeManager& committeeManager) {
+		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, &committeeManager]() {
 			TRY_GET_FSM()
 
 			// TODO: Determine when to set a NodeWorkState
@@ -134,14 +136,14 @@ namespace catapult { namespace fastfinality {
  			);	// returns std::make_pair<Height, std::set<Hash256>>
 			*/
 
-			// TODO: Change to an unordered_map, double-check
+			// TODO: Change to an unordered_map
 
 			/// Mapping each BlockHash of greatest ChainHeight to a vector of PublicKeys of nodes
 			/// which provided such BlockHash-ChainHeight pair.
 		  	std::map<Hash256, std::vector<Key>> candidateIdentityKeys;
 			Height networkHeight(0);
 			for (const auto& state : remoteNodeStates) {
-				const auto &height = state.ChainHeight;
+				const auto& height = state.ChainHeight;
 				if (height >= networkHeight) {
 					if (height > networkHeight) {
 						networkHeight = height;
@@ -151,18 +153,79 @@ namespace catapult { namespace fastfinality {
 				}
 			}
 
-			/// Choosing a target BlockHash based on stakes.
-			Hash256 targetBlockHash;
+			// TODO: Change weights to stakes
+
+			/// Choosing a target BlockHash based on weights.
+			Hash256 networkBlockHash;
 			if (candidateIdentityKeys.size() > 1) {
-				// TODO: Get weights, find BlockHash with greatest total weight, set it as a targetBlockHash
+				std::map<Hash256, double> candidateWeights;
+				for (const auto& pair : candidateIdentityKeys) {
+					const auto& hash = pair.first;
+					for (const auto& key : pair.second) {
+						candidateWeights[hash] += committeeManager.weight(key);
+					}
+				}
+				double maxWeight = 0;
+				for (const auto& pair : candidateWeights) {
+					const auto weight = pair.second;
+					if (weight > maxWeight) {
+						maxWeight = weight;
+						networkBlockHash = pair.first;
+					}
+				}
 			} else {
-				targetBlockHash = candidateIdentityKeys.begin()->first;
+				networkBlockHash = candidateIdentityKeys.begin()->first;
 			}
 
-			/// Setting PublicKeys of nodes which provided target BlockHash and largest ChainHeight
-			/// as .
-			auto& chainSyncData = pFsmShared->chainSyncData();
-			chainSyncData.NodeIdentityKeys = std::move(candidateIdentityKeys[targetBlockHash]);
+			// TODO: Double-check transition logic
+
+			/// Comparing network and local heights.
+			const auto& localHeight = lastBlockElementSupplier()->Block.Height;
+			if (networkHeight < localHeight) {
+
+				/// Local chain is invalid and needs to be reset.
+				pFsmShared->processEvent(NetworkHeightLessThanLocal{});
+
+			} else if (networkHeight > localHeight) {
+
+				/// Preparing chainSyncData and transiting to blocks downloading.
+				auto& chainSyncData = pFsmShared->chainSyncData();
+				chainSyncData.LocalHeight = localHeight;
+				chainSyncData.NetworkHeight = networkHeight;
+				chainSyncData.NodeIdentityKeys = std::move(candidateIdentityKeys[networkBlockHash]);
+
+				pFsmShared->processEvent(NetworkHeightGreaterThanLocal{});
+
+			} else {
+
+				/// Counting votes for the highest local block. If passes, transiting to StageDetection stage,
+				/// otherwise executing local chain check again.
+				double approvalVotes = 0;
+				double totalVotes = 0;
+				const auto& localBlockHash = lastBlockElementSupplier()->EntityHash;
+
+				for (const auto& state : remoteNodeStates) {
+					// const auto& height = state.ChainHeight;
+					//const auto& hash = state.BlockHash;
+					//const auto& workState = state.NodeWorkState;
+					const auto weight = committeeManager.weight(state.PublicKey);
+					if (state.NodeWorkState == NodeWorkState::Running && state.BlockHash == localBlockHash /*&& height == localHeight*/)
+						approvalVotes += weight;
+
+					totalVotes += weight;
+				}
+
+				const auto& config = pConfigHolder->Config().Network;
+				if (SyncVotesSufficient(approvalVotes, totalVotes, config))
+					pFsmShared->processEvent(NetworkHeightEqualToLocal{});
+				else
+					DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeRequestInterval.millis(),
+						[pFsmWeak] {
+						  TRY_GET_FSM()
+						  pFsmShared->processEvent(NetworkHeightDetectionFailure{});
+						}
+					);
+			}
 
 			/*
 			const auto& config = pConfigHolder->Config().Network;

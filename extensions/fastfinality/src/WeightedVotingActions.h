@@ -40,7 +40,8 @@ namespace catapult { namespace fastfinality {
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		const RemoteNodeStateRetriever& retriever,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-		const supplier<Height>& localHeightSupplier);
+		const model::BlockElementSupplier& lastBlockElementSupplier,
+		const chain::CommitteeManager& committeeManager);
 
 	action CreateDefaultResetLocalChainAction();
 
