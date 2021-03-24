@@ -161,6 +161,27 @@ namespace catapult { namespace consumers {
 
 		// endregion
 
+		// region MockPostBlockCommit
+
+		struct PostBlockCommitParams {
+		public:
+			PostBlockCommitParams(const std::vector<model::BlockElement>& blockElements)
+					: Elements(blockElements)
+			{}
+
+		public:
+			std::vector<model::BlockElement> Elements;
+		};
+
+		class MockPostBlockCommit : public test::ParamsCapture<PostBlockCommitParams> {
+		public:
+			void operator()(const std::vector<model::BlockElement>& blockElements) const {
+				const_cast<MockPostBlockCommit*>(this)->push(blockElements);
+			}
+		};
+
+		// endregion
+
 		// region MockProcessor
 
 		struct ProcessorParams {
@@ -403,6 +424,9 @@ namespace catapult { namespace consumers {
 				handlers.CommitStep = [this](auto step) {
 					return CommitStep(step);
 				};
+				handlers.PostBlockCommit = [this](const auto& elements) {
+					return PostBlockCommit(elements);
+				};
 				auto config = model::NetworkConfiguration::Uninitialized();
 				config.MaxRollbackBlocks = Max_Rollback_Blocks;
 				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
@@ -422,6 +446,7 @@ namespace catapult { namespace consumers {
 			MockStateChange StateChange;
 			MockPreStateWritten PreStateWritten;
 			MockTransactionsChange TransactionsChange;
+			MockPostBlockCommit PostBlockCommit;
 			MockCommitStep CommitStep;
 
 			disruptor::DisruptorConsumer Consumer;

@@ -79,6 +79,7 @@ namespace catapult { namespace local {
 							m_pBootstrapper->subscriptionManager(),
 							m_cacheHolder,
 							m_dataDirectory))
+					, m_pPostBlockCommitSubscriber(m_pBootstrapper->subscriptionManager().createPostBlockCommitSubscriber())
 					, m_pNodeSubscriber(CreateNodeSubscriber(m_pBootstrapper->subscriptionManager(), m_nodes))
 					, m_pluginManager(m_pBootstrapper->pluginManager())
 					, m_isBooted(false)
@@ -129,6 +130,7 @@ namespace catapult { namespace local {
 						*m_pTransactionStatusSubscriber,
 						*m_pStateChangeSubscriber,
 						*m_pNodeSubscriber,
+						*m_pPostBlockCommitSubscriber,
 						m_counters,
 						m_pluginManager,
 						m_pBootstrapper->pool());
@@ -257,6 +259,7 @@ namespace catapult { namespace local {
 
 			std::unique_ptr<subscribers::TransactionStatusSubscriber> m_pTransactionStatusSubscriber;
 			std::unique_ptr<subscribers::StateChangeSubscriber> m_pStateChangeSubscriber;
+			std::unique_ptr<io::BlockChangeSubscriber> m_pPostBlockCommitSubscriber;
 			std::unique_ptr<subscribers::NodeSubscriber> m_pNodeSubscriber;
 
 			plugins::PluginManager& m_pluginManager;

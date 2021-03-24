@@ -24,6 +24,7 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/local/LocalTestUtils.h"
+#include "tests/test/other/mocks/MockBlockChangeSubscriber.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
 #include "tests/test/other/mocks/MockStateChangeSubscriber.h"
 #include "tests/test/other/mocks/MockTransactionStatusSubscriber.h"
@@ -55,6 +56,7 @@ namespace catapult { namespace extensions {
 		mocks::MockTransactionStatusSubscriber transactionStatusSubscriber;
 		mocks::MockStateChangeSubscriber stateChangeSubscriber;
 		mocks::MockNodeSubscriber nodeSubscriber;
+		mocks::MockBlockChangeSubscriber postBlockCommitSubscriber;
 
 		std::vector<utils::DiagnosticCounter> counters;
 		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
@@ -73,6 +75,7 @@ namespace catapult { namespace extensions {
 				transactionStatusSubscriber,
 				stateChangeSubscriber,
 				nodeSubscriber,
+				postBlockCommitSubscriber,
 				counters,
 				pluginManager,
 				pool);
