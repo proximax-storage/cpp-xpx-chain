@@ -172,7 +172,7 @@ namespace catapult { namespace fastfinality {
 	void RegisterPullRemoteNodeStateHandler(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			ionet::ServerPacketHandlers& handlers,
-			const std::function<std::shared_ptr<model::BlockElement> (const Height&)>& blockElementGetter,
+			const std::function<std::shared_ptr<const model::BlockElement> (const Height&)>& blockElementGetter,
 			const model::BlockElementSupplier& lastBlockElementSupplier) {
 		handlers.registerHandler(ionet::PacketType::Pull_Remote_Node_State, [pFsmWeak, blockElementGetter, lastBlockElementSupplier](
 				const auto& packet,
@@ -198,7 +198,7 @@ namespace catapult { namespace fastfinality {
 			targetHeight = std::min(targetHeight, localHeight);
 
 			auto pResponsePacket = ionet::CreateSharedPacket<ResponseType>();
-			auto pBlockElement = blockElementGetter(targetHeight);
+			const auto pBlockElement = blockElementGetter(targetHeight);
 			pResponsePacket->ChainHeight = pBlockElement->Block.Height;
 			pResponsePacket->BlockHash = pBlockElement->EntityHash;
 			pResponsePacket->NodeWorkState = pFsmShared->nodeWorkState();

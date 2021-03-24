@@ -25,10 +25,10 @@ namespace catapult { namespace fastfinality {
 		constexpr auto CommitteePhaseCount = 4u;
 
 		bool ApprovalImportanceSufficient(
-				const Importance& approvalImportance,
-				const Importance& totalImportance,
+				const uint64_t approvalImportance,
+				const uint64_t totalImportance,
 				const model::NetworkConfiguration& config) {
-			return (double)approvalImportance.unwrap() / (double)totalImportance.unwrap() >= config.CommitteeEndSyncApproval;
+			return (double)approvalImportance / (double)totalImportance >= config.CommitteeEndSyncApproval;
 		}
 
 		template<typename TValue, typename TValueArray, typename TValueAdapter>
@@ -85,7 +85,7 @@ namespace catapult { namespace fastfinality {
 			const RemoteNodeStateRetriever& retriever,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
-			const std::function<Importance (const Key&)>& importanceGetter,
+			const std::function<uint64_t (const Key&)>& importanceGetter,
 			const chain::CommitteeManager& committeeManager) {
 		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager]() {
 			TRY_GET_FSM()
@@ -124,9 +124,9 @@ namespace catapult { namespace fastfinality {
 
 			} else if (networkHeight > localHeight) {
 
-				std::map<Hash256, std::pair<std::vector<Key>, Importance>> candidateBlockHashes;
+				std::map<Hash256, std::pair<std::vector<Key>, uint64_t>> candidateBlockHashes;
 				std::vector<Key> *pTargetIdentityKeys;
-				Importance maxImportance(0);
+				uint64_t maxImportance = 0;
 
 				for (const auto& state : remoteNodeStates) {
 					if (state.ChainHeight == networkHeight) {
@@ -136,7 +136,7 @@ namespace catapult { namespace fastfinality {
 						auto& storedImportance = candidateBlockHashes[hash].second;
 
 						storedKeys.push_back(key);
-						storedImportance = storedImportance + importanceGetter(key);
+						storedImportance += importanceGetter(key);
 						if (storedImportance >= maxImportance) {
 							maxImportance = storedImportance;
 							pTargetIdentityKeys = &storedKeys;
@@ -153,16 +153,16 @@ namespace catapult { namespace fastfinality {
 
 			} else {
 
-				Importance approvalImportance(0);
-				Importance totalImportance(0);
+				uint64_t approvalImportance = 0;
+				uint64_t totalImportance = 0;
 				const auto& localBlockHash = lastBlockElementSupplier()->EntityHash;
 
 				for (const auto& state : remoteNodeStates) {
 					const auto importance = importanceGetter(state.PublicKey);
 					if (state.NodeWorkState == NodeWorkState::Running && state.BlockHash == localBlockHash) {
-						approvalImportance = approvalImportance + importance;
+						approvalImportance += importance;
 					}
-					totalImportance = totalImportance + importance;
+					totalImportance += importance;
 				}
 
 				const auto& config = pConfigHolder->Config().Network;

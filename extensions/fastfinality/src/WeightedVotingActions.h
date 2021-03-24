@@ -42,7 +42,7 @@ namespace catapult { namespace fastfinality {
 		const RemoteNodeStateRetriever& retriever,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const model::BlockElementSupplier& lastBlockElementSupplier,
-		const std::function<Importance (const Key&)>& importanceGetter,
+		const std::function<uint64_t (const Key&)>& importanceGetter,
 		const chain::CommitteeManager& committeeManager);
 
 	action CreateDefaultResetLocalChainAction();
