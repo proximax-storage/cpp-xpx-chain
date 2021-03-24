@@ -108,11 +108,15 @@ namespace catapult { namespace fastfinality {
 				const auto& pConfigHolder = pluginManager.configHolder();
 				const auto& packetIoPickers = state.packetIoPickers();
 				const auto& packetPayloadSink = state.hooks().packetPayloadSink();
+				const auto& storage = state.storage();
 				auto timeSupplier = state.timeSupplier();
 				auto blockRangeConsumer = state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Remote_Pull);
-				auto lastBlockElementSupplier = [&storage = state.storage()]() {
+				auto lastBlockElementSupplier = [&storage]() {
 					auto storageView = storage.view();
 					return storageView.loadBlockElement(storageView.chainHeight());
+				};
+				auto blockElementGetter = [&storage](const Height& height) {
+				  return storage.view().loadBlockElement(height);
 				};
 				auto importanceGetter = [&state](const Key& identityKey) {
 					auto height = state.cache().height();
@@ -127,7 +131,7 @@ namespace catapult { namespace fastfinality {
 				RegisterPushConfirmedBlockHandler(pFsmShared, packetHandlers, pluginManager);
 				RegisterPushPrevoteMessageHandler(pFsmShared, packetHandlers);
 				RegisterPushPrecommitMessageHandler(pFsmShared, packetHandlers);
-				RegisterPullRemoteNodeStateHandler(pFsmShared, packetHandlers, lastBlockElementSupplier);
+				RegisterPullRemoteNodeStateHandler(pFsmShared, packetHandlers, blockElementGetter, lastBlockElementSupplier);
 
 				auto& committeeData = pFsmShared->committeeData();
 				committeeData.setUnlockedAccounts(CreateUnlockedAccounts(m_harvestingConfig));

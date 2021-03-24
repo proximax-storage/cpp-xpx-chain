@@ -55,5 +55,6 @@ namespace catapult { namespace fastfinality {
 	void RegisterPullRemoteNodeStateHandler(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers,
+		const std::function<std::shared_ptr<model::BlockElement> (const Height&)>& blockElementGetter,
 		const model::BlockElementSupplier& lastBlockElementSupplier);
 }}

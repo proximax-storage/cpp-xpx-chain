@@ -172,10 +172,12 @@ namespace catapult { namespace fastfinality {
 	void RegisterPullRemoteNodeStateHandler(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			ionet::ServerPacketHandlers& handlers,
+			const std::function<std::shared_ptr<model::BlockElement> (const Height&)>& blockElementGetter,
 			const model::BlockElementSupplier& lastBlockElementSupplier) {
-		handlers.registerHandler(ionet::PacketType::Pull_Remote_Node_State, [pFsmWeak, lastBlockElementSupplier](
+		handlers.registerHandler(ionet::PacketType::Pull_Remote_Node_State, [pFsmWeak, blockElementGetter, lastBlockElementSupplier](
 				const auto& packet,
 				auto& context) {
+			using RequestType = RemoteNodeStateRequest;
 			using ResponseType = RemoteNodeStateResponse;
 			if (!ionet::IsPacketValid(packet, ResponseType::Packet_Type)) {
 				CATAPULT_LOG(warning) << "rejecting invalid packet: " << packet;
@@ -186,10 +188,17 @@ namespace catapult { namespace fastfinality {
 
 			TRY_GET_FSM()
 
-			const auto& targetHeight = packet;
+			auto range = ionet::ExtractEntitiesFromPacket<RequestType>(packet, ionet::IsSizeValid<RequestType>);
+			if (range.empty()) {
+				CATAPULT_LOG(warning) << "rejecting empty range: " << packet;
+				return;
+			}
+			auto targetHeight = range.begin()->TargetHeight;
+			const auto& localHeight = lastBlockElementSupplier()->Block.Height;
+			targetHeight = std::min(targetHeight, localHeight);
 
 			auto pResponsePacket = ionet::CreateSharedPacket<ResponseType>();
-			auto pBlockElement = lastBlockElementSupplier();
+			auto pBlockElement = blockElementGetter(targetHeight);
 			pResponsePacket->ChainHeight = pBlockElement->Block.Height;
 			pResponsePacket->BlockHash = pBlockElement->EntityHash;
 			pResponsePacket->NodeWorkState = pFsmShared->nodeWorkState();
