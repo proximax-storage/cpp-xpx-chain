@@ -24,11 +24,11 @@ namespace catapult { namespace fastfinality {
 	namespace {
 		constexpr auto CommitteePhaseCount = 4u;
 
-		bool SyncVotesSufficient(
-				const double approvalVotes,
-				const double totalVotes,
+		bool ApprovalImportanceSufficient(
+				const Importance& approvalImportance,
+				const Importance& totalImportance,
 				const model::NetworkConfiguration& config) {
-			return approvalVotes / totalVotes >= config.CommitteeEndSyncApproval;
+			return (double)approvalImportance.unwrap() / (double)totalImportance.unwrap() >= config.CommitteeEndSyncApproval;
 		}
 
 		template<typename TValue, typename TValueArray, typename TValueAdapter>
@@ -85,8 +85,9 @@ namespace catapult { namespace fastfinality {
 			const RemoteNodeStateRetriever& retriever,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
+			const std::function<Importance (const Key&)>& importanceGetter,
 			const chain::CommitteeManager& committeeManager) {
-		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, &committeeManager]() {
+		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager]() {
 			TRY_GET_FSM()
 
 			// TODO: Determine when to set a NodeWorkState
@@ -102,41 +103,42 @@ namespace catapult { namespace fastfinality {
 				remoteNodeStates = retriever().get();
 			}
 
-			// TODO: Double-check if used correctly
-			if (remoteNodeStates.empty())
+			if (remoteNodeStates.empty()) {
 				pFsmShared->processEvent(NetworkHeightDetectionFailure{});
+				return;
+			}
+
+			// TODO: Optimize in general (sort remoteNodeStates by height/hash, ...)
 
 		  	const auto pMaxHeightState = std::max_element(
 					remoteNodeStates.begin(),
 					remoteNodeStates.end(),
 					[](auto a, auto b) { return a.ChainHeight < b.ChainHeight; });
 
+			// TODO: Double-check importance calculations
 			const auto& networkHeight = pMaxHeightState->ChainHeight;
 			const auto& localHeight = lastBlockElementSupplier()->Block.Height;
-
-			// TODO: Change weights to stakes
-			// TODO: Double-check transition logic
 			if (networkHeight < localHeight) {
 
 				pFsmShared->processEvent(NetworkHeightLessThanLocal{});
 
 			} else if (networkHeight > localHeight) {
 
-				std::map<Hash256, std::pair<std::vector<Key>, double>> candidateBlockHashes;
-				std::vector<Key> *pTargetIdentityKeys;	// TODO: Is a non-smart pointer OK?
-				double maxWeight = -1;	// Since all weights are non-negative, this will guarantee that a pointer
-										// will be assigned to pTargetIdentityKeys at least once.
+				std::map<Hash256, std::pair<std::vector<Key>, Importance>> candidateBlockHashes;
+				std::vector<Key> *pTargetIdentityKeys;
+				Importance maxImportance(0);
+
 				for (const auto& state : remoteNodeStates) {
 					if (state.ChainHeight == networkHeight) {
 						const auto& hash = state.BlockHash;
 						const auto& key = state.PublicKey;
 						auto& storedKeys = candidateBlockHashes[hash].first;
-						auto& storedWeight = candidateBlockHashes[hash].second;
+						auto& storedImportance = candidateBlockHashes[hash].second;
 
 						storedKeys.push_back(key);
-						storedWeight += committeeManager.weight(key);
-						if (storedWeight > maxWeight) {
-							maxWeight = storedWeight;
+						storedImportance = storedImportance + importanceGetter(key);
+						if (storedImportance >= maxImportance) {
+							maxImportance = storedImportance;
 							pTargetIdentityKeys = &storedKeys;
 						}
 					}
@@ -151,22 +153,20 @@ namespace catapult { namespace fastfinality {
 
 			} else {
 
-				// 'Vote' and 'weight' terms are partially mixed below.
-
-				double approvalVotes = 0;
-				double totalVotes = 0;
+				Importance approvalImportance(0);
+				Importance totalImportance(0);
 				const auto& localBlockHash = lastBlockElementSupplier()->EntityHash;
 
 				for (const auto& state : remoteNodeStates) {
-					const auto weight = committeeManager.weight(state.PublicKey);
+					const auto importance = importanceGetter(state.PublicKey);
 					if (state.NodeWorkState == NodeWorkState::Running && state.BlockHash == localBlockHash) {
-						approvalVotes += weight;
+						approvalImportance = approvalImportance + importance;
 					}
-					totalVotes += weight;
+					totalImportance = totalImportance + importance;
 				}
 
 				const auto& config = pConfigHolder->Config().Network;
-				if (SyncVotesSufficient(approvalVotes, totalVotes, config)) {
+				if (ApprovalImportanceSufficient(approvalImportance, totalImportance, config)) {
 					pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 				} else {
 					DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeRequestInterval.millis(),

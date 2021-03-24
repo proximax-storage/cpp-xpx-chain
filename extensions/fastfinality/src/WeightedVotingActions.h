@@ -36,11 +36,13 @@ namespace catapult { namespace fastfinality {
 		action WaitForConfirmedBlock = [] {};
 	};
 
+	// TODO: Fix type of importanceGetter
 	action CreateDefaultCheckLocalChainAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		const RemoteNodeStateRetriever& retriever,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const model::BlockElementSupplier& lastBlockElementSupplier,
+		const std::function<Importance (const Key&)>& importanceGetter,
 		const chain::CommitteeManager& committeeManager);
 
 	action CreateDefaultResetLocalChainAction();

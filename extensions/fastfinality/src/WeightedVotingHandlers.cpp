@@ -168,6 +168,7 @@ namespace catapult { namespace fastfinality {
 			"push precommit message");
 	}
 
+	// TODO: Get data from received packet, change lastBlockElementSupplier to more generic block element supplier
 	void RegisterPullRemoteNodeStateHandler(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			ionet::ServerPacketHandlers& handlers,
@@ -184,6 +185,8 @@ namespace catapult { namespace fastfinality {
 			CATAPULT_LOG(trace) << "received valid " << packet;
 
 			TRY_GET_FSM()
+
+			const auto& targetHeight = packet;
 
 			auto pResponsePacket = ionet::CreateSharedPacket<ResponseType>();
 			auto pBlockElement = lastBlockElementSupplier();

@@ -10,6 +10,9 @@
 #include "catapult/ionet/Packet.h"
 #include "catapult/ionet/PacketEntityUtils.h"
 #include "catapult/ionet/PacketPayload.h"
+#include <catapult/ionet/PacketPayloadFactory.h>
+
+#include <utility>
 #include "catapult/model/Cosignature.h"
 
 namespace catapult { namespace fastfinality {
@@ -34,6 +37,12 @@ namespace catapult { namespace fastfinality {
 		Key PublicKey;
 	};
 
+	// TODO: Same PacketType for both request and response?
+	struct RemoteNodeStateRequest : public ionet::Packet {
+		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Pull_Remote_Node_State;
+		Height TargetHeight;
+	};
+
 	struct RemoteNodeStateResponse : public ionet::Packet {
 		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Pull_Remote_Node_State;
 
@@ -48,9 +57,15 @@ namespace catapult { namespace fastfinality {
 		static constexpr auto Packet_Type = ionet::PacketType::Pull_Remote_Node_State;
 		static constexpr auto Friendly_Name = "remote node state";
 
-		static auto CreateRequestPacketPayload() {
-			return ionet::PacketPayload(Packet_Type);
+		static auto CreateRequestPacketPayload(Height height) {
+			auto pPacket = ionet::CreateSharedPacket<RemoteNodeStateRequest>();
+			pPacket->TargetHeight = std::move(height);
+			return ionet::PacketPayload(pPacket);
 		}
+
+		/*static auto CreateRequestPacketPayload() {
+			return ionet::PacketPayload(Packet_Type);
+		}*/
 
 	public:
 		bool tryParseResult(const ionet::Packet& packet, ResultType& result) const {

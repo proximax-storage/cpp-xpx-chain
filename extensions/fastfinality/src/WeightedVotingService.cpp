@@ -4,10 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <catapult/api/RemoteRequestDispatcher.h>
 #include "WeightedVotingService.h"
 #include "WeightedVotingFsm.h"
-#include "catapult/api/RemoteChainApi.h"
+#include <catapult/api/RemoteRequestDispatcher.h>
+#include "catapult/cache_core/ImportanceView.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "catapult/extensions/ServiceLocator.h"
@@ -36,8 +36,11 @@ namespace catapult { namespace fastfinality {
 			return pUnlockedAccounts;
 		}
 
-		auto CreateRemoteNodeStateRetriever(const net::PacketIoPickerContainer& packetIoPickers) {
-			return [&packetIoPickers]() {
+		auto CreateRemoteNodeStateRetriever(
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+				const model::BlockElementSupplier& lastBlockElementSupplier,
+				const net::PacketIoPickerContainer& packetIoPickers) {
+			return [pConfigHolder, lastBlockElementSupplier, &packetIoPickers]() {
 				std::vector<thread::future<RemoteNodeState>> remoteNodeStateFutures;
 				auto timeout = utils::TimeSpan::FromSeconds(5);
 
@@ -48,10 +51,13 @@ namespace catapult { namespace fastfinality {
 					return thread::make_ready_future(std::vector<RemoteNodeState>());
 
 				// TODO: Double-check
+				const auto maxBlocksPerSyncAttempt = pConfigHolder->Config().Node.MaxBlocksPerSyncAttempt;
+				const auto targetHeight = lastBlockElementSupplier()->Block.Height + Height(maxBlocksPerSyncAttempt);
+
 				for (const auto& packetIoPair : packetIoPairs) {
 					auto pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(packetIoPair);
 					api::RemoteRequestDispatcher dispatcher{*pPacketIoPair->io()};
-					remoteNodeStateFutures.push_back(dispatcher.dispatch(RemoteNodeStateTraits{}).then([pPacketIoPair](auto&& stateFuture) {
+					remoteNodeStateFutures.push_back(dispatcher.dispatch(RemoteNodeStateTraits{}, targetHeight).then([pPacketIoPair](auto&& stateFuture) {
 						auto remoteNodeState = stateFuture.get();
 						remoteNodeState.PublicKey = pPacketIoPair->node().identityKey();
 						return remoteNodeState;
@@ -108,6 +114,13 @@ namespace catapult { namespace fastfinality {
 					auto storageView = storage.view();
 					return storageView.loadBlockElement(storageView.chainHeight());
 				};
+				auto importanceGetter = [&state](const Key& identityKey) {
+					auto height = state.cache().height();
+					const auto& cache = state.cache().sub<cache::AccountStateCache>();
+					auto view = cache.createView(height);
+					cache::ImportanceView importanceView(view->asReadOnly());
+					return importanceView.getAccountImportanceOrDefault(identityKey, height).unwrap();
+				};
 				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
 
 				RegisterPushProposedBlockHandler(pFsmShared, packetHandlers, pluginManager);
@@ -123,9 +136,10 @@ namespace catapult { namespace fastfinality {
 
 				actions.CheckLocalChain = CreateDefaultCheckLocalChainAction(
 					pFsmShared,
-					CreateRemoteNodeStateRetriever(packetIoPickers),
+					CreateRemoteNodeStateRetriever(pConfigHolder, lastBlockElementSupplier, packetIoPickers),
 					pConfigHolder,
 					lastBlockElementSupplier,
+					importanceGetter,
 					pluginManager.getCommitteeManager());
 				actions.ResetLocalChain = CreateDefaultResetLocalChainAction();
 				actions.DownloadBlocks = CreateDefaultDownloadBlocksAction(
