@@ -108,15 +108,14 @@ namespace catapult { namespace fastfinality {
 				return;
 			}
 
-			// TODO: Optimize in general (sort remoteNodeStates by height/hash, ...)
-
-		  	const auto pMaxHeightState = std::max_element(
-					remoteNodeStates.begin(),
-					remoteNodeStates.end(),
-					[](auto a, auto b) { return a.ChainHeight < b.ChainHeight; });
+			std::sort(remoteNodeStates.begin(), remoteNodeStates.end(), [](auto a, auto b) {
+				const auto& aChainHeight = a.ChainHeight;
+				const auto& bChainHeight = b.ChainHeight;
+				return (aChainHeight == bChainHeight ? a.BlockHash > b.BlockHash : aChainHeight > bChainHeight);
+			});
 
 			// TODO: Double-check importance calculations
-			const auto& networkHeight = pMaxHeightState->ChainHeight;
+			const auto& networkHeight = remoteNodeStates.begin()->ChainHeight;
 			const auto& localHeight = lastBlockElementSupplier()->Block.Height;
 			if (networkHeight < localHeight) {
 
@@ -124,30 +123,37 @@ namespace catapult { namespace fastfinality {
 
 			} else if (networkHeight > localHeight) {
 
-				std::map<Hash256, std::pair<std::vector<Key>, uint64_t>> candidateBlockHashes;
-				std::vector<Key> *pTargetIdentityKeys;
-				uint64_t maxImportance = 0;
-
+				std::map<Hash256, std::vector<Key>> blockHashesKeys;
 				for (const auto& state : remoteNodeStates) {
-					if (state.ChainHeight == networkHeight) {
-						const auto& hash = state.BlockHash;
-						const auto& key = state.PublicKey;
-						auto& storedKeys = candidateBlockHashes[hash].first;
-						auto& storedImportance = candidateBlockHashes[hash].second;
+					if (state.ChainHeight < networkHeight) {
+						break;
+					}
+					blockHashesKeys[state.BlockHash].push_back(state.PublicKey);
+				}
 
-						storedKeys.push_back(key);
-						storedImportance += importanceGetter(key);
-						if (storedImportance >= maxImportance) {
-							maxImportance = storedImportance;
-							pTargetIdentityKeys = &storedKeys;
+				std::vector<Key> *pTargetKeys;
+				if (blockHashesKeys.size() > 1) {
+					uint64_t maxImportance = 0;
+					std::map<Hash256, uint64_t> blockHashesImportance;
+					for (const auto& pair : blockHashesKeys) {
+						const auto& hash = pair.first;
+						auto& storedImportance = blockHashesImportance[hash];
+						for (const auto& key : pair.second) {
+							storedImportance += importanceGetter(key);
+							if (storedImportance >= maxImportance) {
+								maxImportance = storedImportance;
+								pTargetKeys = &blockHashesKeys[hash];
+							}
 						}
 					}
+				} else {
+					pTargetKeys = &blockHashesKeys.begin()->second;
 				}
 
 				auto& chainSyncData = pFsmShared->chainSyncData();
 				chainSyncData.LocalHeight = localHeight;
 				chainSyncData.NetworkHeight = networkHeight;
-				chainSyncData.NodeIdentityKeys = std::move(*pTargetIdentityKeys);
+				chainSyncData.NodeIdentityKeys = std::move(*pTargetKeys);
 
 				pFsmShared->processEvent(NetworkHeightGreaterThanLocal{});
 
