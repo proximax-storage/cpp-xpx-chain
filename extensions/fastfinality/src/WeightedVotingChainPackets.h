@@ -24,7 +24,7 @@ namespace catapult { namespace fastfinality {
 		Precommit,
 	};
 
-	enum class NodeWorkState : uint8_t {
+	enum class WorkState : uint8_t {
 		None,
 		Synchronizing,
 		Running,
@@ -33,7 +33,7 @@ namespace catapult { namespace fastfinality {
 	struct RemoteNodeState {
 		Height ChainHeight;
 		Hash256 BlockHash;
-		NodeWorkState NodeWorkState;
+		WorkState NodeWorkState;
 		Key PublicKey;
 	};
 
@@ -48,7 +48,7 @@ namespace catapult { namespace fastfinality {
 
 		Height ChainHeight;
 		Hash256 BlockHash;
-		NodeWorkState NodeWorkState = NodeWorkState::None;
+		WorkState NodeWorkState = WorkState::None;
 	};
 
 	struct RemoteNodeStateTraits {

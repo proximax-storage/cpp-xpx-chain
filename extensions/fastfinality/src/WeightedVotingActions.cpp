@@ -90,8 +90,8 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager]() {
 			TRY_GET_FSM()
 
-			// TODO: Determine when to set a NodeWorkState
-			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
+			// TODO: Determine when to set a WorkState
+			pFsmShared->setNodeWorkState(WorkState::Synchronizing);
 
 			UpdateConnections(pFsmShared);
 
@@ -159,7 +159,7 @@ namespace catapult { namespace fastfinality {
 
 				for (const auto& state : remoteNodeStates) {
 					const auto importance = importanceGetter(state.PublicKey);
-					if (state.NodeWorkState == NodeWorkState::Running && state.BlockHash == localBlockHash) {
+					if (state.NodeWorkState == WorkState::Running && state.BlockHash == localBlockHash) {
 						approvalImportance += importance;
 					}
 					totalImportance += importance;
@@ -350,8 +350,8 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, pConfigHolder, timeSupplier, lastBlockElementSupplier, &committeeManager]() {
 			TRY_GET_FSM()
 
-		  	// TODO: Determine when to set a NodeWorkState
-		  	pFsmShared->setNodeWorkState(NodeWorkState::Running);
+		  	// TODO: Determine when to set a WorkState
+		  	pFsmShared->setNodeWorkState(WorkState::Running);
 
 			pFsmShared->resetChainSyncData();
 			committeeManager.reset();
