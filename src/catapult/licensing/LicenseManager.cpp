@@ -89,44 +89,22 @@ namespace catapult { namespace licensing {
 				, m_serverHost(licensingConfig.LicenseServerHost)
 				, m_serverPort(std::to_string(licensingConfig.LicenseServerPort))
 				, m_licenseRequestTimeout(std::chrono::milliseconds(licensingConfig.LicenseRequestTimeout.millis()))
-				, m_maxRollbackBlocks(pConfigHolder->Config().Network.MaxRollbackBlocks)
 			{}
 
 		public:
-			bool blockGeneratingAllowedAt(const Height& height, const Hash256& stateHash) override {
+			bool blockAllowedAt(const Height& height, const Hash256& stateHash) override {
 				std::lock_guard<std::mutex> lock(m_mutex);
 
-				if (height == m_nextCheckHeight) {
-					m_blockchainStateHash = stateHash;
-
-					requestLicense(height);
-
-					m_nextCheckHeight = m_nextCheckHeight + m_offset;
+				if (!m_pLicense || m_pLicense && height == m_pLicense->MaxHeight ) {
+					requestLicense(height, stateHash);
 				}
 
-				if (m_pLicense && (height <= m_pLicense->MaxHeight + m_maxRollbackBlocks))
-					return true;
-
-				m_blockchainStateHash = stateHash;
-
-				requestLicense(height);
-
-				return m_pLicense && (height <= m_pLicense->MaxHeight + m_maxRollbackBlocks);
-			}
-
-			bool blockConsumingAllowedAt(const Height& height) override {
-				std::lock_guard<std::mutex> lock(m_mutex);
-
-				if (m_pLicense && (height != m_nextCheckHeight && height <= m_pLicense->MaxHeight + m_maxRollbackBlocks))
-					return true;
-
-				requestLicense(height);
-
-				return m_pLicense && (height <= m_pLicense->MaxHeight + m_maxRollbackBlocks);
+				const Height maxRollbackBlocks{ m_pConfigHolder->Config().Network.MaxRollbackBlocks };
+				return m_pLicense && (height <= m_pLicense->MaxHeight + maxRollbackBlocks);
 			}
 
 		private:
-			void requestLicense(const Height& height) {
+			void requestLicense(const Height& height, const Hash256& stateHash) {
 				boost::asio::io_context io_context;
 				boost::asio::ip::tcp::resolver resolver(io_context);
 				m_pSocket = std::make_unique<boost::asio::ip::tcp::socket>(io_context);
@@ -138,7 +116,8 @@ namespace catapult { namespace licensing {
 						this,
 						boost::asio::placeholders::error,
 						boost::asio::placeholders::iterator,
-						height));
+						height,
+						stateHash));
 
 				io_context.run_for(m_licenseRequestTimeout);
 
@@ -148,7 +127,8 @@ namespace catapult { namespace licensing {
 
 			void handleResolve(const boost::system::error_code& err,
 							   boost::asio::ip::tcp::resolver::results_type iter,
-							   const Height& height) {
+							   const Height& height,
+							   const Hash256& stateHash) {
 				if (err) {
 					CATAPULT_LOG(warning) << "couldn't resolve address " << m_serverHost << ": " << err;
 					return;
@@ -159,11 +139,13 @@ namespace catapult { namespace licensing {
 						&DefaultLicenseManager::handleConnect,
 						this,
 						boost::asio::placeholders::error,
-						height));
+						height,
+						stateHash));
 			}
 
 			void handleConnect(const boost::system::error_code& err,
-							   const Height& height) {
+							   const Height& height,
+							   const Hash256& stateHash) {
 				if (err) {
 					CATAPULT_LOG(warning) << "couldn't connect to the license server: " << err;
 					return;
@@ -175,9 +157,9 @@ namespace catapult { namespace licensing {
 				requestJson.add("node", m_node);
 				requestJson.add("height", height);
 
-				std::ostringstream stateHash;
-				stateHash << utils::HexFormat(m_blockchainStateHash.begin(), m_blockchainStateHash.end());
-				requestJson.add("stateHash", stateHash.str());
+				std::ostringstream stateHashStream;
+				stateHashStream << utils::HexFormat(stateHash.begin(), stateHash.end());
+				requestJson.add("stateHash", stateHashStream.str());
 				std::ostringstream out;
 				boost::property_tree::write_json(out, requestJson);
 				auto request = out.str();
@@ -253,12 +235,6 @@ namespace catapult { namespace licensing {
 			std::unique_ptr<boost::asio::streambuf> m_pBuffer;
 
 			std::mutex m_mutex;
-
-			Height m_nextCheckHeight { m_offset };
-			Hash256 m_blockchainStateHash;
-
-			const Height m_offset { 5000 };
-			const Height m_maxRollbackBlocks;
 		};
 	}
 

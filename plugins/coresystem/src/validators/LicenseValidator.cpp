@@ -13,7 +13,7 @@ namespace catapult { namespace validators {
 
 	DECLARE_STATEFUL_VALIDATOR(License, Notification)(const std::shared_ptr<licensing::LicenseManager>& pLicenseManager) {
 		return MAKE_STATEFUL_VALIDATOR(License, [pLicenseManager](const auto& notification, const auto& context) {
-			if (context.Height > Height(1) && !pLicenseManager->blockConsumingAllowedAt(context.Height)) {
+			if (context.Height > Height(1) && !pLicenseManager->blockAllowedAt(context.Height, notification.StateHash)) {
 				return Failure_Core_License_Invalid_Or_Expired;
 			}
 			return ValidationResult::Success;
