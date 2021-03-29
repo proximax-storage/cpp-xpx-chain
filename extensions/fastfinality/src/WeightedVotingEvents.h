@@ -18,9 +18,6 @@ namespace catapult { namespace fastfinality {
 	struct NetworkHeightGreaterThanLocal{};
 	struct NetworkHeightEqualToLocal{};
 
-	struct PeersSelectionFailed{};
-	struct PeersSelectionSucceeded{};
-
 	struct DownloadBlocksFailed{};
 	struct DownloadBlocksSucceeded{};
 
