@@ -45,12 +45,10 @@ namespace catapult { namespace fastfinality {
 				auto timeout = utils::TimeSpan::FromSeconds(5);
 
 				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
-				// TODO: Reconsider log phrasing
 				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling remote node states";
 				if (packetIoPairs.empty())
 					return thread::make_ready_future(std::vector<RemoteNodeState>());
 
-				// TODO: Double-check
 				const auto maxBlocksPerSyncAttempt = pConfigHolder->Config().Node.MaxBlocksPerSyncAttempt;
 				const auto targetHeight = lastBlockElementSupplier()->Block.Height + Height(maxBlocksPerSyncAttempt);
 

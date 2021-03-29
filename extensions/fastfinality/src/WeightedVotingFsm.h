@@ -33,7 +33,7 @@ namespace catapult { namespace fastfinality {
 			, m_confirmedBlockWaitTimer(m_pPool->ioContext())
 			, m_sm(boost::sml::sm<WeightedVotingTransitionTable>(m_actions))
 			, m_strand(m_pPool->ioContext())
-			, m_nodeWorkState(WorkState::None)
+			, m_nodeWorkState(NodeWorkState::None)
 			, m_stopped(false)
 		{}
 
@@ -121,7 +121,7 @@ namespace catapult { namespace fastfinality {
 			return m_nodeWorkState;
 		}
 
-		void setNodeWorkState(WorkState state) {
+		void setNodeWorkState(NodeWorkState state) {
 			m_nodeWorkState = state;
 		}
 
@@ -136,7 +136,7 @@ namespace catapult { namespace fastfinality {
 		CommitteeData m_committeeData;
 		std::vector<thread::Task> m_peerConnectionTasks;
 		boost::asio::io_context::strand m_strand;
-		WorkState m_nodeWorkState;
+		NodeWorkState m_nodeWorkState;
 		bool m_stopped;
 	};
 }}

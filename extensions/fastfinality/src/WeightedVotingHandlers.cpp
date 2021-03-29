@@ -168,7 +168,6 @@ namespace catapult { namespace fastfinality {
 			"push precommit message");
 	}
 
-	// TODO: Get data from received packet, change lastBlockElementSupplier to more generic block element supplier
 	void RegisterPullRemoteNodeStateHandler(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			ionet::ServerPacketHandlers& handlers,
@@ -177,10 +176,9 @@ namespace catapult { namespace fastfinality {
 		handlers.registerHandler(ionet::PacketType::Pull_Remote_Node_State, [pFsmWeak, blockElementGetter, lastBlockElementSupplier](
 				const auto& packet,
 				auto& context) {
-			using RequestType = RemoteNodeStateRequest;
-			using ResponseType = RemoteNodeStateResponse;
-			if (!ionet::IsPacketValid(packet, ResponseType::Packet_Type)) {
-				CATAPULT_LOG(warning) << "rejecting invalid packet: " << packet;
+			const auto pRequest = ionet::CoercePacket<RemoteNodeStatePacket>(&packet);
+			if (!pRequest) {
+				CATAPULT_LOG(warning) << "rejecting empty request: " << packet;
 				return;
 			}
 
@@ -188,20 +186,15 @@ namespace catapult { namespace fastfinality {
 
 			TRY_GET_FSM()
 
-			auto range = ionet::ExtractEntitiesFromPacket<RequestType>(packet, ionet::IsSizeValid<RequestType>);
-			if (range.empty()) {
-				CATAPULT_LOG(warning) << "rejecting empty range: " << packet;
-				return;
-			}
-			auto targetHeight = range.begin()->TargetHeight;
+			auto targetHeight = pRequest->Height;
 			const auto& localHeight = lastBlockElementSupplier()->Block.Height;
 			targetHeight = std::min(targetHeight, localHeight);
 
-			auto pResponsePacket = ionet::CreateSharedPacket<ResponseType>();
+			auto pResponsePacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 			const auto pBlockElement = blockElementGetter(targetHeight);
-			pResponsePacket->ChainHeight = pBlockElement->Block.Height;
+			pResponsePacket->Height = pBlockElement->Block.Height;
 			pResponsePacket->BlockHash = pBlockElement->EntityHash;
-			pResponsePacket->NodeWorkState = pFsmShared->nodeWorkState();
+			pResponsePacket->WorkState = pFsmShared->nodeWorkState();
 
 			context.response(ionet::PacketPayload(pResponsePacket));
 		});

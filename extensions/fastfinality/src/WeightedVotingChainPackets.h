@@ -24,7 +24,7 @@ namespace catapult { namespace fastfinality {
 		Precommit,
 	};
 
-	enum class WorkState : uint8_t {
+	enum class NodeWorkState : uint8_t {
 		None,
 		Synchronizing,
 		Running,
@@ -33,22 +33,16 @@ namespace catapult { namespace fastfinality {
 	struct RemoteNodeState {
 		Height ChainHeight;
 		Hash256 BlockHash;
-		WorkState NodeWorkState;
+		NodeWorkState WorkState;
 		Key PublicKey;
 	};
 
-	// TODO: Same PacketType for both request and response?
-	struct RemoteNodeStateRequest : public ionet::Packet {
-		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Pull_Remote_Node_State;
-		Height TargetHeight;
-	};
-
-	struct RemoteNodeStateResponse : public ionet::Packet {
+	struct RemoteNodeStatePacket : public ionet::Packet {
 		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Pull_Remote_Node_State;
 
-		Height ChainHeight;
+		catapult::Height Height;
 		Hash256 BlockHash;
-		WorkState NodeWorkState = WorkState::None;
+		NodeWorkState WorkState = NodeWorkState::None;
 	};
 
 	struct RemoteNodeStateTraits {
@@ -58,24 +52,20 @@ namespace catapult { namespace fastfinality {
 		static constexpr auto Friendly_Name = "remote node state";
 
 		static auto CreateRequestPacketPayload(Height height) {
-			auto pPacket = ionet::CreateSharedPacket<RemoteNodeStateRequest>();
-			pPacket->TargetHeight = std::move(height);
+			auto pPacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
+			pPacket->Height = std::move(height);
 			return ionet::PacketPayload(pPacket);
 		}
 
-		/*static auto CreateRequestPacketPayload() {
-			return ionet::PacketPayload(Packet_Type);
-		}*/
-
 	public:
 		bool tryParseResult(const ionet::Packet& packet, ResultType& result) const {
-			const auto* pResponse = ionet::CoercePacket<RemoteNodeStateResponse>(&packet);
+			const auto* pResponse = ionet::CoercePacket<RemoteNodeStatePacket>(&packet);
 			if (!pResponse)
 				return false;
 
-			result.ChainHeight = pResponse->ChainHeight;
+			result.ChainHeight = pResponse->Height;
 			result.BlockHash = pResponse->BlockHash;
-			result.NodeWorkState = pResponse->NodeWorkState;
+			result.WorkState = pResponse->WorkState;
 
 			return true;
 		}

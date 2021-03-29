@@ -90,11 +90,9 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager]() {
 			TRY_GET_FSM()
 
-			// TODO: Determine when to set a WorkState
-			pFsmShared->setNodeWorkState(WorkState::Synchronizing);
-
 			UpdateConnections(pFsmShared);
-
+			
+			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
 			pFsmShared->resetChainSyncData();
 			pFsmShared->resetCommitteeData();
 
@@ -103,8 +101,14 @@ namespace catapult { namespace fastfinality {
 				remoteNodeStates = retriever().get();
 			}
 
-			if (remoteNodeStates.empty()) {
-				pFsmShared->processEvent(NetworkHeightDetectionFailure{});
+		  	const auto& config = pConfigHolder->Config().Network;
+		  	if (remoteNodeStates.empty()) {
+				DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeRequestInterval.millis(),
+					[pFsmWeak] {
+						TRY_GET_FSM()
+						pFsmShared->processEvent(NetworkHeightDetectionFailure{});
+					}
+				);
 				return;
 			}
 
@@ -114,46 +118,43 @@ namespace catapult { namespace fastfinality {
 				return (aChainHeight == bChainHeight ? a.BlockHash > b.BlockHash : aChainHeight > bChainHeight);
 			});
 
-			// TODO: Double-check importance calculations
-			const auto& networkHeight = remoteNodeStates.begin()->ChainHeight;
-			const auto& localHeight = lastBlockElementSupplier()->Block.Height;
-			if (networkHeight < localHeight) {
+			auto& chainSyncData = pFsmShared->chainSyncData();
+			chainSyncData.NetworkHeight = remoteNodeStates.begin()->ChainHeight;
+			chainSyncData.LocalHeight = remoteNodeStates.begin()->ChainHeight;
+
+			if (chainSyncData.NetworkHeight < chainSyncData.LocalHeight) {
 
 				pFsmShared->processEvent(NetworkHeightLessThanLocal{});
 
-			} else if (networkHeight > localHeight) {
+			} else if (chainSyncData.NetworkHeight > chainSyncData.LocalHeight) {
 
 				std::map<Hash256, std::vector<Key>> blockHashesKeys;
 				for (const auto& state : remoteNodeStates) {
-					if (state.ChainHeight < networkHeight) {
+					if (state.ChainHeight < chainSyncData.NetworkHeight) {
 						break;
 					}
 					blockHashesKeys[state.BlockHash].push_back(state.PublicKey);
 				}
 
-				std::vector<Key> *pTargetKeys;
 				if (blockHashesKeys.size() > 1) {
 					uint64_t maxImportance = 0;
+					Hash256 bestHash;
 					std::map<Hash256, uint64_t> blockHashesImportance;
 					for (const auto& pair : blockHashesKeys) {
 						const auto& hash = pair.first;
 						auto& storedImportance = blockHashesImportance[hash];
 						for (const auto& key : pair.second) {
 							storedImportance += importanceGetter(key);
-							if (storedImportance >= maxImportance) {
-								maxImportance = storedImportance;
-								pTargetKeys = &blockHashesKeys[hash];
-							}
+						}
+						if (storedImportance >= maxImportance) {
+							maxImportance = storedImportance;
+							bestHash = hash;
 						}
 					}
+					chainSyncData.NodeIdentityKeys = blockHashesKeys.at(bestHash);
 				} else {
-					pTargetKeys = &blockHashesKeys.begin()->second;
+					chainSyncData.NodeIdentityKeys = blockHashesKeys.begin()->second;
 				}
-
-				auto& chainSyncData = pFsmShared->chainSyncData();
-				chainSyncData.LocalHeight = localHeight;
-				chainSyncData.NetworkHeight = networkHeight;
-				chainSyncData.NodeIdentityKeys = std::move(*pTargetKeys);
 
 				pFsmShared->processEvent(NetworkHeightGreaterThanLocal{});
 
@@ -165,13 +166,12 @@ namespace catapult { namespace fastfinality {
 
 				for (const auto& state : remoteNodeStates) {
 					const auto importance = importanceGetter(state.PublicKey);
-					if (state.NodeWorkState == WorkState::Running && state.BlockHash == localBlockHash) {
+					if (state.WorkState == NodeWorkState::Running && state.BlockHash == localBlockHash) {
 						approvalImportance += importance;
 					}
 					totalImportance += importance;
 				}
 
-				const auto& config = pConfigHolder->Config().Network;
 				if (ApprovalImportanceSufficient(approvalImportance, totalImportance, config)) {
 					pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 				} else {
@@ -356,10 +356,8 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, pConfigHolder, timeSupplier, lastBlockElementSupplier, &committeeManager]() {
 			TRY_GET_FSM()
 
-		  	// TODO: Determine when to set a WorkState
-		  	pFsmShared->setNodeWorkState(WorkState::Running);
-
-			pFsmShared->resetChainSyncData();
+		  	pFsmShared->resetChainSyncData();
+			pFsmShared->setNodeWorkState(NodeWorkState::Running);
 			committeeManager.reset();
 
 			auto pLastBlockElement = lastBlockElementSupplier();
