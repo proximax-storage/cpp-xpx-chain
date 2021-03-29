@@ -7,13 +7,15 @@
 #pragma once
 #include "catapult/io/BlockChangeSubscriber.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
+#include "catapult/notification_handlers/AggregateNotificationHandler.h"
+#include "catapult/notification_handlers/NotificationHandlerTypes.h"
 #include <memory>
 
 namespace catapult { namespace storage {
 
-	using ValidatorPointer = std::shared_ptr<const validators::stateful::AggregateNotificationValidator>;
+	using HandlerPointer = std::shared_ptr<const notification_handlers::AggregateNotificationHandler>;
 
 	/// Creates a block storage around \a pluginManager.
 	std::unique_ptr<io::BlockChangeSubscriber> CreateBlockStorageSubscription(
-			extensions::ProcessBootstrapper& bootstrapper, ValidatorPointer pValidator);
+			extensions::ProcessBootstrapper& bootstrapper, const HandlerPointer& pValidator);
 }}

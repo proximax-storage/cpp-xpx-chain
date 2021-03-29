@@ -4,10 +4,12 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/validators/ValidatingNotificationSubscriber.h"
-#include "catapult/validators/ValidatorContext.h"
+#include "catapult/notification_handlers/HandlerNotificationSubscriber.h"
+#include "catapult/notification_handlers/HandlerContext.h"
 #include "catapult/plugins/PluginManager.h"
 #include "BlockStorageSubscription.h"
+
+#include <utility>
 
 namespace catapult { namespace storage {
 
@@ -20,11 +22,11 @@ namespace catapult { namespace storage {
 
 		class BlockStorageSubscription final : public io::BlockChangeSubscriber {
 		public:
-			explicit BlockStorageSubscription(extensions::ProcessBootstrapper& bootstrapper, ValidatorPointer pValidator)
+			explicit BlockStorageSubscription(extensions::ProcessBootstrapper& bootstrapper, HandlerPointer pHandler)
 				: m_pluginManager(bootstrapper.pluginManager())
 				, m_cacheHolder(bootstrapper.cacheHolder())
 				, m_configHolder(bootstrapper.configHolder())
-				, m_pValidator(pValidator)
+				, m_pHandler(std::move(pHandler))
 			{}
 
 		public:
@@ -37,16 +39,16 @@ namespace catapult { namespace storage {
 				auto cacheView = m_cacheHolder.cache().createView();
 				auto readCache = cacheView.toReadOnly();
 
-				auto validatorContext = validators::ValidatorContext(
+				auto handlerContext = notification_handlers::HandlerContext(
 					config,
 					blockElement.Block.Height,
 					blockElement.Block.Timestamp,
 					m_pluginManager.createResolverContext(readCache),
 					readCache
 				);
-				validators::ValidatingNotificationSubscriber validatingSubscriber(*m_pValidator, validatorContext);
+				notification_handlers::HandlerNotificationSubscriber handleSubscriber(*m_pHandler, handlerContext);
 				for (const auto& entity : ExtractEntityInfos(blockElement)) {
-					m_notificationPublisher->publish(entity, validatingSubscriber);
+					m_notificationPublisher->publish(entity, handleSubscriber);
 				}
 			}
 
@@ -58,13 +60,13 @@ namespace catapult { namespace storage {
 			plugins::PluginManager& m_pluginManager;
 			extensions::CacheHolder& m_cacheHolder;
 			std::shared_ptr<config::BlockchainConfigurationHolder> m_configHolder;
-			ValidatorPointer m_pValidator;
+			HandlerPointer m_pHandler;
 			std::unique_ptr<model::NotificationPublisher> m_notificationPublisher;
 		};
 	}
 
 	std::unique_ptr<io::BlockChangeSubscriber> CreateBlockStorageSubscription(
-			extensions::ProcessBootstrapper& bootstrapper, ValidatorPointer pValidator) {
-		return std::make_unique<BlockStorageSubscription>(bootstrapper, pValidator);
+			extensions::ProcessBootstrapper& bootstrapper, const HandlerPointer& pHandler) {
+		return std::make_unique<BlockStorageSubscription>(bootstrapper, pHandler);
 	}
 }}

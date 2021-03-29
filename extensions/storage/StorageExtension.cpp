@@ -6,21 +6,19 @@
 
 #include "src/BlockStorageSubscription.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
+#include "catapult/notification_handlers/DemuxHandlerBuilder.h"
 
 namespace catapult { namespace storage {
 
 	namespace {
 		void RegisterExtension(extensions::ProcessBootstrapper& bootstrapper) {
 			auto& subscriptionManager = bootstrapper.subscriptionManager();
-			validators::stateful::DemuxValidatorBuilder builder;
-			// Here we can add observers(it is stateful validators because they can't modify cache)
-			// Example of declaration you can find in DEFINE_STATEFUL_VALIDATOR
+			notification_handlers::DemuxHandlerBuilder builder;
+			// Example of declaration you can find in DEFINE_HANDLER
 			// To add a new handler use builder.add();
 			subscriptionManager.addPostBlockCommitSubscriber(CreateBlockStorageSubscription(
 					bootstrapper,
-					builder.build([](auto) {
-					return false;
-			})));
+					builder.build()));
 		}
 	}
 }}
