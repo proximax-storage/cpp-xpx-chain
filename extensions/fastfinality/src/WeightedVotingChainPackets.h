@@ -35,7 +35,6 @@ namespace catapult { namespace fastfinality {
 		Hash256 BlockHash;
 		NodeWorkState WorkState;
 		Key PublicKey;
-		Key BootKey;
 		std::vector<Key> HarvesterKeys;
 	};
 
@@ -45,7 +44,6 @@ namespace catapult { namespace fastfinality {
 		catapult::Height Height;
 		Hash256 BlockHash;
 		NodeWorkState WorkState = NodeWorkState::None;
-		Key BootKey;
 		std::vector<Key> HarvesterKeys;
 	};
 
@@ -70,7 +68,6 @@ namespace catapult { namespace fastfinality {
 			result.ChainHeight = pResponse->Height;
 			result.BlockHash = pResponse->BlockHash;
 			result.WorkState = pResponse->WorkState;
-			result.BootKey = pResponse->BootKey;
 			result.HarvesterKeys = std::move(pResponse->HarvesterKeys);
 
 			return true;

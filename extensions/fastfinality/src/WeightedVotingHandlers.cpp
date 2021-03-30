@@ -198,7 +198,7 @@ namespace catapult { namespace fastfinality {
 			pResponsePacket->Height = pBlockElement->Block.Height;
 			pResponsePacket->BlockHash = pBlockElement->EntityHash;
 			pResponsePacket->WorkState = pFsmShared->nodeWorkState();
-			pResponsePacket->BootKey = crypto::ParseKey(pConfigHolder->Config().User.BootKey);
+			pResponsePacket->HarvesterKeys.push_back(crypto::ParseKey(pConfigHolder->Config().User.BootKey));
 
 			const auto& view = pFsmShared->committeeData().unlockedAccounts()->view();
 			for (auto iter = view.begin(); iter != view.end(); ++iter) {
