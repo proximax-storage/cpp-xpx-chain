@@ -82,7 +82,8 @@ namespace catapult { namespace model {
 							{ "committeeMessageBroadcastInterval", "100ms" },
 							{ "committeeRequestInterval", "300ms" },
 							{ "committeeTimeAdjustment", "1.1" },
-							{ "committeeEndSyncApproval", "0.5" }
+							{ "committeeEndSyncApproval", "0.5" },
+							{ "committeeBaseTotalImportance", "100" }
 						}
 					},
 					{
@@ -123,7 +124,8 @@ namespace catapult { namespace model {
 					"committeeMessageBroadcastInterval",
 					"committeeRequestInterval",
 					"committeeTimeAdjustment",
-					"committeeEndSyncApproval"
+					"committeeEndSyncApproval",
+					"committeeBaseTotalImportance"
 				}.count(name);
 			}
 

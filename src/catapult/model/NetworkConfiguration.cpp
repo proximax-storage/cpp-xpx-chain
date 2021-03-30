@@ -103,6 +103,8 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeTimeAdjustment);
 		config.CommitteeEndSyncApproval = 0.5;
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeEndSyncApproval);
+		config.CommitteeBaseTotalImportance = 100;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeBaseTotalImportance);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

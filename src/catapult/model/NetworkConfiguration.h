@@ -136,6 +136,9 @@ namespace catapult { namespace model {
 		/// required for synchronization approval.
 		double CommitteeEndSyncApproval;
 
+		/// Amount of importance added to the total importance during the approval stage of node synchronization.
+		uint64_t CommitteeBaseTotalImportance = 100;
+
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
 
