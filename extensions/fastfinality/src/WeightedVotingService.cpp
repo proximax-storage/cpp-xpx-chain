@@ -129,7 +129,8 @@ namespace catapult { namespace fastfinality {
 				RegisterPushConfirmedBlockHandler(pFsmShared, packetHandlers, pluginManager);
 				RegisterPushPrevoteMessageHandler(pFsmShared, packetHandlers);
 				RegisterPushPrecommitMessageHandler(pFsmShared, packetHandlers);
-				RegisterPullRemoteNodeStateHandler(pFsmShared, packetHandlers, blockElementGetter, lastBlockElementSupplier);
+				// TODO: Consider rewriting to (pFsmShared, packetHandlers, pluginManager, storage)
+				RegisterPullRemoteNodeStateHandler(pFsmShared, packetHandlers, pConfigHolder, blockElementGetter, lastBlockElementSupplier);
 
 				auto& committeeData = pFsmShared->committeeData();
 				committeeData.setUnlockedAccounts(CreateUnlockedAccounts(m_harvestingConfig));

@@ -6,7 +6,9 @@
 
 #include "WeightedVotingHandlers.h"
 #include "WeightedVotingFsm.h"
+#include "catapult/crypto/KeyUtils.h"
 #include "catapult/crypto/Signer.h"
+#include "catapult/harvesting_core/UnlockedAccounts.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
 #include "catapult/model/BlockUtils.h"
 
@@ -171,9 +173,10 @@ namespace catapult { namespace fastfinality {
 	void RegisterPullRemoteNodeStateHandler(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			ionet::ServerPacketHandlers& handlers,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const std::function<std::shared_ptr<const model::BlockElement> (const Height&)>& blockElementGetter,
 			const model::BlockElementSupplier& lastBlockElementSupplier) {
-		handlers.registerHandler(ionet::PacketType::Pull_Remote_Node_State, [pFsmWeak, blockElementGetter, lastBlockElementSupplier](
+		handlers.registerHandler(ionet::PacketType::Pull_Remote_Node_State, [pFsmWeak, pConfigHolder, blockElementGetter, lastBlockElementSupplier](
 				const auto& packet,
 				auto& context) {
 			const auto pRequest = ionet::CoercePacket<RemoteNodeStatePacket>(&packet);
@@ -195,6 +198,12 @@ namespace catapult { namespace fastfinality {
 			pResponsePacket->Height = pBlockElement->Block.Height;
 			pResponsePacket->BlockHash = pBlockElement->EntityHash;
 			pResponsePacket->WorkState = pFsmShared->nodeWorkState();
+			pResponsePacket->BootKey = crypto::ParseKey(pConfigHolder->Config().User.BootKey);
+
+			const auto& view = pFsmShared->committeeData().unlockedAccounts()->view();
+			for (auto iter = view.begin(); iter != view.end(); ++iter) {
+				pResponsePacket->HarvesterKeys.push_back(iter->publicKey());
+			}
 
 			context.response(ionet::PacketPayload(pResponsePacket));
 		});

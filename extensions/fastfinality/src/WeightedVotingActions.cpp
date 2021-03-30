@@ -140,10 +140,25 @@ namespace catapult { namespace fastfinality {
 					uint64_t maxImportance = 0;
 					Hash256 bestHash;
 					std::map<Hash256, uint64_t> blockHashesImportance;
-					for (const auto& pair : blockHashesKeys) {
+					/*for (const auto& pair : blockHashesKeys) {
 						const auto& hash = pair.first;
 						auto& storedImportance = blockHashesImportance[hash];
 						for (const auto& key : pair.second) {
+							storedImportance += importanceGetter(key);
+						}
+						if (storedImportance >= maxImportance) {
+							maxImportance = storedImportance;
+							bestHash = hash;
+						}
+					}*/
+					for (const auto& state : remoteNodeStates) {
+						if (state.ChainHeight < chainSyncData.NetworkHeight) {
+							break;
+						}
+
+						const auto& hash = state.BlockHash;
+						auto& storedImportance = blockHashesImportance[hash];
+						for (const auto& key : state.HarvesterKeys) {
 							storedImportance += importanceGetter(key);
 						}
 						if (storedImportance >= maxImportance) {
@@ -161,11 +176,15 @@ namespace catapult { namespace fastfinality {
 			} else {
 
 				uint64_t approvalImportance = 0;
-				uint64_t totalImportance = 0;
+				uint64_t totalImportance = config.CommitteeBaseTotalImportance;
 				const auto& localBlockHash = lastBlockElementSupplier()->EntityHash;
 
 				for (const auto& state : remoteNodeStates) {
-					const auto importance = importanceGetter(state.PublicKey);
+					//const auto importance = importanceGetter(state.PublicKey);
+					uint64_t importance = 0;
+					for (const auto& key : state.HarvesterKeys) {
+						importance += importanceGetter(key);
+					}
 					if (state.WorkState == NodeWorkState::Running && state.BlockHash == localBlockHash) {
 						approvalImportance += importance;
 					}
