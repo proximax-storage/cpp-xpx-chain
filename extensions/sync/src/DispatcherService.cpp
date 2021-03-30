@@ -159,6 +159,11 @@ namespace catapult { namespace sync {
 			syncHandlers.PreStateWritten = [](const auto&, const auto&, auto) {};
 			syncHandlers.TransactionsChange = state.hooks().transactionsChangeHandler();
 			syncHandlers.CommitStep = CreateCommitStepHandler(dataDirectory);
+			syncHandlers.PostBlockCommit = [&](const std::vector<model::BlockElement>& elements) {
+				for (const auto& element : elements) {
+					state.postBlockCommitSubscriber().notifyBlock(element);
+				}
+			};
 
 			if (state.config().Node.ShouldUseCacheDatabaseStorage)
 				AddSupplementalDataResiliency(syncHandlers, dataDirectory, state.cache(), state.score());

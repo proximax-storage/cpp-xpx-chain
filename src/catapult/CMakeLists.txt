@@ -33,4 +33,5 @@ add_subdirectory(tree)
 add_subdirectory(utils)
 add_subdirectory(validators)
 add_subdirectory(version)
+add_subdirectory(notification_handlers)
 

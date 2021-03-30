@@ -299,6 +299,9 @@ namespace catapult { namespace consumers {
 						peerTransactionHashes,
 						syncState.detachRemovedTransactionInfos());
 				m_handlers.TransactionsChange(TransactionsChangeInfo{ peerTransactionHashes, revertedTransactionInfos });
+
+				// 5. notify observers about commited blocks
+				m_handlers.PostBlockCommit(elements);
 			}
 
 		private:

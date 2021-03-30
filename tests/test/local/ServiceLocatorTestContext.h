@@ -33,6 +33,7 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/SchedulerTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
+#include "tests/test/other/mocks/MockBlockChangeSubscriber.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
 #include "tests/test/other/mocks/MockStateChangeSubscriber.h"
 #include "tests/test/other/mocks/MockTransactionStatusSubscriber.h"
@@ -89,6 +90,7 @@ namespace catapult { namespace test {
 						m_transactionStatusSubscriber,
 						m_stateChangeSubscriber,
 						m_nodeSubscriber,
+						m_postBlockCommitSubscriber,
 						m_counters,
 						m_pluginManager,
 						m_pool)
@@ -131,6 +133,11 @@ namespace catapult { namespace test {
 			return m_nodeSubscriber;
 		}
 
+		/// Gets the post block commit subscriber.
+		const auto& postBlockCommitSubscriber() const {
+			return m_postBlockCommitSubscriber;
+		}
+
 		/// Gets the counters.
 		auto& counters() {
 			return m_counters;
@@ -164,6 +171,7 @@ namespace catapult { namespace test {
 		mocks::MockTransactionStatusSubscriber m_transactionStatusSubscriber;
 		mocks::MockStateChangeSubscriber m_stateChangeSubscriber;
 		mocks::MockNodeSubscriber m_nodeSubscriber;
+		mocks::MockBlockChangeSubscriber m_postBlockCommitSubscriber;
 
 		std::vector<utils::DiagnosticCounter> m_counters;
 		std::vector<plugins::PluginModule> m_modules;
