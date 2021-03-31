@@ -102,7 +102,9 @@ namespace catapult { namespace licensing {
 				}
 
 				const Height maxRollbackBlocks { m_pConfigHolder->Config().Network.MaxRollbackBlocks };
-				const Height currentHeight = height - maxRollbackBlocks;
+				const Height currentHeight = height <= maxRollbackBlocks
+													 ? maxRollbackBlocks
+													 : height - maxRollbackBlocks;
 
 				if (m_pLicense && currentHeight == m_pLicense->MaxHeight) {
 					auto blockElement = m_supplier(currentHeight);
