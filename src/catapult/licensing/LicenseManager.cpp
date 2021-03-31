@@ -92,15 +92,28 @@ namespace catapult { namespace licensing {
 			{}
 
 		public:
-			bool blockAllowedAt(const Height& height, const Hash256& stateHash) override {
+			bool blockAllowedAt(const Height& height) override {
 				std::lock_guard<std::mutex> lock(m_mutex);
 
-				if (!m_pLicense || m_pLicense && height == m_pLicense->MaxHeight ) {
-					requestLicense(height, stateHash);
+				if (!m_pLicense) {
+					const Height nemesisHeight(1);
+					auto blockElement = m_supplier(nemesisHeight);
+					requestLicense(nemesisHeight, blockElement->Block.StateHash);
 				}
 
-				const Height maxRollbackBlocks{ m_pConfigHolder->Config().Network.MaxRollbackBlocks };
-				return m_pLicense && (height <= m_pLicense->MaxHeight + maxRollbackBlocks);
+				const Height maxRollbackBlocks { m_pConfigHolder->Config().Network.MaxRollbackBlocks };
+				const Height currentHeight = height - maxRollbackBlocks;
+
+				if (m_pLicense && currentHeight == m_pLicense->MaxHeight) {
+					auto blockElement = m_supplier(currentHeight);
+					requestLicense(currentHeight, blockElement->Block.StateHash);
+				}
+
+				return m_pLicense && (currentHeight <= m_pLicense->MaxHeight);
+			}
+
+			void setBlockElementSupplier(BlockElementSupplier supplier) override {
+				m_supplier = supplier;
 			}
 
 		private:
@@ -235,6 +248,8 @@ namespace catapult { namespace licensing {
 			std::unique_ptr<boost::asio::streambuf> m_pBuffer;
 
 			std::mutex m_mutex;
+
+			BlockElementSupplier m_supplier;
 		};
 	}
 

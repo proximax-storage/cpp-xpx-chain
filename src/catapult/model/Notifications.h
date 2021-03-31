@@ -249,8 +249,7 @@ namespace catapult { namespace model {
 			Timestamp timestamp,
 			Difficulty difficulty,
 			uint32_t feeInterest,
-			uint32_t feeInterestDenominator,
-			const Hash256& stateHash)
+			uint32_t feeInterestDenominator)
 				: Notification(Notification_Type, sizeof(BlockNotification<1>))
 				, Signer(signer)
 				, Beneficiary(beneficiary)
@@ -259,7 +258,6 @@ namespace catapult { namespace model {
 				, NumTransactions(0)
 				, FeeInterest(feeInterest)
 				, FeeInterestDenominator(feeInterestDenominator)
-				, StateHash(stateHash)
 		{}
 
 	public:
@@ -286,9 +284,6 @@ namespace catapult { namespace model {
 
 		/// Denominator of the transaction fee.
 		uint32_t FeeInterestDenominator;
-
-		/// Hash of the global chain state at this block.
-		Hash256 StateHash;
 	};
 
 	// endregion

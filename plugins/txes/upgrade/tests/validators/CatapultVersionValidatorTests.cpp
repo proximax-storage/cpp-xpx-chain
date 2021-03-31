@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 				upgradeCacheDelta.insert(state::BlockchainUpgradeEntry(Height(1), BlockchainVersion{nextBlockchainVersion}));
 				cache.commit(Height(1));
 			}
-			model::BlockNotification<1> notification(Key(), Key(), Timestamp(), Difficulty(), 0, 0, Hash256());
+			model::BlockNotification<1> notification(Key(), Key(), Timestamp(), Difficulty(), 0, 0);
 			auto pValidator = CreateBlockchainVersionValidator();
 
 			// Act:

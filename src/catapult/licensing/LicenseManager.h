@@ -8,14 +8,18 @@
 #include "LicensingConfiguration.h"
 #include "catapult/types.h"
 #include <memory>
+#include <catapult/io/BlockStorageCache.h>
 
 namespace catapult { namespace config { class BlockchainConfigurationHolder; } }
 
 namespace catapult { namespace licensing {
 
+	using BlockElementSupplier = std::function<std::shared_ptr<const model::BlockElement>(const Height& height)>;
+
 	struct LicenseManager {
 	public:
-		virtual bool blockAllowedAt(const Height& height, const Hash256& stateHash) = 0;
+		virtual bool blockAllowedAt(const Height& height) = 0;
+		virtual void setBlockElementSupplier(BlockElementSupplier supplier) = 0;
 	};
 
 	std::shared_ptr<LicenseManager> CreateDefaultLicenseManager(

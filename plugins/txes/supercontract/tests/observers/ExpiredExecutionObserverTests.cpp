@@ -23,7 +23,7 @@ namespace catapult { namespace observers {
 		const auto Super_Contract_Key = test::GenerateRandomByteArray<Key>();
 
 		auto CreateNotification() {
-			return Notification(Key(), Key(), Timestamp(), Difficulty(), 0u, 0u, Hash256());
+			return Notification(Key(), Key(), Timestamp(), Difficulty(), 0u, 0u);
 		}
 
 		auto CreateOperationEntry(state::LockStatus status, const Height& height, std::set<Key> executors) {
