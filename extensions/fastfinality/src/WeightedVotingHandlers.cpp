@@ -198,12 +198,13 @@ namespace catapult { namespace fastfinality {
 			pResponsePacket->Height = pBlockElement->Block.Height;
 			pResponsePacket->BlockHash = pBlockElement->EntityHash;
 			pResponsePacket->WorkState = pFsmShared->nodeWorkState();
-			pResponsePacket->HarvesterKeys.push_back(crypto::ParseKey(pConfigHolder->Config().User.BootKey));
+			pResponsePacket->HarvesterKey = pFsmShared->committeeData().unlockedAccounts()->view().begin()->publicKey();
+			//pResponsePacket->HarvesterKeys.push_back(crypto::ParseKey(pConfigHolder->Config().User.BootKey));
 
-			const auto& view = pFsmShared->committeeData().unlockedAccounts()->view();
+			/*const auto& view = pFsmShared->committeeData().unlockedAccounts()->view();
 			for (auto iter = view.begin(); iter != view.end(); ++iter) {
 				pResponsePacket->HarvesterKeys.push_back(iter->publicKey());
-			}
+			}*/
 
 			context.response(ionet::PacketPayload(pResponsePacket));
 		});

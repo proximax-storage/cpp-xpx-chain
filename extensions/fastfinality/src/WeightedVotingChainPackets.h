@@ -35,7 +35,7 @@ namespace catapult { namespace fastfinality {
 		Hash256 BlockHash;
 		NodeWorkState WorkState;
 		Key PublicKey;
-		std::vector<Key> HarvesterKeys;
+		Key HarvesterKey;
 	};
 
 	struct RemoteNodeStatePacket : public ionet::Packet {
@@ -44,7 +44,7 @@ namespace catapult { namespace fastfinality {
 		catapult::Height Height;
 		Hash256 BlockHash;
 		NodeWorkState WorkState = NodeWorkState::None;
-		std::vector<Key> HarvesterKeys;
+		Key HarvesterKey;
 	};
 
 	struct RemoteNodeStateTraits {
@@ -68,7 +68,7 @@ namespace catapult { namespace fastfinality {
 			result.ChainHeight = pResponse->Height;
 			result.BlockHash = pResponse->BlockHash;
 			result.WorkState = pResponse->WorkState;
-			result.HarvesterKeys = std::move(pResponse->HarvesterKeys);
+			result.HarvesterKey = pResponse->HarvesterKey;
 
 			return true;
 		}

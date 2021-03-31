@@ -120,7 +120,7 @@ namespace catapult { namespace fastfinality {
 
 			auto& chainSyncData = pFsmShared->chainSyncData();
 			chainSyncData.NetworkHeight = remoteNodeStates.begin()->ChainHeight;
-			chainSyncData.LocalHeight = remoteNodeStates.begin()->ChainHeight;
+			chainSyncData.LocalHeight = lastBlockElementSupplier()->Block.Height;
 
 			if (chainSyncData.NetworkHeight < chainSyncData.LocalHeight) {
 
@@ -158,9 +158,10 @@ namespace catapult { namespace fastfinality {
 
 						const auto& hash = state.BlockHash;
 						auto& storedImportance = blockHashesImportance[hash];
-						for (const auto& key : state.HarvesterKeys) {
+						/*for (const auto& key : state.HarvesterKeys) {
 							storedImportance += importanceGetter(key);
-						}
+						}*/
+						storedImportance += importanceGetter(state.HarvesterKey);
 						if (storedImportance >= maxImportance) {
 							maxImportance = storedImportance;
 							bestHash = hash;
@@ -180,16 +181,18 @@ namespace catapult { namespace fastfinality {
 				const auto& localBlockHash = lastBlockElementSupplier()->EntityHash;
 
 				for (const auto& state : remoteNodeStates) {
-					//const auto importance = importanceGetter(state.PublicKey);
-					uint64_t importance = 0;
+					const auto importance = importanceGetter(state.HarvesterKey);
+					/*uint64_t importance = 0;
 					for (const auto& key : state.HarvesterKeys) {
 						importance += importanceGetter(key);
-					}
-					if (state.WorkState == NodeWorkState::Running && state.BlockHash == localBlockHash) {
+					}*/
+					if ((state.WorkState == NodeWorkState::Running || state.ChainHeight.unwrap() == 1) && state.BlockHash == localBlockHash) {
 						approvalImportance += importance;
 					}
 					totalImportance += importance;
 				}
+
+				CATAPULT_LOG(debug) << "importance (approval/total): " << approvalImportance << " / " << totalImportance;
 
 				if (ApprovalImportanceSufficient(approvalImportance, totalImportance, config)) {
 					pFsmShared->processEvent(NetworkHeightEqualToLocal{});
