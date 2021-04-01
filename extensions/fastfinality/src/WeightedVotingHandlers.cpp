@@ -189,22 +189,29 @@ namespace catapult { namespace fastfinality {
 
 			TRY_GET_FSM()
 
-			auto targetHeight = pRequest->Height;
-			const auto& localHeight = lastBlockElementSupplier()->Block.Height;
-			targetHeight = std::min(targetHeight, localHeight);
+			const auto& view = pFsmShared->committeeData().unlockedAccounts()->view();
+			const uint8_t harvesterKeysCount = 1 + view.size();	// Extra one for a BootKey
+			auto pResponsePacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>(sizeof(Key) * harvesterKeysCount);
 
-			auto pResponsePacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
+			const auto targetHeight = std::min(lastBlockElementSupplier()->Block.Height, pRequest->Height);
 			const auto pBlockElement = blockElementGetter(targetHeight);
+
 			pResponsePacket->Height = pBlockElement->Block.Height;
 			pResponsePacket->BlockHash = pBlockElement->EntityHash;
 			pResponsePacket->WorkState = pFsmShared->nodeWorkState();
-			pResponsePacket->HarvesterKey = pFsmShared->committeeData().unlockedAccounts()->view().begin()->publicKey();
-			//pResponsePacket->HarvesterKeys.push_back(crypto::ParseKey(pConfigHolder->Config().User.BootKey));
+			pResponsePacket->HarvesterKeysCount = harvesterKeysCount;
 
-			/*const auto& view = pFsmShared->committeeData().unlockedAccounts()->view();
-			for (auto iter = view.begin(); iter != view.end(); ++iter) {
-				pResponsePacket->HarvesterKeys.push_back(iter->publicKey());
-			}*/
+			auto* pResponsePacketData = reinterpret_cast<Key*>(pResponsePacket.get() + 1);
+			pResponsePacketData[0] = crypto::ParseKey(pConfigHolder->Config().User.BootKey);
+			{
+				auto iter = view.begin();
+				auto index = 1;
+				while (iter != view.end()) {
+					pResponsePacketData[index] = iter->publicKey();
+					++iter;
+					++index;
+				}
+			}
 
 			context.response(ionet::PacketPayload(pResponsePacket));
 		});

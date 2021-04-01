@@ -140,7 +140,7 @@ namespace catapult { namespace fastfinality {
 					uint64_t maxImportance = 0;
 					Hash256 bestHash;
 					std::map<Hash256, uint64_t> blockHashesImportance;
-					/*for (const auto& pair : blockHashesKeys) {
+					for (const auto& pair : blockHashesKeys) {
 						const auto& hash = pair.first;
 						auto& storedImportance = blockHashesImportance[hash];
 						for (const auto& key : pair.second) {
@@ -150,7 +150,7 @@ namespace catapult { namespace fastfinality {
 							maxImportance = storedImportance;
 							bestHash = hash;
 						}
-					}*/
+					}
 					for (const auto& state : remoteNodeStates) {
 						if (state.ChainHeight < chainSyncData.NetworkHeight) {
 							break;
@@ -158,14 +158,14 @@ namespace catapult { namespace fastfinality {
 
 						const auto& hash = state.BlockHash;
 						auto& storedImportance = blockHashesImportance[hash];
-						/*for (const auto& key : state.HarvesterKeys) {
+						for (const auto& key : state.HarvesterKeys) {
 							storedImportance += importanceGetter(key);
-						}*/
-						storedImportance += importanceGetter(state.HarvesterKey);
+						}
+						/*storedImportance += importanceGetter(state.HarvesterKey);
 						if (storedImportance >= maxImportance) {
 							maxImportance = storedImportance;
 							bestHash = hash;
-						}
+						}*/
 					}
 					chainSyncData.NodeIdentityKeys = blockHashesKeys.at(bestHash);
 				} else {
@@ -181,11 +181,11 @@ namespace catapult { namespace fastfinality {
 				const auto& localBlockHash = lastBlockElementSupplier()->EntityHash;
 
 				for (const auto& state : remoteNodeStates) {
-					const auto importance = importanceGetter(state.HarvesterKey);
-					/*uint64_t importance = 0;
+					//const auto importance = importanceGetter(state.HarvesterKey);
+					uint64_t importance = 0;
 					for (const auto& key : state.HarvesterKeys) {
 						importance += importanceGetter(key);
-					}*/
+					}
 					if ((state.WorkState == NodeWorkState::Running || state.ChainHeight.unwrap() == 1) && state.BlockHash == localBlockHash) {
 						approvalImportance += importance;
 					}
