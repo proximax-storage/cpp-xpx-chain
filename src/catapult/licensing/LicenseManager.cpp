@@ -111,7 +111,7 @@ namespace catapult { namespace licensing {
 					requestLicense(currentHeight, blockElement->Block.StateHash);
 				}
 
-				return m_pLicense && (currentHeight <= m_pLicense->MaxHeight);
+				return m_pLicense && (currentHeight < m_pLicense->MaxHeight);
 			}
 
 			void setBlockElementSupplier(BlockElementSupplier supplier) override {
