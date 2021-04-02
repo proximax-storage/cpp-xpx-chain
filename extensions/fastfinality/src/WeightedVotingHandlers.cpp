@@ -198,7 +198,7 @@ namespace catapult { namespace fastfinality {
 
 			pResponsePacket->Height = pBlockElement->Block.Height;
 			pResponsePacket->BlockHash = pBlockElement->EntityHash;
-			pResponsePacket->WorkState = pFsmShared->nodeWorkState();
+			pResponsePacket->NodeWorkState = pFsmShared->nodeWorkState();
 			pResponsePacket->HarvesterKeysCount = harvesterKeysCount;
 
 			auto* pResponsePacketData = reinterpret_cast<Key*>(pResponsePacket.get() + 1);

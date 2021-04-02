@@ -24,8 +24,7 @@ namespace catapult {
 
 namespace catapult { namespace fastfinality {
 
-	// TODO: Add proper description for RemoteNodeStateRetriever, double-check import
-	///
+	/// A retriever that returns remote node states from all available peers.
 	using RemoteNodeStateRetriever = std::function<thread::future<std::vector<RemoteNodeState>> ()>;
 
 	/// Registers a push proposed block handler in \a handlers verifying data with \a pFsmWeak and \a pluginManager.
@@ -50,8 +49,8 @@ namespace catapult { namespace fastfinality {
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers);
 
-	// TODO: Add proper description for RegisterPullRemoteNodeStateHandler
-	///
+	/// Registers a pull remote node state handler in \a handlers constructing response from \a pFsmWeak
+	/// using \a pConfigHolder, \a blockElementGetter and \a lastBlockElementSupplier.
 	void RegisterPullRemoteNodeStateHandler(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers,

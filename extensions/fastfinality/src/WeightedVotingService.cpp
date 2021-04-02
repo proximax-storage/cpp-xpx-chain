@@ -57,7 +57,7 @@ namespace catapult { namespace fastfinality {
 					api::RemoteRequestDispatcher dispatcher{*pPacketIoPair->io()};
 					remoteNodeStateFutures.push_back(dispatcher.dispatch(RemoteNodeStateTraits{}, targetHeight).then([pPacketIoPair](auto&& stateFuture) {
 						auto remoteNodeState = stateFuture.get();
-						remoteNodeState.PublicKey = pPacketIoPair->node().identityKey();
+						remoteNodeState.NodeKey = pPacketIoPair->node().identityKey();
 						return remoteNodeState;
 					}));
 				}

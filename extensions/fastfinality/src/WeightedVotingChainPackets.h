@@ -31,10 +31,10 @@ namespace catapult { namespace fastfinality {
 	};
 
 	struct RemoteNodeState {
-		Height ChainHeight;
+		catapult::Height Height;
 		Hash256 BlockHash;
-		NodeWorkState WorkState;
-		Key PublicKey;
+		fastfinality::NodeWorkState NodeWorkState;
+		Key NodeKey;
 		std::vector<Key> HarvesterKeys;
 	};
 
@@ -43,7 +43,7 @@ namespace catapult { namespace fastfinality {
 
 		catapult::Height Height;
 		Hash256 BlockHash;
-		NodeWorkState WorkState = NodeWorkState::None;
+		fastfinality::NodeWorkState NodeWorkState = NodeWorkState::None;
 		uint8_t HarvesterKeysCount;
 	};
 
@@ -61,18 +61,14 @@ namespace catapult { namespace fastfinality {
 
 	public:
 		bool tryParseResult(const ionet::Packet& packet, ResultType& result) const {
-			//const auto* pResponse = ionet::CoercePacket<RemoteNodeStatePacket>(&packet);
-			/*if (!pResponse)
-				return false;*/
 
 			const auto* pResponse = static_cast<const RemoteNodeStatePacket*>(&packet);
-			const auto* pResponseData = reinterpret_cast<const Key*>(&packet + 1);
+			const auto* pResponseData = reinterpret_cast<const Key*>(pResponse + 1);
 
-			result.ChainHeight = pResponse->Height;
+			result.Height = pResponse->Height;
 			result.BlockHash = pResponse->BlockHash;
-			result.WorkState = pResponse->WorkState;
+			result.NodeWorkState = pResponse->NodeWorkState;
 			for (auto i = 0; i < pResponse->HarvesterKeysCount; ++i) {
-				//CATAPULT_LOG(debug) << "*** HARVESTER KEY: " << pResponseData[i] << " ***";
 				result.HarvesterKeys.push_back(pResponseData[i]);
 			}
 
