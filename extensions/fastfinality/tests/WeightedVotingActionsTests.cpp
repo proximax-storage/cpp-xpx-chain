@@ -28,7 +28,7 @@ namespace catapult { namespace fastfinality {
 			mocks::MockCommitteeManager committeeManager = mocks::MockCommitteeManager();
 			const std::shared_ptr<thread::IoThreadPool> pPool = test::CreateStartedIoThreadPool();
 		};
-	} // namespace
+	}
 
 	TEST_F(TestWeightedVotingActions, ValidateBlockCosignatures_Success) {
 		ASSERT_TRUE(ValidateBlockCosignatures(pBlock, committeeManager, 0.67));
@@ -62,4 +62,4 @@ namespace catapult { namespace fastfinality {
 		ASSERT_FALSE(ValidateProposedBlock(pBlock, serviceState.state(), lastBlockElementSupplier, pPool));
 	}
 
-}} // namespace catapult::fastfinality
+}}

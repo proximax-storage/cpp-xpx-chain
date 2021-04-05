@@ -44,4 +44,4 @@ namespace catapult { namespace mocks {
 		}
 	};
 
-}} // namespace catapult::mocks
+}}

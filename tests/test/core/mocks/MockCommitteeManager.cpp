@@ -1,12 +1,14 @@
-//
-// Created by newman on 05.03.2021.
-//
+/**
+*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
 
 #include "MockCommitteeManager.h"
 
 namespace catapult { namespace mocks {
 	const chain::Committee& MockCommitteeManager::selectCommittee(const model::NetworkConfiguration& config) {
-		return catapult::chain::Committee(0);
+		return chain::Committee(0);
 	}
 	void MockCommitteeManager::reset() {}
 	double MockCommitteeManager::weight(const Key& accountKey) const {
@@ -15,4 +17,4 @@ namespace catapult { namespace mocks {
 	void MockCommitteeManager::setCommittee(const chain::Committee& committee) {
 		m_committee = committee;
 	}
-}} // namespace catapult::mocks
+}}

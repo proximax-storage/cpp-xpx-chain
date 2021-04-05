@@ -45,7 +45,7 @@ namespace catapult { namespace fastfinality {
 			// Act
 			actFunc(pFsm, handlers);
 		}
-	} // namespace
+	}
 
 	// region RegisterPushProposedBlockHandler
 
@@ -72,7 +72,7 @@ namespace catapult { namespace fastfinality {
 						test::AssertNoResponse(context);
 					});
 		}
-	} // namespace
+	}
 
 	TEST(TEST_CLASS, PushProposedBlockHandler_SavesProposedBlock) {
 		// Arrange:
@@ -156,7 +156,7 @@ namespace catapult { namespace fastfinality {
 						test::AssertNoResponse(context);
 					});
 		}
-	} // namespace
+	}
 
 	TEST(TEST_CLASS, PushConfirmedBlockHandler_SavesConfirmedBlock) {
 		// Arrange:
@@ -215,7 +215,7 @@ namespace catapult { namespace fastfinality {
 
 	// endregion
 
-	// region RegisterPushConfirmedBlockHandler
+	// region RegisterPushVoteMessageHandler
 
 	template<typename TMessage>
 	void makePacketValid(const std::shared_ptr<TMessage>& pPacket, const Key& pubKey, const Hash256& blockHash) {
@@ -242,7 +242,7 @@ namespace catapult { namespace fastfinality {
 			// Assert:
 			assertFunc(pFsm);
 		}
-	} // namespace
+	}
 
 	TEST(TEST_CLASS, RegisterPushPrevoteMessageHandler_Success) {
 		auto stage = CommitteeStage { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
@@ -514,4 +514,4 @@ namespace catapult { namespace fastfinality {
 	}
 
 	// endregion
-}} // namespace catapult::fastfinality
+}}

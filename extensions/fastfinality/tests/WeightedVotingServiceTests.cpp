@@ -43,7 +43,7 @@ namespace catapult { namespace fastfinality {
 			assertFn(pWeightedVoting, serviceState, locator);
 		}
 
-	} // namespace
+	}
 
 	TEST(TEST_CLASS, WeightedVotingServiceRegistrar_Success) {
 		harvesting::HarvestingConfiguration harvestingCfg = harvesting::HarvestingConfiguration::Uninitialized();
@@ -107,4 +107,4 @@ namespace catapult { namespace fastfinality {
 					ASSERT_EQ(pMockFsm->startCounter, 1);
 				});
 	}
-}} // namespace catapult::fastfinality
+}}
