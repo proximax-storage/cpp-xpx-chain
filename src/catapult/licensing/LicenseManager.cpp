@@ -128,7 +128,7 @@ namespace catapult { namespace licensing {
 			}
 
 		private:
-			using RequestCallback = const std::function<void(const bool isSuccess, const std::string response)>;
+			using RequestCallback = const std::function<void(const bool, const boost::property_tree::ptree)>;
 
 			void requestClosestHeight(const Height& height) {
 				boost::property_tree::ptree requestJson = generateBasicJson(height);
@@ -137,11 +137,8 @@ namespace catapult { namespace licensing {
 				boost::property_tree::write_json(out, requestJson);
 				auto request = out.str();
 
-				doRequest(request, [this](const bool isSuccess, const std::string response) {
+				doRequest(request, [this](const bool isSuccess, const boost::property_tree::ptree responseJson) {
 					if (isSuccess) {
-						boost::property_tree::ptree responseJson;
-						checkFailure(response, responseJson);
-
 						m_closestHeight = Height(responseJson.get<uint64_t>("height"));
 					}
 				});
@@ -157,18 +154,14 @@ namespace catapult { namespace licensing {
 				boost::property_tree::write_json(out, requestJson);
 				auto request = out.str();
 
-				doRequest(request, [this](const bool isSuccess, const std::string response) {
+				doRequest(request, [this](const bool isSuccess, const boost::property_tree::ptree responseJson) {
 					if (isSuccess) {
 						try {
-							boost::property_tree::ptree responseJson;
-							checkFailure(response, responseJson);
-
 							auto licenseJson = responseJson.get_child("license");
 
 							m_pLicense = ReadLicense(licenseJson, m_network, m_node, m_licenseKey);
 
 							boost::property_tree::write_json(m_licenseFile.generic_string(), responseJson);
-
 						} catch (const std::exception& err) {
 							CATAPULT_LOG(warning) << "failed to parse license server response: " << err.what();
 						}
@@ -184,18 +177,6 @@ namespace catapult { namespace licensing {
 				json.add("height", height);
 
 				return json;
-			}
-
-			static void checkFailure(const std::string& response, boost::property_tree::ptree& json) {
-				std::istringstream in(response);
-				boost::property_tree::read_json(in, json);
-
-				auto failure = json.get_child_optional("failure");
-				if (failure.has_value()) {
-					auto description = failure->get<std::string>("description");
-					CATAPULT_LOG(warning) << "license server responded with error: " << description;
-					return;
-				}
 			}
 
 			void doRequest(const std::string& request, RequestCallback callback) {
@@ -225,7 +206,7 @@ namespace catapult { namespace licensing {
 							   RequestCallback callback) {
 				if (err) {
 					CATAPULT_LOG(warning) << "couldn't resolve address " << m_serverHost << ": " << err;
-					callback(false, "");
+					callback(false, boost::property_tree::ptree());
 					return;
 				}
 
@@ -243,7 +224,7 @@ namespace catapult { namespace licensing {
 							   RequestCallback callback) {
 				if (err) {
 					CATAPULT_LOG(warning) << "couldn't connect to the license server: " << err;
-					callback(false, "");
+					callback(false, boost::property_tree::ptree());
 					return;
 				}
 
@@ -259,7 +240,7 @@ namespace catapult { namespace licensing {
 			void handleWrite(const boost::system::error_code& err, size_t, RequestCallback callback) {
 				if (err) {
 					CATAPULT_LOG(warning) << "couldn't send request to the license server: " << err;
-					callback(false, "");
+					callback(false, boost::property_tree::ptree());
 					return;
 				}
 
@@ -275,12 +256,23 @@ namespace catapult { namespace licensing {
 			void handleRead(const boost::system::error_code& err, size_t, RequestCallback callback) {
 				if (err && err != boost::asio::error::eof) {
 					CATAPULT_LOG(warning) << "couldn't receive response from the license server: " << err;
-					callback(false, "");
+					callback(false, boost::property_tree::ptree());
 					return;
 				}
 
 				auto response = std::string(boost::asio::buffer_cast<const char*>(m_pBuffer->data()));
-				callback(true, response);
+				boost::property_tree::ptree responseJson;
+				std::istringstream in(response);
+				boost::property_tree::read_json(in, responseJson);
+
+				auto failure = responseJson.get_child_optional("failure");
+				if (failure.has_value()) {
+					auto description = failure->get<std::string>("description");
+					CATAPULT_LOG(warning) << "license server responded with error: " << description;
+					callback(false, responseJson);
+				} else {
+					callback(true, responseJson);
+				}
 			}
 
 		private:
