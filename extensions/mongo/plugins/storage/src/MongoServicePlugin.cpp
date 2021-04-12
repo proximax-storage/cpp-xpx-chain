@@ -1,0 +1,24 @@
+/**
+*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#include "DownloadMapper.h"
+#include "DataModificationMapper.h"
+#include "mongo/src/MongoPluginManager.h"
+#include "mongo/src/MongoReceiptPluginFactory.h"
+#include "storages/MongoDownloadCacheStorage.h"
+
+extern "C" PLUGIN_API
+void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
+	// transaction support
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateDownloadTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationTransactionMongoPlugin());
+
+	// cache storage support
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDownloadCacheStorage(
+		manager.mongoContext(),
+		manager.configHolder()
+	));
+}

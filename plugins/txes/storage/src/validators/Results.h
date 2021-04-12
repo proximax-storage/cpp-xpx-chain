@@ -1,0 +1,20 @@
+/**
+*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#pragma once
+#ifndef CUSTOM_RESULT_DEFINITION
+#include "catapult/validators/ValidationResult.h"
+
+namespace catapult { namespace validators {
+
+#endif
+/// Defines a download channel validation result with \a DESCRIPTION and \a CODE.
+#define DEFINE_SERVICE_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, Service, DESCRIPTION, CODE, None)
+
+
+#ifndef CUSTOM_RESULT_DEFINITION
+}}
+#endif

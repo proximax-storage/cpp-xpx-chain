@@ -29,8 +29,9 @@ namespace catapult { namespace config {
         exchangeConfigId,
         operationConfigId,
 		committeeConfigId,
+		storageConfigId,
         First = static_cast<uint32_t>(aggregateConfigId),
-        Latest = static_cast<uint32_t>(committeeConfigId),
+        Latest = static_cast<uint32_t>(storageConfigId),
 	};
 
 /// Defines config constants for a config with \a NAME.

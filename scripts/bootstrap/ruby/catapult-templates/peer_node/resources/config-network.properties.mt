@@ -163,3 +163,12 @@ downloadCacheEnabled = true
 
 enabled = true
 maxSuperContractsOnDrive = 10
+
+[plugin:catapult.plugins.storage]
+
+enabled = false
+minDriveSize = 1mb
+maxFreeDownloadSize = 1mb
+# 4 weeks 28 days
+storageBillingPeriod = 28d
+downloadBillingPeriod = 24h
