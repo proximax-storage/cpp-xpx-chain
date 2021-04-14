@@ -95,23 +95,22 @@ namespace catapult { namespace licensing {
 			bool blockAllowedAt(const Height& height) override {
 				std::lock_guard<std::mutex> lock(m_mutex);
 
-				const Height nemesisHeight(1);
-				const Height initialHeight(2);
 				const Height maxRollbackBlocks { m_pConfigHolder->Config().Network.MaxRollbackBlocks };
 				const Height currentHeight = height <= maxRollbackBlocks
-											 ? nemesisHeight
-											 : height - maxRollbackBlocks;
+					? Height(1)
+					: height - maxRollbackBlocks;
 
-				if (!m_pLicense && currentHeight <= initialHeight) {
-					auto blockElement = m_supplier(nemesisHeight);
-					requestLicense(nemesisHeight, blockElement->Block.StateHash);
-				}
-
-				if (!m_pLicense && currentHeight > initialHeight) {
-					requestClosestHeight(currentHeight);
-					if (m_closestHeight != Height(0)) {
-						auto blockElement = m_supplier(m_closestHeight);
-						requestLicense(m_closestHeight, blockElement->Block.StateHash);
+				if (!m_pLicense) {
+					if (currentHeight == Height(1)) {
+						auto blockElement = m_supplier(Height(1));
+						requestLicense(Height(1), blockElement->Block.StateHash);
+					} else {
+						const Height closestHeight = requestClosestHeight(currentHeight);
+						// if a license server responded with a failure
+						if (closestHeight > Height(0)) {
+							auto blockElement = m_supplier(closestHeight);
+							requestLicense(closestHeight, blockElement->Block.StateHash);
+						}
 					}
 				}
 
@@ -128,33 +127,34 @@ namespace catapult { namespace licensing {
 			}
 
 		private:
-			using RequestCallback = const std::function<void(const bool, const boost::property_tree::ptree)>;
+			using RequestCallback = const std::function<void(bool, const boost::property_tree::ptree&)>;
 
-			void requestClosestHeight(const Height& height) {
-				boost::property_tree::ptree requestJson = generateBasicJson(height);
+			Height requestClosestHeight(const Height& height) {
+				boost::property_tree::ptree requestJson = createRequest(height);
 
 				std::ostringstream out;
 				boost::property_tree::write_json(out, requestJson);
 				auto request = out.str();
 
-				doRequest(request, [this](const bool isSuccess, const boost::property_tree::ptree responseJson) {
+				Height closestHeight(0);
+				doRequest(request, [this, &closestHeight](bool isSuccess, const boost::property_tree::ptree& responseJson) {
 					if (isSuccess) {
-						m_closestHeight = Height(responseJson.get<uint64_t>("height"));
+						closestHeight = Height(responseJson.get<uint64_t>("height"));
 					}
 				});
+
+				return closestHeight;
 			}
 
 			void requestLicense(const Height& height, const Hash256& stateHash) {
-				boost::property_tree::ptree requestJson = generateBasicJson(height);
+				boost::property_tree::ptree requestJson = createRequest(height);
+				requestJson.add("stateHash", utils::HexFormat(stateHash.begin(), stateHash.end()));
 
-				std::ostringstream stateHashStream;
-				stateHashStream << utils::HexFormat(stateHash.begin(), stateHash.end());
-				requestJson.add("stateHash", stateHashStream.str());
 				std::ostringstream out;
 				boost::property_tree::write_json(out, requestJson);
 				auto request = out.str();
 
-				doRequest(request, [this](const bool isSuccess, const boost::property_tree::ptree responseJson) {
+				doRequest(request, [this](bool isSuccess, const boost::property_tree::ptree& responseJson) {
 					if (isSuccess) {
 						try {
 							auto licenseJson = responseJson.get_child("license");
@@ -169,7 +169,7 @@ namespace catapult { namespace licensing {
 				});
 			}
 
-			boost::property_tree::ptree generateBasicJson(const Height& height) {
+			boost::property_tree::ptree createRequest(const Height& height) {
 				boost::property_tree::ptree json;
 				m_network = crypto::FormatKeyAsString(m_pConfigHolder->Config().Network.Info.PublicKey);
 				json.add("network", m_network);
@@ -296,7 +296,6 @@ namespace catapult { namespace licensing {
 			std::mutex m_mutex;
 
 			BlockElementSupplier m_supplier;
-			Height m_closestHeight;
 		};
 	}
 
