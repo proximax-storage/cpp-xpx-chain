@@ -100,6 +100,10 @@ namespace catapult { namespace licensing {
 					? Height(1)
 					: height - maxRollbackBlocks;
 
+				if (m_pLicense && currentHeight > m_pLicense->MaxHeight) {
+					m_pLicense.reset();
+				}
+
 				if (!m_pLicense) {
 					if (currentHeight == Height(1)) {
 						auto blockElement = m_supplier(Height(1));
@@ -119,7 +123,7 @@ namespace catapult { namespace licensing {
 					requestLicense(currentHeight, blockElement->Block.StateHash);
 				}
 
-				return m_pLicense && (currentHeight < m_pLicense->MaxHeight);
+				return m_pLicense && (currentHeight <= m_pLicense->MaxHeight);
 			}
 
 			void setBlockElementSupplier(BlockElementSupplier supplier) override {
