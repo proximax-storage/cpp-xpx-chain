@@ -101,6 +101,11 @@ namespace catapult { namespace local {
 				initializers(const_cast<model::NetworkConfiguration&>(m_pluginManager.configHolder()->Config().Network));
 				m_pluginManager.configHolder()->SetPluginInitializer(initializers);
 
+				m_pluginManager.licenseManager()->setBlockElementSupplier([&storage = m_storage](const Height& height) {
+					auto storageView = storage.view();
+					return storageView.loadBlockElement(height);
+				});
+
 				CATAPULT_LOG(debug) << "registering counters";
 				registerCounters();
 

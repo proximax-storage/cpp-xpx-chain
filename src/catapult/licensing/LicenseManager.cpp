@@ -18,7 +18,6 @@ namespace catapult { namespace licensing {
 		constexpr auto License_File = "license.json";
 
 		struct License {
-			Height MinHeight;
 			Height MaxHeight;
 		};
 
@@ -43,15 +42,14 @@ namespace catapult { namespace licensing {
 				CATAPULT_THROW_RUNTIME_ERROR("error parsing license signature")
 			}
 
-			Height minHeight(licenseJson.get<uint64_t>("minheight"));
 			Height maxHeight(licenseJson.get<uint64_t>("maxheight"));
 
-			auto buffer = network + node + std::to_string(minHeight.unwrap()) + std::to_string(maxHeight.unwrap());
+			auto buffer = network + node + std::to_string(maxHeight.unwrap());
 			if (!crypto::Verify(licenseKey, { reinterpret_cast<const uint8_t*>(buffer.data()), buffer.size() }, signature)) {
 				CATAPULT_THROW_RUNTIME_ERROR("invalid license signature")
 			}
 
-			return std::make_unique<License>(License{ minHeight, maxHeight });
+			return std::make_unique<License>(License{ maxHeight });
 		}
 
 		std::unique_ptr<License> ReadLicense(
@@ -94,41 +92,111 @@ namespace catapult { namespace licensing {
 			{}
 
 		public:
-			bool blockGeneratingAllowedAt(const Height& height) override {
+			bool blockAllowedAt(const Height& height) override {
 				std::lock_guard<std::mutex> lock(m_mutex);
 
-				if (m_pLicense && (m_pLicense->MinHeight <= height && height <= m_pLicense->MaxHeight))
-					return true;
+				const Height maxRollbackBlocks { m_pConfigHolder->Config().Network.MaxRollbackBlocks };
+				const Height currentHeight = height <= maxRollbackBlocks
+					? Height(1)
+					: height - maxRollbackBlocks;
 
-				requestLicense();
+				if (m_pLicense && currentHeight > m_pLicense->MaxHeight) {
+					m_pLicense.reset();
+				}
 
-				return m_pLicense && (m_pLicense->MinHeight <= height && height <= m_pLicense->MaxHeight);
+				if (!m_pLicense) {
+					if (currentHeight == Height(1)) {
+						auto blockElement = m_supplier(Height(1));
+						requestLicense(Height(1), blockElement->Block.StateHash);
+					} else {
+						const Height closestHeight = requestClosestHeight(currentHeight);
+						// if a license server responded with a failure
+						if (closestHeight > Height(0)) {
+							auto blockElement = m_supplier(closestHeight);
+							requestLicense(closestHeight, blockElement->Block.StateHash);
+						}
+					}
+				}
+
+				if (m_pLicense && currentHeight == m_pLicense->MaxHeight) {
+					auto blockElement = m_supplier(currentHeight);
+					requestLicense(currentHeight, blockElement->Block.StateHash);
+				}
+
+				return m_pLicense && (currentHeight <= m_pLicense->MaxHeight);
 			}
 
-			bool blockConsumingAllowedAt(const Height& height) override {
-				std::lock_guard<std::mutex> lock(m_mutex);
-
-				if (m_pLicense && (height <= m_pLicense->MaxHeight))
-					return true;
-
-				requestLicense();
-
-				return m_pLicense && (height <= m_pLicense->MaxHeight);
+			void setBlockElementSupplier(BlockElementSupplier supplier) override {
+				m_supplier = supplier;
 			}
 
 		private:
-			void requestLicense() {
+			using RequestCallback = const std::function<void(bool, const boost::property_tree::ptree&)>;
+
+			Height requestClosestHeight(const Height& height) {
+				boost::property_tree::ptree requestJson = createRequest(height);
+
+				std::ostringstream out;
+				boost::property_tree::write_json(out, requestJson);
+				auto request = out.str();
+
+				Height closestHeight(0);
+				doRequest(request, [this, &closestHeight](bool isSuccess, const boost::property_tree::ptree& responseJson) {
+					if (isSuccess) {
+						closestHeight = Height(responseJson.get<uint64_t>("height"));
+					}
+				});
+
+				return closestHeight;
+			}
+
+			void requestLicense(const Height& height, const Hash256& stateHash) {
+				boost::property_tree::ptree requestJson = createRequest(height);
+				requestJson.add("stateHash", utils::HexFormat(stateHash.begin(), stateHash.end()));
+
+				std::ostringstream out;
+				boost::property_tree::write_json(out, requestJson);
+				auto request = out.str();
+
+				doRequest(request, [this](bool isSuccess, const boost::property_tree::ptree& responseJson) {
+					if (isSuccess) {
+						try {
+							auto licenseJson = responseJson.get_child("license");
+
+							m_pLicense = ReadLicense(licenseJson, m_network, m_node, m_licenseKey);
+
+							boost::property_tree::write_json(m_licenseFile.generic_string(), responseJson);
+						} catch (const std::exception& err) {
+							CATAPULT_LOG(warning) << "failed to parse license server response: " << err.what();
+						}
+					}
+				});
+			}
+
+			boost::property_tree::ptree createRequest(const Height& height) {
+				boost::property_tree::ptree json;
+				m_network = crypto::FormatKeyAsString(m_pConfigHolder->Config().Network.Info.PublicKey);
+				json.add("network", m_network);
+				json.add("node", m_node);
+				json.add("height", height);
+
+				return json;
+			}
+
+			void doRequest(const std::string& request, RequestCallback callback) {
 				boost::asio::io_context io_context;
 				boost::asio::ip::tcp::resolver resolver(io_context);
 				m_pSocket = std::make_unique<boost::asio::ip::tcp::socket>(io_context);
 				m_pBuffer = std::make_unique<boost::asio::streambuf>();
 
 				resolver.async_resolve(m_serverHost, m_serverPort,
-					boost::bind(
-						&DefaultLicenseManager::handleResolve,
-						this,
-						boost::asio::placeholders::error,
-						boost::asio::placeholders::iterator));
+									   boost::bind(
+											   &DefaultLicenseManager::handleResolve,
+											   this,
+											   boost::asio::placeholders::error,
+											   boost::asio::placeholders::iterator,
+											   request,
+											   callback));
 
 				io_context.run_for(m_licenseRequestTimeout);
 
@@ -136,9 +204,13 @@ namespace catapult { namespace licensing {
 				m_pBuffer.reset(nullptr);
 			}
 
-			void handleResolve(const boost::system::error_code& err, boost::asio::ip::tcp::resolver::results_type iter) {
+			void handleResolve(const boost::system::error_code& err,
+							   const boost::asio::ip::tcp::resolver::results_type& iter,
+							   const std::string& request,
+							   RequestCallback callback) {
 				if (err) {
 					CATAPULT_LOG(warning) << "couldn't resolve address " << m_serverHost << ": " << err;
+					callback(false, boost::property_tree::ptree());
 					return;
 				}
 
@@ -146,34 +218,33 @@ namespace catapult { namespace licensing {
 					boost::bind(
 						&DefaultLicenseManager::handleConnect,
 						this,
-						boost::asio::placeholders::error));
+						boost::asio::placeholders::error,
+						request,
+						callback));
 			}
 
-			void handleConnect(const boost::system::error_code& err) {
+			void handleConnect(const boost::system::error_code& err,
+							   const std::string& request,
+							   RequestCallback callback) {
 				if (err) {
 					CATAPULT_LOG(warning) << "couldn't connect to the license server: " << err;
+					callback(false, boost::property_tree::ptree());
 					return;
 				}
-
-				boost::property_tree::ptree requestJson;
-				m_network = crypto::FormatKeyAsString(m_pConfigHolder->Config().Network.Info.PublicKey);
-				requestJson.add("network", m_network);
-				requestJson.add("node", m_node);
-				std::ostringstream out;
-				boost::property_tree::write_json(out, requestJson);
-				auto request = out.str();
 
 				boost::asio::async_write(*m_pSocket, boost::asio::buffer(request),
 					boost::bind(
 						&DefaultLicenseManager::handleWrite,
 						this,
 						boost::asio::placeholders::error,
-						boost::asio::placeholders::bytes_transferred));
+						boost::asio::placeholders::bytes_transferred,
+						callback));
 			}
 
-			void handleWrite(const boost::system::error_code& err, size_t) {
+			void handleWrite(const boost::system::error_code& err, size_t, RequestCallback callback) {
 				if (err) {
 					CATAPULT_LOG(warning) << "couldn't send request to the license server: " << err;
+					callback(false, boost::property_tree::ptree());
 					return;
 				}
 
@@ -182,36 +253,29 @@ namespace catapult { namespace licensing {
 						&DefaultLicenseManager::handleRead,
 						this,
 						boost::asio::placeholders::error,
-						boost::asio::placeholders::bytes_transferred));
+						boost::asio::placeholders::bytes_transferred,
+						callback));
 			}
 
-			void handleRead(const boost::system::error_code& err, size_t) {
+			void handleRead(const boost::system::error_code& err, size_t, RequestCallback callback) {
 				if (err && err != boost::asio::error::eof) {
 					CATAPULT_LOG(warning) << "couldn't receive response from the license server: " << err;
+					callback(false, boost::property_tree::ptree());
 					return;
 				}
 
-				try {
-					auto response = std::string(boost::asio::buffer_cast<const char*>(m_pBuffer->data()));
-					boost::property_tree::ptree responseJson;
-					std::istringstream in(response);
-					boost::property_tree::read_json(in, responseJson);
+				auto response = std::string(boost::asio::buffer_cast<const char*>(m_pBuffer->data()));
+				boost::property_tree::ptree responseJson;
+				std::istringstream in(response);
+				boost::property_tree::read_json(in, responseJson);
 
-					auto failure = responseJson.get_child_optional("failure");
-					if (failure.has_value()) {
-						auto description = failure->get<std::string>("description");
-						CATAPULT_LOG(warning) << "license server responded with error: " << description;
-						return;
-					}
-
-					auto licenseJson = responseJson.get_child("license");
-
-					m_pLicense = ReadLicense(licenseJson, m_network, m_node, m_licenseKey);
-
-					boost::property_tree::write_json(m_licenseFile.generic_string(), responseJson);
-
-				} catch (const std::exception& err) {
-					CATAPULT_LOG(warning) << "failed to parse license server response: " << err.what();
+				auto failure = responseJson.get_child_optional("failure");
+				if (failure.has_value()) {
+					auto description = failure->get<std::string>("description");
+					CATAPULT_LOG(warning) << "license server responded with error: " << description;
+					callback(false, responseJson);
+				} else {
+					callback(true, responseJson);
 				}
 			}
 
@@ -234,6 +298,8 @@ namespace catapult { namespace licensing {
 			std::unique_ptr<boost::asio::streambuf> m_pBuffer;
 
 			std::mutex m_mutex;
+
+			BlockElementSupplier m_supplier;
 		};
 	}
 

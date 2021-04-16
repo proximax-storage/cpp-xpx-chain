@@ -11,22 +11,18 @@ namespace catapult { namespace mocks {
 
 	struct MockLicenseManager : public licensing::LicenseManager {
 	public:
-		MockLicenseManager(bool blockGeneratingAllowed = true, bool blockConsumingAllowed = true)
-			: m_blockGeneratingAllowed(blockGeneratingAllowed)
-			, m_blockConsumingAllowed(blockConsumingAllowed)
+		MockLicenseManager(bool blockHandlingAllowed = true)
+			: m_blockHandlingAllowed(blockHandlingAllowed)
 		{}
 
 	public:
-		bool blockGeneratingAllowedAt(const Height&) override {
-			return m_blockGeneratingAllowed;
+		bool blockAllowedAt(const Height&) override {
+			return m_blockHandlingAllowed;
 		}
 
-		bool blockConsumingAllowedAt(const Height&) override {
-			return m_blockConsumingAllowed;
-		}
+		void setBlockElementSupplier(licensing::BlockElementSupplier) override {}
 
 	private:
-		bool m_blockGeneratingAllowed;
-		bool m_blockConsumingAllowed;
+		bool m_blockHandlingAllowed;
 	};
 }}
