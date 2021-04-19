@@ -14,6 +14,7 @@ pipeline {
         IMAGE = "proximax/proximax-sirius-chain"
         BUILD_IMAGE = "proximax-catapult-server-dependencies-build-image:v1.1-buster"
         PRIVATE_IMAGE = "proximax/proximax-sirius-chain-private"
+        LICENSE_PUBLIC_KEY = "E8D4B7BEB2A531ECA8CC7FD93F79A4C828C24BE33F99CF7C5609FF5CE14605F4"
     }
 
 	stages {
