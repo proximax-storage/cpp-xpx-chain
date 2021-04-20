@@ -97,9 +97,12 @@ namespace catapult { namespace test {
 			if (!numCosignatures)
 				return pBlock;
 
-			auto pBlockWithCosignatures = utils::MakeUniqueWithSize<model::Block>(pBlock->Size + numCosignatures * sizeof(model::Cosignature));
+			auto blockSize = pBlock->Size + numCosignatures * sizeof(model::Cosignature);
+			auto pBlockWithCosignatures = utils::MakeUniqueWithSize<model::Block>(blockSize);
 			auto* pData = reinterpret_cast<uint8_t*>(pBlockWithCosignatures.get());
 			std::memcpy(pData, pBlock.get(), pBlock->Size);
+			pBlockWithCosignatures->Size = blockSize;
+
 			auto pCosignature = pBlockWithCosignatures->CosignaturesPtr();
 			for (auto i = 0u; i < pBlockWithCosignatures->CosignaturesCount(); ++i, ++pCosignature) {
 				FillWithRandomData(pCosignature->Signer);
