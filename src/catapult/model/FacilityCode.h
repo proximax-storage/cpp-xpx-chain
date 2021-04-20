@@ -71,5 +71,7 @@ namespace catapult { namespace model {
 		Levy = 0x4F,
 		/// Committee facility code.
 		Committee = 0x61,
+		/// Storage facility code.
+		Storage = 0x62,
 	};
 }}
