@@ -11,7 +11,6 @@
 #include "src/model/DownloadTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "plugins/txes/service/src/model/ServiceNotifications.h"
 #include "catapult/model/EntityHasher.h"
 
 using namespace catapult::model;

@@ -9,9 +9,19 @@
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "src/model/StorageNotifications.h"
+#include "src/state/DriveEntry.h"
 #include "src/state/DownloadChannelEntry.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 
 namespace catapult { namespace validators {
+
+	void VerificationStatus(const state::DriveEntry& driveEntry, const validators::ValidatorContext& context, bool& started, bool& active);
+
+	/// A validator implementation that applies to drive prepare drive notifications and validates that:
+	/// - drive size >= minDriveSize
+	/// - number of replicators >= minReplicatorCount
+	/// - the drive does not exist	// TODO: Is needed?
+	// TODO: /// - there is enough storage supply
+	DECLARE_STATEFUL_VALIDATOR(PrepareDrivePermission, model::PrepareDriveNotification<1>)();
 
 }}

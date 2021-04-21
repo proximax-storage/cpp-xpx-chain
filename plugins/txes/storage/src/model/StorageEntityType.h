@@ -12,6 +12,9 @@ namespace catapult { namespace model {
 
 #endif
 
+	/// PrepareDrive transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, PrepareDrive, 0x1);
+
 	/// DataModification transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, DataModification, 0x2);
 
