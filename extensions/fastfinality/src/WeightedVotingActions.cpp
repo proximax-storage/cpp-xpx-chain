@@ -126,38 +126,34 @@ namespace catapult { namespace fastfinality {
 
 			} else if (chainSyncData.NetworkHeight > chainSyncData.LocalHeight) {
 
-				std::map<Hash256, std::vector<Key>> blockHashesNodeKeys;
+				Hash256 currentBlockHash = remoteNodeStates.begin()->BlockHash;
+				uint64_t currentImportance = 0;
+				std::vector<Key> currentNodeKeys;
+				std::map<uint64_t, std::vector<Key>> importanceKeys;
+
 				for (const auto& state : remoteNodeStates) {
 					if (state.Height < chainSyncData.NetworkHeight) {
+						importanceKeys[currentImportance] = std::move(currentNodeKeys);
 						break;
 					}
-					blockHashesNodeKeys[state.BlockHash].push_back(state.NodeKey);
-				}
 
-				if (blockHashesNodeKeys.size() > 1) {
-					uint64_t maxImportance = 0;
-					Hash256 bestHash;
-					std::map<Hash256, uint64_t> blockHashesImportance;
-					for (const auto& state : remoteNodeStates) {
-						if (state.Height < chainSyncData.NetworkHeight) {
-							break;
-						}
-
-						const auto& hash = state.BlockHash;
-						auto& storedImportance = blockHashesImportance[hash];
-						for (const auto& key : state.HarvesterKeys) {
-							storedImportance += importanceGetter(key);
-						}
-						if (storedImportance >= maxImportance) {
-							maxImportance = storedImportance;
-							bestHash = hash;
-						}
+					if (state.BlockHash != currentBlockHash) {
+						importanceKeys[currentImportance] = std::move(currentNodeKeys);
+						currentImportance = 0;
+						currentBlockHash = state.BlockHash;
 					}
-					chainSyncData.NodeIdentityKeys = blockHashesNodeKeys.at(bestHash);
-				} else {
-					chainSyncData.NodeIdentityKeys = blockHashesNodeKeys.begin()->second;
+
+					for (const auto& key : state.HarvesterKeys) {
+						currentImportance += importanceGetter(key);
+					}
+					currentNodeKeys.push_back(state.NodeKey);
+
+					if (&state == &remoteNodeStates.back()) {
+						importanceKeys[currentImportance] = std::move(currentNodeKeys);
+					}
 				}
 
+				chainSyncData.NodeIdentityKeys = std::move(importanceKeys.begin()->second);
 				pFsmShared->processEvent(NetworkHeightGreaterThanLocal{});
 
 			} else {
