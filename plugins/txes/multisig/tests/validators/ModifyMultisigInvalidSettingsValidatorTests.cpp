@@ -35,8 +35,8 @@ namespace catapult { namespace validators {
 	namespace {
 		using Modifications = std::vector<model::CosignatoryModification>;
 
-		auto CreateNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta) {
-			return model::ModifyMultisigSettingsNotification<1>(signer, minRemovalDelta, minApprovalDelta);
+		auto CreateNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta, uint8_t modificationsCount) {
+			return model::ModifyMultisigSettingsNotification<1>(signer, minRemovalDelta, minApprovalDelta, modificationsCount);
 		}
 
 		auto GetValidationResult(const cache::CatapultCache& cache, const model::ModifyMultisigSettingsNotification<1>& notification) {
@@ -51,7 +51,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SuccessWhenAccountIsUnknownAndDeltasAreSetToMinusOne) {
 		// Arrange:
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateNotification(signer, -1, -1);
+		auto notification = CreateNotification(signer, -1, -1, 0);
 
 		auto cache = test::MultisigCacheFactory::Create();
 
@@ -66,9 +66,9 @@ namespace catapult { namespace validators {
 		// Arrange:
 		auto signer = test::GenerateRandomByteArray<Key>();
 		std::vector<model::ModifyMultisigSettingsNotification<1>> notifications{
-			CreateNotification(signer, 0, 1),
-			CreateNotification(signer, 0, -1),
-			CreateNotification(signer, -1, 0)
+			CreateNotification(signer, 0, 1, 0),
+			CreateNotification(signer, 0, -1, 0),
+			CreateNotification(signer, -1, 0, 0)
 		};
 		std::vector<ValidationResult> results;
 
@@ -108,7 +108,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto keys = test::GenerateKeys(1 + numCosignatories);
 			const auto& signer = keys[0];
-			auto notification = CreateNotification(signer, removal.Delta, approval.Delta);
+			auto notification = CreateNotification(signer, removal.Delta, approval.Delta, 0);
 
 			auto cache = test::MultisigCacheFactory::Create();
 			{

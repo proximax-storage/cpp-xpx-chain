@@ -55,7 +55,11 @@ namespace catapult { namespace plugins {
 					sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {}, addedCosignatoryKeys));
 
 				// 2. setting changes
-				sub.notify(ModifyMultisigSettingsNotification<1>(transaction.Signer, transaction.MinRemovalDelta, transaction.MinApprovalDelta));
+				sub.notify(ModifyMultisigSettingsNotification<1>(
+						transaction.Signer,
+						transaction.MinRemovalDelta,
+						transaction.MinApprovalDelta,
+						transaction.ModificationsCount));
 				break;
 			}
 
