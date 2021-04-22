@@ -126,32 +126,24 @@ namespace catapult { namespace fastfinality {
 
 			} else if (chainSyncData.NetworkHeight > chainSyncData.LocalHeight) {
 
-				Hash256 currentBlockHash = remoteNodeStates.begin()->BlockHash;
-				uint64_t currentImportance = 0;
-				std::vector<Key> currentNodeKeys;
-				std::map<uint64_t, std::vector<Key>> importanceKeys;
+				std::map<Hash256, std::pair<uint64_t, std::vector<Key>>> hashKeys;
 
 				for (const auto& state : remoteNodeStates) {
 					if (state.Height < chainSyncData.NetworkHeight) {
-						importanceKeys[currentImportance] = std::move(currentNodeKeys);
 						break;
 					}
 
-					if (state.BlockHash != currentBlockHash) {
-						importanceKeys[currentImportance] = std::move(currentNodeKeys);
-						currentImportance = 0;
-						currentBlockHash = state.BlockHash;
-					}
-
+					auto& pair = hashKeys[state.BlockHash];
+					pair.first += importanceGetter(state.NodeKey);
 					for (const auto& key : state.HarvesterKeys) {
-						currentImportance += importanceGetter(key);
+						pair.first += importanceGetter(key);
 					}
-					currentNodeKeys.push_back(state.NodeKey);
-
-					if (&state == &remoteNodeStates.back()) {
-						importanceKeys[currentImportance] = std::move(currentNodeKeys);
-					}
+					pair.second.push_back(state.NodeKey);
 				}
+
+				std::map<uint64_t, std::vector<Key>> importanceKeys;
+				for (const auto& pair : hashKeys)
+					importanceKeys[pair.second.first] = pair.second.second;
 
 				chainSyncData.NodeIdentityKeys = std::move(importanceKeys.begin()->second);
 				pFsmShared->processEvent(NetworkHeightGreaterThanLocal{});
