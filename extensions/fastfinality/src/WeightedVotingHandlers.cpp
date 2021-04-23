@@ -6,7 +6,9 @@
 
 #include "WeightedVotingHandlers.h"
 #include "WeightedVotingFsm.h"
+#include "catapult/crypto/KeyUtils.h"
 #include "catapult/crypto/Signer.h"
+#include "catapult/harvesting_core/UnlockedAccounts.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
 #include "catapult/model/BlockUtils.h"
 
@@ -166,5 +168,52 @@ namespace catapult { namespace fastfinality {
 			ionet::PacketType::Push_Precommit_Message,
 			handlers,
 			"push precommit message");
+	}
+
+	void RegisterPullRemoteNodeStateHandler(
+			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+			ionet::ServerPacketHandlers& handlers,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+			const std::function<std::shared_ptr<const model::BlockElement> (const Height&)>& blockElementGetter,
+			const model::BlockElementSupplier& lastBlockElementSupplier) {
+		handlers.registerHandler(ionet::PacketType::Pull_Remote_Node_State, [pFsmWeak, pConfigHolder, blockElementGetter, lastBlockElementSupplier](
+				const auto& packet,
+				auto& context) {
+			const auto pRequest = ionet::CoercePacket<RemoteNodeStatePacket>(&packet);
+			if (!pRequest) {
+				CATAPULT_LOG(warning) << "rejecting empty request: " << packet;
+				return;
+			}
+
+			CATAPULT_LOG(trace) << "received valid " << packet;
+
+			TRY_GET_FSM()
+
+			const auto& view = pFsmShared->committeeData().unlockedAccounts()->view();
+			const uint8_t harvesterKeysCount = 1 + view.size();	// Extra one for a BootKey
+			auto pResponsePacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>(sizeof(Key) * harvesterKeysCount);
+
+			const auto targetHeight = std::min(lastBlockElementSupplier()->Block.Height, pRequest->Height);
+			const auto pBlockElement = blockElementGetter(targetHeight);
+
+			pResponsePacket->Height = pBlockElement->Block.Height;
+			pResponsePacket->BlockHash = pBlockElement->EntityHash;
+			pResponsePacket->NodeWorkState = pFsmShared->nodeWorkState();
+			pResponsePacket->HarvesterKeysCount = harvesterKeysCount;
+
+			auto* pResponsePacketData = reinterpret_cast<Key*>(pResponsePacket.get() + 1);
+			pResponsePacketData[0] = crypto::ParseKey(pConfigHolder->Config().User.BootKey);
+			{
+				auto iter = view.begin();
+				auto index = 1;
+				while (iter != view.end()) {
+					pResponsePacketData[index] = iter->publicKey();
+					++iter;
+					++index;
+				}
+			}
+
+			context.response(ionet::PacketPayload(pResponsePacket));
+		});
 	}
 }}

@@ -6,7 +6,8 @@
 
 #include "WeightedVotingService.h"
 #include "WeightedVotingFsm.h"
-#include "catapult/api/RemoteChainApi.h"
+#include <catapult/api/RemoteRequestDispatcher.h>
+#include "catapult/cache_core/ImportanceView.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "catapult/extensions/ServiceLocator.h"
@@ -35,50 +36,33 @@ namespace catapult { namespace fastfinality {
 			return pUnlockedAccounts;
 		}
 
-		auto CreateRemoteChainHeightsRetriever(const net::PacketIoPickerContainer& packetIoPickers) {
-			return [&packetIoPickers]() {
-				std::vector<thread::future<Height>> heightFutures;
+		auto CreateRemoteNodeStateRetriever(
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+				const model::BlockElementSupplier& lastBlockElementSupplier,
+				const net::PacketIoPickerContainer& packetIoPickers) {
+			return [pConfigHolder, lastBlockElementSupplier, &packetIoPickers]() {
+				std::vector<thread::future<RemoteNodeState>> remoteNodeStateFutures;
 				auto timeout = utils::TimeSpan::FromSeconds(5);
 
 				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
-				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for detecting chain heights";
+				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling remote node states";
 				if (packetIoPairs.empty())
-					return thread::make_ready_future(std::vector<Height>());
+					return thread::make_ready_future(std::vector<RemoteNodeState>());
 
-				for (const auto& packetIoPair : packetIoPairs) {
-					auto pPacketIo = packetIoPair.io();
-					auto pChainApi = api::CreateRemoteChainApiWithoutRegistry(*pPacketIo);
-					heightFutures.push_back(pChainApi->chainInfo().then([pPacketIo](auto&& infoFuture) {
-						return infoFuture.get().Height;
-					}));
-				}
-
-				return thread::when_all(std::move(heightFutures)).then([](auto&& completedFutures) {
-					return thread::get_all_ignore_exceptional(completedFutures.get());
-				});
-			};
-		}
-
-		auto CreateRemoteBlockHashesIoRetriever(const net::PacketIoPickerContainer& packetIoPickers) {
-			return [&packetIoPickers](const Height& height) {
-				std::vector<thread::future<std::pair<Hash256, Key>>> futures;
-				auto timeout = utils::TimeSpan::FromSeconds(5);
-
-				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
-				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling block hashes";
-				if (packetIoPairs.empty())
-					return thread::make_ready_future(std::vector<std::pair<Hash256, Key>>());
+				const auto maxBlocksPerSyncAttempt = pConfigHolder->Config().Node.MaxBlocksPerSyncAttempt;
+				const auto targetHeight = lastBlockElementSupplier()->Block.Height + Height(maxBlocksPerSyncAttempt);
 
 				for (const auto& packetIoPair : packetIoPairs) {
 					auto pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(packetIoPair);
-					auto pChainApi = api::CreateRemoteChainApiWithoutRegistry(*pPacketIoPair->io());
-					futures.push_back(pChainApi->hashesFrom(height, 1u).then([pPacketIoPair](auto&& hashesFuture) {
-						auto hash = *hashesFuture.get().cbegin();
-						return std::make_pair(hash, pPacketIoPair->node().identityKey());
+					api::RemoteRequestDispatcher dispatcher{*pPacketIoPair->io()};
+					remoteNodeStateFutures.push_back(dispatcher.dispatch(RemoteNodeStateTraits{}, targetHeight).then([pPacketIoPair](auto&& stateFuture) {
+						auto remoteNodeState = stateFuture.get();
+						remoteNodeState.NodeKey = pPacketIoPair->node().identityKey();
+						return remoteNodeState;
 					}));
 				}
 
-				return thread::when_all(std::move(futures)).then([](auto&& completedFutures) {
+				return thread::when_all(std::move(remoteNodeStateFutures)).then([](auto&& completedFutures) {
 					return thread::get_all_ignore_exceptional(completedFutures.get());
 				});
 			};
@@ -122,11 +106,22 @@ namespace catapult { namespace fastfinality {
 				const auto& pConfigHolder = pluginManager.configHolder();
 				const auto& packetIoPickers = state.packetIoPickers();
 				const auto& packetPayloadSink = state.hooks().packetPayloadSink();
+				const auto& storage = state.storage();
 				auto timeSupplier = state.timeSupplier();
 				auto blockRangeConsumer = state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Remote_Pull);
-				auto lastBlockElementSupplier = [&storage = state.storage()]() {
+				auto lastBlockElementSupplier = [&storage]() {
 					auto storageView = storage.view();
 					return storageView.loadBlockElement(storageView.chainHeight());
+				};
+				auto blockElementGetter = [&storage](const Height& height) {
+				  return storage.view().loadBlockElement(height);
+				};
+				auto importanceGetter = [&state](const Key& identityKey) {
+					auto height = state.cache().height();
+					const auto& cache = state.cache().sub<cache::AccountStateCache>();
+					auto view = cache.createView(height);
+					cache::ImportanceView importanceView(view->asReadOnly());
+					return importanceView.getAccountImportanceOrDefault(identityKey, height).unwrap();
 				};
 				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
 
@@ -134,6 +129,8 @@ namespace catapult { namespace fastfinality {
 				RegisterPushConfirmedBlockHandler(pFsmShared, packetHandlers, pluginManager);
 				RegisterPushPrevoteMessageHandler(pFsmShared, packetHandlers);
 				RegisterPushPrecommitMessageHandler(pFsmShared, packetHandlers);
+				// TODO: Consider rewriting to (pFsmShared, packetHandlers, pluginManager, storage)
+				RegisterPullRemoteNodeStateHandler(pFsmShared, packetHandlers, pConfigHolder, blockElementGetter, lastBlockElementSupplier);
 
 				auto& committeeData = pFsmShared->committeeData();
 				committeeData.setUnlockedAccounts(CreateUnlockedAccounts(m_harvestingConfig));
@@ -142,14 +139,12 @@ namespace catapult { namespace fastfinality {
 
 				actions.CheckLocalChain = CreateDefaultCheckLocalChainAction(
 					pFsmShared,
-					CreateRemoteChainHeightsRetriever(packetIoPickers),
+					CreateRemoteNodeStateRetriever(pConfigHolder, lastBlockElementSupplier, packetIoPickers),
 					pConfigHolder,
-					[&state] { return state.storage().view().chainHeight(); });
+					lastBlockElementSupplier,
+					importanceGetter,
+					pluginManager.getCommitteeManager());
 				actions.ResetLocalChain = CreateDefaultResetLocalChainAction();
-				actions.SelectPeers = CreateDefaultSelectPeersAction(
-					pFsmShared,
-					CreateRemoteBlockHashesIoRetriever(packetIoPickers),
-					pConfigHolder);
 				actions.DownloadBlocks = CreateDefaultDownloadBlocksAction(
 					pFsmShared,
 					state,

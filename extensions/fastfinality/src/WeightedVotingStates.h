@@ -13,7 +13,6 @@ namespace catapult { namespace fastfinality {
 	struct StopWaiting{};
 
 	struct LocalChainCheck{};
-	struct PeersSelection{};
 	struct BlocksDownloading{};
 
 	struct InvalidLocalChain{};
