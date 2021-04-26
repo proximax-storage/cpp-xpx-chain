@@ -1,5 +1,5 @@
 /**
-*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Copyright 2021 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -24,11 +24,6 @@ namespace catapult { namespace validators {
 		// Check if number of replicators >= minReplicatorCount
 		if (notification.ReplicatorCount < pluginConfig.MinReplicatorCount)
 			return Failure_Storage_Prepare_Too_Small_ReplicatorCount;
-
-		// Check if the drive already exists
-		// TODO: Is needed?
-		if (driveCache.contains(notification.DriveKey))
-			return Failure_Storage_Drive_Already_Exists;
 
 		return ValidationResult::Success;
 	});

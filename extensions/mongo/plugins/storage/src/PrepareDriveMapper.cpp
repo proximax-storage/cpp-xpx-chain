@@ -13,19 +13,12 @@ using namespace catapult::mongo::mappers;
 
 namespace catapult { namespace mongo { namespace plugins {
 
+	// TODO: Needs DriveKey?
 	template<typename TTransaction>
 	void StreamPrepareDriveTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-		if (transaction.EntityVersion() == 1)
-			builder << "drive" << ToBinary(Key());
-		else
-			builder << "owner" << ToBinary(transaction.Signer);
-		builder << "duration" << ToInt64(BlockDuration());
-		builder << "billingPeriod" << ToInt64(BlockDuration());
-		builder << "billingPrice" << ToInt64(Amount());
+		builder << "owner" << ToBinary(transaction.Signer);
 		builder << "driveSize" << static_cast<int64_t>(transaction.DriveSize.unwrap());
-		builder << "replicas" << transaction.ReplicatorCount;
-		builder << "minReplicators" << 0;
-		builder << "percentApprovers" << 0;
+		builder << "replicatorCount" << transaction.ReplicatorCount;
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(PrepareDrive, StreamPrepareDriveTransaction)

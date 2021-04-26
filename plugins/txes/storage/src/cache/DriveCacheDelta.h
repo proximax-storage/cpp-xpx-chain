@@ -12,7 +12,7 @@
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
-#include "src/observers/CommonDrive.h"	// TODO: Including storage's CommonDrive.h
+#include "src/observers/CommonDrive.h"
 
 namespace catapult { namespace cache {
 
@@ -65,6 +65,8 @@ namespace catapult { namespace cache {
 		{}
 
 	public:
+
+		// TODO: Clean up
 		using DriveCacheDeltaMixins::ConstAccessor::find;
 		using DriveCacheDeltaMixins::MutableAccessor::find;
 
@@ -88,16 +90,6 @@ namespace catapult { namespace cache {
 		void unmarkRemoveDrive(const DriveCacheDescriptor::KeyType& key, const Height& height) {
 			RemoveIdentifierWithGroup(*m_pRemoveAtHeight, height, key);
 		}
-
-        void prune(Height height, observers::ObserverContext&) {
-            ForEachIdentifierWithGroup(*m_pDriveEntries, *m_pRemoveAtHeight, height, [&](state::DriveEntry& driveEntry) {
-                if (driveEntry.end() == height && driveEntry.version() < 3) {
-					m_pDriveEntries->remove(driveEntry.key());
-                }
-            });
-			m_pBillingAtHeight->remove(height);
-			m_pRemoveAtHeight->remove(height);
-        }
 
 	private:
 		DriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pDriveEntries;

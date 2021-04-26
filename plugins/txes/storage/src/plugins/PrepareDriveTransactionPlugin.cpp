@@ -4,9 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-// TODO: Check includes (commented out are present in DownloadTransactionPlugin.cpp, but not in DataModificationTransactionPlugin.cpp)
-//#include "tools/tools/ToolKeys.h"
-//#include "sdk/src/extensions/ConversionExtensions.h"
 #include "PrepareDriveTransactionPlugin.h"
 #include "src/model/StorageNotifications.h"
 #include "src/model/PrepareDriveTransaction.h"
@@ -27,7 +24,7 @@ namespace catapult { namespace plugins {
 						auto driveHash = CalculateHash(transaction, config.GenerationHash);
 						sub.notify(PrepareDriveNotification<1>(
 								transaction.Signer,
-								Key(driveHash.array()),	// TODO: Check driveKey generation
+								Key(driveHash.array()),
 								transaction.DriveSize,
 								transaction.ReplicatorCount));
 						break;

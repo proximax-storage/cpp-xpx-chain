@@ -32,6 +32,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDataModificationTransactionPlugin());
 		manager.addTransactionSupport(CreateDownloadTransactionPlugin(immutableConfig));
 
+
 		manager.addCacheSupport<cache::DriveCacheStorage>(
 			std::make_unique<cache::DriveCache>(manager.cacheConfig(cache::DriveCache::Name), pConfigHolder));
 
@@ -48,18 +49,6 @@ namespace catapult { namespace plugins {
 			builder.add(observers::CreatePrepareDriveObserver());
 		});
 
-		// TODO: Stub for DriveCache?
-		/*manager.addCacheSupport<cache::DownloadCacheStorage>(
-			std::make_unique<cache::DownloadCache>(manager.cacheConfig(cache::DownloadCache::Name), pConfigHolder));
-
-		using DownloadCacheHandlersService = CacheHandlers<cache::DownloadCacheDescriptor>;
-		DownloadCacheHandlersService::Register<model::FacilityCode::Download>(manager);
-
-		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("DRIVE C"), [&cache]() {
-				return cache.sub<cache::DownloadCache>().createView(cache.height())->size();
-			});
-		});*/
 
 		manager.addCacheSupport<cache::DownloadCacheStorage>(
 			std::make_unique<cache::DownloadCache>(manager.cacheConfig(cache::DownloadCache::Name), pConfigHolder));

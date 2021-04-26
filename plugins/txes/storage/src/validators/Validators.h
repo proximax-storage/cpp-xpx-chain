@@ -20,8 +20,6 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to drive prepare drive notifications and validates that:
 	/// - drive size >= minDriveSize
 	/// - number of replicators >= minReplicatorCount
-	/// - the drive does not exist	// TODO: Is needed?
-	// TODO: /// - there is enough storage supply
 	DECLARE_STATEFUL_VALIDATOR(PrepareDrivePermission, model::PrepareDriveNotification<1>)();
 
 }}

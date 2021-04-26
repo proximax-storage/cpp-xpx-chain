@@ -22,11 +22,8 @@ namespace catapult { namespace validators {
 	/// Desired number of replicators is less than minimal.
 	DEFINE_STORAGE_RESULT(Prepare_Too_Small_ReplicatorCount, 2);
 
-	/// Validation failed because the drive already exists.
-	DEFINE_STORAGE_RESULT(Drive_Already_Exists, 3);
-
 	/// Validation failed because plugin configuration data is malformed.
-	DEFINE_STORAGE_RESULT(Plugin_Config_Malformed, 4);
+	DEFINE_STORAGE_RESULT(Plugin_Config_Malformed, 3);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
