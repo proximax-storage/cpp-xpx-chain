@@ -6,7 +6,6 @@
 
 #include "DriveEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
-#include "catapult/utils/Casting.h"
 
 namespace catapult { namespace state {
 
@@ -16,7 +15,7 @@ namespace catapult { namespace state {
 		io::Write(output, driveEntry.key());
 
 		io::Write(output, driveEntry.owner());
-		io::Write64(output, driveEntry.size());
+		io::Write(output, driveEntry.size());
 		io::Write16(output, driveEntry.replicatorCount());
 	}
 
@@ -36,7 +35,7 @@ namespace catapult { namespace state {
 		input.read(owner);
 		entry.setOwner(owner);
 
-		entry.setSize(io::Read64(input));
+		entry.setSize(Amount(io::Read64(input)));
 		entry.setReplicatorCount(io::Read16(input));
 
 		return entry;

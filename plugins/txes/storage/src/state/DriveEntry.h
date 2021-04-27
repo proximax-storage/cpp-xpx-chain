@@ -34,12 +34,12 @@ namespace catapult { namespace state {
         }
 
 		/// Sets the drive size.
-		void setSize(const uint64_t& size) {
+		void setSize(const Amount& size) {
 			m_size = size;
 		}
 
 		/// Gets the drive size.
-		const uint64_t& size() const {
+		const Amount& size() const {
 			return m_size;
 		}
 
@@ -55,7 +55,7 @@ namespace catapult { namespace state {
 
 	private:
 		Key m_owner;
-		uint64_t m_size;
+		Amount m_size;
 		uint16_t m_replicatorCount;
 	};
 

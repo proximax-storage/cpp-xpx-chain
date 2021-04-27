@@ -57,21 +57,7 @@ namespace catapult { namespace cache {
 
 	/// Drive cache types.
 	struct DriveCacheTypes {
-		struct HeightGroupingTypesDescriptor {
-		public:
-			using KeyType = Height;
-			using ValueType = utils::OrderedIdentifierGroup<Key, Height>;
-			using Serializer = DriveHeightGroupingSerializer;
-
-		public:
-			static auto GetKeyFromValue(const ValueType& identifierGroup) {
-				return identifierGroup.key();
-			}
-		};
-
 		using PrimaryTypes = MutableUnorderedMapAdapter<DriveCacheDescriptor, utils::ArrayHasher<Key>>;
-		using HeightGroupingTypes = MutableUnorderedMapAdapter<HeightGroupingTypesDescriptor, utils::BaseValueHasher<Height>>;
-
 		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicDriveCacheView, BasicDriveCacheDelta, const Key&, state::DriveEntry>;
 
 		using BaseSetDeltaPointers = DriveBaseSetDeltaPointers;

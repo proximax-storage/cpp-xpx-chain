@@ -30,8 +30,6 @@ namespace catapult { namespace cache {
 
 	struct DriveBaseSetDeltaPointers {
 		DriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType pPrimary;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType pBillingGrouping;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType pRemoveGrouping;
 		std::shared_ptr<DrivePatriciaTree::DeltaType> pPatriciaTree;
 	};
 
@@ -42,37 +40,29 @@ namespace catapult { namespace cache {
 
 	public:
 		explicit DriveBaseSets(const CacheConfiguration& config)
-				: CacheDatabaseMixin(config, { "default", "billing_height_grouping", "remove_height_grouping" })
+				: CacheDatabaseMixin(config, { "default"})
 				, Primary(GetContainerMode(config), database(), 0)
-				, BillingGrouping(GetContainerMode(config), database(), 1)
-				, RemoveGrouping(GetContainerMode(config), database(), 2)
-				, PatriciaTree(hasPatriciaTreeSupport(), database(), 3)
+				, PatriciaTree(hasPatriciaTreeSupport(), database(), 1)
 		{}
 
 	public:
 		DriveCacheTypes::PrimaryTypes::BaseSetType Primary;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetType BillingGrouping;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetType RemoveGrouping;
 		CachePatriciaTree<DrivePatriciaTree> PatriciaTree;
 
 	public:
 		DriveBaseSetDeltaPointers rebase() {
-			return { Primary.rebase(), BillingGrouping.rebase(), RemoveGrouping.rebase(), PatriciaTree.rebase() };
+			return { Primary.rebase(), PatriciaTree.rebase() };
 		}
 
 		DriveBaseSetDeltaPointers rebaseDetached() const {
 			return {
 					Primary.rebaseDetached(),
-					BillingGrouping.rebaseDetached(),
-					RemoveGrouping.rebaseDetached(),
 					PatriciaTree.rebaseDetached()
 			};
 		}
 
 		void commit() {
 			Primary.commit();
-			BillingGrouping.commit();
-			RemoveGrouping.commit();
 			PatriciaTree.commit();
 			flush();
 		}

@@ -13,11 +13,10 @@ using namespace catapult::mongo::mappers;
 
 namespace catapult { namespace mongo { namespace plugins {
 
-	// TODO: Needs DriveKey?
 	template<typename TTransaction>
 	void StreamPrepareDriveTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "owner" << ToBinary(transaction.Signer);
-		builder << "driveSize" << static_cast<int64_t>(transaction.DriveSize.unwrap());
+		builder << "driveSize" << ToInt64(transaction.DriveSize);
 		builder << "replicatorCount" << transaction.ReplicatorCount;
 	}
 

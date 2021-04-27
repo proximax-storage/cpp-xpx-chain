@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "CommonDrive.h"
+#include "Observers.h"
 
 namespace catapult { namespace observers {
 
@@ -13,7 +13,7 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Commit == context.Mode) {
 			state::DriveEntry driveEntry(notification.DriveKey);
             driveEntry.setOwner(notification.Owner);
-			driveEntry.setSize(notification.DriveSize.unwrap());
+			driveEntry.setSize(notification.DriveSize);
 			driveEntry.setReplicatorCount(notification.ReplicatorCount);
 			driveCache.insert(driveEntry);
 		} else {

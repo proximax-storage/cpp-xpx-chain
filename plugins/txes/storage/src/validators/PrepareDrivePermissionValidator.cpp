@@ -16,7 +16,7 @@ namespace catapult { namespace validators {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
-		// Checking if drive size >= minDriveSize
+		// Check if drive size >= minDriveSize
 		// TODO: Check conversion
 		if (utils::FileSize::FromMegabytes(notification.DriveSize.unwrap()) < pluginConfig.MinDriveSize)
 			return Failure_Storage_Prepare_Too_Small_DriveSize;

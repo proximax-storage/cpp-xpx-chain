@@ -14,14 +14,13 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	// region ToDbModel
 
-	bsoncxx::document::value ToDbModel(const state::DriveEntry& entry, const Address& accountAddress) {
+	bsoncxx::document::value ToDbModel(const state::DriveEntry& entry, const Key& key) {
 		bson_stream::document builder;
 		auto doc = builder << "drive" << bson_stream::open_document
-				<< "multisig" << ToBinary(entry.key())
-				<< "multisigAddress" << ToBinary(accountAddress)
+				<< "key" << ToBinary(entry.key())
 				<< "owner" << ToBinary(entry.owner())
-				<< "size" << static_cast<int64_t>(entry.size())
-				<< "replicatorCount" << entry.replicatorCount();
+				<< "size" << ToInt64(entry.size())
+				<< "replicatorCount" << static_cast<int32_t>(entry.replicatorCount());
 
 		return doc
 				<< bson_stream::close_document
@@ -36,15 +35,15 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		auto dbDriveEntry = document["drive"];
 
-		Key multisig;
-		DbBinaryToModelArray(multisig, dbDriveEntry["multisig"].get_binary());
-		state::DriveEntry entry(multisig);
+		Key key;
+		DbBinaryToModelArray(key, dbDriveEntry["key"].get_binary());
+		state::DriveEntry entry(key);
 
 		Key owner;
 		DbBinaryToModelArray(owner, dbDriveEntry["owner"].get_binary());
 		entry.setOwner(owner);
 
-		entry.setSize(static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
+		entry.setSize(Amount(dbDriveEntry["size"].get_int64()));
 		entry.setReplicatorCount(static_cast<uint16_t>(dbDriveEntry["replicatorCount"].get_int32()));
 
 		return entry;

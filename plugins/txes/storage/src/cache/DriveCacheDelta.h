@@ -12,7 +12,6 @@
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
-#include "src/observers/CommonDrive.h"
 
 namespace catapult { namespace cache {
 
@@ -60,41 +59,14 @@ namespace catapult { namespace cache {
 				, DriveCacheDeltaMixins::DeltaElements(*driveSets.pPrimary)
 				, DriveCacheDeltaMixins::ConfigBasedEnable(pConfigHolder, [](const auto& config) { return config.Enabled; })
 				, m_pDriveEntries(driveSets.pPrimary)
-				, m_pBillingAtHeight(driveSets.pBillingGrouping)
-				, m_pRemoveAtHeight(driveSets.pRemoveGrouping)
 		{}
 
 	public:
-
-		// TODO: Clean up
 		using DriveCacheDeltaMixins::ConstAccessor::find;
 		using DriveCacheDeltaMixins::MutableAccessor::find;
 
-		void addBillingDrive(const DriveCacheDescriptor::KeyType& key, const Height& height) {
-			AddIdentifierWithGroup(*m_pBillingAtHeight, height, key);
-		}
-
-		void removeBillingDrive(const DriveCacheDescriptor::KeyType& key, const Height& height) {
-			RemoveIdentifierWithGroup(*m_pBillingAtHeight, height, key);
-		}
-
-        /// Processes all marked drives
-        void processBillingDrives(Height height, const consumer<DriveCacheDescriptor::ValueType&>& consumer) {
-            ForEachIdentifierWithGroup(*m_pDriveEntries, *m_pBillingAtHeight, height, consumer);
-        }
-
-		void markRemoveDrive(const DriveCacheDescriptor::KeyType& key, const Height& height) {
-			AddIdentifierWithGroup(*m_pRemoveAtHeight, height, key);
-		}
-
-		void unmarkRemoveDrive(const DriveCacheDescriptor::KeyType& key, const Height& height) {
-			RemoveIdentifierWithGroup(*m_pRemoveAtHeight, height, key);
-		}
-
 	private:
 		DriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pDriveEntries;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pBillingAtHeight;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pRemoveAtHeight;
 	};
 
 	/// Delta on top of the drive cache.
