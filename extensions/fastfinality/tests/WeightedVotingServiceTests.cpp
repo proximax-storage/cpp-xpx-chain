@@ -58,7 +58,7 @@ namespace catapult { namespace fastfinality {
 					auto& handlers = serviceState->state().packetHandlers();
 					ASSERT_EQ(handlers.size(), 0);
 					ASSERT_NO_THROW(pWeightedVoting->registerServices(locator, serviceState->state()));
-					ASSERT_EQ(handlers.size(), 4);
+					ASSERT_EQ(handlers.size(), 5);
 					ASSERT_TRUE(handlers.canProcess(ionet::PacketType::Push_Proposed_Block));
 					ASSERT_TRUE(handlers.canProcess(ionet::PacketType::Push_Confirmed_Block));
 					ASSERT_TRUE(handlers.canProcess(ionet::PacketType::Push_Prevote_Message));

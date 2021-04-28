@@ -61,7 +61,6 @@ namespace catapult { namespace harvesting {
 			pBlock->Difficulty = context.Difficulty;
 			pBlock->Timestamp = context.Timestamp;
 			pBlock->Beneficiary = beneficiary;
-			pBlock->CommitteePhaseTime = 0u;
 			return pBlock;
 		}
 	}

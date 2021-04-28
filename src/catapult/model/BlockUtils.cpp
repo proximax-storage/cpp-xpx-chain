@@ -29,7 +29,7 @@ namespace catapult { namespace model {
 		RawBuffer BlockDataBuffer(const Block& block) {
 			return {
 				reinterpret_cast<const uint8_t*>(&block) + VerifiableEntity::Header_Size,
-				sizeof(BlockHeader) - VerifiableEntity::Header_Size
+				block.GetHeaderSize() - VerifiableEntity::Header_Size
 			};
 		}
 	}
@@ -121,14 +121,16 @@ namespace catapult { namespace model {
 				const Key& signerPublicKey,
 				const TContainer& transactions) {
 			auto transactionPayloadSize = CalculateTotalSize(transactions);
-			auto size = sizeof(BlockHeader) + transactionPayloadSize;
+			auto size = sizeof(BlockHeaderV4) + transactionPayloadSize;
 			auto pBlock = utils::MakeUniqueWithSize<Block>(size);
 			std::memset(static_cast<void*>(pBlock.get()), 0, sizeof(BlockHeader));
 			pBlock->Size = static_cast<uint32_t>(size);
-			pBlock->TransactionPayloadSize = transactionPayloadSize;
+			pBlock->Version = MakeVersion(networkIdentifier, Block::Current_Version);
+			pBlock->setTransactionPayloadSize(transactionPayloadSize);
+			pBlock->setRound(0u);
+			pBlock->setCommitteePhaseTime(0u);
 
 			pBlock->Signer = signerPublicKey;
-			pBlock->Version = MakeVersion(networkIdentifier, Block::Current_Version);
 			pBlock->Type = Entity_Type_Block;
 
 			pBlock->Height = context.BlockHeight + Height(1);
@@ -150,13 +152,14 @@ namespace catapult { namespace model {
 		return CreateBlockT(context, networkIdentifier, signerPublicKey, transactions);
 	}
 
-	UniqueEntityPtr<Block> StitchBlock(const BlockHeader& blockHeader, const Transactions& transactions) {
+	UniqueEntityPtr<Block> StitchBlock(const Block& blockHeader, const Transactions& transactions) {
 		auto transactionPayloadSize = CalculateTotalSize(transactions);
-		auto size = sizeof(BlockHeader) + transactionPayloadSize;
+		auto headerSize = blockHeader.GetHeaderSize();
+		auto size = headerSize + transactionPayloadSize;
 		auto pBlock = utils::MakeUniqueWithSize<Block>(size);
-		std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(BlockHeader));
+		std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, headerSize);
 		pBlock->Size = static_cast<uint32_t>(size);
-		pBlock->TransactionPayloadSize = transactionPayloadSize;
+		pBlock->setTransactionPayloadSize(transactionPayloadSize);
 
 		// append all the transactions
 		auto pDestination = reinterpret_cast<uint8_t*>(pBlock->TransactionsPtr());

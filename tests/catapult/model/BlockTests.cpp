@@ -26,7 +26,30 @@ namespace catapult { namespace model {
 
 #define TEST_CLASS BlockTests
 
-	TEST(TEST_CLASS, EntityHasExpectedSize) {
+	TEST(TEST_CLASS, BlockHeaderHasExpectedSize) {
+		// Arrange:
+		auto expectedSize =
+				sizeof(VerifiableEntity) // base
+				+ sizeof(uint64_t) // height
+				+ sizeof(uint64_t) // timestamp
+				+ sizeof(uint64_t) // difficulty
+				+ sizeof(uint32_t) // fee multiplier
+				+ Hash256_Size // previous block hash
+				+ Hash256_Size // block transactions hash
+				+ Hash256_Size // block receipts hash
+				+ Hash256_Size // state hash
+				+ Key_Size // beneficiary
+				+ sizeof(uint32_t) // fee interest
+				+ sizeof(uint32_t); // fee interest divisibility
+
+		// Assert:
+		EXPECT_EQ(expectedSize, sizeof(BlockHeader));
+		EXPECT_EQ(106u + 196u, sizeof(BlockHeader));
+
+		EXPECT_EQ(sizeof(BlockHeader), sizeof(decltype(Block()))); // use decltype to bypass lint rule
+	}
+
+	TEST(TEST_CLASS, BlockHeaderV4HasExpectedSize) {
 		// Arrange:
 		auto expectedSize =
 				sizeof(VerifiableEntity) // base
@@ -46,10 +69,8 @@ namespace catapult { namespace model {
 				+ sizeof(uint32_t); // transaction payload size
 
 		// Assert:
-		EXPECT_EQ(expectedSize, sizeof(BlockHeader));
-		EXPECT_EQ(106u + 216u, sizeof(BlockHeader));
-
-		EXPECT_EQ(sizeof(BlockHeader), sizeof(decltype(Block()))); // use decltype to bypass lint rule
+		EXPECT_EQ(expectedSize, sizeof(BlockHeaderV4));
+		EXPECT_EQ(106u + 216u, sizeof(BlockHeaderV4));
 	}
 
 	// region test utils
@@ -100,7 +121,7 @@ namespace catapult { namespace model {
 	DATA_POINTER_TEST(TransactionsAreAccessibleWhenBlockHasTransactions) {
 		// Arrange:
 		auto pBlock = CreateBlockWithTransactions();
-		const auto* pBlockEnd = test::AsVoidPointer(pBlock.get() + 1);
+		const auto* pBlockEnd = test::AsVoidPointer(reinterpret_cast<const BlockHeaderV4*>(pBlock.get()) + 1);
 		auto& accessor = TTraits::GetAccessor(*pBlock);
 
 		// Act + Assert:
@@ -114,7 +135,9 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, GetTransactionPayloadSizeReturnsCorrectPayloadSize) {
 		// Arrange:
-		BlockHeader header;
+		BlockHeaderV4 header;
+		header.Size = sizeof(BlockHeaderV4);
+		header.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, model::BlockHeader::Current_Version);
 		header.TransactionPayloadSize = 123u;
 
 		// Act:
@@ -153,7 +176,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, SizeValidWhenReportedSizeIsEqualToHeaderSize) {
 		// Arrange:
-		auto pBlock = CreateBlockWithReportedSize(sizeof(BlockHeader), 0);
+		auto pBlock = CreateBlockWithReportedSize(sizeof(BlockHeaderV4), 0);
 
 		// Act + Assert:
 		EXPECT_TRUE(IsSizeValid(*pBlock));
@@ -164,8 +187,8 @@ namespace catapult { namespace model {
 	// region IsSizeValid - invalid inner tx sizes
 
 	TEST(TEST_CLASS, SizeInvalidWhenTransactionPayloadSizeInvalid) {
-		auto pBlock = CreateBlockWithReportedSize(sizeof(BlockHeader));
-		pBlock->TransactionPayloadSize = std::numeric_limits<uint32_t>::max();
+		auto pBlock = CreateBlockWithReportedSize(sizeof(BlockHeaderV4));
+		pBlock->setTransactionPayloadSize(std::numeric_limits<uint32_t>::max());
 
 		// Act + Assert:
 		EXPECT_FALSE(IsSizeValid(*pBlock));

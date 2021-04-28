@@ -42,6 +42,11 @@ namespace catapult { namespace model {
 
 		// followed by sub-transaction data
 		// followed by cosignatures data
+
+	public:
+		size_t GetHeaderSize() const {
+			return sizeof(AggregateTransactionHeader);
+		}
 	};
 
 	/// Binary layout for an aggregate transaction.

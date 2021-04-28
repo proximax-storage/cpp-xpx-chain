@@ -27,16 +27,16 @@ namespace catapult { namespace harvesting {
 	namespace {
 		model::UniqueEntityPtr<model::Block> GenerateBlock(
 				HarvestingUtFacade& facade,
-				const model::BlockHeader& originalBlockHeader,
+				const model::Block& originalBlockHeader,
 				const TransactionsInfo& transactionsInfo) {
 			// copy and update block header
-			model::BlockHeader blockHeader;
-			std::memcpy(static_cast<void*>(&blockHeader), &originalBlockHeader, sizeof(model::BlockHeader));
-			blockHeader.BlockTransactionsHash = transactionsInfo.TransactionsHash;
-			blockHeader.FeeMultiplier = transactionsInfo.FeeMultiplier;
+			model::UniqueEntityPtr<model::Block> pBlockHeader = utils::MakeUniqueWithSize<model::Block>(originalBlockHeader.Size);
+			std::memcpy(static_cast<void*>(pBlockHeader.get()), &originalBlockHeader, originalBlockHeader.Size);
+			pBlockHeader->BlockTransactionsHash = transactionsInfo.TransactionsHash;
+			pBlockHeader->FeeMultiplier = transactionsInfo.FeeMultiplier;
 
 			// generate the block
-			return facade.commit(blockHeader);
+			return facade.commit(*pBlockHeader);
 		}
 	}
 

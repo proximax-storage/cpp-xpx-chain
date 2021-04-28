@@ -271,7 +271,7 @@ namespace catapult { namespace fastfinality {
 				bool success = false;
 				for (const auto& pBlock : blocks) {
 					committeeManager.reset();
-					while (committeeManager.committee().Round < pBlock->Round)
+					while (committeeManager.committee().Round < pBlock->round())
 						committeeManager.selectCommittee(config.Network);
 
 					if (ValidateBlockCosignatures(pBlock, committeeManager, committeeApproval)) {
@@ -356,7 +356,7 @@ namespace catapult { namespace fastfinality {
 			auto pLastBlockElement = lastBlockElementSupplier();
 			const auto& block = pLastBlockElement->Block;
 			const auto& config = pConfigHolder->Config().Network;
-			auto phaseTimeMillis = block.CommitteePhaseTime ? block.CommitteePhaseTime : config.CommitteePhaseTime.millis();
+			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
 
 			auto roundStart = block.Timestamp + Timestamp(CommitteePhaseCount * phaseTimeMillis);
 			auto currentTime = timeSupplier();
@@ -497,8 +497,8 @@ namespace catapult { namespace fastfinality {
 			pBlockHeader->Difficulty = context.Difficulty;
 			pBlockHeader->Timestamp = context.Timestamp;
 			pBlockHeader->Beneficiary = committeeData.beneficiary();
-			pBlockHeader->Round = committeeStage.Round;
-			pBlockHeader->CommitteePhaseTime = committeeStage.PhaseTimeMillis;
+			pBlockHeader->setRound(committeeStage.Round);
+			pBlockHeader->setCommitteePhaseTime(committeeStage.PhaseTimeMillis);
 			auto pBlock = utils::UniqueToShared(blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock));
 			if (pBlock) {
 				model::SignBlockHeader(*committeeData.blockProposer(), *pBlock);
@@ -662,8 +662,8 @@ namespace catapult { namespace fastfinality {
 				return;
 			}
 
-			if (pProposedBlock->Round != committee.Round) {
-				CATAPULT_LOG(warning) << "rejecting proposal, round " << pProposedBlock->Round
+			if (pProposedBlock->round() != committee.Round) {
+				CATAPULT_LOG(warning) << "rejecting proposal, round " << pProposedBlock->round()
 					<< " invalid, expected " << committee.Round;
 				committeeData.setProposedBlock(nullptr);
 				pFsmShared->processEvent(ProposalInvalid{});
@@ -946,7 +946,7 @@ namespace catapult { namespace fastfinality {
 				CATAPULT_THROW_RUNTIME_ERROR("commit confirmed block failed, no block");
 
 			const auto& stage = committeeData.committeeStage();
-			if (stage.Round != pBlock->Round ||
+			if (stage.Round != pBlock->round() ||
 				!ValidateBlockCosignatures(pBlock, committeeManager, pConfigHolder->Config().Network.CommitteeApproval)) {
 				pFsmShared->processEvent(CommitBlockFailed{});
 				return;

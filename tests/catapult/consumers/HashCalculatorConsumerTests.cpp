@@ -99,7 +99,7 @@ namespace catapult { namespace consumers {
 				auto& block = reinterpret_cast<model::Block&>(buffer[offsets.back()]);
 				block.Size = numBytesPerBlock;
 				block.Type = model::Entity_Type_Block;
-				block.TransactionPayloadSize = numTransactionsPerBlock * Transaction_Size;
+				block.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 
 				for (auto j = 0u; j < numTransactionsPerBlock; ++j) {
 					auto txOffset = offsets.back() + sizeof(model::BlockHeader) + j * Transaction_Size;

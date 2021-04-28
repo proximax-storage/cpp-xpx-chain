@@ -106,9 +106,9 @@ namespace catapult { namespace mongo { namespace mappers {
 				<< "beneficiary" << ToBinary(block.Beneficiary)
 				<< "feeInterest" << static_cast<int32_t>(block.FeeInterest)
 				<< "feeInterestDenominator" << static_cast<int32_t>(block.FeeInterestDenominator)
-				<< "round" << static_cast<int64_t>(block.Round)
-				<< "committeePhaseTime" << static_cast<int64_t>(block.CommitteePhaseTime)
-				<< "transactionPayloadSize" << static_cast<int32_t>(block.TransactionPayloadSize);
+				<< "round" << static_cast<int64_t>(block.round())
+				<< "committeePhaseTime" << static_cast<int64_t>(block.committeePhaseTime())
+				<< "transactionPayloadSize" << static_cast<int32_t>(block.transactionPayloadSize());
 		builder << bson_stream::close_document;
 		return builder << bson_stream::finalize;
 	}

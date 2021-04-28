@@ -117,7 +117,7 @@ namespace catapult { namespace model {
 			const Transactions& transactions);
 
 	/// Creates a new block by stitching together \a blockHeader and \a transactions.
-	UniqueEntityPtr<Block> StitchBlock(const BlockHeader& blockHeader, const Transactions& transactions);
+	UniqueEntityPtr<Block> StitchBlock(const Block& blockHeader, const Transactions& transactions);
 
 	// endregion
 }}

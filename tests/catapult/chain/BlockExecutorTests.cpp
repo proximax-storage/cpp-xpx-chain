@@ -44,17 +44,6 @@ namespace catapult { namespace chain {
 		struct ExecuteTraits {
 			static constexpr auto Notify_Mode = observers::NotifyMode::Commit;
 
-			static std::vector<uint16_t> GetExpectedVersions(size_t numTransactions, uint16_t seed) {
-				std::vector<uint16_t> versions;
-
-				for (uint16_t i = 0u; i < numTransactions; ++i)
-					versions.push_back(seed + i + 1);
-
-				// block should be processed after all transactions
-				versions.push_back(seed);
-				return versions;
-			}
-
 			static std::vector<Hash256> GetExpectedHashes(const model::Block& block) {
 				std::vector<Hash256> hashes;
 
@@ -79,12 +68,6 @@ namespace catapult { namespace chain {
 		struct RollbackTraits {
 			static constexpr auto Notify_Mode = observers::NotifyMode::Rollback;
 
-			static std::vector<uint16_t> GetExpectedVersions(size_t numTransactions, uint16_t seed) {
-				auto versions = ExecuteTraits::GetExpectedVersions(numTransactions, seed);
-				std::reverse(versions.begin(), versions.end());
-				return versions;
-			}
-
 			static std::vector<Hash256> GetExpectedHashes(const model::Block& block) {
 				auto hashes = ExecuteTraits::GetExpectedHashes(block);
 				std::reverse(hashes.begin(), hashes.end());
@@ -100,13 +83,6 @@ namespace catapult { namespace chain {
 				RollbackBlock(blockElement, { observer, CreateResolverContext(), config::CreateMockConfigurationHolder(), state });
 			}
 		};
-
-		void SetVersions(model::Block& block, uint16_t seed) {
-			block.Version = seed;
-
-			for (auto& tx : block.Transactions())
-				tx.Version = ++seed;
-		}
 
 		void AssertContexts(
 				const std::vector<observers::ObserverContext>& contexts,
@@ -138,7 +114,6 @@ namespace catapult { namespace chain {
 		auto delta = cache.createDelta();
 		mocks::MockEntityObserver observer;
 		auto pBlock = test::GenerateBlockWithTransactions(0, Height(10));
-		SetVersions(*pBlock, 22);
 
 		state::CatapultState catapultState;
 		observers::ObserverState state(delta, catapultState);
@@ -148,7 +123,6 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		EXPECT_EQ(1u, observer.versions().size());
-		EXPECT_EQ(TTraits::GetExpectedVersions(0, 22), observer.versions());
 
 		EXPECT_EQ(1u, observer.contexts().size());
 		AssertContexts(observer.contexts(), state, Height(10), TTraits::Notify_Mode);
@@ -160,7 +134,6 @@ namespace catapult { namespace chain {
 		auto delta = cache.createDelta();
 		mocks::MockEntityObserver observer;
 		auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));
-		SetVersions(*pBlock, 22);
 
 		state::CatapultState catapultState;
 		observers::ObserverState state(delta, catapultState);
@@ -170,7 +143,6 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		EXPECT_EQ(8u, observer.versions().size());
-		EXPECT_EQ(TTraits::GetExpectedVersions(7, 22), observer.versions());
 
 		EXPECT_EQ(8u, observer.contexts().size());
 		AssertContexts(observer.contexts(), state, Height(10), TTraits::Notify_Mode);
@@ -202,8 +174,6 @@ namespace catapult { namespace chain {
 		mocks::MockEntityObserver observer;
 		auto pBlock1 = test::GenerateBlockWithTransactions(5, Height(10));
 		auto pBlock2 = test::GenerateBlockWithTransactions(3, Height(25));
-		SetVersions(*pBlock1, 22);
-		SetVersions(*pBlock2, 79);
 
 		state::CatapultState catapultState;
 		observers::ObserverState state(delta, catapultState);
@@ -215,9 +185,6 @@ namespace catapult { namespace chain {
 		// Assert:
 		const auto& versions = observer.versions();
 		EXPECT_EQ(10u, versions.size());
-		auto versionsSplitIter = versions.cbegin() + 6;
-		EXPECT_EQ(TTraits::GetExpectedVersions(5, 22), std::vector<uint16_t>(versions.cbegin(), versionsSplitIter));
-		EXPECT_EQ(TTraits::GetExpectedVersions(3, 79), std::vector<uint16_t>(versionsSplitIter, versions.cend()));
 
 		const auto& contexts = observer.contexts();
 		EXPECT_EQ(10u, observer.contexts().size());

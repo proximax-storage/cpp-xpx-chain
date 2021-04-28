@@ -22,16 +22,38 @@
 
 namespace catapult { namespace model {
 
+	size_t BlockHeader::GetHeaderSize() const {
+		switch (EntityVersion()) {
+			case 3:
+				return sizeof(BlockHeader);
+			default:
+				return sizeof(BlockHeaderV4);
+		}
+	}
+
 	size_t GetTransactionPayloadSize(const BlockHeader& header) {
-		return header.TransactionPayloadSize;
+		switch (header.EntityVersion()) {
+			case 3:
+				return header.Size - sizeof(BlockHeader);
+			default:
+				return reinterpret_cast<const BlockHeaderV4&>(header).TransactionPayloadSize;
+		}
 	}
 
 	namespace {
-		constexpr bool IsPayloadSizeValid(const Block& block) {
-			return
-				block.Size >= sizeof(BlockHeader) &&
-				block.Size - sizeof(BlockHeader) >= block.TransactionPayloadSize &&
-				0 == (block.Size - sizeof(BlockHeader) - block.TransactionPayloadSize) % sizeof(Cosignature);
+		bool IsPayloadSizeValid(const Block& block) {
+			switch (block.EntityVersion()) {
+				case 3: {
+					return block.Size >= sizeof(BlockHeader);
+				}
+				default: {
+					auto transactionPayloadSize = reinterpret_cast<const BlockHeaderV4&>(block).TransactionPayloadSize;
+					return
+						block.Size >= sizeof(BlockHeaderV4) &&
+						block.Size - sizeof(BlockHeaderV4) >= transactionPayloadSize &&
+						0 == (block.Size - sizeof(BlockHeaderV4) - transactionPayloadSize) % sizeof(Cosignature);
+				}
+			}
 		}
 	}
 
