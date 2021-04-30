@@ -119,16 +119,16 @@ namespace catapult { namespace model {
 				const PreviousBlockContext& context,
 				NetworkIdentifier networkIdentifier,
 				const Key& signerPublicKey,
-				const TContainer& transactions) {
+				const TContainer& transactions,
+				VersionType version) {
 			auto transactionPayloadSize = CalculateTotalSize(transactions);
-			auto size = sizeof(BlockHeaderV4) + transactionPayloadSize;
+			auto headerSize = (version > 3) ? sizeof(BlockHeaderV4) : sizeof(BlockHeader);
+			auto size = headerSize + transactionPayloadSize;
 			auto pBlock = utils::MakeUniqueWithSize<Block>(size);
-			std::memset(static_cast<void*>(pBlock.get()), 0, sizeof(BlockHeader));
+			std::memset(static_cast<void*>(pBlock.get()), 0, headerSize);
 			pBlock->Size = static_cast<uint32_t>(size);
-			pBlock->Version = MakeVersion(networkIdentifier, Block::Current_Version);
+			pBlock->Version = MakeVersion(networkIdentifier, version);
 			pBlock->setTransactionPayloadSize(transactionPayloadSize);
-			pBlock->setRound(0u);
-			pBlock->setCommitteePhaseTime(0u);
 
 			pBlock->Signer = signerPublicKey;
 			pBlock->Type = Entity_Type_Block;
@@ -148,8 +148,9 @@ namespace catapult { namespace model {
 			const PreviousBlockContext& context,
 			NetworkIdentifier networkIdentifier,
 			const Key& signerPublicKey,
-			const Transactions& transactions) {
-		return CreateBlockT(context, networkIdentifier, signerPublicKey, transactions);
+			const Transactions& transactions,
+			VersionType version) {
+		return CreateBlockT(context, networkIdentifier, signerPublicKey, transactions, version);
 	}
 
 	UniqueEntityPtr<Block> StitchBlock(const Block& blockHeader, const Transactions& transactions) {

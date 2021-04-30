@@ -55,6 +55,7 @@ namespace catapult { namespace harvesting {
 			auto config = test::CreatePrototypicalBlockchainConfiguration(std::move(networkConfig), "");
 			const_cast<config::NodeConfiguration&>(config.Node).FeeInterestDenominator = 2;
 			const_cast<config::ImmutableConfiguration&>(config.Immutable).ShouldEnableVerifiableState = true;
+			const_cast<config::SupportedEntityVersions&>(config.SupportedEntityVersions).at(model::Entity_Type_Block) = { 3 };
 
 			return config;
 		}

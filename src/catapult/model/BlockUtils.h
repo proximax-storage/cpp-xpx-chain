@@ -114,7 +114,8 @@ namespace catapult { namespace model {
 			const PreviousBlockContext& context,
 			NetworkIdentifier networkIdentifier,
 			const Key& signerPublicKey,
-			const Transactions& transactions);
+			const Transactions& transactions,
+			VersionType version = Block::Current_Version);
 
 	/// Creates a new block by stitching together \a blockHeader and \a transactions.
 	UniqueEntityPtr<Block> StitchBlock(const Block& blockHeader, const Transactions& transactions);

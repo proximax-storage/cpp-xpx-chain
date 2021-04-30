@@ -63,10 +63,10 @@ namespace catapult { namespace test {
 	// region Block factory functions
 
 	/// Generates an empty block with random signer and no transactions.
-	model::UniqueEntityPtr<model::Block> GenerateEmptyRandomBlock();
+	model::UniqueEntityPtr<model::Block> GenerateEmptyRandomBlock(VersionType version = model::Block::Current_Version);
 
 	/// Generates a block with random signer and \a transactions.
-	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const TestBlockTransactions& transactions);
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const TestBlockTransactions& transactions, VersionType version = model::Block::Current_Version);
 
 	/// Generates a block with a given \a signer and \a transactions.
 	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const crypto::KeyPair& signer, const TestBlockTransactions& transactions);
