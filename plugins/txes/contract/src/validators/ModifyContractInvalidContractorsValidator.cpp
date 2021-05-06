@@ -19,7 +19,8 @@ namespace catapult { namespace validators {
 			return ValidationResult::Success; \
 		} \
 		const auto* pModifications = notification.CONTRACTOR_TYPE##ModificationsPtr; \
-		const auto& contractEntry = contractCache.find(notification.Multisig).get(); \
+		auto contractEntryIter = contractCache.find(notification.Multisig); \
+		const auto& contractEntry = contractEntryIter.get(); \
 		for (auto i = 0u; i < notification.CONTRACTOR_TYPE##ModificationCount; ++i) { \
 			auto isAdded = contractEntry.has##CONTRACTOR_TYPE(pModifications[i].CosignatoryPublicKey); \
 			auto isAdding = model::CosignatoryModificationType::Add == pModifications[i].ModificationType; \

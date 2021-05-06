@@ -118,11 +118,13 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer, \a minRemovalDelta and \a minApprovalDelta.
-		explicit ModifyMultisigSettingsNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta)
+		explicit ModifyMultisigSettingsNotification(
+				const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta, uint8_t modificationsCount)
 				: Notification(Notification_Type, sizeof(ModifyMultisigSettingsNotification<1>))
 				, Signer(signer)
 				, MinRemovalDelta(minRemovalDelta)
 				, MinApprovalDelta(minApprovalDelta)
+				, ModificationsCount(modificationsCount)
 		{}
 
 	public:
@@ -134,5 +136,8 @@ namespace catapult { namespace model {
 
 		/// Relative change of cosigs needed to approve a transaction.
 		int8_t MinApprovalDelta;
+
+		/// Count of modification in a transaction.
+		uint8_t ModificationsCount;
 	};
 }}

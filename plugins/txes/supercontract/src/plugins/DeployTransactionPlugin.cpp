@@ -29,7 +29,7 @@ namespace catapult { namespace plugins {
 				auto pModification = sub.mempool().malloc(
 					CosignatoryModification{model::CosignatoryModificationType::Add, transaction.DriveKey});
 				sub.notify(ModifyMultisigCosignersNotification<1>(transaction.Signer, 1, pModification));
-				sub.notify(ModifyMultisigSettingsNotification<1>(transaction.Signer, 1, 1));
+				sub.notify(ModifyMultisigSettingsNotification<1>(transaction.Signer, 1, 1, 1));
 
 				sub.notify(DeployNotification<1>(
 					transaction.Signer,

@@ -33,8 +33,9 @@ namespace catapult { namespace validators {
 
 				if (pOffer->Duration > pluginConfig.MaxOfferDuration && notification.Owner != pluginConfig.LongOfferKey)
 					return Failure_Exchange_Offer_Duration_Too_Large;
-				
-				auto mosaicEntry = mosaicCache.find(mosaicId).get();
+
+				auto mosaicEntryIter = mosaicCache.find(mosaicId);
+				const auto& mosaicEntry = mosaicEntryIter.get();
 				auto mosaicBlockDuration = mosaicEntry.definition().properties().duration();
 				
 				Height maxMosaicHeight = Height(context.Height.unwrap() + mosaicBlockDuration.unwrap());
@@ -99,7 +100,8 @@ namespace catapult { namespace validators {
 		  if (pOffer->Duration > pluginConfig.MaxOfferDuration && notification.Owner != pluginConfig.LongOfferKey)
 			  return Failure_Exchange_Offer_Duration_Too_Large;
 
-		  auto mosaicEntry = mosaicCache.find(mosaicId).get();
+		  auto mosaicEntryIter = mosaicCache.find(mosaicId);
+		  const auto& mosaicEntry = mosaicEntryIter.get();
 		  auto mosaicBlockDuration = mosaicEntry.definition().properties().duration();
 
 		  Height maxMosaicHeight = Height(context.Height.unwrap() + mosaicBlockDuration.unwrap());
