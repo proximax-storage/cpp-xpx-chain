@@ -10,9 +10,22 @@
 #include "catapult/model/Mosaic.h"
 #include "catapult/utils/ArraySet.h"
 #include "catapult/utils/IntegerMath.h"
-#include <map>
+#include <vector>
+#include <algorithm>
 
 namespace catapult { namespace state {
+
+	/// Data modification state.
+	enum class DataModificationState : uint8_t {
+		/// Default data modification state.	// TODO: Rephrase
+		None,
+
+		/// Data modification is queued.
+		Queued,
+
+		/// Data modification is waiting for approval.
+		Active
+	};
 
 	// Mixin for storing drive details.
 	class DriveMixin {
@@ -53,10 +66,21 @@ namespace catapult { namespace state {
 			return m_replicatorCount;
 		}
 
+		/// Gets the queue of data modification hashes.
+		const std::vector<std::pair<Hash256, DataModificationState>>& dataModificationQueue() const {
+			return m_dataModificationQueue;
+		}
+
+		/// Gets the queue of data modification hashes.
+		std::vector<std::pair<Hash256, DataModificationState>>& dataModificationQueue() {
+			return m_dataModificationQueue;
+		}
+
 	private:
 		Key m_owner;
 		Amount m_size;
 		uint16_t m_replicatorCount;
+		std::vector<std::pair<Hash256, DataModificationState>> m_dataModificationQueue;
 	};
 
 	// Drive entry.
