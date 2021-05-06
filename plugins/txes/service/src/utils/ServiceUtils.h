@@ -12,6 +12,7 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache/CatapultCacheDelta.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
+#include "catapult/model/NotificationSubscriber.h"
 
 namespace catapult { namespace utils {
 
@@ -51,4 +52,33 @@ namespace catapult { namespace utils {
         return driveAccount.Balances.get(mosaicId);
     }
 
+	enum class Operation : uint8_t {
+		// Buy service mosaics
+		Buy,
+		// Sell service mosaics
+		Sell,
+	};
+
+	inline void SwapMosaics(
+			const Key& account,
+			const std::vector<model::UnresolvedMosaic>& mosaics,
+			model::NotificationSubscriber& sub,
+			const config::ImmutableConfiguration& immutableCfg,
+			Operation operation) {
+		auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(immutableCfg);
+		for (auto& mosaic : mosaics) {
+			switch (operation) {
+			case Operation::Buy:
+				sub.notify(model::BalanceDebitNotification<1>(account, currencyMosaicId, mosaic.Amount));
+				sub.notify(model::BalanceCreditNotification<1>(account, mosaic.MosaicId, mosaic.Amount));
+				break;
+			case Operation::Sell:
+				sub.notify(model::BalanceDebitNotification<1>(account, mosaic.MosaicId, mosaic.Amount));
+				sub.notify(model::BalanceCreditNotification<1>(account, currencyMosaicId, mosaic.Amount));
+				break;
+			default:
+				CATAPULT_THROW_INVALID_ARGUMENT_1("unsupported operation", operation);
+			}
+		}
+	}
 }}
