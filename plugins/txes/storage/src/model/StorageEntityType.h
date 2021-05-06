@@ -21,6 +21,9 @@ namespace catapult { namespace model {
 	/// Download transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, Download, 0x3);
 
+	/// DataModificationApproval transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, DataModificationApproval, 0x4);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif

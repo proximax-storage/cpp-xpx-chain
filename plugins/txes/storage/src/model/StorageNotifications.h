@@ -25,6 +25,9 @@ namespace catapult { namespace model {
 	/// Defines a drive notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Drive_v1, 0x0004);
 
+	/// Defines a data modification approval notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Approval_v1, 0x0005);
+
 	/// Notification of a data modification.
 	template<VersionType version>
 	struct DataModificationNotification;
@@ -163,5 +166,47 @@ namespace catapult { namespace model {
 
 		/// Transactions type.
 		model::EntityType TransactionType;
+	};
+
+	/// Notification of a data modification approval.
+	template<VersionType version>
+	struct DataModificationApprovalNotification;
+
+	template<>
+	struct DataModificationApprovalNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Data_Modification_Approval_v1_Notification;
+
+	public:
+		explicit DataModificationApprovalNotification(
+				const Key& driveKey,
+				const Hash256& callReference,
+				const Hash256& fileStructureCDI,
+				const Amount& fileStructureSize,
+				const Amount& usedDriveSize)
+				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				, DriveKey(driveKey)
+				, CallReference(callReference)
+				, FileStructureCDI(fileStructureCDI)
+				, FileStructureSize(fileStructureSize)
+				, UsedDriveSize(usedDriveSize)
+		{}
+
+	public:
+		/// Key of drive.
+		Key DriveKey;
+
+		/// A reference to the transaction that initiated the modification.
+		Hash256 CallReference;
+
+		/// Content Download Information for the File Structure.
+		Hash256 FileStructureCDI;
+
+		/// Size of the File Structure.
+		Amount FileStructureSize;
+
+		/// Total used disk space of the drive.
+		Amount UsedDriveSize;
 	};
 }}

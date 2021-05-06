@@ -6,8 +6,47 @@
 
 #include "DriveEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
+#include "catapult/utils/Casting.h"
 
 namespace catapult { namespace state {
+
+	namespace {
+
+		void SaveActiveDataModifications(io::OutputStream& output, const std::vector<Hash256>& activeDataModifications) {
+			io::Write64(output, activeDataModifications.size());
+			for (const auto& hash : activeDataModifications) {
+				io::Write(output, hash);
+			}
+		}
+
+		void SaveFinishedDataModifications(io::OutputStream& output, const std::vector<std::pair<Hash256, DataModificationState>>& finishedDataModifications) {
+			io::Write64(output, finishedDataModifications.size());
+			for (const auto& pair : finishedDataModifications) {
+				io::Write(output, pair.first);
+				io::Write8(output, utils::to_underlying_type(pair.second));
+			}
+		}
+
+		void LoadActiveDataModifications(io::InputStream& input, std::vector<Hash256>& activeDataModifications) {
+			auto hashCount = io::Read64(input);
+			while (hashCount--) {
+				Hash256 hash;
+				io::Read(input, hash);
+				activeDataModifications.push_back(hash);
+			}
+		}
+
+		void LoadFinishedDataModifications(io::InputStream& input, std::vector<std::pair<Hash256, DataModificationState>>& finishedDataModifications) {
+			auto pairCount = io::Read64(input);
+			while (pairCount--) {
+				Hash256 hash;
+				io::Read(input, hash);
+				auto state = static_cast<DataModificationState>(io::Read8(input));
+				finishedDataModifications.emplace_back(hash, state);
+			}
+		}
+
+	}
 
 	void DriveEntrySerializer::Save(const DriveEntry& driveEntry, io::OutputStream& output) {
 
@@ -17,6 +56,9 @@ namespace catapult { namespace state {
 		io::Write(output, driveEntry.owner());
 		io::Write(output, driveEntry.size());
 		io::Write16(output, driveEntry.replicatorCount());
+
+		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
+		SaveFinishedDataModifications(output, driveEntry.finishedDataModifications());
 	}
 
 	DriveEntry DriveEntrySerializer::Load(io::InputStream& input) {
@@ -37,6 +79,9 @@ namespace catapult { namespace state {
 
 		entry.setSize(Amount(io::Read64(input)));
 		entry.setReplicatorCount(io::Read16(input));
+
+		LoadActiveDataModifications(input, entry.activeDataModifications());
+		LoadFinishedDataModifications(input, entry.finishedDataModifications());
 
 		return entry;
 	}

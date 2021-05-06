@@ -14,6 +14,29 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	// region ToDbModel
 
+	namespace {
+		void StreamActiveDataModifications(bson_stream::document& builder, const std::vector<Hash256>& activeDataModifications) {
+			auto array = builder << "activeDataModifications" << bson_stream::open_array;
+			for (const auto& hash : activeDataModifications)
+				array << ToBinary(hash);
+
+			array << bson_stream::close_array;
+		}
+
+		void StreamFinishedDataModifications(bson_stream::document& builder, const std::vector<std::pair<Hash256, state::DataModificationState>>& finishedDataModifications) {
+			auto array = builder << "finishedDataModifications" << bson_stream::open_array;
+			for (const auto& pair : finishedDataModifications) {
+				array
+						<< bson_stream::open_document
+						<< "hash" << ToBinary(pair.first)
+						<< "state" << utils::to_underlying_type(pair.second)
+						<< bson_stream::close_document;
+			}
+
+			array << bson_stream::close_array;
+		}
+	}
+
 	bsoncxx::document::value ToDbModel(const state::DriveEntry& entry, const Key& key) {
 		bson_stream::document builder;
 		auto doc = builder << "drive" << bson_stream::open_document
@@ -21,6 +44,9 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "owner" << ToBinary(entry.owner())
 				<< "size" << ToInt64(entry.size())
 				<< "replicatorCount" << static_cast<int32_t>(entry.replicatorCount());
+
+		StreamActiveDataModifications(builder, entry.activeDataModifications());
+		StreamFinishedDataModifications(builder, entry.finishedDataModifications());
 
 		return doc
 				<< bson_stream::close_document
@@ -30,6 +56,31 @@ namespace catapult { namespace mongo { namespace plugins {
 	// endregion
 
 	// region ToModel
+
+	namespace {
+		void ReadActiveDataModifications(std::vector<Hash256>& activeDataModifications, const bsoncxx::array::view& dbActiveDataModifications) {
+			for (const auto& dbHash : dbActiveDataModifications) {
+				auto doc = dbHash.get_binary();
+
+				Hash256 hash;
+				DbBinaryToModelArray(hash, doc);
+
+				activeDataModifications.push_back(hash);
+			}
+		}
+
+		void ReadFinishedDataModifications(std::vector<std::pair<Hash256, state::DataModificationState>>& finishedDataModifications, const bsoncxx::array::view& dbFinishedDataModifications) {
+			for (const auto& dbPair : dbFinishedDataModifications) {
+				auto doc = dbPair.get_document().view();
+
+				Hash256 hash;
+				DbBinaryToModelArray(hash, doc["hash"].get_binary());
+				auto state = static_cast<state::DataModificationState>(static_cast<uint8_t>(dbPair["state"].get_int32()));
+
+				finishedDataModifications.emplace_back(hash, state);
+			}
+		}
+	}
 
 	state::DriveEntry ToDriveEntry(const bsoncxx::document::view& document) {
 
@@ -45,6 +96,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		entry.setSize(Amount(dbDriveEntry["size"].get_int64()));
 		entry.setReplicatorCount(static_cast<uint16_t>(dbDriveEntry["replicatorCount"].get_int32()));
+
+		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);
+		ReadFinishedDataModifications(entry.finishedDataModifications(), dbDriveEntry["finishedDataModifications"].get_array().value);
 
 		return entry;
 	}
