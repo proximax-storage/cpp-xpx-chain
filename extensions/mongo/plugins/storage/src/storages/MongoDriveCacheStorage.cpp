@@ -7,7 +7,7 @@
 #include "MongoDriveCacheStorage.h"
 #include "src/mappers/DriveEntryMapper.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
-#include "plugins/txes/storage//src/cache/DriveCache.h"
+#include "plugins/txes/storage/src/cache/DriveCache.h"
 #include "catapult/model/Address.h"
 
 using namespace bsoncxx::builder::stream;
@@ -17,14 +17,14 @@ namespace catapult { namespace mongo { namespace plugins {
 	namespace {
 		struct DriveCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::DriveCacheDescriptor> {
 			static constexpr const char* Collection_Name = "drives";
-			static constexpr const char* Id_Property_Name = "drive.key";
+			static constexpr const char* Id_Property_Name = "drive.multisig";
 
 			static auto MapToMongoId(const KeyType& key) {
 				return mappers::ToBinary(key);
 			}
 
 			static auto MapToMongoDocument(const ModelType& entry, model::NetworkIdentifier networkIdentifier) {
-				return plugins::ToDbModel(entry, entry.key());
+				return plugins::ToDbModel(entry, model::PublicKeyToAddress(entry.key(), networkIdentifier));
 			}
 
 			static void Insert(CacheDeltaType& cache, const bsoncxx::document::view& document) {

@@ -6,12 +6,8 @@
 
 #pragma once
 #include "catapult/model/Notifications.h"
-#include "catapult/utils/MemoryUtils.h"
-#include <vector>
 
 namespace catapult { namespace model {
-
-	// TODO: Reorder codes?
 
 	/// Defines a data modification notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_v1, 0x0001);
@@ -117,7 +113,7 @@ namespace catapult { namespace model {
 		explicit PrepareDriveNotification(
 			const Key& owner,
 			const Key& driveKey,
-			const Amount& driveSize,
+			const uint64_t& driveSize,
 			const uint16_t& replicatorCount)
 			: Notification(Notification_Type, sizeof(PrepareDriveNotification<1>))
 			, Owner(owner)
@@ -134,7 +130,7 @@ namespace catapult { namespace model {
 		Key DriveKey;
 
 		/// Size of drive.
-		Amount DriveSize;
+		uint64_t DriveSize;
 
 		/// Number of replicators.
 		uint16_t ReplicatorCount;

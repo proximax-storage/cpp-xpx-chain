@@ -7,7 +7,6 @@
 #pragma once
 #include "StorageEntityType.h"
 #include "catapult/model/Transaction.h"
-#include "catapult/utils/ArraySet.h"
 
 namespace catapult { namespace model {
 
@@ -28,7 +27,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Size of drive.
-		Amount DriveSize;
+		uint64_t DriveSize;
 
 		/// Number of replicators.
 		uint16_t ReplicatorCount;
