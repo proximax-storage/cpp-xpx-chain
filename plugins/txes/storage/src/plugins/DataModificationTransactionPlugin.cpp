@@ -9,6 +9,7 @@
 #include "src/model/DataModificationTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
+#include "catapult/model/EntityHasher.h"
 
 using namespace catapult::model;
 
@@ -16,24 +17,26 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
-			switch (transaction.EntityVersion()) {
-			case 1: {
-				sub.notify(DataModificationNotification<1>(
-						transaction.DriveKey,
-						transaction.Signer,
-						transaction.DownloadDataCDI,
-						transaction.UploadSize
-				));
-				break;
-			}
+		auto CreatePublisher(const config::ImmutableConfiguration& config) {
+			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+				switch (transaction.EntityVersion()) {
+				case 1: {
+					auto transactionHash = CalculateHash(transaction, config.GenerationHash);
+					sub.notify(DataModificationNotification<1>(
+							transactionHash,
+							transaction.DriveKey,
+							transaction.Signer,
+							transaction.DownloadDataCDI,
+							transaction.UploadSize));
+					break;
+				}
 
-
-			default:
-				CATAPULT_LOG(debug) << "invalid version of DataModificationTransaction: " << transaction.EntityVersion();
-			}
+				default:
+					CATAPULT_LOG(debug) << "invalid version of DataModificationTransaction: " << transaction.EntityVersion();
+				}
+			};
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(DataModification, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(DataModification, Default, CreatePublisher, config::ImmutableConfiguration)
 }}

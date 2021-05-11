@@ -33,11 +33,13 @@ namespace catapult { namespace model {
 
 	public:
 		explicit DataModificationNotification(
+			const Hash256& hash,
 			const Key& drive,
 			const Key& owner,
             const Hash256& cdi,
 			const uint64_t& uploadSize)
 			: Notification(Notification_Type, sizeof(DataModificationNotification<1>))
+			, TransactionHash(hash)
 			, DriveKey(drive)
 			, Owner(owner)
 			, DownloadDataCDI(cdi)
@@ -45,6 +47,9 @@ namespace catapult { namespace model {
 		{}
 
 	public:
+		/// Hash of the transaction.
+		Hash256 TransactionHash;
+
 		/// Public key of the drive multisig account.
 		Key DriveKey;
 
