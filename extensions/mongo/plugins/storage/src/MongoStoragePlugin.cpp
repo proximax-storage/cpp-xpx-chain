@@ -20,11 +20,11 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationTransactionMongoPlugin());
 
 	// cache storage support
-	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDownloadCacheStorage(
-		manager.mongoContext(),
-		manager.configHolder()
-	));
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDriveCacheStorage(
+			manager.mongoContext(),
+			manager.configHolder()
+	));
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDownloadCacheStorage(
 			manager.mongoContext(),
 			manager.configHolder()
 	));
