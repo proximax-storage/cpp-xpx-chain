@@ -24,7 +24,7 @@ namespace catapult { namespace plugins {
 					auto driveHash = CalculateHash(transaction, config.GenerationHash);
 					sub.notify(PrepareDriveNotification<1>(
 							transaction.Signer,
-							Key(driveHash.array()),	// TODO: Double-check if copied
+							Key(driveHash.array()),
 							transaction.DriveSize,
 							transaction.ReplicatorCount));
 					break;

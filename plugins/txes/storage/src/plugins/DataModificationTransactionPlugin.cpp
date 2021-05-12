@@ -18,7 +18,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		auto CreatePublisher(const config::ImmutableConfiguration& config) {
-			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+			return [&config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
 					auto transactionHash = CalculateHash(transaction, config.GenerationHash);
