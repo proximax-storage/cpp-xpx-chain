@@ -19,9 +19,9 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void SaveFinishedDataModifications(io::OutputStream& output, const std::vector<std::pair<Hash256, DataModificationState>>& finishedDataModifications) {
-			io::Write64(output, finishedDataModifications.size());
-			for (const auto& pair : finishedDataModifications) {
+		void SaveCompletedDataModifications(io::OutputStream& output, const std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications) {
+			io::Write64(output, completedDataModifications.size());
+			for (const auto& pair : completedDataModifications) {
 				io::Write(output, pair.first);
 				io::Write8(output, utils::to_underlying_type(pair.second));
 			}
@@ -36,13 +36,13 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void LoadFinishedDataModifications(io::InputStream& input, std::vector<std::pair<Hash256, DataModificationState>>& finishedDataModifications) {
+		void LoadCompletedDataModifications(io::InputStream& input, std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications) {
 			auto pairCount = io::Read64(input);
 			while (pairCount--) {
 				Hash256 hash;
 				io::Read(input, hash);
 				auto state = static_cast<DataModificationState>(io::Read8(input));
-				finishedDataModifications.emplace_back(hash, state);
+				completedDataModifications.emplace_back(hash, state);
 			}
 		}
 
@@ -58,7 +58,7 @@ namespace catapult { namespace state {
 		io::Write16(output, driveEntry.replicatorCount());
 
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
-		SaveFinishedDataModifications(output, driveEntry.finishedDataModifications());
+		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
 	}
 
 	DriveEntry DriveEntrySerializer::Load(io::InputStream& input) {
@@ -81,7 +81,7 @@ namespace catapult { namespace state {
 		entry.setReplicatorCount(io::Read16(input));
 
 		LoadActiveDataModifications(input, entry.activeDataModifications());
-		LoadFinishedDataModifications(input, entry.finishedDataModifications());
+		LoadCompletedDataModifications(input, entry.completedDataModifications());
 
 		return entry;
 	}

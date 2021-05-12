@@ -23,13 +23,11 @@ namespace catapult { namespace validators {
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_STORAGE_RESULT(Plugin_Config_Malformed, 3);
 
-	// TODO: Check naming
-
 	/// Data modification is not present in activeDataModifications.
 	DEFINE_STORAGE_RESULT(No_Active_Data_Modifications, 4);
 
 	/// There are other active data modifications that need to be finished first.
-	DEFINE_STORAGE_RESULT(Data_Modification_Is_Queued, 5);
+	DEFINE_STORAGE_RESULT(Invalid_Data_Modification_Id, 5);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

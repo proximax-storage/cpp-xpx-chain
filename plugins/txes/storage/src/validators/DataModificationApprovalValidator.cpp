@@ -22,7 +22,7 @@ namespace catapult { namespace validators {
 
 	  	// Check if respective data modification is the first (oldest) element in activeDataModifications
 	  	if (*activeDataModifications.begin() != notification.CallReference)
-		  	return Failure_Storage_Data_Modification_Is_Queued;
+		  	return Failure_Storage_Invalid_Data_Modification_Id;
 
 		return ValidationResult::Success;
 	});

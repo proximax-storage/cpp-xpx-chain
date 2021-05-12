@@ -73,13 +73,13 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets finished data modifications.
-		const std::vector<std::pair<Hash256, DataModificationState>>& finishedDataModifications() const {
-			return m_finishedDataModifications;
+		const std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications() const {
+			return m_completedDataModifications;
 		}
 
 		/// Gets finished data modifications.
-		std::vector<std::pair<Hash256, DataModificationState>>& finishedDataModifications() {
-			return m_finishedDataModifications;
+		std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications() {
+			return m_completedDataModifications;
 		}
 
 	private:
@@ -87,7 +87,7 @@ namespace catapult { namespace state {
 		Amount m_size;
 		uint16_t m_replicatorCount;
 		std::vector<Hash256> m_activeDataModifications;
-		std::vector<std::pair<Hash256, DataModificationState>> m_finishedDataModifications;
+		std::vector<std::pair<Hash256, DataModificationState>> m_completedDataModifications;
 	};
 
 	// Drive entry.
