@@ -47,6 +47,7 @@ namespace catapult { namespace cache {
 		MosaicLevy,
 		Committee,
 		DownloadChannel,
+		Replicator,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

@@ -11,8 +11,6 @@
 
 namespace catapult { namespace model {
 
-	// TODO: Reorder codes?
-
 	/// Defines a data modification notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_v1, 0x0001);
 
@@ -27,6 +25,9 @@ namespace catapult { namespace model {
 
 	/// Defines a data modification approval notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Approval_v1, 0x0005);
+
+	/// Defines a replicator onboarding notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v1, 0x0006);
 
 	/// Notification of a data modification.
 	template<VersionType version>
@@ -208,5 +209,32 @@ namespace catapult { namespace model {
 
 		/// Total used disk space of the drive.
 		Amount UsedDriveSize;
+	};
+
+	/// Notification of a replicator onboarding.
+	template<VersionType version>
+	struct ReplicatorOnboardingNotification;
+
+	template<>
+	struct ReplicatorOnboardingNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Replicator_Onboarding_v1_Notification;
+
+	public:
+		explicit ReplicatorOnboardingNotification(
+				const Key& publicKey,
+				const Amount& capacity)
+				: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
+				, PublicKey(publicKey)
+				, Capacity(capacity)
+		{}
+
+	public:
+		/// Key of the replicator.
+		Key PublicKey;
+
+		/// The storage size that the replicator provides to the system.
+		Amount Capacity;
 	};
 }}

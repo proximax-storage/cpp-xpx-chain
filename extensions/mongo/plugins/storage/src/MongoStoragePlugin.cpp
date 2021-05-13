@@ -8,10 +8,12 @@
 #include "DownloadMapper.h"
 #include "DataModificationMapper.h"
 #include "DataModificationApprovalMapper.h"
+#include "ReplicatorOnboardingMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "mongo/src/MongoReceiptPluginFactory.h"
 #include "storages/MongoDriveCacheStorage.h"
 #include "storages/MongoDownloadCacheStorage.h"
+#include "storages/MongoReplicatorCacheStorage.h"
 
 extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
@@ -20,13 +22,18 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDownloadTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationApprovalTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateReplicatorOnboardingTransactionMongoPlugin());
 
 	// cache storage support
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDriveCacheStorage(
+			manager.mongoContext(),
+			manager.configHolder()
+	));
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDownloadCacheStorage(
 		manager.mongoContext(),
 		manager.configHolder()
 	));
-	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDriveCacheStorage(
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoReplicatorCacheStorage(
 			manager.mongoContext(),
 			manager.configHolder()
 	));
