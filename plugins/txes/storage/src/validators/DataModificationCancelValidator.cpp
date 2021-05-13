@@ -13,22 +13,26 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(DataModificationCancel,[](const model::DataModificationCancelNotification<1>& notification, const ValidatorContext& context) {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
-		auto driveIter = driveCache.find(notification.DriveKey);
+		const auto driveIter = driveCache.find(notification.DriveKey);
 		const auto& driveEntry = driveIter.get();
+		const auto& activeDataModifications = driveEntry.activeDataModifications();
 		
 		if (notification.Owner != driveEntry.owner())
 		  return Failure_Storage_Is_Not_Owner;
-		
-		auto dataModificationIter = std::find_if(
-				driveEntry.dataModificationQueue().begin(),
-				driveEntry.dataModificationQueue().end(),
-				[&notification](const auto& element) { return element.first == notification.ModificationTrx; });
-		
-		if (dataModificationIter == driveEntry.dataModificationQueue().end())
-			return Failure_Storage_Data_Modification_Not_Found;
 
-		if (dataModificationIter->second == state::DataModificationState::Active)
+		if (activeDataModifications.empty())
+			return Failure_Storage_No_Active_Data_Modifications;
+
+		if (activeDataModifications.front() == notification.ModificationTrx)
 			return Failure_Storage_Data_Modification_Is_Active;
+
+		auto dataModificationIter = std::find(
+				++activeDataModifications.begin(),
+				activeDataModifications.end(),
+				notification.ModificationTrx);
+
+		if (dataModificationIter == activeDataModifications.end())
+			return Failure_Storage_Data_Modification_Not_Found;
 
 		return ValidationResult::Success;
 	})

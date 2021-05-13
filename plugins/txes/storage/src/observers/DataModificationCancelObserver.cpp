@@ -12,11 +12,14 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Commit == context.Mode) {
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();
 			auto& driveEntry = driveCache.find(notification.DriveKey).get();
-			auto it = std::find_if(
-					driveEntry.dataModificationQueue().begin(),
-					driveEntry.dataModificationQueue().end(),
-					[&notification](const auto& element) { return element.first == notification.ModificationTrx; });
-			driveEntry.dataModificationQueue().erase(it);
+			auto& activeDataModifications = driveEntry.activeDataModifications();
+			
+			auto it = std::find(
+					++activeDataModifications.begin(),
+					activeDataModifications.end(),
+					notification.ModificationTrx);
+			activeDataModifications.erase(it);
+			driveEntry.completedDataModifications().emplace_back(std::make_pair(*it, state::DataModificationState::Cancelled));
 		}
 	})
 }}
