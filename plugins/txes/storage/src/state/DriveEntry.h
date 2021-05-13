@@ -11,20 +11,16 @@
 #include "catapult/utils/ArraySet.h"
 #include "catapult/utils/IntegerMath.h"
 #include <vector>
-#include <algorithm>
 
 namespace catapult { namespace state {
 
 	/// Data modification state.
 	enum class DataModificationState : uint8_t {
-		/// Default data modification state.	// TODO: Rephrase
-		None,
+		/// Data modification has been approved.
+		Succeeded,
 
-		/// Data modification is queued.
-		Queued,
-
-		/// Data modification is waiting for approval.
-		Active
+		/// Data modification has been cancelled.
+		Cancelled
 	};
 
 	// Mixin for storing drive details.
@@ -66,21 +62,32 @@ namespace catapult { namespace state {
 			return m_replicatorCount;
 		}
 
-		/// Gets the queue of data modification hashes.
-		const std::vector<std::pair<Hash256, DataModificationState>>& dataModificationQueue() const {
-			return m_dataModificationQueue;
+		/// Gets active data modifications.
+		const std::vector<Hash256>& activeDataModifications() const {
+			return m_activeDataModifications;
 		}
 
-		/// Gets the queue of data modification hashes.
-		std::vector<std::pair<Hash256, DataModificationState>>& dataModificationQueue() {
-			return m_dataModificationQueue;
+		/// Gets active data modifications.
+		std::vector<Hash256>& activeDataModifications() {
+			return m_activeDataModifications;
+		}
+
+		/// Gets finished data modifications.
+		const std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications() const {
+			return m_completedDataModifications;
+		}
+
+		/// Gets finished data modifications.
+		std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications() {
+			return m_completedDataModifications;
 		}
 
 	private:
 		Key m_owner;
 		Amount m_size;
 		uint16_t m_replicatorCount;
-		std::vector<std::pair<Hash256, DataModificationState>> m_dataModificationQueue;
+		std::vector<Hash256> m_activeDataModifications;
+		std::vector<std::pair<Hash256, DataModificationState>> m_completedDataModifications;
 	};
 
 	// Drive entry.

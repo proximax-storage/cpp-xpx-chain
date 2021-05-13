@@ -20,4 +20,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by download notifications.
 	DECLARE_OBSERVER(DownloadChannel, model::DownloadNotification<1>)();
+
+	/// Observes changes triggered by data modification approval notifications.
+	DECLARE_OBSERVER(DataModificationApproval, model::DataModificationApprovalNotification<1>)();
 }}
