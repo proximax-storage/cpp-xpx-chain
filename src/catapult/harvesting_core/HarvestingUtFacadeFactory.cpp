@@ -62,7 +62,7 @@ namespace catapult { namespace harvesting {
 			return false;
 		}
 
-		model::UniqueEntityPtr<model::Block> commit(const model::BlockHeader& blockHeader, const model::Transactions& transactions) {
+		model::UniqueEntityPtr<model::Block> commit(const model::Block& blockHeader, const model::Transactions& transactions) {
 			// 1. stitch block
 			auto pBlock = model::StitchBlock(blockHeader, transactions);
 			const auto& config = m_executionConfig.ConfigSupplier(blockHeader.Height);
@@ -189,7 +189,7 @@ namespace catapult { namespace harvesting {
 		return true;
 	}
 
-	model::UniqueEntityPtr<model::Block> HarvestingUtFacade::commit(const model::BlockHeader& blockHeader) {
+	model::UniqueEntityPtr<model::Block> HarvestingUtFacade::commit(const model::Block& blockHeader) {
 		if (height() != blockHeader.Height)
 			CATAPULT_THROW_RUNTIME_ERROR("commit block header is inconsistent with facade state");
 

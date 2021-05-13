@@ -30,7 +30,13 @@ namespace catapult { namespace model {
 
 		// emulates BlockHeader
 		struct ContainerHeader : public SizePrefixedEntity {
+		public:
 			uint32_t Tag;
+
+		public:
+			size_t GetHeaderSize() const {
+				return sizeof(ContainerHeader);
+			}
 		};
 
 		// emulates Transaction (intentionally has different size than ContainerHeader)

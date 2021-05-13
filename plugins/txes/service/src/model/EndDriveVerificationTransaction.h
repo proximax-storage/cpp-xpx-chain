@@ -19,6 +19,11 @@ namespace catapult { namespace model {
 	struct EndDriveVerificationTransactionHeader : public THeader {
 	public:
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_End_Drive_Verification, 1)
+
+	public:
+		size_t GetHeaderSize() const {
+			return sizeof(EndDriveVerificationTransactionHeader<THeader>);
+		}
 	};
 
 	/// Binary layout for an end drive verification transaction body.

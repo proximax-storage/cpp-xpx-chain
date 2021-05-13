@@ -9,6 +9,7 @@
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/thread/Future.h"
 #include "catapult/types.h"
+#include "WeightedVotingChainPackets.h"
 #include <functional>
 #include <memory>
 
@@ -23,11 +24,8 @@ namespace catapult {
 
 namespace catapult { namespace fastfinality {
 
-	/// A retriever that returns the network chain heights for all available peers.
-	using RemoteChainHeightsRetriever = std::function<thread::future<std::vector<Height>> ()>;
-
-	/// A retriever that returns the block hashes at given height from all available peers and attaches node info to each hash.
-	using RemoteBlockHashesRetriever = std::function<thread::future<std::vector<std::pair<Hash256, Key>>> (const Height&)>;
+	/// A retriever that returns remote node states from all available peers.
+	using RemoteNodeStateRetriever = std::function<thread::future<std::vector<RemoteNodeState>> ()>;
 
 	/// Registers a push proposed block handler in \a handlers verifying data with \a pFsmWeak and \a pluginManager.
 	void RegisterPushProposedBlockHandler(
@@ -50,4 +48,13 @@ namespace catapult { namespace fastfinality {
 	void RegisterPushPrecommitMessageHandler(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers);
+
+	/// Registers a pull remote node state handler in \a handlers constructing response from \a pFsmWeak
+	/// using \a pConfigHolder, \a blockElementGetter and \a lastBlockElementSupplier.
+	void RegisterPullRemoteNodeStateHandler(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		ionet::ServerPacketHandlers& handlers,
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+		const std::function<std::shared_ptr<const model::BlockElement> (const Height&)>& blockElementGetter,
+		const model::BlockElementSupplier& lastBlockElementSupplier);
 }}

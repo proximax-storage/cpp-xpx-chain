@@ -316,15 +316,17 @@ namespace catapult { namespace harvesting {
 
 	namespace {
 		auto CreateBlockHeaderWithHeight(Height height) {
-			auto pBlockHeader = std::make_unique<model::BlockHeader>();
-			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pBlockHeader.get()), sizeof(model::BlockHeader) });
-			pBlockHeader->Size = sizeof(model::BlockHeader);
+			auto pBlockHeader = utils::MakeUniqueWithSize<model::Block>(sizeof(model::BlockHeaderV4));
+			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pBlockHeader.get()), sizeof(model::BlockHeaderV4) });
+			pBlockHeader->Size = sizeof(model::BlockHeaderV4);
 			pBlockHeader->Height = height;
 			pBlockHeader->FeeMultiplier = BlockFeeMultiplier();
 			pBlockHeader->BlockReceiptsHash = Hash256();
 			pBlockHeader->StateHash = Hash256();
 			pBlockHeader->FeeInterest = 1;
 			pBlockHeader->FeeInterestDenominator = 1;
+			pBlockHeader->Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, model::BlockHeader::Current_Version);
+			pBlockHeader->setTransactionPayloadSize(0u);
 			return pBlockHeader;
 		}
 	}
@@ -385,7 +387,6 @@ namespace catapult { namespace harvesting {
 		RunUtFacadeTest(0, [](auto& facade, const auto&, const auto& executionConfig) {
 			// Act: commit
 			auto pBlockHeader = CreateBlockHeaderWithHeight(Default_Height + Height(1));
-			pBlockHeader->TransactionPayloadSize = 0u;
 			auto pBlock = facade.commit(*pBlockHeader);
 
 			// Assert: transactions have been removed
@@ -421,7 +422,6 @@ namespace catapult { namespace harvesting {
 			// Act: commit (update header size to match expected)
 			auto pBlockHeader = CreateBlockHeaderWithHeight(Default_Height + Height(1));
 			pBlockHeader->Size += transactionsSize;
-			pBlockHeader->TransactionPayloadSize = transactionsSize;
 			auto pBlock = facade.commit(*pBlockHeader);
 
 			// Assert: transactions have been removed
@@ -495,7 +495,7 @@ namespace catapult { namespace harvesting {
 
 		public:
 			model::UniqueEntityPtr<model::Block> generate(
-					const model::BlockHeader& blockHeader,
+					const model::Block& blockHeader,
 					const std::vector<model::TransactionInfo>& transactionInfos) const {
 				HarvestingUtFacadeFactory factory(m_cache, m_executionConfig);
 

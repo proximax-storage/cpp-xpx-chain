@@ -155,14 +155,13 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, CanRaiseBlockEntityNotifications) {
 		// Arrange:
 		auto pBlock = test::GenerateEmptyRandomBlock();
-		pBlock->Version = 0x11000003;
 
 		// Act:
 		PublishOne<EntityNotification<1>>(*pBlock, [&pBlock](const auto& notification) {
 			// Assert:
-			EXPECT_EQ(static_cast<NetworkIdentifier>(0x11), notification.NetworkIdentifier);
+			EXPECT_EQ(static_cast<NetworkIdentifier>(0x90), notification.NetworkIdentifier);
 			EXPECT_EQ(pBlock->Type, notification.EntityType);
-			EXPECT_EQ(0x03u, notification.EntityVersion);
+			EXPECT_EQ(0x04u, notification.EntityVersion);
 		});
 	}
 
@@ -178,7 +177,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(block.Signer, notification.Signer);
 			EXPECT_EQ(block.Signature, notification.Signature);
 			EXPECT_EQ(test::AsVoidPointer(&block.Version), test::AsVoidPointer(notification.Data.pData));
-			EXPECT_EQ(sizeof(BlockHeader) - VerifiableEntity::Header_Size, notification.Data.Size);
+			EXPECT_EQ(sizeof(BlockHeaderV4) - VerifiableEntity::Header_Size, notification.Data.Size);
 			EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
 		});
 	}
@@ -212,7 +211,7 @@ namespace catapult { namespace model {
 		test::FillWithRandomData(pBlock->Signer);
 		test::FillWithRandomData(pBlock->Signature);
 		// Convert transaction into cosignatures.
-		pBlock->TransactionPayloadSize = 0u;
+		pBlock->setTransactionPayloadSize(0u);
 		auto* pData = reinterpret_cast<uint8_t*>(pBlock->CosignaturesPtr());
 		std::memcpy(pData, cosignatures.data(), numCosignatures * sizeof(Cosignature));
 
@@ -226,7 +225,7 @@ namespace catapult { namespace model {
 				EXPECT_EQ(cosignatures[i].Signer, notification.Signer);
 				EXPECT_EQ(cosignatures[i].Signature, notification.Signature);
 				EXPECT_EQ(test::AsVoidPointer(&block.Version), test::AsVoidPointer(notification.Data.pData));
-				EXPECT_EQ(sizeof(BlockHeader) - VerifiableEntity::Header_Size, notification.Data.Size);
+				EXPECT_EQ(sizeof(BlockHeaderV4) - VerifiableEntity::Header_Size, notification.Data.Size);
 				EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
 			}
 
@@ -234,7 +233,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(block.Signer, notification.Signer);
 			EXPECT_EQ(block.Signature, notification.Signature);
 			EXPECT_EQ(test::AsVoidPointer(&block.Version), test::AsVoidPointer(notification.Data.pData));
-			EXPECT_EQ(sizeof(BlockHeader) - VerifiableEntity::Header_Size, notification.Data.Size);
+			EXPECT_EQ(sizeof(BlockHeaderV4) - VerifiableEntity::Header_Size, notification.Data.Size);
 			EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
 		});
 	}
@@ -285,15 +284,15 @@ namespace catapult { namespace model {
 		});
 	}
 
-	TEST(TEST_CLASS, CanRaiseBlockCosignaturesNotifications) {
+	TEST(TEST_CLASS, CanRaiseBlockCommitteeNotifications) {
 		// Arrange:
 		auto numCosignatures = 3;
 		auto pBlock = GenerateBlockWithTransactionSizes({ Amount(numCosignatures * sizeof(Cosignature)) });
-		pBlock->Round = 10;
+		pBlock->setRound(10);
 		pBlock->FeeInterest = 2;
 		pBlock->FeeInterestDenominator = 2;
 		// Convert transaction into cosignatures.
-		pBlock->TransactionPayloadSize = 0u;
+		pBlock->setTransactionPayloadSize(0u);
 
 		// Act:
 		PublishOne<BlockCommitteeNotification<1>>(*pBlock, [&block = *pBlock, numCosignatures](const auto& notification) {
@@ -308,6 +307,7 @@ namespace catapult { namespace model {
 		// Arrange:
 		auto pBlock = GenerateBlockWithTransactionSizes({});
 		pBlock->Version = 0x11000003;
+		pBlock->Size = sizeof(model::BlockHeader);
 
 		// Act:
 		PublishAll(*pBlock, PublicationMode::Basic, [](const auto& sub) {
@@ -327,7 +327,7 @@ namespace catapult { namespace model {
 		auto numCosignatures = 3u;
 		auto pBlock = GenerateBlockWithTransactionSizes({ Amount(numCosignatures * sizeof(Cosignature)) });
 		// Convert transaction into cosignatures.
-		pBlock->TransactionPayloadSize = 0u;
+		pBlock->setTransactionPayloadSize(0u);
 
 		// Act:
 		PublishAll(*pBlock, PublicationMode::Basic, [numCosignatures](const auto& sub) {
@@ -475,7 +475,7 @@ namespace catapult { namespace model {
 		auto pTransaction = test::GenerateRandomTransactionWithSize(234);
 		pTransaction->Type = mocks::MockTransaction::Entity_Type;
 		pTransaction->MaxFee = Amount(765);
-		BlockHeader blockHeader;
+		BlockHeaderV4 blockHeader;
 		blockHeader.FeeMultiplier = BlockFeeMultiplier(4);
 		blockHeader.FeeInterest = 1;
 		blockHeader.FeeInterestDenominator = 1;

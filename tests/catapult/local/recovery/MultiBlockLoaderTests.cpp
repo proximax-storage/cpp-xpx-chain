@@ -28,6 +28,7 @@
 #include "tests/test/local/BlockStateHash.h"
 #include "tests/test/local/LocalNodeTestState.h"
 #include "tests/test/local/LocalTestUtils.h"
+#include "tests/test/nodeps/data/NemesisMemoryBlockStorage_data.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/mocks/MockBlockHeightCapturingNotificationObserver.h"
 
@@ -161,7 +162,7 @@ namespace catapult { namespace local {
 			void setStorageChainHeight(Height chainHeight) {
 				auto storage = m_state.ref().Storage.modifier();
 				for (auto i = 2u; i <= chainHeight.unwrap(); ++i) {
-					auto pBlock = test::GenerateBlockWithTransactions(0, Height(i), Timestamp(i * 3000));
+					auto pBlock = test::GenerateBlockWithTransactions(0, Height(i), test::Nemesis_Timestamp + Timestamp(i * 3000));
 					pBlock->Difficulty = Difficulty(1 << 8);
 					storage.saveBlock(test::BlockToBlockElement(*pBlock));
 				}
