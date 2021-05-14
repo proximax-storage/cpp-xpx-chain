@@ -11,8 +11,8 @@
 namespace catapult { namespace validators {
 
 #endif
-/// Defines a download channel validation result with \a DESCRIPTION and \a CODE.
-#define DEFINE_SERVICE_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, Service, DESCRIPTION, CODE, None)
+/// Defines a storage validation result with \a DESCRIPTION and \a CODE.
+#define DEFINE_STORAGE_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, Storage, DESCRIPTION, CODE, None)
 
 
 #ifndef CUSTOM_RESULT_DEFINITION
