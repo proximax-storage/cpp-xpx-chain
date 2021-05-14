@@ -27,6 +27,9 @@ namespace catapult { namespace model {
 
 	/// Defines a data modification approval notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Approval_v1, 0x0005);
+	
+	/// Defines a data modification cancel notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Cancel_v1, 0x0006);
 
 	/// Notification of a data modification.
 	template<VersionType version>
@@ -208,5 +211,33 @@ namespace catapult { namespace model {
 
 		/// Total used disk space of the drive.
 		Amount UsedDriveSize;
+	};
+	
+	/// Notification of a data modification cancel.
+	template<VersionType version>
+	struct DataModificationCancelNotification;
+	
+	template<>
+	struct DataModificationCancelNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Data_Modification_Cancel_v1_Notification;
+	
+	public:
+		explicit DataModificationCancelNotification(const Key& drive, const Key& owner, const Hash256& modificationTrx)
+				: Notification(Notification_Type, sizeof(DataModificationCancelNotification<1>))
+				, DriveKey(drive)
+				, Owner(owner)
+				, ModificationTrx(modificationTrx) {}
+	
+	public:
+		/// Public key of a drive multisig account.
+		Key DriveKey;
+		
+		/// Public key of a drive owner.
+		Key Owner;
+		
+		/// Hash of a DataModification transaction
+		Hash256 ModificationTrx;
 	};
 }}

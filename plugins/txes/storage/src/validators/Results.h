@@ -28,6 +28,15 @@ namespace catapult { namespace validators {
 
 	/// There are other active data modifications that need to be finished first.
 	DEFINE_STORAGE_RESULT(Invalid_Data_Modification_Id, 5);
+	
+	/// Validation failed DataModificationTransaction is not found.
+	DEFINE_STORAGE_RESULT(Data_Modification_Not_Found, 6);
+	
+	/// Validation failed DataModificationTransaction is Active.
+	DEFINE_STORAGE_RESULT(Data_Modification_Is_Active, 7);
+	
+	/// Validation failed Transaction Signer is not Drive owner.
+	DEFINE_STORAGE_RESULT(Is_Not_Owner, 8);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
