@@ -12,6 +12,8 @@
 #include "src/cache/DownloadCache.h"
 #include "src/state/DriveEntry.h"
 #include "src/cache/DriveCache.h"
+#include "src/state/ReplicatorEntry.h"
+#include "src/cache/ReplicatorCache.h"
 
 namespace catapult { namespace observers {
 
@@ -23,4 +25,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by data modification approval notifications.
 	DECLARE_OBSERVER(DataModificationApproval, model::DataModificationApprovalNotification<1>)();
+
+	/// Observes changes triggered by replicator onboarding notifications.
+	DECLARE_OBSERVER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
 }}

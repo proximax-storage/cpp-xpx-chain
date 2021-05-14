@@ -7,10 +7,13 @@
 #include "StoragePlugin.h"
 #include "src/cache/DriveCacheStorage.h"
 #include "src/cache/DownloadCacheStorage.h"
+#include "src/cache/ReplicatorCache.h"
+#include "src/cache/ReplicatorCacheStorage.h"
 #include "src/plugins/PrepareDriveTransactionPlugin.h"
 #include "src/plugins/DataModificationTransactionPlugin.h"
 #include "src/plugins/DownloadTransactionPlugin.h"
 #include "src/plugins/DataModificationApprovalTransactionPlugin.h"
+#include "src/plugins/ReplicatorOnboardingTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -30,6 +33,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDataModificationTransactionPlugin());
 		manager.addTransactionSupport(CreateDownloadTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDataModificationApprovalTransactionPlugin());
+		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin());
 
 
 		manager.addCacheSupport<cache::DriveCacheStorage>(
@@ -58,6 +62,19 @@ namespace catapult { namespace plugins {
 		});
 
 
+		manager.addCacheSupport<cache::ReplicatorCacheStorage>(
+			std::make_unique<cache::ReplicatorCache>(manager.cacheConfig(cache::ReplicatorCache::Name), pConfigHolder));
+
+		using ReplicatorCacheHandlersService = CacheHandlers<cache::ReplicatorCacheDescriptor>;
+		ReplicatorCacheHandlersService::Register<model::FacilityCode::Replicator>(manager);	// TODO: Check FacilityCode
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("REPLICATOR C"), [&cache]() {
+				return cache.sub<cache::ReplicatorCache>().createView(cache.height())->size();
+			});
+		});
+
+
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 		  	builder
 				.add(validators::CreatePrepareDriveValidator())
@@ -68,7 +85,8 @@ namespace catapult { namespace plugins {
 			builder
 				.add(observers::CreatePrepareDriveObserver())
 				.add(observers::CreateDownloadChannelObserver())
-				.add(observers::CreateDataModificationApprovalObserver());
+				.add(observers::CreateDataModificationApprovalObserver())
+				.add(observers::CreateReplicatorOnboardingObserver());
 		});
 	}
 }}

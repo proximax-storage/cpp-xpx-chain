@@ -73,5 +73,7 @@ namespace catapult { namespace model {
 		Committee = 0x61,
 		/// Storage facility code.
 		Storage = 0x62,
+		/// Replicator facility code.
+		Replicator = 0x63,
 	};
 }}
