@@ -24,6 +24,8 @@ namespace catapult { namespace config {
 
 		config.MinDriveSize = utils::FileSize::FromMegabytes(1);
 		TRY_LOAD_CHAIN_PROPERTY(MinDriveSize);
+		config.MinReplicatorCount = 1;
+		TRY_LOAD_CHAIN_PROPERTY(MinReplicatorCount);
 		config.MaxFreeDownloadSize = utils::FileSize::FromMegabytes(1);
 		TRY_LOAD_CHAIN_PROPERTY(MaxFreeDownloadSize);
 		config.StorageBillingPeriod = utils::TimeSpan::FromHours(24 * 7);

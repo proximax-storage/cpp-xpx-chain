@@ -170,6 +170,7 @@ maxSuperContractsOnDrive = 10
 
 enabled = false
 minDriveSize = 1mb
+minReplicatorCount = 1
 maxFreeDownloadSize = 1mb
 # 4 weeks 28 days
 storageBillingPeriod = 28d

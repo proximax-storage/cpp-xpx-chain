@@ -11,11 +11,25 @@
 
 namespace catapult { namespace model {
 
+	// TODO: Reorder codes?
+
 	/// Defines a data modification notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_v1, 0x0001);
 
 	/// Defines a download notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_v1, 0x0002);
+
+	/// Defines a prepare drive notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Prepare_Drive_v1, 0x0003);
+
+	/// Defines a drive notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Drive_v1, 0x0004);
+
+	/// Defines a data modification approval notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Approval_v1, 0x0005);
+	
+	/// Defines a data modification cancel notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Cancel_v1, 0x0006);
 
 	/// Notification of a data modification.
 	template<VersionType version>
@@ -93,5 +107,137 @@ namespace catapult { namespace model {
 
 		/// Delta transaction fee in xpx.
 		Amount TransactionFee;
+	};
+
+	/// Notification of a drive preparation.
+	template<VersionType version>
+	struct PrepareDriveNotification;
+
+	template<>
+	struct PrepareDriveNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Prepare_Drive_v1_Notification;
+
+	public:
+		explicit PrepareDriveNotification(
+			const Key& owner,
+			const Key& driveKey,
+			const Amount& driveSize,
+			const uint16_t& replicatorCount)
+			: Notification(Notification_Type, sizeof(PrepareDriveNotification<1>))
+			, Owner(owner)
+			, DriveKey(driveKey)
+			, DriveSize(driveSize)
+			, ReplicatorCount(replicatorCount)
+		{}
+
+	public:
+		/// Public key of owner.
+		Key Owner;
+
+		/// Public key of drive.
+		Key DriveKey;
+
+		/// Size of drive.
+		Amount DriveSize;
+
+		/// Number of replicators.
+		uint16_t ReplicatorCount;
+	};
+
+	/// Notification of a drive.
+	template<VersionType version>
+	struct DriveNotification;
+
+	template<>
+	struct DriveNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Drive_v1_Notification;
+
+	public:
+		explicit DriveNotification(const Key& drive, const model::EntityType& type)
+				: Notification(Notification_Type, sizeof(DriveNotification<1>))
+				, DriveKey(drive)
+				, TransactionType(type)
+		{}
+
+	public:
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+
+		/// Transactions type.
+		model::EntityType TransactionType;
+	};
+
+	/// Notification of a data modification approval.
+	template<VersionType version>
+	struct DataModificationApprovalNotification;
+
+	template<>
+	struct DataModificationApprovalNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Data_Modification_Approval_v1_Notification;
+
+	public:
+		explicit DataModificationApprovalNotification(
+				const Key& driveKey,
+				const Hash256& callReference,
+				const Hash256& fileStructureCDI,
+				const Amount& fileStructureSize,
+				const Amount& usedDriveSize)
+				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				, DriveKey(driveKey)
+				, CallReference(callReference)
+				, FileStructureCDI(fileStructureCDI)
+				, FileStructureSize(fileStructureSize)
+				, UsedDriveSize(usedDriveSize)
+		{}
+
+	public:
+		/// Key of drive.
+		Key DriveKey;
+
+		/// A reference to the transaction that initiated the modification.
+		Hash256 CallReference;
+
+		/// Content Download Information for the File Structure.
+		Hash256 FileStructureCDI;
+
+		/// Size of the File Structure.
+		Amount FileStructureSize;
+
+		/// Total used disk space of the drive.
+		Amount UsedDriveSize;
+	};
+	
+	/// Notification of a data modification cancel.
+	template<VersionType version>
+	struct DataModificationCancelNotification;
+	
+	template<>
+	struct DataModificationCancelNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Data_Modification_Cancel_v1_Notification;
+	
+	public:
+		explicit DataModificationCancelNotification(const Key& drive, const Key& owner, const Hash256& modificationTrx)
+				: Notification(Notification_Type, sizeof(DataModificationCancelNotification<1>))
+				, DriveKey(drive)
+				, Owner(owner)
+				, ModificationTrx(modificationTrx) {}
+	
+	public:
+		/// Public key of a drive multisig account.
+		Key DriveKey;
+		
+		/// Public key of a drive owner.
+		Key Owner;
+		
+		/// Hash of a DataModification transaction
+		Hash256 ModificationTrx;
 	};
 }}

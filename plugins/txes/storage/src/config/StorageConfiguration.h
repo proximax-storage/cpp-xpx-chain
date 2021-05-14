@@ -22,6 +22,9 @@ namespace catapult { namespace config {
 		/// Minimal size of the drive.
 		utils::FileSize MinDriveSize{};
 
+		/// Minimal number of replicators.
+		uint16_t MinReplicatorCount{};
+
 		/// Max size to download files for free
 		utils::FileSize MaxFreeDownloadSize{};
 
