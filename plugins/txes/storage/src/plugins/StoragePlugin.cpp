@@ -69,6 +69,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreatePrepareDriveObserver())
 				.add(observers::CreateDownloadChannelObserver())
 				.add(observers::CreateDataModificationApprovalObserver());
+		});
 	}
 }}
 
