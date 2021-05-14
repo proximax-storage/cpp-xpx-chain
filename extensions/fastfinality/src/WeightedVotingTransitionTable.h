@@ -39,14 +39,10 @@ namespace catapult { namespace fastfinality {
 				sml::state<LocalChainCheck> + sml::on_entry<sml::_> / ACTION(CheckLocalChain),
 				sml::state<LocalChainCheck> + sml::event<NetworkHeightDetectionFailure> = sml::state<LocalChainCheck>,
 				sml::state<LocalChainCheck> + sml::event<NetworkHeightLessThanLocal> = sml::state<InvalidLocalChain>,
-				sml::state<LocalChainCheck> + sml::event<NetworkHeightGreaterThanLocal> = sml::state<PeersSelection>,
+				sml::state<LocalChainCheck> + sml::event<NetworkHeightGreaterThanLocal> = sml::state<BlocksDownloading>,
 				sml::state<LocalChainCheck> + sml::event<NetworkHeightEqualToLocal> = sml::state<StageDetection>,
 
 				sml::state<InvalidLocalChain> / ACTION(ResetLocalChain) = sml::X,
-
-				sml::state<PeersSelection> + sml::on_entry<sml::_> / ACTION(SelectPeers),
-				sml::state<PeersSelection> + sml::event<PeersSelectionFailed> = sml::state<PeersSelection>,
-				sml::state<PeersSelection> + sml::event<PeersSelectionSucceeded> = sml::state<BlocksDownloading>,
 
 				sml::state<BlocksDownloading> + sml::on_entry<sml::_> / ACTION(DownloadBlocks),
 				sml::state<BlocksDownloading> + sml::event<DownloadBlocksFailed> = sml::state<LocalChainCheck>,

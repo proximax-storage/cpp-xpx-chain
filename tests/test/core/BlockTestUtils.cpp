@@ -80,7 +80,8 @@ namespace catapult { namespace test {
 		model::UniqueEntityPtr<model::Block> GenerateBlock(
 				const TestBlockTransactions& transactions,
 				const TestBlockOptions& options,
-				size_t numCosignatures = 0) {
+				size_t numCosignatures = 0,
+				VersionType version = model::Block::Current_Version) {
 			model::PreviousBlockContext context;
 			auto pBlock = model::CreateBlock(context, Network_Identifier, options.Signer.publicKey(), transactions.get());
 			RandomizeBlock(*pBlock);
@@ -97,9 +98,12 @@ namespace catapult { namespace test {
 			if (!numCosignatures)
 				return pBlock;
 
-			auto pBlockWithCosignatures = utils::MakeUniqueWithSize<model::Block>(pBlock->Size + numCosignatures * sizeof(model::Cosignature));
+			auto blockSize = pBlock->Size + numCosignatures * sizeof(model::Cosignature);
+			auto pBlockWithCosignatures = utils::MakeUniqueWithSize<model::Block>(blockSize);
 			auto* pData = reinterpret_cast<uint8_t*>(pBlockWithCosignatures.get());
 			std::memcpy(pData, pBlock.get(), pBlock->Size);
+			pBlockWithCosignatures->Size = blockSize;
+
 			auto pCosignature = pBlockWithCosignatures->CosignaturesPtr();
 			for (auto i = 0u; i < pBlockWithCosignatures->CosignaturesCount(); ++i, ++pCosignature) {
 				FillWithRandomData(pCosignature->Signer);
@@ -110,12 +114,12 @@ namespace catapult { namespace test {
 		}
 	}
 
-	model::UniqueEntityPtr<model::Block> GenerateEmptyRandomBlock() {
-		return GenerateBlockWithTransactions(0);
+	model::UniqueEntityPtr<model::Block> GenerateEmptyRandomBlock(VersionType version) {
+		return GenerateBlockWithTransactions(0, version);
 	}
 
-	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const TestBlockTransactions& transactions) {
-		return GenerateBlock(transactions, TestBlockOptions(GenerateKeyPair()));
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const TestBlockTransactions& transactions, VersionType version) {
+		return GenerateBlock(transactions, TestBlockOptions(GenerateKeyPair()), 0, version);
 	}
 
 	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const crypto::KeyPair& signer, const TestBlockTransactions& transactions) {

@@ -28,33 +28,12 @@ namespace catapult { namespace io {
 
 	namespace {
 		auto ReadBlockElementImpl(InputStream& inputStream) {
-			model::VerifiableEntity entity;
-			inputStream.read({ reinterpret_cast<uint8_t*>(&entity), sizeof(model::VerifiableEntity) });
+			auto size = Read32(inputStream);
 
 			// read block
-			std::shared_ptr<model::Block> pBlock;
-			if (entity.EntityVersion() <= 3) {
-				auto newFieldsSize = sizeof(int64_t) // round
-					+ sizeof(uint64_t) // CommitteePhaseTime
-					+ sizeof(uint32_t); // TransactionPayloadSize
-				auto size = entity.Size + newFieldsSize;
-				pBlock = utils::MakeSharedWithSize<model::Block>(size);
-				inputStream.read({
-					reinterpret_cast<uint8_t*>(pBlock.get()) + sizeof(model::VerifiableEntity),
-					sizeof(model::BlockHeader) - newFieldsSize - sizeof(model::VerifiableEntity) });
-				pBlock->CommitteePhaseTime = 0u;
-				pBlock->TransactionPayloadSize = size - sizeof(model::BlockHeader);
-				inputStream.read({
-					reinterpret_cast<uint8_t*>(pBlock.get()) + sizeof(model::BlockHeader),
-					size - sizeof(model::BlockHeader) });
-			} else {
-				auto size = entity.Size;
-				pBlock = utils::MakeSharedWithSize<model::Block>(size);
-				inputStream.read({
-					reinterpret_cast<uint8_t*>(pBlock.get()) + sizeof(model::VerifiableEntity),
-					size - sizeof(model::VerifiableEntity) });
-			}
-			std::memcpy(static_cast<void*>(pBlock.get()), &entity, sizeof(model::VerifiableEntity));
+			auto pBlock = utils::MakeSharedWithSize<model::Block>(size);
+			pBlock->Size = size;
+			inputStream.read({ reinterpret_cast<uint8_t*>(pBlock.get()) + sizeof(uint32_t), size - sizeof(uint32_t) });
 
 			// create the block element
 			auto pBlockElement = std::make_shared<model::BlockElement>(std::move(pBlock));

@@ -104,9 +104,9 @@ namespace catapult { namespace test {
 		EXPECT_EQ(block.Beneficiary, GetKeyValue(dbBlock, "beneficiary"));
 		EXPECT_EQ(block.FeeInterest, GetUint32(dbBlock, "feeInterest"));
 		EXPECT_EQ(block.FeeInterestDenominator, GetUint32(dbBlock, "feeInterestDenominator"));
-		EXPECT_EQ(block.Round, GetUint64(dbBlock, "round"));
-		EXPECT_EQ(block.CommitteePhaseTime, GetUint64(dbBlock, "committeePhaseTime"));
-		EXPECT_EQ(block.TransactionPayloadSize, GetUint32(dbBlock, "transactionPayloadSize"));
+		EXPECT_EQ(block.round(), GetUint64(dbBlock, "round"));
+		EXPECT_EQ(block.committeePhaseTime(), GetUint64(dbBlock, "committeePhaseTime"));
+		EXPECT_EQ(block.transactionPayloadSize(), GetUint32(dbBlock, "transactionPayloadSize"));
 	}
 
 	void AssertEqualBlockMetadata(

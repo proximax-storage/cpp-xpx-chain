@@ -5,24 +5,28 @@
 **/
 
 #include "Validators.h"
-#include "src/config/StorageConfiguration.h"
+#include "src/cache/DriveCache.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::PrepareDriveNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(PrepareDrivePermission, [](const model::PrepareDriveNotification<1> &notification, const ValidatorContext& context) {
-
+	DEFINE_STATEFUL_VALIDATOR(PrepareDrive, [](const model::PrepareDriveNotification<1> &notification, const ValidatorContext& context) {
+		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
 		// Check if drive size >= minDriveSize
 		// TODO: Check conversion
-		if (utils::FileSize::FromMegabytes(notification.DriveSize.unwrap()) < pluginConfig.MinDriveSize)
-			return Failure_Storage_Prepare_Too_Small_DriveSize;
+		if (utils::FileSize::FromMegabytes(notification.DriveSize) < pluginConfig.MinDriveSize)
+			return Failure_Storage_Drive_Size_Insufficient;
 
 		// Check if number of replicators >= minReplicatorCount
 		if (notification.ReplicatorCount < pluginConfig.MinReplicatorCount)
-			return Failure_Storage_Prepare_Too_Small_ReplicatorCount;
+			return Failure_Storage_Replicator_Count_Insufficient;
+
+	  	// Check if the drive already exists
+	  	if (driveCache.contains(notification.DriveKey))
+			return Failure_Storage_Drive_Already_Exists;
 
 		return ValidationResult::Success;
 	});

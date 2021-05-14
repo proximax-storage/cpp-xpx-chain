@@ -6,8 +6,6 @@
 
 #pragma once
 #include "catapult/model/Notifications.h"
-#include "catapult/utils/MemoryUtils.h"
-#include <vector>
 
 namespace catapult { namespace model {
 
@@ -26,6 +24,9 @@ namespace catapult { namespace model {
 	/// Defines a data modification approval notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Approval_v1, 0x0005);
 
+	/// Defines a data modification cancel notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Cancel_v1, 0x0006);
+
 	/// Defines a replicator onboarding notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v1, 0x0006);
 
@@ -41,11 +42,13 @@ namespace catapult { namespace model {
 
 	public:
 		explicit DataModificationNotification(
+			const Hash256& hash,
 			const Key& drive,
 			const Key& owner,
             const Hash256& cdi,
 			const uint64_t& uploadSize)
 			: Notification(Notification_Type, sizeof(DataModificationNotification<1>))
+			, TransactionHash(hash)
 			, DriveKey(drive)
 			, Owner(owner)
 			, DownloadDataCDI(cdi)
@@ -53,6 +56,9 @@ namespace catapult { namespace model {
 		{}
 
 	public:
+		/// Hash of the transaction.
+		Hash256 TransactionHash;
+
 		/// Public key of the drive multisig account.
 		Key DriveKey;
 
@@ -121,7 +127,7 @@ namespace catapult { namespace model {
 		explicit PrepareDriveNotification(
 			const Key& owner,
 			const Key& driveKey,
-			const Amount& driveSize,
+			const uint64_t& driveSize,
 			const uint16_t& replicatorCount)
 			: Notification(Notification_Type, sizeof(PrepareDriveNotification<1>))
 			, Owner(owner)
@@ -138,7 +144,7 @@ namespace catapult { namespace model {
 		Key DriveKey;
 
 		/// Size of drive.
-		Amount DriveSize;
+		uint64_t DriveSize;
 
 		/// Number of replicators.
 		uint16_t ReplicatorCount;
@@ -209,6 +215,34 @@ namespace catapult { namespace model {
 
 		/// Total used disk space of the drive.
 		Amount UsedDriveSize;
+	};
+
+	/// Notification of a data modification cancel.
+	template<VersionType version>
+	struct DataModificationCancelNotification;
+
+	template<>
+	struct DataModificationCancelNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Data_Modification_Cancel_v1_Notification;
+
+	public:
+		explicit DataModificationCancelNotification(const Key& drive, const Key& owner, const Hash256& modificationTrx)
+				: Notification(Notification_Type, sizeof(DataModificationCancelNotification<1>))
+				, DriveKey(drive)
+				, Owner(owner)
+				, ModificationTrx(modificationTrx) {}
+
+	public:
+		/// Public key of a drive multisig account.
+		Key DriveKey;
+
+		/// Public key of a drive owner.
+		Key Owner;
+
+		/// Hash of a DataModification transaction
+		Hash256 ModificationTrx;
 	};
 
 	/// Notification of a replicator onboarding.

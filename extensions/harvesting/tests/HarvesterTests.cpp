@@ -72,7 +72,7 @@ namespace catapult { namespace harvesting {
 
 		model::UniqueEntityPtr<model::Block> CreateBlock() {
 			// the created block needs to have height 1 to be able to add it to the block difficulty cache
-			auto pBlock = test::GenerateEmptyRandomBlock();
+			auto pBlock = test::GenerateEmptyRandomBlock(3);
 			pBlock->Height = Height(1);
 			pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
 			pBlock->Timestamp = Timestamp();
@@ -380,7 +380,7 @@ namespace catapult { namespace harvesting {
 			EXPECT_EQ(model::CalculateHash(*context.pLastBlock), pBlock->PreviousBlockHash);
 			EXPECT_TRUE(model::VerifyBlockHeaderSignature(*pBlock));
 			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, state::BlockDifficultyInfo(*pBlock), context.Config.Network), pBlock->Difficulty);
-			EXPECT_EQ(model::MakeVersion(Network_Identifier, 4), pBlock->Version);
+			EXPECT_EQ(model::MakeVersion(Network_Identifier, 3), pBlock->Version);
 			EXPECT_EQ(model::Entity_Type_Block, pBlock->Type);
 			EXPECT_TRUE(model::IsSizeValid(*pBlock, model::TransactionRegistry()));
 			EXPECT_EQ(context.Beneficiary, pBlock->Beneficiary);

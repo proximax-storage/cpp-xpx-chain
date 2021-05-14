@@ -23,6 +23,11 @@ namespace catapult { namespace model {
 
 		/// Id of metadata(MosaicId, NamespaceId and etc).
 		TMetadataId MetadataId;
+
+	public:
+		size_t GetHeaderSize() const {
+			return sizeof(MetadataTransactionHeader);
+		}
 	};
 
 	/// Binary layout for a basic metadata transaction body.

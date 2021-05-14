@@ -31,7 +31,7 @@ namespace catapult {
 namespace catapult { namespace harvesting {
 
 	/// Generates a block from a seed block header given a maximum number of transactions.
-	using BlockGenerator = std::function<model::UniqueEntityPtr<model::Block> (const model::BlockHeader&, uint32_t)>;
+	using BlockGenerator = std::function<model::UniqueEntityPtr<model::Block> (const model::Block&, uint32_t)>;
 
 	/// Creates a default block generator around \a utFacadeFactory and \a utCache for specified transaction \a strategy.
 	BlockGenerator CreateHarvesterBlockGenerator(

@@ -30,8 +30,8 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 			manager.configHolder()
 	));
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDownloadCacheStorage(
-		manager.mongoContext(),
-		manager.configHolder()
+			manager.mongoContext(),
+			manager.configHolder()
 	));
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoReplicatorCacheStorage(
 			manager.mongoContext(),

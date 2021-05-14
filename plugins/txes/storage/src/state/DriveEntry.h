@@ -42,13 +42,23 @@ namespace catapult { namespace state {
             return m_owner;
         }
 
+		/// Sets \a rootHash of drive.
+		void setRootHash(const Hash256& rootHash) {
+			m_rootHash = rootHash;
+		}
+
+		/// Gets root hash of drive.
+		const Hash256& rootHash() const {
+			return m_rootHash;
+		}
+
 		/// Sets the drive size.
-		void setSize(const Amount& size) {
+		void setSize(const uint64_t& size) {
 			m_size = size;
 		}
 
 		/// Gets the drive size.
-		const Amount& size() const {
+		const uint64_t& size() const {
 			return m_size;
 		}
 
@@ -73,21 +83,22 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets finished data modifications.
-		const std::vector<std::pair<Hash256, DataModificationState>>& finishedDataModifications() const {
-			return m_finishedDataModifications;
+		const std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications() const {
+			return m_completedDataModifications;
 		}
 
 		/// Gets finished data modifications.
-		std::vector<std::pair<Hash256, DataModificationState>>& finishedDataModifications() {
-			return m_finishedDataModifications;
+		std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications() {
+			return m_completedDataModifications;
 		}
 
 	private:
 		Key m_owner;
-		Amount m_size;
+		Hash256 m_rootHash;
+		uint64_t m_size;
 		uint16_t m_replicatorCount;
 		std::vector<Hash256> m_activeDataModifications;
-		std::vector<std::pair<Hash256, DataModificationState>> m_finishedDataModifications;
+		std::vector<std::pair<Hash256, DataModificationState>> m_completedDataModifications;
 	};
 
 	// Drive entry.

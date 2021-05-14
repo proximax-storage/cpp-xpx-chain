@@ -9,7 +9,7 @@
 #include "DownloadTransactionPlugin.h"
 #include "src/model/StorageNotifications.h"
 #include "src/model/DownloadTransaction.h"
-#include "catapult/model/NotificationSubscriber.h"
+#include "src/utils/StorageUtils.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/EntityHasher.h"
 
@@ -29,7 +29,8 @@ namespace catapult { namespace plugins {
 							transaction.Signer, driveAddress, currencyMosaicId, transaction.TransactionFee));
 					sub.notify(BalanceTransferNotification<1>(
 							transaction.Signer, driveAddress, currencyMosaicId, transaction.DownloadSize));
-					sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
+//					sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
+					utils::SwapMosaics(transaction.Signer, { { config::GetUnresolvedStorageMosaicId(config), transaction.DownloadSize } }, sub, config, utils::SwapOperation::Buy);
 
 					auto downloadChannelId = CalculateHash(transaction, config.GenerationHash);
 					sub.notify(DownloadNotification<1>(

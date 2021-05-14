@@ -213,7 +213,7 @@ namespace catapult { namespace extensions {
 
 		void RequireValidSignature(const model::Block& block) {
 			auto headerSize = model::VerifiableEntity::Header_Size;
-			auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, sizeof(model::BlockHeader) - headerSize };
+			auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, block.GetHeaderSize() - headerSize };
 			if (crypto::Verify(block.Signer, blockData, block.Signature))
 				return;
 

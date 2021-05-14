@@ -16,7 +16,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	template<typename TTransaction>
 	void StreamPrepareDriveTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "owner" << ToBinary(transaction.Signer);
-		builder << "driveSize" << ToInt64(transaction.DriveSize);
+		builder << "driveSize" << static_cast<int64_t>(transaction.DriveSize);
 		builder << "replicatorCount" << transaction.ReplicatorCount;
 	}
 

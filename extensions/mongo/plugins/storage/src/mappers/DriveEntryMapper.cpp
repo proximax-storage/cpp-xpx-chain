@@ -23,9 +23,9 @@ namespace catapult { namespace mongo { namespace plugins {
 			array << bson_stream::close_array;
 		}
 
-		void StreamFinishedDataModifications(bson_stream::document& builder, const std::vector<std::pair<Hash256, state::DataModificationState>>& finishedDataModifications) {
-			auto array = builder << "finishedDataModifications" << bson_stream::open_array;
-			for (const auto& pair : finishedDataModifications) {
+		void StreamCompletedDataModifications(bson_stream::document& builder, const std::vector<std::pair<Hash256, state::DataModificationState>>& completedDataModifications) {
+			auto array = builder << "completedDataModifications" << bson_stream::open_array;
+			for (const auto& pair : completedDataModifications) {
 				array
 						<< bson_stream::open_document
 						<< "hash" << ToBinary(pair.first)
@@ -37,16 +37,18 @@ namespace catapult { namespace mongo { namespace plugins {
 		}
 	}
 
-	bsoncxx::document::value ToDbModel(const state::DriveEntry& entry, const Key& key) {
+	bsoncxx::document::value ToDbModel(const state::DriveEntry& entry, const Address& accountAddress) {
 		bson_stream::document builder;
 		auto doc = builder << "drive" << bson_stream::open_document
-				<< "key" << ToBinary(entry.key())
+				<< "multisig" << ToBinary(entry.key())
+				<< "multisigAddress" << ToBinary(accountAddress)
 				<< "owner" << ToBinary(entry.owner())
-				<< "size" << ToInt64(entry.size())
+				<< "rootHash" << ToBinary(entry.rootHash())
+				<< "size" << static_cast<int64_t>(entry.size())
 				<< "replicatorCount" << static_cast<int32_t>(entry.replicatorCount());
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
-		StreamFinishedDataModifications(builder, entry.finishedDataModifications());
+		StreamCompletedDataModifications(builder, entry.completedDataModifications());
 
 		return doc
 				<< bson_stream::close_document
@@ -69,15 +71,15 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 		}
 
-		void ReadFinishedDataModifications(std::vector<std::pair<Hash256, state::DataModificationState>>& finishedDataModifications, const bsoncxx::array::view& dbFinishedDataModifications) {
-			for (const auto& dbPair : dbFinishedDataModifications) {
+		void ReadCompletedDataModifications(std::vector<std::pair<Hash256, state::DataModificationState>>& completedDataModifications, const bsoncxx::array::view& dbCompletedDataModifications) {
+			for (const auto& dbPair : dbCompletedDataModifications) {
 				auto doc = dbPair.get_document().view();
 
 				Hash256 hash;
 				DbBinaryToModelArray(hash, doc["hash"].get_binary());
 				auto state = static_cast<state::DataModificationState>(static_cast<uint8_t>(dbPair["state"].get_int32()));
 
-				finishedDataModifications.emplace_back(hash, state);
+				completedDataModifications.emplace_back(hash, state);
 			}
 		}
 	}
@@ -86,19 +88,23 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		auto dbDriveEntry = document["drive"];
 
-		Key key;
-		DbBinaryToModelArray(key, dbDriveEntry["key"].get_binary());
-		state::DriveEntry entry(key);
+		Key multisig;
+		DbBinaryToModelArray(multisig, dbDriveEntry["multisig"].get_binary());
+		state::DriveEntry entry(multisig);
 
 		Key owner;
 		DbBinaryToModelArray(owner, dbDriveEntry["owner"].get_binary());
 		entry.setOwner(owner);
 
-		entry.setSize(Amount(dbDriveEntry["size"].get_int64()));
+		Hash256 rootHash;
+		DbBinaryToModelArray(rootHash, dbDriveEntry["rootHash"].get_binary());
+		entry.setRootHash(rootHash);
+
+		entry.setSize(static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
 		entry.setReplicatorCount(static_cast<uint16_t>(dbDriveEntry["replicatorCount"].get_int32()));
 
 		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);
-		ReadFinishedDataModifications(entry.finishedDataModifications(), dbDriveEntry["finishedDataModifications"].get_array().value);
+		ReadCompletedDataModifications(entry.completedDataModifications(), dbDriveEntry["completedDataModifications"].get_array().value);
 
 		return entry;
 	}
