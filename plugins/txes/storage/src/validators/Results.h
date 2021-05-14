@@ -15,28 +15,31 @@ namespace catapult { namespace validators {
 #define DEFINE_STORAGE_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, Storage, DESCRIPTION, CODE, None)
 
 	/// Desired drive size is less than minimal.
-	DEFINE_STORAGE_RESULT(Prepare_Too_Small_DriveSize, 1);
+	DEFINE_STORAGE_RESULT(Drive_Size_Insufficient, 1);
 
 	/// Desired number of replicators is less than minimal.
-	DEFINE_STORAGE_RESULT(Prepare_Too_Small_ReplicatorCount, 2);
+	DEFINE_STORAGE_RESULT(Replicator_Count_Insufficient, 2);
 
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_STORAGE_RESULT(Plugin_Config_Malformed, 3);
 
+	/// Validation failed because the drive already exists.
+	DEFINE_STORAGE_RESULT(Drive_Already_Exists, 4);
+
 	/// Data modification is not present in activeDataModifications.
-	DEFINE_STORAGE_RESULT(No_Active_Data_Modifications, 4);
+	DEFINE_STORAGE_RESULT(No_Active_Data_Modifications, 5);
 
 	/// There are other active data modifications that need to be finished first.
-	DEFINE_STORAGE_RESULT(Invalid_Data_Modification_Id, 5);
+	DEFINE_STORAGE_RESULT(Invalid_Data_Modification_Id, 6);
 
 	/// Validation failed DataModificationTransaction is not found.
-	DEFINE_STORAGE_RESULT(Data_Modification_Not_Found, 6);
+	DEFINE_STORAGE_RESULT(Data_Modification_Not_Found, 7);
 
 	/// Validation failed DataModificationTransaction is Active.
-	DEFINE_STORAGE_RESULT(Data_Modification_Is_Active, 7);
+	DEFINE_STORAGE_RESULT(Data_Modification_Is_Active, 8);
 
 	/// Validation failed Transaction Signer is not Drive owner.
-	DEFINE_STORAGE_RESULT(Is_Not_Owner, 8);
+	DEFINE_STORAGE_RESULT(Is_Not_Owner, 9);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

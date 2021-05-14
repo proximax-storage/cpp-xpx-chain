@@ -4,18 +4,15 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/observers/Observers.h"
 #include "StoragePlugin.h"
-#include "src/config/StorageConfiguration.h"
-#include "src/cache/DriveCache.h"
 #include "src/cache/DriveCacheStorage.h"
-#include "src/cache/DownloadCache.h"
 #include "src/cache/DownloadCacheStorage.h"
 #include "src/plugins/PrepareDriveTransactionPlugin.h"
 #include "src/plugins/DataModificationTransactionPlugin.h"
 #include "src/plugins/DownloadTransactionPlugin.h"
 #include "src/plugins/DataModificationApprovalTransactionPlugin.h"
 #include "src/validators/Validators.h"
+#include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
 
 namespace catapult { namespace plugins {
@@ -27,8 +24,8 @@ namespace catapult { namespace plugins {
 		});
 
 
-        const auto& pConfigHolder = manager.configHolder();
-        const auto& immutableConfig = manager.immutableConfig();
+		const auto& pConfigHolder = manager.configHolder();
+		const auto& immutableConfig = manager.immutableConfig();
 		manager.addTransactionSupport(CreatePrepareDriveTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDataModificationTransactionPlugin());
 		manager.addTransactionSupport(CreateDownloadTransactionPlugin(immutableConfig));
@@ -42,7 +39,7 @@ namespace catapult { namespace plugins {
 		DriveCacheHandlersService::Register<model::FacilityCode::Drive>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("DRIVE C"), [&cache]() {
+			counters.emplace_back(utils::DiagnosticCounterId("DRIVE2 C"), [&cache]() {
 				return cache.sub<cache::DriveCache>().createView(cache.height())->size();
 			});
 		});
@@ -61,17 +58,17 @@ namespace catapult { namespace plugins {
 		});
 
 
-		manager.addStatefulValidatorHook([](auto& builder) {
-			builder
-					.add(validators::CreateDataModificationApprovalValidator());
+		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
+		  	builder
+				.add(validators::CreatePrepareDriveValidator())
+				.add(validators::CreateDataModificationApprovalValidator());
 		});
-
 
 		manager.addObserverHook([](auto& builder) {
 			builder
-					.add(observers::CreatePrepareDriveObserver())
-					.add(observers::CreateDataModificationApprovalObserver());
-		});
+				.add(observers::CreatePrepareDriveObserver())
+				.add(observers::CreateDownloadChannelObserver())
+				.add(observers::CreateDataModificationApprovalObserver());
 	}
 }}
 
