@@ -7,8 +7,21 @@
 #pragma once
 #include "catapult/types.h"
 #include "catapult/exceptions.h"
+#include "catapult/model/Mosaic.h"
+#include "catapult/utils/ArraySet.h"
+#include "catapult/utils/IntegerMath.h"
+#include <vector>
 
 namespace catapult { namespace state {
+
+	/// Data modification state.
+	enum class DataModificationState : uint8_t {
+		/// Data modification has been approved.
+		Succeeded,
+
+		/// Data modification has been cancelled.
+		Cancelled
+	};
 
 	// Mixin for storing drive details.
 	class DriveMixin {
@@ -59,11 +72,33 @@ namespace catapult { namespace state {
 			return m_replicatorCount;
 		}
 
+		/// Gets active data modifications.
+		const std::vector<Hash256>& activeDataModifications() const {
+			return m_activeDataModifications;
+		}
+
+		/// Gets active data modifications.
+		std::vector<Hash256>& activeDataModifications() {
+			return m_activeDataModifications;
+		}
+
+		/// Gets finished data modifications.
+		const std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications() const {
+			return m_completedDataModifications;
+		}
+
+		/// Gets finished data modifications.
+		std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications() {
+			return m_completedDataModifications;
+		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
 		uint64_t m_size;
 		uint16_t m_replicatorCount;
+		std::vector<Hash256> m_activeDataModifications;
+		std::vector<std::pair<Hash256, DataModificationState>> m_completedDataModifications;
 	};
 
 	// Drive entry.

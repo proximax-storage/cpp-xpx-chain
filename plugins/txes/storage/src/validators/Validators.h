@@ -21,4 +21,9 @@ namespace catapult { namespace validators {
 	/// - the drive does not exist
 	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, model::PrepareDriveNotification<1>)();
 
+	/// A validator implementation that applies to drive data modification approval notifications and validates that:
+	/// - respective data modification is present in activeDataModifications
+	/// - respective data modification is the first (oldest) element in activeDataModifications
+	DECLARE_STATEFUL_VALIDATOR(DataModificationApproval, model::DataModificationApprovalNotification<1>)();
+
 }}

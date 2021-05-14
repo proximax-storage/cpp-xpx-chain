@@ -10,6 +10,7 @@
 #include "src/plugins/PrepareDriveTransactionPlugin.h"
 #include "src/plugins/DataModificationTransactionPlugin.h"
 #include "src/plugins/DownloadTransactionPlugin.h"
+#include "src/plugins/DataModificationApprovalTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -28,6 +29,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreatePrepareDriveTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDataModificationTransactionPlugin());
 		manager.addTransactionSupport(CreateDownloadTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateDataModificationApprovalTransactionPlugin());
 
 
 		manager.addCacheSupport<cache::DriveCacheStorage>(
@@ -58,14 +60,15 @@ namespace catapult { namespace plugins {
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 		  	builder
-					.add(validators::CreatePrepareDriveValidator());
+				.add(validators::CreatePrepareDriveValidator())
+				.add(validators::CreateDataModificationApprovalValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
 			builder
-			 		.add(observers::CreatePrepareDriveObserver())
-					.add(observers::CreateDownloadChannelObserver());
-		});
+				.add(observers::CreatePrepareDriveObserver())
+				.add(observers::CreateDownloadChannelObserver())
+				.add(observers::CreateDataModificationApprovalObserver());
 	}
 }}
 
