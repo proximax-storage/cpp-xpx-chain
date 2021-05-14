@@ -420,7 +420,7 @@ namespace catapult { namespace model {
 			auto pBlock = CreateBlock(context, static_cast<NetworkIdentifier>(0x17), signer.publicKey(), transactions);
 
 			// Assert:
-			ASSERT_EQ(sizeof(BlockHeader) + SumTransactionSizes(transactions), pBlock->Size);
+			ASSERT_EQ(sizeof(BlockHeaderV4) + SumTransactionSizes(transactions), pBlock->Size);
 			EXPECT_EQ(Signature(), pBlock->Signature);
 
 			EXPECT_EQ(signer.publicKey(), pBlock->Signer);
@@ -460,7 +460,7 @@ namespace catapult { namespace model {
 		template<typename TContainerTraits>
 		void AssertCanStitchBlock(size_t numTransactions) {
 			// Arrange:
-			BlockHeader blockHeader;
+			Block blockHeader;
 			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(&blockHeader), sizeof(BlockHeader) });
 
 			auto randomTransactions = test::GenerateRandomTransactions(numTransactions);
@@ -468,7 +468,7 @@ namespace catapult { namespace model {
 			size_t totalTransactionsSize = 0;
 			for (const auto& pTransaction : transactions)
 				totalTransactionsSize += pTransaction->Size;
-			blockHeader.TransactionPayloadSize = totalTransactionsSize;
+			blockHeader.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 			blockHeader.Size = sizeof(BlockHeader) + totalTransactionsSize;
 
 			// Act:

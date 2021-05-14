@@ -24,10 +24,11 @@ namespace catapult { namespace fastfinality {
 	namespace {
 		constexpr auto CommitteePhaseCount = 4u;
 
-		bool PeerNumberSufficient(
-				uint32_t peerNumber,
+		bool ApprovalImportanceSufficient(
+				const uint64_t approvalImportance,
+				const uint64_t totalImportance,
 				const model::NetworkConfiguration& config) {
-			return peerNumber >= std::floor(config.CommitteeApproval * config.CommitteeSize);
+			return (double)approvalImportance / (double)totalImportance >= config.CommitteeEndSyncApproval;
 		}
 
 		template<typename TValue, typename TValueArray, typename TValueAdapter>
@@ -81,46 +82,99 @@ namespace catapult { namespace fastfinality {
 
 	action CreateDefaultCheckLocalChainAction(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			const RemoteChainHeightsRetriever& retriever,
+			const RemoteNodeStateRetriever& retriever,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			const supplier<Height>& localHeightSupplier) {
-		return [pFsmWeak, retriever, pConfigHolder, localHeightSupplier]() {
+			const model::BlockElementSupplier& lastBlockElementSupplier,
+			const std::function<uint64_t (const Key&)>& importanceGetter,
+			const chain::CommitteeManager& committeeManager) {
+		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager]() {
 			TRY_GET_FSM()
 
 			UpdateConnections(pFsmShared);
-
+			
+			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
 			pFsmShared->resetChainSyncData();
 			pFsmShared->resetCommitteeData();
 
-			std::vector<Height> heights;
+			std::vector<RemoteNodeState> remoteNodeStates;
 			{
-				heights = retriever().get();
+				remoteNodeStates = retriever().get();
 			}
 
-			const auto& config = pConfigHolder->Config().Network;
-			auto pair = FindMostFrequentValue<Height>(heights, [] (const Height& height) { return height; });
-			if (PeerNumberSufficient(pair.second, config)) {
-				auto localHeight = localHeightSupplier();
-				auto networkHeight = pair.first;
-
-				auto& chainSyncData = pFsmShared->chainSyncData();
-				chainSyncData.LocalHeight = localHeight;
-				chainSyncData.NetworkHeight = networkHeight;
-
-				if (networkHeight < localHeight) {
-					pFsmShared->processEvent(NetworkHeightLessThanLocal{});
-				} else if (networkHeight > localHeight) {
-					pFsmShared->processEvent(NetworkHeightGreaterThanLocal{});
-				} else {
-					pFsmShared->processEvent(NetworkHeightEqualToLocal{});
-				}
-			} else {
+		  	const auto& config = pConfigHolder->Config().Network;
+		  	if (remoteNodeStates.empty()) {
 				DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeRequestInterval.millis(),
 					[pFsmWeak] {
 						TRY_GET_FSM()
 						pFsmShared->processEvent(NetworkHeightDetectionFailure{});
 					}
 				);
+				return;
+			}
+
+			std::sort(remoteNodeStates.begin(), remoteNodeStates.end(), [](auto a, auto b) {
+				return (a.Height == b.Height ? a.BlockHash > b.BlockHash : a.Height > b.Height);
+			});
+
+			auto& chainSyncData = pFsmShared->chainSyncData();
+			chainSyncData.NetworkHeight = remoteNodeStates.begin()->Height;
+			chainSyncData.LocalHeight = lastBlockElementSupplier()->Block.Height;
+
+			if (chainSyncData.NetworkHeight < chainSyncData.LocalHeight) {
+
+				pFsmShared->processEvent(NetworkHeightLessThanLocal{});
+
+			} else if (chainSyncData.NetworkHeight > chainSyncData.LocalHeight) {
+
+				std::map<Hash256, std::pair<uint64_t, std::vector<Key>>> hashKeys;
+
+				for (const auto& state : remoteNodeStates) {
+					if (state.Height < chainSyncData.NetworkHeight) {
+						break;
+					}
+
+					auto& pair = hashKeys[state.BlockHash];
+					pair.first += importanceGetter(state.NodeKey);
+					for (const auto& key : state.HarvesterKeys) {
+						pair.first += importanceGetter(key);
+					}
+					pair.second.push_back(state.NodeKey);
+				}
+
+				std::map<uint64_t, std::vector<Key>> importanceKeys;
+				for (const auto& pair : hashKeys)
+					importanceKeys[pair.second.first] = pair.second.second;
+
+				chainSyncData.NodeIdentityKeys = std::move(importanceKeys.begin()->second);
+				pFsmShared->processEvent(NetworkHeightGreaterThanLocal{});
+
+			} else {
+
+				uint64_t approvalImportance = 0;
+				uint64_t totalImportance = config.CommitteeBaseTotalImportance;
+				const auto& localBlockHash = lastBlockElementSupplier()->EntityHash;
+
+				for (const auto& state : remoteNodeStates) {
+					uint64_t importance = 0;
+					for (const auto& key : state.HarvesterKeys) {
+						importance += importanceGetter(key);
+					}
+					if (state.NodeWorkState == NodeWorkState::Running && state.BlockHash == localBlockHash) {
+						approvalImportance += importance;
+					}
+					totalImportance += importance;
+				}
+
+				if (ApprovalImportanceSufficient(approvalImportance, totalImportance, config)) {
+					pFsmShared->processEvent(NetworkHeightEqualToLocal{});
+				} else {
+					DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeRequestInterval.millis(),
+						[pFsmWeak] {
+							TRY_GET_FSM()
+							pFsmShared->processEvent(NetworkHeightDetectionFailure{});
+						}
+					);
+				}
 			}
 		};
 	}
@@ -128,38 +182,6 @@ namespace catapult { namespace fastfinality {
 	action CreateDefaultResetLocalChainAction() {
 		return []() {
 			CATAPULT_THROW_RUNTIME_ERROR("local chain is invalid and needs to be reset");
-		};
-	}
-
-	action CreateDefaultSelectPeersAction(
-			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			const RemoteBlockHashesRetriever& retriever,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return [pFsmWeak, retriever, pConfigHolder]() {
-			TRY_GET_FSM()
-
-			pFsmShared->chainSyncData().NodeIdentityKeys.clear();
-			auto maxBlocksPerSyncAttempt = pConfigHolder->Config().Node.MaxBlocksPerSyncAttempt;
-			auto& chainSyncData = pFsmShared->chainSyncData();
-			auto targetHeight = std::min(chainSyncData.NetworkHeight, chainSyncData.LocalHeight + Height(maxBlocksPerSyncAttempt));
-
-			std::vector<std::pair<Hash256, Key>> hashIoPairs;
-			{
-				hashIoPairs = retriever(targetHeight).get();
-			}
-
-			auto pair = FindMostFrequentValue<Hash256>(hashIoPairs, [] (const auto& pair) { return pair.first; });
-			if (PeerNumberSufficient(pair.second, pConfigHolder->Config().Network)) {
-				const auto& blockHash = pair.first;
-				auto& nodeIdentityKeys = pFsmShared->chainSyncData().NodeIdentityKeys;
-				for (const auto& hashIoPair : hashIoPairs) {
-					if (hashIoPair.first == blockHash)
-						nodeIdentityKeys.push_back(hashIoPair.second);
-				}
-				pFsmShared->processEvent(PeersSelectionSucceeded{});
-			} else {
-				pFsmShared->processEvent(PeersSelectionFailed{});
-			}
 		};
 	}
 
@@ -249,7 +271,7 @@ namespace catapult { namespace fastfinality {
 				bool success = false;
 				for (const auto& pBlock : blocks) {
 					committeeManager.reset();
-					while (committeeManager.committee().Round < pBlock->Round)
+					while (committeeManager.committee().Round < pBlock->round())
 						committeeManager.selectCommittee(config.Network);
 
 					if (ValidateBlockCosignatures(pBlock, committeeManager, committeeApproval)) {
@@ -327,13 +349,14 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, pConfigHolder, timeSupplier, lastBlockElementSupplier, &committeeManager]() {
 			TRY_GET_FSM()
 
-			pFsmShared->resetChainSyncData();
+		  	pFsmShared->resetChainSyncData();
+			pFsmShared->setNodeWorkState(NodeWorkState::Running);
 			committeeManager.reset();
 
 			auto pLastBlockElement = lastBlockElementSupplier();
 			const auto& block = pLastBlockElement->Block;
 			const auto& config = pConfigHolder->Config().Network;
-			auto phaseTimeMillis = block.CommitteePhaseTime ? block.CommitteePhaseTime : config.CommitteePhaseTime.millis();
+			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
 
 			auto roundStart = block.Timestamp + Timestamp(CommitteePhaseCount * phaseTimeMillis);
 			auto currentTime = timeSupplier();
@@ -474,8 +497,8 @@ namespace catapult { namespace fastfinality {
 			pBlockHeader->Difficulty = context.Difficulty;
 			pBlockHeader->Timestamp = context.Timestamp;
 			pBlockHeader->Beneficiary = committeeData.beneficiary();
-			pBlockHeader->Round = committeeStage.Round;
-			pBlockHeader->CommitteePhaseTime = committeeStage.PhaseTimeMillis;
+			pBlockHeader->setRound(committeeStage.Round);
+			pBlockHeader->setCommitteePhaseTime(committeeStage.PhaseTimeMillis);
 			auto pBlock = utils::UniqueToShared(blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock));
 			if (pBlock) {
 				model::SignBlockHeader(*committeeData.blockProposer(), *pBlock);
@@ -639,8 +662,8 @@ namespace catapult { namespace fastfinality {
 				return;
 			}
 
-			if (pProposedBlock->Round != committee.Round) {
-				CATAPULT_LOG(warning) << "rejecting proposal, round " << pProposedBlock->Round
+			if (pProposedBlock->round() != committee.Round) {
+				CATAPULT_LOG(warning) << "rejecting proposal, round " << pProposedBlock->round()
 					<< " invalid, expected " << committee.Round;
 				committeeData.setProposedBlock(nullptr);
 				pFsmShared->processEvent(ProposalInvalid{});
@@ -923,7 +946,7 @@ namespace catapult { namespace fastfinality {
 				CATAPULT_THROW_RUNTIME_ERROR("commit confirmed block failed, no block");
 
 			const auto& stage = committeeData.committeeStage();
-			if (stage.Round != pBlock->Round ||
+			if (stage.Round != pBlock->round() ||
 				!ValidateBlockCosignatures(pBlock, committeeManager, pConfigHolder->Config().Network.CommitteeApproval)) {
 				pFsmShared->processEvent(CommitBlockFailed{});
 				return;

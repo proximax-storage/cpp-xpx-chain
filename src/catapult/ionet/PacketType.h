@@ -78,6 +78,9 @@ namespace catapult { namespace ionet {
 	/* A block confirmed by committee has been pushed by a peer. */ \
 	ENUM_VALUE(Push_Confirmed_Block, 16) \
 	\
+    /* A remote node state has been requested by a peer. */ \
+    ENUM_VALUE(Pull_Remote_Node_State, 17) \
+    \
 	/* api only packets have types [500, 600) */ \
 	\
 	/* Partial aggregate transactions have been pushed by an api-node. */ \

@@ -70,6 +70,15 @@ namespace catapult { namespace model {
 		/// Denominator of the transaction fee.
 		uint32_t FeeInterestDenominator;
 
+		// followed by transaction data
+
+	public:
+		size_t GetHeaderSize() const;
+	};
+
+	/// Binary layout for a block header v4.
+	struct BlockHeaderV4 : public BlockHeader {
+	public:
 		/// Committee round (number of attempts to generate this block).
 		int64_t Round;
 
@@ -87,25 +96,23 @@ namespace catapult { namespace model {
 	/// Binary layout for a block.
 	struct Block : public TransactionContainer<BlockHeader, Transaction> {
 	private:
-		template<typename T>
-		static auto* CosignaturesPtrT(T& block) {
-			return block.Size <= sizeof(T) + block.TransactionPayloadSize
-					? nullptr
-					: block.ToBytePointer() + sizeof(T) + block.TransactionPayloadSize;
+		static auto* CosignaturesPtrT(Block& block) {
+			return (block.EntityVersion() < 4 || block.Size <= sizeof(BlockHeaderV4) + reinterpret_cast<const BlockHeaderV4&>(block).TransactionPayloadSize)
+				? nullptr
+				: block.ToBytePointer() + sizeof(BlockHeaderV4) + reinterpret_cast<const BlockHeaderV4&>(block).TransactionPayloadSize;
 		}
 
-		template<typename T>
-		static size_t CosignaturesCountT(T& block) {
-			return block.Size <= sizeof(T) + block.TransactionPayloadSize
-					? 0
-					: (block.Size - sizeof(T) - block.TransactionPayloadSize) / sizeof(Cosignature);
+		static size_t CosignaturesCountT(Block& block) {
+			return (block.EntityVersion() < 4 || block.Size <= sizeof(BlockHeaderV4) + reinterpret_cast<const BlockHeaderV4&>(block).TransactionPayloadSize)
+				? 0
+				: (block.Size - sizeof(BlockHeaderV4) - reinterpret_cast<const BlockHeaderV4&>(block).TransactionPayloadSize) / sizeof(Cosignature);
 		}
 
 	public:
 		/// Returns a const pointer to the first cosignature contained in this block.
 		/// \note The returned pointer is null if the block has an invalid size.
 		const Cosignature* CosignaturesPtr() const {
-			return reinterpret_cast<const Cosignature*>(CosignaturesPtrT(*this));
+			return reinterpret_cast<const Cosignature*>(CosignaturesPtrT(const_cast<Block&>(*this)));
 		}
 
 		/// Returns a pointer to the first cosignature contained in this block.
@@ -117,13 +124,55 @@ namespace catapult { namespace model {
 		/// Returns the number of cosignatures attached to this block.
 		/// \note The returned value is zero if the block has an invalid size.
 		size_t CosignaturesCount() const {
-			return CosignaturesCountT(*this);
+			return CosignaturesCountT(const_cast<Block&>(*this));
 		}
 
 		/// Returns the number of cosignatures attached to this block.
 		/// \note The returned value is zero if the block has an invalid size.
 		size_t CosignaturesCount() {
 			return CosignaturesCountT(*this);
+		}
+
+		int64_t round() const {
+			switch (EntityVersion()) {
+				case 3:
+					return 0u;
+				default:
+					return reinterpret_cast<const BlockHeaderV4&>(*this).Round;
+			}
+		}
+
+		void setRound(int64_t value) {
+			if (EntityVersion() > 3)
+				reinterpret_cast<BlockHeaderV4&>(*this).Round = value;
+		}
+
+		uint64_t committeePhaseTime() const {
+			switch (EntityVersion()) {
+				case 3:
+					return 0u;
+				default:
+					return reinterpret_cast<const BlockHeaderV4&>(*this).CommitteePhaseTime;
+			}
+		}
+
+		void setCommitteePhaseTime(uint64_t value) {
+			if (EntityVersion() > 3)
+				reinterpret_cast<BlockHeaderV4&>(*this).CommitteePhaseTime = value;
+		}
+
+		uint32_t transactionPayloadSize() const {
+			switch (EntityVersion()) {
+				case 3:
+					return 0u;
+				default:
+					return reinterpret_cast<const BlockHeaderV4&>(*this).TransactionPayloadSize;
+			}
+		}
+
+		void setTransactionPayloadSize(uint32_t value) {
+			if (EntityVersion() > 3)
+				reinterpret_cast<BlockHeaderV4&>(*this).TransactionPayloadSize = value;
 		}
 	};
 

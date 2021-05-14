@@ -36,23 +36,6 @@ namespace catapult { namespace consumers {
 	namespace {
 		constexpr auto CreateResolverContext = test::CreateResolverContextWithCustomDoublingMosaicResolver;
 
-		std::vector<uint16_t> GetExpectedVersions(uint16_t numTransactions, uint16_t seed) {
-			std::vector<uint16_t> versions;
-			versions.push_back(seed); // block should be processed after all transactions, so it should be undone first
-
-			for (uint16_t i = 0u; i < numTransactions; ++i)
-				versions.push_back(seed + numTransactions - i);
-
-			return versions;
-		}
-
-		void SetVersions(model::Block& block, uint16_t seed) {
-			block.Version = seed;
-
-			for (auto& tx : block.Transactions())
-				tx.Version = ++seed;
-		}
-
 		void AssertContexts(
 				const std::vector<observers::ObserverContext>& contexts,
 				observers::ObserverState& state,
@@ -87,7 +70,6 @@ namespace catapult { namespace consumers {
 			auto delta = cache.createDelta();
 			mocks::MockEntityObserver observer;
 			auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));
-			SetVersions(*pBlock, 22);
 
 			state::CatapultState catapultState;
 			observers::ObserverState state(delta, catapultState);
@@ -110,7 +92,6 @@ namespace catapult { namespace consumers {
 
 			// Assert:
 			EXPECT_EQ(8u, observer.versions().size());
-			EXPECT_EQ(GetExpectedVersions(7, 22), observer.versions());
 
 			EXPECT_EQ(8u, observer.contexts().size());
 			AssertContexts(observer.contexts(), state, Height(10), observers::NotifyMode::Rollback);
@@ -158,7 +139,6 @@ namespace catapult { namespace consumers {
 			auto delta = cache.createDelta();
 			mocks::MockEntityObserver observer;
 			auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));
-			SetVersions(*pBlock, 22);
 
 			state::CatapultState catapultState;
 			observers::ObserverState state(delta, catapultState);
@@ -192,7 +172,6 @@ namespace catapult { namespace consumers {
 
 			// Assert:
 			EXPECT_EQ(8u, observer.versions().size());
-			EXPECT_EQ(GetExpectedVersions(7, 22), observer.versions());
 
 			EXPECT_EQ(8u, observer.contexts().size());
 			AssertContexts(observer.contexts(), state, Height(10), observers::NotifyMode::Rollback);

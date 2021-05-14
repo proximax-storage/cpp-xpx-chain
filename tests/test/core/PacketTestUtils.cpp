@@ -116,13 +116,14 @@ namespace catapult { namespace test {
 	}
 
 	void SetBlockAt(ionet::ByteBuffer& buffer, size_t offset, uint32_t transactionSize) {
-		SetBlockAt(buffer, offset, sizeof(model::BlockHeader), transactionSize);
+		SetBlockAt(buffer, offset, sizeof(model::BlockHeaderV4), transactionSize);
 	}
 
 	void SetBlockAt(ionet::ByteBuffer& buffer, size_t offset, size_t size, uint32_t transactionSize) {
-		SetVerifiableEntityAt<model::Block>(buffer, offset, size, model::Entity_Type_Block);
+		SetVerifiableEntityAt<model::BlockHeaderV4>(buffer, offset, size, model::Entity_Type_Block);
 
-		auto& block = reinterpret_cast<model::Block&>(buffer[offset]);
+		auto& block = reinterpret_cast<model::BlockHeaderV4&>(buffer[offset]);
+		block.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, model::BlockHeader::Current_Version);
 		block.TransactionPayloadSize = transactionSize;
 	}
 

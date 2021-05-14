@@ -17,7 +17,7 @@ namespace catapult { namespace observers {
 			downloadEntry.setDrive(notification.DriveKey);
 			downloadEntry.setTransactionFee(notification.TransactionFee);
 			// TODO: Buy storage units for xpx in notification.DownloadSize
-			// downloadEntry.setStorageUnits(notification.DownloadSize);
+			downloadEntry.setStorageUnits(notification.DownloadSize);
 		} else {
 			if (downloadCache.contains(notification.Id))
 				downloadCache.remove(notification.Id);

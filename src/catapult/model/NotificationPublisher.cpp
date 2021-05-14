@@ -88,12 +88,12 @@ namespace catapult { namespace model {
 
 			void publish(const Block& block, NotificationSubscriber& sub) const {
 				auto headerSize = VerifiableEntity::Header_Size;
-				auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, sizeof(BlockHeader) - headerSize };
+				auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, block.GetHeaderSize() - headerSize };
 
 				// raise an entity notification
 				switch (block.EntityVersion()) {
 				case 4: {
-					sub.notify(BlockCommitteeNotification<1>(block.Round, block.FeeInterest, block.FeeInterestDenominator));
+					sub.notify(BlockCommitteeNotification<1>(block.round(), block.FeeInterest, block.FeeInterestDenominator));
 
 					auto pCosignature = block.CosignaturesPtr();
 					auto cosignaturesCount = block.CosignaturesCount();
