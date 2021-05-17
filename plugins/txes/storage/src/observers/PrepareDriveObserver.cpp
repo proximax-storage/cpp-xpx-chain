@@ -9,16 +9,14 @@
 namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>, [](const model::PrepareDriveNotification<1>& notification, ObserverContext& context) {
-		auto& driveCache = context.Cache.sub<cache::DriveCache>();
-		if (NotifyMode::Commit == context.Mode) {
-			state::DriveEntry driveEntry(notification.DriveKey);
-            driveEntry.setOwner(notification.Owner);
-			driveEntry.setSize(notification.DriveSize);
-			driveEntry.setReplicatorCount(notification.ReplicatorCount);
-			driveCache.insert(driveEntry);
-		} else {
-			if (driveCache.contains(notification.DriveKey))
-				driveCache.remove(notification.DriveKey);
-		}
+		if (NotifyMode::Rollback == context.Mode)
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (PrepareDrive)");
+
+	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+		state::BcDriveEntry driveEntry(notification.DriveKey);
+		driveEntry.setOwner(notification.Owner);
+		driveEntry.setSize(notification.DriveSize);
+		driveEntry.setReplicatorCount(notification.ReplicatorCount);
+		driveCache.insert(driveEntry);
 	});
 }}

@@ -20,7 +20,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 			case 1: {
 				sub.notify(DataModificationCancelNotification<1>(
-						transaction.DriveKey, transaction.Signer, transaction.ModificationTrx));
+						transaction.DriveKey, transaction.Signer, transaction.DataModificationId));
 				break;
 			}
 

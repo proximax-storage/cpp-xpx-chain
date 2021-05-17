@@ -22,5 +22,6 @@ catapult.mongo.plugins.property = true
 catapult.mongo.plugins.transfer = true
 catapult.mongo.plugins.upgrade = true
 catapult.mongo.plugins.service = true
+catapult.mongo.plugins.storage = true
 catapult.mongo.plugins.operation = true
 catapult.mongo.plugins.supercontract = true

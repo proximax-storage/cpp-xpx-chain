@@ -79,3 +79,18 @@ echo "multitail -i $WORK_DIR/data/api-node-0/catapult_server0000.log -i $WORK_DI
 echo "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
 # echo "tail -f $WORK_DIR/data/api-node-0/catapult_server0000.log $WORK_DIR/data/peer-node-1/catapult_server0000.log $WORK_DIR/data/peer-node-1/catapult_server0000.log"
 # tail -f $WORK_DIR/api-node-0.log $WORK_DIR/peer-node-0.log $WORK_DIR/peer-node-1.log
+
+rm -rf $WORK_DIR/data/peer-node-0/data/
+cp -r $WORK_DIR/data/api-node-0/data/ $WORK_DIR/data/peer-node-0/
+
+#rm -rf $WORK_DIR/data/peer-node-1/data/
+#cp -r $WORK_DIR/data/api-node-0/data/ $WORK_DIR/data/peer-node-1/
+#
+#rm -rf $WORK_DIR/data/peer-node-2/data/
+#cp -r $WORK_DIR/data/api-node-0/data/ $WORK_DIR/data/peer-node-2/
+#
+#rm -rf $WORK_DIR/data/peer-node-3/data/
+#cp -r $WORK_DIR/data/api-node-0/data/ $WORK_DIR/data/peer-node-3/
+#
+#rm -rf $WORK_DIR/data/peer-node-4/data/
+#cp -r $WORK_DIR/data/api-node-0/data/ $WORK_DIR/data/peer-node-4/

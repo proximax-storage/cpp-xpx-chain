@@ -15,11 +15,11 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	template<typename TTransaction>
 	void StreamDataModificationApprovalTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-		builder << "drive" << ToBinary(transaction.DriveKey);
-		builder << "callReference" << ToBinary(transaction.CallReference);
+		builder << "driveKey" << ToBinary(transaction.DriveKey);
+		builder << "dataModificationId" << ToBinary(transaction.DataModificationId);
 		builder << "fileStructureCDI" << ToBinary(transaction.FileStructureCDI);
-		builder << "fileStructureSize" << ToInt64(transaction.FileStructureSize);
-		builder << "usedDriveSize" << ToInt64(transaction.UsedDriveSize);
+		builder << "fileStructureSize" << static_cast<int64_t>(transaction.FileStructureSize);
+		builder << "usedDriveSize" << static_cast<int64_t>(transaction.UsedDriveSize);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(DataModificationApproval, StreamDataModificationApprovalTransaction)

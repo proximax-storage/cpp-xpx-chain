@@ -5,14 +5,15 @@
 **/
 
 #include "StoragePlugin.h"
-#include "src/cache/DriveCacheStorage.h"
-#include "src/cache/DownloadCacheStorage.h"
+#include "src/cache/BcDriveCacheStorage.h"
+#include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCache.h"
 #include "src/cache/ReplicatorCacheStorage.h"
-#include "src/plugins/PrepareDriveTransactionPlugin.h"
+#include "src/plugins/PrepareBcDriveTransactionPlugin.h"
 #include "src/plugins/DataModificationTransactionPlugin.h"
 #include "src/plugins/DownloadTransactionPlugin.h"
 #include "src/plugins/DataModificationApprovalTransactionPlugin.h"
+#include "src/plugins/DataModificationCancelTransactionPlugin.h"
 #include "src/plugins/ReplicatorOnboardingTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
@@ -29,35 +30,36 @@ namespace catapult { namespace plugins {
 
 		const auto& pConfigHolder = manager.configHolder();
 		const auto& immutableConfig = manager.immutableConfig();
-		manager.addTransactionSupport(CreatePrepareDriveTransactionPlugin(immutableConfig));
-		manager.addTransactionSupport(CreateDataModificationTransactionPlugin());
+		manager.addTransactionSupport(CreatePrepareBcDriveTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateDataModificationTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDownloadTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDataModificationApprovalTransactionPlugin());
+		manager.addTransactionSupport(CreateDataModificationCancelTransactionPlugin());
 		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin());
 
 
-		manager.addCacheSupport<cache::DriveCacheStorage>(
-			std::make_unique<cache::DriveCache>(manager.cacheConfig(cache::DriveCache::Name), pConfigHolder));
+		manager.addCacheSupport<cache::BcDriveCacheStorage>(
+			std::make_unique<cache::BcDriveCache>(manager.cacheConfig(cache::BcDriveCache::Name), pConfigHolder));
 
-		using DriveCacheHandlersService = CacheHandlers<cache::DriveCacheDescriptor>;
-		DriveCacheHandlersService::Register<model::FacilityCode::Drive>(manager);
+		using BcDriveCacheHandlersService = CacheHandlers<cache::BcDriveCacheDescriptor>;
+		BcDriveCacheHandlersService::Register<model::FacilityCode::BcDrive>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("DRIVE2 C"), [&cache]() {
-				return cache.sub<cache::DriveCache>().createView(cache.height())->size();
+			counters.emplace_back(utils::DiagnosticCounterId("BC DRIVE C"), [&cache]() {
+				return cache.sub<cache::BcDriveCache>().createView(cache.height())->size();
 			});
 		});
 
 
-		manager.addCacheSupport<cache::DownloadCacheStorage>(
-			std::make_unique<cache::DownloadCache>(manager.cacheConfig(cache::DownloadCache::Name), pConfigHolder));
+		manager.addCacheSupport<cache::DownloadChannelCacheStorage>(
+			std::make_unique<cache::DownloadChannelCache>(manager.cacheConfig(cache::DownloadChannelCache::Name), pConfigHolder));
 
-		using DownloadCacheHandlersService = CacheHandlers<cache::DownloadCacheDescriptor>;
-		DownloadCacheHandlersService::Register<model::FacilityCode::Download>(manager);
+		using DownloadChannelCacheHandlersService = CacheHandlers<cache::DownloadChannelCacheDescriptor>;
+		DownloadChannelCacheHandlersService::Register<model::FacilityCode::DownloadChannel>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("DOWNLOAD CHANNEL C"), [&cache]() {
-				return cache.sub<cache::DownloadCache>().createView(cache.height())->size();
+			counters.emplace_back(utils::DiagnosticCounterId("DOWNLOAD CH C"), [&cache]() {
+				return cache.sub<cache::DownloadChannelCache>().createView(cache.height())->size();
 			});
 		});
 
@@ -66,7 +68,7 @@ namespace catapult { namespace plugins {
 			std::make_unique<cache::ReplicatorCache>(manager.cacheConfig(cache::ReplicatorCache::Name), pConfigHolder));
 
 		using ReplicatorCacheHandlersService = CacheHandlers<cache::ReplicatorCacheDescriptor>;
-		ReplicatorCacheHandlersService::Register<model::FacilityCode::Replicator>(manager);	// TODO: Check FacilityCode
+		ReplicatorCacheHandlersService::Register<model::FacilityCode::Replicator>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("REPLICATOR C"), [&cache]() {
@@ -78,14 +80,18 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 		  	builder
 				.add(validators::CreatePrepareDriveValidator())
-				.add(validators::CreateDataModificationApprovalValidator());
+				.add(validators::CreateDataModificationValidator())
+				.add(validators::CreateDataModificationApprovalValidator())
+				.add(validators::CreateDataModificationCancelValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
 			builder
 				.add(observers::CreatePrepareDriveObserver())
 				.add(observers::CreateDownloadChannelObserver())
+				.add(observers::CreateDataModificationObserver())
 				.add(observers::CreateDataModificationApprovalObserver())
+				.add(observers::CreateDataModificationCancelObserver())
 				.add(observers::CreateReplicatorOnboardingObserver());
 		});
 	}

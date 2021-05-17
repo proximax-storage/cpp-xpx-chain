@@ -12,8 +12,8 @@ namespace catapult { namespace model {
 
 #endif
 
-	/// PrepareDrive transaction.
-	DEFINE_TRANSACTION_TYPE(Storage, PrepareDrive, 0x1);
+	/// PrepareBcDrive transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, PrepareBcDrive, 0x1);
 
 	/// DataModification transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, DataModification, 0x2);
@@ -28,7 +28,7 @@ namespace catapult { namespace model {
 	DEFINE_TRANSACTION_TYPE(Storage, DataModificationCancel, 0x5);
 
 	/// ReplicatorOnboarding transaction.
-	DEFINE_TRANSACTION_TYPE(Storage, ReplicatorOnboarding, 0x5);
+	DEFINE_TRANSACTION_TYPE(Storage, ReplicatorOnboarding, 0x6);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

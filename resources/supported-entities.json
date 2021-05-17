@@ -244,6 +244,36 @@
 			"name": "removeHarvester",
 			"type": "16993",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "prepareBcDrive",
+			"type": "16738",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "dataModification",
+			"type": "16994",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "download",
+			"type": "17250",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "dataModificationApproval",
+			"type": "17506",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "dataModificationCancel",
+			"type": "17762",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "replicatorOnboarding",
+			"type": "18018",
+			"supportedVersions": [1]
 		}
 	]
 }

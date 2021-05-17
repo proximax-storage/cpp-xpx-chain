@@ -75,5 +75,9 @@ namespace catapult { namespace model {
 		Storage = 0x62,
 		/// Replicator facility code.
 		Replicator = 0x63,
+		/// Drive facility code.
+		BcDrive = 0x64,
+		/// Download channel facility code.
+		DownloadChannel = 0x65,
 	};
 }}

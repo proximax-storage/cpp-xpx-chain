@@ -5,14 +5,14 @@
 **/
 
 #include "Validators.h"
-#include "src/cache/DriveCache.h"
+#include "src/cache/BcDriveCache.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::PrepareDriveNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(PrepareDrive, [](const model::PrepareDriveNotification<1> &notification, const ValidatorContext& context) {
-		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
+		const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
 		// Check if drive size >= minDriveSize

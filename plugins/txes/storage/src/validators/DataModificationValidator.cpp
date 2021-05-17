@@ -1,0 +1,30 @@
+/**
+*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#include "Validators.h"
+#include "src/cache/BcDriveCache.h"
+
+namespace catapult { namespace validators {
+
+	using Notification = model::DataModificationNotification<1>;
+
+	DEFINE_STATEFUL_VALIDATOR(DataModification, [](const model::DataModificationNotification<1>& notification, const ValidatorContext& context) {
+	  	auto driveCache = context.Cache.sub<cache::BcDriveCache>();
+	  	auto driveIter = driveCache.find(notification.DriveKey);
+		const auto& pDriveEntry = driveIter.tryGet();
+		if (!pDriveEntry)
+			return Failure_Storage_Drive_Not_Found;
+
+	  	const auto& activeDataModifications = pDriveEntry->activeDataModifications();
+	  	for (const auto& id : activeDataModifications) {
+	  		if (id == notification.DataModificationId)
+				return Failure_Storage_Data_Modification_Already_Exists;
+	  	}
+
+		return ValidationResult::Success;
+	});
+
+}}
