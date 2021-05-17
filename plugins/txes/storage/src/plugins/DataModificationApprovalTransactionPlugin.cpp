@@ -21,7 +21,7 @@ namespace catapult { namespace plugins {
 			case 1: {
 				sub.notify(DataModificationApprovalNotification<1>(
 						transaction.DriveKey,
-						transaction.CallReference,
+						transaction.DataModificationId,
 						transaction.FileStructureCDI,
 						transaction.FileStructureSize,
 						transaction.UsedDriveSize

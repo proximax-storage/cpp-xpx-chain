@@ -4,32 +4,33 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "PrepareDriveMapper.h"
+#include "PrepareBcDriveMapper.h"
 #include "DownloadMapper.h"
 #include "DataModificationMapper.h"
 #include "DataModificationApprovalMapper.h"
+#include "DataModificationCancelMapper.h"
 #include "ReplicatorOnboardingMapper.h"
 #include "mongo/src/MongoPluginManager.h"
-#include "mongo/src/MongoReceiptPluginFactory.h"
-#include "storages/MongoDriveCacheStorage.h"
-#include "storages/MongoDownloadCacheStorage.h"
+#include "storages/MongoBcDriveCacheStorage.h"
+#include "storages/MongoDownloadChannelCacheStorage.h"
 #include "storages/MongoReplicatorCacheStorage.h"
 
 extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	// transaction support
-	manager.addTransactionSupport(catapult::mongo::plugins::CreatePrepareDriveTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreatePrepareBcDriveTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDownloadTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationApprovalTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationCancelTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateReplicatorOnboardingTransactionMongoPlugin());
 
 	// cache storage support
-	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDriveCacheStorage(
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoBcDriveCacheStorage(
 			manager.mongoContext(),
 			manager.configHolder()
 	));
-	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDownloadCacheStorage(
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDownloadChannelCacheStorage(
 			manager.mongoContext(),
 			manager.configHolder()
 	));

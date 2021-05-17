@@ -168,10 +168,10 @@ maxSuperContractsOnDrive = 10
 
 [plugin:catapult.plugins.storage]
 
-enabled = false
-minDriveSize = 1mb
+enabled = true
+minDriveSize = 1MB
 minReplicatorCount = 1
-maxFreeDownloadSize = 1mb
-# 4 weeks 28 days
-storageBillingPeriod = 28d
+maxFreeDownloadSize = 1MB
+# 4 weeks = 28 days = 672 hours
+storageBillingPeriod = 672h
 downloadBillingPeriod = 24h

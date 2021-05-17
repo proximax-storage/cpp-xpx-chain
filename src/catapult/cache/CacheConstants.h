@@ -46,6 +46,7 @@ namespace catapult { namespace cache {
 		Operation,
 		MosaicLevy,
 		Committee,
+		BcDrive,
 		DownloadChannel,
 		Replicator,
 	};

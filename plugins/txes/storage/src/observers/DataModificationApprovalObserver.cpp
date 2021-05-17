@@ -9,21 +9,18 @@
 namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER(DataModificationApproval, model::DataModificationApprovalNotification<1>, [](const model::DataModificationApprovalNotification<1>& notification, ObserverContext& context) {
+	  	if (NotifyMode::Rollback == context.Mode)
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModificationApproval)");
 
-	  	auto& driveCache = context.Cache.sub<cache::DriveCache>();
+	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 	  	auto driveIter = driveCache.find(notification.DriveKey);
 	  	auto& driveEntry = driveIter.get();
 
 		auto& activeDataModifications = driveEntry.activeDataModifications();
-		auto& completedDataModifications = driveEntry.completedDataModifications();
+		activeDataModifications.erase(activeDataModifications.begin());
 
-		if (NotifyMode::Commit == context.Mode) {
-			activeDataModifications.erase(activeDataModifications.begin());
-			completedDataModifications.emplace_back(notification.CallReference, state::DataModificationState::Succeeded);
-		} else {
-			completedDataModifications.erase(completedDataModifications.end());
-			activeDataModifications.insert(activeDataModifications.begin(), notification.CallReference);
-		}
+		auto& completedDataModifications = driveEntry.completedDataModifications();
+		completedDataModifications.emplace_back(notification.DataModificationId, state::DataModificationState::Succeeded);
 
 	});
 }}

@@ -41,6 +41,12 @@ namespace catapult { namespace validators {
 	/// Validation failed Transaction Signer is not Drive owner.
 	DEFINE_STORAGE_RESULT(Is_Not_Owner, 9);
 
+	/// Validation failed becaouse drive does not exist.
+	DEFINE_STORAGE_RESULT(Drive_Not_Found, 10);
+
+	/// Validation failed because the data modification already exists.
+	DEFINE_STORAGE_RESULT(Data_Modification_Already_Exists, 11);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

@@ -9,18 +9,16 @@
 namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER(DownloadChannel, model::DownloadNotification<1>, [](const model::DownloadNotification<1>& notification, ObserverContext& context) {
-		auto& downloadCache = context.Cache.sub<cache::DownloadCache>();
-		if (NotifyMode::Commit == context.Mode) {
-			state::DownloadChannelEntry downloadEntry(notification.Id);
-			downloadEntry.setConsumer(notification.Consumer);
-			// TODO: Add according Id to driveEntry
-			downloadEntry.setDrive(notification.DriveKey);
-			downloadEntry.setTransactionFee(notification.TransactionFee);
-			// TODO: Buy storage units for xpx in notification.DownloadSize
-			downloadEntry.setStorageUnits(notification.DownloadSize);
-		} else {
-			if (downloadCache.contains(notification.Id))
-				downloadCache.remove(notification.Id);
-		}
+		if (NotifyMode::Rollback == context.Mode)
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadChannel)");
+
+	  	auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+		state::DownloadChannelEntry downloadEntry(notification.Id);
+		downloadEntry.setConsumer(notification.Consumer);
+		// TODO: Add according Id to driveEntry
+		downloadEntry.setDrive(notification.DriveKey);
+		downloadEntry.setTransactionFee(notification.TransactionFee);
+		// TODO: Buy storage units for xpx in notification.DownloadSize
+		downloadEntry.setStorageUnits(Amount(notification.DownloadSize));
 	});
 }}

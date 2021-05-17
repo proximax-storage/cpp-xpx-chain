@@ -15,10 +15,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	template<typename TTransaction>
 	void StreamDataModificationTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-//		builder << "consumer" << ToBinary(transaction.Signer);
-//		builder << "drive" << ToBinary(transaction.DriveKey);
-//		builder << "transactionFee" << ToInt64(transaction.TransactionFee);
-//		builder << "downloadSize" << ToInt64(transaction.DownloadSize);
+		builder << "driveKey" << ToBinary(transaction.DriveKey);
+		builder << "downloadDataCdi" << ToBinary(transaction.DownloadDataCDI);
+		builder << "uploadSize" << static_cast<int64_t>(transaction.UploadSize);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(DataModification, StreamDataModificationTransaction)

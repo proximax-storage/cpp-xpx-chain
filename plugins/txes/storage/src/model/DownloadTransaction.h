@@ -31,7 +31,7 @@ namespace catapult { namespace model {
 		Key DriveKey;
 
 		/// Prepaid Download Size.
-		Amount DownloadSize;
+		uint64_t DownloadSize;
 
 		/// XPXs to lock for future payment for.
 		Amount TransactionFee;

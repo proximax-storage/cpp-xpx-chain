@@ -30,17 +30,17 @@ namespace catapult { namespace model {
 		/// Key of drive.
 		Key DriveKey;
 
-		/// A reference to the transaction that initiated the modification.
-		Hash256 CallReference;
+		/// Identifier of the transaction that initiated the modification.
+		Hash256 DataModificationId;
 
 		/// Content Download Information for the File Structure.
 		Hash256 FileStructureCDI;
 
 		/// Size of the File Structure.
-		Amount FileStructureSize;
+		uint64_t FileStructureSize;
 
 		/// Total used disk space of the drive.
-		Amount UsedDriveSize;
+		uint64_t UsedDriveSize;
 
 	public:
 		// Calculates the real size of a storage \a transaction.

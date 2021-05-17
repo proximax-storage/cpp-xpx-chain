@@ -28,8 +28,8 @@ namespace catapult { namespace model {
 		/// Key of a drive.
 		Key DriveKey;
 
-		/// Hash of a DataModification transaction.
-		Hash256 ModificationTrx;
+		/// Identifier of the transaction that initiated the modification.
+		Hash256 DataModificationId;
 
 	public:
 		// Calculates the real size of a storage \a transaction.

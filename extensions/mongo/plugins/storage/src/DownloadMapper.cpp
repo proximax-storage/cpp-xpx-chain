@@ -15,10 +15,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	template<typename TTransaction>
 	void StreamDownloadTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-		builder << "consumer" << ToBinary(transaction.Signer);
-		builder << "drive" << ToBinary(transaction.DriveKey);
+		builder << "driveKey" << ToBinary(transaction.DriveKey);
+		builder << "downloadSize" << static_cast<int64_t>(transaction.DownloadSize);
 		builder << "transactionFee" << ToInt64(transaction.TransactionFee);
-		builder << "downloadSize" << ToInt64(transaction.DownloadSize);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(Download, StreamDownloadTransaction)

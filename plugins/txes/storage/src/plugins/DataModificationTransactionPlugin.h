@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "catapult/config/ImmutableConfiguration.h"
 #include "catapult/plugins.h"
 #include <memory>
 
@@ -14,5 +15,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates a data modification transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateDataModificationTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateDataModificationTransactionPlugin(const config::ImmutableConfiguration& config);
 }}

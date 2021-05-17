@@ -9,14 +9,12 @@
 namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>, [](const model::ReplicatorOnboardingNotification<1>& notification, ObserverContext& context) {
-		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-		if (NotifyMode::Commit == context.Mode) {
-			state::ReplicatorEntry replicatorEntry(notification.PublicKey);
-			replicatorEntry.setCapacity(notification.Capacity);
-			replicatorCache.insert(replicatorEntry);
-		} else {
-			if (replicatorCache.contains(notification.PublicKey))
-				replicatorCache.remove(notification.PublicKey);
-		}
+		if (NotifyMode::Rollback == context.Mode)
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorOnboarding)");
+
+	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		state::ReplicatorEntry replicatorEntry(notification.PublicKey);
+		replicatorEntry.setCapacity(notification.Capacity);
+		replicatorCache.insert(replicatorEntry);
 	});
 }}

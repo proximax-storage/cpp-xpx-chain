@@ -15,9 +15,8 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	template<typename TTransaction>
 	void StreamDataModificationCancelTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-		builder << "consumer" << ToBinary(transaction.Signer);
 		builder << "drive" << ToBinary(transaction.DriveKey);
-		builder << "modificationTransactionHash" << ToBinary(transaction.ModificationTrx);
+		builder << "dataModificationId" << ToBinary(transaction.DataModificationId);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(DataModificationCancel, StreamDataModificationCancelTransaction)

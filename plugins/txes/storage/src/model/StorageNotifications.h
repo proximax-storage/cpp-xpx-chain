@@ -28,7 +28,7 @@ namespace catapult { namespace model {
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Cancel_v1, 0x0006);
 
 	/// Defines a replicator onboarding notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v1, 0x0006);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v1, 0x0007);
 
 	/// Notification of a data modification.
 	template<VersionType version>
@@ -42,13 +42,13 @@ namespace catapult { namespace model {
 
 	public:
 		explicit DataModificationNotification(
-			const Hash256& hash,
+			const Hash256& dataModificationId,
 			const Key& drive,
 			const Key& owner,
             const Hash256& cdi,
 			const uint64_t& uploadSize)
 			: Notification(Notification_Type, sizeof(DataModificationNotification<1>))
-			, TransactionHash(hash)
+			, DataModificationId(dataModificationId)
 			, DriveKey(drive)
 			, Owner(owner)
 			, DownloadDataCDI(cdi)
@@ -57,7 +57,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Hash of the transaction.
-		Hash256 TransactionHash;
+		Hash256 DataModificationId;
 
 		/// Public key of the drive multisig account.
 		Key DriveKey;
@@ -87,13 +87,14 @@ namespace catapult { namespace model {
 			const Hash256& id,
 			const Key& drive,
 			const Key& consumer,
-			const Amount& deltaSize,
-			const Amount& deltaFee)
+			uint64_t downloadSize,
+			const Amount& transactionFee)
 			: Notification(Notification_Type, sizeof(DownloadNotification<1>))
 			, Id(id)
 			, DriveKey(drive)
 			, Consumer(consumer)
-			, DownloadSize(deltaSize)
+			, DownloadSize(downloadSize)
+			, TransactionFee(transactionFee)
 		{}
 
 	public:
@@ -107,7 +108,7 @@ namespace catapult { namespace model {
 		Key Consumer;
 
 		/// Delta size of download.
-		Amount DownloadSize;
+		uint64_t DownloadSize;
 
 		/// Delta transaction fee in xpx.
 		Amount TransactionFee;
@@ -188,13 +189,13 @@ namespace catapult { namespace model {
 	public:
 		explicit DataModificationApprovalNotification(
 				const Key& driveKey,
-				const Hash256& callReference,
+				const Hash256& dataModificationId,
 				const Hash256& fileStructureCDI,
-				const Amount& fileStructureSize,
-				const Amount& usedDriveSize)
+				uint64_t fileStructureSize,
+				uint64_t usedDriveSize)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
 				, DriveKey(driveKey)
-				, CallReference(callReference)
+				, DataModificationId(dataModificationId)
 				, FileStructureCDI(fileStructureCDI)
 				, FileStructureSize(fileStructureSize)
 				, UsedDriveSize(usedDriveSize)
@@ -204,17 +205,17 @@ namespace catapult { namespace model {
 		/// Key of drive.
 		Key DriveKey;
 
-		/// A reference to the transaction that initiated the modification.
-		Hash256 CallReference;
+		/// Identifier of the transaction that initiated the modification.
+		Hash256 DataModificationId;
 
 		/// Content Download Information for the File Structure.
 		Hash256 FileStructureCDI;
 
 		/// Size of the File Structure.
-		Amount FileStructureSize;
+		uint64_t FileStructureSize;
 
 		/// Total used disk space of the drive.
-		Amount UsedDriveSize;
+		uint64_t UsedDriveSize;
 	};
 
 	/// Notification of a data modification cancel.
@@ -228,11 +229,11 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Storage_Data_Modification_Cancel_v1_Notification;
 
 	public:
-		explicit DataModificationCancelNotification(const Key& drive, const Key& owner, const Hash256& modificationTrx)
+		explicit DataModificationCancelNotification(const Key& drive, const Key& owner, const Hash256& dataModificationId)
 				: Notification(Notification_Type, sizeof(DataModificationCancelNotification<1>))
 				, DriveKey(drive)
 				, Owner(owner)
-				, ModificationTrx(modificationTrx) {}
+				, DataModificationId(dataModificationId) {}
 
 	public:
 		/// Public key of a drive multisig account.
@@ -241,8 +242,8 @@ namespace catapult { namespace model {
 		/// Public key of a drive owner.
 		Key Owner;
 
-		/// Hash of a DataModification transaction
-		Hash256 ModificationTrx;
+		/// Identifier of the transaction that initiated the modification.
+		Hash256 DataModificationId;
 	};
 
 	/// Notification of a replicator onboarding.

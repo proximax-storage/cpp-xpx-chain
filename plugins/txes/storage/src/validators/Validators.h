@@ -9,11 +9,11 @@
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "src/model/StorageNotifications.h"
-#include "src/state/DriveEntry.h"
+#include "src/state/BcDriveEntry.h"
 
 namespace catapult { namespace validators {
 
-	void VerificationStatus(const state::DriveEntry& driveEntry, const validators::ValidatorContext& context, bool& started, bool& active);
+	void VerificationStatus(const state::BcDriveEntry& driveEntry, const validators::ValidatorContext& context, bool& started, bool& active);
 
 	/// A validator implementation that applies to drive prepare drive notifications and validates that:
 	/// - drive size >= minDriveSize
@@ -21,9 +21,17 @@ namespace catapult { namespace validators {
 	/// - the drive does not exist
 	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, model::PrepareDriveNotification<1>)();
 
+	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
+	/// -
+	DECLARE_STATEFUL_VALIDATOR(DataModification, model::DataModificationNotification<1>)();
+
 	/// A validator implementation that applies to drive data modification approval notifications and validates that:
 	/// - respective data modification is present in activeDataModifications
 	/// - respective data modification is the first (oldest) element in activeDataModifications
 	DECLARE_STATEFUL_VALIDATOR(DataModificationApproval, model::DataModificationApprovalNotification<1>)();
+
+	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
+	/// -
+	DECLARE_STATEFUL_VALIDATOR(DataModificationCancel, model::DataModificationCancelNotification<1>)();
 
 }}
