@@ -12,37 +12,53 @@ namespace catapult { namespace state {
 
 	namespace {
 
-		void SaveActiveDataModifications(io::OutputStream& output, const std::vector<Hash256>& activeDataModifications) {
+		void SaveActiveDataModifications(io::OutputStream& output, const ActiveDataModifications& activeDataModifications) {
 			io::Write64(output, activeDataModifications.size());
-			for (const auto& hash : activeDataModifications) {
-				io::Write(output, hash);
+			for (const auto& modification : activeDataModifications) {
+				io::Write(output, modification.Id);
+				io::Write(output, modification.Owner);
+				io::Write(output, modification.DownloadDataCdi);
+				io::Write64(output, modification.UploadSize);
 			}
 		}
 
-		void SaveCompletedDataModifications(io::OutputStream& output, const std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications) {
+		void SaveCompletedDataModifications(io::OutputStream& output, const CompletedDataModifications& completedDataModifications) {
 			io::Write64(output, completedDataModifications.size());
-			for (const auto& pair : completedDataModifications) {
-				io::Write(output, pair.first);
-				io::Write8(output, utils::to_underlying_type(pair.second));
+			for (const auto& modification : completedDataModifications) {
+				io::Write(output, modification.Id);
+				io::Write(output, modification.Owner);
+				io::Write(output, modification.DownloadDataCdi);
+				io::Write64(output, modification.UploadSize);
+				io::Write8(output, utils::to_underlying_type(modification.State));
 			}
 		}
 
-		void LoadActiveDataModifications(io::InputStream& input, std::vector<Hash256>& activeDataModifications) {
-			auto hashCount = io::Read64(input);
-			while (hashCount--) {
-				Hash256 hash;
-				io::Read(input, hash);
-				activeDataModifications.push_back(hash);
+		void LoadActiveDataModifications(io::InputStream& input, ActiveDataModifications& activeDataModifications) {
+			auto count = io::Read64(input);
+			while (count--) {
+				Hash256 id;
+				io::Read(input, id);
+				Key owner;
+				io::Read(input, owner);
+				Hash256 downloadDataCdi;
+				io::Read(input, downloadDataCdi);
+				auto uploadSize = io::Read64(input);
+				activeDataModifications.emplace_back(ActiveDataModification{ id, owner, downloadDataCdi, uploadSize });
 			}
 		}
 
-		void LoadCompletedDataModifications(io::InputStream& input, std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications) {
-			auto pairCount = io::Read64(input);
-			while (pairCount--) {
-				Hash256 hash;
-				io::Read(input, hash);
+		void LoadCompletedDataModifications(io::InputStream& input, CompletedDataModifications& completedDataModifications) {
+			auto count = io::Read64(input);
+			while (count--) {
+				Hash256 id;
+				io::Read(input, id);
+				Key owner;
+				io::Read(input, owner);
+				Hash256 downloadDataCdi;
+				io::Read(input, downloadDataCdi);
+				auto uploadSize = io::Read64(input);
 				auto state = static_cast<DataModificationState>(io::Read8(input));
-				completedDataModifications.emplace_back(hash, state);
+				completedDataModifications.emplace_back(ActiveDataModification{ id, owner, downloadDataCdi, uploadSize }, state);
 			}
 		}
 

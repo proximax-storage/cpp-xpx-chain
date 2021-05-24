@@ -25,13 +25,14 @@ namespace catapult { namespace validators {
 		if (activeDataModifications.empty())
 			return Failure_Storage_No_Active_Data_Modifications;
 
-		if (activeDataModifications.front() == notification.DataModificationId)
+		if (activeDataModifications.front().Id == notification.DataModificationId)
 			return Failure_Storage_Data_Modification_Is_Active;
 
-		auto dataModificationIter = std::find(
-				++activeDataModifications.begin(),
-				activeDataModifications.end(),
-				notification.DataModificationId);
+		auto dataModificationIter = ++activeDataModifications.begin();
+		for (; dataModificationIter != activeDataModifications.end(); ++dataModificationIter) {
+			if (dataModificationIter->Id == notification.DataModificationId)
+				break;
+		}
 
 		if (dataModificationIter == activeDataModifications.end())
 			return Failure_Storage_Data_Modification_Not_Found;

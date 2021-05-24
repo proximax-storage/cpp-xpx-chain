@@ -7,14 +7,14 @@
 #include "StoragePlugin.h"
 #include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
-#include "src/cache/ReplicatorCache.h"
-#include "src/cache/ReplicatorCacheStorage.h"
+#include "src/cache/ReplicatorCacheSubCachePlugin.h"
 #include "src/plugins/PrepareBcDriveTransactionPlugin.h"
 #include "src/plugins/DataModificationTransactionPlugin.h"
 #include "src/plugins/DownloadTransactionPlugin.h"
 #include "src/plugins/DataModificationApprovalTransactionPlugin.h"
 #include "src/plugins/DataModificationCancelTransactionPlugin.h"
 #include "src/plugins/ReplicatorOnboardingTransactionPlugin.h"
+#include "src/state/CachedStorageState.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -22,11 +22,9 @@
 namespace catapult { namespace plugins {
 
 	void RegisterStorageSubsystem(PluginManager& manager) {
-
 		manager.addPluginInitializer([](auto& config) {
 			config.template InitPluginConfiguration<config::StorageConfiguration>();
 		});
-
 
 		const auto& pConfigHolder = manager.configHolder();
 		const auto& immutableConfig = manager.immutableConfig();
@@ -36,7 +34,6 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDataModificationApprovalTransactionPlugin());
 		manager.addTransactionSupport(CreateDataModificationCancelTransactionPlugin());
 		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin());
-
 
 		manager.addCacheSupport<cache::BcDriveCacheStorage>(
 			std::make_unique<cache::BcDriveCache>(manager.cacheConfig(cache::BcDriveCache::Name), pConfigHolder));
@@ -50,7 +47,6 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-
 		manager.addCacheSupport<cache::DownloadChannelCacheStorage>(
 			std::make_unique<cache::DownloadChannelCache>(manager.cacheConfig(cache::DownloadChannelCache::Name), pConfigHolder));
 
@@ -63,9 +59,9 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-
-		manager.addCacheSupport<cache::ReplicatorCacheStorage>(
-			std::make_unique<cache::ReplicatorCache>(manager.cacheConfig(cache::ReplicatorCache::Name), pConfigHolder));
+		auto pKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
+		manager.addCacheSupport(std::make_unique<cache::ReplicatorCacheSubCachePlugin>(
+			manager.cacheConfig(cache::ReplicatorCache::Name), pKeyCollector, pConfigHolder));
 
 		using ReplicatorCacheHandlersService = CacheHandlers<cache::ReplicatorCacheDescriptor>;
 		ReplicatorCacheHandlersService::Register<model::FacilityCode::Replicator>(manager);
@@ -76,18 +72,19 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		manager.setStorageState(std::make_unique<state::CachedStorageState>(pKeyCollector));
 
-		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, pKeyCollector](auto& builder) {
 		  	builder
-				.add(validators::CreatePrepareDriveValidator())
+				.add(validators::CreatePrepareDriveValidator(pKeyCollector))
 				.add(validators::CreateDataModificationValidator())
 				.add(validators::CreateDataModificationApprovalValidator())
 				.add(validators::CreateDataModificationCancelValidator());
 		});
 
-		manager.addObserverHook([](auto& builder) {
+		manager.addObserverHook([pKeyCollector](auto& builder) {
 			builder
-				.add(observers::CreatePrepareDriveObserver())
+				.add(observers::CreatePrepareDriveObserver(pKeyCollector))
 				.add(observers::CreateDownloadChannelObserver())
 				.add(observers::CreateDataModificationObserver())
 				.add(observers::CreateDataModificationApprovalObserver())

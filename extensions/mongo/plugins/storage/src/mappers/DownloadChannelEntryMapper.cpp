@@ -16,7 +16,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	bsoncxx::document::value ToDbModel(const state::DownloadChannelEntry& entry) {
 		bson_stream::document builder;
 		auto doc = builder << "downloadChannelInfo" << bson_stream::open_document
-				<< "downloadChannelId" << ToBinary(entry.id())
+				<< "id" << ToBinary(entry.id())
 				<< "consumer" << ToBinary(entry.consumer())
 				<< "driveKey" << ToBinary(entry.drive())
 				<< "transactionFee" << ToInt64(entry.transactionFee())
@@ -34,7 +34,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	state::DownloadChannelEntry ToDownloadChannelEntry(const bsoncxx::document::view& document) {
 		auto dbDownloadChannelEntry = document["downloadChannelInfo"];
 		Hash256 id;
-		DbBinaryToModelArray(id, dbDownloadChannelEntry["downloadChannelId"].get_binary());
+		DbBinaryToModelArray(id, dbDownloadChannelEntry["id"].get_binary());
 		state::DownloadChannelEntry entry(id);
 		Key consumer;
 		DbBinaryToModelArray(consumer, dbDownloadChannelEntry["consumer"].get_binary());

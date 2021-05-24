@@ -6,10 +6,7 @@
 
 #include "catapult/notification_handlers/HandlerNotificationSubscriber.h"
 #include "catapult/notification_handlers/HandlerContext.h"
-#include "catapult/plugins/PluginManager.h"
 #include "BlockStorageSubscription.h"
-
-#include <utility>
 
 namespace catapult { namespace storage {
 
@@ -25,17 +22,17 @@ namespace catapult { namespace storage {
 			explicit BlockStorageSubscription(extensions::ProcessBootstrapper& bootstrapper, HandlerPointer pHandler)
 				: m_pluginManager(bootstrapper.pluginManager())
 				, m_cacheHolder(bootstrapper.cacheHolder())
-				, m_configHolder(bootstrapper.configHolder())
+				, m_pConfigHolder(bootstrapper.configHolder())
 				, m_pHandler(std::move(pHandler))
 			{}
 
 		public:
 			void notifyBlock(const model::BlockElement& blockElement) override {
 				// We load extensions before plugins, so we can't init publisher in constructor
-				if (!m_notificationPublisher) {
-					m_notificationPublisher = m_pluginManager.createNotificationPublisher();
+				if (!m_pNotificationPublisher) {
+					m_pNotificationPublisher = m_pluginManager.createNotificationPublisher();
 				}
-				const auto& config = m_configHolder->Config(blockElement.Block.Height);
+				const auto& config = m_pConfigHolder->Config(blockElement.Block.Height);
 				auto cacheView = m_cacheHolder.cache().createView();
 				auto readCache = cacheView.toReadOnly();
 
@@ -48,7 +45,7 @@ namespace catapult { namespace storage {
 				);
 				notification_handlers::HandlerNotificationSubscriber handleSubscriber(*m_pHandler, handlerContext);
 				for (const auto& entity : ExtractEntityInfos(blockElement)) {
-					m_notificationPublisher->publish(entity, handleSubscriber);
+					m_pNotificationPublisher->publish(entity, handleSubscriber);
 				}
 			}
 
@@ -59,9 +56,9 @@ namespace catapult { namespace storage {
 		private:
 			plugins::PluginManager& m_pluginManager;
 			extensions::CacheHolder& m_cacheHolder;
-			std::shared_ptr<config::BlockchainConfigurationHolder> m_configHolder;
+			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 			HandlerPointer m_pHandler;
-			std::unique_ptr<model::NotificationPublisher> m_notificationPublisher;
+			std::unique_ptr<model::NotificationPublisher> m_pNotificationPublisher;
 		};
 	}
 

@@ -4,7 +4,7 @@
     db.bcdrives.createIndex({ 'drive.multisigAddress': 1 }, { unique: true });
 
     db.createCollection('downloadChannels');
-    db.downloadChannels.createIndex({ 'downloadChannelInfo.downloadChannelId': 1 }, { unique: true });
+    db.downloadChannels.createIndex({ 'downloadChannelInfo.id': 1 }, { unique: true });
 
     db.createCollection('replicators');
     db.replicators.createIndex({ 'replicator.key': 1 }, { unique: true });

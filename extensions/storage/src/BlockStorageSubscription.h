@@ -15,7 +15,7 @@ namespace catapult { namespace storage {
 
 	using HandlerPointer = std::shared_ptr<const notification_handlers::AggregateNotificationHandler>;
 
-	/// Creates a block storage around \a pluginManager.
+	/// Creates a block change subscriber around \a bootstrapper and \a pValidator.
 	std::unique_ptr<io::BlockChangeSubscriber> CreateBlockStorageSubscription(
 			extensions::ProcessBootstrapper& bootstrapper, const HandlerPointer& pValidator);
 }}

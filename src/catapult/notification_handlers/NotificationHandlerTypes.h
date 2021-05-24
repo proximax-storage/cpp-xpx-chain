@@ -54,23 +54,23 @@ namespace catapult { namespace notification_handlers {
 
 /// Declares a stateful handler with \a NAME for notifications of type \a NOTIFICATION_TYPE.
 #define DECLARE_HANDLER(NAME, NOTIFICATION_TYPE) \
-	stateful::NotificationHandlerPointerT<NOTIFICATION_TYPE> Create##NAME##Handler
+	NotificationHandlerPointerT<NOTIFICATION_TYPE> Create##NAME##Handler
 
 /// Makes a functional stateful handler with \a NAME around \a HANDLER.
 /// \note This macro requires a notification_handlers::Notification alias.
 #define MAKE_HANDLER(NAME, HANDLER) \
-	std::make_unique<stateful::FunctionalNotificationHandlerT<notification_handlers::Notification>>(#NAME "Handler", HANDLER);
+	std::make_unique<FunctionalNotificationHandlerT<notification_handlers::Notification>>(#NAME "Handler", HANDLER);
 
 /// Defines a functional stateful handler with \a NAME around \a HANDLER.
 /// \note This macro requires a notification_handlers::Notification alias.
 #define DEFINE_HANDLER(NAME, HANDLER) \
 	DECLARE_HANDLER(NAME, notification_handlers::Notification)() { \
-		return MAKE_Handler(NAME, HANDLER); \
+		return MAKE_HANDLER(NAME, HANDLER); \
 	}
 
 /// Defines a functional stateful handler with \a NAME around \a HANDLER for notifications of type \a NOTIFICATION_TYPE.
 #define DEFINE_HANDLER_WITH_TYPE(NAME, NOTIFICATION_TYPE, HANDLER) \
 	DECLARE_STATEFUL_HANDLER(NAME, NOTIFICATION_TYPE)() { \
-		return std::make_unique<stateful::FunctionalNotificationHandlerT<NOTIFICATION_TYPE>>(#NAME "Handler", HANDLER); \
+		return std::make_unique<FunctionalNotificationHandlerT<NOTIFICATION_TYPE>>(#NAME "Handler", HANDLER); \
 	}
 }}

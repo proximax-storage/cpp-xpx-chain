@@ -5,20 +5,35 @@
 **/
 
 #include "src/BlockStorageSubscription.h"
-#include "catapult/extensions/ProcessBootstrapper.h"
+#include "src/ReplicatorService.h"
+#include "src/notification_handlers/NotificationHandlers.h"
 #include "catapult/notification_handlers/DemuxHandlerBuilder.h"
 
 namespace catapult { namespace storage {
 
 	namespace {
 		void RegisterExtension(extensions::ProcessBootstrapper& bootstrapper) {
-			auto& subscriptionManager = bootstrapper.subscriptionManager();
+			const auto& config = bootstrapper.config();
+			auto keyPair = crypto::KeyPair::FromString(config.User.BootKey);
+			auto storageConfig = StorageConfiguration::LoadFromPath(bootstrapper.resourcesPath());
+			auto pReplicatorService = std::make_shared<ReplicatorService>(
+				std::move(keyPair),
+				config.Immutable.NetworkIdentifier,
+				config.Immutable.GenerationHash,
+				std::move(storageConfig));
+
 			notification_handlers::DemuxHandlerBuilder builder;
-			// Example of declaration you can find in DEFINE_HANDLER
-			// To add a new handler use builder.add();
-			subscriptionManager.addPostBlockCommitSubscriber(CreateBlockStorageSubscription(
-					bootstrapper,
-					builder.build()));
+			builder
+				.add(notification_handlers::CreatePrepareDriveHandler(pReplicatorService))
+				.add(notification_handlers::CreateDataModificationHandler(pReplicatorService))
+				.add(notification_handlers::CreateDataModificationCancelHandler(pReplicatorService))
+				.add(notification_handlers::CreateDataModificationApprovalHandler(pReplicatorService))
+				.add(notification_handlers::CreateDownloadHandler(pReplicatorService));
+
+			bootstrapper.subscriptionManager().addPostBlockCommitSubscriber(
+				CreateBlockStorageSubscription(bootstrapper, builder.build()));
+
+			bootstrapper.extensionManager().addServiceRegistrar(CreateReplicatorServiceRegistrar(pReplicatorService));
 		}
 	}
 }}

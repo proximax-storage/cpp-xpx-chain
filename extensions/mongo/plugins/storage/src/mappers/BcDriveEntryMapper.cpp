@@ -15,22 +15,31 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToDbModel
 
 	namespace {
-		void StreamActiveDataModifications(bson_stream::document& builder, const std::vector<Hash256>& activeDataModifications) {
+		void StreamActiveDataModifications(bson_stream::document& builder, const state::ActiveDataModifications& activeDataModifications) {
 			auto array = builder << "activeDataModifications" << bson_stream::open_array;
-			for (const auto& hash : activeDataModifications)
-				array << ToBinary(hash);
+			for (const auto& modification : activeDataModifications)
+				array
+					<< bson_stream::open_document
+					<< "id" << ToBinary(modification.Id)
+					<< "owner" << ToBinary(modification.Owner)
+					<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
+					<< "uploadSize" << static_cast<int64_t>(modification.UploadSize)
+					<< bson_stream::close_document;
 
 			array << bson_stream::close_array;
 		}
 
-		void StreamCompletedDataModifications(bson_stream::document& builder, const std::vector<std::pair<Hash256, state::DataModificationState>>& completedDataModifications) {
+		void StreamCompletedDataModifications(bson_stream::document& builder, const state::CompletedDataModifications& completedDataModifications) {
 			auto array = builder << "completedDataModifications" << bson_stream::open_array;
-			for (const auto& pair : completedDataModifications) {
+			for (const auto& modification : completedDataModifications) {
 				array
-						<< bson_stream::open_document
-						<< "hash" << ToBinary(pair.first)
-						<< "state" << utils::to_underlying_type(pair.second)
-						<< bson_stream::close_document;
+					<< bson_stream::open_document
+					<< "id" << ToBinary(modification.Id)
+					<< "owner" << ToBinary(modification.Owner)
+					<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
+					<< "uploadSize" << static_cast<int64_t>(modification.UploadSize)
+					<< "state" << utils::to_underlying_type(modification.State)
+					<< bson_stream::close_document;
 			}
 
 			array << bson_stream::close_array;
@@ -60,26 +69,36 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToModel
 
 	namespace {
-		void ReadActiveDataModifications(std::vector<Hash256>& activeDataModifications, const bsoncxx::array::view& dbActiveDataModifications) {
-			for (const auto& dbHash : dbActiveDataModifications) {
-				auto doc = dbHash.get_binary();
+		void ReadActiveDataModifications(state::ActiveDataModifications& activeDataModifications, const bsoncxx::array::view& dbActiveDataModifications) {
+			for (const auto& dbModification : dbActiveDataModifications) {
+				auto doc = dbModification.get_document().view();
 
-				Hash256 hash;
-				DbBinaryToModelArray(hash, doc);
+				Hash256 id;
+				DbBinaryToModelArray(id, doc["id"].get_binary());
+				Key owner;
+				DbBinaryToModelArray(owner, doc["owner"].get_binary());
+				Hash256 downloadDataCdi;
+				DbBinaryToModelArray(downloadDataCdi, doc["downloadDataCdi"].get_binary());
+				auto uploadSize = static_cast<uint64_t>(doc["uploadSize"].get_int64());
 
-				activeDataModifications.push_back(hash);
+				activeDataModifications.emplace_back(state::ActiveDataModification{ id, owner, downloadDataCdi, uploadSize });
 			}
 		}
 
-		void ReadCompletedDataModifications(std::vector<std::pair<Hash256, state::DataModificationState>>& completedDataModifications, const bsoncxx::array::view& dbCompletedDataModifications) {
-			for (const auto& dbPair : dbCompletedDataModifications) {
-				auto doc = dbPair.get_document().view();
+		void ReadCompletedDataModifications(state::CompletedDataModifications& completedDataModifications, const bsoncxx::array::view& dbCompletedDataModifications) {
+			for (const auto& dbModification : dbCompletedDataModifications) {
+				auto doc = dbModification.get_document().view();
 
-				Hash256 hash;
-				DbBinaryToModelArray(hash, doc["hash"].get_binary());
-				auto state = static_cast<state::DataModificationState>(static_cast<uint8_t>(dbPair["state"].get_int32()));
+				Hash256 id;
+				DbBinaryToModelArray(id, doc["id"].get_binary());
+				Key owner;
+				DbBinaryToModelArray(owner, doc["owner"].get_binary());
+				Hash256 downloadDataCdi;
+				DbBinaryToModelArray(downloadDataCdi, doc["downloadDataCdi"].get_binary());
+				auto uploadSize = static_cast<uint64_t>(doc["uploadSize"].get_int64());
+				auto state = static_cast<state::DataModificationState>(static_cast<uint8_t>(doc["state"].get_int32()));
 
-				completedDataModifications.emplace_back(hash, state);
+				completedDataModifications.emplace_back(state::CompletedDataModification{ state::ActiveDataModification{ id, owner, downloadDataCdi, uploadSize }, state });
 			}
 		}
 	}

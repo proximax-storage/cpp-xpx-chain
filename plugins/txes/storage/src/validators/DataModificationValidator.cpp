@@ -19,8 +19,8 @@ namespace catapult { namespace validators {
 			return Failure_Storage_Drive_Not_Found;
 
 	  	const auto& activeDataModifications = pDriveEntry->activeDataModifications();
-	  	for (const auto& id : activeDataModifications) {
-	  		if (id == notification.DataModificationId)
+	  	for (const auto& modification : activeDataModifications) {
+	  		if (modification.Id == notification.DataModificationId)
 				return Failure_Storage_Data_Modification_Already_Exists;
 	  	}
 
