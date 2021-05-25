@@ -35,4 +35,8 @@ namespace catapult { namespace validators {
 	/// -
 	DECLARE_STATEFUL_VALIDATOR(DataModificationCancel, model::DataModificationCancelNotification<1>)();
 
+	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
+	/// -
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
+
 }}

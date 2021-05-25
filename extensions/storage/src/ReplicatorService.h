@@ -18,16 +18,14 @@ namespace catapult { namespace storage {
 
 	using FileNames = std::vector<std::string>;
 
-	class ReplicatorService : public std::enable_shared_from_this<ReplicatorService> {
+	class ReplicatorService {
 	public:
 		ReplicatorService(
 				crypto::KeyPair&& keyPair,
 				model::NetworkIdentifier networkIdentifier,
 				const GenerationHash& generationHash,
 				StorageConfiguration&& storageConfig)
-			: m_stopped(false)
-			, m_driveModificationInProgress(false)
-			, m_keyPair(std::move(keyPair))
+			: m_keyPair(std::move(keyPair))
 			, m_networkIdentifier(networkIdentifier)
 			, m_generationHash(generationHash)
 			, m_storageConfig(std::move(storageConfig))
@@ -38,13 +36,9 @@ namespace catapult { namespace storage {
 			m_transactionRangeHandler = std::move(transactionRangeHandler);
 		}
 
-		Key replicatorKey() const {
-			m_keyPair.publicKey();
-		}
+		Key replicatorKey() const;
 
-		std::map<Key, std::map<Key, uint64_t>>& consumers() {
-			return m_consumers;
-		}
+		void start();
 
 		void addDrive(const Key& driveKey, size_t driveSize);
 		void removeDrive(const Key& driveKey);
@@ -61,24 +55,14 @@ namespace catapult { namespace storage {
 		void shutdown();
 
 	private:
-		void sendDataModificationApprovalTransaction(const Key& driveKey, const Hash256& dataModificationId, const Hash256& driveRootHash);
-		void startDriveModification(const Key& driveKey);
-		std::shared_ptr<sirius::drive::Session> session();
+		class Impl;
+		std::shared_ptr<Impl> m_pImpl;
 
-	private:
-		std::shared_ptr<sirius::drive::Session> m_pSession;
-		std::map<Key, std::shared_ptr<sirius::drive::Drive>> m_drives;
-		std::map<Key, std::vector<std::pair<Hash256, sirius::drive::InfoHash>>> m_driveModifications;
-		std::map<Key, std::map<Key, uint64_t>> m_consumers;
-		std::map<std::string, libtorrent::torrent_handle> m_fileDownloads;
-		std::mutex m_mutex;
-		bool m_stopped;
-		std::atomic_bool m_driveModificationInProgress;
 		crypto::KeyPair m_keyPair;
 		model::NetworkIdentifier m_networkIdentifier;
 		GenerationHash m_generationHash;
-		handlers::TransactionRangeHandler m_transactionRangeHandler;
 		StorageConfiguration m_storageConfig;
+		handlers::TransactionRangeHandler m_transactionRangeHandler;
 	};
 
 	/// Creates a registrar for the replicator service.

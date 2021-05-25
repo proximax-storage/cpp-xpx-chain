@@ -79,7 +79,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreatePrepareDriveValidator(pKeyCollector))
 				.add(validators::CreateDataModificationValidator())
 				.add(validators::CreateDataModificationApprovalValidator())
-				.add(validators::CreateDataModificationCancelValidator());
+				.add(validators::CreateDataModificationCancelValidator())
+				.add(validators::CreateReplicatorOnboardingValidator());
 		});
 
 		manager.addObserverHook([pKeyCollector](auto& builder) {

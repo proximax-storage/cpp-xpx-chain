@@ -21,4 +21,6 @@ namespace catapult { namespace notification_handlers {
 	DECLARE_HANDLER(DataModificationApproval, model::DataModificationApprovalNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(Download, model::DownloadNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
+	DECLARE_HANDLER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 }}
