@@ -20,7 +20,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "consumer" << ToBinary(entry.consumer())
 				<< "driveKey" << ToBinary(entry.drive())
 				<< "transactionFee" << ToInt64(entry.transactionFee())
-				<< "storageUnits" << ToInt64(entry.storageUnits());
+				<< "downloadSize" << static_cast<int64_t>(entry.downloadSize());
 
 		return doc
 				<< bson_stream::close_document
@@ -43,7 +43,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		DbBinaryToModelArray(driveKey, dbDownloadChannelEntry["driveKey"].get_binary());
 		entry.setDrive(driveKey);
 		entry.setTransactionFee(Amount(dbDownloadChannelEntry["transactionFee"].get_int64()));
-		entry.setStorageUnits(Amount(dbDownloadChannelEntry["storageUnits"].get_int64()));
+		entry.setDownloadSize(static_cast<uint64_t>(dbDownloadChannelEntry["downloadSize"].get_int64()));
 
 		return entry;
 	}

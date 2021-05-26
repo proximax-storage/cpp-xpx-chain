@@ -50,21 +50,21 @@ namespace catapult { namespace state {
             return m_transactionFee;
         }
 
-        /// Sets \a storageUnits of download channel.
-        void setStorageUnits(const Amount& storageUnits) {
-            m_storageUnits = storageUnits;
+        /// Sets \a downloadSize of download channel.
+        void setDownloadSize(const uint64_t& downloadSize) {
+			m_downloadSize = downloadSize;
         }
 
-        /// Gets storage units.
-        const Amount& storageUnits() const {
-            return m_storageUnits;
+        /// Gets download size.
+        const uint64_t& downloadSize() const {
+            return m_downloadSize;
         }
 
 	private:
 		Key m_consumer;
 		Key m_drive;
 		Amount m_transactionFee;
-		Amount m_storageUnits;
+		uint64_t m_downloadSize; // In Mbytes
 	};
 
 	// DownloadChannel channel entry.

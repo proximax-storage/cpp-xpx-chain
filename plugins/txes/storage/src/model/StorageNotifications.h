@@ -30,6 +30,9 @@ namespace catapult { namespace model {
 	/// Defines a replicator onboarding notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v1, 0x0007);
 
+	/// Defines a download approval notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Approval_v1, 0x0007);
+
 	/// Notification of a data modification.
 	template<VersionType version>
 	struct DataModificationNotification;
@@ -271,5 +274,37 @@ namespace catapult { namespace model {
 
 		/// The storage size that the replicator provides to the system.
 		Amount Capacity;
+	};
+
+	/// Notification of a download approval.
+	template<VersionType version>
+	struct DownloadApprovalNotification;
+
+	template<>
+	struct DownloadApprovalNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Download_Approval_v1_Notification;
+
+	public:
+		explicit DownloadApprovalNotification(
+				const Hash256& id,
+				const bool response,
+				const uint64_t opinion)
+				: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
+				, DownloadChannelId(id)
+				, ResponseToFinishDownloadTransaction(response)
+				, ReplicatorUploadOpinion(opinion)
+		{}
+
+	public:
+		/// The identifier of the download channel.
+		Hash256 DownloadChannelId;
+
+		/// Reason of the transaction release.
+		bool ResponseToFinishDownloadTransaction;
+
+		/// Opinion about the replicator's upload volumes to the consumer.
+		uint64_t ReplicatorUploadOpinion;
 	};
 }}

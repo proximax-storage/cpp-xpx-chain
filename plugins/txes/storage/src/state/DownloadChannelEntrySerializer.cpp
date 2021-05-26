@@ -19,7 +19,7 @@ namespace catapult { namespace state {
 		io::Write(output, downloadEntry.consumer());
 		io::Write(output, downloadEntry.drive());
 		io::Write(output, downloadEntry.transactionFee());
-		io::Write(output, downloadEntry.storageUnits());
+		io::Write64(output, downloadEntry.downloadSize());
 	}
 
 	DownloadChannelEntry DownloadChannelEntrySerializer::Load(io::InputStream& input) {
@@ -42,7 +42,7 @@ namespace catapult { namespace state {
 		entry.setDrive(drive);
 
 		entry.setTransactionFee(Amount(io::Read64(input)));
-		entry.setStorageUnits(Amount(io::Read64(input)));
+		entry.setDownloadSize(io::Read64(input));
 
 		return entry;
 	}

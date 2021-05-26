@@ -34,4 +34,8 @@ namespace catapult { namespace validators {
 	/// -
 	DECLARE_STATEFUL_VALIDATOR(DataModificationCancel, model::DataModificationCancelNotification<1>)();
 
+	/// A validator implementation that applies to download approval notifications and validates that:
+	/// - respective download channel exists
+	DECLARE_STATEFUL_VALIDATOR(DownloadApproval, model::DownloadApprovalNotification<1>)();
+
 }}
