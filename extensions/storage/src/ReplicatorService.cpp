@@ -80,22 +80,10 @@ namespace catapult { namespace storage {
 	namespace {
 		constexpr auto Replicator_Host = "127.0.0.1:";
 
-		auto getDriveDirectoryName(const Key &driveKey) {
+		auto AsString(const Key &driveKey) {
 			std::ostringstream out;
 			out << driveKey;
 			return out.str();
-		}
-
-		auto getDriveDirectory(const Key &driveKey, const std::string &parentDirectory) {
-			std::filesystem::path driveDirectory = parentDirectory;
-			driveDirectory /= getDriveDirectoryName(driveKey);
-			return driveDirectory;
-		}
-
-		auto getDriveDirectory(const std::string &driveDirectoryName, const std::string &parentDirectory) {
-			std::filesystem::path driveDirectory = parentDirectory;
-			driveDirectory /= driveDirectoryName;
-			return driveDirectory;
 		}
 	}
 
@@ -136,12 +124,11 @@ namespace catapult { namespace storage {
 			if (m_drives.find(driveKey) != m_drives.end())
 				CATAPULT_THROW_INVALID_ARGUMENT_1("drive already added", driveKey);
 
-			auto driveDirectoryName = getDriveDirectoryName(driveKey);
 			m_drives[driveKey] = sirius::drive::createDefaultDrive(
 				session(),
-				getDriveDirectory(driveDirectoryName, m_storageConfig.StorageDirectory),
-				getDriveDirectory(driveDirectoryName, m_storageConfig.SandboxDirectory),
-				driveDirectoryName,
+				m_storageConfig.StorageDirectory,
+				m_storageConfig.SandboxDirectory,
+				AsString(driveKey),
 				driveSize);
 		}
 
@@ -246,7 +233,7 @@ namespace catapult { namespace storage {
 			}
 
 			auto& downloadLimit = consumerData.at(driveKey);
-			auto driveDirectory = getDriveDirectory(driveKey, m_storageConfig.StorageDirectory);
+			std::filesystem::path driveDirectory = m_storageConfig.StorageDirectory;
 			auto fileCount = remainingFiles.size();
 			for (auto i = 0u; i < fileCount; ++i) {
 				auto fileName = *remainingFiles.begin();
@@ -284,7 +271,7 @@ namespace catapult { namespace storage {
 			for (const auto& fileName : allFiles)
 				CATAPULT_LOG(debug) << "file: " << fileName;
 
-			auto driveDirectory = getDriveDirectory(driveKey, m_storageConfig.StorageDirectory);
+			std::filesystem::path driveDirectory = m_storageConfig.StorageDirectory;
 			for (const auto& fileName : allFiles) {
 				std::filesystem::path file = driveDirectory / fileName;
 				if (m_fileDownloads.find(file) == m_fileDownloads.end()) {
