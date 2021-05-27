@@ -88,13 +88,13 @@ namespace catapult { namespace model {
 			const Key& drive,
 			const Key& consumer,
 			uint64_t downloadSize,
-			const Amount& transactionFee)
+			const Amount& feedbackFeeAmount)
 			: Notification(Notification_Type, sizeof(DownloadNotification<1>))
 			, Id(id)
 			, DriveKey(drive)
 			, Consumer(consumer)
 			, DownloadSize(downloadSize)
-			, TransactionFee(transactionFee)
+			, FeedbackFeeAmount(feedbackFeeAmount)
 		{}
 
 	public:
@@ -111,7 +111,7 @@ namespace catapult { namespace model {
 		uint64_t DownloadSize;
 
 		/// Delta transaction fee in xpx.
-		Amount TransactionFee;
+		Amount FeedbackFeeAmount;
 	};
 
 	/// Notification of a drive preparation.

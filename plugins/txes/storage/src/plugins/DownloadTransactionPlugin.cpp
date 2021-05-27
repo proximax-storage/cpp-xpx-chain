@@ -23,27 +23,28 @@ namespace catapult { namespace plugins {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
-//					auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
-//					auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.NetworkIdentifier));
-//					sub.notify(BalanceTransferNotification<1>(
-//							transaction.Signer, driveAddress, currencyMosaicId, transaction.TransactionFee));
-//					sub.notify(BalanceTransferNotification<1>(
-//							transaction.Signer, driveAddress, currencyMosaicId, Amount(transaction.DownloadSize)));
-//					sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
-//					utils::SwapMosaics(transaction.Signer, { { config::GetUnresolvedStorageMosaicId(config), Amount(transaction.DownloadSize) } }, sub, config, utils::SwapOperation::Buy);
+					const auto downloadChannelId = CalculateHash(transaction, config.GenerationHash);
+					const auto downloadChannelAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(Key(downloadChannelId.array()), config.NetworkIdentifier));
+					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
+					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
 
-					auto downloadChannelId = CalculateHash(transaction, config.GenerationHash);
+					sub.notify(BalanceTransferNotification<1>(
+							transaction.Signer, downloadChannelAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
+					utils::SwapMosaics(transaction.Signer, { { streamingMosaicId, Amount(transaction.DownloadSize) } }, sub, config, utils::SwapOperation::Buy);
+					sub.notify(BalanceTransferNotification<1>(
+							transaction.Signer, downloadChannelAddress, streamingMosaicId, Amount(transaction.DownloadSize)));
+					sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
 					sub.notify(DownloadNotification<1>(
 							downloadChannelId,
 							transaction.DriveKey,
 							transaction.Signer,
 							transaction.DownloadSize,
-							transaction.TransactionFee));
+							transaction.FeedbackFeeAmount));
 					break;
 				}
 
 				default:
-					CATAPULT_LOG(debug) << "invalid version of DownloadChannelTransaction: " << transaction.EntityVersion();
+					CATAPULT_LOG(debug) << "invalid version of DownloadTransaction: " << transaction.EntityVersion();
 				}
 			};
 		}

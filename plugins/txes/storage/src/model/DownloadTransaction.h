@@ -34,7 +34,7 @@ namespace catapult { namespace model {
 		uint64_t DownloadSize;
 
 		/// XPXs to lock for future payment for.
-		Amount TransactionFee;
+		Amount FeedbackFeeAmount;
 
 	public:
 		// Calculates the real size of a storage \a transaction.

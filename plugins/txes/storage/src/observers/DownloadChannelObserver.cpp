@@ -17,7 +17,7 @@ namespace catapult { namespace observers {
 		downloadEntry.setConsumer(notification.Consumer);
 		// TODO: Add according Id to driveEntry
 		downloadEntry.setDrive(notification.DriveKey);
-		downloadEntry.setTransactionFee(notification.TransactionFee);
+		downloadEntry.setFeedbackFeeAmount(notification.FeedbackFeeAmount);
 		// TODO: Buy storage units for xpx in notification.DownloadSize
 		downloadEntry.setStorageUnits(Amount(notification.DownloadSize));
 	});

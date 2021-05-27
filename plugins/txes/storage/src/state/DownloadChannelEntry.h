@@ -40,14 +40,14 @@ namespace catapult { namespace state {
             return m_drive;
         }
 
-        /// Sets \a transactionFee of download channel.
-        void setTransactionFee(const Amount& transactionFee) {
-            m_transactionFee = transactionFee;
+        /// Sets \a feedbackFeeAmount of download channel.
+        void setFeedbackFeeAmount(const Amount& feedbackFeeAmount) {
+            m_feedbackFeeAmount = feedbackFeeAmount;
         }
 
-        /// Gets transaction fee.
-        const Amount& transactionFee() const {
-            return m_transactionFee;
+        /// Gets feedback fee amount.
+        const Amount& feedbackFeeAmount() const {
+            return m_feedbackFeeAmount;
         }
 
         /// Sets \a storageUnits of download channel.
@@ -63,7 +63,7 @@ namespace catapult { namespace state {
 	private:
 		Key m_consumer;
 		Key m_drive;
-		Amount m_transactionFee;
+		Amount m_feedbackFeeAmount;
 		Amount m_storageUnits;
 	};
 
