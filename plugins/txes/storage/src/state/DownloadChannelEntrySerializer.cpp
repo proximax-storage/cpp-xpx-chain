@@ -10,6 +10,25 @@
 
 namespace catapult { namespace state {
 
+	namespace {
+
+		void SaveWhitelistedPublicKeys(io::OutputStream& output, const std::vector<Key>& whitelistedPublicKeys) {
+			io::Write16(output, whitelistedPublicKeys.size());
+			for (const auto& key : whitelistedPublicKeys)
+				io::Write(output, key);
+		}
+
+		void LoadWhitelistedPublicKeys(io::InputStream& input, std::vector<Key>& whitelistedPublicKeys) {
+			auto keyCount = io::Read16(input);
+			while (keyCount--) {
+				Key key;
+				io::Read(input, key);
+				whitelistedPublicKeys.push_back(key);
+			}
+		}
+
+	}
+
 	void DownloadChannelEntrySerializer::Save(const DownloadChannelEntry& downloadEntry, io::OutputStream& output) {
 		auto version = downloadEntry.version();
 
@@ -19,7 +38,9 @@ namespace catapult { namespace state {
 		io::Write(output, downloadEntry.consumer());
 		io::Write(output, downloadEntry.drive());
 		io::Write(output, downloadEntry.feedbackFeeAmount());
-		io::Write(output, downloadEntry.storageUnits());
+		io::Write64(output, downloadEntry.downloadSize());
+
+		SaveWhitelistedPublicKeys(output, downloadEntry.whitelistedPublicKeys());
 	}
 
 	DownloadChannelEntry DownloadChannelEntrySerializer::Load(io::InputStream& input) {
@@ -42,7 +63,9 @@ namespace catapult { namespace state {
 		entry.setDrive(drive);
 
 		entry.setFeedbackFeeAmount(Amount(io::Read64(input)));
-		entry.setStorageUnits(Amount(io::Read64(input)));
+		entry.setDownloadSize(io::Read64(input));
+
+		LoadWhitelistedPublicKeys(input, entry.whitelistedPublicKeys());
 
 		return entry;
 	}

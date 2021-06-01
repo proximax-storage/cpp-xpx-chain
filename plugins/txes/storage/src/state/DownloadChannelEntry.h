@@ -50,21 +50,32 @@ namespace catapult { namespace state {
             return m_feedbackFeeAmount;
         }
 
-        /// Sets \a storageUnits of download channel.
-        void setStorageUnits(const Amount& storageUnits) {
-            m_storageUnits = storageUnits;
+        /// Sets \a downloadSize of download channel.
+        void setDownloadSize(const uint64_t& downloadSize) {
+			m_downloadSize = downloadSize;
         }
 
-        /// Gets storage units.
-        const Amount& storageUnits() const {
-            return m_storageUnits;
+        /// Gets download size.
+        const uint64_t& downloadSize() const {
+            return m_downloadSize;
         }
+
+		/// Gets whitelisted public keys.
+		const std::vector<Key>& whitelistedPublicKeys() const {
+			return m_whitelistedPublicKeys;
+		}
+
+		/// Gets whitelisted public keys.
+		std::vector<Key>& whitelistedPublicKeys() {
+			return m_whitelistedPublicKeys;
+		}
 
 	private:
 		Key m_consumer;
 		Key m_drive;
 		Amount m_feedbackFeeAmount;
-		Amount m_storageUnits;
+		uint64_t m_downloadSize; // In Mbytes
+		std::vector<Key> m_whitelistedPublicKeys;
 	};
 
 	// DownloadChannel channel entry.

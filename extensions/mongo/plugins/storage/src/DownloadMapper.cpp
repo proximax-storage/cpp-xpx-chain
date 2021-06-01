@@ -18,6 +18,13 @@ namespace catapult { namespace mongo { namespace plugins {
 		builder << "driveKey" << ToBinary(transaction.DriveKey);
 		builder << "downloadSize" << static_cast<int64_t>(transaction.DownloadSize);
 		builder << "feedbackFeeAmount" << ToInt64(transaction.FeedbackFeeAmount);
+		builder << "whitelistedPublicKeyCount" << static_cast<int16_t>(transaction.WhitelistedPublicKeyCount);	// TODO: Remove?
+
+		auto array = builder << "whitelistedPublicKeys" << bson_stream::open_array;
+		auto pKey = transaction.WhitelistedPublicKeysPtr();
+		for (auto i = 0; i < transaction.WhitelistedPublicKeyCount; ++i, ++pKey)
+			array << ToBinary(*pKey);
+		array << bson_stream::close_array;
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(Download, StreamDownloadTransaction)

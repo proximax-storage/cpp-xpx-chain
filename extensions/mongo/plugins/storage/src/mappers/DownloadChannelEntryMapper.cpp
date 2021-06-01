@@ -13,6 +13,18 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	// region ToDbModel
 
+	namespace {
+
+		void StreamWhitelistedPublicKeys(bson_stream::document& builder, const std::vector<Key>& whitelistedPublicKeys) {
+			auto array = builder << "whitelistedPublicKeys" << bson_stream::open_array;
+			for (const auto& key : whitelistedPublicKeys)
+				array << ToBinary(key);
+
+			array << bson_stream::close_array;
+		}
+
+	}
+
 	bsoncxx::document::value ToDbModel(const state::DownloadChannelEntry& entry) {
 		bson_stream::document builder;
 		auto doc = builder << "downloadChannelInfo" << bson_stream::open_document
@@ -20,7 +32,9 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "consumer" << ToBinary(entry.consumer())
 				<< "driveKey" << ToBinary(entry.drive())
 				<< "feedbackFeeAmount" << ToInt64(entry.feedbackFeeAmount())
-				<< "storageUnits" << ToInt64(entry.storageUnits());
+				<< "downloadSize" << static_cast<int64_t>(entry.downloadSize());
+
+		StreamWhitelistedPublicKeys(builder, entry.whitelistedPublicKeys());
 
 		return doc
 				<< bson_stream::close_document
@@ -31,19 +45,41 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	// region ToModel
 
+	namespace {
+
+		void ReadWhitelistedPublicKeys(std::vector<Key>& whitelistedPublicKeys, const bsoncxx::array::view& dbWhitelistedPublicKeys) {
+			for (const auto& dbKey : dbWhitelistedPublicKeys) {
+				auto doc = dbKey.get_binary();
+
+				Key key;
+				DbBinaryToModelArray(key, doc);
+
+				whitelistedPublicKeys.push_back(key);
+			}
+		}
+
+	}
+
 	state::DownloadChannelEntry ToDownloadChannelEntry(const bsoncxx::document::view& document) {
+
 		auto dbDownloadChannelEntry = document["downloadChannelInfo"];
+
 		Hash256 id;
 		DbBinaryToModelArray(id, dbDownloadChannelEntry["downloadChannelId"].get_binary());
 		state::DownloadChannelEntry entry(id);
+
 		Key consumer;
 		DbBinaryToModelArray(consumer, dbDownloadChannelEntry["consumer"].get_binary());
 		entry.setConsumer(consumer);
+
 		Key driveKey;
 		DbBinaryToModelArray(driveKey, dbDownloadChannelEntry["driveKey"].get_binary());
 		entry.setDrive(driveKey);
+
 		entry.setFeedbackFeeAmount(Amount(dbDownloadChannelEntry["feedbackFeeAmount"].get_int64()));
-		entry.setStorageUnits(Amount(dbDownloadChannelEntry["storageUnits"].get_int64()));
+		entry.setDownloadSize(static_cast<uint64_t>(dbDownloadChannelEntry["downloadSize"].get_int64()));
+
+		ReadWhitelistedPublicKeys(entry.whitelistedPublicKeys(), dbDownloadChannelEntry["whitelistedPublicKeys"].get_array().value);
 
 		return entry;
 	}

@@ -13,7 +13,7 @@ namespace catapult { namespace state {
 	namespace {
 
 		void SaveActiveDataModifications(io::OutputStream& output, const std::vector<Hash256>& activeDataModifications) {
-			io::Write64(output, activeDataModifications.size());
+			io::Write64(output, activeDataModifications.size());	// TODO: Change to Write16?
 			for (const auto& hash : activeDataModifications) {
 				io::Write(output, hash);
 			}

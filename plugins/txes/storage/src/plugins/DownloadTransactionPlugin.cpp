@@ -39,7 +39,9 @@ namespace catapult { namespace plugins {
 							transaction.DriveKey,
 							transaction.Signer,
 							transaction.DownloadSize,
-							transaction.FeedbackFeeAmount));
+							transaction.FeedbackFeeAmount,
+							transaction.WhitelistedPublicKeyCount,
+							transaction.WhitelistedPublicKeysPtr()));
 					break;
 				}
 
