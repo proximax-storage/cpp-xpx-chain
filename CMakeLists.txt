@@ -24,7 +24,7 @@ set(CORE_CATAPULT_LIBS catapult.io catapult.ionet catapult.model catapult.thread
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 	find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random REQUIRED)
 else()
-	find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random stacktrace_backtrace REQUIRED)
+	find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random REQUIRED)
 	add_definitions(-DBOOST_STACKTRACE_USE_BACKTRACE)
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSHOW_BACKTRACE")
 endif()
