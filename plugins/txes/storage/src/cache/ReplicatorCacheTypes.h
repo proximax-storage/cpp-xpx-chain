@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2020 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -7,8 +7,9 @@
 #pragma once
 #include "src/state/ReplicatorEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
+#include "catapult/cache/IdentifierSerializer.h"
+#include "catapult/cache/SingleSetCacheTypesAdapter.h"
 #include "catapult/utils/Hashers.h"
-#include "catapult/utils/IdentifierGroup.h"
 
 namespace catapult {
 	namespace cache {
@@ -21,7 +22,6 @@ namespace catapult {
 		class ReplicatorCacheView;
 		struct ReplicatorEntryPrimarySerializer;
 		class ReplicatorPatriciaTree;
-		struct ReplicatorHeightGroupingSerializer;
 
 		template<typename TCache, typename TCacheDelta, typename TKey, typename TGetResult>
 		class ReadOnlyArtifactCache;
@@ -57,8 +57,32 @@ namespace catapult { namespace cache {
 
 	/// Replicator cache types.
 	struct ReplicatorCacheTypes {
-		using PrimaryTypes = MutableUnorderedMapAdapter<ReplicatorCacheDescriptor, utils::ArrayHasher<Key>>;
 		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicReplicatorCacheView, BasicReplicatorCacheDelta, const Key&, state::ReplicatorEntry>;
+
+		// region secondary descriptors
+
+		struct KeyTypesDescriptor {
+		public:
+			using ValueType = Key;
+			using KeyType = Key;
+
+			// cache types
+			using CacheType = ReplicatorCache;
+			using CacheDeltaType = ReplicatorCacheDelta;
+			using CacheViewType = ReplicatorCacheView;
+
+			using Serializer = UnorderedSetIdentifierSerializer<KeyTypesDescriptor>;
+
+		public:
+			static auto GetKeyFromValue(const ValueType& key) {
+				return key;
+			}
+		};
+
+		// endregion
+
+		using PrimaryTypes = MutableUnorderedMapAdapter<ReplicatorCacheDescriptor, utils::ArrayHasher<Key>>;
+		using KeyTypes = MutableUnorderedMemorySetAdapter<KeyTypesDescriptor, utils::ArrayHasher<Key>>;
 
 		using BaseSetDeltaPointers = ReplicatorBaseSetDeltaPointers;
 		using BaseSets = ReplicatorBaseSets;

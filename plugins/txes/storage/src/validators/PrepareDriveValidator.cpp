@@ -5,30 +5,41 @@
 **/
 
 #include "Validators.h"
-#include "src/cache/BcDriveCache.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::PrepareDriveNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(PrepareDrive, [](const model::PrepareDriveNotification<1> &notification, const ValidatorContext& context) {
-		const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, Notification)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector) {
+		return MAKE_STATEFUL_VALIDATOR(PrepareDrive, [pKeyCollector](const Notification& notification, const ValidatorContext& context) {
+			const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
-		// Check if drive size >= minDriveSize
-		// TODO: Check conversion
-		if (utils::FileSize::FromMegabytes(notification.DriveSize) < pluginConfig.MinDriveSize)
-			return Failure_Storage_Drive_Size_Insufficient;
+			// Check if drive size >= minDriveSize
+			// TODO: Check conversion
+			if (utils::FileSize::FromMegabytes(notification.DriveSize) < pluginConfig.MinDriveSize)
+				return Failure_Storage_Drive_Size_Insufficient;
 
-		// Check if number of replicators >= minReplicatorCount
-		if (notification.ReplicatorCount < pluginConfig.MinReplicatorCount)
-			return Failure_Storage_Replicator_Count_Insufficient;
+			// Check if number of replicators >= minReplicatorCount
+			if (notification.ReplicatorCount < pluginConfig.MinReplicatorCount)
+				return Failure_Storage_Replicator_Count_Insufficient;
 
-	  	// Check if the drive already exists
-	  	if (driveCache.contains(notification.DriveKey))
-			return Failure_Storage_Drive_Already_Exists;
+			// Check if the drive already exists
+			if (driveCache.contains(notification.DriveKey))
+				return Failure_Storage_Drive_Already_Exists;
 
-		return ValidationResult::Success;
-	});
+			auto replicatorCount = pKeyCollector->keys().size();
+			if (!replicatorCount)
+				return Failure_Storage_No_Replicator;
 
+			if (replicatorCount > 1u)
+				return Failure_Storage_Multiple_Replicators;
+
+			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+			if (!replicatorCache.contains(*pKeyCollector->keys().begin()))
+				return Failure_Storage_Replicator_Not_Found;
+
+			return ValidationResult::Success;
+		})
+	}
 }}

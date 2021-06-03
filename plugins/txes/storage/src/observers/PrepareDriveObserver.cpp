@@ -8,15 +8,24 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>, [](const model::PrepareDriveNotification<1>& notification, ObserverContext& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (PrepareDrive)");
+	using Notification = model::PrepareDriveNotification<1>;
 
-	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-		state::BcDriveEntry driveEntry(notification.DriveKey);
-		driveEntry.setOwner(notification.Owner);
-		driveEntry.setSize(notification.DriveSize);
-		driveEntry.setReplicatorCount(notification.ReplicatorCount);
-		driveCache.insert(driveEntry);
-	});
+	DECLARE_OBSERVER(PrepareDrive, Notification)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector) {
+		return MAKE_OBSERVER(PrepareDrive, Notification, [pKeyCollector](const Notification& notification, const ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (PrepareDrive)");
+
+			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+			state::BcDriveEntry driveEntry(notification.DriveKey);
+			driveEntry.setOwner(notification.Owner);
+			driveEntry.setSize(notification.DriveSize);
+			driveEntry.setReplicatorCount(notification.ReplicatorCount);
+			driveCache.insert(driveEntry);
+
+			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+			auto replicatorIter = replicatorCache.find(*pKeyCollector->keys().begin());
+			auto& replicatorEntry = replicatorIter.get();
+			replicatorEntry.drives().emplace_back(notification.DriveKey);
+		})
+	}
 }}

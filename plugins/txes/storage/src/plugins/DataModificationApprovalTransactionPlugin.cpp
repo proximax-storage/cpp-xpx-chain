@@ -5,7 +5,7 @@
 **/
 
 #include "DataModificationApprovalTransactionPlugin.h"
-#include "src/model/StorageNotifications.h"
+#include "catapult/model/StorageNotifications.h"
 #include "src/model/DataModificationApprovalTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
@@ -22,7 +22,7 @@ namespace catapult { namespace plugins {
 				sub.notify(DataModificationApprovalNotification<1>(
 						transaction.DriveKey,
 						transaction.DataModificationId,
-						transaction.FileStructureCDI,
+						transaction.FileStructureCdi,
 						transaction.FileStructureSize,
 						transaction.UsedDriveSize
 				));

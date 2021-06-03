@@ -15,10 +15,14 @@ namespace catapult { namespace observers {
 	  	auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 		state::DownloadChannelEntry downloadEntry(notification.Id);
 		downloadEntry.setConsumer(notification.Consumer);
-		// TODO: Add according Id to driveEntry
 		downloadEntry.setDrive(notification.DriveKey);
 		downloadEntry.setTransactionFee(notification.TransactionFee);
 		// TODO: Buy storage units for xpx in notification.DownloadSize
 		downloadEntry.setStorageUnits(Amount(notification.DownloadSize));
+
+	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+		auto driveIter = driveCache.find(notification.DriveKey);
+		auto& driveEntry = driveIter.get();
+		driveEntry.activeDownloads().emplace_back(notification.Id);
 	});
 }}

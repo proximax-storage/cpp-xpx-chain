@@ -13,11 +13,24 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	// region ToDbModel
 
+	namespace {
+		void StreamDrives(bson_stream::document& builder, const std::vector<Key>& drives) {
+			auto array = builder << "drives" << bson_stream::open_array;
+			for (const auto& drive : drives)
+				array << ToBinary(drive);
+
+			array << bson_stream::close_array;
+		}
+	}
+
 	bsoncxx::document::value ToDbModel(const state::ReplicatorEntry& entry, const Key& key) {
 		bson_stream::document builder;
 		auto doc = builder << "replicator" << bson_stream::open_document
 				<< "key" << ToBinary(entry.key())
+				<< "version" << static_cast<int32_t>(entry.version())
 				<< "capacity" << ToInt64(entry.capacity());
+
+		StreamDrives(builder, entry.drives());
 
 		return doc
 				<< bson_stream::close_document
@@ -25,6 +38,17 @@ namespace catapult { namespace mongo { namespace plugins {
 	}
 
 	// endregion
+
+	namespace {
+		void ReadDrives(std::vector<Key>& drives, const bsoncxx::array::view& dbDrives) {
+			for (const auto& dbDrive : dbDrives) {
+				Key drive;
+				DbBinaryToModelArray(drive, dbDrive.get_binary());
+
+				drives.push_back(drive);
+			}
+		}
+	}
 
 	// region ToModel
 
@@ -36,7 +60,10 @@ namespace catapult { namespace mongo { namespace plugins {
 		DbBinaryToModelArray(key, dbReplicatorEntry["key"].get_binary());
 		state::ReplicatorEntry entry(key);
 
+		entry.setVersion(static_cast<VersionType>(dbReplicatorEntry["capacity"].get_int32()));
 		entry.setCapacity(Amount(dbReplicatorEntry["capacity"].get_int64()));
+
+		ReadDrives(entry.drives(), dbReplicatorEntry["drives"].get_array().value);
 
 		return entry;
 	}

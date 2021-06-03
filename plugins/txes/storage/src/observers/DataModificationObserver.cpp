@@ -17,6 +17,11 @@ namespace catapult { namespace observers {
 	  	auto& driveEntry = driveIter.get();
 
 		auto& activeDataModifications = driveEntry.activeDataModifications();
-		activeDataModifications.push_back(notification.DataModificationId);
+		activeDataModifications.emplace_back(state::ActiveDataModification{
+			notification.DataModificationId,
+			notification.Owner,
+			notification.DownloadDataCdi,
+			notification.UploadSize
+		});
 	});
 }}

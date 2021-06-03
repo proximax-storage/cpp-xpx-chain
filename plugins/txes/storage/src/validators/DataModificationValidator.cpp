@@ -5,13 +5,12 @@
 **/
 
 #include "Validators.h"
-#include "src/cache/BcDriveCache.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::DataModificationNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(DataModification, [](const model::DataModificationNotification<1>& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(DataModification, [](const Notification& notification, const ValidatorContext& context) {
 	  	auto driveCache = context.Cache.sub<cache::BcDriveCache>();
 	  	auto driveIter = driveCache.find(notification.DriveKey);
 		const auto& pDriveEntry = driveIter.tryGet();
@@ -19,8 +18,8 @@ namespace catapult { namespace validators {
 			return Failure_Storage_Drive_Not_Found;
 
 	  	const auto& activeDataModifications = pDriveEntry->activeDataModifications();
-	  	for (const auto& id : activeDataModifications) {
-	  		if (id == notification.DataModificationId)
+	  	for (const auto& modification : activeDataModifications) {
+	  		if (modification.Id == notification.DataModificationId)
 				return Failure_Storage_Data_Modification_Already_Exists;
 	  	}
 

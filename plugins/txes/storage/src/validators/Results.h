@@ -47,6 +47,18 @@ namespace catapult { namespace validators {
 	/// Validation failed because the data modification already exists.
 	DEFINE_STORAGE_RESULT(Data_Modification_Already_Exists, 11);
 
+	/// Validation failed because no replicator registered.
+	DEFINE_STORAGE_RESULT(No_Replicator, 12);
+
+	/// Validation failed because no replicator registered.
+	DEFINE_STORAGE_RESULT(Multiple_Replicators, 13);
+
+	/// Validation failed because no replicator registered.
+	DEFINE_STORAGE_RESULT(Replicator_Not_Found, 14);
+
+	/// Validation failed because no replicator registered.
+	DEFINE_STORAGE_RESULT(Replicator_Already_Registered, 15);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

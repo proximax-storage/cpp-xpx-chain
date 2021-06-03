@@ -6,6 +6,7 @@
 
 #include "ReplicatorEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
+#include "catapult/utils/Casting.h"
 
 namespace catapult { namespace state {
 
@@ -15,6 +16,9 @@ namespace catapult { namespace state {
 		io::Write(output, replicatorEntry.key());
 
 		io::Write(output, replicatorEntry.capacity());
+		io::Write16(output, utils::checked_cast<size_t, uint16_t>(replicatorEntry.drives().size()));
+		for (const auto& driveKey : replicatorEntry.drives())
+			io::Write(output, driveKey);
 	}
 
 	ReplicatorEntry ReplicatorEntrySerializer::Load(io::InputStream& input) {
@@ -30,6 +34,15 @@ namespace catapult { namespace state {
 		entry.setVersion(version);
 
 		entry.setCapacity(Amount(io::Read64(input)));
+
+		auto driveCount = io::Read16(input);
+		auto& drives = entry.drives();
+		drives.reserve(driveCount);
+		for (auto i = 0u; i < driveCount; ++i) {
+			Key driveKey;
+			input.read(driveKey);
+			drives.emplace_back(driveKey);
+		}
 
 		return entry;
 	}

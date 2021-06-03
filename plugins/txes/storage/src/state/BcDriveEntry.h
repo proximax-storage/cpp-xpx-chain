@@ -23,6 +23,33 @@ namespace catapult { namespace state {
 		Cancelled
 	};
 
+	struct ActiveDataModification {
+		/// Id of data modification.
+		Hash256 Id;
+
+		/// Public key of the drive owner.
+		Key Owner;
+
+		/// CDI of download data.
+		Hash256 DownloadDataCdi;
+
+		/// Upload size of data.
+		uint64_t UploadSize;
+	};
+
+	struct CompletedDataModification : ActiveDataModification {
+		CompletedDataModification(const ActiveDataModification& modification, DataModificationState state)
+			: ActiveDataModification(modification)
+			, State(state)
+		{}
+
+		/// Completion state.
+		DataModificationState State;
+	};
+
+	using ActiveDataModifications = std::vector<ActiveDataModification>;
+	using CompletedDataModifications = std::vector<CompletedDataModification>;
+
 	// Mixin for storing drive details.
 	class DriveMixin {
 	public:
@@ -73,23 +100,43 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets active data modifications.
-		const std::vector<Hash256>& activeDataModifications() const {
+		const ActiveDataModifications& activeDataModifications() const {
 			return m_activeDataModifications;
 		}
 
 		/// Gets active data modifications.
-		std::vector<Hash256>& activeDataModifications() {
+		ActiveDataModifications& activeDataModifications() {
 			return m_activeDataModifications;
 		}
 
 		/// Gets finished data modifications.
-		const std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications() const {
+		const CompletedDataModifications& completedDataModifications() const {
 			return m_completedDataModifications;
 		}
 
 		/// Gets finished data modifications.
-		std::vector<std::pair<Hash256, DataModificationState>>& completedDataModifications() {
+		CompletedDataModifications& completedDataModifications() {
 			return m_completedDataModifications;
+		}
+
+		/// Gets active downloads.
+		const std::vector<Hash256>& activeDownloads() const {
+			return m_activeDownloads;
+		}
+
+		/// Gets active downloads.
+		std::vector<Hash256>& activeDownloads() {
+			return m_activeDownloads;
+		}
+
+		/// Gets completed downloads.
+		const std::vector<Hash256>& completedDownloads() const {
+			return m_completedDownloads;
+		}
+
+		/// Gets completed downloads.
+		std::vector<Hash256>& completedDownloads() {
+			return m_completedDownloads;
 		}
 
 	private:
@@ -97,8 +144,10 @@ namespace catapult { namespace state {
 		Hash256 m_rootHash;
 		uint64_t m_size;
 		uint16_t m_replicatorCount;
-		std::vector<Hash256> m_activeDataModifications;
-		std::vector<std::pair<Hash256, DataModificationState>> m_completedDataModifications;
+		ActiveDataModifications m_activeDataModifications;
+		CompletedDataModifications m_completedDataModifications;
+		std::vector<Hash256> m_activeDownloads;
+		std::vector<Hash256> m_completedDownloads;
 	};
 
 	// Drive entry.

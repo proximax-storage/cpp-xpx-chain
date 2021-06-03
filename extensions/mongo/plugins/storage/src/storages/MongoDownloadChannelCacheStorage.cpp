@@ -16,7 +16,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	namespace {
 		struct DownloadChannelCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::DownloadChannelCacheDescriptor> {
 			static constexpr const char* Collection_Name = "downloadChannels";
-			static constexpr const char* Id_Property_Name = "downloadChannelInfo.downloadChannelId";
+			static constexpr const char* Id_Property_Name = "downloadChannelInfo.id";
 
 			static auto MapToMongoId(const KeyType& key) {
 				return mappers::ToBinary(key);

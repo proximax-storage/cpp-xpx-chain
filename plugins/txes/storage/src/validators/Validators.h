@@ -8,8 +8,9 @@
 #include "Results.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
-#include "src/model/StorageNotifications.h"
-#include "src/state/BcDriveEntry.h"
+#include "catapult/model/StorageNotifications.h"
+#include "src/cache/BcDriveCache.h"
+#include "src/cache/ReplicatorCache.h"
 
 namespace catapult { namespace validators {
 
@@ -19,7 +20,7 @@ namespace catapult { namespace validators {
 	/// - drive size >= minDriveSize
 	/// - number of replicators >= minReplicatorCount
 	/// - the drive does not exist
-	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, model::PrepareDriveNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector);
 
 	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
 	/// -
@@ -33,5 +34,9 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
 	/// -
 	DECLARE_STATEFUL_VALIDATOR(DataModificationCancel, model::DataModificationCancelNotification<1>)();
+
+	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
+	/// -
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
 
 }}

@@ -5,7 +5,7 @@
 **/
 
 #include "DataModificationTransactionPlugin.h"
-#include "src/model/StorageNotifications.h"
+#include "catapult/model/StorageNotifications.h"
 #include "src/model/DataModificationTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
@@ -26,7 +26,7 @@ namespace catapult { namespace plugins {
 							transactionHash,
 							transaction.DriveKey,
 							transaction.Signer,
-							transaction.DownloadDataCDI,
+							transaction.DownloadDataCdi,
 							transaction.UploadSize));
 					break;
 				}

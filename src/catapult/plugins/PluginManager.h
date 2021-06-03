@@ -31,6 +31,7 @@
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/observers/DemuxObserverBuilder.h"
 #include "catapult/observers/ObserverTypes.h"
+#include "catapult/state/StorageState.h"
 #include "catapult/utils/DiagnosticCounter.h"
 #include "catapult/validators/DemuxValidatorBuilder.h"
 #include "catapult/validators/ValidatorTypes.h"
@@ -261,6 +262,16 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
+		// region storage
+
+		/// Sets a storage state.
+		void setStorageState(const std::shared_ptr<state::StorageState>& pState);
+
+		/// Gets storage state.
+		state::StorageState& getStorageState() const;
+
+		// endregion
+
 	private:
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		StorageConfiguration m_storageConfig;
@@ -286,6 +297,7 @@ namespace catapult { namespace plugins {
 		bool m_shouldEnableVerifiableState;
 
 		std::shared_ptr<chain::CommitteeManager> m_pCommitteeManager;
+		std::shared_ptr<state::StorageState> m_pStorageState;
 	};
 }}
 

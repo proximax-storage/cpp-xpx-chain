@@ -11,7 +11,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::DataModificationApprovalNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(DataModificationApproval, [](const model::DataModificationApprovalNotification<1> &notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(DataModificationApproval, [](const Notification& notification, const ValidatorContext& context) {
 	  	const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		const auto driveIter = driveCache.find(notification.DriveKey);
 		const auto& pDriveEntry = driveIter.tryGet();
@@ -24,7 +24,7 @@ namespace catapult { namespace validators {
 			return Failure_Storage_No_Active_Data_Modifications;
 
 	  	// Check if respective data modification is the first (oldest) element in activeDataModifications
-	  	if (*activeDataModifications.begin() != notification.DataModificationId)
+	  	if (activeDataModifications.begin()->Id != notification.DataModificationId)
 		  	return Failure_Storage_Invalid_Data_Modification_Id;
 
 		return ValidationResult::Success;

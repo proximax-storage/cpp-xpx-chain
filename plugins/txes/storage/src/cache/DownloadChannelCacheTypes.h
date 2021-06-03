@@ -8,7 +8,6 @@
 #include "src/state/DownloadChannelEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/utils/Hashers.h"
-#include "catapult/utils/IdentifierGroup.h"
 
 namespace catapult {
 	namespace cache {

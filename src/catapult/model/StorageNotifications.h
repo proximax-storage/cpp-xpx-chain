@@ -51,7 +51,7 @@ namespace catapult { namespace model {
 			, DataModificationId(dataModificationId)
 			, DriveKey(drive)
 			, Owner(owner)
-			, DownloadDataCDI(cdi)
+			, DownloadDataCdi(cdi)
 			, UploadSize(uploadSize)
 		{}
 
@@ -66,7 +66,7 @@ namespace catapult { namespace model {
 		Key Owner;
 
 		/// CDI of download data.
-		Hash256 DownloadDataCDI;
+		Hash256 DownloadDataCdi;
 
 		/// Upload size of data.
 		uint64_t UploadSize;
@@ -190,13 +190,13 @@ namespace catapult { namespace model {
 		explicit DataModificationApprovalNotification(
 				const Key& driveKey,
 				const Hash256& dataModificationId,
-				const Hash256& fileStructureCDI,
+				const Hash256& fileStructureCdi,
 				uint64_t fileStructureSize,
 				uint64_t usedDriveSize)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
-				, FileStructureCDI(fileStructureCDI)
+				, FileStructureCdi(fileStructureCdi)
 				, FileStructureSize(fileStructureSize)
 				, UsedDriveSize(usedDriveSize)
 		{}
@@ -209,7 +209,7 @@ namespace catapult { namespace model {
 		Hash256 DataModificationId;
 
 		/// Content Download Information for the File Structure.
-		Hash256 FileStructureCDI;
+		Hash256 FileStructureCdi;
 
 		/// Size of the File Structure.
 		uint64_t FileStructureSize;
