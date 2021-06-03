@@ -34,4 +34,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by replicator onboarding notifications.
 	DECLARE_OBSERVER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
+
+	/// Observes changes triggered by finish download notifications.
+	DECLARE_OBSERVER(FinishDownload, model::FinishDownloadNotification<1>)();
 }}

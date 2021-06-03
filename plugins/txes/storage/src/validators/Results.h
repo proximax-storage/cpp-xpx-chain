@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 	/// Validation failed DataModificationTransaction is Active.
 	DEFINE_STORAGE_RESULT(Data_Modification_Is_Active, 8);
 
-	/// Validation failed Transaction Signer is not Drive owner.
+	/// Validation failed Transaction Signer is not Drive owner.	// TODO: Can be used for download channel ownership validation?
 	DEFINE_STORAGE_RESULT(Is_Not_Owner, 9);
 
 	/// Validation failed becaouse drive does not exist.
@@ -46,6 +46,9 @@ namespace catapult { namespace validators {
 
 	/// Validation failed because the data modification already exists.
 	DEFINE_STORAGE_RESULT(Data_Modification_Already_Exists, 11);
+
+	/// Respective download channel is not found.
+	DEFINE_STORAGE_RESULT(Download_Channel_Not_Found, 12);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

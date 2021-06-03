@@ -34,4 +34,8 @@ namespace catapult { namespace validators {
 	/// -
 	DECLARE_STATEFUL_VALIDATOR(DataModificationCancel, model::DataModificationCancelNotification<1>)();
 
+	/// A validator implementation that applies to drive finish download notifications and validates that:
+	/// - respective download channel exists
+	/// - transaction signer is the owner of the respective download channel
+	DECLARE_STATEFUL_VALIDATOR(FinishDownload, model::FinishDownloadNotification<1>)();
 }}
