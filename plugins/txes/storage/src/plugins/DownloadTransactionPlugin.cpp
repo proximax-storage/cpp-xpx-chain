@@ -33,10 +33,8 @@ namespace catapult { namespace plugins {
 					utils::SwapMosaics(transaction.Signer, { { streamingMosaicId, Amount(transaction.DownloadSize) } }, sub, config, utils::SwapOperation::Buy);
 					sub.notify(BalanceTransferNotification<1>(
 							transaction.Signer, downloadChannelAddress, streamingMosaicId, Amount(transaction.DownloadSize)));
-					sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
 					sub.notify(DownloadNotification<1>(
 							downloadChannelId,
-							transaction.DriveKey,
 							transaction.Signer,
 							transaction.DownloadSize,
 							transaction.FeedbackFeeAmount,

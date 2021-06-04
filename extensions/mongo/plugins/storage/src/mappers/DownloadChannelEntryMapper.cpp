@@ -30,7 +30,6 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto doc = builder << "downloadChannelInfo" << bson_stream::open_document
 				<< "downloadChannelId" << ToBinary(entry.id())
 				<< "consumer" << ToBinary(entry.consumer())
-				<< "driveKey" << ToBinary(entry.drive())
 				<< "feedbackFeeAmount" << ToInt64(entry.feedbackFeeAmount())
 				<< "downloadSize" << static_cast<int64_t>(entry.downloadSize());
 
@@ -71,10 +70,6 @@ namespace catapult { namespace mongo { namespace plugins {
 		Key consumer;
 		DbBinaryToModelArray(consumer, dbDownloadChannelEntry["consumer"].get_binary());
 		entry.setConsumer(consumer);
-
-		Key driveKey;
-		DbBinaryToModelArray(driveKey, dbDownloadChannelEntry["driveKey"].get_binary());
-		entry.setDrive(driveKey);
 
 		entry.setFeedbackFeeAmount(Amount(dbDownloadChannelEntry["feedbackFeeAmount"].get_int64()));
 		entry.setDownloadSize(static_cast<uint64_t>(dbDownloadChannelEntry["downloadSize"].get_int64()));

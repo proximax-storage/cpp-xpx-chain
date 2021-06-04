@@ -16,7 +16,6 @@ namespace catapult { namespace observers {
 		state::DownloadChannelEntry downloadEntry(notification.Id);
 		downloadEntry.setConsumer(notification.Consumer);
 		// TODO: Add according Id to driveEntry
-		downloadEntry.setDrive(notification.DriveKey);
 		downloadEntry.setFeedbackFeeAmount(notification.FeedbackFeeAmount);
 		// TODO: Buy storage units for xpx in notification.DownloadSize
 		downloadEntry.setDownloadSize(notification.DownloadSize);

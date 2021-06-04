@@ -30,16 +30,6 @@ namespace catapult { namespace state {
 			return m_consumer;
 		}
 
-        /// Sets \a drive.
-        void setDrive(const Key& drive) {
-            m_drive = drive;
-        }
-
-        /// Gets drive.
-        const Key& drive() const {
-            return m_drive;
-        }
-
         /// Sets \a feedbackFeeAmount of download channel.
         void setFeedbackFeeAmount(const Amount& feedbackFeeAmount) {
             m_feedbackFeeAmount = feedbackFeeAmount;
@@ -72,7 +62,6 @@ namespace catapult { namespace state {
 
 	private:
 		Key m_consumer;
-		Key m_drive;
 		Amount m_feedbackFeeAmount;
 		uint64_t m_downloadSize; // In Mbytes
 		std::vector<Key> m_whitelistedPublicKeys;

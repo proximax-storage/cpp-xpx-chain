@@ -88,7 +88,6 @@ namespace catapult { namespace model {
 	public:
 		explicit DownloadNotification(
 			const Hash256& id,
-			const Key& drive,
 			const Key& consumer,
 			uint64_t downloadSize,
 			const Amount& feedbackFeeAmount,
@@ -96,7 +95,6 @@ namespace catapult { namespace model {
 			const Key* whitelistedPublicKeysPtr)
 			: Notification(Notification_Type, sizeof(DownloadNotification<1>))
 			, Id(id)
-			, DriveKey(drive)
 			, Consumer(consumer)
 			, DownloadSize(downloadSize)
 			, FeedbackFeeAmount(feedbackFeeAmount)
@@ -108,9 +106,6 @@ namespace catapult { namespace model {
 	public:
 		/// Identifier of the download channel.
 		Hash256 Id;
-
-		/// Public key of the drive multisig account.
-		Key DriveKey;
 
 		/// Public key of the download consumer.
 		Key Consumer;
