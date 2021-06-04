@@ -16,6 +16,7 @@
 #include "src/plugins/DataModificationCancelTransactionPlugin.h"
 #include "src/plugins/ReplicatorOnboardingTransactionPlugin.h"
 #include "src/plugins/FinishDownloadTransactionPlugin.h"
+#include "src/plugins/DownloadPaymentTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -38,6 +39,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDataModificationCancelTransactionPlugin());
 		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin());
 		manager.addTransactionSupport(CreateFinishDownloadTransactionPlugin());
+		manager.addTransactionSupport(CreateDownloadPaymentTransactionPlugin());
 
 
 		manager.addCacheSupport<cache::BcDriveCacheStorage>(
@@ -85,7 +87,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDataModificationValidator())
 				.add(validators::CreateDataModificationApprovalValidator())
 				.add(validators::CreateDataModificationCancelValidator())
-				.add(validators::CreateFinishDownloadValidator());
+				.add(validators::CreateFinishDownloadValidator())
+				.add(validators::CreateDownloadPaymentValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
@@ -96,7 +99,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDataModificationApprovalObserver())
 				.add(observers::CreateDataModificationCancelObserver())
 				.add(observers::CreateReplicatorOnboardingObserver())
-				.add(observers::CreateFinishDownloadObserver());
+				.add(observers::CreateFinishDownloadObserver())
+		  		.add(observers::CreateDownloadPaymentObserver());
 		});
 	}
 }}

@@ -37,4 +37,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by finish download notifications.
 	DECLARE_OBSERVER(FinishDownload, model::FinishDownloadNotification<1>)();
+
+	/// Observes changes triggered by download payment notifications.
+	DECLARE_OBSERVER(DownloadPayment, model::DownloadPaymentNotification<1>)();
 }}

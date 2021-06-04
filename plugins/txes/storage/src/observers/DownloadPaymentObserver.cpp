@@ -8,14 +8,15 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(FinishDownload, model::FinishDownloadNotification<1>, [](const model::FinishDownloadNotification<1>& notification, ObserverContext& context) {
+	DEFINE_OBSERVER(DownloadPayment, model::DownloadPaymentNotification<1>, [](const model::DownloadPaymentNotification<1>& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadPayment)");
 
 	  	auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
 	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
 
-		downloadChannelEntry.setFeedbackFeeAmount(downloadChannelEntry.feedbackFeeAmount() + notification.FeedbackFeeAmount);	// TODO: Add increaseFeedbackFeeAmount and use it instead?
+		downloadChannelEntry.setDownloadSize(downloadChannelEntry.downloadSize() + notification.DownloadSize);	// TODO: Add increase methods and use them instead?
+	  	downloadChannelEntry.setFeedbackFeeAmount(downloadChannelEntry.feedbackFeeAmount() + notification.FeedbackFeeAmount);
 	});
 }}

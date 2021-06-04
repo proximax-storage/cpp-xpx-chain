@@ -33,6 +33,9 @@ namespace catapult { namespace model {
 	/// Defines a finish download notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Finish_Download_v1, 0x0008);
 
+	/// Defines a download payment notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Payment_v1, 0x0009);
+
 	/// Notification of a data modification.
 	template<VersionType version>
 	struct DataModificationNotification;
@@ -309,6 +312,43 @@ namespace catapult { namespace model {
 
 		/// The identifier of the download channel.
 		Hash256 DownloadChannelId;
+
+		/// Amount of XPXs to transfer to the download channel.
+		Amount FeedbackFeeAmount;
+	};
+
+	/// Notification of a download payment.
+	template<VersionType version>
+	struct DownloadPaymentNotification;
+
+	template<>
+	struct DownloadPaymentNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Download_Payment_v1_Notification;
+
+	public:
+		explicit DownloadPaymentNotification(
+				const Key& signer,
+				const Hash256& downloadChannelId,
+				const uint64_t downloadSize,
+				const Amount& feedbackFeeAmount)
+				: Notification(Notification_Type, sizeof(FinishDownloadNotification<1>))
+				, PublicKey(signer)
+				, DownloadChannelId(downloadChannelId)
+				, DownloadSize(downloadSize)
+				, FeedbackFeeAmount(feedbackFeeAmount)
+		{}
+
+	public:
+		/// Key of the signer.
+		Key PublicKey;
+
+		/// The identifier of the download channel.
+		Hash256 DownloadChannelId;
+
+		/// Download size to add to the prepaid size of the download channel.
+		uint64_t DownloadSize;
 
 		/// Amount of XPXs to transfer to the download channel.
 		Amount FeedbackFeeAmount;
