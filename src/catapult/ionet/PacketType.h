@@ -80,6 +80,18 @@ namespace catapult { namespace ionet {
 	\
     /* A remote node state has been requested by a peer. */ \
     ENUM_VALUE(Pull_Remote_Node_State, 17) \
+	\
+    /* Peer requested file download. */ \
+    ENUM_VALUE(Start_Download_Files, 18) \
+	\
+    /* Peer response on file download request. */ \
+    ENUM_VALUE(Start_Download_Files_Response, 19) \
+	\
+    /* Peer requested file download stop. */ \
+    ENUM_VALUE(Stop_Download_Files, 20) \
+	\
+    /* Peer response on file download request. */ \
+    ENUM_VALUE(Stop_Download_Files_Response, 21) \
     \
 	/* api only packets have types [500, 600) */ \
 	\

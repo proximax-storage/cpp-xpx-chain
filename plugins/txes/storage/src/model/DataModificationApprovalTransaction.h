@@ -34,7 +34,7 @@ namespace catapult { namespace model {
 		Hash256 DataModificationId;
 
 		/// Content Download Information for the File Structure.
-		Hash256 FileStructureCDI;
+		Hash256 FileStructureCdi;
 
 		/// Size of the File Structure.
 		uint64_t FileStructureSize;
@@ -43,7 +43,7 @@ namespace catapult { namespace model {
 		uint64_t UsedDriveSize;
 
 	public:
-		// Calculates the real size of a storage \a transaction.
+		// Calculates the real size of a data modification approval \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
 			return sizeof(TransactionType);
 		}

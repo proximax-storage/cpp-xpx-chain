@@ -16,11 +16,11 @@ namespace catapult { namespace observers {
 	  	auto driveIter = driveCache.find(notification.DriveKey);
 	  	auto& driveEntry = driveIter.get();
 
-		auto& activeDataModifications = driveEntry.activeDataModifications();
-		activeDataModifications.erase(activeDataModifications.begin());
-
 		auto& completedDataModifications = driveEntry.completedDataModifications();
-		completedDataModifications.emplace_back(notification.DataModificationId, state::DataModificationState::Succeeded);
+		auto& activeDataModifications = driveEntry.activeDataModifications();
+
+		completedDataModifications.emplace_back(*activeDataModifications.begin(), state::DataModificationState::Succeeded);
+		activeDataModifications.erase(activeDataModifications.begin());
 
 	});
 }}

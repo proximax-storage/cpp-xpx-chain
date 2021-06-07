@@ -15,7 +15,6 @@ namespace catapult { namespace observers {
 	  	auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 		state::DownloadChannelEntry downloadEntry(notification.Id);
 		downloadEntry.setConsumer(notification.Consumer);
-		// TODO: Add according Id to driveEntry
 		downloadEntry.setFeedbackFeeAmount(notification.FeedbackFeeAmount);
 		// TODO: Buy storage units for xpx in notification.DownloadSize
 		downloadEntry.setDownloadSize(notification.DownloadSize);

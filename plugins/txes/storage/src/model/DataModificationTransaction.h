@@ -31,13 +31,13 @@ namespace catapult { namespace model {
 		Key DriveKey;
 
 		/// Download data CDI of modification.
-		Hash256 DownloadDataCDI;
+		Hash256 DownloadDataCdi;
 
 		/// Size of upload.
 		uint64_t UploadSize;
 
 	public:
-		// Calculates the real size of a storage \a transaction.
+		// Calculates the real size of a data modification \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
 			return sizeof(TransactionType);
 		}

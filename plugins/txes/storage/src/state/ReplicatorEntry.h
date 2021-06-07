@@ -7,6 +7,7 @@
 #pragma once
 #include "catapult/types.h"
 #include "catapult/exceptions.h"
+#include "catapult/state/StorageState.h"
 
 namespace catapult { namespace state {
 
@@ -26,8 +27,19 @@ namespace catapult { namespace state {
 			return m_capacity;
 		}
 
+		/// Keys of the drives assiged to the replicator.
+		const std::vector<Key>& drives() const {
+			return m_drives;
+		}
+
+		/// Keys of the drives assiged to the replicator.
+		std::vector<Key>& drives() {
+			return m_drives;
+		}
+
 	private:
 		Amount m_capacity;
+		std::vector<Key> m_drives;
 	};
 
 	// Replicator entry.

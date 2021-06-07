@@ -319,4 +319,22 @@ namespace catapult { namespace plugins {
 	}
 
 	// endregion
+
+	// region storage
+
+	void PluginManager::setStorageState(const std::shared_ptr<state::StorageState>& pState) {
+		if (!!m_pStorageState)
+			CATAPULT_THROW_RUNTIME_ERROR("storage state already set");
+
+		m_pStorageState = pState;
+	}
+
+		state::StorageState& PluginManager::getStorageState() const {
+		if (!m_pStorageState)
+			CATAPULT_THROW_RUNTIME_ERROR("storage state not set");
+
+		return *m_pStorageState;
+	}
+
+	// endregion
 }}

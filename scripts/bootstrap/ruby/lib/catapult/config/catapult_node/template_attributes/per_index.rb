@@ -30,6 +30,7 @@ module Catapult
             harvest_key: self.harvest_key?,
             mongo_host: self.mongo_host_for_api_node, # just used when there is an api host
             bootkey: self.private_key,
+            replicator_port: Peer.port(self.type, self.index) + 3,
             subscriberPort: Peer.port(self.type, self.index) + 2,
             api_port: Peer.port(self.type, self.index) + 1,
             port: Peer.port(self.type, self.index),

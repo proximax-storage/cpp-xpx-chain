@@ -5,7 +5,7 @@
 **/
 
 #include "DownloadPaymentTransactionPlugin.h"
-#include "src/model/StorageNotifications.h"
+#include "catapult/model/StorageNotifications.h"
 #include "src/model/DownloadPaymentTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"

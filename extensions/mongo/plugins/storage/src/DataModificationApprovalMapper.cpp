@@ -17,7 +17,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamDataModificationApprovalTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "driveKey" << ToBinary(transaction.DriveKey);
 		builder << "dataModificationId" << ToBinary(transaction.DataModificationId);
-		builder << "fileStructureCDI" << ToBinary(transaction.FileStructureCDI);
+		builder << "FileStructureCdi" << ToBinary(transaction.FileStructureCdi);
 		builder << "fileStructureSize" << static_cast<int64_t>(transaction.FileStructureSize);
 		builder << "usedDriveSize" << static_cast<int64_t>(transaction.UsedDriveSize);
 	}

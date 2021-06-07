@@ -47,7 +47,7 @@ namespace catapult { namespace notification_handlers {
 				return m_pHandler->name();
 			}
 
-			void validate(const model::Notification& notification, TArgs&&... args) const override {
+			void handle(const model::Notification& notification, TArgs&&... args) const override {
 				return m_pHandler->handle(static_cast<const TNotification&>(notification), std::forward<TArgs>(args)...);
 			}
 

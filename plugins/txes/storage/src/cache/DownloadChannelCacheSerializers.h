@@ -8,7 +8,6 @@
 #include "DownloadChannelCacheTypes.h"
 #include "src/state/DownloadChannelEntrySerializer.h"
 #include "catapult/cache/CacheSerializerAdapter.h"
-#include "catapult/cache/IdentifierGroupSerializer.h"
 
 namespace catapult { namespace cache {
 

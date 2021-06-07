@@ -7,7 +7,7 @@
 #include "tools/tools/ToolKeys.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "FinishDownloadTransactionPlugin.h"
-#include "src/model/StorageNotifications.h"
+#include "catapult/model/StorageNotifications.h"
 #include "src/model/FinishDownloadTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"

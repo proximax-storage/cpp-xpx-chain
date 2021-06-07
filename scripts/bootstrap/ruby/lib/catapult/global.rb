@@ -61,7 +61,7 @@ module Catapult
 
       # node_type value in set {:peer_node, :api_node}
       def self.peer_port(node_type, index)
-        node_type == :peer_node ? PEER_PORT + 3 * (index + 1) : PEER_PORT
+        node_type == :peer_node ? PEER_PORT + 4 * (index + 1) : PEER_PORT
       end
     end
 

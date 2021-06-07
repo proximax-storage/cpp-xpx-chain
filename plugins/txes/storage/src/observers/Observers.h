@@ -7,18 +7,15 @@
 #pragma once
 #include "catapult/observers/ObserverTypes.h"
 #include "src/config/StorageConfiguration.h"
-#include "src/model/StorageNotifications.h"
-#include "src/state/DownloadChannelEntry.h"
+#include "catapult/model/StorageNotifications.h"
 #include "src/cache/DownloadChannelCache.h"
-#include "src/state/BcDriveEntry.h"
 #include "src/cache/BcDriveCache.h"
-#include "src/state/ReplicatorEntry.h"
 #include "src/cache/ReplicatorCache.h"
 
 namespace catapult { namespace observers {
 
 	/// Observes changes triggered by prepare drive notifications.
-	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)();
+	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector);
 
 	/// Observes changes triggered by download notifications.
 	DECLARE_OBSERVER(DownloadChannel, model::DownloadNotification<1>)();
