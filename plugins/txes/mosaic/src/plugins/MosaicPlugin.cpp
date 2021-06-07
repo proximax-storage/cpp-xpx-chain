@@ -46,7 +46,7 @@ namespace catapult { namespace plugins {
 		});
 		const auto& pConfigHolder = manager.configHolder();
 		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
-		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
+		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin(pConfigHolder));
 
 		manager.addCacheSupport<cache::MosaicCacheStorage>(
 				std::make_unique<cache::MosaicCache>(manager.cacheConfig(cache::MosaicCache::Name)));

@@ -4,7 +4,7 @@ publicKey = {{network_public_key}}
 
 [chain]
 
-blockGenerationTargetTime = 0s
+blockGenerationTargetTime = 5s
 blockTimeSmoothingFactor = 1000
 
 greedDelta = 0.5
@@ -139,3 +139,7 @@ downloadCacheEnabled = true
 
 enabled = true
 maxSuperContractsOnDrive = 10
+
+[plugin:catapult.plugins.metadata_nem]
+
+maxValueSize = 1024

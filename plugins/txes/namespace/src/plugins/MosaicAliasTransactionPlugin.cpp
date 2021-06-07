@@ -18,6 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <catapult/model/Address.h>
+#include <sdk/src/extensions/ConversionExtensions.h>
 #include "MosaicAliasTransactionPlugin.h"
 #include "src/model/AliasNotifications.h"
 #include "src/model/MosaicAliasTransaction.h"
@@ -30,19 +32,26 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
-			switch (transaction.EntityVersion()) {
-			case 1:
-				sub.notify(AliasOwnerNotification<1>(transaction.Signer, transaction.NamespaceId, transaction.AliasAction));
-				sub.notify(AliasedMosaicIdNotification_v1(transaction.NamespaceId, transaction.AliasAction, transaction.MosaicId));
-				sub.notify(MosaicRequiredNotification<1>(transaction.Signer, transaction.MosaicId));
-				break;
+		static auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder> &pConfigHolder) {
+			return [pConfigHolder](
+						   const TTransaction& transaction,
+						   const Height& associatedHeight,
+						   NotificationSubscriber& sub) {
+				switch (transaction.EntityVersion()) {
+				case 1:
+					sub.notify(AliasOwnerNotification<1>(
+							transaction.Signer, transaction.NamespaceId, transaction.AliasAction));
+					sub.notify(AliasedMosaicIdNotification_v1(
+							transaction.NamespaceId, transaction.AliasAction, transaction.MosaicId));
+					sub.notify(MosaicRequiredNotification<1>(transaction.Signer, transaction.MosaicId));
+					break;
 
-			default:
-				CATAPULT_LOG(debug) << "invalid version of MosaicAliasTransaction: " << transaction.EntityVersion();
-			}
+				default:
+					CATAPULT_LOG(debug) << "invalid version of MosaicAliasTransaction: " << transaction.EntityVersion();
+				}
+			};
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(MosaicAlias, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicAlias, Default, CreatePublisher, std::shared_ptr<config::BlockchainConfigurationHolder>)
 }}

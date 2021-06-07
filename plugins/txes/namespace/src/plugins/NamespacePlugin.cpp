@@ -41,8 +41,8 @@ namespace catapult { namespace plugins {
 		// region alias
 
 		void RegisterAliasSubsystem(PluginManager& manager) {
-			manager.addTransactionSupport(CreateAddressAliasTransactionPlugin());
-			manager.addTransactionSupport(CreateMosaicAliasTransactionPlugin());
+			manager.addTransactionSupport(CreateAddressAliasTransactionPlugin(manager.configHolder()));
+			manager.addTransactionSupport(CreateMosaicAliasTransactionPlugin(manager.configHolder()));
 
 			manager.addStatelessValidatorHook([](auto& builder) {
 				builder.add(validators::CreateAliasActionValidator());
@@ -159,6 +159,7 @@ namespace catapult { namespace plugins {
 				builder
 					.add(validators::CreateNamespaceNameValidator())
 					.add(validators::CreateRootNamespaceValidator())
+					.add(validators::CreateRequiredNamespaceValidator())
 					.add(validators::CreateRootNamespaceAvailabilityValidator())
 					.add(validators::CreateNamespaceDurationOverflowValidator())
 					// note that the following validator needs to run before the RootNamespaceMaxChildrenValidator
