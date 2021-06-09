@@ -15,9 +15,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
 
-		void StreamWhitelistedPublicKeys(bson_stream::document& builder, const std::vector<Key>& whitelistedPublicKeys) {
-			auto array = builder << "whitelistedPublicKeys" << bson_stream::open_array;
-			for (const auto& key : whitelistedPublicKeys)
+		void StreamListOfPublicKeys(bson_stream::document& builder, const std::vector<Key>& listOfPublicKeys) {
+			auto array = builder << "listOfPublicKeys" << bson_stream::open_array;
+			for (const auto& key : listOfPublicKeys)
 				array << ToBinary(key);
 
 			array << bson_stream::close_array;
@@ -33,7 +33,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "feedbackFeeAmount" << ToInt64(entry.feedbackFeeAmount())
 				<< "downloadSize" << static_cast<int64_t>(entry.downloadSize());
 
-		StreamWhitelistedPublicKeys(builder, entry.whitelistedPublicKeys());
+		StreamListOfPublicKeys(builder, entry.listOfPublicKeys());
 
 		return doc
 				<< bson_stream::close_document
@@ -46,14 +46,14 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
 
-		void ReadWhitelistedPublicKeys(std::vector<Key>& whitelistedPublicKeys, const bsoncxx::array::view& dbWhitelistedPublicKeys) {
-			for (const auto& dbKey : dbWhitelistedPublicKeys) {
+		void ReadListOfPublicKeys(std::vector<Key>& listOfPublicKeys, const bsoncxx::array::view& dbListOfPublicKeys) {
+			for (const auto& dbKey : dbListOfPublicKeys) {
 				auto doc = dbKey.get_binary();
 
 				Key key;
 				DbBinaryToModelArray(key, doc);
 
-				whitelistedPublicKeys.push_back(key);
+				listOfPublicKeys.push_back(key);
 			}
 		}
 
@@ -74,7 +74,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		entry.setFeedbackFeeAmount(Amount(dbDownloadChannelEntry["feedbackFeeAmount"].get_int64()));
 		entry.setDownloadSize(static_cast<uint64_t>(dbDownloadChannelEntry["downloadSize"].get_int64()));
 
-		ReadWhitelistedPublicKeys(entry.whitelistedPublicKeys(), dbDownloadChannelEntry["whitelistedPublicKeys"].get_array().value);
+		ReadListOfPublicKeys(entry.listOfPublicKeys(), dbDownloadChannelEntry["listOfPublicKeys"].get_array().value);
 
 		return entry;
 	}

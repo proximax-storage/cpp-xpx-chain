@@ -12,18 +12,18 @@ namespace catapult { namespace state {
 
 	namespace {
 
-		void SaveWhitelistedPublicKeys(io::OutputStream& output, const std::vector<Key>& whitelistedPublicKeys) {
-			io::Write16(output, whitelistedPublicKeys.size());
-			for (const auto& key : whitelistedPublicKeys)
+		void SaveListOfPublicKeys(io::OutputStream& output, const std::vector<Key>& listOfPublicKeys) {
+			io::Write16(output, listOfPublicKeys.size());
+			for (const auto& key : listOfPublicKeys)
 				io::Write(output, key);
 		}
 
-		void LoadWhitelistedPublicKeys(io::InputStream& input, std::vector<Key>& whitelistedPublicKeys) {
+		void LoadListOfPublicKeys(io::InputStream& input, std::vector<Key>& listOfPublicKeys) {
 			auto keyCount = io::Read16(input);
 			while (keyCount--) {
 				Key key;
 				io::Read(input, key);
-				whitelistedPublicKeys.push_back(key);
+				listOfPublicKeys.push_back(key);
 			}
 		}
 
@@ -39,7 +39,7 @@ namespace catapult { namespace state {
 		io::Write(output, downloadEntry.feedbackFeeAmount());
 		io::Write64(output, downloadEntry.downloadSize());
 
-		SaveWhitelistedPublicKeys(output, downloadEntry.whitelistedPublicKeys());
+		SaveListOfPublicKeys(output, downloadEntry.listOfPublicKeys());
 	}
 
 	DownloadChannelEntry DownloadChannelEntrySerializer::Load(io::InputStream& input) {
@@ -60,7 +60,7 @@ namespace catapult { namespace state {
 		entry.setFeedbackFeeAmount(Amount(io::Read64(input)));
 		entry.setDownloadSize(io::Read64(input));
 
-		LoadWhitelistedPublicKeys(input, entry.whitelistedPublicKeys());
+		LoadListOfPublicKeys(input, entry.listOfPublicKeys());
 
 		return entry;
 	}

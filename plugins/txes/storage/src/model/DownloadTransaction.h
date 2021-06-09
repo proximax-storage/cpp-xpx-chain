@@ -33,23 +33,23 @@ namespace catapult { namespace model {
 		/// XPXs to lock for future payment for.
 		Amount FeedbackFeeAmount;
 
-		/// Count of whitelisted public keys
-		uint16_t WhitelistedPublicKeyCount;
+		/// Size of the list of public keys
+		uint16_t ListOfPublicKeysSize;
 
-		/// Whitelisted public keys
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(WhitelistedPublicKeys, Key)
+		/// List of public keys
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(ListOfPublicKeys, Key)
 
 	private:
 		template<typename T>
-		static auto* WhitelistedPublicKeysPtrT(T& transaction) {
+		static auto* ListOfPublicKeysPtrT(T& transaction) {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
-			return transaction.WhitelistedPublicKeyCount ? pPayloadStart : nullptr;
+			return transaction.ListOfPublicKeysSize ? pPayloadStart : nullptr;
 		}
 
 	public:
 		// Calculates the real size of a storage \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + transaction.WhitelistedPublicKeyCount * sizeof(Key);
+			return sizeof(TransactionType) + transaction.ListOfPublicKeysSize * sizeof(Key);
 		}
 	};
 

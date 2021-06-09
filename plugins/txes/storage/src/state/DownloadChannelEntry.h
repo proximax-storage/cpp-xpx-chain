@@ -50,21 +50,21 @@ namespace catapult { namespace state {
             return m_downloadSize;
         }
 
-		/// Gets whitelisted public keys.
-		const std::vector<Key>& whitelistedPublicKeys() const {
-			return m_whitelistedPublicKeys;
+		/// Gets list of public keys.
+		const std::vector<Key>& listOfPublicKeys() const {
+			return m_listOfPublicKeys;
 		}
 
-		/// Gets whitelisted public keys.
-		std::vector<Key>& whitelistedPublicKeys() {
-			return m_whitelistedPublicKeys;
+		/// Gets list of public keys.
+		std::vector<Key>& listOfPublicKeys() {
+			return m_listOfPublicKeys;
 		}
 
 	private:
 		Key m_consumer;
 		Amount m_feedbackFeeAmount;
 		uint64_t m_downloadSize; // In Mbytes
-		std::vector<Key> m_whitelistedPublicKeys;
+		std::vector<Key> m_listOfPublicKeys;
 	};
 
 	// DownloadChannel channel entry.

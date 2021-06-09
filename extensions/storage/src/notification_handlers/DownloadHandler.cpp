@@ -17,8 +17,8 @@ namespace catapult { namespace notification_handlers {
 				return;
 
 			std::vector<Key> listOfPublicKeys;
-			auto pKey = notification.WhitelistedPublicKeysPtr;
-		  	for (auto i = 0u; i < notification.WhitelistedPublicKeyCount; ++pKey, ++i)
+			auto pKey = notification.ListOfPublicKeysPtr;
+		  	for (auto i = 0u; i < notification.ListOfPublicKeysSize; ++pKey, ++i)
 				listOfPublicKeys.push_back(*pKey);
 
 			pReplicatorService->addConsumer(notification.Consumer, std::move(listOfPublicKeys), notification.DownloadSize);

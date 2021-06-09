@@ -19,9 +19,9 @@ namespace catapult { namespace observers {
 		// TODO: Buy storage units for xpx in notification.DownloadSize
 		downloadEntry.setDownloadSize(notification.DownloadSize);
 
-		auto pKey = notification.WhitelistedPublicKeysPtr;
-		for (auto i = 0; i < notification.WhitelistedPublicKeyCount; ++i, ++pKey)
-			downloadEntry.whitelistedPublicKeys().push_back(*pKey);
+		auto pKey = notification.ListOfPublicKeysPtr;
+		for (auto i = 0; i < notification.ListOfPublicKeysSize; ++i, ++pKey)
+			downloadEntry.listOfPublicKeys().push_back(*pKey);
 
 		downloadCache.insert(downloadEntry);
 	});

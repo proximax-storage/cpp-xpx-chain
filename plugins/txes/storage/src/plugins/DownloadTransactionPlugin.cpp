@@ -38,8 +38,8 @@ namespace catapult { namespace plugins {
 							transaction.Signer,
 							transaction.DownloadSize,
 							transaction.FeedbackFeeAmount,
-							transaction.WhitelistedPublicKeyCount,
-							transaction.WhitelistedPublicKeysPtr()));
+							transaction.ListOfPublicKeysSize,
+							transaction.ListOfPublicKeysPtr()));
 					break;
 				}
 

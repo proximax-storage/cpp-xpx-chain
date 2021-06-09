@@ -94,15 +94,15 @@ namespace catapult { namespace model {
 			const Key& consumer,
 			uint64_t downloadSize,
 			const Amount& feedbackFeeAmount,
-			const uint16_t& whitelistedPublicKeyCount,
-			const Key* whitelistedPublicKeysPtr)
+			const uint16_t& listOfPublicKeysSize,
+			const Key* listOfPublicKeysPtr)
 			: Notification(Notification_Type, sizeof(DownloadNotification<1>))
 			, Id(id)
 			, Consumer(consumer)
 			, DownloadSize(downloadSize)
 			, FeedbackFeeAmount(feedbackFeeAmount)
-			, WhitelistedPublicKeyCount(whitelistedPublicKeyCount)
-			, WhitelistedPublicKeysPtr(whitelistedPublicKeysPtr)
+			, ListOfPublicKeysSize(listOfPublicKeysSize)
+			, ListOfPublicKeysPtr(listOfPublicKeysPtr)
 
 		{}
 
@@ -119,11 +119,11 @@ namespace catapult { namespace model {
 		/// Delta transaction fee in xpx.
 		Amount FeedbackFeeAmount;
 
-		/// Count of whitelisted public keys
-		uint16_t WhitelistedPublicKeyCount;
+		/// Size of the list of public keys
+		uint16_t ListOfPublicKeysSize;
 
-		/// Whitelisted public keys.
-		const Key* WhitelistedPublicKeysPtr;
+		/// List of public keys.
+		const Key* ListOfPublicKeysPtr;
 	};
 
 	/// Notification of a drive preparation.

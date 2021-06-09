@@ -17,11 +17,11 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamDownloadTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "downloadSize" << static_cast<int64_t>(transaction.DownloadSize);
 		builder << "feedbackFeeAmount" << ToInt64(transaction.FeedbackFeeAmount);
-		builder << "whitelistedPublicKeyCount" << static_cast<int16_t>(transaction.WhitelistedPublicKeyCount);	// TODO: Remove?
+		builder << "listOfPublicKeysSize" << static_cast<int16_t>(transaction.ListOfPublicKeysSize);	// TODO: Remove?
 
-		auto array = builder << "whitelistedPublicKeys" << bson_stream::open_array;
-		auto pKey = transaction.WhitelistedPublicKeysPtr();
-		for (auto i = 0; i < transaction.WhitelistedPublicKeyCount; ++i, ++pKey)
+		auto array = builder << "listOfPublicKeys" << bson_stream::open_array;
+		auto pKey = transaction.ListOfPublicKeysPtr();
+		for (auto i = 0; i < transaction.ListOfPublicKeysSize; ++i, ++pKey)
 			array << ToBinary(*pKey);
 		array << bson_stream::close_array;
 	}

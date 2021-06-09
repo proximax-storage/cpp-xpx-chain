@@ -425,9 +425,9 @@ namespace catapult { namespace storage {
 			m_pImpl->removeDriveModification(driveKey, dataModificationId);
 	}
 
-	void ReplicatorService::addConsumer(const Key& consumer, const std::vector<Key> whitelistedPublicKeys, const uint64_t downloadSize) {
+	void ReplicatorService::addConsumer(const Key& consumer, const std::vector<Key> listOfPublicKeys, const uint64_t downloadSize) {
 		if (m_pImpl)
-			m_pImpl->addConsumer(consumer, whitelistedPublicKeys, downloadSize);
+			m_pImpl->addConsumer(consumer, listOfPublicKeys, downloadSize);
 	}
 
 	void ReplicatorService::removeConsumer(const Key& consumer) {
