@@ -46,8 +46,8 @@ namespace catapult { namespace storage {
 		void addDriveModification(const Key& driveKey, const Hash256& dataModificationId, const Hash256& rootHash);
 		void removeDriveModification(const Key& driveKey, const Hash256& dataModificationId);
 
-		void addConsumer(const Key& consumer, const Key& driveKey, uint64_t downloadSize);
-		void removeConsumer(const Key& consumer, const Key& driveKey);
+		void addConsumer(const Key& consumer, const std::vector<Key> listOfPublicKeys, const uint64_t downloadSize);
+		void removeConsumer(const Key& consumer);
 
 		FileNames startDownloadFiles(const Key& consumer, const Key& driveKey, FileNames&& fileNames);
 		FileNames stopDownloadFiles(const Key& driveKey, FileNames&& fileNames);

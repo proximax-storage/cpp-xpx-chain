@@ -119,6 +119,8 @@ namespace catapult { namespace state {
 			return m_completedDataModifications;
 		}
 
+		// TODO: Remove download-related methods and fields?
+
 		/// Gets active downloads.
 		const std::vector<Hash256>& activeDownloads() const {
 			return m_activeDownloads;

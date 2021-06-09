@@ -40,7 +40,7 @@ namespace catapult { namespace state {
 			for (const auto& downloadChannelId : driveEntry.activeDownloads()) {
 				auto downloadChannelIter = downloadChannelCacheView->find(downloadChannelId);
 				const auto& downloadChannelEntry = downloadChannelIter.get();
-				replicatorData.Consumers[downloadChannelEntry.consumer()][driveKey] += downloadChannelEntry.storageUnits().unwrap();
+				replicatorData.Consumers[downloadChannelEntry.consumer()].second += downloadChannelEntry.downloadSize();	// TODO: Replace += with =?
 			}
 		}
 
