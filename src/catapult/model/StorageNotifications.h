@@ -36,6 +36,9 @@ namespace catapult { namespace model {
 	/// Defines a download payment notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Payment_v1, 0x0009);
 
+	/// Defines a storage payment notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Storage_Payment_v1, 0x000A);
+
 	/// Notification of a data modification.
 	template<VersionType version>
 	struct DataModificationNotification;
@@ -352,5 +355,37 @@ namespace catapult { namespace model {
 
 		/// Amount of XPXs to transfer to the download channel.
 		Amount FeedbackFeeAmount;
+	};
+
+	/// Notification of a storage payment.
+	template<VersionType version>
+	struct StoragePaymentNotification;
+
+	template<>
+	struct StoragePaymentNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Storage_Payment_v1_Notification;
+
+	public:
+		explicit StoragePaymentNotification(
+				const Key& signer,
+				const Key& driveKey,
+				const Amount& storageUnits)
+				: Notification(Notification_Type, sizeof(FinishDownloadNotification<1>))
+				, PublicKey(signer)
+				, DriveKey(driveKey)
+				, StorageUnits(storageUnits)
+		{}
+
+	public:
+		/// Key of the signer.
+		Key PublicKey;
+
+		/// Key of the drive.
+		Key DriveKey;
+
+		/// Amount of storage units to transfer to the drive.
+		Amount StorageUnits;
 	};
 }}

@@ -12,6 +12,7 @@
 #include "ReplicatorOnboardingMapper.h"
 #include "FinishDownloadMapper.h"
 #include "DownloadPaymentMapper.h"
+#include "StoragePaymentMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "storages/MongoBcDriveCacheStorage.h"
 #include "storages/MongoDownloadChannelCacheStorage.h"
@@ -28,6 +29,7 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateReplicatorOnboardingTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateFinishDownloadTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDownloadPaymentTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateStoragePaymentTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoBcDriveCacheStorage(

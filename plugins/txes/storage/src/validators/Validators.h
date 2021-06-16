@@ -47,4 +47,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to drive download payment notifications and validates that:
 	/// - respective download channel exists
 	DECLARE_STATEFUL_VALIDATOR(DownloadPayment, model::DownloadPaymentNotification<1>)();
+
+	/// A validator implementation that applies to drive storage payment notifications and validates that:
+	/// - respective drive exists
+	DECLARE_STATEFUL_VALIDATOR(StoragePayment, model::StoragePaymentNotification<1>)();
 }}
