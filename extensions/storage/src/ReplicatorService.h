@@ -48,6 +48,7 @@ namespace catapult { namespace storage {
 
 		void addConsumer(const Key& consumer, const std::vector<Key> listOfPublicKeys, const uint64_t downloadSize);
 		void removeConsumer(const Key& consumer);
+		void increaseDownloadSize(const Key& consumer, const uint64_t downloadSizeDelta);
 
 		FileNames startDownloadFiles(const Key& consumer, const Key& driveKey, FileNames&& fileNames);
 		FileNames stopDownloadFiles(const Key& driveKey, FileNames&& fileNames);

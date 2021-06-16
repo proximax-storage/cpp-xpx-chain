@@ -207,6 +207,15 @@ namespace catapult { namespace storage {
 			m_consumers.erase(consumer);
 		}
 
+		void increaseDownloadSize(const Key& consumer, const uint64_t downloadSizeDelta) {
+			CATAPULT_LOG(debug) << "increasing prepaid download size:\nconsumer: " << consumer << "\ndownload size delta: " << downloadSizeDelta;
+
+			if (m_consumers.find(consumer) == m_consumers.end())
+				CATAPULT_THROW_INVALID_ARGUMENT_1("consumer not found", consumer);
+
+			m_consumers.at(consumer).second += downloadSizeDelta;
+		}
+
 		FileNames startDownloadFiles(const Key& consumer, const Key& driveKey, FileNames&& fileNames) {
 			CATAPULT_LOG(debug) << "start downloading files:\ndrive: " << driveKey << "\nconsumer: " << consumer;
 
