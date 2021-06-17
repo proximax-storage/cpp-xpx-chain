@@ -2,13 +2,35 @@
   "_info": "this file contains a list of all trusted peers and can be shared",
   "knownPeers": [
     {
-      "publicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+      "publicKey": "003D40265A0DB375B4A1BE70FE6216E9E0EBC3CE446511C1D309E5037A6883B3",
       "endpoint": {
-        "host": "127.0.0.1",
+        "host": "genesiseridani.brimstone.xpxsirius.io",
         "port": 7900
       },
       "metadata": {
-        "name": "peernode",
+        "name": "eridani",
+        "roles": "Peer"
+      }
+    },
+    {
+      "publicKey": "FCCC0576C4F0776B96C43A211EFE23597E1DD752B1EA5CB490D079C50DD95A9A",
+      "endpoint": {
+        "host": "genesisomicron.brimstone.xpxsirius.io",
+        "port": 7900
+      },
+      "metadata": {
+        "name": "omicron",
+        "roles": "Peer"
+      }
+    },
+    {
+      "publicKey": "6EFAB69494DAAD8BAC5A48E3F6B6B71F29A5DF2AD207E2B1C41FA399B06BB3B8",
+      "endpoint": {
+        "host": "genesispalioxis.brimstone.xpxsirius.io",
+        "port": 7900
+      },
+      "metadata": {
+        "name": "palioxis",
         "roles": "Peer"
       }
     }
