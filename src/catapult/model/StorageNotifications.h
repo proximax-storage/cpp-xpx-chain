@@ -39,6 +39,9 @@ namespace catapult { namespace model {
 	/// Defines a storage payment notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Storage_Payment_v1, 0x000A);
 
+	/// Defines a data modification single approval notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Single_Approval_v1, 0x000B);
+
 	/// Notification of a data modification.
 	template<VersionType version>
 	struct DataModificationNotification;
@@ -387,5 +390,47 @@ namespace catapult { namespace model {
 
 		/// Amount of storage units to transfer to the drive.
 		Amount StorageUnits;
+	};
+
+	/// Notification of a data modification single approval.
+	template<VersionType version>
+	struct DataModificationSingleApprovalNotification;
+
+	template<>
+	struct DataModificationSingleApprovalNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Data_Modification_Single_Approval_v1_Notification;
+
+	public:
+		explicit DataModificationSingleApprovalNotification(
+				const Key& driveKey,
+				const Hash256& dataModificationId,
+				const uint16_t uploadOpinionPairCount,
+				const Key* uploaderKeysPtr,
+				const uint8_t* uploadOpinionPtr)
+				: Notification(Notification_Type, sizeof(DataModificationSingleApprovalNotification<1>))
+				, DriveKey(driveKey)
+				, DataModificationId(dataModificationId)
+				, UploadOpinionPairCount(uploadOpinionPairCount)
+				, UploaderKeysPtr(uploaderKeysPtr)
+				, UploadOpinionPtr(uploadOpinionPtr)
+		{}
+
+	public:
+		/// Key of drive.
+		Key DriveKey;
+
+		/// Identifier of the transaction that initiated the modification.
+		Hash256 DataModificationId;
+
+		/// Number of key-opinion pairs in the payload.
+		uint16_t UploadOpinionPairCount;
+
+		/// List of the Uploader keys (current Replicators of the Drive or the Drive Owner).
+		const Key* UploaderKeysPtr;
+
+		/// Opinion about how much each Uploader has uploaded to the signer in percents.
+		const uint8_t* UploadOpinionPtr;
 	};
 }}

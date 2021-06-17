@@ -51,4 +51,13 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to drive storage payment notifications and validates that:
 	/// - respective drive exists
 	DECLARE_STATEFUL_VALIDATOR(StoragePayment, model::StoragePaymentNotification<1>)();
+
+	/// A validator implementation that applies to drive data modification single approval notifications and validates that:
+	/// - respective drive exists
+	/// - there are approved data modification (ones with 'succeeded' state) in completedDataModifications
+	/// - respective data modification is the last (newest) among approved data modifications
+	/// - percents in upload opinion sum up to 100
+	/// - each key in upload opinion is either a key of one of the current Replicators of the Drive, or a key of the Drive Owner
+	/// - each key in upload opinion appears exactly once
+	DECLARE_STATEFUL_VALIDATOR(DataModificationSingleApproval, model::DataModificationSingleApprovalNotification<1>)();
 }}

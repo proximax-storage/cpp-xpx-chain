@@ -17,6 +17,7 @@
 #include "src/plugins/FinishDownloadTransactionPlugin.h"
 #include "src/plugins/DownloadPaymentTransactionPlugin.h"
 #include "src/plugins/StoragePaymentTransactionPlugin.h"
+#include "src/plugins/DataModificationSingleApprovalTransactionPlugin.h"
 #include "src/state/CachedStorageState.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
@@ -40,6 +41,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateFinishDownloadTransactionPlugin());
 		manager.addTransactionSupport(CreateDownloadPaymentTransactionPlugin());
 		manager.addTransactionSupport(CreateStoragePaymentTransactionPlugin());
+		manager.addTransactionSupport(CreateDataModificationSingleApprovalTransactionPlugin());
 
 		manager.addCacheSupport<cache::BcDriveCacheStorage>(
 			std::make_unique<cache::BcDriveCache>(manager.cacheConfig(cache::BcDriveCache::Name), pConfigHolder));
@@ -90,7 +92,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDataModificationCancelValidator())
 				.add(validators::CreateFinishDownloadValidator())
 				.add(validators::CreateDownloadPaymentValidator())
-				.add(validators::CreateStoragePaymentValidator());
+				.add(validators::CreateStoragePaymentValidator())
+				.add(validators::CreateDataModificationSingleApprovalValidator());
 		});
 
 		manager.addObserverHook([pKeyCollector](auto& builder) {

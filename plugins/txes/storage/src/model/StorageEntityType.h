@@ -39,6 +39,9 @@ namespace catapult { namespace model {
 	/// StoragePayment transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, StoragePayment, 0x9);
 
+	/// DataModificationSingleApproval transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, DataModificationSingleApproval, 0xA);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif

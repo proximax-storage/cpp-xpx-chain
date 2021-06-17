@@ -41,7 +41,7 @@ namespace catapult { namespace validators {
 	/// Validation failed Transaction Signer is not Drive owner.	// TODO: Can be used for download channel ownership validation?
 	DEFINE_STORAGE_RESULT(Is_Not_Owner, 9);
 
-	/// Validation failed becaouse drive does not exist.
+	/// Validation failed because drive does not exist.
 	DEFINE_STORAGE_RESULT(Drive_Not_Found, 10);
 
 	/// Validation failed because the data modification already exists.
@@ -61,6 +61,18 @@ namespace catapult { namespace validators {
 
 	/// Respective download channel is not found.
 	DEFINE_STORAGE_RESULT(Download_Channel_Not_Found, 16);
+
+	/// There are no data modifications in completedDataModifications with 'succeeded' state.
+	DEFINE_STORAGE_RESULT(No_Approved_Data_Modifications, 17);
+
+	/// Not every key in replicator's upload opinion appears exactly once.
+	DEFINE_STORAGE_RESULT(Opinion_Reocurring_Keys, 18);
+
+	/// The key in upload opinion is neither a key of one of the current replicators of the drive nor a key of the drive owner.
+	DEFINE_STORAGE_RESULT(Opinion_Invalid_Key, 19);
+
+	/// Percents in replicator's upload opinion do not sum up to 100.
+	DEFINE_STORAGE_RESULT(Opinion_Incorrect_Percentage, 20);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
