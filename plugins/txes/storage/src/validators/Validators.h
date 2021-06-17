@@ -39,4 +39,8 @@ namespace catapult { namespace validators {
 	/// -
 	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
 
+	/// A validator implementation that applies to drive closure notifications and validates that:
+	/// -
+	DECLARE_STATEFUL_VALIDATOR(DriveClosure, model::DriveClosureNotification<1>)();
+
 }}

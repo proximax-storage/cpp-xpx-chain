@@ -6,10 +6,10 @@
 
 #include "ReplicatorService.h"
 #include "StoragePacketHandlers.h"
-#include "catapult/builders/DataModificationApprovalBuilder.h"
+#include "sdk/src/builders/DataModificationApprovalBuilder.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
-#include "catapult/extensions/TransactionExtensions.h"
+#include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/utils/NetworkTime.h"
 #include <libtorrent/alert_types.hpp>
 #include <filesystem>
@@ -287,6 +287,18 @@ namespace catapult { namespace storage {
 			return notFoundFiles;
 		}
 
+		void closeDrive(const Key& driveKey) {
+			CATAPULT_LOG(debug) << "closing drive " << driveKey;
+
+			std::unique_lock<std::mutex> lock(m_mutex);
+
+			if (m_stopped)
+				return;
+
+			if (m_drives.find(driveKey) == m_drives.end())
+				CATAPULT_THROW_INVALID_ARGUMENT_1("drive not found", driveKey);
+		}
+
 		void shutdown() {
 			std::unique_lock<std::mutex> lock(m_mutex);
 
@@ -461,6 +473,11 @@ namespace catapult { namespace storage {
 			return m_pImpl->stopDownloadFiles(driveKey, std::move(fileNames));
 
 		return std::move(fileNames);
+	}
+
+	void ReplicatorService::closeDrive(const Key& driveKey) {
+		if (m_pImpl)
+			m_pImpl->closeDrive(driveKey);
 	}
 
 	// endregion
