@@ -21,8 +21,12 @@
 #include "MosaicPlugin.h"
 #include "MosaicDefinitionTransactionPlugin.h"
 #include "MosaicSupplyChangeTransactionPlugin.h"
+#include "MosaicModifyLevyTransactionPlugin.h"
+#include "MosaicRemoveLevyTransactionPlugin.h"
 #include "src/cache/MosaicCache.h"
+#include "src/cache/LevyCache.h"
 #include "src/cache/MosaicCacheStorage.h"
+#include "src/cache/LevyCacheStorage.h"
 #include "src/config/MosaicConfiguration.h"
 #include "src/model/MosaicReceiptType.h"
 #include "src/observers/Observers.h"
@@ -31,6 +35,8 @@
 #include "catapult/observers/RentalFeeObserver.h"
 #include "catapult/plugins/CacheHandlers.h"
 #include "catapult/plugins/PluginManager.h"
+#include "src/utils/MosaicLevyCalculator.h"
+#include "src/catapult/exceptions.h"
 
 namespace catapult { namespace plugins {
 
@@ -47,17 +53,31 @@ namespace catapult { namespace plugins {
 		const auto& pConfigHolder = manager.configHolder();
 		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
-
+		manager.addTransactionSupport(CreateMosaicModifyLevyTransactionPlugin());
+		manager.addTransactionSupport(CreateMosaicRemoveLevyTransactionPlugin());
+		
 		manager.addCacheSupport<cache::MosaicCacheStorage>(
 				std::make_unique<cache::MosaicCache>(manager.cacheConfig(cache::MosaicCache::Name)));
+		
+		manager.addCacheSupport<cache::LevyCacheStorage>(
+			std::make_unique<cache::LevyCache>(manager.cacheConfig(cache::LevyCache::Name), pConfigHolder));
 
-		using CacheHandlers = CacheHandlers<cache::MosaicCacheDescriptor>;
-		CacheHandlers::Register<model::FacilityCode::Mosaic>(manager);
-
+		using CacheHandlersMosaic = CacheHandlers<cache::MosaicCacheDescriptor>;
+		CacheHandlersMosaic::Register<model::FacilityCode::Mosaic>(manager);
+		
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("MOSAIC C"), [&cache]() { return GetMosaicView(cache)->size(); });
 		});
-
+		
+		using CacheHandlersLevy= CacheHandlers<cache::LevyCacheDescriptor>;
+		CacheHandlersLevy::Register<model::FacilityCode::Levy>(manager);
+		
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("LEVY C"), [&cache]() {
+				return cache.sub<cache::LevyCache>().createView(cache.height())->size();
+			});
+		});
+		
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateMosaicIdValidator())
@@ -76,7 +96,10 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateMaxMosaicsBalanceTransferValidator())
 				.add(validators::CreateMaxMosaicsSupplyChangeValidator())
 				// note that the following validator depends on MosaicChangeAllowedValidator
-				.add(validators::CreateMosaicSupplyChangeAllowedValidator());
+				.add(validators::CreateMosaicSupplyChangeAllowedValidator())
+				.add(validators::CreateModifyLevyValidator())
+				.add(validators::CreateRemoveLevyValidator())
+				.add(validators::CreateLevyTransferValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
@@ -86,7 +109,11 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateMosaicDefinitionObserver())
 				.add(observers::CreateMosaicSupplyChangeObserver())
 				.add(observers::CreateRentalFeeObserver<model::MosaicRentalFeeNotification<1>>("Mosaic", rentalFeeReceiptType))
-				.add(observers::CreateCacheBlockTouchObserver<cache::MosaicCache>("Mosaic", expiryReceiptType));
+				.add(observers::CreateCacheBlockTouchObserver<cache::MosaicCache>("Mosaic", expiryReceiptType))
+				.add(observers::CreateModifyLevyObserver())
+				.add(observers::CreateRemoveLevyObserver())
+				.add(observers::CreatePruneLevyHistoryObserver())
+				.add(observers::CreateLevyBalanceTransferObserver());
 		});
 	}
 }}
