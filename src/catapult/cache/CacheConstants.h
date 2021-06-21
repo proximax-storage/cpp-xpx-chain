@@ -44,6 +44,7 @@ namespace catapult { namespace cache {
 		Download,
 		SuperContract,
 		Operation,
+		MosaicLevy,
 		Metadata_Nem,
 	};
 
