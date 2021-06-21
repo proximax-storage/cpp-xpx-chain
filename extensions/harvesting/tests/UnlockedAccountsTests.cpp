@@ -44,7 +44,7 @@ namespace catapult { namespace harvesting {
 
 		struct TestContext {
 		public:
-			explicit TestContext(size_t maxSize) : Accounts(maxSize)
+			explicit TestContext(size_t maxSize) : Accounts(maxSize, [](const auto&) { return 0; })
 			{}
 
 		public:
@@ -72,7 +72,7 @@ namespace catapult { namespace harvesting {
 
 		// Assert:
 		auto view = accounts.view();
-		EXPECT_EQ(UnlockedAccountsAddResult::Success, result);
+		EXPECT_EQ(UnlockedAccountsAddResult::Success_New, result);
 		EXPECT_EQ(1u, view.size());
 		EXPECT_TRUE(view.contains(keyPairWrapper.PublicKey));
 	}
@@ -93,8 +93,8 @@ namespace catapult { namespace harvesting {
 
 		// Assert:
 		auto view = accounts.view();
-		EXPECT_EQ(UnlockedAccountsAddResult::Success, result1);
-		EXPECT_EQ(UnlockedAccountsAddResult::Success, result2);
+		EXPECT_EQ(UnlockedAccountsAddResult::Success_New, result1);
+		EXPECT_EQ(UnlockedAccountsAddResult::Success_Update, result2);
 		EXPECT_EQ(1u, view.size());
 		EXPECT_TRUE(view.contains(publicKey));
 	}
@@ -158,7 +158,7 @@ namespace catapult { namespace harvesting {
 
 		// Assert:
 		auto view = accounts.view();
-		EXPECT_EQ(UnlockedAccountsAddResult::Success, result);
+		EXPECT_EQ(UnlockedAccountsAddResult::Success_New, result);
 		EXPECT_EQ(1u, view.size());
 		EXPECT_TRUE(view.contains(keyPairWrapper.PublicKey));
 	}
@@ -185,7 +185,7 @@ namespace catapult { namespace harvesting {
 		auto view = accounts.view();
 		std::set<Key> actualPublicKeys;
 		for (const auto& keyPair : view)
-			actualPublicKeys.insert(keyPair.publicKey());
+			actualPublicKeys.insert(keyPair.first.publicKey());
 
 		// Assert:
 		EXPECT_EQ(4u, view.size());
@@ -217,7 +217,7 @@ namespace catapult { namespace harvesting {
 		auto view = accounts.view();
 		std::set<Key> actualPublicKeys;
 		for (const auto& keyPair : view)
-			actualPublicKeys.insert(keyPair.publicKey());
+			actualPublicKeys.insert(keyPair.first.publicKey());
 
 		// Assert:
 		EXPECT_EQ(2u, view.size());
@@ -279,7 +279,7 @@ namespace catapult { namespace harvesting {
 		result = AddRandomAccount(context);
 
 		// Assert:
-		EXPECT_EQ(UnlockedAccountsAddResult::Success, result);
+		EXPECT_EQ(UnlockedAccountsAddResult::Success_New, result);
 		EXPECT_EQ(8u, accounts.view().size());
 	}
 
@@ -354,7 +354,7 @@ namespace catapult { namespace harvesting {
 
 	namespace {
 		auto CreateLockProvider() {
-			return std::make_unique<UnlockedAccounts>(7);
+			return std::make_unique<UnlockedAccounts>(7, [](const auto&) { return 0; });
 		}
 	}
 

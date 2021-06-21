@@ -23,7 +23,35 @@
 
 namespace catapult { namespace crypto { class PrivateKey; } }
 
+struct ge25519_t;
+using ge25519 = ge25519_t;
+
 namespace catapult { namespace crypto {
+
+	/// Multiplier for scalar multiplication.
+	using ScalarMultiplier = uint8_t[32];
+
+	/// bignum256modm type definition.
+	using bignum256modm_type = uint64_t[5];
+
+	/// Returns \c true if the y coordinate of \a publicKey is smaller than 2^255 - 19.
+	bool IsCanonicalKey(const Key& publicKey);
+
+	/// Returns \c true if \a publicKey is the neutral element of the group.
+	bool IsNeutralElement(const Key& publicKey);
+
+
+	/// Calculates \a hash of \a privateKey.
+	void HashPrivateKey(const PrivateKey& privateKey, Hash512& hash);
+
+	/// Extracts the \a multiplier used to derive the public key from \a privateKey.
+	void ExtractMultiplier(const PrivateKey& privateKey, ScalarMultiplier& multiplier);
+
+	/// Generates \a nonce from \a privateKey and a list of buffers (\a buffersList).
+	void GenerateNonce(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce);
+
+	/// Constant time scalar multiplication of \a publicKey with \a multiplier. The result is stored in \a sharedSecret.
+	bool ScalarMult(const ScalarMultiplier& multiplier, const Key& publicKey, Key& sharedSecret);
 
 	/// Calculates \a hash of a \a privateKey.
 	void HashPrivateKey(const PrivateKey& privateKey, Hash512& hash);

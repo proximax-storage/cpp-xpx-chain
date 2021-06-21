@@ -20,24 +20,20 @@
 **/
 
 #pragma once
-#include "HarvestRequest.h"
-#include "catapult/functions.h"
-#include <string>
+#include "KeyPair.h"
 
-namespace catapult { namespace config { class CatapultDirectory; } }
+namespace catapult { namespace crypto {
 
-namespace catapult { namespace harvesting {
+	struct SharedKey_tag { static constexpr size_t Size = 32; };
+	using SharedKey = utils::ByteArray<SharedKey_tag::Size, SharedKey_tag>;
 
-	/// Decrypts \a publicKeyPrefixedEncryptedPayload using \a encryptionKeyPair.
-	std::optional<crypto::KeyPair> TryDecryptBlockGeneratorAccountDescriptor(
-			const RawBuffer& publicKeyPrefixedEncryptedPayload,
-			const crypto::KeyPair& encryptionKeyPair);
+	/// Generates HKDF of \a sharedSecret using default zeroed salt and constant label "catapult".
+	SharedKey Hkdf_Hmac_Sha256_32(const Key& sharedSecret);
 
-	/// Reads (encrypted) harvest requests, with heights no greater than \a maxHeight, from \a directory,
-	/// validates using \a encryptionKeyPair and forwards to \a processDescriptor.
-	void UnlockedFileQueueConsumer(
-			const config::CatapultDirectory& directory,
-			Height maxHeight,
-			const crypto::KeyPair& encryptionKeyPair,
-			const consumer<const HarvestRequest&, crypto::KeyPair&&>& processDescriptor);
+	/// Derives shared secret from \a keyPair and \a otherPublicKey.
+	Key DeriveSharedSecret(const KeyPair& keyPair, const Key& otherPublicKey);
+
+	/// Generates shared key using \a keyPair and \a otherPublicKey.
+	/// \note: One of the provided keys is expected to be an ephemeral key.
+	SharedKey DeriveSharedKey(const KeyPair& keyPair, const Key& otherPublicKey);
 }}

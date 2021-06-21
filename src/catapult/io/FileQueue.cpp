@@ -117,7 +117,12 @@ namespace catapult { namespace io {
 			consumer(buffer);
 		});
 	}
-
+	bool FileQueueReader::tryReadNextMessageConditional(const predicate<const std::vector<uint8_t>&>& predicate) {
+		return process([predicate](const auto& nextMessageFilename) {
+		  auto buffer = ReadAllContents(nextMessageFilename);
+		  return predicate(buffer);
+		});
+	}
 	void FileQueueReader::skip(uint32_t count) {
 		for (auto i = 0u; i < count; ++i)
 			process([](const auto&) {});

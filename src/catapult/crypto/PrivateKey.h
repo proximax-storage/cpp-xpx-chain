@@ -54,6 +54,9 @@ namespace catapult { namespace crypto {
 		/// Generates a new private key using the specified byte \a generator.
 		static PrivateKey Generate(const supplier<uint8_t>& generator);
 
+		/// Creates a byte array from \a str and securely erases it.
+		static PrivateKey FromBufferSecure(const MutableRawBuffer& buffer);
+
 	public:
 		/// Returns a const iterator to the beginning of the raw key.
 		inline auto begin() const {

@@ -21,5 +21,5 @@ SOURCE_GROUP("sha256" FILES ${external_sha256_SRC})
 SOURCE_GROUP("sha3" FILES ${external_sha3_SRC})
 SOURCE_GROUP("ripemd160" FILES ${external_ripemd160_SRC})
 
-add_library(external ${external_ref10_SRC} ${external_sha256_SRC} ${external_sha3_SRC} ${external_ripemd160_SRC} README.txt)
+add_library(external ${external_ref10_SRC} ${external_sha256_SRC} ${external_sha3_SRC} ${external_ripemd160_SRC} README.txt ../plugins/txes/account_link/src/model/AccountLinkBaseTransaction.h)
 set_property(TARGET external PROPERTY POSITION_INDEPENDENT_CODE ON)

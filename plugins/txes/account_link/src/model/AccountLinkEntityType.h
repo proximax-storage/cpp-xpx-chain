@@ -28,6 +28,8 @@ namespace catapult { namespace model {
 
 	/// Account link transaction.
 	DEFINE_TRANSACTION_TYPE(AccountLink, Account_Link, 0x1);
+	/// Node key link transaction.
+	DEFINE_TRANSACTION_TYPE(AccountLink, Node_Key_Link, 0x2);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

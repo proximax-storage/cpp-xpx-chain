@@ -20,24 +20,28 @@
 **/
 
 #pragma once
-#include "HarvestRequest.h"
-#include "catapult/functions.h"
-#include <string>
+#include "SharedKey.h"
 
-namespace catapult { namespace config { class CatapultDirectory; } }
+namespace catapult { namespace crypto {
 
-namespace catapult { namespace harvesting {
+	/// AES 256 GCM decryptor.
+	class AesGcm256 {
+	public:
+		struct IV_tag { static constexpr size_t Size = 12; };
+		using IV = utils::ByteArray<IV_tag::Size, IV_tag>;
 
-	/// Decrypts \a publicKeyPrefixedEncryptedPayload using \a encryptionKeyPair.
-	std::optional<crypto::KeyPair> TryDecryptBlockGeneratorAccountDescriptor(
+		struct Tag_tag { static constexpr size_t Size = 16; };
+		using Tag = utils::ByteArray<Tag_tag::Size, Tag_tag>;
+	public:
+
+
+		/// Decrypts \a input to \a output with \a key.
+		static bool TryDecrypt(const SharedKey& key, const RawBuffer& input, std::vector<uint8_t>& output);
+	};
+
+	/// Extracts ephemeral public key from \a publicKeyPrefixedEncryptedPayload and decrypts rest to \a decrypted using \a keyPair.
+	bool TryDecryptEd25199BlockCipher(
 			const RawBuffer& publicKeyPrefixedEncryptedPayload,
-			const crypto::KeyPair& encryptionKeyPair);
-
-	/// Reads (encrypted) harvest requests, with heights no greater than \a maxHeight, from \a directory,
-	/// validates using \a encryptionKeyPair and forwards to \a processDescriptor.
-	void UnlockedFileQueueConsumer(
-			const config::CatapultDirectory& directory,
-			Height maxHeight,
-			const crypto::KeyPair& encryptionKeyPair,
-			const consumer<const HarvestRequest&, crypto::KeyPair&&>& processDescriptor);
+			const KeyPair& keyPair,
+			std::vector<uint8_t>& decrypted);
 }}

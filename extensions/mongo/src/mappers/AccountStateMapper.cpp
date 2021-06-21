@@ -62,7 +62,8 @@ namespace catapult { namespace mongo { namespace mappers {
 				<< "publicKey" << ToBinary(accountState.PublicKey)
 				<< "publicKeyHeight" << ToInt64(accountState.PublicKeyHeight)
 				<< "accountType" << utils::to_underlying_type(accountState.AccountType)
-				<< "linkedAccountKey" << ToBinary(accountState.LinkedAccountKey);
+				<< "linkedAccountKey" << ToBinary(accountState.SupplementalPublicKeys.linked().get())
+			  	<< "nodeAccountKey" << ToBinary(accountState.SupplementalPublicKeys.node().get());
 		StreamAccountBalances(builder, accountState.Balances);
 		builder << bson_stream::close_document;
 		return builder << bson_stream::finalize;
@@ -98,8 +99,12 @@ namespace catapult { namespace mongo { namespace mappers {
 		accountState.PublicKeyHeight = GetValue64<Height>(accountDocument["publicKeyHeight"]);
 
 		accountState.AccountType = static_cast<state::AccountType>(ToUint8(accountDocument["accountType"].get_int32()));
-		DbBinaryToModelArray(accountState.LinkedAccountKey, accountDocument["linkedAccountKey"].get_binary());
 
+		Key tempVal;
+		DbBinaryToModelArray(tempVal, accountDocument["linkedAccountKey"].get_binary());
+		accountState.SupplementalPublicKeys.linked().set(tempVal);
+		DbBinaryToModelArray(tempVal, accountDocument["nodeAccountKey"].get_binary());
+		accountState.SupplementalPublicKeys.node().set(tempVal);
 		auto dbMosaics = accountDocument["mosaics"].get_array().value;
 		for (const auto& mosaicEntry : dbMosaics)
 			ToAccountBalance(accountState.Balances, mosaicEntry.get_document().view());

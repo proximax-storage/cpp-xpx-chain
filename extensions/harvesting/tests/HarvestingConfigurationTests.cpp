@@ -38,6 +38,7 @@ namespace catapult { namespace harvesting {
 							{ "harvestKey", "harvest-key" },
 							{ "isAutoHarvestingEnabled", "true" },
 							{ "maxUnlockedAccounts", "2" },
+							{ "delegatePrioritizationPolicy", "Importance" },
 							{ "beneficiary", "beneficiary-key" }
 						}
 					}
@@ -62,6 +63,7 @@ namespace catapult { namespace harvesting {
 				EXPECT_FALSE(config.IsAutoHarvestingEnabled);
 				EXPECT_EQ(0u, config.MaxUnlockedAccounts);
 				EXPECT_EQ("", config.Beneficiary);
+				EXPECT_EQ(DelegatePrioritizationPolicy::Age, config.DelegatePrioritizationPolicy);
 			}
 
 			static void AssertCustom(const HarvestingConfiguration& config) {
@@ -70,6 +72,7 @@ namespace catapult { namespace harvesting {
 				EXPECT_TRUE(config.IsAutoHarvestingEnabled);
 				EXPECT_EQ(2u, config.MaxUnlockedAccounts);
 				EXPECT_EQ("beneficiary-key", config.Beneficiary);
+				EXPECT_EQ(DelegatePrioritizationPolicy::Importance, config.DelegatePrioritizationPolicy);
 			}
 		};
 	}
@@ -91,6 +94,7 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ("", config.HarvestKey);
 		EXPECT_FALSE(config.IsAutoHarvestingEnabled);
 		EXPECT_EQ(5u, config.MaxUnlockedAccounts);
+		EXPECT_EQ(DelegatePrioritizationPolicy::Importance, config.DelegatePrioritizationPolicy);
 		EXPECT_EQ("0000000000000000000000000000000000000000000000000000000000000000", config.Beneficiary);
 	}
 

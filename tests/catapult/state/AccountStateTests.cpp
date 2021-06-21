@@ -44,8 +44,8 @@ namespace catapult { namespace state {
 		EXPECT_EQ(Height(0), state.PublicKeyHeight);
 
 		EXPECT_EQ(AccountType::Unlinked, state.AccountType);
-		EXPECT_EQ(Key(), state.LinkedAccountKey);
-
+		EXPECT_EQ(Key(), GetLinkedPublicKey(state));
+		EXPECT_EQ(Key(), GetNodePublicKey(state));
 		EXPECT_EQ(0u, state.Balances.size());
 	}
 
@@ -81,9 +81,10 @@ namespace catapult { namespace state {
 			AccountState mainAccountState(test::GenerateRandomAddress(), Height(1));
 			test::FillWithRandomData(mainAccountState.PublicKey);
 			mainAccountState.AccountType = AccountType::Main;
-
-			remoteAccountState.LinkedAccountKey = mainAccountState.PublicKey;
-			mainAccountState.LinkedAccountKey = remoteAccountState.PublicKey;
+			remoteAccountState.SupplementalPublicKeys.linked().unset();
+			remoteAccountState.SupplementalPublicKeys.linked().unset();
+			remoteAccountState.SupplementalPublicKeys.linked().set(mainAccountState.PublicKey);
+			mainAccountState.SupplementalPublicKeys.linked().set(remoteAccountState.PublicKey);
 
 			// Act + Assert:
 			action(remoteAccountState, mainAccountState);
@@ -129,8 +130,10 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, RequireLinkedRemoteAndMainAccounts_ThrowsWhenRemoteAccountStateHasWrongLinkedAccountKey) {
 		// Arrange:
 		PrepareRequireLinkedRemoteAndMainAccountsTest([](auto& remoteAccountState, const auto& mainAccountState) {
-			remoteAccountState.LinkedAccountKey[0] ^= 0xFF;
-
+			Key temp = GetLinkedPublicKey(remoteAccountState);
+			temp[0] ^= 0xFF;
+			remoteAccountState.SupplementalPublicKeys.linked().unset();
+			remoteAccountState.SupplementalPublicKeys.linked().set(temp);
 			// Act + Assert:
 			EXPECT_THROW(RequireLinkedRemoteAndMainAccounts(remoteAccountState, mainAccountState), catapult_runtime_error);
 		});
@@ -139,8 +142,11 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, RequireLinkedRemoteAndMainAccounts_ThrowsWhenMainAccountStateHasWrongLinkedAccountKey) {
 		// Arrange:
 		PrepareRequireLinkedRemoteAndMainAccountsTest([](const auto& remoteAccountState, auto& mainAccountState) {
-			mainAccountState.LinkedAccountKey[0] ^= 0xFF;
 
+			Key temp = GetLinkedPublicKey(mainAccountState);
+			temp[0] ^= 0xFF;
+			mainAccountState.SupplementalPublicKeys.linked().unset();
+			mainAccountState.SupplementalPublicKeys.linked().set(temp);
 			// Act + Assert:
 			EXPECT_THROW(RequireLinkedRemoteAndMainAccounts(remoteAccountState, mainAccountState), catapult_runtime_error);
 		});

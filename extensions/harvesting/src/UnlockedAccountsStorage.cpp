@@ -145,7 +145,7 @@ namespace catapult { namespace harvesting {
 
         void UnlockedAccountsStorage::load(
                 const crypto::KeyPair& encryptionKeyPair,
-                const consumer<BlockGeneratorAccountDescriptor&&>& processDescriptor) {
+                const consumer<crypto::KeyPair&&>& processDescriptor) {
             if (!std::filesystem::exists(m_filename))
                 return;
 
@@ -156,14 +156,14 @@ namespace catapult { namespace harvesting {
                 inputFile.read(encryptedPayload);
 
                 auto decryptedPair = TryDecryptBlockGeneratorAccountDescriptor(encryptedPayload, encryptionKeyPair);
-                if (!decryptedPair.second)
+                if (!decryptedPair)
                     CATAPULT_THROW_RUNTIME_ERROR("malformed harvesters file");
 
                 HarvestRequest request;
                 request.EncryptedPayload = RawBuffer(encryptedPayload);
 
-                auto& descriptor = decryptedPair.first;
-                addRequest(GetRequestIdentifier(request), encryptedPayload, descriptor.signingKeyPair().publicKey());
+                auto& descriptor = decryptedPair.value();
+                addRequest(GetRequestIdentifier(request), encryptedPayload, descriptor.publicKey());
                 processDescriptor(std::move(descriptor));
             }
 

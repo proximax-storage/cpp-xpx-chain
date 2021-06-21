@@ -116,7 +116,7 @@ namespace catapult { namespace harvesting {
 					, Cache(test::CreateEmptyCatapultCache(Config))
 					, KeyPairs(CreateKeyPairs(Num_Accounts))
 					, Beneficiary(test::GenerateRandomByteArray<Key>())
-					, pUnlockedAccounts(std::make_unique<UnlockedAccounts>(Num_Accounts))
+					, pUnlockedAccounts(std::make_unique<UnlockedAccounts>(Num_Accounts, [](const auto&) { return 0; }))
 					, pLastBlock(CreateBlock())
 					, LastBlockElement(test::BlockToBlockElement(*pLastBlock)) {
 				auto delta = Cache.createDelta();
@@ -350,7 +350,7 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		HarvesterContext context;
 		auto pHarvester = context.CreateHarvester();
-		auto firstPublicKey = context.pUnlockedAccounts->view().begin()->publicKey();
+		auto firstPublicKey = context.pUnlockedAccounts->view().begin()->first.publicKey();
 
 		// Act:
 		auto pBlock = pHarvester->harvest(context.LastBlockElement, Max_Time);

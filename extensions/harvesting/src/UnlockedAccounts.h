@@ -22,13 +22,17 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/utils/Hashers.h"
+#include "DelegatePrioritizationPolicy.h"
 #include <vector>
 
 namespace catapult { namespace harvesting {
 
 #define UNLOCKED_ACCOUNTS_ADD_RESULT_LIST \
-	/* Account was successfully unlocked (it might have already been unlocked). */ \
-	ENUM_VALUE(Success) \
+	/* Account was successfully (newly) unlocked. */ \
+	ENUM_VALUE(Success_New) \
+	\
+	/* Account was (previously) unlocked and successfully updated. */ \
+	ENUM_VALUE(Success_Update) \
 	\
 	/* Account could not be unlocked because it is ineligible for harvesting. */ \
 	ENUM_VALUE(Failure_Harvesting_Ineligible) \
@@ -48,15 +52,15 @@ namespace catapult { namespace harvesting {
 
 	/// Insertion operator for outputting \a value to \a out.
 	std::ostream& operator<<(std::ostream& out, UnlockedAccountsAddResult value);
-
+	using PrioritizedKeysContainer = std::vector<std::pair<crypto::KeyPair, size_t>>;
 	/// A read only view on top of unlocked accounts.
 	class UnlockedAccountsView : utils::MoveOnly {
 	public:
 		/// Creates a view around \a keyPairs with lock context \a readLock.
 		explicit UnlockedAccountsView(
-				const std::vector<crypto::KeyPair>& keyPairs,
+				const PrioritizedKeysContainer& prioritizedKeyPairs,
 				utils::SpinReaderWriterLock::ReaderLockGuard&& readLock)
-				: m_keyPairs(keyPairs)
+				: m_prioritizedKeyPairs(prioritizedKeyPairs)
 				, m_readLock(std::move(readLock))
 		{}
 
@@ -69,16 +73,16 @@ namespace catapult { namespace harvesting {
 
 		/// Returns a const iterator to the first element of the underlying container.
 		auto begin() const {
-			return m_keyPairs.cbegin();
+			return m_prioritizedKeyPairs.cbegin();
 		}
 
 		/// Returns a const iterator to the element following the last element of the underlying container.
 		auto end() const {
-			return m_keyPairs.cend();
+			return m_prioritizedKeyPairs.cend();
 		}
 
 	private:
-		const std::vector<crypto::KeyPair>& m_keyPairs;
+		const PrioritizedKeysContainer& m_prioritizedKeyPairs;
 		utils::SpinReaderWriterLock::ReaderLockGuard m_readLock;
 	};
 
@@ -91,10 +95,12 @@ namespace catapult { namespace harvesting {
 		/// Creates a view around \a maxUnlockedAccounts and \a keyPairs with lock context \a readLock.
 		UnlockedAccountsModifier(
 				size_t maxUnlockedAccounts,
-				std::vector<crypto::KeyPair>& keyPairs,
+				PrioritizedKeysContainer& keyPairs,
+				const DelegatePrioritizer& prioritizer,
 				utils::SpinReaderWriterLock::WriterLockGuard&& writeLock)
 				: m_maxUnlockedAccounts(maxUnlockedAccounts)
-				, m_keyPairs(keyPairs)
+				, m_prioritizedKeyPairs(keyPairs)
+				, m_prioritizer(prioritizer)
                 , m_writeLock(std::move(writeLock))
 		{}
 
@@ -103,14 +109,15 @@ namespace catapult { namespace harvesting {
 		UnlockedAccountsAddResult add(crypto::KeyPair&& keyPair);
 
 		/// Removes (locks) the account identified by the public key (\a publicKey).
-		void remove(const Key& publicKey);
+		bool remove(const Key& publicKey);
 
 		/// Removes all accounts for which \a predicate returns \c true.
 		void removeIf(const KeyPredicate& predicate);
 
 	private:
 		size_t m_maxUnlockedAccounts;
-		std::vector<crypto::KeyPair>& m_keyPairs;
+		DelegatePrioritizer m_prioritizer;
+		PrioritizedKeysContainer& m_prioritizedKeyPairs;
 		utils::SpinReaderWriterLock::WriterLockGuard m_writeLock;
 	};
 
@@ -118,7 +125,7 @@ namespace catapult { namespace harvesting {
 	class UnlockedAccounts {
 	public:
 		/// Creates an unlocked accounts container that allows at most \a maxUnlockedAccounts unloced accounts.
-		explicit UnlockedAccounts(size_t maxUnlockedAccounts) : m_maxUnlockedAccounts(maxUnlockedAccounts)
+		explicit UnlockedAccounts(size_t maxUnlockedAccounts, const DelegatePrioritizer& prioritizer) : m_maxUnlockedAccounts(maxUnlockedAccounts), m_prioritizer(prioritizer)
 		{}
 
 	public:
@@ -130,7 +137,8 @@ namespace catapult { namespace harvesting {
 
 	private:
 		size_t m_maxUnlockedAccounts;
-		std::vector<crypto::KeyPair> m_keyPairs;
+		DelegatePrioritizer m_prioritizer;
+		PrioritizedKeysContainer m_prioritizedKeyPairs;
 		mutable utils::SpinReaderWriterLock m_lock;
 	};
 }}

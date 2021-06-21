@@ -20,24 +20,16 @@
 **/
 
 #pragma once
-#include "HarvestRequest.h"
-#include "catapult/functions.h"
-#include <string>
+#include "KeyPair.h"
 
-namespace catapult { namespace config { class CatapultDirectory; } }
+namespace catapult { namespace crypto {
 
-namespace catapult { namespace harvesting {
+	/// Reads the public key from a public key pem file with name \a filename.
+	Key ReadPublicKeyFromPublicKeyPemFile(const std::string& filename);
 
-	/// Decrypts \a publicKeyPrefixedEncryptedPayload using \a encryptionKeyPair.
-	std::optional<crypto::KeyPair> TryDecryptBlockGeneratorAccountDescriptor(
-			const RawBuffer& publicKeyPrefixedEncryptedPayload,
-			const crypto::KeyPair& encryptionKeyPair);
+	/// Reads the public key from a private key pem file with name \a filename.
+	Key ReadPublicKeyFromPrivateKeyPemFile(const std::string& filename);
 
-	/// Reads (encrypted) harvest requests, with heights no greater than \a maxHeight, from \a directory,
-	/// validates using \a encryptionKeyPair and forwards to \a processDescriptor.
-	void UnlockedFileQueueConsumer(
-			const config::CatapultDirectory& directory,
-			Height maxHeight,
-			const crypto::KeyPair& encryptionKeyPair,
-			const consumer<const HarvestRequest&, crypto::KeyPair&&>& processDescriptor);
+	/// Reads the key pair from a private key pem file with name \a filename.
+	crypto::KeyPair ReadKeyPairFromPrivateKeyPemFile(const std::string& filename);
 }}

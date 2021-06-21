@@ -113,7 +113,7 @@ namespace catapult { namespace tools { namespace address {
 					accountJson.put("AccountType", (uint64_t)accountState.AccountType);
 					accountJson.put("OptimizedMosaicId", accountState.Balances.optimizedMosaicId().unwrap());
 					accountJson.put("TrackedMosaicId", accountState.Balances.trackedMosaicId().unwrap());
-					accountJson.put("LinkedAccountKey", crypto::FormatKeyAsString(accountState.LinkedAccountKey));
+					accountJson.put("LinkedAccountKey", crypto::FormatKeyAsString(GetLinkedPublicKey(accountState)));
 
 					pt::ptree mosaics;
 					for (auto& pair : accountState.Balances) {
@@ -172,7 +172,7 @@ namespace catapult { namespace tools { namespace address {
 					accountState.AccountType = (state::AccountType)account.get<uint8_t>("AccountType");
 					accountState.Balances.optimize(MosaicId(account.get<uint64_t>("OptimizedMosaicId")));
 					accountState.Balances.track(MosaicId(account.get<uint64_t>("TrackedMosaicId")));
-					accountState.LinkedAccountKey = crypto::ParseKey(account.get<std::string>("LinkedAccountKey"));
+					accountState.SupplementalPublicKeys.linked().set(crypto::ParseKey(account.get<std::string>("LinkedAccountKey")));
 
 					for (pt::ptree::value_type&  mosaicJson: account.get_child("mosaics")) {
 						auto& mosaic = mosaicJson.second;

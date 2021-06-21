@@ -179,8 +179,6 @@ namespace catapult { namespace state {
 		});
 	}
 
-	template class AccountPublicKeys::PublicKeysAccessor<model::PinnedVotingKey>;
-
 	// endregion
 
 	// region AccountPublicKeys
@@ -189,7 +187,6 @@ namespace catapult { namespace state {
 		auto keyType = KeyType::Unset;
 		keyType |= m_linkedPublicKeyAccessor ? KeyType::Linked : KeyType::Unset;
 		keyType |= m_nodePublicKeyAccessor ? KeyType::Node : KeyType::Unset;
-		keyType |= m_vrfPublicKeyAccessor ? KeyType::VRF : KeyType::Unset;
 		return keyType;
 	}
 
@@ -209,21 +206,6 @@ namespace catapult { namespace state {
 		return m_nodePublicKeyAccessor;
 	}
 
-	const AccountPublicKeys::PublicKeyAccessor<Key>& AccountPublicKeys::vrf() const {
-		return m_vrfPublicKeyAccessor;
-	}
-
-	AccountPublicKeys::PublicKeyAccessor<Key>& AccountPublicKeys::vrf() {
-		return m_vrfPublicKeyAccessor;
-	}
-
-	const AccountPublicKeys::PublicKeysAccessor<model::PinnedVotingKey>& AccountPublicKeys::voting() const {
-		return m_votingPublicKeysAccessor;
-	}
-
-	AccountPublicKeys::PublicKeysAccessor<model::PinnedVotingKey>& AccountPublicKeys::voting() {
-		return m_votingPublicKeysAccessor;
-	}
 
 	// endregion
 }}

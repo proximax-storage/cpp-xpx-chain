@@ -21,12 +21,12 @@
 #pragma once
 #include "HexFormatter.h"
 #include <array>
-
+#include <cstring>
 namespace catapult { namespace utils {
 
 	/// Base class for wrappers of byte array types, to provide some type-safety.
 	template<size_t N, typename TTag>
-	class ByteArray : TTag {
+	class ByteArray : public TTag {
 	public:
 		using const_iterator = typename std::array<uint8_t, N>::const_iterator;
 
@@ -163,6 +163,13 @@ namespace catapult { namespace utils {
 		friend std::ostream& operator<<(std::ostream& out, const ByteArray& byteArray) {
 			out << HexFormat(byteArray.m_array);
 			return out;
+		}
+		/// Copies this byte array to a different byte array.
+		template<typename TDestination>
+		TDestination copyTo() const {
+			TDestination dest;
+			std::memcpy(dest.data(), m_array.data(), std::min(dest.size(), m_array.size()));
+			return dest;
 		}
 
 	private:

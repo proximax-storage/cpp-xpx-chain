@@ -25,7 +25,7 @@
 namespace catapult { namespace harvesting {
 
 	struct HarvestRequestIdentifier_tag { static constexpr size_t Size = 32; };
-	using HarvestRequestIdentifier = utils::ByteArray<HarvestRequestIdentifier_tag>;
+	using HarvestRequestIdentifier = utils::ByteArray<HarvestRequestIdentifier_tag::Size, HarvestRequestIdentifier_tag>;
 
 	/// Harvest request operation.
 	enum class HarvestRequestOperation : uint8_t {
@@ -49,7 +49,7 @@ namespace catapult { namespace harvesting {
 		Key MainAccountPublicKey;
 
 		/// Encrypted payload.
-		/// \note This decrypts into BlockGeneratorAccountDescriptor.
+		/// \note This decrypts into Signing Key Pair.
 		RawBuffer EncryptedPayload;
 
 	public:

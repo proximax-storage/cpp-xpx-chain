@@ -51,13 +51,11 @@ namespace catapult { namespace state {
 			Height AddressHeight;
 			Key PublicKey;
 			Height PublicKeyHeight;
-
 			state::AccountType AccountType;
-			Key LinkedAccountKey;
-
 			MosaicId OptimizedMosaicId;
 			MosaicId TrackedMosaicId;
 			uint16_t MosaicsCount;
+			AccountPublicKeys::KeyType LinkedKeysMask;
 		};
 
 		struct MAY_ALIAS HistoricalSnapshotsHeader {
@@ -68,12 +66,20 @@ namespace catapult { namespace state {
 
 		size_t CalculatePackedSize(const AccountState& accountState) {
 			return sizeof(VersionType) + sizeof(AccountStateHeader) + sizeof(HistoricalSnapshotsHeader)
+				   	+ (HasFlag(AccountPublicKeys::KeyType::Linked, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
+				    + (HasFlag(AccountPublicKeys::KeyType::Node, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
 					+ accountState.Balances.size() * sizeof(model::Mosaic)
 					+ accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot);
 		}
 
+		const Key* GetSupplementalKeysPointer(const AccountStateHeader& header)
+		{
+			return reinterpret_cast<const Key*>(&header + 1);
+		}
 		const model::Mosaic* GetMosaicPointer(const AccountStateHeader& header) {
-			const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&header + 1);
+			const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&header + 1)
+					+ (HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask) ? Key::Size : 0)
+					+ (HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask) ? Key::Size : 0);
 			return reinterpret_cast<const model::Mosaic*>(pHeaderData);
 		}
 
@@ -84,10 +90,22 @@ namespace catapult { namespace state {
 			accountState.PublicKeyHeight = header.PublicKeyHeight;
 
 			accountState.AccountType = header.AccountType;
-			accountState.LinkedAccountKey = header.LinkedAccountKey;
 
 			accountState.Balances.optimize(header.OptimizedMosaicId);
 			accountState.Balances.track(header.TrackedMosaicId);
+			accountState.SupplementalPublicKeys.linked().unset();
+			accountState.SupplementalPublicKeys.node().unset();
+			auto* pKeysPointer = GetSupplementalKeysPointer(header);
+			if(HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
+			{
+				accountState.SupplementalPublicKeys.linked().set(*pKeysPointer);
+				pKeysPointer++;
+			}
+			if(HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask))
+			{
+				accountState.SupplementalPublicKeys.node().set(*pKeysPointer);
+				pKeysPointer++;
+			}
 			const auto* pMosaic = GetMosaicPointer(header);
 			for (auto i = 0u; i < header.MosaicsCount; ++i, ++pMosaic)
 				accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
@@ -103,7 +121,13 @@ namespace catapult { namespace state {
 
 			return accountState;
 		}
+		size_t SetPublicKeyFromDataToBuffer(const AccountPublicKeys::PublicKeyAccessor<Key>& publicKeyAccessor, uint8_t* pData) {
+			auto tData = reinterpret_cast<Key*>(pData);
+			*tData = publicKeyAccessor.get();
+			return Key::Size;
+		}
 
+		/// Buffer holds Header -> Keys -> Balances -> Snapshots
 		std::vector<uint8_t> CopyToBuffer(const AccountState& accountState) {
 			std::vector<uint8_t> buffer(CalculatePackedSize(accountState));
 
@@ -114,7 +138,7 @@ namespace catapult { namespace state {
 			header.PublicKeyHeight = accountState.PublicKeyHeight;
 
 			header.AccountType = accountState.AccountType;
-			header.LinkedAccountKey = accountState.LinkedAccountKey;
+			header.LinkedKeysMask = accountState.SupplementalPublicKeys.mask();
 
 			header.OptimizedMosaicId = accountState.Balances.optimizedMosaicId();
 			header.TrackedMosaicId = accountState.Balances.trackedMosaicId();
@@ -122,12 +146,16 @@ namespace catapult { namespace state {
 
 			auto* pData = buffer.data();
 
-			VersionType version{1};
+			VersionType version{2};//NOTE TO SELF MISSING VERSION 1 TEST!
 			std::memcpy(pData, &version, sizeof(VersionType));
 			pData += sizeof(VersionType);
-
 			std::memcpy(pData, &header, sizeof(AccountStateHeader));
 			pData += sizeof(AccountStateHeader);
+			if (HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
+				pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.linked(), pData);
+
+			if (HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask))
+				pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.node(), pData);
 
 			auto* pUint64Data = reinterpret_cast<uint64_t*>(pData);
 			for (const auto& pair : accountState.Balances) {
@@ -207,8 +235,13 @@ namespace catapult { namespace state {
 			accountState.PublicKeyHeight = Height(234);
 
 			accountState.AccountType = static_cast<AccountType>(33);
-			test::FillWithRandomData(accountState.LinkedAccountKey);
-
+			accountState.SupplementalPublicKeys.linked().unset();
+			accountState.SupplementalPublicKeys.node().unset();
+			Key temp;
+			test::FillWithRandomData(temp);
+			accountState.SupplementalPublicKeys.linked().set(std::move(temp));
+			test::FillWithRandomData(temp);
+			accountState.SupplementalPublicKeys.node().set(std::move(temp));
 			test::RandomFillAccountData(0, accountState, numMosaics, numMosaics);
 			accountState.Balances.optimize(test::GenerateRandomValue<MosaicId>());
 			return accountState;
@@ -225,9 +258,10 @@ namespace catapult { namespace state {
 
 			// Act:
 			TTraits::Serializer::Save(originalAccountState, stream);
-
+			auto packetSize = CalculatePackedSize(originalAccountState);
+			auto paddingSize = TTraits::bufferPaddingSize(originalAccountState);
 			// Assert:
-			ASSERT_EQ(CalculatePackedSize(originalAccountState) - TTraits::bufferPaddingSize(originalAccountState), buffer.size());
+			ASSERT_EQ( packetSize - paddingSize , buffer.size()) << "\n Packed Size: " << packetSize << "Padding Size: " << paddingSize;
 
 			const auto& savedAccountStateHeader = reinterpret_cast<const AccountStateHeader&>(*(buffer.data() + sizeof(VersionType)));
 			EXPECT_EQ(numMosaics, savedAccountStateHeader.MosaicsCount);

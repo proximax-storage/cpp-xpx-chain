@@ -22,6 +22,7 @@
 #include "AccountBalances.h"
 #include "AccountImportance.h"
 #include "catapult/constants.h"
+#include "AccountPublicKeys.h"
 
 namespace catapult { namespace state {
 
@@ -50,7 +51,6 @@ namespace catapult { namespace state {
 				, PublicKey()
 				, PublicKeyHeight(0)
 				, AccountType(AccountType::Unlinked)
-				, LinkedAccountKey()
 				, Balances(this)
 		{}
 
@@ -76,8 +76,11 @@ namespace catapult { namespace state {
 		/// Type of account.
 		state::AccountType AccountType;
 
+		/// Supplemental public keys.
+		AccountPublicKeys SupplementalPublicKeys;
+
 		/// Public key of linked account.
-		Key LinkedAccountKey;
+		//Key LinkedAccountKey;
 
 		/// Balances of an account.
 		AccountBalances Balances;
@@ -85,6 +88,12 @@ namespace catapult { namespace state {
 
 	/// Returns \c true if \a accountType corresponds to a remote account.
 	bool IsRemote(AccountType accountType);
+
+	/// Gets the linked public key associated with \a accountState or a zero key.
+	Key GetLinkedPublicKey(const AccountState& accountState);
+
+	/// Gets the node public key associated with \a accountState or a zero key.
+	Key GetNodePublicKey(const AccountState& accountState);
 
 	/// Requires that \a remoteAccountState and \a mainAccountState state are linked.
 	void RequireLinkedRemoteAndMainAccounts(const AccountState& remoteAccountState, const AccountState& mainAccountState);

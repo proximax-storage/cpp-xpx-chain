@@ -31,9 +31,9 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const PublishContext&, NotificationSubscriber& sub) {
-			sub.notify(KeyLinkActionNotification(transaction.LinkAction));
-			sub.notify(NodeKeyLinkNotification(transaction.SignerPublicKey, transaction.LinkedPublicKey, transaction.LinkAction));
+		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+			sub.notify(KeyLinkActionNotification<1>(transaction.LinkAction));
+			sub.notify(NodeAccountLinkNotification<1>(transaction.Signer, transaction.RemoteAccountKey, transaction.LinkAction));
 		}
 	}
 

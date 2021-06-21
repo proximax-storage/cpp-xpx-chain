@@ -32,7 +32,7 @@ namespace catapult { namespace harvesting {
 	namespace {
 		auto CreateContainsPredicate(const Key& publicKey) {
 			return [&publicKey](const auto& keyPair) {
-				return keyPair.publicKey() == publicKey;
+				return keyPair.first.publicKey() == publicKey;
 			};
 		}
 	}
@@ -40,11 +40,11 @@ namespace catapult { namespace harvesting {
 	// region UnlockedAccountsView
 
 	size_t UnlockedAccountsView::size() const {
-		return m_keyPairs.size();
+		return m_prioritizedKeyPairs.size();
 	}
 
 	bool UnlockedAccountsView::contains(const Key& publicKey) const {
-		return std::any_of(m_keyPairs.cbegin(), m_keyPairs.cend(), CreateContainsPredicate(publicKey));
+		return std::any_of(m_prioritizedKeyPairs.cbegin(), m_prioritizedKeyPairs.cend(), CreateContainsPredicate(publicKey));
 	}
 
 	// endregion
@@ -52,31 +52,46 @@ namespace catapult { namespace harvesting {
 	// region UnlockedAccountsModifier
 
 	UnlockedAccountsAddResult UnlockedAccountsModifier::add(crypto::KeyPair&& keyPair) {
-		if (std::any_of(m_keyPairs.cbegin(), m_keyPairs.cend(), CreateContainsPredicate(keyPair.publicKey())))
-			return UnlockedAccountsAddResult::Success;
+		if (std::any_of(m_prioritizedKeyPairs.cbegin(), m_prioritizedKeyPairs.cend(), CreateContainsPredicate(keyPair.publicKey())))
+			return UnlockedAccountsAddResult::Success_Update;
 
-		if (m_maxUnlockedAccounts == m_keyPairs.size())
-			return UnlockedAccountsAddResult::Failure_Server_Limit;
+		auto priorityScore = m_prioritizer(keyPair.publicKey());
+		if (m_maxUnlockedAccounts == m_prioritizedKeyPairs.size()) {
+			if (m_prioritizedKeyPairs.back().second >= priorityScore)
+				return UnlockedAccountsAddResult::Failure_Server_Limit;
 
-		m_keyPairs.push_back(std::move(keyPair));
-		return UnlockedAccountsAddResult::Success;
+			m_prioritizedKeyPairs.pop_back();
+		}
+
+		auto iter = m_prioritizedKeyPairs.cbegin();
+		for (; m_prioritizedKeyPairs.cend() != iter; ++iter) {
+			if (priorityScore > iter->second)
+				break;
+		}
+		m_prioritizedKeyPairs.emplace(iter, std::move(keyPair), priorityScore);
+		return UnlockedAccountsAddResult::Success_New;
 	}
 
-	void UnlockedAccountsModifier::remove(const Key& publicKey) {
-		auto iter = std::remove_if(m_keyPairs.begin(), m_keyPairs.end(), CreateContainsPredicate(publicKey));
-		if (m_keyPairs.end() != iter)
-			m_keyPairs.erase(iter);
+	bool UnlockedAccountsModifier::remove(const Key& publicKey) {
+		auto iter = std::remove_if(m_prioritizedKeyPairs.begin(), m_prioritizedKeyPairs.end(), CreateContainsPredicate(publicKey));
+		if (m_prioritizedKeyPairs.end() != iter)
+		{
+			m_prioritizedKeyPairs.erase(iter);
+			return true;
+		}
+		return false;
+
 	}
 
 	void UnlockedAccountsModifier::removeIf(const KeyPredicate& predicate) {
-		auto initialSize = m_keyPairs.size();
-		auto newKeyPairsEnd = std::remove_if(m_keyPairs.begin(), m_keyPairs.end(), [predicate](const auto& keyPair) {
-			return predicate(keyPair.publicKey());
+		auto initialSize = m_prioritizedKeyPairs.size();
+		auto newKeyPairsEnd = std::remove_if(m_prioritizedKeyPairs.begin(), m_prioritizedKeyPairs.end(), [predicate](const auto& keyPair) {
+			return predicate(keyPair.first.publicKey());
 		});
 
-		m_keyPairs.erase(newKeyPairsEnd, m_keyPairs.end());
-		if (m_keyPairs.size() != initialSize)
-			CATAPULT_LOG(info) << "pruned " << (initialSize - m_keyPairs.size()) << " unlocked accounts";
+		m_prioritizedKeyPairs.erase(newKeyPairsEnd, m_prioritizedKeyPairs.end());
+		if (m_prioritizedKeyPairs.size() != initialSize)
+			CATAPULT_LOG(info) << "pruned " << (initialSize - m_prioritizedKeyPairs.size()) << " unlocked accounts";
 	}
 
 	// endregion
@@ -85,12 +100,12 @@ namespace catapult { namespace harvesting {
 
 	UnlockedAccountsView UnlockedAccounts::view() const {
 		auto readLock = m_lock.acquireReader();
-		return UnlockedAccountsView(m_keyPairs, std::move(readLock));
+		return UnlockedAccountsView(m_prioritizedKeyPairs, std::move(readLock));
 	}
 
 	UnlockedAccountsModifier UnlockedAccounts::modifier() {
 		auto writeLock  = m_lock.acquireWriter();
-		return UnlockedAccountsModifier(m_maxUnlockedAccounts, m_keyPairs, std::move(writeLock));
+		return UnlockedAccountsModifier(m_maxUnlockedAccounts,m_prioritizedKeyPairs, m_prioritizer, std::move(writeLock));
 	}
 
 	// endregion

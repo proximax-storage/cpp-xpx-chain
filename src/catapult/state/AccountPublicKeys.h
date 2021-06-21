@@ -20,7 +20,6 @@
 **/
 
 #pragma once
-#include "catapult/model/PinnedVotingKey.h"
 #include "catapult/utils/BitwiseEnum.h"
 #include "catapult/types.h"
 #include <memory>
@@ -44,11 +43,8 @@ namespace catapult { namespace state {
 			/// Node public key on which remote is allowed to harvest.
 			Node = 0x02,
 
-			/// VRF public key.
-			VRF = 0x04,
-
 			/// All valid keys.
-			All = Linked | Node | VRF
+			All = Linked | Node
 		};
 
 		// endregion
@@ -171,27 +167,14 @@ namespace catapult { namespace state {
 		/// Gets the node public key accessor.
 		PublicKeyAccessor<Key>& node();
 
-		/// Gets the (const) vrf public key accessor.
-		const PublicKeyAccessor<Key>& vrf() const;
 
-		/// Gets the vrf public key accessor.
-		PublicKeyAccessor<Key>& vrf();
-
-		/// Gets the (const) voting public keys accessor.
-		const PublicKeysAccessor<model::PinnedVotingKey>& voting() const;
-
-		/// Gets the voting public keys accessor.
-		PublicKeysAccessor<model::PinnedVotingKey>& voting();
 
 	private:
 		PublicKeyAccessor<Key> m_linkedPublicKeyAccessor;
 		PublicKeyAccessor<Key> m_nodePublicKeyAccessor;
-		PublicKeyAccessor<Key> m_vrfPublicKeyAccessor;
-		PublicKeysAccessor<model::PinnedVotingKey> m_votingPublicKeysAccessor;
 	};
 
 	MAKE_BITWISE_ENUM(AccountPublicKeys::KeyType)
 
 	extern template class AccountPublicKeys::PublicKeyAccessor<Key>;
-	extern template class AccountPublicKeys::PublicKeysAccessor<model::PinnedVotingKey>;
 }}

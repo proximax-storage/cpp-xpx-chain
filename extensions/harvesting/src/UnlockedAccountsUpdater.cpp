@@ -31,11 +31,11 @@
 namespace catapult { namespace harvesting {
 
 	namespace {
-		bool AddToUnlocked(UnlockedAccounts& unlockedAccounts, BlockGeneratorAccountDescriptor&& descriptor) {
-			auto signingPublicKey = descriptor.signingKeyPair().publicKey();
+		bool AddToUnlocked(UnlockedAccounts& unlockedAccounts, crypto::KeyPair&& descriptor) {
+			auto signingPublicKey = descriptor.publicKey();
 			auto addResult = unlockedAccounts.modifier().add(std::move(descriptor));
 			if (UnlockedAccountsAddResult::Success_New == addResult) {
-				CATAPULT_LOG(important) << "added NEW account " << signingPublicKey;
+				CATAPULT_LOG(info) << "added NEW account " << signingPublicKey;
 				return true;
 			}
 
@@ -60,8 +60,10 @@ namespace catapult { namespace harvesting {
 					const Key& nodePublicKey,
 					const cache::CatapultCache& cache,
 					UnlockedAccounts& unlockedAccounts,
+					const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder,
 					UnlockedAccountsStorage& storage)
 					: m_signingPublicKey(signingPublicKey)
+					, m_ConfigHolder(configHolder)
 					, m_nodePublicKey(nodePublicKey)
 					, m_cache(cache)
 					, m_unlockedAccounts(unlockedAccounts)
@@ -75,11 +77,11 @@ namespace catapult { namespace harvesting {
 			}
 
 		public:
-			void operator()(const HarvestRequest& harvestRequest, BlockGeneratorAccountDescriptor&& descriptor) {
+			void operator()(const HarvestRequest& harvestRequest, crypto::KeyPair&& descriptor) {
 				if (HarvestRequestOperation::Add == harvestRequest.Operation)
 					add(harvestRequest, std::move(descriptor));
 				else
-					remove(GetRequestIdentifier(harvestRequest), descriptor.signingKeyPair().publicKey());
+					remove(GetRequestIdentifier(harvestRequest), descriptor.publicKey());
 			}
 
 			size_t pruneUnlockedAccounts() {
@@ -91,11 +93,10 @@ namespace catapult { namespace harvesting {
 					auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
 					cache::ImportanceView view(readOnlyAccountStateCache);
 
-					const auto& signingPublicKey = descriptor.signingKeyPair().publicKey();
-					auto address = model::PublicKeyToAddress(signingPublicKey, readOnlyAccountStateCache.networkIdentifier());
-					auto shouldPruneAccount = !view.canHarvest(address, height);
+					auto address = model::PublicKeyToAddress(descriptor, readOnlyAccountStateCache.networkIdentifier());
+					auto shouldPruneAccount = !view.canHarvest(descriptor, height, m_ConfigHolder->Config(height).Network.MinHarvesterBalance);
 
-					if (shouldPruneAccount && m_signingPublicKey == signingPublicKey) {
+					if (shouldPruneAccount && m_signingPublicKey == descriptor) {
 						CATAPULT_LOG_THROTTLE(warning, utils::TimeSpan::FromHours(6).millis())
 								<< "primary signing public key " << m_signingPublicKey << " does not meet harvesting requirements";
 						return false;
@@ -119,11 +120,11 @@ namespace catapult { namespace harvesting {
 			}
 
 		private:
-			void add(const HarvestRequest& harvestRequest, BlockGeneratorAccountDescriptor&& descriptor) {
-				if (!isMainAccountEligibleForDelegation(harvestRequest.MainAccountPublicKey, descriptor))
+			void add(const HarvestRequest& harvestRequest, crypto::KeyPair&& descriptor) {
+				if (!isMainAccountEligibleForDelegation(harvestRequest.MainAccountPublicKey, descriptor.publicKey()))
 					return;
 
-				auto harvesterSigningPublicKey = descriptor.signingKeyPair().publicKey();
+				auto harvesterSigningPublicKey = descriptor.publicKey();
 				auto requestIdentifier = GetRequestIdentifier(harvestRequest);
 				if (!m_storage.contains(requestIdentifier) && AddToUnlocked(m_unlockedAccounts, std::move(descriptor)))
 					m_storage.add(requestIdentifier, harvestRequest.EncryptedPayload, harvesterSigningPublicKey);
@@ -135,7 +136,7 @@ namespace catapult { namespace harvesting {
 				m_hasAnyRemoval = true;
 			}
 
-			bool isMainAccountEligibleForDelegation(const Key& mainAccountPublicKey, const BlockGeneratorAccountDescriptor& descriptor) {
+			bool isMainAccountEligibleForDelegation(const Key& mainAccountPublicKey, const Key& descriptor) {
 				auto cacheView = m_cache.createView();
 				auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
 				auto accountStateIter = readOnlyAccountStateCache.find(mainAccountPublicKey);
@@ -149,14 +150,9 @@ namespace catapult { namespace harvesting {
 
 			bool isMainAccountEligibleForDelegation(
 					const state::AccountState& accountState,
-					const BlockGeneratorAccountDescriptor& descriptor) {
-				if (GetLinkedPublicKey(accountState) != descriptor.signingKeyPair().publicKey()) {
+					const Key& descriptor) {
+				if (GetLinkedPublicKey(accountState) != descriptor) {
 					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": invalid signing public key";
-					return false;
-				}
-
-				if (GetVrfPublicKey(accountState) != descriptor.vrfKeyPair().publicKey()) {
-					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": invalid vrf public key";
 					return false;
 				}
 
@@ -177,6 +173,7 @@ namespace catapult { namespace harvesting {
 			Key m_nodePublicKey;
 			const cache::CatapultCache& m_cache;
 			UnlockedAccounts& m_unlockedAccounts;
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& m_ConfigHolder;
 			UnlockedAccountsStorage& m_storage;
 			bool m_hasAnyRemoval;
 		};
@@ -189,12 +186,14 @@ namespace catapult { namespace harvesting {
 			UnlockedAccounts& unlockedAccounts,
 			const Key& signingPublicKey,
 			const crypto::KeyPair& encryptionKeyPair,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder,
 			const config::CatapultDataDirectory& dataDirectory)
 			: m_cache(cache)
 			, m_unlockedAccounts(unlockedAccounts)
 			, m_signingPublicKey(signingPublicKey)
 			, m_encryptionKeyPair(encryptionKeyPair)
 			, m_dataDirectory(dataDirectory)
+			, m_configHolder(configHolder)
 			, m_harvestersFilename(m_dataDirectory.rootDir().file("harvesters.dat"))
 			, m_unlockedAccountsStorage(m_harvestersFilename)
 	{}
@@ -213,6 +212,7 @@ namespace catapult { namespace harvesting {
 				m_encryptionKeyPair.publicKey(),
 				m_cache,
 				m_unlockedAccounts,
+				m_configHolder,
 				m_unlockedAccountsStorage);
 
 		auto cacheHeight = m_cache.createView().height();

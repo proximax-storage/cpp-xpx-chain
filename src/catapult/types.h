@@ -39,8 +39,10 @@ namespace catapult {
 	struct Signature_tag {};
 	using Signature = utils::ByteArray<Signature_Size, Signature_tag>;
 
-	struct Key_tag {};
-	using Key = utils::ByteArray<Key_Size, Key_tag>;
+	struct Key_tag {
+		static constexpr size_t Size = 32;
+	};
+	using Key = utils::ByteArray<Key_tag::Size, Key_tag>;
 
 	struct Hash512_tag { static constexpr auto Byte_Size = 64; };
 	using Hash512 = utils::ByteArray<Hash512_Size, Hash512_tag>;
@@ -53,6 +55,7 @@ namespace catapult {
 
 	struct GenerationHash_tag { static constexpr auto Byte_Size = 32; };
 	using GenerationHash = utils::ByteArray<Hash256_Size, GenerationHash_tag>;
+
 
 	// endregion
 
@@ -76,6 +79,9 @@ namespace catapult {
 
 	struct Amount_tag {};
 	using Amount = utils::BaseValue<uint64_t, Amount_tag>;
+
+	struct FinalizationEpoch_tag {};
+	using FinalizationEpoch = utils::BaseValue<uint32_t, FinalizationEpoch_tag>;
 
 	enum UnresolvedAmountType : uint8_t {
 	    Default,

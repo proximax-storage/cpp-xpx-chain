@@ -30,7 +30,10 @@
 extern "C" {
 #include <ripemd160/ripemd160.h>
 }
-
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/ripemd.h>
+#include <openssl/sha.h>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
@@ -94,6 +97,15 @@ namespace catapult { namespace crypto {
 		HashSingleBuffer<Keccak_512_Builder>(dataBuffer, hash);
 	}
 
+	void Hmac_Sha256(const RawBuffer& key, const RawBuffer& input, Hash256& output) {
+		unsigned int outputSize = 0;
+		HMAC(EVP_sha256(), key.pData, static_cast<int>(key.Size), input.pData, input.Size, output.data(), &outputSize);
+	}
+
+	void Hmac_Sha512(const RawBuffer& key, const RawBuffer& input, Hash512& output) {
+		unsigned int outputSize = 0;
+		HMAC(EVP_sha512(), key.pData, static_cast<int>(key.Size), input.pData, input.Size, output.data(), &outputSize);
+	}
 	// endregion
 
 	// region sha3 / keccak builders

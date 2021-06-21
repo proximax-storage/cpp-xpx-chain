@@ -47,8 +47,10 @@ namespace catapult { namespace mongo { namespace mappers {
 			}
 
 			state.AccountType = static_cast<state::AccountType>(34);
-			test::FillWithRandomData(state.LinkedAccountKey);
-
+			Key temp;
+			test::FillWithRandomData(temp);
+			state.SupplementalPublicKeys.linked().unset();
+			state.SupplementalPublicKeys.linked().set(temp);
 			state.Balances.track(Test_Mosaic);
 			for (const auto& mosaic : mosaics)
 				state.Balances.credit(mosaic.MosaicId, mosaic.Amount);
@@ -74,7 +76,7 @@ namespace catapult { namespace mongo { namespace mappers {
 			AssertEqualAccountStateMetadata(metaView);
 
 			auto account = view["account"].get_document().view();
-			EXPECT_EQ(8u, test::GetFieldCount(account));
+			EXPECT_EQ(9u, test::GetFieldCount(account)); //Keep in mind backwards compatible check for this, handle later!!!!!
 			test::AssertEqualAccountState(state, account);
 		}
 	}

@@ -20,6 +20,7 @@
 **/
 
 #pragma once
+#include <catapult/config_holder/BlockchainConfigurationHolder.h>
 #include "UnlockedAccountsStorage.h"
 #include "catapult/config/CatapultDataDirectory.h"
 
@@ -40,6 +41,7 @@ namespace catapult { namespace harvesting {
 				UnlockedAccounts& unlockedAccounts,
 				const Key& signingPublicKey,
 				const crypto::KeyPair& encryptionKeyPair,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder,
 				const config::CatapultDataDirectory& dataDirectory);
 
 	public:
@@ -57,5 +59,6 @@ namespace catapult { namespace harvesting {
 		config::CatapultDataDirectory m_dataDirectory;
 		std::string m_harvestersFilename;
 		UnlockedAccountsStorage m_unlockedAccountsStorage;
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& m_configHolder;
 	};
 }}

@@ -141,7 +141,8 @@ namespace catapult { namespace test {
 		EXPECT_EQ(accountState.PublicKeyHeight, Height(GetUint64(dbAccount, "publicKeyHeight")));
 
 		EXPECT_EQ(accountState.AccountType, static_cast<state::AccountType>(GetInt32(dbAccount, "accountType")));
-		EXPECT_EQ(accountState.LinkedAccountKey, GetKeyValue(dbAccount, "linkedAccountKey"));
+		EXPECT_EQ(GetLinkedPublicKey(accountState), GetKeyValue(dbAccount, "linkedAccountKey"));
+		EXPECT_EQ(GetNodePublicKey(accountState), GetKeyValue(dbAccount, "nodeAccountKey"));
 
 		auto dbMosaics = dbAccount["mosaics"].get_array().value;
 		size_t numMosaics = 0;

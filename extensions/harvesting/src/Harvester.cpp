@@ -104,12 +104,12 @@ namespace catapult { namespace harvesting {
 
 		auto unlockedAccountsView = m_unlockedAccounts.view();
 		const crypto::KeyPair* pHarvesterKeyPair = nullptr;
-		for (const auto& keyPair : unlockedAccountsView) {
-			hitContext.Signer = keyPair.publicKey();
+		for (const auto& prioritizedKeyPair : unlockedAccountsView) {
+			hitContext.Signer = prioritizedKeyPair.first.publicKey();
 			hitContext.GenerationHash = model::CalculateGenerationHash(context.ParentContext.GenerationHash, hitContext.Signer);
 
 			if (hitPredicate(hitContext)) {
-				pHarvesterKeyPair = &keyPair;
+				pHarvesterKeyPair = &prioritizedKeyPair.first;
 				break;
 			}
 		}

@@ -21,6 +21,7 @@
 #pragma once
 #include <boost/filesystem/path.hpp>
 #include <string>
+#include "DelegatePrioritizationPolicy.h"
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
 
@@ -40,6 +41,11 @@ namespace catapult { namespace harvesting {
 
 		/// Public key of the account receiving part of the harvested fee.
 		std::string Beneficiary;
+
+		/// Prioritization policy used to keep accounts once the maximum number of
+		/// delegated harvesting accounts is reached. Possible values are \c Age
+		/// and \c Importance.
+		harvesting::DelegatePrioritizationPolicy DelegatePrioritizationPolicy;
 
 	private:
 		HarvestingConfiguration() = default;

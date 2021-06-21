@@ -46,6 +46,11 @@ namespace catapult { namespace crypto {
 	/// Calculates the 512-bit Keccak hash of \a dataBuffer into \a hash.
 	void Keccak_512(const RawBuffer& dataBuffer, Hash512& hash) noexcept;
 
+	/// Calculates the sha256 HMAC of \a input with \a key, producing \a output.
+	void Hmac_Sha256(const RawBuffer& key, const RawBuffer& input, Hash256& output);
+
+	/// Calculates the sha512 HMAC of \a input with \a key, producing \a output.
+	void Hmac_Sha512(const RawBuffer& key, const RawBuffer& input, Hash512& output);
 	// endregion
 
 	// region sha3 / keccak builders

@@ -34,7 +34,7 @@ namespace catapult { namespace state {
 		}
 
 		bool AreLinked(const AccountState& lhs, const AccountState& rhs) {
-			return lhs.LinkedAccountKey == rhs.PublicKey && rhs.LinkedAccountKey == lhs.PublicKey;
+			return GetLinkedPublicKey(lhs) == rhs.PublicKey && GetLinkedPublicKey(rhs) == lhs.PublicKey;
 		}
 	}
 
@@ -61,5 +61,12 @@ namespace catapult { namespace state {
 				<< "remote " << model::AddressToString(remoteAccountState.Address) << " link to main"
 				<< model::AddressToString(mainAccountState.Address) << " is improper";
 		CATAPULT_THROW_RUNTIME_ERROR(out.str().c_str());
+	}
+	Key GetLinkedPublicKey(const AccountState& accountState) {
+		return accountState.SupplementalPublicKeys.linked().get();
+	}
+
+	Key GetNodePublicKey(const AccountState& accountState) {
+		return accountState.SupplementalPublicKeys.node().get();
 	}
 }}

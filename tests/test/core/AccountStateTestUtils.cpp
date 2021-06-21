@@ -44,8 +44,8 @@ namespace catapult { namespace test {
 		EXPECT_EQ(expected.PublicKeyHeight, actual.PublicKeyHeight) << message;
 
 		EXPECT_EQ(expected.AccountType, actual.AccountType) << message;
-		EXPECT_EQ(expected.LinkedAccountKey, actual.LinkedAccountKey) << message;
-
+		EXPECT_EQ(expected.SupplementalPublicKeys.linked().get(), actual.SupplementalPublicKeys.linked().get()) << message;
+		EXPECT_EQ(expected.SupplementalPublicKeys.node().get(), actual.SupplementalPublicKeys.node().get()) << message;
 		EXPECT_EQ(expected.Balances.size(), actual.Balances.size()) << message;
 		EXPECT_EQ(expected.Balances.size(), actual.Balances.size());
 		for (const auto& pair : expected.Balances)

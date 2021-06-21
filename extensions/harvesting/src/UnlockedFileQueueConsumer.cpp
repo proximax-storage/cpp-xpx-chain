@@ -19,6 +19,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <catapult/crypto/KeyPair.h>
 #include "UnlockedFileQueueConsumer.h"
 #include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/crypto/AesDecrypt.h"
@@ -34,13 +35,13 @@ namespace catapult { namespace harvesting {
 		}
 	}
 
-	std::pair<BlockGeneratorAccountDescriptor, bool> TryDecryptBlockGeneratorAccountDescriptor(
+	std::optional<crypto::KeyPair> TryDecryptBlockGeneratorAccountDescriptor(
 			const RawBuffer& publicKeyPrefixedEncryptedPayload,
 			const crypto::KeyPair& encryptionKeyPair) {
 		std::vector<uint8_t> decrypted;
 		auto isDecryptSuccessful = crypto::TryDecryptEd25199BlockCipher(publicKeyPrefixedEncryptedPayload, encryptionKeyPair, decrypted);
 		if (!isDecryptSuccessful || HarvestRequest::DecryptedPayloadSize() != decrypted.size())
-			return std::make_pair(BlockGeneratorAccountDescriptor(), false);
+			return std::nullopt;
 
 		auto iter = decrypted.begin();
 		auto extractKeyPair = [&iter]() {
@@ -48,15 +49,14 @@ namespace catapult { namespace harvesting {
 		};
 
 		auto signingKeyPair = extractKeyPair();
-		auto vrfKeyPair = extractKeyPair();
-		return std::make_pair(BlockGeneratorAccountDescriptor(std::move(signingKeyPair), std::move(vrfKeyPair)), true);
+		return std::optional(std::move(signingKeyPair));
 	}
 
 	void UnlockedFileQueueConsumer(
 			const config::CatapultDirectory& directory,
 			Height maxHeight,
 			const crypto::KeyPair& encryptionKeyPair,
-			const consumer<const HarvestRequest&, BlockGeneratorAccountDescriptor&&>& processDescriptor) {
+			const consumer<const HarvestRequest&, crypto::KeyPair&&>& processDescriptor) {
 		io::FileQueueReader reader(directory.str());
 		auto appendMessage = [maxHeight, &encryptionKeyPair, &processDescriptor](const auto& buffer) {
 			// filter out invalid requests
@@ -72,12 +72,12 @@ namespace catapult { namespace harvesting {
 			}
 
 			auto decryptedPair = TryDecryptBlockGeneratorAccountDescriptor(harvestRequest.EncryptedPayload, encryptionKeyPair);
-			if (!decryptedPair.second) {
+			if (!decryptedPair) {
 				CATAPULT_LOG(warning) << "rejecting request with encrypted payload that could not be decrypted";
 				return true;
 			}
 
-			processDescriptor(harvestRequest, std::move(decryptedPair.first));
+			processDescriptor(harvestRequest, std::move(decryptedPair.value()));
 			return true;
 		};
 

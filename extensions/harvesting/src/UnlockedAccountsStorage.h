@@ -59,7 +59,7 @@ namespace catapult { namespace harvesting {
             void save(const predicate<const Key&>& filter) const;
 
             /// Loads harvest requests using \a encryptionKeyPair and forwards to \a processDescriptor.
-            void load(const crypto::KeyPair& encryptionKeyPair, const consumer<BlockGeneratorAccountDescriptor&&>& processDescriptor);
+            void load(const crypto::KeyPair& encryptionKeyPair, const consumer<crypto::KeyPair&&>& processDescriptor);
 
         private:
             void addRequest(

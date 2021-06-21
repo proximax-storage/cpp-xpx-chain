@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 			if (state::AccountType::Main != accountState.AccountType)
 				return Failure_AccountLink_Link_Does_Not_Exist;
 
-			if (notification.RemoteAccountKey != accountState.LinkedAccountKey)
+			if (notification.RemoteAccountKey != GetLinkedPublicKey(accountState))
 				return Failure_AccountLink_Unlink_Data_Inconsistency;
 		}
 

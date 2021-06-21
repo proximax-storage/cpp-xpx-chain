@@ -26,10 +26,18 @@
 namespace catapult { namespace state {
 
 	// region AccountStateNonHistoricalSerializer
+	void WriteSupplementalPublicKeys(io::OutputStream& output, const AccountPublicKeys& accountPublicKeys) {
+		io::Write8(output, utils::to_underlying_type(accountPublicKeys.mask()));
 
+		if (HasFlag(AccountPublicKeys::KeyType::Linked, accountPublicKeys.mask()))
+			output.write(accountPublicKeys.linked().get());
+
+		if (HasFlag(AccountPublicKeys::KeyType::Node, accountPublicKeys.mask()))
+			output.write(accountPublicKeys.node().get());
+	}
 	void AccountStateNonHistoricalSerializer::Save(const AccountState& accountState, io::OutputStream& output) {
 		// write version
-		io::Write32(output, 1);
+		io::Write32(output, 2);
 
 		// write identifying information
 		output.write(accountState.Address);
@@ -39,12 +47,13 @@ namespace catapult { namespace state {
 
 		// write link information
 		io::Write8(output, utils::to_underlying_type(accountState.AccountType));
-		output.write(accountState.LinkedAccountKey);
+
 
 		// write mosaics
 		io::Write(output, accountState.Balances.optimizedMosaicId());
 		io::Write(output, accountState.Balances.trackedMosaicId());
 		io::Write16(output, static_cast<uint16_t>(accountState.Balances.size()));
+		WriteSupplementalPublicKeys(output, accountState.SupplementalPublicKeys);
 		for (const auto& pair : accountState.Balances) {
 			io::Write(output, pair.first);
 			io::Write(output, pair.second);
@@ -59,37 +68,91 @@ namespace catapult { namespace state {
 			return snapshot;
 		}
 
+		void ReadSupplementalPublicKey(io::InputStream& input, AccountPublicKeys::PublicKeyAccessor<Key>& publicKeyAccessor) {
+			Key key;
+			input.read(key);
+			publicKeyAccessor.set(key);
+		}
+
+
+		void ReadSupplementalPublicKeys(io::InputStream& input, AccountPublicKeys& accountPublicKeys) {
+			auto accountPublicKeysMask = static_cast<AccountPublicKeys::KeyType>(io::Read8(input));
+			accountPublicKeys.linked().unset();
+			accountPublicKeys.node().unset();
+			if (HasFlag(AccountPublicKeys::KeyType::Linked, accountPublicKeysMask))
+				ReadSupplementalPublicKey(input, accountPublicKeys.linked());
+
+			if (HasFlag(AccountPublicKeys::KeyType::Node, accountPublicKeysMask))
+				ReadSupplementalPublicKey(input, accountPublicKeys.node());
+
+		}
 		AccountState LoadAccountStateWithoutHistory(io::InputStream& input, VersionType& version) {
 			// read version
 			version = io::Read32(input);
-			if (version > 1)
+			if (version > 2)
 				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountState", version);
+			switch(version)
+			{
+				case 1:
+				{
+					Address address;
+					input.read(address);
+					auto addressHeight = io::Read<Height>(input);
 
-			// read identifying information
-			Address address;
-			input.read(address);
-			auto addressHeight = io::Read<Height>(input);
+					auto accountState = AccountState(address, addressHeight);
 
-			auto accountState = AccountState(address, addressHeight);
+					input.read(accountState.PublicKey);
+					accountState.PublicKeyHeight = io::Read<Height>(input);
 
-			input.read(accountState.PublicKey);
-			accountState.PublicKeyHeight = io::Read<Height>(input);
+					// read link information
+					accountState.AccountType = static_cast<state::AccountType>(io::Read8(input));
+					Key tempKey;
+					input.read(tempKey);
+					accountState.SupplementalPublicKeys.linked().unset();
+					accountState.SupplementalPublicKeys.linked().set(std::move(tempKey));
+					// read mosaics
+					accountState.Balances.optimize(io::Read<MosaicId>(input));
+					accountState.Balances.track(io::Read<MosaicId>(input));
+					auto numMosaics = io::Read16(input);
+					for (auto i = 0u; i < numMosaics; ++i) {
+						auto mosaicId = io::Read<MosaicId>(input);
+						auto amount = io::Read<Amount>(input);
+						accountState.Balances.credit(mosaicId, amount);
+					}
 
-			// read link information
-			accountState.AccountType = static_cast<state::AccountType>(io::Read8(input));
-			input.read(accountState.LinkedAccountKey);
+					return accountState;
+				}
+				case 2:
+				{
+					Address address;
+					input.read(address);
+					auto addressHeight = io::Read<Height>(input);
 
-			// read mosaics
-			accountState.Balances.optimize(io::Read<MosaicId>(input));
-			accountState.Balances.track(io::Read<MosaicId>(input));
-			auto numMosaics = io::Read16(input);
-			for (auto i = 0u; i < numMosaics; ++i) {
-				auto mosaicId = io::Read<MosaicId>(input);
-				auto amount = io::Read<Amount>(input);
-				accountState.Balances.credit(mosaicId, amount);
+					auto accountState = AccountState(address, addressHeight);
+
+					input.read(accountState.PublicKey);
+					accountState.PublicKeyHeight = io::Read<Height>(input);
+
+					// read link information
+					accountState.AccountType = static_cast<state::AccountType>(io::Read8(input));
+
+					// read mosaics
+					accountState.Balances.optimize(io::Read<MosaicId>(input));
+					accountState.Balances.track(io::Read<MosaicId>(input));
+					auto numMosaics = io::Read16(input);
+					// read supplemental public keys
+					ReadSupplementalPublicKeys(input, accountState.SupplementalPublicKeys);
+					for (auto i = 0u; i < numMosaics; ++i) {
+						auto mosaicId = io::Read<MosaicId>(input);
+						auto amount = io::Read<Amount>(input);
+						accountState.Balances.credit(mosaicId, amount);
+					}
+
+					return accountState;
+				}
 			}
+			// read identifying information
 
-			return accountState;
 		}
 	}
 

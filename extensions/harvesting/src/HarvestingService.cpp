@@ -32,17 +32,24 @@
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/plugins/PluginManager.h"
+#include "UnlockedAccountsUpdater.h"
 
 namespace catapult { namespace harvesting {
 
 	namespace {
-		std::shared_ptr<UnlockedAccounts> CreateUnlockedAccounts(const HarvestingConfiguration& config) {
-			auto pUnlockedAccounts = std::make_shared<UnlockedAccounts>(config.MaxUnlockedAccounts);
-			if (config.IsAutoHarvestingEnabled) {
-				// unlock configured account if it's eligible to harvest the next block
-				auto keyPair = crypto::KeyPair::FromString(config.HarvestKey);
-				auto publicKey = keyPair.publicKey();
 
+		struct UnlockedAccountsHolder {
+			std::shared_ptr<UnlockedAccounts> pUnlockedAccounts;
+			std::shared_ptr<UnlockedAccountsUpdater> pUnlockedAccountsUpdater;
+		};
+
+		std::shared_ptr<UnlockedAccounts> CreateUnlockedAccounts(const HarvestingConfiguration& config, const cache::CatapultCache& cache) {
+			// unlock configured account if it's eligible to harvest the next block
+			auto keyPair = crypto::KeyPair::FromString(config.HarvestKey);
+			auto publicKey = keyPair.publicKey();
+			auto pUnlockedAccounts = std::make_shared<UnlockedAccounts>(config.MaxUnlockedAccounts,
+				CreateDelegatePrioritizer(config.DelegatePrioritizationPolicy, cache, publicKey));
+			if (config.IsAutoHarvestingEnabled) {
 				auto unlockResult = pUnlockedAccounts->modifier().add(std::move(keyPair));
 				CATAPULT_LOG(info)
 						<< "Unlocked harvesting account " << publicKey
@@ -50,6 +57,24 @@ namespace catapult { namespace harvesting {
 			}
 
 			return pUnlockedAccounts;
+		}
+
+		UnlockedAccountsHolder CreateUnlockedAccountsHolder(
+				const HarvestingConfiguration& config,
+				const extensions::ServiceState& state,
+				const crypto::KeyPair& encryptionKeyPair) {
+			auto pUnlockedAccounts = CreateUnlockedAccounts(config, state.cache());
+
+			auto pUnlockedAccountsUpdater = std::make_shared<UnlockedAccountsUpdater>(
+					state.cache(),
+					*pUnlockedAccounts,
+					crypto::KeyPair::FromString(config.HarvestKey).publicKey(),
+					encryptionKeyPair,
+					state.pluginManager().configHolder(),
+					config::CatapultDataDirectory(state.config().User.DataDirectory));
+			pUnlockedAccountsUpdater->load();
+
+			return { pUnlockedAccounts, pUnlockedAccountsUpdater };
 		}
 
 		ScheduledHarvesterTaskOptions CreateHarvesterTaskOptions(extensions::ServiceState& state) {
@@ -63,7 +88,7 @@ namespace catapult { namespace harvesting {
 			options.RangeConsumer = state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Local);
 			return options;
 		}
-
+		/*
 		void PruneUnlockedAccounts(UnlockedAccounts& unlockedAccounts, const cache::CatapultCache& cache,
 				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 			auto cacheView = cache.createView();
@@ -74,24 +99,25 @@ namespace catapult { namespace harvesting {
 				cache::ImportanceView view(readOnlyAccountStateCache);
 				return !view.canHarvest(key, height, minHarvesterBalance);
 			});
-		}
+		}*/
 
-		thread::Task CreateHarvestingTask(extensions::ServiceState& state, UnlockedAccounts& unlockedAccounts, const Key& beneficiary) {
+		thread::Task CreateHarvestingTask(extensions::ServiceState& state, const UnlockedAccountsHolder& unlockedAccountsHolder, const Key& beneficiary) {
 			const auto& cache = state.cache();
 			const auto& pConfigHolder = state.pluginManager().configHolder();
 			const auto& utCache = state.utCache();
 			auto strategy = state.config().Node.TransactionSelectionStrategy;
 			auto executionConfig = extensions::CreateExecutionConfiguration(state.pluginManager());
 			HarvestingUtFacadeFactory utFacadeFactory(cache, executionConfig);
-
+			auto pUnlockedAccounts = unlockedAccountsHolder.pUnlockedAccounts;
+			auto pUnlockedAccountsUpdater = unlockedAccountsHolder.pUnlockedAccountsUpdater;
 			auto blockGenerator = CreateHarvesterBlockGenerator(strategy, utFacadeFactory, utCache);
 			auto pHarvesterTask = std::make_shared<ScheduledHarvesterTask>(
 					CreateHarvesterTaskOptions(state),
-					std::make_unique<Harvester>(cache, pConfigHolder, beneficiary, unlockedAccounts, blockGenerator));
+					std::make_unique<Harvester>(cache, pConfigHolder, beneficiary, *pUnlockedAccounts, blockGenerator));
 
-			return thread::CreateNamedTask("harvesting task", [&cache, &unlockedAccounts, pHarvesterTask, pConfigHolder]() {
-				// prune accounts that are not eligible to harvest the next block
-				PruneUnlockedAccounts(unlockedAccounts, cache, pConfigHolder);
+			return thread::CreateNamedTask("harvesting task", [&cache, &pUnlockedAccountsUpdater, pHarvesterTask, state]() {
+				// update unlocked accounts by pruning and filtering
+			  	pUnlockedAccountsUpdater->update();
 
 				// harvest the next block
 				pHarvesterTask->harvest();
@@ -116,12 +142,13 @@ namespace catapult { namespace harvesting {
 			}
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
-				auto pUnlockedAccounts = CreateUnlockedAccounts(m_config);
-				locator.registerRootedService("unlockedAccounts", pUnlockedAccounts);
+
+				auto unlockedAccountsHolder = CreateUnlockedAccountsHolder(m_config, state, locator.keyPair());
+				locator.registerRootedService("unlockedAccounts", unlockedAccountsHolder.pUnlockedAccounts);
 
 				// add tasks
 				auto beneficiary = crypto::ParseKey(m_config.Beneficiary);
-				state.tasks().push_back(CreateHarvestingTask(state, *pUnlockedAccounts, beneficiary));
+				state.tasks().push_back(CreateHarvestingTask(state, unlockedAccountsHolder, beneficiary));
 			}
 
 		private:

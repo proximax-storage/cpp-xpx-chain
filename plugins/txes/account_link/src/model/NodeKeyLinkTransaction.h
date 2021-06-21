@@ -20,16 +20,16 @@
 **/
 
 #pragma once
+#include <catapult/model/Transaction.h>
 #include "AccountLinkEntityType.h"
-#include "catapult/model/KeyLinkSharedTransaction.h"
-
+#include "AccountLinkBaseTransaction.h"
 namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
 	/// Binary layout for a node key link transaction body.
 	template<typename THeader>
-	struct NodeKeyLinkTransactionBody : public BasicKeyLinkTransactionBody<THeader, Key, Entity_Type_Node_Key_Link> {};
+	struct NodeKeyLinkTransactionBody : public AccountLinkBaseTransaction<THeader, Key, Entity_Type_Node_Key_Link, 1> {};
 
 	DEFINE_EMBEDDABLE_TRANSACTION(NodeKeyLink)
 

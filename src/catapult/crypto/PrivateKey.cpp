@@ -80,6 +80,11 @@ namespace catapult { namespace crypto {
 		return key;
 	}
 
+	PrivateKey PrivateKey::FromBufferSecure(const MutableRawBuffer& buffer) {
+		SecureZeroGuard guard(buffer.pData, buffer.Size);
+		return FromString(reinterpret_cast<char*>(buffer.pData), buffer.Size );
+	}
+
 	bool PrivateKey::operator==(const PrivateKey& rhs) const {
 		return m_key == rhs.m_key;
 	}

@@ -65,6 +65,10 @@ namespace catapult { namespace io {
 		/// Tries to read the next message and forwards it to \a consumer if successful.
 		bool tryReadNextMessage(const consumer<std::vector<uint8_t>>& consumer);
 
+		/// Tries to read the next message and forwards it to \a predicate if successful.
+		/// When \a predicate returns \c false, processing is stopped and message is not consumed.
+		bool tryReadNextMessageConditional(const predicate<const std::vector<uint8_t>&>& predicate);
+
 		/// Skips at most the next \a count messages.
 		void skip(uint32_t count);
 

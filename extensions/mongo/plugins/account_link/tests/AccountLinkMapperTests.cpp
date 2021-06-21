@@ -21,6 +21,7 @@
 #include "src/AccountLinkMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/account_link/src/model/AccountLinkTransaction.h"
+#include "plugins/txes/account_link/src/model/NodeKeyLinkTransaction.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
@@ -30,12 +31,27 @@ namespace catapult { namespace mongo { namespace plugins {
 #define TEST_CLASS AccountLinkMapperTests
 
 	namespace {
-		DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(AccountLink,)
+		DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(AccountLink, Account)
+		DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(NodeKeyLink, Node)
 	}
 
-	DEFINE_BASIC_MONGO_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , model::Entity_Type_Account_Link)
+	DEFINE_BASIC_MONGO_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Account, _Account,  model::Entity_Type_Account_Link)
+	DEFINE_BASIC_MONGO_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Node, _Node,  model::Entity_Type_Node_Key_Link)
 
-	// region streamTransaction
+	#undef PLUGIN_TEST
+
+	#define PLUGIN_TEST_ENTRY(NAME, TEST_NAME) \
+		TEST(TEST_CLASS, TEST_NAME##_##NAME##_Regular) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<NAME##RegularTraits>(); } \
+		TEST(TEST_CLASS, TEST_NAME##_##NAME##_Embedded) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<NAME##EmbeddedTraits>(); } \
+
+	#define PLUGIN_TEST(TEST_NAME) \
+		template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+		PLUGIN_TEST_ENTRY(Account, TEST_NAME) \
+		PLUGIN_TEST_ENTRY(Node, TEST_NAME) \
+		template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
+
+			// region streamTransaction
 
 	PLUGIN_TEST(CanMapAccountLinkTransaction) {
 		// Arrange:

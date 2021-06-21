@@ -50,7 +50,10 @@ namespace catapult { namespace observers {
 				// explicitly mark the account as a main account (local harvesting when remote harvesting is enabled)
 				auto accountStateIter = UnlinkedAccountTraits::AddAccount(delta, publicKey, height);
 				accountStateIter.get().AccountType = state::AccountType::Main;
-				accountStateIter.get().LinkedAccountKey = test::GenerateRandomByteArray<Key>();
+				accountStateIter.get().SupplementalPublicKeys.linked().unset();
+				accountStateIter.get().SupplementalPublicKeys.node().unset();
+				accountStateIter.get().SupplementalPublicKeys.linked().set(test::GenerateRandomByteArray<Key>());
+				accountStateIter.get().SupplementalPublicKeys.node().set(test::GenerateRandomByteArray<Key>());
 				return accountStateIter;
 			}
 		};
@@ -61,12 +64,14 @@ namespace catapult { namespace observers {
 				auto mainAccountPublicKey = test::GenerateRandomByteArray<Key>();
 				auto mainAccountStateIter = UnlinkedAccountTraits::AddAccount(delta, mainAccountPublicKey, height);
 				mainAccountStateIter.get().AccountType = state::AccountType::Main;
-				mainAccountStateIter.get().LinkedAccountKey = publicKey;
+				mainAccountStateIter.get().SupplementalPublicKeys.linked().unset();
+				mainAccountStateIter.get().SupplementalPublicKeys.linked().set(publicKey);
 
 				// 2. add the remote account with specified key
 				auto accountStateIter = UnlinkedAccountTraits::AddAccount(delta, publicKey, height);
 				accountStateIter.get().AccountType = state::AccountType::Remote;
-				accountStateIter.get().LinkedAccountKey = mainAccountPublicKey;
+				accountStateIter.get().SupplementalPublicKeys.linked().unset();
+				accountStateIter.get().SupplementalPublicKeys.linked().set(mainAccountPublicKey);
 				return mainAccountStateIter;
 			}
 		};
@@ -533,7 +538,10 @@ namespace catapult { namespace observers {
 		// Assert:
 		AssertImproperLink([](auto& accountState) {
 			// Arrange: change the main account to point to a different account
-			test::FillWithRandomData(accountState.LinkedAccountKey);
+			Key temp;
+			test::FillWithRandomData(temp);
+			accountState.SupplementalPublicKeys.linked().unset();
+			accountState.SupplementalPublicKeys.linked().set(temp);
 		});
 	}
 

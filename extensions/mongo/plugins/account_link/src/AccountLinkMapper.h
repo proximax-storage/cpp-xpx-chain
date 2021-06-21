@@ -26,4 +26,8 @@ namespace catapult { namespace mongo { namespace plugins {
 	/// Creates a mongo accoult link transaction plugin.
 	PLUGIN_API
 	std::unique_ptr<MongoTransactionPlugin> CreateAccountLinkTransactionMongoPlugin();
+
+	/// Creates a mongo node key link transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<MongoTransactionPlugin> CreateNodeKeyLinkTransactionMongoPlugin();
 }}}

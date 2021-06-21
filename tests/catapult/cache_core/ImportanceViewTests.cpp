@@ -67,7 +67,8 @@ namespace catapult { namespace cache {
 				// explicitly mark the account as a main account (local harvesting when remote harvesting is enabled)
 				auto accountStateIter = PublicKeyTraits::AddAccount(delta, publicKey, height);
 				accountStateIter.get().AccountType = state::AccountType::Main;
-				accountStateIter.get().LinkedAccountKey = test::GenerateRandomByteArray<Key>();
+				accountStateIter.get().SupplementalPublicKeys.linked().unset();
+				accountStateIter.get().SupplementalPublicKeys.linked().set(test::GenerateRandomByteArray<Key>());
 				return accountStateIter;
 			}
 		};
@@ -78,12 +79,14 @@ namespace catapult { namespace cache {
 				auto mainAccountPublicKey = test::GenerateRandomByteArray<Key>();
 				auto mainAccountStateIter = PublicKeyTraits::AddAccount(delta, mainAccountPublicKey, height);
 				mainAccountStateIter.get().AccountType = state::AccountType::Main;
-				mainAccountStateIter.get().LinkedAccountKey = publicKey;
+				mainAccountStateIter.get().SupplementalPublicKeys.linked().unset();
+				mainAccountStateIter.get().SupplementalPublicKeys.linked().set(publicKey);
 
 				// 2. add the remote account with specified key
 				auto accountStateIter = PublicKeyTraits::AddAccount(delta, publicKey, height);
 				accountStateIter.get().AccountType = state::AccountType::Remote;
-				accountStateIter.get().LinkedAccountKey = mainAccountPublicKey;
+				accountStateIter.get().SupplementalPublicKeys.linked().unset();
+				accountStateIter.get().SupplementalPublicKeys.linked().set(mainAccountPublicKey);
 				return mainAccountStateIter;
 			}
 		};
@@ -306,7 +309,10 @@ namespace catapult { namespace cache {
 		// Assert:
 		AssertImproperLink<TTraits>([](auto& accountState) {
 			// Arrange: change the main account to point to a different account
-			test::FillWithRandomData(accountState.LinkedAccountKey);
+			Key temp;
+			test::FillWithRandomData(temp);
+		  	accountState.SupplementalPublicKeys.linked().unset();
+		  	accountState.SupplementalPublicKeys.linked().set(std::move(temp));
 		});
 	}
 

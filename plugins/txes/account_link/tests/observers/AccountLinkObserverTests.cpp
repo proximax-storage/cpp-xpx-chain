@@ -91,10 +91,10 @@ namespace catapult { namespace observers {
 
 			// Assert: link was created
 			EXPECT_EQ(state::AccountType::Main, mainAccountState.AccountType);
-			EXPECT_EQ(remoteAccountKey, mainAccountState.LinkedAccountKey);
+			EXPECT_EQ(remoteAccountKey, mainAccountState.SupplementalPublicKeys.linked().get());
 
 			EXPECT_EQ(state::AccountType::Remote, remoteAccountState.AccountType);
-			EXPECT_EQ(mainAccountKey, remoteAccountState.LinkedAccountKey);
+			EXPECT_EQ(mainAccountKey, remoteAccountState.SupplementalPublicKeys.linked().get());
 		});
 	}
 
@@ -105,10 +105,12 @@ namespace catapult { namespace observers {
 			auto mainAccountKey = mainAccountState.PublicKey;
 			auto remoteAccountKey = remoteAccountState.PublicKey;
 
-			mainAccountState.LinkedAccountKey = remoteAccountKey;
+		  	mainAccountState.SupplementalPublicKeys.linked().unset();
+			mainAccountState.SupplementalPublicKeys.linked().set(remoteAccountKey);
 			mainAccountState.AccountType = state::AccountType::Main;
 
-			remoteAccountState.LinkedAccountKey = mainAccountKey;
+		  	remoteAccountState.SupplementalPublicKeys.linked().unset();
+			remoteAccountState.SupplementalPublicKeys.linked().set(mainAccountKey);
 			remoteAccountState.AccountType = state::AccountType::Remote;
 
 			auto notification = model::RemoteAccountLinkNotification<1>(mainAccountKey, remoteAccountKey, TTraits::Remove_Link);
@@ -119,10 +121,10 @@ namespace catapult { namespace observers {
 
 			// Assert: link was removed
 			EXPECT_EQ(state::AccountType::Unlinked, mainAccountState.AccountType);
-			EXPECT_EQ(Key(), mainAccountState.LinkedAccountKey);
+			EXPECT_EQ(Key(), mainAccountState.SupplementalPublicKeys.linked().get());
 
 			EXPECT_EQ(state::AccountType::Remote_Unlinked, remoteAccountState.AccountType);
-			EXPECT_EQ(Key(), remoteAccountState.LinkedAccountKey);
+			EXPECT_EQ(Key(), remoteAccountState.SupplementalPublicKeys.linked().get());
 		});
 	}
 }}

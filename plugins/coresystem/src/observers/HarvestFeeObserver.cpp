@@ -20,6 +20,7 @@
 
 #include "Observers.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 #include "catapult/model/InflationCalculator.h"
 #include "catapult/model/Mosaic.h"
 
@@ -27,44 +28,45 @@ namespace catapult { namespace observers {
 
 	namespace {
 		using Notification = model::BlockNotification<1>;
+		class FeeApplier {
+		public:
+			FeeApplier(MosaicId currencyMosaicId, ObserverContext& context)
+					: m_currencyMosaicId(currencyMosaicId)
+					, m_context(context)
+			{}
 
-		void ApplyFee(
-				state::AccountState& accountState,
-				NotifyMode notifyMode,
-				const model::Mosaic& feeMosaic,
-				ObserverStatementBuilder& statementBuilder,
-				const Height& height) {
-			if (NotifyMode::Rollback == notifyMode) {
-				accountState.Balances.debit(feeMosaic.MosaicId, feeMosaic.Amount, height);
-				return;
+		public:
+			void apply(const Key& key, Amount amount) {
+				auto& cache = m_context.Cache.sub<cache::AccountStateCache>();
+				auto feeMosaic = model::Mosaic{ m_currencyMosaicId, amount };
+				ProcessForwardedAccountState(cache, key, [&feeMosaic, &context = m_context](auto& accountState) {
+				  ApplyFee(accountState, context.Mode, feeMosaic, context.StatementBuilder());
+				});
 			}
 
-			accountState.Balances.credit(feeMosaic.MosaicId, feeMosaic.Amount, height);
+		private:
+			static void ApplyFee(
+					state::AccountState& accountState,
+					NotifyMode notifyMode,
+					const model::Mosaic& feeMosaic,
+					ObserverStatementBuilder& statementBuilder) {
+				if (NotifyMode::Rollback == notifyMode) {
+					accountState.Balances.debit(feeMosaic.MosaicId, feeMosaic.Amount);
+					return;
+				}
 
-			// add fee receipt
-			auto receiptType = model::Receipt_Type_Harvest_Fee;
-			model::BalanceChangeReceipt receipt(receiptType, accountState.PublicKey, feeMosaic.MosaicId, feeMosaic.Amount);
-			statementBuilder.addTransactionReceipt(receipt);
-		}
+				accountState.Balances.credit(feeMosaic.MosaicId, feeMosaic.Amount);
 
-		void ApplyFee(const Key& publicKey, const model::Mosaic& feeMosaic, ObserverContext& context) {
-			auto& cache = context.Cache.template sub<cache::AccountStateCache>();
-			auto accountStateIter = cache.find(publicKey);
-			auto& accountState = accountStateIter.get();
-
-			if (state::AccountType::Remote != accountState.AccountType) {
-				ApplyFee(accountState, context.Mode, feeMosaic, context.StatementBuilder(), context.Height);
-				return;
+				// add fee receipt
+				auto receiptType = model::Receipt_Type_Harvest_Fee;
+				model::BalanceChangeReceipt receipt(receiptType, accountState.PublicKey, feeMosaic.MosaicId, feeMosaic.Amount);
+				statementBuilder.addTransactionReceipt(receipt);
 			}
 
-			auto linkedAccountStateIter = cache.find(accountState.LinkedAccountKey);
-			auto& linkedAccountState = linkedAccountStateIter.get();
-
-			// this check is merely a precaution and will only fire if there is a bug that has corrupted links
-			RequireLinkedRemoteAndMainAccounts(accountState, linkedAccountState);
-
-			ApplyFee(linkedAccountState, context.Mode, feeMosaic, context.StatementBuilder(), context.Height);
-		}
+		private:
+			MosaicId m_currencyMosaicId;
+			ObserverContext& m_context;
+		};
 
 		bool ShouldShareFees(const Key& signer, const Key& harvesterBeneficiary, uint8_t harvestBeneficiaryPercentage) {
 			return 0u < harvestBeneficiaryPercentage && Key() != harvesterBeneficiary && signer != harvesterBeneficiary;
@@ -86,11 +88,12 @@ namespace catapult { namespace observers {
 			auto harvesterAmount = totalAmount - beneficiaryAmount;
 
 			// always create receipt for harvester
-			ApplyFee(notification.Signer, { mosaicId, harvesterAmount }, context);
+			FeeApplier applier(mosaicId, context);
+			applier.apply(notification.Signer, harvesterAmount);
 
 			// only if amount is non-zero create receipt for beneficiary account
 			if (Amount() != beneficiaryAmount)
-				ApplyFee(notification.Beneficiary, { mosaicId, beneficiaryAmount }, context);
+				applier.apply(notification.Beneficiary, beneficiaryAmount);
 
 			// add inflation receipt
 			if (Amount() != inflationAmount && NotifyMode::Commit == context.Mode) {
