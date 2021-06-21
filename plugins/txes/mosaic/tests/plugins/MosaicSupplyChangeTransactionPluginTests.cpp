@@ -18,6 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <tests/test/other/MutableBlockchainConfiguration.h>
+#include <tests/test/local/LocalNodeTestState.h>
 #include "src/plugins/MosaicSupplyChangeTransactionPlugin.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/model/MosaicNotifications.h"
@@ -35,16 +37,24 @@ namespace catapult { namespace plugins {
 	// region TransactionPlugin
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicSupplyChange, 2, 2,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicSupplyChange, std::shared_ptr<config::BlockchainConfigurationHolder>, 2, 2,)
+
+		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
+
+		auto CreateConfiguration() {
+			test::MutableBlockchainConfiguration config;
+			return config.ToConst();
+		}
 
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , Entity_Type_Mosaic_Supply_Change)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , Entity_Type_Mosaic_Supply_Change,
+													 config::CreateMockConfigurationHolder(CreateConfiguration()))
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;
@@ -60,7 +70,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
 
 		typename TTraits::TransactionType transaction;
 		transaction.Size = sizeof(transaction);
@@ -76,7 +86,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishMosaicRequiredNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<MosaicRequiredNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
 
 		typename TTraits::TransactionType transaction;
 		transaction.Size = sizeof(transaction);
@@ -99,7 +109,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishMosaicSupplyChangeNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<MosaicSupplyChangeNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
 
 		typename TTraits::TransactionType transaction;
 		transaction.Size = sizeof(transaction);

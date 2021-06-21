@@ -44,7 +44,8 @@ namespace catapult { namespace cache {
 		Download,
 		SuperContract,
 		Operation,
-		MosaicLevy
+		MosaicLevy,
+		Metadata_Nem,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

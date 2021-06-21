@@ -52,32 +52,32 @@ namespace catapult { namespace plugins {
 		});
 		const auto& pConfigHolder = manager.configHolder();
 		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
-		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
+		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateMosaicModifyLevyTransactionPlugin());
 		manager.addTransactionSupport(CreateMosaicRemoveLevyTransactionPlugin());
-		
+
 		manager.addCacheSupport<cache::MosaicCacheStorage>(
 				std::make_unique<cache::MosaicCache>(manager.cacheConfig(cache::MosaicCache::Name)));
-		
+
 		manager.addCacheSupport<cache::LevyCacheStorage>(
 			std::make_unique<cache::LevyCache>(manager.cacheConfig(cache::LevyCache::Name), pConfigHolder));
 
 		using CacheHandlersMosaic = CacheHandlers<cache::MosaicCacheDescriptor>;
 		CacheHandlersMosaic::Register<model::FacilityCode::Mosaic>(manager);
-		
+
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("MOSAIC C"), [&cache]() { return GetMosaicView(cache)->size(); });
 		});
-		
+
 		using CacheHandlersLevy= CacheHandlers<cache::LevyCacheDescriptor>;
 		CacheHandlersLevy::Register<model::FacilityCode::Levy>(manager);
-		
+
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("LEVY C"), [&cache]() {
 				return cache.sub<cache::LevyCache>().createView(cache.height())->size();
 			});
 		});
-		
+
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateMosaicIdValidator())

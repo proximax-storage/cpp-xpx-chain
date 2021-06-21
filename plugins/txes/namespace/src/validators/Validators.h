@@ -84,6 +84,10 @@ namespace catapult { namespace validators {
 	/// - account is known
 	DECLARE_STATEFUL_VALIDATOR(AddressAlias, model::AliasedAddressNotification_v1)();
 
+	/// A validator implementation that applies to aliased address notifications and validates that:
+	/// - account is known
+	DECLARE_STATEFUL_VALIDATOR(RequiredNamespace, model::NamespaceRequiredNotification<1>)();
+
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid
 	DECLARE_STATELESS_VALIDATOR(NamespacePluginConfig, model::PluginConfigNotification<1>)();

@@ -4,9 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 #pragma once
-
-#include "src/catapult/utils/IdentifierGroup.h"
 #include "src/state/LevyEntry.h"
+#include "catapult/utils/IdentifierGroup.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"
 #include "catapult/utils/Hashers.h"
@@ -61,7 +60,7 @@ namespace catapult { namespace cache {
 		struct HeightGroupingTypesDescriptor {
 		public:
 			using KeyType = Height;
-			using ValueType = utils::IdentifierGroup<MosaicId, Height, utils::BaseValueHasher<MosaicId>>;
+			using ValueType = utils::OrderedIdentifierGroup<MosaicId, Height>;
 			using Serializer = LevyHeightGroupingSerializer;
 		
 		public:
