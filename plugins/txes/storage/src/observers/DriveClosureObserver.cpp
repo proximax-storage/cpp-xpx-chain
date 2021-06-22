@@ -8,18 +8,15 @@
 
 namespace catapult { namespace observers {
 
-    DECLARE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector) {
-		return MAKE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>, [pKeyCollector](const model::DriveClosureNotification<1>& notification, const ObserverContext& context) {
-			if (NotifyMode::Rollback == context.Mode)
-				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
+    DEFINE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>, [](const model::DriveClosureNotification<1>& notification, ObserverContext& context) {
+		if (NotifyMode::Rollback == context.Mode)
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
 
-			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-			driveCache.remove(notification.DriveKey);
+		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+		driveCache.remove(notification.DriveKey);
 
-			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-			auto replicatorIter = replicatorCache.find(*pKeyCollector->keys().begin());
-			auto& replicatorEntry = replicatorIter.get();
-			replicatorEntry.drives().pop_back();
-		})
-	}
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		replicatorCache.remove(notification.DriveKey);
+		
+	});
 }}
