@@ -27,7 +27,7 @@
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
-
+#include "catapult/crypto/KeyUtils.h"
 
 namespace catapult { namespace cache {
 
@@ -100,8 +100,7 @@ namespace catapult { namespace cache {
 			// - merkle roots should have expected value
 			Hash256 expectedMerkleRoot;
 			utils::ParseHexStringIntoContainer(expectedMerkleRootStr.data(), expectedMerkleRootStr.size(), expectedMerkleRoot);
-
-			EXPECT_EQ(expectedMerkleRoot, deltaMerkleRootPair.first);
+			EXPECT_EQ(expectedMerkleRoot, deltaMerkleRootPair.first) << crypto::FormatKeyAsString(*reinterpret_cast<Key*>(&deltaMerkleRootPair.first));;
 			EXPECT_EQ(expectedMerkleRoot, committedMerkleRootPair.first);
 		}
 	}
@@ -113,42 +112,42 @@ namespace catapult { namespace cache {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePrimarySerializer>(
 				"../tests/int/stress/resources/1.patricia-tree-account.dat",
-				"C7EAB2184E93ED71E6695CA7DD05611180E2918DAF7C1CB3C17BCD4BE680BA7D");
+				"D0E6C8A6396ABCAA394B9DF815251CDC23E7C173DE14DE6ECAE2A9336D9B70DA");
 	}
 
 	TEST(TEST_CLASS, AccountStateCacheMerkleRootIsCalculatedCorrectly_PatriciaTree_1) {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePatriciaTreeSerializer>(
 				"../tests/int/stress/resources/1.patricia-tree-account.dat",
-				"C7EAB2184E93ED71E6695CA7DD05611180E2918DAF7C1CB3C17BCD4BE680BA7D");
+				"D0E6C8A6396ABCAA394B9DF815251CDC23E7C173DE14DE6ECAE2A9336D9B70DA");
 	}
 
 	TEST(TEST_CLASS, AccountStateCacheMerkleRootIsCalculatedCorrectly_Primary_2) {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePrimarySerializer>(
 				"../tests/int/stress/resources/2.patricia-tree-account.dat",
-				"5ECB10EA7DEFD6376496F82337B7C82C6A6071F5A849CFD04301B030378D5641");
+				"0CDE5520E172AD0DC01F857173898D03C2625597E902A889B356546E7C74EBBB");
 	}
 
 	TEST(TEST_CLASS, AccountStateCacheMerkleRootIsCalculatedCorrectly_PatriciaTree_2) {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePatriciaTreeSerializer>(
 				"../tests/int/stress/resources/2.patricia-tree-account.dat",
-				"5ECB10EA7DEFD6376496F82337B7C82C6A6071F5A849CFD04301B030378D5641");
+				"0CDE5520E172AD0DC01F857173898D03C2625597E902A889B356546E7C74EBBB");
 	}
 
 	TEST(TEST_CLASS, AccountStateCacheMerkleRootIsCalculatedCorrectly_Primary_3) {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePrimarySerializer>(
 				"../tests/int/stress/resources/3.patricia-tree-account.dat",
-				"A7A372A6AAB162AB47EDF1CD8CAD50886C6BEE4478D7B023371AF24E87C82A3A");
+				"B60AC0F67AEC4C4FC69668643EF5A7E3E26AEACD23BDE8A56CB9B53E73B86A58");
 	}
 
 	TEST(TEST_CLASS, AccountStateCacheMerkleRootIsCalculatedCorrectly_PatriciaTree_3) {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePatriciaTreeSerializer>(
 				"../tests/int/stress/resources/3.patricia-tree-account.dat",
-				"A7A372A6AAB162AB47EDF1CD8CAD50886C6BEE4478D7B023371AF24E87C82A3A");
+				"B60AC0F67AEC4C4FC69668643EF5A7E3E26AEACD23BDE8A56CB9B53E73B86A58");
 	}
 
 	// endregion
