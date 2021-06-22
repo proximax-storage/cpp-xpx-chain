@@ -339,7 +339,7 @@ namespace catapult { namespace model {
 				const Hash256& downloadChannelId,
 				const uint64_t downloadSize,
 				const Amount& feedbackFeeAmount)
-				: Notification(Notification_Type, sizeof(FinishDownloadNotification<1>))
+				: Notification(Notification_Type, sizeof(DownloadPaymentNotification<1>))
 				, PublicKey(signer)
 				, DownloadChannelId(downloadChannelId)
 				, DownloadSize(downloadSize)
@@ -375,7 +375,7 @@ namespace catapult { namespace model {
 				const Key& signer,
 				const Key& driveKey,
 				const Amount& storageUnits)
-				: Notification(Notification_Type, sizeof(FinishDownloadNotification<1>))
+				: Notification(Notification_Type, sizeof(StoragePaymentNotification<1>))
 				, PublicKey(signer)
 				, DriveKey(driveKey)
 				, StorageUnits(storageUnits)
