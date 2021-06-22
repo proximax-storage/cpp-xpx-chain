@@ -169,63 +169,15 @@ namespace catapult { namespace tools { namespace address {
 				MemoryAccountPatriciaTree tree(dataSource);
 
 				for (const auto& pair : pairs)
-					tree.set(pair.second.Address, pair.second);
+					tree.set(pair.first, pair.second);
 
 				return tree.root();
 			}
 			void calculateMerkleRoot() {
-				// Load the json file in this ptree
-				pt::ptree root;
-				pt::read_json(m_inputpath, root);
-				auto children = root.get_child("accounts");
-				std::vector<std::pair<catapult::Address, state::AccountState>> accounts;
-
-				for (pt::ptree::value_type &accountJson : children) {
-					auto& account = accountJson.second;
-
-					state::AccountState accountState(
-							model::StringToAddress(account.get<std::string>("Address")),
-							Height(account.get<uint64_t>("AddressHeight"))
-					);
-					accountState.PublicKeyHeight = Height(account.get<uint64_t>("PublicKeyHeight"));
-					accountState.PublicKey = crypto::ParseKey(account.get<std::string>("PublicKey"));
-					accountState.AccountType = (state::AccountType)account.get<uint8_t>("AccountType");
-					accountState.AccountType = (state::AccountType)account.get<uint8_t>("AccountType");
-					accountState.Balances.optimize(MosaicId(account.get<uint64_t>("OptimizedMosaicId")));
-					accountState.Balances.track(MosaicId(account.get<uint64_t>("TrackedMosaicId")));
-					auto linkedKey = account.get_optional<std::string>("LinkedAccountKey");
-					auto nodeKey = account.get_optional<std::string>("LinkedNodeKey");
-					if(linkedKey.has_value())
-					{
-						accountState.SupplementalPublicKeys.linked().unset();
-						accountState.SupplementalPublicKeys.linked().set(crypto::ParseKey(linkedKey.value()));
-					}
-					if(nodeKey.has_value())
-					{
-						accountState.SupplementalPublicKeys.node().unset();
-						accountState.SupplementalPublicKeys.node().set(crypto::ParseKey(nodeKey.value()));
-					}
-
-
-					for (pt::ptree::value_type&  mosaicJson: account.get_child("mosaics")) {
-						auto& mosaic = mosaicJson.second;
-						accountState.Balances.credit(
-								MosaicId(mosaic.get<std::uint64_t>("MosaicId")),
-								Amount(mosaic.get<uint64_t>("Amount"))
-						);
-					}
-
-					for (pt::ptree::value_type&  snapshotJson: account.get_child("snapshots")) {
-						auto& snapshot = snapshotJson.second;
-						accountState.Balances.addSnapshot({
-																  Amount(snapshot.get<uint64_t>("Amount")),
-																  Height(snapshot.get<uint64_t>("Height"))
-														  });
-					}
-
-					accounts.push_back(std::make_pair(accountState.Address, accountState));
-				}
-
+				std::vector<std::pair<catapult::Address , state::AccountState>> accounts;
+				test::RunInputDependentTest(m_inputpath, ParseAccount, [&accounts](const state::AccountState& accountState) {
+					accounts.push_back(std::pair(accountState.Address, accountState));
+				});
 				auto hash = CalculateRootHash(accounts);
 				CATAPULT_LOG(info) << crypto::FormatKeyAsString(*reinterpret_cast<Key*>(&hash));
 			}

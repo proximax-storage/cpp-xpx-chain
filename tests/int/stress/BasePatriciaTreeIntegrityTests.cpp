@@ -113,14 +113,14 @@ namespace catapult { namespace cache {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePrimarySerializer>(
 				"../tests/int/stress/resources/1.patricia-tree-account.dat",
-				"A7A372A6AAB162AB47EDF1CD8CAD50886C6BEE4478D7B023371AF24E87C82A3A");
+				"C7EAB2184E93ED71E6695CA7DD05611180E2918DAF7C1CB3C17BCD4BE680BA7D");
 	}
 
 	TEST(TEST_CLASS, AccountStateCacheMerkleRootIsCalculatedCorrectly_PatriciaTree_1) {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePatriciaTreeSerializer>(
 				"../tests/int/stress/resources/1.patricia-tree-account.dat",
-				"A7A372A6AAB162AB47EDF1CD8CAD50886C6BEE4478D7B023371AF24E87C82A3A");
+				"C7EAB2184E93ED71E6695CA7DD05611180E2918DAF7C1CB3C17BCD4BE680BA7D");
 	}
 
 	TEST(TEST_CLASS, AccountStateCacheMerkleRootIsCalculatedCorrectly_Primary_2) {
