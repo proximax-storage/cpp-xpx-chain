@@ -60,4 +60,9 @@ namespace catapult { namespace validators {
 	/// - each key in upload opinion is either a key of one of the current Replicators of the Drive, or a key of the Drive Owner
 	/// - each key in upload opinion appears exactly once
 	DECLARE_STATEFUL_VALIDATOR(DataModificationSingleApproval, model::DataModificationSingleApprovalNotification<1>)();
+
+	/// A validator implementation that applies to drive verification payment notifications and validates that:
+	/// - respective drive exists
+	/// - transaction signer is the owner of the respective drive
+	DECLARE_STATEFUL_VALIDATOR(VerificationPayment, model::VerificationPaymentNotification<1>)();
 }}

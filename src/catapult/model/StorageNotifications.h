@@ -42,6 +42,9 @@ namespace catapult { namespace model {
 	/// Defines a data modification single approval notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Single_Approval_v1, 0x000B);
 
+	/// Defines a verification payment notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Verification_Payment_v1, 0x000C);
+
 	/// Notification of a data modification.
 	template<VersionType version>
 	struct DataModificationNotification;
@@ -432,5 +435,37 @@ namespace catapult { namespace model {
 
 		/// Opinion about how much each Uploader has uploaded to the signer in percents.
 		const uint8_t* UploadOpinionPtr;
+	};
+
+	/// Notification of a verification payment.
+	template<VersionType version>
+	struct VerificationPaymentNotification;
+
+	template<>
+	struct VerificationPaymentNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Verification_Payment_v1_Notification;
+
+	public:
+		explicit VerificationPaymentNotification(
+				const Key& owner,
+				const Key& driveKey,
+				const Amount& verificationFeeAmount)
+				: Notification(Notification_Type, sizeof(VerificationPaymentNotification<1>))
+				, Owner(owner)
+				, DriveKey(driveKey)
+				, VerificationFeeAmount(verificationFeeAmount)
+		{}
+
+	public:
+		/// Public key of the drive owner.
+		Key Owner;
+
+		/// Key of drive.
+		Key DriveKey;
+
+		/// Amount of XPXs to transfer to the drive.
+		Amount VerificationFeeAmount;
 	};
 }}

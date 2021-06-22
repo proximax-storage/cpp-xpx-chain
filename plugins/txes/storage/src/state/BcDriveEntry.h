@@ -99,6 +99,16 @@ namespace catapult { namespace state {
 			return m_replicatorCount;
 		}
 
+		/// Sets \a verificationFeeAmount of the drive.
+		void setVerificationFeeAmount(const Amount& verificationFeeAmount) {
+			m_verificationFeeAmount = verificationFeeAmount;
+		}
+
+		/// Gets verification fee amount.
+		const Amount& verificationFeeAmount() const {
+			return m_verificationFeeAmount;
+		}
+
 		/// Gets active data modifications.
 		const ActiveDataModifications& activeDataModifications() const {
 			return m_activeDataModifications;
@@ -146,6 +156,7 @@ namespace catapult { namespace state {
 		Hash256 m_rootHash;
 		uint64_t m_size;
 		uint16_t m_replicatorCount;
+		Amount m_verificationFeeAmount;
 		ActiveDataModifications m_activeDataModifications;
 		CompletedDataModifications m_completedDataModifications;
 		std::vector<Hash256> m_activeDownloads;

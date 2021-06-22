@@ -73,6 +73,7 @@ namespace catapult { namespace state {
 		io::Write(output, driveEntry.rootHash());
 		io::Write64(output, driveEntry.size());
 		io::Write16(output, driveEntry.replicatorCount());
+		io::Write(output, driveEntry.verificationFeeAmount());
 
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
@@ -100,6 +101,7 @@ namespace catapult { namespace state {
 
 		entry.setSize(io::Read64(input));
 		entry.setReplicatorCount(io::Read16(input));
+		entry.setVerificationFeeAmount(Amount(io::Read64(input)));
 
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());

@@ -42,6 +42,9 @@ namespace catapult { namespace model {
 	/// DataModificationSingleApproval transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, DataModificationSingleApproval, 0xA);
 
+	/// VerificationPayment transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, VerificationPayment, 0xB);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif
