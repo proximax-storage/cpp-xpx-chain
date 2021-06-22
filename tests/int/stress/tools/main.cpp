@@ -24,13 +24,15 @@
 #include "catapult/state/AccountState.h"
 #include "catapult/utils/HexParser.h"
 #include "catapult/utils/HexParser.h"
+#include "catapult/types.h"
 #include "sdk/src/extensions/IdGenerator.h"
 #include "tests/int/stress/test/InputDependentTest.h"
 #include "tools/tools/ToolMain.h"
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <random>
-
+#include <catapult/tree/MemoryDataSource.h>
+#include "tests/catapult/cache/test/PatriciaTreeTestUtils.h"
 // Short alias for this namespace
 namespace pt = boost::property_tree;
 
@@ -59,7 +61,8 @@ namespace catapult { namespace tools { namespace address {
 
 		enum  Mode {
 			JsonToBinary,
-			BinaryToJson
+			BinaryToJson,
+			CalculateBinaryRoot
 		};
 
 		class PatriciaTreeGeneratorTool : public Tool {
@@ -72,12 +75,15 @@ namespace catapult { namespace tools { namespace address {
 				optionsBuilder("input,i",
 							   OptionsValue<std::string>(m_inputpath)->default_value("../tests/int/stress/resources/1.patricia-tree-account.dat"),
 							   "path to input file");
+				optionsBuilder("gtest_color",
+							   OptionsValue<std::string>(m_inputpath)->default_value("no"),
+							   "no op");
 				optionsBuilder("output,o",
 							   OptionsValue<std::string>(m_outputpath)->default_value("../tests/int/stress/resources/accounts.json"),
 							   "path to output file");
 				optionsBuilder("mode,m",
 							   boost::program_options::value<std::string>()->default_value("JsonToBinary"),
-							   "mode { JsonToBinary, BinaryToJson }");
+							   "mode { JsonToBinary, BinaryToJson, CalculateBinaryRoot }");
 			}
 
 			int run(const Options& options) override {
@@ -92,6 +98,10 @@ namespace catapult { namespace tools { namespace address {
 					}
 					case BinaryToJson: {
 						createJsonFromBinary();
+						break;
+					}
+					case CalculateBinaryRoot: {
+						calculateMerkleRoot();
 						break;
 					}
 				}
@@ -113,7 +123,14 @@ namespace catapult { namespace tools { namespace address {
 					accountJson.put("AccountType", (uint64_t)accountState.AccountType);
 					accountJson.put("OptimizedMosaicId", accountState.Balances.optimizedMosaicId().unwrap());
 					accountJson.put("TrackedMosaicId", accountState.Balances.trackedMosaicId().unwrap());
-					accountJson.put("LinkedAccountKey", crypto::FormatKeyAsString(GetLinkedPublicKey(accountState)));
+					if(HasFlag(state::AccountPublicKeys::KeyType::Linked, accountState.SupplementalPublicKeys.mask()))
+					{
+						accountJson.put("LinkedAccountKey", crypto::FormatKeyAsString(GetLinkedPublicKey(accountState)));
+					}
+					if(HasFlag(state::AccountPublicKeys::KeyType::Node, accountState.SupplementalPublicKeys.mask()))
+					{
+				  		accountJson.put("LinkedNodeKey", crypto::FormatKeyAsString(GetNodePublicKey(accountState)));
+					}
 
 					pt::ptree mosaics;
 					for (auto& pair : accountState.Balances) {
@@ -142,7 +159,76 @@ namespace catapult { namespace tools { namespace address {
 				root.add_child("accounts", children);
 				pt::write_json(m_outputpath, root);
 			}
+			/// A memory patricia tree used in cache tests.
+			using MemoryAccountPatriciaTree = tree::PatriciaTree<
+					cache::SerializerHashedKeyEncoder<cache::AccountStatePatriciaTreeSerializer>,
+					tree::MemoryDataSource>;
 
+			Hash256 CalculateRootHash(const std::vector<std::pair<catapult::Address, state::AccountState>>& pairs) {
+				tree::MemoryDataSource dataSource;
+				MemoryAccountPatriciaTree tree(dataSource);
+
+				for (const auto& pair : pairs)
+					tree.set(pair.second.Address, pair.second);
+
+				return tree.root();
+			}
+			void calculateMerkleRoot() {
+				// Load the json file in this ptree
+				pt::ptree root;
+				pt::read_json(m_inputpath, root);
+				auto children = root.get_child("accounts");
+				std::vector<std::pair<catapult::Address, state::AccountState>> accounts;
+
+				for (pt::ptree::value_type &accountJson : children) {
+					auto& account = accountJson.second;
+
+					state::AccountState accountState(
+							model::StringToAddress(account.get<std::string>("Address")),
+							Height(account.get<uint64_t>("AddressHeight"))
+					);
+					accountState.PublicKeyHeight = Height(account.get<uint64_t>("PublicKeyHeight"));
+					accountState.PublicKey = crypto::ParseKey(account.get<std::string>("PublicKey"));
+					accountState.AccountType = (state::AccountType)account.get<uint8_t>("AccountType");
+					accountState.AccountType = (state::AccountType)account.get<uint8_t>("AccountType");
+					accountState.Balances.optimize(MosaicId(account.get<uint64_t>("OptimizedMosaicId")));
+					accountState.Balances.track(MosaicId(account.get<uint64_t>("TrackedMosaicId")));
+					auto linkedKey = account.get_optional<std::string>("LinkedAccountKey");
+					auto nodeKey = account.get_optional<std::string>("LinkedNodeKey");
+					if(linkedKey.has_value())
+					{
+						accountState.SupplementalPublicKeys.linked().unset();
+						accountState.SupplementalPublicKeys.linked().set(crypto::ParseKey(linkedKey.value()));
+					}
+					if(nodeKey.has_value())
+					{
+						accountState.SupplementalPublicKeys.node().unset();
+						accountState.SupplementalPublicKeys.node().set(crypto::ParseKey(nodeKey.value()));
+					}
+
+
+					for (pt::ptree::value_type&  mosaicJson: account.get_child("mosaics")) {
+						auto& mosaic = mosaicJson.second;
+						accountState.Balances.credit(
+								MosaicId(mosaic.get<std::uint64_t>("MosaicId")),
+								Amount(mosaic.get<uint64_t>("Amount"))
+						);
+					}
+
+					for (pt::ptree::value_type&  snapshotJson: account.get_child("snapshots")) {
+						auto& snapshot = snapshotJson.second;
+						accountState.Balances.addSnapshot({
+																  Amount(snapshot.get<uint64_t>("Amount")),
+																  Height(snapshot.get<uint64_t>("Height"))
+														  });
+					}
+
+					accounts.push_back(std::make_pair(accountState.Address, accountState));
+				}
+
+				auto hash = CalculateRootHash(accounts);
+				CATAPULT_LOG(info) << crypto::FormatKeyAsString(*reinterpret_cast<Key*>(&hash));
+			}
 			void createBinaryFromJson() {
 				// Load the json file in this ptree
 				pt::ptree root;
@@ -172,7 +258,19 @@ namespace catapult { namespace tools { namespace address {
 					accountState.AccountType = (state::AccountType)account.get<uint8_t>("AccountType");
 					accountState.Balances.optimize(MosaicId(account.get<uint64_t>("OptimizedMosaicId")));
 					accountState.Balances.track(MosaicId(account.get<uint64_t>("TrackedMosaicId")));
-					accountState.SupplementalPublicKeys.linked().set(crypto::ParseKey(account.get<std::string>("LinkedAccountKey")));
+					auto linkedKey = account.get_optional<std::string>("LinkedAccountKey");
+					auto nodeKey = account.get_optional<std::string>("LinkedNodeKey");
+					if(linkedKey.has_value())
+					{
+						accountState.SupplementalPublicKeys.linked().unset();
+						accountState.SupplementalPublicKeys.linked().set(crypto::ParseKey(linkedKey.value()));
+					}
+					if(nodeKey.has_value())
+					{
+						accountState.SupplementalPublicKeys.node().unset();
+						accountState.SupplementalPublicKeys.node().set(crypto::ParseKey(nodeKey.value()));
+					}
+
 
 					for (pt::ptree::value_type&  mosaicJson: account.get_child("mosaics")) {
 						auto& mosaic = mosaicJson.second;
@@ -200,7 +298,8 @@ namespace catapult { namespace tools { namespace address {
 			bool parseEnum(const std::string& mode) {
 				std::map<std::string, Mode> table = {
 						{ "binarytojson", Mode::BinaryToJson },
-						{ "jsontobinary", Mode::JsonToBinary }
+						{ "jsontobinary", Mode::JsonToBinary },
+						{ "calculatebinaryroot", Mode::CalculateBinaryRoot }
 				};
 
 				std::string lower(mode);

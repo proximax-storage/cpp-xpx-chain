@@ -41,6 +41,7 @@ namespace catapult { namespace test {
 		cache::SerializerPlainKeyEncoder<MemoryPatriciaTreeSimpleSerializer>,
 		tree::MemoryDataSource>;
 
+
 	/// A memory base patricia tree used in cache tests.
 	using MemoryBasePatriciaTree = tree::BasePatriciaTree<
 		cache::SerializerPlainKeyEncoder<MemoryPatriciaTreeSimpleSerializer>,
