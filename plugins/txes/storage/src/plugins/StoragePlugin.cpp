@@ -91,7 +91,6 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDataModificationApprovalValidator())
 				.add(validators::CreateDataModificationCancelValidator())
 				.add(validators::CreateReplicatorOnboardingValidator())
-				.add(validators::CreateDataModificationCancelValidator())
 				.add(validators::CreateFinishDownloadValidator())
 				.add(validators::CreateDownloadPaymentValidator())
 				.add(validators::CreateStoragePaymentValidator())

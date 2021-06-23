@@ -36,12 +36,6 @@ namespace catapult { namespace state {
 
 			for (const auto& dataModification : driveEntry.activeDataModifications())
 				replicatorData.DriveModifications[driveKey].emplace_back(dataModification.Id, dataModification.DownloadDataCdi);
-
-			for (const auto& downloadChannelId : driveEntry.activeDownloads()) {
-				auto downloadChannelIter = downloadChannelCacheView->find(downloadChannelId);
-				const auto& downloadChannelEntry = downloadChannelIter.get();
-				replicatorData.Consumers[downloadChannelEntry.consumer()].second += downloadChannelEntry.downloadSize();	// TODO: Replace += with =?
-			}
 		}
 
 		return replicatorData;

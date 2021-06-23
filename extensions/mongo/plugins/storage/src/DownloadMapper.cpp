@@ -17,7 +17,6 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamDownloadTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "downloadSize" << static_cast<int64_t>(transaction.DownloadSize);
 		builder << "feedbackFeeAmount" << ToInt64(transaction.FeedbackFeeAmount);
-		builder << "listOfPublicKeysSize" << static_cast<int16_t>(transaction.ListOfPublicKeysSize);	// TODO: Remove?
 
 		auto array = builder << "listOfPublicKeys" << bson_stream::open_array;
 		auto pKey = transaction.ListOfPublicKeysPtr();

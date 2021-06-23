@@ -129,28 +129,6 @@ namespace catapult { namespace state {
 			return m_completedDataModifications;
 		}
 
-		// TODO: Remove download-related methods and fields?
-
-		/// Gets active downloads.
-		const std::vector<Hash256>& activeDownloads() const {
-			return m_activeDownloads;
-		}
-
-		/// Gets active downloads.
-		std::vector<Hash256>& activeDownloads() {
-			return m_activeDownloads;
-		}
-
-		/// Gets completed downloads.
-		const std::vector<Hash256>& completedDownloads() const {
-			return m_completedDownloads;
-		}
-
-		/// Gets completed downloads.
-		std::vector<Hash256>& completedDownloads() {
-			return m_completedDownloads;
-		}
-
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
@@ -159,8 +137,6 @@ namespace catapult { namespace state {
 		Amount m_verificationFeeAmount;
 		ActiveDataModifications m_activeDataModifications;
 		CompletedDataModifications m_completedDataModifications;
-		std::vector<Hash256> m_activeDownloads;
-		std::vector<Hash256> m_completedDownloads;
 	};
 
 	// Drive entry.

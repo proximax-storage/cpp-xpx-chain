@@ -16,7 +16,7 @@ namespace catapult { namespace observers {
 	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
 
-		downloadChannelEntry.setDownloadSize(downloadChannelEntry.downloadSize() + notification.DownloadSize);	// TODO: Add increase methods and use them instead?
-	  	downloadChannelEntry.setFeedbackFeeAmount(downloadChannelEntry.feedbackFeeAmount() + notification.FeedbackFeeAmount);
+		downloadChannelEntry.increaseDownloadSize(notification.DownloadSize);
+	  	downloadChannelEntry.increaseFeedbackFeeAmount(notification.FeedbackFeeAmount);
 	});
 }}

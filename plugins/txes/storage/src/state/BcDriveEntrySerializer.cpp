@@ -13,7 +13,7 @@ namespace catapult { namespace state {
 	namespace {
 
 		void SaveActiveDataModifications(io::OutputStream& output, const ActiveDataModifications& activeDataModifications) {
-			io::Write64(output, activeDataModifications.size());	// TODO: Change to Write16?
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(activeDataModifications.size()));
 			for (const auto& modification : activeDataModifications) {
 				io::Write(output, modification.Id);
 				io::Write(output, modification.Owner);
@@ -23,7 +23,7 @@ namespace catapult { namespace state {
 		}
 
 		void SaveCompletedDataModifications(io::OutputStream& output, const CompletedDataModifications& completedDataModifications) {
-			io::Write64(output, completedDataModifications.size());
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(completedDataModifications.size()));
 			for (const auto& modification : completedDataModifications) {
 				io::Write(output, modification.Id);
 				io::Write(output, modification.Owner);
@@ -34,7 +34,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadActiveDataModifications(io::InputStream& input, ActiveDataModifications& activeDataModifications) {
-			auto count = io::Read64(input);
+			auto count = io::Read16(input);
 			while (count--) {
 				Hash256 id;
 				io::Read(input, id);
@@ -48,7 +48,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadCompletedDataModifications(io::InputStream& input, CompletedDataModifications& completedDataModifications) {
-			auto count = io::Read64(input);
+			auto count = io::Read16(input);
 			while (count--) {
 				Hash256 id;
 				io::Read(input, id);

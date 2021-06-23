@@ -35,6 +35,11 @@ namespace catapult { namespace state {
             m_feedbackFeeAmount = feedbackFeeAmount;
         }
 
+		/// Increases feedback fee amount by \a delta.
+		void increaseFeedbackFeeAmount(const Amount& delta) {
+			m_feedbackFeeAmount = m_feedbackFeeAmount + delta;
+		}
+
         /// Gets feedback fee amount.
         const Amount& feedbackFeeAmount() const {
             return m_feedbackFeeAmount;
@@ -44,6 +49,11 @@ namespace catapult { namespace state {
         void setDownloadSize(const uint64_t& downloadSize) {
 			m_downloadSize = downloadSize;
         }
+
+		/// Increases download size of the download channel by \a delta.
+		void increaseDownloadSize(const uint64_t& delta) {
+			m_downloadSize = m_downloadSize + delta;
+		}
 
         /// Gets download size.
         const uint64_t& downloadSize() const {
