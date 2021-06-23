@@ -26,6 +26,7 @@
 #include "catapult/io/FileQueue.h"
 #include "catapult/io/RawFile.h"
 #include "catapult/utils/Logging.h"
+#include <optional>
 
 namespace catapult { namespace harvesting {
 

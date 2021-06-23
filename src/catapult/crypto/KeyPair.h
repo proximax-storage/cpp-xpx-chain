@@ -51,7 +51,11 @@ namespace catapult { namespace crypto {
 		const auto& privateKey() const {
 			return m_privateKey;
 		}
+		/// Checks whether two keypairs are the same.
+		bool operator==(const KeyPair& rhs) const { return this->m_privateKey == rhs.m_privateKey; }
 
+		/// Checks whether two keypairs are not the same.
+		bool operator!=(const KeyPair& rhs) const { return !operator==(rhs); }
 		/// Returns a public key of a key pair.
 		const auto& publicKey() const {
 			return m_publicKey;

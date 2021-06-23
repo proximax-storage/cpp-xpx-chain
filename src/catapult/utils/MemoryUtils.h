@@ -49,7 +49,12 @@ namespace catapult { namespace utils {
 	std::shared_ptr<T> UniqueToShared(std::unique_ptr<T, Deleter>&& pointer) {
 		return std::move(pointer);
 	}
-
+	/// Copies \a count bytes from \a pSrc to \a pDest.
+	/// \note This wrapper only requires valid pointers when \a count is nonzero.
+	inline void memcpy_cond(void* pDest, const void* pSrc, size_t count) {
+		if (0 < count)
+			std::memcpy(pDest, pSrc, count);
+	}
 	/// A simple memory pool for allocating memory chunks for objects or arrays of objects.
 	/// Note: constructors/destructors are not called on object memory allocation/deallocation.
 	struct Mempool {

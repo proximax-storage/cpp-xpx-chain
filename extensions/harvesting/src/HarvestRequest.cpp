@@ -27,7 +27,7 @@ namespace catapult { namespace harvesting {
 
 	size_t HarvestRequest::DecryptedPayloadSize() {
 		// encrypted harvester signing private key
-		return Key::Size;
+		return 2 * Key::Size;
 	}
 
 	size_t HarvestRequest::EncryptedPayloadSize() {

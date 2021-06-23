@@ -91,7 +91,7 @@ namespace catapult { namespace harvesting {
 		auto config = HarvestingConfiguration::LoadFromPath("../resources");
 
 		// Assert:
-		EXPECT_EQ("", config.HarvestKey);
+		EXPECT_EQ("0000000000000000000000000000000000000000000000000000000000000000", config.HarvestKey);
 		EXPECT_FALSE(config.IsAutoHarvestingEnabled);
 		EXPECT_EQ(5u, config.MaxUnlockedAccounts);
 		EXPECT_EQ(DelegatePrioritizationPolicy::Importance, config.DelegatePrioritizationPolicy);

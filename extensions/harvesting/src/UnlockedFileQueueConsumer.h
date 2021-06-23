@@ -23,7 +23,8 @@
 #include "HarvestRequest.h"
 #include "catapult/functions.h"
 #include <string>
-
+#include <optional>
+#include <catapult/crypto/KeyPair.h>
 namespace catapult { namespace config { class CatapultDirectory; } }
 
 namespace catapult { namespace harvesting {
