@@ -16,7 +16,9 @@ namespace catapult { namespace observers {
 		driveCache.remove(notification.DriveKey);
 
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-		replicatorCache.remove(notification.DriveKey);
+		auto replicatorIter = replicatorCache.find(notification.DriveKey);
+		auto& replicatorEntry = replicatorIter.get();
+		replicatorEntry.drives().pop_back();
 		
 	});
 }}
