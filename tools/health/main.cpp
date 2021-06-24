@@ -27,6 +27,20 @@
 #include "catapult/utils/DiagnosticCounterId.h"
 #include "catapult/utils/Functional.h"
 
+//prometheus
+#include <array>
+#include <chrono>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <thread>
+
+#include "prometheus/client_metric.h"
+#include "prometheus/counter.h"
+#include "prometheus/exposer.h"
+#include "prometheus/family.h"
+#include "prometheus/registry.h"
+
 namespace catapult { namespace tools { namespace health {
 
 	namespace {
@@ -122,7 +136,20 @@ namespace catapult { namespace tools { namespace health {
 			}
 		}
 
+		using namespace prometheus;
 		void PrettyPrintSummary(const std::vector<NodeInfoPointer>& nodeInfos) {
+			//prometheus : create a http server running on port 8080
+			Exposer exposer{"127.0.0.1:8080"};
+
+			//prometheus : create a metric registry
+			auto registry = std::make_shared<Registry>();
+
+			//prometheus : add a counter family to the registry
+			auto& packet_counter = BuildCounter()
+								.Name("observed_packets_total")
+								.Help("Number of observed packets")
+								.Register(*registry);
+
 			Height maxChainHeight;
 			size_t maxNodeNameSize = 0;
 			size_t maxHeightSize = 0;
@@ -139,6 +166,19 @@ namespace catapult { namespace tools { namespace health {
 						<< " [" << (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P") << "]"
 						<< " at height " << std::setw(static_cast<int>(maxHeightSize)) << pNodeInfo->ChainHeight
 						<< " with score " << pNodeInfo->ChainScore;
+
+				//prometheus : add metric to packet counter family
+				auto& bc_counter = packet_counter.Add({
+					{"maxNodeNameSize", static_cast<int>(maxNodeNameSize)},
+					{"NodeInfo", pNodeInfo->Node},
+					{"Roles", (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P")},
+					{"MaxHeightChain", static_cast<int>(maxHeightSize)},
+					{"Heigh", pNodeInfo->ChainHeight},
+					{"Score", pNodeInfo->ChainScore}
+					});
+
+				//exposer scrape registry on incoming scrapes
+				exposer.RegisterCollectable(registry);
 			}
 		}
 
