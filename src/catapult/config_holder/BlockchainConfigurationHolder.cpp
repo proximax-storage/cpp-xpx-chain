@@ -36,6 +36,14 @@ namespace catapult { namespace config {
 		m_configs.insert({ Height(0), config });
 	}
 
+	BlockchainConfigurationHolder::BlockchainConfigurationHolder(const BlockchainConfiguration& config, cache::CatapultCache* pCache, const Height& height)
+			:  m_pCache(nullptr)
+			, m_pluginInitializer([](auto&) {}){
+
+
+		m_configs.insert({ height, config });
+	}
+
 	boost::filesystem::path BlockchainConfigurationHolder::GetResourcesPath(int argc, const char** argv) {
 		return boost::filesystem::path(argc > 1 ? argv[1] : "..") / "resources";
 	}

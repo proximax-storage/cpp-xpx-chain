@@ -21,7 +21,7 @@ namespace catapult { namespace config {
 
 		explicit BlockchainConfigurationHolder(cache::CatapultCache* pCache =  nullptr);
 		explicit BlockchainConfigurationHolder(const BlockchainConfiguration& config);
-
+		explicit BlockchainConfigurationHolder(const BlockchainConfiguration& config, cache::CatapultCache* pCache, const Height& height);
 		virtual ~BlockchainConfigurationHolder() = default;
 
 	public:

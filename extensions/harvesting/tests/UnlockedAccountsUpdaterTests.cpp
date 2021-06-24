@@ -58,10 +58,9 @@ namespace catapult { namespace harvesting {
 					, m_primaryMainAccountPublicKey(mainKeyPair.publicKey())
 					, m_primarySigningPublicKey(SeedOptions::Remote == seedOptions ? remoteKeyPair.publicKey() : mainKeyPair.publicKey())
 					, m_encryptionKeyPair(test::GenerateKeyPair())
-					, m_updater(m_cache, m_unlockedAccounts, m_primarySigningPublicKey, m_encryptionKeyPair, CreateBlockChainConfigurationHolder(m_config), m_dataDirectory) {
+					, m_updater(m_cache, m_unlockedAccounts, m_primarySigningPublicKey, m_encryptionKeyPair, CreateBlockChainConfigurationHolder(Default_Height, &m_cache, m_config), m_dataDirectory) {
 				if (SeedOptions::Remote == seedOptions) {
-					auto descriptor = crypto::KeyPair(test::GenerateKeyPair());
-					m_unlockedAccounts.modifier().add(std::move(descriptor));
+					m_unlockedAccounts.modifier().add(std::move(remoteKeyPair));
 					addAccount(m_primaryMainAccountPublicKey, m_primarySigningPublicKey, Amount(1234));
 
 					modifyAccount(m_primaryMainAccountPublicKey, [](auto& accountState) {
@@ -71,8 +70,7 @@ namespace catapult { namespace harvesting {
 					return;
 				}
 
-				auto descriptor = crypto::KeyPair(test::GenerateKeyPair());
-				m_unlockedAccounts.modifier().add(std::move(descriptor));
+				m_unlockedAccounts.modifier().add(std::move(mainKeyPair));
 
 				if (SeedOptions::Address == seedOptions) {
 					auto address = model::PublicKeyToAddress(m_primarySigningPublicKey, m_config.Immutable.NetworkIdentifier);
@@ -232,12 +230,27 @@ namespace catapult { namespace harvesting {
 
 		private:
 			static config::BlockchainConfiguration CreateBlockChainConfiguration() {
-				static auto blockChainConfig = config::BlockchainConfiguration::Uninitialized();
-				return blockChainConfig;
+				config::ImmutableConfiguration immutableConfig = config::ImmutableConfiguration::Uninitialized();
+				immutableConfig.NetworkIdentifier = model::NetworkIdentifier::Private_Test;
+				immutableConfig.ShouldEnableVerifiableReceipts = false;
+				immutableConfig.ShouldEnableVerifiableState = false;
+				immutableConfig.HarvestingMosaicId = Harvesting_Mosaic_Id;
+				auto networkConfig = model::NetworkConfiguration::Uninitialized();
+				networkConfig.MinHarvesterBalance = Amount(1000);
+				networkConfig.ImportanceGrouping = 100;
+
+				auto config = config::BlockchainConfiguration(
+						immutableConfig,
+						networkConfig,
+						config::NodeConfiguration::Uninitialized(),
+						config::LoggingConfiguration::Uninitialized(),
+						config::UserConfiguration::Uninitialized(),
+						config::ExtensionsConfiguration::Uninitialized(),
+						config::InflationConfiguration::Uninitialized());
+				return config;
 			}
-			static std::shared_ptr<config::BlockchainConfigurationHolder>  CreateBlockChainConfigurationHolder(const config::BlockchainConfiguration& config) {
-				static auto blockChainCHolder = config::BlockchainConfigurationHolder(config);
-				return std::make_shared<config::BlockchainConfigurationHolder>(config);
+			static std::shared_ptr<config::BlockchainConfigurationHolder>  CreateBlockChainConfigurationHolder(const Height& height, cache::CatapultCache* cache, const config::BlockchainConfiguration& config) {
+				return std::make_shared<config::BlockchainConfigurationHolder>(config, cache, height);
 			}
 
 		private:

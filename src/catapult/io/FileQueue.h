@@ -73,7 +73,7 @@ namespace catapult { namespace io {
 		void skip(uint32_t count);
 
 	private:
-		bool process(const consumer<const std::string&>& processFilename);
+		bool process(const predicate<const std::string&>& processFilename);
 
 	private:
 		boost::filesystem::path m_directory;

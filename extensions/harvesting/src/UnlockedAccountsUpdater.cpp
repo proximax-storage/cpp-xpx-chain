@@ -94,7 +94,8 @@ namespace catapult { namespace harvesting {
 					cache::ImportanceView view(readOnlyAccountStateCache);
 
 					auto address = model::PublicKeyToAddress(descriptor, readOnlyAccountStateCache.networkIdentifier());
-					auto shouldPruneAccount = !view.canHarvest(descriptor, height, m_ConfigHolder->Config(height).Network.MinHarvesterBalance);
+					auto minHarvesterBalance = m_ConfigHolder->Config(height).Network.MinHarvesterBalance;
+					auto shouldPruneAccount = !view.canHarvest(descriptor, height, minHarvesterBalance );
 
 					if (shouldPruneAccount && m_signingPublicKey == descriptor) {
 						CATAPULT_LOG_THROTTLE(warning, utils::TimeSpan::FromHours(6).millis())

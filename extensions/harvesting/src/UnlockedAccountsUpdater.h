@@ -59,6 +59,6 @@ namespace catapult { namespace harvesting {
 		config::CatapultDataDirectory m_dataDirectory;
 		std::string m_harvestersFilename;
 		UnlockedAccountsStorage m_unlockedAccountsStorage;
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& m_configHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_configHolder;
 	};
 }}
