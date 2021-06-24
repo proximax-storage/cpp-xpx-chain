@@ -55,6 +55,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "rootHash" << ToBinary(entry.rootHash())
 				<< "size" << static_cast<int64_t>(entry.size())
 				<< "replicatorCount" << static_cast<int32_t>(entry.replicatorCount())
+				<< "storageUnits" << ToInt64(entry.storageUnits())
 				<< "verificationFeeAmount" << ToInt64(entry.verificationFeeAmount());
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
@@ -122,6 +123,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		entry.setSize(static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
 		entry.setReplicatorCount(static_cast<uint16_t>(dbDriveEntry["replicatorCount"].get_int32()));
+		entry.setStorageUnits(Amount(dbDriveEntry["storageUnits"].get_int64()));
 		entry.setVerificationFeeAmount(Amount(dbDriveEntry["verificationFeeAmount"].get_int64()));
 
 		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);

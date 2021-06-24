@@ -99,9 +99,29 @@ namespace catapult { namespace state {
 			return m_replicatorCount;
 		}
 
+		/// Sets \a storageUnits of the drive.
+		void setStorageUnits(const Amount& storageUnits) {
+			m_storageUnits = storageUnits;
+		}
+
+		/// Increases storage units by \a delta.
+		void increaseStorageUnits(const Amount& delta) {
+			m_storageUnits = m_storageUnits + delta;
+		}
+
+		/// Gets storage units.
+		const Amount& storageUnits() const {
+			return m_storageUnits;
+		}
+
 		/// Sets \a verificationFeeAmount of the drive.
 		void setVerificationFeeAmount(const Amount& verificationFeeAmount) {
 			m_verificationFeeAmount = verificationFeeAmount;
+		}
+
+		/// Increases verification fee amount by \a delta.
+		void increaseVerificationFeeAmount(const Amount& delta) {
+			m_verificationFeeAmount = m_verificationFeeAmount + delta;
 		}
 
 		/// Gets verification fee amount.
@@ -134,6 +154,7 @@ namespace catapult { namespace state {
 		Hash256 m_rootHash;
 		uint64_t m_size;
 		uint16_t m_replicatorCount;
+		Amount m_storageUnits;
 		Amount m_verificationFeeAmount;
 		ActiveDataModifications m_activeDataModifications;
 		CompletedDataModifications m_completedDataModifications;
