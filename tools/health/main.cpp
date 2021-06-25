@@ -167,18 +167,18 @@ namespace catapult { namespace tools { namespace health {
 						<< " at height " << std::setw(static_cast<int>(maxHeightSize)) << pNodeInfo->ChainHeight
 						<< " with score " << pNodeInfo->ChainScore;
 
-				// //prometheus : add metric to packet counter family
-				// auto& bc_counter = packet_counter.Add({
-				// 	{"maxNodeNameSize", static_cast<int>(maxNodeNameSize)},
-				// 	{"NodeInfo", pNodeInfo->Node},
-				// 	{"Roles", (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P")},
-				// 	{"MaxHeightChain", static_cast<int>(maxHeightSize)},
-				// 	{"Heigh", pNodeInfo->ChainHeight},
-				// 	{"Score", pNodeInfo->ChainScore}
-				// 	});
+				//prometheus : add metric to packet counter family
+				auto& bc_counter = packet_counter.Add({
+					{"maxNodeNameSize", static_cast<int>(maxNodeNameSize)},
+					{"NodeInfo", pNodeInfo->Node},
+					{"Roles", (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P")},
+					{"MaxHeightChain", static_cast<int>(maxHeightSize)},
+					{"Heigh", pNodeInfo->ChainHeight},
+					{"Score", pNodeInfo->ChainScore}
+					});
 
-				// //exposer scrape registry on incoming scrapes
-				// exposer.RegisterCollectable(registry);
+				//exposer scrape registry on incoming scrapes
+				exposer.RegisterCollectable(registry);
 			}
 		}
 
