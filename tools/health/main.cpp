@@ -169,16 +169,13 @@ namespace catapult { namespace tools { namespace health {
 
 				//prometheus : add metric to packet counter family
 				auto& bc_counter = packet_counter.Add({
-					{"maxNodeNameSize", static_cast<int>(maxNodeNameSize)},
-					{"NodeInfo", pNodeInfo->Node},
-					{"Roles", (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P")},
-					{"MaxHeightChain", static_cast<int>(maxHeightSize)},
 					{"Heigh", pNodeInfo->ChainHeight},
 					{"Score", pNodeInfo->ChainScore}
 					});
 
 				//exposer scrape registry on incoming scrapes
 				exposer.RegisterCollectable(registry);
+				bc_counter.Increment();
 			}
 		}
 
