@@ -16,6 +16,10 @@ namespace catapult { namespace validators {
 
 	void VerificationStatus(const state::BcDriveEntry& driveEntry, const validators::ValidatorContext& context, bool& started, bool& active);
 
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(StoragePluginConfig, model::PluginConfigNotification<1>)();
+
 	/// A validator implementation that applies to drive prepare drive notifications and validates that:
 	/// - drive size >= minDriveSize
 	/// - number of replicators >= minReplicatorCount
