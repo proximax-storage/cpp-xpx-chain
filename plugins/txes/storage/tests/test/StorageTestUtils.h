@@ -160,4 +160,14 @@ namespace catapult { namespace test {
         return pTransaction;
     }
 
+    /// Creates a data modification transaction.
+    template<typename TTransaction>
+    model::UniqueEntityPtr<TTransaction> CreateDataModificationTransaction() {
+        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DataModification);
+        pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+        pTransaction->DownloadDataCdi = test::GenerateRandomByteArray<Hash256>();
+        pTransaction->UploadSize = test::Random();
+        return pTransaction;
+    }
+
 }}
