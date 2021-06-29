@@ -33,12 +33,14 @@ namespace catapult { namespace config {
 					{
 						"account",
 						{
-							{ "bootKey", "boot-key" }
+							{ "bootKey", "boot-key" },
+							{"enableDelegatedHarvestersAutoDetection", "true"}
 						}
 					},
 					{
 						"storage",
 						{
+							{"certificateDirectory", "../certificate"},
 							{ "dataDirectory", "./db" },
 							{ "pluginsDirectory", "./ext" }
 						}

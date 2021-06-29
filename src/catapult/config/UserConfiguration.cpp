@@ -36,17 +36,20 @@ namespace catapult { namespace config {
 #define LOAD_ACCOUNT_PROPERTY(NAME) LOAD_PROPERTY("account", NAME)
 
 		LOAD_ACCOUNT_PROPERTY(BootKey);
+		LOAD_ACCOUNT_PROPERTY(EnableDelegatedHarvestersAutoDetection);
 
 #undef LOAD_ACCOUNT_PROPERTY
+
 
 #define LOAD_STORAGE_PROPERTY(NAME) LOAD_PROPERTY("storage", NAME)
 
 		LOAD_STORAGE_PROPERTY(DataDirectory);
 		LOAD_STORAGE_PROPERTY(PluginsDirectory);
+		LOAD_STORAGE_PROPERTY(CertificateDirectory);
 
 #undef LOAD_STORAGE_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 3);
+		utils::VerifyBagSizeLte(bag, 5);
 		return config;
 	}
 

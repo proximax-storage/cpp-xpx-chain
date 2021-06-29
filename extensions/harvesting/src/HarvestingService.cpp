@@ -115,7 +115,7 @@ namespace catapult { namespace harvesting {
 					CreateHarvesterTaskOptions(state),
 					std::make_unique<Harvester>(cache, pConfigHolder, beneficiary, *pUnlockedAccounts, blockGenerator));
 
-			return thread::CreateNamedTask("harvesting task", [&cache, &pUnlockedAccountsUpdater, pHarvesterTask, state]() {
+			return thread::CreateNamedTask("harvesting task", [&cache, pUnlockedAccountsUpdater, pHarvesterTask, state]() {
 				// update unlocked accounts by pruning and filtering
 			  	pUnlockedAccountsUpdater->update();
 

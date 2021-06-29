@@ -1,6 +1,7 @@
 /**
-*** Copyright (c) 2016-present,
-*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
+*** Copyright (c) 2016-2019, Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp.
+*** Copyright (c) 2020-present, Jaguar0625, gimre, BloodyRookie.
+*** All rights reserved.
 ***
 *** This file is part of Catapult.
 ***
@@ -19,23 +20,16 @@
 **/
 
 #pragma once
-#include <array>
-#include <cstdint>
-#include <vector>
+#include "src/model/TransferNotifications.h"
+#include "catapult/observers/ObserverTypes.h"
 
-namespace catapult { namespace state {
+namespace catapult { namespace config { class CatapultDirectory; } }
 
-	/// Converts \a value to a vector.
-	template<typename T>
-	auto ToVector(T value) {
-		std::vector<uint8_t> vec(sizeof(T));
-		reinterpret_cast<T&>(vec[0]) = value;
-		return vec;
-	}
+namespace catapult { namespace observers {
 
-	/// Converts an array (\a value) to a vector.
-	template<std::size_t N>
-	auto ToVector(const std::array<uint8_t, N>& value) {
-		return std::vector<uint8_t>(value.cbegin(), value.cend());
-	}
+	/// Observes transfer messages starting with \a marker and sent to \a recipient and writes them to \a directory.
+	DECLARE_OBSERVER(TransferMessageV2, model::TransferMessageNotification<2>)(
+			uint64_t marker,
+			const Address& recipient,
+			const config::CatapultDirectory& directory);
 }}

@@ -80,6 +80,11 @@ namespace catapult { namespace harvesting {
 					, m_config(CreateHarvestingConfiguration(false)) {
 				setHooks();
 			}
+			explicit TestContext(cache::CatapultCache&& cache, const HarvestingConfiguration& config, const supplier<Timestamp>& timeSupplier = &utils::NetworkTime)
+					: BaseType(std::move(cache), timeSupplier)
+					, m_config(config) {
+				setHooks();
+			}
 
 		public:
 			Key harvesterKey() const {
@@ -98,7 +103,9 @@ namespace catapult { namespace harvesting {
 			void setMinHarvesterBalance(Amount balance) {
 				const_cast<model::NetworkConfiguration&>(testState().state().config().Network).MinHarvesterBalance = balance;
 			}
-
+			Amount getMinHarvesterBalance() {
+				return testState().state().config().Network.MinHarvesterBalance;
+			}
 			void enableVerifiableState() {
 				auto& config = testState().state().config();
 				const_cast<bool&>(config.Node.ShouldUseCacheDatabaseStorage) = true;
@@ -194,23 +201,14 @@ namespace catapult { namespace harvesting {
 			EXPECT_EQ(0u, context.counter("UNLKED ACCTS"));
 		});
 	}
-
-	TEST(TEST_CLASS, UnlockedAccountsServiceIsRegisteredProperlyWhenAutoHarvestingIsDisabledAndHarvesterPrivateKeyIsEmpty) {
-		// Arrange:
-		auto config = CreateHarvestingConfiguration(false);
-		config.HarvestKey.clear();
-
-		TestContext context(config);
-		RunUnlockedAccountsServiceTest(context, [&context](const auto&) {
-		  // Assert: no accounts were unlocked
-		  EXPECT_EQ(0u, context.counter("UNLKED ACCTS"));
-		});
-	}
 	// endregion
 
 	// region unlocked accounts management
 
 	namespace {
+		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
+		constexpr auto Importance_Grouping = 234u;
+		constexpr auto Importance_Grouping_Delegate_Testing = 0u;
 		auto CreateKeyPairs(size_t numKeyPairs) {
 			std::vector<crypto::KeyPair> keyPairs;
 			for (auto i = 0u; i < numKeyPairs; ++i)
@@ -236,10 +234,13 @@ namespace catapult { namespace harvesting {
 			cache.commit(Height(100));
 		}
 
-		std::vector<crypto::KeyPair> AddAccountsWithImportances(TestContext& context, const std::vector<Importance>& importances) {
-			auto keyPairs = CreateKeyPairs(importances.size());
-			auto iter = importances.cbegin();
-			AddAccounts(context, keyPairs);
+		std::vector<crypto::KeyPair> AddAccountsWithImportances(TestContext& context, const std::vector<Amount>& balances) {
+			auto keyPairs = CreateKeyPairs(balances.size());
+			auto iter = balances.cbegin();
+			AddAccounts(context, keyPairs, [iter](auto& accountState) mutable {
+			  accountState.Balances.credit(Harvesting_Mosaic_Id, Amount(*iter), Height(100));
+			  ++iter;
+			});
 
 			return keyPairs;
 		}
@@ -249,12 +250,17 @@ namespace catapult { namespace harvesting {
 				std::initializer_list<size_t> expectedIndexes) {
 			// Arrange:
 			auto config = CreateHarvestingConfiguration(true);
+
 			config.MaxUnlockedAccounts = 5;
 			config.DelegatePrioritizationPolicy = prioritizationPolicy;
+			test::MutableBlockchainConfiguration blockchainConfiguration;
 
-			TestContext context(config);
+			blockchainConfiguration.Immutable.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			blockchainConfiguration.Network.ImportanceGrouping = Importance_Grouping_Delegate_Testing;
+			auto cache = test::CreateEmptyCatapultCache(blockchainConfiguration.ToConst(), cache::CacheConfiguration());
+			TestContext context(std::move(cache), config);
 			auto keyPairs = AddAccountsWithImportances(context, {
-					Importance(100), Importance(200), Importance(50), Importance(150), Importance(250)
+					Amount(100), Amount(200), Amount(50), Amount(150), Amount(250)
 			});
 
 			RunUnlockedAccountsServiceTest(context, [&expectedIndexes, &context, &keyPairs](auto& unlockedAccounts) {
@@ -281,7 +287,7 @@ namespace catapult { namespace harvesting {
 	}
 
 	TEST(TEST_CLASS, UnlockedAccountsServiceIsRegisteredProperlyWhenAutoHarvestingIsEnabledWithImportancePrioritizationPolicy) {
-		RunUnlockedAccountsPrioritizationTest(DelegatePrioritizationPolicy::Importance, { 0, 1, 3, 4 });
+		RunUnlockedAccountsPrioritizationTest(DelegatePrioritizationPolicy::Importance, { 4, 1, 3, 0 });
 	}
 	namespace {
 		void AddHarvestersFileRequests(const std::string& filename, const Key& nodeOwnerPublicKey, size_t numRequests) {
@@ -325,8 +331,8 @@ namespace catapult { namespace harvesting {
 
 	namespace {
 		constexpr Amount Account_Balance(1000);
-		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
-		constexpr auto Importance_Grouping = 234u;
+
+
 
 		auto CreateCacheWithAccount(
 				const cache::CacheConfiguration& cacheConfig,

@@ -47,7 +47,11 @@ namespace catapult { namespace plugins {
 				}
 
 				if (transaction.MessageSize)
-					sub.notify(TransferMessageNotification<1>(transaction.MessageSize));
+					sub.notify(TransferMessageNotification<2>(
+							transaction.Signer,
+							transaction.Recipient,
+							transaction.MessageSize,
+							transaction.MessagePtr()));
 
 				if (transaction.MosaicsCount)
 					sub.notify(TransferMosaicsNotification<1>(transaction.MosaicsCount, pMosaics));

@@ -28,6 +28,12 @@ namespace catapult { namespace config {
 	/// User configuration settings.
 	struct UserConfiguration {
 	public:
+		/// \c true if potential delegated harvesters should be automatically detected.
+		bool EnableDelegatedHarvestersAutoDetection;
+
+		/// Certificate directory.
+		std::string CertificateDirectory;
+
 		/// Boot key.
 		std::string BootKey;
 

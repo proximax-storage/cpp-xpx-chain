@@ -20,7 +20,7 @@
 
 #include "src/state/PropertyUtils.h"
 #include "tests/TestHarness.h"
-
+#include <cstdint>
 namespace catapult { namespace state {
 
 #define TEST_CLASS PropertyUtilsTests

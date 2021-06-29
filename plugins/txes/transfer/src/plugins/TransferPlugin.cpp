@@ -18,11 +18,15 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <catapult/model/Address.h>
 #include "TransferPlugin.h"
 #include "TransferTransactionPlugin.h"
 #include "src/config/TransferConfiguration.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/PluginManager.h"
+#include "catapult/crypto/KeyPair.h"
+#include "catapult/config/CatapultDataDirectory.h"
+#include "src/observers/Observers.h"
 
 namespace catapult { namespace plugins {
 
@@ -42,6 +46,17 @@ namespace catapult { namespace plugins {
 			builder
 				.add(validators::CreateTransferMessageValidator())
 				.add(validators::CreateTransferMosaicsValidator());
+		});
+		if (!manager.configHolder()->Config().User.EnableDelegatedHarvestersAutoDetection)
+			return;
+
+
+		//auto encryptionPrivateKeyPemFilename = config::GetNodePrivateKeyPemFilename(manager.userConfig().CertificateDirectory);
+		//auto encryptionPublicKey = crypto::ReadPublicKeyFromPrivateKeyPemFile(encryptionPrivateKeyPemFilename);
+		auto recipient = model::PublicKeyToAddress(crypto::KeyPair::FromString(manager.configHolder()->Config().User.BootKey).publicKey(), manager.configHolder()->Config().Immutable.NetworkIdentifier);
+		auto dataDirectory = config::CatapultDataDirectory(manager.configHolder()->Config().User.DataDirectory);
+		manager.addObserverHook([recipient, dataDirectory](auto& builder) {
+		  builder.add(observers::CreateTransferMessageV2Observer(0xE201735761802AFE, recipient, dataDirectory.dir("transfer_message")));
 		});
 	}
 }}

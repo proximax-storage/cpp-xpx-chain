@@ -33,7 +33,11 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessage)
 
 	namespace {
-		void AssertValidationResult(ValidationResult expectedResult, uint16_t messageSize, uint16_t maxMessageSize) {
+		template<VersionType version>
+		void AssertValidationResult(ValidationResult expectedResult, uint16_t messageSize, uint16_t maxMessageSize);
+
+		template<>
+		void AssertValidationResult<1>(ValidationResult expectedResult, uint16_t messageSize, uint16_t maxMessageSize) {
 			// Arrange:
 			auto notification = model::TransferMessageNotification<1>(messageSize);
 			auto pluginConfig = config::TransferConfiguration::Uninitialized();
@@ -50,20 +54,56 @@ namespace catapult { namespace validators {
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
 		}
+		template<>
+		void AssertValidationResult<2>(ValidationResult expectedResult, uint16_t messageSize, uint16_t maxMessageSize) {
+			// Arrange:
+
+			auto notification = model::TransferMessageNotification<2>(Key(), UnresolvedAddress(), messageSize, nullptr);
+			auto pluginConfig = config::TransferConfiguration::Uninitialized();
+			pluginConfig.MaxMessageSize = maxMessageSize;
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
+			auto config = mutableConfig.ToConst();
+			auto cache = test::CreateEmptyCatapultCache(config);
+			auto pValidator = CreateTransferMessageV2Validator();
+
+			// Act:
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
+
+			// Assert:
+			EXPECT_EQ(expectedResult, result);
+		}
 	}
 
 	TEST(TEST_CLASS, SuccessWhenValidatingNotificationWithMessageSizeLessThanMax) {
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, 100, 1234);
+		AssertValidationResult<1>(ValidationResult::Success, 100, 1234);
 	}
 
 	TEST(TEST_CLASS, SuccessWhenValidatingNotificationWithMessageSizeEqualToMax) {
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, 1234, 1234);
+		AssertValidationResult<1>(ValidationResult::Success, 1234, 1234);
 	}
 
 	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithMessageSizeGreaterThanMax) {
 		// Assert:
-		AssertValidationResult(Failure_Transfer_Message_Too_Large, 1235, 1234);
+		AssertValidationResult<1>(Failure_Transfer_Message_Too_Large, 1235, 1234);
+	}
+
+	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessageV2)
+
+	TEST(TEST_CLASS, V2SuccessWhenValidatingNotificationWithMessageSizeLessThanMax) {
+		// Assert:
+		AssertValidationResult<2>(ValidationResult::Success, 100, 1234);
+	}
+
+	TEST(TEST_CLASS, V2SuccessWhenValidatingNotificationWithMessageSizeEqualToMax) {
+		// Assert:
+		AssertValidationResult<2>(ValidationResult::Success, 1234, 1234);
+	}
+
+	TEST(TEST_CLASS, V2FailureWhenValidatingNotificationWithMessageSizeGreaterThanMax) {
+		// Assert:
+		AssertValidationResult<2>(Failure_Transfer_Message_Too_Large, 1235, 1234);
 	}
 }}

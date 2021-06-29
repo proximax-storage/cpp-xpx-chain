@@ -23,12 +23,13 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::TransferMessageNotification<1>;
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(TransferMessage, model::TransferMessageNotification<1>, [](const auto& notification, const auto& context) {
+	  const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::TransferConfiguration>();
+	  return notification.MessageSize > pluginConfig.MaxMessageSize ? Failure_Transfer_Message_Too_Large : ValidationResult::Success;
+	});
 
-	DECLARE_STATEFUL_VALIDATOR(TransferMessage, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(TransferMessage, [](const auto& notification, const auto& context) {
-			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::TransferConfiguration>();
-			return notification.MessageSize > pluginConfig.MaxMessageSize ? Failure_Transfer_Message_Too_Large : ValidationResult::Success;
-		});
-	}
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(TransferMessageV2, model::TransferMessageNotification<2>, [](const auto& notification, const auto& context) {
+	  const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::TransferConfiguration>();
+	  return notification.MessageSize > pluginConfig.MaxMessageSize ? Failure_Transfer_Message_Too_Large : ValidationResult::Success;
+	});
 }}

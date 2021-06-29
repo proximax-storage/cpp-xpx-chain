@@ -35,14 +35,14 @@ namespace catapult { namespace state {
 			if (height > importanceGroupingHeight) {
 				effectiveHeight = height - importanceGroupingHeight;
 			}
+			auto minElement = std::min_element(
+					snapshots.begin(),
+					snapshots.end(),
+					[&effectiveHeight](const model::BalanceSnapshot& l, const model::BalanceSnapshot& r){
+					  return l.BalanceHeight <= effectiveHeight || l.Amount < r.Amount;
+					});
 
-			return std::min_element(
-				snapshots.begin(),
-				snapshots.end(),
-				[&effectiveHeight](const model::BalanceSnapshot& l, const model::BalanceSnapshot& r){
-					return l.BalanceHeight <= effectiveHeight || l.Amount < r.Amount;
-				}
-			);
+			return minElement;
 		}
 	}
 
