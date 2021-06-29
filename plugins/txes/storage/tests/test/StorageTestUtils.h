@@ -62,6 +62,7 @@ namespace catapult { namespace test {
 		    }
     };
 
+    /// Creates test drive entry.
     state::DownloadChannelEntry CreateDownloadChannelEntry(
         Hash256 id = test::GenerateRandomByteArray<Hash256>(),
         Key consumer = test::GenerateRandomByteArray<Key>(),
@@ -70,8 +71,10 @@ namespace catapult { namespace test {
         Amount storageUnits  = test::GenerateRandomByteArray<Amount>()
     );
 
+    /// Verifies that \a entry1 is equivalent to \a entry2.
     void AssertEqualDownloadChannelData(const state::DownloadChannelEntry& expectedEntry, const state::DownloadChannelEntry& entry);
 
+    /// Cache factory for creating a catapult cache composed of download channel cache and core caches.
     struct DownloadChannelFactory {
         private:
             static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
@@ -96,6 +99,43 @@ namespace catapult { namespace test {
                 CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
                 return cache::CatapultCache(std::move(subCaches));
             }
+    };
+
+    /// Creates test drive entry.
+    state::ReplicatorEntry CreateReplicatorEntry(
+        Key key = test::GenerateRandomByteArray<Key>(),
+        Amount capacity = test::GenerateRandomByteArray<Amount>(),
+		uint16_t drivesCount = 2
+    );
+
+    /// Verifies that \a entry1 is equivalent to \a entry2.
+    void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry);
+
+     /// Cache factory for creating a catapult cache composed of replicator cache and core caches.
+    struct ReplicatorFactory {
+        private:
+            static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
+                auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id));
+                std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
+			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			    subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
+			    subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
+                subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
+			    return subCaches;
+            }
+
+        public:
+            /// Creates an empty catapult cache around default configuration.
+            static cache::CatapultCache Create() {
+                return Create(test::MutableBlockchainConfiguration().ToConst());
+            }
+
+            /// Creates an empty catapult cache around \a config.
+            static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
+                auto subCaches = CreateSubCachesWithDriveCache(config);
+                CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
+                return cache::CatapultCache(std::move(subCaches));
+            }  
     };
 
 }}

@@ -134,10 +134,31 @@ namespace catapult { namespace test {
     }
 
     state::ReplicatorEntry CreateReplicatorEntry(
+            Key key,
+            Amount capacity,
+            uint16_t drivesCount) {
+        state::ReplicatorEntry entry(key);
+        entry.setCapacity(capacity);
+        for (auto dC = 0u; dC < drivesCount; ++dC)
+            entry.drives().emplace_back(test::GenerateRandomByteArray<Key>());
 
-    ) {
-        
+        return entry;
     }
+
+    void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry) {
+        EXPECT_EQ(expectedEntry.key(), entry.key());
+        EXPECT_EQ(expectedEntry.capacity(), entry.capacity());
+
+        const auto& expectedDrives = expectedEntry.drives();
+		const auto& drives = entry.drives();
+        ASSERT_EQ(expectedDrives.size(), drives.size());
+        for (auto i = 0u; i < drives.size(); ++i) {
+            const auto& expectedDrive = expectedDrives[i];
+			const auto& drive = drives[i];
+            EXPECT_EQ(expectedDrive.size(), drive.size());
+        }
+    }
+
 }}
 
 
