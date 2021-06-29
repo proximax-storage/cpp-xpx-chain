@@ -180,4 +180,25 @@ namespace catapult { namespace test {
         return pTransaction;
     }
 
+    /// Creates a data modification approval transaction.
+    template<typename TTransaction>
+    model::UniqueEntityPtr<TTransaction> CreateDataModificationApprovalTransaction() {
+        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DataModificationApproval);
+        pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+        pTransaction->DataModificationId = test::GenerateRandomByteArray<Hash256>();
+        pTransaction->FileStructureCdi = test::GenerateRandomByteArray<Hash256>();
+        pTransaction->FileStructureSize = test::Random();
+        pTransaction->UsedDriveSize = test::Random();
+        return pTransaction;
+    }
+
+    /// Creates a data modification cancel transaction.
+    template<typename TTransaction>
+    model::UniqueEntityPtr<TTransaction> CreateDataModificationCancelTransaction() {
+        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DataModificationCancel);
+        pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+        pTransaction->DataModificationId = test::GenerateRandomByteArray<Hash256>();
+        return pTransaction;
+    }
+
 }}
