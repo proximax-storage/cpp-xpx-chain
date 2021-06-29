@@ -76,6 +76,11 @@ namespace catapult { namespace plugins {
 
 		manager.setStorageState(std::make_unique<state::CachedStorageState>(pKeyCollector));
 
+		manager.addStatelessValidatorHook([](auto& builder) {
+			builder
+				.add(validators::CreateStoragePluginConfigValidator());
+		});
+
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, pKeyCollector](auto& builder) {
 		  	builder
 				.add(validators::CreatePrepareDriveValidator(pKeyCollector))
