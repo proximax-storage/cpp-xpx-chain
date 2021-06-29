@@ -138,23 +138,10 @@ namespace catapult { namespace test {
             }  
     };
 
-    /// Creates a drive transaction.
-    template<typename TTransaction>
-	model::UniqueEntityPtr<TTransaction> CreateDriveTransaction(model::EntityType type, size_t additionalSize = 0) {
-        uint32_t entitySize = sizeof(TTransaction) + additionalSize;
-        auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(entitySize);
-		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
-		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
-        pTransaction->Type = type;
-        pTransaction->Size = entitySize;
-
-        return pTransaction;
-    }
-
     /// Creates a prepare bc drive transaction.
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreatePrepareBcDriveTransaction() {
-        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_PrepareBcDrive);
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_PrepareBcDrive);
         pTransaction->DriveSize = test::Random();
         pTransaction->ReplicatorCount = test::Random16();
         return pTransaction;
@@ -163,7 +150,7 @@ namespace catapult { namespace test {
     /// Creates a data modification transaction.
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateDataModificationTransaction() {
-        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DataModification);
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DataModification);
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->DownloadDataCdi = test::GenerateRandomByteArray<Hash256>();
         pTransaction->UploadSize = test::Random();
@@ -173,7 +160,7 @@ namespace catapult { namespace test {
     /// Creates a download transaction.
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateDownloadTransaction() {
-        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_Download);
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_Download);
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->DownloadSize = test::Random();
         pTransaction->TransactionFee = test::GenerateRandomByteArray<Amount>();
@@ -183,7 +170,7 @@ namespace catapult { namespace test {
     /// Creates a data modification approval transaction.
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateDataModificationApprovalTransaction() {
-        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DataModificationApproval);
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DataModificationApproval);
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->DataModificationId = test::GenerateRandomByteArray<Hash256>();
         pTransaction->FileStructureCdi = test::GenerateRandomByteArray<Hash256>();
@@ -195,7 +182,7 @@ namespace catapult { namespace test {
     /// Creates a data modification cancel transaction.
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateDataModificationCancelTransaction() {
-        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DataModificationCancel);
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DataModificationCancel);
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->DataModificationId = test::GenerateRandomByteArray<Hash256>();
         return pTransaction;
@@ -204,7 +191,7 @@ namespace catapult { namespace test {
     /// Creates a replicator onboarding transaction.
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateReplicatorOnboardingTransaction() {
-        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_ReplicatorOnboarding);
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ReplicatorOnboarding);
         pTransaction->Capacity = test::GenerateRandomByteArray<Amount>();
         return pTransaction;
     }
@@ -212,7 +199,7 @@ namespace catapult { namespace test {
     /// Creates a drive closure transaction.
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateDriveClosureTransaction() {
-        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DriveClosure);
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DriveClosure);
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         return pTransaction;
     }
