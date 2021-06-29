@@ -138,4 +138,26 @@ namespace catapult { namespace test {
             }  
     };
 
+    /// Creates a drive transaction.
+    template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateDriveTransaction(model::EntityType type, size_t additionalSize = 0) {
+        uint32_t entitySize = sizeof(TTransaction) + additionalSize;
+        auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(entitySize);
+		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
+		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
+        pTransaction->Type = type;
+        pTransaction->Size = entitySize;
+
+        return pTransaction;
+    }
+
+    /// Creates a prepare bc drive transaction.
+    template<typename TTransaction>
+    model::UniqueEntityPtr<TTransaction> CreatePrepareBcDriveTransaction() {
+        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_PrepareBcDrive);
+        pTransaction->DriveSize = test::Random();
+        pTransaction->ReplicatorCount = test::Random16();
+        return pTransaction;
+    }
+
 }}
