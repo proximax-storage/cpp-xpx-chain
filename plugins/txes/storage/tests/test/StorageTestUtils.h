@@ -170,4 +170,14 @@ namespace catapult { namespace test {
         return pTransaction;
     }
 
+    /// Creates a download transaction.
+    template<typename TTransaction>
+    model::UniqueEntityPtr<TTransaction> CreateDownloadTransaction() {
+        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_Download);
+        pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+        pTransaction->DownloadSize = test::Random();
+        pTransaction->TransactionFee = test::GenerateRandomByteArray<Amount>();
+        return pTransaction;
+    }
+
 }}
