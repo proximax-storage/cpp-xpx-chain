@@ -133,6 +133,11 @@ namespace catapult { namespace test {
         EXPECT_EQ(expectedEntry.storageUnits(), entry.storageUnits());
     }
 
+    state::ReplicatorEntry CreateReplicatorEntry(
+
+    ) {
+        
+    }
 }}
 
 
