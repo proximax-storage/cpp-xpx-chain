@@ -1,7 +1,9 @@
 [account]
 
 bootKey = {{bootkey}}
+enableDelegatedHarvestersAutoDetection = true
 [storage]
 
-dataDirectory = /data
-pluginsDirectory = 
+dataDirectory = ../data
+pluginsDirectory = .
+certificateDirectory = ../certificate
