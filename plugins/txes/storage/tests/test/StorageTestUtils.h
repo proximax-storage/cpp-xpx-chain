@@ -199,6 +199,7 @@ namespace catapult { namespace test {
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateReplicatorOnboardingTransaction() {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ReplicatorOnboarding);
+        pTransaction->PublicKey = test::GenerateRandomByteArray<Key>();
         pTransaction->Capacity = test::GenerateRandomByteArray<Amount>();
         return pTransaction;
     }
