@@ -54,6 +54,7 @@ namespace catapult { namespace plugins {
 	}
 
 	// region publish - basic
+	
 	PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
