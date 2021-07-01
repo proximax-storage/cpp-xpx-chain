@@ -190,6 +190,7 @@ namespace catapult { namespace test {
     model::UniqueEntityPtr<TTransaction> CreateDataModificationCancelTransaction() {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DataModificationCancel);
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+        pTransaction->Owner = test::GenerateRandomByteArray<Key>();
         pTransaction->DataModificationId = test::GenerateRandomByteArray<Hash256>();
         return pTransaction;
     }
