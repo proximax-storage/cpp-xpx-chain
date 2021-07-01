@@ -153,7 +153,9 @@ namespace catapult { namespace test {
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateDataModificationTransaction() {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DataModification);
+        pTransaction->DataModificationId = test::GenerateRandomByteArray<Hash256>();
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+        pTransaction->Owner = test::GenerateRandomByteArray<Key>();
         pTransaction->DownloadDataCdi = test::GenerateRandomByteArray<Hash256>();
         pTransaction->UploadSize = test::Random();
         return pTransaction;
