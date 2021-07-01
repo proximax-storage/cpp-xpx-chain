@@ -29,13 +29,14 @@ namespace catapult { namespace state {
 		if (!pReplicatorEntry)
 			return replicatorData;
 
-		for (const auto& driveKey : pReplicatorEntry->drives()) {
-			auto driveIter = driveCacheView->find(driveKey);
+		// TODO: Save drive infos as well?
+		for (const auto& drivePair : pReplicatorEntry->drives()) {
+			auto driveIter = driveCacheView->find(drivePair.first);
 			const auto& driveEntry = driveIter.get();
-			replicatorData.Drives.emplace_back(driveKey, driveEntry.size());
+			replicatorData.Drives.emplace_back(drivePair.first, driveEntry.size());
 
 			for (const auto& dataModification : driveEntry.activeDataModifications())
-				replicatorData.DriveModifications[driveKey].emplace_back(dataModification.Id, dataModification.DownloadDataCdi);
+				replicatorData.DriveModifications[drivePair.first].emplace_back(dataModification.Id, dataModification.DownloadDataCdi);
 		}
 
 		return replicatorData;

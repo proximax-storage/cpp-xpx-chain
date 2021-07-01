@@ -14,10 +14,17 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToDbModel
 
 	namespace {
-		void StreamDrives(bson_stream::document& builder, const std::vector<Key>& drives) {
+		void StreamDrives(bson_stream::document& builder, const state::DrivesMap& drives) {
 			auto array = builder << "drives" << bson_stream::open_array;
-			for (const auto& drive : drives)
-				array << ToBinary(drive);
+			for (const auto& drivePair : drives) {
+				bson_stream::document driveBuilder;
+				driveBuilder
+						<< "drive" << ToBinary(drivePair.first)
+						<< "driveHasApprovedDataModifications" << drivePair.second.DriveHasApprovedDataModifications	// TODO: Double-check if streamed correctly
+						<< "lastApprovedDataModificationId" << ToBinary(drivePair.second.LastApprovedDataModificationId)
+						<< "initialDownloadWork" << static_cast<int64_t>(drivePair.second.InitialDownloadWork);
+				array << driveBuilder;
+			}
 
 			array << bson_stream::close_array;
 		}
@@ -40,12 +47,19 @@ namespace catapult { namespace mongo { namespace plugins {
 	// endregion
 
 	namespace {
-		void ReadDrives(std::vector<Key>& drives, const bsoncxx::array::view& dbDrives) {
+		void ReadDrives(state::DrivesMap& drives, const bsoncxx::array::view& dbDrives) {
 			for (const auto& dbDrive : dbDrives) {
-				Key drive;
-				DbBinaryToModelArray(drive, dbDrive.get_binary());
+				auto doc = dbDrive.get_document().view();
 
-				drives.push_back(drive);
+				Key drive;
+				DbBinaryToModelArray(drive, doc["drive"].get_binary());
+
+				state::DriveInfo info;
+				info.DriveHasApprovedDataModifications = doc["driveHasApprovedDataModifications"].get_bool();	// TODO: Double-check if read correctly
+				DbBinaryToModelArray(info.LastApprovedDataModificationId, doc["lastApprovedDataModificationId"].get_binary());
+				info.InitialDownloadWork = doc["initialDownloadWork"].get_int64();
+
+				drives.emplace(drive, info);
 			}
 		}
 	}

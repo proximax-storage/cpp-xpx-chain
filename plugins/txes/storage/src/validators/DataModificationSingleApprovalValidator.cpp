@@ -56,7 +56,7 @@ namespace catapult { namespace validators {
 			const auto& pReplicatorEntry = replicatorIter.tryGet();
 			if (pReplicatorEntry) {
 				const auto& drives = pReplicatorEntry->drives();
-				if (std::find(drives.begin(), drives.end(), notification.DriveKey) != drives.end())
+				if (std::find_if(drives.begin(), drives.end(), [&notification](const auto& drivePair) {return drivePair.first == notification.DriveKey;}) != drives.end())
 					continue;
 			}
 

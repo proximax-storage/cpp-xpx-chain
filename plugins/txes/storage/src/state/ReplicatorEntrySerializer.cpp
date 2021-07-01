@@ -10,15 +10,44 @@
 
 namespace catapult { namespace state {
 
-	void  ReplicatorEntrySerializer::Save(const ReplicatorEntry& replicatorEntry, io::OutputStream& output) {
+	namespace {
+
+		void SaveDrives(io::OutputStream& output, const DrivesMap& drives) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(drives.size()));
+			for (const auto& drivePair : drives) {
+				io::Write(output, drivePair.first);
+				io::Write8(output, drivePair.second.DriveHasApprovedDataModifications);
+				io::Write(output, drivePair.second.LastApprovedDataModificationId);
+				io::Write64(output, drivePair.second.InitialDownloadWork);
+			}
+		}
+
+		void LoadDrives(io::InputStream& input, DrivesMap& drives) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Key drive;
+				io::Read(input, drive);
+
+				DriveInfo info;
+				info.DriveHasApprovedDataModifications = io::Read8(input);
+				io::Read(input, info.LastApprovedDataModificationId);
+				info.InitialDownloadWork = io::Read64(input);
+
+				drives.emplace(drive, info);
+			}
+		}
+
+	}
+
+	void ReplicatorEntrySerializer::Save(const ReplicatorEntry& replicatorEntry, io::OutputStream& output) {
 
 		io::Write32(output, replicatorEntry.version());
 		io::Write(output, replicatorEntry.key());
 
 		io::Write(output, replicatorEntry.capacity());
 		io::Write16(output, utils::checked_cast<size_t, uint16_t>(replicatorEntry.drives().size()));
-		for (const auto& driveKey : replicatorEntry.drives())
-			io::Write(output, driveKey);
+
+		SaveDrives(output, replicatorEntry.drives());
 	}
 
 	ReplicatorEntry ReplicatorEntrySerializer::Load(io::InputStream& input) {
@@ -35,14 +64,7 @@ namespace catapult { namespace state {
 
 		entry.setCapacity(Amount(io::Read64(input)));
 
-		auto driveCount = io::Read16(input);
-		auto& drives = entry.drives();
-		drives.reserve(driveCount);
-		for (auto i = 0u; i < driveCount; ++i) {
-			Key driveKey;
-			input.read(driveKey);
-			drives.emplace_back(driveKey);
-		}
+		LoadDrives(input, entry.drives());
 
 		return entry;
 	}
