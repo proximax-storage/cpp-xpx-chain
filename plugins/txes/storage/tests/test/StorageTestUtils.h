@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "catapult/model/EntityBody.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCache.h"
@@ -67,8 +68,8 @@ namespace catapult { namespace test {
         Hash256 id = test::GenerateRandomByteArray<Hash256>(),
         Key consumer = test::GenerateRandomByteArray<Key>(),
         Key drive = test::GenerateRandomByteArray<Key>(),
-        Amount transactionFee = test::GenerateRandomByteArray<Amount>(),
-        Amount storageUnits  = test::GenerateRandomByteArray<Amount>()
+        Amount transactionFee = test::GenerateRandomValue<Amount>(),
+        Amount storageUnits  = test::GenerateRandomValue<Amount>()
     );
 
     /// Verifies that \a entry1 is equivalent to \a entry2.
@@ -104,7 +105,7 @@ namespace catapult { namespace test {
     /// Creates test drive entry.
     state::ReplicatorEntry CreateReplicatorEntry(
         Key key = test::GenerateRandomByteArray<Key>(),
-        Amount capacity = test::GenerateRandomByteArray<Amount>(),
+        Amount capacity = test::GenerateRandomValue<Amount>(),
 		uint16_t drivesCount = 2
     );
 
@@ -138,6 +139,19 @@ namespace catapult { namespace test {
             }  
     };
 
+    /// Creates a transaction.
+    template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateTransaction(model::EntityType type, size_t additionalSize = 0) {
+        uint32_t entitySize = sizeof(TTransaction) + additionalSize;
+        auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(entitySize);
+		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
+		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
+        pTransaction->Type = type;
+        pTransaction->Size = entitySize;
+
+        return pTransaction;
+    }
+
     /// Creates a prepare bc drive transaction.
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreatePrepareBcDriveTransaction() {
@@ -169,7 +183,7 @@ namespace catapult { namespace test {
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->Consumer = test::GenerateRandomByteArray<Key>();
         pTransaction->DownloadSize = test::Random();
-        pTransaction->TransactionFee = test::GenerateRandomByteArray<Amount>();
+        pTransaction->TransactionFee = test::GenerateRandomValue<Amount>();
         return pTransaction;
     }
 
@@ -200,7 +214,7 @@ namespace catapult { namespace test {
     model::UniqueEntityPtr<TTransaction> CreateReplicatorOnboardingTransaction() {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ReplicatorOnboarding);
         pTransaction->PublicKey = test::GenerateRandomByteArray<Key>();
-        pTransaction->Capacity = test::GenerateRandomByteArray<Amount>();
+        pTransaction->Capacity = test::GenerateRandomValue<Amount>();
         return pTransaction;
     }
 
