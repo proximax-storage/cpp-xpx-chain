@@ -108,7 +108,7 @@ namespace catapult { namespace plugins {
 
 	// endregion
 
-	// region publish - prepare bc drive notification
+	// region publish - data modification notification
 
 	PLUGIN_TEST(CanPublishDataModificationNotification) {
 		// Arrange:
