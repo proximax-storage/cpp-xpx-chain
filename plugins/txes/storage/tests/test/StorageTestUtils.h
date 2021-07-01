@@ -142,6 +142,8 @@ namespace catapult { namespace test {
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreatePrepareBcDriveTransaction() {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_PrepareBcDrive);
+        pTransaction->Owner = test::GenerateRandomByteArray<Key>();
+        pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->DriveSize = test::Random();
         pTransaction->ReplicatorCount = test::Random16();
         return pTransaction;
