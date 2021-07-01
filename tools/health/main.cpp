@@ -27,14 +27,9 @@
 #include "catapult/utils/DiagnosticCounterId.h"
 #include "catapult/utils/Functional.h"
 
-//prometheus
-#include <array>
-#include <chrono>
-#include <cstdlib>
-#include <memory>
-#include <string>
-#include <thread>
+// prometheus
 
+#include "sstream"
 #include "prometheus/client_metric.h"
 #include "prometheus/counter.h"
 #include "prometheus/exposer.h"
@@ -92,52 +87,10 @@ namespace catapult { namespace tools { namespace health {
 
 		// endregion
 
-		// region formatting
+		//region prometheus
 
-		template<typename T>
-		size_t GetStringSize(const T& value) {
-			std::ostringstream out;
-			out << value;
-			return out.str().size();
-		}
-
-		std::string FormatCounterValue(uint64_t value) {
-			auto str = std::to_string(value);
-			auto iter = str.end();
-			constexpr auto Num_Grouping_Digits = 3;
-			while (std::distance(str.begin(), iter) > Num_Grouping_Digits) {
-				iter -= Num_Grouping_Digits;
-				str.insert(iter, '\'');
-			}
-
-			return str;
-		}
-
-		utils::LogLevel MapRelativeHeightToLogLevel(Height height, Height maxChainHeight) {
-			return Height() == height
-					? utils::LogLevel::Error
-					: maxChainHeight > height ? utils::LogLevel::Warning : utils::LogLevel::Info;
-		}
-
-		size_t GetLevelLeftPadding(utils::LogLevel level) {
-			// add left padding in order to align all level names with longest level name (warning)
-			switch (level) {
-			case utils::LogLevel::Error:
-			case utils::LogLevel::Debug:
-			case utils::LogLevel::Trace:
-			case utils::LogLevel::Fatal:
-				return 2;
-
-			case utils::LogLevel::Info:
-				return 3;
-
-			default:
-				return 0;
-			}
-		}
-
-		using namespace prometheus;
-		void PrettyPrintSummary(const std::vector<NodeInfoPointer>& nodeInfos) {
+		void PrometheusHealthCheck(const std::vector<NodeInfoPointer>& nodeInfos){
+			using namespace prometheus;
 			//prometheus : create a http server running on port 8080
 			Exposer exposer{"127.0.0.1:8080"};
 
@@ -146,77 +99,34 @@ namespace catapult { namespace tools { namespace health {
 
 			//prometheus : add a counter family to the registry
 			auto& packet_counter = BuildCounter()
-								.Name("observed_packets_total")
-								.Help("Number of observed packets")
-								.Register(*registry);
-
-			Height maxChainHeight;
-			size_t maxNodeNameSize = 0;
-			size_t maxHeightSize = 0;
+			.Name("observed_blockchain")
+			.Help("Value of observed packets")
+			.Register(*registry);
+			
+			exposer.RegisterCollectable(registry);
+			
 			for (const auto& pNodeInfo : nodeInfos) {
-				maxChainHeight = std::max(maxChainHeight, pNodeInfo->ChainHeight);
-				maxNodeNameSize = std::max(maxNodeNameSize, GetStringSize(pNodeInfo->Node));
-				maxHeightSize = std::max(maxHeightSize, GetStringSize(pNodeInfo->ChainHeight));
-			}
+				std::this_thread::sleep_for(std::chrono::seconds(1));
+				//get string representation
+				std::stringstream ssoNode, ssoHeight, ssoScore;
+				ssoNode << pNodeInfo->Node;
+				std::string node (ssoNode.str());
+				
+				ssoHeight << pNodeInfo->ChainHeight;
+				std::string height (ssoHeight.str());
 
-			for (const auto& pNodeInfo : nodeInfos) {
-				auto level = MapRelativeHeightToLogLevel(pNodeInfo->ChainHeight, maxChainHeight);
-				CATAPULT_LOG_LEVEL(level)
-						<< std::string(GetLevelLeftPadding(level), ' ') << std::setw(static_cast<int>(maxNodeNameSize)) << pNodeInfo->Node
-						<< " [" << (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P") << "]"
-						<< " at height " << std::setw(static_cast<int>(maxHeightSize)) << pNodeInfo->ChainHeight
-						<< " with score " << pNodeInfo->ChainScore;
+				ssoScore << pNodeInfo->ChainScore;
+				std::string score (ssoScore.str());
 
-				//prometheus : add metric to packet counter family
-				auto& bc_counter = packet_counter.Add({
-					{"Heigh", pNodeInfo->ChainHeight},
-					{"Score", pNodeInfo->ChainScore}
-					});
-
-				//exposer scrape registry on incoming scrapes
-				exposer.RegisterCollectable(registry);
-				bc_counter.Increment();
+				//register node info to prometheus
+				auto& node_counter = packet_counter.Add({{"NodeInfo", node},
+				{"Height", height}, 
+				{"Score", score},  
+				{"Type", (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P")}});
 			}
 		}
-
-		void PrettyPrintCounters(const NodeInfo& nodeInfo) {
-			std::ostringstream table;
-			table << nodeInfo.Node << std::endl;
-
-			// insert (name, formatted-value) pairs into a map for sorting by name
-			size_t maxValueSize = 0;
-			std::map<std::string, std::string> sortedCounters;
-			for (const auto& counterValue : nodeInfo.DiagnosticCounters) {
-				auto value = FormatCounterValue(counterValue.Value);
-				sortedCounters.emplace(utils::DiagnosticCounterId(counterValue.Id).name(), value);
-				maxValueSize = std::max(maxValueSize, value.size());
-			}
-
-			constexpr auto Num_Counters_Per_Line = 4;
-			auto numCountersPrinted = 0;
-			for (const auto& pair : sortedCounters) {
-				table
-						<< std::setw(utils::DiagnosticCounterId::Max_Counter_Name_Size) << std::right << pair.first << " : "
-						<< std::setw(static_cast<int>(maxValueSize)) << std::left << pair.second;
-
-				table << " | ";
-				if (0 == ++numCountersPrinted % Num_Counters_Per_Line)
-					table << std::endl;
-			}
-
-			CATAPULT_LOG(info) << table.str();
-		}
-
-		void PrettyPrint(const std::vector<NodeInfoPointer>& nodeInfos) {
-			CATAPULT_LOG(info) << "--- COUNTERS for known peers ---";
-			for (const auto& pNodeInfo : nodeInfos)
-				PrettyPrintCounters(*pNodeInfo);
-
-			CATAPULT_LOG(info) << "--- SUMMARY for known peers ---";
-			PrettyPrintSummary(nodeInfos);
-		}
-
-		// endregion
+		
+		//endregion
 
 		class HealthTool : public NetworkCensusTool<NodeInfo> {
 		public:
@@ -235,7 +145,7 @@ namespace catapult { namespace tools { namespace health {
 			}
 
 			size_t processNodeInfos(const std::vector<NodeInfoPointer>& nodeInfos) override {
-				PrettyPrint(nodeInfos);
+				PrometheusHealthCheck(nodeInfos);
 
 				return utils::Sum(nodeInfos, [](const auto& pNodeInfo) {
 					return Height() == pNodeInfo->ChainHeight ? 1u : 0;
