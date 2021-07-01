@@ -27,6 +27,8 @@ namespace catapult { namespace model {
 	enum class FacilityCode : uint8_t {
 		/// Account link facility code.
 		AccountLink = 0x4C,
+		/// Node Key link facility code.
+		NodeKeyLink = 0x4D,
 		/// Aggregate facility code.
 		Aggregate = 0x41,
 		/// Network config facility code.

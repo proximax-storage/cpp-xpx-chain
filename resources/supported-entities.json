@@ -121,6 +121,11 @@
 			"supportedVersions": [2]
 		},
 		{
+			"name": "Node_Key_Link",
+			"type": "16973",
+			"supportedVersions": [1]
+		},
+		{
 			"name": "PrepareDrive",
 			"type": "16730",
 			"supportedVersions": [3]
