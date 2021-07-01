@@ -45,6 +45,33 @@ namespace catapult { namespace model {
 	/// Defines a verification payment notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Verification_Payment_v1, 0x000C);
 
+	struct DownloadWork : public UnresolvedAmountData {
+	public:
+		DownloadWork(const Key& driveKey, const Key& replicator)
+				: DriveKey(driveKey)
+				, Replicator(replicator)
+		{}
+
+	public:
+		Key DriveKey;
+		Key Replicator;
+	};
+
+	// TODO: Inherit from DownloadWork?
+	struct UploadWork : public UnresolvedAmountData {
+	public:
+		UploadWork(const Key& driveKey, const Key& replicator, const uint8_t& opinion)
+				: DriveKey(driveKey)
+				, Replicator(replicator)
+				, Opinion(opinion)
+		{}
+
+	public:
+		Key DriveKey;
+		Key Replicator;
+		uint8_t Opinion;
+	};
+
 	/// Notification of a data modification.
 	template<VersionType version>
 	struct DataModificationNotification;
