@@ -28,7 +28,7 @@ namespace catapult { namespace model {
 		/// Account link facility code.
 		AccountLink = 0x4C,
 		/// Node Key link facility code.
-		NodeKeyLink = 0x4D,
+		NodeKeyLink = 0x4B,
 		/// Aggregate facility code.
 		Aggregate = 0x41,
 		/// Network config facility code.
