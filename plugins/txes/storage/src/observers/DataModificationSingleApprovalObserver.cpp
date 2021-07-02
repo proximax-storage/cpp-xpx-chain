@@ -17,8 +17,8 @@ namespace catapult { namespace observers {
 	  	auto& replicatorEntry = replicatorIter.get();
 
 	  	auto& info = replicatorEntry.drives().at(notification.DriveKey);
-	  	info.DriveHasApprovedDataModifications = true;
 	  	info.LastApprovedDataModificationId = notification.DataModificationId;
+	  	info.DataModificationIdIsValid = true;
 		info.InitialDownloadWork = 0;
 	});
 }}

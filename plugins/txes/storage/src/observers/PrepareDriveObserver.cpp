@@ -27,8 +27,8 @@ namespace catapult { namespace observers {
 			auto& replicatorEntry = replicatorIter.get();
 
 			state::DriveInfo info;
-			info.DriveHasApprovedDataModifications = false;	// Newly created drive won't have any approved data modifications
 		  	info.LastApprovedDataModificationId = Hash256();	// Zero hash identifier
+		  	info.DataModificationIdIsValid = false;	// Newly created drive won't have any approved data modifications
 			info.InitialDownloadWork = 0;	// Replicator hasn't downloaded anything from the drive that has been just created
 
 			replicatorEntry.drives().emplace(notification.DriveKey, info);

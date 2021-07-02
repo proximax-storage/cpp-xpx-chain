@@ -16,8 +16,8 @@ namespace catapult { namespace state {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(drives.size()));
 			for (const auto& drivePair : drives) {
 				io::Write(output, drivePair.first);
-				io::Write8(output, drivePair.second.DriveHasApprovedDataModifications);
 				io::Write(output, drivePair.second.LastApprovedDataModificationId);
+				io::Write8(output, drivePair.second.DataModificationIdIsValid);
 				io::Write64(output, drivePair.second.InitialDownloadWork);
 			}
 		}
@@ -29,8 +29,8 @@ namespace catapult { namespace state {
 				io::Read(input, drive);
 
 				DriveInfo info;
-				info.DriveHasApprovedDataModifications = io::Read8(input);
 				io::Read(input, info.LastApprovedDataModificationId);
+				info.DataModificationIdIsValid = io::Read8(input);
 				info.InitialDownloadWork = io::Read64(input);
 
 				drives.emplace(drive, info);

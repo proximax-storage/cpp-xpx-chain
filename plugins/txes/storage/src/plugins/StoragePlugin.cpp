@@ -40,8 +40,8 @@ namespace catapult { namespace plugins {
 		}
 
 		const auto calculateApprovableDownloadWork(const state::ReplicatorEntry* pReplicatorEntry, const state::BcDriveEntry* pDriveEntry, const Key& driveKey) {
-			const auto& driveHasApprovedDataModifications = pReplicatorEntry->drives().at(driveKey).DriveHasApprovedDataModifications;
-			const auto& lastApprovedDataModification = pReplicatorEntry->drives().at(driveKey).LastApprovedDataModificationId;
+			const auto& lastApprovedDataModificationId = pReplicatorEntry->drives().at(driveKey).LastApprovedDataModificationId;
+			const auto& dataModificationIdIsValid = pReplicatorEntry->drives().at(driveKey).DataModificationIdIsValid;
 			const auto& completedDataModifications = pDriveEntry->completedDataModifications();
 
 			uint64_t approvableDownloadWork = 0;
@@ -50,9 +50,9 @@ namespace catapult { namespace plugins {
 			for (auto it = completedDataModifications.rbegin(); it != completedDataModifications.rend(); ++it) {
 
 				// Exit the loop as soon as the most recent data modification approved by the replicator is reached. Don't account its size.
-				// driveHasApprovedDataModifications prevents rare cases of premature exits when the drive had no approved data modifications
-				// when the replicator joined it, but current data modification id happens to match the stored lastApprovedDataModification (zero hash by default).
-				if (driveHasApprovedDataModifications && it->Id == lastApprovedDataModification)
+				// dataModificationIdIsValid prevents rare cases of premature exits when the drive had no approved data modifications when the replicator
+				// joined it, but current data modification id happens to match the stored lastApprovedDataModification (zero hash by default).
+				if (dataModificationIdIsValid && it->Id == lastApprovedDataModificationId)
 					break;
 
 				// If current data modification was approved (not cancelled), account its size.

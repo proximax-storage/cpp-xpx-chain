@@ -20,8 +20,8 @@ namespace catapult { namespace mongo { namespace plugins {
 				bson_stream::document driveBuilder;
 				driveBuilder
 						<< "drive" << ToBinary(drivePair.first)
-						<< "driveHasApprovedDataModifications" << drivePair.second.DriveHasApprovedDataModifications	// TODO: Double-check if streamed correctly
 						<< "lastApprovedDataModificationId" << ToBinary(drivePair.second.LastApprovedDataModificationId)
+						<< "dataModificationIdIsValid" << drivePair.second.DataModificationIdIsValid	// TODO: Double-check if streamed correctly
 						<< "initialDownloadWork" << static_cast<int64_t>(drivePair.second.InitialDownloadWork);
 				array << driveBuilder;
 			}
@@ -55,8 +55,8 @@ namespace catapult { namespace mongo { namespace plugins {
 				DbBinaryToModelArray(drive, doc["drive"].get_binary());
 
 				state::DriveInfo info;
-				info.DriveHasApprovedDataModifications = doc["driveHasApprovedDataModifications"].get_bool();	// TODO: Double-check if read correctly
 				DbBinaryToModelArray(info.LastApprovedDataModificationId, doc["lastApprovedDataModificationId"].get_binary());
+				info.DataModificationIdIsValid = doc["dataModificationIdIsValid"].get_bool();	// TODO: Double-check if read correctly
 				info.InitialDownloadWork = doc["initialDownloadWork"].get_int64();
 
 				drives.emplace(drive, info);

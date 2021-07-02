@@ -12,14 +12,16 @@
 namespace catapult { namespace state {
 
 	struct DriveInfo {
-		/// Indicates if there are any approved data modifications on the drive.
-		bool DriveHasApprovedDataModifications;
-
 		/// Identifier of the most recent data modification of the drive approved by the replicator.
 		Hash256 LastApprovedDataModificationId;
 
+		/// Indicates if \p LastApprovedDataModificationId is an identifier of an existing data modification.
+		/// Can be \b false only if the drive had no approved data modifications when the replicator joined it.
+		/// Set to \b true after replicator’s first data modification approval.
+		bool DataModificationIdIsValid;
+
 		/// Used drive size at the time of the replicator’s onboarding excluding metafiles size.
-		/// Is set to zero after replicator’s first data modification approval.
+		/// Set to \p 0 after replicator’s first data modification approval.
 		uint64_t InitialDownloadWork;
 	};
 
