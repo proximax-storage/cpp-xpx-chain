@@ -38,6 +38,9 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by download payment notifications.
 	DECLARE_OBSERVER(DownloadPayment, model::DownloadPaymentNotification<1>)();
 
+	/// Observes changes triggered by data modification single approval notifications.
+	DECLARE_OBSERVER(DataModificationSingleApproval, model::DataModificationSingleApprovalNotification<1>)();
+
 	/// Observes changes triggered by verification payment notifications.
 	DECLARE_OBSERVER(VerificationPayment, model::VerificationPaymentNotification<1>)();
 }}

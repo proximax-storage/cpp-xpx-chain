@@ -62,17 +62,23 @@ namespace catapult { namespace validators {
 	/// Respective download channel is not found.
 	DEFINE_STORAGE_RESULT(Download_Channel_Not_Found, 16);
 
+	/// Signer of the transaction is not allowed to issue transactions of such type.
+	DEFINE_STORAGE_RESULT(Invalid_Transaction_Signer, 17);
+
+	/// Respective drive is not assigned to respective replicator.
+	DEFINE_STORAGE_RESULT(Drive_Not_Assigned_To_Replicator, 18);
+
 	/// There are no data modifications in completedDataModifications with 'succeeded' state.
-	DEFINE_STORAGE_RESULT(No_Approved_Data_Modifications, 17);
+	DEFINE_STORAGE_RESULT(No_Approved_Data_Modifications, 19);
 
 	/// Not every key in replicator's upload opinion appears exactly once.
-	DEFINE_STORAGE_RESULT(Opinion_Reocurring_Keys, 18);
+	DEFINE_STORAGE_RESULT(Opinion_Reocurring_Keys, 20);
 
 	/// The key in upload opinion is neither a key of one of the current replicators of the drive nor a key of the drive owner.
-	DEFINE_STORAGE_RESULT(Opinion_Invalid_Key, 19);
+	DEFINE_STORAGE_RESULT(Opinion_Invalid_Key, 21);
 
 	/// Percents in replicator's upload opinion do not sum up to 100.
-	DEFINE_STORAGE_RESULT(Opinion_Incorrect_Percentage, 20);
+	DEFINE_STORAGE_RESULT(Opinion_Incorrect_Percentage, 22);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

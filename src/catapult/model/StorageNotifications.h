@@ -434,12 +434,14 @@ namespace catapult { namespace model {
 
 	public:
 		explicit DataModificationSingleApprovalNotification(
+				const Key& signer,
 				const Key& driveKey,
 				const Hash256& dataModificationId,
 				const uint16_t uploadOpinionPairCount,
 				const Key* uploaderKeysPtr,
 				const uint8_t* uploadOpinionPtr)
 				: Notification(Notification_Type, sizeof(DataModificationSingleApprovalNotification<1>))
+				, PublicKey(signer)
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
 				, UploadOpinionPairCount(uploadOpinionPairCount)
@@ -448,6 +450,9 @@ namespace catapult { namespace model {
 		{}
 
 	public:
+		/// Key of the signer.
+		Key PublicKey;
+
 		/// Key of drive.
 		Key DriveKey;
 

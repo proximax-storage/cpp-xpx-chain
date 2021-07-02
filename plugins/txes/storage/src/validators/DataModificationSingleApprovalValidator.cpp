@@ -12,7 +12,15 @@ namespace catapult { namespace validators {
 	using Notification = model::DataModificationSingleApprovalNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(DataModificationSingleApproval, [](const Notification& notification, const ValidatorContext& context) {
-	  	const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+	  	const auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+	  	const auto replicatorIter = replicatorCache.find(notification.PublicKey);
+	  	const auto& pReplicatorEntry = replicatorIter.tryGet();
+
+		// Check if the transaction is signed by a replicator
+	  	if (!pReplicatorEntry)
+		  	return Failure_Storage_Invalid_Transaction_Signer;
+
+		const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		const auto driveIter = driveCache.find(notification.DriveKey);
 		const auto& pDriveEntry = driveIter.tryGet();
 
@@ -20,7 +28,13 @@ namespace catapult { namespace validators {
 		if (!pDriveEntry)
 			return Failure_Storage_Drive_Not_Found;
 
-		// Check if there are any approved data modifications
+	  	// Check if the drive is assigned to the replicator
+	  	const auto& drives = pReplicatorEntry->drives();
+	  	// TODO: Use std::count() instead? It won't have to construct an iterator when returning, but will always look through entire vector on the other hand.
+	  	if (std::find_if(drives.begin(), drives.end(), [&notification](const auto& drivePair) {return drivePair.first == notification.DriveKey;}) == drives.end())
+		  	return Failure_Storage_Drive_Not_Assigned_To_Replicator;
+
+	  	// Check if the drive has any approved data modifications; if it has, find the last (newest) such modification
 		const auto& completedDataModifications = pDriveEntry->completedDataModifications();
 		const auto& lastApprovedDataModification = std::find_if(
 				completedDataModifications.rbegin(),
@@ -35,7 +49,6 @@ namespace catapult { namespace validators {
 
 		std::set<Key> uploaderKeys;
 	  	uint8_t cumulativePercentage = 0;
-	  	const auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 	  	auto pKey = notification.UploaderKeysPtr;
 	  	auto pPercent = notification.UploadOpinionPtr;
 	  	for (auto i = 0u; i < notification.UploadOpinionPairCount; ++i, ++pKey, ++pPercent) {
@@ -47,11 +60,11 @@ namespace catapult { namespace validators {
 			uploaderKeys.insert(*pKey);
 			cumulativePercentage += *pPercent;
 
-			// Check if the key is a key of the Drive Owner
+			// Check if the key is a key of the drive owner
 			if (pDriveEntry->owner() == *pKey)
 				continue;
 
-			// Check if the key is a key of one of the Drive's current Replicators
+			// Check if the key is a key of one of the drive's current replicators
 			const auto replicatorIter = replicatorCache.find(*pKey);
 			const auto& pReplicatorEntry = replicatorIter.tryGet();
 			if (pReplicatorEntry) {

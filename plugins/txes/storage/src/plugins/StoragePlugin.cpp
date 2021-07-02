@@ -183,6 +183,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateReplicatorOnboardingObserver())
 				.add(observers::CreateFinishDownloadObserver())
 		  		.add(observers::CreateDownloadPaymentObserver())
+				.add(observers::CreateDataModificationSingleApprovalObserver())
 				.add(observers::CreateVerificationPaymentObserver());
 		});
 	}
