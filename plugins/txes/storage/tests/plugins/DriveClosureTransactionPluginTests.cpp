@@ -70,7 +70,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numNotifications());
         auto i = 0u;
-		EXPECT_EQ(DriveClosureNotification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Storage_Drive_Closure_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
 	// endregion

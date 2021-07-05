@@ -70,7 +70,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numNotifications());
         auto i = 0u;
-		EXPECT_EQ(DataModificationApprovalNotification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Storage_Data_Modification_Approval_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
 	// endregion

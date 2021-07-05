@@ -43,7 +43,7 @@ namespace catapult { namespace test {
                 auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id));
                 std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-                const auto pKeyCollector = cache::ReplicatorKeyCollector().keys();
+                auto pKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
 			    subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 			    subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
                 subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pKeyCollector, pConfigHolder);
@@ -57,11 +57,11 @@ namespace catapult { namespace test {
             }
 
             /// Creates an empty catapult cache around \a config.
-		    static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
+            static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
                 auto subCaches = CreateSubCacheWithBcDriveCache(config);
                 CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
                 return cache::CatapultCache(std::move(subCaches));
-		    }
+            }
     };
 
     /// Creates test drive entry.
@@ -83,7 +83,7 @@ namespace catapult { namespace test {
                 auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id));
                 std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-                const auto pKeyCollector = cache::ReplicatorKeyCollector().keys();
+                auto pKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
 			    subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 			    subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
                 subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pKeyCollector, pConfigHolder);
@@ -121,7 +121,7 @@ namespace catapult { namespace test {
                 auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id));
                 std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-                const auto pKeyCollector = cache::ReplicatorKeyCollector().keys();
+                auto pKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
 			    subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 			    subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
                 subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pKeyCollector, pConfigHolder);
