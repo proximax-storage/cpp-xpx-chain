@@ -47,6 +47,12 @@ namespace catapult { namespace harvesting {
 		return std::any_of(m_prioritizedKeyPairs.cbegin(), m_prioritizedKeyPairs.cend(), CreateContainsPredicate(publicKey));
 	}
 
+	void UnlockedAccountsView::forEach(const predicate<const crypto::KeyPair&>& consumer) const {
+		for (const auto& prioritizedKeyPair : m_prioritizedKeyPairs) {
+			if (!consumer(prioritizedKeyPair.first))
+				break;
+		}
+	}
 	// endregion
 
 	// region UnlockedAccountsModifier

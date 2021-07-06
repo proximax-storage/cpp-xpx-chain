@@ -26,11 +26,13 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
+#include "tests/test/core/PacketPayloadTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include "test/HarvestRequestEncryptedPayload.h"
 #include "catapult/config/CatapultDataDirectory.h"
+#include "tests/test/nodeps/Functional.h"
 
 namespace catapult { namespace harvesting {
 
@@ -86,6 +88,7 @@ namespace catapult { namespace harvesting {
 				setHooks();
 			}
 
+
 		public:
 			Key harvesterKey() const {
 				return crypto::KeyPair::FromString(m_config.HarvestKey).publicKey();
@@ -114,6 +117,10 @@ namespace catapult { namespace harvesting {
 			void setDataDirectory(const std::string& dataDirectory) {
 				auto& config = testState().state().config();
 				const_cast<std::string&>(config.User.DataDirectory) = dataDirectory;
+			}
+			void enableDiagnosticExtension() {
+				auto& config = testState().state().config();
+				const_cast<std::vector<std::string>&>(config.Extensions.Names).push_back("extension.diagnostics");
 			}
 
 		public:
@@ -471,6 +478,107 @@ namespace catapult { namespace harvesting {
 
 		// Assert:
 		EXPECT_NE(Hash256(), harvestedStateHash);
+	}
+
+	// endregion
+	// region packet handler
+
+	TEST(TEST_CLASS, PacketHandlerIsNotRegisteredWhenDiagnosticExtensionIsDisabled) {
+		// Arrange:
+		TestContext context;
+
+		// Act:
+		context.boot();
+
+		// Assert:
+		EXPECT_EQ(0u, context.testState().state().packetHandlers().size());
+	}
+
+	TEST(TEST_CLASS, PacketHandlerIsRegisteredWhenDiagnosticExtensionIsEnabled) {
+		// Arrange:
+		TestContext context;
+		context.enableDiagnosticExtension();
+
+		// Act:
+		context.boot();
+
+		// Assert:
+		const auto& packetHandlers = context.testState().state().packetHandlers();
+		EXPECT_EQ(1u, packetHandlers.size());
+		EXPECT_TRUE(packetHandlers.canProcess(ionet::PacketType::Unlocked_Accounts));
+	}
+
+	namespace {
+		class DiagnosticEnabledTestContext : public TestContext {
+		public:
+			DiagnosticEnabledTestContext() {
+				enableDiagnosticExtension();
+			}
+		};
+	}
+
+	namespace {
+		auto GetPublicKeys(const std::vector<crypto::KeyPair>& keyPairs) {
+			auto keys = test::Apply(true, keyPairs, [](const auto& keyPair) { return keyPair.publicKey(); });
+			return std::set<Key>(keys.cbegin(), keys.cend());
+		}
+
+		void AssertPacketHandlerReturnsUnlockedAccounts(
+				std::vector<crypto::KeyPair>&& keyPairs,
+				const consumer<const ionet::ServerPacketHandlerContext&>& assertPacket) {
+			// Arrange:
+			auto config = CreateHarvestingConfiguration(false);
+
+			TestContext context(config);
+			AddAccounts(context, keyPairs);
+			context.enableDiagnosticExtension();
+			context.boot();
+
+			// - add key pairs to unlocked accounts
+			auto pUnlockedAccounts = GetUnlockedAccounts(context.locator());
+			ASSERT_TRUE(!!pUnlockedAccounts);
+
+			for (auto& keyPair : keyPairs)
+				pUnlockedAccounts->modifier().add(std::move(keyPair));
+
+			// Sanity:
+			EXPECT_EQ(keyPairs.size(), pUnlockedAccounts->view().size());
+
+			// Act:
+			const auto& packetHandlers = context.testState().state().packetHandlers();
+
+			// - process unlocked acconuts request
+			auto pPacket = ionet::CreateSharedPacket<ionet::Packet>();
+			pPacket->Type = ionet::PacketType::Unlocked_Accounts;
+			ionet::ServerPacketHandlerContext handlerContext({}, "");
+			EXPECT_TRUE(packetHandlers.process(*pPacket, handlerContext));
+
+			assertPacket(handlerContext);
+		}
+	}
+
+	TEST(TEST_CLASS, PacketHandlerReturnsEmptyPacketWhenNoUnlockedAccountsArePresent) {
+		AssertPacketHandlerReturnsUnlockedAccounts(CreateKeyPairs(0), [](const auto& handlerContext) {
+		  // Assert: only header is present
+		  auto expectedPacketSize = sizeof(ionet::PacketHeader);
+		  test::AssertPacketHeader(handlerContext, expectedPacketSize, ionet::PacketType::Unlocked_Accounts);
+		});
+	}
+
+	TEST(TEST_CLASS, PacketHandlerReturnsUnlockedAccounts) {
+		// Arrange:
+		auto keyPairs = CreateKeyPairs(3);
+		auto expectedPublicKeys = GetPublicKeys(keyPairs);
+		AssertPacketHandlerReturnsUnlockedAccounts(std::move(keyPairs), [&expectedPublicKeys](const auto& handlerContext) {
+		  // Assert: header is correct and contains the expected number of keys
+		  auto expectedPacketSize = sizeof(ionet::PacketHeader) + 3 * Key::Size;
+		  test::AssertPacketHeader(handlerContext, expectedPacketSize, ionet::PacketType::Unlocked_Accounts);
+
+		  const auto* pUnlockedPublicKeys = reinterpret_cast<const Key*>(test::GetSingleBufferData(handlerContext));
+		  auto unlockedPublicKeys = std::set<Key>(pUnlockedPublicKeys, pUnlockedPublicKeys + 3);
+
+		  EXPECT_EQ(expectedPublicKeys, unlockedPublicKeys);
+		});
 	}
 
 	// endregion

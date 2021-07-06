@@ -80,6 +80,8 @@ namespace catapult { namespace harvesting {
 		auto end() const {
 			return m_prioritizedKeyPairs.cend();
 		}
+		/// Calls \a consumer with block generator account descriptors until all are consumed or \c false is returned by consumer.
+		void forEach(const predicate<const crypto::KeyPair&>& consumer) const;
 
 	private:
 		const PrioritizedKeysContainer& m_prioritizedKeyPairs;

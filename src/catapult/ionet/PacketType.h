@@ -163,6 +163,7 @@ namespace catapult { namespace ionet {
 	/* Block statement has been requested by a client. */ \
 	ENUM_VALUE(Block_Statement, 1103) \
 	\
+	ENUM_VALUE(Unlocked_Accounts, 304) \
 	/* Account infos have been requested by a client. */ \
 	ENUM_VALUE(Account_Infos, FACILITY_BASED_CODE(1200, Core)) \
 	\

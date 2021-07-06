@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <catapult/ionet/PacketPayloadFactory.h>
 #include "HarvestingService.h"
 #include "HarvesterBlockGenerator.h"
 #include "HarvestingUtFacadeFactory.h"
@@ -124,7 +125,36 @@ namespace catapult { namespace harvesting {
 				return thread::make_ready_future(thread::TaskResult::Continue);
 			});
 		}
+		// region diagnostic handler
 
+		bool IsDiagnosticExtensionEnabled(const config::ExtensionsConfiguration& extensionsConfiguration) {
+			const auto& names = extensionsConfiguration.Names;
+			return names.cend() != std::find(names.cbegin(), names.cend(), "extension.diagnostics");
+		}
+
+		void RegisterDiagnosticUnlockedAccountsHandler(extensions::ServiceState& state, const UnlockedAccounts& unlockedAccounts) {
+			auto& handlers = state.packetHandlers();
+
+			handlers.registerHandler(ionet::PacketType::Unlocked_Accounts, [&unlockedAccounts](const auto& packet, auto& context) {
+			  if (!ionet::IsPacketValid(packet, ionet::PacketType::Unlocked_Accounts))
+				  return;
+
+			  auto view = unlockedAccounts.view();
+			  std::vector<Key> harvesterPublicKeys;
+			  view.forEach([&harvesterPublicKeys](const auto& descriptor) {
+				harvesterPublicKeys.push_back(descriptor.publicKey());
+				return true;
+			  });
+
+			  const auto* pHarvesterPublicKeys = reinterpret_cast<const uint8_t*>(harvesterPublicKeys.data());
+			  context.response(catapult::ionet::PacketPayloadFactory::FromFixedSizeRange(
+					  ionet::PacketType::Unlocked_Accounts,
+					  model::EntityRange<Key>::CopyFixed(pHarvesterPublicKeys, harvesterPublicKeys.size())));
+			});
+
+		}
+
+		// endregion
 		class HarvestingServiceRegistrar : public extensions::ServiceRegistrar {
 		public:
 			explicit HarvestingServiceRegistrar(const HarvestingConfiguration& config) : m_config(config)
@@ -149,6 +179,9 @@ namespace catapult { namespace harvesting {
 				// add tasks
 				auto beneficiary = crypto::ParseKey(m_config.Beneficiary);
 				state.tasks().push_back(CreateHarvestingTask(state, unlockedAccountsHolder, beneficiary));
+
+				if (IsDiagnosticExtensionEnabled(state.config().Extensions))
+					RegisterDiagnosticUnlockedAccountsHandler(state, *unlockedAccountsHolder.pUnlockedAccounts);
 			}
 
 		private:
