@@ -109,7 +109,6 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->PublicKey, notification.PublicKey);
         EXPECT_EQ(pTransaction->Capacity, notification.Capacity);
 	}
 
