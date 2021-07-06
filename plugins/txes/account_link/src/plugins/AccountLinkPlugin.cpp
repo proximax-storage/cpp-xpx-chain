@@ -18,15 +18,29 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <catapult/keylink/KeyLinkValidator.h>
+#include <catapult/keylink/KeyLinkObserver.h>
 #include "AccountLinkPlugin.h"
 #include "AccountLinkTransactionPlugin.h"
 #include "NodeKeyLinkTransactionPlugin.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/PluginManager.h"
+#include "src/model/AccountLinkNotifications.h"
 
 namespace catapult { namespace plugins {
 
+	namespace {
+		struct NodeKeyAccessor {
+			static constexpr auto Failure_Link_Already_Exists = validators::Failure_AccountLink_Link_Already_Exists;
+			static constexpr auto Failure_Inconsistent_Unlink_Data = validators::Failure_AccountLink_Unlink_Data_Inconsistency;
+
+			template<typename TAccountState>
+			static auto& Get(TAccountState& accountState) {
+				return accountState.SupplementalPublicKeys.node();
+			}
+		};
+	}
 	void RegisterAccountLinkSubsystem(PluginManager& manager) {
 		manager.addTransactionSupport(CreateAccountLinkTransactionPlugin());
 		manager.addTransactionSupport(CreateNodeKeyLinkTransactionPlugin());
@@ -40,11 +54,13 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateAccountLinkAvailabilityValidator())
 				.add(validators::CreateNewRemoteAccountAvailabilityValidator())
 				.add(validators::CreateRemoteSenderValidator())
-				.add(validators::CreateRemoteInteractionValidator());
+				.add(validators::CreateRemoteInteractionValidator())
+		  		.add(keylink::CreateKeyLinkValidator<model::NodeAccountLinkNotification<1>, NodeKeyAccessor>("Node"));
 		});
 
 		manager.addObserverHook([](auto& builder) {
-			builder.add(observers::CreateAccountLinkObserver());
+			builder.add(observers::CreateAccountLinkObserver())
+		  	.add(keylink::CreateKeyLinkObserver<model::NodeAccountLinkNotification<1>, NodeKeyAccessor>("Node"));
 		});
 	}
 }}
