@@ -28,8 +28,8 @@ namespace catapult { namespace plugins {
 
 		auto CreateConfiguration() {
 			auto config = config::ImmutableConfiguration::Uninitialized();
-			// config.GenerationHash = Generation_Hash;
-			// config.NetworkIdentifier = Network_Identifier;
+			config.GenerationHash = Generation_Hash;
+			config.NetworkIdentifier = Network_Identifier;
 			return config;
 		}
 
@@ -58,7 +58,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
 		typename TTraits::TransactionType transaction;
 		transaction.Size = sizeof(transaction);
@@ -73,7 +73,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications) {
 		// Arrange:
-		auto pTransaction = CreateTransaction<TTraits>(version);
+		auto pTransaction = CreateTransaction<TTraits>();
 		mocks::MockNotificationSubscriber sub;
 		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
@@ -122,9 +122,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-        EXPECT_EQ(pTransaction->DataModificationId, notification.DataModificationId);
         EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
-        EXPECT_EQ(pTransaction->Owner, notification.Owner);
         EXPECT_EQ(pTransaction->DownloadDataCdi, notification.DownloadDataCdi);
         EXPECT_EQ(pTransaction->UploadSize, notification.UploadSize);
 	}

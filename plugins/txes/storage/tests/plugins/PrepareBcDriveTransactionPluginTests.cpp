@@ -58,7 +58,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
 		typename TTraits::TransactionType transaction;
 		transaction.Size = sizeof(transaction);
@@ -73,7 +73,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications) {
 		// Arrange:
-		auto pTransaction = CreateTransaction<TTraits>(version);
+		auto pTransaction = CreateTransaction<TTraits>();
 		mocks::MockNotificationSubscriber sub;
 		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
@@ -84,26 +84,6 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numNotifications());
 		auto i = 0u;
 		EXPECT_EQ(Storage_Prepare_Drive_v1_Notification, sub.notificationTypes()[i++]);
-	}
-
-	// endregion
-
-	// region publish - drive notification
-
-	PLUGIN_TEST(CanPublishDriveNotification) {
-		// Arrange:
-		mocks::MockTypedNotificationSubscriber<DriveNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
-		auto pTransaction = CreateTransaction<TTraits>();
-
-		// Act:
-		test::PublishTransaction(*pPlugin, *pTransaction, sub);
-
-		// Assert:
-		ASSERT_EQ(1u, sub.numMatchingNotifications());
-		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
-		EXPECT_EQ(Entity_Type_PrepareBcDrive, notification.TransactionType);
 	}
 
 	// endregion
@@ -122,8 +102,6 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->Owner, notification.Owner);
-		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(pTransaction->DriveSize, notification.DriveSize);
 		EXPECT_EQ(pTransaction->ReplicatorCount, notification.ReplicatorCount);
 	}

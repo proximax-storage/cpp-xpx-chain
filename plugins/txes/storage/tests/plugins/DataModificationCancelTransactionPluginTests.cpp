@@ -110,7 +110,6 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
-        EXPECT_EQ(pTransaction->Owner, notification.Owner);
         EXPECT_EQ(pTransaction->DataModificationId, notification.DataModificationId);
 	}
 
