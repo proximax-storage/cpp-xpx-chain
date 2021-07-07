@@ -122,12 +122,25 @@ namespace catapult { namespace plugins {
 
 				const auto& downloadChannelCache = cache.template sub<cache::DownloadChannelCache>();
 				const auto downloadChannelIter = downloadChannelCache.find(pDownloadPayment->DownloadChannelId);
-				const auto& downloadChannelEntry = downloadChannelIter.tryGet();
+				const auto& pDownloadChannelEntry = downloadChannelIter.tryGet();
 
-				if (!downloadChannelEntry)
+				if (!pDownloadChannelEntry)
 					break;
 
-				resolved = Amount(pDownloadPayment->DownloadSize * downloadChannelEntry->listOfPublicKeys().size());
+				resolved = Amount(pDownloadPayment->DownloadSize * pDownloadChannelEntry->listOfPublicKeys().size());
+				return true;
+			}
+			case UnresolvedAmountType::StreamingWork: {
+				const auto& pStreamingWork = castToUnresolvedData<model::StreamingWork>(unresolved.DataPtr);
+
+				const auto& driveCache = cache.template sub<cache::BcDriveCache>();
+				const auto driveIter = driveCache.find(pStreamingWork->DriveKey);
+				const auto& pDriveEntry = driveIter.tryGet();
+
+				if (!pDriveEntry)
+					break;
+
+				resolved = Amount(2 * pStreamingWork->UploadSize * pDriveEntry->replicatorCount());
 				return true;
 			}
 		  	default:

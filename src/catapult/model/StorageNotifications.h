@@ -84,6 +84,18 @@ namespace catapult { namespace model {
 		uint64_t DownloadSize;
 	};
 
+	struct StreamingWork : public UnresolvedAmountData {
+	public:
+		StreamingWork(const Key& driveKey, const uint64_t& uploadSize)
+				: DriveKey(driveKey)
+				, UploadSize(uploadSize)
+		{}
+
+	public:
+		Key DriveKey;
+		uint64_t UploadSize;
+	};
+
 	/// Notification of a data modification.
 	template<VersionType version>
 	struct DataModificationNotification;
@@ -100,13 +112,15 @@ namespace catapult { namespace model {
 			const Key& drive,
 			const Key& owner,
             const Hash256& cdi,
-			const uint64_t& uploadSize)
+			const uint64_t& uploadSize,
+			const Amount& feedbackFeeAmount)
 			: Notification(Notification_Type, sizeof(DataModificationNotification<1>))
 			, DataModificationId(dataModificationId)
 			, DriveKey(drive)
 			, Owner(owner)
 			, DownloadDataCdi(cdi)
 			, UploadSize(uploadSize)
+			, FeedbackFeeAmount(feedbackFeeAmount)
 		{}
 
 	public:
@@ -124,6 +138,9 @@ namespace catapult { namespace model {
 
 		/// Upload size of data.
 		uint64_t UploadSize;
+
+		/// Amount of XPXs to transfer to the drive.
+		Amount FeedbackFeeAmount;
 	};
 
 	/// Notification of a download.

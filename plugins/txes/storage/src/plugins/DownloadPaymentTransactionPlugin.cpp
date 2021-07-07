@@ -37,11 +37,10 @@ namespace catapult { namespace plugins {
 					sub.notify(BalanceTransferNotification<1>(
 							transaction.Signer, downloadChannelAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
 					const auto pDownloadPayment = sub.mempool().malloc(model::DownloadPayment(transaction.DownloadChannelId, transaction.DownloadSize));
-					const auto unresolvedDownloadPayment = UnresolvedAmount(0, UnresolvedAmountType::DownloadPayment, pDownloadPayment);
 					utils::SwapMosaics(
 							transaction.Signer,
 							downloadChannelKey,
-							{ std::make_pair(streamingMosaicId, unresolvedDownloadPayment) },
+							{ std::make_pair(streamingMosaicId, UnresolvedAmount(0, UnresolvedAmountType::DownloadPayment, pDownloadPayment)) },
 							sub,
 							config,
 							utils::SwapOperation::Buy);
