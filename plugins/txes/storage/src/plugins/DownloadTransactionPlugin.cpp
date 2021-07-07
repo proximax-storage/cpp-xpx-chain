@@ -24,22 +24,30 @@ namespace catapult { namespace plugins {
 				switch (transaction.EntityVersion()) {
 				case 1: {
 					const auto downloadChannelId = CalculateHash(transaction, config.GenerationHash);
-					const auto downloadChannelAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(Key(downloadChannelId.array()), config.NetworkIdentifier));
-					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
-					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
-
-					sub.notify(BalanceTransferNotification<1>(
-							transaction.Signer, downloadChannelAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
-					utils::SwapMosaics(transaction.Signer, { { streamingMosaicId, Amount(transaction.DownloadSize) } }, sub, config, utils::SwapOperation::Buy);
-					sub.notify(BalanceTransferNotification<1>(
-							transaction.Signer, downloadChannelAddress, streamingMosaicId, Amount(transaction.DownloadSize)));
 					sub.notify(DownloadNotification<1>(
 							downloadChannelId,
 							transaction.Signer,
 							transaction.DownloadSize,
 							transaction.FeedbackFeeAmount,
 							transaction.ListOfPublicKeysSize,
-							transaction.ListOfPublicKeysPtr()));
+							transaction.ListOfPublicKeysPtr()
+					));
+
+					const auto downloadChannelKey = Key(downloadChannelId.array());
+					const auto downloadChannelAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(downloadChannelKey, config.NetworkIdentifier));
+					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
+					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+
+					sub.notify(BalanceTransferNotification<1>(
+							transaction.Signer, downloadChannelAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
+					utils::SwapMosaics(
+							transaction.Signer,
+							downloadChannelKey,
+							{ { streamingMosaicId, Amount(transaction.DownloadSize * transaction.ListOfPublicKeysSize) } },
+							sub,
+							config,
+							utils::SwapOperation::Buy);
+
 					break;
 				}
 

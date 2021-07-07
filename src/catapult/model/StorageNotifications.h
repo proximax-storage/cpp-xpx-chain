@@ -72,6 +72,18 @@ namespace catapult { namespace model {
 		uint8_t Opinion;
 	};
 
+	struct DownloadPayment : public UnresolvedAmountData {
+	public:
+		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)
+				: DownloadChannelId(downloadChannelId)
+				, DownloadSize(downloadSize)
+		{}
+
+	public:
+		Hash256 DownloadChannelId;
+		uint64_t DownloadSize;
+	};
+
 	/// Notification of a data modification.
 	template<VersionType version>
 	struct DataModificationNotification;

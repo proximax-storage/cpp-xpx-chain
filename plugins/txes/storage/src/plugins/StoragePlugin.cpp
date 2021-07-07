@@ -84,13 +84,14 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateVerificationPaymentTransactionPlugin());
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
-		  	const auto& replicatorCache = cache.template sub<cache::ReplicatorCache>();
-		  	const auto& driveCache = cache.template sub<cache::BcDriveCache>();
 		  	switch (unresolved.Type) {
 		  	case UnresolvedAmountType::DownloadWork: {
 				const auto& pDownloadWork = castToUnresolvedData<model::DownloadWork>(unresolved.DataPtr);
+
+				const auto& replicatorCache = cache.template sub<cache::ReplicatorCache>();
 				const auto replicatorIter = replicatorCache.find(pDownloadWork->Replicator);
 				const auto& pReplicatorEntry = replicatorIter.tryGet();
+				const auto& driveCache = cache.template sub<cache::BcDriveCache>();
 				const auto driveIter = driveCache.find(pDownloadWork->DriveKey);
 				const auto& pDriveEntry = driveIter.tryGet();
 
@@ -102,8 +103,11 @@ namespace catapult { namespace plugins {
 		  	}
 		  	case UnresolvedAmountType::UploadWork: {
 			  	const auto& pUploadWork = castToUnresolvedData<model::UploadWork>(unresolved.DataPtr);
+
+				const auto& replicatorCache = cache.template sub<cache::ReplicatorCache>();
 				const auto replicatorIter = replicatorCache.find(pUploadWork->Replicator);
 				const auto& pReplicatorEntry = replicatorIter.tryGet();
+				const auto& driveCache = cache.template sub<cache::BcDriveCache>();
 				const auto driveIter = driveCache.find(pUploadWork->DriveKey);
 				const auto& pDriveEntry = driveIter.tryGet();
 
@@ -112,6 +116,19 @@ namespace catapult { namespace plugins {
 
 				resolved = Amount(calculateApprovableDownloadWork(pReplicatorEntry, pDriveEntry, pUploadWork->DriveKey) * pUploadWork->Opinion);
 			  	return true;
+			}
+			case UnresolvedAmountType::DownloadPayment: {
+				const auto& pDownloadPayment = castToUnresolvedData<model::DownloadPayment>(unresolved.DataPtr);
+
+				const auto& downloadChannelCache = cache.template sub<cache::DownloadChannelCache>();
+				const auto downloadChannelIter = downloadChannelCache.find(pDownloadPayment->DownloadChannelId);
+				const auto& downloadChannelEntry = downloadChannelIter.tryGet();
+
+				if (!downloadChannelEntry)
+					break;
+
+				resolved = Amount(pDownloadPayment->DownloadSize * downloadChannelEntry->listOfPublicKeys().size());
+				return true;
 			}
 		  	default:
 			  	break;

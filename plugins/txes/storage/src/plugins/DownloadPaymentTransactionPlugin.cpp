@@ -22,22 +22,30 @@ namespace catapult { namespace plugins {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
-					const auto downloadChannelAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(Key(transaction.DownloadChannelId.array()), config.NetworkIdentifier));
-					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
-					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
-
-					sub.notify(BalanceTransferNotification<1>(
-							transaction.Signer, downloadChannelAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
-					utils::SwapMosaics(transaction.Signer, { { streamingMosaicId, Amount(transaction.DownloadSize) } }, sub, config, utils::SwapOperation::Buy);
-					sub.notify(BalanceTransferNotification<1>(
-							transaction.Signer, downloadChannelAddress, streamingMosaicId, Amount(transaction.DownloadSize)));
-
 					sub.notify(DownloadPaymentNotification<1>(
 							transaction.Signer,
 							transaction.DownloadChannelId,
 							transaction.DownloadSize,
 							transaction.FeedbackFeeAmount
 					));
+
+					const auto downloadChannelKey = Key(transaction.DownloadChannelId.array());
+					const auto downloadChannelAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(downloadChannelKey, config.NetworkIdentifier));
+					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
+					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+
+					sub.notify(BalanceTransferNotification<1>(
+							transaction.Signer, downloadChannelAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
+					const auto pDownloadPayment = sub.mempool().malloc(model::DownloadPayment(transaction.DownloadChannelId, transaction.DownloadSize));
+					const auto unresolvedDownloadPayment = UnresolvedAmount(0, UnresolvedAmountType::DownloadPayment, pDownloadPayment);
+					utils::SwapMosaics(
+							transaction.Signer,
+							downloadChannelKey,
+							{ std::make_pair(streamingMosaicId, unresolvedDownloadPayment) },
+							sub,
+							config,
+							utils::SwapOperation::Buy);
+
 					break;
 				}
 

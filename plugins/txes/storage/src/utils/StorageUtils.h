@@ -12,6 +12,16 @@
 
 namespace catapult { namespace utils {
 
+	/// Swap mosaics between \a sender and \a receiver.
+	void SwapMosaics(const Key&, const Key&, const std::vector<model::UnresolvedMosaic>&, model::NotificationSubscriber&, const config::ImmutableConfiguration&, SwapOperation);
+
+	/// Swap unresolved amount of mosaics between \a sender and \a receiver.
+	void SwapMosaics(const Key&, const Key&, const std::vector<std::pair<UnresolvedMosaicId, UnresolvedAmount>>&, model::NotificationSubscriber&, const config::ImmutableConfiguration&, SwapOperation);
+
+	/// Swap mosaics on the \a account.
 	void SwapMosaics(const Key&, const std::vector<model::UnresolvedMosaic>&, model::NotificationSubscriber&, const config::ImmutableConfiguration&, SwapOperation);
+
+	/// Swap unresolved amount of mosaics on the \a account.
+	void SwapMosaics(const Key&, const std::vector<std::pair<UnresolvedMosaicId, UnresolvedAmount>>&, model::NotificationSubscriber&, const config::ImmutableConfiguration&, SwapOperation);
 
 }}

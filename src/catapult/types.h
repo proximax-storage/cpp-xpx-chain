@@ -83,7 +83,8 @@ namespace catapult {
 	    FileDeposit,
 	    FileUpload,
 		DownloadWork,
-		UploadWork
+		UploadWork,
+		DownloadPayment
 	};
 
 	struct UnresolvedAmountData {
