@@ -22,11 +22,12 @@ namespace catapult { namespace model {
 			auto expectedSize =
 					baseSize // base
 					+ sizeof(uint64_t) // drive size
+					+ sizeof(Amount) // verification fee amount
 					+ sizeof(uint16_t); // replicator count
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 10u, sizeof(T));
+			EXPECT_EQ(baseSize + 18u, sizeof(T));
 		}
 
 		template<typename T>

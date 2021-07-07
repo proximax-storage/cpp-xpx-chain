@@ -189,11 +189,13 @@ namespace catapult { namespace model {
 			const Key& owner,
 			const Key& driveKey,
 			const uint64_t& driveSize,
+			const Amount& verificationFeeAmount,
 			const uint16_t& replicatorCount)
 			: Notification(Notification_Type, sizeof(PrepareDriveNotification<1>))
 			, Owner(owner)
 			, DriveKey(driveKey)
 			, DriveSize(driveSize)
+			, VerificationFeeAmount(verificationFeeAmount)
 			, ReplicatorCount(replicatorCount)
 		{}
 
@@ -206,6 +208,9 @@ namespace catapult { namespace model {
 
 		/// Size of drive.
 		uint64_t DriveSize;
+
+		/// Amount of XPXs to transfer to the drive.
+		Amount VerificationFeeAmount;
 
 		/// Number of replicators.
 		uint16_t ReplicatorCount;
