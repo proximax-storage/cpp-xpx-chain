@@ -77,7 +77,7 @@ namespace catapult { namespace test {
     void AssertEqualDownloadChannelData(const state::DownloadChannelEntry& expectedEntry, const state::DownloadChannelEntry& entry);
 
     /// Cache factory for creating a catapult cache composed of download channel cache and core caches.
-    struct DownloadChannelFactory {
+    struct DownloadChannelCacheFactory {
         private:
             static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
                 auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id));
@@ -115,7 +115,7 @@ namespace catapult { namespace test {
     void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry);
 
      /// Cache factory for creating a catapult cache composed of replicator cache and core caches.
-    struct ReplicatorFactory {
+    struct ReplicatorCacheFactory {
         private:
             static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
                 auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id));

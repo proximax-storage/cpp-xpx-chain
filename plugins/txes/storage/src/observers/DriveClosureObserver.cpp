@@ -8,7 +8,7 @@
 
 namespace catapult { namespace observers {
 
-    DEFINE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>, [](const model::DriveClosureNotification<1>& notification, ObserverContext& context) {
+    DEFINE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>, ([](const auto& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
 
@@ -20,5 +20,5 @@ namespace catapult { namespace observers {
 		auto& replicatorEntry = replicatorIter.get();
 		replicatorEntry.drives().pop_back();
 		
-	});
+	}));
 }}
