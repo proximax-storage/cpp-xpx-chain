@@ -34,11 +34,13 @@ namespace catapult { namespace observers {
 
         state::BcDriveEntry CreateExpectedBcDriveEntry(state::BcDriveEntry& initialEntry){
             state::BcDriveEntry entry(initialEntry);
+            entry.setSize(0);
+            entry.setReplicatorCount(0);
 
             return entry;
         }
 
-        		struct CacheValues {
+        struct CacheValues {
 		public:
 			CacheValues() : InitialBcDriveEntry(Key()), ExpectedBcDriveEntry(Key())
 			{}
@@ -47,28 +49,44 @@ namespace catapult { namespace observers {
 			state::BcDriveEntry InitialBcDriveEntry;
 			state::BcDriveEntry ExpectedBcDriveEntry;
 		};
+
+        void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
+            // Arrange:
+            ObserverTestContext context(NotifyMode::Commit, Current_Height);
+            Notification notification(values.InitialBcDriveEntry.key());
+            auto pObserver = CreateDriveClosureObserver();
+            auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
+
+            // Populate cache.
+            bcDriveCache.insert(values.InitialBcDriveEntry);
+
+            // Act:
+            test::ObserveNotification(*pObserver, notification, context);
+
+            // Assert: check the cache
+            auto driveIter = bcDriveCache.find(values.ExpectedBcDriveEntry.key());
+            const auto& actualEntry = driveIter.get();
+            test::AssertEqualBcDriveData(values.ExpectedBcDriveEntry, actualEntry);
+        }
     }
 
     TEST(TEST_CLASS, DriveClosure_Commit) {
         // Arrange:
         CacheValues values;
 		values.InitialBcDriveEntry = CreateInitialBcDriveEntry();
+		values.ExpectedBcDriveEntry = CreateExpectedBcDriveEntry(values.InitialBcDriveEntry);
+
+        // Assert
+		RunTest(NotifyMode::Commit, values, Current_Height);
+    }
+
+    TEST(TEST_CLASS, DriveClosure_Rollback) {
+        // Arrange:
+        CacheValues values;
+		values.InitialBcDriveEntry = CreateInitialBcDriveEntry();
 		values.ExpectedBcDriveEntry = values.InitialBcDriveEntry;
 
-		ObserverTestContext context(NotifyMode::Commit, Current_Height);
-        Notification notification(values.InitialBcDriveEntry.key());
-        auto pObserver = CreateDriveClosureObserver();
-        auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
-
-        // Populate cache.
-		bcDriveCache.insert(values.InitialBcDriveEntry);
-
-        // Act:
-		test::ObserveNotification(*pObserver, notification, context);
-
-        // Assert: check the cache
-		auto driveIter = bcDriveCache.find(values.ExpectedBcDriveEntry.key());
-		const auto& actualEntry = driveIter.get();
-		test::AssertEqualBcDriveData(values.ExpectedBcDriveEntry, actualEntry);
+        // Assert
+		RunTest(NotifyMode::Rollback, values, Current_Height);
     }
 }}
