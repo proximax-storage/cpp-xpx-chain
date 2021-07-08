@@ -25,8 +25,7 @@ namespace catapult { namespace plugins {
 					sub.notify(DownloadPaymentNotification<1>(
 							transaction.Signer,
 							transaction.DownloadChannelId,
-							transaction.DownloadSize,
-							transaction.FeedbackFeeAmount
+							transaction.DownloadSize
 					));
 
 					const auto downloadChannelKey = Key(transaction.DownloadChannelId.array());

@@ -29,8 +29,7 @@ namespace catapult { namespace plugins {
 							transaction.DriveKey,
 							transaction.Signer,
 							transaction.DownloadDataCdi,
-							transaction.UploadSize,
-							transaction.FeedbackFeeAmount));
+							transaction.UploadSize));
 
 					const auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.NetworkIdentifier));
 					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);

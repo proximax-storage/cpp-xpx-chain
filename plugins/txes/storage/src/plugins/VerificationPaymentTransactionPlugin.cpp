@@ -22,17 +22,16 @@ namespace catapult { namespace plugins {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
+					sub.notify(VerificationPaymentNotification<1>(
+							transaction.Signer,
+							transaction.DriveKey
+					));
+
 					const auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.NetworkIdentifier));
 					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 
 					sub.notify(BalanceTransferNotification<1>(
 							transaction.Signer, driveAddress, currencyMosaicId, transaction.VerificationFeeAmount));
-
-					sub.notify(VerificationPaymentNotification<1>(
-							transaction.Signer,
-							transaction.DriveKey,
-							transaction.VerificationFeeAmount
-					));
 					break;
 				}
 

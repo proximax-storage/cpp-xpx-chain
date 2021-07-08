@@ -30,21 +30,6 @@ namespace catapult { namespace state {
 			return m_consumer;
 		}
 
-        /// Sets \a feedbackFeeAmount of download channel.
-        void setFeedbackFeeAmount(const Amount& feedbackFeeAmount) {
-            m_feedbackFeeAmount = feedbackFeeAmount;
-        }
-
-		/// Increases feedback fee amount by \a delta.
-		void increaseFeedbackFeeAmount(const Amount& delta) {
-			m_feedbackFeeAmount = m_feedbackFeeAmount + delta;
-		}
-
-        /// Gets feedback fee amount.
-        const Amount& feedbackFeeAmount() const {
-            return m_feedbackFeeAmount;
-        }
-
         /// Sets \a downloadSize of download channel.
         void setDownloadSize(const uint64_t& downloadSize) {
 			m_downloadSize = downloadSize;
@@ -72,7 +57,6 @@ namespace catapult { namespace state {
 
 	private:
 		Key m_consumer;
-		Amount m_feedbackFeeAmount;
 		uint64_t m_downloadSize; // In Mbytes
 		std::vector<Key> m_listOfPublicKeys;
 	};

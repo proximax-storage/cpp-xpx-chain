@@ -112,15 +112,13 @@ namespace catapult { namespace model {
 			const Key& drive,
 			const Key& owner,
             const Hash256& cdi,
-			const uint64_t& uploadSize,
-			const Amount& feedbackFeeAmount)
+			const uint64_t& uploadSize)
 			: Notification(Notification_Type, sizeof(DataModificationNotification<1>))
 			, DataModificationId(dataModificationId)
 			, DriveKey(drive)
 			, Owner(owner)
 			, DownloadDataCdi(cdi)
 			, UploadSize(uploadSize)
-			, FeedbackFeeAmount(feedbackFeeAmount)
 		{}
 
 	public:
@@ -138,9 +136,6 @@ namespace catapult { namespace model {
 
 		/// Upload size of data.
 		uint64_t UploadSize;
-
-		/// Amount of XPXs to transfer to the drive.
-		Amount FeedbackFeeAmount;
 	};
 
 	/// Notification of a download.
@@ -158,14 +153,12 @@ namespace catapult { namespace model {
 			const Hash256& id,
 			const Key& consumer,
 			uint64_t downloadSize,
-			const Amount& feedbackFeeAmount,
 			const uint16_t& listOfPublicKeysSize,
 			const Key* listOfPublicKeysPtr)
 			: Notification(Notification_Type, sizeof(DownloadNotification<1>))
 			, Id(id)
 			, Consumer(consumer)
 			, DownloadSize(downloadSize)
-			, FeedbackFeeAmount(feedbackFeeAmount)
 			, ListOfPublicKeysSize(listOfPublicKeysSize)
 			, ListOfPublicKeysPtr(listOfPublicKeysPtr)
 
@@ -180,9 +173,6 @@ namespace catapult { namespace model {
 
 		/// Delta size of download.
 		uint64_t DownloadSize;
-
-		/// Delta transaction fee in xpx.
-		Amount FeedbackFeeAmount;
 
 		/// Size of the list of public keys
 		uint16_t ListOfPublicKeysSize;
@@ -206,13 +196,11 @@ namespace catapult { namespace model {
 			const Key& owner,
 			const Key& driveKey,
 			const uint64_t& driveSize,
-			const Amount& verificationFeeAmount,
 			const uint16_t& replicatorCount)
 			: Notification(Notification_Type, sizeof(PrepareDriveNotification<1>))
 			, Owner(owner)
 			, DriveKey(driveKey)
 			, DriveSize(driveSize)
-			, VerificationFeeAmount(verificationFeeAmount)
 			, ReplicatorCount(replicatorCount)
 		{}
 
@@ -225,9 +213,6 @@ namespace catapult { namespace model {
 
 		/// Size of drive.
 		uint64_t DriveSize;
-
-		/// Amount of XPXs to transfer to the drive.
-		Amount VerificationFeeAmount;
 
 		/// Number of replicators.
 		uint16_t ReplicatorCount;
@@ -368,12 +353,10 @@ namespace catapult { namespace model {
 	public:
 		explicit FinishDownloadNotification(
 				const Key& signer,
-				const Hash256& downloadChannelId,
-				const Amount& feedbackFeeAmount)
+				const Hash256& downloadChannelId)
 				: Notification(Notification_Type, sizeof(FinishDownloadNotification<1>))
 				, PublicKey(signer)
 				, DownloadChannelId(downloadChannelId)
-				, FeedbackFeeAmount(feedbackFeeAmount)
 		{}
 
 	public:
@@ -382,9 +365,6 @@ namespace catapult { namespace model {
 
 		/// The identifier of the download channel.
 		Hash256 DownloadChannelId;
-
-		/// Amount of XPXs to transfer to the download channel.
-		Amount FeedbackFeeAmount;
 	};
 
 	/// Notification of a download payment.
@@ -401,13 +381,11 @@ namespace catapult { namespace model {
 		explicit DownloadPaymentNotification(
 				const Key& signer,
 				const Hash256& downloadChannelId,
-				const uint64_t downloadSize,
-				const Amount& feedbackFeeAmount)
+				const uint64_t downloadSize)
 				: Notification(Notification_Type, sizeof(DownloadPaymentNotification<1>))
 				, PublicKey(signer)
 				, DownloadChannelId(downloadChannelId)
 				, DownloadSize(downloadSize)
-				, FeedbackFeeAmount(feedbackFeeAmount)
 		{}
 
 	public:
@@ -419,9 +397,6 @@ namespace catapult { namespace model {
 
 		/// Download size to add to the prepaid size of the download channel.
 		uint64_t DownloadSize;
-
-		/// Amount of XPXs to transfer to the download channel.
-		Amount FeedbackFeeAmount;
 	};
 
 	/// Notification of a storage payment.
@@ -437,12 +412,10 @@ namespace catapult { namespace model {
 	public:
 		explicit StoragePaymentNotification(
 				const Key& signer,
-				const Key& driveKey,
-				const Amount& storageUnits)
+				const Key& driveKey)
 				: Notification(Notification_Type, sizeof(StoragePaymentNotification<1>))
 				, PublicKey(signer)
 				, DriveKey(driveKey)
-				, StorageUnits(storageUnits)
 		{}
 
 	public:
@@ -451,9 +424,6 @@ namespace catapult { namespace model {
 
 		/// Key of the drive.
 		Key DriveKey;
-
-		/// Amount of storage units to transfer to the drive.
-		Amount StorageUnits;
 	};
 
 	/// Notification of a data modification single approval.
@@ -516,12 +486,10 @@ namespace catapult { namespace model {
 	public:
 		explicit VerificationPaymentNotification(
 				const Key& owner,
-				const Key& driveKey,
-				const Amount& verificationFeeAmount)
+				const Key& driveKey)
 				: Notification(Notification_Type, sizeof(VerificationPaymentNotification<1>))
 				, Owner(owner)
 				, DriveKey(driveKey)
-				, VerificationFeeAmount(verificationFeeAmount)
 		{}
 
 	public:
@@ -530,8 +498,5 @@ namespace catapult { namespace model {
 
 		/// Key of drive.
 		Key DriveKey;
-
-		/// Amount of XPXs to transfer to the drive.
-		Amount VerificationFeeAmount;
 	};
 }}

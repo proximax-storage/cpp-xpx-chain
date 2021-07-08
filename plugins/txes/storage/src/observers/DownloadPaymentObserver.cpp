@@ -17,6 +17,5 @@ namespace catapult { namespace observers {
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
 
 		downloadChannelEntry.increaseDownloadSize(notification.DownloadSize);
-	  	downloadChannelEntry.increaseFeedbackFeeAmount(notification.FeedbackFeeAmount);
 	});
 }}

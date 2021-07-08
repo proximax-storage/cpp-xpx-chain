@@ -36,7 +36,6 @@ namespace catapult { namespace state {
 
 		io::Write(output, downloadEntry.id());
 		io::Write(output, downloadEntry.consumer());
-		io::Write(output, downloadEntry.feedbackFeeAmount());
 		io::Write64(output, downloadEntry.downloadSize());
 
 		SaveListOfPublicKeys(output, downloadEntry.listOfPublicKeys());
@@ -57,7 +56,6 @@ namespace catapult { namespace state {
 		input.read(consumer);
 		entry.setConsumer(consumer);
 
-		entry.setFeedbackFeeAmount(Amount(io::Read64(input)));
 		entry.setDownloadSize(io::Read64(input));
 
 		LoadListOfPublicKeys(input, entry.listOfPublicKeys());

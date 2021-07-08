@@ -56,9 +56,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "size" << static_cast<int64_t>(entry.size())
 				<< "usedSize" << static_cast<int64_t>(entry.usedSize())
 				<< "metaFilesSize" << static_cast<int64_t>(entry.metaFilesSize())
-				<< "replicatorCount" << static_cast<int32_t>(entry.replicatorCount())
-				<< "storageUnits" << ToInt64(entry.storageUnits())
-				<< "verificationFeeAmount" << ToInt64(entry.verificationFeeAmount());
+				<< "replicatorCount" << static_cast<int32_t>(entry.replicatorCount());
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
 		StreamCompletedDataModifications(builder, entry.completedDataModifications());
@@ -127,8 +125,6 @@ namespace catapult { namespace mongo { namespace plugins {
 		entry.setUsedSize(static_cast<uint64_t>(dbDriveEntry["usedSize"].get_int64()));
 		entry.setMetaFilesSize(static_cast<uint64_t>(dbDriveEntry["metaFilesSize"].get_int64()));
 		entry.setReplicatorCount(static_cast<uint16_t>(dbDriveEntry["replicatorCount"].get_int32()));
-		entry.setStorageUnits(Amount(dbDriveEntry["storageUnits"].get_int64()));
-		entry.setVerificationFeeAmount(Amount(dbDriveEntry["verificationFeeAmount"].get_int64()));
 
 		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);
 		ReadCompletedDataModifications(entry.completedDataModifications(), dbDriveEntry["completedDataModifications"].get_array().value);

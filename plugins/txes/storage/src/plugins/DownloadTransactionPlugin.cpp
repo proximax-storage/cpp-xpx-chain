@@ -28,7 +28,6 @@ namespace catapult { namespace plugins {
 							downloadChannelId,
 							transaction.Signer,
 							transaction.DownloadSize,
-							transaction.FeedbackFeeAmount,
 							transaction.ListOfPublicKeysSize,
 							transaction.ListOfPublicKeysPtr()
 					));

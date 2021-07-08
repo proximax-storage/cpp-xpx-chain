@@ -211,10 +211,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDataModificationApprovalObserver())
 				.add(observers::CreateDataModificationCancelObserver())
 				.add(observers::CreateReplicatorOnboardingObserver())
-				.add(observers::CreateFinishDownloadObserver())
-		  		.add(observers::CreateDownloadPaymentObserver())
-				.add(observers::CreateDataModificationSingleApprovalObserver())
-				.add(observers::CreateVerificationPaymentObserver());
+				.add(observers::CreateDownloadPaymentObserver())
+				.add(observers::CreateDataModificationSingleApprovalObserver());
 		});
 	}
 }}

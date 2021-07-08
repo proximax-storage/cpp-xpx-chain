@@ -30,7 +30,6 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto doc = builder << "downloadChannelInfo" << bson_stream::open_document
 				<< "id" << ToBinary(entry.id())
 				<< "consumer" << ToBinary(entry.consumer())
-				<< "feedbackFeeAmount" << ToInt64(entry.feedbackFeeAmount())
 				<< "downloadSize" << static_cast<int64_t>(entry.downloadSize());
 
 		StreamListOfPublicKeys(builder, entry.listOfPublicKeys());
@@ -71,7 +70,6 @@ namespace catapult { namespace mongo { namespace plugins {
 		DbBinaryToModelArray(consumer, dbDownloadChannelEntry["consumer"].get_binary());
 		entry.setConsumer(consumer);
 
-		entry.setFeedbackFeeAmount(Amount(dbDownloadChannelEntry["feedbackFeeAmount"].get_int64()));
 		entry.setDownloadSize(static_cast<uint64_t>(dbDownloadChannelEntry["downloadSize"].get_int64()));
 
 		ReadListOfPublicKeys(entry.listOfPublicKeys(), dbDownloadChannelEntry["listOfPublicKeys"].get_array().value);

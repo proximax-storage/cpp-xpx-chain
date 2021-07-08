@@ -22,18 +22,19 @@ namespace catapult { namespace plugins {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
-					const auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.NetworkIdentifier));
-					const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
-
-					utils::SwapMosaics(transaction.Signer, { { storageMosaicId, transaction.StorageUnits } }, sub, config, utils::SwapOperation::Buy);
-					sub.notify(BalanceTransferNotification<1>(
-							transaction.Signer, driveAddress, storageMosaicId, transaction.StorageUnits));
-
 					sub.notify(StoragePaymentNotification<1>(
 							transaction.Signer,
-							transaction.DriveKey,
-							transaction.StorageUnits
+							transaction.DriveKey
 					));
+
+					const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
+					utils::SwapMosaics(
+							transaction.Signer,
+							transaction.DriveKey,
+							{ { storageMosaicId, transaction.StorageUnits } },
+							sub,
+							config,
+							utils::SwapOperation::Buy);
 					break;
 				}
 

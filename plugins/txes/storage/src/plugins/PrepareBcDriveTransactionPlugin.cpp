@@ -28,7 +28,6 @@ namespace catapult { namespace plugins {
 							transaction.Signer,
 							driveKey,
 							transaction.DriveSize,
-							transaction.VerificationFeeAmount,
 							transaction.ReplicatorCount
 					));
 
