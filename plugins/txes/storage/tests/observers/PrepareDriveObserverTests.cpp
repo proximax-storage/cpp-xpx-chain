@@ -20,71 +20,88 @@ namespace catapult { namespace observers {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
         using Notification = model::PrepareDriveNotification<1>;
 
-        constexpr auto Replicator_Key_Collector = ReplicatorKeyCollector(1234);
+        const Key Drive_Key = test::GenerateRandomByteArray<Key>();
+        const Key Owner = test::GenerateRandomByteArray<Key>();
+        constexpr auto Drive_Size = 50;
+        constexpr auto Replicator_Count = 10;
+        const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>(1234);
         constexpr Height Current_Height(20);
         
-        struct BcDriveValues {
+        state::BcDriveEntry CreateBcDriveEntry() {
+            state::BcDriveEntry entry(Drive_Key);
+            entry.setOwner(Owner);
+			entry.setSize(Drive_Size);
+            entry.setReplicatorCount(Replicator_Count);
+
+            return entry;
+        }
+
+        state::ReplicatorEntry CreateReplicatorEntry(const Key& driveKey, const std::shared_ptr<cache::ReplicatorKeyCollector>& replicatorKeyCollector) {
+            state::ReplicatorEntry entry(driveKey);
+            entry.drives().emplace_back(*replicatorKeyCollector->keys().begin());
+            
+            return entry;
+        }
+
+        struct CacheValues {
             public:
-			explicit BcDriveValues()
-                : Owner(test::GenerateRandomByteArray<Key>())
-                , DriveKey(test::GenerateRandomByteArray<Key>())
-                , DriveSize(test::Random())
-                , ReplicatorCount(test::Random16())
-            {}
+			    explicit CacheValues()
+                    : BcDriveEntry(Key())
+                    , ReplicatorEntry(Key())
+                {}
 
             public:
-                Key Owner;
-                Key DriveKey;
-                uint64_t DriveSize;
-                uint16_t ReplicatorCount;
+                state::BcDriveEntry BcDriveEntry;
+                state::ReplicatorEntry ReplicatorEntry;
         };
         
-        state::BcDriveEntry CreateBcDriveEntry(const BcDriveValues& values){
-            state::BcDriveEntry entry(values.DriveKey);
-            return entry;
+        void RunTest(NotifyMode mode, const CacheValues& values) {
+            ObserverTestContext context(mode, Current_Height);
+            Notification notification(
+                values.BcDriveEntry.owner(),
+                values.ReplicatorEntry.key(),
+                values.BcDriveEntry.size(),
+                values.BcDriveEntry.replicatorCount());
+            auto pObserver = CreatePrepareDriveObserver(Replicator_Key_Collector);
+            auto& driveCache = context.cache().sub<cache::BcDriveCache>();
+            auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
+
+            // Populate cache.
+            driveCache.insert(values.BcDriveEntry);
+            replicatorCache.insert(values.ReplicatorEntry);
+
+            // Act:
+            test::ObserveNotification(*pObserver, notification, context);
+
+            // Assert: check the cache
+            auto driveIter = driveCache.find(values.BcDriveEntry.key());
+            const auto& actualEntry = driveIter.get();
+            test::AssertEqualBcDriveData(values.BcDriveEntry, actualEntry);
+
+            auto replicatorIter = replicatorCache.find(values.ReplicatorEntry.drives().back());
+			auto& replicatorEntry = replicatorIter.get();
+            test::AssertEqualReplicatorData(values.ReplicatorEntry, replicatorEntry);
         }
     }
 
     TEST(TEST_CLASS, PrepareDrive_Commit) {
         // Arrange:
-        ObserverTestContext context(NotifyMode::Commit, Current_Height, Replicator_Key_Collector);
-        BcDriveValues values;
-        Notification notification(values.Owner, values.DriveKey, values.DriveSize, values.ReplicatorCount);
-        auto pObserver = CreatePrepareDriveObserver(Replicator_Key_Collector);
+        CacheValues values;
+        values.BcDriveEntry = CreateBcDriveEntry();
+        values.ReplicatorEntry = CreateReplicatorEntry(values.BcDriveEntry.key(), Replicator_Key_Collector);
 
-        auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
-
-        // Populate cache.
-        bcDriveCache.insert(CreateBcDriveEntry(values));
-
-        // Act:
-        test::ObserveNotification(*pObserver, notification, context);
-
-        // Assert: check the cache
-        auto driveIter = bcDriveCache.find(values.DriveKey);
-        const auto& actualEntry = driveIter.get();
-        test::AssertEqualBcDriveData(CreateBcDriveEntry(values), actualEntry);
+        // Assert:
+        RunTest(NotifyMode::Commit, values);
     }
 
     TEST(TEST_CLASS, PrepareDrive_Rollback) {
         // Arrange:
-        ObserverTestContext context(NotifyMode::Rollback, Current_Height, Replicator_Key_Collector);
-        BcDriveValues values;
-        Notification notification(values.Owner, values.DriveKey, values.DriveSize, values.ReplicatorCount);
-        auto pObserver = CreatePrepareDriveObserver(Replicator_Key_Collector);
+        CacheValues values;
+        values.BcDriveEntry = CreateBcDriveEntry();
+        values.ReplicatorEntry = CreateReplicatorEntry(values.BcDriveEntry.key(), Replicator_Key_Collector);
 
-        auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
-
-        // Populate cache.
-        bcDriveCache.insert(CreateBcDriveEntry(values));
-
-        // Act:
-        test::ObserveNotification(*pObserver, notification, context);
-
-        // Assert: check the cache
-        auto driveIter = bcDriveCache.find(values.DriveKey);
-        const auto& actualEntry = driveIter.get();
-        test::AssertEqualBcDriveData(CreateBcDriveEntry(values), actualEntry);
+        // Assert:
+        RunTest(NotifyMode::Rollback, values);
     }
 
 }}
