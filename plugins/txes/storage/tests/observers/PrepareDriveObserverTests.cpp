@@ -24,7 +24,7 @@ namespace catapult { namespace observers {
         const Key Owner = test::GenerateRandomByteArray<Key>();
         constexpr auto Drive_Size = 50;
         constexpr auto Replicator_Count = 10;
-        const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>(1234);
+        const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
         constexpr Height Current_Height(20);
         
         state::BcDriveEntry CreateBcDriveEntry() {
@@ -38,6 +38,7 @@ namespace catapult { namespace observers {
 
         state::ReplicatorEntry CreateReplicatorEntry(const Key& driveKey, const std::shared_ptr<cache::ReplicatorKeyCollector>& replicatorKeyCollector) {
             state::ReplicatorEntry entry(driveKey);
+            replicatorKeyCollector->addKey(entry);
             entry.drives().emplace_back(*replicatorKeyCollector->keys().begin());
             
             return entry;
