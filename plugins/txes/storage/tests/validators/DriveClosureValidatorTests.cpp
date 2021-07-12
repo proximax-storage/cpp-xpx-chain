@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
             auto cache = test::BcDriveCacheFactory::Create();
             {
                 auto delta = cache.createDelta();
-                auto driveCacheDelta = delta.sub<cache::BcDriveCache>();
+                auto& driveCacheDelta = delta.sub<cache::BcDriveCache>();
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
