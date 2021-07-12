@@ -27,7 +27,7 @@ namespace catapult { namespace observers {
             public:
                 explicit ReplicatorValues()
                     : PublicKey(test::GenerateRandomByteArray<Key>())
-                    , Capacity(test::GenerateRandomByteArray<Amount>())
+                    , Capacity(test::GenerateRandomValue<Amount>())
                 {}
 
             public:
