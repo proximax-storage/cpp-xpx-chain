@@ -14,7 +14,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS PrepareDriveValidatorTests
 
-    DEFINE_COMMON_VALIDATOR_TESTS(PrepareDrive, )
+    DEFINE_COMMON_VALIDATOR_TESTS(PrepareDrive, const std::make_shared<cache::ReplicatorKeyCollector>())
 
     namespace {
         using Notification = model::PrepareDriveNotification<1>;
