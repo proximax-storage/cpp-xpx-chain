@@ -12,14 +12,16 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS DriveClosureValidatorTests
+#define TEST_CLASS DataModificationApprovalValidatorTests
 
-    DEFINE_COMMON_VALIDATOR_TESTS(DriveClosure, )
+    DEFINE_COMMON_VALIDATOR_TESTS(DataModificationApproval, )
 
     namespace {
-        using Notification = model::DriveClosureNotification<1>;
+        using Notification = model::DataModificationApprovalNotification<1>;
 
         constexpr auto Current_Height = Height(10);
+        constexpr auto File_Structure_Size = 50;
+        constexpr auto Used_Drive_Size = 50;
 
         void AssertValidationResult(
                 ValidationResult expectedResult,
@@ -32,8 +34,8 @@ namespace catapult { namespace validators {
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(driveEntry.key());
-            auto pValidator = CreateDriveClosureValidator();
+            Notification notification(driveEntry.key(), driveEntry.activeDataModifications().begin()->Id, driveEntry.activeDataModifications().begin()->DownloadDataCdi, File_Structure_Size, Used_Drive_Size);
+            auto pValidator = CreateDataModificationApprovalValidator();
             
             // Act:
             auto result = test::ValidateNotification(*pValidator, notification, cache, 
@@ -44,20 +46,34 @@ namespace catapult { namespace validators {
         }
     }
 
-    TEST(TEST_CLASS, FailureWhenDriveAlreadyExist) {
+    TEST(TEST_CLASS, FailureWhenNoActiveDataModification) {
         // Arrange:
         state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
+        entry.activeDataModifications().empty();
 
         // Assert:
         AssertValidationResult(
-            Failure_Storage_Drive_Already_Exists,
+            Failure_Storage_No_Active_Data_Modifications,
+            entry);
+    }
+
+    TEST(TEST_CLASS, FailureWhenDataModificationNotFound) {
+        // Arrange:
+        state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
+        entry.activeDataModifications().back().Id = test::GenerateRandomByteArray<Hash256>();
+
+        // Assert:
+        AssertValidationResult(
+            Failure_Storage_Invalid_Data_Modification_Id,
             entry);
     }
 
     TEST(TEST_CLASS, Success) {
         // Arrange:
         state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
-        
+        entry.setOwner(test::GenerateRandomByteArray<Key>());
+        entry.activeDataModifications().front().Id = test::GenerateRandomByteArray<Hash256>();
+
         // Assert:
         AssertValidationResult(
             ValidationResult::Success,

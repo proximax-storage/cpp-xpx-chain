@@ -12,12 +12,12 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS DriveClosureValidatorTests
+#define TEST_CLASS DataModificationValidatorTests
 
-    DEFINE_COMMON_VALIDATOR_TESTS(DriveClosure, )
+    DEFINE_COMMON_VALIDATOR_TESTS(DataModification, )
 
     namespace {
-        using Notification = model::DriveClosureNotification<1>;
+        using Notification = model::DataModificationNotification<1>;
 
         constexpr auto Current_Height = Height(10);
 
@@ -32,8 +32,8 @@ namespace catapult { namespace validators {
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(driveEntry.key());
-            auto pValidator = CreateDriveClosureValidator();
+            Notification notification(driveEntry.activeDataModifications().begin()->Id, driveEntry.key(), driveEntry.owner(), driveEntry.activeDataModifications().begin()->DownloadDataCdi, driveEntry.activeDataModifications().begin()->UploadSize);
+            auto pValidator = CreateDataModificationValidator();
             
             // Act:
             auto result = test::ValidateNotification(*pValidator, notification, cache, 
@@ -44,23 +44,35 @@ namespace catapult { namespace validators {
         }
     }
 
-    TEST(TEST_CLASS, FailureWhenDriveAlreadyExist) {
+    TEST(TEST_CLASS, FailureWhenDriveNotFound) {
         // Arrange:
         state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
 
         // Assert:
         AssertValidationResult(
-            Failure_Storage_Drive_Already_Exists,
+            Failure_Storage_Drive_Not_Found,
+            entry);
+    }
+
+    TEST(TEST_CLASS, FailureWhenDataModificationAlreadyExists) {
+        // Arrange:
+        state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
+        entry.activeDataModifications();
+
+        // Assert:
+        AssertValidationResult(
+            Failure_Storage_Data_Modification_Already_Exists,
             entry);
     }
 
     TEST(TEST_CLASS, Success) {
         // Arrange:
-        state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
-        
+        auto driveKey = test::GenerateRandomByteArray<Key>();
+        state::BcDriveEntry driveEntry(driveKey);
+
         // Assert:
         AssertValidationResult(
             ValidationResult::Success,
-            entry);
+            driveEntry);
     }
 }}
