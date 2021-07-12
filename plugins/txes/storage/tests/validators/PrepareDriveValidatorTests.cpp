@@ -14,12 +14,13 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS PrepareDriveValidatorTests
 
-    DEFINE_COMMON_VALIDATOR_TESTS(PrepareDrive, const std::make_shared<cache::ReplicatorKeyCollector>())
+    DEFINE_COMMON_VALIDATOR_TESTS(PrepareDrive, std::make_shared<cache::ReplicatorKeyCollector>())
 
     namespace {
         using Notification = model::PrepareDriveNotification<1>;
 
         constexpr auto Replicator_Count = 5;
+        const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
         constexpr auto Current_Height = Height(10);
 
         void AssertValidationResult(
@@ -37,7 +38,7 @@ namespace catapult { namespace validators {
                 cache.commit(Current_Height);
             }
             Notification notification(driveEntry.owner(), driveEntry.key(), driveEntry.size(), Replicator_Count);
-            auto pValidator = CreatePrepareDriveValidator();
+            auto pValidator = CreatePrepareDriveValidator(Replicator_Key_Collector);
             
             // Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, 
@@ -53,11 +54,13 @@ namespace catapult { namespace validators {
         auto driveKey = test::GenerateRandomByteArray<Key>();
 		state::BcDriveEntry driveEntry(driveKey);
         driveEntry.setSize(0);
+        state::ReplicatorEntry replicatorEntry(driveKey);
 
 		// Assert:
 		AssertValidationResult(
             Failure_Storage_Drive_Size_Insufficient,
-			driveEntry);
+			driveEntry,
+            replicatorEntry);
 	}
 
     TEST(TEST_CLASS, FailureWhenReplicatorCountInsufficient) {
@@ -65,28 +68,33 @@ namespace catapult { namespace validators {
         auto driveKey = test::GenerateRandomByteArray<Key>();
         state::BcDriveEntry driveEntry(driveKey);
         driveEntry.setReplicatorCount(2);
+        state::ReplicatorEntry replicatorEntry(driveKey);
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_Replicator_Count_Insufficient,
-            driveEntry);
+            driveEntry,
+            replicatorEntry);
     }
 
     TEST(TEST_CLASS, FailureWhenDriveAlreadyExists) {
         // Arrange:
         auto driveKey = test::GenerateRandomByteArray<Key>();
         state::BcDriveEntry driveEntry(driveKey);
+        state::ReplicatorEntry replicatorEntry(driveKey);
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_Drive_Already_Exists,
-            driveEntry);
+            driveEntry,
+            replicatorEntry);
     }
 
     TEST(TEST_CLASS, FailureWhenNoReplicator) {
         // Arrange:
         auto driveKey = test::GenerateRandomByteArray<Key>();
         state::BcDriveEntry driveEntry(driveKey);
+        state::ReplicatorEntry replicatorEntry(driveKey);
 
         // Assert:
         AssertValidationResult(
@@ -100,7 +108,6 @@ namespace catapult { namespace validators {
         auto driveKey = test::GenerateRandomByteArray<Key>();
         state::BcDriveEntry driveEntry(driveKey);
         state::ReplicatorEntry replicatorEntry(driveKey);
-        state::ReplicatorEntry replicatorEntry2(driveKey);
 
         // Assert:
         AssertValidationResult(
