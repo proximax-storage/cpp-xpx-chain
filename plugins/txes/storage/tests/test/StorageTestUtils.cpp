@@ -65,8 +65,7 @@ namespace catapult { namespace test {
         entry.completedDataModifications().reserve(completedDataModificationsCount);
         for (auto cDMC = 0u; cDMC < completedDataModificationsCount; ++cDMC){
             entry.completedDataModifications().emplace_back(state::CompletedDataModification{
-                state::CompletedDataModification(entry.activeDataModifications()[cDMC], static_cast<state::DataModificationState>(test::RandomByte())),
-                static_cast<state::DataModificationState>(test::RandomByte())
+                entry.activeDataModifications()[cDMC], static_cast<state::DataModificationState>(test::RandomByte())
             });
         }
 
