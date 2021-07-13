@@ -121,6 +121,7 @@ namespace catapult { namespace state {
             pData += sizeof(uint16_t);
             for (const auto& details : entry.activeDownloads()) {
                 EXPECT_EQ_MEMORY(details.data(), pData, Hash256_Size);
+                pData += Hash256_Size;
             }
 
             // end region
@@ -131,6 +132,7 @@ namespace catapult { namespace state {
             pData += sizeof(uint16_t);
             for (const auto& details : entry.completedDownloads()) {
                 EXPECT_EQ_MEMORY(details.data(), pData, Hash256_Size);
+                pData += Hash256_Size;
             }
 
             // end region

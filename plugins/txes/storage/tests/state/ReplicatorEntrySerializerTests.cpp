@@ -52,14 +52,16 @@ namespace catapult { namespace state {
             const auto* pExpectedEnd = pData + expectedSize;
             EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
             pData += sizeof(VersionType);
+            EXPECT_EQ_MEMORY(entry.key().data(), pData, Key_Size);
+            pData += Key_Size;
             EXPECT_EQ(entry.capacity(), *reinterpret_cast<const Amount*>(pData));
             pData += sizeof(Amount);
 
             EXPECT_EQ(entry.drives().size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
             for (const auto& details : entry.drives()) {
-                EXPECT_EQ(details, *reinterpret_cast<const Amount*>(pData));
-                pData += sizeof(Amount);
+                EXPECT_EQ_MEMORY(details.data(), pData, Key_Size);
+                pData += Key_Size;
             }
 
             EXPECT_EQ(pExpectedEnd, pData);
