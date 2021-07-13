@@ -109,7 +109,7 @@ namespace catapult { namespace state {
                 pData += Hash256_Size;
                 EXPECT_EQ(details.UploadSize, *reinterpret_cast<const uint64_t*>(pData));
                 pData += sizeof(uint64_t);
-                EXPECT_EQ(details.State, *reinterpret_cast<const uint8_t*>(pData));
+                EXPECT_EQ(details.State, *reinterpret_cast<const DataModificationState*>(pData));
                 pData += sizeof(uint8_t);
             }
 
