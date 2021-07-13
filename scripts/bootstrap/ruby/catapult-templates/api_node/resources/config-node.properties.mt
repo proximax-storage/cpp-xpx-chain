@@ -22,6 +22,7 @@ minFeeMultiplier = 0
 feeInterest = 1
 feeInterestDenominator = 1
 rejectEmptyBlocks = false
+
 transactionSelectionStrategy = oldest
 unconfirmedTransactionsCacheMaxResponseSize = 20MB
 unconfirmedTransactionsCacheMaxSize = 1'000'000

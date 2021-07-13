@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
+catapult_add_gtest_dependencies()
 set(TARGET_NAME tests.catapult.test.plugins.service)
 
 include_directories(${PROJECT_SOURCE_DIR}/plugins/txes/multisig)

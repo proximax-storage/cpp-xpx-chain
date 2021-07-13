@@ -172,4 +172,121 @@ namespace catapult { namespace utils {
 	// force compilation error if HexFormat is used with ByteArray
 	template<size_t N, typename TTag>
 	constexpr void HexFormat(const ByteArray<N, TTag>&);
+
+	template<size_t N>
+	class Bytes {
+	public:
+		/// Creates a zero-initialized byte array.
+		constexpr Bytes() : m_array()
+		{
+			memset(m_array, 0, sizeof(m_array));
+		}
+
+		/// Creates a copy of \a rhs.
+		constexpr Bytes(const Bytes& rhs) = default;
+
+	public:
+		/// Assigns \a rhs to this.
+		Bytes& operator=(const Bytes& rhs) {
+			std::copy(rhs.m_array, rhs.m_array + N, m_array);
+			return *this;
+		}
+
+	public:
+		/// Returns the array size.
+		constexpr size_t size() const {
+			return N;
+		}
+
+		/// Returns a const reference to the byte at \a index.
+		constexpr const uint8_t& operator[](size_t index) const {
+			return m_array[index];
+		}
+
+		/// Returns a reference to the byte at \a index.
+		constexpr uint8_t& operator[](size_t index) {
+			return m_array[index];
+		}
+
+		/// Returns a const pointer to the underlying array.
+		constexpr const uint8_t* data() const noexcept {
+			return m_array;
+		}
+
+		/// Returns a pointer to the underlying array.
+		constexpr uint8_t* data() noexcept {
+			return m_array;
+		}
+
+	public:
+		/// Returns a const iterator to the first byte.
+		constexpr auto cbegin() const noexcept {
+			return std::cbegin(m_array);
+		}
+
+		/// Returns a const iterator to one past the last byte.
+		constexpr auto cend() const noexcept {
+			return std::cend(m_array);
+		}
+
+		/// Returns a const iterator to the first byte.
+		constexpr auto begin() const noexcept {
+			return std::begin(m_array);
+		}
+
+		/// Returns a const iterator to one past the last byte.
+		constexpr auto end() const noexcept {
+			return std::end(m_array);
+		}
+
+		/// Returns an iterator to the first byte.
+		constexpr auto begin() noexcept {
+			return std::begin(m_array);
+		}
+
+		/// Returns an iterator to one past the last byte.
+		constexpr auto end() noexcept {
+			return std::end(m_array);
+		}
+
+	public:
+		/// Returns \c true if this value is equal to \a rhs.
+		constexpr bool operator==(const Bytes& rhs) const {
+			return std::equal(m_array, m_array + size(), rhs.m_array);
+		}
+
+		/// Returns \c true if this value is not equal to \a rhs.
+		constexpr bool operator!=(const Bytes& rhs) const {
+			return !(*this == rhs);
+		}
+
+		/// Returns \c true if this value is greater than or equal to \a rhs.
+		constexpr bool operator>=(const Bytes& rhs) const {
+			return !std::lexicographical_compare(cbegin(), cend(), rhs.cbegin(), rhs.cend());
+		}
+
+		/// Returns \c true if this value is greater than \a rhs.
+		constexpr bool operator>(const Bytes& rhs) const {
+			return std::lexicographical_compare(rhs.cbegin(), rhs.cend(), cbegin(), cend());
+		}
+
+		/// Returns \c true if this value is less than or equal to \a rhs.
+		constexpr bool operator<=(const Bytes& rhs) const {
+			return !std::lexicographical_compare(rhs.cbegin(), rhs.cend(), cbegin(), cend());
+		}
+
+		/// Returns \c true if this value is less than \a rhs.
+		constexpr bool operator<(const Bytes& rhs) const {
+			return std::lexicographical_compare(cbegin(), cend(), rhs.cbegin(), rhs.cend());
+		}
+
+		/// Insertion operator for outputting \a byteArray to \a out.
+		friend std::ostream& operator<<(std::ostream& out, const Bytes& byteArray) {
+			out << HexFormat(byteArray.m_array);
+			return out;
+		}
+
+	public:
+		uint8_t m_array[N];
+	};
 }}
