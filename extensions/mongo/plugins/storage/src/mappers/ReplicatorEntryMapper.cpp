@@ -74,7 +74,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		DbBinaryToModelArray(key, dbReplicatorEntry["key"].get_binary());
 		state::ReplicatorEntry entry(key);
 
-		entry.setVersion(static_cast<VersionType>(dbReplicatorEntry["capacity"].get_int32()));
+		entry.setVersion(static_cast<VersionType>(dbReplicatorEntry["capacity"].get_int32()));	// TODO: dbReplicatorEntry["version"]
 		entry.setCapacity(Amount(dbReplicatorEntry["capacity"].get_int64()));
 
 		ReadDrives(entry.drives(), dbReplicatorEntry["drives"].get_array().value);

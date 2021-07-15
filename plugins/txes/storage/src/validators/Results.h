@@ -80,6 +80,9 @@ namespace catapult { namespace validators {
 	/// Percents in replicator's upload opinion do not sum up to 100.
 	DEFINE_STORAGE_RESULT(Opinion_Incorrect_Percentage, 22);
 
+	/// Respective BLS public key already exists in BLS keys cache.
+	DEFINE_STORAGE_RESULT(BLS_Key_Already_Registered, 23);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

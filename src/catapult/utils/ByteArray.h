@@ -21,6 +21,7 @@
 #pragma once
 #include "HexFormatter.h"
 #include <array>
+#include <cstring>
 
 namespace catapult { namespace utils {
 

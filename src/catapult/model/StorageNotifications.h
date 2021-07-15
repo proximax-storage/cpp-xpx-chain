@@ -326,15 +326,20 @@ namespace catapult { namespace model {
 	public:
 		explicit ReplicatorOnboardingNotification(
 				const Key& publicKey,
+				const BLSPublicKey& blsKey,
 				const Amount& capacity)
 				: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
 				, PublicKey(publicKey)
+				, BlsKey(blsKey)
 				, Capacity(capacity)
 		{}
 
 	public:
 		/// Key of the replicator.
 		Key PublicKey;
+
+		/// Public BLS key of the replicator.
+		BLSPublicKey BlsKey;
 
 		/// The storage size that the replicator provides to the system.
 		Amount Capacity;

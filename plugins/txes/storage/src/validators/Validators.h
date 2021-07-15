@@ -11,6 +11,7 @@
 #include "catapult/model/StorageNotifications.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/ReplicatorCache.h"
+#include "src/cache/BlsKeysCache.h"
 
 namespace catapult { namespace validators {
 
@@ -35,8 +36,9 @@ namespace catapult { namespace validators {
 	/// -
 	DECLARE_STATEFUL_VALIDATOR(DataModificationCancel, model::DataModificationCancelNotification<1>)();
 
-	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
-	/// -
+	/// A validator implementation that applies to drive replicator onboarding notifications and validates that:
+	/// - the replicator does not exist
+	/// - supplied BLS key doesn't appear in BLS keys cache
 	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
 
 	/// A validator implementation that applies to drive finish download notifications and validates that:

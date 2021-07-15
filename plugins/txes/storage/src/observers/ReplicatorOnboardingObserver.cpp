@@ -16,5 +16,10 @@ namespace catapult { namespace observers {
 		state::ReplicatorEntry replicatorEntry(notification.PublicKey);
 		replicatorEntry.setCapacity(notification.Capacity);
 		replicatorCache.insert(replicatorEntry);
+
+	  	auto& blsKeysCache = context.Cache.sub<cache::BlsKeysCache>();
+	  	state::BlsKeysEntry blsKeysEntry(notification.BlsKey);
+	  	blsKeysEntry.setKey(notification.PublicKey);
+	  	blsKeysCache.insert(blsKeysEntry);
 	});
 }}
