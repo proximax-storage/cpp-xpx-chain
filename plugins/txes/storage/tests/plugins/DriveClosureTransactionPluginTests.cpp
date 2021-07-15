@@ -19,7 +19,7 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(DriveClosure, 1, 1,)
-
+	
 		template<typename TTraits>
 		auto CreateTransaction() {
 			return test::CreateDriveClosureTransaction<typename TTraits::TransactionType>();
@@ -68,8 +68,9 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(1u, sub.numNotifications());
+		ASSERT_EQ(2u, sub.numNotifications());
         auto i = 0u;
+		EXPECT_EQ(Storage_Drive_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Storage_Drive_Closure_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
@@ -89,7 +90,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
+		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(Entity_Type_DriveClosure, notification.TransactionType);
 	}
 
