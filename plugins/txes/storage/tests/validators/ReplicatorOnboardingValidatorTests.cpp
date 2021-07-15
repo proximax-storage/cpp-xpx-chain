@@ -23,7 +23,8 @@ namespace catapult { namespace validators {
 
         void AssertValidationResult(
                 ValidationResult expectedResult,
-				const state::ReplicatorEntry& replicatorEntry) {
+				const state::ReplicatorEntry& replicatorEntry,
+                const Key& driveKey) {
             // Arrange:
             auto cache = test::ReplicatorCacheFactory::Create();
             {
@@ -32,7 +33,7 @@ namespace catapult { namespace validators {
                 replicatorCacheDelta.insert(replicatorEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(replicatorEntry.key(), replicatorEntry.capacity());
+            Notification notification(driveKey, replicatorEntry.capacity());
             auto pValidator = CreateReplicatorOnboardingValidator();
             
             // Act:
@@ -46,23 +47,24 @@ namespace catapult { namespace validators {
 
     TEST(TEST_CLASS, FailureWhenReplicatorAlreadyRegistered) {
         // Arrange:
-        auto driveKey = test::GenerateRandomByteArray<Key>();
+        Key driveKey = test::GenerateRandomByteArray<Key>();
         state::ReplicatorEntry replicatorEntry(driveKey);
-  \
+
         // Assert:
         AssertValidationResult(
             Failure_Storage_Replicator_Already_Registered,
-            replicatorEntry);
+            replicatorEntry,
+            driveKey);
     }
 
     TEST(TEST_CLASS, Success) {
 		// Arrange:
-        auto driveKey = test::GenerateRandomByteArray<Key>();
-        state::ReplicatorEntry replicatorEntry(driveKey);
+        state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
 
         // Assert:
 		AssertValidationResult(
 			ValidationResult::Success,
-            replicatorEntry);
+            replicatorEntry,
+            test::GenerateRandomByteArray<Key>());
 	}
 }}
