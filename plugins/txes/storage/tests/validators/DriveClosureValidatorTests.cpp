@@ -23,7 +23,8 @@ namespace catapult { namespace validators {
 
         void AssertValidationResult(
                 ValidationResult expectedResult,
-                const state::BcDriveEntry& driveEntry) {
+                const state::BcDriveEntry& driveEntry,
+                const Key& driveKey) {
             // Arrange:
             auto cache = test::BcDriveCacheFactory::Create();
             {
@@ -32,7 +33,7 @@ namespace catapult { namespace validators {
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(driveEntry.key());
+            Notification notification(driveKey);
             auto pValidator = CreateDriveClosureValidator();
             
             // Act:
@@ -44,23 +45,26 @@ namespace catapult { namespace validators {
         }
     }
 
-    TEST(TEST_CLASS, FailureWhenDriveAlreadyExist) {
+    TEST(TEST_CLASS, FailureWhenDriveNotFound) {
         // Arrange:
         state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
 
         // Assert:
         AssertValidationResult(
-            Failure_Storage_Drive_Already_Exists,
-            entry);
+            Failure_Storage_Drive_Not_Found,
+            entry,
+            test::GenerateRandomByteArray<Key>());
     }
 
     TEST(TEST_CLASS, Success) {
         // Arrange:
-        state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
+        Key driveKey = test::GenerateRandomByteArray<Key>();
+        state::BcDriveEntry entry(driveKey);
         
         // Assert:
         AssertValidationResult(
             ValidationResult::Success,
-            entry);
+            entry,
+            driveKey);
     }
 }}
