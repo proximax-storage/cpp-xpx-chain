@@ -139,6 +139,16 @@ namespace catapult { namespace state {
 			return m_completedDownloads;
 		}
 
+		/// Gets replicators.
+		const utils::KeySet& replicators() const {
+			return m_replicators;
+		}
+
+		/// Gets replicators.
+		utils::KeySet& replicators() {
+			return m_replicators;
+		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
@@ -148,6 +158,7 @@ namespace catapult { namespace state {
 		CompletedDataModifications m_completedDataModifications;
 		std::vector<Hash256> m_activeDownloads;
 		std::vector<Hash256> m_completedDownloads;
+		utils::KeySet m_replicators;
 	};
 
 	// Drive entry.

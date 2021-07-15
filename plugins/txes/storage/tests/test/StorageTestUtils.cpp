@@ -139,7 +139,7 @@ namespace catapult { namespace test {
         state::ReplicatorEntry entry(key);
         entry.setCapacity(capacity);
         for (auto dC = 0u; dC < drivesCount; ++dC)
-            entry.drives().emplace_back(test::GenerateRandomByteArray<Key>());
+            entry.drives().emplace(test::GenerateRandomByteArray<Key>());
 
         return entry;
     }
@@ -151,11 +151,10 @@ namespace catapult { namespace test {
         const auto& expectedDrives = expectedEntry.drives();
 		const auto& drives = entry.drives();
         ASSERT_EQ(expectedDrives.size(), drives.size());
-        for (auto i = 0u; i < drives.size(); ++i) {
-            const auto& expectedDrive = expectedDrives[i];
-			const auto& drive = drives[i];
-            EXPECT_EQ(expectedDrive.size(), drive.size());
-        }
+		auto expectedIter = expectedDrives.begin();
+		auto actualIter = drives.begin();
+		for (; expectedIter != expectedDrives.end(), actualIter != drives.end(); ++expectedIter, ++actualIter)
+            EXPECT_EQ(*expectedIter, *actualIter);
     }
 
 }}

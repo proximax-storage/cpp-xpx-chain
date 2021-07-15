@@ -37,11 +37,10 @@ namespace catapult { namespace state {
 
 		auto driveCount = io::Read16(input);
 		auto& drives = entry.drives();
-		drives.reserve(driveCount);
 		for (auto i = 0u; i < driveCount; ++i) {
 			Key driveKey;
 			input.read(driveKey);
-			drives.emplace_back(driveKey);
+			drives.emplace(driveKey);
 		}
 
 		return entry;

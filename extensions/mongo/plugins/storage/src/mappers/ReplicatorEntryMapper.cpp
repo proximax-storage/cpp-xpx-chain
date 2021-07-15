@@ -14,7 +14,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToDbModel
 
 	namespace {
-		void StreamDrives(bson_stream::document& builder, const std::vector<Key>& drives) {
+		void StreamDrives(bson_stream::document& builder, const utils::KeySet& drives) {
 			auto array = builder << "drives" << bson_stream::open_array;
 			for (const auto& drive : drives)
 				array << ToBinary(drive);
@@ -40,12 +40,12 @@ namespace catapult { namespace mongo { namespace plugins {
 	// endregion
 
 	namespace {
-		void ReadDrives(std::vector<Key>& drives, const bsoncxx::array::view& dbDrives) {
+		void ReadDrives(utils::KeySet& drives, const bsoncxx::array::view& dbDrives) {
 			for (const auto& dbDrive : dbDrives) {
 				Key drive;
 				DbBinaryToModelArray(drive, dbDrive.get_binary());
 
-				drives.push_back(drive);
+				drives.emplace(drive);
 			}
 		}
 	}

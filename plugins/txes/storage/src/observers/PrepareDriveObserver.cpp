@@ -25,7 +25,7 @@ namespace catapult { namespace observers {
 			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 			auto replicatorIter = replicatorCache.find(*pKeyCollector->keys().begin());
 			auto& replicatorEntry = replicatorIter.get();
-			replicatorEntry.drives().emplace_back(notification.DriveKey);
+			replicatorEntry.drives().emplace(notification.DriveKey);
 		})
 	}
 }}

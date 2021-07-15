@@ -39,7 +39,7 @@ namespace catapult { namespace observers {
         state::ReplicatorEntry CreateReplicatorEntry(const Key& driveKey, const std::shared_ptr<cache::ReplicatorKeyCollector>& replicatorKeyCollector) {
             state::ReplicatorEntry entry(driveKey);
             replicatorKeyCollector->addKey(entry);
-            entry.drives().emplace_back(*replicatorKeyCollector->keys().begin());
+            entry.drives().emplace(*replicatorKeyCollector->keys().begin());
             
             return entry;
         }
@@ -79,7 +79,7 @@ namespace catapult { namespace observers {
             const auto& actualEntry = driveIter.get();
             test::AssertEqualBcDriveData(values.BcDriveEntry, actualEntry);
 
-            auto replicatorIter = replicatorCache.find(values.ReplicatorEntry.drives().back());
+            auto replicatorIter = replicatorCache.find(values.ReplicatorEntry.key());
 			auto& replicatorEntry = replicatorIter.get();
             test::AssertEqualReplicatorData(values.ReplicatorEntry, replicatorEntry);
         }

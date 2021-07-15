@@ -13,12 +13,16 @@ namespace catapult { namespace observers {
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
 
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-		driveCache.remove(notification.DriveKey);
+		auto driveIter = driveCache.find(notification.DriveKey);
+		auto& driveEntry = driveIter.get();
 
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-		auto replicatorIter = replicatorCache.find(notification.DriveKey);
-		auto& replicatorEntry = replicatorIter.get();
-		replicatorEntry.drives().pop_back();
-		
+		for (const auto& replicatorKey : driveEntry.replicators()) {
+			auto replicatorIter = replicatorCache.find(replicatorKey);
+			auto& replicatorEntry = replicatorIter.get();
+			replicatorEntry.drives().erase(replicatorEntry.drives().find(notification.DriveKey));
+		}
+
+		driveCache.remove(notification.DriveKey);
 	}));
 }}

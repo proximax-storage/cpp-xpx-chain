@@ -5,7 +5,6 @@
 **/
 
 #include "tests/test/StorageTestUtils.h"
-#include "catapult/model/StorageNotifications.h"
 #include "src/observers/Observers.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
@@ -24,57 +23,81 @@ namespace catapult { namespace observers {
         constexpr auto Drive_Size = 100;
         constexpr auto Num_Replicators = 10;
 
-        state::BcDriveEntry CreateInitialBcDriveEntry(){
-            state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
+        state::BcDriveEntry CreateInitialBcDriveEntry(const Key& driveKey, const utils::KeySet& replicatorKeys){
+            state::BcDriveEntry entry(driveKey);
             entry.setSize(Drive_Size);
             entry.setReplicatorCount(Num_Replicators);
+			entry.replicators() = replicatorKeys;
 
             return entry;
         }
 
-        state::BcDriveEntry CreateExpectedBcDriveEntry(state::BcDriveEntry& initialEntry){
-            state::BcDriveEntry entry(initialEntry);
-            entry.setSize(0);
-            entry.setReplicatorCount(0);
+		state::ReplicatorEntry CreateInitialReplicatorEntry(const Key& driveKey, const Key& replicatorKey){
+			state::ReplicatorEntry entry(replicatorKey);
+			entry.drives().emplace(driveKey);
+
+			return entry;
+		}
+
+        state::ReplicatorEntry CreateExpectedReplicatorEntry(const Key& replicatorKey){
+            state::ReplicatorEntry entry(replicatorKey);
 
             return entry;
         }
 
         struct CacheValues {
 		public:
-			CacheValues() : InitialBcDriveEntry(Key()), ExpectedBcDriveEntry(Key())
+			CacheValues()
+				: InitialBcDriveEntry(Key())
+				, ExpectedBcDriveEntry(Key())
 			{}
 
 		public:
 			state::BcDriveEntry InitialBcDriveEntry;
 			state::BcDriveEntry ExpectedBcDriveEntry;
+			std::vector<state::ReplicatorEntry> InitialReplicatorEntries;
+			std::vector<state::ReplicatorEntry> ExpectedReplicatorEntries;
 		};
 
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
             // Arrange:
-            ObserverTestContext context(NotifyMode::Commit, Current_Height);
+            ObserverTestContext context(mode, Current_Height);
             Notification notification(values.InitialBcDriveEntry.key());
             auto pObserver = CreateDriveClosureObserver();
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
+        	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 
             // Populate cache.
             bcDriveCache.insert(values.InitialBcDriveEntry);
+            for (const auto& entry : values.InitialReplicatorEntries)
+        		replicatorCache.insert(entry);
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
-            auto driveIter = bcDriveCache.find(values.ExpectedBcDriveEntry.key());
-            const auto& actualEntry = driveIter.get();
-            test::AssertEqualBcDriveData(values.ExpectedBcDriveEntry, actualEntry);
+			EXPECT_FALSE(bcDriveCache.find(values.ExpectedBcDriveEntry.key()).tryGet());
+
+            for (const auto& entry : values.ExpectedReplicatorEntries) {
+				auto replicatorIter = replicatorCache.find(entry.key());
+				const auto &actualEntry = replicatorIter.get();
+				test::AssertEqualReplicatorData(entry, actualEntry);
+			}
         }
     }
 
     TEST(TEST_CLASS, DriveClosure_Commit) {
         // Arrange:
         CacheValues values;
-		values.InitialBcDriveEntry = CreateInitialBcDriveEntry();
-		values.ExpectedBcDriveEntry = CreateExpectedBcDriveEntry(values.InitialBcDriveEntry);
+        auto driveKey = test::GenerateRandomByteArray<Key>();
+        utils::KeySet replicatorKeys;
+        for (auto i = 0u; i < Num_Replicators; ++i) {
+        	auto replicatorKey = test::GenerateRandomByteArray<Key>();
+			replicatorKeys.emplace(replicatorKey);
+			values.InitialReplicatorEntries.push_back(CreateInitialReplicatorEntry(driveKey, replicatorKey));
+			values.ExpectedReplicatorEntries.push_back(CreateExpectedReplicatorEntry(replicatorKey));
+		}
+		values.InitialBcDriveEntry = CreateInitialBcDriveEntry(driveKey, replicatorKeys);
 
         // Assert
 		RunTest(NotifyMode::Commit, values, Current_Height);
@@ -83,10 +106,8 @@ namespace catapult { namespace observers {
     TEST(TEST_CLASS, DriveClosure_Rollback) {
         // Arrange:
         CacheValues values;
-		values.ExpectedBcDriveEntry = CreateInitialBcDriveEntry();
-		values.InitialBcDriveEntry = CreateExpectedBcDriveEntry(values.ExpectedBcDriveEntry);
 
         // Assert
-		RunTest(NotifyMode::Rollback, values, Current_Height);
+		EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
     }
 }}

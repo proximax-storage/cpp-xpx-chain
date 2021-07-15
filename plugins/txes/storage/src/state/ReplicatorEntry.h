@@ -8,6 +8,7 @@
 #include "catapult/types.h"
 #include "catapult/exceptions.h"
 #include "catapult/state/StorageState.h"
+#include "catapult/utils/ArraySet.h"
 
 namespace catapult { namespace state {
 
@@ -28,18 +29,18 @@ namespace catapult { namespace state {
 		}
 
 		/// Keys of the drives assiged to the replicator.
-		const std::vector<Key>& drives() const {
+		const utils::KeySet& drives() const {
 			return m_drives;
 		}
 
 		/// Keys of the drives assiged to the replicator.
-		std::vector<Key>& drives() {
+		utils::KeySet& drives() {
 			return m_drives;
 		}
 
 	private:
 		Amount m_capacity;
-		std::vector<Key> m_drives;
+		utils::KeySet m_drives;
 	};
 
 	// Replicator entry.
