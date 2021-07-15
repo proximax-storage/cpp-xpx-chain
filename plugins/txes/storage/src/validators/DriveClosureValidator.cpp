@@ -16,8 +16,9 @@ namespace catapult { namespace validators {
         
         // Check if the drive exists
         if (driveCache.contains(notification.DriveKey))
-			return Failure_Storage_Drive_Already_Exists;
-
-		return ValidationResult::Success;
+            return ValidationResult::Success;
+		
+        return Failure_Storage_Drive_Not_Found;
+		
 	})
 }}

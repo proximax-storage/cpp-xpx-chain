@@ -83,8 +83,8 @@ namespace catapult { namespace observers {
     TEST(TEST_CLASS, DriveClosure_Rollback) {
         // Arrange:
         CacheValues values;
-		values.InitialBcDriveEntry = CreateInitialBcDriveEntry();
-		values.ExpectedBcDriveEntry = values.InitialBcDriveEntry;
+		values.ExpectedBcDriveEntry = CreateInitialBcDriveEntry();
+		values.InitialBcDriveEntry = CreateExpectedBcDriveEntry(values.ExpectedBcDriveEntry);
 
         // Assert
 		RunTest(NotifyMode::Rollback, values, Current_Height);
