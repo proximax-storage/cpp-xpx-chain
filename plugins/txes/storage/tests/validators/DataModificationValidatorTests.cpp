@@ -23,7 +23,9 @@ namespace catapult { namespace validators {
 
         void AssertValidationResult(
                 ValidationResult expectedResult,
-                const state::BcDriveEntry& driveEntry) {
+                const state::BcDriveEntry& driveEntry,
+                const Key& driveKey,
+                const std::vector<state::ActiveDataModification>& activeDataModification) {
             // Arrange:
             auto cache = test::BcDriveCacheFactory::Create();
             {
@@ -32,7 +34,7 @@ namespace catapult { namespace validators {
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(driveEntry.activeDataModifications().begin()->Id, driveEntry.key(), driveEntry.owner(), driveEntry.activeDataModifications().begin()->DownloadDataCdi, driveEntry.activeDataModifications().begin()->UploadSize);
+            Notification notification(activeDataModification.front().Id, driveKey, activeDataModification.front().Owner, activeDataModification.front().DownloadDataCdi, activeDataModification.front().UploadSize);
             auto pValidator = CreateDataModificationValidator();
             
             // Act:
@@ -51,28 +53,52 @@ namespace catapult { namespace validators {
         // Assert:
         AssertValidationResult(
             Failure_Storage_Drive_Not_Found,
-            entry);
+            entry,
+            test::GenerateRandomByteArray<Key>(),
+            { 
+                { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), 
+                    test::GenerateRandomByteArray<Hash256>(), test::Random() } 
+            });
     }
 
     TEST(TEST_CLASS, FailureWhenDataModificationAlreadyExists) {
         // Arrange:
-        state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
-        entry.activeDataModifications();
+        auto driveKey = test::GenerateRandomByteArray<Key>();
+        auto id = test::GenerateRandomByteArray<Hash256>();
+        state::BcDriveEntry entry(driveKey);
+        entry.activeDataModifications().emplace_back(state::ActiveDataModification {
+            id, test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Hash256>(), test::Random()
+        });
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_Data_Modification_Already_Exists,
-            entry);
+            entry,
+            driveKey,
+            { 
+                { id, test::GenerateRandomByteArray<Key>(), 
+                    test::GenerateRandomByteArray<Hash256>(), test::Random() } 
+            });
     }
 
     TEST(TEST_CLASS, Success) {
         // Arrange:
-        auto driveKey = test::GenerateRandomByteArray<Key>();
-        state::BcDriveEntry driveEntry(driveKey);
+        Key driveKey = test::GenerateRandomByteArray<Key>();
+        Key owner = test::GenerateRandomByteArray<Key>();
+        Hash256 downloadDataCdi = test::GenerateRandomByteArray<Hash256>();
+        uint64_t uploadSize = test::Random();
+        state::BcDriveEntry entry(driveKey);
+        entry.activeDataModifications().emplace_back(state::ActiveDataModification {
+            test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize
+        });
 
         // Assert:
         AssertValidationResult(
             ValidationResult::Success,
-            driveEntry);
+            entry,
+            driveKey,
+            { 
+                { test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize }
+            });
     }
 }}
