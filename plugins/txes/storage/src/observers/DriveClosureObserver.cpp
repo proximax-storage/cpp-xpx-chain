@@ -23,6 +23,13 @@ namespace catapult { namespace observers {
 			replicatorEntry.drives().erase(replicatorEntry.drives().find(notification.DriveKey));
 		}
 
+		auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
+		for (const auto& activeDownload : driveEntry.activeDownloads()) {
+			auto downloadChannelIter = downloadChannelCache.find(activeDownload);
+			auto& downloadChannelEntry = downloadChannelIter.get();
+			downloadChannelCache.remove(downloadChannelEntry.id());
+		}
+		
 		driveCache.remove(notification.DriveKey);
 	}));
 }}

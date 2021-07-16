@@ -22,6 +22,7 @@ namespace catapult { namespace observers {
         constexpr Height Current_Height(20);
         constexpr auto Drive_Size = 100;
         constexpr auto Num_Replicators = 10;
+        constexpr auto Num_Active_Downloads = 5;
 
         state::BcDriveEntry CreateInitialBcDriveEntry(const Key& driveKey, const utils::KeySet& replicatorKeys){
             state::BcDriveEntry entry(driveKey);
@@ -45,6 +46,12 @@ namespace catapult { namespace observers {
             return entry;
         }
 
+        state::DownloadChannelEntry CreateInitialDownloadChannelEntry(const Hash256& id){
+            state::DownloadChannelEntry entry(id);
+
+            return entry;
+        }
+
         struct CacheValues {
 		public:
 			CacheValues()
@@ -57,6 +64,8 @@ namespace catapult { namespace observers {
 			state::BcDriveEntry ExpectedBcDriveEntry;
 			std::vector<state::ReplicatorEntry> InitialReplicatorEntries;
 			std::vector<state::ReplicatorEntry> ExpectedReplicatorEntries;
+            std::vector<state::DownloadChannelEntry> InitialDownloadChannelEntries;
+			std::vector<state::DownloadChannelEntry> ExpectedDownloadChannelEntries;
 		};
 
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
@@ -66,11 +75,14 @@ namespace catapult { namespace observers {
             auto pObserver = CreateDriveClosureObserver();
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
+            auto& downloadChannelCache = context.cache().sub<cache::DownloadChannelCache>();
 
             // Populate cache.
             bcDriveCache.insert(values.InitialBcDriveEntry);
             for (const auto& entry : values.InitialReplicatorEntries)
         		replicatorCache.insert(entry);
+            for (const auto& entry : values.InitialDownloadChannelEntries)
+                downloadChannelCache.insert(entry);
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
@@ -83,6 +95,12 @@ namespace catapult { namespace observers {
 				const auto &actualEntry = replicatorIter.get();
 				test::AssertEqualReplicatorData(entry, actualEntry);
 			}
+
+            for (const auto& entry : values.ExpectedDownloadChannelEntries) {
+                auto downloadChannelIter = downloadChannelCache.find(entry.id());
+                const auto &actualEntry = downloadChannelIter.get();
+                EXPECT_FALSE(downloadChannelCache.find(actualEntry.id()).tryGet());
+            }
         }
     }
 
@@ -97,6 +115,10 @@ namespace catapult { namespace observers {
 			values.InitialReplicatorEntries.push_back(CreateInitialReplicatorEntry(driveKey, replicatorKey));
 			values.ExpectedReplicatorEntries.push_back(CreateExpectedReplicatorEntry(replicatorKey));
 		}
+        for (auto j = 0u; j < Num_Active_Downloads; j++) {
+            auto activeDownloadId = test::GenerateRandomByteArray<Hash256>();
+            values.InitialDownloadChannelEntries.push_back(CreateInitialDownloadChannelEntry(activeDownloadId));
+        }
 		values.InitialBcDriveEntry = CreateInitialBcDriveEntry(driveKey, replicatorKeys);
 
         // Assert
