@@ -65,7 +65,6 @@ namespace catapult { namespace observers {
 			std::vector<state::ReplicatorEntry> InitialReplicatorEntries;
 			std::vector<state::ReplicatorEntry> ExpectedReplicatorEntries;
             std::vector<state::DownloadChannelEntry> InitialDownloadChannelEntries;
-			std::vector<state::DownloadChannelEntry> ExpectedDownloadChannelEntries;
 		};
 
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
@@ -96,11 +95,8 @@ namespace catapult { namespace observers {
 				test::AssertEqualReplicatorData(entry, actualEntry);
 			}
 
-            for (const auto& entry : values.ExpectedDownloadChannelEntries) {
-                auto downloadChannelIter = downloadChannelCache.find(entry.id());
-                const auto &actualEntry = downloadChannelIter.get();
-                EXPECT_FALSE(downloadChannelCache.find(actualEntry.id()).tryGet());
-            }
+            for (const auto& entry : values.InitialDownloadChannelEntries)
+                EXPECT_FALSE(downloadChannelCache.find(entry.id()).tryGet());
         }
     }
 
@@ -115,11 +111,12 @@ namespace catapult { namespace observers {
 			values.InitialReplicatorEntries.push_back(CreateInitialReplicatorEntry(driveKey, replicatorKey));
 			values.ExpectedReplicatorEntries.push_back(CreateExpectedReplicatorEntry(replicatorKey));
 		}
+		values.InitialBcDriveEntry = CreateInitialBcDriveEntry(driveKey, replicatorKeys);
         for (auto j = 0u; j < Num_Active_Downloads; j++) {
             auto activeDownloadId = test::GenerateRandomByteArray<Hash256>();
             values.InitialDownloadChannelEntries.push_back(CreateInitialDownloadChannelEntry(activeDownloadId));
+			values.InitialBcDriveEntry.activeDownloads().push_back(activeDownloadId);
         }
-		values.InitialBcDriveEntry = CreateInitialBcDriveEntry(driveKey, replicatorKeys);
 
         // Assert
 		RunTest(NotifyMode::Commit, values, Current_Height);

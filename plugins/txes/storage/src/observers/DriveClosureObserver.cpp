@@ -24,11 +24,8 @@ namespace catapult { namespace observers {
 		}
 
 		auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
-		for (const auto& activeDownload : driveEntry.activeDownloads()) {
-			auto downloadChannelIter = downloadChannelCache.find(activeDownload);
-			auto& downloadChannelEntry = downloadChannelIter.get();
-			downloadChannelCache.remove(downloadChannelEntry.id());
-		}
+		for (const auto& downloadId : driveEntry.activeDownloads())
+			downloadChannelCache.remove(downloadId);
 		
 		driveCache.remove(notification.DriveKey);
 	}));
