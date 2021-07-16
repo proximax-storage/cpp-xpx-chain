@@ -23,7 +23,9 @@ namespace catapult { namespace validators {
 
         void AssertValidationResult(
                 ValidationResult expectedResult,
-                const state::BcDriveEntry& driveEntry) {
+                const state::BcDriveEntry& driveEntry,
+                const Key& owner,
+                const std::vector<state::ActiveDataModification>& activeDataModification) {
             // Arrange:
             auto cache = test::BcDriveCacheFactory::Create();
             {
@@ -32,7 +34,7 @@ namespace catapult { namespace validators {
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(driveEntry.key(), driveEntry.owner(), driveEntry.activeDataModifications().begin()->Id);
+            Notification notification(driveEntry.key(), owner, activeDataModification.back().Id);
             auto pValidator = CreateDataModificationCancelValidator();
             
             // Act:
@@ -47,55 +49,103 @@ namespace catapult { namespace validators {
     TEST(TEST_CLASS, FailureWhenIsNotOwner) {
         // Arrange:
         state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
+        entry.setOwner(test::GenerateRandomByteArray<Key>());
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_Is_Not_Owner,
-            entry);
+            entry,
+            test::GenerateRandomByteArray<Key>(),
+            {
+                { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), 
+                    test::GenerateRandomByteArray<Hash256>(), test::Random() }
+            });
     }
 
     TEST(TEST_CLASS, FailureWhenNoActiveDataModification) {
         // Arrange:
+        auto owner = test::GenerateRandomByteArray<Key>();
         state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
-        entry.activeDataModifications().empty();
+        entry.setOwner(owner);
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_No_Active_Data_Modifications,
-            entry);
+            entry,
+            owner,
+            {
+                { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), 
+                    test::GenerateRandomByteArray<Hash256>(), test::Random() }
+            });
     }
 
     TEST(TEST_CLASS, FailureWhenDataModificationIsActive) {
         // Arrange:
+        auto owner = test::GenerateRandomByteArray<Key>();
+        auto dataModificationId = test::GenerateRandomByteArray<Hash256>();
         state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
-        entry.activeDataModifications().front().Id = test::GenerateRandomByteArray<Hash256>();
+        entry.setOwner(owner);
+        entry.activeDataModifications().emplace_back(state::ActiveDataModification {
+            dataModificationId, test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Hash256>(), test::Random()
+        });
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_Data_Modification_Is_Active,
-            entry);
+            entry,
+            owner,
+            {
+                { dataModificationId, test::GenerateRandomByteArray<Key>(), 
+                    test::GenerateRandomByteArray<Hash256>(), test::Random() }
+            });
     }
 
     TEST(TEST_CLASS, FailureWhenDataModificationNotFound) {
         // Arrange:
+        auto owner = test::GenerateRandomByteArray<Key>();
         state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
-        entry.activeDataModifications().front().Id = test::GenerateRandomByteArray<Hash256>();
+        entry.setOwner(owner);
+        entry.activeDataModifications().emplace_back(state::ActiveDataModification {
+            test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), 
+                test::GenerateRandomByteArray<Hash256>(), test::Random()
+        });
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_Data_Modification_Not_Found,
-            entry);
+            entry,
+            owner,
+            { 
+                { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), 
+                    test::GenerateRandomByteArray<Hash256>(), test::Random() }
+            });
     }
 
     TEST(TEST_CLASS, Success) {
         // Arrange:
-        state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
-        entry.setOwner(test::GenerateRandomByteArray<Key>());
-        entry.activeDataModifications().front().Id = test::GenerateRandomByteArray<Hash256>();
+        auto driveKey = test::GenerateRandomByteArray<Key>();
+        auto owner = test::GenerateRandomByteArray<Key>();
+        auto dataModificationId = test::GenerateRandomByteArray<Hash256>();
+        std::vector<Key> ownerPublicKey { test::GenerateRandomByteArray<Key>() };
+        std::vector<Hash256> downloadDataCdi { test::GenerateRandomByteArray<Hash256>() };
+        std::vector<uint64_t> uploadSize { test::Random() };
+        state::BcDriveEntry entry(driveKey);
+        entry.setOwner(owner);
+        entry.activeDataModifications().emplace_back(state::ActiveDataModification {
+            test::GenerateRandomByteArray<Hash256>(), ownerPublicKey[0], downloadDataCdi[0], uploadSize[0] 
+        });
+        entry.activeDataModifications().emplace_back(state::ActiveDataModification {
+            dataModificationId, ownerPublicKey[1], downloadDataCdi[1], uploadSize[1] 
+        });
 
         // Assert:
         AssertValidationResult(
             ValidationResult::Success,
-            entry);
+            entry,
+            owner,
+            {
+                { test::GenerateRandomByteArray<Hash256>(), ownerPublicKey[0], downloadDataCdi[0], uploadSize[0] },
+                { dataModificationId, ownerPublicKey[1], downloadDataCdi[1], uploadSize[1]  }
+            });
     }
 }}
