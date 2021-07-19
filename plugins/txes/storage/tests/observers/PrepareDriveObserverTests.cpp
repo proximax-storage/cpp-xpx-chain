@@ -56,8 +56,8 @@ namespace catapult { namespace observers {
                 state::ReplicatorEntry ReplicatorEntry;
         };
         
-        void RunTest(NotifyMode mode, const CacheValues& values) {
-            ObserverTestContext context(mode, Current_Height);
+        void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
+            ObserverTestContext context(mode, currentHeight);
             Notification notification(
                 values.BcDriveEntry.owner(),
                 values.ReplicatorEntry.key(),
@@ -68,7 +68,6 @@ namespace catapult { namespace observers {
             auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 
             // Populate cache.
-            driveCache.insert(values.BcDriveEntry);
             replicatorCache.insert(values.ReplicatorEntry);
 
             // Act:
@@ -92,17 +91,15 @@ namespace catapult { namespace observers {
         values.ReplicatorEntry = CreateReplicatorEntry(values.BcDriveEntry.key(), Replicator_Key_Collector);
 
         // Assert:
-        RunTest(NotifyMode::Commit, values);
+        RunTest(NotifyMode::Commit, values, Current_Height);
     }
 
     TEST(TEST_CLASS, PrepareDrive_Rollback) {
         // Arrange:
         CacheValues values;
-        values.BcDriveEntry = CreateBcDriveEntry();
-        values.ReplicatorEntry = CreateReplicatorEntry(values.BcDriveEntry.key(), Replicator_Key_Collector);
 
         // Assert:
-        RunTest(NotifyMode::Rollback, values);
+        EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
     }
 
 }}
