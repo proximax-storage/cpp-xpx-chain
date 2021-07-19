@@ -20,7 +20,6 @@ namespace catapult { namespace observers {
         using ObserverTestContext = test::ObserverTestContextT<test::ReplicatorCacheFactory>;
         using Notification = model::ReplicatorOnboardingNotification<1>;
 
-        const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
         constexpr auto Current_Height = Height(25);
 
         struct ReplicatorValues {
@@ -35,31 +34,44 @@ namespace catapult { namespace observers {
                 Amount Capacity;
         };
 
-        state::ReplicatorEntry CreateEntry(const ReplicatorValues& values) {
+        state::ReplicatorEntry CreateReplicatorEntry(const ReplicatorValues& values) {
             state::ReplicatorEntry entry(values.PublicKey);
             entry.setCapacity(values.Capacity);
 
             return entry;
         }
+
+        void RunTest(NotifyMode mode, const ReplicatorValues& values, const Height& currentHeight) {
+            // Arrange:
+            ObserverTestContext context(mode, currentHeight);
+            Notification notification(values.PublicKey, values.Capacity);
+            auto pObserver = CreateReplicatorOnboardingObserver();
+        	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
+            
+            // Act:
+            test::ObserveNotification(*pObserver, notification, context);
+
+            // Assert: check the cache
+     		auto replicatorIter = replicatorCache.find(values.PublicKey);
+			const auto &actualEntry = replicatorIter.get();
+			test::AssertEqualReplicatorData(CreateReplicatorEntry(values), actualEntry);
+
+        }
     }
 
     TEST(TEST_CLASS, ReplicatorOnboarding_Commit) {
         // Arrange:
-        ObserverTestContext context(NotifyMode::Commit, Current_Height);
         ReplicatorValues values;
-        Notification notification(values.PublicKey, values.Capacity);
-        auto pObserver = CreateReplicatorOnboardingObserver();
-        auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
-
-        // Populate cache.
-        replicatorCache.insert(CreateEntry(values));
-
-        // Act:
-        test::ObserveNotification(*pObserver, notification, context);
 
         // Assert:
-        auto driveIter = replicatorCache.find(values.PublicKey);
-        auto& actualEntry = driveIter.get();
-        test::AssertEqualReplicatorData(CreateEntry(values), actualEntry);
+        RunTest(NotifyMode::Commit, values, Current_Height);
+    }
+
+    TEST(TEST_CLASS, ReplicatorOnboarding_Rollback) {
+        // Arrange:
+        ReplicatorValues values;
+
+        // Assert
+		EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
     }
 }}

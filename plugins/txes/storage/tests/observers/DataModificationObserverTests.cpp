@@ -25,67 +25,67 @@ namespace catapult { namespace observers {
         struct BcDriveValues {
             public:
                 explicit BcDriveValues()
-                    : DriveKey(test::GenerateRandomByteArray<Key>())
-                    , DataModificationId(test::GenerateRandomByteArray<Hash256>())
-                    , Owner(test::GenerateRandomByteArray<Key>())
-                    , DownloadDataCdi(test::GenerateRandomByteArray<Hash256>())
-                    , UploadSize(test::Random())
+                    : Drive_Key(test::GenerateRandomByteArray<Key>())
+                    , Active_Data_Modification {
+                        state::ActiveDataModification { 
+                            test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), 
+                            test::GenerateRandomByteArray<Hash256>(), test::Random()
+                    }}
                 {}
             
             public:
-                Key DriveKey;
-                Hash256 DataModificationId;
-                Key Owner;
-                Hash256 DownloadDataCdi;
-                uint64_t UploadSize;
-                std::vector<state::ActiveDataModification> ActiveDataModification;
+                Key Drive_Key;
+                std::vector<state::ActiveDataModification> Active_Data_Modification;
         };
 
         state::BcDriveEntry CreateEntry(const BcDriveValues& values) {
-            state::BcDriveEntry entry(values.DriveKey);
-            entry.activeDataModifications().emplace_back(state::ActiveDataModification{
-                values.DataModificationId,
-                values.Owner,
-                values.DownloadDataCdi,
-                values.UploadSize
-            });
+            state::BcDriveEntry entry(values.Drive_Key);
+            for (const auto &activeDataModification : values.Active_Data_Modification) {
+                entry.activeDataModifications().emplace_back(activeDataModification);
+            }
 
             return entry;
+        }
+
+        void RunTest(NotifyMode mode, const BcDriveValues& values, const Height& currentHeight) {
+            // Arrange:
+            ObserverTestContext context(mode, currentHeight);
+            Notification notification(
+                values.Active_Data_Modification.begin()->Id, 
+                values.Drive_Key, 
+                values.Active_Data_Modification.begin()->Owner, 
+                values.Active_Data_Modification.begin()->DownloadDataCdi, 
+                values.Active_Data_Modification.begin()->UploadSize);
+            auto pObserver = CreateDataModificationObserver();
+        	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
+
+            // Populate cache.
+            bcDriveCache.insert(state::BcDriveEntry(values.Drive_Key));
+
+            // Act:
+            test::ObserveNotification(*pObserver, notification, context);
+
+            // Assert: check the cache
+            auto driveIter = bcDriveCache.find(values.Drive_Key);
+            const auto& actualEntry = driveIter.get();
+            test::AssertEqualBcDriveData(CreateEntry(values), actualEntry);
         }
     }
 
     TEST(TEST_CLASS, DataModification_Commit) {
         // Arrange:
-        ObserverTestContext context(NotifyMode::Commit, Current_Height);
         BcDriveValues values;
-        Notification notification(values.DataModificationId, values.DriveKey, values.Owner, values.DownloadDataCdi, values.UploadSize);
-        auto pObserver = CreateDataModificationObserver();
-        auto& driveCache = context.cache().sub<cache::BcDriveCache>();
-
-        // Populate cache.
-        driveCache.insert(CreateEntry(values));
-
-        // Act:
-        test::ObserveNotification(*pObserver, notification, context);
-
+        values.Drive_Key = test::GenerateRandomByteArray<Key>();
+        
         // Assert:
-        auto driveIter = driveCache.find(values.DriveKey);
-        auto& actualEntry = driveIter.get();
-        test::AssertEqualBcDriveData(CreateEntry(values), actualEntry);
+        RunTest(NotifyMode::Commit, values, Current_Height);
     }
 
     TEST(TEST_CLASS, DataModification_Rollback) {
         // Arrange:
-        ObserverTestContext context(NotifyMode::Rollback, Current_Height);
         BcDriveValues values;
-        Notification notification(values.DataModificationId, values.DriveKey, values.Owner, values.DownloadDataCdi, values.UploadSize);
-        auto pObserver = CreateDataModificationObserver();
-        auto& driveCache = context.cache().sub<cache::BcDriveCache>();
 
-        // Act:
-        test::ObserveNotification(*pObserver, notification, context);
-
-        // Assert:
-        EXPECT_FALSE(driveCache.contains(values.DriveKey));
+        // Assert
+		EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
     }
 }}

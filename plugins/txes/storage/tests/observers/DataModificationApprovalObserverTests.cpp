@@ -21,83 +21,85 @@ namespace catapult { namespace observers {
         using Notification = model::DataModificationApprovalNotification<1>;
 
         constexpr auto Current_Height = Height(10);
-        const Hash256 Data_Modification_Id =  test::GenerateRandomByteArray<Hash256>();
-        const Hash256 File_Structure_Cdi =  test::GenerateRandomByteArray<Hash256>();
         constexpr auto File_Structure_Size = 50;
-        constexpr auto Used_Drive_Size = 500;
+        constexpr auto Used_Drive_Size = 50;
 
-        state::BcDriveEntry CreateInitialEntry() {
-            state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
-            entry.activeDataModifications().emplace_back(state::ActiveDataModification{
-                Data_Modification_Id,
-                test::GenerateRandomByteArray<Key>(),
-                test::GenerateRandomByteArray<Hash256>(),
-                test::Random()
+        state::BcDriveEntry CreateInitialEntry(const Key& driveKey) {
+            state::BcDriveEntry entry(driveKey);
+            entry.activeDataModifications().emplace_back(state::ActiveDataModification {
+                test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), 
+                test::GenerateRandomByteArray<Hash256>(), test::Random()
             });
-
+            
             return entry;
         }
 
-        state::BcDriveEntry CreateExpectedEntry(state::BcDriveEntry& initialEntry) {
-            state::BcDriveEntry entry(initialEntry.key());
-            auto& completedDataModifications = entry.completedDataModifications();
-            auto& activeDataModifications = entry.activeDataModifications();
-            completedDataModifications.emplace_back(*activeDataModifications.begin(), state::DataModificationState::Succeeded);
-		    activeDataModifications.erase(activeDataModifications.begin());
-
+        state::BcDriveEntry CreateExpectedEntry(const Key& driveKey, const state::ActiveDataModifications& activeDataModifications) {
+            state::BcDriveEntry entry(driveKey);
+            for (const auto &activeDataModification: activeDataModifications) {
+                entry.completedDataModifications().emplace_back(activeDataModification, state::DataModificationState::Succeeded);
+            }
+            
             return entry;
         }
 
         struct CacheValues {
-        public:
-            CacheValues() : InitialDriveEntry(Key()), ExpectedDriveEntry(Key())
-            {}
-
-        public:
-            state::BcDriveEntry InitialDriveEntry;
-            state::BcDriveEntry ExpectedDriveEntry;
+            public:
+                explicit CacheValues()
+                    : InitialBcDriveEntry(Key())
+                    , ExpectedBcDriveEntry(Key())
+                {}
+            
+            public:
+                state::BcDriveEntry InitialBcDriveEntry;
+			    state::BcDriveEntry ExpectedBcDriveEntry;
         };
 
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
             // Arrange:
-            ObserverTestContext context(NotifyMode::Commit, Current_Height);
-            Notification notification(values.InitialDriveEntry.key(), Data_Modification_Id, File_Structure_Cdi, File_Structure_Size, Used_Drive_Size);
+            ObserverTestContext context(mode, currentHeight);
+            Notification notification(
+                values.InitialBcDriveEntry.key(), 
+                values.InitialBcDriveEntry.activeDataModifications().begin()->Id, 
+                values.InitialBcDriveEntry.activeDataModifications().begin()->DownloadDataCdi,
+                File_Structure_Size,
+                Used_Drive_Size);
             auto pObserver = CreateDataModificationApprovalObserver();
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 
             // Populate cache.
-            bcDriveCache.insert(values.InitialDriveEntry);
+            bcDriveCache.insert(values.InitialBcDriveEntry);
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
-            auto driveIter = bcDriveCache.find(values.ExpectedDriveEntry.key());
+            auto driveIter = bcDriveCache.find(values.InitialBcDriveEntry.key());
             const auto& actualEntry = driveIter.get();
-            test::AssertEqualBcDriveData(values.ExpectedDriveEntry, actualEntry);
-
-            EXPECT_TRUE(bcDriveCache.contains(values.ExpectedDriveEntry.key()));
+            test::AssertEqualBcDriveData(values.ExpectedBcDriveEntry, actualEntry);
         }
     }
 
     TEST(TEST_CLASS, DataModificationApproval_Commit) {
         // Arrange:
         CacheValues values;
-        values.InitialDriveEntry = CreateInitialEntry();
-        values.ExpectedDriveEntry = CreateExpectedEntry(values.InitialDriveEntry);
+        auto driveKey = test::GenerateRandomByteArray<Key>();
+        values.InitialBcDriveEntry = CreateInitialEntry(driveKey);
+        values.ExpectedBcDriveEntry = CreateExpectedEntry(driveKey, values.InitialBcDriveEntry.activeDataModifications());
 
         // Assert
         RunTest(NotifyMode::Commit, values, Current_Height);
     }
 
-    TEST(TEST_CLASS, DataModificationCancel_Rollback) {
+    TEST(TEST_CLASS, DataModificationApproval_Rollback) {
         // Arrange:
         CacheValues values;
-		values.InitialDriveEntry = CreateInitialEntry();
-		values.ExpectedDriveEntry = CreateExpectedEntry(values.InitialDriveEntry);
+        auto driveKey = test::GenerateRandomByteArray<Key>();
+        values.ExpectedBcDriveEntry = CreateInitialEntry(driveKey);
+        values.InitialBcDriveEntry = values.ExpectedBcDriveEntry;
 
         // Assert
-        RunTest(NotifyMode::Rollback, values, Current_Height);
+        EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
     }
 
 }}
