@@ -45,6 +45,7 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateTransferMessageValidator())
+				.add(validators::CreateTransferMessageV2Validator())
 				.add(validators::CreateTransferMosaicsValidator());
 		});
 		if (!manager.configHolder()->Config().User.EnableDelegatedHarvestersAutoDetection)
@@ -53,8 +54,11 @@ namespace catapult { namespace plugins {
 
 		//auto encryptionPrivateKeyPemFilename = config::GetNodePrivateKeyPemFilename(manager.userConfig().CertificateDirectory);
 		//auto encryptionPublicKey = crypto::ReadPublicKeyFromPrivateKeyPemFile(encryptionPrivateKeyPemFilename);
+
 		auto recipient = model::PublicKeyToAddress(crypto::KeyPair::FromString(manager.configHolder()->Config().User.BootKey).publicKey(), manager.configHolder()->Config().Immutable.NetworkIdentifier);
+
 		auto dataDirectory = config::CatapultDataDirectory(manager.configHolder()->Config().User.DataDirectory);
+		CATAPULT_LOG(info) << "Registering facultative message for delegated harvesting for recipient: " << model::AddressToString(recipient) << " at directory " << dataDirectory.rootDir().path();
 		manager.addObserverHook([recipient, dataDirectory](auto& builder) {
 		  builder.add(observers::CreateTransferMessageV2Observer(0xE201735761802AFE, recipient, dataDirectory.dir("transfer_message")));
 		});

@@ -19,6 +19,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <catapult/model/Address.h>
 #include "Observers.h"
 #include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/io/FileQueue.h"
@@ -39,18 +40,19 @@ namespace catapult { namespace observers {
 		return MAKE_OBSERVER(TransferMessageV2, Notification, ([marker, recipient, directory](
 				const Notification& notification,
 				ObserverContext& context) {
-			if (notification.MessageSize <= Marker_Size || marker != reinterpret_cast<const uint64_t&>(*notification.MessagePtr))
-				return;
 
-			if (recipient != context.Resolvers.resolve(notification.Recipient))
-				return;
+			if (notification.MessageSize <= Marker_Size || marker != reinterpret_cast<const uint64_t&>(*notification.MessagePtr)) return;
+			if (recipient != context.Resolvers.resolve(notification.Recipient)) return;
 
+
+		  	CATAPULT_LOG(info) << "Booting up writer";
 			io::FileQueueWriter writer(directory.str());
 			io::Write8(writer, NotifyMode::Commit == context.Mode ? 0 : 1);
 			io::Write(writer, context.Height);
 			writer.write(notification.SenderPublicKey);
 			writer.write({ notification.MessagePtr + Marker_Size, notification.MessageSize - Marker_Size });
 			writer.flush();
+		  	CATAPULT_LOG(info) << "Written request for harvest delegation";
 		}));
 	}
 }}

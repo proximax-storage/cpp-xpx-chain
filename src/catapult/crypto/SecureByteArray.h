@@ -29,11 +29,11 @@
 namespace catapult { namespace crypto {
 
 	/// Base class for wrappers of secure byte array types, to provide some type-safety.
-	template<typename TTag>
+	template<size_t N, typename TTag>
 	class SecureByteArray : public utils::MoveOnly {
 	public:
 		/// Size of the underlying array data.
-		static constexpr size_t Size = TTag::Size;
+		static constexpr size_t Size = N;
 
 	public:
 		/// Creates a byte array.
@@ -128,12 +128,12 @@ namespace catapult { namespace crypto {
 		}
 
 	private:
-		utils::ByteArray<TTag> m_array;
+		utils::ByteArray<N,TTag> m_array;
 
 	private:
 		class SecureZeroGuard {
 		public:
-			explicit SecureZeroGuard(utils::ByteArray<TTag>& byteArray) : SecureZeroGuard(byteArray.data(), byteArray.size())
+			explicit SecureZeroGuard(utils::ByteArray<N, TTag>& byteArray) : SecureZeroGuard(byteArray.data(), byteArray.size())
 			{}
 
 			SecureZeroGuard(uint8_t* pData, size_t dataSize) : m_pData(pData), m_dataSize(dataSize)

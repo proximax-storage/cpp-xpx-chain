@@ -95,7 +95,7 @@ namespace catapult { namespace test {
 	}
 
 	std::vector<uint8_t> ToClearTextBuffer(const crypto::KeyPair& descriptor) {
-		std::vector<uint8_t> clearText(2 * Key::Size);
+		std::vector<uint8_t> clearText(Key::Size);
 		std::memcpy(&clearText[0], descriptor.privateKey().data(), Key::Size);
 
 		return clearText;

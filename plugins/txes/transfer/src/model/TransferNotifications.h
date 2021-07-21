@@ -36,7 +36,7 @@ namespace catapult { namespace model {
 	DEFINE_TRANSFER_NOTIFICATION(Mosaics_v1, 0x002, Validator);
 
 	/// Transfer was received with a message.
-	DEFINE_TRANSFER_NOTIFICATION(Message_v2, 0x003, Validator);
+	DEFINE_TRANSFER_NOTIFICATION(Message_v2, 0x003, All);
 
 #undef DEFINE_TRANSFER_NOTIFICATION
 

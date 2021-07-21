@@ -6,3 +6,4 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 catapult_test_executable_target(tests.catapult.crypto nodeps)
 target_link_libraries(tests.catapult.crypto external catapult.crypto)
+catapult_add_openssl_dependencies(tests.catapult.crypto)

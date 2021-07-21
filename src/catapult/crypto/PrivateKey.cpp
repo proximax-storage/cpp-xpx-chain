@@ -85,6 +85,8 @@ namespace catapult { namespace crypto {
 		return FromString(reinterpret_cast<char*>(buffer.pData), buffer.Size );
 	}
 
+
+
 	bool PrivateKey::operator==(const PrivateKey& rhs) const {
 		return m_key == rhs.m_key;
 	}

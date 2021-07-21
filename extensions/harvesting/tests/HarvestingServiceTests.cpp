@@ -300,7 +300,7 @@ namespace catapult { namespace harvesting {
 		void AddHarvestersFileRequests(const std::string& filename, const Key& nodeOwnerPublicKey, size_t numRequests) {
 			UnlockedAccountsStorage storage(filename);
 			for (auto i = 0u; i < numRequests; ++i) {
-				auto decryptedBuffer = test::GenerateRandomVector(2 * Key::Size);
+				auto decryptedBuffer = test::GenerateRandomVector(Key::Size);
 				auto encryptedPayload = test::PrepareHarvestRequestEncryptedPayload(nodeOwnerPublicKey, decryptedBuffer);
 				storage.add(test::GetRequestIdentifier(encryptedPayload), encryptedPayload.Data, Key{ { static_cast<uint8_t>(i) } });
 			}
