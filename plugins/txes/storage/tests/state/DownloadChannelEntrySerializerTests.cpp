@@ -52,6 +52,8 @@ namespace catapult { namespace state {
 
         void AssertEntryBuffer(const state::DownloadChannelEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {
             const auto* pExpectedEnd = pData + expectedSize;
+            EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
+			pData += sizeof(VersionType);
             EXPECT_EQ_MEMORY(entry.id().data(), pData, Hash256_Size);
 			pData += Hash256_Size;
             EXPECT_EQ_MEMORY(entry.consumer().data(), pData, Key_Size);
