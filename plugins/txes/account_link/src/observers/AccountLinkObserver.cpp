@@ -50,8 +50,8 @@ namespace catapult { namespace observers {
 			SetLink(mainAccountState, notification.RemoteAccountKey, state::AccountType::Main);
 			SetLink(remoteAccountState, notification.MainAccountKey, state::AccountType::Remote);
 		} else {
-			SetLink(mainAccountState, Key(), state::AccountType::Unlinked);
-			SetLink(remoteAccountState, Key(), state::AccountType::Remote_Unlinked);
+			ClearLink(mainAccountState, state::AccountType::Unlinked);
+			ClearLink(remoteAccountState, state::AccountType::Remote_Unlinked);
 		}
 	});
 }}
