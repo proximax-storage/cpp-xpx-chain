@@ -28,7 +28,7 @@ namespace catapult { namespace test {
                 const auto &expectedCompletedDataModification = expectedCompletedDataModifications[i];
                 const auto &completedDataModification = completedDataModifications[i];
                 EXPECT_EQ(expectedCompletedDataModifications[i].Id,completedDataModifications[i].Id);
-                 EXPECT_EQ(expectedCompletedDataModifications[i].Owner,completedDataModifications[i].Owner);
+                EXPECT_EQ(expectedCompletedDataModifications[i].Owner,completedDataModifications[i].Owner);
                 EXPECT_EQ(expectedCompletedDataModifications[i].DownloadDataCdi,completedDataModifications[i].DownloadDataCdi);
                 EXPECT_EQ(expectedCompletedDataModifications[i].UploadSize,completedDataModifications[i].UploadSize);
                 EXPECT_EQ(expectedCompletedDataModifications[i].State,completedDataModifications[i].State);

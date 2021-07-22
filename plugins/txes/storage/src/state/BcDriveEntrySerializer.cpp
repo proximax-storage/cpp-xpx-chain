@@ -13,7 +13,7 @@ namespace catapult { namespace state {
 	namespace {
 
 		void SaveActiveDataModifications(io::OutputStream& output, const ActiveDataModifications& activeDataModifications) {
-			io::Write64(output, activeDataModifications.size());
+			io::Write16(output, activeDataModifications.size());
 			for (const auto& modification : activeDataModifications) {
 				io::Write(output, modification.Id);
 				io::Write(output, modification.Owner);
@@ -23,7 +23,7 @@ namespace catapult { namespace state {
 		}
 
 		void SaveCompletedDataModifications(io::OutputStream& output, const CompletedDataModifications& completedDataModifications) {
-			io::Write64(output, completedDataModifications.size());
+			io::Write16(output, completedDataModifications.size());
 			for (const auto& modification : completedDataModifications) {
 				io::Write(output, modification.Id);
 				io::Write(output, modification.Owner);
@@ -33,8 +33,22 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void SaveActiveDownloads(io::OutputStream& output, std::vector<Hash256> activeDownloads) {
+			io::Write16(output, activeDownloads.size());
+			for (const auto& active : activeDownloads) {
+				io::Write(output, active);
+			}
+		}
+
+		void SaveCompletedDownloads(io::OutputStream& output, std::vector<Hash256> completedDownloads) {
+			io::Write16(output, completedDownloads.size());
+			for (const auto& completed : completedDownloads) {
+				io::Write(output, completed);
+			}
+		}
+
 		void LoadActiveDataModifications(io::InputStream& input, ActiveDataModifications& activeDataModifications) {
-			auto count = io::Read64(input);
+			auto count = io::Read16(input);
 			while (count--) {
 				Hash256 id;
 				io::Read(input, id);
@@ -48,7 +62,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadCompletedDataModifications(io::InputStream& input, CompletedDataModifications& completedDataModifications) {
-			auto count = io::Read64(input);
+			auto count = io::Read16(input);
 			while (count--) {
 				Hash256 id;
 				io::Read(input, id);
@@ -59,6 +73,24 @@ namespace catapult { namespace state {
 				auto uploadSize = io::Read64(input);
 				auto state = static_cast<DataModificationState>(io::Read8(input));
 				completedDataModifications.emplace_back(ActiveDataModification{ id, owner, downloadDataCdi, uploadSize }, state);
+			}
+		}
+
+		void LoadActiveDownloads(io::InputStream& input, std::vector<Hash256> activeDownloads) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Hash256 activeDownloadId;
+				io::Read(input, activeDownloadId);
+				activeDownloads.emplace_back(activeDownloadId);
+			}
+		}
+
+		void LoadCompletedDownloads(io::InputStream& input, std::vector<Hash256> completedDownloads) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Hash256 completedDownloadId;
+				io::Read(input, completedDownloadId);
+				completedDownloads.emplace_back(completedDownloadId);
 			}
 		}
 
@@ -76,6 +108,8 @@ namespace catapult { namespace state {
 
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
+		SaveActiveDownloads(output, driveEntry.activeDownloads());
+		SaveCompletedDownloads(output, driveEntry.completedDownloads());
 	}
 
 	BcDriveEntry BcDriveEntrySerializer::Load(io::InputStream& input) {
@@ -103,6 +137,8 @@ namespace catapult { namespace state {
 
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
+		LoadActiveDownloads(input, entry.activeDownloads());
+		LoadCompletedDownloads(input, entry.completedDownloads());
 
 		return entry;
 	}
