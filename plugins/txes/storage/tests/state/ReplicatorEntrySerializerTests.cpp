@@ -19,6 +19,7 @@ namespace catapult { namespace state {
             sizeof(VersionType) + // version
             Key_Size + // drive key
             sizeof(Amount) + // capacity
+            sizeof(uint16_t) + // drive count
             Drives_Count * (Key_Size); // drives
 
         class TestContext {
@@ -127,10 +128,11 @@ namespace catapult { namespace state {
 
             //region drives
             
-            EXPECT_EQ(entry.drives().size(), *reinterpret_cast<const uint16_t*>(pData));
+            uint16_t drivesCount = utils::checked_cast<size_t, uint16_t>(entry.drives().size());
+            memcpy(pData, &drivesCount, sizeof(uint16_t));
             pData += sizeof(uint16_t);
-            for (const auto& details : entry.drives()) {
-                memcpy(pData, &details, Key_Size);
+            for (const auto& driveKey : entry.drives()) {
+                memcpy(pData, driveKey.data(), Key_Size);
                 pData += Key_Size;
             }
 

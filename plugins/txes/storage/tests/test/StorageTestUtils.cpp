@@ -151,10 +151,10 @@ namespace catapult { namespace test {
         const auto& expectedDrives = expectedEntry.drives();
 		const auto& drives = entry.drives();
         ASSERT_EQ(expectedDrives.size(), drives.size());
-		auto expectedIter = expectedDrives.begin();
-		auto actualIter = drives.begin();
-		for (; expectedIter != expectedDrives.end(), actualIter != drives.end(); ++expectedIter, ++actualIter)
-            EXPECT_EQ(*expectedIter, *actualIter);
+        for (auto& expected : expectedDrives) {
+            auto actual = drives.find(expected);
+            EXPECT_EQ(expected, *actual);
+        }
     }
 
 }}
