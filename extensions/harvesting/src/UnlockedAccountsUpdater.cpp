@@ -90,10 +90,13 @@ namespace catapult { namespace harvesting {
 				size_t numPrunedAccounts = 0;
 				auto height = cacheView.height() + Height(1);
 				m_unlockedAccounts.modifier().removeIf([this, height, &cacheView, &numPrunedAccounts](const auto& descriptor) {
+					CATAPULT_LOG(debug) << "Going through account prune procedure";
+
 					auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
 					cache::ImportanceView view(readOnlyAccountStateCache);
 
 					auto address = model::PublicKeyToAddress(descriptor, readOnlyAccountStateCache.networkIdentifier());
+				  	CATAPULT_LOG(debug) << "Descriptor info: Public: " << descriptor << " | Address: " << address;
 					auto minHarvesterBalance = m_ConfigHolder->Config(height).Network.MinHarvesterBalance;
 					auto shouldPruneAccount = !view.canHarvest(descriptor, height, minHarvesterBalance );
 
@@ -153,7 +156,7 @@ namespace catapult { namespace harvesting {
 					const state::AccountState& accountState,
 					const Key& descriptor) {
 				if (GetLinkedPublicKey(accountState) != descriptor) {
-					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": invalid signing public key";
+					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": invalid signing public key." << GetLinkedPublicKey(accountState);
 					return false;
 				}
 
@@ -162,7 +165,7 @@ namespace catapult { namespace harvesting {
 					return true;
 
 				if (GetNodePublicKey(accountState) != m_nodePublicKey) {
-					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": invalid node public key";
+					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": invalid node public key." << GetNodePublicKey(accountState);
 					return false;
 				}
 

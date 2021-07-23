@@ -71,7 +71,7 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, transaction, sub);
 
 		// Assert:
-		EXPECT_EQ(4u, sub.numNotifications());
+		EXPECT_EQ(5u, sub.numNotifications());
 		EXPECT_EQ(0u, sub.numAddresses());
 		EXPECT_EQ(1u, sub.numKeys());
 
@@ -171,11 +171,12 @@ namespace catapult { namespace plugins {
 
 		// Assert:
 		const auto& notificationTypes = sub.notificationTypes();
-		ASSERT_EQ(4u, notificationTypes.size());
+		ASSERT_EQ(5u, notificationTypes.size());
 		EXPECT_EQ(AccountLink_New_Remote_Account_v1_Notification, notificationTypes[0]);
 		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, notificationTypes[1]);
-		EXPECT_EQ(Core_Address_Interaction_v1_Notification, notificationTypes[2]);
-		EXPECT_EQ(AccountLink_Remote_v1_Notification, notificationTypes[3]);
+		EXPECT_EQ(AccountLink_Key_Link_Action_Notification, notificationTypes[2]);
+		EXPECT_EQ(Core_Address_Interaction_v1_Notification, notificationTypes[3]);
+		EXPECT_EQ(AccountLink_Remote_v1_Notification, notificationTypes[4]);
 	}
 
 	PLUGIN_TEST(CanExtractAllNotificationsWhenAccountLinkActionIsUnlink) {
@@ -194,7 +195,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		const auto& notificationTypes = sub.notificationTypes();
 		ASSERT_EQ(3u, notificationTypes.size());
-		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, notificationTypes[0]);
+		EXPECT_EQ(AccountLink_Key_Link_Action_Notification, notificationTypes[0]);
 		EXPECT_EQ(Core_Address_Interaction_v1_Notification, notificationTypes[1]);
 		EXPECT_EQ(AccountLink_Remote_v1_Notification, notificationTypes[2]);
 	}

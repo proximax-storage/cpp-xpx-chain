@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to remote account link notifications and validates that:
 	/// - account link action is valid
-	DECLARE_STATELESS_VALIDATOR(AccountLinkAction, model::RemoteAccountLinkNotification<1>)();
+	DECLARE_STATELESS_VALIDATOR(AccountLinkAction, model::KeyLinkActionNotification<1>)();
 
 	/// A validator implementation that applies to remote account link notifications and validates that:
 	/// - link action is consistent with current state

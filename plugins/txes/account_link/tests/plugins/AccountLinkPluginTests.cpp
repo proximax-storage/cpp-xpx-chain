@@ -54,11 +54,12 @@ namespace catapult { namespace plugins {
 					"NewRemoteAccountAvailabilityValidator",
 					"RemoteSenderValidator",
 					"AccountLinkAvailabilityValidator",
+					"NodeKeyLinkValidator"
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
-				return { "AccountLinkObserver" };
+				return { "AccountLinkObserver", "NodeKeyLinkObserver" };
 			}
 
 			static std::vector<std::string> GetPermanentObserverNames() {
