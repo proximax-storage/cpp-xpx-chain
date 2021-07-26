@@ -59,6 +59,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because no replicator registered.
 	DEFINE_STORAGE_RESULT(Replicator_Already_Registered, 15);
 
+	/// Validation failed because replicator not registered.
+	DEFINE_STORAGE_RESULT(Replicator_Not_Registered, 16);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

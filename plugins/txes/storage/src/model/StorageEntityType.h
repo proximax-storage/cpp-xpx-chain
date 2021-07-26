@@ -29,6 +29,9 @@ namespace catapult { namespace model {
 
 	/// ReplicatorOnboarding transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, ReplicatorOnboarding, 0x6);
+	
+	/// ReplicatorOffboarding transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, ReplicatorOffboarding, 0x7);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

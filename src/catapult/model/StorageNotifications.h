@@ -29,6 +29,9 @@ namespace catapult { namespace model {
 
 	/// Defines a replicator onboarding notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v1, 0x0007);
+	
+	/// Defines a replicator offboarding notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Offboarding_v1, 0x0008);
 
 	/// Notification of a data modification.
 	template<VersionType version>
@@ -272,4 +275,28 @@ namespace catapult { namespace model {
 		/// The storage size that the replicator provides to the system.
 		Amount Capacity;
 	};
+
+	/// Notification of a replicator offboarding.
+	template<VersionType version>
+	struct ReplicatorOffboardingNotification;
+
+	template<>
+	struct ReplicatorOffboardingNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Replicator_Offboarding_v1_Notification;
+
+	public:
+			explicit ReplicatorOffboardingNotification(
+					const Key& publicKey)
+					: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
+					, PublicKey(publicKey)
+			{}
+
+		public:
+			/// Key of the replicator.
+			Key PublicKey;
+
+		};
+
 }}

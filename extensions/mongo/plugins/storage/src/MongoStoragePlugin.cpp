@@ -10,6 +10,7 @@
 #include "DataModificationApprovalMapper.h"
 #include "DataModificationCancelMapper.h"
 #include "ReplicatorOnboardingMapper.h"
+#include "ReplicatorOffboardingMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "storages/MongoBcDriveCacheStorage.h"
 #include "storages/MongoDownloadChannelCacheStorage.h"
@@ -24,6 +25,7 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationApprovalTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationCancelTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateReplicatorOnboardingTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateReplicatorOffboardingTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoBcDriveCacheStorage(

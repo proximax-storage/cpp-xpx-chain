@@ -4,9 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "ReplicatorOnboardingTransactionPlugin.h"
+#include "ReplicatorOffboardingTransactionPlugin.h"
 #include "catapult/model/StorageNotifications.h"
-#include "src/model/ReplicatorOnboardingTransaction.h"
+#include "src/model/ReplicatorOffboardingTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 
@@ -19,30 +19,29 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1: {
-				sub.notify(ReplicatorOnboardingNotification<1>(
+				sub.notify(ReplicatorOffboardingNotification<1>(
 						transaction.Signer,
-						transaction.Capacity
 				));
 
 				const auto signerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier));
-				const auto storageMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+				const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
 
-				// Payments for Download Work to the signer Replicator
-				const auto pDownloadWork = sub.mempool().malloc(model::DownloadWork(transaction.DriveKey, transaction.Signer));
-				sub.notify(BalanceDebitNotification<1>(
+				// Payments for Storage Deposit Returning to signer
+				const auto pDownloadWork = sub.mempool().malloc(model::DriveDeposit(transaction.DriveKey, transaction.Signer));
+				sub.notify(BalanceCreditNotification<1>(
 						signerAddress,
 						storageMosaicId,
-						UnresolvedAmount(0, UnresolvedAmountType::DownloadWork, pDownloadWork)
+						UnresolvedAmount(0, UnresolvedAmountType::DriveDeposit, pDriveDeposit)
 				));
 
 				break;
 			}
 
 			default:
-				CATAPULT_LOG(debug) << "invalid version of ReplicatorOnboardingTransaction: " << transaction.EntityVersion();
+				CATAPULT_LOG(debug) << "invalid version of ReplicatorOffboardingTransaction: " << transaction.EntityVersion();
 			}
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(ReplicatorOnboarding, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(ReplicatorOffboarding, Default, Publish)
 }}

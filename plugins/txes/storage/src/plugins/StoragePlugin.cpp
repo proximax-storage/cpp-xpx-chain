@@ -14,6 +14,7 @@
 #include "src/plugins/DataModificationApprovalTransactionPlugin.h"
 #include "src/plugins/DataModificationCancelTransactionPlugin.h"
 #include "src/plugins/ReplicatorOnboardingTransactionPlugin.h"
+#include "src/plugins/ReplicatorOffboardingTransactionPlugin.h"
 #include "src/state/CachedStorageState.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
@@ -34,6 +35,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDataModificationApprovalTransactionPlugin());
 		manager.addTransactionSupport(CreateDataModificationCancelTransactionPlugin());
 		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin());
+		manager.addTransactionSupport(CreateReplicatorOffboardingTransactionPlugin());
 
 		manager.addCacheSupport<cache::BcDriveCacheStorage>(
 			std::make_unique<cache::BcDriveCache>(manager.cacheConfig(cache::BcDriveCache::Name), pConfigHolder));
@@ -80,7 +82,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDataModificationValidator())
 				.add(validators::CreateDataModificationApprovalValidator())
 				.add(validators::CreateDataModificationCancelValidator())
-				.add(validators::CreateReplicatorOnboardingValidator());
+				.add(validators::CreateReplicatorOnboardingValidator())
+				.add(validators::CreateReplicatorOffboardingValidator());
 		});
 
 		manager.addObserverHook([pKeyCollector](auto& builder) {
@@ -90,7 +93,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDataModificationObserver())
 				.add(observers::CreateDataModificationApprovalObserver())
 				.add(observers::CreateDataModificationCancelObserver())
-				.add(observers::CreateReplicatorOnboardingObserver());
+				.add(observers::CreateReplicatorOnboardingObserver())
+				.add(observers::CreateReplicatorOffboardingObserver());
 		});
 	}
 }}
