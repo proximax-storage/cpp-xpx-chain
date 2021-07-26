@@ -20,10 +20,11 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 				case 1:
 					sub.notify(MosaicRemoveLevyNotification<1>(transaction.MosaicId, transaction.Signer));
-				break;
-				
+					break;
+
 				default:
-					CATAPULT_LOG(debug) << "invalid version of MosaicRemoveLevyTransaciton: " << transaction.EntityVersion();
+					CATAPULT_LOG(debug) << "invalid version of MosaicRemoveLevyTransaciton: "
+										<< transaction.EntityVersion();
 			}
 		}
 	}

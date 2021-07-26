@@ -12,34 +12,34 @@
 #include "src/utils/MosaicLevyUtils.h"
 
 namespace catapult { namespace observers {
-		
+
 	using Notification = model::BalanceTransferNotification<1>;
-	
+
 	void LevyBalanceTransferObserverDetail(const Notification& notification, const ObserverContext& context) {
 		auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
 		auto pLevy = GetLevy(mosaicId, context);
-		if(!pLevy)
+		if (!pLevy)
 			return;
-		
+
 		utils::MosaicLevyCalculatorFactory factory;
 		Amount levyAmount = factory.getCalculator(pLevy->Type)(notification.Amount, pLevy->Fee);
-		
-		auto& cache = context.Cache.sub<cache::AccountStateCache>();
+
+		auto &cache = context.Cache.sub<cache::AccountStateCache>();
 		auto senderIter = cache.find(notification.Sender);
 		auto recipientIter = cache.find(pLevy->Recipient);
-		
-		auto& senderState = senderIter.get();
-		auto& recipientState = recipientIter.get();
-		
+
+		auto &senderState = senderIter.get();
+		auto &recipientState = recipientIter.get();
+
 		if (NotifyMode::Commit == context.Mode) {
 			senderState.Balances.debit(pLevy->MosaicId, levyAmount, context.Height);
 			recipientState.Balances.credit(pLevy->MosaicId, levyAmount, context.Height);
-		}else {
+		} else {
 			recipientState.Balances.debit(pLevy->MosaicId, levyAmount, context.Height);
 			senderState.Balances.credit(pLevy->MosaicId, levyAmount, context.Height);
 		}
 	}
-	
+
 	DEFINE_OBSERVER(LevyBalanceTransfer, Notification, [](const auto& notification, const ObserverContext& context) {
 		LevyBalanceTransferObserverDetail(notification, context);
 	});

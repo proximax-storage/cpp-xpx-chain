@@ -13,18 +13,18 @@ namespace catapult { namespace observers {
 	using Notification = model::MosaicRemoveLevyNotification<1>;
 
 	void RemoveLevyObserverDetail(
-		const Notification& notification,
-		const ObserverContext& context) {
-		
-		auto& cache = context.Cache.sub<cache::LevyCache>();
+		const Notification &notification,
+		const ObserverContext &context) {
+
+		auto &cache = context.Cache.sub<cache::LevyCache>();
 		auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
 		auto iter = cache.find(mosaicId);
-		auto& entry = iter.get();
-		
+		auto &entry = iter.get();
+
 		if (NotifyMode::Commit == context.Mode && entry.levy()) {
 			entry.remove(context.Height);
 			cache.markHistoryForRemove(mosaicId, context.Height);
-		} else if( NotifyMode::Rollback == context.Mode) {
+		} else if (NotifyMode::Rollback == context.Mode) {
 			entry.undo();
 			cache.unmarkHistoryForRemove(mosaicId, context.Height);
 		}

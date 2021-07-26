@@ -14,34 +14,33 @@ namespace catapult { namespace observers {
 	namespace {
 		void PruneHistory(state::LevyHistoryList& list, const Height& height) {
 			state::LevyHistoryIterator iterator = list.begin();
-			while( iterator != list.end() && iterator->first <= height) {
+			while (iterator != list.end() && iterator->first <= height) {
 				iterator = list.erase(iterator);
 			}
 		}
 	}
 	
 	void PruneLevyHistoryObserverDetail(const ObserverContext& context) {
-		
 		if (NotifyMode::Rollback == context.Mode)
 			return;
-		
+
 		const model::NetworkConfiguration &config = context.Config.Network;
-		
+
 		auto gracePeriod = Height(config.MaxRollbackBlocks);
 		if (context.Height <= gracePeriod)
 			return;
-		
+
 		auto pruneHeight = context.Height - gracePeriod;
 		auto &cache = context.Cache.sub<cache::LevyCache>();
-		
+
 		auto cachedMosaicIds = cache.getCachedMosaicIdsByHeight(pruneHeight);
-		for (const auto& mosaicId : cachedMosaicIds) {
+		for (const auto &mosaicId : cachedMosaicIds) {
 			auto cacheIter = cache.find(mosaicId);
 			auto &entry = cacheIter.get();
-			
+
 			PruneHistory(entry.updateHistory(), pruneHeight);
-			
-			if( entry.levy() == nullptr && !entry.hasUpdateHistory())
+
+			if (entry.levy() == nullptr && !entry.hasUpdateHistory())
 				cache.remove(mosaicId);
 		}
 	}
