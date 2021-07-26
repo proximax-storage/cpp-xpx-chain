@@ -99,7 +99,7 @@ namespace catapult { namespace state {
             }
         }
 
-        void AssertActiveDownloads(const std::vector<Hash256> activeDownloads, const uint8_t*& pData) {
+        void AssertActiveDownloads(const std::vector<Hash256>& activeDownloads, const uint8_t*& pData) {
             EXPECT_EQ(activeDownloads.size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
             for (const auto& active : activeDownloads) {
@@ -108,7 +108,7 @@ namespace catapult { namespace state {
             }
         }
 
-        void AssertCompletedDownloads(const std::vector<Hash256> completedDownloads, const uint8_t*& pData) {
+        void AssertCompletedDownloads(const std::vector<Hash256>& completedDownloads, const uint8_t*& pData) {
             EXPECT_EQ(completedDownloads.size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
             for (const auto& completed : completedDownloads) {
@@ -221,17 +221,17 @@ namespace catapult { namespace state {
             }
 		}
 
-        void SaveActiveDownloads(const std::vector<Hash256> activeDownloads, uint8_t*& pData) {
-			uint16_t activeDownloadsCount = utils::checked_cast<size_t, uint16_t>(activeDownloads.size());
+        void SaveActiveDownloads(const std::vector<Hash256>& activeDownloads, uint8_t*& pData) {
+            uint16_t activeDownloadsCount = utils::checked_cast<size_t, uint16_t>(activeDownloads.size());
             memcpy(pData, &activeDownloadsCount, sizeof(uint16_t));
             pData += sizeof(uint16_t);
-			for (const auto& active : activeDownloads) {
-				memcpy(pData, active.data(), Hash256_Size);
+            for (const auto& active : activeDownloads) {
+                memcpy(pData, active.data(), Hash256_Size);
                 pData += Hash256_Size;
-			}
+            }
 		}
 
-		void SaveCompletedDownloads(const std::vector<Hash256> completedDownloads, uint8_t*& pData) {
+		void SaveCompletedDownloads(const std::vector<Hash256>& completedDownloads, uint8_t*& pData) {
 			uint16_t completedDownloadsCount = utils::checked_cast<size_t, uint16_t>(completedDownloads.size());
             memcpy(pData, &completedDownloadsCount, sizeof(uint16_t));
             pData += sizeof(uint16_t);
@@ -258,24 +258,9 @@ namespace catapult { namespace state {
             memcpy(pData, &entry.replicatorCount(), sizeof(uint16_t));
             pData += sizeof(uint16_t);
 
-            auto activeDataModificationsCount = utils::checked_cast<size_t, uint16_t>(entry.activeDataModifications().size());
-            memcpy(pData, &activeDataModificationsCount, sizeof(uint16_t));
-            pData += sizeof(uint16_t);
             SaveActiveDataModifications(entry.activeDataModifications(), pData);
-
-            auto completedDataModificationsCount = utils::checked_cast<size_t, uint16_t>(entry.completedDataModifications().size());
-            memcpy(pData, &completedDataModificationsCount, sizeof(uint16_t));
-            pData += sizeof(uint16_t);
             SaveCompletedDataModifications(entry.completedDataModifications(), pData);
-
-            auto activeDownloadsCount = utils::checked_cast<size_t, uint16_t>(entry.activeDownloads().size());
-            memcpy(pData, &activeDownloadsCount, sizeof(uint16_t));
-            pData += sizeof(uint16_t);
             SaveActiveDownloads(entry.activeDownloads(), pData);
-
-            auto completedDownloadsCount = utils::checked_cast<size_t, uint16_t>(entry.completedDownloads().size());
-            memcpy(pData, &completedDownloadsCount, sizeof(uint16_t));
-            pData += sizeof(uint16_t);
             SaveCompletedDownloads(entry.completedDownloads(), pData);
 
             return buffer;

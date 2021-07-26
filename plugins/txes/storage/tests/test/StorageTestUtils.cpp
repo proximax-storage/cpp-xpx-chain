@@ -27,11 +27,25 @@ namespace catapult { namespace test {
             for (auto i = 0u; i < completedDataModifications.size(); i++) {
                 const auto &expectedCompletedDataModification = expectedCompletedDataModifications[i];
                 const auto &completedDataModification = completedDataModifications[i];
-                EXPECT_EQ(expectedCompletedDataModifications[i].Id,completedDataModifications[i].Id);
-                EXPECT_EQ(expectedCompletedDataModifications[i].Owner,completedDataModifications[i].Owner);
-                EXPECT_EQ(expectedCompletedDataModifications[i].DownloadDataCdi,completedDataModifications[i].DownloadDataCdi);
-                EXPECT_EQ(expectedCompletedDataModifications[i].UploadSize,completedDataModifications[i].UploadSize);
-                EXPECT_EQ(expectedCompletedDataModifications[i].State,completedDataModifications[i].State);
+                EXPECT_EQ(expectedCompletedDataModification.Id, completedDataModification.Id);
+                EXPECT_EQ(expectedCompletedDataModification.Owner, completedDataModification.Owner);
+                EXPECT_EQ(expectedCompletedDataModification.DownloadDataCdi, completedDataModification.DownloadDataCdi);
+                EXPECT_EQ(expectedCompletedDataModification.UploadSize, completedDataModification.UploadSize);
+                EXPECT_EQ(expectedCompletedDataModification.State, completedDataModification.State);
+            }
+        }
+
+        void AssertEqualActiveDownloads(const std::vector<Hash256>& expectedActiveDownloads, const std::vector<Hash256>& activeDownloads) {
+            ASSERT_EQ(expectedActiveDownloads.size(), activeDownloads.size());
+            for (auto i = 0u; i < activeDownloads.size(); ++i) {
+                EXPECT_EQ(expectedActiveDownloads[i], activeDownloads[i]);
+            }
+        }
+
+        void AssertEqualCompletedDownloads(const std::vector<Hash256>& expectedCompletedDownloads, const std::vector<Hash256>& completedDownloads) {
+            ASSERT_EQ(expectedCompletedDownloads.size(), completedDownloads.size());
+            for (auto i = 0u; i < completedDownloads.size(); ++i) {
+                EXPECT_EQ(expectedCompletedDownloads[i], completedDownloads[i]);
             }
         }
     }
@@ -69,10 +83,12 @@ namespace catapult { namespace test {
             });
         }
 
+        entry.activeDownloads().reserve(activeDownloadsCount);
         for (auto aDC = 0u; aDC < activeDownloadsCount; ++aDC) {
             entry.activeDownloads().emplace_back(test::GenerateRandomByteArray<Hash256>());
         }
 
+        entry.completedDownloads().reserve(completedDownloadsCount);
         for (auto cDC = 0u; cDC < completedDownloadsCount; ++cDC) {
             entry.completedDownloads().emplace_back(test::GenerateRandomByteArray<Hash256>());
         }
@@ -89,24 +105,8 @@ namespace catapult { namespace test {
 
         AssertEqualActiveDataModifications(expectedEntry.activeDataModifications(), entry.activeDataModifications());
         AssertEqualCompletedDataModifications(expectedEntry.completedDataModifications(), entry.completedDataModifications());
-
-        const auto& expectedActiveDownloads = expectedEntry.activeDownloads();
-		const auto& activeDownloads = entry.activeDownloads();
-        ASSERT_EQ(expectedActiveDownloads.size(), activeDownloads.size());
-        for (auto i = 0u; i < activeDownloads.size(); ++i) {
-            const auto& expectedActiveDownload = expectedActiveDownloads[i];
-			const auto& activeDownload = activeDownloads[i];
-            EXPECT_EQ(expectedActiveDownload.size(), activeDownload.size());
-        }
-
-        const auto& expectedCompletedDownloads = expectedEntry.completedDownloads();
-		const auto& completedDownloads = entry.completedDownloads();
-        ASSERT_EQ(expectedCompletedDownloads.size(), completedDownloads.size());
-        for (auto i = 0u; i < completedDownloads.size(); ++i) {
-            const auto& expectedCompletedDownload = expectedCompletedDownloads[i];
-			const auto& completedDownload = completedDownloads[i];
-            EXPECT_EQ(expectedCompletedDownload.size(), completedDownload.size());
-        }
+        AssertEqualActiveDownloads(expectedEntry.activeDownloads(), entry.activeDownloads());
+        AssertEqualCompletedDownloads(expectedEntry.completedDownloads(), entry.completedDownloads());
     }
 
     state::DownloadChannelEntry CreateDownloadChannelEntry(

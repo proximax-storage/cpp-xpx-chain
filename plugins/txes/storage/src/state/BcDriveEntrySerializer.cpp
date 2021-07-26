@@ -33,14 +33,14 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void SaveActiveDownloads(io::OutputStream& output, std::vector<Hash256> activeDownloads) {
+		void SaveActiveDownloads(io::OutputStream& output, const std::vector<Hash256>& activeDownloads) {
 			io::Write16(output, activeDownloads.size());
 			for (const auto& active : activeDownloads) {
 				io::Write(output, active);
 			}
 		}
 
-		void SaveCompletedDownloads(io::OutputStream& output, std::vector<Hash256> completedDownloads) {
+		void SaveCompletedDownloads(io::OutputStream& output, const std::vector<Hash256>& completedDownloads) {
 			io::Write16(output, completedDownloads.size());
 			for (const auto& completed : completedDownloads) {
 				io::Write(output, completed);
@@ -76,7 +76,7 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void LoadActiveDownloads(io::InputStream& input, std::vector<Hash256> activeDownloads) {
+		void LoadActiveDownloads(io::InputStream& input, std::vector<Hash256>& activeDownloads) {
 			auto count = io::Read16(input);
 			while (count--) {
 				Hash256 activeDownloadId;
@@ -85,7 +85,7 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void LoadCompletedDownloads(io::InputStream& input, std::vector<Hash256> completedDownloads) {
+		void LoadCompletedDownloads(io::InputStream& input, std::vector<Hash256>& completedDownloads) {
 			auto count = io::Read16(input);
 			while (count--) {
 				Hash256 completedDownloadId;
