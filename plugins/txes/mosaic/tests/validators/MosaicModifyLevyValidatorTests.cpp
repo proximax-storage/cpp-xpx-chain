@@ -126,7 +126,7 @@ namespace catapult {
 		TEST(TEST_CLASS, MosaicLevyIdNotFound) {
 			auto recipient = test::GenerateRandomByteArray<Address>();
 			
-			AssertLevyParameterTest(Failure_Mosaic_Levy_Mosaic_Not_Found_Or_Expired,
+			AssertLevyParameterTest(Failure_Mosaic_Levy_Not_Found_Or_Expired,
 				CreateValidMosaicLevyRaw( model::LevyType::Absolute,
 					test::UnresolveXor(recipient),
 					UnresolvedMosaicId(1000)),

@@ -15,6 +15,9 @@ namespace catapult { namespace validators {
 
 	ValidationResult MosaicRemoveLevyValidatorDetail(const Notification& notification,
 													 const ValidatorContext& context) {
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MosaicConfiguration>();
+		if (!pluginConfig.LevyEnabled)
+			return Failure_Mosaic_Levy_Not_Enabled;
 
 		/// 1. check if signer is eligible and mosaic ID to be removed is valid
 		/// allow the nemesis signer to remove a levy from cache even if the base mosaic Id expired

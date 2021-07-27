@@ -45,7 +45,7 @@ namespace catapult {
 
 			/// 2. check if levy mosaic Id is valid
 			if (!utils::IsMosaicIdValid(pLevy->MosaicId, context))
-				return Failure_Mosaic_Levy_Mosaic_Not_Found_Or_Expired;
+				return Failure_Mosaic_Levy_Not_Found_Or_Expired;
 
 			/// 3. compute for levy fee
 			utils::MosaicLevyCalculatorFactory factory;

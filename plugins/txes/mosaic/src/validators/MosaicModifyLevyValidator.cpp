@@ -17,6 +17,9 @@ namespace catapult { namespace validators {
 
 	ValidationResult MosaicModifyLevyValidatorDetail(const Notification& notification,
 													 const ValidatorContext& context) {
+        const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MosaicConfiguration>();
+        if (!pluginConfig.LevyEnabled)
+            return Failure_Mosaic_Levy_Not_Enabled;
 
         MosaicId baseMosaicId = context.Resolvers.resolve(notification.MosaicId);
         MosaicId levyMosaicId = context.Resolvers.resolve(notification.Levy.MosaicId);
@@ -41,7 +44,7 @@ namespace catapult { namespace validators {
 
         /// 5. Check MosaicId if valid
         if (!utils::IsMosaicIdValid(levyMosaicId, context))
-            return Failure_Mosaic_Levy_Mosaic_Not_Found_Or_Expired;
+            return Failure_Mosaic_Levy_Not_Found_Or_Expired;
 
         /// 6. check if mosaicId is transferable
         auto &mosaicCache = context.Cache.sub<cache::MosaicCache>();

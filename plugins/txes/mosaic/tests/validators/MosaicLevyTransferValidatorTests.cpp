@@ -75,7 +75,7 @@ namespace catapult { namespace validators {
 		TEST(TEST_CLASS, LevyConfigEnabledLevyNotFound) {
 			auto config = test::CreateMosaicConfigWithLevy(true);
 			auto cache = test::LevyCacheFactory::Create(config);
-			AssertLevyParameterTest(Failure_Mosaic_Levy_Mosaic_Not_Found_Or_Expired, cache, [](cache::CatapultCacheDelta& cache, const Key&) {
+			AssertLevyParameterTest(Failure_Mosaic_Levy_Not_Found_Or_Expired, cache, [](cache::CatapultCacheDelta& cache, const Key&) {
 				auto& levyCacheDelta = cache.sub<cache::LevyCache>();
 				auto levy = test::CreateLevyEntry(Currency_Mosaic_Id, Amount(10));
 				auto levyEntry = test::CreateLevyEntry(Currency_Mosaic_Id, levy, true, false);
@@ -86,7 +86,7 @@ namespace catapult { namespace validators {
 		TEST(TEST_CLASS, LevyConfigEnabledLevyMosaicExpired) {
 			auto config = test::CreateMosaicConfigWithLevy(true);
 			auto cache = test::LevyCacheFactory::Create(config);
-			AssertLevyParameterTest(Failure_Mosaic_Levy_Mosaic_Not_Found_Or_Expired, cache, [](cache::CatapultCacheDelta& cache, const Key&) {
+			AssertLevyParameterTest(Failure_Mosaic_Levy_Not_Found_Or_Expired, cache, [](cache::CatapultCacheDelta& cache, const Key&) {
 				auto levy = test::CreateLevyEntry(MosaicId(333), Amount(1000));
 				
 				// Crete Mosaic at Height 1 with duration 10, validate at height 100
