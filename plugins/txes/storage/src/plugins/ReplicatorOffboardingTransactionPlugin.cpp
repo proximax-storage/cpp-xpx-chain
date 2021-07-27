@@ -27,12 +27,9 @@ namespace catapult { namespace plugins {
 				const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
 
 				// Payments for Storage Deposit Returning to signer
-				const auto pDownloadWork = sub.mempool().malloc(model::DriveDeposit(transaction.DriveKey, transaction.Signer));
 				sub.notify(BalanceCreditNotification<1>(
 						signerAddress,
-						storageMosaicId,
-						UnresolvedAmount(0, UnresolvedAmountType::DriveDeposit, pDriveDeposit)
-				));
+						storageMosaicId
 
 				break;
 			}

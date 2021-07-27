@@ -28,11 +28,9 @@ namespace catapult { namespace plugins {
 				const auto storageMosaicId = config::GetUnresolvedStreamingMosaicId(config);
 
 				// Payments for Download Work to the signer Replicator
-				const auto pDownloadWork = sub.mempool().malloc(model::DownloadWork(transaction.DriveKey, transaction.Signer));
 				sub.notify(BalanceDebitNotification<1>(
 						signerAddress,
-						storageMosaicId,
-						UnresolvedAmount(0, UnresolvedAmountType::DownloadWork, pDownloadWork)
+						storageMosaicId
 				));
 
 				break;
