@@ -17,10 +17,6 @@ namespace catapult { namespace validators {
 
 	ValidationResult MosaicModifyLevyValidatorDetail(const Notification& notification,
 													 const ValidatorContext& context) {
-        const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MosaicConfiguration>();
-        if (!pluginConfig.LevyEnabled)
-            return Failure_Mosaic_Levy_Not_Enabled;
-
         MosaicId baseMosaicId = context.Resolvers.resolve(notification.MosaicId);
         MosaicId levyMosaicId = context.Resolvers.resolve(notification.Levy.MosaicId);
 
@@ -57,6 +53,10 @@ namespace catapult { namespace validators {
 
 	DECLARE_STATEFUL_VALIDATOR(ModifyLevy, Notification)( ) {
 		return MAKE_STATEFUL_VALIDATOR(ModifyLevy, [](const auto& notification, const auto& context) {
+            auto &pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MosaicConfiguration>();
+            if (!pluginConfig.LevyEnabled)
+                return Failure_Mosaic_Levy_Not_Enabled;
+
 			return MosaicModifyLevyValidatorDetail(notification, context);
 		});
 	}
