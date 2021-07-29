@@ -90,13 +90,11 @@ namespace catapult { namespace harvesting {
 				size_t numPrunedAccounts = 0;
 				auto height = cacheView.height() + Height(1);
 				m_unlockedAccounts.modifier().removeIf([this, height, &cacheView, &numPrunedAccounts](const auto& descriptor) {
-					CATAPULT_LOG(debug) << "Going through account prune procedure";
 
 					auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
 					cache::ImportanceView view(readOnlyAccountStateCache);
 
 					auto address = model::PublicKeyToAddress(descriptor, readOnlyAccountStateCache.networkIdentifier());
-				  	CATAPULT_LOG(debug) << "Descriptor info: Public: " << descriptor << " | Address: " << address;
 					auto minHarvesterBalance = m_ConfigHolder->Config(height).Network.MinHarvesterBalance;
 					auto shouldPruneAccount = !view.canHarvest(descriptor, height, minHarvesterBalance );
 
@@ -143,29 +141,34 @@ namespace catapult { namespace harvesting {
 			bool isMainAccountEligibleForDelegation(const Key& mainAccountPublicKey, const Key& descriptor) {
 				auto cacheView = m_cache.createView();
 				auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
-				auto accountStateIter = readOnlyAccountStateCache.find(mainAccountPublicKey);
-				if (!accountStateIter.tryGet()) {
+				auto remoteAccountStateIter = readOnlyAccountStateCache.find(descriptor);
+				if (!remoteAccountStateIter.tryGet()) {
+					CATAPULT_LOG(warning) << "rejecting delegation from " << mainAccountPublicKey << ": unknown remote account";
+					return false;
+				}
+				auto remoteAccountState = remoteAccountStateIter.get();
+				auto mainAccountStateIter = readOnlyAccountStateCache.find(GetLinkedPublicKey(remoteAccountState));
+				if (!mainAccountStateIter.tryGet()) {
 					CATAPULT_LOG(warning) << "rejecting delegation from " << mainAccountPublicKey << ": unknown main account";
 					return false;
 				}
-
-				return isMainAccountEligibleForDelegation(accountStateIter.get(), descriptor);
+				return isMainAccountEligibleForDelegation(mainAccountStateIter.get(), descriptor);
 			}
 
 			bool isMainAccountEligibleForDelegation(
-					const state::AccountState& accountState,
+					const state::AccountState& mainAccountState,
 					const Key& descriptor) {
-				if (GetLinkedPublicKey(accountState) != descriptor) {
-					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": invalid signing public key." << GetLinkedPublicKey(accountState);
+				if (GetLinkedPublicKey(mainAccountState) != descriptor) {
+					CATAPULT_LOG(warning) << "rejecting delegation from " << mainAccountState.PublicKey << ": invalid main account linking." << GetLinkedPublicKey(mainAccountState);
 					return false;
 				}
 
-				// skip node link check for remote (non-delegated) harvesters
-				if (GetLinkedPublicKey(accountState) == m_signingPublicKey)
+				// skip node link check if main account has signed this persistent harvesting delegation request(meaning he authorizes it?)
+				if (GetLinkedPublicKey(mainAccountState) == m_signingPublicKey)
 					return true;
 
-				if (GetNodePublicKey(accountState) != m_nodePublicKey) {
-					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": invalid node public key." << GetNodePublicKey(accountState);
+				if (GetNodePublicKey(mainAccountState) != m_nodePublicKey) {
+					CATAPULT_LOG(warning) << "rejecting delegation from " << mainAccountState.PublicKey << ": invalid node public key." << GetNodePublicKey(mainAccountState);
 					return false;
 				}
 
