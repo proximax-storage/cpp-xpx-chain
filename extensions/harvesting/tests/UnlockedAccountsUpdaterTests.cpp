@@ -318,13 +318,32 @@ namespace catapult { namespace harvesting {
 		context.assertHarvesterFileRecords({ encryptedPayload });
 	}
 
-	TEST(TEST_CLASS, UpdateWillAddAccount_AnnouncedByThirdPartyAccount) {
+	TEST(TEST_CLASS, UpdateBypassesInvalidAccount_UnknownMainAccount) {
 		// Arrange:
 		TestContext context;
 		auto descriptors = test::GenerateRandomAccountDescriptors(1);
 		context.addEnabledAccount(descriptors[0]);
 
-		auto encryptedPayload = context.queueAddMessageWithHarvester(descriptors[0]);
+		context.queueAddMessageWithHarvester(descriptors[0]);
+
+		// Sanity:
+		EXPECT_EQ(1u, context.numUnlockedAccounts());
+
+		// Act:
+		context.update();
+
+		// Assert: ineligible message was ignored
+		EXPECT_EQ(1u, context.numUnlockedAccounts());
+		context.assertNoHarvesterFile();
+	}
+
+	TEST(TEST_CLASS, UpdateWillAddAccount_AnnouncedByThirdPartyAccount) {
+		// Arrange:
+		TestContext context;
+		auto descriptors = test::GenerateRandomAccountDescriptors(2);
+		context.addEnabledAccount(descriptors[0]);
+		auto mainAccountPublicKey = context.addEnabledAccount(descriptors[1]);
+		auto encryptedPayload = context.queueAddMessageWithHarvester(descriptors[0], mainAccountPublicKey);
 
 		// Sanity:
 		EXPECT_EQ(1u, context.numUnlockedAccounts());
@@ -336,7 +355,6 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(2u, context.numUnlockedAccounts());
 		context.assertHarvesterFileRecords({ encryptedPayload });
 	}
-
 	namespace {
 		void AssertUpdateBypasses(const consumer<state::AccountState&>& corruptAccountState) {
 			// Arrange:

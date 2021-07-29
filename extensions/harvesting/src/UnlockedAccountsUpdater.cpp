@@ -138,18 +138,23 @@ namespace catapult { namespace harvesting {
 				m_hasAnyRemoval = true;
 			}
 
-			bool isMainAccountEligibleForDelegation(const Key& mainAccountPublicKey, const Key& descriptor) {
+			bool isMainAccountEligibleForDelegation(const Key& signingAccountPublicKey, const Key& descriptor) {
 				auto cacheView = m_cache.createView();
 				auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
 				auto remoteAccountStateIter = readOnlyAccountStateCache.find(descriptor);
 				if (!remoteAccountStateIter.tryGet()) {
-					CATAPULT_LOG(warning) << "rejecting delegation from " << mainAccountPublicKey << ": unknown remote account";
+					CATAPULT_LOG(warning) << "rejecting delegation from " << signingAccountPublicKey << ": unknown remote account";
 					return false;
 				}
 				auto remoteAccountState = remoteAccountStateIter.get();
 				auto mainAccountStateIter = readOnlyAccountStateCache.find(GetLinkedPublicKey(remoteAccountState));
 				if (!mainAccountStateIter.tryGet()) {
-					CATAPULT_LOG(warning) << "rejecting delegation from " << mainAccountPublicKey << ": unknown main account";
+					CATAPULT_LOG(warning) << "rejecting delegation from " << signingAccountPublicKey << ": unknown main account";
+					return false;
+				}
+				auto signingAccountStateIter = readOnlyAccountStateCache.find(signingAccountPublicKey);
+				if (!signingAccountStateIter.tryGet()) {
+					CATAPULT_LOG(warning) << "rejecting delegation from " << signingAccountPublicKey << ": unknown signing account";
 					return false;
 				}
 				return isMainAccountEligibleForDelegation(mainAccountStateIter.get(), descriptor);
