@@ -32,17 +32,17 @@ namespace catapult { namespace plugins {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
-			case 3: {
+			case 4: {
 				sub.notify(AccountAddressNotification<1>(transaction.Recipient));
 				sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {transaction.Recipient}));
 
 				const auto *pMosaics = transaction.MosaicsPtr();
 				for (auto i = 0u; i < transaction.MosaicsCount; ++i) {
 					auto notification = BalanceTransferNotification<1>(
-						transaction.Signer,
-						transaction.Recipient,
-						pMosaics[i].MosaicId,
-						pMosaics[i].Amount);
+							transaction.Signer,
+							transaction.Recipient,
+							pMosaics[i].MosaicId,
+							pMosaics[i].Amount);
 					sub.notify(notification);
 				}
 

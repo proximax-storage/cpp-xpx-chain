@@ -63,7 +63,7 @@
 		{
 			"name": "Transfer",
 			"type": "16724",
-			"supportedVersions": [3]
+			"supportedVersions": [4]
 		},
 		{
 			"name": "Secret_Proof",
