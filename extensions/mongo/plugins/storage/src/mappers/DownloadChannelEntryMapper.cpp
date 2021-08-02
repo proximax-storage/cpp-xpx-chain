@@ -30,7 +30,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto doc = builder << "downloadChannelInfo" << bson_stream::open_document
 				<< "id" << ToBinary(entry.id())
 				<< "consumer" << ToBinary(entry.consumer())
-				<< "downloadSize" << static_cast<int64_t>(entry.downloadSize());
+				<< "downloadSize" << static_cast<int64_t>(entry.downloadSize())
+				<< "downloadApprovalCount" << static_cast<int16_t>(entry.downloadApprovalCount());
 
 		StreamListOfPublicKeys(builder, entry.listOfPublicKeys());
 
@@ -71,6 +72,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		entry.setConsumer(consumer);
 
 		entry.setDownloadSize(static_cast<uint64_t>(dbDownloadChannelEntry["downloadSize"].get_int64()));
+		entry.setDownloadApprovalCount(static_cast<uint16_t>(dbDownloadChannelEntry["downloadApprovalCount"].get_int32()));
 
 		ReadListOfPublicKeys(entry.listOfPublicKeys(), dbDownloadChannelEntry["listOfPublicKeys"].get_array().value);
 

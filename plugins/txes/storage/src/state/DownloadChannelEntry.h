@@ -17,7 +17,10 @@ namespace catapult { namespace state {
 	// Mixin for storing download channel details.
 	class DownloadChannelMixin {
 	public:
-		DownloadChannelMixin() = default;
+		DownloadChannelMixin()
+			: m_downloadSize(0)
+			, m_downloadApprovalCount(0)
+		{}
 
 	public:
 		/// Sets \a consumer of download channel.
@@ -45,6 +48,21 @@ namespace catapult { namespace state {
             return m_downloadSize;
         }
 
+		/// Gets number of completed download approval transactions.
+		const uint16_t& downloadApprovalCount() const {
+			return m_downloadApprovalCount;
+		}
+
+		/// Sets number of completed download approval transactions.
+		void setDownloadApprovalCount(const uint16_t& count) {
+			m_downloadApprovalCount = count;
+		}
+
+		/// Increases number of completed download approval transactions by one.
+		void incrementDownloadApprovalCount() {
+			++m_downloadApprovalCount;
+		}
+
 		/// Gets list of public keys.
 		const std::vector<Key>& listOfPublicKeys() const {
 			return m_listOfPublicKeys;
@@ -58,6 +76,7 @@ namespace catapult { namespace state {
 	private:
 		Key m_consumer;
 		uint64_t m_downloadSize; // In Mbytes
+		uint16_t m_downloadApprovalCount;
 		std::vector<Key> m_listOfPublicKeys;
 	};
 
