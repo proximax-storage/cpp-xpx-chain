@@ -20,17 +20,25 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 			case 1: {
 				sub.notify(ReplicatorOnboardingNotification<1>(
-						transaction.Signer,
-						transaction.Capacity
+					transaction.Signer,
+					transaction.Capacity
 				));
 
 				const auto signerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier));
-				const auto storageMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+				const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
 
-				// Payments for Download Work to the signer Replicator
+				// Payments for storage deposit serve as proof of space
 				sub.notify(BalanceDebitNotification<1>(
-						signerAddress,
-						storageMosaicId
+					signerAddress,
+					storageMosaicId
+				));
+
+				//Payments for streaming deposit serve as proof of space
+				const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+
+				sub.notify(BalanceDebitNotification<1>)(
+					signerAddress,
+					streamingMosaicId
 				));
 
 				break;

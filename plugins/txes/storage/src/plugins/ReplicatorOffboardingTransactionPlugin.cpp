@@ -20,7 +20,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 			case 1: {
 				sub.notify(ReplicatorOffboardingNotification<1>(
-						transaction.Signer,
+					transaction.Signer,
 				));
 
 				const auto signerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier));
@@ -28,8 +28,17 @@ namespace catapult { namespace plugins {
 
 				// Payments for Storage Deposit Returning to signer
 				sub.notify(BalanceCreditNotification<1>(
-						signerAddress,
-						storageMosaicId
+					signerAddress,
+					storageMosaicId
+				));
+
+				const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+
+				//Payments for Storage deposit return
+				sub.notify(BalanceDebitNotification<1>)(
+					signerAddress,
+					streamingMosaicId
+				));
 
 				break;
 			}
