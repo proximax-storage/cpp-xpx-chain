@@ -45,6 +45,9 @@ namespace catapult { namespace model {
 	/// VerificationPayment transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, VerificationPayment, 0xB);
 
+	/// DownloadApproval transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, DownloadApproval, 0xC);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif

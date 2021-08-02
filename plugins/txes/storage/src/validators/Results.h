@@ -83,6 +83,18 @@ namespace catapult { namespace validators {
 	/// Respective BLS public key already exists in BLS keys cache.
 	DEFINE_STORAGE_RESULT(BLS_Key_Already_Registered, 23);
 
+	/// Opinion index is out of range.
+	DEFINE_STORAGE_RESULT(Invalid_Opinion_Index, 24);
+
+	/// BLS signature doesn't match the message.
+	DEFINE_STORAGE_RESULT(Invalid_BLS_Signature, 25);
+
+	/// Download approval transaction for the corresponding billing period has already been approved.
+	DEFINE_STORAGE_RESULT(Overdue_Download_Approval, 26);
+
+	/// Download approval transaction sequence number is invalid
+	DEFINE_STORAGE_RESULT(Invalid_Sequence_Number, 27);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

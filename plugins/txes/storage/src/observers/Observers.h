@@ -38,4 +38,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by data modification single approval notifications.
 	DECLARE_OBSERVER(DataModificationSingleApproval, model::DataModificationSingleApprovalNotification<1>)();
+
+	/// Observes changes triggered by download approval notifications.
+	DECLARE_OBSERVER(DownloadApproval, model::DownloadApprovalNotification<1>)();
 }}
