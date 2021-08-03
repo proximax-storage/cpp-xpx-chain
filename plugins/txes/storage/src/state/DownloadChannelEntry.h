@@ -73,11 +73,22 @@ namespace catapult { namespace state {
 			return m_listOfPublicKeys;
 		}
 
+		/// Gets replicators' cumulative payment amounts
+		const std::map<Key, Amount>& cumulativePayments() const {
+			return m_cumulativePayments;
+		}
+
+		/// Gets replicators' cumulative payment amounts
+		std::map<Key, Amount>& cumulativePayments() {
+			return m_cumulativePayments;
+		}
+
 	private:
 		Key m_consumer;
 		uint64_t m_downloadSize; // In Mbytes
 		uint16_t m_downloadApprovalCount;
 		std::vector<Key> m_listOfPublicKeys;
+		std::map<Key, Amount> m_cumulativePayments;
 	};
 
 	// DownloadChannel channel entry.

@@ -23,6 +23,18 @@ namespace catapult { namespace mongo { namespace plugins {
 			array << bson_stream::close_array;
 		}
 
+		void StreamCumulativePayments(bson_stream::document& builder, const std::map<Key, Amount>& cumulativePayments) {
+			auto array = builder << "cumulativePayments" << bson_stream::open_array;
+			for (const auto& pair : cumulativePayments) {
+				bson_stream::document paymentBuilder;
+				paymentBuilder
+						<< "replicator" << ToBinary(pair.first)
+						<< "payment" << ToInt64(pair.second);
+				array << paymentBuilder;
+			}
+			array << bson_stream::close_array;
+		}
+
 	}
 
 	bsoncxx::document::value ToDbModel(const state::DownloadChannelEntry& entry) {
@@ -34,6 +46,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "downloadApprovalCount" << static_cast<int16_t>(entry.downloadApprovalCount());
 
 		StreamListOfPublicKeys(builder, entry.listOfPublicKeys());
+		StreamCumulativePayments(builder, entry.cumulativePayments());
 
 		return doc
 				<< bson_stream::close_document
@@ -57,6 +70,17 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 		}
 
+		void ReadCumulativePayments(std::map<Key, Amount>& cumulativePayments, const bsoncxx::array::view& dbCumulativePayments) {
+			for (const auto& dbPair : dbCumulativePayments) {
+				auto doc = dbPair.get_document().view();
+
+				Key replicator;
+				DbBinaryToModelArray(replicator, doc["replicator"].get_binary());
+
+				cumulativePayments[replicator] = Amount(static_cast<uint64_t>(dbPair["payment"].get_int64()));
+			}
+		}
+
 	}
 
 	state::DownloadChannelEntry ToDownloadChannelEntry(const bsoncxx::document::view& document) {
@@ -75,6 +99,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		entry.setDownloadApprovalCount(static_cast<uint16_t>(dbDownloadChannelEntry["downloadApprovalCount"].get_int32()));
 
 		ReadListOfPublicKeys(entry.listOfPublicKeys(), dbDownloadChannelEntry["listOfPublicKeys"].get_array().value);
+		ReadCumulativePayments(entry.cumulativePayments(), dbDownloadChannelEntry["cumulativePayments"].get_array().value);
 
 		return entry;
 	}

@@ -18,12 +18,29 @@ namespace catapult { namespace state {
 				io::Write(output, key);
 		}
 
+		void SaveCumulativePayments(io::OutputStream& output, const std::map<Key, Amount>& cumulativePayments) {
+			io::Write16(output, cumulativePayments.size());
+			for (const auto& pair : cumulativePayments) {
+				io::Write(output, pair.first);
+				io::Write(output, pair.second);
+			}
+		}
+
 		void LoadListOfPublicKeys(io::InputStream& input, std::vector<Key>& listOfPublicKeys) {
 			auto keyCount = io::Read16(input);
 			while (keyCount--) {
 				Key key;
 				io::Read(input, key);
 				listOfPublicKeys.push_back(key);
+			}
+		}
+
+		void LoadCumulativePayments(io::InputStream& input, std::map<Key, Amount>& cumulativePayments) {
+			auto pairCount = io::Read16(input);
+			while (pairCount--) {
+				Key replicator;
+				io::Read(input, replicator);
+				cumulativePayments[replicator] = Amount(io::Read64(input));
 			}
 		}
 
@@ -40,6 +57,7 @@ namespace catapult { namespace state {
 		io::Write16(output, downloadEntry.downloadApprovalCount());
 
 		SaveListOfPublicKeys(output, downloadEntry.listOfPublicKeys());
+		SaveCumulativePayments(output, downloadEntry.cumulativePayments());
 	}
 
 	DownloadChannelEntry DownloadChannelEntrySerializer::Load(io::InputStream& input) {
@@ -61,6 +79,7 @@ namespace catapult { namespace state {
 		entry.setDownloadApprovalCount(io::Read16(input));
 
 		LoadListOfPublicKeys(input, entry.listOfPublicKeys());
+		LoadCumulativePayments(input, entry.cumulativePayments());
 
 		return entry;
 	}
