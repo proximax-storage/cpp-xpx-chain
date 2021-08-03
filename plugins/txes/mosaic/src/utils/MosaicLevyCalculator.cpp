@@ -9,30 +9,29 @@
 
 namespace catapult { namespace utils {
 
-	MosaicLevyCalculatorFactory::MosaicLevyCalculatorFactory() {
-			// No Levy
-			m_calculators.push_back([](Amount, Amount) {
-				return Amount(0);
-			});
+    MosaicLevyCalculatorFactory::MosaicLevyCalculatorFactory() {
+        // No Levy
+        m_calculators.push_back([](const Amount &, const Amount &) {
+            return Amount(0);
+        });
 
-			// absolute or constant calculator
-			m_calculators.push_back([](Amount, Amount levy) {
-				return levy;
-			});
+        // absolute or constant calculator
+        m_calculators.push_back([](const Amount &, const Amount& levy) {
+            return levy;
+        });
 
-			// percentile fee
-			m_calculators.push_back([](Amount amount, Amount levy) {
-				float pct = (levy.unwrap() / (float) model::MosaicLevyFeeDecimalPlace) / 100.0f;
-				return Amount(amount.unwrap() * pct);
-			});
-		}
+        // percentile fee
+        m_calculators.push_back([](const Amount amount, const Amount levy) {
+            float pct = (levy.unwrap() / (float) model::MosaicLevyFeeDecimalPlace) / 100.0f;
+            return Amount(amount.unwrap() * pct);
+        });
+    }
 
-		MosaicLevyCalculatorFactory::MosaicLevyCalculator MosaicLevyCalculatorFactory::getCalculator(model::LevyType type) {
-			auto id = utils::to_underlying_type(type);
-			if (m_calculators.size() <= id)
-				CATAPULT_THROW_INVALID_ARGUMENT_1("unknown type with id", static_cast<uint16_t>(type));
+    MosaicLevyCalculatorFactory::MosaicLevyCalculator MosaicLevyCalculatorFactory::getCalculator(model::LevyType type) {
+        auto id = utils::to_underlying_type(type);
+        if (m_calculators.size() <= id)
+            CATAPULT_THROW_INVALID_ARGUMENT_1("unknown type with id",static_cast<uint8_t>(type));
 
-			return m_calculators[id];
-		}
-	}
-}
+        return m_calculators[id];
+    }
+}}
