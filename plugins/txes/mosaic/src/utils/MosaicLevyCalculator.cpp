@@ -16,7 +16,7 @@ namespace catapult { namespace utils {
         });
 
         // absolute or constant calculator
-        m_calculators.push_back([](const Amount &, Amount levy) {
+        m_calculators.push_back([](const Amount &, const Amount& levy) {
             return levy;
         });
 
