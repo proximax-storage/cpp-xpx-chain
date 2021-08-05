@@ -138,42 +138,31 @@ namespace catapult { namespace harvesting {
 				m_hasAnyRemoval = true;
 			}
 
-			bool isMainAccountEligibleForDelegation(const Key& signingAccountPublicKey, const Key& descriptor) {
+			bool isMainAccountEligibleForDelegation(const Key& mainAccountPublicKey, const Key& descriptor) {
 				auto cacheView = m_cache.createView();
 				auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
-				auto remoteAccountStateIter = readOnlyAccountStateCache.find(descriptor);
-				if (!remoteAccountStateIter.tryGet()) {
-					CATAPULT_LOG(warning) << "rejecting delegation from " << signingAccountPublicKey << ": unknown remote account";
+				auto accountStateIter = readOnlyAccountStateCache.find(mainAccountPublicKey);
+				if (!accountStateIter.tryGet()) {
+					CATAPULT_LOG(warning) << "rejecting delegation from " << mainAccountPublicKey << ": unknown main account";
 					return false;
 				}
-				auto remoteAccountState = remoteAccountStateIter.get();
-				auto mainAccountStateIter = readOnlyAccountStateCache.find(GetLinkedPublicKey(remoteAccountState));
-				if (!mainAccountStateIter.tryGet()) {
-					CATAPULT_LOG(warning) << "rejecting delegation from " << signingAccountPublicKey << ": unknown main account";
-					return false;
-				}
-				auto signingAccountStateIter = readOnlyAccountStateCache.find(signingAccountPublicKey);
-				if (!signingAccountStateIter.tryGet()) {
-					CATAPULT_LOG(warning) << "rejecting delegation from " << signingAccountPublicKey << ": unknown signing account";
-					return false;
-				}
-				return isMainAccountEligibleForDelegation(mainAccountStateIter.get(), descriptor);
+				return isMainAccountEligibleForDelegation(accountStateIter.get(), descriptor);
 			}
 
 			bool isMainAccountEligibleForDelegation(
-					const state::AccountState& mainAccountState,
+					const state::AccountState& accountState,
 					const Key& descriptor) {
-				if (GetLinkedPublicKey(mainAccountState) != descriptor) {
-					CATAPULT_LOG(warning) << "rejecting delegation from " << mainAccountState.PublicKey << ": invalid main account linking." << GetLinkedPublicKey(mainAccountState);
+				if (GetLinkedPublicKey(accountState) != descriptor) {
+					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": invalid signing public key";
 					return false;
 				}
 
-				// skip node link check if main account has signed this persistent harvesting delegation request(meaning he authorizes it?)
-				if (GetLinkedPublicKey(mainAccountState) == m_signingPublicKey)
+				// skip node link check for remote (non-delegated) harvesters
+				if (GetLinkedPublicKey(accountState) == m_signingPublicKey)
 					return true;
 
-				if (GetNodePublicKey(mainAccountState) != m_nodePublicKey) {
-					CATAPULT_LOG(warning) << "rejecting delegation from " << mainAccountState.PublicKey << ": invalid node public key." << GetNodePublicKey(mainAccountState);
+				if (GetNodePublicKey(accountState) != m_nodePublicKey) {
+					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": invalid node public key";
 					return false;
 				}
 

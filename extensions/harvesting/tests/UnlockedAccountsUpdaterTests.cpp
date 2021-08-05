@@ -337,7 +337,7 @@ namespace catapult { namespace harvesting {
 		context.assertNoHarvesterFile();
 	}
 
-	TEST(TEST_CLASS, UpdateWillAddAccount_AnnouncedByThirdPartyAccount) {
+	TEST(TEST_CLASS, UpdateWillNotAddAccount_AnnouncedByThirdPartyAccount) {
 		// Arrange:
 		TestContext context;
 		auto descriptors = test::GenerateRandomAccountDescriptors(2);
@@ -352,8 +352,8 @@ namespace catapult { namespace harvesting {
 		context.update();
 
 		// Assert: ineligible message was ignored
-		EXPECT_EQ(2u, context.numUnlockedAccounts());
-		context.assertHarvesterFileRecords({ encryptedPayload });
+		EXPECT_EQ(1u, context.numUnlockedAccounts());
+		context.assertNoHarvesterFile();
 	}
 	namespace {
 		void AssertUpdateBypasses(const consumer<state::AccountState&>& corruptAccountState) {
