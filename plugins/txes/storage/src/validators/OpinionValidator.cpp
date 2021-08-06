@@ -32,10 +32,10 @@ namespace catapult { namespace validators {
 			if (*pIndex >= notification.OpinionCount)
 				return Failure_Storage_Invalid_Opinion_Index;
 			const auto replicatorIter = replicatorCache.find(*(notification.PublicKeysPtr + i));
-	  		const auto& replicatorEntry = replicatorIter.tryGet();
-			if (!replicatorEntry)
+	  		const auto& pReplicatorEntry = replicatorIter.tryGet();
+			if (!pReplicatorEntry)
 				return Failure_Storage_Replicator_Not_Found;
-			blsPublicKeys.at(*pIndex).push_back(&replicatorEntry->blsKey());
+			blsPublicKeys.at(*pIndex).push_back(&pReplicatorEntry->blsKey());
 		}
 
 	  	// Bitset that represents boolean array of size (notification.OpinionCount * notification.JudgedCount) of opinion presence.
@@ -67,7 +67,7 @@ namespace catapult { namespace validators {
 			individualData.clear();
 			for (auto j = 0; j < notification.JudgedCount; ++j) {
 				if (presentOpinions[i*notification.JudgedCount + j]) {
-					individualData.emplace(*(notification.PublicKeysPtr + j), *pOpinionElement);
+					individualData.emplace(notification.PublicKeysPtr[j], *pOpinionElement);
 					++pOpinionElement;
 				}
 			}

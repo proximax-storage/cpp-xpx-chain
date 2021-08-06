@@ -9,6 +9,8 @@
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "catapult/model/StorageNotifications.h"
+#include "catapult/cache_core/AccountStateCache.h"
+#include "src/cache/DownloadChannelCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/ReplicatorCache.h"
 #include "src/cache/BlsKeysCache.h"
@@ -71,6 +73,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to download approval notifications and validates that:
 	/// - all replicators mentioned in opinions exist
 	/// - BLS signatures match corresponding parts of the transaction
+	// TODO: Validate that all provided individual parts are unique
+	// TODO: Validate that each provided public key is mentioned in at least one opinion
 	// TODO: Make separate notification with pointer to common part
 	DECLARE_STATEFUL_VALIDATOR(Opinion, model::DownloadApprovalNotification<1>)();
 
@@ -78,4 +82,14 @@ namespace catapult { namespace validators {
 	/// - respective download channel exists
 	/// - transaction sequence number is exactly one more than the number of completed download approval transactions of the download channel
 	DECLARE_STATEFUL_VALIDATOR(DownloadApproval, model::DownloadApprovalNotification<1>)();
+
+	/// A validator implementation that applies to download approval payment notifications and validates that:
+	/// - respective download channel exists
+	/// - all necessary account states exist
+	DECLARE_STATEFUL_VALIDATOR(DownloadApprovalPayment, model::DownloadApprovalPaymentNotification<1>)();
+
+	/// A validator implementation that applies to download channel refund notifications and validates that:
+	/// - respective download channel exists
+	/// - account states of the download channel and its consumer exist
+	DECLARE_STATEFUL_VALIDATOR(DownloadChannelRefund, model::DownloadChannelRefundNotification<1>)();
 }}

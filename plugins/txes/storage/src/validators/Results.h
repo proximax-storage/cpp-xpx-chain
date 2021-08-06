@@ -95,6 +95,12 @@ namespace catapult { namespace validators {
 	/// Download approval transaction sequence number is invalid
 	DEFINE_STORAGE_RESULT(Invalid_Sequence_Number, 27);
 
+	/// Sender's account state is not found.
+	DEFINE_STORAGE_RESULT(Sender_State_Not_Found, 28);
+
+	/// Recipient's account state is not found.
+	DEFINE_STORAGE_RESULT(Recipient_State_Not_Found, 29);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

@@ -8,6 +8,7 @@
 #include "catapult/observers/ObserverTypes.h"
 #include "src/config/StorageConfiguration.h"
 #include "catapult/model/StorageNotifications.h"
+#include "catapult/cache_core/AccountStateCache.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/ReplicatorCache.h"
@@ -41,4 +42,10 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by download approval notifications.
 	DECLARE_OBSERVER(DownloadApproval, model::DownloadApprovalNotification<1>)();
+
+	/// Observes changes triggered by download approval payment notifications.
+	DECLARE_OBSERVER(DownloadApprovalPayment, model::DownloadApprovalPaymentNotification<1>)();
+
+	/// Observes changes triggered by download channel refund notifications.
+	DECLARE_OBSERVER(DownloadChannelRefund, model::DownloadChannelRefundNotification<1>)();
 }}

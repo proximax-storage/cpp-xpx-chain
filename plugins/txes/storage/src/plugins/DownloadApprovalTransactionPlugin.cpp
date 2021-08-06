@@ -35,6 +35,21 @@ namespace catapult { namespace plugins {
 							transaction.PresentOpinionsPtr(),
 							transaction.OpinionsPtr()
 				  	));
+
+					sub.notify(DownloadApprovalPaymentNotification<1>(
+							transaction.DownloadChannelId,
+							transaction.OpinionCount,
+							transaction.JudgingCount,
+							transaction.JudgedCount,
+							transaction.PublicKeysPtr(),
+							transaction.OpinionIndicesPtr(),
+							transaction.PresentOpinionsPtr(),
+							transaction.OpinionsPtr()
+					));
+
+					if (transaction.ResponseToFinishDownloadTransaction)
+						sub.notify(DownloadChannelRefundNotification<1>(transaction.DownloadChannelId));
+
 				  	break;
 			  	}
 

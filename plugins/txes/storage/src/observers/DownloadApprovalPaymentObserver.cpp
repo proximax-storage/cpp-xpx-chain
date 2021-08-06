@@ -1,0 +1,85 @@
+/**
+*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#include <boost/dynamic_bitset.hpp>
+#include "Observers.h"
+
+namespace catapult { namespace observers {
+
+	using Notification = model::DownloadApprovalPaymentNotification<1>;
+
+	DEFINE_OBSERVER(DownloadApprovalPayment, Notification, ([](const Notification& notification, ObserverContext& context) {
+		if (NotifyMode::Rollback == context.Mode)
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadApprovalPayment)");
+
+	  	auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
+	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
+	  	auto& downloadChannelEntry = downloadChannelIter.get();
+
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto senderIter = accountStateCache.find(Key(notification.DownloadChannelId.array()));
+	  	auto& senderState = senderIter.get();
+
+		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+
+	  	// Nth element in opinionCounts indicates how many replicators have provided Nth opinion.
+		std::vector<uint8_t> opinionCounts(notification.OpinionCount, 0);
+		auto pIndex = notification.OpinionIndicesPtr;
+		for (auto i = 0; i < notification.JudgingCount; ++i, ++pIndex)
+			++opinionCounts.at(*pIndex);
+
+		// Maps each replicator key to a vector of opinions about that replicator.
+		std::map<Key, std::vector<uint64_t>> opinions;
+
+		// Bitset that represents boolean array of size (transaction.OpinionCount * transaction.JudgedCount) of opinion presence.
+		const auto presentOpinionByteCount = (notification.OpinionCount * notification.JudgedCount + 7) / 8;
+		boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
+
+		// Filling in opinions map.
+		auto pOpinionElement = notification.OpinionsPtr;
+		for (auto i = 0; i < notification.OpinionCount; ++i)
+			for (auto j = 0; j < notification.JudgedCount; ++j)
+				if (presentOpinions[i*notification.JudgedCount + j]) {
+					auto& opinionVector = opinions[notification.PublicKeysPtr[j]];
+					opinionVector.resize(opinionVector.size() + opinionCounts.at(i), *pOpinionElement);
+					++pOpinionElement;
+				}
+
+		// Calculating full payments to the replicators based on median opinions about them.
+		std::map<Key, uint64_t> payments;
+		uint64_t totalPayment = 0;
+		for (auto& pair: opinions) {
+			auto& opinionVector = pair.second;
+			std::sort(opinionVector.begin(), opinionVector.end());
+			const auto medianIndex = opinionVector.size() / 2;	// Corresponds to upper median index when the size is even
+			const auto medianOpinion = opinionVector.size() % 2 ?
+									   opinionVector.at(medianIndex) :
+									   (opinionVector.at(medianIndex-1) + opinionVector.at(medianIndex)) / 2;
+			const auto fullPayment = std::max(medianOpinion - downloadChannelEntry.cumulativePayments().at(pair.first).unwrap(), 0ul);
+			payments[pair.first] = fullPayment;
+			totalPayment += fullPayment;
+		}
+
+		// Scaling down payments if there's not enough mosaics on the download channel for full payments to all of the replicators.
+		const auto& downloadChannelBalance = senderState.Balances.get(streamingMosaicId).unwrap();
+		if (downloadChannelBalance < totalPayment) {
+			const double scalingFactor = static_cast<double>(downloadChannelBalance) / totalPayment;
+			for (auto& pair: payments)
+				pair.second *= scalingFactor;	// Decimal part is truncated, so the new total payment is guaranteed to fit in download channel balance
+		}
+
+		// Making mosaic transfers and updating cumulative payments.
+		for (const auto& pair: payments) {
+			auto recipientIter = accountStateCache.find(pair.first);
+			auto& recipientState = recipientIter.get();
+			senderState.Balances.debit(streamingMosaicId, Amount(pair.second), context.Height);
+			recipientState.Balances.credit(currencyMosaicId, Amount(pair.second), context.Height);
+			auto& cumulativePayment = downloadChannelEntry.cumulativePayments().at(pair.first);
+			cumulativePayment = cumulativePayment + Amount(pair.second);
+		}
+	}))
+}}
