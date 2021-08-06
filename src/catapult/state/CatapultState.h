@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/model/ImportanceHeight.h"
+#include "VersionableState.h"
 #include <atomic>
 
 namespace catapult { namespace state {

@@ -202,7 +202,8 @@ namespace catapult { namespace tools { namespace address {
 
 					state::AccountState accountState(
 							model::StringToAddress(account.get<std::string>("Address")),
-							Height(account.get<uint64_t>("AddressHeight"))
+							Height(account.get<uint64_t>("AddressHeight")),
+							2
 					);
 					accountState.PublicKeyHeight = Height(account.get<uint64_t>("PublicKeyHeight"));
 					accountState.PublicKey = crypto::ParseKey(account.get<std::string>("PublicKey"));

@@ -45,7 +45,7 @@ namespace catapult { namespace observers {
 			void notify(const AccountId& accountId) {
 				auto& accountStateCache = m_context.Cache.sub<cache::AccountStateCache>();
 				if (NotifyMode::Commit == m_context.Mode)
-					accountStateCache.addAccount(accountId, m_context.Height);
+					accountStateCache.addAccount(accountId, m_context.Height, this->m_context.Config.Network.AccountVersion);
 				else
 					accountStateCache.queueRemove(accountId, m_context.Height);
 			}

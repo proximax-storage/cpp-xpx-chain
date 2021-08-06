@@ -46,7 +46,25 @@ namespace catapult { namespace state {
 	namespace {
 #pragma pack(push, 1)
 
-		struct AccountStateHeader {
+		template<uint32_t TVersion>
+		struct AccountStateHeader{};
+
+		template<>
+		struct AccountStateHeader<1> {
+			catapult::Address Address;
+			Height AddressHeight;
+			Key PublicKey;
+			Height PublicKeyHeight;
+
+			state::AccountType AccountType;
+			Key LinkedAccountKey;
+
+			MosaicId OptimizedMosaicId;
+			MosaicId TrackedMosaicId;
+			uint16_t MosaicsCount;
+		};
+		template<>
+		struct AccountStateHeader<2> {
 			catapult::Address Address;
 			Height AddressHeight;
 			Key PublicKey;
@@ -57,126 +75,212 @@ namespace catapult { namespace state {
 			uint16_t MosaicsCount;
 			AccountPublicKeys::KeyType LinkedKeysMask;
 		};
-
 		struct MAY_ALIAS HistoricalSnapshotsHeader {
 			uint16_t SnapshotsCount;
 		};
 
 #pragma pack(pop)
 
-		size_t CalculatePackedSize(const AccountState& accountState) {
-			return sizeof(VersionType) + sizeof(AccountStateHeader) + sizeof(HistoricalSnapshotsHeader)
-				   	+ (HasFlag(AccountPublicKeys::KeyType::Linked, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
-				    + (HasFlag(AccountPublicKeys::KeyType::Node, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
-					+ accountState.Balances.size() * sizeof(model::Mosaic)
-					+ accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot);
-		}
-
-		const Key* GetSupplementalKeysPointer(const AccountStateHeader& header)
+		const Key* GetSupplementalKeysPointer(const AccountStateHeader<2>& header)
 		{
 			return reinterpret_cast<const Key*>(&header + 1);
 		}
-		const model::Mosaic* GetMosaicPointer(const AccountStateHeader& header) {
-			const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&header + 1)
-					+ (HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask) ? Key::Size : 0)
-					+ (HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask) ? Key::Size : 0);
-			return reinterpret_cast<const model::Mosaic*>(pHeaderData);
-		}
 
-		template<typename TTraits>
-		AccountState CopyHeaderToAccountState(const AccountStateHeader& header) {
-			auto accountState = AccountState(header.Address, header.AddressHeight);
-			accountState.PublicKey = header.PublicKey;
-			accountState.PublicKeyHeight = header.PublicKeyHeight;
-
-			accountState.AccountType = header.AccountType;
-
-			accountState.Balances.optimize(header.OptimizedMosaicId);
-			accountState.Balances.track(header.TrackedMosaicId);
-			accountState.SupplementalPublicKeys.linked().unset();
-			accountState.SupplementalPublicKeys.node().unset();
-			auto* pKeysPointer = GetSupplementalKeysPointer(header);
-			if(HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
-			{
-				accountState.SupplementalPublicKeys.linked().set(*pKeysPointer);
-				pKeysPointer++;
-			}
-			if(HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask))
-			{
-				accountState.SupplementalPublicKeys.node().set(*pKeysPointer);
-				pKeysPointer++;
-			}
-			const auto* pMosaic = GetMosaicPointer(header);
-			for (auto i = 0u; i < header.MosaicsCount; ++i, ++pMosaic)
-				accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
-
-			if (TTraits::Has_Historical_Snapshots) {
-				const auto& historicalSnapshotsHeader = reinterpret_cast<const HistoricalSnapshotsHeader&>(*pMosaic);
-				const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&historicalSnapshotsHeader + 1);
-
-				const auto* pBalanceSnapshot = reinterpret_cast<const model::BalanceSnapshot*>(pHeaderData);
-				for (int i = 0; i < historicalSnapshotsHeader.SnapshotsCount; ++i, ++pBalanceSnapshot)
-					accountState.Balances.addSnapshot(*pBalanceSnapshot);
-			}
-
-			return accountState;
-		}
 		size_t SetPublicKeyFromDataToBuffer(const AccountPublicKeys::PublicKeyAccessor<Key>& publicKeyAccessor, uint8_t* pData) {
 			auto tData = reinterpret_cast<Key*>(pData);
 			*tData = publicKeyAccessor.get();
 			return Key::Size;
 		}
 
-		/// Buffer holds Header -> Keys -> Balances -> Snapshots
-		std::vector<uint8_t> CopyToBuffer(const AccountState& accountState) {
-			std::vector<uint8_t> buffer(CalculatePackedSize(accountState));
+		template<typename TTraits, uint32_t TVersion>
+		struct VersionedStateSerializerUtils {};
 
-			AccountStateHeader header;
-			header.Address = accountState.Address;
-			header.AddressHeight = accountState.AddressHeight;
-			header.PublicKey = accountState.PublicKey;
-			header.PublicKeyHeight = accountState.PublicKeyHeight;
-
-			header.AccountType = accountState.AccountType;
-			header.LinkedKeysMask = accountState.SupplementalPublicKeys.mask();
-
-			header.OptimizedMosaicId = accountState.Balances.optimizedMosaicId();
-			header.TrackedMosaicId = accountState.Balances.trackedMosaicId();
-			header.MosaicsCount = static_cast<uint16_t>(accountState.Balances.size());
-
-			auto* pData = buffer.data();
-
-			VersionType version{2};//NOTE TO SELF MISSING VERSION 1 TEST!
-			std::memcpy(pData, &version, sizeof(VersionType));
-			pData += sizeof(VersionType);
-			std::memcpy(pData, &header, sizeof(AccountStateHeader));
-			pData += sizeof(AccountStateHeader);
-			if (HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
-				pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.linked(), pData);
-
-			if (HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask))
-				pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.node(), pData);
-
-			auto* pUint64Data = reinterpret_cast<uint64_t*>(pData);
-			for (const auto& pair : accountState.Balances) {
-				*pUint64Data++ = pair.first.unwrap();
-				*pUint64Data++ = pair.second.unwrap();
+		template<typename TTraits>
+		struct VersionedStateSerializerUtils<TTraits, 1> {
+			static size_t CalculatePackedSize(const AccountState& accountState) {
+				return sizeof(VersionType) + sizeof(AccountStateHeader<1>) + sizeof(HistoricalSnapshotsHeader)
+					   + accountState.Balances.size() * sizeof(model::Mosaic)
+					   + accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot);
 			}
-
-			pData = reinterpret_cast<uint8_t*>(pUint64Data);
-			HistoricalSnapshotsHeader historicalHeader;
-			historicalHeader.SnapshotsCount = static_cast<uint16_t>(accountState.Balances.snapshots().size());
-			std::memcpy(pData, &historicalHeader, sizeof(HistoricalSnapshotsHeader));
-			pData += sizeof(HistoricalSnapshotsHeader);
-
-			pUint64Data = reinterpret_cast<uint64_t*>(pData);
-			for (const auto& snapshot : accountState.Balances.snapshots()) {
-				*pUint64Data++ = snapshot.Amount.unwrap();
-				*pUint64Data++ = snapshot.BalanceHeight.unwrap();
+			static const model::Mosaic* GetMosaicPointer(const AccountStateHeader<1>& header) {
+				const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&header + 1);
+				return reinterpret_cast<const model::Mosaic*>(pHeaderData);
 			}
+			AccountState CopyHeaderToAccountState(const AccountStateHeader<1>& header) {
+				auto accountState = AccountState(header.Address, header.AddressHeight);
+				accountState.PublicKey = header.PublicKey;
+				accountState.PublicKeyHeight = header.PublicKeyHeight;
 
-			return buffer;
-		}
+				accountState.AccountType = header.AccountType;
+				accountState.SupplementalPublicKeys.linked().unset();
+				accountState.SupplementalPublicKeys.linked().set(header.LinkedAccountKey);
+
+				accountState.Balances.optimize(header.OptimizedMosaicId);
+				accountState.Balances.track(header.TrackedMosaicId);
+				const auto* pMosaic = GetMosaicPointer(header);
+				for (auto i = 0u; i < header.MosaicsCount; ++i, ++pMosaic)
+					accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
+
+				if (TTraits::Has_Historical_Snapshots) {
+					const auto& historicalSnapshotsHeader = reinterpret_cast<const HistoricalSnapshotsHeader&>(*pMosaic);
+					const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&historicalSnapshotsHeader + 1);
+
+					const auto* pBalanceSnapshot = reinterpret_cast<const model::BalanceSnapshot*>(pHeaderData);
+					for (int i = 0; i < historicalSnapshotsHeader.SnapshotsCount; ++i, ++pBalanceSnapshot)
+						accountState.Balances.addSnapshot(*pBalanceSnapshot);
+				}
+
+				return accountState;
+			}
+			std::vector<uint8_t> CopyToBuffer(const AccountState& accountState) {
+				std::vector<uint8_t> buffer(CalculatePackedSize(accountState));
+
+				AccountStateHeader<1> header;
+				header.Address = accountState.Address;
+				header.AddressHeight = accountState.AddressHeight;
+				header.PublicKey = accountState.PublicKey;
+				header.PublicKeyHeight = accountState.PublicKeyHeight;
+
+				header.AccountType = accountState.AccountType;
+				header.LinkedAccountKey = accountState.SupplementalPublicKeys.linked().get();
+
+				header.OptimizedMosaicId = accountState.Balances.optimizedMosaicId();
+				header.TrackedMosaicId = accountState.Balances.trackedMosaicId();
+				header.MosaicsCount = static_cast<uint16_t>(accountState.Balances.size());
+
+				auto* pData = buffer.data();
+
+				VersionType version{1};
+				std::memcpy(pData, &version, sizeof(VersionType));
+				pData += sizeof(VersionType);
+
+				std::memcpy(pData, &header, sizeof(AccountStateHeader<1>));
+				pData += sizeof(AccountStateHeader<1>);
+
+				auto* pUint64Data = reinterpret_cast<uint64_t*>(pData);
+				for (const auto& pair : accountState.Balances) {
+					*pUint64Data++ = pair.first.unwrap();
+					*pUint64Data++ = pair.second.unwrap();
+				}
+
+				pData = reinterpret_cast<uint8_t*>(pUint64Data);
+				HistoricalSnapshotsHeader historicalHeader;
+				historicalHeader.SnapshotsCount = static_cast<uint16_t>(accountState.Balances.snapshots().size());
+				std::memcpy(pData, &historicalHeader, sizeof(HistoricalSnapshotsHeader));
+				pData += sizeof(HistoricalSnapshotsHeader);
+
+				pUint64Data = reinterpret_cast<uint64_t*>(pData);
+				for (const auto& snapshot : accountState.Balances.snapshots()) {
+					*pUint64Data++ = snapshot.Amount.unwrap();
+					*pUint64Data++ = snapshot.BalanceHeight.unwrap();
+				}
+
+				return buffer;
+			}
+		};
+
+		template<typename TTraits>
+		struct VersionedStateSerializerUtils<TTraits, 2> {
+			static size_t CalculatePackedSize(const AccountState& accountState) {
+				return sizeof(VersionType) + sizeof(AccountStateHeader<2>) + sizeof(HistoricalSnapshotsHeader)
+					   + (HasFlag(AccountPublicKeys::KeyType::Linked, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
+					   + (HasFlag(AccountPublicKeys::KeyType::Node, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
+					   + accountState.Balances.size() * sizeof(model::Mosaic)
+					   + accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot);
+			}
+			const model::Mosaic* GetMosaicPointer(const AccountStateHeader<2>& header) {
+				const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&header + 1)
+										  + (HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask) ? Key::Size : 0)
+										  + (HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask) ? Key::Size : 0);
+				return reinterpret_cast<const model::Mosaic*>(pHeaderData);
+			}
+			AccountState CopyHeaderToAccountState(const AccountStateHeader<2>& header) {
+				auto accountState = AccountState(header.Address, header.AddressHeight);
+				accountState.PublicKey = header.PublicKey;
+				accountState.PublicKeyHeight = header.PublicKeyHeight;
+
+				accountState.AccountType = header.AccountType;
+
+				accountState.Balances.optimize(header.OptimizedMosaicId);
+				accountState.Balances.track(header.TrackedMosaicId);
+				accountState.SupplementalPublicKeys.linked().unset();
+				accountState.SupplementalPublicKeys.node().unset();
+				auto* pKeysPointer = GetSupplementalKeysPointer(header);
+				if(HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
+				{
+					accountState.SupplementalPublicKeys.linked().set(*pKeysPointer);
+					pKeysPointer++;
+				}
+				if(HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask))
+				{
+					accountState.SupplementalPublicKeys.node().set(*pKeysPointer);
+					pKeysPointer++;
+				}
+				const auto* pMosaic = GetMosaicPointer(header);
+				for (auto i = 0u; i < header.MosaicsCount; ++i, ++pMosaic)
+					accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
+
+				if (TTraits::Has_Historical_Snapshots) {
+					const auto& historicalSnapshotsHeader = reinterpret_cast<const HistoricalSnapshotsHeader&>(*pMosaic);
+					const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&historicalSnapshotsHeader + 1);
+
+					const auto* pBalanceSnapshot = reinterpret_cast<const model::BalanceSnapshot*>(pHeaderData);
+					for (int i = 0; i < historicalSnapshotsHeader.SnapshotsCount; ++i, ++pBalanceSnapshot)
+						accountState.Balances.addSnapshot(*pBalanceSnapshot);
+				}
+
+				return accountState;
+			}
+			std::vector<uint8_t> CopyToBuffer(const AccountState& accountState) {
+				std::vector<uint8_t> buffer(CalculatePackedSize(accountState));
+
+				AccountStateHeader<2> header;
+				header.Address = accountState.Address;
+				header.AddressHeight = accountState.AddressHeight;
+				header.PublicKey = accountState.PublicKey;
+				header.PublicKeyHeight = accountState.PublicKeyHeight;
+
+				header.AccountType = accountState.AccountType;
+				header.LinkedKeysMask = accountState.SupplementalPublicKeys.mask();
+
+				header.OptimizedMosaicId = accountState.Balances.optimizedMosaicId();
+				header.TrackedMosaicId = accountState.Balances.trackedMosaicId();
+				header.MosaicsCount = static_cast<uint16_t>(accountState.Balances.size());
+
+				auto* pData = buffer.data();
+
+				VersionType version{2};//NOTE TO SELF MISSING VERSION 1 TEST!
+				std::memcpy(pData, &version, sizeof(VersionType));
+				pData += sizeof(VersionType);
+				std::memcpy(pData, &header, sizeof(AccountStateHeader<2>));
+				pData += sizeof(AccountStateHeader<2>);
+				if (HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
+					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.linked(), pData);
+
+				if (HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask))
+					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.node(), pData);
+
+				auto* pUint64Data = reinterpret_cast<uint64_t*>(pData);
+				for (const auto& pair : accountState.Balances) {
+					*pUint64Data++ = pair.first.unwrap();
+					*pUint64Data++ = pair.second.unwrap();
+				}
+
+				pData = reinterpret_cast<uint8_t*>(pUint64Data);
+				HistoricalSnapshotsHeader historicalHeader;
+				historicalHeader.SnapshotsCount = static_cast<uint16_t>(accountState.Balances.snapshots().size());
+				std::memcpy(pData, &historicalHeader, sizeof(HistoricalSnapshotsHeader));
+				pData += sizeof(HistoricalSnapshotsHeader);
+
+				pUint64Data = reinterpret_cast<uint64_t*>(pData);
+				for (const auto& snapshot : accountState.Balances.snapshots()) {
+					*pUint64Data++ = snapshot.Amount.unwrap();
+					*pUint64Data++ = snapshot.BalanceHeight.unwrap();
+				}
+
+				return buffer;
+			}
+		};
 	}
 
 	// endregion

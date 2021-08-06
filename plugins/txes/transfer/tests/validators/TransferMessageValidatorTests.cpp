@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS TransferMessageValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessage)
+	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessageV1)
 
 	namespace {
 		template<VersionType version>
@@ -46,7 +46,7 @@ namespace catapult { namespace validators {
 			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pValidator = CreateTransferMessageValidator();
+			auto pValidator = CreateTransferMessageV1Validator();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, config);

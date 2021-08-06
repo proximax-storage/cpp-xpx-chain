@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to transfer message notifications and validates that:
 	/// - messages have a maximum message size of \a maxMessageSize
-	DECLARE_STATEFUL_VALIDATOR(TransferMessage, model::TransferMessageNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(TransferMessageV1, model::TransferMessageNotification<1>)();
 
 	/// A validator implementation that applies to transfer message notifications and validates that:
 	/// - messages have a maximum message size of \a maxMessageSize

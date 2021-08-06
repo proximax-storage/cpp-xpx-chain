@@ -44,7 +44,7 @@ namespace catapult { namespace plugins {
 
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateTransferMessageValidator())
+				.add(validators::CreateTransferMessageV1Validator())
 				.add(validators::CreateTransferMessageV2Validator())
 				.add(validators::CreateTransferMosaicsValidator());
 		});

@@ -37,7 +37,7 @@ namespace catapult { namespace config {
 	}
 
 	BlockchainConfigurationHolder::BlockchainConfigurationHolder(const BlockchainConfiguration& config, cache::CatapultCache* pCache, const Height& height)
-			:  m_pCache(nullptr)
+			:  m_pCache(pCache)
 			, m_pluginInitializer([](auto&) {}){
 
 

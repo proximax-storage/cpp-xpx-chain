@@ -34,7 +34,7 @@ namespace catapult { namespace state {
 		auto height = Height(1234);
 
 		// Act:
-		AccountState state(address, height);
+		AccountState state(address, height, 1);
 
 		// Assert:
 		EXPECT_EQ(address, state.Address);
@@ -74,11 +74,11 @@ namespace catapult { namespace state {
 		template<typename TAction>
 		void PrepareRequireLinkedRemoteAndMainAccountsTest(TAction action) {
 			// Arrange: set up two linked accounts
-			AccountState remoteAccountState(test::GenerateRandomAddress(), Height(1));
+			AccountState remoteAccountState(test::GenerateRandomAddress(), Height(1), 2);
 			test::FillWithRandomData(remoteAccountState.PublicKey);
 			remoteAccountState.AccountType = AccountType::Remote;
 
-			AccountState mainAccountState(test::GenerateRandomAddress(), Height(1));
+			AccountState mainAccountState(test::GenerateRandomAddress(), Height(1), 2);
 			test::FillWithRandomData(mainAccountState.PublicKey);
 			mainAccountState.AccountType = AccountType::Main;
 			remoteAccountState.SupplementalPublicKeys.linked().unset();

@@ -21,6 +21,7 @@
 #pragma once
 #include "AccountBalances.h"
 #include "AccountImportance.h"
+#include "VersionableState.h"
 #include "catapult/constants.h"
 #include "AccountPublicKeys.h"
 
@@ -42,9 +43,22 @@ namespace catapult { namespace state {
 	};
 
 	/// Account state data.
-	struct AccountState {
+	struct AccountState : public VersionableState {
+
 	public:
-		/// Creates an account state from an \a address and a height (\a addressHeight).
+
+		/// Creates an account state from an \a address and a height (\a addressHeight) for a given version.
+		explicit AccountState(const catapult::Address& address, Height addressHeight, uint32_t version)
+				: Address(address)
+				, AddressHeight(addressHeight)
+				, PublicKey()
+				, PublicKeyHeight(0)
+				, AccountType(AccountType::Unlinked)
+				, Balances(this)
+				, VersionableState(version)
+		{}
+
+		/// Creates an account state from an \a address and a height (\a addressHeight) with version 1.
 		explicit AccountState(const catapult::Address& address, Height addressHeight)
 				: Address(address)
 				, AddressHeight(addressHeight)
@@ -52,11 +66,13 @@ namespace catapult { namespace state {
 				, PublicKeyHeight(0)
 				, AccountType(AccountType::Unlinked)
 				, Balances(this)
+				, VersionableState(1)
 		{}
 
 		/// Copy constructor that makes a deep copy of \a accountState.
 		AccountState(const AccountState& accountState)
-		: Balances(this) {
+		: Balances(this),
+		  VersionableState(accountState){
 			*this = accountState;
 		}
 
@@ -78,9 +94,6 @@ namespace catapult { namespace state {
 
 		/// Supplemental public keys.
 		AccountPublicKeys SupplementalPublicKeys;
-
-		/// Public key of linked account.
-		//Key LinkedAccountKey;
 
 		/// Balances of an account.
 		AccountBalances Balances;

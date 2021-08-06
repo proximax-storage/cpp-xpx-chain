@@ -90,16 +90,19 @@ namespace catapult { namespace cache {
 		return address;
 	}
 
-	void BasicAccountStateCacheDelta::addAccount(const Address& address, Height height) {
+	void BasicAccountStateCacheDelta::addAccount(const Address& address, Height height, uint32_t version) {
 		if (contains(address))
 			return;
 
-		addAccount(state::AccountState(address, height));
+		addAccount(state::AccountState(address, height, version));
 	}
 
-	void BasicAccountStateCacheDelta::addAccount(const Key& publicKey, Height height) {
+	void BasicAccountStateCacheDelta::addAccount(const Address& address, Height height) {
+		addAccount(address, height, 1);
+	}
+	void BasicAccountStateCacheDelta::addAccount(const Key& publicKey, Height height, uint32_t version) {
 		auto address = getAddress(publicKey);
-		addAccount(address, height);
+		addAccount(address, height, version);
 
 		// optimize common case where public key is already known by not marking account as dirty in that case
 		auto accountStateIterConst = const_cast<const BasicAccountStateCacheDelta*>(this)->find(address);
@@ -113,6 +116,9 @@ namespace catapult { namespace cache {
 		accountState.PublicKeyHeight = height;
 	}
 
+	void BasicAccountStateCacheDelta::addAccount(const Key& publicKey, Height height) {
+		addAccount(publicKey, height, 1);
+	}
 	void BasicAccountStateCacheDelta::addAccount(const state::AccountState& accountState) {
 		if (contains(accountState.Address))
 			return;

@@ -37,23 +37,47 @@ namespace catapult { namespace state {
 	}
 	void AccountStateNonHistoricalSerializer::Save(const AccountState& accountState, io::OutputStream& output) {
 		// write version
-		io::Write32(output, 2);
+		io::Write32(output, accountState.GetVersion());
+		switch(accountState.GetVersion())
+		{
+			case 1:
+			{
+				// write identifying information
+				output.write(accountState.Address);
+				io::Write(output, accountState.AddressHeight);
+				output.write(accountState.PublicKey);
+				io::Write(output, accountState.PublicKeyHeight);
 
-		// write identifying information
-		output.write(accountState.Address);
-		io::Write(output, accountState.AddressHeight);
-		output.write(accountState.PublicKey);
-		io::Write(output, accountState.PublicKeyHeight);
+				// write link information
+				io::Write8(output, utils::to_underlying_type(accountState.AccountType));
+				Key LinkedAccountKeyRep = accountState.SupplementalPublicKeys.linked().get();
+				output.write(LinkedAccountKeyRep);
+				// write mosaics
+				io::Write(output, accountState.Balances.optimizedMosaicId());
+				io::Write(output, accountState.Balances.trackedMosaicId());
+				io::Write16(output, static_cast<uint16_t>(accountState.Balances.size()));
+				break;
+			}
+			case 2:
+			{
+				// write identifying information
+				output.write(accountState.Address);
+				io::Write(output, accountState.AddressHeight);
+				output.write(accountState.PublicKey);
+				io::Write(output, accountState.PublicKeyHeight);
 
-		// write link information
-		io::Write8(output, utils::to_underlying_type(accountState.AccountType));
+				// write link information
+				io::Write8(output, utils::to_underlying_type(accountState.AccountType));
 
 
-		// write mosaics
-		io::Write(output, accountState.Balances.optimizedMosaicId());
-		io::Write(output, accountState.Balances.trackedMosaicId());
-		io::Write16(output, static_cast<uint16_t>(accountState.Balances.size()));
-		WriteSupplementalPublicKeys(output, accountState.SupplementalPublicKeys);
+				// write mosaics
+				io::Write(output, accountState.Balances.optimizedMosaicId());
+				io::Write(output, accountState.Balances.trackedMosaicId());
+				io::Write16(output, static_cast<uint16_t>(accountState.Balances.size()));
+				WriteSupplementalPublicKeys(output, accountState.SupplementalPublicKeys);
+				break;
+			}
+		}
 		for (const auto& pair : accountState.Balances) {
 			io::Write(output, pair.first);
 			io::Write(output, pair.second);
@@ -99,7 +123,7 @@ namespace catapult { namespace state {
 					input.read(address);
 					auto addressHeight = io::Read<Height>(input);
 
-					auto accountState = AccountState(address, addressHeight);
+					auto accountState = AccountState(address, addressHeight, 1);
 
 					input.read(accountState.PublicKey);
 					accountState.PublicKeyHeight = io::Read<Height>(input);
@@ -128,7 +152,7 @@ namespace catapult { namespace state {
 					input.read(address);
 					auto addressHeight = io::Read<Height>(input);
 
-					auto accountState = AccountState(address, addressHeight);
+					auto accountState = AccountState(address, addressHeight, 2);
 
 					input.read(accountState.PublicKey);
 					accountState.PublicKeyHeight = io::Read<Height>(input);

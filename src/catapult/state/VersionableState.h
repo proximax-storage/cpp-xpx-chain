@@ -18,17 +18,38 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "Validators.h"
-#include "src/config/TransferConfiguration.h"
+#pragma once
+#include "catapult/model/ImportanceHeight.h"
+#include <atomic>
 
-namespace catapult { namespace validators {
+namespace catapult { namespace state {
 
-#define DEFINE_TRANSFER_MESSAGE_VALIDATOR(VERSION) \
-	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(TransferMessageV##VERSION, model::TransferMessageNotification<VERSION>, [](const auto& notification, const auto& context) { \
-	  const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::TransferConfiguration>(); \
-	  return notification.MessageSize > pluginConfig.MaxMessageSize ? Failure_Transfer_Message_Too_Large : ValidationResult::Success; \
-	});
+	/// Version extension for state classes
+	struct VersionableState {
+	public:
+		/// Default version 1.
+		VersionableState()
+				: Version(1)
+		{}
 
-	DEFINE_TRANSFER_MESSAGE_VALIDATOR(1);
-	DEFINE_TRANSFER_MESSAGE_VALIDATOR(2);
+		VersionableState(const uint32_t version)
+				: Version(version)
+		{}
+
+		VersionableState(const VersionableState& rhs)
+				: Version(rhs.Version)
+		{}
+
+		VersionableState& operator=(const VersionableState& rhs) {
+			Version = rhs.Version;
+			return *this;
+		}
+
+	protected:
+		/// Version of this state.
+		uint32_t Version;
+
+	public:
+		uint32_t GetVersion() const{ return Version; }
+	};
 }}

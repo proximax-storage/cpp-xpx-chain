@@ -108,10 +108,17 @@ namespace catapult { namespace cache {
 		MosaicId harvestingMosaicId() const;
 
 	public:
-		/// If not present, adds an account to the cache at given height (\a addressHeight) using \a address.
+		/// If not present, adds an account of given version to the cache at given height (\a addressHeight) using \a address.
+		void addAccount(const Address& address, Height addressHeight, uint32_t version);
+
+		/// If not present, adds an account of version 1 to the cache at given height (\a addressHeight) using \a address.
 		void addAccount(const Address& address, Height addressHeight);
 
-		/// If not present, adds an account to the cache using \a publicKey.
+		/// If not present, adds an account of given version to the cache using \a publicKey.
+		/// If public key has not been known earlier, its height is set to \a publicKeyHeight.
+		void addAccount(const Key& publicKey, Height publicKeyHeight, uint32_t version);
+
+		/// If not present, adds an account of version 1 to the cache using \a publicKey.
 		/// If public key has not been known earlier, its height is set to \a publicKeyHeight.
 		void addAccount(const Key& publicKey, Height publicKeyHeight);
 
