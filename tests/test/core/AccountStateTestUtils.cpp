@@ -35,9 +35,9 @@ namespace catapult { namespace test {
 			state.Balances.addSnapshot(model::BalanceSnapshot{Amount(seed * 1000 + i + 1), state.AddressHeight + Height(i + 1)});
 		}
 	}
-
 	void AssertEqual(const state::AccountState& expected, const state::AccountState& actual, const std::string& message) {
 		// Assert:
+		EXPECT_EQ(expected.GetVersion(), actual.GetVersion()) << message;
 		EXPECT_EQ(expected.Address, actual.Address) << message;
 		EXPECT_EQ(expected.AddressHeight, actual.AddressHeight) << message;
 		EXPECT_EQ(expected.PublicKey, actual.PublicKey) << message;
@@ -45,7 +45,11 @@ namespace catapult { namespace test {
 
 		EXPECT_EQ(expected.AccountType, actual.AccountType) << message;
 		EXPECT_EQ(expected.SupplementalPublicKeys.linked().get(), actual.SupplementalPublicKeys.linked().get()) << message;
-		EXPECT_EQ(expected.SupplementalPublicKeys.node().get(), actual.SupplementalPublicKeys.node().get()) << message;
+		if (expected.GetVersion() > 1)
+		{
+			EXPECT_EQ(expected.SupplementalPublicKeys.node().get(), actual.SupplementalPublicKeys.node().get()) << message;
+		}
+
 		EXPECT_EQ(expected.Balances.size(), actual.Balances.size()) << message;
 		EXPECT_EQ(expected.Balances.size(), actual.Balances.size());
 		for (const auto& pair : expected.Balances)
