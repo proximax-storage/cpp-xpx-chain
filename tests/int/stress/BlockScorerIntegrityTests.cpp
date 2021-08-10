@@ -64,6 +64,7 @@ namespace catapult { namespace chain {
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
 			config.BlockTimeSmoothingFactor = 0;
 			config.TotalChainImportance = test::Default_Total_Chain_Importance;
+			config.AccountVersion = 1;
 			return config;
 		}
 

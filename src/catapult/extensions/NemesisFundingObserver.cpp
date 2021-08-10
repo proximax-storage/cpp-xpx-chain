@@ -37,8 +37,7 @@ namespace catapult { namespace extensions {
 				CATAPULT_THROW_INVALID_ARGUMENT_1("unexpected nemesis transfer from account", notification.Sender);
 
 			auto& cache = context.Cache.template sub<cache::AccountStateCache>();
-			//On Nemesis Block all account states are V1
-			cache.addAccount(notification.Sender, context.Height, 1);
+			cache.addAccount(notification.Sender, context.Height, context.Config.Network.AccountVersion);
 
 			auto senderIter = cache.find(notification.Sender);
 			auto& senderState = senderIter.get();

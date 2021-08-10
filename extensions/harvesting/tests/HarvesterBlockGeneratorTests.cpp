@@ -47,7 +47,7 @@ namespace catapult { namespace harvesting {
 			config.Immutable.CurrencyMosaicId = MosaicId(123);
 
 			config.Network.ImportanceGrouping = 1;
-
+			config.Network.AccountVersion = 1;
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 1;
 

@@ -100,7 +100,7 @@ namespace catapult { namespace model {
 		bool EnableDeadlineValidation;
 
 		/// Version of the Account State used.
-		uint32_t AccountVersion;
+		uint32_t AccountVersion = 1;
 
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;

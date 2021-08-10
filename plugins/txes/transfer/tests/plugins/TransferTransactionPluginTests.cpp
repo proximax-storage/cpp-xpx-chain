@@ -34,9 +34,9 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS TransferTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(Transfer, 3, 3,)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(Transfer, 4, 4,)
 
-		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
+		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 4);
 
 		template<typename TTraits>
 		auto CreateTransactionWithMosaics(uint8_t numMosaics, uint16_t messageSize = 0) {

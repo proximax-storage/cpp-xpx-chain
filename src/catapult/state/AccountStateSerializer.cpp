@@ -50,7 +50,7 @@ namespace catapult { namespace state {
 
 				// write link information
 				io::Write8(output, utils::to_underlying_type(accountState.AccountType));
-				Key LinkedAccountKeyRep = accountState.SupplementalPublicKeys.linked().get();
+				Key LinkedAccountKeyRep = HasFlag(AccountPublicKeys::KeyType::Linked, accountState.SupplementalPublicKeys.mask()) ? accountState.SupplementalPublicKeys.linked().get() : Key();
 				output.write(LinkedAccountKeyRep);
 				// write mosaics
 				io::Write(output, accountState.Balances.optimizedMosaicId());
@@ -132,8 +132,11 @@ namespace catapult { namespace state {
 					accountState.AccountType = static_cast<state::AccountType>(io::Read8(input));
 					Key tempKey;
 					input.read(tempKey);
-					accountState.SupplementalPublicKeys.linked().unset();
-					accountState.SupplementalPublicKeys.linked().set(std::move(tempKey));
+					if(tempKey != Key())
+					{
+						accountState.SupplementalPublicKeys.linked().unset();
+						accountState.SupplementalPublicKeys.linked().set(std::move(tempKey));
+					}
 					// read mosaics
 					accountState.Balances.optimize(io::Read<MosaicId>(input));
 					accountState.Balances.track(io::Read<MosaicId>(input));

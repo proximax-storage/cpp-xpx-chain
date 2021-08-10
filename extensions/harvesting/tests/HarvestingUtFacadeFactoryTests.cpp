@@ -66,7 +66,7 @@ namespace catapult { namespace harvesting {
 			config.Network.BlockPruneInterval = 10;
 			config.Network.GreedDelta = 0.5;
 			config.Network.GreedExponent = 2.0;
-
+			config.Network.AccountVersion = 1;
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 1;
 

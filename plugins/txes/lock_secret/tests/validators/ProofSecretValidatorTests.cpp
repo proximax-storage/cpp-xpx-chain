@@ -68,6 +68,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxProofSize = 100;
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
 			networkConfig.SetPluginConfiguration(pluginConfig);
+			networkConfig.AccountVersion = 1;
 			return config::CreateMockConfigurationHolder(networkConfig);
 		}
 

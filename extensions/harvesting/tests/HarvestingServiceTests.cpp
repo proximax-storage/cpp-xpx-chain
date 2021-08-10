@@ -350,6 +350,7 @@ namespace catapult { namespace harvesting {
 			test::MutableBlockchainConfiguration config;
 			config.Immutable.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			config.Network.ImportanceGrouping = Importance_Grouping;
+			config.Network.AccountVersion = 1;
 			auto cache = test::CreateEmptyCatapultCache(config.ToConst(), cacheConfig);
 			auto delta = cache.createDelta();
 

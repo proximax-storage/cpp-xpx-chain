@@ -98,7 +98,7 @@ namespace catapult { namespace cache {
 	}
 
 	void BasicAccountStateCacheDelta::addAccount(const Address& address, Height height) {
-		addAccount(address, height, 1);
+		addAccount(address, height, this->networkConfig().AccountVersion);
 	}
 	void BasicAccountStateCacheDelta::addAccount(const Key& publicKey, Height height, uint32_t version) {
 		auto address = getAddress(publicKey);
@@ -117,7 +117,7 @@ namespace catapult { namespace cache {
 	}
 
 	void BasicAccountStateCacheDelta::addAccount(const Key& publicKey, Height height) {
-		addAccount(publicKey, height, 1);
+		addAccount(publicKey, height, this->networkConfig().AccountVersion);
 	}
 	void BasicAccountStateCacheDelta::addAccount(const state::AccountState& accountState) {
 		if (contains(accountState.Address))

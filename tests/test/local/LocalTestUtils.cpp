@@ -284,7 +284,7 @@ namespace catapult { namespace test {
 		config.Immutable = CreateImmutableConfiguration();
 		config.Network = std::move(networkConfig);
 		config.Node = CreateNodeConfiguration();
-
+		config.Network.AccountVersion = 1;
 		config.User.BootKey = Local_Node_Private_Key;
 		config.User.DataDirectory = dataDirectory;
 		config.SupportedEntityVersions = CreateSupportedEntityVersions();

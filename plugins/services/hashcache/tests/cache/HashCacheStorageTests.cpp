@@ -30,6 +30,7 @@ namespace catapult { namespace cache {
 			auto config = model::NetworkConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromMinutes(2);
 			config.MaxRollbackBlocks = 768;
+			config.AccountVersion = 1;
 			return config::CreateMockConfigurationHolder(config);
 		}
 

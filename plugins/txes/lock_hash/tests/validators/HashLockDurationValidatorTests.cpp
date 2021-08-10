@@ -41,6 +41,7 @@ namespace catapult { namespace validators {
 				auto networkConfig = model::NetworkConfiguration::Uninitialized();
 				networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 				networkConfig.SetPluginConfiguration(pluginConfig);
+				networkConfig.AccountVersion = 1;
 				auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 				return pConfigHolder;
 			}

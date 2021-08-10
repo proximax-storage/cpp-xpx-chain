@@ -291,6 +291,7 @@ namespace catapult { namespace extensions {
 			config.Network.MinHarvesterBalance = Amount(1);
 			config.Network.ImportanceGrouping = 1;
 			config.Network.MaxDifficultyBlocks = 111;
+			config.Network.AccountVersion = 1;
 			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
 
@@ -315,6 +316,7 @@ namespace catapult { namespace extensions {
 			test::TempDirectoryGuard tempDir;
 			auto stateDirectory = config::CatapultDirectory(tempDir.name() + "/zstate");
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.AccountVersion = 1;
 			auto originalCache = CreateCacheWithRealCoreSystemPlugins(tempDir.name() + "/db");
 
 			// - run additional preparation

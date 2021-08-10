@@ -50,7 +50,7 @@ namespace catapult { namespace model {
 		void AssertTransactionHasExpectedProperties() {
 			// Assert:
 			EXPECT_EQ(Entity_Type_Transfer, T::Entity_Type);
-			EXPECT_EQ(3u, T::Current_Version);
+			EXPECT_EQ(4u, T::Current_Version);
 		}
 	}
 

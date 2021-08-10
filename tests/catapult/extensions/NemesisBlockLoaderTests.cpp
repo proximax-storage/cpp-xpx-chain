@@ -151,6 +151,7 @@ namespace catapult { namespace extensions {
 			config.Network.Info.PublicKey = nemesisBlock.Signer;
 			config.Network.MaxMosaicAtomicUnits = Amount(15'000'000);
 			config.Network.TotalChainImportance = nemesisOptions.TotalChainImportance;
+			config.Network.AccountVersion = 1;
 			return config.ToConst();
 		}
 
