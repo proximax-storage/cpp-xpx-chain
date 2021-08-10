@@ -31,7 +31,11 @@ namespace catapult { namespace plugins {
 	// region TransactionPlugin
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AddressAlias, 1, 1,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(AddressAlias, std::shared_ptr<config::BlockchainConfigurationHolder>,1, 1,)
+		auto CreateConfiguration() {
+			test::MutableBlockchainConfiguration config;
+			return config.ToConst();
+		}
 
 		struct NotificationTraits {
 		public:
@@ -50,7 +54,8 @@ namespace catapult { namespace plugins {
 		};
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , Entity_Type_Alias_Address)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , Entity_Type_Alias_Address,
+			config::CreateMockConfigurationHolder(CreateConfiguration()))
 
 	DEFINE_ALIAS_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, AddressAlias, NotificationTraits)
 

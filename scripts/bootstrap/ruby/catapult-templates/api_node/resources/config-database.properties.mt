@@ -23,3 +23,4 @@ catapult.mongo.plugins.upgrade = true
 catapult.mongo.plugins.service = true
 catapult.mongo.plugins.operation = true
 catapult.mongo.plugins.supercontract = true
+catapult.mongo.plugins.metadata_nem = true

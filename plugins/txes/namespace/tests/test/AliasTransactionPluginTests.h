@@ -22,6 +22,7 @@
 #include "src/model/AliasNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
+#include "NamespaceCacheTestUtils.h"
 
 namespace catapult { namespace test {
 
@@ -32,7 +33,7 @@ namespace catapult { namespace test {
 	public:
 		static void AssertCanCalculateSize() {
 			// Arrange:
-			auto pPlugin = TTraits::CreatePlugin();
+			auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder());
 
 			typename TTraits::TransactionType transaction;
 			transaction.Size = 0;
@@ -48,7 +49,7 @@ namespace catapult { namespace test {
 		static void AssertCanPublishCorrectNumberOfNotifications() {
 			// Arrange:
 			mocks::MockNotificationSubscriber sub;
-			auto pPlugin = TTraits::CreatePlugin();
+			auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder());
 
 			typename TTraits::TransactionType transaction;
 			transaction.Size = sizeof(transaction);
@@ -66,7 +67,7 @@ namespace catapult { namespace test {
 			// Arrange:
 			mocks::MockTypedNotificationSubscriber<model::AliasOwnerNotification<1>> aliasOwnerSub;
 			mocks::MockTypedNotificationSubscriber<typename TNotificationTraits::Notification_Type> aliasedSub;
-			auto pPlugin = TTraits::CreatePlugin();
+			auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder());
 
 			typename TTraits::TransactionType transaction;
 			transaction.Size = sizeof(transaction);

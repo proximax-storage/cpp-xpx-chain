@@ -21,7 +21,10 @@
 #include "MosaicDefinitionMapper.h"
 #include "MosaicExpiryReceiptMapper.h"
 #include "MosaicSupplyChangeMapper.h"
+#include "MosaicModifyLevyMapper.h"
+#include "MosaicRemoveLevyMapper.h"
 #include "storages/MongoMosaicCacheStorage.h"
+#include "storages/MongoLevyCacheStorage.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "mongo/src/MongoReceiptPluginFactory.h"
 #include "plugins/txes/mosaic/src/model/MosaicReceiptType.h"
@@ -31,11 +34,18 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	// transaction support
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateMosaicDefinitionTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateMosaicSupplyChangeTransactionMongoPlugin());
-
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateMosaicModifyLevyTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateMosaicRemoveLevyTransactionMongoPlugin());
+	
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoMosaicCacheStorage(
 			manager.mongoContext(),
 			manager.configHolder()));
+	
+	// levy storage support
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoLevyCacheStorage(
+		manager.mongoContext(),
+		manager.configHolder()));
 
 	// receipt support
 	manager.addReceiptSupport(catapult::mongo::plugins::CreateMosaicExpiryReceiptMongoPlugin());
