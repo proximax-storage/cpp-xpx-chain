@@ -18,6 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <catapult/model/Address.h>
+#include <sdk/src/extensions/ConversionExtensions.h>
 #include "MosaicSupplyChangeTransactionPlugin.h"
 #include "src/model/MosaicNotifications.h"
 #include "src/model/MosaicSupplyChangeTransaction.h"
@@ -30,18 +32,25 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
-			switch (transaction.EntityVersion()) {
-			case 2:
-				sub.notify(MosaicRequiredNotification<1>(transaction.Signer, transaction.MosaicId));
-				sub.notify(MosaicSupplyChangeNotification<1>(transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));
-				break;
+		static auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder> &pConfigHolder) {
+			return [pConfigHolder](
+						   const TTransaction& transaction,
+						   const Height& associatedHeight,
+						   NotificationSubscriber& sub) {
+				switch (transaction.EntityVersion()) {
+				case 2:
+					sub.notify(MosaicRequiredNotification<1>(transaction.Signer, transaction.MosaicId));
+					sub.notify(MosaicSupplyChangeNotification<1>(
+							transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));
+					break;
 
-			default:
-					CATAPULT_LOG(debug) << "invalid version of MosaicSupplyChangeTransaction: " << transaction.EntityVersion();
-			}
+				default:
+					CATAPULT_LOG(debug) << "invalid version of MosaicSupplyChangeTransaction: "
+										<< transaction.EntityVersion();
+				}
+			};
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(MosaicSupplyChange, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicSupplyChange, Default, CreatePublisher, std::shared_ptr<config::BlockchainConfigurationHolder>)
 }}

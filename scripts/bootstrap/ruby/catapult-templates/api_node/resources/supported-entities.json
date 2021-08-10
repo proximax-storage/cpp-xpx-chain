@@ -26,6 +26,21 @@
 			"supportedVersions": [1]
 		},
 		{
+			"name": "Account_Metadata_Nem",
+			"type": "16703",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Mosaic_Metadata_Nem",
+			"type": "16959",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Namespace_Metadata_Nem",
+			"type": "17215",
+			"supportedVersions": [1]
+		},
+		{
 			"name": "BlockChain_Upgrade",
 			"type": "16728",
 			"supportedVersions": [1]
@@ -223,6 +238,16 @@
 		{
 			"name": "deactivate",
 			"type": "17760",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Mosaic_Modify_Levy",
+			"type": "17229",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Mosaic_Remove_Levy",
+			"type": "17485",
 			"supportedVersions": [1]
 		}
 	]

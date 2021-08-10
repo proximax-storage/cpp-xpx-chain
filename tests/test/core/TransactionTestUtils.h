@@ -96,4 +96,34 @@ namespace catapult { namespace test {
 	TEST(NAME##TransactionTests, EmbeddedTransactionHasExpectedProperties) { \
 		AssertTransactionHasExpectedProperties<Embedded##NAME##Transaction>(); \
 	}
+
+/// Adds basic transaction property tests for \a NAME transaction with custom arguments.
+#define ADD_BASIC_TRANSACTION_PROPERTY_TESTS_WITH_ARGS(NAME, ...) \
+	TEST(NAME##TransactionTests, TransactionHasExpectedProperties) { \
+		AssertTransactionHasExpectedProperties<NAME##Transaction>(__VA_ARGS__); \
+	} \
+	TEST(NAME##TransactionTests, EmbeddedTransactionHasExpectedProperties) { \
+		AssertTransactionHasExpectedProperties<Embedded##NAME##Transaction>(__VA_ARGS__); \
+	}
+
+/// Adds basic transaction alignment tests for \a NAME transaction.
+#define ADD_BASIC_TRANSACTION_ALIGNMENT_TESTS(NAME) \
+	TEST(NAME##TransactionTests, TransactionHasProperAlignment) { \
+		AssertTransactionHasProperAlignment<NAME##Transaction>(); \
+	} \
+	TEST(NAME##TransactionTests, EmbeddedTransactionHasProperAlignment) { \
+		AssertTransactionHasProperAlignment<Embedded##NAME##Transaction>(); \
+	}
+
+/// Adds basic transaction size and property tests for \a NAME transaction with custom arguments.
+#define ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS_WITH_ARGS(NAME, ...) \
+	ADD_BASIC_TRANSACTION_PROPERTY_TESTS_WITH_ARGS(NAME, __VA_ARGS__) \
+	ADD_BASIC_TRANSACTION_ALIGNMENT_TESTS(NAME) \
+	\
+	TEST(NAME##TransactionTests, TransactionHasExpectedSize) { \
+		AssertTransactionHasExpectedSize<NAME##Transaction>(sizeof(Transaction), __VA_ARGS__); \
+	} \
+	TEST(NAME##TransactionTests, EmbeddedTransactionHasExpectedSize) { \
+		AssertTransactionHasExpectedSize<Embedded##NAME##Transaction>(sizeof(EmbeddedTransaction), __VA_ARGS__); \
+	}
 }}

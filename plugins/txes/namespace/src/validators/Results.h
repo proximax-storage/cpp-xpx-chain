@@ -103,6 +103,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because aliased address is invalid.
 	DEFINE_NAMESPACE_RESULT(Alias_Invalid_Address, 177);
 
+	/// Validation failed unknown.
+	DEFINE_NAMESPACE_RESULT(Unknown, 200);
+
 	// endregion
 
 #ifndef CUSTOM_RESULT_DEFINITION

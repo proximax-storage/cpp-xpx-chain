@@ -4,7 +4,7 @@ publicKey = {{network_public_key}}
 
 [chain]
 
-blockGenerationTargetTime = 0s
+blockGenerationTargetTime = 5s
 blockTimeSmoothingFactor = 1000
 
 greedDelta = 0.5
@@ -81,6 +81,8 @@ maxMosaicDivisibility = 6
 mosaicRentalFeeSinkPublicKey = 53E140B5947F104CABC2D6FE8BAEDBC30EF9A0609C717D9613DE593EC2A266D3
 mosaicRentalFee = 10'000'000'000
 
+levyEnabled = true
+
 [plugin:catapult.plugins.multisig]
 
 maxMultisigDepth = 3
@@ -139,3 +141,7 @@ downloadCacheEnabled = true
 
 enabled = true
 maxSuperContractsOnDrive = 10
+
+[plugin:catapult.plugins.metadata_nem]
+
+maxValueSize = 1024
