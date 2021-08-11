@@ -33,9 +33,9 @@ namespace catapult { namespace plugins {
 					storageMosaicId
 				));
 
-				//Payments for streaming deposit serve as proof of space (2 x of storage deposit)
 				const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
 
+				//Payments for streaming deposit serve as proof of space (2 x of storage deposit)
 				sub.notify(BalanceDebitNotification<1>)(
 					signerAddress,
 					streamingMosaicId
