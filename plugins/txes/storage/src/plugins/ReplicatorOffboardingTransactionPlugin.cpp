@@ -34,11 +34,13 @@ namespace catapult { namespace plugins {
 
 				const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
 
-				//Payments for Storage deposit return
-				sub.notify(BalanceDebitNotification<1>)(
+				//Payments for streaming deposit return (streaming deposit - streaming deposit slashing)
+				sub.notify(BalanceCreditNotification<1>)(
 					signerAddress,
 					streamingMosaicId
 				));
+
+				//Payment for streamming deposit slashing (2min x u1, u2)
 
 				break;
 			}
