@@ -7,19 +7,11 @@
 #include <boost/dynamic_bitset.hpp>
 #include "Validators.h"
 #include "src/catapult/crypto/Signer.h"
+#include "src/utils/StorageUtils.h"
 
 namespace catapult { namespace validators {
 
-	namespace {
-		template<typename TPointer, typename TData>
-		inline void WriteToArray(TPointer*& ptr, const TData& data) {
-			const auto pData = reinterpret_cast<const TPointer*>(&data);
-			std::copy(pData, pData + sizeof(data), ptr);
-			ptr += sizeof(data);
-		}
-	}
-
-	using Notification = model::DownloadApprovalNotification<1>;
+	using Notification = model::OpinionNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(Opinion, ([](const Notification& notification, const ValidatorContext& context) {
 		const auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
@@ -27,11 +19,12 @@ namespace catapult { namespace validators {
 	  	// Nth vector in blsPublicKeys contains pointers to all public BLS keys of replicators that provided Nth opinion.
 		std::vector<std::vector<const BLSPublicKey*>> blsPublicKeys(notification.OpinionCount);
 
-	  	auto pIndex = notification.OpinionIndicesPtr;
+	  	// Preparing blsPublicKeys.
+		auto pIndex = notification.OpinionIndicesPtr;
 	  	for (auto i = 0; i < notification.JudgingCount; ++i, ++pIndex) {
 			if (*pIndex >= notification.OpinionCount)
 				return Failure_Storage_Invalid_Opinion_Index;
-			const auto replicatorIter = replicatorCache.find(*(notification.PublicKeysPtr + i));
+			const auto replicatorIter = replicatorCache.find(notification.PublicKeysPtr[i]);
 	  		const auto& pReplicatorEntry = replicatorIter.tryGet();
 			if (!pReplicatorEntry)
 				return Failure_Storage_Replicator_Not_Found;
@@ -42,44 +35,57 @@ namespace catapult { namespace validators {
 	  	const auto presentOpinionByteCount = (notification.OpinionCount * notification.JudgedCount + 7) / 8;
 	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
 
-	  	// Set that represents complete opinion of one of the replicators. Opinion elements are sorted in ascending order of keys.
-		using OpinionElement = std::pair<Key, uint64_t>;
-		const auto comparator = [](const OpinionElement& a, const OpinionElement& b){ return a.first < b.first; };
-		std::set<OpinionElement, decltype(comparator)> individualData(comparator);
+		// Validating that each provided public key
+	  	// - is unique
+		// - is used in at least one opinion (i.e. that each column of PresentOpinions has at least one set bit)
+		std::set<Key> providedKeys;
+		auto pKey = notification.PublicKeysPtr;
+		for (auto i = 0; i < notification.JudgedCount; ++i, ++pKey) {
+			if (providedKeys.count(*pKey))
+				return Failure_Storage_Opinion_Reocurring_Keys;
+			providedKeys.insert(*pKey);
+			bool isUsed = false;
+			for (auto j = 0; !isUsed && j < notification.OpinionCount; ++j)
+				isUsed = presentOpinions[j*notification.JudgedCount + i];
+			if (!isUsed)
+				return Failure_Storage_Opinion_Unused_Key;
+		}
 
 	  	// Preparing common data.
-		// TODO: Move to DownloadApprovalTransactionPlugin
-	  	const auto commonDataSize = sizeof(notification.DownloadChannelId)
-									+ sizeof(notification.SequenceNumber)
-									+ sizeof(notification.ResponseToFinishDownloadTransaction);
-		const auto maxDataSize = commonDataSize + (sizeof(Key) + sizeof(uint64_t)) * notification.JudgedCount;	// Guarantees that every possible individual opinion will fit in.
-		auto* const pCommonDataBegin = new uint8_t[maxDataSize];
-	  	auto* pCommonData = pCommonDataBegin;
-	  	WriteToArray(pCommonData, notification.DownloadChannelId);
-	  	WriteToArray(pCommonData, notification.SequenceNumber);
-	  	WriteToArray(pCommonData, notification.ResponseToFinishDownloadTransaction);
-		auto* const pIndividualDataBegin = pCommonData;
+	  	const auto maxDataSize = notification.CommonDataSize + (sizeof(Key) + sizeof(uint64_t)) * notification.JudgedCount;	// Guarantees that every possible individual opinion will fit in.
+		auto* const pDataBegin = new uint8_t[maxDataSize];
+	  	std::copy(notification.CommonDataPtr, notification.CommonDataPtr + notification.CommonDataSize, pDataBegin);
+	  	auto* const pIndividualDataBegin = pDataBegin + notification.CommonDataSize;
 
 		// Validating signatures.
 	  	auto pBlsSignature = notification.BlsSignaturesPtr;
 	  	auto pOpinionElement = notification.OpinionsPtr;
+	  	using OpinionElement = std::pair<Key, uint64_t>;
+		const auto comparator = [](const OpinionElement& a, const OpinionElement& b){ return a.first < b.first; };
+		using IndividualPart = std::set<OpinionElement, decltype(comparator)>;
+	  	IndividualPart individualPart(comparator);	// Set that represents complete opinion of one of the replicators. Opinion elements are sorted in ascending order of keys.
+		std::set<IndividualPart> providedIndividualParts;	// Set of provided complete opinions. Used to determine if there are reoccurring individual parts.
 		for (auto i = 0; i < notification.OpinionCount; ++i, ++pBlsSignature) {
-			individualData.clear();
+			individualPart.clear();
 			for (auto j = 0; j < notification.JudgedCount; ++j) {
 				if (presentOpinions[i*notification.JudgedCount + j]) {
-					individualData.emplace(notification.PublicKeysPtr[j], *pOpinionElement);
+					individualPart.emplace(notification.PublicKeysPtr[j], *pOpinionElement);
 					++pOpinionElement;
 				}
 			}
 
-			const auto dataSize = commonDataSize + (sizeof(Key) + sizeof(uint64_t)) * individualData.size();
+			if (providedIndividualParts.count(individualPart))
+				return Failure_Storage_Opinions_Reocurring_Individual_Parts;
+			providedIndividualParts.insert(individualPart);
+
+			const auto dataSize = notification.CommonDataSize + (sizeof(Key) + sizeof(uint64_t)) * individualPart.size();
 			auto* pIndividualData = pIndividualDataBegin;
-			for (auto individualDataIter = individualData.begin(); individualDataIter != individualData.end(); ++individualDataIter) {
-				WriteToArray(pIndividualData, individualDataIter->first);
-				WriteToArray(pIndividualData, individualDataIter->second);
+			for (auto individualPartIter = individualPart.begin(); individualPartIter != individualPart.end(); ++individualPartIter) {
+				utils::WriteToByteArray(pIndividualData, individualPartIter->first);
+				utils::WriteToByteArray(pIndividualData, individualPartIter->second);
 			}
 
-			RawBuffer dataBuffer(pCommonDataBegin, dataSize);
+			RawBuffer dataBuffer(pDataBegin, dataSize);
 
 			if (!crypto::FastAggregateVerify(blsPublicKeys.at(i), dataBuffer, *pBlsSignature))
 				return Failure_Storage_Invalid_BLS_Signature;

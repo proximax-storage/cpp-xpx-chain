@@ -6,6 +6,7 @@
 
 #include "DownloadApprovalTransactionPlugin.h"
 #include "src/model/DownloadApprovalTransaction.h"
+#include "src/utils/StorageUtils.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/StorageNotifications.h"
@@ -21,6 +22,28 @@ namespace catapult { namespace plugins {
 			return [config](const TTransaction &transaction, const Height &associatedHeight, NotificationSubscriber &sub) {
 			  	switch (transaction.EntityVersion()) {
 			  	case 1: {
+					const auto commonDataSize = sizeof(transaction.DownloadChannelId)
+												+ sizeof(transaction.SequenceNumber)
+												+ sizeof(transaction.ResponseToFinishDownloadTransaction);
+					auto* const commonDataPtr = new uint8_t[commonDataSize];
+					auto* pCommonData = commonDataPtr;
+					utils::WriteToByteArray(pCommonData, transaction.DownloadChannelId);
+					utils::WriteToByteArray(pCommonData, transaction.SequenceNumber);
+					utils::WriteToByteArray(pCommonData, transaction.ResponseToFinishDownloadTransaction);
+
+					sub.notify(OpinionNotification<1>(
+							commonDataSize,
+							transaction.OpinionCount,
+							transaction.JudgingCount,
+							transaction.JudgedCount,
+							commonDataPtr,
+							transaction.PublicKeysPtr(),
+							transaction.OpinionIndicesPtr(),
+							transaction.BlsSignaturesPtr(),
+							transaction.PresentOpinionsPtr(),
+							transaction.OpinionsPtr()
+					));
+
 				  	sub.notify(DownloadApprovalNotification<1>(
 						  	transaction.DownloadChannelId,
 							transaction.SequenceNumber,
@@ -28,7 +51,6 @@ namespace catapult { namespace plugins {
 						  	transaction.OpinionCount,
 							transaction.JudgingCount,
 							transaction.JudgedCount,
-							transaction.OpinionElementCount,
 							transaction.PublicKeysPtr(),
 							transaction.OpinionIndicesPtr(),
 							transaction.BlsSignaturesPtr(),

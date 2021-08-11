@@ -76,4 +76,10 @@ namespace catapult { namespace utils {
 			SwapOperation operation) {
 		return SwapMosaics(account, account, mosaics, sub, immutableCfg, operation);
 	}
+
+	template<typename TData>
+	inline void WriteToByteArray(uint8_t*& ptr, const TData& data) {
+		const auto pData = reinterpret_cast<const uint8_t*>(&data);
+		ptr = std::copy(pData, pData + sizeof(data), ptr);
+	}
 }}

@@ -71,7 +71,7 @@ namespace catapult { namespace validators {
 	/// There are no data modifications in completedDataModifications with 'succeeded' state.
 	DEFINE_STORAGE_RESULT(No_Approved_Data_Modifications, 19);
 
-	/// Not every key in replicator's upload opinion appears exactly once.
+	/// Not every key in the opinion appears exactly once.
 	DEFINE_STORAGE_RESULT(Opinion_Reocurring_Keys, 20);
 
 	/// The key in upload opinion is neither a key of one of the current replicators of the drive nor a key of the drive owner.
@@ -89,17 +89,23 @@ namespace catapult { namespace validators {
 	/// BLS signature doesn't match the message.
 	DEFINE_STORAGE_RESULT(Invalid_BLS_Signature, 25);
 
+	/// The key is present in the list of public keys, but no opinion about it is given.
+	DEFINE_STORAGE_RESULT(Opinion_Unused_Key, 26);
+
+	/// Not every individual part of the multisig transaction appears exactly once.
+	DEFINE_STORAGE_RESULT(Opinions_Reocurring_Individual_Parts, 27);
+
 	/// Download approval transaction for the corresponding billing period has already been approved.
-	DEFINE_STORAGE_RESULT(Overdue_Download_Approval, 26);
+	DEFINE_STORAGE_RESULT(Overdue_Download_Approval, 28);
 
 	/// Download approval transaction sequence number is invalid
-	DEFINE_STORAGE_RESULT(Invalid_Sequence_Number, 27);
+	DEFINE_STORAGE_RESULT(Invalid_Sequence_Number, 29);
 
 	/// Sender's account state is not found.
-	DEFINE_STORAGE_RESULT(Sender_State_Not_Found, 28);
+	DEFINE_STORAGE_RESULT(Sender_State_Not_Found, 30);
 
 	/// Recipient's account state is not found.
-	DEFINE_STORAGE_RESULT(Recipient_State_Not_Found, 29);
+	DEFINE_STORAGE_RESULT(Recipient_State_Not_Found, 31);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

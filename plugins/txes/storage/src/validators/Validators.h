@@ -73,10 +73,10 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to download approval notifications and validates that:
 	/// - all replicators mentioned in opinions exist
 	/// - BLS signatures match corresponding parts of the transaction
-	// TODO: Validate that all provided individual parts are unique
-	// TODO: Validate that each provided public key is mentioned in at least one opinion
-	// TODO: Make separate notification with pointer to common part
-	DECLARE_STATEFUL_VALIDATOR(Opinion, model::DownloadApprovalNotification<1>)();
+	/// - each provided public key is unique
+	/// - each provided public key is used in at least one opinion
+	/// - all provided individual parts are unique
+	DECLARE_STATEFUL_VALIDATOR(Opinion, model::OpinionNotification<1>)();
 
 	/// A validator implementation that applies to download approval notifications and validates that:
 	/// - respective download channel exists

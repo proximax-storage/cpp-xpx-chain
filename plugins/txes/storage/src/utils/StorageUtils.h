@@ -24,4 +24,7 @@ namespace catapult { namespace utils {
 	/// Swap unresolved amount of mosaics on the \a account.
 	void SwapMosaics(const Key&, const std::vector<std::pair<UnresolvedMosaicId, UnresolvedAmount>>&, model::NotificationSubscriber&, const config::ImmutableConfiguration&, SwapOperation);
 
+	/// Writes \a data to \a ptr one byte at a time. When done, \a ptr points to the past-the-last byte.
+	template<typename TData>
+	void WriteToByteArray(uint8_t*& ptr, const TData& data);
 }}

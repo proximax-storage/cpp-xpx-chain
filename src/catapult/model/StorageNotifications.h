@@ -45,14 +45,17 @@ namespace catapult { namespace model {
 	/// Defines a verification payment notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Verification_Payment_v1, 0x000C);
 
+	/// Defines an opinion notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Opinion_v1, 0x000D);
+
 	/// Defines a download approval notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Approval_v1, 0x000D);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Approval_v1, 0x000E);
 
 	/// Defines a download approval payment notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Approval_Payment_v1, 0x000E);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Approval_Payment_v1, 0x000F);
 
 	/// Defines a download channel refund notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Channel_Refund_v1, 0x000F);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Channel_Refund_v1, 0x0010);
 
 	struct DownloadWork : public UnresolvedAmountData {
 	public:
@@ -514,6 +517,74 @@ namespace catapult { namespace model {
 		Key DriveKey;
 	};
 
+	/// Notification of an opinion multisig.
+	template<VersionType version> //, typename TOpinion>
+	struct OpinionNotification;
+
+	template<> //typename TOpinion>
+	struct OpinionNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Opinion_v1_Notification;
+
+	public:
+		explicit OpinionNotification(
+				const size_t commonDataSize,
+				const uint8_t opinionCount,
+				const uint8_t judgingCount,
+				const uint8_t judgedCount,
+				const uint8_t* commonDataPtr,
+				const Key* publicKeysPtr,
+				const uint8_t* opinionIndicesPtr,
+				const BLSSignature* blsSignaturesPtr,
+				const uint8_t* presentOpinionsPtr,
+				const uint64_t* opinionsPtr)
+				: Notification(Notification_Type, sizeof(OpinionNotification<1>))
+				, CommonDataSize(commonDataSize)
+				, OpinionCount(opinionCount)
+				, JudgingCount(judgingCount)
+				, JudgedCount(judgedCount)
+				, CommonDataPtr(commonDataPtr)
+				, PublicKeysPtr(publicKeysPtr)
+				, OpinionIndicesPtr(opinionIndicesPtr)
+				, BlsSignaturesPtr(blsSignaturesPtr)
+				, PresentOpinionsPtr(presentOpinionsPtr)
+				, OpinionsPtr(opinionsPtr)
+		{}
+
+	public:
+		/// Size of common data of the transaction in bytes.
+		size_t CommonDataSize;
+
+		/// Number of unique opinions.
+		uint8_t OpinionCount;
+
+		/// Number of replicators that provided their opinions.
+		uint8_t JudgingCount;
+
+		/// Number of replicators on which at least one opinion was provided.
+		uint8_t JudgedCount;
+
+		/// Common data of the transaction.
+		const uint8_t* CommonDataPtr;
+
+		/// Replicators' public keys.
+		const Key* PublicKeysPtr;
+
+		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
+		const uint8_t* OpinionIndicesPtr;
+
+		/// Aggregated BLS signatures of opinions.
+		const BLSSignature* BlsSignaturesPtr;
+
+		/// Two-dimensional array of opinion element presence.
+		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
+		const uint8_t* PresentOpinionsPtr;
+
+		/// Jagged array of opinion elements.
+		const uint64_t* OpinionsPtr;
+	};
+
 	/// Notification of a download approval.
 	template<VersionType version>
 	struct DownloadApprovalNotification;
@@ -532,7 +603,6 @@ namespace catapult { namespace model {
 				const uint8_t opinionCount,
 				const uint8_t judgingCount,
 				const uint8_t judgedCount,
-				const uint8_t opinionElementCount,
 				const Key* publicKeysPtr,
 				const uint8_t* opinionIndicesPtr,
 				const BLSSignature* blsSignaturesPtr,
@@ -545,7 +615,6 @@ namespace catapult { namespace model {
 				, OpinionCount(opinionCount)
 				, JudgingCount(judgingCount)
 				, JudgedCount(judgedCount)
-				, OpinionElementCount(opinionElementCount)
 				, PublicKeysPtr(publicKeysPtr)
 				, OpinionIndicesPtr(opinionIndicesPtr)
 				, BlsSignaturesPtr(blsSignaturesPtr)
@@ -571,10 +640,6 @@ namespace catapult { namespace model {
 
 		/// Number of replicators on which at least one opinion was provided.
 		uint8_t JudgedCount;
-
-		/// Total number of opinion elements.
-		// TODO: Remove; instead process PresentOpinions to count up existing opinion elements
-		uint8_t OpinionElementCount;
 
 		/// Replicators' public keys.
 		const Key* PublicKeysPtr;
@@ -664,7 +729,7 @@ namespace catapult { namespace model {
 	public:
 		explicit DownloadChannelRefundNotification(
 				const Hash256& downloadChannelId)
-				: Notification(Notification_Type, sizeof(VerificationPaymentNotification<1>))
+				: Notification(Notification_Type, sizeof(DownloadChannelRefundNotification<1>))
 				, DownloadChannelId(downloadChannelId)
 		{}
 
