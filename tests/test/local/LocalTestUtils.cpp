@@ -101,7 +101,7 @@ namespace catapult { namespace test {
 			"\t\t{\n"
 			"\t\t\t\"name\": \"Transfer\",\n"
 			"\t\t\t\"type\": \"16724\",\n"
-			"\t\t\t\"supportedVersions\": [3]\n"
+			"\t\t\t\"supportedVersions\": [4]\n"
 			"\t\t},\n"
 			"\t\t{\n"
 			"\t\t\t\"name\": \"Secret_Proof\",\n"
