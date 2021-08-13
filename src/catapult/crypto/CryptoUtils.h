@@ -55,4 +55,15 @@ namespace catapult { namespace crypto {
 
 	/// Calculates \a hash of a \a privateKey.
 	void HashPrivateKey(const PrivateKey& privateKey, Hash512& hash);
+
+	/// Unpacks inverse of \a publicKey into \a A and validates that:
+	/// - publicKey is canonical
+	/// - A is on the curve
+	bool UnpackNegative(ge25519& A, const Key& publicKey);
+
+	/// Unpacks inverse of \a publicKey into \a A and validates that:
+	/// - publicKey is canonical
+	/// - A is on the curve
+	/// - A is in main subgroup
+	bool UnpackNegativeAndCheckSubgroup(ge25519& A, const Key& publicKey);
 }}

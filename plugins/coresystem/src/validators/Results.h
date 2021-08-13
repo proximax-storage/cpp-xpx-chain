@@ -64,6 +64,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because a block has invalid FeeInterestDenominator.
 	DEFINE_CORE_RESULT(Invalid_FeeInterestDenominator, 25);
 
+	/// Validation failed because account version was not supported.
+	DEFINE_CORE_RESULT(Invalid_AccountVersionUnsupported, 26);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

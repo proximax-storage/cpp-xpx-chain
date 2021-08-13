@@ -1,6 +1,7 @@
 /**
-*** Copyright (c) 2016-present,
-*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
+*** Copyright (c) 2016-2019, Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp.
+*** Copyright (c) 2020-present, Jaguar0625, gimre, BloodyRookie.
+*** All rights reserved.
 ***
 *** This file is part of Catapult.
 ***
@@ -19,20 +20,18 @@
 **/
 
 #pragma once
-#ifndef CUSTOM_ENTITY_TYPE_DEFINITION
-#include "catapult/model/EntityType.h"
-
+#include <catapult/model/Transaction.h>
+#include "AccountLinkEntityType.h"
+#include "AccountLinkBaseTransaction.h"
 namespace catapult { namespace model {
 
-#endif
+#pragma pack(push, 1)
 
-	/// Account link transaction.
-	DEFINE_TRANSACTION_TYPE(AccountLink, Account_Link, 0x1);
-	/// Node key link transaction.
-	DEFINE_TRANSACTION_TYPE(NodeKeyLink, Node_Key_Link, 0x2);
-	/// VRF key link transaction.
-	DEFINE_TRANSACTION_TYPE(VrfKeyLink, Vrf_Key_Link, 0x3);
+	/// Binary layout for a vrf key link transaction body.
+	template<typename THeader>
+	struct VrfKeyLinkTransactionBody : public AccountLinkBaseTransaction<THeader, Key, Entity_Type_Vrf_Key_Link, 1> {};
 
-#ifndef CUSTOM_ENTITY_TYPE_DEFINITION
+	DEFINE_EMBEDDABLE_TRANSACTION(VrfKeyLink)
+
+#pragma pack(pop)
 }}
-#endif

@@ -33,7 +33,7 @@ namespace catapult { namespace crypto {
 	class KeyPair final {
 	private:
 		explicit KeyPair(PrivateKey&& privateKey) : m_privateKey(std::move(privateKey)) {
-			ExtractPublicKeyFromPrivateKey(m_privateKey, m_publicKey);
+			ExtractPublicKeyFromPrivateKey<1>(m_privateKey, m_publicKey);
 		}
 
 	public:

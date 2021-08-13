@@ -106,6 +106,8 @@ namespace catapult { namespace state {
 			accountState.SupplementalPublicKeys.linked().set(std::move(temp));
 			test::FillWithRandomData(temp);
 			accountState.SupplementalPublicKeys.node().set(std::move(temp));
+			test::FillWithRandomData(temp);
+			accountState.SupplementalPublicKeys.vrf().set(std::move(temp));
 			test::RandomFillAccountData(0, accountState, numMosaics, numMosaics);
 			accountState.Balances.optimize(test::GenerateRandomValue<MosaicId>());
 			return accountState;
@@ -225,6 +227,7 @@ namespace catapult { namespace state {
 				accountState.Balances.track(header.TrackedMosaicId);
 				accountState.SupplementalPublicKeys.linked().unset();
 				accountState.SupplementalPublicKeys.node().unset();
+				accountState.SupplementalPublicKeys.vrf().unset();
 				auto* pKeysPointer = GetSupplementalKeysPointer(header);
 				if(HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
 				{
@@ -234,6 +237,11 @@ namespace catapult { namespace state {
 				if(HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask))
 				{
 					accountState.SupplementalPublicKeys.node().set(*pKeysPointer);
+					pKeysPointer++;
+				}
+				if(HasFlag(AccountPublicKeys::KeyType::VRF, header.LinkedKeysMask))
+				{
+					accountState.SupplementalPublicKeys.vrf().set(*pKeysPointer);
 					pKeysPointer++;
 				}
 				const auto* pMosaic = GetMosaicPointer(header);
@@ -279,6 +287,9 @@ namespace catapult { namespace state {
 
 				if (HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask))
 					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.node(), pData);
+
+				if (HasFlag(AccountPublicKeys::KeyType::VRF, header.LinkedKeysMask))
+					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.vrf(), pData);
 
 				auto* pUint64Data = reinterpret_cast<uint64_t*>(pData);
 				for (const auto& pair : accountState.Balances) {

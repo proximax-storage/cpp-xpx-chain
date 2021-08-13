@@ -24,11 +24,13 @@
 
 extern "C" {
 #include <ref10/ge.h>
+#include <donna/catapult.h>
 }
 
 namespace catapult { namespace crypto {
 
-	void ExtractPublicKeyFromPrivateKey(const PrivateKey& privateKey, Key& publicKey) {
+	template<>
+	void ExtractPublicKeyFromPrivateKey<1>(const PrivateKey& privateKey, Key& publicKey) {
 		Hash512 h;
 		ge_p3 A;
 
@@ -40,5 +42,9 @@ namespace catapult { namespace crypto {
 
 		ge_scalarmult_base(&A, h.data());
 		ge_p3_tobytes(publicKey.data(), &A);
+	}
+	template<>
+	void ExtractPublicKeyFromPrivateKey<2>(const PrivateKey& privateKey, Key& publicKey) {
+		ed25519_publickey(privateKey.data(), publicKey.data());
 	}
 }}

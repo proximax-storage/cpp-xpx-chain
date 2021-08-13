@@ -21,15 +21,17 @@
 
 #pragma once
 #include <src/model/AccountLinkAction.h>
+#include <plugins/coresystem/src/validators/Results.h>
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace keylink {
 
-	/// Creates a stateful key link validator with \a name that validates:
+	/// Creates a stateful key link validator with \a name that validates. Do not use for linked accounts:
 	/// - no link exists when linking
 	/// - matching link exists when unlinking
+	/// - Main account is of version 2
 	template<typename TNotification, typename TAccessor>
 	validators::stateful::NotificationValidatorPointerT<TNotification> CreateKeyLinkValidator(const std::string& name) {
 		using ValidatorType = validators::stateful::FunctionalNotificationValidatorT<TNotification>;
@@ -38,8 +40,12 @@ namespace catapult { namespace keylink {
 				const validators::ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::AccountStateCache>();
 			auto accountStateIter = cache.find(notification.MainAccountKey);
-			const auto& accountState = accountStateIter.get();
 
+			const auto& accountState = accountStateIter.get();
+			if(accountState.GetVersion() < 2)
+			{
+				return validators::Failure_Core_Invalid_AccountVersionUnsupported;
+			}
 			const auto& publicKeyAccessor = TAccessor::Get(accountState);
 			if (model::AccountLinkAction::Link == notification.LinkAction) {
 				if (publicKeyAccessor)

@@ -40,6 +40,15 @@ namespace catapult { namespace plugins {
 				return accountState.SupplementalPublicKeys.node();
 			}
 		};
+		struct VrfKeyAccessor {
+			static constexpr auto Failure_Link_Already_Exists = validators::Failure_AccountLink_Link_Already_Exists;
+			static constexpr auto Failure_Inconsistent_Unlink_Data = validators::Failure_AccountLink_Unlink_Data_Inconsistency;
+
+			template<typename TAccountState>
+			static auto& Get(TAccountState& accountState) {
+				return accountState.SupplementalPublicKeys.vrf();
+			}
+		};
 	}
 	void RegisterAccountLinkSubsystem(PluginManager& manager) {
 		manager.addTransactionSupport(CreateAccountLinkTransactionPlugin());
@@ -55,12 +64,14 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateNewRemoteAccountAvailabilityValidator())
 				.add(validators::CreateRemoteSenderValidator())
 				.add(validators::CreateRemoteInteractionValidator())
-		  		.add(keylink::CreateKeyLinkValidator<model::NodeAccountLinkNotification<1>, NodeKeyAccessor>("Node"));
+		  		.add(keylink::CreateKeyLinkValidator<model::NodeAccountLinkNotification<1>, NodeKeyAccessor>("Node"))
+		  		.add(keylink::CreateKeyLinkValidator<model::VrfKeyLinkNotification<1>, VrfKeyAccessor>("VRF"));
 		});
 
 		manager.addObserverHook([](auto& builder) {
 			builder.add(observers::CreateAccountLinkObserver())
-		  	.add(keylink::CreateKeyLinkObserver<model::NodeAccountLinkNotification<1>, NodeKeyAccessor>("Node"));
+		  	.add(keylink::CreateKeyLinkObserver<model::NodeAccountLinkNotification<1>, NodeKeyAccessor>("Node"))
+			.add(keylink::CreateKeyLinkObserver<model::VrfKeyLinkNotification<1>, VrfKeyAccessor>("VRF"));
 		});
 	}
 }}

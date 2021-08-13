@@ -39,6 +39,9 @@ namespace catapult { namespace model {
 	/// Account was un/linked to a node.
 	DEFINE_ACCOUNT_LINK_NOTIFICATION(Node, 0x003, All);
 
+	/// Account was un/linked to a node.
+	DEFINE_ACCOUNT_LINK_NOTIFICATION(VRF, 0x005, All);
+
 	/// Key link action was received.
 	DEFINE_ACCOUNT_LINK_NOTIFICATION(Key_Link_Action, 0x004, Validator);
 
@@ -46,21 +49,16 @@ namespace catapult { namespace model {
 
 	// endregion
 
-
-	/// Notification of a remote account link.
-	template<VersionType version>
-	struct RemoteAccountLinkNotification;
-
-	template<>
-	struct RemoteAccountLinkNotification<1> : public Notification {
+	template<typename TAccountPublicKey, NotificationType Key_Link_Notification_Type, VersionType version>
+	struct BaseKeyLinkNotification : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = AccountLink_Remote_v1_Notification;
+		static constexpr auto Notification_Type = Key_Link_Notification_Type;
 
 	public:
 		/// Creates a notification around \a mainAccountKey, \a remoteAccountKey and \a linkAction.
-		RemoteAccountLinkNotification(const Key& mainAccountKey, const Key& remoteAccountKey, AccountLinkAction linkAction)
-				: Notification(Notification_Type, sizeof(RemoteAccountLinkNotification<1>))
+		BaseKeyLinkNotification(const Key& mainAccountKey, const TAccountPublicKey& remoteAccountKey, AccountLinkAction linkAction)
+				: Notification(Notification_Type, sizeof(Key_Link_Notification_Type))
 				, MainAccountKey(mainAccountKey)
 				, RemoteAccountKey(remoteAccountKey)
 				, LinkAction(linkAction)
@@ -71,12 +69,17 @@ namespace catapult { namespace model {
 		const Key& MainAccountKey;
 
 		/// Remote account key.
-		const Key& RemoteAccountKey;
+		const TAccountPublicKey& RemoteAccountKey;
 
 		/// Account link action.
 		AccountLinkAction LinkAction;
 	};
-
+	template<uint32_t TVersion>
+	using RemoteAccountLinkNotification = BaseKeyLinkNotification<Key, AccountLink_Remote_v1_Notification, TVersion>;
+	template<uint32_t TVersion>
+	using NodeAccountLinkNotification = BaseKeyLinkNotification<Key, AccountLink_Node_Notification, TVersion>;
+	template<uint32_t TVersion>
+	using VrfKeyLinkNotification = BaseKeyLinkNotification<Key, AccountLink_VRF_Notification, TVersion>;
 	/// Notification of a new remote account.
 	template<VersionType version>
 	struct NewRemoteAccountNotification;
@@ -98,38 +101,6 @@ namespace catapult { namespace model {
 		/// Remote account key.
 		const Key& RemoteAccountKey;
 	};
-
-	// region NodeKeyLinkNotification
-	/// Notification of a node link.
-	template<VersionType version>
-	struct NodeAccountLinkNotification;
-
-	template<>
-	struct NodeAccountLinkNotification<1> : public Notification {
-		public:
-			/// Matching notification type.
-			static constexpr auto Notification_Type = AccountLink_Node_Notification;
-
-		public:
-			/// Creates a notification around \a mainAccountKey, \a remoteAccountKey and \a linkAction.
-			NodeAccountLinkNotification(const Key& mainAccountKey, const Key& remoteAccountKey, AccountLinkAction linkAction)
-					: Notification(Notification_Type, sizeof(RemoteAccountLinkNotification<1>))
-					, MainAccountKey(mainAccountKey)
-					, RemoteAccountKey(remoteAccountKey)
-					, LinkAction(linkAction)
-			{}
-
-		public:
-			/// Main account key.
-			const Key& MainAccountKey;
-
-			/// Remote account key.
-			const Key& RemoteAccountKey;
-
-			/// Account link action.
-			AccountLinkAction LinkAction;
-		};
-	// endregion
 
 	// region KeyLinkAction
 	/// Notification of an account link action.
