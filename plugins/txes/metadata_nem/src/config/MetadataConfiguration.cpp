@@ -20,7 +20,6 @@
 **/
 
 #include "MetadataConfiguration.h"
-#include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/ConfigurationUtils.h"
 
 namespace catapult { namespace config {
@@ -33,10 +32,11 @@ namespace catapult { namespace config {
 		MetadataConfiguration config;
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
+		LOAD_PROPERTY(Enabled);
 		LOAD_PROPERTY(MaxValueSize);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 1);
+		utils::VerifyBagSizeLte(bag, 2);
 		return config;
 	}
 }}

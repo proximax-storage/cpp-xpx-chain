@@ -27,7 +27,7 @@
 namespace catapult { namespace cache {
 
 	/// Cache composed of metadata information.
-	using BasicMetadataCache = BasicCache<MetadataCacheDescriptor, MetadataCacheTypes::BaseSets>;
+	using BasicMetadataCache = BasicCache<MetadataCacheDescriptor, MetadataCacheTypes::BaseSets, std::shared_ptr<config::BlockchainConfigurationHolder>>;
 
 	/// Synchronized cache composed of metadata information.
 	class MetadataCache : public SynchronizedCache<BasicMetadataCache> {
@@ -36,7 +36,8 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a cache around \a config.
-		explicit MetadataCache(const CacheConfiguration& config) : SynchronizedCache<BasicMetadataCache>(BasicMetadataCache(config))
+		explicit MetadataCache(const CacheConfiguration& config, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+			: SynchronizedCache<BasicMetadataCache>(BasicMetadataCache(config, std::move(pConfigHolder)))
 		{}
 	};
 }}

@@ -21,7 +21,7 @@
 
 #pragma once
 #include "catapult/model/PluginConfiguration.h"
-#include <stdint.h>
+#include <cstdint>
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
 
@@ -33,6 +33,9 @@ namespace catapult { namespace config {
 		DEFINE_CONFIG_CONSTANTS(metadata_nem)
 
 	public:
+		/// Whether the plugin is enabled.
+		bool Enabled;
+
 		/// Maximum metadata value size.
 		uint16_t MaxValueSize;
 
