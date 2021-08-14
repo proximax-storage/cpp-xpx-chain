@@ -25,6 +25,7 @@
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/deltaset/BaseSetDelta.h"
+#include "src/config/MetadataConfiguration.h"
 
 namespace catapult { namespace cache {
 
@@ -41,14 +42,15 @@ namespace catapult { namespace cache {
 			, public MetadataCacheDeltaMixins::PatriciaTreeDelta
 			, public MetadataCacheDeltaMixins::BasicInsertRemove
 			, public MetadataCacheDeltaMixins::DeltaElements
-			, public MetadataCacheDeltaMixins::Enable
-			, public MetadataCacheDeltaMixins::Height {
+			, public MetadataCacheDeltaMixins::ConfigBasedEnable<config::MetadataConfiguration> {
 	public:
 		using ReadOnlyView = MetadataCacheTypes::CacheReadOnlyType;
 
 	public:
 		/// Creates a delta around \a metadataSets.
-		explicit BasicMetadataCacheDelta(const MetadataCacheTypes::BaseSetDeltaPointers& metadataSets)
+		explicit BasicMetadataCacheDelta(
+			const MetadataCacheTypes::BaseSetDeltaPointers& metadataSets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: MetadataCacheDeltaMixins::Size(*metadataSets.pPrimary)
 				, MetadataCacheDeltaMixins::Contains(*metadataSets.pPrimary)
 				, MetadataCacheDeltaMixins::ConstAccessor(*metadataSets.pPrimary)
@@ -56,6 +58,7 @@ namespace catapult { namespace cache {
 				, MetadataCacheDeltaMixins::PatriciaTreeDelta(*metadataSets.pPrimary, metadataSets.pPatriciaTree)
 				, MetadataCacheDeltaMixins::BasicInsertRemove(*metadataSets.pPrimary)
 				, MetadataCacheDeltaMixins::DeltaElements(*metadataSets.pPrimary)
+				, MetadataCacheDeltaMixins::ConfigBasedEnable<config::MetadataConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
 				, m_pMetadataEntries(metadataSets.pPrimary)
 		{}
 
@@ -70,8 +73,11 @@ namespace catapult { namespace cache {
 	/// Delta on top of the metadata cache.
 	class MetadataCacheDelta : public ReadOnlyViewSupplier<BasicMetadataCacheDelta> {
 	public:
-		/// Creates a delta around \a metadataSets.
-		explicit MetadataCacheDelta(const MetadataCacheTypes::BaseSetDeltaPointers& metadataSets) : ReadOnlyViewSupplier(metadataSets)
+		/// Creates a delta around \a metadataSets and \a pConfigHolder.
+		explicit MetadataCacheDelta(
+			const MetadataCacheTypes::BaseSetDeltaPointers& metadataSets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+				: ReadOnlyViewSupplier(metadataSets, pConfigHolder)
 		{}
 	};
 }}

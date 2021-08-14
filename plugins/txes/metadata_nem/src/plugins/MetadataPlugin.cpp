@@ -23,11 +23,9 @@
 #include "MetadataTransactionPlugin.h"
 #include "src/cache/MetadataCache.h"
 #include "src/cache/MetadataCacheStorage.h"
-#include "src/config/MetadataConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/CacheHandlers.h"
-#include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace plugins {
 
@@ -40,8 +38,9 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateMosaicMetadataTransactionPlugin(manager.configHolder()));
 		manager.addTransactionSupport(CreateNamespaceMetadataTransactionPlugin(manager.configHolder()));
 
+        const auto& pConfigHolder = manager.configHolder();
 		manager.addCacheSupport<cache::MetadataCacheStorage>(std::make_unique<cache::MetadataCache>(
-				manager.cacheConfig(cache::MetadataCache::Name)));
+				manager.cacheConfig(cache::MetadataCache::Name), pConfigHolder));
 
 		using CacheHandlers = CacheHandlers<cache::MetadataCacheDescriptor>;
 		CacheHandlers::Register<model::FacilityCode::Metadata_Nem>(manager);

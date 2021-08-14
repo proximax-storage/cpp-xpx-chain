@@ -40,8 +40,7 @@ namespace catapult { namespace cache {
 		using Iteration = PrimaryMixins::Iteration;
 		using ConstAccessor = PrimaryMixins::ConstAccessor;
 		using PatriciaTreeView = PrimaryMixins::PatriciaTreeView;
-		using Enable = PrimaryMixins::Enable;
-		using Height = PrimaryMixins::Height;
+		using ConfigBasedEnable = PrimaryMixins::ConfigBasedEnable<config::MetadataConfiguration>;
 	};
 
 	/// Basic view on top of the metadata cache.
@@ -52,27 +51,32 @@ namespace catapult { namespace cache {
 			, public MetadataCacheViewMixins::Iteration
 			, public MetadataCacheViewMixins::ConstAccessor
 			, public MetadataCacheViewMixins::PatriciaTreeView
-			, public MetadataCacheViewMixins::Enable
-			, public MetadataCacheViewMixins::Height {
+			, public MetadataCacheViewMixins::ConfigBasedEnable {
 	public:
 		using ReadOnlyView = MetadataCacheTypes::CacheReadOnlyType;
 
 	public:
 		/// Creates a view around \a metadataSets.
-		explicit BasicMetadataCacheView(const MetadataCacheTypes::BaseSets& metadataSets)
+		explicit BasicMetadataCacheView(
+			const MetadataCacheTypes::BaseSets& metadataSets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: MetadataCacheViewMixins::Size(metadataSets.Primary)
 				, MetadataCacheViewMixins::Contains(metadataSets.Primary)
 				, MetadataCacheViewMixins::Iteration(metadataSets.Primary)
 				, MetadataCacheViewMixins::ConstAccessor(metadataSets.Primary)
 				, MetadataCacheViewMixins::PatriciaTreeView(metadataSets.PatriciaTree.get())
+				, MetadataCacheViewMixins::ConfigBasedEnable(pConfigHolder, [](const auto& config) { return config.Enabled; })
 		{}
 	};
 
 	/// View on top of the metadata cache.
 	class MetadataCacheView : public ReadOnlyViewSupplier<BasicMetadataCacheView> {
 	public:
-		/// Creates a view around \a metadataSets.
-		explicit MetadataCacheView(const MetadataCacheTypes::BaseSets& metadataSets) : ReadOnlyViewSupplier(metadataSets)
+		/// Creates a view around \a metadataSets and \a pConfigHolder.
+		explicit MetadataCacheView(
+			const MetadataCacheTypes::BaseSets& metadataSets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+				: ReadOnlyViewSupplier(metadataSets, pConfigHolder)
 		{}
 	};
 }}
