@@ -15,11 +15,15 @@ file(GLOB external_ripemd160_SRC
 	"ripemd160/*.c"
 	"ripemd160/*.h"
 )
-
+file(GLOB external_donna_SRC
+	"donna/*.c"
+	"donna/*.h"
+)
 SOURCE_GROUP("ref10" FILES ${external_ref10_SRC})
 SOURCE_GROUP("sha256" FILES ${external_sha256_SRC})
 SOURCE_GROUP("sha3" FILES ${external_sha3_SRC})
 SOURCE_GROUP("ripemd160" FILES ${external_ripemd160_SRC})
+SOURCE_GROUP("donna" FILES ${external_donna_SRC})
 
-add_library(external ${external_ref10_SRC} ${external_sha256_SRC} ${external_sha3_SRC} ${external_ripemd160_SRC} README.txt ../plugins/txes/account_link/src/model/AccountLinkBaseTransaction.h)
+add_library(external ${external_ref10_SRC} ${external_sha256_SRC} ${external_sha3_SRC} ${external_ripemd160_SRC} ${external_donna_SRC} README.txt ../plugins/txes/account_link/src/model/AccountLinkBaseTransaction.h)
 set_property(TARGET external PROPERTY POSITION_INDEPENDENT_CODE ON)

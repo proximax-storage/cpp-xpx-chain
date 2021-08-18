@@ -31,9 +31,9 @@
 namespace catapult { namespace harvesting {
 
 	namespace {
-		bool AddToUnlocked(UnlockedAccounts& unlockedAccounts, crypto::KeyPair&& descriptor) {
-			auto signingPublicKey = descriptor.publicKey();
-			auto addResult = unlockedAccounts.modifier().add(std::move(descriptor));
+		bool AddToUnlocked(UnlockedAccounts& unlockedAccounts, BlockGeneratorAccountDescriptor&& descriptor, uint32_t version) {
+			auto signingPublicKey = descriptor.signingKeyPair().publicKey();
+			auto addResult = unlockedAccounts.modifier().add(std::move(descriptor), version);
 			if (UnlockedAccountsAddResult::Success_New == addResult) {
 				CATAPULT_LOG(info) << "added NEW account " << signingPublicKey;
 				return true;
@@ -77,11 +77,11 @@ namespace catapult { namespace harvesting {
 			}
 
 		public:
-			void operator()(const HarvestRequest& harvestRequest, crypto::KeyPair&& descriptor) {
+			void operator()(const HarvestRequest& harvestRequest, BlockGeneratorAccountDescriptor&& descriptor) {
 				if (HarvestRequestOperation::Add == harvestRequest.Operation)
 					add(harvestRequest, std::move(descriptor));
 				else
-					remove(GetRequestIdentifier(harvestRequest), descriptor.publicKey());
+					remove(GetRequestIdentifier(harvestRequest), descriptor.signingKeyPair().publicKey());
 			}
 
 			size_t pruneUnlockedAccounts() {
@@ -94,21 +94,28 @@ namespace catapult { namespace harvesting {
 					auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
 					cache::ImportanceView view(readOnlyAccountStateCache);
 
-					auto address = model::PublicKeyToAddress(descriptor, readOnlyAccountStateCache.networkIdentifier());
-					auto minHarvesterBalance = m_ConfigHolder->Config(height).Network.MinHarvesterBalance;
-					auto shouldPruneAccount = !view.canHarvest(descriptor, height, minHarvesterBalance );
+			  		const auto& signingPublicKey = descriptor.signingKeyPair().publicKey();
 
-					if (shouldPruneAccount && m_signingPublicKey == descriptor) {
+					auto address = model::PublicKeyToAddress(signingPublicKey, readOnlyAccountStateCache.networkIdentifier());
+					auto minHarvesterBalance = m_ConfigHolder->Config(height).Network.MinHarvesterBalance;
+					auto shouldPruneAccount = !view.canHarvest(signingPublicKey, height, minHarvesterBalance );
+
+					if (shouldPruneAccount && m_signingPublicKey == signingPublicKey) {
 						CATAPULT_LOG_THROTTLE(warning, utils::TimeSpan::FromHours(6).millis())
 								<< "primary signing public key " << m_signingPublicKey << " does not meet harvesting requirements";
 						return false;
 					}
 
 					if (!shouldPruneAccount) {
-						auto remoteAccountStateIter = readOnlyAccountStateCache.find(address);
-						if (state::AccountType::Remote == remoteAccountStateIter.get().AccountType) {
-							auto mainAccountStateIter = readOnlyAccountStateCache.find(GetLinkedPublicKey(remoteAccountStateIter.get()));
+						auto accountStateIter = readOnlyAccountStateCache.find(address);
+						auto accountState = accountStateIter.get();
+						if (state::AccountType::Remote == accountStateIter.get().AccountType) {
+							auto mainAccountStateIter = readOnlyAccountStateCache.find(GetLinkedPublicKey(accountState));
 							shouldPruneAccount = !isMainAccountEligibleForDelegation(mainAccountStateIter.get(), descriptor);
+						}
+						else
+						{
+							shouldPruneAccount = accountState.GetVersion() > 1 && GetVrfPublicKey(accountState) != descriptor.vrfKeyPair().publicKey();
 						}
 					}
 
@@ -122,13 +129,14 @@ namespace catapult { namespace harvesting {
 			}
 
 		private:
-			void add(const HarvestRequest& harvestRequest, crypto::KeyPair&& descriptor) {
-				if (!isMainAccountEligibleForDelegation(harvestRequest.MainAccountPublicKey, descriptor.publicKey()))
+			void add(const HarvestRequest& harvestRequest, BlockGeneratorAccountDescriptor&& descriptor) {
+				uint32_t version;
+				if (!isMainAccountEligibleForDelegation(harvestRequest.MainAccountPublicKey, descriptor, version))
 					return;
 
-				auto harvesterSigningPublicKey = descriptor.publicKey();
+				auto harvesterSigningPublicKey = descriptor.signingKeyPair().publicKey();
 				auto requestIdentifier = GetRequestIdentifier(harvestRequest);
-				if (!m_storage.contains(requestIdentifier) && AddToUnlocked(m_unlockedAccounts, std::move(descriptor)))
+				if (!m_storage.contains(requestIdentifier) && AddToUnlocked(m_unlockedAccounts, std::move(descriptor), version))
 					m_storage.add(requestIdentifier, harvestRequest.EncryptedPayload, harvesterSigningPublicKey);
 			}
 
@@ -138,7 +146,7 @@ namespace catapult { namespace harvesting {
 				m_hasAnyRemoval = true;
 			}
 
-			bool isMainAccountEligibleForDelegation(const Key& mainAccountPublicKey, const Key& descriptor) {
+			bool isMainAccountEligibleForDelegation(const Key& mainAccountPublicKey, const BlockGeneratorAccountDescriptor& descriptor, uint32_t& version) {
 				auto cacheView = m_cache.createView();
 				auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
 				auto accountStateIter = readOnlyAccountStateCache.find(mainAccountPublicKey);
@@ -146,14 +154,27 @@ namespace catapult { namespace harvesting {
 					CATAPULT_LOG(warning) << "rejecting delegation from " << mainAccountPublicKey << ": unknown main account";
 					return false;
 				}
-				return isMainAccountEligibleForDelegation(accountStateIter.get(), descriptor);
+				auto accountState = accountStateIter.get();
+				version = accountState.GetVersion();
+				return isMainAccountEligibleForDelegation(accountState, descriptor);
 			}
 
 			bool isMainAccountEligibleForDelegation(
 					const state::AccountState& accountState,
-					const Key& descriptor) {
-				if (GetLinkedPublicKey(accountState) != descriptor) {
+					const BlockGeneratorAccountDescriptor& descriptor
+					) {
+				if(accountState.GetVersion() < 2) //Delegation will only work for V2 accounts.
+				{
+					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": Unsupported account version";
+					return false;
+				}
+				if (GetLinkedPublicKey(accountState) != descriptor.signingKeyPair().publicKey()) {
 					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": invalid signing public key";
+					return false;
+				}
+
+				if (GetVrfPublicKey(accountState) != descriptor.vrfKeyPair().publicKey()) {
+					CATAPULT_LOG(warning) << "rejecting delegation from " << accountState.PublicKey << ": invalid vrf public key";
 					return false;
 				}
 
@@ -200,9 +221,13 @@ namespace catapult { namespace harvesting {
 	{}
 
 	void UnlockedAccountsUpdater::load() {
-		// load account descriptors
-		m_unlockedAccountsStorage.load(m_encryptionKeyPair, [&unlockedAccounts = m_unlockedAccounts](auto&& descriptor) {
-			AddToUnlocked(unlockedAccounts, std::move(descriptor));
+		// load account descriptors, check version manually should be ok done once only
+		m_unlockedAccountsStorage.load(m_encryptionKeyPair, [&unlockedAccounts = m_unlockedAccounts, &cache = m_cache](auto&& descriptor) {
+			auto cacheView = cache.createView();
+			auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
+			auto accountStateIter = readOnlyAccountStateCache.find(descriptor.signingKeyPair().publicKey());
+			auto accountState = accountStateIter.get();
+			AddToUnlocked(unlockedAccounts, std::move(descriptor), accountState.GetVersion());
 		});
 	}
 

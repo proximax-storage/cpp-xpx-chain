@@ -19,23 +19,11 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "NodeKeyLinkTransactionPlugin.h"
-#include "src/model/AccountLinkNotifications.h"
-#include "src/model/VrfKeyLinkTransaction.h"
-#include "catapult/model/NotificationSubscriber.h"
-#include "catapult/model/TransactionPluginFactory.h"
+#pragma once
+#include <stdint.h>
 
-using namespace catapult::model;
+namespace catapult { namespace test {
 
-namespace catapult { namespace plugins {
-
-	namespace {
-		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
-			sub.notify(KeyLinkActionNotification<1>(transaction.LinkAction));
-			sub.notify(VrfKeyLinkNotification<1>(transaction.Signer, transaction.RemoteAccountKey, transaction.LinkAction));
-		}
-	}
-
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(VrfKeyLink, Default, Publish)
+	/// Adds the group order to \a scalar.
+	void ScalarAddGroupOrder(uint8_t* scalar);
 }}

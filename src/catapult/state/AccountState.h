@@ -108,6 +108,9 @@ namespace catapult { namespace state {
 	/// Gets the node public key associated with \a accountState or a zero key.
 	Key GetNodePublicKey(const AccountState& accountState);
 
+	/// Gets the vrf public key associated with \a accountState or a zero key.
+	Key GetVrfPublicKey(const AccountState& accountState);
+
 	/// Requires that \a remoteAccountState and \a mainAccountState state are linked.
 	void RequireLinkedRemoteAndMainAccounts(const AccountState& remoteAccountState, const AccountState& mainAccountState);
 }}

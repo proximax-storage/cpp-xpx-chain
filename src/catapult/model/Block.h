@@ -25,6 +25,7 @@
 #include "catapult/types.h"
 #include <memory>
 #include <vector>
+#include <catapult/crypto/Vrf.h>
 
 namespace catapult { namespace model {
 
@@ -34,7 +35,7 @@ namespace catapult { namespace model {
 	struct BlockHeader : public VerifiableEntity {
 	public:
 		/// Block format version.
-		static constexpr VersionType Current_Version = 3;
+		static constexpr VersionType Current_Version = 4;
 
 	public:
 		/// Height of a block.
@@ -71,10 +72,36 @@ namespace catapult { namespace model {
 
 		/// Denominator of the transaction fee.
 		uint32_t FeeInterestDenominator;
+
+	public:
+
+		size_t GetHeaderSize() const;
+	};
+
+	/// Binary layout for a block header v4.
+	struct BlockHeaderV4 : public BlockHeader {
+	public:
+		/// Generation hash proof.
+		crypto::VrfProof GenerationHashProof;
+
 	};
 
 	/// Binary layout for a block.
-	struct Block : public TransactionContainer<BlockHeader, Transaction> {};
+	struct Block : public TransactionContainer<BlockHeader, Transaction> {
+		crypto::VrfProof getGenerationHashProof() const {
+			switch (EntityVersion()) {
+			case 3:
+				return crypto::VrfProof();
+			default:
+				return reinterpret_cast<const BlockHeaderV4&>(*this).GenerationHashProof;
+			}
+		}
+
+		void setGenerationHashProof(crypto::VrfProof&& value) {
+			if (EntityVersion() > 3)
+				reinterpret_cast<BlockHeaderV4&>(*this).GenerationHashProof = value;
+		}
+	};
 
 #pragma pack(pop)
 

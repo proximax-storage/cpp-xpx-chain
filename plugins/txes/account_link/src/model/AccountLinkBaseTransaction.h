@@ -23,6 +23,7 @@
 #include <catapult/model/Transaction.h>
 #include "AccountLinkEntityType.h"
 #include "AccountLinkBaseTransaction.h"
+#include "catapult/model/AccountLinkAction.h"
 namespace catapult { namespace model {
 
 #pragma pack(push, 1)

@@ -30,12 +30,17 @@ namespace catapult { namespace crypto {
 #endif
 
 	/// Represents a pair of private key with associated public key.
-	class KeyPair final {
-	private:
-		explicit KeyPair(PrivateKey&& privateKey) : m_privateKey(std::move(privateKey)) {
-			ExtractPublicKeyFromPrivateKey<1>(m_privateKey, m_publicKey);
+	class KeyPair {
+	protected:
+		KeyPair(PrivateKey&& privateKey) : m_privateKey(std::move(privateKey)) {
+			DerivePublicKeyFromPrivate(m_privateKey);
 		}
 
+	protected:
+		virtual void DerivePublicKeyFromPrivate(const PrivateKey& key) //Remember to turn this into pure virtual method
+		{
+			ExtractPublicKeyFromPrivateKeySha3(key, m_publicKey);
+		}
 	public:
 		/// Creates a key pair from \a privateKey.
 		static auto FromPrivate(PrivateKey&& privateKey) {
@@ -61,11 +66,32 @@ namespace catapult { namespace crypto {
 			return m_publicKey;
 		}
 
-	private:
+	protected:
 		PrivateKey m_privateKey;
 		Key m_publicKey;
 	};
 
+	/// Represents a pair of private key with associated public key associated with a Sha3 hashing function
+	class KeyPairSha3 final: public KeyPair {
+	private:
+		KeyPairSha3(PrivateKey&& privateKey) : KeyPair(std::move(privateKey)) {}
+
+	protected:
+		void DerivePublicKeyFromPrivate(const PrivateKey& key) override {
+			ExtractPublicKeyFromPrivateKeySha3(key, m_publicKey);
+		}
+	};
+
+	/// Represents a pair of private key with associated public key associated with a Sha3 hashing function
+	class KeyPairSha2 final: public KeyPair {
+	private:
+		KeyPairSha2(PrivateKey&& privateKey) : KeyPair(std::move(privateKey)) {}
+
+	protected:
+		void DerivePublicKeyFromPrivate(const PrivateKey& key) override {
+			ExtractPublicKeyFromPrivateKeySha2(key, m_publicKey);
+		}
+	};
 #ifdef SPAMMER_TOOL
 #pragma pack(pop)
 #endif

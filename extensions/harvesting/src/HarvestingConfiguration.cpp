@@ -37,6 +37,7 @@ namespace catapult { namespace harvesting {
 #define LOAD_HARVESTING_PROPERTY(NAME) LOAD_PROPERTY("harvesting", NAME)
 
 		LOAD_HARVESTING_PROPERTY(HarvestKey);
+		LOAD_HARVESTING_PROPERTY(HarvesterVrfPrivateKey);
 		LOAD_HARVESTING_PROPERTY(IsAutoHarvestingEnabled);
 		LOAD_HARVESTING_PROPERTY(MaxUnlockedAccounts);
 		LOAD_HARVESTING_PROPERTY(Beneficiary);

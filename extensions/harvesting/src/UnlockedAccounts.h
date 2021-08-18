@@ -23,6 +23,7 @@
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/utils/Hashers.h"
 #include "DelegatePrioritizationPolicy.h"
+#include "BlockGeneratorAccountDescriptor.h"
 #include <vector>
 
 namespace catapult { namespace harvesting {
@@ -52,7 +53,7 @@ namespace catapult { namespace harvesting {
 
 	/// Insertion operator for outputting \a value to \a out.
 	std::ostream& operator<<(std::ostream& out, UnlockedAccountsAddResult value);
-	using PrioritizedKeysContainer = std::vector<std::pair<crypto::KeyPair, size_t>>;
+	using PrioritizedKeysContainer = std::vector<std::tuple<BlockGeneratorAccountDescriptor, size_t, uint32_t>>;
 	/// A read only view on top of unlocked accounts.
 	class UnlockedAccountsView : utils::MoveOnly {
 	public:
@@ -81,7 +82,7 @@ namespace catapult { namespace harvesting {
 			return m_prioritizedKeyPairs.cend();
 		}
 		/// Calls \a consumer with block generator account descriptors until all are consumed or \c false is returned by consumer.
-		void forEach(const predicate<const crypto::KeyPair&>& consumer) const;
+		void forEach(const predicate<const BlockGeneratorAccountDescriptor&>& consumer) const;
 
 	private:
 		const PrioritizedKeysContainer& m_prioritizedKeyPairs;
@@ -91,7 +92,7 @@ namespace catapult { namespace harvesting {
 	/// A write only view on top of unlocked accounts.
 	class UnlockedAccountsModifier : utils::MoveOnly {
 	private:
-		using KeyPredicate = predicate<const Key&>;
+		using KeyPredicate = predicate<const BlockGeneratorAccountDescriptor&>;
 
 	public:
 		/// Creates a view around \a maxUnlockedAccounts and \a keyPairs with lock context \a readLock.
@@ -108,7 +109,7 @@ namespace catapult { namespace harvesting {
 
 	public:
 		/// Adds (unlocks) the account identified by key pair (\a keyPair).
-		UnlockedAccountsAddResult add(crypto::KeyPair&& keyPair);
+		UnlockedAccountsAddResult add(BlockGeneratorAccountDescriptor&& keyPair, uint32_t accountVersion);
 
 		/// Removes (locks) the account identified by the public key (\a publicKey).
 		bool remove(const Key& publicKey);

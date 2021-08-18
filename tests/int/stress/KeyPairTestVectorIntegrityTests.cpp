@@ -75,7 +75,7 @@ namespace catapult {
 		RunTest("1.test-keys.dat", ParseKeyTestData, [](const auto& testData) {
 			// Act:
 			Key publicKey;
-			crypto::ExtractPublicKeyFromPrivateKey(testData.PrivateKey, publicKey);
+			crypto::ExtractPublicKeyFromPrivateKeySha3(testData.PrivateKey, publicKey);
 			auto address = model::PublicKeyToAddress(testData.PublicKey, model::NetworkIdentifier::Public);
 
 			// Assert:

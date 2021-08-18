@@ -20,6 +20,7 @@
 
 #include <catapult/ionet/PacketPayloadFactory.h>
 #include "HarvestingService.h"
+#include "BlockGeneratorAccountDescriptor.h"
 #include "HarvesterBlockGenerator.h"
 #include "HarvestingUtFacadeFactory.h"
 #include "ScheduledHarvesterTask.h"
@@ -44,17 +45,40 @@ namespace catapult { namespace harvesting {
 			std::shared_ptr<UnlockedAccountsUpdater> pUnlockedAccountsUpdater;
 		};
 
-		std::shared_ptr<UnlockedAccounts> CreateUnlockedAccounts(const HarvestingConfiguration& config, const cache::CatapultCache& cache) {
+		BlockGeneratorAccountDescriptor CreateBlockGeneratorAccountDescriptor(const HarvestingConfiguration& config) {
+			if (!config.IsAutoHarvestingEnabled)
+				return BlockGeneratorAccountDescriptor();
+
+			return BlockGeneratorAccountDescriptor(
+					crypto::KeyPair::FromString(config.HarvestKey),
+					crypto::KeyPair::FromString(config.HarvesterVrfPrivateKey));
+		}
+
+		std::shared_ptr<UnlockedAccounts> CreateUnlockedAccounts(const HarvestingConfiguration& config, const cache::CatapultCache& cache, BlockGeneratorAccountDescriptor&& blockGeneratorAccountDescriptor) {
 			// unlock configured account if it's eligible to harvest the next block
-			auto keyPair = crypto::KeyPair::FromString(config.HarvestKey);
-			auto publicKey = keyPair.publicKey();
+			auto harvesterSigningPublicKey = blockGeneratorAccountDescriptor.signingKeyPair().publicKey();
+			auto harvesterVrfPublicKey = blockGeneratorAccountDescriptor.vrfKeyPair().publicKey();
 			auto pUnlockedAccounts = std::make_shared<UnlockedAccounts>(config.MaxUnlockedAccounts,
-				CreateDelegatePrioritizer(config.DelegatePrioritizationPolicy, cache, publicKey));
+				CreateDelegatePrioritizer(config.DelegatePrioritizationPolicy, cache, harvesterSigningPublicKey));
 			if (config.IsAutoHarvestingEnabled) {
-				auto unlockResult = pUnlockedAccounts->modifier().add(std::move(keyPair));
+
+ 				auto cacheView = cache.createView();
+				auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
+				auto accountStateIter = readOnlyAccountStateCache.find(harvesterSigningPublicKey);
+				if (!accountStateIter.tryGet()) {
+					CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "Unable to set up Auto Harvesting: Invalid harvesting account provided with AutoHarvesting Enabled");
+				}
+				auto accountState = accountStateIter.get();
+				/* No need to verify as account would be pruned.
+				if(accountState.GetVersion() > 1 && harvesterVrfPublicKey != GetVrfPublicKey(accountState))
+				{
+					CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "Unable to set up Auto Harvesting: V2 accounts do not support harvesting without a valid VRF key");
+				}*/
+				auto unlockResult = pUnlockedAccounts->modifier().add(std::move(blockGeneratorAccountDescriptor), accountState.GetVersion());
 				CATAPULT_LOG(info)
-						<< "Unlocked harvesting account " << publicKey
-						<< " for harvesting with result " << unlockResult;
+					<< std::endl << "Unlocked harvesting account with result " << unlockResult
+					<< std::endl << "+ Signing " << harvesterSigningPublicKey
+					<< std::endl << "+ VRF     " << harvesterVrfPublicKey;
 			}
 
 			return pUnlockedAccounts;
@@ -64,7 +88,9 @@ namespace catapult { namespace harvesting {
 				const HarvestingConfiguration& config,
 				const extensions::ServiceState& state,
 				const crypto::KeyPair& encryptionKeyPair) {
-			auto pUnlockedAccounts = CreateUnlockedAccounts(config, state.cache());
+			auto blockGeneratorAccountDescriptor = CreateBlockGeneratorAccountDescriptor(config);
+			auto harvesterSigningPublicKey = blockGeneratorAccountDescriptor.signingKeyPair().publicKey();
+			auto pUnlockedAccounts = CreateUnlockedAccounts(config, state.cache(), std::move(blockGeneratorAccountDescriptor));
 
 			auto pUnlockedAccountsUpdater = std::make_shared<UnlockedAccountsUpdater>(
 					state.cache(),
@@ -89,18 +115,6 @@ namespace catapult { namespace harvesting {
 			options.RangeConsumer = state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Local);
 			return options;
 		}
-		/*
-		void PruneUnlockedAccounts(UnlockedAccounts& unlockedAccounts, const cache::CatapultCache& cache,
-				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-			auto cacheView = cache.createView();
-			auto height = cacheView.height() + Height(1);
-			auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
-			auto minHarvesterBalance = pConfigHolder->Config(height).Network.MinHarvesterBalance;
-			unlockedAccounts.modifier().removeIf([height, minHarvesterBalance, &readOnlyAccountStateCache](const auto& key) {
-				cache::ImportanceView view(readOnlyAccountStateCache);
-				return !view.canHarvest(key, height, minHarvesterBalance);
-			});
-		}*/
 
 		thread::Task CreateHarvestingTask(extensions::ServiceState& state, const UnlockedAccountsHolder& unlockedAccountsHolder, const Key& beneficiary) {
 			const auto& cache = state.cache();
@@ -142,7 +156,7 @@ namespace catapult { namespace harvesting {
 			  auto view = unlockedAccounts.view();
 			  std::vector<Key> harvesterPublicKeys;
 			  view.forEach([&harvesterPublicKeys](const auto& descriptor) {
-				harvesterPublicKeys.push_back(descriptor.publicKey());
+				harvesterPublicKeys.push_back(descriptor.signingKeyPair().publicKey());
 				return true;
 			  });
 
@@ -175,6 +189,7 @@ namespace catapult { namespace harvesting {
 
 				auto unlockedAccountsHolder = CreateUnlockedAccountsHolder(m_config, state, locator.keyPair());
 				locator.registerRootedService("unlockedAccounts", unlockedAccountsHolder.pUnlockedAccounts);
+
 
 				// add tasks
 				auto beneficiary = crypto::ParseKey(m_config.Beneficiary);

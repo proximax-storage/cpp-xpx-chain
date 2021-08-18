@@ -56,6 +56,11 @@ namespace catapult { namespace model {
 		return generationHash;
 	}
 
+	GenerationHash CalculateGenerationHashVrf(const crypto::ProofGamma& gamma) {
+		auto proofHash = GenerateVrfProofHash(gamma);
+		return proofHash.copyTo<GenerationHash>();
+	}
+
 	// endregion
 
 	// region sign / verify
@@ -115,7 +120,7 @@ namespace catapult { namespace model {
 				NetworkIdentifier networkIdentifier,
 				const Key& signerPublicKey,
 				const TContainer& transactions) {
-			auto size = sizeof(BlockHeader) + CalculateTotalSize(transactions);
+			auto size = sizeof(BlockHeaderV4) + CalculateTotalSize(transactions);
 			auto pBlock = utils::MakeUniqueWithSize<Block>(size);
 			std::memset(static_cast<void*>(pBlock.get()), 0, sizeof(BlockHeader));
 			pBlock->Size = static_cast<uint32_t>(size);

@@ -141,14 +141,13 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, CanRaiseBlockEntityNotifications) {
 		// Arrange:
 		auto pBlock = test::GenerateEmptyRandomBlock();
-		pBlock->Version = 0x11000003;
 
 		// Act:
 		PublishOne<EntityNotification<1>>(*pBlock, [&pBlock](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(static_cast<NetworkIdentifier>(0x11), notification.NetworkIdentifier);
 			EXPECT_EQ(pBlock->Type, notification.EntityType);
-			EXPECT_EQ(0x03u, notification.EntityVersion);
+			EXPECT_EQ(0x04u, notification.EntityVersion);
 		});
 	}
 
@@ -164,7 +163,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(block.Signer, notification.Signer);
 			EXPECT_EQ(block.Signature, notification.Signature);
 			EXPECT_EQ(test::AsVoidPointer(&block.Version), test::AsVoidPointer(notification.Data.pData));
-			EXPECT_EQ(sizeof(BlockHeader) - VerifiableEntity::Header_Size, notification.Data.Size);
+			EXPECT_EQ(sizeof(BlockHeaderV4) - VerifiableEntity::Header_Size, notification.Data.Size);
 			EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
 		});
 	}
@@ -378,7 +377,7 @@ namespace catapult { namespace model {
 		auto pTransaction = test::GenerateRandomTransactionWithSize(234);
 		pTransaction->Type = mocks::MockTransaction::Entity_Type;
 		pTransaction->MaxFee = Amount(765);
-		BlockHeader blockHeader;
+		BlockHeaderV4 blockHeader;
 		blockHeader.FeeMultiplier = BlockFeeMultiplier(4);
 		blockHeader.FeeInterest = 1;
 		blockHeader.FeeInterestDenominator = 1;

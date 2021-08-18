@@ -20,7 +20,7 @@
 **/
 
 #pragma once
-#include <src/model/AccountLinkAction.h>
+#include <src/catapult/model/AccountLinkAction.h>
 #include <plugins/coresystem/src/validators/Results.h>
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/validators/ValidatorTypes.h"

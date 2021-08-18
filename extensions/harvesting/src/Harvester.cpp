@@ -64,6 +64,9 @@ namespace catapult { namespace harvesting {
 			pBlock->Beneficiary = beneficiary;
 			return pBlock;
 		}
+		void AddGenerationHashProof(model::Block& block, const crypto::VrfProof& vrfProof) {
+			block.setGenerationHashProof({ vrfProof.Gamma, vrfProof.VerificationHash, vrfProof.Scalar });
+		}
 	}
 
 	Harvester::Harvester(
@@ -103,29 +106,40 @@ namespace catapult { namespace harvesting {
 		});
 
 		auto unlockedAccountsView = m_unlockedAccounts.view();
-		const crypto::KeyPair* pHarvesterKeyPair = nullptr;
-		for (const auto& prioritizedKeyPair : unlockedAccountsView) {
-			hitContext.Signer = prioritizedKeyPair.first.publicKey();
-			hitContext.GenerationHash = model::CalculateGenerationHash(context.ParentContext.GenerationHash, hitContext.Signer);
-
+		std::pair<const crypto::KeyPair*, uint32_t> pHarvesterKeyPairWithVersion = std::make_pair(nullptr, 0);
+		crypto::VrfProof vrfProof;
+		for (const auto& unlockedAccountInfo : unlockedAccountsView) {
+			hitContext.Signer = get<0>(unlockedAccountInfo).signingKeyPair().publicKey();
+			if(get<2>(unlockedAccountInfo) > 1)
+			{
+				vrfProof = crypto::GenerateVrfProof(context.ParentContext.GenerationHash, get<0>(unlockedAccountInfo).vrfKeyPair());
+				hitContext.GenerationHash = model::CalculateGenerationHashVrf(vrfProof.Gamma);
+			}
+			else
+			{
+				hitContext.GenerationHash = model::CalculateGenerationHash(context.ParentContext.GenerationHash, hitContext.Signer);
+			}
 			if (hitPredicate(hitContext)) {
-				pHarvesterKeyPair = &prioritizedKeyPair.first;
+				pHarvesterKeyPairWithVersion = std::make_pair(&get<0>(unlockedAccountInfo).signingKeyPair(), get<2>(unlockedAccountInfo));
 				break;
 			}
-		}
 
-		if (!pHarvesterKeyPair)
+		}
+		if (!pHarvesterKeyPairWithVersion.first)
 			return nullptr;
 
 		utils::SlowOperationLogger stackLogger("generating candidate block", utils::LogLevel::Debug, utils::TimeSpan::FromMilliseconds(100));
-		auto pBlockHeader = CreateUnsignedBlockHeader(context, config.Immutable.NetworkIdentifier, pHarvesterKeyPair->publicKey(), m_beneficiary);
+		auto pBlockHeader = CreateUnsignedBlockHeader(context, config.Immutable.NetworkIdentifier, pHarvesterKeyPairWithVersion.first->publicKey(), m_beneficiary);
+
+		if(pHarvesterKeyPairWithVersion.second > 1) AddGenerationHashProof(*pBlockHeader, vrfProof);
+
 		auto pBlock = m_blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock);
 
 		if (config.Node.RejectEmptyBlocks && !pBlock->TransactionsPtr())
 			return nullptr;
 
 		if (pBlock)
-			SignBlockHeader(*pHarvesterKeyPair, *pBlock);
+			SignBlockHeader(*pHarvesterKeyPairWithVersion.first, *pBlock);
 
 		return pBlock;
 	}

@@ -65,7 +65,7 @@ namespace catapult { namespace crypto {
 		auto privateKeyStr = test::GenerateRandomHexString(Key_Size * 2);
 		auto privateKey = PrivateKey::FromString(privateKeyStr);
 		Key expectedPublicKey;
-		ExtractPublicKeyFromPrivateKey(privateKey, expectedPublicKey);
+		ExtractPublicKeyFromPrivateKeySha3(privateKey, expectedPublicKey);
 
 		// Act:
 		auto keyPair = KeyPair::FromPrivate(std::move(privateKey));

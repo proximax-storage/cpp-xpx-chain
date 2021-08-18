@@ -27,6 +27,7 @@
 #include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/TimeSpan.h"
 #include "catapult/types.h"
+#include "AccountLinkAction.h"
 #include <vector>
 
 namespace catapult { namespace model {
@@ -70,6 +71,32 @@ namespace catapult { namespace model {
 	public:
 		/// Address.
 		UnresolvedAddress Address;
+	};
+
+	template<typename TAccountPublicKey, NotificationType Key_Link_Notification_Type, VersionType version>
+	struct BaseKeyLinkNotification : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Key_Link_Notification_Type;
+
+	public:
+		/// Creates a notification around \a mainAccountKey, \a remoteAccountKey and \a linkAction.
+		BaseKeyLinkNotification(const Key& mainAccountKey, const TAccountPublicKey& remoteAccountKey, AccountLinkAction linkAction)
+				: Notification(Notification_Type, sizeof(Key_Link_Notification_Type))
+				, MainAccountKey(mainAccountKey)
+				, RemoteAccountKey(remoteAccountKey)
+				, LinkAction(linkAction)
+		{}
+
+	public:
+		/// Main account key.
+		const Key& MainAccountKey;
+
+		/// Remote account key.
+		const TAccountPublicKey& RemoteAccountKey;
+
+		/// Account link action.
+		AccountLinkAction LinkAction;
 	};
 
 	/// Notification of use of an account public key.

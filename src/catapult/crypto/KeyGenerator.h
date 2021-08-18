@@ -25,13 +25,14 @@ namespace catapult { namespace crypto { class PrivateKey; } }
 
 namespace catapult { namespace crypto {
 
-	template<uint32_t TVersion>
+	//template<uint32_t TVersion>
 	/// Extracts a public key (\a publicKey) from a private key (\a)
-	void ExtractPublicKeyFromPrivateKey(const PrivateKey& privateKey, Key& publicKey);
-	template<>
+	//void ExtractPublicKeyFromPrivateKey(const PrivateKey& privateKey, Key& publicKey);
+	//template<>
 	/// Extracts a public key (\a publicKey) from a private key (\a)
-	void ExtractPublicKeyFromPrivateKey<1>(const PrivateKey& privateKey, Key& publicKey);
-	template<>
+	//void ExtractPublicKeyFromPrivateKey<1>(const PrivateKey& privateKey, Key& publicKey);
+	//template<>
 	/// Extracts a public key (\a publicKey) from a private key (\a)
-	void ExtractPublicKeyFromPrivateKey<2>(const PrivateKey& privateKey, Key& publicKey);
+	void ExtractPublicKeyFromPrivateKeySha3(const PrivateKey& privateKey, Key& publicKey);
+	void ExtractPublicKeyFromPrivateKeySha2(const PrivateKey& privateKey, Key& publicKey);
 }}

@@ -20,19 +20,20 @@
 
 #include "UnlockedAccounts.h"
 #include "catapult/utils/MacroBasedEnumIncludes.h"
-
+#include "BlockGeneratorAccountDescriptor.h"
 namespace catapult { namespace harvesting {
 
 #define DEFINE_ENUM UnlockedAccountsAddResult
 #define ENUM_LIST UNLOCKED_ACCOUNTS_ADD_RESULT_LIST
 #include "catapult/utils/MacroBasedEnum.h"
+
 #undef ENUM_LIST
 #undef DEFINE_ENUM
 
 	namespace {
 		auto CreateContainsPredicate(const Key& publicKey) {
 			return [&publicKey](const auto& keyPair) {
-				return keyPair.first.publicKey() == publicKey;
+				return get<0>(keyPair).publicKey() == publicKey;
 			};
 		}
 	}
@@ -47,9 +48,9 @@ namespace catapult { namespace harvesting {
 		return std::any_of(m_prioritizedKeyPairs.cbegin(), m_prioritizedKeyPairs.cend(), CreateContainsPredicate(publicKey));
 	}
 
-	void UnlockedAccountsView::forEach(const predicate<const crypto::KeyPair&>& consumer) const {
+	void UnlockedAccountsView::forEach(const predicate<const BlockGeneratorAccountDescriptor&>& consumer) const {
 		for (const auto& prioritizedKeyPair : m_prioritizedKeyPairs) {
-			if (!consumer(prioritizedKeyPair.first))
+			if (!consumer(get<0>(prioritizedKeyPair)))
 				break;
 		}
 	}
@@ -57,13 +58,14 @@ namespace catapult { namespace harvesting {
 
 	// region UnlockedAccountsModifier
 
-	UnlockedAccountsAddResult UnlockedAccountsModifier::add(crypto::KeyPair&& keyPair) {
-		if (std::any_of(m_prioritizedKeyPairs.cbegin(), m_prioritizedKeyPairs.cend(), CreateContainsPredicate(keyPair.publicKey())))
+	UnlockedAccountsAddResult UnlockedAccountsModifier::add(BlockGeneratorAccountDescriptor&& descriptor, uint32_t accountVersion) {
+		const auto& publicKey = descriptor.signingKeyPair().publicKey();
+		if (std::any_of(m_prioritizedKeyPairs.cbegin(), m_prioritizedKeyPairs.cend(), CreateContainsPredicate(publicKey)))
 			return UnlockedAccountsAddResult::Success_Update;
 
-		auto priorityScore = m_prioritizer(keyPair.publicKey());
+		auto priorityScore = m_prioritizer(publicKey);
 		if (m_maxUnlockedAccounts == m_prioritizedKeyPairs.size()) {
-			if (m_prioritizedKeyPairs.back().second >= priorityScore)
+			if (get<1>(m_prioritizedKeyPairs.back()) >= priorityScore)
 				return UnlockedAccountsAddResult::Failure_Server_Limit;
 
 			m_prioritizedKeyPairs.pop_back();
@@ -71,10 +73,10 @@ namespace catapult { namespace harvesting {
 
 		auto iter = m_prioritizedKeyPairs.cbegin();
 		for (; m_prioritizedKeyPairs.cend() != iter; ++iter) {
-			if (priorityScore > iter->second)
+			if (priorityScore > get<1>(*iter))
 				break;
 		}
-		m_prioritizedKeyPairs.emplace(iter, std::move(keyPair), priorityScore);
+		m_prioritizedKeyPairs.emplace(iter, std::move(descriptor), priorityScore, accountVersion);
 		return UnlockedAccountsAddResult::Success_New;
 	}
 
@@ -92,7 +94,7 @@ namespace catapult { namespace harvesting {
 	void UnlockedAccountsModifier::removeIf(const KeyPredicate& predicate) {
 		auto initialSize = m_prioritizedKeyPairs.size();
 		auto newKeyPairsEnd = std::remove_if(m_prioritizedKeyPairs.begin(), m_prioritizedKeyPairs.end(), [predicate](const auto& keyPair) {
-			return predicate(keyPair.first.publicKey());
+			return predicate(get<0>(keyPair).publicKey());
 		});
 
 		m_prioritizedKeyPairs.erase(newKeyPairsEnd, m_prioritizedKeyPairs.end());

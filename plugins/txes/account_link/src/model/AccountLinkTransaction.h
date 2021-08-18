@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "AccountLinkAction.h"
+#include "src/catapult/model/AccountLinkAction.h"
 #include "AccountLinkEntityType.h"
 #include "AccountLinkBaseTransaction.h"
 

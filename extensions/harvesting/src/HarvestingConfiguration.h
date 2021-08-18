@@ -33,6 +33,9 @@ namespace catapult { namespace harvesting {
 		/// Harvest key.
 		std::string HarvestKey;
 
+		/// Harvester VRF private key. Used only when harvesting is enabled. Only used if HarvestKey is a V2 account
+		std::string HarvesterVrfPrivateKey;
+
 		/// \c true if auto harvesting is enabled.
 		bool IsAutoHarvestingEnabled;
 

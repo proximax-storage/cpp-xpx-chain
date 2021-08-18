@@ -66,6 +66,10 @@ namespace catapult { namespace state {
 		return accountState.SupplementalPublicKeys.linked().get();
 	}
 
+	Key GetVrfPublicKey(const AccountState& accountState) {
+		return accountState.SupplementalPublicKeys.linked().get();
+	}
+
 	Key GetNodePublicKey(const AccountState& accountState) {
 		return accountState.SupplementalPublicKeys.node().get();
 	}

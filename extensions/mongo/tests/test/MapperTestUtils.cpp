@@ -95,7 +95,7 @@ namespace catapult { namespace test {
 
 	void AssertEqualBlockData(const model::Block& block, const bsoncxx::document::view& dbBlock) {
 		// - 4 fields from VerifiableEntity, 9 fields from Block
-		EXPECT_EQ(15u, GetFieldCount(dbBlock));
+		EXPECT_EQ(18u, GetFieldCount(dbBlock));
 		AssertEqualVerifiableEntityData(block, dbBlock);
 
 		EXPECT_EQ(block.Height, Height(GetUint64(dbBlock, "height")));
@@ -105,6 +105,11 @@ namespace catapult { namespace test {
 		EXPECT_EQ(block.PreviousBlockHash, GetHashValue(dbBlock, "previousBlockHash"));
 		EXPECT_EQ(block.BlockTransactionsHash, GetHashValue(dbBlock, "blockTransactionsHash"));
 		EXPECT_EQ(block.BlockReceiptsHash, GetHashValue(dbBlock, "blockReceiptsHash"));
+		EXPECT_EQ(block.getGenerationHashProof().Gamma, GetBinaryArray<crypto::ProofGamma::Size>(dbBlock, "proofGamma"));
+		EXPECT_EQ(
+				block.getGenerationHashProof().VerificationHash,
+				GetBinaryArray<crypto::ProofVerificationHash::Size>(dbBlock, "proofVerificationHash"));
+		EXPECT_EQ(block.getGenerationHashProof().Scalar, GetBinaryArray<crypto::ProofScalar::Size>(dbBlock, "proofScalar"));
 		EXPECT_EQ(block.StateHash, GetHashValue(dbBlock, "stateHash"));
 		EXPECT_EQ(block.Beneficiary, GetKeyValue(dbBlock, "beneficiary"));
 		EXPECT_EQ(block.FeeInterest, GetUint32(dbBlock, "feeInterest"));

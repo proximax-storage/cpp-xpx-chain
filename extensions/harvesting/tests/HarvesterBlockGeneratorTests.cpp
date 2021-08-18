@@ -105,8 +105,10 @@ namespace catapult { namespace harvesting {
 
 		public:
 			auto generate(Height blockHeight, uint32_t maxTransactionsPerBlock) {
-				model::BlockHeader blockHeader;
+				model::BlockHeaderV4 blockHeader;
 				blockHeader.Height = blockHeight;
+				blockHeader.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, model::BlockHeader::Current_Version);
+				blockHeader.Size = sizeof(model::BlockHeaderV4);
 				return m_generator(blockHeader, maxTransactionsPerBlock);
 			}
 

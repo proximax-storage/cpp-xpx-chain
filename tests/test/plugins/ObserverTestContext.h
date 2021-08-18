@@ -33,6 +33,7 @@ namespace catapult { namespace test {
 	template<typename TCacheFactory>
 	class ObserverTestContextT {
 	public:
+
 		/// Creates a test context around \a mode and \a height.
 		explicit ObserverTestContextT(observers::NotifyMode mode, Height height)
 				: m_config(config::BlockchainConfiguration::Uninitialized())

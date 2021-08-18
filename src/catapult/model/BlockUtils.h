@@ -36,6 +36,8 @@ namespace catapult { namespace model {
 	/// and a public key (\a publicKey).
 	GenerationHash CalculateGenerationHash(const GenerationHash& previousGenerationHash, const Key& publicKey);
 
+	/// Calculates the generation hash from \a gamma.
+	GenerationHash CalculateGenerationHashVrf(const crypto::ProofGamma& gamma);
 	// endregion
 
 	// region sign / verify

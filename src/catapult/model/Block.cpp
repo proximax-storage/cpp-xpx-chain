@@ -24,6 +24,15 @@
 
 namespace catapult { namespace model {
 
+	size_t BlockHeader::GetHeaderSize() const {
+		switch (EntityVersion()) {
+		case 3:
+			return sizeof(BlockHeader);
+		default:
+			return sizeof(BlockHeaderV4);
+		}
+	}
+
 	size_t GetTransactionPayloadSize(const BlockHeader& header) {
 		return header.Size - sizeof(BlockHeader);
 	}

@@ -145,7 +145,7 @@ namespace catapult { namespace harvesting {
 
         void UnlockedAccountsStorage::load(
                 const crypto::KeyPair& encryptionKeyPair,
-                const consumer<crypto::KeyPair&&>& processDescriptor) {
+                const consumer<BlockGeneratorAccountDescriptor&&>& processDescriptor) {
             if (!std::filesystem::exists(m_filename))
                 return;
 
@@ -163,7 +163,7 @@ namespace catapult { namespace harvesting {
                 request.EncryptedPayload = RawBuffer(encryptedPayload);
 
                 auto& descriptor = decryptedPair.value();
-                addRequest(GetRequestIdentifier(request), encryptedPayload, descriptor.publicKey());
+                addRequest(GetRequestIdentifier(request), encryptedPayload, descriptor.signingKeyPair().publicKey());
                 processDescriptor(std::move(descriptor));
             }
 

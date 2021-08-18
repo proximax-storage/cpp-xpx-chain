@@ -384,9 +384,9 @@ namespace catapult { namespace harvesting {
 
 	namespace {
 		auto CreateBlockHeaderWithHeight(Height height) {
-			auto pBlockHeader = std::make_unique<model::BlockHeader>();
-			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pBlockHeader.get()), sizeof(model::BlockHeader) });
-			pBlockHeader->Size = sizeof(model::BlockHeader);
+			auto pBlockHeader = utils::MakeUniqueWithSize<model::Block>(sizeof(model::BlockHeaderV4));
+			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pBlockHeader.get()), sizeof(model::BlockHeaderV4) });
+			pBlockHeader->Size = sizeof(model::BlockHeaderV4);
 			pBlockHeader->Height = height;
 			pBlockHeader->FeeMultiplier = BlockFeeMultiplier();
 			pBlockHeader->BlockReceiptsHash = Hash256();

@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "AccountLinkAction.h"
+#include "src/catapult/model/AccountLinkAction.h"
 #include "catapult/model/Mosaic.h"
 #include "catapult/model/Notifications.h"
 
@@ -49,31 +49,7 @@ namespace catapult { namespace model {
 
 	// endregion
 
-	template<typename TAccountPublicKey, NotificationType Key_Link_Notification_Type, VersionType version>
-	struct BaseKeyLinkNotification : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Key_Link_Notification_Type;
 
-	public:
-		/// Creates a notification around \a mainAccountKey, \a remoteAccountKey and \a linkAction.
-		BaseKeyLinkNotification(const Key& mainAccountKey, const TAccountPublicKey& remoteAccountKey, AccountLinkAction linkAction)
-				: Notification(Notification_Type, sizeof(Key_Link_Notification_Type))
-				, MainAccountKey(mainAccountKey)
-				, RemoteAccountKey(remoteAccountKey)
-				, LinkAction(linkAction)
-		{}
-
-	public:
-		/// Main account key.
-		const Key& MainAccountKey;
-
-		/// Remote account key.
-		const TAccountPublicKey& RemoteAccountKey;
-
-		/// Account link action.
-		AccountLinkAction LinkAction;
-	};
 	template<uint32_t TVersion>
 	using RemoteAccountLinkNotification = BaseKeyLinkNotification<Key, AccountLink_Remote_v1_Notification, TVersion>;
 	template<uint32_t TVersion>

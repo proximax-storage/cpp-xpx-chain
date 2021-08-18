@@ -89,7 +89,12 @@ namespace catapult { namespace model {
 
 			void publish(const Block& block, NotificationSubscriber& sub) const {
 				// raise an entity notification
+				auto headerSize = VerifiableEntity::Header_Size;
+				auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, block.GetHeaderSize() - headerSize };
 				switch (block.EntityVersion()) {
+				case 4: {
+					[[fallthrough]];
+				}
 				case 3: {
 					// raise an account public key notification
 					if (Key() != block.Beneficiary)
@@ -106,8 +111,6 @@ namespace catapult { namespace model {
 					sub.notify(blockNotification);
 
 					// raise a signature notification
-					auto headerSize = VerifiableEntity::Header_Size;
-					auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, sizeof(BlockHeader) - headerSize };
 					sub.notify(SignatureNotification<1>(block.Signer, block.Signature, blockData));
 					break;
 				}

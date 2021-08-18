@@ -26,6 +26,7 @@
 #include "catapult/io/FileQueue.h"
 #include "catapult/io/RawFile.h"
 #include "catapult/utils/Logging.h"
+#include "BlockGeneratorAccountDescriptor.h"
 #include <optional>
 
 namespace catapult { namespace harvesting {
@@ -36,7 +37,7 @@ namespace catapult { namespace harvesting {
 		}
 	}
 
-	std::optional<crypto::KeyPair> TryDecryptBlockGeneratorAccountDescriptor(
+	std::optional<BlockGeneratorAccountDescriptor> TryDecryptBlockGeneratorAccountDescriptor(
 			const RawBuffer& publicKeyPrefixedEncryptedPayload,
 			const crypto::KeyPair& encryptionKeyPair) {
 		std::vector<uint8_t> decrypted;
@@ -50,14 +51,15 @@ namespace catapult { namespace harvesting {
 		};
 
 		auto signingKeyPair = extractKeyPair();
-		return std::optional(std::move(signingKeyPair));
+		auto vrfKeyPair = extractKeyPair();
+		return std::optional(BlockGeneratorAccountDescriptor(std::move(signingKeyPair), std::move(vrfKeyPair)));
 	}
 
 	void UnlockedFileQueueConsumer(
 			const config::CatapultDirectory& directory,
 			Height maxHeight,
 			const crypto::KeyPair& encryptionKeyPair,
-			const consumer<const HarvestRequest&, crypto::KeyPair&&>& processDescriptor) {
+			const consumer<const HarvestRequest&, BlockGeneratorAccountDescriptor&&>& processDescriptor) {
 		io::FileQueueReader reader(directory.str());
 		auto appendMessage = [maxHeight, &encryptionKeyPair, &processDescriptor](const auto& buffer) {
 			// filter out invalid requests

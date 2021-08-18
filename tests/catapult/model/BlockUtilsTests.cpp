@@ -422,7 +422,7 @@ namespace catapult { namespace model {
 			auto pBlock = CreateBlock(context, static_cast<NetworkIdentifier>(0x17), signer.publicKey(), transactions);
 
 			// Assert:
-			ASSERT_EQ(sizeof(BlockHeader) + SumTransactionSizes(transactions), pBlock->Size);
+			ASSERT_EQ(sizeof(BlockHeaderV4) + SumTransactionSizes(transactions), pBlock->Size);
 			EXPECT_EQ(Signature(), pBlock->Signature);
 
 			EXPECT_EQ(signer.publicKey(), pBlock->Signer);
@@ -462,8 +462,8 @@ namespace catapult { namespace model {
 		template<typename TContainerTraits>
 		void AssertCanStitchBlock(size_t numTransactions) {
 			// Arrange:
-			BlockHeader blockHeader;
-			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(&blockHeader), sizeof(BlockHeader) });
+			BlockHeaderV4 blockHeader;
+			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(&blockHeader), sizeof(BlockHeaderV4) });
 
 			auto randomTransactions = test::GenerateRandomTransactions(numTransactions);
 			auto transactions = TContainerTraits::MapTransactions(randomTransactions);
@@ -472,12 +472,12 @@ namespace catapult { namespace model {
 			auto pBlock = StitchBlock(blockHeader, transactions);
 
 			// Assert:
-			ASSERT_EQ(sizeof(BlockHeader) + SumTransactionSizes(transactions), pBlock->Size);
+			ASSERT_EQ(sizeof(BlockHeaderV4) + SumTransactionSizes(transactions), pBlock->Size);
 
 			EXPECT_EQ_MEMORY(
-					reinterpret_cast<const uint8_t*>(&blockHeader) + sizeof(BlockHeader::Size),
-					reinterpret_cast<const uint8_t*>(pBlock.get()) + sizeof(BlockHeader::Size),
-					sizeof(BlockHeader) - sizeof(BlockHeader::Size));
+					reinterpret_cast<const uint8_t*>(&blockHeader) + sizeof(BlockHeaderV4::Size),
+					reinterpret_cast<const uint8_t*>(pBlock.get()) + sizeof(BlockHeaderV4::Size),
+					sizeof(BlockHeaderV4) - sizeof(BlockHeaderV4::Size));
 
 			AssertTransactionsInBlock(*pBlock, transactions);
 		}

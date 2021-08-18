@@ -27,7 +27,7 @@ namespace catapult { namespace model {
 
 #define TEST_CLASS BlockTests
 
-	TEST(TEST_CLASS, EntityHasExpectedSize) {
+	TEST(TEST_CLASS, BlockHeaderHasExpectedSize) {
 		// Arrange:
 		auto expectedSize =
 				sizeof(VerifiableEntity) // base
@@ -49,6 +49,27 @@ namespace catapult { namespace model {
 
 		EXPECT_EQ(sizeof(BlockHeader), sizeof(decltype(Block()))); // use decltype to bypass lint rule
 	}
+		TEST(TEST_CLASS, BlockHeaderV4HasExpectedSize) {
+			// Arrange:
+			auto expectedSize =
+					sizeof(VerifiableEntity) // base
+					+ sizeof(uint64_t) // height
+					+ sizeof(uint64_t) // timestamp
+					+ sizeof(uint64_t) // difficulty
+					+ sizeof(uint32_t) // fee multiplier
+					+ sizeof(crypto::VrfProof) // VRF Proof size
+					+ Hash256_Size // previous block hash
+					+ Hash256_Size // block transactions hash
+					+ Hash256_Size // block receipts hash
+					+ Hash256_Size // state hash
+					+ Key_Size // beneficiary
+					+ sizeof(uint32_t) // fee interest
+					+ sizeof(uint32_t); // fee interest divisibility
+
+			// Assert:
+			EXPECT_EQ(expectedSize, sizeof(BlockHeaderV4));
+			EXPECT_EQ(106u + 196u + 80u, sizeof(BlockHeaderV4));
+		}
 
 	// region test utils
 
@@ -98,7 +119,7 @@ namespace catapult { namespace model {
 	DATA_POINTER_TEST(TransactionsAreAccessibleWhenBlockHasTransactions) {
 		// Arrange:
 		auto pBlock = CreateBlockWithTransactions();
-		const auto* pBlockEnd = test::AsVoidPointer(pBlock.get() + 1);
+		const auto* pBlockEnd = test::AsVoidPointer(reinterpret_cast<const BlockHeaderV4*>(pBlock.get()) + 1);
 		auto& accessor = TTraits::GetAccessor(*pBlock);
 
 		// Act + Assert:
@@ -112,8 +133,8 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, GetTransactionPayloadSizeReturnsCorrectPayloadSize) {
 		// Arrange:
-		BlockHeader header;
-		header.Size = sizeof(BlockHeader) + 123;
+		BlockHeaderV4 header;
+		header.Size = sizeof(BlockHeaderV4) + 123;
 
 		// Act:
 		auto payloadSize = GetTransactionPayloadSize(header);
@@ -143,7 +164,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, SizeInvalidWhenReportedSizeIsLessThanHeaderSize) {
 		// Arrange:
-		auto pBlock = CreateBlockWithReportedSize(sizeof(BlockHeader) - 1);
+		auto pBlock = CreateBlockWithReportedSize(sizeof(BlockHeaderV4) - 1);
 
 		// Act + Assert:
 		EXPECT_FALSE(IsSizeValid(*pBlock));
@@ -151,7 +172,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, SizeValidWhenReportedSizeIsEqualToHeaderSize) {
 		// Arrange:
-		auto pBlock = CreateBlockWithReportedSize(sizeof(BlockHeader));
+		auto pBlock = CreateBlockWithReportedSize(sizeof(BlockHeaderV4));
 
 		// Act + Assert:
 		EXPECT_TRUE(IsSizeValid(*pBlock));
@@ -163,7 +184,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, SizeInvalidWhenAnyTransactionHasPartialHeader) {
 		// Arrange: create a block with 1 extra byte (which should be interpeted as a partial tx header)
-		auto pBlock = CreateBlockWithReportedSize(sizeof(BlockHeader) + 1);
+		auto pBlock = CreateBlockWithReportedSize(sizeof(BlockHeaderV4) + 1);
 
 		// Act + Assert:
 		EXPECT_FALSE(IsSizeValid(*pBlock));

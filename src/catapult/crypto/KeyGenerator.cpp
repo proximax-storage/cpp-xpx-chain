@@ -29,8 +29,8 @@ extern "C" {
 
 namespace catapult { namespace crypto {
 
-	template<>
-	void ExtractPublicKeyFromPrivateKey<1>(const PrivateKey& privateKey, Key& publicKey) {
+
+	void ExtractPublicKeyFromPrivateKeySha3(const PrivateKey& privateKey, Key& publicKey) {
 		Hash512 h;
 		ge_p3 A;
 
@@ -43,8 +43,8 @@ namespace catapult { namespace crypto {
 		ge_scalarmult_base(&A, h.data());
 		ge_p3_tobytes(publicKey.data(), &A);
 	}
-	template<>
-	void ExtractPublicKeyFromPrivateKey<2>(const PrivateKey& privateKey, Key& publicKey) {
+
+	void ExtractPublicKeyFromPrivateKeySha2(const PrivateKey& privateKey, Key& publicKey) {
 		ed25519_publickey(privateKey.data(), publicKey.data());
 	}
 }}

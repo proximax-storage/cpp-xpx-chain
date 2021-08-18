@@ -167,4 +167,10 @@ namespace catapult {
 
 	struct VmVersion_tag {};
 	using VmVersion = utils::BaseValue<uint64_t, VmVersion_tag>;
+
+	/// Gets the size of the specified type as an unsigned 32 bit value.
+	template<typename T>
+	constexpr uint32_t SizeOf32() {
+		return static_cast<uint32_t>(sizeof(T));
+	}
 }

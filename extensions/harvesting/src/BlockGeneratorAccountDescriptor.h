@@ -20,26 +20,35 @@
 **/
 
 #pragma once
-#include "HarvestRequest.h"
-#include "catapult/functions.h"
-#include "BlockGeneratorAccountDescriptor.h"
-#include <string>
-#include <optional>
-#include <catapult/crypto/KeyPair.h>
-namespace catapult { namespace config { class CatapultDirectory; } }
+#include "catapult/crypto/KeyPair.h"
 
 namespace catapult { namespace harvesting {
 
-	/// Decrypts \a publicKeyPrefixedEncryptedPayload using \a encryptionKeyPair.
-	std::optional<BlockGeneratorAccountDescriptor> TryDecryptBlockGeneratorAccountDescriptor(
-			const RawBuffer& publicKeyPrefixedEncryptedPayload,
-			const crypto::KeyPair& encryptionKeyPair);
+	/// Contains all account dependent information required to generate a block.
+	class BlockGeneratorAccountDescriptor {
+	public:
+		/// Creates default descriptor.
+		BlockGeneratorAccountDescriptor();
 
-	/// Reads (encrypted) harvest requests, with heights no greater than \a maxHeight, from \a directory,
-	/// validates using \a encryptionKeyPair and forwards to \a processDescriptor.
-	void UnlockedFileQueueConsumer(
-			const config::CatapultDirectory& directory,
-			Height maxHeight,
-			const crypto::KeyPair& encryptionKeyPair,
-			const consumer<const HarvestRequest&, BlockGeneratorAccountDescriptor&&>& processDescriptor);
+		/// Creates descriptor around \a signingKeyPair and \a vrfKeyPair.
+		BlockGeneratorAccountDescriptor(crypto::KeyPair&& signingKeyPair, crypto::KeyPair&& vrfKeyPair);
+
+	public:
+		/// Gets the signing key pair.
+		const crypto::KeyPair& signingKeyPair() const;
+
+		/// Gets the vrf key pair.
+		const crypto::KeyPair& vrfKeyPair() const;
+
+	public:
+		/// Returns \c true if this descriptor is equal to \a rhs.
+		bool operator==(const BlockGeneratorAccountDescriptor& rhs) const;
+
+		/// Returns \c true if this descriptor is not equal to \a rhs.
+		bool operator!=(const BlockGeneratorAccountDescriptor& rhs) const;
+
+	private:
+		crypto::KeyPair m_signingKeyPair;
+		crypto::KeyPair m_vrfKeyPair;
+	};
 }}
