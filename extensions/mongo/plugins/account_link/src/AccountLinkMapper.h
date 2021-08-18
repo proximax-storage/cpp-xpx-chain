@@ -30,4 +30,8 @@ namespace catapult { namespace mongo { namespace plugins {
 	/// Creates a mongo node key link transaction plugin.
 	PLUGIN_API
 	std::unique_ptr<MongoTransactionPlugin> CreateNodeKeyLinkTransactionMongoPlugin();
+
+	/// Creates a mongo vrf key link transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<MongoTransactionPlugin> CreateVrfKeyLinkTransactionMongoPlugin();
 }}}

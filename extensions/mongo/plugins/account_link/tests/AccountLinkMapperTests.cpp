@@ -22,6 +22,7 @@
 #include "mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/account_link/src/model/AccountLinkTransaction.h"
 #include "plugins/txes/account_link/src/model/NodeKeyLinkTransaction.h"
+#include "plugins/txes/account_link/src/model/VrfKeyLinkTransaction.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
@@ -33,10 +34,12 @@ namespace catapult { namespace mongo { namespace plugins {
 	namespace {
 		DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(AccountLink, Account)
 		DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(NodeKeyLink, Node)
+		DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(VrfKeyLink, Vrf)
 	}
 
 	DEFINE_BASIC_MONGO_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Account, _Account,  model::Entity_Type_Account_Link)
 	DEFINE_BASIC_MONGO_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Node, _Node,  model::Entity_Type_Node_Key_Link)
+	DEFINE_BASIC_MONGO_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Vrf, _Vrf,  model::Entity_Type_Vrf_Key_Link)
 
 	#undef PLUGIN_TEST
 
@@ -48,6 +51,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
 		PLUGIN_TEST_ENTRY(Account, TEST_NAME) \
 		PLUGIN_TEST_ENTRY(Node, TEST_NAME) \
+		PLUGIN_TEST_ENTRY(Vrf, TEST_NAME) \
 		template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 
