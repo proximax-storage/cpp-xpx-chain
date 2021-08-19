@@ -29,6 +29,9 @@ namespace catapult { namespace model {
 		/// Size of drive.
 		uint64_t DriveSize;
 
+		/// Amount of XPXs to transfer to the drive.
+		Amount VerificationFeeAmount;
+
 		/// Number of replicators.
 		uint16_t ReplicatorCount;
 

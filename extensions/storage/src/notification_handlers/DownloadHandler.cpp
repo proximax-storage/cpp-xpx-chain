@@ -16,7 +16,12 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			pReplicatorService->addConsumer(notification.Consumer, notification.DriveKey, notification.DownloadSize);
+			std::vector<Key> listOfPublicKeys;
+			auto pKey = notification.ListOfPublicKeysPtr;
+		  	for (auto i = 0u; i < notification.ListOfPublicKeysSize; ++pKey, ++i)
+				listOfPublicKeys.push_back(*pKey);
+
+			pReplicatorService->addConsumer(notification.Consumer, std::move(listOfPublicKeys), notification.DownloadSize);
 		});
 	}
 }}

@@ -23,27 +23,35 @@ namespace catapult { namespace plugins {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
-//					auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
-//					auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.NetworkIdentifier));
-//					sub.notify(BalanceTransferNotification<1>(
-//							transaction.Signer, driveAddress, currencyMosaicId, transaction.TransactionFee));
-//					sub.notify(BalanceTransferNotification<1>(
-//							transaction.Signer, driveAddress, currencyMosaicId, Amount(transaction.DownloadSize)));
-//					sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
-//					utils::SwapMosaics(transaction.Signer, { { config::GetUnresolvedStorageMosaicId(config), Amount(transaction.DownloadSize) } }, sub, config, utils::SwapOperation::Buy);
-
-					auto downloadChannelId = CalculateHash(transaction, config.GenerationHash);
+					const auto downloadChannelId = CalculateHash(transaction, config.GenerationHash);
 					sub.notify(DownloadNotification<1>(
 							downloadChannelId,
-							transaction.DriveKey,
 							transaction.Signer,
 							transaction.DownloadSize,
-							transaction.TransactionFee));
+							transaction.ListOfPublicKeysSize,
+							transaction.ListOfPublicKeysPtr()
+					));
+
+					const auto downloadChannelKey = Key(downloadChannelId.array());
+					const auto downloadChannelAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(downloadChannelKey, config.NetworkIdentifier));
+					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
+					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+
+					sub.notify(BalanceTransferNotification<1>(
+							transaction.Signer, downloadChannelAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
+					utils::SwapMosaics(
+							transaction.Signer,
+							downloadChannelKey,
+							{ { streamingMosaicId, Amount(transaction.DownloadSize * transaction.ListOfPublicKeysSize) } },
+							sub,
+							config,
+							utils::SwapOperation::Buy);
+
 					break;
 				}
 
 				default:
-					CATAPULT_LOG(debug) << "invalid version of DownloadChannelTransaction: " << transaction.EntityVersion();
+					CATAPULT_LOG(debug) << "invalid version of DownloadTransaction: " << transaction.EntityVersion();
 				}
 			};
 		}

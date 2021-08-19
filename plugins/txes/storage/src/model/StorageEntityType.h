@@ -30,6 +30,21 @@ namespace catapult { namespace model {
 	/// ReplicatorOnboarding transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, ReplicatorOnboarding, 0x6);
 
+	/// FinishDownload transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, FinishDownload, 0x7);
+
+	/// DownloadPayment transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, DownloadPayment, 0x8);
+
+	/// StoragePayment transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, StoragePayment, 0x9);
+
+	/// DataModificationSingleApproval transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, DataModificationSingleApproval, 0xA);
+
+	/// VerificationPayment transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, VerificationPayment, 0xB);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif

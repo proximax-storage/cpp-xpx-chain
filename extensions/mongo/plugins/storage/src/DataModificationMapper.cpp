@@ -18,6 +18,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		builder << "driveKey" << ToBinary(transaction.DriveKey);
 		builder << "downloadDataCdi" << ToBinary(transaction.DownloadDataCdi);
 		builder << "uploadSize" << static_cast<int64_t>(transaction.UploadSize);
+		builder << "feedbackFeeAmount" << ToInt64(transaction.FeedbackFeeAmount);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(DataModification, StreamDataModificationTransaction)

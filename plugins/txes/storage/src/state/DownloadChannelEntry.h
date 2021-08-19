@@ -30,41 +30,35 @@ namespace catapult { namespace state {
 			return m_consumer;
 		}
 
-        /// Sets \a drive.
-        void setDrive(const Key& drive) {
-            m_drive = drive;
+        /// Sets \a downloadSize of download channel.
+        void setDownloadSize(const uint64_t& downloadSize) {
+			m_downloadSize = downloadSize;
         }
 
-        /// Gets drive.
-        const Key& drive() const {
-            return m_drive;
+		/// Increases download size of the download channel by \a delta.
+		void increaseDownloadSize(const uint64_t& delta) {
+			m_downloadSize = m_downloadSize + delta;
+		}
+
+        /// Gets download size.
+        const uint64_t& downloadSize() const {
+            return m_downloadSize;
         }
 
-        /// Sets \a transactionFee of download channel.
-        void setTransactionFee(const Amount& transactionFee) {
-            m_transactionFee = transactionFee;
-        }
+		/// Gets list of public keys.
+		const std::vector<Key>& listOfPublicKeys() const {
+			return m_listOfPublicKeys;
+		}
 
-        /// Gets transaction fee.
-        const Amount& transactionFee() const {
-            return m_transactionFee;
-        }
-
-        /// Sets \a storageUnits of download channel.
-        void setStorageUnits(const Amount& storageUnits) {
-            m_storageUnits = storageUnits;
-        }
-
-        /// Gets storage units.
-        const Amount& storageUnits() const {
-            return m_storageUnits;
-        }
+		/// Gets list of public keys.
+		std::vector<Key>& listOfPublicKeys() {
+			return m_listOfPublicKeys;
+		}
 
 	private:
 		Key m_consumer;
-		Key m_drive;
-		Amount m_transactionFee;
-		Amount m_storageUnits;
+		uint64_t m_downloadSize; // In Mbytes
+		std::vector<Key> m_listOfPublicKeys;
 	};
 
 	// DownloadChannel channel entry.

@@ -49,8 +49,7 @@ namespace catapult { namespace storage {
 
 					auto replicatorData = storageState.getReplicatorData(m_pReplicatorService->replicatorKey(), state.cache());
 					for (const auto& consumerPair : replicatorData.Consumers) {
-						for (const auto& drivePair : consumerPair.second)
-							m_pReplicatorService->addConsumer(consumerPair.first, drivePair.first, drivePair.second);
+						m_pReplicatorService->addConsumer(consumerPair.first, consumerPair.second.first, consumerPair.second.second);
 					}
 
 					for (const auto& pair : replicatorData.Drives) {
@@ -109,7 +108,7 @@ namespace catapult { namespace storage {
 			return m_keyPair.publicKey();
 		}
 
-		std::map<Key, std::map<Key, uint64_t>>& consumers() {
+		std::map<Key, std::pair<std::vector<Key>, uint64_t>>& consumers() {
 			return m_consumers;
 		}
 
@@ -192,26 +191,29 @@ namespace catapult { namespace storage {
 			driveModifications.erase(iter);
 		}
 
-		void addConsumer(const Key& consumer, const Key& driveKey, uint64_t downloadSize) {
-			CATAPULT_LOG(debug) << "adding consumer:\ndrive: " << driveKey << "\nconsumer: " << consumer
-				<< "\n download size: " << downloadSize;
+		void addConsumer(const Key& consumer, const std::vector<Key> listOfPublicKeys, const uint64_t downloadSize) {
+			CATAPULT_LOG(debug) << "adding consumer:\nconsumer: " << consumer << "\npublic keys in list: " << listOfPublicKeys.size() << "\ndownload size: " << downloadSize;
 
-			m_consumers[consumer][driveKey] += downloadSize;
+			m_consumers[consumer].first = listOfPublicKeys;
+			m_consumers[consumer].second = downloadSize;
 		}
 
-		void removeConsumer(const Key& consumer, const Key& driveKey) {
-			CATAPULT_LOG(debug) << "removing consumer:\ndrive: " << driveKey << "\nconsumer: " << consumer;
+		void removeConsumer(const Key& consumer) {
+			CATAPULT_LOG(debug) << "removing consumer: " << consumer;
 
 			if (m_consumers.find(consumer) == m_consumers.end())
 				CATAPULT_THROW_INVALID_ARGUMENT_1("consumer not found", consumer);
 
-			auto consumerData = m_consumers.at(consumer);
-			if (consumerData.find(driveKey) == consumerData.end())
-				CATAPULT_THROW_INVALID_ARGUMENT_2("consumer is not added to drive", consumer, driveKey);
+			m_consumers.erase(consumer);
+		}
 
-			consumerData.erase(driveKey);
-			if (consumerData.empty())
-				m_consumers.erase(consumer);
+		void increaseDownloadSize(const Key& consumer, const uint64_t downloadSizeDelta) {
+			CATAPULT_LOG(debug) << "increasing prepaid download size:\nconsumer: " << consumer << "\ndownload size delta: " << downloadSizeDelta;
+
+			if (m_consumers.find(consumer) == m_consumers.end())
+				CATAPULT_THROW_INVALID_ARGUMENT_1("consumer not found", consumer);
+
+			m_consumers.at(consumer).second += downloadSizeDelta;
 		}
 
 		FileNames startDownloadFiles(const Key& consumer, const Key& driveKey, FileNames&& fileNames) {
@@ -227,12 +229,8 @@ namespace catapult { namespace storage {
 			}
 
 			auto consumerData = m_consumers.at(consumer);
-			if (consumerData.find(driveKey) == consumerData.end()) {
-				CATAPULT_LOG(warning) << "consumer " << consumer << " is not added to drive " << driveKey;
-				return remainingFiles;
-			}
+			auto& downloadLimit = consumerData.second;
 
-			auto& downloadLimit = consumerData.at(driveKey);
 			std::filesystem::path driveDirectory = m_storageConfig.StorageDirectory;
 			auto fileCount = remainingFiles.size();
 			for (auto i = 0u; i < fileCount; ++i) {
@@ -252,10 +250,7 @@ namespace catapult { namespace storage {
 
 				downloadLimit -= fileSize;
 				if (!downloadLimit) {
-					consumerData.erase(driveKey);
-					if (consumerData.empty())
-						m_consumers.erase(consumer);
-
+					m_consumers.erase(consumer);
 					return remainingFiles;
 				}
 			}
@@ -384,7 +379,7 @@ namespace catapult { namespace storage {
 		std::shared_ptr<sirius::drive::Session> m_pSession;
 		std::map<Key, std::shared_ptr<sirius::drive::Drive>> m_drives;
 		std::map<Key, std::vector<std::pair<Hash256, sirius::drive::InfoHash>>> m_driveModifications;
-		std::map<Key, std::map<Key, uint64_t>> m_consumers;
+		std::map<Key, std::pair<std::vector<Key>, uint64_t>> m_consumers;
 		std::map<std::string, libtorrent::torrent_handle> m_fileDownloads;
 		std::mutex m_mutex;
 		bool m_stopped;
@@ -439,14 +434,14 @@ namespace catapult { namespace storage {
 			m_pImpl->removeDriveModification(driveKey, dataModificationId);
 	}
 
-	void ReplicatorService::addConsumer(const Key& consumer, const Key& driveKey, uint64_t downloadSize) {
+	void ReplicatorService::addConsumer(const Key& consumer, const std::vector<Key> listOfPublicKeys, const uint64_t downloadSize) {
 		if (m_pImpl)
-			m_pImpl->addConsumer(consumer, driveKey, downloadSize);
+			m_pImpl->addConsumer(consumer, listOfPublicKeys, downloadSize);
 	}
 
-	void ReplicatorService::removeConsumer(const Key& consumer, const Key& driveKey) {
+	void ReplicatorService::removeConsumer(const Key& consumer) {
 		if (m_pImpl)
-			m_pImpl->removeConsumer(consumer, driveKey);
+			m_pImpl->removeConsumer(consumer);
 	}
 
 	FileNames ReplicatorService::startDownloadFiles(const Key& consumer, const Key& driveKey, FileNames&& fileNames) {

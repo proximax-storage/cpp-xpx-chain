@@ -27,19 +27,29 @@ namespace catapult { namespace model {
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Download, 1)
 
 	public:
-		/// Key of drive.
-		Key DriveKey;
-
 		/// Prepaid Download Size.
 		uint64_t DownloadSize;
 
 		/// XPXs to lock for future payment for.
-		Amount TransactionFee;
+		Amount FeedbackFeeAmount;
+
+		/// Size of the list of public keys
+		uint16_t ListOfPublicKeysSize;
+
+		/// List of public keys
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(ListOfPublicKeys, Key)
+
+	private:
+		template<typename T>
+		static auto* ListOfPublicKeysPtrT(T& transaction) {
+			auto* pPayloadStart = THeader::PayloadStart(transaction);
+			return transaction.ListOfPublicKeysSize ? pPayloadStart : nullptr;
+		}
 
 	public:
 		// Calculates the real size of a storage \a transaction.
-		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
-			return sizeof(TransactionType);
+		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
+			return sizeof(TransactionType) + transaction.ListOfPublicKeysSize * sizeof(Key);
 		}
 	};
 

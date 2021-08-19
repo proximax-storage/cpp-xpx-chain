@@ -30,6 +30,72 @@ namespace catapult { namespace model {
 	/// Defines a replicator onboarding notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v1, 0x0007);
 
+	/// Defines a finish download notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Finish_Download_v1, 0x0008);
+
+	/// Defines a download payment notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Payment_v1, 0x0009);
+
+	/// Defines a storage payment notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Storage_Payment_v1, 0x000A);
+
+	/// Defines a data modification single approval notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Single_Approval_v1, 0x000B);
+
+	/// Defines a verification payment notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Verification_Payment_v1, 0x000C);
+
+	struct DownloadWork : public UnresolvedAmountData {
+	public:
+		DownloadWork(const Key& driveKey, const Key& replicator)
+				: DriveKey(driveKey)
+				, Replicator(replicator)
+		{}
+
+	public:
+		Key DriveKey;
+		Key Replicator;
+	};
+
+	// TODO: Inherit from DownloadWork?
+	struct UploadWork : public UnresolvedAmountData {
+	public:
+		UploadWork(const Key& driveKey, const Key& replicator, const uint8_t& opinion)
+				: DriveKey(driveKey)
+				, Replicator(replicator)
+				, Opinion(opinion)
+		{}
+
+	public:
+		Key DriveKey;
+		Key Replicator;
+		uint8_t Opinion;
+	};
+
+	struct DownloadPayment : public UnresolvedAmountData {
+	public:
+		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)
+				: DownloadChannelId(downloadChannelId)
+				, DownloadSize(downloadSize)
+		{}
+
+	public:
+		Hash256 DownloadChannelId;
+		uint64_t DownloadSize;
+	};
+
+	struct StreamingWork : public UnresolvedAmountData {
+	public:
+		StreamingWork(const Key& driveKey, const uint64_t& uploadSize)
+				: DriveKey(driveKey)
+				, UploadSize(uploadSize)
+		{}
+
+	public:
+		Key DriveKey;
+		uint64_t UploadSize;
+	};
+
 	/// Notification of a data modification.
 	template<VersionType version>
 	struct DataModificationNotification;
@@ -85,24 +151,22 @@ namespace catapult { namespace model {
 	public:
 		explicit DownloadNotification(
 			const Hash256& id,
-			const Key& drive,
 			const Key& consumer,
 			uint64_t downloadSize,
-			const Amount& transactionFee)
+			const uint16_t& listOfPublicKeysSize,
+			const Key* listOfPublicKeysPtr)
 			: Notification(Notification_Type, sizeof(DownloadNotification<1>))
 			, Id(id)
-			, DriveKey(drive)
 			, Consumer(consumer)
 			, DownloadSize(downloadSize)
-			, TransactionFee(transactionFee)
+			, ListOfPublicKeysSize(listOfPublicKeysSize)
+			, ListOfPublicKeysPtr(listOfPublicKeysPtr)
+
 		{}
 
 	public:
 		/// Identifier of the download channel.
 		Hash256 Id;
-
-		/// Public key of the drive multisig account.
-		Key DriveKey;
 
 		/// Public key of the download consumer.
 		Key Consumer;
@@ -110,8 +174,11 @@ namespace catapult { namespace model {
 		/// Delta size of download.
 		uint64_t DownloadSize;
 
-		/// Delta transaction fee in xpx.
-		Amount TransactionFee;
+		/// Size of the list of public keys
+		uint16_t ListOfPublicKeysSize;
+
+		/// List of public keys.
+		const Key* ListOfPublicKeysPtr;
 	};
 
 	/// Notification of a drive preparation.
@@ -271,5 +338,165 @@ namespace catapult { namespace model {
 
 		/// The storage size that the replicator provides to the system.
 		Amount Capacity;
+	};
+
+	/// Notification of a finish download.
+	template<VersionType version>
+	struct FinishDownloadNotification;
+
+	template<>
+	struct FinishDownloadNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Finish_Download_v1_Notification;
+
+	public:
+		explicit FinishDownloadNotification(
+				const Key& signer,
+				const Hash256& downloadChannelId)
+				: Notification(Notification_Type, sizeof(FinishDownloadNotification<1>))
+				, PublicKey(signer)
+				, DownloadChannelId(downloadChannelId)
+		{}
+
+	public:
+		/// Key of the signer.
+		Key PublicKey;
+
+		/// The identifier of the download channel.
+		Hash256 DownloadChannelId;
+	};
+
+	/// Notification of a download payment.
+	template<VersionType version>
+	struct DownloadPaymentNotification;
+
+	template<>
+	struct DownloadPaymentNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Download_Payment_v1_Notification;
+
+	public:
+		explicit DownloadPaymentNotification(
+				const Key& signer,
+				const Hash256& downloadChannelId,
+				const uint64_t downloadSize)
+				: Notification(Notification_Type, sizeof(DownloadPaymentNotification<1>))
+				, PublicKey(signer)
+				, DownloadChannelId(downloadChannelId)
+				, DownloadSize(downloadSize)
+		{}
+
+	public:
+		/// Key of the signer.
+		Key PublicKey;
+
+		/// The identifier of the download channel.
+		Hash256 DownloadChannelId;
+
+		/// Download size to add to the prepaid size of the download channel.
+		uint64_t DownloadSize;
+	};
+
+	/// Notification of a storage payment.
+	template<VersionType version>
+	struct StoragePaymentNotification;
+
+	template<>
+	struct StoragePaymentNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Storage_Payment_v1_Notification;
+
+	public:
+		explicit StoragePaymentNotification(
+				const Key& signer,
+				const Key& driveKey)
+				: Notification(Notification_Type, sizeof(StoragePaymentNotification<1>))
+				, PublicKey(signer)
+				, DriveKey(driveKey)
+		{}
+
+	public:
+		/// Key of the signer.
+		Key PublicKey;
+
+		/// Key of the drive.
+		Key DriveKey;
+	};
+
+	/// Notification of a data modification single approval.
+	template<VersionType version>
+	struct DataModificationSingleApprovalNotification;
+
+	template<>
+	struct DataModificationSingleApprovalNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Data_Modification_Single_Approval_v1_Notification;
+
+	public:
+		explicit DataModificationSingleApprovalNotification(
+				const Key& signer,
+				const Key& driveKey,
+				const Hash256& dataModificationId,
+				const uint16_t uploadOpinionPairCount,
+				const Key* uploaderKeysPtr,
+				const uint8_t* uploadOpinionPtr)
+				: Notification(Notification_Type, sizeof(DataModificationSingleApprovalNotification<1>))
+				, PublicKey(signer)
+				, DriveKey(driveKey)
+				, DataModificationId(dataModificationId)
+				, UploadOpinionPairCount(uploadOpinionPairCount)
+				, UploaderKeysPtr(uploaderKeysPtr)
+				, UploadOpinionPtr(uploadOpinionPtr)
+		{}
+
+	public:
+		/// Key of the signer.
+		Key PublicKey;
+
+		/// Key of drive.
+		Key DriveKey;
+
+		/// Identifier of the transaction that initiated the modification.
+		Hash256 DataModificationId;
+
+		/// Number of key-opinion pairs in the payload.
+		uint16_t UploadOpinionPairCount;
+
+		/// List of the Uploader keys (current Replicators of the Drive or the Drive Owner).
+		const Key* UploaderKeysPtr;
+
+		/// Opinion about how much each Uploader has uploaded to the signer in percents.
+		const uint8_t* UploadOpinionPtr;
+	};
+
+	/// Notification of a verification payment.
+	template<VersionType version>
+	struct VerificationPaymentNotification;
+
+	template<>
+	struct VerificationPaymentNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Verification_Payment_v1_Notification;
+
+	public:
+		explicit VerificationPaymentNotification(
+				const Key& owner,
+				const Key& driveKey)
+				: Notification(Notification_Type, sizeof(VerificationPaymentNotification<1>))
+				, Owner(owner)
+				, DriveKey(driveKey)
+		{}
+
+	public:
+		/// Public key of the drive owner.
+		Key Owner;
+
+		/// Key of drive.
+		Key DriveKey;
 	};
 }}

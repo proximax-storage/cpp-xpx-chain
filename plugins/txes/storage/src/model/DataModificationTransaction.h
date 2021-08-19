@@ -36,6 +36,9 @@ namespace catapult { namespace model {
 		/// Size of upload.
 		uint64_t UploadSize;
 
+		/// Amount of XPXs to transfer to the drive.
+		Amount FeedbackFeeAmount;
+
 	public:
 		// Calculates the real size of a data modification \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {

@@ -38,10 +38,10 @@ namespace catapult { namespace validators {
 	/// Validation failed DataModificationTransaction is Active.
 	DEFINE_STORAGE_RESULT(Data_Modification_Is_Active, 8);
 
-	/// Validation failed Transaction Signer is not Drive owner.
+	/// Validation failed because transaction signer is not an owner of the drive or download channel.
 	DEFINE_STORAGE_RESULT(Is_Not_Owner, 9);
 
-	/// Validation failed becaouse drive does not exist.
+	/// Validation failed because drive does not exist.
 	DEFINE_STORAGE_RESULT(Drive_Not_Found, 10);
 
 	/// Validation failed because the data modification already exists.
@@ -58,6 +58,27 @@ namespace catapult { namespace validators {
 
 	/// Validation failed because no replicator registered.
 	DEFINE_STORAGE_RESULT(Replicator_Already_Registered, 15);
+
+	/// Respective download channel is not found.
+	DEFINE_STORAGE_RESULT(Download_Channel_Not_Found, 16);
+
+	/// Signer of the transaction is not allowed to issue transactions of such type.
+	DEFINE_STORAGE_RESULT(Invalid_Transaction_Signer, 17);
+
+	/// Respective drive is not assigned to respective replicator.
+	DEFINE_STORAGE_RESULT(Drive_Not_Assigned_To_Replicator, 18);
+
+	/// There are no data modifications in completedDataModifications with 'succeeded' state.
+	DEFINE_STORAGE_RESULT(No_Approved_Data_Modifications, 19);
+
+	/// Not every key in replicator's upload opinion appears exactly once.
+	DEFINE_STORAGE_RESULT(Opinion_Reocurring_Keys, 20);
+
+	/// The key in upload opinion is neither a key of one of the current replicators of the drive nor a key of the drive owner.
+	DEFINE_STORAGE_RESULT(Opinion_Invalid_Key, 21);
+
+	/// Percents in replicator's upload opinion do not sum up to 100.
+	DEFINE_STORAGE_RESULT(Opinion_Incorrect_Percentage, 22);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
