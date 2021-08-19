@@ -113,17 +113,17 @@ namespace catapult { namespace mongo { namespace mappers {
 			Key tempVal;
 			if(supplementalKeysDocument["linked"])
 			{
-				DbBinaryToModelArray(tempVal, supplementalKeysDocument["linked"].get_binary());
+				DbBinaryToModelArray(tempVal, supplementalKeysDocument["linked"]["publicKey"].get_binary());
 				keys.linked().set(tempVal);
 			}
 			if(supplementalKeysDocument["node"])
 			{
-				DbBinaryToModelArray(tempVal, supplementalKeysDocument["node"].get_binary());
+				DbBinaryToModelArray(tempVal, supplementalKeysDocument["node"]["publicKey"].get_binary());
 				keys.linked().set(tempVal);
 			}
 			if(supplementalKeysDocument["vrf"])
 			{
-				DbBinaryToModelArray(tempVal, supplementalKeysDocument["vrf"].get_binary());
+				DbBinaryToModelArray(tempVal, supplementalKeysDocument["vrf"]["publicKey"].get_binary());
 				keys.linked().set(tempVal);
 			}
 		}

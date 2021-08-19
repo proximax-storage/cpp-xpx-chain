@@ -50,6 +50,12 @@ namespace catapult { namespace crypto {
 
 		/// Scalar.
 		ProofScalar Scalar;
+
+	public:
+		bool isEmpty()
+		{
+			return Gamma == ProofGamma() && VerificationHash == ProofVerificationHash() && Scalar == ProofScalar();
+		}
 	};
 
 #pragma pack(pop)

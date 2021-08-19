@@ -21,6 +21,7 @@
 
 #include "KeyTestUtils.h"
 #include "Random.h"
+#include "src/catapult/exceptions.h"
 
 namespace catapult { namespace test {
 

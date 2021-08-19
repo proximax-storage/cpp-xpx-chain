@@ -43,6 +43,12 @@ namespace catapult { namespace chain {
 	/// Validation failed because the unconfirmed cache is too full.
 	DEFINE_CHAIN_RESULT(Unconfirmed_Cache_Too_Full, 201);
 
+	/// Validation failed because a block was received that has an invalid vrf proof.
+	DEFINE_CHAIN_RESULT(Block_Invalid_Vrf_Proof, 107);
+
+	/// Validation failed because a block was received that has an unknown signer.
+	DEFINE_CHAIN_RESULT(Block_Unknown_Signer, 108);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

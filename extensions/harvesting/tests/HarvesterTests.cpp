@@ -61,11 +61,13 @@ namespace catapult { namespace harvesting {
 		}
 		std::vector<state::AccountState*> CreateAccounts(
 				cache::AccountStateCacheDelta& cache,
-				const std::vector<KeyPair>& keyPairs) {
+				const std::vector<KeyPair>& keyPairs,
+				const std::vector<KeyPair>& vrfKeyPairs) {
 			std::vector<state::AccountState*> accountStates;
 			for (auto i = 0u; i < keyPairs.size(); ++i) {
 				cache.addAccount(keyPairs[i].publicKey(), Height(1));
 				auto& accountState = cache.find(keyPairs[i].publicKey()).get();
+				accountState.SupplementalPublicKeys.vrf().set(vrfKeyPairs[i].publicKey());
 				auto& balances = accountState.Balances;
 				balances.credit(Harvesting_Mosaic_Id, Amount(1'000'000'000'000'000), Height(1));
 				balances.track(Harvesting_Mosaic_Id);
@@ -98,7 +100,7 @@ namespace catapult { namespace harvesting {
 			config.Network.TotalChainImportance = test::Default_Total_Chain_Importance;
 			config.Network.GreedDelta = 0.5;
 			config.Network.GreedExponent = 2.0;
-
+			config.Network.AccountVersion = 2;
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 2;
 
@@ -115,18 +117,19 @@ namespace catapult { namespace harvesting {
 					: Config(CreateConfiguration())
 					, Cache(test::CreateEmptyCatapultCache(Config))
 					, KeyPairs(CreateKeyPairs(Num_Accounts))
+					, VrfKeyPairs(CreateKeyPairs(Num_Accounts))
 					, Beneficiary(test::GenerateRandomByteArray<Key>())
 					, pUnlockedAccounts(std::make_unique<UnlockedAccounts>(Num_Accounts, [](const auto&) { return 0; }))
 					, pLastBlock(CreateBlock())
 					, LastBlockElement(test::BlockToBlockElement(*pLastBlock)) {
 				auto delta = Cache.createDelta();
-				AccountStates = CreateAccounts(delta.sub<cache::AccountStateCache>(), KeyPairs);
+				AccountStates = CreateAccounts(delta.sub<cache::AccountStateCache>(), KeyPairs, VrfKeyPairs);
 
 				auto& difficultyCache = delta.sub<cache::BlockDifficultyCache>();
 				state::BlockDifficultyInfo info(pLastBlock->Height, pLastBlock->Timestamp, pLastBlock->Difficulty);
 				difficultyCache.insert(info);
 				Cache.commit(Height(1));
-				UnlockAllAccounts(*pUnlockedAccounts, KeyPairs);
+				UnlockAllAccounts(*pUnlockedAccounts, KeyPairs, VrfKeyPairs);
 
 				LastBlockElement.GenerationHash = test::GenerateRandomByteArray<GenerationHash>();
 			}
@@ -152,16 +155,23 @@ namespace catapult { namespace harvesting {
 			}
 
 		private:
-			static void UnlockAllAccounts(UnlockedAccounts& unlockedAccounts, const std::vector<KeyPair>& keyPairs) {
-				auto modifier = unlockedAccounts.modifier();
-				for (const auto& keyPair : keyPairs)
-					modifier.add(test::CopyKeyPair(keyPair));
+			static void UnlockAllAccounts(
+				UnlockedAccounts& unlockedAccounts,
+				const std::vector<KeyPair>& signingKeyPairs,
+				const std::vector<KeyPair>& vrfKeyPairs) {
+					auto modifier = unlockedAccounts.modifier();
+					for (auto i = 0u; i < Num_Accounts; ++i) {
+						modifier.add(BlockGeneratorAccountDescriptor(
+								test::CopyKeyPair(signingKeyPairs[i]),
+								test::CopyKeyPair(vrfKeyPairs[i])), 2);
+					}
 			}
 
 		public:
 			config::BlockchainConfiguration Config;
 			cache::CatapultCache Cache;
 			std::vector<KeyPair> KeyPairs;
+			std::vector<KeyPair> VrfKeyPairs;
 			Key Beneficiary;
 			std::vector<state::AccountState*> AccountStates;
 			std::unique_ptr<UnlockedAccounts> pUnlockedAccounts;
@@ -350,7 +360,7 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		HarvesterContext context;
 		auto pHarvester = context.CreateHarvester();
-		auto firstPublicKey = context.pUnlockedAccounts->view().begin()->first.publicKey();
+		auto firstPublicKey = get<0>(*context.pUnlockedAccounts->view().begin()).signingKeyPair().publicKey();
 
 		// Act:
 		auto pBlock = pHarvester->harvest(context.LastBlockElement, Max_Time);
