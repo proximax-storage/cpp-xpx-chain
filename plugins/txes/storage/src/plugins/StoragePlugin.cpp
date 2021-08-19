@@ -19,6 +19,7 @@
 #include "src/plugins/StoragePaymentTransactionPlugin.h"
 #include "src/plugins/DataModificationSingleApprovalTransactionPlugin.h"
 #include "src/plugins/VerificationPaymentTransactionPlugin.h"
+#include "src/plugins/FinishDriveVerificationTransactionPlugin.h"
 #include "src/state/CachedStorageState.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
@@ -82,6 +83,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateStoragePaymentTransactionPlugin());
 		manager.addTransactionSupport(CreateDataModificationSingleApprovalTransactionPlugin());
 		manager.addTransactionSupport(CreateVerificationPaymentTransactionPlugin());
+		manager.addTransactionSupport(CreateFinishDriveVerificationTransactionPlugin());
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 		  	switch (unresolved.Type) {

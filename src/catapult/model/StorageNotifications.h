@@ -45,6 +45,9 @@ namespace catapult { namespace model {
 	/// Defines a verification payment notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Verification_Payment_v1, 0x000C);
 
+	/// Defines a finish drive verification notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Finish_Drive_Verification_v1, 0x000D);
+
 	struct DownloadWork : public UnresolvedAmountData {
 	public:
 		DownloadWork(const Key& driveKey, const Key& replicator)
@@ -498,5 +501,48 @@ namespace catapult { namespace model {
 
 		/// Key of drive.
 		Key DriveKey;
+	};
+
+	/// Notification of a finish drive verification.
+	template<VersionType version>
+	struct FinishDriveVerificationNotification;
+
+	template<>
+	struct FinishDriveVerificationNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Finish_Drive_Verification_v1_Notification;
+
+	public:
+		explicit FinishDriveVerificationNotification(
+				const Key &signer,
+				const Key &driveKey,
+				const Hash256 &verificationTrigger,
+				const uint16_t verificationOpinionPairCount,
+				const Key* proversPtr,
+				const bool* verificationOpinionPtr)
+				: Notification(Notification_Type, sizeof(FinishDriveVerificationNotification<1>))
+				, PublicKey(signer)
+				, DriveKey(driveKey)
+				, VerificationOpinionPairCount(verificationOpinionPairCount)
+				, ProversPtr(proversPtr)
+				, VerificationOpinionPtr(verificationOpinionPtr)
+		{}
+
+	public:
+		/// Key of the signer
+		Key PublicKey;
+
+		/// Key of the drive.
+		Key DriveKey;
+
+		/// Number of key-opinion pairs in the payload.
+		uint16_t VerificationOpinionPairCount;
+
+		/// List of the Provers keys.
+		const Key* ProversPtr;
+
+		/// Opinion about verification status for each Prover. Success or Failure.
+		const bool* VerificationOpinionPtr;
 	};
 }}
