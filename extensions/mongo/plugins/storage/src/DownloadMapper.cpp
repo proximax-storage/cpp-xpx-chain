@@ -15,9 +15,14 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	template<typename TTransaction>
 	void StreamDownloadTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-		builder << "driveKey" << ToBinary(transaction.DriveKey);
 		builder << "downloadSize" << static_cast<int64_t>(transaction.DownloadSize);
-		builder << "transactionFee" << ToInt64(transaction.TransactionFee);
+		builder << "feedbackFeeAmount" << ToInt64(transaction.FeedbackFeeAmount);
+
+		auto array = builder << "listOfPublicKeys" << bson_stream::open_array;
+		auto pKey = transaction.ListOfPublicKeysPtr();
+		for (auto i = 0; i < transaction.ListOfPublicKeysSize; ++i, ++pKey)
+			array << ToBinary(*pKey);
+		array << bson_stream::close_array;
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(Download, StreamDownloadTransaction)

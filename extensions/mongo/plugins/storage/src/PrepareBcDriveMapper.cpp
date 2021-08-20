@@ -16,6 +16,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	template<typename TTransaction>
 	void StreamPrepareBcDriveTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "driveSize" << static_cast<int64_t>(transaction.DriveSize);
+		builder << "verificationFeeAmount" << ToInt64(transaction.VerificationFeeAmount);
 		builder << "replicatorCount" << transaction.ReplicatorCount;
 	}
 
