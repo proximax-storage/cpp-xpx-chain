@@ -21,26 +21,45 @@ namespace catapult { namespace plugins {
 			case 1: {
 				sub.notify(ReplicatorOnboardingNotification<1>(
 					transaction.Signer,
-					transaction.Capacity
+					transaction.Capacity,
 				));
 
 				const auto signerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier));
 				const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
-
+				const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+				
+				//swap xpx to storage unit
+				SwapMosaics(
+					transaction.Signer, 
+					{ model::UnresolvedMosaic{ storageMosaicId, Amount(transaction.Capacity) } },
+					sub,
+					config.Immutable,
+					Buy
+				);
+				
 				// Payments for storage deposit serve as proof of space
 				sub.notify(BalanceDebitNotification<1>(
 					signerAddress,
-					storageMosaicId
+					storageMosaicId,
+					Amount(transaction.Capacity),
 				));
 
-				const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+				//swap xpx to streaming unit
+				SwapMosaics(
+					transaction.Signer, 
+					{ model::UnresolvedMosaic{ streamingMosaicId, Amount(transaction.Capacity * 2) } }, 
+					sub,
+					config.immutable,
+					Buy
+				);
 
 				//Payments for streaming deposit serve as proof of space (2 x of storage deposit)
 				sub.notify(BalanceDebitNotification<1>)(
 					signerAddress,
-					streamingMosaicId
+					streamingMosaicId,
+					Amount(transaction.Capacity * 2),
 				));
-
+				
 				break;
 			}
 

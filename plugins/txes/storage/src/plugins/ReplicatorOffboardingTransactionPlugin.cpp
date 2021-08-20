@@ -25,22 +25,41 @@ namespace catapult { namespace plugins {
 
 				const auto signerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier));
 				const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
+				const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+
+				//swap storage unit to xpx
+				SwapMosaics(
+					transaction.Signer, 
+					{ model::UnresolvedMosaic{ storageMosaicId, Amount(signerState) } },
+					sub,
+					config.Immutable,
+					Sell
+				);
 
 				// Payments for Storage Deposit Returning to signer
 				sub.notify(BalanceCreditNotification<1>(
 					signerAddress,
-					storageMosaicId
+					storageMosaicId,
+					Amount(signerState)
 				));
 
-				const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+				//swap streaming unit to xpx
+				auto streamingUnitXPX = SwapMosaics(
+					transaction.Signer, 
+					{ model::UnresolvedMosaic{ streamingMosaicId, Amount() } },
+					sub,
+					config.Immutable,
+					Sell
+				);
 
 				//Payments for streaming deposit return (streaming deposit minus streaming deposit slashing)
 				sub.notify(BalanceCreditNotification<1>)(
 					signerAddress,
-					streamingMosaicId
+					streamingMosaicId,
+					streamingUnitXPX
 				));
 
-				//Payment for streamming deposit slashing 
+				//Transfer for streamming deposit slashing 
 				sub.notify(BalanceCreditNotification<1>)(
 					signerAddress,
 					streamingMosaicId
