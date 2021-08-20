@@ -221,19 +221,18 @@ pipeline {
                         }
                     }
                 }
-
-                stage('Build Manifest and Push'){
-                    agent {
-                        label 'docker-c6g-xlarge'
-                    }
-                    steps {
-                        script {
-                            sh """
-                                docker manifest create ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH} ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}-arm64 ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}-amd64
-                                docker manifest push ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}
-                            """
-                        }
-                    }
+            }
+        }
+        stage('Build Manifest and Push'){
+            agent {
+                label 'docker-c6g-xlarge'
+            }
+            steps {
+                script {
+                    sh """
+                        docker manifest create ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH} ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}-arm64 ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}-amd64
+                        docker manifest push ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}
+                    """
                 }
             }
         }
