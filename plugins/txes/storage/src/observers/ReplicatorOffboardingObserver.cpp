@@ -35,8 +35,8 @@ namespace catapult { namespace observers {
 		//Total drive size served
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		uint64_t driveSize = 0;
-		for(const Key& driveKey : replicatorEntry.drives()){
-			auto driveIter = driveCache.find(driveKey);
+		for(const auto& iter : replicatorEntry.drives()){
+			auto driveIter = driveCache.find(iter.first);
 			const auto& drive = driveIter.get();		
 			deposit += drive.size();
 		}
@@ -46,6 +46,14 @@ namespace catapult { namespace observers {
 		else
 			replicatorState.Balances.debit(storageMosaicId, Amount(deposit), context.Height);
 
-		
+		//UsedDriveSize of last approved by the Replicator modification
+
+        // UsedDriveSize of last approved modification on the Drive 
+        uint64_t usedDriveSizeOnDrive = 0;
+        for(const auto& iter : replicatorEntry.drives()){
+            auto driveIter = driveCache.find(iter.first);
+            const auto& drive = driveIter.get();        
+            usedDriveSizeOnDrive += drive.usedSize();
+        }
 	});
 }}
