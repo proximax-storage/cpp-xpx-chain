@@ -229,10 +229,12 @@ pipeline {
             }
             steps {
                 script {
-                    sh """
-                        docker manifest create ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH} ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}-arm64 ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}-amd64
-                        docker manifest push ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}
-                    """
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                        sh """
+                            docker manifest create ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH} ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}-arm64 ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}-amd64
+                            docker manifest push ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}
+                        """
+                    }
                 }
             }
         }
