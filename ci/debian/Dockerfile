@@ -1,4 +1,4 @@
-FROM debian:stable-slim
+FROM debian:bullseye-slim
 COPY ./deps /
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libboost-stacktrace-dev \
   libboost-random-dev \
   libzstd-dev \
-  librocksdb5.17 
+  librocksdb6.11 
 
 COPY _build/bin /sirius/bin
 
