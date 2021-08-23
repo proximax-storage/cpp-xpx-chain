@@ -86,18 +86,18 @@ namespace catapult { namespace test {
 		EXPECT_EQ(expectedEncryptedPayloads, actualEncryptedPayloads);
 	}
 
-	std::vector<crypto::KeyPair> GenerateRandomAccountDescriptors(size_t numDescriptors) {
-		std::vector<crypto::KeyPair> descriptors;
+	std::vector<harvesting::BlockGeneratorAccountDescriptor> GenerateRandomAccountDescriptors(size_t numDescriptors) {
+		std::vector<harvesting::BlockGeneratorAccountDescriptor> descriptors;
 		for (auto i = 0u; i < numDescriptors; ++i)
-			descriptors.emplace_back(GenerateKeyPair());
+			descriptors.emplace_back(GenerateKeyPair(), GenerateKeyPair());
 
 		return descriptors;
 	}
 
-	std::vector<uint8_t> ToClearTextBuffer(const crypto::KeyPair& descriptor) {
-		std::vector<uint8_t> clearText(Key::Size);
-		std::memcpy(&clearText[0], descriptor.privateKey().data(), Key::Size);
-
+	std::vector<uint8_t> ToClearTextBuffer(const harvesting::BlockGeneratorAccountDescriptor& descriptor) {
+		std::vector<uint8_t> clearText(2 * Key::Size);
+		std::memcpy(&clearText[0], descriptor.signingKeyPair().privateKey().data(), Key::Size);
+		std::memcpy(&clearText[Key::Size], descriptor.vrfKeyPair().privateKey().data(), Key::Size);
 		return clearText;
 	}
 }}

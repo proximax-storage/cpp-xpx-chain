@@ -20,6 +20,7 @@
 
 #include "harvesting/src/UnlockedAccounts.h"
 #include "tests/test/core/AddressTestUtils.h"
+#include "tests/test/core/KeyPairTestUtils.h"
 #include "tests/test/nodeps/LockTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -28,28 +29,67 @@ namespace catapult { namespace harvesting {
 #define TEST_CLASS UnlockedAccountsTests
 
 	namespace {
-		struct KeyPairWrapper {
+		struct AccountDescriptorWrapper {
 		public:
-			crypto::KeyPair KeyPair;
-			Key PublicKey;
+			BlockGeneratorAccountDescriptor Descriptor;
+			Key SigningPublicKey;
+			Key VrfPublicKey;
 
 		public:
-			KeyPairWrapper() : KeyPair(test::GenerateKeyPair()), PublicKey(KeyPair.publicKey())
+			AccountDescriptorWrapper()
+					: Descriptor(test::GenerateKeyPair(), test::GenerateKeyPair())
+					, SigningPublicKey(Descriptor.signingKeyPair().publicKey())
+					, VrfPublicKey(Descriptor.vrfKeyPair().publicKey())
 			{}
 		};
 
-		KeyPairWrapper GenerateKeyPairWrapper() {
-			return KeyPairWrapper();
+		AccountDescriptorWrapper GenerateAccountDescriptorWrapper() {
+			return AccountDescriptorWrapper();
 		}
 
 		struct TestContext {
 		public:
-			explicit TestContext(size_t maxSize) : Accounts(maxSize, [](const auto&) { return 0; })
+			explicit TestContext(size_t maxSize) : Accounts(maxSize, [this](const auto& publicKey) {
+			  auto iter = CustomPrioritizationMap.find(publicKey);
+			  return CustomPrioritizationMap.cend() != iter ? iter->second : 0;
+			})
 			{}
 
 		public:
 			UnlockedAccounts Accounts;
+			std::unordered_map<Key, size_t, utils::ArrayHasher<Key>> CustomPrioritizationMap;
 		};
+
+		UnlockedAccountsAddResult AddAccount(TestContext& context, BlockGeneratorAccountDescriptor&& descriptor) {
+			return context.Accounts.modifier().add(std::move(descriptor), 2);
+		}
+
+		UnlockedAccountsAddResult AddRandomAccount(TestContext& context) {
+			return AddAccount(context, GenerateAccountDescriptorWrapper().Descriptor);
+		}
+
+	}
+
+	namespace {
+		std::pair<Key, size_t> GetPrioritizedVrfPublicKey(const UnlockedAccountsView& accountsView, const Key& signingPublicKey) {
+			auto index = 0u;
+			auto vrfPublicKey = Key();
+			accountsView.forEach([&signingPublicKey, &index, &vrfPublicKey](const auto& descriptor) {
+			  if (descriptor.signingKeyPair().publicKey() != signingPublicKey) {
+				  ++index;
+				  return true;
+			  }
+
+			  vrfPublicKey = descriptor.vrfKeyPair().publicKey();
+			  return false;
+			});
+
+			return std::make_pair(vrfPublicKey, index);
+		}
+
+		Key GetVrfPublicKey(const UnlockedAccountsView& accountsView, const Key& signingPublicKey) {
+			return GetPrioritizedVrfPublicKey(accountsView, signingPublicKey).first;
+		}
 	}
 
 	TEST(TEST_CLASS, InitiallyContainerIsEmpty) {
@@ -63,109 +103,204 @@ namespace catapult { namespace harvesting {
 
 	TEST(TEST_CLASS, CanAddHarvestingEligibleAccount) {
 		// Arrange:
-		auto keyPairWrapper = GenerateKeyPairWrapper();
+		auto accountDescriptorWrapper = GenerateAccountDescriptorWrapper();
 		TestContext context(8);
 		auto& accounts = context.Accounts;
 
 		// Act:
-		auto result = accounts.modifier().add(std::move(keyPairWrapper.KeyPair));
+		auto result = accounts.modifier().add(std::move(accountDescriptorWrapper.Descriptor), 2);
 
 		// Assert:
 		auto view = accounts.view();
 		EXPECT_EQ(UnlockedAccountsAddResult::Success_New, result);
 		EXPECT_EQ(1u, view.size());
-		EXPECT_TRUE(view.contains(keyPairWrapper.PublicKey));
+		EXPECT_TRUE(view.contains(accountDescriptorWrapper.SigningPublicKey));
+
+		// - vrf public key is properly associated
+		EXPECT_FALSE(view.contains(accountDescriptorWrapper.VrfPublicKey));
+		EXPECT_EQ(accountDescriptorWrapper.VrfPublicKey, GetVrfPublicKey(view, accountDescriptorWrapper.SigningPublicKey));
 	}
 
-	TEST(TEST_CLASS, AdditionOfAlreadyAddedAccountHasNoEffect) {
+	TEST(TEST_CLASS, CanAddMultipleAccountsToContainer) {
 		// Arrange:
-		constexpr auto Private_Key_String = "3485d98efd7eb07adafcfd1a157d89de2796a95e780813c0258af3f5f84ed8cb";
-		auto keyPair1 = crypto::KeyPair::FromString(Private_Key_String);
-		auto keyPair2 = crypto::KeyPair::FromString(Private_Key_String);
-		auto publicKey = keyPair1.publicKey();
+		auto accountDescriptorWrapper1 = GenerateAccountDescriptorWrapper();
+		auto accountDescriptorWrapper2 = GenerateAccountDescriptorWrapper();
+		TestContext context(8);
+		auto& accounts = context.Accounts;
+
+		// Act:
+		{
+			auto modifier = accounts.modifier();
+			modifier.add(std::move(accountDescriptorWrapper1.Descriptor), 2);
+			modifier.add(std::move(accountDescriptorWrapper2.Descriptor), 2);
+		}
+
+		// Assert:
+		auto view = accounts.view();
+		EXPECT_EQ(2u, view.size());
+		EXPECT_TRUE(view.contains(accountDescriptorWrapper1.SigningPublicKey));
+		EXPECT_TRUE(view.contains(accountDescriptorWrapper2.SigningPublicKey));
+
+		// - vrf public keys are properly associated
+		EXPECT_FALSE(view.contains(accountDescriptorWrapper1.VrfPublicKey));
+		EXPECT_FALSE(view.contains(accountDescriptorWrapper2.VrfPublicKey));
+		EXPECT_EQ(accountDescriptorWrapper1.VrfPublicKey, GetVrfPublicKey(view, accountDescriptorWrapper1.SigningPublicKey));
+		EXPECT_EQ(accountDescriptorWrapper2.VrfPublicKey, GetVrfPublicKey(view, accountDescriptorWrapper2.SigningPublicKey));
+	}
+
+	TEST(TEST_CLASS, AdditionOfAlreadyAddedAccountUpdatesVrfPublicKey) {
+		// Arrange:
+		auto signingKeyPair = test::GenerateKeyPair();
+		auto vrfKeyPair1 = test::GenerateKeyPair();
+		auto vrfKeyPair2 = test::GenerateKeyPair();
 
 		TestContext context(8);
 		auto& accounts = context.Accounts;
 
 		// Act:
-		auto result1 = accounts.modifier().add(std::move(keyPair1));
-		auto result2 = accounts.modifier().add(std::move(keyPair2));
+		auto result1 = accounts.modifier().add(BlockGeneratorAccountDescriptor(
+				test::CopyKeyPair(signingKeyPair),
+				test::CopyKeyPair(vrfKeyPair1)), 2);
+		auto result2 = accounts.modifier().add(BlockGeneratorAccountDescriptor(
+				test::CopyKeyPair(signingKeyPair),
+				test::CopyKeyPair(vrfKeyPair2)), 2);
 
 		// Assert:
 		auto view = accounts.view();
 		EXPECT_EQ(UnlockedAccountsAddResult::Success_New, result1);
 		EXPECT_EQ(UnlockedAccountsAddResult::Success_Update, result2);
 		EXPECT_EQ(1u, view.size());
-		EXPECT_TRUE(view.contains(publicKey));
+		EXPECT_TRUE(view.contains(signingKeyPair.publicKey()));
+
+		// - last vrf public key is properly associated
+		EXPECT_FALSE(view.contains(vrfKeyPair1.publicKey()));
+		EXPECT_FALSE(view.contains(vrfKeyPair2.publicKey()));
+		EXPECT_EQ(vrfKeyPair2.publicKey(), GetVrfPublicKey(view, signingKeyPair.publicKey()));
 	}
 
-	TEST(TEST_CLASS, CanAddMultipleAccountsToContainer) {
+	TEST(TEST_CLASS, AdditionOfAlreadyAddedAccountUpdatesVrfPublicKeyAndPreservesPriority) {
 		// Arrange:
-		auto keyPairWrapper1 = GenerateKeyPairWrapper();
-		auto keyPairWrapper2 = GenerateKeyPairWrapper();
+		auto signingKeyPair1 = test::GenerateKeyPair();
+		auto signingKeyPair2 = test::GenerateKeyPair();
+		auto vrfKeyPair1 = test::GenerateKeyPair();
+		auto vrfKeyPair2 = test::GenerateKeyPair();
+
 		TestContext context(8);
 		auto& accounts = context.Accounts;
 
-		// Act:
-		{
-			auto modifier = accounts.modifier();
-			modifier.add(std::move(keyPairWrapper1.KeyPair));
-			modifier.add(std::move(keyPairWrapper2.KeyPair));
-		}
+		// - add account 1 with priority 3
+		context.CustomPrioritizationMap[signingKeyPair1.publicKey()] = 3;
+		accounts.modifier().add(BlockGeneratorAccountDescriptor(test::CopyKeyPair(signingKeyPair1), test::CopyKeyPair(vrfKeyPair1)), 2);
+
+		// Act: lower account 1 priority and update VRF
+		context.CustomPrioritizationMap[signingKeyPair1.publicKey()] = 1;
+		auto result = accounts.modifier().add(BlockGeneratorAccountDescriptor(
+				test::CopyKeyPair(signingKeyPair1),
+				test::CopyKeyPair(vrfKeyPair2)), 2);
+
+		// - add account 2 with in-between priority
+		context.CustomPrioritizationMap[signingKeyPair2.publicKey()] = 2;
+		accounts.modifier().add(BlockGeneratorAccountDescriptor(test::CopyKeyPair(signingKeyPair2), test::GenerateKeyPair()), 2);
 
 		// Assert:
 		auto view = accounts.view();
+		EXPECT_EQ(UnlockedAccountsAddResult::Success_Update, result);
 		EXPECT_EQ(2u, view.size());
-		EXPECT_TRUE(view.contains(keyPairWrapper1.PublicKey));
-		EXPECT_TRUE(view.contains(keyPairWrapper2.PublicKey));
+		EXPECT_TRUE(view.contains(signingKeyPair1.publicKey()));
+		EXPECT_TRUE(view.contains(signingKeyPair2.publicKey()));
+
+		// - last vrf public key is properly associated and retains original (highest) priority
+		EXPECT_FALSE(view.contains(vrfKeyPair1.publicKey()));
+		EXPECT_FALSE(view.contains(vrfKeyPair2.publicKey()));
+
+		const auto& vrfPrioritizedPublicKey = GetPrioritizedVrfPublicKey(view, signingKeyPair1.publicKey());
+		EXPECT_EQ(vrfKeyPair2.publicKey(), vrfPrioritizedPublicKey.first);
+		EXPECT_EQ(0u, vrfPrioritizedPublicKey.second);
 	}
 
-	TEST(TEST_CLASS, CanRemoveAccountFromContainer) {
-		// Arrange:
-		auto keyPairWrapper1 = GenerateKeyPairWrapper();
-		auto keyPairWrapper2 = GenerateKeyPairWrapper();
-		TestContext context(8);
-		auto& accounts = context.Accounts;
+		TEST(TEST_CLASS, CanRemoveAccountFromContainer) {
+			// Arrange:
+			auto accountDescriptorWrapper1 = GenerateAccountDescriptorWrapper();
+			auto accountDescriptorWrapper2 = GenerateAccountDescriptorWrapper();
+			TestContext context(8);
+			auto& accounts = context.Accounts;
 
-		{
-			auto modifier = accounts.modifier();
-			modifier.add(std::move(keyPairWrapper1.KeyPair));
-			modifier.add(std::move(keyPairWrapper2.KeyPair));
+			{
+				auto modifier = accounts.modifier();
+				modifier.add(std::move(accountDescriptorWrapper1.Descriptor), 2);
+				modifier.add(std::move(accountDescriptorWrapper2.Descriptor), 2);
+			}
+
+			// Sanity:
+			EXPECT_EQ(2u, accounts.view().size());
+
+			// Act:
+			auto removeResult = accounts.modifier().remove(accountDescriptorWrapper1.SigningPublicKey);
+
+			// Assert:
+			EXPECT_TRUE(removeResult);
+
+			auto view = accounts.view();
+			EXPECT_EQ(1u, view.size());
+			EXPECT_FALSE(view.contains(accountDescriptorWrapper1.SigningPublicKey));
+			EXPECT_TRUE(view.contains(accountDescriptorWrapper2.SigningPublicKey));
 		}
 
-		// Sanity:
-		EXPECT_EQ(2u, accounts.view().size());
+		TEST(TEST_CLASS, RemovalOfAccountNotInContainerHasNoEffect) {
+			// Arrange:
+			auto accountDescriptorWrapper = GenerateAccountDescriptorWrapper();
+			TestContext context(8);
+			auto& accounts = context.Accounts;
 
-		// Act:
-		accounts.modifier().remove(keyPairWrapper1.PublicKey);
+			// Act:
+			auto result = accounts.modifier().add(std::move(accountDescriptorWrapper.Descriptor), 2);
+			auto removeResult = accounts.modifier().remove(test::GenerateKeyPair().publicKey());
 
-		// Assert:
-		auto view = accounts.view();
-		EXPECT_EQ(1u, view.size());
-		EXPECT_FALSE(view.contains(keyPairWrapper1.PublicKey));
-		EXPECT_TRUE(view.contains(keyPairWrapper2.PublicKey));
-	}
+			// Assert:
+			EXPECT_FALSE(removeResult);
 
-	TEST(TEST_CLASS, RemovalOfAccountNotInContainerHasNoEffect) {
-		// Arrange:
-		auto keyPairWrapper = GenerateKeyPairWrapper();
-		TestContext context(8);
-		auto& accounts = context.Accounts;
+			auto view = accounts.view();
+			EXPECT_EQ(UnlockedAccountsAddResult::Success_New, result);
+			EXPECT_EQ(1u, view.size());
+			EXPECT_TRUE(view.contains(accountDescriptorWrapper.SigningPublicKey));
+		}
 
-		// Act:
-		auto result = accounts.modifier().add(std::move(keyPairWrapper.KeyPair));
-		accounts.modifier().remove(test::GenerateKeyPair().publicKey());
 
-		// Assert:
-		auto view = accounts.view();
-		EXPECT_EQ(UnlockedAccountsAddResult::Success_New, result);
-		EXPECT_EQ(1u, view.size());
-		EXPECT_TRUE(view.contains(keyPairWrapper.PublicKey));
-	}
+	// region forEach iteration
 
 	namespace {
-		UnlockedAccountsAddResult AddAccount(TestContext& context, crypto::KeyPair&& keyPair) {
-			return context.Accounts.modifier().add(std::move(keyPair));
+		struct AccountPublicKeys {
+		public:
+			Key SigningPublicKey;
+			Key VrfPublicKey;
+
+		public:
+			constexpr bool operator==(const AccountPublicKeys& rhs) const {
+				return SigningPublicKey == rhs.SigningPublicKey && VrfPublicKey == rhs.VrfPublicKey;
+			}
+		};
+
+		std::vector<AccountPublicKeys> AddAccounts(TestContext& context, size_t numAccounts) {
+			std::vector<AccountPublicKeys> publicKeys;
+			for (auto i = 0u; i < numAccounts; ++i) {
+				auto accountDescriptorWrapper = GenerateAccountDescriptorWrapper();
+				publicKeys.push_back({ accountDescriptorWrapper.SigningPublicKey, accountDescriptorWrapper.VrfPublicKey });
+				AddAccount(context, std::move(accountDescriptorWrapper.Descriptor));
+			}
+
+			return publicKeys;
+		}
+
+		std::vector<AccountPublicKeys> ExtractAllPublicKeysOrdered(
+				const UnlockedAccountsView& view,
+				size_t maxPublicKeys = std::numeric_limits<size_t>::max()) {
+			std::vector<AccountPublicKeys> publicKeys;
+			view.forEach([maxPublicKeys, &publicKeys](const auto& descriptor) {
+			  publicKeys.push_back({ descriptor.signingKeyPair().publicKey(), descriptor.vrfKeyPair().publicKey() });
+			  return publicKeys.size() < maxPublicKeys;
+			});
+
+			return publicKeys;
 		}
 	}
 
@@ -173,23 +308,65 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		TestContext context(8);
 		const auto& accounts = context.Accounts;
-
-		std::set<Key> expectedPublicKeys;
-		for (auto i = 0u; i < 4; ++i) {
-			auto keyPair = test::GenerateKeyPair();
-			expectedPublicKeys.insert(keyPair.publicKey());
-			AddAccount(context, std::move(keyPair));
-		}
+		auto expectedPublicKeys = AddAccounts(context, 4);
 
 		// Act:
 		auto view = accounts.view();
-		std::set<Key> actualPublicKeys;
-		for (const auto& keyPair : view)
-			actualPublicKeys.insert(keyPair.first.publicKey());
+		auto actualPublicKeys = ExtractAllPublicKeysOrdered(view);
 
 		// Assert:
 		EXPECT_EQ(4u, view.size());
 		EXPECT_EQ(expectedPublicKeys, actualPublicKeys);
+	}
+
+	TEST(TEST_CLASS, CanShortCircuitIterateOverAllAccounts) {
+		// Arrange:
+		TestContext context(8);
+		const auto& accounts = context.Accounts;
+
+		auto expectedPublicKeys = AddAccounts(context, 4);
+		expectedPublicKeys.pop_back();
+		expectedPublicKeys.pop_back();
+
+		// Act:
+		auto view = accounts.view();
+		auto actualPublicKeys = ExtractAllPublicKeysOrdered(view, 2);
+
+		// Assert:
+		EXPECT_EQ(4u, view.size());
+		EXPECT_EQ(2u, actualPublicKeys.size());
+		EXPECT_EQ(expectedPublicKeys, actualPublicKeys);
+	}
+
+	TEST(TEST_CLASS, ForEachReturnsAccountsInStableDecreasingOrderOfPriority) {
+		// Arrange:
+		constexpr auto Num_Accounts = 12u;
+		TestContext context(15);
+		const auto& accounts = context.Accounts;
+
+		// -     priorities: 2 1 0 2 1 0 2 1 0 2 1 0
+		// - sorted indexes: 0 4 8 1 5 9 2 6 A 3 7 B
+		std::vector<Key> expectedPublicKeys;
+		for (auto i = 0u; i < Num_Accounts; ++i) {
+			auto accountDescriptorWrapper = GenerateAccountDescriptorWrapper();
+			expectedPublicKeys.push_back(accountDescriptorWrapper.SigningPublicKey);
+			context.CustomPrioritizationMap.emplace(accountDescriptorWrapper.SigningPublicKey, 2 - (i % 3));
+			AddAccount(context, std::move(accountDescriptorWrapper.Descriptor));
+		}
+
+		// Act:
+		auto view = accounts.view();
+		auto actualPublicKeys = ExtractAllPublicKeysOrdered(view);
+
+		// Assert:
+		EXPECT_EQ(Num_Accounts, view.size());
+		EXPECT_EQ(Num_Accounts, actualPublicKeys.size());
+		for (auto i = 0u; i < Num_Accounts; ++i) {
+			auto expectedIndex = (i / 4) + 3 * (i % 4);
+			EXPECT_EQ(expectedPublicKeys[expectedIndex], actualPublicKeys[i].SigningPublicKey)
+							<< "expected index = " << expectedIndex
+							<< ", actual index = " << i;
+		}
 	}
 
 	TEST(TEST_CLASS, RemovedAccountsAreNotIterated) {
@@ -197,17 +374,11 @@ namespace catapult { namespace harvesting {
 		TestContext context(8);
 		auto& accounts = context.Accounts;
 
-		std::set<Key> expectedPublicKeys;
-		for (auto i = 0u; i < 4; ++i) {
-			auto keyPair = test::GenerateKeyPair();
-			expectedPublicKeys.insert(keyPair.publicKey());
-			AddAccount(context, std::move(keyPair));
-		}
-
+		auto expectedPublicKeys = AddAccounts(context, 4);
 		{
 			auto modifier = accounts.modifier();
-			modifier.remove(*++expectedPublicKeys.cbegin());
-			modifier.remove(*--expectedPublicKeys.cend());
+			modifier.remove((++expectedPublicKeys.cbegin())->SigningPublicKey);
+			modifier.remove((--expectedPublicKeys.cend())->SigningPublicKey);
 		}
 
 		expectedPublicKeys.erase(++expectedPublicKeys.begin());
@@ -215,20 +386,16 @@ namespace catapult { namespace harvesting {
 
 		// Act:
 		auto view = accounts.view();
-		std::set<Key> actualPublicKeys;
-		for (const auto& keyPair : view)
-			actualPublicKeys.insert(keyPair.first.publicKey());
+		auto actualPublicKeys = ExtractAllPublicKeysOrdered(view);
 
 		// Assert:
 		EXPECT_EQ(2u, view.size());
 		EXPECT_EQ(expectedPublicKeys, actualPublicKeys);
 	}
 
-	namespace {
-		UnlockedAccountsAddResult AddRandomAccount(TestContext& context) {
-			return AddAccount(context, test::GenerateKeyPair());
-		}
-	}
+	// endregion
+
+	// region max accounts
 
 	TEST(TEST_CLASS, CanAddMaxAccounts) {
 		// Arrange:
@@ -261,13 +428,13 @@ namespace catapult { namespace harvesting {
 
 	TEST(TEST_CLASS, RemovedAccountsDoNotCountTowardsLimit) {
 		// Arrange:
-		auto keyPairWrapper = GenerateKeyPairWrapper();
+		auto accountDescriptorWrapper = GenerateAccountDescriptorWrapper();
 		TestContext context(8);
 		auto& accounts = context.Accounts;
 
 		// Act:
 		for (auto i = 0u; i < 4; ++i) AddRandomAccount(context);
-		AddAccount(context, std::move(keyPairWrapper.KeyPair));
+		AddAccount(context, std::move(accountDescriptorWrapper.Descriptor));
 		for (auto i = 0u; i < 3; ++i) AddRandomAccount(context);
 
 		// Sanity:
@@ -275,13 +442,93 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(UnlockedAccountsAddResult::Failure_Server_Limit, result);
 
 		// Act:
-		accounts.modifier().remove(keyPairWrapper.PublicKey);
+		accounts.modifier().remove(accountDescriptorWrapper.SigningPublicKey);
 		result = AddRandomAccount(context);
 
 		// Assert:
 		EXPECT_EQ(UnlockedAccountsAddResult::Success_New, result);
 		EXPECT_EQ(8u, accounts.view().size());
 	}
+
+	namespace {
+		void AssertCannotAddMoreThanMaxAccounts(const std::function<size_t (size_t)>& indexToPriorityMap) {
+			// Arrange:
+			TestContext context(8);
+			const auto& accounts = context.Accounts;
+
+			std::vector<AccountPublicKeys> expectedPublicKeys;
+			for (auto i = 0u; i < 8; ++i) {
+				auto accountDescriptorWrapper = GenerateAccountDescriptorWrapper();
+				expectedPublicKeys.push_back({ accountDescriptorWrapper.SigningPublicKey, accountDescriptorWrapper.VrfPublicKey });
+				context.CustomPrioritizationMap.emplace(accountDescriptorWrapper.SigningPublicKey, indexToPriorityMap(i));
+				AddAccount(context, std::move(accountDescriptorWrapper.Descriptor));
+			}
+
+			// Act:
+			auto accountDescriptorWrapper = GenerateAccountDescriptorWrapper();
+			context.CustomPrioritizationMap.emplace(accountDescriptorWrapper.SigningPublicKey, indexToPriorityMap(8));
+			auto result = AddAccount(context, std::move(accountDescriptorWrapper.Descriptor));
+
+			auto view = accounts.view();
+			auto actualPublicKeys = ExtractAllPublicKeysOrdered(view);
+
+			// Assert:
+			EXPECT_EQ(UnlockedAccountsAddResult::Failure_Server_Limit, result);
+			EXPECT_EQ(8u, view.size());
+			EXPECT_EQ(expectedPublicKeys, actualPublicKeys);
+		}
+	}
+
+	TEST(TEST_CLASS, CannotAddMoreThanMaxAccounts_EqualPriority) {
+		AssertCannotAddMoreThanMaxAccounts([](auto) { return 7; });
+	}
+
+	TEST(TEST_CLASS, CannotAddMoreThanMaxAccounts_PriorityLessThan) {
+		AssertCannotAddMoreThanMaxAccounts([](auto i) { return 8 - i; });
+	}
+
+	TEST(TEST_CLASS, CannotAddMoreThanMaxAccounts_PriorityGreaterThan) {
+		// Arrange:
+		constexpr auto Num_Accounts = 8u;
+		TestContext context(Num_Accounts);
+		const auto& accounts = context.Accounts;
+
+		// -     priorities: 4 3 2 1 0 4 3 2
+		// - sorted indexes: 0 2 4 6 7 1 3 5
+		std::vector<AccountPublicKeys> expectedPublicKeys;
+		for (auto i = 0u; i < Num_Accounts; ++i) {
+			auto accountDescriptorWrapper = GenerateAccountDescriptorWrapper();
+			expectedPublicKeys.push_back({ accountDescriptorWrapper.SigningPublicKey, accountDescriptorWrapper.VrfPublicKey });
+			context.CustomPrioritizationMap.emplace(accountDescriptorWrapper.SigningPublicKey, 4 - (i % 5));
+			AddAccount(context, std::move(accountDescriptorWrapper.Descriptor));
+		}
+
+		// Act:
+		auto accountDescriptorWrapper = GenerateAccountDescriptorWrapper();
+		context.CustomPrioritizationMap.emplace(accountDescriptorWrapper.SigningPublicKey, 2);
+
+		// - lowest is popped and new descriptor is second lowest
+		expectedPublicKeys[4] = expectedPublicKeys[3];
+		expectedPublicKeys[3] = { accountDescriptorWrapper.SigningPublicKey, accountDescriptorWrapper.VrfPublicKey };
+
+		auto result = AddAccount(context, std::move(accountDescriptorWrapper.Descriptor));
+
+		auto view = accounts.view();
+		auto actualPublicKeys = ExtractAllPublicKeysOrdered(view);
+
+		// Assert:
+		EXPECT_EQ(UnlockedAccountsAddResult::Success_New, result);
+		EXPECT_EQ(Num_Accounts, view.size());
+
+		auto expectedIndexes = std::vector<size_t>{ 0, 5, 1, 6, 2, 7, 3, 4 };
+		for (auto i = 0u; i < Num_Accounts; ++i) {
+			auto expectedIndex = expectedIndexes[i];
+			EXPECT_EQ(expectedPublicKeys[expectedIndex], actualPublicKeys[i])
+							<< "expected index = " << expectedIndex
+							<< ", actual index = " << i;
+		}
+	}
+	// endregion
 
 	// region removeIf
 
@@ -332,11 +579,11 @@ namespace catapult { namespace harvesting {
 		// Act:
 		auto i = 0u;
 		std::vector<Key> removedKeys;
-		accounts.modifier().removeIf([&](const auto& key) {
+		accounts.modifier().removeIf([&](const auto& descriptor) {
 			if (0 == i++ % 2)
 				return false;
 
-			removedKeys.push_back(key);
+		  removedKeys.push_back(descriptor.signingKeyPair().publicKey());
 			return true;
 		});
 

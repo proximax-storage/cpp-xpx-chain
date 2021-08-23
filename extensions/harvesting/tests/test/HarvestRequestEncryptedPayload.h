@@ -81,8 +81,8 @@ namespace catapult { namespace test {
 	void AssertHarvesterFileContents(const std::string& filename, const HarvestRequestEncryptedPayloads& expectedEncryptedPayloads);
 
 	/// Generates \a numDescriptors random block generator account descriptors.
-	std::vector<crypto::KeyPair> GenerateRandomAccountDescriptors(size_t numDescriptors);
+	std::vector<harvesting::BlockGeneratorAccountDescriptor>  GenerateRandomAccountDescriptors(size_t numDescriptors);
 
 	/// Serializes \a descriptor into a clear text buffer.
-	std::vector<uint8_t> ToClearTextBuffer(const crypto::KeyPair& descriptor);
+	std::vector<uint8_t> ToClearTextBuffer(const harvesting::BlockGeneratorAccountDescriptor& descriptor);
 }}

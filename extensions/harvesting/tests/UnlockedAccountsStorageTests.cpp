@@ -37,7 +37,7 @@ namespace catapult { namespace harvesting {
 
 		// region test utils
 
-		auto PrepareEncryptedPayloads(const Key& recipientPublicKey, const std::vector<crypto::KeyPair>& descriptors) {
+		auto PrepareEncryptedPayloads(const Key& recipientPublicKey, const std::vector<BlockGeneratorAccountDescriptor>& descriptors) {
 			test::HarvestRequestEncryptedPayloads encryptedPayloads;
 			for (const auto& descriptor : descriptors) {
 				auto encryptedPayload = test::PrepareHarvestRequestEncryptedPayload(
@@ -536,14 +536,14 @@ namespace catapult { namespace harvesting {
 	}
 
 	namespace {
-		struct KeyHasher {
-			size_t operator()(const crypto::KeyPair& descriptor) const {
-				return utils::ArrayHasher<Key>()(descriptor.publicKey());
+		struct BlockGeneratorAccountDescriptorHasher {
+			size_t operator()(const BlockGeneratorAccountDescriptor& descriptor) const {
+				return utils::ArrayHasher<Key>()(descriptor.signingKeyPair().publicKey());
 			}
 		};
 
 		using BlockGeneratorKeyDescriptorUnorderedSet =
-			std::unordered_set<crypto::KeyPair, KeyHasher>;
+			std::unordered_set<BlockGeneratorAccountDescriptor, BlockGeneratorAccountDescriptorHasher>;
 
 		auto AppendEncryptedPayloadToFile(const std::string& filename, const test::HarvestRequestEncryptedPayload& encryptedPayload) {
 			io::RawFile output(filename, io::OpenMode::Read_Append);

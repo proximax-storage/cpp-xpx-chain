@@ -561,7 +561,7 @@ namespace catapult { namespace harvesting {
 
 		public:
 			model::UniqueEntityPtr<model::Block> generate(
-					const model::BlockHeader& blockHeader,
+					const model::Block& blockHeader,
 					const std::vector<model::TransactionInfo>& transactionInfos,
 					size_t numUnapplies = 0) const {
 				HarvestingUtFacadeFactory factory(m_cache, m_executionConfig);

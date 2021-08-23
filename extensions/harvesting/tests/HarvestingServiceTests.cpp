@@ -42,10 +42,11 @@ namespace catapult { namespace harvesting {
 		constexpr auto Service_Name = "unlockedAccounts";
 		constexpr auto Task_Name = "harvesting task";
 		constexpr auto Harvester_Key = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
-
+		constexpr auto Harvester_Vrf_Key = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
 		HarvestingConfiguration CreateHarvestingConfiguration(bool autoHarvest) {
 			auto config = HarvestingConfiguration::Uninitialized();
 			config.HarvestKey = Harvester_Key;
+			config.HarvesterVrfPrivateKey = Harvester_Vrf_Key;
 			config.IsAutoHarvestingEnabled = autoHarvest;
 			config.MaxUnlockedAccounts = 10;
 			config.Beneficiary = std::string(64, '0');
@@ -275,7 +276,7 @@ namespace catapult { namespace harvesting {
 			  std::vector<Key> publicKeys;
 			  for (auto& keyPair : keyPairs) {
 				  publicKeys.push_back(keyPair.publicKey());
-				  unlockedAccounts.modifier().add(std::move(keyPair));
+				  unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 2);
 			  }
 
 			  // Assert:
@@ -540,7 +541,7 @@ namespace catapult { namespace harvesting {
 			ASSERT_TRUE(!!pUnlockedAccounts);
 
 			for (auto& keyPair : keyPairs)
-				pUnlockedAccounts->modifier().add(std::move(keyPair));
+				pUnlockedAccounts->modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 2);
 
 			// Sanity:
 			EXPECT_EQ(keyPairs.size(), pUnlockedAccounts->view().size());

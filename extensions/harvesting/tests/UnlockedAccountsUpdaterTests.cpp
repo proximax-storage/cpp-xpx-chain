@@ -59,8 +59,11 @@ namespace catapult { namespace harvesting {
 					, m_primarySigningPublicKey(SeedOptions::Remote == seedOptions ? remoteKeyPair.publicKey() : mainKeyPair.publicKey())
 					, m_encryptionKeyPair(test::GenerateKeyPair())
 					, m_updater(m_cache, m_unlockedAccounts, m_primarySigningPublicKey, m_encryptionKeyPair, CreateBlockChainConfigurationHolder(Default_Height, &m_cache, m_config), m_dataDirectory) {
+
 				if (SeedOptions::Remote == seedOptions) {
-					m_unlockedAccounts.modifier().add(std::move(remoteKeyPair));
+					auto descriptor = BlockGeneratorAccountDescriptor(std::move(remoteKeyPair), test::GenerateKeyPair());
+					auto vrfPublicKey = descriptor.vrfKeyPair().publicKey();
+					m_unlockedAccounts.modifier().add(std::move(descriptor), 2);
 					addAccount(m_primaryMainAccountPublicKey, m_primarySigningPublicKey, Amount(1234));
 
 					modifyAccount(m_primaryMainAccountPublicKey, [](auto& accountState) {
@@ -69,14 +72,15 @@ namespace catapult { namespace harvesting {
 
 					return;
 				}
-
-				m_unlockedAccounts.modifier().add(std::move(mainKeyPair));
+				auto descriptor = BlockGeneratorAccountDescriptor(std::move(mainKeyPair), test::GenerateKeyPair());
+				auto vrfPublicKey = descriptor.vrfKeyPair().publicKey();
+				m_unlockedAccounts.modifier().add(std::move(descriptor), 2);
 
 				if (SeedOptions::Address == seedOptions) {
 					auto address = model::PublicKeyToAddress(m_primarySigningPublicKey, m_config.Immutable.NetworkIdentifier);
-					addMainAccount(address, Amount(1234));
+					addMainAccount(address, vrfPublicKey, Amount(1234));
 				} else {
-					addAccount(m_primarySigningPublicKey, Amount(1234));
+					addAccount(m_primarySigningPublicKey, vrfPublicKey, Amount(1234));
 				}
 			}
 
@@ -126,7 +130,7 @@ namespace catapult { namespace harvesting {
 
 			auto queueAddMessageWithHarvester(
 					const crypto::KeyPair& ephemeralKeyPair,
-					const crypto::KeyPair& descriptor,
+					const BlockGeneratorAccountDescriptor& descriptor,
 					const Key& mainAccountPublicKey,
 					Height height = Default_Height) {
 				auto encryptedPayload = test::PrepareHarvestRequestEncryptedPayload(
@@ -139,13 +143,13 @@ namespace catapult { namespace harvesting {
 			}
 
 			auto queueAddMessageWithHarvester(
-					const crypto::KeyPair& descriptor,
+					const BlockGeneratorAccountDescriptor& descriptor,
 					const Key& mainAccountPublicKey,
 					Height height = Default_Height) {
 				return queueAddMessageWithHarvester(test::GenerateKeyPair(), descriptor, mainAccountPublicKey, height);
 			}
 
-			auto queueAddMessageWithHarvester(const crypto::KeyPair& descriptor) {
+			auto queueAddMessageWithHarvester(const BlockGeneratorAccountDescriptor& descriptor) {
 				return queueAddMessageWithHarvester(descriptor, test::GenerateRandomByteArray<Key>());
 			}
 
@@ -156,7 +160,7 @@ namespace catapult { namespace harvesting {
 				queueMessage(HarvestRequestOperation::Remove, encryptedPayload, mainAccountPublicKey, height);
 			}
 
-			void appendHarvesterDirectlyToHarvestersFile(const crypto::KeyPair& descriptor) {
+			void appendHarvesterDirectlyToHarvestersFile(const BlockGeneratorAccountDescriptor& descriptor) {
 				io::RawFile file(harvestersFilename(), io::OpenMode::Read_Append);
 				file.seek(file.size());
 
@@ -166,8 +170,8 @@ namespace catapult { namespace harvesting {
 				file.write({ reinterpret_cast<const uint8_t*>(&encryptedPayload), sizeof(encryptedPayload) });
 			}
 
-			Key addEnabledAccount(const crypto::KeyPair& descriptor) {
-				return addAccount(descriptor.publicKey(), Amount(1111));
+			Key addEnabledAccount(const BlockGeneratorAccountDescriptor& descriptor) {
+				return addAccount(descriptor.signingKeyPair().publicKey(), descriptor.vrfKeyPair().publicKey(), Amount(1111));
 			}
 
 			void assertHarvesterFileRecords(const test::HarvestRequestEncryptedPayloads& expectedEncryptedPayloads) {
@@ -180,7 +184,7 @@ namespace catapult { namespace harvesting {
 
 		private:
 			template<typename TAccountIdentifier>
-			void addMainAccount(const TAccountIdentifier& accountIdentifier,  Amount balance) {
+			void addMainAccount(const TAccountIdentifier& accountIdentifier, const Key& vrfPublicKey,  Amount balance) {
 				auto delta = m_cache.createDelta();
 				auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 
@@ -188,17 +192,18 @@ namespace catapult { namespace harvesting {
 				auto mainAccountStateIter = accountStateCache.find(accountIdentifier);
 				state::AccountState state = mainAccountStateIter.get();
 				mainAccountStateIter.get().Balances.credit(Harvesting_Mosaic_Id, balance);
+				mainAccountStateIter.get().SupplementalPublicKeys.vrf().set(vrfPublicKey);
 				m_cache.commit(Default_Height);
 			}
 
-			Key addAccount(const Key& signingPublicKey, Amount balance) {
+			Key addAccount(const Key& signingPublicKey, const Key& vrfPublicKey, Amount balance) {
 				auto mainAccountPublicKey = test::GenerateRandomByteArray<Key>();
-				addAccount(mainAccountPublicKey, signingPublicKey, balance);
+				addAccount(mainAccountPublicKey, signingPublicKey, vrfPublicKey, balance);
 				return mainAccountPublicKey;
 			}
 
-			void addAccount(const Key& mainAccountPublicKey, const Key& signingPublicKey, Amount balance) {
-				addMainAccount(mainAccountPublicKey, balance);
+			void addAccount(const Key& mainAccountPublicKey, const Key& signingPublicKey, const Key& vrfPublicKey, Amount balance) {
+				addMainAccount(mainAccountPublicKey, vrfPublicKey, balance);
 
 				auto delta = m_cache.createDelta();
 				auto& accountStateCache = delta.sub<cache::AccountStateCache>();
