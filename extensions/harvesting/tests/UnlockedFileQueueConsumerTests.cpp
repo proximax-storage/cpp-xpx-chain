@@ -69,8 +69,9 @@ namespace catapult { namespace harvesting {
 		auto decryptedPair = TryDecryptBlockGeneratorAccountDescriptor(publicKeyPrefixedEncryptedPayload, recipientKeyPair);
 
 		// Assert:
-		ASSERT_TRUE(decryptedPair.has_value());
-		EXPECT_EQ_MEMORY(clearText.data(), decryptedPair.value().privateKey().data(), Key::Size);
+		ASSERT_TRUE(decryptedPair);
+		EXPECT_EQ_MEMORY(clearText.data(), decryptedPair.value().signingKeyPair().privateKey().data(), Key::Size);
+		EXPECT_EQ_MEMORY(clearText.data() + Key::Size, decryptedPair.value().vrfKeyPair().privateKey().data(), Key::Size);
 	}
 
 	// endregion
@@ -95,19 +96,19 @@ namespace catapult { namespace harvesting {
 			}
 
 			void runConsumerAndAssert(
-					const std::vector<crypto::KeyPair>& descriptors,
+					const std::vector<BlockGeneratorAccountDescriptor>& descriptors,
 					const std::vector<std::vector<uint8_t>>& messages,
 					std::initializer_list<size_t> validIndexes,
 					Height maxHeight = Default_Height) {
 				// Act:
 				config::CatapultDirectory directory(m_directoryGuard.name());
 				std::vector<std::vector<uint8_t>> collectedMessages;
-				std::vector<crypto::KeyPair> collectedDescriptors;
+				std::vector<BlockGeneratorAccountDescriptor> collectedDescriptors;
 				UnlockedFileQueueConsumer(directory, maxHeight, m_keyPair, [&collectedMessages, &collectedDescriptors](
 						const auto& request,
 						auto&& descriptor) {
-					collectedMessages.emplace_back(SerializeHarvestRequest(request));
-					collectedDescriptors.emplace_back(std::move(descriptor));
+				  collectedMessages.emplace_back(SerializeHarvestRequest(request));
+				  collectedDescriptors.emplace_back(std::move(descriptor));
 				});
 
 				// Assert:
@@ -117,11 +118,12 @@ namespace catapult { namespace harvesting {
 						auto index) {
 					EXPECT_EQ(expected, actual) << "message at " << index;
 				});
-				AssertForwarded<crypto::KeyPair>(descriptors, collectedDescriptors, validIndexes, [](
+				AssertForwarded<BlockGeneratorAccountDescriptor>(descriptors, collectedDescriptors, validIndexes, [](
 						const auto& expected,
 						const auto& actual,
 						auto index) {
-					EXPECT_EQ(expected.publicKey(), actual.publicKey()) << "descriptor at " << index;
+				  EXPECT_EQ(expected.signingKeyPair().publicKey(), actual.signingKeyPair().publicKey()) << "descriptor at " << index;
+				  EXPECT_EQ(expected.vrfKeyPair().publicKey(), actual.vrfKeyPair().publicKey()) << "descriptor at " << index;
 				});
 			}
 
@@ -129,14 +131,14 @@ namespace catapult { namespace harvesting {
 			enum class InvalidMessageFlag { Invalid_Tag, Invalid_Decrypted_Data_Size };
 			enum class Sizes { Underflow, Normal, Overflow };
 
-			auto prepareMessage(const crypto::KeyPair& descriptor, Height height = Default_Height) {
+			auto prepareMessage(const BlockGeneratorAccountDescriptor& descriptor, Height height = Default_Height) {
 				auto clearText = test::ToClearTextBuffer(descriptor);
 				auto encryptedPayload = test::PrepareHarvestRequestEncryptedPayload(m_keyPair.publicKey(), clearText);
 				return EncryptedPayloadToMessage(encryptedPayload, height);
 			}
 
 			auto prepareMessages(
-					const std::vector<crypto::KeyPair>& descriptors,
+					const std::vector<BlockGeneratorAccountDescriptor>& descriptors,
 					std::initializer_list<Sizes> messageDeltas) {
 				if (messageDeltas.size() != descriptors.size())
 					CATAPULT_THROW_INVALID_ARGUMENT("arguments sizes mismatch");
@@ -157,7 +159,7 @@ namespace catapult { namespace harvesting {
 				return messages;
 			}
 
-			auto prepareInvalidMessage(const crypto::KeyPair& descriptor, InvalidMessageFlag invalidMessageFlag) {
+			auto prepareInvalidMessage(const BlockGeneratorAccountDescriptor& descriptor, InvalidMessageFlag invalidMessageFlag) {
 				if (InvalidMessageFlag::Invalid_Tag == invalidMessageFlag) {
 					auto messageBuffer = prepareMessage(descriptor);
 					messageBuffer[1 + sizeof(Height) + Key::Size] ^= 0xFF;
