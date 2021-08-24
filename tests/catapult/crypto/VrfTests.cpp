@@ -23,7 +23,6 @@
 #include "catapult/crypto/Hashes.h"
 #include "catapult/crypto/SharedKey.h"
 #include "catapult/utils/HexParser.h"
-#include "tests/test/nodeps/KeyTestUtils.h"
 #include "tests/test/crypto/CurveUtils.h"
 #include "tests/test/nodeps/Alignment.h"
 #include "tests/TestHarness.h"

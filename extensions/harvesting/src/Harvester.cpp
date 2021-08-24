@@ -109,10 +109,10 @@ namespace catapult { namespace harvesting {
 		std::pair<const crypto::KeyPair*, uint32_t> pHarvesterKeyPairWithVersion = std::make_pair(nullptr, 0);
 		crypto::VrfProof vrfProof;
 		for (const auto& unlockedAccountInfo : unlockedAccountsView) {
-			hitContext.Signer = get<0>(unlockedAccountInfo).signingKeyPair().publicKey();
-			if(get<2>(unlockedAccountInfo) > 1)
+			hitContext.Signer = std::get<0>(unlockedAccountInfo).signingKeyPair().publicKey();
+			if(std::get<2>(unlockedAccountInfo) > 1)
 			{
-				vrfProof = crypto::GenerateVrfProof(context.ParentContext.GenerationHash, get<0>(unlockedAccountInfo).vrfKeyPair());
+				vrfProof = crypto::GenerateVrfProof(context.ParentContext.GenerationHash, std::get<0>(unlockedAccountInfo).vrfKeyPair());
 				hitContext.GenerationHash = model::CalculateGenerationHashVrf(vrfProof.Gamma);
 			}
 			else
@@ -120,7 +120,7 @@ namespace catapult { namespace harvesting {
 				hitContext.GenerationHash = model::CalculateGenerationHash(context.ParentContext.GenerationHash, hitContext.Signer);
 			}
 			if (hitPredicate(hitContext)) {
-				pHarvesterKeyPairWithVersion = std::make_pair(&get<0>(unlockedAccountInfo).signingKeyPair(), get<2>(unlockedAccountInfo));
+				pHarvesterKeyPairWithVersion = std::make_pair(&std::get<0>(unlockedAccountInfo).signingKeyPair(), std::get<2>(unlockedAccountInfo));
 				break;
 			}
 

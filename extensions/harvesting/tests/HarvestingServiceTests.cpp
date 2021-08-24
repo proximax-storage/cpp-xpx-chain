@@ -392,7 +392,7 @@ namespace catapult { namespace harvesting {
 		context.setMinHarvesterBalance(Account_Balance);
 
 		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair)](auto& unlockedAccounts, const auto& task) mutable {
-			unlockedAccounts.modifier().add(std::move(keyPair));
+			unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 2);
 
 			// Act:
 			auto result = task.Callback().get();
@@ -411,7 +411,7 @@ namespace catapult { namespace harvesting {
 		context.setMinHarvesterBalance(Account_Balance + Amount(1));
 
 		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair)](auto& unlockedAccounts, const auto& task) mutable {
-			unlockedAccounts.modifier().add(std::move(keyPair));
+			unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 2);
 
 			// Act:
 			auto result = task.Callback().get();
@@ -444,7 +444,7 @@ namespace catapult { namespace harvesting {
 			RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair), &context, &harvestedStateHash](
 					auto& unlockedAccounts,
 					const auto& task) mutable {
-				unlockedAccounts.modifier().add(std::move(keyPair));
+				unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 2);
 
 				// Act:
 				auto result = task.Callback().get();

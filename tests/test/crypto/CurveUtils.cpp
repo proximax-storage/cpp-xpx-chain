@@ -26,7 +26,7 @@ namespace catapult { namespace test {
 
 	void ScalarAddGroupOrder(uint8_t* scalar) {
 		// 2^252 + 27742317777372353535851937790883648493, little endian.
-		auto groupOrder = test::HexStringToVector("EDD3F55C1A631258D69CF7A2DEF9DE1400000000000000000000000000000010");
+		auto groupOrder = test::ToVector("EDD3F55C1A631258D69CF7A2DEF9DE1400000000000000000000000000000010");
 		uint8_t r = 0;
 		for (auto i = 0u; i < groupOrder.size(); ++i) {
 			auto t = static_cast<uint16_t>(scalar[i] + groupOrder[i]);

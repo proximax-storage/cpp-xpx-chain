@@ -231,6 +231,19 @@ namespace catapult { namespace crypto {
 			}
 		}
 	}
+	void GenerateNonce(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce) {
+		Hash512 privHash;
+		HashPrivateKey(privateKey, privHash);
+		Hash512 hash;
+		//CHANGE TO SHA2!!!!
+		Sha3_512_Builder builder;
+		builder.update({ privHash.data() + Hash512::Byte_Size / 2, Hash512::Byte_Size / 2 });
+		builder.update(buffersList);
+		builder.final(hash);
+		expand256_modm(nonce, hash.data(), 64);
+
+		SecureZero(privHash);
+	}
 	// f = flag ? g : f
 	// prerequisite: flag must be 0 or 1
 	void ConditionalMove(bignum25519 f, const bignum25519 g, uint8_t flag) {

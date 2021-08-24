@@ -362,7 +362,7 @@ namespace catapult { namespace harvesting {
 			// Assert:
 			EXPECT_FALSE(!!pBlock1);
 			EXPECT_TRUE(!!pBlock2);
-			EXPECT_EQ(bestKey, pBlock2->Signer);
+			EXPECT_EQ(bestKey.first, pBlock2->Signer);
 			return true;
 		});
 	}
@@ -413,7 +413,7 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		HarvesterContext<TypeParam::value> context;
 		auto pHarvester = context.CreateHarvester();
-		auto firstPublicKey = get<0>(*context.pUnlockedAccounts->view().begin()).signingKeyPair().publicKey();
+		auto firstPublicKey = std::get<0>(*context.pUnlockedAccounts->view().begin()).signingKeyPair().publicKey();
 
 		// Act:
 		auto pBlock = pHarvester->harvest(context.LastBlockElement, Max_Time);
@@ -444,7 +444,7 @@ namespace catapult { namespace harvesting {
 			EXPECT_TRUE(!!pBlock);
 			EXPECT_EQ(timestamp, pBlock->Timestamp);
 			EXPECT_EQ(Height(2), pBlock->Height);
-			EXPECT_EQ(bestKey, pBlock->Signer);
+			EXPECT_EQ(bestKey.first, pBlock->Signer);
 			EXPECT_EQ(model::CalculateHash(*context.pLastBlock), pBlock->PreviousBlockHash);
 			EXPECT_TRUE(model::VerifyBlockHeaderSignature(*pBlock));
 			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, state::BlockDifficultyInfo(*pBlock), context.Config.Network), pBlock->Difficulty);
