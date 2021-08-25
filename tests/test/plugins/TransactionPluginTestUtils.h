@@ -392,7 +392,9 @@ namespace catapult { namespace test {
 				const model::EmbeddedTransactionPlugin& plugin,
 				const TransactionType& transaction,
 				model::NotificationSubscriber& sub) {
-			plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(transaction, Hash256(), Height(1)),  sub);
+			Timestamp deadline;
+			plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(
+					plugins::ConvertEmbeddedTransaction(transaction, deadline, sub.mempool()), Height(1)), sub);
 		}
 	};
 }}

@@ -50,12 +50,20 @@ namespace catapult { namespace model {
 	// endregion
 
 
-	template<uint32_t TVersion>
-	using RemoteAccountLinkNotification = BaseKeyLinkNotification<Key, AccountLink_Remote_v1_Notification, TVersion>;
-	template<uint32_t TVersion>
-	using NodeAccountLinkNotification = BaseKeyLinkNotification<Key, AccountLink_Node_Notification, TVersion>;
-	template<uint32_t TVersion>
-	using VrfKeyLinkNotification = BaseKeyLinkNotification<Key, AccountLink_VRF_Notification, TVersion>;
+	template<VersionType version>
+	struct RemoteAccountLinkNotification;
+	template<VersionType version>
+	struct NodeAccountLinkNotification;
+	template<VersionType version>
+	struct VrfKeyLinkNotification;
+
+	template<>
+	struct RemoteAccountLinkNotification<1> : BaseKeyLinkNotification<Key, AccountLink_Remote_v1_Notification>{using BaseKeyLinkNotification::BaseKeyLinkNotification;};
+	template<>
+	struct NodeAccountLinkNotification<1> : BaseKeyLinkNotification<Key, AccountLink_Node_Notification>{using BaseKeyLinkNotification::BaseKeyLinkNotification;};
+	template<>
+	struct VrfKeyLinkNotification<1> : BaseKeyLinkNotification<Key, AccountLink_VRF_Notification>{using BaseKeyLinkNotification::BaseKeyLinkNotification;};
+
 	/// Notification of a new remote account.
 	template<VersionType version>
 	struct NewRemoteAccountNotification;

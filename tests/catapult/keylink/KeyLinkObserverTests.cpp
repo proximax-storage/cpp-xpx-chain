@@ -33,7 +33,7 @@ namespace catapult { namespace keylink {
 	// region test utils
 
 	namespace {
-		using Notification = model::BaseKeyLinkNotification<Key, static_cast<model::NotificationType>(0), 1>;
+		using Notification = model::BaseKeyLinkNotification<Key, static_cast<model::NotificationType>(0)>;
 
 		struct Accessor {
 			static auto& Get(state::AccountState& accountState) {

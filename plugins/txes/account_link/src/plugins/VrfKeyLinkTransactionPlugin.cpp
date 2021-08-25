@@ -32,8 +32,15 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
-			sub.notify(KeyLinkActionNotification<1>(transaction.LinkAction));
-			sub.notify(VrfKeyLinkNotification<1>(transaction.Signer, transaction.RemoteAccountKey, transaction.LinkAction));
+			switch (transaction.EntityVersion()) {
+			case 1:
+				sub.notify(KeyLinkActionNotification<1>(transaction.LinkAction));
+				sub.notify(VrfKeyLinkNotification<1>(transaction.Signer, transaction.RemoteAccountKey, transaction.LinkAction));
+				break;
+
+			default:
+				CATAPULT_LOG(debug) << "invalid version of VrfKeyLinkTransaction: " << transaction.EntityVersion();
+			}
 		}
 	}
 

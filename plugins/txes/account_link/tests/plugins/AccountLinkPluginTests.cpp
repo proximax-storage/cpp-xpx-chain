@@ -41,7 +41,7 @@ namespace catapult { namespace plugins {
 
 		public:
 			static std::vector<model::EntityType> GetTransactionTypes() {
-				return { model::Entity_Type_Account_Link, model::Entity_Type_Node_Key_Link };
+				return { model::Entity_Type_Account_Link, model::Entity_Type_Node_Key_Link, model::Entity_Type_Vrf_Key_Link };
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
@@ -54,12 +54,13 @@ namespace catapult { namespace plugins {
 					"NewRemoteAccountAvailabilityValidator",
 					"RemoteSenderValidator",
 					"AccountLinkAvailabilityValidator",
-					"NodeKeyLinkValidator"
+					"NodeKeyLinkValidator",
+					"VRFKeyLinkValidator"
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
-				return { "AccountLinkObserver", "NodeKeyLinkObserver" };
+				return { "AccountLinkObserver", "NodeKeyLinkObserver",  "VRFKeyLinkObserver"};
 			}
 
 			static std::vector<std::string> GetPermanentObserverNames() {

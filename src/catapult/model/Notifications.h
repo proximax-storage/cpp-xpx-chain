@@ -73,7 +73,7 @@ namespace catapult { namespace model {
 		UnresolvedAddress Address;
 	};
 
-	template<typename TAccountPublicKey, NotificationType Key_Link_Notification_Type, VersionType version>
+	template<typename TAccountPublicKey, NotificationType Key_Link_Notification_Type>
 	struct BaseKeyLinkNotification : public Notification {
 	public:
 		/// Matching notification type.
@@ -82,7 +82,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a mainAccountKey, \a remoteAccountKey and \a linkAction.
 		BaseKeyLinkNotification(const Key& mainAccountKey, const TAccountPublicKey& remoteAccountKey, AccountLinkAction linkAction)
-				: Notification(Notification_Type, sizeof(Key_Link_Notification_Type))
+				: Notification(Notification_Type, sizeof(BaseKeyLinkNotification))
 				, MainAccountKey(mainAccountKey)
 				, RemoteAccountKey(remoteAccountKey)
 				, LinkAction(linkAction)

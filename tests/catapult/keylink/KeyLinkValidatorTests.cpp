@@ -33,7 +33,7 @@ namespace catapult { namespace keylink {
 	// region test utils
 
 	namespace {
-		using Notification = model::BaseKeyLinkNotification<Key, static_cast<model::NotificationType>(0), 1>;
+		using Notification = model::BaseKeyLinkNotification<Key, static_cast<model::NotificationType>(0)>;
 
 		struct Accessor {
 			static constexpr auto Failure_Link_Already_Exists = static_cast<validators::ValidationResult>(0x80000000 + 1);
