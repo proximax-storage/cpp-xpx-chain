@@ -30,7 +30,7 @@ namespace catapult { namespace model {
 	/// Defines a replicator onboarding notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v1, 0x0007);
 
-	/// Defines a replicator onboarding notification type.
+	/// Defines a drive closure notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Drive_Closure_v1, 0x0008);
 
 	/// Notification of a data modification.
