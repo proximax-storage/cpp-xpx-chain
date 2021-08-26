@@ -319,12 +319,14 @@ namespace catapult { namespace mongo {
 			// Arrange:
 			test::PrepareDatabase(test::DatabaseName());
 			auto pBlock = test::GenerateBlockWithTransactions(blockElementCounts.NumTransactions);
+			auto transactionPayloadSize = pBlock->transactionPayloadSize();
 			auto pRawData = reinterpret_cast<uint8_t*>(pBlock.get());
 			test::FillWithRandomData({ pRawData + sizeof(uint32_t), sizeof(model::BlockHeader) - sizeof(uint32_t) });
 			pBlock->Height = Height(1);
 			pBlock->Difficulty = RandomClamped<Difficulty>();
 			pBlock->FeeInterest = 1;
 			pBlock->FeeInterestDenominator = 1;
+			pBlock->setTransactionPayloadSize(transactionPayloadSize);
 			return pBlock;
 		}
 

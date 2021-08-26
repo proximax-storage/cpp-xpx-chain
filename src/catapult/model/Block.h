@@ -83,6 +83,7 @@ namespace catapult { namespace model {
 	public:
 		/// Generation hash proof.
 		crypto::VrfProof GenerationHashProof;
+		uint32_t TransactionPayloadSize;
 
 	};
 
@@ -100,6 +101,19 @@ namespace catapult { namespace model {
 		void setGenerationHashProof(crypto::VrfProof&& value) {
 			if (EntityVersion() > 3)
 				reinterpret_cast<BlockHeaderV4&>(*this).GenerationHashProof = value;
+		}
+		uint32_t transactionPayloadSize() const {
+			switch (EntityVersion()) {
+			case 3:
+				return 0u;
+			default:
+				return reinterpret_cast<const BlockHeaderV4&>(*this).TransactionPayloadSize;
+			}
+		}
+
+		void setTransactionPayloadSize(uint32_t value) {
+			if (EntityVersion() > 3)
+				reinterpret_cast<BlockHeaderV4&>(*this).TransactionPayloadSize = value;
 		}
 	};
 

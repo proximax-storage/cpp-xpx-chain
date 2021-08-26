@@ -462,22 +462,27 @@ namespace catapult { namespace model {
 		template<typename TContainerTraits>
 		void AssertCanStitchBlock(size_t numTransactions) {
 			// Arrange:
-			BlockHeaderV4 blockHeader;
-			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(&blockHeader), sizeof(BlockHeaderV4) });
+			Block blockHeader;
+			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(&blockHeader), sizeof(BlockHeader) });
 
 			auto randomTransactions = test::GenerateRandomTransactions(numTransactions);
 			auto transactions = TContainerTraits::MapTransactions(randomTransactions);
+			size_t totalTransactionsSize = 0;
+			for (const auto& pTransaction : transactions)
+				totalTransactionsSize += pTransaction->Size;
+			blockHeader.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
+			blockHeader.Size = sizeof(BlockHeader) + totalTransactionsSize;
 
 			// Act:
 			auto pBlock = StitchBlock(blockHeader, transactions);
 
 			// Assert:
-			ASSERT_EQ(sizeof(BlockHeaderV4) + SumTransactionSizes(transactions), pBlock->Size);
+			ASSERT_EQ(sizeof(BlockHeader) + SumTransactionSizes(transactions), pBlock->Size);
 
 			EXPECT_EQ_MEMORY(
-					reinterpret_cast<const uint8_t*>(&blockHeader) + sizeof(BlockHeaderV4::Size),
-					reinterpret_cast<const uint8_t*>(pBlock.get()) + sizeof(BlockHeaderV4::Size),
-					sizeof(BlockHeaderV4) - sizeof(BlockHeaderV4::Size));
+					reinterpret_cast<const uint8_t*>(&blockHeader),
+					reinterpret_cast<const uint8_t*>(pBlock.get()),
+					sizeof(BlockHeader));
 
 			AssertTransactionsInBlock(*pBlock, transactions);
 		}

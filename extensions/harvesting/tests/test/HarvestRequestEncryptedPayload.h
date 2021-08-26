@@ -33,7 +33,7 @@ namespace catapult { namespace test {
 	struct HarvestRequestEncryptedPayload {
 	public:
 		/// Encrypted payload size.
-		static constexpr size_t Size = 32u + 16 + 12 + 32;
+		static constexpr size_t Size = 32u + 16 + 12 + 32 + 32;
 
 	public:
 		/// Encrypted data memory buffer.

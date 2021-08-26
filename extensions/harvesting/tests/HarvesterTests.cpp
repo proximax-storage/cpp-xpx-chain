@@ -275,10 +275,10 @@ namespace catapult { namespace harvesting {
 			std::integral_constant<uint32_t,2>>;
 
 	template<typename TBaseAccountVersion>
-	struct TEST_CLASS : public ::testing::Test {};
-	TYPED_TEST_CASE(TEST_CLASS, test_types);
+	struct HarvesterTest : public ::testing::Test {};
+	TYPED_TEST_CASE(HarvesterTest, test_types);
 
-	TYPED_TEST(TEST_CLASS, HarvestReturnsNullptrWhenNoAccountIsUnlocked) {
+	TYPED_TEST(HarvesterTest, HarvestReturnsNullptrWhenNoAccountIsUnlocked) {
 		// Arrange:
 		HarvesterContext<TypeParam::value> context;
 		{
@@ -299,7 +299,7 @@ namespace catapult { namespace harvesting {
 		EXPECT_FALSE(!!pBlock);
 	}
 
-	TYPED_TEST(TEST_CLASS, HarvestReturnsBlockWhenEnoughTimeElapsed) {
+	TYPED_TEST(HarvesterTest, HarvestReturnsBlockWhenEnoughTimeElapsed) {
 		// Arrange:
 		HarvesterContext<TypeParam::value> context;
 		auto pHarvester = context.CreateHarvester();
@@ -311,7 +311,7 @@ namespace catapult { namespace harvesting {
 		EXPECT_TRUE(!!pBlock);
 	}
 
-	TYPED_TEST(TEST_CLASS, HarvestReturnsNullptrWhenDifficultyCacheDoesNotContainInfoAtLastBlockHeight) {
+	TYPED_TEST(HarvesterTest, HarvestReturnsNullptrWhenDifficultyCacheDoesNotContainInfoAtLastBlockHeight) {
 		// Arrange:
 		HarvesterContext<TypeParam::value> context;
 		auto pHarvester = context.CreateHarvester();
@@ -340,7 +340,7 @@ namespace catapult { namespace harvesting {
 		EXPECT_FALSE(!!pBlock2);
 	}
 
-	TYPED_TEST(TEST_CLASS, HarvesterWithBestKeyCreatesBlockAtEarliestMoment) {
+	TYPED_TEST(HarvesterTest, HarvesterWithBestKeyCreatesBlockAtEarliestMoment) {
 		// Arrange:
 		// - the harvester accepts the first account that has a hit. That means that subsequent accounts might have
 		// - a better (lower) hit but still won't be the signer of the block.
@@ -367,7 +367,7 @@ namespace catapult { namespace harvesting {
 		});
 	}
 
-	TYPED_TEST(TEST_CLASS, HarvestReturnsNullptrWhenNoHarvesterHasHit) {
+	TYPED_TEST(HarvesterTest, HarvestReturnsNullptrWhenNoHarvesterHasHit) {
 		// Arrange:
 		HarvesterContext<TypeParam::value> context;
 		auto bestKey = context.BestHarvesterPublicKey();
@@ -382,7 +382,7 @@ namespace catapult { namespace harvesting {
 		EXPECT_FALSE(!!pBlock);
 	}
 
-	TYPED_TEST(TEST_CLASS, HarvestReturnsNullptrWhenAccountsAreUnlockedButNotFoundInCache) {
+	TYPED_TEST(HarvesterTest, HarvestReturnsNullptrWhenAccountsAreUnlockedButNotFoundInCache) {
 		// Arrange:
 		HarvesterContext<TypeParam::value> context;
 		auto pHarvester = context.CreateHarvester();
@@ -409,7 +409,7 @@ namespace catapult { namespace harvesting {
 		EXPECT_FALSE(!!pBlock);
 	}
 
-	TYPED_TEST(TEST_CLASS, HarvestHasFirstHarvesterWithHitAsSigner) {
+	TYPED_TEST(HarvesterTest, HarvestHasFirstHarvesterWithHitAsSigner) {
 		// Arrange:
 		HarvesterContext<TypeParam::value> context;
 		auto pHarvester = context.CreateHarvester();
@@ -423,7 +423,7 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(firstPublicKey, pBlock->Signer);
 	}
 
-	TYPED_TEST(TEST_CLASS, HarvestedBlockHasExpectedProperties) {
+	TYPED_TEST(HarvesterTest, HarvestedBlockHasExpectedProperties) {
 		// Arrange:
 		// - the harvester accepts the first account that has a hit. That means that subsequent accounts might have
 		// - a better (lower) hit but still won't be the signer of the block.
@@ -468,7 +468,7 @@ namespace catapult { namespace harvesting {
 		}
 	}
 
-		TYPED_TEST(TEST_CLASS, HarvestDelegatesToBlockGenerator) {
+		TYPED_TEST(HarvesterTest, HarvestDelegatesToBlockGenerator) {
 		// Arrange:
 		HarvesterContext<TypeParam::value> context;
 		const_cast<uint32_t&>(context.Config.Network.MaxTransactionsPerBlock) = 123;
@@ -496,7 +496,7 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(capturedParams[0].first, pHarvestedBlock->Signer);
 	}
 
-	TYPED_TEST(TEST_CLASS, HarvestReturnsNullptrWhenBlockGeneratorFails) {
+	TYPED_TEST(HarvesterTest, HarvestReturnsNullptrWhenBlockGeneratorFails) {
 		// Arrange:
 		HarvesterContext<TypeParam::value> context;
 		const_cast<uint32_t&>(context.Config.Network.MaxTransactionsPerBlock) = 123;

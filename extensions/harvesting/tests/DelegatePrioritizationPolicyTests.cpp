@@ -48,13 +48,14 @@ namespace catapult { namespace harvesting {
 			auto blockchainConfiguration = test::MutableBlockchainConfiguration();
 			blockchainConfiguration.Network.ImportanceGrouping = 1;
 			blockchainConfiguration.Network.AccountVersion = 1;
+			blockchainConfiguration.Immutable.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			auto cache = test::CreateEmptyCatapultCache(blockchainConfiguration.ToConst());
 
 			auto cacheDelta = cache.createDelta();
 			auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();
-			accountStateCacheDelta.addAccount(importantAccountPublicKey, Height(100));
-			state::AccountBalances balances(&accountStateCacheDelta.find(importantAccountPublicKey).get());
-			balances.credit(Harvesting_Mosaic_Id, Amount(1234), Height(100));
+			accountStateCacheDelta.addAccount(importantAccountPublicKey, cacheHeight);
+			auto accountState = &accountStateCacheDelta.find(importantAccountPublicKey).get();
+			accountState->Balances.credit(Harvesting_Mosaic_Id, Amount(1234), cacheHeight);
 			cache.commit(cacheHeight);
 
 			return cache;

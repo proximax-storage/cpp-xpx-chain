@@ -34,26 +34,47 @@ namespace catapult { namespace model {
 	}
 
 	size_t GetTransactionPayloadSize(const BlockHeader& header) {
-		return header.Size - sizeof(BlockHeader);
+		switch (header.EntityVersion()) {
+		case 3:
+			return header.Size - sizeof(BlockHeader);
+		default:
+			return reinterpret_cast<const BlockHeaderV4&>(header).TransactionPayloadSize;
+		}
 	}
 
-	bool IsSizeValid(const Block& block, const TransactionRegistry& registry) {
-		if (block.Size < sizeof(BlockHeader)) {
-			CATAPULT_LOG(warning) << block.Type << " block failed size validation with size " << block.Size;
-			return false;
+		namespace {
+			bool IsPayloadSizeValid(const Block& block) {
+				switch (block.EntityVersion()) {
+				case 3: {
+					return block.Size >= sizeof(BlockHeader);
+				}
+				default: {
+					auto transactionPayloadSize = reinterpret_cast<const BlockHeaderV4&>(block).TransactionPayloadSize;
+					return
+							block.Size >= sizeof(BlockHeaderV4) &&
+							block.Size - sizeof(BlockHeaderV4) == transactionPayloadSize;
+				}
+				}
+			}
 		}
 
-		auto transactions = block.Transactions(EntityContainerErrorPolicy::Suppress);
-		auto areAllTransactionsValid = std::all_of(transactions.cbegin(), transactions.cend(), [&registry](const auto& transaction) {
-			return IsSizeValid(transaction, registry);
-		});
+		bool IsSizeValid(const Block& block, const TransactionRegistry& registry) {
+			if (!IsPayloadSizeValid(block)) {
+				CATAPULT_LOG(warning) << block.Type << " block failed size validation with size " << block.Size;
+				return false;
+			}
 
-		if (areAllTransactionsValid && !transactions.hasError())
-			return true;
+			auto transactions = block.Transactions(EntityContainerErrorPolicy::Suppress);
+			auto areAllTransactionsValid = std::all_of(transactions.cbegin(), transactions.cend(), [&registry](const auto& transaction) {
+			  return IsSizeValid(transaction, registry);
+			});
 
-		CATAPULT_LOG(warning)
+			if (areAllTransactionsValid && !transactions.hasError())
+				return true;
+
+			CATAPULT_LOG(warning)
 				<< "block transactions failed size validation (valid sizes? " << areAllTransactionsValid
 				<< ", errors? " << transactions.hasError() << ")";
-		return false;
-	}
+			return false;
+		}
 }}

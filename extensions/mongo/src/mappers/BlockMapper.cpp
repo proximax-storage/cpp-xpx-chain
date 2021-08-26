@@ -86,6 +86,7 @@ namespace catapult { namespace mongo { namespace mappers {
 				<< "previousBlockHash" << ToBinary(block.PreviousBlockHash)
 				<< "proofGamma" << ToBinary(block.getGenerationHashProof().Gamma)
 				<< "proofVerificationHash" << ToBinary(block.getGenerationHashProof().VerificationHash)
+				<< "transactionPayloadSize" << static_cast<int32_t>(block.transactionPayloadSize())
 				<< "proofScalar" << ToBinary(block.getGenerationHashProof().Scalar)
 				<< "blockTransactionsHash" << ToBinary(block.BlockTransactionsHash)
 				<< "blockReceiptsHash" << ToBinary(block.BlockReceiptsHash)

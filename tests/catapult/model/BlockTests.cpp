@@ -58,6 +58,7 @@ namespace catapult { namespace model {
 					+ sizeof(uint64_t) // difficulty
 					+ sizeof(uint32_t) // fee multiplier
 					+ sizeof(crypto::VrfProof) // VRF Proof size
+					+ sizeof(uint32_t)
 					+ Hash256_Size // previous block hash
 					+ Hash256_Size // block transactions hash
 					+ Hash256_Size // block receipts hash
@@ -68,7 +69,7 @@ namespace catapult { namespace model {
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(BlockHeaderV4));
-			EXPECT_EQ(106u + 196u + 80u, sizeof(BlockHeaderV4));
+			EXPECT_EQ(106u + 196 + 80 + 4, sizeof(BlockHeaderV4));
 		}
 
 	// region test utils
@@ -79,8 +80,8 @@ namespace catapult { namespace model {
 			return test::GenerateBlockWithTransactions(transactions);
 		}
 
-		model::UniqueEntityPtr<Block> CreateBlockWithReportedSize(uint32_t size) {
-			auto pBlock = CreateBlockWithTransactions();
+		model::UniqueEntityPtr<Block> CreateBlockWithReportedSize(uint32_t size, size_t numTransactions = 3) {
+			auto pBlock = CreateBlockWithTransactions(numTransactions);
 			pBlock->Size = size;
 			return pBlock;
 		}
@@ -135,7 +136,8 @@ namespace catapult { namespace model {
 		// Arrange:
 		BlockHeaderV4 header;
 		header.Size = sizeof(BlockHeaderV4) + 123;
-
+		header.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, model::BlockHeader::Current_Version);
+		header.TransactionPayloadSize = 123u;
 		// Act:
 		auto payloadSize = GetTransactionPayloadSize(header);
 
@@ -172,7 +174,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, SizeValidWhenReportedSizeIsEqualToHeaderSize) {
 		// Arrange:
-		auto pBlock = CreateBlockWithReportedSize(sizeof(BlockHeaderV4));
+		auto pBlock = CreateBlockWithReportedSize(sizeof(BlockHeaderV4), 0);
 
 		// Act + Assert:
 		EXPECT_TRUE(IsSizeValid(*pBlock));
