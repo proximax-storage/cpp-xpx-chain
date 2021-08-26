@@ -259,12 +259,14 @@ namespace catapult { namespace model {
 	public:
 		explicit DataModificationApprovalNotification(
 				const Key& driveKey,
+				const Key& replicatorKey,
 				const Hash256& dataModificationId,
 				const Hash256& fileStructureCdi,
 				uint64_t fileStructureSize,
 				uint64_t usedDriveSize)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
 				, DriveKey(driveKey)
+				, ReplicatorKey(replicatorKey)
 				, DataModificationId(dataModificationId)
 				, FileStructureCdi(fileStructureCdi)
 				, FileStructureSize(fileStructureSize)
@@ -274,6 +276,9 @@ namespace catapult { namespace model {
 	public:
 		/// Key of drive.
 		Key DriveKey;
+
+		/// Replicator public key
+		Key ReplicatorKey;
 
 		/// Identifier of the transaction that initiated the modification.
 		Hash256 DataModificationId;
@@ -466,17 +471,21 @@ namespace catapult { namespace model {
 		explicit DataModificationSingleApprovalNotification(
 				const Key& signer,
 				const Key& driveKey,
+				const Key& replicatorKey,
 				const Hash256& dataModificationId,
 				const uint16_t uploadOpinionPairCount,
 				const Key* uploaderKeysPtr,
-				const uint8_t* uploadOpinionPtr)
+				const uint8_t* uploadOpinionPtr,
+				uint64_t usedDriveSize)
 				: Notification(Notification_Type, sizeof(DataModificationSingleApprovalNotification<1>))
 				, PublicKey(signer)
 				, DriveKey(driveKey)
+				, ReplicatorKey(replicatorKey)
 				, DataModificationId(dataModificationId)
 				, UploadOpinionPairCount(uploadOpinionPairCount)
 				, UploaderKeysPtr(uploaderKeysPtr)
 				, UploadOpinionPtr(uploadOpinionPtr)
+				, UsedDriveSize(usedDriveSize)
 		{}
 
 	public:
@@ -485,6 +494,9 @@ namespace catapult { namespace model {
 
 		/// Key of drive.
 		Key DriveKey;
+
+		/// Key of replicator
+		Key ReplicatorKey;
 
 		/// Identifier of the transaction that initiated the modification.
 		Hash256 DataModificationId;
@@ -497,6 +509,8 @@ namespace catapult { namespace model {
 
 		/// Opinion about how much each Uploader has uploaded to the signer in percents.
 		const uint8_t* UploadOpinionPtr;
+
+		const uint64_t UsedDriveSize;
 	};
 
 	/// Notification of a verification payment.

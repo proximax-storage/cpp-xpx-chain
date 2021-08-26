@@ -82,6 +82,9 @@ namespace catapult { namespace validators {
 	/// Percents in replicator's upload opinion do not sum up to 100.
 	DEFINE_STORAGE_RESULT(Opinion_Incorrect_Percentage, 23);
 
+	/// Data modification is not present in activeDataModifications.
+	DEFINE_STORAGE_RESULT(No_Confirmed_Used_Sizes, 24);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

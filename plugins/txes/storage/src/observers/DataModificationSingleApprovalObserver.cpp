@@ -20,5 +20,12 @@ namespace catapult { namespace observers {
 	  	info.LastApprovedDataModificationId = notification.DataModificationId;
 	  	info.DataModificationIdIsValid = true;
 		info.InitialDownloadWork = 0;
+
+		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+	  	auto driveIter = driveCache.find(notification.DriveKey);
+	  	auto& driveEntry = driveIter.get();
+
+		driveEntry.confirmedUsedSizes().insert({notification.ReplicatorKey, notification.UsedDriveSize});
+
 	});
 }}

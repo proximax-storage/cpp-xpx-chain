@@ -30,11 +30,17 @@ namespace catapult { namespace model {
 		/// Key of drive.
 		Key DriveKey;
 
+		/// Key of replicator
+		Key ReplicatorKey;
+
 		/// Identifier of the transaction that initiated the modification.
 		Hash256 DataModificationId;
 
 		/// Number of key-opinion pairs in the payload.
 		uint16_t UploadOpinionPairCount;
+
+		/// Total used disk space of the drive.
+		uint64_t UsedDriveSize;
 
 		/// List of the Uploader keys (current Replicators of the Drive or the Drive Owner).
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(UploaderKeys, Key)

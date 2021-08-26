@@ -80,6 +80,11 @@ namespace catapult { namespace validators {
 		if (cumulativePercentage != 100)
 			return Failure_Storage_Opinion_Incorrect_Percentage;
 
+		// Check if there are any comfirmed used sizes modifications
+		const auto& confirmedUsedSizes = pDriveEntry->confirmedUsedSizes();
+		if (confirmedUsedSizes.empty())
+			return Failure_Storage_No_Active_Data_Modifications;
+
 		return ValidationResult::Success;
 	});
 

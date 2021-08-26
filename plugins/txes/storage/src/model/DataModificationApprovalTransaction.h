@@ -18,7 +18,7 @@ namespace catapult { namespace model {
 	struct DataModificationApprovalTransactionBody : public THeader {
 	private:
 		using TransactionType = DataModificationApprovalTransactionBody<THeader>;
-
+		
 	public:
 		explicit DataModificationApprovalTransactionBody<THeader>()
 		{}
@@ -29,6 +29,9 @@ namespace catapult { namespace model {
 	public:
 		/// Key of drive.
 		Key DriveKey;
+
+		/// Key of replicator
+		Key ReplicatorKey
 
 		/// Identifier of the transaction that initiated the modification.
 		Hash256 DataModificationId;
