@@ -126,20 +126,25 @@ namespace catapult { namespace harvesting {
 				auto delta = Cache.createDelta();
 				auto &accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
 
+
+
+
+
+
+				AccountStates = CreateAccounts(accountStateCacheDelta, KeyPairs, VrfKeyPairs);
 				KeyPairs.push_back(KeyPair::FromPrivate(test::GenerateRandomPrivateKey()));
 				VrfKeyPairs.push_back(KeyPair::FromPrivate(test::GenerateRandomPrivateKey()));
 				const auto &primaryAccountPair = KeyPairs.back();
 				const auto &vrfPrimaryAccountPair = VrfKeyPairs.back();
+
+
 				accountStateCacheDelta.addAccount(primaryAccountPair.publicKey(), Height(1), TBaseAccountVersion);
 				auto& accountState = accountStateCacheDelta.find(primaryAccountPair.publicKey()).get();
 				if(TBaseAccountVersion > 1) accountState.SupplementalPublicKeys.vrf().set(vrfPrimaryAccountPair.publicKey());
 				auto& balances = accountState.Balances;
 				balances.credit(Harvesting_Mosaic_Id, Amount(1'000'000'000'000'000), Height(1));
 				balances.track(Harvesting_Mosaic_Id);
-
-				AccountStates = CreateAccounts(accountStateCacheDelta, KeyPairs, VrfKeyPairs);
 				AccountStates.push_back(&accountState);
-
 
 				auto& difficultyCache = delta.sub<cache::BlockDifficultyCache>();
 				state::BlockDifficultyInfo info(pLastBlock->Height, pLastBlock->Timestamp, pLastBlock->Difficulty);

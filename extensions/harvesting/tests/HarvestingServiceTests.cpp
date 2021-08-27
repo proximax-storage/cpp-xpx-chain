@@ -69,23 +69,29 @@ namespace catapult { namespace harvesting {
 
 		public:
 			explicit TestContext(test::LocalNodeFlags flags = test::LocalNodeFlags::None)
-					: m_config(CreateHarvestingConfiguration(test::LocalNodeFlags::Should_Auto_Harvest == flags)) {
+					: BaseType(test::CreateEmptyCatapultCache(test::CreatePrototypicalBlockchainConfiguration())),
+					m_config(CreateHarvestingConfiguration(test::LocalNodeFlags::Should_Auto_Harvest == flags)) {
+
+				createConfigurationAccount();
 				setHooks();
 			}
 
 			explicit TestContext(const HarvestingConfiguration& config)
 					: BaseType(test::CreateEmptyCatapultCache(test::CreatePrototypicalBlockchainConfiguration()))
 					, m_config(config) {
+				createConfigurationAccount();
 				setHooks();
 			}
 			explicit TestContext(cache::CatapultCache&& cache, const supplier<Timestamp>& timeSupplier = &utils::NetworkTime)
 					: BaseType(std::move(cache), timeSupplier)
 					, m_config(CreateHarvestingConfiguration(false)) {
+				createConfigurationAccount();
 				setHooks();
 			}
 			explicit TestContext(cache::CatapultCache&& cache, const HarvestingConfiguration& config, const supplier<Timestamp>& timeSupplier = &utils::NetworkTime)
 					: BaseType(std::move(cache), timeSupplier)
 					, m_config(config) {
+				createConfigurationAccount();
 				setHooks();
 			}
 
@@ -130,6 +136,17 @@ namespace catapult { namespace harvesting {
 			}
 
 		private:
+			void createConfigurationAccount() {
+				auto &cache = testState().cache();
+				auto cacheDelta = cache.createDelta();
+				auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();
+				auto harvestingKeypair = crypto::KeyPair::FromString(m_config.HarvestKey);
+
+				//Ensure account exists so service can boot
+				accountStateCacheDelta.addAccount(harvestingKeypair.publicKey(), Height(1));
+
+				cache.commit(Height(1));
+			}
 			void setHooks() {
 				// set up hooks
 				auto& capturedStateHashes = m_capturedStateHashes;
@@ -298,13 +315,19 @@ namespace catapult { namespace harvesting {
 		RunUnlockedAccountsPrioritizationTest(DelegatePrioritizationPolicy::Importance, { 4, 1, 3, 0 });
 	}
 	namespace {
-		void AddHarvestersFileRequests(const std::string& filename, const Key& nodeOwnerPublicKey, size_t numRequests) {
+		void AddHarvestersFileRequestsAndCacheCorrespondingAccounts(cache::CatapultCache& cache, const std::string& filename, const Key& nodeOwnerPublicKey, size_t numRequests) {
 			UnlockedAccountsStorage storage(filename);
+			auto delta = cache.createDelta();
 			for (auto i = 0u; i < numRequests; ++i) {
-				auto decryptedBuffer = test::GenerateRandomVector(Key::Size);
+				auto decryptedBuffer = test::GenerateRandomVector(Key::Size*2);
+				auto& accountStateCache = delta.sub<cache::AccountStateCache>();
+				auto iter = decryptedBuffer.begin();
+				auto publicKey = crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate([&iter]() mutable { return *iter++; })).publicKey();
+				accountStateCache.addAccount(publicKey, Height(1));
 				auto encryptedPayload = test::PrepareHarvestRequestEncryptedPayload(nodeOwnerPublicKey, decryptedBuffer);
 				storage.add(test::GetRequestIdentifier(encryptedPayload), encryptedPayload.Data, Key{ { static_cast<uint8_t>(i) } });
 			}
+			cache.commit(Height(1));
 		}
 	}
 	TEST(TEST_CLASS, UnlockedAccountsServiceIsLoadingUnlockedHarvestersFile) {
@@ -314,7 +337,7 @@ namespace catapult { namespace harvesting {
 		context.setDataDirectory(directoryGuard.name());
 
 		auto filename = config::CatapultDataDirectory(directoryGuard.name()).rootDir().file("harvesters.dat");
-		AddHarvestersFileRequests(filename, context.locator().keyPair().publicKey(), 3);
+			AddHarvestersFileRequestsAndCacheCorrespondingAccounts(context.testState().cache(), filename, context.locator().keyPair().publicKey(), 3);
 
 		RunUnlockedAccountsServiceTest(context, [&context](const auto& unlockedAccounts) {
 		  // Assert: only accounts from the file were unlocked
@@ -444,7 +467,7 @@ namespace catapult { namespace harvesting {
 			RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair), &context, &harvestedStateHash](
 					auto& unlockedAccounts,
 					const auto& task) mutable {
-				unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 2);
+				unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 1);
 
 				// Act:
 				auto result = task.Callback().get();

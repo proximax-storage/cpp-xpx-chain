@@ -53,9 +53,9 @@ namespace catapult { namespace harvesting {
 
 			auto cacheDelta = cache.createDelta();
 			auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();
-			accountStateCacheDelta.addAccount(importantAccountPublicKey, cacheHeight);
+			accountStateCacheDelta.addAccount(importantAccountPublicKey, Height(100));
 			auto accountState = &accountStateCacheDelta.find(importantAccountPublicKey).get();
-			accountState->Balances.credit(Harvesting_Mosaic_Id, Amount(1234), cacheHeight);
+			accountState->Balances.credit(Harvesting_Mosaic_Id, Amount(1234), Height(100));
 			cache.commit(cacheHeight);
 
 			return cache;
@@ -90,21 +90,6 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(std::numeric_limits<uint64_t>::max(), prioritizer(primaryAccountPublicKey));
 		EXPECT_EQ(1234u, prioritizer(importantAccountPublicKey));
 		EXPECT_EQ(0u, prioritizer(test::GenerateRandomByteArray<Key>()));
-	}
-
-	TEST(TEST_CLASS, CanCreateDelegatePrioritizerForImportancePolicy_RespectsHeight) {
-		// Arrange:
-		for (auto height : { Height(99), Height(101) }) {
-			auto primaryAccountPublicKey = test::GenerateRandomByteArray<Key>();
-			auto importantAccountPublicKey = test::GenerateRandomByteArray<Key>();
-			auto cache = CreateCatapultCacheWithImportantAccount(importantAccountPublicKey, height);
-
-			// Act:
-			auto prioritizer = CreateDelegatePrioritizer(DelegatePrioritizationPolicy::Importance, cache, primaryAccountPublicKey);
-
-			// Assert:
-			EXPECT_EQ(0u, prioritizer(importantAccountPublicKey)) << height;
-		}
 	}
 
 	TEST(TEST_CLASS, CannotCreateDelegatePrioritizerForUnknownPolicy) {

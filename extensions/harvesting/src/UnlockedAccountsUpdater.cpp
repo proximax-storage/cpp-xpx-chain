@@ -226,8 +226,8 @@ namespace catapult { namespace harvesting {
 			auto cacheView = cache.createView();
 			auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
 			auto accountStateIter = readOnlyAccountStateCache.find(descriptor.signingKeyPair().publicKey());
-			auto accountState = accountStateIter.get();
-			AddToUnlocked(unlockedAccounts, std::move(descriptor), accountState.GetVersion());
+			if(!accountStateIter.tryGet()) return;
+			AddToUnlocked(unlockedAccounts, std::move(descriptor), accountStateIter.get().GetVersion());
 		});
 	}
 
