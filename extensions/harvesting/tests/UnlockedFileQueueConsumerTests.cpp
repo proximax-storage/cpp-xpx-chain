@@ -35,7 +35,7 @@ namespace catapult { namespace harvesting {
 	// region TryDecryptBlockGeneratorAccountDescriptor
 
 	namespace {
-		constexpr auto Encrypted_Data_Size = Key::Size;
+		constexpr auto Encrypted_Data_Size = Key::Size * 2;
 
 		void AssertFailureWhenDecryptedDataHasInvalidSize(size_t dataSize) {
 			// Arrange:

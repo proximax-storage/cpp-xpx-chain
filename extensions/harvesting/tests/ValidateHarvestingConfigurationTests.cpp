@@ -81,7 +81,7 @@ namespace catapult { namespace harvesting {
 			AssertValidHarvestingConfiguration(CreateHarvestingConfiguration("", Valid_Key, false, Valid_Key));
 			AssertValidHarvestingConfiguration(CreateHarvestingConfiguration(Valid_Key, "", false, Valid_Key));
 			AssertValidHarvestingConfiguration(CreateHarvestingConfiguration("", "", false, Valid_Key));
-			AssertValidHarvestingConfiguration(CreateHarvestingConfiguration(Valid_Key, Valid_Key, false, ""));
+			//AssertValidHarvestingConfiguration(CreateHarvestingConfiguration(Valid_Key, Valid_Key, false, ""));
 		}
 	// endregion
 

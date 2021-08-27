@@ -60,6 +60,13 @@ namespace catapult { namespace harvesting {
 
 	UnlockedAccountsAddResult UnlockedAccountsModifier::add(BlockGeneratorAccountDescriptor&& descriptor, uint32_t accountVersion) {
 		const auto& publicKey = descriptor.signingKeyPair().publicKey();
+		for (auto& prioritizedKeyPair : m_prioritizedKeyPairs) {
+			if (CreateContainsPredicate(publicKey)(prioritizedKeyPair)) {
+				std::get<0>(prioritizedKeyPair) = std::move(descriptor);
+				return UnlockedAccountsAddResult::Success_Update;
+			}
+		}
+
 		if (std::any_of(m_prioritizedKeyPairs.cbegin(), m_prioritizedKeyPairs.cend(), CreateContainsPredicate(publicKey)))
 			return UnlockedAccountsAddResult::Success_Update;
 

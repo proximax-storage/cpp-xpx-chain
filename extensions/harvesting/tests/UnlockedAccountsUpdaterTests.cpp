@@ -64,7 +64,7 @@ namespace catapult { namespace harvesting {
 					auto descriptor = BlockGeneratorAccountDescriptor(std::move(remoteKeyPair), test::GenerateKeyPair());
 					auto vrfPublicKey = descriptor.vrfKeyPair().publicKey();
 					m_unlockedAccounts.modifier().add(std::move(descriptor), 2);
-					addAccount(m_primaryMainAccountPublicKey, m_primarySigningPublicKey, Amount(1234));
+					addAccount(m_primaryMainAccountPublicKey, m_primarySigningPublicKey, vrfPublicKey,Amount(1234));
 
 					modifyAccount(m_primaryMainAccountPublicKey, [](auto& accountState) {
 						accountState.SupplementalPublicKeys.node().unset();
@@ -114,6 +114,10 @@ namespace catapult { namespace harvesting {
 			}
 
 		public:
+
+			auto& getCache() {
+				return m_cache;
+			}
 			void setCacheHeight(Height cacheHeight) {
 				auto delta = m_cache.createDelta();
 				m_cache.commit(cacheHeight);
@@ -160,10 +164,14 @@ namespace catapult { namespace harvesting {
 				queueMessage(HarvestRequestOperation::Remove, encryptedPayload, mainAccountPublicKey, height);
 			}
 
-			void appendHarvesterDirectlyToHarvestersFile(const BlockGeneratorAccountDescriptor& descriptor) {
+			void appendHarvesterDirectlyToHarvestersFile(cache::CatapultCache& cache, const BlockGeneratorAccountDescriptor& descriptor) {
 				io::RawFile file(harvestersFilename(), io::OpenMode::Read_Append);
 				file.seek(file.size());
-
+				//Ensure account exists in cache
+				auto delta = cache.createDelta();
+				auto& accountStateCache = delta.sub<cache::AccountStateCache>();
+				accountStateCache.addAccount(descriptor.signingKeyPair().publicKey(), Height(1));
+				cache.commit(Height(1));
 				auto encryptedPayload = test::PrepareHarvestRequestEncryptedPayload(
 						m_encryptionKeyPair.publicKey(),
 						test::ToClearTextBuffer(descriptor));
@@ -211,6 +219,8 @@ namespace catapult { namespace harvesting {
 				mainAccountStateIter.get().AccountType = state::AccountType::Main;
 				mainAccountStateIter.get().SupplementalPublicKeys.linked().set(signingPublicKey);
 				mainAccountStateIter.get().SupplementalPublicKeys.node().set(m_encryptionKeyPair.publicKey());
+				mainAccountStateIter.get().SupplementalPublicKeys.vrf().unset();
+				mainAccountStateIter.get().SupplementalPublicKeys.vrf().set(vrfPublicKey);
 
 				accountStateCache.addAccount(signingPublicKey, Default_Height);
 				auto remoteAccountStateIter = accountStateCache.find(signingPublicKey);
@@ -243,7 +253,7 @@ namespace catapult { namespace harvesting {
 				auto networkConfig = model::NetworkConfiguration::Uninitialized();
 				networkConfig.MinHarvesterBalance = Amount(1000);
 				networkConfig.ImportanceGrouping = 100;
-
+				networkConfig.AccountVersion = 2;
 				auto config = config::BlockchainConfiguration(
 						immutableConfig,
 						networkConfig,
@@ -288,7 +298,7 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		TestContext context;
 		for (auto i = 0; i < 4; ++i)
-			context.appendHarvesterDirectlyToHarvestersFile(test::GenerateRandomAccountDescriptors(1)[0]);
+			context.appendHarvesterDirectlyToHarvestersFile(context.getCache(), test::GenerateRandomAccountDescriptors(1)[0]);
 
 		// Sanity:
 		EXPECT_EQ(1u, context.numUnlockedAccounts());
