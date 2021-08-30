@@ -50,6 +50,16 @@ namespace catapult { namespace state {
 	using ActiveDataModifications = std::vector<ActiveDataModification>;
 	using CompletedDataModifications = std::vector<CompletedDataModification>;
 
+	struct Verification {
+	    /// Height of verification results.
+	    catapult::Height Height;
+
+	    /// The hash of block that initiated the Verification.
+	    Hash256 VerificationTrigger;
+	};
+
+	using Verifications = std::vector<Verification>;
+
 	// Mixin for storing drive details.
 	class DriveMixin {
 	public:
@@ -141,6 +151,16 @@ namespace catapult { namespace state {
 			return m_completedDataModifications;
 		}
 
+		/// Gets verifications.
+		Verifications& verifications() {
+		    return m_verifications;
+		}
+
+		/// Gets verifications.
+		const Verifications& verifications() const {
+			return m_verifications;
+		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
@@ -150,6 +170,7 @@ namespace catapult { namespace state {
 		uint16_t m_replicatorCount;
 		ActiveDataModifications m_activeDataModifications;
 		CompletedDataModifications m_completedDataModifications;
+		Verifications m_verifications;
 	};
 
 	// Drive entry.

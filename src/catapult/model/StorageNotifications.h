@@ -524,6 +524,7 @@ namespace catapult { namespace model {
 				: Notification(Notification_Type, sizeof(FinishDriveVerificationNotification<1>))
 				, PublicKey(signer)
 				, DriveKey(driveKey)
+				, VerificationTrigger(verificationTrigger)
 				, VerificationOpinionPairCount(verificationOpinionPairCount)
 				, ProversPtr(proversPtr)
 				, VerificationOpinionPtr(verificationOpinionPtr)
@@ -535,6 +536,9 @@ namespace catapult { namespace model {
 
 		/// Key of the drive.
 		Key DriveKey;
+
+		/// The hash of block that initiated the Verification.
+		Hash256 VerificationTrigger;
 
 		/// Number of key-opinion pairs in the payload.
 		uint16_t VerificationOpinionPairCount;

@@ -62,6 +62,18 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void LoadFinishedVerifications(io::InputStream& input, Verifications& finishedVerifications) {
+		    auto count = io::Read16(input);
+		    while (count--) {
+
+		        state::Verification verification;
+		        io::Read(input, verification.Height);
+		        io::Read(input, verification.VerificationTrigger);
+
+		        finishedVerifications.emplace_back(verification);
+		    }
+		}
+
 	}
 
 	void BcDriveEntrySerializer::Save(const BcDriveEntry& driveEntry, io::OutputStream& output) {
@@ -107,6 +119,7 @@ namespace catapult { namespace state {
 
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
+        LoadFinishedVerifications(input, entry.verifications());
 
 		return entry;
 	}
