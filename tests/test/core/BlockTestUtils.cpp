@@ -152,6 +152,7 @@ namespace catapult { namespace test {
 			auto& block = reinterpret_cast<model::Block&>(buffer[i * Entity_Size]);
 			block.Size = Entity_Size;
 			block.Type = model::Entity_Type_Block;
+			block.Version =  MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 		}
 
 		return buffer;

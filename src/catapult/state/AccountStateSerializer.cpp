@@ -34,6 +34,7 @@ namespace catapult { namespace state {
 
 		if (HasFlag(AccountPublicKeys::KeyType::Node, accountPublicKeys.mask()))
 			output.write(accountPublicKeys.node().get());
+
 		if (HasFlag(AccountPublicKeys::KeyType::VRF, accountPublicKeys.mask()))
 			output.write(accountPublicKeys.vrf().get());
 	}

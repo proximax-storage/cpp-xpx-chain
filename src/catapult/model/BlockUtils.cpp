@@ -133,7 +133,7 @@ namespace catapult { namespace model {
 			pBlock->Type = Entity_Type_Block;
 
 			pBlock->setTransactionPayloadSize(transactionPayloadSize);
-
+			pBlock->setGenerationHashProof(crypto::VrfProof());
 			pBlock->Height = context.BlockHeight + Height(1);
 			pBlock->Difficulty = Difficulty();
 			pBlock->PreviousBlockHash = context.BlockHash;

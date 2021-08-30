@@ -39,6 +39,7 @@ namespace catapult { namespace api {
 				block.Size = sizeof(model::BlockHeader);
 				block.Type = model::Entity_Type_Block;
 				block.Height = startHeight + Height(i);
+				block.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 			}
 
 			return pPacket;

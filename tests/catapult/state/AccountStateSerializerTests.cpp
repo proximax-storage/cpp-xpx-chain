@@ -207,12 +207,14 @@ namespace catapult { namespace state {
 				return sizeof(VersionType) + sizeof(AccountStateHeader<2>) + sizeof(HistoricalSnapshotsHeader)
 					   + (HasFlag(AccountPublicKeys::KeyType::Linked, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
 					   + (HasFlag(AccountPublicKeys::KeyType::Node, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
+						 + (HasFlag(AccountPublicKeys::KeyType::VRF, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
 					   + accountState.Balances.size() * sizeof(model::Mosaic)
 					   + accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot);
 			}
 			static const model::Mosaic* GetMosaicPointer(const AccountStateHeader<2>& header) {
 				const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&header + 1)
 										  + (HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask) ? Key::Size : 0)
+										  + (HasFlag(AccountPublicKeys::KeyType::VRF, header.LinkedKeysMask) ? Key::Size : 0)
 										  + (HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask) ? Key::Size : 0);
 				return reinterpret_cast<const model::Mosaic*>(pHeaderData);
 			}
@@ -244,6 +246,8 @@ namespace catapult { namespace state {
 					accountState.SupplementalPublicKeys.vrf().set(*pKeysPointer);
 					pKeysPointer++;
 				}
+				accountState.Balances.optimize(header.OptimizedMosaicId);
+				accountState.Balances.track(header.TrackedMosaicId);
 				const auto* pMosaic = GetMosaicPointer(header);
 				for (auto i = 0u; i < header.MosaicsCount; ++i, ++pMosaic)
 					accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
