@@ -28,7 +28,8 @@ namespace catapult { namespace plugins {
 							transaction.DataModificationId,
 							transaction.UploadOpinionPairCount,
 							transaction.UploaderKeysPtr(),
-							transaction.UploadOpinionPtr()
+							transaction.UploadOpinionPtr(),
+							transaction.UsedDriveSize
 					));
 
 					const auto signerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier));

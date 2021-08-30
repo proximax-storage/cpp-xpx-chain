@@ -20,6 +20,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 			case 1: {
 				sub.notify(DataModificationApprovalNotification<1>(
+						transaction.Signer,
 						transaction.DriveKey,
 						transaction.DataModificationId,
 						transaction.FileStructureCdi,

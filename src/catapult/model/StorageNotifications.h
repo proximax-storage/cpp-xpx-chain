@@ -258,12 +258,14 @@ namespace catapult { namespace model {
 
 	public:
 		explicit DataModificationApprovalNotification(
+				const Key& signer,
 				const Key& driveKey,
 				const Hash256& dataModificationId,
 				const Hash256& fileStructureCdi,
 				uint64_t fileStructureSize,
 				uint64_t usedDriveSize)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				, PublicKey(signer)
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
 				, FileStructureCdi(fileStructureCdi)
@@ -272,6 +274,9 @@ namespace catapult { namespace model {
 		{}
 
 	public:
+		/// Key of the signer.
+		Key PublicKey;
+		
 		/// Key of drive.
 		Key DriveKey;
 
@@ -469,7 +474,8 @@ namespace catapult { namespace model {
 				const Hash256& dataModificationId,
 				const uint16_t uploadOpinionPairCount,
 				const Key* uploaderKeysPtr,
-				const uint8_t* uploadOpinionPtr)
+				const uint8_t* uploadOpinionPtr,
+				uint64_t usedDriveSize)
 				: Notification(Notification_Type, sizeof(DataModificationSingleApprovalNotification<1>))
 				, PublicKey(signer)
 				, DriveKey(driveKey)
@@ -477,6 +483,7 @@ namespace catapult { namespace model {
 				, UploadOpinionPairCount(uploadOpinionPairCount)
 				, UploaderKeysPtr(uploaderKeysPtr)
 				, UploadOpinionPtr(uploadOpinionPtr)
+				, UsedDriveSize(usedDriveSize)
 		{}
 
 	public:
@@ -497,6 +504,8 @@ namespace catapult { namespace model {
 
 		/// Opinion about how much each Uploader has uploaded to the signer in percents.
 		const uint8_t* UploadOpinionPtr;
+
+		const uint64_t UsedDriveSize;
 	};
 
 	/// Notification of a verification payment.
