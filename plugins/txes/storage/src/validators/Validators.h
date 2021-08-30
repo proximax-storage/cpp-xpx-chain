@@ -65,4 +65,11 @@ namespace catapult { namespace validators {
 	/// - respective drive exists
 	/// - transaction signer is the owner of the respective drive
 	DECLARE_STATEFUL_VALIDATOR(VerificationPayment, model::VerificationPaymentNotification<1>)();
+
+	/// A validator implementation that applies to finish drive verification notifications and validates that:
+	/// - respective drive exists
+	/// - no active data modifications
+	/// - a verification time has come
+	/// - a verification doesn't exist
+	DECLARE_STATEFUL_VALIDATOR(FinishDriveVerification, model::FinishDriveVerificationNotification<1>)();
 }}

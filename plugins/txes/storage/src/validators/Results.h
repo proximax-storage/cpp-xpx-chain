@@ -80,6 +80,15 @@ namespace catapult { namespace validators {
 	/// Percents in replicator's upload opinion do not sum up to 100.
 	DEFINE_STORAGE_RESULT(Opinion_Incorrect_Percentage, 22);
 
+	/// The drive cannot be verified if there are active modifications.
+	DEFINE_STORAGE_RESULT(Verification_Exist_Active_Modifications, 23);
+
+	/// The attempt to start verification too early.
+	DEFINE_STORAGE_RESULT(Verification_Premature_Verification, 24);
+
+	/// The attempt to start already started verification.
+	DEFINE_STORAGE_RESULT(Verification_Already_Exist, 25);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

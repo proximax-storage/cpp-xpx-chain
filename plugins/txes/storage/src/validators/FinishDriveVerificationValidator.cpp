@@ -1,0 +1,59 @@
+/**
+*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#include "Validators.h"
+#include "catapult/model/EntityHasher.h"
+
+namespace catapult { namespace validators {
+
+    using Notification = model::FinishDriveVerificationNotification<1>;
+
+    Hash256& calculateSharedFieldsHash(const Key& driveKey, const Hash256& verificationTrigger) {
+        auto sharedDataSize = driveKey.size() + verificationTrigger.size();
+        auto *const pSharedDataBegin = new uint8_t[sharedDataSize];
+        auto *pSharedData = pSharedDataBegin;
+
+        std::copy(driveKey.begin(), driveKey.end(), pSharedData);
+        pSharedData += sizeof(driveKey.size());
+        std::copy(verificationTrigger.begin(), verificationTrigger.end(), pSharedData);
+
+        Hash256 verificationHash;
+        crypto::Sha3_256(utils::RawBuffer(pSharedDataBegin, sharedDataSize), verificationHash);
+
+        return verificationHash;
+    }
+
+    DEFINE_STATEFUL_VALIDATOR(FinishDriveVerification, [](const Notification& notification, const ValidatorContext& context) {
+        const auto &driveCache = context.Cache.sub<cache::BcDriveCache>();
+        const auto driveIter = driveCache.find(notification.DriveKey);
+        const auto &pDriveEntry = driveIter.tryGet();
+
+        // Check if respective drive exists
+        if (!pDriveEntry)
+            return Failure_Storage_Drive_Not_Found;
+
+        // Check if there are active data modifications
+        if (!pDriveEntry->activeDataModifications().empty())
+            return Failure_Storage_Verification_Exist_Active_Modifications;
+
+        // Check if verification isn't premature
+        const auto &pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+        if (!pDriveEntry->verifications().empty() &&
+            !(Height(pDriveEntry->verifications().back().Height.unwrap() + pluginConfig.VerificationFrequency.unwrap()) >= context.Height)) {
+            return Failure_Storage_Verification_Premature_Verification;
+        }
+
+        // calculate shared fields` hash
+        auto verificationHash = calculateSharedFieldsHash(notification.DriveKey, notification.VerificationTrigger);
+        auto lastVerificationHash = calculateSharedFieldsHash(notification.DriveKey, notification.VerificationTrigger);
+
+        // Check if verification already exist
+        if (verificationHash == lastVerificationHash)
+            return Failure_Storage_Verification_Already_Exist;
+
+        return ValidationResult::Success;
+    });
+}}
