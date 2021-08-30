@@ -26,6 +26,5 @@ namespace catapult { namespace observers {
 	  	auto& driveEntry = driveIter.get();
 
 		driveEntry.confirmedUsedSizes().insert({notification.PublicKey, notification.UsedDriveSize});
-
 	});
 }}
