@@ -37,6 +37,9 @@ namespace catapult { namespace config {
 		/// Whether the plugin is enabled.
 		bool Enabled;
 
+		/// Verification frequency.
+		BlockDuration VerificationFrequency;
+
 	private:
 		StorageConfiguration() = default;
 

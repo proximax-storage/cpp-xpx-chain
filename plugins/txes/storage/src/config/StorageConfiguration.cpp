@@ -32,6 +32,8 @@ namespace catapult { namespace config {
 		TRY_LOAD_CHAIN_PROPERTY(StorageBillingPeriod);
 		config.DownloadBillingPeriod = utils::TimeSpan::FromHours(24);
 		TRY_LOAD_CHAIN_PROPERTY(DownloadBillingPeriod);
+		config.VerificationFrequency = BlockDuration(720);
+		TRY_LOAD_CHAIN_PROPERTY(VerificationFrequency);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 
