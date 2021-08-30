@@ -6,6 +6,7 @@
 
 #include "Observers.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include <algorithm>
 
 namespace catapult { namespace observers { 
 
@@ -20,11 +21,12 @@ namespace catapult { namespace observers {
 		auto replicatorIter = replicatorCache.find(notification.PublicKey);
 		auto& replicatorEntry = replicatorIter.get();
 
-		//Replicator state
+		//Replicator account state
 		auto& cache = context.Cache.sub<cache::AccountStateCache>();
 		auto accountIter = cache.find(notification.PublicKey);
 		auto& replicatorState = accountIter.get();
 
+		//Storage deposit return
 		//Mosaic id
 		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
@@ -32,28 +34,44 @@ namespace catapult { namespace observers {
 		//Remaining capacity
 		auto deposit = replicatorEntry.capacity().unwrap();
 
-		//Total drive size served
+		//To get Total drive size served and Total driveSize
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		uint64_t driveSize = 0;
 		for(const auto& iter : replicatorEntry.drives()){
 			auto driveIter = driveCache.find(iter.first);
 			const auto& drive = driveIter.get();		
 			deposit += drive.size();
+			driveSize += drive.size();
 		}
 
-		if (NotifyMode::Commit == context.Mode)
-			replicatorState.Balances.credit(storageMosaicId, Amount(deposit), context.Height);
-		else
-			replicatorState.Balances.debit(storageMosaicId, Amount(deposit), context.Height);
+		//Streaming deposit slashing
+		//To get UsedDriveSize of last approved by the Replicator modification
+		uint64_t usedDriveSizeOnReplicator = 0;
+        for(const auto& i : replicatorEntry.drives()){
+            auto driveIter = driveCache.find(i.first);
+            const auto& drive = driveIter.get();   
+			for(const auto& j : drive.confirmedUsedSizes()){
+				usedDriveSizeOnReplicator += j.second;
+			} 
+        }
 
-		//UsedDriveSize of last approved by the Replicator modification
-
-        // UsedDriveSize of last approved modification on the Drive 
+        //To get UsedDriveSize of last approved modification on the Drive 
         uint64_t usedDriveSizeOnDrive = 0;
-        for(const auto& iter : replicatorEntry.drives()){
-            auto driveIter = driveCache.find(iter.first);
+        for(const auto& i : replicatorEntry.drives()){
+            auto driveIter = driveCache.find(i.first);
             const auto& drive = driveIter.get();        
             usedDriveSizeOnDrive += drive.usedSize();
         }
+		
+		//Streaming deposit slashing = 2min(usedDriveSizeOnReplicator, usedDriveSizeOnDrive)
+		auto streamingDepositSlashing = 2 * std::min(usedDriveSizeOnReplicator, usedDriveSizeOnDrive);
+		
+		//Streaming deposit return = streaming deposit - streaming deposit slashing
+		auto streamingDeposit = (driveSize * 2) - streamingDepositSlashing;
+
+		if (NotifyMode::Commit == context.Mode)
+			replicatorState.Balances.credit(storageMosaicId, Amount(deposit + streamingDeposit), context.Height);
+		else
+			replicatorState.Balances.debit(storageMosaicId, Amount(deposit + streamingDeposit), context.Height);
 	});
 }}
