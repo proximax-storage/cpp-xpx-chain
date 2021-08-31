@@ -18,7 +18,7 @@ namespace catapult { namespace model {
 	struct DataModificationApprovalTransactionBody : public THeader {
 	private:
 		using TransactionType = DataModificationApprovalTransactionBody<THeader>;
-
+		
 	public:
 		explicit DataModificationApprovalTransactionBody<THeader>()
 		{}

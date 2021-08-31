@@ -43,6 +43,10 @@ namespace catapult { namespace validators {
 	/// - supplied BLS key doesn't appear in BLS keys cache
 	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
 
+	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
+	/// -
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)();
+
 	/// A validator implementation that applies to drive finish download notifications and validates that:
 	/// - respective download channel exists
 	/// - transaction signer is the owner of the respective download channel

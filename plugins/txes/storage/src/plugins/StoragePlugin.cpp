@@ -15,6 +15,7 @@
 #include "src/plugins/DataModificationApprovalTransactionPlugin.h"
 #include "src/plugins/DataModificationCancelTransactionPlugin.h"
 #include "src/plugins/ReplicatorOnboardingTransactionPlugin.h"
+#include "src/plugins/ReplicatorOffboardingTransactionPlugin.h"
 #include "src/plugins/FinishDownloadTransactionPlugin.h"
 #include "src/plugins/DownloadPaymentTransactionPlugin.h"
 #include "src/plugins/StoragePaymentTransactionPlugin.h"
@@ -79,6 +80,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDataModificationApprovalTransactionPlugin());
 		manager.addTransactionSupport(CreateDataModificationCancelTransactionPlugin());
 		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin());
+		manager.addTransactionSupport(CreateReplicatorOffboardingTransactionPlugin());
 		manager.addTransactionSupport(CreateFinishDownloadTransactionPlugin());
 		manager.addTransactionSupport(CreateDownloadPaymentTransactionPlugin());
 		manager.addTransactionSupport(CreateStoragePaymentTransactionPlugin());
@@ -211,6 +213,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDataModificationApprovalValidator())
 				.add(validators::CreateDataModificationCancelValidator())
 				.add(validators::CreateReplicatorOnboardingValidator())
+				.add(validators::CreateReplicatorOffboardingValidator())
 				.add(validators::CreateFinishDownloadValidator())
 				.add(validators::CreateDownloadPaymentValidator())
 				.add(validators::CreateStoragePaymentValidator())
@@ -230,6 +233,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDataModificationApprovalObserver())
 				.add(observers::CreateDataModificationCancelObserver())
 				.add(observers::CreateReplicatorOnboardingObserver())
+				.add(observers::CreateReplicatorOffboardingObserver())
 				.add(observers::CreateDownloadPaymentObserver())
 				.add(observers::CreateDataModificationSingleApprovalObserver())
 				.add(observers::CreateDownloadApprovalObserver())

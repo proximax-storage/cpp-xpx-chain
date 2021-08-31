@@ -29,21 +29,24 @@ namespace catapult { namespace model {
 
 	/// ReplicatorOnboarding transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, ReplicatorOnboarding, 0x6);
+	
+	/// ReplicatorOffboarding transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, ReplicatorOffboarding, 0x7);
 
 	/// FinishDownload transaction.
-	DEFINE_TRANSACTION_TYPE(Storage, FinishDownload, 0x7);
+	DEFINE_TRANSACTION_TYPE(Storage, FinishDownload, 0x8);
 
 	/// DownloadPayment transaction.
-	DEFINE_TRANSACTION_TYPE(Storage, DownloadPayment, 0x8);
+	DEFINE_TRANSACTION_TYPE(Storage, DownloadPayment, 0x9);
 
 	/// StoragePayment transaction.
-	DEFINE_TRANSACTION_TYPE(Storage, StoragePayment, 0x9);
+	DEFINE_TRANSACTION_TYPE(Storage, StoragePayment, 0xA);
 
 	/// DataModificationSingleApproval transaction.
-	DEFINE_TRANSACTION_TYPE(Storage, DataModificationSingleApproval, 0xA);
+	DEFINE_TRANSACTION_TYPE(Storage, DataModificationSingleApproval, 0xB);
 
 	/// VerificationPayment transaction.
-	DEFINE_TRANSACTION_TYPE(Storage, VerificationPayment, 0xB);
+	DEFINE_TRANSACTION_TYPE(Storage, VerificationPayment, 0xC);
 
 	/// DownloadApproval transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, DownloadApproval, 0xC);
