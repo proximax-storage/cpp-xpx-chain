@@ -29,6 +29,9 @@ namespace catapult { namespace model {
 		/// The storage size that the replicator provides to the system.
 		Amount Capacity;
 
+		/// Public BLS key of the replicator.
+		BLSPublicKey BlsKey;
+
 	public:
 		// Calculates the real size of a storage \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {

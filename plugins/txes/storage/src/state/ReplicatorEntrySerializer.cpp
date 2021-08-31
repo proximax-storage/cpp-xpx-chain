@@ -45,6 +45,7 @@ namespace catapult { namespace state {
 		io::Write(output, replicatorEntry.key());
 
 		io::Write(output, replicatorEntry.capacity());
+		io::Write(output, replicatorEntry.blsKey());
 		io::Write16(output, utils::checked_cast<size_t, uint16_t>(replicatorEntry.drives().size()));
 
 		SaveDrives(output, replicatorEntry.drives());
@@ -63,6 +64,10 @@ namespace catapult { namespace state {
 		entry.setVersion(version);
 
 		entry.setCapacity(Amount(io::Read64(input)));
+
+		BLSPublicKey blsKey;
+		input.read(blsKey);
+		entry.setBlsKey(blsKey);
 
 		LoadDrives(input, entry.drives());
 

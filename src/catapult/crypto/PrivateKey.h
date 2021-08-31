@@ -89,6 +89,44 @@ namespace catapult { namespace crypto {
 		Key m_key;
 	};
 
+	/// Represents a BLS private key.
+	class BLSPrivateKey final : public utils::Bytes<Key_Size> {
+	public:
+		/// Creates a BLS private key.
+		BLSPrivateKey() = default;
+
+		/// Creates a BLS private key from raw array.
+		BLSPrivateKey(uint8_t bytes[32]) {
+			std::copy(bytes, bytes + Key_Size, m_array);
+		}
+
+		/// Destroys the BLS private key.
+		~BLSPrivateKey();
+
+	public:
+		/// Move constructor.
+		BLSPrivateKey(BLSPrivateKey&& rhs);
+
+		/// Move assignment operator.
+		BLSPrivateKey& operator=(BLSPrivateKey&& rhs);
+
+	public:
+		/// Creates a private key from \a str.
+		static BLSPrivateKey FromString(const std::string& str);
+
+		/// Creates a private key from \a str.
+		static BLSPrivateKey FromRawString(const std::string& str);
+
+		/// Creates a private key from \a pRawKey with size \a keySize and securely erases \a pRawKey.
+		static BLSPrivateKey FromStringSecure(char* pRawKey, size_t keySize);
+
+		/// Generates a new private key using the specified byte \a generator.
+		static BLSPrivateKey Generate(const supplier<uint8_t>& generator);
+
+	private:
+		static BLSPrivateKey FromString(const char* const pRawKey, size_t keySize);
+	};
+
 #ifdef SPAMMER_TOOL
 #pragma pack(pop)
 #endif

@@ -31,6 +31,11 @@ namespace catapult { namespace crypto {
 			Key zeroKey;
 			std::fill(zeroKey.begin(), zeroKey.end(), static_cast<uint8_t>(0));
 			return zeroKey; }();
+
+		const BLSPublicKey BLS_Public_Key_Zero = []() {
+		  	BLSPublicKey zeroKey;
+			std::fill(zeroKey.begin(), zeroKey.end(), static_cast<uint8_t>(0));
+			return zeroKey; }();
 	}
 
 	TEST(TEST_CLASS, CanExtractPublicKeyFromPrivateKey) {
@@ -60,5 +65,50 @@ namespace catapult { namespace crypto {
 
 		// Assert:
 		EXPECT_EQ(publicKey1, publicKey2);
+	}
+
+	TEST(TEST_CLASS, CanExtractPublicKeyFromPrivateKey_BLS) {
+		// Arrange:
+		auto privateKey = BLSPrivateKey::Generate(test::RandomByte);
+		BLSPublicKey publicKey;
+
+		// Act:
+		ExtractPublicKeyFromPrivateKey(privateKey, publicKey);
+
+		// Assert:
+		EXPECT_NE(BLS_Public_Key_Zero, publicKey);
+	}
+
+	TEST(TEST_CLASS, CanExtractSamePublicKeyFromSamePrivateKey_BLS) {
+		// Arrange::
+		auto generatePublicKey = []() {
+			BLSPublicKey publicKey;
+			auto privateKey = BLSPrivateKey::Generate([]() { return static_cast<uint8_t>(7); });
+			ExtractPublicKeyFromPrivateKey(privateKey, publicKey);
+			return publicKey;
+		};
+
+		// Act:
+		auto publicKey1 = generatePublicKey();
+		auto publicKey2 = generatePublicKey();
+
+		// Assert:
+		EXPECT_EQ(publicKey1, publicKey2);
+	}
+
+	TEST(TEST_CLASS, CanExtractSamePublicKeyFromSamePrivateKey_BLS_Zero) {
+		// Arrange::
+		auto generatePublicKey = []() {
+			BLSPublicKey publicKey;
+			auto privateKey = BLSPrivateKey::Generate([]() { return static_cast<uint8_t>(0); });
+			ExtractPublicKeyFromPrivateKey(privateKey, publicKey);
+			return publicKey;
+		};
+
+		// Act:
+		auto publicKey = generatePublicKey();
+
+		// Assert:
+		EXPECT_EQ(test::ToString(publicKey), "A695AD325DFC7E1191FBC9F186F58EFF42A634029731B18380FF89BF42C464A42CB8CA55B200F051F57F1E1893C68759");
 	}
 }}

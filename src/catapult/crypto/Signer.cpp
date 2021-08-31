@@ -27,6 +27,7 @@
 extern "C" {
 #include <ref10/ge.h>
 #include <ref10/sc.h>
+#include <blst/blst.hpp>
 }
 
 #ifdef _MSC_VER
@@ -38,6 +39,9 @@ extern "C" {
 namespace catapult { namespace crypto {
 
 	namespace {
+		const std::string FILECOIN_DST("BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_");
+		const std::string ETH2_DST("BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_");
+
 		const size_t Encoded_Size = Signature_Size / 2;
 		static_assert(Encoded_Size * 2 == Hash512_Size, "hash must be big enough to hold two encoded elements");
 
@@ -132,6 +136,16 @@ namespace catapult { namespace crypto {
 		CheckEncodedS(encodedS);
 	}
 
+	void Sign(const BLSKeyPair& keyPair, const RawBuffer& message, BLSSignature& computedSignature) {
+		blst::blst_p2 hash_point;
+		blst::blst_hash_to_g2(&hash_point, message.pData, message.Size,
+							  reinterpret_cast<const uint8_t*>(FILECOIN_DST.data()), FILECOIN_DST.size());
+		const auto* temp = reinterpret_cast<const blst::blst_scalar*>(&keyPair.privateKey().m_array);
+		blst::blst_p2_affine out_point;
+		blst::blst_sign_pk2_in_g1(nullptr, &out_point, &hash_point, temp);
+		blst::blst_p2_affine_compress(computedSignature.m_array, &out_point);
+	}
+
 	bool Verify(const Key& publicKey, const RawBuffer& dataBuffer, const Signature& signature) {
 		return Verify(publicKey, { dataBuffer }, signature);
 	}
@@ -171,5 +185,120 @@ namespace catapult { namespace crypto {
 		uint8_t checkr[Encoded_Size];
 		ge_tobytes(checkr, &R);
 		return 0 == crypto_verify_32(checkr, encodedR);
+	}
+
+	bool Verify(const BLSPublicKey& publicKey, const RawBuffer& dataBuffer, const BLSSignature& signature) {
+		blst::P2_Affine sig;
+		auto res = sig.uncompress(signature.m_array);
+		if (res != blst::BLST_SUCCESS) {
+			CATAPULT_LOG(error) << "can't uncompress signature " << signature;
+			return false;
+		}
+		blst::P1_Affine pk;
+		res = pk.uncompress(publicKey.m_array);
+		if (res != blst::BLST_SUCCESS) {
+			CATAPULT_LOG(error) << "can't uncompress public key " << publicKey;
+			return false;
+		}
+		return sig.core_verify(pk, true /* hash_or_encode */, dataBuffer.pData, dataBuffer.Size, FILECOIN_DST, nullptr, NULL) == blst::BLST_SUCCESS;
+	}
+
+	BLSSignature Aggregate(const std::vector<const BLSSignature*>& signatures) {
+		if (signatures.empty() || !signatures[0])
+			return BLSSignature();
+
+		blst::P2_Affine sig;
+		auto res = sig.uncompress(signatures[0]->m_array);
+		if (res != blst::BLST_SUCCESS) {
+			CATAPULT_LOG(error) << "can't uncompress signature during aggregate 0 " << *signatures[0];
+			return BLSSignature();
+		}
+
+		blst::P2 agg_point(sig);
+		for (auto i = 1u; i < signatures.size(); ++i) {
+			if (!signatures[i])
+				return BLSSignature();
+
+			res = sig.uncompress(signatures[i]->m_array);
+			if (res != blst::BLST_SUCCESS) {
+				CATAPULT_LOG(error) << "can't uncompress signature during aggregate " << i << ' ' << *signatures[i];
+				return BLSSignature();
+			}
+			agg_point.aggregate(sig);
+		}
+
+		BLSSignature result;
+		agg_point.to_affine().compress(result.m_array);
+		return result;
+	}
+
+	BLSPublicKey Aggregate(const std::vector<const BLSPublicKey*>& pubKeys) {
+		if (pubKeys.empty() || !pubKeys[0])
+			return BLSPublicKey();
+
+		blst::P1_Affine pk;
+		auto res = pk.uncompress(pubKeys[0]->m_array);
+		if (res != blst::BLST_SUCCESS) {
+			CATAPULT_LOG(error) << "can't uncompress signature during aggregate 0 " << *pubKeys[0];
+			return BLSPublicKey();
+		}
+
+		blst::P1 agg_point(pk);
+		for (auto i = 1u; i < pubKeys.size(); ++i) {
+			if (!pubKeys[i])
+				return BLSPublicKey();
+
+			res = pk.uncompress(pubKeys[i]->m_array);
+			if (res != blst::BLST_SUCCESS) {
+				CATAPULT_LOG(error) << "can't uncompress signature during aggregate " << i << ' ' << *pubKeys[i];
+				return BLSPublicKey();
+			}
+			agg_point.aggregate(pk);
+		}
+
+		BLSPublicKey result;
+		agg_point.to_affine().compress(result.m_array);
+		return result;
+	}
+
+	bool AggregateVerify(const std::vector<const BLSPublicKey*>& publicKeys,
+						 const std::vector<RawBuffer>& dataBuffers,
+						 const BLSSignature& signature) {
+		if (publicKeys.size() != dataBuffers.size())
+			return false;
+
+		blst::blst_p2_affine sig;
+		auto res = blst::blst_p2_uncompress(&sig, signature.m_array);
+		if (res != blst::BLST_SUCCESS) {
+			CATAPULT_LOG(error) << "can't uncompress signature during aggregate verify " << signature;
+			return false;
+		}
+
+		uint64_t mempool[blst::blst_pairing_sizeof() / sizeof(uint64_t)];
+		memset(mempool, 0, sizeof(mempool));
+		blst::blst_pairing* pairing = reinterpret_cast<blst::blst_pairing*>(&mempool);
+		blst::blst_pairing_init(pairing, true, reinterpret_cast<const uint8_t*>(FILECOIN_DST.data()), FILECOIN_DST.size());
+		for (auto i = 0u; i < publicKeys.size(); ++i) {
+			if (!publicKeys[i])
+				return false;
+
+			blst::blst_p1_affine pk;
+			res = blst::blst_p1_uncompress(&pk, publicKeys[i]->m_array);
+			if (res != blst::BLST_SUCCESS) {
+				CATAPULT_LOG(error) << "can't uncompress pk during aggregate verify " << i << ' ' << publicKeys[i];
+				return false;
+			}
+			blst::blst_pairing_aggregate_pk_in_g1(pairing, &pk, nullptr, dataBuffers[i].pData, dataBuffers[i].Size);
+		}
+
+		blst::blst_pairing_commit(pairing);
+		blst::blst_fp12 pt;
+		blst::blst_aggregated_in_g2(&pt, &sig);
+		return blst::blst_pairing_finalverify(pairing, &pt);
+	}
+
+	bool FastAggregateVerify(const std::vector<const BLSPublicKey*>& publicKeys, const RawBuffer& dataBuffer, const BLSSignature& signature) {
+		auto aggregatedPK = Aggregate(publicKeys);
+		return Verify(aggregatedPK, dataBuffer, signature);
 	}
 }}

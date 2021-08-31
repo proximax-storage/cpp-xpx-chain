@@ -22,11 +22,18 @@
 #include "SecureZero.h"
 #include "catapult/utils/HexParser.h"
 
+extern "C" {
+#include <blst/blst.hpp>
+}
+
 namespace catapult { namespace crypto {
 
 	namespace {
 		class SecureZeroGuard {
 		public:
+			SecureZeroGuard(blst::byte bytes[Key_Size]) : SecureZeroGuard(bytes, sizeof(bytes))
+			{}
+
 			SecureZeroGuard(Key& key) : SecureZeroGuard(key.data(), key.size())
 			{}
 
@@ -85,5 +92,50 @@ namespace catapult { namespace crypto {
 
 	bool PrivateKey::operator!=(const PrivateKey& rhs) const {
 		return !(*this == rhs);
+	}
+
+	BLSPrivateKey::BLSPrivateKey(BLSPrivateKey&& rhs) {
+		SecureZeroGuard guard(rhs.m_array);
+		std::swap(m_array, rhs.m_array);
+	}
+
+	BLSPrivateKey& BLSPrivateKey::operator=(BLSPrivateKey&& rhs) {
+		SecureZeroGuard guard(rhs.m_array);
+		std::swap(m_array, rhs.m_array);
+		return *this;
+	}
+
+	BLSPrivateKey::~BLSPrivateKey() {
+		SecureZero(m_array, Key_Size);
+	}
+
+	BLSPrivateKey BLSPrivateKey::FromString(const char* const pRawKey, size_t keySize) {
+		BLSPrivateKey key;
+		utils::ParseHexStringIntoContainer(pRawKey, keySize, key);
+		return key;
+	}
+
+	BLSPrivateKey BLSPrivateKey::FromString(const std::string& str) {
+		return FromString(str.c_str(), str.size());
+	}
+
+	BLSPrivateKey BLSPrivateKey::FromRawString(const std::string& str) {
+		Key raw;
+		int i = 0;
+		utils::ParseHexStringIntoContainer(str.c_str(), str.size(), raw);
+		return Generate([&](){ return raw[i++]; });
+	}
+
+	BLSPrivateKey BLSPrivateKey::FromStringSecure(char* pRawKey, size_t keySize) {
+		SecureZeroGuard guard(reinterpret_cast<uint8_t*>(pRawKey), keySize);
+		return FromString(pRawKey, keySize);
+	}
+
+	BLSPrivateKey BLSPrivateKey::Generate(const supplier<uint8_t>& generator) {
+		Hash256 ikm;
+		std::generate_n(ikm.begin(), ikm.size(), generator);
+		blst::SecretKey sk{};
+		sk.keygen(ikm.begin(), ikm.size());
+		return BLSPrivateKey(sk.key.b);
 	}
 }}
