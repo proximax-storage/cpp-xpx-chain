@@ -59,6 +59,7 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, currentHeight);
             Notification notification(
+            	Key(),
                 values.InitialBcDriveEntry.key(), 
                 values.InitialBcDriveEntry.activeDataModifications().begin()->Id, 
                 values.InitialBcDriveEntry.activeDataModifications().begin()->DownloadDataCdi,

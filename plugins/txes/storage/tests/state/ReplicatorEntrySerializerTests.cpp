@@ -60,8 +60,8 @@ namespace catapult { namespace state {
 
             EXPECT_EQ(entry.drives().size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
-            for (const auto& details : entry.drives()) {
-                EXPECT_EQ_MEMORY(details.data(), pData, Key_Size);
+            for (const auto& pair : entry.drives()) {
+                EXPECT_EQ_MEMORY(pair.first.data(), pData, Key_Size);
                 pData += Key_Size;
             }
 
@@ -131,8 +131,8 @@ namespace catapult { namespace state {
             uint16_t drivesCount = utils::checked_cast<size_t, uint16_t>(entry.drives().size());
             memcpy(pData, &drivesCount, sizeof(uint16_t));
             pData += sizeof(uint16_t);
-            for (const auto& driveKey : entry.drives()) {
-                memcpy(pData, driveKey.data(), Key_Size);
+            for (const auto& pair : entry.drives()) {
+                memcpy(pData, pair.first.data(), Key_Size);
                 pData += Key_Size;
             }
 

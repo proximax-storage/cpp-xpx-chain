@@ -19,51 +19,49 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1: {
-				sub.notify(ReplicatorOffboardingNotification<1>(
-					transaction.Signer,
-				));
+				sub.notify(ReplicatorOffboardingNotification<1>(transaction.Signer));
 
-				const auto signerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier));
-				const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
-				const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
-
-				//swap storage unit to xpx
-				SwapMosaics(
-					transaction.Signer, 
-					{ model::UnresolvedMosaic{ storageMosaicId, Amount(signerState) } },
-					sub,
-					config.Immutable,
-					Sell
-				);
-
-				// Payments for Storage Deposit Returning to signer
-				sub.notify(BalanceCreditNotification<1>(
-					signerAddress,
-					storageMosaicId,
-					Amount(signerState)
-				));
-
-				//swap streaming unit to xpx
-				auto streamingUnitXPX = SwapMosaics(
-					transaction.Signer, 
-					{ model::UnresolvedMosaic{ streamingMosaicId, Amount() } },
-					sub,
-					config.Immutable,
-					Sell
-				);
-
-				//Payments for streaming deposit return (streaming deposit minus streaming deposit slashing)
-				sub.notify(BalanceCreditNotification<1>)(
-					signerAddress,
-					streamingMosaicId,
-					streamingUnitXPX
-				));
-
-				//Transfer for streamming deposit slashing 
-				sub.notify(BalanceCreditNotification<1>)(
-					signerAddress,
-					streamingMosaicId
-				));
+//				const auto signerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier));
+//				const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
+//				const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+//
+//				//swap storage unit to xpx
+//				SwapMosaics(
+//					transaction.Signer,
+//					{ model::UnresolvedMosaic{ storageMosaicId, Amount(signerState) } },
+//					sub,
+//					config.Immutable,
+//					Sell
+//				);
+//
+//				// Payments for Storage Deposit Returning to signer
+//				sub.notify(BalanceCreditNotification<1>(
+//					signerAddress,
+//					storageMosaicId,
+//					Amount(signerState)
+//				));
+//
+//				//swap streaming unit to xpx
+//				auto streamingUnitXPX = SwapMosaics(
+//					transaction.Signer,
+//					{ model::UnresolvedMosaic{ streamingMosaicId, Amount() } },
+//					sub,
+//					config.Immutable,
+//					Sell
+//				);
+//
+//				//Payments for streaming deposit return (streaming deposit minus streaming deposit slashing)
+//				sub.notify(BalanceCreditNotification<1>)(
+//					signerAddress,
+//					streamingMosaicId,
+//					streamingUnitXPX
+//				));
+//
+//				//Transfer for streamming deposit slashing
+//				sub.notify(BalanceCreditNotification<1>)(
+//					signerAddress,
+//					streamingMosaicId
+//				));
 
 				break;
 			}

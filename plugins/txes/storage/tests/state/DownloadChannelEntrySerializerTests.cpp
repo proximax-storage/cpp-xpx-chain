@@ -44,10 +44,7 @@ namespace catapult { namespace state {
         auto CreateDownloadChannelEntry() {
             return test::CreateDownloadChannelEntry(
                 test::GenerateRandomByteArray<Hash256>(),
-                test::GenerateRandomByteArray<Key>(),
-                test::GenerateRandomByteArray<Key>(),
-                test::GenerateRandomValue<Amount>(),
-                test::GenerateRandomValue<Amount>());
+                test::GenerateRandomByteArray<Key>());
         }
 
         void AssertEntryBuffer(const state::DownloadChannelEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {
@@ -58,12 +55,6 @@ namespace catapult { namespace state {
 			pData += Hash256_Size;
             EXPECT_EQ_MEMORY(entry.consumer().data(), pData, Key_Size);
             pData += Key_Size;
-            EXPECT_EQ_MEMORY(entry.drive().data(), pData, Key_Size);
-			pData += Key_Size;
-            EXPECT_EQ(entry.transactionFee(), *reinterpret_cast<const Amount*>(pData));
-            pData += sizeof(Amount);
-            EXPECT_EQ(entry.storageUnits(), *reinterpret_cast<const Amount*>(pData));
-            pData += sizeof(Amount);
 
             EXPECT_EQ(pExpectedEnd, pData);
         }
@@ -125,12 +116,6 @@ namespace catapult { namespace state {
             pData += Hash256_Size;
             memcpy(pData, entry.consumer().data(), Key_Size);
             pData += Key_Size;
-            memcpy(pData, entry.drive().data(), Key_Size);
-            pData += Key_Size;
-            memcpy(pData, &entry.transactionFee(), sizeof(Amount));
-            pData += sizeof(Amount);
-            memcpy(pData, &entry.storageUnits(), sizeof(Amount));
-            pData += sizeof(Amount);
 
             return buffer;
         }

@@ -83,16 +83,6 @@ namespace catapult { namespace test {
             });
         }
 
-        entry.activeDownloads().reserve(activeDownloadsCount);
-        for (auto aDC = 0u; aDC < activeDownloadsCount; ++aDC) {
-            entry.activeDownloads().emplace_back(test::GenerateRandomByteArray<Hash256>());
-        }
-
-        entry.completedDownloads().reserve(completedDownloadsCount);
-        for (auto cDC = 0u; cDC < completedDownloadsCount; ++cDC) {
-            entry.completedDownloads().emplace_back(test::GenerateRandomByteArray<Hash256>());
-        }
-
         return entry;
     }
 
@@ -105,21 +95,13 @@ namespace catapult { namespace test {
 
         AssertEqualActiveDataModifications(expectedEntry.activeDataModifications(), entry.activeDataModifications());
         AssertEqualCompletedDataModifications(expectedEntry.completedDataModifications(), entry.completedDataModifications());
-        AssertEqualActiveDownloads(expectedEntry.activeDownloads(), entry.activeDownloads());
-        AssertEqualCompletedDownloads(expectedEntry.completedDownloads(), entry.completedDownloads());
     }
 
     state::DownloadChannelEntry CreateDownloadChannelEntry(
             Hash256 id,
-            Key consumer,
-		    Key drive,
-    		Amount transactionFee,
-	    	Amount storageUnits) {
+            Key consumer) {
         state::DownloadChannelEntry entry(id);
         entry.setConsumer(consumer);
-        entry.setDrive(drive);
-        entry.setTransactionFee(transactionFee);
-        entry.setStorageUnits(storageUnits);
 
         return entry;
     }
@@ -127,9 +109,6 @@ namespace catapult { namespace test {
     void AssertEqualDownloadChannelData(const state::DownloadChannelEntry& expectedEntry, const state::DownloadChannelEntry& entry) {
         EXPECT_EQ(expectedEntry.id(), entry.id());
         EXPECT_EQ(expectedEntry.consumer(), entry.consumer());
-        EXPECT_EQ(expectedEntry.drive(), entry.drive());
-        EXPECT_EQ(expectedEntry.transactionFee(), entry.transactionFee());
-        EXPECT_EQ(expectedEntry.storageUnits(), entry.storageUnits());
     }
 
     state::ReplicatorEntry CreateReplicatorEntry(
@@ -139,7 +118,7 @@ namespace catapult { namespace test {
         state::ReplicatorEntry entry(key);
         entry.setCapacity(capacity);
         for (auto dC = 0u; dC < drivesCount; ++dC)
-            entry.drives().emplace(test::GenerateRandomByteArray<Key>());
+            entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
 
         return entry;
     }
@@ -151,9 +130,9 @@ namespace catapult { namespace test {
         const auto& expectedDrives = expectedEntry.drives();
 		const auto& drives = entry.drives();
         ASSERT_EQ(expectedDrives.size(), drives.size());
-        for (auto& expected : expectedDrives) {
-            auto actual = drives.find(expected);
-            EXPECT_EQ(expected, *actual);
+        for (auto& pair : expectedDrives) {
+            auto iter = drives.find(pair.first);
+            EXPECT_EQ(pair.second, iter->second);
         }
     }
 

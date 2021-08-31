@@ -35,7 +35,7 @@ namespace catapult { namespace observers {
 
 		state::ReplicatorEntry CreateInitialReplicatorEntry(const Key& driveKey, const Key& replicatorKey){
 			state::ReplicatorEntry entry(replicatorKey);
-			entry.drives().emplace(driveKey);
+			entry.drives().emplace(driveKey, state::DriveInfo());
 
 			return entry;
 		}
@@ -115,7 +115,6 @@ namespace catapult { namespace observers {
         for (auto j = 0u; j < Num_Active_Downloads; j++) {
             auto activeDownloadId = test::GenerateRandomByteArray<Hash256>();
             values.InitialDownloadChannelEntries.push_back(CreateInitialDownloadChannelEntry(activeDownloadId));
-			values.InitialBcDriveEntry.activeDownloads().push_back(activeDownloadId);
         }
 
         // Assert

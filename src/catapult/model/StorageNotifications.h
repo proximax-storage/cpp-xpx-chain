@@ -171,7 +171,7 @@ namespace catapult { namespace model {
 			const Hash256& id,
 			const Key& consumer,
 			uint64_t downloadSize,
-			const uint16_t& listOfPublicKeysSize,
+			uint16_t listOfPublicKeysSize,
 			const Key* listOfPublicKeysPtr)
 			: Notification(Notification_Type, sizeof(DownloadNotification<1>))
 			, Id(id)

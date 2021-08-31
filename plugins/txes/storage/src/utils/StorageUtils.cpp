@@ -59,7 +59,7 @@ namespace catapult { namespace utils {
 		}
 	}
 
-	inline void SwapMosaics(
+	void SwapMosaics(
 			const Key& account,
 			const std::vector<model::UnresolvedMosaic>& mosaics,
 			model::NotificationSubscriber& sub,
@@ -68,18 +68,12 @@ namespace catapult { namespace utils {
 		return SwapMosaics(account, account, mosaics, sub, immutableCfg, operation);
 	}
 
-	inline void SwapMosaics(
+	void SwapMosaics(
 			const Key& account,
 			const std::vector<std::pair<UnresolvedMosaicId, UnresolvedAmount>>& mosaics,
 			model::NotificationSubscriber& sub,
 			const config::ImmutableConfiguration& immutableCfg,
 			SwapOperation operation) {
 		return SwapMosaics(account, account, mosaics, sub, immutableCfg, operation);
-	}
-
-	template<typename TData>
-	inline void WriteToByteArray(uint8_t*& ptr, const TData& data) {
-		const auto pData = reinterpret_cast<const uint8_t*>(&data);
-		ptr = std::copy(pData, pData + sizeof(data), ptr);
 	}
 }}

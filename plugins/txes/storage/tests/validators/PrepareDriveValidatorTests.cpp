@@ -67,7 +67,7 @@ namespace catapult { namespace validators {
         driveEntry.setSize(10);
         state::ReplicatorEntry replicatorEntry(driveKey);
         Replicator_Key_Collector->addKey(replicatorEntry);
-        replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin());
+        replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin(), state::DriveInfo());
 
 		// Assert:
 		AssertValidationResult(
@@ -86,7 +86,7 @@ namespace catapult { namespace validators {
         driveEntry.setReplicatorCount(2);
         state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
         Replicator_Key_Collector->addKey(replicatorEntry);
-        replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin());
+        replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin(), state::DriveInfo());
 
         // Assert:
         AssertValidationResult(
@@ -106,7 +106,7 @@ namespace catapult { namespace validators {
         driveEntry.setReplicatorCount(Replicator_Count);
         state::ReplicatorEntry replicatorEntry(driveKey);
         Replicator_Key_Collector->addKey(replicatorEntry);
-        replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin());
+        replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin(), state::DriveInfo());
 
         // Assert:
         AssertValidationResult(
@@ -181,7 +181,7 @@ namespace catapult { namespace validators {
         driveEntry.setReplicatorCount(Replicator_Count);
         state::ReplicatorEntry replicatorEntry(driveKey);
         Replicator_Key_Collector->addKey(replicatorEntry);
-        replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin());
+        replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin(), state::DriveInfo());
 
         // Assert:
 		AssertValidationResult(

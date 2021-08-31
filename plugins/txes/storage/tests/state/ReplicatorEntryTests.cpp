@@ -37,18 +37,19 @@ namespace catapult { namespace state {
 
     TEST(TEST_CLASS, CanAccessDrives) {
         // Arrange:
-        utils::KeySet drives = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
         auto entry = ReplicatorEntry(Key());
+        auto driveKey = test::GenerateRandomByteArray<Key>();
+        DriveInfo driveInfo{ test::GenerateRandomByteArray<Hash256>(), 0 == test::RandomByte() % 2, test::Random() };
 
         // Sanity:
         ASSERT_TRUE(entry.drives().empty());
 
         // Act:
-        entry.drives() = drives;
+        entry.drives().emplace(driveKey, driveInfo);
 
         // Assert:
-        ASSERT_EQ(2, entry.drives().size());
-        EXPECT_EQ(drives, entry.drives());
+        ASSERT_EQ(1, entry.drives().size());
+        EXPECT_EQ(driveInfo, entry.drives().at(driveKey));
     }
 
 }}

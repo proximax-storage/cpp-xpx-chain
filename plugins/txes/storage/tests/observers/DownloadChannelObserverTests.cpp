@@ -40,12 +40,9 @@ namespace catapult { namespace observers {
 			    state::BcDriveEntry ExpectedBcDriveEntry;
         };
 
-        state::DownloadChannelEntry CreateDownloadChannelEntry(const Hash256& id, const Key& driveKey) {
+        state::DownloadChannelEntry CreateDownloadChannelEntry(const Hash256& id) {
             state::DownloadChannelEntry entry(id);
             entry.setConsumer(Consumer);
-            entry.setDrive(driveKey);
-            entry.setTransactionFee(Transaction_Fee);
-            entry.setStorageUnits(Storage_Units);
 
             return entry;
         }
@@ -58,7 +55,6 @@ namespace catapult { namespace observers {
 
         state::BcDriveEntry CreateExpectedBcDriveEntry(const Key& driveKey, const Hash256& id) {
             state::BcDriveEntry entry(driveKey);
-            entry.activeDownloads().emplace_back(id);
 
             return entry;
         }
@@ -68,10 +64,10 @@ namespace catapult { namespace observers {
 			ObserverTestContext context(mode, currentHeight);
 			Notification notification(
                 values.DownloadChannelEntries.id(),
-                values.DownloadChannelEntries.drive(), 
                 values.DownloadChannelEntries.consumer(), 
-                Download_Size, 
-                values.DownloadChannelEntries.storageUnits());
+                Download_Size,
+				0u,
+				nullptr);
             auto pObserver = CreateDownloadChannelObserver();
             auto& downloadChannelCache = context.cache().sub<cache::DownloadChannelCache>();
             auto& driveCache = context.cache().sub<cache::BcDriveCache>(); 
@@ -100,7 +96,7 @@ namespace catapult { namespace observers {
         auto driveKey = test::GenerateRandomByteArray<Key>();
         auto activeDownloadId = test::GenerateRandomByteArray<Hash256>();
         values.InitialBcDriveEntry = CreateInitialBcDriveEntry(driveKey);  
-        values.DownloadChannelEntries = CreateDownloadChannelEntry(activeDownloadId, driveKey);
+        values.DownloadChannelEntries = CreateDownloadChannelEntry(activeDownloadId);
         values.ExpectedBcDriveEntry = CreateExpectedBcDriveEntry(driveKey, activeDownloadId);
 
         // Assert:

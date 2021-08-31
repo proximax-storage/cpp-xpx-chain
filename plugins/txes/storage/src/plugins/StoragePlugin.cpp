@@ -83,12 +83,12 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin());
 		manager.addTransactionSupport(CreateDriveClosureTransactionPlugin());
 		manager.addTransactionSupport(CreateReplicatorOffboardingTransactionPlugin());
-		manager.addTransactionSupport(CreateFinishDownloadTransactionPlugin());
-		manager.addTransactionSupport(CreateDownloadPaymentTransactionPlugin());
-		manager.addTransactionSupport(CreateStoragePaymentTransactionPlugin());
-		manager.addTransactionSupport(CreateDataModificationSingleApprovalTransactionPlugin());
-		manager.addTransactionSupport(CreateVerificationPaymentTransactionPlugin());
-		manager.addTransactionSupport(CreateDownloadApprovalTransactionPlugin());
+		manager.addTransactionSupport(CreateFinishDownloadTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateDownloadPaymentTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateStoragePaymentTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateDataModificationSingleApprovalTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateVerificationPaymentTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateDownloadApprovalTransactionPlugin(immutableConfig));
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 		  	switch (unresolved.Type) {
@@ -219,8 +219,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDataModificationValidator())
 				.add(validators::CreateDataModificationApprovalValidator())
 				.add(validators::CreateDataModificationCancelValidator())
-				.add(validators::CreateReplicatorOnboardingValidator())
-				.add(validators::CreateDriveClosureValidator());
+				.add(validators::CreateDriveClosureValidator())
 				.add(validators::CreateReplicatorOnboardingValidator())
 				.add(validators::CreateReplicatorOffboardingValidator())
 				.add(validators::CreateFinishDownloadValidator())
@@ -241,8 +240,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDataModificationObserver())
 				.add(observers::CreateDataModificationApprovalObserver())
 				.add(observers::CreateDataModificationCancelObserver())
-				.add(observers::CreateReplicatorOnboardingObserver())
-				.add(observers::CreateDriveClosureObserver());
+				.add(observers::CreateDriveClosureObserver())
 				.add(observers::CreateReplicatorOnboardingObserver())
 				.add(observers::CreateReplicatorOffboardingObserver())
 				.add(observers::CreateDownloadPaymentObserver())

@@ -24,6 +24,12 @@ namespace catapult { namespace state {
 		/// Used drive size at the time of the replicator’s onboarding excluding metafiles size.
 		/// Set to \p 0 after replicator’s first data modification approval.
 		uint64_t InitialDownloadWork;
+
+		bool operator==(const DriveInfo& rhs) const {
+			return LastApprovedDataModificationId == rhs.LastApprovedDataModificationId &&
+				DataModificationIdIsValid == rhs.DataModificationIdIsValid &&
+				InitialDownloadWork == rhs.InitialDownloadWork;
+		}
 	};
 
 	/// The map where key is drive and value is info.

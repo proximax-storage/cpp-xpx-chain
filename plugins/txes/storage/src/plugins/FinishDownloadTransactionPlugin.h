@@ -8,11 +8,14 @@
 #include "catapult/plugins.h"
 #include <memory>
 
-namespace catapult { namespace model { class TransactionPlugin; } }
+namespace catapult {
+	namespace model { class TransactionPlugin; }
+	namespace config { class ImmutableConfiguration; }
+}
 
 namespace catapult { namespace plugins {
 
 	/// Creates a finish download transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateFinishDownloadTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateFinishDownloadTransactionPlugin(const config::ImmutableConfiguration& config);
 }}

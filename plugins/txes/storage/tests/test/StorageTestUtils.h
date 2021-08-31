@@ -67,10 +67,7 @@ namespace catapult { namespace test {
     /// Creates test drive entry.
     state::DownloadChannelEntry CreateDownloadChannelEntry(
         Hash256 id = test::GenerateRandomByteArray<Hash256>(),
-        Key consumer = test::GenerateRandomByteArray<Key>(),
-        Key drive = test::GenerateRandomByteArray<Key>(),
-        Amount transactionFee = test::GenerateRandomValue<Amount>(),
-        Amount storageUnits  = test::GenerateRandomValue<Amount>()
+        Key consumer = test::GenerateRandomByteArray<Key>()
     );
 
     /// Verifies that \a entry1 is equivalent to \a entry2.
@@ -178,9 +175,7 @@ namespace catapult { namespace test {
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateDownloadTransaction() {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_Download);
-        pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->DownloadSize = test::Random();
-        pTransaction->TransactionFee = test::GenerateRandomValue<Amount>();
         return pTransaction;
     }
 
@@ -214,12 +209,12 @@ namespace catapult { namespace test {
     }
 
     // /// Creates a drive closure transaction.
-    // template<typename TTransaction>
-    // model::UniqueEntityPtr<TTransaction> CreateDriveClosureTransaction() {
-    //     auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DriveClosure);
-    //     pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
-    //     return pTransaction;
-    // }
+     template<typename TTransaction>
+     model::UniqueEntityPtr<TTransaction> CreateDriveClosureTransaction() {
+         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DriveClosure);
+         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+         return pTransaction;
+     }
 
     /// Creates a replicator offboarding transaction.
     template<typename TTransaction>

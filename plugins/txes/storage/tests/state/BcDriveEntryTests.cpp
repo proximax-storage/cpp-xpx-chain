@@ -132,38 +132,6 @@ namespace catapult { namespace state {
         EXPECT_EQ(completedDataModification.State, entry.completedDataModifications().back().State);
     }
 
-    TEST(TEST_CLASS, CanAccessActiveDownloads) {
-        // Arrange:
-        Hash256 activeDownloadId = test::GenerateRandomByteArray<Hash256>();
-        auto entry = BcDriveEntry(Key());
-
-        // Sanity:
-        ASSERT_TRUE(entry.activeDownloads().empty());
-
-        // Act:
-        entry.activeDownloads().emplace_back(activeDownloadId);
-
-        // Assert:
-        ASSERT_EQ(1, entry.activeDownloads().size());
-        EXPECT_EQ(activeDownloadId, entry.activeDownloads().back());
-    }
-
-    TEST(TEST_CLASS, CanAccessCompletedDownloads) {
-        // Arrange:
-        Hash256 completedDownloadId = test::GenerateRandomByteArray<Hash256>();
-        auto entry = BcDriveEntry(Key());
-
-        // Sanity:
-        ASSERT_TRUE(entry.completedDownloads().empty());
-
-        // Act:
-        entry.completedDownloads().emplace_back(completedDownloadId);
-
-        // Assert:
-        ASSERT_EQ(1, entry.completedDownloads().size());
-        EXPECT_EQ(completedDownloadId, entry.completedDownloads().back());
-    }
-
     TEST(TEST_CLASS, CanAccessReplicators) {
         // Arrange:
         utils::KeySet replicators = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };

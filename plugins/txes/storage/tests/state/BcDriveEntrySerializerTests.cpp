@@ -15,8 +15,6 @@ namespace catapult { namespace state {
 
         constexpr auto Active_Data_Modifications_Count = 5;
         constexpr auto Completed_Data_Modifications_Count = 5;
-        constexpr auto Active_Downloads_Count = 10;
-        constexpr auto Completed_Downloads_Count = 10;
 
         constexpr auto Entry_Size =
             sizeof(VersionType) + // version
@@ -28,11 +26,7 @@ namespace catapult { namespace state {
             sizeof(uint16_t) + // active data modifications count
             Active_Data_Modifications_Count * (Hash256_Size + Key_Size + Hash256_Size + sizeof(uint64_t)) + // active data modifications
             sizeof(uint16_t) + // completed data modifications count
-            Completed_Data_Modifications_Count * (Hash256_Size + Key_Size + Hash256_Size + sizeof(uint64_t) + sizeof(uint8_t)) + // completed data modifications
-            sizeof(uint16_t) + // active downloads count
-            Active_Downloads_Count * (Hash256_Size) + // active downloads
-            sizeof(uint16_t) + // completed downloads count
-            Completed_Downloads_Count * (Hash256_Size); // completed downloads
+            Completed_Data_Modifications_Count * (Hash256_Size + Key_Size + Hash256_Size + sizeof(uint64_t) + sizeof(uint8_t)); // completed data modifications
        
         class TestContext {
         public:
@@ -62,9 +56,7 @@ namespace catapult { namespace state {
                 test::Random(),
                 test::Random16(),
                 Active_Data_Modifications_Count,
-                Completed_Data_Modifications_Count,
-                Active_Downloads_Count,
-                Completed_Downloads_Count);
+                Completed_Data_Modifications_Count);
         }
 
         void AssertActiveDataModifications(const ActiveDataModifications& activeDataModifications, const uint8_t*& pData) {
@@ -99,24 +91,6 @@ namespace catapult { namespace state {
             }
         }
 
-        void AssertActiveDownloads(const std::vector<Hash256>& activeDownloads, const uint8_t*& pData) {
-            EXPECT_EQ(activeDownloads.size(), *reinterpret_cast<const uint16_t*>(pData));
-            pData += sizeof(uint16_t);
-            for (const auto& active : activeDownloads) {
-                EXPECT_EQ_MEMORY(active.data(), pData, Hash256_Size);
-                pData += Hash256_Size;
-            }
-        }
-
-        void AssertCompletedDownloads(const std::vector<Hash256>& completedDownloads, const uint8_t*& pData) {
-            EXPECT_EQ(completedDownloads.size(), *reinterpret_cast<const uint16_t*>(pData));
-            pData += sizeof(uint16_t);
-            for (const auto& completed : completedDownloads) {
-                EXPECT_EQ_MEMORY(completed.data(), pData, Hash256_Size);
-                pData += Hash256_Size;
-            }
-        }
-
         void AssertEntryBuffer(const state::BcDriveEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {
             const auto* pExpectedEnd = pData + expectedSize;
             EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
@@ -134,8 +108,6 @@ namespace catapult { namespace state {
 
             AssertActiveDataModifications(entry.activeDataModifications(), pData);
             AssertCompletedDataModifications(entry.completedDataModifications(), pData);
-            AssertActiveDownloads(entry.activeDownloads(), pData);
-            AssertCompletedDownloads(entry.completedDownloads(), pData);
 
             EXPECT_EQ(pExpectedEnd, pData);
         }
@@ -221,26 +193,6 @@ namespace catapult { namespace state {
             }
 		}
 
-        void SaveActiveDownloads(const std::vector<Hash256>& activeDownloads, uint8_t*& pData) {
-            uint16_t activeDownloadsCount = utils::checked_cast<size_t, uint16_t>(activeDownloads.size());
-            memcpy(pData, &activeDownloadsCount, sizeof(uint16_t));
-            pData += sizeof(uint16_t);
-            for (const auto& active : activeDownloads) {
-                memcpy(pData, active.data(), Hash256_Size);
-                pData += Hash256_Size;
-            }
-		}
-
-		void SaveCompletedDownloads(const std::vector<Hash256>& completedDownloads, uint8_t*& pData) {
-			uint16_t completedDownloadsCount = utils::checked_cast<size_t, uint16_t>(completedDownloads.size());
-            memcpy(pData, &completedDownloadsCount, sizeof(uint16_t));
-            pData += sizeof(uint16_t);
-            for (const auto& completed : completedDownloads) {
-                memcpy(pData, completed.data(), Hash256_Size);
-                pData += Hash256_Size;
-            }
-		}
-
         std::vector<uint8_t> CreateEntryBuffer(const state::BcDriveEntry& entry, VersionType version) {
             std::vector<uint8_t> buffer(Entry_Size);
 
@@ -260,8 +212,6 @@ namespace catapult { namespace state {
 
             SaveActiveDataModifications(entry.activeDataModifications(), pData);
             SaveCompletedDataModifications(entry.completedDataModifications(), pData);
-            SaveActiveDownloads(entry.activeDownloads(), pData);
-            SaveCompletedDownloads(entry.completedDownloads(), pData);
 
             return buffer;
         }

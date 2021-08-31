@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
                 replicatorCacheDelta.insert(replicatorEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(driveKey, replicatorEntry.capacity());
+            Notification notification(driveKey, BLSPublicKey(), replicatorEntry.capacity());
             auto pValidator = CreateReplicatorOnboardingValidator();
             
             // Act:

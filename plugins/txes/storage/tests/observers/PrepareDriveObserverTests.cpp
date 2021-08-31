@@ -39,7 +39,7 @@ namespace catapult { namespace observers {
         state::ReplicatorEntry CreateReplicatorEntry(const Key& driveKey, const std::shared_ptr<cache::ReplicatorKeyCollector>& replicatorKeyCollector) {
             state::ReplicatorEntry entry(driveKey);
             replicatorKeyCollector->addKey(entry);
-            entry.drives().emplace(*replicatorKeyCollector->keys().begin());
+            entry.drives().emplace(*replicatorKeyCollector->keys().begin(), state::DriveInfo());
             
             return entry;
         }

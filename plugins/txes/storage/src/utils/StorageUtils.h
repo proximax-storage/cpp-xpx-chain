@@ -26,5 +26,8 @@ namespace catapult { namespace utils {
 
 	/// Writes \a data to \a ptr one byte at a time. When done, \a ptr points to the past-the-last byte.
 	template<typename TData>
-	void WriteToByteArray(uint8_t*& ptr, const TData& data);
+	void WriteToByteArray(uint8_t*& ptr, const TData& data) {
+		const auto pData = reinterpret_cast<const uint8_t*>(&data);
+		ptr = std::copy(pData, pData + sizeof(data), ptr);
+	}
 }}

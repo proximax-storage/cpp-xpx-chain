@@ -26,11 +26,13 @@ namespace catapult { namespace observers {
             public:
                 explicit ReplicatorValues()
                     : PublicKey(test::GenerateRandomByteArray<Key>())
+                    , BlsKey(test::GenerateRandomByteArray<BLSPublicKey>())
                     , Capacity(test::GenerateRandomValue<Amount>())
                 {}
 
             public:
                 Key PublicKey;
+                BLSPublicKey BlsKey;
                 Amount Capacity;
         };
 
@@ -44,7 +46,7 @@ namespace catapult { namespace observers {
         void RunTest(NotifyMode mode, const ReplicatorValues& values, const Height& currentHeight) {
             // Arrange:
             ObserverTestContext context(mode, currentHeight);
-            Notification notification(values.PublicKey, values.Capacity);
+            Notification notification(values.PublicKey, values.BlsKey, values.Capacity);
             auto pObserver = CreateReplicatorOnboardingObserver();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
             

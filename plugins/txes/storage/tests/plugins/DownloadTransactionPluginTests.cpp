@@ -103,7 +103,6 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(Entity_Type_Download, notification.TransactionType);
 	}
 
@@ -123,9 +122,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-        EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
         EXPECT_EQ(pTransaction->DownloadSize, notification.DownloadSize);
-        EXPECT_EQ(pTransaction->TransactionFee, notification.TransactionFee);
 	}
 
 	// endregion

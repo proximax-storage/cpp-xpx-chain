@@ -22,10 +22,6 @@ namespace catapult { namespace observers {
 			auto& replicatorEntry = replicatorIter.get();
 			replicatorEntry.drives().erase(replicatorEntry.drives().find(notification.DriveKey));
 		}
-
-		auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
-		for (const auto& downloadId : driveEntry.activeDownloads())
-			downloadChannelCache.remove(downloadId);
 		
 		driveCache.remove(notification.DriveKey);
 	}));
