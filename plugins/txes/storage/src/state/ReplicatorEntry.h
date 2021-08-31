@@ -12,6 +12,23 @@
 
 namespace catapult { namespace state {
 
+	struct DriveInfo {
+		/// Identifier of the most recent data modification of the drive approved by the replicator.
+		Hash256 LastApprovedDataModificationId;
+
+		/// Indicates if \p LastApprovedDataModificationId is an identifier of an existing data modification.
+		/// Can be \b false only if the drive had no approved data modifications when the replicator joined it.
+		/// Set to \b true after replicator’s first data modification approval.
+		bool DataModificationIdIsValid;
+
+		/// Used drive size at the time of the replicator’s onboarding excluding metafiles size.
+		/// Set to \p 0 after replicator’s first data modification approval.
+		uint64_t InitialDownloadWork;
+	};
+
+	/// The map where key is drive and value is info.
+	using DrivesMap = std::map<Key, DriveInfo>;
+
 	// Mixin for storing replicator details.
 	class ReplicatorMixin {
 	public:
@@ -28,19 +45,30 @@ namespace catapult { namespace state {
 			return m_capacity;
 		}
 
-		/// Keys of the drives assiged to the replicator.
-		const utils::KeySet& drives() const {
+		/// Sets BLS public key of the replicator.
+		void setBlsKey(const BLSPublicKey& blsKey) {
+			m_blsKey = blsKey;
+		}
+
+		/// Gets BLS public key of the replicator.
+		const BLSPublicKey& blsKey() const {
+			return m_blsKey;
+		}
+
+		/// Gets infos of drives assigned to the replicator.
+		const DrivesMap& drives() const {
 			return m_drives;
 		}
 
-		/// Keys of the drives assiged to the replicator.
-		utils::KeySet& drives() {
+		/// Gets infos of drives assigned to the replicator.
+		DrivesMap& drives() {
 			return m_drives;
 		}
 
 	private:
 		Amount m_capacity;
-		utils::KeySet m_drives;
+		BLSPublicKey m_blsKey;
+		DrivesMap m_drives;
 	};
 
 	// Replicator entry.

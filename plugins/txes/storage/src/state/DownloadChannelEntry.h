@@ -17,7 +17,10 @@ namespace catapult { namespace state {
 	// Mixin for storing download channel details.
 	class DownloadChannelMixin {
 	public:
-		DownloadChannelMixin() = default;
+		DownloadChannelMixin()
+			: m_downloadSize(0)
+			, m_downloadApprovalCount(0)
+		{}
 
 	public:
 		/// Sets \a consumer of download channel.
@@ -30,41 +33,62 @@ namespace catapult { namespace state {
 			return m_consumer;
 		}
 
-        /// Sets \a drive.
-        void setDrive(const Key& drive) {
-            m_drive = drive;
+        /// Sets \a downloadSize of download channel.
+        void setDownloadSize(const uint64_t& downloadSize) {
+			m_downloadSize = downloadSize;
         }
 
-        /// Gets drive.
-        const Key& drive() const {
-            return m_drive;
+		/// Increases download size of the download channel by \a delta.
+		void increaseDownloadSize(const uint64_t& delta) {
+			m_downloadSize = m_downloadSize + delta;
+		}
+
+        /// Gets download size.
+        const uint64_t& downloadSize() const {
+            return m_downloadSize;
         }
 
-        /// Sets \a transactionFee of download channel.
-        void setTransactionFee(const Amount& transactionFee) {
-            m_transactionFee = transactionFee;
-        }
+		/// Gets number of completed download approval transactions.
+		const uint16_t& downloadApprovalCount() const {
+			return m_downloadApprovalCount;
+		}
 
-        /// Gets transaction fee.
-        const Amount& transactionFee() const {
-            return m_transactionFee;
-        }
+		/// Sets number of completed download approval transactions.
+		void setDownloadApprovalCount(const uint16_t& count) {
+			m_downloadApprovalCount = count;
+		}
 
-        /// Sets \a storageUnits of download channel.
-        void setStorageUnits(const Amount& storageUnits) {
-            m_storageUnits = storageUnits;
-        }
+		/// Increases number of completed download approval transactions by one.
+		void incrementDownloadApprovalCount() {
+			++m_downloadApprovalCount;
+		}
 
-        /// Gets storage units.
-        const Amount& storageUnits() const {
-            return m_storageUnits;
-        }
+		/// Gets list of public keys.
+		const std::vector<Key>& listOfPublicKeys() const {
+			return m_listOfPublicKeys;
+		}
+
+		/// Gets list of public keys.
+		std::vector<Key>& listOfPublicKeys() {
+			return m_listOfPublicKeys;
+		}
+
+		/// Gets replicators' cumulative payment amounts
+		const std::map<Key, Amount>& cumulativePayments() const {
+			return m_cumulativePayments;
+		}
+
+		/// Gets replicators' cumulative payment amounts
+		std::map<Key, Amount>& cumulativePayments() {
+			return m_cumulativePayments;
+		}
 
 	private:
 		Key m_consumer;
-		Key m_drive;
-		Amount m_transactionFee;
-		Amount m_storageUnits;
+		uint64_t m_downloadSize; // In Mbytes
+		uint16_t m_downloadApprovalCount;
+		std::vector<Key> m_listOfPublicKeys;
+		std::map<Key, Amount> m_cumulativePayments;
 	};
 
 	// DownloadChannel channel entry.

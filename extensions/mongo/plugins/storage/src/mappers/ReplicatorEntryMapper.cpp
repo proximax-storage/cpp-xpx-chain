@@ -14,10 +14,17 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToDbModel
 
 	namespace {
-		void StreamDrives(bson_stream::document& builder, const utils::KeySet& drives) {
+		void StreamDrives(bson_stream::document& builder, const state::DrivesMap& drives) {
 			auto array = builder << "drives" << bson_stream::open_array;
-			for (const auto& drive : drives)
-				array << ToBinary(drive);
+			for (const auto& drivePair : drives) {
+				bson_stream::document driveBuilder;
+				driveBuilder
+						<< "drive" << ToBinary(drivePair.first)
+						<< "lastApprovedDataModificationId" << ToBinary(drivePair.second.LastApprovedDataModificationId)
+						<< "dataModificationIdIsValid" << drivePair.second.DataModificationIdIsValid	// TODO: Double-check if streamed correctly
+						<< "initialDownloadWork" << static_cast<int64_t>(drivePair.second.InitialDownloadWork);
+				array << driveBuilder;
+			}
 
 			array << bson_stream::close_array;
 		}
@@ -28,7 +35,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto doc = builder << "replicator" << bson_stream::open_document
 				<< "key" << ToBinary(entry.key())
 				<< "version" << static_cast<int32_t>(entry.version())
-				<< "capacity" << ToInt64(entry.capacity());
+				<< "capacity" << ToInt64(entry.capacity())
+				<< "blsKey" << ToBinary(entry.blsKey());
 
 		StreamDrives(builder, entry.drives());
 
@@ -40,12 +48,19 @@ namespace catapult { namespace mongo { namespace plugins {
 	// endregion
 
 	namespace {
-		void ReadDrives(utils::KeySet& drives, const bsoncxx::array::view& dbDrives) {
+		void ReadDrives(state::DrivesMap& drives, const bsoncxx::array::view& dbDrives) {
 			for (const auto& dbDrive : dbDrives) {
-				Key drive;
-				DbBinaryToModelArray(drive, dbDrive.get_binary());
+				auto doc = dbDrive.get_document().view();
 
-				drives.emplace(drive);
+				Key drive;
+				DbBinaryToModelArray(drive, doc["drive"].get_binary());
+
+				state::DriveInfo info;
+				DbBinaryToModelArray(info.LastApprovedDataModificationId, doc["lastApprovedDataModificationId"].get_binary());
+				info.DataModificationIdIsValid = doc["dataModificationIdIsValid"].get_bool();	// TODO: Double-check if read correctly
+				info.InitialDownloadWork = doc["initialDownloadWork"].get_int64();
+
+				drives.emplace(drive, info);
 			}
 		}
 	}
@@ -60,8 +75,12 @@ namespace catapult { namespace mongo { namespace plugins {
 		DbBinaryToModelArray(key, dbReplicatorEntry["key"].get_binary());
 		state::ReplicatorEntry entry(key);
 
-		entry.setVersion(static_cast<VersionType>(dbReplicatorEntry["capacity"].get_int32()));
+		entry.setVersion(static_cast<VersionType>(dbReplicatorEntry["capacity"].get_int32()));	// TODO: dbReplicatorEntry["version"]
 		entry.setCapacity(Amount(dbReplicatorEntry["capacity"].get_int64()));
+
+		BLSPublicKey blsKey;
+		DbBinaryToModelBytes(blsKey, dbReplicatorEntry["blsKey"].get_binary());
+		entry.setBlsKey(blsKey);
 
 		ReadDrives(entry.drives(), dbReplicatorEntry["drives"].get_array().value);
 

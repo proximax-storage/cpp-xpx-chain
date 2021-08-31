@@ -79,5 +79,7 @@ namespace catapult { namespace model {
 		BcDrive = 0x64,
 		/// Download channel facility code.
 		DownloadChannel = 0x65,
+		/// BLS relation facility code.
+		BlsKeys = 0x66,
 	};
 }}

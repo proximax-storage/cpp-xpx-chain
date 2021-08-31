@@ -49,12 +49,16 @@ namespace catapult { namespace state {
 
 	using ActiveDataModifications = std::vector<ActiveDataModification>;
 	using CompletedDataModifications = std::vector<CompletedDataModification>;
+	/// The map where key is replicator public key and value is last used drive size approved by the replicator.
+	using UsedSizeMap = std::map<Key, u_int64_t>;
 
 	// Mixin for storing drive details.
 	class DriveMixin {
 	public:
 		DriveMixin()
 			: m_size(0)
+			, m_usedSize(0)
+			, m_metaFilesSize(0)
 			, m_replicatorCount(0)
 		{}
 
@@ -79,14 +83,34 @@ namespace catapult { namespace state {
 			return m_rootHash;
 		}
 
-		/// Sets the drive size.
+		/// Sets total size of the drive.
 		void setSize(const uint64_t& size) {
 			m_size = size;
 		}
 
-		/// Gets the drive size.
+		/// Gets total size of the drive.
 		const uint64_t& size() const {
 			return m_size;
+		}
+
+		/// Sets used size of the drive.
+		void setUsedSize(const uint64_t& usedSize) {
+			m_usedSize = usedSize;
+		}
+
+		/// Gets used size of the drive.
+		const uint64_t& usedSize() const {
+			return m_usedSize;
+		}
+
+		/// Sets the size of the drive metafiles.
+		void setMetaFilesSize(const uint64_t& metaFilesSize) {
+			m_metaFilesSize = metaFilesSize;
+		}
+
+		/// Gets the size of the drive metafiles.
+		const uint64_t& metaFilesSize() const {
+			return m_metaFilesSize;
 		}
 
 		/// Sets the number of the drive \a replicas.
@@ -119,24 +143,14 @@ namespace catapult { namespace state {
 			return m_completedDataModifications;
 		}
 
-		/// Gets active downloads.
-		const std::vector<Hash256>& activeDownloads() const {
-			return m_activeDownloads;
+		/// Gets map with key replicator public key and value used drive size.
+		const UsedSizeMap& confirmedUsedSizes() const {
+			return m_usedSizeMap;
 		}
 
-		/// Gets active downloads.
-		std::vector<Hash256>& activeDownloads() {
-			return m_activeDownloads;
-		}
-
-		/// Gets completed downloads.
-		const std::vector<Hash256>& completedDownloads() const {
-			return m_completedDownloads;
-		}
-
-		/// Gets completed downloads.
-		std::vector<Hash256>& completedDownloads() {
-			return m_completedDownloads;
+		/// Gets infos of drives assigned to the replicator.
+		UsedSizeMap& confirmedUsedSizes() {
+			return m_usedSizeMap;
 		}
 
 		/// Gets replicators.
@@ -153,11 +167,12 @@ namespace catapult { namespace state {
 		Key m_owner;
 		Hash256 m_rootHash;
 		uint64_t m_size;
+		uint64_t m_usedSize;
+		uint64_t m_metaFilesSize;
 		uint16_t m_replicatorCount;
 		ActiveDataModifications m_activeDataModifications;
 		CompletedDataModifications m_completedDataModifications;
-		std::vector<Hash256> m_activeDownloads;
-		std::vector<Hash256> m_completedDownloads;
+		UsedSizeMap m_usedSizeMap;
 		utils::KeySet m_replicators;
 	};
 

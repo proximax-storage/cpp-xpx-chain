@@ -13,14 +13,40 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	// region ToDbModel
 
+	namespace {
+
+		void StreamListOfPublicKeys(bson_stream::document& builder, const std::vector<Key>& listOfPublicKeys) {
+			auto array = builder << "listOfPublicKeys" << bson_stream::open_array;
+			for (const auto& key : listOfPublicKeys)
+				array << ToBinary(key);
+
+			array << bson_stream::close_array;
+		}
+
+		void StreamCumulativePayments(bson_stream::document& builder, const std::map<Key, Amount>& cumulativePayments) {
+			auto array = builder << "cumulativePayments" << bson_stream::open_array;
+			for (const auto& pair : cumulativePayments) {
+				bson_stream::document paymentBuilder;
+				paymentBuilder
+						<< "replicator" << ToBinary(pair.first)
+						<< "payment" << ToInt64(pair.second);
+				array << paymentBuilder;
+			}
+			array << bson_stream::close_array;
+		}
+
+	}
+
 	bsoncxx::document::value ToDbModel(const state::DownloadChannelEntry& entry) {
 		bson_stream::document builder;
 		auto doc = builder << "downloadChannelInfo" << bson_stream::open_document
 				<< "id" << ToBinary(entry.id())
 				<< "consumer" << ToBinary(entry.consumer())
-				<< "driveKey" << ToBinary(entry.drive())
-				<< "transactionFee" << ToInt64(entry.transactionFee())
-				<< "storageUnits" << ToInt64(entry.storageUnits());
+				<< "downloadSize" << static_cast<int64_t>(entry.downloadSize())
+				<< "downloadApprovalCount" << static_cast<int16_t>(entry.downloadApprovalCount());
+
+		StreamListOfPublicKeys(builder, entry.listOfPublicKeys());
+		StreamCumulativePayments(builder, entry.cumulativePayments());
 
 		return doc
 				<< bson_stream::close_document
@@ -31,19 +57,49 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	// region ToModel
 
+	namespace {
+
+		void ReadListOfPublicKeys(std::vector<Key>& listOfPublicKeys, const bsoncxx::array::view& dbListOfPublicKeys) {
+			for (const auto& dbKey : dbListOfPublicKeys) {
+				auto doc = dbKey.get_binary();
+
+				Key key;
+				DbBinaryToModelArray(key, doc);
+
+				listOfPublicKeys.push_back(key);
+			}
+		}
+
+		void ReadCumulativePayments(std::map<Key, Amount>& cumulativePayments, const bsoncxx::array::view& dbCumulativePayments) {
+			for (const auto& dbPair : dbCumulativePayments) {
+				auto doc = dbPair.get_document().view();
+
+				Key replicator;
+				DbBinaryToModelArray(replicator, doc["replicator"].get_binary());
+
+				cumulativePayments[replicator] = Amount(static_cast<uint64_t>(dbPair["payment"].get_int64()));
+			}
+		}
+
+	}
+
 	state::DownloadChannelEntry ToDownloadChannelEntry(const bsoncxx::document::view& document) {
+
 		auto dbDownloadChannelEntry = document["downloadChannelInfo"];
+
 		Hash256 id;
 		DbBinaryToModelArray(id, dbDownloadChannelEntry["id"].get_binary());
 		state::DownloadChannelEntry entry(id);
+
 		Key consumer;
 		DbBinaryToModelArray(consumer, dbDownloadChannelEntry["consumer"].get_binary());
 		entry.setConsumer(consumer);
-		Key driveKey;
-		DbBinaryToModelArray(driveKey, dbDownloadChannelEntry["driveKey"].get_binary());
-		entry.setDrive(driveKey);
-		entry.setTransactionFee(Amount(dbDownloadChannelEntry["transactionFee"].get_int64()));
-		entry.setStorageUnits(Amount(dbDownloadChannelEntry["storageUnits"].get_int64()));
+
+		entry.setDownloadSize(static_cast<uint64_t>(dbDownloadChannelEntry["downloadSize"].get_int64()));
+		entry.setDownloadApprovalCount(static_cast<uint16_t>(dbDownloadChannelEntry["downloadApprovalCount"].get_int32()));
+
+		ReadListOfPublicKeys(entry.listOfPublicKeys(), dbDownloadChannelEntry["listOfPublicKeys"].get_array().value);
+		ReadCumulativePayments(entry.cumulativePayments(), dbDownloadChannelEntry["cumulativePayments"].get_array().value);
 
 		return entry;
 	}

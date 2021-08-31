@@ -35,15 +35,32 @@ namespace catapult { namespace plugins {
 					auto downloadChannelId = CalculateHash(transaction, config.GenerationHash);
 					sub.notify(DownloadNotification<1>(
 							downloadChannelId,
-							transaction.DriveKey,
 							transaction.Signer,
 							transaction.DownloadSize,
-							transaction.TransactionFee));
+							transaction.ListOfPublicKeysSize,
+							transaction.ListOfPublicKeysPtr()
+					));
+
+					const auto downloadChannelKey = Key(downloadChannelId.array());
+					const auto downloadChannelAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(downloadChannelKey, config.NetworkIdentifier));
+					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
+					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+
+					sub.notify(BalanceTransferNotification<1>(
+							transaction.Signer, downloadChannelAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
+					utils::SwapMosaics(
+							transaction.Signer,
+							downloadChannelKey,
+							{ { streamingMosaicId, Amount(transaction.DownloadSize * transaction.ListOfPublicKeysSize) } },
+							sub,
+							config,
+							utils::SwapOperation::Buy);
+
 					break;
 				}
 
 				default:
-					CATAPULT_LOG(debug) << "invalid version of DownloadChannelTransaction: " << transaction.EntityVersion();
+					CATAPULT_LOG(debug) << "invalid version of DownloadTransaction: " << transaction.EntityVersion();
 				}
 			};
 		}

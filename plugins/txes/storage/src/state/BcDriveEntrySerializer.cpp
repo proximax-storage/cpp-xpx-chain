@@ -13,7 +13,7 @@ namespace catapult { namespace state {
 	namespace {
 
 		void SaveActiveDataModifications(io::OutputStream& output, const ActiveDataModifications& activeDataModifications) {
-			io::Write16(output, activeDataModifications.size());
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(activeDataModifications.size()));
 			for (const auto& modification : activeDataModifications) {
 				io::Write(output, modification.Id);
 				io::Write(output, modification.Owner);
@@ -23,7 +23,7 @@ namespace catapult { namespace state {
 		}
 
 		void SaveCompletedDataModifications(io::OutputStream& output, const CompletedDataModifications& completedDataModifications) {
-			io::Write16(output, completedDataModifications.size());
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(completedDataModifications.size()));
 			for (const auto& modification : completedDataModifications) {
 				io::Write(output, modification.Id);
 				io::Write(output, modification.Owner);
@@ -104,6 +104,8 @@ namespace catapult { namespace state {
 		io::Write(output, driveEntry.owner());
 		io::Write(output, driveEntry.rootHash());
 		io::Write64(output, driveEntry.size());
+		io::Write64(output, driveEntry.usedSize());
+		io::Write64(output, driveEntry.metaFilesSize());
 		io::Write16(output, driveEntry.replicatorCount());
 
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
@@ -133,6 +135,8 @@ namespace catapult { namespace state {
 		entry.setRootHash(rootHash);
 
 		entry.setSize(io::Read64(input));
+		entry.setUsedSize(io::Read64(input));
+		entry.setMetaFilesSize(io::Read64(input));
 		entry.setReplicatorCount(io::Read16(input));
 
 		LoadActiveDataModifications(input, entry.activeDataModifications());

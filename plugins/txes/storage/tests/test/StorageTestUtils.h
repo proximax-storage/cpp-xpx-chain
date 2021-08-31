@@ -213,11 +213,18 @@ namespace catapult { namespace test {
         return pTransaction;
     }
 
-    /// Creates a drive closure transaction.
+    // /// Creates a drive closure transaction.
+    // template<typename TTransaction>
+    // model::UniqueEntityPtr<TTransaction> CreateDriveClosureTransaction() {
+    //     auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DriveClosure);
+    //     pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+    //     return pTransaction;
+    // }
+
+    /// Creates a replicator offboarding transaction.
     template<typename TTransaction>
-    model::UniqueEntityPtr<TTransaction> CreateDriveClosureTransaction() {
-        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DriveClosure);
-        pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+    model::UniqueEntityPtr<TTransaction> CreateReplicatorOffboardingTransaction() {
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ReplicatorOffboarding);
         return pTransaction;
     }
 

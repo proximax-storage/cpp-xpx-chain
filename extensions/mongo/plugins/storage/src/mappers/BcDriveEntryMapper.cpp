@@ -54,6 +54,8 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "owner" << ToBinary(entry.owner())
 				<< "rootHash" << ToBinary(entry.rootHash())
 				<< "size" << static_cast<int64_t>(entry.size())
+				<< "usedSize" << static_cast<int64_t>(entry.usedSize())
+				<< "metaFilesSize" << static_cast<int64_t>(entry.metaFilesSize())
 				<< "replicatorCount" << static_cast<int32_t>(entry.replicatorCount());
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
@@ -120,6 +122,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		entry.setRootHash(rootHash);
 
 		entry.setSize(static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
+		entry.setUsedSize(static_cast<uint64_t>(dbDriveEntry["usedSize"].get_int64()));
+		entry.setMetaFilesSize(static_cast<uint64_t>(dbDriveEntry["metaFilesSize"].get_int64()));
 		entry.setReplicatorCount(static_cast<uint16_t>(dbDriveEntry["replicatorCount"].get_int32()));
 
 		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);
