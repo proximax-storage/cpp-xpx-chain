@@ -51,6 +51,9 @@ namespace catapult { namespace model {
 	/// DownloadApproval transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, DownloadApproval, 0xC);
 
+	/// DriveClosure transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, DriveClosure, 0x7);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif

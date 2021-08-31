@@ -274,6 +274,11 @@
 			"name": "replicatorOnboarding",
 			"type": "18018",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "driveClosure",
+			"type": "18274",
+			"supportedVersions": [1]
 		}
 	]
 }

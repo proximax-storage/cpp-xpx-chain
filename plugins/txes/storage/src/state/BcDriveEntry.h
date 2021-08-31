@@ -153,6 +153,16 @@ namespace catapult { namespace state {
 			return m_usedSizeMap;
 		}
 
+		/// Gets replicators.
+		const utils::KeySet& replicators() const {
+			return m_replicators;
+		}
+
+		/// Gets replicators.
+		utils::KeySet& replicators() {
+			return m_replicators;
+		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
@@ -163,6 +173,7 @@ namespace catapult { namespace state {
 		ActiveDataModifications m_activeDataModifications;
 		CompletedDataModifications m_completedDataModifications;
 		UsedSizeMap m_usedSizeMap;
+		utils::KeySet m_replicators;
 	};
 
 	// Drive entry.

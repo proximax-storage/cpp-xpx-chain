@@ -10,6 +10,7 @@
 #include "DataModificationApprovalMapper.h"
 #include "DataModificationCancelMapper.h"
 #include "ReplicatorOnboardingMapper.h"
+#include "DriveClosureMapper.h"
 #include "ReplicatorOffboardingMapper.h"
 #include "FinishDownloadMapper.h"
 #include "DownloadPaymentMapper.h"
@@ -32,6 +33,7 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationApprovalTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationCancelTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateReplicatorOnboardingTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateDriveClosureTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateReplicatorOffboardingTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateFinishDownloadTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDownloadPaymentTransactionMongoPlugin());

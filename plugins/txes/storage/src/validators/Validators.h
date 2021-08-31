@@ -19,6 +19,10 @@ namespace catapult { namespace validators {
 
 	void VerificationStatus(const state::BcDriveEntry& driveEntry, const validators::ValidatorContext& context, bool& started, bool& active);
 
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(StoragePluginConfig, model::PluginConfigNotification<1>)();
+
 	/// A validator implementation that applies to drive prepare drive notifications and validates that:
 	/// - drive size >= minDriveSize
 	/// - number of replicators >= minReplicatorCount
@@ -86,6 +90,10 @@ namespace catapult { namespace validators {
 	/// - respective download channel exists
 	/// - transaction sequence number is exactly one more than the number of completed download approval transactions of the download channel
 	DECLARE_STATEFUL_VALIDATOR(DownloadApproval, model::DownloadApprovalNotification<1>)();
+
+	/// A validator implementation that applies to drive closure notifications and validates that:
+	/// -
+	DECLARE_STATEFUL_VALIDATOR(DriveClosure, model::DriveClosureNotification<1>)();
 
 	/// A validator implementation that applies to download approval payment notifications and validates that:
 	/// - respective download channel exists

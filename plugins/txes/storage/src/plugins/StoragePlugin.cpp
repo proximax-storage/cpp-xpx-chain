@@ -15,6 +15,7 @@
 #include "src/plugins/DataModificationApprovalTransactionPlugin.h"
 #include "src/plugins/DataModificationCancelTransactionPlugin.h"
 #include "src/plugins/ReplicatorOnboardingTransactionPlugin.h"
+#include "src/plugins/DriveClosureTransactionPlugin.h"
 #include "src/plugins/ReplicatorOffboardingTransactionPlugin.h"
 #include "src/plugins/FinishDownloadTransactionPlugin.h"
 #include "src/plugins/DownloadPaymentTransactionPlugin.h"
@@ -80,6 +81,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDataModificationApprovalTransactionPlugin());
 		manager.addTransactionSupport(CreateDataModificationCancelTransactionPlugin());
 		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin());
+		manager.addTransactionSupport(CreateDriveClosureTransactionPlugin());
 		manager.addTransactionSupport(CreateReplicatorOffboardingTransactionPlugin());
 		manager.addTransactionSupport(CreateFinishDownloadTransactionPlugin());
 		manager.addTransactionSupport(CreateDownloadPaymentTransactionPlugin());
@@ -206,12 +208,19 @@ namespace catapult { namespace plugins {
 
 		manager.setStorageState(std::make_unique<state::CachedStorageState>(pKeyCollector));
 
+		manager.addStatelessValidatorHook([](auto& builder) {
+			builder
+				.add(validators::CreateStoragePluginConfigValidator());
+		});
+
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, pKeyCollector](auto& builder) {
 		  	builder
 				.add(validators::CreatePrepareDriveValidator(pKeyCollector))
 				.add(validators::CreateDataModificationValidator())
 				.add(validators::CreateDataModificationApprovalValidator())
 				.add(validators::CreateDataModificationCancelValidator())
+				.add(validators::CreateReplicatorOnboardingValidator())
+				.add(validators::CreateDriveClosureValidator());
 				.add(validators::CreateReplicatorOnboardingValidator())
 				.add(validators::CreateReplicatorOffboardingValidator())
 				.add(validators::CreateFinishDownloadValidator())
@@ -232,6 +241,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDataModificationObserver())
 				.add(observers::CreateDataModificationApprovalObserver())
 				.add(observers::CreateDataModificationCancelObserver())
+				.add(observers::CreateReplicatorOnboardingObserver())
+				.add(observers::CreateDriveClosureObserver());
 				.add(observers::CreateReplicatorOnboardingObserver())
 				.add(observers::CreateReplicatorOffboardingObserver())
 				.add(observers::CreateDownloadPaymentObserver())

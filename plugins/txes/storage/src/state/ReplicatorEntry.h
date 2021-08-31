@@ -8,6 +8,7 @@
 #include "catapult/types.h"
 #include "catapult/exceptions.h"
 #include "catapult/state/StorageState.h"
+#include "catapult/utils/ArraySet.h"
 
 namespace catapult { namespace state {
 

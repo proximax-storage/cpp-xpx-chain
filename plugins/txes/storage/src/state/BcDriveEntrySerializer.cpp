@@ -33,6 +33,20 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void SaveActiveDownloads(io::OutputStream& output, const std::vector<Hash256>& activeDownloads) {
+			io::Write16(output, activeDownloads.size());
+			for (const auto& active : activeDownloads) {
+				io::Write(output, active);
+			}
+		}
+
+		void SaveCompletedDownloads(io::OutputStream& output, const std::vector<Hash256>& completedDownloads) {
+			io::Write16(output, completedDownloads.size());
+			for (const auto& completed : completedDownloads) {
+				io::Write(output, completed);
+			}
+		}
+
 		void LoadActiveDataModifications(io::InputStream& input, ActiveDataModifications& activeDataModifications) {
 			auto count = io::Read16(input);
 			while (count--) {
@@ -62,6 +76,24 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void LoadActiveDownloads(io::InputStream& input, std::vector<Hash256>& activeDownloads) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Hash256 activeDownloadId;
+				io::Read(input, activeDownloadId);
+				activeDownloads.emplace_back(activeDownloadId);
+			}
+		}
+
+		void LoadCompletedDownloads(io::InputStream& input, std::vector<Hash256>& completedDownloads) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Hash256 completedDownloadId;
+				io::Read(input, completedDownloadId);
+				completedDownloads.emplace_back(completedDownloadId);
+			}
+		}
+
 	}
 
 	void BcDriveEntrySerializer::Save(const BcDriveEntry& driveEntry, io::OutputStream& output) {
@@ -78,6 +110,8 @@ namespace catapult { namespace state {
 
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
+		SaveActiveDownloads(output, driveEntry.activeDownloads());
+		SaveCompletedDownloads(output, driveEntry.completedDownloads());
 	}
 
 	BcDriveEntry BcDriveEntrySerializer::Load(io::InputStream& input) {
@@ -107,6 +141,8 @@ namespace catapult { namespace state {
 
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
+		LoadActiveDownloads(input, entry.activeDownloads());
+		LoadCompletedDownloads(input, entry.completedDownloads());
 
 		return entry;
 	}

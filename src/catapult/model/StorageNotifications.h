@@ -29,7 +29,7 @@ namespace catapult { namespace model {
 
 	/// Defines a replicator onboarding notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v1, 0x0007);
-	
+
 	/// Defines a replicator offboarding notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Offboarding_v1, 0x0008);
 
@@ -110,6 +110,9 @@ namespace catapult { namespace model {
 		Key DriveKey;
 		uint64_t UploadSize;
 	};
+
+	/// Defines a drive closure notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Drive_Closure_v1, 0x0008);
 
 	/// Notification of a data modification.
 	template<VersionType version>
@@ -288,7 +291,7 @@ namespace catapult { namespace model {
 	public:
 		/// Key of the signer.
 		Key PublicKey;
-		
+
 		/// Key of drive.
 		Key DriveKey;
 
@@ -363,6 +366,27 @@ namespace catapult { namespace model {
 
 		/// The storage size that the replicator provides to the system.
 		Amount Capacity;
+	};
+
+	/// Notification of a drive closure.
+	template<VersionType version>
+	struct DriveClosureNotification;
+
+	template<>
+	struct DriveClosureNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Drive_Closure_v1_Notification;
+
+	public:
+		explicit DriveClosureNotification(const Key& drive)
+				: Notification(Notification_Type, sizeof(DriveClosureNotification<1>))
+				, DriveKey(drive){}
+
+	public:
+		/// Public key of a drive.
+		Key DriveKey;
+
 	};
 
 	/// Notification of a replicator offboarding.
