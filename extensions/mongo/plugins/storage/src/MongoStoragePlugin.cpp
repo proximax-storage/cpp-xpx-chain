@@ -15,10 +15,12 @@
 #include "StoragePaymentMapper.h"
 #include "DataModificationSingleApprovalMapper.h"
 #include "VerificationPaymentMapper.h"
+#include "DownloadApprovalMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "storages/MongoBcDriveCacheStorage.h"
 #include "storages/MongoDownloadChannelCacheStorage.h"
 #include "storages/MongoReplicatorCacheStorage.h"
+#include "storages/MongoBlsKeysCacheStorage.h"
 
 extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
@@ -34,6 +36,7 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateStoragePaymentTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationSingleApprovalTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateVerificationPaymentTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateDownloadApprovalTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoBcDriveCacheStorage(
@@ -45,6 +48,10 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 			manager.configHolder()
 	));
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoReplicatorCacheStorage(
+			manager.mongoContext(),
+			manager.configHolder()
+	));
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoBlsKeysCacheStorage(
 			manager.mongoContext(),
 			manager.configHolder()
 	));

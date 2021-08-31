@@ -44,6 +44,16 @@ namespace catapult { namespace state {
 			return m_capacity;
 		}
 
+		/// Sets BLS public key of the replicator.
+		void setBlsKey(const BLSPublicKey& blsKey) {
+			m_blsKey = blsKey;
+		}
+
+		/// Gets BLS public key of the replicator.
+		const BLSPublicKey& blsKey() const {
+			return m_blsKey;
+		}
+
 		/// Gets infos of drives assigned to the replicator.
 		const DrivesMap& drives() const {
 			return m_drives;
@@ -56,6 +66,7 @@ namespace catapult { namespace state {
 
 	private:
 		Amount m_capacity;
+		BLSPublicKey m_blsKey;
 		DrivesMap m_drives;
 	};
 

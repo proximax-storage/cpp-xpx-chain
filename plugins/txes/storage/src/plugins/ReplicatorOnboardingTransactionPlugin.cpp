@@ -21,6 +21,7 @@ namespace catapult { namespace plugins {
 			case 1: {
 				sub.notify(ReplicatorOnboardingNotification<1>(
 						transaction.Signer,
+						transaction.BlsKey,
 						transaction.Capacity
 				));
 				break;

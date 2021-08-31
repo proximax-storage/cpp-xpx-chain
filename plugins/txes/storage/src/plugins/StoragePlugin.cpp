@@ -8,6 +8,7 @@
 #include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCacheSubCachePlugin.h"
+#include "src/cache/BlsKeysCacheStorage.h"
 #include "src/plugins/PrepareBcDriveTransactionPlugin.h"
 #include "src/plugins/DataModificationTransactionPlugin.h"
 #include "src/plugins/DownloadTransactionPlugin.h"
@@ -19,6 +20,7 @@
 #include "src/plugins/StoragePaymentTransactionPlugin.h"
 #include "src/plugins/DataModificationSingleApprovalTransactionPlugin.h"
 #include "src/plugins/VerificationPaymentTransactionPlugin.h"
+#include "src/plugins/DownloadApprovalTransactionPlugin.h"
 #include "src/state/CachedStorageState.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
@@ -82,6 +84,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateStoragePaymentTransactionPlugin());
 		manager.addTransactionSupport(CreateDataModificationSingleApprovalTransactionPlugin());
 		manager.addTransactionSupport(CreateVerificationPaymentTransactionPlugin());
+		manager.addTransactionSupport(CreateDownloadApprovalTransactionPlugin());
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 		  	switch (unresolved.Type) {
@@ -187,6 +190,18 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		manager.addCacheSupport<cache::BlsKeysCacheStorage>(
+				std::make_unique<cache::BlsKeysCache>(manager.cacheConfig(cache::BlsKeysCache::Name), pConfigHolder));
+
+		using BlsKeysCacheHandlersService = CacheHandlers<cache::BlsKeysCacheDescriptor>;
+		BlsKeysCacheHandlersService::Register<model::FacilityCode::BlsKeys>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+		  	counters.emplace_back(utils::DiagnosticCounterId("BLS KEYS C"), [&cache]() {
+				return cache.sub<cache::BlsKeysCache>().createView(cache.height())->size();
+		  	});
+		});
+
 		manager.setStorageState(std::make_unique<state::CachedStorageState>(pKeyCollector));
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, pKeyCollector](auto& builder) {
@@ -200,7 +215,11 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDownloadPaymentValidator())
 				.add(validators::CreateStoragePaymentValidator())
 				.add(validators::CreateDataModificationSingleApprovalValidator())
-		  		.add(validators::CreateVerificationPaymentValidator());
+		  		.add(validators::CreateVerificationPaymentValidator())
+				.add(validators::CreateOpinionValidator())
+				.add(validators::CreateDownloadApprovalValidator())
+				.add(validators::CreateDownloadApprovalPaymentValidator())
+				.add(validators::CreateDownloadChannelRefundValidator());
 		});
 
 		manager.addObserverHook([pKeyCollector](auto& builder) {
@@ -212,7 +231,10 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDataModificationCancelObserver())
 				.add(observers::CreateReplicatorOnboardingObserver())
 				.add(observers::CreateDownloadPaymentObserver())
-				.add(observers::CreateDataModificationSingleApprovalObserver());
+				.add(observers::CreateDataModificationSingleApprovalObserver())
+				.add(observers::CreateDownloadApprovalObserver())
+				.add(observers::CreateDownloadApprovalPaymentObserver())
+				.add(observers::CreateDownloadChannelRefundObserver());
 		});
 	}
 }}
