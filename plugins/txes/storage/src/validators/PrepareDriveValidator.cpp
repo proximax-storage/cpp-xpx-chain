@@ -32,9 +32,6 @@ namespace catapult { namespace validators {
 			if (!replicatorCount)
 				return Failure_Storage_No_Replicator;
 
-			if (replicatorCount > 1u)
-				return Failure_Storage_Multiple_Replicators;
-
 			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 			if (!replicatorCache.contains(*pKeyCollector->keys().begin()))
 				return Failure_Storage_Replicator_Not_Found;
