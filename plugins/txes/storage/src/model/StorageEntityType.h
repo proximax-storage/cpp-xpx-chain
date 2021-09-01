@@ -49,10 +49,10 @@ namespace catapult { namespace model {
 	DEFINE_TRANSACTION_TYPE(Storage, VerificationPayment, 0xC);
 
 	/// DownloadApproval transaction.
-	DEFINE_TRANSACTION_TYPE(Storage, DownloadApproval, 0xC);
+	DEFINE_TRANSACTION_TYPE(Storage, DownloadApproval, 0xD);
 
 	/// DriveClosure transaction.
-	DEFINE_TRANSACTION_TYPE(Storage, DriveClosure, 0x7);
+	DEFINE_TRANSACTION_TYPE(Storage, DriveClosure, 0xE);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
