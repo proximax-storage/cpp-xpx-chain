@@ -234,7 +234,7 @@ namespace catapult { namespace ionet {
 	BUFFER_SINGLE_ENTITY_TEST(CanExtractSingleBlockWithTransaction) {
 		// Arrange: create a buffer containing a block with one transaction
 		ByteBuffer buffer(Block_Transaction_Size);
-		test::SetBlockAt(buffer, 0, Block_Transaction_Size);
+		test::SetBlockAt(buffer, 0, Block_Transaction_Size, Transaction_Size);
 		SetTransactionAt(buffer, static_cast<uint32_t>(buffer.size() - Transaction_Size));
 
 		// Act:
@@ -248,10 +248,10 @@ namespace catapult { namespace ionet {
 		void PrepareMultiBlockBuffer(ByteBuffer& buffer) {
 			// create a buffer containing three blocks
 			buffer.resize(Block_Transaction_Size + 2 * sizeof(model::BlockHeaderV4));
-			test::SetBlockAt(buffer, 0); // block 1
-			test::SetBlockAt(buffer, sizeof(model::BlockHeaderV4), Block_Transaction_Size); // block 2
+			test::SetBlockAt(buffer, 0, sizeof(model::BlockHeaderV4)); // block 1
+			test::SetBlockAt(buffer, sizeof(model::BlockHeaderV4), Block_Transaction_Size, Transaction_Size); // block 2
 			SetTransactionAt(buffer, 2 * sizeof(model::BlockHeaderV4)); // block 2 tx
-			test::SetBlockAt(buffer, sizeof(model::BlockHeaderV4) + Block_Transaction_Size); // block 3
+			test::SetBlockAt(buffer, sizeof(model::BlockHeaderV4) + Block_Transaction_Size, sizeof(model::BlockHeaderV4), 0); // block 3
 		}
 	}
 

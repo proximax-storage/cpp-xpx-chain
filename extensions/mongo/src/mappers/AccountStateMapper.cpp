@@ -64,13 +64,16 @@ namespace catapult { namespace mongo { namespace mappers {
 				<< "publicKey" << ToBinary(publicKeyAccessor.get())
 				<< bson_stream::close_document;
 	}
-	void StreamAccountPublicKeys(bson_stream::document& builder, const state::AccountPublicKeys& accountPublicKeys) {
+	void StreamAccountPublicKeys(bson_stream::document& builder, const state::AccountPublicKeys& accountPublicKeys, uint32_t version) {
 		builder << "supplementalPublicKeys" << bson_stream::open_document;
 
 		auto mask = accountPublicKeys.mask();
 		StreamPublicKey(builder, "linked", mask, state::AccountPublicKeys::KeyType::Linked, accountPublicKeys.linked());
-		StreamPublicKey(builder, "node", mask, state::AccountPublicKeys::KeyType::Node, accountPublicKeys.node());
-		StreamPublicKey(builder, "vrf", mask, state::AccountPublicKeys::KeyType::VRF, accountPublicKeys.vrf());
+		if(version > 1)
+		{
+			StreamPublicKey(builder, "node", mask, state::AccountPublicKeys::KeyType::Node, accountPublicKeys.node());
+			StreamPublicKey(builder, "vrf", mask, state::AccountPublicKeys::KeyType::VRF, accountPublicKeys.vrf());
+		}
 
 		builder << bson_stream::close_document;
 	}
@@ -81,11 +84,13 @@ namespace catapult { namespace mongo { namespace mappers {
 
 		// account data
 		builder << "account" << bson_stream::open_document
+				<< "version" << (int32_t)accountState.GetVersion()
 				<< "address" << ToBinary(accountState.Address)
 				<< "addressHeight" << ToInt64(accountState.AddressHeight)
 				<< "publicKey" << ToBinary(accountState.PublicKey)
 				<< "publicKeyHeight" << ToInt64(accountState.PublicKeyHeight)
 				<< "accountType" << utils::to_underlying_type(accountState.AccountType);
+		StreamAccountPublicKeys(builder, accountState.SupplementalPublicKeys, accountState.GetVersion());
 		StreamAccountBalances(builder, accountState.Balances);
 		builder << bson_stream::close_document;
 		return builder << bson_stream::finalize;
@@ -108,23 +113,27 @@ namespace catapult { namespace mongo { namespace mappers {
 				    }
 			);
 		}
-		void ToSupplementalAccountKeys(state::AccountPublicKeys& keys, const bsoncxx::document::view& supplementalKeysDocument)
+		void ToSupplementalAccountKeys(state::AccountPublicKeys& keys, const bsoncxx::document::view& supplementalKeysDocument, uint32_t version)
 		{
 			Key tempVal;
 			if(supplementalKeysDocument["linked"])
 			{
 				DbBinaryToModelArray(tempVal, supplementalKeysDocument["linked"]["publicKey"].get_binary());
+				keys.linked().unset();
 				keys.linked().set(tempVal);
 			}
+			if(version == 1) return;
 			if(supplementalKeysDocument["node"])
 			{
 				DbBinaryToModelArray(tempVal, supplementalKeysDocument["node"]["publicKey"].get_binary());
-				keys.linked().set(tempVal);
+				keys.node().unset();
+				keys.node().set(tempVal);
 			}
 			if(supplementalKeysDocument["vrf"])
 			{
 				DbBinaryToModelArray(tempVal, supplementalKeysDocument["vrf"]["publicKey"].get_binary());
-				keys.linked().set(tempVal);
+				keys.vrf().unset();
+				keys.vrf().set(tempVal);
 			}
 		}
 	}
@@ -135,20 +144,19 @@ namespace catapult { namespace mongo { namespace mappers {
 		DbBinaryToModelArray(accountAddress, accountDocument["address"].get_binary());
 		auto accountAddressHeight = GetValue64<Height>(accountDocument["addressHeight"]);
 
-		auto& accountState = accountStateFactory(accountAddress, accountAddressHeight);
-		DbBinaryToModelArray(accountState.PublicKey, accountDocument["publicKey"].get_binary());
-		accountState.PublicKeyHeight = GetValue64<Height>(accountDocument["publicKeyHeight"]);
+		auto accountState = accountStateFactory(accountAddress, accountAddressHeight, (uint32_t)accountDocument["version"].get_int32());
+		DbBinaryToModelArray(accountState->PublicKey, accountDocument["publicKey"].get_binary());
+		accountState->PublicKeyHeight = GetValue64<Height>(accountDocument["publicKeyHeight"]);
+		accountState->AccountType = static_cast<state::AccountType>(ToUint8(accountDocument["accountType"].get_int32()));
 
-		accountState.AccountType = static_cast<state::AccountType>(ToUint8(accountDocument["accountType"].get_int32()));
-
-		ToSupplementalAccountKeys(accountState.SupplementalPublicKeys, accountDocument["supplementalPublicKeys"].get_document().view());
+		ToSupplementalAccountKeys(accountState->SupplementalPublicKeys, accountDocument["supplementalPublicKeys"].get_document().view(), accountState->GetVersion());
 		auto dbMosaics = accountDocument["mosaics"].get_array().value;
 		for (const auto& mosaicEntry : dbMosaics)
-			ToAccountBalance(accountState.Balances, mosaicEntry.get_document().view());
+			ToAccountBalance(accountState->Balances, mosaicEntry.get_document().view());
 
 		auto dbSnapshots = accountDocument["snapshots"].get_array().value;
 		for (const auto& snapshotEntry : dbSnapshots)
-			ToAccountBalanceSnapshot(accountState.Balances, snapshotEntry.get_document().view());
+			ToAccountBalanceSnapshot(accountState->Balances, snapshotEntry.get_document().view());
 	}
 
 	// endregion

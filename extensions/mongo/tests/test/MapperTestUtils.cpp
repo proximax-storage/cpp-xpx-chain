@@ -145,11 +145,16 @@ namespace catapult { namespace test {
 		EXPECT_EQ(accountState.AddressHeight, Height(GetUint64(dbAccount, "addressHeight")));
 		EXPECT_EQ(accountState.PublicKey, GetKeyValue(dbAccount, "publicKey"));
 		EXPECT_EQ(accountState.PublicKeyHeight, Height(GetUint64(dbAccount, "publicKeyHeight")));
-
+		EXPECT_EQ(accountState.GetVersion(), GetUint32(dbAccount, "version"));
 		EXPECT_EQ(accountState.AccountType, static_cast<state::AccountType>(GetInt32(dbAccount, "accountType")));
-		EXPECT_EQ(GetLinkedPublicKey(accountState), GetKeyValue(dbAccount, "linkedAccountKey"));
-		EXPECT_EQ(GetNodePublicKey(accountState), GetKeyValue(dbAccount, "nodeAccountKey"));
 
+		auto supplementalKeysDocument = dbAccount["supplementalPublicKeys"].get_document().view();
+		EXPECT_EQ(accountState.SupplementalPublicKeys.linked().get(), GetKeyValue(supplementalKeysDocument["linked"], "publicKey"));
+		if(accountState.GetVersion() > 1)
+		{
+			EXPECT_EQ(accountState.SupplementalPublicKeys.node().get(), GetKeyValue(supplementalKeysDocument["node"], "publicKey"));
+			EXPECT_EQ(accountState.SupplementalPublicKeys.vrf().get(), GetKeyValue(supplementalKeysDocument["vrf"], "publicKey"));
+		}
 		auto dbMosaics = dbAccount["mosaics"].get_array().value;
 		size_t numMosaics = 0;
 		for (const auto& mosaicElement : dbMosaics) {

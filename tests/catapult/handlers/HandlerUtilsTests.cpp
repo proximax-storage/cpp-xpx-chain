@@ -60,7 +60,7 @@ namespace catapult { namespace handlers {
 	TEST(TEST_CLASS, CreatePushEntityHandler_DoesNotForwardMalformedEntityToRangeHandler) {
 		// Arrange:
 		ionet::ByteBuffer buffer(Block_Packet_Size);
-		auto& packet = test::SetPushBlockPacketInBuffer(buffer);
+		auto& packet = test::SetPushBlockPacketInBuffer(buffer, 0);
 		--packet.Size;
 
 		// Assert:
@@ -70,7 +70,7 @@ namespace catapult { namespace handlers {
 	TEST(TEST_CLASS, CreatePushEntityHandler_ForwardsWellFormedEntityToRangeHandler) {
 		// Arrange:
 		ionet::ByteBuffer buffer(Block_Packet_Size);
-		const auto& packet = test::SetPushBlockPacketInBuffer(buffer);
+		const auto& packet = test::SetPushBlockPacketInBuffer(buffer, 0);
 
 		// Assert:
 		AssertCreatePushEntityHandlerForwarding(packet, 1);
@@ -79,9 +79,9 @@ namespace catapult { namespace handlers {
 	TEST(TEST_CLASS, CreatePushEntityHandler_DoesNotForwardMalformedEntitiesToRangeHandler) {
 		// Arrange:
 		ionet::ByteBuffer buffer(Two_Blocks_Packet_Size);
-		auto& packet = test::SetPushBlockPacketInBuffer(buffer);
-		test::SetBlockAt(buffer, sizeof(ionet::Packet));
-		test::SetBlockAt(buffer, sizeof(ionet::Packet) + sizeof(model::BlockHeaderV4));
+		auto& packet = test::SetPushBlockPacketInBuffer(buffer, 0);
+		test::SetBlockAt(buffer, sizeof(ionet::Packet), 0u);
+		test::SetBlockAt(buffer, sizeof(ionet::Packet) + sizeof(model::BlockHeaderV4), 0u);
 		--packet.Size;
 
 		// Assert:
@@ -91,9 +91,9 @@ namespace catapult { namespace handlers {
 	TEST(TEST_CLASS, CreatePushEntityHandler_ForwardsWellFormedEntitiesToRangeHandler) {
 		// Arrange:
 		ionet::ByteBuffer buffer(Two_Blocks_Packet_Size);
-		const auto& packet = test::SetPushBlockPacketInBuffer(buffer);
-		test::SetBlockAt(buffer, sizeof(ionet::Packet));
-		test::SetBlockAt(buffer, sizeof(ionet::Packet) + sizeof(model::BlockHeaderV4));
+		const auto& packet = test::SetPushBlockPacketInBuffer(buffer, 0);
+		test::SetBlockAt(buffer, sizeof(ionet::Packet), 0u);
+		test::SetBlockAt(buffer, sizeof(ionet::Packet) + sizeof(model::BlockHeaderV4), 0u);
 
 		// Assert:
 		AssertCreatePushEntityHandlerForwarding(packet, 1);

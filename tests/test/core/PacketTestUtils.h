@@ -76,13 +76,13 @@ namespace catapult { namespace test {
 	void SetTransactionAt(ionet::ByteBuffer& buffer, size_t offset, size_t size);
 
 	/// Sets a block in \a buffer at \a offset with the default block size.
-	void SetBlockAt(ionet::ByteBuffer& buffer, size_t offset);
+	void SetBlockAt(ionet::ByteBuffer& buffer, size_t offset, uint32_t transactionSize = 0);
 
 	/// Sets a block in \a buffer at \a offset with a custom \a size.
-	void SetBlockAt(ionet::ByteBuffer& buffer, size_t offset, size_t size);
+	void SetBlockAt(ionet::ByteBuffer& buffer, size_t offset, size_t size, uint32_t transactionSize = 0);
 
 	/// Sets a push block packet in \a buffer.
-	ionet::Packet& SetPushBlockPacketInBuffer(ionet::ByteBuffer& buffer);
+	ionet::Packet& SetPushBlockPacketInBuffer(ionet::ByteBuffer& buffer, uint32_t transactionSize = 0);
 
 	/// Generates a random push block packet.
 	std::shared_ptr<ionet::Packet> GenerateRandomBlockPacket();

@@ -52,7 +52,7 @@ namespace catapult { namespace handlers {
 			void RunPushBlockHandlerTest(uint32_t sizeAdjustment, TAction action) {
 				// Arrange:
 				ionet::ByteBuffer buffer(Block_Packet_Size);
-				auto& packet = test::SetPushBlockPacketInBuffer(buffer);
+				auto& packet = test::SetPushBlockPacketInBuffer(buffer, 0);
 				packet.Size -= sizeAdjustment;
 
 				ionet::ServerPacketHandlers handlers;

@@ -39,8 +39,9 @@ namespace catapult { namespace mongo { namespace mappers {
 			EXPECT_EQ(0u, test::GetFieldCount(dbMetadata));
 		}
 
+		template<uint32_t TVersion>
 		auto CreateAccountState(Height publicKeyHeight, std::initializer_list<model::Mosaic> mosaics, std::initializer_list<model::BalanceSnapshot> snapshots) {
-			state::AccountState state(test::GenerateRandomAddress(), Height(123));
+			state::AccountState state(test::GenerateRandomAddress(), Height(123), TVersion);
 			if (Height(0) != publicKeyHeight) {
 				state.PublicKeyHeight = publicKeyHeight;
 				test::FillWithRandomData(state.PublicKey);
@@ -50,7 +51,13 @@ namespace catapult { namespace mongo { namespace mappers {
 			Key temp;
 			test::FillWithRandomData(temp);
 			state.SupplementalPublicKeys.linked().unset();
-			state.SupplementalPublicKeys.linked().set(temp);
+			state.SupplementalPublicKeys.linked().set(std::move(temp));
+			test::FillWithRandomData(temp);
+			state.SupplementalPublicKeys.vrf().unset();
+			state.SupplementalPublicKeys.vrf().set(std::move(temp));
+			test::FillWithRandomData(temp);
+			state.SupplementalPublicKeys.node().unset();
+			state.SupplementalPublicKeys.node().set(std::move(temp));
 			state.Balances.track(Test_Mosaic);
 			for (const auto& mosaic : mosaics)
 				state.Balances.credit(mosaic.MosaicId, mosaic.Amount);
@@ -61,9 +68,10 @@ namespace catapult { namespace mongo { namespace mappers {
 			return state;
 		}
 
+		template<uint32_t TVersion>
 		void AssertCanMapAccountState(Height publicKeyHeight, std::initializer_list<model::Mosaic> mosaics, std::initializer_list<model::BalanceSnapshot> snapshots) {
 			// Arrange:
-			auto state = CreateAccountState(publicKeyHeight, mosaics, snapshots);
+			auto state = CreateAccountState<TVersion>(publicKeyHeight, mosaics, snapshots);
 
 			// Act:
 			auto dbAccount = ToDbModel(state);
@@ -83,22 +91,25 @@ namespace catapult { namespace mongo { namespace mappers {
 
 	TEST(TEST_CLASS, CanMapAccountStateWithNeitherPublicKeyNotMosaicsNotSnapshots) {
 		// Assert:
-		AssertCanMapAccountState(Height(0), {}, {});
+		AssertCanMapAccountState<1>(Height(0), {}, {});
+		AssertCanMapAccountState<2>(Height(0), {}, {});
 	}
 
 	TEST(TEST_CLASS, CanMapAccountStateWithPublicKeyButWithoutMosaicsAnsSNapshots) {
 		// Assert:
-		AssertCanMapAccountState(Height(456), {}, {});
+		AssertCanMapAccountState<1>(Height(456), {}, {});
+		AssertCanMapAccountState<2>(Height(456), {}, {});
 	}
 
 	TEST(TEST_CLASS, CanMapAccountStateWithoutPublicKeyButWithSingleMosaicAndSnapshot) {
 		// Assert:
-		AssertCanMapAccountState(Height(0), { { Test_Mosaic, Amount(234) } }, { { Amount(234), Height(123) } });
+		AssertCanMapAccountState<1>(Height(0), { { Test_Mosaic, Amount(234) } }, { { Amount(234), Height(123) } });
+		AssertCanMapAccountState<2>(Height(0), { { Test_Mosaic, Amount(234) } }, { { Amount(234), Height(123) } });
 	}
 
 	TEST(TEST_CLASS, CanMapAccountStateWithoutPublicKeyButWithMultipleMosaicsAndSingleSnapshot) {
 		// Assert:
-		AssertCanMapAccountState(
+		AssertCanMapAccountState<1>(
 			Height(0),
 			{
 				{ Test_Mosaic, Amount(234) },
@@ -109,16 +120,28 @@ namespace catapult { namespace mongo { namespace mappers {
 				{ Amount(234), Height(123) }
 			}
 		);
+		AssertCanMapAccountState<2>(
+				Height(0),
+				{
+						{ Test_Mosaic, Amount(234) },
+						{ MosaicId(1357), Amount(345) },
+						{ MosaicId(31), Amount(45) }
+				},
+				{
+						{ Amount(234), Height(123) }
+				}
+		);
 	}
 
 	TEST(TEST_CLASS, CanMapAccountStateWithPublicKeyAndSingleMosaicAndSnapshot) {
 		// Assert:
-		AssertCanMapAccountState(Height(456), { { Test_Mosaic, Amount(234) } }, { { Amount(234), Height(456) } });
+		AssertCanMapAccountState<1>(Height(456), { { Test_Mosaic, Amount(234) } }, { { Amount(234), Height(456) } });
+		AssertCanMapAccountState<2>(Height(456), { { Test_Mosaic, Amount(234) } }, { { Amount(234), Height(456) } });
 	}
 
 	TEST(TEST_CLASS, CanMapAccountStateWithPublicKeyAndMultipleMosaicsAndSnapshots) {
 		// Assert:
-		AssertCanMapAccountState(
+		AssertCanMapAccountState<1>(
 			Height(456),
 			{
 				{ Test_Mosaic, Amount(234) },
@@ -131,6 +154,19 @@ namespace catapult { namespace mongo { namespace mappers {
 				{ Amount(236), Height(458) }
 			}
 		);
+		AssertCanMapAccountState<2>(
+				Height(456),
+				{
+						{ Test_Mosaic, Amount(234) },
+						{ MosaicId(1357), Amount(345) },
+						{ MosaicId(31), Amount(45) }
+				},
+				{
+						{ Amount(234), Height(456) },
+						{ Amount(235), Height(457) },
+						{ Amount(236), Height(458) }
+				}
+		);
 	}
 
 	// endregion
@@ -138,53 +174,61 @@ namespace catapult { namespace mongo { namespace mappers {
 	// region ToAccountState
 
 	namespace {
+		template<uint32_t TVersion>
 		void AssertCanMapDbAccountState(Height publicKeyHeight, std::initializer_list<model::Mosaic> mosaics, std::initializer_list<model::BalanceSnapshot> snapshots) {
 			// Arrange:
-			auto state = CreateAccountState(publicKeyHeight, mosaics, snapshots);
+			auto state = CreateAccountState<TVersion>(publicKeyHeight, mosaics, snapshots);
 			auto dbAccount = ToDbModel(state);
 
 			// Act:
-			state::AccountState newAccountState(Address(), Height(0));
-			ToAccountState(dbAccount, [&newAccountState](const auto& address, auto height) -> state::AccountState& {
-				newAccountState.Address = address;
-				newAccountState.AddressHeight = height;
-				return newAccountState;
+			std::shared_ptr<state::AccountState> statePtr;
+			ToAccountState(dbAccount, [&statePtr](const auto& address, auto height, auto version) -> std::shared_ptr<state::AccountState>  {
+
+			  	statePtr = std::make_shared<state::AccountState>(Address(), Height(0), version);
+				statePtr->Address = address;
+				statePtr->AddressHeight = height;
+				return statePtr;
 			});
 
 			// Assert:
 			auto accountData = dbAccount.view()["account"].get_document();
-			test::AssertEqualAccountState(newAccountState, accountData.view());
+			test::AssertEqualAccountState(*statePtr, accountData.view());
 		}
 	}
 
 	TEST(TEST_CLASS, CanMapDbAccountStateWithNeitherPublicKeyNotMosaicsAndSnapshot) {
 		// Assert:
-		AssertCanMapDbAccountState(Height(0), {}, {});
+		AssertCanMapDbAccountState<1>(Height(0), {}, {});
+		AssertCanMapDbAccountState<2>(Height(0), {}, {});
 	}
 
 	TEST(TEST_CLASS, CanMapDbAccountStateWithPublicKeyButWithoutMosaicsAndSnapshot) {
 		// Assert:
-		AssertCanMapDbAccountState(Height(456), {}, {});
+		AssertCanMapDbAccountState<1>(Height(456), {}, {});
+		AssertCanMapDbAccountState<2>(Height(456), {}, {});
 	}
 
 	TEST(TEST_CLASS, CanMapDbAccountStateWithoutPublicKeyButWithSingleMosaicAnsWithoutSnapshot) {
 		// Assert:
-		AssertCanMapDbAccountState(Height(0), { { Test_Mosaic, Amount(234) } }, {});
+		AssertCanMapDbAccountState<1>(Height(0), { { Test_Mosaic, Amount(234) } }, {});
+		AssertCanMapDbAccountState<2>(Height(0), { { Test_Mosaic, Amount(234) } }, {});
 	}
 
 	TEST(TEST_CLASS, CanMapDbAccountStateWithoutPublicKeyButWithWithoutMosaicAnsSingleSnapshot) {
 		// Assert:
-		AssertCanMapDbAccountState(Height(0), {}, { { Amount(234), Height(456) } });
+		AssertCanMapDbAccountState<1>(Height(0), {}, { { Amount(234), Height(456) } });
+		AssertCanMapDbAccountState<2>(Height(0), {}, { { Amount(234), Height(456) } });
 	}
 
 	TEST(TEST_CLASS, CanMapDbAccountStateWithoutPublicKeyButWithSingleMosaicAnsSnapshot) {
 		// Assert:
-		AssertCanMapDbAccountState(Height(0), { { Test_Mosaic, Amount(234) } }, { { Amount(234), Height(456) } });
+		AssertCanMapDbAccountState<1>(Height(0), { { Test_Mosaic, Amount(234) } }, { { Amount(234), Height(456) } });
+		AssertCanMapDbAccountState<2>(Height(0), { { Test_Mosaic, Amount(234) } }, { { Amount(234), Height(456) } });
 	}
 
 	TEST(TEST_CLASS, CanMapDbAccountStateWithoutPublicKeyButWithMultipleMosaicsAndSingleSnapshot) {
 		// Assert:
-		AssertCanMapDbAccountState(
+		AssertCanMapDbAccountState<1>(
 			Height(0),
 			{
 				{ Test_Mosaic, Amount(234) },
@@ -195,26 +239,40 @@ namespace catapult { namespace mongo { namespace mappers {
 				{ Amount(234), Height(456) }
 			}
 		);
+		AssertCanMapDbAccountState<2>(
+				Height(0),
+				{
+						{ Test_Mosaic, Amount(234) },
+						{ MosaicId(1357), Amount(345) },
+						{ MosaicId(31), Amount(45) }
+				},
+				{
+						{ Amount(234), Height(456) }
+				}
+		);
 	}
 
 	TEST(TEST_CLASS, CanMapDbAccountStateWithPublicKeyAndSingleMosaicAndWithoutSnapshot) {
 		// Assert:
-		AssertCanMapDbAccountState(Height(456), { { Test_Mosaic, Amount(234) } }, {});
+		AssertCanMapDbAccountState<1>(Height(456), { { Test_Mosaic, Amount(234) } }, {});
+		AssertCanMapDbAccountState<2>(Height(456), { { Test_Mosaic, Amount(234) } }, {});
 	}
 
 	TEST(TEST_CLASS, CanMapDbAccountStateWithPublicKeyAndWithoutMosaicAndSingleSnapshot) {
 		// Assert:
-		AssertCanMapDbAccountState(Height(456), {}, { { Amount(234), Height(456) } });
+		AssertCanMapDbAccountState<1>(Height(456), {}, { { Amount(234), Height(456) } });
+		AssertCanMapDbAccountState<2>(Height(456), {}, { { Amount(234), Height(456) } });
 	}
 
 	TEST(TEST_CLASS, CanMapDbAccountStateWithPublicKeyAndSingleMosaicAndSnapshot) {
 		// Assert:
-		AssertCanMapDbAccountState(Height(456), { { Test_Mosaic, Amount(234) } }, { { Amount(234), Height(456) } });
+		AssertCanMapDbAccountState<1>(Height(456), { { Test_Mosaic, Amount(234) } }, { { Amount(234), Height(456) } });
+		AssertCanMapDbAccountState<2>(Height(456), { { Test_Mosaic, Amount(234) } }, { { Amount(234), Height(456) } });
 	}
 
 	TEST(TEST_CLASS, CanMapDbAccountStateWithPublicKeyAndMultipleMosaicsAndSnapshots) {
 		// Assert:
-		AssertCanMapDbAccountState(
+		AssertCanMapDbAccountState<1>(
 			Height(456),
 			{
 				{ Test_Mosaic, Amount(234) },
@@ -226,6 +284,19 @@ namespace catapult { namespace mongo { namespace mappers {
 				{ Amount(235), Height(457) } ,
 				{ Amount(236), Height(458) }
 			}
+		);
+		AssertCanMapDbAccountState<2>(
+				Height(456),
+				{
+						{ Test_Mosaic, Amount(234) },
+						{ MosaicId(1357), Amount(345) },
+						{ MosaicId(31), Amount(45) }
+				},
+				{
+						{ Amount(234), Height(456) } ,
+						{ Amount(235), Height(457) } ,
+						{ Amount(236), Height(458) }
+				}
 		);
 	}
 

@@ -151,7 +151,7 @@ namespace catapult { namespace ionet {
 				// create a packet with no complete blocks but some overflow bytes
 				constexpr auto Base_Packet_Size = sizeof(Packet);
 				buffer.resize(Base_Packet_Size + std::max<uint32_t>(sizeof(model::BlockHeaderV4), size));
-				auto& packet = test::SetPushBlockPacketInBuffer(buffer);
+				auto& packet = test::SetPushBlockPacketInBuffer(buffer, 0);
 				packet.Size = Base_Packet_Size + size;
 				return packet;
 			}
@@ -189,7 +189,7 @@ namespace catapult { namespace ionet {
 				constexpr auto Num_Full_Blocks = 2u;
 				constexpr auto Base_Packet_Size = sizeof(Packet) + Num_Full_Blocks * sizeof(model::BlockHeaderV4);
 				buffer.resize(Base_Packet_Size + std::max<uint32_t>(sizeof(model::BlockHeaderV4), size));
-				auto& packet = test::SetPushBlockPacketInBuffer(buffer);
+				auto& packet = test::SetPushBlockPacketInBuffer(buffer, 0);
 				for (auto i = 0u; i <= Num_Full_Blocks; ++i) {
 					auto blockSize = Num_Full_Blocks == i ? size : sizeof(model::BlockHeaderV4);
 					test::SetBlockAt(buffer, sizeof(Packet) + i * sizeof(model::BlockHeaderV4), blockSize);
@@ -318,7 +318,7 @@ namespace catapult { namespace ionet {
 	PACKET_SINGLE_ENTITY_TEST(CanExtractSingleBlockWithoutTransactions) {
 		// Arrange: create a packet containing a block with no transactions
 		ByteBuffer buffer(Block_Packet_Size);
-		const auto& packet = test::SetPushBlockPacketInBuffer(buffer);
+		const auto& packet = test::SetPushBlockPacketInBuffer(buffer, 0);
 
 		// Act:
 		auto extractResult = TTraits::Extract(packet);
@@ -334,7 +334,7 @@ namespace catapult { namespace ionet {
 	PACKET_SINGLE_ENTITY_TEST(IsValidPredicateHasHigherPrecedenceThanSizeCheck) {
 		// Arrange: create a packet containing a block with no transactions
 		ByteBuffer buffer(Block_Packet_Size);
-		const auto& packet = test::SetPushBlockPacketInBuffer(buffer);
+		const auto& packet = test::SetPushBlockPacketInBuffer(buffer, 0);
 
 		// Act: extract and return false from the isValid predicate even though the packet has a valid size
 		auto numValidCalls = 0u;
@@ -351,7 +351,7 @@ namespace catapult { namespace ionet {
 	PACKET_SINGLE_ENTITY_TEST(CanExtractSingleBlockWithTransaction) {
 		// Arrange: create a packet containing a block with one transaction
 		ByteBuffer buffer(Block_Transaction_Packet_Size);
-		const auto& packet = test::SetPushBlockPacketInBuffer(buffer);
+		const auto& packet = test::SetPushBlockPacketInBuffer(buffer, Transaction_Size);
 		SetTransactionAt(buffer, static_cast<uint32_t>(buffer.size() - Transaction_Size));
 
 		// Act:
@@ -368,10 +368,10 @@ namespace catapult { namespace ionet {
 	namespace {
 		const Packet& PrepareMultiBlockPacket(ByteBuffer& buffer) {
 			// create a packet containing three blocks
-			buffer.resize(Block_Transaction_Packet_Size + 2 * sizeof(model::BlockHeader));
-			const auto& packet = test::SetPushBlockPacketInBuffer(buffer);
+			buffer.resize(Block_Transaction_Packet_Size + 2 * sizeof(model::BlockHeaderV4));
+			const auto& packet = test::SetPushBlockPacketInBuffer(buffer); // wrongly set
 			test::SetBlockAt(buffer, sizeof(Packet)); // block 1
-			test::SetBlockAt(buffer, sizeof(Packet) + sizeof(model::BlockHeaderV4), Block_Transaction_Size); // block 2
+			test::SetBlockAt(buffer, sizeof(Packet) + sizeof(model::BlockHeaderV4), Transaction_Size); // block 2
 			SetTransactionAt(buffer, sizeof(Packet) + 2 * sizeof(model::BlockHeaderV4)); // block 2 tx
 			test::SetBlockAt(buffer, sizeof(Packet) + sizeof(model::BlockHeaderV4) + Block_Transaction_Size); // block 3
 			return packet;
