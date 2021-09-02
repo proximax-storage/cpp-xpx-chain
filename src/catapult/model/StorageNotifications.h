@@ -34,31 +34,34 @@ namespace catapult { namespace model {
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Offboarding_v1, 0x0008);
 
 	/// Defines a finish download notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Finish_Download_v1, 0x0008);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Finish_Download_v1, 0x0009);
 
 	/// Defines a download payment notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Payment_v1, 0x0009);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Payment_v1, 0x000A);
 
 	/// Defines a storage payment notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Storage_Payment_v1, 0x000A);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Storage_Payment_v1, 0x000B);
 
 	/// Defines a data modification single approval notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Single_Approval_v1, 0x000B);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Single_Approval_v1, 0x000C);
 
 	/// Defines a verification payment notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Verification_Payment_v1, 0x000C);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Verification_Payment_v1, 0x000D);
 
 	/// Defines an opinion notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Opinion_v1, 0x000D);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Opinion_v1, 0x000E);
 
 	/// Defines a download approval notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Approval_v1, 0x000E);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Approval_v1, 0x000F);
 
 	/// Defines a download approval payment notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Approval_Payment_v1, 0x000F);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Approval_Payment_v1, 0x0010);
 
 	/// Defines a download channel refund notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Channel_Refund_v1, 0x0010);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Channel_Refund_v1, 0x0011);
+
+	/// Defines a drive closure notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Drive_Closure_v1, 0x0012);
 
 	struct DownloadWork : public UnresolvedAmountData {
 	public:
@@ -110,9 +113,6 @@ namespace catapult { namespace model {
 		Key DriveKey;
 		uint64_t UploadSize;
 	};
-
-	/// Defines a drive closure notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Drive_Closure_v1, 0x0008);
 
 	/// Notification of a data modification.
 	template<VersionType version>
