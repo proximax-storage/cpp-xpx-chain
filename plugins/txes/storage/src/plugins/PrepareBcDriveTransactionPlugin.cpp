@@ -23,6 +23,7 @@ namespace catapult { namespace plugins {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
+					sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
 					auto driveKey = Key(CalculateHash(transaction, config.GenerationHash).array());
 					sub.notify(PrepareDriveNotification<1>(
 							transaction.Signer,

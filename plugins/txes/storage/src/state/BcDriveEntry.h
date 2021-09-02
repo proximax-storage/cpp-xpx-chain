@@ -49,6 +49,8 @@ namespace catapult { namespace state {
 
 	using ActiveDataModifications = std::vector<ActiveDataModification>;
 	using CompletedDataModifications = std::vector<CompletedDataModification>;
+	/// The map where key is replicator public key and value is last used drive size approved by the replicator.
+	using UsedSizeMap = std::map<Key, u_int64_t>;
 
 	struct Verification {
 	    /// Height of verification results.
@@ -153,12 +155,32 @@ namespace catapult { namespace state {
 
 		/// Gets verifications.
 		Verifications& verifications() {
-		    return m_verifications;
+			return m_verifications;
 		}
 
 		/// Gets verifications.
 		const Verifications& verifications() const {
 			return m_verifications;
+		}
+
+		/// Gets map with key replicator public key and value used drive size.
+		const UsedSizeMap& confirmedUsedSizes() const {
+			return m_usedSizeMap;
+		}
+
+		/// Gets infos of drives assigned to the replicator.
+		UsedSizeMap& confirmedUsedSizes() {
+			return m_usedSizeMap;
+		}
+
+		/// Gets replicators.
+		const utils::KeySet& replicators() const {
+			return m_replicators;
+		}
+
+		/// Gets replicators.
+		utils::KeySet& replicators() {
+			return m_replicators;
 		}
 
 	private:
@@ -170,6 +192,8 @@ namespace catapult { namespace state {
 		uint16_t m_replicatorCount;
 		ActiveDataModifications m_activeDataModifications;
 		CompletedDataModifications m_completedDataModifications;
+		UsedSizeMap m_usedSizeMap;
+		utils::KeySet m_replicators;
 		Verifications m_verifications;
 	};
 

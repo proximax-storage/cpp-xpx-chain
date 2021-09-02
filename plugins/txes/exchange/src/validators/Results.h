@@ -72,6 +72,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because there is incorrect type of offer.
 	DEFINE_CATAPULT_EXCHANGE_RESULT(Incorrect_Offer_Type, 19);
 
+	/// Validation failed because there is incorrect type of offer.
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Mosaic_Does_Not_Exist, 20);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

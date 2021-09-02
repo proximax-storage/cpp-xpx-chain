@@ -12,10 +12,12 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(ReplicatorOnboarding, [](const Notification& notification, const ValidatorContext& context) {
 	  	auto replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-	  	auto replicatorIter = replicatorCache.find(notification.PublicKey);
-		const auto& pReplicatorEntry = replicatorIter.tryGet();
 		if (replicatorCache.contains(notification.PublicKey))
 			return Failure_Storage_Replicator_Already_Registered;
+
+		auto blsKeysCache = context.Cache.sub<cache::BlsKeysCache>();
+		if (blsKeysCache.contains(notification.BlsKey))
+			  return Failure_Storage_BLS_Key_Already_Registered;
 
 		return ValidationResult::Success;
 	});

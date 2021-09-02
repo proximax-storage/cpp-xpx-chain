@@ -8,6 +8,7 @@
 #include "catapult/types.h"
 #include "catapult/exceptions.h"
 #include "catapult/state/StorageState.h"
+#include "catapult/utils/ArraySet.h"
 
 namespace catapult { namespace state {
 
@@ -23,6 +24,12 @@ namespace catapult { namespace state {
 		/// Used drive size at the time of the replicator’s onboarding excluding metafiles size.
 		/// Set to \p 0 after replicator’s first data modification approval.
 		uint64_t InitialDownloadWork;
+
+		bool operator==(const DriveInfo& rhs) const {
+			return LastApprovedDataModificationId == rhs.LastApprovedDataModificationId &&
+				DataModificationIdIsValid == rhs.DataModificationIdIsValid &&
+				InitialDownloadWork == rhs.InitialDownloadWork;
+		}
 	};
 
 	/// The map where key is drive and value is info.
@@ -44,6 +51,16 @@ namespace catapult { namespace state {
 			return m_capacity;
 		}
 
+		/// Sets BLS public key of the replicator.
+		void setBlsKey(const BLSPublicKey& blsKey) {
+			m_blsKey = blsKey;
+		}
+
+		/// Gets BLS public key of the replicator.
+		const BLSPublicKey& blsKey() const {
+			return m_blsKey;
+		}
+
 		/// Gets infos of drives assigned to the replicator.
 		const DrivesMap& drives() const {
 			return m_drives;
@@ -56,6 +73,7 @@ namespace catapult { namespace state {
 
 	private:
 		Amount m_capacity;
+		BLSPublicKey m_blsKey;
 		DrivesMap m_drives;
 	};
 

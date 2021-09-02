@@ -12,7 +12,7 @@ namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates a data modification transaction plugin.
+	/// Creates a data modification approval transaction plugin.
 	PLUGIN_API
 	std::unique_ptr<model::TransactionPlugin> CreateDataModificationApprovalTransactionPlugin();
 }}

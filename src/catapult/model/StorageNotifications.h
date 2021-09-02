@@ -30,23 +30,41 @@ namespace catapult { namespace model {
 	/// Defines a replicator onboarding notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v1, 0x0007);
 
+	/// Defines a replicator offboarding notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Offboarding_v1, 0x0008);
+
 	/// Defines a finish download notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Finish_Download_v1, 0x0008);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Finish_Download_v1, 0x0009);
 
 	/// Defines a download payment notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Payment_v1, 0x0009);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Payment_v1, 0x000A);
 
 	/// Defines a storage payment notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Storage_Payment_v1, 0x000A);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Storage_Payment_v1, 0x000B);
 
 	/// Defines a data modification single approval notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Single_Approval_v1, 0x000B);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Single_Approval_v1, 0x000C);
 
 	/// Defines a verification payment notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Verification_Payment_v1, 0x000C);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Verification_Payment_v1, 0x000D);
+
+	/// Defines an opinion notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Opinion_v1, 0x000E);
+
+	/// Defines a download approval notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Approval_v1, 0x000F);
+
+	/// Defines a download approval payment notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Approval_Payment_v1, 0x0010);
+
+	/// Defines a download channel refund notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Channel_Refund_v1, 0x0011);
+
+	/// Defines a drive closure notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Drive_Closure_v1, 0x0012);
 
 	/// Defines a finish drive verification notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Finish_Drive_Verification_v1, 0x000D);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Finish_Drive_Verification_v1, 0x0013);
 
 	struct DownloadWork : public UnresolvedAmountData {
 	public:
@@ -156,7 +174,7 @@ namespace catapult { namespace model {
 			const Hash256& id,
 			const Key& consumer,
 			uint64_t downloadSize,
-			const uint16_t& listOfPublicKeysSize,
+			uint16_t listOfPublicKeysSize,
 			const Key* listOfPublicKeysPtr)
 			: Notification(Notification_Type, sizeof(DownloadNotification<1>))
 			, Id(id)
@@ -258,12 +276,14 @@ namespace catapult { namespace model {
 
 	public:
 		explicit DataModificationApprovalNotification(
+				const Key& signer,
 				const Key& driveKey,
 				const Hash256& dataModificationId,
 				const Hash256& fileStructureCdi,
 				uint64_t fileStructureSize,
 				uint64_t usedDriveSize)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				, PublicKey(signer)
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
 				, FileStructureCdi(fileStructureCdi)
@@ -272,6 +292,9 @@ namespace catapult { namespace model {
 		{}
 
 	public:
+		/// Key of the signer.
+		Key PublicKey;
+
 		/// Key of drive.
 		Key DriveKey;
 
@@ -329,9 +352,11 @@ namespace catapult { namespace model {
 	public:
 		explicit ReplicatorOnboardingNotification(
 				const Key& publicKey,
+				const BLSPublicKey& blsKey,
 				const Amount& capacity)
 				: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
 				, PublicKey(publicKey)
+				, BlsKey(blsKey)
 				, Capacity(capacity)
 		{}
 
@@ -339,9 +364,56 @@ namespace catapult { namespace model {
 		/// Key of the replicator.
 		Key PublicKey;
 
+		/// Public BLS key of the replicator.
+		BLSPublicKey BlsKey;
+
 		/// The storage size that the replicator provides to the system.
 		Amount Capacity;
 	};
+
+	/// Notification of a drive closure.
+	template<VersionType version>
+	struct DriveClosureNotification;
+
+	template<>
+	struct DriveClosureNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Drive_Closure_v1_Notification;
+
+	public:
+		explicit DriveClosureNotification(const Key& drive)
+				: Notification(Notification_Type, sizeof(DriveClosureNotification<1>))
+				, DriveKey(drive){}
+
+	public:
+		/// Public key of a drive.
+		Key DriveKey;
+
+	};
+
+	/// Notification of a replicator offboarding.
+	template<VersionType version>
+	struct ReplicatorOffboardingNotification;
+
+	template<>
+	struct ReplicatorOffboardingNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Replicator_Offboarding_v1_Notification;
+
+	public:
+			explicit ReplicatorOffboardingNotification(
+					const Key& publicKey)
+					: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
+					, PublicKey(publicKey)
+			{}
+
+		public:
+			/// Key of the replicator.
+			Key PublicKey;
+
+		};
 
 	/// Notification of a finish download.
 	template<VersionType version>
@@ -446,7 +518,8 @@ namespace catapult { namespace model {
 				const Hash256& dataModificationId,
 				const uint16_t uploadOpinionPairCount,
 				const Key* uploaderKeysPtr,
-				const uint8_t* uploadOpinionPtr)
+				const uint8_t* uploadOpinionPtr,
+				uint64_t usedDriveSize)
 				: Notification(Notification_Type, sizeof(DataModificationSingleApprovalNotification<1>))
 				, PublicKey(signer)
 				, DriveKey(driveKey)
@@ -454,6 +527,7 @@ namespace catapult { namespace model {
 				, UploadOpinionPairCount(uploadOpinionPairCount)
 				, UploaderKeysPtr(uploaderKeysPtr)
 				, UploadOpinionPtr(uploadOpinionPtr)
+				, UsedDriveSize(usedDriveSize)
 		{}
 
 	public:
@@ -474,6 +548,8 @@ namespace catapult { namespace model {
 
 		/// Opinion about how much each Uploader has uploaded to the signer in percents.
 		const uint8_t* UploadOpinionPtr;
+
+		const uint64_t UsedDriveSize;
 	};
 
 	/// Notification of a verification payment.
@@ -501,6 +577,227 @@ namespace catapult { namespace model {
 
 		/// Key of drive.
 		Key DriveKey;
+	};
+
+	/// Notification of an opinion multisig.
+	template<VersionType version> //, typename TOpinion>
+	struct OpinionNotification;
+
+	template<> //typename TOpinion>
+	struct OpinionNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Opinion_v1_Notification;
+
+	public:
+		explicit OpinionNotification(
+				const size_t commonDataSize,
+				const uint8_t opinionCount,
+				const uint8_t judgingCount,
+				const uint8_t judgedCount,
+				const uint8_t* commonDataPtr,
+				const Key* publicKeysPtr,
+				const uint8_t* opinionIndicesPtr,
+				const BLSSignature* blsSignaturesPtr,
+				const uint8_t* presentOpinionsPtr,
+				const uint64_t* opinionsPtr)
+				: Notification(Notification_Type, sizeof(OpinionNotification<1>))
+				, CommonDataSize(commonDataSize)
+				, OpinionCount(opinionCount)
+				, JudgingCount(judgingCount)
+				, JudgedCount(judgedCount)
+				, CommonDataPtr(commonDataPtr)
+				, PublicKeysPtr(publicKeysPtr)
+				, OpinionIndicesPtr(opinionIndicesPtr)
+				, BlsSignaturesPtr(blsSignaturesPtr)
+				, PresentOpinionsPtr(presentOpinionsPtr)
+				, OpinionsPtr(opinionsPtr)
+		{}
+
+	public:
+		/// Size of common data of the transaction in bytes.
+		size_t CommonDataSize;
+
+		/// Number of unique opinions.
+		uint8_t OpinionCount;
+
+		/// Number of replicators that provided their opinions.
+		uint8_t JudgingCount;
+
+		/// Number of replicators on which at least one opinion was provided.
+		uint8_t JudgedCount;
+
+		/// Common data of the transaction.
+		const uint8_t* CommonDataPtr;
+
+		/// Replicators' public keys.
+		const Key* PublicKeysPtr;
+
+		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
+		const uint8_t* OpinionIndicesPtr;
+
+		/// Aggregated BLS signatures of opinions.
+		const BLSSignature* BlsSignaturesPtr;
+
+		/// Two-dimensional array of opinion element presence.
+		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
+		const uint8_t* PresentOpinionsPtr;
+
+		/// Jagged array of opinion elements.
+		const uint64_t* OpinionsPtr;
+	};
+
+	/// Notification of a download approval.
+	template<VersionType version>
+	struct DownloadApprovalNotification;
+
+	template<>
+	struct DownloadApprovalNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Download_Approval_v1_Notification;
+
+	public:
+		explicit DownloadApprovalNotification(
+				const Hash256& id,
+				const uint16_t number,
+				const bool response,
+				const uint8_t opinionCount,
+				const uint8_t judgingCount,
+				const uint8_t judgedCount,
+				const Key* publicKeysPtr,
+				const uint8_t* opinionIndicesPtr,
+				const BLSSignature* blsSignaturesPtr,
+				const uint8_t* presentOpinionsPtr,
+				const uint64_t* opinionsPtr)
+				: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
+				, DownloadChannelId(id)
+				, SequenceNumber(number)
+				, ResponseToFinishDownloadTransaction(response)
+				, OpinionCount(opinionCount)
+				, JudgingCount(judgingCount)
+				, JudgedCount(judgedCount)
+				, PublicKeysPtr(publicKeysPtr)
+				, OpinionIndicesPtr(opinionIndicesPtr)
+				, BlsSignaturesPtr(blsSignaturesPtr)
+				, PresentOpinionsPtr(presentOpinionsPtr)
+				, OpinionsPtr(opinionsPtr)
+		{}
+
+	public:
+		/// The identifier of the download channel.
+		Hash256 DownloadChannelId;
+
+		/// Sequence number of current download approval transaction in the download channel.
+		uint16_t SequenceNumber;
+
+		/// Reason of the transaction release.
+		bool ResponseToFinishDownloadTransaction;
+
+		/// Number of unique opinions.
+		uint8_t OpinionCount;
+
+		/// Number of replicators that provided their opinions.
+		uint8_t JudgingCount;
+
+		/// Number of replicators on which at least one opinion was provided.
+		uint8_t JudgedCount;
+
+		/// Replicators' public keys.
+		const Key* PublicKeysPtr;
+
+		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
+		const uint8_t* OpinionIndicesPtr;
+
+		/// Aggregated BLS signatures of opinions.
+		const BLSSignature* BlsSignaturesPtr;
+
+		/// Two-dimensional array of opinion element presence.
+		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
+		const uint8_t* PresentOpinionsPtr;
+
+		/// Jagged array of opinion elements.
+		const uint64_t* OpinionsPtr;
+	};
+
+	/// Notification of an opinion-based payment for a download approval transaction.
+	template<VersionType version>
+	struct DownloadApprovalPaymentNotification;
+
+	template<>
+	struct DownloadApprovalPaymentNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Download_Approval_Payment_v1_Notification;
+
+	public:
+		explicit DownloadApprovalPaymentNotification(
+				const Hash256& id,
+				const uint8_t opinionCount,
+				const uint8_t judgingCount,
+				const uint8_t judgedCount,
+				const Key* publicKeysPtr,
+				const uint8_t* opinionIndicesPtr,
+				const uint8_t* presentOpinionsPtr,
+				const uint64_t* opinionsPtr)
+				: Notification(Notification_Type, sizeof(DownloadApprovalPaymentNotification<1>))
+				, DownloadChannelId(id)
+				, OpinionCount(opinionCount)
+				, JudgingCount(judgingCount)
+				, JudgedCount(judgedCount)
+				, PublicKeysPtr(publicKeysPtr)
+				, OpinionIndicesPtr(opinionIndicesPtr)
+				, PresentOpinionsPtr(presentOpinionsPtr)
+				, OpinionsPtr(opinionsPtr)
+		{}
+
+	public:
+		/// The identifier of the download channel.
+		Hash256 DownloadChannelId;
+
+		/// Number of unique opinions.
+		uint8_t OpinionCount;
+
+		/// Number of replicators that provided their opinions.
+		uint8_t JudgingCount;
+
+		/// Number of replicators on which at least one opinion was provided.
+		uint8_t JudgedCount;
+
+		/// Replicators' public keys.
+		const Key* PublicKeysPtr;
+
+		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
+		const uint8_t* OpinionIndicesPtr;
+
+		/// Two-dimensional array of opinion element presence.
+		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
+		const uint8_t* PresentOpinionsPtr;
+
+		/// Jagged array of opinion elements.
+		const uint64_t* OpinionsPtr;
+	};
+
+	/// Notification of a download channel refund.
+	template<VersionType version>
+	struct DownloadChannelRefundNotification;
+
+	template<>
+	struct DownloadChannelRefundNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Download_Channel_Refund_v1_Notification;
+
+	public:
+		explicit DownloadChannelRefundNotification(
+				const Hash256& downloadChannelId)
+				: Notification(Notification_Type, sizeof(DownloadChannelRefundNotification<1>))
+				, DownloadChannelId(downloadChannelId)
+		{}
+
+	public:
+		/// The identifier of the download channel.
+		Hash256 DownloadChannelId;
 	};
 
 	/// Notification of a finish drive verification.

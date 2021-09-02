@@ -59,26 +59,58 @@ namespace catapult { namespace validators {
 	/// Validation failed because no replicator registered.
 	DEFINE_STORAGE_RESULT(Replicator_Already_Registered, 15);
 
+	/// Validation failed because replicator not registered.
+	DEFINE_STORAGE_RESULT(Replicator_Not_Registered, 16);
 	/// Respective download channel is not found.
-	DEFINE_STORAGE_RESULT(Download_Channel_Not_Found, 16);
+	DEFINE_STORAGE_RESULT(Download_Channel_Not_Found, 17);
 
 	/// Signer of the transaction is not allowed to issue transactions of such type.
-	DEFINE_STORAGE_RESULT(Invalid_Transaction_Signer, 17);
+	DEFINE_STORAGE_RESULT(Invalid_Transaction_Signer, 18);
 
 	/// Respective drive is not assigned to respective replicator.
-	DEFINE_STORAGE_RESULT(Drive_Not_Assigned_To_Replicator, 18);
+	DEFINE_STORAGE_RESULT(Drive_Not_Assigned_To_Replicator, 19);
 
 	/// There are no data modifications in completedDataModifications with 'succeeded' state.
-	DEFINE_STORAGE_RESULT(No_Approved_Data_Modifications, 19);
+	DEFINE_STORAGE_RESULT(No_Approved_Data_Modifications, 20);
 
-	/// Not every key in replicator's upload opinion appears exactly once.
-	DEFINE_STORAGE_RESULT(Opinion_Reocurring_Keys, 20);
+	/// Not every key in the opinion appears exactly once.
+	DEFINE_STORAGE_RESULT(Opinion_Reocurring_Keys, 21);
 
 	/// The key in upload opinion is neither a key of one of the current replicators of the drive nor a key of the drive owner.
-	DEFINE_STORAGE_RESULT(Opinion_Invalid_Key, 21);
+	DEFINE_STORAGE_RESULT(Opinion_Invalid_Key, 22);
 
 	/// Percents in replicator's upload opinion do not sum up to 100.
-	DEFINE_STORAGE_RESULT(Opinion_Incorrect_Percentage, 22);
+	DEFINE_STORAGE_RESULT(Opinion_Incorrect_Percentage, 23);
+
+	/// Data modification is not present in activeDataModifications.
+	DEFINE_STORAGE_RESULT(No_Confirmed_Used_Sizes, 24);
+
+	/// Respective BLS public key already exists in BLS keys cache.
+	DEFINE_STORAGE_RESULT(BLS_Key_Already_Registered, 25);
+
+	/// Opinion index is out of range.
+	DEFINE_STORAGE_RESULT(Invalid_Opinion_Index, 26);
+
+	/// BLS signature doesn't match the message.
+	DEFINE_STORAGE_RESULT(Invalid_BLS_Signature, 27);
+
+	/// The key is present in the list of public keys, but no opinion about it is given.
+	DEFINE_STORAGE_RESULT(Opinion_Unused_Key, 28);
+
+	/// Not every individual part of the multisig transaction appears exactly once.
+	DEFINE_STORAGE_RESULT(Opinions_Reocurring_Individual_Parts, 29);
+
+	/// Download approval transaction for the corresponding billing period has already been approved.
+	DEFINE_STORAGE_RESULT(Overdue_Download_Approval, 30);
+
+	/// Download approval transaction sequence number is invalid
+	DEFINE_STORAGE_RESULT(Invalid_Sequence_Number, 31);
+
+	/// Sender's account state is not found.
+	DEFINE_STORAGE_RESULT(Sender_State_Not_Found, 32);
+
+	/// Recipient's account state is not found.
+	DEFINE_STORAGE_RESULT(Recipient_State_Not_Found, 33);
 
 	/// The drive cannot be verified if there are active modifications.
 	DEFINE_STORAGE_RESULT(Verification_Exist_Active_Modifications, 23);

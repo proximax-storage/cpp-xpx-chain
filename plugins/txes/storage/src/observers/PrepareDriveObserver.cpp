@@ -26,12 +26,7 @@ namespace catapult { namespace observers {
 			auto replicatorIter = replicatorCache.find(*pKeyCollector->keys().begin());
 			auto& replicatorEntry = replicatorIter.get();
 
-			state::DriveInfo info;
-		  	info.LastApprovedDataModificationId = Hash256();	// Zero hash identifier
-		  	info.DataModificationIdIsValid = false;	// Newly created drive won't have any approved data modifications
-			info.InitialDownloadWork = 0;	// Replicator hasn't downloaded anything from the drive that has been just created
-
-			replicatorEntry.drives().emplace(notification.DriveKey, info);
+			replicatorEntry.drives().emplace(notification.DriveKey, state::DriveInfo{ Hash256(), false, 0 });
 		})
 	}
 }}

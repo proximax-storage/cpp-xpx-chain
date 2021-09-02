@@ -19,7 +19,9 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1: {
+				sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
 				sub.notify(DataModificationApprovalNotification<1>(
+						transaction.Signer,
 						transaction.DriveKey,
 						transaction.DataModificationId,
 						transaction.FileStructureCdi,

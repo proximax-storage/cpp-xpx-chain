@@ -181,6 +181,16 @@ namespace catapult { namespace ionet {
 	\
 	/* Committee state path has been requested by a client. */ \
 	ENUM_VALUE(Committee_State_Path, FACILITY_BASED_CODE(800, Committee)) \
+	\
+	/* BcDrive state path has been requested by a client. */ \
+	ENUM_VALUE(BcDrive_State_Path, FACILITY_BASED_CODE(800, BcDrive)) \
+	\
+	/* DownloadChannel state path has been requested by a client. */ \
+	ENUM_VALUE(DownloadChannel_State_Path, FACILITY_BASED_CODE(800, DownloadChannel)) \
+	\
+	/* Replicator state path has been requested by a client. */ \
+	ENUM_VALUE(Replicator_State_Path, FACILITY_BASED_CODE(800, Replicator)) \
+	\
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
 	/* Request for the current diagnostic counter values. */ \
@@ -251,6 +261,15 @@ namespace catapult { namespace ionet {
 	\
 	/* Committee infos have been requested by a client. */ \
 	ENUM_VALUE(Committee_Infos, FACILITY_BASED_CODE(1200, Committee)) \
+	\
+	/* BcDrive infos have been requested by a client. */ \
+	ENUM_VALUE(BcDrive_Infos, FACILITY_BASED_CODE(1200, BcDrive)) \
+	\
+	/* DownloadChannel infos have been requested by a client. */ \
+	ENUM_VALUE(DownloadChannel_Infos, FACILITY_BASED_CODE(1200, DownloadChannel)) \
+	\
+	/* Replicator infos have been requested by a client. */ \
+	ENUM_VALUE(Replicator_Infos, FACILITY_BASED_CODE(1200, Replicator)) \
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

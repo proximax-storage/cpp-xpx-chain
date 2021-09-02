@@ -59,7 +59,7 @@ namespace catapult { namespace utils {
 		}
 	}
 
-	inline void SwapMosaics(
+	void SwapMosaics(
 			const Key& account,
 			const std::vector<model::UnresolvedMosaic>& mosaics,
 			model::NotificationSubscriber& sub,
@@ -68,7 +68,7 @@ namespace catapult { namespace utils {
 		return SwapMosaics(account, account, mosaics, sub, immutableCfg, operation);
 	}
 
-	inline void SwapMosaics(
+	void SwapMosaics(
 			const Key& account,
 			const std::vector<std::pair<UnresolvedMosaicId, UnresolvedAmount>>& mosaics,
 			model::NotificationSubscriber& sub,

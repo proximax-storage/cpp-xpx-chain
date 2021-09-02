@@ -53,6 +53,8 @@ namespace catapult { namespace storage {
 		FileNames startDownloadFiles(const Key& consumer, const Key& driveKey, FileNames&& fileNames);
 		FileNames stopDownloadFiles(const Key& driveKey, FileNames&& fileNames);
 
+		void closeDrive(const Key& driveKey);
+
 		void shutdown();
 
 	private:

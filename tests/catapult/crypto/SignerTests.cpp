@@ -20,6 +20,7 @@
 
 #include "catapult/crypto/Signer.h"
 #include "tests/TestHarness.h"
+#include <type_traits>
 #include <numeric>
 
 namespace catapult { namespace crypto {
@@ -27,96 +28,127 @@ namespace catapult { namespace crypto {
 #define TEST_CLASS SignerTests
 
 	namespace {
-		template<typename TArray>
-		Signature SignPayload(const KeyPair& keyPair, const TArray& payload) {
-			Signature signature{};
-			EXPECT_NO_THROW(Sign(keyPair, payload, signature));
-			return signature;
-		}
-
 		const char* Default_Key_String = "CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98534";
-		KeyPair GetDefaultKeyPair() {
-			return KeyPair::FromString(Default_Key_String);
-		}
 
-		KeyPair GetAlteredKeyPair() {
-			return KeyPair::FromString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98535");
-		}
+		struct KeyTraits {
+			using SignatureType = Signature;
+
+			static KeyPair GetDefaultKeyPair() {
+				return KeyPair::FromString(Default_Key_String);
+			}
+
+			template<typename TArray>
+			static Signature SignPayload(const KeyPair& keyPair, const TArray& payload) {
+				Signature signature{};
+				EXPECT_NO_THROW(Sign(keyPair, payload, signature));
+				return signature;
+			}
+
+			static KeyPair GetAlteredKeyPair() {
+				return KeyPair::FromString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98535");
+			}
+		};
+
+		struct BLSTraits {
+			using SignatureType = BLSSignature;
+
+			static BLSKeyPair GetDefaultKeyPair() {
+				return BLSKeyPair::FromRawString(Default_Key_String);
+			}
+
+			template<typename TArray>
+			static BLSSignature SignPayload(const BLSKeyPair& keyPair, const TArray& payload) {
+				BLSSignature signature{};
+				EXPECT_NO_THROW(Sign(keyPair, payload, signature));
+				return signature;
+			}
+
+			static BLSKeyPair GetAlteredKeyPair() {
+				return BLSKeyPair::FromRawString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98535");
+			}
+		};
 	}
 
-	TEST(TEST_CLASS, SignFillsTheSignature) {
+#define TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<KeyTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<BLSTraits>(); } \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
+	TRAITS_BASED_TEST(SignFillsTheSignature) {
 		// Arrange:
 		auto payload = test::GenerateRandomArray<100>();
 
 		// Act:
-		Signature signature;
+		typename TTraits::SignatureType signature;
 		std::iota(signature.begin(), signature.end(), static_cast<uint8_t>(0));
-		Sign(GetDefaultKeyPair(), payload, signature);
+		Sign(TTraits::GetDefaultKeyPair(), payload, signature);
 
 		// Assert: the signature got overwritten in call to Sign() above
-		Signature invalid;
+		typename TTraits::SignatureType invalid;
 		std::iota(invalid.begin(), invalid.end(), static_cast<uint8_t>(0));
 		EXPECT_NE(invalid, signature);
 	}
 
-	TEST(TEST_CLASS, SignaturesGeneratedForSameDataBySameKeyPairsAreEqual) {
+	TRAITS_BASED_TEST(SignaturesGeneratedForSameDataBySameKeyPairsAreEqual) {
 		// Arrange:
-		auto keyPair1 = KeyPair::FromString(Default_Key_String);
-		auto keyPair2 = KeyPair::FromString(Default_Key_String);
+		auto keyPair1 = TTraits::GetDefaultKeyPair();
+		auto keyPair2 = TTraits::GetDefaultKeyPair();
 		auto payload = test::GenerateRandomArray<100>();
 
 		// Act:
 
-		auto signature1 = SignPayload(keyPair1, payload);
-		auto signature2 = SignPayload(keyPair2, payload);
+		auto signature1 = TTraits::SignPayload(keyPair1, payload);
+		auto signature2 = TTraits::SignPayload(keyPair2, payload);
 
 		// Assert:
 		EXPECT_EQ(signature1, signature2);
 	}
 
-	TEST(TEST_CLASS, SignaturesGeneratedForSameDataByDifferentKeyPairsAreDifferent) {
+	TRAITS_BASED_TEST(SignaturesGeneratedForSameDataByDifferentKeyPairsAreDifferent) {
 		// Arrange:
 		auto payload = test::GenerateRandomArray<100>();
 
 		// Act:
-		auto signature1 = SignPayload(GetDefaultKeyPair(), payload);
-		auto signature2 = SignPayload(GetAlteredKeyPair(), payload);
+		auto signature1 = TTraits::SignPayload(TTraits::GetDefaultKeyPair(), payload);
+		auto signature2 = TTraits::SignPayload(TTraits::GetAlteredKeyPair(), payload);
 
 		// Assert:
 		EXPECT_NE(signature1, signature2);
 	}
 
-	TEST(TEST_CLASS, SignedDataCanBeVerified) {
+	TRAITS_BASED_TEST(SignedDataCanBeVerified) {
 		// Arrange:
 		auto payload = test::GenerateRandomArray<100>();
-		auto signature = SignPayload(GetDefaultKeyPair(), payload);
+		auto signature = TTraits::SignPayload(TTraits::GetDefaultKeyPair(), payload);
 
 		// Act:
-		bool isVerified = Verify(GetDefaultKeyPair().publicKey(), payload, signature);
+		bool isVerified = Verify(TTraits::GetDefaultKeyPair().publicKey(), payload, signature);
 
 		// Assert:
 		EXPECT_TRUE(isVerified);
 	}
 
-	TEST(TEST_CLASS, SignedDataCannotBeVerifiedWithDifferentKeyPair) {
+	TRAITS_BASED_TEST(SignedDataCannotBeVerifiedWithDifferentKeyPair) {
 		// Arrange:
 		auto payload = test::GenerateRandomArray<100>();
-		auto signature = SignPayload(GetDefaultKeyPair(), payload);
+		auto signature = TTraits::SignPayload(TTraits::GetDefaultKeyPair(), payload);
 
 		// Act:
-		bool isVerified = Verify(GetAlteredKeyPair().publicKey(), payload, signature);
+		bool isVerified = Verify(TTraits::GetAlteredKeyPair().publicKey(), payload, signature);
 
 		// Assert:
 		EXPECT_FALSE(isVerified);
 	}
 
 	namespace {
+		template<typename TTraits>
 		void AssertSignatureChangeInvalidatesSignature(size_t position) {
 			// Arrange:
-			auto keyPair = GetDefaultKeyPair();
+			auto keyPair = TTraits::GetDefaultKeyPair();
 			auto payload = test::GenerateRandomArray<100>();
 
-			auto signature = SignPayload(keyPair, payload);
+			auto signature = TTraits::SignPayload(keyPair, payload);
 			signature[position] ^= 0xFF;
 
 			// Act:
@@ -127,24 +159,24 @@ namespace catapult { namespace crypto {
 		}
 	}
 
-	TEST(TEST_CLASS, SignatureDoesNotVerifyWhenRPartOfSignatureIsModified) {
+	TRAITS_BASED_TEST(SignatureDoesNotVerifyWhenRPartOfSignatureIsModified) {
 		// Assert:
 		for (auto i = 0u; i < Signature_Size / 2; ++i)
-			AssertSignatureChangeInvalidatesSignature(i);
+			AssertSignatureChangeInvalidatesSignature<TTraits>(i);
 	}
 
-	TEST(TEST_CLASS, SignatureDoesNotVerifyWhenSPartOfSignatureIsModified) {
+	TRAITS_BASED_TEST(SignatureDoesNotVerifyWhenSPartOfSignatureIsModified) {
 		// Assert:
 		for (auto i = Signature_Size / 2; i < Signature_Size; ++i)
-			AssertSignatureChangeInvalidatesSignature(i);
+			AssertSignatureChangeInvalidatesSignature<TTraits>(i);
 	}
 
-	TEST(TEST_CLASS, SignatureDoesNotVerifyWhenPayloadIsModified) {
+	TRAITS_BASED_TEST(SignatureDoesNotVerifyWhenPayloadIsModified) {
 		// Arrange:
-		auto keyPair = GetDefaultKeyPair();
+		auto keyPair = TTraits::GetDefaultKeyPair();
 		auto payload = test::GenerateRandomArray<100>();
 		for (auto i = 0u; i < payload.size(); ++i) {
-			auto signature = SignPayload(keyPair, payload);
+			auto signature = TTraits::SignPayload(keyPair, payload);
 			payload[i] ^= 0xFF;
 
 			// Act:
@@ -155,17 +187,21 @@ namespace catapult { namespace crypto {
 		}
 	}
 
-	TEST(TEST_CLASS, PublicKeyNotOnACurveCausesVerifyToFail) {
+	TRAITS_BASED_TEST(PublicKeyNotOnACurveCausesVerifyToFail) {
 		// Arrange:
-		auto hackedKeyPair = GetDefaultKeyPair();
+		auto hackedKeyPair = TTraits::GetDefaultKeyPair();
 		auto payload = test::GenerateRandomArray<100>();
 
 		// hack the key, to an invalid one (not on a curve)
-		auto& hackPublic = const_cast<Key&>(hackedKeyPair.publicKey());
+		typedef decltype(hackedKeyPair.publicKey()) ConstKeyType;
+		typedef typename std::add_lvalue_reference<
+		        typename std::remove_const<
+		                typename std::remove_reference<ConstKeyType>::type>::type>::type KeyType;
+		auto& hackPublic = const_cast<KeyType>(hackedKeyPair.publicKey());
 		std::fill(hackPublic.begin(), hackPublic.end(), static_cast<uint8_t>(0));
 		hackPublic[hackPublic.size() - 1] = 0x01;
 
-		auto signature = SignPayload(hackedKeyPair, payload);
+		auto signature = TTraits::SignPayload(hackedKeyPair, payload);
 
 		// Act:
 		bool isVerified = Verify(hackedKeyPair.publicKey(), payload, signature);
@@ -174,18 +210,22 @@ namespace catapult { namespace crypto {
 		EXPECT_FALSE(isVerified);
 	}
 
-	TEST(TEST_CLASS, VerificationFailsWhenPublicKeyDoesNotCorrespondToPrivateKey) {
+	TRAITS_BASED_TEST(VerificationFailsWhenPublicKeyDoesNotCorrespondToPrivateKey) {
 		// Arrange:
-		auto hackedKeyPair = GetDefaultKeyPair();
+		auto hackedKeyPair = TTraits::GetDefaultKeyPair();
 		auto payload = test::GenerateRandomArray<100>();
 
 		// hack the key, to an invalid one
-		auto& hackPublic = const_cast<Key&>(hackedKeyPair.publicKey());
+		typedef decltype(hackedKeyPair.publicKey()) ConstKeyType;
+		typedef typename std::add_lvalue_reference<
+				typename std::remove_const<
+						typename std::remove_reference<ConstKeyType>::type>::type>::type KeyType;
+		auto& hackPublic = const_cast<KeyType>(hackedKeyPair.publicKey());
 		std::transform(hackPublic.begin(), hackPublic.end(), hackPublic.begin(), [](uint8_t x) {
 			return static_cast<uint8_t>(x ^ 0xFF);
 		});
 
-		auto signature = SignPayload(hackedKeyPair, payload);
+		auto signature = TTraits::SignPayload(hackedKeyPair, payload);
 
 		// Act:
 		bool isVerified = Verify(hackedKeyPair.publicKey(), payload, signature);
@@ -194,16 +234,20 @@ namespace catapult { namespace crypto {
 		EXPECT_FALSE(isVerified);
 	}
 
-	TEST(TEST_CLASS, VerifyRejectsZeroPublicKey) {
+	TRAITS_BASED_TEST(VerifyRejectsZeroPublicKey) {
 		// Arrange:
-		auto hackedKeyPair = GetDefaultKeyPair();
+		auto hackedKeyPair = TTraits::GetDefaultKeyPair();
 		auto payload = test::GenerateRandomArray<100>();
 
 		// hack the key, to an invalid one
-		auto& hackPublic = const_cast<Key&>(hackedKeyPair.publicKey());
+		typedef decltype(hackedKeyPair.publicKey()) ConstKeyType;
+		typedef typename std::add_lvalue_reference<
+				typename std::remove_const<
+						typename std::remove_reference<ConstKeyType>::type>::type>::type KeyType;
+		auto& hackPublic = const_cast<KeyType>(hackedKeyPair.publicKey());
 		std::fill(hackPublic.begin(), hackPublic.end(), static_cast<uint8_t>(0));
 
-		auto signature = SignPayload(hackedKeyPair, payload);
+		auto signature = TTraits::SignPayload(hackedKeyPair, payload);
 
 		// Act:
 		// keep in mind, there's no good way to make this test, as right now, we have
@@ -215,11 +259,12 @@ namespace catapult { namespace crypto {
 	}
 
 	namespace {
+		template<typename TTraits>
 		void ScalarAddGroupOrder(uint8_t* scalar) {
 			// 2^252 + 27742317777372353535851937790883648493, little endian.
-			const auto Group_Order = test::ToArray<Signature_Size / 2>("EDD3F55C1A631258D69CF7A2DEF9DE1400000000000000000000000000000010");
+			const auto Group_Order = test::ToArray<sizeof(typename TTraits::SignatureType) / 2>("EDD3F55C1A631258D69CF7A2DEF9DE1400000000000000000000000000000010");
 			uint8_t r = 0;
-			for (auto i = 0u; i < Signature_Size / 2; ++i) {
+			for (auto i = 0u; i < sizeof(typename TTraits::SignatureType) / 2; ++i) {
 				auto t = static_cast<uint16_t>(scalar[i]) + static_cast<uint16_t>(Group_Order[i]);
 				scalar[i] += Group_Order[i] + r;
 				r = static_cast<uint8_t>(t >> 8);
@@ -227,15 +272,15 @@ namespace catapult { namespace crypto {
 		}
 	}
 
-	TEST(TEST_CLASS, CannotVerifyNonCanonicalSignature) {
+	TRAITS_BASED_TEST(CannotVerifyNonCanonicalSignature) {
 		// Arrange:
 		std::array<uint8_t, 10> payload{ { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 } };
 
-		auto keyPair = GetDefaultKeyPair();
-		auto canonicalSignature = SignPayload(keyPair, payload);
+		auto keyPair = TTraits::GetDefaultKeyPair();
+		auto canonicalSignature = TTraits::SignPayload(keyPair, payload);
 		// this is signature with group order added to 'encodedS' part of signature
 		auto nonCanonicalSignature = canonicalSignature;
-		ScalarAddGroupOrder(nonCanonicalSignature.data() + Signature_Size / 2);
+		ScalarAddGroupOrder<TTraits>(nonCanonicalSignature.data() + Signature_Size / 2);
 
 		// Act:
 		bool isCanonicalVerified = Verify(keyPair.publicKey(), payload, canonicalSignature);
@@ -317,6 +362,62 @@ namespace catapult { namespace crypto {
 			EXPECT_EQ(input.InputData.size(), input.ExpectedSignatures.size());
 			return input;
 		}
+
+		struct BLSTestVectorsInput {
+			std::vector<std::string> InputData;
+			std::vector<std::string> RawPrivateKeys;
+			std::vector<std::string> ExpectedPrivateKeys;
+			std::vector<std::string> ExpectedPublicKeys;
+			std::vector<std::string> ExpectedSignatures;
+		};
+
+		BLSTestVectorsInput GetBLSTestVectorsInput() {
+			BLSTestVectorsInput input;
+			input.InputData = {
+				"hello foo",
+				"Brother, I love you",
+				"Jo Jo",
+				"Hello Kitty",
+				"Ha Haha Hahaha Hahahaha Hahahahaha Hahahahahaha Hahahahahahaha",
+			};
+
+			input.RawPrivateKeys = {
+				"0000000000000000000000000000000000000000000000000000000000000000",
+				"15923F9D2FFFB11D771818E1F7D7DDCD363913933264D58533CB3A5DD2DAA66A",
+				"A9323CEF24497AB770516EA572A0A2645EE2D5A75BC72E78DE534C0A03BC328E",
+				"D7D816DA0566878EE739EDE2131CD64201BCCC27F88FA51BA5815BCB0FE33CC8",
+				"27FC9998454848B987FAD89296558A34DEED4358D1517B953572F3E0AAA0A22D"
+			};
+
+			input.ExpectedPrivateKeys = {
+				"3562DBB3987D4FEB5B898633CC9C812AEC49F2C64CAD5B34F5A086DF199A124D",
+				"B49CAEC8626B832103C7B999D001B911A215E8942EB4C7FED235B6DBC3E48E69",
+				"D5D8B9ABF20D6493BD21162415C1B756F19188BD36FE93C5339E8F2E6E5C614E",
+				"426AD2746B63CB08EBE6C16B4E2B9C47BEBD8648135FC720EAAA886A0323AA36",
+				"A364026A6F25E375553646C4A29A51C635F669DD68B6188E2D72CEED95516E37"
+			};
+			input.ExpectedPublicKeys = {
+				"A695AD325DFC7E1191FBC9F186F58EFF42A634029731B18380FF89BF42C464A42CB8CA55B200F051F57F1E1893C68759",
+				"A389E43A21A4F2C2CC465F2CB666FD8C5BEEBCBB05547DA36121035DF1D0FF9BDE2583B5F1886A0A66CD729BC619E770",
+				"8504A48E1116F51D5857C5E281CD4EACF196C7A288ED55546C3E0B16FADFEFC95D0E947DF2D483310CDCE5836DD5DCB9",
+				"B0900B51CD5FE877EA91248537D787E90883C85361DE79A25A460741EFB29DFEC86B06D028C0FFE9B02671FDA7113538",
+				"AF6B154FC92D1EFDE3A75D297F0119581E24D67F895DB7CB252B8BEF5BA93054B69881688CB35FFFB86993251E4C88EA"
+			};
+			input.ExpectedSignatures = {
+				"864CBD674C5657256671C3BBDA0EF50D077FFE50EB03AC2C9C1F435B5BF5D872603BCD0A337665A0EF867397F3985EAD0EB347E6CAE7E0BA4F0F04355D8886899393AC82F1F895414ADDFD683054316EECEEAEA85F9C309666BBCFC922F2728A",
+				"B440DAFDABB1BD03EAFD5B230E60468D10D295370A6E1EE918D2231684D22B74780835AD6EB7E7F7734557662923860C183D1BE43BEF1998BAC2175D14D4782110E4E943EAAD8DFC57CCF26BE84B443548CEC761C33894CA20263DCD793B1FAE",
+				"986089A075412DAE9522AE2AEC1DA072D89A685848B0A18DA62C9FCFAA4B9706E139ED8EE99D7AC786E8AAC938CAE3FD15687CC666113AEF43AB69234488B646A1AEDDA60D7C1B253E4955ED51572FABCF6394C31C82BD00F794662E1863F27E",
+				"8E1831E42FA1C3BFD7A2A346D84356F08D5AFBA01AB2CB472BEB7AFA4012B4113015A8BEB1A04E506D5976C118216156086CE1836AB4BC1AE14CFCC7FF5D32BD11B1E15C5B6CAA11EC57B1C40BE657A8724889CA87E353C8701902EE9FDD8656",
+				"A5649669AB0162C7219CC91A5B3BB0DB1DF2CF2B597702C404AEBF3DDCA9CBD4081375C585F38B392BAA443D48F9DE6703D3516D3408B4ABEC2062C5B64CBF611C046A2FE6CED0788D1F7FDE6AE7277FB25257790D5C9713CF0F37A661862576"
+			};
+
+			// Sanity:
+			EXPECT_EQ(input.InputData.size(), input.RawPrivateKeys.size());
+			EXPECT_EQ(input.InputData.size(), input.ExpectedPrivateKeys.size());
+			EXPECT_EQ(input.InputData.size(), input.ExpectedPublicKeys.size());
+			EXPECT_EQ(input.InputData.size(), input.ExpectedSignatures.size());
+			return input;
+		}
 	}
 
 	TEST(TEST_CLASS, SignPassesTestVectors) {
@@ -327,7 +428,7 @@ namespace catapult { namespace crypto {
 		for (auto i = 0u; i < input.InputData.size(); ++i) {
 			// Act:
 			auto keyPair = KeyPair::FromString(input.PrivateKeys[i]);
-			auto signature = SignPayload(keyPair, test::ToVector(input.InputData[i]));
+			auto signature = KeyTraits::SignPayload(keyPair, test::ToVector(input.InputData[i]));
 
 			// Assert:
 			auto message = "test vector at " + std::to_string(i);
@@ -345,7 +446,7 @@ namespace catapult { namespace crypto {
 			// Act:
 			auto keyPair = KeyPair::FromString(input.PrivateKeys[i]);
 			auto payload = test::ToVector(input.InputData[i]);
-			auto signature = SignPayload(keyPair, payload);
+			auto signature = KeyTraits::SignPayload(keyPair, payload);
 			auto isVerified = Verify(keyPair.publicKey(), payload, signature);
 
 			// Assert:
@@ -354,16 +455,37 @@ namespace catapult { namespace crypto {
 		}
 	}
 
+	TEST(TEST_CLASS, VerifyPassesBLSTestVectors) {
+		// Arrange:
+		auto input = GetBLSTestVectorsInput();
+
+		// Act / Assert:
+		for (auto i = 0u; i < input.InputData.size(); ++i) {
+			// Act:
+			auto keyPair = BLSKeyPair::FromRawString(input.RawPrivateKeys[i]);
+			auto payload = utils::RawBuffer(reinterpret_cast<const uint8_t*>(input.InputData[i].data()), input.InputData[i].size());
+			auto signature = BLSTraits::SignPayload(keyPair, payload);
+			auto isVerified = Verify(keyPair.publicKey(), payload, signature);
+
+			// Assert:
+			auto message = "test vector at " + std::to_string(i);
+			EXPECT_EQ(input.ExpectedPrivateKeys[i], test::ToString(keyPair.privateKey())) << message;
+			EXPECT_EQ(input.ExpectedPublicKeys[i], test::ToString(keyPair.publicKey())) << message;
+			EXPECT_EQ(input.ExpectedSignatures[i], test::ToString(signature)) << message;
+			EXPECT_TRUE(isVerified) << message;
+		}
+	}
+
 	TEST(TEST_CLASS, SignatureForConsecutiveDataMatchesSignatureForChunkedData) {
 		// Arrange:
 		auto payload = test::GenerateRandomVector(123);
-		auto properSignature = SignPayload(GetDefaultKeyPair(), payload);
+		auto properSignature = KeyTraits::SignPayload(KeyTraits::GetDefaultKeyPair(), payload);
 
 		// Act:
 		{
 			Signature result;
 			auto partSize = payload.size() / 2;
-			ASSERT_NO_THROW(Sign(GetDefaultKeyPair(), {
+			ASSERT_NO_THROW(Sign(KeyTraits::GetDefaultKeyPair(), {
 				{ payload.data(), partSize },
 				{ payload.data() + partSize, payload.size() - partSize }
 			}, result));
@@ -373,7 +495,7 @@ namespace catapult { namespace crypto {
 		{
 			Signature result;
 			auto partSize = payload.size() / 3;
-			ASSERT_NO_THROW(Sign(GetDefaultKeyPair(), {
+			ASSERT_NO_THROW(Sign(KeyTraits::GetDefaultKeyPair(), {
 				{ payload.data(), partSize },
 				{ payload.data() + partSize, partSize },
 				{ payload.data() + 2 * partSize, payload.size() - 2 * partSize }
@@ -384,7 +506,7 @@ namespace catapult { namespace crypto {
 		{
 			Signature result;
 			auto partSize = payload.size() / 4;
-			ASSERT_NO_THROW(Sign(GetDefaultKeyPair(), {
+			ASSERT_NO_THROW(Sign(KeyTraits::GetDefaultKeyPair(), {
 				{ payload.data(), partSize },
 				{ payload.data() + partSize, partSize },
 				{ payload.data() + 2 * partSize, partSize },
@@ -392,5 +514,63 @@ namespace catapult { namespace crypto {
 			}, result));
 			EXPECT_EQ(properSignature, result);
 		}
+	}
+
+	TEST(TEST_CLASS, AggregateVerify) {
+		// Arrange:
+		auto input = GetBLSTestVectorsInput();
+		std::vector<BLSSignature> signatures(input.InputData.size());
+		std::vector<BLSPublicKey> keys(input.InputData.size());
+		std::vector<RawBuffer> messages(input.InputData.size());
+		std::vector<const BLSSignature*> p_signatures(input.InputData.size());
+		std::vector<const BLSPublicKey*> p_keys(input.InputData.size());
+
+		// Act / Assert:
+		for (auto i = 0u; i < input.InputData.size(); ++i) {
+			// Act:
+			auto keyPair = BLSKeyPair::FromRawString(input.RawPrivateKeys[i]);
+			keys[i] = keyPair.publicKey();
+			p_keys[i] = &keys[i];
+			messages[i] = utils::RawBuffer(reinterpret_cast<const uint8_t*>(input.InputData[i].data()), input.InputData[i].size());
+			signatures[i] = BLSTraits::SignPayload(keyPair, messages[i]);
+			p_signatures[i] = &signatures[i];
+		}
+
+		auto aggregatedSig = Aggregate(p_signatures);
+		EXPECT_EQ("91C5891B27541EF99BB2441BF9138C59103B78EDBA6BE72BF28576D343B75B95E14749950653FFF86816C9F1654E9D100521023EBB2A664530E6674EA6AE35E7F5184FBFA81436C10C437D50DD1460F0FDCC91160605748164AD21763D0E1462",
+				  test::ToString(aggregatedSig));
+
+		EXPECT_TRUE(AggregateVerify(p_keys, messages, aggregatedSig));
+	}
+
+	TEST(TEST_CLASS, FastAggregateVerify) {
+		// Arrange:
+		auto input = GetBLSTestVectorsInput();
+		std::vector<BLSSignature> signatures(input.InputData.size());
+		std::vector<BLSPublicKey> keys(input.InputData.size());
+		std::string text = "It is same message for all signers to verify that fast aggregate verify works properly";
+		RawBuffer message = utils::RawBuffer(reinterpret_cast<const uint8_t*>(text.data()), text.size());
+		std::vector<const BLSSignature*> p_signatures(input.InputData.size());
+		std::vector<const BLSPublicKey*> p_keys(input.InputData.size());
+
+		// Act / Assert:
+		for (auto i = 0u; i < input.InputData.size(); ++i) {
+			// Act:
+			auto keyPair = BLSKeyPair::FromRawString(input.RawPrivateKeys[i]);
+			keys[i] = keyPair.publicKey();
+			p_keys[i] = &keys[i];
+			signatures[i] = BLSTraits::SignPayload(keyPair, message);
+			p_signatures[i] = &signatures[i];
+		}
+
+		auto aggregatedSig = Aggregate(p_signatures);
+		EXPECT_EQ("B98B4E81319EAA7BB4BF3BC123697EDDFC888A52D7CD8FC4F260639D448C6409E4BC4437A3DA69A72D99CA153FB466FF15F2EE567DDF667F4F88A6BCA92C5CAA5B2C359DBF9367703D88D1974501D0CE0A47012AB4269498CBE076B763BE0B83",
+				  test::ToString(aggregatedSig));
+
+		auto aggregatedKey = Aggregate(p_keys);
+		EXPECT_EQ("B1BB94B73381FE39C7D25C3E1353274D34D09CE698E04548B7F6DD49C062DAF17DA13405C92CB61C04508B991576183D",
+				  test::ToString(aggregatedKey));
+
+		EXPECT_TRUE(FastAggregateVerify(p_keys, message, aggregatedSig));
 	}
 }}
