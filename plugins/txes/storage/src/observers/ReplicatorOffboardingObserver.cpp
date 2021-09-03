@@ -11,13 +11,8 @@
 namespace catapult { namespace observers { 
 
 	DEFINE_OBSERVER(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>, [](const model::ReplicatorOffboardingNotification<1>& notification, ObserverContext& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorOffboarding)");
-
-	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-		replicatorCache.remove(notification.PublicKey);
-		
 		//Replicator entry
+	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		auto replicatorIter = replicatorCache.find(notification.PublicKey);
 		auto& replicatorEntry = replicatorIter.get();
 
@@ -25,6 +20,9 @@ namespace catapult { namespace observers {
 		auto& cache = context.Cache.sub<cache::AccountStateCache>();
 		auto accountIter = cache.find(notification.PublicKey);
 		auto& replicatorState = accountIter.get();
+
+		//Remove replicator public key
+		replicatorCache.remove(notification.PublicKey);
 
 		//Storage deposit return
 		//Mosaic id
