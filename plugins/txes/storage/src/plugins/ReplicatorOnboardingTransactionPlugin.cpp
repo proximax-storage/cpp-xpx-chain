@@ -9,6 +9,7 @@
 #include "src/model/ReplicatorOnboardingTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
+#include "src/utils/StorageUtils.h"
 
 using namespace catapult::model;
 
@@ -16,56 +17,44 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
-			switch (transaction.EntityVersion()) {
-			case 1: {
-				sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
-				sub.notify(ReplicatorOnboardingNotification<1>(transaction.Signer, transaction.BlsKey, transaction.Capacity));
+		auto CreatePublisher(const config::ImmutableConfiguration& config) {
+			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+				switch (transaction.EntityVersion()) {
+				case 1: {
+					sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
+					sub.notify(ReplicatorOnboardingNotification<1>(transaction.Signer, transaction.BlsKey, transaction.Capacity));
 
-//				const auto signerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier));
-//				const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
-//				const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
-//
-//				//swap xpx to storage unit
-//				SwapMosaics(
-//					transaction.Signer,
-//					{ model::UnresolvedMosaic{ storageMosaicId, Amount(transaction.Capacity) } },
-//					sub,
-//					config.Immutable,
-//					Buy
-//				);
-//
-//				// Payments for storage deposit serve as proof of space
-//				sub.notify(BalanceDebitNotification<1>(
-//					signerAddress,
-//					storageMosaicId,
-//					Amount(transaction.Capacity),
-//				));
-//
-//				//swap xpx to streaming unit
-//				SwapMosaics(
-//					transaction.Signer,
-//					{ model::UnresolvedMosaic{ streamingMosaicId, Amount(transaction.Capacity * 2) } },
-//					sub,
-//					config.immutable,
-//					Buy
-//				);
-//
-//				//Payments for streaming deposit serve as proof of space (2 x of storage deposit)
-//				sub.notify(BalanceDebitNotification<1>)(
-//					signerAddress,
-//					streamingMosaicId,
-//					Amount(transaction.Capacity * 2),
-//				));
+					const auto signerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier));
+					const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
+					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
 
-				break;
-			}
+					//swap xpx to storage unit
+					utils::SwapMosaics(
+						transaction.Signer,
+						{ { storageMosaicId, Amount(transaction.Capacity) } },
+						sub,
+						config,
+						utils::SwapOperation::Buy
+					);
 
-			default:
-				CATAPULT_LOG(debug) << "invalid version of ReplicatorOnboardingTransaction: " << transaction.EntityVersion();
-			}
+					//swap xpx to streaming unit
+					utils::SwapMosaics(
+						transaction.Signer,
+						{ { streamingMosaicId, Amount(2 * transaction.Capacity) } },
+						sub,
+						config,
+						utils::SwapOperation::Buy
+					);
+
+					break;
+				}
+
+				default:
+					CATAPULT_LOG(debug) << "invalid version of ReplicatorOnboardingTransaction: " << transaction.EntityVersion();
+				}
+			};
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(ReplicatorOnboarding, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(ReplicatorOnboarding, Default, CreatePublisher)
 }}
