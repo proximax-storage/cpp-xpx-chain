@@ -12,6 +12,8 @@
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCache.h"
 #include "src/cache/ReplicatorCacheStorage.h"
+#include "src/cache/BlsKeysCache.h"
+#include "src/cache/BlsKeysCacheStorage.h"
 #include "src/model/StorageEntityType.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
@@ -110,6 +112,8 @@ namespace catapult { namespace test {
 
     /// Verifies that \a entry1 is equivalent to \a entry2.
     void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry);
+
+    void AssertEqualBlskeyData(const state::BlsKeysEntry& expectedEntry, const state::BlsKeysEntry& entry);
 
      /// Cache factory for creating a catapult cache composed of replicator cache and core caches.
     struct ReplicatorCacheFactory {

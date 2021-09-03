@@ -136,6 +136,10 @@ namespace catapult { namespace test {
         }
     }
 
+    void AssertEqualBlskeyData(const state::BlsKeysEntry& expectedEntry, const state::BlsKeysEntry& entry){
+        EXPECT_EQ(expectedEntry.key(), entry.key());
+    }
+
 }}
 
 

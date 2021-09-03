@@ -39,6 +39,14 @@ namespace catapult { namespace observers {
         state::ReplicatorEntry CreateReplicatorEntry(const ReplicatorValues& values) {
             state::ReplicatorEntry entry(values.PublicKey);
             entry.setCapacity(values.Capacity);
+            entry.setBlsKey(values.BlsKey);
+
+            return entry;
+        }
+
+        state::BlsKeysEntry CreateBlsKeyEntry(const ReplicatorValues& values) {
+            state::BlsKeysEntry entry(values.BlsKey);
+            entry.setKey(values.PublicKey);
 
             return entry;
         }
@@ -49,14 +57,19 @@ namespace catapult { namespace observers {
             Notification notification(values.PublicKey, values.BlsKey, values.Capacity);
             auto pObserver = CreateReplicatorOnboardingObserver();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
+            auto& blsKeysCache = context.cache().sub<cache::BlsKeysCache>();
             
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
      		auto replicatorIter = replicatorCache.find(values.PublicKey);
-			const auto &actualEntry = replicatorIter.get();
-			test::AssertEqualReplicatorData(CreateReplicatorEntry(values), actualEntry);
+			const auto &replicatorEntry = replicatorIter.get();
+			test::AssertEqualReplicatorData(CreateReplicatorEntry(values), replicatorEntry);
+
+     		auto BlsKeyIter = blsKeysCache.find(values.BlsKey);
+			const auto &blsKeysEntry = BlsKeyIter.get();
+			test::AssertEqualBlskeyData(CreateBlsKeyEntry(values), blsKeysEntry);
 
         }
     }
