@@ -3,12 +3,12 @@
 		{
 			"name": "Block",
 			"type": "33091",
-			"supportedVersions": [3]
+			"supportedVersions": [3,4]
 		},
 		{
 			"name": "Nemesis_Block",
 			"type": "32835",
-			"supportedVersions": [3]
+			"supportedVersions": [3,4]
 		},
 		{
 			"name": "Address_Metadata",

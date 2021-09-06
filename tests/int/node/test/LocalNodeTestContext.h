@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include <catapult/cache_core/AccountStateCache.h>
 #include "ConfigurationTestUtils.h"
 #include "LocalNodeNemesisHashTestUtils.h"
 #include "LocalNodeTestUtils.h"
@@ -70,9 +71,13 @@ namespace catapult { namespace test {
 				, m_configTransform(configTransform)
 				, m_serverKeyPair(loadServerKeyPair())
 				, m_partnerServerKeyPair(LoadPartnerServerKeyPair())
+				, m_localNodeHarvestingKeys(std::make_tuple(crypto::KeyPair::FromString("819F72066B17FFD71B8B4142C5AEAE4B997B0882ABDF2C263B02869382BD93A0"), test::GenerateKeyPair()))
 				, m_tempDir("lntc" + tempDirPostfix)
 				, m_partnerTempDir("lntc_partner" + tempDirPostfix) {
-			initializeDataDirectory(m_tempDir.name());
+			if(HasFlag(NodeFlag::Auto_Harvest, nodeFlag)) initializeDataDirectory(m_tempDir.name(), &m_localNodeHarvestingKeys);
+			else initializeDataDirectory(m_tempDir.name());
+
+
 
 			if (HasFlag(NodeFlag::With_Partner, nodeFlag)) {
 				initializeDataDirectory(m_partnerTempDir.name());
@@ -88,9 +93,9 @@ namespace catapult { namespace test {
 		}
 
 	private:
-		void initializeDataDirectory(const std::string& directory) const {
+		void initializeDataDirectory(const std::string& directory, std::tuple<crypto::KeyPair, crypto::KeyPair>* harvestKeys = nullptr) const {
 			PrepareStorage(directory);
-			PrepareConfiguration(directory, m_nodeFlag);
+			PrepareConfiguration(directory, m_nodeFlag, harvestKeys);
 
 			if (HasFlag(NodeFlag::Verify_Receipts, m_nodeFlag))
 				SetNemesisReceiptsHash(directory);
@@ -177,6 +182,7 @@ namespace catapult { namespace test {
 		}
 
 	private:
+
 		std::unique_ptr<local::LocalNode> boot(
 				config::BlockchainConfiguration&& config,
 				const consumer<extensions::ProcessBootstrapper&>& configure) {
@@ -193,9 +199,7 @@ namespace catapult { namespace test {
 			auto& extensionManager = pBootstrapper->extensionManager();
 			extensionManager.addServiceRegistrar(std::make_unique<CapturingServiceRegistrar>(m_capturedServiceState));
 			pBootstrapper->loadExtensions();
-
 			configure(*pBootstrapper);
-
 			return local::CreateLocalNode(m_serverKeyPair, std::move(pBootstrapper));
 		}
 
@@ -271,7 +275,7 @@ namespace catapult { namespace test {
 		crypto::KeyPair m_partnerServerKeyPair;
 		TempDirectoryGuard m_tempDir;
 		TempDirectoryGuard m_partnerTempDir;
-
+		std::tuple<crypto::KeyPair, crypto::KeyPair> m_localNodeHarvestingKeys;
 		std::unique_ptr<local::LocalNode> m_pLocalPartnerNode;
 		std::unique_ptr<local::LocalNode> m_pLocalNode;
 		mutable CapturedServiceState m_capturedServiceState;

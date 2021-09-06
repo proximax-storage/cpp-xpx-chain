@@ -19,6 +19,7 @@
 **/
 
 #include <catapult/ionet/PacketPayloadFactory.h>
+#include <catapult/model/Address.h>
 #include "HarvestingService.h"
 #include "BlockGeneratorAccountDescriptor.h"
 #include "HarvesterBlockGenerator.h"
@@ -40,6 +41,18 @@ namespace catapult { namespace harvesting {
 
 	namespace {
 
+		std::optional<const state::AccountState&> FindAccountStateByPublicKeyOrAddress(const cache::ReadOnlyAccountStateCache& cache, const Key& publicKey) {
+			auto accountStateKeyIter = cache.find(publicKey);
+			if (accountStateKeyIter.tryGet())
+				return std::optional<const state::AccountState&>(accountStateKeyIter.get());
+
+			// if state could not be accessed by public key, try searching by address
+			auto accountStateAddressIter = cache.find(model::PublicKeyToAddress(publicKey, cache.networkIdentifier()));
+			if (accountStateAddressIter.tryGet())
+				return std::optional<const state::AccountState&>(accountStateAddressIter.get());
+
+			return std::nullopt;
+		}
 		struct UnlockedAccountsHolder {
 			std::shared_ptr<UnlockedAccounts> pUnlockedAccounts;
 			std::shared_ptr<UnlockedAccountsUpdater> pUnlockedAccountsUpdater;
@@ -64,17 +77,17 @@ namespace catapult { namespace harvesting {
 
  				auto cacheView = cache.createView();
 				auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
-				auto accountStateIter = readOnlyAccountStateCache.find(harvesterSigningPublicKey);
-				if (!accountStateIter.tryGet()) {
+				auto accountStateOptional = FindAccountStateByPublicKeyOrAddress(const cache::ReadOnlyAccountStateCache& cache, const Key& publicKey);
+				if (!accountStateOptional.has_value()) {
 					CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "Unable to set up Auto Harvesting: Invalid harvesting account provided with AutoHarvesting Enabled");
 				}
-				auto accountState = accountStateIter.get();
+				auto accountState = accountStateOptional.value();
 				/* No need to verify as account would be pruned.
 				if(accountState.GetVersion() > 1 && harvesterVrfPublicKey != GetVrfPublicKey(accountState))
 				{
 					CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "Unable to set up Auto Harvesting: V2 accounts do not support harvesting without a valid VRF key");
 				}*/
-				auto unlockResult = pUnlockedAccounts->modifier().add(std::move(blockGeneratorAccountDescriptor), accountState.GetVersion());
+				= pUnlockedAccounts->modifier().add(std::move(blockGeneratorAccountDescriptor), accountState.GetVersion());
 				CATAPULT_LOG(info)
 					<< std::endl << "Unlocked harvesting account with result " << unlockResult
 					<< std::endl << "+ Signing " << harvesterSigningPublicKey

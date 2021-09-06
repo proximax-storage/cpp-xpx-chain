@@ -37,16 +37,23 @@ namespace catapult { namespace test {
 			return destinationFilePath.generic_string();
 		}
 
-		void SetAutoHarvesting(const std::string& configFilePath) {
+		void SetAutoHarvesting(const std::string& configFilePath, const std::tuple<crypto::KeyPair, crypto::KeyPair>& harvestKeys) {
 			pt::ptree properties;
 			pt::read_ini(configFilePath, properties);
 			properties.put("harvesting.isAutoHarvestingEnabled", true);
-			properties.put("harvesting.harvestKey", "3485D98EFD7EB07ADAFCFD1A157D89DE2796A95E780813C0258AF3F5F84ED8CB");
+			properties.put("harvesting.harvestKey", std::get<0>(harvestKeys).publicKey());
+			properties.put("harvesting.harvesterVrfPrivateKey", std::get<1>(harvestKeys).publicKey());
 			pt::write_ini(configFilePath, properties);
 		}
 	}
 
-	void PrepareConfiguration(const std::string& destination, NodeFlag nodeFlag) {
+	/**
+	 *
+	 * @param destination
+	 * @param nodeFlag
+	 * @param harvestKeys MUST BE PRESENT IF NODEFLAG CONTAINS AUTO_HARVEST FLAG
+	 */
+	void PrepareConfiguration(const std::string& destination, NodeFlag nodeFlag, std::tuple<crypto::KeyPair, crypto::KeyPair>* harvestKeys = nullptr) {
 		auto destinationResourcesPath = boost::filesystem::path(destination) / "resources";
 		boost::filesystem::create_directories(destinationResourcesPath);
 		CopyFile(destinationResourcesPath, "config-networkheight.properties");
@@ -57,7 +64,10 @@ namespace catapult { namespace test {
 			return;
 
 		auto harvestingConfigFilePath = CopyFile(destinationResourcesPath, "config-harvesting.properties");
-		if (HasFlag(NodeFlag::Auto_Harvest, nodeFlag))
-			SetAutoHarvesting(harvestingConfigFilePath);
+		if (HasFlag(NodeFlag::Auto_Harvest, nodeFlag)) {
+			if(harvestKeys == nullptr)
+				CATAPULT_THROW_INVALID_ARGUMENT("harvestKeys must not be empty if Auto_Harvest flag is set!");
+			SetAutoHarvesting(harvestingConfigFilePath, *harvestKeys);
+		}
 	}
 }}
