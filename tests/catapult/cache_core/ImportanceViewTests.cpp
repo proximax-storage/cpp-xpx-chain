@@ -184,9 +184,9 @@ namespace catapult { namespace cache {
 
 	namespace {
 		struct CanHarvestViaMemberTraits {
-			static bool CanHarvest(const AccountStateCache& cache, const Key& publicKey, Height height, Amount minBalance) {
+			static bool CanHarvest(const AccountStateCache& cache, const Key& publicKey, Height height, Amount minBalance, Amount maxBalance) {
 				auto pView = test::CreateImportanceView(cache);
-				return pView->canHarvest(publicKey, height, minBalance);
+				return pView->canHarvest(publicKey, height, minBalance, maxBalance);
 			}
 		};
 
@@ -212,7 +212,7 @@ namespace catapult { namespace cache {
 		AddAccount<TTraits>(*pCache, key);
 
 		// Act + Assert:
-		EXPECT_FALSE(TTraits::CanHarvest(*pCache, test::GenerateRandomByteArray<Key>(), height, Amount(1234)));
+		EXPECT_FALSE(TTraits::CanHarvest(*pCache, test::GenerateRandomByteArray<Key>(), height, Amount(1234), Amount(UINT64_MAX)));
 	}
 
 	namespace {
@@ -225,7 +225,7 @@ namespace catapult { namespace cache {
 			AddAccount<TTraits>(*pCache, key, initialBalance);
 
 			// Act:
-			return TTraits::CanHarvest(*pCache, key, testHeight, Amount(1234));
+			return TTraits::CanHarvest(*pCache, key, testHeight, Amount(1234), Amount(UINT64_MAX));
 		}
 	}
 
@@ -264,7 +264,7 @@ namespace catapult { namespace cache {
 
 		struct CanHarvestTraits {
 			static void Act(const ImportanceView& view, const Key& publicKey) {
-				view.canHarvest(publicKey, Height(111), Amount());
+				view.canHarvest(publicKey, Height(111), Amount(), Amount(UINT64_MAX));
 			}
 		};
 	}

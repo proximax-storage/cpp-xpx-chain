@@ -71,9 +71,10 @@ namespace catapult { namespace cache {
 		return tryGetAccountImportance(publicKey, height, importance) ? importance : Importance(0);
 	}
 
-	bool ImportanceView::canHarvest(const Key& publicKey, Height height, Amount minHarvestingBalance) const {
+	bool ImportanceView::canHarvest(const Key& publicKey, Height height, Amount minHarvestingBalance, Amount maxHarvestingBalance) const {
 		return FindAccountStateWithImportance(m_cache, publicKey, height, [&](const auto& accountState) {
-			return accountState.Balances.getEffectiveBalance(height, m_cache.importanceGrouping()) >= minHarvestingBalance;
+			auto balance = accountState.Balances.getEffectiveBalance(height, m_cache.importanceGrouping());
+		return balance >= minHarvestingBalance && balance <= maxHarvesterBalance;
 		});
 	}
 }}
