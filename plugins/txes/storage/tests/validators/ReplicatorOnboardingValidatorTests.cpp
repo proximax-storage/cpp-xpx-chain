@@ -24,16 +24,20 @@ namespace catapult { namespace validators {
         void AssertValidationResult(
                 ValidationResult expectedResult,
 				const state::ReplicatorEntry& replicatorEntry,
-                const Key& driveKey) {
+                const state::BlsKeysEntry& blsKeysEntry,
+                const Key& publicKey,
+                const BLSPublicKey& blsKey) {
             // Arrange:
             auto cache = test::ReplicatorCacheFactory::Create();
             {
                 auto delta = cache.createDelta();
                 auto& replicatorCacheDelta = delta.sub<cache::ReplicatorCache>();
                 replicatorCacheDelta.insert(replicatorEntry);
+                auto& blsKeysCacheDelta = delta.sub<cache::BlsKeysCache>();
+                blsKeysCacheDelta.insert(blsKeysEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(driveKey, BLSPublicKey(), replicatorEntry.capacity());
+            Notification notification(publicKey, blsKey, replicatorEntry.capacity());
             auto pValidator = CreateReplicatorOnboardingValidator();
             
             // Act:
@@ -47,24 +51,62 @@ namespace catapult { namespace validators {
 
     TEST(TEST_CLASS, FailureWhenReplicatorAlreadyRegistered) {
         // Arrange:
-        Key driveKey = test::GenerateRandomByteArray<Key>();
-        state::ReplicatorEntry replicatorEntry(driveKey);
+        Key publicKey = test::GenerateRandomByteArray<Key>();
+        BLSPublicKey blsKey = test::GenerateRandomByteArray<BLSPublicKey>();
+
+        state::ReplicatorEntry replicatorEntry(publicKey);
+        replicatorEntry.setBlsKey(blsKey);
+        state::BlsKeysEntry blsEntry(blsKey);
+        blsEntry.setKey(publicKey);
+
+        state::BlsKeysEntry blsEntry2(test::GenerateRandomByteArray<BLSPublicKey>());
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_Replicator_Already_Registered,
             replicatorEntry,
-            driveKey);
+            blsEntry2,
+            publicKey,
+            test::GenerateRandomByteArray<BLSPublicKey>());
+    }
+
+    TEST(TEST_CLASS, FailureWhenBlsAlreadyRegistered) {
+        // Arrange:
+        BLSPublicKey blsKey = test::GenerateRandomByteArray<BLSPublicKey>();
+
+        state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
+        replicatorEntry.setBlsKey(blsKey);
+        state::BlsKeysEntry blsEntry(blsKey);
+        blsEntry.setKey(test::GenerateRandomByteArray<Key>());
+
+        // Assert:
+        AssertValidationResult(
+            Failure_Storage_BLS_Key_Already_Registered,
+            replicatorEntry,
+            blsEntry,
+            test::GenerateRandomByteArray<Key>(),
+            blsKey);
     }
 
     TEST(TEST_CLASS, Success) {
 		// Arrange:
-        state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
+        Key publicKey = test::GenerateRandomByteArray<Key>();
+        BLSPublicKey blsKey = test::GenerateRandomByteArray<BLSPublicKey>();
+        
+        state::ReplicatorEntry replicatorEntry(publicKey);
+        replicatorEntry.setBlsKey(blsKey);
+        state::BlsKeysEntry blsEntry(blsKey);
+        blsEntry.setKey(publicKey);
+
+        state::ReplicatorEntry replicatorEntry2(test::GenerateRandomByteArray<Key>());
+        state::BlsKeysEntry blsEntry2(test::GenerateRandomByteArray<BLSPublicKey>());
 
         // Assert:
 		AssertValidationResult(
 			ValidationResult::Success,
-            replicatorEntry,
-            test::GenerateRandomByteArray<Key>());
+            replicatorEntry2,
+            blsEntry2,
+            test::GenerateRandomByteArray<Key>(),
+            test::GenerateRandomByteArray<BLSPublicKey>());
 	}
 }}
