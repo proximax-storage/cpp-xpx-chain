@@ -28,6 +28,7 @@ namespace catapult { namespace observers {
 		//Mosaic id
 		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		const auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 		
 		//Remaining capacity
 		auto deposit = replicatorEntry.capacity().unwrap();
@@ -67,9 +68,11 @@ namespace catapult { namespace observers {
 		//Streaming deposit return = streaming deposit - streaming deposit slashing
 		auto streamingDeposit = (driveSize * 2) - streamingDepositSlashing;
 
-		if (NotifyMode::Commit == context.Mode)
-			replicatorState.Balances.credit(storageMosaicId, Amount(deposit + streamingDeposit), context.Height);
-		else
-			replicatorState.Balances.debit(storageMosaicId, Amount(deposit + streamingDeposit), context.Height);
+		//swap storage unit to xpx
+		replicatorState.Balances.debit(storageMosaicId, Amount(deposit), context.Height);
+		replicatorState.Balances.credit(currencyMosaicId, Amount(deposit), context.Height);
+		//swap streaming unit to xpx
+		replicatorState.Balances.debit(streamingMosaicId, Amount(streamingDeposit), context.Height);
+		replicatorState.Balances.credit(currencyMosaicId, Amount(streamingDeposit), context.Height);
 	});
 }}
