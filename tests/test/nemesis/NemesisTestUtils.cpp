@@ -122,7 +122,7 @@ namespace catapult { namespace test {
 	namespace {
 		void AssertNemesisState(const cache::MosaicCacheView& view) {
 			// Assert:
-			EXPECT_EQ(3u, view.size());
+			EXPECT_EQ(5u, view.size());
 
 			// - check for known mosaics
 			ASSERT_TRUE(view.contains(Default_Currency_Mosaic_Id));
@@ -136,6 +136,12 @@ namespace catapult { namespace test {
 
 			ASSERT_TRUE(view.contains(Default_Streamin_Mosaic_Id));
 			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Streamin_Mosaic_Id).get().supply());
+
+			ASSERT_TRUE(view.contains(Default_SuperContract_Mosaic_Id));
+			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_SuperContract_Mosaic_Id).get().supply());
+
+			ASSERT_TRUE(view.contains(Default_Review_Mosaic_Id));
+			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Review_Mosaic_Id).get().supply());
 		}
 	}
 

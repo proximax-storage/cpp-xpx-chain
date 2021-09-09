@@ -100,7 +100,7 @@ namespace catapult { namespace model {
 			}
 
 			static bool IsPropertyOptional(const std::string& name) {
-				return "enableUnconfirmedTransactionMinFeeValidation" == name || "accountVersion" == name;
+				return "enableUnconfirmedTransactionMinFeeValidation" == name || "accountVersion" == name || "maxHarvesterBalance" == name;
 			}
 
 			static void AssertZero(const NetworkConfiguration& config) {

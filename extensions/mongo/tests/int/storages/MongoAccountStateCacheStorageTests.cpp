@@ -60,6 +60,7 @@ namespace catapult { namespace mongo { namespace storages {
 				auto accountState = state::AccountState(address, Height(1234567) + height);
 				accountState.PublicKey = publicKey;
 				accountState.PublicKeyHeight = Height(1234567) + height;
+				accountState.SupplementalPublicKeys.linked().set(test::GenerateRandomByteArray<Key>());
 				auto randomAmount = Amount((test::Random() % 1'000'000 + 1'000) * 1'000'000);
 				accountState.Balances.credit(Currency_Mosaic_Id, randomAmount, accountState.PublicKeyHeight);
 				accountState.Balances.commitSnapshots();
@@ -69,7 +70,9 @@ namespace catapult { namespace mongo { namespace storages {
 			static void Add(cache::CatapultCacheDelta& delta, const ModelType& accountState) {
 				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
 				accountStateCacheDelta.addAccount(accountState.PublicKey, accountState.PublicKeyHeight);
+
 				auto& accountStateFromCache = accountStateCacheDelta.find(accountState.PublicKey).get();
+				accountStateFromCache.SupplementalPublicKeys.linked().set(accountState.SupplementalPublicKeys.linked().get());
 				accountStateFromCache.Balances.credit(Currency_Mosaic_Id, accountState.Balances.get(Currency_Mosaic_Id), accountState.PublicKeyHeight);
 				accountStateFromCache.Balances.commitSnapshots();
 			}

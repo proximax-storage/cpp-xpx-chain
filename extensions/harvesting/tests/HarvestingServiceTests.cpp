@@ -113,6 +113,9 @@ namespace catapult { namespace harvesting {
 			void setMinHarvesterBalance(Amount balance) {
 				const_cast<model::NetworkConfiguration&>(testState().state().config().Network).MinHarvesterBalance = balance;
 			}
+			void setMaxHarvesterBalance(Amount balance) {
+				const_cast<model::NetworkConfiguration&>(testState().state().config().Network).MaxHarvesterBalance = balance;
+			}
 			Amount getMinHarvesterBalance() {
 				return testState().state().config().Network.MinHarvesterBalance;
 			}
@@ -413,7 +416,7 @@ namespace catapult { namespace harvesting {
 		auto keyPair = test::GenerateKeyPair();
 		TestContext context(CreateCacheWithAccount(height, keyPair.publicKey(), Account_Balance));
 		context.setMinHarvesterBalance(Account_Balance);
-
+		context.setMaxHarvesterBalance(Amount(UINT64_MAX));
 		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair)](auto& unlockedAccounts, const auto& task) mutable {
 			unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 2);
 
@@ -432,6 +435,7 @@ namespace catapult { namespace harvesting {
 		auto keyPair = test::GenerateKeyPair();
 		TestContext context(CreateCacheWithAccount(height, keyPair.publicKey(), Account_Balance));
 		context.setMinHarvesterBalance(Account_Balance + Amount(1));
+		context.setMaxHarvesterBalance(Amount(UINT64_MAX));
 
 		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair)](auto& unlockedAccounts, const auto& task) mutable {
 			unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 2);
@@ -461,6 +465,7 @@ namespace catapult { namespace harvesting {
 			TestContext context(
 					CreateCacheWithAccount(cacheConfig, Height(1), keyPair.publicKey(), balance),
 					[]() { return Timestamp(std::numeric_limits<int64_t>::max()); });
+			context.setMaxHarvesterBalance(Amount(UINT64_MAX));
 			if (enableVerifiableState)
 				context.enableVerifiableState();
 

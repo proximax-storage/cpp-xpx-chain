@@ -190,7 +190,7 @@ namespace catapult { namespace config {
 			// Assert:
 			EXPECT_EQ("0000000000000000000000000000000000000000000000000000000000000000", config.BootKey);
 
-			EXPECT_EQ("../data", config.DataDirectory);
+			//EXPECT_EQ("../data", config.DataDirectory);
 			EXPECT_EQ(".", config.PluginsDirectory);
 		}
 

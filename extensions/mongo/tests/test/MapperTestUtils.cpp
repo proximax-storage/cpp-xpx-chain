@@ -140,6 +140,15 @@ namespace catapult { namespace test {
 		}
 	}
 
+	void AssertPublicKeySubDocument(
+			const bsoncxx::document::view& dbAccountPublicKeys,
+			const std::string& name,
+			const state::AccountPublicKeys::PublicKeyAccessor<Key>& expectedPublicKeyAccessor) {
+		auto dbPublicKeyDocument = dbAccountPublicKeys[name].get_document();
+		EXPECT_EQ(1u, GetFieldCount(dbPublicKeyDocument.view()));
+		EXPECT_EQ(expectedPublicKeyAccessor.get(), GetKeyValue(dbPublicKeyDocument.view(), "publicKey"));
+	}
+
 	void AssertEqualAccountState(const state::AccountState& accountState, const bsoncxx::document::view& dbAccount) {
 		EXPECT_EQ(accountState.Address, GetAddressValue(dbAccount, "address"));
 		EXPECT_EQ(accountState.AddressHeight, Height(GetUint64(dbAccount, "addressHeight")));
@@ -148,12 +157,13 @@ namespace catapult { namespace test {
 		EXPECT_EQ(accountState.GetVersion(), GetUint32(dbAccount, "version"));
 		EXPECT_EQ(accountState.AccountType, static_cast<state::AccountType>(GetInt32(dbAccount, "accountType")));
 
-		auto supplementalKeysDocument = dbAccount["supplementalPublicKeys"].get_document().view();
-		EXPECT_EQ(accountState.SupplementalPublicKeys.linked().get(), GetKeyValue(supplementalKeysDocument["linked"], "publicKey"));
+		auto supplementalKeysDocument = dbAccount["supplementalPublicKeys"].get_document();
+
+		AssertPublicKeySubDocument(supplementalKeysDocument, "linked", accountState.SupplementalPublicKeys.linked());
 		if(accountState.GetVersion() > 1)
 		{
-			EXPECT_EQ(accountState.SupplementalPublicKeys.node().get(), GetKeyValue(supplementalKeysDocument["node"], "publicKey"));
-			EXPECT_EQ(accountState.SupplementalPublicKeys.vrf().get(), GetKeyValue(supplementalKeysDocument["vrf"], "publicKey"));
+			AssertPublicKeySubDocument(supplementalKeysDocument, "node", accountState.SupplementalPublicKeys.node());
+			AssertPublicKeySubDocument(supplementalKeysDocument, "vrf", accountState.SupplementalPublicKeys.vrf());
 		}
 		auto dbMosaics = dbAccount["mosaics"].get_array().value;
 		size_t numMosaics = 0;

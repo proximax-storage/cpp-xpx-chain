@@ -81,6 +81,7 @@ namespace catapult { namespace model {
 		config.AccountVersion = 1;
 		TRY_LOAD_CHAIN_PROPERTY(AccountVersion);
 		config.MaxHarvesterBalance = Amount(UINT64_MAX);
+		TRY_LOAD_CHAIN_PROPERTY(MaxHarvesterBalance);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

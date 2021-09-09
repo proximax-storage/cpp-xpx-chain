@@ -49,6 +49,7 @@ namespace catapult { namespace mocks {
 			block.Height = Height(i);
 			block.FeeInterest = 1;
 			block.FeeInterestDenominator = 1;
+			block.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 			pStorage->saveBlock(test::BlockToBlockElement(block));
 		}
 

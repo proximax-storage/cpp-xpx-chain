@@ -145,7 +145,7 @@ namespace catapult { namespace model {
 		// Act:
 		PublishOne<EntityNotification<1>>(*pBlock, [&pBlock](const auto& notification) {
 			// Assert:
-			EXPECT_EQ(static_cast<NetworkIdentifier>(0x11), notification.NetworkIdentifier);
+			EXPECT_EQ(NetworkIdentifier::Mijin_Test, notification.NetworkIdentifier);
 			EXPECT_EQ(pBlock->Type, notification.EntityType);
 			EXPECT_EQ(0x04u, notification.EntityVersion);
 		});

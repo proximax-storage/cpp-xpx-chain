@@ -252,6 +252,7 @@ namespace catapult { namespace harvesting {
 				immutableConfig.HarvestingMosaicId = Harvesting_Mosaic_Id;
 				auto networkConfig = model::NetworkConfiguration::Uninitialized();
 				networkConfig.MinHarvesterBalance = Amount(1000);
+				networkConfig.MaxHarvesterBalance = Amount(UINT64_MAX);
 				networkConfig.ImportanceGrouping = 100;
 				networkConfig.AccountVersion = 2;
 				auto config = config::BlockchainConfiguration(

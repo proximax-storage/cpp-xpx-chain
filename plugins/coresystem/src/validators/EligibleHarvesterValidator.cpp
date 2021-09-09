@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 				const ValidatorContext& context) {
 			cache::ImportanceView view(context.Cache.sub<cache::AccountStateCache>());
 			const model::NetworkConfiguration& config = context.Config.Network;
-			return view.canHarvest(notification.Signer, context.Height, config.MinHarvesterBalance, config.MaxHarvesterBalance)
+			return view.canHarvest(notification.Signer, context.Height, config.MinHarvesterBalance, Amount(UINT64_MAX))
 					? ValidationResult::Success
 					: Failure_Core_Block_Harvester_Ineligible;
 		});
