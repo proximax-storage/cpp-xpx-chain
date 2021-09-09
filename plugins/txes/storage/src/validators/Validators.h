@@ -106,9 +106,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(DownloadChannelRefund, model::DownloadChannelRefundNotification<1>)();
 
     /// A validator implementation that applies to finish drive verification notifications and validates that:
-    /// - respective drive exists
-    /// - no active data modifications
-    /// - a verification time has come
-    /// - a verification doesn't exist
+	/// - respective drive exists
+    /// - All signers are in the Confirmed Storage State
     DECLARE_STATEFUL_VALIDATOR(FinishDriveVerification, model::FinishDriveVerificationNotification<1>)();
 }}

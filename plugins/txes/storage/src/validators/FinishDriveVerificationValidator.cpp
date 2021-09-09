@@ -4,8 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <catapult/crypto/Signer.h>
 #include "Validators.h"
-#include "catapult/model/EntityHasher.h"
 
 namespace catapult { namespace validators {
 
@@ -33,26 +33,13 @@ namespace catapult { namespace validators {
 
         // Check if respective drive exists
         if (!pDriveEntry)
-            return Failure_Storage_Drive_Not_Found;
+                return Failure_Storage_Drive_Not_Found;
 
-        // Check if there are active data modifications
-        if (!pDriveEntry->activeDataModifications().empty())
-            return Failure_Storage_Verification_Exist_Active_Modifications;
-
-        // Check if verification isn't premature
-        const auto &pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
-        if (!pDriveEntry->verifications().empty() &&
-            !(Height(pDriveEntry->verifications().back().Height.unwrap() + pluginConfig.VerificationFrequency.unwrap()) >= context.Height)) {
-            return Failure_Storage_Verification_Premature_Verification;
+        // Check if all signer/provers are in the Confirmed state.
+        for (auto i = 0; i < notification.VerifiersOpinionsCount; ++i) {
+            if (pDriveEntry->confirmedStates().find(notification.ProversPtr[i])->second != pDriveEntry->rootHash())
+                return Failure_Storage_Verification_Not_All_Signer_In_Confirmed_State;
         }
-
-        // calculate shared fields` hash
-        auto verificationHash = calculateSharedFieldsHash(notification.DriveKey, notification.VerificationTrigger);
-        auto lastVerificationHash = calculateSharedFieldsHash(notification.DriveKey, notification.VerificationTrigger);
-
-        // Check if verification already exist
-        if (verificationHash == lastVerificationHash)
-            return Failure_Storage_Verification_Already_Exist;
 
         return ValidationResult::Success;
     });

@@ -62,15 +62,15 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void LoadFinishedVerifications(io::InputStream& input, Verifications& finishedVerifications) {
+		void LoadVerifications(io::InputStream& input, Verifications& verifications) {
 		    auto count = io::Read16(input);
 		    while (count--) {
-
 		        state::Verification verification;
 		        io::Read(input, verification.Height);
 		        io::Read(input, verification.VerificationTrigger);
+				verification.State = static_cast<VerificationState>(io::Read8(input));
 
-		        finishedVerifications.emplace_back(verification);
+		        verifications.emplace_back(verification);
 		    }
 		}
 
@@ -119,7 +119,7 @@ namespace catapult { namespace state {
 
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
-        LoadFinishedVerifications(input, entry.verifications());
+		LoadVerifications(input, entry.verifications());
 
 		return entry;
 	}

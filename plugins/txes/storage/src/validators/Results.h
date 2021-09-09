@@ -112,14 +112,8 @@ namespace catapult { namespace validators {
 	/// Recipient's account state is not found.
 	DEFINE_STORAGE_RESULT(Recipient_State_Not_Found, 33);
 
-	/// The drive cannot be verified if there are active modifications.
-	DEFINE_STORAGE_RESULT(Verification_Exist_Active_Modifications, 23);
-
-	/// The attempt to start verification too early.
-	DEFINE_STORAGE_RESULT(Verification_Premature_Verification, 24);
-
-	/// The attempt to start already started verification.
-	DEFINE_STORAGE_RESULT(Verification_Already_Exist, 25);
+	/// Not all signers are in the Confirmed State.
+	DEFINE_STORAGE_RESULT(Verification_Not_All_Signer_In_Confirmed_State, 34);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

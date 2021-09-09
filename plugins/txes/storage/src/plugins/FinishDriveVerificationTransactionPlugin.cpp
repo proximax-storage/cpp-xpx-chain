@@ -22,12 +22,13 @@ namespace catapult { namespace plugins {
                 switch (transaction.EntityVersion()) {
                     case 1: {
                         sub.notify(FinishDriveVerificationNotification<1>(
-                                transaction.Signer,
                                 transaction.DriveKey,
                                 transaction.VerificationTrigger,
-                                transaction.VerificationOpinionPairCount,
+                                transaction.ProversCount,
                                 transaction.ProversPtr(),
-                                transaction.VerificationOpinionPtr()
+                                transaction.VerifiersOpinionsCount,
+                                transaction.BlsSignaturesPtr(),
+                                transaction.VerifiersOpinionsPtr()
                         ));
 
                         break;

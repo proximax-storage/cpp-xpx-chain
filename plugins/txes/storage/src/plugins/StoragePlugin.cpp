@@ -233,7 +233,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDownloadApprovalValidator())
 				.add(validators::CreateDownloadApprovalPaymentValidator())
 				.add(validators::CreateDownloadChannelRefundValidator())
-					.add(validators::CreateFinishDriveVerificationValidator());
+				.add(validators::CreateFinishDriveVerificationValidator());
 		});
 
 		manager.addObserverHook([pKeyCollector](auto& builder) {

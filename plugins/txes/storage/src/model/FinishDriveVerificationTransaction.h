@@ -31,32 +31,48 @@ namespace catapult { namespace model {
         /// The hash of block that initiated the Verification.
         Hash256 VerificationTrigger;
 
-        /// Number of key-opinion pairs in the payload.
-        uint16_t VerificationOpinionPairCount;
+        /// Number of Provers.
+        uint16_t ProversCount;
 
         /// Public Keys of the Provers.
         DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Provers, Key)
 
+        /// Number of Verifiers` opinions.
+        uint16_t VerifiersOpinionsCount;
+
+        /// Aggregated BLS signatures of opinions.
+        DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(BlsSignatures, BLSSignature)
+
         /// Opinion about verification status for each Prover. Success or Failure.
-        DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(VerificationOpinion, bool)
+        DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(VerifiersOpinions, uint8_t)
 
     public:
         template<typename T>
-        static auto* ProversPtrT(T& transaction) {
-            auto* pPayloadStart = THeader::PayloadStart(transaction);
-            return transaction.VerificationOpinionPairCount ? pPayloadStart : nullptr;
+        static auto *ProversPtrT(T &transaction) {
+            return transaction.VerifiersOpinionsCount ? THeader::PayloadStart(transaction) : nullptr;
         }
 
         template<typename T>
-        static auto *VerificationOpinionPtrT(T &transaction) {
+        static auto *BlsSignaturesPtrT(T &transaction) {
             auto *pPayloadStart = THeader::PayloadStart(transaction);
-            return transaction.VerificationOpinionPairCount ?
-                   pPayloadStart + transaction.VerificationOpinionPairCount * sizeof(Key) : nullptr;
+            return transaction.VerifiersOpinionsCount && pPayloadStart ? pPayloadStart
+                    + transaction.VerifiersOpinionsCount * sizeof(Key) : nullptr;
+        }
+
+        template<typename T>
+        static auto *VerifiersOpinionsPtrT(T &transaction) {
+            auto *pPayloadStart = THeader::PayloadStart(transaction);
+            return transaction.VerifiersOpinionsCount && pPayloadStart ? pPayloadStart
+                    + transaction.VerifiersOpinionsCount * sizeof(Key)
+                    + transaction.VerifiersOpinionsCount * sizeof(BLSSignature) : nullptr;
         }
 
         // Calculates the real size of a storage \a transaction.
         static constexpr uint64_t CalculateRealSize(const TransactionType &transaction) noexcept {
-            return sizeof(TransactionType) + transaction.VerificationOpinionPairCount * (sizeof(Key) + sizeof(bool));
+            return sizeof(TransactionType)
+                   + transaction.VerifiersOpinionsCount * sizeof(Key)
+                   + transaction.VerifiersOpinionsCount * sizeof(BLSSignature)
+                   + transaction.VerifiersOpinionsCount * transaction.ProversCount * sizeof(uint8_t);
         }
     };
 

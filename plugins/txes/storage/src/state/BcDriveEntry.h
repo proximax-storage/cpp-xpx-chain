@@ -52,12 +52,37 @@ namespace catapult { namespace state {
 	/// The map where key is replicator public key and value is last used drive size approved by the replicator.
 	using UsedSizeMap = std::map<Key, u_int64_t>;
 
+	using ConfirmedStates = std::map<Key, Hash256>; // last approved root hash
+
+    /// Data modification state.
+    enum class VerificationState : uint8_t {
+        /// Verification is succeed.
+        Succeeded,
+
+        /// Verification waits for opinions.
+        Pending,
+
+        /// Verification was canceled. For example by DataModificationApprovalTransaction.
+		Canceled,
+
+        /// Verification failed.
+        Failed
+    };
+
+    using VerificationOpinions = std::vector<std::pair<Key, uint8_t>>;
+
 	struct Verification {
 	    /// Height of verification results.
 	    catapult::Height Height;
 
 	    /// The hash of block that initiated the Verification.
 	    Hash256 VerificationTrigger;
+
+        /// Verification opinions.
+        VerificationOpinions Opinions;
+
+		/// State of verification.
+		VerificationState State;
 	};
 
 	using Verifications = std::vector<Verification>;
@@ -153,16 +178,6 @@ namespace catapult { namespace state {
 			return m_completedDataModifications;
 		}
 
-		/// Gets verifications.
-		Verifications& verifications() {
-			return m_verifications;
-		}
-
-		/// Gets verifications.
-		const Verifications& verifications() const {
-			return m_verifications;
-		}
-
 		/// Gets map with key replicator public key and value used drive size.
 		const UsedSizeMap& confirmedUsedSizes() const {
 			return m_usedSizeMap;
@@ -183,6 +198,26 @@ namespace catapult { namespace state {
 			return m_replicators;
 		}
 
+		/// Gets verifications.
+		Verifications& verifications() {
+			return m_verifications;
+		}
+
+		/// Gets verifications.
+		const Verifications& verifications() const {
+			return m_verifications;
+		}
+
+		/// Gets replicators last confirmed states.
+		const ConfirmedStates& confirmedStates() const {
+			return m_confirmedStates;
+		}
+
+		/// Gets replicators last confirmed states.
+		ConfirmedStates& confirmedStates() {
+			return m_confirmedStates;
+		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
@@ -195,6 +230,7 @@ namespace catapult { namespace state {
 		UsedSizeMap m_usedSizeMap;
 		utils::KeySet m_replicators;
 		Verifications m_verifications;
+		ConfirmedStates m_confirmedStates;
 	};
 
 	// Drive entry.

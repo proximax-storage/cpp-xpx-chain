@@ -104,15 +104,16 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 		}
 
-		void ReadFinishedVerifications(state::Verifications& finishedVerifications, const bsoncxx::array::view& dbFinishedVerifications) {
-			for (const auto& dbModification : dbFinishedVerifications) {
-				auto doc = dbModification.get_document().view();
+		void ReadVerifications(state::Verifications& verifications, const bsoncxx::array::view& dbVerifications) {
+			for (const auto& dbVerification : dbVerifications) {
+				auto doc = dbVerification.get_document().view();
 
 				state::Verification verification;
 				verification.Height = Height(doc["height"].get_int64());
 				DbBinaryToModelArray(verification.VerificationTrigger, doc["verificationTrigger"].get_binary());
+				verification.State = static_cast<state::VerificationState>(static_cast<uint8_t>(doc["state"].get_int32()));
 
-				finishedVerifications.emplace_back(verification);
+				verifications.emplace_back(verification);
 			}
 		}
 	}
@@ -140,7 +141,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);
 		ReadCompletedDataModifications(entry.completedDataModifications(), dbDriveEntry["completedDataModifications"].get_array().value);
-		ReadFinishedVerifications(entry.verifications(), dbDriveEntry["verifications"].get_array().value);
+		ReadVerifications(entry.verifications(), dbDriveEntry["verifications"].get_array().value);
 
 		return entry;
 	}

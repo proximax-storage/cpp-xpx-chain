@@ -18,17 +18,26 @@ namespace catapult { namespace mongo { namespace plugins {
         builder << "drive" << ToBinary(transaction.DriveKey);
         builder << "verificationTrigger" << ToBinary(transaction.VerificationTrigger);
 
-        auto uploaderKeys = builder << "provers" << bson_stream::open_array;
+        // Streaming Provers Keys
+        auto proversKeys = builder << "provers" << bson_stream::open_array;
         auto pKey = transaction.ProversPtr();
-        for (auto i = 0u; i < transaction.VerificationOpinionPairCount; ++i, ++pKey)
-            uploaderKeys << ToBinary(*pKey);
-        uploaderKeys << bson_stream::close_array;
+        for (auto i = 0u; i < transaction.VerifiersOpinionsCount; ++i, ++pKey)
+            proversKeys << ToBinary(*pKey);
+        proversKeys << bson_stream::close_array;
 
-        auto uploadOpinion = builder << "verificationOpinion" << bson_stream::open_array;
-        auto pPercent = transaction.VerificationOpinionPtr();
-        for (auto i = 0u; i < transaction.VerificationOpinionPairCount; ++i, ++pPercent)
-            uploadOpinion << *pPercent;
-        uploadOpinion << bson_stream::close_array;
+        // Streaming BlsSignatures
+        auto blsSignaturesArray = builder << "blsSignatures" << bson_stream::open_array;
+        auto pSignature = transaction.BlsSignaturesPtr();
+        for (auto i = 0; i < transaction.VerifiersOpinionsCount; ++i, ++pSignature)
+            blsSignaturesArray << ToBinary(*pSignature);
+        blsSignaturesArray << bson_stream::close_array;
+
+        // Streaming verification opinions
+        auto verificationOpinion = builder << "verificationOpinion" << bson_stream::open_array;
+        auto pPercent = transaction.VerifiersOpinionsPtr();
+        for (auto i = 0u; i < transaction.VerifiersOpinionsCount; ++i, ++pPercent)
+            verificationOpinion << *pPercent;
+        verificationOpinion << bson_stream::close_array;
     }
 
     DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(FinishDriveVerification, StreamFinishDriveVerificationTransaction)
