@@ -23,5 +23,6 @@ namespace catapult { namespace observers {
 		activeDataModifications.erase(activeDataModifications.begin());
 
 		driveEntry.confirmedUsedSizes().insert({notification.PublicKey, notification.UsedDriveSize});
+		driveEntry.verifications().back().State = state::VerificationState::Canceled;
 	});
 }}

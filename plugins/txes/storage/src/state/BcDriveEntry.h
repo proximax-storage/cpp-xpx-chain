@@ -54,7 +54,7 @@ namespace catapult { namespace state {
 
 	using ConfirmedStates = std::map<Key, Hash256>; // last approved root hash
 
-    /// Data modification state.
+    /// Verification State.
     enum class VerificationState : uint8_t {
         /// Verification is succeed.
         Succeeded,
@@ -69,12 +69,9 @@ namespace catapult { namespace state {
         Failed
     };
 
-    using VerificationOpinions = std::vector<std::pair<Key, uint8_t>>;
+    using VerificationOpinions = std::map<Key, uint8_t>;
 
 	struct Verification {
-	    /// Height of verification results.
-	    catapult::Height Height;
-
 	    /// The hash of block that initiated the Verification.
 	    Hash256 VerificationTrigger;
 

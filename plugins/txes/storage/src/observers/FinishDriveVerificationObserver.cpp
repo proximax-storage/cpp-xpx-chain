@@ -16,13 +16,11 @@ namespace catapult { namespace observers {
         auto driveIter = driveCache.find(notification.DriveKey);
         auto &driveEntry = driveIter.get();
 
-        // Prover and median opinion about it`s result
-        std::vector<std::pair<Key, uint8_t>> opinions;
-        opinions.reserve(notification.ProversCount);
-
-        // Find median for every Prover
+        auto pendingVerification = driveEntry.verifications().back();
         auto medianOpinion = 0;
         auto totalMedianOpinion = 0;
+
+        // Find median opinion for every Prover
         for (auto i = 0; i < notification.ProversCount; ++i) {
             medianOpinion = 0;
 
@@ -34,12 +32,11 @@ namespace catapult { namespace observers {
             else
                 medianOpinion = 0;
 
-            opinions.emplace_back(std::pair<Key, uint8_t>{notification.ProversPtr[i], medianOpinion});
+            pendingVerification.Opinions.find(notification.ProversPtr[i])->second = medianOpinion;
             totalMedianOpinion += medianOpinion;
         }
 
-        auto pendingVerification = driveEntry.verifications().back();
-        pendingVerification.Opinions = opinions;
+        // Set the result of the verification base on median opinion of every Prover
         if (notification.ProversCount / 2 < totalMedianOpinion)
             pendingVerification.State = state::VerificationState::Succeeded;
         else
