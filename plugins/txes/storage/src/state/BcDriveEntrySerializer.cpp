@@ -33,6 +33,23 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void SaveVerificationOpinions(io::OutputStream& output, const VerificationOpinions& opinions) {
+			io::Write16(output, opinions.size());
+			for (const auto& pair : opinions) {
+				io::Write(output, pair.first);
+				io::Write8(output, pair.second);
+			}
+		}
+
+		void SaveVerifications(io::OutputStream& output, const Verifications& verifications) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(verifications.size()));
+			for (const auto& verification : verifications) {
+				io::Write(output, verification.VerificationTrigger);
+				io::Write8(output, utils::to_underlying_type(verification.State));
+				SaveVerificationOpinions(output, verification.Opinions);
+			}
+		}
+
 		void LoadActiveDataModifications(io::InputStream& input, ActiveDataModifications& activeDataModifications) {
 			auto count = io::Read16(input);
 			while (count--) {
@@ -62,18 +79,26 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void LoadVerificationOpinions(io::InputStream& input, VerificationOpinions& opinions) {
+			auto pairCount = io::Read16(input);
+			while (pairCount--) {
+				Key prover;
+				io::Read(input, prover);
+				opinions[prover] = io::Read8(input);
+			}
+		}
+
 		void LoadVerifications(io::InputStream& input, Verifications& verifications) {
 		    auto count = io::Read16(input);
 		    while (count--) {
 		        state::Verification verification;
-		        io::Read(input, verification.Height);
 		        io::Read(input, verification.VerificationTrigger);
+				LoadVerificationOpinions(input, verification.Opinions);
 				verification.State = static_cast<VerificationState>(io::Read8(input));
 
 		        verifications.emplace_back(verification);
 		    }
 		}
-
 	}
 
 	void BcDriveEntrySerializer::Save(const BcDriveEntry& driveEntry, io::OutputStream& output) {
@@ -90,6 +115,7 @@ namespace catapult { namespace state {
 
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
+		SaveVerifications(output, driveEntry.verifications());
 	}
 
 	BcDriveEntry BcDriveEntrySerializer::Load(io::InputStream& input) {

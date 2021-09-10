@@ -44,6 +44,33 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			array << bson_stream::close_array;
 		}
+
+		void StreamVerificationOpinions(bson_stream::document& builder, const state::VerificationOpinions& opinions) {
+			auto array = builder << "opinions" << bson_stream::open_array;
+			for (const auto& pair : opinions) {
+				bson_stream::document opinionsBuilder;
+				opinionsBuilder
+						<< "prover" << ToBinary(pair.first)
+						<< "opinion" << static_cast<int8_t>(pair.second);
+				array << opinionsBuilder;
+			}
+			array << bson_stream::close_array;
+		}
+
+		void StreamVerifications(bson_stream::document& builder, const state::Verifications& verifications) {
+			auto array = builder << "verifications" << bson_stream::open_array;
+			for (const auto& verification : verifications) {
+				bson_stream::document verificationBuilder;
+				verificationBuilder
+						<< "verificationTrigger" << ToBinary(verification.VerificationTrigger)
+						<< "state" << utils::to_underlying_type(verification.State);
+
+				StreamVerificationOpinions(verificationBuilder, verification.Opinions);
+				array << verificationBuilder;
+			}
+
+			array << bson_stream::close_array;
+		}
 	}
 
 	bsoncxx::document::value ToDbModel(const state::BcDriveEntry& entry, const Address& accountAddress) {
@@ -60,6 +87,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
 		StreamCompletedDataModifications(builder, entry.completedDataModifications());
+		StreamVerifications(builder, entry.verifications());
 
 		return doc
 				<< bson_stream::close_document
@@ -104,15 +132,26 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 		}
 
+		void ReadVerificationOpinions(state::VerificationOpinions& opinions, const bsoncxx::array::view& dbOpinions) {
+			for (const auto& dbPair : dbOpinions) {
+				auto doc = dbPair.get_document().view();
+
+				Key prover;
+				DbBinaryToModelArray(prover, doc["prover"].get_binary());
+
+				opinions[prover] = static_cast<uint8_t>(dbPair["opinion"].get_int64());
+			}
+		}
+
 		void ReadVerifications(state::Verifications& verifications, const bsoncxx::array::view& dbVerifications) {
 			for (const auto& dbVerification : dbVerifications) {
 				auto doc = dbVerification.get_document().view();
 
 				state::Verification verification;
-				verification.Height = Height(doc["height"].get_int64());
 				DbBinaryToModelArray(verification.VerificationTrigger, doc["verificationTrigger"].get_binary());
 				verification.State = static_cast<state::VerificationState>(static_cast<uint8_t>(doc["state"].get_int32()));
 
+				ReadVerificationOpinions(verification.Opinions, doc["opinions"].get_array().value);
 				verifications.emplace_back(verification);
 			}
 		}
