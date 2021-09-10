@@ -11,21 +11,6 @@ namespace catapult { namespace validators {
 
     using Notification = model::FinishDriveVerificationNotification<1>;
 
-    Hash256& calculateSharedFieldsHash(const Key& driveKey, const Hash256& verificationTrigger) {
-        auto sharedDataSize = driveKey.size() + verificationTrigger.size();
-        auto *const pSharedDataBegin = new uint8_t[sharedDataSize];
-        auto *pSharedData = pSharedDataBegin;
-
-        std::copy(driveKey.begin(), driveKey.end(), pSharedData);
-        pSharedData += sizeof(driveKey.size());
-        std::copy(verificationTrigger.begin(), verificationTrigger.end(), pSharedData);
-
-        Hash256 verificationHash;
-        crypto::Sha3_256(utils::RawBuffer(pSharedDataBegin, sharedDataSize), verificationHash);
-
-        return verificationHash;
-    }
-
     DEFINE_STATEFUL_VALIDATOR(FinishDriveVerification, [](const Notification& notification, const ValidatorContext& context) {
         const auto &driveCache = context.Cache.sub<cache::BcDriveCache>();
         const auto driveIter = driveCache.find(notification.DriveKey);
@@ -35,11 +20,25 @@ namespace catapult { namespace validators {
         if (!pDriveEntry)
                 return Failure_Storage_Drive_Not_Found;
 
-        // Check if all signer/provers are in the Confirmed state.
+        auto& pendingVerification = pDriveEntry->verifications().back();
+
+        // Check if provided verification trigger is equal to desired
+        if (notification.VerificationTrigger != pendingVerification.VerificationTrigger)
+            return Failure_Storage_Verification_Bad_Verification_Trigger;
+
+        // Check if the count of Provers is right
+        if (pendingVerification.Opinions.size() != notification.ProversCount)
+            return Failure_Storage_Verification_Wrong_Namber_Of_Provers;
+
+        // Check if all Provers were in the Confirmed state at the start of verification.
         for (auto i = 0; i < notification.VerifiersOpinionsCount; ++i) {
-            if (pDriveEntry->confirmedStates().find(notification.ProversPtr[i])->second != pDriveEntry->rootHash())
-                return Failure_Storage_Verification_Not_All_Signer_In_Confirmed_State;
+            if (pendingVerification.Opinions.find(notification.ProversPtr[i]) == pendingVerification.Opinions.end())
+                return Failure_Storage_Verification_Some_Provers_Are_Illegal;
         }
+
+        // Check if the verification in the Pending state.
+        if (pDriveEntry->verifications().back().State != state::VerificationState::Pending)
+            return Failure_Storage_Verification_Not_In_Pending;
 
         return ValidationResult::Success;
     });

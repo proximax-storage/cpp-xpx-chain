@@ -112,8 +112,17 @@ namespace catapult { namespace validators {
 	/// Recipient's account state is not found.
 	DEFINE_STORAGE_RESULT(Recipient_State_Not_Found, 33);
 
-	/// Not all signers are in the Confirmed State.
-	DEFINE_STORAGE_RESULT(Verification_Not_All_Signer_In_Confirmed_State, 34);
+	/// Verification Trigger is not equal to the pending verification.
+	DEFINE_STORAGE_RESULT(Verification_Bad_Verification_Trigger, 34);
+
+	/// The provided count of Provers is not equal to desired.
+	DEFINE_STORAGE_RESULT(Verification_Wrong_Namber_Of_Provers, 35);
+
+	/// Not all Provers were in the Confirmed state at the start of Verification.
+	DEFINE_STORAGE_RESULT(Verification_Some_Provers_Are_Illegal, 36);
+
+	/// Verification not in Pending state.
+	DEFINE_STORAGE_RESULT(Verification_Not_In_Pending, 37);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
