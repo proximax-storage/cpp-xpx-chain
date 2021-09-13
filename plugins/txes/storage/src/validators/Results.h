@@ -61,6 +61,7 @@ namespace catapult { namespace validators {
 
 	/// Validation failed because replicator not registered.
 	DEFINE_STORAGE_RESULT(Replicator_Not_Registered, 16);
+	
 	/// Respective download channel is not found.
 	DEFINE_STORAGE_RESULT(Download_Channel_Not_Found, 17);
 
