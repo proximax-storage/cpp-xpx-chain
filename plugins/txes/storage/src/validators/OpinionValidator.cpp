@@ -90,6 +90,7 @@ namespace catapult { namespace validators {
 			if (!crypto::FastAggregateVerify(blsPublicKeys.at(i), dataBuffer, *pBlsSignature))
 				return Failure_Storage_Invalid_BLS_Signature;
 		}
+		delete pDataBegin;
 
 		return ValidationResult::Success;
 	}))

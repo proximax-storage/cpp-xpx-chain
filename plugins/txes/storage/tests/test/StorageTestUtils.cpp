@@ -113,10 +113,12 @@ namespace catapult { namespace test {
 
     state::ReplicatorEntry CreateReplicatorEntry(
             Key key,
+			BLSPublicKey blsKey,
             Amount capacity,
             uint16_t drivesCount) {
         state::ReplicatorEntry entry(key);
-        entry.setCapacity(capacity);
+        entry.setBlsKey(blsKey);
+		entry.setCapacity(capacity);
         for (auto dC = 0u; dC < drivesCount; ++dC)
             entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
 
@@ -136,6 +138,34 @@ namespace catapult { namespace test {
         }
     }
 
+	state::BlsKeysEntry CreateBlsKeysEntry(
+			const BLSPublicKey& blsKey,
+			const Key& key) {
+		auto entry = state::BlsKeysEntry(blsKey);
+		entry.setKey(key);
+		return entry;
+	};
+
+	void AddReplicators(cache::CatapultCache& cache, const uint8_t count, std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs, const Height& height) {
+		auto delta = cache.createDelta();
+		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
+		auto& blsKeysDelta = delta.sub<cache::BlsKeysCache>();
+		const auto newSize = replicatorKeyPairs.size() + count;
+		replicatorKeyPairs.reserve(newSize);
+		for (auto i = replicatorKeyPairs.size(); i < newSize; ++i) {
+			Key key;
+			do { key = test::GenerateRandomByteArray<Key>(); } while (replicatorDelta.contains(key));
+			replicatorKeyPairs.emplace_back(key, crypto::BLSKeyPair::FromPrivate(crypto::BLSPrivateKey::Generate(test::RandomByte)));
+			while (blsKeysDelta.contains(replicatorKeyPairs.at(i).second.publicKey()))
+				replicatorKeyPairs.at(i) = std::make_pair(key, crypto::BLSKeyPair::FromPrivate(crypto::BLSPrivateKey::Generate(test::RandomByte)));
+			const auto& blsPublicKey = replicatorKeyPairs.at(i).second.publicKey();
+			const auto replicatorEntry = test::CreateReplicatorEntry(key, blsPublicKey);
+			const auto blsKeyEntry = test::CreateBlsKeysEntry(blsPublicKey, key);
+			replicatorDelta.insert(replicatorEntry);
+			blsKeysDelta.insert(blsKeyEntry);
+		}
+		cache.commit(height);
+	}
 }}
 
 

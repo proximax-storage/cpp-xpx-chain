@@ -45,6 +45,7 @@ namespace catapult { namespace state {
         auto CreateReplicatorEntry() {
             return test::CreateReplicatorEntry(
                 test::GenerateRandomByteArray<Key>(),
+				test::GenerateRandomByteArray<BLSPublicKey>(),
                 test::GenerateRandomValue<Amount>(),
                 Drives_Count);
         }
