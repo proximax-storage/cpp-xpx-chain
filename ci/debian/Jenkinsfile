@@ -39,6 +39,7 @@ pipeline {
                                 catapult.mongo.plugins.lockhash \
                                 catapult.mongo.plugins.locksecret \
                                 catapult.mongo.plugins.metadata \
+                                catapult.mongo.plugins.metadata_nem \
                                 catapult.mongo.plugins.mosaic \
                                 catapult.mongo.plugins.multisig \
                                 catapult.mongo.plugins.namespace \
@@ -58,6 +59,7 @@ pipeline {
                                 catapult.plugins.lockhash \
                                 catapult.plugins.locksecret \
                                 catapult.plugins.metadata \
+                                catapult.plugins.metadata_nem \
                                 catapult.plugins.mosaic \
                                 catapult.plugins.multisig \
                                 catapult.plugins.namespace \
