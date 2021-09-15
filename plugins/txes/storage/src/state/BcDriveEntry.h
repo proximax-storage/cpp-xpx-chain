@@ -56,17 +56,14 @@ namespace catapult { namespace state {
 
     /// Verification State.
     enum class VerificationState : uint8_t {
-        /// Verification is succeed.
-        Succeeded,
-
         /// Verification waits for opinions.
         Pending,
 
         /// Verification was canceled. For example by DataModificationApprovalTransaction.
 		Canceled,
 
-        /// Verification failed.
-        Failed
+        /// Verification finished.
+        Finished
     };
 
     using VerificationOpinions = std::map<Key, uint8_t>;

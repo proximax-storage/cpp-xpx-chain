@@ -812,38 +812,43 @@ namespace catapult { namespace model {
 
 	public:
 		explicit FinishDriveVerificationNotification(
-				const Key &signer,
 				const Key &driveKey,
 				const Hash256 &verificationTrigger,
-				const uint16_t verificationOpinionPairCount,
-				const Key* proversPtr,
-				const bool* verificationOpinionPtr)
+				const uint16_t proversCount,
+				const Key *proversPtr,
+				const uint16_t verifiersOpinionsCount,
+				const BLSSignature *blsSignaturesPtr,
+				const uint8_t *verificationOpinionPtr)
 				: Notification(Notification_Type, sizeof(FinishDriveVerificationNotification<1>))
-				, PublicKey(signer)
 				, DriveKey(driveKey)
 				, VerificationTrigger(verificationTrigger)
-				, VerificationOpinionPairCount(verificationOpinionPairCount)
+				, ProversCount(proversCount)
 				, ProversPtr(proversPtr)
-				, VerificationOpinionPtr(verificationOpinionPtr)
+				, VerifiersOpinionsCount(verifiersOpinionsCount)
+				, BlsSignaturesPtr(blsSignaturesPtr)
+				, VerifiersOpinionsPtr(verificationOpinionPtr)
 		{}
 
 	public:
-		/// Key of the signer
-		Key PublicKey;
-
 		/// Key of the drive.
 		Key DriveKey;
 
 		/// The hash of block that initiated the Verification.
 		Hash256 VerificationTrigger;
 
-		/// Number of key-opinion pairs in the payload.
-		uint16_t VerificationOpinionPairCount;
+		/// Number of Provers.
+		uint16_t ProversCount;
 
 		/// List of the Provers keys.
-		const Key* ProversPtr;
+        const Key *ProversPtr;
+
+		/// Number of key-opinion pairs in the payload.
+		uint16_t VerifiersOpinionsCount;
+
+		/// Aggregated BLS signatures of opinions.
+		const BLSSignature* BlsSignaturesPtr;
 
 		/// Opinion about verification status for each Prover. Success or Failure.
-		const bool* VerificationOpinionPtr;
+		const uint8_t *VerifiersOpinionsPtr;
 	};
 }}
