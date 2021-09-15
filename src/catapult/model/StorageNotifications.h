@@ -63,8 +63,8 @@ namespace catapult { namespace model {
 	/// Defines a drive closure notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Drive_Closure_v1, 0x0012);
 
-	/// Defines a finish drive verification notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Finish_Drive_Verification_v1, 0x0013);
+	/// Defines an end drive verification notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, End_Drive_Verification_v1, 0x0013);
 
 	struct DownloadWork : public UnresolvedAmountData {
 	public:
@@ -802,16 +802,16 @@ namespace catapult { namespace model {
 
 	/// Notification of a finish drive verification.
 	template<VersionType version>
-	struct FinishDriveVerificationNotification;
+	struct EndDriveVerificationNotification;
 
 	template<>
-	struct FinishDriveVerificationNotification<1> : public Notification {
+	struct EndDriveVerificationNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Storage_Finish_Drive_Verification_v1_Notification;
 
 	public:
-		explicit FinishDriveVerificationNotification(
+		explicit EndDriveVerificationNotification(
 				const Key &driveKey,
 				const Hash256 &verificationTrigger,
 				const uint16_t proversCount,
@@ -819,7 +819,7 @@ namespace catapult { namespace model {
 				const uint16_t verifiersOpinionsCount,
 				const BLSSignature *blsSignaturesPtr,
 				const uint8_t *verificationOpinionPtr)
-				: Notification(Notification_Type, sizeof(FinishDriveVerificationNotification<1>))
+				: Notification(Notification_Type, sizeof(EndDriveVerificationNotification<1>))
 				, DriveKey(driveKey)
 				, VerificationTrigger(verificationTrigger)
 				, ProversCount(proversCount)
