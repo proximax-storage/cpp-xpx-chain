@@ -8,9 +8,9 @@
 
 namespace catapult { namespace observers {
 
-    DEFINE_OBSERVER(FinishDriveVerification, model::FinishDriveVerificationNotification<1>,([](const model::FinishDriveVerificationNotification<1>& notification, ObserverContext& context) {
+    DEFINE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>, ([](const model::EndDriveVerificationNotification<1>& notification, ObserverContext& context) {
         if (NotifyMode::Rollback == context.Mode)
-            CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDriveVerification)");
+            CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (EndDriveVerification)");
 
         //Mosaic ids
         const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;

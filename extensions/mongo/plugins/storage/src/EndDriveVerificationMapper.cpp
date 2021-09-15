@@ -4,17 +4,17 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "FinishDriveVerificationMapper.h"
+#include "EndDriveVerificationMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
-#include "plugins/txes/storage/src/model/FinishDriveVerificationTransaction.h"
+#include "plugins/txes/storage/src/model/EndDriveVerificationTransaction.h"
 
 using namespace catapult::mongo::mappers;
 
 namespace catapult { namespace mongo { namespace plugins {
 
     template<typename TTransaction>
-    void StreamFinishDriveVerificationTransaction(bson_stream::document& builder, const TTransaction& transaction) {
+    void StreamEndDriveVerificationTransaction(bson_stream::document& builder, const TTransaction& transaction) {
         builder << "drive" << ToBinary(transaction.DriveKey);
         builder << "verificationTrigger" << ToBinary(transaction.VerificationTrigger);
 
@@ -40,5 +40,5 @@ namespace catapult { namespace mongo { namespace plugins {
         verificationOpinion << bson_stream::close_array;
     }
 
-    DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(FinishDriveVerification, StreamFinishDriveVerificationTransaction)
+    DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(EndDriveVerification, StreamEndDriveVerificationTransaction)
 }}}

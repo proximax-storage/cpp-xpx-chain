@@ -56,5 +56,5 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DownloadChannelRefund, model::DownloadChannelRefundNotification<1>)();
 
 	/// Observes changes triggered by data finish drive verification notifications.
-	DECLARE_OBSERVER(FinishDriveVerification, model::FinishDriveVerificationNotification<1>)();
+	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)();
 }}

@@ -14,5 +14,5 @@ namespace catapult { namespace plugins {
 
     /// Creates a finish download transaction plugin.
     PLUGIN_API
-    std::unique_ptr<model::TransactionPlugin> CreateFinishDriveVerificationTransactionPlugin();
+    std::unique_ptr<model::TransactionPlugin> CreateEndDriveVerificationTransactionPlugin();
 }}

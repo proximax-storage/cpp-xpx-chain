@@ -5,9 +5,9 @@
 **/
 
 #include "sdk/src/extensions/ConversionExtensions.h"
-#include "FinishDriveVerificationTransactionPlugin.h"
+#include "EndDriveVerificationTransactionPlugin.h"
 #include "catapult/model/StorageNotifications.h"
-#include "src/model/FinishDriveVerificationTransaction.h"
+#include "src/model/EndDriveVerificationTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 
@@ -21,7 +21,7 @@ namespace catapult { namespace plugins {
             return [config](const TTransaction &transaction, const Height &, NotificationSubscriber &sub) {
                 switch (transaction.EntityVersion()) {
                     case 1: {
-                        sub.notify(FinishDriveVerificationNotification<1>(
+                        sub.notify(EndDriveVerificationNotification<1>(
                                 transaction.DriveKey,
                                 transaction.VerificationTrigger,
                                 transaction.ProversCount,
@@ -35,12 +35,12 @@ namespace catapult { namespace plugins {
                     }
 
                     default:
-                        CATAPULT_LOG(debug) << "invalid version of FinishDriveVerificationTransaction: "
+                        CATAPULT_LOG(debug) << "invalid version of EndDriveVerificationTransaction: "
                                             << transaction.EntityVersion();
                 }
             };
         }
     }
 
-    DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(FinishDriveVerification, Default, CreatePublisher, config::ImmutableConfiguration)
+    DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(EndDriveVerification, Default, CreatePublisher, config::ImmutableConfiguration)
 }}

@@ -9,9 +9,9 @@
 
 namespace catapult { namespace validators {
 
-    using Notification = model::FinishDriveVerificationNotification<1>;
+    using Notification = model::EndDriveVerificationNotification<1>;
 
-    DEFINE_STATEFUL_VALIDATOR(FinishDriveVerification, [](const Notification& notification, const ValidatorContext& context) {
+    DEFINE_STATEFUL_VALIDATOR(EndDriveVerification, [](const Notification& notification, const ValidatorContext& context) {
         const auto &driveCache = context.Cache.sub<cache::BcDriveCache>();
         const auto driveIter = driveCache.find(notification.DriveKey);
         const auto &pDriveEntry = driveIter.tryGet();

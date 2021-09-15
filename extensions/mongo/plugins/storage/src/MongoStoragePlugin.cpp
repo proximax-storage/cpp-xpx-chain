@@ -18,7 +18,7 @@
 #include "DataModificationSingleApprovalMapper.h"
 #include "VerificationPaymentMapper.h"
 #include "DownloadApprovalMapper.h"
-#include "FinishDriveVerificationMapper.h"
+#include "EndDriveVerificationMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "storages/MongoBcDriveCacheStorage.h"
 #include "storages/MongoDownloadChannelCacheStorage.h"
@@ -42,7 +42,7 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDataModificationSingleApprovalTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateVerificationPaymentTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDownloadApprovalTransactionMongoPlugin());
-	manager.addTransactionSupport(catapult::mongo::plugins::CreateFinishDriveVerificationTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateEndDriveVerificationTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoBcDriveCacheStorage(

@@ -23,7 +23,7 @@
 #include "src/plugins/DataModificationSingleApprovalTransactionPlugin.h"
 #include "src/plugins/VerificationPaymentTransactionPlugin.h"
 #include "src/plugins/DownloadApprovalTransactionPlugin.h"
-#include "src/plugins/FinishDriveVerificationTransactionPlugin.h"
+#include "src/plugins/EndDriveVerificationTransactionPlugin.h"
 #include "src/state/CachedStorageState.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
@@ -90,7 +90,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDataModificationSingleApprovalTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateVerificationPaymentTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDownloadApprovalTransactionPlugin(immutableConfig));
-		manager.addTransactionSupport(CreateFinishDriveVerificationTransactionPlugin());
+		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin());
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 		  	switch (unresolved.Type) {
@@ -233,7 +233,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDownloadApprovalValidator())
 				.add(validators::CreateDownloadApprovalPaymentValidator())
 				.add(validators::CreateDownloadChannelRefundValidator())
-				.add(validators::CreateFinishDriveVerificationValidator());
+				.add(validators::CreateEndDriveVerificationValidator());
 		});
 
 		manager.addObserverHook([pKeyCollector](auto& builder) {
@@ -251,7 +251,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDownloadApprovalObserver())
 				.add(observers::CreateDownloadApprovalPaymentObserver())
 				.add(observers::CreateDownloadChannelRefundObserver())
-				.add(observers::CreateFinishDriveVerificationObserver());
+				.add(observers::CreateEndDriveVerificationObserver());
 		});
 	}
 }}

@@ -108,5 +108,5 @@ namespace catapult { namespace validators {
     /// A validator implementation that applies to finish drive verification notifications and validates that:
 	/// - respective drive exists
     /// - All signers are in the Confirmed Storage State
-    DECLARE_STATEFUL_VALIDATOR(FinishDriveVerification, model::FinishDriveVerificationNotification<1>)();
+    DECLARE_STATEFUL_VALIDATOR(EndDriveVerification, model::EndDriveVerificationNotification<1>)();
 }}

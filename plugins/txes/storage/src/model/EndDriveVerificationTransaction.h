@@ -14,15 +14,15 @@ namespace catapult { namespace model {
 
     /// Binary layout for a finish drive verification transaction body.
     template<typename THeader>
-    struct FinishDriveVerificationTransactionBody : public THeader {
+    struct EndDriveVerificationTransactionBody : public THeader {
     private:
-        using TransactionType = FinishDriveVerificationTransactionBody<THeader>;
+        using TransactionType = EndDriveVerificationTransactionBody<THeader>;
 
     public:
-        explicit FinishDriveVerificationTransactionBody<THeader>() = default;
+        explicit EndDriveVerificationTransactionBody<THeader>() = default;
 
     public:
-        DEFINE_TRANSACTION_CONSTANTS(Entity_Type_FinishDriveVerification, 1)
+        DEFINE_TRANSACTION_CONSTANTS(Entity_Type_EndDriveVerification, 1)
 
     public:
         /// Key of the drive.
@@ -76,7 +76,7 @@ namespace catapult { namespace model {
         }
     };
 
-    DEFINE_EMBEDDABLE_TRANSACTION(FinishDriveVerification)
+    DEFINE_EMBEDDABLE_TRANSACTION(EndDriveVerification)
 
 #pragma pack(pop)
 }}
