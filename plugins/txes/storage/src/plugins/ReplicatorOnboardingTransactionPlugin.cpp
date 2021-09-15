@@ -10,6 +10,7 @@
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "src/utils/StorageUtils.h"
+#include "sdk/src/extensions/ConversionExtensions.h"
 
 using namespace catapult::model;
 
@@ -24,14 +25,14 @@ namespace catapult { namespace plugins {
 					sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
 					sub.notify(ReplicatorOnboardingNotification<1>(transaction.Signer, transaction.BlsKey, transaction.Capacity));
 
-					const auto signerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier));
 					const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
 					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+					uint64_t capacity = transaction.Capacity.unwrap();
 
 					//swap xpx to storage unit
 					utils::SwapMosaics(
 						transaction.Signer,
-						{ { storageMosaicId, Amount(transaction.Capacity) } },
+						{ { storageMosaicId, transaction.Capacity } },
 						sub,
 						config,
 						utils::SwapOperation::Buy
@@ -40,7 +41,7 @@ namespace catapult { namespace plugins {
 					//swap xpx to streaming unit
 					utils::SwapMosaics(
 						transaction.Signer,
-						{ { streamingMosaicId, Amount(2 * transaction.Capacity) } },
+						{ { streamingMosaicId, Amount(2 * capacity) } },
 						sub,
 						config,
 						utils::SwapOperation::Buy
@@ -56,5 +57,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(ReplicatorOnboarding, Default, CreatePublisher)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(ReplicatorOnboarding, Default, CreatePublisher, config::ImmutableConfiguration)
 }}
