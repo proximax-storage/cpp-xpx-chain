@@ -26,13 +26,13 @@
 
 namespace catapult { namespace test {
 
-	Accounts::Accounts(size_t numAccounts) {
+	Accounts::Accounts(size_t numAccounts, uint32_t otherAccountsVersion, uint32_t defaultAccountVersion) {
 		if (0 == numAccounts)
 			CATAPULT_THROW_INVALID_ARGUMENT("must create at least one account");
 
-		m_keyPairs.push_back(crypto::KeyPair::FromString(Mijin_Test_Private_Keys[0]));
+		m_keyPairs.push_back(crypto::KeyPair::FromString(Mijin_Test_Private_Keys[0], defaultAccountVersion ? defaultAccountVersion : defaultAccountVersion));
 		for (auto i = 0u; i < numAccounts - 1; ++i)
-			m_keyPairs.push_back(GenerateKeyPair());
+			m_keyPairs.push_back(GenerateKeyPair(otherAccountsVersion));
 	}
 
 	Address Accounts::getAddress(size_t id) const {

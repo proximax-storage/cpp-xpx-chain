@@ -60,9 +60,15 @@ namespace catapult { namespace local {
 
 		void ResignBlock(model::Block& block) {
 			for (const auto* pPrivateKeyString : test::Mijin_Test_Private_Keys) {
-				auto keyPair = crypto::KeyPair::FromString(pPrivateKeyString);
-				if (keyPair.publicKey() == block.Signer) {
-					extensions::BlockExtensions(test::GetNemesisGenerationHash()).signFullBlock(keyPair, block);
+				auto keyPairSha3 = crypto::KeyPair::FromString(pPrivateKeyString, KeyHashingType::Sha3);
+				if (keyPairSha3.publicKey() == block.Signer) {
+					extensions::BlockExtensions(test::GetNemesisGenerationHash()).signFullBlock(keyPairSha3, block);
+					return;
+				}
+				//TEMPORARY BAD FIX
+				auto keyPairSha2 = crypto::KeyPair::FromString(pPrivateKeyString, KeyHashingType::Sha2);
+				if (keyPairSha2.publicKey() == block.Signer) {
+					extensions::BlockExtensions(test::GetNemesisGenerationHash()).signFullBlock(keyPairSha2, block);
 					return;
 				}
 			}
@@ -87,7 +93,7 @@ namespace catapult { namespace local {
 			EXPECT_EQ(Height(1), context.height());
 
 			// - prepare transfers (all transfers are dependent on previous transfer)
-			test::Accounts accounts(6);
+			test::Accounts accounts(6, 2, 1);
 			test::TransactionsBuilder transactionsBuilder(accounts);
 			transactionsBuilder.addTransfer(0, 1, Amount(1'000'000));
 			transactionsBuilder.addTransfer(1, 2, Amount(900'000));
@@ -183,7 +189,7 @@ namespace catapult { namespace local {
 		std::vector<Hash256> RunRollbackTest(TTestContext& context) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
-			test::Accounts accounts(6);
+			test::Accounts accounts(6, 2, 1);
 			{
 				// - always use SingleBlockTraits because a push can rollback at most one block
 				auto stateHashCalculator = context.createStateHashCalculator();
@@ -265,7 +271,7 @@ namespace catapult { namespace local {
 		std::vector<Hash256> RunRejectInvalidApplyTest(TTestContext& context, TGenerateInvalidBlocks generateInvalidBlocks) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
-			test::Accounts accounts(6);
+			test::Accounts accounts(6, 2, 1);
 			std::unique_ptr<BlockChainBuilder> pBuilder1;
 			Blocks seedBlocks;
 			{
@@ -414,7 +420,7 @@ namespace catapult { namespace local {
 		std::vector<Hash256> RunRejectInvalidRollbackTest(TTestContext& context, TGenerateInvalidBlocks generateInvalidBlocks) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
-			test::Accounts accounts(6);
+			test::Accounts accounts(6, 2, 1);
 			std::unique_ptr<BlockChainBuilder> pBuilder1;
 			Blocks seedBlocks;
 			{

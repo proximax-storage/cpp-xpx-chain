@@ -37,6 +37,7 @@ namespace catapult { namespace harvesting {
 		}
 	}
 
+	//Blocks from the file queue must always be account version 2 since remote delegated harvesting is not enabled for account version 1. Further account versions will need this to be reworked.
 	std::optional<BlockGeneratorAccountDescriptor> TryDecryptBlockGeneratorAccountDescriptor(
 			const RawBuffer& publicKeyPrefixedEncryptedPayload,
 			const crypto::KeyPair& encryptionKeyPair) {
@@ -47,12 +48,12 @@ namespace catapult { namespace harvesting {
 
 		auto iter = decrypted.begin();
 		auto extractKeyPair = [&iter]() {
-			return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate([&iter]() mutable { return *iter++; }));
+			return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate([&iter]() mutable { return *iter++; }), 2);
 		};
 
 		auto signingKeyPair = extractKeyPair();
 		auto vrfKeyPair = extractKeyPair();
-		return std::optional(BlockGeneratorAccountDescriptor(std::move(signingKeyPair), std::move(vrfKeyPair)));
+		return std::optional(BlockGeneratorAccountDescriptor(std::move(signingKeyPair), std::move(vrfKeyPair), 2));
 	}
 
 	void UnlockedFileQueueConsumer(

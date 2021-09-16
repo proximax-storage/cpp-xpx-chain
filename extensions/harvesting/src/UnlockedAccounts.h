@@ -53,7 +53,10 @@ namespace catapult { namespace harvesting {
 
 	/// Insertion operator for outputting \a value to \a out.
 	std::ostream& operator<<(std::ostream& out, UnlockedAccountsAddResult value);
-	using PrioritizedKeysContainer = std::vector<std::tuple<BlockGeneratorAccountDescriptor, size_t, uint32_t>>;
+	using PrioritizedKeysContainer = std::vector<std::tuple<BlockGeneratorAccountDescriptor, size_t>>;
+	namespace PrioritizedContainerIdx {
+		enum PrioritizedContainerIdx { Descriptor = 0, Priority = 1 };
+	};
 	/// A read only view on top of unlocked accounts.
 	class UnlockedAccountsView : utils::MoveOnly {
 	public:
@@ -109,7 +112,7 @@ namespace catapult { namespace harvesting {
 
 	public:
 		/// Adds (unlocks) the account identified by key pair (\a keyPair).
-		UnlockedAccountsAddResult add(BlockGeneratorAccountDescriptor&& keyPair, uint32_t accountVersion);
+		UnlockedAccountsAddResult add(BlockGeneratorAccountDescriptor&& keyPair);
 
 		/// Removes (locks) the account identified by the public key (\a publicKey).
 		bool remove(const Key& publicKey);

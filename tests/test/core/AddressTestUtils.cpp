@@ -29,8 +29,16 @@ namespace catapult { namespace test {
 		return crypto::PrivateKey::Generate(RandomByte);
 	}
 
-	crypto::KeyPair GenerateKeyPair() {
-		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey());
+	crypto::KeyPair GenerateKeyPair(KeyHashingType type) {
+		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), type);
+	}
+
+	crypto::KeyPair GenerateKeyPair(uint32_t version) {
+		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), 1);
+	}
+
+	crypto::KeyPair GenerateVrfKeyPair() {
+		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), KeyHashingType::Sha3);
 	}
 
 	Address GenerateRandomAddress() {

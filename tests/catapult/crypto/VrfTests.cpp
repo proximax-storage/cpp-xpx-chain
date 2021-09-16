@@ -122,7 +122,7 @@ namespace catapult { namespace crypto {
 		auto i = 0u;
 		for (const auto& input : testVectorsInput) {
 			// Arrange:
-			auto keyPair = KeyPair::FromString(input.SK);
+			auto keyPair = KeyPair::FromString(input.SK, Vrf_Key_Hashing_Type);
 			auto alpha = test::ToVector(input.Alpha);
 			auto message = "at index " + std::to_string(i);
 
@@ -150,7 +150,7 @@ namespace catapult { namespace crypto {
 
 	namespace {
 		void AssertVerifyVrfProofFailsWhenProofIsCorrupted(const consumer<VrfProof&>& transform) {
-			auto keyPair = KeyPair::FromString("9D61B19DEFFD5A60BA844AF492EC2CC44449C5697B326919703BAC031CAE7F60");
+			auto keyPair = KeyPair::FromString("9D61B19DEFFD5A60BA844AF492EC2CC44449C5697B326919703BAC031CAE7F60", Vrf_Key_Hashing_Type);
 			auto alpha = test::ToVector("af82");
 			auto vrfProof = GenerateVrfProof(alpha, keyPair);
 
@@ -218,7 +218,7 @@ namespace catapult { namespace crypto {
 		auto i = 0u;
 		for (const auto& input : testVectorsInput) {
 			// Arrange:
-			auto keyPair = KeyPair::FromString(input.SK);
+			auto keyPair = KeyPair::FromString(input.SK, Vrf_Key_Hashing_Type);
 			auto alpha = test::ToVector(input.Alpha);
 			auto message = "at index " + std::to_string(i);
 

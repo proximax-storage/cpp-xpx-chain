@@ -36,6 +36,10 @@ namespace catapult { namespace tools { namespace upgrade {
 			}
 
 			void prepareOptions(OptionsBuilder& optionsBuilder, OptionsPositional&) override {
+				optionsBuilder("signer-account-version,s",
+							   OptionsValue<uint32_t>(m_accountVersion)->required(),
+							   "account version for the nemesis account required to sign transaction (no default)");
+
 				optionsBuilder("signer-key,s",
 					OptionsValue<std::string>(m_signerKey)->required(),
 					"nemesis private key required to sign transaction (no default)");
@@ -145,7 +149,7 @@ namespace catapult { namespace tools { namespace upgrade {
 				model::NetworkIdentifier networkIdentifier;
 				if (!model::TryParseValue(m_network, networkIdentifier))
 					CATAPULT_THROW_INVALID_ARGUMENT_1("wrong network identifier", m_network);
-				auto signer = crypto::KeyPair::FromString(m_signerKey);
+				auto signer = crypto::KeyPair::FromString(m_signerKey, m_accountVersion);
 				std::list<std::shared_ptr<model::Transaction>> transactions;
 
 				if (m_blockChainUpgrade) {
@@ -188,7 +192,7 @@ namespace catapult { namespace tools { namespace upgrade {
 				boost::asio::io_service service;
 				boost::asio::executor_work_guard guard(boost::asio::make_work_guard(service));
 
-				crypto::KeyPair keyPair = crypto::KeyPair::FromString(m_restKey);
+				crypto::KeyPair keyPair = crypto::KeyPair::FromString(m_restKey, Rest_Key_Hashing_Type);
 				net::VerifiedPeerInfo serverPeerInfo;
 				serverPeerInfo.PublicKey = crypto::ParseKey(m_apiKey);
 				serverPeerInfo.SecurityMode = ionet::ConnectionSecurityMode::None;
@@ -304,6 +308,7 @@ namespace catapult { namespace tools { namespace upgrade {
 			uint16_t m_port;
 			std::string m_apiKey;
 			std::string m_restKey;
+			uint32_t m_accountVersion;
 		};
 	}
 }}}

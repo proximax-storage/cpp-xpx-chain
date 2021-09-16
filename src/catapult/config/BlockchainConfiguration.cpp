@@ -92,7 +92,7 @@ namespace catapult { namespace config {
 	ionet::Node ToLocalNode(const BlockchainConfiguration& config) {
 		const auto& localNodeConfig = config.Node.Local;
 
-		auto identityKey = crypto::KeyPair::FromString(config.User.BootKey).publicKey();
+		auto identityKey = crypto::KeyPair::FromString(config.User.BootKey, 1).publicKey();
 
 		auto endpoint = ionet::NodeEndpoint();
 		endpoint.Host = localNodeConfig.Host;

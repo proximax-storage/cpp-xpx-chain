@@ -29,7 +29,7 @@ namespace catapult { namespace test {
 	class Accounts {
 	public:
 		/// Creates a container with \a numAccounts accounts.
-		explicit Accounts(size_t numAccounts);
+		explicit Accounts(size_t numAccounts, uint32_t otherAccountsVersion, uint32_t defaultAccountVersion = 0);
 
 	public:
 		/// Gets the address for the \a id account.

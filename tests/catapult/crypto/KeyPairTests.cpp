@@ -26,21 +26,24 @@ namespace catapult { namespace crypto {
 #define TEST_CLASS KeyPairTests
 
 	namespace {
-		void AssertCannotCreatePrivateKeyFromStringWithSize(size_t size, char keyFirstChar) {
+		void AssertCannotCreatePrivateKeyFromStringWithSize(size_t size, char keyFirstChar, KeyHashingType hashType) {
 			// Arrange:
 			auto rawKeyString = test::GenerateRandomHexString(size);
 			rawKeyString[0] = keyFirstChar;
 
 			// Act + Assert: key creation should fail but string should not be cleared
-			EXPECT_THROW(KeyPair::FromString(rawKeyString), catapult_invalid_argument) << "string size: " << size;
+			EXPECT_THROW(KeyPair::FromString(rawKeyString, hashType), catapult_invalid_argument) << "string size: " << size;
 			EXPECT_EQ(keyFirstChar, rawKeyString[0]);
 		}
 	}
 
 	TEST(TEST_CLASS, CannotCreateKeyPairFromInvalidString) {
-		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 1, 'a');
-		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 2, 'g');
-		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 3, 'a');
+		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 1, 'a', KeyHashingType::Sha3);
+		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 1, 'a', KeyHashingType::Sha2);
+		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 2, 'g', KeyHashingType::Sha3);
+		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 2, 'g', KeyHashingType::Sha2);
+		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 3, 'a', KeyHashingType::Sha3);
+		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 3, 'a', KeyHashingType::Sha2);
 	}
 
 	TEST(TEST_CLASS, CanCreateKeyPairFromValidString) {
@@ -50,29 +53,37 @@ namespace catapult { namespace crypto {
 		auto expectedKey = std::string("C54D6E33ED1446EEDD7F7A80A588DD01857F723687A09200C1917D5524752F8B");
 #else
 		auto rawKeyString = std::string("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98534");
-		auto expectedKey = std::string("A6DC1C33C26BC67B21AC4B3F4D1E88901E23AD208260F40AF3CB0A6CE9557852");
+		auto expectedKeySha3 = std::string("A6DC1C33C26BC67B21AC4B3F4D1E88901E23AD208260F40AF3CB0A6CE9557852");
+		auto expectedKeySha2 = std::string("A6DC1C33C26BC67B21AC4B3F4D1E88901E23AD208260F40AF3CB0A6CE9557852");
 #endif
 		// Act:
-		auto keyPair = KeyPair::FromString(rawKeyString);
+		auto keyPairSha3 = KeyPair::FromString(rawKeyString, KeyHashingType::Sha3);
+		auto keyPairSha2 = KeyPair::FromString(rawKeyString, KeyHashingType::Sha2);
 
 		// Assert:
-		EXPECT_EQ(expectedKey, test::ToString(keyPair.publicKey()));
-		EXPECT_EQ(rawKeyString, test::ToHexString(keyPair.privateKey().data(), keyPair.privateKey().size()));
+		EXPECT_EQ(expectedKeySha3, test::ToString(keyPairSha3.publicKey()));
+		EXPECT_EQ(rawKeyString, test::ToHexString(keyPairSha3.privateKey().data(), keyPairSha3.privateKey().size()));
+
+		EXPECT_EQ(expectedKeySha2, test::ToString(keyPairSha2.publicKey()));
+		EXPECT_EQ(rawKeyString, test::ToHexString(keyPairSha2.privateKey().data(), keyPairSha2.privateKey().size()));
 	}
 
 	TEST(TEST_CLASS, CanCreateKeyPairFromPrivateKey) {
 		// Arrange:
 		auto privateKeyStr = test::GenerateRandomHexString(Key_Size * 2);
 		auto privateKey = PrivateKey::FromString(privateKeyStr);
-		Key expectedPublicKey;
-		ExtractPublicKeyFromPrivateKeySha3(privateKey, expectedPublicKey);
-
+		Key expectedPublicKeySha3, expectedPublicKeySha2;
+		ExtractPublicKeyFromPrivateKeySha2(privateKey, expectedPublicKeySha2);
+		ExtractPublicKeyFromPrivateKeySha3(privateKey, expectedPublicKeySha3);
 		// Act:
-		auto keyPair = KeyPair::FromPrivate(std::move(privateKey));
-
+		auto keyPairSha3 = KeyPair::FromPrivate(std::move(privateKey), KeyHashingType::Sha3);
+		auto keyPairSha2 = KeyPair::FromPrivate(std::move(privateKey), KeyHashingType::Sha2);
 		// Assert:
-		EXPECT_EQ(PrivateKey::FromString(privateKeyStr), keyPair.privateKey());
-		EXPECT_EQ(expectedPublicKey, keyPair.publicKey());
+		EXPECT_EQ(PrivateKey::FromString(privateKeyStr), keyPairSha3.privateKey());
+		EXPECT_EQ(expectedPublicKeySha3, keyPairSha3.publicKey());
+
+		EXPECT_EQ(PrivateKey::FromString(privateKeyStr), keyPairSha2.privateKey());
+		EXPECT_EQ(expectedPublicKeySha2, keyPairSha2.publicKey());
 	}
 
 	TEST(TEST_CLASS, KeyPairCreatedFromPrivateKeyMatchesKeyPairCreatedFromString) {
@@ -81,8 +92,8 @@ namespace catapult { namespace crypto {
 		auto privateKey = PrivateKey::FromString(privateKeyStr);
 
 		// Act:
-		auto keyPair1 = KeyPair::FromPrivate(std::move(privateKey));
-		auto keyPair2 = KeyPair::FromString(privateKeyStr);
+		auto keyPair1 = KeyPair::FromPrivate(std::move(privateKey), KeyHashingType::Sha3);
+		auto keyPair2 = KeyPair::FromString(privateKeyStr, KeyHashingType::Sha3);
 
 		// Assert:
 		EXPECT_EQ(keyPair1.privateKey(), keyPair2.privateKey());
@@ -115,7 +126,15 @@ namespace catapult { namespace crypto {
 			"A6954BAA315EE50453CCE3483906F134405B8B3ADD94BFC8D8125CF3C09BBFE8",
 			"832A237053A83B7E97CA287AC15F9AD5838898E7395967B56D39749652EA25C3"
 		};
-		std::string expectedSet[] {
+		std::string expectedSetSha3[] {
+			"5C9901721703B1B082263065BDE4929079312FB6A09683C00F131AA794796467",
+			"887258790597075D955EC709131255333E5F62327933D236D6160E56A8B75A6D",
+			"DBAC0727B529972CF54D0DFAA52928AAA5A99766CB1912EF3B430BD30647EEDE",
+			"3A147249DD5DEC2DEBB0787F2B99E6BC5961FFB361600116D88444B461C8EF22",
+			"0EF23A8FDC27032AC21065D39B965CACBEBECD08CDAE2E18AB205D751F1E7626",
+		};
+
+		std::string expectedSetSha2[] {
 			"5C9901721703B1B082263065BDE4929079312FB6A09683C00F131AA794796467",
 			"887258790597075D955EC709131255333E5F62327933D236D6160E56A8B75A6D",
 			"DBAC0727B529972CF54D0DFAA52928AAA5A99766CB1912EF3B430BD30647EEDE",
@@ -124,13 +143,16 @@ namespace catapult { namespace crypto {
 		};
 #endif
 
-		ASSERT_EQ(CountOf(dataSet), CountOf(expectedSet));
+		ASSERT_EQ(CountOf(dataSet), CountOf(expectedSetSha3));
+		ASSERT_EQ(CountOf(dataSet), CountOf(expectedSetSha2));
 		for (size_t i = 0; i < CountOf(dataSet); ++i) {
 			// Act:
-			auto keyPair = KeyPair::FromString(dataSet[i]);
+			auto keyPairSha3 = KeyPair::FromString(dataSet[i], KeyHashingType::Sha3);
+			auto keyPairSha2 = KeyPair::FromString(dataSet[i], KeyHashingType::Sha2);
 
 			// Assert:
-			EXPECT_EQ(expectedSet[i], test::ToString(keyPair.publicKey()));
+			EXPECT_EQ(expectedSetSha3[i], test::ToString(keyPairSha3.publicKey()));
+			EXPECT_EQ(expectedSetSha2[i], test::ToString(keyPairSha2.publicKey()));
 		}
 	}
 }}

@@ -191,7 +191,7 @@ namespace catapult { namespace tools { namespace nemgen {
 	}
 
 	model::UniqueEntityPtr<model::Block> CreateNemesisBlock(const NemesisConfiguration& config, const std::string& resourcesPath) {
-		auto signer = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey);
+		auto signer = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey, config.NemesisAccountVersion);
 		NemesisTransactions transactions(config.NetworkIdentifier, config.NemesisGenerationHash, signer);
 
 		// - namespace creation
@@ -265,7 +265,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		block.BlockReceiptsHash = executionHashesDescriptor.ReceiptsHash;
 		block.StateHash = executionHashesDescriptor.StateHash;
 
-		auto signer = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey);
+		auto signer = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey, config.NemesisAccountVersion);
 		extensions::BlockExtensions(config.NemesisGenerationHash).signFullBlock(signer, block);
 		return model::CalculateHash(block);
 	}

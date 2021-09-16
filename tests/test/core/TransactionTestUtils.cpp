@@ -83,8 +83,8 @@ namespace catapult { namespace test {
 		return pTransaction;
 	}
 
-	model::UniqueEntityPtr<model::Transaction> GenerateDeterministicTransaction() {
-		auto keyPair = crypto::KeyPair::FromString("4C730B716552D60D276D24EABD60CAB3BF15BC6824937A510639CEB08BC77821");
+	model::UniqueEntityPtr<model::Transaction> GenerateDeterministicTransaction(uint32_t signerAccountVersion) {
+		auto keyPair = crypto::KeyPair::FromString("4C730B716552D60D276D24EABD60CAB3BF15BC6824937A510639CEB08BC77821", signerAccountVersion);
 
 		auto pTransaction = mocks::CreateMockTransaction(sizeof(uint64_t));
 		pTransaction->Signer = keyPair.publicKey();

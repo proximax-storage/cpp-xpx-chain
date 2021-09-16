@@ -69,7 +69,7 @@ namespace catapult { namespace sync {
 			// so, use a fixed account that will generate a hit lower than the target, which is fixed in the test
 			// since the cache is setup in InitializeCatapultCacheForDispatcherTests,
 			// this account does not need to be a 'real' nemesis account
-			return crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[0]);
+			return crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[0], 1);
 		}
 
 		cache::CatapultCache CreateCatapultCacheForDispatcherTests() {

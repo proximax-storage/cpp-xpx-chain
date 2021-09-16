@@ -91,7 +91,7 @@ namespace catapult {
 	namespace {
 		struct SignTestData {
 		public:
-			explicit SignTestData(crypto::PrivateKey&& privateKey) : KeyPair(crypto::KeyPair::FromPrivate(std::move(privateKey)))
+			explicit SignTestData(crypto::PrivateKey&& privateKey) : KeyPair(crypto::KeyPair::FromPrivate(std::move(privateKey), KeyHashingType::Sha3))
 			{}
 
 		public:

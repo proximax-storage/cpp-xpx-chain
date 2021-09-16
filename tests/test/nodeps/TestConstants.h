@@ -54,7 +54,10 @@ namespace catapult { namespace test {
 
 #endif
 
-		/// Default total chain importance used for scaling block target calculation.
+	/// Default version for accounts created during nemesis block generation. Testing purposes only
+	constexpr uint32_t Nemesis_Accounts_Version = 1;
+
+	/// Default total chain importance used for scaling block target calculation.
 	constexpr Importance Default_Total_Chain_Importance(8'999'999'998);
 
 	/// Network generation hash string used by deterministic tests.

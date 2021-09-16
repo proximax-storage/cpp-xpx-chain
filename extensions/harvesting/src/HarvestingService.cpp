@@ -20,6 +20,7 @@
 
 #include <catapult/ionet/PacketPayloadFactory.h>
 #include <catapult/model/Address.h>
+#include <catapult/utils/HexParser.h>
 #include "HarvestingService.h"
 #include "BlockGeneratorAccountDescriptor.h"
 #include "HarvesterBlockGenerator.h"
@@ -58,36 +59,26 @@ namespace catapult { namespace harvesting {
 			std::shared_ptr<UnlockedAccountsUpdater> pUnlockedAccountsUpdater;
 		};
 
-		BlockGeneratorAccountDescriptor CreateBlockGeneratorAccountDescriptor(const HarvestingConfiguration& config) {
+		BlockGeneratorAccountDescriptor CreateBlockGeneratorAccountDescriptor(const HarvestingConfiguration& config, uint32_t configuredAccountVersion = 1) {
 			if (!config.IsAutoHarvestingEnabled)
 				return BlockGeneratorAccountDescriptor();
 
 			return BlockGeneratorAccountDescriptor(
-					crypto::KeyPair::FromString(config.HarvestKey),
-					crypto::KeyPair::FromString(config.HarvesterVrfPrivateKey));
+					crypto::KeyPair::FromString(config.HarvestKey, configuredAccountVersion),
+					crypto::KeyPair::FromString(config.HarvesterVrfPrivateKey, configuredAccountVersion),
+					configuredAccountVersion);
 		}
 
 		std::shared_ptr<UnlockedAccounts> CreateUnlockedAccounts(const HarvestingConfiguration& config, const cache::CatapultCache& cache, BlockGeneratorAccountDescriptor&& blockGeneratorAccountDescriptor) {
 			// unlock configured account if it's eligible to harvest the next block
 			auto harvesterSigningPublicKey = blockGeneratorAccountDescriptor.signingKeyPair().publicKey();
 			auto harvesterVrfPublicKey = blockGeneratorAccountDescriptor.vrfKeyPair().publicKey();
+
+			//Prioritizer may get silent invalid public key is if autoharvesting is not enabled
 			auto pUnlockedAccounts = std::make_shared<UnlockedAccounts>(config.MaxUnlockedAccounts,
 				CreateDelegatePrioritizer(config.DelegatePrioritizationPolicy, cache, harvesterSigningPublicKey));
 			if (config.IsAutoHarvestingEnabled) {
-
- 				auto cacheView = cache.createView();
-				auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
-				auto accountStateOptional = FindAccountStateByPublicKeyOrAddress(readOnlyAccountStateCache, harvesterSigningPublicKey);
-				if (!accountStateOptional.has_value()) {
-					CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "Unable to set up Auto Harvesting: Invalid harvesting account provided with AutoHarvesting Enabled");
-				}
-				auto accountState = accountStateOptional.value().get();
-				/* No need to verify as account would be pruned.
-				if(accountState.GetVersion() > 1 && harvesterVrfPublicKey != GetVrfPublicKey(accountState))
-				{
-					CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "Unable to set up Auto Harvesting: V2 accounts do not support harvesting without a valid VRF key");
-				}*/
-				auto unlockResult = pUnlockedAccounts->modifier().add(std::move(blockGeneratorAccountDescriptor), accountState.GetVersion());
+				auto unlockResult = pUnlockedAccounts->modifier().add(std::move(blockGeneratorAccountDescriptor));
 				CATAPULT_LOG(info)
 					<< std::endl << "Unlocked harvesting account with result " << unlockResult
 					<< std::endl << "+ Signing " << harvesterSigningPublicKey
@@ -101,14 +92,28 @@ namespace catapult { namespace harvesting {
 				const HarvestingConfiguration& config,
 				const extensions::ServiceState& state,
 				const crypto::KeyPair& encryptionKeyPair) {
-			auto blockGeneratorAccountDescriptor = CreateBlockGeneratorAccountDescriptor(config);
+			Key harvesterPublicKey;
+			utils::ParseHexStringIntoContainer(config.HarvesterPublicKey.c_str(), Key::Size, harvesterPublicKey);
+			auto configAccountVersion = 1u;
+			if(config.IsAutoHarvestingEnabled)
+			{
+				auto cacheView = state.cache().createView();
+				auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
+				auto accountStateOptional = FindAccountStateByPublicKeyOrAddress(readOnlyAccountStateCache, harvesterPublicKey);
+				if (!accountStateOptional.has_value()) {
+					CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "Unable to set up Auto Harvesting: Invalid harvesting account provided with AutoHarvesting Enabled");
+				}
+				configAccountVersion = accountStateOptional.value().get().GetVersion();
+			}
+			auto blockGeneratorAccountDescriptor = CreateBlockGeneratorAccountDescriptor(config, configAccountVersion);
 			auto harvesterSigningPublicKey = blockGeneratorAccountDescriptor.signingKeyPair().publicKey();
+			if(config.IsAutoHarvestingEnabled && harvesterSigningPublicKey != harvesterPublicKey) CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "AutoHarvestingKeyMismatch: Derived public key does not match provided public key");
 			auto pUnlockedAccounts = CreateUnlockedAccounts(config, state.cache(), std::move(blockGeneratorAccountDescriptor));
 
 			auto pUnlockedAccountsUpdater = std::make_shared<UnlockedAccountsUpdater>(
 					state.cache(),
 					*pUnlockedAccounts,
-					crypto::KeyPair::FromString(config.HarvestKey).publicKey(),
+					harvesterPublicKey,
 					encryptionKeyPair,
 					state.pluginManager().configHolder(),
 					config::CatapultDataDirectory(state.config().User.DataDirectory));

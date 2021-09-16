@@ -220,8 +220,8 @@ namespace catapult { namespace test {
 			return config;
 		}
 
-		void SetNetwork(model::NetworkInfo& network) {
-			network.PublicKey = crypto::KeyPair::FromString(Mijin_Test_Nemesis_Private_Key).publicKey();
+		void SetNetwork(model::NetworkInfo& network, uint32_t accountVersion) {
+			network.PublicKey = crypto::KeyPair::FromString(Mijin_Test_Nemesis_Private_Key, accountVersion).publicKey();
 		}
 	}
 
@@ -231,12 +231,12 @@ namespace catapult { namespace test {
 	}
 
 	crypto::KeyPair LoadServerKeyPair() {
-		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::FromString(Local_Node_Private_Key));
+		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::FromString(Local_Node_Private_Key), Node_Boot_Key_Hashing_Type);
 	}
 
 	model::NetworkConfiguration CreatePrototypicalNetworkConfiguration() {
 		auto config = model::NetworkConfiguration::Uninitialized();
-		SetNetwork(config.Info);
+
 
 		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 		config.BlockTimeSmoothingFactor = 10'000;
@@ -258,6 +258,11 @@ namespace catapult { namespace test {
 
 		config.GreedDelta = 0.5;
 		config.GreedExponent = 2.0;
+
+		config.AccountVersion = 1;
+
+		SetNetwork(config.Info, config.AccountVersion);
+
 		return config;
 	}
 

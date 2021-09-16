@@ -63,7 +63,7 @@ namespace catapult { namespace net {
 		VerifyResult VerifyClient(const std::shared_ptr<ionet::PacketIo>& pClientIo, bool shouldExpectNonEmptyPeerInfo = false) {
 			// Assert: verified client key should be correct only for certain results
 			auto expectedPeerInfo = shouldExpectNonEmptyPeerInfo
-					? VerifiedPeerInfo{ crypto::KeyPair::FromString(Client_Private_Key).publicKey(), Default_Security_Mode }
+					? VerifiedPeerInfo{ crypto::KeyPair::FromString(Client_Private_Key, Node_Boot_Key_Hashing_Type).publicKey(), Default_Security_Mode }
 					: VerifiedPeerInfo{ Key(), static_cast<ionet::ConnectionSecurityMode>(0) };
 
 			return VerifyClient(pClientIo, expectedPeerInfo);
@@ -74,7 +74,7 @@ namespace catapult { namespace net {
 				auto pRequest = static_cast<const ServerChallengeRequest*>(pPacket);
 				auto pResponse = GenerateServerChallengeResponse(
 						*pRequest,
-						crypto::KeyPair::FromString(Client_Private_Key),
+						crypto::KeyPair::FromString(Client_Private_Key, Node_Boot_Key_Hashing_Type),
 						Default_Security_Mode);
 				modifyPacket(*pResponse);
 				return pResponse;
@@ -167,7 +167,7 @@ namespace catapult { namespace net {
 			pMockIo->queueWrite(ionet::SocketOperationCode::Success);
 
 			// Act: verify
-			auto clientPublicKey = crypto::KeyPair::FromString(Client_Private_Key).publicKey();
+			auto clientPublicKey = crypto::KeyPair::FromString(Client_Private_Key, Node_Boot_Key_Hashing_Type).publicKey();
 			auto result = VerifyClient(pMockIo, { clientPublicKey, securityMode });
 
 			// Assert:

@@ -33,6 +33,9 @@ namespace catapult { namespace harvesting {
 		/// Harvest key.
 		std::string HarvestKey;
 
+		/// Harvest public key. Required now since keys cannot be derived before tied to an account state
+		std::string HarvesterPublicKey;
+
 		/// Harvester VRF private key. Used only when harvesting is enabled. Only used if HarvestKey is a V2 account
 		std::string HarvesterVrfPrivateKey;
 

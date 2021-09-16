@@ -19,26 +19,23 @@
 **/
 
 #pragma once
-#include "types.h"
+#include <array>
+#include <cstring>
+#include "catapult/state/AccountState.h"
+#include "catapult/types.h"
+namespace catapult { namespace utils {
 
-namespace catapult {
+	/// Resolve an account version to the corresponding key hashing algorythm
+	KeyHashingType ResolveKeyHashingTypeFromAccountVersion(uint32_t version)
+	{
+		if(version >= 2) return KeyHashingType::Sha2;
+		return KeyHashingType::Sha3;
+	}
 
-	/// Number of historical importances associated with a single account.
-	constexpr size_t Importance_History_Size = 3;
-
-	/// Nemesis block difficulty
-	constexpr uint64_t NEMESIS_BLOCK_DIFFICULTY{1000};
-
-	/// Size of hashes in the hash cache.
-	/// \note Reducing below `Hash256_Size` can save memory but will increase possibility of false positive rejections.
-	constexpr size_t Cached_Hash_Size = Hash256_Size;
-
-	/// Duration of eternal artifact.
-	constexpr BlockDuration Eternal_Artifact_Duration(0);
-
-	const KeyHashingType Node_Boot_Key_Hashing_Type = KeyHashingType::Sha3;
-
-	const KeyHashingType Rest_Key_Hashing_Type = KeyHashingType::Sha3;
-
-	const KeyHashingType Vrf_Key_Hashing_Type = KeyHashingType::Sha2;
-}
+	/// Resolve an account version to the corresponding key hashing algorythm
+	KeyHashingType ResolveKeyHashingTypeFromAccountVersion(const state::AccountState& account)
+	{
+		if(account.GetVersion() >= 2) return KeyHashingType::Sha2;
+		return KeyHashingType::Sha3;
+	}
+}}

@@ -36,6 +36,7 @@ namespace catapult {
 
 	namespace {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
+		constexpr auto Config_Account_Version = 1;
 		constexpr Amount Nemesis_Amount(9000000000ull / CountOf(test::Mijin_Test_Private_Keys) * 1000000ull);
 
 		bool VerifyNemesisNetworkTransactionSignature(const model::Transaction& transaction) {
@@ -45,8 +46,8 @@ namespace catapult {
 
 	TEST(TEST_CLASS, CreateTransaction) {
 		// Arrange:
-		auto signer = crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key);
-		auto recipient = crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[0]);
+		auto signer = crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, Config_Account_Version);
+		auto recipient = crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[0], Config_Account_Version);
 
 		// Act:
 		auto pTransaction = test::CreateTransferTransaction(signer, recipient.publicKey(), Amount(1234));
@@ -58,10 +59,10 @@ namespace catapult {
 
 	TEST(TEST_CLASS, CreateNemesisBlockTransactions) {
 		// Arrange:
-		auto signer = crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key);
+		auto signer = crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, Config_Account_Version);
 
 		for (const auto* pRecipientPrivateKeyString : test::Mijin_Test_Private_Keys) {
-			auto recipient = crypto::KeyPair::FromString(pRecipientPrivateKeyString);
+			auto recipient = crypto::KeyPair::FromString(pRecipientPrivateKeyString, Config_Account_Version);
 
 			// Act:
 			auto pTransaction = test::CreateTransferTransaction(signer, recipient.publicKey(), Nemesis_Amount);
@@ -76,12 +77,12 @@ namespace catapult {
 
 	namespace {
 		auto CreateNemesisBlock() {
-			auto signer = crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key);
+			auto signer = crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, Config_Account_Version);
 			auto generationHash = test::GetNemesisGenerationHash();
 
 			model::Transactions transactions;
 			for (const auto* pRecipientPrivateKeyString : test::Mijin_Test_Private_Keys) {
-				auto recipient = crypto::KeyPair::FromString(pRecipientPrivateKeyString);
+				auto recipient = crypto::KeyPair::FromString(pRecipientPrivateKeyString, Config_Account_Version);
 				auto pTransfer = test::CreateTransferTransaction(signer, recipient.publicKey(), Nemesis_Amount);
 				pTransfer->MaxFee = Amount(0);
 				extensions::TransactionExtensions(generationHash).sign(signer, *pTransfer);

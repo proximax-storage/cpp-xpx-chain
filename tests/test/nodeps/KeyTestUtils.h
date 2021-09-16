@@ -28,9 +28,16 @@ namespace catapult { namespace test {
 	/// Generates a random private key.
 	crypto::PrivateKey GenerateRandomPrivateKey();
 
-	/// Generates a random key pair.
-	crypto::KeyPair GenerateKeyPair();
+	/// Generates a random key pair compatible with the given account version.
+	crypto::KeyPair GenerateKeyPair(uint32_t accountVersion);
+
+	/// Generates a random key pair with the given hashing type
+	crypto::KeyPair GenerateKeyPair(KeyHashingType hashingType);
 
 	/// Extracts the public keys of \a keyPairs into a key set.
 	utils::KeySet ToKeySet(const std::vector<crypto::KeyPair>& keyPairs);
+
+	crypto::KeyPair GenerateVrfKeyPair();
+
+
 }}

@@ -30,8 +30,14 @@ namespace catapult { namespace test {
 	/// Generates a random private key.
 	crypto::PrivateKey GenerateRandomPrivateKey();
 
-	/// Generates a random key pair.
-	crypto::KeyPair GenerateKeyPair();
+	/// Generates a random key pair based on an account version
+	crypto::KeyPair GenerateKeyPair(uint32_t version = 1);
+
+	/// Generates a random key pair based on a KeyHashingType
+	crypto::KeyPair GenerateKeyPair(KeyHashingType type);
+
+	/// Generates a random VRF key pair based on a KeyHashingType
+	crypto::KeyPair GenerateVrfKeyPair();
 
 	/// Generates a random address.
 	Address GenerateRandomAddress();

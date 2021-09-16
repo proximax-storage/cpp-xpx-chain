@@ -36,11 +36,11 @@ namespace catapult { namespace crypto {
 
 		const char* Default_Key_String = "CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98534";
 		KeyPair GetDefaultKeyPair() {
-			return KeyPair::FromString(Default_Key_String);
+			return KeyPair::FromString(Default_Key_String, KeyHashingType::Sha3);
 		}
 
 		KeyPair GetAlteredKeyPair() {
-			return KeyPair::FromString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98535");
+			return KeyPair::FromString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98535", KeyHashingType::Sha3);
 		}
 	}
 
@@ -61,8 +61,8 @@ namespace catapult { namespace crypto {
 
 	TEST(TEST_CLASS, SignaturesGeneratedForSameDataBySameKeyPairsAreEqual) {
 		// Arrange:
-		auto keyPair1 = KeyPair::FromString(Default_Key_String);
-		auto keyPair2 = KeyPair::FromString(Default_Key_String);
+		auto keyPair1 = KeyPair::FromString(Default_Key_String, KeyHashingType::Sha3);
+		auto keyPair2 = KeyPair::FromString(Default_Key_String, KeyHashingType::Sha3);
 		auto payload = test::GenerateRandomArray<100>();
 
 		// Act:
@@ -326,7 +326,7 @@ namespace catapult { namespace crypto {
 		// Act / Assert:
 		for (auto i = 0u; i < input.InputData.size(); ++i) {
 			// Act:
-			auto keyPair = KeyPair::FromString(input.PrivateKeys[i]);
+			auto keyPair = KeyPair::FromString(input.PrivateKeys[i], KeyHashingType::Sha3);
 			auto signature = SignPayload(keyPair, test::ToVector(input.InputData[i]));
 
 			// Assert:
@@ -343,7 +343,7 @@ namespace catapult { namespace crypto {
 		// Act / Assert:
 		for (auto i = 0u; i < input.InputData.size(); ++i) {
 			// Act:
-			auto keyPair = KeyPair::FromString(input.PrivateKeys[i]);
+			auto keyPair = KeyPair::FromString(input.PrivateKeys[i], KeyHashingType::Sha3);
 			auto payload = test::ToVector(input.InputData[i]);
 			auto signature = SignPayload(keyPair, payload);
 			auto isVerified = Verify(keyPair.publicKey(), payload, signature);

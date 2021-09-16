@@ -173,4 +173,10 @@ namespace catapult {
 	constexpr uint32_t SizeOf32() {
 		return static_cast<uint32_t>(sizeof(T));
 	}
+
+	enum class KeyHashingType
+	{
+		Sha2,
+		Sha3
+	};
 }

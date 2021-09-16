@@ -52,8 +52,8 @@ namespace catapult { namespace sync {
 #define TEST_CLASS ChainSyncTests
 
 	namespace {
-		auto Special_Account_Key_Pair = crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[0]);
-		auto Nemesis_Account_Key_Pair = crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[1]);
+		auto Special_Account_Key_Pair = crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[0], 1);
+		auto Nemesis_Account_Key_Pair = crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[1], 1);
 		uint64_t constexpr Initial_Balance = 1'000'000'000'000'000u;
 
 		chain::ChainSynchronizerConfiguration CreateChainSynchronizerConfiguration(

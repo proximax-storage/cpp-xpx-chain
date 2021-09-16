@@ -31,7 +31,7 @@ namespace catapult { namespace harvesting {
 
 	TEST(TEST_CLASS, CanCreateDefault) {
 		// Arrange:
-		auto zeroKeyPair = crypto::KeyPair::FromPrivate(crypto::PrivateKey());
+		auto zeroKeyPair = crypto::KeyPair::FromPrivate(crypto::PrivateKey(), KeyHashingType::Sha3);
 
 		// Act:
 		auto descriptor = BlockGeneratorAccountDescriptor();
@@ -43,11 +43,11 @@ namespace catapult { namespace harvesting {
 
 	TEST(TEST_CLASS, CanCreateWithExplicitKeyPairs) {
 		// Arrange:
-		auto signingKeyPair = test::GenerateKeyPair();
-		auto vrfKeyPair = test::GenerateKeyPair();
+		auto signingKeyPair = test::GenerateKeyPair(KeyHashingType::Sha3);
+		auto vrfKeyPair = test::GenerateVrfKeyPair();
 
 		// Act:
-		auto descriptor = BlockGeneratorAccountDescriptor(test::CopyKeyPair(signingKeyPair), test::CopyKeyPair(vrfKeyPair));
+		auto descriptor = BlockGeneratorAccountDescriptor(test::CopyKeyPair(signingKeyPair), test::CopyKeyPair(vrfKeyPair), 2);
 
 		// Assert:
 		EXPECT_EQ(signingKeyPair.publicKey(), descriptor.signingKeyPair().publicKey());
@@ -60,15 +60,15 @@ namespace catapult { namespace harvesting {
 		}
 
 		std::unordered_map<std::string, BlockGeneratorAccountDescriptor> GenerateEqualityInstanceMap() {
-			auto signingKeyPair = test::GenerateKeyPair();
-			auto vrfKeyPair = test::GenerateKeyPair();
+			auto signingKeyPair = test::GenerateKeyPair(2);
+			auto vrfKeyPair = test::GenerateVrfKeyPair();
 
 			std::unordered_map<std::string, BlockGeneratorAccountDescriptor> map;
-			map.emplace("default", BlockGeneratorAccountDescriptor(test::CopyKeyPair(signingKeyPair), test::CopyKeyPair(vrfKeyPair)));
-			map.emplace("copy", BlockGeneratorAccountDescriptor(test::CopyKeyPair(signingKeyPair), test::CopyKeyPair(vrfKeyPair)));
-			map.emplace("diff-signing", BlockGeneratorAccountDescriptor(test::GenerateKeyPair(), test::CopyKeyPair(vrfKeyPair)));
-			map.emplace("diff-vrf", BlockGeneratorAccountDescriptor(test::CopyKeyPair(signingKeyPair), test::GenerateKeyPair()));
-			map.emplace("diff-signing-vrf", BlockGeneratorAccountDescriptor(test::GenerateKeyPair(), test::GenerateKeyPair()));
+			map.emplace("default", BlockGeneratorAccountDescriptor(test::CopyKeyPair(signingKeyPair), test::CopyKeyPair(vrfKeyPair), 2));
+			map.emplace("copy", BlockGeneratorAccountDescriptor(test::CopyKeyPair(signingKeyPair), test::CopyKeyPair(vrfKeyPair), 2));
+			map.emplace("diff-signing", BlockGeneratorAccountDescriptor(test::GenerateKeyPair(2), test::CopyKeyPair(vrfKeyPair), 2));
+			map.emplace("diff-vrf", BlockGeneratorAccountDescriptor(test::CopyKeyPair(signingKeyPair), test::GenerateVrfKeyPair(), 2));
+			map.emplace("diff-signing-vrf", BlockGeneratorAccountDescriptor(test::GenerateKeyPair(2), test::GenerateVrfKeyPair(), 2));
 			return map;
 		}
 	}

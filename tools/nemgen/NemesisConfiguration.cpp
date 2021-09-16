@@ -183,8 +183,12 @@ namespace catapult { namespace tools { namespace nemgen {
 		LOAD_NEMESIS_PROPERTY(NemesisGenerationHash);
 		LOAD_NEMESIS_PROPERTY(NemesisSignerPrivateKey);
 
-#undef LOAD_NEMESIS_PROPERTY
 
+#undef LOAD_NEMESIS_PROPERTY
+#define TRY_LOAD_NEMESIS_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "nemesis", #NAME, config.NAME)
+		config.NemesisAccountVersion = 1;
+		TRY_LOAD_NEMESIS_PROPERTY(NemesisAccountVersion);
+#undef TRY_LOAD_NEMESIS_PROPERTY
 #define LOAD_CPP_PROPERTY(NAME) LOAD_PROPERTY("cpp", NAME)
 
 		LOAD_CPP_PROPERTY(CppFileHeader);
@@ -198,8 +202,9 @@ namespace catapult { namespace tools { namespace nemgen {
 
 #undef LOAD_OUTPUT_PROPERTY
 
+
 		// the nemesis account owns all namespaces and mosaic definitions in the configuration
-		auto owner = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey).publicKey();
+		auto owner = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey, config.NemesisAccountVersion).publicKey();
 
 		// load namespace information
 		auto numNamespaceProperties = LoadNamespaces(bag, config, owner);

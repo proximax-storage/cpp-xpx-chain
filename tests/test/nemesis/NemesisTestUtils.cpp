@@ -36,8 +36,8 @@ namespace catapult { namespace test {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 	}
 
-	Key RawPrivateKeyToPublicKey(const char* privateKeyString) {
-		auto keyPair = crypto::KeyPair::FromString(privateKeyString);
+	Key RawPrivateKeyToPublicKey(const char* privateKeyString, KeyHashingType hashType) {
+		auto keyPair = crypto::KeyPair::FromString(privateKeyString, hashType);
 		return keyPair.publicKey();
 	}
 
@@ -50,8 +50,8 @@ namespace catapult { namespace test {
 	}
 
 	namespace {
-		void AssertNemesisAccount(const cache::AccountStateCacheView& view) {
-			auto nemesisKeyPair = crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key);
+		void AssertNemesisAccount(const cache::AccountStateCacheView& view, uint32_t nemesisAccountVersion) {
+			auto nemesisKeyPair = crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, nemesisAccountVersion);
 			auto address = model::PublicKeyToAddress(nemesisKeyPair.publicKey(), Network_Identifier);
 			auto accountStateIter = view.find(address);
 			const auto& accountState = accountStateIter.get();
@@ -98,12 +98,12 @@ namespace catapult { namespace test {
 			EXPECT_EQ(Amount(409'090'909'000'000), accountState.Balances.get(Default_Harvesting_Mosaic_Id)) << message;
 		}
 
-		void AssertNemesisState(const cache::AccountStateCacheView& view) {
+		void AssertNemesisState(const cache::AccountStateCacheView& view, uint32_t nemesisAccountVersion) {
 			// Assert:
 			EXPECT_EQ(3u + CountOf(test::Mijin_Test_Private_Keys), view.size());
 
 			// - check nemesis account
-			AssertNemesisAccount(view);
+			AssertNemesisAccount(view, nemesisAccountVersion);
 
 			// - check rental fee accounts
 			AssertRentalFeeAccount(view, crypto::ParseKey(Namespace_Rental_Fee_Sink_Public_Key));
@@ -115,8 +115,8 @@ namespace catapult { namespace test {
 		}
 	}
 
-	void AssertNemesisAccountState(const cache::CatapultCacheView& view) {
-		AssertNemesisState(view.sub<cache::AccountStateCache>());
+	void AssertNemesisAccountState(const cache::CatapultCacheView& view, uint32_t nemesisAccountVersion) {
+		AssertNemesisState(view.sub<cache::AccountStateCache>(), nemesisAccountVersion);
 	}
 
 	namespace {

@@ -55,24 +55,24 @@ namespace catapult { namespace local {
 			return static_cast<uint16_t>(test::GetLocalHostPort() + 10 * (id + 1));
 		}
 
-		ionet::Node CreateNode(uint32_t id) {
+		ionet::Node CreateNode(uint32_t id, uint32_t accountVersion) {
 			auto metadata = ionet::NodeMetadata(model::NetworkIdentifier::Mijin_Test, "NODE " + std::to_string(id));
 			metadata.Roles = ionet::NodeRoles::Peer;
 			return ionet::Node(
-					crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[id]).publicKey(),
+					crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[id], accountVersion).publicKey(),
 					test::CreateLocalHostNodeEndpoint(GetPortForNode(id)),
 					metadata);
 		}
 
-		std::vector<ionet::Node> CreateNodes(size_t numNodes) {
+		std::vector<ionet::Node> CreateNodes(size_t numNodes, uint32_t accountVersion) {
 			std::vector<ionet::Node> nodes;
 			for (auto i = 0u; i < numNodes; ++i)
-				nodes.push_back(CreateNode(i));
+				nodes.push_back(CreateNode(i, accountVersion));
 
 			return nodes;
 		}
 
-		void UpdateBlockChainConfiguration(model::NetworkConfiguration& networkConfig) {
+		void UpdateBlockChainConfiguration(model::NetworkConfiguration& networkConfig, uint32_t accountVersion) {
 			networkConfig.ImportanceGrouping = Max_Rollback_Blocks / 2 + 1;
 			networkConfig.MaxRollbackBlocks = Max_Rollback_Blocks;
 			networkConfig.MaxDifficultyBlocks = 4;
@@ -81,7 +81,7 @@ namespace catapult { namespace local {
 			networkConfig.AccountVersion = 1;
 		}
 
-		void UpdateConfigurationForNode(config::BlockchainConfiguration& config, uint32_t id) {
+		void UpdateConfigurationForNode(config::BlockchainConfiguration& config, uint32_t id, uint32_t accountVersion) {
 			// 1. give each node its own ports
 			auto port = GetPortForNode(id);
 			auto& nodeConfig = const_cast<config::NodeConfiguration&>(config.Node);
@@ -91,7 +91,7 @@ namespace catapult { namespace local {
 			nodeConfig.FeeInterestDenominator = 2;
 
 			// 2. specify custom network settings
-			UpdateBlockChainConfiguration(const_cast<model::NetworkConfiguration&>(config.Network));
+			UpdateBlockChainConfiguration(const_cast<model::NetworkConfiguration&>(config.Network), accountVersion);
 
 			// 3. give each node its own key
 			auto& userConfig = const_cast<config::UserConfiguration&>(config.User);
@@ -136,7 +136,8 @@ namespace catapult { namespace local {
 				const std::string& resourcesPath,
 				const test::BlockChainBuilder::BlockReceiptsHashCalculator& blockReceiptsHashCalculator,
 				size_t numBlocks,
-				utils::TimeSpan blockTimeInterval) {
+				utils::TimeSpan blockTimeInterval,
+				uint32_t accountVersion) {
 			constexpr uint32_t Num_Accounts = 11;
 			test::Accounts accounts(Num_Accounts);
 
@@ -148,7 +149,7 @@ namespace catapult { namespace local {
 			}
 
 			auto networkConfig = test::CreatePrototypicalNetworkConfiguration();
-			UpdateBlockChainConfiguration(networkConfig);
+			UpdateBlockChainConfiguration(networkConfig, accountVersion);
 
 			test::BlockChainBuilder builder(accounts, stateHashCalculator, networkConfig, resourcesPath);
 			builder.setBlockTimeInterval(blockTimeInterval);
@@ -306,10 +307,10 @@ namespace catapult { namespace local {
 		// region consensus test
 
 		template<typename TNetworkTraits, typename TVerifyTraits>
-		void AssertMultiNodeNetworkCanReachConsensus(TVerifyTraits&& verifyTraits, size_t networkSize) {
+		void AssertMultiNodeNetworkCanReachConsensus(TVerifyTraits&& verifyTraits, size_t networkSize, uint32_t accountVersion) {
 			// Arrange: create nodes
 			test::GlobalLogFilter testLogFilter(utils::LogLevel::Debug);
-			auto networkNodes = CreateNodes(networkSize);
+			auto networkNodes = CreateNodes(networkSize, accountVersion);
 
 			// Act: boot all nodes
 			CATAPULT_LOG(debug) << "booting nodes";
@@ -322,8 +323,8 @@ namespace catapult { namespace local {
 				// - give each node a separate directory
 				auto nodeFlag = test::NodeFlag::Require_Explicit_Boot | TVerifyTraits::Node_Flag;
 				auto peers = TNetworkTraits::GetPeersForNode(i, networkNodes);
-				auto configTransform = [i](auto& config) {
-					UpdateConfigurationForNode(config, i);
+				auto configTransform = [i, accountVersion](auto& config) {
+					UpdateConfigurationForNode(config, i, accountVersion);
 					const_cast<config::NodeConfiguration&>(config.Node).OutgoingConnections.MaxConnections = 20;
 				};
 				auto postfix = "_" + std::to_string(i);
@@ -347,7 +348,8 @@ namespace catapult { namespace local {
 						stateHashCalculator.dataDirectory().empty() ? context.dataDirectory() : stateHashCalculator.dataDirectory(),
 						[&verifyTraits](const auto& block) { return verifyTraits.calculateReceiptsHash(block); },
 						numBlocks,
-						utils::TimeSpan::FromSeconds(60 + i));
+						utils::TimeSpan::FromSeconds(60 + i),
+						accountVersion);
 
 				// - wait for the first block element to get processed
 				//   note that this is needed because else the node is shut down before processing the initial chain
@@ -439,11 +441,13 @@ namespace catapult { namespace local {
 
 	VERIFY_OPTIONS_BASED_TEST(MultiNodeDenseNetworkCanReachConsensus) {
 		// Assert:
-		AssertMultiNodeNetworkCanReachConsensus<DenseNetworkTraits>(TTraits(), TTraits::Dense_Network_Size);
+		AssertMultiNodeNetworkCanReachConsensus<DenseNetworkTraits>(TTraits(), TTraits::Dense_Network_Size, 1);
+		//AssertMultiNodeNetworkCanReachConsensus<DenseNetworkTraits>(TTraits(), TTraits::Dense_Network_Size, 2);
 	}
 
 	VERIFY_OPTIONS_BASED_TEST(MultiNodeSparseNetworkCanReachConsensus) {
 		// Assert:
-		AssertMultiNodeNetworkCanReachConsensus<SparseNetworkTraits>(TTraits(), TTraits::Sparse_Network_Size);
+		AssertMultiNodeNetworkCanReachConsensus<SparseNetworkTraits>(TTraits(), TTraits::Sparse_Network_Size, 1);
+		//AssertMultiNodeNetworkCanReachConsensus<SparseNetworkTraits>(TTraits(), TTraits::Sparse_Network_Size, 2);
 	}
 }}

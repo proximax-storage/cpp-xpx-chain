@@ -30,6 +30,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/RealTransactionFactory.h"
+#include "tests/test/nodeps/TestConstants.h"
 
 namespace catapult { namespace test {
 
@@ -69,7 +70,7 @@ namespace catapult { namespace test {
 
 	namespace {
 		crypto::KeyPair GetNemesisAccountKeyPair() {
-			return crypto::KeyPair::FromString(Mijin_Test_Private_Keys[0]); // use a nemesis account
+			return crypto::KeyPair::FromString(Mijin_Test_Private_Keys[0], Nemesis_Accounts_Version); // use a nemesis account
 		}
 
 		std::shared_ptr<model::Block> CreateBlock() {

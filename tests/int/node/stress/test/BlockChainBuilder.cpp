@@ -192,8 +192,8 @@ namespace catapult { namespace test {
 			// skip first test account because it is used to fund other accounts
 			if (0u == i++)
 				continue;
-
-			auto keyPair = crypto::KeyPair::FromString(pPrivateKeyString);
+			// all account versions should be the same as what is set in the configuration at this point
+			auto keyPair = crypto::KeyPair::FromString(pPrivateKeyString, pConfigHolder->Config().Network.AccountVersion);
 
 			chain::BlockHitContext blockHitContext;
 			blockHitContext.GenerationHash = model::CalculateGenerationHash(context.GenerationHash, keyPair.publicKey());

@@ -43,10 +43,13 @@ namespace catapult { namespace harvesting {
 		constexpr auto Task_Name = "harvesting task";
 		constexpr auto Harvester_Key = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
 		constexpr auto Harvester_Vrf_Key = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
+		template<uint32_t TAccountVersion>
 		HarvestingConfiguration CreateHarvestingConfiguration(bool autoHarvest) {
 			auto config = HarvestingConfiguration::Uninitialized();
 			config.HarvestKey = Harvester_Key;
 			config.HarvesterVrfPrivateKey = Harvester_Vrf_Key;
+			auto publicKey = crypto::KeyPair::FromString(config.HarvestKey, TAccountVersion).publicKey();
+			config.HarvesterPublicKey = test::ToString(publicKey);
 			config.IsAutoHarvestingEnabled = autoHarvest;
 			config.MaxUnlockedAccounts = 10;
 			config.Beneficiary = std::string(64, '0');
@@ -62,7 +65,7 @@ namespace catapult { namespace harvesting {
 				return CreateRegistrar(HarvestingConfiguration::Uninitialized());
 			}
 		};
-
+		template<uint32_t TAccountVersion>
 		class TestContext : public test::ServiceLocatorTestContext<HarvestingServiceTraits> {
 		private:
 			using BaseType = test::ServiceLocatorTestContext<HarvestingServiceTraits>;
@@ -70,35 +73,35 @@ namespace catapult { namespace harvesting {
 		public:
 			explicit TestContext(test::LocalNodeFlags flags = test::LocalNodeFlags::None)
 					: BaseType(test::CreateEmptyCatapultCache(test::CreatePrototypicalBlockchainConfiguration())),
-					m_config(CreateHarvestingConfiguration(test::LocalNodeFlags::Should_Auto_Harvest == flags)) {
+					m_config(CreateHarvestingConfiguration<TAccountVersion>(test::LocalNodeFlags::Should_Auto_Harvest == flags)) {
 
-				createConfigurationAccount();
+				createConfigurationAccount(TAccountVersion);
 				setHooks();
 			}
 
 			explicit TestContext(const HarvestingConfiguration& config)
 					: BaseType(test::CreateEmptyCatapultCache(test::CreatePrototypicalBlockchainConfiguration()))
 					, m_config(config) {
-				createConfigurationAccount();
+				createConfigurationAccount(TAccountVersion);
 				setHooks();
 			}
 			explicit TestContext(cache::CatapultCache&& cache, const supplier<Timestamp>& timeSupplier = &utils::NetworkTime)
 					: BaseType(std::move(cache), timeSupplier)
-					, m_config(CreateHarvestingConfiguration(false)) {
-				createConfigurationAccount();
+					, m_config(CreateHarvestingConfiguration<TAccountVersion>(false)) {
+				createConfigurationAccount(TAccountVersion);
 				setHooks();
 			}
 			explicit TestContext(cache::CatapultCache&& cache, const HarvestingConfiguration& config, const supplier<Timestamp>& timeSupplier = &utils::NetworkTime)
 					: BaseType(std::move(cache), timeSupplier)
 					, m_config(config) {
-				createConfigurationAccount();
+				createConfigurationAccount(TAccountVersion);
 				setHooks();
 			}
 
 
 		public:
 			Key harvesterKey() const {
-				return crypto::KeyPair::FromString(m_config.HarvestKey).publicKey();
+				return crypto::KeyPair::FromString(m_config.HarvestKey, TAccountVersion).publicKey();
 			}
 
 			const auto& capturedStateHashes() const {
@@ -139,11 +142,11 @@ namespace catapult { namespace harvesting {
 			}
 
 		private:
-			void createConfigurationAccount() {
+			void createConfigurationAccount(uint32_t accountVersion) {
 				auto &cache = testState().cache();
 				auto cacheDelta = cache.createDelta();
-				auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();
-				auto harvestingKeypair = crypto::KeyPair::FromString(m_config.HarvestKey);
+				auto& accountStateCacheDelta = cacheDelta.template sub<cache::AccountStateCache>();
+				auto harvestingKeypair = crypto::KeyPair::FromString(m_config.HarvestKey, accountVersion);
 
 				//Ensure account exists so service can boot
 				accountStateCacheDelta.addAccount(harvestingKeypair.publicKey(), Height(1));
@@ -178,13 +181,24 @@ namespace catapult { namespace harvesting {
 
 	ADD_SERVICE_REGISTRAR_INFO_TEST(Harvesting, Post_Range_Consumers)
 
+	namespace {
+		using test_types = ::testing::Types<
+				std::integral_constant<uint32_t,1>,
+				std::integral_constant<uint32_t,2>>;
+
+		template<typename TBaseAccountVersion>
+		struct HarvestingServiceTest : public ::testing::Test {};
+	}
+
+	TYPED_TEST_CASE(HarvestingServiceTest, test_types);
+
 	// region unlocked accounts
 
 	namespace {
-		template<typename TAction>
+		template<uint32_t TAccountVersion, typename TAction>
 		void RunUnlockedAccountsServiceTest(test::LocalNodeFlags localNodeFlags, TAction action) {
 			// Arrange:
-			TestContext context(localNodeFlags);
+			TestContext<TAccountVersion> context(localNodeFlags);
 
 			// Act:
 			context.boot();
@@ -197,8 +211,8 @@ namespace catapult { namespace harvesting {
 			ASSERT_TRUE(!!pUnlockedAccounts);
 			action(*pUnlockedAccounts, context);
 		}
-		template<typename TAction>
-		void RunUnlockedAccountsServiceTest(TestContext& context, TAction action) {
+		template<uint32_t TAccountVersion, typename TAction>
+		void RunUnlockedAccountsServiceTest(TestContext<TAccountVersion>& context, TAction action) {
 			// Act:
 			context.boot();
 
@@ -212,18 +226,18 @@ namespace catapult { namespace harvesting {
 		}
 	}
 
-	TEST(TEST_CLASS, UnlockedAccountsServiceIsRegisteredProperlyWhenAutoHarvestingIsEnabled) {
+	TYPED_TEST(HarvestingServiceTest, UnlockedAccountsServiceIsRegisteredProperlyWhenAutoHarvestingIsEnabled) {
 		// Arrange:
-		RunUnlockedAccountsServiceTest(test::LocalNodeFlags::Should_Auto_Harvest, [](const auto& accounts, const auto& context) {
+		RunUnlockedAccountsServiceTest<TypeParam::value>(test::LocalNodeFlags::Should_Auto_Harvest, [](const auto& accounts, const auto& context) {
 			// Assert: a single account was unlocked
 			EXPECT_TRUE(accounts.view().contains(context.harvesterKey()));
 			EXPECT_EQ(1u, context.counter("UNLKED ACCTS"));
 		});
 	}
 
-	TEST(TEST_CLASS, UnlockedAccountsServiceIsRegisteredProperlyWhenAutoHarvestingIsDisabled) {
+		TYPED_TEST(HarvestingServiceTest, UnlockedAccountsServiceIsRegisteredProperlyWhenAutoHarvestingIsDisabled) {
 		// Arrange:
-		RunUnlockedAccountsServiceTest(test::LocalNodeFlags::None, [](const auto& accounts, const auto& context) {
+		RunUnlockedAccountsServiceTest<TypeParam::value>(test::LocalNodeFlags::None, [](const auto& accounts, const auto& context) {
 			// Assert: no accounts were unlocked
 			EXPECT_FALSE(accounts.view().contains(context.harvesterKey()));
 			EXPECT_EQ(0u, context.counter("UNLKED ACCTS"));
@@ -237,47 +251,50 @@ namespace catapult { namespace harvesting {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 		constexpr auto Importance_Grouping = 234u;
 		constexpr auto Importance_Grouping_Delegate_Testing = 0u;
-		auto CreateKeyPairs(size_t numKeyPairs) {
+		auto CreateKeyPairs(size_t numKeyPairs, uint32_t accountVersion) {
 			std::vector<crypto::KeyPair> keyPairs;
 			for (auto i = 0u; i < numKeyPairs; ++i)
-				keyPairs.push_back(test::GenerateKeyPair());
+				keyPairs.push_back(test::GenerateKeyPair(accountVersion));
 
 			return keyPairs;
 		}
 
+		template<uint32_t TAccountVersion>
 		void AddAccounts(
-				TestContext& context,
+				TestContext<TAccountVersion>& context,
 				const std::vector<crypto::KeyPair>& keyPairs,
+				uint32_t accountVersion,
 				const consumer<state::AccountState&>& accountStateModifier = [](const auto&) {}) {
 			auto& cache = context.testState().state().cache();
 			auto cacheDelta = cache.createDelta();
-			auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();
+			auto& accountStateCacheDelta = cacheDelta.template sub<cache::AccountStateCache>();
 
 			for (const auto& keyPair : keyPairs) {
 				const auto& publicKey = keyPair.publicKey();
-				accountStateCacheDelta.addAccount(publicKey, Height(100));
+				accountStateCacheDelta.addAccount(publicKey, Height(100), accountVersion);
 				accountStateModifier(accountStateCacheDelta.find(publicKey).get());
 			}
 
 			cache.commit(Height(100));
 		}
 
-		std::vector<crypto::KeyPair> AddAccountsWithImportances(TestContext& context, const std::vector<Amount>& balances) {
-			auto keyPairs = CreateKeyPairs(balances.size());
+		template<uint32_t TAccountVersion>
+		std::vector<crypto::KeyPair> AddAccountsWithImportances(TestContext<TAccountVersion>& context, uint32_t accountVersion, const std::vector<Amount>& balances) {
+			auto keyPairs = CreateKeyPairs(balances.size(), accountVersion);
 			auto iter = balances.cbegin();
-			AddAccounts(context, keyPairs, [iter](auto& accountState) mutable {
+			AddAccounts<TAccountVersion>(context, keyPairs, accountVersion, [iter](auto& accountState) mutable {
 			  accountState.Balances.credit(Harvesting_Mosaic_Id, Amount(*iter), Height(100));
 			  ++iter;
 			});
 
 			return keyPairs;
 		}
-
+		template<uint32_t TAccountVersion>
 		void RunUnlockedAccountsPrioritizationTest(
 				DelegatePrioritizationPolicy prioritizationPolicy,
 				std::initializer_list<size_t> expectedIndexes) {
 			// Arrange:
-			auto config = CreateHarvestingConfiguration(true);
+			auto config = CreateHarvestingConfiguration<TAccountVersion>(true);
 
 			config.MaxUnlockedAccounts = 5;
 			config.DelegatePrioritizationPolicy = prioritizationPolicy;
@@ -286,8 +303,9 @@ namespace catapult { namespace harvesting {
 			blockchainConfiguration.Immutable.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			blockchainConfiguration.Network.ImportanceGrouping = Importance_Grouping_Delegate_Testing;
 			auto cache = test::CreateEmptyCatapultCache(blockchainConfiguration.ToConst(), cache::CacheConfiguration());
-			TestContext context(std::move(cache), config);
-			auto keyPairs = AddAccountsWithImportances(context, {
+			TestContext<TAccountVersion> context(std::move(cache), config);
+			//Additional unlocked accounts are always V2 since remote delegated harvesting is not enabled for V1.
+			auto keyPairs = AddAccountsWithImportances<TAccountVersion>(context, 2, {
 					Amount(100), Amount(200), Amount(50), Amount(150), Amount(250)
 			});
 
@@ -296,7 +314,7 @@ namespace catapult { namespace harvesting {
 			  std::vector<Key> publicKeys;
 			  for (auto& keyPair : keyPairs) {
 				  publicKeys.push_back(keyPair.publicKey());
-				  unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 2);
+				  unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateVrfKeyPair(), 2));
 			  }
 
 			  // Assert:
@@ -310,12 +328,12 @@ namespace catapult { namespace harvesting {
 		}
 	}
 
-	TEST(TEST_CLASS, UnlockedAccountsServiceIsRegisteredProperlyWhenAutoHarvestingIsEnabledWithAgePrioritizationPolicy) {
-		RunUnlockedAccountsPrioritizationTest(DelegatePrioritizationPolicy::Age, { 0, 1, 2, 3 });
+	TYPED_TEST(HarvestingServiceTest, UnlockedAccountsServiceIsRegisteredProperlyWhenAutoHarvestingIsEnabledWithAgePrioritizationPolicy) {
+		RunUnlockedAccountsPrioritizationTest<TypeParam::value>(DelegatePrioritizationPolicy::Age, { 0, 1, 2, 3 });
 	}
 
-	TEST(TEST_CLASS, UnlockedAccountsServiceIsRegisteredProperlyWhenAutoHarvestingIsEnabledWithImportancePrioritizationPolicy) {
-		RunUnlockedAccountsPrioritizationTest(DelegatePrioritizationPolicy::Importance, { 4, 1, 3, 0 });
+	TYPED_TEST(HarvestingServiceTest, UnlockedAccountsServiceIsRegisteredProperlyWhenAutoHarvestingIsEnabledWithImportancePrioritizationPolicy) {
+		RunUnlockedAccountsPrioritizationTest<TypeParam::value>(DelegatePrioritizationPolicy::Importance, { 4, 1, 3, 0 });
 	}
 	namespace {
 		void AddHarvestersFileRequestsAndCacheCorrespondingAccounts(cache::CatapultCache& cache, const std::string& filename, const Key& nodeOwnerPublicKey, size_t numRequests) {
@@ -325,7 +343,7 @@ namespace catapult { namespace harvesting {
 				auto decryptedBuffer = test::GenerateRandomVector(Key::Size*2);
 				auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 				auto iter = decryptedBuffer.begin();
-				auto publicKey = crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate([&iter]() mutable { return *iter++; })).publicKey();
+				auto publicKey = crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate([&iter]() mutable { return *iter++; }),2).publicKey();
 				accountStateCache.addAccount(publicKey, Height(1));
 				auto encryptedPayload = test::PrepareHarvestRequestEncryptedPayload(nodeOwnerPublicKey, decryptedBuffer);
 				storage.add(test::GetRequestIdentifier(encryptedPayload), encryptedPayload.Data, Key{ { static_cast<uint8_t>(i) } });
@@ -333,16 +351,16 @@ namespace catapult { namespace harvesting {
 			cache.commit(Height(1));
 		}
 	}
-	TEST(TEST_CLASS, UnlockedAccountsServiceIsLoadingUnlockedHarvestersFile) {
+		TYPED_TEST(HarvestingServiceTest, UnlockedAccountsServiceIsLoadingUnlockedHarvestersFile) {
 		// Arrange:
 		test::TempDirectoryGuard directoryGuard;
-		TestContext context(test::LocalNodeFlags::None);
+		TestContext<TypeParam::value> context(test::LocalNodeFlags::None);
 		context.setDataDirectory(directoryGuard.name());
 
 		auto filename = config::CatapultDataDirectory(directoryGuard.name()).rootDir().file("harvesters.dat");
 			AddHarvestersFileRequestsAndCacheCorrespondingAccounts(context.testState().cache(), filename, context.locator().keyPair().publicKey(), 3);
 
-		RunUnlockedAccountsServiceTest(context, [&context](const auto& unlockedAccounts) {
+		RunUnlockedAccountsServiceTest<TypeParam::value>(context, [&context](const auto& unlockedAccounts) {
 		  // Assert: only accounts from the file were unlocked
 		  EXPECT_EQ(3u, context.counter("UNLKED ACCTS"));
 		  EXPECT_FALSE(unlockedAccounts.view().contains(context.harvesterKey()));
@@ -352,8 +370,8 @@ namespace catapult { namespace harvesting {
 	// region harvesting task - utils + basic
 
 	namespace {
-		template<typename TAction>
-		void RunTaskTest(TestContext& context, const std::string& taskName, TAction&& action) {
+		template<uint32_t TAccountVersion, typename TAction>
+		void RunTaskTest(TestContext<TAccountVersion>& context, const std::string& taskName, TAction&& action) {
 			// Act:
 			test::RunTaskTest(context, 1, taskName, [&context, action = std::move(action)](const auto& task) mutable {
 				auto pUnlockedAccounts = GetUnlockedAccounts(context.locator());
@@ -367,7 +385,7 @@ namespace catapult { namespace harvesting {
 		constexpr Amount Account_Balance(1000);
 
 
-
+		template<uint32_t TAccountVersion>
 		auto CreateCacheWithAccount(
 				const cache::CacheConfiguration& cacheConfig,
 				Height height,
@@ -377,7 +395,7 @@ namespace catapult { namespace harvesting {
 			test::MutableBlockchainConfiguration config;
 			config.Immutable.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			config.Network.ImportanceGrouping = Importance_Grouping;
-			config.Network.AccountVersion = 1;
+			config.Network.AccountVersion = TAccountVersion;
 			auto cache = test::CreateEmptyCatapultCache(config.ToConst(), cacheConfig);
 			auto delta = cache.createDelta();
 
@@ -395,30 +413,30 @@ namespace catapult { namespace harvesting {
 			cache.commit(height);
 			return cache;
 		}
-
+		template<uint32_t TAccountVersion>
 		auto CreateCacheWithAccount(Height height, const Key& publicKey, Amount balance) {
-			return CreateCacheWithAccount(cache::CacheConfiguration(), height, publicKey, balance);
+			return CreateCacheWithAccount<TAccountVersion>(cache::CacheConfiguration(), height, publicKey, balance);
 		}
 	}
 
-	TEST(TEST_CLASS, HarvestingTaskIsScheduled) {
+	TYPED_TEST(HarvestingServiceTest, HarvestingTaskIsScheduled) {
 		// Assert:
-		test::AssertRegisteredTask(TestContext(), 1, Task_Name);
+		test::AssertRegisteredTask(TestContext<TypeParam::value>(), 1, Task_Name);
 	}
 
 	// endregion
 
 	// region harvesting task - pruning
 
-	TEST(TEST_CLASS, HarvestingTaskDoesNotPruneEligibleAccount) {
+		TYPED_TEST(HarvestingServiceTest, HarvestingTaskDoesNotPruneEligibleAccount) {
 		// Arrange:
 		auto height = Height(2 * Importance_Grouping - 1);
-		auto keyPair = test::GenerateKeyPair();
-		TestContext context(CreateCacheWithAccount(height, keyPair.publicKey(), Account_Balance));
+		auto keyPair = test::GenerateKeyPair(2);
+		TestContext<TypeParam::value> context(CreateCacheWithAccount<TypeParam::value>(height, keyPair.publicKey(), Account_Balance));
 		context.setMinHarvesterBalance(Account_Balance);
 		context.setMaxHarvesterBalance(Amount(UINT64_MAX));
 		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair)](auto& unlockedAccounts, const auto& task) mutable {
-			unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 2);
+			unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateVrfKeyPair(), 2));
 
 			// Act:
 			auto result = task.Callback().get();
@@ -429,16 +447,16 @@ namespace catapult { namespace harvesting {
 		});
 	}
 
-	TEST(TEST_CLASS, HarvestingTaskDoesPruneAccountIneligibleDueToBalance) {
+		TYPED_TEST(HarvestingServiceTest, HarvestingTaskDoesPruneAccountIneligibleDueToBalance) {
 		// Arrange: ineligible because account balance is too low
 		auto height = Height(2 * Importance_Grouping - 1);
-		auto keyPair = test::GenerateKeyPair();
-		TestContext context(CreateCacheWithAccount(height, keyPair.publicKey(), Account_Balance));
+		auto keyPair = test::GenerateKeyPair(2);
+		TestContext<TypeParam::value> context(CreateCacheWithAccount<TypeParam::value>(height, keyPair.publicKey(), Account_Balance));
 		context.setMinHarvesterBalance(Account_Balance + Amount(1));
 		context.setMaxHarvesterBalance(Amount(UINT64_MAX));
 
 		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair)](auto& unlockedAccounts, const auto& task) mutable {
-			unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 2);
+			unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateVrfKeyPair(), 2));
 
 			// Act:
 			auto result = task.Callback().get();
@@ -454,16 +472,17 @@ namespace catapult { namespace harvesting {
 	// region harvesting task - state hash
 
 	namespace {
+		template<uint32_t TAccountVersion>
 		void RunHarvestingStateHashTest(bool enableVerifiableState, Hash256& harvestedStateHash) {
 			// Arrange: use a huge amount and a max timestamp to force a hit
 			test::TempDirectoryGuard dbDirGuard;
-			auto keyPair = test::GenerateKeyPair();
+			auto keyPair = test::GenerateKeyPair(TAccountVersion);
 			auto balance = Amount(1'000'000'000'000);
 			auto cacheConfig = enableVerifiableState
 					? cache::CacheConfiguration(dbDirGuard.name(), utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled)
 					: cache::CacheConfiguration();
-			TestContext context(
-					CreateCacheWithAccount(cacheConfig, Height(1), keyPair.publicKey(), balance),
+			TestContext<TAccountVersion> context(
+					CreateCacheWithAccount<TAccountVersion>(cacheConfig, Height(1), keyPair.publicKey(), balance),
 					[]() { return Timestamp(std::numeric_limits<int64_t>::max()); });
 			context.setMaxHarvesterBalance(Amount(UINT64_MAX));
 			if (enableVerifiableState)
@@ -472,7 +491,7 @@ namespace catapult { namespace harvesting {
 			RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair), &context, &harvestedStateHash](
 					auto& unlockedAccounts,
 					const auto& task) mutable {
-				unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 1);
+				unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateVrfKeyPair(), TAccountVersion));
 
 				// Act:
 				auto result = task.Callback().get();
@@ -492,19 +511,19 @@ namespace catapult { namespace harvesting {
 		}
 	}
 
-	TEST(TEST_CLASS, HarvestingTaskGeneratesZeroStateHashWhenVerifiableStateIsDisabled) {
+	TYPED_TEST(HarvestingServiceTest, HarvestingTaskGeneratesZeroStateHashWhenVerifiableStateIsDisabled) {
 		// Act:
 		Hash256 harvestedStateHash;
-		RunHarvestingStateHashTest(false, harvestedStateHash);
+		RunHarvestingStateHashTest<TypeParam::value>(false, harvestedStateHash);
 
 		// Assert:
 		EXPECT_EQ(Hash256(), harvestedStateHash);
 	}
 
-	TEST(TEST_CLASS, HarvestingTaskGeneratesNonZeroStateHashWhenVerifiableStateIsEnabled) {
+	TYPED_TEST(HarvestingServiceTest, HarvestingTaskGeneratesNonZeroStateHashWhenVerifiableStateIsEnabled) {
 		// Act:
 		Hash256 harvestedStateHash;
-		RunHarvestingStateHashTest(true, harvestedStateHash);
+		RunHarvestingStateHashTest<TypeParam::value>(true, harvestedStateHash);
 
 		// Assert:
 		EXPECT_NE(Hash256(), harvestedStateHash);
@@ -513,9 +532,9 @@ namespace catapult { namespace harvesting {
 	// endregion
 	// region packet handler
 
-	TEST(TEST_CLASS, PacketHandlerIsNotRegisteredWhenDiagnosticExtensionIsDisabled) {
+	TYPED_TEST(HarvestingServiceTest, PacketHandlerIsNotRegisteredWhenDiagnosticExtensionIsDisabled) {
 		// Arrange:
-		TestContext context;
+		TestContext<TypeParam::value> context;
 
 		// Act:
 		context.boot();
@@ -524,9 +543,9 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(0u, context.testState().state().packetHandlers().size());
 	}
 
-	TEST(TEST_CLASS, PacketHandlerIsRegisteredWhenDiagnosticExtensionIsEnabled) {
+	TYPED_TEST(HarvestingServiceTest, PacketHandlerIsRegisteredWhenDiagnosticExtensionIsEnabled) {
 		// Arrange:
-		TestContext context;
+		TestContext<TypeParam::value> context;
 		context.enableDiagnosticExtension();
 
 		// Act:
@@ -539,10 +558,11 @@ namespace catapult { namespace harvesting {
 	}
 
 	namespace {
-		class DiagnosticEnabledTestContext : public TestContext {
+		template<uint32_t TAccountVersion>
+		class DiagnosticEnabledTestContext : public TestContext<TAccountVersion> {
 		public:
 			DiagnosticEnabledTestContext() {
-				enableDiagnosticExtension();
+				TestContext<TAccountVersion>::enableDiagnosticExtension();
 			}
 		};
 	}
@@ -553,14 +573,15 @@ namespace catapult { namespace harvesting {
 			return std::set<Key>(keys.cbegin(), keys.cend());
 		}
 
+		template<uint32_t TAccountVersion>
 		void AssertPacketHandlerReturnsUnlockedAccounts(
 				std::vector<crypto::KeyPair>&& keyPairs,
 				const consumer<const ionet::ServerPacketHandlerContext&>& assertPacket) {
 			// Arrange:
-			auto config = CreateHarvestingConfiguration(false);
+			auto config = CreateHarvestingConfiguration<TAccountVersion>(false);
 
-			TestContext context(config);
-			AddAccounts(context, keyPairs);
+			TestContext<TAccountVersion> context(config);
+			AddAccounts(context, keyPairs, 2);
 			context.enableDiagnosticExtension();
 			context.boot();
 
@@ -569,7 +590,7 @@ namespace catapult { namespace harvesting {
 			ASSERT_TRUE(!!pUnlockedAccounts);
 
 			for (auto& keyPair : keyPairs)
-				pUnlockedAccounts->modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateKeyPair()), 2);
+				pUnlockedAccounts->modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateVrfKeyPair(), 2));
 
 			// Sanity:
 			EXPECT_EQ(keyPairs.size(), pUnlockedAccounts->view().size());
@@ -587,19 +608,19 @@ namespace catapult { namespace harvesting {
 		}
 	}
 
-	TEST(TEST_CLASS, PacketHandlerReturnsEmptyPacketWhenNoUnlockedAccountsArePresent) {
-		AssertPacketHandlerReturnsUnlockedAccounts(CreateKeyPairs(0), [](const auto& handlerContext) {
+	TYPED_TEST(HarvestingServiceTest, PacketHandlerReturnsEmptyPacketWhenNoUnlockedAccountsArePresent) {
+		AssertPacketHandlerReturnsUnlockedAccounts<TypeParam::value>(CreateKeyPairs(0, 2), [](const auto& handlerContext) {
 		  // Assert: only header is present
 		  auto expectedPacketSize = sizeof(ionet::PacketHeader);
 		  test::AssertPacketHeader(handlerContext, expectedPacketSize, ionet::PacketType::Unlocked_Accounts);
 		});
 	}
 
-	TEST(TEST_CLASS, PacketHandlerReturnsUnlockedAccounts) {
+	TYPED_TEST(HarvestingServiceTest, PacketHandlerReturnsUnlockedAccounts) {
 		// Arrange:
-		auto keyPairs = CreateKeyPairs(3);
+		auto keyPairs = CreateKeyPairs(3, 2);
 		auto expectedPublicKeys = GetPublicKeys(keyPairs);
-		AssertPacketHandlerReturnsUnlockedAccounts(std::move(keyPairs), [&expectedPublicKeys](const auto& handlerContext) {
+		AssertPacketHandlerReturnsUnlockedAccounts<TypeParam::value>(std::move(keyPairs), [&expectedPublicKeys](const auto& handlerContext) {
 		  // Assert: header is correct and contains the expected number of keys
 		  auto expectedPacketSize = sizeof(ionet::PacketHeader) + 3 * Key::Size;
 		  test::AssertPacketHeader(handlerContext, expectedPacketSize, ionet::PacketType::Unlocked_Accounts);

@@ -33,7 +33,7 @@ namespace catapult { namespace harvesting {
 	namespace {
 		auto CreateContainsPredicate(const Key& publicKey) {
 			return [&publicKey](const auto& descriptorContainer) {
-				return std::get<0>(descriptorContainer).signingKeyPair().publicKey() == publicKey;
+				return std::get<PrioritizedContainerIdx::Descriptor>(descriptorContainer).signingKeyPair().publicKey() == publicKey;
 			};
 		}
 	}
@@ -50,7 +50,7 @@ namespace catapult { namespace harvesting {
 
 	void UnlockedAccountsView::forEach(const predicate<const BlockGeneratorAccountDescriptor&>& consumer) const {
 		for (const auto& prioritizedKeyPair : m_prioritizedKeyPairs) {
-			if (!consumer(std::get<0>(prioritizedKeyPair)))
+			if (!consumer(std::get<PrioritizedContainerIdx::Descriptor>(prioritizedKeyPair)))
 				break;
 		}
 	}
@@ -58,11 +58,11 @@ namespace catapult { namespace harvesting {
 
 	// region UnlockedAccountsModifier
 
-	UnlockedAccountsAddResult UnlockedAccountsModifier::add(BlockGeneratorAccountDescriptor&& descriptor, uint32_t accountVersion) {
+	UnlockedAccountsAddResult UnlockedAccountsModifier::add(BlockGeneratorAccountDescriptor&& descriptor) {
 		const auto& publicKey = descriptor.signingKeyPair().publicKey();
 		for (auto& prioritizedKeyPair : m_prioritizedKeyPairs) {
 			if (CreateContainsPredicate(publicKey)(prioritizedKeyPair)) {
-				std::get<0>(prioritizedKeyPair) = std::move(descriptor);
+				std::get<PrioritizedContainerIdx::Descriptor>(prioritizedKeyPair) = std::move(descriptor);
 				return UnlockedAccountsAddResult::Success_Update;
 			}
 		}
@@ -72,7 +72,7 @@ namespace catapult { namespace harvesting {
 
 		auto priorityScore = m_prioritizer(publicKey);
 		if (m_maxUnlockedAccounts == m_prioritizedKeyPairs.size()) {
-			if (std::get<1>(m_prioritizedKeyPairs.back()) >= priorityScore)
+			if (std::get<PrioritizedContainerIdx::Priority>(m_prioritizedKeyPairs.back()) >= priorityScore)
 				return UnlockedAccountsAddResult::Failure_Server_Limit;
 
 			m_prioritizedKeyPairs.pop_back();
@@ -80,10 +80,10 @@ namespace catapult { namespace harvesting {
 
 		auto iter = m_prioritizedKeyPairs.cbegin();
 		for (; m_prioritizedKeyPairs.cend() != iter; ++iter) {
-			if (priorityScore > std::get<1>(*iter))
+			if (priorityScore > std::get<PrioritizedContainerIdx::Priority>(*iter))
 				break;
 		}
-		m_prioritizedKeyPairs.emplace(iter, std::move(descriptor), priorityScore, accountVersion);
+		m_prioritizedKeyPairs.emplace(iter, std::move(descriptor), priorityScore);
 		return UnlockedAccountsAddResult::Success_New;
 	}
 
@@ -101,7 +101,7 @@ namespace catapult { namespace harvesting {
 	void UnlockedAccountsModifier::removeIf(const KeyPredicate& predicate) {
 		auto initialSize = m_prioritizedKeyPairs.size();
 		auto newKeyPairsEnd = std::remove_if(m_prioritizedKeyPairs.begin(), m_prioritizedKeyPairs.end(), [predicate](const auto& descriptorContainer) {
-			return predicate(std::get<0>(descriptorContainer));
+			return predicate(std::get<PrioritizedContainerIdx::Descriptor>(descriptorContainer));
 		});
 
 		m_prioritizedKeyPairs.erase(newKeyPairsEnd, m_prioritizedKeyPairs.end());

@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/types.h"
 #include <cstring>
+#include "TestConstants.h"
 
 namespace catapult { namespace test {
 
@@ -59,7 +60,7 @@ namespace catapult { namespace test {
 	inline Importance GetNemesisImportance(const Key& publicKey) {
 		auto index = 0u;
 		for (const auto* pRecipientPrivateKeyString : test::Mijin_Test_Private_Keys) {
-			auto keyPair = crypto::KeyPair::FromString(pRecipientPrivateKeyString);
+			auto keyPair = crypto::KeyPair::FromString(pRecipientPrivateKeyString, Nemesis_Accounts_Version);
 			if (keyPair.publicKey() == publicKey)
 				break;
 

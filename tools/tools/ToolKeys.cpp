@@ -44,12 +44,12 @@ namespace catapult { namespace tools {
 		}
 	}
 
-	crypto::KeyPair LoadServerKeyPair() {
-		return crypto::KeyPair::FromString(Mijin_Test_Private_Key);
+	crypto::KeyPair LoadServerKeyPair(uint32_t accountVersion) {
+		return crypto::KeyPair::FromString(Mijin_Test_Private_Key, accountVersion);
 	}
 
-	crypto::KeyPair GenerateRandomKeyPair() {
-		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte));
+	crypto::KeyPair GenerateRandomKeyPair(uint32_t accountVersion) {
+		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte), accountVersion);
 	}
 
 	std::vector<Address> PrepareAddresses(size_t count) {

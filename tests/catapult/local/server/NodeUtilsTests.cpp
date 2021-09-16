@@ -60,7 +60,7 @@ namespace catapult { namespace local {
 		auto nodesView = nodes.view();
 		EXPECT_EQ(1u, nodesView.size());
 		auto expectedContents = test::BasicNodeDataContainer{
-			{ crypto::KeyPair::FromString(hexPrivateKey).publicKey(), "LOCAL", ionet::NodeSource::Local }
+			{ crypto::KeyPair::FromString(hexPrivateKey, Node_Boot_Key_Hashing_Type).publicKey(), "LOCAL", ionet::NodeSource::Local }
 		};
 		EXPECT_EQ(expectedContents, test::CollectAll(nodesView));
 	}
@@ -85,7 +85,7 @@ namespace catapult { namespace local {
 		auto nodesView = nodes.view();
 		EXPECT_EQ(4u, nodesView.size());
 		auto expectedContents = test::BasicNodeDataContainer{
-			{ crypto::KeyPair::FromString(hexPrivateKey).publicKey(), "LOCAL", ionet::NodeSource::Local },
+			{ crypto::KeyPair::FromString(hexPrivateKey, Node_Boot_Key_Hashing_Type).publicKey(), "LOCAL", ionet::NodeSource::Local },
 			{ keys[0], "alice", ionet::NodeSource::Static },
 			{ keys[1], "bob", ionet::NodeSource::Static },
 			{ keys[2], "charlie", ionet::NodeSource::Static }
@@ -132,7 +132,7 @@ namespace catapult { namespace local {
 		auto nodesView = nodes.view();
 		EXPECT_EQ(2u, nodesView.size());
 		auto expectedContents = test::BasicNodeDataContainer{
-			{ crypto::KeyPair::FromString(hexPrivateKey).publicKey(), std::string(255, 'l'), ionet::NodeSource::Local },
+			{ crypto::KeyPair::FromString(hexPrivateKey, Node_Boot_Key_Hashing_Type).publicKey(), std::string(255, 'l'), ionet::NodeSource::Local },
 			{ peerKey, std::string(255, 'p'), ionet::NodeSource::Static }
 		};
 		EXPECT_EQ(expectedContents, test::CollectAll(nodesView));

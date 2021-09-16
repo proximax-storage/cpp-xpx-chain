@@ -332,7 +332,7 @@ namespace catapult { namespace config {
 	TEST(TEST_CLASS, CanExtractLocalNodeFromConfiguration) {
 		// Arrange:
 		auto privateKeyString = test::GenerateRandomHexString(2 * Key_Size);
-		auto keyPair = crypto::KeyPair::FromString(privateKeyString);
+		auto keyPair = crypto::KeyPair::FromString(privateKeyString, 1);
 		auto config = CreateBlockchainConfiguration(privateKeyString);
 
 		// Act:

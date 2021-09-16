@@ -56,7 +56,7 @@ namespace catapult { namespace test {
 	std::vector<crypto::KeyPair> GetNemesisKeyPairs() {
 		std::vector<crypto::KeyPair> nemesisKeyPairs;
 		for (const auto* pRecipientPrivateKeyString : test::Mijin_Test_Private_Keys)
-			nemesisKeyPairs.push_back(crypto::KeyPair::FromString(pRecipientPrivateKeyString));
+			nemesisKeyPairs.push_back(crypto::KeyPair::FromString(pRecipientPrivateKeyString, 1));
 
 		return nemesisKeyPairs;
 	}

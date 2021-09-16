@@ -37,6 +37,7 @@ namespace catapult { namespace harvesting {
 #define LOAD_HARVESTING_PROPERTY(NAME) LOAD_PROPERTY("harvesting", NAME)
 
 		LOAD_HARVESTING_PROPERTY(HarvestKey);
+		LOAD_HARVESTING_PROPERTY(HarvesterPublicKey);
 		LOAD_HARVESTING_PROPERTY(HarvesterVrfPrivateKey);
 		LOAD_HARVESTING_PROPERTY(IsAutoHarvestingEnabled);
 		LOAD_HARVESTING_PROPERTY(MaxUnlockedAccounts);
@@ -45,7 +46,7 @@ namespace catapult { namespace harvesting {
 
 #undef LOAD_HARVESTING_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 6);
+		utils::VerifyBagSizeLte(bag, 7);
 		return config;
 	}
 

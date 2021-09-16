@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 
 		crypto::KeyPair GetNemesisAccount() {
 			// note that the nemesis account is fake in order to ensure that it is being retrieved from the context
-			return crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF");
+			return crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF", 1);
 		}
 
 		config::BlockchainConfiguration CreateBlockchainConfiguration() {

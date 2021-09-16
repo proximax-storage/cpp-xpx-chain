@@ -54,8 +54,8 @@ namespace catapult { namespace plugins {
 
 		//auto encryptionPrivateKeyPemFilename = config::GetNodePrivateKeyPemFilename(manager.userConfig().CertificateDirectory);
 		//auto encryptionPublicKey = crypto::ReadPublicKeyFromPrivateKeyPemFile(encryptionPrivateKeyPemFilename);
-
-		auto recipient = model::PublicKeyToAddress(crypto::KeyPair::FromString(manager.configHolder()->Config().User.BootKey).publicKey(), manager.configHolder()->Config().Immutable.NetworkIdentifier);
+		//BOOT KEY ALWAYS USES V1 ACCOUNT(SHA3)
+		auto recipient = model::PublicKeyToAddress(crypto::KeyPair::FromString(manager.configHolder()->Config().User.BootKey, 1).publicKey(), manager.configHolder()->Config().Immutable.NetworkIdentifier);
 
 		auto dataDirectory = config::CatapultDataDirectory(manager.configHolder()->Config().User.DataDirectory);
 		CATAPULT_LOG(info) << "Registering facultative message for delegated harvesting for recipient: " << model::AddressToString(recipient) << " at directory " << dataDirectory.rootDir().path();

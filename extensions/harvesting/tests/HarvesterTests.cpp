@@ -55,7 +55,8 @@ namespace catapult { namespace harvesting {
 		std::vector<KeyPair> CreateKeyPairs(size_t count) {
 			std::vector<KeyPair> keyPairs;
 			for (auto i = 0u; i < count; ++i)
-				keyPairs.push_back(KeyPair::FromPrivate(test::GenerateRandomPrivateKey()));
+				//All additional unlockedAccounts have to be V2
+				keyPairs.push_back(test::GenerateKeyPair(2));
 
 			return keyPairs;
 		}
@@ -132,8 +133,8 @@ namespace catapult { namespace harvesting {
 
 
 				AccountStates = CreateAccounts(accountStateCacheDelta, KeyPairs, VrfKeyPairs);
-				KeyPairs.push_back(KeyPair::FromPrivate(test::GenerateRandomPrivateKey()));
-				VrfKeyPairs.push_back(KeyPair::FromPrivate(test::GenerateRandomPrivateKey()));
+				KeyPairs.push_back(test::GenerateKeyPair(TBaseAccountVersion));
+				VrfKeyPairs.push_back(test::GenerateVrfKeyPair());
 				const auto &primaryAccountPair = KeyPairs.back();
 				const auto &vrfPrimaryAccountPair = VrfKeyPairs.back();
 
@@ -184,7 +185,7 @@ namespace catapult { namespace harvesting {
 					for (auto i = 0u; i < Num_Accounts; ++i) {
 						modifier.add(BlockGeneratorAccountDescriptor(
 								test::CopyKeyPair(signingKeyPairs[i]),
-								test::CopyKeyPair(vrfKeyPairs[i])), 2);
+								test::CopyKeyPair(vrfKeyPairs[i]),2));
 					}
 			}
 
@@ -274,13 +275,17 @@ namespace catapult { namespace harvesting {
 	}
 
 	// region basic tests
+	namespace {
+		using test_types = ::testing::Types<
+				std::integral_constant<uint32_t,1>,
+				std::integral_constant<uint32_t,2>>;
+		template<typename TBaseAccountVersion>
+		struct HarvesterTest : public ::testing::Test {};
 
-	using test_types = ::testing::Types<
-			std::integral_constant<uint32_t,1>,
-			std::integral_constant<uint32_t,2>>;
+	}
 
-	template<typename TBaseAccountVersion>
-	struct HarvesterTest : public ::testing::Test {};
+
+
 	TYPED_TEST_CASE(HarvesterTest, test_types);
 
 	TYPED_TEST(HarvesterTest, HarvestReturnsNullptrWhenNoAccountIsUnlocked) {

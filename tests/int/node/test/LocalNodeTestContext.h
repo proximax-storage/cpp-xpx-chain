@@ -71,7 +71,8 @@ namespace catapult { namespace test {
 				, m_configTransform(configTransform)
 				, m_serverKeyPair(loadServerKeyPair())
 				, m_partnerServerKeyPair(LoadPartnerServerKeyPair())
-				, m_localNodeHarvestingKeys(std::make_tuple(crypto::KeyPair::FromString("819F72066B17FFD71B8B4142C5AEAE4B997B0882ABDF2C263B02869382BD93A0"), test::GenerateKeyPair()))
+				//UPDATE THIS TO ALLOW V2 ACCOUNTS IN NEMESIS BLOCK
+				, m_localNodeHarvestingKeys(std::make_tuple(crypto::KeyPair::FromString("819F72066B17FFD71B8B4142C5AEAE4B997B0882ABDF2C263B02869382BD93A0", 1), test::GenerateVrfKeyPair()))
 				, m_tempDir("lntc" + tempDirPostfix)
 				, m_partnerTempDir("lntc_partner" + tempDirPostfix) {
 			if(HasFlag(NodeFlag::Auto_Harvest, nodeFlag)) initializeDataDirectory(m_tempDir.name(), &m_localNodeHarvestingKeys);
@@ -213,7 +214,7 @@ namespace catapult { namespace test {
 			// can pass empty string to CreateBlockchainConfiguration because this config is only being used to get boot key
 			auto config = CreatePrototypicalBlockchainConfiguration("");
 			m_configTransform(config);
-			return crypto::KeyPair::FromString(config.User.BootKey);
+			return crypto::KeyPair::FromString(config.User.BootKey, Node_Boot_Key_Hashing_Type);
 		}
 
 	public:

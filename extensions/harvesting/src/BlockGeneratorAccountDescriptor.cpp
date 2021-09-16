@@ -25,17 +25,19 @@ namespace catapult { namespace harvesting {
 
 	namespace {
 		crypto::KeyPair CreateZeroKeyPair() {
-			return crypto::KeyPair::FromPrivate(crypto::PrivateKey());
+			return crypto::KeyPair::FromPrivate(crypto::PrivateKey(), 1);
 		}
 	}
 
+	// Note: Empty descriptors always use V1 accounts
 	BlockGeneratorAccountDescriptor::BlockGeneratorAccountDescriptor()
-			: BlockGeneratorAccountDescriptor(CreateZeroKeyPair(), CreateZeroKeyPair())
+			: BlockGeneratorAccountDescriptor(CreateZeroKeyPair(), CreateZeroKeyPair(), 1)
 	{}
 
-	BlockGeneratorAccountDescriptor::BlockGeneratorAccountDescriptor(crypto::KeyPair&& signingKeyPair, crypto::KeyPair&& vrfKeyPair)
+	BlockGeneratorAccountDescriptor::BlockGeneratorAccountDescriptor(crypto::KeyPair&& signingKeyPair, crypto::KeyPair&& vrfKeyPair, uint32_t accountVersion)
 			: m_signingKeyPair(std::move(signingKeyPair))
 			, m_vrfKeyPair(std::move(vrfKeyPair))
+			, m_accountVersion(accountVersion)
 	{}
 
 	const crypto::KeyPair& BlockGeneratorAccountDescriptor::signingKeyPair() const {
@@ -46,9 +48,14 @@ namespace catapult { namespace harvesting {
 		return m_vrfKeyPair;
 	}
 
+	const uint32_t BlockGeneratorAccountDescriptor::accountVersion() const {
+		return m_accountVersion;
+	}
+
+	// V1 account comparisons ignore the VRF Key Pair as it is not used
 	bool BlockGeneratorAccountDescriptor::operator==(const BlockGeneratorAccountDescriptor& rhs) const {
-		return m_signingKeyPair.publicKey() == rhs.m_signingKeyPair.publicKey()
-				&& m_vrfKeyPair.publicKey() == rhs.m_vrfKeyPair.publicKey();
+		return m_signingKeyPair.publicKey() == rhs.m_signingKeyPair.publicKey() &&
+				( m_accountVersion < 2 || m_vrfKeyPair.publicKey() == rhs.m_vrfKeyPair.publicKey());
 	}
 
 	bool BlockGeneratorAccountDescriptor::operator!=(const BlockGeneratorAccountDescriptor& rhs) const {

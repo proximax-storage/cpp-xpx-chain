@@ -169,10 +169,10 @@ namespace catapult { namespace crypto {
 			static constexpr auto DeriveSharedResult = DeriveSharedKey;
 		};
 
-		auto CreateKeyPair(const Key& privateKey) {
+		auto CreateKeyPair(const Key& privateKey, KeyHashingType hashingType) {
 			PrivateKey key;
 			std::memcpy(const_cast<unsigned char *>(key.data()), privateKey.data(), privateKey.Size);
-			return KeyPair::FromPrivate(std::move(key));
+			return KeyPair::FromPrivate(std::move(key), hashingType);
 		}
 
 		template<typename TTraits>
@@ -181,15 +181,15 @@ namespace catapult { namespace crypto {
 				const consumer<const typename TTraits::SharedResult&, const typename TTraits::SharedResult&>& assertKeys) {
 			// Arrange: the public key needs to be valid, else unpacking will fail
 			auto privateKey1 = test::GenerateRandomByteArray<Key>();
-			auto otherPublicKey1 = test::GenerateKeyPair().publicKey();
+			auto otherPublicKey1 = test::GenerateKeyPair(KeyHashingType::Sha3).publicKey();
 
 			auto privateKey2 = privateKey1;
 			auto otherPublicKey2 = otherPublicKey1;
 
 			mutate(privateKey2, otherPublicKey2);
 
-			auto keyPair1 = CreateKeyPair(privateKey1);
-			auto keyPair2 = CreateKeyPair(privateKey2);
+			auto keyPair1 = CreateKeyPair(privateKey1, KeyHashingType::Sha2);
+			auto keyPair2 = CreateKeyPair(privateKey2, KeyHashingType::Sha2);
 
 			// Act:
 			auto sharedResult1 = TTraits::DeriveSharedResult(keyPair1, otherPublicKey1);
@@ -240,8 +240,8 @@ namespace catapult { namespace crypto {
 		// Arrange:
 		auto privateKey1 = test::GenerateRandomByteArray<Key>();
 		auto privateKey2 = test::GenerateRandomByteArray<Key>();
-		auto keyPair1 = CreateKeyPair(privateKey1);
-		auto keyPair2 = CreateKeyPair(privateKey2);
+		auto keyPair1 = CreateKeyPair(privateKey1, KeyHashingType::Sha2);
+		auto keyPair2 = CreateKeyPair(privateKey2, KeyHashingType::Sha2);
 
 		// Act:
 		auto sharedResult1 = TTraits::DeriveSharedResult(keyPair1, keyPair2.publicKey());
@@ -254,8 +254,8 @@ namespace catapult { namespace crypto {
 		// Arrange:
 		auto privateKey1 = PrivateKey::FromString("2F985E4EC55D60C957C973BD1BEE2C0B3BA313A841D3EE4C74810805E6936053");
 		auto privateKey2 = PrivateKey::FromString("D6430327F90FAAD41F4BC69E51EB6C9D4C78B618D0A4B616478BD05E7A480950");
-		auto keyPair1 = KeyPair::FromPrivate(std::move(privateKey1));
-		auto keyPair2 = KeyPair::FromPrivate(std::move(privateKey2));
+		auto keyPair1 = KeyPair::FromPrivate(std::move(privateKey1), KeyHashingType::Sha2);
+		auto keyPair2 = KeyPair::FromPrivate(std::move(privateKey2), KeyHashingType::Sha2);
 
 		// Act:
 		auto sharedResult1 = TTraits::DeriveSharedResult(keyPair1, keyPair2.publicKey());
@@ -267,7 +267,7 @@ namespace catapult { namespace crypto {
 
 	SHARED_BASED_TEST(PublicKeyNotOnTheCurveResultsInZeroSharedResult) {
 		// Arrange:
-		auto keyPair = test::GenerateKeyPair();
+		auto keyPair = test::GenerateKeyPair(KeyHashingType::Sha2);
 		Key publicKey{};
 		publicKey[Key::Size - 1] = 1; // not on the curve
 

@@ -114,7 +114,7 @@ namespace catapult { namespace harvesting {
 		}
 
 		KeyPair AddImportantAccount(cache::CatapultCache& cache) {
-			auto keyPair = KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
+			auto keyPair = test::GenerateKeyPair(1);
 			auto delta = cache.createDelta();
 			auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 			accountStateCache.addAccount(keyPair.publicKey(), Height(1));
@@ -127,7 +127,7 @@ namespace catapult { namespace harvesting {
 
 		void UnlockAccount(UnlockedAccounts& unlockedAccounts, const KeyPair& keyPair) {
 			auto modifier = unlockedAccounts.modifier();
-			modifier.add(BlockGeneratorAccountDescriptor(test::CopyKeyPair(keyPair), test::GenerateKeyPair()), 1);
+			modifier.add(BlockGeneratorAccountDescriptor(test::CopyKeyPair(keyPair), test::GenerateKeyPair(), 1));
 		}
 
 		struct HarvesterContext {

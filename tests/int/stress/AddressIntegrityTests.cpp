@@ -34,7 +34,7 @@ namespace catapult {
 		// Arrange:
 		for (auto i = 0u; i < 1000; ++i) {
 			auto sk = crypto::PrivateKey::Generate(test::RandomByte);
-			auto kp = crypto::KeyPair::FromPrivate(std::move(sk));
+			auto kp = crypto::KeyPair::FromPrivate(std::move(sk), KeyHashingType::Sha3);
 			auto rawAddress = model::PublicKeyToAddress(kp.publicKey(), model::NetworkIdentifier::Mijin);
 			auto address = model::AddressToString(rawAddress);
 			if (address[0] == 'M' && address[1] == 'A')
@@ -90,7 +90,7 @@ namespace catapult {
 		};
 
 		auto PrivateKeyStringToAddressString(const std::string& pkString, model::NetworkIdentifier networkIdentifier) {
-			auto kp = crypto::KeyPair::FromString(pkString);
+			auto kp = crypto::KeyPair::FromString(pkString, KeyHashingType::Sha3);
 			auto rawAddress = model::PublicKeyToAddress(kp.publicKey(), networkIdentifier);
 			return model::AddressToString(rawAddress);
 		}

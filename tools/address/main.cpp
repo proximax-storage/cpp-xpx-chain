@@ -33,6 +33,13 @@
 namespace catapult { namespace tools { namespace address {
 
 	namespace {
+
+		KeyHashingType GetHashingTypeFromOptionString(std::string hashingType)
+		{
+			if(hashingType == "sha2")
+				return KeyHashingType::Sha2;
+			return KeyHashingType::Sha3;
+		}
 		// region entropy sources
 
 		class LowEntropySource {
@@ -71,6 +78,9 @@ namespace catapult { namespace tools { namespace address {
 				optionsBuilder("public,p",
 						OptionsValue<std::string>(m_publicKey),
 						"show address associated with public key");
+				optionsBuilder("version,v",
+							   OptionsValue<std::string>(m_hashingAlgorythm)->default_value("sha3"),
+							   "hashing algorythm to be used in the key");
 				optionsBuilder("secret,s",
 						OptionsValue<std::string>(m_secretKey),
 						"show address and public key associated with private key");
@@ -88,13 +98,14 @@ namespace catapult { namespace tools { namespace address {
 				if (!model::TryParseValue(m_networkName, networkId))
 					CATAPULT_THROW_INVALID_ARGUMENT_1("unknown network", m_networkName);
 
+				auto hashingType = GetHashingTypeFromOptionString(m_hashingAlgorythm);
 				if (!m_publicKey.empty()) {
 					output(networkId, crypto::ParseKey(m_publicKey));
 					return 0;
 				}
 
 				if (!m_secretKey.empty()) {
-					output(networkId, crypto::KeyPair::FromString(m_secretKey));
+					output(networkId, crypto::KeyPair::FromString(m_secretKey, hashingType));
 					return 0;
 				}
 
@@ -123,7 +134,7 @@ namespace catapult { namespace tools { namespace address {
 				std::cout << "--- generating " << m_numRandomKeys << " keys ---" << std::endl;
 
 				for (auto i = 0u; i < m_numRandomKeys; ++i) {
-					output(networkId, crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(generator)));
+					output(networkId, crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(generator), GetHashingTypeFromOptionString(m_hashingAlgorythm)));
 					std::cout << std::endl;
 				}
 			}
@@ -133,6 +144,7 @@ namespace catapult { namespace tools { namespace address {
 			std::string m_publicKey;
 			std::string m_secretKey;
 			std::string m_networkName;
+			std::string m_hashingAlgorythm;
 
 		private:
 			static constexpr int Label_Width = 24;

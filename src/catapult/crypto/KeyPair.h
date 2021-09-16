@@ -22,6 +22,7 @@
 #include "KeyGenerator.h"
 #include "PrivateKey.h"
 #include "catapult/types.h"
+#include "catapult/utils/AccountVersionToKeyTypeResolver.h"
 
 namespace catapult { namespace crypto {
 
@@ -29,33 +30,65 @@ namespace catapult { namespace crypto {
 #pragma pack(push, 16)
 #endif
 
-	/// Represents a pair of private key with associated public key.
+	class KeyPairSha2;
+	class KeyPairSha3;
+	/// Represents an interface to a pair of private key with associated public key. Read Only
 	class KeyPair {
-	protected:
-		KeyPair(PrivateKey&& privateKey) : m_privateKey(std::move(privateKey)) {
-			DerivePublicKeyFromPrivate(m_privateKey);
-		}
 
 	protected:
-		virtual void DerivePublicKeyFromPrivate(const PrivateKey& key) //Remember to turn this into pure virtual method
-		{
-			ExtractPublicKeyFromPrivateKeySha3(key, m_publicKey);
-		}
+		KeyPair(PrivateKey&& privateKey) : m_privateKey(std::move(privateKey)) {}
+
+	protected:
+		virtual void DerivePublicKeyFromPrivate(const PrivateKey& key);
 	public:
-		/// Creates a key pair from \a privateKey.
-		static auto FromPrivate(PrivateKey&& privateKey) {
-			return KeyPair(std::move(privateKey));
+		/// Creates a key pair of given type from \a privateKey.
+		template<class T>
+		static KeyPair FromPrivate(PrivateKey&& privateKey) {
+			return static_cast<KeyPair>(T(std::move(privateKey)));
 		}
 
-		/// Creates a key pair from \a privateKey.
-		static auto FromString(const std::string& privateKey) {
-			return FromPrivate(PrivateKey::FromString(privateKey));
+		/// Creates a key pair of a given type from \a privateKey string.
+		template<class T>
+		static KeyPair FromString(const std::string& privateKey) {
+			return FromPrivate<T>(PrivateKey::FromString(privateKey));
+		}
+
+		/// Creates a key pair of given type from \a privateKey based on account version.
+		static auto FromPrivate(PrivateKey&& privateKey, KeyHashingType hashingType) {
+			if(hashingType == KeyHashingType::Sha2)
+				return FromPrivate<KeyPairSha2>(std::move(privateKey));
+			return FromPrivate<KeyPairSha3>(std::move(privateKey));
+
+		}
+
+		/// Creates a key pair of a given type from \a privateKey string.
+		static auto FromString(const std::string& privateKey, KeyHashingType hashingType) {
+			if(hashingType== KeyHashingType::Sha2)
+				return FromString<KeyPairSha2>(privateKey);
+			return FromString<KeyPairSha3>(privateKey);
+		}
+
+		/// Creates a key pair of given type from \a privateKey based on account version.
+		static auto FromPrivate(PrivateKey&& privateKey, uint32_t version) {
+			return FromPrivate(std::move(privateKey), utils::ResolveKeyHashingTypeFromAccountVersion(version));
+
+		}
+
+		/// Creates a key pair of a given type from \a privateKey string.
+		static auto FromString(const std::string& privateKey, uint32_t version) {
+			return FromString(privateKey, utils::ResolveKeyHashingTypeFromAccountVersion(version));
 		}
 
 		/// Returns a private key of a key pair.
 		const auto& privateKey() const {
 			return m_privateKey;
 		}
+
+		/// Returns the hashing algorythm used in this KeyPair.
+		const auto hashingType() const {
+			return m_hashingType;
+		}
+
 		/// Checks whether two keypairs are the same.
 		bool operator==(const KeyPair& rhs) const { return this->m_privateKey == rhs.m_privateKey; }
 
@@ -69,12 +102,18 @@ namespace catapult { namespace crypto {
 	protected:
 		PrivateKey m_privateKey;
 		Key m_publicKey;
+		KeyHashingType m_hashingType;
 	};
 
 	/// Represents a pair of private key with associated public key associated with a Sha3 hashing function
 	class KeyPairSha3 final: public KeyPair {
-	private:
-		KeyPairSha3(PrivateKey&& privateKey) : KeyPair(std::move(privateKey)) {}
+		friend KeyPair;
+
+	protected:
+		KeyPairSha3(PrivateKey&& privateKey) : KeyPair(std::move(privateKey)) {
+			DerivePublicKeyFromPrivate(m_privateKey);
+			m_hashingType = KeyHashingType::Sha3;
+		}
 
 	protected:
 		void DerivePublicKeyFromPrivate(const PrivateKey& key) override {
@@ -84,8 +123,12 @@ namespace catapult { namespace crypto {
 
 	/// Represents a pair of private key with associated public key associated with a Sha3 hashing function
 	class KeyPairSha2 final: public KeyPair {
-	private:
-		KeyPairSha2(PrivateKey&& privateKey) : KeyPair(std::move(privateKey)) {}
+		friend KeyPair;
+	protected:
+		KeyPairSha2(PrivateKey&& privateKey) : KeyPair(std::move(privateKey)) {
+			DerivePublicKeyFromPrivate(m_privateKey);
+			m_hashingType = KeyHashingType::Sha2;
+		}
 
 	protected:
 		void DerivePublicKeyFromPrivate(const PrivateKey& key) override {

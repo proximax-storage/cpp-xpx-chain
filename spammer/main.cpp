@@ -68,12 +68,12 @@ uint8_t RandomByte() {
 	return static_cast<uint8_t>(gen());
 }
 
-crypto::KeyPair GenerateRandomKeyPair() {
-	return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte));
+crypto::KeyPair GenerateRandomKeyPair(uint32_t accountVersion) {
+	return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte), accountVersion);
 }
 
 model::UniqueEntityPtr<model::Transaction> generateTransferTransaction(const GenerationHash& hash) {
-	auto signer = GenerateRandomKeyPair();
+	auto signer = GenerateRandomKeyPair(1);
 	model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Public_Test;
 
 	builders::TransferBuilder builder(networkIdentifier, signer.publicKey());

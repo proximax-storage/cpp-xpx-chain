@@ -36,7 +36,7 @@ namespace catapult { namespace test {
 
 	namespace {
 		template<typename TModify>
-		void ModifyNemesis(const std::string& destination, TModify modify) {
+		void ModifyNemesis(const std::string& destination, uint32_t accountVersion, TModify modify) {
 			// load from file storage to allow successive modifications
 			io::FileBlockStorage storage(destination);
 			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
@@ -45,7 +45,7 @@ namespace catapult { namespace test {
 			auto& nemesisBlock = const_cast<model::Block&>(pNemesisBlockElement->Block);
 			modify(nemesisBlock, *pNemesisBlockElement);
 			extensions::BlockExtensions(GetNemesisGenerationHash()).signFullBlock(
-					crypto::KeyPair::FromString(Mijin_Test_Nemesis_Private_Key),
+					crypto::KeyPair::FromString(Mijin_Test_Nemesis_Private_Key, accountVersion),
 					nemesisBlock);
 
 			// overwrite the nemesis file in destination
@@ -74,9 +74,9 @@ namespace catapult { namespace test {
 		}
 	}
 
-	void SetNemesisReceiptsHash(const std::string& destination) {
+	void SetNemesisReceiptsHash(const std::string& destination, const config::BlockchainConfiguration& config) {
 		// calculate the receipts hash (default nemesis block has zeroed receipts hash)
-		ModifyNemesis(destination, [](auto& nemesisBlock, const auto&) {
+		ModifyNemesis(destination, config.Network.AccountVersion, [](auto& nemesisBlock, const auto&) {
 			model::BlockStatementBuilder blockStatementBuilder;
 
 			// 1. add harvest fee receipt
@@ -112,7 +112,7 @@ namespace catapult { namespace test {
 	}
 		void SetNemesisStateHash(const std::string& destination, const config::BlockchainConfiguration& config) {
 		// calculate the state hash (default nemesis block has zeroed state hash)
-		ModifyNemesis(destination, [&config](auto& nemesisBlock, const auto& nemesisBlockElement) {
+		ModifyNemesis(destination, config.Network.AccountVersion, [&config](auto& nemesisBlock, const auto& nemesisBlockElement) {
 			nemesisBlock.StateHash = CalculateNemesisStateHash(nemesisBlockElement, config);
 		});
 	}
