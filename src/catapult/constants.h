@@ -41,4 +41,6 @@ namespace catapult {
 	const KeyHashingType Rest_Key_Hashing_Type = KeyHashingType::Sha3;
 
 	const KeyHashingType Vrf_Key_Hashing_Type = KeyHashingType::Sha2;
+
+	const KeyHashingType Ephemeral_Key_Hashing_Type = KeyHashingType::Sha2;
 }

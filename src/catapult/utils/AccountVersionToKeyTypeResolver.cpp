@@ -20,12 +20,18 @@
 
 #pragma once
 #include "catapult/state/AccountState.h"
-#include "catapult/types.h"
 namespace catapult { namespace utils {
 
 	/// Resolve an account version to the corresponding key hashing algorythm from a version
-	KeyHashingType ResolveKeyHashingTypeFromAccountVersion(uint32_t version);
+	KeyHashingType ResolveKeyHashingTypeFromAccountVersion(uint32_t version)
+	{
+		if(version >= 2) return KeyHashingType::Sha2;
+		return KeyHashingType::Sha3;
+	}
 
 	/// Resolve an account version to the corresponding key hashing algorythm from an account state
-	KeyHashingType ResolveKeyHashingTypeFromAccountVersion(const state::AccountState& account);
+	KeyHashingType ResolveKeyHashingTypeFromAccountVersion(const state::AccountState& account)
+	{
+		return ResolveKeyHashingTypeFromAccountVersion(account.GetVersion());
+	}
 }}

@@ -30,54 +30,30 @@ namespace catapult { namespace crypto {
 #pragma pack(push, 16)
 #endif
 
-	class KeyPairSha2;
-	class KeyPairSha3;
 	/// Represents an interface to a pair of private key with associated public key. Read Only
 	class KeyPair {
 
 	protected:
 		KeyPair(PrivateKey&& privateKey) : m_privateKey(std::move(privateKey)) {}
-
-	protected:
-		virtual void DerivePublicKeyFromPrivate(const PrivateKey& key);
 	public:
 		/// Creates a key pair of given type from \a privateKey.
 		template<class T>
-		static KeyPair FromPrivate(PrivateKey&& privateKey) {
-			return static_cast<KeyPair>(T(std::move(privateKey)));
-		}
+		static KeyPair FromPrivate(PrivateKey&& privateKey);
 
 		/// Creates a key pair of a given type from \a privateKey string.
 		template<class T>
-		static KeyPair FromString(const std::string& privateKey) {
-			return FromPrivate<T>(PrivateKey::FromString(privateKey));
-		}
-
+		static KeyPair FromString(const std::string& privateKey);
 		/// Creates a key pair of given type from \a privateKey based on account version.
-		static auto FromPrivate(PrivateKey&& privateKey, KeyHashingType hashingType) {
-			if(hashingType == KeyHashingType::Sha2)
-				return FromPrivate<KeyPairSha2>(std::move(privateKey));
-			return FromPrivate<KeyPairSha3>(std::move(privateKey));
-
-		}
+		static KeyPair FromPrivate(PrivateKey&& privateKey, KeyHashingType hashingType);
 
 		/// Creates a key pair of a given type from \a privateKey string.
-		static auto FromString(const std::string& privateKey, KeyHashingType hashingType) {
-			if(hashingType== KeyHashingType::Sha2)
-				return FromString<KeyPairSha2>(privateKey);
-			return FromString<KeyPairSha3>(privateKey);
-		}
+		static KeyPair FromString(const std::string& privateKey, KeyHashingType hashingType);
 
 		/// Creates a key pair of given type from \a privateKey based on account version.
-		static auto FromPrivate(PrivateKey&& privateKey, uint32_t version) {
-			return FromPrivate(std::move(privateKey), utils::ResolveKeyHashingTypeFromAccountVersion(version));
-
-		}
+		static KeyPair FromPrivate(PrivateKey&& privateKey, uint32_t version);
 
 		/// Creates a key pair of a given type from \a privateKey string.
-		static auto FromString(const std::string& privateKey, uint32_t version) {
-			return FromString(privateKey, utils::ResolveKeyHashingTypeFromAccountVersion(version));
-		}
+		static KeyPair FromString(const std::string& privateKey, uint32_t version);
 
 		/// Returns a private key of a key pair.
 		const auto& privateKey() const {
@@ -116,7 +92,7 @@ namespace catapult { namespace crypto {
 		}
 
 	protected:
-		void DerivePublicKeyFromPrivate(const PrivateKey& key) override {
+		void DerivePublicKeyFromPrivate(const PrivateKey& key) {
 			ExtractPublicKeyFromPrivateKeySha3(key, m_publicKey);
 		}
 	};
@@ -131,10 +107,11 @@ namespace catapult { namespace crypto {
 		}
 
 	protected:
-		void DerivePublicKeyFromPrivate(const PrivateKey& key) override {
+		void DerivePublicKeyFromPrivate(const PrivateKey& key) {
 			ExtractPublicKeyFromPrivateKeySha2(key, m_publicKey);
 		}
 	};
+
 #ifdef SPAMMER_TOOL
 #pragma pack(pop)
 #endif
