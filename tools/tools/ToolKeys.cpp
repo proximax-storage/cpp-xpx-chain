@@ -52,6 +52,10 @@ namespace catapult { namespace tools {
 		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte), accountVersion);
 	}
 
+	crypto::KeyPair GenerateRandomKeyPair(KeyHashingType hashingType) {
+		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte), hashingType);
+	}
+
 	std::vector<Address> PrepareAddresses(size_t count) {
 		std::vector<Address> addresses;
 		auto seedKey = Key();

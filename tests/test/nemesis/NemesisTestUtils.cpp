@@ -45,8 +45,16 @@ namespace catapult { namespace test {
 		return model::PublicKeyToAddress(crypto::ParseKey(publicKeyString), Network_Identifier);
 	}
 
-	Address RawPrivateKeyToAddress(const char* privateKeyString) {
-		return model::PublicKeyToAddress(RawPrivateKeyToPublicKey(privateKeyString), Network_Identifier);
+	Address RawPrivateKeyToAddress(const char* privateKeyString, KeyHashingType hashType) {
+		return model::PublicKeyToAddress(RawPrivateKeyToPublicKey(privateKeyString, hashType), Network_Identifier);
+	}
+
+	Key RawPrivateKeyToPublicKey(const char* privateKeyString, uint32_t accountVersion) {
+		auto keyPair = crypto::KeyPair::FromString(privateKeyString, accountVersion);
+		return keyPair.publicKey();
+	}
+	Address RawPrivateKeyToAddress(const char* privateKeyString, uint32_t accountVersion) {
+		return model::PublicKeyToAddress(RawPrivateKeyToPublicKey(privateKeyString, accountVersion), Network_Identifier);
 	}
 
 	namespace {
@@ -111,7 +119,7 @@ namespace catapult { namespace test {
 
 			// - check recipient accounts
 			for (const auto* pRecipientPrivateKeyString : test::Mijin_Test_Private_Keys)
-				AssertRecipientAccount(view, RawPrivateKeyToPublicKey(pRecipientPrivateKeyString));
+				AssertRecipientAccount(view, RawPrivateKeyToPublicKey(pRecipientPrivateKeyString, nemesisAccountVersion));
 		}
 	}
 

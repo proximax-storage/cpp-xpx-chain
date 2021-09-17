@@ -40,7 +40,7 @@ namespace catapult { namespace harvesting {
 		void AssertFailureWhenDecryptedDataHasInvalidSize(size_t dataSize) {
 			// Arrange:
 			auto clearText = test::GenerateRandomVector(dataSize);
-			auto recipientKeyPair = test::GenerateKeyPair();
+			auto recipientKeyPair = test::GenerateKeyPair(2);
 			auto publicKeyPrefixedEncryptedPayload = test::GenerateEphemeralAndEncrypt(clearText, recipientKeyPair.publicKey());
 
 			// Act:
@@ -62,7 +62,7 @@ namespace catapult { namespace harvesting {
 	TEST(TEST_CLASS, TryDecryptBlockGeneratorAccountDescriptor_SucceedsWhenDecryptedDataHasProperSize) {
 		// Arrange:
 		auto clearText = test::GenerateRandomVector(Encrypted_Data_Size);
-		auto recipientKeyPair = test::GenerateKeyPair();
+		auto recipientKeyPair = test::GenerateKeyPair(2);
 		auto publicKeyPrefixedEncryptedPayload = test::GenerateEphemeralAndEncrypt(clearText, recipientKeyPair.publicKey());
 
 		// Act:
@@ -83,7 +83,7 @@ namespace catapult { namespace harvesting {
 
 		class TestContext {
 		public:
-			TestContext() : m_keyPair(test::GenerateKeyPair())
+			TestContext() : m_keyPair(test::GenerateKeyPair(2))
 			{}
 
 		public:

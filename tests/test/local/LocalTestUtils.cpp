@@ -308,7 +308,7 @@ namespace catapult { namespace test {
 		test::MutableBlockchainConfiguration config;
 		config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
 		config.Immutable.GenerationHash = GetNemesisGenerationHash();
-		SetNetwork(config.Network.Info);
+		SetNetwork(config.Network.Info, config.Network.AccountVersion);
 		config.Network.MaxTransactionLifetime = utils::TimeSpan::FromHours(1);
 		config.Network.ImportanceGrouping = 123;
 		config.Network.MaxDifficultyBlocks = 123;

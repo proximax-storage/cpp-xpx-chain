@@ -78,7 +78,7 @@ namespace catapult { namespace test {
 	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(size_t numTransactions, Height height, Timestamp timestamp);
 
 	/// Generates a predefined block, i.e. this function will always return the same block.
-	model::UniqueEntityPtr<model::Block> GenerateDeterministicBlock();
+	model::UniqueEntityPtr<model::Block> GenerateDeterministicBlock(uint32_t signerAccountVersion);
 
 	// endregion
 

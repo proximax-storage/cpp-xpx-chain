@@ -27,7 +27,7 @@ namespace catapult { namespace config { class BlockchainConfiguration; } }
 namespace catapult { namespace test {
 
 	/// Updates the nemesis block in the \a destination directory by setting an appropriate receipts hash.
-	void SetNemesisReceiptsHash(const std::string& destination);
+	void SetNemesisReceiptsHash(const std::string& destination, const config::BlockchainConfiguration& config);
 
 	/// Updates the nemesis block in the \a destination directory by setting an appropriate state hash in accordance with \a config.
 	void SetNemesisStateHash(const std::string& destination, const config::BlockchainConfiguration& config);

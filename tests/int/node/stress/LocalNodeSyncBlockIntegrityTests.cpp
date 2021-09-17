@@ -35,10 +35,10 @@ namespace catapult { namespace local {
 
 	namespace {
 		template<typename TTestContext>
-		std::vector<Hash256> RunInvalidSignatureTest(TTestContext& context) {
+		std::vector<Hash256> RunInvalidSignatureTest(TTestContext& context, uint32_t mainAccountVersion, uint32_t additionalAccountVersions) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
-			test::Accounts accounts(3);
+			test::Accounts accounts(3, mainAccountVersion, additionalAccountVersions);
 
 			// - prepare a better (unsigned) block
 			std::shared_ptr<model::Block> pUnsignedBlock;
@@ -87,7 +87,7 @@ namespace catapult { namespace local {
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunInvalidSignatureTest(context);
+		auto stateHashes = RunInvalidSignatureTest(context, 1, 1);
 
 		// Assert: all state hashes are zero
 		test::AssertAllZero(stateHashes, 1);
@@ -98,7 +98,7 @@ namespace catapult { namespace local {
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunInvalidSignatureTest(context);
+		auto stateHashes = RunInvalidSignatureTest(context, 1, 1);
 
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashes, 1);

@@ -26,16 +26,22 @@ namespace catapult { namespace cache { class CatapultCacheView; } }
 namespace catapult { namespace test {
 
 	/// Converts a raw private key string (\a privateKeyString) to a public key.
-	Key RawPrivateKeyToPublicKey(const char* privateKeyString);
+	Key RawPrivateKeyToPublicKey(const char* privateKeyString, KeyHashingType hashType);
 
 	/// Converts a raw private key string (\a privateKeyString) to an address.
-	Address RawPrivateKeyToAddress(const char* privateKeyString);
+	Address RawPrivateKeyToAddress(const char* privateKeyString, KeyHashingType hashType);
+
+	/// Converts a raw private key string (\a privateKeyString) to a public key.
+	Key RawPrivateKeyToPublicKey(const char* privateKeyString, uint32_t accountVersion);
+
+	/// Converts a raw private key string (\a privateKeyString) to an address.
+	Address RawPrivateKeyToAddress(const char* privateKeyString, uint32_t accountVersion);
 
 	/// Converts a raw public key string (\a publicKeyString) to an address.
 	Address RawPublicKeyToAddress(const char* publicKeyString);
 
 	/// Asserts that \a view contains expected nemesis account state.
-	void AssertNemesisAccountState(const cache::CatapultCacheView& view);
+	void AssertNemesisAccountState(const cache::CatapultCacheView& view, uint32_t nemesisAccountVersion);
 
 	/// Asserts that \a view contains expected nemesis mosaic state.
 	void AssertNemesisMosaicState(const cache::CatapultCacheView& view);

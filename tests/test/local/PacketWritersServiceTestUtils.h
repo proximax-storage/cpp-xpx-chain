@@ -34,8 +34,8 @@ namespace catapult { namespace test {
 	struct BlockBroadcastTraits {
 		using EntityType = std::shared_ptr<model::Block>;
 
-		static EntityType CreateEntity() {
-			return EntityType(GenerateDeterministicBlock());
+		static EntityType CreateEntity(uint32_t nemesisAccountVersion) {
+			return EntityType(GenerateDeterministicBlock(nemesisAccountVersion));
 		}
 
 		static void Broadcast(const EntityType& pBlock, const extensions::ServerHooks& hooks) {
@@ -51,7 +51,7 @@ namespace catapult { namespace test {
 	struct TransactionBroadcastTraits {
 		using EntityType = std::vector<model::TransactionInfo>;
 
-		static EntityType CreateEntity() {
+		static EntityType CreateEntity(uint32_t nemesisAccountVersion) {
 			EntityType transactionInfos;
 			transactionInfos.push_back(model::TransactionInfo(GenerateRandomTransaction(), Height()));
 			return transactionInfos;
@@ -153,7 +153,7 @@ namespace catapult { namespace test {
 			// Arrange: create a (tcp) server
 			ionet::ByteBuffer packetBuffer;
 			auto pPool = CreateStartedIoThreadPool();
-			auto serverKeyPair = GenerateKeyPair();
+			auto serverKeyPair = GenerateKeyPair(Node_Boot_Key_Hashing_Type);
 			SpawnPacketServerWork(pPool->ioContext(), [&ioContext = pPool->ioContext(), &packetBuffer, &serverKeyPair](
 					const auto& pServer) {
 				// - verify the client
@@ -173,7 +173,7 @@ namespace catapult { namespace test {
 			ConnectToExternalWriter(context, serverKeyPair.publicKey());
 
 			// Act: broadcast an entity to the server
-			auto entity = TBroadcastTraits::CreateEntity();
+			auto entity = TBroadcastTraits::CreateEntity(context.testState().config().Network.AccountVersion);
 			TBroadcastTraits::Broadcast(entity, context.testState().state().hooks());
 
 			// - wait for the test to complete

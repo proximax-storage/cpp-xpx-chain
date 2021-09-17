@@ -42,7 +42,7 @@ namespace catapult { namespace test {
 	}
 
 	HarvestRequestEncryptedPayload PrepareHarvestRequestEncryptedPayload(const Key& recipientPublicKey, const RawBuffer& clearTextBuffer) {
-		return PrepareHarvestRequestEncryptedPayload(GenerateKeyPair(), recipientPublicKey, clearTextBuffer);
+		return PrepareHarvestRequestEncryptedPayload(GenerateKeyPair(Ephemeral_Key_Hashing_Type), recipientPublicKey, clearTextBuffer);
 	}
 
 	HarvestRequestEncryptedPayload PrepareHarvestRequestEncryptedPayload(
@@ -89,7 +89,7 @@ namespace catapult { namespace test {
 	std::vector<harvesting::BlockGeneratorAccountDescriptor> GenerateRandomAccountDescriptors(size_t numDescriptors) {
 		std::vector<harvesting::BlockGeneratorAccountDescriptor> descriptors;
 		for (auto i = 0u; i < numDescriptors; ++i)
-			descriptors.emplace_back(GenerateKeyPair(), GenerateKeyPair());
+			descriptors.emplace_back(GenerateKeyPair(2), GenerateVrfKeyPair(), 2);
 
 		return descriptors;
 	}

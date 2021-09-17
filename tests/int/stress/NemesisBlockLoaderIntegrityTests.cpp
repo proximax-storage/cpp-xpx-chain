@@ -82,7 +82,7 @@ namespace catapult { namespace extensions {
 			// Assert:
 			const auto& cacheView = stateRef.Cache.createView();
 			EXPECT_EQ(Height(1), cacheView.height());
-			test::AssertNemesisAccountState(cacheView);
+			test::AssertNemesisAccountState(cacheView, stateRef.ConfigHolder->Config().Network.AccountVersion);
 		});
 	}
 

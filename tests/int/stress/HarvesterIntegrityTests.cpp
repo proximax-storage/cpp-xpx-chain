@@ -125,7 +125,7 @@ namespace catapult { namespace harvesting {
 
 			void prepareAndUnlockSenderAccount(crypto::KeyPair&& keyPair) {
 				// 1. seed an account with an initial currency balance of N and harvesting balance of 10'000'000
-				auto vrfKeyPair = test::GenerateKeyPair();
+				auto vrfKeyPair = test::GenerateVrfKeyPair();
 				auto currencyMosaicId = test::Default_Currency_Mosaic_Id;
 				auto harvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
 				auto cacheDelta = m_cache.createDelta();
@@ -138,7 +138,7 @@ namespace catapult { namespace harvesting {
 				m_cache.commit(Height(1));
 
 				// 2. unlock the account
-				m_unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), std::move(vrfKeyPair)), 2);
+				m_unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), std::move(vrfKeyPair), keyPair.hashingType() == KeyHashingType::Sha3 ? 1 : 2));
 			}
 
 			void prepareSenderAccountAndTransactions(crypto::KeyPair&& keyPair, Timestamp deadline) {

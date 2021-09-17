@@ -383,7 +383,7 @@ namespace catapult { namespace extensions {
 	TEST(TEST_CLASS, DeterministicBlockIsFullyVerifiable) {
 		// Arrange:
 		auto generationHash = utils::ParseByteArray<GenerationHash>(test::Deterministic_Network_Generation_Hash_String);
-		auto pBlock = test::GenerateDeterministicBlock();
+		auto pBlock = test::GenerateDeterministicBlock(1);
 
 		// Act: deterministic block does not contain any aggregate transactions, so no transaction registry is required
 		auto result = BlockExtensions(generationHash).verifyFullBlock(*pBlock);

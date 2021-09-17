@@ -193,7 +193,7 @@ namespace catapult { namespace consumers {
 		auto generationHash = utils::ParseByteArray<GenerationHash>(test::Deterministic_Network_Generation_Hash_String);
 
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pEntity = test::GenerateDeterministicBlock();
+		auto pEntity = test::GenerateDeterministicBlock(1);
 		auto input = ConsumerInput(model::BlockRange::FromEntity(std::move(pEntity)));
 		auto& blockElements = input.blocks();
 
@@ -312,7 +312,7 @@ namespace catapult { namespace consumers {
 		auto generationHash = utils::ParseByteArray<GenerationHash>(test::Deterministic_Network_Generation_Hash_String);
 
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pEntity = test::GenerateDeterministicTransaction();
+		auto pEntity = test::GenerateDeterministicTransaction(1);
 		auto input = ConsumerInput(model::TransactionRange::FromEntity(std::move(pEntity)));
 		auto& transactionElements = input.transactions();
 

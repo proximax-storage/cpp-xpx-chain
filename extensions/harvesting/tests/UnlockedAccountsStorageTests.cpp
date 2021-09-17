@@ -54,7 +54,7 @@ namespace catapult { namespace harvesting {
 		}
 
 		auto PrepareEncryptedPayloads(size_t numEncryptedPayloads) {
-			auto keyPair = test::GenerateKeyPair();
+			auto keyPair = test::GenerateKeyPair(2);
 			return PrepareEncryptedPayloads(keyPair.publicKey(), numEncryptedPayloads);
 		}
 
@@ -116,7 +116,7 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		test::TempFileGuard guard(Filename);
 		UnlockedAccountsStorage storage(guard.name());
-		auto keyPair = test::GenerateKeyPair();
+		auto keyPair = test::GenerateKeyPair(2);
 		auto decryptedPayload = test::ToClearTextBuffer(test::GenerateRandomAccountDescriptors(1)[0]);
 		auto encryptedPayload = test::PrepareHarvestRequestEncryptedPayload(keyPair.publicKey(), decryptedPayload);
 		auto encryptedBuffer = test::CopyHarvestRequestEncryptedPayloadToBuffer(encryptedPayload);
@@ -503,7 +503,7 @@ namespace catapult { namespace harvesting {
 	TEST(TEST_CLASS, CanLoadWhenInputIsNotPresent) {
 		// Arrange:
 		test::TempFileGuard guard(Filename);
-		auto keyPair = test::GenerateKeyPair();
+		auto keyPair = test::GenerateKeyPair(2);
 
 		// Sanity:
 		EXPECT_FALSE(std::filesystem::exists(guard.name()));
@@ -517,7 +517,7 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		test::TempFileGuard guard(Filename);
 		CreateFile(guard.name());
-		auto keyPair = test::GenerateKeyPair();
+		auto keyPair = test::GenerateKeyPair(2);
 
 		// Act + Assert:
 		UnlockedAccountsStorage storage(guard.name());
@@ -528,7 +528,7 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		test::TempFileGuard guard(Filename);
 		CreateFile(guard.name(), sizeof(test::HarvestRequestEncryptedPayload) - 1);
-		auto keyPair = test::GenerateKeyPair();
+		auto keyPair = test::GenerateKeyPair(2);
 
 		// Act + Assert:
 		UnlockedAccountsStorage storage(guard.name());
@@ -563,7 +563,7 @@ namespace catapult { namespace harvesting {
 	TEST(TEST_CLASS, CanLoadRequests) {
 		// Arrange:
 		test::TempFileGuard guard(Filename);
-		auto keyPair = test::GenerateKeyPair();
+		auto keyPair = test::GenerateKeyPair(2);
 		auto descriptors = test::GenerateRandomAccountDescriptors(3);
 		auto encryptedPayloads = PrepareEncryptedPayloads(keyPair.publicKey(), descriptors);
 		for (const auto& encryptedPayload : encryptedPayloads)
@@ -592,7 +592,7 @@ namespace catapult { namespace harvesting {
 	TEST(TEST_CLASS, LoadThrowsWhenInputDoesNotHaveEnoughData) {
 		// Arrange: create file with one proper encryptedPayload and one "short"
 		test::TempFileGuard guard(Filename);
-		auto keyPair = test::GenerateKeyPair();
+		auto keyPair = test::GenerateKeyPair(2);
 		auto decryptedPayload = test::ToClearTextBuffer(test::GenerateRandomAccountDescriptors(1)[0]);
 		auto encryptedPayload = test::PrepareHarvestRequestEncryptedPayload(keyPair.publicKey(), decryptedPayload);
 		AppendEncryptedPayloadToFile(guard.name(), encryptedPayload);
@@ -606,7 +606,7 @@ namespace catapult { namespace harvesting {
 	TEST(TEST_CLASS, LoadThrowsWhenDataIsInvalid) {
 		// Arrange:
 		test::TempFileGuard guard(Filename);
-		auto keyPair = test::GenerateKeyPair();
+		auto keyPair = test::GenerateKeyPair(2);
 		auto invalidPrivateBuffer = test::GenerateRandomArray<Key::Size + 1>();
 		auto encryptedPayload = test::PrepareHarvestRequestEncryptedPayload(keyPair.publicKey(), invalidPrivateBuffer);
 		AppendEncryptedPayloadToFile(guard.name(), encryptedPayload);

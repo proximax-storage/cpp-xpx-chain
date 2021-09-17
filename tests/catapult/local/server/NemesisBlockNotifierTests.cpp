@@ -58,6 +58,11 @@ namespace catapult { namespace local {
 				m_cache.commit(Height());
 			}
 
+			auto& config()
+			{
+				return m_pPluginManager->config();
+			}
+
 		private:
 			static config::BlockchainConfiguration CreateConfiguration() {
 				return test::CreateBlockchainConfigurationWithNemesisPluginExtensions("");
@@ -134,8 +139,8 @@ namespace catapult { namespace local {
 			return addresses.cend() != addresses.find(address);
 		}
 
-		bool ContainsModifiedPrivate(const model::AddressSet& addresses, const char* privateKeyString) {
-			return ContainsAddress(addresses, test::RawPrivateKeyToAddress(privateKeyString));
+		bool ContainsModifiedPrivate(const model::AddressSet& addresses, const char* privateKeyString, uint32_t accountVersion) {
+			return ContainsAddress(addresses, test::RawPrivateKeyToAddress(privateKeyString, accountVersion));
 		}
 
 		bool ContainsModifiedPublic(const model::AddressSet& addresses, const char* publicKeyString) {
@@ -185,13 +190,13 @@ namespace catapult { namespace local {
 		EXPECT_EQ(3u + CountOf(test::Mijin_Test_Private_Keys), addedAddresses.size());
 
 		// - check nemesis and rental fee sinks
-		EXPECT_TRUE(ContainsModifiedPrivate(addedAddresses, test::Mijin_Test_Nemesis_Private_Key));
+		EXPECT_TRUE(ContainsModifiedPrivate(addedAddresses, test::Mijin_Test_Nemesis_Private_Key, context.config().AccountVersion));
 		EXPECT_TRUE(ContainsModifiedPublic(addedAddresses, test::Namespace_Rental_Fee_Sink_Public_Key));
 		EXPECT_TRUE(ContainsModifiedPublic(addedAddresses, test::Mosaic_Rental_Fee_Sink_Public_Key));
 
 		// - check recipient accounts
 		for (const auto* pRecipientPrivateKeyString : test::Mijin_Test_Private_Keys)
-			EXPECT_TRUE(ContainsModifiedPrivate(addedAddresses, pRecipientPrivateKeyString)) << pRecipientPrivateKeyString;
+			EXPECT_TRUE(ContainsModifiedPrivate(addedAddresses, pRecipientPrivateKeyString, context.config().AccountVersion)) << pRecipientPrivateKeyString;
 	}
 
 	// endregion

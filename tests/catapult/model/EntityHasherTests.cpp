@@ -137,7 +137,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CalculateBlockHashReturnsExpectedHash) {
 		// Arrange: create a predefined block with one predefined transaction
-		auto pBlock = test::GenerateDeterministicBlock();
+		auto pBlock = test::GenerateDeterministicBlock(1);
 
 		// Act:
 		auto hash = CalculateHash(*pBlock);
@@ -167,7 +167,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CalculateTransactionHashReturnsExpectedHash) {
 		// Arrange: create a predefined transaction
-		auto pTransaction = test::GenerateDeterministicTransaction();
+		auto pTransaction = test::GenerateDeterministicTransaction(1);
 		auto generationHash = utils::ParseByteArray<GenerationHash>(test::Deterministic_Network_Generation_Hash_String);
 
 		// Act:

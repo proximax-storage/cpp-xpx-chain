@@ -64,7 +64,7 @@ namespace catapult { namespace test {
 	model::UniqueEntityPtr<model::Transaction> GenerateTransactionWithDeadline(Timestamp deadline);
 
 	/// Generates a predefined transaction, i.e. this function will always return the same transaction.
-	model::UniqueEntityPtr<model::Transaction> GenerateDeterministicTransaction();
+	model::UniqueEntityPtr<model::Transaction> GenerateDeterministicTransaction(uint32_t signerAccountVersion);
 
 	/// Policy for creating a transaction.
 	struct TransactionPolicy {

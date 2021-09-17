@@ -137,7 +137,7 @@ namespace catapult { namespace local {
 			AssertBooted(context);
 
 			// - prepare namespace registrations
-			test::Accounts accounts(1);
+			test::Accounts accounts(1, 1, 1);
 			auto stateHashCalculator = context.createStateHashCalculator();
 			BlockChainBuilder builder(accounts, stateHashCalculator);
 			test::TransactionsBuilder transactionsBuilder(accounts);
@@ -200,7 +200,7 @@ namespace catapult { namespace local {
 		NamespaceStateHashes RunNamespaceStateChangeTest(TTestContext& context, size_t numAliveBlocks, size_t numExpectedNamespaces) {
 			// Arrange:
 			NamespaceStateHashes stateHashes;
-			test::Accounts accounts(2);
+			test::Accounts accounts(2, 1, 1);
 			auto stateHashCalculator = context.createStateHashCalculator();
 			auto builderBlockPair = PrepareTwoRootNamespaces(context, accounts, stateHashCalculator, stateHashes);
 			auto& builder = builderBlockPair.first;
@@ -333,7 +333,7 @@ namespace catapult { namespace local {
 		NamespaceStateHashes RunRegisterAndDeactivateNamespaceTest(TTestContext& context, size_t numAliveBlocks) {
 			// Arrange:
 			NamespaceStateHashes stateHashes;
-			test::Accounts accounts(2);
+			test::Accounts accounts(2, 1, 1);
 			auto stateHashCalculator = context.createStateHashCalculator();
 
 			// *** customization of PrepareTwoRootNamespaces ***
@@ -423,7 +423,7 @@ namespace catapult { namespace local {
 				size_t numExpectedNamespaces) {
 			// Arrange:
 			NamespaceStateHashes stateHashes;
-			test::Accounts accounts(2);
+			test::Accounts accounts(2, 1, 1);
 			std::unique_ptr<BlockChainBuilder> pBuilder;
 			std::vector<std::shared_ptr<model::Block>> allBlocks;
 			uint32_t numAliveChains;

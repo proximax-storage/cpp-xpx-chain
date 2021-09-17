@@ -126,7 +126,7 @@ namespace catapult { namespace test {
 	model::UniqueEntityPtr<model::Block> GenerateDeterministicBlock(uint32_t signerAccountVersion) {
 		auto keyPair = crypto::KeyPair::FromString("A41BE076B942D915EA3330B135D35C5A959A2DCC50BBB393C6407984D4A3B564", signerAccountVersion);
 		ConstTransactions transactions;
-		transactions.push_back(GenerateDeterministicTransaction());
+		transactions.push_back(GenerateDeterministicTransaction(signerAccountVersion));
 		auto pBlock = GenerateBlockWithTransactions(keyPair, transactions);
 		pBlock->Signer = keyPair.publicKey();
 		pBlock->Height = Height(12345);

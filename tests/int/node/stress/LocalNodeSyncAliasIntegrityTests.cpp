@@ -46,7 +46,7 @@ namespace catapult { namespace local {
 			EXPECT_EQ(Height(1), context.height());
 
 			// - prepare transactions
-			test::Accounts accounts(3);
+			test::Accounts accounts(3, 1, 1);
 			test::TransactionsBuilder transactionsBuilder(accounts);
 
 			// - make transfers to the accounts to be aliased so that they're in the account state cache
@@ -152,7 +152,7 @@ namespace catapult { namespace local {
 		std::vector<Hash256> RunRollbackAliasTest(TTestContext& context) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
-			test::Accounts accounts(4);
+			test::Accounts accounts(4, 1, 1);
 
 			// - make transfers to the accounts to be aliased so that they're in the account state cache
 			std::unique_ptr<BlockChainBuilder> pBuilder1;

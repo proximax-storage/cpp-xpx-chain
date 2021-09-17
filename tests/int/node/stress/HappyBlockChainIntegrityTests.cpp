@@ -139,7 +139,7 @@ namespace catapult { namespace local {
 				utils::TimeSpan blockTimeInterval,
 				uint32_t accountVersion) {
 			constexpr uint32_t Num_Accounts = 11;
-			test::Accounts accounts(Num_Accounts);
+			test::Accounts accounts(Num_Accounts, 1, 1);
 
 			test::TransactionsBuilder transactionsBuilder(accounts);
 			for (auto i = 0u; i < numBlocks; ++i) {

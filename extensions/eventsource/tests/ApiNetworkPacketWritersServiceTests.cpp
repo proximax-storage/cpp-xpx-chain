@@ -97,7 +97,7 @@ namespace catapult { namespace eventsource {
 			test::AsyncReadIntoBuffer(pPool->ioContext(), *pIo, packetBuffer);
 
 			// Act: broadcast an entity to the server
-			auto entity = TBroadcastTraits::CreateEntity();
+			auto entity = TBroadcastTraits::CreateEntity(context.testState().config().Network.AccountVersion);
 			TBroadcastTraits::Broadcast(entity, context.testState().state().hooks());
 
 			// - wait for the test to complete

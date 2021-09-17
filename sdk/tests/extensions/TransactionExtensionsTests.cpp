@@ -128,7 +128,7 @@ namespace catapult { namespace extensions {
 	TEST(TEST_CLASS, DeterministicTransactionIsFullyVerifiable) {
 		// Arrange:
 		auto generationHash = utils::ParseByteArray<GenerationHash>(test::Deterministic_Network_Generation_Hash_String);
-		auto pTransaction = test::GenerateDeterministicTransaction();
+		auto pTransaction = test::GenerateDeterministicTransaction(1);
 
 		// Act:
 		auto isVerified = TransactionExtensions(generationHash).verify(*pTransaction);

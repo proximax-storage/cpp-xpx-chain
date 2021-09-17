@@ -46,7 +46,7 @@ namespace catapult { namespace harvesting {
 
 		public:
 			explicit TestContext(SeedOptions seedOptions = SeedOptions::Public_Key)
-					: TestContext(test::GenerateKeyPair(), test::GenerateKeyPair(), seedOptions)
+					: TestContext(test::GenerateKeyPair(2), test::GenerateKeyPair(2), seedOptions)
 			{}
 
 		private:
@@ -57,13 +57,13 @@ namespace catapult { namespace harvesting {
 					, m_unlockedAccounts(10, [](const auto&) { return 0; })
 					, m_primaryMainAccountPublicKey(mainKeyPair.publicKey())
 					, m_primarySigningPublicKey(SeedOptions::Remote == seedOptions ? remoteKeyPair.publicKey() : mainKeyPair.publicKey())
-					, m_encryptionKeyPair(test::GenerateKeyPair())
+					, m_encryptionKeyPair(test::GenerateKeyPair(Node_Boot_Key_Hashing_Type))
 					, m_updater(m_cache, m_unlockedAccounts, m_primarySigningPublicKey, m_encryptionKeyPair, CreateBlockChainConfigurationHolder(Default_Height, &m_cache, m_config), m_dataDirectory) {
 
 				if (SeedOptions::Remote == seedOptions) {
-					auto descriptor = BlockGeneratorAccountDescriptor(std::move(remoteKeyPair), test::GenerateKeyPair());
+					auto descriptor = BlockGeneratorAccountDescriptor(std::move(remoteKeyPair), test::GenerateVrfKeyPair(), 2);
 					auto vrfPublicKey = descriptor.vrfKeyPair().publicKey();
-					m_unlockedAccounts.modifier().add(std::move(descriptor), 2);
+					m_unlockedAccounts.modifier().add(std::move(descriptor));
 					addAccount(m_primaryMainAccountPublicKey, m_primarySigningPublicKey, vrfPublicKey,Amount(1234));
 
 					modifyAccount(m_primaryMainAccountPublicKey, [](auto& accountState) {
@@ -72,9 +72,9 @@ namespace catapult { namespace harvesting {
 
 					return;
 				}
-				auto descriptor = BlockGeneratorAccountDescriptor(std::move(mainKeyPair), test::GenerateKeyPair());
+				auto descriptor = BlockGeneratorAccountDescriptor(std::move(mainKeyPair), test::GenerateVrfKeyPair(), 2);
 				auto vrfPublicKey = descriptor.vrfKeyPair().publicKey();
-				m_unlockedAccounts.modifier().add(std::move(descriptor), 2);
+				m_unlockedAccounts.modifier().add(std::move(descriptor));
 
 				if (SeedOptions::Address == seedOptions) {
 					auto address = model::PublicKeyToAddress(m_primarySigningPublicKey, m_config.Immutable.NetworkIdentifier);
@@ -150,7 +150,7 @@ namespace catapult { namespace harvesting {
 					const BlockGeneratorAccountDescriptor& descriptor,
 					const Key& mainAccountPublicKey,
 					Height height = Default_Height) {
-				return queueAddMessageWithHarvester(test::GenerateKeyPair(), descriptor, mainAccountPublicKey, height);
+				return queueAddMessageWithHarvester(test::GenerateKeyPair(2), descriptor, mainAccountPublicKey, height);
 			}
 
 			auto queueAddMessageWithHarvester(const BlockGeneratorAccountDescriptor& descriptor) {
@@ -777,7 +777,7 @@ namespace catapult { namespace harvesting {
 		auto mainAccountPublicKey3 = context.addEnabledAccount(descriptors[2]);
 
 		// - prepare and process non-consecutive messages with same announcer
-		auto ephemeralKeyPair = test::GenerateKeyPair();
+		auto ephemeralKeyPair = test::GenerateKeyPair(Ephemeral_Key_Hashing_Type);
 		auto encryptedPayload1 = context.queueAddMessageWithHarvester(ephemeralKeyPair, descriptors[0], mainAccountPublicKey1);
 		auto encryptedPayload2 = context.queueAddMessageWithHarvester(descriptors[1], mainAccountPublicKey2);
 		context.queueAddMessageWithHarvester(ephemeralKeyPair, descriptors[2], mainAccountPublicKey3);
@@ -802,7 +802,7 @@ namespace catapult { namespace harvesting {
 		auto mainAccountPublicKey3 = context.addEnabledAccount(descriptors[2]);
 
 		// - prepare and process non-consecutive messages with same announcer
-		auto ephemeralKeyPair = test::GenerateKeyPair();
+		auto ephemeralKeyPair = test::GenerateKeyPair(Ephemeral_Key_Hashing_Type);
 		auto encryptedPayload1 = context.queueAddMessageWithHarvester(ephemeralKeyPair, descriptors[0], mainAccountPublicKey1);
 		auto encryptedPayload2 = context.queueAddMessageWithHarvester(descriptors[1], mainAccountPublicKey2);
 		auto encryptedPayload3 = context.queueAddMessageWithHarvester(ephemeralKeyPair, descriptors[2], mainAccountPublicKey3);
@@ -850,7 +850,7 @@ namespace catapult { namespace harvesting {
 		auto mainAccountPublicKey2 =context.addEnabledAccount(descriptors[1]);
 
 		// - prepare and process non-consecutive messages with same announcer and harvester
-		auto ephemeralKeyPair = test::GenerateKeyPair();
+		auto ephemeralKeyPair = test::GenerateKeyPair(Ephemeral_Key_Hashing_Type);
 		auto encryptedPayload1 = context.queueAddMessageWithHarvester(ephemeralKeyPair, descriptors[0], mainAccountPublicKey1);
 		auto encryptedPayload2 = context.queueAddMessageWithHarvester(descriptors[1], mainAccountPublicKey2);
 		context.queueAddMessageWithHarvester(ephemeralKeyPair, descriptors[0], mainAccountPublicKey1);
@@ -874,7 +874,7 @@ namespace catapult { namespace harvesting {
 		auto mainAccountPublicKey2 = context.addEnabledAccount(descriptors[1]);
 
 		// - prepare and process non-consecutive messages with same announcer and harvester
-		auto ephemeralKeyPair = test::GenerateKeyPair();
+		auto ephemeralKeyPair = test::GenerateKeyPair(Ephemeral_Key_Hashing_Type);
 		auto encryptedPayload1 = context.queueAddMessageWithHarvester(ephemeralKeyPair, descriptors[0], mainAccountPublicKey1);
 		auto encryptedPayload2 = context.queueAddMessageWithHarvester(descriptors[1], mainAccountPublicKey2);
 		auto encryptedPayload3 = context.queueAddMessageWithHarvester(ephemeralKeyPair, descriptors[0], mainAccountPublicKey1);

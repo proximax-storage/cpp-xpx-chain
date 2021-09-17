@@ -98,15 +98,14 @@ namespace catapult { namespace test {
 			PrepareStorage(directory);
 			PrepareConfiguration(directory, m_nodeFlag, harvestKeys);
 
+			auto config = CreatePrototypicalBlockchainConfiguration(directory);
+			prepareNetworkConfiguration(config);
+
 			if (HasFlag(NodeFlag::Verify_Receipts, m_nodeFlag))
-				SetNemesisReceiptsHash(directory);
+				SetNemesisReceiptsHash(directory, config);
 
-			if (HasFlag(NodeFlag::Verify_State, m_nodeFlag)) {
-				auto config = CreatePrototypicalBlockchainConfiguration(directory);
-				prepareNetworkConfiguration(config);
-
+			if (HasFlag(NodeFlag::Verify_State, m_nodeFlag))
 				SetNemesisStateHash(directory, config);
-			}
 		}
 
 	public:

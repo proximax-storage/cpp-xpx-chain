@@ -114,7 +114,7 @@ namespace catapult { namespace local {
 		public:
 			explicit TestFacade(TTestContext& context)
 					: m_context(context)
-					, m_accounts(4)
+					, m_accounts(4, 1, 1)
 			{}
 
 		public:
@@ -187,7 +187,7 @@ namespace catapult { namespace local {
 		SecretLockStateHashes RunLockSecretLockTest(TTestContext& context) {
 			// Arrange:
 			SecretLockStateHashes stateHashes;
-			test::Accounts accounts(4);
+			test::Accounts accounts(4, 1, 1);
 			auto stateHashCalculator = context.createStateHashCalculator();
 
 			// Act + Assert:
@@ -489,7 +489,7 @@ namespace catapult { namespace local {
 		public:
 			SecretLockRollbackTestContext()
 					: m_context(test::NonNemesisTransactionPlugins::Lock_Secret, ConfigTransform)
-					, m_accounts(4)
+					, m_accounts(4, 1, 1)
 			{}
 
 		public:
@@ -661,7 +661,7 @@ namespace catapult { namespace local {
 		SecretLockStateHashes RunLockAndUnlockSecretLockTest(TTestContext& context) {
 			// Arrange:
 			SecretLockStateHashes stateHashes;
-			test::Accounts accounts(4);
+			test::Accounts accounts(4, 1, 1);
 			auto stateHashCalculator = context.createStateHashCalculator();
 
 			// - wait for boot
