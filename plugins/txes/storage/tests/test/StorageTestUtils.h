@@ -22,6 +22,40 @@
 
 namespace catapult { namespace test {
 
+	/// Cache factory for creating a catapult cache composed of BC drive cache, BLS keys cache, download channel cache and replicator cache.
+	struct StorageCacheFactory {
+	private:
+		static auto CreateStorageSubCaches(const config::BlockchainConfiguration& config) {
+			std::vector<size_t> cacheIds = {
+					cache::BcDriveCache::Id,
+					cache::BlsKeysCache::Id,
+					cache::DownloadChannelCache::Id,
+					cache::ReplicatorCache::Id};
+			auto maxId = std::max_element(cacheIds.begin(), cacheIds.end());
+			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(*maxId + 1);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
+			subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
+			subCaches[cache::BlsKeysCache::Id] = MakeSubCachePlugin<cache::BlsKeysCache, cache::BlsKeysCacheStorage>(pConfigHolder);
+			subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
+			subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pKeyCollector, pConfigHolder);
+			return subCaches;
+		}
+
+	public:
+		/// Creates an empty catapult cache around default configuration.
+		static cache::CatapultCache Create() {
+			return Create(test::MutableBlockchainConfiguration().ToConst());
+		}
+
+		/// Creates an empty catapult cache around \a config.
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
+			auto subCaches = CreateStorageSubCaches(config);
+			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
+			return cache::CatapultCache(std::move(subCaches));
+		}
+	};
+
     /// Creates test drive entry.
     state::BcDriveEntry CreateBcDriveEntry(
         Key key = test::GenerateRandomByteArray<Key>(),
