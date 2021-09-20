@@ -49,28 +49,28 @@ namespace catapult { namespace model {
     public:
         template<typename T>
         static auto *ProversPtrT(T &transaction) {
-            return transaction.VerifiersOpinionsCount ? THeader::PayloadStart(transaction) : nullptr;
+            return transaction.ProversCount ? THeader::PayloadStart(transaction) : nullptr;
         }
 
         template<typename T>
         static auto *BlsSignaturesPtrT(T &transaction) {
             auto *pPayloadStart = THeader::PayloadStart(transaction);
             return transaction.VerifiersOpinionsCount && pPayloadStart ? pPayloadStart
-                    + transaction.VerifiersOpinionsCount * sizeof(Key) : nullptr;
+                    + transaction.ProversCount * sizeof(Key) : nullptr;
         }
 
         template<typename T>
         static auto *VerifiersOpinionsPtrT(T &transaction) {
             auto *pPayloadStart = THeader::PayloadStart(transaction);
             return transaction.VerifiersOpinionsCount && pPayloadStart ? pPayloadStart
-                    + transaction.VerifiersOpinionsCount * sizeof(Key)
+                    + transaction.ProversCount * sizeof(Key)
                     + transaction.VerifiersOpinionsCount * sizeof(BLSSignature) : nullptr;
         }
 
         // Calculates the real size of a storage \a transaction.
         static constexpr uint64_t CalculateRealSize(const TransactionType &transaction) noexcept {
             return sizeof(TransactionType)
-                   + transaction.VerifiersOpinionsCount * sizeof(Key)
+                   + transaction.ProversCount * sizeof(Key)
                    + transaction.VerifiersOpinionsCount * sizeof(BLSSignature)
                    + transaction.VerifiersOpinionsCount * transaction.ProversCount * sizeof(uint8_t);
         }
