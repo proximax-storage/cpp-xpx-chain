@@ -54,26 +54,26 @@ namespace catapult { namespace state {
 
 	using ConfirmedStates = std::map<Key, Hash256>; // last approved root hash
 
-    /// Verification State.
-    enum class VerificationState : uint8_t {
-        /// Verification waits for opinions.
-        Pending,
+	/// Verification State.
+	enum class VerificationState : uint8_t {
+		/// Verification waits for opinions.
+		Pending,
 
-        /// Verification was canceled. For example by DataModificationApprovalTransaction.
+		/// Verification was canceled. For example by DataModificationApprovalTransaction.
 		Canceled,
 
-        /// Verification finished.
-        Finished
-    };
+		/// Verification finished.
+		Finished
+	};
 
-    using VerificationOpinions = std::map<Key, uint8_t>;
+    using VerificationResults = std::map<Key, uint8_t>;
 
 	struct Verification {
-	    /// The hash of block that initiated the Verification.
-	    Hash256 VerificationTrigger;
+		/// The hash of block that initiated the Verification.
+		Hash256 VerificationTrigger;
 
-        /// Verification opinions.
-        VerificationOpinions Opinions;
+		/// Verification opinions.
+		VerificationResults Results;
 
 		/// State of verification.
 		VerificationState State;

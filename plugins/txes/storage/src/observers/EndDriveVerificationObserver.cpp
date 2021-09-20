@@ -32,18 +32,25 @@ namespace catapult { namespace observers {
 
         // Find median opinion for every Prover
         for (auto i = 0; i < notification.ProversCount; ++i) {
-            opinions = 0;
+            for (auto j = 0; j < notification.VerificationOpinionsCount; ++j) {
+                if (notification.ProversPtr[i] == notification.VerificationOpinionsPtr[j].Verifier)
+                    continue;
 
-            // Count all opinions
-            for (auto j = 0; j < notification.VerifiersOpinionsCount; ++j)
-                opinions += notification.VerifiersOpinionsPtr[j * notification.ProversCount];
+                auto it = std::find_if(
+                        notification.VerificationOpinionsPtr[j].Opinions.begin(),
+                        notification.VerificationOpinionsPtr[j].Opinions.end(),
+                        [&notification, i](const std::pair<Key, uint8_t>& el){return el.first == notification.ProversPtr[i];}
+                );
 
-            // If median greater than required check the next Prover
-            if (notification.VerifiersOpinionsCount / 2 < opinions) {
-                pendingVerification.Opinions.find(notification.ProversPtr[i])->second = 1;
+                opinions += it->second;
+            }
+
+            // Check opinions` median
+            if (opinions > notification.VerificationOpinionsCount / 2) {
+                pendingVerification.Results.find(notification.ProversPtr[i])->second = 1;
                 continue;
             }
-            pendingVerification.Opinions.find(notification.ProversPtr[i])->second = 0;
+            pendingVerification.Results.find(notification.ProversPtr[i])->second = 0;
 
             // Get replicator entry
             auto replicatorIter = replicatorCache.find(notification.ProversPtr[i]);

@@ -21,23 +21,25 @@ namespace catapult { namespace mongo { namespace plugins {
         // Streaming Provers Keys
         auto proversKeys = builder << "provers" << bson_stream::open_array;
         auto pKey = transaction.ProversPtr();
-        for (auto i = 0u; i < transaction.VerifiersOpinionsCount; ++i, ++pKey)
+        for (auto i = 0u; i < transaction.ProversCount; ++i, ++pKey)
             proversKeys << ToBinary(*pKey);
         proversKeys << bson_stream::close_array;
 
-        // Streaming BlsSignatures
-        auto blsSignaturesArray = builder << "blsSignatures" << bson_stream::open_array;
-        auto pSignature = transaction.BlsSignaturesPtr();
-        for (auto i = 0; i < transaction.VerifiersOpinionsCount; ++i, ++pSignature)
-            blsSignaturesArray << ToBinary(*pSignature);
-        blsSignaturesArray << bson_stream::close_array;
-
         // Streaming verification opinions
-        auto verificationOpinion = builder << "verificationOpinion" << bson_stream::open_array;
-        auto pPercent = transaction.VerifiersOpinionsPtr();
-        for (auto i = 0u; i < transaction.VerifiersOpinionsCount; ++i, ++pPercent)
-            verificationOpinion << *pPercent;
-        verificationOpinion << bson_stream::close_array;
+        auto verificationOpinions = builder << "verificationOpinions" << bson_stream::open_array;
+        auto pOpinion = transaction.VerificationOpinionsPtr();
+        for (auto i = 0u; i < transaction.VerificationOpinionsCount; ++i, ++pOpinion) {
+            verificationOpinions << "verifier" << ToBinary((*pOpinion).Verifier);
+            verificationOpinions << "blsSignature" << ToBinary((*pOpinion).BlsSignature);
+
+            auto opinion = verificationOpinions << "verificationOpinion" << bson_stream::open_array;
+            for (auto j = 0u; j < transaction.ProversCount-1; ++j) {
+                opinion << "prover" << ToBinary((*pOpinion).Opinions[j].first);
+                opinion << "opinion" << (*pOpinion).Opinions[j].second;
+            }
+            opinion << bson_stream::close_array;
+        }
+        verificationOpinions << bson_stream::close_array;
     }
 
     DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(EndDriveVerification, StreamEndDriveVerificationTransaction)

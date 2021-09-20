@@ -105,7 +105,7 @@ namespace catapult { namespace validators {
 	/// - account states of the download channel and its consumer exist
 	DECLARE_STATEFUL_VALIDATOR(DownloadChannelRefund, model::DownloadChannelRefundNotification<1>)();
 
-    /// A validator implementation that applies to finish drive verification notifications and validates that:
+    /// A validator implementation that applies to end drive verification notifications and validates that:
 	/// - respective drive exists
     /// - All signers are in the Confirmed Storage State
     DECLARE_STATEFUL_VALIDATOR(EndDriveVerification, model::EndDriveVerificationNotification<1>)();

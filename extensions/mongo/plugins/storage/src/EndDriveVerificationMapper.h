@@ -9,7 +9,7 @@
 
 namespace catapult { namespace mongo { namespace plugins {
 
-    /// Creates a mongo data modification finish drive verification transaction plugin.
+    /// Creates a mongo data modification end drive verification transaction plugin.
     PLUGIN_API
     std::unique_ptr<MongoTransactionPlugin> CreateEndDriveVerificationTransactionMongoPlugin();
 }}}

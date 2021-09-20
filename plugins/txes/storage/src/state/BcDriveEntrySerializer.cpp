@@ -33,7 +33,7 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void SaveVerificationOpinions(io::OutputStream& output, const VerificationOpinions& opinions) {
+		void SaveVerificationOpinions(io::OutputStream& output, const VerificationResults& opinions) {
 			io::Write16(output, opinions.size());
 			for (const auto& pair : opinions) {
 				io::Write(output, pair.first);
@@ -46,7 +46,7 @@ namespace catapult { namespace state {
 			for (const auto& verification : verifications) {
 				io::Write(output, verification.VerificationTrigger);
 				io::Write8(output, utils::to_underlying_type(verification.State));
-				SaveVerificationOpinions(output, verification.Opinions);
+				SaveVerificationOpinions(output, verification.Results);
 			}
 		}
 
@@ -79,7 +79,7 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void LoadVerificationOpinions(io::InputStream& input, VerificationOpinions& opinions) {
+		void LoadVerificationOpinions(io::InputStream& input, VerificationResults& opinions) {
 			auto pairCount = io::Read16(input);
 			while (pairCount--) {
 				Key prover;
@@ -93,7 +93,7 @@ namespace catapult { namespace state {
 		    while (count--) {
 		        state::Verification verification;
 		        io::Read(input, verification.VerificationTrigger);
-				LoadVerificationOpinions(input, verification.Opinions);
+				LoadVerificationOpinions(input, verification.Results);
 				verification.State = static_cast<VerificationState>(io::Read8(input));
 
 		        verifications.emplace_back(verification);

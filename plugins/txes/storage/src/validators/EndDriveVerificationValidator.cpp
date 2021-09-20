@@ -27,12 +27,12 @@ namespace catapult { namespace validators {
             return Failure_Storage_Verification_Bad_Verification_Trigger;
 
         // Check if the count of Provers is right
-        if (pendingVerification.Opinions.size() != notification.ProversCount)
+        if (pendingVerification.Results.size() != notification.ProversCount)
             return Failure_Storage_Verification_Wrong_Namber_Of_Provers;
 
         // Check if all Provers were in the Confirmed state at the start of verification.
-        for (auto i = 0; i < notification.VerifiersOpinionsCount; ++i) {
-            if (pendingVerification.Opinions.find(notification.ProversPtr[i]) == pendingVerification.Opinions.end())
+        for (auto i = 0; i < notification.ProversCount; ++i) {
+            if (pendingVerification.Results.find(notification.ProversPtr[i]) == pendingVerification.Results.end())
                 return Failure_Storage_Verification_Some_Provers_Are_Illegal;
         }
 

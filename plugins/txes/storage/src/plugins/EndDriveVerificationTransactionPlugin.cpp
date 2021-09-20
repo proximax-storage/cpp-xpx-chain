@@ -26,9 +26,8 @@ namespace catapult { namespace plugins {
                                 transaction.VerificationTrigger,
                                 transaction.ProversCount,
                                 transaction.ProversPtr(),
-                                transaction.VerifiersOpinionsCount,
-                                transaction.BlsSignaturesPtr(),
-                                transaction.VerifiersOpinionsPtr()
+                                transaction.VerificationOpinionsCount,
+                                transaction.VerificationOpinionsPtr()
                         ));
 
                         break;

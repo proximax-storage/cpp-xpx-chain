@@ -5,6 +5,8 @@
 **/
 
 #pragma once
+
+#include "src/model/StorageTypes.h"
 #include "catapult/model/Notifications.h"
 
 namespace catapult { namespace model {
@@ -800,7 +802,7 @@ namespace catapult { namespace model {
 		Hash256 DownloadChannelId;
 	};
 
-	/// Notification of a finish drive verification.
+	/// Notification of a end drive verification.
 	template<VersionType version>
 	struct EndDriveVerificationNotification;
 
@@ -808,7 +810,7 @@ namespace catapult { namespace model {
 	struct EndDriveVerificationNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Storage_Finish_Drive_Verification_v1_Notification;
+		static constexpr auto Notification_Type = Storage_End_Drive_Verification_v1_Notification;
 
 	public:
 		explicit EndDriveVerificationNotification(
@@ -816,17 +818,15 @@ namespace catapult { namespace model {
 				const Hash256 &verificationTrigger,
 				const uint16_t proversCount,
 				const Key *proversPtr,
-				const uint16_t verifiersOpinionsCount,
-				const BLSSignature *blsSignaturesPtr,
-				const uint8_t *verificationOpinionPtr)
+				const uint16_t verificationOpinionsCount,
+				const VerificationOpinion *verificationOpinionsPtr)
 				: Notification(Notification_Type, sizeof(EndDriveVerificationNotification<1>))
 				, DriveKey(driveKey)
 				, VerificationTrigger(verificationTrigger)
 				, ProversCount(proversCount)
 				, ProversPtr(proversPtr)
-				, VerifiersOpinionsCount(verifiersOpinionsCount)
-				, BlsSignaturesPtr(blsSignaturesPtr)
-				, VerifiersOpinionsPtr(verificationOpinionPtr)
+				, VerificationOpinionsCount(verificationOpinionsCount)
+				, VerificationOpinionsPtr(verificationOpinionsPtr)
 		{}
 
 	public:
@@ -842,13 +842,10 @@ namespace catapult { namespace model {
 		/// List of the Provers keys.
         const Key *ProversPtr;
 
-		/// Number of key-opinion pairs in the payload.
-		uint16_t VerifiersOpinionsCount;
-
-		/// Aggregated BLS signatures of opinions.
-		const BLSSignature* BlsSignaturesPtr;
+		/// Number of verification opinions in the payload.
+		uint16_t VerificationOpinionsCount;
 
 		/// Opinion about verification status for each Prover. Success or Failure.
-		const uint8_t *VerifiersOpinionsPtr;
+		const VerificationOpinion *VerificationOpinionsPtr;
 	};
 }}

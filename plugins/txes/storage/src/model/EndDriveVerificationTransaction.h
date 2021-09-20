@@ -5,14 +5,14 @@
 **/
 
 #pragma once
+#include "StorageTypes.h"
 #include "StorageEntityType.h"
 #include "catapult/model/Transaction.h"
 
 namespace catapult { namespace model {
 
 #pragma pack(push, 1)
-
-    /// Binary layout for a finish drive verification transaction body.
+    /// Binary layout for a end drive verification transaction body.
     template<typename THeader>
     struct EndDriveVerificationTransactionBody : public THeader {
     private:
@@ -37,14 +37,11 @@ namespace catapult { namespace model {
         /// Public Keys of the Provers.
         DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Provers, Key)
 
-        /// Number of Verifiers` opinions.
-        uint16_t VerifiersOpinionsCount;
+        /// Number of Verification opinions.
+        uint16_t VerificationOpinionsCount;
 
-        /// Aggregated BLS signatures of opinions.
-        DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(BlsSignatures, BLSSignature)
-
-        /// Opinion about verification status for each Prover. Success or Failure.
-        DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(VerifiersOpinions, uint8_t)
+        /// Verification Results.
+        DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(VerificationOpinions, VerificationOpinion)
 
     public:
         template<typename T>
@@ -53,26 +50,22 @@ namespace catapult { namespace model {
         }
 
         template<typename T>
-        static auto *BlsSignaturesPtrT(T &transaction) {
+        static auto *VerificationOpinionsPtrT(T &transaction) {
             auto *pPayloadStart = THeader::PayloadStart(transaction);
-            return transaction.VerifiersOpinionsCount && pPayloadStart ? pPayloadStart
+            return transaction.VerificationOpinionsCount && pPayloadStart ? pPayloadStart
                     + transaction.ProversCount * sizeof(Key) : nullptr;
-        }
-
-        template<typename T>
-        static auto *VerifiersOpinionsPtrT(T &transaction) {
-            auto *pPayloadStart = THeader::PayloadStart(transaction);
-            return transaction.VerifiersOpinionsCount && pPayloadStart ? pPayloadStart
-                    + transaction.ProversCount * sizeof(Key)
-                    + transaction.VerifiersOpinionsCount * sizeof(BLSSignature) : nullptr;
         }
 
         // Calculates the real size of a storage \a transaction.
         static constexpr uint64_t CalculateRealSize(const TransactionType &transaction) noexcept {
             return sizeof(TransactionType)
                    + transaction.ProversCount * sizeof(Key)
-                   + transaction.VerifiersOpinionsCount * sizeof(BLSSignature)
-                   + transaction.VerifiersOpinionsCount * transaction.ProversCount * sizeof(uint8_t);
+                   + transaction.VerificationOpinionsCount
+                   * (// size of VerificationOpinion
+                        sizeof(Key)                         // size of VerificationOpinion.Verifier
+                        + sizeof(BLSSignature)              // size of VerificationOpinion.BlsSignature
+                        + (transaction.ProversCount-1) * (sizeof(Key) + sizeof(uint8_t)) // size of VerificationOpinion.Results
+                     );
         }
     };
 
