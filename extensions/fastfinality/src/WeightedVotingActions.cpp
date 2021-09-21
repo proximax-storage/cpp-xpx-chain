@@ -18,17 +18,17 @@
 #include "catapult/model/BlockUtils.h"
 #include "catapult/utils/StackLogger.h"
 #include "catapult/validators/AggregateEntityValidator.h"
-
+#include <cmath>
 namespace catapult { namespace fastfinality {
 
 	namespace {
 		constexpr auto CommitteePhaseCount = 4u;
 
-		bool ApprovalImportanceSufficient(
-				const uint64_t approvalImportance,
-				const uint64_t totalImportance,
+		bool ApprovalRatingSufficient(
+				const double approvalRating,
+				const double totalRating,
 				const model::NetworkConfiguration& config) {
-			return (double)approvalImportance / (double)totalImportance >= config.CommitteeEndSyncApproval;
+			return approvalRating / totalRating >= config.CommitteeEndSyncApproval;
 		}
 
 		template<typename TValue, typename TValueArray, typename TValueAdapter>
@@ -150,8 +150,10 @@ namespace catapult { namespace fastfinality {
 
 			} else {
 
-				uint64_t approvalImportance = 0;
-				uint64_t totalImportance = config.CommitteeBaseTotalImportance;
+				// uint64_t approvalImportance = 0;
+				// uint64_t totalImportance = config.CommitteeBaseTotalImportance;
+				double approvalRating = 0;
+				double totalRating = 0;
 				const auto& localBlockHash = lastBlockElementSupplier()->EntityHash;
 
 				for (const auto& state : remoteNodeStates) {
@@ -159,13 +161,20 @@ namespace catapult { namespace fastfinality {
 					for (const auto& key : state.HarvesterKeys) {
 						importance += importanceGetter(key);
 					}
-					if (state.NodeWorkState == NodeWorkState::Running && state.BlockHash == localBlockHash) {
-						approvalImportance += importance;
+					double alpha;
+					if (state.BlockHash != localBlockHash) {
+						alpha = 0;
+					} else if (state.NodeWorkState != NodeWorkState::Running) {
+						alpha = config.CommitteeNotRunningContribution;
+					} else {
+						alpha = 1;
 					}
-					totalImportance += importance;
+					double importance_log = std::log(importance + config.CommitteeBaseTotalImportance);
+					approvalRating += alpha * importance_log;
+					totalRating += importance_log;
 				}
 
-				if (ApprovalImportanceSufficient(approvalImportance, totalImportance, config)) {
+				if (ApprovalRatingSufficient(approvalRating, totalRating, config)) {
 					pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 				} else {
 					DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeRequestInterval.millis(),
