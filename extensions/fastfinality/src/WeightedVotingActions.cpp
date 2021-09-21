@@ -19,6 +19,7 @@
 #include "catapult/utils/StackLogger.h"
 #include "catapult/validators/AggregateEntityValidator.h"
 #include <cmath>
+
 namespace catapult { namespace fastfinality {
 
 	namespace {
@@ -150,8 +151,6 @@ namespace catapult { namespace fastfinality {
 
 			} else {
 
-				// uint64_t approvalImportance = 0;
-				// uint64_t totalImportance = config.CommitteeBaseTotalImportance;
 				double approvalRating = 0;
 				double totalRating = 0;
 				const auto& localBlockHash = lastBlockElementSupplier()->EntityHash;
@@ -169,7 +168,7 @@ namespace catapult { namespace fastfinality {
 					} else {
 						alpha = 1;
 					}
-					double importance_log = std::log(importance + config.CommitteeBaseTotalImportance);
+					double importance_log = std::log10((double) (importance + config.CommitteeBaseTotalImportance));
 					approvalRating += alpha * importance_log;
 					totalRating += importance_log;
 				}
