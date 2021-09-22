@@ -134,26 +134,6 @@ namespace catapult { namespace validators {
             Replicator_Key_Collector);
     }
 
-    TEST(TEST_CLASS, FailureWhenMultipleReplicators) {
-        // Arrange:
-        auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
-        state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-        driveEntry.setSize(Drive_Size);
-        driveEntry.setReplicatorCount(Replicator_Count);
-        state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
-        Replicator_Key_Collector->addKey(replicatorEntry);
-        state::ReplicatorEntry replicatorEntry2(test::GenerateRandomByteArray<Key>());
-        Replicator_Key_Collector->addKey(replicatorEntry2);
-
-        // Assert:
-        AssertValidationResult(
-            Failure_Storage_Multiple_Replicators,
-            driveEntry,
-            replicatorEntry,
-            test::GenerateRandomByteArray<Key>(),
-            Replicator_Key_Collector);
-    }
-
     TEST(TEST_CLASS, FailureWhenReplicatorNotFound) { 
         // Arrange:
         auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
