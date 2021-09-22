@@ -75,7 +75,7 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-        ASSERT_EQ(2u, sub.numNotifications());
+        ASSERT_EQ(7u, sub.numNotifications());
         auto i = 0u;
         EXPECT_EQ(Storage_Drive_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Storage_Replicator_Onboarding_v1_Notification, sub.notificationTypes()[i++]);

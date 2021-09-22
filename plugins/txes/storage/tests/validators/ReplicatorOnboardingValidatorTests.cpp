@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
                 const Key& publicKey,
                 const BLSPublicKey& blsKey) {
             // Arrange:
-            auto cache = test::ReplicatorCacheFactory::Create();
+            auto cache = test::StorageCacheFactory::Create();
             {
                 auto delta = cache.createDelta();
                 auto& replicatorCacheDelta = delta.sub<cache::ReplicatorCache>();
@@ -59,13 +59,11 @@ namespace catapult { namespace validators {
         state::BlsKeysEntry blsEntry(blsKey);
         blsEntry.setKey(publicKey);
 
-        state::BlsKeysEntry blsEntry2(test::GenerateRandomByteArray<BLSPublicKey>());
-
         // Assert:
         AssertValidationResult(
             Failure_Storage_Replicator_Already_Registered,
             replicatorEntry,
-            blsEntry2,
+            blsEntry,
             publicKey,
             test::GenerateRandomByteArray<BLSPublicKey>());
     }
@@ -98,14 +96,11 @@ namespace catapult { namespace validators {
         state::BlsKeysEntry blsEntry(blsKey);
         blsEntry.setKey(publicKey);
 
-        state::ReplicatorEntry replicatorEntry2(test::GenerateRandomByteArray<Key>());
-        state::BlsKeysEntry blsEntry2(test::GenerateRandomByteArray<BLSPublicKey>());
-
         // Assert:
 		AssertValidationResult(
 			ValidationResult::Success,
-            replicatorEntry2,
-            blsEntry2,
+            replicatorEntry,
+            blsEntry,
             test::GenerateRandomByteArray<Key>(),
             test::GenerateRandomByteArray<BLSPublicKey>());
 	}

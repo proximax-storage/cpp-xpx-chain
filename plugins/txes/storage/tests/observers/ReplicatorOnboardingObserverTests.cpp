@@ -17,7 +17,7 @@ namespace catapult { namespace observers {
     DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboarding,)
 
     namespace {
-        using ObserverTestContext = test::ObserverTestContextT<test::ReplicatorCacheFactory>;
+        using ObserverTestContext = test::ObserverTestContextT<test::StorageCacheFactory>;
         using Notification = model::ReplicatorOnboardingNotification<1>;
 
         const Key Public_Key = test::GenerateRandomByteArray<Key>();
@@ -62,20 +62,20 @@ namespace catapult { namespace observers {
                 values.ReplicatorEntry.capacity());
             auto pObserver = CreateReplicatorOnboardingObserver();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
-            auto& blsKeysCache = context.cache().sub<cache::BlsKeysCache>();
             
+            auto& blsKeysCache = context.cache().sub<cache::BlsKeysCache>();
+
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
      		auto replicatorIter = replicatorCache.find(values.ReplicatorEntry.key());
-			const auto &replicatorEntry = replicatorIter.get();
+			const auto& replicatorEntry = replicatorIter.get();
 			test::AssertEqualReplicatorData(values.ReplicatorEntry, replicatorEntry);
 
-     		auto BlsKeyIter = blsKeysCache.find(values.BlsKeyEntry.blsKey());
+            auto BlsKeyIter = blsKeysCache.find(values.BlsKeyEntry.blsKey());
 			const auto &blsKeysEntry = BlsKeyIter.get();
 			test::AssertEqualBlskeyData(values.BlsKeyEntry, blsKeysEntry);
-
         }
     }
 
