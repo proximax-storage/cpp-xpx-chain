@@ -44,16 +44,16 @@ namespace catapult {
 	};
 	using Key = utils::ByteArray<Key_tag::Size, Key_tag>;
 
-	struct Hash512_tag { static constexpr auto Byte_Size = 64; };
+	struct Hash512_tag { static constexpr auto Size = 64; };
 	using Hash512 = utils::ByteArray<Hash512_Size, Hash512_tag>;
 
-	struct Hash256_tag { static constexpr auto Byte_Size = 32; };
+	struct Hash256_tag { static constexpr auto Size = 32; };
 	using Hash256 = utils::ByteArray<Hash256_Size, Hash256_tag>;
 
 	struct Hash160_tag {};
 	using Hash160 = utils::ByteArray<Hash160_Size, Hash160_tag>;
 
-	struct GenerationHash_tag { static constexpr auto Byte_Size = 32; };
+	struct GenerationHash_tag { static constexpr auto Size = 32; };
 	using GenerationHash = utils::ByteArray<Hash256_Size, GenerationHash_tag>;
 
 

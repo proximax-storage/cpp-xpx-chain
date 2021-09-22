@@ -93,7 +93,7 @@ namespace catapult { namespace crypto {
 
 	protected:
 		void DerivePublicKeyFromPrivate(const PrivateKey& key) {
-			ExtractPublicKeyFromPrivateKeySha3(key, m_publicKey);
+			ExtractPublicKeyFromPrivateKey<KeyHashingType::Sha3>(key, m_publicKey);
 		}
 	};
 
@@ -108,7 +108,7 @@ namespace catapult { namespace crypto {
 
 	protected:
 		void DerivePublicKeyFromPrivate(const PrivateKey& key) {
-			ExtractPublicKeyFromPrivateKeySha2(key, m_publicKey);
+			ExtractPublicKeyFromPrivateKey<KeyHashingType::Sha2>(key, m_publicKey);
 		}
 	};
 

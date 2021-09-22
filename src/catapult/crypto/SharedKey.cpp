@@ -47,8 +47,10 @@ namespace catapult { namespace crypto {
 
 	Key DeriveSharedSecret(const KeyPair& keyPair, const Key& otherPublicKey) {
 		ScalarMultiplier multiplier;
-		ExtractMultiplier(keyPair.privateKey(), multiplier);
-
+		if(keyPair.hashingType() == KeyHashingType::Sha3)
+			ExtractMultiplier<KeyHashingType::Sha3>(keyPair.privateKey(), multiplier);
+		else
+			ExtractMultiplier<KeyHashingType::Sha2>(keyPair.privateKey(), multiplier);
 		Key sharedSecret;
 		if (!ScalarMult(multiplier, otherPublicKey, sharedSecret))
 			return Key();

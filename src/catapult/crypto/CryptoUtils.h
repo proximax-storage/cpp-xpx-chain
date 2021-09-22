@@ -40,21 +40,32 @@ namespace catapult { namespace crypto {
 	/// Returns \c true if \a publicKey is the neutral element of the group.
 	bool IsNeutralElement(const Key& publicKey);
 
-
-	/// Calculates \a hash of \a privateKey.
-	void HashPrivateKey(const PrivateKey& privateKey, Hash512& hash);
+	template<KeyHashingType TKeyHashingType>
+	void BuildHash(Hash512& hash, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash);
+	template<>
+	void BuildHash<KeyHashingType::Sha3>(Hash512& hash, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash);
+	template<>
+	void BuildHash<KeyHashingType::Sha2>(Hash512& hash, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash);
 
 	/// Extracts the \a multiplier used to derive the public key from \a privateKey.
+	template<KeyHashingType TKeyHashingType>
 	void ExtractMultiplier(const PrivateKey& privateKey, ScalarMultiplier& multiplier);
 
 	/// Generates \a nonce from \a privateKey and a list of buffers (\a buffersList).
+	template<KeyHashingType TKeyHashingType>
 	void GenerateNonce(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce);
 
 	/// Constant time scalar multiplication of \a publicKey with \a multiplier. The result is stored in \a sharedSecret.
 	bool ScalarMult(const ScalarMultiplier& multiplier, const Key& publicKey, Key& sharedSecret);
 
 	/// Calculates \a hash of a \a privateKey.
+	template<KeyHashingType THashingType>
 	void HashPrivateKey(const PrivateKey& privateKey, Hash512& hash);
+	template<>
+	void HashPrivateKey<KeyHashingType::Sha2>(const PrivateKey& privateKey, Hash512& hash);
+	template<>
+	void HashPrivateKey<KeyHashingType::Sha3>(const PrivateKey& privateKey, Hash512& hash);
+
 
 	/// Unpacks inverse of \a publicKey into \a A and validates that:
 	/// - publicKey is canonical
@@ -66,4 +77,14 @@ namespace catapult { namespace crypto {
 	/// - A is on the curve
 	/// - A is in main subgroup
 	bool UnpackNegativeAndCheckSubgroup(ge25519& A, const Key& publicKey);
+
+	extern template void HashPrivateKey<KeyHashingType::Sha3>(const PrivateKey& privateKey, Hash512& hash);
+	extern template void HashPrivateKey<KeyHashingType::Sha2>(const PrivateKey& privateKey, Hash512& hash);
+	extern template void BuildHash<KeyHashingType::Sha2>(Hash512& hash, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash);
+	extern template void BuildHash<KeyHashingType::Sha3>(Hash512& hash, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash);
+	extern template void GenerateNonce<KeyHashingType::Sha2>(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce);
+	extern template void GenerateNonce<KeyHashingType::Sha3>(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce);
+	extern template void ExtractMultiplier<KeyHashingType::Sha3>(const PrivateKey& privateKey, ScalarMultiplier& multiplier);
+	extern template void ExtractMultiplier<KeyHashingType::Sha2>(const PrivateKey& privateKey, ScalarMultiplier& multiplier);
+
 }}

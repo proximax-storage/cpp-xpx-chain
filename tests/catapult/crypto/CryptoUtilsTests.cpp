@@ -38,7 +38,7 @@ namespace catapult { namespace crypto {
 
 		// Act:
 		Hash512 hash;
-		HashPrivateKey(privateKey, hash);
+		HashPrivateKey<KeyHashingType::Sha3>(privateKey, hash);
 
 		// Assert:
 		Hash512 expectedHash;

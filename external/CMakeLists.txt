@@ -25,5 +25,8 @@ SOURCE_GROUP("sha3" FILES ${external_sha3_SRC})
 SOURCE_GROUP("ripemd160" FILES ${external_ripemd160_SRC})
 SOURCE_GROUP("donna" FILES ${external_donna_SRC})
 
-add_library(external ${external_ref10_SRC} ${external_sha256_SRC} ${external_sha3_SRC} ${external_ripemd160_SRC} ${external_donna_SRC} README.txt ../plugins/txes/account_link/src/model/AccountLinkBaseTransaction.h)
+add_library(external ${external_ref10_SRC} ${external_sha256_SRC} ${external_sha3_SRC} ${external_ripemd160_SRC} ${external_donna_SRC} README.txt)
+
+catapult_add_openssl_dependencies(external)
+
 set_property(TARGET external PROPERTY POSITION_INDEPENDENT_CODE ON)

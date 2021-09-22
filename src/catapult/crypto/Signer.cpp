@@ -89,7 +89,7 @@ namespace catapult { namespace crypto {
 
 		// Hash the private key to improve randomness.
 		Hash512 privHash;
-		HashPrivateKey(keyPair.privateKey(), privHash);
+		HashPrivateKey<KeyHashingType::Sha3>(keyPair.privateKey(), privHash);
 
 		// r = H(privHash[256:512] || data)
 		// "EdDSA avoids these issues by generating r = H(h_b, ..., h_2b?1, M), so that

@@ -21,6 +21,7 @@
 #include "Hashes.h"
 #include "KeccakHash.h"
 #include "catapult/utils/Casting.h"
+#include "OpensslContexts.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -56,6 +57,22 @@ namespace catapult { namespace crypto {
 			crypto_hash_sha256_update(&state, dataBuffer.pData, dataBuffer.Size);
 			crypto_hash_sha256_final(&state, hash.data());
 		}
+		template<typename THash>
+		void HashSingleBuffer(const EVP_MD* pMessageDigest, const RawBuffer& dataBuffer, THash& hash) {
+			auto outputSize = static_cast<unsigned int>(hash.size());
+
+			OpensslDigestContext context;
+			context.dispatch(EVP_DigestInit_ex, pMessageDigest, nullptr);
+			context.dispatch(EVP_DigestUpdate, dataBuffer.pData, dataBuffer.Size);
+			context.dispatch(EVP_DigestFinal_ex, hash.data(), &outputSize);
+		}
+	}
+
+	void Sha256(const RawBuffer& dataBuffer, Hash256& hash) {
+		HashSingleBuffer(EVP_sha256(), dataBuffer, hash);
+	}
+	void Sha512(const RawBuffer& dataBuffer, Hash512& hash) {
+		HashSingleBuffer(EVP_sha512(), dataBuffer, hash);
 	}
 
 	void Bitcoin160(const RawBuffer& dataBuffer, Hash160& hash) noexcept {
@@ -111,6 +128,7 @@ namespace catapult { namespace crypto {
 	// region sha3 / keccak builders
 
 	namespace {
+
 		Keccak_HashInstance* CastToKeccakHashInstance(uint8_t* pHashContext) noexcept {
 			return reinterpret_cast<Keccak_HashInstance*>(pHashContext);
 		}
@@ -131,11 +149,54 @@ namespace catapult { namespace crypto {
 			Keccak_HashSqueeze(CastToKeccakHashInstance(context), output, static_cast<uint32_t>(hashSize * 8));
 		}
 
-		inline void KeccakFinal(uint8_t* context, uint8_t* output, int /* ignore last argument */, Sha3ModeTag) noexcept {
-			Keccak_HashFinal(CastToKeccakHashInstance(context), output);
+		const EVP_MD* GetMessageDigest(Sha2ModeTag, Hash512_tag) {
+			return EVP_sha512();
 		}
+
+		const EVP_MD* GetMessageDigest(Sha2ModeTag, Hash256_tag) {
+			return EVP_sha256();
+		}
+
+		const EVP_MD* GetMessageDigest(Sha3ModeTag, Hash256_tag) {
+			return EVP_sha3_256();
+		}
+
+		const EVP_MD* GetMessageDigest(Sha3ModeTag, Hash512_tag) {
+			return EVP_sha3_512();
+		}
+
+		const EVP_MD* GetMessageDigest(Sha3ModeTag, GenerationHash_tag) {
+			return EVP_sha3_256();
+		}
+
 	}
 
+	//region hash builder
+	template<typename TModeTag, typename THashTag>
+	HashBuilderT<TModeTag, THashTag>::HashBuilderT() {
+		m_context.dispatch(EVP_DigestInit_ex, GetMessageDigest(TModeTag(), THashTag()), nullptr);
+	}
+
+	template<typename TModeTag, typename THashTag>
+	void HashBuilderT<TModeTag, THashTag>::update(const RawBuffer& dataBuffer) {
+		m_context.dispatch(EVP_DigestUpdate, dataBuffer.pData, dataBuffer.Size);
+	}
+
+	template<typename TModeTag, typename THashTag>
+	void HashBuilderT<TModeTag, THashTag>::update(std::initializer_list<const RawBuffer> buffers) {
+		for (const auto& buffer : buffers)
+			update(buffer);
+	}
+
+	template<typename TModeTag, typename THashTag>
+	void HashBuilderT<TModeTag, THashTag>::final(OutputType& output) {
+		auto outputSize = static_cast<unsigned int>(output.size());
+		m_context.dispatch(EVP_DigestFinal_ex, output.data(), &outputSize);
+	}
+
+	//endregion
+
+	//region keccak builder
 	template<typename TModeTag, typename THashTag>
 	KeccakBuilder<TModeTag, THashTag>::KeccakBuilder() {
 		static_assert(sizeof(Keccak_HashInstance) <= sizeof(m_hashContext), "m_hashContext is too small to fit Keccak instance");
@@ -155,14 +216,18 @@ namespace catapult { namespace crypto {
 
 	template<typename TModeTag, typename THashTag>
 	void KeccakBuilder<TModeTag, THashTag>::final(OutputType& output) noexcept {
-		KeccakFinal(m_hashContext, output.data(), THashTag::Byte_Size, TModeTag());
+		KeccakFinal(m_hashContext, output.data(), THashTag::Size, TModeTag());
 	}
 
-	template class KeccakBuilder<Sha3ModeTag, Hash256_tag>;
-	template class KeccakBuilder<Sha3ModeTag, Hash512_tag>;
+	//endregion
+
+	template class HashBuilderT<Sha3ModeTag, Hash256_tag>;
+	template class HashBuilderT<Sha3ModeTag, Hash512_tag>;
+	template class HashBuilderT<Sha2ModeTag, Hash512_tag>;
+	template class HashBuilderT<Sha2ModeTag, Hash256_tag>;
 	template class KeccakBuilder<KeccakModeTag, Hash256_tag>;
 	template class KeccakBuilder<KeccakModeTag, Hash512_tag>;
-	template class KeccakBuilder<Sha3ModeTag, GenerationHash_tag>;
+	template class HashBuilderT<Sha3ModeTag, GenerationHash_tag>;
 
 	// endregion
 }}

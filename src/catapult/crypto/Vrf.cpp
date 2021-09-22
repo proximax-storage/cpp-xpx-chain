@@ -151,7 +151,7 @@ namespace catapult { namespace crypto {
 
 		// generate k
 		bignum256modm k;
-		GenerateNonce(keyPair.privateKey(), { h }, k);
+		GenerateNonce<Vrf_Key_Hashing_Type>(keyPair.privateKey(), { h }, k);
 
 		// k * B
 		Key k_times_B;
@@ -170,7 +170,7 @@ namespace catapult { namespace crypto {
 
 		// s = (k + cx) mod q
 		ScalarMultiplier encodedX;
-		ExtractMultiplier(keyPair.privateKey(), encodedX);
+		ExtractMultiplier<Vrf_Key_Hashing_Type>(keyPair.privateKey(), encodedX);
 		auto s = VrfS(encodedK, c, encodedX);
 
 		SecureZero(encodedK);

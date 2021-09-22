@@ -17,10 +17,9 @@
 *** You should have received a copy of the GNU Lesser General Public License
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
-
-#include <donna/ed25519-donna.h>
 #include "CryptoUtils.h"
 #include "Hashes.h"
+#include <donna/catapult.h>
 #include "PrivateKey.h"
 #include "SecureZero.h"
 #ifdef SIGNATURE_SCHEME_NIS1
@@ -28,17 +27,33 @@
 #endif
 
 namespace catapult { namespace crypto {
-
-	void HashPrivateKey(const PrivateKey& privateKey, Hash512& hash) {
+	template<KeyHashingType THashingType>
+	void HashPrivateKey(const PrivateKey& privateKey, Hash512& hash);
+	template<>
+	void HashPrivateKey<KeyHashingType::Sha2>(const PrivateKey& privateKey, Hash512& hash) {
 #ifdef SIGNATURE_SCHEME_NIS1
 		Key reversedKey;
 		std::reverse_copy(privateKey.begin(), privateKey.end(), reversedKey.begin());
 		Keccak_512(reversedKey, hash);
 		SecureZero(reversedKey.data(), Key_Size);
 #else
-		Sha3_512({ privateKey.data(), privateKey.size() }, hash);
+		Sha512({ privateKey.data(), privateKey.size() }, hash);
 #endif
 	}
+	template<>
+	void HashPrivateKey<KeyHashingType::Sha3>(const PrivateKey& privateKey, Hash512& hash) {
+#ifdef SIGNATURE_SCHEME_NIS1
+		Key reversedKey;
+	std::reverse_copy(privateKey.begin(), privateKey.end(), reversedKey.begin());
+	Keccak_512(reversedKey, hash);
+	SecureZero(reversedKey.data(), Key_Size);
+#else
+		Sha3_512({ privateKey.data(), privateKey.size() }, hash);
+#endif
+
+	}
+
+
 	namespace {
 		// region byte / byte array helpers
 
@@ -102,6 +117,9 @@ namespace catapult { namespace crypto {
 		}
 
 
+
+
+
 		// endregion
 
 	}
@@ -133,17 +151,7 @@ namespace catapult { namespace crypto {
 	}
 
 
-	void ExtractMultiplier(const PrivateKey& privateKey, ScalarMultiplier& multiplier) {
-		Hash512 privHash;
-		HashPrivateKey(privateKey, privHash);
 
-		// fieldElement(privHash[0:256])
-		privHash[0] &= 0xF8;
-		privHash[31] &= 0x7F;
-		privHash[31] |= 0x40;
-		std::memcpy(multiplier, privHash.data(), Hash256_Size);
-		SecureZero(privHash);
-	}
 	// pTable = { A, 2 * A, 3 * A, 4 * A, 5 * A, 6 * A, 7 * A, 8 * A }
 	void PrecomputeTable(const ge25519& A, ge25519_pniels (&table)[8]) {
 		// pTable[0] = A
@@ -231,19 +239,24 @@ namespace catapult { namespace crypto {
 			}
 		}
 	}
-	void GenerateNonce(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce) {
-		Hash512 privHash;
-		HashPrivateKey(privateKey, privHash);
-		Hash512 hash;
-		//CHANGE TO SHA2!!!!
-		Sha3_512_Builder builder;
-		builder.update({ privHash.data() + Hash512::Byte_Size / 2, Hash512::Byte_Size / 2 });
-		builder.update(buffersList);
-		builder.final(hash);
-		expand256_modm(nonce, hash.data(), 64);
 
+
+
+	template<KeyHashingType TKeyHashingType>
+	void ExtractMultiplier(const PrivateKey& privateKey, ScalarMultiplier& multiplier) {
+		Hash512 privHash;
+		HashPrivateKey<TKeyHashingType>(privateKey, privHash);
+
+		// fieldElement(privHash[0:256])
+		privHash[0] &= 0xF8;
+		privHash[31] &= 0x7F;
+		privHash[31] |= 0x40;
+		std::memcpy(multiplier, privHash.data(), Hash256_Size);
 		SecureZero(privHash);
 	}
+
+
+
 	// f = flag ? g : f
 	// prerequisite: flag must be 0 or 1
 	void ConditionalMove(bignum25519 f, const bignum25519 g, uint8_t flag) {
@@ -348,4 +361,40 @@ namespace catapult { namespace crypto {
 		SecureZero(e);
 		return !IsNeutralElement(sharedSecret);
 	}
+
+	template<KeyHashingType TKeyHashingType>
+	void BuildHash(Hash512& hash, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash);
+	template<>
+	void BuildHash<KeyHashingType::Sha3>(Hash512& hash, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash)
+	{
+		Sha3_512_Builder builder;
+		builder.update({ privHash.data() + Hash512::Size / 2, Hash512::Size / 2 });
+		builder.update(buffersList);
+		builder.final(hash);
+	}
+	template<>
+	void BuildHash<KeyHashingType::Sha2>(Hash512& hash, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash)
+	{
+		Sha512_Builder builder;
+		builder.update({ privHash.data() + Hash512::Size / 2, Hash512::Size / 2 });
+		builder.update(buffersList);
+		builder.final(hash);
+	}
+	template<KeyHashingType TKeyHashingType>
+	void GenerateNonce(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce) {
+		Hash512 privHash;
+		HashPrivateKey<TKeyHashingType>(privateKey, privHash);
+		Hash512 hash;
+		BuildHash<TKeyHashingType>(hash, buffersList, privHash);
+		expand256_modm(nonce, hash.data(), 64);
+
+		SecureZero(privHash);
+	}
+
+	template void HashPrivateKey<KeyHashingType::Sha3>(const PrivateKey& privateKey, Hash512& hash);
+	template void HashPrivateKey<KeyHashingType::Sha2>(const PrivateKey& privateKey, Hash512& hash);
+	template void GenerateNonce<KeyHashingType::Sha2>(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce);
+	template void GenerateNonce<KeyHashingType::Sha3>(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce);
+	template void ExtractMultiplier<KeyHashingType::Sha3>(const PrivateKey& privateKey, ScalarMultiplier& multiplier);
+	template void ExtractMultiplier<KeyHashingType::Sha2>(const PrivateKey& privateKey, ScalarMultiplier& multiplier);
 }}

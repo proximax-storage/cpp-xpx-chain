@@ -254,8 +254,8 @@ namespace catapult { namespace crypto {
 		// Arrange:
 		auto privateKey1 = PrivateKey::FromString("2F985E4EC55D60C957C973BD1BEE2C0B3BA313A841D3EE4C74810805E6936053");
 		auto privateKey2 = PrivateKey::FromString("D6430327F90FAAD41F4BC69E51EB6C9D4C78B618D0A4B616478BD05E7A480950");
-		auto keyPair1 = KeyPair::FromPrivate(std::move(privateKey1), KeyHashingType::Sha2);
-		auto keyPair2 = KeyPair::FromPrivate(std::move(privateKey2), KeyHashingType::Sha2);
+		auto keyPair1 = KeyPair::FromPrivate(std::move(privateKey1), Vrf_Key_Hashing_Type);
+		auto keyPair2 = KeyPair::FromPrivate(std::move(privateKey2), Vrf_Key_Hashing_Type);
 
 		// Act:
 		auto sharedResult1 = TTraits::DeriveSharedResult(keyPair1, keyPair2.publicKey());
