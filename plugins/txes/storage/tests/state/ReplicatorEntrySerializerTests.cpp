@@ -46,6 +46,7 @@ namespace catapult { namespace state {
             return test::CreateReplicatorEntry(
                 test::GenerateRandomByteArray<Key>(),
                 test::GenerateRandomValue<Amount>(),
+                test::GenerateRandomValue<BLSPublicKey>(),
                 Drives_Count);
         }
 
@@ -57,6 +58,8 @@ namespace catapult { namespace state {
             pData += Key_Size;
             EXPECT_EQ(entry.capacity(), *reinterpret_cast<const Amount*>(pData));
             pData += sizeof(Amount);
+            EXPECT_EQ(entry.blsKey(), *reinterpret_cast<const BLSPublicKey*>(pData));
+            pData += sizeof(BLSPublicKey);
 
             EXPECT_EQ(entry.drives().size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
@@ -125,6 +128,8 @@ namespace catapult { namespace state {
             pData += Key_Size;
             memcpy(pData, &entry.capacity(), sizeof(Amount));
             pData += sizeof(Amount);
+            memcpy(pData, &entry.blsKey(), sizeof(BLSPublicKey));
+            pData += sizeof(BLSPublicKey);
 
             //region drives
             
