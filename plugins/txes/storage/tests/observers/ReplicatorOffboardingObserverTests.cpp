@@ -10,6 +10,7 @@
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
+#include "catapult/model/Address.h"
 
 namespace catapult { namespace observers {
 
@@ -21,14 +22,38 @@ namespace catapult { namespace observers {
         using ObserverTestContext = test::ObserverTestContextT<test::ReplicatorCacheFactory>;
         using Notification = model::ReplicatorOffboardingNotification<1>;
 
+        const Key Replicator_Key = test::GenerateRandomByteArray<Key>();
         const Key Drive_Key = test::GenerateRandomByteArray<Key>();
-        const Key Owner = test::GenerateRandomByteArray<Key>();
+        const Key Owner_key = test::GenerateRandomByteArray<Key>();
         constexpr auto Current_Height = Height(25);
-        constexpr auto Currency_Mosaic_Id = MosaicId(1000);
-        constexpr auto Storage_Mosaic_Id = MosaicId(1001);
-        constexpr auto Streaming_Mosaic_Id = MosaicId(1002);
-        uint64_t storageDeposit = 100;
-        uint64_t streamingDeposit = 200;
+        uint64_t Storage_Deposit = 100;
+        uint64_t Streaming_Deposit = 200;
+
+        state::BcDriveEntry CreateBcDriveEntry() {
+            state::BcDriveEntry entry(Drive_Key);
+            entry.setOwner(Owner_key);
+            entry.setUsedSize(25);
+            entry.confirmedUsedSizes().insert({Replicator_Key, 25});
+
+            return entry;
+        }
+
+        state::ReplicatorEntry CreateReplicatorEntry() {
+            state::ReplicatorEntry entry(Replicator_Key);
+            entry.setCapacity(Amount(Storage_Deposit));
+            entry.drives().emplace(Drive_Key, state::DriveInfo{});
+            return entry;
+        }
+
+        state::AccountState CreateAccount(catapult::MosaicId Storage_Mosaic_Id, catapult::MosaicId Streaming_Mosaic_Id) {
+		    auto address = model::PublicKeyToAddress(Replicator_Key, model::NetworkIdentifier::Mijin_Test);
+		    state::AccountState account(address, Current_Height);
+		    account.PublicKey = Replicator_Key;
+		    account.PublicKeyHeight = Current_Height;
+            account.Balances.credit(Storage_Mosaic_Id, Amount(Storage_Deposit));
+            account.Balances.credit(Streaming_Mosaic_Id, Amount(Streaming_Deposit));
+		    return account;
+	    }
 
         struct ReplicatorValues {
             public:
@@ -40,27 +65,6 @@ namespace catapult { namespace observers {
                 Key PublicKey;
         };
 
-        state::BcDriveEntry CreateBcDriveEntry(const ReplicatorValues& values) {
-            state::BcDriveEntry entry(Drive_Key);
-            entry.setOwner(Owner);
-			entry.setSize(50);
-            entry.setUsedSize(25);
-            entry.confirmedUsedSizes().insert({values.PublicKey, 25});
-
-            return entry;
-        }
-
-        state::ReplicatorEntry CreateReplicatorEntry(const ReplicatorValues& values) {
-            state::ReplicatorEntry entry(values.PublicKey);
-            entry.setCapacity(Amount(storageDeposit));
-            entry.drives().emplace(Drive_Key, state::DriveInfo{});
-            return entry;
-        }
-
-        static test::BalanceTransfers GetInitialReplicatorDepositUnits(MosaicId depositUnit, uint64_t totalUnit) {
-            return { { depositUnit, Amount(totalUnit) } };
-        }
-        
         static test::BalanceTransfers GetFinalReplicatorStorage(MosaicId mosaicId) {
             //total storage deposit = 100 (capacity + usedSize)
             return { { mosaicId, Amount(0) } };
@@ -76,26 +80,28 @@ namespace catapult { namespace observers {
             return { { mosaicId, Amount(100) } };
         }
 
-        void RunTest(NotifyMode mode, const ReplicatorValues& values, const Height& currentHeight) {
+        void RunTest(NotifyMode mode, ReplicatorValues values, const Height& Current_Height) {
             // Arrange:
-            ObserverTestContext context(mode, currentHeight);
-            Notification notification(values.PublicKey);
+            ObserverTestContext context(mode, Current_Height);
+            Notification notification(Replicator_Key);
             auto pObserver = CreateReplicatorOffboardingObserver();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
             auto& accountCache = context.cache().sub<cache::AccountStateCache>();
             auto& driveCache = context.cache().sub<cache::BcDriveCache>();
+            auto& Currency_Mosaic_Id = context.observerContext().Config.Immutable.CurrencyMosaicId;
+            auto& Storage_Mosaic_Id = context.observerContext().Config.Immutable.CurrencyMosaicId;
+            auto& Streaming_Mosaic_Id = context.observerContext().Config.Immutable.CurrencyMosaicId;
 
-            //Set initial storage and streaming unit in the replicator
-            test::SetCacheBalances(context.cache(), values.PublicKey, GetInitialReplicatorDepositUnits(Storage_Mosaic_Id, storageDeposit));
-            test::SetCacheBalances(context.cache(), values.PublicKey, GetInitialReplicatorDepositUnits(Streaming_Mosaic_Id, streamingDeposit));
+            //Populate cache
+            replicatorCache.insert(CreateReplicatorEntry());
+            driveCache.insert(CreateBcDriveEntry());
+            accountCache.addAccount(CreateAccount(Storage_Mosaic_Id, Streaming_Mosaic_Id));
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
-     		auto replicatorIter = replicatorCache.find(values.PublicKey);
-			const auto &actualEntry = replicatorIter.get();
-			test::AssertEqualReplicatorData(CreateReplicatorEntry(values), actualEntry);
+			EXPECT_FALSE(replicatorCache.find(Replicator_Key).tryGet());
             test::AssertBalances(context.cache(), values.PublicKey, GetFinalReplicatorCurrency(Currency_Mosaic_Id));
             test::AssertBalances(context.cache(), values.PublicKey, GetFinalReplicatorStorage(Storage_Mosaic_Id));
             test::AssertBalances(context.cache(), values.PublicKey, GetFinalReplicatorStreaming(Streaming_Mosaic_Id));
@@ -108,13 +114,5 @@ namespace catapult { namespace observers {
 
         // Assert:
         RunTest(NotifyMode::Commit, values, Current_Height);
-    }
-
-    TEST(TEST_CLASS, ReplicatorOffboarding_Rollback) {
-        // Arrange:
-        ReplicatorValues values;
-
-        // Assert
-		EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
     }
 }}
