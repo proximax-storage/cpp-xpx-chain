@@ -178,7 +178,7 @@ namespace catapult { namespace consumers {
 				}
 
 				auto vrfPublicKey = GetVrfPublicKey(accountStateCache, accountStateIter.get().PublicKey);
-				auto vrfVerifyResult = crypto::VerifyVrfProof(block.getGenerationHashProof(), parentGenerationHash, vrfPublicKey);
+				auto vrfVerifyResult = crypto::VerifyVrfProof<Vrf_Key_Hashing_Type>(block.getGenerationHashProof(), parentGenerationHash, vrfPublicKey);
 
 				if (Hash512() == vrfVerifyResult) {
 					CATAPULT_LOG(warning) << "vrf proof does not validate at height " << block.Height;

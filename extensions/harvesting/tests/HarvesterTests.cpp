@@ -214,7 +214,7 @@ namespace catapult { namespace harvesting {
 					GenerationHash genHash;
 					if(account->GetVersion() > 1)
 					{
-						auto vrfProof = crypto::GenerateVrfProof(LastBlockElement.GenerationHash, VrfKeyPairs[i]);
+						auto vrfProof = crypto::GenerateVrfProof<Vrf_Key_Hashing_Type>(LastBlockElement.GenerationHash, VrfKeyPairs[i]);
 						genHash = model::CalculateGenerationHashVrf(vrfProof.Gamma);
 					}
 					else
@@ -249,7 +249,7 @@ namespace catapult { namespace harvesting {
 					auto it = find_if(KeyPairs.begin(), KeyPairs.end(), [&publicKey](const KeyPair& x) {
 					  return publicKey == x.publicKey();
 					});
-					auto vrfProof = crypto::GenerateVrfProof(LastBlockElement.GenerationHash, VrfKeyPairs[it - KeyPairs.begin()]);
+					auto vrfProof = crypto::GenerateVrfProof<Vrf_Key_Hashing_Type>(LastBlockElement.GenerationHash, VrfKeyPairs[it - KeyPairs.begin()]);
 					genHash = model::CalculateGenerationHashVrf(vrfProof.Gamma);
 				}
 				else genHash = model::CalculateGenerationHash(LastBlockElement.GenerationHash, publicKey);

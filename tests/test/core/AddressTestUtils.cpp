@@ -34,11 +34,11 @@ namespace catapult { namespace test {
 	}
 
 	crypto::KeyPair GenerateKeyPair(uint32_t version) {
-		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), 1);
+		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), version);
 	}
 
 	crypto::KeyPair GenerateVrfKeyPair() {
-		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), KeyHashingType::Sha3);
+		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), Vrf_Key_Hashing_Type);
 	}
 
 	Address GenerateRandomAddress() {

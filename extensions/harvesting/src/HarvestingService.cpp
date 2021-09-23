@@ -93,7 +93,7 @@ namespace catapult { namespace harvesting {
 				const extensions::ServiceState& state,
 				const crypto::KeyPair& encryptionKeyPair) {
 			Key harvesterPublicKey;
-			utils::ParseHexStringIntoContainer(config.HarvesterPublicKey.c_str(), Key::Size, harvesterPublicKey);
+			utils::ParseHexStringIntoContainer(config.HarvesterPublicKey.c_str(), Key::Size*2, harvesterPublicKey);
 			auto configAccountVersion = 1u;
 			if(config.IsAutoHarvestingEnabled)
 			{

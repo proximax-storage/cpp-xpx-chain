@@ -57,7 +57,7 @@ namespace catapult { namespace model {
 	}
 
 	GenerationHash CalculateGenerationHashVrf(const crypto::ProofGamma& gamma) {
-		auto proofHash = GenerateVrfProofHash(gamma);
+		auto proofHash = crypto::GenerateVrfProofHash<Vrf_Key_Hashing_Type>(gamma);
 		return proofHash.copyTo<GenerationHash>();
 	}
 

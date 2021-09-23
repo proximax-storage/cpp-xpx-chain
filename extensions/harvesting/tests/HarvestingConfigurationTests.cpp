@@ -36,6 +36,7 @@ namespace catapult { namespace harvesting {
 						"harvesting",
 						{
 							{ "harvestKey", "harvest-key" },
+							{"harvesterPublicKey", "harvester-public-key"},
 							{ "harvesterVrfPrivateKey", "harvest-vrf-key" },
 							{ "isAutoHarvestingEnabled", "true" },
 							{ "maxUnlockedAccounts", "2" },
@@ -62,6 +63,7 @@ namespace catapult { namespace harvesting {
 				// Assert:
 				EXPECT_EQ("", config.HarvestKey);
 				EXPECT_EQ("", config.HarvesterVrfPrivateKey);
+				EXPECT_EQ("", config.HarvesterPublicKey);
 				EXPECT_FALSE(config.IsAutoHarvestingEnabled);
 				EXPECT_EQ(0u, config.MaxUnlockedAccounts);
 				EXPECT_EQ("", config.Beneficiary);
@@ -96,6 +98,7 @@ namespace catapult { namespace harvesting {
 		// Assert:
 		EXPECT_EQ("0000000000000000000000000000000000000000000000000000000000000000", config.HarvestKey);
 		EXPECT_EQ("0000000000000000000000000000000000000000000000000000000000000000", config.HarvesterVrfPrivateKey);
+		EXPECT_EQ("0000000000000000000000000000000000000000000000000000000000000000", config.HarvesterPublicKey);
 		EXPECT_FALSE(config.IsAutoHarvestingEnabled);
 		EXPECT_EQ(5u, config.MaxUnlockedAccounts);
 		EXPECT_EQ(DelegatePrioritizationPolicy::Importance, config.DelegatePrioritizationPolicy);

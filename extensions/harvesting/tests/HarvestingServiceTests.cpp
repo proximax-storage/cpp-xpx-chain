@@ -149,7 +149,7 @@ namespace catapult { namespace harvesting {
 				auto harvestingKeypair = crypto::KeyPair::FromString(m_config.HarvestKey, accountVersion);
 
 				//Ensure account exists so service can boot
-				accountStateCacheDelta.addAccount(harvestingKeypair.publicKey(), Height(1));
+				accountStateCacheDelta.addAccount(harvestingKeypair.publicKey(), Height(1), accountVersion);
 
 				cache.commit(Height(1));
 			}
@@ -390,6 +390,7 @@ namespace catapult { namespace harvesting {
 				const cache::CacheConfiguration& cacheConfig,
 				Height height,
 				const Key& publicKey,
+				const Key& vrfPublicKey,
 				Amount balance) {
 			// Arrange:
 			test::MutableBlockchainConfiguration config;
@@ -403,6 +404,8 @@ namespace catapult { namespace harvesting {
 			auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 			accountStateCache.addAccount(publicKey, Height(1));
 			auto& accountState = accountStateCache.find(publicKey).get();
+			accountState.SupplementalPublicKeys.vrf().unset();
+			accountState.SupplementalPublicKeys.vrf().set(vrfPublicKey);
 			accountState.Balances.credit(Harvesting_Mosaic_Id, balance, Height(1));
 
 			// - add a block difficulty info
@@ -414,8 +417,8 @@ namespace catapult { namespace harvesting {
 			return cache;
 		}
 		template<uint32_t TAccountVersion>
-		auto CreateCacheWithAccount(Height height, const Key& publicKey, Amount balance) {
-			return CreateCacheWithAccount<TAccountVersion>(cache::CacheConfiguration(), height, publicKey, balance);
+		auto CreateCacheWithAccount(Height height, const Key& publicKey, const Key& vrfPublicKey, Amount balance) {
+			return CreateCacheWithAccount<TAccountVersion>(cache::CacheConfiguration(), height, publicKey, vrfPublicKey, balance);
 		}
 	}
 
@@ -432,11 +435,12 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		auto height = Height(2 * Importance_Grouping - 1);
 		auto keyPair = test::GenerateKeyPair(2);
-		TestContext<TypeParam::value> context(CreateCacheWithAccount<TypeParam::value>(height, keyPair.publicKey(), Account_Balance));
+		auto vrfKeyPair = test::GenerateVrfKeyPair();
+		TestContext<TypeParam::value> context(CreateCacheWithAccount<TypeParam::value>(height, keyPair.publicKey(), vrfKeyPair.publicKey(), Account_Balance));
 		context.setMinHarvesterBalance(Account_Balance);
 		context.setMaxHarvesterBalance(Amount(UINT64_MAX));
-		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair)](auto& unlockedAccounts, const auto& task) mutable {
-			unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateVrfKeyPair(), 2));
+		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair), vrfKeyPair = std::move(vrfKeyPair)](auto& unlockedAccounts, const auto& task) mutable {
+			unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), std::move(vrfKeyPair), 2));
 
 			// Act:
 			auto result = task.Callback().get();
@@ -451,12 +455,13 @@ namespace catapult { namespace harvesting {
 		// Arrange: ineligible because account balance is too low
 		auto height = Height(2 * Importance_Grouping - 1);
 		auto keyPair = test::GenerateKeyPair(2);
-		TestContext<TypeParam::value> context(CreateCacheWithAccount<TypeParam::value>(height, keyPair.publicKey(), Account_Balance));
+		auto vrfKeyPair = test::GenerateVrfKeyPair();
+		TestContext<TypeParam::value> context(CreateCacheWithAccount<TypeParam::value>(height, keyPair.publicKey(), vrfKeyPair.publicKey(), Account_Balance));
 		context.setMinHarvesterBalance(Account_Balance + Amount(1));
 		context.setMaxHarvesterBalance(Amount(UINT64_MAX));
 
-		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair)](auto& unlockedAccounts, const auto& task) mutable {
-			unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateVrfKeyPair(), 2));
+		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair), vrfKeyPair = std::move(vrfKeyPair)](auto& unlockedAccounts, const auto& task) mutable {
+			unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), std::move(vrfKeyPair), 2));
 
 			// Act:
 			auto result = task.Callback().get();
@@ -477,21 +482,22 @@ namespace catapult { namespace harvesting {
 			// Arrange: use a huge amount and a max timestamp to force a hit
 			test::TempDirectoryGuard dbDirGuard;
 			auto keyPair = test::GenerateKeyPair(TAccountVersion);
+			auto vrfKeyPair = test::GenerateVrfKeyPair();
 			auto balance = Amount(1'000'000'000'000);
 			auto cacheConfig = enableVerifiableState
 					? cache::CacheConfiguration(dbDirGuard.name(), utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled)
 					: cache::CacheConfiguration();
 			TestContext<TAccountVersion> context(
-					CreateCacheWithAccount<TAccountVersion>(cacheConfig, Height(1), keyPair.publicKey(), balance),
+					CreateCacheWithAccount<TAccountVersion>(cacheConfig, Height(1), keyPair.publicKey(), vrfKeyPair.publicKey(), balance),
 					[]() { return Timestamp(std::numeric_limits<int64_t>::max()); });
 			context.setMaxHarvesterBalance(Amount(UINT64_MAX));
 			if (enableVerifiableState)
 				context.enableVerifiableState();
 
-			RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair), &context, &harvestedStateHash](
+			RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair), vrfKeyPair = std::move(vrfKeyPair), &context, &harvestedStateHash](
 					auto& unlockedAccounts,
 					const auto& task) mutable {
-				unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), test::GenerateVrfKeyPair(), TAccountVersion));
+				unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), std::move(vrfKeyPair), TAccountVersion));
 
 				// Act:
 				auto result = task.Callback().get();

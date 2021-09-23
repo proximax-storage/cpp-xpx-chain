@@ -47,6 +47,7 @@ namespace catapult { namespace harvesting {
 			return std::nullopt;
 
 		auto iter = decrypted.begin();
+		//Assuming version 2 keypairs are Sha2, otherwise this needs to support KeyHashingType
 		auto extractKeyPair = [&iter]() {
 			return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate([&iter]() mutable { return *iter++; }), 2);
 		};

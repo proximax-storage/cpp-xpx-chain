@@ -127,7 +127,7 @@ namespace catapult { namespace crypto {
 			auto message = "at index " + std::to_string(i);
 
 			// Act: compute proof
-			auto vrfProof = GenerateVrfProof(alpha, keyPair);
+			auto vrfProof = GenerateVrfProof<Vrf_Key_Hashing_Type>(alpha, keyPair);
 
 			// Assert:
 			auto verificationHash = testVectorsOutput[i].VerificationHash;
@@ -136,7 +136,7 @@ namespace catapult { namespace crypto {
 			EXPECT_EQ(utils::ParseByteArray<ProofScalar>(testVectorsOutput[i].Scalar), vrfProof.Scalar) << message;
 
 			// Act: verify proof and compute beta
-			auto proofHash = VerifyVrfProof(vrfProof, alpha, keyPair.publicKey());
+			auto proofHash = VerifyVrfProof<Vrf_Key_Hashing_Type>(vrfProof, alpha, keyPair.publicKey());
 
 			// Assert:
 			EXPECT_EQ(utils::ParseByteArray<Hash512>(testVectorsOutput[i].Beta), proofHash) << message;
@@ -152,15 +152,15 @@ namespace catapult { namespace crypto {
 		void AssertVerifyVrfProofFailsWhenProofIsCorrupted(const consumer<VrfProof&>& transform) {
 			auto keyPair = KeyPair::FromString("9D61B19DEFFD5A60BA844AF492EC2CC44449C5697B326919703BAC031CAE7F60", Vrf_Key_Hashing_Type);
 			auto alpha = test::ToVector("af82");
-			auto vrfProof = GenerateVrfProof(alpha, keyPair);
+			auto vrfProof = GenerateVrfProof<Vrf_Key_Hashing_Type>(alpha, keyPair);
 
 			// Sanity:
-			auto proofHash = VerifyVrfProof(vrfProof, alpha, keyPair.publicKey());
+			auto proofHash = VerifyVrfProof<Vrf_Key_Hashing_Type>(vrfProof, alpha, keyPair.publicKey());
 			EXPECT_NE(Hash512(), proofHash);
 
 			// Act: corrupt proof
 			transform(vrfProof);
-			proofHash = VerifyVrfProof(vrfProof, alpha, keyPair.publicKey());
+			proofHash = VerifyVrfProof<Vrf_Key_Hashing_Type>(vrfProof, alpha, keyPair.publicKey());
 
 			// Assert:
 			EXPECT_EQ(Hash512(), proofHash);
@@ -223,11 +223,11 @@ namespace catapult { namespace crypto {
 			auto message = "at index " + std::to_string(i);
 
 			// - compute proof hash
-			auto vrfProof = GenerateVrfProof(alpha, keyPair);
-			auto proofHash = VerifyVrfProof(vrfProof, alpha, keyPair.publicKey());
+			auto vrfProof = GenerateVrfProof<Vrf_Key_Hashing_Type>(alpha, keyPair);
+			auto proofHash = VerifyVrfProof<Vrf_Key_Hashing_Type>(vrfProof, alpha, keyPair.publicKey());
 
 			// Act: compute proof hash from gamma
-			auto proofHashFromGamma = GenerateVrfProofHash(vrfProof.Gamma);
+			auto proofHashFromGamma = GenerateVrfProofHash<Vrf_Key_Hashing_Type>(vrfProof.Gamma);
 
 			// Assert:
 			EXPECT_EQ(proofHash, proofHashFromGamma) << message;

@@ -61,11 +61,21 @@ namespace catapult { namespace crypto {
 #pragma pack(pop)
 
 	/// Generates a verifiable random function proof from \a alpha and \a keyPair.
+	template<KeyHashingType TKeyHashingType>
 	VrfProof GenerateVrfProof(const RawBuffer& alpha, const KeyPair& keyPair);
 
 	/// Verifies verifiable random function proof (\a vrfProof) using \a alpha and \a publicKey.
+	template<KeyHashingType TKeyHashingType>
 	Hash512 VerifyVrfProof(const VrfProof& vrfProof, const RawBuffer& alpha, const Key& publicKey);
 
 	/// Generates a verifiable random function proof hash from \a gamma.
+	template<KeyHashingType TKeyHashingType>
 	Hash512 GenerateVrfProofHash(const ProofGamma& gamma);
+
+	extern template Hash512 VerifyVrfProof<KeyHashingType::Sha2>(const VrfProof& vrfProof, const RawBuffer& alpha, const Key& publicKey);
+	extern template Hash512 VerifyVrfProof<KeyHashingType::Sha3>(const VrfProof& vrfProof, const RawBuffer& alpha, const Key& publicKey);
+	extern template Hash512 GenerateVrfProofHash<KeyHashingType::Sha2>(const ProofGamma& gamma);
+	extern template Hash512 GenerateVrfProofHash<KeyHashingType::Sha3>(const ProofGamma& gamma);
+	extern template VrfProof GenerateVrfProof<KeyHashingType::Sha2>(const RawBuffer& alpha, const KeyPair& keyPair);
+	extern template VrfProof GenerateVrfProof<KeyHashingType::Sha3>(const RawBuffer& alpha, const KeyPair& keyPair);
 }}

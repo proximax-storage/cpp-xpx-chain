@@ -114,7 +114,7 @@ namespace catapult { namespace harvesting {
 
 			if(blockDescriptor.accountVersion() > 1)
 			{
-				vrfProof = crypto::GenerateVrfProof(context.ParentContext.GenerationHash, blockDescriptor.vrfKeyPair());
+				vrfProof = crypto::GenerateVrfProof<Vrf_Key_Hashing_Type>(context.ParentContext.GenerationHash, blockDescriptor.vrfKeyPair());
 				hitContext.GenerationHash = model::CalculateGenerationHashVrf(vrfProof.Gamma);
 			}
 			else
