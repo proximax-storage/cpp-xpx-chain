@@ -74,8 +74,10 @@ namespace catapult { namespace validators {
 				}
 			}
 
-			if (providedIndividualParts.count(individualPart))
+			if (providedIndividualParts.count(individualPart)) {
+				delete[] pDataBegin;
 				return Failure_Storage_Opinions_Reocurring_Individual_Parts;
+			}
 			providedIndividualParts.insert(individualPart);
 
 			const auto dataSize = notification.CommonDataSize + (sizeof(Key) + sizeof(uint64_t)) * individualPart.size();
@@ -87,11 +89,13 @@ namespace catapult { namespace validators {
 
 			RawBuffer dataBuffer(pDataBegin, dataSize);
 
-			if (!crypto::FastAggregateVerify(blsPublicKeys.at(i), dataBuffer, *pBlsSignature))
+			if (!crypto::FastAggregateVerify(blsPublicKeys.at(i), dataBuffer, *pBlsSignature)) {
+				delete[] pDataBegin;
 				return Failure_Storage_Invalid_BLS_Signature;
+			}
 		}
-		delete pDataBegin;
 
+		delete[] pDataBegin;
 		return ValidationResult::Success;
 	}))
 

@@ -146,18 +146,17 @@ namespace catapult { namespace test {
 		return entry;
 	};
 
-	void AddReplicators(cache::CatapultCache& cache, const uint8_t count, std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs, const Height& height) {
+	void AddReplicators(cache::CatapultCache& cache, std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs, const uint8_t count, const Height height) {
 		auto delta = cache.createDelta();
 		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
 		auto& blsKeysDelta = delta.sub<cache::BlsKeysCache>();
 		const auto newSize = replicatorKeyPairs.size() + count;
 		replicatorKeyPairs.reserve(newSize);
 		for (auto i = replicatorKeyPairs.size(); i < newSize; ++i) {
-			Key key;
-			do { key = test::GenerateRandomByteArray<Key>(); } while (replicatorDelta.contains(key));
-			replicatorKeyPairs.emplace_back(key, crypto::BLSKeyPair::FromPrivate(crypto::BLSPrivateKey::Generate(test::RandomByte)));
-			while (blsKeysDelta.contains(replicatorKeyPairs.at(i).second.publicKey()))
-				replicatorKeyPairs.at(i) = std::make_pair(key, crypto::BLSKeyPair::FromPrivate(crypto::BLSPrivateKey::Generate(test::RandomByte)));
+			replicatorKeyPairs.emplace_back(
+					test::GenerateRandomByteArray<Key>(),
+					crypto::BLSKeyPair::FromPrivate(crypto::BLSPrivateKey::Generate(test::RandomByte)));
+			const auto& key = replicatorKeyPairs.at(i).first;
 			const auto& blsPublicKey = replicatorKeyPairs.at(i).second.publicKey();
 			const auto replicatorEntry = test::CreateReplicatorEntry(key, blsPublicKey);
 			const auto blsKeyEntry = test::CreateBlsKeysEntry(blsPublicKey, key);

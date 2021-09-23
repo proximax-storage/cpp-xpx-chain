@@ -12,6 +12,7 @@
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/PrivateKey.h"
 #include "catapult/crypto/Signer.h"
+#include "catapult/model/StorageNotifications.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCache.h"
@@ -192,9 +193,9 @@ namespace catapult { namespace test {
 	/// Adds the keys of created replicators to \a keys.
 	void AddReplicators(
 			cache::CatapultCache& cache,
-			uint8_t count,
 			std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs,
-			const Height& height = Height(10));
+			uint8_t count,
+			Height height = Height(1));
 
 	/// Common fields of opinion-based multisignature transactions (DownloadApproval, DataModificationApproval, EndDriveVerification).
 	template<typename TOpinion>
@@ -202,27 +203,30 @@ namespace catapult { namespace test {
 		uint8_t OpinionCount;
 		uint8_t JudgingCount;
 		uint8_t JudgedCount;
+		uint8_t OpinionElementCount;
 		std::vector<Key> PublicKeys;
 		std::vector<uint8_t> OpinionIndices;
 		std::vector<BLSSignature> BlsSignatures;
 		std::vector<bool> PresentOpinions;
-		std::vector<TOpinion> Opinions;
+		std::vector<std::vector<TOpinion>> Opinions;
 	};
 
 	/// Creates an OpinionData filled with valid data.
 	template<typename TOpinion>
 	OpinionData<TOpinion> CreateValidOpinionData(
 			const std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs,
-			uint8_t* const pCommonDataBegin,
-			const size_t commonDataSize) {
+			const RawBuffer& commonDataBuffer,
+			const uint8_t judgedCount = 0,
+			const uint8_t judgingCount = 0,
+			const uint8_t opinionCount = 0,
+			const bool forceOpinionPresence = false) {
 		OpinionData<TOpinion> data;
 
 		// Generating valid counts.
-		data.JudgedCount = test::RandomInRange(static_cast<size_t>(1), replicatorKeyPairs.size());
-		data.JudgingCount = test::RandomInRange(static_cast<uint8_t>(1), data.JudgedCount);
-		data.OpinionCount = test::RandomInRange(static_cast<uint8_t>(1), data.JudgingCount);
+		data.JudgedCount = judgedCount ? judgedCount : test::RandomInRange<uint8_t>(1, replicatorKeyPairs.size());
+		data.JudgingCount = judgingCount ? judgingCount : test::RandomInRange<uint8_t>(1, data.JudgedCount);
+		data.OpinionCount = opinionCount ? opinionCount : test::RandomInRange<uint8_t>(1, data.JudgingCount);
 		const auto presentOpinionCount = data.OpinionCount * data.JudgedCount;
-		auto opinionElementCount = 0;
 
 		// Filling PublicKeys and OpinionIndices.
 		std::vector<std::vector<const crypto::BLSKeyPair*>> blsKeyPairs(data.OpinionCount);	// Nth vector in blsKeyPairs contains pointers to all BLS key pairs of replicators that provided Nth opinion.
@@ -240,38 +244,52 @@ namespace catapult { namespace test {
 		}
 
 		// Filling PresentOpinions.
+		std::vector<uint8_t> opinionSizes;	// Vector of opinion element counts in each opinion.
+		opinionSizes.resize(data.OpinionCount);
 		data.PresentOpinions.reserve(presentOpinionCount);
 		std::vector<uint8_t> predPresenceIndices;	// Vector of predetermined indices used to guarantee that every key is used. If Nth element in predPresenceIndices is M, then Mth element in Nth column of presentOpinions must be true.
 		predPresenceIndices.reserve(data.JudgedCount);
-		for (auto i = 0u; i < data.JudgedCount; ++i) predPresenceIndices.emplace_back(test::RandomInRange(0, data.OpinionCount-1));
-		for (auto i = 0u; i < presentOpinionCount; ++i) {
-			const bool bit = (predPresenceIndices.at(i % data.JudgedCount) == i / data.JudgedCount) || test::Random() % 10;	// True with probability 0.9
-			opinionElementCount += bit;
-			data.PresentOpinions.push_back(bit);
+		for (auto i = 0u; i < data.JudgedCount; ++i)
+			predPresenceIndices.emplace_back(test::RandomInRange(0, data.OpinionCount-1));
+		for (auto i = 0u; i < data.OpinionCount; ++i) {
+			for (auto j = 0u; j < data.JudgedCount; ++j) {
+				const bool bit = forceOpinionPresence || predPresenceIndices.at(j) == i || test::Random() % 10; // True if forced or according to predPresenceIndices or with probability 0.9
+				opinionSizes.at(i) += bit;
+				data.OpinionElementCount += bit;
+				data.PresentOpinions.push_back(bit);
+			}
 		}
 
 		// Filling Opinions.
-		data.Opinions = test::GenerateUniqueRandomDataVector<TOpinion>(opinionElementCount);	// TODO: Not necessarily unique
+		data.Opinions.resize(data.OpinionCount);
+		for (auto i = 0u; i < data.OpinionCount; ++i) {
+			data.Opinions.at(i).reserve(opinionSizes.at(i));
+			for (auto j = 0u; j < opinionSizes.at(i); ++j) {
+				TOpinion opinionElement;
+				FillWithRandomData({ reinterpret_cast<uint8_t*>(&opinionElement), sizeof(TOpinion) });
+				data.Opinions.at(i).push_back(opinionElement);
+			}
+		}
 
 		// Filling BlsSignatures.
-		const auto maxDataSize = commonDataSize + (sizeof(Key) + sizeof(TOpinion)) * data.JudgedCount;	// Guarantees that every possible individual opinion will fit in.
+		const auto maxDataSize = commonDataBuffer.Size + (sizeof(Key) + sizeof(TOpinion)) * data.JudgedCount;	// Guarantees that every possible individual opinion will fit in.
 		auto* const pDataBegin = new uint8_t[maxDataSize];	// TODO: Make smart pointer
-		memcpy(pDataBegin, pCommonDataBegin, commonDataSize);
-		auto* const pIndividualDataBegin = pDataBegin + commonDataSize;
+		memcpy(pDataBegin, commonDataBuffer.pData, commonDataBuffer.Size);
+		auto* const pIndividualDataBegin = pDataBegin + commonDataBuffer.Size;
 
 		using OpinionElement = std::pair<Key, TOpinion>;
 		const auto comparator = [](const OpinionElement& a, const OpinionElement& b){ return a.first < b.first; };
 		std::set<OpinionElement, decltype(comparator)> individualPart(comparator);	// Set that represents complete opinion of one of the replicators. Opinion elements are sorted in ascending order of keys.
-		for (auto i = 0, k = 0; i < data.OpinionCount; ++i) {
+		for (auto i = 0; i < data.OpinionCount; ++i) {
 			individualPart.clear();
-			for (auto j = 0; j < data.JudgedCount; ++j) {
+			for (auto j = 0, k = 0; j < data.JudgedCount; ++j) {
 				if (data.PresentOpinions.at(i * data.JudgedCount + j)) {
-					individualPart.emplace(data.PublicKeys.at(j), data.Opinions.at(k));
+					individualPart.emplace(data.PublicKeys.at(j), data.Opinions.at(i).at(k));
 					++k;
 				}
 			}
 
-			const auto dataSize = commonDataSize + (sizeof(Key) + sizeof(TOpinion)) * individualPart.size();
+			const auto dataSize = commonDataBuffer.Size + (sizeof(Key) + sizeof(TOpinion)) * individualPart.size();
 			auto* pIndividualData = pIndividualDataBegin;
 			for (const auto& opinionElement : individualPart) {
 				utils::WriteToByteArray(pIndividualData, opinionElement.first);
@@ -380,60 +398,4 @@ namespace catapult { namespace test {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ReplicatorOffboarding);
         return pTransaction;
     }
-
-	/// Creates a download approval transaction.
-	template<typename TTransaction>
-	model::UniqueEntityPtr<TTransaction> CreateDownloadApprovalTransaction(
-			const Hash256& downloadChannelId,
-			const uint16_t sequenceNumber,
-			const bool response,
-			const OpinionData<uint64_t>& opinionData) {
-		const auto presentOpinionByteCount = (opinionData.OpinionCount * opinionData.JudgedCount + 7) / 8;
-		const auto bodySize = sizeof(TTransaction);
-		const auto payloadSize = opinionData.JudgedCount * sizeof(Key)
-								 + opinionData.JudgingCount * sizeof(uint8_t)
-								 + opinionData.OpinionCount * sizeof(BLSSignature)
-								 + presentOpinionByteCount * sizeof(uint8_t)
-								 + opinionData.Opinions.size() * sizeof(uint64_t);
-		uint32_t entitySize = bodySize + payloadSize;
-		auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(entitySize);
-		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
-		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
-		pTransaction->Type = model::Entity_Type_DownloadApproval;
-		pTransaction->Size = entitySize;
-
-		pTransaction->DownloadChannelId = downloadChannelId;
-		pTransaction->SequenceNumber = sequenceNumber;
-		pTransaction->ResponseToFinishDownloadTransaction = response;
-		pTransaction->OpinionCount = opinionData.OpinionCount;
-		pTransaction->JudgingCount = opinionData.JudgingCount;
-		pTransaction->JudgedCount = opinionData.JudgedCount;
-		pTransaction->OpinionElementCount = opinionData.Opinions.size();
-
-		auto* const pPublicKeysBegin = reinterpret_cast<Key*>(pTransaction.get() + 1);
-		for (auto i = 0u; i < opinionData.PublicKeys.size(); ++i)
-			memcpy(static_cast<void*>(&pPublicKeysBegin[i]), static_cast<const void*>(&opinionData.PublicKeys.at(i)), sizeof(Key));
-
-		auto* const pOpinionIndicesBegin = reinterpret_cast<uint8_t*>(pPublicKeysBegin + opinionData.PublicKeys.size());
-		for (auto i = 0u; i < opinionData.OpinionIndices.size(); ++i)
-			memcpy(static_cast<void*>(&pOpinionIndicesBegin[i]), static_cast<const void*>(&opinionData.OpinionIndices.at(i)), sizeof(uint8_t));
-
-		auto* const pBlsSignaturesBegin = reinterpret_cast<BLSSignature*>(pOpinionIndicesBegin + opinionData.OpinionIndices.size());
-		for (auto i = 0u; i < opinionData.BlsSignatures.size(); ++i)
-			memcpy(static_cast<void*>(&pBlsSignaturesBegin[i]), static_cast<const void*>(&opinionData.BlsSignatures.at(i)), sizeof(BLSSignature));
-
-		auto* const pPresentOpinionsBegin = reinterpret_cast<uint8_t*>(pBlsSignaturesBegin + opinionData.BlsSignatures.size());
-		for (auto i = 0u; i < presentOpinionByteCount; ++i) {
-			boost::dynamic_bitset<uint8_t> byte(8, 0u);
-			for (auto j = 0u; j < std::min(8ul, opinionData.PresentOpinions.size() - i*8); ++j)
-				byte[j] = opinionData.PresentOpinions.at(j + i*8);
-			boost::to_block_range(byte, &pPresentOpinionsBegin[i]);
-		}
-
-		auto* const pOpinionsBegin = reinterpret_cast<uint64_t*>(pPresentOpinionsBegin + presentOpinionByteCount);
-		for (auto i = 0u; i < opinionData.Opinions.size(); ++i)
-			memcpy(static_cast<void*>(&pOpinionsBegin[i]), static_cast<const void*>(&opinionData.Opinions.at(i)), sizeof(uint64_t));
-
-		return pTransaction;
-	}
 }}
