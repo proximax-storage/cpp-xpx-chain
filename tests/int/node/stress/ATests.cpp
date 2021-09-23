@@ -52,26 +52,28 @@ namespace catapult {
 		private:
 
 		};
+		int z = 0;
 
 		void RunCreateDefaultCheckLocalChainActionTest(int correct_action,
-				const catapult::fastfinality::RemoteNodeStateRetriever& retriever,
-				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-				const model::BlockElementSupplier& lastBlockElementSupplier,
-				const std::function<uint64_t (const Key&)>& importanceGetter) {
+			    std::shared_ptr<catapult::fastfinality::RemoteNodeStateRetriever> retriever,
+				std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder,
+				std::shared_ptr<model::BlockElementSupplier> lastBlockElementSupplier,
+				std::shared_ptr<std::function<uint64_t (const Key&)>> importanceGetter) {
 			std::shared_ptr<thread::IoThreadPool> pPool = test::CreateStartedIoThreadPool();
 			auto fsmShared = std::make_shared<fastfinality::WeightedVotingFsm>(pPool);
-			auto fsmWeak = std::weak_ptr<fastfinality::WeightedVotingFsm>(fsmShared);
-			auto & actions = fsmShared->actions();
+			// auto fsmWeak = std::weak_ptr<fastfinality::WeightedVotingFsm>(fsmShared);
 			auto committeeManager = std::make_shared<mocks::MockCommitteeManager>();
-			std::shared_ptr<int> counter = std::make_shared<int>(0);
-			actions.CheckLocalChain = [correct_action, counter, fsmWeak,
+			auto counter = std::make_shared<int>(0);
+			auto & actions = fsmShared->actions();
+			actions.CheckLocalChain = [correct_action, fsmShared,
 									   retriever, pConfigHolder, lastBlockElementSupplier,
-									   importanceGetter, committeeManager] {
-				if (*counter == 0) {
-					*counter += 1;
+									   importanceGetter, committeeManager] () {
+				if (z == 0) {
+					z += 1;
+					auto weakFsm = std::weak_ptr<fastfinality::WeightedVotingFsm>(fsmShared);
 					fastfinality::CreateDefaultCheckLocalChainAction(
-						fsmWeak, retriever, pConfigHolder,
-							lastBlockElementSupplier, importanceGetter, *committeeManager)();
+							weakFsm, *retriever, pConfigHolder,
+							*lastBlockElementSupplier, *importanceGetter, *committeeManager)();
 				}	else {
 					ASSERT_EQ(correct_action, 0);
 				}
@@ -88,13 +90,9 @@ namespace catapult {
 			fsmShared->start();
 		}
 
-		auto CreateConfigHolder() {
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.CommitteeEndSyncApproval = 0.45;
-			config.CommitteeBaseTotalImportance = 100;
-			config.CommitteeNotRunningContribution = 0.5;
-			return std::shared_ptr<config::BlockchainConfigurationHolder>(new config::MockBlockchainConfigurationHolder(config));
-		}
+
+
+
 
 		uint64_t ConstantImportanceGenerator(const Key& key) {
 			return ConstantImportance;
@@ -108,7 +106,7 @@ namespace catapult {
 //		};
 
 		auto GenerateStates() {
-			std::vector<fastfinality::RemoteNodeState>states(Committee_Size);
+			std::vector<fastfinality::RemoteNodeState>states;
 			for (int i = 0; i < Committee_Size; i++) {
 				fastfinality::RemoteNodeState r;
 				r.Height = Height(MaxHeight);
@@ -116,6 +114,7 @@ namespace catapult {
 				r.NodeKey = {{(unsigned char ) i}};
 				r.NodeWorkState = fastfinality::NodeWorkState::Synchronizing;
 				r.HarvesterKeys = {r.NodeKey};
+				states.push_back(r);
 			}
 			return states;
 		}
@@ -128,22 +127,50 @@ namespace catapult {
 			return std::shared_ptr<model::BlockElement>(element);
 		}
 
-		auto f() {
+		auto CreateConfigHolder() {
+			auto config = model::NetworkConfiguration::Uninitialized();
+			config.CommitteeEndSyncApproval = 0.45;
+			config.CommitteeBaseTotalImportance = 100;
+			config.CommitteeNotRunningContribution = 0.5;
+			return std::make_shared<config::MockBlockchainConfigurationHolder>(config);
+		}
+
+		auto Retriever() {
 			return thread::make_ready_future(GenerateStates());
 		}
 
-		void AssignActions(std::shared_ptr<fastfinality::WeightedVotingFsm> fsm) {
-			fastfinality::WeightedVotingActions & actions = fsm -> actions();
+		auto Supplier() {
+			return GenerateBlockElement();
+		}
 
+		void RunTemp() {
+			std::shared_ptr<thread::IoThreadPool> pPool = test::CreateStartedIoThreadPool();
+			auto fsmShared = std::make_shared<fastfinality::WeightedVotingFsm>(pPool);
+			auto configHolder = CreateConfigHolder();
+			auto committeeManager = std::make_shared<mocks::MockCommitteeManager>();
+			auto & actions = fsmShared->actions();
+			actions.CheckLocalChain = [fsmShared, configHolder, committeeManager] () {
+				auto weak = std::weak_ptr<fastfinality::WeightedVotingFsm>(fsmShared);
+				fastfinality::CreateDefaultCheckLocalChainAction(
+						weak,
+						Retriever,
+						configHolder,
+						Supplier,
+						ConstantImportanceGenerator,
+						*committeeManager)();
+			};
+			fsmShared->start();
 		}
 
 		TEST(TEST_CLASS, TEST_NAME) {
-			auto configHolder = CreateConfigHolder();
-			catapult::fastfinality::RemoteNodeStateRetriever statesRetriever = [] () {return thread::make_ready_future(GenerateStates());};
-			// std::function<int(void)> a = [] () {return 3;};
-			auto supplier = [] () {return GenerateBlockElement();};
-			auto committeeManager = catapult::mocks::MockCommitteeManager();
-			RunCreateDefaultCheckLocalChainActionTest(1, statesRetriever, configHolder, supplier, ConstantImportanceGenerator);
+//			auto configHolder = CreateConfigHolder();
+////			catapult::fastfinality::RemoteNodeStateRetriever statesRetriever = [] () {};
+//			auto s = 6;
+//			// std::function<int(void)> a = [] () {return 3;};
+//			auto supplier = [] () {return GenerateBlockElement();};
+//			auto committeeManager = catapult::mocks::MockCommitteeManager();
+			RunTemp();
+//			RunTemp(std::make_shared<catapult::fastfinality::RemoteNodeStateRetriever>(statesRetriever), configHolder, std::make_shared<model::BlockElementSupplier>(supplier), std::make_shared<std::function<uint64_t (const Key&)>>(ConstantImportanceGenerator));
 		}
 	}
 //
