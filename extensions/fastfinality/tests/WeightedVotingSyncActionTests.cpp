@@ -144,6 +144,8 @@ namespace catapult {
 				// ASSERT_EQ(0, 3);
 			};
 			fsmShared->start();
+
+			pPool->join();
 		}
 
 		TEST(TEST_CLASS, SYNC) {
