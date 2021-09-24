@@ -39,7 +39,7 @@ namespace catapult {
 
 		namespace {
 
-			constexpr uint8_t Committee_Size = 21u;
+			constexpr uint8_t CommitteeSize = 21u;
 			constexpr double CommitteeEndSyncApproval = 0.45;
 			constexpr uint64_t CommitteeBaseTotalImportance = 100;
 			constexpr double CommitteeNotRunningContribution = 0.5;
@@ -133,7 +133,7 @@ namespace catapult {
 
 			auto GenerateEqualImportance(uint64_t value) {
 				std::map<Key, uint64_t> nodeImportance;
-				for (int i = 0; i < Committee_Size; i++) {
+				for (int i = 0; i < CommitteeSize; i++) {
 					Key key = {{(unsigned char ) i}};
 					nodeImportance[key] = value;
 				}
@@ -151,7 +151,7 @@ namespace catapult {
 
 			auto GenerateBaseStates() {
 				std::vector<fastfinality::RemoteNodeState> states;
-				for (int i = 0; i < Committee_Size; i++) {
+				for (int i = 0; i < CommitteeSize; i++) {
 					fastfinality::RemoteNodeState r;
 					r.NodeKey = {{(unsigned char ) i}};
 					r.HarvesterKeys = {r.NodeKey};
@@ -190,8 +190,8 @@ namespace catapult {
 
 		TEST(TEST_CLASS, GlobalReboot) {
 			auto nodeStates = states::GenerateBaseStates();
-			states::EqualHashes(nodeStates, states::MaxHeight, states::StandardHash, 0, Committee_Size);
-			states::EqualStates(nodeStates, NodeWorkState::Synchronizing, 0, Committee_Size);
+			states::EqualHashes(nodeStates, states::MaxHeight, states::StandardHash, 0, CommitteeSize);
+			states::EqualStates(nodeStates, NodeWorkState::Synchronizing, 0, CommitteeSize);
 			auto nodeImportance = importance::GenerateEqualImportance(importance::StandardImportance);
 			auto config = GenerateStandardConfigHolder();
 			auto element = blockelement::GenerateBlockElement(states::MaxHeight, states::StandardHash);
@@ -203,8 +203,8 @@ namespace catapult {
 
 		TEST(TEST_CLASS, GlobalRebootLagBehind) {
 			auto nodeStates = states::GenerateBaseStates();
-			states::EqualHashes(nodeStates, states::MaxHeight, states::StandardHash, 0, Committee_Size);
-			states::EqualStates(nodeStates, NodeWorkState::Synchronizing, 0, Committee_Size);
+			states::EqualHashes(nodeStates, states::MaxHeight, states::StandardHash, 0, CommitteeSize);
+			states::EqualStates(nodeStates, NodeWorkState::Synchronizing, 0, CommitteeSize);
 			auto nodeImportance = importance::GenerateEqualImportance(importance::StandardImportance);
 			auto config = GenerateStandardConfigHolder();
 			auto element = blockelement::GenerateBlockElement(states::MinHeight, states::NonStandardHash);
@@ -216,9 +216,9 @@ namespace catapult {
 
 		TEST(TEST_CLASS, GlobalRebootNotEnoughApprovalRating) {
 			auto nodeStates = states::GenerateBaseStates();
-			states::EqualHashes(nodeStates, states::MaxHeight, states::StandardHash, 0, Committee_Size / 2);
-			states::EqualHashes(nodeStates, states::MinHeight, states::NonStandardHash, Committee_Size / 2, Committee_Size);
-			states::EqualStates(nodeStates, NodeWorkState::Synchronizing, 0, Committee_Size);
+			states::EqualHashes(nodeStates, states::MaxHeight, states::StandardHash, 0, CommitteeSize / 2);
+			states::EqualHashes(nodeStates, states::MinHeight, states::NonStandardHash, CommitteeSize / 2, CommitteeSize);
+			states::EqualStates(nodeStates, NodeWorkState::Synchronizing, 0, CommitteeSize);
 			auto nodeImportance = importance::GenerateEqualImportance(importance::StandardImportance);
 			auto config = GenerateStandardConfigHolder();
 			auto element = blockelement::GenerateBlockElement(states::MaxHeight, states::NonStandardHash);
@@ -230,9 +230,9 @@ namespace catapult {
 
 		TEST(TEST_CLASS, GlobalRunningEnoughApprovalRating) {
 			auto nodeStates = states::GenerateBaseStates();
-			states::EqualHashes(nodeStates, states::MaxHeight, states::StandardHash, 0, Committee_Size / 2);
-			states::EqualHashes(nodeStates, states::MinHeight, states::NonStandardHash, Committee_Size / 2, Committee_Size);
-			states::EqualStates(nodeStates, NodeWorkState::Running, 0, Committee_Size);
+			states::EqualHashes(nodeStates, states::MaxHeight, states::StandardHash, 0, CommitteeSize / 2);
+			states::EqualHashes(nodeStates, states::MinHeight, states::NonStandardHash, CommitteeSize / 2, CommitteeSize);
+			states::EqualStates(nodeStates, NodeWorkState::Running, 0, CommitteeSize);
 			auto nodeImportance = importance::GenerateEqualImportance(importance::StandardImportance);
 			auto config = GenerateStandardConfigHolder();
 			auto element = blockelement::GenerateBlockElement(states::MaxHeight, states::NonStandardHash);
@@ -244,8 +244,8 @@ namespace catapult {
 
 		TEST(TEST_CLASS, InvalidChain) {
 			auto nodeStates = states::GenerateBaseStates();
-			states::EqualHashes(nodeStates, states::MinHeight, states::StandardHash, 0, Committee_Size);
-			states::EqualStates(nodeStates, NodeWorkState::Running, 0, Committee_Size);
+			states::EqualHashes(nodeStates, states::MinHeight, states::StandardHash, 0, CommitteeSize);
+			states::EqualStates(nodeStates, NodeWorkState::Running, 0, CommitteeSize);
 			auto nodeImportance = importance::GenerateEqualImportance(importance::StandardImportance);
 			auto config = GenerateStandardConfigHolder();
 			auto element = blockelement::GenerateBlockElement(states::MaxHeight, states::NonStandardHash);
