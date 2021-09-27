@@ -35,8 +35,12 @@ namespace catapult { namespace test {
 	/// Hash string of the deterministic transaction.
 #ifdef SIGNATURE_SCHEME_NIS1
 	constexpr auto Deterministic_Transaction_Hash_String = "6EA6D56912DF29CDE28A182F091DC952CE4B74BFA1A4E11D1F606C79F4A57549";
+	constexpr auto Deterministic_Transaction_Hash_String_V1_Signer = "85168DC0940A111229F05E4DFE3C8F8F1193E811D6AC7D14B43A7BACB3A93054";
+	constexpr auto Deterministic_Transaction_Hash_String_V2_Signer = "142D9CB050696BC4B44A861A156BE09FDEBBAB555C89537012C3BAA1A2929085";
 #else
 	constexpr auto Deterministic_Transaction_Hash_String = "85168DC0940A111229F05E4DFE3C8F8F1193E811D6AC7D14B43A7BACB3A93054";
+	constexpr auto Deterministic_Transaction_Hash_String_V1_Signer = "85168DC0940A111229F05E4DFE3C8F8F1193E811D6AC7D14B43A7BACB3A93054";
+	constexpr auto Deterministic_Transaction_Hash_String_V2_Signer = "142D9CB050696BC4B44A861A156BE09FDEBBAB555C89537012C3BAA1A2929085";
 #endif
 
 	/// Gets default generation hash used in tests.

@@ -137,13 +137,15 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CalculateBlockHashReturnsExpectedHash) {
 		// Arrange: create a predefined block with one predefined transaction
-		auto pBlock = test::GenerateDeterministicBlock(1);
+		auto pBlockV1Signer = test::GenerateDeterministicBlock(1);
+		auto pBlockV2Signer = test::GenerateDeterministicBlock(2);
 
 		// Act:
-		auto hash = CalculateHash(*pBlock);
-
+		auto hashV1Signer = CalculateHash(*pBlockV1Signer);
+		auto hashV2Signer = CalculateHash(*pBlockV2Signer);
 		// Assert:
-		EXPECT_EQ(test::Deterministic_Block_Hash_String, test::ToString(hash));
+		EXPECT_EQ(test::Deterministic_Block_Hash_String_V1_Signer, test::ToString(hashV1Signer));
+		EXPECT_EQ(test::Deterministic_Block_Hash_String_V2_Signer, test::ToString(hashV2Signer));
 	}
 
 	TEST(TEST_CLASS, BlockHashDoesNotChangeWhenBlockTransactionDataChanges) {
@@ -167,14 +169,17 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CalculateTransactionHashReturnsExpectedHash) {
 		// Arrange: create a predefined transaction
-		auto pTransaction = test::GenerateDeterministicTransaction(1);
+		auto pTransactionV1Signer = test::GenerateDeterministicTransaction(1);
+		auto pTransactionV2Signer = test::GenerateDeterministicTransaction(2);
 		auto generationHash = utils::ParseByteArray<GenerationHash>(test::Deterministic_Network_Generation_Hash_String);
 
 		// Act:
-		auto hash = CalculateHash(*pTransaction, generationHash);
+		auto hashV1Signer = CalculateHash(*pTransactionV1Signer, generationHash);
+		auto hashV2Signer = CalculateHash(*pTransactionV2Signer, generationHash);
 
 		// Assert:
-		EXPECT_EQ(test::Deterministic_Transaction_Hash_String, test::ToString(hash));
+		EXPECT_EQ(test::Deterministic_Transaction_Hash_String_V1_Signer, test::ToString(hashV1Signer));
+		EXPECT_EQ(test::Deterministic_Transaction_Hash_String_V2_Signer, test::ToString(hashV2Signer));
 	}
 
 	TEST(TEST_CLASS, TransactionHashChangesWhenGenerationHashChanges) {

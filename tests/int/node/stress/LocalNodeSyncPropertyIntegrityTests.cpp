@@ -83,12 +83,12 @@ namespace catapult { namespace local {
 
 		// region TestFacade
 
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		class TestFacade {
 		public:
 			explicit TestFacade(TTestContext& context)
 					: m_context(context)
-					, m_accounts(4, 1, 1)
+					, m_accounts(4, TRemainingAccountVersions, TDefaultAccountVersion)
 			{}
 
 		public:
@@ -137,14 +137,29 @@ namespace catapult { namespace local {
 		// endregion
 	}
 
+	namespace {
+		using test_types = ::testing::Types<
+				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V1 ACCOUNTS
+				//std::pair<std::integral_constant<uint32_t,2>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V2 ACCOUNTS
+				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,1>>
+		>;
+		// It is not possible for a nemesis account to be version 2 and a newer account to be version 1
+
+		template<typename TBaseAccountVersion>
+		struct LocalNodeSyncPropertyIntegrityTests : public ::testing::Test {};
+	}
+
+	TYPED_TEST_CASE(LocalNodeSyncPropertyIntegrityTests, test_types);
+
 	// region property (add)
 
+
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		PropertyStateHashes RunAddPropertyTest(TTestContext& context) {
 			// Arrange:
 			PropertyStateHashes stateHashes;
-			test::Accounts accounts(4, 1, 1);
+			test::Accounts accounts(4, TRemainingAccountVersions, TDefaultAccountVersion);
 			auto stateHashCalculator = context.createStateHashCalculator();
 
 			// Act + Assert:
@@ -154,23 +169,23 @@ namespace catapult { namespace local {
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanAddProperty) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanAddProperty) {
 		// Arrange:
 		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunAddPropertyTest(context));
+		auto stateHashesPair = test::Unzip(RunAddPropertyTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 2);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanAddPropertyWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanAddPropertyWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunAddPropertyTest(context));
+		auto stateHashesPair = test::Unzip(RunAddPropertyTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashesPair.first, 2);
@@ -187,10 +202,10 @@ namespace catapult { namespace local {
 	// region property (remove)
 
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		PropertyStateHashes RunRemovePropertyTest(TTestContext& context) {
 			// Arrange: create a property
-			TestFacade facade(context);
+			TestFacade<TTestContext, TDefaultAccountVersion, TRemainingAccountVersions> facade(context);
 			facade.pushProperty();
 
 			// - prepare block that will remove the property
@@ -214,23 +229,23 @@ namespace catapult { namespace local {
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanRemoveProperty) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanRemoveProperty) {
 		// Arrange:
 		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunRemovePropertyTest(context));
+		auto stateHashesPair = test::Unzip(RunRemovePropertyTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 3);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanRemovePropertyWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanRemovePropertyWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunRemovePropertyTest(context));
+		auto stateHashesPair = test::Unzip(RunRemovePropertyTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are nonzero (since importance is recalculated every block none of the hashes are the same)
 		test::AssertAllNonZero(stateHashesPair.first, 3);
@@ -252,11 +267,11 @@ namespace catapult { namespace local {
 	// region property (add + remove) [single chain part]
 
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		PropertyStateHashes RunAddAndRemovePropertyTest(TTestContext& context) {
 			// Arrange:
 			PropertyStateHashes stateHashes;
-			test::Accounts accounts(4, 1, 1);
+			test::Accounts accounts(4, TRemainingAccountVersions, TDefaultAccountVersion);
 			auto stateHashCalculator = context.createStateHashCalculator();
 
 			// - wait for boot
@@ -286,23 +301,23 @@ namespace catapult { namespace local {
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanAddAndRemoveProperty_SingleChainPart) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanAddAndRemoveProperty_SingleChainPart) {
 		// Arrange:
 		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunAddAndRemovePropertyTest(context));
+		auto stateHashesPair = test::Unzip(RunAddAndRemovePropertyTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 2);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanAddAndRemovePropertyWithStateHashEnabled_SingleChainPart) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanAddAndRemovePropertyWithStateHashEnabled_SingleChainPart) {
 		// Arrange:
 		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunAddAndRemovePropertyTest(context));
+		auto stateHashesPair = test::Unzip(RunAddAndRemovePropertyTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are nonzero (since importance is recalculated every block none of the hashes are the same)
 		test::AssertAllNonZero(stateHashesPair.first, 2);

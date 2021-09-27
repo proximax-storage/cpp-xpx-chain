@@ -72,4 +72,6 @@ namespace catapult { namespace test {
 
 // NO_STRESS_TEST should be used by tests that shouldn't be stressed
 #define NO_STRESS_TEST(TEST_FIXTURE, TEST_NAME) GTEST_TEST(TEST_FIXTURE, TEST_NAME)
+#define NO_STRESS_TYPED_TEST(TEST_FIXTURE, TEST_NAME) TYPED_TEST(TEST_FIXTURE, TEST_NAME)
+
 }}

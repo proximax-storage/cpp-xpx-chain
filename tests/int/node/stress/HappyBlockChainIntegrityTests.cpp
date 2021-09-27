@@ -78,7 +78,7 @@ namespace catapult { namespace local {
 			networkConfig.MaxDifficultyBlocks = 4;
 			networkConfig.GreedDelta = 0.5;
 			networkConfig.GreedExponent = 2.0;
-			networkConfig.AccountVersion = 1;
+			networkConfig.AccountVersion = accountVersion;
 		}
 
 		void UpdateConfigurationForNode(config::BlockchainConfiguration& config, uint32_t id, uint32_t accountVersion) {

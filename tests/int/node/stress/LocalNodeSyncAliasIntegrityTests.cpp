@@ -118,6 +118,20 @@ namespace catapult { namespace local {
 	// region alias application + rollback
 
 	namespace {
+		using test_types = ::testing::Types<
+				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V1 ACCOUNTS
+				//std::pair<std::integral_constant<uint32_t,2>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V2 ACCOUNTS
+				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,1>>
+		>;
+		// It is not possible for a nemesis account to be version 2 and a newer account to be version 1
+
+		template<typename TBaseAccountVersion>
+		struct LocalNodeSyncAliasIntegrityTests : public ::testing::Test {};
+	}
+
+	TYPED_TEST_CASE(LocalNodeSyncAliasIntegrityTests, test_types);
+
+	namespace {
 		auto CreateTimeSpan(uint64_t numSeconds) {
 			return utils::TimeSpan::FromSeconds(numSeconds);
 		}
@@ -148,11 +162,11 @@ namespace catapult { namespace local {
 			return utils::UniqueToShared(builder2.asSingleBlock(transactionsBuilder));
 		}
 
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		std::vector<Hash256> RunRollbackAliasTest(TTestContext& context) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
-			test::Accounts accounts(4, 1, 1);
+			test::Accounts accounts(4, TRemainingAccountVersions, TDefaultAccountVersion);
 
 			// - make transfers to the accounts to be aliased so that they're in the account state cache
 			std::unique_ptr<BlockChainBuilder> pBuilder1;
@@ -205,23 +219,23 @@ namespace catapult { namespace local {
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanRollbackAlias) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncAliasIntegrityTests, CanRollbackAlias) {
 		// Arrange:
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunRollbackAliasTest(context);
+		auto stateHashes = RunRollbackAliasTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context);
 
 		// Assert: all state hashes are zero
 		test::AssertAllZero(stateHashes, 2);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanRollbackAliasWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncAliasIntegrityTests, CanRollbackAliasWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunRollbackAliasTest(context);
+		auto stateHashes = RunRollbackAliasTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context);
 
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashes, 2);

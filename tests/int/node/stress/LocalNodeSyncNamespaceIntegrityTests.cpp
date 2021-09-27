@@ -123,10 +123,23 @@ namespace catapult { namespace local {
 		// endregion
 	}
 
+	namespace {
+		using test_types = ::testing::Types<
+				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V1 ACCOUNTS
+				//std::pair<std::integral_constant<uint32_t,2>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V2 ACCOUNTS
+				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,1>>
+				>;
+		// It is not possible for a nemesis account to be version 2 and a newer account to be version 1
+
+		template<typename TBaseAccountVersion>
+		struct LocalNodeSyncNamespaceIntegrityTests : public ::testing::Test {};
+	}
+
+	TYPED_TEST_CASE(LocalNodeSyncNamespaceIntegrityTests, test_types);
 	// region namespace (register)
 
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		NamespaceStateHashes RunRegisterNamespaceTest(TTestContext& context) {
 			// Arrange:
 			NamespaceStateHashes stateHashes;
@@ -137,7 +150,7 @@ namespace catapult { namespace local {
 			AssertBooted(context);
 
 			// - prepare namespace registrations
-			test::Accounts accounts(1, 1, 1);
+			test::Accounts accounts(1, TRemainingAccountVersions, TDefaultAccountVersion);
 			auto stateHashCalculator = context.createStateHashCalculator();
 			BlockChainBuilder builder(accounts, stateHashCalculator);
 			test::TransactionsBuilder transactionsBuilder(accounts);
@@ -160,23 +173,23 @@ namespace catapult { namespace local {
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanRegisterNamespace) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncNamespaceIntegrityTests, CanRegisterNamespace) {
 		// Arrange:
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunRegisterNamespaceTest(context));
+		auto stateHashesPair = test::Unzip(RunRegisterNamespaceTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 2);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanRegisterNamespaceWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncNamespaceIntegrityTests, CanRegisterNamespaceWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunRegisterNamespaceTest(context));
+		auto stateHashesPair = test::Unzip(RunRegisterNamespaceTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashesPair.first, 2);
@@ -196,11 +209,11 @@ namespace catapult { namespace local {
 		//   (1) namespace duration ==> 12
 		constexpr auto Blocks_Before_Namespace_Expire = static_cast<uint32_t>(12);
 
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		NamespaceStateHashes RunNamespaceStateChangeTest(TTestContext& context, size_t numAliveBlocks, size_t numExpectedNamespaces) {
 			// Arrange:
 			NamespaceStateHashes stateHashes;
-			test::Accounts accounts(2, 1, 1);
+			test::Accounts accounts(2, TRemainingAccountVersions, TDefaultAccountVersion);
 			auto stateHashCalculator = context.createStateHashCalculator();
 			auto builderBlockPair = PrepareTwoRootNamespaces(context, accounts, stateHashCalculator, stateHashes);
 			auto& builder = builderBlockPair.first;
@@ -237,30 +250,30 @@ namespace catapult { namespace local {
 			return stateHashes;
 		}
 
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		NamespaceStateHashes RunExpireNamespaceTest(TTestContext& context) {
 			// Act:
-			return RunNamespaceStateChangeTest(context, Blocks_Before_Namespace_Expire - 1, 3);
+			return RunNamespaceStateChangeTest<TTestContext,TDefaultAccountVersion,TRemainingAccountVersions>(context, Blocks_Before_Namespace_Expire - 1, 3);
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanExpireNamespace) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncNamespaceIntegrityTests, CanExpireNamespace) {
 		// Arrange:
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunExpireNamespaceTest(context));
+		auto stateHashesPair = test::Unzip(RunExpireNamespaceTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 4);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanExpireNamespaceWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncNamespaceIntegrityTests, CanExpireNamespaceWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunExpireNamespaceTest(context));
+		auto stateHashesPair = test::Unzip(RunExpireNamespaceTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are nonzero (since importance is recalculated every block none of the hashes are the same)
 		test::AssertAllNonZero(stateHashesPair.first, 4);
@@ -284,30 +297,30 @@ namespace catapult { namespace local {
 		//   (3) max rollback blocks => 10
 		constexpr auto Blocks_Before_Namespace_Prune = static_cast<uint32_t>(12 + (utils::TimeSpan::FromHours(1).seconds() / 60) + 10);
 
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		NamespaceStateHashes RunPruneNamespaceTest(TTestContext& context) {
 			// Act:
-			return RunNamespaceStateChangeTest(context, Blocks_Before_Namespace_Prune - 1, 1);
+			return RunNamespaceStateChangeTest<TTestContext,TDefaultAccountVersion,TRemainingAccountVersions>(context, Blocks_Before_Namespace_Prune - 1, 1);
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanPruneNamespace) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncNamespaceIntegrityTests, CanPruneNamespace) {
 		// Arrange:
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunPruneNamespaceTest(context));
+		auto stateHashesPair = test::Unzip(RunPruneNamespaceTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 4);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanPruneNamespaceWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncNamespaceIntegrityTests, CanPruneNamespaceWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunPruneNamespaceTest(context));
+		auto stateHashesPair = test::Unzip(RunPruneNamespaceTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are nonzero (since importance is recalculated every block none of the hashes are the same)
 		test::AssertAllNonZero(stateHashesPair.first, 4);
@@ -329,11 +342,11 @@ namespace catapult { namespace local {
 		//   (2) grace period ========> 1hr of blocks with 60s target time
 		constexpr auto Blocks_Before_Namespace_Deactivate = static_cast<uint32_t>(12 + (utils::TimeSpan::FromHours(1).seconds() / 60));
 
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		NamespaceStateHashes RunRegisterAndDeactivateNamespaceTest(TTestContext& context, size_t numAliveBlocks) {
 			// Arrange:
 			NamespaceStateHashes stateHashes;
-			test::Accounts accounts(2, 1, 1);
+			test::Accounts accounts(2, TRemainingAccountVersions, TDefaultAccountVersion);
 			auto stateHashCalculator = context.createStateHashCalculator();
 
 			// *** customization of PrepareTwoRootNamespaces ***
@@ -374,19 +387,19 @@ namespace catapult { namespace local {
 			return stateHashes;
 		}
 
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		NamespaceStateHashes RunRegisterAndDeactivateNamespaceTest(TTestContext& context) {
 			// Act:
-			return RunRegisterAndDeactivateNamespaceTest(context, Blocks_Before_Namespace_Deactivate - 1);
+			return RunRegisterAndDeactivateNamespaceTest<TTestContext,TDefaultAccountVersion,TRemainingAccountVersions>(context, Blocks_Before_Namespace_Deactivate - 1);
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanRegisterAndDeactivateNamespace_SingleChainPart) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncNamespaceIntegrityTests, CanRegisterAndDeactivateNamespace_SingleChainPart) {
 		// Arrange:
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunRegisterAndDeactivateNamespaceTest(context));
+		auto stateHashesPair = test::Unzip(RunRegisterAndDeactivateNamespaceTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are zero
 		test::AssertAllZero(stateHashesPair.first, 2);
@@ -395,12 +408,12 @@ namespace catapult { namespace local {
 		test::AssertAllZero(stateHashesPair.second, 2);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanRegisterAndDeactivateNamespaceWithStateHashEnabled_SingleChainPart) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncNamespaceIntegrityTests, CanRegisterAndDeactivateNamespaceWithStateHashEnabled_SingleChainPart) {
 		// Arrange:
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunRegisterAndDeactivateNamespaceTest(context));
+		auto stateHashesPair = test::Unzip(RunRegisterAndDeactivateNamespaceTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are nonzero (since importance is recalculated every block none of the hashes are the same)
 		test::AssertAllNonZero(stateHashesPair.first, 2);
@@ -416,14 +429,14 @@ namespace catapult { namespace local {
 	// region namespace (expire + rollback)
 
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		NamespaceStateHashes RunNamespaceStateChangeRollbackTest(
 				TTestContext& context,
 				size_t numAliveBlocks,
 				size_t numExpectedNamespaces) {
 			// Arrange:
 			NamespaceStateHashes stateHashes;
-			test::Accounts accounts(2, 1, 1);
+			test::Accounts accounts(2, TRemainingAccountVersions, TDefaultAccountVersion);
 			std::unique_ptr<BlockChainBuilder> pBuilder;
 			std::vector<std::shared_ptr<model::Block>> allBlocks;
 			uint32_t numAliveChains;
@@ -490,30 +503,30 @@ namespace catapult { namespace local {
 			return stateHashes;
 		}
 
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		NamespaceStateHashes RunExpireAndRollbackNamespaceTest(TTestContext& context) {
 			// Act:
-			return RunNamespaceStateChangeRollbackTest(context, Blocks_Before_Namespace_Expire - 1, 3);
+			return RunNamespaceStateChangeRollbackTest<TTestContext,TDefaultAccountVersion,TRemainingAccountVersions>(context, Blocks_Before_Namespace_Expire - 1, 3);
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanExpireAndRollbackNamespace) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncNamespaceIntegrityTests, CanExpireAndRollbackNamespace) {
 		// Arrange:
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunExpireAndRollbackNamespaceTest(context));
+		auto stateHashesPair = test::Unzip(RunExpireAndRollbackNamespaceTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 4);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanExpireAndRollbackNamespaceWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncNamespaceIntegrityTests, CanExpireAndRollbackNamespaceWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunExpireAndRollbackNamespaceTest(context));
+		auto stateHashesPair = test::Unzip(RunExpireAndRollbackNamespaceTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are nonzero (since importance is recalculated every block none of the hashes are the same)
 		test::AssertAllNonZero(stateHashesPair.first, 4);
@@ -531,30 +544,30 @@ namespace catapult { namespace local {
 	// region namespace (prune + rollback)
 
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		NamespaceStateHashes RunPruneAndRollbackNamespaceTest(TTestContext& context) {
 			// Act:
-			return RunNamespaceStateChangeRollbackTest(context, Blocks_Before_Namespace_Prune - 1, 1);
+			return RunNamespaceStateChangeRollbackTest<TTestContext,TDefaultAccountVersion,TRemainingAccountVersions>(context, Blocks_Before_Namespace_Prune - 1, 1);
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanPruneAndRollbackNamespace) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncNamespaceIntegrityTests, CanPruneAndRollbackNamespace) {
 		// Arrange:
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunPruneAndRollbackNamespaceTest(context));
+		auto stateHashesPair = test::Unzip(RunPruneAndRollbackNamespaceTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 4);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanPruneAndRollbackNamespaceWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncNamespaceIntegrityTests, CanPruneAndRollbackNamespaceWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunPruneAndRollbackNamespaceTest(context));
+		auto stateHashesPair = test::Unzip(RunPruneAndRollbackNamespaceTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are nonzero (since importance is recalculated every block none of the hashes are the same)
 		test::AssertAllNonZero(stateHashesPair.first, 4);

@@ -188,7 +188,7 @@ namespace catapult { namespace consumers {
 		AssertBlockHashesAreCalculatedCorrectly(3, 4);
 	}
 
-	TEST(BLOCK_TEST_CLASS, CalculatesCorrectHashForDeterministicEntity) {
+	TEST(BLOCK_TEST_CLASS, CalculatesCorrectHashForDeterministicEntityV1Signer) {
 		// Arrange:
 		auto generationHash = utils::ParseByteArray<GenerationHash>(test::Deterministic_Network_Generation_Hash_String);
 
@@ -203,7 +203,25 @@ namespace catapult { namespace consumers {
 		// Assert:
 		test::AssertContinued(result);
 		ASSERT_EQ(1u, blockElements.size());
-		EXPECT_EQ(test::Deterministic_Block_Hash_String, test::ToString(blockElements[0].EntityHash));
+		EXPECT_EQ(test::Deterministic_Block_Hash_String_V1_Signer, test::ToString(blockElements[0].EntityHash));
+	}
+
+	TEST(BLOCK_TEST_CLASS, CalculatesCorrectHashForDeterministicEntityV2Signer) {
+		// Arrange:
+		auto generationHash = utils::ParseByteArray<GenerationHash>(test::Deterministic_Network_Generation_Hash_String);
+
+		auto registry = mocks::CreateDefaultTransactionRegistry();
+		auto pEntity = test::GenerateDeterministicBlock(2);
+		auto input = ConsumerInput(model::BlockRange::FromEntity(std::move(pEntity)));
+		auto& blockElements = input.blocks();
+
+		// Act:
+		auto result = CreateBlockHashCalculatorConsumer(generationHash, registry)(blockElements);
+
+		// Assert:
+		test::AssertContinued(result);
+		ASSERT_EQ(1u, blockElements.size());
+		EXPECT_EQ(test::Deterministic_Block_Hash_String_V2_Signer, test::ToString(blockElements[0].EntityHash));
 	}
 
 	TEST(BLOCK_TEST_CLASS, ExceptionIsPropagatedWhenMalformedTransactionIsProcessed) {
@@ -307,7 +325,7 @@ namespace catapult { namespace consumers {
 		AssertTransactionHashesAreCalculatedCorrectly(3);
 	}
 
-	TEST(TRANSACTION_TEST_CLASS, CalculatesCorrectHashForDeterministicEntity) {
+	TEST(TRANSACTION_TEST_CLASS, CalculatesCorrectHashForDeterministicEntityV1Signer) {
 		// Arrange:
 		auto generationHash = utils::ParseByteArray<GenerationHash>(test::Deterministic_Network_Generation_Hash_String);
 
@@ -322,7 +340,25 @@ namespace catapult { namespace consumers {
 		// Assert:
 		test::AssertContinued(result);
 		ASSERT_EQ(1u, transactionElements.size());
-		EXPECT_EQ(test::Deterministic_Transaction_Hash_String, test::ToString(transactionElements[0].EntityHash));
+		EXPECT_EQ(test::Deterministic_Transaction_Hash_String_V1_Signer, test::ToString(transactionElements[0].EntityHash));
+	}
+
+	TEST(TRANSACTION_TEST_CLASS, CalculatesCorrectHashForDeterministicEntity) {
+		// Arrange:
+		auto generationHash = utils::ParseByteArray<GenerationHash>(test::Deterministic_Network_Generation_Hash_String);
+
+		auto registry = mocks::CreateDefaultTransactionRegistry();
+		auto pEntity = test::GenerateDeterministicTransaction(2);
+		auto input = ConsumerInput(model::TransactionRange::FromEntity(std::move(pEntity)));
+		auto& transactionElements = input.transactions();
+
+		// Act:
+		auto result = CreateTransactionHashCalculatorConsumer(generationHash, registry)(transactionElements);
+
+		// Assert:
+		test::AssertContinued(result);
+		ASSERT_EQ(1u, transactionElements.size());
+		EXPECT_EQ(test::Deterministic_Transaction_Hash_String_V2_Signer, test::ToString(transactionElements[0].EntityHash));
 	}
 
 	// endregion

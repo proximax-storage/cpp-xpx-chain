@@ -109,12 +109,12 @@ namespace catapult { namespace local {
 
 		// region TestFacade
 
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		class TestFacade {
 		public:
 			explicit TestFacade(TTestContext& context)
 					: m_context(context)
-					, m_accounts(4, 1, 1)
+					, m_accounts(4, TRemainingAccountVersions, TDefaultAccountVersion)
 			{}
 
 		public:
@@ -180,14 +180,28 @@ namespace catapult { namespace local {
 		// endregion
 	}
 
-	// region secret lock (register)
+	namespace {
+		using test_types = ::testing::Types<
+				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V1 ACCOUNTS
+				//std::pair<std::integral_constant<uint32_t,2>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V2 ACCOUNTS
+				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,1>>
+		>;
+		// It is not possible for a nemesis account to be version 2 and a newer account to be version 1
+
+		template<typename TBaseAccountVersion>
+		struct LocalNodeSyncSecretLockIntegrityTests : public ::testing::Test {};
+	}
+
+	TYPED_TEST_CASE(LocalNodeSyncSecretLockIntegrityTests, test_types);
+
+		// region secret lock (register)
 
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		SecretLockStateHashes RunLockSecretLockTest(TTestContext& context) {
 			// Arrange:
 			SecretLockStateHashes stateHashes;
-			test::Accounts accounts(4, 1, 1);
+			test::Accounts accounts(4, TRemainingAccountVersions, TDefaultAccountVersion);
 			auto stateHashCalculator = context.createStateHashCalculator();
 
 			// Act + Assert:
@@ -197,23 +211,23 @@ namespace catapult { namespace local {
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanLockSecretLock) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanLockSecretLock) {
 		// Arrange:
 		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunLockSecretLockTest(context));
+		auto stateHashesPair = test::Unzip(RunLockSecretLockTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 2);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanLockSecretLockWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanLockSecretLockWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunLockSecretLockTest(context));
+		auto stateHashesPair = test::Unzip(RunLockSecretLockTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashesPair.first, 2);
@@ -230,10 +244,10 @@ namespace catapult { namespace local {
 	// region secret lock (unlock)
 
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		SecretLockStateHashes RunUnlockSecretLockTest(TTestContext& context) {
 			// Arrange: create a secret lock followed by empty blocks so that two more blocks will trigger expiry
-			TestFacade facade(context);
+			TestFacade<TTestContext, TDefaultAccountVersion, TRemainingAccountVersions> facade(context);
 			auto numEmptyBlocks = static_cast<uint32_t>(Lock_Duration.unwrap() - 2);
 			auto secretProof = facade.pushSecretLockAndTransferBlocks(numEmptyBlocks);
 
@@ -261,23 +275,23 @@ namespace catapult { namespace local {
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanUnlockSecretLock) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanUnlockSecretLock) {
 		// Arrange:
 		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunUnlockSecretLockTest(context));
+		auto stateHashesPair = test::Unzip(RunUnlockSecretLockTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 4);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanUnlockSecretLockWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanUnlockSecretLockWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunUnlockSecretLockTest(context));
+		auto stateHashesPair = test::Unzip(RunUnlockSecretLockTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		AssertDeactivatingSecretLock(stateHashesPair);
@@ -288,10 +302,10 @@ namespace catapult { namespace local {
 	// region secret lock (expire)
 
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		SecretLockStateHashes RunExpireSecretLockTest(TTestContext& context) {
 			// Arrange: create a secret lock followed by empty blocks so that the next block will trigger expiry
-			TestFacade facade(context);
+			TestFacade<TTestContext, TDefaultAccountVersion, TRemainingAccountVersions> facade(context);
 			auto numEmptyBlocks = static_cast<uint32_t>(Lock_Duration.unwrap() - 1);
 			facade.pushSecretLockAndTransferBlocks(numEmptyBlocks);
 
@@ -319,23 +333,23 @@ namespace catapult { namespace local {
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanExpireSecretLock) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanExpireSecretLock) {
 		// Arrange:
 		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunExpireSecretLockTest(context));
+		auto stateHashesPair = test::Unzip(RunExpireSecretLockTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 4);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanExpireSecretLockWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanExpireSecretLockWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunExpireSecretLockTest(context));
+		auto stateHashesPair = test::Unzip(RunExpireSecretLockTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		AssertDeactivatingSecretLock(stateHashesPair);
@@ -346,10 +360,10 @@ namespace catapult { namespace local {
 	// region secret lock (unlock + rollback)
 
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		SecretLockStateHashes RunUnlockAndRollbackSecretLockTest(TTestContext& context) {
 			// Arrange: create a secret lock followed by empty blocks so that three more blocks will trigger expiry
-			TestFacade facade(context);
+			TestFacade<TTestContext, TDefaultAccountVersion, TRemainingAccountVersions> facade(context);
 			auto numEmptyBlocks = static_cast<uint32_t>(Lock_Duration.unwrap() - 3);
 			auto secretProof = facade.pushSecretLockAndTransferBlocks(numEmptyBlocks);
 
@@ -383,23 +397,23 @@ namespace catapult { namespace local {
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanUnlockAndRollbackSecretLock) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanUnlockAndRollbackSecretLock) {
 		// Arrange:
 		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunUnlockAndRollbackSecretLockTest(context));
+		auto stateHashesPair = test::Unzip(RunUnlockAndRollbackSecretLockTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 4);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanUnlockAndRollbackSecretLockWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanUnlockAndRollbackSecretLockWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunUnlockAndRollbackSecretLockTest(context));
+		auto stateHashesPair = test::Unzip(RunUnlockAndRollbackSecretLockTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are nonzero (since importance is recalculated every block none of the hashes are the same)
 		test::AssertAllNonZero(stateHashesPair.first, 4);
@@ -420,10 +434,10 @@ namespace catapult { namespace local {
 	// region secret lock (expire + rollback)
 
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		SecretLockStateHashes RunExpireAndRollbackSecretLockTest(TTestContext& context) {
 			// Arrange: create a secret lock followed by empty blocks so that the next block will trigger expiry
-			TestFacade facade(context);
+			TestFacade<TTestContext, TDefaultAccountVersion, TRemainingAccountVersions> facade(context);
 			auto numEmptyBlocks = static_cast<uint32_t>(Lock_Duration.unwrap() - 1);
 			facade.pushSecretLockAndTransferBlocks(numEmptyBlocks);
 
@@ -457,23 +471,23 @@ namespace catapult { namespace local {
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanExpireAndRollbackSecretLock) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanExpireAndRollbackSecretLock) {
 		// Arrange:
 		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunExpireAndRollbackSecretLockTest(context));
+		auto stateHashesPair = test::Unzip(RunExpireAndRollbackSecretLockTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 4);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanExpireAndRollbackSecretLockWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanExpireAndRollbackSecretLockWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunExpireAndRollbackSecretLockTest(context));
+		auto stateHashesPair = test::Unzip(RunExpireAndRollbackSecretLockTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		AssertDeactivatingSecretLock(stateHashesPair);
@@ -484,12 +498,12 @@ namespace catapult { namespace local {
 	// region secret lock (add lock + rollback + readd lock at different height)
 
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		class SecretLockRollbackTestContext {
 		public:
 			SecretLockRollbackTestContext()
 					: m_context(test::NonNemesisTransactionPlugins::Lock_Secret, ConfigTransform)
-					, m_accounts(4, 1, 1)
+					, m_accounts(4, TRemainingAccountVersions, TDefaultAccountVersion)
 			{}
 
 		public:
@@ -619,9 +633,9 @@ namespace catapult { namespace local {
 		};
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanAddAndRollbackAndReaddSecretLock) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanAddAndRollbackAndReaddSecretLock) {
 		// Arrange:
-		SecretLockRollbackTestContext<test::StateHashDisabledTestContext> context;
+		SecretLockRollbackTestContext<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value> context;
 
 		// Act: pair.second contains account state cache state hashes
 		auto stateHashesPair = test::Unzip(context.runRegisterLockAndRollbackAndReregisterLockSecretLockTest());
@@ -630,9 +644,9 @@ namespace catapult { namespace local {
 		test::AssertAllZero(stateHashesPair, 3);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanAddAndRollbackAndReaddSecretLockWithStateHashEnabled) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanAddAndRollbackAndReaddSecretLockWithStateHashEnabled) {
 		// Arrange:
-		SecretLockRollbackTestContext<test::StateHashEnabledTestContext> context;
+		SecretLockRollbackTestContext<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value> context;
 
 		// Act: pair.second contains account state cache state hashes
 		auto stateHashesPair = test::Unzip(context.runRegisterLockAndRollbackAndReregisterLockSecretLockTest());
@@ -657,11 +671,11 @@ namespace catapult { namespace local {
 	// region secret lock (register + unlock) [single chain part]
 
 	namespace {
-		template<typename TTestContext>
+		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		SecretLockStateHashes RunLockAndUnlockSecretLockTest(TTestContext& context) {
 			// Arrange:
 			SecretLockStateHashes stateHashes;
-			test::Accounts accounts(4, 1, 1);
+			test::Accounts accounts(4, TRemainingAccountVersions, TDefaultAccountVersion);
 			auto stateHashCalculator = context.createStateHashCalculator();
 
 			// - wait for boot
@@ -696,23 +710,23 @@ namespace catapult { namespace local {
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanLockAndUnlockSecretLock_SingleChainPart) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanLockAndUnlockSecretLock_SingleChainPart) {
 		// Arrange:
 		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunLockAndUnlockSecretLockTest(context));
+		auto stateHashesPair = test::Unzip(RunLockAndUnlockSecretLockTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 2);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, CanLockAndUnlockSecretLockWithStateHashEnabled_SingleChainPart) {
+	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanLockAndUnlockSecretLockWithStateHashEnabled_SingleChainPart) {
 		// Arrange:
 		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunLockAndUnlockSecretLockTest(context));
+		auto stateHashesPair = test::Unzip(RunLockAndUnlockSecretLockTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
 
 		// Assert: all state hashes are nonzero (since importance is recalculated every block none of the hashes are the same)
 		test::AssertAllNonZero(stateHashesPair.first, 2);
