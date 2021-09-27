@@ -19,25 +19,29 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#pragma once
-#include "MetadataCacheDelta.h"
-#include "MetadataCacheView.h"
-#include "catapult/cache/BasicCache.h"
+#include "MongoMetadataCacheStorage.h"
+#include "src/mappers/MetadataEntryMapper.h"
+#include "mongo/src/storages/MongoCacheStorage.h"
+#include "plugins/txes/metadata_v2/src/cache/MetadataCache.h"
 
-namespace catapult { namespace cache {
+using namespace bsoncxx::builder::stream;
 
-	/// Cache composed of metadata information.
-	using BasicMetadataCache = BasicCache<MetadataCacheDescriptor, MetadataCacheTypes::BaseSets, std::shared_ptr<config::BlockchainConfigurationHolder>>;
+namespace catapult { namespace mongo { namespace plugins {
 
-	/// Synchronized cache composed of metadata information.
-	class MetadataCache : public SynchronizedCache<BasicMetadataCache> {
-	public:
-		DEFINE_CACHE_CONSTANTS(Metadata_Nem)
+	namespace {
+		struct MetadataCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::MetadataCacheDescriptor> {
+			static constexpr auto Collection_Name = "metadata_v2";
+			static constexpr auto Id_Property_Name = "metadataEntry.compositeHash";
 
-	public:
-		/// Creates a cache around \a config.
-		explicit MetadataCache(const CacheConfiguration& config, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
-			: SynchronizedCache<BasicMetadataCache>(BasicMetadataCache(config, std::move(pConfigHolder)))
-		{}
-	};
-}}
+			static auto MapToMongoId(const KeyType& key) {
+				return mappers::ToBinary(key);
+			}
+
+			static auto MapToMongoDocument(const ModelType& metadataEntry, model::NetworkIdentifier) {
+				return plugins::ToDbModel(metadataEntry);
+			}
+		};
+	}
+
+	DEFINE_MONGO_FLAT_CACHE_STORAGE(Metadata, MetadataCacheTraits)
+}}}

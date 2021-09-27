@@ -19,29 +19,28 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "MongoMetadataCacheStorage.h"
-#include "src/mappers/MetadataEntryMapper.h"
-#include "mongo/src/storages/MongoCacheStorage.h"
-#include "plugins/txes/metadata_nem/src/cache/MetadataCache.h"
+#include "AccountMetadataMapper.h"
+#include "mongo/src/MongoTransactionPluginFactory.h"
+#include "mongo/src/mappers/MapperUtils.h"
+#include "plugins/txes/metadata_v2/src/model/AccountMetadataTransaction.h"
 
-using namespace bsoncxx::builder::stream;
+using namespace catapult::mongo::mappers;
 
 namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
-		struct MetadataCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::MetadataCacheDescriptor> {
-			static constexpr auto Collection_Name = "metadata_nem";
-			static constexpr auto Id_Property_Name = "metadataEntry.compositeHash";
+		template<typename TTransaction>
+		void Stream(bson_stream::document& builder, const TTransaction& transaction) {
+			builder
+					<< "targetKey" << ToBinary(transaction.TargetKey)
+					<< "scopedMetadataKey" << static_cast<int64_t>(transaction.ScopedMetadataKey)
+					<< "valueSizeDelta" << transaction.ValueSizeDelta
+					<< "valueSize" << transaction.ValueSize;
 
-			static auto MapToMongoId(const KeyType& key) {
-				return mappers::ToBinary(key);
-			}
-
-			static auto MapToMongoDocument(const ModelType& metadataEntry, model::NetworkIdentifier) {
-				return plugins::ToDbModel(metadataEntry);
-			}
-		};
+			if (0 < transaction.ValueSize)
+				builder << "value" << ToBinary(transaction.ValuePtr(), transaction.ValueSize);
+		}
 	}
 
-	DEFINE_MONGO_FLAT_CACHE_STORAGE(Metadata, MetadataCacheTraits)
+	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(AccountMetadata, Stream)
 }}}

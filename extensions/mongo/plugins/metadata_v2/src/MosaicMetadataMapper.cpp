@@ -22,7 +22,7 @@
 #include "MosaicMetadataMapper.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "plugins/txes/metadata_nem/src/model/MosaicMetadataTransaction.h"
+#include "plugins/txes/metadata_v2/src/model/MosaicMetadataTransaction.h"
 
 using namespace catapult::mongo::mappers;
 

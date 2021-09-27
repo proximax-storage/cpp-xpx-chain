@@ -20,22 +20,12 @@
 **/
 
 #pragma once
-#ifndef CUSTOM_ENTITY_TYPE_DEFINITION
-#include "catapult/model/EntityType.h"
+#include "MetadataCacheTypes.h"
+#include "plugins/txes/metadata_v2/src/state/MetadataEntrySerializer.h"
+#include "catapult/cache/CacheSerializerAdapter.h"
 
-namespace catapult { namespace model {
+namespace catapult { namespace cache {
 
-#endif
-
-	/// Account metadata transaction.
-	DEFINE_TRANSACTION_TYPE(Metadata_Nem, Account_Metadata, 0x1);
-
-	/// Mosaic metadata transaction.
-	DEFINE_TRANSACTION_TYPE(Metadata_Nem, Mosaic_Metadata, 0x2);
-
-	/// Namespace metadata transaction.
-	DEFINE_TRANSACTION_TYPE(Metadata_Nem, Namespace_Metadata, 0x3);
-
-#ifndef CUSTOM_ENTITY_TYPE_DEFINITION
+	/// Primary serializer for metadata cache.
+	struct MetadataEntryPrimarySerializer : public CacheSerializerAdapter<state::MetadataEntrySerializer, MetadataCacheDescriptor> {};
 }}
-#endif

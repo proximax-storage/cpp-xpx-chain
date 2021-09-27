@@ -21,7 +21,7 @@
 
 #include "MetadataEntryMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "plugins/txes/metadata_nem/src/state/MetadataEntry.h"
+#include "plugins/txes/metadata_v2/src/state/MetadataEntry.h"
 #include "catapult/utils/Casting.h"
 
 using namespace catapult::mongo::mappers;

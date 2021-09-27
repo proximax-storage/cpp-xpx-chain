@@ -43,7 +43,7 @@ namespace catapult { namespace plugins {
 				manager.cacheConfig(cache::MetadataCache::Name), pConfigHolder));
 
 		using CacheHandlers = CacheHandlers<cache::MetadataCacheDescriptor>;
-		CacheHandlers::Register<model::FacilityCode::Metadata_Nem>(manager);
+		CacheHandlers::Register<model::FacilityCode::Metadata_v2>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("METADATAN C"), [&cache]() {

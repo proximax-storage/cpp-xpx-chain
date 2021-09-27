@@ -30,13 +30,13 @@ namespace catapult { namespace validators {
 	DEFINE_STATEFUL_VALIDATOR(MetadataSizes, [](const auto& notification, const ValidatorContext& context) {
 		// ValueSize cannot be zero because that implies cache entry value size is zero, which is not allowed
 		if (0 == notification.ValueSize)
-		  return Failure_Metadata_Nem_Value_Too_Small;
+		  return Failure_Metadata_v2_Value_Too_Small;
 
 		// following comparison works because it is comparing int32_t and uint16_t
 		if (std::abs(static_cast<int32_t>(notification.ValueSizeDelta)) > notification.ValueSize)
-		  return Failure_Metadata_Nem_Value_Size_Delta_Too_Large;
+		  return Failure_Metadata_v2_Value_Size_Delta_Too_Large;
 
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MetadataConfiguration>();
-		return notification.ValueSize > pluginConfig.MaxValueSize ? Failure_Metadata_Nem_Value_Too_Large : ValidationResult::Success;
+		return notification.ValueSize > pluginConfig.MaxValueSize ? Failure_Metadata_v2_Value_Too_Large : ValidationResult::Success;
 	})
 }}

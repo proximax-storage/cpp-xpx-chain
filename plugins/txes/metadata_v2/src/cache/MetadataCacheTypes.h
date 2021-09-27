@@ -20,7 +20,7 @@
 **/
 
 #pragma once
-#include "plugins/txes/metadata_nem/src/state/MetadataEntry.h"
+#include "plugins/txes/metadata_v2/src/state/MetadataEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"
 #include "catapult/utils/Hashers.h"
