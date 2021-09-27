@@ -23,6 +23,7 @@ namespace catapult { namespace validators {
 		constexpr auto Replicator_Count = 5;
 		constexpr auto Common_Data_Size_Download_Approval = sizeof(Hash256) + sizeof(uint16_t) + sizeof(bool);
 
+		/// Creates RawBuffer with given \a size and fills it with random data. Data pointer must be manually deleted after use.
 		RawBuffer GenerateCommonDataBuffer(const size_t& size) {
 			auto* const pCommonData = new uint8_t[size];
 			MutableRawBuffer mutableBuffer(pCommonData, size);
@@ -43,9 +44,9 @@ namespace catapult { namespace validators {
 									 + opinionData.OpinionCount * sizeof(BLSSignature)
 									 + presentOpinionByteCount * sizeof(uint8_t)
 									 + opinionData.OpinionElementCount * sizeof(TOpinion);
-			auto* const pPayload = new uint8_t[payloadSize];
+			const auto pPayload = std::unique_ptr<uint8_t[]>(new uint8_t[payloadSize]);
 
-			auto* const pPublicKeysBegin = reinterpret_cast<Key*>(pPayload);
+			auto* const pPublicKeysBegin = reinterpret_cast<Key*>(pPayload.get());
 			for (auto i = 0u; i < opinionData.PublicKeys.size(); ++i)
 				memcpy(static_cast<void*>(&pPublicKeysBegin[i]), static_cast<const void*>(&opinionData.PublicKeys.at(i)), sizeof(Key));
 
@@ -87,9 +88,7 @@ namespace catapult { namespace validators {
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
-
 			delete[] commonDataBuffer.pData;
-			delete[] pPayload;
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

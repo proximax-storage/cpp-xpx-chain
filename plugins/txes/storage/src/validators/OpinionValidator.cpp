@@ -53,9 +53,9 @@ namespace catapult { namespace validators {
 
 	  	// Preparing common data.
 	  	const auto maxDataSize = notification.CommonDataSize + (sizeof(Key) + sizeof(uint64_t)) * notification.JudgedCount;	// Guarantees that every possible individual opinion will fit in.
-		auto* const pDataBegin = new uint8_t[maxDataSize];
-	  	std::copy(notification.CommonDataPtr, notification.CommonDataPtr + notification.CommonDataSize, pDataBegin);
-	  	auto* const pIndividualDataBegin = pDataBegin + notification.CommonDataSize;
+		const auto pDataBegin = std::unique_ptr<uint8_t[]>(new uint8_t[maxDataSize]);
+	  	std::copy(notification.CommonDataPtr, notification.CommonDataPtr + notification.CommonDataSize, pDataBegin.get());
+	  	auto* const pIndividualDataBegin = pDataBegin.get() + notification.CommonDataSize;
 
 		// Validating signatures.
 	  	auto pBlsSignature = notification.BlsSignaturesPtr;
@@ -75,7 +75,6 @@ namespace catapult { namespace validators {
 			}
 
 			if (providedIndividualParts.count(individualPart)) {
-				delete[] pDataBegin;
 				return Failure_Storage_Opinions_Reocurring_Individual_Parts;
 			}
 			providedIndividualParts.insert(individualPart);
@@ -87,15 +86,13 @@ namespace catapult { namespace validators {
 				utils::WriteToByteArray(pIndividualData, individualPartIter->second);
 			}
 
-			RawBuffer dataBuffer(pDataBegin, dataSize);
+			RawBuffer dataBuffer(pDataBegin.get(), dataSize);
 
 			if (!crypto::FastAggregateVerify(blsPublicKeys.at(i), dataBuffer, *pBlsSignature)) {
-				delete[] pDataBegin;
 				return Failure_Storage_Invalid_BLS_Signature;
 			}
 		}
 
-		delete[] pDataBegin;
 		return ValidationResult::Success;
 	}))
 

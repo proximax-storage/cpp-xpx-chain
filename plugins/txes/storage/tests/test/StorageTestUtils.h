@@ -273,9 +273,9 @@ namespace catapult { namespace test {
 
 		// Filling BlsSignatures.
 		const auto maxDataSize = commonDataBuffer.Size + (sizeof(Key) + sizeof(TOpinion)) * data.JudgedCount;	// Guarantees that every possible individual opinion will fit in.
-		auto* const pDataBegin = new uint8_t[maxDataSize];	// TODO: Make smart pointer
-		memcpy(pDataBegin, commonDataBuffer.pData, commonDataBuffer.Size);
-		auto* const pIndividualDataBegin = pDataBegin + commonDataBuffer.Size;
+		const auto pDataBegin = std::unique_ptr<uint8_t[]>(new uint8_t[maxDataSize]);
+		memcpy(pDataBegin.get(), commonDataBuffer.pData, commonDataBuffer.Size);
+		auto* const pIndividualDataBegin = pDataBegin.get() + commonDataBuffer.Size;
 
 		using OpinionElement = std::pair<Key, TOpinion>;
 		const auto comparator = [](const OpinionElement& a, const OpinionElement& b){ return a.first < b.first; };
@@ -296,10 +296,10 @@ namespace catapult { namespace test {
 				utils::WriteToByteArray(pIndividualData, opinionElement.second);
 			}
 
-			RawBuffer dataBuffer(pDataBegin, dataSize);
+			RawBuffer dataBuffer(pDataBegin.get(), dataSize);
 
 			const auto blsSignaturesCount = blsKeyPairs.at(i).size();
-			auto* const pBlsSignatures = new BLSSignature[blsSignaturesCount];	// TODO: Make smart pointer
+			const auto pBlsSignatures = std::unique_ptr<BLSSignature[]>(new BLSSignature[blsSignaturesCount]);
 			std::vector<const BLSSignature*> signatures;
 			signatures.reserve(blsSignaturesCount);
 			for (auto j = 0u; j < blsSignaturesCount; ++j) {
@@ -308,9 +308,7 @@ namespace catapult { namespace test {
 			}
 
 			data.BlsSignatures.push_back(catapult::crypto::Aggregate(signatures));
-			delete pBlsSignatures;
 		}
-		delete pDataBegin;
 
 		return data;
 	};
