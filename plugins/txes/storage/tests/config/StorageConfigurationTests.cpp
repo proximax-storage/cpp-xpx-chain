@@ -23,7 +23,8 @@ namespace catapult { namespace config {
 							{ "minReplicatorCount", "1" },
 							{ "maxFreeDownloadSize", "1MB" },
 							{ "storageBillingPeriod", "168h" },
-							{ "downloadBillingPeriod", "24h" }
+							{ "downloadBillingPeriod", "24h" },
+							{ "verificationFrequency", "720" }
 						}
 					}
 				};
@@ -39,7 +40,8 @@ namespace catapult { namespace config {
 					"minReplicatorCount",
 					"maxFreeDownloadSize",
 					"storageBillingPeriod",
-					"downloadBillingPeriod"}.count(name);
+					"downloadBillingPeriod",
+					"verificationFrequency"}.count(name);
 			}
 
 			static bool IsSectionOptional(const std::string&) {
@@ -54,6 +56,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(utils::FileSize::FromMegabytes(0u), config.MaxFreeDownloadSize);
 				EXPECT_EQ(utils::TimeSpan::FromHours(0), config.StorageBillingPeriod);
 				EXPECT_EQ(utils::TimeSpan::FromHours(0), config.DownloadBillingPeriod);
+				EXPECT_EQ(0, config.VerificationFrequency);
 			}
 
 			static void AssertCustom(const StorageConfiguration& config) {
@@ -64,6 +67,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(utils::FileSize::FromMegabytes(1u), config.MaxFreeDownloadSize);
 				EXPECT_EQ(utils::TimeSpan::FromHours(24 * 7), config.StorageBillingPeriod);
 				EXPECT_EQ(utils::TimeSpan::FromHours(24), config.DownloadBillingPeriod);
+				EXPECT_EQ(720, config.VerificationFrequency);
 			}
 		};
 	}

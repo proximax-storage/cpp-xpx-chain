@@ -223,4 +223,12 @@ namespace catapult { namespace test {
         return pTransaction;
     }
 
+    /// Creates a end drive verification transaction.
+    template<typename TTransaction>
+    model::UniqueEntityPtr<TTransaction> CreateEndDriveVerificationTransaction() {
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_EndDriveVerification);
+        pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+        pTransaction->VerificationTrigger = test::GenerateRandomByteArray<Hash256>();
+        return pTransaction;
+    }
 }}
