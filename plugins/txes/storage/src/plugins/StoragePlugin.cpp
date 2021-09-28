@@ -90,7 +90,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDataModificationSingleApprovalTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateVerificationPaymentTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDownloadApprovalTransactionPlugin(immutableConfig));
-		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin());
+		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig));
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 		  	switch (unresolved.Type) {

@@ -17,21 +17,22 @@ namespace catapult { namespace observers {
         const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 
         // Replicator cache
-        auto &replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+        auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 
         // Drive entry
-        auto &driveCache = context.Cache.sub<cache::BcDriveCache>();
+        auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
         auto driveIter = driveCache.find(notification.DriveKey);
-        auto &driveEntry = driveIter.get();
+        auto& driveEntry = driveIter.get();
 
         // Pending verification
-        auto pendingVerification = driveEntry.verifications().back();
+        auto& pendingVerification = driveEntry.verifications().back();
 
-        auto opinions = 0;
         auto totalSplittingSoDeposit = 0;
 
         // Find median opinion for every Prover
         for (auto i = 0; i < notification.ProversCount; ++i) {
+            uint8_t opinions = 0;
+
             for (auto j = 0; j < notification.VerificationOpinionsCount; ++j) {
                 if (notification.ProversPtr[i] == notification.VerificationOpinionsPtr[j].Verifier)
                     continue;
@@ -39,28 +40,33 @@ namespace catapult { namespace observers {
                 auto it = std::find_if(
                         notification.VerificationOpinionsPtr[j].Opinions.begin(),
                         notification.VerificationOpinionsPtr[j].Opinions.end(),
-                        [&notification, i](const std::pair<Key, uint8_t>& el){return el.first == notification.ProversPtr[i];}
+                        [&notification, i](const std::pair<Key, uint8_t>& el) {
+                            return el.first == notification.ProversPtr[i];
+                        }
                 );
 
                 opinions += it->second;
             }
 
             // Check opinions` median
+            auto proverIt = pendingVerification.Results.find(notification.ProversPtr[i]);
             if (opinions > notification.VerificationOpinionsCount / 2) {
-                pendingVerification.Results.find(notification.ProversPtr[i])->second = 1;
+                proverIt->second = 1;
+
+                CATAPULT_LOG(debug) << (uint8_t) opinions;
                 continue;
             }
-            pendingVerification.Results.find(notification.ProversPtr[i])->second = 0;
+            proverIt->second = 0;
 
             // Get replicator entry
             auto replicatorIter = replicatorCache.find(notification.ProversPtr[i]);
-            auto &replicatorEntry = replicatorIter.get();
+            auto& replicatorEntry = replicatorIter.get();
 
             // Count deposited Storage mosaics and delete the replicator from drives
             auto deposit = replicatorEntry.capacity().unwrap();
-            for (const auto &iter: replicatorEntry.drives()) {
+            for (const auto& iter: replicatorEntry.drives()) {
                 auto driveIter = driveCache.find(iter.first);
-                auto &drive = driveIter.get();
+                auto& drive = driveIter.get();
 
                 deposit += drive.size();
                 drive.replicators().erase(drive.replicators().find(notification.ProversPtr[i]));
@@ -72,38 +78,44 @@ namespace catapult { namespace observers {
             replicatorEntry.drives().clear();
 
             // Credit drive`s account for replicator`s Streaming deposit
-            auto &cache = context.Cache.sub<cache::AccountStateCache>();
+            auto& cache = context.Cache.sub<cache::AccountStateCache>();
             auto accountIter = cache.find(notification.DriveKey);
-            auto &driveState = accountIter.get();
+            auto& driveState = accountIter.get();
 
             driveState.Balances.credit(streamingMosaicId, Amount(deposit * 2), context.Height);
         }
 
+        pendingVerification.State = state::VerificationState::Finished;
+
+        if (totalSplittingSoDeposit == 0)
+            return;
+
         // Split failed replicators` Storage deposits between left replicators
-        auto &cache = context.Cache.sub<cache::AccountStateCache>();
-        for (const auto &iter: driveEntry.replicators()) {
+        auto& cache = context.Cache.sub<cache::AccountStateCache>();
+        driveIter = driveCache.find(notification.DriveKey);
+        driveEntry = driveIter.get();
+
+        for (const auto& iter: driveEntry.replicators()) {
             auto accountIter = cache.find(iter);
-            auto &replicatorState = accountIter.get();
+            auto& replicatorState = accountIter.get();
 
             replicatorState.Balances.credit(
                     storageMosaicId,
-                    Amount(totalSplittingSoDeposit / driveEntry.replicatorCount()),
+                    Amount(totalSplittingSoDeposit / driveEntry.replicators().size()),
                     context.Height
             );
         }
 
         // If there are left Storage mosaics send them to the first replicator
-        if (totalSplittingSoDeposit % driveEntry.replicatorCount() != 0) {
+        if (totalSplittingSoDeposit % driveEntry.replicators().size() != 0) {
             auto accountIter = cache.find(*driveEntry.replicators().begin());
-            auto &replicatorState = accountIter.get();
+            auto& replicatorState = accountIter.get();
 
             replicatorState.Balances.credit(
                     storageMosaicId,
-                    Amount(totalSplittingSoDeposit % driveEntry.replicatorCount()),
+                    Amount(totalSplittingSoDeposit % driveEntry.replicators().size()),
                     context.Height
             );
         }
-
-        pendingVerification.State = state::VerificationState::Finished;
     }))
 }}

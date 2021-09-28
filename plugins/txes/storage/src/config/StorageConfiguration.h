@@ -38,7 +38,7 @@ namespace catapult { namespace config {
 		bool Enabled;
 
 		/// Verification frequency.
-		BlockDuration VerificationFrequency;
+		uint64_t VerificationFrequency;
 
 	private:
 		StorageConfiguration() = default;
