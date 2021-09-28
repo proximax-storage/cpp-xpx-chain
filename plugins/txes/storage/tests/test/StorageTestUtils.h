@@ -204,10 +204,11 @@ namespace catapult { namespace test {
 		uint8_t JudgingCount;
 		uint8_t JudgedCount;
 		uint8_t OpinionElementCount;
+		uint8_t FilledPresenceRowIndex;
 		std::vector<Key> PublicKeys;
 		std::vector<uint8_t> OpinionIndices;
 		std::vector<BLSSignature> BlsSignatures;
-		std::vector<bool> PresentOpinions;
+		std::vector<std::vector<bool>> PresentOpinions;
 		std::vector<std::vector<TOpinion>> Opinions;
 	};
 
@@ -219,7 +220,7 @@ namespace catapult { namespace test {
 			const uint8_t judgedCount = 0,
 			const uint8_t judgingCount = 0,
 			const uint8_t opinionCount = 0,
-			const bool forceOpinionPresence = false) {
+			const bool filledPresenceRow = false) {
 		OpinionData<TOpinion> data;
 
 		// Generating valid counts.
@@ -243,31 +244,25 @@ namespace catapult { namespace test {
 			}
 		}
 
-		// Filling PresentOpinions.
-		std::vector<uint8_t> opinionSizes;	// Vector of opinion element counts in each opinion.
-		opinionSizes.resize(data.OpinionCount);
-		data.PresentOpinions.reserve(presentOpinionCount);
+		// Filling PresentOpinions and Opinions.
+		data.PresentOpinions.resize(data.OpinionCount);
+		data.Opinions.resize(data.OpinionCount);
 		std::vector<uint8_t> predPresenceIndices;	// Vector of predetermined indices used to guarantee that every key is used. If Nth element in predPresenceIndices is M, then Mth element in Nth column of presentOpinions must be true.
 		predPresenceIndices.reserve(data.JudgedCount);
+		data.FilledPresenceRowIndex = test::RandomInRange(0, std::max(data.OpinionCount-2, 0));	// The row in PresentOpinions filled with 1's is guaranteed not to be the last.
 		for (auto i = 0u; i < data.JudgedCount; ++i)
 			predPresenceIndices.emplace_back(test::RandomInRange(0, data.OpinionCount-1));
 		for (auto i = 0u; i < data.OpinionCount; ++i) {
+			data.PresentOpinions.at(i).reserve(data.JudgedCount);
 			for (auto j = 0u; j < data.JudgedCount; ++j) {
-				const bool bit = forceOpinionPresence || predPresenceIndices.at(j) == i || test::Random() % 10; // True if forced or according to predPresenceIndices or with probability 0.9
-				opinionSizes.at(i) += bit;
+				const bool bit = data.FilledPresenceRowIndex == i || predPresenceIndices.at(j) == i || test::Random() % 10; // True according to FilledPresenceRowIndex, predPresenceIndices or with probability 0.9
 				data.OpinionElementCount += bit;
-				data.PresentOpinions.push_back(bit);
-			}
-		}
-
-		// Filling Opinions.
-		data.Opinions.resize(data.OpinionCount);
-		for (auto i = 0u; i < data.OpinionCount; ++i) {
-			data.Opinions.at(i).reserve(opinionSizes.at(i));
-			for (auto j = 0u; j < opinionSizes.at(i); ++j) {
-				TOpinion opinionElement;
-				FillWithRandomData({ reinterpret_cast<uint8_t*>(&opinionElement), sizeof(TOpinion) });
-				data.Opinions.at(i).push_back(opinionElement);
+				data.PresentOpinions.at(i).push_back(bit);
+				if (bit) {
+					TOpinion opinionElement;
+					FillWithRandomData({ reinterpret_cast<uint8_t*>(&opinionElement), sizeof(TOpinion) });
+					data.Opinions.at(i).push_back(opinionElement);
+				}
 			}
 		}
 
@@ -283,7 +278,7 @@ namespace catapult { namespace test {
 		for (auto i = 0; i < data.OpinionCount; ++i) {
 			individualPart.clear();
 			for (auto j = 0, k = 0; j < data.JudgedCount; ++j) {
-				if (data.PresentOpinions.at(i * data.JudgedCount + j)) {
+				if (data.PresentOpinions.at(i).at(j)) {
 					individualPart.emplace(data.PublicKeys.at(j), data.Opinions.at(i).at(k));
 					++k;
 				}
