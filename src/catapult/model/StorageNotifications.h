@@ -814,20 +814,19 @@ namespace catapult { namespace model {
 
 	public:
 		explicit EndDriveVerificationNotification(
-				const Key &driveKey,
-				const Hash256 &verificationTrigger,
+				const Key& driveKey,
+				const Hash256& verificationTrigger,
 				const uint16_t proversCount,
-				const Key *proversPtr,
+				const Key* proversPtr,
 				const uint16_t verificationOpinionsCount,
-				const VerificationOpinion *verificationOpinionsPtr)
+				const VerificationOpinion* verificationOpinionsPtr)
 				: Notification(Notification_Type, sizeof(EndDriveVerificationNotification<1>))
 				, DriveKey(driveKey)
 				, VerificationTrigger(verificationTrigger)
 				, ProversCount(proversCount)
 				, ProversPtr(proversPtr)
 				, VerificationOpinionsCount(verificationOpinionsCount)
-				, VerificationOpinionsPtr(verificationOpinionsPtr)
-		{}
+				, VerificationOpinionsPtr(verificationOpinionsPtr) {}
 
 	public:
 		/// Key of the drive.
@@ -840,12 +839,12 @@ namespace catapult { namespace model {
 		uint16_t ProversCount;
 
 		/// List of the Provers keys.
-        const Key *ProversPtr;
+		const Key* ProversPtr;
 
 		/// Number of verification opinions in the payload.
 		uint16_t VerificationOpinionsCount;
 
 		/// Opinion about verification status for each Prover. Success or Failure.
-		const VerificationOpinion *VerificationOpinionsPtr;
+		const VerificationOpinion* VerificationOpinionsPtr;
 	};
 }}

@@ -116,7 +116,7 @@ namespace catapult { namespace validators {
 	DEFINE_STORAGE_RESULT(Verification_Bad_Verification_Trigger, 34);
 
 	/// The provided count of Provers is not equal to desired.
-	DEFINE_STORAGE_RESULT(Verification_Wrong_Namber_Of_Provers, 35);
+	DEFINE_STORAGE_RESULT(Verification_Wrong_Number_Of_Provers, 35);
 
 	/// Not all Provers were in the Confirmed state at the start of Verification.
 	DEFINE_STORAGE_RESULT(Verification_Some_Provers_Are_Illegal, 36);

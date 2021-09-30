@@ -12,13 +12,13 @@ namespace catapult { namespace validators {
     using Notification = model::EndDriveVerificationNotification<1>;
 
     DEFINE_STATEFUL_VALIDATOR(EndDriveVerification, [](const Notification& notification, const ValidatorContext& context) {
-        const auto &driveCache = context.Cache.sub<cache::BcDriveCache>();
+        const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
         const auto driveIter = driveCache.find(notification.DriveKey);
-        const auto &pDriveEntry = driveIter.tryGet();
+        const auto& pDriveEntry = driveIter.tryGet();
 
         // Check if respective drive exists
         if (!pDriveEntry)
-                return Failure_Storage_Drive_Not_Found;
+            return Failure_Storage_Drive_Not_Found;
 
         auto& pendingVerification = pDriveEntry->verifications().back();
 
@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 
         // Check if the count of Provers is right
         if (pendingVerification.Results.size() != notification.ProversCount)
-            return Failure_Storage_Verification_Wrong_Namber_Of_Provers;
+            return Failure_Storage_Verification_Wrong_Number_Of_Provers;
 
         // Check if all Provers were in the Confirmed state at the start of verification.
         for (auto i = 0; i < notification.ProversCount; ++i) {

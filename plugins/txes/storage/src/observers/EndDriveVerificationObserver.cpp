@@ -52,8 +52,6 @@ namespace catapult { namespace observers {
             auto proverIt = pendingVerification.Results.find(notification.ProversPtr[i]);
             if (opinions > notification.VerificationOpinionsCount / 2) {
                 proverIt->second = 1;
-
-                CATAPULT_LOG(debug) << (uint8_t) opinions;
                 continue;
             }
             proverIt->second = 0;

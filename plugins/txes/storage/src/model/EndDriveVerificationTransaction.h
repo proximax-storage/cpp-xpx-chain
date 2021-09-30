@@ -45,27 +45,28 @@ namespace catapult { namespace model {
 
     public:
         template<typename T>
-        static auto *ProversPtrT(T &transaction) {
+        static auto* ProversPtrT(T& transaction) {
             return transaction.ProversCount ? THeader::PayloadStart(transaction) : nullptr;
         }
 
         template<typename T>
-        static auto *VerificationOpinionsPtrT(T &transaction) {
-            auto *pPayloadStart = THeader::PayloadStart(transaction);
+        static auto* VerificationOpinionsPtrT(T& transaction) {
+            auto* pPayloadStart = THeader::PayloadStart(transaction);
             return transaction.VerificationOpinionsCount && pPayloadStart ? pPayloadStart
                     + transaction.ProversCount * sizeof(Key) : nullptr;
         }
 
         // Calculates the real size of a storage \a transaction.
-        static constexpr uint64_t CalculateRealSize(const TransactionType &transaction) noexcept {
+        static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
             return sizeof(TransactionType)
                    + transaction.ProversCount * sizeof(Key)
-                   + transaction.VerificationOpinionsCount
-                   * (// size of VerificationOpinion
-                        sizeof(Key)                         // size of VerificationOpinion.Verifier
-                        + sizeof(BLSSignature)              // size of VerificationOpinion.BlsSignature
-                        + transaction.ProversCount ? 0 : (transaction.ProversCount-1) * (sizeof(Key) + sizeof(uint8_t)) // size of VerificationOpinion.Results
-                     );
+                     + transaction.VerificationOpinionsCount
+                       * (// size of VerificationOpinion
+                               sizeof(Key)                         // size of VerificationOpinion.Verifier
+                               + sizeof(BLSSignature)              // size of VerificationOpinion.BlsSignature
+                               + transaction.ProversCount ? 0 :
+                                 (transaction.ProversCount - 1) * (sizeof(Key) + sizeof(uint8_t)) // size of VerificationOpinion.Results
+                       );
         }
     };
 
