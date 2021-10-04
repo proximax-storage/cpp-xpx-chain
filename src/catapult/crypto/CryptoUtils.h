@@ -41,11 +41,11 @@ namespace catapult { namespace crypto {
 	bool IsNeutralElement(const Key& publicKey);
 
 	template<KeyHashingType TKeyHashingType>
-	void BuildHash(Hash512& hash, std::initializer_list<const utils::BasicRawBuffer<const uint8_t>>& initBuffers, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash);
+	void BuildHash(Hash512& hash, std::initializer_list<const RawBuffer> initBuffers, const std::initializer_list<const RawBuffer>& buffersList);
 	template<>
-	void BuildHash<KeyHashingType::Sha3>(Hash512& hash, std::initializer_list<const utils::BasicRawBuffer<const uint8_t>>& initBuffers, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash);
+	void BuildHash<KeyHashingType::Sha3>(Hash512& hash, std::initializer_list<const RawBuffer> initBuffers, const std::initializer_list<const RawBuffer>& buffersList);
 	template<>
-	void BuildHash<KeyHashingType::Sha2>(Hash512& hash, std::initializer_list<const utils::BasicRawBuffer<const uint8_t>>& initBuffers, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash);
+	void BuildHash<KeyHashingType::Sha2>(Hash512& hash, std::initializer_list<const RawBuffer> initBuffers, const std::initializer_list<const RawBuffer>& buffersList);
 
 	/// Extracts the \a multiplier used to derive the public key from \a privateKey.
 	template<KeyHashingType TKeyHashingType>
@@ -80,8 +80,8 @@ namespace catapult { namespace crypto {
 
 	extern template void HashPrivateKey<KeyHashingType::Sha3>(const PrivateKey& privateKey, Hash512& hash);
 	extern template void HashPrivateKey<KeyHashingType::Sha2>(const PrivateKey& privateKey, Hash512& hash);
-	extern template void BuildHash<KeyHashingType::Sha2>(Hash512& hash, std::initializer_list<const utils::BasicRawBuffer<const uint8_t>>& initBuffers, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash);
-	extern template void BuildHash<KeyHashingType::Sha3>(Hash512& hash, std::initializer_list<const utils::BasicRawBuffer<const uint8_t>>& initBuffers, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash);
+	extern template void BuildHash<KeyHashingType::Sha2>(Hash512& hash, std::initializer_list<const RawBuffer> initBuffers, const std::initializer_list<const RawBuffer>& buffersList);
+	extern template void BuildHash<KeyHashingType::Sha3>(Hash512& hash, std::initializer_list<const RawBuffer> initBuffers, const std::initializer_list<const RawBuffer>& buffersList);
 	extern template void GenerateNonce<KeyHashingType::Sha2>(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce);
 	extern template void GenerateNonce<KeyHashingType::Sha3>(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce);
 	extern template void ExtractMultiplier<KeyHashingType::Sha3>(const PrivateKey& privateKey, ScalarMultiplier& multiplier);

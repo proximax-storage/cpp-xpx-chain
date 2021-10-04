@@ -52,12 +52,16 @@ namespace catapult { namespace harvesting {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 		constexpr size_t Num_Accounts = 5;
 
-		std::vector<KeyPair> CreateKeyPairs(size_t count) {
+		std::vector<KeyPair> CreateKeyPairs(size_t count, uint32_t defaultAccountVersion) {
 			std::vector<KeyPair> keyPairs;
 			for (auto i = 0u; i < count; ++i)
+			{
+				if(i == 0)
+					keyPairs.push_back(test::GenerateKeyPair(defaultAccountVersion));
 				//All additional unlockedAccounts have to be V2
-				keyPairs.push_back(test::GenerateKeyPair(2));
-
+				else
+					keyPairs.push_back(test::GenerateKeyPair(2));
+			}
 			return keyPairs;
 		}
 		std::vector<state::AccountState*> CreateAccounts(
@@ -66,7 +70,7 @@ namespace catapult { namespace harvesting {
 				const std::vector<KeyPair>& vrfKeyPairs) {
 			std::vector<state::AccountState*> accountStates;
 			for (auto i = 0u; i < keyPairs.size(); ++i) {
-				cache.addAccount(keyPairs[i].publicKey(), Height(1));
+				cache.addAccount(keyPairs[i].publicKey(), Height(1), 2);
 				auto& accountState = cache.find(keyPairs[i].publicKey()).get();
 				accountState.SupplementalPublicKeys.vrf().set(vrfKeyPairs[i].publicKey());
 				auto& balances = accountState.Balances;
@@ -101,7 +105,7 @@ namespace catapult { namespace harvesting {
 			config.Network.TotalChainImportance = test::Default_Total_Chain_Importance;
 			config.Network.GreedDelta = 0.5;
 			config.Network.GreedExponent = 2.0;
-			config.Network.AccountVersion = 2;
+			config.Network.AccountVersion = 2; // In this test we assume version 2 accounts are enabled otherwise there can only be one harvesting account per node, the configured one.
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 2;
 
@@ -118,34 +122,15 @@ namespace catapult { namespace harvesting {
 			HarvesterContext()
 					: Config(CreateConfiguration())
 					, Cache(test::CreateEmptyCatapultCache(Config))
-					, KeyPairs(CreateKeyPairs(Num_Accounts))
-					, VrfKeyPairs(CreateKeyPairs(Num_Accounts))
+					, KeyPairs(CreateKeyPairs(Num_Accounts, TBaseAccountVersion)) // additional keypairs are always V2
+					, VrfKeyPairs(CreateKeyPairs(Num_Accounts, 2))
 					, Beneficiary(test::GenerateRandomByteArray<Key>())
 					, pUnlockedAccounts(std::make_unique<UnlockedAccounts>(Num_Accounts, [](const auto&) { return 0; }))
 					, pLastBlock(CreateBlock())
 					, LastBlockElement(test::BlockToBlockElement(*pLastBlock)) {
 				auto delta = Cache.createDelta();
 				auto &accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
-
-
-
-
-
-
 				AccountStates = CreateAccounts(accountStateCacheDelta, KeyPairs, VrfKeyPairs);
-				KeyPairs.push_back(test::GenerateKeyPair(TBaseAccountVersion));
-				VrfKeyPairs.push_back(test::GenerateVrfKeyPair());
-				const auto &primaryAccountPair = KeyPairs.back();
-				const auto &vrfPrimaryAccountPair = VrfKeyPairs.back();
-
-
-				accountStateCacheDelta.addAccount(primaryAccountPair.publicKey(), Height(1), TBaseAccountVersion);
-				auto& accountState = accountStateCacheDelta.find(primaryAccountPair.publicKey()).get();
-				if(TBaseAccountVersion > 1) accountState.SupplementalPublicKeys.vrf().set(vrfPrimaryAccountPair.publicKey());
-				auto& balances = accountState.Balances;
-				balances.credit(Harvesting_Mosaic_Id, Amount(1'000'000'000'000'000), Height(1));
-				balances.track(Harvesting_Mosaic_Id);
-				AccountStates.push_back(&accountState);
 
 				auto& difficultyCache = delta.sub<cache::BlockDifficultyCache>();
 				state::BlockDifficultyInfo info(pLastBlock->Height, pLastBlock->Timestamp, pLastBlock->Difficulty);
@@ -185,7 +170,7 @@ namespace catapult { namespace harvesting {
 					for (auto i = 0u; i < Num_Accounts; ++i) {
 						modifier.add(BlockGeneratorAccountDescriptor(
 								test::CopyKeyPair(signingKeyPairs[i]),
-								test::CopyKeyPair(vrfKeyPairs[i]),2));
+								test::CopyKeyPair(vrfKeyPairs[i]), signingKeyPairs[i].hashingType() == KeyHashingType::Sha2 ? 2 : 1));
 					}
 			}
 

@@ -363,29 +363,30 @@ namespace catapult { namespace crypto {
 	}
 
 	template<KeyHashingType TKeyHashingType>
-	void BuildHash(Hash512& hash, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash);
+	void BuildHash(Hash512& hash,  std::initializer_list<const RawBuffer> initBuffers, const std::initializer_list<const RawBuffer>& buffersList);
 	template<>
-	void BuildHash<KeyHashingType::Sha3>(Hash512& hash, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash)
+	void BuildHash<KeyHashingType::Sha3>(Hash512& hash, std::initializer_list<const RawBuffer> initBuffers, const std::initializer_list<const RawBuffer>& buffersList)
 	{
 		Sha3_512_Builder builder;
-		builder.update({ privHash.data() + Hash512::Size / 2, Hash512::Size / 2 });
+		builder.update(initBuffers);
 		builder.update(buffersList);
 		builder.final(hash);
 	}
 	template<>
-	void BuildHash<KeyHashingType::Sha2>(Hash512& hash, const std::initializer_list<const RawBuffer>& buffersList, const Hash512& privHash)
+	void BuildHash<KeyHashingType::Sha2>(Hash512& hash, std::initializer_list<const RawBuffer> initBuffers, const std::initializer_list<const RawBuffer>& buffersList)
 	{
 		Sha512_Builder builder;
-		builder.update({ privHash.data() + Hash512::Size / 2, Hash512::Size / 2 });
+		builder.update(initBuffers);
 		builder.update(buffersList);
 		builder.final(hash);
 	}
+
 	template<KeyHashingType TKeyHashingType>
 	void GenerateNonce(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce) {
 		Hash512 privHash;
 		HashPrivateKey<TKeyHashingType>(privateKey, privHash);
 		Hash512 hash;
-		BuildHash<TKeyHashingType>(hash, buffersList, privHash);
+		BuildHash<TKeyHashingType>(hash, {RawBuffer(privHash.data() + Hash512::Size / 2, Hash512::Size / 2 )}, buffersList);
 		expand256_modm(nonce, hash.data(), 64);
 
 		SecureZero(privHash);
@@ -393,6 +394,8 @@ namespace catapult { namespace crypto {
 
 	template void HashPrivateKey<KeyHashingType::Sha3>(const PrivateKey& privateKey, Hash512& hash);
 	template void HashPrivateKey<KeyHashingType::Sha2>(const PrivateKey& privateKey, Hash512& hash);
+	template void BuildHash<KeyHashingType::Sha2>(Hash512& hash, std::initializer_list<const RawBuffer> initBuffers, const std::initializer_list<const RawBuffer>& buffersList);
+	template void BuildHash<KeyHashingType::Sha3>(Hash512& hash, std::initializer_list<const RawBuffer> initBuffers, const std::initializer_list<const RawBuffer>& buffersList);
 	template void GenerateNonce<KeyHashingType::Sha2>(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce);
 	template void GenerateNonce<KeyHashingType::Sha3>(const PrivateKey& privateKey, std::initializer_list<const RawBuffer> buffersList, bignum256modm_type& nonce);
 	template void ExtractMultiplier<KeyHashingType::Sha3>(const PrivateKey& privateKey, ScalarMultiplier& multiplier);

@@ -21,6 +21,7 @@
 #include "TransactionExtensions.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/Signer.h"
+#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 
 namespace catapult { namespace extensions {
 
@@ -37,10 +38,11 @@ namespace catapult { namespace extensions {
 	{}
 
 	void TransactionExtensions::sign(const crypto::KeyPair& signer, model::Transaction& transaction) const {
+		transaction.SetSignatureVersion(signer.hashingType() == KeyHashingType::Sha2 ? 2 : 1);
 		crypto::Sign(signer, { m_generationHash, TransactionDataBuffer(transaction) }, transaction.Signature);
 	}
 
 	bool TransactionExtensions::verify(const model::Transaction& transaction) const {
-		return crypto::Verify(transaction.Signer, { m_generationHash, TransactionDataBuffer(transaction) }, transaction.Signature);
+		return crypto::Verify(transaction.Signer, { m_generationHash, TransactionDataBuffer(transaction) }, transaction.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(transaction.SignatureVersion()));
 	}
 }}

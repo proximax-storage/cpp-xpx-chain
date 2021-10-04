@@ -30,14 +30,17 @@ namespace catapult {
 
 	// region byte arrays (ex address)
 
-	constexpr size_t Signature_Size = 64;
+	constexpr size_t Signature_Size = 64+1;
 	constexpr size_t Key_Size = 32;
 	constexpr size_t Hash512_Size = 64;
 	constexpr size_t Hash256_Size = 32;
 	constexpr size_t Hash160_Size = 20;
 
-	struct Signature_tag {};
-	using Signature = utils::ByteArray<Signature_Size, Signature_tag>;
+	struct Signature_tag {static constexpr auto Size = 64+1; };
+	using Signature = utils::ByteArray<Signature_tag::Size, Signature_tag>;
+
+	struct RawSignature_tag {static constexpr auto Size = 64; };
+	using RawSignature = utils::ByteArray<RawSignature_tag::Size, RawSignature_tag>;
 
 	struct Key_tag {
 		static constexpr size_t Size = 32;
@@ -156,9 +159,9 @@ namespace catapult {
 		return N;
 	}
 
-	// Network type (8 bit) + entity type (24 bit).
+	// Network type (8 bit) + Signature Version (8 bit) + entity type (16 bit).
 	using VersionType = uint32_t;
-
+	using SignatureVersion = uint8_t;
 	/// Version set.
 	using VersionSet = std::unordered_set<VersionType>;
 

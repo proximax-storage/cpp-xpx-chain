@@ -24,19 +24,44 @@
 
 namespace catapult { namespace crypto {
 
+	/// Returns the hashing algorythm used in this KeyPair.
+	const SignatureVersion GetSignatureVersion(Signature signature);
+
+	const RawSignature& GetRawSignature(const Signature& signature);
+
+	Signature ExpandSignature(RawSignature& signature, SignatureVersion version);
+
+	RawSignature& GetRawSignature(Signature& signature);
 	/// Signs data pointed by \a dataBuffer using \a keyPair, placing resulting signature in \a computedSignature.
 	/// \note The function will throw if the generated S part of the signature is not less than the group order.
 	void Sign(const KeyPair& keyPair, const RawBuffer& dataBuffer, Signature& computedSignature);
+
+	/// Signs data pointed by \a dataBuffer using \a keyPair, placing resulting raw signature in \a computedSignature.
+	/// \note The function will throw if the generated S part of the signature is not less than the group order.
+	void Sign(const KeyPair& keyPair, const RawBuffer& dataBuffer, RawSignature& computedSignature);
 
 	/// Signs data in \a buffersList using \a keyPair, placing resulting signature in \a computedSignature.
 	/// \note The function will throw if the generated S part of the signature is not less than the group order.
 	void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, Signature& computedSignature);
 
+	/// Signs data in \a buffersList using \a keyPair, placing resulting raw signature in \a computedSignature.
+	/// \note The function will throw if the generated S part of the signature is not less than the group order.
+	void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, RawSignature& computedSignature);
+
+	/// Signs data in \a buffersList using \a keyPair, placing resulting signature in \a computedSignature based on Ref10 implementation.
+	/// \note The function will throw if the generated S part of the signature is not less than the group order.
+	void SignRef10(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, Signature& signature);
+
 	/// Verifies that \a signature of data pointed by \a dataBuffer is valid, using public key \a publicKey.
 	/// Returns \c true if signature is valid.
 	bool Verify(const Key& publicKey, const RawBuffer& dataBuffer, const Signature& signature);
 
+
 	/// Verifies that \a signature of data in \a buffersList is valid, using public key \a publicKey.
 	/// Returns \c true if signature is valid.
-	bool Verify(const Key& publicKey, std::initializer_list<const RawBuffer> buffersList, const Signature& signature);
+	bool Verify(const Key& publicKey, std::initializer_list<const RawBuffer> buffers, const RawSignature& signature, KeyHashingType hashingType);
+
+	/// Verifies that \a signature of data in \a buffersList is valid, using public key \a publicKey based on Ref10 implementation.
+	/// Returns \c true if signature is valid.
+	bool VerifyRef10(const Key& publicKey, std::initializer_list<const RawBuffer> buffersList, const RawSignature& signature, KeyHashingType hashingType);
 }}
