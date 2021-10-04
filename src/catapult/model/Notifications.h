@@ -430,7 +430,7 @@ namespace catapult { namespace model {
 		/// (\a dataReplayProtectionMode) applied to data.
 		SignatureNotification(
 				const Key& signer,
-				const Signature& signature,
+				const RawSignature& signature,
 				const RawBuffer& data,
 				ReplayProtectionMode dataReplayProtectionMode = ReplayProtectionMode::Disabled)
 				: Notification(Notification_Type, sizeof(SignatureNotification<1>))
@@ -445,7 +445,7 @@ namespace catapult { namespace model {
 		const Key& Signer;
 
 		/// Signature.
-		const catapult::Signature& Signature;
+		const catapult::RawSignature& Signature;
 
 		/// Signed data.
 		RawBuffer Data;
@@ -453,6 +453,47 @@ namespace catapult { namespace model {
 		/// Replay protection mode applied to data.
 		ReplayProtectionMode DataReplayProtectionMode;
 	};
+
+	template<>
+	struct SignatureNotification<2> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Signature_v2_Notification;
+
+	public:
+		/// Creates a signature notification around \a signer, \a signature and \a data with optional replay protection mode
+		/// (\a dataReplayProtectionMode) applied to data.
+		SignatureNotification(
+				const Key& signer,
+				const RawSignature& signature,
+				const SignatureVersion version,
+				const RawBuffer& data,
+				SignatureNotification<1>::ReplayProtectionMode dataReplayProtectionMode = SignatureNotification<1>::ReplayProtectionMode::Disabled)
+				: Notification(Notification_Type, sizeof(SignatureNotification<1>))
+				, Signer(signer)
+				, SignatureVersion(version)
+				, Signature(signature)
+				, Data(data)
+				, DataReplayProtectionMode(dataReplayProtectionMode)
+		{}
+
+	public:
+		/// Signer.
+		const Key& Signer;
+
+		/// Signature.
+		const catapult::RawSignature& Signature;
+
+		/// Signed data.
+		RawBuffer Data;
+
+		/// Signature version.
+		SignatureVersion SignatureVersion;
+
+		/// Replay protection mode applied to data.
+		SignatureNotification<1>::ReplayProtectionMode DataReplayProtectionMode;
+	};
+
 
 	// endregion
 

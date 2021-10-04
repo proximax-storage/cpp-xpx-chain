@@ -142,11 +142,29 @@ namespace catapult { namespace model {
 				sub.notify(BalanceDebitNotification<1>(transaction.Signer, m_feeMosaicId, fee));
 
 				// raise a signature notification
-				sub.notify(SignatureNotification<1>(
-						transaction.Signer,
-						transaction.Signature,
-						plugin.dataBuffer(transaction),
-						SignatureNotification<1>::ReplayProtectionMode::Enabled));
+				switch (transaction.SignatureVersion())
+				{
+					case 0://unset: prior to merge
+					{
+
+						sub.notify(SignatureNotification<1>(
+								transaction.Signer,
+								transaction.Signature,
+								plugin.dataBuffer(transaction),
+								SignatureNotification<1>::ReplayProtectionMode::Enabled));
+						break;
+					}
+					default:
+					{
+						sub.notify(SignatureNotification<2>(
+								transaction.Signer,
+								transaction.Signature,
+								transaction.SignatureVersion(),
+								plugin.dataBuffer(transaction),
+								SignatureNotification<1>::ReplayProtectionMode::Enabled));
+					}
+				}
+
 			}
 
 		private:

@@ -64,7 +64,7 @@ namespace catapult { namespace validators {
 			crypto::KeyPair SignerKeyPair;
 			catapult::GenerationHash GenerationHash;
 			std::vector<uint8_t> DataBuffer;
-			catapult::Signature Signature;
+			catapult::RawSignature Signature;
 		};
 	}
 

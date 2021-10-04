@@ -24,13 +24,15 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::SignatureNotification<1>;
-
-	DEFINE_STATEFUL_VALIDATOR(NemesisSink, [](const auto& notification, const auto& context) {
-		auto isBlockHeightOne = context.Height == Height(1);
-		auto isNemesisPublicKey = notification.Signer == context.Network.PublicKey;
-		return isBlockHeightOne || !isNemesisPublicKey
-				? ValidationResult::Success
-				: Failure_Core_Nemesis_Account_Signed_After_Nemesis_Block;
+#define DEFINE_NEMESIS_SINK_VALIDATOR(VERSION) \
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(NemesisSinkV##VERSION, model::SignatureNotification<VERSION>, [](const auto& notification, const auto& context) { \
+	  auto isBlockHeightOne = context.Height == Height(1); \
+		auto isNemesisPublicKey = notification.Signer == context.Network.PublicKey; \
+		return isBlockHeightOne || !isNemesisPublicKey\
+		? ValidationResult::Success \
+		: Failure_Core_Nemesis_Account_Signed_After_Nemesis_Block;\
 	});
+
+	DEFINE_NEMESIS_SINK_VALIDATOR(1);
+	DEFINE_NEMESIS_SINK_VALIDATOR(2);
 }}

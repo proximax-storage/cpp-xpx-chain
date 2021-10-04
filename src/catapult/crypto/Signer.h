@@ -29,7 +29,7 @@ namespace catapult { namespace crypto {
 
 	const RawSignature& GetRawSignature(const Signature& signature);
 
-	Signature ExpandSignature(RawSignature& signature, SignatureVersion version);
+	Signature ExpandSignature(const RawSignature& signature, SignatureVersion version);
 
 	RawSignature& GetRawSignature(Signature& signature);
 	/// Signs data pointed by \a dataBuffer using \a keyPair, placing resulting signature in \a computedSignature.

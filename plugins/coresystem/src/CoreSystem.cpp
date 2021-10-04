@@ -97,8 +97,9 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateMaxTransactionsValidator())
 				.add(validators::CreateAddressValidator(networkIdentifier))
 				.add(validators::CreateDeadlineValidator())
-//				We using nemesis account to update the network
-//				.add(validators::CreateNemesisSinkValidator())
+//				We're using nemesis account to update the network
+//				.add(validators::CreateNemesisSinkV1Validator())
+//				.add(validators::CreateNemesisSinkV2Validator())
 				.add(validators::CreateEligibleHarvesterValidator())
 				.add(validators::CreateBalanceDebitValidator())
 				.add(validators::CreateBalanceTransferValidator());

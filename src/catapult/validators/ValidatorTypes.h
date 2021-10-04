@@ -102,6 +102,10 @@ namespace catapult { namespace validators {
 #define MAKE_STATELESS_VALIDATOR(NAME, HANDLER) \
 	std::make_unique<stateless::FunctionalNotificationValidatorT<validators::Notification>>(#NAME "Validator", HANDLER);
 
+/// Makes a functional stateless validator with \a NAME around \a HANDLER  of type \a NOTIFICATION_TYPE.
+#define MAKE_STATELESS_VALIDATOR_WITH_TYPE(NAME, NOTIFICATION_TYPE, HANDLER) \
+	std::make_unique<stateless::FunctionalNotificationValidatorT<NOTIFICATION_TYPE>>(#NAME "Validator", HANDLER);
+
 /// Defines a functional stateless validator with \a NAME around \a HANDLER.
 /// \note This macro requires a validators::Notification alias.
 #define DEFINE_STATELESS_VALIDATOR(NAME, HANDLER) \

@@ -105,6 +105,9 @@ namespace catapult { namespace model {
 	/// Signature was received.
 	DEFINE_CORE_NOTIFICATION(Signature_v1, 0x0007, Validator);
 
+	/// Signature was received V2.
+	DEFINE_CORE_NOTIFICATION(Signature_v2, 0x0107, Validator);
+
 	/// Mosaic was debited from account.
 	DEFINE_CORE_NOTIFICATION(Balance_Debit_v1, 0x0008, All);
 

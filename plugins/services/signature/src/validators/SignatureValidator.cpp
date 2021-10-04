@@ -20,19 +20,29 @@
 
 #include "Validators.h"
 #include "catapult/crypto/Signer.h"
+#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::SignatureNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(Signature, Notification)(const GenerationHash& generationHash) {
-		return MAKE_STATELESS_VALIDATOR(Signature, [generationHash](const auto& notification) {
+	DECLARE_STATELESS_VALIDATOR(SignatureV1, model::SignatureNotification<1>)(const GenerationHash& generationHash) {
+		return MAKE_STATELESS_VALIDATOR_WITH_TYPE(SignatureV1, model::SignatureNotification<1>, [generationHash](const auto& notification) {
 
-			auto isVerified = Notification::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
-					? crypto::Verify(notification.Signer, { generationHash, notification.Data }, notification.Signature)
-					: crypto::Verify(notification.Signer, notification.Data, notification.Signature);
+			auto isVerified = model::SignatureNotification<1>::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
+					? crypto::Verify(notification.Signer, { generationHash, notification.Data }, notification.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(1))
+					: crypto::Verify(notification.Signer, {notification.Data}, notification.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(1));
 
 			return isVerified ? ValidationResult::Success : Failure_Signature_Not_Verifiable;
+		});
+	}
+	DECLARE_STATELESS_VALIDATOR(SignatureV2, model::SignatureNotification<2>)(const GenerationHash& generationHash) {
+		return MAKE_STATELESS_VALIDATOR_WITH_TYPE(SignatureV2, model::SignatureNotification<2>, [generationHash](const auto& notification) {
+
+		  auto isVerified = model::SignatureNotification<1>::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
+							? crypto::Verify(notification.Signer, { generationHash, notification.Data }, notification.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(notification.SignatureVersion))
+							: crypto::Verify(notification.Signer, {notification.Data}, notification.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(notification.SignatureVersion));
+
+		  return isVerified ? ValidationResult::Success : Failure_Signature_Not_Verifiable;
 		});
 	}
 }}

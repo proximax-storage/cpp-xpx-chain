@@ -87,6 +87,15 @@ namespace catapult { namespace crypto {
 	RawSignature& GetRawSignature(Signature& signature) {
 		return *reinterpret_cast<RawSignature*>(signature.data()+1);
 	}
+	Signature ExpandSignature(const RawSignature& signature, SignatureVersion version)
+	{
+		auto result = Signature();
+		auto data = result.data()+1;
+		*reinterpret_cast<RawSignature*>(data) = signature;
+		*result.data() = version;
+		//SecureZero(signature);
+		return result;
+	}
 
 	void Sign(const KeyPair& keyPair, const RawBuffer& dataBuffer, Signature& signature) {
 		Sign(keyPair, { dataBuffer }, GetRawSignature(signature));

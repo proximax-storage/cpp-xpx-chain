@@ -58,7 +58,7 @@ namespace catapult { namespace validators {
 			auto config = CreateBlockchainConfiguration();
 			auto context = test::CreateValidatorContext(config, Height(height), readOnlyCache);
 
-			auto signature = test::GenerateRandomByteArray<Signature>();
+			auto signature = test::GenerateRandomByteArray<RawSignature>();
 			model::SignatureNotification<1> notification(signer, signature, {});
 
 			// Act:
