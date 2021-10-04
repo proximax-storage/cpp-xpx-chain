@@ -22,20 +22,23 @@
 
 namespace catapult { namespace model {
 
-	size_t GetTransactionPayloadSize(const AggregateTransactionHeader& header) {
+	template<uint32_t TCoSignatureVersion>
+	size_t GetTransactionPayloadSize(const AggregateTransactionHeader<TCoSignatureVersion>& header) {
 		return header.PayloadSize;
 	}
 
 	namespace {
-		constexpr bool IsPayloadSizeValid(const AggregateTransaction& aggregate) {
+		template<uint32_t TCoSignatureVersion>
+		constexpr bool IsPayloadSizeValid(const AggregateTransaction<TCoSignatureVersion>& aggregate) {
 			return
-					aggregate.Size >= sizeof(AggregateTransaction) &&
-					aggregate.Size - sizeof(AggregateTransaction) >= aggregate.PayloadSize &&
-					0 == (aggregate.Size - sizeof(AggregateTransaction) - aggregate.PayloadSize) % sizeof(Cosignature);
+					aggregate.Size >= sizeof(AggregateTransaction<TCoSignatureVersion>) &&
+					aggregate.Size - sizeof(AggregateTransaction<TCoSignatureVersion>) >= aggregate.PayloadSize &&
+					0 == (aggregate.Size - sizeof(AggregateTransaction<TCoSignatureVersion>) - aggregate.PayloadSize) % sizeof(Cosignature<2>);
 		}
 	}
 
-	bool IsSizeValid(const AggregateTransaction& aggregate, const TransactionRegistry& registry) {
+	template<uint32_t TCoSignatureVersion>
+	bool IsSizeValid(const AggregateTransaction<TCoSignatureVersion>& aggregate, const TransactionRegistry& registry) {
 		if (!IsPayloadSizeValid(aggregate)) {
 			CATAPULT_LOG(warning)
 					<< "aggregate transaction failed size validation with size "
@@ -56,4 +59,9 @@ namespace catapult { namespace model {
 				<< ", errors? " << transactions.hasError() << ")";
 		return false;
 	}
+	template size_t GetTransactionPayloadSize<1>(const AggregateTransactionHeader<1>& header);
+	template size_t GetTransactionPayloadSize<2>(const AggregateTransactionHeader<2>& header);
+
+	template bool IsSizeValid<1>(const AggregateTransaction<1>& aggregate, const TransactionRegistry& registry);
+	template bool IsSizeValid<2>(const AggregateTransaction<2>& aggregate, const TransactionRegistry& registry);
 }}

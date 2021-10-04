@@ -33,8 +33,9 @@ using namespace catapult::model;
 namespace catapult { namespace plugins {
 
 	namespace {
-		constexpr const AggregateTransaction& CastToDerivedType(const Transaction& transaction) {
-			return static_cast<const AggregateTransaction&>(transaction);
+		template<uint32_t TCoSignatureVersion>
+		constexpr const AggregateTransaction<TCoSignatureVersion>& CastToDerivedType(const Transaction& transaction) {
+			return static_cast<const AggregateTransaction<TCoSignatureVersion>&>(transaction);
 		}
 
 		class AggregateTransactionPlugin : public TransactionPlugin {
@@ -56,13 +57,13 @@ namespace catapult { namespace plugins {
 			TransactionAttributes attributes(const Height& height) const override {
 				const auto& config = m_pConfigHolder->ConfigAtHeightOrLatest(height);
 				const auto& pluginConfig = config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
-				return { AggregateTransaction::Min_Version, AggregateTransaction::Current_Version, pluginConfig.MaxBondedTransactionLifetime };
+				return { AggregateTransaction<2>::Min_Version, AggregateTransaction<2>::Current_Version, pluginConfig.MaxBondedTransactionLifetime };
 			}
-
+			template<uint32_t TCoSignatureVersion>
 			uint64_t calculateRealSize(const Transaction& transaction) const override {
 				// if size is valid, the real size is the transaction size
 				// if size is invalid, return a size that can never be correct (transaction size is uint32_t)
-				return IsSizeValid(CastToDerivedType(transaction), m_transactionRegistry)
+				return IsSizeValid(CastToDerivedType<TCoSignatureVersion>(transaction), m_transactionRegistry)
 						? transaction.Size
 						: std::numeric_limits<uint64_t>::max();
 			}

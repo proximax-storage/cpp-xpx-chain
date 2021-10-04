@@ -26,7 +26,20 @@ namespace catapult { namespace model {
 #pragma pack(push, 1)
 
 	/// A cosignature.
-	struct Cosignature {
+	template<uint32_t TVersion>
+	struct Cosignature;
+
+	template<>
+	struct Cosignature<1> {
+		/// Cosigner public key.
+		Key Signer;
+
+		/// Cosigner signature.
+		catapult::RawSignature Signature;
+	};
+
+	template<>
+	struct Cosignature<2> {
 		/// Cosigner public key.
 		Key Signer;
 
@@ -35,11 +48,12 @@ namespace catapult { namespace model {
 	};
 
 	/// A detached cosignature.
-	struct DetachedCosignature : public Cosignature {
+	template<uint32_t TVersion>
+	struct DetachedCosignature : public Cosignature<TVersion> {
 	public:
 		/// Creates a detached cosignature around \a signer, \a signature and \a parentHash.
 		DetachedCosignature(const Key& signer, const catapult::Signature& signature, const Hash256& parentHash)
-				: Cosignature{ signer, signature }
+				: Cosignature<TVersion>{ signer, signature }
 				, ParentHash(parentHash)
 		{}
 
