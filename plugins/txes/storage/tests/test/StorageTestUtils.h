@@ -111,7 +111,8 @@ namespace catapult { namespace test {
     /// Creates test drive entry.
     state::DownloadChannelEntry CreateDownloadChannelEntry(
         Hash256 id = test::GenerateRandomByteArray<Hash256>(),
-        Key consumer = test::GenerateRandomByteArray<Key>()
+        Key consumer = test::GenerateRandomByteArray<Key>(),
+		uint16_t downloadApprovalCount = test::Random16()
     );
 
     /// Verifies that \a entry1 is equivalent to \a entry2.

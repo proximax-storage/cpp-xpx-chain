@@ -100,8 +100,8 @@ namespace catapult { namespace validators {
 	/// Not every individual part of the multisig transaction appears exactly once.
 	DEFINE_STORAGE_RESULT(Opinions_Reocurring_Individual_Parts, 29);
 
-	/// Download approval transaction for the corresponding billing period has already been approved.
-	DEFINE_STORAGE_RESULT(Overdue_Download_Approval, 30);
+	/// Multisig transaction for the corresponding billing period has already been approved.
+	DEFINE_STORAGE_RESULT(Transaction_Already_Approved, 30);
 
 	/// Download approval transaction sequence number is invalid
 	DEFINE_STORAGE_RESULT(Invalid_Sequence_Number, 31);

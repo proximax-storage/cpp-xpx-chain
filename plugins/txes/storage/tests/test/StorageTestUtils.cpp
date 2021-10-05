@@ -99,9 +99,11 @@ namespace catapult { namespace test {
 
     state::DownloadChannelEntry CreateDownloadChannelEntry(
             Hash256 id,
-            Key consumer) {
+            Key consumer,
+			uint16_t downloadApprovalCount) {
         state::DownloadChannelEntry entry(id);
         entry.setConsumer(consumer);
+		entry.setDownloadApprovalCount(downloadApprovalCount);
 
         return entry;
     }

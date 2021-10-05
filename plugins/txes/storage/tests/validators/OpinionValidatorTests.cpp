@@ -5,7 +5,6 @@
 **/
 
 #include "catapult/crypto/Signer.h"
-#include "src/model/DownloadApprovalTransaction.h"
 #include "src/validators/Validators.h"
 #include "tests/test/StorageTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"

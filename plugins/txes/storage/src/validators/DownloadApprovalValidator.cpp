@@ -22,9 +22,9 @@ namespace catapult { namespace validators {
 
 	  	// Check if transaction sequence number is exactly one more than the number of completed download approval transactions
 	  	const auto targetSequenceNumber = pDownloadChannelEntry->downloadApprovalCount() + 1;
-		if (notification.SequenceNumber < targetSequenceNumber)		// Considered a regular case
-			return Failure_Storage_Overdue_Download_Approval;
-		else if (notification.SequenceNumber > targetSequenceNumber)	// Considered an irregular case, may be worth investigating
+		if (notification.SequenceNumber == targetSequenceNumber - 1)		// Considered a regular case
+			return Failure_Storage_Transaction_Already_Approved;
+		else if (notification.SequenceNumber != targetSequenceNumber)	// Considered an irregular case, may be worth investigating
 			return Failure_Storage_Invalid_Sequence_Number;
 
 		return ValidationResult::Success;

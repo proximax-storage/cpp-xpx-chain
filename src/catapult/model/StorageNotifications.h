@@ -657,28 +657,10 @@ namespace catapult { namespace model {
 	public:
 		explicit DownloadApprovalNotification(
 				const Hash256& id,
-				const uint16_t number,
-				const bool response,
-				const uint8_t opinionCount,
-				const uint8_t judgingCount,
-				const uint8_t judgedCount,
-				const Key* publicKeysPtr,
-				const uint8_t* opinionIndicesPtr,
-				const BLSSignature* blsSignaturesPtr,
-				const uint8_t* presentOpinionsPtr,
-				const uint64_t* opinionsPtr)
+				const uint16_t number)
 				: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
 				, DownloadChannelId(id)
 				, SequenceNumber(number)
-				, ResponseToFinishDownloadTransaction(response)
-				, OpinionCount(opinionCount)
-				, JudgingCount(judgingCount)
-				, JudgedCount(judgedCount)
-				, PublicKeysPtr(publicKeysPtr)
-				, OpinionIndicesPtr(opinionIndicesPtr)
-				, BlsSignaturesPtr(blsSignaturesPtr)
-				, PresentOpinionsPtr(presentOpinionsPtr)
-				, OpinionsPtr(opinionsPtr)
 		{}
 
 	public:
@@ -687,34 +669,6 @@ namespace catapult { namespace model {
 
 		/// Sequence number of current download approval transaction in the download channel.
 		uint16_t SequenceNumber;
-
-		/// Reason of the transaction release.
-		bool ResponseToFinishDownloadTransaction;
-
-		/// Number of unique opinions.
-		uint8_t OpinionCount;
-
-		/// Number of replicators that provided their opinions.
-		uint8_t JudgingCount;
-
-		/// Number of replicators on which at least one opinion was provided.
-		uint8_t JudgedCount;
-
-		/// Replicators' public keys.
-		const Key* PublicKeysPtr;
-
-		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
-		const uint8_t* OpinionIndicesPtr;
-
-		/// Aggregated BLS signatures of opinions.
-		const BLSSignature* BlsSignaturesPtr;
-
-		/// Two-dimensional array of opinion element presence.
-		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
-		const uint8_t* PresentOpinionsPtr;
-
-		/// Jagged array of opinion elements.
-		const uint64_t* OpinionsPtr;
 	};
 
 	/// Notification of an opinion-based payment for a download approval transaction.
