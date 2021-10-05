@@ -277,6 +277,11 @@
 		},
 		{
 			"name": "driveClosure",
+			"type": "20066",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "replicatorOffboarding",
 			"type": "18274",
 			"supportedVersions": [1]
 		}
