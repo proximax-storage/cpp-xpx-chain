@@ -31,9 +31,9 @@ namespace catapult { namespace test {
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 	}
 
-	model::UniqueEntityPtr<model::AggregateTransaction> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures) {
-		uint32_t size = sizeof(model::AggregateTransaction) + 124 + numCosignatures * sizeof(model::Cosignature);
-		auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction>(size);
+	model::UniqueEntityPtr<model::AggregateTransaction<1>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures) {
+		uint32_t size = sizeof(model::AggregateTransaction<1>) + 124 + numCosignatures * sizeof(model::Cosignature<1>);
+		auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<1>>(size);
 		FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), size });
 
 		pTransaction->Version = Transaction_Version;
@@ -44,15 +44,15 @@ namespace catapult { namespace test {
 		return pTransaction;
 	}
 
-	model::DetachedCosignature GenerateValidCosignature(const Hash256& aggregateHash) {
-		model::Cosignature cosignature;
-		auto keyPair = GenerateKeyPair();
+	model::DetachedCosignature<1> GenerateValidCosignature(const Hash256& aggregateHash) {
+		model::Cosignature<1> cosignature;
+		auto keyPair = GenerateKeyPair(1);
 		cosignature.Signer = keyPair.publicKey();
 		crypto::Sign(keyPair, aggregateHash, cosignature.Signature);
 		return { cosignature.Signer, cosignature.Signature, aggregateHash };
 	}
 
-	void FixCosignatures(const Hash256& aggregateHash, model::AggregateTransaction& aggregateTransaction) {
+	void FixCosignatures(const Hash256& aggregateHash, model::AggregateTransaction<1>& aggregateTransaction) {
 		// assigning DetachedCosignature to Cosignature works by slicing off ParentHash since the former is derived from the latter
 		auto* pCosignature = aggregateTransaction.CosignaturesPtr();
 		for (auto i = 0u; i < aggregateTransaction.CosignaturesCount(); ++i)
@@ -60,7 +60,7 @@ namespace catapult { namespace test {
 	}
 
 	AggregateTransactionWrapper CreateAggregateTransaction(uint8_t numTransactions) {
-		using TransactionType = model::AggregateTransaction;
+		using TransactionType = model::AggregateTransaction<1>;
 		uint32_t entitySize = sizeof(TransactionType) + numTransactions * sizeof(mocks::EmbeddedMockTransaction);
 		AggregateTransactionWrapper wrapper;
 		auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
@@ -87,14 +87,14 @@ namespace catapult { namespace test {
 		return wrapper;
 	}
 
-	model::UniqueEntityPtr<model::Transaction> StripCosignatures(const model::AggregateTransaction& aggregateTransaction) {
+	model::UniqueEntityPtr<model::Transaction> StripCosignatures(const model::AggregateTransaction<1>& aggregateTransaction) {
 		auto pTransactionWithoutCosignatures = CopyEntity(aggregateTransaction);
-		uint32_t cosignaturesSize = static_cast<uint32_t>(aggregateTransaction.CosignaturesCount()) * sizeof(model::Cosignature);
+		uint32_t cosignaturesSize = static_cast<uint32_t>(aggregateTransaction.CosignaturesCount()) * sizeof(model::Cosignature<1>);
 		pTransactionWithoutCosignatures->Size -= cosignaturesSize;
 		return std::move(pTransactionWithoutCosignatures);
 	}
 
-	CosignaturesMap ToMap(const std::vector<model::Cosignature>& cosignatures) {
+	CosignaturesMap ToMap(const std::vector<model::Cosignature<1>>& cosignatures) {
 		CosignaturesMap cosignaturesMap;
 		for (const auto& cosignature : cosignatures)
 			cosignaturesMap.emplace(cosignature.Signer, cosignature.Signature);
@@ -104,18 +104,18 @@ namespace catapult { namespace test {
 
 	void AssertStitchedTransaction(
 			const model::Transaction& stitchedTransaction,
-			const model::AggregateTransaction& originalTransaction,
-			const std::vector<model::Cosignature>& expectedCosignatures,
+			const model::AggregateTransaction<1>& originalTransaction,
+			const std::vector<model::Cosignature<1>>& expectedCosignatures,
 			size_t numCosignaturesToIgnore) {
 		// Assert: check basic properties
 		auto expectedSize =
-				sizeof(model::AggregateTransaction)
+				sizeof(model::AggregateTransaction<1>)
 				+ originalTransaction.PayloadSize
-				+ static_cast<uint32_t>((expectedCosignatures.size() + numCosignaturesToIgnore) * sizeof(model::Cosignature));
+				+ static_cast<uint32_t>((expectedCosignatures.size() + numCosignaturesToIgnore) * sizeof(model::Cosignature<1>));
 		ASSERT_EQ(expectedSize, stitchedTransaction.Size);
 		ASSERT_EQ(model::Entity_Type_Aggregate_Bonded, stitchedTransaction.Type);
 
-		const auto& aggregateStitchedTransaction = static_cast<const model::AggregateTransaction&>(stitchedTransaction);
+		const auto& aggregateStitchedTransaction = static_cast<const model::AggregateTransaction<1>&>(stitchedTransaction);
 
 		// - check tx data
 		EXPECT_EQ(*StripCosignatures(originalTransaction), *StripCosignatures(aggregateStitchedTransaction));

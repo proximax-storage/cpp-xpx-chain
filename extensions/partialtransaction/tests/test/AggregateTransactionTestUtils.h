@@ -27,21 +27,21 @@
 namespace catapult { namespace test {
 
 	/// Creates an aggregate transaction with \a numCosignatures cosignatures.
-	model::UniqueEntityPtr<model::AggregateTransaction> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures);
+	model::UniqueEntityPtr<model::AggregateTransaction<1>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures);
 
 	/// Generates a random cosignature for parent hash (\a aggregateHash).
-	model::DetachedCosignature GenerateValidCosignature(const Hash256& aggregateHash);
+	model::DetachedCosignature<1> GenerateValidCosignature(const Hash256& aggregateHash);
 
 	/// Fix cosignatures of \a aggregateTransaction having \a aggregateHash.
-	void FixCosignatures(const Hash256& aggregateHash, model::AggregateTransaction& aggregateTransaction);
+	void FixCosignatures(const Hash256& aggregateHash, model::AggregateTransaction<1>& aggregateTransaction);
 
 	/// A map of cosignature components.
-	using CosignaturesMap = std::unordered_map<Key, Signature, utils::ArrayHasher<Key>>;
+	using CosignaturesMap = std::unordered_map<Key, RawSignature, utils::ArrayHasher<Key>>;
 
 	/// Wrapper around an aggregate transaction and its component information.
 	struct AggregateTransactionWrapper {
 		/// Aggregate transaction.
-		model::UniqueEntityPtr<model::AggregateTransaction> pTransaction;
+		model::UniqueEntityPtr<model::AggregateTransaction<1>> pTransaction;
 
 		/// Sub transactions composing the aggregate transaction.
 		std::vector<const mocks::EmbeddedMockTransaction*> SubTransactions;
@@ -51,16 +51,16 @@ namespace catapult { namespace test {
 	AggregateTransactionWrapper CreateAggregateTransaction(uint8_t numTransactions);
 
 	/// Creates a new transaction based on \a aggregateTransaction that excludes all cosignatures.
-	model::UniqueEntityPtr<model::Transaction> StripCosignatures(const model::AggregateTransaction& aggregateTransaction);
+	model::UniqueEntityPtr<model::Transaction> StripCosignatures(const model::AggregateTransaction<1>& aggregateTransaction);
 
 	/// Extracts component parts of \a cosignatures into a map.
-	CosignaturesMap ToMap(const std::vector<model::Cosignature>& cosignatures);
+	CosignaturesMap ToMap(const std::vector<model::Cosignature<1>>& cosignatures);
 
 	/// Asserts that \a stitchedTransaction is equal to \a originalTransaction with \a expectedCosignatures.
 	/// If nonzero, \a numCosignaturesToIgnore will allow that many cosignatures to be unmatched.
 	void AssertStitchedTransaction(
 			const model::Transaction& stitchedTransaction,
-			const model::AggregateTransaction& originalTransaction,
-			const std::vector<model::Cosignature>& expectedCosignatures,
+			const model::AggregateTransaction<1>& originalTransaction,
+			const std::vector<model::Cosignature<1>>& expectedCosignatures,
 			size_t numCosignaturesToIgnore = 0);
 }}

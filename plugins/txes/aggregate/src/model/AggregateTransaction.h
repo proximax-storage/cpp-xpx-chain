@@ -53,26 +53,6 @@ namespace catapult { namespace model {
 		}
 	};
 
-	template<>
-	struct AggregateTransactionHeader<2> : public Transaction {
-	public:
-		static constexpr VersionType Min_Version = 2;
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Aggregate_Complete, 4)
-
-	public:
-		/// Transaction payload size in bytes.
-		/// \note This is the total number bytes occupied by all sub-transactions.
-		uint32_t PayloadSize;
-
-		// followed by sub-transaction data
-		// followed by cosignatures data
-
-	public:
-		size_t GetHeaderSize() const {
-			return sizeof(AggregateTransactionHeader);
-		}
-	};
-
 	/// Binary layout for an aggregate transaction.
 
 	template<uint32_t TCoSignatureVersion>

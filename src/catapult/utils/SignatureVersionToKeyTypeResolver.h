@@ -23,6 +23,8 @@
 #include "catapult/types.h"
 namespace catapult { namespace utils {
 
-	/// Resolve an account version to the corresponding key hashing algorythm from a version
+	/// Resolve an signature version to the corresponding key hashing algorythm from a version
 	KeyHashingType ResolveKeyHashingTypeFromSignatureVersion(SignatureVersion version);
+	/// Verifies that the given \a accountVersion is compatible with the given \a signatureVersion
+	bool VerifyAccountVersionCompatibilityWithSignatureVersion(uint32_t accountVersion, SignatureVersion signatureVersion);
 }}

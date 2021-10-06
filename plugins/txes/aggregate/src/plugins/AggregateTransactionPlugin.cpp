@@ -57,19 +57,18 @@ namespace catapult { namespace plugins {
 			TransactionAttributes attributes(const Height& height) const override {
 				const auto& config = m_pConfigHolder->ConfigAtHeightOrLatest(height);
 				const auto& pluginConfig = config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
-				return { AggregateTransaction<2>::Min_Version, AggregateTransaction<2>::Current_Version, pluginConfig.MaxBondedTransactionLifetime };
+				return { AggregateTransaction<1>::Min_Version, AggregateTransaction<1>::Current_Version, pluginConfig.MaxBondedTransactionLifetime };
 			}
-			template<uint32_t TCoSignatureVersion>
 			uint64_t calculateRealSize(const Transaction& transaction) const override {
 				// if size is valid, the real size is the transaction size
 				// if size is invalid, return a size that can never be correct (transaction size is uint32_t)
-				return IsSizeValid(CastToDerivedType<TCoSignatureVersion>(transaction), m_transactionRegistry)
+				return IsSizeValid(CastToDerivedType<1>(transaction), m_transactionRegistry)
 						? transaction.Size
 						: std::numeric_limits<uint64_t>::max();
 			}
 
 			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override {
-				const auto& aggregate = CastToDerivedType(transactionInfo.entity());
+				const auto& aggregate = CastToDerivedType<1>(transactionInfo.entity());
 				auto numTransactions = static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend()));
 				auto numCosignatures = aggregate.CosignaturesCount();
 
@@ -102,9 +101,11 @@ namespace catapult { namespace plugins {
 							numCosignatures,
 							aggregate.CosignaturesPtr()));
 
+					std::map<Key, uint32_t> associatedVersion;
 					// publish all sub-transaction information
 					for (const auto& subTransaction : aggregate.Transactions()) {
 						// - change source
+						associatedVersion.try_emplace(subTransaction.Signer, subTransaction.SignatureVersion());
 						constexpr auto Relative = SourceChangeNotification<1>::SourceChangeType::Relative;
 						sub.notify(SourceChangeNotification<1>(Relative, 0, Relative, 1));
 
@@ -139,7 +140,8 @@ namespace catapult { namespace plugins {
 						// - notice that all valid cosigners must have been observed previously as part of either
 						//   (1) sub-transaction execution or (2) composite account setup
 						// - require the cosigners to sign the aggregate indirectly via the hash of its data
-						sub.notify(SignatureNotification<1>(pCosignature->Signer, pCosignature->Signature, transactionInfo.hash()));
+						auto it = associatedVersion.find(pCosignature->Signer);
+						sub.notify(SignatureNotification<2>(pCosignature->Signer, pCosignature->Signature, it != associatedVersion.end() ? it->second : 1,  transactionInfo.hash()));
 						++pCosignature;
 					}
 					break;
@@ -151,17 +153,17 @@ namespace catapult { namespace plugins {
 			}
 
 			RawBuffer dataBuffer(const Transaction& transaction) const override {
-				const auto& aggregate = CastToDerivedType(transaction);
+				const auto& aggregate = CastToDerivedType<1>(transaction);
 
 				auto headerSize = VerifiableEntity::Header_Size;
 				return {
 					reinterpret_cast<const uint8_t*>(&aggregate) + headerSize,
-					sizeof(AggregateTransaction) - headerSize + aggregate.PayloadSize
+					sizeof(AggregateTransaction<1>) - headerSize + aggregate.PayloadSize
 				};
 			}
 
 			std::vector<RawBuffer> merkleSupplementaryBuffers(const Transaction& transaction) const override {
-				const auto& aggregate = CastToDerivedType(transaction);
+				const auto& aggregate = CastToDerivedType<1>(transaction);
 
 				std::vector<RawBuffer> buffers;
 				auto numCosignatures = aggregate.CosignaturesCount();

@@ -29,4 +29,12 @@ namespace catapult { namespace utils {
 		return KeyHashingType::Sha3;
 	}
 
+	bool VerifyAccountVersionCompatibilityWithSignatureVersion(uint32_t accountVersion, SignatureVersion signatureVersion)
+	{
+		if(accountVersion == 2 && signatureVersion < 2) return false;
+		if(accountVersion == 1 && signatureVersion > 1) return false;
+		return true;
+	}
+
+
 }}

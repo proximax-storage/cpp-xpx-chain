@@ -39,7 +39,7 @@ namespace catapult { namespace model {
 
 	template<uint32_t TCoSignatureVersion>
 	bool IsSizeValid(const AggregateTransaction<TCoSignatureVersion>& aggregate, const TransactionRegistry& registry) {
-		if (!IsPayloadSizeValid(aggregate)) {
+		if (!IsPayloadSizeValid<TCoSignatureVersion>(aggregate)) {
 			CATAPULT_LOG(warning)
 					<< "aggregate transaction failed size validation with size "
 					<< aggregate.Size << " and payload size " << aggregate.PayloadSize;
@@ -60,8 +60,5 @@ namespace catapult { namespace model {
 		return false;
 	}
 	template size_t GetTransactionPayloadSize<1>(const AggregateTransactionHeader<1>& header);
-	template size_t GetTransactionPayloadSize<2>(const AggregateTransactionHeader<2>& header);
-
 	template bool IsSizeValid<1>(const AggregateTransaction<1>& aggregate, const TransactionRegistry& registry);
-	template bool IsSizeValid<2>(const AggregateTransaction<2>& aggregate, const TransactionRegistry& registry);
 }}

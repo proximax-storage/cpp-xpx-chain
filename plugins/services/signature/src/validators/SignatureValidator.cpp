@@ -18,9 +18,11 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <catapult/cache_core/AccountStateCache.h>
 #include "Validators.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -35,14 +37,21 @@ namespace catapult { namespace validators {
 			return isVerified ? ValidationResult::Success : Failure_Signature_Not_Verifiable;
 		});
 	}
-	DECLARE_STATELESS_VALIDATOR(SignatureV2, model::SignatureNotification<2>)(const GenerationHash& generationHash) {
-		return MAKE_STATELESS_VALIDATOR_WITH_TYPE(SignatureV2, model::SignatureNotification<2>, [generationHash](const auto& notification) {
+	DECLARE_STATEFUL_VALIDATOR(SignatureV2, model::SignatureNotification<2>)(const GenerationHash& generationHash) {
+		return MAKE_STATEFUL_VALIDATOR_WITH_TYPE(SignatureV2, model::SignatureNotification<2>, ([generationHash](const auto& notification, const auto& context) {
 
-		  auto isVerified = model::SignatureNotification<1>::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
-							? crypto::Verify(notification.Signer, { generationHash, notification.Data }, notification.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(notification.SignatureVersion))
-							: crypto::Verify(notification.Signer, {notification.Data}, notification.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(notification.SignatureVersion));
+			const auto& cache = context.Cache.template sub<cache::AccountStateCache>();
+			auto accountStateIter = cache.find(notification.Signer);
+			auto account = accountStateIter.tryGet();
+			if(account != nullptr)
+			{
+				if(!utils::VerifyAccountVersionCompatibilityWithSignatureVersion(account->GetVersion(), notification.SignatureVersion)) return Failure_Signature_Not_Verifiable;
+			}
+			auto isVerified = model::SignatureNotification<1>::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
+						? crypto::Verify(notification.Signer, { generationHash, notification.Data }, notification.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(notification.SignatureVersion))
+						: crypto::Verify(notification.Signer, {notification.Data}, notification.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(notification.SignatureVersion));
 
-		  return isVerified ? ValidationResult::Success : Failure_Signature_Not_Verifiable;
-		});
+			return isVerified ? ValidationResult::Success : Failure_Signature_Not_Verifiable;
+		}));
 	}
 }}
