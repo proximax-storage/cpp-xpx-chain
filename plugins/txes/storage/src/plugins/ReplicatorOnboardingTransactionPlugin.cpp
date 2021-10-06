@@ -24,6 +24,7 @@ namespace catapult { namespace plugins {
 				case 1: {
 					sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
 					sub.notify(ReplicatorOnboardingNotification<1>(transaction.Signer, transaction.BlsKey, transaction.Capacity));
+					sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
 
 					const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
 					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
