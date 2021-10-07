@@ -47,13 +47,13 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		void StreamVerificationOpinions(bson_stream::document& builder, const state::VerificationResults& opinions) {
 			auto array = builder << "opinions" << bson_stream::open_array;
-			for (const auto& pair : opinions) {
-				bson_stream::document opinionsBuilder;
-				opinionsBuilder
-						<< "prover" << ToBinary(pair.first)
-						<< "opinion" << static_cast<int8_t>(pair.second);
-				array << opinionsBuilder;
-			}
+			for (const auto& pair : opinions)
+				array
+						<< bson_stream::open_document
+							<< "prover" << ToBinary(pair.first)
+							<< "result" << static_cast<int8_t>(pair.second)
+						<< bson_stream::close_document;
+
 			array << bson_stream::close_array;
 		}
 
@@ -139,7 +139,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				Key prover;
 				DbBinaryToModelArray(prover, doc["prover"].get_binary());
 
-				opinions[prover] = static_cast<uint8_t>(dbPair["opinion"].get_int64());
+				opinions[prover] = static_cast<uint8_t>(dbPair["result"].get_int64());
 			}
 		}
 
