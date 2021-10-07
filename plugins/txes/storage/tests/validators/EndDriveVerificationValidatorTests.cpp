@@ -126,6 +126,7 @@ namespace catapult {
             auto trigger = test::GenerateRandomByteArray<Hash256>();
             entry.verifications().emplace_back(state::Verification{
                 trigger,
+                state::VerificationState::Finished,
                 state::VerificationResults{{test::GenerateRandomByteArray<Key>(), 1}}
             });
 
@@ -152,8 +153,8 @@ namespace catapult {
             auto trigger = test::GenerateRandomByteArray<Hash256>();
             entry.verifications().emplace_back(state::Verification{
                 trigger,
-                state::VerificationResults{},
                 state::VerificationState::Finished,
+                state::VerificationResults{},
             });
 
             // Assert:

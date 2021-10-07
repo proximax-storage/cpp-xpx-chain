@@ -93,8 +93,8 @@ namespace catapult { namespace state {
 		    while (count--) {
 		        state::Verification verification;
 		        io::Read(input, verification.VerificationTrigger);
-				LoadVerificationOpinions(input, verification.Results);
 				verification.State = static_cast<VerificationState>(io::Read8(input));
+				LoadVerificationOpinions(input, verification.Results);
 
 		        verifications.emplace_back(verification);
 		    }

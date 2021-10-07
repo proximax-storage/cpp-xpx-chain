@@ -26,16 +26,16 @@ namespace catapult { namespace observers {
             state::Verification CreateInitialVerificationEntry() {
                 return state::Verification{
                         Verification_Trigger,
-                        state::VerificationResults{},
                         state::VerificationState::Pending,
+                        state::VerificationResults{},
                 };
             }
 
             state::Verification CreateExpectedVerificationEntry(const state::VerificationResults& results) {
                 return state::Verification{
                         Verification_Trigger,
-                        results,
                         state::VerificationState::Finished,
+                        results,
                 };
             }
 

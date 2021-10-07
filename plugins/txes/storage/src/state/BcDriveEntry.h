@@ -72,11 +72,11 @@ namespace catapult { namespace state {
 		/// The hash of block that initiated the Verification.
 		Hash256 VerificationTrigger;
 
-		/// Verification opinions.
-		VerificationResults Results;
-
 		/// State of verification.
 		VerificationState State;
+
+		/// Verification opinions.
+		VerificationResults Results;
 	};
 
 	using Verifications = std::vector<Verification>;

@@ -58,6 +58,7 @@ namespace catapult { namespace test {
 	    	uint16_t replicatorCount,
 	    	uint16_t activeDataModificationsCount,
 		    uint16_t completedDataModificationsCount,
+            uint16_t verificationsCount,
 		    uint16_t activeDownloadsCount,
 		    uint16_t completedDownloadsCount) {
         state::BcDriveEntry entry(key);
@@ -80,6 +81,15 @@ namespace catapult { namespace test {
         for (auto cDMC = 0u; cDMC < completedDataModificationsCount; ++cDMC){
             entry.completedDataModifications().emplace_back(state::CompletedDataModification{
                 entry.activeDataModifications()[cDMC], static_cast<state::DataModificationState>(test::RandomByte())
+            });
+        }
+
+        entry.verifications().reserve(verificationsCount);
+        for (auto vc = 0u; vc < verificationsCount; ++vc){
+            entry.verifications().emplace_back(state::Verification{
+                    test::GenerateRandomByteArray<Hash256>(),
+                    state::VerificationState::Finished,
+                    state::VerificationResults{}
             });
         }
 
