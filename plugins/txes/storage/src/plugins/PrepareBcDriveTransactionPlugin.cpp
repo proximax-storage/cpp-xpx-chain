@@ -31,6 +31,7 @@ namespace catapult { namespace plugins {
 							transaction.DriveSize,
 							transaction.ReplicatorCount
 					));
+					sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
 
 					const auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(driveKey, config.NetworkIdentifier));
 					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
