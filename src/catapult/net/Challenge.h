@@ -48,8 +48,8 @@ namespace catapult { namespace net {
 		/// Challenge data that should be signed by the server.
 		net::Challenge Challenge;
 
-		/// Client's signature on the server challenge and any additional request information.
-		catapult::Signature Signature;
+		/// Client's signature on the server challenge and any additional request information. Always Sha3
+		catapult::RawSignature Signature;
 
 		/// Client's public key.
 		Key PublicKey;
@@ -62,8 +62,8 @@ namespace catapult { namespace net {
 	struct ClientChallengeResponse : public ionet::Packet {
 		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Client_Challenge;
 
-		/// Server's signature on the client challenge.
-		catapult::Signature Signature;
+		/// Server's signature on the client challenge. Always Sha3
+		catapult::RawSignature Signature;
 	};
 
 #pragma pack(pop)

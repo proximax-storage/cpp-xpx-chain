@@ -33,7 +33,7 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Adds a cosignature (composed of \a signer and \a signature) for a partial transaction with hash \a parentHash to the cache.
-		virtual model::DetachedTransactionInfo add(const Hash256& parentHash, const Key& signer, const Signature& signature) = 0;
+		virtual model::DetachedTransactionInfo add(const Hash256& parentHash, const Key& signer, const RawSignature& signature) = 0;
 
 		/// Removes all partial transactions that have deadlines at or before the given \a timestamp.
 		virtual std::vector<model::DetachedTransactionInfo> prune(Timestamp timestamp) = 0;
@@ -52,7 +52,7 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Adds a cosignature (composed of \a signer and \a signature) for a partial transaction with hash \a parentHash to the cache.
-		model::DetachedTransactionInfo add(const Hash256& parentHash, const Key& signer, const Signature& signature) {
+		model::DetachedTransactionInfo add(const Hash256& parentHash, const Key& signer, const RawSignature& signature) {
 			return modifier().add(parentHash, signer, signature);
 		}
 

@@ -23,6 +23,7 @@
 #include "catapult/model/EntityPtr.h"
 #include "catapult/thread/Future.h"
 #include <memory>
+#include <catapult/model/Cosignature.h>
 
 namespace catapult {
 	namespace cache {
@@ -31,7 +32,6 @@ namespace catapult {
 	}
 	namespace chain { class PtValidator; }
 	namespace model {
-		struct DetachedCosignature;
 		struct Transaction;
 		struct TransactionInfo;
 	}
@@ -111,7 +111,7 @@ namespace catapult { namespace chain {
 		thread::future<TransactionUpdateResult> update(const model::TransactionInfo& transactionInfo);
 
 		/// Updates this cache by adding a new \a cosignature.
-		thread::future<CosignatureUpdateResult> update(const model::DetachedCosignature& cosignature);
+		thread::future<CosignatureUpdateResult> update(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature);
 
 	private:
 		class Impl;

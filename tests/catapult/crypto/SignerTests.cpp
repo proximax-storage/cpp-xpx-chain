@@ -35,12 +35,12 @@ namespace catapult { namespace crypto {
 		}
 
 		const char* Default_Key_String = "CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98534";
-		KeyPair GetDefaultKeyPair() {
-			return KeyPair::FromString(Default_Key_String, KeyHashingType::Sha3);
+		KeyPair GetDefaultKeyPair(KeyHashingType hashingType = KeyHashingType::Sha3) {
+			return KeyPair::FromString(Default_Key_String, hashingType);
 		}
 
-		KeyPair GetAlteredKeyPair() {
-			return KeyPair::FromString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98535", KeyHashingType::Sha3);
+		KeyPair GetAlteredKeyPair(KeyHashingType hashingType = KeyHashingType::Sha3) {
+			return KeyPair::FromString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98535", hashingType);
 		}
 	}
 
@@ -63,15 +63,20 @@ namespace catapult { namespace crypto {
 		// Arrange:
 		auto keyPair1 = KeyPair::FromString(Default_Key_String, KeyHashingType::Sha3);
 		auto keyPair2 = KeyPair::FromString(Default_Key_String, KeyHashingType::Sha3);
+		auto keyPair3 = KeyPair::FromString(Default_Key_String, KeyHashingType::Sha2);
+		auto keyPair4 = KeyPair::FromString(Default_Key_String, KeyHashingType::Sha2);
 		auto payload = test::GenerateRandomArray<100>();
 
 		// Act:
 
 		auto signature1 = SignPayload(keyPair1, payload);
 		auto signature2 = SignPayload(keyPair2, payload);
+		auto signature3 = SignPayload(keyPair3, payload);
+		auto signature4 = SignPayload(keyPair4, payload);
 
 		// Assert:
 		EXPECT_EQ(signature1, signature2);
+		EXPECT_EQ(signature3, signature4);
 	}
 
 	TEST(TEST_CLASS, SignaturesGeneratedForSameDataByDifferentKeyPairsAreDifferent) {
@@ -82,8 +87,13 @@ namespace catapult { namespace crypto {
 		auto signature1 = SignPayload(GetDefaultKeyPair(), payload);
 		auto signature2 = SignPayload(GetAlteredKeyPair(), payload);
 
+		auto signature3 = SignPayload(GetDefaultKeyPair(KeyHashingType::Sha2), payload);
+		auto signature4 = SignPayload(GetAlteredKeyPair(KeyHashingType::Sha2), payload);
+
 		// Assert:
 		EXPECT_NE(signature1, signature2);
+		EXPECT_NE(signature3, signature4);
+		EXPECT_NE(signature1, signature3);
 	}
 
 	TEST(TEST_CLASS, SignedDataCanBeVerified) {
@@ -105,6 +115,7 @@ namespace catapult { namespace crypto {
 
 		// Act:
 		bool isVerified = Verify(GetAlteredKeyPair().publicKey(), payload, signature);
+		bool isVerified2 = Verify(GetDefaultKeyPair(KeyHashingType::Sha2).publicKey(), payload, signature);
 
 		// Assert:
 		EXPECT_FALSE(isVerified);
@@ -250,8 +261,10 @@ namespace catapult { namespace crypto {
 		struct TestVectorsInput {
 			std::vector<std::string> InputData;
 			std::vector<std::string> PrivateKeys;
-			std::vector<std::string> ExpectedPublicKeys;
-			std::vector<std::string> ExpectedSignatures;
+			std::vector<std::string> ExpectedPublicKeysSha2;
+			std::vector<std::string> ExpectedPublicKeysSha3;
+			std::vector<std::string> ExpectedSignaturesSha2;
+			std::vector<std::string> ExpectedSignaturesSha3;
 		};
 
 		TestVectorsInput GetTestVectorsInput() {
@@ -295,26 +308,43 @@ namespace catapult { namespace crypto {
 				"D7D816DA0566878EE739EDE2131CD64201BCCC27F88FA51BA5815BCB0FE33CC8",
 				"27FC9998454848B987FAD89296558A34DEED4358D1517B953572F3E0AAA0A22D"
 			};
-			input.ExpectedPublicKeys = {
+			input.ExpectedPublicKeysSha3 = {
 				"53C659B47C176A70EB228DE5C0A0FF391282C96640C2A42CD5BBD0982176AB1B",
 				"3FE4A1AA148F5E76891CE924F5DC05627A87047B2B4AD9242C09C0ECED9B2338",
 				"F398C0A2BDACDBD7037D2F686727201641BBF87EF458F632AE2A04B4E8F57994",
 				"6A283A241A8D8203B3A1E918B1E6F0A3E14E75E16D4CFFA45AE4EF89E38ED6B5",
 				"4DC62B38215826438DE2369743C6BBE6D13428405025DFEFF2857B9A9BC9D821"
 			};
-			input.ExpectedSignatures = {
+			input.ExpectedPublicKeysSha2 = {
+				"53C659B47C176A70EB228DE5C0A0FF391282C96640C2A42CD5BBD0982176AB1B",
+				"3FE4A1AA148F5E76891CE924F5DC05627A87047B2B4AD9242C09C0ECED9B2338",
+				"F398C0A2BDACDBD7037D2F686727201641BBF87EF458F632AE2A04B4E8F57994",
+				"6A283A241A8D8203B3A1E918B1E6F0A3E14E75E16D4CFFA45AE4EF89E38ED6B5",
+				"4DC62B38215826438DE2369743C6BBE6D13428405025DFEFF2857B9A9BC9D821"
+			};
+			input.ExpectedSignaturesSha3 = {
 				"C9B1342EAB27E906567586803DA265CC15CCACA411E0AEF44508595ACBC47600D02527F2EED9AB3F28C856D27E30C3808AF7F22F5F243DE698182D373A9ADE03",
 				"0755E437ED4C8DD66F1EC29F581F6906AB1E98704ECA94B428A25937DF00EC64796F08E5FEF30C6F6C57E4A5FB4C811D617FA661EB6958D55DAE66DDED205501",
 				"15D6585A2A456E90E89E8774E9D12FE01A6ACFE09936EE41271AA1FBE0551264A9FF9329CB6FEE6AE034238C8A91522A6258361D48C5E70A41C1F1C51F55330D",
 				"F6FB0D8448FEC0605CF74CFFCC7B7AE8D31D403BCA26F7BD21CB4AC87B00769E9CC7465A601ED28CDF08920C73C583E69D621BA2E45266B86B5FCF8165CBE309",
 				"E88D8C32FE165D34B775F70657B96D8229FFA9C783E61198A6F3CCB92F487982D08F8B16AB9157E2EFC3B78F126088F585E26055741A9F25127AC13E883C9A05"
 			};
+			input.ExpectedSignaturesSha2 = {
+				"C9B1342EAB27E906567586803DA265CC15CCACA411E0AEF44508595ACBC47600D02527F2EED9AB3F28C856D27E30C3808AF7F22F5F243DE698182D373A9ADE03",
+				"0755E437ED4C8DD66F1EC29F581F6906AB1E98704ECA94B428A25937DF00EC64796F08E5FEF30C6F6C57E4A5FB4C811D617FA661EB6958D55DAE66DDED205501",
+				"15D6585A2A456E90E89E8774E9D12FE01A6ACFE09936EE41271AA1FBE0551264A9FF9329CB6FEE6AE034238C8A91522A6258361D48C5E70A41C1F1C51F55330D",
+				"F6FB0D8448FEC0605CF74CFFCC7B7AE8D31D403BCA26F7BD21CB4AC87B00769E9CC7465A601ED28CDF08920C73C583E69D621BA2E45266B86B5FCF8165CBE309",
+				"E88D8C32FE165D34B775F70657B96D8229FFA9C783E61198A6F3CCB92F487982D08F8B16AB9157E2EFC3B78F126088F585E26055741A9F25127AC13E883C9A05"
+			};
+
 #endif
 
 			// Sanity:
 			EXPECT_EQ(input.InputData.size(), input.PrivateKeys.size());
-			EXPECT_EQ(input.InputData.size(), input.ExpectedPublicKeys.size());
-			EXPECT_EQ(input.InputData.size(), input.ExpectedSignatures.size());
+			EXPECT_EQ(input.InputData.size(), input.ExpectedPublicKeysSha2.size());
+			EXPECT_EQ(input.InputData.size(), input.ExpectedSignaturesSha2.size());
+			EXPECT_EQ(input.InputData.size(), input.ExpectedPublicKeysSha3.size());
+			EXPECT_EQ(input.InputData.size(), input.ExpectedSignaturesSha3.size());
 			return input;
 		}
 	}
@@ -326,13 +356,19 @@ namespace catapult { namespace crypto {
 		// Act / Assert:
 		for (auto i = 0u; i < input.InputData.size(); ++i) {
 			// Act:
-			auto keyPair = KeyPair::FromString(input.PrivateKeys[i], KeyHashingType::Sha3);
-			auto signature = SignPayload(keyPair, test::ToVector(input.InputData[i]));
+			auto keyPairSha3 = KeyPair::FromString(input.PrivateKeys[i], KeyHashingType::Sha3);
+			auto signatureSha3 = SignPayload(keyPairSha3, test::ToVector(input.InputData[i]));
+
+			auto keyPairSha2 = KeyPair::FromString(input.PrivateKeys[i], KeyHashingType::Sha2);
+			auto signatureSha2 = SignPayload(keyPairSha2, test::ToVector(input.InputData[i]));
 
 			// Assert:
 			auto message = "test vector at " + std::to_string(i);
-			EXPECT_EQ(input.ExpectedPublicKeys[i], test::ToString(keyPair.publicKey())) << message;
-			EXPECT_EQ(input.ExpectedSignatures[i], test::ToString(signature)) << message;
+			EXPECT_EQ(input.ExpectedPublicKeysSha3[i], test::ToString(keyPairSha3.publicKey())) << message;
+			EXPECT_EQ(input.ExpectedSignaturesSha3[i], test::ToString(signatureSha3)) << message;
+
+			EXPECT_EQ(input.ExpectedPublicKeysSha2[i], test::ToString(keyPairSha2.publicKey())) << message;
+			EXPECT_EQ(input.ExpectedSignaturesSha2[i], test::ToString(signatureSha3)) << message;
 		}
 	}
 
@@ -343,21 +379,26 @@ namespace catapult { namespace crypto {
 		// Act / Assert:
 		for (auto i = 0u; i < input.InputData.size(); ++i) {
 			// Act:
-			auto keyPair = KeyPair::FromString(input.PrivateKeys[i], KeyHashingType::Sha3);
+			auto keyPairSha3 = KeyPair::FromString(input.PrivateKeys[i], KeyHashingType::Sha3);
+			auto keyPairSha2 = KeyPair::FromString(input.PrivateKeys[i], KeyHashingType::Sha2);
 			auto payload = test::ToVector(input.InputData[i]);
-			auto signature = SignPayload(keyPair, payload);
-			auto isVerified = Verify(keyPair.publicKey(), payload, signature);
+			auto signatureSha3 = SignPayload(keyPairSha3, payload);
+			auto signatureSha2 = SignPayload(keyPairSha2, payload);
+			auto isVerifiedSha3 = Verify(keyPairSha3.publicKey(), payload, signatureSha3);
+			auto isVerifiedSha2 = Verify(keyPairSha3.publicKey(), payload, signatureSha2);
 
 			// Assert:
 			auto message = "test vector at " + std::to_string(i);
-			EXPECT_TRUE(isVerified) << message;
+			EXPECT_TRUE(isVerifiedSha3) << message;
+			EXPECT_TRUE(isVerifiedSha2) << message;
 		}
 	}
 
 	TEST(TEST_CLASS, SignatureForConsecutiveDataMatchesSignatureForChunkedData) {
 		// Arrange:
 		auto payload = test::GenerateRandomVector(123);
-		auto properSignature = SignPayload(GetDefaultKeyPair(), payload);
+		auto properSignatureSha3 = SignPayload(GetDefaultKeyPair(), payload);
+		auto properSignatureSha2 = SignPayload(GetDefaultKeyPair(KeyHashingType::Sha2), payload);
 
 		// Act:
 		{
@@ -367,7 +408,17 @@ namespace catapult { namespace crypto {
 				{ payload.data(), partSize },
 				{ payload.data() + partSize, payload.size() - partSize }
 			}, result));
-			EXPECT_EQ(properSignature, result);
+			EXPECT_EQ(properSignatureSha3, result);
+		}
+
+		{
+			Signature result;
+			auto partSize = payload.size() / 2;
+			ASSERT_NO_THROW(Sign(GetDefaultKeyPair(KeyHashingType::Sha2), {
+															  { payload.data(), partSize },
+															  { payload.data() + partSize, payload.size() - partSize }
+													  }, result));
+			EXPECT_EQ(properSignatureSha2, result);
 		}
 
 		{
@@ -378,7 +429,18 @@ namespace catapult { namespace crypto {
 				{ payload.data() + partSize, partSize },
 				{ payload.data() + 2 * partSize, payload.size() - 2 * partSize }
 			}, result));
-			EXPECT_EQ(properSignature, result);
+			EXPECT_EQ(properSignatureSha3, result);
+		}
+
+		{
+			Signature result;
+			auto partSize = payload.size() / 3;
+			ASSERT_NO_THROW(Sign(GetDefaultKeyPair(KeyHashingType::Sha2), {
+															  { payload.data(), partSize },
+															  { payload.data() + partSize, partSize },
+															  { payload.data() + 2 * partSize, payload.size() - 2 * partSize }
+													  }, result));
+			EXPECT_EQ(properSignatureSha2, result);
 		}
 
 		{
@@ -390,7 +452,19 @@ namespace catapult { namespace crypto {
 				{ payload.data() + 2 * partSize, partSize },
 				{ payload.data() + 3 * partSize, payload.size() - 3 * partSize }
 			}, result));
-			EXPECT_EQ(properSignature, result);
+			EXPECT_EQ(properSignatureSha3, result);
+		}
+
+		{
+			Signature result;
+			auto partSize = payload.size() / 4;
+			ASSERT_NO_THROW(Sign(GetDefaultKeyPair(KeyHashingType::Sha2), {
+															  { payload.data(), partSize },
+															  { payload.data() + partSize, partSize },
+															  { payload.data() + 2 * partSize, partSize },
+															  { payload.data() + 3 * partSize, payload.size() - 3 * partSize }
+													  }, result));
+			EXPECT_EQ(properSignatureSha2, result);
 		}
 	}
 }}

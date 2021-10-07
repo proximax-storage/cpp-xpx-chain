@@ -38,15 +38,15 @@ namespace catapult { namespace net {
 			return { reinterpret_cast<const uint8_t*>(&securityMode), sizeof(ionet::ConnectionSecurityMode) };
 		}
 
-		void SignChallenge(const crypto::KeyPair& keyPair, std::initializer_list<const RawBuffer> buffers, Signature& computedSignature) {
+		void SignChallenge(const crypto::KeyPair& keyPair, std::initializer_list<const RawBuffer> buffers, RawSignature& computedSignature) {
 			CATAPULT_LOG(debug) << "preparing challenge response";
 			crypto::Sign(keyPair, buffers, computedSignature);
 			CATAPULT_LOG(trace) << "signature: " << computedSignature;
 		}
 
-		bool VerifyChallenge(const Key& publicKey, std::initializer_list<const RawBuffer> buffers, const Signature& signature) {
+		bool VerifyChallenge(const Key& publicKey, std::initializer_list<const RawBuffer> buffers, const RawSignature& signature) {
 			CATAPULT_LOG(trace) << "verify signature: " << signature;
-			auto isVerified = crypto::Verify(publicKey, buffers, signature);
+			auto isVerified = crypto::Verify(publicKey, buffers, signature, KeyHashingType::Sha3);
 			CATAPULT_LOG(debug) << "verify signature result: " << isVerified;
 			return isVerified;
 		}

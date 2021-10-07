@@ -66,7 +66,7 @@ namespace catapult { namespace tools { namespace benchmark {
 						<< "), ops / partition (" << m_opsPerPartition
 						<< "), data size (" << m_dataSize << ")";
 
-				auto keyPair = GenerateRandomKeyPair(KeyHashingType::Sha3);
+				auto keyPair = GenerateRandomKeyPair(1);
 				auto entries = std::vector<BenchmarkEntry>(m_numPartitions * m_opsPerPartition);
 				auto pPool = CreateStartedThreadPool(m_numThreads);
 

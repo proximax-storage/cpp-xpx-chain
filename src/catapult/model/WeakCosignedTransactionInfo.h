@@ -33,7 +33,7 @@ namespace catapult { namespace model {
 		{}
 
 		/// Creates a weak transaction info around \a pTransaction and \a pCosignatures.
-		WeakCosignedTransactionInfo(const Transaction* pTransaction, const std::vector<Cosignature>* pCosignatures)
+		WeakCosignedTransactionInfo(const Transaction* pTransaction, const std::vector<Cosignature<CoSignatureVersionAlias::Raw>>* pCosignatures)
 				: m_pTransaction(pTransaction)
 				, m_pCosignatures(pCosignatures)
 		{}
@@ -45,7 +45,7 @@ namespace catapult { namespace model {
 		}
 
 		/// Gets the cosignatures.
-		const std::vector<Cosignature>& cosignatures() const {
+		const std::vector<Cosignature<CoSignatureVersionAlias::Raw>>& cosignatures() const {
 			return *m_pCosignatures;
 		}
 
@@ -64,6 +64,6 @@ namespace catapult { namespace model {
 
 	private:
 		const Transaction* m_pTransaction;
-		const std::vector<Cosignature>* m_pCosignatures;
+		const std::vector<Cosignature<CoSignatureVersionAlias::Raw>>* m_pCosignatures;
 	};
 }}

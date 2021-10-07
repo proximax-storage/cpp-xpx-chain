@@ -38,7 +38,7 @@ namespace catapult { namespace extensions {
 	{}
 
 	void TransactionExtensions::sign(const crypto::KeyPair& signer, model::Transaction& transaction) const {
-		transaction.SetSignatureVersion(signer.hashingType() == KeyHashingType::Sha2 ? 2 : 1);
+		transaction.SetSignatureVersion(signer.hashingType() == KeyHashingType::Sha2 ? SignatureVersionAlias::Sha2 : SignatureVersionAlias::Sha3);
 		crypto::Sign(signer, { m_generationHash, TransactionDataBuffer(transaction) }, transaction.Signature);
 	}
 

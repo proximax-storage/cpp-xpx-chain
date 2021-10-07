@@ -31,7 +31,7 @@ namespace catapult { namespace ionet {
 		struct SecurePacketHeader : public ionet::Packet {
 			static constexpr PacketType Packet_Type = PacketType::Secure_Signed;
 
-			catapult::Signature Signature;
+			catapult::RawSignature Signature;
 		};
 
 		Hash256 CalculatePayloadHash(const PacketPayload& payload) {
@@ -71,7 +71,7 @@ namespace catapult { namespace ionet {
 				Hash256 childPacketHash;
 				crypto::Sha3_256({ reinterpret_cast<const uint8_t*>(&childPacket), childPacket.Size }, childPacketHash);
 
-				if (!crypto::Verify(m_remoteKey, childPacketHash, securePacketHeader.Signature)) {
+				if (!crypto::Verify(m_remoteKey, {childPacketHash}, securePacketHeader.Signature, KeyHashingType::Sha3)) {
 					CATAPULT_LOG(warning) << "packet from " << m_remoteKey << " has invalid signature";
 					return m_callback(SocketOperationCode::Security_Error, nullptr);
 				}

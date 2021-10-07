@@ -25,7 +25,7 @@
 
 namespace catapult { namespace builders {
 
-	using TransactionType = model::AggregateTransaction;
+	using TransactionType = model::AggregateTransaction<1>;
 
 	AggregateTransactionBuilder::AggregateTransactionBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer)
 			: TransactionBuilder(networkIdentifier, signer)
@@ -79,13 +79,13 @@ namespace catapult { namespace builders {
 					TransactionDataBuffer(*m_pAggregateTransaction));
 		}
 
-		model::Cosignature cosignature{ cosigner.publicKey(), {} };
+		model::Cosignature<1> cosignature{ cosigner.publicKey(), {} };
 		crypto::Sign(cosigner, m_transactionHash, cosignature.Signature);
 		m_cosignatures.push_back(cosignature);
 	}
 
 	model::UniqueEntityPtr<TransactionType> AggregateCosignatureAppender::build() const {
-		auto cosignaturesSize = sizeof(model::Cosignature) * m_cosignatures.size();
+		auto cosignaturesSize = sizeof(model::Cosignature<1>) * m_cosignatures.size();
 		auto size = m_pAggregateTransaction->Size + static_cast<uint32_t>(cosignaturesSize);
 		auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(size);
 

@@ -24,6 +24,7 @@
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/utils/MemoryUtils.h"
+#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 #include <cstring>
 
 namespace catapult { namespace model {
@@ -70,7 +71,7 @@ namespace catapult { namespace model {
 	}
 
 	bool VerifyBlockHeaderSignature(const Block& block) {
-		return crypto::Verify(block.Signer, BlockDataBuffer(block), block.Signature);
+		return crypto::Verify(block.Signer, {BlockDataBuffer(block)}, block.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(block.SignatureVersion()));
 	}
 
 	// endregion

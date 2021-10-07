@@ -44,9 +44,9 @@ namespace catapult { namespace test {
 		return pTransaction;
 	}
 
-	model::DetachedCosignature<1> GenerateValidCosignature(const Hash256& aggregateHash) {
+	model::DetachedCosignature<1> GenerateValidCosignature(const Hash256& aggregateHash, uint32_t accountVersion) {
 		model::Cosignature<1> cosignature;
-		auto keyPair = GenerateKeyPair(1);
+		auto keyPair = GenerateKeyPair(accountVersion);
 		cosignature.Signer = keyPair.publicKey();
 		crypto::Sign(keyPair, aggregateHash, cosignature.Signature);
 		return { cosignature.Signer, cosignature.Signature, aggregateHash };

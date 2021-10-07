@@ -25,14 +25,14 @@ namespace catapult { namespace utils {
 	/// Resolve an account version to the corresponding key hashing algorythm from a version
 	KeyHashingType ResolveKeyHashingTypeFromSignatureVersion(SignatureVersion version)
 	{
-		if(version >= 2) return KeyHashingType::Sha2;
+		if(version >= SignatureVersionAlias::Sha2) return KeyHashingType::Sha2;
 		return KeyHashingType::Sha3;
 	}
 
 	bool VerifyAccountVersionCompatibilityWithSignatureVersion(uint32_t accountVersion, SignatureVersion signatureVersion)
 	{
-		if(accountVersion == 2 && signatureVersion < 2) return false;
-		if(accountVersion == 1 && signatureVersion > 1) return false;
+		if(accountVersion == 2 && signatureVersion < SignatureVersionAlias::Sha2) return false;
+		if(accountVersion == 1 && signatureVersion > SignatureVersionAlias::Sha3) return false;
 		return true;
 	}
 

@@ -49,7 +49,10 @@ namespace catapult { namespace model {
 
 	/// A detached cosignature.
 	template<uint32_t TVersion>
-	struct DetachedCosignature;
+	struct DetachedCosignature : public Cosignature<TVersion>
+	{
+
+	};
 
 	template<>
 	struct DetachedCosignature<1> : public Cosignature<1> {

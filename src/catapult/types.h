@@ -182,4 +182,22 @@ namespace catapult {
 		Sha2,
 		Sha3
 	};
+
+	namespace SignatureVersionAlias
+	{
+		enum SignatureVersionFromHashType : uint8_t
+		{
+			Sha3 = 1,
+			Sha2 = 2
+		};
+	}
+
+	namespace CoSignatureVersionAlias
+	{
+		enum SignatureVersionFromHashType : uint8_t
+		{
+			Raw = 1,
+			Extended = 2
+		};
+	}
 }

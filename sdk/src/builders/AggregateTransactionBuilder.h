@@ -39,7 +39,7 @@ namespace catapult { namespace builders {
 
 	public:
 		/// Builds a new aggregate transaction.
-		model::UniqueEntityPtr<model::AggregateTransaction> build() const;
+		model::UniqueEntityPtr<model::AggregateTransaction<1>> build() const;
 
 	private:
 		std::vector<EmbeddedTransactionPointer> m_pTransactions;
@@ -52,19 +52,19 @@ namespace catapult { namespace builders {
 		/// for the network with the specified generation hash (\a generationHash).
 		AggregateCosignatureAppender(
 				const GenerationHash& generationHash,
-				model::UniqueEntityPtr<model::AggregateTransaction>&& pAggregateTransaction);
+				model::UniqueEntityPtr<model::AggregateTransaction<1>>&& pAggregateTransaction);
 
 	public:
 		/// Cosigns an aggregate \a transaction using \a cosigner key pair.
 		void cosign(const crypto::KeyPair& cosigner);
 
 		/// Builds an aggregate transaction with cosigatures appended.
-		model::UniqueEntityPtr<model::AggregateTransaction> build() const;
+		model::UniqueEntityPtr<model::AggregateTransaction<1>> build() const;
 
 	private:
 		GenerationHash m_generationHash;
-		model::UniqueEntityPtr<model::AggregateTransaction> m_pAggregateTransaction;
+		model::UniqueEntityPtr<model::AggregateTransaction<1>> m_pAggregateTransaction;
 		Hash256 m_transactionHash;
-		std::vector<model::Cosignature> m_cosignatures;
+		std::vector<model::Cosignature<1>> m_cosignatures;
 	};
 }}
