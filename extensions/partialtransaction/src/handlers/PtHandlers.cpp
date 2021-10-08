@@ -71,7 +71,7 @@ namespace catapult { namespace handlers {
 		}
 
 		void AppendTransactionInfo(ionet::PacketPayloadBuilder& builder, const model::CosignedTransactionInfo& transactionInfo) {
-			using CosignatureRange = model::EntityRange<model::Cosignature>;
+			using CosignatureRange = model::EntityRange<model::Cosignature<CoSignatureVersionAlias::Raw>>;
 
 			auto numCosignatures = static_cast<uint16_t>(transactionInfo.Cosignatures.size());
 			if (transactionInfo.pTransaction) {

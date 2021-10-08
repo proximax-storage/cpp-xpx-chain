@@ -104,7 +104,8 @@ namespace catapult { namespace chain {
 				builder.add(create##VALIDATOR_TYPE##Validator<model::TransactionDeadlineNotification<1>>(options, subBasicValidators, subParamCapturers)); \
 				builder.add(create##VALIDATOR_TYPE##Validator<model::TransactionFeeNotification<1>>(options, subBasicValidators, subParamCapturers)); \
 				builder.add(create##VALIDATOR_TYPE##Validator<model::BalanceDebitNotification<1>>(options, subBasicValidators, subParamCapturers)); \
-				builder.add(create##VALIDATOR_TYPE##Validator<model::SignatureNotification<1>>(options, subBasicValidators, subParamCapturers)); \
+				builder.add(create##VALIDATOR_TYPE##Validator<model::SignatureNotification<1>>(options, subBasicValidators, subParamCapturers));             \
+				builder.add(create##VALIDATOR_TYPE##Validator<model::SignatureNotification<2>>(options, subBasicValidators, subParamCapturers)); \
 				builder.add(create##VALIDATOR_TYPE##Validator<mocks::MockNotification<mocks::Mock_Validator_1_Notification>>(options, subBasicValidators, subParamCapturers)); \
 				basicValidators.push_back(subBasicValidators); \
 				paramCapturers.push_back(subParamCapturers);
@@ -398,7 +399,7 @@ namespace catapult { namespace chain {
 
 			// Act:
 			auto pTransaction = CreateAggregateTransaction(2);
-			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature>(3);
+			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<CoSignatureVersionAlias::Raw>>(3);
 			auto result = validator.validateCosigners({ pTransaction.get(), &cosignatures });
 
 			// Assert:

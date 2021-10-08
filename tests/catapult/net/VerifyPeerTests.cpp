@@ -29,6 +29,7 @@
 #include "tests/test/core/mocks/MockPacketIo.h"
 #include "tests/test/net/SocketTestUtils.h"
 #include <queue>
+#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 
 using catapult::mocks::MockPacketIo;
 
@@ -259,7 +260,7 @@ namespace catapult { namespace net {
 
 		// Assert: the signature is non zero and is verifiable
 		EXPECT_NE(Signature(), packet.Signature);
-		EXPECT_TRUE(crypto::Verify(serverKeyPair.publicKey(), challenge, packet.Signature));
+		EXPECT_TRUE(crypto::Verify(serverKeyPair.publicKey(), {challenge}, packet.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(SignatureVersionAlias::Sha3)));
 	}
 
 	// endregion
@@ -484,7 +485,7 @@ namespace catapult { namespace net {
 
 		// Assert: the signature is non zero and is verifiable
 		EXPECT_NE(Signature(), packet.Signature);
-		EXPECT_TRUE(crypto::Verify(clientKeyPair.publicKey(), signedData, packet.Signature));
+		EXPECT_TRUE(crypto::Verify(clientKeyPair.publicKey(), {signedData}, packet.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(SignatureVersionAlias::Sha3)));
 	}
 
 	// endregion

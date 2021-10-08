@@ -46,7 +46,7 @@ namespace catapult { namespace net {
 
 		bool VerifyChallenge(const Key& publicKey, std::initializer_list<const RawBuffer> buffers, const RawSignature& signature) {
 			CATAPULT_LOG(trace) << "verify signature: " << signature;
-			auto isVerified = crypto::Verify(publicKey, buffers, signature, KeyHashingType::Sha3);
+			auto isVerified = crypto::Verify(publicKey, buffers, signature, Node_Boot_Key_Hashing_Type);
 			CATAPULT_LOG(debug) << "verify signature result: " << isVerified;
 			return isVerified;
 		}

@@ -128,7 +128,7 @@ namespace catapult { namespace handlers {
 					m_transactionInfos.push_back({
 						test::GenerateRandomByteArray<Hash256>(),
 						i % 2 ? nullptr : mocks::CreateMockTransaction(static_cast<uint16_t>(i)),
-						test::GenerateRandomDataVector<model::Cosignature>(i)
+						test::GenerateRandomDataVector<model::Cosignature<CoSignatureVersionAlias::Raw>>(i)
 					});
 				}
 			}
@@ -142,7 +142,7 @@ namespace catapult { namespace handlers {
 				return utils::Sum(m_transactionInfos, [](const auto& transactionInfo){
 					return sizeof(uint16_t) // tag
 							+ (transactionInfo.pTransaction ? transactionInfo.pTransaction->Size : Hash256_Size)
-							+ transactionInfo.Cosignatures.size() * sizeof(model::Cosignature);
+							+ transactionInfo.Cosignatures.size() * sizeof(model::Cosignature<CoSignatureVersionAlias::Raw>);
 				});
 			}
 
@@ -173,7 +173,7 @@ namespace catapult { namespace handlers {
 
 					if (!transactionInfo.Cosignatures.empty()) {
 						const auto* pCosignatures = payload.buffers()[i + 2].pData;
-						auto expectedSize = transactionInfo.Cosignatures.size() * sizeof(model::Cosignature);
+						auto expectedSize = transactionInfo.Cosignatures.size() * sizeof(model::Cosignature<CoSignatureVersionAlias::Raw>);
 						EXPECT_EQ_MEMORY(transactionInfo.Cosignatures.data(), pCosignatures, expectedSize) << failedMessage;
 						i += 3;
 					} else {

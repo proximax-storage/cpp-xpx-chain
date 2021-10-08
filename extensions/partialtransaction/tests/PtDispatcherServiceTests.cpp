@@ -278,16 +278,16 @@ namespace catapult { namespace partialtransaction {
 	namespace {
 		// Tests are using mock transaction plugin with Custom_Buffer option.
 		// We need to set proper value in mockTransaction.Data.Size, so that cosignatures won't be included.
-		auto FixAggregateTransactionDataSize(model::AggregateTransaction& aggregateTransaction) {
+		auto FixAggregateTransactionDataSize(model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction) {
 			static_assert(
-					sizeof(model::AggregateTransaction) < sizeof(mocks::MockTransaction),
+					sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) < sizeof(mocks::MockTransaction),
 					"this test requires mockTransaction Data to fit inside the aggregate transaction Payload");
-			if (sizeof(model::AggregateTransaction) + aggregateTransaction.PayloadSize < sizeof(mocks::MockTransaction))
+			if (sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) + aggregateTransaction.PayloadSize < sizeof(mocks::MockTransaction))
 				CATAPULT_THROW_RUNTIME_ERROR("this test requires mockTransaction Data to fit inside the aggregate transaction Payload");
 
 			auto* pTransactionData = reinterpret_cast<uint8_t*>(&aggregateTransaction);
 			auto& mockTransaction = reinterpret_cast<mocks::MockTransaction&>(*pTransactionData);
-			auto headerSizeDifference = sizeof(mocks::MockTransaction) - sizeof(model::AggregateTransaction);
+			auto headerSizeDifference = sizeof(mocks::MockTransaction) - sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>);
 			mockTransaction.Data.Size = static_cast<uint16_t>(aggregateTransaction.PayloadSize - headerSizeDifference);
 		}
 
@@ -540,8 +540,8 @@ namespace catapult { namespace partialtransaction {
 	}
 
 	namespace {
-		auto ExtractCosignaturePayload(const model::EntityRange<model::DetachedCosignature>& range) {
-			std::vector<model::DetachedCosignature> cosignatures;
+		auto ExtractCosignaturePayload(const model::EntityRange<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>& range) {
+			std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw>> cosignatures;
 			for (const auto& cosignature : range)
 				cosignatures.push_back(cosignature);
 
@@ -566,7 +566,7 @@ namespace catapult { namespace partialtransaction {
 			ptCache.modifier().add(transactionInfo);
 
 			// - prepare a cosignature range
-			auto cosignatureRange = model::EntityRange<model::DetachedCosignature>::PrepareFixed(3);
+			auto cosignatureRange = model::EntityRange<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>::PrepareFixed(3);
 			std::vector<Key> cosigners;
 			for (auto& cosignature : cosignatureRange) {
 				cosignature = test::GenerateValidCosignature(transactionInfo.EntityHash);

@@ -56,14 +56,24 @@ namespace catapult { namespace chain {
 				const model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction,
 				const Hash256& aggregateHash,
 				const model::WeakCosignedTransactionInfo& transactionInfoFromCache) {
+
+			// tie all public keys with a version
+
+			std::map<Key, SignatureVersion> associatedVersion;
+			// publish all sub-transaction information
+			for (const auto& subTransaction : aggregateTransaction.Transactions())
+				associatedVersion.try_emplace(subTransaction.Signer, subTransaction.SignatureVersion());
+
 			utils::KeySet cosigners;
 			DetachedCosignatures cosignatures;
 			const auto* pCosignature = aggregateTransaction.CosignaturesPtr();
 			for (auto i = 0u; i < aggregateTransaction.CosignaturesCount(); ++i) {
 				const auto& cosigner = pCosignature->Signer;
 				if (cosigners.emplace(cosigner).second && (!transactionInfoFromCache || !transactionInfoFromCache.hasCosigner(cosigner)))
-					cosignatures.emplace_back(pCosignature->Signer, pCosignature->Signature, aggregateHash);
-
+				{
+					auto versionPair = associatedVersion.find(cosigner);
+					cosignatures.emplace_back(std::make_pair(model::DetachedCosignature<1>(pCosignature->Signer, pCosignature->Signature, aggregateHash), versionPair != associatedVersion.end() ? versionPair->second : 1));
+				}
 				++pCosignature;
 			}
 
@@ -205,10 +215,22 @@ namespace catapult { namespace chain {
 		thread::future<CosignatureUpdateResult> update(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature, SignatureVersion version) {
 			auto pPromise = std::make_shared<thread::promise<CosignatureUpdateResult>>(); // needs to be copyable to pass to post
 			auto updateFuture = pPromise->get_future();
-
 			boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), version, cosignature, pPromise{std::move(pPromise)}]() {
 				auto result = pThis->updateImpl(cosignature, version);
 				pPromise->set_value(std::move(result));
+			});
+
+			return updateFuture;
+		}
+		thread::future<CosignatureUpdateResult> update(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature) {
+			auto pPromise = std::make_shared<thread::promise<CosignatureUpdateResult>>(); // needs to be copyable to pass to post
+			auto updateFuture = pPromise->get_future();
+			auto view = m_transactionsCache.view();
+			auto transactionInfoFromCache = view.find(cosignature.ParentHash);
+			auto version = transactionInfoFromCache.tryGetVersionForSigner(cosignature.Signer);
+			boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), version, cosignature, pPromise{std::move(pPromise)}]() {
+			  auto result = pThis->updateImpl(cosignature, version);
+			  pPromise->set_value(std::move(result));
 			});
 
 			return updateFuture;
@@ -247,7 +269,7 @@ namespace catapult { namespace chain {
 
 			std::vector<thread::future<CosignatureUpdateResult>> futures;
 			for (const auto& cosignature : cosignatures)
-				futures.emplace_back(update(cosignature));
+				futures.emplace_back(update(cosignature.first, cosignature.second));
 
 			return thread::when_all(std::move(futures)).then([updateType](auto&& resultsFuture) {
 				auto results = resultsFuture.get();
@@ -421,6 +443,10 @@ namespace catapult { namespace chain {
 
 	thread::future<TransactionUpdateResult> PtUpdater::update(const model::TransactionInfo& transactionInfo) {
 		return m_pImpl->update(transactionInfo);
+	}
+
+	thread::future<CosignatureUpdateResult> PtUpdater::update(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature, SignatureVersion version) {
+		return m_pImpl->update(cosignature, version);
 	}
 
 	thread::future<CosignatureUpdateResult> PtUpdater::update(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature) {

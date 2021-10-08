@@ -66,7 +66,7 @@ namespace catapult { namespace api {
 			// read cosignatures
 			auto numCosignatures = *pTag & 0x7FFF;
 			for (uint16_t i = 0; i < numCosignatures; ++i) {
-				const auto* pCosignature = reader.readFixed<model::Cosignature>();
+				const auto* pCosignature = reader.readFixed<model::Cosignature<CoSignatureVersionAlias::Raw>>();
 				if (!pCosignature) {
 					CATAPULT_LOG_PARSE_ERROR("cosignature") << " at " << i;
 					return false;

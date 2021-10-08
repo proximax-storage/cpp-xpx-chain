@@ -44,19 +44,19 @@ namespace catapult { namespace plugins {
 		constexpr auto Entity_Type = static_cast<EntityType>(9876);
 
 		struct AggregateTransactionWrapper {
-			model::UniqueEntityPtr<AggregateTransaction> pTransaction;
+			model::UniqueEntityPtr<AggregateTransaction<CoSignatureVersionAlias::Raw>> pTransaction;
 			std::vector<const mocks::EmbeddedMockTransaction*> SubTransactions;
 			std::vector<Key> SubTransactionSigners;
 			std::vector<Key> SubTransactionRecipients;
 			std::vector<Key> Cosigners;
-			std::vector<Signature> CosignerSignatures;
+			std::vector<RawSignature> CosignerSignatures;
 		};
 
 		AggregateTransactionWrapper CreateAggregateTransaction(uint8_t numTransactions, uint8_t numCosignatures, VersionType version) {
-			using TransactionType = AggregateTransaction;
+			using TransactionType = AggregateTransaction<CoSignatureVersionAlias::Raw>;
 			uint32_t entitySize = sizeof(TransactionType)
 					+ numTransactions * sizeof(mocks::EmbeddedMockTransaction)
-					+ numCosignatures * sizeof(Cosignature);
+					+ numCosignatures * sizeof(Cosignature<CoSignatureVersionAlias::Raw>);
 
 			AggregateTransactionWrapper wrapper;
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
@@ -195,7 +195,7 @@ namespace catapult { namespace plugins {
 		auto realSize = pPlugin->calculateRealSize(*wrapper.pTransaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(AggregateTransaction) + 3 * sizeof(mocks::EmbeddedMockTransaction) + 4 * sizeof(Cosignature), realSize);
+		EXPECT_EQ(sizeof(AggregateTransaction<CoSignatureVersionAlias::Raw>) + 3 * sizeof(mocks::EmbeddedMockTransaction) + 4 * sizeof(Cosignature<CoSignatureVersionAlias::Raw>), realSize);
 	}
 
 	TRAITS_BASED_TEST(CannotCalculateSizeWhenAnySubTransactionIsNotSupported) {
@@ -534,7 +534,7 @@ namespace catapult { namespace plugins {
 			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures, version);
 
 			const auto* pAggregateDataStart = test::AsVoidPointer(&wrapper.pTransaction->Version);
-			auto aggregateDataSize = sizeof(AggregateTransaction) - VerifiableEntity::Header_Size;
+			auto aggregateDataSize = sizeof(AggregateTransaction<CoSignatureVersionAlias::Raw>) - VerifiableEntity::Header_Size;
 			aggregateDataSize += numTransactions * sizeof(mocks::EmbeddedMockTransaction);
 
 			// Act:

@@ -22,6 +22,7 @@
 #include "Cosignature.h"
 #include "Transaction.h"
 #include <vector>
+#include <plugins/txes/aggregate/src/model/AggregateTransaction.h>
 
 namespace catapult { namespace model {
 
@@ -44,6 +45,14 @@ namespace catapult { namespace model {
 			return *m_pTransaction;
 		}
 
+		const SignatureVersion tryGetVersionForSigner(const Key& signer)
+		{
+			for(auto& innerTransaction : reinterpret_cast<const model::AggregateTransaction<CoSignatureVersionAlias::Raw>*>(m_pTransaction)->Transactions())
+			{
+				if(innerTransaction.Signer == signer) return innerTransaction.SignatureVersion();
+			}
+			return 0;
+		}
 		/// Gets the cosignatures.
 		const std::vector<Cosignature<CoSignatureVersionAlias::Raw>>& cosignatures() const {
 			return *m_pCosignatures;

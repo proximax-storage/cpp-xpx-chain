@@ -30,7 +30,7 @@ namespace catapult { namespace handlers {
 	namespace {
 		struct PushCosignaturesTraits {
 			static constexpr auto Packet_Type = ionet::PacketType::Push_Detached_Cosignatures;
-			static constexpr auto Data_Size = sizeof(model::DetachedCosignature);
+			static constexpr auto Data_Size = sizeof(model::DetachedCosignature<CoSignatureVersionAlias::Raw>);
 
 			static constexpr size_t AdditionalPacketSize(size_t) {
 				return 0u;

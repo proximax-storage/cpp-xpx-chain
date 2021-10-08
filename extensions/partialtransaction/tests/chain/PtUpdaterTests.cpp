@@ -52,7 +52,7 @@ namespace catapult { namespace chain {
 			return transactionInfo;
 		}
 
-		std::shared_ptr<model::AggregateTransaction> CreateRandomAggregateTransaction(uint32_t numCosignatures) {
+		std::shared_ptr<model::AggregateTransaction<CoSignatureVersionAlias::Raw>> CreateRandomAggregateTransaction(uint32_t numCosignatures) {
 			return test::CreateRandomAggregateTransactionWithCosignatures(numCosignatures);
 		}
 
@@ -258,7 +258,7 @@ namespace catapult { namespace chain {
 				m_transactionHashes.clear();
 			}
 
-			void assertCalls(const model::AggregateTransaction& aggregateTransaction, const ExpectedValidatorCalls& expected) {
+			void assertCalls(const model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction, const ExpectedValidatorCalls& expected) {
 				// Assert: check calls
 				assertCallsImpl(aggregateTransaction, expected);
 
@@ -267,7 +267,7 @@ namespace catapult { namespace chain {
 			}
 
 			void assertCalls(
-					const model::AggregateTransaction& aggregateTransaction,
+					const model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction,
 					const Hash256& aggregateTransactionHash,
 					const ExpectedValidatorCalls& expected) {
 				// Assert: check calls
@@ -282,7 +282,7 @@ namespace catapult { namespace chain {
 			}
 
 		private:
-			void assertCallsImpl(const model::AggregateTransaction& aggregateTransaction, const ExpectedValidatorCalls& expected) {
+			void assertCallsImpl(const model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction, const ExpectedValidatorCalls& expected) {
 				// Assert: check calls
 				CATAPULT_LOG(debug)
 						<< "NumValidatePartialCalls = " << m_numValidatePartialCalls
@@ -379,8 +379,8 @@ namespace catapult { namespace chain {
 			/// Asserts that the pt cache contains a \em single \a aggregateTransaction with \a aggregateHash and \a cosignatures.
 			void assertSingleTransactionInCache(
 					const Hash256& aggregateHash,
-					const model::AggregateTransaction& aggregateTransaction,
-					const std::vector<model::Cosignature>& cosignatures) const {
+					const model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction,
+					const std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>>& cosignatures) const {
 				// Assert:
 				EXPECT_EQ(1u, m_transactionsCache.view().size());
 
@@ -390,8 +390,8 @@ namespace catapult { namespace chain {
 		private:
 			void assertTransactionInCache(
 					const Hash256& aggregateHash,
-					const model::AggregateTransaction& aggregateTransaction,
-					const std::vector<model::Cosignature>& cosignatures) const {
+					const model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction,
+					const std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>>& cosignatures) const {
 				// Assert: expected transaction is in the cache
 				auto view = m_transactionsCache.view();
 				auto transactionInfoFromCache = view.find(aggregateHash);
@@ -1265,8 +1265,8 @@ namespace catapult { namespace chain {
 			ASSERT_EQ(1u, context.completedTransactions().size());
 
 			const auto& completedTransaction = *context.completedTransactions()[0];
-			std::vector<model::Cosignature> expectedCosignatures{ pCosignatures[0], pCosignatures[1], pCosignatures[2] };
-			auto numUnknownCosignatures = (completedTransaction.Size - transaction.Size) / sizeof(model::Cosignature);
+			std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>> expectedCosignatures{ pCosignatures[0], pCosignatures[1], pCosignatures[2] };
+			auto numUnknownCosignatures = (completedTransaction.Size - transaction.Size) / sizeof(model::Cosignature<CoSignatureVersionAlias::Raw>);
 			test::AssertStitchedTransaction(completedTransaction, transaction, expectedCosignatures, numUnknownCosignatures);
 
 			EXPECT_TRUE(context.failedTransactionStatuses().empty());

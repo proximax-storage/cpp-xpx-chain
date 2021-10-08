@@ -39,7 +39,7 @@ namespace catapult { namespace chain {
 		AggregateCosignersNotificationPublisher publisher;
 		auto wrapper = test::CreateAggregateTransaction(2);
 
-		auto cosignatures = test::GenerateRandomDataVector<Cosignature>(4);
+		auto cosignatures = test::GenerateRandomDataVector<Cosignature<CoSignatureVersionAlias::Raw>>(4);
 		auto transactionInfo = WeakCosignedTransactionInfo(wrapper.pTransaction.get(), &cosignatures);
 
 		// - change the transaction type
@@ -56,12 +56,12 @@ namespace catapult { namespace chain {
 		AggregateCosignersNotificationPublisher publisher;
 		auto wrapper = test::CreateAggregateTransaction(2);
 
-		auto cosignatures = test::GenerateRandomDataVector<Cosignature>(4);
+		auto cosignatures = test::GenerateRandomDataVector<Cosignature<CoSignatureVersionAlias::Raw>>(4);
 		auto transactionInfo = WeakCosignedTransactionInfo(wrapper.pTransaction.get(), &cosignatures);
 
 		// - make the transaction look like it has a cosignature
 		//   (since the transactions are not iterated before the check, only the first transaction needs to be valid)
-		wrapper.pTransaction->PayloadSize -= sizeof(Cosignature);
+		wrapper.pTransaction->PayloadSize -= sizeof(Cosignature<CoSignatureVersionAlias::Raw>);
 
 		// Act + Assert: aggregate must not have any cosignatures
 		EXPECT_THROW(publisher.publish(transactionInfo, sub), catapult_invalid_argument);
@@ -82,7 +82,7 @@ namespace catapult { namespace chain {
 			auto wrapper = test::CreateAggregateTransaction(numTransactions);
 			wrapper.pTransaction->Type = transactionType;
 
-			auto cosignatures = test::GenerateRandomDataVector<Cosignature>(numCosignatures);
+			auto cosignatures = test::GenerateRandomDataVector<Cosignature<CoSignatureVersionAlias::Raw>>(numCosignatures);
 			auto transactionInfo = WeakCosignedTransactionInfo(wrapper.pTransaction.get(), &cosignatures);
 
 			// Act:
@@ -126,7 +126,7 @@ namespace catapult { namespace chain {
 		AggregateCosignersNotificationPublisher publisher;
 		auto wrapper = test::CreateAggregateTransaction(0);
 
-		auto cosignatures = test::GenerateRandomDataVector<Cosignature>(0);
+		auto cosignatures = test::GenerateRandomDataVector<Cosignature<CoSignatureVersionAlias::Raw>>(0);
 		auto transactionInfo = WeakCosignedTransactionInfo(wrapper.pTransaction.get(), &cosignatures);
 
 		// Act:
@@ -148,7 +148,7 @@ namespace catapult { namespace chain {
 		AggregateCosignersNotificationPublisher publisher;
 		auto wrapper = test::CreateAggregateTransaction(2);
 
-		auto cosignatures = test::GenerateRandomDataVector<Cosignature>(3);
+		auto cosignatures = test::GenerateRandomDataVector<Cosignature<CoSignatureVersionAlias::Raw>>(3);
 		auto transactionInfo = WeakCosignedTransactionInfo(wrapper.pTransaction.get(), &cosignatures);
 
 		// Act:

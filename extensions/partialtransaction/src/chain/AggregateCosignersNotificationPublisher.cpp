@@ -35,7 +35,7 @@ namespace catapult { namespace chain {
 			if (!IsAggregate(transaction.Type))
 				CATAPULT_THROW_INVALID_ARGUMENT("AggregateNotificationPublisher only supports aggregate transactions");
 
-			const auto& aggregate = static_cast<const model::AggregateTransaction&>(transaction);
+			const auto& aggregate = static_cast<const model::AggregateTransaction<CoSignatureVersionAlias::Raw>&>(transaction);
 			if (0 != aggregate.CosignaturesCount())
 				CATAPULT_THROW_INVALID_ARGUMENT("AggregateNotificationPublisher only supports aggregates without cosignatures");
 

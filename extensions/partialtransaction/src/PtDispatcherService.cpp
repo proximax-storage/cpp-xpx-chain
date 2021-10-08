@@ -47,9 +47,9 @@ namespace catapult { namespace partialtransaction {
 		constexpr auto Service_Name = "pt.dispatcher";
 		constexpr auto Api_Partial_Service_Name = "api.partial";
 
-		using CosignaturesSink = consumer<const std::vector<model::DetachedCosignature>&>;
+		using CosignaturesSink = consumer<const std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>&>;
 
-		Hash256 ToHash(const model::DetachedCosignature& cosignature) {
+		Hash256 ToHash(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature) {
 			// the R-part of the signature is good enough for a hash
 			Hash256 hash;
 			std::memcpy(hash.data(), cosignature.Signature.data(), Hash256_Size);
@@ -176,7 +176,7 @@ namespace catapult { namespace partialtransaction {
 			hooks.setCosignedTransactionInfosConsumer(
 					[&dispatcher = *pBatchRangeDispatcher, &ptUpdater, pRecentHashCache, cosignaturesSink, pCacheLock](auto&& infos) {
 				CATAPULT_LOG(debug) << "pushing infos " << infos.size() << " to pt dispatcher";
-				std::vector<model::DetachedCosignature> newCosignatures;
+				std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw>> newCosignatures;
 				SplitCosignedTransactionInfos(
 						std::move(infos),
 						[&dispatcher](auto&& transactionRange) {
@@ -200,7 +200,7 @@ namespace catapult { namespace partialtransaction {
 
 			hooks.setCosignatureRangeConsumer([&ptUpdater, pRecentHashCache, cosignaturesSink, pCacheLock](auto&& cosignatureRange) {
 				utils::SpinLockGuard guard(*pCacheLock);
-				std::vector<model::DetachedCosignature> newCosignatures;
+				std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw>> newCosignatures;
 				for (const auto& cosignature : cosignatureRange.Range) {
 					if (pRecentHashCache->add(ToHash(cosignature))) {
 						ptUpdater.update(cosignature);

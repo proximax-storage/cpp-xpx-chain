@@ -46,7 +46,7 @@ namespace catapult { namespace validators {
 			}
 
 			// - setup cosignatures
-			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature>(cosigners.size());
+			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<CoSignatureVersionAlias::Raw>>(cosigners.size());
 			for (auto i = 0u; i < cosigners.size(); ++i)
 				cosignatures[i].Signer = cosigners[i];
 
