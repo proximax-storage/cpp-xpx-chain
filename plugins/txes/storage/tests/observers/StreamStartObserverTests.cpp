@@ -12,25 +12,25 @@
 
 namespace catapult { namespace observers {
 
-#define TEST_CLASS DataModificationObserverTests
+#define TEST_CLASS StreamStartObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(DataModification,)
+    DEFINE_COMMON_OBSERVER_TESTS(StreamStart,)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
-        using Notification = model::DataModificationNotification<1>;
+        using Notification = model::StreamStartNotification<1>;
 
         constexpr auto Current_Height = Height(10);
 
         struct BcDriveValues {
             public:
-                explicit BcDriveValues()
-                    : Drive_Key(test::GenerateRandomByteArray<Key>())
+                explicit BcDriveValues(
+						const Key& key,
+						const state::ActiveDataModification& modification)
+                    : Drive_Key(key)
                     , Active_Data_Modification {
-                        state::ActiveDataModification(
-                            test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), 
-                            test::GenerateRandomByteArray<Hash256>(), test::Random()
-					)}
+						modification
+					}
                 {}
             
             public:
@@ -47,16 +47,26 @@ namespace catapult { namespace observers {
             return entry;
         }
 
+		auto RandomBcDriveValues() {
+			auto key = test::GenerateRandomByteArray<Key>();
+			auto expectedUploadSize = test::Random();
+			auto folderBytes = test::GenerateRandomVector(512);
+			auto modification = state::ActiveDataModification (
+				test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(),
+				expectedUploadSize, std::string(folderBytes.begin(), folderBytes.end()));
+			return BcDriveValues(key, modification);
+		}
+
         void RunTest(NotifyMode mode, const BcDriveValues& values, const Height& currentHeight) {
             // Arrange:
             ObserverTestContext context(mode, currentHeight);
             Notification notification(
                 values.Active_Data_Modification.begin()->Id, 
                 values.Drive_Key, 
-                values.Active_Data_Modification.begin()->Owner, 
-                values.Active_Data_Modification.begin()->DownloadDataCdi, 
-                values.Active_Data_Modification.begin()->ExpectedUploadSize);
-            auto pObserver = CreateDataModificationObserver();
+                values.Active_Data_Modification.begin()->Owner,
+                values.Active_Data_Modification.begin()->ExpectedUploadSize,
+				values.Active_Data_Modification.begin()->Folder);
+            auto pObserver = CreateStreamStartObserver();
         	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 
             // Populate cache.
@@ -72,18 +82,17 @@ namespace catapult { namespace observers {
         }
     }
 
-    TEST(TEST_CLASS, DataModification_Commit) {
+    TEST(TEST_CLASS, StreamStart_Commit) {
         // Arrange:
-        BcDriveValues values;
-        values.Drive_Key = test::GenerateRandomByteArray<Key>();
+        auto values = RandomBcDriveValues();
         
         // Assert:
         RunTest(NotifyMode::Commit, values, Current_Height);
     }
 
-    TEST(TEST_CLASS, DataModification_Rollback) {
+    TEST(TEST_CLASS, StreamStart_Rollback) {
         // Arrange:
-        BcDriveValues values;
+		auto values = RandomBcDriveValues();
 
         // Assert
 		EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);

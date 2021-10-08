@@ -8,7 +8,7 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(DataModification, model::DataModificationNotification<1>, [](const model::DataModificationNotification<1>& notification, ObserverContext& context) {
+	DEFINE_OBSERVER(StreamStart, model::StreamStartNotification<1>, [](const model::StreamStartNotification<1>& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModification)");
 
@@ -18,10 +18,10 @@ namespace catapult { namespace observers {
 
 		auto& activeDataModifications = driveEntry.activeDataModifications();
 		activeDataModifications.emplace_back(state::ActiveDataModification(
-			notification.DataModificationId,
+			notification.StreamId,
 			notification.Owner,
-			notification.DownloadDataCdi,
-			notification.UploadSize
+			notification.ExpectedUploadSize,
+			notification.Folder
 		));
 	});
 }}

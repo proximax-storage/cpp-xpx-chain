@@ -12,12 +12,12 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS DataModificationValidatorTests
+#define TEST_CLASS StreamStartValidatorTests
 
-    DEFINE_COMMON_VALIDATOR_TESTS(DataModification, )
+    DEFINE_COMMON_VALIDATOR_TESTS(StreamStart, )
 
     namespace {
-        using Notification = model::DataModificationNotification<1>;
+        using Notification = model::StreamStartNotification<1>;
 
         constexpr auto Current_Height = Height(10);
 
@@ -34,8 +34,9 @@ namespace catapult { namespace validators {
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(activeDataModification.front().Id, driveKey, activeDataModification.front().Owner, activeDataModification.front().DownloadDataCdi, activeDataModification.front().ActualUploadSize);
-            auto pValidator = CreateDataModificationValidator();
+			const auto& modification = activeDataModification.front();
+            Notification notification(modification.Id, driveKey, modification.Owner, modification.ExpectedUploadSize, modification.Folder);
+            auto pValidator = CreateStreamStartValidator();
             
             // Act:
             auto result = test::ValidateNotification(*pValidator, notification, cache, 
@@ -49,50 +50,57 @@ namespace catapult { namespace validators {
     TEST(TEST_CLASS, FailureWhenDriveNotFound) {
         // Arrange:
         state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
+		auto folderBytes = test::GenerateRandomVector(512);
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_Drive_Not_Found,
             entry,
             test::GenerateRandomByteArray<Key>(),
-            {
+            { 
                 state::ActiveDataModification(
 					test::GenerateRandomByteArray<Hash256>(),
 					test::GenerateRandomByteArray<Key>(),
-					test::GenerateRandomByteArray<Hash256>(),
-					test::Random())
-            });
+					test::Random(),
+					std::string(folderBytes.begin(), folderBytes.end())
+				)
+			});
     }
 
-    TEST(TEST_CLASS, FailureWhenDataModificationAlreadyExists) {
+    TEST(TEST_CLASS, FailureWhenStreamAlreadyExists) {
         // Arrange:
         auto driveKey = test::GenerateRandomByteArray<Key>();
         auto id = test::GenerateRandomByteArray<Hash256>();
         state::BcDriveEntry entry(driveKey);
-        entry.activeDataModifications().emplace_back(state::ActiveDataModification(
+        entry.activeDataModifications().emplace_back(state::ActiveDataModification {
             id, test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Hash256>(), test::Random()
-		));
+        });
+		auto folderBytes = test::GenerateRandomVector(512);
 
         // Assert:
         AssertValidationResult(
-            Failure_Storage_Data_Modification_Already_Exists,
+            Failure_Storage_Stream_Already_Exists,
             entry,
             driveKey,
-            { state::ActiveDataModification(
-				id, test::GenerateRandomByteArray<Key>(),
-				test::GenerateRandomByteArray<Hash256>(), test::Random())
-            });
+            {state::ActiveDataModification(
+				id,
+				test::GenerateRandomByteArray<Key>(),
+				test::Random(),
+				std::string(folderBytes.begin(), folderBytes.end())
+			)}
+		);
     }
 
     TEST(TEST_CLASS, Success) {
         // Arrange:
         Key driveKey = test::GenerateRandomByteArray<Key>();
         Key owner = test::GenerateRandomByteArray<Key>();
-        Hash256 downloadDataCdi = test::GenerateRandomByteArray<Hash256>();
-        uint64_t uploadSize = test::Random();
+        uint64_t expectedUploadSize = test::Random();
         state::BcDriveEntry entry(driveKey);
-        entry.activeDataModifications().emplace_back(state::ActiveDataModification (
-            test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize
+		auto folderBytes = test::GenerateRandomVector(512);
+        entry.activeDataModifications().emplace_back(state::ActiveDataModification(
+            test::GenerateRandomByteArray<Hash256>(), owner, expectedUploadSize,
+			std::string(folderBytes.begin(), folderBytes.end())
 		));
 
         // Assert:
@@ -100,8 +108,9 @@ namespace catapult { namespace validators {
             ValidationResult::Success,
             entry,
             driveKey,
-            { state::ActiveDataModification(
-                test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize)
+            { 
+                { test::GenerateRandomByteArray<Hash256>(), owner, expectedUploadSize,
+						  std::string(folderBytes.begin(), folderBytes.end())}
             });
     }
 }}

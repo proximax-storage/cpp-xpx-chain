@@ -69,7 +69,7 @@ namespace catapult { namespace state {
                 pData += Key_Size;
                 EXPECT_EQ_MEMORY(active.DownloadDataCdi.data(), pData, Hash256_Size);
                 pData += Hash256_Size;
-                EXPECT_EQ(active.UploadSize, *reinterpret_cast<const uint64_t*>(pData));
+                EXPECT_EQ(active.ExpectedUploadSize, *reinterpret_cast<const uint64_t*>(pData));
                 pData += sizeof(uint64_t);
             }
         }
@@ -84,7 +84,7 @@ namespace catapult { namespace state {
                 pData += Key_Size;
                 EXPECT_EQ_MEMORY(active.DownloadDataCdi.data(), pData, Hash256_Size);
                 pData += Hash256_Size;
-                EXPECT_EQ(active.UploadSize, *reinterpret_cast<const uint64_t*>(pData));
+                EXPECT_EQ(active.ExpectedUploadSize, *reinterpret_cast<const uint64_t*>(pData));
                 pData += sizeof(uint64_t);
                 EXPECT_EQ(active.State, static_cast<DataModificationState>(*pData));
                 pData++;
@@ -170,7 +170,7 @@ namespace catapult { namespace state {
                 pData += Key_Size;
                 memcpy(pData, modification.DownloadDataCdi.data(), Hash256_Size);
                 pData += Hash256_Size;
-                memcpy(pData, &modification.UploadSize, sizeof(uint64_t));
+                memcpy(pData, &modification.ExpectedUploadSize, sizeof(uint64_t));
                 pData += sizeof(uint64_t);
 			}
 		}
@@ -186,7 +186,7 @@ namespace catapult { namespace state {
                 pData += Key_Size;
                 memcpy(pData, modification.DownloadDataCdi.data(), Hash256_Size);
                 pData += Hash256_Size;
-                memcpy(pData, &modification.UploadSize, sizeof(uint64_t));
+                memcpy(pData, &modification.ExpectedUploadSize, sizeof(uint64_t));
                 pData += sizeof(uint64_t);
                 *pData = utils::to_underlying_type(modification.State);
                 pData++;

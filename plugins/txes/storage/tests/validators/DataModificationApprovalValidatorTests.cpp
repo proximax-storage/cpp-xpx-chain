@@ -37,7 +37,7 @@ namespace catapult { namespace validators {
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(Key(), driveKey, activeDataModification.front().Id, activeDataModification.front().DownloadDataCdi, File_Structure_Size, activeDataModification.front().UploadSize);
+            Notification notification(Key(), driveKey, activeDataModification.front().Id, activeDataModification.front().DownloadDataCdi, File_Structure_Size, activeDataModification.front().ActualUploadSize);
             auto pValidator = CreateDataModificationApprovalValidator();
             
             // Act:

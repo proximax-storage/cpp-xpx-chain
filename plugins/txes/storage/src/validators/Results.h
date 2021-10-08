@@ -112,6 +112,9 @@ namespace catapult { namespace validators {
 	/// Recipient's account state is not found.
 	DEFINE_STORAGE_RESULT(Recipient_State_Not_Found, 33);
 
+	/// Validation failed because the data modification already exists.
+	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 34);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

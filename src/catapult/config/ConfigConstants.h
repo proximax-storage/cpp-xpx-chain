@@ -30,6 +30,7 @@ namespace catapult { namespace config {
         operationConfigId,
 		committeeConfigId,
 		storageConfigId,
+		streamingConfigId,
         First = static_cast<uint32_t>(aggregateConfigId),
         Latest = static_cast<uint32_t>(storageConfigId),
 	};

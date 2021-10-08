@@ -17,14 +17,18 @@ namespace catapult { namespace mongo { namespace plugins {
 	namespace {
 		void StreamActiveDataModifications(bson_stream::document& builder, const state::ActiveDataModifications& activeDataModifications) {
 			auto array = builder << "activeDataModifications" << bson_stream::open_array;
-			for (const auto& modification : activeDataModifications)
+			for (const auto& modification : activeDataModifications) {
+				auto pFolder = (const uint8_t*) (modification.Folder.c_str());
 				array
-					<< bson_stream::open_document
-					<< "id" << ToBinary(modification.Id)
-					<< "owner" << ToBinary(modification.Owner)
-					<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
-					<< "uploadSize" << static_cast<int64_t>(modification.UploadSize)
-					<< bson_stream::close_document;
+						<< bson_stream::open_document
+						<< "id" << ToBinary(modification.Id)
+						<< "owner" << ToBinary(modification.Owner)
+						<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
+						<< "expectedUploadSize" << static_cast<int64_t>(modification.ExpectedUploadSize)
+						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSize)
+						<< "folder" << ToBinary(pFolder, modification.Folder.size())
+						<< bson_stream::close_document;
+			}
 
 			array << bson_stream::close_array;
 		}
@@ -32,14 +36,17 @@ namespace catapult { namespace mongo { namespace plugins {
 		void StreamCompletedDataModifications(bson_stream::document& builder, const state::CompletedDataModifications& completedDataModifications) {
 			auto array = builder << "completedDataModifications" << bson_stream::open_array;
 			for (const auto& modification : completedDataModifications) {
+				auto pFolder = (const uint8_t*) (modification.Folder.c_str());
 				array
-					<< bson_stream::open_document
-					<< "id" << ToBinary(modification.Id)
-					<< "owner" << ToBinary(modification.Owner)
-					<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
-					<< "uploadSize" << static_cast<int64_t>(modification.UploadSize)
-					<< "state" << utils::to_underlying_type(modification.State)
-					<< bson_stream::close_document;
+						<< bson_stream::open_document
+						<< "id" << ToBinary(modification.Id)
+						<< "owner" << ToBinary(modification.Owner)
+						<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
+						<< "expectedUploadSize" << static_cast<int64_t>(modification.ExpectedUploadSize)
+						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSize)
+						<< "folder" << ToBinary(pFolder, modification.Folder.size())
+						<< "state" << utils::to_underlying_type(modification.State)
+						<< bson_stream::close_document;
 			}
 
 			array << bson_stream::close_array;
@@ -49,21 +56,21 @@ namespace catapult { namespace mongo { namespace plugins {
 	bsoncxx::document::value ToDbModel(const state::BcDriveEntry& entry, const Address& accountAddress) {
 		bson_stream::document builder;
 		auto doc = builder << "drive" << bson_stream::open_document
-				<< "multisig" << ToBinary(entry.key())
-				<< "multisigAddress" << ToBinary(accountAddress)
-				<< "owner" << ToBinary(entry.owner())
-				<< "rootHash" << ToBinary(entry.rootHash())
-				<< "size" << static_cast<int64_t>(entry.size())
-				<< "usedSize" << static_cast<int64_t>(entry.usedSize())
-				<< "metaFilesSize" << static_cast<int64_t>(entry.metaFilesSize())
-				<< "replicatorCount" << static_cast<int32_t>(entry.replicatorCount());
+						   << "multisig" << ToBinary(entry.key())
+						   << "multisigAddress" << ToBinary(accountAddress)
+						   << "owner" << ToBinary(entry.owner())
+						   << "rootHash" << ToBinary(entry.rootHash())
+						   << "size" << static_cast<int64_t>(entry.size())
+						   << "usedSize" << static_cast<int64_t>(entry.usedSize())
+						   << "metaFilesSize" << static_cast<int64_t>(entry.metaFilesSize())
+						   << "replicatorCount" << static_cast<int32_t>(entry.replicatorCount());
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
 		StreamCompletedDataModifications(builder, entry.completedDataModifications());
 
 		return doc
-				<< bson_stream::close_document
-				<< bson_stream::finalize;
+			   << bson_stream::close_document
+			   << bson_stream::finalize;
 	}
 
 	// endregion
@@ -81,9 +88,11 @@ namespace catapult { namespace mongo { namespace plugins {
 				DbBinaryToModelArray(owner, doc["owner"].get_binary());
 				Hash256 downloadDataCdi;
 				DbBinaryToModelArray(downloadDataCdi, doc["downloadDataCdi"].get_binary());
-				auto uploadSize = static_cast<uint64_t>(doc["uploadSize"].get_int64());
-
-				activeDataModifications.emplace_back(state::ActiveDataModification{ id, owner, downloadDataCdi, uploadSize });
+				auto expectedUploadSize = static_cast<uint64_t>(doc["expectedUploadSize"].get_int64());
+				auto actualUploadSize = static_cast<uint64_t>(doc["actualUploadSize"].get_int64());
+				auto binaryFolder = doc["folder"].get_binary();
+				std::string folder((const char*) binaryFolder.bytes, binaryFolder.size);
+				activeDataModifications.emplace_back(state::ActiveDataModification{ id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folder });
 			}
 		}
 
@@ -97,10 +106,14 @@ namespace catapult { namespace mongo { namespace plugins {
 				DbBinaryToModelArray(owner, doc["owner"].get_binary());
 				Hash256 downloadDataCdi;
 				DbBinaryToModelArray(downloadDataCdi, doc["downloadDataCdi"].get_binary());
-				auto uploadSize = static_cast<uint64_t>(doc["uploadSize"].get_int64());
+				auto expectedUploadSize = static_cast<uint64_t>(doc["expectedUploadSize"].get_int64());
+				auto actualUploadSize = static_cast<uint64_t>(doc["actualUploadSize"].get_int64());
+				auto binaryFolder = doc["folder"].get_binary();
+				std::string folder((const char*) binaryFolder.bytes, binaryFolder.size);
+
 				auto state = static_cast<state::DataModificationState>(static_cast<uint8_t>(doc["state"].get_int32()));
 
-				completedDataModifications.emplace_back(state::CompletedDataModification{ state::ActiveDataModification{ id, owner, downloadDataCdi, uploadSize }, state });
+				completedDataModifications.emplace_back(state::CompletedDataModification{ state::ActiveDataModification{ id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folder }, state });
 			}
 		}
 	}

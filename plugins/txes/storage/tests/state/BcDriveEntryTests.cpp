@@ -101,7 +101,7 @@ namespace catapult { namespace state {
         EXPECT_EQ(activeDataModification.Id, entry.activeDataModifications().back().Id);
         EXPECT_EQ(activeDataModification.Owner, entry.activeDataModifications().back().Owner);
         EXPECT_EQ(activeDataModification.DownloadDataCdi, entry.activeDataModifications().back().DownloadDataCdi);
-        EXPECT_EQ(activeDataModification.UploadSize, entry.activeDataModifications().back().UploadSize);
+        EXPECT_EQ(activeDataModification.ExpectedUploadSize, entry.activeDataModifications().back().ExpectedUploadSize);
     }
 
     TEST(TEST_CLASS, CanAccessCompletedDataModification) {
@@ -128,7 +128,7 @@ namespace catapult { namespace state {
         EXPECT_EQ(completedDataModification.Id, entry.completedDataModifications().back().Id);
         EXPECT_EQ(completedDataModification.Owner, entry.completedDataModifications().back().Owner);
         EXPECT_EQ(completedDataModification.DownloadDataCdi, entry.completedDataModifications().back().DownloadDataCdi);
-        EXPECT_EQ(completedDataModification.UploadSize, entry.completedDataModifications().back().UploadSize);
+        EXPECT_EQ(completedDataModification.ExpectedUploadSize, entry.completedDataModifications().back().ExpectedUploadSize);
         EXPECT_EQ(completedDataModification.State, entry.completedDataModifications().back().State);
     }
 

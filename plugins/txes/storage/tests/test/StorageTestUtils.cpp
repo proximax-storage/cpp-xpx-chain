@@ -18,7 +18,9 @@ namespace catapult { namespace test {
                 EXPECT_EQ(expectedActiveDataModification.Id, activeDataModification.Id);
                 EXPECT_EQ(expectedActiveDataModification.Owner, activeDataModification.Owner);
                 EXPECT_EQ(expectedActiveDataModification.DownloadDataCdi, activeDataModification.DownloadDataCdi);
-                EXPECT_EQ(expectedActiveDataModification.UploadSize, activeDataModification.UploadSize);
+                EXPECT_EQ(expectedActiveDataModification.ExpectedUploadSize, activeDataModification.ExpectedUploadSize);
+				EXPECT_EQ(expectedActiveDataModification.ActualUploadSize, activeDataModification.ActualUploadSize);
+				EXPECT_EQ(expectedActiveDataModification.Folder, activeDataModification.Folder);
             }
         }
 
@@ -30,7 +32,9 @@ namespace catapult { namespace test {
                 EXPECT_EQ(expectedCompletedDataModification.Id, completedDataModification.Id);
                 EXPECT_EQ(expectedCompletedDataModification.Owner, completedDataModification.Owner);
                 EXPECT_EQ(expectedCompletedDataModification.DownloadDataCdi, completedDataModification.DownloadDataCdi);
-                EXPECT_EQ(expectedCompletedDataModification.UploadSize, completedDataModification.UploadSize);
+                EXPECT_EQ(expectedCompletedDataModification.ExpectedUploadSize, completedDataModification.ExpectedUploadSize);
+				EXPECT_EQ(expectedCompletedDataModification.ActualUploadSize, completedDataModification.ActualUploadSize);
+				EXPECT_EQ(expectedCompletedDataModification.Folder, completedDataModification.Folder);
                 EXPECT_EQ(expectedCompletedDataModification.State, completedDataModification.State);
             }
         }
@@ -68,12 +72,16 @@ namespace catapult { namespace test {
 
         entry.activeDataModifications().reserve(activeDataModificationsCount);
         for (auto aDMC = 0u; aDMC < activeDataModificationsCount; ++aDMC){
-            entry.activeDataModifications().emplace_back(state::ActiveDataModification{
-                test::GenerateRandomByteArray<Hash256>(),   /// Id of data modification.
-                key,                                        /// Public key of the drive owner.
-                test::GenerateRandomByteArray<Hash256>(),   /// CDI of download data.
-                test::Random()                              /// Upload size of data.
-            });
+			auto folderBytes = test::GenerateRandomVector(512);
+			auto uploadSize = test::Random();
+			entry.activeDataModifications().emplace_back(state::ActiveDataModification(
+                test::GenerateRandomByteArray<Hash256>(),   				/// Id of data modification.
+				key,                                        				/// Public key of the drive owner.
+                test::GenerateRandomByteArray<Hash256>(),   				/// CDI of download data.
+				uploadSize,                             					/// ExpectedUpload size of data.
+				uploadSize,													/// ActualUpload size of data.
+				std::string(folderBytes.begin(), folderBytes.end())	/// Folder (for stream)
+			));
         }
 
         entry.completedDataModifications().reserve(completedDataModificationsCount);

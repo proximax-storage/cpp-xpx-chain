@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 	/// - the drive does not exist
 	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector);
 
-	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
+	/// A validator implementation that applies to drive data modification notifications and validates that:
 	/// -
 	DECLARE_STATEFUL_VALIDATOR(DataModification, model::DataModificationNotification<1>)();
 
@@ -104,4 +104,8 @@ namespace catapult { namespace validators {
 	/// - respective download channel exists
 	/// - account states of the download channel and its consumer exist
 	DECLARE_STATEFUL_VALIDATOR(DownloadChannelRefund, model::DownloadChannelRefundNotification<1>)();
+
+	/// A validator implementation that applies to drive stream start notifications and validates that:
+	/// -
+	DECLARE_STATEFUL_VALIDATOR(StreamStart, model::StreamStartNotification<1>)();
 }}
