@@ -18,7 +18,7 @@ namespace catapult { namespace state {
 			io::Write(output, modification.DownloadDataCdi);
 			io::Write64(output, modification.ExpectedUploadSize);
 			io::Write64(output, modification.ActualUploadSize);
-			io::Write16(output, modification.Folder.size());
+			io::Write16(output, (uint16_t) modification.Folder.size());
 			auto pFolder = (const uint8_t*) (modification.Folder.c_str());
 			io::Write(output, utils::RawBuffer(pFolder, modification.Folder.size()));
 		}
@@ -51,7 +51,7 @@ namespace catapult { namespace state {
 			std::vector<uint8_t> folderBytes(folderSize);
 			io::Read(input, folderBytes);
 			std::string folder(folderBytes.begin(), folderBytes.end());
-			return ActiveDataModification{ id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folder };
+			return ActiveDataModification(id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folder);
 		}
 
 		void LoadActiveDataModifications(io::InputStream& input, ActiveDataModifications& activeDataModifications) {

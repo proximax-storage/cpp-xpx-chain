@@ -80,7 +80,7 @@ namespace catapult { namespace test {
                 test::GenerateRandomByteArray<Hash256>(),   				/// CDI of download data.
 				uploadSize,                             					/// ExpectedUpload size of data.
 				uploadSize,													/// ActualUpload size of data.
-				std::string(folderBytes.begin(), folderBytes.end())	/// Folder (for stream)
+				std::string(folderBytes.begin(), folderBytes.end())			/// Folder (for stream)
 			));
         }
 
