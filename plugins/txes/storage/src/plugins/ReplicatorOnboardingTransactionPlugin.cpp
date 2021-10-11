@@ -23,8 +23,8 @@ namespace catapult { namespace plugins {
 				switch (transaction.EntityVersion()) {
 				case 1: {
 					sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
-					sub.notify(ReplicatorOnboardingNotification<1>(transaction.Signer, transaction.BlsKey, transaction.Capacity));
 					sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
+					sub.notify(ReplicatorOnboardingNotification<1>(transaction.Signer, transaction.BlsKey, transaction.Capacity));
 
 					const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
 					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
