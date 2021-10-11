@@ -82,6 +82,6 @@ namespace catapult { namespace model {
 		/// BLS relation facility code.
 		BlsKeys = 0x66,
 		/// Streaming facility code
-		Streaming = 0x67
+		Streaming = 0x67,
 	};
 }}

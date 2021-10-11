@@ -4,10 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "DataModificationMapper.h"
+#include "StreamStartMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
-#include "plugins/txes/storage/src/model/DataModificationTransaction.h"
+#include "plugins/txes/streaming/src/model/StreamStartTransaction.h"
 
 using namespace catapult::mongo::mappers;
 
@@ -16,10 +16,11 @@ namespace catapult { namespace mongo { namespace plugins {
 	template<typename TTransaction>
 	void StreamDataModificationTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "driveKey" << ToBinary(transaction.DriveKey);
-		builder << "downloadDataCdi" << ToBinary(transaction.DownloadDataCdi);
-		builder << "uploadSize" << static_cast<int64_t>(transaction.UploadSize);
+		builder << "expectedUploadSize" << static_cast<int64_t>(transaction.ExpectedUploadSize);
 		builder << "feedbackFeeAmount" << ToInt64(transaction.FeedbackFeeAmount);
+		auto pFolder = (const uint8_t*) (transaction.FolderPtr());
+		builder << "folder" << ToBinary(pFolder, transaction.FolderSize);
 	}
 
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(DataModification, StreamDataModificationTransaction)
+	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(StreamStart, StreamDataModificationTransaction)
 }}}

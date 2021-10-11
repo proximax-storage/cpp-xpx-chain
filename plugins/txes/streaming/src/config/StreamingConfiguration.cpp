@@ -21,7 +21,8 @@ namespace catapult { namespace config {
 #undef LOAD_PROPERTY
 
 #define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
-
+		config.MaxFolderSize = 512u;
+		TRY_LOAD_CHAIN_PROPERTY(MaxFolderSize);
 #undef TRY_LOAD_CHAIN_PROPERTY
 
 		return config;

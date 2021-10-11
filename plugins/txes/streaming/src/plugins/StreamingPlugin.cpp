@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "src/validators/Validators.h"
 #include "StreamingPlugin.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/StreamStartTransactionPlugin.h"
@@ -33,6 +34,11 @@ namespace catapult { namespace plugins {
 		const auto& pConfigHolder = manager.configHolder();
 		const auto& immutableConfig = manager.immutableConfig();
 		manager.addTransactionSupport(CreateStreamStartTransactionPlugin(immutableConfig));
+
+		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
+			builder
+					.add(validators::CreateStreamStartFolderValidator());
+		});
 	}
 }}
 

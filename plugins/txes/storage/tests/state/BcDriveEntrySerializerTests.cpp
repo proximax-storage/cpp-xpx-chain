@@ -131,13 +131,15 @@ namespace catapult { namespace state {
 
 			// Act:
 			BcDriveEntrySerializer::Save(entry1, context.outputStream());
+			auto entryBufferSize1 = context.buffer().size();
 			BcDriveEntrySerializer::Save(entry2, context.outputStream());
+			auto entryBufferSize2 = context.buffer().size() - entryBufferSize1;
 
 			// Assert:
 			const auto* pBuffer1 = context.buffer().data();
-			const auto* pBuffer2 = pBuffer1 + entry1.size();
-			AssertEntryBuffer(entry1, pBuffer1, entry1.size(), version);
-			AssertEntryBuffer(entry2, pBuffer2, entry2.size(), version);
+			const auto* pBuffer2 = pBuffer1 + entryBufferSize1;
+			AssertEntryBuffer(entry1, pBuffer1, entryBufferSize1, version);
+			AssertEntryBuffer(entry2, pBuffer2, entryBufferSize2, version);
 		}
     }
 

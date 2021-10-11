@@ -8,12 +8,11 @@
 #include "Results.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
-#include "catapult/model/StorageNotifications.h"
+#include "catapult/model/StreamingNotifications.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "src/cache/DownloadChannelCache.h"
-#include "src/cache/BcDriveCache.h"
-#include "src/cache/ReplicatorCache.h"
-#include "src/cache/BlsKeysCache.h"
 
 namespace catapult { namespace validators {
+	/// A validator implementation that applies to drive stream start notifications and validates that:
+	/// folder is not too long
+	DECLARE_STATEFUL_VALIDATOR(StreamStartFolder, model::StreamStartFolderNotification<1>)();
 }}

@@ -176,7 +176,7 @@ namespace catapult { namespace model {
 				const Key& owner,
 				const uint64_t& expecteedUploadSize,
 				const std::string& folder)
-			: Notification(Notification_Type, sizeof(DataModificationNotification<1>))
+			: Notification(Notification_Type, sizeof(StreamStartNotification<1>))
 			, StreamId(streamId)
 			, DriveKey(drive)
 			, Owner(owner)

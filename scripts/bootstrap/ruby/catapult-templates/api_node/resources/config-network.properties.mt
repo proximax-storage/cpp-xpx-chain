@@ -176,3 +176,8 @@ maxFreeDownloadSize = 1MB
 # 4 weeks = 28 days = 672 hours
 storageBillingPeriod = 672h
 downloadBillingPeriod = 24h
+
+[plugin:catapult.plugins.streaming]
+
+enabled = true
+maxFolderSize = 512

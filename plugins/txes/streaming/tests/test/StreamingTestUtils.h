@@ -6,14 +6,6 @@
 
 #pragma once
 #include "catapult/model/EntityBody.h"
-//#include "src/cache/BcDriveCache.h"
-//#include "src/cache/BcDriveCacheStorage.h"
-//#include "src/cache/DownloadChannelCache.h"
-//#include "src/cache/DownloadChannelCacheStorage.h"
-//#include "src/cache/ReplicatorCache.h"
-//#include "src/cache/ReplicatorCacheStorage.h"
-//#include "src/cache/BlsKeysCache.h"
-//#include "src/cache/BlsKeysCacheStorage.h"
 #include "src/model/StreamingEntityType.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"

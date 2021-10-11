@@ -9,6 +9,7 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "StreamStartTransactionPlugin.h"
 #include "catapult/model/StorageNotifications.h"
+#include "catapult/model/StreamingNotifications.h"
 #include "src/model/StreamStartTransaction.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/EntityHasher.h"
@@ -33,6 +34,9 @@ namespace catapult { namespace plugins {
 							transaction.Signer,
 							transaction.ExpectedUploadSize,
 							folder
+					));
+					sub.notify(StreamStartFolderNotification<1>(
+							transaction.FolderSize
 					));
 
 					const auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.NetworkIdentifier));
