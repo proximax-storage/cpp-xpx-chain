@@ -31,7 +31,7 @@ namespace catapult { namespace observers {
 
         // Find median opinion for every Prover
         for (auto i = 0; i < notification.ProversCount; ++i) {
-            uint8_t opinions = 0;
+            uint8_t result = 0;
 
             for (auto j = 0; j < notification.VerificationOpinionsCount; ++j) {
                 if (notification.ProversPtr[i] == notification.VerificationOpinionsPtr[j].Verifier)
@@ -45,12 +45,12 @@ namespace catapult { namespace observers {
                         }
                 );
 
-                opinions += it->second;
+                result += it->second;
             }
 
-            // Check opinions` median
+            // Check result` median
             auto proverIt = pendingVerification.Results.find(notification.ProversPtr[i]);
-            if (opinions > notification.VerificationOpinionsCount / 2) {
+            if (result > notification.VerificationOpinionsCount / 2) {
                 proverIt->second = 1;
                 continue;
             }

@@ -64,8 +64,7 @@ namespace catapult { namespace model {
                        * (// size of VerificationOpinion
                                sizeof(Key)                         // size of VerificationOpinion.Verifier
                                + sizeof(BLSSignature)              // size of VerificationOpinion.BlsSignature
-                               + transaction.ProversCount ? 0 :
-                                 (transaction.ProversCount - 1) * (sizeof(Key) + sizeof(uint8_t)) // size of VerificationOpinion.Results
+                               + transaction.ProversCount * (sizeof(Key) + sizeof(uint8_t)) // size of VerificationOpinion.Results
                        );
         }
     };
