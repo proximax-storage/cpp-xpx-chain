@@ -229,9 +229,20 @@ namespace catapult { namespace zeromq {
 	void ZeroMqEntityPublisher::publishCosignature(
 			const model::TransactionInfo& parentTransactionInfo,
 			const Key& signer,
-			const Signature& signature) {
+			const RawSignature& signature) {
 		auto topicMarker = TransactionMarker::Cosignature_Marker;
-		model::DetachedCosignature detachedCosignature(signer, signature, parentTransactionInfo.EntityHash);
+		model::DetachedCosignature<CoSignatureVersionAlias::Raw> detachedCosignature(signer, signature, parentTransactionInfo.EntityHash);
+		publish("detached cosignature", topicMarker, WeakTransactionInfo(parentTransactionInfo), [&detachedCosignature](auto& multipart) {
+			multipart.addmem(static_cast<const void*>(&detachedCosignature), sizeof(detachedCosignature));
+		});
+	}
+
+	void ZeroMqEntityPublisher::publishEmbeddedCosignature(
+			const model::TransactionInfo& parentTransactionInfo,
+			const Key& signer,
+			const Signature& signature) {
+		auto topicMarker = TransactionMarker::Cosignature_Embedded_Marker;
+		model::DetachedCosignature<CoSignatureVersionAlias::Extended> detachedCosignature(signer, signature, parentTransactionInfo.EntityHash);
 		publish("detached cosignature", topicMarker, WeakTransactionInfo(parentTransactionInfo), [&detachedCosignature](auto& multipart) {
 			multipart.addmem(static_cast<const void*>(&detachedCosignature), sizeof(detachedCosignature));
 		});

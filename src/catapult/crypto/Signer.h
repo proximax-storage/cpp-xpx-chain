@@ -42,11 +42,11 @@ namespace catapult { namespace crypto {
 
 	/// Signs data in \a buffersList using \a keyPair, placing resulting signature in \a computedSignature.
 	/// \note The function will throw if the generated S part of the signature is not less than the group order.
-	void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, Signature& computedSignature);
+	void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, RawSignature& computedSignature);
 
 	/// Signs data in \a buffersList using \a keyPair, placing resulting raw signature in \a computedSignature.
 	/// \note The function will throw if the generated S part of the signature is not less than the group order.
-	void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, RawSignature& computedSignature);
+	void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, Signature& computedSignature);
 
 	/// Signs data in \a buffersList using \a keyPair, placing resulting signature in \a computedSignature based on Ref10 implementation.
 	/// \note The function will throw if the generated S part of the signature is not less than the group order.

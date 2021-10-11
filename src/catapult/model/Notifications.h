@@ -413,7 +413,7 @@ namespace catapult { namespace model {
 	// region signature
 
 	/// Notifies the presence of a signature.
-	template<VersionType version>
+	template<VersionType TVersion>
 	struct SignatureNotification;
 
 	template<>
@@ -488,7 +488,7 @@ namespace catapult { namespace model {
 		RawBuffer Data;
 
 		/// Signature version.
-		SignatureVersion SignatureVersion;
+		catapult::SignatureVersion SignatureVersion;
 
 		/// Replay protection mode applied to data.
 		SignatureNotification<1>::ReplayProtectionMode DataReplayProtectionMode;

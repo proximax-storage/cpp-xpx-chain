@@ -61,7 +61,7 @@ namespace catapult { namespace cache {
 			using BaseType::add;
 
 		public:
-			model::DetachedTransactionInfo add(const Hash256& parentHash, const Key& signer, const Signature& signature) override {
+			model::DetachedTransactionInfo add(const Hash256& parentHash, const Key& signer, const RawSignature& signature) override {
 				auto parentInfo = modifier().add(parentHash, signer, signature);
 				if (parentInfo)
 					subscriber().notifyAddCosignature(PtChangeSubscriberTraits::ToTransactionInfo(parentInfo), signer, signature);

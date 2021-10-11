@@ -31,7 +31,7 @@ namespace catapult { namespace builders {
 #define TEST_CLASS AggregateTransactionBuilderTests
 
 	namespace {
-		using RegularTraits = test::RegularTransactionTraits<model::AggregateTransaction>;
+		using RegularTraits = test::RegularTransactionTraits<model::AggregateTransaction<CoSignatureVersionAlias::Raw>>;
 
 		class TestContext {
 		public:
@@ -51,13 +51,13 @@ namespace catapult { namespace builders {
 				return builder.build();
 			}
 
-			void assertTransaction(const model::AggregateTransaction& transaction, size_t numCosignatures, model::EntityType type) {
+			void assertTransaction(const model::AggregateTransaction<CoSignatureVersionAlias::Raw>& transaction, size_t numCosignatures, model::EntityType type) {
 				auto numTransactions = m_pTransactions.size();
 				size_t additionalSize = numTransactions * sizeof(mocks::EmbeddedMockTransaction);
 				for (auto i = 0u; i < numTransactions; ++i)
 					additionalSize += 31 + i;
 
-				additionalSize += numCosignatures * sizeof(model::Cosignature);
+				additionalSize += numCosignatures * sizeof(model::Cosignature<CoSignatureVersionAlias::Raw>);
 				RegularTraits::CheckFields(additionalSize, transaction);
 				EXPECT_EQ(m_signer, transaction.Signer);
 				EXPECT_EQ(0x62000003, transaction.Version);
@@ -88,27 +88,28 @@ namespace catapult { namespace builders {
 			context.assertTransaction(*pTransaction, 0, model::Entity_Type_Aggregate_Bonded);
 		}
 
-		auto GenerateKeys(size_t numKeys) {
+		auto GenerateKeys(size_t numKeysV1, size_t numKeysV2) {
 			std::vector<crypto::KeyPair> keys;
-			for (auto i = 0u; i < numKeys; ++i)
-				keys.push_back(test::GenerateKeyPair());
-
+			for (auto i = 0u; i < numKeysV1; ++i)
+				keys.push_back(test::GenerateKeyPair(1));
+			for (auto i = 0u; i < numKeysV2; ++i)
+				keys.push_back(test::GenerateKeyPair(2));
 			return keys;
 		}
 
-		RawBuffer TransactionDataBuffer(const model::AggregateTransaction& transaction) {
+		RawBuffer TransactionDataBuffer(const model::AggregateTransaction<CoSignatureVersionAlias::Raw>& transaction) {
 			return {
 				reinterpret_cast<const uint8_t*>(&transaction) + model::VerifiableEntity::Header_Size,
-				sizeof(model::AggregateTransaction) - model::VerifiableEntity::Header_Size + transaction.PayloadSize
+				sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) - model::VerifiableEntity::Header_Size + transaction.PayloadSize
 			};
 		}
 
-		void AssertAggregateCosignaturesTransaction(size_t numCosignatures) {
+		void AssertAggregateCosignaturesTransaction(size_t numCosignatures, bool multipleKeyVersions = true) {
 			// Arrange: create transaction with 3 embedded transactions
 			TestContext context(3);
 			auto generationHash = test::GenerateRandomByteArray<GenerationHash>();
 			AggregateCosignatureAppender builder(generationHash, context.buildTransaction());
-			auto cosigners = GenerateKeys(numCosignatures);
+			auto cosigners = GenerateKeys(numCosignatures, !multipleKeyVersion ? 0 : numCosignatures/2);
 
 			// Act:
 			for (const auto& cosigner : cosigners)

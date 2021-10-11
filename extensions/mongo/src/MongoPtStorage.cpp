@@ -33,13 +33,13 @@ namespace catapult { namespace mongo {
 	namespace {
 		constexpr auto Pt_Collection_Name = "partialTransactions";
 
-		using CosignaturesMap = std::unordered_map<Hash256, std::vector<model::Cosignature>, utils::ArrayHasher<Hash256>>;
+		using CosignaturesMap = std::unordered_map<Hash256, std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>>, utils::ArrayHasher<Hash256>>;
 
 		auto CreateFilter(const Hash256& hash) {
 			return document() << "meta.hash" << mappers::ToBinary(hash) << finalize;
 		}
 
-		auto CreateAppendDocument(const std::vector<model::Cosignature>& cosignatures) {
+		auto CreateAppendDocument(const std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>>& cosignatures) {
 			document doc{};
 			auto array = doc
 					<< "$push"
@@ -49,7 +49,7 @@ namespace catapult { namespace mongo {
 								<< "$each"
 								<< open_array;
 
-			for (const model::Cosignature& cosignature : cosignatures) {
+			for (const model::Cosignature<CoSignatureVersionAlias::Raw>& cosignature : cosignatures) {
 				array
 						<< open_document
 							<< "signer" << mappers::ToBinary(cosignature.Signer)
@@ -86,7 +86,7 @@ namespace catapult { namespace mongo {
 			void notifyAddCosignature(
 					const model::TransactionInfo& parentTransactionInfo,
 					const Key& signer,
-					const Signature& signature) override {
+					const RawSignature& signature) override {
 				// this function is only called by the pt cache modifier if parentInfo corresponds to a known partial transaction
 				auto& cosignatures = m_cosignaturesMap[parentTransactionInfo.EntityHash];
 				cosignatures.push_back({ signer, signature });

@@ -59,7 +59,7 @@ namespace catapult { namespace model {
 		}
 
 		/// Returns version of an entity.
-		SignatureVersion SignatureVersion() const {
+		catapult::SignatureVersion SignatureVersion() const {
 			return static_cast<catapult::SignatureVersion>((Version & SIGNATURE_VERSION_MASK) >> SIGNATURE_VERSION_SHIFT);
 		}
 		/// Returns version of an entity.

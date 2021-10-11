@@ -201,7 +201,7 @@ namespace catapult { namespace test {
 				ToHexString(GetBinary(dbTransaction, "data"), transaction.Data.Size));
 	}
 
-	void AssertEqualCosignatures(const std::vector<model::Cosignature>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures) {
+	void AssertEqualCosignatures(const std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures) {
 		auto iter = dbCosignatures.cbegin();
 		for (const auto& expectedCosignature : expectedCosignatures) {
 			auto cosignatureView = iter->get_document().view();

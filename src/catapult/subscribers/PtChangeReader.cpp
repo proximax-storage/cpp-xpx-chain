@@ -42,7 +42,7 @@ namespace catapult { namespace subscribers {
 
 		void ForwardCosignature(io::InputStream& inputStream, cache::PtChangeSubscriber& subscriber) {
 			Key signer;
-			Signature signature;
+			RawSignature signature;
 			model::TransactionInfo transactionInfo;
 			inputStream.read(signer);
 			inputStream.read(signature);

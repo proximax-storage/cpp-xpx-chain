@@ -38,7 +38,7 @@ namespace catapult { namespace subscribers {
 		void notifyAddCosignature(
 				const model::TransactionInfo& parentTransactionInfo,
 				const Key& signer,
-				const Signature& signature) override {
+				const RawSignature& signature) override {
 			this->forEach([&parentTransactionInfo, &signer, &signature](auto& subscriber) {
 				subscriber.notifyAddCosignature(parentTransactionInfo, signer, signature);
 			});

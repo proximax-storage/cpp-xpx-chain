@@ -103,6 +103,7 @@ namespace catapult { namespace crypto {
 	void Sign(const KeyPair& keyPair, const RawBuffer& dataBuffer, RawSignature& signature) {
 		Sign(keyPair, { dataBuffer }, signature);
 	}
+
 	void SignRef10(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, RawSignature& signature) {
 		uint8_t *RESTRICT encodedR = signature.data();
 		uint8_t *RESTRICT encodedS = signature.data() + Encoded_Size;
@@ -158,8 +159,11 @@ namespace catapult { namespace crypto {
 	}
 
 	void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, Signature& signature) {
-		uint8_t *RESTRICT encodedR = GetRawSignature(signature).data();
-		uint8_t *RESTRICT encodedS = GetRawSignature(signature).data() + Encoded_Size;
+		return Sign(keyPair, buffersList, GetRawSignature(signature));
+	}
+	void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, RawSignature& signature) {
+		uint8_t *RESTRICT encodedR = signature.data();
+		uint8_t *RESTRICT encodedS = signature.data() + Encoded_Size;
 		*signature.begin() = (uint8_t)keyPair.hashingType();
 
 		// r = H(privHash[256:512] || data)

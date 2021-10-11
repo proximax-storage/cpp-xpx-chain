@@ -71,7 +71,10 @@ namespace catapult { namespace zeromq {
 		Partial_Transaction_Remove_Marker = 0x71, // 'q'
 
 		/// A detached cosignature.
-		Cosignature_Marker = 0x63 // 'c'
+		Cosignature_Marker = 0x63, // 'c'
+
+		/// A detached cosignature with embedded version.
+		Cosignature_Embedded_Marker = 0x64 // 'd'
 	};
 
 	/// A zeromq entity publisher.
@@ -103,7 +106,9 @@ namespace catapult { namespace zeromq {
 		void publishTransactionStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status);
 
 		/// Publishes a cosignature composed of transaction info (\a parentTransactionInfo), \a signer and \a signature.
-		void publishCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const Signature& signature);
+		void publishCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const RawSignature& signature);
+
+		void publishEmbeddedCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const Signature& signature);
 
 	private:
 		struct WeakTransactionInfo;

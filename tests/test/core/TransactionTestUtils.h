@@ -84,7 +84,7 @@ namespace catapult { namespace test {
 	model::TransactionRange CreateEntityRange(const std::vector<const model::Transaction*>& transactions);
 
 	/// Creates a random (detached) cosignature.
-	model::DetachedCosignature CreateRandomCosignature();
+	model::DetachedCosignature<CoSignatureVersionAlias::Raw> CreateRandomCosignature();
 
 /// Adds basic transaction size and property tests for \a NAME transaction.
 #define ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS(NAME) \

@@ -41,7 +41,7 @@ namespace catapult { namespace cache {
 		virtual void notifyAddCosignature(
 				const model::TransactionInfo& parentTransactionInfo,
 				const Key& signer,
-				const Signature& signature) = 0;
+				const RawSignature& signature) = 0;
 
 		/// Indicates transaction infos (\a transactionInfos) were removed from partial transactions.
 		/// \note This is only aggregate part and will not have any cosignatures.

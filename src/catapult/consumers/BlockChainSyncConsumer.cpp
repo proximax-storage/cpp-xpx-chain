@@ -66,7 +66,7 @@ namespace catapult { namespace consumers {
 							AddConfig(configs, blockElement.Block.Height,
 								static_cast<const model::NetworkConfigTransaction&>(transaction));
 						} else if (model::Entity_Type_Aggregate_Complete == type || model::Entity_Type_Aggregate_Bonded == type) {
-							const auto& aggregate = static_cast<const model::AggregateTransaction&>(transaction);
+							const auto& aggregate = static_cast<const model::AggregateTransaction<CoSignatureVersionAlias::Raw>&>(transaction);
 							for (const auto& subTransaction : aggregate.Transactions()) {
 								if (model::Entity_Type_Network_Config == subTransaction.Type) {
 									AddConfig(configs, blockElement.Block.Height,
