@@ -28,7 +28,7 @@ namespace catapult { namespace model {
 	// region metadata notification types
 
 /// Defines a metadata notification type with \a DESCRIPTION, \a CODE and \a CHANNEL.
-#define DEFINE_METADATA_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Metadata_Nem, DESCRIPTION, CODE)
+#define DEFINE_METADATA_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Metadata_v2, DESCRIPTION, CODE)
 
 	/// Metadata value was received with specified sizes.
 	DEFINE_METADATA_NOTIFICATION(Sizes, 0x0001, Validator);
@@ -49,7 +49,7 @@ namespace catapult { namespace model {
 	struct MetadataSizesNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Metadata_Nem_Sizes_Notification;
+		static constexpr auto Notification_Type = Metadata_v2_Sizes_Notification;
 
 	public:
 		/// Creates a notification around \a valueSizeDelta and \a valueSize.
@@ -79,7 +79,7 @@ namespace catapult { namespace model {
 	struct MetadataValueNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Metadata_Nem_Value_Notification;
+		static constexpr auto Notification_Type = Metadata_v2_Value_Notification;
 
 	public:
 		/// Creates a notification around \a partialMetadataKey, \a metadataTarget, \a valueSizeDelta, \a valueSize and \a pValue.

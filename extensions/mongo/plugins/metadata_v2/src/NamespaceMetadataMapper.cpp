@@ -19,10 +19,10 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "AccountMetadataMapper.h"
+#include "NamespaceMetadataMapper.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "plugins/txes/metadata_nem/src/model/AccountMetadataTransaction.h"
+#include "plugins/txes/metadata_v2/src/model/NamespaceMetadataTransaction.h"
 
 using namespace catapult::mongo::mappers;
 
@@ -34,6 +34,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			builder
 					<< "targetKey" << ToBinary(transaction.TargetKey)
 					<< "scopedMetadataKey" << static_cast<int64_t>(transaction.ScopedMetadataKey)
+					<< "targetNamespaceId" << ToInt64(transaction.TargetNamespaceId)
 					<< "valueSizeDelta" << transaction.ValueSizeDelta
 					<< "valueSize" << transaction.ValueSize;
 
@@ -42,5 +43,5 @@ namespace catapult { namespace mongo { namespace plugins {
 		}
 	}
 
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(AccountMetadata, Stream)
+	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(NamespaceMetadata, Stream)
 }}}

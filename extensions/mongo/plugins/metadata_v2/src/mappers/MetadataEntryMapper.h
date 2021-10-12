@@ -19,29 +19,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "NamespaceMetadataMapper.h"
-#include "mongo/src/MongoTransactionPluginFactory.h"
-#include "mongo/src/mappers/MapperUtils.h"
-#include "plugins/txes/metadata_nem/src/model/NamespaceMetadataTransaction.h"
-
-using namespace catapult::mongo::mappers;
+#pragma once
+#include "mongo/src/mappers/MapperInclude.h"
+#include "plugins/txes/metadata_v2/src/state/MetadataEntry.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 
-	namespace {
-		template<typename TTransaction>
-		void Stream(bson_stream::document& builder, const TTransaction& transaction) {
-			builder
-					<< "targetKey" << ToBinary(transaction.TargetKey)
-					<< "scopedMetadataKey" << static_cast<int64_t>(transaction.ScopedMetadataKey)
-					<< "targetNamespaceId" << ToInt64(transaction.TargetNamespaceId)
-					<< "valueSizeDelta" << transaction.ValueSizeDelta
-					<< "valueSize" << transaction.ValueSize;
-
-			if (0 < transaction.ValueSize)
-				builder << "value" << ToBinary(transaction.ValuePtr(), transaction.ValueSize);
-		}
-	}
-
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(NamespaceMetadata, Stream)
+	/// Maps \a metadataEntry to the corresponding db model value.
+	bsoncxx::document::value ToDbModel(const state::MetadataEntry& metadataEntry);
 }}}

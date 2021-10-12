@@ -30,7 +30,7 @@ namespace catapult { namespace config {
 	/// Metadata plugin configuration settings.
 	struct MetadataConfiguration : public model::PluginConfiguration {
 	public:
-		DEFINE_CONFIG_CONSTANTS(metadata_nem)
+		DEFINE_CONFIG_CONSTANTS(metadata_v2)
 
 	public:
 		/// Whether the plugin is enabled.

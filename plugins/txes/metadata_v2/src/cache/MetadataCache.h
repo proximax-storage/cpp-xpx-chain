@@ -20,11 +20,24 @@
 **/
 
 #pragma once
-#include "mongo/src/mappers/MapperInclude.h"
-#include "plugins/txes/metadata_nem/src/state/MetadataEntry.h"
+#include "MetadataCacheDelta.h"
+#include "MetadataCacheView.h"
+#include "catapult/cache/BasicCache.h"
 
-namespace catapult { namespace mongo { namespace plugins {
+namespace catapult { namespace cache {
 
-	/// Maps \a metadataEntry to the corresponding db model value.
-	bsoncxx::document::value ToDbModel(const state::MetadataEntry& metadataEntry);
-}}}
+	/// Cache composed of metadata information.
+	using BasicMetadataCache = BasicCache<MetadataCacheDescriptor, MetadataCacheTypes::BaseSets, std::shared_ptr<config::BlockchainConfigurationHolder>>;
+
+	/// Synchronized cache composed of metadata information.
+	class MetadataCache : public SynchronizedCache<BasicMetadataCache> {
+	public:
+		DEFINE_CACHE_CONSTANTS(Metadata_v2)
+
+	public:
+		/// Creates a cache around \a config.
+		explicit MetadataCache(const CacheConfiguration& config, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+			: SynchronizedCache<BasicMetadataCache>(BasicMetadataCache(config, std::move(pConfigHolder)))
+		{}
+	};
+}}

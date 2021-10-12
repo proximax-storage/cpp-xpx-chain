@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 
 #endif
 /// Defines a metadata validation result with \a DESCRIPTION and \a CODE.
-#define DEFINE_METADATA_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, Metadata_Nem, DESCRIPTION, CODE, None)
+#define DEFINE_METADATA_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, Metadata_v2, DESCRIPTION, CODE, None)
 
 	/// Validation failed because the metadata value is too small.
 	DEFINE_METADATA_RESULT(Value_Too_Small, 1);

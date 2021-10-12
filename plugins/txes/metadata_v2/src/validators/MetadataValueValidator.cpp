@@ -35,7 +35,7 @@ namespace catapult { namespace validators {
 		if (!metadataIter.tryGet()) {
 			return notification.ValueSizeDelta == notification.ValueSize
 					? ValidationResult::Success
-					: Failure_Metadata_Nem_Value_Size_Delta_Mismatch;
+					: Failure_Metadata_v2_Value_Size_Delta_Mismatch;
 		}
 
 		const auto& metadataValue = metadataIter.get().value();
@@ -44,7 +44,7 @@ namespace catapult { namespace validators {
 			expectedCacheValueSize = static_cast<uint16_t>(expectedCacheValueSize - notification.ValueSizeDelta);
 
 		if (expectedCacheValueSize != metadataValue.size())
-			return Failure_Metadata_Nem_Value_Size_Delta_Mismatch;
+			return Failure_Metadata_v2_Value_Size_Delta_Mismatch;
 
 		if (notification.ValueSizeDelta >= 0)
 			return ValidationResult::Success;
@@ -52,6 +52,6 @@ namespace catapult { namespace validators {
 		auto requiredTrimCount = static_cast<uint16_t>(-notification.ValueSizeDelta);
 		return metadataValue.canTrim({ notification.ValuePtr, notification.ValueSize }, requiredTrimCount)
 				? ValidationResult::Success
-				: Failure_Metadata_Nem_Value_Change_Irreversible;
+				: Failure_Metadata_v2_Value_Change_Irreversible;
 	}))
 }}

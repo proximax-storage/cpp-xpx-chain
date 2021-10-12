@@ -142,7 +142,7 @@ downloadCacheEnabled = true
 enabled = true
 maxSuperContractsOnDrive = 10
 
-[plugin:catapult.plugins.metadata_nem]
+[plugin:catapult.plugins.metadata_v2]
 
 enabled = true
 maxValueSize = 1024
