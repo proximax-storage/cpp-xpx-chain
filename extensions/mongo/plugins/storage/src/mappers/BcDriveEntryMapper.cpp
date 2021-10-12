@@ -46,7 +46,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		}
 
 		void StreamVerificationOpinions(bson_stream::document& builder, const state::VerificationResults& opinions) {
-			auto array = builder << "opinions" << bson_stream::open_array;
+			auto array = builder << "results" << bson_stream::open_array;
 			for (const auto& pair : opinions)
 				array
 						<< bson_stream::open_document
@@ -151,7 +151,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				DbBinaryToModelArray(verification.VerificationTrigger, doc["verificationTrigger"].get_binary());
 				verification.State = static_cast<state::VerificationState>(static_cast<uint8_t>(doc["state"].get_int32()));
 
-				ReadVerificationOpinions(verification.Results, doc["opinions"].get_array().value);
+				ReadVerificationOpinions(verification.Results, doc["results"].get_array().value);
 				verifications.emplace_back(verification);
 			}
 		}

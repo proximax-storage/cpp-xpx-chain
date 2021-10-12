@@ -22,12 +22,12 @@ namespace catapult { namespace mongo { namespace plugins {
                                             << "verifier" << ToBinary((*pOpinion).Verifier)
                                             << "blsSignature" << ToBinary((*pOpinion).BlsSignature);
 
-            auto opinions = doc << "opinions" << bson_stream::open_array;
+            auto opinions = doc << "results" << bson_stream::open_array;
             for (auto j = 0u; j < transaction.ProversCount-1; ++j) {
                 opinions
                         << bson_stream::open_document
-                            << "prover" << ToBinary((*pOpinion).Opinions[j].first)
-                            << "result" << (*pOpinion).Opinions[j].second
+                            << "prover" << ToBinary((*pOpinion).Results[j].first)
+                            << "result" << (*pOpinion).Results[j].second
                         << bson_stream::close_document;
             }
             opinions << bson_stream::close_array;

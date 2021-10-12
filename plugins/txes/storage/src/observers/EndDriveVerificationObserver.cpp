@@ -38,8 +38,8 @@ namespace catapult { namespace observers {
                     continue;
 
                 auto it = std::find_if(
-                        notification.VerificationOpinionsPtr[j].Opinions.begin(),
-                        notification.VerificationOpinionsPtr[j].Opinions.end(),
+                        notification.VerificationOpinionsPtr[j].Results.begin(),
+                        notification.VerificationOpinionsPtr[j].Results.end(),
                         [&notification, i](const std::pair<Key, uint8_t>& el) {
                             return el.first == notification.ProversPtr[i];
                         }

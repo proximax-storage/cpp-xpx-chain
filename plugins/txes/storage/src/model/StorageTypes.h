@@ -20,8 +20,8 @@ namespace catapult { namespace model {
             /// Aggregated BLS signatures of opinions.
             BLSSignature BlsSignature;
 
-            /// Opinion about verification status for each Prover. Success or Failure.
-            std::vector<std::pair<Key, uint8_t>> Opinions;
+            /// Opinion about verification results for each Prover. Success or Failure.
+            std::vector<std::pair<Key, uint8_t>> Results;
         };
 
 #pragma pack(pop)

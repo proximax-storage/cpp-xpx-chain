@@ -48,7 +48,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			presentOpinionsArray << static_cast<int8_t>(*pBlock);
 		presentOpinionsArray << bson_stream::close_array;
 
-		// Streaming Opinions
+		// Streaming Results
 		auto opinionsArray = builder << "opinions" << bson_stream::open_array;
 		auto pOpinion = transaction.OpinionsPtr();
 		for (auto i = 0; i < transaction.OpinionElementCount; ++i, ++pOpinion)
