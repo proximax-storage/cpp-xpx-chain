@@ -28,7 +28,8 @@
 
 namespace catapult { namespace validators {
 
-	DEFINE_COMMON_VALIDATOR_TESTS(NemesisSink,)
+	DEFINE_COMMON_VALIDATOR_TESTS(NemesisSinkV1,)
+	DEFINE_COMMON_VALIDATOR_TESTS(NemesisSinkV2,)
 
 #define TEST_CLASS NemesisSinkValidatorTests
 
@@ -54,7 +55,7 @@ namespace catapult { namespace validators {
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
 
-			auto pValidator = CreateNemesisSinkValidator();
+			auto pValidator = CreateNemesisSinkV1Validator();
 			auto config = CreateBlockchainConfiguration();
 			auto context = test::CreateValidatorContext(config, Height(height), readOnlyCache);
 

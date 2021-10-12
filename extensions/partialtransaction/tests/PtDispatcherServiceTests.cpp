@@ -212,6 +212,17 @@ namespace catapult { namespace partialtransaction {
 		}
 	}
 
+	namespace {
+		using test_types = ::testing::Types<
+				std::integral_constant<uint32_t,1>,
+				std::integral_constant<uint32_t,2>>;
+
+		template<typename TBaseAccountVersion>
+		struct PtDispatcherServiceTests : public ::testing::Test {};
+	}
+
+	TYPED_TEST_CASE(TEST_CLASS, test_types);
+
 	ADD_SERVICE_REGISTRAR_INFO_TEST(PtDispatcher, Post_Range_Consumers)
 
 	TEST(TEST_CLASS, CanBootService) {
@@ -291,13 +302,13 @@ namespace catapult { namespace partialtransaction {
 			mockTransaction.Data.Size = static_cast<uint16_t>(aggregateTransaction.PayloadSize - headerSizeDifference);
 		}
 
-		auto CreateRandomAggregateTransaction(const model::TransactionRegistry& registry, bool validCosignatures) {
+		auto CreateRandomAggregateTransaction(const model::TransactionRegistry& registry, bool validCosignatures, uint32_t cosignatureAccountVersion) {
 			auto pTransaction = test::CreateRandomAggregateTransactionWithCosignatures(Num_Cosignatures);
 			FixAggregateTransactionDataSize(*pTransaction);
 
 			auto aggregateHash = CalculateTransactionHash(registry, *pTransaction);
 			if (validCosignatures)
-				test::FixCosignatures(aggregateHash, *pTransaction);
+				test::FixCosignatures(aggregateHash, *pTransaction, cosignatureAccountVersion);
 
 			return pTransaction;
 		}
@@ -305,10 +316,11 @@ namespace catapult { namespace partialtransaction {
 		model::TransactionRange CreateAggregateTransactionRange(
 				const model::TransactionRegistry& registry,
 				size_t numTransactions,
-				bool validCosignatures) {
+				bool validCosignatures,
+				uint32_t cosignatureAccountVersion) {
 			std::vector<model::TransactionRange> range;
 			for (auto i = 0u; i < numTransactions; ++i)
-				range.push_back(model::TransactionRange::FromEntity(CreateRandomAggregateTransaction(registry, validCosignatures)));
+				range.push_back(model::TransactionRange::FromEntity(CreateRandomAggregateTransaction(registry, validCosignatures, cosignatureAccountVersion)));
 
 			return model::TransactionRange::MergeRanges(std::move(range));
 		}
@@ -332,14 +344,14 @@ namespace catapult { namespace partialtransaction {
 			return result;
 		}
 
-		template<typename TWait, typename THandler>
+		template<uint32_t TCosignatureAccountVersion, typename TWait, typename THandler>
 		void AssertDispatcherForwarding(const DispatcherTestOptions& options, TWait wait, THandler handler) {
 			// Arrange:
 			TestContext context(options.ValidationResult);
 			context.boot();
 
 			const auto& transactionRegistry = context.registry();
-			auto range = CreateAggregateTransactionRange(transactionRegistry, options.NumEntities, options.ValidCosignatures);
+			auto range = CreateAggregateTransactionRange(transactionRegistry, options.NumEntities, options.ValidCosignatures, TCosignatureAccountVersion);
 			auto expectedHashes = CalculateHashes(transactionRegistry, range);
 
 			// Sanity:
@@ -356,9 +368,9 @@ namespace catapult { namespace partialtransaction {
 		}
 	}
 
-	TEST(TEST_CLASS, Dispatcher_DoesNotForwardToUpdaterWhenValidationFailed) {
+	TYPED_TEST(TEST_CLASS, Dispatcher_DoesNotForwardToUpdaterWhenValidationFailed) {
 		// Arrange:
-		AssertDispatcherForwarding(
+		AssertDispatcherForwarding<TypeParam::value>(
 				DispatcherTestOptions{ ValidationResult::Failure, 1, false },
 				[](const auto&) {},
 				[](const auto& context, const auto& expectedHashes) {
@@ -373,8 +385,8 @@ namespace catapult { namespace partialtransaction {
 				});
 	}
 
-	TEST(TEST_CLASS, Dispatcher_ForwardsToUpdaterWhenValidationSucceeded) {
-		AssertDispatcherForwarding(
+	TYPED_TEST(TEST_CLASS, Dispatcher_ForwardsToUpdaterWhenValidationSucceeded) {
+		AssertDispatcherForwarding<TypeParam::value>(
 				DispatcherTestOptions{ ValidationResult::Success, 1, false },
 				[](const auto& context) {
 					// wait for element processing to finish
@@ -391,8 +403,8 @@ namespace catapult { namespace partialtransaction {
 				});
 	}
 
-	TEST(TEST_CLASS, Dispatcher_ForwardsMultipleEntitiesToUpdaterWhenValidationSucceeded) {
-		AssertDispatcherForwarding(
+	TYPED_TEST(TEST_CLASS, Dispatcher_ForwardsMultipleEntitiesToUpdaterWhenValidationSucceeded) {
+		AssertDispatcherForwarding<TypeParam::value>(
 				DispatcherTestOptions{ ValidationResult::Success, 3, false },
 				[](const auto& context) {
 					// wait for element processing to finish
@@ -410,14 +422,14 @@ namespace catapult { namespace partialtransaction {
 				});
 	}
 
-	TEST(TEST_CLASS, Dispatcher_PtCacheIgnoresTransactionWithSameHash) {
+	TYPED_TEST(TEST_CLASS, Dispatcher_PtCacheIgnoresTransactionWithSameHash) {
 		// Arrange: disable short lived cache, so that dispatcher won't eliminate second element via recency cache
 		TestContext context(ValidationResult::Success);
 		const_cast<config::NodeConfiguration&>(context.testState().config().Node).ShortLivedCacheMaxSize = 0;
 		context.boot();
 
 		const auto& transactionRegistry = context.registry();
-		auto range1 = CreateAggregateTransactionRange(transactionRegistry, 1, false);
+		auto range1 = CreateAggregateTransactionRange(transactionRegistry, 1, false, TypeParam::value);
 		auto range2 = model::TransactionRange::CopyRange(range1);
 		const auto& transaction = *range1.begin();
 		auto expectedHash = CalculateTransactionHash(transactionRegistry, transaction);
@@ -448,8 +460,8 @@ namespace catapult { namespace partialtransaction {
 		EXPECT_EQ(utils::to_underlying_type(consumers::Neutral_Consumer_Hash_In_Recency_Cache), result.CompletionCode);
 	}
 
-	TEST(TEST_CLASS, Dispatcher_UpdaterForwardsToConsumerWhenValidationSucceeded) {
-		AssertDispatcherForwarding(
+	TYPED_TEST(TEST_CLASS, Dispatcher_UpdaterForwardsToConsumerWhenValidationSucceeded) {
+		AssertDispatcherForwarding<TypeParam::value>(
 				DispatcherTestOptions{ ValidationResult::Success, 3, true },
 				[](const auto& context) {
 					// wait for element processing to finish
@@ -478,7 +490,7 @@ namespace catapult { namespace partialtransaction {
 			return ionet::CreateBroadcastPayload(transactionInfos, ionet::PacketType::Push_Partial_Transactions);
 		}
 
-		template<typename TInvokeHook>
+		template<uint32_t TCosignatureAccountVersion, typename TInvokeHook>
 		void AssertInvokeForwardsTransactionRangeToDispatcher(TInvokeHook invokeHook) {
 			// Arrange:
 			TestContext context(ValidationResult::Success);
@@ -486,7 +498,7 @@ namespace catapult { namespace partialtransaction {
 
 			// - prepare a transaction range
 			const auto& transactionRegistry = context.registry();
-			auto transactionRange = CreateAggregateTransactionRange(transactionRegistry, 3, false);
+			auto transactionRange = CreateAggregateTransactionRange(transactionRegistry, 3, false, TCosignatureAccountVersion);
 			auto expectedHashes = CalculateHashes(transactionRegistry, transactionRange);
 			auto expectedPayload = ExtractTransactionPayload(transactionRange);
 
@@ -515,9 +527,9 @@ namespace catapult { namespace partialtransaction {
 		}
 	}
 
-	TEST(TEST_CLASS, CosignedTransactionInfosConsumerForwardsTransactionRangeToDispatcher) {
+	TYPED_TEST(TEST_CLASS, CosignedTransactionInfosConsumerForwardsTransactionRangeToDispatcher) {
 		// Assert:
-		AssertInvokeForwardsTransactionRangeToDispatcher([](const auto& hooks, auto&& transactionRange) {
+		AssertInvokeForwardsTransactionRangeToDispatcher<TypeParam::value>([](const auto& hooks, auto&& transactionRange) {
 			// Arrange:
 			CosignedTransactionInfos transactionInfos;
 			for (const auto& transaction : transactionRange) {
@@ -531,9 +543,9 @@ namespace catapult { namespace partialtransaction {
 		});
 	}
 
-	TEST(TEST_CLASS, PtRangeConsumerForwardsTransactionRangeToDispatcher) {
+	TYPED_TEST(TEST_CLASS, PtRangeConsumerForwardsTransactionRangeToDispatcher) {
 		// Assert:
-		AssertInvokeForwardsTransactionRangeToDispatcher([](const auto& hooks, auto&& transactionRange) {
+		AssertInvokeForwardsTransactionRangeToDispatcher<TypeParam::value>([](const auto& hooks, auto&& transactionRange) {
 			// Act:
 			hooks.ptRangeConsumer()(std::move(transactionRange));
 		});
@@ -569,7 +581,7 @@ namespace catapult { namespace partialtransaction {
 			auto cosignatureRange = model::EntityRange<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>::PrepareFixed(3);
 			std::vector<Key> cosigners;
 			for (auto& cosignature : cosignatureRange) {
-				cosignature = test::GenerateValidCosignature(transactionInfo.EntityHash);
+				cosignature = test::GenerateValidCosignature(transactionInfo.EntityHash, 1);
 				cosigners.push_back(cosignature.Signer);
 			}
 

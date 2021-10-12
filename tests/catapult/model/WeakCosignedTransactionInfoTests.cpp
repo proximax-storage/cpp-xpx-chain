@@ -36,7 +36,7 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, CanCreateWeakCosignedTransactionInfo) {
 		// Act:
 		Transaction transaction;
-		auto cosignatures = test::GenerateRandomDataVector<Cosignature>(3);
+		auto cosignatures = test::GenerateRandomDataVector<Cosignature<CoSignatureVersionAlias::Raw> >(3);
 		WeakCosignedTransactionInfo transactionInfo(&transaction, &cosignatures);
 
 		// Assert:
@@ -48,7 +48,7 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, HasCosignerReturnsTrueWhenSignerIsCosigner) {
 		// Arrange:
 		Transaction transaction;
-		auto cosignatures = test::GenerateRandomDataVector<Cosignature>(3);
+		auto cosignatures = test::GenerateRandomDataVector<Cosignature<CoSignatureVersionAlias::Raw> >(3);
 		WeakCosignedTransactionInfo transactionInfo(&transaction, &cosignatures);
 
 		// Act + Assert:
@@ -60,7 +60,7 @@ namespace catapult { namespace model {
 		// Arrange:
 		Transaction transaction;
 		transaction.Signer = test::GenerateRandomByteArray<Key>();
-		auto cosignatures = test::GenerateRandomDataVector<Cosignature>(3);
+		auto cosignatures = test::GenerateRandomDataVector<Cosignature<CoSignatureVersionAlias::Raw> >(3);
 		WeakCosignedTransactionInfo transactionInfo(&transaction, &cosignatures);
 
 		// Act + Assert:

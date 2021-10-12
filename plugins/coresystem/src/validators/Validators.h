@@ -40,7 +40,11 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all signature notifications and validates that:
 	/// - nemesis account signatures are not allowed after the nemesis block
-	DECLARE_STATEFUL_VALIDATOR(NemesisSink, model::SignatureNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(NemesisSinkV1, model::SignatureNotification<1>)();
+
+	/// A validator implementation that applies to all signature notifications and validates that:
+	/// - nemesis account signatures are not allowed after the nemesis block
+	DECLARE_STATEFUL_VALIDATOR(NemesisSinkV2, model::SignatureNotification<2>)();
 
 	/// A validator implementation that applies to all entity notifications and validates that:
 	/// - the entity targets the expected network (\a networkIdentifier)

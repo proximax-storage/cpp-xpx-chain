@@ -30,8 +30,8 @@ namespace catapult { namespace test {
 		return test::GenerateRandomDataVector<Key>(count);
 	}
 
-	std::vector<model::Cosignature> GenerateCosignaturesFromCosigners(const std::vector<Key>& cosigners) {
-		auto cosignatures = test::GenerateRandomDataVector<model::Cosignature>(cosigners.size());
+	std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>> GenerateCosignaturesFromCosigners(const std::vector<Key>& cosigners) {
+		auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<CoSignatureVersionAlias::Raw>>(cosigners.size());
 		for (auto i = 0u; i < cosigners.size(); ++i)
 			cosignatures[i].Signer = cosigners[i];
 

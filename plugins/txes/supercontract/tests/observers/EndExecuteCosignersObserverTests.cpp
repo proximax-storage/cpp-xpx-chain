@@ -26,10 +26,10 @@ namespace catapult { namespace observers {
 		const auto Current_Height = Height(123);
 		const auto Super_Contract_Key = test::GenerateRandomByteArray<Key>();
 
-		const std::vector<model::Cosignature> Cosignatures{
-			{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() },
-			{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() },
-			{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() },
+		const std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>> Cosignatures{
+			{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<RawSignature>() },
+			{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<RawSignature>() },
+			{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<RawSignature>() },
 		};
 
 		const std::vector<model::Mosaic> Initial_Balances{

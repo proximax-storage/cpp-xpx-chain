@@ -161,7 +161,7 @@ namespace catapult { namespace test {
 	void AssertDetachedCosignatureMessage(
 			const zmq::multipart_t& message,
 			const std::vector<uint8_t>& topic,
-			const model::DetachedCosignature& detachedCosignature) {
+			const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& detachedCosignature) {
 		ASSERT_EQ(2u, message.size());
 
 		AssertMessagePart(message[0], topic.data(), topic.size());

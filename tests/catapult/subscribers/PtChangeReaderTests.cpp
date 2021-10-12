@@ -100,7 +100,7 @@ namespace catapult { namespace subscribers {
 	TEST(TEST_CLASS, CanReadCosignature) {
 		// Arrange:
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto signature = test::GenerateRandomByteArray<Signature>();
+		auto signature = test::GenerateRandomByteArray<RawSignature>();
 		auto transactionInfos = test::CreateTransactionInfosWithOptionalAddresses(1);
 
 		std::vector<uint8_t> buffer;

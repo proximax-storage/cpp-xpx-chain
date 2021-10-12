@@ -137,9 +137,9 @@ namespace catapult { namespace ionet {
 	// region cosignatures
 
 	namespace {
-		void AssertPayloadBuffer(const PacketPayload& payload, const std::vector<model::DetachedCosignature>& cosignatures) {
+		void AssertPayloadBuffer(const PacketPayload& payload, const std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>& cosignatures) {
 			// Assert:
-			auto cosignatureSize = sizeof(model::DetachedCosignature);
+			auto cosignatureSize = sizeof(model::DetachedCosignature<CoSignatureVersionAlias::Raw>);
 			auto expectedPayloadSize = cosignatures.size() * cosignatureSize;
 			test::AssertPacketHeader(payload, sizeof(PacketHeader) + expectedPayloadSize, PacketType::Push_Detached_Cosignatures);
 
@@ -150,7 +150,7 @@ namespace catapult { namespace ionet {
 			ASSERT_EQ(expectedPayloadSize, buffer.Size);
 
 			// - all cosignatures are present in the buffer
-			const auto* pCosignature = reinterpret_cast<const model::DetachedCosignature*>(buffer.pData);
+			const auto* pCosignature = reinterpret_cast<const model::DetachedCosignature<CoSignatureVersionAlias::Raw>*>(buffer.pData);
 			for (auto i = 0u; i < cosignatures.size(); ++i, ++pCosignature)
 				EXPECT_EQ_MEMORY(cosignatures.data() + i, pCosignature, cosignatureSize) << "cosignature at " << i;
 		}
@@ -158,7 +158,7 @@ namespace catapult { namespace ionet {
 
 	TEST(TEST_CLASS, CanCreateBroadcastPayload_Cosignatures_None) {
 		// Arrange:
-		std::vector<model::DetachedCosignature> infos;
+		std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw>> infos;
 
 		// Act:
 		auto payload = CreateBroadcastPayload(infos);
@@ -170,7 +170,7 @@ namespace catapult { namespace ionet {
 
 	TEST(TEST_CLASS, CanCreateBroadcastPayload_Cosignatures_Single) {
 		// Arrange:
-		std::vector<model::DetachedCosignature> cosignatures;
+		std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw> > cosignatures;
 		cosignatures.push_back(test::CreateRandomCosignature());
 
 		// Act:
@@ -182,7 +182,7 @@ namespace catapult { namespace ionet {
 
 	TEST(TEST_CLASS, CanCreateBroadcastPayload_Cosignatures_Multiple) {
 		// Arrange:
-		std::vector<model::DetachedCosignature> cosignatures;
+		std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw> > cosignatures;
 		for (auto i = 0u; i < 5; ++i)
 			cosignatures.push_back(test::CreateRandomCosignature());
 

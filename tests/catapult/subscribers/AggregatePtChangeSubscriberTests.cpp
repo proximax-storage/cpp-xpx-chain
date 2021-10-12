@@ -57,7 +57,7 @@ namespace catapult { namespace subscribers {
 		class MockPtChangeSubscriber : public UnsupportedPtChangeSubscriber {
 		public:
 			struct Param {
-				Param(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const Signature& signature)
+				Param(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const RawSignature& signature)
 						: ParentTransactionInfo(parentTransactionInfo)
 						, Signer(signer)
 						, Signature(signature)
@@ -65,11 +65,11 @@ namespace catapult { namespace subscribers {
 
 				const model::TransactionInfo& ParentTransactionInfo;
 				const Key& Signer;
-				const catapult::Signature& Signature;
+				const catapult::RawSignature& Signature;
 			};
 
 		public:
-			void notifyAddCosignature(const model::TransactionInfo& parentInfo, const Key& signer, const Signature& signature) override {
+			void notifyAddCosignature(const model::TransactionInfo& parentInfo, const Key& signer, const RawSignature& signature) override {
 				CapturedParams.emplace_back(parentInfo, signer, signature);
 			}
 
@@ -80,7 +80,7 @@ namespace catapult { namespace subscribers {
 		TestContext<MockPtChangeSubscriber> context;
 		auto transactionInfo = test::CreateRandomTransactionInfo();
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto signature = test::GenerateRandomByteArray<Signature>();
+		auto signature = test::GenerateRandomByteArray<RawSignature>();
 
 		// Sanity:
 		EXPECT_EQ(3u, context.subscribers().size());

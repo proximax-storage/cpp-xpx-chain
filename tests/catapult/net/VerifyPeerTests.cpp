@@ -259,7 +259,7 @@ namespace catapult { namespace net {
 		const auto& packet = pMockIo->writtenPacketAt<ClientChallengeResponse>(1);
 
 		// Assert: the signature is non zero and is verifiable
-		EXPECT_NE(Signature(), packet.Signature);
+		EXPECT_NE(RawSignature(), packet.Signature);
 		EXPECT_TRUE(crypto::Verify(serverKeyPair.publicKey(), {challenge}, packet.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(SignatureVersionAlias::Sha3)));
 	}
 
@@ -484,7 +484,7 @@ namespace catapult { namespace net {
 		signedData[Challenge_Size] = utils::to_underlying_type(Default_Security_Mode);
 
 		// Assert: the signature is non zero and is verifiable
-		EXPECT_NE(Signature(), packet.Signature);
+		EXPECT_NE(RawSignature(), packet.Signature);
 		EXPECT_TRUE(crypto::Verify(clientKeyPair.publicKey(), {signedData}, packet.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(SignatureVersionAlias::Sha3)));
 	}
 

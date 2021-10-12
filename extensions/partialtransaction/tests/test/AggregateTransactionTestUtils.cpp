@@ -31,8 +31,8 @@ namespace catapult { namespace test {
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 	}
 
-	model::UniqueEntityPtr<model::AggregateTransaction<1>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures) {
-		uint32_t size = sizeof(model::AggregateTransaction<1>) + 124 + numCosignatures * sizeof(model::Cosignature<1>);
+	model::UniqueEntityPtr<model::AggregateTransaction<CoSignatureVersionAlias::Raw>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures) {
+		uint32_t size = sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) + 124 + numCosignatures * sizeof(model::Cosignature<1>);
 		auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<1>>(size);
 		FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), size });
 
@@ -44,19 +44,19 @@ namespace catapult { namespace test {
 		return pTransaction;
 	}
 
-	model::DetachedCosignature<1> GenerateValidCosignature(const Hash256& aggregateHash, uint32_t accountVersion) {
-		model::Cosignature<1> cosignature;
+	model::DetachedCosignature<CoSignatureVersionAlias::Raw> GenerateValidCosignature(const Hash256& aggregateHash, uint32_t accountVersion) {
+		model::Cosignature<CoSignatureVersionAlias::Raw> cosignature;
 		auto keyPair = GenerateKeyPair(accountVersion);
 		cosignature.Signer = keyPair.publicKey();
 		crypto::Sign(keyPair, aggregateHash, cosignature.Signature);
 		return { cosignature.Signer, cosignature.Signature, aggregateHash };
 	}
 
-	void FixCosignatures(const Hash256& aggregateHash, model::AggregateTransaction<1>& aggregateTransaction) {
+	void FixCosignatures(const Hash256& aggregateHash, model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction, uint32_t accountVersion) {
 		// assigning DetachedCosignature to Cosignature works by slicing off ParentHash since the former is derived from the latter
 		auto* pCosignature = aggregateTransaction.CosignaturesPtr();
 		for (auto i = 0u; i < aggregateTransaction.CosignaturesCount(); ++i)
-			*pCosignature++ = GenerateValidCosignature(aggregateHash);
+			*pCosignature++ = GenerateValidCosignature(aggregateHash, accountVersion);
 	}
 
 	AggregateTransactionWrapper CreateAggregateTransaction(uint8_t numTransactions) {

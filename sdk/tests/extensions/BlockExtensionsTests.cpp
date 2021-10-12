@@ -224,7 +224,7 @@ namespace catapult { namespace extensions {
 			auto result = extensions.verifyFullBlock(*pBlock);
 
 			// Assert: fields have been updated and it is verifiable
-			EXPECT_NE(Signature(), pBlock->Signature);
+			EXPECT_NE(RawSignature(), pBlock->Signature);
 			EXPECT_NE(Hash256(), pBlock->BlockTransactionsHash);
 			EXPECT_EQ(VerifyFullBlockResult::Success, result);
 		});

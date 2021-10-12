@@ -31,7 +31,7 @@ namespace catapult {
 	namespace model {
 		struct Block;
 		struct BlockElement;
-		template<SignatureVersion TCosignatureVersion>
+		template<uint32_t TCosignatureVersion>
 		struct Cosignature;
 		struct EmbeddedTransaction;
 		struct Receipt;
@@ -152,8 +152,8 @@ namespace catapult { namespace test {
 
 	/// Converts binary field \a name from a document (\a doc) to a signature.
 	template<typename TDocument>
-	Signature GetSignatureValue(const TDocument& doc, const std::string& name) {
-		return GetBinaryArray<Signature_Size>(doc, name);
+	RawSignature GetSignatureValue(const TDocument& doc, const std::string& name) {
+		return GetBinaryArray<RawSignature_tag::Size>(doc, name);
 	}
 
 	/// Converts binary field \a name from a document (\a doc) to a (decoded) address.

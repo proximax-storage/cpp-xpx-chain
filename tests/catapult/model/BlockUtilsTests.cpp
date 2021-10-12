@@ -423,7 +423,7 @@ namespace catapult { namespace model {
 
 			// Assert:
 			ASSERT_EQ(sizeof(BlockHeaderV4) + SumTransactionSizes(transactions), pBlock->Size);
-			EXPECT_EQ(Signature(), pBlock->Signature);
+			EXPECT_EQ(RawSignature(), pBlock->Signature);
 
 			EXPECT_EQ(signer.publicKey(), pBlock->Signer);
 			EXPECT_EQ(static_cast<NetworkIdentifier>(0x17), pBlock->Network());

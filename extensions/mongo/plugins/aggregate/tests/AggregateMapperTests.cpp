@@ -33,7 +33,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 #define TEST_CLASS AggregateMapperTests
 
-	using TransactionType = model::AggregateTransaction;
+	using TransactionType = model::AggregateTransaction<CoSignatureVersionAlias::Raw>;
 	using EmbeddedTransactionType = mocks::EmbeddedMockTransaction;
 
 	namespace {
@@ -43,7 +43,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto AllocateAggregateTransaction(uint16_t numTransactions, uint16_t numCosignatures) {
 			uint32_t entitySize = sizeof(TransactionType)
 					+ numTransactions * sizeof(EmbeddedTransactionType)
-					+ numCosignatures * sizeof(model::Cosignature);
+					+ numCosignatures * sizeof(model::Cosignature<CoSignatureVersionAlias::Raw>);
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
 			pTransaction->Size = entitySize;
 			pTransaction->PayloadSize = numTransactions * sizeof(EmbeddedTransactionType);
@@ -82,11 +82,11 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto pTransaction = AllocateAggregateTransaction(1, numCosignatures);
 
 			// - create and copy cosignatures
-			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature>(numCosignatures);
+			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<CoSignatureVersionAlias::Raw>>(numCosignatures);
 			std::memcpy(
 					static_cast<void*>(pTransaction->CosignaturesPtr()),
 					cosignatures.data(),
-					numCosignatures * sizeof(model::Cosignature));
+					numCosignatures * sizeof(model::Cosignature<CoSignatureVersionAlias::Raw>));
 
 			// - create the plugin
 			MongoTransactionRegistry registry;

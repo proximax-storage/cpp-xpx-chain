@@ -30,10 +30,10 @@ namespace catapult { namespace test {
 	model::UniqueEntityPtr<model::AggregateTransaction<1>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures);
 
 	/// Generates a random cosignature for parent hash (\a aggregateHash).
-	model::DetachedCosignature<1> GenerateValidCosignature(const Hash256& aggregateHash);
+	model::DetachedCosignature<CoSignatureVersionAlias::Raw> GenerateValidCosignature(const Hash256& aggregateHash, uint32_t accountVersion);
 
 	/// Fix cosignatures of \a aggregateTransaction having \a aggregateHash.
-	void FixCosignatures(const Hash256& aggregateHash, model::AggregateTransaction<1>& aggregateTransaction);
+	void FixCosignatures(const Hash256& aggregateHash, model::AggregateTransaction<1>& aggregateTransaction, uint32_t accountVersion);
 
 	/// A map of cosignature components.
 	using CosignaturesMap = std::unordered_map<Key, RawSignature, utils::ArrayHasher<Key>>;

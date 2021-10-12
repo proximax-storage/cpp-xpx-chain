@@ -42,11 +42,11 @@ namespace catapult { namespace filespooling {
 		public:
 			void assertCosignature(
 					const Key& expectedKey,
-					const Signature& expectedSignature,
+					const RawSignature& expectedSignature,
 					const model::TransactionInfo& expectedTransactionInfo) {
 				auto inputStream = createInputStream();
 				Key key;
-				Signature signature;
+				RawSignature signature;
 				model::TransactionInfo transactionInfo;
 				auto operationType = static_cast<OperationType>(io::Read8(inputStream));
 				inputStream.read(key);
@@ -112,7 +112,7 @@ namespace catapult { namespace filespooling {
 		// Arrange:
 		FilePtChangeStorageContext context;
 		auto key = test::GenerateRandomByteArray<Key>();
-		auto signature = test::GenerateRandomByteArray<Signature>();
+		auto signature = test::GenerateRandomByteArray<RawSignature>();
 		auto transactionInfo = test::CreateRandomTransactionInfo();
 		transactionInfo.OptionalExtractedAddresses = test::GenerateRandomUnresolvedAddressSetPointer(3);
 

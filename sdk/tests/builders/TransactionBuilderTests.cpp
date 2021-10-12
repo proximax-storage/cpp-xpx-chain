@@ -75,7 +75,7 @@ namespace catapult { namespace builders {
 			// Assert:
 			EXPECT_EQ(signer, builder.signer());
 			ASSERT_EQ(sizeof(mocks::MockTransaction) + Additional_Data_Size, pTransaction->Size);
-			EXPECT_EQ(Signature(), pTransaction->Signature);
+			EXPECT_EQ(RawSignature(), pTransaction->Signature);
 			EXPECT_EQ(signer, pTransaction->Signer);
 			EXPECT_EQ(0x620000FF, pTransaction->Version);
 			EXPECT_EQ(static_cast<model::EntityType>(mocks::MockTransaction::Entity_Type), pTransaction->Type);

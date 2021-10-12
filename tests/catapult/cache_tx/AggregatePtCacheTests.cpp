@@ -40,7 +40,7 @@ namespace catapult { namespace cache {
 				CATAPULT_THROW_RUNTIME_ERROR("add - not supported in mock");
 			}
 
-			model::DetachedTransactionInfo add(const Hash256&, const Key&, const Signature&) override {
+			model::DetachedTransactionInfo add(const Hash256&, const Key&, const RawSignature&) override {
 				CATAPULT_THROW_RUNTIME_ERROR("add(cosignature) - not supported in mock");
 			}
 
@@ -119,7 +119,7 @@ namespace catapult { namespace cache {
 	namespace {
 		class MockAddCosignaturePtCacheModifier : public UnsupportedPtCacheModifier {
 		public:
-			using CosignatureInfo = std::pair<Hash256, model::Cosignature>;
+			using CosignatureInfo = std::pair<Hash256, model::Cosignature<CoSignatureVersionAlias::Raw>>;
 
 		public:
 			explicit MockAddCosignaturePtCacheModifier(
@@ -130,8 +130,8 @@ namespace catapult { namespace cache {
 			{}
 
 		public:
-			model::DetachedTransactionInfo add(const Hash256& parentHash, const Key& signer, const Signature& signature) override {
-				m_cosignatureInfos.emplace_back(parentHash, model::Cosignature{ signer, signature });
+			model::DetachedTransactionInfo add(const Hash256& parentHash, const Key& signer, const RawSignature& signature) override {
+				m_cosignatureInfos.emplace_back(parentHash, model::Cosignature<CoSignatureVersionAlias::Raw>{ signer, signature });
 				return m_transactionInfo.copy();
 			}
 
@@ -148,7 +148,7 @@ namespace catapult { namespace cache {
 		TestContext<MockAddCosignaturePtCacheModifier> context(cosignatureInfos, transactionInfo);
 
 		auto parentHash = test::GenerateRandomByteArray<Hash256>();
-		auto cosignature = model::Cosignature{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() };
+		auto cosignature = model::Cosignature<CoSignatureVersionAlias::Raw>{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<RawSignature>() };
 
 		// Act: add via modifier, which flushes when destroyed
 		auto transactionInfoFromAdd = context.aggregate().modifier().add(parentHash, cosignature.Signer, cosignature.Signature);
@@ -179,7 +179,7 @@ namespace catapult { namespace cache {
 		TestContext<MockAddCosignaturePtCacheModifier> context(cosignatureInfos, model::TransactionInfo());
 
 		auto parentHash = test::GenerateRandomByteArray<Hash256>();
-		auto cosignature = model::Cosignature{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() };
+		auto cosignature = model::Cosignature<CoSignatureVersionAlias::Raw>{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<RawSignature>() };
 
 		// Act: add via modifier, which flushes when destroyed
 		auto transactionInfoFromAdd = context.aggregate().modifier().add(parentHash, cosignature.Signer, cosignature.Signature);

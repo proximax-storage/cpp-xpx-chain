@@ -109,7 +109,7 @@ namespace catapult { namespace builders {
 			TestContext context(3);
 			auto generationHash = test::GenerateRandomByteArray<GenerationHash>();
 			AggregateCosignatureAppender builder(generationHash, context.buildTransaction());
-			auto cosigners = GenerateKeys(numCosignatures, !multipleKeyVersion ? 0 : numCosignatures/2);
+			auto cosigners = GenerateKeys(numCosignatures/2+numCosignatures%2, !multipleKeyVersions ? 0 : numCosignatures/2);
 
 			// Act:
 			for (const auto& cosigner : cosigners)
@@ -117,13 +117,20 @@ namespace catapult { namespace builders {
 
 			auto pTransaction = builder.build();
 
+			auto findCorrespondingKeyVersion = [&cosigners](const Key& publicKey) -> KeyHashingType{
+				auto result = std::find_if(cosigners.begin(), cosigners.end(), [&publicKey](auto& val){
+					return val.publicKey() == publicKey;
+				});
+				if(result != cosigners.end()) return result->hashingType();
+				return KeyHashingType::Sha3;
+			};
 			// Assert:
 			context.assertTransaction(*pTransaction, cosigners.size(), model::Entity_Type_Aggregate_Complete);
 			auto hash = model::CalculateHash(*pTransaction, generationHash, TransactionDataBuffer(*pTransaction));
 			const auto* pCosignature = pTransaction->CosignaturesPtr();
 			for (const auto& cosigner : cosigners) {
 				EXPECT_EQ(cosigner.publicKey(), pCosignature->Signer) << "invalid signer";
-				EXPECT_TRUE(crypto::Verify(pCosignature->Signer, hash, pCosignature->Signature))
+				EXPECT_TRUE(crypto::Verify(pCosignature->Signer, {hash}, pCosignature->Signature, findCorrespondingKeyVersion(pCosignature->Signer)))
 						<< "invalid cosignature " << pCosignature->Signature;
 				++pCosignature;
 			}
