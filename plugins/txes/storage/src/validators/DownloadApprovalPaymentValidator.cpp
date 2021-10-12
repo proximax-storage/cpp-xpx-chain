@@ -27,9 +27,10 @@ namespace catapult { namespace validators {
 		if (!pSenderState)
 		  	return Failure_Storage_Sender_State_Not_Found;
 
-	  	// Check if all replicators' account states exist
-		for (auto i = 0; i < notification.JudgedCount; ++i) {
-			const auto recipientStateIter = accountStateCache.find(notification.PublicKeysPtr[i]);
+	  	// Check if all judged replicators' account states exist
+		const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
+		for (auto i = 0; i < totalJudgedKeysCount; ++i) {
+			const auto recipientStateIter = accountStateCache.find(notification.PublicKeysPtr[notification.JudgingKeysCount + i]);
 			const auto& pRecipientState = recipientStateIter.tryGet();
 			if (!pRecipientState)
 				return Failure_Storage_Recipient_State_Not_Found;

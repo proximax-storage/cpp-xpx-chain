@@ -29,22 +29,24 @@ namespace catapult { namespace observers {
 	  	// Nth element in opinionCounts indicates how many replicators have provided Nth opinion.
 		std::vector<uint8_t> opinionCounts(notification.OpinionCount, 0);
 		auto pIndex = notification.OpinionIndicesPtr;
-		for (auto i = 0; i < notification.JudgingCount; ++i, ++pIndex)
+		const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
+		for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pIndex)
 			++opinionCounts.at(*pIndex);
 
 		// Maps each replicator key to a vector of opinions about that replicator.
 		std::map<Key, std::vector<uint64_t>> opinions;
 
-		// Bitset that represents boolean array of size (transaction.OpinionCount * transaction.JudgedCount) of opinion presence.
-		const auto presentOpinionByteCount = (notification.OpinionCount * notification.JudgedCount + 7) / 8;
+		// Bitset that represents boolean array of size (transaction.OpinionCount * totalJudgedKeysCount) of opinion presence.
+	  	const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
+		const auto presentOpinionByteCount = (notification.OpinionCount * totalJudgedKeysCount + 7) / 8;
 		boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
 
 		// Filling in opinions map.
 		auto pOpinionElement = notification.OpinionsPtr;
 		for (auto i = 0; i < notification.OpinionCount; ++i)
-			for (auto j = 0; j < notification.JudgedCount; ++j)
-				if (presentOpinions[i*notification.JudgedCount + j]) {
-					auto& opinionVector = opinions[notification.PublicKeysPtr[j]];
+			for (auto j = 0; j < totalJudgedKeysCount; ++j)
+				if (presentOpinions[i*totalJudgedKeysCount + j]) {
+					auto& opinionVector = opinions[notification.PublicKeysPtr[notification.JudgingKeysCount + j]];
 					opinionVector.resize(opinionVector.size() + opinionCounts.at(i), *pOpinionElement);
 					++pOpinionElement;
 				}

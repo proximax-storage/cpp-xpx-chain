@@ -37,11 +37,12 @@ namespace catapult { namespace validators {
 				const RawBuffer& commonDataBuffer,
 				const test::OpinionData<TOpinion>& opinionData) {
 			// Arrange:
-			const auto presentOpinionElementCount = opinionData.OpinionCount * opinionData.JudgedCount;
+			const auto totalJudgedKeysCount = opinionData.OverlappingKeysCount + opinionData.JudgedKeysCount;
+			const auto presentOpinionElementCount = opinionData.OpinionCount * totalJudgedKeysCount;
 			const auto presentOpinionByteCount = (presentOpinionElementCount + 7) / 8;
-			const auto payloadSize = opinionData.JudgedCount * sizeof(Key)
-									 + opinionData.JudgingCount * sizeof(uint8_t)
-									 + opinionData.OpinionCount * sizeof(BLSSignature)
+			const auto payloadSize = opinionData.PublicKeys.size() * sizeof(Key)
+									 + opinionData.OpinionIndices.size() * sizeof(uint8_t)
+									 + opinionData.BlsSignatures.size() * sizeof(BLSSignature)
 									 + presentOpinionByteCount * sizeof(uint8_t)
 									 + opinionData.OpinionElementCount * sizeof(TOpinion);
 			const auto pPayload = std::unique_ptr<uint8_t[]>(new uint8_t[payloadSize]);
@@ -63,7 +64,7 @@ namespace catapult { namespace validators {
 				boost::dynamic_bitset<uint8_t> byte(8, 0u);
 				for (auto j = 0u; j < std::min(8u, presentOpinionElementCount - i*8); ++j) {
 					const auto bitNumber = i*8 + j;
-					byte[j] = opinionData.PresentOpinions.at(bitNumber / opinionData.JudgedCount).at(bitNumber % opinionData.JudgedCount);
+					byte[j] = opinionData.PresentOpinions.at(bitNumber / totalJudgedKeysCount).at(bitNumber % totalJudgedKeysCount);
 				}
 				boost::to_block_range(byte, &pPresentOpinionsBegin[i]);
 			}
@@ -77,8 +78,9 @@ namespace catapult { namespace validators {
 			Notification notification(
 					commonDataBuffer.Size,
 					opinionData.OpinionCount,
-					opinionData.JudgingCount,
-					opinionData.JudgedCount,
+					opinionData.JudgingKeysCount,
+					opinionData.OverlappingKeysCount,
+					opinionData.JudgedKeysCount,
 					commonDataBuffer.pData,
 					pPublicKeysBegin,
 					pOpinionIndicesBegin,
@@ -122,7 +124,8 @@ namespace catapult { namespace validators {
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
 
 		// Act:
-		const auto keyIndex = test::RandomInRange(0, opinionData.JudgedCount-1);	// Select random key
+		const auto totalJudgedKeysCount = opinionData.OverlappingKeysCount + opinionData.JudgedKeysCount;
+		const auto keyIndex = test::RandomInRange(0, totalJudgedKeysCount-1);	// Select random judged key
 		for (auto i = 0; i < opinionData.OpinionCount; ++i)
 			opinionData.PresentOpinions.at(i).at(keyIndex) = false;	// Reset all bits in corresponding column in PresentOpinions
 
@@ -140,12 +143,16 @@ namespace catapult { namespace validators {
 		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
 		const auto commonDataBuffer = GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
-		const auto judgedCount = test::RandomInRange<uint8_t>(2, replicatorKeyPairs.size());	// Need at least 2 different keys
-		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer, judgedCount);
+
+		const auto totalKeysCount = test::RandomInRange(2ul, replicatorKeyPairs.size());	// Need at least 2 different keys
+		const auto overlappingKeysCount = test::RandomInRange<uint8_t>(totalKeysCount > 1 ? 0 : 1, totalKeysCount);
+		const auto judgingKeysCount = test::RandomInRange<uint8_t>(overlappingKeysCount ? 0 : 1, totalKeysCount - overlappingKeysCount - (overlappingKeysCount ? 0 : 1));
+		const auto judgedKeysCount = totalKeysCount - overlappingKeysCount - judgingKeysCount;
+		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer, {judgingKeysCount, overlappingKeysCount, judgedKeysCount});
 
 		// Act:
-		const auto sourceKeyIndex = test::RandomInRange(0, opinionData.JudgedCount-1);	// Select random key as a source
-		auto targetKeyIndex = test::RandomInRange(0, opinionData.JudgedCount-2);	// Select random key from remaining keys as a target
+		const auto sourceKeyIndex = test::RandomInRange(0ul, totalKeysCount-1);	// Select random key as a source
+		auto targetKeyIndex = test::RandomInRange(0ul, totalKeysCount-2);	// Select random key from remaining keys as a target
 		targetKeyIndex += targetKeyIndex >= sourceKeyIndex;	// Compensate for the source key
 		opinionData.PublicKeys.at(targetKeyIndex) = opinionData.PublicKeys.at(sourceKeyIndex);	// Replace target key with a source key
 
@@ -166,7 +173,8 @@ namespace catapult { namespace validators {
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
 
 		// Act:
-		const auto replicatorIndex = test::RandomInRange(0, opinionData.JudgingCount-1);	// Select random replicator
+		const auto totalJudgingKeysCount = opinionData.JudgingKeysCount + opinionData.OverlappingKeysCount;
+		const auto replicatorIndex = test::RandomInRange(0, totalJudgingKeysCount-1);	// Select random judging replicator
 		auto delta = cache.createDelta();
 		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
 		replicatorDelta.remove(opinionData.PublicKeys.at(replicatorIndex));	// Remove selected replicator from ReplicatorCache
@@ -189,7 +197,7 @@ namespace catapult { namespace validators {
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
 
 		// Act:
-		const auto positionIndex = test::RandomInRange(0, opinionData.JudgingCount-1);	// Select random position in OpinionIndices
+		const auto positionIndex = test::RandomInRange(0ul, opinionData.OpinionIndices.size()-1);	// Select random position in OpinionIndices
 		opinionData.OpinionIndices.at(positionIndex) += opinionData.OpinionCount;	// Make stored index invalid (valid indices must be less than OpinionCount)
 
 		// Assert:
@@ -207,15 +215,17 @@ namespace catapult { namespace validators {
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
 		const auto commonDataBuffer = GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 
-		const auto maxCount = replicatorKeyPairs.size();
-		const auto opinionCount = test::RandomInRange<uint8_t>(2, maxCount);	// Need at least 2 different opinions
-		const auto judgingCount = test::RandomInRange<uint8_t>(opinionCount, maxCount);	// Generating the rest of the counts
-		const auto judgedCount = test::RandomInRange<uint8_t>(judgingCount, maxCount);
-		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer, judgedCount, judgingCount, opinionCount, true);
+		const auto totalKeysCount = test::RandomInRange(2ul, replicatorKeyPairs.size());
+		const auto opinionCount = test::RandomInRange<uint8_t>(2, totalKeysCount);	// Need at least 2 different opinions
+		const auto totalJudgingKeysCount = test::RandomInRange<uint8_t>(opinionCount, totalKeysCount);
+		const auto judgedKeysCount = totalKeysCount - totalJudgingKeysCount;
+		const auto overlappingKeysCount = test::RandomInRange<uint8_t>(judgedKeysCount ? 0 : 1, totalJudgingKeysCount);
+		const auto judgingKeysCount = totalJudgingKeysCount - overlappingKeysCount;
+		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer, {judgingKeysCount, overlappingKeysCount, judgedKeysCount}, opinionCount, true);
 
 		// Act:
-		auto sourceOpinionIndex = test::RandomInRange(0, opinionData.OpinionCount-2);	// Select random opinion as a source; it can't be the last opinion
-		auto targetOpinionIndex = test::RandomInRange(sourceOpinionIndex+1, opinionData.OpinionCount-1);	// Select random opinion from following opinions as a target
+		auto sourceOpinionIndex = test::RandomInRange(0ul, opinionData.Opinions.size()-2);	// Select random opinion as a source; it can't be the last opinion
+		auto targetOpinionIndex = test::RandomInRange(sourceOpinionIndex+1, opinionData.Opinions.size()-1);	// Select random opinion from following opinions as a target
 		targetOpinionIndex += targetOpinionIndex == opinionData.FilledPresenceRowIndex;	// Compensate for the fully present opinion. Safe since this opinion is guaranteed not to be the last
 		opinionData.OpinionElementCount += opinionData.Opinions.at(sourceOpinionIndex).size() - opinionData.Opinions.at(targetOpinionIndex).size();	// Update OpinionElementCount
 		opinionData.Opinions.at(targetOpinionIndex) = opinionData.Opinions.at(sourceOpinionIndex);	// Replace target opinion with a source opinion
@@ -238,7 +248,7 @@ namespace catapult { namespace validators {
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
 
 		// Act:
-		const auto signatureIndex = test::RandomInRange(0, opinionData.OpinionCount-1);	// Select random signature
+		const auto signatureIndex = test::RandomInRange(0ul, opinionData.BlsSignatures.size()-1);	// Select random signature
 		opinionData.BlsSignatures.at(signatureIndex) = test::GenerateRandomByteArray<BLSSignature>();	// Replace selected signature with random data
 
 		// Assert:

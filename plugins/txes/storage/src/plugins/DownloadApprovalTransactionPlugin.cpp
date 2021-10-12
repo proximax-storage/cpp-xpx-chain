@@ -34,8 +34,9 @@ namespace catapult { namespace plugins {
 					sub.notify(OpinionNotification<1>(
 							commonDataSize,
 							transaction.OpinionCount,
-							transaction.JudgingCount,
-							transaction.JudgedCount,
+							transaction.JudgingKeysCount,
+							transaction.OverlappingKeysCount,
+							transaction.JudgedKeysCount,
 							commonDataPtr,
 							transaction.PublicKeysPtr(),
 							transaction.OpinionIndicesPtr(),
@@ -52,8 +53,9 @@ namespace catapult { namespace plugins {
 					sub.notify(DownloadApprovalPaymentNotification<1>(
 							transaction.DownloadChannelId,
 							transaction.OpinionCount,
-							transaction.JudgingCount,
-							transaction.JudgedCount,
+							transaction.JudgingKeysCount,
+							transaction.OverlappingKeysCount,
+							transaction.JudgedKeysCount,
 							transaction.PublicKeysPtr(),
 							transaction.OpinionIndicesPtr(),
 							transaction.PresentOpinionsPtr(),

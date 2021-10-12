@@ -590,8 +590,9 @@ namespace catapult { namespace model {
 		explicit OpinionNotification(
 				const size_t commonDataSize,
 				const uint8_t opinionCount,
-				const uint8_t judgingCount,
-				const uint8_t judgedCount,
+				const uint8_t judgingKeysCount,
+				const uint8_t overlappingKeysCount,
+				const uint8_t judgedKeysCount,
 				const uint8_t* commonDataPtr,
 				const Key* publicKeysPtr,
 				const uint8_t* opinionIndicesPtr,
@@ -601,8 +602,9 @@ namespace catapult { namespace model {
 				: Notification(Notification_Type, sizeof(OpinionNotification<1>))
 				, CommonDataSize(commonDataSize)
 				, OpinionCount(opinionCount)
-				, JudgingCount(judgingCount)
-				, JudgedCount(judgedCount)
+				, JudgingKeysCount(judgingKeysCount)
+				, OverlappingKeysCount(overlappingKeysCount)
+				, JudgedKeysCount(judgedKeysCount)
 				, CommonDataPtr(commonDataPtr)
 				, PublicKeysPtr(publicKeysPtr)
 				, OpinionIndicesPtr(opinionIndicesPtr)
@@ -618,11 +620,14 @@ namespace catapult { namespace model {
 		/// Number of unique opinions.
 		uint8_t OpinionCount;
 
-		/// Number of replicators that provided their opinions.
-		uint8_t JudgingCount;
+		/// Number of replicators that provided their opinions, but on which no opinions were provided.
+		uint8_t JudgingKeysCount;
 
-		/// Number of replicators on which at least one opinion was provided.
-		uint8_t JudgedCount;
+		/// Number of replicators that both provided their opinions, and on which at least one opinion was provided.
+		uint8_t OverlappingKeysCount;
+
+		/// Number of replicators that didn't provide their opinions, but on which at least one opinion was provided.
+		uint8_t JudgedKeysCount;
 
 		/// Common data of the transaction.
 		const uint8_t* CommonDataPtr;
@@ -685,8 +690,9 @@ namespace catapult { namespace model {
 		explicit DownloadApprovalPaymentNotification(
 				const Hash256& id,
 				const uint8_t opinionCount,
-				const uint8_t judgingCount,
-				const uint8_t judgedCount,
+				const uint8_t judgingKeysCount,
+				const uint8_t overlappingKeysCount,
+				const uint8_t judgedKeysCount,
 				const Key* publicKeysPtr,
 				const uint8_t* opinionIndicesPtr,
 				const uint8_t* presentOpinionsPtr,
@@ -694,8 +700,9 @@ namespace catapult { namespace model {
 				: Notification(Notification_Type, sizeof(DownloadApprovalPaymentNotification<1>))
 				, DownloadChannelId(id)
 				, OpinionCount(opinionCount)
-				, JudgingCount(judgingCount)
-				, JudgedCount(judgedCount)
+				, JudgingKeysCount(judgingKeysCount)
+				, OverlappingKeysCount(overlappingKeysCount)
+				, JudgedKeysCount(judgedKeysCount)
 				, PublicKeysPtr(publicKeysPtr)
 				, OpinionIndicesPtr(opinionIndicesPtr)
 				, PresentOpinionsPtr(presentOpinionsPtr)
@@ -709,11 +716,14 @@ namespace catapult { namespace model {
 		/// Number of unique opinions.
 		uint8_t OpinionCount;
 
-		/// Number of replicators that provided their opinions.
-		uint8_t JudgingCount;
+		/// Number of replicators that provided their opinions, but on which no opinions were provided.
+		uint8_t JudgingKeysCount;
 
-		/// Number of replicators on which at least one opinion was provided.
-		uint8_t JudgedCount;
+		/// Number of replicators that both provided their opinions, and on which at least one opinion was provided.
+		uint8_t OverlappingKeysCount;
+
+		/// Number of replicators that didn't provide their opinions, but on which at least one opinion was provided.
+		uint8_t JudgedKeysCount;
 
 		/// Replicators' public keys.
 		const Key* PublicKeysPtr;

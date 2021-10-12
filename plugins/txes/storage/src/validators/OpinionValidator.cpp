@@ -15,13 +15,16 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(Opinion, ([](const Notification& notification, const ValidatorContext& context) {
 		const auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+	  	const auto totalKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount + notification.JudgedKeysCount;
+	  	const auto totalJudgingKeysCount = totalKeysCount - notification.JudgedKeysCount;
+	  	const auto totalJudgedKeysCount = totalKeysCount - notification.JudgingKeysCount;
 
 	  	// Nth vector in blsPublicKeys contains pointers to all public BLS keys of replicators that provided Nth opinion.
 		std::vector<std::vector<const BLSPublicKey*>> blsPublicKeys(notification.OpinionCount);
 
 	  	// Preparing blsPublicKeys.
 		auto pIndex = notification.OpinionIndicesPtr;
-	  	for (auto i = 0; i < notification.JudgingCount; ++i, ++pIndex) {
+	  	for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pIndex) {
 			if (*pIndex >= notification.OpinionCount)
 				return Failure_Storage_Invalid_Opinion_Index;
 			const auto replicatorIter = replicatorCache.find(notification.PublicKeysPtr[i]);
@@ -31,28 +34,30 @@ namespace catapult { namespace validators {
 			blsPublicKeys.at(*pIndex).push_back(&pReplicatorEntry->blsKey());
 		}
 
-	  	// Bitset that represents boolean array of size (notification.OpinionCount * notification.JudgedCount) of opinion presence.
-	  	const auto presentOpinionByteCount = (notification.OpinionCount * notification.JudgedCount + 7) / 8;
+	  	// Bitset that represents boolean array of size (notification.OpinionCount * totalJudgedKeysCount) of opinion presence.
+	  	const auto presentOpinionByteCount = (notification.OpinionCount * totalJudgedKeysCount + 7) / 8;
 	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
 
 		// Validating that each provided public key
 	  	// - is unique
-		// - is used in at least one opinion (i.e. that each column of PresentOpinions has at least one set bit)
+		// - is used in at least one opinion, if belongs to judged keys (i.e. that each column of PresentOpinions has at least one set bit)
 		std::set<Key> providedKeys;
 		auto pKey = notification.PublicKeysPtr;
-		for (auto i = 0; i < notification.JudgedCount; ++i, ++pKey) {
+		for (auto i = 0; i < totalKeysCount; ++i, ++pKey) {
 			if (providedKeys.count(*pKey))
 				return Failure_Storage_Opinion_Reocurring_Keys;
 			providedKeys.insert(*pKey);
-			bool isUsed = false;
-			for (auto j = 0; !isUsed && j < notification.OpinionCount; ++j)
-				isUsed = presentOpinions[j*notification.JudgedCount + i];
-			if (!isUsed)
-				return Failure_Storage_Opinion_Unused_Key;
+			if (i >= notification.JudgingKeysCount) {
+				bool isUsed = false;
+				for (auto j = 0; !isUsed && j < notification.OpinionCount; ++j)
+					isUsed = presentOpinions[j*totalJudgedKeysCount + i - notification.JudgingKeysCount];
+				if (!isUsed)
+					return Failure_Storage_Opinion_Unused_Key;
+			}
 		}
 
 	  	// Preparing common data.
-	  	const auto maxDataSize = notification.CommonDataSize + (sizeof(Key) + sizeof(uint64_t)) * notification.JudgedCount;	// Guarantees that every possible individual opinion will fit in.
+	  	const auto maxDataSize = notification.CommonDataSize + (sizeof(Key) + sizeof(uint64_t)) * totalJudgedKeysCount;	// Guarantees that every possible individual opinion will fit in.
 		const auto pDataBegin = std::unique_ptr<uint8_t[]>(new uint8_t[maxDataSize]);
 	  	std::copy(notification.CommonDataPtr, notification.CommonDataPtr + notification.CommonDataSize, pDataBegin.get());
 	  	auto* const pIndividualDataBegin = pDataBegin.get() + notification.CommonDataSize;
@@ -67,16 +72,15 @@ namespace catapult { namespace validators {
 		std::set<IndividualPart> providedIndividualParts;	// Set of provided complete opinions. Used to determine if there are reoccurring individual parts.
 		for (auto i = 0; i < notification.OpinionCount; ++i, ++pBlsSignature) {
 			individualPart.clear();
-			for (auto j = 0; j < notification.JudgedCount; ++j) {
-				if (presentOpinions[i*notification.JudgedCount + j]) {
-					individualPart.emplace(notification.PublicKeysPtr[j], *pOpinionElement);
+			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
+				if (presentOpinions[i * totalJudgedKeysCount + j]) {
+					individualPart.emplace(notification.PublicKeysPtr[notification.JudgingKeysCount + j], *pOpinionElement);
 					++pOpinionElement;
 				}
 			}
 
-			if (providedIndividualParts.count(individualPart)) {
+			if (providedIndividualParts.count(individualPart))
 				return Failure_Storage_Opinions_Reocurring_Individual_Parts;
-			}
 			providedIndividualParts.insert(individualPart);
 
 			const auto dataSize = notification.CommonDataSize + (sizeof(Key) + sizeof(uint64_t)) * individualPart.size();

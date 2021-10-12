@@ -202,8 +202,9 @@ namespace catapult { namespace test {
 	template<typename TOpinion>
 	struct OpinionData {
 		uint8_t OpinionCount;
-		uint8_t JudgingCount;
-		uint8_t JudgedCount;
+		uint8_t JudgingKeysCount;
+		uint8_t OverlappingKeysCount;
+		uint8_t JudgedKeysCount;
 		uint8_t OpinionElementCount;
 		uint8_t FilledPresenceRowIndex;
 		std::vector<Key> PublicKeys;
@@ -214,31 +215,38 @@ namespace catapult { namespace test {
 	};
 
 	/// Creates an OpinionData filled with valid data.
+	/// Tuple \c publicKeysCounts contains \a JudgingKeysCount, \a OverlappingKeysCount and \a JudgedKeysCount in that order.
 	template<typename TOpinion>
 	OpinionData<TOpinion> CreateValidOpinionData(
 			const std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs,
 			const RawBuffer& commonDataBuffer,
-			const uint8_t judgedCount = 0,
-			const uint8_t judgingCount = 0,
+			const std::tuple<uint8_t, uint8_t, uint8_t> publicKeysCounts = {0, 0, 0},
 			const uint8_t opinionCount = 0,
 			const bool filledPresenceRow = false) {
 		OpinionData<TOpinion> data;
 
 		// Generating valid counts.
-		data.JudgedCount = judgedCount ? judgedCount : test::RandomInRange<uint8_t>(1, replicatorKeyPairs.size());
-		data.JudgingCount = judgingCount ? judgingCount : test::RandomInRange<uint8_t>(1, data.JudgedCount);
-		data.OpinionCount = opinionCount ? opinionCount : test::RandomInRange<uint8_t>(1, data.JudgingCount);
-		const auto presentOpinionCount = data.OpinionCount * data.JudgedCount;
+		const bool countsProvided = publicKeysCounts != std::tuple<uint8_t, uint8_t, uint8_t>(0, 0, 0);
+		const auto totalKeysCount = countsProvided ?
+				std::get<0>(publicKeysCounts) + std::get<1>(publicKeysCounts) + std::get<2>(publicKeysCounts)
+				: test::RandomInRange<uint8_t>(1, replicatorKeyPairs.size());
+		data.OverlappingKeysCount = countsProvided ? std::get<1>(publicKeysCounts) : test::RandomInRange<uint8_t>(totalKeysCount > 1 ? 0 : 1, totalKeysCount);
+		data.JudgingKeysCount = countsProvided ? std::get<0>(publicKeysCounts) : test::RandomInRange<uint8_t>(data.OverlappingKeysCount ? 0 : 1, totalKeysCount - data.OverlappingKeysCount - (data.OverlappingKeysCount ? 0 : 1));
+		data.JudgedKeysCount = countsProvided ? std::get<2>(publicKeysCounts) : totalKeysCount - data.OverlappingKeysCount - data.JudgingKeysCount;
+		const auto totalJudgingKeysCount = totalKeysCount - data.JudgedKeysCount;
+		const auto totalJudgedKeysCount = totalKeysCount - data.JudgingKeysCount;
+		data.OpinionCount = opinionCount ? opinionCount : test::RandomInRange<uint8_t>(1, totalJudgingKeysCount);
+		const auto presentOpinionCount = data.OpinionCount * totalJudgedKeysCount;
 
 		// Filling PublicKeys and OpinionIndices.
 		std::vector<std::vector<const crypto::BLSKeyPair*>> blsKeyPairs(data.OpinionCount);	// Nth vector in blsKeyPairs contains pointers to all BLS key pairs of replicators that provided Nth opinion.
-		data.OpinionIndices.reserve(data.JudgingCount);
-		std::vector<uint8_t> predOpinionIndices(boost::counting_iterator<uint8_t>(0u), boost::counting_iterator<uint8_t>(data.JudgingCount));	// Vector of predetermined indices used to guarantee that every opinion is used. If Nth element in predOpinionIndices is M and M < opinionCount, then Nth element in opinionIndices must be M.
+		data.OpinionIndices.reserve(totalJudgingKeysCount);
+		std::vector<uint8_t> predOpinionIndices(boost::counting_iterator<uint8_t>(0u), boost::counting_iterator<uint8_t>(totalJudgingKeysCount));	// Vector of predetermined indices used to guarantee that every opinion is used. If Nth element in predOpinionIndices is M and M < opinionCount, then Nth element in opinionIndices must be M.
 		std::shuffle(std::begin(predOpinionIndices), std::end(predOpinionIndices), std::default_random_engine {});
-		for (auto i = 0u; i < data.JudgedCount; ++i) {
+		for (auto i = 0u; i < totalKeysCount; ++i) {
 			const auto& pair = replicatorKeyPairs.at(i);
 			data.PublicKeys.push_back(pair.first);
-			if (i < data.JudgingCount) {
+			if (i < totalJudgingKeysCount) {
 				const auto opinionIndex = predOpinionIndices.at(i) < data.OpinionCount ? predOpinionIndices.at(i) : test::RandomInRange(0, data.OpinionCount-1);
 				data.OpinionIndices.push_back(opinionIndex);
 				blsKeyPairs.at(opinionIndex).push_back(&pair.second);
@@ -249,13 +257,13 @@ namespace catapult { namespace test {
 		data.PresentOpinions.resize(data.OpinionCount);
 		data.Opinions.resize(data.OpinionCount);
 		std::vector<uint8_t> predPresenceIndices;	// Vector of predetermined indices used to guarantee that every key is used. If Nth element in predPresenceIndices is M, then Mth element in Nth column of presentOpinions must be true.
-		predPresenceIndices.reserve(data.JudgedCount);
-		data.FilledPresenceRowIndex = test::RandomInRange(0, std::max(data.OpinionCount-2, 0));	// The row in PresentOpinions filled with 1's is guaranteed not to be the last.
-		for (auto i = 0u; i < data.JudgedCount; ++i)
+		predPresenceIndices.reserve(totalJudgedKeysCount);
+		data.FilledPresenceRowIndex = filledPresenceRow ? test::RandomInRange(0, std::max(data.OpinionCount-2, 0)) : -1;	// The row in PresentOpinions filled with 1's is guaranteed not to be the last.
+		for (auto i = 0u; i < totalJudgedKeysCount; ++i)
 			predPresenceIndices.emplace_back(test::RandomInRange(0, data.OpinionCount-1));
 		for (auto i = 0u; i < data.OpinionCount; ++i) {
-			data.PresentOpinions.at(i).reserve(data.JudgedCount);
-			for (auto j = 0u; j < data.JudgedCount; ++j) {
+			data.PresentOpinions.at(i).reserve(totalJudgedKeysCount);
+			for (auto j = 0u; j < totalJudgedKeysCount; ++j) {
 				const bool bit = data.FilledPresenceRowIndex == i || predPresenceIndices.at(j) == i || test::Random() % 10; // True according to FilledPresenceRowIndex, predPresenceIndices or with probability 0.9
 				data.OpinionElementCount += bit;
 				data.PresentOpinions.at(i).push_back(bit);
@@ -268,7 +276,7 @@ namespace catapult { namespace test {
 		}
 
 		// Filling BlsSignatures.
-		const auto maxDataSize = commonDataBuffer.Size + (sizeof(Key) + sizeof(TOpinion)) * data.JudgedCount;	// Guarantees that every possible individual opinion will fit in.
+		const auto maxDataSize = commonDataBuffer.Size + (sizeof(Key) + sizeof(TOpinion)) * totalJudgedKeysCount;	// Guarantees that every possible individual opinion will fit in.
 		const auto pDataBegin = std::unique_ptr<uint8_t[]>(new uint8_t[maxDataSize]);
 		memcpy(pDataBegin.get(), commonDataBuffer.pData, commonDataBuffer.Size);
 		auto* const pIndividualDataBegin = pDataBegin.get() + commonDataBuffer.Size;
@@ -278,9 +286,9 @@ namespace catapult { namespace test {
 		std::set<OpinionElement, decltype(comparator)> individualPart(comparator);	// Set that represents complete opinion of one of the replicators. Opinion elements are sorted in ascending order of keys.
 		for (auto i = 0; i < data.OpinionCount; ++i) {
 			individualPart.clear();
-			for (auto j = 0, k = 0; j < data.JudgedCount; ++j) {
+			for (auto j = 0, k = 0; j < totalJudgedKeysCount; ++j) {
 				if (data.PresentOpinions.at(i).at(j)) {
-					individualPart.emplace(data.PublicKeys.at(j), data.Opinions.at(i).at(k));
+					individualPart.emplace(data.PublicKeys.at(data.JudgingKeysCount + j), data.Opinions.at(i).at(k));
 					++k;
 				}
 			}
