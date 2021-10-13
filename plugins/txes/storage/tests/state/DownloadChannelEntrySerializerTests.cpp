@@ -13,14 +13,6 @@ namespace catapult { namespace state {
 
 	namespace {
 
-        constexpr auto Entry_Size =
-            sizeof(VersionType) + // version
-            Hash256_Size + // id
-            Key_Size + // consumer
-            Key_Size + // drive
-            sizeof(Amount) + // transaction fee
-            sizeof(Amount); // storage units
-
         class TestContext {
         public:
             explicit TestContext()
@@ -42,10 +34,31 @@ namespace catapult { namespace state {
         };
         
         auto CreateDownloadChannelEntry() {
-            return test::CreateDownloadChannelEntry(
-                test::GenerateRandomByteArray<Hash256>(),
-                test::GenerateRandomByteArray<Key>());
+            return test::CreateDownloadChannelEntry();
         }
+
+		void AssertListOfPublicKeysBuffer(const std::vector<Key>& expected, const uint8_t*& pData) {
+			uint16_t size = *reinterpret_cast<const uint16_t*>(pData);
+			pData += sizeof(size);
+			EXPECT_EQ(expected.size(), size);
+			for (const auto& key: expected) {
+				EXPECT_EQ_MEMORY(key.data(), pData, Key_Size);
+				pData += Key_Size;
+			}
+		}
+
+		void AssertCumulativePaymentsBuffer(const std::map<Key, Amount>& expected, const uint8_t*& pData) {
+			uint16_t size = *reinterpret_cast<const uint16_t*>(pData);
+			pData += sizeof(size);
+			EXPECT_EQ(expected.size(), size);
+			for (const auto& pair: expected) {
+				EXPECT_EQ_MEMORY(pair.first.data(), pData, Key_Size);
+				pData += Key_Size;
+				uint64_t amount = *reinterpret_cast<const uint64_t*>(pData);
+				pData += sizeof(amount);
+				EXPECT_EQ(pair.second.unwrap(), amount);
+			}
+		}
 
         void AssertEntryBuffer(const state::DownloadChannelEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {
             const auto* pExpectedEnd = pData + expectedSize;
@@ -55,6 +68,15 @@ namespace catapult { namespace state {
 			pData += Hash256_Size;
             EXPECT_EQ_MEMORY(entry.consumer().data(), pData, Key_Size);
             pData += Key_Size;
+			uint64_t downloadSize = *reinterpret_cast<const uint64_t*>(pData);
+			pData += sizeof(downloadSize);
+			EXPECT_EQ(entry.downloadSize(), downloadSize);
+			uint16_t downloadApprovalCount = *reinterpret_cast<const uint16_t*>(pData);
+			pData += sizeof(downloadApprovalCount);
+			EXPECT_EQ(entry.downloadApprovalCount(), downloadApprovalCount);
+
+			AssertListOfPublicKeysBuffer(entry.listOfPublicKeys(), pData);
+			AssertCumulativePaymentsBuffer(entry.cumulativePayments(), pData);
 
             EXPECT_EQ(pExpectedEnd, pData);
         }
@@ -68,8 +90,8 @@ namespace catapult { namespace state {
             DownloadChannelEntrySerializer::Save(entry, context.outputStream());
 
             // Assert:
-            ASSERT_EQ(Entry_Size, context.buffer().size());
-            AssertEntryBuffer(entry, context.buffer().data(), Entry_Size, version);
+//            ASSERT_EQ(Entry_Size, context.buffer().size());
+            AssertEntryBuffer(entry, context.buffer().data(), context.buffer().size(), version);
         }
 
         void AssertCanSaveMultipleEntries(VersionType version) {
@@ -80,14 +102,15 @@ namespace catapult { namespace state {
 
             // Act:
             DownloadChannelEntrySerializer::Save(entry1, context.outputStream());
+			auto entryBufferSize1 = context.buffer().size();
             DownloadChannelEntrySerializer::Save(entry2, context.outputStream());
+			auto entryBufferSize2 = context.buffer().size() - entryBufferSize1;
 
             // Assert:
-            ASSERT_EQ(2 * Entry_Size, context.buffer().size());
             const auto* pBuffer1 = context.buffer().data();
-            const auto* pBuffer2 = pBuffer1 + Entry_Size;
-            AssertEntryBuffer(entry1, pBuffer1, Entry_Size, version);
-            AssertEntryBuffer(entry2, pBuffer2, Entry_Size, version);
+            const auto* pBuffer2 = pBuffer1 + entryBufferSize1;
+            AssertEntryBuffer(entry1, pBuffer1, entryBufferSize1, version);
+            AssertEntryBuffer(entry2, pBuffer2, entryBufferSize2, version);
         }
     }
 
@@ -106,16 +129,40 @@ namespace catapult { namespace state {
     // region Load
 
     namespace {
-        std::vector<uint8_t> CreateEntryBuffer(const state::DownloadChannelEntry& entry, VersionType version) {
-            std::vector<uint8_t> buffer(Entry_Size);
 
-            auto* pData = buffer.data();
-            memcpy(pData, &version, sizeof(VersionType));
-            pData += sizeof(VersionType);
-            memcpy(pData, entry.id().data(), Hash256_Size);
-            pData += Hash256_Size;
-            memcpy(pData, entry.consumer().data(), Key_Size);
-            pData += Key_Size;
+		void CopyToVector(std::vector<uint8_t>& data, const uint8_t * p, size_t bytes) {
+			data.insert(data.end(), p, p + bytes);
+		}
+
+		void SaveListOfPublicKeys(const std::vector<Key>& listOfPublicKeys, std::vector<uint8_t>& buffer) {
+			auto publicKeysSize = listOfPublicKeys.size();
+			CopyToVector(buffer, (const uint8_t*) &publicKeysSize, sizeof(uint16_t));
+			for (const auto& publicKey: listOfPublicKeys) {
+				CopyToVector(buffer, publicKey.data(), Key_Size);
+			}
+		}
+
+		void SaveCumulativePayments(const std::map<Key, Amount>& cumulativePayments,
+									std::vector<uint8_t>& buffer) {
+			auto cumulativePaymentsSize = cumulativePayments.size();
+			CopyToVector(buffer, (const uint8_t*) &cumulativePaymentsSize, sizeof(uint16_t));
+			for (const auto& pair: cumulativePayments) {
+				CopyToVector(buffer, pair.first.data(), Key_Size);
+				CopyToVector(buffer, (const uint8_t*) &pair.second, sizeof(Amount));
+			}
+		}
+
+        std::vector<uint8_t> CreateEntryBuffer(const state::DownloadChannelEntry& entry, VersionType version) {
+            std::vector<uint8_t> buffer;
+
+			CopyToVector(buffer, (const uint8_t*) &version, sizeof(VersionType));
+			CopyToVector(buffer, entry.id().data(), Hash256_Size);
+			CopyToVector(buffer, entry.consumer().data(), Key_Size);
+			CopyToVector(buffer, (const uint8_t*) &entry.downloadSize(), sizeof(uint64_t));
+			CopyToVector(buffer, (const uint8_t*) &entry.downloadApprovalCount(), sizeof(uint16_t));
+
+			SaveListOfPublicKeys(entry.listOfPublicKeys(), buffer);
+			SaveCumulativePayments(entry.cumulativePayments(), buffer);
 
             return buffer;
         }

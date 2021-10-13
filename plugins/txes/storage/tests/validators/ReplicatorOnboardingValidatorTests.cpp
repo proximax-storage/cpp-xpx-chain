@@ -24,20 +24,28 @@ namespace catapult { namespace validators {
         void AssertValidationResult(
                 ValidationResult expectedResult,
 				const state::ReplicatorEntry& replicatorEntry,
+				const state::BlsKeysEntry& blsEntry,
                 const Key& driveKey) {
             // Arrange:
             auto cache = test::ReplicatorCacheFactory::Create();
             {
-                auto delta = cache.createDelta();
+				auto delta = cache.createDelta();
                 auto& replicatorCacheDelta = delta.sub<cache::ReplicatorCache>();
                 replicatorCacheDelta.insert(replicatorEntry);
-                cache.commit(Current_Height);
-            }
+				cache.commit(Current_Height);
+			}
+			{
+				auto delta = cache.createDelta();
+				auto& blsCacheDela = delta.sub<cache::BlsKeysCache>();
+				blsCacheDela.insert(blsEntry);
+				cache.commit(Current_Height);
+			}
+
             Notification notification(driveKey, BLSPublicKey(), replicatorEntry.capacity());
             auto pValidator = CreateReplicatorOnboardingValidator();
-            
+
             // Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, 
+			auto result = test::ValidateNotification(*pValidator, notification, cache,
                 config::BlockchainConfiguration::Uninitialized(), Current_Height);
 
 			// Assert:
@@ -49,22 +57,26 @@ namespace catapult { namespace validators {
         // Arrange:
         Key driveKey = test::GenerateRandomByteArray<Key>();
         state::ReplicatorEntry replicatorEntry(driveKey);
+		state::BlsKeysEntry blsKeysEntry(test::GenerateRandomByteArray<BLSPublicKey>());
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_Replicator_Already_Registered,
             replicatorEntry,
+			blsKeysEntry,
             driveKey);
     }
 
     TEST(TEST_CLASS, Success) {
 		// Arrange:
         state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
+		state::BlsKeysEntry blsKeysEntry(test::GenerateRandomByteArray<BLSPublicKey>());
 
         // Assert:
 		AssertValidationResult(
 			ValidationResult::Success,
             replicatorEntry,
+			blsKeysEntry,
             test::GenerateRandomByteArray<Key>());
 	}
 }}

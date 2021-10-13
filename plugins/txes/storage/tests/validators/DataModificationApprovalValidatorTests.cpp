@@ -88,6 +88,7 @@ namespace catapult { namespace validators {
         entry.activeDataModifications().emplace_back(state::ActiveDataModification {
             test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), File_Structure_Cdi, Used_Drive_Size
         });
+		entry.confirmedUsedSizes().insert({test::GenerateRandomByteArray<Key>(), test::Random()});
 
         // Assert:
         AssertValidationResult(
@@ -108,6 +109,7 @@ namespace catapult { namespace validators {
         entry.activeDataModifications().emplace_back(state::ActiveDataModification {
             Id, ownerPublicKey, File_Structure_Cdi, Used_Drive_Size
         });
+		entry.confirmedUsedSizes().insert(std::make_pair(test::GenerateRandomByteArray<Key>(), test::Random()));
 
         // Assert:
         AssertValidationResult(

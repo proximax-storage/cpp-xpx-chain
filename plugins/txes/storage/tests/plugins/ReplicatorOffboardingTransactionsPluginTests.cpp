@@ -68,30 +68,9 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-        ASSERT_EQ(2u, sub.numNotifications());
+        ASSERT_EQ(1u, sub.numNotifications());
         auto i = 0u;
-        EXPECT_EQ(Storage_Drive_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Storage_Replicator_Offboarding_v1_Notification, sub.notificationTypes()[i++]);
-	}
-
-	// endregion
-
-	// region publish - drive notification
-
-	PLUGIN_TEST(CanPublishDriveNotification) {
-		// Arrange:
-		mocks::MockTypedNotificationSubscriber<DriveNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
-		auto pTransaction = CreateTransaction<TTraits>();
-
-		// Act:
-		test::PublishTransaction(*pPlugin, *pTransaction, sub);
-
-		// Assert:
-		ASSERT_EQ(1u, sub.numMatchingNotifications());
-		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
-		EXPECT_EQ(Entity_Type_ReplicatorOffboarding, notification.TransactionType);
 	}
 
 	// endregion

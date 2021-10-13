@@ -43,6 +43,7 @@ namespace catapult { namespace observers {
         state::DownloadChannelEntry CreateDownloadChannelEntry(const Hash256& id) {
             state::DownloadChannelEntry entry(id);
             entry.setConsumer(Consumer);
+			entry.setDownloadSize(Download_Size);
 
             return entry;
         }
@@ -73,7 +74,6 @@ namespace catapult { namespace observers {
             auto& driveCache = context.cache().sub<cache::BcDriveCache>(); 
 
             // Populate cache.
-            downloadChannelCache.insert(values.DownloadChannelEntries);
             driveCache.insert(values.InitialBcDriveEntry);
 
             // Act:
@@ -83,7 +83,7 @@ namespace catapult { namespace observers {
             auto downloadChannelIter = downloadChannelCache.find(values.DownloadChannelEntries.id());
             const auto& actualDownloadChannelEntry = downloadChannelIter.get();
             test::AssertEqualDownloadChannelData(values.DownloadChannelEntries, actualDownloadChannelEntry);
-          
+
             auto driveIter = driveCache.find(values.InitialBcDriveEntry.key());
             const auto& actualEntry = driveIter.get();
             test::AssertEqualBcDriveData(values.ExpectedBcDriveEntry, actualEntry);

@@ -96,7 +96,7 @@ namespace catapult { namespace observers {
 			}
 
             for (const auto& entry : values.InitialDownloadChannelEntries)
-                EXPECT_FALSE(downloadChannelCache.find(entry.id()).tryGet());
+                EXPECT_TRUE(downloadChannelCache.find(entry.id()).tryGet());
         }
     }
 

@@ -6,6 +6,8 @@
 
 #include "StorageTestUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/model/EntityHasher.h"
+#include "tests/test/core/mocks/MockNotificationSubscriber.h"
 
 namespace catapult { namespace test {
 
@@ -107,16 +109,47 @@ namespace catapult { namespace test {
 
     state::DownloadChannelEntry CreateDownloadChannelEntry(
             Hash256 id,
-            Key consumer) {
+            Key consumer,
+			uint64_t downloadSize,
+			uint16_t downloadApprovalCount,
+			std::vector<Key> listOfPublicKeys,
+			std::map<Key, Amount> cumulativePayments) {
         state::DownloadChannelEntry entry(id);
         entry.setConsumer(consumer);
+		entry.setDownloadSize(downloadSize);
+		entry.setDownloadApprovalCount(downloadApprovalCount);
+		entry.listOfPublicKeys() = listOfPublicKeys;
+		entry.cumulativePayments() = cumulativePayments;
 
         return entry;
     }
 
+	void AssertEqualListOfPublicKeys(const std::vector<Key>& expected, const std::vector<Key>& actual) {
+		EXPECT_EQ(expected.size(), actual.size());
+		for (int i = 0; i < expected.size(); i++) {
+			EXPECT_EQ(expected[i], actual[i]);
+		}
+	}
+
+	void AssertEqualCumulativePayments(const std::map<Key, Amount>& expected,
+									   const std::map<Key, Amount>& actual) {
+		EXPECT_EQ(expected.size(), actual.size());
+		auto itExpected = expected.begin();
+		auto itActual = actual.begin();
+		for(; itExpected != expected.end(); itExpected++) {
+			EXPECT_EQ(itExpected->first, itActual->first);
+			EXPECT_EQ(itExpected->second, itActual->second);
+		}
+	}
+
     void AssertEqualDownloadChannelData(const state::DownloadChannelEntry& expectedEntry, const state::DownloadChannelEntry& entry) {
         EXPECT_EQ(expectedEntry.id(), entry.id());
         EXPECT_EQ(expectedEntry.consumer(), entry.consumer());
+		EXPECT_EQ(expectedEntry.downloadSize(), entry.downloadSize());
+		EXPECT_EQ(expectedEntry.downloadApprovalCount(), entry.downloadApprovalCount());
+
+		AssertEqualListOfPublicKeys(expectedEntry.listOfPublicKeys(), entry.listOfPublicKeys());
+		AssertEqualCumulativePayments(expectedEntry.cumulativePayments(), entry.cumulativePayments());
     }
 
     state::ReplicatorEntry CreateReplicatorEntry(
@@ -134,6 +167,7 @@ namespace catapult { namespace test {
     void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry) {
         EXPECT_EQ(expectedEntry.key(), entry.key());
         EXPECT_EQ(expectedEntry.capacity(), entry.capacity());
+		EXPECT_EQ(expectedEntry.blsKey(), entry.blsKey());
 
         const auto& expectedDrives = expectedEntry.drives();
 		const auto& drives = entry.drives();
@@ -143,7 +177,6 @@ namespace catapult { namespace test {
             EXPECT_EQ(pair.second, iter->second);
         }
     }
-
 }}
 
 

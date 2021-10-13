@@ -39,6 +39,7 @@ namespace catapult { namespace observers {
         state::ReplicatorEntry CreateReplicatorEntry(const ReplicatorValues& values) {
             state::ReplicatorEntry entry(values.PublicKey);
             entry.setCapacity(values.Capacity);
+			entry.setBlsKey(values.BlsKey);
 
             return entry;
         }
