@@ -32,7 +32,7 @@ namespace catapult { namespace model {
 		// Arrange:
 		auto expectedSize =
 				sizeof(uint32_t) // size
-				+ sizeof(Signature) // signature
+				+ sizeof(RawSignature) // signature
 				+ sizeof(uint32_t) // version
 				+ sizeof(uint16_t) // entity type
 				+ sizeof(Key); // signer

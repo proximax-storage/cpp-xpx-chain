@@ -62,7 +62,7 @@ namespace catapult { namespace plugins {
 			uint64_t calculateRealSize(const Transaction& transaction) const override {
 				// if size is valid, the real size is the transaction size
 				// if size is invalid, return a size that can never be correct (transaction size is uint32_t)
-				return IsSizeValid(CastToDerivedType<1>(transaction), m_transactionRegistry)
+				return IsSizeValid(CastToDerivedType<CoSignatureVersionAlias::Raw>(transaction), m_transactionRegistry)
 						? transaction.Size
 						: std::numeric_limits<uint64_t>::max();
 			}

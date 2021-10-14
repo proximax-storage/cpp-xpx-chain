@@ -38,8 +38,8 @@ namespace catapult { namespace ionet {
 		public:
 			explicit TestContext(uint32_t maxSignedPacketDataSize = std::numeric_limits<uint32_t>::max())
 					: pMockPacketIo(std::make_shared<mocks::MockPacketIo>())
-					, KeyPair(test::GenerateKeyPair())
-					, RemoteKeyPair(test::GenerateKeyPair())
+					, KeyPair(test::GenerateKeyPair(Node_Boot_Key_Hashing_Type))
+					, RemoteKeyPair(test::GenerateKeyPair(Node_Boot_Key_Hashing_Type))
 					, RemoteKey(RemoteKeyPair.publicKey())
 					, pSecureIo(CreateSecureSignedPacketIo(pMockPacketIo, KeyPair, RemoteKey, maxSignedPacketDataSize))
 					, pSecureBatchReader(CreateSecureSignedBatchPacketReader(pMockPacketIo, RemoteKey))
@@ -54,11 +54,11 @@ namespace catapult { namespace ionet {
 			std::shared_ptr<BatchPacketReader> pSecureBatchReader;
 		};
 
-		Signature SignPacket(const crypto::KeyPair& keyPair, const Packet& packet) {
+		RawSignature SignPacket(const crypto::KeyPair& keyPair, const Packet& packet) {
 			Hash256 packetHash;
 			crypto::Sha3_256({ reinterpret_cast<const uint8_t*>(&packet), packet.Size }, packetHash);
 
-			Signature signature;
+			RawSignature signature;
 			crypto::Sign(keyPair, packetHash, signature);
 			return signature;
 		}
@@ -89,11 +89,11 @@ namespace catapult { namespace ionet {
 			// Assert:
 			EXPECT_EQ(SocketOperationCode::Success, writeCode);
 
-			ASSERT_EQ(sizeof(PacketHeader) + sizeof(Signature) + sizeof(PacketHeader) + numEntitiesBytes, writtenPacket.Size);
+			ASSERT_EQ(sizeof(PacketHeader) + sizeof(RawSignature) + sizeof(PacketHeader) + numEntitiesBytes, writtenPacket.Size);
 			EXPECT_EQ(PacketType::Secure_Signed, writtenPacket.Type);
 
-			const auto& signature = reinterpret_cast<const Signature&>(*(&writtenPacket + 1));
-			const auto& childPacket = reinterpret_cast<const Packet&>(*(reinterpret_cast<const uint8_t*>(&signature) + Signature_Size));
+			const auto& signature = reinterpret_cast<const RawSignature&>(*(&writtenPacket + 1));
+			const auto& childPacket = reinterpret_cast<const Packet&>(*(reinterpret_cast<const uint8_t*>(&signature) + RawSignature::Size));
 			ASSERT_EQ(sizeof(PacketHeader) + numEntitiesBytes, childPacket.Size);
 			EXPECT_EQ(PacketType::Push_Transactions, childPacket.Type);
 
@@ -205,17 +205,17 @@ namespace catapult { namespace ionet {
 	namespace {
 		// note: GetSecureSigned* helpers assume a secure signed packet
 
-		Signature& GetSecureSignedSignature(Packet& packet) {
-			return reinterpret_cast<Signature&>(*(&packet + 1));
+		RawSignature& GetSecureSignedSignature(Packet& packet) {
+			return reinterpret_cast<RawSignature&>(*(&packet + 1));
 		}
 
 		Packet& GetSecureSignedChildPacket(Packet& packet) {
 			auto& signature = GetSecureSignedSignature(packet);
-			return reinterpret_cast<Packet&>(*(reinterpret_cast<uint8_t*>(&signature) + Signature_Size));
+			return reinterpret_cast<Packet&>(*(reinterpret_cast<uint8_t*>(&signature) + RawSignature::Size));
 		}
 
 		std::shared_ptr<Packet> CreateSecureSignedPacket(const crypto::KeyPair& keyPair, uint32_t childPayloadSize) {
-			uint32_t payloadSize = sizeof(Signature) + sizeof(PacketHeader) + childPayloadSize;
+			uint32_t payloadSize = sizeof(RawSignature) + sizeof(PacketHeader) + childPayloadSize;
 			auto pPacket = test::CreateRandomPacket(payloadSize, PacketType::Secure_Signed);
 
 			auto& signature = GetSecureSignedSignature(*pPacket);
@@ -331,7 +331,7 @@ namespace catapult { namespace ionet {
 	READ_TRAITS_BASED_TEST(ReadFailsWhenEnvelopePacketSignatureDoesNotVerify) {
 		// Assert:
 		RunFailedReadTest<TTraits>(SocketOperationCode::Security_Error, 123, [](const auto&, const auto&, auto& signature) {
-			signature[Signature_Size / 2] ^= 0xFF;
+			signature[RawSignature::Size / 2] ^= 0xFF;
 		});
 	}
 

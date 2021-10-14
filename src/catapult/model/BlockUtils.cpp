@@ -67,6 +67,7 @@ namespace catapult { namespace model {
 	// region sign / verify
 
 	void SignBlockHeader(const crypto::KeyPair& signer, Block& block) {
+		block.SetSignatureVersion(utils::ResolveSignatureVersionFromKeyHashingType(signer.hashingType()));
 		crypto::Sign(signer, BlockDataBuffer(block), block.Signature);
 	}
 

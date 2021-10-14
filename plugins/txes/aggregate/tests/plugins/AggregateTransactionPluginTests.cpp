@@ -288,9 +288,9 @@ namespace catapult { namespace plugins {
 		}
 
 		// - signature notifications are raised last (and with wrong source) for performance reasons
-		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_TRUE(Core_Signature_v1_Notification == sub.notificationTypes()[i] || Core_Signature_v2_Notification == sub.notificationTypes()[i++]);
+		EXPECT_TRUE(Core_Signature_v1_Notification == sub.notificationTypes()[i] || Core_Signature_v2_Notification == sub.notificationTypes()[i++]);
+		EXPECT_TRUE(Core_Signature_v1_Notification == sub.notificationTypes()[i] || Core_Signature_v2_Notification == sub.notificationTypes()[i++]);
 	}
 
 	// endregion
@@ -433,15 +433,20 @@ namespace catapult { namespace plugins {
 	// region publish - signature
 
 	namespace {
+		template<SignatureVersion TSignatureNotificationVersion>
 		void AssertCanRaiseSignatureNotifications(uint8_t numTransactions, uint8_t numCosignatures, VersionType version) {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<SignatureNotification<1>> sub;
+			mocks::MockTypedNotificationSubscriber<SignatureNotification<2>> sub; //In updated node version subtransactions always issue a V2 notification
 			auto registry = mocks::CreateDefaultTransactionRegistry();
 			auto pPlugin = CreateTransactionPlugin(registry);
 			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures, version);
 
 			auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
-
+			if constexpr(TSignatureNotificationVersion == 1)
+			{
+				wrapper.pTransaction->SetSignatureVersion(0);
+			}
+			else wrapper.pTransaction->SetSignatureVersion(1);
 			// Act:
 			test::PublishTransaction(*pPlugin, WeakEntityInfoT<Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
@@ -468,12 +473,14 @@ namespace catapult { namespace plugins {
 
 	TRAITS_BASED_TEST(EmptyAggregateDoesNotRaiseSignatureNotifications) {
 		// Assert:
-		AssertCanRaiseSignatureNotifications(0, 0, version);
+		AssertCanRaiseSignatureNotifications<1>(0, 0, version);
+		AssertCanRaiseSignatureNotifications<2>(0, 0, version);
 	}
 
 	TRAITS_BASED_TEST(CanRaiseSignatureNotificationsFromAggregate) {
 		// Assert:
-		AssertCanRaiseSignatureNotifications(2, 3, version);
+		AssertCanRaiseSignatureNotifications<1>(2, 3, version);
+		AssertCanRaiseSignatureNotifications<2>(2, 3, version);
 	}
 
 	// endregion

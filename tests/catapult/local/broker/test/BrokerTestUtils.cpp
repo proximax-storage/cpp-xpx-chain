@@ -38,7 +38,7 @@ namespace catapult { namespace test {
 
 		void WriteCosignature(io::OutputStream& outputStream) {
 			auto signer = GenerateRandomByteArray<Key>();
-			auto signature = GenerateRandomByteArray<Signature>();
+			auto signature = GenerateRandomByteArray<RawSignature>();
 			auto transactionInfo = CreateRandomTransactionInfo();
 			transactionInfo.OptionalExtractedAddresses = GenerateRandomUnresolvedAddressSetPointer(Random() % 2 + 1);
 

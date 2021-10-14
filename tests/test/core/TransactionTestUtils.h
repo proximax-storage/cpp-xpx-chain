@@ -38,9 +38,9 @@ namespace catapult { namespace test {
 	constexpr auto Deterministic_Transaction_Hash_String_V1_Signer = "85168DC0940A111229F05E4DFE3C8F8F1193E811D6AC7D14B43A7BACB3A93054";
 	constexpr auto Deterministic_Transaction_Hash_String_V2_Signer = "142D9CB050696BC4B44A861A156BE09FDEBBAB555C89537012C3BAA1A2929085";
 #else
-	constexpr auto Deterministic_Transaction_Hash_String = "85168DC0940A111229F05E4DFE3C8F8F1193E811D6AC7D14B43A7BACB3A93054";
-	constexpr auto Deterministic_Transaction_Hash_String_V1_Signer = "85168DC0940A111229F05E4DFE3C8F8F1193E811D6AC7D14B43A7BACB3A93054";
-	constexpr auto Deterministic_Transaction_Hash_String_V2_Signer = "142D9CB050696BC4B44A861A156BE09FDEBBAB555C89537012C3BAA1A2929085";
+	constexpr auto Deterministic_Transaction_Hash_String = "85168DC0940A111229F05E4DFE3C8F8F1193E811D6AC7D14B43A7BACB3A93054"; //OLD ONE FOR V1 with NO EMBEDDED SIGNATURE VERSION
+	constexpr auto Deterministic_Transaction_Hash_String_V1_Signer = "FFF506916D7E0D5DB25EAA7E5CC4804BA10A9CF20FD8E883D0A5101A66D2D0AD";
+	constexpr auto Deterministic_Transaction_Hash_String_V2_Signer = "8CD9A389EDC1CE567E5F81AE130AC70CC4BA66A79019BA5FBBEABCE090847FA8";
 #endif
 
 	/// Gets default generation hash used in tests.

@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <catapult/utils/SignatureVersionToKeyTypeResolver.h>
 #include "harvesting/src/Harvester.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
@@ -443,7 +444,7 @@ namespace catapult { namespace harvesting {
 			EXPECT_EQ(model::CalculateHash(*context.pLastBlock), pBlock->PreviousBlockHash);
 			EXPECT_TRUE(model::VerifyBlockHeaderSignature(*pBlock));
 			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, state::BlockDifficultyInfo(*pBlock), context.Config.Network), pBlock->Difficulty);
-			EXPECT_EQ(model::MakeVersion(Network_Identifier, 4), pBlock->Version);
+			EXPECT_EQ(model::MakeVersion(Network_Identifier, bestKey.second, 4), pBlock->Version); //For now signature version and key version are the same.
 			EXPECT_EQ(model::Entity_Type_Block, pBlock->Type);
 			EXPECT_TRUE(model::IsSizeValid(*pBlock, model::TransactionRegistry()));
 			EXPECT_EQ(context.Beneficiary, pBlock->Beneficiary);

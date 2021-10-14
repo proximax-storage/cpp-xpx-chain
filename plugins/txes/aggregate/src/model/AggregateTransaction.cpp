@@ -33,7 +33,7 @@ namespace catapult { namespace model {
 			return
 					aggregate.Size >= sizeof(AggregateTransaction<TCoSignatureVersion>) &&
 					aggregate.Size - sizeof(AggregateTransaction<TCoSignatureVersion>) >= aggregate.PayloadSize &&
-					0 == (aggregate.Size - sizeof(AggregateTransaction<TCoSignatureVersion>) - aggregate.PayloadSize) % sizeof(Cosignature<2>);
+					0 == (aggregate.Size - sizeof(AggregateTransaction<TCoSignatureVersion>) - aggregate.PayloadSize) % sizeof(Cosignature<TCoSignatureVersion>);
 		}
 	}
 

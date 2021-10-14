@@ -159,10 +159,10 @@ namespace catapult { namespace validators {
 			AssertValidationResult<1>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification);
 		}
 
-		//V1 account with deprecated V2 signature notification
+		//V1 account with V2 signature notification
 		{
 			// Arrange:
-			TestContext<2> context(Mode);
+			TestContext<1> context(Mode);
 			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, 1, context.DataBuffer, Mode);
 
 			context.Signature[0] ^= 0xFF;
@@ -171,7 +171,7 @@ namespace catapult { namespace validators {
 			AssertValidationResult<2>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification);
 		}
 
-		//V2 account with deprecated V2 signature notification
+		//V2 account with V2 signature notification
 		{
 			// Arrange:
 			TestContext<1> context(Mode);
@@ -199,10 +199,10 @@ namespace catapult { namespace validators {
 			AssertValidationResult<1>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification);
 		}
 
-		//V1 account with deprecated V2 signature notification
+		//V1 account with V2 signature notification
 		{
 			// Arrange:
-			TestContext<2> context(Mode);
+			TestContext<1> context(Mode);
 			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, 1, context.DataBuffer, Mode);
 
 			context.DataBuffer[10] ^= 0xFF;
@@ -211,7 +211,7 @@ namespace catapult { namespace validators {
 			AssertValidationResult<2>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification);
 		}
 
-		//V2 account with deprecated V2 signature notification
+		//V2 account with V2 signature notification
 		{
 			// Arrange:
 			TestContext<1> context(Mode);
@@ -240,10 +240,10 @@ namespace catapult { namespace validators {
 			AssertValidationResult<1>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification);
 		}
 
-		//V1 account with deprecated V2 signature notification
+		//V1 account with V2 signature notification
 		{
 			// Arrange:
-			TestContext<2> context(mode);
+			TestContext<1> context(mode);
 			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, 1, context.DataBuffer, mode);
 
 			context.GenerationHash[2] ^= 0xFF;
@@ -252,10 +252,10 @@ namespace catapult { namespace validators {
 			AssertValidationResult<2>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification);
 		}
 
-		//V2 account with deprecated V2 signature notification
+		//V2 account with V2 signature notification
 		{
 			// Arrange:
-			TestContext<1> context(mode);
+			TestContext<2> context(mode);
 			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, 2, context.DataBuffer, mode);
 
 			context.GenerationHash[2] ^= 0xFF;
@@ -281,10 +281,10 @@ namespace catapult { namespace validators {
 			AssertValidationResult<1>(ValidationResult::Success, context.GenerationHash, notification);
 		}
 
-		//V1 account with deprecated V2 signature notification
+		//V1 account with V2 signature notification
 		{
 			// Arrange:
-			TestContext<2> context(mode);
+			TestContext<1> context(mode);
 			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, 1, context.DataBuffer, mode);
 
 			context.GenerationHash[2] ^= 0xFF;
@@ -293,10 +293,10 @@ namespace catapult { namespace validators {
 			AssertValidationResult<2>(ValidationResult::Success, context.GenerationHash, notification);
 		}
 
-		//V2 account with deprecated V2 signature notification
+		//V2 account with V2 signature notification
 		{
 			// Arrange:
-			TestContext<1> context(mode);
+			TestContext<2> context(mode);
 			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, 2, context.DataBuffer, mode);
 
 			context.GenerationHash[2] ^= 0xFF;

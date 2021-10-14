@@ -81,7 +81,7 @@ namespace catapult { namespace crypto {
 	}
 
 	const SignatureVersion GetSignatureVersion(Signature signature) {
-		return *reinterpret_cast<const SignatureVersion*>(signature.begin());
+		return *reinterpret_cast<const SignatureVersion*>(&*signature.begin());
 	}
 
 	RawSignature& GetRawSignature(Signature& signature) {
@@ -98,7 +98,7 @@ namespace catapult { namespace crypto {
 	}
 
 	void Sign(const KeyPair& keyPair, const RawBuffer& dataBuffer, Signature& signature) {
-		Sign(keyPair, { dataBuffer }, GetRawSignature(signature));
+		Sign(keyPair, { dataBuffer }, signature);
 	}
 	void Sign(const KeyPair& keyPair, const RawBuffer& dataBuffer, RawSignature& signature) {
 		Sign(keyPair, { dataBuffer }, signature);
@@ -159,6 +159,7 @@ namespace catapult { namespace crypto {
 	}
 
 	void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, Signature& signature) {
+		signature[0] = utils::ResolveSignatureVersionFromKeyHashingType(keyPair.hashingType());
 		return Sign(keyPair, buffersList, GetRawSignature(signature));
 	}
 	void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, RawSignature& signature) {
@@ -267,7 +268,7 @@ namespace catapult { namespace crypto {
 		// compare calculated R to given R
 		uint8_t checkr[Encoded_Size];
 		ge25519_pack(checkr, &R);
-		return 1 != ed25519_verify(encodedR, checkr, 32);
+		return 1 == ed25519_verify(encodedR, checkr, 32);
 	}
 
 	bool VerifyRef10(const Key& publicKey, std::initializer_list<const RawBuffer> buffersList, const RawSignature& signature, KeyHashingType hashingType) {

@@ -49,7 +49,7 @@ namespace catapult { namespace model {
 
 	public:
 		size_t GetHeaderSize() const {
-			return sizeof(AggregateTransactionHeader);
+			return sizeof(AggregateTransactionHeader<1>);
 		}
 	};
 
