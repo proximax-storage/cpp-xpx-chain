@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "src/model/StorageTypes.h"
 #include "catapult/model/Notifications.h"
 
 namespace catapult { namespace model {
@@ -65,8 +64,7 @@ namespace catapult { namespace model {
 	/// Defines a drive closure notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Drive_Closure_v1, 0x0012);
 
-	/// Defines an end drive verification notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, End_Drive_Verification_v1, 0x0013);
+    //End_Drive_Verification_v1, 0x0013 in models
 
 	struct DownloadWork : public UnresolvedAmountData {
 	public:
@@ -800,51 +798,5 @@ namespace catapult { namespace model {
 	public:
 		/// The identifier of the download channel.
 		Hash256 DownloadChannelId;
-	};
-
-	/// Notification of a end drive verification.
-	template<VersionType version>
-	struct EndDriveVerificationNotification;
-
-	template<>
-	struct EndDriveVerificationNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Storage_End_Drive_Verification_v1_Notification;
-
-	public:
-		explicit EndDriveVerificationNotification(
-				const Key& driveKey,
-				const Hash256& verificationTrigger,
-				const uint16_t proversCount,
-				const Key* proversPtr,
-				const uint16_t verificationOpinionsCount,
-				const VerificationOpinion* verificationOpinionsPtr)
-				: Notification(Notification_Type, sizeof(EndDriveVerificationNotification<1>))
-				, DriveKey(driveKey)
-				, VerificationTrigger(verificationTrigger)
-				, ProversCount(proversCount)
-				, ProversPtr(proversPtr)
-				, VerificationOpinionsCount(verificationOpinionsCount)
-				, VerificationOpinionsPtr(verificationOpinionsPtr) {}
-
-	public:
-		/// Key of the drive.
-		Key DriveKey;
-
-		/// The hash of block that initiated the Verification.
-		Hash256 VerificationTrigger;
-
-		/// Number of Provers.
-		uint16_t ProversCount;
-
-		/// List of the Provers keys.
-		const Key* ProversPtr;
-
-		/// Number of verification opinions in the payload.
-		uint16_t VerificationOpinionsCount;
-
-		/// Opinion about verification status for each Prover. Success or Failure.
-		const VerificationOpinion* VerificationOpinionsPtr;
 	};
 }}

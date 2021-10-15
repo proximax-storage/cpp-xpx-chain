@@ -7,7 +7,7 @@
 #include "catapult/utils/HexParser.h"
 #include "src/plugins/EndDriveVerificationTransactionPlugin.h"
 #include "src/model/EndDriveVerificationTransaction.h"
-#include "src/catapult/model/StorageNotifications.h"
+#include "src/model/InternalStorageNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/StorageTestUtils.h"

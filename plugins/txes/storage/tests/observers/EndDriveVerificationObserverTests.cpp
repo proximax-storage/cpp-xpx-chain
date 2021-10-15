@@ -6,6 +6,7 @@
 
 #include "tests/test/StorageTestUtils.h"
 #include "catapult/model/StorageNotifications.h"
+#include "src/model/InternalStorageNotifications.h"
 #include "src/observers/Observers.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"

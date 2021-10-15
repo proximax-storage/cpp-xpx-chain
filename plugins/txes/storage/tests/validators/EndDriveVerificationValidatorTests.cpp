@@ -5,7 +5,7 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "catapult/model/StorageNotifications.h"
+#include "src/model/InternalStorageNotifications.h"
 #include "tests/test/StorageTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"

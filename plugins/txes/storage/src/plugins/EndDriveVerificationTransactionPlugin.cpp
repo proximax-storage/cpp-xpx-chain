@@ -6,7 +6,7 @@
 
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "EndDriveVerificationTransactionPlugin.h"
-#include "catapult/model/StorageNotifications.h"
+#include "src/model/InternalStorageNotifications.h"
 #include "src/model/EndDriveVerificationTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"

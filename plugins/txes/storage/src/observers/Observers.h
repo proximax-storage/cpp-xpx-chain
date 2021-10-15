@@ -9,6 +9,7 @@
 #include "src/config/StorageConfiguration.h"
 #include "catapult/model/StorageNotifications.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "src/model/InternalStorageNotifications.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/ReplicatorCache.h"
