@@ -662,10 +662,22 @@ namespace catapult { namespace model {
 	public:
 		explicit DownloadApprovalNotification(
 				const Hash256& id,
-				const uint16_t number)
+				const uint16_t number,
+				const uint8_t opinionCount,
+				const uint8_t judgingKeysCount,
+				const uint8_t overlappingKeysCount,
+				const uint8_t judgedKeysCount,
+				const uint8_t* opinionIndicesPtr,
+				const uint8_t* presentOpinionsPtr)
 				: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
 				, DownloadChannelId(id)
 				, SequenceNumber(number)
+				, OpinionCount(opinionCount)
+				, JudgingKeysCount(judgingKeysCount)
+				, OverlappingKeysCount(overlappingKeysCount)
+				, JudgedKeysCount(judgedKeysCount)
+				, OpinionIndicesPtr(opinionIndicesPtr)
+				, PresentOpinionsPtr(presentOpinionsPtr)
 		{}
 
 	public:
@@ -674,6 +686,25 @@ namespace catapult { namespace model {
 
 		/// Sequence number of current download approval transaction in the download channel.
 		uint16_t SequenceNumber;
+
+		/// Number of unique opinions.
+		uint8_t OpinionCount;
+
+		/// Number of replicators that provided their opinions, but on which no opinions were provided.
+		uint8_t JudgingKeysCount;
+
+		/// Number of replicators that both provided their opinions, and on which at least one opinion was provided.
+		uint8_t OverlappingKeysCount;
+
+		/// Number of replicators that didn't provide their opinions, but on which at least one opinion was provided.
+		uint8_t JudgedKeysCount;
+
+		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
+		const uint8_t* OpinionIndicesPtr;
+
+		/// Two-dimensional array of opinion element presence.
+		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
+		const uint8_t* PresentOpinionsPtr;
 	};
 
 	/// Notification of an opinion-based payment for a download approval transaction.

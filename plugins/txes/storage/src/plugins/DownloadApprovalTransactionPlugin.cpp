@@ -47,7 +47,13 @@ namespace catapult { namespace plugins {
 
 				  	sub.notify(DownloadApprovalNotification<1>(
 						  	transaction.DownloadChannelId,
-							transaction.SequenceNumber
+							transaction.SequenceNumber,
+							transaction.OpinionCount,
+							transaction.JudgingKeysCount,
+							transaction.OverlappingKeysCount,
+							transaction.JudgedKeysCount,
+							transaction.OpinionIndicesPtr(),
+							transaction.PresentOpinionsPtr()
 				  	));
 
 					sub.notify(DownloadApprovalPaymentNotification<1>(

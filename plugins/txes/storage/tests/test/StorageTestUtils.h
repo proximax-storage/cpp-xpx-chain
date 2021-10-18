@@ -214,6 +214,9 @@ namespace catapult { namespace test {
 		std::vector<std::vector<TOpinion>> Opinions;
 	};
 
+	/// Creates RawBuffer with given \a size and fills it with random data. Data pointer must be manually deleted after use.
+	RawBuffer GenerateCommonDataBuffer(const size_t& size);
+
 	/// Creates an OpinionData filled with valid data.
 	/// Tuple \c publicKeysCounts contains \a JudgingKeysCount, \a OverlappingKeysCount and \a JudgedKeysCount in that order.
 	template<typename TOpinion>
@@ -256,7 +259,7 @@ namespace catapult { namespace test {
 		// Filling PresentOpinions and Opinions.
 		data.PresentOpinions.resize(data.OpinionCount);
 		data.Opinions.resize(data.OpinionCount);
-		std::vector<uint8_t> predPresenceIndices;	// Vector of predetermined indices used to guarantee that every key is used. If Nth element in predPresenceIndices is M, then Mth element in Nth column of presentOpinions must be true.
+		std::vector<uint8_t> predPresenceIndices;	// Vector of predetermined indices used to guarantee that every judged key is used. If Nth element in predPresenceIndices is M, then Mth element in Nth column of presentOpinions must be true.
 		predPresenceIndices.reserve(totalJudgedKeysCount);
 		data.FilledPresenceRowIndex = filledPresenceRow ? test::RandomInRange(0, std::max(data.OpinionCount-2, 0)) : -1;	// The row in PresentOpinions filled with 1's is guaranteed not to be the last.
 		for (auto i = 0u; i < totalJudgedKeysCount; ++i)

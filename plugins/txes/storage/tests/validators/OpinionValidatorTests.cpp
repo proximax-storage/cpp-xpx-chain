@@ -22,14 +22,6 @@ namespace catapult { namespace validators {
 		constexpr auto Replicator_Count = 5;
 		constexpr auto Common_Data_Size_Download_Approval = sizeof(Hash256) + sizeof(uint16_t) + sizeof(bool);
 
-		/// Creates RawBuffer with given \a size and fills it with random data. Data pointer must be manually deleted after use.
-		RawBuffer GenerateCommonDataBuffer(const size_t& size) {
-			auto* const pCommonData = new uint8_t[size];
-			MutableRawBuffer mutableBuffer(pCommonData, size);
-			test::FillWithRandomData(mutableBuffer);
-			return RawBuffer(mutableBuffer.pData, mutableBuffer.Size);
-		}
-
 		template<typename TOpinion>
 		void AssertValidationResult(
 				const ValidationResult& expectedResult,
@@ -104,7 +96,7 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
-		const auto commonDataBuffer = GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
+		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
 
 		// Assert:
@@ -120,7 +112,7 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
-		const auto commonDataBuffer = GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
+		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
 
 		// Act:
@@ -142,7 +134,7 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
-		const auto commonDataBuffer = GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
+		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 
 		const auto totalKeysCount = test::RandomInRange(2ul, replicatorKeyPairs.size());	// Need at least 2 different keys
 		const auto overlappingKeysCount = test::RandomInRange<uint8_t>(totalKeysCount > 1 ? 0 : 1, totalKeysCount);
@@ -169,7 +161,7 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
-		const auto commonDataBuffer = GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
+		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
 
 		// Act:
@@ -193,7 +185,7 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
-		const auto commonDataBuffer = GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
+		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
 
 		// Act:
@@ -213,7 +205,7 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
-		const auto commonDataBuffer = GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
+		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 
 		const auto totalKeysCount = test::RandomInRange(2ul, replicatorKeyPairs.size());
 		const auto opinionCount = test::RandomInRange<uint8_t>(2, totalKeysCount);	// Need at least 2 different opinions
@@ -244,7 +236,7 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
-		const auto commonDataBuffer = GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
+		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
 
 		// Act:

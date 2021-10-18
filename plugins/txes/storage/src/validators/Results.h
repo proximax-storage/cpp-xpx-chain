@@ -112,6 +112,9 @@ namespace catapult { namespace validators {
 	/// Recipient's account state is not found.
 	DEFINE_STORAGE_RESULT(Recipient_State_Not_Found, 33);
 
+	/// Replicator hasn't provided an opinion on itself.
+	DEFINE_STORAGE_RESULT(No_Opinion_Provided_On_Self, 34);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

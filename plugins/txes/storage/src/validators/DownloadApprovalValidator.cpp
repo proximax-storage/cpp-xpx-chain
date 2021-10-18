@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <boost/dynamic_bitset.hpp>
 #include "Validators.h"
 #include "src/cache/DownloadChannelCache.h"
 
@@ -26,6 +27,20 @@ namespace catapult { namespace validators {
 			return Failure_Storage_Transaction_Already_Approved;
 		else if (notification.SequenceNumber != targetSequenceNumber)	// Considered an irregular case, may be worth investigating
 			return Failure_Storage_Invalid_Sequence_Number;
+
+	  	// Check if every replicator has provided an opinion on itself
+		if (notification.JudgingKeysCount > 0)
+			return Failure_Storage_No_Opinion_Provided_On_Self;
+	  	std::vector<std::vector<uint8_t>> publicKeysIndices(notification.OpinionCount);	// Nth vector in publicKeysIndices contains indices of all public keys of replicators that provided Nth opinion.
+	  	for (auto i = 0; i < notification.OverlappingKeysCount; ++i)
+			publicKeysIndices.at(notification.OpinionIndicesPtr[i]).push_back(i);	// Opinion indices should be already validated in OpinionValidator, no need to double check them
+	  	const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
+		const auto presentOpinionByteCount = (notification.OpinionCount * totalJudgedKeysCount + 7) / 8;
+	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
+		for (auto i = 0; i < notification.OpinionCount; ++i)
+			for (const auto index : publicKeysIndices.at(i))
+				if (!presentOpinions[i*totalJudgedKeysCount + index])
+					return Failure_Storage_No_Opinion_Provided_On_Self;
 
 		return ValidationResult::Success;
 	});

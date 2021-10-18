@@ -167,6 +167,13 @@ namespace catapult { namespace test {
 		}
 		cache.commit(height);
 	}
+
+	RawBuffer GenerateCommonDataBuffer(const size_t& size) {
+		auto* const pCommonData = new uint8_t[size];
+		MutableRawBuffer mutableBuffer(pCommonData, size);
+		test::FillWithRandomData(mutableBuffer);
+		return RawBuffer(mutableBuffer.pData, mutableBuffer.Size);
+	}
 }}
 
 
