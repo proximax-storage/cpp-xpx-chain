@@ -47,6 +47,7 @@ namespace catapult { namespace model {
 
 		const SignatureVersion tryGetVersionForSigner(const Key& signer)
 		{
+			if(!m_pTransaction) return 0;
 			for(auto& innerTransaction : reinterpret_cast<const model::AggregateTransaction<CoSignatureVersionAlias::Raw>*>(m_pTransaction)->Transactions())
 			{
 				if(innerTransaction.Signer == signer) return innerTransaction.SignatureVersion();

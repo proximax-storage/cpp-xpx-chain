@@ -20,10 +20,12 @@
 
 #include "AggregateTransactionTestUtils.h"
 #include "catapult/crypto/Signer.h"
+#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/TestHarness.h"
+#include <vector>
 
 namespace catapult { namespace test {
 
@@ -31,32 +33,56 @@ namespace catapult { namespace test {
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 	}
 
-	model::UniqueEntityPtr<model::AggregateTransaction<CoSignatureVersionAlias::Raw>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures) {
-		uint32_t size = sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) + 124 + numCosignatures * sizeof(model::Cosignature<1>);
+	model::UniqueEntityPtr<model::AggregateTransaction<CoSignatureVersionAlias::Raw>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures, uint32_t numTransactions, std::vector<crypto::KeyPair>& cosigners, uint32_t cosignersAccountVersion) {
+
+		auto totalKeys = numCosignatures > numTransactions ? numCosignatures : numTransactions;
+		for (auto i = 0u; i < totalKeys; ++i) {
+			cosigners.push_back(test::GenerateKeyPair(cosignersAccountVersion));
+		}
+		uint32_t payloadSize = numTransactions * sizeof(mocks::EmbeddedMockTransaction);
+		uint32_t size = sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) + payloadSize + numCosignatures * sizeof(model::Cosignature<1>);
 		auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<1>>(size);
 		FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), size });
+
 
 		pTransaction->Version = Transaction_Version;
 		pTransaction->Size = size;
 		pTransaction->Type = model::Entity_Type_Aggregate_Bonded;
-		pTransaction->PayloadSize = 124;
-		pTransaction->TransactionsPtr()->Size = 124;
+		pTransaction->PayloadSize = payloadSize;
+		pTransaction->TransactionsPtr()->Size = payloadSize;
+
+		auto* pSubTransaction = static_cast<mocks::EmbeddedMockTransaction*>(pTransaction->TransactionsPtr());
+		for (auto i = 0u; i < numTransactions; ++i) {
+			pSubTransaction->Size = sizeof(mocks::EmbeddedMockTransaction);
+			pSubTransaction->Data.Size = 0;
+			pSubTransaction->SetSignatureVersion(cosignersAccountVersion);
+			pSubTransaction->Type = mocks::EmbeddedMockTransaction::Entity_Type;
+			pSubTransaction->Signer = cosigners[i].publicKey();
+			FillWithRandomData(pSubTransaction->Recipient);
+			++pSubTransaction;
+		}
 		return pTransaction;
 	}
 
-	model::DetachedCosignature<CoSignatureVersionAlias::Raw> GenerateValidCosignature(const Hash256& aggregateHash, uint32_t accountVersion) {
+	model::DetachedCosignature<CoSignatureVersionAlias::Raw> GenerateValidCosignature(const crypto::KeyPair& keyPair, const Hash256& aggregateHash) {
 		model::Cosignature<CoSignatureVersionAlias::Raw> cosignature;
-		auto keyPair = GenerateKeyPair(accountVersion);
 		cosignature.Signer = keyPair.publicKey();
 		crypto::Sign(keyPair, aggregateHash, cosignature.Signature);
 		return { cosignature.Signer, cosignature.Signature, aggregateHash };
 	}
+	model::DetachedCosignature<CoSignatureVersionAlias::Raw> GenerateValidCosignature(const Hash256& aggregateHash, uint32_t accountVersion) {
+		auto keyPair = GenerateKeyPair(accountVersion);
+		return GenerateValidCosignature(keyPair, aggregateHash);
+	}
 
-	void FixCosignatures(const Hash256& aggregateHash, model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction, uint32_t accountVersion) {
+	void FixCosignatures(const std::vector<crypto::KeyPair>& cosigners, const Hash256& aggregateHash, model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction) {
 		// assigning DetachedCosignature to Cosignature works by slicing off ParentHash since the former is derived from the latter
+		// there must be at least as many transactions in the aggregate transaction as cosigners and the first three will have their signer updated
 		auto* pCosignature = aggregateTransaction.CosignaturesPtr();
 		for (auto i = 0u; i < aggregateTransaction.CosignaturesCount(); ++i)
-			*pCosignature++ = GenerateValidCosignature(aggregateHash, accountVersion);
+		{
+			*pCosignature++ = GenerateValidCosignature(cosigners[i], aggregateHash);
+		}
 	}
 
 	AggregateTransactionWrapper CreateAggregateTransaction(uint8_t numTransactions) {

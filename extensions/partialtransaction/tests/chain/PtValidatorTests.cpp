@@ -273,7 +273,7 @@ namespace catapult { namespace chain {
 					EXPECT_EQ(model::Core_Transaction_Deadline_v1_Notification, notificationTypes[2]);
 					EXPECT_EQ(model::Core_Transaction_Fee_v1_Notification, notificationTypes[3]);
 					EXPECT_EQ(model::Core_Balance_Debit_v1_Notification, notificationTypes[4]);
-					EXPECT_EQ(model::Core_Signature_v1_Notification, notificationTypes[5]);
+					EXPECT_TRUE(model::Core_Signature_v2_Notification == notificationTypes[5] || model::Core_Signature_v1_Notification == notificationTypes[5]  );
 				} else {
 					ASSERT_EQ(1u, notificationTypes.size());
 					EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
@@ -373,7 +373,7 @@ namespace catapult { namespace chain {
 			EXPECT_EQ(model::Core_Transaction_Deadline_v1_Notification, notificationTypes[2]);
 			EXPECT_EQ(model::Core_Transaction_Fee_v1_Notification, notificationTypes[3]);
 			EXPECT_EQ(model::Core_Balance_Debit_v1_Notification, notificationTypes[4]);
-			EXPECT_EQ(model::Core_Signature_v1_Notification, notificationTypes[5]);
+			EXPECT_TRUE(model::Core_Signature_v2_Notification == notificationTypes[5] || model::Core_Signature_v1_Notification == notificationTypes[5] );
 			EXPECT_EQ(mocks::Mock_Validator_1_Notification, notificationTypes[6]);
 		});
 	}

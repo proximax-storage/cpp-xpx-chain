@@ -19,6 +19,7 @@
 **/
 
 #include "partialtransaction/src/PtDispatcherService.h"
+#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 #include "partialtransaction/src/PtBootstrapperService.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
@@ -303,12 +304,13 @@ namespace catapult { namespace partialtransaction {
 		}
 
 		auto CreateRandomAggregateTransaction(const model::TransactionRegistry& registry, bool validCosignatures, uint32_t cosignatureAccountVersion) {
-			auto pTransaction = test::CreateRandomAggregateTransactionWithCosignatures(Num_Cosignatures);
+			std::vector<crypto::KeyPair> cosignerKeys;
+			auto pTransaction = test::CreateRandomAggregateTransactionWithCosignatures(Num_Cosignatures, 1, cosignerKeys, cosignatureAccountVersion);
 			FixAggregateTransactionDataSize(*pTransaction);
 
 			auto aggregateHash = CalculateTransactionHash(registry, *pTransaction);
 			if (validCosignatures)
-				test::FixCosignatures(aggregateHash, *pTransaction, cosignatureAccountVersion);
+				test::FixCosignatures(cosignerKeys, aggregateHash, *pTransaction);
 
 			return pTransaction;
 		}
@@ -368,7 +370,7 @@ namespace catapult { namespace partialtransaction {
 		}
 	}
 
-	TYPED_TEST(TEST_CLASS, Dispatcher_DoesNotForwardToUpdaterWhenValidationFailed) {
+	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_DoesNotForwardToUpdaterWhenValidationFailed) {
 		// Arrange:
 		AssertDispatcherForwarding<TypeParam::value>(
 				DispatcherTestOptions{ ValidationResult::Failure, 1, false },
@@ -385,7 +387,7 @@ namespace catapult { namespace partialtransaction {
 				});
 	}
 
-	TYPED_TEST(TEST_CLASS, Dispatcher_ForwardsToUpdaterWhenValidationSucceeded) {
+	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_ForwardsToUpdaterWhenValidationSucceeded) {
 		AssertDispatcherForwarding<TypeParam::value>(
 				DispatcherTestOptions{ ValidationResult::Success, 1, false },
 				[](const auto& context) {
@@ -403,7 +405,7 @@ namespace catapult { namespace partialtransaction {
 				});
 	}
 
-	TYPED_TEST(TEST_CLASS, Dispatcher_ForwardsMultipleEntitiesToUpdaterWhenValidationSucceeded) {
+	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_ForwardsMultipleEntitiesToUpdaterWhenValidationSucceeded) {
 		AssertDispatcherForwarding<TypeParam::value>(
 				DispatcherTestOptions{ ValidationResult::Success, 3, false },
 				[](const auto& context) {
@@ -422,7 +424,7 @@ namespace catapult { namespace partialtransaction {
 				});
 	}
 
-	TYPED_TEST(TEST_CLASS, Dispatcher_PtCacheIgnoresTransactionWithSameHash) {
+	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_PtCacheIgnoresTransactionWithSameHash) {
 		// Arrange: disable short lived cache, so that dispatcher won't eliminate second element via recency cache
 		TestContext context(ValidationResult::Success);
 		const_cast<config::NodeConfiguration&>(context.testState().config().Node).ShortLivedCacheMaxSize = 0;
@@ -460,7 +462,7 @@ namespace catapult { namespace partialtransaction {
 		EXPECT_EQ(utils::to_underlying_type(consumers::Neutral_Consumer_Hash_In_Recency_Cache), result.CompletionCode);
 	}
 
-	TYPED_TEST(TEST_CLASS, Dispatcher_UpdaterForwardsToConsumerWhenValidationSucceeded) {
+	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_UpdaterForwardsToConsumerWhenValidationSucceeded) {
 		AssertDispatcherForwarding<TypeParam::value>(
 				DispatcherTestOptions{ ValidationResult::Success, 3, true },
 				[](const auto& context) {
@@ -527,7 +529,7 @@ namespace catapult { namespace partialtransaction {
 		}
 	}
 
-	TYPED_TEST(TEST_CLASS, CosignedTransactionInfosConsumerForwardsTransactionRangeToDispatcher) {
+	TYPED_TEST(PtDispatcherServiceTests, CosignedTransactionInfosConsumerForwardsTransactionRangeToDispatcher) {
 		// Assert:
 		AssertInvokeForwardsTransactionRangeToDispatcher<TypeParam::value>([](const auto& hooks, auto&& transactionRange) {
 			// Arrange:
@@ -543,7 +545,7 @@ namespace catapult { namespace partialtransaction {
 		});
 	}
 
-	TYPED_TEST(TEST_CLASS, PtRangeConsumerForwardsTransactionRangeToDispatcher) {
+	TYPED_TEST(PtDispatcherServiceTests, PtRangeConsumerForwardsTransactionRangeToDispatcher) {
 		// Assert:
 		AssertInvokeForwardsTransactionRangeToDispatcher<TypeParam::value>([](const auto& hooks, auto&& transactionRange) {
 			// Act:
