@@ -200,6 +200,37 @@ namespace catapult { namespace validators {
 				opinionData);
 	}
 
+	TEST(TEST_CLASS, FailureWhenUnusedOpinions) {
+		// Arrange:
+		auto cache = test::StorageCacheFactory::Create();
+		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
+		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
+		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
+
+		const auto totalKeysCount = test::RandomInRange(2ul, replicatorKeyPairs.size());
+		const auto opinionCount = test::RandomInRange<uint8_t>(2, totalKeysCount);	// Need at least 2 different opinions
+		const auto totalJudgingKeysCount = test::RandomInRange<uint8_t>(opinionCount, totalKeysCount);
+		const auto judgedKeysCount = totalKeysCount - totalJudgingKeysCount;
+		const auto overlappingKeysCount = test::RandomInRange<uint8_t>(judgedKeysCount ? 0 : 1, totalJudgingKeysCount);
+		const auto judgingKeysCount = totalJudgingKeysCount - overlappingKeysCount;
+		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer, {judgingKeysCount, overlappingKeysCount, judgedKeysCount}, opinionCount);
+
+		// Act:
+		const auto sourceOpinionIndex = test::RandomInRange<uint8_t>(0, opinionCount-1);	// Select random opinion index as a source
+		auto targetOpinionIndex = test::RandomInRange<uint8_t>(0, opinionCount-2);	// Select random opinion index as a target
+		targetOpinionIndex += targetOpinionIndex >= sourceOpinionIndex;	// Compensate for the source opinion index
+		for (auto& index : opinionData.OpinionIndices)
+			if (index == targetOpinionIndex)
+				index = sourceOpinionIndex;	// Replace all entries of targetOpinionIndex with sourceOpinionIndex
+
+		// Assert:
+		AssertValidationResult(
+				Failure_Storage_Unused_Opinion,
+				cache,
+				commonDataBuffer,
+				opinionData);
+	}
+
 	TEST(TEST_CLASS, FailureWhenReocurringIndividualParts) {
 		// Arrange:
 		auto cache = test::StorageCacheFactory::Create();

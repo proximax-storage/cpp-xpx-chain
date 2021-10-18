@@ -78,9 +78,10 @@ namespace catapult { namespace validators {
 	/// - transaction signer is the owner of the respective drive
 	DECLARE_STATEFUL_VALIDATOR(VerificationPayment, model::VerificationPaymentNotification<1>)();
 
-	/// A validator implementation that applies to download approval notifications and validates that:
+	/// A validator implementation that applies to opinion notifications and validates that:
 	/// - all replicators mentioned in opinions exist
 	/// - BLS signatures match corresponding parts of the transaction
+	/// - each provided opinion is used at least once
 	/// - each provided public key is unique
 	/// - each provided public key is used in at least one opinion
 	/// - all provided individual parts are unique
@@ -89,6 +90,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to download approval notifications and validates that:
 	/// - respective download channel exists
 	/// - transaction sequence number is exactly one more than the number of completed download approval transactions of the download channel
+	/// - every replicator has provided an opinion on itself
 	DECLARE_STATEFUL_VALIDATOR(DownloadApproval, model::DownloadApprovalNotification<1>)();
 
 	/// A validator implementation that applies to drive closure notifications and validates that:

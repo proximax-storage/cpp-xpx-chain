@@ -34,6 +34,11 @@ namespace catapult { namespace validators {
 			blsPublicKeys.at(*pIndex).push_back(&pReplicatorEntry->blsKey());
 		}
 
+	  	// Validating that each provided opinion is used at least once.
+		for (const auto& keys : blsPublicKeys)
+			if (keys.empty())
+				return Failure_Storage_Unused_Opinion;
+
 	  	// Bitset that represents boolean array of size (notification.OpinionCount * totalJudgedKeysCount) of opinion presence.
 	  	const auto presentOpinionByteCount = (notification.OpinionCount * totalJudgedKeysCount + 7) / 8;
 	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);

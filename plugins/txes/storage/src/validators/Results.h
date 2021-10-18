@@ -61,6 +61,7 @@ namespace catapult { namespace validators {
 
 	/// Validation failed because replicator not registered.
 	DEFINE_STORAGE_RESULT(Replicator_Not_Registered, 16);
+
 	/// Respective download channel is not found.
 	DEFINE_STORAGE_RESULT(Download_Channel_Not_Found, 17);
 
@@ -114,6 +115,9 @@ namespace catapult { namespace validators {
 
 	/// Replicator hasn't provided an opinion on itself.
 	DEFINE_STORAGE_RESULT(No_Opinion_Provided_On_Self, 34);
+
+	/// Opinion is provided, but its index does not appear in the list of opinion indices.
+	DEFINE_STORAGE_RESULT(Unused_Opinion, 35);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
