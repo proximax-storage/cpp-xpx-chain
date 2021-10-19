@@ -44,6 +44,25 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			array << bson_stream::close_array;
 		}
+
+		void StreamConfirmedUsedSizes(bson_stream::document& builder, const state::UsedSizeMap& confirmedUsedSizes) {
+			auto array = builder << "confirmedUsedSizes" << bson_stream::open_array;
+			for (const auto& pair : confirmedUsedSizes)
+				array
+					<< bson_stream::open_document
+					<< "replicator" << ToBinary(pair.first)
+					<< "size" << static_cast<int64_t>(pair.second)
+					<< bson_stream::close_document;
+
+			array << bson_stream::close_array;
+		}
+
+		void StreamReplicators(bson_stream::document& builder, const utils::KeySet& replicators) {
+			auto array = builder << "replicators" << bson_stream::open_array;
+			for (const auto& replicatorKey : replicators)
+				array << ToBinary(replicatorKey);
+			array << bson_stream::close_array;
+		}
 	}
 
 	bsoncxx::document::value ToDbModel(const state::BcDriveEntry& entry, const Address& accountAddress) {
@@ -60,6 +79,8 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
 		StreamCompletedDataModifications(builder, entry.completedDataModifications());
+		StreamConfirmedUsedSizes(builder, entry.confirmedUsedSizes());
+		StreamReplicators(builder, entry.replicators());
 
 		return doc
 				<< bson_stream::close_document
@@ -103,6 +124,26 @@ namespace catapult { namespace mongo { namespace plugins {
 				completedDataModifications.emplace_back(state::CompletedDataModification{ state::ActiveDataModification{ id, owner, downloadDataCdi, uploadSize }, state });
 			}
 		}
+
+		void ReadConfirmedUsedSizes(state::UsedSizeMap& confirmedUsedSizes, const bsoncxx::array::view& dbConfirmedUsedSizes) {
+			for (const auto& dbConfirmedUsedSize : dbConfirmedUsedSizes) {
+				auto doc = dbConfirmedUsedSize.get_document().view();
+
+				Key replicatorKey;
+				DbBinaryToModelArray(replicatorKey, doc["replicator"].get_binary());
+				auto size = static_cast<uint64_t>(doc["size"].get_int64());
+
+				confirmedUsedSizes.emplace(replicatorKey, size);
+			}
+		}
+
+		void ReadReplicators(utils::KeySet& replicators, const bsoncxx::array::view& dbReplicators) {
+			for (const auto& dbReplicator : dbReplicators) {
+				Key replicatorKey;
+				DbBinaryToModelArray(replicatorKey, dbReplicator.get_binary());
+				replicators.insert(replicatorKey);
+			}
+		}
 	}
 
 	state::BcDriveEntry ToDriveEntry(const bsoncxx::document::view& document) {
@@ -128,6 +169,8 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);
 		ReadCompletedDataModifications(entry.completedDataModifications(), dbDriveEntry["completedDataModifications"].get_array().value);
+		ReadConfirmedUsedSizes(entry.confirmedUsedSizes(), dbDriveEntry["confirmedUsedSizes"].get_array().value);
+		ReadReplicators(entry.replicators(), dbDriveEntry["replicators"].get_array().value);
 
 		return entry;
 	}
