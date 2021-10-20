@@ -82,9 +82,10 @@ namespace catapult { namespace chain {
 				auto pUnconfirmedCatapultCache = m_detachedCatapultCache.getAndTryLock();
 				if (!pUnconfirmedCatapultCache) {
 					// if there is no unconfirmed cache state, it means that a block update is forthcoming
-					// just add all to the cache and they will be validated later
-					addAll(modifier, utInfos);
+					// just save all and they will be validated and added later
+					std::lock_guard<std::mutex> lock(m_mutex);
 					for (auto i = 0u; i < utInfos.size(); ++i) {
+						addDeferredTransaction(utInfos[i]);
 						results[i].Type = UtUpdateResult::UpdateType::Neutral;
 					}
 					return results;
@@ -133,6 +134,16 @@ namespace catapult { namespace chain {
 				apply(applyState, originalTransactionInfos, TransactionSource::Existing, [&confirmedTransactionHashes](const auto& info) {
 				  return confirmedTransactionHashes.cend() == confirmedTransactionHashes.find(&info.EntityHash);
 				});
+
+				// 5. add deferred txes
+				{
+					std::lock_guard<std::mutex> lock(m_mutex);
+					if (!m_deferredTransactions.empty()) {
+						apply(applyState, m_deferredTransactions, TransactionSource::New);
+						m_deferredTransactions.clear();
+						m_deferredTransactionHashes.clear();
+					}
+				}
 			}
 
 			// 5. Notify about failed transactions
@@ -219,17 +230,19 @@ namespace catapult { namespace chain {
 			}
 		}
 
+		void addDeferredTransaction(const model::TransactionInfo& utInfo) {
+			if (m_deferredTransactionHashes.cend() == m_deferredTransactionHashes.find(utInfo.EntityHash)) {
+				m_deferredTransactionHashes.insert(utInfo.EntityHash);
+				m_deferredTransactions.push_back(utInfo.copy());
+			}
+		}
+
 		bool throttle(
 				const model::TransactionInfo& utInfo,
 				TransactionSource transactionSource,
 				const ApplyState& applyState,
 				cache::ReadOnlyCatapultCache& cache) const {
 			return m_throttle(utInfo, { transactionSource, m_detachedCatapultCache.height(), cache, applyState.Modifier });
-		}
-
-		void addAll(cache::UtCacheModifierProxy& modifier, const std::vector<model::TransactionInfo>& utInfos) {
-			for (const auto& utInfo : utInfos)
-				modifier.add(utInfo);
 		}
 
 	private:
@@ -239,6 +252,9 @@ namespace catapult { namespace chain {
 		TimeSupplier m_timeSupplier;
 		FailedTransactionSink m_failedTransactionSink;
 		UtUpdater::Throttle m_throttle;
+		std::vector<model::TransactionInfo> m_deferredTransactions;
+		utils::HashSet m_deferredTransactionHashes;
+		std::mutex m_mutex;
 	};
 
 	UtUpdater::UtUpdater(

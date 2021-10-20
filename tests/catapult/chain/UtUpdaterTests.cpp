@@ -441,6 +441,12 @@ namespace catapult { namespace chain {
 			return sources;
 		}
 
+		std::vector<UtUpdater::TransactionSource> CreateExistingAndNewSources(size_t numExisting, size_t numNew) {
+			std::vector<UtUpdater::TransactionSource> sources(numExisting, UtUpdater::TransactionSource::Existing);
+			sources.insert(sources.end(), numNew, UtUpdater::TransactionSource::New);
+			return sources;
+		}
+
 		model::WeakEntityInfo CreateEntityInfoAt(const TransactionData& data, size_t index) {
 			return model::WeakEntityInfo(*data.Entities[index], data.UtInfos[index].EntityHash, Height{0});
 		}
@@ -798,14 +804,45 @@ namespace catapult { namespace chain {
 		// Act:
 		context.updater().update(transactionData.UtInfos);
 
+		// Assert: the cache contains original and doesn't contain the new transactions
+		EXPECT_EQ(3u, context.transactionsCache().view().size());
+		test::AssertContainsAll(context.transactionsCache(), originalTransactionData.Hashes);
+
+		// - neither the validator nor observer were passed any entities
+		context.assertContexts({});
+		context.assertEntityInfos({});
+	}
+
+	TEST(TEST_CLASS, DeferredTransactionsGetAddedToCache) {
+		// Arrange: initialize the UT cache with 3 transactions
+		UpdaterTestContext context;
+		auto originalTransactionData = CreateTransactionData(3);
+		test::AddAll(context.transactionsCache(), originalTransactionData.UtInfos);
+
+		// - modify the catapult cache after creating the updater
+		context.seedDifficultyInfos(7);
+
+		// - prepare 4 new transactions
+		auto transactionData = CreateTransactionData(4);
+
+		context.updater().update(transactionData.UtInfos);
+
+		// Sanity:
+		EXPECT_EQ(3u, context.transactionsCache().view().size());
+
+		// Act:
+		context.updater().update({}, {});
+
 		// Assert: the cache contains original and new transactions
 		EXPECT_EQ(7u, context.transactionsCache().view().size());
 		test::AssertContainsAll(context.transactionsCache(), originalTransactionData.Hashes);
 		test::AssertContainsAll(context.transactionsCache(), transactionData.Hashes);
 
-		// - neither the validator nor observer were passed any entities
-		context.assertContexts({});
-		context.assertEntityInfos({});
+		// - both original and new entities were executed relative to the updated cache
+		//   (the rebase is implicitly checked by asserting that the first validator and observer were passed
+		//    a cache with 7 - instead of 0 - block difficulty infos)
+		context.assertContexts(CreateExistingAndNewSources(3, 4), 7);
+		context.assertEntityInfos(ConcatContainers(originalTransactionData.EntityInfos, transactionData.EntityInfos));
 	}
 
 	// endregion
