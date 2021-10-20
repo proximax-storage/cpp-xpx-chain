@@ -279,6 +279,11 @@
 			"name": "driveClosure",
 			"type": "18274",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "streamStart",
+			"type": "16743",
+			"supportedVersions": [1]
 		}
 	]
 }

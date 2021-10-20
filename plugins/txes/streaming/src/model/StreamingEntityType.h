@@ -12,7 +12,7 @@ namespace catapult { namespace model {
 
 #endif
 
-	/// PrepareBcDrive transaction.
+	/// Stream Start transaction.
 	DEFINE_TRANSACTION_TYPE(Streaming, StreamStart, 0x1);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
