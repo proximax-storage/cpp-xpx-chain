@@ -1,6 +1,7 @@
 /**
-*** Copyright (c) 2016-present,
-*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
+*** Copyright (c) 2016-2019, Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp.
+*** Copyright (c) 2020-present, Jaguar0625, gimre, BloodyRookie.
+*** All rights reserved.
 ***
 *** This file is part of Catapult.
 ***
@@ -19,37 +20,12 @@
 **/
 
 #pragma once
-#include <stdint.h>
+#include "MetadataCacheTypes.h"
+#include "plugins/txes/metadata_v2/src/state/MetadataEntrySerializer.h"
+#include "catapult/cache/CacheSerializerAdapter.h"
 
 namespace catapult { namespace cache {
 
-	/// Cache ids for well-known caches.
-	enum class CacheId : uint32_t {
-		NetworkConfig,
-		AccountState,
-		BlockDifficulty,
-		Hash,
-		Namespace,
-		Metadata,
-		Mosaic,
-		Multisig,
-		HashLockInfo,
-		SecretLockInfo,
-		Property,
-		Reputation,
-		Contract,
-		BlockchainUpgrade,
-		Drive,
-		Exchange,
-		Download,
-		SuperContract,
-		Operation,
-		MosaicLevy,
-		Metadata_v2,
-	};
-
-/// Defines cache constants for a cache with \a NAME.
-#define DEFINE_CACHE_CONSTANTS(NAME) \
-	static constexpr size_t Id = utils::to_underlying_type(CacheId::NAME); \
-	static constexpr auto Name = #NAME "Cache";
+	/// Primary serializer for metadata cache.
+	struct MetadataEntryPrimarySerializer : public CacheSerializerAdapter<state::MetadataEntrySerializer, MetadataCacheDescriptor> {};
 }}

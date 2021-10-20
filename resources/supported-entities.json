@@ -26,17 +26,17 @@
 			"supportedVersions": [1]
 		},
 		{
-			"name": "Account_Metadata_Nem",
+			"name": "Account_Metadata_v2",
 			"type": "16703",
 			"supportedVersions": [1]
 		},
 		{
-			"name": "Mosaic_Metadata_Nem",
+			"name": "Mosaic_Metadata_v2",
 			"type": "16959",
 			"supportedVersions": [1]
 		},
 		{
-			"name": "Namespace_Metadata_Nem",
+			"name": "Namespace_Metadata_v2",
 			"type": "17215",
 			"supportedVersions": [1]
 		},
