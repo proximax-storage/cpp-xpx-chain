@@ -46,6 +46,9 @@ namespace catapult { namespace test {
 		ServiceTestState() : ServiceTestState(cache::CatapultCache({}))
 		{}
 
+		ServiceTestState(const config::BlockchainConfiguration& config) : ServiceTestState(cache::CatapultCache({}), config)
+		{}
+
 		/// Creates the test state around \a cache.
 		explicit ServiceTestState(cache::CatapultCache&& cache) : ServiceTestState(std::move(cache), &utils::NetworkTime)
 		{}
@@ -183,9 +186,13 @@ namespace catapult { namespace test {
 				, m_locator(m_keyPair)
 		{}
 
-		/// Creates the test context around \a cache.
+		/// Creates the test context around \a config. For initialization of plugin configurations
 		explicit ServiceLocatorTestContext(cache::CatapultCache&& cache)
 				: ServiceLocatorTestContext(std::move(cache), &utils::NetworkTime)
+		{}
+		/// Creates the test context around \a cache.
+		explicit ServiceLocatorTestContext(const config::BlockchainConfiguration& config)
+				: ServiceLocatorTestContext(cache::CatapultCache({}), config)
 		{}
 
 		/// Creates the test context around \a cache and \a timeSupplier.

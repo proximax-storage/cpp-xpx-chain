@@ -25,6 +25,7 @@
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/TestHarness.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include <string>
 
 namespace catapult {
@@ -70,6 +71,18 @@ namespace catapult { namespace test {
 	/// Creates a test blockchain configuration according to the supplied configuration (\a networkConfig)
 	/// with a storage in the specified directory (\a dataDirectory).
 	config::BlockchainConfiguration CreatePrototypicalBlockchainConfiguration(
+			model::NetworkConfiguration&& networkConfig,
+			const std::string& dataDirectory);
+
+	/// Creates a prototypical mutable blockchain configuration that is safe to use in local tests.
+	MutableBlockchainConfiguration CreateMutablePrototypicalBlockchainConfiguration();
+
+	/// Creates a test blockchain mutable configuration with a storage in the specified directory (\a dataDirectory).
+	MutableBlockchainConfiguration CreateMutablePrototypicalBlockchainConfiguration(const std::string& dataDirectory);
+
+	/// Creates a test blockchain mutable configuration according to the supplied configuration (\a networkConfig)
+	/// with a storage in the specified directory (\a dataDirectory).
+	MutableBlockchainConfiguration CreateMutablePrototypicalBlockchainConfiguration(
 			model::NetworkConfiguration&& networkConfig,
 			const std::string& dataDirectory);
 

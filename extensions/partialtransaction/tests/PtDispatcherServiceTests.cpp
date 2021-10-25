@@ -18,16 +18,20 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <plugins/txes/aggregate/src/config/AggregateConfiguration.h>
 #include "partialtransaction/src/PtDispatcherService.h"
 #include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 #include "partialtransaction/src/PtBootstrapperService.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
+#include "plugins/coresystem/src/CoreSystem.h"
 #include "plugins/txes/aggregate/src/validators/Results.h"
 #include "catapult/cache_tx/MemoryPtCache.h"
 #include "catapult/consumers/ConsumerResults.h"
 #include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/ionet/BroadcastUtils.h"
+#include "plugins/txes/aggregate/src/plugins/AggregateTransactionPlugin.h"
+#include "plugins/txes/aggregate/src/plugins/AggregatePlugin.h"
 #include "catapult/model/EntityHasher.h"
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
@@ -69,65 +73,24 @@ namespace catapult { namespace partialtransaction {
 			return Num_Cosignatures == aggregateNotification.CosignaturesCount;
 		}
 
-		template<typename TNotification>
-		class BaseMockStatelessNotificationValidator : public validators::stateless::NotificationValidatorT<TNotification> {
-		public:
-			explicit BaseMockStatelessNotificationValidator(validators::ValidationResult result)
-					: m_result(result)
-			{}
+		auto CreateConfiguration()
+		{
+			auto config = test::CreateMutablePrototypicalBlockchainConfiguration();
+			config.Network.Plugins.emplace(PLUGIN_NAME(aggregate), utils::ConfigurationBag({{
+					"",
+					{
+							{ "maxTransactionsPerAggregate", "15" },
+							{ "maxCosignaturesPerAggregate", "15" },
 
-		public:
-			const std::string& name() const override {
-				return m_name;
-			}
+							{ "enableStrictCosignatureCheck", "true" },
+							{ "enableBondedAggregateSupport", "true" },
 
-			ValidationResult validate(const TNotification&) const override {
-				return m_result;
-			}
-
-		protected:
-			const std::string m_name = "MockStatelessNotificationValidator";
-			const ValidationResult m_result;
-		};
-
-		template<typename TNotification>
-		class MockStatelessNotificationValidator : public BaseMockStatelessNotificationValidator<TNotification> {
-		public:
-			using BaseMockStatelessNotificationValidator<TNotification>::BaseMockStatelessNotificationValidator;
-		};
-
-		template<>
-		class MockStatelessNotificationValidator<model::AggregateCosignaturesNotification<1>>
-			: public BaseMockStatelessNotificationValidator<model::AggregateCosignaturesNotification<1>> {
-		public:
-			using BaseMockStatelessNotificationValidator<model::AggregateCosignaturesNotification<1>>::BaseMockStatelessNotificationValidator;
-
-		public:
-			ValidationResult validate(const model::AggregateCosignaturesNotification<1>& notification) const override {
-				return HasAllCosignatures(notification) ? ValidationResult::Success : validators::Failure_Aggregate_Missing_Cosigners;
-			}
-		};
-
-		template<>
-		class MockStatelessNotificationValidator<model::AggregateEmbeddedTransactionNotification<1>>
-			: public BaseMockStatelessNotificationValidator<model::AggregateEmbeddedTransactionNotification<1>> {
-		public:
-			using BaseMockStatelessNotificationValidator<model::AggregateEmbeddedTransactionNotification<1>>::BaseMockStatelessNotificationValidator;
-
-		public:
-			ValidationResult validate(const model::AggregateEmbeddedTransactionNotification<1>& notification) const override {
-				return HasAllCosignatures(notification) ? ValidationResult::Success : validators::Failure_Aggregate_Ineligible_Cosigners;
-			}
-		};
-
-		template<typename TNotification>
-		std::unique_ptr<const validators::NotificationValidatorT<TNotification>> CreateStatelessValidator(ValidationResult validationResult) {
-			return std::make_unique<MockStatelessNotificationValidator<TNotification>>(validationResult);
-		}
-
-		template<typename TNotification, typename TBuilder>
-		void AddStatelessValidator(TBuilder& builder, ValidationResult validationResult) {
-			builder.add(CreateStatelessValidator<TNotification>(validationResult));
+							{ "maxBondedTransactionLifetime", "1h" },
+							{ "strictSigner", "true" }
+					}
+			}}));
+			config.Network.InitPluginConfiguration<config::AggregateConfiguration>();
+			return config.ToConst();
 		}
 
 		class TestContext : public test::ServiceLocatorTestContext<PtDispatcherServiceTraits> {
@@ -137,7 +100,8 @@ namespace catapult { namespace partialtransaction {
 
 			explicit TestContext(ValidationResult validationResult)
 					: m_numCompletedTransactions(0)
-					, m_pWriters(std::make_shared<mocks::BroadcastAwareMockPacketWriters>()) {
+					, m_pWriters(std::make_shared<mocks::BroadcastAwareMockPacketWriters>())
+					, test::ServiceLocatorTestContext<PtDispatcherServiceTraits>(CreateConfiguration()){
 				auto pBootstrapperRegistrar = CreatePtBootstrapperServiceRegistrar([]() {
 					return std::make_unique<cache::MemoryPtCacheProxy>(cache::MemoryCacheOptions(1024, 1024));
 				});
@@ -149,24 +113,10 @@ namespace catapult { namespace partialtransaction {
 				// pt updater supports only aggregate transactions and tests check that txes are forwarded to pt updater
 				// Custom_Buffers is needed to make sure cosignatures won't be included in hash calculation
 				auto& pluginManager = testState().pluginManager();
-				constexpr auto Not_Embeddable = utils::to_underlying_type(mocks::PluginOptionFlags::Not_Embeddable);
-				constexpr auto Custom_Buffers = utils::to_underlying_type(mocks::PluginOptionFlags::Custom_Buffers);
+				RegisterTestCoreSystem(pluginManager);
+				RegisterAggregateSubsystem(pluginManager);
 
-				pluginManager.addTransactionSupport(mocks::CreateMockTransactionPlugin(
-						Transaction_Type,
-						static_cast<mocks::PluginOptionFlags>(Not_Embeddable | Custom_Buffers)));
 				pluginManager.addTransactionSupport(mocks::CreateMockTransactionPlugin());
-
-				pluginManager.addStatelessValidatorHook([validationResult](auto& builder) {
-					AddStatelessValidator<model::AggregateCosignaturesNotification<1>>(builder, validationResult);
-					AddStatelessValidator<model::AggregateEmbeddedTransactionNotification<1>>(builder, validationResult);
-					AddStatelessValidator<model::EntityNotification<1>>(builder, validationResult);
-					AddStatelessValidator<model::TransactionNotification<1>>(builder, validationResult);
-					AddStatelessValidator<model::TransactionDeadlineNotification<1>>(builder, validationResult);
-					AddStatelessValidator<model::TransactionFeeNotification<1>>(builder, validationResult);
-					AddStatelessValidator<model::BalanceDebitNotification<1>>(builder, validationResult);
-					AddStatelessValidator<model::SignatureNotification<1>>(builder, validationResult);
-				});
 
 				testState().state().hooks().setTransactionRangeConsumerFactory([&counter = m_numCompletedTransactions](auto) {
 					return [&counter](auto&& range) { counter += range.Range.size(); };
@@ -301,12 +251,13 @@ namespace catapult { namespace partialtransaction {
 			auto& mockTransaction = reinterpret_cast<mocks::MockTransaction&>(*pTransactionData);
 			auto headerSizeDifference = sizeof(mocks::MockTransaction) - sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>);
 			mockTransaction.Data.Size = static_cast<uint16_t>(aggregateTransaction.PayloadSize - headerSizeDifference);
+			return mockTransaction.Data.Size;
 		}
 
 		auto CreateRandomAggregateTransaction(const model::TransactionRegistry& registry, bool validCosignatures, uint32_t cosignatureAccountVersion) {
 			std::vector<crypto::KeyPair> cosignerKeys;
-			auto pTransaction = test::CreateRandomAggregateTransactionWithCosignatures(Num_Cosignatures, 1, cosignerKeys, cosignatureAccountVersion);
-			FixAggregateTransactionDataSize(*pTransaction);
+			auto pTransaction = test::CreateRandomAggregateTransactionWithCosignatures(Num_Cosignatures, Num_Cosignatures, cosignerKeys, cosignatureAccountVersion);
+			//FixAggregateTransactionDataSize(*pTransaction);
 
 			auto aggregateHash = CalculateTransactionHash(registry, *pTransaction);
 			if (validCosignatures)
@@ -319,11 +270,16 @@ namespace catapult { namespace partialtransaction {
 				const model::TransactionRegistry& registry,
 				size_t numTransactions,
 				bool validCosignatures,
-				uint32_t cosignatureAccountVersion) {
+				uint32_t cosignatureAccountVersion,
+				bool corruptTransactions = false) {
 			std::vector<model::TransactionRange> range;
 			for (auto i = 0u; i < numTransactions; ++i)
-				range.push_back(model::TransactionRange::FromEntity(CreateRandomAggregateTransaction(registry, validCosignatures, cosignatureAccountVersion)));
-
+			{
+				auto validTransaction = CreateRandomAggregateTransaction(registry, validCosignatures, cosignatureAccountVersion);
+				//Corrupt transactions if expecting failure during validation
+				if(corruptTransactions) validTransaction->Version &= 0xFFFF0000;
+				range.push_back(model::TransactionRange::FromEntity(std::move(validTransaction)));
+			}
 			return model::TransactionRange::MergeRanges(std::move(range));
 		}
 
@@ -353,8 +309,9 @@ namespace catapult { namespace partialtransaction {
 			context.boot();
 
 			const auto& transactionRegistry = context.registry();
-			auto range = CreateAggregateTransactionRange(transactionRegistry, options.NumEntities, options.ValidCosignatures, TCosignatureAccountVersion);
+			auto range = CreateAggregateTransactionRange(transactionRegistry, options.NumEntities, options.ValidCosignatures, TCosignatureAccountVersion, options.ValidationResult != ValidationResult::Success);
 			auto expectedHashes = CalculateHashes(transactionRegistry, range);
+
 
 			// Sanity:
 			EXPECT_EQ(options.NumEntities, expectedHashes.size());
@@ -562,7 +519,7 @@ namespace catapult { namespace partialtransaction {
 			return ionet::CreateBroadcastPayload(cosignatures);
 		}
 
-		template<typename TInvokeHook>
+		template<uint32_t TCosignerAccountVersion, typename TInvokeHook>
 		void AssertInvokeForwardsCosignatureRangeToUpdater(TInvokeHook invokeHook) {
 			// Arrange:
 			TestContext context(ValidationResult::Success);
@@ -571,20 +528,18 @@ namespace catapult { namespace partialtransaction {
 			auto& ptCache = GetMemoryPtCache(context.locator());
 
 			// - prepare and add a transaction range to the cache
-			auto pTransaction = utils::UniqueToShared(test::CreateAggregateTransaction(1).pTransaction);
-			FixAggregateTransactionDataSize(*pTransaction);
-
+			std::vector<crypto::KeyPair> cosignerKeys;
+			auto pTransaction = utils::UniqueToShared(test::CreateRandomAggregateTransactionWithCosignatures(0, 5, cosignerKeys, TCosignerAccountVersion));
 			model::TransactionInfo transactionInfo;
 			transactionInfo.EntityHash = CalculateTransactionHash(context.registry(), *pTransaction);
 			transactionInfo.pEntity = pTransaction;
 			ptCache.modifier().add(transactionInfo);
 
-			// - prepare a cosignature range
+			// - prepare a cosignature range. One of the cosignatures corresponds to the signer, so we only add 3 more, leaving one out so the transaction is not completed and removed from cache
 			auto cosignatureRange = model::EntityRange<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>::PrepareFixed(3);
-			std::vector<Key> cosigners;
-			for (auto& cosignature : cosignatureRange) {
-				cosignature = test::GenerateValidCosignature(transactionInfo.EntityHash, 1);
-				cosigners.push_back(cosignature.Signer);
+			auto cosignature = cosignatureRange.begin();
+			for (auto i = 0; i < cosignatureRange.size(); i++) {
+				*cosignature++ = test::GenerateValidCosignature(cosignerKeys[i+1], transactionInfo.EntityHash);
 			}
 
 			auto expectedPayload = ExtractCosignaturePayload(cosignatureRange);
@@ -603,9 +558,11 @@ namespace catapult { namespace partialtransaction {
 			auto i = 0u;
 			auto transactionInfoFromCache = view.find(transactionInfo.EntityHash);
 			ASSERT_TRUE(!!transactionInfoFromCache);
-			for (const auto& cosigner : cosigners) {
-				EXPECT_TRUE(transactionInfoFromCache.hasCosigner(cosigner)) << "cosigner at " << std::to_string(i);
+			for (const auto& cosigner : cosignerKeys) {
+				//Last key should not be present otherwise transaction would be completed and removed from cache
+				if(i != 4) EXPECT_TRUE(transactionInfoFromCache.hasCosigner(cosigner.publicKey())) << "cosigner at " << std::to_string(i);
 				++i;
+
 			}
 
 			ASSERT_EQ(1u, context.numBroadcastCalls());
@@ -615,9 +572,9 @@ namespace catapult { namespace partialtransaction {
 		}
 	}
 
-	TEST(TEST_CLASS, CosignedTransactionInfosConsumerForwardsCosignaturesToUpdater) {
+	TYPED_TEST(PtDispatcherServiceTests, CosignedTransactionInfosConsumerForwardsCosignaturesToUpdater) {
 		// Assert:
-		AssertInvokeForwardsCosignatureRangeToUpdater([](const auto& hooks, auto&& cosignatureRange) {
+		AssertInvokeForwardsCosignatureRangeToUpdater<TypeParam::value>([](const auto& hooks, auto&& cosignatureRange) {
 			// Arrange: create a separate info for each cosignature
 			CosignedTransactionInfos transactionInfos;
 			for (const auto& cosignature : cosignatureRange) {
@@ -632,9 +589,9 @@ namespace catapult { namespace partialtransaction {
 		});
 	}
 
-	TEST(TEST_CLASS, CosignatureRangeConsumerForwardsCosignatureRangeToUpdater) {
+	TYPED_TEST(PtDispatcherServiceTests, CosignatureRangeConsumerForwardsCosignatureRangeToUpdater) {
 		// Assert:
-		AssertInvokeForwardsCosignatureRangeToUpdater([](const auto& hooks, auto&& cosignatureRange) {
+		AssertInvokeForwardsCosignatureRangeToUpdater<TypeParam::value>([](const auto& hooks, auto&& cosignatureRange) {
 			// Act:
 			hooks.cosignatureRangeConsumer()(std::move(cosignatureRange));
 		});

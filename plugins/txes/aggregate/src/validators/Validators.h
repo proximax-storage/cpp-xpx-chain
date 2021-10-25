@@ -20,8 +20,8 @@
 
 #pragma once
 #include "Results.h"
-#include "src/config/AggregateConfiguration.h"
-#include "src/model/AggregateNotifications.h"
+#include "../config/AggregateConfiguration.h"
+#include "../model/AggregateNotifications.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"

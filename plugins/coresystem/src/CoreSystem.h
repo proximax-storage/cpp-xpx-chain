@@ -27,4 +27,5 @@ namespace catapult { namespace plugins {
 	/// Registers the core system with \a manager.
 	/// \note This plugin is required for basic system operation.
 	void RegisterCoreSystem(PluginManager& manager);
+	void RegisterTestCoreSystem(PluginManager& manager);
 }}

@@ -141,7 +141,7 @@ namespace catapult { namespace test {
 			"\t\t{\n"
 			"\t\t\t\"name\": \"Aggregate_Bonded\",\n"
 			"\t\t\t\"type\": \"16961\",\n"
-			"\t\t\t\"supportedVersions\": [2]\n"
+			"\t\t\t\"supportedVersions\": [2, 3]\n"
 			"\t\t},\n"
 			"\t\t{\n"
 			"\t\t\t\"name\": \"Mosaic_Definition\",\n"
@@ -285,6 +285,18 @@ namespace catapult { namespace test {
 	config::BlockchainConfiguration CreatePrototypicalBlockchainConfiguration(
 			model::NetworkConfiguration&& networkConfig,
 			const std::string& dataDirectory) {
+		return CreateMutablePrototypicalBlockchainConfiguration(std::move(networkConfig), dataDirectory).ToConst();
+	}
+	MutableBlockchainConfiguration CreateMutablePrototypicalBlockchainConfiguration() {
+		return CreateMutablePrototypicalBlockchainConfiguration(""); // create the configuration without a valid data directory
+	}
+
+	MutableBlockchainConfiguration CreateMutablePrototypicalBlockchainConfiguration(const std::string& dataDirectory) {
+		return CreateMutablePrototypicalBlockchainConfiguration(CreatePrototypicalNetworkConfiguration(), dataDirectory);
+	}
+	MutableBlockchainConfiguration CreateMutablePrototypicalBlockchainConfiguration(
+			model::NetworkConfiguration&& networkConfig,
+			const std::string& dataDirectory) {
 		MutableBlockchainConfiguration config;
 		config.Immutable = CreateImmutableConfiguration();
 		config.Network = std::move(networkConfig);
@@ -293,7 +305,7 @@ namespace catapult { namespace test {
 		config.User.BootKey = Local_Node_Private_Key;
 		config.User.DataDirectory = dataDirectory;
 		config.SupportedEntityVersions = CreateSupportedEntityVersions();
-		return config.ToConst();
+		return config;
 	}
 
 	std::unique_ptr<cache::MemoryUtCache> CreateUtCache() {

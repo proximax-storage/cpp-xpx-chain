@@ -78,6 +78,7 @@ namespace catapult { namespace plugins {
 		}
 	}
 
+
 	void RegisterCoreSystem(PluginManager& manager) {
 		const auto& pConfigHolder = manager.configHolder();
 
@@ -122,6 +123,32 @@ namespace catapult { namespace plugins {
 			builder
 				.add(observers::CreateBlockDifficultyObserver())
 				.add(observers::CreateCacheBlockPruningObserver<cache::BlockDifficultyCache>("BlockDifficulty"));
+		});
+	}
+	//Register core system without observers and account dependent validators so state is not touched and valid accounts are unnecessary
+	void RegisterTestCoreSystem(PluginManager& manager) {
+		const auto& pConfigHolder = manager.configHolder();
+
+		AddAccountStateCache(manager);
+		AddBlockDifficultyCache(manager);
+
+		auto networkIdentifier = pConfigHolder->Config().Immutable.NetworkIdentifier;
+		manager.addStatelessValidatorHook([networkIdentifier](auto& builder) {
+		  builder
+				  .add(validators::CreateNetworkValidator(networkIdentifier))
+				  .add(validators::CreateTransactionFeeValidator());
+		});
+
+		manager.addStatefulValidatorHook([networkIdentifier](auto& builder) {
+		  builder
+				  .add(validators::CreateEntityVersionValidator())
+				  .add(validators::CreateMaxTransactionsValidator())
+				  .add(validators::CreateAddressValidator(networkIdentifier))
+				  .add(validators::CreateDeadlineValidator())
+//				We're using nemesis account to update the network
+//				.add(validators::CreateNemesisSinkV1Validator())
+//				.add(validators::CreateNemesisSinkV2Validator())
+				  .add(validators::CreateEligibleHarvesterValidator());
 		});
 	}
 }}

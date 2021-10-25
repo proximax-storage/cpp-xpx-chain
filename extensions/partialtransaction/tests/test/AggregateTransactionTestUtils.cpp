@@ -41,12 +41,17 @@ namespace catapult { namespace test {
 		}
 		uint32_t payloadSize = numTransactions * sizeof(mocks::EmbeddedMockTransaction);
 		uint32_t size = sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) + payloadSize + numCosignatures * sizeof(model::Cosignature<1>);
-		auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<1>>(size);
+		auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<CoSignatureVersionAlias::Raw>>(size);
 		FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), size });
 
 
 		pTransaction->Version = Transaction_Version;
 		pTransaction->Size = size;
+		pTransaction->MaxFee = Amount(UINT16_MAX);
+		if(!numCosignatures && !numTransactions)
+			FillWithRandomData(pTransaction->Signer);
+		else
+			pTransaction->Signer = cosigners[0].publicKey();
 		pTransaction->Type = model::Entity_Type_Aggregate_Bonded;
 		pTransaction->PayloadSize = payloadSize;
 		pTransaction->TransactionsPtr()->Size = payloadSize;
@@ -54,6 +59,9 @@ namespace catapult { namespace test {
 		auto* pSubTransaction = static_cast<mocks::EmbeddedMockTransaction*>(pTransaction->TransactionsPtr());
 		for (auto i = 0u; i < numTransactions; ++i) {
 			pSubTransaction->Size = sizeof(mocks::EmbeddedMockTransaction);
+
+			// Set network identifier for successful validation
+			pSubTransaction->Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
 			pSubTransaction->Data.Size = 0;
 			pSubTransaction->SetSignatureVersion(cosignersAccountVersion);
 			pSubTransaction->Type = mocks::EmbeddedMockTransaction::Entity_Type;
@@ -79,7 +87,8 @@ namespace catapult { namespace test {
 		// assigning DetachedCosignature to Cosignature works by slicing off ParentHash since the former is derived from the latter
 		// there must be at least as many transactions in the aggregate transaction as cosigners and the first three will have their signer updated
 		auto* pCosignature = aggregateTransaction.CosignaturesPtr();
-		for (auto i = 0u; i < aggregateTransaction.CosignaturesCount(); ++i)
+		pCosignature++;//First cosignature corresponds to the actual transaction signeri n this plugin
+		for (auto i = 1u; i < aggregateTransaction.CosignaturesCount(); ++i)
 		{
 			*pCosignature++ = GenerateValidCosignature(cosigners[i], aggregateHash);
 		}

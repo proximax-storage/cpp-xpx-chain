@@ -27,6 +27,8 @@ namespace catapult { namespace utils {
 	KeyHashingType ResolveKeyHashingTypeFromSignatureVersion(SignatureVersion version);
 	/// Resolve an signature version from the corresponding key hashing algorythm from a version. There must be a 1 to 1 ratio
 	SignatureVersion ResolveSignatureVersionFromKeyHashingType(KeyHashingType hashingType);
+	/// Resolve an account version \a accountVersion  to a corresponding signature version
+	SignatureVersion ResolveAccountVersionToSignatureVersion(uint32_t accountVersion);
 	/// Verifies that the given \a accountVersion is compatible with the given \a signatureVersion
 	bool VerifyAccountVersionCompatibilityWithSignatureVersion(uint32_t accountVersion, SignatureVersion signatureVersion);
 }}
