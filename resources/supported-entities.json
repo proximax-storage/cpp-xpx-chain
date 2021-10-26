@@ -279,6 +279,11 @@
 			"name": "driveClosure",
 			"type": "18274",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "endDriveVerification",
+			"type": "20322",
+			"supportedVersions": [1]
 		}
 	]
 }

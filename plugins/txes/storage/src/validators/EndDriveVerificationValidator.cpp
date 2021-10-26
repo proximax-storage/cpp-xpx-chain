@@ -23,7 +23,7 @@ namespace catapult { namespace validators {
         auto& pendingVerification = pDriveEntry->verifications().back();
 
         // Check if provided verification trigger is equal to desired
-        if (!pDriveEntry->verifications().empty() &&
+        if (pDriveEntry->verifications().empty() ||
             pendingVerification.State == state::VerificationState::Pending &&
             notification.VerificationTrigger != pendingVerification.VerificationTrigger)
             return Failure_Storage_Verification_Bad_Verification_Trigger;

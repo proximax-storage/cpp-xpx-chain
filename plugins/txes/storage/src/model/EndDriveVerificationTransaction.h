@@ -34,11 +34,11 @@ namespace catapult { namespace model {
         /// Number of Provers.
         uint16_t ProversCount;
 
-        /// Public Keys of the Provers.
-        DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Provers, Key)
-
         /// Number of Verification opinions.
         uint16_t VerificationOpinionsCount;
+
+        /// Public Keys of the Provers.
+        DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Provers, Key)
 
         /// Verification Results.
         DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(VerificationOpinions, VerificationOpinion)
@@ -59,9 +59,9 @@ namespace catapult { namespace model {
         // Calculates the real size of a storage \a transaction.
         static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
             return sizeof(TransactionType)
-                        + transaction.ProversCount * sizeof(Key)
-                        + transaction.VerificationOpinionsCount * sizeof(VerificationOpinion)
-                        + transaction.VerificationOpinionsCount * transaction.ProversCount * (sizeof(Key) + sizeof(uint8_t)); // size of VerificationOpinion.Results
+                   + transaction.ProversCount * sizeof(Key)
+                   + transaction.VerificationOpinionsCount * (sizeof(Key) + sizeof(BLSSignature))
+                   + transaction.VerificationOpinionsCount * transaction.ProversCount * (sizeof(Key) + sizeof(uint8_t)); // size of VerificationOpinion.Results
         }
     };
 
