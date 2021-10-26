@@ -33,14 +33,15 @@ namespace catapult { namespace test {
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 	}
 
-	model::UniqueEntityPtr<model::AggregateTransaction<CoSignatureVersionAlias::Raw>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures, uint32_t numTransactions, std::vector<crypto::KeyPair>& cosigners, uint32_t cosignersAccountVersion) {
-
+	model::UniqueEntityPtr<model::AggregateTransaction<CoSignatureVersionAlias::Raw>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures, uint32_t numTransactions, std::vector<crypto::KeyPair>& cosigners, uint32_t cosignersAccountVersion, bool signerIsCosigner) {
+		if(signerIsCosigner)
+			assert(!(!numCosignatures && !numTransactions));
 		auto totalKeys = numCosignatures > numTransactions ? numCosignatures : numTransactions;
 		for (auto i = 0u; i < totalKeys; ++i) {
 			cosigners.push_back(test::GenerateKeyPair(cosignersAccountVersion));
 		}
 		uint32_t payloadSize = numTransactions * sizeof(mocks::EmbeddedMockTransaction);
-		uint32_t size = sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) + payloadSize + numCosignatures * sizeof(model::Cosignature<1>);
+		uint32_t size = sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) + payloadSize + (numCosignatures-(signerIsCosigner ? 1 : 0)) * sizeof(model::Cosignature<1>);
 		auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<CoSignatureVersionAlias::Raw>>(size);
 		FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), size });
 
@@ -48,7 +49,7 @@ namespace catapult { namespace test {
 		pTransaction->Version = Transaction_Version;
 		pTransaction->Size = size;
 		pTransaction->MaxFee = Amount(UINT16_MAX);
-		if(!numCosignatures && !numTransactions)
+		if(!numCosignatures && !numTransactions || !signerIsCosigner)
 			FillWithRandomData(pTransaction->Signer);
 		else
 			pTransaction->Signer = cosigners[0].publicKey();
@@ -83,12 +84,11 @@ namespace catapult { namespace test {
 		return GenerateValidCosignature(keyPair, aggregateHash);
 	}
 
-	void FixCosignatures(const std::vector<crypto::KeyPair>& cosigners, const Hash256& aggregateHash, model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction) {
+	void FixCosignatures(const std::vector<crypto::KeyPair>& cosigners, const Hash256& aggregateHash, model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction, bool signerIsCosigner) {
 		// assigning DetachedCosignature to Cosignature works by slicing off ParentHash since the former is derived from the latter
-		// there must be at least as many transactions in the aggregate transaction as cosigners and the first three will have their signer updated
+		// there must be at least as many transactions in the aggregate transaction as cosigners. If the signer is a cosigner there can be one less.
 		auto* pCosignature = aggregateTransaction.CosignaturesPtr();
-		pCosignature++;//First cosignature corresponds to the actual transaction signeri n this plugin
-		for (auto i = 1u; i < aggregateTransaction.CosignaturesCount(); ++i)
+		for (auto i = signerIsCosigner ? 1u : 0u; i < aggregateTransaction.CosignaturesCount()+ signerIsCosigner ? 1u : 0u; ++i)
 		{
 			*pCosignature++ = GenerateValidCosignature(cosigners[i], aggregateHash);
 		}
