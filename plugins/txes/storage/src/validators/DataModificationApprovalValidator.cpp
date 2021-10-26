@@ -23,7 +23,7 @@ namespace catapult { namespace validators {
 		if (activeDataModifications.empty())
 			return Failure_Storage_No_Active_Data_Modifications;
 
-		// Check if there are any comfirmed used sizes modifications
+		// Check if there are any confirmed used sizes modifications
 	  	const auto& confirmedUsedSizes = pDriveEntry->confirmedUsedSizes();
 		if (confirmedUsedSizes.empty())
 			return Failure_Storage_No_Active_Data_Modifications;

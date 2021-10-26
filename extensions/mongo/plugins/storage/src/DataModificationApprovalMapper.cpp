@@ -19,7 +19,47 @@ namespace catapult { namespace mongo { namespace plugins {
 		builder << "dataModificationId" << ToBinary(transaction.DataModificationId);
 		builder << "FileStructureCdi" << ToBinary(transaction.FileStructureCdi);
 		builder << "fileStructureSize" << static_cast<int64_t>(transaction.FileStructureSize);
+		builder << "metaFilesSize" << static_cast<int64_t>(transaction.MetaFilesSize);
 		builder << "usedDriveSize" << static_cast<int64_t>(transaction.UsedDriveSize);
+
+		// Streaming PublicKeys
+		auto publicKeysArray = builder << "publicKeys" << bson_stream::open_array;
+		auto pKey = transaction.PublicKeysPtr();
+		const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
+		for (auto i = 0; i < totalKeysCount; ++i, ++pKey)
+			publicKeysArray << ToBinary(*pKey);
+		publicKeysArray << bson_stream::close_array;
+
+		// Streaming OpinionIndices
+		auto opinionIndicesArray = builder << "opinionIndices" << bson_stream::open_array;
+		auto pIndex = transaction.OpinionIndicesPtr();
+		const auto totalJudgingKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount;
+		for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pIndex)
+			opinionIndicesArray << static_cast<int8_t>(*pIndex);
+		opinionIndicesArray << bson_stream::close_array;
+
+		// Streaming BlsSignatures
+		auto blsSignaturesArray = builder << "blsSignatures" << bson_stream::open_array;
+		auto pSignature = transaction.BlsSignaturesPtr();
+		for (auto i = 0; i < transaction.OpinionCount; ++i, ++pSignature)
+			blsSignaturesArray << ToBinary(*pSignature);
+		blsSignaturesArray << bson_stream::close_array;
+
+		// Streaming PresentOpinions
+		auto presentOpinionsArray = builder << "presentOpinions" << bson_stream::open_array;
+		auto pBlock = transaction.PresentOpinionsPtr();
+		const auto totalJudgedKeysCount = transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
+		const auto presentOpinionByteCount = (transaction.OpinionCount * totalJudgedKeysCount + 7) / 8;
+		for (auto i = 0; i < presentOpinionByteCount; ++i, ++pBlock)
+			presentOpinionsArray << static_cast<int8_t>(*pBlock);
+		presentOpinionsArray << bson_stream::close_array;
+
+		// Streaming Opinions
+		auto opinionsArray = builder << "opinions" << bson_stream::open_array;
+		auto pOpinion = transaction.OpinionsPtr();
+		for (auto i = 0; i < transaction.OpinionElementCount; ++i, ++pOpinion)
+			opinionsArray << static_cast<int64_t>(*pOpinion);
+		opinionsArray << bson_stream::close_array;
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(DataModificationApproval, StreamDataModificationApprovalTransaction)
