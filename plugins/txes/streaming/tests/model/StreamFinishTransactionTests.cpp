@@ -4,14 +4,14 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/model/StreamStartTransaction.h"
+#include <src/model/StreamFinishTransaction.h>
 #include "tests/test/core/TransactionTestUtils.h"
 
 namespace catapult { namespace model {
 
-	using TransactionType = StreamStartTransaction;
+	using TransactionType = StreamFinishTransaction;
 
-#define TEST_CLASS StreamStartTransactionTests
+#define TEST_CLASS StreamFinishTransactionTests
 
 	// region size + properties
 
@@ -22,13 +22,13 @@ namespace catapult { namespace model {
 			auto expectedSize =
 					baseSize // base
 					+ Key_Size // drive key size
-					+ sizeof(uint64_t) // expected upload size
-					+ sizeof(uint16_t) // folderName size
-					+ sizeof(Amount); // feedback fee
+				    + Hash256_Size // stream id size
+					+ sizeof(uint64_t) // actual upload size
+					+ Hash256_Size; // stream structure CDI size
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 50u, sizeof(T));
+			EXPECT_EQ(baseSize + 104, sizeof(T));
 		}
 
 		template<typename T>
@@ -39,7 +39,7 @@ namespace catapult { namespace model {
 		}
 	}
 
-	ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS(StreamStart)
+	ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS(StreamFinish)
 
 	// endregion
 
@@ -47,16 +47,14 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CanCalculateRealSizeWithReasonableValues) {
 		// Arrange:
-		StreamStartTransaction transaction;
+		StreamFinishTransaction transaction;
 		transaction.Size = 0;
-		constexpr auto folderNameSize = 3;
-		transaction.FolderNameSize = folderNameSize;
 
 		// Act:
-		auto realSize = StreamStartTransaction::CalculateRealSize(transaction);
+		auto realSize = StreamFinishTransaction::CalculateRealSize(transaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(StreamStartTransaction) + folderNameSize, realSize);
+		EXPECT_EQ(sizeof(StreamFinishTransaction), realSize);
 	}
 
 	// endregion

@@ -17,6 +17,11 @@ namespace catapult { namespace validators {
 		if (!pDriveEntry)
 			return Failure_Storage_Drive_Not_Found;
 
+		const auto& owner = pDriveEntry->owner();
+		if (owner != notification.Owner) {
+			return Failure_Storage_Is_Not_Owner;
+		}
+
 	  	const auto& activeDataModifications = pDriveEntry->activeDataModifications();
 	  	for (const auto& modification : activeDataModifications) {
 	  		if (modification.Id == notification.DataModificationId)

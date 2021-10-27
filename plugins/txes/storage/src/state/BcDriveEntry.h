@@ -31,7 +31,7 @@ namespace catapult { namespace state {
 				const Key& owner,
 				const Hash256& downloadDataCdi,
 				const uint64_t& uploadSize)
-			: ActiveDataModification(id, owner, downloadDataCdi, uploadSize, uploadSize, "")
+			: ActiveDataModification(id, owner, downloadDataCdi, uploadSize, uploadSize, "", true)
 		{}
 
 		/// Constructor For Stream Start
@@ -39,8 +39,8 @@ namespace catapult { namespace state {
 				const Hash256& id,
 				const Key& owner,
 				const uint64_t& expectedUploadSize,
-				const std::string& folder)
-			: ActiveDataModification(id, owner, Hash256(), expectedUploadSize, expectedUploadSize, folder)
+				const std::string& folderName)
+			: ActiveDataModification(id, owner, Hash256(), expectedUploadSize, expectedUploadSize, folderName, false)
 		{}
 
 		ActiveDataModification(
@@ -49,13 +49,15 @@ namespace catapult { namespace state {
 				const Hash256& downloadDataCdi,
 				const uint64_t& expectedUploadSize,
 				const uint64_t& actualUploadSize,
-				const std::string& folder)
+				const std::string& folderName,
+				const bool& readyForApproval)
 			: Id(id)
 			, Owner(owner)
 			, DownloadDataCdi(downloadDataCdi)
 			, ExpectedUploadSize(expectedUploadSize)
 			, ActualUploadSize(actualUploadSize)
-			, Folder(folder)
+			, FolderName(folderName)
+			, ReadyForApproval(readyForApproval)
 		{}
 
 		/// Id of data modification.
@@ -73,8 +75,11 @@ namespace catapult { namespace state {
 		/// Actual Upload size of data. Differs from ExpectedUploadSize only for streams
 		uint64_t ActualUploadSize;
 
-		/// Folder for stream
-		std::string Folder;
+		/// FolderName for stream
+		std::string FolderName;
+
+		/// Whether DataModification can be approved by Replicators
+		bool ReadyForApproval;
 	};
 
 	struct CompletedDataModification : ActiveDataModification {

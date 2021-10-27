@@ -82,14 +82,15 @@ namespace catapult { namespace state {
 
     TEST(TEST_CLASS, CanAccessActiveDataModification) {
         // Arrange:
-		auto folderBytes = test::GenerateRandomDataVector<uint8_t>(512);
+		auto folderNameBytes = test::GenerateRandomDataVector<uint8_t>(512);
         ActiveDataModification activeDataModification (
             test::GenerateRandomByteArray<Hash256>(),
             test::GenerateRandomByteArray<Key>(),
             test::GenerateRandomByteArray<Hash256>(),
             test::Random(),
 			test::Random(),
-			std::string(folderBytes.begin(), folderBytes.end())
+			std::string(folderNameBytes.begin(), folderNameBytes.end()),
+			test::RandomByte()
 		);
         auto entry = BcDriveEntry(Key());
 
@@ -106,19 +107,21 @@ namespace catapult { namespace state {
         EXPECT_EQ(activeDataModification.DownloadDataCdi, entry.activeDataModifications().back().DownloadDataCdi);
         EXPECT_EQ(activeDataModification.ExpectedUploadSize, entry.activeDataModifications().back().ExpectedUploadSize);
 		EXPECT_EQ(activeDataModification.ActualUploadSize, entry.activeDataModifications().back().ActualUploadSize);
-		EXPECT_EQ(activeDataModification.Folder, entry.activeDataModifications().back().Folder);
+		EXPECT_EQ(activeDataModification.FolderName, entry.activeDataModifications().back().FolderName);
+		EXPECT_EQ(activeDataModification.ReadyForApproval, entry.activeDataModifications().back().ReadyForApproval);
 	}
 
     TEST(TEST_CLASS, CanAccessCompletedDataModification) {
         // Arrange:
-		auto folderBytes = test::GenerateRandomDataVector<uint8_t>(512);
+		auto folderNameBytes = test::GenerateRandomDataVector<uint8_t>(512);
         ActiveDataModification activeDataModification(
             test::GenerateRandomByteArray<Hash256>(),
             test::GenerateRandomByteArray<Key>(),
             test::GenerateRandomByteArray<Hash256>(),
             test::Random(),
 			test::Random(),
-					std::string(folderBytes.begin(), folderBytes.end())
+			std::string(folderNameBytes.begin(), folderNameBytes.end()),
+			true
 		);
         CompletedDataModification completedDataModification {
             activeDataModification, DataModificationState::Succeeded
@@ -138,7 +141,7 @@ namespace catapult { namespace state {
         EXPECT_EQ(completedDataModification.DownloadDataCdi, entry.completedDataModifications().back().DownloadDataCdi);
 		EXPECT_EQ(completedDataModification.ExpectedUploadSize, entry.completedDataModifications().back().ExpectedUploadSize);
 		EXPECT_EQ(completedDataModification.ActualUploadSize, entry.completedDataModifications().back().ActualUploadSize);
-		EXPECT_EQ(completedDataModification.Folder, entry.completedDataModifications().back().Folder);
+		EXPECT_EQ(completedDataModification.FolderName, entry.completedDataModifications().back().FolderName);
         EXPECT_EQ(completedDataModification.State, entry.completedDataModifications().back().State);
     }
 

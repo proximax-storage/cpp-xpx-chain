@@ -108,4 +108,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to drive stream start notifications and validates that:
 	/// -
 	DECLARE_STATEFUL_VALIDATOR(StreamStart, model::StreamStartNotification<1>)();
+
+	/// A validator implementation that applies to drive stream start notifications and validates that:
+	/// -
+	DECLARE_STATEFUL_VALIDATOR(StreamFinish, model::StreamFinishNotification<1>)();
 }}

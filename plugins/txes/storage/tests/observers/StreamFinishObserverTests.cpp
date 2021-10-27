@@ -12,13 +12,13 @@
 
 namespace catapult { namespace observers {
 
-#define TEST_CLASS StreamStartObserverTests
+#define TEST_CLASS StreamFinishObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(StreamStart,)
+    DEFINE_COMMON_OBSERVER_TESTS(StreamFinish,)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
-        using Notification = model::StreamStartNotification<1>;
+        using Notification = model::StreamFinishNotification<1>;
 
         constexpr auto Current_Height = Height(10);
 
@@ -43,7 +43,6 @@ namespace catapult { namespace observers {
             for (const auto &activeDataModification : values.Active_Data_Modification) {
                 entry.activeDataModifications().emplace_back(activeDataModification);
             }
-
             return entry;
         }
 
@@ -53,7 +52,8 @@ namespace catapult { namespace observers {
 			auto folderNameBytes = test::GenerateRandomVector(512);
 			auto modification = state::ActiveDataModification (
 				test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(),
-				expectedUploadSize, std::string(folderNameBytes.begin(), folderNameBytes.end()));
+				test::GenerateRandomByteArray<Hash256>(), expectedUploadSize, expectedUploadSize / 2, std::string(folderNameBytes.begin(), folderNameBytes.end()), true);
+
 			return BcDriveValues(key, modification);
 		}
 
@@ -61,24 +61,31 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, currentHeight);
             Notification notification(
-                values.Active_Data_Modification.begin()->Id, 
-                values.Drive_Key, 
+				values.Drive_Key,
+                values.Active_Data_Modification.begin()->Id,
                 values.Active_Data_Modification.begin()->Owner,
-                values.Active_Data_Modification.begin()->ExpectedUploadSize,
-				values.Active_Data_Modification.begin()->FolderName);
-            auto pObserver = CreateStreamStartObserver();
+                values.Active_Data_Modification.begin()->ActualUploadSize,
+				values.Active_Data_Modification.begin()->DownloadDataCdi);
+            auto pObserver = CreateStreamFinishObserver();
         	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 
             // Populate cache.
-            bcDriveCache.insert(state::BcDriveEntry(values.Drive_Key));
+			auto entry = state::BcDriveEntry(values.Drive_Key);
+			entry.activeDataModifications().push_back(state::ActiveDataModification(
+				values.Active_Data_Modification.begin()->Id,
+				values.Active_Data_Modification.begin()->Owner,
+				values.Active_Data_Modification.begin()->ExpectedUploadSize,
+				values.Active_Data_Modification.begin()->FolderName
+			));
+            bcDriveCache.insert(entry);
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
 
-            // Assert: check the cache
-            auto driveIter = bcDriveCache.find(values.Drive_Key);
-            const auto& actualEntry = driveIter.get();
-            test::AssertEqualBcDriveData(CreateEntry(values), actualEntry);
+             // Assert: check the cache
+             auto driveIter = bcDriveCache.find(values.Drive_Key);
+             const auto& actualEntry = driveIter.get();
+             test::AssertEqualBcDriveData(CreateEntry(values), actualEntry);
         }
     }
 

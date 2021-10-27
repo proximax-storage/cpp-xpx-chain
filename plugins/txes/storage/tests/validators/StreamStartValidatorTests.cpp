@@ -35,7 +35,7 @@ namespace catapult { namespace validators {
                 cache.commit(Current_Height);
             }
 			const auto& modification = activeDataModification.front();
-            Notification notification(modification.Id, driveKey, modification.Owner, modification.ExpectedUploadSize, modification.Folder);
+            Notification notification(modification.Id, driveKey, modification.Owner, modification.ExpectedUploadSize, modification.FolderName);
             auto pValidator = CreateStreamStartValidator();
             
             // Act:
@@ -50,7 +50,7 @@ namespace catapult { namespace validators {
     TEST(TEST_CLASS, FailureWhenDriveNotFound) {
         // Arrange:
         state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
-		auto folderBytes = test::GenerateRandomVector(512);
+		auto folderNameBytes = test::GenerateRandomVector(512);
 
         // Assert:
         AssertValidationResult(
@@ -62,7 +62,7 @@ namespace catapult { namespace validators {
 					test::GenerateRandomByteArray<Hash256>(),
 					test::GenerateRandomByteArray<Key>(),
 					test::Random(),
-					std::string(folderBytes.begin(), folderBytes.end())
+					std::string(folderNameBytes.begin(), folderNameBytes.end())
 				)
 			});
     }
@@ -75,7 +75,7 @@ namespace catapult { namespace validators {
         entry.activeDataModifications().emplace_back(state::ActiveDataModification {
             id, test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Hash256>(), test::Random()
         });
-		auto folderBytes = test::GenerateRandomVector(512);
+		auto folderNameBytes = test::GenerateRandomVector(512);
 
         // Assert:
         AssertValidationResult(
@@ -86,9 +86,32 @@ namespace catapult { namespace validators {
 				id,
 				test::GenerateRandomByteArray<Key>(),
 				test::Random(),
-				std::string(folderBytes.begin(), folderBytes.end())
+				std::string(folderNameBytes.begin(), folderNameBytes.end())
 			)}
 		);
+    }
+
+    TEST(TEST_CLASS, FailureWhenIsNotOwner) {
+    	// Arrange:
+    	Key driveKey = test::GenerateRandomByteArray<Key>();
+    	Key owner = test::GenerateRandomByteArray<Key>();
+    	uint64_t expectedUploadSize = test::Random();
+    	state::BcDriveEntry entry(driveKey);
+    	auto folderNameBytes = test::GenerateRandomVector(512);
+    	entry.activeDataModifications().emplace_back(state::ActiveDataModification(
+    			test::GenerateRandomByteArray<Hash256>(), owner, expectedUploadSize,
+    			std::string(folderNameBytes.begin(), folderNameBytes.end())
+    			));
+
+    	// Assert:
+    	AssertValidationResult(
+    			Failure_Storage_Is_Not_Owner,
+    			entry,
+    			driveKey,
+    			{
+    				{ test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), expectedUploadSize,
+					  std::string(folderNameBytes.begin(), folderNameBytes.end())}
+    			});
     }
 
     TEST(TEST_CLASS, Success) {
@@ -97,10 +120,10 @@ namespace catapult { namespace validators {
         Key owner = test::GenerateRandomByteArray<Key>();
         uint64_t expectedUploadSize = test::Random();
         state::BcDriveEntry entry(driveKey);
-		auto folderBytes = test::GenerateRandomVector(512);
+		auto folderNameBytes = test::GenerateRandomVector(512);
         entry.activeDataModifications().emplace_back(state::ActiveDataModification(
             test::GenerateRandomByteArray<Hash256>(), owner, expectedUploadSize,
-			std::string(folderBytes.begin(), folderBytes.end())
+			std::string(folderNameBytes.begin(), folderNameBytes.end())
 		));
 
         // Assert:
@@ -110,7 +133,7 @@ namespace catapult { namespace validators {
             driveKey,
             { 
                 { test::GenerateRandomByteArray<Hash256>(), owner, expectedUploadSize,
-						  std::string(folderBytes.begin(), folderBytes.end())}
+						  std::string(folderNameBytes.begin(), folderNameBytes.end())}
             });
     }
 }}

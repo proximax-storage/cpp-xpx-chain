@@ -66,6 +66,9 @@ namespace catapult { namespace model {
 	/// Defines a stream start notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Stream_Start_v1, 0x0013);
 
+	/// Defines a stream finish notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Stream_Finish_v1, 0x0014);
+
 	struct DownloadWork : public UnresolvedAmountData {
 	public:
 		DownloadWork(const Key& driveKey, const Key& replicator)
@@ -175,13 +178,13 @@ namespace catapult { namespace model {
 				const Key& drive,
 				const Key& owner,
 				const uint64_t& expecteedUploadSize,
-				const std::string& folder)
+				const std::string& folderName)
 			: Notification(Notification_Type, sizeof(StreamStartNotification<1>))
 			, StreamId(streamId)
 			, DriveKey(drive)
 			, Owner(owner)
 			, ExpectedUploadSize(expecteedUploadSize)
-			, Folder(folder)
+			, FolderName(folderName)
 		{}
 
 	public:
@@ -197,8 +200,49 @@ namespace catapult { namespace model {
 		/// Upload size of data.
 		uint64_t ExpectedUploadSize;
 
-		/// Folder to save stream in
-		std::string Folder;
+		/// FolderName to save stream in
+		std::string FolderName;
+	};
+
+	/// Notification of a stream start.
+	template<VersionType version>
+	struct StreamFinishNotification;
+
+	template<>
+	struct StreamFinishNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Stream_Finish_v1_Notification;
+
+	public:
+		explicit StreamFinishNotification(
+				const Key& drive,
+				const Hash256& streamId,
+				const Key& owner,
+				const uint64_t& actualUploadSize,
+				const Hash256& streamStructureCdi)
+				: Notification(Notification_Type, sizeof(StreamStartNotification<1>))
+				, StreamId(streamId)
+				, DriveKey(drive)
+				, Owner(owner)
+				, ActualUploadSize(actualUploadSize)
+				, StreamStructureCdi(streamStructureCdi)
+				{}
+
+	public:
+		/// Hash of the transaction.
+		Hash256 StreamId;
+
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+
+		/// Public key of the drive owner.
+		Key Owner;
+
+		/// Actual size of the stream
+		uint64_t ActualUploadSize;
+
+		Hash256 StreamStructureCdi;
 	};
 
 	/// Notification of a download.
@@ -424,14 +468,18 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Storage_Drive_Closure_v1_Notification;
 
 	public:
-		explicit DriveClosureNotification(const Key& drive)
+		explicit DriveClosureNotification(const Key& drive, const Key& owner)
 			: Notification(Notification_Type, sizeof(DriveClosureNotification<1>))
-			, DriveKey(drive){}
+			, DriveKey(drive)
+			, DriveOwner(owner)
+		{}
 
 	public:
 		/// Public key of a drive.
 		Key DriveKey;
 
+		/// Public Key of the drive owner
+		Key DriveOwner;
 	};
 
 	/// Notification of a replicator offboarding.

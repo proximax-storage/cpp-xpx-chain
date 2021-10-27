@@ -15,6 +15,9 @@ namespace catapult { namespace model {
 	/// Stream Start transaction.
 	DEFINE_TRANSACTION_TYPE(Streaming, StreamStart, 0x1);
 
+	/// Stream Finish transaction.
+	DEFINE_TRANSACTION_TYPE(Streaming, StreamFinish, 0x2);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif

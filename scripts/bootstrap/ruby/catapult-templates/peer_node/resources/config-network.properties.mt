@@ -180,4 +180,4 @@ downloadBillingPeriod = 24h
 [plugin:catapult.plugins.streaming]
 
 enabled = true
-maxFolderSize = 512
+maxFolderNameSize = 512

@@ -14,7 +14,7 @@ namespace catapult { namespace validators {
 /// Defines a storage validation result with \a DESCRIPTION and \a CODE.
 #define DEFINE_STREAMING_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, Streaming, DESCRIPTION, CODE, None)
 		/// Folder length is too large
-		DEFINE_STREAMING_RESULT(Folder_Too_Large, 1);
+		DEFINE_STREAMING_RESULT(Folder_Name_Too_Large, 1);
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

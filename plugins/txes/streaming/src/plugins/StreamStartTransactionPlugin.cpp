@@ -27,16 +27,16 @@ namespace catapult { namespace plugins {
 				case 1: {
 					sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
 					auto transactionHash = CalculateHash(transaction, config.GenerationHash);
-					std::string folder((const char*)transaction.FolderPtr(), transaction.FolderSize);
+					std::string folderName((const char*)transaction.FolderNamePtr(), transaction.FolderNameSize);
 					sub.notify(StreamStartNotification<1>(
 							transactionHash,
 							transaction.DriveKey,
 							transaction.Signer,
 							transaction.ExpectedUploadSize,
-							folder
+							folderName
 					));
-					sub.notify(StreamStartFolderNotification<1>(
-							transaction.FolderSize
+					sub.notify(StreamStartFolderNameNotification<1>(
+							transaction.FolderNameSize
 					));
 
 					const auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.NetworkIdentifier));

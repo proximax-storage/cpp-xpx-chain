@@ -33,31 +33,26 @@ namespace catapult { namespace model {
 		/// Expected size of stream.
 		uint64_t ExpectedUploadSize;
 
-		/// Message of folder string in bytes
-		uint16_t FolderSize;
+		/// Message of folderName string in bytes
+		uint16_t FolderNameSize;
 
 		/// Amount of XPXs to transfer to the drive.
 		Amount FeedbackFeeAmount;
 
-		/// Folder to save stream in.
-		// Followed by folder if FolderSize != 0
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Folder, uint8_t)
+		/// FolderName to save stream in.
+		// Followed by folderName if FolderNameSize != 0
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(FolderName, uint8_t)
 
 	private:
 		template<typename T>
-		static auto* FolderPtrT(T& transaction) {
-			return transaction.FolderSize ? THeader::PayloadStart(transaction) : nullptr;
+		static auto* FolderNamePtrT(T& transaction) {
+			return transaction.FolderNameSize ? THeader::PayloadStart(transaction) : nullptr;
 		}
 
 	public:
 		// Calculates the real size of a data modification \a transaction.
 		static uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			CATAPULT_LOG(error) << "HEREEEEEEEEEEE "
-						<< " " << transaction.DriveKey
-					    << " " << transaction.ExpectedUploadSize
-						<< " " << transaction.FolderSize
-					    << " " << transaction.FeedbackFeeAmount;
-			return sizeof(TransactionType) + transaction.FolderSize;
+			return sizeof(TransactionType) + transaction.FolderNameSize;
 		}
 	};
 

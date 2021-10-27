@@ -10,27 +10,27 @@
 namespace catapult { namespace model {
 
 	/// Defines a data modification notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Streaming, Stream_Start_Folder_v1, 0x0001);
+	DEFINE_NOTIFICATION_TYPE(All, Streaming, Stream_Start_FolderName_v1, 0x0001);
 
 	/// Notification of a data modification.
 	template<VersionType version>
-	struct StreamStartFolderNotification;
+	struct StreamStartFolderNameNotification;
 
 	template<>
-	struct StreamStartFolderNotification<1> : public Notification {
+	struct StreamStartFolderNameNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Streaming_Stream_Start_Folder_v1_Notification;
+		static constexpr auto Notification_Type = Streaming_Stream_Start_FolderName_v1_Notification;
 
 	public:
-		explicit StreamStartFolderNotification(
-				const uint16_t& folderSize)
-			: Notification(Notification_Type, sizeof(StreamStartFolderNotification<1>))
-			, FolderSize(folderSize)
+		explicit StreamStartFolderNameNotification(
+				const uint16_t& folderNameSize)
+			: Notification(Notification_Type, sizeof(StreamStartFolderNameNotification<1>))
+			, FolderNameSize(folderNameSize)
 		{}
 
 	public:
-		/// Folder length.
-		uint16_t FolderSize;
+		/// FolderName length.
+		uint16_t FolderNameSize;
 	};
 }}

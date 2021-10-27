@@ -27,21 +27,21 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS StreamStartFolderValidatorTests
+#define TEST_CLASS StreamStartFolderNameValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(StreamStartFolder)
+	DEFINE_COMMON_VALIDATOR_TESTS(StreamStartFolderName)
 
 	namespace {
-		void AssertValidationResult(ValidationResult expectedResult, uint16_t folderSize, uint16_t maxFolderSize) {
+		void AssertValidationResult(ValidationResult expectedResult, uint16_t folderNameSize, uint16_t maxFolderNameSize) {
 			// Arrange:
-			auto notification = model::StreamStartFolderNotification<1>(folderSize);
+			auto notification = model::StreamStartFolderNameNotification<1>(folderNameSize);
 			auto pluginConfig = config::StreamingConfiguration::Uninitialized();
-			pluginConfig.MaxFolderSize = maxFolderSize;
+			pluginConfig.MaxFolderNameSize = maxFolderNameSize;
 			test::MutableBlockchainConfiguration mutableConfig;
 			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pValidator = CreateStreamStartFolderValidator();
+			auto pValidator = CreateStreamStartFolderNameValidator();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
@@ -51,18 +51,18 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, SuccessWhenValidatingNotificationWithFolderSizeLessThanMax) {
+	TEST(TEST_CLASS, SuccessWhenValidatingNotificationWithFolderNameSizeLessThanMax) {
 		// Assert:
 		AssertValidationResult(ValidationResult::Success, 512, 513);
 	}
 
-	TEST(TEST_CLASS, SuccessWhenValidatingNotificationWithFolderSizeEqualToMax) {
+	TEST(TEST_CLASS, SuccessWhenValidatingNotificationWithFolderNameSizeEqualToMax) {
 		// Assert:
 		AssertValidationResult(ValidationResult::Success, 512, 512);
 	}
 
-	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithFolderSizeGreaterThanMax) {
+	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithFolderNameSizeGreaterThanMax) {
 		// Assert:
-		AssertValidationResult(Failure_Streaming_Folder_Too_Large, 512, 511);
+		AssertValidationResult(Failure_Streaming_Folder_Name_Too_Large, 512, 511);
 	}
 }}

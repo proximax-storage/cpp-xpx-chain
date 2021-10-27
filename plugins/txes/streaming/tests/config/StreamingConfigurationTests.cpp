@@ -19,7 +19,7 @@ namespace catapult { namespace config {
 							"",
 							{
 									{ "enabled", "true" },
-									{ "maxFolderSize", "512" },
+									{ "maxFolderNameNameSize", "512" },
 							}
 					}
 				};
@@ -31,7 +31,7 @@ namespace catapult { namespace config {
 
 			static bool IsPropertyOptional(const std::string& name) {
 				return std::set<std::string>{
-					"maxFolderSize",}.count(name);
+					"maxFolderNameSize",}.count(name);
 			}
 
 			static bool IsSectionOptional(const std::string&) {
@@ -41,13 +41,13 @@ namespace catapult { namespace config {
 			static void AssertZero(const StreamingConfiguration& config) {
 				// Assert:
 				EXPECT_FALSE(config.Enabled);
-				EXPECT_EQ(0u, config.MaxFolderSize);
+				EXPECT_EQ(0u, config.MaxFolderNameSize);
 			}
 
 			static void AssertCustom(const StreamingConfiguration& config) {
 				// Assert:
 				EXPECT_TRUE(config.Enabled);
-				EXPECT_EQ(512u, config.MaxFolderSize);
+				EXPECT_EQ(512u, config.MaxFolderNameSize);
 			}
 		};
 	}

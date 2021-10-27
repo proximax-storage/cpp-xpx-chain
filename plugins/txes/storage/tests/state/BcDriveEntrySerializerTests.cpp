@@ -61,11 +61,13 @@ namespace catapult { namespace state {
 			pData += sizeof(uint64_t);
 			EXPECT_EQ(active.ActualUploadSize, *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
-			auto folderSize = active.Folder.size();
-			EXPECT_EQ(folderSize, *reinterpret_cast<const uint16_t*>(pData));
+			auto folderNameSize = active.FolderName.size();
+			EXPECT_EQ(folderNameSize, *reinterpret_cast<const uint16_t*>(pData));
 			pData += sizeof(uint16_t);
-			EXPECT_EQ_MEMORY(active.Folder.c_str(), pData, folderSize);
-			pData += folderSize;
+			EXPECT_EQ(active.ReadyForApproval, *reinterpret_cast<const uint8_t*>(pData));
+			pData += sizeof(uint8_t);
+			EXPECT_EQ_MEMORY(active.FolderName.c_str(), pData, folderNameSize);
+			pData += folderNameSize;
 		}
 
         void AssertActiveDataModifications(const ActiveDataModifications& activeDataModifications, const uint8_t*& pData) {
@@ -169,9 +171,10 @@ namespace catapult { namespace state {
 			CopyToVector(data, modification.DownloadDataCdi.data(), Hash256_Size);
 			CopyToVector(data, (const uint8_t *) &modification.ExpectedUploadSize, sizeof(uint64_t));
 			CopyToVector(data, (const uint8_t *) &modification.ActualUploadSize, sizeof(uint64_t));
-			auto folderSize = (uint16_t) modification.Folder.size();
-			CopyToVector(data, (const uint8_t *) &folderSize, sizeof(folderSize));
-			CopyToVector(data, (const uint8_t *) modification.Folder.c_str(), folderSize);
+			auto folderNameSize = (uint16_t) modification.FolderName.size();
+			CopyToVector(data, (const uint8_t *) &folderNameSize, sizeof(folderNameSize));
+			CopyToVector(data, (const uint8_t *) &modification.ReadyForApproval, sizeof(bool));
+			CopyToVector(data, (const uint8_t *) modification.FolderName.c_str(), folderNameSize);
 		}
 
         void SaveActiveDataModifications(const ActiveDataModifications& activeDataModifications, std::vector<uint8_t>& data) {

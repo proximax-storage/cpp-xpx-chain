@@ -89,7 +89,7 @@ namespace catapult { namespace plugins {
 		auto i = 0u;
 		EXPECT_EQ(Storage_Drive_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Storage_Stream_Start_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Streaming_Stream_Start_Folder_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Streaming_Stream_Start_FolderName_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Transfer_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[i++]);
@@ -133,15 +133,15 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(pTransaction->ExpectedUploadSize, notification.ExpectedUploadSize);
-		EXPECT_EQ(pTransaction->FolderSize, notification.Folder.size());
-		EXPECT_EQ_MEMORY(pTransaction->FolderPtr(), notification.Folder.data(), notification.Folder.size());
+		EXPECT_EQ(pTransaction->FolderNameSize, notification.FolderName.size());
+		EXPECT_EQ_MEMORY(pTransaction->FolderNamePtr(), notification.FolderName.data(), notification.FolderName.size());
 	}
 
 	// endregion
 
-	PLUGIN_TEST(CanPublishStreamStartFolder) {
+	PLUGIN_TEST(CanPublishStreamStartFolderName) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<StreamStartFolderNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<StreamStartFolderNameNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 		auto pTransaction = CreateTransaction<TTraits>();
 
@@ -151,7 +151,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->FolderSize, notification.FolderSize);
+		EXPECT_EQ(pTransaction->FolderNameSize, notification.FolderNameSize);
 	}
 
 	// endregion

@@ -9,11 +9,11 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::StreamStartFolderNotification<1>;
+	using Notification = model::StreamStartFolderNameNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(StreamStartFolder, [](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(StreamStartFolderName, [](const Notification& notification, const ValidatorContext& context) {
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StreamingConfiguration>();
-		return notification.FolderSize > pluginConfig.MaxFolderSize ? Failure_Streaming_Folder_Too_Large : ValidationResult::Success;
+		return notification.FolderNameSize > pluginConfig.MaxFolderNameSize ? Failure_Streaming_Folder_Name_Too_Large : ValidationResult::Success;
 	});
 
 }}

@@ -10,7 +10,7 @@ namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER(StreamStart, model::StreamStartNotification<1>, [](const model::StreamStartNotification<1>& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModification)");
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StreamStart)");
 
 	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 	  	auto driveIter = driveCache.find(notification.DriveKey);
@@ -21,7 +21,7 @@ namespace catapult { namespace observers {
 			notification.StreamId,
 			notification.Owner,
 			notification.ExpectedUploadSize,
-			notification.Folder
+			notification.FolderName
 		));
 	});
 }}

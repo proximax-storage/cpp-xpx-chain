@@ -84,6 +84,27 @@ namespace catapult { namespace validators {
             });
     }
 
+    TEST(TEST_CLASS, FailureWhenIsNotOwner) {
+    	// Arrange:
+    	Key driveKey = test::GenerateRandomByteArray<Key>();
+    	Key owner = test::GenerateRandomByteArray<Key>();
+    	Hash256 downloadDataCdi = test::GenerateRandomByteArray<Hash256>();
+    	uint64_t uploadSize = test::Random();
+    	state::BcDriveEntry entry(driveKey);
+    	entry.activeDataModifications().emplace_back(state::ActiveDataModification (
+    			test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize
+    			));
+
+    	// Assert:
+    	AssertValidationResult(
+    			Failure_Storage_Is_Not_Owner,
+    			entry,
+    			driveKey,
+    			{ state::ActiveDataModification(
+    					test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), downloadDataCdi, uploadSize)
+    			});
+    }
+
     TEST(TEST_CLASS, Success) {
         // Arrange:
         Key driveKey = test::GenerateRandomByteArray<Key>();
@@ -91,6 +112,7 @@ namespace catapult { namespace validators {
         Hash256 downloadDataCdi = test::GenerateRandomByteArray<Hash256>();
         uint64_t uploadSize = test::Random();
         state::BcDriveEntry entry(driveKey);
+		entry.setOwner(owner);
         entry.activeDataModifications().emplace_back(state::ActiveDataModification (
             test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize
 		));

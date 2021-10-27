@@ -231,7 +231,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDownloadApprovalValidator())
 				.add(validators::CreateDownloadApprovalPaymentValidator())
 				.add(validators::CreateDownloadChannelRefundValidator())
-				.add(validators::CreateStreamStartValidator());
+				.add(validators::CreateStreamStartValidator())
+				.add(validators::CreateStreamFinishValidator());
 		});
 
 		manager.addObserverHook([pKeyCollector](auto& builder) {
@@ -249,7 +250,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDownloadApprovalObserver())
 				.add(observers::CreateDownloadApprovalPaymentObserver())
 				.add(observers::CreateDownloadChannelRefundObserver())
-				.add(observers::CreateStreamStartObserver());
+				.add(observers::CreateStreamStartObserver())
+				.add(observers::CreateStreamFinishObserver());
 		});
 	}
 }}

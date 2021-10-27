@@ -22,7 +22,8 @@ namespace catapult { namespace test {
                 EXPECT_EQ(expectedActiveDataModification.DownloadDataCdi, activeDataModification.DownloadDataCdi);
                 EXPECT_EQ(expectedActiveDataModification.ExpectedUploadSize, activeDataModification.ExpectedUploadSize);
 				EXPECT_EQ(expectedActiveDataModification.ActualUploadSize, activeDataModification.ActualUploadSize);
-				EXPECT_EQ(expectedActiveDataModification.Folder, activeDataModification.Folder);
+				EXPECT_EQ(expectedActiveDataModification.FolderName, activeDataModification.FolderName);
+				EXPECT_EQ(expectedActiveDataModification.ReadyForApproval, activeDataModification.ReadyForApproval);
             }
         }
 
@@ -36,8 +37,9 @@ namespace catapult { namespace test {
                 EXPECT_EQ(expectedCompletedDataModification.DownloadDataCdi, completedDataModification.DownloadDataCdi);
                 EXPECT_EQ(expectedCompletedDataModification.ExpectedUploadSize, completedDataModification.ExpectedUploadSize);
 				EXPECT_EQ(expectedCompletedDataModification.ActualUploadSize, completedDataModification.ActualUploadSize);
-				EXPECT_EQ(expectedCompletedDataModification.Folder, completedDataModification.Folder);
+				EXPECT_EQ(expectedCompletedDataModification.FolderName, completedDataModification.FolderName);
                 EXPECT_EQ(expectedCompletedDataModification.State, completedDataModification.State);
+                EXPECT_EQ(expectedCompletedDataModification.ReadyForApproval, expectedCompletedDataModification.ReadyForApproval);
             }
         }
 
@@ -74,15 +76,17 @@ namespace catapult { namespace test {
 
         entry.activeDataModifications().reserve(activeDataModificationsCount);
         for (auto aDMC = 0u; aDMC < activeDataModificationsCount; ++aDMC){
-			auto folderBytes = test::GenerateRandomVector(512);
+			auto folderNameBytes = test::GenerateRandomVector(512);
 			auto uploadSize = test::Random();
+			bool readyForApproval = test::RandomByte();
 			entry.activeDataModifications().emplace_back(state::ActiveDataModification(
-                test::GenerateRandomByteArray<Hash256>(),   				/// Id of data modification.
-				key,                                        				/// Public key of the drive owner.
-                test::GenerateRandomByteArray<Hash256>(),   				/// CDI of download data.
-				uploadSize,                             					/// ExpectedUpload size of data.
-				uploadSize,													/// ActualUpload size of data.
-				std::string(folderBytes.begin(), folderBytes.end())			/// Folder (for stream)
+                test::GenerateRandomByteArray<Hash256>(),   					/// Id of data modification.
+				key,                                        					/// Public key of the drive owner.
+                test::GenerateRandomByteArray<Hash256>(),   					/// CDI of download data.
+				uploadSize,                             						/// ExpectedUpload size of data.
+				uploadSize,														/// ActualUpload size of data.
+		std::string(folderNameBytes.begin(), folderNameBytes.end()),	/// FolderName (for stream)
+				readyForApproval												/// Flag whether modification can be approved
 			));
         }
 

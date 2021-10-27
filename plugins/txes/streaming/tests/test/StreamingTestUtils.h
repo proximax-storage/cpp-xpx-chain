@@ -27,15 +27,25 @@ namespace catapult { namespace test {
 		return pTransaction;
 	}
 
-	/// Creates a data modification transaction.
+	/// Creates a stream start modification transaction.
 	template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateStreamStartTransaction() {
-		uint8_t folderSize = 255u;
-		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_StreamStart, folderSize);
+		uint8_t folderNameSize = 255u;
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_StreamStart, folderNameSize);
 		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
 		pTransaction->ExpectedUploadSize = test::Random();
-		pTransaction->FolderSize = folderSize;
-		test::FillWithRandomData(MutableRawBuffer(pTransaction->FolderPtr(), folderSize));
+		pTransaction->FolderNameSize = folderNameSize;
+		test::FillWithRandomData(MutableRawBuffer(pTransaction->FolderNamePtr(), folderNameSize));
+		return pTransaction;
+	}
+
+	/// Creates a stream start modification transaction.
+	template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateStreamFinishTransaction() {
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_StreamFinish);
+		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+		pTransaction->StreamId = test::GenerateRandomByteArray<Hash256>();
+		pTransaction->ActualUploadSize = test::Random();
 		return pTransaction;
 	}
 }}

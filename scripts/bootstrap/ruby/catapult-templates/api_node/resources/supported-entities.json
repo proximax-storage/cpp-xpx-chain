@@ -284,6 +284,11 @@
 			"name": "streamStart",
 			"type": "16743",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "streamFinish",
+			"type": "16999",
+			"supportedVersions": [1]
 		}
 	]
 }

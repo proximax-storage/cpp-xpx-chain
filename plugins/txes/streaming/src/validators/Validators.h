@@ -13,6 +13,6 @@
 
 namespace catapult { namespace validators {
 	/// A validator implementation that applies to drive stream start notifications and validates that:
-	/// folder is not too long
-	DECLARE_STATEFUL_VALIDATOR(StreamStartFolder, model::StreamStartFolderNotification<1>)();
+	/// folderName is not too long
+	DECLARE_STATEFUL_VALIDATOR(StreamStartFolderName, model::StreamStartFolderNameNotification<1>)();
 }}

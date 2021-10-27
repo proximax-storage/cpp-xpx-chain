@@ -18,9 +18,10 @@ namespace catapult { namespace state {
 			io::Write(output, modification.DownloadDataCdi);
 			io::Write64(output, modification.ExpectedUploadSize);
 			io::Write64(output, modification.ActualUploadSize);
-			io::Write16(output, (uint16_t) modification.Folder.size());
-			auto pFolder = (const uint8_t*) (modification.Folder.c_str());
-			io::Write(output, utils::RawBuffer(pFolder, modification.Folder.size()));
+			io::Write16(output, (uint16_t) modification.FolderName.size());
+			io::Write8(output, modification.ReadyForApproval);
+			auto pFolderName = (const uint8_t*) (modification.FolderName.c_str());
+			io::Write(output, utils::RawBuffer(pFolderName, modification.FolderName.size()));
 		}
 
 		void SaveActiveDataModifications(io::OutputStream& output, const ActiveDataModifications& activeDataModifications) {
@@ -47,11 +48,12 @@ namespace catapult { namespace state {
 			io::Read(input, downloadDataCdi);
 			auto expectedUploadSize = io::Read64(input);
 			auto actualUploadSize = io::Read64(input);
-			auto folderSize = io::Read16(input);
-			std::vector<uint8_t> folderBytes(folderSize);
-			io::Read(input, folderBytes);
-			std::string folder(folderBytes.begin(), folderBytes.end());
-			return ActiveDataModification(id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folder);
+			auto folderNameSize = io::Read16(input);
+			auto readyForApproval = io::Read8(input);
+			std::vector<uint8_t> folderNameBytes(folderNameSize);
+			io::Read(input, folderNameBytes);
+			std::string folderName(folderNameBytes.begin(), folderNameBytes.end());
+			return ActiveDataModification(id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folderName, readyForApproval);
 		}
 
 		void LoadActiveDataModifications(io::InputStream& input, ActiveDataModifications& activeDataModifications) {

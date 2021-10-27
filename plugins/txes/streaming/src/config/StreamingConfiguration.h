@@ -20,7 +20,7 @@ namespace catapult { namespace config {
 		DEFINE_CONFIG_CONSTANTS(streaming)
 
 		/// Maximum length of folder name
-		uint16_t MaxFolderSize;
+		uint16_t MaxFolderNameSize;
 
 		/// Whether the plugin is enabled.
 		bool Enabled;

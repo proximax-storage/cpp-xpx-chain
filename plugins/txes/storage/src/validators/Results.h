@@ -113,7 +113,16 @@ namespace catapult { namespace validators {
 	DEFINE_STORAGE_RESULT(Recipient_State_Not_Found, 33);
 
 	/// Validation failed because the data modification already exists.
-	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 34);
+	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 38);
+
+	/// Validation failed because the stream if not first in the queue.
+	DEFINE_STORAGE_RESULT(Invalid_Stream_Id, 39);
+
+	/// Validation failed because the stream has already been finished.
+	DEFINE_STORAGE_RESULT(Stream_Already_Finished, 40);
+
+	/// Validation failed because declared stream actual size exceeds prepaid expected size
+	DEFINE_STORAGE_RESULT(Expected_Upload_Size_Exceeded, 41);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
