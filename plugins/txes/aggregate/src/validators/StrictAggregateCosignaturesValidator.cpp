@@ -53,7 +53,7 @@ namespace catapult { namespace validators {
 		}
 
 		// only return success if all cosigners are used
-		return std::all_of(cosigners.cbegin(), cosigners.cend(), [](const auto& pair) { return pair.second; })
+		return std::all_of(cosigners.cbegin(), cosigners.cend(), [&signerKey = notification.Signer, strictlyRequireSignerAsCosigner = pluginConfig.StrictSigner](const auto& pair) { return pair.second || *pair.first == signerKey && !strictlyRequireSignerAsCosigner; })
 			   ? hasMissingCosigners ? Failure_Aggregate_Missing_Cosigners : ValidationResult::Success
 			   : Failure_Aggregate_Ineligible_Cosigners;
 	}

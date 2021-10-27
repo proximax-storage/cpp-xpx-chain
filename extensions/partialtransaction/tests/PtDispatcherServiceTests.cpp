@@ -73,7 +73,7 @@ namespace catapult { namespace partialtransaction {
 			return Num_Cosignatures == aggregateNotification.CosignaturesCount;
 		}
 
-		auto CreateConfiguration(bool enableStrictSigning)
+		auto CreateConfiguration(bool enableStrictSigning, bool signerRequired)
 		{
 			auto config = test::CreateMutablePrototypicalBlockchainConfiguration();
 			config.Network.Plugins.emplace(PLUGIN_NAME(aggregate), utils::ConfigurationBag({{
@@ -86,7 +86,7 @@ namespace catapult { namespace partialtransaction {
 							{ "enableBondedAggregateSupport", "true" },
 
 							{ "maxBondedTransactionLifetime", "1h" },
-							{ "strictSigner", enableStrictSigning ? "true" : "false" }
+							{ "strictSigner", signerRequired ? "true" : "false" }
 					}
 			}}));
 			config.Network.InitPluginConfiguration<config::AggregateConfiguration>();
@@ -95,13 +95,13 @@ namespace catapult { namespace partialtransaction {
 
 		class TestContext : public test::ServiceLocatorTestContext<PtDispatcherServiceTraits> {
 		public:
-			TestContext() : TestContext(ValidationResult::Failure, true)
+			TestContext() : TestContext(ValidationResult::Failure, true, true)
 			{}
 
-			explicit TestContext(ValidationResult validationResult, bool enableStrictSigning)
+			explicit TestContext(ValidationResult validationResult, bool enableStrictSigning, bool strictSigner)
 					: m_numCompletedTransactions(0)
 					, m_pWriters(std::make_shared<mocks::BroadcastAwareMockPacketWriters>())
-					, test::ServiceLocatorTestContext<PtDispatcherServiceTraits>(CreateConfiguration(enableStrictSigning)){
+					, test::ServiceLocatorTestContext<PtDispatcherServiceTraits>(CreateConfiguration(enableStrictSigning, strictSigner)){
 				auto pBootstrapperRegistrar = CreatePtBootstrapperServiceRegistrar([]() {
 					return std::make_unique<cache::MemoryPtCacheProxy>(cache::MemoryCacheOptions(1024, 1024));
 				});
@@ -275,6 +275,7 @@ namespace catapult { namespace partialtransaction {
 			bool ValidCosignatures;
 			bool enableStrictSigning;
 			bool useSignerAsCosigner;
+			bool enableStrictSigner;
 		};
 
 		auto ProcessAndWait(disruptor::ConsumerDispatcher& dispatcher, model::TransactionRange&& range) {
@@ -293,7 +294,7 @@ namespace catapult { namespace partialtransaction {
 		template<uint32_t TCosignatureAccountVersion, typename TWait, typename THandler>
 		void AssertDispatcherForwarding(const DispatcherTestOptions& options, TWait wait, THandler handler) {
 			// Arrange:
-			TestContext context(options.ValidationResult, options.enableStrictSigning);
+			TestContext context(options.ValidationResult, options.enableStrictSigning, options.enableStrictSigner);
 			context.boot();
 
 			const auto& transactionRegistry = context.registry();
@@ -318,7 +319,7 @@ namespace catapult { namespace partialtransaction {
 	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_DoesNotForwardToUpdaterWhenValidationFailed) {
 		// Arrange:
 		AssertDispatcherForwarding<TypeParam::value>(
-				DispatcherTestOptions{ ValidationResult::Failure, 1, false, true, false },
+				DispatcherTestOptions{ ValidationResult::Failure, 1, false, true, false, false },
 				[](const auto&) {},
 				[](const auto& context, const auto& expectedHashes) {
 					// Assert:
@@ -334,7 +335,7 @@ namespace catapult { namespace partialtransaction {
 
 	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_ForwardsToUpdaterWhenValidationSucceeded) {
 		AssertDispatcherForwarding<TypeParam::value>(
-				DispatcherTestOptions{ ValidationResult::Success, 1, false },
+				DispatcherTestOptions{ ValidationResult::Success, 1, false, false, false, false },
 				[](const auto& context) {
 					// wait for element processing to finish
 					WAIT_FOR_ONE_EXPR(context.cache().view().size());
@@ -394,13 +395,13 @@ namespace catapult { namespace partialtransaction {
 		}
 	}
 	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_ForwardsMultipleEntitiesToUpdaterWhenTransactionValid) {
-		//Should all succeed because cosignatures are not validated at this stage.
+		//Should all succeed because cosignatures are not yet included in this stage
 		AssertDispatcherForwardingToUpdaterWhenValidationSucceeds<TypeParam::value>(
 		DispatcherTestOptions{ ValidationResult::Success, 3, false, true, false }, 3);
 		AssertDispatcherForwardingToUpdaterWhenValidationSucceeds<TypeParam::value>(
-			DispatcherTestOptions{ ValidationResult::Success, 3, false, false, false }, 3);
+				DispatcherTestOptions{ ValidationResult::Success, 3, false, true, true }, 3);
 		AssertDispatcherForwardingToUpdaterWhenValidationSucceeds<TypeParam::value>(
-			DispatcherTestOptions{ ValidationResult::Success, 3, false, true, true }, 3);
+			DispatcherTestOptions{ ValidationResult::Success, 3, false, false, false }, 3);
 		AssertDispatcherForwardingToUpdaterWhenValidationSucceeds<TypeParam::value>(
 				DispatcherTestOptions{ ValidationResult::Success, 3, false, false, true }, 3);
 	}
@@ -408,7 +409,7 @@ namespace catapult { namespace partialtransaction {
 
 	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_PtCacheIgnoresTransactionWithSameHash) {
 		// Arrange: disable short lived cache, so that dispatcher won't eliminate second element via recency cache
-		TestContext context(ValidationResult::Success, true);
+		TestContext context(ValidationResult::Success, true, true);
 		const_cast<config::NodeConfiguration&>(context.testState().config().Node).ShortLivedCacheMaxSize = 0;
 		context.boot();
 
@@ -444,22 +445,31 @@ namespace catapult { namespace partialtransaction {
 		EXPECT_EQ(utils::to_underlying_type(consumers::Neutral_Consumer_Hash_In_Recency_Cache), result.CompletionCode);
 	}
 
-	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_UpdaterForwardsToConsumerWhenTransactionValidAndStrictEnabledNoSignerAsCosigner) {
+	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_UpdaterForwardsToConsumerWhenTransactionValidAndStrictEnabledNoSignerAsCosignerStrictSigner) {
 		AssertDispatcherForwardingToConsumerWhenValidationSucceeds<TypeParam::value>(
-				DispatcherTestOptions{ ValidationResult::Success, 3, true, true, false }, 0);
+				DispatcherTestOptions{ ValidationResult::Success, 3, true, true, false, true }, 0);
+	}
+	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_UpdaterForwardsToConsumerWhenTransactionValidAndStrictEnabledSignerAsCosignerStrictSigner) {
+		AssertDispatcherForwardingToConsumerWhenValidationSucceeds<TypeParam::value>(
+				DispatcherTestOptions{ ValidationResult::Success, 3, true, true, true, true }, 3);
+	}
+	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_UpdaterForwardsToConsumerWhenTransactionValidAndStrictEnabledNoSignerAsCosignerNoStrictSigner) {
+		AssertDispatcherForwardingToConsumerWhenValidationSucceeds<TypeParam::value>(
+				DispatcherTestOptions{ ValidationResult::Success, 3, true, true, false, false }, 3);
+	}
+	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_UpdaterForwardsToConsumerWhenTransactionValidAndStrictEnabledSignerAsCosignerNoStrictSigner) {
+		AssertDispatcherForwardingToConsumerWhenValidationSucceeds<TypeParam::value>(
+				DispatcherTestOptions{ ValidationResult::Success, 3, true, true, true, false }, 3);
 	}
 	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_UpdaterForwardsToConsumerWhenTransactionValidAndStrictDisabledNoSignerAsCosigner) {
 		AssertDispatcherForwardingToConsumerWhenValidationSucceeds<TypeParam::value>(
-				DispatcherTestOptions{ ValidationResult::Success, 3, true, false, false }, 3);
+				DispatcherTestOptions{ ValidationResult::Success, 3, true, false, false, false }, 3);
 	}
 	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_UpdaterForwardsToConsumerWhenTransactionValidAndStrictDisabledSignerAsCosigner) {
 		AssertDispatcherForwardingToConsumerWhenValidationSucceeds<TypeParam::value>(
-				DispatcherTestOptions{ ValidationResult::Success, 3, true, false, true }, 3);
+				DispatcherTestOptions{ ValidationResult::Success, 3, true, false, true, false }, 3);
 	}
-	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_UpdaterForwardsToConsumerWhenTransactionValidAndStrictEnabledSignerAsCosigner) {
-		AssertDispatcherForwardingToConsumerWhenValidationSucceeds<TypeParam::value>(
-				DispatcherTestOptions{ ValidationResult::Success, 3, true, true, true }, 3);
-	}
+
 
 	// region hooks
 
@@ -475,7 +485,7 @@ namespace catapult { namespace partialtransaction {
 		template<uint32_t TCosignatureAccountVersion, typename TInvokeHook>
 		void AssertInvokeForwardsTransactionRangeToDispatcher(TInvokeHook invokeHook) {
 			// Arrange:
-			TestContext context(ValidationResult::Success, true);
+			TestContext context(ValidationResult::Success, true, true);
 			context.boot();
 
 			// - prepare a transaction range
@@ -542,27 +552,28 @@ namespace catapult { namespace partialtransaction {
 			return ionet::CreateBroadcastPayload(cosignatures);
 		}
 
-		template<uint32_t TCosignerAccountVersion, typename TInvokeHook>
-		void AssertInvokeForwardsCosignatureRangeToUpdater(TInvokeHook invokeHook) {
+		template<uint32_t TCosignerAccountVersion, typename TInvokeHook, typename TAssertion>
+		void AssertInvokeForwardsCosignatureRangeToUpdater(bool enableStrictSigning, bool signerIsCosigner, bool enableStrictSigner, TInvokeHook invokeHook, TAssertion assertResults) {
 			// Arrange:
-			TestContext context(ValidationResult::Success, true);
+			TestContext context(ValidationResult::Success, enableStrictSigning, enableStrictSigner);
 			context.boot();
 
 			auto& ptCache = GetMemoryPtCache(context.locator());
 
 			// - prepare and add a transaction range to the cache
 			std::vector<crypto::KeyPair> cosignerKeys;
-			auto pTransaction = utils::UniqueToShared(test::CreateRandomAggregateTransactionWithCosignatures(0, 5, cosignerKeys, TCosignerAccountVersion, true));
+			auto pTransaction = utils::UniqueToShared(test::CreateRandomAggregateTransactionWithCosignatures(0, 5, cosignerKeys, TCosignerAccountVersion, signerIsCosigner));
 			model::TransactionInfo transactionInfo;
 			transactionInfo.EntityHash = CalculateTransactionHash(context.registry(), *pTransaction);
 			transactionInfo.pEntity = pTransaction;
 			ptCache.modifier().add(transactionInfo);
 
-			// - prepare a cosignature range. One of the cosignatures corresponds to the signer, so we only add 3 more, leaving one out so the transaction is not completed and removed from cache
-			auto cosignatureRange = model::EntityRange<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>::PrepareFixed(3);
+			// - prepare a cosignature range. One of the cosignatures may correspond to the signer, so we only add 3 more, leaving one out so the transaction is not completed and removed from cache
+			auto cosignaturesToAdd = signerIsCosigner ? 3 : 4;
+			auto cosignatureRange = model::EntityRange<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>::PrepareFixed(cosignaturesToAdd);
 			auto cosignature = cosignatureRange.begin();
 			for (auto i = 0; i < cosignatureRange.size(); i++) {
-				*cosignature++ = test::GenerateValidCosignature(cosignerKeys[i+1], transactionInfo.EntityHash);
+				*cosignature++ = test::GenerateValidCosignature(cosignerKeys[i+(signerIsCosigner? 1 : 0)], transactionInfo.EntityHash);
 			}
 
 			auto expectedPayload = ExtractCosignaturePayload(cosignatureRange);
@@ -570,34 +581,10 @@ namespace catapult { namespace partialtransaction {
 			// Act:
 			invokeHook(GetPtServerHooks(context.locator()), std::move(cosignatureRange));
 
-			// Assert: wait for element processing to finish
-			WAIT_FOR_VALUE_EXPR(3u, context.cache().view().find(transactionInfo.EntityHash).cosignatures().size());
-			WAIT_FOR_ONE_EXPR(context.numBroadcastCalls());
-
-			// - cache should be populated with cosignatures
-			auto view = context.cache().view();
-			EXPECT_EQ(1u, view.size());
-
-			auto i = 0u;
-			auto transactionInfoFromCache = view.find(transactionInfo.EntityHash);
-			ASSERT_TRUE(!!transactionInfoFromCache);
-			for (const auto& cosigner : cosignerKeys) {
-				//Last key should not be present otherwise transaction would be completed and removed from cache
-				if(i != 4) EXPECT_TRUE(transactionInfoFromCache.hasCosigner(cosigner.publicKey()) || cosigner.publicKey() == transactionInfoFromCache.transaction().Signer) << "cosigner at " << std::to_string(i);
-				++i;
-
-			}
-
-			ASSERT_EQ(1u, context.numBroadcastCalls());
-			test::AssertEqualPayload(expectedPayload, context.broadcastedPayloads()[0]);
-
-			EXPECT_EQ(0u, context.numCompletedTransactions());
+			assertResults(context, transactionInfo, cosignerKeys, expectedPayload, cosignaturesToAdd);
 		}
-	}
 
-	TYPED_TEST(PtDispatcherServiceTests, CosignedTransactionInfosConsumerForwardsCosignaturesToUpdater) {
-		// Assert:
-		AssertInvokeForwardsCosignatureRangeToUpdater<TypeParam::value>([](const auto& hooks, auto&& cosignatureRange) {
+		auto arrangeDataForForwarding(const PtServerHooks& hooks, model::EntityRange<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>&& cosignatureRange) {
 			// Arrange: create a separate info for each cosignature
 			CosignedTransactionInfos transactionInfos;
 			for (const auto& cosignature : cosignatureRange) {
@@ -609,15 +596,106 @@ namespace catapult { namespace partialtransaction {
 
 			// Act:
 			hooks.cosignedTransactionInfosConsumer()(std::move(transactionInfos));
-		});
+		}
+
+		void assertForwardFailure(const TestContext& context, const model::TransactionInfo& transactionInfo, const std::vector<crypto::KeyPair>& cosignerKeys, const ionet::PacketPayload& expectedPayload, size_t cosignaturesToAdd){
+			// Assert: all cosignatures should fail validation because the signer is not a cosigner
+			WAIT_FOR_VALUE_EXPR(0u, context.cache().view().find(transactionInfo.EntityHash).cosignatures().size());
+			WAIT_FOR_ONE_EXPR(context.numBroadcastCalls());
+
+			// - cache should be have one pending aggregate
+			auto view = context.cache().view();
+			EXPECT_EQ(1u, view.size());
+
+			auto i = 0u;
+			auto transactionInfoFromCache = view.find(transactionInfo.EntityHash);
+			ASSERT_TRUE(!!transactionInfoFromCache);
+			for (const auto& cosigner : cosignerKeys) {
+				//Last key should not be present otherwise transaction would be completed and removed from cache
+				//Other cosigners must not be found as cosignatures must have failed validation
+				if(i != 0) EXPECT_FALSE(transactionInfoFromCache.hasCosigner(cosigner.publicKey()) || cosigner.publicKey() == transactionInfoFromCache.transaction().Signer) << "cosigner at " << std::to_string(i);
+				++i;
+
+			}
+
+			ASSERT_EQ(1u, context.numBroadcastCalls());
+			test::AssertEqualPayload(expectedPayload, context.broadcastedPayloads()[0]);
+
+			EXPECT_EQ(0u, context.numCompletedTransactions());
+		}
+
+		void assertForwardSuccess(const TestContext& context, const model::TransactionInfo& transactionInfo, const std::vector<crypto::KeyPair>& cosignerKeys, const ionet::PacketPayload& expectedPayload,  size_t cosignaturesToAdd){
+			// Assert: all cosignatures should succeed validation because the signer is not a cosigner
+			WAIT_FOR_VALUE_EXPR(cosignaturesToAdd, context.cache().view().find(transactionInfo.EntityHash).cosignatures().size());
+			WAIT_FOR_ONE_EXPR(context.numBroadcastCalls());
+
+			// - cache should be have one pending aggregate
+			auto view = context.cache().view();
+			EXPECT_EQ(1u, view.size());
+
+			auto i = 0u;
+			auto transactionInfoFromCache = view.find(transactionInfo.EntityHash);
+			ASSERT_TRUE(!!transactionInfoFromCache);
+			for (const auto& cosigner : cosignerKeys) {
+				//Last key should not be present otherwise transaction would be completed and removed from cache
+				//Other cosigners must be present
+				if(i != 4) EXPECT_TRUE(transactionInfoFromCache.hasCosigner(cosigner.publicKey()) || cosigner.publicKey() == transactionInfoFromCache.transaction().Signer) << "cosigner at " << std::to_string(i);
+				++i;
+
+			}
+
+			ASSERT_EQ(1u, context.numBroadcastCalls());
+			test::AssertEqualPayload(expectedPayload, context.broadcastedPayloads()[0]);
+
+			EXPECT_EQ(0u, context.numCompletedTransactions());
+		}
+
+		void assertForwardFastSuccess(const TestContext& context, const model::TransactionInfo& transactionInfo, const std::vector<crypto::KeyPair>& cosignerKeys, const ionet::PacketPayload& expectedPayload,  size_t cosignaturesToAdd){
+			// Assert: basic validation will complete the transaction of first completion check
+			WAIT_FOR_ONE_EXPR(context.numBroadcastCalls());
+			WAIT_FOR_VALUE_EXPR(1, context.numCompletedTransactions());
+			// - cache should now be empty
+			auto view = context.cache().view();
+			EXPECT_EQ(0u, view.size());
+
+			auto i = 0u;
+
+			ASSERT_EQ(1u, context.numBroadcastCalls());
+			test::AssertEqualPayload(expectedPayload, context.broadcastedPayloads()[0]);
+		}
+	}
+
+	TYPED_TEST(PtDispatcherServiceTests, CosignedTransactionInfosConsumerForwardsCosignaturesToUpdaterAndStrictEnabledNoSignerAsCosignerStrictSigner) {
+		// Assert:
+		AssertInvokeForwardsCosignatureRangeToUpdater<TypeParam::value>(true, false, true, arrangeDataForForwarding, assertForwardFailure);
+	}
+	TYPED_TEST(PtDispatcherServiceTests, CosignedTransactionInfosConsumerForwardsCosignaturesToUpdaterAndStrictEnabledNoSignerAsCosignerNoStrictSigner) {
+		// Assert:
+		AssertInvokeForwardsCosignatureRangeToUpdater<TypeParam::value>(true, false, false, arrangeDataForForwarding, assertForwardSuccess);
+	}
+	TYPED_TEST(PtDispatcherServiceTests, CosignedTransactionInfosConsumerForwardsCosignaturesToUpdaterAndStrictEnabledSignerAsCosignerStrictSigner) {
+		// Assert:
+		AssertInvokeForwardsCosignatureRangeToUpdater<TypeParam::value>(true, true, true, arrangeDataForForwarding, assertForwardSuccess);
+	}
+	TYPED_TEST(PtDispatcherServiceTests, CosignedTransactionInfosConsumerForwardsCosignaturesToUpdaterAndStrictEnabledSignerAsCosignerNoStrictSigner) {
+		// Assert:
+		AssertInvokeForwardsCosignatureRangeToUpdater<TypeParam::value>(true, true, false, arrangeDataForForwarding, assertForwardSuccess);
+	}
+	TYPED_TEST(PtDispatcherServiceTests, CosignedTransactionInfosConsumerForwardsCosignaturesToUpdaterAndStrictDisabledNoSignerAsCosigner) {
+		// Assert:
+		AssertInvokeForwardsCosignatureRangeToUpdater<TypeParam::value>(false, false, false, arrangeDataForForwarding, assertForwardFastSuccess);
+	}
+	TYPED_TEST(PtDispatcherServiceTests, CosignedTransactionInfosConsumerForwardsCosignaturesToUpdaterAndStrictDisabledSignerAsCosigner) {
+		// Assert:
+		AssertInvokeForwardsCosignatureRangeToUpdater<TypeParam::value>(false, true, false, arrangeDataForForwarding, assertForwardFastSuccess);
 	}
 
 	TYPED_TEST(PtDispatcherServiceTests, CosignatureRangeConsumerForwardsCosignatureRangeToUpdater) {
 		// Assert:
-		AssertInvokeForwardsCosignatureRangeToUpdater<TypeParam::value>([](const auto& hooks, auto&& cosignatureRange) {
+		//AssertInvokeForwardsCosignatureRangeToUpdater<TypeParam::value>([](const auto& hooks, auto&& cosignatureRange) {
 			// Act:
-			hooks.cosignatureRangeConsumer()(std::move(cosignatureRange));
-		});
+		//	hooks.cosignatureRangeConsumer()(std::move(cosignatureRange));
+		//});
 	}
 
 	// endregion

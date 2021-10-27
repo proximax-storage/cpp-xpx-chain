@@ -41,7 +41,7 @@ namespace catapult { namespace test {
 			cosigners.push_back(test::GenerateKeyPair(cosignersAccountVersion));
 		}
 		uint32_t payloadSize = numTransactions * sizeof(mocks::EmbeddedMockTransaction);
-		uint32_t size = sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) + payloadSize + (numCosignatures-(signerIsCosigner ? 1 : 0)) * sizeof(model::Cosignature<1>);
+		uint32_t size = sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) + payloadSize + (numCosignatures-(signerIsCosigner && numCosignatures > 0? 1 : 0)) * sizeof(model::Cosignature<1>);
 		auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<CoSignatureVersionAlias::Raw>>(size);
 		FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), size });
 
