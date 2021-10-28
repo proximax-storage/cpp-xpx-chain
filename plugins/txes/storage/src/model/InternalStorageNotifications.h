@@ -8,12 +8,9 @@
 
 #include "src/model/StorageTypes.h"
 #include "catapult/model/Notifications.h"
+#include "catapult/model/StorageNotifications.h"
 
 namespace catapult { namespace model {
-
-    /// Defines an end drive verification notification type.
-    DEFINE_NOTIFICATION_TYPE(All, Storage, End_Drive_Verification_v1, 0x0013);
-
     /// Notification of an end drive verification.
     template<VersionType version>
     struct EndDriveVerificationNotification;

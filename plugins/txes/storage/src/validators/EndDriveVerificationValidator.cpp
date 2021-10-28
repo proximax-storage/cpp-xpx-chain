@@ -20,27 +20,28 @@ namespace catapult { namespace validators {
         if (!pDriveEntry)
             return Failure_Storage_Drive_Not_Found;
 
-        auto& pendingVerification = pDriveEntry->verifications().back();
+        // Check if provided verification trigger exist and if it has Pending state
+        auto pendingVerification = std::find_if(
+                pDriveEntry->verifications().begin(),
+                pDriveEntry->verifications().end(),
+                [&notification](const state::Verification& v) {
+                    return v.VerificationTrigger == notification.VerificationTrigger &&
+                           v.State == state::VerificationState::Pending;
+                }
+        );
 
-        // Check if provided verification trigger is equal to desired
-        if (pDriveEntry->verifications().empty() ||
-            pendingVerification.State == state::VerificationState::Pending &&
-            notification.VerificationTrigger != pendingVerification.VerificationTrigger)
+        if (pendingVerification == pDriveEntry->verifications().end())
             return Failure_Storage_Verification_Bad_Verification_Trigger;
 
         // Check if the count of Provers is right
-        if (pendingVerification.Results.size() != notification.ProversCount)
+        if (pendingVerification->Results.size() != notification.ProversCount)
             return Failure_Storage_Verification_Wrong_Number_Of_Provers;
 
         // Check if all Provers were in the Confirmed state at the start of verification.
         for (auto i = 0; i < notification.ProversCount; ++i) {
-            if (pendingVerification.Results.find(notification.ProversPtr[i]) == pendingVerification.Results.end())
+            if (pendingVerification->Results.find(notification.ProversPtr[i]) == pendingVerification->Results.end())
                 return Failure_Storage_Verification_Some_Provers_Are_Illegal;
         }
-
-        // Check if the verification in the Pending state.
-        if (pDriveEntry->verifications().back().State != state::VerificationState::Pending)
-            return Failure_Storage_Verification_Not_In_Pending;
 
         return ValidationResult::Success;
     });

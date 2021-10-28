@@ -121,9 +121,6 @@ namespace catapult { namespace validators {
 	/// Not all Provers were in the Confirmed state at the start of Verification.
 	DEFINE_STORAGE_RESULT(Verification_Some_Provers_Are_Illegal, 36);
 
-	/// Verification not in Pending state.
-	DEFINE_STORAGE_RESULT(Verification_Not_In_Pending, 37);
-
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

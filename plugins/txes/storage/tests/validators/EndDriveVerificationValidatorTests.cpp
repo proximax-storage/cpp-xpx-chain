@@ -123,14 +123,14 @@ namespace catapult {
             Key driveKey = test::GenerateRandomByteArray<Key>();
             state::BcDriveEntry entry(driveKey);
 
+            const Key prover = test::GenerateRandomByteArray<Key>();
+
             auto trigger = test::GenerateRandomByteArray<Hash256>();
             entry.verifications().emplace_back(state::Verification{
-                trigger,
-                state::VerificationState::Finished,
-                state::VerificationResults{{test::GenerateRandomByteArray<Key>(), 1}}
+                    trigger,
+                    state::VerificationState::Pending,
+                    state::VerificationResults{{test::GenerateRandomByteArray<Key>(), 1}}
             });
-
-            const Key prover = test::GenerateRandomByteArray<Key>();
 
             // Assert:
             AssertValidationResult(
@@ -140,31 +140,6 @@ namespace catapult {
                     trigger,
                     1,
                     &prover,
-                    0,
-                    nullptr
-            );
-        }
-
-        TEST(TEST_CLASS, FailureNotInPending) {
-            // Arrange:
-            Key driveKey = test::GenerateRandomByteArray<Key>();
-            state::BcDriveEntry entry(driveKey);
-
-            auto trigger = test::GenerateRandomByteArray<Hash256>();
-            entry.verifications().emplace_back(state::Verification{
-                trigger,
-                state::VerificationState::Finished,
-                state::VerificationResults{},
-            });
-
-            // Assert:
-            AssertValidationResult(
-                    Failure_Storage_Verification_Not_In_Pending,
-                    entry,
-                    driveKey,
-                    trigger,
-                    0,
-                    nullptr,
                     0,
                     nullptr
             );

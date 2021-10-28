@@ -64,7 +64,8 @@ namespace catapult { namespace model {
 	/// Defines a drive closure notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Drive_Closure_v1, 0x0012);
 
-    //End_Drive_Verification_v1, 0x0013 in models
+	/// Defines an end drive verification notification type.
+    DEFINE_NOTIFICATION_TYPE(All, Storage, End_Drive_Verification_v1, 0x0013);
 
 	struct DownloadWork : public UnresolvedAmountData {
 	public:
