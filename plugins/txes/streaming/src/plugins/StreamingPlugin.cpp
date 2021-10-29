@@ -9,6 +9,7 @@
 #include "src/observers/Observers.h"
 #include "src/plugins/StreamStartTransactionPlugin.h"
 #include "src/plugins/StreamFinishTransactionPlugin.h"
+#include "src/plugins/StreamPaymentTransactionPlugin.h"
 #include "catapult/plugins/CacheHandlers.h"
 
 namespace catapult { namespace plugins {
@@ -36,6 +37,7 @@ namespace catapult { namespace plugins {
 		const auto& immutableConfig = manager.immutableConfig();
 		manager.addTransactionSupport(CreateStreamStartTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateStreamFinishTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateStreamPaymentTransactionPlugin(immutableConfig));
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 			builder

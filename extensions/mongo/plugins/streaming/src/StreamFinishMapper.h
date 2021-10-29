@@ -9,7 +9,7 @@
 
 namespace catapult { namespace mongo { namespace plugins {
 
-	/// Creates a mongo data modification transaction plugin.
+	/// Creates a mongo stream finish transaction plugin.
 	PLUGIN_API
 	std::unique_ptr<MongoTransactionPlugin> CreateStreamFinishTransactionMongoPlugin();
 }}}

@@ -91,7 +91,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDownloadApprovalTransactionPlugin(immutableConfig));
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
-		  	switch (unresolved.Type) {
+			switch (unresolved.Type) {
 		  	case UnresolvedAmountType::DownloadWork: {
 				const auto& pDownloadWork = castToUnresolvedData<model::DownloadWork>(unresolved.DataPtr);
 
@@ -232,7 +232,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDownloadApprovalPaymentValidator())
 				.add(validators::CreateDownloadChannelRefundValidator())
 				.add(validators::CreateStreamStartValidator())
-				.add(validators::CreateStreamFinishValidator());
+				.add(validators::CreateStreamFinishValidator())
+				.add(validators::CreateStreamPaymentValidator());
 		});
 
 		manager.addObserverHook([pKeyCollector](auto& builder) {
@@ -251,7 +252,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDownloadApprovalPaymentObserver())
 				.add(observers::CreateDownloadChannelRefundObserver())
 				.add(observers::CreateStreamStartObserver())
-				.add(observers::CreateStreamFinishObserver());
+				.add(observers::CreateStreamFinishObserver())
+				.add(observers::CreateStreamPaymentObserver());
 		});
 	}
 }}

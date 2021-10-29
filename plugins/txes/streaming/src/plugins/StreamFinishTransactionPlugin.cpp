@@ -4,15 +4,11 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <src/utils/StreamingUtils.h>
-#include "tools/tools/ToolKeys.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "StreamFinishTransactionPlugin.h"
 #include "catapult/model/StorageNotifications.h"
-#include "plugins/txes/streaming/src/model/StreamingNotifications.h"
 #include "src/model/StreamFinishTransaction.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "catapult/model/EntityHasher.h"
 #include "catapult/model/NotificationSubscriber.h"
 
 using namespace catapult::model;

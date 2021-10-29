@@ -51,7 +51,7 @@ namespace catapult { namespace model {
 
 	public:
 		// Calculates the real size of a data modification \a transaction.
-		static uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
+		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
 			return sizeof(TransactionType) + transaction.FolderNameSize;
 		}
 	};

@@ -69,6 +69,9 @@ namespace catapult { namespace model {
 	/// Defines a stream finish notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Stream_Finish_v1, 0x0014);
 
+	/// Defines a stream payment notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Stream_Payment_v1, 0x0015);
+
 	struct DownloadWork : public UnresolvedAmountData {
 	public:
 		DownloadWork(const Key& driveKey, const Key& replicator)
@@ -204,7 +207,7 @@ namespace catapult { namespace model {
 		std::string FolderName;
 	};
 
-	/// Notification of a stream start.
+	/// Notification of a stream finish.
 	template<VersionType version>
 	struct StreamFinishNotification;
 
@@ -243,6 +246,38 @@ namespace catapult { namespace model {
 		uint64_t ActualUploadSize;
 
 		Hash256 StreamStructureCdi;
+	};
+
+	/// Notification of a stream payment.
+	template<VersionType version>
+	struct StreamPaymentNotification;
+
+	template<>
+	struct StreamPaymentNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Stream_Payment_v1_Notification;
+
+	public:
+		explicit StreamPaymentNotification(
+				const Key& drive,
+				const Hash256& streamId,
+				const uint64_t& additionalUploadSize)
+				: Notification(Notification_Type, sizeof(StreamStartNotification<1>))
+				, StreamId(streamId)
+				, DriveKey(drive)
+				, AdditionalUploadSize(additionalUploadSize)
+				{}
+
+	public:
+		/// Hash of the transaction.
+		Hash256 StreamId;
+
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+
+		/// Actual size of the stream
+		uint64_t AdditionalUploadSize;
 	};
 
 	/// Notification of a download.

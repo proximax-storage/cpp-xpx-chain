@@ -28,19 +28,19 @@ namespace catapult { namespace observers {
 						const Key& key,
 						const state::ActiveDataModification& modification)
                     : Drive_Key(key)
-                    , Active_Data_Modification {
+                    , Active_Data_Modifications {
 						modification
 					}
                 {}
             
             public:
                 Key Drive_Key;
-                std::vector<state::ActiveDataModification> Active_Data_Modification;
+                std::vector<state::ActiveDataModification> Active_Data_Modifications;
         };
 
         state::BcDriveEntry CreateEntry(const BcDriveValues& values) {
             state::BcDriveEntry entry(values.Drive_Key);
-            for (const auto &activeDataModification : values.Active_Data_Modification) {
+            for (const auto &activeDataModification : values.Active_Data_Modifications) {
                 entry.activeDataModifications().emplace_back(activeDataModification);
             }
 
@@ -61,11 +61,11 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, currentHeight);
             Notification notification(
-                values.Active_Data_Modification.begin()->Id, 
+                values.Active_Data_Modifications.begin()->Id,
                 values.Drive_Key, 
-                values.Active_Data_Modification.begin()->Owner,
-                values.Active_Data_Modification.begin()->ExpectedUploadSize,
-				values.Active_Data_Modification.begin()->FolderName);
+                values.Active_Data_Modifications.begin()->Owner,
+                values.Active_Data_Modifications.begin()->ExpectedUploadSize,
+				values.Active_Data_Modifications.begin()->FolderName);
             auto pObserver = CreateStreamStartObserver();
         	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 

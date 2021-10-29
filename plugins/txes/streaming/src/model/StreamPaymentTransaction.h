@@ -15,16 +15,16 @@ namespace catapult { namespace model {
 
 	/// Binary layout for a data modification transaction body.
 	template<typename THeader>
-	struct StreamFinishTransactionBody : public THeader {
+	struct StreamPaymentTransactionBody : public THeader {
 	private:
-		using TransactionType = StreamFinishTransactionBody<THeader>;
+		using TransactionType = StreamPaymentTransactionBody<THeader>;
 
 	public:
-		explicit StreamFinishTransactionBody<THeader>()
+		explicit StreamPaymentTransactionBody<THeader>()
 		{}
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_StreamFinish, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_StreamPayment, 1)
 
 	public:
 		/// Key of drive.
@@ -34,19 +34,16 @@ namespace catapult { namespace model {
 		Hash256 StreamId;
 
 		/// Actual size of stream
-		uint64_t ActualUploadSize;
-
-		/// Stream Structure CDI
-		Hash256 StreamStructureCdi;
+		uint64_t AdditionalUploadSize;
 
 	public:
-		// Calculates the real size of a stream finish \a transaction.
+		// Calculates the real size of a stream payment \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
 			return sizeof(TransactionType);
 		}
 	};
 
-	DEFINE_EMBEDDABLE_TRANSACTION(StreamFinish)
+	DEFINE_EMBEDDABLE_TRANSACTION(StreamPayment)
 
 #pragma pack(pop)
 }}

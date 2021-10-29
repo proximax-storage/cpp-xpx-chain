@@ -39,13 +39,23 @@ namespace catapult { namespace test {
 		return pTransaction;
 	}
 
-	/// Creates a stream start modification transaction.
+	/// Creates a stream finish modification transaction.
 	template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateStreamFinishTransaction() {
 		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_StreamFinish);
 		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
 		pTransaction->StreamId = test::GenerateRandomByteArray<Hash256>();
 		pTransaction->ActualUploadSize = test::Random();
+		return pTransaction;
+	}
+
+	/// Creates a stream payment modification transaction.
+	template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateStreamPaymentTransaction() {
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_StreamPayment);
+		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+		pTransaction->StreamId = test::GenerateRandomByteArray<Hash256>();
+		pTransaction->AdditionalUploadSize = test::Random();
 		return pTransaction;
 	}
 }}

@@ -58,6 +58,9 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by stream start notifications.
 	DECLARE_OBSERVER(StreamStart, model::StreamStartNotification<1>)();
 
-	/// Observes changes triggered by stream start notifications.
+	/// Observes changes triggered by stream finish notifications.
 	DECLARE_OBSERVER(StreamFinish, model::StreamFinishNotification<1>)();
+
+	/// Observes changes triggered by stream payment notifications.
+	DECLARE_OBSERVER(StreamPayment, model::StreamPaymentNotification<1>)();
 }}

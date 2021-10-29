@@ -6,6 +6,7 @@
 
 #include "StreamStartMapper.h"
 #include "StreamFinishMapper.h"
+#include "StreamPaymentMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 
 extern "C" PLUGIN_API
@@ -13,4 +14,5 @@ extern "C" PLUGIN_API
 	// transaction support
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateStreamStartTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateStreamFinishTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateStreamPaymentTransactionMongoPlugin());
 }

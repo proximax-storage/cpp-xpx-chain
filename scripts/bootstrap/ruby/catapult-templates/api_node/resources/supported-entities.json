@@ -289,6 +289,11 @@
 			"name": "streamFinish",
 			"type": "16999",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "streamPayment",
+			"type": "17255",
+			"supportedVersions": [1]
 		}
 	]
 }
