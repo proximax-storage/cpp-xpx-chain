@@ -51,6 +51,27 @@ namespace catapult { namespace chain {
 					})
 					, m_name(CreateJointValidatorName(m_pStatelessValidator->name(), m_pStatefulValidator->name()))
 			{}
+			JointValidator(
+					const cache::CatapultCache& cache,
+					const TimeSupplier& timeSupplier,
+					const plugins::PluginManager& pluginManager,
+					const ValidationResultPredicate& isSuppressedFailure,
+					const ValidatorEnabledPredicate& shouldEnable,
+					bool enableStateful
+					)
+					: m_cache(cache)
+					, m_timeSupplier(timeSupplier)
+					, m_pConfigHolder(pluginManager.configHolder())
+					, m_pStatelessValidator(pluginManager.createStatelessValidator(isSuppressedFailure))
+					, m_pStatefulValidator(enableStateful ? pluginManager.createStatefulValidator(isSuppressedFailure) : nullptr)
+					, m_pConditionalStatefulValidator(pluginManager.createConditionalStatefulValidator(shouldEnable, isSuppressedFailure))
+					, m_resolverContextFactory([&pluginManager](const auto& readOnlyCache){
+					  return pluginManager.createResolverContext(readOnlyCache);
+					})
+					, m_name(CreateJointValidatorName(m_pStatelessValidator->name(), enableStateful ?
+								CreateJointValidatorName(m_pStatefulValidator->name(), m_pConditionalStatefulValidator->name()) :
+								m_pConditionalStatefulValidator->name()))
+			{}
 
 		public:
 			const std::string& name() const override {
@@ -61,9 +82,18 @@ namespace catapult { namespace chain {
 				auto result = validateStateless(notification);
 				if (IsValidationResultFailure(result))
 					return result;
-
-				auto statefulResult = validateStateful(notification);
-				AggregateValidationResult(result, statefulResult);
+				if(m_pStatefulValidator)
+				{
+					auto statefulResult = validateStateful(notification);
+					AggregateValidationResult(result, statefulResult);
+					if (IsValidationResultFailure(result))
+						return result;
+				}
+				if (m_pConditionalStatefulValidator)
+				{
+					auto conditionalResult = validateConditionalStateful(notification);
+					AggregateValidationResult(result, conditionalResult);
+				}
 				return result;
 			}
 
@@ -81,12 +111,22 @@ namespace catapult { namespace chain {
 				return m_pStatefulValidator->validate(notification, validatorContext);
 			}
 
+			ValidationResult validateConditionalStateful(const model::Notification& notification) const {
+				auto cacheView = m_cache.createView();
+				auto readOnlyCache = cacheView.toReadOnly();
+				auto resolverContext = m_resolverContextFactory(readOnlyCache);
+				const auto& config = m_pConfigHolder->Config();
+				auto validatorContext = ValidatorContext(config, cacheView.height(), m_timeSupplier(), resolverContext, readOnlyCache);
+				return m_pConditionalStatefulValidator->validate(notification, validatorContext);
+			}
+
 		private:
 			const cache::CatapultCache& m_cache;
 			TimeSupplier m_timeSupplier;
 			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 			std::unique_ptr<const stateless::NotificationValidator> m_pStatelessValidator;
 			std::unique_ptr<const stateful::NotificationValidator> m_pStatefulValidator;
+			std::unique_ptr<const stateful::NotificationValidator> m_pConditionalStatefulValidator;
 			std::function<model::ResolverContext (const cache::ReadOnlyCatapultCache&)> m_resolverContextFactory;
 			std::string m_name;
 		};
@@ -98,5 +138,15 @@ namespace catapult { namespace chain {
 			const plugins::PluginManager& pluginManager,
 			const ValidationResultPredicate& isSuppressedFailure) {
 		return std::make_unique<JointValidator>(cache, timeSupplier, pluginManager, isSuppressedFailure);
+	}
+
+	std::unique_ptr<const stateless::NotificationValidator> CreateJointValidator(
+			const cache::CatapultCache& cache,
+			const TimeSupplier& timeSupplier,
+			const plugins::PluginManager& pluginManager,
+			const ValidationResultPredicate& isSuppressedFailure,
+			const ValidatorEnabledPredicate& shouldEnable,
+			bool enableStateful) {
+		return std::make_unique<JointValidator>(cache, timeSupplier, pluginManager, isSuppressedFailure, shouldEnable, enableStateful);
 	}
 }}

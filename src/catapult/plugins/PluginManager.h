@@ -35,6 +35,7 @@
 #include "catapult/validators/ValidatorTypes.h"
 #include "catapult/plugins.h"
 #include "catapult/types.h"
+#include <bitset>
 #include "PluginUtils.h"
 
 namespace catapult { namespace plugins {
@@ -51,6 +52,7 @@ namespace catapult { namespace plugins {
 		utils::FileSize MaxCacheDatabaseWriteBatchSize;
 	};
 
+
 	/// A manager for registering plugins.
 	class PluginManager {
 	private:
@@ -58,6 +60,7 @@ namespace catapult { namespace plugins {
 		using CounterHook = consumer<std::vector<utils::DiagnosticCounter>&, const cache::CatapultCache&>;
 		using StatelessValidatorHook = consumer<validators::stateless::DemuxValidatorBuilder&>;
 		using StatefulValidatorHook = consumer<validators::stateful::DemuxValidatorBuilder&>;
+		using ConditionalStatefulValidatorHook = std::pair<validators::ValidatorRegistrationMetadata, consumer<validators::stateful::DemuxValidatorBuilder&>>;
 		using ObserverHook = consumer<observers::DemuxObserverBuilder&>;
 
 		using StatelessValidatorPointer = std::unique_ptr<const validators::stateless::AggregateNotificationValidator>;
@@ -182,6 +185,14 @@ namespace catapult { namespace plugins {
 		/// Adds a stateful validator \a hook.
 		void addStatefulValidatorHook(const StatefulValidatorHook& hook);
 
+		/// Adds a stateful validator \a hook.
+		void addConditionalStatefulValidatorHook(validators::ValidatorRegistrationMetadata&& metadata, const StatefulValidatorHook& hook);
+
+		/// Creates a conditional stateless validator that ignores suppressed failures according to \a isSuppressedFailure and ignores hooks that don't respect \a shouldEnable.
+		StatefulValidatorPointer createConditionalStatefulValidator(const validators::ValidatorEnabledPredicate& shouldEnable, const validators::ValidationResultPredicate& isSuppressedFailure) const;
+
+		/// Creates a conditional stateless validator that ignores hooks that don't respect \a shouldEnable.
+		StatefulValidatorPointer createConditionalStatefulValidator(const validators::ValidatorEnabledPredicate& shouldEnable) const;
 		/// Creates a stateless validator that ignores suppressed failures according to \a isSuppressedFailure.
 		StatelessValidatorPointer createStatelessValidator(const validators::ValidationResultPredicate& isSuppressedFailure) const;
 
@@ -261,6 +272,7 @@ namespace catapult { namespace plugins {
 		std::vector<CounterHook> m_diagnosticCounterHooks;
 		std::vector<StatelessValidatorHook> m_statelessValidatorHooks;
 		std::vector<StatefulValidatorHook> m_statefulValidatorHooks;
+		std::vector<ConditionalStatefulValidatorHook> m_conditionalStatefulValidatorHooks;
 		std::vector<ObserverHook> m_observerHooks;
 		std::vector<ObserverHook> m_transientObserverHooks;
 

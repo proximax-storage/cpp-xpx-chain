@@ -28,6 +28,7 @@
 #include "catapult/plugins/PluginUtils.h"
 #include <memory>
 #include <vector>
+#include <bitset>
 
 namespace catapult { namespace validators {
 
@@ -42,6 +43,24 @@ namespace catapult { namespace validators {
 	/// Validation result predicate.
 	using ValidationResultPredicate = predicate<ValidationResult>;
 
+
+
+	enum class ValidatorRegistrationFlags {
+		EnableOnPartialValidation = 0u,
+		ValidatorRegistrationType_MAX
+	};
+	constexpr unsigned long ValidatorRegistrationFlags_SIZE = static_cast<unsigned long>(ValidatorRegistrationFlags::ValidatorRegistrationType_MAX);
+	struct ValidatorRegistrationMetadata {
+	public:
+		ValidatorRegistrationMetadata(std::bitset<ValidatorRegistrationFlags_SIZE>&& data) :
+			Flags(std::move(data))
+		{
+		}
+	public:
+		std::bitset<ValidatorRegistrationFlags_SIZE> Flags;
+	};
+
+	using ValidatorEnabledPredicate = predicate<ValidatorRegistrationMetadata>;
 	/// A vector of validators.
 	template<typename... TArgs>
 	using ValidatorVectorT = std::vector<std::unique_ptr<const EntityValidatorT<TArgs...>>>;

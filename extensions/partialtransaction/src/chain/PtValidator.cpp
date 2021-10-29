@@ -36,6 +36,10 @@ namespace catapult { namespace chain {
 			return Failure_Aggregate_Missing_Cosigners == result;
 		}
 
+		bool ShouldHookBeIntegrated(validators::ValidatorRegistrationMetadata metadata) {
+			return metadata.Flags[static_cast<unsigned long>(validators::ValidatorRegistrationFlags::EnableOnPartialValidation)];
+		}
+
 		constexpr CosignersValidationResult MapToCosignersValidationResult(ValidationResult result) {
 			if (IsValidationResultSuccess(result))
 				return CosignersValidationResult::Success;
@@ -57,8 +61,8 @@ namespace catapult { namespace chain {
 					: m_transactionValidator(
 							CreateJointValidator(cache, timeSupplier, pluginManager, IsMissingCosignersResult),
 							pluginManager.createNotificationPublisher(model::PublicationMode::Basic))
-					, m_statelessTransactionValidator(
-							pluginManager.createStatelessValidator(),
+					, m_customTransactionValidator(
+							CreateJointValidator(cache, timeSupplier, pluginManager, IsMissingCosignersResult, ShouldHookBeIntegrated, false),
 							pluginManager.createNotificationPublisher(model::PublicationMode::Custom))
 					, m_pCosignersValidator(CreateJointValidator(cache, timeSupplier, pluginManager, [](auto) { return false; }))
 			{}
@@ -72,7 +76,7 @@ namespace catapult { namespace chain {
 				auto result = m_transactionValidator.validate(weakEntityInfo);
 				if (IsValidationResultSuccess(result)) {
 					// - check custom stateless validators
-					result = m_statelessTransactionValidator.validate(weakEntityInfo);
+					result = m_customTransactionValidator.validate(weakEntityInfo);
 					if (IsValidationResultSuccess(result))
 						return { result, true };
 				}
@@ -89,7 +93,7 @@ namespace catapult { namespace chain {
 
 		private:
 			NotificationValidatorAdapter m_transactionValidator;
-			NotificationValidatorAdapter m_statelessTransactionValidator;
+			NotificationValidatorAdapter m_customTransactionValidator;
 			AggregateCosignersNotificationPublisher m_aggregatePublisher;
 			std::unique_ptr<const stateless::NotificationValidator> m_pCosignersValidator;
 		};

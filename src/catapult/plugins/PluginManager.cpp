@@ -114,6 +114,19 @@ namespace catapult { namespace plugins {
 			ApplyAll(builder, hooks);
 			return builder.build(std::forward<TArgs>(args)...);
 		}
+
+		template<typename TBuilder, typename THooks, typename... TArgs>
+		static void ApplyAllCond(TBuilder& builder, const THooks& hooks, const validators::ValidatorEnabledPredicate& enableIf, TArgs&&... args) {
+			for (const auto& hook : hooks)
+				if(enableIf(hook.first)) hook.second(builder, std::forward<TArgs>(args)...);
+		}
+
+		template<typename TBuilder, typename THooks, typename... TArgs>
+		static auto BuildCond(const THooks& hooks, const validators::ValidatorEnabledPredicate& enableIf, TArgs&&... args) {
+			TBuilder builder;
+			ApplyAllCond(builder, hooks, enableIf);
+			return builder.build(std::forward<TArgs>(args)...);
+		}
 	}
 
 	// region handlers
@@ -158,6 +171,10 @@ namespace catapult { namespace plugins {
 		m_statefulValidatorHooks.push_back(hook);
 	}
 
+	void PluginManager::addConditionalStatefulValidatorHook(validators::ValidatorRegistrationMetadata&& metadata, const StatefulValidatorHook& hook) {
+		m_conditionalStatefulValidatorHooks.push_back(std::make_pair(std::move(metadata), hook));
+	}
+
 	PluginManager::StatelessValidatorPointer PluginManager::createStatelessValidator(
 			const validators::ValidationResultPredicate& isSuppressedFailure) const {
 		return Build<validators::stateless::DemuxValidatorBuilder>(m_statelessValidatorHooks, isSuppressedFailure);
@@ -172,8 +189,18 @@ namespace catapult { namespace plugins {
 		return Build<validators::stateful::DemuxValidatorBuilder>(m_statefulValidatorHooks, isSuppressedFailure);
 	}
 
+	PluginManager::StatefulValidatorPointer PluginManager::createConditionalStatefulValidator(
+			const validators::ValidatorEnabledPredicate& shouldEnable,
+			const validators::ValidationResultPredicate& isSuppressedFailure) const {
+		return BuildCond<validators::stateful::DemuxValidatorBuilder>(m_conditionalStatefulValidatorHooks, shouldEnable, isSuppressedFailure);
+	}
+
 	PluginManager::StatefulValidatorPointer PluginManager::createStatefulValidator() const {
 		return createStatefulValidator([](auto) { return false; });
+	}
+
+	PluginManager::StatefulValidatorPointer PluginManager::createConditionalStatefulValidator(const validators::ValidatorEnabledPredicate& shouldEnable) const {
+		return createConditionalStatefulValidator([](auto) { return false; });
 	}
 
 	// endregion
