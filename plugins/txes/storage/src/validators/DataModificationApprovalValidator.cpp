@@ -24,8 +24,8 @@ namespace catapult { namespace validators {
 			return Failure_Storage_No_Active_Data_Modifications;
 
 		// Check if there are any confirmed used sizes modifications
-	  	const auto& confirmedUsedSizes = pDriveEntry->confirmedUsedSizes();
-		if (confirmedUsedSizes.empty())
+	  	// TODO: Double-check
+		if (pDriveEntry->replicatorInfos().empty())
 			return Failure_Storage_No_Active_Data_Modifications;
 
 	  	// Check if respective data modification is the first (oldest) element in activeDataModifications

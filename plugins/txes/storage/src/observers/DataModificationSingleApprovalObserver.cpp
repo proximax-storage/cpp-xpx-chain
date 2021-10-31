@@ -25,6 +25,6 @@ namespace catapult { namespace observers {
 	  	auto driveIter = driveCache.find(notification.DriveKey);
 	  	auto& driveEntry = driveIter.get();
 
-		driveEntry.confirmedUsedSizes().insert({notification.PublicKey, notification.UsedDriveSize});
+		driveEntry.replicatorInfos().at(notification.PublicKey).UsedSize = notification.UsedDriveSize;
 	});
 }}

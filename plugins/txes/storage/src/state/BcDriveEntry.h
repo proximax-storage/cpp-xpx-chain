@@ -47,10 +47,17 @@ namespace catapult { namespace state {
 		DataModificationState State;
 	};
 
+	struct ReplicatorInfo {
+		/// Last used drive size approved by the replicator.
+		uint64_t UsedSize;
+
+		/// Total size of data which this replicator has uploaded to other replicators of this drive.
+		uint64_t CumulativeUploadSize;
+	};
+
 	using ActiveDataModifications = std::vector<ActiveDataModification>;
 	using CompletedDataModifications = std::vector<CompletedDataModification>;
-	/// The map where key is replicator public key and value is last used drive size approved by the replicator.
-	using UsedSizeMap = std::map<Key, u_int64_t>;
+	using ReplicatorsMap = std::map<Key, ReplicatorInfo>;
 
 	// Mixin for storing drive details.
 	class DriveMixin {
@@ -143,16 +150,6 @@ namespace catapult { namespace state {
 			return m_completedDataModifications;
 		}
 
-		/// Gets map with key replicator public key and value used drive size.
-		const UsedSizeMap& confirmedUsedSizes() const {
-			return m_usedSizeMap;
-		}
-
-		/// Gets infos of drives assigned to the replicator.
-		UsedSizeMap& confirmedUsedSizes() {
-			return m_usedSizeMap;
-		}
-
 		/// Gets replicators.
 		const utils::KeySet& replicators() const {
 			return m_replicators;
@@ -161,6 +158,16 @@ namespace catapult { namespace state {
 		/// Gets replicators.
 		utils::KeySet& replicators() {
 			return m_replicators;
+		}
+
+		/// Gets infos of replicators assigned to the drive.
+		const ReplicatorsMap& replicatorInfos() const {
+			return m_replicatorInfos;
+		}
+
+		/// Gets infos of replicators assigned to the drive.
+		ReplicatorsMap& replicatorInfos() {
+			return m_replicatorInfos;
 		}
 
 	private:
@@ -172,8 +179,8 @@ namespace catapult { namespace state {
 		uint16_t m_replicatorCount;
 		ActiveDataModifications m_activeDataModifications;
 		CompletedDataModifications m_completedDataModifications;
-		UsedSizeMap m_usedSizeMap;
-		utils::KeySet m_replicators;
+		utils::KeySet m_replicators;	// TODO: Remove, use ReplicatorsMap instead
+		ReplicatorsMap m_replicatorInfos;
 	};
 
 	// Drive entry.

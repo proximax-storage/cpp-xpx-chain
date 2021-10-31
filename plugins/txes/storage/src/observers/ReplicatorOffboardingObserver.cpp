@@ -50,8 +50,8 @@ namespace catapult { namespace observers {
         for(const auto& i : replicatorEntry.drives()){
             auto driveIter = driveCache.find(i.first);
             const auto& drive = driveIter.get();   
-			for(const auto& j : drive.confirmedUsedSizes()){
-				usedDriveSizeOnReplicator += j.second;
+			for(const auto& j : drive.replicatorInfos()){
+				usedDriveSizeOnReplicator += j.second.UsedSize;
 			} 
         }
 

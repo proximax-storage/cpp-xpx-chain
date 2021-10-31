@@ -44,6 +44,20 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			array << bson_stream::close_array;
 		}
+
+		void StreamReplicatorInfos(bson_stream::document& builder, const state::ReplicatorsMap& replicatorInfos) {
+			auto array = builder << "replicatorInfos" << bson_stream::open_array;
+			for (const auto& infoPair : replicatorInfos) {
+				bson_stream::document infoBuilder;
+				infoBuilder
+						<< "replicator" << ToBinary(infoPair.first)
+						<< "usedSize" << static_cast<int64_t>(infoPair.second.UsedSize)
+						<< "cumulativeUploadSize" << static_cast<int64_t>(infoPair.second.CumulativeUploadSize);
+				array << infoBuilder;
+			}
+
+			array << bson_stream::close_array;
+		}
 	}
 
 	bsoncxx::document::value ToDbModel(const state::BcDriveEntry& entry, const Address& accountAddress) {
@@ -60,6 +74,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
 		StreamCompletedDataModifications(builder, entry.completedDataModifications());
+		StreamReplicatorInfos(builder, entry.replicatorInfos());
 
 		return doc
 				<< bson_stream::close_document
@@ -103,6 +118,21 @@ namespace catapult { namespace mongo { namespace plugins {
 				completedDataModifications.emplace_back(state::CompletedDataModification{ state::ActiveDataModification{ id, owner, downloadDataCdi, uploadSize }, state });
 			}
 		}
+
+		void ReadReplicatorInfos(state::ReplicatorsMap& replicatorInfos, const bsoncxx::array::view& dbReplicatorInfos) {
+			for (const auto& dbInfo : dbReplicatorInfos) {
+				auto doc = dbInfo.get_document().view();
+
+				Key replicator;
+				DbBinaryToModelArray(replicator, doc["replicator"].get_binary());
+
+				state::ReplicatorInfo info;
+				info.UsedSize = doc["usedSize"].get_int64();
+				info.CumulativeUploadSize = doc["cumulativeUploadSize"].get_int64();
+
+				replicatorInfos.emplace(replicator, info);
+			}
+		}
 	}
 
 	state::BcDriveEntry ToDriveEntry(const bsoncxx::document::view& document) {
@@ -128,6 +158,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);
 		ReadCompletedDataModifications(entry.completedDataModifications(), dbDriveEntry["completedDataModifications"].get_array().value);
+		ReadReplicatorInfos(entry.replicatorInfos(), dbDriveEntry["replicatorInfos"].get_array().value);
 
 		return entry;
 	}

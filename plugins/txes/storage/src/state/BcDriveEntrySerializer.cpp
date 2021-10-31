@@ -33,6 +33,15 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void SaveReplicatorInfos(io::OutputStream& output, const ReplicatorsMap& replicatorInfos) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(replicatorInfos.size()));
+			for (const auto& infoPair : replicatorInfos) {
+				io::Write(output, infoPair.first);
+				io::Write64(output, infoPair.second.UsedSize);
+				io::Write64(output, infoPair.second.CumulativeUploadSize);
+			}
+		}
+
 		void LoadActiveDataModifications(io::InputStream& input, ActiveDataModifications& activeDataModifications) {
 			auto count = io::Read16(input);
 			while (count--) {
@@ -61,6 +70,20 @@ namespace catapult { namespace state {
 				completedDataModifications.emplace_back(ActiveDataModification{ id, owner, downloadDataCdi, uploadSize }, state);
 			}
 		}
+
+		void LoadReplicatorInfos(io::InputStream& input, ReplicatorsMap& replicatorInfos) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Key replicator;
+				io::Read(input, replicator);
+
+				ReplicatorInfo info;
+				info.UsedSize = io::Read64(input);
+				info.CumulativeUploadSize = io::Read64(input);
+
+				replicatorInfos.emplace(replicator, info);
+			}
+		}
 	}
 
 	void BcDriveEntrySerializer::Save(const BcDriveEntry& driveEntry, io::OutputStream& output) {
@@ -77,6 +100,7 @@ namespace catapult { namespace state {
 
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
+		SaveReplicatorInfos(output, driveEntry.replicatorInfos());
 	}
 
 	BcDriveEntry BcDriveEntrySerializer::Load(io::InputStream& input) {
@@ -106,6 +130,7 @@ namespace catapult { namespace state {
 
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
+		LoadReplicatorInfos(input, entry.replicatorInfos());
 
 		return entry;
 	}
