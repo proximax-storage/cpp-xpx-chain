@@ -25,7 +25,14 @@ namespace catapult { namespace observers {
         auto& driveEntry = driveIter.get();
 
         // Pending verification
-        auto& pendingVerification = driveEntry.verifications().back();
+        auto pendingVerification = std::find_if(
+                driveEntry.verifications().begin(),
+                driveEntry.verifications().end(),
+                [&notification](const state::Verification& v) {
+                    return v.VerificationTrigger == notification.VerificationTrigger &&
+                           v.State == state::VerificationState::Pending;
+                }
+        );
 
         auto totalSplittingSoDeposit = 0;
 
@@ -49,7 +56,7 @@ namespace catapult { namespace observers {
             }
 
             // Check result` median
-            auto proverIt = pendingVerification.Results.find(notification.ProversPtr[i]);
+            auto proverIt = pendingVerification->Results.find(notification.ProversPtr[i]);
             if (result > notification.VerificationOpinionsCount / 2) {
                 proverIt->second = 1;
                 continue;
@@ -83,7 +90,7 @@ namespace catapult { namespace observers {
             driveState.Balances.credit(streamingMosaicId, Amount(deposit * 2), context.Height);
         }
 
-        pendingVerification.State = state::VerificationState::Finished;
+        pendingVerification->State = state::VerificationState::Finished;
 
         if (totalSplittingSoDeposit == 0)
             return;
