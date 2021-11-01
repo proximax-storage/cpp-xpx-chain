@@ -21,6 +21,14 @@ namespace catapult { namespace validators {
 
         constexpr auto Current_Height = Height(10);
 
+        auto CreateConfig() {
+        	test::MutableBlockchainConfiguration config;
+        	auto pluginConfig = config::StorageConfiguration::Uninitialized();
+        	pluginConfig.MaxModificationSize = utils::FileSize::FromMegabytes(30);
+        	config.Network.SetPluginConfiguration(pluginConfig);
+        	return (config.ToConst());
+        }
+
         void AssertValidationResult(
                 ValidationResult expectedResult,
                 const state::BcDriveEntry& driveEntry,
@@ -40,7 +48,7 @@ namespace catapult { namespace validators {
             
             // Act:
             auto result = test::ValidateNotification(*pValidator, notification, cache, 
-                config::BlockchainConfiguration::Uninitialized(), Current_Height);
+                CreateConfig(), Current_Height);
 
             // Assert:
             EXPECT_EQ(expectedResult, result);
@@ -65,6 +73,29 @@ namespace catapult { namespace validators {
 					std::string(folderNameBytes.begin(), folderNameBytes.end())
 				)
 			});
+    }
+
+    TEST(TEST_CLASS, FailureWhenUploadSizeExcessive) {
+    	// Arrange:
+    	Key driveKey = test::GenerateRandomByteArray<Key>();
+    	Key owner = test::GenerateRandomByteArray<Key>();
+    	uint64_t expectedUploadSize = 1e9;
+    	state::BcDriveEntry entry(driveKey);
+    	auto folderNameBytes = test::GenerateRandomVector(512);
+    	entry.activeDataModifications().emplace_back(state::ActiveDataModification(
+    			test::GenerateRandomByteArray<Hash256>(), owner, expectedUploadSize,
+    			std::string(folderNameBytes.begin(), folderNameBytes.end())
+    			));
+
+    	// Assert:
+    	AssertValidationResult(
+    			Failure_Storage_Upload_Size_Excessive,
+    			entry,
+    			driveKey,
+    			{
+    				{ test::GenerateRandomByteArray<Hash256>(), owner, expectedUploadSize,
+					  std::string(folderNameBytes.begin(), folderNameBytes.end())}
+    			});
     }
 
     TEST(TEST_CLASS, FailureWhenStreamAlreadyExists) {

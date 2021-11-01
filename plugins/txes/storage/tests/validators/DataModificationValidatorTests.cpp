@@ -21,6 +21,14 @@ namespace catapult { namespace validators {
 
         constexpr auto Current_Height = Height(10);
 
+        auto CreateConfig() {
+        	test::MutableBlockchainConfiguration config;
+        	auto pluginConfig = config::StorageConfiguration::Uninitialized();
+        	pluginConfig.MaxModificationSize = utils::FileSize::FromMegabytes(30);
+        	config.Network.SetPluginConfiguration(pluginConfig);
+        	return (config.ToConst());
+        }
+
         void AssertValidationResult(
                 ValidationResult expectedResult,
                 const state::BcDriveEntry& driveEntry,
@@ -39,11 +47,29 @@ namespace catapult { namespace validators {
             
             // Act:
             auto result = test::ValidateNotification(*pValidator, notification, cache, 
-                config::BlockchainConfiguration::Uninitialized(), Current_Height);
+                CreateConfig(), Current_Height);
 
             // Assert:
             EXPECT_EQ(expectedResult, result);
         }
+    }
+
+    TEST(TEST_CLASS, FailureWhenUploadSizeExcessive) {
+    	// Arrange:
+    	state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
+
+    	// Assert:
+    	AssertValidationResult(
+    			Failure_Storage_Upload_Size_Excessive,
+    			entry,
+    			test::GenerateRandomByteArray<Key>(),
+    			{
+    				state::ActiveDataModification(
+    						test::GenerateRandomByteArray<Hash256>(),
+    						test::GenerateRandomByteArray<Key>(),
+    						test::GenerateRandomByteArray<Hash256>(),
+    						1e9)
+    			});
     }
 
     TEST(TEST_CLASS, FailureWhenDriveNotFound) {

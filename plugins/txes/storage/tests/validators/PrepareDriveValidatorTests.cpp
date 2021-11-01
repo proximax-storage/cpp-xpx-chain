@@ -27,6 +27,7 @@ namespace catapult { namespace validators {
             test::MutableBlockchainConfiguration config;
             auto pluginConfig = config::StorageConfiguration::Uninitialized();
             pluginConfig.MinDriveSize = utils::FileSize::FromMegabytes(30);
+            pluginConfig.MinDriveSize = utils::FileSize::FromTerabytes(30);
             pluginConfig.MinReplicatorCount = 5;
             config.Network.SetPluginConfiguration(pluginConfig);
             return (config.ToConst());
@@ -77,6 +78,25 @@ namespace catapult { namespace validators {
             test::GenerateRandomByteArray<Key>(),
             Replicator_Key_Collector);
 	}
+
+	TEST(TEST_CLASS, FailureWhenDriveSizeExcessive) {
+    	// Arrange:
+    	auto driveKey = test::GenerateRandomByteArray<Key>();
+    	auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
+    	state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+    	driveEntry.setSize(1e9);
+    	state::ReplicatorEntry replicatorEntry(driveKey);
+    	Replicator_Key_Collector->addKey(replicatorEntry);
+    	replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin(), state::DriveInfo());
+
+    	// Assert:
+    	AssertValidationResult(
+    			Failure_Storage_Drive_Size_Excessive,
+    			driveEntry,
+    			replicatorEntry,
+    			test::GenerateRandomByteArray<Key>(),
+    			Replicator_Key_Collector);
+    }
 
     TEST(TEST_CLASS, FailureWhenReplicatorCountInsufficient) {  
         // Arrange:

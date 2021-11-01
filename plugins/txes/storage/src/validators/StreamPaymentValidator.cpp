@@ -12,6 +12,12 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(StreamPayment, [](const Notification& notification, const ValidatorContext& context) {
 	  	auto driveCache = context.Cache.sub<cache::BcDriveCache>();
+	  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+
+	  	// Check if stream size >= maxModificationSize
+	  	if (utils::FileSize::FromMegabytes(notification.AdditionalUploadSize) > pluginConfig.MaxModificationSize)
+	  		return Failure_Storage_Upload_Size_Excessive;
+
 	  	auto driveIter = driveCache.find(notification.DriveKey);
 		const auto& pDriveEntry = driveIter.tryGet();
 		if (!pDriveEntry)

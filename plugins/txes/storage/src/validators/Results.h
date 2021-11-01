@@ -124,6 +124,15 @@ namespace catapult { namespace validators {
 	/// Validation failed because declared stream actual size exceeds prepaid expected size
 	DEFINE_STORAGE_RESULT(Expected_Upload_Size_Exceeded, 41);
 
+	/// Desired drive size is greater than maximal.
+	DEFINE_STORAGE_RESULT(Drive_Size_Excessive, 42);
+
+	/// Desired modification size is greater than maximal.
+	DEFINE_STORAGE_RESULT(Upload_Size_Excessive, 43);
+
+	/// Desired download size is greater than maximal.
+	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 44);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif
