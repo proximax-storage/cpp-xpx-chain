@@ -22,6 +22,6 @@ namespace catapult { namespace observers {
 		completedDataModifications.emplace_back(*activeDataModifications.begin(), state::DataModificationState::Succeeded);
 		activeDataModifications.erase(activeDataModifications.begin());
 
-		driveEntry.replicatorInfos().at(notification.PublicKey).UsedSize = notification.UsedDriveSize;
+		driveEntry.setUsedSize(notification.UsedDriveSize);
 	});
 }}

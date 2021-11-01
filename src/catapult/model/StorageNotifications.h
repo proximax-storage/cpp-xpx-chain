@@ -63,6 +63,15 @@ namespace catapult { namespace model {
 	/// Defines a drive closure notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Drive_Closure_v1, 0x0012);
 
+	/// Defines a data modification approval download work notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Approval_Download_Work_v1, 0x0013);
+
+	/// Defines a data modification approval upload work notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Approval_Upload_Work_v1, 0x0014);
+
+	/// Defines a data modification approval refund notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Approval_Refund_v1, 0x0015);
+
 	struct DownloadWork : public UnresolvedAmountData {
 	public:
 		DownloadWork(const Key& driveKey, const Key& replicator)
@@ -273,24 +282,36 @@ namespace catapult { namespace model {
 
 	public:
 		explicit DataModificationApprovalNotification(
-				const Key& signer,
 				const Key& driveKey,
 				const Hash256& dataModificationId,
 				const Hash256& fileStructureCdi,
-				uint64_t fileStructureSize,
-				uint64_t usedDriveSize)
+				const uint64_t fileStructureSize,
+				const uint64_t metaFilesSize,
+				const uint64_t usedDriveSize,
+				const uint8_t opinionCount,
+				const uint8_t judgingKeysCount,
+				const uint8_t overlappingKeysCount,
+				const uint8_t judgedKeysCount,
+				const Key* publicKeysPtr,
+				const uint8_t* opinionIndicesPtr,
+				const uint8_t* presentOpinionsPtr)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
-				, PublicKey(signer)
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
 				, FileStructureCdi(fileStructureCdi)
 				, FileStructureSize(fileStructureSize)
+				, MetaFilesSize(metaFilesSize)
 				, UsedDriveSize(usedDriveSize)
+				, OpinionCount(opinionCount)
+				, JudgingKeysCount(judgingKeysCount)
+				, OverlappingKeysCount(overlappingKeysCount)
+				, JudgedKeysCount(judgedKeysCount)
+				, PublicKeysPtr(publicKeysPtr)
+				, OpinionIndicesPtr(opinionIndicesPtr)
+				, PresentOpinionsPtr(presentOpinionsPtr)
 		{}
 
 	public:
-		/// Key of the signer.
-		Key PublicKey;
 
 		/// Key of drive.
 		Key DriveKey;
@@ -303,6 +324,168 @@ namespace catapult { namespace model {
 
 		/// Size of the File Structure.
 		uint64_t FileStructureSize;
+
+		/// The size of metafiles including File Structure.
+		uint64_t MetaFilesSize;
+
+		/// Total used disk space of the drive.
+		uint64_t UsedDriveSize;
+
+		/// Number of unique opinions.
+		uint8_t OpinionCount;
+
+		/// Number of replicators that provided their opinions, but on which no opinions were provided.
+		uint8_t JudgingKeysCount;
+
+		/// Number of replicators that both provided their opinions, and on which at least one opinion was provided.
+		uint8_t OverlappingKeysCount;
+
+		/// Number of replicators that didn't provide their opinions, but on which at least one opinion was provided.
+		uint8_t JudgedKeysCount;
+
+		/// Replicators' public keys.
+		const Key* PublicKeysPtr;
+
+		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
+		const uint8_t* OpinionIndicesPtr;
+
+		/// Two-dimensional array of opinion element presence.
+		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
+		const uint8_t* PresentOpinionsPtr;
+	};
+
+	/// Notification of a data modification approval download work.
+	template<VersionType version>
+	struct DataModificationApprovalDownloadWorkNotification;
+
+	template<>
+	struct DataModificationApprovalDownloadWorkNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Data_Modification_Approval_Download_Work_v1_Notification;
+
+	public:
+		explicit DataModificationApprovalDownloadWorkNotification(
+				const Key& driveKey,
+				const Hash256& dataModificationId,
+				const uint64_t usedDriveSize,
+				const uint8_t publicKeysCount,
+				const Key* publicKeysPtr)
+				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				, DriveKey(driveKey)
+				, DataModificationId(dataModificationId)
+				, UsedDriveSize(usedDriveSize)
+				, PublicKeysCount(publicKeysCount)
+				, PublicKeysPtr(publicKeysPtr)
+		{}
+
+	public:
+		/// Key of drive.
+		Key DriveKey;
+
+		/// Identifier of the transaction that initiated the modification.
+		Hash256 DataModificationId;
+
+		/// Total used disk space of the drive.
+		uint64_t UsedDriveSize;
+
+		/// Number of replicators' public keys.
+		uint8_t PublicKeysCount;
+
+		/// Replicators' public keys.
+		const Key* PublicKeysPtr;
+	};
+
+	/// Notification of a data modification approval upload work.
+	template<VersionType version>
+	struct DataModificationApprovalUploadWorkNotification;
+
+	template<>
+	struct DataModificationApprovalUploadWorkNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Data_Modification_Approval_Upload_Work_v1_Notification;
+
+	public:
+		explicit DataModificationApprovalUploadWorkNotification(
+				const Key& driveKey,
+				const uint8_t opinionCount,
+				const uint8_t judgingKeysCount,
+				const uint8_t overlappingKeysCount,
+				const uint8_t judgedKeysCount,
+				const Key* publicKeysPtr,
+				const uint8_t* opinionIndicesPtr,
+				const uint8_t* presentOpinionsPtr,
+				const uint64_t* opinionsPtr)
+				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				, DriveKey(driveKey)
+				, OpinionCount(opinionCount)
+				, JudgingKeysCount(judgingKeysCount)
+				, OverlappingKeysCount(overlappingKeysCount)
+				, JudgedKeysCount(judgedKeysCount)
+				, PublicKeysPtr(publicKeysPtr)
+				, OpinionIndicesPtr(opinionIndicesPtr)
+				, PresentOpinionsPtr(presentOpinionsPtr)
+				, OpinionsPtr(opinionsPtr)
+		{}
+
+	public:
+		/// Key of drive.
+		Key DriveKey;
+
+		/// Number of unique opinions.
+		uint8_t OpinionCount;
+
+		/// Number of replicators that provided their opinions, but on which no opinions were provided.
+		uint8_t JudgingKeysCount;
+
+		/// Number of replicators that both provided their opinions, and on which at least one opinion was provided.
+		uint8_t OverlappingKeysCount;
+
+		/// Number of replicators that didn't provide their opinions, but on which at least one opinion was provided.
+		uint8_t JudgedKeysCount;
+
+		/// Replicators' public keys.
+		const Key* PublicKeysPtr;
+
+		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
+		const uint8_t* OpinionIndicesPtr;
+
+		/// Two-dimensional array of opinion element presence.
+		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
+		const uint8_t* PresentOpinionsPtr;
+
+		/// Jagged array of opinion elements.
+		const uint64_t* OpinionsPtr;
+	};
+
+	/// Notification of a data modification approval refund.
+	template<VersionType version>
+	struct DataModificationApprovalRefundNotification;
+
+	template<>
+	struct DataModificationApprovalRefundNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Data_Modification_Approval_Refund_v1_Notification;
+
+	public:
+		explicit DataModificationApprovalRefundNotification(
+				const Key& driveKey,
+				const Hash256& dataModificationId,
+				const uint64_t usedDriveSize)
+				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				, DriveKey(driveKey)
+				, DataModificationId(dataModificationId)
+				, UsedDriveSize(usedDriveSize)
+		{}
+
+	public:
+		/// Key of drive.
+		Key DriveKey;
+
+		/// Identifier of the transaction that initiated the modification.
+		Hash256 DataModificationId;
 
 		/// Total used disk space of the drive.
 		uint64_t UsedDriveSize;

@@ -7,6 +7,7 @@
 #include "DataModificationApprovalTransactionPlugin.h"
 #include "catapult/model/StorageNotifications.h"
 #include "src/model/DataModificationApprovalTransaction.h"
+#include "src/utils/StorageUtils.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 
@@ -20,14 +21,85 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 			case 1: {
 				sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
+
+				const auto commonDataSize = sizeof(transaction.DriveKey)
+											+ sizeof(transaction.DataModificationId)
+											+ sizeof(transaction.FileStructureCdi)
+											+ sizeof(transaction.FileStructureSize)
+											+ sizeof(transaction.MetaFilesSize)
+											+ sizeof(transaction.UsedDriveSize);
+				auto* const commonDataPtr = new uint8_t[commonDataSize];
+				auto* pCommonData = commonDataPtr;
+				utils::WriteToByteArray(pCommonData, transaction.DriveKey);
+				utils::WriteToByteArray(pCommonData, transaction.DataModificationId);
+				utils::WriteToByteArray(pCommonData, transaction.FileStructureCdi);
+				utils::WriteToByteArray(pCommonData, transaction.FileStructureSize);
+				utils::WriteToByteArray(pCommonData, transaction.MetaFilesSize);
+				utils::WriteToByteArray(pCommonData, transaction.UsedDriveSize);
+
+				sub.notify(OpinionNotification<1>(
+						commonDataSize,
+						transaction.OpinionCount,
+						transaction.JudgingKeysCount,
+						transaction.OverlappingKeysCount,
+						transaction.JudgedKeysCount,
+						commonDataPtr,
+						transaction.PublicKeysPtr(),
+						transaction.OpinionIndicesPtr(),
+						transaction.BlsSignaturesPtr(),
+						transaction.PresentOpinionsPtr(),
+						transaction.OpinionsPtr()
+				));
+
+				// Must be applied before UsedSize of the drive is changed,
+				// i.e. before the DataModificationApproval notification.
+				sub.notify(DataModificationApprovalRefundNotification<1>(
+						transaction.DriveKey,
+						transaction.DataModificationId,
+						transaction.UsedDriveSize
+				));
+
 				sub.notify(DataModificationApprovalNotification<1>(
-						transaction.Signer,
 						transaction.DriveKey,
 						transaction.DataModificationId,
 						transaction.FileStructureCdi,
 						transaction.FileStructureSize,
-						transaction.UsedDriveSize
+						transaction.MetaFilesSize,
+						transaction.UsedDriveSize,
+						transaction.OpinionCount,
+						transaction.JudgingKeysCount,
+						transaction.OverlappingKeysCount,
+						transaction.JudgedKeysCount,
+						transaction.PublicKeysPtr(),
+						transaction.OpinionIndicesPtr(),
+						transaction.PresentOpinionsPtr()
 				));
+
+				// Makes mosaic transfers;
+				// Updates cosigner replicators' drive infos (updates LastApprovedDataModificationId, resets
+				// InitialDownloadWork) and drive's replicator infos (updates UsedSize).
+				sub.notify(DataModificationApprovalDownloadWorkNotification<1>(
+						transaction.DriveKey,
+						transaction.DataModificationId,
+						transaction.UsedDriveSize,
+						transaction.JudgingKeysCount + transaction.OverlappingKeysCount,
+						transaction.PublicKeysPtr()
+				));
+
+				// Makes mosaic transfers;
+				// Updates drive's replicator infos (updates CumulativeUploadPayments).
+				sub.notify(DataModificationApprovalUploadWorkNotification<1>(
+						transaction.DriveKey,
+						transaction.OpinionCount,
+						transaction.JudgingKeysCount,
+						transaction.OverlappingKeysCount,
+						transaction.JudgedKeysCount,
+						transaction.PublicKeysPtr(),
+						transaction.OpinionIndicesPtr(),
+						transaction.PresentOpinionsPtr(),
+						transaction.OpinionsPtr()
+				));
+
 				break;
 			}
 

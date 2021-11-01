@@ -28,6 +28,15 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by data modification approval notifications.
 	DECLARE_OBSERVER(DataModificationApproval, model::DataModificationApprovalNotification<1>)();
 
+	/// Observes changes triggered by data modification approval download work notifications.
+	DECLARE_OBSERVER(DataModificationApprovalDownloadWork, model::DataModificationApprovalDownloadWorkNotification<1>)();
+
+	/// Observes changes triggered by data modification approval upload work notifications.
+	DECLARE_OBSERVER(DataModificationApprovalUploadWork, model::DataModificationApprovalUploadWorkNotification<1>)();
+
+	/// Observes changes triggered by data modification approval refund notifications.
+	DECLARE_OBSERVER(DataModificationRefundApproval, model::DataModificationApprovalRefundNotification<1>)();
+
 	/// Observes changes triggered by data modification cancel notifications.
 	DECLARE_OBSERVER(DataModificationCancel, model::DataModificationCancelNotification<1>)();
 

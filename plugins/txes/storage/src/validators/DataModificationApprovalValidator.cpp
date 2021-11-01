@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <boost/dynamic_bitset.hpp>
 #include "Validators.h"
 #include "src/cache/BcDriveCache.h"
 
@@ -31,6 +32,28 @@ namespace catapult { namespace validators {
 	  	// Check if respective data modification is the first (oldest) element in activeDataModifications
 	  	if (activeDataModifications.begin()->Id != notification.DataModificationId)
 		  	return Failure_Storage_Invalid_Data_Modification_Id;
+
+		// Check if all public keys are either Replicator keys of Drive Owner key
+		const auto& replicators = pDriveEntry->replicators();
+	  	const auto& driveOwner = pDriveEntry->owner();
+		const auto totalKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount + notification.JudgedKeysCount;
+		auto pKey = notification.PublicKeysPtr;
+		for (auto i = 0; i < totalKeysCount; ++i, ++pKey)
+			if (!replicators.count(*pKey) && *pKey != driveOwner)
+				return Failure_Storage_Opinion_Invalid_Key;
+
+		// Check if none of the replicators has provided an opinion on itself
+	  	std::vector<std::vector<uint8_t>> publicKeysIndices(notification.OpinionCount);	// Nth vector in publicKeysIndices contains indices of all overlapping public keys of replicators that provided Nth opinion.
+	  	const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
+		for (auto i = notification.JudgingKeysCount; i < totalJudgingKeysCount; ++i)
+		  	publicKeysIndices.at(notification.OpinionIndicesPtr[i]).push_back(i - notification.JudgingKeysCount);	// Opinion indices should be already validated in OpinionValidator, no need to double check them
+	  	const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
+	  	const auto presentOpinionByteCount = (notification.OpinionCount * totalJudgedKeysCount + 7) / 8;
+	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
+	  	for (auto i = 0; i < notification.OpinionCount; ++i)
+		  	for (const auto index : publicKeysIndices.at(i))
+			  	if (presentOpinions[i*totalJudgedKeysCount + index])
+					return Failure_Storage_Opinion_Provided_On_Self;
 
 		return ValidationResult::Success;
 	});

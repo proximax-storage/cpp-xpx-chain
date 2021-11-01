@@ -36,6 +36,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to drive data modification approval notifications and validates that:
 	/// - respective data modification is present in activeDataModifications
 	/// - respective data modification is the first (oldest) element in activeDataModifications
+	/// - all public keys are either Replicator keys of Drive Owner key
+	/// - none of the replicators has provided an opinion on itself
 	DECLARE_STATEFUL_VALIDATOR(DataModificationApproval, model::DataModificationApprovalNotification<1>)();
 
 	/// A validator implementation that applies to drive data modification cancel notifications and validates that:

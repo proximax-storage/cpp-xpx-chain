@@ -119,6 +119,9 @@ namespace catapult { namespace validators {
 	/// Opinion is provided, but its index does not appear in the list of opinion indices.
 	DEFINE_STORAGE_RESULT(Unused_Opinion, 35);
 
+	/// Replicator has provided an opinion on itself when he shouldn't have done this.
+	DEFINE_STORAGE_RESULT(Opinion_Provided_On_Self, 36);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif
