@@ -130,6 +130,21 @@ namespace catapult { namespace state {
 			return m_replicatorCount;
 		}
 
+		/// Sets the cumulative upload size made by the owner.
+		void setOwnerCumulativeUploadSize(uint64_t uploadSize) {
+			m_ownerCumulativeUploadSize = uploadSize;
+		}
+
+		/// Increases the cumulative upload size made by the owner by \a delta.
+		void increaseOwnerCumulativeUploadSize(uint64_t delta) {
+			m_ownerCumulativeUploadSize = m_ownerCumulativeUploadSize + delta;
+		}
+
+		/// Gets the cumulative upload size made by the owner.
+		const uint64_t& ownerCumulativeUploadSize() const {
+			return m_ownerCumulativeUploadSize;
+		}
+
 		/// Gets active data modifications.
 		const ActiveDataModifications& activeDataModifications() const {
 			return m_activeDataModifications;
@@ -177,6 +192,7 @@ namespace catapult { namespace state {
 		uint64_t m_usedSize;
 		uint64_t m_metaFilesSize;
 		uint16_t m_replicatorCount;
+		uint64_t m_ownerCumulativeUploadSize;
 		ActiveDataModifications m_activeDataModifications;
 		CompletedDataModifications m_completedDataModifications;
 		utils::KeySet m_replicators;	// TODO: Remove, use ReplicatorsMap instead

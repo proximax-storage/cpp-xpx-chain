@@ -97,6 +97,7 @@ namespace catapult { namespace state {
 		io::Write64(output, driveEntry.usedSize());
 		io::Write64(output, driveEntry.metaFilesSize());
 		io::Write16(output, driveEntry.replicatorCount());
+		io::Write64(output, driveEntry.ownerCumulativeUploadSize());
 
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
@@ -127,6 +128,7 @@ namespace catapult { namespace state {
 		entry.setUsedSize(io::Read64(input));
 		entry.setMetaFilesSize(io::Read64(input));
 		entry.setReplicatorCount(io::Read16(input));
+		entry.setOwnerCumulativeUploadSize(io::Read64(input));
 
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
