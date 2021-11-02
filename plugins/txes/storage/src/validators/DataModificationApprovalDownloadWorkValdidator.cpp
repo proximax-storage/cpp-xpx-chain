@@ -1,0 +1,59 @@
+/**
+*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#include "Validators.h"
+#include "src/cache/BcDriveCache.h"
+
+namespace catapult { namespace validators {
+
+	using Notification = model::DataModificationApprovalDownloadWorkNotification<1>;
+
+	DEFINE_STATEFUL_VALIDATOR(DataModificationApprovalDownloadWork, [](const Notification& notification, const ValidatorContext& context) {
+	  	const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+	  	const auto driveIter = driveCache.find(notification.DriveKey);
+	 	const auto& pDriveEntry = driveIter.tryGet();
+
+	  	// Check if respective drive exists
+	  	if (!pDriveEntry)
+		  	return Failure_Storage_Drive_Not_Found;
+
+	  	const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+	  	const auto senderStateIter = accountStateCache.find(notification.DriveKey);
+	  	const auto& pSenderState = senderStateIter.tryGet();
+
+	  	// Check if account state of the drive exists
+	  	if (!pSenderState)
+		  	return Failure_Storage_Sender_State_Not_Found;
+
+	  	const auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+	  	auto pKey = notification.PublicKeysPtr;
+		for (auto i = 0; i < notification.PublicKeysCount; ++i, ++pKey) {
+			// Check if judging replicator exists
+			const auto replicatorIter = replicatorCache.find(*pKey);
+			const auto& pReplicatorEntry = replicatorIter.tryGet();
+			if (!pReplicatorEntry)
+				return Failure_Storage_Replicator_Not_Found;
+
+			// Check if judging replicator's account state exists
+			const auto recipientStateIter = accountStateCache.find(*pKey);
+			const auto& pRecipientState = recipientStateIter.tryGet();
+			if (!pRecipientState)
+				return Failure_Storage_Recipient_State_Not_Found;
+
+			// Check if the replicator has respective drive info with given drive key
+			if (!pReplicatorEntry->drives().count(notification.DriveKey))
+				return Failure_Storage_Drive_Info_Not_Found;
+
+			// Check if the drive has respective replicator info with given replicator key
+			if (!pDriveEntry->replicatorInfos().count(*pKey))
+				return Failure_Storage_Replicator_Info_Not_Found;
+		}
+
+	  	// TODO: Check if there are enough mosaics for the transfer?
+
+		return ValidationResult::Success;
+	});
+}}

@@ -122,6 +122,12 @@ namespace catapult { namespace validators {
 	/// Replicator has provided an opinion on itself when he shouldn't have done this.
 	DEFINE_STORAGE_RESULT(Opinion_Provided_On_Self, 36);
 
+	/// There are no drive infos in the replicator entry with given drive key.
+	DEFINE_STORAGE_RESULT(Drive_Info_Not_Found, 37);
+
+	/// There are no replicator infos in the drive entry with given replicator key.
+	DEFINE_STORAGE_RESULT(Replicator_Info_Not_Found, 38);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

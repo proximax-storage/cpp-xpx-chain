@@ -56,7 +56,8 @@ namespace catapult { namespace plugins {
 				sub.notify(DataModificationApprovalRefundNotification<1>(
 						transaction.DriveKey,
 						transaction.DataModificationId,
-						transaction.UsedDriveSize
+						transaction.UsedDriveSize,
+						transaction.MetaFilesSize
 				));
 
 				sub.notify(DataModificationApprovalNotification<1>(
@@ -87,7 +88,7 @@ namespace catapult { namespace plugins {
 				));
 
 				// Makes mosaic transfers;
-				// Updates drive's replicator infos (updates CumulativeUploadPayments).
+				// Updates drive's replicator infos (updates CumulativeUploadPayments) and owner cumulative upload size.
 				sub.notify(DataModificationApprovalUploadWorkNotification<1>(
 						transaction.DriveKey,
 						transaction.OpinionCount,

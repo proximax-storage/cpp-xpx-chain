@@ -35,7 +35,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DataModificationApprovalUploadWork, model::DataModificationApprovalUploadWorkNotification<1>)();
 
 	/// Observes changes triggered by data modification approval refund notifications.
-	DECLARE_OBSERVER(DataModificationRefundApproval, model::DataModificationApprovalRefundNotification<1>)();
+	DECLARE_OBSERVER(DataModificationApprovalRefund, model::DataModificationApprovalRefundNotification<1>)();
 
 	/// Observes changes triggered by data modification cancel notifications.
 	DECLARE_OBSERVER(DataModificationCancel, model::DataModificationCancelNotification<1>)();

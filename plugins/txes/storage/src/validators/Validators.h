@@ -40,6 +40,23 @@ namespace catapult { namespace validators {
 	/// - none of the replicators has provided an opinion on itself
 	DECLARE_STATEFUL_VALIDATOR(DataModificationApproval, model::DataModificationApprovalNotification<1>)();
 
+	/// A validator implementation that applies to drive data modification approval download work notifications and validates that:
+	/// - respective drive and replicators exist
+	/// - drive's and replicators' account states exist
+	/// - all respective drive infos and replicator infos exist
+	DECLARE_STATEFUL_VALIDATOR(DataModificationApprovalDownloadWork, model::DataModificationApprovalDownloadWorkNotification<1>)();
+
+	/// A validator implementation that applies to drive data modification approval upload work notifications and validates that:
+	/// - respective drive exists
+	/// - drive's and uploaders' account states exist
+	/// - all replicators' keys are present in drive's replicatorInfos
+	DECLARE_STATEFUL_VALIDATOR(DataModificationApprovalUploadWork, model::DataModificationApprovalUploadWorkNotification<1>)();
+
+	/// A validator implementation that applies to drive data modification approval refund notifications and validates that:
+	/// - respective drive exists
+	/// - drive's and drive owner's account states exist
+	DECLARE_STATEFUL_VALIDATOR(DataModificationApprovalRefund, model::DataModificationApprovalRefundNotification<1>)();
+
 	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
 	/// -
 	DECLARE_STATEFUL_VALIDATOR(DataModificationCancel, model::DataModificationCancelNotification<1>)();

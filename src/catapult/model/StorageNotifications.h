@@ -312,7 +312,6 @@ namespace catapult { namespace model {
 		{}
 
 	public:
-
 		/// Key of drive.
 		Key DriveKey;
 
@@ -473,10 +472,12 @@ namespace catapult { namespace model {
 		explicit DataModificationApprovalRefundNotification(
 				const Key& driveKey,
 				const Hash256& dataModificationId,
+				const uint64_t metaFilesSize,
 				const uint64_t usedDriveSize)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
+				, MetaFilesSize(metaFilesSize)
 				, UsedDriveSize(usedDriveSize)
 		{}
 
@@ -486,6 +487,9 @@ namespace catapult { namespace model {
 
 		/// Identifier of the transaction that initiated the modification.
 		Hash256 DataModificationId;
+
+		/// The size of metafiles including File Structure.
+		uint64_t MetaFilesSize;
 
 		/// Total used disk space of the drive.
 		uint64_t UsedDriveSize;

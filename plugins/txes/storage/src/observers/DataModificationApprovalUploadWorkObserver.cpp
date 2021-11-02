@@ -35,8 +35,14 @@ namespace catapult { namespace observers {
 		// Preparing vectors related to cumulative upload sizes.
 		std::vector<uint64_t> initialCumulativeUploadSizes;
 	  	initialCumulativeUploadSizes.reserve(totalJudgedKeysCount);
-		for (auto i = notification.JudgingKeysCount; i < totalKeysCount; ++i)
-			initialCumulativeUploadSizes.push_back(driveEntry.replicatorInfos().at(notification.PublicKeysPtr[i]).CumulativeUploadSize);
+	  	const auto& driveOwnerPublicKey = driveEntry.owner();
+		for (auto i = notification.JudgingKeysCount; i < totalKeysCount; ++i) {
+			const auto key = notification.PublicKeysPtr[i];
+			const auto initialSize = (key != driveOwnerPublicKey) ?
+					driveEntry.replicatorInfos().at(key).CumulativeUploadSize :
+					driveEntry.ownerCumulativeUploadSize();
+			initialCumulativeUploadSizes.push_back(initialSize);
+		}
 	  	std::vector<uint64_t> uploadSizesIncrements(totalJudgedKeysCount);
 
 		// Nth element in opinionCounts indicates how many replicators have provided Nth opinion.
@@ -44,7 +50,7 @@ namespace catapult { namespace observers {
 		for (auto i = 0; i < totalJudgingKeysCount; ++i)
 			++opinionCounts.at(notification.OpinionIndicesPtr[i]);
 
-		// Iterating over opinions row by row and calculating upload sizes increments for each judged replicator.
+		// Iterating over opinions row by row and calculating upload sizes increments for each judged uploader.
 		auto pOpinion = notification.OpinionsPtr;
 		for (auto i = 0; i < notification.OpinionCount; ++i) {
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
@@ -63,7 +69,10 @@ namespace catapult { namespace observers {
 			const auto transferAmount = Amount(uploadSizesIncrements.at(i));
 			senderState.Balances.debit(streamingMosaicId, transferAmount, context.Height);
 			recipientState.Balances.credit(currencyMosaicId, transferAmount, context.Height);
-			driveEntry.replicatorInfos().at(*pKey).CumulativeUploadSize += uploadSizesIncrements.at(i);
+			if (*pKey != driveOwnerPublicKey)
+				driveEntry.replicatorInfos().at(*pKey).CumulativeUploadSize += uploadSizesIncrements.at(i);
+			else
+				driveEntry.increaseOwnerCumulativeUploadSize(uploadSizesIncrements.at(i));
 		}
 	});
 }}
