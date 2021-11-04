@@ -23,6 +23,16 @@ namespace catapult { namespace observers {
 		activeDataModifications.erase(activeDataModifications.begin());
 
 		driveEntry.confirmedUsedSizes().insert({notification.PublicKey, notification.UsedDriveSize});
-		driveEntry.verifications().back().State = state::VerificationState::Canceled;
+
+		auto it = std::find_if(
+				driveEntry.verifications().begin(),
+				driveEntry.verifications().end(),
+				[&notification](const state::Verification& v) {
+					return v.State == state::VerificationState::Pending;
+				}
+		);
+
+		if (it != driveEntry.verifications().end())
+			it->State = state::VerificationState::Canceled;
 	});
 }}

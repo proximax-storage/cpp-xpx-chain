@@ -67,6 +67,9 @@ namespace catapult { namespace model {
 	/// Defines an end drive verification notification type.
     DEFINE_NOTIFICATION_TYPE(All, Storage, End_Drive_Verification_v1, 0x0013);
 
+	/// Defines an start drive verification notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Start_Drive_Verification_v1, 0x0014);
+
 	struct DownloadWork : public UnresolvedAmountData {
 	public:
 		DownloadWork(const Key& driveKey, const Key& replicator)
