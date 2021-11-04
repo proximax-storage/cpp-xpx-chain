@@ -54,6 +54,33 @@ namespace catapult { namespace state {
 
 	AccountBalances::AccountBalances(AccountBalances&& accountBalances) = default;
 
+	void AccountBalances::steal(AccountBalances& balances, AccountState& newAccount)
+	{
+		m_optimizedMosaicId = balances.optimizedMosaicId();
+		m_trackedMosaicId = balances.trackedMosaicId();
+		m_balances.optimize(m_optimizedMosaicId);
+		m_accountState = &newAccount;
+		std::vector<MosaicId> toRemove;
+		for (const auto& pair : balances)
+		{
+			m_balances.insert(pair);
+			toRemove.push_back(pair.first);
+		}
+		for (const auto& snapshot : balances.m_localSnapshots)
+			pushSnapshot(snapshot, true /* committed */);
+
+		for (const auto& snapshot : balances.m_remoteSnapshots)
+			pushSnapshot(snapshot, false /* committed */);
+
+		for(const auto& mosaic : toRemove)
+		{
+			balances.m_balances.erase(mosaic);
+		}
+
+		balances.cleanUpSnaphots();
+
+
+	}
 	AccountBalances& AccountBalances::operator=(const AccountBalances& accountBalances) {
 		m_optimizedMosaicId = accountBalances.optimizedMosaicId();
 		m_trackedMosaicId = accountBalances.trackedMosaicId();
@@ -112,6 +139,8 @@ namespace catapult { namespace state {
 	}
 
 	AccountBalances& AccountBalances::internalCredit(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
+		if(m_accountState && m_accountState->IsLocked())
+			CATAPULT_THROW_RUNTIME_ERROR("Locked accounts cannot be modified!");
 		if (IsZero(amount))
 			return *this;
 
@@ -134,6 +163,8 @@ namespace catapult { namespace state {
 	}
 
 	AccountBalances& AccountBalances::internalDebit(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
+		if(m_accountState && m_accountState->IsLocked())
+			CATAPULT_THROW_RUNTIME_ERROR("Locked accounts cannot be modified!");
 		if (IsZero(amount))
 			return *this;
 

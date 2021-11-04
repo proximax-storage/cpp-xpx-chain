@@ -204,12 +204,21 @@ namespace catapult { namespace state {
 		template<typename TTraits>
 		struct VersionedStateSerializerUtils<TTraits, 2> {
 			static size_t CalculatePackedSize(const AccountState& accountState) {
-				return sizeof(VersionType) + sizeof(AccountStateHeader<2>) + sizeof(HistoricalSnapshotsHeader)
+				auto size = sizeof(VersionType) + sizeof(AccountStateHeader<2>) + sizeof(HistoricalSnapshotsHeader)
 					   + (HasFlag(AccountPublicKeys::KeyType::Linked, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
 					   + (HasFlag(AccountPublicKeys::KeyType::Node, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
-						 + (HasFlag(AccountPublicKeys::KeyType::VRF, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
+					   + (HasFlag(AccountPublicKeys::KeyType::VRF, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
+					   + 8
 					   + accountState.Balances.size() * sizeof(model::Mosaic)
 					   + accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot);
+				if(HasAdditionalData(AdditionalDataFlags::HasOldState, accountState.GetAdditionalDataMask()))
+				{
+					if(accountState.OldState->GetVersion() == 1)
+						size += VersionedStateSerializerUtils<TTraits, 1>::CalculatePackedSize(*accountState.OldState);
+					else if(accountState.OldState->GetVersion() == 2)
+						size += VersionedStateSerializerUtils<TTraits, 2>::CalculatePackedSize(*accountState.OldState);
+				}
+				return size;
 			}
 			static const model::Mosaic* GetMosaicPointer(const AccountStateHeader<2>& header) {
 				const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&header + 1)
@@ -246,9 +255,23 @@ namespace catapult { namespace state {
 					accountState.SupplementalPublicKeys.vrf().set(*pKeysPointer);
 					pKeysPointer++;
 				}
+				auto bytePointer = reinterpret_cast<const uint8_t*>(pKeysPointer);
+				auto mask = *bytePointer;
+				int forwardMove;
+				if(HasAdditionalData(AdditionalDataFlags::HasOldState, mask))
+				{
+					auto accountState = CopyHeaderToAccountState(*reinterpret_cast<const AccountStateHeader<2>*>(bytePointer));
+					if(accountState.OldState->GetVersion() == 1)
+						forwardMove = VersionedStateSerializerUtils<TTraits, 1>::CalculatePackedSize(*accountState.OldState);
+					else if(accountState.OldState->GetVersion() == 2)
+						forwardMove = VersionedStateSerializerUtils<TTraits, 2>::CalculatePackedSize(*accountState.OldState);
+				}
 				accountState.Balances.optimize(header.OptimizedMosaicId);
 				accountState.Balances.track(header.TrackedMosaicId);
-				const auto* pMosaic = GetMosaicPointer(header);
+
+				const auto* pMosaicExpectedLocation = reinterpret_cast<const uint8_t*>(GetMosaicPointer(header));
+				pMosaicExpectedLocation+=forwardMove;
+				const auto* pMosaic = reinterpret_cast<const model::Mosaic*>(pMosaicExpectedLocation);
 				for (auto i = 0u; i < header.MosaicsCount; ++i, ++pMosaic)
 					accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
 
@@ -274,18 +297,26 @@ namespace catapult { namespace state {
 
 				header.AccountType = accountState.AccountType;
 				header.LinkedKeysMask = accountState.SupplementalPublicKeys.mask();
-
 				header.OptimizedMosaicId = accountState.Balances.optimizedMosaicId();
 				header.TrackedMosaicId = accountState.Balances.trackedMosaicId();
 				header.MosaicsCount = static_cast<uint16_t>(accountState.Balances.size());
 
 				auto* pData = buffer.data();
 
-				VersionType version{2};//NOTE TO SELF MISSING VERSION 1 TEST!
+				VersionType version{2};
 				std::memcpy(pData, &version, sizeof(VersionType));
 				pData += sizeof(VersionType);
 				std::memcpy(pData, &header, sizeof(AccountStateHeader<2>));
 				pData += sizeof(AccountStateHeader<2>);
+				auto mask = accountState.GetAdditionalDataMask();
+				*pData = mask;
+				pData++;
+				if(HasAdditionalData(AdditionalDataFlags::HasOldState, accountState.GetAdditionalDataMask()))
+				{
+					auto data = CopyToBuffer(*accountState.OldState);
+					std::memcpy(pData, data.data(), sizeof(data));
+					pData += sizeof(data);
+				}
 				if (HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
 					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.linked(), pData);
 

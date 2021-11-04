@@ -31,6 +31,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because the verification of the signature failed.
 	DEFINE_SIGNATURE_RESULT(Not_Verifiable, 8);
 
+	/// Validation failed because the verification of the signature failed.
+	DEFINE_SIGNATURE_RESULT(Invalid_Version, 9);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

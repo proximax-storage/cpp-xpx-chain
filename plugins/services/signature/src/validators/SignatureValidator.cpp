@@ -23,6 +23,7 @@
 #include "catapult/crypto/Signer.h"
 #include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 #include "catapult/validators/ValidatorContext.h"
+#include "catapult/utils/CacheUtils.h"
 
 namespace catapult { namespace validators {
 
@@ -41,11 +42,18 @@ namespace catapult { namespace validators {
 		return MAKE_STATEFUL_VALIDATOR_WITH_TYPE(SignatureV2, model::SignatureNotification<2>, ([generationHash](const auto& notification, const auto& context) {
 
 			const auto& cache = context.Cache.template sub<cache::AccountStateCache>();
-			auto accountStateIter = cache.find(notification.Signer);
-			auto account = accountStateIter.tryGet();
-			if(account != nullptr)
+			auto account = utils::FindAccountStateByPublicKeyOrAddress(cache, notification.Signer);
+			if(account)
 			{
-				if(!utils::VerifyAccountVersionCompatibilityWithSignatureVersion(account->GetVersion(), notification.SignatureVersion)) return Failure_Signature_Not_Verifiable;
+				/// Locked accounts can no longer sign
+				if(account->get().IsLocked())
+					return Failure_Signature_Not_Verifiable;
+				if(!utils::VerifyAccountVersionCompatibilityWithSignatureVersion(account->get().GetVersion(), notification.SignatureVersion)) return Failure_Signature_Invalid_Version;
+			}
+			else if(utils::ResolveAccountVersionToSignatureVersion(context.Config.Network.AccountVersion) > notification.SignatureVersion)
+			{
+				//Make sure that accounts cannot be created if they are using a signature scheme older than the current active one
+				return Failure_Signature_Invalid_Version;
 			}
 			auto isVerified = model::SignatureNotification<1>::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
 						? crypto::Verify(notification.Signer, { generationHash, notification.Data }, notification.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(notification.SignatureVersion))

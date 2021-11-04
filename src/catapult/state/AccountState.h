@@ -24,6 +24,8 @@
 #include "VersionableState.h"
 #include "catapult/constants.h"
 #include "AccountPublicKeys.h"
+#include <optional>
+#include <bitset>
 
 namespace catapult { namespace state {
 
@@ -39,13 +41,32 @@ namespace catapult { namespace state {
 		Remote,
 
 		/// Account is a remote harvester eligible account that is unlinked.
-		Remote_Unlinked
+		Remote_Unlinked,
+
+		/// Account has been locked. Locked accounts can no longer change or participate in the blockchain.
+		Locked
+	};
+
+	enum class AdditionalDataFlags : size_t {
+		HasOldState = 0
 	};
 
 	/// Account state data.
 	struct AccountState : public VersionableState {
 
 	public:
+
+		/// Creates an account state from an \a address and a height (\a addressHeight) for a given version while specifying the previous state
+		explicit AccountState(const catapult::Address& address, Height addressHeight, uint32_t version, const AccountState& oldState)
+				: Address(address)
+				, AddressHeight(addressHeight)
+				, PublicKey()
+				, PublicKeyHeight(0)
+				, AccountType(AccountType::Unlinked)
+				, Balances(this)
+				, OldState(std::make_shared<AccountState>(oldState))
+				, VersionableState(version)
+		{}
 
 		/// Creates an account state from an \a address and a height (\a addressHeight) for a given version.
 		explicit AccountState(const catapult::Address& address, Height addressHeight, uint32_t version)
@@ -55,6 +76,7 @@ namespace catapult { namespace state {
 				, PublicKeyHeight(0)
 				, AccountType(AccountType::Unlinked)
 				, Balances(this)
+				, OldState(nullptr)
 				, VersionableState(version)
 		{}
 
@@ -66,12 +88,14 @@ namespace catapult { namespace state {
 				, PublicKeyHeight(0)
 				, AccountType(AccountType::Unlinked)
 				, Balances(this)
+				, OldState(nullptr)
 				, VersionableState(1)
 		{}
 
 		/// Copy constructor that makes a deep copy of \a accountState.
 		AccountState(const AccountState& accountState)
 		: Balances(this),
+			OldState(nullptr),
 		  VersionableState(accountState){
 			*this = accountState;
 		}
@@ -97,7 +121,25 @@ namespace catapult { namespace state {
 
 		/// Balances of an account.
 		AccountBalances Balances;
+
+		/// Account state snapshot prior to upgrade
+		std::shared_ptr<state::AccountState> OldState;
+
+	public:
+		bool IsLocked() const
+		{
+			return AccountType == state::AccountType::Locked;
+		}
+
+		auto GetAdditionalDataMask() const
+		{
+			uint8_t data = 0;
+			data |= !!OldState << static_cast<uint8_t>(AdditionalDataFlags::HasOldState);
+			return data;
+		}
 	};
+
+	bool HasAdditionalData(AdditionalDataFlags flag, uint8_t mask);
 
 	/// Returns \c true if \a accountType corresponds to a remote account.
 	bool IsRemote(AccountType accountType);

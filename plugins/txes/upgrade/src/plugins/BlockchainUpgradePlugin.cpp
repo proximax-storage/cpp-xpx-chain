@@ -13,6 +13,7 @@
 #include "src/observers/Observers.h"
 #include "src/plugins/BlockchainUpgradeTransactionPlugin.h"
 #include "src/validators/Validators.h"
+#include "src/plugins/AccountV2UpgradeTransactionPlugin.h"
 
 namespace catapult { namespace plugins {
 
@@ -22,7 +23,7 @@ namespace catapult { namespace plugins {
 		});
 
 		manager.addTransactionSupport(CreateBlockchainUpgradeTransactionPlugin());
-
+		manager.addTransactionSupport(CreateAccountV2UpgradeTransactionPlugin());
 		manager.addCacheSupport<cache::BlockchainUpgradeCacheStorage>(
 			std::make_unique<cache::BlockchainUpgradeCache>(manager.cacheConfig(cache::BlockchainUpgradeCache::Name)));
 
@@ -44,12 +45,14 @@ namespace catapult { namespace plugins {
 			builder
 				.add(validators::CreateBlockchainUpgradeSignerValidator())
 				.add(validators::CreateBlockchainUpgradeValidator())
+				.add(validators::CreateAccountV2UpgradeValidator())
 				.add(validators::CreateBlockchainVersionValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
 			builder
-				.add(observers::CreateBlockchainUpgradeObserver());
+				.add(observers::CreateBlockchainUpgradeObserver())
+		  		.add(observers::CreateAccountV2UpgradeObserver());
 		});
 	}
 }}

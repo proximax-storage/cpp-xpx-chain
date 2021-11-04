@@ -20,9 +20,39 @@ namespace catapult { namespace model {
 	/// Catapult upgrade version.
 	DEFINE_CATAPULT_UPGRADE_NOTIFICATION(Version_v1, 0x002, All);
 
+	/// Catapult upgrade account.
+	DEFINE_CATAPULT_UPGRADE_NOTIFICATION(AccountUpgradeV2_v1, 0x003, All);
+
 #undef DEFINE_CATAPULT_UPGRADE_NOTIFICATION
 
 	// endregion
+
+
+	/// Notification of a catapult upgrade signer.
+	template<VersionType version>
+	struct AccountV2UpgradeNotification;
+
+	template<>
+	struct AccountV2UpgradeNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = BlockchainUpgrade_AccountUpgradeV2_v1_Notification;
+
+	public:
+		/// Creates a notification around \a signer.
+		AccountV2UpgradeNotification(const Key& signer, const Key& newAccountPublicKey)
+				: Notification(Notification_Type, sizeof(AccountV2UpgradeNotification<1>))
+				, Signer(signer)
+				, NewAccountPublicKey(newAccountPublicKey)
+		{}
+
+	public:
+		/// Catapult signer.
+		const Key& Signer;
+
+		/// New account key
+		const Key& NewAccountPublicKey;
+	};
 
 	/// Notification of a catapult upgrade signer.
 	template<VersionType version>

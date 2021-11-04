@@ -21,6 +21,7 @@
 #include "ImportanceView.h"
 #include "AccountStateCache.h"
 #include "catapult/model/Address.h"
+#include "catapult/utils/CacheUtils.h"
 
 namespace catapult { namespace cache {
 
@@ -40,21 +41,17 @@ namespace catapult { namespace cache {
 
 				return ForwardIfAccountHasImportanceAtHeight(linkedAccountState, cache, height, action);
 			}
-
+			if(accountState.IsLocked()) //Locked accounts cannot harvest
+				return false;
 			return action(accountState);
 		}
 
 		template<typename TAction>
 		bool FindAccountStateWithImportance(const ReadOnlyAccountStateCache& cache, const Key& publicKey, Height height, TAction action) {
-			auto accountStateKeyIter = cache.find(publicKey);
-			if (accountStateKeyIter.tryGet())
-				return ForwardIfAccountHasImportanceAtHeight(accountStateKeyIter.get(), cache, height, action);
-
-			// if state could not be accessed by public key, try searching by address
-			auto accountStateAddressIter = cache.find(model::PublicKeyToAddress(publicKey, cache.networkIdentifier()));
-			if (accountStateAddressIter.tryGet())
-				return ForwardIfAccountHasImportanceAtHeight(accountStateAddressIter.get(), cache, height, action);
-
+			auto accountStateOpt = utils::FindAccountStateByPublicKeyOrAddress(cache, publicKey);
+			if (accountStateOpt) {
+				return ForwardIfAccountHasImportanceAtHeight(accountStateOpt->get(), cache, height, action);
+			}
 			return false;
 		}
 	}

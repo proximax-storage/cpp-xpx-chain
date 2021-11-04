@@ -29,6 +29,18 @@ namespace catapult { namespace validators {
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_CATAPULT_UPGRADE_RESULT(Plugin_Config_Malformed, 5);
 
+	/// Validation failed because this public key already belongs to an account.
+	DEFINE_CATAPULT_UPGRADE_RESULT(Account_Duplicate, 6);
+
+	/// Validation failed because the signer cannot be upgraded.
+	DEFINE_CATAPULT_UPGRADE_RESULT(Account_Not_Upgradable, 7);
+
+	/// Validation failed because the signer cannot be upgraded.
+	DEFINE_CATAPULT_UPGRADE_RESULT(Account_Non_Existant, 8);
+
+	/// Validation failed because the signer cannot be upgraded.
+	DEFINE_CATAPULT_UPGRADE_RESULT(Account_Version_Not_Allowed, 9);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

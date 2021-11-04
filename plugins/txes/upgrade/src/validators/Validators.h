@@ -16,6 +16,12 @@ namespace catapult { namespace validators {
 	/// - signer is nemesis account
 	DECLARE_STATEFUL_VALIDATOR(BlockchainUpgradeSigner, model::BlockchainUpgradeSignerNotification<1>)();
 
+	/// A validator implementation that applies to blockchain account upgrades from V1 to V2 and validates that:
+	/// - signer is a valid V1 account
+	/// - V2 accounts are allowed
+	/// - Account does not already exist
+	DECLARE_STATEFUL_VALIDATOR(AccountV2Upgrade, model::AccountV2UpgradeNotification<1>)();
+
 	/// A validator implementation that applies to blockchain upgrade notification and validates that:
 	/// - upgrade period is valid (greater or equal the minimum value set in config)
 	/// - no other upgrade is declared at the same height

@@ -49,6 +49,12 @@ namespace catapult { namespace state {
 		}
 	}
 
+	bool HasAdditionalData(AdditionalDataFlags flag, uint8_t mask)
+	{
+		return (mask >> static_cast<uint8_t>(flag)) & 1;
+
+	}
+
 	void RequireLinkedRemoteAndMainAccounts(const AccountState& remoteAccountState, const AccountState& mainAccountState) {
 		RequireAccountType(remoteAccountState, AccountType::Remote, "REMOTE");
 		RequireAccountType(mainAccountState, AccountType::Main, "MAIN");

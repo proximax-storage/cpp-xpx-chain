@@ -78,6 +78,13 @@ namespace catapult { namespace state {
 				io::Write(output, accountState.Balances.trackedMosaicId());
 				io::Write16(output, static_cast<uint16_t>(accountState.Balances.size()));
 				WriteSupplementalPublicKeys(output, accountState.SupplementalPublicKeys);
+
+				auto mask = accountState.GetAdditionalDataMask();
+				io::Write8(output, mask);
+				if(HasAdditionalData(AdditionalDataFlags::HasOldState, mask))
+				{
+					Save(*accountState.OldState, output);
+				}
 				break;
 			}
 		}
@@ -175,6 +182,12 @@ namespace catapult { namespace state {
 					auto numMosaics = io::Read16(input);
 					// read supplemental public keys
 					ReadSupplementalPublicKeys(input, accountState.SupplementalPublicKeys);
+					auto mask = io::Read8(input);
+					if(HasAdditionalData(AdditionalDataFlags::HasOldState, mask))
+					{
+						VersionType _discard;
+						accountState.OldState = std::make_shared<state::AccountState>(LoadAccountStateWithoutHistory(input, _discard));
+					}
 					for (auto i = 0u; i < numMosaics; ++i) {
 						auto mosaicId = io::Read<MosaicId>(input);
 						auto amount = io::Read<Amount>(input);

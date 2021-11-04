@@ -86,6 +86,9 @@ namespace catapult { namespace state {
 		Amount get(MosaicId mosaicId) const;
 
 	public:
+		/// Steals all the balances from the target /a balances
+		void steal(AccountBalances& balances, AccountState& newAccount);
+
 		/// Adds \a amount funds to a given mosaic (\a mosaicId).
 		/// It will increase balance of account without tracking of it in snapshots array.
 		AccountBalances& credit(const MosaicId& mosaicId, const Amount& amount);

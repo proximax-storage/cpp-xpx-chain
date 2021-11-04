@@ -12,4 +12,8 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by blockchain upgrade notifications
 	DECLARE_OBSERVER(BlockchainUpgrade, model::BlockchainUpgradeVersionNotification<1>)();
+
+	/// Observes changes triggered by account upgrade notifications
+	DECLARE_OBSERVER(AccountV2Upgrade, model::AccountV2UpgradeNotification<1>)();
+
 }}

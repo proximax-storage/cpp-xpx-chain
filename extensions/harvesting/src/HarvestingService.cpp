@@ -42,18 +42,6 @@ namespace catapult { namespace harvesting {
 
 	namespace {
 
-		std::optional<std::reference_wrapper<const state::AccountState>> FindAccountStateByPublicKeyOrAddress(const cache::ReadOnlyAccountStateCache& cache, const Key& publicKey) {
-			auto accountStateKeyIter = cache.find(publicKey);
-			if (accountStateKeyIter.tryGet())
-				return std::optional<std::reference_wrapper<const state::AccountState>>(accountStateKeyIter.get());
-
-			// if state could not be accessed by public key, try searching by address
-			auto accountStateAddressIter = cache.find(model::PublicKeyToAddress(publicKey, cache.networkIdentifier()));
-			if (accountStateAddressIter.tryGet())
-				return std::optional<std::reference_wrapper<const state::AccountState>>(accountStateAddressIter.get());
-
-			return std::nullopt;
-		}
 		struct UnlockedAccountsHolder {
 			std::shared_ptr<UnlockedAccounts> pUnlockedAccounts;
 			std::shared_ptr<UnlockedAccountsUpdater> pUnlockedAccountsUpdater;
