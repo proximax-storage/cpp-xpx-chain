@@ -20,16 +20,36 @@ pipeline {
             steps {
                 echo 'Building catapult-server inside a docker'
                 script {
+                    withCredentials([string(credentialsId: 'git_token', variable: 'GIT_TOKEN')]) {
+                        sh """
+                            
+                            git config --global url."https://${GIT_TOKEN}:@github.com/".insteadOf "https://github.com/"
+                            git submodule update --init --recursive --remote
+                            cd cpp-xpx-storage-sdk
+                            git checkout bdce0d9d3da429fffad25c18ad39d2f01c33fed9
+                            cd ..
+                        """
+                    }
                     def buildImage = docker.image("${BUILD_IMAGE}")
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                        buildImage.inside {
+                        buildImage.inside('-u 0'){
                             sh """
+                                echo 'Building libtorrent'
+                                apt update && apt install -y libboost-tools-dev
+                                cd cpp-xpx-storage-sdk
+                                git clone --recurse-submodules https://github.com/arvidn/libtorrent.git
+                                cd libtorrent
+                                echo \"using gcc ;\" >>~/user-config.jam
+                                b2 crypto=openssl cxxstd=14 release
+                                b2 install --prefix=/usr/local
+                                cd ../../
+                                
                                 echo 'Building catapult-server'
                                 rm -rf _build
                                 mkdir _build 
                                 cd _build
                                 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so .. 
-                                    make -j4 publish
+                                make -j4 publish
                                 make -j4
                                 cd ..
                                 ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
