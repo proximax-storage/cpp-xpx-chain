@@ -11,7 +11,7 @@
 #include "catapult/model/StorageNotifications.h"
 
 namespace catapult { namespace model {
-    /// Notification of an end drive verification.
+    /// Notification of end drive verification.
     template<VersionType version>
     struct EndDriveVerificationNotification;
 
@@ -55,5 +55,32 @@ namespace catapult { namespace model {
 
         /// Opinion about verification status for each Prover. Success or Failure.
         const VerificationOpinion* VerificationOpinionsPtr;
+    };
+
+    /// Notification of start drive verification.
+    template<VersionType version>
+    struct StartDriveVerificationNotification;
+
+    template<>
+    struct StartDriveVerificationNotification<1> : public Notification {
+    public:
+        /// Matching notification type.
+        static constexpr auto Notification_Type = Storage_Start_Drive_Verification_v1_Notification;
+
+    public:
+        explicit StartDriveVerificationNotification(const Key& driveKey, const Hash256& blockHash)
+                : Notification(Notification_Type, sizeof(StartDriveVerificationNotification<1>))
+                , DriveKey(driveKey)
+                , BlockHash(blockHash){}
+
+    public:
+        /// Key of the drive.
+        Key DriveKey;
+
+        /// Current block hash.
+        Hash256 BlockHash;
+
+        /// Current block generation time.
+        utils::TimeSpan BlockGenerationTime;
     };
 }}
