@@ -1,5 +1,1 @@
-[submodule "cpp-xpx-storage-sdk"]
-	path = cpp-xpx-storage-sdk
-	url = https://github.com/proximax-storage/cpp-xpx-storage-sdk
-[submodule]
-	cpp-xpx-storage-sdk = test/storage
+
