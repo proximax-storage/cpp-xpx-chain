@@ -39,10 +39,6 @@ namespace catapult { namespace chain {
 			return m_accounts;
 		}
 
-		void setLogLevel(utils::LogLevel logLevel) {
-			m_logLevel = logLevel;
-		}
-
 	protected:
 		void decreaseActivities(const config::CommitteeConfiguration& config);
 
@@ -53,6 +49,5 @@ namespace catapult { namespace chain {
 		std::shared_ptr<cache::CommitteeAccountCollector> m_pAccountCollector;
 		std::map<Key, Hash256> m_hashes;
 		cache::AccountMap m_accounts;
-		utils::LogLevel m_logLevel;
 	};
 }}
