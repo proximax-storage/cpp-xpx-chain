@@ -24,6 +24,7 @@
 #include "catapult/model/ContainerTypes.h"
 #include "catapult/model/NetworkInfo.h"
 #include <memory>
+#include "catapult/types.h"
 
 namespace catapult { namespace test {
 
@@ -33,8 +34,8 @@ namespace catapult { namespace test {
 	/// Generates a random key pair based on an account version
 	crypto::KeyPair GenerateKeyPair(uint32_t version = 1);
 
-	/// Generates a random key pair based on a KeyHashingType
-	crypto::KeyPair GenerateKeyPair(KeyHashingType type);
+	/// Generates a random key pair based on a derivation scheme
+	crypto::KeyPair GenerateKeyPair(DerivationScheme type);
 
 	/// Generates a random VRF key pair based on a KeyHashingType
 	crypto::KeyPair GenerateVrfKeyPair();

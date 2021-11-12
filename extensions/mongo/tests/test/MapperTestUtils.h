@@ -207,7 +207,7 @@ namespace catapult { namespace test {
 	void AssertEqualMockTransactionData(const mocks::MockTransaction& transaction, const bsoncxx::document::view& dbTransaction);
 
 	/// Verifies that model \a expectedCosignatures and db cosignatures (\a dbCosignatures) are equivalent.
-	void AssertEqualCosignatures(const std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures);
+	void AssertEqualCosignatures(const std::vector<model::Cosignature<SignatureLayout::Raw>>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures);
 
 	/// Verifies that model \a receipt and db receipt (\a dbReceipt) are equivalent.
 	void AssertEqualReceiptData(const model::Receipt& receipt, const bsoncxx::document::view& dbReceipt);

@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <catapult/utils/SignatureVersionToKeyTypeResolver.h>
 #include "harvesting/src/Harvester.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
@@ -53,26 +52,35 @@ namespace catapult { namespace harvesting {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 		constexpr size_t Num_Accounts = 5;
 
-		std::vector<KeyPair> CreateKeyPairs(size_t count, uint32_t defaultAccountVersion) {
-			std::vector<KeyPair> keyPairs;
+		std::vector<std::pair<KeyPair, uint32_t>> CreateKeyPairs(size_t count, uint32_t defaultAccountVersion) {
+			std::vector<std::pair<KeyPair, uint32_t>> keyPairs;
 			for (auto i = 0u; i < count; ++i)
 			{
 				if(i == 0)
-					keyPairs.push_back(test::GenerateKeyPair(defaultAccountVersion));
+					keyPairs.emplace_back(test::GenerateKeyPair(defaultAccountVersion), defaultAccountVersion);
 				//All additional unlockedAccounts have to be V2
 				else
-					keyPairs.push_back(test::GenerateKeyPair(2));
+					keyPairs.emplace_back(test::GenerateKeyPair(2), 2);
+			}
+			return keyPairs;
+		}
+
+		std::vector<KeyPair> CreateVrfKeyPairs(size_t count) {
+			std::vector<KeyPair> keyPairs;
+			for (auto i = 0u; i < count; ++i)
+			{
+				keyPairs.emplace_back(test::GenerateKeyPair(2));
 			}
 			return keyPairs;
 		}
 		std::vector<state::AccountState*> CreateAccounts(
 				cache::AccountStateCacheDelta& cache,
-				const std::vector<KeyPair>& keyPairs,
+				const std::vector<std::pair<KeyPair, uint32_t>>& keyPairs,
 				const std::vector<KeyPair>& vrfKeyPairs) {
 			std::vector<state::AccountState*> accountStates;
 			for (auto i = 0u; i < keyPairs.size(); ++i) {
-				cache.addAccount(keyPairs[i].publicKey(), Height(1), 2);
-				auto& accountState = cache.find(keyPairs[i].publicKey()).get();
+				cache.addAccount(keyPairs[i].first.publicKey(), Height(1), keyPairs[i].second);
+				auto& accountState = cache.find(keyPairs[i].first.publicKey()).get();
 				accountState.SupplementalPublicKeys.vrf().set(vrfKeyPairs[i].publicKey());
 				auto& balances = accountState.Balances;
 				balances.credit(Harvesting_Mosaic_Id, Amount(1'000'000'000'000'000), Height(1));
@@ -124,7 +132,7 @@ namespace catapult { namespace harvesting {
 					: Config(CreateConfiguration())
 					, Cache(test::CreateEmptyCatapultCache(Config))
 					, KeyPairs(CreateKeyPairs(Num_Accounts, TBaseAccountVersion)) // additional keypairs are always V2
-					, VrfKeyPairs(CreateKeyPairs(Num_Accounts, 2))
+					, VrfKeyPairs(CreateVrfKeyPairs(Num_Accounts))
 					, Beneficiary(test::GenerateRandomByteArray<Key>())
 					, pUnlockedAccounts(std::make_unique<UnlockedAccounts>(Num_Accounts, [](const auto&) { return 0; }))
 					, pLastBlock(CreateBlock())
@@ -165,20 +173,20 @@ namespace catapult { namespace harvesting {
 		private:
 			static void UnlockAllAccounts(
 				UnlockedAccounts& unlockedAccounts,
-				const std::vector<KeyPair>& signingKeyPairs,
+				const std::vector<std::pair<KeyPair, uint32_t>>& signingKeyPairs,
 				const std::vector<KeyPair>& vrfKeyPairs) {
 					auto modifier = unlockedAccounts.modifier();
 					for (auto i = 0u; i < Num_Accounts; ++i) {
 						modifier.add(BlockGeneratorAccountDescriptor(
-								test::CopyKeyPair(signingKeyPairs[i]),
-								test::CopyKeyPair(vrfKeyPairs[i]), signingKeyPairs[i].hashingType() == KeyHashingType::Sha2 ? 2 : 1));
+								test::CopyKeyPair(signingKeyPairs[i].first),
+								test::CopyKeyPair(vrfKeyPairs[i]), signingKeyPairs[i].second));
 					}
 			}
 
 		public:
 			config::BlockchainConfiguration Config;
 			cache::CatapultCache Cache;
-			std::vector<KeyPair> KeyPairs;
+			std::vector<std::pair<KeyPair, uint32_t>> KeyPairs;
 			std::vector<KeyPair> VrfKeyPairs;
 			Key Beneficiary;
 			std::vector<state::AccountState*> AccountStates;
@@ -194,13 +202,13 @@ namespace catapult { namespace harvesting {
 
 				for (auto i = 0; i < AccountStates.size(); ++i) {
 					auto account = AccountStates[i];
-					auto FindPublicKeyPredicate = [&key = account->PublicKey](const KeyPair& x) {
-					  return key == x.publicKey();
+					auto FindPublicKeyPredicate = [&key = account->PublicKey](const std::pair<KeyPair,uint32_t>& x) {
+					  return key == x.first.publicKey();
 					};
 					GenerationHash genHash;
 					if(account->GetVersion() > 1)
 					{
-						auto vrfProof = crypto::GenerateVrfProof<Vrf_Key_Hashing_Type>(LastBlockElement.GenerationHash, VrfKeyPairs[i]);
+						auto vrfProof = crypto::GenerateVrfProof<Vrf_Key_Derivation_Scheme>(LastBlockElement.GenerationHash, VrfKeyPairs[i]);
 						genHash = model::CalculateGenerationHashVrf(vrfProof.Gamma);
 					}
 					else
@@ -210,7 +218,8 @@ namespace catapult { namespace harvesting {
 					uint64_t hit = chain::CalculateHit(genHash);
 					if (hit < bestHit) {
 						bestHit = hit;
-						pBestKeyPair = std::make_pair((*find_if(KeyPairs.begin(), KeyPairs.end(), FindPublicKeyPredicate)).publicKey(), account->GetVersion());
+						auto& hitPair = *find_if(KeyPairs.begin(), KeyPairs.end(), FindPublicKeyPredicate);
+						pBestKeyPair = std::make_pair(hitPair.first.publicKey(), hitPair.second);
 					}
 
 				}
@@ -232,10 +241,10 @@ namespace catapult { namespace harvesting {
 				GenerationHash genHash;
 				if(account.GetVersion() > 1)
 				{
-					auto it = find_if(KeyPairs.begin(), KeyPairs.end(), [&publicKey](const KeyPair& x) {
-					  return publicKey == x.publicKey();
+					auto it = find_if(KeyPairs.begin(), KeyPairs.end(), [&publicKey](const std::pair<KeyPair, uint32_t>& x) {
+					  return publicKey == x.first.publicKey();
 					});
-					auto vrfProof = crypto::GenerateVrfProof<Vrf_Key_Hashing_Type>(LastBlockElement.GenerationHash, VrfKeyPairs[it - KeyPairs.begin()]);
+					auto vrfProof = crypto::GenerateVrfProof<Vrf_Key_Derivation_Scheme>(LastBlockElement.GenerationHash, VrfKeyPairs[it - KeyPairs.begin()]);
 					genHash = model::CalculateGenerationHashVrf(vrfProof.Gamma);
 				}
 				else genHash = model::CalculateGenerationHash(LastBlockElement.GenerationHash, publicKey);
@@ -280,7 +289,7 @@ namespace catapult { namespace harvesting {
 		{
 			auto modifier = context.pUnlockedAccounts->modifier();
 			for (const auto& keyPair : context.KeyPairs)
-				modifier.remove(keyPair.publicKey());
+				modifier.remove(keyPair.first.publicKey());
 		}
 
 		auto pHarvester = context.CreateHarvester();
@@ -387,7 +396,7 @@ namespace catapult { namespace harvesting {
 			auto cacheDelta = context.Cache.createDelta();
 			auto& accountStateCache = cacheDelta.template sub<cache::AccountStateCache>();
 			for (const auto& keyPair : context.KeyPairs)
-				accountStateCache.queueRemove(keyPair.publicKey(), Height(1));
+				accountStateCache.queueRemove(keyPair.first.publicKey(), Height(1));
 
 			accountStateCache.commitRemovals();
 			context.Cache.commit(Height());
@@ -444,7 +453,7 @@ namespace catapult { namespace harvesting {
 			EXPECT_EQ(model::CalculateHash(*context.pLastBlock), pBlock->PreviousBlockHash);
 			EXPECT_TRUE(model::VerifyBlockHeaderSignature(*pBlock));
 			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, state::BlockDifficultyInfo(*pBlock), context.Config.Network), pBlock->Difficulty);
-			EXPECT_EQ(model::MakeVersion(Network_Identifier, bestKey.second, 4), pBlock->Version); //For now signature version and key version are the same.
+			EXPECT_EQ(model::MakeVersion(Network_Identifier, utils::AccountVersionFeatureResolver::KeyDerivationScheme(bestKey.second), 4), pBlock->Version); //For now signature version and key version are the same.
 			EXPECT_EQ(model::Entity_Type_Block, pBlock->Type);
 			EXPECT_TRUE(model::IsSizeValid(*pBlock, model::TransactionRegistry()));
 			EXPECT_EQ(context.Beneficiary, pBlock->Beneficiary);
@@ -457,9 +466,9 @@ namespace catapult { namespace harvesting {
 	// region block generator delegation
 
 	namespace {
-		bool IsAnyKeyPairMatch(const std::vector<KeyPair>& keyPairs, const Key& key) {
+		bool IsAnyKeyPairMatch(const std::vector<std::pair<KeyPair, uint32_t>>& keyPairs, const Key& key) {
 			return std::any_of(keyPairs.cbegin(), keyPairs.cend(), [&key](const auto& keyPair) {
-				return key == keyPair.publicKey();
+				return key == keyPair.first.publicKey();
 			});
 		}
 	}

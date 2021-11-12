@@ -18,9 +18,10 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/crypto/Signer.h"
 #include "tests/TestHarness.h"
 #include <numeric>
+#include "catapult/crypto/Signature.h"
+#include "catapult/crypto/KeyPair.h"
 
 namespace catapult { namespace crypto {
 
@@ -30,17 +31,17 @@ namespace catapult { namespace crypto {
 		template<typename TArray>
 		Signature SignPayload(const KeyPair& keyPair, const TArray& payload) {
 			Signature signature{};
-			EXPECT_NO_THROW(Sign(keyPair, payload, signature));
+			EXPECT_NO_THROW(SignatureFeatureSolver::Sign(keyPair, payload, signature));
 			return signature;
 		}
 
 		const char* Default_Key_String = "CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98534";
-		KeyPair GetDefaultKeyPair(KeyHashingType hashingType = KeyHashingType::Sha3) {
-			return KeyPair::FromString(Default_Key_String, hashingType);
+		KeyPair GetDefaultKeyPair(DerivationScheme derivationScheme = DerivationScheme::Ed25519_Sha3) {
+			return KeyPair::FromString(Default_Key_String, derivationScheme);
 		}
 
-		KeyPair GetAlteredKeyPair(KeyHashingType hashingType = KeyHashingType::Sha3) {
-			return KeyPair::FromString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98535", hashingType);
+		KeyPair GetAlteredKeyPair(DerivationScheme derivationScheme = DerivationScheme::Ed25519_Sha3) {
+			return KeyPair::FromString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98535", derivationScheme);
 		}
 	}
 
@@ -51,7 +52,7 @@ namespace catapult { namespace crypto {
 		// Act:
 		Signature signature;
 		std::iota(signature.begin(), signature.end(), static_cast<uint8_t>(0));
-		Sign(GetDefaultKeyPair(), payload, signature);
+		SignatureFeatureSolver::Sign(GetDefaultKeyPair(), payload, signature);
 
 		// Assert: the signature got overwritten in call to Sign() above
 		Signature invalid;
@@ -61,10 +62,10 @@ namespace catapult { namespace crypto {
 
 	TEST(TEST_CLASS, SignaturesGeneratedForSameDataBySameKeyPairsAreEqual) {
 		// Arrange:
-		auto keyPair1 = KeyPair::FromString(Default_Key_String, KeyHashingType::Sha3);
-		auto keyPair2 = KeyPair::FromString(Default_Key_String, KeyHashingType::Sha3);
-		auto keyPair3 = KeyPair::FromString(Default_Key_String, KeyHashingType::Sha2);
-		auto keyPair4 = KeyPair::FromString(Default_Key_String, KeyHashingType::Sha2);
+		auto keyPair1 = KeyPair::FromString(Default_Key_String, DerivationScheme::Ed25519_Sha3);
+		auto keyPair2 = KeyPair::FromString(Default_Key_String, DerivationScheme::Ed25519_Sha3);
+		auto keyPair3 = KeyPair::FromString(Default_Key_String, DerivationScheme::Ed25519_Sha2);
+		auto keyPair4 = KeyPair::FromString(Default_Key_String, DerivationScheme::Ed25519_Sha2);
 		auto payload = test::GenerateRandomArray<100>();
 
 		// Act:
@@ -87,8 +88,8 @@ namespace catapult { namespace crypto {
 		auto signature1 = SignPayload(GetDefaultKeyPair(), payload);
 		auto signature2 = SignPayload(GetAlteredKeyPair(), payload);
 
-		auto signature3 = SignPayload(GetDefaultKeyPair(KeyHashingType::Sha2), payload);
-		auto signature4 = SignPayload(GetAlteredKeyPair(KeyHashingType::Sha2), payload);
+		auto signature3 = SignPayload(GetDefaultKeyPair(DerivationScheme::Ed25519_Sha2), payload);
+		auto signature4 = SignPayload(GetAlteredKeyPair(DerivationScheme::Ed25519_Sha2), payload);
 
 		// Assert:
 		EXPECT_NE(signature1, signature2);
@@ -102,7 +103,7 @@ namespace catapult { namespace crypto {
 		auto signature = SignPayload(GetDefaultKeyPair(), payload);
 
 		// Act:
-		bool isVerified = Verify(GetDefaultKeyPair().publicKey(), payload, signature);
+		bool isVerified = SignatureFeatureSolver::Verify(GetDefaultKeyPair().publicKey(), payload, signature);
 
 		// Assert:
 		EXPECT_TRUE(isVerified);
@@ -114,8 +115,8 @@ namespace catapult { namespace crypto {
 		auto signature = SignPayload(GetDefaultKeyPair(), payload);
 
 		// Act:
-		bool isVerified = Verify(GetAlteredKeyPair().publicKey(), payload, signature);
-		bool isVerified2 = Verify(GetDefaultKeyPair(KeyHashingType::Sha2).publicKey(), payload, signature);
+		bool isVerified = SignatureFeatureSolver::Verify(GetAlteredKeyPair().publicKey(), payload, signature);
+		bool isVerified2 = SignatureFeatureSolver::Verify(GetDefaultKeyPair(DerivationScheme::Ed25519_Sha2).publicKey(), payload, signature);
 
 		// Assert:
 		EXPECT_FALSE(isVerified);
@@ -131,7 +132,7 @@ namespace catapult { namespace crypto {
 			signature[position] ^= 0xFF;
 
 			// Act:
-			bool isVerified = Verify(keyPair.publicKey(), payload, signature);
+			bool isVerified = SignatureFeatureSolver::Verify(keyPair.publicKey(), payload, signature);
 
 			// Assert:
 			EXPECT_FALSE(isVerified);
@@ -140,13 +141,13 @@ namespace catapult { namespace crypto {
 
 	TEST(TEST_CLASS, SignatureDoesNotVerifyWhenRPartOfSignatureIsModified) {
 		// Assert:
-		for (auto i = 0u; i < Signature_Size / 2; ++i)
+		for (auto i = 1u; i < (RawSignature::Size/ 2)+1; ++i)
 			AssertSignatureChangeInvalidatesSignature(i);
 	}
 
 	TEST(TEST_CLASS, SignatureDoesNotVerifyWhenSPartOfSignatureIsModified) {
 		// Assert:
-		for (auto i = Signature_Size / 2; i < Signature_Size; ++i)
+		for (auto i = (RawSignature::Size/ 2)+1; i < Signature_Size; ++i)
 			AssertSignatureChangeInvalidatesSignature(i);
 	}
 
@@ -159,7 +160,7 @@ namespace catapult { namespace crypto {
 			payload[i] ^= 0xFF;
 
 			// Act:
-			bool isVerified = Verify(keyPair.publicKey(), payload, signature);
+			bool isVerified = SignatureFeatureSolver::Verify(keyPair.publicKey(), payload, signature);
 
 			// Assert:
 			EXPECT_FALSE(isVerified);
@@ -179,7 +180,7 @@ namespace catapult { namespace crypto {
 		auto signature = SignPayload(hackedKeyPair, payload);
 
 		// Act:
-		bool isVerified = Verify(hackedKeyPair.publicKey(), payload, signature);
+		bool isVerified = SignatureFeatureSolver::Verify(hackedKeyPair.publicKey(), payload, signature);
 
 		// Assert:
 		EXPECT_FALSE(isVerified);
@@ -199,7 +200,7 @@ namespace catapult { namespace crypto {
 		auto signature = SignPayload(hackedKeyPair, payload);
 
 		// Act:
-		bool isVerified = Verify(hackedKeyPair.publicKey(), payload, signature);
+		bool isVerified = SignatureFeatureSolver::Verify(hackedKeyPair.publicKey(), payload, signature);
 
 		// Assert:
 		EXPECT_FALSE(isVerified);
@@ -219,7 +220,7 @@ namespace catapult { namespace crypto {
 		// Act:
 		// keep in mind, there's no good way to make this test, as right now, we have
 		// no way (and I don't think we need one), to check why verify failed
-		bool isVerified = Verify(hackedKeyPair.publicKey(), payload, signature);
+		bool isVerified = SignatureFeatureSolver::Verify(hackedKeyPair.publicKey(), payload, signature);
 
 		// Assert:
 		EXPECT_FALSE(isVerified);
@@ -249,8 +250,8 @@ namespace catapult { namespace crypto {
 		ScalarAddGroupOrder(nonCanonicalSignature.data() + Signature_Size / 2);
 
 		// Act:
-		bool isCanonicalVerified = Verify(keyPair.publicKey(), payload, canonicalSignature);
-		bool isNonCanonicalVerified = Verify(keyPair.publicKey(), payload, nonCanonicalSignature);
+		bool isCanonicalVerified = SignatureFeatureSolver::Verify(keyPair.publicKey(), payload, canonicalSignature);
+		bool isNonCanonicalVerified = SignatureFeatureSolver::Verify(keyPair.publicKey(), payload, nonCanonicalSignature);
 
 		// Assert:
 		EXPECT_TRUE(isCanonicalVerified);
@@ -356,10 +357,10 @@ namespace catapult { namespace crypto {
 		// Act / Assert:
 		for (auto i = 0u; i < input.InputData.size(); ++i) {
 			// Act:
-			auto keyPairSha3 = KeyPair::FromString(input.PrivateKeys[i], KeyHashingType::Sha3);
+			auto keyPairSha3 = KeyPair::FromString(input.PrivateKeys[i], DerivationScheme::Ed25519_Sha3);
 			auto signatureSha3 = SignPayload(keyPairSha3, test::ToVector(input.InputData[i]));
 
-			auto keyPairSha2 = KeyPair::FromString(input.PrivateKeys[i], KeyHashingType::Sha2);
+			auto keyPairSha2 = KeyPair::FromString(input.PrivateKeys[i], DerivationScheme::Ed25519_Sha2);
 			auto signatureSha2 = SignPayload(keyPairSha2, test::ToVector(input.InputData[i]));
 
 			// Assert:
@@ -379,13 +380,13 @@ namespace catapult { namespace crypto {
 		// Act / Assert:
 		for (auto i = 0u; i < input.InputData.size(); ++i) {
 			// Act:
-			auto keyPairSha3 = KeyPair::FromString(input.PrivateKeys[i], KeyHashingType::Sha3);
-			auto keyPairSha2 = KeyPair::FromString(input.PrivateKeys[i], KeyHashingType::Sha2);
+			auto keyPairSha3 = KeyPair::FromString(input.PrivateKeys[i], DerivationScheme::Ed25519_Sha3);
+			auto keyPairSha2 = KeyPair::FromString(input.PrivateKeys[i], DerivationScheme::Ed25519_Sha2);
 			auto payload = test::ToVector(input.InputData[i]);
 			auto signatureSha3 = SignPayload(keyPairSha3, payload);
 			auto signatureSha2 = SignPayload(keyPairSha2, payload);
-			auto isVerifiedSha3 = Verify(keyPairSha3.publicKey(), payload, signatureSha3);
-			auto isVerifiedSha2 = Verify(keyPairSha2.publicKey(), payload, signatureSha2);
+			auto isVerifiedSha3 = SignatureFeatureSolver::Verify(keyPairSha3.publicKey(), payload, signatureSha3);
+			auto isVerifiedSha2 = SignatureFeatureSolver::Verify(keyPairSha2.publicKey(), payload, signatureSha2);
 
 			// Assert:
 			auto message = "test vector at " + std::to_string(i);
@@ -398,13 +399,13 @@ namespace catapult { namespace crypto {
 		// Arrange:
 		auto payload = test::GenerateRandomVector(123);
 		auto properSignatureSha3 = SignPayload(GetDefaultKeyPair(), payload);
-		auto properSignatureSha2 = SignPayload(GetDefaultKeyPair(KeyHashingType::Sha2), payload);
+		auto properSignatureSha2 = SignPayload(GetDefaultKeyPair(DerivationScheme::Ed25519_Sha2), payload);
 
 		// Act:
 		{
 			Signature result;
 			auto partSize = payload.size() / 2;
-			ASSERT_NO_THROW(Sign(GetDefaultKeyPair(), {
+			ASSERT_NO_THROW(SignatureFeatureSolver::Sign(GetDefaultKeyPair(), {
 				{ payload.data(), partSize },
 				{ payload.data() + partSize, payload.size() - partSize }
 			}, result));
@@ -414,7 +415,7 @@ namespace catapult { namespace crypto {
 		{
 			Signature result;
 			auto partSize = payload.size() / 2;
-			ASSERT_NO_THROW(Sign(GetDefaultKeyPair(KeyHashingType::Sha2), {
+			ASSERT_NO_THROW(SignatureFeatureSolver::Sign(GetDefaultKeyPair(DerivationScheme::Ed25519_Sha2), {
 															  { payload.data(), partSize },
 															  { payload.data() + partSize, payload.size() - partSize }
 													  }, result));
@@ -424,7 +425,7 @@ namespace catapult { namespace crypto {
 		{
 			Signature result;
 			auto partSize = payload.size() / 3;
-			ASSERT_NO_THROW(Sign(GetDefaultKeyPair(), {
+			ASSERT_NO_THROW(SignatureFeatureSolver::Sign(GetDefaultKeyPair(), {
 				{ payload.data(), partSize },
 				{ payload.data() + partSize, partSize },
 				{ payload.data() + 2 * partSize, payload.size() - 2 * partSize }
@@ -435,7 +436,7 @@ namespace catapult { namespace crypto {
 		{
 			Signature result;
 			auto partSize = payload.size() / 3;
-			ASSERT_NO_THROW(Sign(GetDefaultKeyPair(KeyHashingType::Sha2), {
+			ASSERT_NO_THROW(SignatureFeatureSolver::Sign(GetDefaultKeyPair(DerivationScheme::Ed25519_Sha2), {
 															  { payload.data(), partSize },
 															  { payload.data() + partSize, partSize },
 															  { payload.data() + 2 * partSize, payload.size() - 2 * partSize }
@@ -446,7 +447,7 @@ namespace catapult { namespace crypto {
 		{
 			Signature result;
 			auto partSize = payload.size() / 4;
-			ASSERT_NO_THROW(Sign(GetDefaultKeyPair(), {
+			ASSERT_NO_THROW(SignatureFeatureSolver::Sign(GetDefaultKeyPair(), {
 				{ payload.data(), partSize },
 				{ payload.data() + partSize, partSize },
 				{ payload.data() + 2 * partSize, partSize },
@@ -458,7 +459,7 @@ namespace catapult { namespace crypto {
 		{
 			Signature result;
 			auto partSize = payload.size() / 4;
-			ASSERT_NO_THROW(Sign(GetDefaultKeyPair(KeyHashingType::Sha2), {
+			ASSERT_NO_THROW(SignatureFeatureSolver::Sign(GetDefaultKeyPair(DerivationScheme::Ed25519_Sha2), {
 															  { payload.data(), partSize },
 															  { payload.data() + partSize, partSize },
 															  { payload.data() + 2 * partSize, partSize },

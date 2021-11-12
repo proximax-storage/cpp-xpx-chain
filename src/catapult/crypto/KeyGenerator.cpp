@@ -30,15 +30,15 @@ extern "C" {
 namespace catapult { namespace crypto {
 
 
-	template<KeyHashingType TKeyHashingType>
+	template<DerivationScheme TKeyDerivationScheme>
 	void ExtractPublicKeyFromPrivateKey(const PrivateKey& privateKey, Key& publicKey);
 
 	template<>
-	void ExtractPublicKeyFromPrivateKey<KeyHashingType::Sha3>(const PrivateKey& privateKey, Key& publicKey) {
+	void ExtractPublicKeyFromPrivateKey<DerivationScheme::Ed25519_Sha3>(const PrivateKey& privateKey, Key& publicKey) {
 		Hash512 h;
 		ge_p3 A;
 
-		HashPrivateKey<KeyHashingType::Sha3>(privateKey, h);
+		HashPrivateKey<DerivationScheme::Ed25519_Sha3>(privateKey, h);
 
 		h[0] &= 0xF8;
 		h[31] &= 0x7F;
@@ -48,7 +48,7 @@ namespace catapult { namespace crypto {
 		ge_p3_tobytes(publicKey.data(), &A);
 	}
 	template<>
-	void ExtractPublicKeyFromPrivateKey<KeyHashingType::Sha2>(const PrivateKey& privateKey, Key& publicKey) {
+	void ExtractPublicKeyFromPrivateKey<DerivationScheme::Ed25519_Sha2>(const PrivateKey& privateKey, Key& publicKey) {
 		ed25519_publickey(privateKey.data(), publicKey.data());
 	}
 }}

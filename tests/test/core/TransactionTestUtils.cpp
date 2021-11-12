@@ -23,7 +23,6 @@
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "mocks/MockTransaction.h"
 #include "catapult/crypto/KeyUtils.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/model/VerifiableEntity.h"
 #include "catapult/utils/HexParser.h"
 #include "tests/test/nodeps/TestConstants.h"
@@ -122,8 +121,8 @@ namespace catapult { namespace test {
 		return CreateEntityRange<model::Transaction>(transactions);
 	}
 
-	model::DetachedCosignature<CoSignatureVersionAlias::Raw> CreateRandomCosignature() {
-		return model::DetachedCosignature<CoSignatureVersionAlias::Raw>{
+	model::DetachedCosignature<SignatureLayout::Raw> CreateRandomCosignature() {
+		return model::DetachedCosignature<SignatureLayout::Raw>{
 			test::GenerateRandomByteArray<Key>(),
 			test::GenerateRandomByteArray<RawSignature>(),
 			test::GenerateRandomByteArray<Hash256>(),

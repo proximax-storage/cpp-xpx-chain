@@ -47,7 +47,7 @@ namespace catapult { namespace mocks {
 	/// Mock partial transactions change subscriber.
 	class MockPtChangeSubscriber : public test::MockTransactionsChangeSubscriber<cache::PtChangeSubscriber, PtFlushInfo> {
 	private:
-		using CosignatureInfo = std::pair<std::unique_ptr<const model::TransactionInfo>, model::Cosignature<CoSignatureVersionAlias::Raw>>;
+		using CosignatureInfo = std::pair<std::unique_ptr<const model::TransactionInfo>, model::Cosignature<SignatureLayout::Raw>>;
 
 	public:
 		/// Returns added cosignatures.
@@ -73,7 +73,7 @@ namespace catapult { namespace mocks {
 				const RawSignature& signature) override {
 			m_addedCosignatureInfos.emplace_back(
 					std::make_unique<model::TransactionInfo>(parentTransactionInfo.copy()),
-					model::Cosignature<CoSignatureVersionAlias::Raw>{ signer, signature });
+					model::Cosignature<SignatureLayout::Raw>{ signer, signature });
 		}
 
 	private:

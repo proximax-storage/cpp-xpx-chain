@@ -37,14 +37,14 @@ namespace catapult { namespace model {
 				+ sizeof(uint32_t); // payload size
 
 		// Assert:
-		EXPECT_EQ(expectedSize, sizeof(AggregateTransaction<CoSignatureVersionAlias::Raw>));
-		EXPECT_EQ(122u + 4, sizeof(AggregateTransaction<CoSignatureVersionAlias::Raw>));
+		EXPECT_EQ(expectedSize, sizeof(AggregateTransaction<SignatureLayout::Raw>));
+		EXPECT_EQ(122u + 4, sizeof(AggregateTransaction<SignatureLayout::Raw>));
 	}
 
 	TEST(TEST_CLASS, TransactionHasExpectedProperties) {
 		// Assert:
-		EXPECT_EQ(Entity_Type_Aggregate_Complete, AggregateTransaction<CoSignatureVersionAlias::Raw>::Entity_Type);
-		EXPECT_EQ(3u, AggregateTransaction<CoSignatureVersionAlias::Raw>::Current_Version);
+		EXPECT_EQ(Entity_Type_Aggregate_Complete, AggregateTransaction<SignatureLayout::Raw>::Entity_Type);
+		EXPECT_EQ(3u, AggregateTransaction<SignatureLayout::Raw>::Current_Version);
 	}
 
 	// endregion
@@ -57,13 +57,13 @@ namespace catapult { namespace model {
 		auto CreateAggregateTransaction(
 				uint32_t extraSize,
 				std::initializer_list<uint16_t> attachmentExtraSizes) {
-			uint32_t size = sizeof(AggregateTransaction<CoSignatureVersionAlias::Raw>) + extraSize;
+			uint32_t size = sizeof(AggregateTransaction<SignatureLayout::Raw>) + extraSize;
 			for (auto attachmentExtraSize : attachmentExtraSizes)
 				size += sizeof(EmbeddedTransactionType) + attachmentExtraSize;
 
-			auto pTransaction = utils::MakeUniqueWithSize<AggregateTransaction<CoSignatureVersionAlias::Raw>>(size);
+			auto pTransaction = utils::MakeUniqueWithSize<AggregateTransaction<SignatureLayout::Raw>>(size);
 			pTransaction->Size = size;
-			pTransaction->PayloadSize = size - (sizeof(AggregateTransaction<CoSignatureVersionAlias::Raw>) + extraSize);
+			pTransaction->PayloadSize = size - (sizeof(AggregateTransaction<SignatureLayout::Raw>) + extraSize);
 
 			auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
 			for (auto attachmentExtraSize : attachmentExtraSizes) {
@@ -77,7 +77,7 @@ namespace catapult { namespace model {
 			return pTransaction;
 		}
 
-		EmbeddedTransactionType& GetSecondTransaction(AggregateTransaction<CoSignatureVersionAlias::Raw>& transaction) {
+		EmbeddedTransactionType& GetSecondTransaction(AggregateTransaction<SignatureLayout::Raw>& transaction) {
 			uint8_t* pBytes = reinterpret_cast<uint8_t*>(transaction.TransactionsPtr());
 			return *reinterpret_cast<EmbeddedTransactionType*>(pBytes + transaction.TransactionsPtr()->Size);
 		}
@@ -88,8 +88,8 @@ namespace catapult { namespace model {
 	// region transactions
 
 	namespace {
-		using ConstTraits = test::ConstTraitsT<AggregateTransaction<CoSignatureVersionAlias::Raw>>;
-		using NonConstTraits = test::NonConstTraitsT<AggregateTransaction<CoSignatureVersionAlias::Raw>>;
+		using ConstTraits = test::ConstTraitsT<AggregateTransaction<SignatureLayout::Raw>>;
+		using NonConstTraits = test::NonConstTraitsT<AggregateTransaction<SignatureLayout::Raw>>;
 	}
 
 #define DATA_POINTER_TEST(TEST_NAME) \
@@ -146,7 +146,7 @@ namespace catapult { namespace model {
 
 	DATA_POINTER_TEST(CosignaturesAreAccessibleWhenThereAreNoTransactionsButCosignatures) {
 		// Arrange:
-		auto pTransaction = CreateAggregateTransaction(2 * sizeof(Cosignature<CoSignatureVersionAlias::Raw>), {});
+		auto pTransaction = CreateAggregateTransaction(2 * sizeof(Cosignature<SignatureLayout::Raw>), {});
 		const auto* pAggregateEnd = reinterpret_cast<const uint8_t*>(pTransaction.get() + 1);
 		const auto* pTransactionsEnd = test::AsVoidPointer(pAggregateEnd + pTransaction->PayloadSize);
 		auto& accessor = TTraits::GetAccessor(*pTransaction);
@@ -161,7 +161,7 @@ namespace catapult { namespace model {
 
 	DATA_POINTER_TEST(CosignaturesAreAccessibleWhenThereAreTransactionsAndCosignatures) {
 		// Arrange:
-		auto pTransaction = CreateAggregateTransaction(sizeof(Cosignature<CoSignatureVersionAlias::Raw>), { 1, 2, 3 });
+		auto pTransaction = CreateAggregateTransaction(sizeof(Cosignature<SignatureLayout::Raw>), { 1, 2, 3 });
 		const auto* pAggregateEnd = reinterpret_cast<const uint8_t*>(pTransaction.get() + 1);
 		const auto* pTransactionsEnd = test::AsVoidPointer(pAggregateEnd + pTransaction->PayloadSize);
 		auto& accessor = TTraits::GetAccessor(*pTransaction);
@@ -176,7 +176,7 @@ namespace catapult { namespace model {
 
 	DATA_POINTER_TEST(CosignaturesAreAccessibleWhenThereAreTransactionsAndPartialCosignatures) {
 		// Arrange: three transactions and space for 2.5 cosignatures
-		auto pTransaction = CreateAggregateTransaction(2 * sizeof(Cosignature<CoSignatureVersionAlias::Raw>) + sizeof(Cosignature<CoSignatureVersionAlias::Raw>) / 2, { 1, 2, 3 });
+		auto pTransaction = CreateAggregateTransaction(2 * sizeof(Cosignature<SignatureLayout::Raw>) + sizeof(Cosignature<SignatureLayout::Raw>) / 2, { 1, 2, 3 });
 		const auto* pAggregateEnd = reinterpret_cast<const uint8_t*>(pTransaction.get() + 1);
 		const auto* pTransactionsEnd = test::AsVoidPointer(pAggregateEnd + pTransaction->PayloadSize);
 		auto& accessor = TTraits::GetAccessor(*pTransaction);
@@ -197,7 +197,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, GetTransactionPayloadSizeReturnsCorrectPayloadSize) {
 		// Arrange:
-		AggregateTransactionHeader<CoSignatureVersionAlias::Raw> header;
+		AggregateTransactionHeader<SignatureLayout::Raw> header;
 		header.PayloadSize = 123;
 
 		// Act:
@@ -210,7 +210,7 @@ namespace catapult { namespace model {
 	// endregion
 
 	namespace {
-		bool IsSizeValid(const AggregateTransaction<CoSignatureVersionAlias::Raw>& transaction, mocks::PluginOptionFlags options = mocks::PluginOptionFlags::Default) {
+		bool IsSizeValid(const AggregateTransaction<SignatureLayout::Raw>& transaction, mocks::PluginOptionFlags options = mocks::PluginOptionFlags::Default) {
 			auto registry = mocks::CreateDefaultTransactionRegistry(options);
 			return IsSizeValid(transaction, registry);
 		}
@@ -319,9 +319,9 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, SizeInvalidWhenSpaceForCosignaturesIsNotMultipleOfCosignatureSize) {
 		// Arrange:
-		for (auto extraSize : { 1u, 3u, static_cast<uint32_t>(sizeof(Cosignature<CoSignatureVersionAlias::Raw>) - 1) }) {
+		for (auto extraSize : { 1u, 3u, static_cast<uint32_t>(sizeof(Cosignature<SignatureLayout::Raw>) - 1) }) {
 			// - add extra bytes, which will cause space to not be multiple of cosignature size
-			auto pTransaction = CreateAggregateTransaction(2 * sizeof(Cosignature<CoSignatureVersionAlias::Raw>) + extraSize, { 1, 2, 3 });
+			auto pTransaction = CreateAggregateTransaction(2 * sizeof(Cosignature<SignatureLayout::Raw>) + extraSize, { 1, 2, 3 });
 
 			// Act + Assert:
 			EXPECT_FALSE(IsSizeValid(*pTransaction)) << "extra size: " << extraSize;
@@ -344,7 +344,7 @@ namespace catapult { namespace model {
 		// Arrange:
 		for (auto numCosignatures : { 1u, 3u }) {
 			// Arrange:
-			auto pTransaction = CreateAggregateTransaction(numCosignatures * sizeof(Cosignature<CoSignatureVersionAlias::Raw>), { 1, 2, 3 });
+			auto pTransaction = CreateAggregateTransaction(numCosignatures * sizeof(Cosignature<SignatureLayout::Raw>), { 1, 2, 3 });
 
 			// Act + Assert:
 			EXPECT_TRUE(IsSizeValid(*pTransaction)) << "num cosignatures: " << numCosignatures;

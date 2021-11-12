@@ -26,8 +26,8 @@ namespace catapult { namespace partialtransaction {
 
 	model::UniqueEntityPtr<model::Transaction> StitchAggregate(const model::WeakCosignedTransactionInfo& transactionInfo) {
 		uint32_t size = transactionInfo.transaction().Size
-				+ sizeof(model::Cosignature<CoSignatureVersionAlias::Raw>) * static_cast<uint32_t>(transactionInfo.cosignatures().size());
-		auto pTransactionWithCosignatures = utils::MakeUniqueWithSize<model::AggregateTransaction<CoSignatureVersionAlias::Raw>>(size);
+				+ sizeof(model::Cosignature<SignatureLayout::Raw>) * static_cast<uint32_t>(transactionInfo.cosignatures().size());
+		auto pTransactionWithCosignatures = utils::MakeUniqueWithSize<model::AggregateTransaction<SignatureLayout::Raw>>(size);
 
 		// copy transaction data
 		auto transactionSize = transactionInfo.transaction().Size;
@@ -52,7 +52,7 @@ namespace catapult { namespace partialtransaction {
 	void SplitCosignedTransactionInfos(
 			CosignedTransactionInfos&& transactionInfos,
 			const consumer<model::TransactionRange&&>& transactionRangeConsumer,
-			const consumer<model::DetachedCosignature<CoSignatureVersionAlias::Raw>&&>& cosignatureConsumer) {
+			const consumer<model::DetachedCosignature<SignatureLayout::Raw>&&>& cosignatureConsumer) {
 		std::vector<model::TransactionRange> transactionRanges;
 		for (const auto& transactionInfo : transactionInfos) {
 			if (transactionInfo.pTransaction) {
@@ -61,7 +61,7 @@ namespace catapult { namespace partialtransaction {
 			}
 
 			for (const auto& cosignature : transactionInfo.Cosignatures)
-				cosignatureConsumer(model::DetachedCosignature<CoSignatureVersionAlias::Raw>(cosignature.Signer, cosignature.Signature, transactionInfo.EntityHash));
+				cosignatureConsumer(model::DetachedCosignature<SignatureLayout::Raw>(cosignature.Signer, cosignature.Signature, transactionInfo.EntityHash));
 		}
 
 		if (!transactionRanges.empty())

@@ -208,7 +208,7 @@ namespace catapult { namespace state {
 					   + (HasFlag(AccountPublicKeys::KeyType::Linked, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
 					   + (HasFlag(AccountPublicKeys::KeyType::Node, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
 					   + (HasFlag(AccountPublicKeys::KeyType::VRF, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
-					   + 8
+					   + 1
 					   + accountState.Balances.size() * sizeof(model::Mosaic)
 					   + accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot);
 				if(HasAdditionalData(AdditionalDataFlags::HasOldState, accountState.GetAdditionalDataMask()))
@@ -221,7 +221,7 @@ namespace catapult { namespace state {
 				return size;
 			}
 			static const model::Mosaic* GetMosaicPointer(const AccountStateHeader<2>& header) {
-				const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&header + 1)
+				const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&header + 1) + 1
 										  + (HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask) ? Key::Size : 0)
 										  + (HasFlag(AccountPublicKeys::KeyType::VRF, header.LinkedKeysMask) ? Key::Size : 0)
 										  + (HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask) ? Key::Size : 0);
@@ -257,7 +257,8 @@ namespace catapult { namespace state {
 				}
 				auto bytePointer = reinterpret_cast<const uint8_t*>(pKeysPointer);
 				auto mask = *bytePointer;
-				int forwardMove;
+				bytePointer++;
+				int forwardMove = 0;
 				if(HasAdditionalData(AdditionalDataFlags::HasOldState, mask))
 				{
 					auto accountState = CopyHeaderToAccountState(*reinterpret_cast<const AccountStateHeader<2>*>(bytePointer));
@@ -308,6 +309,14 @@ namespace catapult { namespace state {
 				pData += sizeof(VersionType);
 				std::memcpy(pData, &header, sizeof(AccountStateHeader<2>));
 				pData += sizeof(AccountStateHeader<2>);
+				if (HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
+					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.linked(), pData);
+
+				if (HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask))
+					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.node(), pData);
+
+				if (HasFlag(AccountPublicKeys::KeyType::VRF, header.LinkedKeysMask))
+					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.vrf(), pData);
 				auto mask = accountState.GetAdditionalDataMask();
 				*pData = mask;
 				pData++;
@@ -317,14 +326,7 @@ namespace catapult { namespace state {
 					std::memcpy(pData, data.data(), sizeof(data));
 					pData += sizeof(data);
 				}
-				if (HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
-					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.linked(), pData);
 
-				if (HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask))
-					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.node(), pData);
-
-				if (HasFlag(AccountPublicKeys::KeyType::VRF, header.LinkedKeysMask))
-					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.vrf(), pData);
 
 				auto* pUint64Data = reinterpret_cast<uint64_t*>(pData);
 				for (const auto& pair : accountState.Balances) {

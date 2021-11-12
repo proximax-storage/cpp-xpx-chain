@@ -123,7 +123,7 @@ namespace catapult { namespace harvesting {
 				return pLastBlock;
 			}
 
-			void prepareAndUnlockSenderAccount(crypto::KeyPair&& keyPair) {
+			void prepareAndUnlockSenderAccount(crypto::KeyPair&& keyPair, uint32_t accountVersion) {
 				// 1. seed an account with an initial currency balance of N and harvesting balance of 10'000'000
 				auto vrfKeyPair = test::GenerateVrfKeyPair();
 				auto currencyMosaicId = test::Default_Currency_Mosaic_Id;
@@ -138,10 +138,10 @@ namespace catapult { namespace harvesting {
 				m_cache.commit(Height(1));
 
 				// 2. unlock the account
-				m_unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), std::move(vrfKeyPair), keyPair.hashingType() == KeyHashingType::Sha3 ? 1 : 2));
+				m_unlockedAccounts.modifier().add(BlockGeneratorAccountDescriptor(std::move(keyPair), std::move(vrfKeyPair), accountVersion));
 			}
 
-			void prepareSenderAccountAndTransactions(crypto::KeyPair&& keyPair, Timestamp deadline) {
+			void prepareSenderAccountAndTransactions(crypto::KeyPair&& keyPair, Timestamp deadline, uint32_t accountVersion) {
 				// 1. seed the UT cache with N txes
 				auto recipient = test::GenerateRandomByteArray<Key>();
 				for (auto i = 0u; i < GetNumIterations(); ++i) {
@@ -155,7 +155,7 @@ namespace catapult { namespace harvesting {
 				}
 
 				// 2. seed and unlock an account with an initial balance of N
-				prepareAndUnlockSenderAccount(std::move(keyPair));
+				prepareAndUnlockSenderAccount(std::move(keyPair), accountVersion);
 			}
 
 			void execute(const model::TransactionInfo& transactionInfo) {
@@ -196,7 +196,7 @@ namespace catapult { namespace harvesting {
 		auto nextBlockTimestamp = pLastBlock->Timestamp + Timestamp(10'000);
 
 		// - seed a sender account and unconfirmed transactions
-		context.prepareSenderAccountAndTransactions(test::GenerateKeyPair(), nextBlockTimestamp);
+		context.prepareSenderAccountAndTransactions(test::GenerateKeyPair(), nextBlockTimestamp, 1);
 
 		// Act:
 		// - simulate tx confirmation (block dispatcher) by confirming one tx at a time
@@ -259,7 +259,7 @@ namespace catapult { namespace harvesting {
 		auto pLastBlock = context.createLastBlock();
 
 		// - seed and unlock a sender account
-		context.prepareAndUnlockSenderAccount(test::GenerateKeyPair());
+		context.prepareAndUnlockSenderAccount(test::GenerateKeyPair(), 1);
 
 		// Act:
 		// - let the harvester sometimes see a cache height 1 and sometimes height 2

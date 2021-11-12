@@ -29,7 +29,7 @@ namespace catapult { namespace test {
 		return crypto::PrivateKey::Generate(RandomByte);
 	}
 
-	crypto::KeyPair GenerateKeyPair(KeyHashingType type) {
+	crypto::KeyPair GenerateKeyPair(DerivationScheme type) {
 		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), type);
 	}
 
@@ -38,7 +38,7 @@ namespace catapult { namespace test {
 	}
 
 	crypto::KeyPair GenerateVrfKeyPair() {
-		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), Vrf_Key_Hashing_Type);
+		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), Vrf_Key_Derivation_Scheme);
 	}
 
 	Address GenerateRandomAddress() {

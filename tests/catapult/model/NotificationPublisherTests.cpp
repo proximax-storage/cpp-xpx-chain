@@ -314,7 +314,7 @@ namespace catapult { namespace model {
 		test::FillWithRandomData(pTransaction->Signer);
 		test::FillWithRandomData(pTransaction->Signature);
 
-		pTransaction->SetSignatureVersion(0); //Making sure transaction does not yet support signature version so old notification is published.
+		pTransaction->SetSignatureDerivationScheme(DerivationScheme::Unset); //Making sure transaction does not yet support derivation scheme so old notification is published.
 		// Act:
 		PublishOne<SignatureNotification<1>>(*pTransaction, [&transaction = *pTransaction](const auto& notification) {
 			// Assert:
@@ -327,13 +327,13 @@ namespace catapult { namespace model {
 			EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Enabled, notification.DataReplayProtectionMode);
 		});
 
-		pTransaction->SetSignatureVersion(1); //Making sure transaction now supports version so we can test signature notification V2
+		pTransaction->SetSignatureDerivationScheme(DerivationScheme::Ed25519_Sha2); //Making sure transaction now supports version so we can test signature notification V2
 		// Act:
 		PublishOne<SignatureNotification<2>>(*pTransaction, [&transaction = *pTransaction](const auto& notification) {
 		  // Assert:
 		  EXPECT_EQ(transaction.Signer, notification.Signer);
 		  EXPECT_EQ(transaction.Signature, notification.Signature);
-		  EXPECT_EQ(transaction.SignatureVersion(), notification.SignatureVersion);
+		  EXPECT_EQ(transaction.SignatureDerivationScheme(), notification.DerivationScheme);
 
 		  // - notice that mock plugin is configured with PluginOptionFlags::Custom_Buffers so dataBuffer() contains only data payload
 		  EXPECT_EQ(test::AsVoidPointer(&transaction + 1), test::AsVoidPointer(notification.Data.pData));
@@ -457,7 +457,7 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, CanPublishTransactionNotificationsWithModeBasic) {
 		// Arrange:
 		auto pTransaction = mocks::CreateMockTransaction(12);
-		pTransaction->SetSignatureVersion(0); // SET VERSION TO ZERO SO IT SENDS V1 SIGNATURE NOTIFICATION
+		pTransaction->SetSignatureDerivationScheme(DerivationScheme::Unset); // SET DERIVATION SCHEME TO UNSET SO IT PUBLISHES THE OLD NOTIFICATION TYPE
 		// Act:
 		PublishAll(*pTransaction, PublicationMode::Basic, [&transaction = *pTransaction](const auto& sub) {
 			// Assert: 8 raised by NotificationPublisher, none raised by MockTransaction::publish
@@ -471,7 +471,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[6]);
 			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[7]);
 		});
-		pTransaction->SetSignatureVersion(1); // SET VERSION TO NON ZERO SO IT SENDS V2 SIGNATURE NOTIFICATION
+		pTransaction->SetSignatureDerivationScheme(DerivationScheme::Ed25519_Sha2); // SET VERSION TO NON ZERO SO IT SENDS V2 SIGNATURE NOTIFICATION
 		PublishAll(*pTransaction, PublicationMode::Basic, [&transaction = *pTransaction](const auto& sub) {
 		  // Assert: 8 raised by NotificationPublisher, none raised by MockTransaction::publish
 		  ASSERT_EQ(8u, sub.numNotifications());

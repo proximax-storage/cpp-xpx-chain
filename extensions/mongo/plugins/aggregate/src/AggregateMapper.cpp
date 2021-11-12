@@ -29,11 +29,11 @@ using namespace catapult::mongo::mappers;
 namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
-		constexpr const model::AggregateTransaction<CoSignatureVersionAlias::Raw>& CastToDerivedType(const model::Transaction& transaction) {
-			return static_cast<const model::AggregateTransaction<CoSignatureVersionAlias::Raw>&>(transaction);
+		constexpr const model::AggregateTransaction<SignatureLayout::Raw>& CastToDerivedType(const model::Transaction& transaction) {
+			return static_cast<const model::AggregateTransaction<SignatureLayout::Raw>&>(transaction);
 		}
 
-		void StreamCosignatures(bson_stream::document& builder, const model::Cosignature<CoSignatureVersionAlias::Raw>* pCosignature, size_t numCosignatures) {
+		void StreamCosignatures(bson_stream::document& builder, const model::Cosignature<SignatureLayout::Raw>* pCosignature, size_t numCosignatures) {
 			auto cosignaturesArray = builder << "cosignatures" << bson_stream::open_array;
 			for (auto i = 0u; i < numCosignatures; ++i) {
 				cosignaturesArray

@@ -21,6 +21,7 @@
 #include <catapult/ionet/PacketPayloadFactory.h>
 #include <catapult/model/Address.h>
 #include <catapult/utils/HexParser.h>
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 #include "HarvestingService.h"
 #include "BlockGeneratorAccountDescriptor.h"
 #include "HarvesterBlockGenerator.h"
@@ -87,7 +88,7 @@ namespace catapult { namespace harvesting {
 			{
 				auto cacheView = state.cache().createView();
 				auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
-				auto accountStateOptional = FindAccountStateByPublicKeyOrAddress(readOnlyAccountStateCache, harvesterPublicKey);
+				auto accountStateOptional = cache::FindAccountStateByPublicKeyOrAddress(readOnlyAccountStateCache, harvesterPublicKey);
 				if (!accountStateOptional.has_value()) {
 					CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "Unable to set up Auto Harvesting: Invalid harvesting account provided with AutoHarvesting Enabled");
 				}

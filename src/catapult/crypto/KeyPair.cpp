@@ -32,24 +32,28 @@ namespace catapult { namespace crypto {
 		return static_cast<KeyPair>(T(std::move(privateKey)));
 	}
 
-	KeyPair KeyPair::FromPrivate(PrivateKey&& privateKey, KeyHashingType hashingType) {
-		if(hashingType == KeyHashingType::Sha2)
+	KeyPair KeyPair::FromPrivate(PrivateKey&& privateKey, DerivationScheme derivationScheme) {
+		if(derivationScheme == DerivationScheme::Ed25519_Sha3)
+			return FromPrivate<KeyPairSha3>(std::move(privateKey));
+		if(derivationScheme == DerivationScheme::Ed25519_Sha2)
 			return FromPrivate<KeyPairSha2>(std::move(privateKey));
-		return FromPrivate<KeyPairSha3>(std::move(privateKey));
+		CATAPULT_THROW_RUNTIME_ERROR("Attempting to use invalid key derivation scheme.");
 
 	}
 
-	KeyPair KeyPair::FromString(const std::string& privateKey, KeyHashingType hashingType) {
-		if(hashingType== KeyHashingType::Sha2)
+	KeyPair KeyPair::FromString(const std::string& privateKey, DerivationScheme derivationScheme) {
+		if(derivationScheme == DerivationScheme::Ed25519_Sha3)
+			return FromString<KeyPairSha3>(privateKey);
+		if(derivationScheme == DerivationScheme::Ed25519_Sha2)
 			return FromString<KeyPairSha2>(privateKey);
-		return FromString<KeyPairSha3>(privateKey);
+		CATAPULT_THROW_RUNTIME_ERROR("Attempting to use invalid key derivation scheme.");
 	}
 	KeyPair KeyPair::FromPrivate(PrivateKey&& privateKey, uint32_t version) {
-		return FromPrivate(std::move(privateKey), utils::ResolveKeyHashingTypeFromAccountVersion(version));
+		return FromPrivate(std::move(privateKey), utils::AccountVersionFeatureResolver::KeyDerivationScheme(version));
 
 	}
 	KeyPair KeyPair::FromString(const std::string& privateKey, uint32_t version) {
-		return FromString(privateKey, utils::ResolveKeyHashingTypeFromAccountVersion(version));
+		return FromString(privateKey, utils::AccountVersionFeatureResolver::KeyDerivationScheme(version));
 	}
 
 }}

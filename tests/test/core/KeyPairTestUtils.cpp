@@ -26,7 +26,7 @@ namespace catapult { namespace test {
 
 	KeyPair CopyKeyPair(const KeyPair& keyPair) {
 		auto iter = keyPair.privateKey().begin();
-		return KeyPair::FromPrivate(PrivateKey::Generate([&iter]() { return *iter++; }), keyPair.hashingType());
+		return KeyPair::FromPrivate(PrivateKey::Generate([&iter]() { return *iter++; }), keyPair.derivationScheme());
 	}
 
 	utils::KeySet ToKeySet(const std::vector<crypto::KeyPair>& keyPairs) {

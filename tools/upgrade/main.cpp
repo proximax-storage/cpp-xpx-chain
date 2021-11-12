@@ -192,7 +192,7 @@ namespace catapult { namespace tools { namespace upgrade {
 				boost::asio::io_service service;
 				boost::asio::executor_work_guard guard(boost::asio::make_work_guard(service));
 
-				crypto::KeyPair keyPair = crypto::KeyPair::FromString(m_restKey, Rest_Key_Hashing_Type);
+				crypto::KeyPair keyPair = crypto::KeyPair::FromString(m_restKey, Rest_Key_Derivation_Scheme);
 				net::VerifiedPeerInfo serverPeerInfo;
 				serverPeerInfo.PublicKey = crypto::ParseKey(m_apiKey);
 				serverPeerInfo.SecurityMode = ionet::ConnectionSecurityMode::None;

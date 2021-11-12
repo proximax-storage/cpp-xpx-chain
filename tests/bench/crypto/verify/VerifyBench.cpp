@@ -18,9 +18,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/crypto/Signer.h"
 #include "tests/bench/nodeps/Random.h"
 #include <benchmark/benchmark.h>
+#include "catapult/crypto/Signature.h"
 
 namespace catapult { namespace crypto {
 
@@ -36,7 +36,7 @@ namespace catapult { namespace crypto {
 				bench::FillWithRandomData(signature);
 				state.ResumeTiming();
 
-				crypto::Verify(key, buffer, signature);
+				crypto::SignatureFeatureSolver::Verify(key, buffer, signature);
 			}
 
 			state.SetBytesProcessed(static_cast<int64_t>(buffer.size() * state.iterations()));

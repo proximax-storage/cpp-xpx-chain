@@ -399,7 +399,7 @@ namespace catapult { namespace chain {
 
 			// Act:
 			auto pTransaction = CreateAggregateTransaction(2);
-			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<CoSignatureVersionAlias::Raw>>(3);
+			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(3);
 			auto result = validator.validateCosigners({ pTransaction.get(), &cosignatures });
 
 			// Assert:

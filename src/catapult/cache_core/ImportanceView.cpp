@@ -21,7 +21,7 @@
 #include "ImportanceView.h"
 #include "AccountStateCache.h"
 #include "catapult/model/Address.h"
-#include "catapult/utils/CacheUtils.h"
+#include "AccountStateCacheUtils.h"
 
 namespace catapult { namespace cache {
 
@@ -48,7 +48,7 @@ namespace catapult { namespace cache {
 
 		template<typename TAction>
 		bool FindAccountStateWithImportance(const ReadOnlyAccountStateCache& cache, const Key& publicKey, Height height, TAction action) {
-			auto accountStateOpt = utils::FindAccountStateByPublicKeyOrAddress(cache, publicKey);
+			auto accountStateOpt = cache::FindAccountStateByPublicKeyOrAddress(cache, publicKey);
 			if (accountStateOpt) {
 				return ForwardIfAccountHasImportanceAtHeight(accountStateOpt->get(), cache, height, action);
 			}

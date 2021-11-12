@@ -20,11 +20,11 @@
 
 #include "Challenge.h"
 #include "catapult/crypto/KeyPair.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/utils/Casting.h"
 #include "catapult/utils/HexFormatter.h"
 #include "catapult/utils/Logging.h"
 #include <boost/random/random_device.hpp>
+#include "catapult/crypto/Signature.h"
 
 namespace catapult { namespace net {
 
@@ -40,13 +40,13 @@ namespace catapult { namespace net {
 
 		void SignChallenge(const crypto::KeyPair& keyPair, std::initializer_list<const RawBuffer> buffers, RawSignature& computedSignature) {
 			CATAPULT_LOG(debug) << "preparing challenge response";
-			crypto::Sign(keyPair, buffers, computedSignature);
+			crypto::SignatureFeatureSolver::Sign(keyPair, buffers, computedSignature);
 			CATAPULT_LOG(trace) << "signature: " << computedSignature;
 		}
 
 		bool VerifyChallenge(const Key& publicKey, std::initializer_list<const RawBuffer> buffers, const RawSignature& signature) {
 			CATAPULT_LOG(trace) << "verify signature: " << signature;
-			auto isVerified = crypto::Verify(publicKey, buffers, signature, Node_Boot_Key_Hashing_Type);
+			auto isVerified = crypto::SignatureFeatureSolver::Verify(publicKey, buffers, signature, Node_Boot_Key_Derivation_Scheme);
 			CATAPULT_LOG(debug) << "verify signature result: " << isVerified;
 			return isVerified;
 		}

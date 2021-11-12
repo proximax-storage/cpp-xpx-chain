@@ -30,10 +30,10 @@ namespace catapult { namespace model {
 
     namespace {
 		using SignatureVersion = uint8_t;
-        constexpr VersionType ENTITY_VERSION_MASK = VersionType(~VersionType{0}) >> ((sizeof(NetworkIdentifier)+sizeof(SignatureVersion)) * CHAR_BIT);
+        constexpr VersionType ENTITY_VERSION_MASK = VersionType(~VersionType{0}) >> ((sizeof(NetworkIdentifier)+sizeof(DerivationScheme)) * CHAR_BIT);
         constexpr uint8_t NETWORK_IDENTIFIER_SHIFT = (sizeof(VersionType) - sizeof(NetworkIdentifier)) * CHAR_BIT;
-		constexpr VersionType SIGNATURE_VERSION_MASK = (VersionType(~VersionType{0}) >> (sizeof(NetworkIdentifier) * CHAR_BIT)) ^ INT16_MAX;
-		constexpr uint8_t SIGNATURE_VERSION_SHIFT = (sizeof(VersionType) - sizeof(NetworkIdentifier) - sizeof(SignatureVersion)) * CHAR_BIT;
+		constexpr VersionType SIGNATURE_DERIVATION_STRATEGY_MASK = (VersionType(~VersionType{0}) >> (sizeof(NetworkIdentifier) * CHAR_BIT)) ^ INT16_MAX;
+		constexpr uint8_t SIGNATURE_DERIVATION_STRATEGY_SHIFT = (sizeof(VersionType) - sizeof(NetworkIdentifier) - sizeof(DerivationScheme)) * CHAR_BIT;
     }
 	/// Binary layout for an entity body.
 	template<typename THeader>
@@ -59,13 +59,13 @@ namespace catapult { namespace model {
 		}
 
 		/// Returns version of an entity.
-		catapult::SignatureVersion SignatureVersion() const {
-			return static_cast<catapult::SignatureVersion>((Version & SIGNATURE_VERSION_MASK) >> SIGNATURE_VERSION_SHIFT);
+		DerivationScheme SignatureDerivationScheme() const {
+			return static_cast<DerivationScheme>((Version & SIGNATURE_DERIVATION_STRATEGY_MASK) >> SIGNATURE_DERIVATION_STRATEGY_SHIFT);
 		}
 		/// Returns version of an entity.
-		void SetSignatureVersion(catapult::SignatureVersion value) {
-			Version &= ~SIGNATURE_VERSION_MASK;
-			Version |= (static_cast<VersionType>(value) << SIGNATURE_VERSION_SHIFT);
+		void SetSignatureDerivationScheme(DerivationScheme value) {
+			Version &= ~SIGNATURE_DERIVATION_STRATEGY_MASK;
+			Version |= (static_cast<VersionType>(value) << SIGNATURE_DERIVATION_STRATEGY_SHIFT);
 		}
 
 	};
@@ -80,9 +80,9 @@ namespace catapult { namespace model {
 			   	version;
 	}
 		/// Creates a version field out of given entity \a version, \a signatureVersion and \a networkIdentifier.
-	constexpr VersionType MakeVersion(NetworkIdentifier networkIdentifier, SignatureVersion signatureVersion, VersionType version) noexcept {
+	constexpr VersionType MakeVersion(NetworkIdentifier networkIdentifier, DerivationScheme signatureDerivationScheme, VersionType version) noexcept {
 		return  static_cast<VersionType>(utils::to_underlying_type(networkIdentifier)) << NETWORK_IDENTIFIER_SHIFT |
-				static_cast<VersionType>(signatureVersion) << SIGNATURE_VERSION_SHIFT |
+				static_cast<VersionType>(signatureDerivationScheme) << SIGNATURE_DERIVATION_STRATEGY_SHIFT |
 				version;
 	}
 }}

@@ -18,20 +18,19 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/Signature.h"
 #include "NemesisBlockLoader.h"
 #include "LocalNodeStateRef.h"
 #include "NemesisFundingObserver.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/chain/BlockExecutor.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/utils/IntegerMath.h"
-#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 
 namespace catapult { namespace extensions {
 
@@ -220,7 +219,7 @@ namespace catapult { namespace extensions {
 		void RequireValidSignature(const model::Block& block) {
 			auto headerSize = model::VerifiableEntity::Header_Size;
 			auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, block.GetHeaderSize() - headerSize };
-			if (crypto::Verify(block.Signer, {blockData}, block.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(block.SignatureVersion())))
+			if (crypto::SignatureFeatureSolver::Verify(block.Signer, {blockData}, block.Signature, block.SignatureDerivationScheme()))
 				return;
 
 			CATAPULT_THROW_RUNTIME_ERROR("nemesis block has invalid signature");

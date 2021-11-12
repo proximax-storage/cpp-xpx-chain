@@ -153,7 +153,7 @@ namespace catapult { namespace test {
 			// Arrange: create a (tcp) server
 			ionet::ByteBuffer packetBuffer;
 			auto pPool = CreateStartedIoThreadPool();
-			auto serverKeyPair = GenerateKeyPair(Node_Boot_Key_Hashing_Type);
+			auto serverKeyPair = GenerateKeyPair(Node_Boot_Key_Derivation_Scheme);
 			SpawnPacketServerWork(pPool->ioContext(), [&ioContext = pPool->ioContext(), &packetBuffer, &serverKeyPair](
 					const auto& pServer) {
 				// - verify the client

@@ -21,15 +21,16 @@
 
 #pragma once
 #include <catapult/model/Transaction.h>
+#include "BlockchainUpgradeEntityType.h"
 namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
 		/// Binary layout for a account upgrade transaction meant to upgrade a V1 account to a V2 account, resulting in all asset transfer from one to the other.
 		template<typename THeader>
-		struct AccountV2UpgradeTransaction : public THeader {
+		struct AccountV2UpgradeTransactionBody : public THeader {
 		private:
-			using TransactionType = AccountV2UpgradeTransaction<THeader>;
+			using TransactionType = AccountV2UpgradeTransactionBody<THeader>;
 
 		public:
 			DEFINE_TRANSACTION_CONSTANTS(Entity_Type_AccountV2_Upgrade, 1)
@@ -44,6 +45,7 @@ namespace catapult { namespace model {
 				return sizeof(TransactionType);
 			}
 		};
+		DEFINE_EMBEDDABLE_TRANSACTION(AccountV2Upgrade)
 
 #pragma pack(pop)
 	}}

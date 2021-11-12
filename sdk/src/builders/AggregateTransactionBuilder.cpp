@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/Signature.h"
 #include "AggregateTransactionBuilder.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/utils/Functional.h"
 
@@ -80,7 +80,7 @@ namespace catapult { namespace builders {
 		}
 
 		model::Cosignature<1> cosignature{ cosigner.publicKey(), {} };
-		crypto::Sign(cosigner, m_transactionHash, cosignature.Signature);
+		crypto::SignatureFeatureSolver::Sign(cosigner, m_transactionHash, cosignature.Signature);
 		m_cosignatures.push_back(cosignature);
 	}
 

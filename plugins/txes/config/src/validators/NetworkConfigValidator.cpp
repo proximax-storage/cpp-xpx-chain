@@ -46,6 +46,14 @@ namespace catapult { namespace validators {
 				if (2 * networkConfig.ImportanceGrouping <= networkConfig.MaxRollbackBlocks)
 					return Failure_NetworkConfig_ImportanceGrouping_Less_Or_Equal_Half_MaxRollbackBlocks;
 
+				if( networkConfig.AccountVersion < currentNetworkConfig.AccountVersion)
+					return Failure_NetworkConfig_AccountVersion_Less_Than_Current;
+
+				if(networkConfig.AccountVersion < networkConfig.MinimumAccountVersion)
+					return Failure_NetworkConfig_AccountVersion_Less_Than_Minimum;
+
+				if(networkConfig.MinimumAccountVersion < networkConfig.AccountVersion)
+					return Failure_NetworkConfig_MinimumAccountVersion_Less_Than_Current;
 				if (100u < networkConfig.HarvestBeneficiaryPercentage)
 					return Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hundred;
 

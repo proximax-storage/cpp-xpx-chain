@@ -44,7 +44,7 @@ namespace catapult { namespace partialtransaction {
 		}
 
 		/// Sets the cosignature range \a consumer.
-		void setCosignatureRangeConsumer(const handlers::RangeHandler<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>& consumer) {
+		void setCosignatureRangeConsumer(const handlers::RangeHandler<model::DetachedCosignature<SignatureLayout::Raw>>& consumer) {
 			extensions::SetOnce(m_cosignatureRangeConsumer, consumer);
 		}
 
@@ -67,7 +67,7 @@ namespace catapult { namespace partialtransaction {
 	private:
 		CosignedTransactionInfosConsumer m_cosignedTransactionInfosConsumer;
 		handlers::TransactionRangeHandler m_ptRangeConsumer;
-		handlers::RangeHandler<model::DetachedCosignature<CoSignatureVersionAlias::Raw>> m_cosignatureRangeConsumer;
+		handlers::RangeHandler<model::DetachedCosignature<SignatureLayout::Raw>> m_cosignatureRangeConsumer;
 	};
 
 	// endregion

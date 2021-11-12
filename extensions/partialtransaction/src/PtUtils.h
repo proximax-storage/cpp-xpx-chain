@@ -33,5 +33,5 @@ namespace catapult { namespace partialtransaction {
 	void SplitCosignedTransactionInfos(
 			CosignedTransactionInfos&& transactionInfos,
 			const consumer<model::TransactionRange&&>& transactionRangeConsumer,
-			const consumer<model::DetachedCosignature<CoSignatureVersionAlias::Raw>&&>& cosignatureConsumer);
+			const consumer<model::DetachedCosignature<SignatureLayout::Raw>&&>& cosignatureConsumer);
 }}

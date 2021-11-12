@@ -36,11 +36,11 @@ namespace catapult {
 	/// Duration of eternal artifact.
 	constexpr BlockDuration Eternal_Artifact_Duration(0);
 
-	const KeyHashingType Node_Boot_Key_Hashing_Type = KeyHashingType::Sha3;
+	const DerivationScheme Node_Boot_Key_Derivation_Scheme = DerivationScheme::Ed25519_Sha3;
 
-	const KeyHashingType Rest_Key_Hashing_Type = KeyHashingType::Sha3;
+	const DerivationScheme Rest_Key_Derivation_Scheme = DerivationScheme::Ed25519_Sha3;
 
-	const KeyHashingType Vrf_Key_Hashing_Type = KeyHashingType::Sha2;
+	const DerivationScheme Vrf_Key_Derivation_Scheme = DerivationScheme::Ed25519_Sha2;
 
-	const KeyHashingType Ephemeral_Key_Hashing_Type = KeyHashingType::Sha2;
+	const DerivationScheme Ephemeral_Key_Derivation_Scheme = DerivationScheme::Ed25519_Sha2;
 }

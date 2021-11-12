@@ -32,7 +32,7 @@ namespace catapult { namespace test {
 	crypto::KeyPair GenerateKeyPair(uint32_t accountVersion);
 
 	/// Generates a random key pair with the given hashing type
-	crypto::KeyPair GenerateKeyPair(KeyHashingType hashingType);
+	crypto::KeyPair GenerateKeyPair(DerivationScheme derivationScheme);
 
 	/// Extracts the public keys of \a keyPairs into a key set.
 	utils::KeySet ToKeySet(const std::vector<crypto::KeyPair>& keyPairs);

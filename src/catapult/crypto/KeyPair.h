@@ -22,7 +22,7 @@
 #include "KeyGenerator.h"
 #include "PrivateKey.h"
 #include "catapult/types.h"
-#include "catapult/utils/AccountVersionToKeyTypeResolver.h"
+#include "catapult/utils/AccountVersionFeatureResolver.h"
 
 namespace catapult { namespace crypto {
 
@@ -44,10 +44,10 @@ namespace catapult { namespace crypto {
 		template<class T>
 		static KeyPair FromString(const std::string& privateKey);
 		/// Creates a key pair of given type from \a privateKey based on account version.
-		static KeyPair FromPrivate(PrivateKey&& privateKey, KeyHashingType hashingType);
+		static KeyPair FromPrivate(PrivateKey&& privateKey, DerivationScheme hashingType);
 
 		/// Creates a key pair of a given type from \a privateKey string.
-		static KeyPair FromString(const std::string& privateKey, KeyHashingType hashingType);
+		static KeyPair FromString(const std::string& privateKey, DerivationScheme hashingType);
 
 		/// Creates a key pair of given type from \a privateKey based on account version.
 		static KeyPair FromPrivate(PrivateKey&& privateKey, uint32_t version);
@@ -61,8 +61,8 @@ namespace catapult { namespace crypto {
 		}
 
 		/// Returns the hashing algorythm used in this KeyPair.
-		const auto hashingType() const {
-			return m_hashingType;
+		const auto derivationScheme() const {
+			return m_derivationScheme;
 		}
 
 		/// Checks whether two keypairs are the same.
@@ -78,7 +78,7 @@ namespace catapult { namespace crypto {
 	protected:
 		PrivateKey m_privateKey;
 		Key m_publicKey;
-		KeyHashingType m_hashingType;
+		DerivationScheme m_derivationScheme;
 	};
 
 	/// Represents a pair of private key with associated public key associated with a Sha3 hashing function
@@ -88,12 +88,12 @@ namespace catapult { namespace crypto {
 	protected:
 		KeyPairSha3(PrivateKey&& privateKey) : KeyPair(std::move(privateKey)) {
 			DerivePublicKeyFromPrivate(m_privateKey);
-			m_hashingType = KeyHashingType::Sha3;
+			m_derivationScheme = DerivationScheme::Ed25519_Sha3;
 		}
 
 	protected:
 		void DerivePublicKeyFromPrivate(const PrivateKey& key) {
-			ExtractPublicKeyFromPrivateKey<KeyHashingType::Sha3>(key, m_publicKey);
+			ExtractPublicKeyFromPrivateKey<DerivationScheme::Ed25519_Sha3>(key, m_publicKey);
 		}
 	};
 
@@ -103,12 +103,12 @@ namespace catapult { namespace crypto {
 	protected:
 		KeyPairSha2(PrivateKey&& privateKey) : KeyPair(std::move(privateKey)) {
 			DerivePublicKeyFromPrivate(m_privateKey);
-			m_hashingType = KeyHashingType::Sha2;
+			m_derivationScheme = DerivationScheme::Ed25519_Sha2;
 		}
 
 	protected:
 		void DerivePublicKeyFromPrivate(const PrivateKey& key) {
-			ExtractPublicKeyFromPrivateKey<KeyHashingType::Sha2>(key, m_publicKey);
+			ExtractPublicKeyFromPrivateKey<DerivationScheme::Ed25519_Sha2>(key, m_publicKey);
 		}
 	};
 

@@ -1229,12 +1229,12 @@ namespace catapult { namespace consumers {
 			static auto CreateConfigTransaction(const BlockDuration& applyHeightDelta) {
 				auto pEmbeddedTransaction = CreateConfigTransactionBuilder(applyHeightDelta).buildEmbedded();
 
-				uint32_t size = sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) + pEmbeddedTransaction->Size;
-				auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<CoSignatureVersionAlias::Raw>>(size);
+				uint32_t size = sizeof(model::AggregateTransaction<SignatureLayout::Raw>) + pEmbeddedTransaction->Size;
+				auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<SignatureLayout::Raw>>(size);
 				pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
-				pTransaction->Type = model::AggregateTransaction<CoSignatureVersionAlias::Raw>::Entity_Type;
+				pTransaction->Type = model::AggregateTransaction<SignatureLayout::Raw>::Entity_Type;
 				pTransaction->Size = size;
-				pTransaction->PayloadSize = size - sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>);
+				pTransaction->PayloadSize = size - sizeof(model::AggregateTransaction<SignatureLayout::Raw>);
 
 				std::memcpy(pTransaction.get() + 1, pEmbeddedTransaction.get(), pEmbeddedTransaction->Size);
 

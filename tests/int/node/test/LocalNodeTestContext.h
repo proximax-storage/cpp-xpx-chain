@@ -213,7 +213,7 @@ namespace catapult { namespace test {
 			// can pass empty string to CreateBlockchainConfiguration because this config is only being used to get boot key
 			auto config = CreatePrototypicalBlockchainConfiguration("");
 			m_configTransform(config);
-			return crypto::KeyPair::FromString(config.User.BootKey, Node_Boot_Key_Hashing_Type);
+			return crypto::KeyPair::FromString(config.User.BootKey, Node_Boot_Key_Derivation_Scheme);
 		}
 
 	public:

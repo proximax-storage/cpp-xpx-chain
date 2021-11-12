@@ -18,10 +18,10 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <catapult/crypto/Signature.h>
 #include "tools/ToolMain.h"
 #include "tools/ToolKeys.h"
 #include "tools/ToolThreadUtils.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/thread/IoThreadPool.h"
 #include "catapult/thread/ParallelFor.h"
 #include "catapult/utils/StackLogger.h"
@@ -78,11 +78,11 @@ namespace catapult { namespace tools { namespace benchmark {
 				});
 
 				RunParallel("Signature", *pPool, entries, [&keyPair](auto& entry) {
-					crypto::Sign(keyPair, entry.Data, entry.Signature);
+					crypto::SignatureFeatureSolver::Sign(keyPair, entry.Data, entry.Signature);
 				});
 
 				RunParallel("Verify", *pPool, entries, [&keyPair](auto& entry) {
-					entry.IsVerified = crypto::Verify(keyPair.publicKey(), entry.Data, entry.Signature);
+					entry.IsVerified = crypto::SignatureFeatureSolver::Verify(keyPair.publicKey(), entry.Data, entry.Signature);
 					if (!entry.IsVerified)
 						CATAPULT_LOG(warning) << "could not verify data!";
 				});

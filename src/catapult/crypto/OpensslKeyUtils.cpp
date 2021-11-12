@@ -93,10 +93,10 @@ namespace catapult { namespace crypto {
 			std::array<uint8_t, Key::Size> privateKeyBuffer;
 			auto privateKeyBufferSize = Key::Size;
 			if (!EVP_PKEY_get_raw_private_key(&key, privateKeyBuffer.data(), &privateKeyBufferSize))
-				return std::make_pair(KeyPair::FromPrivate(PrivateKey(), Node_Boot_Key_Hashing_Type), false);
+				return std::make_pair(KeyPair::FromPrivate(PrivateKey(), Node_Boot_Key_Derivation_Scheme), false);
 
 			auto privateKey = PrivateKey::FromBufferSecure(privateKeyBuffer);
-			return std::make_pair(KeyPair::FromPrivate(std::move(privateKey), Node_Boot_Key_Hashing_Type), true);
+			return std::make_pair(KeyPair::FromPrivate(std::move(privateKey), Node_Boot_Key_Derivation_Scheme), true);
 		});
 	}
 }}

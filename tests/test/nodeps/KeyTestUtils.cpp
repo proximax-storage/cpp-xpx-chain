@@ -33,12 +33,12 @@ namespace catapult { namespace test {
 		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), accountVersion);
 	}
 
-	crypto::KeyPair GenerateKeyPair(KeyHashingType hashingType) {
-		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), hashingType);
+	crypto::KeyPair GenerateKeyPair(DerivationScheme derivationScheme) {
+		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), derivationScheme);
 	}
 
-	crypto::KeyPair GenerateVrfKeyPair(KeyHashingType hashingType) {
-		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), Vrf_Key_Hashing_Type);
+	crypto::KeyPair GenerateVrfKeyPair() {
+		return crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey(), Vrf_Key_Derivation_Scheme);
 	}
 
 	utils::KeySet ToKeySet(const std::vector<crypto::KeyPair>& keyPairs) {

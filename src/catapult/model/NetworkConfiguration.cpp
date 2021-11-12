@@ -80,6 +80,8 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(EnableDeadlineValidation);
 		config.AccountVersion = 1;
 		TRY_LOAD_CHAIN_PROPERTY(AccountVersion);
+		config.MinimumAccountVersion = 1;
+		TRY_LOAD_CHAIN_PROPERTY(MinimumAccountVersion);
 		config.MaxHarvesterBalance = Amount(UINT64_MAX);
 		TRY_LOAD_CHAIN_PROPERTY(MaxHarvesterBalance);
 

@@ -44,7 +44,7 @@ namespace catapult { namespace plugins {
 		constexpr auto Entity_Type = static_cast<EntityType>(9876);
 
 		struct AggregateTransactionWrapper {
-			model::UniqueEntityPtr<AggregateTransaction<CoSignatureVersionAlias::Raw>> pTransaction;
+			model::UniqueEntityPtr<AggregateTransaction<SignatureLayout::Raw>> pTransaction;
 			std::vector<const mocks::EmbeddedMockTransaction*> SubTransactions;
 			std::vector<Key> SubTransactionSigners;
 			std::vector<Key> SubTransactionRecipients;
@@ -53,10 +53,10 @@ namespace catapult { namespace plugins {
 		};
 
 		AggregateTransactionWrapper CreateAggregateTransaction(uint8_t numTransactions, uint8_t numCosignatures, VersionType version) {
-			using TransactionType = AggregateTransaction<CoSignatureVersionAlias::Raw>;
+			using TransactionType = AggregateTransaction<SignatureLayout::Raw>;
 			uint32_t entitySize = sizeof(TransactionType)
 					+ numTransactions * sizeof(mocks::EmbeddedMockTransaction)
-					+ numCosignatures * sizeof(Cosignature<CoSignatureVersionAlias::Raw>);
+					+ numCosignatures * sizeof(Cosignature<SignatureLayout::Raw>);
 
 			AggregateTransactionWrapper wrapper;
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
@@ -195,7 +195,7 @@ namespace catapult { namespace plugins {
 		auto realSize = pPlugin->calculateRealSize(*wrapper.pTransaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(AggregateTransaction<CoSignatureVersionAlias::Raw>) + 3 * sizeof(mocks::EmbeddedMockTransaction) + 4 * sizeof(Cosignature<CoSignatureVersionAlias::Raw>), realSize);
+		EXPECT_EQ(sizeof(AggregateTransaction<SignatureLayout::Raw>) + 3 * sizeof(mocks::EmbeddedMockTransaction) + 4 * sizeof(Cosignature<SignatureLayout::Raw>), realSize);
 	}
 
 	TRAITS_BASED_TEST(CannotCalculateSizeWhenAnySubTransactionIsNotSupported) {
@@ -433,7 +433,7 @@ namespace catapult { namespace plugins {
 	// region publish - signature
 
 	namespace {
-		template<SignatureVersion TSignatureNotificationVersion>
+		template<DerivationScheme TDerivationScheme>
 		void AssertCanRaiseSignatureNotifications(uint8_t numTransactions, uint8_t numCosignatures, VersionType version) {
 			// Arrange:
 			mocks::MockTypedNotificationSubscriber<SignatureNotification<2>> sub; //In updated node version subtransactions always issue a V2 notification
@@ -442,11 +442,7 @@ namespace catapult { namespace plugins {
 			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures, version);
 
 			auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
-			if constexpr(TSignatureNotificationVersion == 1)
-			{
-				wrapper.pTransaction->SetSignatureVersion(0);
-			}
-			else wrapper.pTransaction->SetSignatureVersion(1);
+			wrapper.pTransaction->SetSignatureDerivationScheme(TDerivationScheme);
 			// Act:
 			test::PublishTransaction(*pPlugin, WeakEntityInfoT<Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
@@ -473,14 +469,14 @@ namespace catapult { namespace plugins {
 
 	TRAITS_BASED_TEST(EmptyAggregateDoesNotRaiseSignatureNotifications) {
 		// Assert:
-		AssertCanRaiseSignatureNotifications<1>(0, 0, version);
-		AssertCanRaiseSignatureNotifications<2>(0, 0, version);
+		AssertCanRaiseSignatureNotifications<DerivationScheme::Ed25519_Sha3>(0, 0, version);
+		AssertCanRaiseSignatureNotifications<DerivationScheme::Ed25519_Sha2>(0, 0, version);
 	}
 
 	TRAITS_BASED_TEST(CanRaiseSignatureNotificationsFromAggregate) {
 		// Assert:
-		AssertCanRaiseSignatureNotifications<1>(2, 3, version);
-		AssertCanRaiseSignatureNotifications<2>(2, 3, version);
+		AssertCanRaiseSignatureNotifications<DerivationScheme::Ed25519_Sha3>(2, 3, version);
+		AssertCanRaiseSignatureNotifications<DerivationScheme::Ed25519_Sha2>(2, 3, version);
 	}
 
 	// endregion
@@ -541,7 +537,7 @@ namespace catapult { namespace plugins {
 			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures, version);
 
 			const auto* pAggregateDataStart = test::AsVoidPointer(&wrapper.pTransaction->Version);
-			auto aggregateDataSize = sizeof(AggregateTransaction<CoSignatureVersionAlias::Raw>) - VerifiableEntity::Header_Size;
+			auto aggregateDataSize = sizeof(AggregateTransaction<SignatureLayout::Raw>) - VerifiableEntity::Header_Size;
 			aggregateDataSize += numTransactions * sizeof(mocks::EmbeddedMockTransaction);
 
 			// Act:

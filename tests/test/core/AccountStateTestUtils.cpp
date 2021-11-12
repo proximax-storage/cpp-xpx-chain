@@ -49,6 +49,7 @@ namespace catapult { namespace test {
 		{
 			EXPECT_EQ(expected.SupplementalPublicKeys.node().get(), actual.SupplementalPublicKeys.node().get()) << message;
 			EXPECT_EQ(expected.SupplementalPublicKeys.vrf().get(), actual.SupplementalPublicKeys.vrf().get()) << message;
+			EXPECT_EQ(expected.GetAdditionalDataMask(), actual.GetAdditionalDataMask());
 		}
 
 		EXPECT_EQ(expected.Balances.size(), actual.Balances.size()) << message;

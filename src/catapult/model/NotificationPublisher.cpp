@@ -111,7 +111,18 @@ namespace catapult { namespace model {
 					sub.notify(blockNotification);
 
 					// raise a signature notification
-					sub.notify(SignatureNotification<1>(block.Signer, block.Signature, blockData));
+					switch (block.SignatureDerivationScheme())
+					{
+						case DerivationScheme::Unset: //unset: prior to merge
+						{
+							sub.notify(SignatureNotification<1>(block.Signer, block.Signature, blockData));
+							break;
+						}
+						default:
+						{
+							sub.notify(SignatureNotification<2>(block.Signer, block.Signature, block.SignatureDerivationScheme(), blockData));
+						}
+					}
 					break;
 				}
 
@@ -142,9 +153,9 @@ namespace catapult { namespace model {
 				sub.notify(BalanceDebitNotification<1>(transaction.Signer, m_feeMosaicId, fee));
 
 				// raise a signature notification
-				switch (transaction.SignatureVersion())
+				switch (transaction.SignatureDerivationScheme())
 				{
-					case 0://unset: prior to merge
+					case DerivationScheme::Unset: //unset: prior to merge
 					{
 
 						sub.notify(SignatureNotification<1>(
@@ -159,7 +170,7 @@ namespace catapult { namespace model {
 						sub.notify(SignatureNotification<2>(
 								transaction.Signer,
 								transaction.Signature,
-								transaction.SignatureVersion(),
+								transaction.SignatureDerivationScheme(),
 								plugin.dataBuffer(transaction),
 								SignatureNotification<1>::ReplayProtectionMode::Enabled));
 					}

@@ -47,7 +47,7 @@ namespace catapult { namespace cache {
 			return m_transactionInfo.EntityHash;
 		}
 
-		const std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>>& cosignatures() const {
+		const std::vector<model::Cosignature<SignatureLayout::Raw>>& cosignatures() const {
 			return m_cosignatures;
 		}
 
@@ -77,7 +77,7 @@ namespace catapult { namespace cache {
 
 			// recalculate the cosignatures hash
 			crypto::Sha3_256(
-					{ reinterpret_cast<const uint8_t*>(m_cosignatures.data()), m_cosignatures.size() * sizeof(model::Cosignature<CoSignatureVersionAlias::Raw>) },
+					{ reinterpret_cast<const uint8_t*>(m_cosignatures.data()), m_cosignatures.size() * sizeof(model::Cosignature<SignatureLayout::Raw>) },
 					m_cosignaturesHash);
 			return true;
 		}
@@ -85,7 +85,7 @@ namespace catapult { namespace cache {
 	private:
 		model::DetachedTransactionInfo m_transactionInfo;
 		Hash256 m_cosignaturesHash;
-		std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>> m_cosignatures; // sorted by signer so that sets of cosignatures added in different order match
+		std::vector<model::Cosignature<SignatureLayout::Raw>> m_cosignatures; // sorted by signer so that sets of cosignatures added in different order match
 	};
 
 	// region MemoryPtCacheView
@@ -135,7 +135,7 @@ namespace catapult { namespace cache {
 			if (knownShortHashPairs.cend() != iter && iter->second == utils::ToShortHash(ptData.cosignaturesHash()))
 				continue;
 
-			auto entrySize = sizeof(Hash256) + sizeof(model::Cosignature<CoSignatureVersionAlias::Raw>) * ptData.cosignatures().size();
+			auto entrySize = sizeof(Hash256) + sizeof(model::Cosignature<SignatureLayout::Raw>) * ptData.cosignatures().size();
 			model::CosignedTransactionInfo transactionInfo;
 			transactionInfo.EntityHash = ptData.entityHash();
 			transactionInfo.Cosignatures = ptData.cosignatures();

@@ -62,7 +62,7 @@ namespace catapult { namespace plugins {
 			uint64_t calculateRealSize(const Transaction& transaction) const override {
 				// if size is valid, the real size is the transaction size
 				// if size is invalid, return a size that can never be correct (transaction size is uint32_t)
-				return IsSizeValid(CastToDerivedType<CoSignatureVersionAlias::Raw>(transaction), m_transactionRegistry)
+				return IsSizeValid(CastToDerivedType<SignatureLayout::Raw>(transaction), m_transactionRegistry)
 						? transaction.Size
 						: std::numeric_limits<uint64_t>::max();
 			}
@@ -101,11 +101,11 @@ namespace catapult { namespace plugins {
 							numCosignatures,
 							aggregate.CosignaturesPtr()));
 
-					std::map<Key, uint32_t> associatedVersion;
+					std::map<Key, DerivationScheme> associatedVersion;
 					// publish all sub-transaction information
 					for (const auto& subTransaction : aggregate.Transactions()) {
 						// - change source
-						associatedVersion.try_emplace(subTransaction.Signer, subTransaction.SignatureVersion());
+						associatedVersion.try_emplace(subTransaction.Signer, subTransaction.SignatureDerivationScheme());
 						constexpr auto Relative = SourceChangeNotification<1>::SourceChangeType::Relative;
 						sub.notify(SourceChangeNotification<1>(Relative, 0, Relative, 1));
 
@@ -141,7 +141,7 @@ namespace catapult { namespace plugins {
 						//   (1) sub-transaction execution or (2) composite account setup
 						// - require the cosigners to sign the aggregate indirectly via the hash of its data
 						auto it = associatedVersion.find(pCosignature->Signer);
-						sub.notify(SignatureNotification<2>(pCosignature->Signer, pCosignature->Signature, it != associatedVersion.end() ? it->second : 1,  transactionInfo.hash()));
+						sub.notify(SignatureNotification<2>(pCosignature->Signer, pCosignature->Signature, it != associatedVersion.end() ? it->second : DerivationScheme::Ed25519_Sha3,  transactionInfo.hash()));
 						++pCosignature;
 					}
 					break;

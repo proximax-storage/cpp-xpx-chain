@@ -33,6 +33,9 @@ namespace catapult { namespace validators {
 			"blockGenerationTargetTime = 15s\n"
 			"blockTimeSmoothingFactor = 3000\n"
 			"\n"
+			"accountVersion = 1\n"
+			"minimumAccountVersion = 1\n"
+			"\n"
 			"greedDelta = 0.5\n"
 			"greedExponent = 2\n"
 			"\n"
@@ -191,6 +194,37 @@ namespace catapult { namespace validators {
 			Failure_NetworkConfig_ImportanceGrouping_Less_Or_Equal_Half_MaxRollbackBlocks,
 			networkConfig,
 			test::GetSupportedEntityVersionsString());
+	}
+
+	TEST(TEST_CLASS, FailureWhenAccountVersionIsLowerThanCurrentVersion) {
+		auto networkConfig = networkConfigWithPlugin;
+		boost::algorithm::replace_first(networkConfig, "accountVersion = 1", "accountVersion = 0");
+		// Assert:
+		RunTest(
+				Failure_NetworkConfig_AccountVersion_Less_Than_Current,
+				networkConfig,
+				test::GetSupportedEntityVersionsString());
+	}
+
+	TEST(TEST_CLASS, FailureWhenMinimumAccountVersionIsLowerThanCurrentVersion) {
+		auto networkConfig = networkConfigWithPlugin;
+		boost::algorithm::replace_first(networkConfig, "minimumAccountVersion = 1", "minimumAccountVersion = 0");
+		// Assert:
+		RunTest(
+				Failure_NetworkConfig_MinimumAccountVersion_Less_Than_Current,
+				networkConfig,
+				test::GetSupportedEntityVersionsString());
+	}
+
+	TEST(TEST_CLASS, FailureWhenAccountVersionIsLowerThanMinimum) {
+		auto networkConfig = networkConfigWithPlugin;
+		boost::algorithm::replace_first(networkConfig, "accountVersion = 1", "accountVersion = 1");
+		boost::algorithm::replace_first(networkConfig, "minimumAccountVersion = 1", "minimumAccountVersion = 2");
+		// Assert:
+		RunTest(
+				Failure_NetworkConfig_AccountVersion_Less_Than_Minimum,
+				networkConfig,
+				test::GetSupportedEntityVersionsString());
 	}
 
 	TEST(TEST_CLASS, FailureWhenHarvestBeneficiaryPercentageInvalid) {

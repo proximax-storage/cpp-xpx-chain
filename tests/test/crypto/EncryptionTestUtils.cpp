@@ -75,7 +75,7 @@ namespace catapult { namespace test {
 	}
 
 	std::vector<uint8_t> GenerateEphemeralAndEncrypt(const RawBuffer& clearText, const Key& recipientPublicKey) {
-		auto ephemeralKeyPair = test::GenerateKeyPair(Ephemeral_Key_Hashing_Type);
+		auto ephemeralKeyPair = test::GenerateKeyPair(Ephemeral_Key_Derivation_Scheme);
 		auto sharedKey = DeriveSharedKey(ephemeralKeyPair, recipientPublicKey);
 		auto iv = GenerateRandomByteArray<crypto::AesGcm256::IV>();
 

@@ -71,8 +71,8 @@ uint8_t RandomByte() {
 crypto::KeyPair GenerateRandomKeyPair(uint32_t accountVersion) {
 	return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte), accountVersion);
 }
-crypto::KeyPair GenerateRandomKeyPair(KeyHashingType hashingType) {
-	return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte), hashingType);
+crypto::KeyPair GenerateRandomKeyPair(DerivationScheme derivationScheme) {
+	return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte), derivationScheme);
 }
 
 model::UniqueEntityPtr<model::Transaction> generateTransferTransaction(const GenerationHash& hash) {
@@ -228,7 +228,7 @@ int main(int argc, const char** argv) {
 		svc.run();
 	} else if (options.Mode == "node") {
 
-		crypto::KeyPair keyPair = GenerateRandomKeyPair(Node_Boot_Key_Hashing_Type);
+		crypto::KeyPair keyPair = GenerateRandomKeyPair(Node_Boot_Key_Derivation_Scheme);
 		net::VerifiedPeerInfo serverPeerInfo;
 		serverPeerInfo.PublicKey = crypto::ParseKey(options.ApiNodePublicKey);
 		serverPeerInfo.SecurityMode = ionet::ConnectionSecurityMode::None;

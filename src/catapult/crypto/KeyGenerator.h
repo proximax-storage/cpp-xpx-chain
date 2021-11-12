@@ -26,6 +26,6 @@ namespace catapult { namespace crypto { class PrivateKey; } }
 namespace catapult { namespace crypto {
 
 	/// Extracts a public key (\a publicKey) from a private key (\a)
-	template<KeyHashingType TKeyHashingType>
+	template<DerivationScheme TKeyDerivationScheme>
 	void ExtractPublicKeyFromPrivateKey(const PrivateKey& privateKey, Key& publicKey);
 }}

@@ -18,11 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/Signature.h"
 #include "SecureSignedPacketIo.h"
 #include "BatchPacketReader.h"
 #include "PacketIo.h"
+#include "catapult/constants.h"
 #include "catapult/crypto/Hashes.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/utils/HexFormatter.h"
 
 namespace catapult { namespace ionet {
@@ -71,7 +72,7 @@ namespace catapult { namespace ionet {
 				Hash256 childPacketHash;
 				crypto::Sha3_256({ reinterpret_cast<const uint8_t*>(&childPacket), childPacket.Size }, childPacketHash);
 
-				if (!crypto::Verify(m_remoteKey, {childPacketHash}, securePacketHeader.Signature, Node_Boot_Key_Hashing_Type)) {
+				if (!crypto::SignatureFeatureSolver::Verify(m_remoteKey, {childPacketHash}, securePacketHeader.Signature, Node_Boot_Key_Derivation_Scheme)) {
 					CATAPULT_LOG(warning) << "packet from " << m_remoteKey << " has invalid signature";
 					return m_callback(SocketOperationCode::Security_Error, nullptr);
 				}
@@ -109,7 +110,7 @@ namespace catapult { namespace ionet {
 
 				auto payloadHash = CalculatePayloadHash(payload);
 				auto pSecurePacketHeader = CreateSharedPacket<SecurePacketHeader>(0);
-				crypto::Sign(m_sourceKeyPair, payloadHash, pSecurePacketHeader->Signature);
+				crypto::SignatureFeatureSolver::Sign(m_sourceKeyPair, payloadHash, pSecurePacketHeader->Signature);
 
 				m_pIo->write(PacketPayload::Merge(pSecurePacketHeader, payload), callback);
 			}

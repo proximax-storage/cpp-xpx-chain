@@ -119,7 +119,7 @@ namespace catapult { namespace cache {
 	namespace {
 		class MockAddCosignaturePtCacheModifier : public UnsupportedPtCacheModifier {
 		public:
-			using CosignatureInfo = std::pair<Hash256, model::Cosignature<CoSignatureVersionAlias::Raw>>;
+			using CosignatureInfo = std::pair<Hash256, model::Cosignature<SignatureLayout::Raw>>;
 
 		public:
 			explicit MockAddCosignaturePtCacheModifier(
@@ -131,7 +131,7 @@ namespace catapult { namespace cache {
 
 		public:
 			model::DetachedTransactionInfo add(const Hash256& parentHash, const Key& signer, const RawSignature& signature) override {
-				m_cosignatureInfos.emplace_back(parentHash, model::Cosignature<CoSignatureVersionAlias::Raw>{ signer, signature });
+				m_cosignatureInfos.emplace_back(parentHash, model::Cosignature<SignatureLayout::Raw>{ signer, signature });
 				return m_transactionInfo.copy();
 			}
 
@@ -148,7 +148,7 @@ namespace catapult { namespace cache {
 		TestContext<MockAddCosignaturePtCacheModifier> context(cosignatureInfos, transactionInfo);
 
 		auto parentHash = test::GenerateRandomByteArray<Hash256>();
-		auto cosignature = model::Cosignature<CoSignatureVersionAlias::Raw>{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<RawSignature>() };
+		auto cosignature = model::Cosignature<SignatureLayout::Raw>{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<RawSignature>() };
 
 		// Act: add via modifier, which flushes when destroyed
 		auto transactionInfoFromAdd = context.aggregate().modifier().add(parentHash, cosignature.Signer, cosignature.Signature);
@@ -179,7 +179,7 @@ namespace catapult { namespace cache {
 		TestContext<MockAddCosignaturePtCacheModifier> context(cosignatureInfos, model::TransactionInfo());
 
 		auto parentHash = test::GenerateRandomByteArray<Hash256>();
-		auto cosignature = model::Cosignature<CoSignatureVersionAlias::Raw>{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<RawSignature>() };
+		auto cosignature = model::Cosignature<SignatureLayout::Raw>{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<RawSignature>() };
 
 		// Act: add via modifier, which flushes when destroyed
 		auto transactionInfoFromAdd = context.aggregate().modifier().add(parentHash, cosignature.Signer, cosignature.Signature);

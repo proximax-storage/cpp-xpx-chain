@@ -47,7 +47,7 @@ namespace catapult { namespace harvesting {
 			return std::nullopt;
 
 		auto iter = decrypted.begin();
-		//Assuming version 2 keypairs are Sha2, otherwise this needs to support KeyHashingType
+		// Currently the derivationScheme is always 25519_Sha2 for the unlocked accounts, as that's what was introduced in currently active account version 2
 		auto extractKeyPair = [&iter]() {
 			return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate([&iter]() mutable { return *iter++; }), 2);
 		};

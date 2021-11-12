@@ -19,13 +19,12 @@
 **/
 
 #include "AggregateTransactionTestUtils.h"
-#include "catapult/crypto/Signer.h"
-#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/TestHarness.h"
 #include <vector>
+#include "catapult/crypto/Signature.h"
 
 namespace catapult { namespace test {
 
@@ -33,7 +32,7 @@ namespace catapult { namespace test {
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 	}
 
-	model::UniqueEntityPtr<model::AggregateTransaction<CoSignatureVersionAlias::Raw>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures, uint32_t numTransactions, std::vector<crypto::KeyPair>& cosigners, uint32_t cosignersAccountVersion, bool signerIsCosigner) {
+	model::UniqueEntityPtr<model::AggregateTransaction<SignatureLayout::Raw>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures, uint32_t numTransactions, std::vector<crypto::KeyPair>& cosigners, uint32_t cosignersAccountVersion, bool signerIsCosigner) {
 		if(signerIsCosigner)
 			assert(!(!numCosignatures && !numTransactions));
 		auto totalKeys = numCosignatures > numTransactions ? numCosignatures : numTransactions;
@@ -41,8 +40,8 @@ namespace catapult { namespace test {
 			cosigners.push_back(test::GenerateKeyPair(cosignersAccountVersion));
 		}
 		uint32_t payloadSize = numTransactions * sizeof(mocks::EmbeddedMockTransaction);
-		uint32_t size = sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) + payloadSize + (numCosignatures-(signerIsCosigner && numCosignatures > 0? 1 : 0)) * sizeof(model::Cosignature<1>);
-		auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<CoSignatureVersionAlias::Raw>>(size);
+		uint32_t size = sizeof(model::AggregateTransaction<SignatureLayout::Raw>) + payloadSize + (numCosignatures-(signerIsCosigner && numCosignatures > 0? 1 : 0)) * sizeof(model::Cosignature<1>);
+		auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<SignatureLayout::Raw>>(size);
 		FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), size });
 
 
@@ -64,7 +63,7 @@ namespace catapult { namespace test {
 			// Set network identifier for successful validation
 			pSubTransaction->Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
 			pSubTransaction->Data.Size = 0;
-			pSubTransaction->SetSignatureVersion(cosignersAccountVersion);
+			pSubTransaction->SetSignatureDerivationScheme(utils::AccountVersionFeatureResolver::KeyDerivationScheme(cosignersAccountVersion));
 			pSubTransaction->Type = mocks::EmbeddedMockTransaction::Entity_Type;
 			pSubTransaction->Signer = cosigners[i].publicKey();
 			FillWithRandomData(pSubTransaction->Recipient);
@@ -73,18 +72,18 @@ namespace catapult { namespace test {
 		return pTransaction;
 	}
 
-	model::DetachedCosignature<CoSignatureVersionAlias::Raw> GenerateValidCosignature(const crypto::KeyPair& keyPair, const Hash256& aggregateHash) {
-		model::Cosignature<CoSignatureVersionAlias::Raw> cosignature;
+	model::DetachedCosignature<SignatureLayout::Raw> GenerateValidCosignature(const crypto::KeyPair& keyPair, const Hash256& aggregateHash) {
+		model::Cosignature<SignatureLayout::Raw> cosignature;
 		cosignature.Signer = keyPair.publicKey();
-		crypto::Sign(keyPair, aggregateHash, cosignature.Signature);
+		crypto::SignatureFeatureSolver::Sign(keyPair, aggregateHash, cosignature.Signature);
 		return { cosignature.Signer, cosignature.Signature, aggregateHash };
 	}
-	model::DetachedCosignature<CoSignatureVersionAlias::Raw> GenerateValidCosignature(const Hash256& aggregateHash, uint32_t accountVersion) {
+	model::DetachedCosignature<SignatureLayout::Raw> GenerateValidCosignature(const Hash256& aggregateHash, uint32_t accountVersion) {
 		auto keyPair = GenerateKeyPair(accountVersion);
 		return GenerateValidCosignature(keyPair, aggregateHash);
 	}
 
-	void FixCosignatures(const std::vector<crypto::KeyPair>& cosigners, const Hash256& aggregateHash, model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction, bool signerIsCosigner) {
+	void FixCosignatures(const std::vector<crypto::KeyPair>& cosigners, const Hash256& aggregateHash, model::AggregateTransaction<SignatureLayout::Raw>& aggregateTransaction, bool signerIsCosigner) {
 		// assigning DetachedCosignature to Cosignature works by slicing off ParentHash since the former is derived from the latter
 		// there must be at least as many transactions in the aggregate transaction as cosigners. If the signer is a cosigner there can be one less.
 		auto* pCosignature = aggregateTransaction.CosignaturesPtr();

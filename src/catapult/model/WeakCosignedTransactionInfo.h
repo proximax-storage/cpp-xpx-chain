@@ -23,6 +23,7 @@
 #include "Transaction.h"
 #include <vector>
 #include <plugins/txes/aggregate/src/model/AggregateTransaction.h>
+#include "catapult/utils/AccountVersionFeatureResolver.h"
 
 namespace catapult { namespace model {
 
@@ -34,7 +35,7 @@ namespace catapult { namespace model {
 		{}
 
 		/// Creates a weak transaction info around \a pTransaction and \a pCosignatures.
-		WeakCosignedTransactionInfo(const Transaction* pTransaction, const std::vector<Cosignature<CoSignatureVersionAlias::Raw>>* pCosignatures)
+		WeakCosignedTransactionInfo(const Transaction* pTransaction, const std::vector<Cosignature<SignatureLayout::Raw>>* pCosignatures)
 				: m_pTransaction(pTransaction)
 				, m_pCosignatures(pCosignatures)
 		{}
@@ -45,17 +46,17 @@ namespace catapult { namespace model {
 			return *m_pTransaction;
 		}
 
-		const SignatureVersion tryGetVersionForSigner(const Key& signer)
+		const DerivationScheme tryGetDerivationSchemeForSigner(const Key& signer)
 		{
-			if(!m_pTransaction) return 0;
-			for(auto& innerTransaction : reinterpret_cast<const model::AggregateTransaction<CoSignatureVersionAlias::Raw>*>(m_pTransaction)->Transactions())
+			if(!m_pTransaction) return utils::AccountVersionFeatureResolver::KeyDerivationScheme<1>();
+			for(auto& innerTransaction : reinterpret_cast<const model::AggregateTransaction<SignatureLayout::Raw>*>(m_pTransaction)->Transactions())
 			{
-				if(innerTransaction.Signer == signer) return innerTransaction.SignatureVersion();
+				if(innerTransaction.Signer == signer) return innerTransaction.SignatureDerivationScheme();
 			}
-			return 0;
+			return utils::AccountVersionFeatureResolver::KeyDerivationScheme<1>();
 		}
 		/// Gets the cosignatures.
-		const std::vector<Cosignature<CoSignatureVersionAlias::Raw>>& cosignatures() const {
+		const std::vector<Cosignature<SignatureLayout::Raw>>& cosignatures() const {
 			return *m_pCosignatures;
 		}
 
@@ -76,6 +77,6 @@ namespace catapult { namespace model {
 
 	private:
 		const Transaction* m_pTransaction;
-		const std::vector<Cosignature<CoSignatureVersionAlias::Raw>>* m_pCosignatures;
+		const std::vector<Cosignature<SignatureLayout::Raw>>* m_pCosignatures;
 	};
 }}

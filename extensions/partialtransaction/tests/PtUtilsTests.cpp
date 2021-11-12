@@ -32,7 +32,7 @@ namespace catapult { namespace partialtransaction {
 		void AssertCanStitchAggregate(size_t numCosignatures) {
 			// Arrange:
 			auto pTransaction = test::CreateAggregateTransaction(1).pTransaction;
-			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<CoSignatureVersionAlias::Raw>>(numCosignatures);
+			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(numCosignatures);
 
 			// Act:
 			auto pStitchedTransaction = StitchAggregate({ pTransaction.get(), &cosignatures });
@@ -41,7 +41,7 @@ namespace catapult { namespace partialtransaction {
 			test::AssertStitchedTransaction(*pStitchedTransaction, *pTransaction, cosignatures);
 
 			// Sanity:
-			EXPECT_EQ(numCosignatures, static_cast<const model::AggregateTransaction<CoSignatureVersionAlias::Raw>&>(*pStitchedTransaction).CosignaturesCount());
+			EXPECT_EQ(numCosignatures, static_cast<const model::AggregateTransaction<SignatureLayout::Raw>&>(*pStitchedTransaction).CosignaturesCount());
 		}
 	}
 
@@ -62,7 +62,7 @@ namespace catapult { namespace partialtransaction {
 	namespace {
 		struct SplitForwardingCapture {
 			std::vector<model::TransactionRange> TransactionRanges;
-			std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw>> Cosignatures;
+			std::vector<model::DetachedCosignature<SignatureLayout::Raw>> Cosignatures;
 		};
 
 		SplitForwardingCapture SplitAndCapture(const CosignedTransactionInfos& transactionInfos) {
@@ -78,7 +78,7 @@ namespace catapult { namespace partialtransaction {
 			return capture;
 		}
 
-		model::Cosignature<CoSignatureVersionAlias::Raw> GenerateRandomCosignature() {
+		model::Cosignature<SignatureLayout::Raw> GenerateRandomCosignature() {
 			return { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<RawSignature>() };
 		}
 
@@ -101,7 +101,7 @@ namespace catapult { namespace partialtransaction {
 				for (const auto& transaction : transactionRange) {
 					// notice that stitched transaction is always passed to range
 					const auto& originalTransaction =
-							static_cast<const model::AggregateTransaction<CoSignatureVersionAlias::Raw>&>(*m_transactionInfos[i].pTransaction);
+							static_cast<const model::AggregateTransaction<SignatureLayout::Raw>&>(*m_transactionInfos[i].pTransaction);
 					test::AssertStitchedTransaction(transaction, originalTransaction, m_transactionInfos[i].Cosignatures);
 					++i;
 				}
@@ -120,13 +120,13 @@ namespace catapult { namespace partialtransaction {
 					auto cosignature = GenerateRandomCosignature();
 					transactionInfo.Cosignatures.push_back(cosignature);
 					m_cosignatures.push_back(
-							model::DetachedCosignature<CoSignatureVersionAlias::Raw>(cosignature.Signer, cosignature.Signature, transactionInfo.EntityHash));
+							model::DetachedCosignature<SignatureLayout::Raw>(cosignature.Signer, cosignature.Signature, transactionInfo.EntityHash));
 				}
 
 				transactionInfos.push_back(transactionInfo);
 			}
 
-			void assertData(const std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>& cosignatures) {
+			void assertData(const std::vector<model::DetachedCosignature<SignatureLayout::Raw>>& cosignatures) {
 				ASSERT_EQ(m_cosignatures.size(), cosignatures.size());
 
 				for (auto i = 0u; i < m_cosignatures.size(); ++i) {
@@ -138,7 +138,7 @@ namespace catapult { namespace partialtransaction {
 			}
 
 		private:
-			std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw>> m_cosignatures;
+			std::vector<model::DetachedCosignature<SignatureLayout::Raw>> m_cosignatures;
 		};
 	}
 

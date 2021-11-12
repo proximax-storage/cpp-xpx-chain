@@ -60,13 +60,13 @@ namespace catapult { namespace local {
 
 		void ResignBlock(model::Block& block) {
 			for (const auto* pPrivateKeyString : test::Mijin_Test_Private_Keys) {
-				auto keyPairSha3 = crypto::KeyPair::FromString(pPrivateKeyString, KeyHashingType::Sha3);
+				auto keyPairSha3 = crypto::KeyPair::FromString(pPrivateKeyString, DerivationScheme::Ed25519_Sha3);
 				if (keyPairSha3.publicKey() == block.Signer) {
 					extensions::BlockExtensions(test::GetNemesisGenerationHash()).signFullBlock(keyPairSha3, block);
 					return;
 				}
 				//TEMPORARY BAD FIX
-				auto keyPairSha2 = crypto::KeyPair::FromString(pPrivateKeyString, KeyHashingType::Sha2);
+				auto keyPairSha2 = crypto::KeyPair::FromString(pPrivateKeyString, DerivationScheme::Ed25519_Sha2);
 				if (keyPairSha2.publicKey() == block.Signer) {
 					extensions::BlockExtensions(test::GetNemesisGenerationHash()).signFullBlock(keyPairSha2, block);
 					return;

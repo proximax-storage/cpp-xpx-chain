@@ -36,8 +36,8 @@ namespace catapult { namespace test {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 	}
 
-	Key RawPrivateKeyToPublicKey(const char* privateKeyString, KeyHashingType hashType) {
-		auto keyPair = crypto::KeyPair::FromString(privateKeyString, hashType);
+	Key RawPrivateKeyToPublicKey(const char* privateKeyString, DerivationScheme derivationScheme) {
+		auto keyPair = crypto::KeyPair::FromString(privateKeyString, derivationScheme);
 		return keyPair.publicKey();
 	}
 
@@ -45,8 +45,8 @@ namespace catapult { namespace test {
 		return model::PublicKeyToAddress(crypto::ParseKey(publicKeyString), Network_Identifier);
 	}
 
-	Address RawPrivateKeyToAddress(const char* privateKeyString, KeyHashingType hashType) {
-		return model::PublicKeyToAddress(RawPrivateKeyToPublicKey(privateKeyString, hashType), Network_Identifier);
+	Address RawPrivateKeyToAddress(const char* privateKeyString, DerivationScheme derivationScheme) {
+		return model::PublicKeyToAddress(RawPrivateKeyToPublicKey(privateKeyString, derivationScheme), Network_Identifier);
 	}
 
 	Key RawPrivateKeyToPublicKey(const char* privateKeyString, uint32_t accountVersion) {

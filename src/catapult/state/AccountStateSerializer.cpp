@@ -69,7 +69,7 @@ namespace catapult { namespace state {
 				output.write(accountState.PublicKey);
 				io::Write(output, accountState.PublicKeyHeight);
 
-				// write link information
+				// write account type
 				io::Write8(output, utils::to_underlying_type(accountState.AccountType));
 
 

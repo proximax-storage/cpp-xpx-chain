@@ -31,7 +31,7 @@ namespace catapult { namespace harvesting {
 
 	TEST(TEST_CLASS, CanCreateDefault) {
 		// Arrange:
-		auto zeroKeyPair = crypto::KeyPair::FromPrivate(crypto::PrivateKey(), KeyHashingType::Sha3);
+		auto zeroKeyPair = crypto::KeyPair::FromPrivate(crypto::PrivateKey(), DerivationScheme::Ed25519_Sha3);
 
 		// Act:
 		auto descriptor = BlockGeneratorAccountDescriptor();
@@ -43,7 +43,7 @@ namespace catapult { namespace harvesting {
 
 	TEST(TEST_CLASS, CanCreateWithExplicitKeyPairs) {
 		// Arrange:
-		auto signingKeyPair = test::GenerateKeyPair(KeyHashingType::Sha3);
+		auto signingKeyPair = test::GenerateKeyPair(DerivationScheme::Ed25519_Sha3);
 		auto vrfKeyPair = test::GenerateVrfKeyPair();
 
 		// Act:

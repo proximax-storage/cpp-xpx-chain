@@ -99,7 +99,10 @@ namespace catapult { namespace model {
 		/// Allows validate deadline of transaction. It means that you can send old transactions to blockchain if it is false.
 		bool EnableDeadlineValidation;
 
-		/// Version of the Account State used. OPTIONAL DEFAULTS TO 1
+		/// Minimum Version of the Account State that is currently allowed to be created. OPTIONAL DEFAULTS TO 1
+		uint32_t MinimumAccountVersion = 1;
+
+		/// Version of the Account State currently active. OPTIONAL DEFAULTS TO 1
 		uint32_t AccountVersion = 1;
 
 		/// Maximum number of harvesting mosaic atomic units needed for an account to be eligible for harvesting. OPTIONAL DEFAULTS TO MAX

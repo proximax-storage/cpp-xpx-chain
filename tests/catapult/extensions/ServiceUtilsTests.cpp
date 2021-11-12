@@ -35,7 +35,7 @@ namespace catapult { namespace extensions {
 	namespace {
 		constexpr auto Service_Name = "writers";
 
-		using CosignaturesSink = consumer<const std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>&>;
+		using CosignaturesSink = consumer<const std::vector<model::DetachedCosignature<SignatureLayout::Raw>>&>;
 		using TransactionSink = extensions::SharedNewTransactionsSink;
 	}
 

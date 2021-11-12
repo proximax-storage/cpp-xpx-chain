@@ -39,7 +39,7 @@ namespace catapult { namespace crypto {
 		Key publicKey;
 
 		// Act:
-		ExtractPublicKeyFromPrivateKey<KeyHashingType::Sha3>(privateKey, publicKey);
+		ExtractPublicKeyFromPrivateKey<DerivationScheme::Ed25519_Sha3>(privateKey, publicKey);
 
 		// Assert:
 		EXPECT_NE(Public_Key_Zero, publicKey);
@@ -50,7 +50,7 @@ namespace catapult { namespace crypto {
 		auto generatePublicKey = []() {
 			Key publicKey;
 			auto privateKey = PrivateKey::Generate([]() { return static_cast<uint8_t>(7); });
-			ExtractPublicKeyFromPrivateKey<KeyHashingType::Sha3>(privateKey, publicKey);
+			ExtractPublicKeyFromPrivateKey<DerivationScheme::Ed25519_Sha3>(privateKey, publicKey);
 			return publicKey;
 		};
 

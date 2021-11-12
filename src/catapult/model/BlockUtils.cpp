@@ -22,10 +22,9 @@
 #include "FeeUtils.h"
 #include "catapult/crypto/Hashes.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/utils/MemoryUtils.h"
-#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 #include <cstring>
+#include "catapult/crypto/Signature.h"
 
 namespace catapult { namespace model {
 
@@ -58,7 +57,7 @@ namespace catapult { namespace model {
 	}
 
 	GenerationHash CalculateGenerationHashVrf(const crypto::ProofGamma& gamma) {
-		auto proofHash = crypto::GenerateVrfProofHash<Vrf_Key_Hashing_Type>(gamma);
+		auto proofHash = crypto::GenerateVrfProofHash<Vrf_Key_Derivation_Scheme>(gamma);
 		return proofHash.copyTo<GenerationHash>();
 	}
 
@@ -67,12 +66,12 @@ namespace catapult { namespace model {
 	// region sign / verify
 
 	void SignBlockHeader(const crypto::KeyPair& signer, Block& block) {
-		block.SetSignatureVersion(utils::ResolveSignatureVersionFromKeyHashingType(signer.hashingType()));
-		crypto::Sign(signer, BlockDataBuffer(block), block.Signature);
+		block.SetSignatureDerivationScheme(signer.derivationScheme());
+		crypto::SignatureFeatureSolver::Sign(signer, BlockDataBuffer(block), block.Signature);
 	}
 
 	bool VerifyBlockHeaderSignature(const Block& block) {
-		return crypto::Verify(block.Signer, {BlockDataBuffer(block)}, block.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(block.SignatureVersion()));
+		return crypto::SignatureFeatureSolver::Verify(block.Signer, {BlockDataBuffer(block)}, block.Signature, block.SignatureDerivationScheme());
 	}
 
 	// endregion

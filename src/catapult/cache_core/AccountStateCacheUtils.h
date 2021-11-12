@@ -22,7 +22,7 @@
 #pragma once
 #include "catapult/functions.h"
 #include "catapult/types.h"
-
+#include <optional>
 namespace catapult {
 	namespace cache {
 		class AccountStateCacheDelta;
@@ -41,4 +41,8 @@ namespace catapult { namespace cache {
 			const ReadOnlyAccountStateCache& cache,
 			const Key& key,
 			const consumer<const state::AccountState&>& action);
+
+	std::optional<std::reference_wrapper<const state::AccountState>> FindAccountStateByPublicKeyOrAddress(const cache::ReadOnlyAccountStateCache& cache, const Key& publicKey);
+
+	std::optional<std::reference_wrapper<const state::AccountState>> FindAccountStateByPublicKeyOrAddress(const cache::AccountStateCacheDelta& cache, const Key& publicKey);
 }}

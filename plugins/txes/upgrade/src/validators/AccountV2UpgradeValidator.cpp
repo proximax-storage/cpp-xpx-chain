@@ -7,25 +7,25 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "Validators.h"
 #include "catapult/validators/ValidatorContext.h"
-#include "catapult/utils/CacheUtils.h"
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 #include "catapult/model/Address.h"
 #include "catapult/state/AccountState.h"
 namespace catapult { namespace validators {
 
 	using Notification = model::AccountV2UpgradeNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(AccountV2Upgrader, [](const auto& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(AccountV2Upgrade, [](const auto& notification, const ValidatorContext& context) {
 		if(context.Config.Network.AccountVersion < 2)
 			return Failure_BlockchainUpgrade_Account_Version_Not_Allowed;
 
 		const auto& cache = context.Cache.template sub<cache::AccountStateCache>();
-		auto accountRef = utils::FindAccountStateByPublicKeyOrAddress(cache, notification.Signer);
+		auto accountRef = cache::FindAccountStateByPublicKeyOrAddress(cache, notification.Signer);
 		if(!accountRef)
 			return Failure_BlockchainUpgrade_Account_Non_Existant;
 		auto account = accountRef->get();
 		if(account.GetVersion() != 1 || state::IsRemote(account.AccountType))
 			return Failure_BlockchainUpgrade_Account_Not_Upgradable;
-		accountRef = utils::FindAccountStateByPublicKeyOrAddress(cache, notification.NewAccountPublicKey);
+		accountRef = cache::FindAccountStateByPublicKeyOrAddress(cache, notification.NewAccountPublicKey);
 	  	if(accountRef)
 			return Failure_BlockchainUpgrade_Account_Duplicate;
 		return ValidationResult::Success;

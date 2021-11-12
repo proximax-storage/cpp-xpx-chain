@@ -18,9 +18,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/Signature.h"
 #include "catapult/ionet/SecureSignedPacketIo.h"
 #include "catapult/crypto/Hashes.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
@@ -38,8 +38,8 @@ namespace catapult { namespace ionet {
 		public:
 			explicit TestContext(uint32_t maxSignedPacketDataSize = std::numeric_limits<uint32_t>::max())
 					: pMockPacketIo(std::make_shared<mocks::MockPacketIo>())
-					, KeyPair(test::GenerateKeyPair(Node_Boot_Key_Hashing_Type))
-					, RemoteKeyPair(test::GenerateKeyPair(Node_Boot_Key_Hashing_Type))
+					, KeyPair(test::GenerateKeyPair(Node_Boot_Key_Derivation_Scheme))
+					, RemoteKeyPair(test::GenerateKeyPair(Node_Boot_Key_Derivation_Scheme))
 					, RemoteKey(RemoteKeyPair.publicKey())
 					, pSecureIo(CreateSecureSignedPacketIo(pMockPacketIo, KeyPair, RemoteKey, maxSignedPacketDataSize))
 					, pSecureBatchReader(CreateSecureSignedBatchPacketReader(pMockPacketIo, RemoteKey))
@@ -59,7 +59,7 @@ namespace catapult { namespace ionet {
 			crypto::Sha3_256({ reinterpret_cast<const uint8_t*>(&packet), packet.Size }, packetHash);
 
 			RawSignature signature;
-			crypto::Sign(keyPair, packetHash, signature);
+			crypto::SignatureFeatureSolver::Sign(keyPair, packetHash, signature);
 			return signature;
 		}
 	}

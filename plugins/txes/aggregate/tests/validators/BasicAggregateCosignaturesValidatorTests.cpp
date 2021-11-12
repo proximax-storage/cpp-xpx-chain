@@ -34,7 +34,7 @@ namespace catapult { namespace validators {
 
 	namespace {
 		auto GenerateRandomCosignatures(uint8_t numCosignatures) {
-			return test::GenerateRandomDataVector<model::Cosignature<CoSignatureVersionAlias::Raw>>(numCosignatures);
+			return test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(numCosignatures);
 		}
 
 		auto CreateConfig(uint32_t maxTransactions, uint8_t maxCosignatures) {
@@ -142,7 +142,7 @@ namespace catapult { namespace validators {
 		void AssertCosignerUniquenessValidationResult(
 				ValidationResult expectedResult,
 				const Key& signer,
-				const std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>>& cosignatures) {
+				const std::vector<model::Cosignature<SignatureLayout::Raw>>& cosignatures) {
 			// Arrange:
 			model::AggregateCosignaturesNotification<1> notification(signer, 3, nullptr, cosignatures.size(), cosignatures.data());
 			auto config = CreateConfig(

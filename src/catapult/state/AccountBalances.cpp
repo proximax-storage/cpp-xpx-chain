@@ -35,6 +35,7 @@ namespace catapult { namespace state {
 			if (height > importanceGroupingHeight) {
 				effectiveHeight = height - importanceGroupingHeight;
 			}
+			if(snapshots.size() == 1) return snapshots.begin();
 			auto minElement = std::min_element(
 					snapshots.begin(),
 					snapshots.end(),

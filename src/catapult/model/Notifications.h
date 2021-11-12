@@ -466,12 +466,12 @@ namespace catapult { namespace model {
 		SignatureNotification(
 				const Key& signer,
 				const RawSignature& signature,
-				const SignatureVersion version,
+				const DerivationScheme derivationScheme,
 				const RawBuffer& data,
 				SignatureNotification<1>::ReplayProtectionMode dataReplayProtectionMode = SignatureNotification<1>::ReplayProtectionMode::Disabled)
 				: Notification(Notification_Type, sizeof(SignatureNotification<1>))
 				, Signer(signer)
-				, SignatureVersion(version)
+				, DerivationScheme(derivationScheme)
 				, Signature(signature)
 				, Data(data)
 				, DataReplayProtectionMode(dataReplayProtectionMode)
@@ -488,7 +488,7 @@ namespace catapult { namespace model {
 		RawBuffer Data;
 
 		/// Signature version.
-		catapult::SignatureVersion SignatureVersion;
+		catapult::DerivationScheme DerivationScheme;
 
 		/// Replay protection mode applied to data.
 		SignatureNotification<1>::ReplayProtectionMode DataReplayProtectionMode;

@@ -59,13 +59,13 @@ namespace catapult { namespace partialtransaction {
 		};
 
 		struct CosignatureRangeConsumerTraits {
-			using ParamType = model::AnnotatedEntityRange<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>;
+			using ParamType = model::AnnotatedEntityRange<model::DetachedCosignature<SignatureLayout::Raw>>;
 
 			static auto Get(const PtServerHooks& hooks) {
 				return hooks.cosignatureRangeConsumer();
 			}
 
-			static void Set(PtServerHooks& hooks, const handlers::RangeHandler<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>& consumer) {
+			static void Set(PtServerHooks& hooks, const handlers::RangeHandler<model::DetachedCosignature<SignatureLayout::Raw>>& consumer) {
 				hooks.setCosignatureRangeConsumer(consumer);
 			}
 		};

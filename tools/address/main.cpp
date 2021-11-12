@@ -34,11 +34,11 @@ namespace catapult { namespace tools { namespace address {
 
 	namespace {
 
-		KeyHashingType GetHashingTypeFromOptionString(std::string hashingType)
+		DerivationScheme GetHashingTypeFromOptionString(std::string hashingType)
 		{
 			if(hashingType == "sha2")
-				return KeyHashingType::Sha2;
-			return KeyHashingType::Sha3;
+				return DerivationScheme::Ed25519_Sha2;
+			return DerivationScheme::Ed25519_Sha3;
 		}
 		// region entropy sources
 

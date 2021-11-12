@@ -78,7 +78,7 @@ namespace catapult { namespace test {
 	}
 
 	crypto::KeyPair LoadPartnerServerKeyPair() {
-		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::FromString(Local_Node_Partner_Private_Key), Node_Boot_Key_Hashing_Type);
+		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::FromString(Local_Node_Partner_Private_Key), Node_Boot_Key_Derivation_Scheme);
 	}
 
 	ionet::Node CreateLocalPartnerNode() {

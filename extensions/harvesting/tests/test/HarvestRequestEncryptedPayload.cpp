@@ -42,7 +42,7 @@ namespace catapult { namespace test {
 	}
 
 	HarvestRequestEncryptedPayload PrepareHarvestRequestEncryptedPayload(const Key& recipientPublicKey, const RawBuffer& clearTextBuffer) {
-		return PrepareHarvestRequestEncryptedPayload(GenerateKeyPair(Ephemeral_Key_Hashing_Type), recipientPublicKey, clearTextBuffer);
+		return PrepareHarvestRequestEncryptedPayload(GenerateKeyPair(Ephemeral_Key_Derivation_Scheme), recipientPublicKey, clearTextBuffer);
 	}
 
 	HarvestRequestEncryptedPayload PrepareHarvestRequestEncryptedPayload(

@@ -22,6 +22,7 @@
 #include "AccountStateCacheUtils.h"
 #include "AccountStateCacheDelta.h"
 #include "AccountStateCacheView.h"
+#include "catapult/model/Address.h"
 
 namespace catapult { namespace cache {
 
@@ -57,5 +58,31 @@ namespace catapult { namespace cache {
 			const Key& key,
 			const consumer<const state::AccountState&>& action) {
 		ProcessForwardedAccountStateT(cache, key, action);
+	}
+
+	std::optional<std::reference_wrapper<const state::AccountState>> FindAccountStateByPublicKeyOrAddress(const cache::ReadOnlyAccountStateCache& cache, const Key& publicKey) {
+		auto accountStateKeyIter = cache.find(publicKey);
+		if (accountStateKeyIter.tryGet())
+			return std::optional<std::reference_wrapper<const state::AccountState>>(accountStateKeyIter.get());
+
+		// if state could not be accessed by public key, try searching by address
+		auto accountStateAddressIter = cache.find(model::PublicKeyToAddress(publicKey, cache.networkIdentifier()));
+		if (accountStateAddressIter.tryGet())
+			return std::optional<std::reference_wrapper<const state::AccountState>>(accountStateAddressIter.get());
+
+		return std::nullopt;
+	}
+
+	std::optional<std::reference_wrapper<const state::AccountState>> FindAccountStateByPublicKeyOrAddress(const cache::AccountStateCacheDelta& cache, const Key& publicKey) {
+		auto accountStateKeyIter = cache.find(publicKey);
+		if (accountStateKeyIter.tryGet())
+			return std::optional<std::reference_wrapper<const state::AccountState>>(accountStateKeyIter.get());
+
+		// if state could not be accessed by public key, try searching by address
+		auto accountStateAddressIter = cache.find(model::PublicKeyToAddress(publicKey, cache.networkIdentifier()));
+		if (accountStateAddressIter.tryGet())
+			return std::optional<std::reference_wrapper<const state::AccountState>>(accountStateAddressIter.get());
+
+		return std::nullopt;
 	}
 }}

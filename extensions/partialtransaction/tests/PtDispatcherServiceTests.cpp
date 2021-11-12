@@ -20,7 +20,6 @@
 
 #include <plugins/txes/aggregate/src/config/AggregateConfiguration.h>
 #include "partialtransaction/src/PtDispatcherService.h"
-#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 #include "partialtransaction/src/PtBootstrapperService.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
@@ -334,8 +333,9 @@ namespace catapult { namespace partialtransaction {
 	}
 
 	TYPED_TEST(PtDispatcherServiceTests, Dispatcher_ForwardsToUpdaterWhenValidationSucceeded) {
+		// Must enable strict signing or it automatically is completed!
 		AssertDispatcherForwarding<TypeParam::value>(
-				DispatcherTestOptions{ ValidationResult::Success, 1, false, false, false, false },
+				DispatcherTestOptions{ ValidationResult::Success, 1, false, true, false, false },
 				[](const auto& context) {
 					// wait for element processing to finish
 					WAIT_FOR_ONE_EXPR(context.cache().view().size());
@@ -400,10 +400,6 @@ namespace catapult { namespace partialtransaction {
 		DispatcherTestOptions{ ValidationResult::Success, 3, false, true, false }, 3);
 		AssertDispatcherForwardingToUpdaterWhenValidationSucceeds<TypeParam::value>(
 				DispatcherTestOptions{ ValidationResult::Success, 3, false, true, true }, 3);
-		AssertDispatcherForwardingToUpdaterWhenValidationSucceeds<TypeParam::value>(
-			DispatcherTestOptions{ ValidationResult::Success, 3, false, false, false }, 3);
-		AssertDispatcherForwardingToUpdaterWhenValidationSucceeds<TypeParam::value>(
-				DispatcherTestOptions{ ValidationResult::Success, 3, false, false, true }, 3);
 	}
 
 
@@ -544,8 +540,8 @@ namespace catapult { namespace partialtransaction {
 	}
 
 	namespace {
-		auto ExtractCosignaturePayload(const model::EntityRange<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>& range) {
-			std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw>> cosignatures;
+		auto ExtractCosignaturePayload(const model::EntityRange<model::DetachedCosignature<SignatureLayout::Raw>>& range) {
+			std::vector<model::DetachedCosignature<SignatureLayout::Raw>> cosignatures;
 			for (const auto& cosignature : range)
 				cosignatures.push_back(cosignature);
 
@@ -570,7 +566,7 @@ namespace catapult { namespace partialtransaction {
 
 			// - prepare a cosignature range. One of the cosignatures may correspond to the signer, so we only add 3 more, leaving one out so the transaction is not completed and removed from cache
 			auto cosignaturesToAdd = signerIsCosigner ? 3 : 4;
-			auto cosignatureRange = model::EntityRange<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>::PrepareFixed(cosignaturesToAdd);
+			auto cosignatureRange = model::EntityRange<model::DetachedCosignature<SignatureLayout::Raw>>::PrepareFixed(cosignaturesToAdd);
 			auto cosignature = cosignatureRange.begin();
 			for (auto i = 0; i < cosignatureRange.size(); i++) {
 				*cosignature++ = test::GenerateValidCosignature(cosignerKeys[i+(signerIsCosigner? 1 : 0)], transactionInfo.EntityHash);
@@ -584,7 +580,7 @@ namespace catapult { namespace partialtransaction {
 			assertResults(context, transactionInfo, cosignerKeys, expectedPayload, cosignaturesToAdd);
 		}
 
-		auto arrangeDataForForwarding(const PtServerHooks& hooks, model::EntityRange<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>&& cosignatureRange) {
+		auto arrangeDataForForwarding(const PtServerHooks& hooks, model::EntityRange<model::DetachedCosignature<SignatureLayout::Raw>>&& cosignatureRange) {
 			// Arrange: create a separate info for each cosignature
 			CosignedTransactionInfos transactionInfos;
 			for (const auto& cosignature : cosignatureRange) {

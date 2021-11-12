@@ -161,7 +161,6 @@ namespace catapult {
 
 	// Network type (8 bit) + Signature Version (8 bit) + entity type (16 bit).
 	using VersionType = uint32_t;
-	using SignatureVersion = uint8_t;
 	/// Version set.
 	using VersionSet = std::unordered_set<VersionType>;
 
@@ -177,24 +176,20 @@ namespace catapult {
 		return static_cast<uint32_t>(sizeof(T));
 	}
 
-	enum class KeyHashingType
+	/// Defines a specific derivation strategy that ties a given private key to public key. Important for signing and key exchange as well.
+	enum DerivationScheme : uint8_t
 	{
-		Sha2,
-		Sha3
+		Unset = 0, //Defaults to Ed25519_Sha3, may exist in old blocks
+		Ed25519_Sha3 = 1,
+		Ed25519_Sha2
 	};
 
-	namespace SignatureVersionAlias
-	{
-		enum SignatureVersionFromHashType : uint8_t
-		{
-			Sha3 = 1,
-			Sha2 = 2
-		};
-	}
+	/// Defines a signature layout
+	namespace SignatureLayout {
 
-	namespace CoSignatureVersionAlias
-	{
-		enum SignatureVersionFromHashType : uint8_t
+		/// Raw layout includes only the signature bytes.
+		/// Extended includes the signature derivation scheme in the first byte, and then the signature bytes in the remaining 64
+		enum SignatureLayout : uint8_t
 		{
 			Raw = 1,
 			Extended = 2

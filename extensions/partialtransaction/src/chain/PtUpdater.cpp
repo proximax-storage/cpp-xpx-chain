@@ -24,45 +24,44 @@
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_tx/MemoryPtCache.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/thread/FutureUtils.h"
 #include "catapult/thread/IoThreadPool.h"
 #include "catapult/utils/ArraySet.h"
 #include "catapult/utils/HexFormatter.h"
 #include "catapult/utils/MemoryUtils.h"
 #include <boost/asio.hpp>
-#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
+#include "catapult/crypto/Signature.h"
 
 namespace catapult { namespace chain {
 
 	namespace {
-		using DetachedCosignatures = std::vector<std::pair<model::DetachedCosignature<CoSignatureVersionAlias::Raw>, SignatureVersion>>;
+		using DetachedCosignatures = std::vector<std::pair<model::DetachedCosignature<SignatureLayout::Raw>, DerivationScheme>>;
 
-		std::shared_ptr<const model::AggregateTransaction<CoSignatureVersionAlias::Raw>> RemoveCosignatures(
-				const std::shared_ptr<const model::AggregateTransaction<CoSignatureVersionAlias::Raw>>& pAggregateTransaction) {
+		std::shared_ptr<const model::AggregateTransaction<SignatureLayout::Raw>> RemoveCosignatures(
+				const std::shared_ptr<const model::AggregateTransaction<SignatureLayout::Raw>>& pAggregateTransaction) {
 			// if there are no cosignatures, no need to copy
 			if (0 == pAggregateTransaction->CosignaturesCount())
 				return pAggregateTransaction;
 
 			// copy the transaction data without cosignatures
-			uint32_t truncatedSize = sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) + pAggregateTransaction->PayloadSize;
-			auto pTransactionWithoutCosignatures = utils::MakeSharedWithSize<model::AggregateTransaction<CoSignatureVersionAlias::Raw>>(truncatedSize);
+			uint32_t truncatedSize = sizeof(model::AggregateTransaction<SignatureLayout::Raw>) + pAggregateTransaction->PayloadSize;
+			auto pTransactionWithoutCosignatures = utils::MakeSharedWithSize<model::AggregateTransaction<SignatureLayout::Raw>>(truncatedSize);
 			std::memcpy(static_cast<void*>(pTransactionWithoutCosignatures.get()), pAggregateTransaction.get(), truncatedSize);
 			pTransactionWithoutCosignatures->Size = truncatedSize;
 			return std::move(pTransactionWithoutCosignatures);
 		}
 
 		DetachedCosignatures ExtractCosignatures(
-				const model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction,
+				const model::AggregateTransaction<SignatureLayout::Raw>& aggregateTransaction,
 				const Hash256& aggregateHash,
 				const model::WeakCosignedTransactionInfo& transactionInfoFromCache) {
 
 			// tie all public keys with a version
 
-			std::map<Key, SignatureVersion> associatedVersion;
+			std::map<Key, DerivationScheme> associatedVersion;
 			// publish all sub-transaction information
 			for (const auto& subTransaction : aggregateTransaction.Transactions())
-				associatedVersion.try_emplace(subTransaction.Signer, subTransaction.SignatureVersion());
+				associatedVersion.try_emplace(subTransaction.Signer, subTransaction.SignatureDerivationScheme());
 
 			utils::KeySet cosigners;
 			DetachedCosignatures cosignatures;
@@ -72,7 +71,8 @@ namespace catapult { namespace chain {
 				if (cosigners.emplace(cosigner).second && (!transactionInfoFromCache || !transactionInfoFromCache.hasCosigner(cosigner)))
 				{
 					auto versionPair = associatedVersion.find(cosigner);
-					cosignatures.emplace_back(std::make_pair(model::DetachedCosignature<1>(pCosignature->Signer, pCosignature->Signature, aggregateHash), versionPair != associatedVersion.end() ? versionPair->second : 1));
+					if(versionPair == associatedVersion.end()) continue;
+					cosignatures.emplace_back(std::make_pair(model::DetachedCosignature<1>(pCosignature->Signer, pCosignature->Signature, aggregateHash),versionPair->second));
 				}
 				++pCosignature;
 			}
@@ -83,7 +83,7 @@ namespace catapult { namespace chain {
 
 	struct StaleTransactionInfo {
 		Hash256 AggregateHash;
-		std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>> EligibleCosignatures;
+		std::vector<model::Cosignature<SignatureLayout::Raw>> EligibleCosignatures;
 	};
 
 	struct CheckEligibilityResult {
@@ -150,7 +150,7 @@ namespace catapult { namespace chain {
 
 	private:
 		struct TransactionUpdateContext {
-			std::shared_ptr<const model::AggregateTransaction<CoSignatureVersionAlias::Raw>> pAggregateTransaction;
+			std::shared_ptr<const model::AggregateTransaction<SignatureLayout::Raw>> pAggregateTransaction;
 			Hash256 AggregateHash;
 			DetachedCosignatures Cosignatures;
 			std::shared_ptr<const model::UnresolvedAddressSet> pExtractedAddresses;
@@ -163,7 +163,7 @@ namespace catapult { namespace chain {
 
 			const auto& aggregateHash = transactionInfo.EntityHash;
 			DetachedCosignatures cosignatures;
-			auto pAggregateTransaction = std::static_pointer_cast<const model::AggregateTransaction<CoSignatureVersionAlias::Raw>>(transactionInfo.pEntity);
+			auto pAggregateTransaction = std::static_pointer_cast<const model::AggregateTransaction<SignatureLayout::Raw>>(transactionInfo.pEntity);
 			{
 				auto view = m_transactionsCache.view();
 				auto transactionInfoFromCache = view.find(aggregateHash);
@@ -212,24 +212,24 @@ namespace catapult { namespace chain {
 		}
 
 	public:
-		thread::future<CosignatureUpdateResult> update(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature, SignatureVersion version) {
+		thread::future<CosignatureUpdateResult> update(const model::DetachedCosignature<SignatureLayout::Raw>& cosignature, DerivationScheme derivationScheme) {
 			auto pPromise = std::make_shared<thread::promise<CosignatureUpdateResult>>(); // needs to be copyable to pass to post
 			auto updateFuture = pPromise->get_future();
-			boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), version, cosignature, pPromise{std::move(pPromise)}]() {
-				auto result = pThis->updateImpl(cosignature, version);
+			boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), derivationScheme, cosignature, pPromise{std::move(pPromise)}]() {
+				auto result = pThis->updateImpl(cosignature, derivationScheme);
 				pPromise->set_value(std::move(result));
 			});
 
 			return updateFuture;
 		}
-		thread::future<CosignatureUpdateResult> update(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature) {
+		thread::future<CosignatureUpdateResult> update(const model::DetachedCosignature<SignatureLayout::Raw>& cosignature) {
 			auto pPromise = std::make_shared<thread::promise<CosignatureUpdateResult>>(); // needs to be copyable to pass to post
 			auto updateFuture = pPromise->get_future();
 			auto view = m_transactionsCache.view();
 			auto transactionInfoFromCache = view.find(cosignature.ParentHash);
-			auto version = transactionInfoFromCache.tryGetVersionForSigner(cosignature.Signer);
-			boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), version, cosignature, pPromise{std::move(pPromise)}]() {
-			  auto result = pThis->updateImpl(cosignature, version);
+			auto derivationScheme = transactionInfoFromCache.tryGetDerivationSchemeForSigner(cosignature.Signer);
+			boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), derivationScheme, cosignature, pPromise{std::move(pPromise)}]() {
+			  auto result = pThis->updateImpl(cosignature, derivationScheme);
 			  pPromise->set_value(std::move(result));
 			});
 
@@ -237,7 +237,7 @@ namespace catapult { namespace chain {
 		}
 
 	private:
-		CosignatureUpdateResult updateImpl(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature, SignatureVersion signatureVersion) {
+		CosignatureUpdateResult updateImpl(const model::DetachedCosignature<SignatureLayout::Raw>& cosignature, DerivationScheme signatureDerivationScheme) {
 			auto eligiblityResult = checkEligibility(cosignature);
 
 			// proactively refresh the cache even if the new cosignature is invalid
@@ -251,7 +251,7 @@ namespace catapult { namespace chain {
 				return eligiblityResult.updateResult();
 			}
 
-			if (!crypto::Verify(cosignature.Signer, {cosignature.ParentHash}, cosignature.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(signatureVersion))) {
+			if (!crypto::SignatureFeatureSolver::Verify(cosignature.Signer, {cosignature.ParentHash}, cosignature.Signature, signatureDerivationScheme)) {
 				CATAPULT_LOG(debug)
 						<< "ignoring unverifiable cosignature (signer = " << cosignature.Signer
 						<< ", parentHash = " << cosignature.ParentHash << ")";
@@ -282,7 +282,7 @@ namespace catapult { namespace chain {
 			});
 		}
 
-		CosignatureUpdateResult addCosignature(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature) {
+		CosignatureUpdateResult addCosignature(const model::DetachedCosignature<SignatureLayout::Raw>& cosignature) {
 			{
 				auto modifier = m_transactionsCache.modifier();
 				if (!modifier.add(cosignature.ParentHash, cosignature.Signer, cosignature.Signature))
@@ -294,7 +294,7 @@ namespace catapult { namespace chain {
 
 	private:
 		CosignatureUpdateResult checkCompleteness(const Hash256& aggregateHash) {
-			std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>> completedCosignatures;
+			std::vector<model::Cosignature<SignatureLayout::Raw>> completedCosignatures;
 			{
 				auto view = m_transactionsCache.view();
 				auto transactionInfoFromCache = view.find(aggregateHash);
@@ -328,7 +328,7 @@ namespace catapult { namespace chain {
 		// checkEligibility has two responsibilities
 		// 1. first pass to determine if cosignature is invalid before verifying signature (it could still be rejected later)
 		// 2. detect if cache state for corresponding transaction is invalid and needs refreshing
-		CheckEligibilityResult checkEligibility(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature) const {
+		CheckEligibilityResult checkEligibility(const model::DetachedCosignature<SignatureLayout::Raw>& cosignature) const {
 			auto view = m_transactionsCache.view();
 			auto transactionInfoFromCache = view.find(cosignature.ParentHash);
 			if (!transactionInfoFromCache)
@@ -353,7 +353,7 @@ namespace catapult { namespace chain {
 
 			// at this point, either the new cosignature or an existing cosignature is ineligible
 			// 1. check the new cosignature and exit in the more likely case it is ineligible
-			std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>> singleElementCosignatures{ cosignature };
+			std::vector<model::Cosignature<SignatureLayout::Raw>> singleElementCosignatures{ cosignature };
 			auto validateNewResult = validateCosigners(transactionInfoFromCache, singleElementCosignatures);
 			CheckEligibilityResult newCosignatureEligiblityResult(validateNewResult.Normalized);
 			if (CosignersValidationResult::Ineligible == validateNewResult.Normalized)
@@ -397,7 +397,7 @@ namespace catapult { namespace chain {
 
 		PtValidator::Result<CosignersValidationResult> validateCosigners(
 				const model::WeakCosignedTransactionInfo& transactionInfo,
-				const std::vector<model::Cosignature<CoSignatureVersionAlias::Raw>>& cosignatures) const {
+				const std::vector<model::Cosignature<SignatureLayout::Raw>>& cosignatures) const {
 			return m_pValidator->validateCosigners({ &transactionInfo.transaction(), &cosignatures });
 		}
 
@@ -445,11 +445,11 @@ namespace catapult { namespace chain {
 		return m_pImpl->update(transactionInfo);
 	}
 
-	thread::future<CosignatureUpdateResult> PtUpdater::update(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature, SignatureVersion version) {
-		return m_pImpl->update(cosignature, version);
+	thread::future<CosignatureUpdateResult> PtUpdater::update(const model::DetachedCosignature<SignatureLayout::Raw>& cosignature, DerivationScheme scheme) {
+		return m_pImpl->update(cosignature, scheme);
 	}
 
-	thread::future<CosignatureUpdateResult> PtUpdater::update(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature) {
+	thread::future<CosignatureUpdateResult> PtUpdater::update(const model::DetachedCosignature<SignatureLayout::Raw>& cosignature) {
 		return m_pImpl->update(cosignature);
 	}
 }}

@@ -345,7 +345,7 @@ namespace catapult { namespace zeromq {
 		context.publishCosignature(transactionInfo, signer, signature);
 
 		// Assert:
-		model::DetachedCosignature<CoSignatureVersionAlias::Raw>  expectedDetachedCosignature(signer, signature, transactionInfo.EntityHash);
+		model::DetachedCosignature<SignatureLayout::Raw>  expectedDetachedCosignature(signer, signature, transactionInfo.EntityHash);
 		auto& zmqSocket = context.zmqSocket();
 		test::AssertMessages(zmqSocket, marker, addresses, [&expectedDetachedCosignature](const auto& message, const auto& topic) {
 			test::AssertDetachedCosignatureMessage(message, topic, expectedDetachedCosignature);

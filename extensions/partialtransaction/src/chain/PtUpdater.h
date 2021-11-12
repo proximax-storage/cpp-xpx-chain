@@ -111,9 +111,9 @@ namespace catapult { namespace chain {
 		thread::future<TransactionUpdateResult> update(const model::TransactionInfo& transactionInfo);
 
 		/// Updates this cache by adding a new \a cosignature with included \a version for optimization when it is available.
-		thread::future<CosignatureUpdateResult> update(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature, SignatureVersion version);
+		thread::future<CosignatureUpdateResult> update(const model::DetachedCosignature<SignatureLayout::Raw>& cosignature, DerivationScheme version);
 		/// Updates this cache by adding a new \a cosignature without \a version which will be retrieved from cache.
-		thread::future<CosignatureUpdateResult> update(const model::DetachedCosignature<CoSignatureVersionAlias::Raw>& cosignature);
+		thread::future<CosignatureUpdateResult> update(const model::DetachedCosignature<SignatureLayout::Raw>& cosignature);
 
 	private:
 		class Impl;

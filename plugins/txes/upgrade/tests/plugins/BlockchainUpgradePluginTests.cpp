@@ -36,7 +36,7 @@ namespace catapult { namespace plugins {
 
 		public:
 			static std::vector<model::EntityType> GetTransactionTypes() {
-				return { model::Entity_Type_Blockchain_Upgrade };
+				return { model::Entity_Type_Blockchain_Upgrade, model::Entity_Type_AccountV2_Upgrade };
 			}
 
 			static std::vector<std::string> GetCacheNames() {
@@ -66,12 +66,14 @@ namespace catapult { namespace plugins {
 					"BlockchainUpgradeSignerValidator",
 					"BlockchainVersionValidator",
 					"BlockchainUpgradeValidator",
+					"AccountV2UpgradeValidator"
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
 					"BlockchainUpgradeObserver",
+					"AccountV2UpgradeObserver"
 				};
 			}
 

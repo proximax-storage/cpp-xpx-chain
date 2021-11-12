@@ -88,7 +88,7 @@ namespace catapult { namespace tools {
 	// region MultiNodeConnector
 
 	MultiNodeConnector::MultiNodeConnector()
-			: m_clientKeyPair(GenerateRandomKeyPair(Node_Boot_Key_Hashing_Type))
+			: m_clientKeyPair(GenerateRandomKeyPair(Node_Boot_Key_Derivation_Scheme))
 			, m_pPool(CreateStartedThreadPool())
 	{}
 

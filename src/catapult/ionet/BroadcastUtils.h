@@ -36,5 +36,5 @@ namespace catapult { namespace ionet {
 	PacketPayload CreateBroadcastPayload(const std::vector<model::TransactionInfo>& transactionInfos, PacketType packetType);
 
 	/// Creates a payload around \a cosignatures for broadcasting.
-	PacketPayload CreateBroadcastPayload(const std::vector<model::DetachedCosignature<CoSignatureVersionAlias::Raw>>& cosignatures);
+	PacketPayload CreateBroadcastPayload(const std::vector<model::DetachedCosignature<SignatureLayout::Raw>>& cosignatures);
 }}

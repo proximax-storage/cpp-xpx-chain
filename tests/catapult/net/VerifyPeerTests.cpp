@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/net/VerifyPeer.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/ionet/PacketIo.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/net/Challenge.h"
@@ -29,7 +28,7 @@
 #include "tests/test/core/mocks/MockPacketIo.h"
 #include "tests/test/net/SocketTestUtils.h"
 #include <queue>
-#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
+#include "catapult/crypto/Signature.h"
 
 using catapult::mocks::MockPacketIo;
 
@@ -64,7 +63,7 @@ namespace catapult { namespace net {
 		VerifyResult VerifyClient(const std::shared_ptr<ionet::PacketIo>& pClientIo, bool shouldExpectNonEmptyPeerInfo = false) {
 			// Assert: verified client key should be correct only for certain results
 			auto expectedPeerInfo = shouldExpectNonEmptyPeerInfo
-					? VerifiedPeerInfo{ crypto::KeyPair::FromString(Client_Private_Key, Node_Boot_Key_Hashing_Type).publicKey(), Default_Security_Mode }
+					? VerifiedPeerInfo{ crypto::KeyPair::FromString(Client_Private_Key, Node_Boot_Key_Derivation_Scheme).publicKey(), Default_Security_Mode }
 					: VerifiedPeerInfo{ Key(), static_cast<ionet::ConnectionSecurityMode>(0) };
 
 			return VerifyClient(pClientIo, expectedPeerInfo);
@@ -75,7 +74,7 @@ namespace catapult { namespace net {
 				auto pRequest = static_cast<const ServerChallengeRequest*>(pPacket);
 				auto pResponse = GenerateServerChallengeResponse(
 						*pRequest,
-						crypto::KeyPair::FromString(Client_Private_Key, Node_Boot_Key_Hashing_Type),
+						crypto::KeyPair::FromString(Client_Private_Key, Node_Boot_Key_Derivation_Scheme),
 						Default_Security_Mode);
 				modifyPacket(*pResponse);
 				return pResponse;
@@ -168,7 +167,7 @@ namespace catapult { namespace net {
 			pMockIo->queueWrite(ionet::SocketOperationCode::Success);
 
 			// Act: verify
-			auto clientPublicKey = crypto::KeyPair::FromString(Client_Private_Key, Node_Boot_Key_Hashing_Type).publicKey();
+			auto clientPublicKey = crypto::KeyPair::FromString(Client_Private_Key, Node_Boot_Key_Derivation_Scheme).publicKey();
 			auto result = VerifyClient(pMockIo, { clientPublicKey, securityMode });
 
 			// Assert:
@@ -260,7 +259,7 @@ namespace catapult { namespace net {
 
 		// Assert: the signature is non zero and is verifiable
 		EXPECT_NE(RawSignature(), packet.Signature);
-		EXPECT_TRUE(crypto::Verify(serverKeyPair.publicKey(), {challenge}, packet.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(SignatureVersionAlias::Sha3)));
+		EXPECT_TRUE(crypto::SignatureFeatureSolver::Verify(serverKeyPair.publicKey(), {challenge}, packet.Signature, Node_Boot_Key_Derivation_Scheme));
 	}
 
 	// endregion
@@ -485,7 +484,7 @@ namespace catapult { namespace net {
 
 		// Assert: the signature is non zero and is verifiable
 		EXPECT_NE(RawSignature(), packet.Signature);
-		EXPECT_TRUE(crypto::Verify(clientKeyPair.publicKey(), {signedData}, packet.Signature, utils::ResolveKeyHashingTypeFromSignatureVersion(SignatureVersionAlias::Sha3)));
+		EXPECT_TRUE(crypto::SignatureFeatureSolver::Verify(clientKeyPair.publicKey(), {signedData}, packet.Signature, Node_Boot_Key_Derivation_Scheme));
 	}
 
 	// endregion

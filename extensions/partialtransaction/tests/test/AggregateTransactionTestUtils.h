@@ -27,16 +27,16 @@
 namespace catapult { namespace test {
 
 	/// Creates an aggregate transaction with \a numCosignatures cosignatures, \a numTransactions transactions and populates \a cosigners with the KeyPairs of \a cosignersAccountVersion version, used as transaction signers.
-	model::UniqueEntityPtr<model::AggregateTransaction<CoSignatureVersionAlias::Raw>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures, uint32_t numTransactions, std::vector<crypto::KeyPair>& cosigners, uint32_t cosignersAccountVersion, bool signerIsCosigner);
+	model::UniqueEntityPtr<model::AggregateTransaction<SignatureLayout::Raw>> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures, uint32_t numTransactions, std::vector<crypto::KeyPair>& cosigners, uint32_t cosignersAccountVersion, bool signerIsCosigner);
 
 	/// Generates a random cosignature for parent hash (\a aggregateHash).
-	model::DetachedCosignature<CoSignatureVersionAlias::Raw> GenerateValidCosignature(const crypto::KeyPair& keyPair, const Hash256& aggregateHash);
+	model::DetachedCosignature<SignatureLayout::Raw> GenerateValidCosignature(const crypto::KeyPair& keyPair, const Hash256& aggregateHash);
 
 	/// Generates a random cosignature for parent hash (\a aggregateHash).
-	model::DetachedCosignature<CoSignatureVersionAlias::Raw> GenerateValidCosignature(const Hash256& aggregateHash, uint32_t accountVersion);
+	model::DetachedCosignature<SignatureLayout::Raw> GenerateValidCosignature(const Hash256& aggregateHash, uint32_t accountVersion);
 
 	/// Fix cosignatures of \a aggregateTransaction having \a aggregateHash.
-	void FixCosignatures(const std::vector<crypto::KeyPair>& cosigners, const Hash256& aggregateHash, model::AggregateTransaction<CoSignatureVersionAlias::Raw>& aggregateTransaction, bool signerIsCosigner);
+	void FixCosignatures(const std::vector<crypto::KeyPair>& cosigners, const Hash256& aggregateHash, model::AggregateTransaction<SignatureLayout::Raw>& aggregateTransaction, bool signerIsCosigner);
 
 	/// A map of cosignature components.
 	using CosignaturesMap = std::unordered_map<Key, RawSignature, utils::ArrayHasher<Key>>;

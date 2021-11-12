@@ -52,7 +52,7 @@ namespace catapult { namespace tools {
 		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte), accountVersion);
 	}
 
-	crypto::KeyPair GenerateRandomKeyPair(KeyHashingType hashingType) {
+	crypto::KeyPair GenerateRandomKeyPair(DerivationScheme hashingType) {
 		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte), hashingType);
 	}
 

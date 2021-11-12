@@ -35,7 +35,7 @@ namespace catapult { namespace model {
 		std::shared_ptr<const Transaction> pTransaction;
 
 		/// Cosignatures (optional).
-		std::vector<Cosignature<CoSignatureVersionAlias::Raw>> Cosignatures;
+		std::vector<Cosignature<SignatureLayout::Raw>> Cosignatures;
 	};
 }}
 

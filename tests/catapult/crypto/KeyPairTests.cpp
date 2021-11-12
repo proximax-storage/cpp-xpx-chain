@@ -26,24 +26,24 @@ namespace catapult { namespace crypto {
 #define TEST_CLASS KeyPairTests
 
 	namespace {
-		void AssertCannotCreatePrivateKeyFromStringWithSize(size_t size, char keyFirstChar, KeyHashingType hashType) {
+		void AssertCannotCreatePrivateKeyFromStringWithSize(size_t size, char keyFirstChar, DerivationScheme derivationScheme) {
 			// Arrange:
 			auto rawKeyString = test::GenerateRandomHexString(size);
 			rawKeyString[0] = keyFirstChar;
 
 			// Act + Assert: key creation should fail but string should not be cleared
-			EXPECT_THROW(KeyPair::FromString(rawKeyString, hashType), catapult_invalid_argument) << "string size: " << size;
+			EXPECT_THROW(KeyPair::FromString(rawKeyString, derivationScheme), catapult_invalid_argument) << "string size: " << size;
 			EXPECT_EQ(keyFirstChar, rawKeyString[0]);
 		}
 	}
 
 	TEST(TEST_CLASS, CannotCreateKeyPairFromInvalidString) {
-		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 1, 'a', KeyHashingType::Sha3);
-		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 1, 'a', KeyHashingType::Sha2);
-		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 2, 'g', KeyHashingType::Sha3);
-		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 2, 'g', KeyHashingType::Sha2);
-		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 3, 'a', KeyHashingType::Sha3);
-		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 3, 'a', KeyHashingType::Sha2);
+		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 1, 'a', DerivationScheme::Ed25519_Sha3);
+		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 1, 'a', DerivationScheme::Ed25519_Sha2);
+		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 2, 'g', DerivationScheme::Ed25519_Sha3);
+		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 2, 'g', DerivationScheme::Ed25519_Sha2);
+		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 3, 'a', DerivationScheme::Ed25519_Sha3);
+		AssertCannotCreatePrivateKeyFromStringWithSize(Key_Size * 3, 'a', DerivationScheme::Ed25519_Sha2);
 	}
 
 	TEST(TEST_CLASS, CanCreateKeyPairFromValidString) {
@@ -57,8 +57,8 @@ namespace catapult { namespace crypto {
 		auto expectedKeySha2 = std::string("E343795087E44BC0CD516F3FF19954A9B90FEA7684724E5C145559D6D4D9F56D");
 #endif
 		// Act:
-		auto keyPairSha3 = KeyPair::FromString(rawKeyString, KeyHashingType::Sha3);
-		auto keyPairSha2 = KeyPair::FromString(rawKeyString, KeyHashingType::Sha2);
+		auto keyPairSha3 = KeyPair::FromString(rawKeyString, DerivationScheme::Ed25519_Sha3);
+		auto keyPairSha2 = KeyPair::FromString(rawKeyString, DerivationScheme::Ed25519_Sha2);
 
 		// Assert:
 		EXPECT_EQ(expectedKeySha3, test::ToString(keyPairSha3.publicKey()));
@@ -74,11 +74,11 @@ namespace catapult { namespace crypto {
 		auto privateKey = PrivateKey::FromString(privateKeyStr);
 		auto privateKey2 = PrivateKey::FromString(privateKeyStr);
 		Key expectedPublicKeySha3, expectedPublicKeySha2;
-		ExtractPublicKeyFromPrivateKey<KeyHashingType::Sha2>(privateKey, expectedPublicKeySha2);
-		ExtractPublicKeyFromPrivateKey<KeyHashingType::Sha3>(privateKey, expectedPublicKeySha3);
+		ExtractPublicKeyFromPrivateKey<DerivationScheme::Ed25519_Sha2>(privateKey, expectedPublicKeySha2);
+		ExtractPublicKeyFromPrivateKey<DerivationScheme::Ed25519_Sha3>(privateKey, expectedPublicKeySha3);
 		// Act:
-		auto keyPairSha3 = KeyPair::FromPrivate(std::move(privateKey), KeyHashingType::Sha3);
-		auto keyPairSha2 = KeyPair::FromPrivate(std::move(privateKey2), KeyHashingType::Sha2);
+		auto keyPairSha3 = KeyPair::FromPrivate(std::move(privateKey), DerivationScheme::Ed25519_Sha3);
+		auto keyPairSha2 = KeyPair::FromPrivate(std::move(privateKey2), DerivationScheme::Ed25519_Sha2);
 		// Assert:
 		EXPECT_EQ(PrivateKey::FromString(privateKeyStr), keyPairSha3.privateKey());
 		EXPECT_EQ(expectedPublicKeySha3, keyPairSha3.publicKey());
@@ -93,8 +93,8 @@ namespace catapult { namespace crypto {
 		auto privateKey = PrivateKey::FromString(privateKeyStr);
 
 		// Act:
-		auto keyPair1 = KeyPair::FromPrivate(std::move(privateKey), KeyHashingType::Sha3);
-		auto keyPair2 = KeyPair::FromString(privateKeyStr, KeyHashingType::Sha3);
+		auto keyPair1 = KeyPair::FromPrivate(std::move(privateKey), DerivationScheme::Ed25519_Sha3);
+		auto keyPair2 = KeyPair::FromString(privateKeyStr, DerivationScheme::Ed25519_Sha3);
 
 		// Assert:
 		EXPECT_EQ(keyPair1.privateKey(), keyPair2.privateKey());
@@ -148,8 +148,8 @@ namespace catapult { namespace crypto {
 		ASSERT_EQ(CountOf(dataSet), CountOf(expectedSetSha2));
 		for (size_t i = 0; i < CountOf(dataSet); ++i) {
 			// Act:
-			auto keyPairSha3 = KeyPair::FromString(dataSet[i], KeyHashingType::Sha3);
-			auto keyPairSha2 = KeyPair::FromString(dataSet[i], KeyHashingType::Sha2);
+			auto keyPairSha3 = KeyPair::FromString(dataSet[i], DerivationScheme::Ed25519_Sha3);
+			auto keyPairSha2 = KeyPair::FromString(dataSet[i], DerivationScheme::Ed25519_Sha2);
 
 			// Assert:
 			EXPECT_EQ(expectedSetSha3[i], test::ToString(keyPairSha3.publicKey()));

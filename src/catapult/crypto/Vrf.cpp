@@ -63,11 +63,11 @@ namespace catapult { namespace crypto {
 			return 0 == std::memcmp(reduced, multiplier, 32);
 		}
 
-		template<KeyHashingType TKeyHashingType>
+		template<DerivationScheme TDerivationScheme>
 		Hash512 IetfHash(uint8_t suite, uint8_t action, std::initializer_list<const RawBuffer> buffersList);
 
 		template<>
-		Hash512 IetfHash<KeyHashingType::Sha3>(uint8_t suite, uint8_t action, std::initializer_list<const RawBuffer> buffersList) {
+		Hash512 IetfHash<DerivationScheme::Ed25519_Sha3>(uint8_t suite, uint8_t action, std::initializer_list<const RawBuffer> buffersList) {
 			Sha3_512_Builder builder;
 			builder.update({ &suite, 1 });
 			builder.update({ &action, 1 });
@@ -79,7 +79,7 @@ namespace catapult { namespace crypto {
 			return hash;
 		}
 		template<>
-		Hash512 IetfHash<KeyHashingType::Sha2>(uint8_t suite, uint8_t action, std::initializer_list<const RawBuffer> buffersList) {
+		Hash512 IetfHash<DerivationScheme::Ed25519_Sha2>(uint8_t suite, uint8_t action, std::initializer_list<const RawBuffer> buffersList) {
 			Sha512_Builder builder;
 			builder.update({ &suite, 1 });
 			builder.update({ &action, 1 });
@@ -91,13 +91,13 @@ namespace catapult { namespace crypto {
 			return hash;
 		}
 
-		template<KeyHashingType TKeyHashingType>
+		template<DerivationScheme TDerivationScheme>
 		Key MapToKey(const RawBuffer& alpha, const Key& publicKey) {
 			uint8_t i = 0;
 			ge25519 A;
 			while (true) {
 				// Hash(suite | action | publicKey | alpha | i)
-				auto hash = IetfHash<TKeyHashingType>(0x03, 0x01, { publicKey, alpha, { &i, 1 } });
+				auto hash = IetfHash<TDerivationScheme>(0x03, 0x01, { publicKey, alpha, { &i, 1 } });
 				auto key = hash.template copyTo<Key>();
 				if (UnpackNegative(A, key))
 					return ScalarMultEight(key);
@@ -127,9 +127,9 @@ namespace catapult { namespace crypto {
 			return packedR;
 		}
 
-		template<KeyHashingType TKeyHashingType>
+		template<DerivationScheme TDerivationScheme>
 		ProofVerificationHash VrfC(const Key& h, const Key& gamma, const Key& k_times_B, const Key& k_times_h) {
-			auto hash = IetfHash<TKeyHashingType>(0x03, 0x02, { h, gamma, k_times_B, k_times_h });
+			auto hash = IetfHash<TDerivationScheme>(0x03, 0x02, { h, gamma, k_times_B, k_times_h });
 
 			ProofVerificationHash c;
 			std::memcpy(c.data(), hash.data(), 16);
@@ -158,10 +158,10 @@ namespace catapult { namespace crypto {
 		}
 	}
 
-	template<KeyHashingType TKeyHashingType>
+	template<DerivationScheme TDerivationScheme>
 	VrfProof GenerateVrfProof(const RawBuffer& alpha, const KeyPair& keyPair) {
 		// map to group element
-		auto h = MapToKey<TKeyHashingType>(alpha, keyPair.publicKey());
+		auto h = MapToKey<TDerivationScheme>(alpha, keyPair.publicKey());
 		if (Key() == h)
 			return VrfProof();
 
@@ -170,7 +170,7 @@ namespace catapult { namespace crypto {
 
 		// generate k
 		bignum256modm k;
-		GenerateNonce<Vrf_Key_Hashing_Type>(keyPair.privateKey(), { h }, k);
+		GenerateNonce<Vrf_Key_Derivation_Scheme>(keyPair.privateKey(), { h }, k);
 
 		// k * B
 		Key k_times_B;
@@ -185,11 +185,11 @@ namespace catapult { namespace crypto {
 		ScalarMult(encodedK, h, k_times_h);
 
 		// c = first 16 bytes of Sha512(suite | action | h | gamma | k * B | k * h)
-		auto c = VrfC<TKeyHashingType>(h, gamma, k_times_B, k_times_h);
+		auto c = VrfC<TDerivationScheme>(h, gamma, k_times_B, k_times_h);
 
 		// s = (k + cx) mod q
 		ScalarMultiplier encodedX;
-		ExtractMultiplier<Vrf_Key_Hashing_Type>(keyPair.privateKey(), encodedX);
+		ExtractMultiplier<Vrf_Key_Derivation_Scheme>(keyPair.privateKey(), encodedX);
 		auto s = VrfS(encodedK, c, encodedX);
 
 		SecureZero(encodedK);
@@ -198,7 +198,7 @@ namespace catapult { namespace crypto {
 		return { gamma.template copyTo<ProofGamma>(), c, s };
 	}
 
-	template<KeyHashingType TKeyHashingType>
+	template<DerivationScheme TDerivationScheme>
 	Hash512 VerifyVrfProof(const VrfProof& vrfProof, const RawBuffer& alpha, const Key& publicKey) {
 		auto gamma = vrfProof.Gamma.copyTo<Key>();
 
@@ -208,7 +208,7 @@ namespace catapult { namespace crypto {
 			return Hash512();
 
 		// map to group element
-		auto h = MapToKey<TKeyHashingType>(alpha, publicKey);
+		auto h = MapToKey<TDerivationScheme>(alpha, publicKey);
 		if (Key() == h)
 			return Hash512();
 
@@ -252,19 +252,19 @@ namespace catapult { namespace crypto {
 		ge25519_pack(v.data(), &V);
 
 		// verificationHash = first 16 bytes of Sha512(suite | 0x2 | h | gamma | u | v)
-		auto verificationHash = VrfC<TKeyHashingType>(h, gamma, u, v);
-		return vrfProof.VerificationHash == verificationHash ? GenerateVrfProofHash<TKeyHashingType>(vrfProof.Gamma) : Hash512();
+		auto verificationHash = VrfC<TDerivationScheme>(h, gamma, u, v);
+		return vrfProof.VerificationHash == verificationHash ? GenerateVrfProofHash<TDerivationScheme>(vrfProof.Gamma) : Hash512();
 	}
 
-	template<KeyHashingType TKeyHashingType>
+	template<DerivationScheme TDerivationScheme>
 	Hash512 GenerateVrfProofHash(const ProofGamma& gamma) {
-		return IetfHash<TKeyHashingType>(0x03, 0x03, { ScalarMultEight(gamma.copyTo<Key>()) });
+		return IetfHash<TDerivationScheme>(0x03, 0x03, { ScalarMultEight(gamma.copyTo<Key>()) });
 	}
 
-	template Hash512 GenerateVrfProofHash<KeyHashingType::Sha3>(const ProofGamma& gamma);
-	template Hash512 GenerateVrfProofHash<KeyHashingType::Sha2>(const ProofGamma& gamma);
-	template Hash512 VerifyVrfProof<KeyHashingType::Sha3>(const VrfProof& vrfProof, const RawBuffer& alpha, const Key& publicKey);
-	template Hash512 VerifyVrfProof<KeyHashingType::Sha2>(const VrfProof& vrfProof, const RawBuffer& alpha, const Key& publicKey);
-	template VrfProof GenerateVrfProof<KeyHashingType::Sha3>(const RawBuffer& alpha, const KeyPair& keyPair);
-	template VrfProof GenerateVrfProof<KeyHashingType::Sha2>(const RawBuffer& alpha, const KeyPair& keyPair);
+	template Hash512 GenerateVrfProofHash<DerivationScheme::Ed25519_Sha3>(const ProofGamma& gamma);
+	template Hash512 GenerateVrfProofHash<DerivationScheme::Ed25519_Sha2>(const ProofGamma& gamma);
+	template Hash512 VerifyVrfProof<DerivationScheme::Ed25519_Sha3>(const VrfProof& vrfProof, const RawBuffer& alpha, const Key& publicKey);
+	template Hash512 VerifyVrfProof<DerivationScheme::Ed25519_Sha2>(const VrfProof& vrfProof, const RawBuffer& alpha, const Key& publicKey);
+	template VrfProof GenerateVrfProof<DerivationScheme::Ed25519_Sha3>(const RawBuffer& alpha, const KeyPair& keyPair);
+	template VrfProof GenerateVrfProof<DerivationScheme::Ed25519_Sha2>(const RawBuffer& alpha, const KeyPair& keyPair);
 }}

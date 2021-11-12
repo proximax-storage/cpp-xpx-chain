@@ -18,12 +18,11 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/Signature.h"
 #include "catapult/net/Challenge.h"
-#include "catapult/crypto/Signer.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/TestHarness.h"
-#include "catapult/utils/SignatureVersionToKeyTypeResolver.h"
 
 namespace catapult { namespace net {
 
@@ -75,7 +74,7 @@ namespace catapult { namespace net {
 		// Arrange:
 		constexpr auto Challenge_Size = std::tuple_size_v<Challenge>;
 		auto pRequest = GenerateServerChallengeRequest();
-		auto keyPair = test::GenerateKeyPair(Node_Boot_Key_Hashing_Type);
+		auto keyPair = test::GenerateKeyPair(Node_Boot_Key_Derivation_Scheme);
 
 		// Act:
 		auto pResponse = GenerateServerChallengeResponse(*pRequest, keyPair, ionet::ConnectionSecurityMode::Signed);
@@ -90,7 +89,7 @@ namespace catapult { namespace net {
 		EXPECT_EQ(ionet::PacketType::Server_Challenge, pResponse->Type);
 		EXPECT_NE(Challenge(), pResponse->Challenge); // challenge is non-zero
 		EXPECT_NE(pRequest->Challenge, pResponse->Challenge); // challenge is not the same as the request challenge
-		EXPECT_TRUE(crypto::Verify(pResponse->PublicKey, {signedData}, pResponse->Signature, Node_Boot_Key_Hashing_Type));
+		EXPECT_TRUE(crypto::SignatureFeatureSolver::Verify(pResponse->PublicKey, {signedData}, pResponse->Signature, Node_Boot_Key_Derivation_Scheme));
 		EXPECT_EQ(keyPair.publicKey(), pResponse->PublicKey);
 	}
 
@@ -164,7 +163,7 @@ namespace catapult { namespace net {
 		// Assert:
 		EXPECT_EQ(sizeof(ClientChallengeResponse), pResponse->Size);
 		EXPECT_EQ(ionet::PacketType::Client_Challenge, pResponse->Type);
-		EXPECT_TRUE(crypto::Verify(keyPair.publicKey(), {pRequest->Challenge}, pResponse->Signature, Node_Boot_Key_Hashing_Type));
+		EXPECT_TRUE(crypto::SignatureFeatureSolver::Verify(keyPair.publicKey(), {pRequest->Challenge}, pResponse->Signature, Node_Boot_Key_Derivation_Scheme));
 	}
 
 	// endregion

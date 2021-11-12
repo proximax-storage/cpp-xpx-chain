@@ -32,7 +32,7 @@ namespace catapult { namespace tools {
 	crypto::KeyPair GenerateRandomKeyPair(uint32_t accountVersion);
 
 	/// Returns random key pair.
-	crypto::KeyPair GenerateRandomKeyPair(KeyHashingType type);
+	crypto::KeyPair GenerateRandomKeyPair(DerivationScheme type);
 
 	/// Generate \a count deterministic addresses.
 	std::vector<Address> PrepareAddresses(size_t count);

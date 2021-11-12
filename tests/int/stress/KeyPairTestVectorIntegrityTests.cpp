@@ -22,12 +22,12 @@
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/crypto/PrivateKey.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/model/Address.h"
 #include "catapult/utils/HexFormatter.h"
 #include "catapult/utils/HexParser.h"
 #include "tests/int/stress/test/InputDependentTest.h"
 #include "tests/TestHarness.h"
+#include "catapult/crypto/Signature.h"
 
 namespace catapult {
 
@@ -75,7 +75,7 @@ namespace catapult {
 		RunTest("1.test-keys.dat", ParseKeyTestData, [](const auto& testData) {
 			// Act:
 			Key publicKey;
-			crypto::ExtractPublicKeyFromPrivateKey<KeyHashingType::Sha3>(testData.PrivateKey, publicKey);
+			crypto::ExtractPublicKeyFromPrivateKey<DerivationScheme::Ed25519_Sha3>(testData.PrivateKey, publicKey);
 			auto address = model::PublicKeyToAddress(testData.PublicKey, model::NetworkIdentifier::Public);
 
 			// Assert:
@@ -91,7 +91,7 @@ namespace catapult {
 	namespace {
 		struct SignTestData {
 		public:
-			explicit SignTestData(crypto::PrivateKey&& privateKey) : KeyPair(crypto::KeyPair::FromPrivate(std::move(privateKey), KeyHashingType::Sha3))
+			explicit SignTestData(crypto::PrivateKey&& privateKey) : KeyPair(crypto::KeyPair::FromPrivate(std::move(privateKey), DerivationScheme::Ed25519_Sha3))
 			{}
 
 		public:
@@ -122,7 +122,7 @@ namespace catapult {
 		RunTest("2.test-sign.dat", ParseSignTestData, [](const auto& testData) {
 			// Act:
 			Signature signature;
-			crypto::Sign(testData.KeyPair, testData.Data, signature);
+			crypto::SignatureFeatureSolver::Sign(testData.KeyPair, testData.Data, signature);
 
 			// Assert:
 			EXPECT_EQ(testData.Signature, signature) << "data " << utils::HexFormat(testData.Data);

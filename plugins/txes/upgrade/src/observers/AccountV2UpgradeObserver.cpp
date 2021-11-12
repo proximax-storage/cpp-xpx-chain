@@ -8,7 +8,7 @@
 #include "src/cache/BlockchainUpgradeCache.h"
 #include "catapult/model/Address.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/utils/CacheUtils.h"
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 #include "catapult/state/AccountBalances.h"
 namespace catapult { namespace observers {
 
@@ -56,7 +56,7 @@ namespace {
 		  	if(NotifyMode::Commit == context.Mode)
 			{
 
-				auto originalAccount = utils::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer)->get();
+				auto originalAccount = cache::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer)->get();
 				state::AccountState newAccount(model::PublicKeyToAddress(notification.NewAccountPublicKey, accountStateCache.networkIdentifier()), context.Height, 2, originalAccount);
 				newAccount.PublicKey = notification.NewAccountPublicKey;
 				TransferGenerateNewState(originalAccount, newAccount, context.Height);
@@ -64,8 +64,8 @@ namespace {
 			}
 			else
 			{
-				auto newAccount = utils::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.NewAccountPublicKey)->get();
-				auto originalAccount = utils::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer)->get();
+				auto newAccount = cache::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.NewAccountPublicKey)->get();
+				auto originalAccount = cache::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer)->get();
 				originalAccount = *newAccount.OldState;
 				accountStateCache.queueRemove(notification.NewAccountPublicKey, newAccount.PublicKeyHeight);
 				accountStateCache.commitRemovals();

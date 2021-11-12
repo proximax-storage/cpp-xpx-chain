@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/Signature.h"
 #include "src/builders/AggregateTransactionBuilder.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/model/EntityHasher.h"
 #include "sdk/tests/builders/test/BuilderTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
@@ -31,7 +31,7 @@ namespace catapult { namespace builders {
 #define TEST_CLASS AggregateTransactionBuilderTests
 
 	namespace {
-		using RegularTraits = test::RegularTransactionTraits<model::AggregateTransaction<CoSignatureVersionAlias::Raw>>;
+		using RegularTraits = test::RegularTransactionTraits<model::AggregateTransaction<SignatureLayout::Raw>>;
 
 		class TestContext {
 		public:
@@ -51,13 +51,13 @@ namespace catapult { namespace builders {
 				return builder.build();
 			}
 
-			void assertTransaction(const model::AggregateTransaction<CoSignatureVersionAlias::Raw>& transaction, size_t numCosignatures, model::EntityType type) {
+			void assertTransaction(const model::AggregateTransaction<SignatureLayout::Raw>& transaction, size_t numCosignatures, model::EntityType type) {
 				auto numTransactions = m_pTransactions.size();
 				size_t additionalSize = numTransactions * sizeof(mocks::EmbeddedMockTransaction);
 				for (auto i = 0u; i < numTransactions; ++i)
 					additionalSize += 31 + i;
 
-				additionalSize += numCosignatures * sizeof(model::Cosignature<CoSignatureVersionAlias::Raw>);
+				additionalSize += numCosignatures * sizeof(model::Cosignature<SignatureLayout::Raw>);
 				RegularTraits::CheckFields(additionalSize, transaction);
 				EXPECT_EQ(m_signer, transaction.Signer);
 				EXPECT_EQ(0x62000003, transaction.Version);
@@ -97,10 +97,10 @@ namespace catapult { namespace builders {
 			return keys;
 		}
 
-		RawBuffer TransactionDataBuffer(const model::AggregateTransaction<CoSignatureVersionAlias::Raw>& transaction) {
+		RawBuffer TransactionDataBuffer(const model::AggregateTransaction<SignatureLayout::Raw>& transaction) {
 			return {
 				reinterpret_cast<const uint8_t*>(&transaction) + model::VerifiableEntity::Header_Size,
-				sizeof(model::AggregateTransaction<CoSignatureVersionAlias::Raw>) - model::VerifiableEntity::Header_Size + transaction.PayloadSize
+				sizeof(model::AggregateTransaction<SignatureLayout::Raw>) - model::VerifiableEntity::Header_Size + transaction.PayloadSize
 			};
 		}
 
@@ -117,12 +117,12 @@ namespace catapult { namespace builders {
 
 			auto pTransaction = builder.build();
 
-			auto findCorrespondingKeyVersion = [&cosigners](const Key& publicKey) -> KeyHashingType{
+			auto findCorrespondingKeyVersion = [&cosigners](const Key& publicKey) -> DerivationScheme{
 				auto result = std::find_if(cosigners.begin(), cosigners.end(), [&publicKey](auto& val){
 					return val.publicKey() == publicKey;
 				});
-				if(result != cosigners.end()) return result->hashingType();
-				return KeyHashingType::Sha3;
+				if(result != cosigners.end()) return result->derivationScheme();
+				CATAPULT_THROW_RUNTIME_ERROR("Unable to find expected derivation scheme!");
 			};
 			// Assert:
 			context.assertTransaction(*pTransaction, cosigners.size(), model::Entity_Type_Aggregate_Complete);
@@ -130,7 +130,7 @@ namespace catapult { namespace builders {
 			const auto* pCosignature = pTransaction->CosignaturesPtr();
 			for (const auto& cosigner : cosigners) {
 				EXPECT_EQ(cosigner.publicKey(), pCosignature->Signer) << "invalid signer";
-				EXPECT_TRUE(crypto::Verify(pCosignature->Signer, {hash}, pCosignature->Signature, findCorrespondingKeyVersion(pCosignature->Signer)))
+				EXPECT_TRUE(crypto::SignatureFeatureSolver::Verify(pCosignature->Signer, {hash}, pCosignature->Signature, findCorrespondingKeyVersion(pCosignature->Signer)))
 						<< "invalid cosignature " << pCosignature->Signature;
 				++pCosignature;
 			}
