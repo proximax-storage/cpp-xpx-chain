@@ -28,8 +28,8 @@ namespace catapult { namespace plugins {
 											+ sizeof(transaction.FileStructureSize)
 											+ sizeof(transaction.MetaFilesSize)
 											+ sizeof(transaction.UsedDriveSize);
-				auto* const commonDataPtr = new uint8_t[commonDataSize];
-				auto* pCommonData = commonDataPtr;
+				const auto commonDataPtr = std::unique_ptr<uint8_t[]>(new uint8_t[commonDataSize]);
+				auto* pCommonData = commonDataPtr.get();
 				utils::WriteToByteArray(pCommonData, transaction.DriveKey);
 				utils::WriteToByteArray(pCommonData, transaction.DataModificationId);
 				utils::WriteToByteArray(pCommonData, transaction.FileStructureCdi);
@@ -43,7 +43,7 @@ namespace catapult { namespace plugins {
 						transaction.JudgingKeysCount,
 						transaction.OverlappingKeysCount,
 						transaction.JudgedKeysCount,
-						commonDataPtr,
+						commonDataPtr.get(),
 						transaction.PublicKeysPtr(),
 						transaction.OpinionIndicesPtr(),
 						transaction.BlsSignaturesPtr(),

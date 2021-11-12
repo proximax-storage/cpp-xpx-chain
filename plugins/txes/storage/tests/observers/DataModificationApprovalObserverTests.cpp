@@ -22,7 +22,12 @@ namespace catapult { namespace observers {
 
         constexpr auto Current_Height = Height(10);
         constexpr auto File_Structure_Size = 50;
+		constexpr auto Meta_Files_Size = 50;
         constexpr auto Used_Drive_Size = 50;
+		constexpr auto Opinion_Count = 3;
+		constexpr auto Judging_Keys_Count = 2;
+		constexpr auto Overlapping_Keys_Count = 2;
+		constexpr auto Judged_Keys_Count = 2;
 
         state::BcDriveEntry CreateInitialEntry(const Key& driveKey) {
             state::BcDriveEntry entry(driveKey);
@@ -57,14 +62,24 @@ namespace catapult { namespace observers {
 
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
             // Arrange:
+			const auto pPublicKeys = std::make_unique<Key>();
+			const auto pOpinionIndices = std::make_unique<uint8_t>();
+			const auto pPresentOpinions = std::make_unique<uint8_t>();
             ObserverTestContext context(mode, currentHeight);
             Notification notification(
-            	Key(),
-                values.InitialBcDriveEntry.key(), 
+            	values.InitialBcDriveEntry.key(),
                 values.InitialBcDriveEntry.activeDataModifications().begin()->Id, 
                 values.InitialBcDriveEntry.activeDataModifications().begin()->DownloadDataCdi,
                 File_Structure_Size,
-                Used_Drive_Size);
+				Meta_Files_Size,
+				Used_Drive_Size,
+				Opinion_Count,
+				Judging_Keys_Count,
+				Overlapping_Keys_Count,
+				Judged_Keys_Count,
+				pPublicKeys.get(),
+				pOpinionIndices.get(),
+				pPresentOpinions.get());
             auto pObserver = CreateDataModificationApprovalObserver();
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 

@@ -22,7 +22,12 @@ namespace catapult { namespace validators {
         constexpr auto Current_Height = Height(10);
         const auto File_Structure_Cdi =  test::GenerateRandomByteArray<Hash256>();
         constexpr auto File_Structure_Size = 50;
+		constexpr auto Meta_Files_Size = 50;
         constexpr auto Used_Drive_Size = 50;
+		constexpr auto Opinion_Count = 3;
+		constexpr auto Judging_Keys_Count = 2;
+		constexpr auto Overlapping_Keys_Count = 2;
+		constexpr auto Judged_Keys_Count = 2;
 
         void AssertValidationResult(
                 ValidationResult expectedResult,
@@ -37,11 +42,27 @@ namespace catapult { namespace validators {
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(Key(), driveKey, activeDataModification.front().Id, activeDataModification.front().DownloadDataCdi, File_Structure_Size, activeDataModification.front().UploadSize);
+			const auto pPublicKeys = std::make_unique<Key>();
+			const auto pOpinionIndices = std::make_unique<uint8_t>();
+			const auto pPresentOpinions = std::make_unique<uint8_t>();
+            Notification notification(
+					driveKey,
+					activeDataModification.front().Id,
+					activeDataModification.front().DownloadDataCdi,
+					File_Structure_Size,
+					Meta_Files_Size,
+					activeDataModification.front().UploadSize,
+					Opinion_Count,
+					Judging_Keys_Count,
+					Overlapping_Keys_Count,
+					Judged_Keys_Count,
+					pPublicKeys.get(),
+					pOpinionIndices.get(),
+					pPresentOpinions.get());
             auto pValidator = CreateDataModificationApprovalValidator();
             
             // Act:
-            auto result = test::ValidateNotification(*pValidator, notification, cache, 
+            auto result = test::ValidateNotification(*pValidator, notification, cache,
                 config::BlockchainConfiguration::Uninitialized(), Current_Height);
 
             // Assert:
