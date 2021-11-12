@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <boost/dynamic_bitset.hpp>
 #include "tools/tools/ToolKeys.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "DataModificationSingleApprovalTransactionPlugin.h"
@@ -26,38 +27,46 @@ namespace catapult { namespace plugins {
 							transaction.Signer,
 							transaction.DriveKey,
 							transaction.DataModificationId,
-							transaction.UploadOpinionPairCount,
-							transaction.UploaderKeysPtr(),
-							transaction.UploadOpinionPtr(),
-							transaction.UsedDriveSize
+							transaction.UsedDriveSize,
+							transaction.PublicKeysCount,
+							transaction.PublicKeysPtr(),
+							transaction.OpinionsPtr()
 					));
 
-					const auto signerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier));
-					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+					auto pPublicKeys = std::unique_ptr<Key[]>(new Key[transaction.PublicKeysCount + 1]);
+					pPublicKeys[0] = transaction.Signer;
+					std::copy(transaction.PublicKeysPtr(), transaction.PublicKeysPtr() + transaction.PublicKeysCount, &pPublicKeys[1]);	// TODO: Double-check
 
-					// Payments for Download Work to the signer Replicator
-					const auto pDownloadWork = sub.mempool().malloc(model::DownloadWork(transaction.DriveKey, transaction.Signer));
-					sub.notify(BalanceTransferNotification<1>(
+					sub.notify(DataModificationApprovalDownloadWorkNotification<1>(
 							transaction.DriveKey,
-							signerAddress,
-							streamingMosaicId,
-							UnresolvedAmount(0, UnresolvedAmountType::DownloadWork, pDownloadWork)
+							transaction.DataModificationId,
+							transaction.UsedDriveSize,
+							1,
+							pPublicKeys.get()
 					));
 
-					// Payments for Upload Work to the Drive Owner and other Replicators of the Drive
-					auto uploaderKeysPtr = transaction.UploaderKeysPtr();
-					auto uploadOpinionPtr = transaction.UploadOpinionPtr();
-
-					for (auto i = 0u; i < transaction.UploadOpinionPairCount; ++i, ++uploaderKeysPtr, ++uploadOpinionPtr) {
-						const auto pUploadWork = sub.mempool().malloc(model::UploadWork(transaction.DriveKey, transaction.Signer, *uploadOpinionPtr));
-						const auto uploaderAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(*uploaderKeysPtr, config.NetworkIdentifier));
-						sub.notify(BalanceTransferNotification<1>(
-								transaction.DriveKey,
-								uploaderAddress,
-								streamingMosaicId,
-								UnresolvedAmount(0, UnresolvedAmountType::UploadWork, pUploadWork)
-						));
+					auto pOpinionIndices = std::unique_ptr<uint8_t[]>(new uint8_t[1]);
+					pOpinionIndices[0] = 0;
+					const auto presentOpinionByteCount = (transaction.PublicKeysCount + 7) / 8;
+					auto pPresentOpinions = std::unique_ptr<uint8_t[]>(new uint8_t[presentOpinionByteCount]);
+					for (auto i = 0u; i < presentOpinionByteCount; ++i) {
+						boost::dynamic_bitset<uint8_t> byte(8, 0u);
+						for (auto j = 0u; j < std::min(8u, transaction.PublicKeysCount - i*8); ++j)
+							byte[j] = true;
+						boost::to_block_range(byte, &pPresentOpinions[i]);
 					}
+
+					sub.notify(DataModificationApprovalUploadWorkNotification<1>(
+							transaction.DriveKey,
+							1,
+							1,
+							0,
+							transaction.PublicKeysCount,
+							pPublicKeys.get(),
+							pOpinionIndices.get(),
+							pPresentOpinions.get(),
+							transaction.OpinionsPtr()
+					));
 
 					break;
 				}

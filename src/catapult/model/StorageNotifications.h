@@ -72,33 +72,6 @@ namespace catapult { namespace model {
 	/// Defines a data modification approval refund notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Data_Modification_Approval_Refund_v1, 0x0015);
 
-	struct DownloadWork : public UnresolvedAmountData {
-	public:
-		DownloadWork(const Key& driveKey, const Key& replicator)
-				: DriveKey(driveKey)
-				, Replicator(replicator)
-		{}
-
-	public:
-		Key DriveKey;
-		Key Replicator;
-	};
-
-	// TODO: Inherit from DownloadWork?
-	struct UploadWork : public UnresolvedAmountData {
-	public:
-		UploadWork(const Key& driveKey, const Key& replicator, const uint8_t& opinion)
-				: DriveKey(driveKey)
-				, Replicator(replicator)
-				, Opinion(opinion)
-		{}
-
-	public:
-		Key DriveKey;
-		Key Replicator;
-		uint8_t Opinion;
-	};
-
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
 		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)
@@ -700,18 +673,18 @@ namespace catapult { namespace model {
 				const Key& signer,
 				const Key& driveKey,
 				const Hash256& dataModificationId,
-				const uint16_t uploadOpinionPairCount,
-				const Key* uploaderKeysPtr,
-				const uint8_t* uploadOpinionPtr,
-				uint64_t usedDriveSize)
+				const uint64_t usedDriveSize,
+				const uint16_t publicKeysCount,
+				const Key* publicKeysPtr,
+				const uint64_t* opinionsPtr)
 				: Notification(Notification_Type, sizeof(DataModificationSingleApprovalNotification<1>))
 				, PublicKey(signer)
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
-				, UploadOpinionPairCount(uploadOpinionPairCount)
-				, UploaderKeysPtr(uploaderKeysPtr)
-				, UploadOpinionPtr(uploadOpinionPtr)
 				, UsedDriveSize(usedDriveSize)
+				, PublicKeysCount(publicKeysCount)
+				, PublicKeysPtr(publicKeysPtr)
+				, OpinionsPtr(opinionsPtr)
 		{}
 
 	public:
@@ -724,16 +697,17 @@ namespace catapult { namespace model {
 		/// Identifier of the transaction that initiated the modification.
 		Hash256 DataModificationId;
 
-		/// Number of key-opinion pairs in the payload.
-		uint16_t UploadOpinionPairCount;
+		/// Total used disk space of the drive.
+		uint64_t UsedDriveSize;
 
-		/// List of the Uploader keys (current Replicators of the Drive or the Drive Owner).
-		const Key* UploaderKeysPtr;
+		/// Number of replicators' public keys.
+		uint8_t PublicKeysCount;
 
-		/// Opinion about how much each Uploader has uploaded to the signer in percents.
-		const uint8_t* UploadOpinionPtr;
+		/// Replicators' public keys.
+		const Key* PublicKeysPtr;
 
-		const uint64_t UsedDriveSize;
+		/// One-dimensional array of opinion elements.
+		const uint64_t* OpinionsPtr;
 	};
 
 	/// Notification of a verification payment.

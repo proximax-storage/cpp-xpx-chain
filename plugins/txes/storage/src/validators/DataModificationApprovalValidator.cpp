@@ -16,11 +16,13 @@ namespace catapult { namespace validators {
 	  	const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		const auto driveIter = driveCache.find(notification.DriveKey);
 		const auto& pDriveEntry = driveIter.tryGet();
+
+		// Check if respective drive exists
 		if (!pDriveEntry)
 			return Failure_Storage_Drive_Not_Found;
-	  	const auto& activeDataModifications = pDriveEntry->activeDataModifications();
 
 	  	// Check if there are any active data modifications
+	  	const auto& activeDataModifications = pDriveEntry->activeDataModifications();
 		if (activeDataModifications.empty())
 			return Failure_Storage_No_Active_Data_Modifications;
 

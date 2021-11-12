@@ -92,38 +92,6 @@ namespace catapult { namespace plugins {
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 		  	switch (unresolved.Type) {
-		  	case UnresolvedAmountType::DownloadWork: {
-				const auto& pDownloadWork = castToUnresolvedData<model::DownloadWork>(unresolved.DataPtr);
-
-				const auto& replicatorCache = cache.template sub<cache::ReplicatorCache>();
-				const auto replicatorIter = replicatorCache.find(pDownloadWork->Replicator);
-				const auto& pReplicatorEntry = replicatorIter.tryGet();
-				const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-				const auto driveIter = driveCache.find(pDownloadWork->DriveKey);
-				const auto& pDriveEntry = driveIter.tryGet();
-
-				if (!pReplicatorEntry || !pDriveEntry)
-					break;
-
-				resolved = Amount(calculateApprovableDownloadWork(pReplicatorEntry, pDriveEntry, pDownloadWork->DriveKey) + pReplicatorEntry->drives().at(pDownloadWork->DriveKey).InitialDownloadWork);
-				return true;
-		  	}
-		  	case UnresolvedAmountType::UploadWork: {
-			  	const auto& pUploadWork = castToUnresolvedData<model::UploadWork>(unresolved.DataPtr);
-
-				const auto& replicatorCache = cache.template sub<cache::ReplicatorCache>();
-				const auto replicatorIter = replicatorCache.find(pUploadWork->Replicator);
-				const auto& pReplicatorEntry = replicatorIter.tryGet();
-				const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-				const auto driveIter = driveCache.find(pUploadWork->DriveKey);
-				const auto& pDriveEntry = driveIter.tryGet();
-
-				if (!pReplicatorEntry || !pDriveEntry)
-					break;
-
-				resolved = Amount(calculateApprovableDownloadWork(pReplicatorEntry, pDriveEntry, pUploadWork->DriveKey) * pUploadWork->Opinion);
-			  	return true;
-			}
 			case UnresolvedAmountType::DownloadPayment: {
 				const auto& pDownloadPayment = castToUnresolvedData<model::DownloadPayment>(unresolved.DataPtr);
 

@@ -88,8 +88,6 @@ namespace catapult {
 	    DriveDeposit,
 	    FileDeposit,
 	    FileUpload,
-		DownloadWork,
-		UploadWork,
 		DownloadPayment,
 		StreamingWork
 	};

@@ -33,35 +33,35 @@ namespace catapult { namespace model {
 		/// Identifier of the transaction that initiated the modification.
 		Hash256 DataModificationId;
 
-		/// Number of key-opinion pairs in the payload.
-		uint16_t UploadOpinionPairCount;
-
 		/// Total used disk space of the drive.
 		uint64_t UsedDriveSize;
 
-		/// List of the Uploader keys (current Replicators of the Drive or the Drive Owner).
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(UploaderKeys, Key)
+		/// Number of replicators' public keys.
+		uint8_t PublicKeysCount;
 
-		/// Opinion about how much each Uploader has uploaded to the signer in percents.
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(UploadOpinion, uint8_t)
+		/// List of the Uploader keys (current Replicators of the Drive or the Drive Owner).
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(PublicKeys, Key)
+
+		/// One-dimensional array of opinion elements (how much each Uploader has uploaded to the signer).
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Opinions, uint64_t)
 
 	private:
 		template<typename T>
-		static auto* UploaderKeysPtrT(T& transaction) {
+		static auto* PublicKeysPtrT(T& transaction) {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
-			return transaction.UploadOpinionPairCount ? pPayloadStart : nullptr;
+			return transaction.PublicKeysCount ? pPayloadStart : nullptr;
 		}
 
 		template<typename T>
-		static auto* UploadOpinionPtrT(T& transaction) {
+		static auto* OpinionsPtrT(T& transaction) {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
-			return transaction.UploadOpinionPairCount ? pPayloadStart + transaction.UploadOpinionPairCount * sizeof(Key) : nullptr;
+			return transaction.PublicKeysCount ? pPayloadStart + transaction.PublicKeysCount * sizeof(Key) : nullptr;
 		}
 
 	public:
 		// Calculates the real size of a data modification single approval \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + transaction.UploadOpinionPairCount * (sizeof(Key) + sizeof(uint8_t));
+			return sizeof(TransactionType) + transaction.PublicKeysCount * (sizeof(Key) + sizeof(uint64_t));
 		}
 	};
 
