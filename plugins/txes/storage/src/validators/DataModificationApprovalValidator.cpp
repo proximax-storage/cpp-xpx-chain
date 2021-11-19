@@ -23,11 +23,6 @@ namespace catapult { namespace validators {
 		if (activeDataModifications.empty())
 			return Failure_Storage_No_Active_Data_Modifications;
 
-		// Check if there are any comfirmed used sizes modifications
-	  	const auto& confirmedUsedSizes = pDriveEntry->confirmedUsedSizes();
-		if (confirmedUsedSizes.empty())
-			return Failure_Storage_No_Active_Data_Modifications;
-
 	  	// Check if respective data modification is the first (oldest) element in activeDataModifications
 	  	if (activeDataModifications.begin()->Id != notification.DataModificationId)
 		  	return Failure_Storage_Invalid_Data_Modification_Id;

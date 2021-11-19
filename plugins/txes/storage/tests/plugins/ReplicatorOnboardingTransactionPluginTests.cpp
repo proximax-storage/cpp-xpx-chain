@@ -18,7 +18,14 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS ReplicatorOnboardingTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ReplicatorOnboarding, 1, 1,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(ReplicatorOnboarding, config::ImmutableConfiguration, 1, 1,)
+
+		auto CreateConfiguration() {
+			auto config = config::ImmutableConfiguration::Uninitialized();
+			// config.GenerationHash = Generation_Hash;
+			// config.NetworkIdentifier = Network_Identifier;
+			return config;
+		}
 
 		template<typename TTraits>
 		auto CreateTransaction() {
@@ -26,11 +33,11 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_ReplicatorOnboarding)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_ReplicatorOnboarding, CreateConfiguration())
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
@@ -45,7 +52,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
@@ -62,13 +69,13 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto pTransaction = CreateTransaction<TTraits>();
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-        ASSERT_EQ(2u, sub.numNotifications());
+        ASSERT_EQ(7u, sub.numNotifications());
         auto i = 0u;
         EXPECT_EQ(Storage_Drive_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Storage_Replicator_Onboarding_v1_Notification, sub.notificationTypes()[i++]);
@@ -81,7 +88,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishDriveNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<DriveNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
@@ -101,7 +108,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishReplicatorOnboardingNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<ReplicatorOnboardingNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:

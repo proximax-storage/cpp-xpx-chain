@@ -36,18 +36,25 @@ namespace catapult { namespace plugins {
 		public:
 			static std::vector<model::EntityType> GetTransactionTypes() {
 				return {
-					model::Entity_Type_DataModificationApproval,
-					model::Entity_Type_DataModificationCancel,
+					model::Entity_Type_PrepareBcDrive,
 					model::Entity_Type_DataModification,
 					model::Entity_Type_Download,
+					model::Entity_Type_DataModificationApproval,
+					model::Entity_Type_DataModificationCancel,
+					model::Entity_Type_ReplicatorOnboarding,
 					model::Entity_Type_DriveClosure,
-                    model::Entity_Type_ReplicatorOnboarding,
-                    model::Entity_Type_PrepareBcDrive
+					model::Entity_Type_ReplicatorOffboarding,
+					model::Entity_Type_FinishDownload,
+					model::Entity_Type_DownloadPayment,
+					model::Entity_Type_StoragePayment,
+					model::Entity_Type_DataModificationSingleApproval,
+					model::Entity_Type_VerificationPayment,
+					model::Entity_Type_DownloadApproval
 				};
 			}
 
 			static std::vector<std::string> GetCacheNames() {
-				return { "BcDriveCache", "DownloadChannelCache", "ReplicatorCache" };
+				return { "BcDriveCache", "DownloadChannelCache", "ReplicatorCache", "BlsKeysCache" };
 			}
 
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
@@ -55,11 +62,11 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
-				return { ionet::PacketType::BcDrive_State_Path, ionet::PacketType::DownloadChannel_State_Path, ionet::PacketType::Replicator_State_Path };
+				return { ionet::PacketType::BcDrive_State_Path, ionet::PacketType::DownloadChannel_State_Path, ionet::PacketType::Replicator_State_Path};
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {
-				return { "BC DRIVE C", "DOWNLOAD CH C", "REPLICATOR C" };
+				return { "BC DRIVE C", "DOWNLOAD CH C", "REPLICATOR C", "BLS KEYS C" };
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
@@ -70,12 +77,23 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
-					"DataModificationValidator",
-					"PrepareDriveValidator",
-					"DataModificationApprovalValidator",
-					"DataModificationCancelValidator",
-					"ReplicatorOnboardingValidator",
-					"DriveClosureValidator"
+						"DataModificationValidator",
+						"PrepareDriveValidator",
+						"DataModificationApprovalValidator",
+						"DataModificationCancelValidator",
+						"ReplicatorOnboardingValidator",
+						"ReplicatorOffboardingValidator",
+						"FinishDownloadValidator",
+						"DownloadPaymentValidator",
+						"StoragePaymentValidator",
+						"DataModificationSingleApprovalValidator",
+						"VerificationPaymentValidator",
+						"OpinionValidator",
+						"DownloadApprovalValidator",
+						"DownloadApprovalPaymentValidator",
+						"DownloadChannelRefundValidator",
+						"DriveClosureValidator",
+						"StreamStartValidator"
 				};
 			}
 
@@ -87,7 +105,14 @@ namespace catapult { namespace plugins {
 					"DataModificationApprovalObserver",
 					"DataModificationCancelObserver",
 					"ReplicatorOnboardingObserver",
-					"DriveClosureObserver"
+					"ReplicatorOffboardingObserver",
+					"DownloadPaymentObserver",
+					"DataModificationSingleApprovalObserver",
+					"DownloadApprovalObserver",
+					"DownloadApprovalPaymentObserver",
+					"DownloadChannelRefundObserver",
+					"DriveClosureObserver",
+					"StreamStartObserver"
 				};
 			}
 

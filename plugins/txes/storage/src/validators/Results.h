@@ -61,6 +61,7 @@ namespace catapult { namespace validators {
 
 	/// Validation failed because replicator not registered.
 	DEFINE_STORAGE_RESULT(Replicator_Not_Registered, 16);
+
 	/// Respective download channel is not found.
 	DEFINE_STORAGE_RESULT(Download_Channel_Not_Found, 17);
 
@@ -120,6 +121,27 @@ namespace catapult { namespace validators {
 
 	/// Not all Provers were in the Confirmed state at the start of Verification.
 	DEFINE_STORAGE_RESULT(Verification_Some_Provers_Are_Illegal, 36);
+
+	/// Validation failed because the data modification already exists.
+	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 38);
+
+	/// Validation failed because the stream if not first in the queue.
+	DEFINE_STORAGE_RESULT(Invalid_Stream_Id, 39);
+
+	/// Validation failed because the stream has already been finished.
+	DEFINE_STORAGE_RESULT(Stream_Already_Finished, 40);
+
+	/// Validation failed because declared stream actual size exceeds prepaid expected size
+	DEFINE_STORAGE_RESULT(Expected_Upload_Size_Exceeded, 41);
+
+	/// Desired drive size is greater than maximal.
+	DEFINE_STORAGE_RESULT(Drive_Size_Excessive, 42);
+
+	/// Desired modification size is greater than maximal.
+	DEFINE_STORAGE_RESULT(Upload_Size_Excessive, 43);
+
+	/// Desired download size is greater than maximal.
+	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 44);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

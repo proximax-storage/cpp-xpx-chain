@@ -21,7 +21,7 @@ namespace catapult { namespace plugins {
 			case 1: {
 				sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
 				sub.notify(DriveClosureNotification<1>(
-						transaction.DriveKey));
+						transaction.DriveKey, transaction.Signer));
 				break;
 			}
 

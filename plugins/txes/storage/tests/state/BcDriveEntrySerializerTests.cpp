@@ -55,6 +55,7 @@ namespace catapult { namespace state {
         };
 
         auto CreateBcDriveEntry() {
+			auto key = test::GenerateRandomByteArray<Key>();
             return test::CreateBcDriveEntry(
                 test::GenerateRandomByteArray<Key>(),
                 test::GenerateRandomByteArray<Key>(),
@@ -63,37 +64,45 @@ namespace catapult { namespace state {
                 test::Random16(),
                 Active_Data_Modifications_Count,
                 Completed_Data_Modifications_Count,
+				test::Random16(),
+				test::Random16(),
                 Verifications_Count);
         }
+
+		void AssertActiveDataModification(const ActiveDataModification& active, const uint8_t*& pData) {
+			EXPECT_EQ_MEMORY(active.Id.data(), pData, Hash256_Size);
+			pData += Hash256_Size;
+			EXPECT_EQ_MEMORY(active.Owner.data(), pData, Key_Size);
+			pData += Key_Size;
+			EXPECT_EQ_MEMORY(active.DownloadDataCdi.data(), pData, Hash256_Size);
+			pData += Hash256_Size;
+			EXPECT_EQ(active.ExpectedUploadSize, *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
+			EXPECT_EQ(active.ActualUploadSize, *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
+			auto folderNameSize = active.FolderName.size();
+			EXPECT_EQ(folderNameSize, *reinterpret_cast<const uint16_t*>(pData));
+			pData += sizeof(uint16_t);
+			EXPECT_EQ(active.ReadyForApproval, *reinterpret_cast<const uint8_t*>(pData));
+			pData += sizeof(uint8_t);
+			EXPECT_EQ_MEMORY(active.FolderName.c_str(), pData, folderNameSize);
+			pData += folderNameSize;
+		}
 
         void AssertActiveDataModifications(const ActiveDataModifications& activeDataModifications, const uint8_t*& pData) {
             EXPECT_EQ(activeDataModifications.size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
             for (const auto& active : activeDataModifications) {
-                EXPECT_EQ_MEMORY(active.Id.data(), pData, Hash256_Size);
-                pData += Hash256_Size;
-                EXPECT_EQ_MEMORY(active.Owner.data(), pData, Key_Size);
-                pData += Key_Size;
-                EXPECT_EQ_MEMORY(active.DownloadDataCdi.data(), pData, Hash256_Size);
-                pData += Hash256_Size;
-                EXPECT_EQ(active.UploadSize, *reinterpret_cast<const uint64_t*>(pData));
-                pData += sizeof(uint64_t);
+				AssertActiveDataModification(active, pData);
             }
         }
 
        void AssertCompletedDataModifications(const CompletedDataModifications& completedDataModifications, const uint8_t*& pData) {
             EXPECT_EQ(completedDataModifications.size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
-            for (const auto& active : completedDataModifications) {
-                EXPECT_EQ_MEMORY(active.Id.data(), pData, Hash256_Size);
-                pData += Hash256_Size;
-                EXPECT_EQ_MEMORY(active.Owner.data(), pData, Key_Size);
-                pData += Key_Size;
-                EXPECT_EQ_MEMORY(active.DownloadDataCdi.data(), pData, Hash256_Size);
-                pData += Hash256_Size;
-                EXPECT_EQ(active.UploadSize, *reinterpret_cast<const uint64_t*>(pData));
-                pData += sizeof(uint64_t);
-                EXPECT_EQ(active.State, static_cast<DataModificationState>(*pData));
+            for (const auto& completed : completedDataModifications) {
+				AssertActiveDataModification(completed, pData);
+                EXPECT_EQ(completed.State, static_cast<DataModificationState>(*pData));
                 pData++;
             }
         }
@@ -123,10 +132,10 @@ namespace catapult { namespace state {
 			pData += Hash256_Size;
             EXPECT_EQ(entry.size(), *reinterpret_cast<const uint64_t*>(pData));
             pData += sizeof(uint64_t);
-            EXPECT_EQ(entry.usedSize(), *reinterpret_cast<const uint64_t*>(pData));
-            pData += sizeof(uint64_t);
-            EXPECT_EQ(entry.metaFilesSize(), *reinterpret_cast<const uint64_t*>(pData));
-            pData += sizeof(uint64_t);
+			EXPECT_EQ(entry.usedSize(), *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
+			EXPECT_EQ(entry.metaFilesSize(), *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
             EXPECT_EQ(entry.replicatorCount(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
 
@@ -146,8 +155,7 @@ namespace catapult { namespace state {
 			BcDriveEntrySerializer::Save(entry, context.outputStream());
 
 			// Assert:
-			ASSERT_EQ(Entry_Size, context.buffer().size());
-			AssertEntryBuffer(entry, context.buffer().data(), Entry_Size, version);
+			AssertEntryBuffer(entry, context.buffer().data(), context.buffer().size(), version);
 		}
 
 		void AssertCanSaveMultipleEntries(VersionType version) {
@@ -158,14 +166,15 @@ namespace catapult { namespace state {
 
 			// Act:
 			BcDriveEntrySerializer::Save(entry1, context.outputStream());
+			auto entryBufferSize1 = context.buffer().size();
 			BcDriveEntrySerializer::Save(entry2, context.outputStream());
+			auto entryBufferSize2 = context.buffer().size() - entryBufferSize1;
 
 			// Assert:
-			ASSERT_EQ(2 * Entry_Size, context.buffer().size());
 			const auto* pBuffer1 = context.buffer().data();
-			const auto* pBuffer2 = pBuffer1 + Entry_Size;
-			AssertEntryBuffer(entry1, pBuffer1, Entry_Size, version);
-			AssertEntryBuffer(entry2, pBuffer2, Entry_Size, version);
+			const auto* pBuffer2 = pBuffer1 + entryBufferSize1;
+			AssertEntryBuffer(entry1, pBuffer1, entryBufferSize1, version);
+			AssertEntryBuffer(entry2, pBuffer2, entryBufferSize2, version);
 		}
     }
 
@@ -184,91 +193,75 @@ namespace catapult { namespace state {
     // region Load
 
     namespace {
-        void SaveActiveDataModifications(const ActiveDataModifications& activeDataModifications, uint8_t*& pData) {
+
+		void CopyToVector(std::vector<uint8_t>& data, const uint8_t * p, size_t bytes) {
+			data.insert(data.end(), p, p + bytes);
+		}
+
+		void SaveActiveDataModification(const ActiveDataModification& modification, std::vector<uint8_t>& data) {
+			CopyToVector(data, modification.Id.data(), Hash256_Size);
+			CopyToVector(data, modification.Owner.data(), Key_Size);
+			CopyToVector(data, modification.DownloadDataCdi.data(), Hash256_Size);
+			CopyToVector(data, (const uint8_t *) &modification.ExpectedUploadSize, sizeof(uint64_t));
+			CopyToVector(data, (const uint8_t *) &modification.ActualUploadSize, sizeof(uint64_t));
+			auto folderNameSize = (uint16_t) modification.FolderName.size();
+			CopyToVector(data, (const uint8_t *) &folderNameSize, sizeof(folderNameSize));
+			CopyToVector(data, (const uint8_t *) &modification.ReadyForApproval, sizeof(bool));
+			CopyToVector(data, (const uint8_t *) modification.FolderName.c_str(), folderNameSize);
+		}
+
+        void SaveActiveDataModifications(const ActiveDataModifications& activeDataModifications, std::vector<uint8_t>& data) {
             uint16_t activeDataModificationsCount = utils::checked_cast<size_t, uint16_t>(activeDataModifications.size());
-            memcpy(pData, &activeDataModificationsCount, sizeof(uint16_t));
-            pData += sizeof(uint16_t);
+            CopyToVector(data, (const uint8_t *) &activeDataModificationsCount, sizeof(uint16_t));
 			for (const auto& modification : activeDataModifications) {
-                memcpy(pData, modification.Id.data(), Hash256_Size);
-                pData += Hash256_Size;
-                memcpy(pData, modification.Owner.data(), Key_Size);
-                pData += Key_Size;
-                memcpy(pData, modification.DownloadDataCdi.data(), Hash256_Size);
-                pData += Hash256_Size;
-                memcpy(pData, &modification.UploadSize, sizeof(uint64_t));
-                pData += sizeof(uint64_t);
+				SaveActiveDataModification(modification, data);
 			}
 		}
 
-        void SaveCompletedDataModifications(const CompletedDataModifications& completedDataModifications, uint8_t*& pData) {
+        void SaveCompletedDataModifications(const CompletedDataModifications& completedDataModifications, std::vector<uint8_t>& data) {
 		    uint16_t completedDataModificationsCount = utils::checked_cast<size_t, uint16_t>(completedDataModifications.size());
-            memcpy(pData, &completedDataModificationsCount, sizeof(uint16_t));
-            pData += sizeof(uint16_t);
+			CopyToVector(data, (const uint8_t *) &completedDataModificationsCount, sizeof(uint16_t));
             for (const auto& modification : completedDataModifications) {
-                memcpy(pData, modification.Id.data(), Hash256_Size);
-                pData += Hash256_Size;
-                memcpy(pData, modification.Owner.data(), Key_Size);
-                pData += Key_Size;
-                memcpy(pData, modification.DownloadDataCdi.data(), Hash256_Size);
-                pData += Hash256_Size;
-                memcpy(pData, &modification.UploadSize, sizeof(uint64_t));
-                pData += sizeof(uint64_t);
-                *pData = utils::to_underlying_type(modification.State);
-                pData++;
+				SaveActiveDataModification(modification, data);
+                data.push_back(utils::to_underlying_type(modification.State));
             }
 		}
 
-        void SaveVerificationResults(const VerificationResults& results, uint8_t*& pData) {
+        void SaveVerificationResults(const VerificationResults& results, std::vector<uint8_t>& data) {
             uint16_t resultsCount = utils::checked_cast<size_t, uint16_t>(results.size());
-            memcpy(pData, &resultsCount, sizeof(uint16_t));
-            pData += sizeof(uint16_t);
+			CopyToVector(data, (const uint8_t *) &resultsCount, sizeof(uint16_t));
             for (const auto& result : results) {
-                memcpy(pData, result.first.data(), Key_Size);
-                pData += Key_Size;
-                *pData = result.second;
-                pData++;
+				CopyToVector(data, result.first.data(), Key_Size);
+				CopyToVector(data, (const uint8_t *) &result.second, sizeof(uint8_t));
             }
         }
 
-        void SaveVerifications(const Verifications& verifications, uint8_t*& pData) {
+        void SaveVerifications(const Verifications& verifications, std::vector<uint8_t>& data) {
             uint16_t verificationsCount = utils::checked_cast<size_t, uint16_t>(verifications.size());
-            memcpy(pData, &verificationsCount, sizeof(uint16_t));
-            pData += sizeof(uint16_t);
+			CopyToVector(data, (const uint8_t *) &verificationsCount, sizeof(uint16_t));
             for (const auto& verification : verifications) {
-                memcpy(pData, verification.VerificationTrigger.data(), Hash256_Size);
-                pData += Hash256_Size;
-                *pData = utils::to_underlying_type(verification.State);
-                pData++;
-                SaveVerificationResults(verification.Results, pData);
+				CopyToVector(data, verification.VerificationTrigger.data(), Hash256_Size);
+				CopyToVector(data, (const uint8_t *) &verification.State, sizeof(uint8_t));
+                SaveVerificationResults(verification.Results, data);
             }
         }
 
         std::vector<uint8_t> CreateEntryBuffer(const state::BcDriveEntry& entry, VersionType version) {
-            std::vector<uint8_t> buffer(Entry_Size);
+            std::vector<uint8_t> data;
+			CopyToVector(data, (const uint8_t*)&version, sizeof(version));
+			CopyToVector(data, entry.key().data(), Key_Size);
+			CopyToVector(data, entry.owner().data(), Key_Size);
+			CopyToVector(data, entry.rootHash().data(), Hash256_Size);
+			CopyToVector(data, (const uint8_t*) &entry.size(), sizeof(uint64_t));
+			CopyToVector(data, (const uint8_t*) &entry.usedSize(), sizeof(uint64_t));
+			CopyToVector(data, (const uint8_t*) &entry.metaFilesSize(), sizeof(uint64_t));
+			CopyToVector(data, (const uint8_t*) &entry.replicatorCount(), sizeof(uint16_t));
 
-            auto* pData = buffer.data();
-            memcpy(pData, &version, sizeof(VersionType));
-            pData += sizeof(VersionType);
-            memcpy(pData, entry.key().data(), Key_Size);
-            pData += Key_Size;
-            memcpy(pData, entry.owner().data(), Key_Size);
-            pData += Key_Size;
-            memcpy(pData, entry.rootHash().data(), Hash256_Size);
-            pData += Hash256_Size;
-            memcpy(pData, &entry.size(), sizeof(uint64_t));
-            pData += sizeof(uint64_t);
-            memcpy(pData, &entry.usedSize(), sizeof(uint64_t));
-            pData += sizeof(uint64_t);
-            memcpy(pData, &entry.metaFilesSize(), sizeof(uint64_t));
-            pData += sizeof(uint64_t);
-            memcpy(pData, &entry.replicatorCount(), sizeof(uint16_t));
-            pData += sizeof(uint16_t);
+            SaveActiveDataModifications(entry.activeDataModifications(), data);
+            SaveCompletedDataModifications(entry.completedDataModifications(), data);
+            SaveVerifications(entry.verifications(), data);
 
-            SaveActiveDataModifications(entry.activeDataModifications(), pData);
-            SaveCompletedDataModifications(entry.completedDataModifications(), pData);
-            SaveVerifications(entry.verifications(), pData);
-
-            return buffer;
+            return data;
         }
 
         void AssertCanLoadSingleEntry(VersionType version) {

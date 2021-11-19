@@ -6,6 +6,8 @@
 
 #include "StorageTestUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/model/EntityHasher.h"
+#include "tests/test/core/mocks/MockNotificationSubscriber.h"
 
 namespace catapult { namespace test {
 
@@ -18,7 +20,10 @@ namespace catapult { namespace test {
                 EXPECT_EQ(expectedActiveDataModification.Id, activeDataModification.Id);
                 EXPECT_EQ(expectedActiveDataModification.Owner, activeDataModification.Owner);
                 EXPECT_EQ(expectedActiveDataModification.DownloadDataCdi, activeDataModification.DownloadDataCdi);
-                EXPECT_EQ(expectedActiveDataModification.UploadSize, activeDataModification.UploadSize);
+                EXPECT_EQ(expectedActiveDataModification.ExpectedUploadSize, activeDataModification.ExpectedUploadSize);
+				EXPECT_EQ(expectedActiveDataModification.ActualUploadSize, activeDataModification.ActualUploadSize);
+				EXPECT_EQ(expectedActiveDataModification.FolderName, activeDataModification.FolderName);
+				EXPECT_EQ(expectedActiveDataModification.ReadyForApproval, activeDataModification.ReadyForApproval);
             }
         }
 
@@ -30,8 +35,11 @@ namespace catapult { namespace test {
                 EXPECT_EQ(expectedCompletedDataModification.Id, completedDataModification.Id);
                 EXPECT_EQ(expectedCompletedDataModification.Owner, completedDataModification.Owner);
                 EXPECT_EQ(expectedCompletedDataModification.DownloadDataCdi, completedDataModification.DownloadDataCdi);
-                EXPECT_EQ(expectedCompletedDataModification.UploadSize, completedDataModification.UploadSize);
+                EXPECT_EQ(expectedCompletedDataModification.ExpectedUploadSize, completedDataModification.ExpectedUploadSize);
+				EXPECT_EQ(expectedCompletedDataModification.ActualUploadSize, completedDataModification.ActualUploadSize);
+				EXPECT_EQ(expectedCompletedDataModification.FolderName, completedDataModification.FolderName);
                 EXPECT_EQ(expectedCompletedDataModification.State, completedDataModification.State);
+                EXPECT_EQ(expectedCompletedDataModification.ReadyForApproval, expectedCompletedDataModification.ReadyForApproval);
             }
         }
 
@@ -69,12 +77,18 @@ namespace catapult { namespace test {
 
         entry.activeDataModifications().reserve(activeDataModificationsCount);
         for (auto aDMC = 0u; aDMC < activeDataModificationsCount; ++aDMC){
-            entry.activeDataModifications().emplace_back(state::ActiveDataModification{
-                test::GenerateRandomByteArray<Hash256>(),   /// Id of data modification.
-                key,                                        /// Public key of the drive owner.
-                test::GenerateRandomByteArray<Hash256>(),   /// CDI of download data.
-                test::Random()                              /// Upload size of data.
-            });
+			auto folderNameBytes = test::GenerateRandomVector(512);
+			auto uploadSize = test::Random();
+			bool readyForApproval = test::RandomByte();
+			entry.activeDataModifications().emplace_back(state::ActiveDataModification(
+                test::GenerateRandomByteArray<Hash256>(),   					/// Id of data modification.
+				key,                                        					/// Public key of the drive owner.
+                test::GenerateRandomByteArray<Hash256>(),   					/// CDI of download data.
+				uploadSize,                             						/// ExpectedUpload size of data.
+				uploadSize,														/// ActualUpload size of data.
+		std::string(folderNameBytes.begin(), folderNameBytes.end()),	/// FolderName (for stream)
+				readyForApproval												/// Flag whether modification can be approved
+			));
         }
 
         entry.completedDataModifications().reserve(completedDataModificationsCount);
@@ -109,24 +123,57 @@ namespace catapult { namespace test {
 
     state::DownloadChannelEntry CreateDownloadChannelEntry(
             Hash256 id,
-            Key consumer) {
+            Key consumer,
+			uint64_t downloadSize,
+			uint16_t downloadApprovalCount,
+			std::vector<Key> listOfPublicKeys,
+			std::map<Key, Amount> cumulativePayments) {
         state::DownloadChannelEntry entry(id);
         entry.setConsumer(consumer);
+		entry.setDownloadSize(downloadSize);
+		entry.setDownloadApprovalCount(downloadApprovalCount);
+		entry.listOfPublicKeys() = listOfPublicKeys;
+		entry.cumulativePayments() = cumulativePayments;
 
         return entry;
     }
 
+	void AssertEqualListOfPublicKeys(const std::vector<Key>& expected, const std::vector<Key>& actual) {
+		EXPECT_EQ(expected.size(), actual.size());
+		for (int i = 0; i < expected.size(); i++) {
+			EXPECT_EQ(expected[i], actual[i]);
+		}
+	}
+
+	void AssertEqualCumulativePayments(const std::map<Key, Amount>& expected,
+									   const std::map<Key, Amount>& actual) {
+		EXPECT_EQ(expected.size(), actual.size());
+		auto itExpected = expected.begin();
+		auto itActual = actual.begin();
+		for(; itExpected != expected.end(); itExpected++) {
+			EXPECT_EQ(itExpected->first, itActual->first);
+			EXPECT_EQ(itExpected->second, itActual->second);
+		}
+	}
+
     void AssertEqualDownloadChannelData(const state::DownloadChannelEntry& expectedEntry, const state::DownloadChannelEntry& entry) {
         EXPECT_EQ(expectedEntry.id(), entry.id());
         EXPECT_EQ(expectedEntry.consumer(), entry.consumer());
+		EXPECT_EQ(expectedEntry.downloadSize(), entry.downloadSize());
+		EXPECT_EQ(expectedEntry.downloadApprovalCount(), entry.downloadApprovalCount());
+
+		AssertEqualListOfPublicKeys(expectedEntry.listOfPublicKeys(), entry.listOfPublicKeys());
+		AssertEqualCumulativePayments(expectedEntry.cumulativePayments(), entry.cumulativePayments());
     }
 
     state::ReplicatorEntry CreateReplicatorEntry(
             Key key,
             Amount capacity,
+            BLSPublicKey blsKey,
             uint16_t drivesCount) {
         state::ReplicatorEntry entry(key);
         entry.setCapacity(capacity);
+        entry.setBlsKey(blsKey);
         for (auto dC = 0u; dC < drivesCount; ++dC)
             entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
 
@@ -136,6 +183,7 @@ namespace catapult { namespace test {
     void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry) {
         EXPECT_EQ(expectedEntry.key(), entry.key());
         EXPECT_EQ(expectedEntry.capacity(), entry.capacity());
+        EXPECT_EQ(expectedEntry.blsKey(), entry.blsKey());
 
         const auto& expectedDrives = expectedEntry.drives();
 		const auto& drives = entry.drives();
@@ -144,6 +192,10 @@ namespace catapult { namespace test {
             auto iter = drives.find(pair.first);
             EXPECT_EQ(pair.second, iter->second);
         }
+    }
+
+    void AssertEqualBlskeyData(const state::BlsKeysEntry& expectedEntry, const state::BlsKeysEntry& entry){
+        EXPECT_EQ(expectedEntry.key(), entry.key());
     }
 
 }}

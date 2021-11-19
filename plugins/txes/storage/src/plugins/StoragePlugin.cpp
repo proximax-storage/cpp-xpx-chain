@@ -62,7 +62,7 @@ namespace catapult { namespace plugins {
 
 				// If current data modification was approved (not cancelled), account its size.
 				if (it->State == state::DataModificationState::Succeeded)
-					approvableDownloadWork += it->UploadSize;
+					approvableDownloadWork += it->ActualUploadSize;
 			}
 
 			return approvableDownloadWork;
@@ -81,7 +81,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDownloadTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDataModificationApprovalTransactionPlugin());
 		manager.addTransactionSupport(CreateDataModificationCancelTransactionPlugin());
-		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin());
+		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDriveClosureTransactionPlugin());
 		manager.addTransactionSupport(CreateReplicatorOffboardingTransactionPlugin());
 		manager.addTransactionSupport(CreateFinishDownloadTransactionPlugin(immutableConfig));
@@ -93,7 +93,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig));
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
-		  	switch (unresolved.Type) {
+			switch (unresolved.Type) {
 		  	case UnresolvedAmountType::DownloadWork: {
 				const auto& pDownloadWork = castToUnresolvedData<model::DownloadWork>(unresolved.DataPtr);
 
@@ -233,6 +233,9 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDownloadApprovalValidator())
 				.add(validators::CreateDownloadApprovalPaymentValidator())
 				.add(validators::CreateDownloadChannelRefundValidator())
+				.add(validators::CreateStreamStartValidator())
+				.add(validators::CreateStreamFinishValidator())
+				.add(validators::CreateStreamPaymentValidator())
 				.add(validators::CreateEndDriveVerificationValidator());
 		});
 
@@ -251,6 +254,9 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDownloadApprovalObserver())
 				.add(observers::CreateDownloadApprovalPaymentObserver())
 				.add(observers::CreateDownloadChannelRefundObserver())
+				.add(observers::CreateStreamStartObserver())
+				.add(observers::CreateStreamFinishObserver())
+				.add(observers::CreateStreamPaymentObserver())
 				.add(observers::CreateEndDriveVerificationObserver());
 		});
 	}

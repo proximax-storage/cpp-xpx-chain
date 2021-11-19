@@ -20,13 +20,17 @@ namespace catapult { namespace observers {
 			driveEntry.setOwner(notification.Owner);
 			driveEntry.setSize(notification.DriveSize);
 			driveEntry.setReplicatorCount(notification.ReplicatorCount);
-			driveCache.insert(driveEntry);
 
 			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-			auto replicatorIter = replicatorCache.find(*pKeyCollector->keys().begin());
-			auto& replicatorEntry = replicatorIter.get();
+			for (const auto& replicatorKey : pKeyCollector->keys()) {
+				driveEntry.replicators().emplace(replicatorKey);
 
-			replicatorEntry.drives().emplace(notification.DriveKey, state::DriveInfo{ Hash256(), false, 0 });
+				auto replicatorIter = replicatorCache.find(replicatorKey);
+				auto& replicatorEntry = replicatorIter.get();
+				replicatorEntry.drives().emplace(notification.DriveKey, state::DriveInfo{ Hash256(), false, 0 });
+			}
+
+			driveCache.insert(driveEntry);
 		})
 	}
 }}

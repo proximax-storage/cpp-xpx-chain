@@ -21,6 +21,14 @@ namespace catapult { namespace validators {
 
         constexpr auto Current_Height = Height(10);
 
+        auto CreateConfig() {
+        	test::MutableBlockchainConfiguration config;
+        	auto pluginConfig = config::StorageConfiguration::Uninitialized();
+        	pluginConfig.MaxModificationSize = utils::FileSize::FromMegabytes(30);
+        	config.Network.SetPluginConfiguration(pluginConfig);
+        	return (config.ToConst());
+        }
+
         void AssertValidationResult(
                 ValidationResult expectedResult,
                 const state::BcDriveEntry& driveEntry,
@@ -34,16 +42,34 @@ namespace catapult { namespace validators {
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(activeDataModification.front().Id, driveKey, activeDataModification.front().Owner, activeDataModification.front().DownloadDataCdi, activeDataModification.front().UploadSize);
+            Notification notification(activeDataModification.front().Id, driveKey, activeDataModification.front().Owner, activeDataModification.front().DownloadDataCdi, activeDataModification.front().ActualUploadSize);
             auto pValidator = CreateDataModificationValidator();
             
             // Act:
             auto result = test::ValidateNotification(*pValidator, notification, cache, 
-                config::BlockchainConfiguration::Uninitialized(), Current_Height);
+                CreateConfig(), Current_Height);
 
             // Assert:
             EXPECT_EQ(expectedResult, result);
         }
+    }
+
+    TEST(TEST_CLASS, FailureWhenUploadSizeExcessive) {
+    	// Arrange:
+    	state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
+
+    	// Assert:
+    	AssertValidationResult(
+    			Failure_Storage_Upload_Size_Excessive,
+    			entry,
+    			test::GenerateRandomByteArray<Key>(),
+    			{
+    				state::ActiveDataModification(
+    						test::GenerateRandomByteArray<Hash256>(),
+    						test::GenerateRandomByteArray<Key>(),
+    						test::GenerateRandomByteArray<Hash256>(),
+    						1e9)
+    			});
     }
 
     TEST(TEST_CLASS, FailureWhenDriveNotFound) {
@@ -55,9 +81,12 @@ namespace catapult { namespace validators {
             Failure_Storage_Drive_Not_Found,
             entry,
             test::GenerateRandomByteArray<Key>(),
-            { 
-                { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), 
-                    test::GenerateRandomByteArray<Hash256>(), test::Random() } 
+            {
+                state::ActiveDataModification(
+					test::GenerateRandomByteArray<Hash256>(),
+					test::GenerateRandomByteArray<Key>(),
+					test::GenerateRandomByteArray<Hash256>(),
+					test::Random())
             });
     }
 
@@ -66,19 +95,40 @@ namespace catapult { namespace validators {
         auto driveKey = test::GenerateRandomByteArray<Key>();
         auto id = test::GenerateRandomByteArray<Hash256>();
         state::BcDriveEntry entry(driveKey);
-        entry.activeDataModifications().emplace_back(state::ActiveDataModification {
+        entry.activeDataModifications().emplace_back(state::ActiveDataModification(
             id, test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Hash256>(), test::Random()
-        });
+		));
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_Data_Modification_Already_Exists,
             entry,
             driveKey,
-            { 
-                { id, test::GenerateRandomByteArray<Key>(), 
-                    test::GenerateRandomByteArray<Hash256>(), test::Random() } 
+            { state::ActiveDataModification(
+				id, test::GenerateRandomByteArray<Key>(),
+				test::GenerateRandomByteArray<Hash256>(), test::Random())
             });
+    }
+
+    TEST(TEST_CLASS, FailureWhenIsNotOwner) {
+    	// Arrange:
+    	Key driveKey = test::GenerateRandomByteArray<Key>();
+    	Key owner = test::GenerateRandomByteArray<Key>();
+    	Hash256 downloadDataCdi = test::GenerateRandomByteArray<Hash256>();
+    	uint64_t uploadSize = test::Random();
+    	state::BcDriveEntry entry(driveKey);
+    	entry.activeDataModifications().emplace_back(state::ActiveDataModification (
+    			test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize
+    			));
+
+    	// Assert:
+    	AssertValidationResult(
+    			Failure_Storage_Is_Not_Owner,
+    			entry,
+    			driveKey,
+    			{ state::ActiveDataModification(
+    					test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), downloadDataCdi, uploadSize)
+    			});
     }
 
     TEST(TEST_CLASS, Success) {
@@ -88,17 +138,18 @@ namespace catapult { namespace validators {
         Hash256 downloadDataCdi = test::GenerateRandomByteArray<Hash256>();
         uint64_t uploadSize = test::Random();
         state::BcDriveEntry entry(driveKey);
-        entry.activeDataModifications().emplace_back(state::ActiveDataModification {
+		entry.setOwner(owner);
+        entry.activeDataModifications().emplace_back(state::ActiveDataModification (
             test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize
-        });
+		));
 
         // Assert:
         AssertValidationResult(
             ValidationResult::Success,
             entry,
             driveKey,
-            { 
-                { test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize }
+            { state::ActiveDataModification(
+                test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize)
             });
     }
 }}

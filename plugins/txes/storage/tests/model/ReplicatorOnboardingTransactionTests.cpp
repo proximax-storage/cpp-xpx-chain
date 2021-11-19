@@ -21,11 +21,12 @@ namespace catapult { namespace model {
 			// Arrange:
 			auto expectedSize =
 					baseSize // base
-					+ sizeof(uint64_t); // replicator capacity
+					+ sizeof(uint64_t) // replicator capacity
+					+ BLS_Public_Key_Size; //Public BLS key
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 8u, sizeof(T));
+			EXPECT_EQ(baseSize + 56u, sizeof(T));
 		}
 
 		template<typename T>
