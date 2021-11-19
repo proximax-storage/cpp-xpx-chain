@@ -19,8 +19,9 @@ namespace catapult { namespace state {
             sizeof(VersionType) + // version
             Key_Size + // drive key
             sizeof(Amount) + // capacity
+			sizeof(BLSPublicKey) + // bls key
             sizeof(uint16_t) + // drive count
-            Drives_Count * (Key_Size); // drives
+            Drives_Count * (Key_Size + Hash256_Size + sizeof(bool) + sizeof(uint64_t)); // drives
 
         class TestContext {
         public:
@@ -58,14 +59,21 @@ namespace catapult { namespace state {
             pData += Key_Size;
             EXPECT_EQ(entry.capacity(), *reinterpret_cast<const Amount*>(pData));
             pData += sizeof(Amount);
-            EXPECT_EQ(entry.blsKey(), *reinterpret_cast<const BLSPublicKey*>(pData));
-            pData += sizeof(BLSPublicKey);
+			EXPECT_EQ_MEMORY(entry.blsKey().data(), pData, sizeof(BLSPublicKey));
+			pData += sizeof(BLSPublicKey);
 
             EXPECT_EQ(entry.drives().size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
             for (const auto& pair : entry.drives()) {
                 EXPECT_EQ_MEMORY(pair.first.data(), pData, Key_Size);
                 pData += Key_Size;
+				const auto& info = pair.second;
+				EXPECT_EQ_MEMORY(info.LastApprovedDataModificationId.data(), pData, Hash256_Size);
+				pData += Hash256_Size;
+				EXPECT_EQ(info.DataModificationIdIsValid, *reinterpret_cast<const bool*>(pData));
+				pData += sizeof(bool);
+				EXPECT_EQ(info.InitialDownloadWork, *reinterpret_cast<const uint64_t*>(pData));
+				pData += sizeof(uint64_t);
             }
 
             EXPECT_EQ(pExpectedEnd, pData);
@@ -128,9 +136,8 @@ namespace catapult { namespace state {
             pData += Key_Size;
             memcpy(pData, &entry.capacity(), sizeof(Amount));
             pData += sizeof(Amount);
-            memcpy(pData, &entry.blsKey(), sizeof(BLSPublicKey));
-            pData += sizeof(BLSPublicKey);
-
+			memcpy(pData, entry.blsKey().data(), sizeof(BLSPublicKey));
+			pData += sizeof(BLSPublicKey);
             //region drives
             
             uint16_t drivesCount = utils::checked_cast<size_t, uint16_t>(entry.drives().size());
@@ -139,6 +146,13 @@ namespace catapult { namespace state {
             for (const auto& pair : entry.drives()) {
                 memcpy(pData, pair.first.data(), Key_Size);
                 pData += Key_Size;
+				const auto& info = pair.second;
+				memcpy(pData, info.LastApprovedDataModificationId.data(), Hash256_Size);
+				pData += Hash256_Size;
+				memcpy(pData, &info.DataModificationIdIsValid, sizeof(bool));
+				pData += sizeof(bool);
+				memcpy(pData, &info.InitialDownloadWork, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
             }
 
             // end region

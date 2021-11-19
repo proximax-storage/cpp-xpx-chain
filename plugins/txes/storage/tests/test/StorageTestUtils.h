@@ -22,6 +22,40 @@
 
 namespace catapult { namespace test {
 
+	/// Cache factory for creating a catapult cache composed of BC drive cache, BLS keys cache, download channel cache and replicator cache.
+	struct StorageCacheFactory {
+	private:
+		static auto CreateStorageSubCaches(const config::BlockchainConfiguration& config) {
+			std::vector<size_t> cacheIds = {
+					cache::BcDriveCache::Id,
+					cache::BlsKeysCache::Id,
+					cache::DownloadChannelCache::Id,
+					cache::ReplicatorCache::Id};
+			auto maxId = std::max_element(cacheIds.begin(), cacheIds.end());
+			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(*maxId + 1);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
+			subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
+			subCaches[cache::BlsKeysCache::Id] = MakeSubCachePlugin<cache::BlsKeysCache, cache::BlsKeysCacheStorage>(pConfigHolder);
+			subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
+			subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pKeyCollector, pConfigHolder);
+			return subCaches;
+		}
+
+	public:
+		/// Creates an empty catapult cache around default configuration.
+		static cache::CatapultCache Create() {
+			return Create(test::MutableBlockchainConfiguration().ToConst());
+		}
+
+		/// Creates an empty catapult cache around \a config.
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
+			auto subCaches = CreateStorageSubCaches(config);
+			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
+			return cache::CatapultCache(std::move(subCaches));
+		}
+	};
+
     /// Creates test drive entry.
     state::BcDriveEntry CreateBcDriveEntry(
         Key key = test::GenerateRandomByteArray<Key>(),
@@ -69,7 +103,11 @@ namespace catapult { namespace test {
     /// Creates test download entry.
     state::DownloadChannelEntry CreateDownloadChannelEntry(
         Hash256 id = test::GenerateRandomByteArray<Hash256>(),
-        Key consumer = test::GenerateRandomByteArray<Key>()
+        Key consumer = test::GenerateRandomByteArray<Key>(),
+		uint64_t downloadSize = test::Random(),
+		uint16_t downloadApprovalCount = test::Random16(),
+		std::vector<Key> listOfPublicKeys = {test::GenerateRandomByteArray<Key>()},
+		std::map<Key, Amount> cumulativePayments = {{test::GenerateRandomByteArray<Key>(),Amount{test::Random()}}}
     );
 
     /// Verifies that \a entry1 is equivalent to \a entry2.
@@ -118,14 +156,16 @@ namespace catapult { namespace test {
     struct ReplicatorCacheFactory {
         private:
             static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
-                auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id));
+				std::vector<uint32_t> cacheIds = {cache::BcDriveCache::Id, cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id, cache::BlsKeysCache::Id};
+				auto id = *std::max_element(cacheIds.begin(), cacheIds.end());
                 std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
                 auto pKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
 			    subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 			    subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
                 subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pKeyCollector, pConfigHolder);
-                return subCaches;
+                subCaches[cache::BlsKeysCache::Id] = MakeSubCachePlugin<cache::BlsKeysCache, cache::BlsKeysCacheStorage>(pConfigHolder);
+				return subCaches;
             }
 
         public:
@@ -179,6 +219,8 @@ namespace catapult { namespace test {
     model::UniqueEntityPtr<TTransaction> CreateDownloadTransaction() {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_Download);
         pTransaction->DownloadSize = test::Random();
+		pTransaction->FeedbackFeeAmount = Amount(test::Random());
+		pTransaction->ListOfPublicKeysSize = test::Random16();
         return pTransaction;
     }
 
@@ -226,5 +268,6 @@ namespace catapult { namespace test {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ReplicatorOffboarding);
         return pTransaction;
     }
+
 
 }}

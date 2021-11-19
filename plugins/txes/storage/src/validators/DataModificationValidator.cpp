@@ -12,10 +12,21 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(DataModification, [](const Notification& notification, const ValidatorContext& context) {
 	  	auto driveCache = context.Cache.sub<cache::BcDriveCache>();
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+
+	  	// Check if modification size >= maxModificationSize
+	  	if (utils::FileSize::FromMegabytes(notification.UploadSize) > pluginConfig.MaxModificationSize)
+	  		return Failure_Storage_Upload_Size_Excessive;
+
 	  	auto driveIter = driveCache.find(notification.DriveKey);
 		const auto& pDriveEntry = driveIter.tryGet();
 		if (!pDriveEntry)
 			return Failure_Storage_Drive_Not_Found;
+
+		const auto& owner = pDriveEntry->owner();
+		if (owner != notification.Owner) {
+			return Failure_Storage_Is_Not_Owner;
+		}
 
 	  	const auto& activeDataModifications = pDriveEntry->activeDataModifications();
 	  	for (const auto& modification : activeDataModifications) {

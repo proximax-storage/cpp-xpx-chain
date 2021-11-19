@@ -33,6 +33,22 @@ namespace catapult { namespace utils {
 		EXPECT_EQ(0u, FileSize().bytes());
 	}
 
+	TEST(TEST_CLASS, CanCreateFileSizeFromTerabytes) {
+		// Assert:
+		EXPECT_EQ(1024ull * 1024ull * 1024ull * 1024ull, FileSize::FromTerabytes(1).bytes());
+		EXPECT_EQ(2 * 1024ull * 1024ull * 1024ull * 1024ull, FileSize::FromTerabytes(2).bytes());
+		EXPECT_EQ(10 * 1024ull * 1024ull * 1024ull * 1024ull, FileSize::FromTerabytes(10).bytes());
+		EXPECT_EQ(123 * 1024ull * 1024ull * 1024ull * 1024ull, FileSize::FromTerabytes(123).bytes());
+	}
+
+	TEST(TEST_CLASS, CanCreateFileSizeFromGigabytes) {
+		// Assert:
+		EXPECT_EQ(1024ull * 1024ull * 1024ull, FileSize::FromGigabytes(1).bytes());
+		EXPECT_EQ(2 * 1024ull * 1024ull * 1024ull, FileSize::FromGigabytes(2).bytes());
+		EXPECT_EQ(10 * 1024ull * 1024ull * 1024ull, FileSize::FromGigabytes(10).bytes());
+		EXPECT_EQ(123 * 1024ull * 1024ull * 1024ull, FileSize::FromGigabytes(123).bytes());
+	}
+
 	TEST(TEST_CLASS, CanCreateFileSizeFromMegabytes) {
 		// Assert:
 		EXPECT_EQ(1024 * 1024u, FileSize::FromMegabytes(1).bytes());
@@ -60,6 +76,22 @@ namespace catapult { namespace utils {
 	// endregion
 
 	// region accessor conversions
+
+	TEST(TEST_CLASS, TerabytesAreTruncatedWhenConverted) {
+		// Assert:
+		constexpr uint64_t Base_Bytes = 10 * 1024ull * 1024ull * 1024ull * 1024ull;
+		EXPECT_EQ(9u, FileSize::FromBytes(Base_Bytes - 1).terabytes());
+		EXPECT_EQ(10u, FileSize::FromBytes(Base_Bytes).terabytes());
+		EXPECT_EQ(10u, FileSize::FromBytes(Base_Bytes + 1).terabytes());
+	}
+
+	TEST(TEST_CLASS, GigabytesAreTruncatedWhenConverted) {
+		// Assert:
+		constexpr uint64_t Base_Bytes = 10 * 1024ull * 1024ull * 1024ull;
+		EXPECT_EQ(9u, FileSize::FromBytes(Base_Bytes - 1).gigabytes());
+		EXPECT_EQ(10u, FileSize::FromBytes(Base_Bytes).gigabytes());
+		EXPECT_EQ(10u, FileSize::FromBytes(Base_Bytes + 1).gigabytes());
+	}
 
 	TEST(TEST_CLASS, MegabytesAreTruncatedWhenConverted) {
 		// Assert:
@@ -172,39 +204,39 @@ namespace catapult { namespace utils {
 	// region to string
 
 	namespace {
-		void AssertStringRepresentation(const std::string& expected, uint64_t numMegabytes, uint64_t numKilobytes, uint64_t numBytes) {
+		void AssertStringRepresentation(const std::string& expected, uint64_t numTerabytes, uint64_t numGigabytes, uint64_t numMegabytes, uint64_t numKilobytes, uint64_t numBytes) {
 			// Arrange:
-			auto timeSpan = FileSize::FromBytes(((numMegabytes * 1024) + numKilobytes) * 1024 + numBytes);
+			auto timeSpan = FileSize::FromBytes(((((numTerabytes * 1024ull + numGigabytes) * 1024ull + numMegabytes) * 1024ull) + numKilobytes) * 1024ull + numBytes);
 
 			// Act:
 			auto str = test::ToString(timeSpan);
 
 			// Assert:
-			EXPECT_EQ(expected, str) << numMegabytes << "MB " << numKilobytes << "KB " << numBytes << "B";
+			EXPECT_EQ(expected, str) << numTerabytes << "TB " << numGigabytes << "GB " << numMegabytes << "MB " << numKilobytes << "KB " << numBytes << "B";
 		}
 	}
 
 	TEST(TEST_CLASS, CanOutputFileSize) {
 		// Assert:
 		// - zero
-		AssertStringRepresentation("0B", 0, 0, 0);
+		AssertStringRepresentation("0B", 0, 0, 0, 0, 0);
 
 		// - ones
-		AssertStringRepresentation("1MB", 1, 0, 0);
-		AssertStringRepresentation("1KB", 0, 1, 0);
-		AssertStringRepresentation("1B", 0, 0, 1);
+		AssertStringRepresentation("1MB", 0, 0, 1, 0, 0);
+		AssertStringRepresentation("1KB", 0, 0, 0, 1, 0);
+		AssertStringRepresentation("1B", 0, 0, 0, 0, 1);
 
 		// - overflows
-		AssertStringRepresentation("20500MB", 20500, 0, 0);
-		AssertStringRepresentation("1028MB", 1028, 0, 0);
-		AssertStringRepresentation("1MB 4KB", 0, 1028, 0);
-		AssertStringRepresentation("1KB 4B", 0, 0, 1028);
+		AssertStringRepresentation("20GB 20MB", 0, 0, 20500, 0, 0);
+		AssertStringRepresentation("1GB 4MB", 0, 0, 1028, 0, 0);
+		AssertStringRepresentation("1MB 4KB", 0, 0, 0, 1028, 0);
+		AssertStringRepresentation("1KB 4B", 0, 0, 0, 0, 1028);
 
 		// - all values
-		AssertStringRepresentation("1MB 1KB 1B", 1, 1, 1);
-		AssertStringRepresentation("1023MB 1023KB 1023B", 1023, 1023, 1023);
-		AssertStringRepresentation("12MB 52KB 46B", 12, 52, 46);
-		AssertStringRepresentation("12MB 46B", 12, 0, 46);
+		AssertStringRepresentation("1TB 1GB 1MB 1KB 1B", 1, 1, 1, 1, 1);
+		AssertStringRepresentation("3GB 1023MB 1023KB 1023B", 0, 3, 1023, 1023, 1023);
+		AssertStringRepresentation("2TB 2GB 12MB 52KB 46B", 2, 2, 12, 52, 46);
+		AssertStringRepresentation("4TB 12MB 46B", 4, 0, 12, 0, 46);
 	}
 
 	// endregion

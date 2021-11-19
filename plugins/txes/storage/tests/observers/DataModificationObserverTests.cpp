@@ -27,10 +27,10 @@ namespace catapult { namespace observers {
                 explicit BcDriveValues()
                     : Drive_Key(test::GenerateRandomByteArray<Key>())
                     , Active_Data_Modification {
-                        state::ActiveDataModification { 
+                        state::ActiveDataModification(
                             test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), 
                             test::GenerateRandomByteArray<Hash256>(), test::Random()
-                    }}
+					)}
                 {}
             
             public:
@@ -55,7 +55,7 @@ namespace catapult { namespace observers {
                 values.Drive_Key, 
                 values.Active_Data_Modification.begin()->Owner, 
                 values.Active_Data_Modification.begin()->DownloadDataCdi, 
-                values.Active_Data_Modification.begin()->UploadSize);
+                values.Active_Data_Modification.begin()->ExpectedUploadSize);
             auto pObserver = CreateDataModificationObserver();
         	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 

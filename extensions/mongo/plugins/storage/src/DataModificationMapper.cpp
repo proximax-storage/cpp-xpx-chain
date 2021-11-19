@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "DownloadMapper.h"
+#include "DataModificationMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
 #include "plugins/txes/storage/src/model/DataModificationTransaction.h"
