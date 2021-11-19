@@ -15,10 +15,18 @@ namespace catapult { namespace validators {
         const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
         
         // Check if the drive exists
-        if (driveCache.contains(notification.DriveKey))
-            return ValidationResult::Success;
-		
-        return Failure_Storage_Drive_Not_Found;
+        auto driveIter = driveCache.find(notification.DriveKey);
+        const auto& pDriveEntry = driveIter.tryGet();
+        if (!pDriveEntry)
+        	return Failure_Storage_Drive_Not_Found;
+
+		// Check of the signer is the owner
+        const auto& owner = pDriveEntry->owner();
+        if (owner != notification.DriveOwner) {
+        	return Failure_Storage_Is_Not_Owner;
+        }
+
+        return ValidationResult::Success;
 		
 	})
 }}

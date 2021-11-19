@@ -20,8 +20,11 @@ namespace catapult { namespace config {
 						{
 							{ "enabled", "true" },
 							{ "minDriveSize", "1MB" },
+							{ "maxDriveSize", "10TB" },
+							{ "maxModificationSize", "10TB" },
 							{ "minReplicatorCount", "1" },
 							{ "maxFreeDownloadSize", "1MB" },
+							{ "maxDownloadSize", "10TB" },
 							{ "storageBillingPeriod", "168h" },
 							{ "downloadBillingPeriod", "24h" }
 						}
@@ -36,8 +39,11 @@ namespace catapult { namespace config {
 			static bool IsPropertyOptional(const std::string& name) {
 				return std::set<std::string>{
 					"minDriveSize",
+					"maxDriveSize",
+					"maxModificationSize",
 					"minReplicatorCount",
 					"maxFreeDownloadSize",
+					"maxDownloadSize",
 					"storageBillingPeriod",
 					"downloadBillingPeriod"}.count(name);
 			}
@@ -50,8 +56,11 @@ namespace catapult { namespace config {
 				// Assert:
 				EXPECT_FALSE(config.Enabled);
 				EXPECT_EQ(utils::FileSize::FromMegabytes(0u), config.MinDriveSize);
+				EXPECT_EQ(utils::FileSize::FromTerabytes(0u), config.MaxDriveSize);
+				EXPECT_EQ(utils::FileSize::FromTerabytes(0u), config.MaxModificationSize);
 				EXPECT_EQ(0, config.MinReplicatorCount);
 				EXPECT_EQ(utils::FileSize::FromMegabytes(0u), config.MaxFreeDownloadSize);
+				EXPECT_EQ(utils::FileSize::FromTerabytes(0u), config.MaxDownloadSize);
 				EXPECT_EQ(utils::TimeSpan::FromHours(0), config.StorageBillingPeriod);
 				EXPECT_EQ(utils::TimeSpan::FromHours(0), config.DownloadBillingPeriod);
 			}
@@ -60,8 +69,11 @@ namespace catapult { namespace config {
 				// Assert:
 				EXPECT_TRUE(config.Enabled);
 				EXPECT_EQ(utils::FileSize::FromMegabytes(1u), config.MinDriveSize);
+				EXPECT_EQ(utils::FileSize::FromTerabytes(10u), config.MaxDriveSize);
+				EXPECT_EQ(utils::FileSize::FromTerabytes(10u), config.MaxModificationSize);
 				EXPECT_EQ(1, config.MinReplicatorCount);
 				EXPECT_EQ(utils::FileSize::FromMegabytes(1u), config.MaxFreeDownloadSize);
+				EXPECT_EQ(utils::FileSize::FromTerabytes(11u), config.MaxDownloadSize);
 				EXPECT_EQ(utils::TimeSpan::FromHours(24 * 7), config.StorageBillingPeriod);
 				EXPECT_EQ(utils::TimeSpan::FromHours(24), config.DownloadBillingPeriod);
 			}

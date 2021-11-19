@@ -70,7 +70,7 @@ namespace catapult { namespace observers {
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
             // Arrange:
             ObserverTestContext context(mode, Current_Height);
-            Notification notification(values.InitialBcDriveEntry.key());
+            Notification notification(values.InitialBcDriveEntry.key(), test::GenerateRandomByteArray<Key>());
             auto pObserver = CreateDriveClosureObserver();
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
@@ -96,7 +96,7 @@ namespace catapult { namespace observers {
 			}
 
             for (const auto& entry : values.InitialDownloadChannelEntries)
-                EXPECT_FALSE(downloadChannelCache.find(entry.id()).tryGet());
+                EXPECT_TRUE(downloadChannelCache.find(entry.id()).tryGet());
         }
     }
 

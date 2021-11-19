@@ -23,11 +23,12 @@ namespace catapult { namespace model {
 					baseSize // base
 					+ Key_Size // drive key size
 					+ Hash256_Size // CDI modification size
-					+ sizeof(uint64_t); // replicator count
+					+ sizeof(uint64_t) // upload size
+					+ sizeof(Amount); // feedback fee
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 72u, sizeof(T));
+			EXPECT_EQ(baseSize + 80u, sizeof(T));
 		}
 
 		template<typename T>
