@@ -32,28 +32,29 @@ namespace catapult { namespace plugins {
 							transaction.DriveSize,
 							transaction.ReplicatorCount
 					));
+					sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
 
 					const auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(driveKey, config.NetworkIdentifier));
 					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 					const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
 					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
 
-					sub.notify(BalanceTransferNotification<1>(
-							transaction.Signer, driveAddress, currencyMosaicId, transaction.VerificationFeeAmount));
-					utils::SwapMosaics(
-							transaction.Signer,
-							driveKey,
-							{ {storageMosaicId, Amount(transaction.DriveSize * transaction.ReplicatorCount)} },
-							sub,
-							config,
-							utils::SwapOperation::Buy);
-					utils::SwapMosaics(
-							transaction.Signer,
-							driveKey,
-							{ {streamingMosaicId, Amount(2 * transaction.DriveSize * transaction.ReplicatorCount)} },
-							sub,
-							config,
-							utils::SwapOperation::Buy);
+					// sub.notify(BalanceTransferNotification<1>(
+					// 		transaction.Signer, driveAddress, currencyMosaicId, transaction.VerificationFeeAmount));
+					// utils::SwapMosaics(
+					// 		transaction.Signer,
+					// 		driveKey,
+					// 		{ {storageMosaicId, Amount(transaction.DriveSize * transaction.ReplicatorCount)} },
+					// 		sub,
+					// 		config,
+					// 		utils::SwapOperation::Buy);
+					// utils::SwapMosaics(
+					// 		transaction.Signer,
+					// 		driveKey,
+					// 		{ {streamingMosaicId, Amount(2 * transaction.DriveSize * transaction.ReplicatorCount)} },
+					// 		sub,
+					// 		config,
+					// 		utils::SwapOperation::Buy);
 
 					break;
 				}

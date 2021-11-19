@@ -63,11 +63,20 @@ namespace catapult { namespace model {
 	/// Defines a drive closure notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Drive_Closure_v1, 0x0012);
 
+	/// Defines a stream start notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Stream_Start_v1, 0x0013);
+
+	/// Defines a stream finish notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Stream_Finish_v1, 0x0014);
+
+	/// Defines a stream payment notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Stream_Payment_v1, 0x0015);
+
 	struct DownloadWork : public UnresolvedAmountData {
 	public:
 		DownloadWork(const Key& driveKey, const Key& replicator)
-				: DriveKey(driveKey)
-				, Replicator(replicator)
+			: DriveKey(driveKey)
+			, Replicator(replicator)
 		{}
 
 	public:
@@ -79,9 +88,9 @@ namespace catapult { namespace model {
 	struct UploadWork : public UnresolvedAmountData {
 	public:
 		UploadWork(const Key& driveKey, const Key& replicator, const uint8_t& opinion)
-				: DriveKey(driveKey)
-				, Replicator(replicator)
-				, Opinion(opinion)
+			: DriveKey(driveKey)
+			, Replicator(replicator)
+			, Opinion(opinion)
 		{}
 
 	public:
@@ -93,8 +102,8 @@ namespace catapult { namespace model {
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
 		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)
-				: DownloadChannelId(downloadChannelId)
-				, DownloadSize(downloadSize)
+			: DownloadChannelId(downloadChannelId)
+			, DownloadSize(downloadSize)
 		{}
 
 	public:
@@ -105,8 +114,8 @@ namespace catapult { namespace model {
 	struct StreamingWork : public UnresolvedAmountData {
 	public:
 		StreamingWork(const Key& driveKey, const uint64_t& uploadSize)
-				: DriveKey(driveKey)
-				, UploadSize(uploadSize)
+			: DriveKey(driveKey)
+			, UploadSize(uploadSize)
 		{}
 
 	public:
@@ -126,11 +135,11 @@ namespace catapult { namespace model {
 
 	public:
 		explicit DataModificationNotification(
-			const Hash256& dataModificationId,
-			const Key& drive,
-			const Key& owner,
-            const Hash256& cdi,
-			const uint64_t& uploadSize)
+				const Hash256& dataModificationId,
+				const Key& drive,
+				const Key& owner,
+				const Hash256& cdi,
+				const uint64_t& uploadSize)
 			: Notification(Notification_Type, sizeof(DataModificationNotification<1>))
 			, DataModificationId(dataModificationId)
 			, DriveKey(drive)
@@ -156,6 +165,121 @@ namespace catapult { namespace model {
 		uint64_t UploadSize;
 	};
 
+	/// Notification of a stream start.
+	template<VersionType version>
+	struct StreamStartNotification;
+
+	template<>
+	struct StreamStartNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Stream_Start_v1_Notification;
+
+	public:
+		explicit StreamStartNotification(
+				const Hash256& streamId,
+				const Key& drive,
+				const Key& owner,
+				const uint64_t& expecteedUploadSize,
+				const std::string& folderName)
+			: Notification(Notification_Type, sizeof(StreamStartNotification<1>))
+			, StreamId(streamId)
+			, DriveKey(drive)
+			, Owner(owner)
+			, ExpectedUploadSize(expecteedUploadSize)
+			, FolderName(folderName)
+		{}
+
+	public:
+		/// Hash of the transaction.
+		Hash256 StreamId;
+
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+
+		/// Public key of the drive owner.
+		Key Owner;
+
+		/// Upload size of data.
+		uint64_t ExpectedUploadSize;
+
+		/// FolderName to save stream in
+		std::string FolderName;
+	};
+
+	/// Notification of a stream finish.
+	template<VersionType version>
+	struct StreamFinishNotification;
+
+	template<>
+	struct StreamFinishNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Stream_Finish_v1_Notification;
+
+	public:
+		explicit StreamFinishNotification(
+				const Key& drive,
+				const Hash256& streamId,
+				const Key& owner,
+				const uint64_t& actualUploadSize,
+				const Hash256& streamStructureCdi)
+				: Notification(Notification_Type, sizeof(StreamStartNotification<1>))
+				, StreamId(streamId)
+				, DriveKey(drive)
+				, Owner(owner)
+				, ActualUploadSize(actualUploadSize)
+				, StreamStructureCdi(streamStructureCdi)
+				{}
+
+	public:
+		/// Hash of the transaction.
+		Hash256 StreamId;
+
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+
+		/// Public key of the drive owner.
+		Key Owner;
+
+		/// Actual size of the stream
+		uint64_t ActualUploadSize;
+
+		Hash256 StreamStructureCdi;
+	};
+
+	/// Notification of a stream payment.
+	template<VersionType version>
+	struct StreamPaymentNotification;
+
+	template<>
+	struct StreamPaymentNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Stream_Payment_v1_Notification;
+
+	public:
+		explicit StreamPaymentNotification(
+				const Key& drive,
+				const Hash256& streamId,
+				const uint64_t& additionalUploadSize)
+				: Notification(Notification_Type, sizeof(StreamStartNotification<1>))
+				, StreamId(streamId)
+				, DriveKey(drive)
+				, AdditionalUploadSize(additionalUploadSize)
+				{}
+
+	public:
+		/// Hash of the transaction.
+		Hash256 StreamId;
+
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+
+		/// Actual size of the stream
+		uint64_t AdditionalUploadSize;
+	};
+
 	/// Notification of a download.
 	template<VersionType version>
 	struct DownloadNotification;
@@ -168,11 +292,11 @@ namespace catapult { namespace model {
 
 	public:
 		explicit DownloadNotification(
-			const Hash256& id,
-			const Key& consumer,
-			uint64_t downloadSize,
-			uint16_t listOfPublicKeysSize,
-			const Key* listOfPublicKeysPtr)
+				const Hash256& id,
+				const Key& consumer,
+				uint64_t downloadSize,
+				uint16_t listOfPublicKeysSize,
+				const Key* listOfPublicKeysPtr)
 			: Notification(Notification_Type, sizeof(DownloadNotification<1>))
 			, Id(id)
 			, Consumer(consumer)
@@ -211,10 +335,10 @@ namespace catapult { namespace model {
 
 	public:
 		explicit PrepareDriveNotification(
-			const Key& owner,
-			const Key& driveKey,
-			const uint64_t& driveSize,
-			const uint16_t& replicatorCount)
+				const Key& owner,
+				const Key& driveKey,
+				const uint64_t& driveSize,
+				const uint16_t& replicatorCount)
 			: Notification(Notification_Type, sizeof(PrepareDriveNotification<1>))
 			, Owner(owner)
 			, DriveKey(driveKey)
@@ -248,9 +372,9 @@ namespace catapult { namespace model {
 
 	public:
 		explicit DriveNotification(const Key& drive, const model::EntityType& type)
-				: Notification(Notification_Type, sizeof(DriveNotification<1>))
-				, DriveKey(drive)
-				, TransactionType(type)
+			: Notification(Notification_Type, sizeof(DriveNotification<1>))
+			, DriveKey(drive)
+			, TransactionType(type)
 		{}
 
 	public:
@@ -279,13 +403,13 @@ namespace catapult { namespace model {
 				const Hash256& fileStructureCdi,
 				uint64_t fileStructureSize,
 				uint64_t usedDriveSize)
-				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
-				, PublicKey(signer)
-				, DriveKey(driveKey)
-				, DataModificationId(dataModificationId)
-				, FileStructureCdi(fileStructureCdi)
-				, FileStructureSize(fileStructureSize)
-				, UsedDriveSize(usedDriveSize)
+			: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+			, PublicKey(signer)
+			, DriveKey(driveKey)
+			, DataModificationId(dataModificationId)
+			, FileStructureCdi(fileStructureCdi)
+			, FileStructureSize(fileStructureSize)
+			, UsedDriveSize(usedDriveSize)
 		{}
 
 	public:
@@ -320,10 +444,10 @@ namespace catapult { namespace model {
 
 	public:
 		explicit DataModificationCancelNotification(const Key& drive, const Key& owner, const Hash256& dataModificationId)
-				: Notification(Notification_Type, sizeof(DataModificationCancelNotification<1>))
-				, DriveKey(drive)
-				, Owner(owner)
-				, DataModificationId(dataModificationId) {}
+			: Notification(Notification_Type, sizeof(DataModificationCancelNotification<1>))
+			, DriveKey(drive)
+			, Owner(owner)
+			, DataModificationId(dataModificationId) {}
 
 	public:
 		/// Public key of a drive multisig account.
@@ -351,10 +475,10 @@ namespace catapult { namespace model {
 				const Key& publicKey,
 				const BLSPublicKey& blsKey,
 				const Amount& capacity)
-				: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
-				, PublicKey(publicKey)
-				, BlsKey(blsKey)
-				, Capacity(capacity)
+			: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
+			, PublicKey(publicKey)
+			, BlsKey(blsKey)
+			, Capacity(capacity)
 		{}
 
 	public:
@@ -379,14 +503,18 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Storage_Drive_Closure_v1_Notification;
 
 	public:
-		explicit DriveClosureNotification(const Key& drive)
-				: Notification(Notification_Type, sizeof(DriveClosureNotification<1>))
-				, DriveKey(drive){}
+		explicit DriveClosureNotification(const Key& drive, const Key& owner)
+			: Notification(Notification_Type, sizeof(DriveClosureNotification<1>))
+			, DriveKey(drive)
+			, DriveOwner(owner)
+		{}
 
 	public:
 		/// Public key of a drive.
 		Key DriveKey;
 
+		/// Public Key of the drive owner
+		Key DriveOwner;
 	};
 
 	/// Notification of a replicator offboarding.
@@ -400,17 +528,17 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Storage_Replicator_Offboarding_v1_Notification;
 
 	public:
-			explicit ReplicatorOffboardingNotification(
-					const Key& publicKey)
-					: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
-					, PublicKey(publicKey)
-			{}
+		explicit ReplicatorOffboardingNotification(
+				const Key& publicKey)
+			: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
+			, PublicKey(publicKey)
+		{}
 
-		public:
-			/// Key of the replicator.
-			Key PublicKey;
+	public:
+		/// Key of the replicator.
+		Key PublicKey;
 
-		};
+	};
 
 	/// Notification of a finish download.
 	template<VersionType version>
@@ -426,9 +554,9 @@ namespace catapult { namespace model {
 		explicit FinishDownloadNotification(
 				const Key& signer,
 				const Hash256& downloadChannelId)
-				: Notification(Notification_Type, sizeof(FinishDownloadNotification<1>))
-				, PublicKey(signer)
-				, DownloadChannelId(downloadChannelId)
+			: Notification(Notification_Type, sizeof(FinishDownloadNotification<1>))
+			, PublicKey(signer)
+			, DownloadChannelId(downloadChannelId)
 		{}
 
 	public:
@@ -454,10 +582,10 @@ namespace catapult { namespace model {
 				const Key& signer,
 				const Hash256& downloadChannelId,
 				const uint64_t downloadSize)
-				: Notification(Notification_Type, sizeof(DownloadPaymentNotification<1>))
-				, PublicKey(signer)
-				, DownloadChannelId(downloadChannelId)
-				, DownloadSize(downloadSize)
+			: Notification(Notification_Type, sizeof(DownloadPaymentNotification<1>))
+			, PublicKey(signer)
+			, DownloadChannelId(downloadChannelId)
+			, DownloadSize(downloadSize)
 		{}
 
 	public:
@@ -485,9 +613,9 @@ namespace catapult { namespace model {
 		explicit StoragePaymentNotification(
 				const Key& signer,
 				const Key& driveKey)
-				: Notification(Notification_Type, sizeof(StoragePaymentNotification<1>))
-				, PublicKey(signer)
-				, DriveKey(driveKey)
+			: Notification(Notification_Type, sizeof(StoragePaymentNotification<1>))
+			, PublicKey(signer)
+			, DriveKey(driveKey)
 		{}
 
 	public:
@@ -517,14 +645,14 @@ namespace catapult { namespace model {
 				const Key* uploaderKeysPtr,
 				const uint8_t* uploadOpinionPtr,
 				uint64_t usedDriveSize)
-				: Notification(Notification_Type, sizeof(DataModificationSingleApprovalNotification<1>))
-				, PublicKey(signer)
-				, DriveKey(driveKey)
-				, DataModificationId(dataModificationId)
-				, UploadOpinionPairCount(uploadOpinionPairCount)
-				, UploaderKeysPtr(uploaderKeysPtr)
-				, UploadOpinionPtr(uploadOpinionPtr)
-				, UsedDriveSize(usedDriveSize)
+			: Notification(Notification_Type, sizeof(DataModificationSingleApprovalNotification<1>))
+			, PublicKey(signer)
+			, DriveKey(driveKey)
+			, DataModificationId(dataModificationId)
+			, UploadOpinionPairCount(uploadOpinionPairCount)
+			, UploaderKeysPtr(uploaderKeysPtr)
+			, UploadOpinionPtr(uploadOpinionPtr)
+			, UsedDriveSize(usedDriveSize)
 		{}
 
 	public:
@@ -563,9 +691,9 @@ namespace catapult { namespace model {
 		explicit VerificationPaymentNotification(
 				const Key& owner,
 				const Key& driveKey)
-				: Notification(Notification_Type, sizeof(VerificationPaymentNotification<1>))
-				, Owner(owner)
-				, DriveKey(driveKey)
+			: Notification(Notification_Type, sizeof(VerificationPaymentNotification<1>))
+			, Owner(owner)
+			, DriveKey(driveKey)
 		{}
 
 	public:
@@ -598,17 +726,17 @@ namespace catapult { namespace model {
 				const BLSSignature* blsSignaturesPtr,
 				const uint8_t* presentOpinionsPtr,
 				const uint64_t* opinionsPtr)
-				: Notification(Notification_Type, sizeof(OpinionNotification<1>))
-				, CommonDataSize(commonDataSize)
-				, OpinionCount(opinionCount)
-				, JudgingCount(judgingCount)
-				, JudgedCount(judgedCount)
-				, CommonDataPtr(commonDataPtr)
-				, PublicKeysPtr(publicKeysPtr)
-				, OpinionIndicesPtr(opinionIndicesPtr)
-				, BlsSignaturesPtr(blsSignaturesPtr)
-				, PresentOpinionsPtr(presentOpinionsPtr)
-				, OpinionsPtr(opinionsPtr)
+			: Notification(Notification_Type, sizeof(OpinionNotification<1>))
+			, CommonDataSize(commonDataSize)
+			, OpinionCount(opinionCount)
+			, JudgingCount(judgingCount)
+			, JudgedCount(judgedCount)
+			, CommonDataPtr(commonDataPtr)
+			, PublicKeysPtr(publicKeysPtr)
+			, OpinionIndicesPtr(opinionIndicesPtr)
+			, BlsSignaturesPtr(blsSignaturesPtr)
+			, PresentOpinionsPtr(presentOpinionsPtr)
+			, OpinionsPtr(opinionsPtr)
 		{}
 
 	public:
@@ -667,18 +795,18 @@ namespace catapult { namespace model {
 				const BLSSignature* blsSignaturesPtr,
 				const uint8_t* presentOpinionsPtr,
 				const uint64_t* opinionsPtr)
-				: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
-				, DownloadChannelId(id)
-				, SequenceNumber(number)
-				, ResponseToFinishDownloadTransaction(response)
-				, OpinionCount(opinionCount)
-				, JudgingCount(judgingCount)
-				, JudgedCount(judgedCount)
-				, PublicKeysPtr(publicKeysPtr)
-				, OpinionIndicesPtr(opinionIndicesPtr)
-				, BlsSignaturesPtr(blsSignaturesPtr)
-				, PresentOpinionsPtr(presentOpinionsPtr)
-				, OpinionsPtr(opinionsPtr)
+			: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
+			, DownloadChannelId(id)
+			, SequenceNumber(number)
+			, ResponseToFinishDownloadTransaction(response)
+			, OpinionCount(opinionCount)
+			, JudgingCount(judgingCount)
+			, JudgedCount(judgedCount)
+			, PublicKeysPtr(publicKeysPtr)
+			, OpinionIndicesPtr(opinionIndicesPtr)
+			, BlsSignaturesPtr(blsSignaturesPtr)
+			, PresentOpinionsPtr(presentOpinionsPtr)
+			, OpinionsPtr(opinionsPtr)
 		{}
 
 	public:
@@ -737,15 +865,15 @@ namespace catapult { namespace model {
 				const uint8_t* opinionIndicesPtr,
 				const uint8_t* presentOpinionsPtr,
 				const uint64_t* opinionsPtr)
-				: Notification(Notification_Type, sizeof(DownloadApprovalPaymentNotification<1>))
-				, DownloadChannelId(id)
-				, OpinionCount(opinionCount)
-				, JudgingCount(judgingCount)
-				, JudgedCount(judgedCount)
-				, PublicKeysPtr(publicKeysPtr)
-				, OpinionIndicesPtr(opinionIndicesPtr)
-				, PresentOpinionsPtr(presentOpinionsPtr)
-				, OpinionsPtr(opinionsPtr)
+			: Notification(Notification_Type, sizeof(DownloadApprovalPaymentNotification<1>))
+			, DownloadChannelId(id)
+			, OpinionCount(opinionCount)
+			, JudgingCount(judgingCount)
+			, JudgedCount(judgedCount)
+			, PublicKeysPtr(publicKeysPtr)
+			, OpinionIndicesPtr(opinionIndicesPtr)
+			, PresentOpinionsPtr(presentOpinionsPtr)
+			, OpinionsPtr(opinionsPtr)
 		{}
 
 	public:
@@ -788,8 +916,8 @@ namespace catapult { namespace model {
 	public:
 		explicit DownloadChannelRefundNotification(
 				const Hash256& downloadChannelId)
-				: Notification(Notification_Type, sizeof(DownloadChannelRefundNotification<1>))
-				, DownloadChannelId(downloadChannelId)
+			: Notification(Notification_Type, sizeof(DownloadChannelRefundNotification<1>))
+			, DownloadChannelId(downloadChannelId)
 		{}
 
 	public:

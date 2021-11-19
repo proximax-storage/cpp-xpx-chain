@@ -68,7 +68,7 @@ namespace catapult { namespace state {
 		input.read(blsKey);
 		entry.setBlsKey(blsKey);
 
-		LoadDrives(input, entry.drives());
+		 LoadDrives(input, entry.drives());
 
 		return entry;
 	}

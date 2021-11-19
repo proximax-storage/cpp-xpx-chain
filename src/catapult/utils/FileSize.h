@@ -37,6 +37,16 @@ namespace catapult { namespace utils {
 		{}
 
 	public:
+		/// Creates a file size from the given number of \a terabytes.
+		static constexpr FileSize FromTerabytes(uint64_t terabytes) {
+			return FromGigabytes(terabytes * 1024);
+		}
+
+		/// Creates a file size from the given number of \a gigabytes.
+		static constexpr FileSize FromGigabytes(uint64_t gigabytes) {
+			return FromMegabytes(gigabytes * 1024);
+		}
+
 		/// Creates a file size from the given number of \a megabytes.
 		static constexpr FileSize FromMegabytes(uint64_t megabytes) {
 			return FromKilobytes(megabytes * 1024);
@@ -53,6 +63,16 @@ namespace catapult { namespace utils {
 		}
 
 	public:
+		/// Returns the number of gigabytes.
+		constexpr uint64_t terabytes() const {
+			return gigabytes() / 1024;
+		}
+
+		/// Returns the number of gigabytes.
+		constexpr uint64_t gigabytes() const {
+			return megabytes() / 1024;
+		}
+
 		/// Returns the number of megabytes.
 		constexpr uint64_t megabytes() const {
 			return kilobytes() / 1024;

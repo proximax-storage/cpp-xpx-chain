@@ -11,23 +11,29 @@
 namespace catapult { namespace state {
 
 	namespace {
+		void SaveActiveDataModification(io::OutputStream& output, const ActiveDataModification& modification) {
+			io::Write(output, modification.Id);
+			io::Write(output, modification.Owner);
+			io::Write(output, modification.DownloadDataCdi);
+			io::Write64(output, modification.ExpectedUploadSize);
+			io::Write64(output, modification.ActualUploadSize);
+			io::Write16(output, (uint16_t) modification.FolderName.size());
+			io::Write8(output, modification.ReadyForApproval);
+			auto pFolderName = (const uint8_t*) (modification.FolderName.c_str());
+			io::Write(output, utils::RawBuffer(pFolderName, modification.FolderName.size()));
+		}
+
 		void SaveActiveDataModifications(io::OutputStream& output, const ActiveDataModifications& activeDataModifications) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(activeDataModifications.size()));
 			for (const auto& modification : activeDataModifications) {
-				io::Write(output, modification.Id);
-				io::Write(output, modification.Owner);
-				io::Write(output, modification.DownloadDataCdi);
-				io::Write64(output, modification.UploadSize);
+				SaveActiveDataModification(output, modification);
 			}
 		}
 
 		void SaveCompletedDataModifications(io::OutputStream& output, const CompletedDataModifications& completedDataModifications) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(completedDataModifications.size()));
 			for (const auto& modification : completedDataModifications) {
-				io::Write(output, modification.Id);
-				io::Write(output, modification.Owner);
-				io::Write(output, modification.DownloadDataCdi);
-				io::Write64(output, modification.UploadSize);
+				SaveActiveDataModification(output,modification);
 				io::Write8(output, utils::to_underlying_type(modification.State));
 			}
 		}
@@ -46,32 +52,37 @@ namespace catapult { namespace state {
 				io::Write(output, replicatorKey);
 		}
 
+		auto LoadActiveDataModification(io::InputStream& input) {
+			Hash256 id;
+			io::Read(input, id);
+			Key owner;
+			io::Read(input, owner);
+			Hash256 downloadDataCdi;
+			io::Read(input, downloadDataCdi);
+			auto expectedUploadSize = io::Read64(input);
+			auto actualUploadSize = io::Read64(input);
+			auto folderNameSize = io::Read16(input);
+			auto readyForApproval = io::Read8(input);
+			std::vector<uint8_t> folderNameBytes(folderNameSize);
+			io::Read(input, folderNameBytes);
+			std::string folderName(folderNameBytes.begin(), folderNameBytes.end());
+			return ActiveDataModification(id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folderName, readyForApproval);
+		}
+
 		void LoadActiveDataModifications(io::InputStream& input, ActiveDataModifications& activeDataModifications) {
 			auto count = io::Read16(input);
 			while (count--) {
-				Hash256 id;
-				io::Read(input, id);
-				Key owner;
-				io::Read(input, owner);
-				Hash256 downloadDataCdi;
-				io::Read(input, downloadDataCdi);
-				auto uploadSize = io::Read64(input);
-				activeDataModifications.emplace_back(ActiveDataModification{ id, owner, downloadDataCdi, uploadSize });
+				auto modification = LoadActiveDataModification(input);
+				activeDataModifications.emplace_back(modification);
 			}
 		}
 
 		void LoadCompletedDataModifications(io::InputStream& input, CompletedDataModifications& completedDataModifications) {
 			auto count = io::Read16(input);
 			while (count--) {
-				Hash256 id;
-				io::Read(input, id);
-				Key owner;
-				io::Read(input, owner);
-				Hash256 downloadDataCdi;
-				io::Read(input, downloadDataCdi);
-				auto uploadSize = io::Read64(input);
+				auto activeModification = LoadActiveDataModification(input);
 				auto state = static_cast<DataModificationState>(io::Read8(input));
-				completedDataModifications.emplace_back(ActiveDataModification{ id, owner, downloadDataCdi, uploadSize }, state);
+				completedDataModifications.emplace_back(activeModification, state);
 			}
 		}
 

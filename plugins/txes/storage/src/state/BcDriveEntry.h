@@ -24,17 +24,62 @@ namespace catapult { namespace state {
 	};
 
 	struct ActiveDataModification {
+
+		/// Constructor For Data Modification
+		ActiveDataModification(
+				const Hash256& id,
+				const Key& owner,
+				const Hash256& downloadDataCdi,
+				const uint64_t& uploadSize)
+			: ActiveDataModification(id, owner, downloadDataCdi, uploadSize, uploadSize, "", true)
+		{}
+
+		/// Constructor For Stream Start
+		ActiveDataModification(
+				const Hash256& id,
+				const Key& owner,
+				const uint64_t& expectedUploadSize,
+				const std::string& folderName)
+			: ActiveDataModification(id, owner, Hash256(), expectedUploadSize, expectedUploadSize, folderName, false)
+		{}
+
+		ActiveDataModification(
+				const Hash256& id,
+				const Key& owner,
+				const Hash256& downloadDataCdi,
+				const uint64_t& expectedUploadSize,
+				const uint64_t& actualUploadSize,
+				const std::string& folderName,
+				const bool& readyForApproval)
+			: Id(id)
+			, Owner(owner)
+			, DownloadDataCdi(downloadDataCdi)
+			, ExpectedUploadSize(expectedUploadSize)
+			, ActualUploadSize(actualUploadSize)
+			, FolderName(folderName)
+			, ReadyForApproval(readyForApproval)
+		{}
+
 		/// Id of data modification.
 		Hash256 Id;
 
 		/// Public key of the drive owner.
 		Key Owner;
 
-		/// CDI of download data.
+		/// CDI of download data. Zero for Stream
 		Hash256 DownloadDataCdi;
 
-		/// Upload size of data.
-		uint64_t UploadSize;
+		/// Expected Upload size of data.
+		uint64_t ExpectedUploadSize;
+
+		/// Actual Upload size of data. Differs from ExpectedUploadSize only for streams
+		uint64_t ActualUploadSize;
+
+		/// FolderName for stream
+		std::string FolderName;
+
+		/// Whether DataModification can be approved by Replicators
+		bool ReadyForApproval;
 	};
 
 	struct CompletedDataModification : ActiveDataModification {
@@ -64,14 +109,14 @@ namespace catapult { namespace state {
 
 	public:
 		/// Sets \a owner of drive.
-        void setOwner(const Key& owner) {
-            m_owner = owner;
-        }
+		void setOwner(const Key& owner) {
+			m_owner = owner;
+		}
 
-        /// Gets owner of drive.
-        const Key& owner() const {
-            return m_owner;
-        }
+		/// Gets owner of drive.
+		const Key& owner() const {
+			return m_owner;
+		}
 
 		/// Sets \a rootHash of drive.
 		void setRootHash(const Hash256& rootHash) {
