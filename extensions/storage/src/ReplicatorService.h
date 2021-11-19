@@ -7,12 +7,11 @@
 #pragma once
 #include "StorageConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
-#include "catapult/extensions/ServerHooks.h"
 #include "catapult/extensions/ServiceRegistrar.h"
 #include "catapult/types.h"
-#include "drive/Drive.h"
+#include "drive/FlatDrive.h"
 #include "drive/Session.h"
-#include <mutex>
+#include "ReplicatorEventHandler.h"
 
 namespace catapult { namespace storage {
 
@@ -40,20 +39,16 @@ namespace catapult { namespace storage {
 
 		void start();
 
-		void addDrive(const Key& driveKey, size_t driveSize);
-		void removeDrive(const Key& driveKey);
-
-		void addDriveModification(const Key& driveKey, const Hash256& dataModificationId, const Hash256& rootHash);
+		void addDriveModification(
+				const Key& driveKey,
+				const Hash256& dataInfoHash,
+				const Hash256& transactionHash,
+				const Key& owner,
+				uint64_t dataSize
+		);
 		void removeDriveModification(const Key& driveKey, const Hash256& dataModificationId);
 
-		void addConsumer(const Key& consumer, const std::vector<Key> listOfPublicKeys, const uint64_t downloadSize);
-		void removeConsumer(const Key& consumer);
-		void increaseDownloadSize(const Key& consumer, const uint64_t downloadSizeDelta);
-
-		FileNames startDownloadFiles(const Key& consumer, const Key& driveKey, FileNames&& fileNames);
-		FileNames stopDownloadFiles(const Key& driveKey, FileNames&& fileNames);
-
-		void closeDrive(const Key& driveKey);
+		void closeDrive(const Key& driveKey, const Hash256& transactionHash);
 
 		void shutdown();
 

@@ -17,7 +17,7 @@ namespace catapult { namespace state {
 	struct ReplicatorData {
 		std::vector<std::pair<Key, uint64_t>> Drives;
 		std::map<Key, std::vector<std::pair<Hash256, Hash256>>> DriveModifications;
-		std::map<Key, std::pair<std::vector<Key>, uint64_t>> Consumers;
+//		std::map<Key, std::pair<std::vector<Key>, uint64_t>> Consumers;
 	};
 
 	/// Interface for storage state.

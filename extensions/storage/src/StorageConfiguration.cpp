@@ -25,10 +25,11 @@ namespace catapult { namespace storage {
 		LOAD_DB_PROPERTY(TransactionTimeout);
 		LOAD_DB_PROPERTY(StorageDirectory);
 		LOAD_DB_PROPERTY(SandboxDirectory);
+		LOAD_DB_PROPERTY(UseTcpSocket);
 
 #undef LOAD_DB_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 4);
+		utils::VerifyBagSizeLte(bag, 5);
 		return config;
 	}
 

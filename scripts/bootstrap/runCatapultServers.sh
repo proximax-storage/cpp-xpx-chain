@@ -1,7 +1,7 @@
-PATH_TO_CATAPULT_SERVER="/home/jackshen/Download/cpp-xpx-chain"
+PATH_TO_CATAPULT_SERVER="/home/newman/projects/catapult/cpp-xpx-chain"
 PATH_TO_BOOTSTRAP=$PATH_TO_CATAPULT_SERVER/scripts/bootstrap
 
-WORK_DIR=$PATH_TO_CATAPULT_SERVER/_build
+WORK_DIR=$PATH_TO_CATAPULT_SERVER/cmake-build-debug
 num_addresses=50
 raw_addresses_path=$WORK_DIR/addresses/raw-addresses.txt
 formatted_address_path=$WORK_DIR/addresses/addresses.yaml
@@ -47,12 +47,12 @@ generate_nem() {
     cd $WORK_DIR/data/$1/
     echo "running nemgen $1"
 
+    cp -R $WORK_DIR/config-build/$1/userconfig/resources resources
     if [ ! -d $WORK_DIR/nemesis/data ]; then
       mkdir settings
       mkdir -p seed/mijin-test/00000
       dd if=/dev/zero of=seed/mijin-test/00000/hashes.dat bs=1 count=64
       cd settings
-      cp -R $WORK_DIR/config-build/$1/userconfig/resources ../resources
       $WORK_DIR/bin/catapult.tools.nemgen --nemesisProperties $WORK_DIR/nemesis/block-properties-file.properties
       cp -r $WORK_DIR/data/$1/seed/mijin-test/* $WORK_DIR/data/$1/data/
       cp -r $WORK_DIR/data/$1/data $WORK_DIR/nemesis/
@@ -61,16 +61,14 @@ generate_nem() {
       cd -
     else
       cp $WORK_DIR/nemesis/data -r $WORK_DIR/data/$1/
-      cp -R $WORK_DIR/config-build/$1/userconfig/resources $WORK_DIR/data/$1/
     fi
 
   else
     echo "no need to run nemgen"
   fi
 
-  # $WORK_DIR/bin/sirius.bc $WORK_DIR/config-build/$1/userconfig &
-  # >/dev/null 2>&1 &
-  # echo "You can find logs in '$WORK_DIR/data/$1/'"
+#  $WORK_DIR/bin/sirius.bc $WORK_DIR/config-build/$1/userconfig &>/dev/null 2>&1 &
+  echo "You can find logs in '$WORK_DIR/data/$1/'"
 }
 
 generate_nem "api-node-0"

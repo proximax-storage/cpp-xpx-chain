@@ -67,20 +67,20 @@ namespace catapult { namespace storage {
 	}
 
 	void RegisterStartDownloadFilesHandler(const std::weak_ptr<ReplicatorService>& pReplicatorServiceWeak, ionet::ServerPacketHandlers& handlers) {
-		RegisterFileDownloadHandler<ionet::PacketType::Start_Download_Files, ionet::PacketType::Start_Download_Files_Response>(
-			pReplicatorServiceWeak,
-			handlers,
-			[](auto pReplicatorService, const Key& consumer, const Key& driveKey, auto&& fileNames) {
-				return pReplicatorService->startDownloadFiles(consumer, driveKey, std::move(fileNames));
-			});
+//		RegisterFileDownloadHandler<ionet::PacketType::Start_Download_Files, ionet::PacketType::Start_Download_Files_Response>(
+//			pReplicatorServiceWeak,
+//			handlers,
+//			[](auto pReplicatorService, const Key& consumer, const Key& driveKey, auto&& fileNames) {
+//				return pReplicatorService->startDownloadFiles(consumer, driveKey, std::move(fileNames));
+//			});
 	}
 
 	void RegisterStopDownloadFilesHandler(const std::weak_ptr<ReplicatorService>& pReplicatorServiceWeak, ionet::ServerPacketHandlers& handlers) {
-		RegisterFileDownloadHandler<ionet::PacketType::Stop_Download_Files, ionet::PacketType::Stop_Download_Files_Response>(
-			pReplicatorServiceWeak,
-			handlers,
-			[](auto pReplicatorService, const Key&, const Key& driveKey, auto&& fileNames) {
-				return pReplicatorService->stopDownloadFiles(driveKey, std::move(fileNames));
-			});
+//		RegisterFileDownloadHandler<ionet::PacketType::Stop_Download_Files, ionet::PacketType::Stop_Download_Files_Response>(
+//			pReplicatorServiceWeak,
+//			handlers,
+//			[](auto pReplicatorService, const Key&, const Key& driveKey, auto&& fileNames) {
+//				return pReplicatorService->stopDownloadFiles(driveKey, std::move(fileNames));
+//			});
 	}
 }}
