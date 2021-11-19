@@ -38,6 +38,23 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void SaveVerificationOpinions(io::OutputStream& output, const VerificationResults& opinions) {
+			io::Write16(output, opinions.size());
+			for (const auto& pair : opinions) {
+				io::Write(output, pair.first);
+				io::Write8(output, pair.second);
+			}
+		}
+
+		void SaveVerifications(io::OutputStream& output, const Verifications& verifications) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(verifications.size()));
+			for (const auto& verification : verifications) {
+				io::Write(output, verification.VerificationTrigger);
+				io::Write8(output, utils::to_underlying_type(verification.State));
+				SaveVerificationOpinions(output, verification.Results);
+			}
+		}
+
 		void SaveConfirmedUsedSizes(io::OutputStream& output, const UsedSizeMap& confirmedUsedSizes) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(confirmedUsedSizes.size()));
 			for (const auto& pair : confirmedUsedSizes) {
@@ -104,6 +121,27 @@ namespace catapult { namespace state {
 				replicators.insert(replicatorKey);
 			}
 		}
+
+		void LoadVerificationOpinions(io::InputStream& input, VerificationResults& opinions) {
+			auto pairCount = io::Read16(input);
+			while (pairCount--) {
+				Key prover;
+				io::Read(input, prover);
+				opinions[prover] = io::Read8(input);
+			}
+		}
+
+		void LoadVerifications(io::InputStream& input, Verifications& verifications) {
+		    auto count = io::Read16(input);
+		    while (count--) {
+		        state::Verification verification;
+		        io::Read(input, verification.VerificationTrigger);
+				verification.State = static_cast<VerificationState>(io::Read8(input));
+				LoadVerificationOpinions(input, verification.Results);
+
+		        verifications.emplace_back(verification);
+		    }
+		}
 	}
 
 	void BcDriveEntrySerializer::Save(const BcDriveEntry& driveEntry, io::OutputStream& output) {
@@ -122,6 +160,7 @@ namespace catapult { namespace state {
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
 		SaveConfirmedUsedSizes(output, driveEntry.confirmedUsedSizes());
 		SaveReplicators(output, driveEntry.replicators());
+		SaveVerifications(output, driveEntry.verifications());
 	}
 
 	BcDriveEntry BcDriveEntrySerializer::Load(io::InputStream& input) {
@@ -153,6 +192,7 @@ namespace catapult { namespace state {
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
 		LoadConfirmedUsedSizes(input, entry.confirmedUsedSizes());
 		LoadReplicators(input, entry.replicators());
+		LoadVerifications(input, entry.verifications());
 
 		return entry;
 	}

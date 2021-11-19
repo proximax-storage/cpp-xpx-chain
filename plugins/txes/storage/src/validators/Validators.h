@@ -10,6 +10,7 @@
 #include "catapult/validators/ValidatorTypes.h"
 #include "catapult/model/StorageNotifications.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "src/model/InternalStorageNotifications.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/ReplicatorCache.h"
@@ -127,4 +128,9 @@ namespace catapult { namespace validators {
 	/// - respective stream exists
 	/// - respective stream has not been finished yet
 	DECLARE_STATEFUL_VALIDATOR(StreamPayment, model::StreamPaymentNotification<1>)();
+
+    /// A validator implementation that applies to end drive verification notifications and validates that:
+	/// - respective drive exists
+    /// - All signers are in the Confirmed Storage State
+    DECLARE_STATEFUL_VALIDATOR(EndDriveVerification, model::EndDriveVerificationNotification<1>)();
 }}

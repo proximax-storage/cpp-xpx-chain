@@ -46,6 +46,9 @@ namespace catapult { namespace config {
 		/// Whether the plugin is enabled.
 		bool Enabled;
 
+		/// Expected Verification frequency.
+		utils::TimeSpan ExpectedVerificationFrequency;
+
 	private:
 		StorageConfiguration() = default;
 

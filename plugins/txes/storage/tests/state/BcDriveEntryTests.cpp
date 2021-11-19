@@ -160,5 +160,29 @@ namespace catapult { namespace state {
         ASSERT_EQ(2, entry.replicators().size());
         EXPECT_EQ(replicators, entry.replicators());
     }
+
+    TEST(TEST_CLASS, CanAccessVerifications) {
+        // Arrange:
+        Verifications verifications = {
+                Verification{
+                    test::GenerateRandomByteArray<Hash256>(),
+                    VerificationState::Pending,
+                    VerificationResults{},
+                }
+        };
+        auto entry = BcDriveEntry(Key());
+
+        // Sanity:
+        ASSERT_TRUE(entry.verifications().empty());
+
+        // Act:
+        entry.verifications() = verifications;
+
+        // Assert:
+        ASSERT_EQ(1, entry.verifications().size());
+        EXPECT_EQ(verifications.front().VerificationTrigger, entry.verifications().front().VerificationTrigger);
+        EXPECT_EQ(verifications.front().Results.size(), entry.verifications().front().Results.size());
+        EXPECT_EQ(verifications.front().State, entry.verifications().front().State);
+    }
     
 }}

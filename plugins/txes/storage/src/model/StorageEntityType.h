@@ -54,6 +54,9 @@ namespace catapult { namespace model {
 	/// DriveClosure transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, DriveClosure, 0xE);
 
+	/// EndDriveVerification transaction.
+	DEFINE_TRANSACTION_TYPE(Storage, EndDriveVerification, 0xF);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif

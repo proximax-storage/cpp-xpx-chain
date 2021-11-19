@@ -23,6 +23,7 @@
 #include "src/plugins/DataModificationSingleApprovalTransactionPlugin.h"
 #include "src/plugins/VerificationPaymentTransactionPlugin.h"
 #include "src/plugins/DownloadApprovalTransactionPlugin.h"
+#include "src/plugins/EndDriveVerificationTransactionPlugin.h"
 #include "src/state/CachedStorageState.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
@@ -89,6 +90,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDataModificationSingleApprovalTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateVerificationPaymentTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDownloadApprovalTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig));
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 			switch (unresolved.Type) {
@@ -233,7 +235,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDownloadChannelRefundValidator())
 				.add(validators::CreateStreamStartValidator())
 				.add(validators::CreateStreamFinishValidator())
-				.add(validators::CreateStreamPaymentValidator());
+				.add(validators::CreateStreamPaymentValidator())
+				.add(validators::CreateEndDriveVerificationValidator());
 		});
 
 		manager.addObserverHook([pKeyCollector](auto& builder) {
@@ -253,7 +256,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDownloadChannelRefundObserver())
 				.add(observers::CreateStreamStartObserver())
 				.add(observers::CreateStreamFinishObserver())
-				.add(observers::CreateStreamPaymentObserver());
+				.add(observers::CreateStreamPaymentObserver())
+				.add(observers::CreateEndDriveVerificationObserver());
 		});
 	}
 }}

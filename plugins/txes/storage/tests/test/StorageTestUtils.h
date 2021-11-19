@@ -65,8 +65,9 @@ namespace catapult { namespace test {
 		uint16_t replicatorCount = test::Random16(),
 		uint16_t activeDataModificationsCount = 2,
 		uint16_t completedDataModificationsCount = 2,
-		uint16_t activeDownloadsCount = 2,
-		uint16_t completedDownloadsCount = 2
+        uint16_t verificationsCount = 2,
+        uint16_t activeDownloadsCount = 2,
+        uint16_t completedDownloadsCount = 2
     );
 
 	/// Verifies that \a entry1 is equivalent to \a entry2.
@@ -271,5 +272,12 @@ namespace catapult { namespace test {
         return pTransaction;
     }
 
-
+    /// Creates a end drive verification transaction.
+    template<typename TTransaction>
+    model::UniqueEntityPtr<TTransaction> CreateEndDriveVerificationTransaction() {
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_EndDriveVerification);
+        pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+        pTransaction->VerificationTrigger = test::GenerateRandomByteArray<Hash256>();
+        return pTransaction;
+    }
 }}

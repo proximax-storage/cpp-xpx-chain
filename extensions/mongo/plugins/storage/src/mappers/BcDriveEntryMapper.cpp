@@ -72,6 +72,33 @@ namespace catapult { namespace mongo { namespace plugins {
 				array << ToBinary(replicatorKey);
 			array << bson_stream::close_array;
 		}
+
+		void StreamVerificationOpinions(bson_stream::document& builder, const state::VerificationResults& opinions) {
+			auto array = builder << "results" << bson_stream::open_array;
+			for (const auto& pair : opinions)
+				array
+						<< bson_stream::open_document
+							<< "prover" << ToBinary(pair.first)
+							<< "result" << static_cast<int8_t>(pair.second)
+						<< bson_stream::close_document;
+
+			array << bson_stream::close_array;
+		}
+
+		void StreamVerifications(bson_stream::document& builder, const state::Verifications& verifications) {
+			auto array = builder << "verifications" << bson_stream::open_array;
+			for (const auto& verification : verifications) {
+				bson_stream::document verificationBuilder;
+				verificationBuilder
+						<< "verificationTrigger" << ToBinary(verification.VerificationTrigger)
+						<< "state" << utils::to_underlying_type(verification.State);
+
+				StreamVerificationOpinions(verificationBuilder, verification.Results);
+				array << verificationBuilder;
+			}
+
+			array << bson_stream::close_array;
+		}
 	}
 
 	bsoncxx::document::value ToDbModel(const state::BcDriveEntry& entry, const Address& accountAddress) {
@@ -90,6 +117,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		StreamCompletedDataModifications(builder, entry.completedDataModifications());
 		StreamConfirmedUsedSizes(builder, entry.confirmedUsedSizes());
 		StreamReplicators(builder, entry.replicators());
+		StreamVerifications(builder, entry.verifications());
 
 		return doc
 			   << bson_stream::close_document
@@ -160,6 +188,30 @@ namespace catapult { namespace mongo { namespace plugins {
 				replicators.insert(replicatorKey);
 			}
 		}
+
+		void ReadVerificationOpinions(state::VerificationResults& opinions, const bsoncxx::array::view& dbOpinions) {
+			for (const auto& dbPair : dbOpinions) {
+				auto doc = dbPair.get_document().view();
+
+				Key prover;
+				DbBinaryToModelArray(prover, doc["prover"].get_binary());
+
+				opinions[prover] = static_cast<uint8_t>(dbPair["result"].get_int64());
+			}
+		}
+
+		void ReadVerifications(state::Verifications& verifications, const bsoncxx::array::view& dbVerifications) {
+			for (const auto& dbVerification : dbVerifications) {
+				auto doc = dbVerification.get_document().view();
+
+				state::Verification verification;
+				DbBinaryToModelArray(verification.VerificationTrigger, doc["verificationTrigger"].get_binary());
+				verification.State = static_cast<state::VerificationState>(static_cast<uint8_t>(doc["state"].get_int32()));
+
+				ReadVerificationOpinions(verification.Results, doc["results"].get_array().value);
+				verifications.emplace_back(verification);
+			}
+		}
 	}
 
 	state::BcDriveEntry ToDriveEntry(const bsoncxx::document::view& document) {
@@ -187,6 +239,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		ReadCompletedDataModifications(entry.completedDataModifications(), dbDriveEntry["completedDataModifications"].get_array().value);
 		ReadConfirmedUsedSizes(entry.confirmedUsedSizes(), dbDriveEntry["confirmedUsedSizes"].get_array().value);
 		ReadReplicators(entry.replicators(), dbDriveEntry["replicators"].get_array().value);
+		ReadVerifications(entry.verifications(), dbDriveEntry["verifications"].get_array().value);
 
 		return entry;
 	}

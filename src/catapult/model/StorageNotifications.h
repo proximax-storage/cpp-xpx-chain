@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+
 #include "catapult/model/Notifications.h"
 
 namespace catapult { namespace model {
@@ -71,6 +72,12 @@ namespace catapult { namespace model {
 
 	/// Defines a stream payment notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Stream_Payment_v1, 0x0015);
+
+	/// Defines an end drive verification notification type.
+    DEFINE_NOTIFICATION_TYPE(All, Storage, End_Drive_Verification_v1, 0x0016);
+
+	/// Defines an start drive verification notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Start_Drive_Verification_v1, 0x0017);
 
 	struct DownloadWork : public UnresolvedAmountData {
 	public:

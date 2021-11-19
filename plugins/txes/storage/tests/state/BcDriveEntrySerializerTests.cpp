@@ -15,6 +15,24 @@ namespace catapult { namespace state {
 
         constexpr auto Active_Data_Modifications_Count = 5;
         constexpr auto Completed_Data_Modifications_Count = 5;
+        constexpr auto Verifications_Count = 2;
+
+        constexpr auto Entry_Size =
+            sizeof(VersionType) + // version
+            Key_Size + // drive key
+            Key_Size + // owner
+            Hash256_Size + // root hash
+            sizeof(uint64_t) + // size
+            sizeof(uint64_t) + // used size
+            sizeof(uint64_t) + // meta files size
+            sizeof(uint16_t) + // replicator count
+            sizeof(uint16_t) + // active data modifications count
+            Active_Data_Modifications_Count * (Hash256_Size + Key_Size + Hash256_Size + sizeof(uint64_t)) + // active data modifications
+            sizeof(uint16_t) + // completed data modifications count
+            Completed_Data_Modifications_Count * (Hash256_Size + Key_Size + Hash256_Size + sizeof(uint64_t) + sizeof(uint8_t)) + // completed data modifications
+            sizeof(uint16_t) + // verifications count
+            Verifications_Count * sizeof(uint16_t) + // verifications` opinions count
+            Verifications_Count * (Hash256_Size + sizeof(VerificationState)); // verifications
 
         class TestContext {
         public:
@@ -47,7 +65,8 @@ namespace catapult { namespace state {
                 Active_Data_Modifications_Count,
                 Completed_Data_Modifications_Count,
 				test::Random16(),
-				test::Random16());
+				test::Random16(),
+                Verifications_Count);
         }
 
 		void AssertActiveDataModification(const ActiveDataModification& active, const uint8_t*& pData) {
@@ -88,6 +107,19 @@ namespace catapult { namespace state {
             }
         }
 
+        void AssertVerifications(const Verifications& verifications, const uint8_t*& pData) {
+            EXPECT_EQ(verifications.size(), *reinterpret_cast<const uint16_t*>(pData));
+            pData += sizeof(uint16_t);
+            for (const auto& verification : verifications) {
+                EXPECT_EQ_MEMORY(verification.VerificationTrigger.data(), pData, Hash256_Size);
+                pData += Hash256_Size;
+                EXPECT_EQ(verification.State, static_cast<VerificationState>(*pData));
+                pData += sizeof(VerificationState);
+                EXPECT_EQ(verification.Results.size(), *reinterpret_cast<const uint16_t*>(pData));
+                pData += sizeof(uint16_t);
+            }
+        }
+
         void AssertEntryBuffer(const state::BcDriveEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {
             const auto* pExpectedEnd = pData + expectedSize;
             EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
@@ -109,6 +141,7 @@ namespace catapult { namespace state {
 
             AssertActiveDataModifications(entry.activeDataModifications(), pData);
             AssertCompletedDataModifications(entry.completedDataModifications(), pData);
+            AssertVerifications(entry.verifications(), pData);
 
             EXPECT_EQ(pExpectedEnd, pData);
         }
@@ -194,6 +227,25 @@ namespace catapult { namespace state {
             }
 		}
 
+        void SaveVerificationResults(const VerificationResults& results, std::vector<uint8_t>& data) {
+            uint16_t resultsCount = utils::checked_cast<size_t, uint16_t>(results.size());
+			CopyToVector(data, (const uint8_t *) &resultsCount, sizeof(uint16_t));
+            for (const auto& result : results) {
+				CopyToVector(data, result.first.data(), Key_Size);
+				CopyToVector(data, (const uint8_t *) &result.second, sizeof(uint8_t));
+            }
+        }
+
+        void SaveVerifications(const Verifications& verifications, std::vector<uint8_t>& data) {
+            uint16_t verificationsCount = utils::checked_cast<size_t, uint16_t>(verifications.size());
+			CopyToVector(data, (const uint8_t *) &verificationsCount, sizeof(uint16_t));
+            for (const auto& verification : verifications) {
+				CopyToVector(data, verification.VerificationTrigger.data(), Hash256_Size);
+				CopyToVector(data, (const uint8_t *) &verification.State, sizeof(uint8_t));
+                SaveVerificationResults(verification.Results, data);
+            }
+        }
+
         std::vector<uint8_t> CreateEntryBuffer(const state::BcDriveEntry& entry, VersionType version) {
             std::vector<uint8_t> data;
 			CopyToVector(data, (const uint8_t*)&version, sizeof(version));
@@ -207,6 +259,8 @@ namespace catapult { namespace state {
 
             SaveActiveDataModifications(entry.activeDataModifications(), data);
             SaveCompletedDataModifications(entry.completedDataModifications(), data);
+            SaveVerifications(entry.verifications(), data);
+
             return data;
         }
 

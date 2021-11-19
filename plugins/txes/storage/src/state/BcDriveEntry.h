@@ -97,6 +97,35 @@ namespace catapult { namespace state {
 	/// The map where key is replicator public key and value is last used drive size approved by the replicator.
 	using UsedSizeMap = std::map<Key, uint64_t>;
 
+	using ConfirmedStates = std::map<Key, Hash256>; // last approved root hash
+
+	/// Verification State.
+	enum class VerificationState : uint8_t {
+		/// Verification waits for opinions.
+		Pending,
+
+		/// Verification was canceled. For example by DataModificationApprovalTransaction.
+		Canceled,
+
+		/// Verification finished.
+		Finished
+	};
+
+    using VerificationResults = std::map<Key, uint8_t>;
+
+	struct Verification {
+		/// The hash of block that initiated the Verification.
+		Hash256 VerificationTrigger;
+
+		/// State of verification.
+		VerificationState State;
+
+		/// Verification opinions.
+		VerificationResults Results;
+	};
+
+	using Verifications = std::vector<Verification>;
+
 	// Mixin for storing drive details.
 	class DriveMixin {
 	public:
@@ -208,6 +237,26 @@ namespace catapult { namespace state {
 			return m_replicators;
 		}
 
+		/// Gets verifications.
+		Verifications& verifications() {
+			return m_verifications;
+		}
+
+		/// Gets verifications.
+		const Verifications& verifications() const {
+			return m_verifications;
+		}
+
+		/// Gets replicators last confirmed states.
+		const ConfirmedStates& confirmedStates() const {
+			return m_confirmedStates;
+		}
+
+		/// Gets replicators last confirmed states.
+		ConfirmedStates& confirmedStates() {
+			return m_confirmedStates;
+		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
@@ -219,6 +268,8 @@ namespace catapult { namespace state {
 		CompletedDataModifications m_completedDataModifications;
 		UsedSizeMap m_confirmedUsedSizeMap;
 		utils::KeySet m_replicators;
+		Verifications m_verifications;
+		ConfirmedStates m_confirmedStates;
 	};
 
 	// Drive entry.

@@ -61,7 +61,7 @@ namespace catapult { namespace validators {
 
 	/// Validation failed because replicator not registered.
 	DEFINE_STORAGE_RESULT(Replicator_Not_Registered, 16);
-	
+
 	/// Respective download channel is not found.
 	DEFINE_STORAGE_RESULT(Download_Channel_Not_Found, 17);
 
@@ -112,6 +112,15 @@ namespace catapult { namespace validators {
 
 	/// Recipient's account state is not found.
 	DEFINE_STORAGE_RESULT(Recipient_State_Not_Found, 33);
+
+	/// Verification Trigger is not equal to the pending verification.
+	DEFINE_STORAGE_RESULT(Verification_Bad_Verification_Trigger, 34);
+
+	/// The provided count of Provers is not equal to desired.
+	DEFINE_STORAGE_RESULT(Verification_Wrong_Number_Of_Provers, 35);
+
+	/// Not all Provers were in the Confirmed state at the start of Verification.
+	DEFINE_STORAGE_RESULT(Verification_Some_Provers_Are_Illegal, 36);
 
 	/// Validation failed because the data modification already exists.
 	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 38);
