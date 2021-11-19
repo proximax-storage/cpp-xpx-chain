@@ -281,6 +281,11 @@
 			"supportedVersions": [1]
 		},
 		{
+			"name": "replicatorOffboarding",
+			"type": "20066",
+			"supportedVersions": [1]
+		},
+		{
 			"name": "streamStart",
 			"type": "16743",
 			"supportedVersions": [1]

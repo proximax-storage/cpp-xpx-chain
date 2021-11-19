@@ -21,8 +21,8 @@ namespace catapult { namespace model {
 			// Arrange:
 			auto expectedSize =
 					baseSize // base
-					+ sizeof(Amount) // replicator capacity
-					+ BLS_Public_Key_Size; // replicator bls public key
+					+ sizeof(uint64_t) // replicator capacity
+					+ BLS_Public_Key_Size; //Public BLS key
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));

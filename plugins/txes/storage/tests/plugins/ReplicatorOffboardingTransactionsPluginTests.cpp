@@ -69,8 +69,25 @@ namespace catapult { namespace plugins {
 
 		// Assert:
         ASSERT_EQ(1u, sub.numNotifications());
-        auto i = 0u;
-		EXPECT_EQ(Storage_Replicator_Offboarding_v1_Notification, sub.notificationTypes()[i++]);
+        EXPECT_EQ(Storage_Replicator_Offboarding_v1_Notification, sub.notificationTypes()[0]);
+	}
+
+	// endregion
+
+	// region publish - drive notification
+
+	PLUGIN_TEST(CanPublishDriveNotification) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<DriveNotification<1>> sub;
+		auto pPlugin = TTraits::CreatePlugin();
+		auto pTransaction = CreateTransaction<TTraits>();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+
+		// Assert:
+		ASSERT_EQ(0, sub.numMatchingNotifications());
+		const auto& notification = sub.matchingNotifications()[0];
 	}
 
 	// endregion

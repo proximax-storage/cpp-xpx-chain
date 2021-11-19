@@ -95,7 +95,7 @@ namespace catapult { namespace state {
 	using ActiveDataModifications = std::vector<ActiveDataModification>;
 	using CompletedDataModifications = std::vector<CompletedDataModification>;
 	/// The map where key is replicator public key and value is last used drive size approved by the replicator.
-	using UsedSizeMap = std::map<Key, u_int64_t>;
+	using UsedSizeMap = std::map<Key, uint64_t>;
 
 	// Mixin for storing drive details.
 	class DriveMixin {
@@ -190,12 +190,12 @@ namespace catapult { namespace state {
 
 		/// Gets map with key replicator public key and value used drive size.
 		const UsedSizeMap& confirmedUsedSizes() const {
-			return m_usedSizeMap;
+			return m_confirmedUsedSizeMap;
 		}
 
 		/// Gets infos of drives assigned to the replicator.
 		UsedSizeMap& confirmedUsedSizes() {
-			return m_usedSizeMap;
+			return m_confirmedUsedSizeMap;
 		}
 
 		/// Gets replicators.
@@ -217,7 +217,7 @@ namespace catapult { namespace state {
 		uint16_t m_replicatorCount;
 		ActiveDataModifications m_activeDataModifications;
 		CompletedDataModifications m_completedDataModifications;
-		UsedSizeMap m_usedSizeMap;
+		UsedSizeMap m_confirmedUsedSizeMap;
 		utils::KeySet m_replicators;
 	};
 

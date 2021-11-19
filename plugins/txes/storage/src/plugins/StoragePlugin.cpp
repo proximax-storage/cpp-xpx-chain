@@ -80,7 +80,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDownloadTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDataModificationApprovalTransactionPlugin());
 		manager.addTransactionSupport(CreateDataModificationCancelTransactionPlugin());
-		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin());
+		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDriveClosureTransactionPlugin());
 		manager.addTransactionSupport(CreateReplicatorOffboardingTransactionPlugin());
 		manager.addTransactionSupport(CreateFinishDownloadTransactionPlugin(immutableConfig));

@@ -47,24 +47,24 @@ namespace catapult { namespace validators {
 
     TEST(TEST_CLASS, Success) {
         // Arrange:
-        Key driveKey = test::GenerateRandomByteArray<Key>();
-        state::ReplicatorEntry replicatorEntry(driveKey);
+        state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
 
         // Assert:
         AssertValidationResult(
 				ValidationResult::Success,
             replicatorEntry,
-            driveKey);
+            test::GenerateRandomByteArray<Key>());
     }
 
     TEST(TEST_CLASS, FailureWhenReplicatorNotRegistered) {
 		// Arrange:
-        state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
+        Key driveKey = test::GenerateRandomByteArray<Key>();
+        state::ReplicatorEntry replicatorEntry(driveKey);
 
         // Assert:
 		AssertValidationResult(
 				Failure_Storage_Replicator_Not_Registered,
             replicatorEntry,
-            test::GenerateRandomByteArray<Key>());
+            driveKey);
 	}
 }}

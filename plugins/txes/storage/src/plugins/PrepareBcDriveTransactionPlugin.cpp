@@ -25,6 +25,7 @@ namespace catapult { namespace plugins {
 				case 1: {
 					sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
 					auto driveKey = Key(CalculateHash(transaction, config.GenerationHash).array());
+					sub.notify(AccountPublicKeyNotification<1>(driveKey));
 					sub.notify(PrepareDriveNotification<1>(
 							transaction.Signer,
 							driveKey,

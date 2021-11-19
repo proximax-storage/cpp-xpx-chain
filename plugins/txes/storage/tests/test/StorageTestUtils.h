@@ -152,7 +152,9 @@ namespace catapult { namespace test {
     /// Verifies that \a entry1 is equivalent to \a entry2.
     void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry);
 
-    /// Cache factory for creating a catapult cache composed of replicator cache and core caches.
+    void AssertEqualBlskeyData(const state::BlsKeysEntry& expectedEntry, const state::BlsKeysEntry& entry);
+
+     /// Cache factory for creating a catapult cache composed of replicator cache and core caches.
     struct ReplicatorCacheFactory {
         private:
             static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
