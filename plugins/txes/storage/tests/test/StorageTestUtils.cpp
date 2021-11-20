@@ -35,6 +35,27 @@ namespace catapult { namespace test {
             }
         }
 
+		void AssertEqualReplicatorInfos(const std::map<Key, state::ReplicatorInfo>& expectedReplicatorInfos, const std::map<Key, state::ReplicatorInfo>& replicatorInfos) {
+			ASSERT_EQ(expectedReplicatorInfos.size(), replicatorInfos.size());
+			for (auto iter = replicatorInfos.begin(); iter != replicatorInfos.end(); ++iter) {
+				const auto expIter = expectedReplicatorInfos.find(iter->first);
+				ASSERT_NE(expIter, expectedReplicatorInfos.end());
+				EXPECT_EQ(expIter->second.UsedSize, iter->second.UsedSize);
+				EXPECT_EQ(expIter->second.CumulativeUploadSize, iter->second.CumulativeUploadSize);
+			}
+		}
+
+		void AssertEqualDriveInfos(const std::map<Key, state::DriveInfo>& expectedDriveInfos, const std::map<Key, state::DriveInfo>& driveInfos) {
+			ASSERT_EQ(expectedDriveInfos.size(), driveInfos.size());
+			for (auto iter = driveInfos.begin(); iter != driveInfos.end(); ++iter) {
+				const auto expIter = expectedDriveInfos.find(iter->first);
+				ASSERT_NE(expIter, expectedDriveInfos.end());
+				EXPECT_EQ(expIter->second.LastApprovedDataModificationId, iter->second.LastApprovedDataModificationId);
+				EXPECT_EQ(expIter->second.DataModificationIdIsValid, iter->second.DataModificationIdIsValid);
+				EXPECT_EQ(expIter->second.InitialDownloadWork, iter->second.InitialDownloadWork);
+			}
+		}
+
         void AssertEqualActiveDownloads(const std::vector<Hash256>& expectedActiveDownloads, const std::vector<Hash256>& activeDownloads) {
             ASSERT_EQ(expectedActiveDownloads.size(), activeDownloads.size());
             for (auto i = 0u; i < activeDownloads.size(); ++i) {
@@ -91,10 +112,15 @@ namespace catapult { namespace test {
         EXPECT_EQ(expectedEntry.owner(), entry.owner());
         EXPECT_EQ(expectedEntry.rootHash(), entry.rootHash());
         EXPECT_EQ(expectedEntry.size(), entry.size());
+		EXPECT_EQ(expectedEntry.usedSize(), entry.usedSize());
+		EXPECT_EQ(expectedEntry.metaFilesSize(), entry.metaFilesSize());
         EXPECT_EQ(expectedEntry.replicatorCount(), entry.replicatorCount());
+		EXPECT_EQ(expectedEntry.ownerCumulativeUploadSize(), entry.ownerCumulativeUploadSize());
+		EXPECT_EQ(expectedEntry.replicators(), entry.replicators());
 
         AssertEqualActiveDataModifications(expectedEntry.activeDataModifications(), entry.activeDataModifications());
         AssertEqualCompletedDataModifications(expectedEntry.completedDataModifications(), entry.completedDataModifications());
+		AssertEqualReplicatorInfos(expectedEntry.replicatorInfos(), entry.replicatorInfos());
     }
 
     state::DownloadChannelEntry CreateDownloadChannelEntry(
@@ -130,14 +156,9 @@ namespace catapult { namespace test {
     void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry) {
         EXPECT_EQ(expectedEntry.key(), entry.key());
         EXPECT_EQ(expectedEntry.capacity(), entry.capacity());
+		EXPECT_EQ(expectedEntry.blsKey(), entry.blsKey());
 
-        const auto& expectedDrives = expectedEntry.drives();
-		const auto& drives = entry.drives();
-        ASSERT_EQ(expectedDrives.size(), drives.size());
-        for (auto& pair : expectedDrives) {
-            auto iter = drives.find(pair.first);
-            EXPECT_EQ(pair.second, iter->second);
-        }
+		AssertEqualDriveInfos(expectedEntry.drives(), entry.drives());
     }
 
 	state::BlsKeysEntry CreateBlsKeysEntry(
@@ -174,6 +195,14 @@ namespace catapult { namespace test {
 		test::FillWithRandomData(mutableBuffer);
 		return RawBuffer(mutableBuffer.pData, mutableBuffer.Size);
 	}
+
+	void PopulateReplicatorKeyPairs(std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs, uint16_t replicatorCount) {
+		replicatorKeyPairs.reserve(replicatorCount);
+		for (auto i = replicatorKeyPairs.size(); i < replicatorCount; ++i)
+			replicatorKeyPairs.emplace_back(
+					test::GenerateRandomByteArray<Key>(),
+					crypto::BLSKeyPair::FromPrivate(crypto::BLSPrivateKey::Generate(test::RandomByte)));
+	};
 }}
 
 

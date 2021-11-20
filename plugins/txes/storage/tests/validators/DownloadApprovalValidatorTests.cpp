@@ -73,11 +73,7 @@ namespace catapult { namespace validators {
 				const uint16_t sequenceNumber) {
 			// Generate valid opinion data:
 			std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
-			replicatorKeyPairs.reserve(Replicator_Count);
-			for (auto i = replicatorKeyPairs.size(); i < Replicator_Count; ++i)	// No need to actually create replicator entries, since they are not used in DownloadApprovalValidator.
-				replicatorKeyPairs.emplace_back(
-						test::GenerateRandomByteArray<Key>(),
-						crypto::BLSKeyPair::FromPrivate(crypto::BLSPrivateKey::Generate(test::RandomByte)));
+			test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
 
 			const auto totalKeysCount = test::RandomInRange<uint8_t>(1, replicatorKeyPairs.size());
 			const auto overlappingKeysCount = test::RandomInRange<uint8_t>(1, totalKeysCount);
@@ -200,11 +196,7 @@ namespace catapult { namespace validators {
 		cache.commit(Current_Height);
 
 		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
-		replicatorKeyPairs.reserve(Replicator_Count);
-		for (auto i = replicatorKeyPairs.size(); i < Replicator_Count; ++i)	// No need to actually create replicator entries, since they are not used in DownloadApprovalValidator.
-			replicatorKeyPairs.emplace_back(
-					test::GenerateRandomByteArray<Key>(),
-					crypto::BLSKeyPair::FromPrivate(crypto::BLSPrivateKey::Generate(test::RandomByte)));
+		test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
 
 		const auto totalKeysCount = test::RandomInRange<uint8_t>(2, replicatorKeyPairs.size());
 		const auto judgingKeysCount = test::RandomInRange<uint8_t>(1, totalKeysCount-1);
@@ -233,11 +225,7 @@ namespace catapult { namespace validators {
 		cache.commit(Current_Height);
 
 		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
-		replicatorKeyPairs.reserve(Replicator_Count);
-		for (auto i = replicatorKeyPairs.size(); i < Replicator_Count; ++i)	// No need to actually create replicator entries, since they are not used in DownloadApprovalValidator.
-			replicatorKeyPairs.emplace_back(
-					test::GenerateRandomByteArray<Key>(),
-					crypto::BLSKeyPair::FromPrivate(crypto::BLSPrivateKey::Generate(test::RandomByte)));
+		test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
 
 		const auto totalKeysCount = test::RandomInRange<uint8_t>(1, replicatorKeyPairs.size());
 		const auto overlappingKeysCount = test::RandomInRange<uint8_t>(1, totalKeysCount);

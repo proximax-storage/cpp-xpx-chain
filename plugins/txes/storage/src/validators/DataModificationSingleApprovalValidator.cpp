@@ -20,13 +20,9 @@ namespace catapult { namespace validators {
 	  	if (!pDriveEntry)
 			return Failure_Storage_Drive_Not_Found;
 
-	  	const auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-	  	const auto replicatorIter = replicatorCache.find(notification.PublicKey);
-	  	const auto& pReplicatorEntry = replicatorIter.tryGet();
-
 	  	// Check if the transaction signer is a replicator of the drive
 	  	const auto& replicators = pDriveEntry->replicators();
-		if (!pReplicatorEntry || !replicators.count(notification.PublicKey))
+		if (!replicators.count(notification.PublicKey))
 		  	return Failure_Storage_Invalid_Transaction_Signer;
 
 	  	// Validating that each provided public key

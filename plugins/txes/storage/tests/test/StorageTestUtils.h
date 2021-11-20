@@ -217,6 +217,9 @@ namespace catapult { namespace test {
 	/// Creates RawBuffer with given \a size and fills it with random data. Data pointer must be manually deleted after use.
 	RawBuffer GenerateCommonDataBuffer(const size_t& size);
 
+	/// Populates \a replicatorKeyPairs up to \a replicatorCount random key pairs.
+	void PopulateReplicatorKeyPairs(std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs, uint16_t replicatorCount);
+
 	/// Creates an OpinionData filled with valid data.
 	/// Tuple \c publicKeysCounts contains \a JudgingKeysCount, \a OverlappingKeysCount and \a JudgedKeysCount in that order.
 	template<typename TOpinion>
