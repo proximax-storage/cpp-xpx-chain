@@ -1,0 +1,178 @@
+FROM debian:bullseye-20210816
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  software-properties-common \
+  curl \
+  git \
+  build-essential \
+  cmake \
+  libcurl4-openssl-dev \
+  pkg-config \
+  libgtest-dev \
+  libbenchmark-dev \
+  librocksdb-dev \
+  libczmq-dev \
+  libsasl2-dev \
+  libssl-dev \
+  libboost-dev \
+  libboost-atomic-dev \
+  libboost-date-time-dev \
+  libboost-regex-dev \
+  libboost-system-dev \
+  libboost-timer-dev \
+  libboost-chrono-dev \
+  libboost-log-dev \
+  libboost-thread-dev \
+  libboost-filesystem-dev \
+  libboost-program-options-dev \
+  libboost-stacktrace-dev \
+  libboost-random-dev \
+  libmongoc-dev \
+  libzstd-dev \
+  googletest \
+  libzmq3-dev
+
+WORKDIR /usr/local/src
+
+# Install cppzmq
+RUN curl -OL https://github.com/zeromq/cppzmq/archive/v4.7.1.tar.gz && \
+  tar xzf v4.7.1.tar.gz && \
+  cd cppzmq-4.7.1 && \
+  mkdir build && \
+  cd build && \
+  cmake -DCPPZMQ_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. && \
+  make -j4 && \
+  make install
+
+# Install mongo-cxx
+RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.2/mongo-cxx-driver-r3.6.2.tar.gz && \
+  tar -xzf mongo-cxx-driver-r3.6.2.tar.gz && \
+  cd mongo-cxx-driver-r3.6.2/build && \
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBSONCXX_POLY_USE_BOOST=1 .. && \
+  make -j4 && \
+  make install
+
+# Clean Downloads
+RUN rm v4.7.1.tar.gz mongo-cxx-driver-r3.6.2.tar.gz
+
+# Copy local directory to image
+COPY . /catapult
+
+# Build Catapult Server
+RUN cd /catapult \
+    && rm -rf _build \
+    && mkdir _build && cd _build \
+    && cmake -DCMAKE_BUILD_TYPE=Release  \
+    -DCMAKE_CXX_FLAGS="-pthread" \
+    .. \
+    && make publish \
+    && make \
+# Required extensions
+    # catapult.mongo.plugins.accountlink \
+    # catapult.mongo.plugins.aggregate \
+    # catapult.mongo.plugins.config \
+    # catapult.mongo.plugins.contract \
+    # catapult.mongo.plugins.exchange \
+    # catapult.mongo.plugins.lockhash \
+    # catapult.mongo.plugins.locksecret \
+    # catapult.mongo.plugins.metadata \
+    # catapult.mongo.plugins.metadata_nem \
+    # catapult.mongo.plugins.mosaic \
+    # catapult.mongo.plugins.multisig \
+    # catapult.mongo.plugins.namespace \
+    # catapult.mongo.plugins.operation \
+    # catapult.mongo.plugins.property \
+    # catapult.mongo.plugins.service \
+    # catapult.mongo.plugins.supercontract \
+    # catapult.mongo.plugins.transfer \
+    # catapult.mongo.plugins.upgrade \
+    # catapult.plugins.accountlink \
+    # catapult.plugins.aggregate \
+    # catapult.plugins.config \
+    # catapult.plugins.contract \
+    # catapult.plugins.exchange \
+    # catapult.plugins.hashcache \
+    # catapult.plugins.hashcache.cache \
+    # catapult.plugins.lockhash \
+    # catapult.plugins.locksecret \
+    # catapult.plugins.metadata \
+    # catapult.plugins.metadata_nem \
+    # catapult.plugins.mosaic \
+    # catapult.plugins.multisig \
+    # catapult.plugins.namespace \
+    # catapult.plugins.operation \
+    # catapult.plugins.property \
+    # catapult.plugins.service \
+    # catapult.plugins.signature \
+    # catapult.plugins.supercontract \
+    # catapult.plugins.transfer \
+    # catapult.plugins.upgrade \    
+    # extension.addressextraction \
+    extension.diagnostics \
+    # extension.eventsource \
+    # extension.filespooling \
+    # extension.harvesting \
+    # extension.hashcache \
+    extension.mongo \
+    # extension.networkheight \
+    # extension.nodediscovery \
+    # extension.packetserver \
+    # extension.partialtransaction \
+    # extension.pluginhandlers \
+    # extension.sync \
+    # extension.syncsource \
+    # extension.timesync \
+    # extension.transactionsink \
+    # extension.unbondedpruning \
+    # extension.zeromq \
+    -j 4
+
+RUN cd /catapult/_build && make \
+# Catapult
+    # sirius.bc \
+    # catapult.broker \
+    # catapult.recovery \
+    # catapult.tools.address \
+    # catapult.tools.benchmark \
+    catapult.tools.health \
+    # catapult.tools.nemgen \
+    # catapult.tools.nemgen.blockhashes \
+    # catapult.tools.network \
+    # catapult.tools.statusgen \
+    -j 4
+
+# script for copying required libs to temporary folder /deps
+RUN /catapult/scripts/release-script/copyDeps.sh /catapult/_build/bin/ /deps
+
+#------------------------
+# Actual target image which only contains the required binaries
+#------------------------
+FROM debian:bullseye-slim
+
+# # copy required libs
+# COPY --from=0 /deps /
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  libboost-atomic-dev \
+  libboost-date-time-dev \
+  libboost-regex-dev \
+  libboost-system-dev \
+  libboost-timer-dev \
+  libboost-chrono-dev \
+  libboost-log-dev \
+  libboost-thread-dev \
+  libboost-filesystem-dev \
+  libboost-program-options-dev \
+  libboost-stacktrace-dev \
+  libboost-random-dev \
+  libzstd-dev \
+  librocksdb6.11 
+
+# copy executables
+COPY --from=0 /catapult/_build/bin /sirius/bin
+
+# # sirius.bc as the entry point
+# ENTRYPOINT ["/sirius/bin/sirius.bc"]
+
+# # set the config directory by default
+# CMD ["/chainconfig"]
