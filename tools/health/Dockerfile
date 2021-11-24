@@ -113,7 +113,7 @@ RUN cd /catapult \
     # extension.filespooling \
     # extension.harvesting \
     # extension.hashcache \
-    extension.mongo \
+    # extension.mongo \
     # extension.networkheight \
     # extension.nodediscovery \
     # extension.packetserver \
@@ -141,8 +141,8 @@ RUN cd /catapult/_build && make \
     # catapult.tools.statusgen \
     -j 4
 
-# script for copying required libs to temporary folder /deps
-RUN /catapult/scripts/release-script/copyDeps.sh /catapult/_build/bin/ /deps
+# # script for copying required libs to temporary folder /deps
+# RUN /catapult/scripts/release-script/copyDeps.sh /catapult/_build/bin/ /deps
 
 #------------------------
 # Actual target image which only contains the required binaries
@@ -171,8 +171,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # copy executables
 COPY --from=0 /catapult/_build/bin /sirius/bin
 
-# # sirius.bc as the entry point
-# ENTRYPOINT ["/sirius/bin/sirius.bc"]
+EXPOSE 8080
+# sirius.bc as the entry point
+ENTRYPOINT ["/sirius/bin/catapult.tools.health"]
 
-# # set the config directory by default
-# CMD ["/chainconfig"]
+# set the config directory by default
+CMD ["/chainconfig"]
