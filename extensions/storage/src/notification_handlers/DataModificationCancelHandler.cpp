@@ -16,7 +16,8 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			pReplicatorService->removeDriveModification(notification.DriveKey, notification.DataModificationId);
+			if (pReplicatorService->driveExist(notification.DriveKey))
+				pReplicatorService->removeDriveModification(notification.DriveKey, notification.DataModificationId);
 		});
 	}
 }}

@@ -18,29 +18,30 @@ namespace catapult { namespace storage {
     }
 
     void ReplicatorEventHandler::modifyApprovalTransactionIsReady(sirius::drive::Replicator& replicator, sirius::drive::ApprovalTransactionInfo&& transactionInfo) {
-        CATAPULT_LOG(debug) << "modify approval transaction " << transactionInfo.m_modifyTransactionHash << " is ready";
+        CATAPULT_LOG(debug) << "modify approval transaction for " << transactionInfo.m_modifyTransactionHash << " is ready";
 
         m_transactionSender.sendDataModificationApprovalTransaction(
                 (const crypto::KeyPair&) replicator.keyPair(),
                 transactionInfo
         );
-        replicator.onApprovalTransactionHasBeenPublished(transactionInfo);
+        replicator.asyncApprovalTransactionHasBeenPublished(transactionInfo);
     }
 
     void ReplicatorEventHandler::singleModifyApprovalTransactionIsReady(sirius::drive::Replicator& replicator, sirius::drive::ApprovalTransactionInfo&& transactionInfo) {
-        CATAPULT_LOG(debug) << "single modify approval transaction " << transactionInfo.m_modifyTransactionHash
+        CATAPULT_LOG(debug) << "single modify approval transaction for " << transactionInfo.m_modifyTransactionHash
                             << " is ready";
 
         m_transactionSender.sendDataModificationSingleApprovalTransaction(
                 (const crypto::KeyPair&) replicator.keyPair(),
                 transactionInfo
         );
-        replicator.onSingleApprovalTransactionHasBeenPublished(transactionInfo);
+        replicator.asyncSingleApprovalTransactionHasBeenPublished(transactionInfo);
     }
 
     void ReplicatorEventHandler::downloadApprovalTransactionIsReady(sirius::drive::Replicator& replicator, const sirius::drive::DownloadApprovalTransactionInfo& info) {
-        CATAPULT_LOG(debug) << "download approval transaction " << info.m_blockHash << " is ready";
+        CATAPULT_LOG(debug) << "download approval transaction for" << info.m_blockHash << " is ready";
 
-        replicator.onDownloadApprovalTransactionHasBeenPublished(info.m_blockHash, info.m_downloadChannelId);
+        m_transactionSender.sendDownloadApprovalTransaction((const crypto::KeyPair&) replicator.keyPair(), info);
+        replicator.asyncDownloadApprovalTransactionHasBeenPublished(info.m_blockHash, info.m_downloadChannelId);
     }
 }}

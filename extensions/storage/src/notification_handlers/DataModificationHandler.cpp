@@ -5,24 +5,26 @@
 **/
 
 #include "NotificationHandlers.h"
+#include "plugins/txes/service/src/cache/DriveCache.h"
 
 namespace catapult { namespace notification_handlers {
 
 	using Notification = model::DataModificationNotification<1>;
 
 	DECLARE_HANDLER(DataModification, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(DataModification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+		return MAKE_HANDLER(DataModification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
 
-			pReplicatorService->addDriveModification(
-					notification.DriveKey,
-					notification.DownloadDataCdi,
-					notification.DataModificationId,
-					notification.Owner,
-					notification.Size
-			);
+			if (pReplicatorService->driveExist(notification.DriveKey))
+				pReplicatorService->addDriveModification(
+						notification.DriveKey,
+						notification.DownloadDataCdi,
+						notification.DataModificationId,
+						notification.Owner,
+						notification.Size
+				);
 		});
 	}
 }}

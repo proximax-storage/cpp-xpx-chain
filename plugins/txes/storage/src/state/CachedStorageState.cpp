@@ -29,14 +29,36 @@ namespace catapult { namespace state {
 		if (!pReplicatorEntry)
 			return replicatorData;
 
-		// TODO: Save drive infos as well?
 		for (const auto& drivePair : pReplicatorEntry->drives()) {
 			auto driveIter = driveCacheView->find(drivePair.first);
 			const auto& driveEntry = driveIter.get();
-			replicatorData.Drives.emplace_back(drivePair.first, driveEntry.size());
 
-			for (const auto& dataModification : driveEntry.activeDataModifications())
-				replicatorData.DriveModifications[drivePair.first].emplace_back(dataModification.Id, dataModification.DownloadDataCdi);
+			DriveState driveState{
+				driveEntry.key(),
+				driveEntry.size(),
+				driveEntry.usedSize(),
+				driveEntry.replicators()
+			};
+			auto* pDriveState = &driveState;
+			replicatorData.DrivesStates.emplace_back(driveState);
+
+			const auto& activeDataModifications = driveEntry.activeDataModifications();
+			if (!activeDataModifications.empty()) {
+				pDriveState->LastDataModification = activeDataModifications.back();
+				continue;
+			}
+
+			const auto& completedDataModifications = driveEntry.completedDataModifications();
+			const auto& lastApprovedDataModification = std::find_if(
+					completedDataModifications.rbegin(),
+					completedDataModifications.rend(),
+					[](const state::CompletedDataModification& dataModification) {return dataModification.State == state::DataModificationState::Succeeded;});
+
+			if (lastApprovedDataModification == completedDataModifications.rend())
+				continue;
+
+			if (lastApprovedDataModification->Id != drivePair.second.LastApprovedDataModificationId)
+				pDriveState->LastDataModification = *lastApprovedDataModification;
 		}
 
 		return replicatorData;
