@@ -29,10 +29,10 @@ namespace catapult { namespace builders {
         void setUsedDriveSize(uint64_t usedDriveSize);
 
     public:
-        /// Builds a new data modification approval transaction.
+        /// Builds a new data modification single approval transaction.
         model::UniqueEntityPtr<Transaction> build() const;
 
-        /// Builds a new embedded data modification approval transaction.
+        /// Builds a new embedded data modification single approval transaction.
         model::UniqueEntityPtr<EmbeddedTransaction> buildEmbedded() const;
 
     private:

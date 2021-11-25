@@ -1,0 +1,57 @@
+/**
+*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#pragma once
+#include "TransactionBuilder.h"
+#include "plugins/txes/storage/src/model/DownloadApprovalTransaction.h"
+#include <vector>
+
+namespace catapult { namespace builders {
+
+    /// Builder for a catapult upgrade transaction.
+    class DownloadApprovalBuilder : public TransactionBuilder {
+    public:
+        using Transaction = model::DownloadApprovalTransaction;
+        using EmbeddedTransaction = model::EmbeddedDownloadApprovalTransaction;
+
+        /// Creates a catapult upgrade builder for building a catapult upgrade transaction from \a signer
+        /// for the network specified by \a networkIdentifier.
+        DownloadApprovalBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer);
+
+    public:
+//        void setDriveKey(const Key& driveKey);
+        void setDownloadChannelId(const Hash256& downloadChannelId);
+        void setSequenceNumber(uint16_t sequenceNumber);
+        void setResponseToFinishDownloadTransaction(bool responseToFinishDownloadTransaction);
+        void setReplicatorsKeys(const std::vector<Key>& keys);
+        void setOpinionIndices(const std::vector<uint8_t>& opinionIndices);
+        void setBlsSignatures(const std::vector<BLSSignature>& blsSignatures);
+        void setPresentOpinions(const std::vector<uint8_t>& presentOpinions);
+        void setOpinions(const std::vector<uint64_t>& opinions);
+
+    public:
+        /// Builds a new download approval approval transaction.
+        model::UniqueEntityPtr<Transaction> build() const;
+
+        /// Builds a new embedded download approval transaction.
+        model::UniqueEntityPtr<EmbeddedTransaction> buildEmbedded() const;
+
+    private:
+        template<typename TTransaction>
+        model::UniqueEntityPtr<TTransaction> buildImpl() const;
+
+    private:
+//        Key m_driveKey;
+        Hash256 m_downloadChannelId;
+        uint16_t m_sequenceNumber;
+        bool m_responseToFinishDownloadTransaction;
+        std::vector<Key> m_replicatorsKeys;
+        std::vector<uint8_t> m_opinionIndices;
+        std::vector<BLSSignature> m_blsSignatures;
+        std::vector<uint8_t> m_presentOpinions;
+        std::vector<uint64_t> m_opinions;
+    };
+}}

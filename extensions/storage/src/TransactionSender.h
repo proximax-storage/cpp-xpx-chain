@@ -27,7 +27,10 @@ namespace catapult { namespace storage {
 
     public:
         void sendDataModificationApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
+
         void sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
+
+        void sendDownloadApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo);
 
     private:
         void signAndSend(const crypto::KeyPair& sender, std::shared_ptr<model::Transaction> pTransaction);

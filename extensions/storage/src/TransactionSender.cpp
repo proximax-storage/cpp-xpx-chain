@@ -7,6 +7,7 @@
 #include "TransactionSender.h"
 #include "sdk/src/builders/DataModificationApprovalBuilder.h"
 #include "sdk/src/builders/DataModificationSingleApprovalBuilder.h"
+#include "sdk/src/builders/DownloadApprovalBuilder.h"
 #include "catapult/extensions/TransactionExtensions.h"
 
 namespace catapult { namespace storage {
@@ -33,8 +34,32 @@ namespace catapult { namespace storage {
         builder.setDriveKey(transactionInfo.m_driveKey);
         builder.setDataModificationId(transactionInfo.m_modifyTransactionHash);
         builder.setUsedDriveSize(transactionInfo.m_driveSize);
-//        builder.setUploaderKeys();
 //        builder.setUploadOpinion();
+
+        auto keysArray = transactionInfo.m_opinions.at(0).m_uploadReplicatorKeys;
+        std::vector<Key> keys;
+        keys.reserve(keysArray.size() / Key_Size);
+
+        auto keyNumber = 0;
+        for (auto it = keysArray.begin(); it != keysArray.end(); it + Key_Size) {
+            std::copy(it, it + Key_Size, keys.at(keyNumber).begin());
+            keyNumber++;
+        }
+        builder.setUploaderKeys(keys);
+
+        auto pTransaction = utils::UniqueToShared(builder.build());
+        signAndSend(sender, pTransaction);
+    }
+
+    void TransactionSender::sendDownloadApprovalTransaction(const crypto::KeyPair& sender,
+                                                            const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
+        CATAPULT_LOG(debug) << "sending download approval transaction " << transactionInfo.m_blockHash;
+
+        builders::DownloadApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
+        builder.setDownloadChannelId(transactionInfo.m_downloadChannelId);
+
+        // TODO set other fields
+        auto& opinions = transactionInfo.m_opinions;
 
         auto pTransaction = utils::UniqueToShared(builder.build());
         signAndSend(sender, pTransaction);
