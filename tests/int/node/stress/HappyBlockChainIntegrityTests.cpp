@@ -20,11 +20,13 @@
 
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/chain/BlockScorer.h"
+#include "tests/int/node/stress/test/TransactionsBuilder.h"
+#include "tests/int/node/stress/test/TransactionBuilderTransferCapability.h"
 #include "catapult/config/ValidateConfiguration.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/ChainScore.h"
 #include "tests/int/node/stress/test/BlockChainBuilder.h"
-#include "tests/int/node/stress/test/TransactionsBuilder.h"
+#include "tests/int/node/stress/test/TransactionBuilderNamespaceCapability.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
 #include "tests/int/node/test/LocalNodeTestContext.h"
 #include "tests/test/nodeps/Logging.h"
@@ -132,6 +134,8 @@ namespace catapult { namespace local {
 
 		ChainStatistics PushRandomBlockChainToNode(
 				const ionet::Node& node,
+				std::shared_ptr<config::BlockchainConfigurationHolder> holder,
+				const cache::CatapultCache& cache,
 				test::StateHashCalculator& stateHashCalculator,
 				const std::string& resourcesPath,
 				const test::BlockChainBuilder::BlockReceiptsHashCalculator& blockReceiptsHashCalculator,
@@ -142,16 +146,16 @@ namespace catapult { namespace local {
 			test::Accounts accounts(Num_Accounts, 1, 1);
 
 			test::TransactionsBuilder transactionsBuilder(accounts);
+			auto transferBuilder = transactionsBuilder.getCapability<test::TransactionBuilderTransferCapability>();
 			for (auto i = 0u; i < numBlocks; ++i) {
 				// don't allow account 0 to be recipient because it is sender
 				auto recipientId = RandomByteClamped(Num_Accounts - 2) + 1u;
-				transactionsBuilder.addTransfer(0, recipientId, Amount(1'000'000));
+				transferBuilder->addTransfer(0, recipientId, Amount(1'000'000));
 			}
 
-			auto networkConfig = test::CreatePrototypicalNetworkConfiguration();
-			UpdateBlockChainConfiguration(networkConfig, accountVersion);
-
-			test::BlockChainBuilder builder(accounts, stateHashCalculator, networkConfig, resourcesPath);
+			UpdateBlockChainConfiguration(const_cast<model::NetworkConfiguration&>(holder->Config().Network), accountVersion);
+			const cache::AccountStateCache& accountCache = cache.sub<cache::AccountStateCache>();
+			test::BlockChainBuilder builder(accounts, stateHashCalculator, holder, &accountCache, resourcesPath);
 			builder.setBlockTimeInterval(blockTimeInterval);
 			builder.setBlockReceiptsHashCalculator(blockReceiptsHashCalculator);
 			auto blocks = builder.asBlockChain(transactionsBuilder);
@@ -334,16 +338,16 @@ namespace catapult { namespace local {
 				auto& context = *contexts[i];
 				RescheduleTasks(context.resourcesDirectory());
 				context.boot();
-
 				// - push a random number of different (valid) blocks to each node
 				// - vary time spacing so that all chains will have different scores
 				auto numBlocks = RandomByteClamped(Max_Rollback_Blocks - 1) + 1u; // always generate at least one block
-
 				// - when stateHashCalculator data directory is empty, there is no cache lock so node resources can be used directly
 				CATAPULT_LOG(debug) << "pushing initial chain to node " << i;
 				auto stateHashCalculator = verifyTraits.createStateHashCalculator(context, i);
 				auto chainStats = PushRandomBlockChainToNode(
 						networkNodes[i],
+						context.configHolder(),
+						context.localNode().cache(),
 						stateHashCalculator,
 						stateHashCalculator.dataDirectory().empty() ? context.dataDirectory() : stateHashCalculator.dataDirectory(),
 						[&verifyTraits](const auto& block) { return verifyTraits.calculateReceiptsHash(block); },

@@ -50,7 +50,7 @@ namespace catapult { namespace cache {
 		bool FindAccountStateWithImportance(const ReadOnlyAccountStateCache& cache, const Key& publicKey, Height height, TAction action) {
 			auto accountStateOpt = cache::FindAccountStateByPublicKeyOrAddress(cache, publicKey);
 			if (accountStateOpt) {
-				return ForwardIfAccountHasImportanceAtHeight(accountStateOpt->get(), cache, height, action);
+				return ForwardIfAccountHasImportanceAtHeight(*accountStateOpt, cache, height, action);
 			}
 			return false;
 		}

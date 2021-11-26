@@ -19,34 +19,22 @@
 **/
 
 #pragma once
-#include "BasicTransactionsBuilder.h"
+#include "TransactionsBuilder.h"
+#include "TransactionBuilderCapability.h"
 
 namespace catapult { namespace test {
 
-	/// Transactions builder and generator for transfer and property transactions.
-	class PropertyTransactionsBuilder : public BasicTransactionsBuilder {
-	private:
-		// region descriptors
 
+	/// Transactions builder capability for property transactions.
+	class TransactionBuilderPropertyCapability : public TransactionBuilderCapability
+	{
+
+	private:
 		struct PropertyAddressBlockDescriptor {
 			size_t SenderId;
 			size_t PartnerId;
 			bool IsAdd;
 		};
-
-		// endregion
-
-	public:
-		/// Creates a builder around \a accounts.
-		explicit PropertyTransactionsBuilder(const Accounts& accounts);
-
-	private:
-		// BasicTransactionsBuilder
-		model::UniqueEntityPtr<model::Transaction> generate(
-				uint32_t descriptorType,
-				const std::shared_ptr<const void>& pDescriptor,
-				Timestamp deadline) const override;
-
 	public:
 		/// Adds a property that blocks \a partnerId from sending to \a senderId.
 		void addAddressBlockProperty(size_t senderId, size_t partnerId);
@@ -54,12 +42,18 @@ namespace catapult { namespace test {
 		/// Adds a property that unblocks \a partnerId from sending to \a senderId.
 		void addAddressUnblockProperty(size_t senderId, size_t partnerId);
 
+	public:
+		TransactionBuilderPropertyCapability(TransactionsBuilder&  builder) : TransactionBuilderCapability(builder)
+		{
+
+		}
+		void registerHooks() override;
 	private:
 		model::UniqueEntityPtr<model::Transaction> createAddressPropertyTransaction(
 				const PropertyAddressBlockDescriptor& descriptor,
-				Timestamp deadline) const;
+				Timestamp deadline);
 
-	private:
-		enum class DescriptorType { Property_Address_Block = 1 };
+
+
 	};
 }}

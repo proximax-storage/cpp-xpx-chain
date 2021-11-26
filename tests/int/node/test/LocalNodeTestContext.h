@@ -162,12 +162,18 @@ namespace catapult { namespace test {
 			m_pLocalNode = boot(createConfig());
 		}
 
+		/// Get the config holder that was created when the node was booted.
+		std::shared_ptr<config::BlockchainConfigurationHolder> configHolder()
+		{
+			return m_pConfigHolder;
+		}
+
 		/// Boots a new local node around \a config.
 		std::unique_ptr<local::LocalNode> boot(config::BlockchainConfiguration&& config) {
 			return boot(std::move(config), [](const auto&) {});
 		}
 
-		/// Boots a new local node allowing additional customization via \a configure.
+		/// Boots a new local node allowing additional customization via \a configure and \a cacheModifier.
 		std::unique_ptr<local::LocalNode> boot(const consumer<extensions::ProcessBootstrapper&>& configure) {
 			return boot(createConfig(), configure);
 		}
@@ -188,9 +194,9 @@ namespace catapult { namespace test {
 				const consumer<extensions::ProcessBootstrapper&>& configure) {
 			prepareNetworkConfiguration(config);
 
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			m_pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
 			auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
-					pConfigHolder,
+					m_pConfigHolder,
 					resourcesDirectory(),
 					extensions::ProcessDisposition::Production,
 					"LocalNodeTests");
@@ -278,6 +284,7 @@ namespace catapult { namespace test {
 		std::tuple<crypto::KeyPair, crypto::KeyPair> m_localNodeHarvestingKeys;
 		std::unique_ptr<local::LocalNode> m_pLocalPartnerNode;
 		std::unique_ptr<local::LocalNode> m_pLocalNode;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		mutable CapturedServiceState m_capturedServiceState;
 	};
 }}

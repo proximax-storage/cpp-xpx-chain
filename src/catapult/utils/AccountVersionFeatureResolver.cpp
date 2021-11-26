@@ -49,6 +49,8 @@ if (BOOST_PP_SEQ_ELEM(0, p) == accountVersion) \
 
 	bool AccountVersionFeatureResolver::IsAccountShemeCompatible(uint32_t accountVersion, DerivationScheme scheme)
 	{
-		return KeyDerivationScheme(accountVersion) == scheme;
+		auto accountScheme = KeyDerivationScheme(accountVersion);
+		// Second condition exists for backwards compatibility when blocks/transactions did not have the derivation scheme bit set.
+		return accountScheme == scheme || (scheme == DerivationScheme::Unset && accountVersion == 1);
 	}
 }}

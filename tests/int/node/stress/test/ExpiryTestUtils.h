@@ -22,6 +22,8 @@
 #include "Accounts.h"
 #include "BlockChainBuilder.h"
 #include "TransactionsBuilder.h"
+#include "TransactionBuilderTransferCapability.h"
+#include "TransactionBuilderNamespaceCapability.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
 
 namespace catapult { namespace test {
@@ -64,8 +66,9 @@ namespace catapult { namespace test {
 		for (;;) {
 			auto numBlocks = std::min<size_t>(50, numRemainingBlocks);
 			TransactionsBuilder transactionsBuilder(accounts);
+			auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
 			for (auto i = 0u; i < numBlocks; ++i)
-				transactionsBuilder.addTransfer(0, 1, Amount(1));
+				transferBuilder->addTransfer(0, 1, Amount(1));
 
 			auto blocks = builder.asBlockChain(transactionsBuilder);
 			auto pIo = PushEntities(connection, ionet::PacketType::Push_Block, blocks);

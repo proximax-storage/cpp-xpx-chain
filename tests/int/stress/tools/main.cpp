@@ -203,7 +203,7 @@ namespace catapult { namespace tools { namespace address {
 					state::AccountState accountState(
 							model::StringToAddress(account.get<std::string>("Address")),
 							Height(account.get<uint64_t>("AddressHeight")),
-							2
+							account.get<uint8_t>("Version")
 					);
 					accountState.PublicKeyHeight = Height(account.get<uint64_t>("PublicKeyHeight"));
 					accountState.PublicKey = crypto::ParseKey(account.get<std::string>("PublicKey"));
@@ -223,7 +223,6 @@ namespace catapult { namespace tools { namespace address {
 						accountState.SupplementalPublicKeys.node().unset();
 						accountState.SupplementalPublicKeys.node().set(crypto::ParseKey(nodeKey.value()));
 					}
-
 
 					for (pt::ptree::value_type&  mosaicJson: account.get_child("mosaics")) {
 						auto& mosaic = mosaicJson.second;

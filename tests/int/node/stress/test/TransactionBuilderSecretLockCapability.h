@@ -19,15 +19,17 @@
 **/
 
 #pragma once
-#include "BasicTransactionsBuilder.h"
+#include "TransactionsBuilder.h"
+#include "TransactionBuilderCapability.h"
 
 namespace catapult { namespace test {
 
-	/// Transactions builder and generator for transfer and secret lock transactions.
-	class SecretLockTransactionsBuilder : public BasicTransactionsBuilder {
-	private:
-		// region descriptors
 
+	/// Transactions builder and generator for transfer and secret lock transactions.
+	class TransactionBuilderSecretLockCapability : public TransactionBuilderCapability
+	{
+
+	private:
 		struct SecretLockDescriptor {
 			size_t SenderId;
 			size_t RecipientId;
@@ -41,20 +43,6 @@ namespace catapult { namespace test {
 			size_t RecipientId;
 			std::vector<uint8_t> Proof;
 		};
-
-		// endregion
-
-	public:
-		/// Creates a builder around \a accounts.
-		explicit SecretLockTransactionsBuilder(const Accounts& accounts);
-
-	private:
-		// BasicTransactionsBuilder
-		model::UniqueEntityPtr<model::Transaction> generate(
-				uint32_t descriptorType,
-				const std::shared_ptr<const void>& pDescriptor,
-				Timestamp deadline) const override;
-
 	public:
 		/// Adds a secret lock from \a senderId to \a recipientId for amount \a transferAmount, specified \a duration and \a proof.
 		std::vector<uint8_t> addSecretLock(
@@ -70,12 +58,18 @@ namespace catapult { namespace test {
 		/// Adds a secret proof from \a senderId to \a recipientId using \a proof data.
 		void addSecretProof(size_t senderId, size_t recipientId, const std::vector<uint8_t>& proof);
 
-	private:
-		model::UniqueEntityPtr<model::Transaction> createSecretLock(const SecretLockDescriptor& descriptor, Timestamp deadline) const;
+	public:
+		TransactionBuilderSecretLockCapability(TransactionsBuilder& builder) : TransactionBuilderCapability(builder)
+		{
 
-		model::UniqueEntityPtr<model::Transaction> createSecretProof(const SecretProofDescriptor& descriptor, Timestamp deadline) const;
-
+		}
+		void registerHooks() override;
 	private:
-		enum class DescriptorType { Secret_Lock = 1, Secret_Proof };
+		model::UniqueEntityPtr<model::Transaction> createSecretLock(const SecretLockDescriptor& descriptor, Timestamp deadline);
+
+		model::UniqueEntityPtr<model::Transaction> createSecretProof(const SecretProofDescriptor& descriptor, Timestamp deadline);
+
+
+
 	};
 }}

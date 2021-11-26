@@ -18,7 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "PropertyTransactionsBuilder.h"
+#include "TransactionBuilderPropertyCapability.h"
 #include "sdk/src/builders/AddressPropertyBuilder.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 
@@ -26,46 +26,28 @@ namespace catapult { namespace test {
 
 	namespace {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
+
 	}
-
-	// region ctor
-
-	PropertyTransactionsBuilder::PropertyTransactionsBuilder(const Accounts& accounts) : BasicTransactionsBuilder(accounts)
-	{}
-
-	// endregion
-
-	// region generate
-
-	model::UniqueEntityPtr<model::Transaction> PropertyTransactionsBuilder::generate(
-			uint32_t descriptorType,
-			const std::shared_ptr<const void>& pDescriptor,
-			Timestamp deadline) const {
-		switch (static_cast<DescriptorType>(descriptorType)) {
-		case DescriptorType::Property_Address_Block:
-			return createAddressPropertyTransaction(CastToDescriptor<PropertyAddressBlockDescriptor>(pDescriptor), deadline);
-		}
-
-		return nullptr;
-	}
-
-	// endregion
-
 	// region add / create
 
-	void PropertyTransactionsBuilder::addAddressBlockProperty(size_t senderId, size_t partnerId) {
+	void TransactionBuilderPropertyCapability::addAddressBlockProperty(size_t senderId, size_t partnerId) {
 		auto descriptor = PropertyAddressBlockDescriptor{ senderId, partnerId, true };
-		add(DescriptorType::Property_Address_Block, descriptor);
+		add(DescriptorTypes::Property, descriptor);
 	}
 
-	void PropertyTransactionsBuilder::addAddressUnblockProperty(size_t senderId, size_t partnerId) {
+	void TransactionBuilderPropertyCapability::registerHooks() {
+		m_builder.registerDescriptor(DescriptorTypes::Property, [self = ptr<TransactionBuilderPropertyCapability>()](auto& pDescriptor, auto deadline){
+		  return self->createAddressPropertyTransaction(CastToDescriptor<PropertyAddressBlockDescriptor>(pDescriptor), deadline);
+		});
+	}
+	void TransactionBuilderPropertyCapability::addAddressUnblockProperty(size_t senderId, size_t partnerId) {
 		auto descriptor = PropertyAddressBlockDescriptor{ senderId, partnerId, false };
-		add(DescriptorType::Property_Address_Block, descriptor);
+		add(DescriptorTypes::Property, descriptor);
 	}
 
-	model::UniqueEntityPtr<model::Transaction> PropertyTransactionsBuilder::createAddressPropertyTransaction(
+	model::UniqueEntityPtr<model::Transaction> TransactionBuilderPropertyCapability::createAddressPropertyTransaction(
 			const PropertyAddressBlockDescriptor& descriptor,
-			Timestamp deadline) const {
+			Timestamp deadline) {
 		const auto& senderKeyPair = accounts().getKeyPair(descriptor.SenderId);
 		auto partnerAddress = extensions::CopyToUnresolvedAddress(accounts().getAddress(descriptor.PartnerId));
 

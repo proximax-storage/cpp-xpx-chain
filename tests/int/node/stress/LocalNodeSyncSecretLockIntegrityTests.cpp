@@ -20,7 +20,9 @@
 
 #include "tests/int/node/stress/test/ExpiryTestUtils.h"
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
-#include "tests/int/node/stress/test/SecretLockTransactionsBuilder.h"
+#include "tests/int/node/stress/test/TransactionsBuilder.h"
+#include "tests/int/node/stress/test/TransactionBuilderTransferCapability.h"
+#include "tests/int/node/stress/test/TransactionBuilderSecretLockCapability.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
@@ -63,12 +65,17 @@ namespace catapult { namespace local {
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
 			// - prepare secret lock
-			test::SecretLockTransactionsBuilder transactionsBuilder(accounts);
-			transactionsBuilder.addTransfer(0, 2, Amount(1'000'000));
-			transactionsBuilder.addTransfer(0, 3, Amount(1'000'000));
-			auto secretProof = transactionsBuilder.addSecretLock(2, 3, Amount(100'000), Lock_Duration);
+			test::TransactionsBuilder transactionsBuilder(accounts);
+			auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+			auto lockBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderSecretLockCapability>();
+			transferBuilder->addTransfer(0, 2, Amount(1'000'000));
+			transferBuilder->addTransfer(0, 3, Amount(1'000'000));
+			auto secretProof = lockBuilder->addSecretLock(2, 3, Amount(100'000), Lock_Duration);
 
-			BlockChainBuilder builder(accounts, stateHashCalculator);
+			auto& cache = context.localNode().cache();
+			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
 			auto pSecretLockBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 
 			// Act:
@@ -155,11 +162,11 @@ namespace catapult { namespace local {
 				return secretLockTuple.Proof;
 			}
 
-			Blocks createTailBlocks(utils::TimeSpan blockInterval, const consumer<test::SecretLockTransactionsBuilder&>& addToBuilder) {
+			Blocks createTailBlocks(utils::TimeSpan blockInterval, const consumer<test::TransactionsBuilder&>& addToBuilder) {
 				auto stateHashCalculator = m_context.createStateHashCalculator();
 				test::SeedStateHashCalculator(stateHashCalculator, m_allBlocks);
 
-				test::SecretLockTransactionsBuilder transactionsBuilder(m_accounts);
+				test::TransactionsBuilder transactionsBuilder(m_accounts);
 				addToBuilder(transactionsBuilder);
 
 				auto builder = m_pActiveBuilder->createChainedBuilder(stateHashCalculator);
@@ -253,7 +260,8 @@ namespace catapult { namespace local {
 
 			// - prepare blocks that will unlock the secret
 			auto nextBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(60), [&secretProof](auto& transactionsBuilder) {
-				transactionsBuilder.addSecretProof(2, 3, secretProof);
+			  	auto secretLockBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderSecretLockCapability>();
+		  		secretLockBuilder->addSecretProof(2, 3, secretProof);
 			});
 
 			// Act:
@@ -311,7 +319,8 @@ namespace catapult { namespace local {
 
 			// - prepare blocks that will cause the secret to expire
 			auto nextBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(60), [](auto& transactionsBuilder) {
-				transactionsBuilder.addTransfer(0, 1, Amount(1));
+			  	auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+				transferBuilder->addTransfer(0, 1, Amount(1));
 			});
 
 			// Act:
@@ -369,11 +378,13 @@ namespace catapult { namespace local {
 
 			// - prepare two sets of blocks one of which will unlock secret (better block time will yield better chain)
 			auto worseBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(60), [&secretProof](auto& transactionsBuilder) {
-				transactionsBuilder.addSecretProof(2, 3, secretProof);
+				auto secretLockBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderSecretLockCapability>();
+				secretLockBuilder->addSecretProof(2, 3, secretProof);
 			});
 			auto betterBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(58), [](auto& transactionsBuilder) {
-				transactionsBuilder.addTransfer(0, 1, Amount(1));
-				transactionsBuilder.addTransfer(0, 1, Amount(1));
+				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+				transferBuilder->addTransfer(0, 1, Amount(1));
+				transferBuilder->addTransfer(0, 1, Amount(1));
 			});
 
 			// Act:
@@ -443,11 +454,13 @@ namespace catapult { namespace local {
 
 			// - prepare two sets of blocks that will trigger expiry (better block time will yield better chain)
 			auto worseBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(60), [](auto& transactionsBuilder) {
-				transactionsBuilder.addTransfer(0, 1, Amount(1));
+				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+				transferBuilder->addTransfer(0, 1, Amount(1));
 			});
 			auto betterBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(58), [](auto& transactionsBuilder) {
-				transactionsBuilder.addTransfer(0, 1, Amount(1));
-				transactionsBuilder.addTransfer(0, 1, Amount(1));
+				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+				transferBuilder->addTransfer(0, 1, Amount(1));
+				transferBuilder->addTransfer(0, 1, Amount(1));
 			});
 
 			// Act:
@@ -516,15 +529,17 @@ namespace catapult { namespace local {
 				test::WaitForBoot(m_context);
 
 				// - fund accounts
-				auto builder = fundAccounts(allBlocks);
+				auto builder = fundAccounts(allBlocks, m_context.configHolder());
 
 				// - add secret lock and then force rollback
-				test::SecretLockTransactionsBuilder transactionsBuilder(m_accounts);
-				auto secretProof = transactionsBuilder.addSecretLock(2, 3, Amount(100'000), Lock_Duration);
+				test::TransactionsBuilder transactionsBuilder(m_accounts);
+				auto secretLockBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderSecretLockCapability>();
+				auto secretProof = secretLockBuilder->addSecretLock(2, 3, Amount(100'000), Lock_Duration);
 				auto worseBlocks = createBlocks(transactionsBuilder, builder, allBlocks);
 
-				test::SecretLockTransactionsBuilder transactionsBuilder2(m_accounts);
-				transactionsBuilder2.addTransfer(0, 1, Amount(1));
+				test::TransactionsBuilder transactionsBuilder2(m_accounts);
+				auto transferBuilder = transactionsBuilder2.template getCapability<test::TransactionBuilderTransferCapability>();
+				transferBuilder->addTransfer(0, 1, Amount(1));
 
 				{
 					auto stateHashCalculator = m_context.createStateHashCalculator();
@@ -551,8 +566,9 @@ namespace catapult { namespace local {
 				test::SeedStateHashCalculator(stateHashCalculator2, allBlocks);
 				auto builder3 = builder.createChainedBuilder(stateHashCalculator2, *allBlocks.back());
 
-				test::SecretLockTransactionsBuilder transactionsBuilder3(m_accounts);
-				transactionsBuilder3.addSecretLock(2, 3, Amount(100'000), Lock_Duration, secretProof);
+				test::TransactionsBuilder transactionsBuilder3(m_accounts);
+				auto secretLockBuilder2 = transactionsBuilder3.template getCapability<test::TransactionBuilderSecretLockCapability>();
+				secretLockBuilder2->addSecretLock(2, 3, Amount(100'000), Lock_Duration, secretProof);
 				auto blocks2 = builder3.asBlockChain(transactionsBuilder3);
 				test::PushEntities(m_connection, ionet::PacketType::Push_Block, blocks2);
 				test::WaitForHeightAndElements(m_context, Height(5), 4, 1);
@@ -581,16 +597,20 @@ namespace catapult { namespace local {
 			}
 
 		private:
-			BlockChainBuilder fundAccounts(BlockChainBuilder::Blocks& allBlocks) {
+			BlockChainBuilder fundAccounts(BlockChainBuilder::Blocks& allBlocks, std::shared_ptr<config::BlockchainConfigurationHolder> configHolder) {
 				auto stateHashCalculator = m_context.createStateHashCalculator();
 
 				// - fund accounts
-				test::SecretLockTransactionsBuilder transactionsBuilder(m_accounts);
-				transactionsBuilder.addTransfer(0, 2, Amount(1'000'000));
-				transactionsBuilder.addTransfer(0, 3, Amount(1'000'000));
+				test::TransactionsBuilder transactionsBuilder(m_accounts);
+				auto transferBuilder = transactionsBuilder.getCapability<test::TransactionBuilderTransferCapability>();
+				transferBuilder->addTransfer(0, 2, Amount(1'000'000));
+				transferBuilder->addTransfer(0, 3, Amount(1'000'000));
 
 				// - send chain
-				BlockChainBuilder builder(m_accounts, stateHashCalculator);
+				auto& cache = m_context.localNode().cache();
+				auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+
+				BlockChainBuilder builder(m_accounts, stateHashCalculator, m_context.configHolder(), &accountStateCache);
 				auto blocks = builder.asBlockChain(transactionsBuilder);
 				allBlocks.insert(allBlocks.cend(), blocks.cbegin(), blocks.cend());
 
@@ -607,7 +627,7 @@ namespace catapult { namespace local {
 			}
 
 			BlockChainBuilder::Blocks createBlocks(
-					test::SecretLockTransactionsBuilder& transactionGenerator,
+					test::TransactionsBuilder& transactionGenerator,
 					BlockChainBuilder& builder,
 					BlockChainBuilder::Blocks& allBlocks,
 					utils::TimeSpan blockTimeInterval = utils::TimeSpan::FromSeconds(60)) {
@@ -619,7 +639,7 @@ namespace catapult { namespace local {
 			}
 
 			std::shared_ptr<model::Block> pushBlockAndWait(BlockChainBuilder& builder, Height height) {
-				test::SecretLockTransactionsBuilder transactionsBuilder(m_accounts);
+				test::TransactionsBuilder transactionsBuilder(m_accounts);
 				auto pBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 				test::PushEntity(m_connection, ionet::PacketType::Push_Block, pBlock);
 				test::WaitForHeightAndElements(m_context, height, static_cast<uint32_t>(height.unwrap() - 1), 1);
@@ -683,16 +703,21 @@ namespace catapult { namespace local {
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
 			// - prepare secret lock
-			test::SecretLockTransactionsBuilder transactionsBuilder(accounts);
-			transactionsBuilder.addTransfer(0, 2, Amount(1'000'000));
-			transactionsBuilder.addTransfer(0, 3, Amount(1'000'000));
-			auto secretProof = transactionsBuilder.addSecretLock(2, 3, Amount(100'000), Lock_Duration);
+			test::TransactionsBuilder transactionsBuilder(accounts);
+			auto transferBuilder = transactionsBuilder.getCapability<test::TransactionBuilderTransferCapability>();
+			auto secretLockBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderSecretLockCapability>();
+			transferBuilder->addTransfer(0, 2, Amount(1'000'000));
+			transferBuilder->addTransfer(0, 3, Amount(1'000'000));
+			auto secretProof = secretLockBuilder->addSecretLock(2, 3, Amount(100'000), Lock_Duration);
 
 			// - add a second block that unlocks the lock
-			transactionsBuilder.addSecretProof(2, 3, secretProof);
+			secretLockBuilder->addSecretProof(2, 3, secretProof);
 
 			// - send chain
-			BlockChainBuilder builder(accounts, stateHashCalculator);
+			auto& cache = context.localNode().cache();
+			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
 			auto blocks = builder.asBlockChain(transactionsBuilder);
 
 			test::ExternalSourceConnection connection;

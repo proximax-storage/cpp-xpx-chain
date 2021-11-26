@@ -20,6 +20,7 @@
 
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
+#include "tests/int/node/stress/test/TransactionBuilderTransferCapability.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -44,10 +45,14 @@ namespace catapult { namespace local {
 			std::shared_ptr<model::Block> pUnsignedBlock;
 			{
 				test::TransactionsBuilder transactionsBuilder(accounts);
-				transactionsBuilder.addTransfer(0, 1, Amount(1'000'000));
+				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+				transferBuilder->addTransfer(0, 1, Amount(1'000'000));
 
 				auto stateHashCalculator = context.createStateHashCalculator();
-				BlockChainBuilder builder(accounts, stateHashCalculator);
+				auto& cache = context.localNode().cache();
+				auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+
+				BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
 				builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
 				pUnsignedBlock = builder.asSingleBlock(transactionsBuilder);
 				test::FillWithRandomData(pUnsignedBlock->Signature);
@@ -57,10 +62,14 @@ namespace catapult { namespace local {
 			std::shared_ptr<model::Block> pSignedBlock;
 			{
 				test::TransactionsBuilder transactionsBuilder(accounts);
-				transactionsBuilder.addTransfer(0, 2, Amount(550'000));
+				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+				transferBuilder->addTransfer(0, 2, Amount(550'000));
 
 				auto stateHashCalculator = context.createStateHashCalculator();
-				BlockChainBuilder builder(accounts, stateHashCalculator);
+				auto& cache = context.localNode().cache();
+				auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+
+				BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
 				pSignedBlock = builder.asSingleBlock(transactionsBuilder);
 			}
 

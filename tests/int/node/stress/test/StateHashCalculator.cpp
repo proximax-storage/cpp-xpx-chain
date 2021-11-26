@@ -70,6 +70,7 @@ namespace catapult { namespace test {
 		return blockStateHash;
 	}
 
+
 	void StateHashCalculator::updateStateHash(model::Block& block) {
 		block.StateHash = execute(block);
 	}

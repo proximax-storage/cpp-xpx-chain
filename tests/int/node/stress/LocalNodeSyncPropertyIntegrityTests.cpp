@@ -18,10 +18,15 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <tests/int/node/stress/test/TransactionBuilderNetworkConfigCapability.h>
+#include <boost/algorithm/string/replace.hpp>
 #include "tests/int/node/stress/test/ExpiryTestUtils.h"
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
-#include "tests/int/node/stress/test/PropertyTransactionsBuilder.h"
+#include "tests/int/node/stress/test/TransactionsBuilder.h"
+#include "tests/int/node/stress/test/TransactionBuilderTransferCapability.h"
+#include "tests/int/node/stress/test/TransactionBuilderPropertyCapability.h"
 #include "tests/TestHarness.h"
+#include "tests/test/nodeps/MijinConstants.h"
 
 namespace catapult { namespace local {
 
@@ -45,6 +50,28 @@ namespace catapult { namespace local {
 			auto numProperties = test::GetCounterValue(localNode.counters(), "PROPERTY C");
 			EXPECT_EQ(numExpectedProperties, numProperties);
 		}
+		template<typename TTestContext>
+		void GenerateNetworkUpgrade(const TTestContext& context,
+									const test::Accounts& accounts,
+									BlockChainBuilder& builder,
+									test::ExternalSourceConnection& connection)
+		{
+			test::TransactionsBuilder transactionsBuilder(accounts);
+			auto networkConfigBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNetworkConfigCapability>();
+			auto configuration = context.resourcesDirectory() + "/config-network.properties";
+			std::string supportedEntities;
+			boost::filesystem::load_string_file(context.resourcesDirectory() + "/supported-entities.json", supportedEntities);
+			std::string content;
+			boost::filesystem::load_string_file(configuration, content);
+			boost::algorithm::replace_first(content, "accountVersion = 1", "accountVersion = 2\nminimumAccountVersion = 1");
+			networkConfigBuilder->addNetworkConfigUpdate(content, supportedEntities, BlockDuration(1));
+			auto pUpgradeBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
+			test::PushEntity(connection, ionet::PacketType::Push_Block, pUpgradeBlock);
+
+			//Push empty block to ensure updated configuration is used
+			//auto pEmptyBlock = utils::UniqueToShared(builder.asSingleBlock(test::TransactionsBuilder(accounts)));
+			//test::PushEntity(connection, ionet::PacketType::Push_Block, pEmptyBlock);
+		}
 
 		template<typename TTestContext>
 		std::pair<BlockChainBuilder, std::shared_ptr<model::Block>> PrepareProperty(
@@ -56,21 +83,33 @@ namespace catapult { namespace local {
 			test::WaitForBoot(context);
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
-			// - prepare property
-			test::PropertyTransactionsBuilder transactionsBuilder(accounts);
-			transactionsBuilder.addTransfer(0, 2, Amount(1'000'000));
-			transactionsBuilder.addTransfer(0, 3, Amount(1'000'000));
-			transactionsBuilder.addAddressBlockProperty(2, 3);
 
-			BlockChainBuilder builder(accounts, stateHashCalculator);
-			auto pPropertyBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
+			// - prepare property
+			test::TransactionsBuilder transactionsBuilder(accounts);
+			auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+			auto propertyBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderPropertyCapability>();
+
+			transferBuilder->addTransfer(0, 2, Amount(1'000'000));
+			transferBuilder->addTransfer(0, 3, Amount(1'000'000));
+			propertyBuilder->addAddressBlockProperty(2, 3);
+			auto& accountStateCache = context.localNode().cache().template sub<cache::AccountStateCache>();
+
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+
 
 			// Act:
 			test::ExternalSourceConnection connection;
+			auto isV2 = (accounts.cbegin()+1)->second == 2;
+			if(isV2)
+			{
+				GenerateNetworkUpgrade(context, accounts, builder, connection);
+				test::WaitForHeightAndElements(context, Height(2), 1, 1);
+			}
+			auto pPropertyBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 			auto pIo = test::PushEntity(connection, ionet::PacketType::Push_Block, pPropertyBlock);
 
 			// - wait for the chain height to change and for all height readers to disconnect
-			test::WaitForHeightAndElements(context, Height(2), 1, 1);
+			test::WaitForHeightAndElements(context, Height(isV2 ? 3 : 2), isV2 ? 2 : 1, 1);
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
 			// Assert: the cache has expected number of properties
@@ -88,7 +127,7 @@ namespace catapult { namespace local {
 		public:
 			explicit TestFacade(TTestContext& context)
 					: m_context(context)
-					, m_accounts(4, TRemainingAccountVersions, TDefaultAccountVersion)
+					, m_accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 4, TRemainingAccountVersions, TDefaultAccountVersion)
 			{}
 
 		public:
@@ -113,12 +152,13 @@ namespace catapult { namespace local {
 				m_pActiveBuilder = std::make_unique<BlockChainBuilder>(builderBlockPair.first);
 			}
 
-			Blocks createTailBlocks(utils::TimeSpan blockInterval, const consumer<test::PropertyTransactionsBuilder&>& addToBuilder) {
+			Blocks createTailBlocks(utils::TimeSpan blockInterval, const consumer<test::TransactionBuilderPropertyCapability&>& addToBuilder) {
 				auto stateHashCalculator = m_context.createStateHashCalculator();
 				test::SeedStateHashCalculator(stateHashCalculator, m_allBlocks);
 
-				test::PropertyTransactionsBuilder transactionsBuilder(m_accounts);
-				addToBuilder(transactionsBuilder);
+				test::TransactionsBuilder transactionsBuilder(m_accounts);
+				auto propertyBuilder = transactionsBuilder.getCapability<test::TransactionBuilderPropertyCapability>();
+				addToBuilder(*propertyBuilder);
 
 				auto builder = m_pActiveBuilder->createChainedBuilder(stateHashCalculator);
 				builder.setBlockTimeInterval(blockInterval);
@@ -139,9 +179,8 @@ namespace catapult { namespace local {
 
 	namespace {
 		using test_types = ::testing::Types<
-				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V1 ACCOUNTS
-				//std::pair<std::integral_constant<uint32_t,2>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V2 ACCOUNTS
-				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,1>>
+				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,1>>,
+				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,2>>
 		>;
 		// It is not possible for a nemesis account to be version 2 and a newer account to be version 1
 
@@ -155,11 +194,11 @@ namespace catapult { namespace local {
 
 
 	namespace {
-		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
-		PropertyStateHashes RunAddPropertyTest(TTestContext& context) {
+		template<typename TTestContext>
+		PropertyStateHashes RunAddPropertyTest(TTestContext& context, const test::Accounts& accounts) {
 			// Arrange:
 			PropertyStateHashes stateHashes;
-			test::Accounts accounts(4, TRemainingAccountVersions, TDefaultAccountVersion);
+
 			auto stateHashCalculator = context.createStateHashCalculator();
 
 			// Act + Assert:
@@ -167,14 +206,16 @@ namespace catapult { namespace local {
 
 			return stateHashes;
 		}
+
 	}
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanAddProperty) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property);
+		test::Accounts accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 4, TypeParam::second_type::value, TypeParam::first_type::value);
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property, [](const auto&) {});
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunAddPropertyTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
+		auto stateHashesPair = test::Unzip(RunAddPropertyTest<test::StateHashDisabledTestContext>(context, accounts));
 
 		// Assert:
 		test::AssertAllZero(stateHashesPair, 2);
@@ -182,10 +223,12 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanAddPropertyWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property);
+		test::Accounts accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 4, TypeParam::second_type::value, TypeParam::first_type::value);
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property, [](config::BlockchainConfiguration& config) {
+		});
 
 		// Act + Assert:
-		auto stateHashesPair = test::Unzip(RunAddPropertyTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
+		auto stateHashesPair = test::Unzip(RunAddPropertyTest<test::StateHashEnabledTestContext>(context, accounts));
 
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashesPair.first, 2);
@@ -213,12 +256,13 @@ namespace catapult { namespace local {
 				transactionsBuilder.addAddressUnblockProperty(2, 3);
 			});
 
+			constexpr auto isV2 = TRemainingAccountVersions == 2;
 			// Act:
 			test::ExternalSourceConnection connection;
 			auto pIo1 = test::PushEntities(connection, ionet::PacketType::Push_Block, nextBlocks);
 
 			// - wait for the chain height to change and for all height readers to disconnect
-			test::WaitForHeightAndElements(context, Height(3), 2, 1);
+			test::WaitForHeightAndElements(context, Height(isV2 ? 4 : 3), isV2 ? 3 : 2, 1);
 
 			// Assert: the cache has no properties
 			AssertPropertyCount(context.localNode(), 0);
@@ -271,27 +315,43 @@ namespace catapult { namespace local {
 		PropertyStateHashes RunAddAndRemovePropertyTest(TTestContext& context) {
 			// Arrange:
 			PropertyStateHashes stateHashes;
-			test::Accounts accounts(4, TRemainingAccountVersions, TDefaultAccountVersion);
+			test::Accounts accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 4, TRemainingAccountVersions, TDefaultAccountVersion);
 			auto stateHashCalculator = context.createStateHashCalculator();
 
 			// - wait for boot
 			test::WaitForBoot(context);
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
-			// - prepare property chain with add and remove
-			test::PropertyTransactionsBuilder transactionsBuilder(accounts);
-			transactionsBuilder.addTransfer(0, 2, Amount(1'000'000));
-			transactionsBuilder.addTransfer(0, 3, Amount(1'000'000));
-			transactionsBuilder.addAddressBlockProperty(2, 3);
-			transactionsBuilder.addAddressUnblockProperty(2, 3);
+
 
 			// - send chain
-			BlockChainBuilder builder(accounts, stateHashCalculator);
+			auto& cache = context.localNode().cache();
+			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+			test::ExternalSourceConnection connection;
+			auto isV2 = (accounts.cbegin()+1)->second == 2;
+			if(isV2)
+			{
+				GenerateNetworkUpgrade(context, accounts, builder, connection);
+				test::WaitForHeightAndElements(context, Height(2), 1, 1);
+			}
+
+			// - prepare property chain with add and remove
+			test::TransactionsBuilder transactionsBuilder(accounts);
+			auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+			auto propertyBuilder = transactionsBuilder.getCapability<test::TransactionBuilderPropertyCapability>();
+
+			transferBuilder->addTransfer(0, 2, Amount(1'000'000));
+			transferBuilder->addTransfer(0, 3, Amount(1'000'000));
+			propertyBuilder->addAddressBlockProperty(2, 3);
+			propertyBuilder->addAddressUnblockProperty(2, 3);
+
 			auto blocks = builder.asBlockChain(transactionsBuilder);
 
-			test::ExternalSourceConnection connection;
+
 			test::PushEntities(connection, ionet::PacketType::Push_Block, blocks);
-			test::WaitForHeightAndElements(context, Height(5), 1, 1);
+			test::WaitForHeightAndElements(context, Height(isV2 ? 6 : 5), isV2 ? 2 : 1, 1);
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
 			// Assert: the cache has no properties

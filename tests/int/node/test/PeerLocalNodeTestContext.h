@@ -48,6 +48,11 @@ namespace catapult { namespace test {
 		/// Gets the primary (first) local node.
 		local::LocalNode& localNode() const;
 
+		/// Retrieves the node configuration holder created after booting
+		std::shared_ptr<config::BlockchainConfigurationHolder> configHolder();
+
+		std::string resourcesDirectory() const;
+
 		/// Gets the data directory.
 		std::string dataDirectory() const;
 

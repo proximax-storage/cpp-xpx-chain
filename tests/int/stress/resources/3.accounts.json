@@ -2,6 +2,7 @@
     "accounts": [
         {
             "Address": "SDKDPA36TE53BO24FD4KA6OPGOUSEVOU3O5SIFMY",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "1188832332847600384",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -15,6 +16,7 @@
         },
         {
             "Address": "SD6ZH6T6BR3NMNDYNVRTHDCF6OZYCHFQEUT6QXE7",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -28,6 +30,7 @@
         },
         {
             "Address": "SA4YXJHBHUUBOX6GVKGAQSCN6VKLTDGAGATXK2BV",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "3198079663259684096",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -41,6 +44,7 @@
         },
         {
             "Address": "SCDSFEWJX4ILTGVNJGMSVLJZIDEQTMMFRJRFE5B6",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -54,6 +58,7 @@
         },
         {
             "Address": "SABDVQSXHD3FRM26QIGN4SES24SSZO5GIPGO4NWR",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -67,6 +72,7 @@
         },
         {
             "Address": "SACWFYVHGEYOV5YTPFBCZ2SFYHR3CTQZQR2JDSUM",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "17778230791875130368",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -80,6 +86,7 @@
         },
         {
             "Address": "SA3JCE2LX6Z4YY72IOXEQFNQW3IQBWYZINI26CPP",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "14567118197645263104",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -92,6 +99,7 @@
         },
         {
             "Address": "SAKT3CKHCYIG5BBOPTSY2WXSVPBSLIA67AEOX4ND",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -105,6 +113,7 @@
         },
         {
             "Address": "SBZ22LWA7GDZLPLQF7PXTMNLWSEZ7ZRVGRMWLXWV",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -118,6 +127,7 @@
         },
         {
             "Address": "SCEABFIOJC2GGNM3FOLPTTI73VW5ADYK67AM3DO3",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -131,6 +141,7 @@
         },
         {
             "Address": "SBIN2SDQWFD47RFB3IOJ4IVA4GTCKHIC6YIHR3XX",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -144,6 +155,7 @@
         },
         {
             "Address": "SA767PEH52O3MMJXQKVTMOHBJ6WUNCPYGOGQY6FL",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -157,6 +169,7 @@
         },
         {
             "Address": "SBOUKTPDJBX2QTZ6FLXNSYOWWG7NVYWRR325RNFM",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "15280141152480794880",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -169,6 +182,7 @@
         },
         {
             "Address": "SCGQF2ZB7E2EEIOHAPV3KRSIEI3QD7L3MNNQHIH6",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -182,6 +196,7 @@
         },
         {
             "Address": "SA7V4HPJBZR6HD3E6GPSVVIIVXFK4WSOAOKKKIOM",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "12437104094841378048",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -194,6 +209,7 @@
         },
         {
             "Address": "SAG3I2WEYTTQNT5WKB7ITUY23LPXN2IEUZPGQANE",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "1059832025659549440",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -206,6 +222,7 @@
         },
         {
             "Address": "SAAZBWCQAXVFPYVH7L3ZJVVSYPLSUDJOOKJJJ2CD",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -219,6 +236,7 @@
         },
         {
             "Address": "SD2TR2USDXE4QIBX3OW2MFTLSQB6DGYWRJH4ZNDB",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -232,6 +250,7 @@
         },
         {
             "Address": "SARNASAS2BIAB6LMFA3FPMGBPGIJGK6IJETM3ZSP",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "5073761810921927680",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -244,6 +263,7 @@
         },
         {
             "Address": "SAOLTPFDPDREJFUAGTTXAQCFCNMHMFJPVASZ5VLW",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -257,6 +277,7 @@
         },
         {
             "Address": "SDTZ23JBJZP3GTKKM2P6FYCMXS6RQYPB6R477TTR",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "6532441305887424000",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -269,6 +290,7 @@
         },
         {
             "Address": "SCEYFB35CYFF2U7UZ32RYXXZ5JTPCSKU4P6BRXZR",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -282,6 +304,7 @@
         },
         {
             "Address": "SCKM5PAMXE7FNBAPE37Q7GOUU7CU5HEQDLAZTOS6",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -295,6 +318,7 @@
         },
         {
             "Address": "SCKWUMYOFK647EXNFZWHMXSFYDVKIDH3LZGDWCMJ",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -308,6 +332,7 @@
         },
         {
             "Address": "SANWMR3GEKGHQWTBE4VDVDPV562EYTQKE47VL75V",
+            "Version": 2,
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",

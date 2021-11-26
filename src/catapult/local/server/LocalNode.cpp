@@ -143,6 +143,7 @@ namespace catapult { namespace local {
 				// is always bypassed on subsequent boots
 				if (isFirstBoot)
 					saveStateToDisk();
+
 			}
 
 		private:

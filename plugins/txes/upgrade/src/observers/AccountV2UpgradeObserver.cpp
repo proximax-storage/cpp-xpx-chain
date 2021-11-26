@@ -56,7 +56,7 @@ namespace {
 		  	if(NotifyMode::Commit == context.Mode)
 			{
 
-				auto originalAccount = cache::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer)->get();
+				auto originalAccount = *cache::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer);
 				state::AccountState newAccount(model::PublicKeyToAddress(notification.NewAccountPublicKey, accountStateCache.networkIdentifier()), context.Height, 2, originalAccount);
 				newAccount.PublicKey = notification.NewAccountPublicKey;
 				TransferGenerateNewState(originalAccount, newAccount, context.Height);
@@ -64,8 +64,8 @@ namespace {
 			}
 			else
 			{
-				auto newAccount = cache::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.NewAccountPublicKey)->get();
-				auto originalAccount = cache::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer)->get();
+				auto newAccount = *cache::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.NewAccountPublicKey);
+				auto originalAccount = *cache::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer);
 				originalAccount = *newAccount.OldState;
 				accountStateCache.queueRemove(notification.NewAccountPublicKey, newAccount.PublicKeyHeight);
 				accountStateCache.commitRemovals();

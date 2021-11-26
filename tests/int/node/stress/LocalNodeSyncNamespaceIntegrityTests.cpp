@@ -19,6 +19,8 @@
 **/
 
 #include "tests/int/node/stress/test/ExpiryTestUtils.h"
+#include "tests/int/node/stress/test/TransactionsBuilder.h"
+#include "tests/int/node/stress/test/TransactionBuilderTransferCapability.h"
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -61,10 +63,15 @@ namespace catapult { namespace local {
 
 			// - prepare namespace registrations
 			test::TransactionsBuilder transactionsBuilder(accounts);
-			transactionsBuilder.addNamespace(0, "foo", BlockDuration(12));
-			transactionsBuilder.addNamespace(0, "bar", BlockDuration(12));
+			auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+			auto namespaceBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNamespaceCapability>();
+			namespaceBuilder->addNamespace(0, "foo", BlockDuration(12));
+			namespaceBuilder->addNamespace(0, "bar", BlockDuration(12));
 
-			BlockChainBuilder builder(accounts, stateHashCalculator);
+			auto& cache = context.localNode().cache();
+			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
 			auto pNamespaceBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 
 			// Act:
@@ -99,9 +106,10 @@ namespace catapult { namespace local {
 			auto numRemainingBlocks = numTotalBlocks;
 			for (;;) {
 				test::TransactionsBuilder transactionsBuilder(accounts);
+				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
 				auto numBlocks = std::min<size_t>(50, numRemainingBlocks);
 				for (auto i = 0u; i < numBlocks; ++i)
-					transactionsBuilder.addTransfer(0, 1, Amount(1));
+					transferBuilder->addTransfer(0, 1, Amount(1));
 
 				auto blocks = builder.asBlockChain(transactionsBuilder);
 				auto pIo = test::PushEntities(connection, ionet::PacketType::Push_Block, blocks);
@@ -152,10 +160,14 @@ namespace catapult { namespace local {
 			// - prepare namespace registrations
 			test::Accounts accounts(1, TRemainingAccountVersions, TDefaultAccountVersion);
 			auto stateHashCalculator = context.createStateHashCalculator();
-			BlockChainBuilder builder(accounts, stateHashCalculator);
+			auto& cache = context.localNode().cache();
+			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
 			test::TransactionsBuilder transactionsBuilder(accounts);
-			transactionsBuilder.addNamespace(0, "foo", BlockDuration(10));
-			transactionsBuilder.addNamespace(0, "bar", BlockDuration(10));
+			auto namespaceBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNamespaceCapability>();
+			namespaceBuilder->addNamespace(0, "foo", BlockDuration(10));
+			namespaceBuilder->addNamespace(0, "bar", BlockDuration(10));
 			auto pNamespaceBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 
 			// Act:
@@ -231,7 +243,8 @@ namespace catapult { namespace local {
 			// - prepare a block that triggers a state change
 			auto builder3 = transferBlocksResult.Builder.createChainedBuilder();
 			test::TransactionsBuilder transactionsBuilder(accounts);
-			transactionsBuilder.addTransfer(0, 1, Amount(1));
+			auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+			transferBuilder->addTransfer(0, 1, Amount(1));
 			auto pTailBlock = utils::UniqueToShared(builder3.asSingleBlock(transactionsBuilder));
 
 			// Act:
@@ -358,19 +371,24 @@ namespace catapult { namespace local {
 			AssertBooted(context);
 
 			// - prepare namespace registrations
-			BlockChainBuilder builder(accounts, stateHashCalculator);
+			auto& cache = context.localNode().cache();
+			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
 			test::TransactionsBuilder transactionsBuilder(accounts);
-			transactionsBuilder.addNamespace(0, "foo", BlockDuration(12));
-			transactionsBuilder.addNamespace(0, "bar", BlockDuration(12));
+			auto namespaceBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNamespaceCapability>();
+			namespaceBuilder->addNamespace(0, "foo", BlockDuration(12));
+			namespaceBuilder->addNamespace(0, "bar", BlockDuration(12));
 			auto pNamespaceBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 
 			// - add the specified number of blocks up to and including a state change
 			test::ExternalSourceConnection connection;
 			auto builder2 = builder.createChainedBuilder();
 			test::TransactionsBuilder transactionsBuilder2(accounts);
+			auto transferBuilder = transactionsBuilder2.template getCapability<test::TransactionBuilderTransferCapability>();
 
 			for (auto i = 0u; i <= numAliveBlocks; ++i)
-				transactionsBuilder2.addTransfer(0, 1, Amount(1));
+				transferBuilder->addTransfer(0, 1, Amount(1));
 
 			auto blocks = builder2.asBlockChain(transactionsBuilder2);
 			blocks.insert(blocks.begin(), pNamespaceBlock);
@@ -467,7 +485,8 @@ namespace catapult { namespace local {
 
 				auto builder3 = pBuilder->createChainedBuilder(stateHashCalculator);
 				test::TransactionsBuilder transactionsBuilder(accounts);
-				transactionsBuilder.addTransfer(0, 1, Amount(1));
+				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+				transferBuilder->addTransfer(0, 1, Amount(1));
 				pExpiryBlock1 = utils::UniqueToShared(builder3.asSingleBlock(transactionsBuilder));
 			}
 
@@ -480,8 +499,9 @@ namespace catapult { namespace local {
 				auto builder3 = pBuilder->createChainedBuilder(stateHashCalculator);
 				builder3.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
 				test::TransactionsBuilder transactionsBuilder(accounts);
-				transactionsBuilder.addTransfer(0, 1, Amount(1));
-				transactionsBuilder.addTransfer(0, 1, Amount(1));
+				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+				transferBuilder->addTransfer(0, 1, Amount(1));
+				transferBuilder->addTransfer(0, 1, Amount(1));
 				expiryBlocks2 = builder3.asBlockChain(transactionsBuilder);
 			}
 

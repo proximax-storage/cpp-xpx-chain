@@ -22,6 +22,7 @@
 #include "sdk/src/builders/AddressAliasBuilder.h"
 #include "sdk/src/builders/RegisterNamespaceBuilder.h"
 #include "sdk/src/builders/TransferBuilder.h"
+#include "sdk/src/builders/NetworkConfigBuilder.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "plugins/txes/namespace/src/model/NamespaceIdGenerator.h"
@@ -121,5 +122,20 @@ namespace catapult { namespace test {
 		return std::move(pTransaction);
 	}
 
+	model::UniqueEntityPtr<model::Transaction> CreateNetworkConfigTransaction(
+			const crypto::KeyPair& signer,
+			const std::string& config,
+			const std::string& supportedVersions,
+			const BlockDuration& blocksBeforeActive)
+	{
+		builders::NetworkConfigBuilder builder(Network_Identifier, signer.publicKey());
+		builder.setBlockChainConfig(RawBuffer(reinterpret_cast<const unsigned char*>(config.data()), config.size()));
+		builder.setSupportedVersionsConfig(RawBuffer(reinterpret_cast<const unsigned char*>(supportedVersions.data()), supportedVersions.size()));
+		builder.setApplyHeightDelta(blocksBeforeActive);
+		auto pTransaction = builder.build();
+
+		extensions::TransactionExtensions(GetNemesisGenerationHash()).sign(signer, *pTransaction);
+		return std::move(pTransaction);
+	}
 	// endregion
 }}

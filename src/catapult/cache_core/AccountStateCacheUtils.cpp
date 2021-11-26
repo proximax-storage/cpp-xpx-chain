@@ -60,29 +60,29 @@ namespace catapult { namespace cache {
 		ProcessForwardedAccountStateT(cache, key, action);
 	}
 
-	std::optional<std::reference_wrapper<const state::AccountState>> FindAccountStateByPublicKeyOrAddress(const cache::ReadOnlyAccountStateCache& cache, const Key& publicKey) {
+	std::unique_ptr<const state::AccountState> FindAccountStateByPublicKeyOrAddress(const cache::ReadOnlyAccountStateCache& cache, const Key& publicKey) {
 		auto accountStateKeyIter = cache.find(publicKey);
 		if (accountStateKeyIter.tryGet())
-			return std::optional<std::reference_wrapper<const state::AccountState>>(accountStateKeyIter.get());
+			return std::make_unique<const state::AccountState>(accountStateKeyIter.get());
 
 		// if state could not be accessed by public key, try searching by address
 		auto accountStateAddressIter = cache.find(model::PublicKeyToAddress(publicKey, cache.networkIdentifier()));
 		if (accountStateAddressIter.tryGet())
-			return std::optional<std::reference_wrapper<const state::AccountState>>(accountStateAddressIter.get());
+			return std::make_unique<const state::AccountState>(accountStateAddressIter.get());
 
-		return std::nullopt;
+		return nullptr;
 	}
 
-	std::optional<std::reference_wrapper<const state::AccountState>> FindAccountStateByPublicKeyOrAddress(const cache::AccountStateCacheDelta& cache, const Key& publicKey) {
+	std::unique_ptr<const state::AccountState> FindAccountStateByPublicKeyOrAddress(const cache::AccountStateCacheDelta& cache, const Key& publicKey) {
 		auto accountStateKeyIter = cache.find(publicKey);
 		if (accountStateKeyIter.tryGet())
-			return std::optional<std::reference_wrapper<const state::AccountState>>(accountStateKeyIter.get());
+			return std::make_unique<const state::AccountState>(accountStateKeyIter.get());
 
 		// if state could not be accessed by public key, try searching by address
 		auto accountStateAddressIter = cache.find(model::PublicKeyToAddress(publicKey, cache.networkIdentifier()));
 		if (accountStateAddressIter.tryGet())
-			return std::optional<std::reference_wrapper<const state::AccountState>>(accountStateAddressIter.get());
+			return std::make_unique<const state::AccountState>(accountStateAddressIter.get());
 
-		return std::nullopt;
+		return nullptr;
 	}
 }}

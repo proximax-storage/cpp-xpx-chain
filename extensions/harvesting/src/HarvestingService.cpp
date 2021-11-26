@@ -89,10 +89,10 @@ namespace catapult { namespace harvesting {
 				auto cacheView = state.cache().createView();
 				auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
 				auto accountStateOptional = cache::FindAccountStateByPublicKeyOrAddress(readOnlyAccountStateCache, harvesterPublicKey);
-				if (!accountStateOptional.has_value()) {
+				if (!accountStateOptional) {
 					CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "Unable to set up Auto Harvesting: Invalid harvesting account provided with AutoHarvesting Enabled");
 				}
-				configAccountVersion = accountStateOptional.value().get().GetVersion();
+				configAccountVersion = accountStateOptional->GetVersion();
 			}
 			auto blockGeneratorAccountDescriptor = CreateBlockGeneratorAccountDescriptor(config, configAccountVersion);
 			auto harvesterSigningPublicKey = blockGeneratorAccountDescriptor.signingKeyPair().publicKey();

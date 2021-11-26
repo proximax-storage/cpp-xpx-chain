@@ -18,7 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "SecretLockTransactionsBuilder.h"
+#include "TransactionBuilderSecretLockCapability.h"
 #include "sdk/src/builders/SecretLockBuilder.h"
 #include "sdk/src/builders/SecretProofBuilder.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
@@ -32,35 +32,22 @@ namespace catapult { namespace test {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 	}
 
-	// region ctor
-
-	SecretLockTransactionsBuilder::SecretLockTransactionsBuilder(const Accounts& accounts) : BasicTransactionsBuilder(accounts)
-	{}
-
-	// endregion
-
-	// region generate
-
-	model::UniqueEntityPtr<model::Transaction> SecretLockTransactionsBuilder::generate(
-			uint32_t descriptorType,
-			const std::shared_ptr<const void>& pDescriptor,
-			Timestamp deadline) const {
-		switch (static_cast<DescriptorType>(descriptorType)) {
-		case DescriptorType::Secret_Lock:
-			return createSecretLock(CastToDescriptor<SecretLockDescriptor>(pDescriptor), deadline);
-
-		case DescriptorType::Secret_Proof:
-			return createSecretProof(CastToDescriptor<SecretProofDescriptor>(pDescriptor), deadline);
-		}
-
-		return nullptr;
-	}
 
 	// endregion
 
 	// region add / create
 
-	std::vector<uint8_t> SecretLockTransactionsBuilder::addSecretLock(
+	void TransactionBuilderSecretLockCapability::registerHooks() {
+        auto self = ptr<TransactionBuilderSecretLockCapability>();
+        m_builder.registerDescriptor(DescriptorTypes::Secret_Lock, [self](auto& pDescriptor, auto deadline){
+            return self->createSecretLock(CastToDescriptor<SecretLockDescriptor>(pDescriptor), deadline);
+        });
+
+        m_builder.registerDescriptor(DescriptorTypes::Secret_Proof, [self](auto& pDescriptor, auto deadline){
+            return self->createSecretProof(CastToDescriptor<SecretProofDescriptor>(pDescriptor), deadline);
+        });
+	}
+	std::vector<uint8_t> TransactionBuilderSecretLockCapability::addSecretLock(
 			size_t senderId,
 			size_t recipientId,
 			Amount transferAmount,
@@ -70,11 +57,11 @@ namespace catapult { namespace test {
 		crypto::Sha3_256(proof, secret);
 
 		auto descriptor = SecretLockDescriptor{ senderId, recipientId, transferAmount, duration, secret };
-		add(DescriptorType::Secret_Lock, descriptor);
+		add(DescriptorTypes::Secret_Lock, descriptor);
 		return proof;
 	}
 
-	std::vector<uint8_t> SecretLockTransactionsBuilder::addSecretLock(
+	std::vector<uint8_t> TransactionBuilderSecretLockCapability::addSecretLock(
 			size_t senderId,
 			size_t recipientId,
 			Amount transferAmount,
@@ -82,14 +69,14 @@ namespace catapult { namespace test {
 		return addSecretLock(senderId, recipientId, transferAmount, duration, test::GenerateRandomVector(25));
 	}
 
-	void SecretLockTransactionsBuilder::addSecretProof(size_t senderId, size_t recipientId, const std::vector<uint8_t>& proof) {
+	void TransactionBuilderSecretLockCapability::addSecretProof(size_t senderId, size_t recipientId, const std::vector<uint8_t>& proof) {
 		auto descriptor = SecretProofDescriptor{ senderId, recipientId, proof };
-		add(DescriptorType::Secret_Proof, descriptor);
+		add(DescriptorTypes::Secret_Proof, descriptor);
 	}
 
-	model::UniqueEntityPtr<model::Transaction> SecretLockTransactionsBuilder::createSecretLock(
+	model::UniqueEntityPtr<model::Transaction> TransactionBuilderSecretLockCapability::createSecretLock(
 			const SecretLockDescriptor& descriptor,
-			Timestamp deadline) const {
+			Timestamp deadline) {
 		const auto& senderKeyPair = accounts().getKeyPair(descriptor.SenderId);
 		auto recipientAddress = extensions::CopyToUnresolvedAddress(accounts().getAddress(descriptor.RecipientId));
 
@@ -104,9 +91,10 @@ namespace catapult { namespace test {
 		return SignWithDeadline(std::move(pTransaction), senderKeyPair, deadline);
 	}
 
-	model::UniqueEntityPtr<model::Transaction> SecretLockTransactionsBuilder::createSecretProof(
+
+	model::UniqueEntityPtr<model::Transaction> TransactionBuilderSecretLockCapability::createSecretProof(
 			const SecretProofDescriptor& descriptor,
-			Timestamp deadline) const {
+			Timestamp deadline) {
 		const auto& senderKeyPair = accounts().getKeyPair(descriptor.SenderId);
 		auto recipientAddress = extensions::CopyToUnresolvedAddress(accounts().getAddress(descriptor.RecipientId));
 

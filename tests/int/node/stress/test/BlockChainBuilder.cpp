@@ -18,6 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/cache_core/ImportanceView.h"
+#include "catapult/cache_core/AccountStateCache.h"
 #include "BlockChainBuilder.h"
 #include "sdk/src/extensions/BlockExtensions.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
@@ -35,36 +37,36 @@ namespace catapult { namespace test {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 	}
 
-	BlockChainBuilder::BlockChainBuilder(const Accounts& accounts, StateHashCalculator& stateHashCalculator)
-			: BlockChainBuilder(accounts, stateHashCalculator, CreatePrototypicalNetworkConfiguration())
+	BlockChainBuilder::BlockChainBuilder(
+			const Accounts& accounts,
+			StateHashCalculator& stateHashCalculator,
+			std::shared_ptr<config::BlockchainConfigurationHolder> configHolder,
+			const cache::AccountStateCache* accountStateCache)
+			: BlockChainBuilder(accounts, stateHashCalculator, configHolder, accountStateCache, stateHashCalculator.dataDirectory())
 	{}
 
 	BlockChainBuilder::BlockChainBuilder(
 			const Accounts& accounts,
 			StateHashCalculator& stateHashCalculator,
-			const model::NetworkConfiguration& config)
-			: BlockChainBuilder(accounts, stateHashCalculator, config, stateHashCalculator.dataDirectory())
-	{}
-
-	BlockChainBuilder::BlockChainBuilder(
-			const Accounts& accounts,
-			StateHashCalculator& stateHashCalculator,
-			const model::NetworkConfiguration& config,
+			std::shared_ptr<config::BlockchainConfigurationHolder> configHolder,
+			const cache::AccountStateCache* accountStateCache,
 			const std::string& resourcesPath)
-			: BlockChainBuilder(accounts, stateHashCalculator, config, resourcesPath, false)
+			: BlockChainBuilder(accounts, stateHashCalculator, configHolder, accountStateCache, resourcesPath, false)
 	{}
 
 	BlockChainBuilder::BlockChainBuilder(
 			const Accounts& accounts,
 			StateHashCalculator& stateHashCalculator,
-			const model::NetworkConfiguration& config,
+			std::shared_ptr<config::BlockchainConfigurationHolder> configHolder,
+			const cache::AccountStateCache* accountStateCache,
 			const std::string& resourcesPath,
 			bool isChained)
 			: m_pAccounts(&accounts)
 			, m_pStateHashCalculator(&stateHashCalculator)
 			, m_blockTimeInterval(utils::TimeSpan::FromSeconds(60))
 			, m_blockReceiptsHashCalculator([](const auto&) { return Hash256(); })
-			, m_config(config) {
+			, m_pConfigHolder(configHolder)
+			, m_pAccountStateCache(accountStateCache){
 		if (isChained)
 			return;
 
@@ -100,7 +102,7 @@ namespace catapult { namespace test {
 
 	BlockChainBuilder BlockChainBuilder::createChainedBuilder(StateHashCalculator& stateHashCalculator) const {
 		// resources directory is not used when creating chained builder
-		auto builder = BlockChainBuilder(*m_pAccounts, stateHashCalculator, m_config, "", true);
+		auto builder = BlockChainBuilder(*m_pAccounts, stateHashCalculator, m_pConfigHolder, m_pAccountStateCache, "", true);
 		builder.m_pTailBlockElement = m_pTailBlockElement;
 		builder.m_pParentBlockElement = m_pTailBlockElement;
 		builder.m_difficulties = m_difficulties;
@@ -109,7 +111,7 @@ namespace catapult { namespace test {
 
 	BlockChainBuilder BlockChainBuilder::createChainedBuilder(StateHashCalculator& stateHashCalculator, const model::Block& block) const {
 		// resources directory is not used when creating chained builder
-		auto builder = BlockChainBuilder(*m_pAccounts, stateHashCalculator, m_config, "", true);
+		auto builder = BlockChainBuilder(*m_pAccounts, stateHashCalculator, m_pConfigHolder, m_pAccountStateCache, "", true);
 		builder.m_pTailBlockElement = ToSharedBlockElement(m_pTailBlockElement->GenerationHash, block);
 		builder.m_pParentBlockElement = builder.m_pTailBlockElement;
 		builder.m_difficulties = m_difficulties;
@@ -150,7 +152,7 @@ namespace catapult { namespace test {
 	void BlockChainBuilder::pushDifficulty(const model::Block& block) {
 		m_difficulties.insert(state::BlockDifficultyInfo(block.Height, block.Timestamp, block.Difficulty));
 
-		if (m_difficulties.size() > m_config.MaxDifficultyBlocks)
+		if (m_difficulties.size() > m_pConfigHolder->Config(block.Height).Network.MaxDifficultyBlocks)
 			m_difficulties.erase(m_difficulties.cbegin());
 	}
 
@@ -161,7 +163,7 @@ namespace catapult { namespace test {
 		auto difficulty = chain::CalculateDifficulty(
 			cache::DifficultyInfoRange(m_difficulties.cbegin(), m_difficulties.cend()),
 			state::BlockDifficultyInfo(context.BlockHeight + Height(1), timestamp, Difficulty()),
-			m_config
+			m_pConfigHolder->Config(context.BlockHeight + Height(1)).Network
 		);
 
 		auto signer = findBlockSigner(context, timestamp, difficulty);
@@ -181,10 +183,12 @@ namespace catapult { namespace test {
 			const model::PreviousBlockContext& context,
 			Timestamp timestamp,
 			Difficulty difficulty) {
-		auto pConfigHolder = config::CreateMockConfigurationHolder(m_config);
-		chain::BlockHitPredicate hitPredicate(pConfigHolder, [](const auto&, auto) {
-			// to simplfy tests, just return a constant importance
-			return Importance(8'999'999'998'000'000);
+
+		chain::BlockHitPredicate hitPredicate(m_pConfigHolder, [&accountStateCache = *m_pAccountStateCache](const auto& key, auto height) {
+		  auto lockedCacheView = accountStateCache.createView(height);
+		  cache::ReadOnlyAccountStateCache readOnlyCache(*lockedCacheView);
+		  cache::ImportanceView view(readOnlyCache);
+		  return view.getAccountImportanceOrDefault(key, height);
 		});
 
 		auto i = 0u;
@@ -193,7 +197,7 @@ namespace catapult { namespace test {
 			if (0u == i++)
 				continue;
 			// all account versions should be the same as what is set in the configuration at this point
-			auto keyPair = crypto::KeyPair::FromString(pPrivateKeyString, pConfigHolder->Config().Network.AccountVersion);
+			auto keyPair = crypto::KeyPair::FromString(pPrivateKeyString, m_pConfigHolder->Config().Network.AccountVersion);
 
 			chain::BlockHitContext blockHitContext;
 			blockHitContext.GenerationHash = model::CalculateGenerationHash(context.GenerationHash, keyPair.publicKey());

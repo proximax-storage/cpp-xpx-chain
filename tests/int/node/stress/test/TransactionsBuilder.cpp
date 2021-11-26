@@ -19,64 +19,56 @@
 **/
 
 #include "TransactionsBuilder.h"
+#include "sdk/src/extensions/ConversionExtensions.h"
+#include "sdk/src/extensions/TransactionExtensions.h"
+#include "plugins/txes/namespace/src/model/NamespaceIdGenerator.h"
 #include "tests/test/local/RealTransactionFactory.h"
+#include "tests/test/nodeps/Nemesis.h"
 
 namespace catapult { namespace test {
 
+
+
 	// region ctor
 
-	TransactionsBuilder::TransactionsBuilder(const Accounts& accounts) : BasicTransactionsBuilder(accounts)
+	TransactionsBuilder::TransactionsBuilder(const Accounts& accounts) : m_accounts(accounts)
 	{}
 
 	// endregion
 
-	// region generate
+	// region TransactionsGenerator
 
-	model::UniqueEntityPtr<model::Transaction> TransactionsBuilder::generate(
-			uint32_t descriptorType,
-			const std::shared_ptr<const void>& pDescriptor,
-			Timestamp deadline) const {
-		switch (static_cast<DescriptorType>(descriptorType)) {
-		case DescriptorType::Namespace:
-			return createRegisterNamespace(CastToDescriptor<NamespaceDescriptor>(pDescriptor), deadline);
+	size_t TransactionsBuilder::size() const {
+		return m_transactionDescriptorPairs.size();
+	}
 
-		case DescriptorType::Alias:
-			return createAddressAlias(CastToDescriptor<NamespaceDescriptor>(pDescriptor), deadline);
-		}
+	model::UniqueEntityPtr<model::Transaction> TransactionsBuilder::generate(uint32_t descriptorType, const std::shared_ptr<const void>& pDescriptor, Timestamp deadline) const {
+		return m_generators.find(descriptorType)->second(pDescriptor, deadline);
+	}
+	model::UniqueEntityPtr<model::Transaction> TransactionsBuilder::generateAt(size_t index, Timestamp deadline) const {
+		const auto& pair = m_transactionDescriptorPairs[index];
+		auto pTransaction = generate(pair.first, pair.second, deadline);
+		if (pTransaction)
+			return pTransaction;
 
-		return nullptr;
+		CATAPULT_THROW_INVALID_ARGUMENT_1("cannot generate unknown transaction type", pair.first);
 	}
 
 	// endregion
 
-	// region add / create
 
-	void TransactionsBuilder::addNamespace(size_t ownerId, const std::string& name, BlockDuration duration, size_t aliasId) {
-		auto descriptor = NamespaceDescriptor{ ownerId, name, duration, aliasId };
-		add(DescriptorType::Namespace, descriptor);
 
-		if (0 != descriptor.AddressAliasId)
-			add(DescriptorType::Alias, descriptor);
+	// region protected
+
+	const Accounts& TransactionsBuilder::accounts() const {
+		return m_accounts;
 	}
 
-	model::UniqueEntityPtr<model::Transaction> TransactionsBuilder::createRegisterNamespace(
-			const NamespaceDescriptor& descriptor,
-			Timestamp deadline) const {
-		const auto& ownerKeyPair = accounts().getKeyPair(descriptor.OwnerId);
-
-		auto pTransaction = CreateRegisterRootNamespaceTransaction(ownerKeyPair, descriptor.Name, descriptor.Duration);
-		return SignWithDeadline(std::move(pTransaction), ownerKeyPair, deadline);
-	}
-
-	model::UniqueEntityPtr<model::Transaction> TransactionsBuilder::createAddressAlias(
-			const NamespaceDescriptor& descriptor,
-			Timestamp deadline) const {
-		const auto& ownerKeyPair = accounts().getKeyPair(descriptor.OwnerId);
-		const auto& aliasedAddress = accounts().getAddress(descriptor.AddressAliasId);
-
-		auto pTransaction = CreateRootAddressAliasTransaction(ownerKeyPair, descriptor.Name, aliasedAddress);
-		return SignWithDeadline(std::move(pTransaction), ownerKeyPair, deadline);
+	const std::pair<uint32_t, std::shared_ptr<const void>>& TransactionsBuilder::getAt(size_t index) const {
+		return m_transactionDescriptorPairs[index];
 	}
 
 	// endregion
+
+
 }}

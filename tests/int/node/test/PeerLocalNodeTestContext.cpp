@@ -71,6 +71,9 @@ namespace catapult { namespace test {
 		return m_context.dataDirectory();
 	}
 
+	std::shared_ptr<config::BlockchainConfigurationHolder> PeerLocalNodeTestContext::configHolder() {
+		return m_context.configHolder();
+	}
 	PeerLocalNodeStats PeerLocalNodeTestContext::stats() const {
 		return m_context.stats();
 	}
@@ -78,6 +81,10 @@ namespace catapult { namespace test {
 	Height PeerLocalNodeTestContext::height() const {
 		ExternalSourceConnection connection;
 		return GetLocalNodeHeightViaApi(connection);
+	}
+
+	std::string PeerLocalNodeTestContext::resourcesDirectory() const {
+		return m_context.resourcesDirectory();
 	}
 
 	Height PeerLocalNodeTestContext::loadSavedStateChainHeight() const {

@@ -30,15 +30,30 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a container with \a numAccounts accounts.
 		explicit Accounts(size_t numAccounts, uint32_t otherAccountsVersion, uint32_t defaultAccountVersion = 0);
+		explicit Accounts(crypto::KeyPair nemesisKeyPair, size_t numAccounts, uint32_t otherAccountsVersion, uint32_t defaultAccountVersion = 0);
+		using AccountKeys = std::vector<std::pair<crypto::KeyPair, uint32_t>>;
+	public:
+		using iterator = AccountKeys::iterator;
+		using const_iterator = AccountKeys::const_iterator;
 
+		iterator begin() { return m_keyPairs.begin(); }
+		iterator end() { return m_keyPairs.end(); }
+		const_iterator begin() const { return m_keyPairs.begin(); }
+		const_iterator end() const { return m_keyPairs.end(); }
+		const_iterator cbegin() const { return m_keyPairs.cbegin(); }
+		const_iterator cend() const { return m_keyPairs.cend(); }
 	public:
 		/// Gets the address for the \a id account.
 		Address getAddress(size_t id) const;
+
+		/// Gets the address for the \a id account.
+		const crypto::KeyPair& getNemesisKeyPair() const;
 
 		/// Gets the key pair for the \a id account.
 		const crypto::KeyPair& getKeyPair(size_t id) const;
 
 	private:
-		std::vector<crypto::KeyPair> m_keyPairs;
+		std::vector<std::pair<crypto::KeyPair, uint32_t>> m_keyPairs;
+		std::optional<crypto::KeyPair> m_nemesisKeyPair;
 	};
 }}

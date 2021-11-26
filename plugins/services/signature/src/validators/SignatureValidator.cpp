@@ -33,13 +33,13 @@ namespace catapult { namespace validators {
 		if(account)
 		{
 			/// Locked accounts can no longer sign
-			if(account->get().IsLocked())
+			if(account->IsLocked())
 				return Failure_Signature_Not_Verifiable;
-			if(!utils::AccountVersionFeatureResolver::IsAccountShemeCompatible(account->get().GetVersion(), notification.DerivationScheme)) return Failure_Signature_Invalid_Version;
+			if(!utils::AccountVersionFeatureResolver::IsAccountShemeCompatible(account->GetVersion(), notification.DerivationScheme)) return Failure_Signature_Invalid_Version;
 		}
-		else if(!utils::AccountVersionFeatureResolver::MinimumVersionHasCompatibleDerivationScheme(notification.DerivationScheme, context.Config.Network.MinimumAccountVersion, context.Config.Network.AccountVersion))
+		// If
+		if(!utils::AccountVersionFeatureResolver::MinimumVersionHasCompatibleDerivationScheme(notification.DerivationScheme, context.Config.Network.MinimumAccountVersion, context.Config.Network.AccountVersion))
 		{
-			//Make sure that accounts cannot be created if they are using a derivation scheme older than the current active one
 			return Failure_Signature_Invalid_Version;
 		}
 		auto isVerified = model::SignatureNotification<1>::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode

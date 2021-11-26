@@ -60,6 +60,8 @@ namespace catapult { namespace test {
 		CopyFile(destinationResourcesPath, "config-networkheight.properties");
 		CopyFile(destinationResourcesPath, "config-task.properties");
 
+		CopyFile(destinationResourcesPath, "config-network.properties");
+		CopyFile(destinationResourcesPath, "supported-entities.json");
 		// don't copy the harvesting configuration if an api node is being simulated
 		if (HasFlag(NodeFlag::Simulated_Api, nodeFlag))
 			return;

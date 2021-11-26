@@ -29,21 +29,31 @@ namespace catapult { namespace test {
 	Accounts::Accounts(size_t numAccounts, uint32_t otherAccountsVersion, uint32_t defaultAccountVersion) {
 		if (0 == numAccounts)
 			CATAPULT_THROW_INVALID_ARGUMENT("must create at least one account");
-
-		m_keyPairs.push_back(crypto::KeyPair::FromString(Mijin_Test_Private_Keys[0], defaultAccountVersion ? defaultAccountVersion : defaultAccountVersion));
+		auto defAcc = defaultAccountVersion ? defaultAccountVersion : defaultAccountVersion;
+		m_keyPairs.push_back(std::make_pair(crypto::KeyPair::FromString(Mijin_Test_Private_Keys[0], defAcc),defAcc));
 		for (auto i = 0u; i < numAccounts - 1; ++i)
-			m_keyPairs.push_back(GenerateKeyPair(otherAccountsVersion));
+			m_keyPairs.push_back(std::make_pair(GenerateKeyPair(otherAccountsVersion), otherAccountsVersion));
+	}
+
+	Accounts::Accounts(crypto::KeyPair signer, size_t numAccounts, uint32_t otherAccountsVersion, uint32_t defaultAccountVersion) : Accounts(numAccounts, otherAccountsVersion, defaultAccountVersion) {
+		m_nemesisKeyPair = std::make_optional(std::move(signer));
 	}
 
 	Address Accounts::getAddress(size_t id) const {
 		return model::PublicKeyToAddress(getKeyPair(id).publicKey(), model::NetworkIdentifier::Mijin_Test);
 	}
 
+	const crypto::KeyPair& Accounts::getNemesisKeyPair() const
+	{
+		if(!m_nemesisKeyPair)
+			CATAPULT_THROW_RUNTIME_ERROR("Nemesis key pair has not been provided!");
+		return m_nemesisKeyPair.value();
+	}
 	const crypto::KeyPair& Accounts::getKeyPair(size_t id) const {
 		if (id >= m_keyPairs.size())
 			CATAPULT_THROW_INVALID_ARGUMENT_1("invalid account id", id);
 
-		return m_keyPairs[id];
+		return m_keyPairs[id].first;
 	}
 }}
 

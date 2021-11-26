@@ -25,6 +25,7 @@
 #include "catapult/model/BlockUtils.h"
 #include "catapult/state/BlockDifficultyInfo.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
+#include "catapult/cache_core/AccountStateCache.h"
 #include <set>
 
 namespace catapult { namespace test {
@@ -36,31 +37,34 @@ namespace catapult { namespace test {
 		using BlockReceiptsHashCalculator = std::function<Hash256 (const model::Block&)>;
 
 	public:
-		/// Creates a builder around \a accounts and \a stateHashCalculator.
-		BlockChainBuilder(const Accounts& accounts, StateHashCalculator& stateHashCalculator);
 
 		/// Creates a builder around \a accounts, \a stateHashCalculator and \a config.
 		BlockChainBuilder(
 				const Accounts& accounts,
 				StateHashCalculator& stateHashCalculator,
-				const model::NetworkConfiguration& config);
+				std::shared_ptr<config::BlockchainConfigurationHolder> configHolder,
+				const cache::AccountStateCache* accountStateCache);
 
 		/// Creates a builder around \a accounts, \a stateHashCalculator, \a config and explicit \a resourcesPath.
 		BlockChainBuilder(
 				const Accounts& accounts,
 				StateHashCalculator& stateHashCalculator,
-				const model::NetworkConfiguration& config,
+				std::shared_ptr<config::BlockchainConfigurationHolder> configHolder,
+				const cache::AccountStateCache* accountStateCache,
 				const std::string& resourcesPath);
 
 	private:
 		BlockChainBuilder(
 				const Accounts& accounts,
 				StateHashCalculator& stateHashCalculator,
-				const model::NetworkConfiguration& config,
+				std::shared_ptr<config::BlockchainConfigurationHolder> configHolder,
+				const cache::AccountStateCache* accountStateCache,
 				const std::string& resourcesPath,
 				bool isChained);
 
 	public:
+
+
 		/// Sets the time between blocks to \a blockTimeInterval.
 		void setBlockTimeInterval(utils::TimeSpan blockTimeInterval);
 
@@ -111,6 +115,7 @@ namespace catapult { namespace test {
 
 		utils::TimeSpan m_blockTimeInterval;
 		BlockReceiptsHashCalculator m_blockReceiptsHashCalculator;
-		model::NetworkConfiguration m_config;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
+		const cache::AccountStateCache* m_pAccountStateCache;
 	};
 }}

@@ -19,46 +19,69 @@
 **/
 
 #pragma once
-#include "BasicTransactionsBuilder.h"
+#include "Accounts.h"
+#include "TransactionsGenerator.h"
+#include <vector>
 
 namespace catapult { namespace test {
 
-	/// Transactions builder and generator for transfer and namespace transactions.
-	class TransactionsBuilder : public BasicTransactionsBuilder {
-	private:
-		// region descriptors
+	/// Basic transactions builder and generator for transfer transactions.
+	using TransactionGenerator = std::function<model::UniqueEntityPtr<model::Transaction>(const std::shared_ptr<const void>&, Timestamp)>;
+	class TransactionBuilderCapability;
 
-		struct NamespaceDescriptor {
-			size_t OwnerId;
-			std::string Name;
-			BlockDuration Duration;
-			size_t AddressAliasId; // optional
-		};
-
-		// endregion
-
+	class TransactionsBuilder : public TransactionsGenerator {
+		friend TransactionBuilderCapability;
 	public:
 		/// Creates a builder around \a accounts.
 		explicit TransactionsBuilder(const Accounts& accounts);
 
+	public:
+		// TransactionsGenerator
+		size_t size() const override;
+		model::UniqueEntityPtr<model::Transaction> generateAt(size_t index, Timestamp deadline) const override;
+
+	public:
+
+		template<typename TDescriptorType>
+		void registerDescriptor(TDescriptorType descriptorType, TransactionGenerator generator)
+		{
+			m_generators.emplace(utils::to_underlying_type(descriptorType), std::move(generator));
+		}
+
+		template<typename TCapability>
+		std::shared_ptr<TCapability> getCapability()
+		{
+			auto capability = std::make_shared<TCapability>(*this);
+			capability->registerHooks();
+			return capability;
+		}
+
+	protected:
+		/// Gets accounts.
+		const Accounts& accounts() const;
+
+		/// Gets transaction descriptor pair at \ index.
+		const std::pair<uint32_t, std::shared_ptr<const void>>& getAt(size_t index) const;
+
+		/// Adds transaction described by \a descriptor with descriptor type (\a descriptorType).
+		template<typename TDescriptorType, typename TDescriptor>
+		void add(TDescriptorType descriptorType, const TDescriptor& descriptor) {
+			m_transactionDescriptorPairs.emplace_back(
+					utils::to_underlying_type(descriptorType),
+					std::make_shared<TDescriptor>(descriptor));
+		}
+
 	private:
-		// BasicTransactionsBuilder
+		/// Generates transaction with specified \a deadline given descriptor (\a pDescriptor) and descriptor type (\a descriptorType).
 		model::UniqueEntityPtr<model::Transaction> generate(
 				uint32_t descriptorType,
 				const std::shared_ptr<const void>& pDescriptor,
-				Timestamp deadline) const override;
-
-	public:
-		/// Adds a root namespace registration for namespace \a name by \a ownerId for specified \a duration,
-		/// optionally setting an alias for \a aliasId.
-		void addNamespace(size_t ownerId, const std::string& name, BlockDuration duration, size_t aliasId = 0);
+				Timestamp deadline) const;
 
 	private:
-		model::UniqueEntityPtr<model::Transaction> createRegisterNamespace(const NamespaceDescriptor& descriptor, Timestamp deadline) const;
+		const Accounts& m_accounts;
 
-		model::UniqueEntityPtr<model::Transaction> createAddressAlias(const NamespaceDescriptor& descriptor, Timestamp deadline) const;
-
-	private:
-		enum class DescriptorType { Namespace = 1, Alias };
+		std::map<uint32_t, TransactionGenerator> m_generators;
+		std::vector<std::pair<uint32_t, std::shared_ptr<const void>>> m_transactionDescriptorPairs;
 	};
 }}

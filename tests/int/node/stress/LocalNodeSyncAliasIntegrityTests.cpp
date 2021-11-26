@@ -19,6 +19,8 @@
 **/
 
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
+#include "tests/int/node/stress/test/TransactionBuilderNamespaceCapability.h"
+#include "tests/int/node/stress/test/TransactionBuilderTransferCapability.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
 #include "tests/TestHarness.h"
@@ -48,25 +50,28 @@ namespace catapult { namespace local {
 			// - prepare transactions
 			test::Accounts accounts(3, 1, 1);
 			test::TransactionsBuilder transactionsBuilder(accounts);
-
+			auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+			auto namespaceBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNamespaceCapability>();
 			// - make transfers to the accounts to be aliased so that they're in the account state cache
-			transactionsBuilder.addTransfer(0, 1, Amount(1));
-			transactionsBuilder.addTransfer(0, 2, Amount(1));
+			transferBuilder->addTransfer(0, 1, Amount(1));
+			transferBuilder->addTransfer(0, 2, Amount(1));
 
 			// -  make root namespaces and assign address aliases to each one
-			transactionsBuilder.addNamespace(0, "foo", BlockDuration(12), 1); // root "foo" namespace with alias for account 1
-			transactionsBuilder.addNamespace(0, "bar", BlockDuration(12), 2); // root "bar" namespace with alias for account 2
+			namespaceBuilder->addNamespace(0, "foo", BlockDuration(12), 1); // root "foo" namespace with alias for account 1
+			namespaceBuilder->addNamespace(0, "bar", BlockDuration(12), 2); // root "bar" namespace with alias for account 2
 
 			// - send direct
-			transactionsBuilder.addTransfer(0, 1, Amount(1'000'000));
-			transactionsBuilder.addTransfer(0, 2, Amount(900'000));
+			transferBuilder->addTransfer(0, 1, Amount(1'000'000));
+			transferBuilder->addTransfer(0, 2, Amount(900'000));
 
 			// - send via alias
-			transactionsBuilder.addTransfer(0, "foo", Amount(700'000));
-			transactionsBuilder.addTransfer(0, "bar", Amount(400'000));
+			transferBuilder->addTransfer(0, "foo", Amount(700'000));
+			transferBuilder->addTransfer(0, "bar", Amount(400'000));
 
 			auto stateHashCalculator = context.createStateHashCalculator();
-			BlockChainBuilder builder(accounts, stateHashCalculator);
+			auto& cache = context.localNode().cache();
+			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
 			auto pBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 
 			// Act:
@@ -147,12 +152,14 @@ namespace catapult { namespace local {
 				size_t aliasId2) {
 			// 1. make root namespaces and assign address aliases to each one
 			test::TransactionsBuilder transactionsBuilder(accounts);
-			transactionsBuilder.addNamespace(0, "foo", BlockDuration(12), aliasId1); // root "foo" namespace with account `aliasId1` alias
-			transactionsBuilder.addNamespace(0, "bar", BlockDuration(12), aliasId2); // root "bar" namespace with account `aliasId2` alias
+			auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+			auto namespaceBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNamespaceCapability>();
+			namespaceBuilder->addNamespace(0, "foo", BlockDuration(12), aliasId1); // root "foo" namespace with account `aliasId1` alias
+			namespaceBuilder->addNamespace(0, "bar", BlockDuration(12), aliasId2); // root "bar" namespace with account `aliasId2` alias
 
 			// 2. send via alias
-			transactionsBuilder.addTransfer(0, "foo", Amount(700'000));
-			transactionsBuilder.addTransfer(0, "bar", Amount(400'000));
+			transferBuilder->addTransfer(0, "foo", Amount(700'000));
+			transferBuilder->addTransfer(0, "bar", Amount(400'000));
 
 			// 3. create block
 			auto stateHashCalculator = context.createStateHashCalculator();
@@ -173,12 +180,16 @@ namespace catapult { namespace local {
 			Blocks seedBlocks;
 			{
 				test::TransactionsBuilder transactionsBuilder(accounts);
-				transactionsBuilder.addTransfer(0, 1, Amount(1));
-				transactionsBuilder.addTransfer(0, 2, Amount(1));
-				transactionsBuilder.addTransfer(0, 3, Amount(1));
+				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+				transferBuilder->addTransfer(0, 1, Amount(1));
+				transferBuilder->addTransfer(0, 2, Amount(1));
+				transferBuilder->addTransfer(0, 3, Amount(1));
 
 				auto stateHashCalculator = context.createStateHashCalculator();
-				BlockChainBuilder builder(accounts, stateHashCalculator);
+				auto& cache = context.localNode().cache();
+				auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+
+				BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
 				auto pBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 
 				test::ExternalSourceConnection connection;
