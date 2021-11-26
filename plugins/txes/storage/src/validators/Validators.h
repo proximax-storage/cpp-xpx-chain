@@ -10,6 +10,7 @@
 #include "catapult/validators/ValidatorTypes.h"
 #include "catapult/model/StorageNotifications.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "src/model/InternalStorageNotifications.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/ReplicatorCache.h"
@@ -29,8 +30,10 @@ namespace catapult { namespace validators {
 	/// - the drive does not exist
 	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector);
 
-	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
-	/// -
+	/// A validator implementation that applies to drive data modification notifications and validates that:
+	/// - respective drive exists
+	/// - signer is the drive owner
+	/// - modification has not been added yet
 	DECLARE_STATEFUL_VALIDATOR(DataModification, model::DataModificationNotification<1>)();
 
 	/// A validator implementation that applies to drive data modification approval notifications and validates that:
@@ -47,8 +50,8 @@ namespace catapult { namespace validators {
 	/// - supplied BLS key doesn't appear in BLS keys cache
 	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
 
-	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
-	/// -
+	/// A validator implementation that applies to drive replicator offboarding notifications and validates that:
+	/// - the replicator public key is removed
 	DECLARE_STATEFUL_VALIDATOR(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)();
 
 	/// A validator implementation that applies to drive finish download notifications and validates that:
@@ -104,4 +107,30 @@ namespace catapult { namespace validators {
 	/// - respective download channel exists
 	/// - account states of the download channel and its consumer exist
 	DECLARE_STATEFUL_VALIDATOR(DownloadChannelRefund, model::DownloadChannelRefundNotification<1>)();
+
+	/// A validator implementation that applies to drive stream start notifications and validates that:
+	/// - respective drive exists
+	/// - signer is the drive owner
+	/// - stream has not been added yet
+	DECLARE_STATEFUL_VALIDATOR(StreamStart, model::StreamStartNotification<1>)();
+
+	/// A validator implementation that applies to drive stream start notifications and validates that:
+	/// - respective drive exists
+	/// - signer is the drive owner
+	/// - respective stream is present in activeDataModifications
+	/// - respective stream is the first (oldest) element in activeDataModifications
+	/// - respective stream has not been finished yet
+	/// - actual upload size does not exceed expected upload size
+	DECLARE_STATEFUL_VALIDATOR(StreamFinish, model::StreamFinishNotification<1>)();
+
+	/// A validator implementation that applies to drive stream start notifications and validates that:
+	/// - respective drive exists
+	/// - respective stream exists
+	/// - respective stream has not been finished yet
+	DECLARE_STATEFUL_VALIDATOR(StreamPayment, model::StreamPaymentNotification<1>)();
+
+    /// A validator implementation that applies to end drive verification notifications and validates that:
+	/// - respective drive exists
+    /// - All signers are in the Confirmed Storage State
+    DECLARE_STATEFUL_VALIDATOR(EndDriveVerification, model::EndDriveVerificationNotification<1>)();
 }}

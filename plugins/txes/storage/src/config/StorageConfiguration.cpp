@@ -24,14 +24,22 @@ namespace catapult { namespace config {
 
 		config.MinDriveSize = utils::FileSize::FromMegabytes(1);
 		TRY_LOAD_CHAIN_PROPERTY(MinDriveSize);
+		config.MaxDriveSize = utils::FileSize::FromTerabytes(10);
+		TRY_LOAD_CHAIN_PROPERTY(MaxDriveSize);
+		config.MaxModificationSize = utils::FileSize::FromTerabytes(10);
+		TRY_LOAD_CHAIN_PROPERTY(MaxModificationSize);
 		config.MinReplicatorCount = 1;
 		TRY_LOAD_CHAIN_PROPERTY(MinReplicatorCount);
 		config.MaxFreeDownloadSize = utils::FileSize::FromMegabytes(1);
 		TRY_LOAD_CHAIN_PROPERTY(MaxFreeDownloadSize);
+		config.MaxDownloadSize = utils::FileSize::FromTerabytes(10);
+		TRY_LOAD_CHAIN_PROPERTY(MaxDownloadSize);
 		config.StorageBillingPeriod = utils::TimeSpan::FromHours(24 * 7);
 		TRY_LOAD_CHAIN_PROPERTY(StorageBillingPeriod);
 		config.DownloadBillingPeriod = utils::TimeSpan::FromHours(24);
 		TRY_LOAD_CHAIN_PROPERTY(DownloadBillingPeriod);
+		config.ExpectedVerificationFrequency = utils::TimeSpan::FromHours(4);
+		TRY_LOAD_CHAIN_PROPERTY(ExpectedVerificationFrequency);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

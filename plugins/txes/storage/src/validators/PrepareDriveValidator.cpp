@@ -20,6 +20,10 @@ namespace catapult { namespace validators {
 			if (utils::FileSize::FromMegabytes(notification.DriveSize) < pluginConfig.MinDriveSize)
 				return Failure_Storage_Drive_Size_Insufficient;
 
+			// Check if drive size <= maxDriveSize
+			if (utils::FileSize::FromMegabytes(notification.DriveSize) > pluginConfig.MaxDriveSize)
+				return Failure_Storage_Drive_Size_Excessive;
+
 			// Check if number of replicators >= minReplicatorCount
 			if (notification.ReplicatorCount < pluginConfig.MinReplicatorCount)
 				return Failure_Storage_Replicator_Count_Insufficient;
@@ -31,9 +35,6 @@ namespace catapult { namespace validators {
 			auto replicatorCount = pKeyCollector->keys().size();
 			if (!replicatorCount)
 				return Failure_Storage_No_Replicator;
-
-			if (replicatorCount > 1u)
-				return Failure_Storage_Multiple_Replicators;
 
 			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 			if (!replicatorCache.contains(*pKeyCollector->keys().begin()))

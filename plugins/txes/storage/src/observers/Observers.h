@@ -9,6 +9,7 @@
 #include "src/config/StorageConfiguration.h"
 #include "catapult/model/StorageNotifications.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "src/model/InternalStorageNotifications.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/ReplicatorCache.h"
@@ -54,4 +55,19 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by download channel refund notifications.
 	DECLARE_OBSERVER(DownloadChannelRefund, model::DownloadChannelRefundNotification<1>)();
+
+	/// Observes changes triggered by stream start notifications.
+	DECLARE_OBSERVER(StreamStart, model::StreamStartNotification<1>)();
+
+	/// Observes changes triggered by stream finish notifications.
+	DECLARE_OBSERVER(StreamFinish, model::StreamFinishNotification<1>)();
+
+	/// Observes changes triggered by stream payment notifications.
+	DECLARE_OBSERVER(StreamPayment, model::StreamPaymentNotification<1>)();
+
+	/// Observes changes triggered by start drive verification notifications.
+	DECLARE_OBSERVER(StartDriveVerification, model::StartDriveVerificationNotification<1>)();
+
+	/// Observes changes triggered by end drive verification notifications.
+	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)();
 }}

@@ -21,13 +21,13 @@ namespace catapult { namespace model {
 			// Arrange:
 			auto expectedSize =
 					baseSize // base
-					+ Key_Size // drive key size
 					+ sizeof(uint64_t) // prepaid download size
-					+ sizeof(uint64_t); // transaction fee size
+					+ sizeof(Amount) // feedback fee size
+					+ sizeof(uint16_t); // public keys size
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 48u, sizeof(T));
+			EXPECT_EQ(baseSize + 18u, sizeof(T));
 		}
 
 		template<typename T>
@@ -48,12 +48,13 @@ namespace catapult { namespace model {
 		// Arrange:
 		DownloadTransaction transaction;
 		transaction.Size = 0;
+		transaction.ListOfPublicKeysSize = test::Random16();
 
 		// Act:
 		auto realSize = DownloadTransaction::CalculateRealSize(transaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(DownloadTransaction), realSize);
+		EXPECT_EQ(sizeof(DownloadTransaction) + transaction.ListOfPublicKeysSize * Key_Size, realSize);
 	}
 
 	// endregion

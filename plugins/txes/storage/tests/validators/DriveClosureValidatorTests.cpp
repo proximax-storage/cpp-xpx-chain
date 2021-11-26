@@ -24,7 +24,8 @@ namespace catapult { namespace validators {
         void AssertValidationResult(
                 ValidationResult expectedResult,
                 const state::BcDriveEntry& driveEntry,
-                const Key& driveKey) {
+                const Key& driveKey,
+				const Key& driveOwner) {
             // Arrange:
             auto cache = test::BcDriveCacheFactory::Create();
             {
@@ -33,7 +34,7 @@ namespace catapult { namespace validators {
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(driveKey);
+            Notification notification(driveKey, driveOwner);
             auto pValidator = CreateDriveClosureValidator();
             
             // Act:
@@ -53,18 +54,37 @@ namespace catapult { namespace validators {
         AssertValidationResult(
             Failure_Storage_Drive_Not_Found,
             entry,
-            test::GenerateRandomByteArray<Key>());
+            test::GenerateRandomByteArray<Key>(),
+			test::GenerateRandomByteArray<Key>());
+    }
+
+    TEST(TEST_CLASS, FailureWhenIsNotOwner) {
+    	// Arrange:
+    	Key driveKey = test::GenerateRandomByteArray<Key>();
+    	state::BcDriveEntry entry(driveKey);
+    	Key owner = test::GenerateRandomByteArray<Key>();
+    	entry.setOwner(owner);
+
+    	// Assert:
+    	AssertValidationResult(
+    			Failure_Storage_Is_Not_Owner,
+    			entry,
+    			driveKey,
+    			test::GenerateRandomByteArray<Key>());
     }
 
     TEST(TEST_CLASS, Success) {
         // Arrange:
         Key driveKey = test::GenerateRandomByteArray<Key>();
         state::BcDriveEntry entry(driveKey);
+		Key owner = test::GenerateRandomByteArray<Key>();
+		entry.setOwner(owner);
         
         // Assert:
         AssertValidationResult(
             ValidationResult::Success,
             entry,
-            driveKey);
+            driveKey,
+			owner);
     }
 }}

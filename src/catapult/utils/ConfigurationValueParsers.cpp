@@ -292,6 +292,12 @@ namespace catapult { namespace utils {
 		case 'M':
 			return tryParse(FileSize::FromMegabytes, 2);
 
+		case 'G':
+			return tryParse(FileSize::FromGigabytes, 2);
+
+		case 'T':
+			return tryParse(FileSize::FromTerabytes, 2);
+
 		default:
 			return tryParse(FileSize::FromBytes, 1);
 		}

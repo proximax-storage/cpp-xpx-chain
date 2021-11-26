@@ -277,7 +277,32 @@
 		},
 		{
 			"name": "driveClosure",
-			"type": "18274",
+			"type": "20066",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "replicatorOffboarding",
+			"type": "20066",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "streamStart",
+			"type": "16743",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "streamFinish",
+			"type": "16999",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "streamPayment",
+			"type": "17255",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "endDriveVerification",
+			"type": "20322",
 			"supportedVersions": [1]
 		}
 	]

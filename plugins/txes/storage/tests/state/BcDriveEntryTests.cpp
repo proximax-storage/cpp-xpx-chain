@@ -82,12 +82,16 @@ namespace catapult { namespace state {
 
     TEST(TEST_CLASS, CanAccessActiveDataModification) {
         // Arrange:
-        ActiveDataModification activeDataModification {
+		auto folderNameBytes = test::GenerateRandomDataVector<uint8_t>(512);
+        ActiveDataModification activeDataModification (
             test::GenerateRandomByteArray<Hash256>(),
             test::GenerateRandomByteArray<Key>(),
             test::GenerateRandomByteArray<Hash256>(),
-            test::Random()
-        };
+            test::Random(),
+			test::Random(),
+			std::string(folderNameBytes.begin(), folderNameBytes.end()),
+			test::RandomByte()
+		);
         auto entry = BcDriveEntry(Key());
 
         // Sanity:
@@ -101,17 +105,24 @@ namespace catapult { namespace state {
         EXPECT_EQ(activeDataModification.Id, entry.activeDataModifications().back().Id);
         EXPECT_EQ(activeDataModification.Owner, entry.activeDataModifications().back().Owner);
         EXPECT_EQ(activeDataModification.DownloadDataCdi, entry.activeDataModifications().back().DownloadDataCdi);
-        EXPECT_EQ(activeDataModification.UploadSize, entry.activeDataModifications().back().UploadSize);
-    }
+        EXPECT_EQ(activeDataModification.ExpectedUploadSize, entry.activeDataModifications().back().ExpectedUploadSize);
+		EXPECT_EQ(activeDataModification.ActualUploadSize, entry.activeDataModifications().back().ActualUploadSize);
+		EXPECT_EQ(activeDataModification.FolderName, entry.activeDataModifications().back().FolderName);
+		EXPECT_EQ(activeDataModification.ReadyForApproval, entry.activeDataModifications().back().ReadyForApproval);
+	}
 
     TEST(TEST_CLASS, CanAccessCompletedDataModification) {
         // Arrange:
-        ActiveDataModification activeDataModification {
+		auto folderNameBytes = test::GenerateRandomDataVector<uint8_t>(512);
+        ActiveDataModification activeDataModification(
             test::GenerateRandomByteArray<Hash256>(),
             test::GenerateRandomByteArray<Key>(),
             test::GenerateRandomByteArray<Hash256>(),
-            test::Random()
-        };
+            test::Random(),
+			test::Random(),
+			std::string(folderNameBytes.begin(), folderNameBytes.end()),
+			true
+		);
         CompletedDataModification completedDataModification {
             activeDataModification, DataModificationState::Succeeded
         };
@@ -128,7 +139,9 @@ namespace catapult { namespace state {
         EXPECT_EQ(completedDataModification.Id, entry.completedDataModifications().back().Id);
         EXPECT_EQ(completedDataModification.Owner, entry.completedDataModifications().back().Owner);
         EXPECT_EQ(completedDataModification.DownloadDataCdi, entry.completedDataModifications().back().DownloadDataCdi);
-        EXPECT_EQ(completedDataModification.UploadSize, entry.completedDataModifications().back().UploadSize);
+		EXPECT_EQ(completedDataModification.ExpectedUploadSize, entry.completedDataModifications().back().ExpectedUploadSize);
+		EXPECT_EQ(completedDataModification.ActualUploadSize, entry.completedDataModifications().back().ActualUploadSize);
+		EXPECT_EQ(completedDataModification.FolderName, entry.completedDataModifications().back().FolderName);
         EXPECT_EQ(completedDataModification.State, entry.completedDataModifications().back().State);
     }
 
@@ -146,6 +159,30 @@ namespace catapult { namespace state {
         // Assert:
         ASSERT_EQ(2, entry.replicators().size());
         EXPECT_EQ(replicators, entry.replicators());
+    }
+
+    TEST(TEST_CLASS, CanAccessVerifications) {
+        // Arrange:
+        Verifications verifications = {
+                Verification{
+                    test::GenerateRandomByteArray<Hash256>(),
+                    VerificationState::Pending,
+                    VerificationResults{},
+                }
+        };
+        auto entry = BcDriveEntry(Key());
+
+        // Sanity:
+        ASSERT_TRUE(entry.verifications().empty());
+
+        // Act:
+        entry.verifications() = verifications;
+
+        // Assert:
+        ASSERT_EQ(1, entry.verifications().size());
+        EXPECT_EQ(verifications.front().VerificationTrigger, entry.verifications().front().VerificationTrigger);
+        EXPECT_EQ(verifications.front().Results.size(), entry.verifications().front().Results.size());
+        EXPECT_EQ(verifications.front().State, entry.verifications().front().State);
     }
     
 }}

@@ -81,5 +81,7 @@ namespace catapult { namespace model {
 		DownloadChannel = 0x65,
 		/// BLS relation facility code.
 		BlsKeys = 0x66,
+		/// Streaming facility code
+		Streaming = 0x67,
 	};
 }}
