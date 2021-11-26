@@ -92,7 +92,7 @@ namespace catapult { namespace tools { namespace health {
 		void PrometheusHealthCheck(const std::vector<NodeInfoPointer>& nodeInfos){
 			using namespace prometheus;
 			//prometheus : create a http server running on port 8080
-			Exposer exposer{"127.0.0.1:8080"};
+			Exposer exposer{"0.0.0.0:8080"};
 
 			//prometheus : create a metric registry
 			auto registry = std::make_shared<Registry>();

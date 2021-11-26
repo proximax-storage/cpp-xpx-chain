@@ -25,6 +25,7 @@
 #include <memory>
 #include <thread>
 #include <vector>
+#include <atomic>
 
 namespace catapult { namespace thread {
 
