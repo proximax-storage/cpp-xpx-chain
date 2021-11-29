@@ -4,14 +4,14 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/model/BlockchainUpgradeTransaction.h"
+#include "src/model/AccountV2UpgradeTransaction.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
 
 namespace catapult { namespace model {
 
-	using TransactionType = BlockchainUpgradeTransaction;
+	using TransactionType = AccountV2UpgradeTransaction;
 
 #define TEST_CLASS AccountV2UpgradeTransactionTests
 
@@ -22,11 +22,11 @@ namespace catapult { namespace model {
 		void AssertEntityHasExpectedSize(size_t baseSize) {
 			// Arrange:
 			auto expectedSize = baseSize // base
-					+ sizeof(uint32_t); // Target account public key
+					+ sizeof(Key); // Target account public key
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 16u, sizeof(T));
+			EXPECT_EQ(baseSize + 32u, sizeof(T));
 		}
 
 		template<typename T>
@@ -37,7 +37,7 @@ namespace catapult { namespace model {
 		}
 	}
 
-	ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS(BlockchainUpgrade)
+	ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS(AccountV2Upgrade)
 
 	// endregion
 }}

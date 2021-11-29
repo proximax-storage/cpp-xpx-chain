@@ -52,7 +52,7 @@ namespace catapult { namespace validators {
 				if(networkConfig.AccountVersion < networkConfig.MinimumAccountVersion)
 					return Failure_NetworkConfig_AccountVersion_Less_Than_Minimum;
 
-				if(networkConfig.MinimumAccountVersion < networkConfig.MinimumAccountVersion)
+				if(networkConfig.MinimumAccountVersion < currentNetworkConfig.MinimumAccountVersion)
 					return Failure_NetworkConfig_MinimumAccountVersion_Less_Than_Current;
 				if (100u < networkConfig.HarvestBeneficiaryPercentage)
 					return Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hundred;

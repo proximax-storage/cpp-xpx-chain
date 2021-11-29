@@ -80,7 +80,7 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(2, sub.numNotifications());
+		ASSERT_EQ(1, sub.numNotifications());
 		EXPECT_EQ(BlockchainUpgrade_AccountUpgradeV2_v1_Notification, sub.notificationTypes()[0]);
 	}
 

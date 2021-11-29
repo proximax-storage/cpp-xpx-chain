@@ -13,7 +13,7 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS BlockchainUpgradeValidatorTests
+#define TEST_CLASS AccountV2UpgradeValidatorTests
 
 	DEFINE_COMMON_VALIDATOR_TESTS(AccountV2Upgrade)
 
@@ -37,6 +37,7 @@ namespace catapult { namespace validators {
 			auto delta = cache.createDelta();
 			auto& accountCache = delta.sub<cache::AccountStateCache>();
 			cacheModifier(accountCache);
+			cache.commit(Height(1));
 			model::AccountV2UpgradeNotification<1> notification(signer, newAccountPublicKey);
 			auto pValidator = CreateAccountV2UpgradeValidator();
 
@@ -93,7 +94,7 @@ namespace catapult { namespace validators {
 				test::GenerateRandomByteArray<Key>(),
 				[signerKey](cache::AccountStateCacheDelta& delta){
 				  delta.addAccount(signerKey, Height(1), 1);
-				  auto accountState = delta.find(signerKey).get();
+				  auto& accountState = delta.find(signerKey).get();
 				  accountState.AccountType = state::AccountType::Remote;
 				});
 	}
@@ -109,7 +110,7 @@ namespace catapult { namespace validators {
 				test::GenerateRandomByteArray<Key>(),
 				[signerKey](cache::AccountStateCacheDelta& delta){
 				  delta.addAccount(signerKey, Height(1), 1);
-				  auto accountState = delta.find(signerKey).get();
+				  auto& accountState = delta.find(signerKey).get();
 				  accountState.AccountType = state::AccountType::Locked;
 				});
 	}

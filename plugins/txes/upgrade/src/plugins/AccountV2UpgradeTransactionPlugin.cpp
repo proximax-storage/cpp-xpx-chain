@@ -6,7 +6,7 @@
 
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "BlockchainUpgradeTransactionPlugin.h"
+#include "src/plugins/AccountV2UpgradeTransactionPlugin.h"
 #include "src/model/AccountV2UpgradeTransaction.h"
 #include "src/model/BlockchainUpgradeNotifications.h"
 

@@ -83,7 +83,7 @@ namespace catapult { namespace test {
 			model::PreviousBlockContext context(*pNemesisBlockElement);
 			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
 			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
-			pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
+			pBlock->Difficulty = Difficulty(1200); // Update
 			pBlock->Version = MakeVersion(Network_Identifier, model::BlockHeader::Current_Version);
 			pBlock->FeeInterest = 1;
 			pBlock->FeeInterestDenominator = 2;

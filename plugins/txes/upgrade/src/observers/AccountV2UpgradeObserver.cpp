@@ -44,34 +44,36 @@ namespace {
 
 		originalAccount.AccountType = state::AccountType::Locked;
 	}
+
+	void ExecuteObservation(const Notification& notification, const ObserverContext& context) {
+		/// We will move the entire state of account V1 to the new target account.
+
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+
+		if(NotifyMode::Commit == context.Mode)
+		{
+
+			auto& originalAccount = *cache::GetAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer);
+			state::AccountState newAccount(model::PublicKeyToAddress(notification.NewAccountPublicKey, accountStateCache.networkIdentifier()), context.Height, 2, originalAccount);
+			newAccount.PublicKey = notification.NewAccountPublicKey;
+			TransferGenerateNewState(originalAccount, newAccount, context.Height);
+			accountStateCache.addAccount(newAccount);
+		}
+		else
+		{
+			auto& newAccount = *cache::GetAccountStateByPublicKeyOrAddress(accountStateCache, notification.NewAccountPublicKey);
+			auto& originalAccount = *cache::GetAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer);
+			originalAccount = *newAccount.OldState;
+			accountStateCache.queueRemove(notification.NewAccountPublicKey, newAccount.PublicKeyHeight);
+			accountStateCache.commitRemovals();
+
+		}
+
+	}
 }
 
 
 	DECLARE_OBSERVER(AccountV2Upgrade, Notification)() {
-		return MAKE_OBSERVER(AccountV2Upgrade, Notification, [](const auto& notification, const ObserverContext& context) {
-			/// We will move the entire state of account V1 to the new target account.
-
-			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-
-		  	if(NotifyMode::Commit == context.Mode)
-			{
-
-				auto originalAccount = *cache::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer);
-				state::AccountState newAccount(model::PublicKeyToAddress(notification.NewAccountPublicKey, accountStateCache.networkIdentifier()), context.Height, 2, originalAccount);
-				newAccount.PublicKey = notification.NewAccountPublicKey;
-				TransferGenerateNewState(originalAccount, newAccount, context.Height);
-				accountStateCache.addAccount(newAccount);
-			}
-			else
-			{
-				auto newAccount = *cache::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.NewAccountPublicKey);
-				auto originalAccount = *cache::FindAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer);
-				originalAccount = *newAccount.OldState;
-				accountStateCache.queueRemove(notification.NewAccountPublicKey, newAccount.PublicKeyHeight);
-				accountStateCache.commitRemovals();
-
-			}
-
-		});
+		return MAKE_OBSERVER(AccountV2Upgrade, Notification, ExecuteObservation);
 	}
 }}

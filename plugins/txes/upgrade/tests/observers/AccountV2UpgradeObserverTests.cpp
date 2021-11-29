@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "sdk/src/extensions/MemoryStream.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
 #include "src/observers/Observers.h"
@@ -32,50 +33,71 @@ namespace catapult { namespace observers {
 			ObserverTestContext context(mode, Height(1));
 			auto pObserver = CreateAccountV2UpgradeObserver();
 			auto& delta = context.observerContext().Cache.sub<cache::AccountStateCache>();
-
+			auto remoteKey = test::GenerateRandomByteArray<Key>();
 			crypto::KeyPair signer = test::GenerateKeyPair(1);
 			auto finalTarget = test::GenerateKeyPair(2);
 			auto notification = std::make_unique<Notification>(signer.publicKey(), finalTarget.publicKey());
 
 			auto originalState = std::make_shared<state::AccountState>(model::PublicKeyToAddress(signer.publicKey(), Default_Network_Id), Height(1), 1);
 			originalState->Balances.credit(Harvesting_Mosaic_Id, Amount(1000));
-			originalState->SupplementalPublicKeys.linked().set(test::GenerateRandomByteArray<Key>());
+			originalState->SupplementalPublicKeys.linked().set(remoteKey);
+			originalState->PublicKey = signer.publicKey();
+			originalState->PublicKeyHeight = Height(1);
 			if(mode == NotifyMode::Commit)
 			{
 				// Add signer account
 				delta.addAccount(*originalState);
-				auto account = delta.find(signer.publicKey()).get();
-				account.Balances.credit(Harvesting_Mosaic_Id, Amount(1000));
-				account.SupplementalPublicKeys.linked().set(test::GenerateRandomByteArray<Key>());
 			}
 			else
 			{
 				// Add signer account
 				delta.addAccount(signer.publicKey(), Height(1), 1);
-				auto account = delta.find(signer.publicKey()).get();
+				auto& account = delta.find(signer.publicKey()).get();
 				account.AccountType = state::AccountType::Locked;
 
 				// Add target account
 
-				delta.addAccount(finalTarget.publicKey(), Height(1), 1);
-				auto targetAccount = delta.find(finalTarget.publicKey()).get();
+				delta.addAccount(finalTarget.publicKey(), Height(1), 2);
+				auto& targetAccount = delta.find(finalTarget.publicKey()).get();
 				targetAccount.Balances.credit(Harvesting_Mosaic_Id, Amount(1000));
-				targetAccount.SupplementalPublicKeys.linked().set(test::GenerateRandomByteArray<Key>());
+				targetAccount.SupplementalPublicKeys.linked().set(remoteKey);
 				targetAccount.OldState = originalState;
 			}
 
 
 
 			test::ObserveNotification(*pObserver, *notification, context);
-			// Assert: check the cache
 
+			// Assert: check the cache
 			EXPECT_EQ(mode == NotifyMode::Commit, delta.contains(finalTarget.publicKey()));
 			if (mode == NotifyMode::Commit) {
-				//VERIFY TARGET ACCOUNT
+				auto account = delta.find(signer.publicKey()).get();
+				auto newAccount = delta.find(finalTarget.publicKey()).get();
+				// Verify original account state
+				EXPECT_TRUE(account.IsLocked());
+				EXPECT_TRUE(!account.Balances.size());
+
+				// Verify new account state
+				EXPECT_TRUE(newAccount.OldState);
+				EXPECT_EQ(newAccount.Balances.size(), 1);
+				EXPECT_EQ(newAccount.Balances.get(Harvesting_Mosaic_Id), Amount(1000));
+				EXPECT_EQ(newAccount.SupplementalPublicKeys.linked().get(), remoteKey);
+
 			}
 			else
 			{
 				//VERIFY ORIGINAL ACCOUNT
+				auto account = delta.find(signer.publicKey()).get();
+				auto newAccount = delta.find(finalTarget.publicKey()).tryGet();
+
+				EXPECT_FALSE(newAccount);
+				// Verify original account state
+				EXPECT_FALSE(account.IsLocked());
+				EXPECT_FALSE(account.OldState);
+				EXPECT_EQ(account.Balances.size(), 1);
+				EXPECT_EQ(account.Balances.get(Harvesting_Mosaic_Id), Amount(1000));
+				EXPECT_EQ(account.SupplementalPublicKeys.linked().get(), remoteKey);
+
 			}
 		}
 	}

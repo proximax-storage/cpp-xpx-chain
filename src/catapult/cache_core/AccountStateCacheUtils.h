@@ -42,8 +42,8 @@ namespace catapult { namespace cache {
 			const Key& key,
 			const consumer<const state::AccountState&>& action);
 
-	/// Find an account state by public key or address using a ReadOnlyAccountStateCache \a cache and a \a publicKey. Note: AccountState not owned
+	/// Find an account state by public key or address using a ReadOnlyAccountStateCache \a cache and a \a publicKey and a pointer to a constant copy.
 	std::unique_ptr<const state::AccountState> FindAccountStateByPublicKeyOrAddress(const cache::ReadOnlyAccountStateCache& cache, const Key& publicKey);
-	/// Find an account state by public key or address using a AccountStateCacheDelta \a cache and a \a publicKey. Note: AccountState not owned
-	std::unique_ptr<const state::AccountState> FindAccountStateByPublicKeyOrAddress(const cache::AccountStateCacheDelta& cache, const Key& publicKey);
+	/// Find an account state by public key or address using a AccountStateCacheDelta \a cache and a \a publicKey. Returns a pointer to the actual data. Note: AccountState not owned
+	state::AccountState* GetAccountStateByPublicKeyOrAddress(cache::AccountStateCacheDelta& cache, const Key& publicKey);
 }}

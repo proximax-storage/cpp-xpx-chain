@@ -73,15 +73,15 @@ namespace catapult { namespace cache {
 		return nullptr;
 	}
 
-	std::unique_ptr<const state::AccountState> FindAccountStateByPublicKeyOrAddress(const cache::AccountStateCacheDelta& cache, const Key& publicKey) {
+	state::AccountState* GetAccountStateByPublicKeyOrAddress(cache::AccountStateCacheDelta& cache, const Key& publicKey) {
 		auto accountStateKeyIter = cache.find(publicKey);
 		if (accountStateKeyIter.tryGet())
-			return std::make_unique<const state::AccountState>(accountStateKeyIter.get());
+			return &accountStateKeyIter.get();
 
 		// if state could not be accessed by public key, try searching by address
 		auto accountStateAddressIter = cache.find(model::PublicKeyToAddress(publicKey, cache.networkIdentifier()));
 		if (accountStateAddressIter.tryGet())
-			return std::make_unique<const state::AccountState>(accountStateAddressIter.get());
+			return &accountStateAddressIter.get();
 
 		return nullptr;
 	}
