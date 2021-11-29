@@ -5,7 +5,6 @@
 **/
 
 #include "NotificationHandlers.h"
-#include "plugins/txes/service/src/cache/DriveCache.h"
 
 namespace catapult { namespace notification_handlers {
 

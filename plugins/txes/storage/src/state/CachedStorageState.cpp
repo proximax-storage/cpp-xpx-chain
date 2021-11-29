@@ -24,43 +24,74 @@ namespace catapult { namespace state {
 		auto driveCacheView = cache.sub<cache::BcDriveCache>().createView(cache.height());
 		auto downloadChannelCacheView = cache.sub<cache::DownloadChannelCache>().createView(cache.height());
 
+//		auto replicatorIter = replicatorCacheView->find(replicatorKey);
+//		auto pReplicatorEntry = replicatorIter.tryGet();
+//		if (!pReplicatorEntry)
+//			return replicatorData;
+//
+//		for (const auto& drivePair : pReplicatorEntry->drives()) {
+//			auto driveIter = driveCacheView->find(drivePair.first);
+//			const auto& driveEntry = driveIter.get();
+//
+//			DriveState driveState{
+//				driveEntry.key(),
+//				driveEntry.size(),
+//				driveEntry.usedSize(),
+//				driveEntry.replicators()
+//			};
+//			auto* pDriveState = &driveState;
+//			replicatorData.DrivesStates.emplace_back(driveState);
+//
+//			const auto& activeDataModifications = driveEntry.activeDataModifications();
+//			if (!activeDataModifications.empty()) {
+//				pDriveState->LastDataModification = activeDataModifications.back();
+//				continue;
+//			}
+//
+//			const auto& completedDataModifications = driveEntry.completedDataModifications();
+//			const auto& lastApprovedDataModification = std::find_if(
+//					completedDataModifications.rbegin(),
+//					completedDataModifications.rend(),
+//					[](const state::CompletedDataModification& dataModification) {return dataModification.State == state::DataModificationState::Succeeded;});
+//
+//			if (lastApprovedDataModification == completedDataModifications.rend())
+//				continue;
+//
+//			if (lastApprovedDataModification->Id != drivePair.second.LastApprovedDataModificationId)
+//				pDriveState->LastDataModification = *lastApprovedDataModification;
+//		}
+
+		return replicatorData;
+	}
+
+	const utils::KeySet& CachedStorageState::getDrivesReplicatorsList(const Key& driveKey, cache::CatapultCache& cache) const {
+		auto driveCacheView = cache.sub<cache::BcDriveCache>().createView(cache.height());
+		auto driveIter = driveCacheView->find(driveKey);
+		auto driveEntry = driveIter.tryGet();
+		if (driveEntry)
+			return driveEntry->replicators();
+
+		return utils::KeySet{};
+	}
+
+	const BcDriveEntry* CachedStorageState::getDrive(const Key& driveKey, cache::CatapultCache& cache) const {
+		auto driveCacheView = cache.sub<cache::BcDriveCache>().createView(cache.height());
+		auto driveIter = driveCacheView->find(driveKey);
+		return driveIter.tryGet();
+	}
+
+	const DriveInfo* CachedStorageState::getReplicatorDriveInfo(const Key& replicatorKey, const Key& driveKey, cache::CatapultCache& cache) const {
+		auto replicatorCacheView = cache.sub<cache::ReplicatorCache>().createView(cache.height());
+
 		auto replicatorIter = replicatorCacheView->find(replicatorKey);
 		auto pReplicatorEntry = replicatorIter.tryGet();
 		if (!pReplicatorEntry)
-			return replicatorData;
+			return nullptr;
 
-		for (const auto& drivePair : pReplicatorEntry->drives()) {
-			auto driveIter = driveCacheView->find(drivePair.first);
-			const auto& driveEntry = driveIter.get();
+		auto driveInfoIter = pReplicatorEntry->drives().find(driveKey);
+		if (driveInfoIter == pReplicatorEntry->drives().end())
+			return nullptr;
 
-			DriveState driveState{
-				driveEntry.key(),
-				driveEntry.size(),
-				driveEntry.usedSize(),
-				driveEntry.replicators()
-			};
-			auto* pDriveState = &driveState;
-			replicatorData.DrivesStates.emplace_back(driveState);
-
-			const auto& activeDataModifications = driveEntry.activeDataModifications();
-			if (!activeDataModifications.empty()) {
-				pDriveState->LastDataModification = activeDataModifications.back();
-				continue;
-			}
-
-			const auto& completedDataModifications = driveEntry.completedDataModifications();
-			const auto& lastApprovedDataModification = std::find_if(
-					completedDataModifications.rbegin(),
-					completedDataModifications.rend(),
-					[](const state::CompletedDataModification& dataModification) {return dataModification.State == state::DataModificationState::Succeeded;});
-
-			if (lastApprovedDataModification == completedDataModifications.rend())
-				continue;
-
-			if (lastApprovedDataModification->Id != drivePair.second.LastApprovedDataModificationId)
-				pDriveState->LastDataModification = *lastApprovedDataModification;
-		}
-
-		return replicatorData;
+		return &(*driveInfoIter).second;
 	}
 }}

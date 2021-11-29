@@ -5,6 +5,8 @@
 **/
 
 #pragma once
+
+#include "catapult/state/StorageState.h"
 #include "StorageConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ServiceRegistrar.h"
@@ -23,11 +25,13 @@ namespace catapult { namespace storage {
 				crypto::KeyPair&& keyPair,
 				model::NetworkIdentifier networkIdentifier,
 				const GenerationHash& generationHash,
-				StorageConfiguration&& storageConfig)
+				StorageConfiguration&& storageConfig,
+				state::StorageState& storageState)
 			: m_keyPair(std::move(keyPair))
 			, m_networkIdentifier(networkIdentifier)
 			, m_generationHash(generationHash)
 			, m_storageConfig(std::move(storageConfig))
+			, m_storageState(storageState)
 		{}
 
 	public:
@@ -77,6 +81,7 @@ namespace catapult { namespace storage {
 		GenerationHash m_generationHash;
 		StorageConfiguration m_storageConfig;
 		handlers::TransactionRangeHandler m_transactionRangeHandler;
+		state::StorageState& m_storageState;
 	};
 
 	/// Creates a registrar for the replicator service.

@@ -8,6 +8,7 @@
 #include "catapult/types.h"
 #include "catapult/utils/NonCopyable.h"
 #include "plugins/txes/storage/src/state/BcDriveEntry.h"
+#include "plugins/txes/storage/src/state/ReplicatorEntry.h"
 #include <vector>
 #include <map>
 
@@ -23,7 +24,7 @@ namespace catapult { namespace state {
 	};
 
 	struct DriveState {
-		Key Key;
+		Key DriveKey;
 		uint64_t Size;
 		uint64_t UsedSize;
 		utils::KeySet Replicators;
@@ -43,6 +44,9 @@ namespace catapult { namespace state {
 
 	public:
 		virtual bool isReplicatorRegistered(const Key& key) = 0;
-		virtual ReplicatorData getReplicatorData(const Key& replicatorKey, cache::CatapultCache& m_cache) = 0;
+		virtual ReplicatorData getReplicatorData(const Key& replicatorKey, cache::CatapultCache& cache) = 0;
+		virtual const utils::KeySet& getDrivesReplicatorsList(const Key& driveKey, cache::CatapultCache& cache) const = 0;
+		virtual const BcDriveEntry* getDrive(const Key& driveKey, cache::CatapultCache& cache) const = 0;
+		virtual const DriveInfo* getReplicatorDriveInfo(const Key& replicatorKey, const Key& driveKey, cache::CatapultCache& cache) const = 0;
 	};
 }}

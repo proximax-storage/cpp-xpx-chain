@@ -13,7 +13,7 @@
 namespace catapult { namespace storage {
     void TransactionSender::sendDataModificationApprovalTransaction(const crypto::KeyPair& sender,
                                                                     const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
-        CATAPULT_LOG(debug) << "sending data modification approval transaction " << transactionInfo.m_modifyTransactionHash;
+//        CATAPULT_LOG(debug) << "sending data modification approval transaction " << transactionInfo.m_modifyTransactionHash;
 
         builders::DataModificationApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
         builder.setDriveKey(transactionInfo.m_driveKey);
@@ -28,7 +28,7 @@ namespace catapult { namespace storage {
 
     void TransactionSender::sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender,
                                                                           const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
-        CATAPULT_LOG(debug) << "sending data modification single approval transaction " << transactionInfo.m_modifyTransactionHash;
+//        CATAPULT_LOG(debug) << "sending data modification single approval transaction " << transactionInfo.m_modifyTransactionHash;
 
         builders::DataModificationSingleApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
         builder.setDriveKey(transactionInfo.m_driveKey);
@@ -53,13 +53,34 @@ namespace catapult { namespace storage {
 
     void TransactionSender::sendDownloadApprovalTransaction(const crypto::KeyPair& sender,
                                                             const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
-        CATAPULT_LOG(debug) << "sending download approval transaction " << transactionInfo.m_blockHash;
+//        CATAPULT_LOG(debug) << "sending download approval transaction " << transactionInfo.m_blockHash;
 
         builders::DownloadApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
         builder.setDownloadChannelId(transactionInfo.m_downloadChannelId);
 
         // TODO set other fields
-        auto& opinions = transactionInfo.m_opinions;
+        std::vector<Key> pubKeys;
+        pubKeys.reserve(transactionInfo.m_opinions.size());
+
+        std::vector<uint8_t> opinionIndices;
+        opinionIndices.reserve(transactionInfo.m_opinions.size());
+
+        std::vector<BLSSignature> signatures;
+        signatures.reserve(transactionInfo.m_opinions.size());
+
+        std::vector<uint64_t> opinions;
+        opinions.reserve(transactionInfo.m_opinions.size());
+
+        auto index = 0;
+        for (const auto& opinion : transactionInfo.m_opinions) {
+            opinionIndices.emplace_back(index);
+
+            pubKeys.emplace_back(opinion.m_replicatorKey);
+//            signatures.emplace_back(opinion.m_signature);
+//            opinions.emplace_back(opinion.m_downloadedBytes);
+
+            index++;
+        }
 
         auto pTransaction = utils::UniqueToShared(builder.build());
         signAndSend(sender, pTransaction);

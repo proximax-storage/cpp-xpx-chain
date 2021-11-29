@@ -22,14 +22,21 @@ namespace catapult { namespace observers {
 		completedDataModifications.emplace_back(*activeDataModifications.begin(), state::DataModificationState::Succeeded);
 		activeDataModifications.erase(activeDataModifications.begin());
 
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		for (const auto& replicator : driveEntry.replicators()) {
+			auto replicatorIter = replicatorCache.find(replicator);
+			auto& replicatorEntry = replicatorIter.get();
+
+			auto& driveInfo = replicatorEntry.drives()[notification.DriveKey];
+			driveInfo.LastCompletedCumulativeDownloadWork += completedDataModifications.back().ActualUploadSize;
+		}
+
 		driveEntry.confirmedUsedSizes().insert({notification.PublicKey, notification.UsedDriveSize});
 
 		auto it = std::find_if(
 				driveEntry.verifications().begin(),
 				driveEntry.verifications().end(),
-				[&notification](const state::Verification& v) {
-					return v.State == state::VerificationState::Pending;
-				}
+				[&notification](const state::Verification& v) {return v.State == state::VerificationState::Pending;}
 		);
 
 		if (it != driveEntry.verifications().end())
