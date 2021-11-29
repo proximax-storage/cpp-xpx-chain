@@ -40,8 +40,9 @@ maxCommitteePhaseTime = 1m
 committeeMessageBroadcastInterval = 100ms
 committeeRequestInterval = 300ms
 committeeTimeAdjustment = 1.1
-committeeEndSyncApproval = 0.5
+committeeEndSyncApproval = 0.45
 committeeBaseTotalImportance = 100
+committeeNotRunningContribution = 0.5
 
 [plugin:catapult.plugins.accountlink]
 dummy = to trigger plugin load
@@ -170,8 +171,17 @@ maxSuperContractsOnDrive = 10
 
 enabled = true
 minDriveSize = 1MB
+maxDriveSize = 10TB
+maxModificationSize = 10TB
 minReplicatorCount = 1
 maxFreeDownloadSize = 1MB
+maxDownloadSize = 10TB
 # 4 weeks = 28 days = 672 hours
 storageBillingPeriod = 672h
 downloadBillingPeriod = 24h
+expectedVerificationFrequency = 4h
+
+[plugin:catapult.plugins.streaming]
+
+enabled = true
+maxFolderNameSize = 512

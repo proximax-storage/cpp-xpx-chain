@@ -125,8 +125,35 @@ namespace catapult { namespace validators {
 	/// There are no drive infos in the replicator entry with given drive key.
 	DEFINE_STORAGE_RESULT(Drive_Info_Not_Found, 37);
 
-	/// There are no replicator infos in the drive entry with given replicator key.
-	DEFINE_STORAGE_RESULT(Replicator_Info_Not_Found, 38);
+	/// Verification Trigger is not equal to the pending verification.
+	DEFINE_STORAGE_RESULT(Verification_Bad_Verification_Trigger, 38);
+
+	/// The provided count of Provers is not equal to desired.
+	DEFINE_STORAGE_RESULT(Verification_Wrong_Number_Of_Provers, 39);
+
+	/// Not all Provers were in the Confirmed state at the start of Verification.
+	DEFINE_STORAGE_RESULT(Verification_Some_Provers_Are_Illegal, 40);
+
+	/// Validation failed because the data modification already exists.
+	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 41);
+
+	/// Validation failed because the stream if not first in the queue.
+	DEFINE_STORAGE_RESULT(Invalid_Stream_Id, 42);
+
+	/// Validation failed because the stream has already been finished.
+	DEFINE_STORAGE_RESULT(Stream_Already_Finished, 43);
+
+	/// Validation failed because declared stream actual size exceeds prepaid expected size
+	DEFINE_STORAGE_RESULT(Expected_Upload_Size_Exceeded, 44);
+
+	/// Desired drive size is greater than maximal.
+	DEFINE_STORAGE_RESULT(Drive_Size_Excessive, 45);
+
+	/// Desired modification size is greater than maximal.
+	DEFINE_STORAGE_RESULT(Upload_Size_Excessive, 46);
+
+	/// Desired download size is greater than maximal.
+	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 47);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

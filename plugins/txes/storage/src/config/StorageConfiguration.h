@@ -22,11 +22,20 @@ namespace catapult { namespace config {
 		/// Minimal size of the drive.
 		utils::FileSize MinDriveSize{};
 
+		/// Maximal size of the drive.
+		utils::FileSize MaxDriveSize{};
+
+		/// Maximal size of the modification (for single payment).
+		utils::FileSize MaxModificationSize{};
+
 		/// Minimal number of replicators.
 		uint16_t MinReplicatorCount{};
 
 		/// Max size to download files for free
 		utils::FileSize MaxFreeDownloadSize{};
+
+		/// Maximal size of the download (for single payment).
+		utils::FileSize MaxDownloadSize{};
 
 		/// Storage billing period.
 		utils::TimeSpan StorageBillingPeriod;
@@ -36,6 +45,9 @@ namespace catapult { namespace config {
 
 		/// Whether the plugin is enabled.
 		bool Enabled;
+
+		/// Expected Verification frequency.
+		utils::TimeSpan ExpectedVerificationFrequency;
 
 	private:
 		StorageConfiguration() = default;

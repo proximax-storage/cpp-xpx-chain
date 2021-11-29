@@ -48,7 +48,7 @@ namespace catapult { namespace observers {
 
 				// If current data modification was approved (not cancelled), account its size.
 				if (it->State == state::DataModificationState::Succeeded)
-					approvableDownloadWork += it->UploadSize;
+					approvableDownloadWork += it->ActualUploadSize;
 			}
 
 			// Making mosaic transfers.
@@ -64,7 +64,7 @@ namespace catapult { namespace observers {
 			driveInfo.InitialDownloadWork = 0;
 
 			// Updating used drive size for the current replicator.
-			driveEntry.replicatorInfos().at(*pKey).UsedSize = notification.UsedDriveSize;
+			driveEntry.confirmedUsedSizes().at(*pKey) = notification.UsedDriveSize;
 		}
 	});
 }}

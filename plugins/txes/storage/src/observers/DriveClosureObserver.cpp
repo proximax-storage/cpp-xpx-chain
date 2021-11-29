@@ -17,11 +17,8 @@ namespace catapult { namespace observers {
 		auto& driveEntry = driveIter.get();
 
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-		for (const auto& replicatorKey : driveEntry.replicators()) {
-			auto replicatorIter = replicatorCache.find(replicatorKey);
-			auto& replicatorEntry = replicatorIter.get();
-			replicatorEntry.drives().erase(replicatorEntry.drives().find(notification.DriveKey));
-		}
+		for (const auto& replicatorKey : driveEntry.replicators())
+			replicatorCache.find(replicatorKey).get().drives().erase(notification.DriveKey);
 		
 		driveCache.remove(notification.DriveKey);
 	}));

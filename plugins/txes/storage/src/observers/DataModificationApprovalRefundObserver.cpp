@@ -26,7 +26,7 @@ namespace catapult { namespace observers {
 	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 
 	  	const auto replicatorDifference = driveEntry.replicatorCount() - driveEntry.replicators().size();
-	  	const auto usedSizeDifference = driveEntry.activeDataModifications().begin()->UploadSize
+	  	const auto usedSizeDifference = driveEntry.activeDataModifications().begin()->ActualUploadSize
 				+ driveEntry.usedSize()
 				- (notification.UsedDriveSize - notification.MetaFilesSize);
 		const auto transferAmount = Amount(replicatorDifference * usedSizeDifference);

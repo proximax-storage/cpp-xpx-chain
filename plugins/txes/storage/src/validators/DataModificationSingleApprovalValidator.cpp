@@ -55,10 +55,10 @@ namespace catapult { namespace validators {
 		if (lastApprovedDataModification->Id != notification.DataModificationId)
 			return Failure_Storage_Invalid_Data_Modification_Id;
 
-		// Check if there are any confirmed used sizes modifications
-		// TODO: Double-check
-		if (pDriveEntry->replicatorInfos().empty())
-			return Failure_Storage_No_Active_Data_Modifications;
+		// Check if singer's key is present in drive's confirmedUsedSizes
+		// TODO: Double-check if needed
+		if (!pDriveEntry->confirmedUsedSizes().count(notification.PublicKey))
+			return Failure_Storage_Replicator_Not_Found;
 
 		return ValidationResult::Success;
 	});

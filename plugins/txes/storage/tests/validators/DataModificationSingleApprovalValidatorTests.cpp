@@ -30,6 +30,7 @@ namespace catapult { namespace validators {
 				const int16_t ownerIndex,
 				const std::vector<Key>& publicKeys) {
 			driveEntry.replicators().insert(signer);
+			driveEntry.confirmedUsedSizes().emplace(signer, test::Random());
 
 			auto& lastCompletedModification = driveEntry.completedDataModifications().back();
 			lastCompletedModification.Id = dataModificationId;
@@ -40,10 +41,8 @@ namespace catapult { namespace validators {
 			}
 
 			for (auto i = 0u; i < publicKeys.size(); ++i)
-				if (i != ownerIndex) {
+				if (i != ownerIndex)
 					driveEntry.replicators().insert(publicKeys.at(i));
-					driveEntry.replicatorInfos().emplace(publicKeys.at(i), state::ReplicatorInfo{test::Random(), test::Random()});
-				}
 		}
 
         void AssertValidationResult(
@@ -302,33 +301,5 @@ namespace catapult { namespace validators {
 				publicKeys);
     }
 
-    // TODO: Double-check
-    TEST(TEST_CLASS, FailureWhenEmptyReplicatorInfos) {
-    	// Arrange:
-		auto cache = test::StorageCacheFactory::Create();
-		auto delta = cache.createDelta();
-		auto& driveDelta = delta.sub<cache::BcDriveCache>();
-		auto driveEntry = test::CreateBcDriveEntry();
-
-		const auto signer = test::GenerateRandomByteArray<Key>();
-		const auto dataModificationId = test::GenerateRandomByteArray<Hash256>();
-		const auto ownerIndex = test::RandomInRange(-1, Public_Keys_Count-1);
-		const auto publicKeys = test::GenerateUniqueRandomDataVector<Key>(Public_Keys_Count);
-		PrepareDriveEntry(driveEntry, signer, dataModificationId, ownerIndex, publicKeys);
-
-		// Act:
-		driveEntry.replicatorInfos().clear();
-
-		driveDelta.insert(driveEntry);
-		cache.commit(Current_Height);
-
-		// Assert:
-		AssertValidationResult(
-				Failure_Storage_No_Active_Data_Modifications,
-				cache,
-				signer,
-				driveEntry.key(),
-				dataModificationId,
-				publicKeys);
-    }
+	// TODO: Add test case when singer's key is not present in drive's confirmedUsedSizes?
 }}

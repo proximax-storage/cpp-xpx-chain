@@ -39,7 +39,7 @@ namespace catapult { namespace observers {
 		for (auto i = notification.JudgingKeysCount; i < totalKeysCount; ++i) {
 			const auto key = notification.PublicKeysPtr[i];
 			const auto initialSize = (key != driveOwnerPublicKey) ?
-					driveEntry.replicatorInfos().at(key).CumulativeUploadSize :
+					driveEntry.cumulativeUploadSizes().at(key) :
 					driveEntry.ownerCumulativeUploadSize();
 			initialCumulativeUploadSizes.push_back(initialSize);
 		}
@@ -70,7 +70,7 @@ namespace catapult { namespace observers {
 			senderState.Balances.debit(streamingMosaicId, transferAmount, context.Height);
 			recipientState.Balances.credit(currencyMosaicId, transferAmount, context.Height);
 			if (*pKey != driveOwnerPublicKey)
-				driveEntry.replicatorInfos().at(*pKey).CumulativeUploadSize += uploadSizesIncrements.at(i);
+				driveEntry.cumulativeUploadSizes().at(*pKey) += uploadSizesIncrements.at(i);
 			else
 				driveEntry.increaseOwnerCumulativeUploadSize(uploadSizesIncrements.at(i));
 		}

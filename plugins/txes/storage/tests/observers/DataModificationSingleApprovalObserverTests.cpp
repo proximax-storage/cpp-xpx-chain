@@ -37,9 +37,9 @@ namespace catapult { namespace observers {
 					},
 					state::DataModificationState::Succeeded
             });
-			entry.replicatorInfos().emplace(
+			entry.confirmedUsedSizes().emplace(
 					replicatorKey,
-					state::ReplicatorInfo {test::RandomInRange<uint64_t>(0, Used_Drive_Size-1), test::Random()}
+					test::RandomInRange<uint64_t>(0, Used_Drive_Size-1)
  			);
 
             return entry;
@@ -59,7 +59,7 @@ namespace catapult { namespace observers {
 		}
 
         state::BcDriveEntry CreateExpectedBcDriveEntry(state::BcDriveEntry entry) {
-			entry.replicatorInfos().begin()->second.UsedSize = Used_Drive_Size;
+			entry.confirmedUsedSizes().begin()->second = Used_Drive_Size;
             return entry;
         }
 

@@ -17,14 +17,19 @@ namespace catapult { namespace mongo { namespace plugins {
 	namespace {
 		void StreamActiveDataModifications(bson_stream::document& builder, const state::ActiveDataModifications& activeDataModifications) {
 			auto array = builder << "activeDataModifications" << bson_stream::open_array;
-			for (const auto& modification : activeDataModifications)
+			for (const auto& modification : activeDataModifications) {
+				auto pFolderName = (const uint8_t*) (modification.FolderName.c_str());
 				array
-					<< bson_stream::open_document
-					<< "id" << ToBinary(modification.Id)
-					<< "owner" << ToBinary(modification.Owner)
-					<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
-					<< "uploadSize" << static_cast<int64_t>(modification.UploadSize)
-					<< bson_stream::close_document;
+						<< bson_stream::open_document
+						<< "id" << ToBinary(modification.Id)
+						<< "owner" << ToBinary(modification.Owner)
+						<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
+						<< "expectedUploadSize" << static_cast<int64_t>(modification.ExpectedUploadSize)
+						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSize)
+						<< "folderName" << ToBinary(pFolderName, modification.FolderName.size())
+						<< "readyForApproval" << modification.ReadyForApproval
+						<< bson_stream::close_document;
+			}
 
 			array << bson_stream::close_array;
 		}
@@ -32,28 +37,64 @@ namespace catapult { namespace mongo { namespace plugins {
 		void StreamCompletedDataModifications(bson_stream::document& builder, const state::CompletedDataModifications& completedDataModifications) {
 			auto array = builder << "completedDataModifications" << bson_stream::open_array;
 			for (const auto& modification : completedDataModifications) {
+				auto pFolderName = (const uint8_t*) (modification.FolderName.c_str());
 				array
-					<< bson_stream::open_document
-					<< "id" << ToBinary(modification.Id)
-					<< "owner" << ToBinary(modification.Owner)
-					<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
-					<< "uploadSize" << static_cast<int64_t>(modification.UploadSize)
-					<< "state" << utils::to_underlying_type(modification.State)
-					<< bson_stream::close_document;
+						<< bson_stream::open_document
+						<< "id" << ToBinary(modification.Id)
+						<< "owner" << ToBinary(modification.Owner)
+						<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
+						<< "expectedUploadSize" << static_cast<int64_t>(modification.ExpectedUploadSize)
+						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSize)
+						<< "folderName" << ToBinary(pFolderName, modification.FolderName.size())
+						<< "readyForApproval" << modification.ReadyForApproval
+						<< "state" << utils::to_underlying_type(modification.State)
+						<< bson_stream::close_document;
 			}
 
 			array << bson_stream::close_array;
 		}
 
-		void StreamReplicatorInfos(bson_stream::document& builder, const state::ReplicatorsMap& replicatorInfos) {
-			auto array = builder << "replicatorInfos" << bson_stream::open_array;
-			for (const auto& infoPair : replicatorInfos) {
-				bson_stream::document infoBuilder;
-				infoBuilder
-						<< "replicator" << ToBinary(infoPair.first)
-						<< "usedSize" << static_cast<int64_t>(infoPair.second.UsedSize)
-						<< "cumulativeUploadSize" << static_cast<int64_t>(infoPair.second.CumulativeUploadSize);
-				array << infoBuilder;
+		void StreamConfirmedUsedSizes(bson_stream::document& builder, const state::SizeMap& confirmedUsedSizes) {
+			auto array = builder << "confirmedUsedSizes" << bson_stream::open_array;
+			for (const auto& pair : confirmedUsedSizes)
+				array
+					<< bson_stream::open_document
+					<< "replicator" << ToBinary(pair.first)
+					<< "size" << static_cast<int64_t>(pair.second)
+					<< bson_stream::close_document;
+
+			array << bson_stream::close_array;
+		}
+
+		void StreamReplicators(bson_stream::document& builder, const utils::KeySet& replicators) {
+			auto array = builder << "replicators" << bson_stream::open_array;
+			for (const auto& replicatorKey : replicators)
+				array << ToBinary(replicatorKey);
+			array << bson_stream::close_array;
+		}
+
+		void StreamVerificationOpinions(bson_stream::document& builder, const state::VerificationResults& opinions) {
+			auto array = builder << "results" << bson_stream::open_array;
+			for (const auto& pair : opinions)
+				array
+						<< bson_stream::open_document
+							<< "prover" << ToBinary(pair.first)
+							<< "result" << static_cast<int8_t>(pair.second)
+						<< bson_stream::close_document;
+
+			array << bson_stream::close_array;
+		}
+
+		void StreamVerifications(bson_stream::document& builder, const state::Verifications& verifications) {
+			auto array = builder << "verifications" << bson_stream::open_array;
+			for (const auto& verification : verifications) {
+				bson_stream::document verificationBuilder;
+				verificationBuilder
+						<< "verificationTrigger" << ToBinary(verification.VerificationTrigger)
+						<< "state" << utils::to_underlying_type(verification.State);
+
+				StreamVerificationOpinions(verificationBuilder, verification.Results);
+				array << verificationBuilder;
 			}
 
 			array << bson_stream::close_array;
@@ -63,23 +104,25 @@ namespace catapult { namespace mongo { namespace plugins {
 	bsoncxx::document::value ToDbModel(const state::BcDriveEntry& entry, const Address& accountAddress) {
 		bson_stream::document builder;
 		auto doc = builder << "drive" << bson_stream::open_document
-				<< "multisig" << ToBinary(entry.key())
-				<< "multisigAddress" << ToBinary(accountAddress)
-				<< "owner" << ToBinary(entry.owner())
-				<< "rootHash" << ToBinary(entry.rootHash())
-				<< "size" << static_cast<int64_t>(entry.size())
-				<< "usedSize" << static_cast<int64_t>(entry.usedSize())
-				<< "metaFilesSize" << static_cast<int64_t>(entry.metaFilesSize())
-				<< "replicatorCount" << static_cast<int32_t>(entry.replicatorCount())
-				<< "ownerCumulativeUploadSize" << static_cast<int64_t>(entry.ownerCumulativeUploadSize());
+				           << "multisig" << ToBinary(entry.key())
+				           << "multisigAddress" << ToBinary(accountAddress)
+				           << "owner" << ToBinary(entry.owner())
+				           << "rootHash" << ToBinary(entry.rootHash())
+						   << "size" << static_cast<int64_t>(entry.size())
+				           << "usedSize" << static_cast<int64_t>(entry.usedSize())
+				           << "metaFilesSize" << static_cast<int64_t>(entry.metaFilesSize())
+				           << "replicatorCount" << static_cast<int32_t>(entry.replicatorCount())
+				           << "ownerCumulativeUploadSize" << static_cast<int64_t>(entry.ownerCumulativeUploadSize());
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
 		StreamCompletedDataModifications(builder, entry.completedDataModifications());
-		StreamReplicatorInfos(builder, entry.replicatorInfos());
+		StreamConfirmedUsedSizes(builder, entry.confirmedUsedSizes());
+		StreamReplicators(builder, entry.replicators());
+		StreamVerifications(builder, entry.verifications());
 
 		return doc
-				<< bson_stream::close_document
-				<< bson_stream::finalize;
+			   << bson_stream::close_document
+			   << bson_stream::finalize;
 	}
 
 	// endregion
@@ -97,9 +140,12 @@ namespace catapult { namespace mongo { namespace plugins {
 				DbBinaryToModelArray(owner, doc["owner"].get_binary());
 				Hash256 downloadDataCdi;
 				DbBinaryToModelArray(downloadDataCdi, doc["downloadDataCdi"].get_binary());
-				auto uploadSize = static_cast<uint64_t>(doc["uploadSize"].get_int64());
-
-				activeDataModifications.emplace_back(state::ActiveDataModification{ id, owner, downloadDataCdi, uploadSize });
+				auto expectedUploadSize = static_cast<uint64_t>(doc["expectedUploadSize"].get_int64());
+				auto actualUploadSize = static_cast<uint64_t>(doc["actualUploadSize"].get_int64());
+				auto binaryFolderName = doc["folderName"].get_binary();
+				std::string folderName((const char*) binaryFolderName.bytes, binaryFolderName.size);
+				auto readyForApproval = doc["readyForApproval"].get_bool();
+				activeDataModifications.emplace_back(state::ActiveDataModification(id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folderName, readyForApproval));
 			}
 		}
 
@@ -113,25 +159,58 @@ namespace catapult { namespace mongo { namespace plugins {
 				DbBinaryToModelArray(owner, doc["owner"].get_binary());
 				Hash256 downloadDataCdi;
 				DbBinaryToModelArray(downloadDataCdi, doc["downloadDataCdi"].get_binary());
-				auto uploadSize = static_cast<uint64_t>(doc["uploadSize"].get_int64());
+				auto expectedUploadSize = static_cast<uint64_t>(doc["expectedUploadSize"].get_int64());
+				auto actualUploadSize = static_cast<uint64_t>(doc["actualUploadSize"].get_int64());
+				auto binaryFolderName = doc["folderName"].get_binary();
+				std::string folderName((const char*) binaryFolderName.bytes, binaryFolderName.size);
+				bool readyForApproval = doc["readyForApproval"].get_bool();
 				auto state = static_cast<state::DataModificationState>(static_cast<uint8_t>(doc["state"].get_int32()));
 
-				completedDataModifications.emplace_back(state::CompletedDataModification{ state::ActiveDataModification{ id, owner, downloadDataCdi, uploadSize }, state });
+				completedDataModifications.emplace_back(state::CompletedDataModification{ state::ActiveDataModification(id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folderName, readyForApproval), state });
 			}
 		}
 
-		void ReadReplicatorInfos(state::ReplicatorsMap& replicatorInfos, const bsoncxx::array::view& dbReplicatorInfos) {
-			for (const auto& dbInfo : dbReplicatorInfos) {
-				auto doc = dbInfo.get_document().view();
+		void ReadConfirmedUsedSizes(state::SizeMap& confirmedUsedSizes, const bsoncxx::array::view& dbConfirmedUsedSizes) {
+			for (const auto& dbConfirmedUsedSize : dbConfirmedUsedSizes) {
+				auto doc = dbConfirmedUsedSize.get_document().view();
 
-				Key replicator;
-				DbBinaryToModelArray(replicator, doc["replicator"].get_binary());
+				Key replicatorKey;
+				DbBinaryToModelArray(replicatorKey, doc["replicator"].get_binary());
+				auto size = static_cast<uint64_t>(doc["size"].get_int64());
 
-				state::ReplicatorInfo info;
-				info.UsedSize = doc["usedSize"].get_int64();
-				info.CumulativeUploadSize = doc["cumulativeUploadSize"].get_int64();
+				confirmedUsedSizes.emplace(replicatorKey, size);
+			}
+		}
 
-				replicatorInfos.emplace(replicator, info);
+		void ReadReplicators(utils::KeySet& replicators, const bsoncxx::array::view& dbReplicators) {
+			for (const auto& dbReplicator : dbReplicators) {
+				Key replicatorKey;
+				DbBinaryToModelArray(replicatorKey, dbReplicator.get_binary());
+				replicators.insert(replicatorKey);
+			}
+		}
+
+		void ReadVerificationOpinions(state::VerificationResults& opinions, const bsoncxx::array::view& dbOpinions) {
+			for (const auto& dbPair : dbOpinions) {
+				auto doc = dbPair.get_document().view();
+
+				Key prover;
+				DbBinaryToModelArray(prover, doc["prover"].get_binary());
+
+				opinions[prover] = static_cast<uint8_t>(dbPair["result"].get_int64());
+			}
+		}
+
+		void ReadVerifications(state::Verifications& verifications, const bsoncxx::array::view& dbVerifications) {
+			for (const auto& dbVerification : dbVerifications) {
+				auto doc = dbVerification.get_document().view();
+
+				state::Verification verification;
+				DbBinaryToModelArray(verification.VerificationTrigger, doc["verificationTrigger"].get_binary());
+				verification.State = static_cast<state::VerificationState>(static_cast<uint8_t>(doc["state"].get_int32()));
+
+				ReadVerificationOpinions(verification.Results, doc["results"].get_array().value);
+				verifications.emplace_back(verification);
 			}
 		}
 	}
@@ -160,7 +239,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);
 		ReadCompletedDataModifications(entry.completedDataModifications(), dbDriveEntry["completedDataModifications"].get_array().value);
-		ReadReplicatorInfos(entry.replicatorInfos(), dbDriveEntry["replicatorInfos"].get_array().value);
+		ReadConfirmedUsedSizes(entry.confirmedUsedSizes(), dbDriveEntry["confirmedUsedSizes"].get_array().value);
+		ReadReplicators(entry.replicators(), dbDriveEntry["replicators"].get_array().value);
+		ReadVerifications(entry.verifications(), dbDriveEntry["verifications"].get_array().value);
 
 		return entry;
 	}

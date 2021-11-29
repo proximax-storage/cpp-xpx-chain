@@ -26,11 +26,6 @@ namespace catapult { namespace validators {
 		if (activeDataModifications.empty())
 			return Failure_Storage_No_Active_Data_Modifications;
 
-		// Check if there are any confirmed used sizes modifications
-	  	// TODO: Double-check
-		if (pDriveEntry->replicatorInfos().empty())
-			return Failure_Storage_No_Active_Data_Modifications;
-
 	  	// Check if respective data modification is the first (oldest) element in activeDataModifications
 	  	if (activeDataModifications.begin()->Id != notification.DataModificationId)
 		  	return Failure_Storage_Invalid_Data_Modification_Id;

@@ -28,10 +28,8 @@ namespace catapult { namespace validators {
         constexpr auto Used_Drive_Size = 50;
 
 		void PrepareDriveEntry(state::BcDriveEntry& driveEntry, const std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs) {
-			for (const auto& pair : replicatorKeyPairs) {
+			for (const auto& pair : replicatorKeyPairs)
 				driveEntry.replicators().insert(pair.first);
-				driveEntry.replicatorInfos().emplace(pair.first, state::ReplicatorInfo{test::Random(), test::Random()});
-			}
 		}
 
         void AssertValidationResult(
@@ -191,33 +189,6 @@ namespace catapult { namespace validators {
 				test::GenerateRandomByteArray<Hash256>(),
 				replicatorKeyPairs);
     }
-
-	// TODO: Double-check
-	TEST(TEST_CLASS, FailureWhenEmptyReplicatorInfos) {
-		// Arrange:
-		auto cache = test::StorageCacheFactory::Create();
-		auto delta = cache.createDelta();
-		auto& driveDelta = delta.sub<cache::BcDriveCache>();
-		auto driveEntry = test::CreateBcDriveEntry();
-
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
-		test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
-		PrepareDriveEntry(driveEntry, replicatorKeyPairs);
-
-		// Act:
-		driveEntry.replicatorInfos().clear();
-
-		driveDelta.insert(driveEntry);
-		cache.commit(Current_Height);
-
-		// Assert:
-		AssertValidationResultWithoutOpinionData(
-				Failure_Storage_No_Active_Data_Modifications,
-				cache,
-				driveEntry.key(),
-				driveEntry.activeDataModifications().begin()->Id,
-				replicatorKeyPairs);
-	}
 
     TEST(TEST_CLASS, FailureWhenInvalidDataModificationId) {
 		// Arrange:

@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 		// Check if
 		// - all uploaders' account states exist
-	  	// - all replicators' keys are present in drive's replicatorInfos
+	  	// - all replicators' keys are present in drive's cumulativeUploadSizes
 		const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
 	  	const auto& driveOwnerPublicKey = pDriveEntry->owner();
 		auto pKey = &notification.PublicKeysPtr[notification.JudgingKeysCount];
@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 			const auto& pRecipientState = recipientStateIter.tryGet();
 			if (!pRecipientState)
 				return Failure_Storage_Recipient_State_Not_Found;
-			if (*pKey != driveOwnerPublicKey && !pDriveEntry->replicatorInfos().count(*pKey))
+			if (*pKey != driveOwnerPublicKey && !pDriveEntry->cumulativeUploadSizes().count(*pKey))
 				return Failure_Storage_Replicator_Not_Found;
 		}
 

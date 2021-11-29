@@ -68,10 +68,8 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-        ASSERT_EQ(2u, sub.numNotifications());
-        auto i = 0u;
-        EXPECT_EQ(Storage_Drive_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Storage_Replicator_Offboarding_v1_Notification, sub.notificationTypes()[i++]);
+        ASSERT_EQ(1u, sub.numNotifications());
+        EXPECT_EQ(Storage_Replicator_Offboarding_v1_Notification, sub.notificationTypes()[0]);
 	}
 
 	// endregion
@@ -88,10 +86,8 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(1u, sub.numMatchingNotifications());
+		ASSERT_EQ(0, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
-		EXPECT_EQ(Entity_Type_ReplicatorOffboarding, notification.TransactionType);
 	}
 
 	// endregion
