@@ -24,7 +24,7 @@
 #include "src/plugins/VerificationPaymentTransactionPlugin.h"
 #include "src/plugins/DownloadApprovalTransactionPlugin.h"
 #include "src/plugins/EndDriveVerificationTransactionPlugin.h"
-#include "src/state/CachedStorageState.h"
+#include "src/state/StorageStateImpl.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -208,7 +208,7 @@ namespace catapult { namespace plugins {
 		  	});
 		});
 
-		manager.setStorageState(std::make_unique<state::CachedStorageState>(pKeyCollector));
+		manager.setStorageState(std::make_unique<state::StorageStateImpl>(pKeyCollector));
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder

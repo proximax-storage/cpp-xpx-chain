@@ -7,7 +7,6 @@
 #include "ReplicatorService.h"
 #include <utility>
 #include "StoragePacketHandlers.h"
-#include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/utils/NetworkTime.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/extensions/ServiceLocator.h"
@@ -37,45 +36,49 @@ namespace catapult { namespace storage {
             void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
                 locator.registerRootedService(Service_Name, m_pReplicatorService);
 
-                m_pReplicatorService->setTransactionRangeHandler(state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local));
-                RegisterStartDownloadFilesHandler(m_pReplicatorService, state.packetHandlers());
-                RegisterStopDownloadFilesHandler(m_pReplicatorService, state.packetHandlers());
+//                RegisterStartDownloadFilesHandler(m_pReplicatorService, state.packetHandlers());
+//                RegisterStopDownloadFilesHandler(m_pReplicatorService, state.packetHandlers());
 
                 auto& storageState = state.pluginManager().getStorageState();
+                m_pReplicatorService->initReplicator(
+                        state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local),
+                        storageState,
+                        state
+                );
+
                 if (storageState.isReplicatorRegistered(m_pReplicatorService->replicatorKey())) {
                     CATAPULT_LOG(debug) << "starting replicator service";
                     m_pReplicatorService->start();
 
-                    auto replicatorData = storageState.getReplicatorData(m_pReplicatorService->replicatorKey(), state.cache());
-                    for (const auto& driveState : replicatorData.DrivesStates) {
+                    auto replicatorDrives = storageState.getReplicatorDrives(m_pReplicatorService->replicatorKey(), state.cache());
+                    for (const auto& drive : replicatorDrives) {
                         m_pReplicatorService->addDrive(
-                                driveState.DriveKey,
-                                driveState.Size,
-                                driveState.UsedSize,
-                                driveState.Replicators
+                                drive->key(),
+                                drive->size(),
+                                drive->usedSize(),
+                                drive->replicators()
                         );
 
-                        const auto& dataModification = driveState.LastDataModification;
-                        if (dataModification.Id == Hash256{}) {
+                        for (auto it = drive->activeDataModifications().rbegin(); it != drive->activeDataModifications().rend(); ++it) {
                             m_pReplicatorService->addDriveModification(
-                                    driveState.DriveKey,
-                                    dataModification.DownloadDataCdi,
-                                    dataModification.Id,
-                                    dataModification.Owner,
-                                    dataModification.ExpectedUploadSize
+                                    drive->key(),
+                                    it->DownloadDataCdi,
+                                    it->Id,
+                                    it->Owner,
+                                    it->ExpectedUploadSize
                             );
                         }
                     }
 
-                    for (const auto& channel : replicatorData.DownloadChannels) {
-                        // TODO is a consumer is already in ListOfPublicKeys
-                        auto consumers = channel.ListOfPublicKeys;
-                        consumers.emplace_back(channel.Consumer);
+                    auto replicatorChannels = storageState.getReplicatorDownloadChannels(m_pReplicatorService->replicatorKey(), state.cache());
+                    for (const auto& channel : replicatorChannels) {
+                        auto consumers = channel->listOfPublicKeys();
+                        consumers.emplace_back(channel->consumer());
 
                         m_pReplicatorService->addDriveChannel(
-                                Hash256{},
+                                channel->id(),
                                 Key{}, // TODO add real drive key in V3
-                                channel.DownloadSize,
+                                channel->downloadSize(),
                                 consumers
                         );
                     }
@@ -109,35 +112,10 @@ namespace catapult { namespace storage {
 
     class ReplicatorService::Impl : public std::enable_shared_from_this<ReplicatorService::Impl> {
     public:
-        Impl(
-                sirius::crypto::KeyPair&& keyPair,
-                model::NetworkIdentifier networkIdentifier,
-                const GenerationHash& generationHash,
-                StorageConfiguration storageConfig,
-                handlers::TransactionRangeHandler transactionRangeHandler,
-                state::StorageState& storageState)
-                : m_stopped(false)
-                , m_keyPair(std::move(keyPair))
-                , m_storageState(storageState)
-                , m_transactionSender(TransactionSender(
-                        networkIdentifier,
-                        generationHash,
-                        std::move(transactionRangeHandler),
-                        storageConfig
-                ))
-                , m_eventHandler(ReplicatorEventHandler(m_transactionSender, m_storageState))
-                , m_pReplicator(sirius::drive::createDefaultReplicator(
-                        keyPair,
-                        Replicator_Host,
-                        std::move(storageConfig.Port),
-                        std::move(storageConfig.StorageDirectory),
-                        std::move(storageConfig.SandboxDirectory),
-                        storageConfig.UseTcpSocket,
-                        m_eventHandler,
-                        nullptr,
-                        Service_Name
-                ))
-        {}
+        Impl(sirius::crypto::KeyPair&& keyPair, std::shared_ptr<sirius::drive::Replicator> replicator)
+            : m_stopped(false)
+            , m_keyPair(std::move(keyPair))
+            , m_pReplicator(std::move(replicator)) {}
 
     public:
         Key replicatorKey() const {
@@ -151,8 +129,7 @@ namespace catapult { namespace storage {
                                   const Hash256& downloadDataCdi,
                                   const Hash256& modificationId,
                                   const Key& owner,
-                                  uint64_t dataSize
-       ) {
+                                  uint64_t dataSize) {
             if (m_stopped)
                 return;
 
@@ -164,8 +141,8 @@ namespace catapult { namespace storage {
                 (const sirius::Key&) owner
             };
 
-//            CATAPULT_LOG(debug) << "new modify request for " << driveKey << "drive: \n\t"
-//                                << modifyRequest;
+            CATAPULT_LOG(debug) << "new modify request " << modifyRequest.m_transactionHash
+                                << " for drive " << driveKey;
 
             m_pReplicator->asyncModify((const sirius::Key&) driveKey, std::move(modifyRequest));
        }
@@ -174,8 +151,7 @@ namespace catapult { namespace storage {
             if (m_stopped)
                 return;
 
-//            CATAPULT_LOG(debug) << "new modify request for " << driveKey << "drive: \n"
-//                                << "\ttransactions hash:" << transactionHash;
+            CATAPULT_LOG(debug) << "remove modify request " << transactionHash.data() << " for drive " << driveKey;
 
             m_pReplicator->asyncCancelModify(
                     (const sirius::Key&) driveKey,
@@ -186,12 +162,12 @@ namespace catapult { namespace storage {
         void addDriveChannel(const Hash256& channelId,
                              const Key& driveKey,
                              size_t prepaidDownloadSize,
-                             const std::vector<Key>& consumers
-        ) {
+                             const std::vector<Key>& consumers) {
+
             if (m_stopped)
                 return;
 
-//            CATAPULT_LOG(debug) << "add download channel " << channelId;
+            CATAPULT_LOG(debug) << "add download channel " << channelId.data();
 
             std::vector<sirius::Key> castedConsumers;
             std::transform(consumers.begin(), consumers.end(), castedConsumers.begin(), [](const Key& key) {return (const sirius::Key&) key;});
@@ -206,15 +182,11 @@ namespace catapult { namespace storage {
             m_pReplicator->asyncAddDownloadChannelInfo((const sirius::Key&) driveKey, std::move(downloadRequest));
         }
 
-        void increaseDownloadChannelSize(const Hash256& channelId, size_t increasedDownloadSize) {
-//            catapult::storage::ReplicatorService::Impl::addDrive()
-        }
-
         void closeDriveChannel(const Hash256& channelId) {
             if (m_stopped)
                 return;
 
-//            CATAPULT_LOG(debug) << "closing download channel " << channelId;
+            CATAPULT_LOG(debug) << "closing download channel " << channelId.data();
 
             m_pReplicator->removeDownloadChannelInfo((const std::array<uint8_t, 32>&) channelId);
         }
@@ -223,7 +195,7 @@ namespace catapult { namespace storage {
             if (m_stopped)
                 return;
 
-//            CATAPULT_LOG(debug) << "add drive " << driveKey;
+            CATAPULT_LOG(debug) << "add drive " << driveKey;
 
             sirius::drive::ReplicatorList replicatorList;
             replicatorList.reserve(replicators.size());
@@ -242,7 +214,6 @@ namespace catapult { namespace storage {
             if (m_stopped)
                 return false;
 
-//            m_pReplicator.findDrive(driveKey)
             return true;
         }
 
@@ -250,7 +221,7 @@ namespace catapult { namespace storage {
             if (m_stopped)
                 return;
 
-//            CATAPULT_LOG(debug) << "closing drive " << driveKey;
+            CATAPULT_LOG(debug) << "closing drive " << driveKey;
 
             m_pReplicator->asyncCloseDrive(
                     (const sirius::Key&) driveKey,
@@ -273,25 +244,41 @@ namespace catapult { namespace storage {
     private:
         bool m_stopped;
         sirius::crypto::KeyPair m_keyPair;
-        state::StorageState& m_storageState;
-        TransactionSender m_transactionSender;
-        ReplicatorEventHandler m_eventHandler;
         std::shared_ptr<sirius::drive::Replicator> m_pReplicator;
     };
 
+
+    void ReplicatorService::initReplicator(
+            handlers::TransactionRangeHandler transactionRangeHandler,
+            state::StorageState& storageState,
+            extensions::ServiceState& serviceState) {
+
+        auto* convertedKeyPair = reinterpret_cast<sirius::crypto::KeyPair*>(&m_keyPair);
+        auto transactionSender = TransactionSender(
+                m_networkIdentifier,
+                m_generationHash,
+                std::move(transactionRangeHandler),
+                m_storageConfig
+        );
+        auto eventHandler = ReplicatorEventHandler(transactionSender, storageState, serviceState);
+
+        m_pReplicator = sirius::drive::createDefaultReplicator(
+                *convertedKeyPair,
+                Replicator_Host,
+                std::move(m_storageConfig.Port),
+                std::move(m_storageConfig.StorageDirectory),
+                std::move(m_storageConfig.SandboxDirectory),
+                m_storageConfig.UseTcpSocket,
+                eventHandler,
+                nullptr,
+                Service_Name
+        );
+    }
+
     void ReplicatorService::start() {
         if (!m_pImpl) {
-//            sirius::crypto::PrivateKey convertedPrivateKey;
-//            std::copy(m_keyPair.privateKey().begin(), m_keyPair.privateKey().end(), convertedPrivateKey.begin());
-
-            m_pImpl = std::make_shared<ReplicatorService::Impl>(
-                    sirius::crypto::KeyPair::FromPrivate(std::move(sirius::crypto::PrivateKey{})),
-                    m_networkIdentifier,
-                    m_generationHash,
-                    m_storageConfig,
-                    m_transactionRangeHandler,
-                    m_storageState
-            );
+            auto* convertedKeyPair = reinterpret_cast<sirius::crypto::KeyPair*>(&m_keyPair);
+            m_pImpl = std::make_shared<ReplicatorService::Impl>(std::move(*convertedKeyPair), m_pReplicator);
         }
     }
 
@@ -306,8 +293,7 @@ namespace catapult { namespace storage {
                                                  const Hash256& downloadDataCdi,
                                                  const Hash256& modificationId,
                                                  const Key& owner,
-                                                 uint64_t dataSize
-    ) {
+                                                 uint64_t dataSize) {
         if (m_pImpl)
             m_pImpl->addDriveModification(driveKey, downloadDataCdi, modificationId, owner, dataSize);
     }
@@ -320,10 +306,17 @@ namespace catapult { namespace storage {
     void ReplicatorService::addDriveChannel(const Hash256& channelId,
                                             const Key& driveKey,
                                             size_t prepaidDownloadSize,
-                                            const std::vector<Key>& consumers
-    ) {
+                                            const std::vector<Key>& consumers) {
         if (m_pImpl)
             m_pImpl->addDriveChannel(channelId, driveKey, prepaidDownloadSize, consumers);
+    }
+
+    void ReplicatorService::increaseDownloadChannelSize(const Hash256& channelId,
+                                                        const Key& driveKey,
+                                                        size_t downloadSize,
+                                                        const std::vector<Key>& consumers) {
+        if (m_pImpl)
+            m_pImpl->addDriveChannel(channelId, driveKey, downloadSize, consumers);
     }
 
     void ReplicatorService::closeDriveChannel(const Hash256& channelId) {

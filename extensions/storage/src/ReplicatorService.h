@@ -25,23 +25,21 @@ namespace catapult { namespace storage {
 				crypto::KeyPair&& keyPair,
 				model::NetworkIdentifier networkIdentifier,
 				const GenerationHash& generationHash,
-				StorageConfiguration&& storageConfig,
-				state::StorageState& storageState)
+				StorageConfiguration&& storageConfig)
 			: m_keyPair(std::move(keyPair))
 			, m_networkIdentifier(networkIdentifier)
 			, m_generationHash(generationHash)
 			, m_storageConfig(std::move(storageConfig))
-			, m_storageState(storageState)
 		{}
 
 	public:
-		void setTransactionRangeHandler(handlers::TransactionRangeHandler transactionRangeHandler) {
-			m_transactionRangeHandler = std::move(transactionRangeHandler);
-		}
-
-		Key replicatorKey() const;
+		void initReplicator(handlers::TransactionRangeHandler transactionRangeHandler,
+							state::StorageState& storageState,
+							extensions::ServiceState& serviceState);
 
 		void start();
+
+		Key replicatorKey() const;
 
 		void addDriveModification(const Key& driveKey,
 								  const Hash256& downloadDataCdi,
@@ -58,7 +56,10 @@ namespace catapult { namespace storage {
 							 const std::vector<Key>& consumers);
 
 		// TODO update download channel size
-		void increaseDownloadChannelSize(const Hash256& channelId, size_t increasedDownloadSize);
+		void increaseDownloadChannelSize(const Hash256& channelId,
+                                         const Key& driveKey,
+                                         size_t downloadSize,
+                                         const std::vector<Key>& consumers);
 
 		void closeDriveChannel(const Hash256& channelId);
 
@@ -80,8 +81,7 @@ namespace catapult { namespace storage {
 		model::NetworkIdentifier m_networkIdentifier;
 		GenerationHash m_generationHash;
 		StorageConfiguration m_storageConfig;
-		handlers::TransactionRangeHandler m_transactionRangeHandler;
-		state::StorageState& m_storageState;
+		std::shared_ptr<sirius::drive::Replicator> m_pReplicator;
 	};
 
 	/// Creates a registrar for the replicator service.

@@ -7,13 +7,18 @@
 #include "drive/Replicator.h"
 #include "TransactionSender.h"
 #include "catapult/state/StorageState.h"
+#include "catapult/extensions/ServiceState.h"
 
 namespace catapult { namespace storage {
     class ReplicatorEventHandler: public sirius::drive::ReplicatorEventHandler {
     public:
-        explicit ReplicatorEventHandler(TransactionSender& transactionSender, const state::StorageState& storageState)
-            : m_transactionSender(transactionSender)
-            , m_storageState(storageState) {}
+        explicit ReplicatorEventHandler(
+                TransactionSender transactionSender,
+                state::StorageState& storageState,
+                const extensions::ServiceState& serviceState)
+            : m_transactionSender(std::move(transactionSender))
+            , m_storageState(storageState)
+            , m_serviceState(serviceState){}
 
     public:
         void modifyTransactionEndedWithError(sirius::drive::Replicator& replicator,
@@ -32,7 +37,8 @@ namespace catapult { namespace storage {
         void downloadOpinionHasBeenReceived(sirius::drive::Replicator& replicator, const sirius::drive::DownloadApprovalTransactionInfo&) override;
 
     private:
-        TransactionSender& m_transactionSender;
-        const state::StorageState& m_storageState;
+        TransactionSender m_transactionSender;
+        state::StorageState& m_storageState;
+        const extensions::ServiceState& m_serviceState;
     };
 }}

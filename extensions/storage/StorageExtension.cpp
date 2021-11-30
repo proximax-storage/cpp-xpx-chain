@@ -20,8 +20,7 @@ namespace catapult { namespace storage {
 				std::move(keyPair),
 				config.Immutable.NetworkIdentifier,
 				config.Immutable.GenerationHash,
-				std::move(storageConfig),
-				bootstrapper.pluginManager().getStorageState());
+				std::move(storageConfig));
 
 			notification_handlers::DemuxHandlerBuilder builder;
 			builder

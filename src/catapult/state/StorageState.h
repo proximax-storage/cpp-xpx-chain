@@ -9,33 +9,13 @@
 #include "catapult/utils/NonCopyable.h"
 #include "plugins/txes/storage/src/state/BcDriveEntry.h"
 #include "plugins/txes/storage/src/state/ReplicatorEntry.h"
+#include "plugins/txes/storage/src/state/DownloadChannelEntry.h"
 #include <vector>
 #include <map>
 
 namespace catapult { namespace cache { class CatapultCache; } }
 
 namespace catapult { namespace state {
-
-	struct DownloadChannelState {
-		Key Consumer;
-		uint64_t DownloadSize;
-		uint16_t DownloadApprovalCount;
-		std::vector<Key> ListOfPublicKeys;
-	};
-
-	struct DriveState {
-		Key DriveKey;
-		uint64_t Size;
-		uint64_t UsedSize;
-		utils::KeySet Replicators;
-		ActiveDataModification LastDataModification;
-        // TODO add channels in V3
-	};
-
-	struct ReplicatorData {
-		std::vector<DriveState> DrivesStates;
-		std::vector<DownloadChannelState> DownloadChannels;
-	};
 
 	/// Interface for storage state.
 	class StorageState : public utils::NonCopyable {
@@ -44,9 +24,10 @@ namespace catapult { namespace state {
 
 	public:
 		virtual bool isReplicatorRegistered(const Key& key) = 0;
-		virtual ReplicatorData getReplicatorData(const Key& replicatorKey, cache::CatapultCache& cache) = 0;
-		virtual const utils::KeySet& getDrivesReplicatorsList(const Key& driveKey, cache::CatapultCache& cache) const = 0;
-		virtual const BcDriveEntry* getDrive(const Key& driveKey, cache::CatapultCache& cache) const = 0;
-		virtual const DriveInfo* getReplicatorDriveInfo(const Key& replicatorKey, const Key& driveKey, cache::CatapultCache& cache) const = 0;
+		virtual const utils::KeySet& getDriveReplicators(const Key& driveKey, cache::CatapultCache& cache) = 0;
+		virtual const BcDriveEntry* getDrive(const Key& driveKey, cache::CatapultCache& cache) = 0;
+		virtual const DriveInfo* getReplicatorDriveInfo(const Key& replicatorKey, const Key& driveKey, cache::CatapultCache& cache) = 0;
+		virtual std::vector<const BcDriveEntry*> getReplicatorDrives(const Key& replicatorKey, cache::CatapultCache& cache) = 0;
+		virtual std::vector<const DownloadChannelEntry*> getReplicatorDownloadChannels(const Key& replicatorKey, cache::CatapultCache& cache) = 0;
 	};
 }}
