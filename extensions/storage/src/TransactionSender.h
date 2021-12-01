@@ -33,7 +33,7 @@ namespace catapult { namespace storage {
         void sendDownloadApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo);
 
     private:
-        void signAndSend(const crypto::KeyPair& sender, std::shared_ptr<model::Transaction> pTransaction);
+        void send(const crypto::KeyPair& sender, std::shared_ptr<model::Transaction> pTransaction);
 
     private:
         GenerationHash m_generationHash;

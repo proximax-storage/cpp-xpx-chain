@@ -57,7 +57,7 @@ namespace catapult { namespace builders {
         pTransaction->DownloadChannelId = m_downloadChannelId;
         pTransaction->SequenceNumber = m_sequenceNumber;
         pTransaction->ResponseToFinishDownloadTransaction = m_responseToFinishDownloadTransaction;
-        pTransaction->OpinionCount = m_presentOpinions.size();
+        pTransaction->OpinionCount = m_opinionIndices.size();
         pTransaction->JudgingCount = m_opinionIndices.size();
         pTransaction->JudgedCount = m_replicatorsKeys.size();
         pTransaction->OpinionElementCount = m_opinions.size();

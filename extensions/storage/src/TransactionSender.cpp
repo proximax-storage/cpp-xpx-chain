@@ -13,7 +13,7 @@
 namespace catapult { namespace storage {
     void TransactionSender::sendDataModificationApprovalTransaction(const crypto::KeyPair& sender,
                                                                     const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
-//        CATAPULT_LOG(debug) << "sending data modification approval transaction " << transactionInfo.m_modifyTransactionHash;
+        CATAPULT_LOG(debug) << "sending data modification approval transaction " << transactionInfo.m_modifyTransactionHash.data();
 
         builders::DataModificationApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
         builder.setDriveKey(transactionInfo.m_driveKey);
@@ -23,44 +23,48 @@ namespace catapult { namespace storage {
         builder.setUsedDriveSize(transactionInfo.m_driveSize);
 
         auto pTransaction = utils::UniqueToShared(builder.build());
-        signAndSend(sender, pTransaction);
+        pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
+        extensions::TransactionExtensions(m_generationHash).sign(sender, *pTransaction);
+
+        send(sender, pTransaction);
     }
 
     void TransactionSender::sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender,
                                                                           const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
-//        CATAPULT_LOG(debug) << "sending data modification single approval transaction " << transactionInfo.m_modifyTransactionHash;
+        CATAPULT_LOG(debug) << "sending data modification single approval transaction " << transactionInfo.m_modifyTransactionHash.data();
+
+        auto singleOpinion = transactionInfo.m_opinions.at(0);
+        std::vector<Key> keys;
+        keys.reserve(singleOpinion.m_uploadLayout.size());
+
+        // TODO count percents here?
+        // in percent
+        std::vector<uint8_t> opinions;
+        keys.reserve(singleOpinion.m_uploadLayout.size());
+
+        for (const auto& layout : singleOpinion.m_uploadLayout) {
+            keys.emplace_back(layout.m_key);
+        }
 
         builders::DataModificationSingleApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
         builder.setDriveKey(transactionInfo.m_driveKey);
         builder.setDataModificationId(transactionInfo.m_modifyTransactionHash);
         builder.setUsedDriveSize(transactionInfo.m_driveSize);
-//        builder.setUploadOpinion();
-
-        auto keysArray = transactionInfo.m_opinions.at(0).m_uploadReplicatorKeys;
-        std::vector<Key> keys;
-        keys.reserve(keysArray.size() / Key_Size);
-
-        auto keyNumber = 0;
-        for (auto it = keysArray.begin(); it != keysArray.end(); it + Key_Size) {
-            std::copy(it, it + Key_Size, keys.at(keyNumber).begin());
-            keyNumber++;
-        }
         builder.setUploaderKeys(keys);
+        builder.setUploadOpinion(opinions);
 
         auto pTransaction = utils::UniqueToShared(builder.build());
-        signAndSend(sender, pTransaction);
+        pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
+        extensions::TransactionExtensions(m_generationHash).sign(sender, *pTransaction);
+
+        send(sender, pTransaction);
     }
 
     void TransactionSender::sendDownloadApprovalTransaction(const crypto::KeyPair& sender,
                                                             const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
-//        CATAPULT_LOG(debug) << "sending download approval transaction " << transactionInfo.m_blockHash;
+        CATAPULT_LOG(debug) << "sending download approval transaction " << transactionInfo.m_blockHash.data();
 
-        builders::DownloadApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
-        builder.setDownloadChannelId(transactionInfo.m_downloadChannelId);
-
-        // TODO set other fields
-        std::vector<Key> pubKeys;
-        pubKeys.reserve(transactionInfo.m_opinions.size());
+        std::set<Key> pubKeys;
 
         std::vector<uint8_t> opinionIndices;
         opinionIndices.reserve(transactionInfo.m_opinions.size());
@@ -68,28 +72,40 @@ namespace catapult { namespace storage {
         std::vector<BLSSignature> signatures;
         signatures.reserve(transactionInfo.m_opinions.size());
 
+        // TODO set them properly
+        std::vector<uint8_t> presentOpinions;
         std::vector<uint64_t> opinions;
-        opinions.reserve(transactionInfo.m_opinions.size());
 
-        auto index = 0;
+        auto judging = 0;
         for (const auto& opinion : transactionInfo.m_opinions) {
-            opinionIndices.emplace_back(index);
-
-            pubKeys.emplace_back(opinion.m_replicatorKey);
+            opinionIndices.emplace_back(judging);
+            pubKeys.insert(opinion.m_replicatorKey);
 //            signatures.emplace_back(opinion.m_signature);
-//            opinions.emplace_back(opinion.m_downloadedBytes);
 
-            index++;
+            for (const auto& layout : opinion.m_downloadLayout) {
+                pubKeys.insert(layout.m_key);
+                opinions.emplace_back(layout.m_uploadedBytes);
+            }
+
+            judging++;
         }
 
-        auto pTransaction = utils::UniqueToShared(builder.build());
-        signAndSend(sender, pTransaction);
-    }
+        builders::DownloadApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
+        builder.setDownloadChannelId(transactionInfo.m_downloadChannelId);
+        builder.setReplicatorsKeys(std::vector<Key>(pubKeys.begin(), pubKeys.end()));
+        builder.setOpinionIndices(opinionIndices);
+        builder.setBlsSignatures(signatures);
+        builder.setPresentOpinions(presentOpinions);
+        builder.setOpinions(opinions);
 
-    void TransactionSender::signAndSend(const crypto::KeyPair& sender, std::shared_ptr<model::Transaction> pTransaction) {
+        auto pTransaction = utils::UniqueToShared(builder.build());
         pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
         extensions::TransactionExtensions(m_generationHash).sign(sender, *pTransaction);
 
+        send(sender, pTransaction);
+    }
+
+    void TransactionSender::send(const crypto::KeyPair& sender, std::shared_ptr<model::Transaction> pTransaction) {
         auto range = model::TransactionRange::FromEntity(pTransaction);
         m_transactionRangeHandler({std::move(range), sender.publicKey()});
     }
