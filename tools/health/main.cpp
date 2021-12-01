@@ -28,13 +28,6 @@
 #include "catapult/utils/Functional.h"
 #include <iostream>
 
-// logging for testing
-#include "catapult/config/ConfigurationFileLoader.h"
-#include "catapult/config/LoggingConfiguration.h"
-#include "catapult/thread/ThreadInfo.h"
-#include "catapult/utils/ExceptionLogging.h"
-
-
 // prometheus
 
 #include "sstream"
@@ -153,7 +146,11 @@ namespace catapult { namespace tools { namespace health {
 			}
 
 			size_t processNodeInfos(const std::vector<NodeInfoPointer>& nodeInfos) override {
-				PrometheusHealthCheck(nodeInfos);
+
+				for (;;) {
+					PrometheusHealthCheck(nodeInfos);
+					std::this_thread::sleep_for(std::chrono::seconds(10));
+				}
 
 				return utils::Sum(nodeInfos, [](const auto& pNodeInfo) {
 					return Height() == pNodeInfo->ChainHeight ? 1u : 0;
@@ -166,14 +163,17 @@ namespace catapult { namespace tools { namespace health {
 	}
 }}}
 
+
 int main(int argc, const char** argv) {
 	catapult::tools::health::HealthTool tool;
 
-	for (;;) {
-		catapult::tools::ToolMain(argc, argv, tool);
-		std::this_thread::sleep_for(std::chrono::seconds(10));
-		fcloseall();
-	}
+	catapult::tools::ToolMain(argc, argv, tool);
+
+
+	// for (;;) {
+	// 	catapult::tools::ToolMain(argc, argv, tool);
+	// 	std::this_thread::sleep_for(std::chrono::seconds(60));
+	// }
 
 	return 0;
 }
