@@ -165,15 +165,7 @@ namespace catapult { namespace tools { namespace health {
 
 
 int main(int argc, const char** argv) {
+
 	catapult::tools::health::HealthTool tool;
-
-	catapult::tools::ToolMain(argc, argv, tool);
-
-
-	// for (;;) {
-	// 	catapult::tools::ToolMain(argc, argv, tool);
-	// 	std::this_thread::sleep_for(std::chrono::seconds(60));
-	// }
-
-	return 0;
+	return catapult::tools::ToolMain(argc, argv, tool);
 }
