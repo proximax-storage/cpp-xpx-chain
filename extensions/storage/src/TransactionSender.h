@@ -16,29 +16,26 @@ namespace catapult { namespace storage {
     class TransactionSender {
     public:
         TransactionSender(
-                model::NetworkIdentifier networkIdentifier,
-                GenerationHash generationHash,
-                handlers::TransactionRangeHandler transactionRangeHandler,
-                StorageConfiguration storageConfig)
-                : m_networkIdentifier(networkIdentifier)
-                , m_generationHash(generationHash)
-                , m_transactionRangeHandler(std::move(transactionRangeHandler))
-                , m_storageConfig(std::move(storageConfig)) {}
+				const config::ImmutableConfiguration& immutableConfig,
+				StorageConfiguration storageConfig,
+				handlers::TransactionRangeHandler transactionRangeHandler)
+			: m_networkIdentifier(immutableConfig.NetworkIdentifier)
+			, m_generationHash(immutableConfig.GenerationHash)
+			, m_storageConfig(std::move(storageConfig))
+			, m_transactionRangeHandler(std::move(transactionRangeHandler)) {}
 
     public:
         void sendDataModificationApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
-
         void sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
-
         void sendDownloadApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo);
 
     private:
         void send(const crypto::KeyPair& sender, std::shared_ptr<model::Transaction> pTransaction);
 
     private:
+		model::NetworkIdentifier m_networkIdentifier;
         GenerationHash m_generationHash;
         StorageConfiguration m_storageConfig;
-        model::NetworkIdentifier m_networkIdentifier;
         handlers::TransactionRangeHandler m_transactionRangeHandler;
     };
 }}

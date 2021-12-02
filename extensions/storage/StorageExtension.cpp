@@ -6,6 +6,7 @@
 
 #include "src/BlockStorageSubscription.h"
 #include "src/ReplicatorService.h"
+#include "src/StorageTransactionStatusSubscriber.h"
 #include "src/notification_handlers/NotificationHandlers.h"
 #include "catapult/notification_handlers/DemuxHandlerBuilder.h"
 
@@ -14,12 +15,10 @@ namespace catapult { namespace storage {
 	namespace {
 		void RegisterExtension(extensions::ProcessBootstrapper& bootstrapper) {
 			const auto& config = bootstrapper.config();
-			auto keyPair = crypto::KeyPair::FromString(config.User.BootKey);
+			auto keyPair = crypto::KeyPair::FromString(config.User.BootKey); // TODO: get the key from the storage config.
 			auto storageConfig = StorageConfiguration::LoadFromPath(bootstrapper.resourcesPath());
 			auto pReplicatorService = std::make_shared<ReplicatorService>(
 				std::move(keyPair),
-				config.Immutable.NetworkIdentifier,
-				config.Immutable.GenerationHash,
 				std::move(storageConfig));
 
 			notification_handlers::DemuxHandlerBuilder builder;
@@ -35,6 +34,7 @@ namespace catapult { namespace storage {
 				CreateBlockStorageSubscription(bootstrapper, builder.build()));
 
 			bootstrapper.extensionManager().addServiceRegistrar(CreateReplicatorServiceRegistrar(pReplicatorService));
+			bootstrapper.subscriptionManager().addTransactionStatusSubscriber(CreateStorageTransactionStatusSubscriber(pReplicatorService));
 		}
 	}
 }}

@@ -6,16 +6,35 @@
 
 #pragma once
 #include "catapult/types.h"
+#include "catapult/utils/ArraySet.h"
 #include "catapult/utils/NonCopyable.h"
-#include "plugins/txes/storage/src/state/BcDriveEntry.h"
-#include "plugins/txes/storage/src/state/ReplicatorEntry.h"
-#include "plugins/txes/storage/src/state/DownloadChannelEntry.h"
 #include <vector>
-#include <map>
 
 namespace catapult { namespace cache { class CatapultCache; } }
 
 namespace catapult { namespace state {
+
+	struct DataModification {
+		Hash256 Id;
+		Key Owner;
+		Hash256 DownloadDataCdi;
+		uint64_t ExpectedUploadSize;
+	};
+
+	struct Drive {
+		Key Id;
+		Key Owner;
+		uint64_t Size;
+		uint64_t UsedSize;
+		utils::KeySet Replicators;
+		std::vector<DataModification> DataModifications;
+	};
+
+	struct DownloadChannel {
+		Hash256 Id;
+		uint64_t DownloadSize;
+		std::vector<Key> Consumers;
+	};
 
 	/// Interface for storage state.
 	class StorageState : public utils::NonCopyable {
@@ -23,11 +42,18 @@ namespace catapult { namespace state {
 		virtual ~StorageState() = default;
 
 	public:
+		void setCache(cache::CatapultCache* pCache) {
+			m_pCache = pCache;
+		}
+
+	public:
 		virtual bool isReplicatorRegistered(const Key& key) = 0;
-		virtual const utils::KeySet& getDriveReplicators(const Key& driveKey, cache::CatapultCache& cache) = 0;
-		virtual const BcDriveEntry* getDrive(const Key& driveKey, cache::CatapultCache& cache) = 0;
-		virtual const DriveInfo* getReplicatorDriveInfo(const Key& replicatorKey, const Key& driveKey, cache::CatapultCache& cache) = 0;
-		virtual std::vector<const BcDriveEntry*> getReplicatorDrives(const Key& replicatorKey, cache::CatapultCache& cache) = 0;
-		virtual std::vector<const DownloadChannelEntry*> getReplicatorDownloadChannels(const Key& replicatorKey, cache::CatapultCache& cache) = 0;
+		virtual Drive getDrive(const Key& driveKey) = 0;
+		virtual uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) = 0;
+		virtual std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) = 0;
+		virtual std::vector<DownloadChannel> getDownloadChannels() = 0;
+
+	protected:
+		cache::CatapultCache* m_pCache;
 	};
 }}

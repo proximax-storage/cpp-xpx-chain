@@ -268,7 +268,7 @@ namespace catapult { namespace plugins {
 		void setStorageState(const std::shared_ptr<state::StorageState>& pState);
 
 		/// Gets storage state.
-		state::StorageState& getStorageState() const;
+		state::StorageState& storageState() const;
 
 		// endregion
 

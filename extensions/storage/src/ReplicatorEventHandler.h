@@ -10,35 +10,9 @@
 #include "catapult/extensions/ServiceState.h"
 
 namespace catapult { namespace storage {
-    class ReplicatorEventHandler: public sirius::drive::ReplicatorEventHandler {
-    public:
-        explicit ReplicatorEventHandler(
-                TransactionSender transactionSender,
-                state::StorageState& storageState,
-                const extensions::ServiceState& serviceState)
-            : m_transactionSender(std::move(transactionSender))
-            , m_storageState(storageState)
-            , m_serviceState(serviceState){}
 
-    public:
-        void modifyTransactionEndedWithError(sirius::drive::Replicator& replicator,
-                                            const sirius::Key& driveKey,
-                                            const sirius::drive::ModifyRequest& modifyRequest,
-                                            const std::string& reason, int errorCode) override;
-
-        void modifyApprovalTransactionIsReady(sirius::drive::Replicator& replicator, sirius::drive::ApprovalTransactionInfo&& transactionInfo) override;
-
-        void singleModifyApprovalTransactionIsReady(sirius::drive::Replicator& replicator, sirius::drive::ApprovalTransactionInfo&& transactionInfo) override;
-
-        void downloadApprovalTransactionIsReady(sirius::drive::Replicator& replicator, const sirius::drive::DownloadApprovalTransactionInfo& info) override;
-
-        void opinionHasBeenReceived(sirius::drive::Replicator& replicator, const sirius::drive::ApprovalTransactionInfo&) override;
-
-        void downloadOpinionHasBeenReceived(sirius::drive::Replicator& replicator, const sirius::drive::DownloadApprovalTransactionInfo&) override;
-
-    private:
-        TransactionSender m_transactionSender;
-        state::StorageState& m_storageState;
-        const extensions::ServiceState& m_serviceState;
-    };
+	std::unique_ptr<sirius::drive::ReplicatorEventHandler> CreateReplicatorEventHandler(
+		TransactionSender&& transactionSender,
+		state::StorageState& storageState,
+		const extensions::ServiceState& serviceState);
 }}

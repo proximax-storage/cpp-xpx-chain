@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "catapult/cache/CatapultCache.h"
 #include "catapult/state/StorageState.h"
 #include "src/cache/ReplicatorKeyCollector.h"
 
@@ -18,11 +19,10 @@ namespace catapult { namespace state {
 
 	public:
 		bool isReplicatorRegistered(const Key& key) override;
-		const utils::KeySet& getDriveReplicators(const Key& driveKey, cache::CatapultCache& cache) override;
-		const BcDriveEntry* getDrive(const Key& driveKey, cache::CatapultCache& cache) override;
-		const DriveInfo* getReplicatorDriveInfo(const Key& replicatorKey, const Key& driveKey, cache::CatapultCache& cache) override;
-		std::vector<const BcDriveEntry*> getReplicatorDrives(const Key& replicatorKey, cache::CatapultCache& cache) override;
-		std::vector<const DownloadChannelEntry*> getReplicatorDownloadChannels(const Key& replicatorKey, cache::CatapultCache& cache) override;
+		Drive getDrive(const Key& driveKey) override;
+		uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) override;
+		std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) override;
+		std::vector<DownloadChannel> getDownloadChannels() override;
 
 	private:
 		std::shared_ptr<cache::ReplicatorKeyCollector> m_pKeyCollector;

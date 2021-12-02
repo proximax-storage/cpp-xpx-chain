@@ -17,71 +17,45 @@
 
 namespace catapult { namespace storage {
 
-	using FileNames = std::vector<std::string>;
-
 	class ReplicatorService {
 	public:
-		ReplicatorService(
-				crypto::KeyPair&& keyPair,
-				model::NetworkIdentifier networkIdentifier,
-				const GenerationHash& generationHash,
-				StorageConfiguration&& storageConfig)
-			: m_keyPair(std::move(keyPair))
-			, m_networkIdentifier(networkIdentifier)
-			, m_generationHash(generationHash)
-			, m_storageConfig(std::move(storageConfig))
-		{}
+		ReplicatorService(crypto::KeyPair&& keyPair, StorageConfiguration&& storageConfig);
 
 	public:
-		void initReplicator(handlers::TransactionRangeHandler transactionRangeHandler,
-							state::StorageState& storageState,
-							extensions::ServiceState& serviceState);
-
 		void start();
-
-		Key replicatorKey() const;
-
-		void addDriveModification(const Key& driveKey,
-								  const Hash256& downloadDataCdi,
-								  const Hash256& modificationId,
-								  const Key& owner,
-								  uint64_t dataSize);
-
-		void removeDriveModification(const Key& driveKey, const Hash256& dataModificationId);
-
-        // TODO looks incorrect
-		void addDriveChannel(const Hash256& channelId,
-							 const Key& driveKey,
-							 size_t prepaidDownloadSize,
-							 const std::vector<Key>& consumers);
-
-		// TODO update download channel size
-		void increaseDownloadChannelSize(const Hash256& channelId,
-                                         const Key& driveKey,
-                                         size_t downloadSize,
-                                         const std::vector<Key>& consumers);
-
-		void closeDriveChannel(const Hash256& channelId);
-
-		void addDrive(const Key& driveKey, uint64_t driveSize, uint64_t usedSize, const utils::KeySet& replicators);
-
-		bool driveExist(const Key& driveKey);
-
-		void closeDrive(const Key& driveKey, const Hash256& transactionHash);
+		void stop();
 
 		void shutdown();
 
-		void terminate();
+		void setServiceState(extensions::ServiceState* pServiceState) {
+			m_pServiceState = pServiceState;
+		}
+
+		const Key& replicatorKey() const;
+
+		void addDriveModification( const Key& driveKey, const Hash256& downloadDataCdi, const Hash256& modificationId, const Key& owner, uint64_t dataSize);
+		void removeDriveModification(const Key& driveKey, const Hash256& dataModificationId);
+
+        // TODO looks incorrect
+		void addDriveChannel(const Hash256& channelId, const Key& driveKey, size_t prepaidDownloadSize, const std::vector<Key>& consumers);
+		// TODO update download channel size
+		void increaseDownloadChannelSize(const Hash256& channelId, const Key& driveKey, size_t downloadSize, const std::vector<Key>& consumers);
+		void closeDriveChannel(const Hash256& channelId);
+
+		void addDrive(const Key& driveKey, uint64_t driveSize, uint64_t usedSize, const utils::KeySet& replicators);
+		bool driveExist(const Key& driveKey);
+		void closeDrive(const Key& driveKey, const Hash256& transactionHash);
+
+	public:
+		void notifyTransactionStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status);
 
 	private:
 		class Impl;
 		std::shared_ptr<Impl> m_pImpl;
 
 		crypto::KeyPair m_keyPair;
-		model::NetworkIdentifier m_networkIdentifier;
-		GenerationHash m_generationHash;
 		StorageConfiguration m_storageConfig;
-		std::shared_ptr<sirius::drive::Replicator> m_pReplicator;
+		extensions::ServiceState* m_pServiceState;
 	};
 
 	/// Creates a registrar for the replicator service.
