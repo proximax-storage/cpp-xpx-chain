@@ -63,7 +63,7 @@ namespace catapult { namespace test {
 			bool isChained)
 			: m_pAccounts(&accounts)
 			, m_pStateHashCalculator(&stateHashCalculator)
-			, m_blockTimeInterval(utils::TimeSpan::FromSeconds(60))
+			, m_blockTimeInterval(configHolder->Config().Network.BlockGenerationTargetTime)
 			, m_blockReceiptsHashCalculator([](const auto&) { return Hash256(); })
 			, m_pConfigHolder(configHolder)
 			, m_pAccountStateCache(accountStateCache){
