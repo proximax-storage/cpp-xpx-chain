@@ -38,12 +38,6 @@ namespace catapult { namespace test {
 			size_t AddressAliasId; // optional
 		};
 
-		struct NetworkConfigDescriptor {
-			std::string NetworkConfig;
-			std::string SupportedEntities;
-			BlockDuration BlocksBeforeActive;
-		};
-
 	public:
 		/// Adds a root namespace registration for namespace \a name by \a ownerId for specified \a duration,
 		/// optionally setting an alias for \a aliasId.

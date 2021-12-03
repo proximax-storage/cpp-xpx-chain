@@ -108,7 +108,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanApplyAliasWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Namespace);
 
 		// Act + Assert:
 		auto stateHashes = RunApplyAliasTest(context);
@@ -204,13 +204,15 @@ namespace catapult { namespace local {
 			}
 
 			// - create two blocks with same aliases pointing to different accounts where (better) second block will yield better chain
-			auto pTailBlock1 = CreateBlockWithTwoAliasesAndTransfers(context, accounts, *pBuilder1, seedBlocks, CreateTimeSpan(60), 1, 2);
-			auto pTailBlock2 = CreateBlockWithTwoAliasesAndTransfers(context, accounts, *pBuilder1, seedBlocks, CreateTimeSpan(58), 2, 3);
+			auto pTailBlock1 = CreateBlockWithTwoAliasesAndTransfers(context, accounts, *pBuilder1, seedBlocks, CreateTimeSpan(15), 1, 2);
+			auto pTailBlock2 = CreateBlockWithTwoAliasesAndTransfers(context, accounts, *pBuilder1, seedBlocks, CreateTimeSpan(5), 2, 3);
 
 			// Act:
 			test::ExternalSourceConnection connection;
+
 			auto pIo1 = test::PushEntity(connection, ionet::PacketType::Push_Block, pTailBlock1);
 			auto pIo2 = test::PushEntity(connection, ionet::PacketType::Push_Block, pTailBlock2);
+
 
 			// - wait for the chain height to change and for all height readers to disconnect
 			test::WaitForHeightAndElements(context, Height(1 + seedBlocks.size() + 1), 3, 2);

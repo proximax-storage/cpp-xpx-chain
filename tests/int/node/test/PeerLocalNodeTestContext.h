@@ -32,7 +32,10 @@ namespace catapult { namespace test {
 		Lock_Secret,
 
 		/// Property plugin.
-		Property
+		Property,
+
+		/// Namespace
+		Namespace
 	};
 
 	/// Test context for peer local node tests.

@@ -195,6 +195,7 @@ namespace catapult { namespace test {
 			prepareNetworkConfiguration(config);
 
 			m_pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
+
 			auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
 					m_pConfigHolder,
 					resourcesDirectory(),

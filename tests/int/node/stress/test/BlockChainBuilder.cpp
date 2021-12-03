@@ -67,6 +67,7 @@ namespace catapult { namespace test {
 			, m_blockReceiptsHashCalculator([](const auto&) { return Hash256(); })
 			, m_pConfigHolder(configHolder)
 			, m_pAccountStateCache(accountStateCache){
+
 		if (isChained)
 			return;
 

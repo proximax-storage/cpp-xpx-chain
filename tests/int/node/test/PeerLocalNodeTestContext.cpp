@@ -46,6 +46,22 @@ namespace catapult { namespace test {
 					}
 				}}));
 			}
+
+			if (NonNemesisTransactionPlugins::Namespace == additionalPlugins) {
+				plugins.emplace("catapult.plugins.namespace", utils::ConfigurationBag({{
+				  "",
+				  {
+						  { "maxNameSize", "64" },
+						  { "maxNamespaceDuration", "365d" },
+						  { "namespaceGracePeriodDuration", "0d" },
+						  { "reservedRootNamespaceNames", "xem, nem, user, account, org, com, biz, net, edu, mil, gov, info, prx, xpx, xarcade, xar, proximax, prc, storage" },
+						  { "namespaceRentalFeeSinkPublicKey", "3E82E1C1E4A75ADAA3CBA8C101C3CD31D9817A2EB966EB3B511FB2ED45B8E262" },
+						  { "rootNamespaceRentalFeePerBlock", "10'000'000'000" },
+						  { "childNamespaceRentalFee", "10'000'000'000" },
+						  { "maxChildNamespaces", "500" },
+				  }
+				}}));
+			}
 		}
 	}
 
