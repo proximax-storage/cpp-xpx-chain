@@ -11,7 +11,7 @@
 #include "catapult/extensions/TransactionExtensions.h"
 
 namespace catapult { namespace storage {
-    void TransactionSender::sendDataModificationApprovalTransaction(const crypto::KeyPair& sender,
+    catapult::Signature TransactionSender::sendDataModificationApprovalTransaction(const crypto::KeyPair& sender,
                                                                     const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
         CATAPULT_LOG(debug) << "sending data modification approval transaction " << transactionInfo.m_modifyTransactionHash.data();
 
@@ -27,9 +27,11 @@ namespace catapult { namespace storage {
         extensions::TransactionExtensions(m_generationHash).sign(sender, *pTransaction);
 
         send(sender, pTransaction);
+
+        return pTransaction->Signature;
     }
 
-    void TransactionSender::sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender,
+    catapult::Signature TransactionSender::sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender,
                                                                           const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
         CATAPULT_LOG(debug) << "sending data modification single approval transaction " << transactionInfo.m_modifyTransactionHash.data();
 
@@ -58,9 +60,11 @@ namespace catapult { namespace storage {
         extensions::TransactionExtensions(m_generationHash).sign(sender, *pTransaction);
 
         send(sender, pTransaction);
+
+        return pTransaction->Signature;
     }
 
-    void TransactionSender::sendDownloadApprovalTransaction(const crypto::KeyPair& sender,
+    catapult::Signature TransactionSender::sendDownloadApprovalTransaction(const crypto::KeyPair& sender,
                                                             const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
         CATAPULT_LOG(debug) << "sending download approval transaction " << transactionInfo.m_blockHash.data();
 
@@ -103,6 +107,8 @@ namespace catapult { namespace storage {
         extensions::TransactionExtensions(m_generationHash).sign(sender, *pTransaction);
 
         send(sender, pTransaction);
+
+        return pTransaction->Signature;
     }
 
     void TransactionSender::send(const crypto::KeyPair& sender, std::shared_ptr<model::Transaction> pTransaction) {

@@ -6,6 +6,7 @@
 
 #include <numeric>
 #include "ReplicatorEventHandler.h"
+#include "plugins/txes/storage/src/validators/Results.h"
 
 namespace catapult { namespace storage {
 
@@ -14,9 +15,11 @@ namespace catapult { namespace storage {
 		public:
 			explicit ReplicatorEventHandler(
 					TransactionSender&& transactionSender,
-					state::StorageState& storageState)
+					state::StorageState& storageState,
+					OperationContainer& operations)
 				: m_transactionSender(std::move(transactionSender))
 				, m_storageState(storageState)
+				, m_operations(operations)
 			{}
 
 		public:
@@ -38,7 +41,24 @@ namespace catapult { namespace storage {
 					(const crypto::KeyPair &) replicator.keyPair(),
 					transactionInfo
 				);
-				replicator.asyncApprovalTransactionHasBeenPublished(transactionInfo);
+
+				auto sign = m_transactionSender.sendDataModificationApprovalTransaction((const crypto::KeyPair &) replicator.keyPair(), transactionInfo);
+				Callback callback = [&](const Hash256& hash, uint32_t status){
+					if (!!status)
+						replicator.asyncApprovalTransactionHasBeenPublished(transactionInfo);
+
+					validators::ValidationResult validationResult{status};
+					if (validationResult != validators::Failure_Storage_No_Active_Data_Modifications
+						&& validationResult != validators::Failure_Storage_Opinion_Invalid_Key)
+						return;
+
+					replicator.asyncApprovalTransactionHasFailedInvalidSignatures(
+							sirius::Key{}, //TODO pass real key
+							(const std::array<uint8_t, 32UL>&) hash
+					);
+				};
+
+				m_operations.Emplace(sign, callback);
 			}
 
 			void singleModifyApprovalTransactionIsReady(
@@ -51,7 +71,14 @@ namespace catapult { namespace storage {
 					(const crypto::KeyPair &) replicator.keyPair(),
 					transactionInfo
 				);
-				replicator.asyncSingleApprovalTransactionHasBeenPublished(transactionInfo);
+
+				auto sign = m_transactionSender.sendDataModificationApprovalTransaction((const crypto::KeyPair &) replicator.keyPair(), transactionInfo);
+				Callback callback = [&](const Hash256& hash, uint32_t status){
+					if (!!status)
+						replicator.asyncSingleApprovalTransactionHasBeenPublished(transactionInfo);
+				};
+
+				m_operations.Emplace(sign, callback);
 			}
 
 			void downloadApprovalTransactionIsReady(
@@ -59,8 +86,22 @@ namespace catapult { namespace storage {
 					const sirius::drive::DownloadApprovalTransactionInfo& info) override {
 				CATAPULT_LOG(debug) << "download approval transaction for" << info.m_blockHash.data() << " is ready";
 
-				m_transactionSender.sendDownloadApprovalTransaction((const crypto::KeyPair &) replicator.keyPair(), info);
-				replicator.asyncDownloadApprovalTransactionHasBeenPublished(info.m_blockHash, info.m_downloadChannelId);
+				auto sign = m_transactionSender.sendDownloadApprovalTransaction((const crypto::KeyPair &) replicator.keyPair(), info);
+				Callback callback = [&](const Hash256& hash, uint32_t status){
+					if (!!status)
+						replicator.asyncDownloadApprovalTransactionHasBeenPublished(info.m_blockHash, info.m_downloadChannelId);
+
+					validators::ValidationResult validationResult{status};
+					if (validationResult != validators::Failure_Storage_Invalid_Sequence_Number)
+						return;
+
+					replicator.asyncDownloadApprovalTransactionHasFailedInvalidSignatures(
+							(const sirius::utils::ByteArray<32, sirius::Hash256_tag>&) hash,
+							info.m_downloadChannelId
+					);
+				};
+
+				m_operations.Emplace(sign, callback);
 			}
 
 			void opinionHasBeenReceived(
@@ -84,11 +125,8 @@ namespace catapult { namespace storage {
 					return;
 				}
 
-				const auto *pDriveEntry = m_storageState.getDrive(info.m_driveKey);
-				if (!pDriveEntry)
-					return;
-
-				const auto &replicators = pDriveEntry->replicators();
+				const auto pDriveEntry = m_storageState.getDrive(info.m_driveKey);
+				const auto &replicators = pDriveEntry.Replicators;
 				auto it = replicators.find(opinion.m_replicatorKey);
 				if (it == replicators.end())
 					return;
@@ -99,24 +137,24 @@ namespace catapult { namespace storage {
 				// TODO check also offboarded/excluded replicators
 				for (const auto &layout: opinion.m_uploadLayout) {
 					auto repIt = replicators.find(layout.m_key);
-					if (repIt == replicators.end() && *repIt != pDriveEntry->owner())
+					if (repIt == replicators.end() && *repIt != pDriveEntry.Owner)
 						return;
 
 					actualSum += layout.m_uploadedBytes;
 				}
 
 				auto modificationIt = std::find_if(
-					pDriveEntry->activeDataModifications().begin(),
-					pDriveEntry->activeDataModifications().end(),
+					pDriveEntry.DataModifications.begin(),
+					pDriveEntry.DataModifications.end(),
 					[&info](const auto &item) { return item.Id == info.m_modifyTransactionHash; }
 				);
 
-				if (modificationIt == pDriveEntry->activeDataModifications().end())
+				if (modificationIt == pDriveEntry.DataModifications.end())
 					return;
 
 				modificationIt++;
 				expectedSum += std::accumulate(
-					pDriveEntry->activeDataModifications().begin(),
+					pDriveEntry.DataModifications.begin(),
 					modificationIt,
 					0,
 					[](int64_t accumulator, const auto &currentModification) {
@@ -154,12 +192,14 @@ namespace catapult { namespace storage {
 		private:
 			TransactionSender m_transactionSender;
 			state::StorageState& m_storageState;
+			OperationContainer& m_operations;
 		};
 	}
 
 	std::unique_ptr<sirius::drive::ReplicatorEventHandler> CreateReplicatorEventHandler(
 			TransactionSender&& transactionSender,
-			state::StorageState& storageState) {
-		return std::make_unique<ReplicatorEventHandler>(std::move(transactionSender), storageState);
+			state::StorageState& storageState,
+			OperationContainer& operations) {
+		return std::make_unique<ReplicatorEventHandler>(std::move(transactionSender), storageState, operations);
 	}
 }}

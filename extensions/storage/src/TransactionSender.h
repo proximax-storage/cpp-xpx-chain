@@ -25,9 +25,9 @@ namespace catapult { namespace storage {
 			, m_transactionRangeHandler(std::move(transactionRangeHandler)) {}
 
     public:
-        void sendDataModificationApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
-        void sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
-        void sendDownloadApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo);
+		catapult::Signature sendDataModificationApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
+		catapult::Signature sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
+		catapult::Signature sendDownloadApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo);
 
     private:
         void send(const crypto::KeyPair& sender, std::shared_ptr<model::Transaction> pTransaction);

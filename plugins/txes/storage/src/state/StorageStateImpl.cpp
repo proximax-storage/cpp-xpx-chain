@@ -24,7 +24,8 @@ namespace catapult { namespace state {
 					modification.Id,
 					modification.Owner,
 					modification.DownloadDataCdi,
-					modification.ExpectedUploadSize});
+					modification.ExpectedUploadSize,
+				modification.ActualUploadSize});
 
 			return Drive{
 				driveEntry.key(),
@@ -40,6 +41,15 @@ namespace catapult { namespace state {
 	bool StorageStateImpl::isReplicatorRegistered(const Key& key) {
 		const auto& keys = m_pKeyCollector->keys();
 		return (keys.find(key) != keys.end());
+	}
+
+	bool StorageStateImpl::isReplicatorBelongToDrive(const Key& key, const Key& driveKey) {
+		auto drive = GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
+		auto it = drive.Replicators.find(key);
+		if (it != drive.Replicators.end())
+			return true;
+
+		return false;
 	}
 
 	Drive StorageStateImpl::getDrive(const Key& driveKey) {
@@ -82,6 +92,22 @@ namespace catapult { namespace state {
 		}
 
 		return channels;
+	}
+
+	DownloadChannel StorageStateImpl::getDownloadChannel(Hash256& id) {
+		auto downloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
+
+		auto channel = downloadChannelCacheView->find(id);
+		auto channelEntry = channel.get();
+
+		auto consumers = channelEntry.listOfPublicKeys();
+		consumers.emplace_back(channelEntry.consumer());
+
+		return DownloadChannel{
+			channelEntry.id(),
+			channelEntry.downloadSize(),
+			consumers
+		};
 	}
 
 }}

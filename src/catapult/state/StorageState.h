@@ -19,6 +19,7 @@ namespace catapult { namespace state {
 		Key Owner;
 		Hash256 DownloadDataCdi;
 		uint64_t ExpectedUploadSize;
+		uint64_t ActualUploadSize;
 	};
 
 	struct Drive {
@@ -34,6 +35,7 @@ namespace catapult { namespace state {
 		Hash256 Id;
 		uint64_t DownloadSize;
 		std::vector<Key> Consumers;
+		Key DriveKey; // TODO inv V3
 	};
 
 	/// Interface for storage state.
@@ -48,10 +50,12 @@ namespace catapult { namespace state {
 
 	public:
 		virtual bool isReplicatorRegistered(const Key& key) = 0;
+		virtual bool isReplicatorBelongToDrive(const Key& key, const Key& driveKey) = 0;
 		virtual Drive getDrive(const Key& driveKey) = 0;
 		virtual uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) = 0;
 		virtual std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) = 0;
 		virtual std::vector<DownloadChannel> getDownloadChannels() = 0;
+		virtual DownloadChannel getDownloadChannel(Hash256& id) = 0;
 
 	protected:
 		cache::CatapultCache* m_pCache;
