@@ -31,6 +31,8 @@ namespace catapult { namespace storage {
 
 		const Key& replicatorKey() const;
 
+		bool isReplicatorRegistered(const Key& key);
+
 		void addDriveModification( const Key& driveKey, const Hash256& downloadDataCdi, const Hash256& modificationId, const Key& owner, uint64_t dataSize);
 		void removeDriveModification(const Key& driveKey, const Hash256& dataModificationId);
 
@@ -40,7 +42,7 @@ namespace catapult { namespace storage {
 		void closeDriveChannel(const Hash256& channelId);
 
 		void addDrive(const Key& driveKey, uint64_t driveSize, uint64_t usedSize, const utils::KeySet& replicators);
-		bool driveExist(const Key& driveKey);
+		bool containsDrive(const Key& driveKey);
 		void closeDrive(const Key& driveKey, const Hash256& transactionHash);
 
 	public:

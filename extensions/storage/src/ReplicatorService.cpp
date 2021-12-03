@@ -199,8 +199,8 @@ namespace catapult { namespace storage {
             m_pReplicator->asyncAddDrive((const sirius::Key&) driveKey, request);
         }
 
-        bool driveExist(const Key& driveKey) {
-            return true;
+        bool containsDrive(const Key& driveKey) {
+            return m_serviceState.pluginManager().storageState().isReplicatorBelongToDrive(reinterpret_cast<const Key&>(m_keyPair), driveKey);
         }
 
         void closeDrive(const Key& driveKey, const Hash256& transactionHash) {
@@ -256,6 +256,10 @@ namespace catapult { namespace storage {
         return m_keyPair.publicKey();
     }
 
+	bool ReplicatorService::isReplicatorRegistered(const Key& key) {
+		return m_pServiceState->pluginManager().storageState().isReplicatorRegistered(key);
+	}
+
     void ReplicatorService::addDriveModification(
 			const Key& driveKey,
 			const Hash256& downloadDataCdi,
@@ -291,9 +295,9 @@ namespace catapult { namespace storage {
             m_pImpl->addDrive(driveKey, driveSize, usedSize, replicators);
     }
 
-    bool ReplicatorService::driveExist(const Key& driveKey) {
+    bool ReplicatorService::containsDrive(const Key& driveKey) {
         if (m_pImpl)
-            m_pImpl->driveExist(driveKey);
+            m_pImpl->containsDrive(driveKey);
 
         return false;
     }

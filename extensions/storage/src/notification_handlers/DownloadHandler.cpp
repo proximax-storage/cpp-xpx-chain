@@ -16,7 +16,7 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-//			if (!pReplicatorService->driveExist(notification.DriveKey))
+//			if (!pReplicatorService->containsDrive(notification.DriveKey))
 //				return;
 
 			std::vector<Key> listOfPublicKeys;

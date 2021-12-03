@@ -11,12 +11,12 @@ namespace catapult { namespace notification_handlers {
 	using Notification = model::DataModificationNotification<1>;
 
 	DECLARE_HANDLER(DataModification, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(DataModification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
+		return MAKE_HANDLER(DataModification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
 
-			if (pReplicatorService->driveExist(notification.DriveKey))
+			if (pReplicatorService->containsDrive(notification.DriveKey))
 				pReplicatorService->addDriveModification(
 						notification.DriveKey,
 						notification.DownloadDataCdi,
