@@ -8,12 +8,12 @@
 #include "TransactionSender.h"
 #include "catapult/state/StorageState.h"
 #include "catapult/extensions/ServiceState.h"
-#include "src/utils/OperationContainer.h"
+#include "TransactionStatusHandler.h"
 
 namespace catapult { namespace storage {
 
 	std::unique_ptr<sirius::drive::ReplicatorEventHandler> CreateReplicatorEventHandler(
-		TransactionSender&& transactionSender,
-		state::StorageState& storageState,
-		OperationContainer& m_operations);
+            TransactionSender&& transactionSender,
+            state::StorageState& storageState,
+            TransactionStatusHandler& m_transactionStatusHandler);
 }}

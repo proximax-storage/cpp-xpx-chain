@@ -67,7 +67,7 @@ namespace catapult { namespace storage {
 			TransactionSender transactionSender(immutableConfig, storageConfig,
 												m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local));
 			auto& storageState = m_serviceState.pluginManager().storageState();
-			m_pReplicatorEventHandler = CreateReplicatorEventHandler(std::move(transactionSender), storageState, m_operations);
+			m_pReplicatorEventHandler = CreateReplicatorEventHandler(std::move(transactionSender), storageState, m_transactionStatusHandler);
 
 			m_pReplicator = sirius::drive::createDefaultReplicator(
 				reinterpret_cast<sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
@@ -213,7 +213,7 @@ namespace catapult { namespace storage {
         }
 
 		void notifyTransactionStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) {
-			m_operations.Call(transaction.Signature, hash, status);
+			m_transactionStatusHandler.handle(transaction.Signature, hash, status);
 		}
 
         void stop() {
@@ -225,7 +225,7 @@ namespace catapult { namespace storage {
 		extensions::ServiceState& m_serviceState;
 		std::shared_ptr<sirius::drive::Replicator> m_pReplicator;
 		std::unique_ptr<sirius::drive::ReplicatorEventHandler> m_pReplicatorEventHandler;
-		OperationContainer m_operations = OperationContainer{};
+		TransactionStatusHandler m_transactionStatusHandler = TransactionStatusHandler{};
     };
 
     // endregion
