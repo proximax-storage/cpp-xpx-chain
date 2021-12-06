@@ -43,6 +43,10 @@ namespace catapult { namespace state {
 		return (keys.find(key) != keys.end());
 	}
 
+	std::vector<Key> StorageStateImpl::getAllReplicators() {
+		return {m_pKeyCollector->keys().begin(), m_pKeyCollector->keys().end()};
+	}
+
 	bool StorageStateImpl::driveExist(const Key& driveKey) {
 		auto driveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
 		return driveCacheView->contains(driveKey);
@@ -74,6 +78,11 @@ namespace catapult { namespace state {
 			drives.emplace_back(GetDrive(pair.first, *pDriveCacheView));
 
 		return drives;
+	}
+
+	std::vector<Key> StorageStateImpl::getDriveReplicators(const Key& driveKey) {
+		auto drive = GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
+		return {drive.Replicators.begin(), drive.Replicators.end()};
 	}
 
 	uint64_t StorageStateImpl::getDownloadWork(const Key& replicatorKey, const Key& driveKey) {

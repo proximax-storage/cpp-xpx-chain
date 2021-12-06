@@ -19,11 +19,13 @@ namespace catapult { namespace state {
 
 	public:
 		bool isReplicatorRegistered(const Key& key) override;
+		std::vector<Key> getAllReplicators() override;
 
 		bool driveExist(const Key& driveKey) override;
 		Drive getDrive(const Key& driveKey) override;
 		bool isReplicatorBelongToDrive(const Key& key, const Key& driveKey) override;
 		std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) override;
+		std::vector<Key> getDriveReplicators(const Key& driveKey) override;
 
 		uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) override;
 

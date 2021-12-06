@@ -5,6 +5,7 @@
 **/
 
 #include "ReplicatorService.h"
+#include "src/catapult/ionet/NodeContainer.h"
 #include "catapult/extensions/ServiceLocator.h"
 
 namespace catapult { namespace storage {
@@ -56,9 +57,14 @@ namespace catapult { namespace storage {
 
     class ReplicatorService::Impl : public std::enable_shared_from_this<ReplicatorService::Impl> {
     public:
-        Impl(crypto::KeyPair& keyPair, extensions::ServiceState& serviceState)
+        Impl(crypto::KeyPair& keyPair,
+			 extensions::ServiceState& serviceState,
+			 state::StorageState& storageState,
+			 const ionet::NodeContainerView& nodesView)
             : m_keyPair(keyPair)
 			, m_serviceState(serviceState)
+			, m_storageState(storageState)
+			, m_nodesView(nodesView)
 		{}
 
     public:
@@ -70,15 +76,14 @@ namespace catapult { namespace storage {
 					m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local)
 			);
 
-			auto& storageState = m_serviceState.pluginManager().storageState();
 			m_pReplicatorEventHandler = CreateReplicatorEventHandler(
 					std::move(transactionSender),
-					storageState,
+					m_storageState,
 					m_transactionStatusHandler
 			);
 
 			m_pReplicator = sirius::drive::createDefaultReplicator(
-					reinterpret_cast<sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
+					reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
 					Replicator_Host,
 					std::string(storageConfig.Port), // TODO: do not use move semantics.
 					std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
@@ -88,14 +93,9 @@ namespace catapult { namespace storage {
 					nullptr,
 					Service_Name);
 
-			auto drives = storageState.getReplicatorDrives(m_keyPair.publicKey());
+			auto drives = m_storageState.getReplicatorDrives(m_keyPair.publicKey());
 			for (const auto& drive: drives) {
-				addDrive(
-						drive.Id,
-						drive.Size,
-						drive.UsedSize,
-						drive.Replicators
-				);
+				addDrive(drive.Id, drive.Size, drive.UsedSize);
 
 				for (const auto& dataModification: drive.DataModifications) {
 					addDriveModification(
@@ -108,7 +108,7 @@ namespace catapult { namespace storage {
 				}
 			}
 
-			auto channels = storageState.getDownloadChannels();
+			auto channels = m_storageState.getDownloadChannels();
 			for (const auto& channel: channels) {
 				addDriveChannel(
 						channel.Id,
@@ -125,16 +125,16 @@ namespace catapult { namespace storage {
 				const Hash256& modificationId,
 				const Key& owner,
 				uint64_t dataSize) {
+			CATAPULT_LOG(debug) << "new modify request " << modificationId << " for drive " << driveKey;
+
+			auto replicators = findNodesByKeys(m_storageState.getDriveReplicators(driveKey)); // TODO or get from notification?
             auto modifyRequest = sirius::drive::ModifyRequest{
                 (const sirius::Hash256&) downloadDataCdi,
                 (const sirius::Hash256&) modificationId,
                 dataSize,
-                {}, // TODO add replicators addresses
+				replicators,
                 (const sirius::Key&) owner
             };
-
-            CATAPULT_LOG(debug) << "new modify request " << modifyRequest.m_transactionHash
-                                << " for drive " << driveKey;
 
             m_pReplicator->asyncModify((const sirius::Key&) driveKey, std::move(modifyRequest));
        }
@@ -155,6 +155,8 @@ namespace catapult { namespace storage {
 				const std::vector<Key>& consumers) {
             CATAPULT_LOG(debug) << "add download channel " << channelId.data();
 
+//			auto replicators = findNodesByKeys(m_storageState.getDriveReplicators(driveKey)); // TODO use in V3
+			auto replicators = findNodesByKeys(m_storageState.getAllReplicators());
             std::vector<sirius::Key> castedConsumers;
 			std::transform(
 					consumers.begin(),
@@ -166,7 +168,7 @@ namespace catapult { namespace storage {
 			auto downloadRequest = sirius::drive::DownloadRequest{
 					(const std::array<uint8_t, 32>&) channelId,
 					prepaidDownloadSize,
-					{}, // TODO add replicators addresses
+					replicators,
 					castedConsumers
 			};
 
@@ -176,7 +178,7 @@ namespace catapult { namespace storage {
 		void increaseDownloadChannelSize(const Hash256& channelId, size_t downloadSize) {
 			CATAPULT_LOG(debug) << "updating download  channel " << channelId.data();
 
-			auto channel = m_serviceState.pluginManager().storageState().getDownloadChannel(const_cast<Hash256&>(channelId));
+			auto channel = m_storageState.getDownloadChannel(const_cast<Hash256&>(channelId));
 			catapult::storage::ReplicatorService::Impl::addDriveChannel(
 					channelId,
 					channel.DriveKey,
@@ -191,24 +193,16 @@ namespace catapult { namespace storage {
             m_pReplicator->removeDownloadChannelInfo((const std::array<uint8_t, 32>&) channelId);
         }
 
-        void addDrive(const Key& driveKey, uint64_t driveSize, uint64_t usedSize, const utils::KeySet& replicators) {
+        void addDrive(const Key& driveKey, uint64_t driveSize, uint64_t usedSize) {
             CATAPULT_LOG(debug) << "add drive " << driveKey;
 
-            sirius::drive::ReplicatorList replicatorList;
-			replicatorList.reserve(replicators.size());
-
-			auto i = 0;
-			for (const auto& rep: replicators) {
-				replicatorList.at(i).m_publicKey = (const sirius::Key&) rep;
-				i++;
-			}
-
-			sirius::drive::AddDriveRequest request{driveSize, usedSize, replicatorList};
+			auto replicators = findNodesByKeys(m_storageState.getDriveReplicators(driveKey)); // TODO or get from notification?
+			sirius::drive::AddDriveRequest request{driveSize, usedSize, replicators};
 			m_pReplicator->asyncAddDrive((const sirius::Key&) driveKey, request);
         }
 
         bool containsDrive(const Key& driveKey) {
-            return m_serviceState.pluginManager().storageState().isReplicatorBelongToDrive(reinterpret_cast<const Key&>(m_keyPair), driveKey);
+            return m_storageState.isReplicatorBelongToDrive(reinterpret_cast<const Key&>(m_keyPair), driveKey);
         }
 
         void closeDrive(const Key& driveKey, const Hash256& transactionHash) {
@@ -220,7 +214,10 @@ namespace catapult { namespace storage {
             );
         }
 
-		void notifyTransactionStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) {
+		void notifyTransactionStatus(
+				const model::Transaction& transaction,
+				const Height& height,
+				const Hash256& hash, uint32_t status) {
 			m_transactionStatusHandler.handle(transaction.Signature, hash, status);
 		}
 
@@ -228,12 +225,38 @@ namespace catapult { namespace storage {
 			// TODO: stop replicator.
         }
 
+	private:
+		std::vector<sirius::drive::ReplicatorInfo> findNodesByKeys(const std::vector<Key>& keys) {
+			std::vector<sirius::drive::ReplicatorInfo> requestedNodes;
+			requestedNodes.reserve(keys.size());
+
+			auto allNodes = ionet::FindAllActiveNodes(m_nodesView);
+			for (const auto& node : allNodes) {
+				auto it = std::find(keys.begin(), keys.end(), node.identityKey());
+				if (it == keys.end())
+					continue;
+
+				boost::asio::ip::tcp::endpoint endpoint;
+				endpoint.address(boost::asio::ip::address::from_string(node.endpoint().Host));
+				endpoint.port(node.endpoint().Port);
+
+				requestedNodes.emplace_back(sirius::drive::ReplicatorInfo{
+					endpoint,
+					(const sirius::utils::ByteArray<32, sirius::Key_tag>&) it.base(),
+				});
+			}
+
+		}
+
     private:
-        crypto::KeyPair& m_keyPair; // TODO: change to const ref.
+        const crypto::KeyPair& m_keyPair;
 		extensions::ServiceState& m_serviceState;
+		state::StorageState& m_storageState;
+		const ionet::NodeContainerView& m_nodesView;
+
 		std::shared_ptr<sirius::drive::Replicator> m_pReplicator;
 		std::unique_ptr<sirius::drive::ReplicatorEventHandler> m_pReplicatorEventHandler;
-		TransactionStatusHandler m_transactionStatusHandler = TransactionStatusHandler{};
+		TransactionStatusHandler m_transactionStatusHandler{};
     };
 
     // endregion
@@ -249,7 +272,12 @@ namespace catapult { namespace storage {
 		if (m_pImpl)
 			CATAPULT_THROW_RUNTIME_ERROR("replicator service already started");
 
-		m_pImpl = std::make_shared<ReplicatorService::Impl>(m_keyPair, *m_pServiceState);
+		m_pImpl = std::make_shared<ReplicatorService::Impl>(
+				m_keyPair,
+				*m_pServiceState,
+				m_pServiceState->pluginManager().storageState(),
+				m_pServiceState->nodes().view()
+		);
 		m_pImpl->init(m_storageConfig);
     }
 
@@ -283,7 +311,11 @@ namespace catapult { namespace storage {
             m_pImpl->removeDriveModification(driveKey, dataModificationId);
     }
 
-    void ReplicatorService::addDriveChannel(const Hash256& channelId, const Key& driveKey, size_t prepaidDownloadSize, const std::vector<Key>& consumers) {
+    void ReplicatorService::addDriveChannel(
+			const Hash256& channelId,
+			const Key& driveKey,
+			size_t prepaidDownloadSize,
+			const std::vector<Key>& consumers) {
         if (m_pImpl)
             m_pImpl->addDriveChannel(channelId, driveKey, prepaidDownloadSize, consumers);
     }
@@ -298,9 +330,9 @@ namespace catapult { namespace storage {
             m_pImpl->closeDriveChannel(channelId);
     }
 
-    void ReplicatorService::addDrive(const Key& driveKey, uint64_t driveSize, uint64_t usedSize, const utils::KeySet& replicators) {
+    void ReplicatorService::addDrive(const Key& driveKey,uint64_t driveSize, uint64_t usedSize) {
         if (m_pImpl)
-            m_pImpl->addDrive(driveKey, driveSize, usedSize, replicators);
+            m_pImpl->addDrive(driveKey, driveSize, usedSize);
     }
 
     bool ReplicatorService::containsDrive(const Key& driveKey) {
@@ -315,7 +347,12 @@ namespace catapult { namespace storage {
             m_pImpl->closeDrive(driveKey, transactionHash);
     }
 
-	void ReplicatorService::notifyTransactionStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) {
+	void ReplicatorService::notifyTransactionStatus(
+			const model::Transaction&
+			transaction,
+			const Height& height,
+			const Hash256& hash,
+			uint32_t status) {
         if (m_pImpl)
             m_pImpl->notifyTransactionStatus(transaction, height, hash, status);
 	}

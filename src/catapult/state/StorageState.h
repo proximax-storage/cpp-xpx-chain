@@ -51,11 +51,13 @@ namespace catapult { namespace state {
 
 	public:
 		virtual bool isReplicatorRegistered(const Key& key) = 0;
+		virtual std::vector<Key> getAllReplicators() = 0; // TODO only for V2. Delete in V3
 
 		virtual bool driveExist(const Key& driveKey) = 0;
 		virtual Drive getDrive(const Key& driveKey) = 0;
 		virtual bool isReplicatorBelongToDrive(const Key& key, const Key& driveKey) = 0;
 		virtual std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) = 0;
+		virtual std::vector<Key> getDriveReplicators(const Key& driveKey) = 0;
 
 		virtual uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) = 0;
 

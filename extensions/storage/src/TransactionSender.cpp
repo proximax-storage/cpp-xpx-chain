@@ -12,8 +12,9 @@
 #include "catapult/extensions/TransactionExtensions.h"
 
 namespace catapult { namespace storage {
-    catapult::Signature TransactionSender::sendDataModificationApprovalTransaction(const crypto::KeyPair& sender,
-                                                                                   const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
+    catapult::Signature TransactionSender::sendDataModificationApprovalTransaction(
+            const crypto::KeyPair& sender,
+            const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
         CATAPULT_LOG(debug) << "sending data modification approval transaction "
                             << transactionInfo.m_modifyTransactionHash.data();
 
@@ -33,8 +34,9 @@ namespace catapult { namespace storage {
         return pTransaction->Signature;
     }
 
-    catapult::Signature TransactionSender::sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender,
-                                                                                         const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
+    catapult::Signature TransactionSender::sendDataModificationSingleApprovalTransaction(
+            const crypto::KeyPair& sender,
+            const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
         CATAPULT_LOG(debug) << "sending data modification single approval transaction "
                             << transactionInfo.m_modifyTransactionHash.data();
 
@@ -67,9 +69,10 @@ namespace catapult { namespace storage {
         return pTransaction->Signature;
     }
 
-    catapult::Signature TransactionSender::sendDownloadApprovalTransaction(const crypto::KeyPair& sender,
-                                                                           uint16_t sequenceNumber,
-                                                                           const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
+    catapult::Signature TransactionSender::sendDownloadApprovalTransaction(
+            const crypto::KeyPair& sender,
+            uint16_t sequenceNumber,
+            const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
         CATAPULT_LOG(debug) << "sending download approval transaction " << transactionInfo.m_blockHash.data();
 
         std::vector<uint8_t> opinionIndices;
