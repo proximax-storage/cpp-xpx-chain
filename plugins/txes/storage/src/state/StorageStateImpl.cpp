@@ -43,6 +43,15 @@ namespace catapult { namespace state {
 		return (keys.find(key) != keys.end());
 	}
 
+	bool StorageStateImpl::driveExist(const Key& driveKey) {
+		auto driveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+		return driveCacheView->contains(driveKey);
+	}
+
+	Drive StorageStateImpl::getDrive(const Key& driveKey) {
+		return GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
+	}
+
 	bool StorageStateImpl::isReplicatorBelongToDrive(const Key& key, const Key& driveKey) {
 		auto drive = GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
 		auto it = drive.Replicators.find(key);
@@ -50,18 +59,6 @@ namespace catapult { namespace state {
 			return true;
 
 		return false;
-	}
-
-	Drive StorageStateImpl::getDrive(const Key& driveKey) {
-		return GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
-	}
-
-	uint64_t StorageStateImpl::getDownloadWork(const Key& replicatorKey, const Key& driveKey) {
-		auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-		auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
-		auto replicatorEntry = replicatorIter.get();
-
-		return replicatorEntry.drives().find(driveKey)->second.LastCompletedCumulativeDownloadWork;
 	}
 
 	std::vector<Drive> StorageStateImpl::getReplicatorDrives(const Key& replicatorKey) {
@@ -79,6 +76,19 @@ namespace catapult { namespace state {
 		return drives;
 	}
 
+	uint64_t StorageStateImpl::getDownloadWork(const Key& replicatorKey, const Key& driveKey) {
+		auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
+		auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
+		auto replicatorEntry = replicatorIter.get();
+
+		return replicatorEntry.drives().find(driveKey)->second.LastCompletedCumulativeDownloadWork;
+	}
+
+	bool StorageStateImpl::downloadChannelExist(const Hash256& id) {
+		auto downloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
+		return downloadChannelCacheView->contains(id);
+	}
+
 	std::vector<DownloadChannel> StorageStateImpl::getDownloadChannels() {
 		auto downloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
 		auto iterableView = downloadChannelCacheView->tryMakeIterableView();
@@ -88,13 +98,18 @@ namespace catapult { namespace state {
 		for (auto it = iterableView->begin(); it != iterableView->end(); ++it) {
 			auto consumers = it->second.listOfPublicKeys();
 			consumers.emplace_back(it->second.consumer());
-			channels.emplace_back(DownloadChannel{it->first, it->second.downloadSize(), consumers });
+			channels.emplace_back(DownloadChannel{
+				it->first,
+				it->second.downloadSize(),
+				it->second.downloadApprovalCount(),
+				consumers
+			});
 		}
 
 		return channels;
 	}
 
-	DownloadChannel StorageStateImpl::getDownloadChannel(Hash256& id) {
+	DownloadChannel StorageStateImpl::getDownloadChannel(const Hash256& id) {
 		auto downloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
 
 		auto channel = downloadChannelCacheView->find(id);
@@ -106,7 +121,9 @@ namespace catapult { namespace state {
 		return DownloadChannel{
 			channelEntry.id(),
 			channelEntry.downloadSize(),
-			consumers
+			channelEntry.downloadApprovalCount(),
+			consumers,
+			Key{} // TODO set real key
 		};
 	}
 

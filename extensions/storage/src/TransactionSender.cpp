@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <boost/dynamic_bitset.hpp>
 #include "TransactionSender.h"
 #include "sdk/src/builders/DataModificationApprovalBuilder.h"
 #include "sdk/src/builders/DataModificationSingleApprovalBuilder.h"
@@ -12,8 +13,9 @@
 
 namespace catapult { namespace storage {
     catapult::Signature TransactionSender::sendDataModificationApprovalTransaction(const crypto::KeyPair& sender,
-                                                                    const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
-        CATAPULT_LOG(debug) << "sending data modification approval transaction " << transactionInfo.m_modifyTransactionHash.data();
+                                                                                   const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
+        CATAPULT_LOG(debug) << "sending data modification approval transaction "
+                            << transactionInfo.m_modifyTransactionHash.data();
 
         builders::DataModificationApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
         builder.setDriveKey(transactionInfo.m_driveKey);
@@ -32,8 +34,9 @@ namespace catapult { namespace storage {
     }
 
     catapult::Signature TransactionSender::sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender,
-                                                                          const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
-        CATAPULT_LOG(debug) << "sending data modification single approval transaction " << transactionInfo.m_modifyTransactionHash.data();
+                                                                                         const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
+        CATAPULT_LOG(debug) << "sending data modification single approval transaction "
+                            << transactionInfo.m_modifyTransactionHash.data();
 
         auto singleOpinion = transactionInfo.m_opinions.at(0);
         std::vector<Key> keys;
@@ -44,7 +47,7 @@ namespace catapult { namespace storage {
         std::vector<uint8_t> opinions;
         keys.reserve(singleOpinion.m_uploadLayout.size());
 
-        for (const auto& layout : singleOpinion.m_uploadLayout) {
+        for (const auto& layout: singleOpinion.m_uploadLayout) {
             keys.emplace_back(layout.m_key);
         }
 
@@ -65,10 +68,9 @@ namespace catapult { namespace storage {
     }
 
     catapult::Signature TransactionSender::sendDownloadApprovalTransaction(const crypto::KeyPair& sender,
-                                                            const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
+                                                                           uint16_t sequenceNumber,
+                                                                           const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
         CATAPULT_LOG(debug) << "sending download approval transaction " << transactionInfo.m_blockHash.data();
-
-        std::set<Key> pubKeys;
 
         std::vector<uint8_t> opinionIndices;
         opinionIndices.reserve(transactionInfo.m_opinions.size());
@@ -76,31 +78,80 @@ namespace catapult { namespace storage {
         std::vector<BLSSignature> signatures;
         signatures.reserve(transactionInfo.m_opinions.size());
 
-        // TODO set them properly
-        std::vector<uint8_t> presentOpinions;
-        std::vector<uint64_t> opinions;
-
-        auto judging = 0;
-        for (const auto& opinion : transactionInfo.m_opinions) {
-            opinionIndices.emplace_back(judging);
-            pubKeys.insert(opinion.m_replicatorKey);
+        std::set<Key> judgingPubKeys;
+        std::set<Key> judgedPubKeys;
+        auto opinionIndex = 0;
+        for (const auto& opinion: transactionInfo.m_opinions) {
+            opinionIndices.emplace_back(opinionIndex);
+            judgingPubKeys.insert(opinion.m_replicatorKey);
 //            signatures.emplace_back(opinion.m_signature);
 
-            for (const auto& layout : opinion.m_downloadLayout) {
-                pubKeys.insert(layout.m_key);
-                opinions.emplace_back(layout.m_uploadedBytes);
+            for (const auto& layout: opinion.m_downloadLayout)
+                judgedPubKeys.insert(layout.m_key);
+
+            opinionIndex++;
+        }
+
+        // TODO set them properly
+        std::vector<std::vector<bool>> presentOpinions;
+        presentOpinions.reserve(judgingPubKeys.size());
+
+        std::vector<std::vector<uint64_t>> opinions;
+        opinions.reserve(judgingPubKeys.size());
+
+        std::set<Key> allPubKeys = judgingPubKeys;
+        allPubKeys.insert(judgedPubKeys.begin(), judgedPubKeys.end());
+
+        for (auto row = 0; row < allPubKeys.size(); ++row) {
+            opinions.at(row).reserve(judgedPubKeys.size());
+            std::fill(opinions.at(row).begin(), opinions.at(row).end(), 0);
+
+            presentOpinions.at(row).reserve(judgedPubKeys.size());
+            std::fill(presentOpinions.at(row).begin(), presentOpinions.at(row).end(), false);
+
+            if (row >= judgingPubKeys.size())
+                continue;
+
+            for (const auto& layout: transactionInfo.m_opinions[row].m_downloadLayout) {
+                auto column = 0;
+                for (const auto& key : allPubKeys) {
+                    if (key == layout.m_key)
+                        break;
+
+                    column++;
+                }
+
+                presentOpinions[row][column] = true;
+                opinions[row][column] = layout.m_uploadedBytes;
             }
 
-            judging++;
+            row++;
         }
+
+        std::vector<uint64_t> flatOpinions;
+        for (const auto& opinion : opinions)
+            flatOpinions.insert(flatOpinions.end(), opinion.begin(), opinion.end());
+
+        boost::dynamic_bitset<uint8_t> bitset((flatOpinions.size() + 7) / 8 );
+        auto index = 0;
+        for (const auto& presentOpinion : presentOpinions)
+            for (const auto& value : presentOpinion) {
+                bitset[index] = value;
+                index++;
+            }
+
+        std::vector<uint8_t> flatPresentOpinions;
+        boost::to_block_range(bitset, std::back_inserter(flatPresentOpinions));
 
         builders::DownloadApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
         builder.setDownloadChannelId(transactionInfo.m_downloadChannelId);
-        builder.setReplicatorsKeys(std::vector<Key>(pubKeys.begin(), pubKeys.end()));
+        builder.setSequenceNumber(sequenceNumber);
+        builder.setResponseToFinishDownloadTransaction(false); // TODO set right value
+        builder.setReplicatorsKeys(std::vector<Key>(allPubKeys.begin(), allPubKeys.end()));
         builder.setOpinionIndices(opinionIndices);
         builder.setBlsSignatures(signatures);
-        builder.setPresentOpinions(presentOpinions);
-        builder.setOpinions(opinions);
+        builder.setPresentOpinions(flatPresentOpinions);
+        builder.setOpinions(flatOpinions);
 
         auto pTransaction = utils::UniqueToShared(builder.build());
         pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());

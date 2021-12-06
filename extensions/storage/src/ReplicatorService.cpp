@@ -64,49 +64,57 @@ namespace catapult { namespace storage {
     public:
 		void init(const StorageConfiguration& storageConfig) {
 			const auto& immutableConfig = m_serviceState.config().Immutable;
-			TransactionSender transactionSender(immutableConfig, storageConfig,
-												m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local));
+			TransactionSender transactionSender(
+					immutableConfig,
+					storageConfig,
+					m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local)
+			);
+
 			auto& storageState = m_serviceState.pluginManager().storageState();
-			m_pReplicatorEventHandler = CreateReplicatorEventHandler(std::move(transactionSender), storageState, m_transactionStatusHandler);
+			m_pReplicatorEventHandler = CreateReplicatorEventHandler(
+					std::move(transactionSender),
+					storageState,
+					m_transactionStatusHandler
+			);
 
 			m_pReplicator = sirius::drive::createDefaultReplicator(
-				reinterpret_cast<sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
-				Replicator_Host,
-				std::string(storageConfig.Port), // TODO: do not use move semantics.
-				std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
-				std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
-				storageConfig.UseTcpSocket,
-				*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
-				nullptr,
-				Service_Name);
+					reinterpret_cast<sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
+					Replicator_Host,
+					std::string(storageConfig.Port), // TODO: do not use move semantics.
+					std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
+					std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
+					storageConfig.UseTcpSocket,
+					*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
+					nullptr,
+					Service_Name);
 
 			auto drives = storageState.getReplicatorDrives(m_keyPair.publicKey());
-			for (const auto& drive : drives) {
+			for (const auto& drive: drives) {
 				addDrive(
-					drive.Id,
-					drive.Size,
-					drive.UsedSize,
-					drive.Replicators
+						drive.Id,
+						drive.Size,
+						drive.UsedSize,
+						drive.Replicators
 				);
 
-				for (const auto& dataModification : drive.DataModifications) {
+				for (const auto& dataModification: drive.DataModifications) {
 					addDriveModification(
-						drive.Id,
-						dataModification.DownloadDataCdi,
-						dataModification.Id,
-						dataModification.Owner,
-						dataModification.ExpectedUploadSize
+							drive.Id,
+							dataModification.DownloadDataCdi,
+							dataModification.Id,
+							dataModification.Owner,
+							dataModification.ExpectedUploadSize
 					);
 				}
 			}
 
 			auto channels = storageState.getDownloadChannels();
-			for (const auto& channel : channels) {
+			for (const auto& channel: channels) {
 				addDriveChannel(
-					channel.Id,
-					Key{}, // TODO add real drive key in V3
-					channel.DownloadSize,
-					channel.Consumers
+						channel.Id,
+						Key{}, // TODO add real drive key in V3
+						channel.DownloadSize,
+						channel.Consumers
 				);
 			}
 		}
@@ -148,21 +156,21 @@ namespace catapult { namespace storage {
             CATAPULT_LOG(debug) << "add download channel " << channelId.data();
 
             std::vector<sirius::Key> castedConsumers;
-            std::transform(
+			std::transform(
 					consumers.begin(),
 					consumers.end(),
 					castedConsumers.begin(),
-					[](const Key& key) {return (const sirius::Key&) key;}
+					[](const Key& key) { return (const sirius::Key&) key; }
 			);
 
-            auto downloadRequest = sirius::drive::DownloadRequest{
-                    (const std::array<uint8_t, 32>&) channelId,
-                    prepaidDownloadSize,
-                    {}, // TODO add replicators addresses
-                    castedConsumers
-            };
+			auto downloadRequest = sirius::drive::DownloadRequest{
+					(const std::array<uint8_t, 32>&) channelId,
+					prepaidDownloadSize,
+					{}, // TODO add replicators addresses
+					castedConsumers
+			};
 
-            m_pReplicator->asyncAddDownloadChannelInfo((const sirius::Key&) driveKey, std::move(downloadRequest));
+			m_pReplicator->asyncAddDownloadChannelInfo((const sirius::Key&) driveKey, std::move(downloadRequest));
         }
 
 		void increaseDownloadChannelSize(const Hash256& channelId, size_t downloadSize) {
@@ -187,16 +195,16 @@ namespace catapult { namespace storage {
             CATAPULT_LOG(debug) << "add drive " << driveKey;
 
             sirius::drive::ReplicatorList replicatorList;
-            replicatorList.reserve(replicators.size());
+			replicatorList.reserve(replicators.size());
 
-            auto i = 0;
-            for (const auto& rep : replicators) {
-                replicatorList.at(i).m_publicKey = (const sirius::Key&) rep;
-                i++;
-            }
+			auto i = 0;
+			for (const auto& rep: replicators) {
+				replicatorList.at(i).m_publicKey = (const sirius::Key&) rep;
+				i++;
+			}
 
-            sirius::drive::AddDriveRequest request{driveSize, usedSize, replicatorList};
-            m_pReplicator->asyncAddDrive((const sirius::Key&) driveKey, request);
+			sirius::drive::AddDriveRequest request{driveSize, usedSize, replicatorList};
+			m_pReplicator->asyncAddDrive((const sirius::Key&) driveKey, request);
         }
 
         bool containsDrive(const Key& driveKey) {

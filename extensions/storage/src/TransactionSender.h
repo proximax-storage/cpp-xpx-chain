@@ -10,6 +10,7 @@
 #include "src/catapult/crypto/KeyPair.h"
 #include "catapult/utils/NetworkTime.h"
 #include "catapult/extensions/ServerHooks.h"
+#include "catapult/state/StorageState.h"
 #include "drive/FlatDrive.h"
 
 namespace catapult { namespace storage {
@@ -27,7 +28,7 @@ namespace catapult { namespace storage {
     public:
 		catapult::Signature sendDataModificationApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
 		catapult::Signature sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
-		catapult::Signature sendDownloadApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo);
+		catapult::Signature sendDownloadApprovalTransaction(const crypto::KeyPair& sender, uint16_t sequenceNumber, const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo);
 
     private:
         void send(const crypto::KeyPair& sender, std::shared_ptr<model::Transaction> pTransaction);

@@ -19,12 +19,17 @@ namespace catapult { namespace state {
 
 	public:
 		bool isReplicatorRegistered(const Key& key) override;
-		bool isReplicatorBelongToDrive(const Key& key, const Key& driveKey) override;
+
+		bool driveExist(const Key& driveKey) override;
 		Drive getDrive(const Key& driveKey) override;
-		uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) override;
+		bool isReplicatorBelongToDrive(const Key& key, const Key& driveKey) override;
 		std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) override;
+
+		uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) override;
+
+		bool downloadChannelExist(const Hash256& id) override;
 		std::vector<DownloadChannel> getDownloadChannels() override;
-		DownloadChannel getDownloadChannel(Hash256& id) override;
+		DownloadChannel getDownloadChannel(const Hash256& id) override;
 
 	private:
 		std::shared_ptr<cache::ReplicatorKeyCollector> m_pKeyCollector;
