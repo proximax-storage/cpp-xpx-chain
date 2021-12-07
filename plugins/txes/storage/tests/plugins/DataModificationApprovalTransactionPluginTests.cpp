@@ -32,6 +32,11 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = CreateTransaction<TTraits>();
+		pTransaction->OpinionCount = 0;
+		pTransaction->JudgingKeysCount = 0;
+		pTransaction->OverlappingKeysCount = 0;
+		pTransaction->JudgedKeysCount = 0;
+		pTransaction->OpinionElementCount = 0;
 
 		// Act:
 		auto realSize = pPlugin->calculateRealSize(*pTransaction);
@@ -68,10 +73,14 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-        ASSERT_EQ(2u, sub.numNotifications());
+        ASSERT_EQ(6u, sub.numNotifications());
         auto i = 0u;
         EXPECT_EQ(Storage_Drive_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Storage_Opinion_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Storage_Data_Modification_Approval_Refund_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Storage_Data_Modification_Approval_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Storage_Data_Modification_Approval_Download_Work_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Storage_Data_Modification_Approval_Upload_Work_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
 	// endregion

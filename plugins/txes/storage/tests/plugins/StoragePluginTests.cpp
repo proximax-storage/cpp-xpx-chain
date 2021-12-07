@@ -49,7 +49,8 @@ namespace catapult { namespace plugins {
 					model::Entity_Type_StoragePayment,
 					model::Entity_Type_DataModificationSingleApproval,
 					model::Entity_Type_VerificationPayment,
-					model::Entity_Type_DownloadApproval
+					model::Entity_Type_DownloadApproval,
+					model::Entity_Type_EndDriveVerification
 				};
 			}
 
@@ -58,11 +59,13 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
-				return { ionet::PacketType::BcDrive_Infos, ionet::PacketType::DownloadChannel_Infos, ionet::PacketType::Replicator_Infos };
+				return { ionet::PacketType::BcDrive_Infos, ionet::PacketType::DownloadChannel_Infos,
+						 ionet::PacketType::Replicator_Infos, ionet::PacketType::BlsKeys_Infos };
 			}
 
 			static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
-				return { ionet::PacketType::BcDrive_State_Path, ionet::PacketType::DownloadChannel_State_Path, ionet::PacketType::Replicator_State_Path};
+				return { ionet::PacketType::BcDrive_State_Path, ionet::PacketType::DownloadChannel_State_Path,
+						 ionet::PacketType::Replicator_State_Path, ionet::PacketType::BlsKeys_State_Path };
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {
@@ -93,7 +96,13 @@ namespace catapult { namespace plugins {
 						"DownloadApprovalPaymentValidator",
 						"DownloadChannelRefundValidator",
 						"DriveClosureValidator",
-						"StreamStartValidator"
+						"DataModificationApprovalDownloadWorkValidator",
+						"DataModificationApprovalUploadWorkValidator",
+						"DataModificationApprovalRefundValidator",
+						"StreamStartValidator",
+						"StreamFinishValidator",
+						"StreamPaymentValidator",
+						"EndDriveVerificationValidator"
 				};
 			}
 
@@ -112,7 +121,13 @@ namespace catapult { namespace plugins {
 					"DownloadApprovalPaymentObserver",
 					"DownloadChannelRefundObserver",
 					"DriveClosureObserver",
-					"StreamStartObserver"
+					"DataModificationApprovalDownloadWorkObserver",
+					"DataModificationApprovalUploadWorkObserver",
+					"DataModificationApprovalRefundObserver",
+					"StreamStartObserver",
+					"StreamFinishObserver",
+					"StreamPaymentObserver",
+					"EndDriveVerificationObserver"
 				};
 			}
 

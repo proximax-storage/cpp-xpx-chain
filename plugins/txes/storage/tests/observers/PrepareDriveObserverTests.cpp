@@ -24,6 +24,7 @@ namespace catapult { namespace observers {
         const Key Owner = test::GenerateRandomByteArray<Key>();
         constexpr auto Drive_Size = 50;
         constexpr auto Replicator_Count = 10;
+		const Key Replicator_Key = test::GenerateRandomByteArray<Key>();
         const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
         constexpr Height Current_Height(20);
         
@@ -36,10 +37,11 @@ namespace catapult { namespace observers {
             return entry;
         }
 
-        state::ReplicatorEntry CreateReplicatorEntry(const Key& driveKey, const std::shared_ptr<cache::ReplicatorKeyCollector>& replicatorKeyCollector) {
-            state::ReplicatorEntry entry(driveKey);
+        state::ReplicatorEntry CreateReplicatorEntry(state::BcDriveEntry& driveEntry, const std::shared_ptr<cache::ReplicatorKeyCollector>& replicatorKeyCollector) {
+            state::ReplicatorEntry entry(Replicator_Key);
             replicatorKeyCollector->addKey(entry);
-            entry.drives().emplace(*replicatorKeyCollector->keys().begin(), state::DriveInfo());
+            entry.drives().emplace(Drive_Key, state::DriveInfo());
+			driveEntry.replicators().insert(Replicator_Key);
             
             return entry;
         }
@@ -59,10 +61,10 @@ namespace catapult { namespace observers {
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
             ObserverTestContext context(mode, currentHeight);
             Notification notification(
-                values.BcDriveEntry.owner(),
-                values.ReplicatorEntry.key(),
-                values.BcDriveEntry.size(),
-                values.BcDriveEntry.replicatorCount());
+				Owner,
+				Drive_Key,
+				Drive_Size,
+				Replicator_Count);
             auto pObserver = CreatePrepareDriveObserver(Replicator_Key_Collector);
             auto& driveCache = context.cache().sub<cache::BcDriveCache>();
             auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
@@ -88,7 +90,7 @@ namespace catapult { namespace observers {
         // Arrange:
         CacheValues values;
         values.BcDriveEntry = CreateBcDriveEntry();
-        values.ReplicatorEntry = CreateReplicatorEntry(values.BcDriveEntry.key(), Replicator_Key_Collector);
+        values.ReplicatorEntry = CreateReplicatorEntry(values.BcDriveEntry, Replicator_Key_Collector);
 
         // Assert:
         RunTest(NotifyMode::Commit, values, Current_Height);

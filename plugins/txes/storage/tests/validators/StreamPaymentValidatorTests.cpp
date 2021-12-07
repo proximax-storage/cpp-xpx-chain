@@ -29,6 +29,12 @@ namespace catapult { namespace validators {
         	return (config.ToConst());
         }
 
+		auto RandomUploadSize() {
+			const auto config = CreateConfig();
+			const auto maxModificationSize = config.Network.template GetPluginConfiguration<config::StorageConfiguration>().MaxModificationSize;
+			return test::RandomInRange<uint64_t>(1, maxModificationSize.megabytes());
+		}
+
         void AssertValidationResult(
                 ValidationResult expectedResult,
                 const state::BcDriveEntry& driveEntry,
@@ -66,7 +72,7 @@ namespace catapult { namespace validators {
             entry,
             test::GenerateRandomByteArray<Key>(),
             test::GenerateRandomByteArray<Hash256>(),
-			test::Random());
+			RandomUploadSize());
     }
 
     TEST(TEST_CLASS, FailureWhenUploadSizeExcessive) {
@@ -89,7 +95,7 @@ namespace catapult { namespace validators {
     			entry,
     			driveKey,
     			streamId,
-    			test::Random());
+    			1e9);
     }
 
     TEST(TEST_CLASS, FailureWhenInvalidStreamId) {
@@ -112,7 +118,7 @@ namespace catapult { namespace validators {
 			entry,
 			driveKey,
 			test::GenerateRandomByteArray<Hash256>(),
-			test::Random());
+			RandomUploadSize());
     }
 
     TEST(TEST_CLASS, FailureWhenStreamAlreadyFinished) {
@@ -136,7 +142,7 @@ namespace catapult { namespace validators {
 			entry,
 			driveKey,
 			streamId,
-			test::Random());
+			RandomUploadSize());
     }
 
     TEST(TEST_CLASS, Success) {
@@ -159,6 +165,6 @@ namespace catapult { namespace validators {
 			entry,
 			driveKey,
 			streamId,
-		  	test::Random());
+			RandomUploadSize());
     }
 }}

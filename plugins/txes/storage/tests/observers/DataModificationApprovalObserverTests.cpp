@@ -41,10 +41,13 @@ namespace catapult { namespace observers {
 
         state::BcDriveEntry CreateExpectedEntry(const Key& driveKey, const state::ActiveDataModifications& activeDataModifications) {
             state::BcDriveEntry entry(driveKey);
-            for (const auto &activeDataModification: activeDataModifications) {
+            for (const auto &activeDataModification: activeDataModifications)
                 entry.completedDataModifications().emplace_back(activeDataModification, state::DataModificationState::Succeeded);
-            }
-            
+
+			const auto totalJudgingKeysCount = Judging_Keys_Count + Overlapping_Keys_Count;
+			for (auto i = 0u; i < totalJudgingKeysCount; ++i)
+				entry.confirmedUsedSizes().insert({test::GenerateRandomByteArray<Key>(), Used_Drive_Size});
+
             return entry;
         }
 
@@ -62,9 +65,15 @@ namespace catapult { namespace observers {
 
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
             // Arrange:
-			const auto pPublicKeys = std::make_unique<Key>();
+			const auto& confirmedUsedSizes = values.ExpectedBcDriveEntry.confirmedUsedSizes();
+			auto pPublicKeys = std::make_unique<Key[]>(confirmedUsedSizes.size());
+			auto pPair = confirmedUsedSizes.begin();
+			for (auto i = 0u; i < confirmedUsedSizes.size(); ++i, ++pPair)
+				pPublicKeys[i] = pPair->first;
+
 			const auto pOpinionIndices = std::make_unique<uint8_t>();
 			const auto pPresentOpinions = std::make_unique<uint8_t>();
+
             ObserverTestContext context(mode, currentHeight);
             Notification notification(
             	values.InitialBcDriveEntry.key(),
@@ -99,7 +108,7 @@ namespace catapult { namespace observers {
     TEST(TEST_CLASS, DataModificationApproval_Commit) {
         // Arrange:
         CacheValues values;
-        auto driveKey = test::GenerateRandomByteArray<Key>();
+        const auto driveKey = test::GenerateRandomByteArray<Key>();
         values.InitialBcDriveEntry = CreateInitialEntry(driveKey);
         values.ExpectedBcDriveEntry = CreateExpectedEntry(driveKey, values.InitialBcDriveEntry.activeDataModifications());
 
@@ -110,7 +119,7 @@ namespace catapult { namespace observers {
     TEST(TEST_CLASS, DataModificationApproval_Rollback) {
         // Arrange:
         CacheValues values;
-        auto driveKey = test::GenerateRandomByteArray<Key>();
+        const auto driveKey = test::GenerateRandomByteArray<Key>();
         values.ExpectedBcDriveEntry = CreateInitialEntry(driveKey);
         values.InitialBcDriveEntry = values.ExpectedBcDriveEntry;
 

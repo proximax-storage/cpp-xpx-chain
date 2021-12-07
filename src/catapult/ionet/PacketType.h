@@ -190,6 +190,9 @@ namespace catapult { namespace ionet {
 	\
 	/* Replicator state path has been requested by a client. */ \
 	ENUM_VALUE(Replicator_State_Path, FACILITY_BASED_CODE(800, Replicator)) \
+    \
+	/* BlsKeys state path has been requested by a client. */ \
+	ENUM_VALUE(BlsKeys_State_Path, FACILITY_BASED_CODE(800, BlsKeys)) \
 	\
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
@@ -270,6 +273,9 @@ namespace catapult { namespace ionet {
 	\
 	/* Replicator infos have been requested by a client. */ \
 	ENUM_VALUE(Replicator_Infos, FACILITY_BASED_CODE(1200, Replicator)) \
+	\
+	/* BlsKeys infos have been requested by a client. */ \
+	ENUM_VALUE(BlsKeys_Infos, FACILITY_BASED_CODE(1200, BlsKeys))
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

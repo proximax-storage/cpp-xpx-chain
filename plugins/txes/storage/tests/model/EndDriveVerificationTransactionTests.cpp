@@ -47,8 +47,10 @@ namespace catapult { namespace model {
 
         TEST(TEST_CLASS, CanCalculateRealSizeWithReasonableValues) {
             // Arrange:
-            EndDriveVerificationTransaction transaction;
-            transaction.Size = 0;
+			EndDriveVerificationTransaction transaction;
+			transaction.ProversCount = 0;
+			transaction.VerificationOpinionsCount = 0;
+			transaction.Size = 0;
 
             // Act:
             auto realSize = EndDriveVerificationTransaction::CalculateRealSize(transaction);

@@ -21,14 +21,20 @@ namespace catapult { namespace model {
 			// Arrange:
 			auto expectedSize =
 					baseSize // base
-					+ Key_Size // drive key size
-					+ Hash256_Size // data modification identifier size
-					+ Hash256_Size // content size
+					+ Key_Size // drive key
+					+ Hash256_Size // data modification id
+					+ Hash256_Size // file structure CDI
 					+ sizeof(uint64_t) // file structure size
-					+ sizeof(uint64_t); // used disk space
+					+ sizeof(uint64_t) // metafiles size
+					+ sizeof(uint64_t) // used drive size
+					+ sizeof(uint8_t) // opinion count
+					+ sizeof(uint8_t) // judging keys count
+					+ sizeof(uint8_t) // overlapping keys count
+					+ sizeof(uint8_t) // judged keys count
+					+ sizeof(uint8_t); // opinion element count
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 112u, sizeof(T));
+			EXPECT_EQ(baseSize + 125u, sizeof(T));
 		}
 
 		template<typename T>
@@ -48,6 +54,11 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, CanCalculateRealSizeWithReasonableValues) {
 		// Arrange:
 		DataModificationApprovalTransaction transaction;
+		transaction.JudgingKeysCount = 0;
+		transaction.OverlappingKeysCount = 0;
+		transaction.JudgedKeysCount = 0;
+		transaction.OpinionCount = 0;
+		transaction.OpinionElementCount = 0;
 		transaction.Size = 0;
 
 		// Act:

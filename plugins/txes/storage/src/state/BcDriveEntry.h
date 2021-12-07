@@ -132,6 +132,7 @@ namespace catapult { namespace state {
 			, m_usedSize(0)
 			, m_metaFilesSize(0)
 			, m_replicatorCount(0)
+			, m_ownerCumulativeUploadSize(0)
 		{}
 
 	public:

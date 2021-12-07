@@ -33,7 +33,7 @@ namespace catapult { namespace model {
 		template<typename T>
 		void AssertTransactionHasExpectedProperties() {
 			// Assert:
-			EXPECT_EQ(Entity_Type_StreamStart, T::Entity_Type);
+			EXPECT_EQ(Entity_Type_StreamPayment, T::Entity_Type);
 			EXPECT_EQ(1u, T::Current_Version);
 		}
 	}

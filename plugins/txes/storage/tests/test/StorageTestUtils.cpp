@@ -43,14 +43,25 @@ namespace catapult { namespace test {
             }
         }
 
+		void AssertEqualVerifications(const state::Verifications& expectedVerifications, const state::Verifications& verifications) {
+			ASSERT_EQ(expectedVerifications.size(), verifications.size());
+			for (auto i = 0u; i < verifications.size(); i++) {
+				const auto &expectedVerification = expectedVerifications[i];
+				const auto &verification = verifications[i];
+				EXPECT_EQ(expectedVerification.VerificationTrigger, verification.VerificationTrigger);
+				EXPECT_EQ(expectedVerification.State, verification.State);
+				EXPECT_EQ(expectedVerification.Results, verification.Results);
+			}
+		}
+
 		void AssertEqualDriveInfos(const std::map<Key, state::DriveInfo>& expectedDriveInfos, const std::map<Key, state::DriveInfo>& driveInfos) {
 			ASSERT_EQ(expectedDriveInfos.size(), driveInfos.size());
-			for (auto iter = driveInfos.begin(); iter != driveInfos.end(); ++iter) {
-				const auto expIter = expectedDriveInfos.find(iter->first);
+			for (const auto& pair : driveInfos) {
+				const auto expIter = expectedDriveInfos.find(pair.first);
 				ASSERT_NE(expIter, expectedDriveInfos.end());
-				EXPECT_EQ(expIter->second.LastApprovedDataModificationId, iter->second.LastApprovedDataModificationId);
-				EXPECT_EQ(expIter->second.DataModificationIdIsValid, iter->second.DataModificationIdIsValid);
-				EXPECT_EQ(expIter->second.InitialDownloadWork, iter->second.InitialDownloadWork);
+				EXPECT_EQ(expIter->second.LastApprovedDataModificationId, pair.second.LastApprovedDataModificationId);
+				EXPECT_EQ(expIter->second.DataModificationIdIsValid, pair.second.DataModificationIdIsValid);
+				EXPECT_EQ(expIter->second.InitialDownloadWork, pair.second.InitialDownloadWork);
 			}
 		}
 
@@ -130,11 +141,12 @@ namespace catapult { namespace test {
 		EXPECT_EQ(expectedEntry.metaFilesSize(), entry.metaFilesSize());
         EXPECT_EQ(expectedEntry.replicatorCount(), entry.replicatorCount());
 		EXPECT_EQ(expectedEntry.ownerCumulativeUploadSize(), entry.ownerCumulativeUploadSize());
+		EXPECT_EQ(expectedEntry.confirmedUsedSizes(), entry.confirmedUsedSizes());
 		EXPECT_EQ(expectedEntry.replicators(), entry.replicators());
 
         AssertEqualActiveDataModifications(expectedEntry.activeDataModifications(), entry.activeDataModifications());
         AssertEqualCompletedDataModifications(expectedEntry.completedDataModifications(), entry.completedDataModifications());
-		// TODO: Add more assertions?
+		AssertEqualVerifications(expectedEntry.verifications(), entry.verifications());
     }
 
     state::DownloadChannelEntry CreateDownloadChannelEntry(
