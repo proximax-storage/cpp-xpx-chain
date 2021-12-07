@@ -30,6 +30,7 @@ namespace catapult { namespace observers {
 			const auto driveOwnerKey = test::GenerateRandomByteArray<Key>();
 			entry.replicators().insert(replicatorKey);
 			entry.setOwner(driveOwnerKey);
+			entry.setUsedSize(Used_Drive_Size);
             entry.completedDataModifications().emplace_back(state::CompletedDataModification {
 					{
                 		test::GenerateRandomByteArray<Hash256>(), driveOwnerKey,
@@ -95,8 +96,7 @@ namespace catapult { namespace observers {
             Notification notification(
 				values.InitialReplicatorEntry.key(),
 				values.InitialBcDriveEntry.key(),
-                values.InitialBcDriveEntry.completedDataModifications().end()->Id,
-				Used_Drive_Size,
+                values.InitialBcDriveEntry.completedDataModifications().rbegin()->Id,
 				Public_Keys_Count,
 				pPublicKeys.get(),
 				pOpinions.get());
@@ -129,7 +129,7 @@ namespace catapult { namespace observers {
         values.ExpectedBcDriveEntry = CreateExpectedBcDriveEntry(values.InitialBcDriveEntry);
 		values.ExpectedReplicatorEntry = CreateExpectedReplicatorEntry(
 				values.InitialReplicatorEntry,
-				values.InitialBcDriveEntry.completedDataModifications().end()->Id
+				values.InitialBcDriveEntry.completedDataModifications().rbegin()->Id
 		);
 
         // Assert

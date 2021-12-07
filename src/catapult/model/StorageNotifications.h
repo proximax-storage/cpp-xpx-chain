@@ -471,13 +471,11 @@ namespace catapult { namespace model {
 		explicit DataModificationApprovalDownloadWorkNotification(
 				const Key& driveKey,
 				const Hash256& dataModificationId,
-				const uint64_t usedDriveSize,
 				const uint8_t publicKeysCount,
 				const Key* publicKeysPtr)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
-				, UsedDriveSize(usedDriveSize)
 				, PublicKeysCount(publicKeysCount)
 				, PublicKeysPtr(publicKeysPtr)
 		{}
@@ -488,9 +486,6 @@ namespace catapult { namespace model {
 
 		/// Identifier of the transaction that initiated the modification.
 		Hash256 DataModificationId;
-
-		/// Total used disk space of the drive.
-		uint64_t UsedDriveSize;
 
 		/// Number of replicators' public keys.
 		uint8_t PublicKeysCount;
@@ -808,7 +803,6 @@ namespace catapult { namespace model {
 				const Key& signer,
 				const Key& driveKey,
 				const Hash256& dataModificationId,
-				const uint64_t usedDriveSize,
 				const uint16_t publicKeysCount,
 				const Key* publicKeysPtr,
 				const uint64_t* opinionsPtr)
@@ -816,7 +810,6 @@ namespace catapult { namespace model {
 			, PublicKey(signer)
 			, DriveKey(driveKey)
 			, DataModificationId(dataModificationId)
-			, UsedDriveSize(usedDriveSize)
 			, PublicKeysCount(publicKeysCount)
 			, PublicKeysPtr(publicKeysPtr)
 			, OpinionsPtr(opinionsPtr)
@@ -831,9 +824,6 @@ namespace catapult { namespace model {
 
 		/// Identifier of the transaction that initiated the modification.
 		Hash256 DataModificationId;
-
-		/// Total used disk space of the drive.
-		uint64_t UsedDriveSize;
 
 		/// Number of replicators' public keys.
 		uint8_t PublicKeysCount;

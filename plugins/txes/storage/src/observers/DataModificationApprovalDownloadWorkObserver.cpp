@@ -62,9 +62,6 @@ namespace catapult { namespace observers {
 			driveInfo.LastApprovedDataModificationId = notification.DataModificationId;
 			driveInfo.DataModificationIdIsValid = true;
 			driveInfo.InitialDownloadWork = 0;
-
-			// Updating used drive size for the current replicator.
-			driveEntry.confirmedUsedSizes().at(*pKey) = notification.UsedDriveSize;
 		}
 	});
 }}

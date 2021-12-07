@@ -21,7 +21,6 @@ namespace catapult { namespace validators {
 
         constexpr auto Current_Height = Height(10);
 		constexpr auto Public_Keys_Count = 5;
-        constexpr auto Used_Drive_Size = 50;
 
 		void PrepareDriveEntry(
 				state::BcDriveEntry& driveEntry,
@@ -62,7 +61,6 @@ namespace catapult { namespace validators {
 					signer,
 					driveKey,
 					dataModificationId,
-					Used_Drive_Size,
 					publicKeys.size(),
 					pPublicKeys.get(),
 					pOpinions.get()

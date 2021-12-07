@@ -27,7 +27,6 @@ namespace catapult { namespace plugins {
 							transaction.Signer,
 							transaction.DriveKey,
 							transaction.DataModificationId,
-							transaction.UsedDriveSize,
 							transaction.PublicKeysCount,
 							transaction.PublicKeysPtr(),
 							transaction.OpinionsPtr()
@@ -40,7 +39,6 @@ namespace catapult { namespace plugins {
 					sub.notify(DataModificationApprovalDownloadWorkNotification<1>(
 							transaction.DriveKey,
 							transaction.DataModificationId,
-							transaction.UsedDriveSize,
 							1,
 							pPublicKeys.get()
 					));

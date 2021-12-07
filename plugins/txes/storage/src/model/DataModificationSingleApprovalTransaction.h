@@ -33,9 +33,6 @@ namespace catapult { namespace model {
 		/// Identifier of the transaction that initiated the modification.
 		Hash256 DataModificationId;
 
-		/// Total used disk space of the drive.
-		uint64_t UsedDriveSize;
-
 		/// Number of replicators' public keys.
 		uint8_t PublicKeysCount;
 

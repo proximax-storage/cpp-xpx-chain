@@ -77,12 +77,11 @@ namespace catapult { namespace plugins {
 				));
 
 				// Makes mosaic transfers;
-				// Updates cosigner replicators' drive infos (updates LastApprovedDataModificationId, resets
-				// InitialDownloadWork) and drive's replicator infos (updates UsedSize).
+				// Updates cosigner replicators' drive infos (updates LastApprovedDataModificationId,
+				// resets InitialDownloadWork)
 				sub.notify(DataModificationApprovalDownloadWorkNotification<1>(
 						transaction.DriveKey,
 						transaction.DataModificationId,
-						transaction.UsedDriveSize,
 						transaction.JudgingKeysCount + transaction.OverlappingKeysCount,
 						transaction.PublicKeysPtr()
 				));
