@@ -129,7 +129,6 @@ namespace catapult { namespace tools { namespace health {
 	
 		//endregion
 
-
 		class HealthTool : public NetworkCensusTool<NodeInfo> {
 		public:
 			HealthTool() : NetworkCensusTool("Health")
@@ -172,7 +171,6 @@ namespace catapult { namespace tools { namespace health {
 							nodeInfos.push_back(nodeInfoFuture.get());
 
 						PrometheusHealthCheck(nodeInfos);
-						// return this->processNodeInfos(nodeInfos);
 					});
 					std::this_thread::sleep_for(std::chrono::seconds(10));
 				}

@@ -27,7 +27,6 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>
-#include <thread>
 
 namespace catapult { namespace tools {
 
@@ -91,7 +90,6 @@ namespace catapult { namespace tools {
 		struct ParsedOptions {
 			Options ToolOptions;
 			bool IsHelpRequest;
-			bool InfiniteRun;
 			std::string LoggingConfigurationPath;
 		};
 
