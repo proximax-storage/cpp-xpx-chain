@@ -9,7 +9,7 @@
 #include "sdk/src/builders/DataModificationApprovalBuilder.h"
 #include "sdk/src/builders/DataModificationSingleApprovalBuilder.h"
 #include "sdk/src/builders/DownloadApprovalBuilder.h"
-#include "catapult/extensions/TransactionExtensions.h"
+#include "sdk/src/extensions/TransactionExtensions.h"
 
 namespace catapult { namespace storage {
     catapult::Signature TransactionSender::sendDataModificationApprovalTransaction(

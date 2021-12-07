@@ -5,11 +5,14 @@
 **/
 
 #include "TransactionStatusHandler.h"
+#include "catapult/exceptions.h"
 
 namespace catapult { namespace storage {
 
     void TransactionStatusHandler::addHandler(catapult::Signature& transactionSignature, Callback handler) {
         std::lock_guard<std::mutex> lock(m_mutex);
+
+        CATAPULT_LOG(debug) << "New handler for " << transactionSignature.data();
         m_callbacks[std::move(transactionSignature)] = std::move(handler);
     }
 
@@ -17,8 +20,10 @@ namespace catapult { namespace storage {
         std::lock_guard<std::mutex> lock(m_mutex);
 
         auto callbackIter = m_callbacks.find(transactionSignature);
-        if (callbackIter == m_callbacks.end())
+        if (callbackIter == m_callbacks.end()) {
+            CATAPULT_LOG(debug) << "Handler for " << transactionSignature.data() << " not found";
             return;
+        }
 
         callbackIter->second(hash, status);
         m_callbacks.erase(transactionSignature);

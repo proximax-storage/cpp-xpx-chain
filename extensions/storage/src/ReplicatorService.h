@@ -6,14 +6,14 @@
 
 #pragma once
 
-#include "catapult/state/StorageState.h"
 #include "StorageConfiguration.h"
-#include "catapult/crypto/KeyPair.h"
-#include "catapult/extensions/ServiceRegistrar.h"
+#include "ReplicatorEventHandler.h"
 #include "catapult/types.h"
+#include "catapult/crypto/KeyPair.h"
+#include "catapult/state/StorageState.h"
+#include "catapult/extensions/ServiceRegistrar.h"
 #include "drive/FlatDrive.h"
 #include "drive/Session.h"
-#include "ReplicatorEventHandler.h"
 
 namespace catapult { namespace storage {
 

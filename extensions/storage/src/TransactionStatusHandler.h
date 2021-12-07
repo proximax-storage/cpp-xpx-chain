@@ -16,6 +16,9 @@ namespace catapult { namespace storage {
 
     class TransactionStatusHandler {
     public:
+        TransactionStatusHandler() = default;
+
+    public:
 
         /// addHandler saves a handler in map with transactionSignature key
         void addHandler(catapult::Signature& transactionSignature, Callback handler);
