@@ -1,0 +1,4 @@
+2021-12-07 10:30:36.852921 0x00007f31d1bc7ec0: <warning> (io::FileLock.cpp@74) LockOpen failed: 17
+2021-12-07 10:30:36.853498 0x00007f31d1bc7ec0: <fatal> (process::ProcessMain.cpp@113) could not acquire instance lock "/home/warmiso/cpp-xpx-chain/_build/data/api-node-0/data/server.lock"
+2021-12-07 10:30:36.852933 0x00007f69c1bd4ec0: <warning> (io::FileLock.cpp@74) LockOpen failed: 17
+2021-12-07 10:30:36.853517 0x00007f69c1bd4ec0: <fatal> (process::ProcessMain.cpp@113) could not acquire instance lock "/home/warmiso/cpp-xpx-chain/_build/data/peer-node-0/data/server.lock"

@@ -129,11 +129,12 @@ namespace catapult { namespace tools { namespace health {
 	
 		//endregion
 
+
 		class HealthTool : public NetworkCensusTool<NodeInfo> {
 		public:
 			HealthTool() : NetworkCensusTool("Health")
 			{}
-
+			
 		private:
 			std::vector<thread::future<bool>> getNodeInfoFutures(
 					thread::IoThreadPool& pool,
@@ -148,7 +149,31 @@ namespace catapult { namespace tools { namespace health {
 			size_t processNodeInfos(const std::vector<NodeInfoPointer>& nodeInfos) override {
 
 				for (;;) {
-					PrometheusHealthCheck(nodeInfos);
+					auto config = LoadConfiguration(m_resourcesPath);
+					auto p2pNodes = LoadPeers(m_resourcesPath, config.Immutable.NetworkIdentifier);
+					auto apiNodes = LoadOptionalApiPeers(m_resourcesPath, config.Immutable.NetworkIdentifier);
+
+					MultiNodeConnector connector;
+					std::vector<NodeInfoFuture> nodeInfoFutures;
+
+					auto addNodeInfoFutures = [this, &connector, &nodeInfoFutures](const auto& nodes) {
+						for (const auto& node : nodes) {
+							CATAPULT_LOG(debug) << "preparing to get stats from node " << node;
+							nodeInfoFutures.push_back(this->createNodeInfoFuture(connector, node));
+						}
+					};
+
+					addNodeInfoFutures(p2pNodes);
+					addNodeInfoFutures(apiNodes);
+
+					auto finalFuture = thread::when_all(std::move(nodeInfoFutures)).then([this](auto&& allFutures) {
+						std::vector<NodeInfoPointer> nodeInfos;
+						for (auto& nodeInfoFuture : allFutures.get())
+							nodeInfos.push_back(nodeInfoFuture.get());
+
+						PrometheusHealthCheck(nodeInfos);
+						// return this->processNodeInfos(nodeInfos);
+					});
 					std::this_thread::sleep_for(std::chrono::seconds(10));
 				}
 
@@ -165,7 +190,6 @@ namespace catapult { namespace tools { namespace health {
 
 
 int main(int argc, const char** argv) {
-
 	catapult::tools::health::HealthTool tool;
 	return catapult::tools::ToolMain(argc, argv, tool);
 }
