@@ -35,7 +35,10 @@ namespace catapult { namespace builders {
     template<typename TransactionType>
     model::UniqueEntityPtr<TransactionType> DataModificationSingleApprovalBuilder::buildImpl() const {
         // 1. allocate
-        auto pTransaction = createTransaction<TransactionType>(sizeof(TransactionType));
+        auto size = sizeof(TransactionType)
+                + m_uploaderKeys.size() * sizeof(Key)
+                + m_uploadOpinions.size() * sizeof(uint8_t);
+        auto pTransaction = createTransaction<TransactionType>(size);
 
         // 2. set transaction fields
         pTransaction->DriveKey = m_driveKey;
