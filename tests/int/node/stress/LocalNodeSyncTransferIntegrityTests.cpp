@@ -95,7 +95,7 @@ namespace catapult { namespace local {
 			EXPECT_EQ(Height(1), context.height());
 
 			// - prepare transfers (all transfers are dependent on previous transfer)
-			test::Accounts accounts(6, 2, 1);
+			test::Accounts accounts(6, 1, 1);
 			test::TransactionsBuilder transactionsBuilder(accounts);
 			auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
 			transferBuilder->addTransfer(0, 1, Amount(1'000'000));
@@ -199,7 +199,7 @@ namespace catapult { namespace local {
 		std::vector<Hash256> RunRollbackTest(TTestContext& context) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
-			test::Accounts accounts(6, 2, 1);
+			test::Accounts accounts(6, 1, 1);
 			{
 				// - always use SingleBlockTraits because a push can rollback at most one block
 				auto stateHashCalculator = context.createStateHashCalculator();
@@ -221,12 +221,12 @@ namespace catapult { namespace local {
 			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 
 			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
-			builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
+			builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(13)); // better block time will yield better chain
 			auto blocks = TTraits::GetBlocks(builder, transactionsBuilder);
 
 			// - prepare a transfer that can only attach to rollback case
 			test::TransactionsBuilder transactionsBuilder2(accounts);
-			auto transferBuilder2 = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
+			auto transferBuilder2 = transactionsBuilder2.template getCapability<test::TransactionBuilderTransferCapability>();
 			transferBuilder2->addTransfer(2, 4, Amount(350'000));
 
 			auto builder2 = builder.createChainedBuilder();
@@ -286,7 +286,7 @@ namespace catapult { namespace local {
 		std::vector<Hash256> RunRejectInvalidApplyTest(TTestContext& context, TGenerateInvalidBlocks generateInvalidBlocks) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
-			test::Accounts accounts(6, 2, 1);
+			test::Accounts accounts(6, 1, 1);
 			std::unique_ptr<BlockChainBuilder> pBuilder1;
 			Blocks seedBlocks;
 			{
@@ -438,7 +438,7 @@ namespace catapult { namespace local {
 		std::vector<Hash256> RunRejectInvalidRollbackTest(TTestContext& context, TGenerateInvalidBlocks generateInvalidBlocks) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
-			test::Accounts accounts(6, 2, 1);
+			test::Accounts accounts(6, 1, 1);
 			std::unique_ptr<BlockChainBuilder> pBuilder1;
 			Blocks seedBlocks;
 			{
@@ -460,7 +460,7 @@ namespace catapult { namespace local {
 				BlockChainBuilder builder2(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
 
 				// - prepare invalid blocks
-				builder2.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
+				builder2.setBlockTimeInterval(utils::TimeSpan::FromSeconds(13)); // better block time will yield better chain
 				invalidBlocks = generateInvalidBlocks(accounts, builder2);
 			}
 

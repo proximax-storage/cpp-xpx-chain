@@ -18,6 +18,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <boost/algorithm/string/replace.hpp>
+#include "tests/int/node/stress/test/TransactionBuilderNetworkConfigCapability.h"
+#include "plugins/txes/namespace/src/config/NamespaceConfiguration.h"
 #include "tests/int/node/stress/test/ExpiryTestUtils.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
 #include "tests/int/node/stress/test/TransactionBuilderTransferCapability.h"
@@ -42,16 +45,43 @@ namespace catapult { namespace local {
 		}
 
 		template<typename TTestContext>
-		void AssertBooted(const TTestContext& context) {
+		auto GenerateNetworkUpgrade(TTestContext& context,
+									const test::Accounts& accounts,
+									test::StateHashCalculator& stateHashCalculator,
+									test::ExternalSourceConnection& connection)
+		{
+			test::TransactionsBuilder transactionsBuilder(accounts);
+			auto networkConfigBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNetworkConfigCapability>();
+			auto configuration = context.resourcesDirectory() + "/config-network.properties";
+			std::string supportedEntities;
+			boost::filesystem::load_string_file(context.resourcesDirectory() + "/supported-entities.json", supportedEntities);
+			std::string content;
+			boost::filesystem::load_string_file(configuration, content);
+			boost::algorithm::replace_first(content, "namespaceGracePeriodDuration = 0d", "namespaceGracePeriodDuration = 1h");
+			networkConfigBuilder->addNetworkConfigUpdate(content, supportedEntities, BlockDuration(1));
+			auto& cache = context.localNode().cache();
+			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+
+			auto pUpgradeBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
+			test::PushEntity(connection, ionet::PacketType::Push_Block, pUpgradeBlock);
+			test::WaitForHeightAndElements(context, Height(2), 1, 1);
+			return std::make_pair(builder, std::move(pUpgradeBlock));
+		}
+		template<typename TTestContext>
+		void AssertBooted(const TTestContext& context, Height expectedHeight) {
 			// Assert:
-			EXPECT_EQ(Height(1), context.height());
+			EXPECT_EQ(Height(expectedHeight), context.height());
 			test::AssertNamespaceCount(context.localNode(), 1);
 		}
 
 		template<typename TTestContext>
 		std::pair<BlockChainBuilder, std::shared_ptr<model::Block>> PrepareTwoRootNamespaces(
+				BlockChainBuilder& builder,
+				Height expectedHeightOnDone,
 				TTestContext& context,
 				const test::Accounts& accounts,
+				test::ExternalSourceConnection& connection,
 				test::StateHashCalculator& stateHashCalculator,
 				NamespaceStateHashes& stateHashes) {
 			// Arrange:
@@ -59,7 +89,7 @@ namespace catapult { namespace local {
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
 			// Sanity:
-			AssertBooted(context);
+			AssertBooted(context, expectedHeightOnDone-Height(1));
 
 			// - prepare namespace registrations
 			test::TransactionsBuilder transactionsBuilder(accounts);
@@ -68,18 +98,13 @@ namespace catapult { namespace local {
 			namespaceBuilder->addNamespace(0, "foo", BlockDuration(12));
 			namespaceBuilder->addNamespace(0, "bar", BlockDuration(12));
 
-			auto& cache = context.localNode().cache();
-			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
-
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
 			auto pNamespaceBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 
 			// Act:
-			test::ExternalSourceConnection connection;
 			auto pIo = test::PushEntity(connection, ionet::PacketType::Push_Block, pNamespaceBlock);
 
 			// - wait for the chain height to change and for all height readers to disconnect
-			test::WaitForHeightAndElements(context, Height(2), 1, 1);
+			test::WaitForHeightAndElements(context, Height(expectedHeightOnDone), expectedHeightOnDone.unwrap()-1, 1);
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
 			// Sanity: the cache has expected namespaces
@@ -97,6 +122,7 @@ namespace catapult { namespace local {
 		template<typename TTestContext>
 		TransferBlocksResult PushTransferBlocks(
 				TTestContext& context,
+				Height initialHeight,
 				test::ExternalSourceConnection& connection,
 				BlockChainBuilder& builder,
 				size_t numTotalBlocks,
@@ -118,7 +144,7 @@ namespace catapult { namespace local {
 				++numAliveChains;
 				allBlocks.insert(allBlocks.end(), blocks.cbegin(), blocks.cend());
 
-				test::WaitForHeightAndElements(context, Height(2 + numTotalBlocks - numRemainingBlocks), 1 + numAliveChains, 1);
+				test::WaitForHeightAndElements(context, Height(initialHeight.unwrap() + numTotalBlocks - numRemainingBlocks), initialHeight.unwrap() - 1 + numAliveChains, 1);
 				if (0 == numRemainingBlocks)
 					break;
 
@@ -155,7 +181,7 @@ namespace catapult { namespace local {
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
 			// Sanity:
-			AssertBooted(context);
+			AssertBooted(context, Height(1));
 
 			// - prepare namespace registrations
 			test::Accounts accounts(1, TRemainingAccountVersions, TDefaultAccountVersion);
@@ -225,15 +251,18 @@ namespace catapult { namespace local {
 		NamespaceStateHashes RunNamespaceStateChangeTest(TTestContext& context, size_t numAliveBlocks, size_t numExpectedNamespaces) {
 			// Arrange:
 			NamespaceStateHashes stateHashes;
-			test::Accounts accounts(2, TRemainingAccountVersions, TDefaultAccountVersion);
+			test::Accounts accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 2, TRemainingAccountVersions, TDefaultAccountVersion);
 			auto stateHashCalculator = context.createStateHashCalculator();
-			auto builderBlockPair = PrepareTwoRootNamespaces(context, accounts, stateHashCalculator, stateHashes);
-			auto& builder = builderBlockPair.first;
+
+
+			test::ExternalSourceConnection connection;
+			auto builderNetworkPair = GenerateNetworkUpgrade(context, accounts, stateHashCalculator, connection);
+			auto builder1 = builderNetworkPair.first.createChainedBuilder();
+			auto builderBlockPair = PrepareTwoRootNamespaces(builder1, Height(3), context, accounts, connection, stateHashCalculator, stateHashes);
 
 			// - add the specified number of blocks up to a state change
-			test::ExternalSourceConnection connection;
-			auto builder2 = builder.createChainedBuilder();
-			auto transferBlocksResult = PushTransferBlocks(context, connection, builder2, numAliveBlocks, accounts);
+			auto builder2 = builderBlockPair.first.createChainedBuilder();
+			auto transferBlocksResult = PushTransferBlocks(context, Height(3), connection, builder2, numAliveBlocks, accounts);
 			auto numAliveChains = transferBlocksResult.NumAliveChains;
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
@@ -251,7 +280,7 @@ namespace catapult { namespace local {
 			auto pIo1 = test::PushEntity(connection, ionet::PacketType::Push_Block, pTailBlock);
 
 			// - wait for the chain height to change and for all height readers to disconnect
-			test::WaitForHeightAndElements(context, Height(2 + numAliveBlocks + 1), 1 + numAliveChains + 1, 1);
+			test::WaitForHeightAndElements(context, Height(3 + numAliveBlocks + 1), 2 + numAliveChains + 1, 1);
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
 			// Assert: the cache has the expected balances and namespaces
@@ -304,16 +333,20 @@ namespace catapult { namespace local {
 	// region namespace (prune)
 
 	namespace {
-		// namespace is pruned after the sum of the following
-		//   (1) namespace duration ==> 12
-		//   (2) grace period ========> 1hr of blocks with 60s target time
-		//   (3) max rollback blocks => 10
-		constexpr auto Blocks_Before_Namespace_Prune = static_cast<uint32_t>(12 + (utils::TimeSpan::FromHours(1).seconds() / 60) + 10);
 
+		uint32_t GetBlocksBeforeNamespacePrune(uint64_t graceBlocks, uint32_t maxRollbackBlocks)
+		{
+			// namespace is pruned after the sum of the following
+			//   (1) namespace duration ==> 12
+			//   (2) grace period ========> 1hr of blocks with blockTime target time
+			//   (3) max rollback blocks => maxRollbackBlocks
+			return static_cast<uint32_t>(12 +  graceBlocks + maxRollbackBlocks);
+		}
 		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		NamespaceStateHashes RunPruneNamespaceTest(TTestContext& context) {
 			// Act:
-			return RunNamespaceStateChangeTest<TTestContext,TDefaultAccountVersion,TRemainingAccountVersions>(context, Blocks_Before_Namespace_Prune - 1, 1);
+			model::NetworkConfiguration config = context.configHolder()->Config().Network;
+			return RunNamespaceStateChangeTest<TTestContext,TDefaultAccountVersion,TRemainingAccountVersions>(context, GetBlocksBeforeNamespacePrune(utils::TimeSpan::FromHours(1).seconds() / config.BlockGenerationTargetTime.seconds(), config.MaxRollbackBlocks) - 1, 1);
 		}
 	}
 
@@ -368,7 +401,7 @@ namespace catapult { namespace local {
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
 			// Sanity:
-			AssertBooted(context);
+			AssertBooted(context, Height(1));
 
 			// - prepare namespace registrations
 			auto& cache = context.localNode().cache();
@@ -454,24 +487,27 @@ namespace catapult { namespace local {
 				size_t numExpectedNamespaces) {
 			// Arrange:
 			NamespaceStateHashes stateHashes;
-			test::Accounts accounts(2, TRemainingAccountVersions, TDefaultAccountVersion);
+			test::Accounts accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 2, TRemainingAccountVersions, TDefaultAccountVersion);
 			std::unique_ptr<BlockChainBuilder> pBuilder;
 			std::vector<std::shared_ptr<model::Block>> allBlocks;
 			uint32_t numAliveChains;
 			{
 				auto stateHashCalculator = context.createStateHashCalculator();
-				auto builderBlockPair = PrepareTwoRootNamespaces(context, accounts, stateHashCalculator, stateHashes);
+				test::ExternalSourceConnection connection;
+				auto builderNetworkPair = GenerateNetworkUpgrade(context, accounts, stateHashCalculator, connection);
+				auto builder1 = builderNetworkPair.first.createChainedBuilder();
+				auto builderBlockPair = PrepareTwoRootNamespaces(builder1, Height(3), context, accounts, connection, stateHashCalculator, stateHashes);
 
 				// - add the specified number of blocks up to a state change
-				test::ExternalSourceConnection connection;
 				auto builder2 = builderBlockPair.first.createChainedBuilder();
-				auto transferBlocksResult = PushTransferBlocks(context, connection, builder2, numAliveBlocks, accounts);
+				auto transferBlocksResult = PushTransferBlocks(context, Height(3), connection, builder2, numAliveBlocks, accounts);
 				numAliveChains = transferBlocksResult.NumAliveChains;
 				stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
 				// Sanity: all namespaces are still present
 				test::AssertNamespaceCount(context.localNode(), 3);
 
+				allBlocks.emplace_back(builderNetworkPair.second);
 				allBlocks.emplace_back(builderBlockPair.second);
 				allBlocks.insert(allBlocks.end(), transferBlocksResult.AllBlocks.cbegin(), transferBlocksResult.AllBlocks.cend());
 				pBuilder = std::make_unique<BlockChainBuilder>(builder2);
@@ -511,7 +547,7 @@ namespace catapult { namespace local {
 			auto pIo2 = test::PushEntities(connection, ionet::PacketType::Push_Block, expiryBlocks2);
 
 			// - wait for the chain height to change and for all height readers to disconnect
-			test::WaitForHeightAndElements(context, Height(2 + numAliveBlocks + 2), 1 + numAliveChains + 2, 2);
+			test::WaitForHeightAndElements(context, Height(3 + numAliveBlocks + 2), 1 + 1 +  numAliveChains + 2, 2);
 			stateHashes.emplace_back(GetStateHash(context), GetComponentStateHash(context));
 
 			// Assert: the cache has the expected balances and namespaces
@@ -567,7 +603,8 @@ namespace catapult { namespace local {
 		template<typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		NamespaceStateHashes RunPruneAndRollbackNamespaceTest(TTestContext& context) {
 			// Act:
-			return RunNamespaceStateChangeRollbackTest<TTestContext,TDefaultAccountVersion,TRemainingAccountVersions>(context, Blocks_Before_Namespace_Prune - 1, 1);
+			model::NetworkConfiguration config = context.configHolder()->Config().Network;
+			return RunNamespaceStateChangeRollbackTest<TTestContext,TDefaultAccountVersion,TRemainingAccountVersions>(context, GetBlocksBeforeNamespacePrune(utils::TimeSpan::FromHours(1).seconds() / config.BlockGenerationTargetTime.seconds(), config.MaxRollbackBlocks) - 1, 1);
 		}
 	}
 

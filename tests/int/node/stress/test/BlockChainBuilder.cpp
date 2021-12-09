@@ -198,7 +198,7 @@ namespace catapult { namespace test {
 			if (0u == i++)
 				continue;
 			// all account versions should be the same as what is set in the configuration at this point
-			auto keyPair = crypto::KeyPair::FromString(pPrivateKeyString, m_pConfigHolder->Config().Network.AccountVersion);
+			auto keyPair = crypto::KeyPair::FromString(pPrivateKeyString, 1);
 
 			chain::BlockHitContext blockHitContext;
 			blockHitContext.GenerationHash = model::CalculateGenerationHash(context.GenerationHash, keyPair.publicKey());

@@ -189,8 +189,6 @@ namespace catapult { namespace local {
 
 	namespace {
 		using test_types = ::testing::Types<
-				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V1 ACCOUNTS
-				//std::pair<std::integral_constant<uint32_t,2>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V2 ACCOUNTS
 				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,1>>
 		>;
 		// It is not possible for a nemesis account to be version 2 and a newer account to be version 1
@@ -544,8 +542,8 @@ namespace catapult { namespace local {
 				{
 					auto stateHashCalculator = m_context.createStateHashCalculator();
 					test::SeedStateHashCalculator(stateHashCalculator, allBlocks);
-					builder = builder.createChainedBuilder(stateHashCalculator, *allBlocks.back());
-					builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58));
+					builder = builder.createChainedBuilder(stateHashCalculator);
+					builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(13));
 					auto betterBlocks = builder.asBlockChain(transactionsBuilder2);
 					allBlocks.push_back(betterBlocks[0]);
 
@@ -564,7 +562,7 @@ namespace catapult { namespace local {
 				// - readd secret lock
 				auto stateHashCalculator2 = m_context.createStateHashCalculator();
 				test::SeedStateHashCalculator(stateHashCalculator2, allBlocks);
-				auto builder3 = builder.createChainedBuilder(stateHashCalculator2, *allBlocks.back());
+				auto builder3 = builder.createChainedBuilder(stateHashCalculator2);
 
 				test::TransactionsBuilder transactionsBuilder3(m_accounts);
 				auto secretLockBuilder2 = transactionsBuilder3.template getCapability<test::TransactionBuilderSecretLockCapability>();
@@ -593,7 +591,7 @@ namespace catapult { namespace local {
 		private:
 			static void ConfigTransform(config::BlockchainConfiguration& config) {
 				// with importance grouping 1 the account state cache would change with every block, which is unwanted in the test
-				const_cast<model::NetworkConfiguration&>(config.Network).ImportanceGrouping = 100;
+				//const_cast<model::NetworkConfiguration&>(config.Network).ImportanceGrouping = 100;
 			}
 
 		private:
@@ -630,7 +628,7 @@ namespace catapult { namespace local {
 					test::TransactionsBuilder& transactionGenerator,
 					BlockChainBuilder& builder,
 					BlockChainBuilder::Blocks& allBlocks,
-					utils::TimeSpan blockTimeInterval = utils::TimeSpan::FromSeconds(60)) {
+					utils::TimeSpan blockTimeInterval = utils::TimeSpan::FromSeconds(15)) {
 				auto stateHashCalculator = m_context.createStateHashCalculator();
 				test::SeedStateHashCalculator(stateHashCalculator, allBlocks);
 				auto tempBuilder = builder.createChainedBuilder(stateHashCalculator);

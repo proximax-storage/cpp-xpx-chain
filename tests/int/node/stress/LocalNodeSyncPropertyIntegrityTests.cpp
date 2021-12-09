@@ -51,7 +51,7 @@ namespace catapult { namespace local {
 			EXPECT_EQ(numExpectedProperties, numProperties);
 		}
 		template<typename TTestContext>
-		void GenerateNetworkUpgrade(const TTestContext& context,
+		std::pair<BlockChainBuilder, std::shared_ptr<model::Block>> GenerateNetworkUpgrade(const TTestContext& context,
 									const test::Accounts& accounts,
 									BlockChainBuilder& builder,
 									test::ExternalSourceConnection& connection)
@@ -67,14 +67,12 @@ namespace catapult { namespace local {
 			networkConfigBuilder->addNetworkConfigUpdate(content, supportedEntities, BlockDuration(1));
 			auto pUpgradeBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 			test::PushEntity(connection, ionet::PacketType::Push_Block, pUpgradeBlock);
-
-			//Push empty block to ensure updated configuration is used
-			//auto pEmptyBlock = utils::UniqueToShared(builder.asSingleBlock(test::TransactionsBuilder(accounts)));
-			//test::PushEntity(connection, ionet::PacketType::Push_Block, pEmptyBlock);
+			test::WaitForHeightAndElements(context, Height(2), 1, 1);
+			return std::make_pair(builder, pUpgradeBlock);
 		}
 
 		template<typename TTestContext>
-		std::pair<BlockChainBuilder, std::shared_ptr<model::Block>> PrepareProperty(
+		std::pair<BlockChainBuilder, std::vector<std::shared_ptr<model::Block>>> PrepareProperty(
 				TTestContext& context,
 				const test::Accounts& accounts,
 				test::StateHashCalculator& stateHashCalculator,
@@ -100,11 +98,13 @@ namespace catapult { namespace local {
 			// Act:
 			test::ExternalSourceConnection connection;
 			auto isV2 = (accounts.cbegin()+1)->second == 2;
+			std::vector<std::shared_ptr<model::Block>> entities;
 			if(isV2)
 			{
-				GenerateNetworkUpgrade(context, accounts, builder, connection);
-				test::WaitForHeightAndElements(context, Height(2), 1, 1);
+				auto networkPair = GenerateNetworkUpgrade(context, accounts, builder, connection);
+				entities.push_back(networkPair.second);
 			}
+
 			auto pPropertyBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 			auto pIo = test::PushEntity(connection, ionet::PacketType::Push_Block, pPropertyBlock);
 
@@ -114,8 +114,8 @@ namespace catapult { namespace local {
 
 			// Assert: the cache has expected number of properties
 			AssertPropertyCount(context.localNode(), 1);
-
-			return std::make_pair(builder, pPropertyBlock);
+			entities.push_back(pPropertyBlock);
+			return std::make_pair(builder, entities);
 		}
 
 		// endregion
@@ -148,7 +148,8 @@ namespace catapult { namespace local {
 				// Sanity: all properties are still present
 				AssertPropertyCount(m_context.localNode(), 1);
 
-				m_allBlocks.emplace_back(builderBlockPair.second);
+				for(auto block : builderBlockPair.second)
+					m_allBlocks.emplace_back(block);
 				m_pActiveBuilder = std::make_unique<BlockChainBuilder>(builderBlockPair.first);
 			}
 
@@ -252,7 +253,7 @@ namespace catapult { namespace local {
 			facade.pushProperty();
 
 			// - prepare block that will remove the property
-			auto nextBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(60), [](auto& transactionsBuilder) {
+			auto nextBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(15), [](auto& transactionsBuilder) {
 				transactionsBuilder.addAddressUnblockProperty(2, 3);
 			});
 
@@ -332,10 +333,8 @@ namespace catapult { namespace local {
 			test::ExternalSourceConnection connection;
 			auto isV2 = (accounts.cbegin()+1)->second == 2;
 			if(isV2)
-			{
 				GenerateNetworkUpgrade(context, accounts, builder, connection);
-				test::WaitForHeightAndElements(context, Height(2), 1, 1);
-			}
+
 
 			// - prepare property chain with add and remove
 			test::TransactionsBuilder transactionsBuilder(accounts);

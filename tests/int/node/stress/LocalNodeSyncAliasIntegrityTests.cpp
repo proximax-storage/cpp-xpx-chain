@@ -123,6 +123,7 @@ namespace catapult { namespace local {
 	// region alias application + rollback
 
 	namespace {
+		//Note: Currently unnecessary as V2 accounts never issue transactions in this test.
 		using test_types = ::testing::Types<
 				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V1 ACCOUNTS
 				//std::pair<std::integral_constant<uint32_t,2>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V2 ACCOUNTS
