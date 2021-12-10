@@ -18,6 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <boost/algorithm/string/replace.hpp>
+#include "tests/int/node/stress/test/TransactionBuilderNetworkConfigCapability.h"
 #include "sdk/src/extensions/BlockExtensions.h"
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
@@ -49,12 +51,25 @@ namespace catapult { namespace local {
 				return builder.asBlockChain(transactionsGenerator);
 			}
 		};
+		namespace {
+			using test_types = ::testing::Types<
+					std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,1>>,
+					std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,2>>
+			>;
+			// It is not possible for a nemesis account to be version 2 and a newer account to be version 1
+
+			template<typename TBaseAccountVersion>
+			struct LocalNodeSyncTransferIntegrityTests : public ::testing::Test {};
+		}
+
+		TYPED_TEST_CASE(LocalNodeSyncTransferIntegrityTests, test_types);
+
 
 #define SINGLE_MULTI_BASED_TEST(TEST_NAME) \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	NO_STRESS_TEST(TEST_CLASS, TEST_NAME##_SingleBlock) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SingleBlockTraits>(); } \
-	NO_STRESS_TEST(TEST_CLASS, TEST_NAME##_BlockChain) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<MultiBlockTraits>(); } \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+	template<typename TTraits, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	NO_STRESS_TYPED_TEST(TEST_CLASS, TEST_NAME##_SingleBlock) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SingleBlockTraits, TypeParam::first_type::value, TypeParam::second_type::value>(); } \
+	NO_STRESS_TYPED_TEST(TEST_CLASS, TEST_NAME##_BlockChain) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<MultiBlockTraits, TypeParam::first_type::value, TypeParam::second_type::value>(); } \
+	template<typename TTraits, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 		// endregion
 
@@ -84,18 +99,62 @@ namespace catapult { namespace local {
 	// region transfer application (success)
 
 	namespace {
-		template<typename TTraits, typename TTestContext>
+
+		template<typename TTestContext>
+		std::pair<BlockChainBuilder, std::shared_ptr<model::Block>> GenerateNetworkUpgrade(const TTestContext& context,
+																						   const test::Accounts& accounts,
+																						   BlockChainBuilder& builder,
+																						   bool upgrade = false)
+		{
+			test::TransactionsBuilder transactionsBuilder(accounts);
+			auto networkConfigBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNetworkConfigCapability>();
+			auto configuration = context.resourcesDirectory() + "/config-network.properties";
+			std::string supportedEntities;
+			boost::filesystem::load_string_file(context.resourcesDirectory() + "/supported-entities.json", supportedEntities);
+			std::string content;
+			boost::filesystem::load_string_file(configuration, content);
+			if(upgrade) boost::algorithm::replace_first(content, "accountVersion = 1", "accountVersion = 2\nminimumAccountVersion = 1");
+			networkConfigBuilder->addNetworkConfigUpdate(content, supportedEntities, BlockDuration(1));
+
+			test::ExternalSourceConnection connection;
+			auto pUpgradeBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
+			test::PushEntity(connection, ionet::PacketType::Push_Block, pUpgradeBlock);
+			test::WaitForHeightAndElements(context, Height(2), 1, 1);
+			return std::make_pair(builder, pUpgradeBlock);
+		}
+
+
+		template<typename TTraits, typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		std::vector<Hash256> RunApplyTest(TTestContext& context) {
+
 			// Arrange:
 			std::vector<Hash256> stateHashes;
 			test::WaitForBoot(context);
 			stateHashes.emplace_back(GetStateHash(context));
-
+			auto currentBlockHeight = 1;
+			auto expectedBlockElements = 1;
 			// Sanity:
 			EXPECT_EQ(Height(1), context.height());
 
+			// Prepare requirements
+
+			test::Accounts accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 6, TRemainingAccountVersions, TDefaultAccountVersion);
+
+			auto stateHashCalculator = context.createStateHashCalculator();
+			auto& cache = context.localNode().cache();
+			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+
+			// - maybe upgrade network
+			auto networkUpgradePair = GenerateNetworkUpgrade(context,
+															 accounts,
+															 builder,
+															 TRemainingAccountVersions > 1);
+			currentBlockHeight++;
+			expectedBlockElements++;
+
 			// - prepare transfers (all transfers are dependent on previous transfer)
-			test::Accounts accounts(6, 1, 1);
+
 			test::TransactionsBuilder transactionsBuilder(accounts);
 			auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
 			transferBuilder->addTransfer(0, 1, Amount(1'000'000));
@@ -104,19 +163,14 @@ namespace catapult { namespace local {
 			transferBuilder->addTransfer(3, 4, Amount(400'000));
 			transferBuilder->addTransfer(4, 5, Amount(50'000));
 
-			auto stateHashCalculator = context.createStateHashCalculator();
-			auto& cache = context.localNode().cache();
-			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
-
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
 			auto blocks = TTraits::GetBlocks(builder, transactionsBuilder);
 
 			// Act:
 			test::ExternalSourceConnection connection;
 			auto pIo = test::PushEntities(connection, ionet::PacketType::Push_Block, blocks);
-
+			currentBlockHeight += blocks.size();
 			// - wait for the chain height to change and for all height readers to disconnect
-			test::WaitForHeightAndElements(context, Height(1 + blocks.size()), 1, 1);
+			test::WaitForHeightAndElements(context, Height(currentBlockHeight), expectedBlockElements, 1);
 			stateHashes.emplace_back(GetStateHash(context));
 
 			// Assert: the cache has expected balances
@@ -137,7 +191,7 @@ namespace catapult { namespace local {
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunApplyTest<TTraits>(context);
+		auto stateHashes = RunApplyTest<TTraits, test::StateHashDisabledTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context);
 
 		// Assert: all state hashes are zero
 		test::AssertAllZero(stateHashes, 2);
@@ -148,7 +202,7 @@ namespace catapult { namespace local {
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunApplyTest<TTraits>(context);
+		auto stateHashes = RunApplyTest<TTraits, test::StateHashEnabledTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context);
 
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashes, 2);
@@ -160,16 +214,61 @@ namespace catapult { namespace local {
 	// region transfer application + rollback (success)
 
 	namespace {
-		template<typename TTraits, typename TTestContext>
-		std::pair<BlockChainBuilder, Blocks> PrepareFiveChainedTransfers(
+
+		struct BlockChainStateTracker {
+
+			BlockChainStateTracker(BlockChainBuilder activeBuilder, Blocks currentBlocks, uint32_t currentBlockHeight, uint32_t currentBlockElements) :
+				activeBuilder(activeBuilder), currentBlocks(currentBlocks), currentBlockHeight(currentBlockHeight), currentBlockElements(currentBlockElements) {
+
+			}
+
+
+			BlockChainBuilder activeBuilder;
+			Blocks currentBlocks;
+			uint32_t currentBlockHeight;
+			uint32_t currentBlockElements;
+		};
+		template<typename TTraits, typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
+		BlockChainStateTracker PrepareBootAndUpgrade(
 				TTestContext& context,
 				const test::Accounts& accounts,
 				test::StateHashCalculator& stateHashCalculator) {
 			// Arrange:
-			test::WaitForBoot(context);
+				test::WaitForBoot(context);
 
-			// Sanity:
-			EXPECT_EQ(Height(1), context.height());
+				// Sanity:
+				EXPECT_EQ(Height(1), context.height());
+
+				auto currentBlockHeight = 1;
+				auto expectedBlockElements = 1;
+				// Prepare requirements
+
+				auto& cache = context.localNode().cache();
+				auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+
+				BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+
+				// - maybe upgrade network
+
+				Blocks blocks;
+				auto networkUpgradePair = GenerateNetworkUpgrade(context,
+																 accounts,
+																 builder,
+																 TRemainingAccountVersions > 1);
+				currentBlockHeight++;
+				expectedBlockElements++;
+				blocks.push_back(networkUpgradePair.second);
+
+
+				return BlockChainStateTracker(builder, blocks, currentBlockHeight, expectedBlockElements);
+
+			}
+			template<typename TTraits, typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
+			BlockChainStateTracker PrepareFiveChainedTransfers(
+				TTestContext& context,
+				const test::Accounts& accounts,
+				test::StateHashCalculator& stateHashCalculator,
+				BlockChainStateTracker tracker) {
 
 			// - prepare transfers (all transfers are dependent on previous transfer)
 			test::TransactionsBuilder transactionsBuilder(accounts);
@@ -180,30 +279,30 @@ namespace catapult { namespace local {
 			transferBuilder->addTransfer(3, 4, Amount(400'000));
 			transferBuilder->addTransfer(4, 5, Amount(50'000));
 
-			auto& cache = context.localNode().cache();
-			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
-
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
-			auto blocks = TTraits::GetBlocks(builder, transactionsBuilder);
-
+			tracker.activeBuilder = tracker.activeBuilder.createChainedBuilder(stateHashCalculator);
+			auto blocks = TTraits::GetBlocks(tracker.activeBuilder, transactionsBuilder);
+			for(auto block : blocks)
+				tracker.currentBlocks.push_back(block);
 			// Act:
 			test::ExternalSourceConnection connection;
 			auto pIo = test::PushEntities(connection, ionet::PacketType::Push_Block, blocks);
-
+			tracker.currentBlockHeight += blocks.size();
 			// - wait for the chain height to change and for all height readers to disconnect
-			test::WaitForHeightAndElements(context, Height(1 + blocks.size()), 1, 1);
-			return std::make_pair(builder, blocks);
+			test::WaitForHeightAndElements(context, Height(tracker.currentBlockHeight), tracker.currentBlockElements, 1);
+			return tracker;
 		}
 
-		template<typename TTraits, typename TTestContext>
+		template<typename TTraits, typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		std::vector<Hash256> RunRollbackTest(TTestContext& context) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
-			test::Accounts accounts(6, 1, 1);
+			// - always use SingleBlockTraits because a push can rollback at most one block
+			std::optional<BlockChainStateTracker> tempTracker;
+			test::Accounts accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 6, TRemainingAccountVersions, TDefaultAccountVersion);
 			{
-				// - always use SingleBlockTraits because a push can rollback at most one block
 				auto stateHashCalculator = context.createStateHashCalculator();
-				PrepareFiveChainedTransfers<SingleBlockTraits>(context, accounts, stateHashCalculator);
+				tempTracker = PrepareBootAndUpgrade<SingleBlockTraits, TTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context, accounts, stateHashCalculator);
+				PrepareFiveChainedTransfers<SingleBlockTraits, TTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context, accounts, stateHashCalculator, *tempTracker);
 				stateHashes.emplace_back(GetStateHash(context));
 			}
 
@@ -216,11 +315,14 @@ namespace catapult { namespace local {
 			transferBuilder->addTransfer(0, 4, Amount(400'000));
 			transferBuilder->addTransfer(0, 5, Amount(50'000));
 
-			auto stateHashCalculator = context.createStateHashCalculator();
+			auto stateHashCalculator2 = context.createStateHashCalculator();
 			auto& cache = context.localNode().cache();
 			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+			test::SeedStateHashCalculator(stateHashCalculator2, tempTracker->currentBlocks);
+			auto builder = tempTracker->activeBuilder.createChainedBuilder(stateHashCalculator2);
 
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+
+
 			builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(13)); // better block time will yield better chain
 			auto blocks = TTraits::GetBlocks(builder, transactionsBuilder);
 
@@ -238,7 +340,7 @@ namespace catapult { namespace local {
 			auto pIo2 = test::PushEntity(connection, ionet::PacketType::Push_Block, pTailBlock);
 
 			// - wait for the chain height to change and for all height readers to disconnect
-			test::WaitForHeightAndElements(context, Height(1 + blocks.size() + 1), 3, 2);
+			test::WaitForHeightAndElements(context, Height(2 + blocks.size() + 1), 4, 2);
 			stateHashes.emplace_back(GetStateHash(context));
 
 			// Assert: the cache has expected balances
@@ -259,7 +361,7 @@ namespace catapult { namespace local {
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunRollbackTest<TTraits>(context);
+		auto stateHashes = RunRollbackTest<TTraits, test::StateHashDisabledTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context);
 
 		// Assert: all state hashes are zero
 		test::AssertAllZero(stateHashes, 2);
@@ -270,7 +372,7 @@ namespace catapult { namespace local {
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunRollbackTest<TTraits>(context);
+		auto stateHashes = RunRollbackTest<TTraits, test::StateHashEnabledTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context);
 
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashes, 2);
@@ -282,19 +384,20 @@ namespace catapult { namespace local {
 	// region transfer application (validation failure)
 
 	namespace {
-		template<typename TTraits, typename TTestContext, typename TGenerateInvalidBlocks>
+		template<typename TTraits, typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions, typename TGenerateInvalidBlocks>
 		std::vector<Hash256> RunRejectInvalidApplyTest(TTestContext& context, TGenerateInvalidBlocks generateInvalidBlocks) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
-			test::Accounts accounts(6, 1, 1);
+			test::Accounts accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 6,  TRemainingAccountVersions, TDefaultAccountVersion);
 			std::unique_ptr<BlockChainBuilder> pBuilder1;
 			Blocks seedBlocks;
 			{
 				// - seed the chain with initial blocks
 				auto stateHashCalculator = context.createStateHashCalculator();
-				auto builderBlocksPair = PrepareFiveChainedTransfers<TTraits>(context, accounts, stateHashCalculator);
-				pBuilder1 = std::make_unique<BlockChainBuilder>(builderBlocksPair.first);
-				seedBlocks = builderBlocksPair.second;
+				auto tracker = PrepareBootAndUpgrade<SingleBlockTraits, TTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context, accounts, stateHashCalculator);
+				tracker = PrepareFiveChainedTransfers<TTraits, TTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context, accounts, stateHashCalculator, tracker);
+				pBuilder1 = std::make_unique<BlockChainBuilder>(tracker.activeBuilder);
+				seedBlocks = tracker.currentBlocks;
 				stateHashes.emplace_back(GetStateHash(context));
 			}
 
@@ -328,7 +431,7 @@ namespace catapult { namespace local {
 			auto pIo2 = test::PushEntity(connection, ionet::PacketType::Push_Block, pTailBlock);
 
 			// - wait for the chain height to change and for all height readers to disconnect
-			test::WaitForHeightAndElements(context, Height(1 + seedBlocks.size() + 1), 3, 2);
+			test::WaitForHeightAndElements(context, Height(1 + seedBlocks.size() + 1), 4, 2);
 			stateHashes.emplace_back(GetStateHash(context));
 
 			// Assert: the cache has expected balances
@@ -343,10 +446,10 @@ namespace catapult { namespace local {
 			return stateHashes;
 		}
 
-		template<typename TTraits, typename TTestContext>
+		template<typename TTraits, typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		std::vector<Hash256> RunRejectInvalidValidationApplyTest(TTestContext& context) {
 			// Act + Assert:
-			return RunRejectInvalidApplyTest<TTraits>(context, [](const auto& accounts, auto& builder) {
+			return RunRejectInvalidApplyTest<TTraits, TTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context, [](const auto& accounts, auto& builder) {
 				// Arrange: prepare three transfers, where second is invalid
 				test::TransactionsBuilder transactionsBuilder(accounts);
 				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
@@ -363,7 +466,7 @@ namespace catapult { namespace local {
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunRejectInvalidValidationApplyTest<TTraits>(context);
+		auto stateHashes = RunRejectInvalidValidationApplyTest<TTraits, test::StateHashDisabledTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context);
 
 		// Assert: all state hashes are zero
 		test::AssertAllZero(stateHashes, 2);
@@ -374,7 +477,7 @@ namespace catapult { namespace local {
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunRejectInvalidValidationApplyTest<TTraits>(context);
+		auto stateHashes = RunRejectInvalidValidationApplyTest<TTraits, test::StateHashEnabledTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context);
 
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashes, 2);
@@ -386,10 +489,10 @@ namespace catapult { namespace local {
 	// region transfer application (state hash failure)
 
 	namespace {
-		template<typename TTraits, typename TTestContext>
+		template<typename TTraits, typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		std::vector<Hash256> RunRejectInvalidStateHashApplyTest(TTestContext& context) {
 			// Act + Assert:
-			return RunRejectInvalidApplyTest<TTraits>(context, [](const auto& accounts, auto& builder) {
+			return RunRejectInvalidApplyTest<TTraits, TTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context, [](const auto& accounts, auto& builder) {
 				// Arrange: prepare three valid transfers
 				test::TransactionsBuilder transactionsBuilder(accounts);
 				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
@@ -411,7 +514,7 @@ namespace catapult { namespace local {
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunRejectInvalidStateHashApplyTest<TTraits>(context);
+		auto stateHashes = RunRejectInvalidStateHashApplyTest<TTraits, test::StateHashDisabledTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context);
 
 		// Assert: all state hashes are zero
 		test::AssertAllZero(stateHashes, 2);
@@ -422,7 +525,7 @@ namespace catapult { namespace local {
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunRejectInvalidStateHashApplyTest<TTraits>(context);
+		auto stateHashes = RunRejectInvalidStateHashApplyTest<TTraits, test::StateHashEnabledTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context);
 
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashes, 2);
@@ -434,20 +537,21 @@ namespace catapult { namespace local {
 	// region transfer application + rollback (validation failure)
 
 	namespace {
-		template<typename TTraits, typename TTestContext, typename TGenerateInvalidBlocks>
+		template<typename TTraits, typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions, typename TGenerateInvalidBlocks>
 		std::vector<Hash256> RunRejectInvalidRollbackTest(TTestContext& context, TGenerateInvalidBlocks generateInvalidBlocks) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
-			test::Accounts accounts(6, 1, 1);
+			test::Accounts accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 6,  TRemainingAccountVersions, TDefaultAccountVersion);
 			std::unique_ptr<BlockChainBuilder> pBuilder1;
 			Blocks seedBlocks;
 			{
 				// - seed the chain with initial blocks
 				// - always use SingleBlockTraits because a push can rollback at most one block
 				auto stateHashCalculator = context.createStateHashCalculator();
-				auto builderBlocksPair = PrepareFiveChainedTransfers<SingleBlockTraits>(context, accounts, stateHashCalculator);
-				pBuilder1 = std::make_unique<BlockChainBuilder>(builderBlocksPair.first);
-				seedBlocks = builderBlocksPair.second;
+				auto tracker = PrepareBootAndUpgrade<SingleBlockTraits, TTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context, accounts, stateHashCalculator);
+				tracker = PrepareFiveChainedTransfers<SingleBlockTraits, TTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context, accounts, stateHashCalculator, tracker);
+				pBuilder1 = std::make_unique<BlockChainBuilder>(tracker.activeBuilder);
+				seedBlocks = tracker.currentBlocks;
 				stateHashes.emplace_back(GetStateHash(context));
 			}
 
@@ -484,7 +588,7 @@ namespace catapult { namespace local {
 			auto pIo2 = test::PushEntity(connection, ionet::PacketType::Push_Block, pTailBlock);
 
 			// - wait for the chain height to change and for all height readers to disconnect
-			test::WaitForHeightAndElements(context, Height(1 + seedBlocks.size() + 1), 3, 2);
+			test::WaitForHeightAndElements(context, Height(1 + seedBlocks.size() + 1), 4, 2);
 			stateHashes.emplace_back(GetStateHash(context));
 
 			// Assert: the cache has expected balances
@@ -499,10 +603,10 @@ namespace catapult { namespace local {
 			return stateHashes;
 		}
 
-		template<typename TTraits, typename TTestContext>
+		template<typename TTraits, typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		std::vector<Hash256> RunRejectInvalidValidationRollbackTest(TTestContext& context) {
 			// Act + Assert:
-			return RunRejectInvalidRollbackTest<TTraits>(context, [](const auto& accounts, auto& builder) {
+			return RunRejectInvalidRollbackTest<TTraits, TTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context, [](const auto& accounts, auto& builder) {
 				// Arrange: prepare five transfers, where third is invalid
 				test::TransactionsBuilder transactionsBuilder(accounts);
 				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
@@ -521,7 +625,7 @@ namespace catapult { namespace local {
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunRejectInvalidValidationRollbackTest<TTraits>(context);
+		auto stateHashes = RunRejectInvalidValidationRollbackTest<TTraits, test::StateHashDisabledTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context);
 
 		// Assert: all state hashes are zero
 		test::AssertAllZero(stateHashes, 2);
@@ -532,7 +636,7 @@ namespace catapult { namespace local {
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunRejectInvalidValidationRollbackTest<TTraits>(context);
+		auto stateHashes = RunRejectInvalidValidationRollbackTest<TTraits, test::StateHashEnabledTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context);
 
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashes, 2);
@@ -544,10 +648,10 @@ namespace catapult { namespace local {
 	// region transfer application + rollback (state hash failure)
 
 	namespace {
-		template<typename TTraits, typename TTestContext>
+		template<typename TTraits, typename TTestContext, uint32_t TDefaultAccountVersion, uint32_t TRemainingAccountVersions>
 		std::vector<Hash256> RunRejectInvalidStateHashRollbackTest(TTestContext& context) {
 			// Act + Assert:
-			return RunRejectInvalidRollbackTest<TTraits>(context, [](const auto& accounts, auto& builder) {
+			return RunRejectInvalidRollbackTest<TTraits, TTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context, [](const auto& accounts, auto& builder) {
 				// Arrange: prepare five valid transfers
 				test::TransactionsBuilder transactionsBuilder(accounts);
 				auto transferBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderTransferCapability>();
@@ -571,7 +675,7 @@ namespace catapult { namespace local {
 		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunRejectInvalidStateHashRollbackTest<TTraits>(context);
+		auto stateHashes = RunRejectInvalidStateHashRollbackTest<TTraits, test::StateHashDisabledTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context);
 
 		// Assert: all state hashes are zero
 		test::AssertAllZero(stateHashes, 2);
@@ -582,7 +686,7 @@ namespace catapult { namespace local {
 		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
-		auto stateHashes = RunRejectInvalidStateHashRollbackTest<TTraits>(context);
+		auto stateHashes = RunRejectInvalidStateHashRollbackTest<TTraits, test::StateHashEnabledTestContext, TDefaultAccountVersion, TRemainingAccountVersions>(context);
 
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashes, 2);
