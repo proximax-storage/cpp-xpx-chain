@@ -15,7 +15,7 @@ namespace catapult { namespace model {
 	DEFINE_TRANSACTION_TYPE(BlockchainUpgrade, Blockchain_Upgrade, 0x1);
 
 	/// Account V1 to V2 upgrade transaction.
-	DEFINE_TRANSACTION_TYPE(AccountV2Upgrade, AccountV2_Upgrade, 0x1);
+	DEFINE_TRANSACTION_TYPE(AccountV2Upgrade, AccountV2_Upgrade, 0x2);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
