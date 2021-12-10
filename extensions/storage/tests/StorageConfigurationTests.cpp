@@ -16,10 +16,10 @@ namespace catapult { namespace config {
             static utils::ConfigurationBag::ValuesContainer CreateProperties() {
                 return {
                         {
-                                "",
+                                "replicator",
                                 {
                                         { "port", "5000" },
-                                        { "transactionTimeout", "1" },
+                                        { "transactionTimeout", "1s" },
                                         { "storageDirectory", "/tmp/storage" },
                                         { "sandboxDirectory", "/tmp/storage/sandbox" },
                                         { "useTcpSocket", "true" },
@@ -32,14 +32,18 @@ namespace catapult { namespace config {
                 return false;
             }
 
+            static bool IsPropertyOptional(const std::string&) {
+                return false;
+            }
+
             static bool SupportsUnknownProperties() {
-                return true;
+                return false;
             }
 
             static void AssertZero(const storage::StorageConfiguration& config) {
                 // Assert:
                 EXPECT_EQ("", config.Port);
-                EXPECT_EQ(utils::TimeSpan::FromSeconds(0), config.TransactionTimeout);
+                EXPECT_EQ(utils::TimeSpan::FromHours(0), config.TransactionTimeout);
                 EXPECT_EQ("", config.StorageDirectory);
                 EXPECT_EQ("", config.SandboxDirectory);
                 EXPECT_EQ(false, config.UseTcpSocket);
@@ -55,6 +59,8 @@ namespace catapult { namespace config {
             }
         };
     }
+
+#define TEST_CLASS StorageConfigurationTests
 
     TEST(TEST_CLASS, CanCreateUninitializedStorageConfiguration) {
 		test::AssertCanCreateUninitializedConfiguration<StorageConfigurationTraits>();

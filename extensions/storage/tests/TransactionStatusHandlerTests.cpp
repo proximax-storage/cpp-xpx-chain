@@ -18,7 +18,7 @@ namespace catapult { namespace storage {
         Signature signature{};
 
         // Assert:
-        EXPECT_ANY_THROW(handler.addHandler(signature, [](const Hash256& hash, uint32_t status){}));
+        EXPECT_NO_THROW(handler.addHandler(signature, [](const Hash256& hash, uint32_t status){}));
     }
 
     TEST(TEST_CLASS, TransactionStatusHandler_CanHandle) {

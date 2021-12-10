@@ -5,10 +5,11 @@
 **/
 
 #include "storage/src/StorageTransactionStatusSubscriber.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
-#include "src/StorageConfiguration.h"
+#include "tests/test/core/AddressTestUtils.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "src/ReplicatorService.h"
+#include "src/StorageConfiguration.h"
 
 namespace catapult { namespace storage {
 
@@ -17,8 +18,8 @@ namespace catapult { namespace storage {
     TEST(TEST_CLASS, CanCreateStorageTransactionStatusSubscriber) {
         // Act:
         auto config = config::CreateMockConfigurationHolder();
-        auto keyPair = crypto::KeyPair::FromString("test");
-        auto storageConfig = StorageConfiguration{};
+        auto keyPair = test::GenerateKeyPair();
+        StorageConfiguration storageConfig{};
 
         auto pReplicatorService = std::make_shared<ReplicatorService>(
                 std::move(keyPair),
