@@ -16,14 +16,14 @@ namespace catapult { namespace config {
             static utils::ConfigurationBag::ValuesContainer CreateProperties() {
                 return {
                         {
-                                "replicator",
-                                {
-                                        { "port", "5000" },
-                                        { "transactionTimeout", "1s" },
-                                        { "storageDirectory", "/tmp/storage" },
-                                        { "sandboxDirectory", "/tmp/storage/sandbox" },
-                                        { "useTcpSocket", "true" },
-                                }
+                            "replicator",
+                            {
+                                    {"port", "5000"},
+                                    {"transactionTimeout", "1s"},
+                                    {"storageDirectory", "/tmp/storage"},
+                                    {"sandboxDirectory", "/tmp/storage/sandbox"},
+                                    {"useTcpSocket", "true"},
+                            }
                         }
                 };
             }
@@ -63,26 +63,26 @@ namespace catapult { namespace config {
 #define TEST_CLASS StorageConfigurationTests
 
     TEST(TEST_CLASS, CanCreateUninitializedStorageConfiguration) {
-		test::AssertCanCreateUninitializedConfiguration<StorageConfigurationTraits>();
-	}
+        test::AssertCanCreateUninitializedConfiguration<StorageConfigurationTraits>();
+    }
 
-	TEST(TEST_CLASS, CannotLoadStorageConfigurationFromEmptyBag) {
-		test::AssertCannotLoadConfigurationFromEmptyBag<StorageConfigurationTraits>();
-	}
+    TEST(TEST_CLASS, CannotLoadStorageConfigurationFromEmptyBag) {
+        test::AssertCannotLoadConfigurationFromEmptyBag<StorageConfigurationTraits>();
+    }
 
     TEST(TEST_CLASS, LoadStorageConfigurationFromBagWithMissingProperty) {
-		test::AssertLoadConfigurationFromBagWithMissingProperty<StorageConfigurationTraits>();
-	}
+        test::AssertLoadConfigurationFromBagWithMissingProperty<StorageConfigurationTraits>();
+    }
 
-	TEST(TEST_CLASS, LoadStorageConfigurationFromBagWithUnknownProperty) {
-		test::AssertLoadConfigurationFromBagWithUnknownProperty<StorageConfigurationTraits>();
-	}
+    TEST(TEST_CLASS, LoadStorageConfigurationFromBagWithUnknownProperty) {
+        test::AssertLoadConfigurationFromBagWithUnknownProperty<StorageConfigurationTraits>();
+    }
 
-	TEST(TEST_CLASS, LoadStorageConfigurationFromBagWithUnknownSection) {
-		test::AssertLoadConfigurationFromBagWithUnknownSection<StorageConfigurationTraits>();
-	}
+    TEST(TEST_CLASS, LoadStorageConfigurationFromBagWithUnknownSection) {
+        test::AssertLoadConfigurationFromBagWithUnknownSection<StorageConfigurationTraits>();
+    }
 
-	TEST(TEST_CLASS, CanLoadCustomStorageConfigurationFromBag) {
-		test::AssertCanLoadCustomConfigurationFromBag<StorageConfigurationTraits>();
-	}
+    TEST(TEST_CLASS, CanLoadCustomStorageConfigurationFromBag) {
+        test::AssertCanLoadCustomConfigurationFromBag<StorageConfigurationTraits>();
+    }
 }}

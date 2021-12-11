@@ -5,64 +5,70 @@
 **/
 
 #pragma once
+
 #include "catapult/state/StorageState.h"
 
 namespace catapult { namespace mocks {
 
 #pragma pack(push, 1)
 
-        /// Mock storageState.
-        struct MockStorageState : public state::StorageState {
-            ~MockStorageState() override = default;
+    /// Mock storageState.
+    struct MockStorageState : public state::StorageState {
+    public:
+        explicit MockStorageState() = default;
 
-            bool isReplicatorRegistered(const Key& key) override {
-                    return false;
-            }
+        ~MockStorageState() override = default;
 
-            std::vector<Key> getAllReplicators() override {
-                    return std::vector<Key>();
-            }
+    public:
 
-            bool driveExist(const Key& driveKey) override {
-                    return false;
-            }
+        bool isReplicatorRegistered(const Key& key) override {
+            return false;
+        }
 
-            state::Drive getDrive(const Key& driveKey) override {
-                    return state::Drive();
-            }
+        std::vector<Key> getAllReplicators() override {
+            return std::vector<Key>();
+        }
 
-            bool isReplicatorBelongToDrive(const Key& key, const Key& driveKey) override {
-                    return false;
-            }
+        bool driveExist(const Key& driveKey) override {
+            return false;
+        }
 
-            std::vector<state::Drive> getReplicatorDrives(const Key& replicatorKey) override {
-                    return std::vector<state::Drive>();
-            }
+        state::Drive getDrive(const Key& driveKey) override {
+            return state::Drive();
+        }
 
-            std::vector<Key> getDriveReplicators(const Key& driveKey) override {
-                    return std::vector<Key>();
-            }
+        bool isReplicatorBelongToDrive(const Key& key, const Key& driveKey) override {
+            return false;
+        }
 
-            state::DataModification getLastApprovedDataModification(const Key& driveKey) override {
-                    return state::DataModification();
-            }
+        std::vector<state::Drive> getReplicatorDrives(const Key& replicatorKey) override {
+            return std::vector<state::Drive>();
+        }
 
-            uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) override {
-                    return 0;
-            }
+        std::vector<Key> getDriveReplicators(const Key& driveKey) override {
+            return std::vector<Key>();
+        }
 
-            bool downloadChannelExist(const Hash256& id) override {
-                    return false;
-            }
+        Hash256 getLastApprovedDataModificationId(const Key& driveKey) override {
+            return catapult::Hash256();
+        }
 
-            std::vector<state::DownloadChannel> getDownloadChannels() override {
-                    return std::vector<state::DownloadChannel>();
-            }
+        uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) override {
+            return 0;
+        }
 
-            state::DownloadChannel getDownloadChannel(const Hash256& id) override {
-                    return state::DownloadChannel();
-            }
-        };
+        bool downloadChannelExist(const Hash256& id) override {
+            return false;
+        }
+
+        std::vector<state::DownloadChannel> getDownloadChannels() override {
+            return std::vector<state::DownloadChannel>();
+        }
+
+        state::DownloadChannel getDownloadChannel(const Hash256& id) override {
+            return state::DownloadChannel();
+        }
+    };
 
 #pragma pack(pop)
 }}

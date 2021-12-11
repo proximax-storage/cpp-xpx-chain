@@ -12,7 +12,7 @@
 
 namespace catapult { namespace storage {
 
-	std::unique_ptr<sirius::drive::ReplicatorEventHandler> CreateReplicatorEventHandler(
+    std::unique_ptr<sirius::drive::ReplicatorEventHandler> CreateReplicatorEventHandler(
             TransactionSender&& transactionSender,
             state::StorageState& storageState,
             TransactionStatusHandler& m_transactionStatusHandler);

@@ -18,7 +18,7 @@ namespace catapult { namespace storage {
         Signature signature{};
 
         // Assert:
-        EXPECT_NO_THROW(handler.addHandler(signature, [](const Hash256& hash, uint32_t status){}));
+        EXPECT_NO_THROW(handler.addHandler(signature, [](const Hash256& hash, uint32_t status) {}));
     }
 
     TEST(TEST_CLASS, TransactionStatusHandler_CanHandle) {
@@ -27,7 +27,7 @@ namespace catapult { namespace storage {
         Signature signature{};
         auto counter = 0;
 
-        handler.addHandler(signature, [&counter](const Hash256& hash, uint32_t status){ counter++; });
+        handler.addHandler(signature, [&counter](const Hash256& hash, uint32_t status) { counter++; });
         handler.handle(signature, Hash256{}, 0);
 
         // Assert:
@@ -40,7 +40,7 @@ namespace catapult { namespace storage {
         Signature signature{};
         auto counter = 0;
 
-        handler.addHandler(signature, [&counter](const Hash256& hash, uint32_t status){ counter++; });
+        handler.addHandler(signature, [&counter](const Hash256& hash, uint32_t status) { counter++; });
         handler.handle(signature, Hash256{}, 0);
         handler.handle(signature, Hash256{}, 0);
 

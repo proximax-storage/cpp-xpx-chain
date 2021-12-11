@@ -8,9 +8,9 @@
 
 namespace catapult { namespace builders {
 
-    DataModificationSingleApprovalBuilder::DataModificationSingleApprovalBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer)
-            : TransactionBuilder(networkIdentifier, signer)
-    {}
+    DataModificationSingleApprovalBuilder::DataModificationSingleApprovalBuilder(
+            model::NetworkIdentifier networkIdentifier, const Key& signer)
+            : TransactionBuilder(networkIdentifier, signer) {}
 
     void DataModificationSingleApprovalBuilder::setDriveKey(const Key& driveKey) {
         m_driveKey = driveKey;
@@ -36,8 +36,8 @@ namespace catapult { namespace builders {
     model::UniqueEntityPtr<TransactionType> DataModificationSingleApprovalBuilder::buildImpl() const {
         // 1. allocate
         auto size = sizeof(TransactionType)
-                + m_uploaderKeys.size() * sizeof(Key)
-                + m_uploadOpinions.size() * sizeof(uint8_t);
+                    + m_uploaderKeys.size() * sizeof(Key)
+                    + m_uploadOpinions.size() * sizeof(uint8_t);
         auto pTransaction = createTransaction<TransactionType>(size);
 
         // 2. set transaction fields
@@ -53,11 +53,13 @@ namespace catapult { namespace builders {
         return pTransaction;
     }
 
-    model::UniqueEntityPtr<DataModificationSingleApprovalBuilder::Transaction> DataModificationSingleApprovalBuilder::build() const {
+    model::UniqueEntityPtr<DataModificationSingleApprovalBuilder::Transaction>
+    DataModificationSingleApprovalBuilder::build() const {
         return buildImpl<Transaction>();
     }
 
-    model::UniqueEntityPtr<DataModificationSingleApprovalBuilder::EmbeddedTransaction> DataModificationSingleApprovalBuilder::buildEmbedded() const {
+    model::UniqueEntityPtr<DataModificationSingleApprovalBuilder::EmbeddedTransaction>
+    DataModificationSingleApprovalBuilder::buildEmbedded() const {
         return buildImpl<EmbeddedTransaction>();
     }
 }}

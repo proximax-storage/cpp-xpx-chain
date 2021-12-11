@@ -12,6 +12,7 @@
 #include "sdk/src/extensions/TransactionExtensions.h"
 
 namespace catapult { namespace storage {
+
     catapult::Signature TransactionSender::sendDataModificationApprovalTransaction(
             const crypto::KeyPair& sender,
             const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
@@ -117,7 +118,7 @@ namespace catapult { namespace storage {
 
             for (const auto& layout: transactionInfo.m_opinions[row].m_downloadLayout) {
                 auto column = 0;
-                for (const auto& key : allPubKeys) {
+                for (const auto& key: allPubKeys) {
                     if (key == layout.m_key)
                         break;
 
@@ -132,13 +133,13 @@ namespace catapult { namespace storage {
         }
 
         std::vector<uint64_t> flatOpinions;
-        for (const auto& opinion : opinions)
+        for (const auto& opinion: opinions)
             flatOpinions.insert(flatOpinions.end(), opinion.begin(), opinion.end());
 
-        boost::dynamic_bitset<uint8_t> bitset((flatOpinions.size() + 7) / 8 );
+        boost::dynamic_bitset<uint8_t> bitset((flatOpinions.size() + 7) / 8);
         auto index = 0;
-        for (const auto& presentOpinion : presentOpinions)
-            for (const auto& value : presentOpinion) {
+        for (const auto& presentOpinion: presentOpinions)
+            for (const auto& value: presentOpinion) {
                 bitset[index] = value;
                 index++;
             }

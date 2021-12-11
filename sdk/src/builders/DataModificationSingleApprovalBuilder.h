@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+
 #include "TransactionBuilder.h"
 #include "plugins/txes/storage/src/model/DataModificationSingleApprovalTransaction.h"
 #include <vector>
@@ -23,9 +24,13 @@ namespace catapult { namespace builders {
 
     public:
         void setDriveKey(const Key& driveKey);
+
         void setDataModificationId(const Hash256& dataModificationId);
+
         void setUploaderKeys(const std::vector<Key>& uploaderKeys);
+
         void setUploadOpinion(const std::vector<uint8_t>& uploadOpinions);
+
         void setUsedDriveSize(uint64_t usedDriveSize);
 
     public:

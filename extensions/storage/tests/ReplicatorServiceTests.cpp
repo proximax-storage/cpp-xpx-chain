@@ -8,7 +8,6 @@
 #include "tests/TestHarness.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/other/mocks/MockServiceState.h"
-#include "tests/test/other/mocks/MockStorageState.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace storage {

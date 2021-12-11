@@ -59,6 +59,8 @@ namespace catapult { namespace state {
 		virtual std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) = 0;
 		virtual std::vector<Key> getDriveReplicators(const Key& driveKey) = 0;
 
+        virtual Hash256 getLastApprovedDataModificationId(const Key& driveKey) = 0;
+
 		virtual uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) = 0;
 
 		virtual bool downloadChannelExist(const Hash256& id) = 0;

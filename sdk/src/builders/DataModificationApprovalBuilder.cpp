@@ -8,52 +8,55 @@
 
 namespace catapult { namespace builders {
 
-	DataModificationApprovalBuilder::DataModificationApprovalBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer)
-		: TransactionBuilder(networkIdentifier, signer)
-		, m_fileStructureSize(0)
-		, m_usedDriveSize(0)
-	{}
+    DataModificationApprovalBuilder::DataModificationApprovalBuilder(
+            model::NetworkIdentifier networkIdentifier,
+            const Key& signer)
+            : TransactionBuilder(networkIdentifier, signer)
+            , m_fileStructureSize(0)
+            , m_usedDriveSize(0) {}
 
-	void DataModificationApprovalBuilder::setDriveKey(const Key& driveKey) {
-		m_driveKey = driveKey;
-	}
+    void DataModificationApprovalBuilder::setDriveKey(const Key& driveKey) {
+        m_driveKey = driveKey;
+    }
 
-	void DataModificationApprovalBuilder::setDataModificationId(const Hash256& dataModificationId) {
-		m_dataModificationId = dataModificationId;
-	}
+    void DataModificationApprovalBuilder::setDataModificationId(const Hash256& dataModificationId) {
+        m_dataModificationId = dataModificationId;
+    }
 
-	void DataModificationApprovalBuilder::setFileStructureCdi(const Hash256& fileStructureCdi) {
-		m_fileStructureCdi = fileStructureCdi;
-	}
+    void DataModificationApprovalBuilder::setFileStructureCdi(const Hash256& fileStructureCdi) {
+        m_fileStructureCdi = fileStructureCdi;
+    }
 
-	void DataModificationApprovalBuilder::setFileStructureSize(uint64_t fileStructureSize) {
-		m_fileStructureSize = fileStructureSize;
-	}
+    void DataModificationApprovalBuilder::setFileStructureSize(uint64_t fileStructureSize) {
+        m_fileStructureSize = fileStructureSize;
+    }
 
-	void DataModificationApprovalBuilder::setUsedDriveSize(uint64_t usedDriveSize) {
-		m_usedDriveSize = usedDriveSize;
-	}
+    void DataModificationApprovalBuilder::setUsedDriveSize(uint64_t usedDriveSize) {
+        m_usedDriveSize = usedDriveSize;
+    }
 
-	template<typename TransactionType>
-	model::UniqueEntityPtr<TransactionType> DataModificationApprovalBuilder::buildImpl() const {
-		// 1. allocate
-		auto pTransaction = createTransaction<TransactionType>(sizeof(TransactionType));
+    template<typename TransactionType>
+    model::UniqueEntityPtr<TransactionType> DataModificationApprovalBuilder::buildImpl() const {
+        // 1. allocate
+        auto pTransaction = createTransaction<TransactionType>(sizeof(TransactionType));
 
-		// 2. set transaction fields
-		pTransaction->DriveKey = m_driveKey;
-		pTransaction->DataModificationId = m_dataModificationId;
-		pTransaction->FileStructureCdi = m_fileStructureCdi;
-		pTransaction->FileStructureSize = m_fileStructureSize;
-		pTransaction->UsedDriveSize = m_usedDriveSize;
+        // 2. set transaction fields
+        pTransaction->DriveKey = m_driveKey;
+        pTransaction->DataModificationId = m_dataModificationId;
+        pTransaction->FileStructureCdi = m_fileStructureCdi;
+        pTransaction->FileStructureSize = m_fileStructureSize;
+        pTransaction->UsedDriveSize = m_usedDriveSize;
 
-		return pTransaction;
-	}
+        return pTransaction;
+    }
 
-	model::UniqueEntityPtr<DataModificationApprovalBuilder::Transaction> DataModificationApprovalBuilder::build() const {
-		return buildImpl<Transaction>();
-	}
+    model::UniqueEntityPtr<DataModificationApprovalBuilder::Transaction>
+    DataModificationApprovalBuilder::build() const {
+        return buildImpl<Transaction>();
+    }
 
-	model::UniqueEntityPtr<DataModificationApprovalBuilder::EmbeddedTransaction> DataModificationApprovalBuilder::buildEmbedded() const {
-		return buildImpl<EmbeddedTransaction>();
-	}
+    model::UniqueEntityPtr<DataModificationApprovalBuilder::EmbeddedTransaction>
+    DataModificationApprovalBuilder::buildEmbedded() const {
+        return buildImpl<EmbeddedTransaction>();
+    }
 }}

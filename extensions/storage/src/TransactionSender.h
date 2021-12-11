@@ -17,24 +17,26 @@ namespace catapult { namespace storage {
     class TransactionSender {
     public:
         TransactionSender(
-				const config::ImmutableConfiguration& immutableConfig,
-				StorageConfiguration storageConfig,
-				handlers::TransactionRangeHandler transactionRangeHandler)
-			: m_networkIdentifier(immutableConfig.NetworkIdentifier)
-			, m_generationHash(immutableConfig.GenerationHash)
-			, m_storageConfig(std::move(storageConfig))
-			, m_transactionRangeHandler(std::move(transactionRangeHandler)) {}
+                const config::ImmutableConfiguration& immutableConfig,
+                StorageConfiguration storageConfig,
+                handlers::TransactionRangeHandler transactionRangeHandler)
+                : m_networkIdentifier(immutableConfig.NetworkIdentifier)
+                , m_generationHash(immutableConfig.GenerationHash)
+                , m_storageConfig(std::move(storageConfig))
+                , m_transactionRangeHandler(std::move(transactionRangeHandler)) {}
 
     public:
-		catapult::Signature sendDataModificationApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
-		catapult::Signature sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
-		catapult::Signature sendDownloadApprovalTransaction(const crypto::KeyPair& sender, uint16_t sequenceNumber, const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo);
+        catapult::Signature sendDataModificationApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
+
+        catapult::Signature sendDataModificationSingleApprovalTransaction(const crypto::KeyPair& sender, const sirius::drive::ApprovalTransactionInfo& transactionInfo);
+
+        catapult::Signature sendDownloadApprovalTransaction(const crypto::KeyPair& sender, uint16_t sequenceNumber, const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo);
 
     private:
         void send(const crypto::KeyPair& sender, std::shared_ptr<model::Transaction> pTransaction);
 
     private:
-		model::NetworkIdentifier m_networkIdentifier;
+        model::NetworkIdentifier m_networkIdentifier;
         GenerationHash m_generationHash;
         StorageConfiguration m_storageConfig;
         handlers::TransactionRangeHandler m_transactionRangeHandler;

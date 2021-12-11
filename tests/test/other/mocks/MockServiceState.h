@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+
 #include "MockStorageState.h"
 #include "MockNodeSubscriber.h"
 #include "MockStateChangeSubscriber.h"
@@ -21,74 +22,77 @@ namespace catapult { namespace mocks {
 
 #pragma pack(push, 1)
 
-        /// Mock storageState.
-        class MockServiceState {
-        public:
-            MockServiceState(extensions::ServiceState serviceState) : m_serviceState(serviceState) {};
+    /// Mock serviceState.
+    class MockServiceState {
+    public:
+        MockServiceState(extensions::ServiceState serviceState) : m_serviceState(std::move(serviceState)) {};
 
-        public:
-            extensions::ServiceState* ServiceState() {
-                    return &m_serviceState;
-            }
+    public:
+        extensions::ServiceState* ServiceState() {
+            return &m_serviceState;
+        }
 
-        private:
-            extensions::ServiceState m_serviceState;
+    private:
+        extensions::ServiceState m_serviceState;
+    };
+
+    MockServiceState CreateMockServiceState() {
+        auto config = test::CreateUninitializedBlockchainConfiguration();
+        const_cast<utils::FileSize&>(config.Node.MaxPacketDataSize) = utils::FileSize::FromKilobytes(1234);
+
+        ionet::NodeContainer nodes;
+        auto catapultCache = cache::CatapultCache({});
+        state::CatapultState catapultState;
+        io::BlockStorageCache storage(
+                std::make_unique<mocks::MockMemoryBlockStorage>(),
+                std::make_unique<mocks::MockMemoryBlockStorage>()
+        );
+        extensions::LocalNodeChainScore score;
+        auto pUtCache = test::CreateUtCacheProxy();
+
+        auto numTimeSupplierCalls = 0u;
+        auto timeSupplier = [&numTimeSupplierCalls]() {
+            ++numTimeSupplierCalls;
+            return Timestamp(111);
         };
 
-        MockServiceState CreateMockServiceState() {
-                auto config = test::CreateUninitializedBlockchainConfiguration();
-                const_cast<utils::FileSize&>(config.Node.MaxPacketDataSize) = utils::FileSize::FromKilobytes(1234);
+        mocks::MockTransactionStatusSubscriber transactionStatusSubscriber;
+        mocks::MockStateChangeSubscriber stateChangeSubscriber;
+        mocks::MockNodeSubscriber nodeSubscriber;
+        mocks::MockBlockChangeSubscriber postBlockCommitSubscriber;
 
-                ionet::NodeContainer nodes;
-                auto catapultCache = cache::CatapultCache({});
-                state::CatapultState catapultState;
-                io::BlockStorageCache storage(
-                        std::make_unique<mocks::MockMemoryBlockStorage>(),
-                        std::make_unique<mocks::MockMemoryBlockStorage>()
-                );
-                extensions::LocalNodeChainScore score;
-                auto pUtCache = test::CreateUtCacheProxy();
+        std::vector<utils::DiagnosticCounter> counters;
+        auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
-                auto numTimeSupplierCalls = 0u;
-                auto timeSupplier = [&numTimeSupplierCalls]() {
-                    ++numTimeSupplierCalls;
-                    return Timestamp(111);
-                };
+        plugins::PluginManager pluginManager(pConfigHolder, plugins::StorageConfiguration());
+        auto storageState = std::make_shared<mocks::MockStorageState>();
+        pluginManager.setStorageState(storageState);
 
-                mocks::MockTransactionStatusSubscriber transactionStatusSubscriber;
-                mocks::MockStateChangeSubscriber stateChangeSubscriber;
-                mocks::MockNodeSubscriber nodeSubscriber;
-                mocks::MockBlockChangeSubscriber postBlockCommitSubscriber;
+        thread::MultiServicePool pool("mock", 1);
 
-                std::vector<utils::DiagnosticCounter> counters;
-                auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+        // Act:
+        auto state = extensions::ServiceState(
+                nodes,
+                catapultCache,
+                catapultState,
+                storage,
+                score,
+                *pUtCache,
+                timeSupplier,
+                transactionStatusSubscriber,
+                stateChangeSubscriber,
+                nodeSubscriber,
+                postBlockCommitSubscriber,
+                counters,
+                pluginManager,
+                pool
+        );
 
-                plugins::PluginManager pluginManager(pConfigHolder, plugins::StorageConfiguration());
-                auto storageState = std::shared_ptr<mocks::MockStorageState>();
-                pluginManager.setStorageState(storageState);
+        auto& hooks = state.hooks();
+        hooks.setTransactionRangeConsumerFactory([](auto) { return [](auto&&) {}; });
 
-                thread::MultiServicePool pool("test", 1);
-
-                // Act:
-                auto state = extensions::ServiceState(
-                        nodes,
-                        catapultCache,
-                        catapultState,
-                        storage,
-                        score,
-                        *pUtCache,
-                        timeSupplier,
-                        transactionStatusSubscriber,
-                        stateChangeSubscriber,
-                        nodeSubscriber,
-                        postBlockCommitSubscriber,
-                        counters,
-                        pluginManager,
-                        pool
-                );
-
-                return {state};
-        }
+        return {state};
+    }
 
 #pragma pack(pop)
 }}
