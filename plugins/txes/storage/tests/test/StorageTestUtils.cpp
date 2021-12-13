@@ -196,11 +196,9 @@ namespace catapult { namespace test {
 
     state::ReplicatorEntry CreateReplicatorEntry(
             Key key,
-			BLSPublicKey blsKey,
             Amount capacity,
             uint16_t drivesCount) {
         state::ReplicatorEntry entry(key);
-        entry.setBlsKey(blsKey);
 		entry.setCapacity(capacity);
         for (auto dC = 0u; dC < drivesCount; ++dC)
             entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
@@ -216,14 +214,6 @@ namespace catapult { namespace test {
 		AssertEqualDriveInfos(expectedEntry.drives(), entry.drives());
     }
 
-	state::BlsKeysEntry CreateBlsKeysEntry(
-			const BLSPublicKey& blsKey,
-			const Key& key) {
-		auto entry = state::BlsKeysEntry(blsKey);
-		entry.setKey(key);
-		return entry;
-	};
-
 	void AddReplicators(cache::CatapultCache& cache, std::vector<crypto::KeyPair>& replicatorKeyPairs, const uint8_t count, const Height height) {
 		auto delta = cache.createDelta();
 		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
@@ -237,10 +227,6 @@ namespace catapult { namespace test {
 		}
 		cache.commit(height);
 	}
-
-    void AssertEqualBlskeyData(const state::BlsKeysEntry& expectedEntry, const state::BlsKeysEntry& entry){
-        EXPECT_EQ(expectedEntry.key(), entry.key());
-    }
 
 	RawBuffer GenerateCommonDataBuffer(const size_t& size) {
 		auto* const pCommonData = new uint8_t[size];

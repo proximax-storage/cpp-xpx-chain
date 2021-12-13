@@ -20,7 +20,7 @@ namespace catapult { namespace mongo { namespace plugins {
         for (auto i = 0u; i < transaction.VerificationOpinionsCount; ++i, ++pOpinion) {
             auto doc = verificationOpinions << bson_stream::open_document
                                             << "verifier" << ToBinary((*pOpinion).Verifier)
-                                            << "blsSignature" << ToBinary((*pOpinion).BlsSignature);
+                                            << "signature" << ToBinary((*pOpinion).Signature);
 
             auto opinions = doc << "results" << bson_stream::open_array;
             for (auto j = 0u; j < transaction.ProversCount-1; ++j) {

@@ -19,7 +19,6 @@ namespace catapult { namespace state {
             sizeof(VersionType) + // version
             Key_Size + // drive key
             sizeof(Amount) + // capacity
-			sizeof(BLSPublicKey) + // bls key
             sizeof(uint16_t) + // drive count
             Drives_Count * (Key_Size + Hash256_Size + sizeof(bool) + sizeof(uint64_t)); // drives
 
@@ -46,7 +45,6 @@ namespace catapult { namespace state {
         auto CreateReplicatorEntry() {
             return test::CreateReplicatorEntry(
                 test::GenerateRandomByteArray<Key>(),
-				test::GenerateRandomByteArray<BLSPublicKey>(),
                 test::GenerateRandomValue<Amount>(),
                 Drives_Count);
         }
@@ -59,8 +57,6 @@ namespace catapult { namespace state {
             pData += Key_Size;
             EXPECT_EQ(entry.capacity(), *reinterpret_cast<const Amount*>(pData));
             pData += sizeof(Amount);
-			EXPECT_EQ_MEMORY(entry.blsKey().data(), pData, sizeof(BLSPublicKey));
-			pData += sizeof(BLSPublicKey);
 
             EXPECT_EQ(entry.drives().size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
@@ -136,8 +132,6 @@ namespace catapult { namespace state {
             pData += Key_Size;
             memcpy(pData, &entry.capacity(), sizeof(Amount));
             pData += sizeof(Amount);
-			memcpy(pData, entry.blsKey().data(), sizeof(BLSPublicKey));
-			pData += sizeof(BLSPublicKey);
             //region drives
             
             uint16_t drivesCount = utils::checked_cast<size_t, uint16_t>(entry.drives().size());

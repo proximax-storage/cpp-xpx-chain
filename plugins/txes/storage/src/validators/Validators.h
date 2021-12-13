@@ -14,7 +14,6 @@
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/ReplicatorCache.h"
-#include "src/cache/BlsKeysCache.h"
 
 namespace catapult { namespace validators {
 

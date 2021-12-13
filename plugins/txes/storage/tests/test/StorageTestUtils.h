@@ -19,8 +19,6 @@
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCache.h"
 #include "src/cache/ReplicatorCacheStorage.h"
-#include "src/cache/BlsKeysCache.h"
-#include "src/cache/BlsKeysCacheStorage.h"
 #include "src/model/StorageEntityType.h"
 #include "src/utils/StorageUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
@@ -30,13 +28,12 @@
 
 namespace catapult { namespace test {
 
-	/// Cache factory for creating a catapult cache composed of BC drive cache, BLS keys cache, download channel cache and replicator cache.
+	/// Cache factory for creating a catapult cache composed of BC drive cache, download channel cache and replicator cache.
 	struct StorageCacheFactory {
 	private:
 		static auto CreateStorageSubCaches(const config::BlockchainConfiguration& config) {
 			std::vector<size_t> cacheIds = {
 					cache::BcDriveCache::Id,
-					cache::BlsKeysCache::Id,
 					cache::DownloadChannelCache::Id,
 					cache::ReplicatorCache::Id};
 			auto maxId = std::max_element(cacheIds.begin(), cacheIds.end());
@@ -44,7 +41,6 @@ namespace catapult { namespace test {
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
 			subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
-			subCaches[cache::BlsKeysCache::Id] = MakeSubCachePlugin<cache::BlsKeysCache, cache::BlsKeysCacheStorage>(pConfigHolder);
 			subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
 			subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pKeyCollector, pConfigHolder);
 			return subCaches;
@@ -153,7 +149,6 @@ namespace catapult { namespace test {
     /// Creates test replicator entry.
     state::ReplicatorEntry CreateReplicatorEntry(
         Key key = test::GenerateRandomByteArray<Key>(),
-		BLSPublicKey blsKey = test::GenerateRandomByteArray<BLSPublicKey>(),
         Amount capacity = test::GenerateRandomValue<Amount>(),
 		uint16_t drivesCount = 2
     );
@@ -161,13 +156,11 @@ namespace catapult { namespace test {
     /// Verifies that \a entry1 is equivalent to \a entry2.
     void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry);
 
-    void AssertEqualBlskeyData(const state::BlsKeysEntry& expectedEntry, const state::BlsKeysEntry& entry);
-
      /// Cache factory for creating a catapult cache composed of replicator cache and core caches.
     struct ReplicatorCacheFactory {
         private:
             static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
-				std::vector<uint32_t> cacheIds = {cache::BcDriveCache::Id, cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id, cache::BlsKeysCache::Id};
+				std::vector<uint32_t> cacheIds = {cache::BcDriveCache::Id, cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id};
 				auto id = *std::max_element(cacheIds.begin(), cacheIds.end());
                 std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
@@ -175,7 +168,6 @@ namespace catapult { namespace test {
 			    subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 			    subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
                 subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pKeyCollector, pConfigHolder);
-                subCaches[cache::BlsKeysCache::Id] = MakeSubCachePlugin<cache::BlsKeysCache, cache::BlsKeysCacheStorage>(pConfigHolder);
 				return subCaches;
             }
 
@@ -192,11 +184,6 @@ namespace catapult { namespace test {
                 return cache::CatapultCache(std::move(subCaches));
             }  
     };
-
-	/// Creates test BLS keys entry.
-	state::BlsKeysEntry CreateBlsKeysEntry(
-			const BLSPublicKey& blsKey = test::GenerateRandomByteArray<BLSPublicKey>(),
-			const Key& key = test::GenerateRandomByteArray<Key>());
 
 	/// Adds \a count unique replicator entries to the respective cache.
 	/// Adds the key pairs of created replicators to \a keys.
@@ -376,7 +363,6 @@ namespace catapult { namespace test {
     model::UniqueEntityPtr<TTransaction> CreateReplicatorOnboardingTransaction() {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ReplicatorOnboarding);
         pTransaction->Capacity = test::GenerateRandomValue<Amount>();
-        pTransaction->BlsKey = test::GenerateRandomByteArray<BLSPublicKey>();
         return pTransaction;
     }
 

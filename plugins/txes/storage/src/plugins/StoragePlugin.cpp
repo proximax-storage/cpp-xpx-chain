@@ -8,7 +8,6 @@
 #include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCacheSubCachePlugin.h"
-#include "src/cache/BlsKeysCacheStorage.h"
 #include "src/plugins/PrepareBcDriveTransactionPlugin.h"
 #include "src/plugins/DataModificationTransactionPlugin.h"
 #include "src/plugins/DownloadTransactionPlugin.h"
@@ -162,18 +161,6 @@ namespace catapult { namespace plugins {
 			counters.emplace_back(utils::DiagnosticCounterId("REPLICATOR C"), [&cache]() {
 				return cache.sub<cache::ReplicatorCache>().createView(cache.height())->size();
 			});
-		});
-
-		manager.addCacheSupport<cache::BlsKeysCacheStorage>(
-				std::make_unique<cache::BlsKeysCache>(manager.cacheConfig(cache::BlsKeysCache::Name), pConfigHolder));
-
-		using BlsKeysCacheHandlersService = CacheHandlers<cache::BlsKeysCacheDescriptor>;
-		BlsKeysCacheHandlersService::Register<model::FacilityCode::BlsKeys>(manager);
-
-		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-		  	counters.emplace_back(utils::DiagnosticCounterId("BLS KEYS C"), [&cache]() {
-				return cache.sub<cache::BlsKeysCache>().createView(cache.height())->size();
-		  	});
 		});
 
 		manager.setStorageState(std::make_unique<state::CachedStorageState>(pKeyCollector));
