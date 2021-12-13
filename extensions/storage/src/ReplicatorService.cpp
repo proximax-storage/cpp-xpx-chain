@@ -62,8 +62,11 @@ namespace catapult { namespace storage {
              extensions::ServiceState& serviceState,
              state::StorageState& storageState,
              const ionet::NodeContainerView& nodesView)
-                : m_keyPair(keyPair), m_serviceState(serviceState), m_storageState(storageState), m_nodesView(
-                nodesView) {}
+             : m_keyPair(keyPair)
+             , m_serviceState(serviceState)
+             , m_storageState(storageState)
+             , m_nodesView(nodesView)
+             {}
 
     public:
         void init(const StorageConfiguration& storageConfig) {
@@ -89,11 +92,22 @@ namespace catapult { namespace storage {
                     storageConfig.UseTcpSocket,
                     *m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
                     nullptr,
-                    Service_Name);
+                    Service_Name
+            );
 
             auto drives = m_storageState.getReplicatorDrives(m_keyPair.publicKey());
             for (const auto& drive: drives) {
                 addDrive(drive.Id, drive.Size, drive.UsedSize);
+
+                auto lastApprovedModification = m_storageState.getLastApprovedDataModification(drive.Id);
+                m_pReplicator->asyncApprovalTransactionHasBeenPublished(sirius::drive::ApprovalTransactionInfo{
+                    (std::array<uint8_t, 32>&) lastApprovedModification.DriveKey,
+                    (std::array<uint8_t, 32>&) lastApprovedModification.Id,
+                    (std::array<uint8_t, 32>&) lastApprovedModification.DownloadDataCdi,
+                    lastApprovedModification.ExpectedUploadSize,
+                    lastApprovedModification.ActualUploadSize-lastApprovedModification.ExpectedUploadSize,
+                    lastApprovedModification.UsedSize
+                });
 
                 for (const auto& dataModification: drive.DataModifications) {
                     addDriveModification(
@@ -110,7 +124,7 @@ namespace catapult { namespace storage {
             for (const auto& channel: channels) {
                 addDriveChannel(
                         channel.Id,
-                        Key{}, // TODO add real drive key in V3
+                        channel.DriveKey,
                         channel.DownloadSize,
                         channel.Consumers
                 );
@@ -125,8 +139,7 @@ namespace catapult { namespace storage {
                 uint64_t dataSize) {
             CATAPULT_LOG(debug) << "new modify request " << modificationId << " for drive " << driveKey;
 
-            auto replicators = findNodesByKeys(
-                    m_storageState.getDriveReplicators(driveKey)); // TODO or get from notification?
+            auto replicators = findNodesByKeys(m_storageState.getDriveReplicators(driveKey)); // TODO or get from notification?
             auto modifyRequest = sirius::drive::ModifyRequest{
                     (const sirius::Hash256&) downloadDataCdi,
                     (const sirius::Hash256&) modificationId,
@@ -195,8 +208,7 @@ namespace catapult { namespace storage {
         void addDrive(const Key& driveKey, uint64_t driveSize, uint64_t usedSize) {
             CATAPULT_LOG(debug) << "add drive " << driveKey;
 
-            auto replicators = findNodesByKeys(
-                    m_storageState.getDriveReplicators(driveKey)); // TODO or get from notification?
+            auto replicators = findNodesByKeys(m_storageState.getDriveReplicators(driveKey)); // TODO or get from notification?
             auto downloadWork = m_storageState.getDownloadWork(m_keyPair.publicKey(), driveKey);
             sirius::drive::AddDriveRequest request{driveSize, downloadWork, replicators};
             m_pReplicator->asyncAddDrive((const sirius::Key&) driveKey, request);
@@ -266,7 +278,9 @@ namespace catapult { namespace storage {
     // region - replicator service
 
     ReplicatorService::ReplicatorService(crypto::KeyPair&& keyPair, StorageConfiguration&& storageConfig)
-            : m_keyPair(std::move(keyPair)), m_storageConfig(std::move(storageConfig)) {}
+            : m_keyPair(std::move(keyPair))
+            , m_storageConfig(std::move(storageConfig))
+            {}
 
     void ReplicatorService::start() {
         if (m_pImpl) CATAPULT_THROW_RUNTIME_ERROR("replicator service already started");

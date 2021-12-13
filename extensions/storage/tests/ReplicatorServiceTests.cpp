@@ -26,7 +26,7 @@ namespace catapult { namespace storage {
         );
 
         auto serviceState = mocks::CreateMockServiceState();
-        pReplicatorService->setServiceState(serviceState.ServiceState());
+        pReplicatorService->setServiceState(serviceState->ServiceState());
 
         // Assert:
         EXPECT_NO_THROW(pReplicatorService->start());

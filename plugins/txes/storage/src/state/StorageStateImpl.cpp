@@ -23,6 +23,7 @@ namespace catapult { namespace state {
                 dataModifications.emplace_back(DataModification{
                         modification.Id,
                         modification.Owner,
+                        driveKey,
                         modification.DownloadDataCdi,
                         modification.ExpectedUploadSize,
                         modification.ActualUploadSize});
@@ -85,7 +86,7 @@ namespace catapult { namespace state {
         return {drive.Replicators.begin(), drive.Replicators.end()};
     }
 
-    Hash256 StorageStateImpl::getLastApprovedDataModificationId(const Key& driveKey) {
+    ApprovedDataModification StorageStateImpl::getLastApprovedDataModification(const Key& driveKey) {
         auto driveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
         auto driveIter = driveCacheView->find(driveKey);
         auto driveEntry = driveIter.get();
@@ -101,7 +102,22 @@ namespace catapult { namespace state {
         if (completedModificationsIter == driveEntry.completedDataModifications().rend())
             return {};
 
-        return completedModificationsIter->Id;
+        std::vector<Key> signers;
+        for (const auto& state : driveEntry.confirmedStates()) {
+            if (state.second == completedModificationsIter->Id)
+                signers.emplace_back(state.first);
+        }
+
+        return ApprovedDataModification{
+                completedModificationsIter->Id,
+                driveEntry.owner(),
+                driveEntry.key(),
+                completedModificationsIter->DownloadDataCdi,
+                completedModificationsIter->ExpectedUploadSize,
+                completedModificationsIter->ActualUploadSize,
+                signers,
+                driveEntry.usedSize()
+        };
     }
 
     uint64_t StorageStateImpl::getDownloadWork(const Key& replicatorKey, const Key& driveKey) {

@@ -13,10 +13,8 @@ namespace catapult { namespace mocks {
 #pragma pack(push, 1)
 
     /// Mock storageState.
-    struct MockStorageState : public state::StorageState {
+    class MockStorageState : public state::StorageState {
     public:
-        explicit MockStorageState() = default;
-
         ~MockStorageState() override = default;
 
     public:
@@ -49,8 +47,8 @@ namespace catapult { namespace mocks {
             return std::vector<Key>();
         }
 
-        Hash256 getLastApprovedDataModificationId(const Key& driveKey) override {
-            return catapult::Hash256();
+        state::ApprovedDataModification getLastApprovedDataModification(const Key& driveKey) override {
+            return {};
         }
 
         uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) override {

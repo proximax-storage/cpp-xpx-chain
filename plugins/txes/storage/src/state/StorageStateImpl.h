@@ -27,7 +27,7 @@ namespace catapult { namespace state {
         std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) override;
         std::vector<Key> getDriveReplicators(const Key& driveKey) override;
 
-        Hash256 getLastApprovedDataModificationId(const Key& driveKey) override;
+        ApprovedDataModification getLastApprovedDataModification(const Key& driveKey) override;
 
         uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) override;
 

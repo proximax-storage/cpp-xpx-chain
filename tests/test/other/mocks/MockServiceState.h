@@ -17,6 +17,7 @@
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/thread/MultiServicePool.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
+#include <utility>
 
 namespace catapult { namespace mocks {
 
@@ -36,7 +37,7 @@ namespace catapult { namespace mocks {
         extensions::ServiceState m_serviceState;
     };
 
-    MockServiceState CreateMockServiceState() {
+    std::shared_ptr<MockServiceState> CreateMockServiceState() {
         auto config = test::CreateUninitializedBlockchainConfiguration();
         const_cast<utils::FileSize&>(config.Node.MaxPacketDataSize) = utils::FileSize::FromKilobytes(1234);
 
@@ -65,8 +66,7 @@ namespace catapult { namespace mocks {
         auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
         plugins::PluginManager pluginManager(pConfigHolder, plugins::StorageConfiguration());
-        auto storageState = std::make_shared<mocks::MockStorageState>();
-        pluginManager.setStorageState(storageState);
+        pluginManager.setStorageState(std::make_unique<mocks::MockStorageState>());
 
         thread::MultiServicePool pool("mock", 1);
 
@@ -88,10 +88,9 @@ namespace catapult { namespace mocks {
                 pool
         );
 
-        auto& hooks = state.hooks();
-        hooks.setTransactionRangeConsumerFactory([](auto) { return [](auto&&) {}; });
+        state.hooks().setTransactionRangeConsumerFactory([](auto) { return [](auto&&) {}; });
 
-        return {state};
+        return std::make_shared<MockServiceState>(state);
     }
 
 #pragma pack(pop)
