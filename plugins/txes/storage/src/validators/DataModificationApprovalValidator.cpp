@@ -40,17 +40,13 @@ namespace catapult { namespace validators {
 				return Failure_Storage_Opinion_Invalid_Key;
 
 		// Check if none of the replicators has provided an opinion on itself
-	  	std::vector<std::vector<uint8_t>> publicKeysIndices(notification.OpinionCount);	// Nth vector in publicKeysIndices contains indices of all overlapping public keys of replicators that provided Nth opinion.
 	  	const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
-		for (auto i = notification.JudgingKeysCount; i < totalJudgingKeysCount; ++i)
-		  	publicKeysIndices.at(notification.OpinionIndicesPtr[i]).push_back(i - notification.JudgingKeysCount);	// Opinion indices should be already validated in OpinionValidator, no need to double check them
 	  	const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
-	  	const auto presentOpinionByteCount = (notification.OpinionCount * totalJudgedKeysCount + 7) / 8;
+	  	const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
 	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
-	  	for (auto i = 0; i < notification.OpinionCount; ++i)
-		  	for (const auto index : publicKeysIndices.at(i))
-			  	if (presentOpinions[i*totalJudgedKeysCount + index])
-					return Failure_Storage_Opinion_Provided_On_Self;
+	  	for (auto i = notification.JudgingKeysCount; i < totalJudgingKeysCount; ++i)
+			if (presentOpinions[i*totalJudgedKeysCount + (i - notification.JudgingKeysCount)])
+				return Failure_Storage_Opinion_Provided_On_Self;
 
 		return ValidationResult::Success;
 	});

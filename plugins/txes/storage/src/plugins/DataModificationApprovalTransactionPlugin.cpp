@@ -39,14 +39,12 @@ namespace catapult { namespace plugins {
 
 				sub.notify(OpinionNotification<1>(
 						commonDataSize,
-						transaction.OpinionCount,
 						transaction.JudgingKeysCount,
 						transaction.OverlappingKeysCount,
 						transaction.JudgedKeysCount,
 						commonDataPtr.get(),
 						transaction.PublicKeysPtr(),
-						transaction.OpinionIndicesPtr(),
-						transaction.BlsSignaturesPtr(),
+						transaction.SignaturesPtr(),
 						transaction.PresentOpinionsPtr(),
 						transaction.OpinionsPtr()
 				));
@@ -67,12 +65,10 @@ namespace catapult { namespace plugins {
 						transaction.FileStructureSize,
 						transaction.MetaFilesSize,
 						transaction.UsedDriveSize,
-						transaction.OpinionCount,
 						transaction.JudgingKeysCount,
 						transaction.OverlappingKeysCount,
 						transaction.JudgedKeysCount,
 						transaction.PublicKeysPtr(),
-						transaction.OpinionIndicesPtr(),
 						transaction.PresentOpinionsPtr()
 				));
 
@@ -90,12 +86,10 @@ namespace catapult { namespace plugins {
 				// Updates drive's replicator infos (updates CumulativeUploadPayments) and owner cumulative upload size.
 				sub.notify(DataModificationApprovalUploadWorkNotification<1>(
 						transaction.DriveKey,
-						transaction.OpinionCount,
 						transaction.JudgingKeysCount,
 						transaction.OverlappingKeysCount,
 						transaction.JudgedKeysCount,
 						transaction.PublicKeysPtr(),
-						transaction.OpinionIndicesPtr(),
 						transaction.PresentOpinionsPtr(),
 						transaction.OpinionsPtr()
 				));

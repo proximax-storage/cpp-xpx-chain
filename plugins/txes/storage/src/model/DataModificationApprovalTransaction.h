@@ -45,9 +45,6 @@ namespace catapult { namespace model {
 		/// Total used disk space of the drive.
 		uint64_t UsedDriveSize;
 
-		/// Number of unique opinions.
-		uint8_t OpinionCount;
-
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;
 
@@ -64,11 +61,8 @@ namespace catapult { namespace model {
 		/// Replicators' public keys.
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(PublicKeys, Key)
 
-		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(OpinionIndices, uint8_t)
-
-		/// Aggregated BLS signatures of opinions.
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(BlsSignatures, BLSSignature)
+		/// Signatures of replicators' opinions.
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Signatures, Signature)
 
 		/// Two-dimensional array of opinion element presence.
 		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
@@ -85,7 +79,7 @@ namespace catapult { namespace model {
 		}
 
 		template<typename T>
-		static auto* OpinionIndicesPtrT(T& transaction) {
+		static auto* SignaturesPtrT(T& transaction) {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
 			const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
 			const auto totalJudgingKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount;
@@ -94,25 +88,14 @@ namespace catapult { namespace model {
 		}
 
 		template<typename T>
-		static auto* BlsSignaturesPtrT(T& transaction) {
-			auto* pPayloadStart = THeader::PayloadStart(transaction);
-			const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
-			const auto totalJudgingKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount;
-			return transaction.OpinionCount && pPayloadStart ? pPayloadStart
-					+ totalKeysCount * sizeof(Key)
-					+ totalJudgingKeysCount * sizeof(uint8_t) : nullptr;
-		}
-
-		template<typename T>
 		static auto* PresentOpinionsPtrT(T& transaction) {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
 			const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
 			const auto totalJudgingKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount;
 			const auto totalJudgedKeysCount = transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
-			return transaction.OpinionCount && totalJudgedKeysCount && pPayloadStart ? pPayloadStart
+			return totalJudgingKeysCount && totalJudgedKeysCount && pPayloadStart ? pPayloadStart
 					+ totalKeysCount * sizeof(Key)
-					+ totalJudgingKeysCount * sizeof(uint8_t)
-					+ transaction.OpinionCount * sizeof(BLSSignature) : nullptr;
+					+ totalJudgingKeysCount * sizeof(Signature) : nullptr;
 		}
 
 		template<typename T>
@@ -120,11 +103,10 @@ namespace catapult { namespace model {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
 			const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
 			const auto totalJudgingKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount;
-			const auto presentOpinionByteCount = (transaction.OpinionCount * (transaction.OverlappingKeysCount + transaction.JudgedKeysCount) + 7) / 8;
+			const auto presentOpinionByteCount = (totalJudgingKeysCount * (transaction.OverlappingKeysCount + transaction.JudgedKeysCount) + 7) / 8;
 			return transaction.OpinionElementCount && pPayloadStart ? pPayloadStart
 					+ totalKeysCount * sizeof(Key)
-					+ totalJudgingKeysCount * sizeof(uint8_t)
-					+ transaction.OpinionCount * sizeof(BLSSignature)
+					+ totalJudgingKeysCount * sizeof(Signature)
 					+ presentOpinionByteCount * sizeof(uint8_t) : nullptr;
 		}
 
@@ -133,11 +115,10 @@ namespace catapult { namespace model {
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
 			const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
 			const auto totalJudgingKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount;
-			const auto presentOpinionByteCount = (transaction.OpinionCount * (transaction.OverlappingKeysCount + transaction.JudgedKeysCount) + 7) / 8;
+			const auto presentOpinionByteCount = (totalJudgingKeysCount * (transaction.OverlappingKeysCount + transaction.JudgedKeysCount) + 7) / 8;
 			return sizeof(TransactionType)
 				   + totalKeysCount * sizeof(Key)
-				   + totalJudgingKeysCount * sizeof(uint8_t)
-				   + transaction.OpinionCount * sizeof(BLSSignature)
+				   + totalJudgingKeysCount * sizeof(Signature)
 				   + presentOpinionByteCount * sizeof(uint8_t)
 				   + transaction.OpinionElementCount * sizeof(uint64_t);
 		}

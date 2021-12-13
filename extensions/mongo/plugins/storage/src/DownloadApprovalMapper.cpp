@@ -27,26 +27,19 @@ namespace catapult { namespace mongo { namespace plugins {
 			publicKeysArray << ToBinary(*pKey);
 		publicKeysArray << bson_stream::close_array;
 
-		// Streaming OpinionIndices
-		auto opinionIndicesArray = builder << "opinionIndices" << bson_stream::open_array;
-		auto pIndex = transaction.OpinionIndicesPtr();
+		// Streaming Signatures
+		auto signaturesArray = builder << "signatures" << bson_stream::open_array;
+		auto pSignature = transaction.SignaturesPtr();
 		const auto totalJudgingKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount;
-		for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pIndex)
-			opinionIndicesArray << static_cast<int8_t>(*pIndex);
-		opinionIndicesArray << bson_stream::close_array;
-
-		// Streaming BlsSignatures
-		auto blsSignaturesArray = builder << "blsSignatures" << bson_stream::open_array;
-		auto pSignature = transaction.BlsSignaturesPtr();
-		for (auto i = 0; i < transaction.OpinionCount; ++i, ++pSignature)
-			blsSignaturesArray << ToBinary(*pSignature);
-		blsSignaturesArray << bson_stream::close_array;
+		for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pSignature)
+			signaturesArray << ToBinary(*pSignature);
+		signaturesArray << bson_stream::close_array;
 
 		// Streaming PresentOpinions
 		auto presentOpinionsArray = builder << "presentOpinions" << bson_stream::open_array;
 		auto pBlock = transaction.PresentOpinionsPtr();
 		const auto totalJudgedKeysCount = transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
-		const auto presentOpinionByteCount = (transaction.OpinionCount * totalJudgedKeysCount + 7) / 8;
+		const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
 		for (auto i = 0; i < presentOpinionByteCount; ++i, ++pBlock)
 			presentOpinionsArray << static_cast<int8_t>(*pBlock);
 		presentOpinionsArray << bson_stream::close_array;

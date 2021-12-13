@@ -24,7 +24,6 @@ namespace catapult { namespace observers {
         constexpr auto File_Structure_Size = 50;
 		constexpr auto Meta_Files_Size = 50;
         constexpr auto Used_Drive_Size = 50;
-		constexpr auto Opinion_Count = 3;
 		constexpr auto Judging_Keys_Count = 2;
 		constexpr auto Overlapping_Keys_Count = 2;
 		constexpr auto Judged_Keys_Count = 2;
@@ -70,8 +69,6 @@ namespace catapult { namespace observers {
 			auto pPair = confirmedUsedSizes.begin();
 			for (auto i = 0u; i < confirmedUsedSizes.size(); ++i, ++pPair)
 				pPublicKeys[i] = pPair->first;
-
-			const auto pOpinionIndices = std::make_unique<uint8_t>();
 			const auto pPresentOpinions = std::make_unique<uint8_t>();
 
             ObserverTestContext context(mode, currentHeight);
@@ -82,12 +79,10 @@ namespace catapult { namespace observers {
                 File_Structure_Size,
 				Meta_Files_Size,
 				Used_Drive_Size,
-				Opinion_Count,
 				Judging_Keys_Count,
 				Overlapping_Keys_Count,
 				Judged_Keys_Count,
 				pPublicKeys.get(),
-				pOpinionIndices.get(),
 				pPresentOpinions.get());
             auto pObserver = CreateDataModificationApprovalObserver();
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();

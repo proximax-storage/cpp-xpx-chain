@@ -27,9 +27,9 @@ namespace catapult { namespace validators {
 		constexpr auto Meta_Files_Size = 50;
         constexpr auto Used_Drive_Size = 50;
 
-		void PrepareDriveEntry(state::BcDriveEntry& driveEntry, const std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs) {
+		void PrepareDriveEntry(state::BcDriveEntry& driveEntry, const std::vector<crypto::KeyPair>& replicatorKeyPairs) {
 			for (const auto& pair : replicatorKeyPairs)
-				driveEntry.replicators().insert(pair.first);
+				driveEntry.replicators().insert(pair.publicKey());
 		}
 
         void AssertValidationResult(
@@ -39,16 +39,14 @@ namespace catapult { namespace validators {
 				const Hash256& dataModificationId,
 				const test::OpinionData<uint64_t>& opinionData) {
             // Arrange:
+			const auto totalJudgingKeysCount = opinionData.JudgingKeysCount + opinionData.OverlappingKeysCount;
 			const auto totalJudgedKeysCount = opinionData.OverlappingKeysCount + opinionData.JudgedKeysCount;
-			const auto presentOpinionElementCount = opinionData.OpinionCount * totalJudgedKeysCount;
+			const auto presentOpinionElementCount = totalJudgingKeysCount * totalJudgedKeysCount;
 			const auto presentOpinionByteCount = (presentOpinionElementCount + 7) / 8;
 
 			const auto pPublicKeys = std::unique_ptr<Key[]>(new Key[opinionData.PublicKeys.size()]);
 			for (auto i = 0u; i < opinionData.PublicKeys.size(); ++i)
 				memcpy(static_cast<void*>(&pPublicKeys[i]), static_cast<const void*>(&opinionData.PublicKeys.at(i)), sizeof(Key));
-			const auto pOpinionIndices = std::unique_ptr<uint8_t[]>(new uint8_t[opinionData.OpinionIndices.size()]);
-			for (auto i = 0u; i < opinionData.OpinionIndices.size(); ++i)
-				memcpy(static_cast<void*>(&pOpinionIndices[i]), static_cast<const void*>(&opinionData.OpinionIndices.at(i)), sizeof(uint8_t));
 			const auto pPresentOpinions = std::unique_ptr<uint8_t[]>(new uint8_t[presentOpinionByteCount]);
 			for (auto i = 0u; i < presentOpinionByteCount; ++i) {
 				boost::dynamic_bitset<uint8_t> byte(8, 0u);
@@ -66,12 +64,10 @@ namespace catapult { namespace validators {
 					File_Structure_Size,
 					Meta_Files_Size,
 					Used_Drive_Size,
-					opinionData.OpinionCount,
 					opinionData.JudgingKeysCount,
 					opinionData.OverlappingKeysCount,
 					opinionData.JudgedKeysCount,
 					pPublicKeys.get(),
-					pOpinionIndices.get(),
 					pPresentOpinions.get()
 			);
             auto pValidator = CreateDataModificationApprovalValidator();
@@ -88,7 +84,7 @@ namespace catapult { namespace validators {
 				const cache::CatapultCache& cache,
 				const Key& driveKey,
 				const Hash256& dataModificationId,
-				const std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs,
+				const std::vector<crypto::KeyPair>& replicatorKeyPairs,
 				const bool includeDriveOwner = true) {
 			// Generate valid opinion data:
 			const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size);
@@ -105,12 +101,9 @@ namespace catapult { namespace validators {
 				opinionData.PublicKeys.at(targetKeyIndex) = driveEntry.owner();
 			}
 
-			std::vector<std::vector<uint8_t>> publicKeysIndices(opinionData.OpinionCount);	// Nth vector in publicKeysIndices contains indices of all public keys of replicators that provided Nth opinion.
-			for (auto i = 0; i < opinionData.OverlappingKeysCount; ++i)
-				publicKeysIndices.at(opinionData.OpinionIndices.at(opinionData.JudgingKeysCount + i)).push_back(i);
-			for (auto i = 0; i < opinionData.OpinionCount; ++i)
-				for (const auto index : publicKeysIndices.at(i))
-					opinionData.PresentOpinions.at(i).at(index) = false;
+			// Make sure that every judging replicator has NOT provided an opinion on self:
+			for (auto i = opinionData.JudgingKeysCount; i < totalJudgingKeysCount; ++i)
+				opinionData.PresentOpinions.at(i).at(i - opinionData.JudgingKeysCount) = false;
 
 			// Pass:
 			AssertValidationResult(
@@ -129,7 +122,7 @@ namespace catapult { namespace validators {
 		auto& driveDelta = delta.sub<cache::BcDriveCache>();
 		auto driveEntry = test::CreateBcDriveEntry();
 
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
+		std::vector<crypto::KeyPair> replicatorKeyPairs;
 		test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
 		PrepareDriveEntry(driveEntry, replicatorKeyPairs);
 
@@ -150,7 +143,7 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		// No need to create drive delta and drive entry.
 
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
+		std::vector<crypto::KeyPair> replicatorKeyPairs;
 		test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
 		// No need to prepare drive entry.
 
@@ -171,7 +164,7 @@ namespace catapult { namespace validators {
 		auto& driveDelta = delta.sub<cache::BcDriveCache>();
 		auto driveEntry = test::CreateBcDriveEntry();
 
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
+		std::vector<crypto::KeyPair> replicatorKeyPairs;
 		test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
 		PrepareDriveEntry(driveEntry, replicatorKeyPairs);
 
@@ -197,7 +190,7 @@ namespace catapult { namespace validators {
 		auto& driveDelta = delta.sub<cache::BcDriveCache>();
 		auto driveEntry = test::CreateBcDriveEntry();
 
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
+		std::vector<crypto::KeyPair> replicatorKeyPairs;
 		test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
 		PrepareDriveEntry(driveEntry, replicatorKeyPairs);
 
@@ -220,7 +213,7 @@ namespace catapult { namespace validators {
 		auto& driveDelta = delta.sub<cache::BcDriveCache>();
 		auto driveEntry = test::CreateBcDriveEntry();
 
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
+		std::vector<crypto::KeyPair> replicatorKeyPairs;
 		test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
 		PrepareDriveEntry(driveEntry, replicatorKeyPairs);
 
@@ -252,7 +245,7 @@ namespace catapult { namespace validators {
 		auto& driveDelta = delta.sub<cache::BcDriveCache>();
 		auto driveEntry = test::CreateBcDriveEntry();
 
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
+		std::vector<crypto::KeyPair> replicatorKeyPairs;
 		test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
 		PrepareDriveEntry(driveEntry, replicatorKeyPairs);
 
@@ -269,8 +262,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		const auto targetKeyIndex = test::RandomInRange<uint8_t>(judgingKeysCount, totalJudgingKeysCount-1);
-		const auto targetOpinionIndex = opinionData.OpinionIndices.at(targetKeyIndex);
-		opinionData.PresentOpinions.at(targetOpinionIndex).at(targetKeyIndex - judgingKeysCount) = true;
+		opinionData.PresentOpinions.at(targetKeyIndex).at(targetKeyIndex - judgingKeysCount) = true;
 
 		// Assert:
 		AssertValidationResult(

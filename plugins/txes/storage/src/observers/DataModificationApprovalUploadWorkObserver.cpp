@@ -29,7 +29,7 @@ namespace catapult { namespace observers {
 	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 
 	  	// Preparing presentOpinions bitset array.
-	  	const auto presentOpinionByteCount = (notification.OpinionCount * totalJudgedKeysCount + 7) / 8;
+	  	const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
 	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
 
 		// Preparing vectors related to cumulative upload sizes.
@@ -45,17 +45,12 @@ namespace catapult { namespace observers {
 		}
 	  	std::vector<uint64_t> uploadSizesIncrements(totalJudgedKeysCount);
 
-		// Nth element in opinionCounts indicates how many replicators have provided Nth opinion.
-		std::vector<uint8_t> opinionCounts(notification.OpinionCount, 0);
-		for (auto i = 0; i < totalJudgingKeysCount; ++i)
-			++opinionCounts.at(notification.OpinionIndicesPtr[i]);
-
 		// Iterating over opinions row by row and calculating upload sizes increments for each judged uploader.
 		auto pOpinion = notification.OpinionsPtr;
-		for (auto i = 0; i < notification.OpinionCount; ++i) {
+		for (auto i = 0; i < totalJudgingKeysCount; ++i) {
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
 				if (presentOpinions[i*totalJudgedKeysCount + j]) {
-					uploadSizesIncrements.at(j) += opinionCounts.at(i) * std::max(*pOpinion - initialCumulativeUploadSizes.at(j), 0ul);
+					uploadSizesIncrements.at(j) += std::max(*pOpinion - initialCumulativeUploadSizes.at(j), 0ul);
 					++pOpinion;
 				}
 			}

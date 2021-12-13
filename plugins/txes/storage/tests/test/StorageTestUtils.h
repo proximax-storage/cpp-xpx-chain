@@ -198,26 +198,24 @@ namespace catapult { namespace test {
 			const BLSPublicKey& blsKey = test::GenerateRandomByteArray<BLSPublicKey>(),
 			const Key& key = test::GenerateRandomByteArray<Key>());
 
-	/// Adds \a count unique replicator entries and BLS key entries to respective caches.
-	/// Adds the keys of created replicators to \a keys.
+	/// Adds \a count unique replicator entries to the respective cache.
+	/// Adds the key pairs of created replicators to \a keys.
 	void AddReplicators(
 			cache::CatapultCache& cache,
-			std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs,
+			std::vector<crypto::KeyPair>& replicatorKeyPairs,
 			uint8_t count,
 			Height height = Height(1));
 
 	/// Common fields of opinion-based multisignature transactions (DownloadApproval, DataModificationApproval, EndDriveVerification).
 	template<typename TOpinion>
 	struct OpinionData {
-		uint8_t OpinionCount;
 		uint8_t JudgingKeysCount;
 		uint8_t OverlappingKeysCount;
 		uint8_t JudgedKeysCount;
 		uint8_t OpinionElementCount;
-		uint8_t FilledPresenceRowIndex;
+		int16_t FilledPresenceRowIndex;
 		std::vector<Key> PublicKeys;
-		std::vector<uint8_t> OpinionIndices;
-		std::vector<BLSSignature> BlsSignatures;
+		std::vector<Signature> Signatures;
 		std::vector<std::vector<bool>> PresentOpinions;
 		std::vector<std::vector<TOpinion>> Opinions;
 	};
@@ -226,16 +224,15 @@ namespace catapult { namespace test {
 	RawBuffer GenerateCommonDataBuffer(const size_t& size);
 
 	/// Populates \a replicatorKeyPairs up to \a replicatorCount random key pairs.
-	void PopulateReplicatorKeyPairs(std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs, uint16_t replicatorCount);
+	void PopulateReplicatorKeyPairs(std::vector<crypto::KeyPair>& replicatorKeyPairs, uint16_t replicatorCount);
 
 	/// Creates an OpinionData filled with valid data.
 	/// Tuple \c publicKeysCounts contains \a JudgingKeysCount, \a OverlappingKeysCount and \a JudgedKeysCount in that order.
 	template<typename TOpinion>
 	OpinionData<TOpinion> CreateValidOpinionData(
-			const std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs,
+			const std::vector<crypto::KeyPair>& replicatorKeyPairs,
 			const RawBuffer& commonDataBuffer,
 			const std::tuple<uint8_t, uint8_t, uint8_t> publicKeysCounts = {0, 0, 0},
-			const uint8_t opinionCount = 0,
 			const bool filledPresenceRow = false) {
 		OpinionData<TOpinion> data;
 
@@ -249,33 +246,21 @@ namespace catapult { namespace test {
 		data.JudgedKeysCount = countsProvided ? std::get<2>(publicKeysCounts) : totalKeysCount - data.OverlappingKeysCount - data.JudgingKeysCount;
 		const auto totalJudgingKeysCount = totalKeysCount - data.JudgedKeysCount;
 		const auto totalJudgedKeysCount = totalKeysCount - data.JudgingKeysCount;
-		data.OpinionCount = opinionCount ? opinionCount : test::RandomInRange<uint8_t>(1, totalJudgingKeysCount);
-		const auto presentOpinionCount = data.OpinionCount * totalJudgedKeysCount;
+		const auto presentOpinionCount = totalJudgingKeysCount * totalJudgedKeysCount;
 
-		// Filling PublicKeys and OpinionIndices.
-		std::vector<std::vector<const crypto::BLSKeyPair*>> blsKeyPairs(data.OpinionCount);	// Nth vector in blsKeyPairs contains pointers to all BLS key pairs of replicators that provided Nth opinion.
-		data.OpinionIndices.reserve(totalJudgingKeysCount);
-		std::vector<uint8_t> predOpinionIndices(boost::counting_iterator<uint8_t>(0u), boost::counting_iterator<uint8_t>(totalJudgingKeysCount));	// Vector of predetermined indices used to guarantee that every opinion is used. If Nth element in predOpinionIndices is M and M < opinionCount, then Nth element in opinionIndices must be M.
-		std::shuffle(std::begin(predOpinionIndices), std::end(predOpinionIndices), std::default_random_engine {});
-		for (auto i = 0u; i < totalKeysCount; ++i) {
-			const auto& pair = replicatorKeyPairs.at(i);
-			data.PublicKeys.push_back(pair.first);
-			if (i < totalJudgingKeysCount) {
-				const auto opinionIndex = predOpinionIndices.at(i) < data.OpinionCount ? predOpinionIndices.at(i) : test::RandomInRange(0, data.OpinionCount-1);
-				data.OpinionIndices.push_back(opinionIndex);
-				blsKeyPairs.at(opinionIndex).push_back(&pair.second);
-			}
-		}
+		// Filling PublicKeys.
+		for (auto i = 0u; i < totalKeysCount; ++i)
+			data.PublicKeys.push_back(replicatorKeyPairs.at(i).publicKey());
 
 		// Filling PresentOpinions and Opinions.
-		data.PresentOpinions.resize(data.OpinionCount);
-		data.Opinions.resize(data.OpinionCount);
+		data.PresentOpinions.resize(totalJudgingKeysCount);
+		data.Opinions.resize(totalJudgingKeysCount);
 		std::vector<uint8_t> predPresenceIndices;	// Vector of predetermined indices used to guarantee that every judged key is used. If Nth element in predPresenceIndices is M, then Mth element in Nth column of presentOpinions must be true.
 		predPresenceIndices.reserve(totalJudgedKeysCount);
-		data.FilledPresenceRowIndex = filledPresenceRow ? test::RandomInRange(0, std::max(data.OpinionCount-2, 0)) : -1;	// The row in PresentOpinions filled with 1's is guaranteed not to be the last.
+		data.FilledPresenceRowIndex = filledPresenceRow ? test::RandomInRange(0, std::max(totalJudgingKeysCount-2, 0)) : -1;	// The row in PresentOpinions filled with 1's is guaranteed not to be the last.
 		for (auto i = 0u; i < totalJudgedKeysCount; ++i)
-			predPresenceIndices.emplace_back(test::RandomInRange(0, data.OpinionCount-1));
-		for (auto i = 0u; i < data.OpinionCount; ++i) {
+			predPresenceIndices.emplace_back(test::RandomInRange(0, totalJudgingKeysCount-1));
+		for (auto i = 0u; i < totalJudgingKeysCount; ++i) {
 			data.PresentOpinions.at(i).reserve(totalJudgedKeysCount);
 			for (auto j = 0u; j < totalJudgedKeysCount; ++j) {
 				const bool bit = data.FilledPresenceRowIndex == i || predPresenceIndices.at(j) == i || test::Random() % 10; // True according to FilledPresenceRowIndex, predPresenceIndices or with probability 0.9
@@ -289,7 +274,7 @@ namespace catapult { namespace test {
 			}
 		}
 
-		// Filling BlsSignatures.
+		// Filling Signatures.
 		const auto maxDataSize = commonDataBuffer.Size + (sizeof(Key) + sizeof(TOpinion)) * totalJudgedKeysCount;	// Guarantees that every possible individual opinion will fit in.
 		const auto pDataBegin = std::unique_ptr<uint8_t[]>(new uint8_t[maxDataSize]);
 		memcpy(pDataBegin.get(), commonDataBuffer.pData, commonDataBuffer.Size);
@@ -298,7 +283,7 @@ namespace catapult { namespace test {
 		using OpinionElement = std::pair<Key, TOpinion>;
 		const auto comparator = [](const OpinionElement& a, const OpinionElement& b){ return a.first < b.first; };
 		std::set<OpinionElement, decltype(comparator)> individualPart(comparator);	// Set that represents complete opinion of one of the replicators. Opinion elements are sorted in ascending order of keys.
-		for (auto i = 0; i < data.OpinionCount; ++i) {
+		for (auto i = 0; i < totalJudgingKeysCount; ++i) {
 			individualPart.clear();
 			for (auto j = 0, k = 0; j < totalJudgedKeysCount; ++j) {
 				if (data.PresentOpinions.at(i).at(j)) {
@@ -315,17 +300,9 @@ namespace catapult { namespace test {
 			}
 
 			RawBuffer dataBuffer(pDataBegin.get(), dataSize);
-
-			const auto blsSignaturesCount = blsKeyPairs.at(i).size();
-			const auto pBlsSignatures = std::unique_ptr<BLSSignature[]>(new BLSSignature[blsSignaturesCount]);
-			std::vector<const BLSSignature*> signatures;
-			signatures.reserve(blsSignaturesCount);
-			for (auto j = 0u; j < blsSignaturesCount; ++j) {
-				catapult::crypto::Sign(*blsKeyPairs.at(i).at(j), dataBuffer, pBlsSignatures[j]);
-				signatures.push_back(&pBlsSignatures[j]);
-			}
-
-			data.BlsSignatures.push_back(catapult::crypto::Aggregate(signatures));
+			Signature signature;
+			catapult::crypto::Sign(replicatorKeyPairs.at(i), dataBuffer, signature);
+			data.Signatures.push_back(signature);
 		}
 
 		return data;

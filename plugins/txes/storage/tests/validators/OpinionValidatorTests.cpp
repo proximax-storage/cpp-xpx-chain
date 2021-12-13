@@ -29,12 +29,12 @@ namespace catapult { namespace validators {
 				const RawBuffer& commonDataBuffer,
 				const test::OpinionData<TOpinion>& opinionData) {
 			// Arrange:
+			const auto totalJudgingKeysCount = opinionData.JudgingKeysCount + opinionData.OverlappingKeysCount;
 			const auto totalJudgedKeysCount = opinionData.OverlappingKeysCount + opinionData.JudgedKeysCount;
-			const auto presentOpinionElementCount = opinionData.OpinionCount * totalJudgedKeysCount;
+			const auto presentOpinionElementCount = totalJudgingKeysCount * totalJudgedKeysCount;
 			const auto presentOpinionByteCount = (presentOpinionElementCount + 7) / 8;
 			const auto payloadSize = opinionData.PublicKeys.size() * sizeof(Key)
-									 + opinionData.OpinionIndices.size() * sizeof(uint8_t)
-									 + opinionData.BlsSignatures.size() * sizeof(BLSSignature)
+									 + opinionData.Signatures.size() * sizeof(Signature)
 									 + presentOpinionByteCount * sizeof(uint8_t)
 									 + opinionData.OpinionElementCount * sizeof(TOpinion);
 			const auto pPayload = std::unique_ptr<uint8_t[]>(new uint8_t[payloadSize]);
@@ -43,15 +43,11 @@ namespace catapult { namespace validators {
 			for (auto i = 0u; i < opinionData.PublicKeys.size(); ++i)
 				memcpy(static_cast<void*>(&pPublicKeysBegin[i]), static_cast<const void*>(&opinionData.PublicKeys.at(i)), sizeof(Key));
 
-			auto* const pOpinionIndicesBegin = reinterpret_cast<uint8_t*>(pPublicKeysBegin + opinionData.PublicKeys.size());
-			for (auto i = 0u; i < opinionData.OpinionIndices.size(); ++i)
-				memcpy(static_cast<void*>(&pOpinionIndicesBegin[i]), static_cast<const void*>(&opinionData.OpinionIndices.at(i)), sizeof(uint8_t));
+			auto* const pSignaturesBegin = reinterpret_cast<Signature*>(pPublicKeysBegin + opinionData.PublicKeys.size());
+			for (auto i = 0u; i < opinionData.Signatures.size(); ++i)
+				memcpy(static_cast<void*>(&pSignaturesBegin[i]), static_cast<const void*>(&opinionData.Signatures.at(i)), sizeof(Signature));
 
-			auto* const pBlsSignaturesBegin = reinterpret_cast<BLSSignature*>(pOpinionIndicesBegin + opinionData.OpinionIndices.size());
-			for (auto i = 0u; i < opinionData.BlsSignatures.size(); ++i)
-				memcpy(static_cast<void*>(&pBlsSignaturesBegin[i]), static_cast<const void*>(&opinionData.BlsSignatures.at(i)), sizeof(BLSSignature));
-
-			auto* const pPresentOpinionsBegin = reinterpret_cast<uint8_t*>(pBlsSignaturesBegin + opinionData.BlsSignatures.size());
+			auto* const pPresentOpinionsBegin = reinterpret_cast<uint8_t*>(pSignaturesBegin + opinionData.Signatures.size());
 			for (auto i = 0u; i < presentOpinionByteCount; ++i) {
 				boost::dynamic_bitset<uint8_t> byte(8, 0u);
 				for (auto j = 0u; j < std::min(8u, presentOpinionElementCount - i*8); ++j) {
@@ -69,14 +65,12 @@ namespace catapult { namespace validators {
 
 			Notification notification(
 					commonDataBuffer.Size,
-					opinionData.OpinionCount,
 					opinionData.JudgingKeysCount,
 					opinionData.OverlappingKeysCount,
 					opinionData.JudgedKeysCount,
 					commonDataBuffer.pData,
 					pPublicKeysBegin,
-					pOpinionIndicesBegin,
-					pBlsSignaturesBegin,
+					pSignaturesBegin,
 					pPresentOpinionsBegin,
 					pOpinionsBegin
 			);
@@ -94,7 +88,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, Success) {
 		// Arrange:
 		auto cache = test::StorageCacheFactory::Create();
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
+		std::vector<crypto::KeyPair> replicatorKeyPairs;
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
 		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
@@ -110,15 +104,16 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenUnusedKeys) {
 		// Arrange:
 		auto cache = test::StorageCacheFactory::Create();
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
+		std::vector<crypto::KeyPair> replicatorKeyPairs;
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
 		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
 
 		// Act:
+		const auto totalJudgingKeysCount = opinionData.JudgingKeysCount + opinionData.OverlappingKeysCount;
 		const auto totalJudgedKeysCount = opinionData.OverlappingKeysCount + opinionData.JudgedKeysCount;
 		const auto keyIndex = test::RandomInRange(0, totalJudgedKeysCount-1);	// Select random judged key
-		for (auto i = 0; i < opinionData.OpinionCount; ++i)
+		for (auto i = 0; i < totalJudgingKeysCount; ++i)
 			opinionData.PresentOpinions.at(i).at(keyIndex) = false;	// Reset all bits in corresponding column in PresentOpinions
 
 		// Assert:
@@ -132,7 +127,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenReoccuringKeys) {
 		// Arrange:
 		auto cache = test::StorageCacheFactory::Create();
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
+		std::vector<crypto::KeyPair> replicatorKeyPairs;
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
 		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 
@@ -156,127 +151,21 @@ namespace catapult { namespace validators {
 				opinionData);
 	}
 
-	TEST(TEST_CLASS, FailureWhenReplicatorNotFound) {
+	TEST(TEST_CLASS, FailureWhenInvalidSignature) {
 		// Arrange:
 		auto cache = test::StorageCacheFactory::Create();
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
+		std::vector<crypto::KeyPair> replicatorKeyPairs;
 		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
 		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
 
 		// Act:
-		const auto totalJudgingKeysCount = opinionData.JudgingKeysCount + opinionData.OverlappingKeysCount;
-		const auto replicatorIndex = test::RandomInRange(0, totalJudgingKeysCount-1);	// Select random judging replicator
-		auto delta = cache.createDelta();
-		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
-		replicatorDelta.remove(opinionData.PublicKeys.at(replicatorIndex));	// Remove selected replicator from ReplicatorCache
-		cache.commit(cache.height());	// Commit removal
+		const auto signatureIndex = test::RandomInRange(0ul, opinionData.Signatures.size()-1);	// Select random signature
+		opinionData.Signatures.at(signatureIndex) = test::GenerateRandomByteArray<Signature>();	// Replace selected signature with random data
 
 		// Assert:
 		AssertValidationResult(
-				Failure_Storage_Replicator_Not_Found,
-				cache,
-				commonDataBuffer,
-				opinionData);
-	}
-
-	TEST(TEST_CLASS, FailureWhenInvalidOpinionIndex) {
-		// Arrange:
-		auto cache = test::StorageCacheFactory::Create();
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
-		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
-		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
-		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
-
-		// Act:
-		const auto positionIndex = test::RandomInRange(0ul, opinionData.OpinionIndices.size()-1);	// Select random position in OpinionIndices
-		opinionData.OpinionIndices.at(positionIndex) += opinionData.OpinionCount;	// Make stored index invalid (valid indices must be less than OpinionCount)
-
-		// Assert:
-		AssertValidationResult(
-				Failure_Storage_Invalid_Opinion_Index,
-				cache,
-				commonDataBuffer,
-				opinionData);
-	}
-
-	TEST(TEST_CLASS, FailureWhenUnusedOpinions) {
-		// Arrange:
-		auto cache = test::StorageCacheFactory::Create();
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
-		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
-		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
-
-		const auto totalKeysCount = test::RandomInRange(2ul, replicatorKeyPairs.size());
-		const auto opinionCount = test::RandomInRange<uint8_t>(2, totalKeysCount);	// Need at least 2 different opinions
-		const auto totalJudgingKeysCount = test::RandomInRange<uint8_t>(opinionCount, totalKeysCount);
-		const auto judgedKeysCount = totalKeysCount - totalJudgingKeysCount;
-		const auto overlappingKeysCount = test::RandomInRange<uint8_t>(judgedKeysCount ? 0 : 1, totalJudgingKeysCount);
-		const auto judgingKeysCount = totalJudgingKeysCount - overlappingKeysCount;
-		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer, {judgingKeysCount, overlappingKeysCount, judgedKeysCount}, opinionCount);
-
-		// Act:
-		const auto sourceOpinionIndex = test::RandomInRange<uint8_t>(0, opinionCount-1);	// Select random opinion index as a source
-		auto targetOpinionIndex = test::RandomInRange<uint8_t>(0, opinionCount-2);	// Select random opinion index as a target
-		targetOpinionIndex += targetOpinionIndex >= sourceOpinionIndex;	// Compensate for the source opinion index
-		for (auto& index : opinionData.OpinionIndices)
-			if (index == targetOpinionIndex)
-				index = sourceOpinionIndex;	// Replace all entries of targetOpinionIndex with sourceOpinionIndex
-
-		// Assert:
-		AssertValidationResult(
-				Failure_Storage_Unused_Opinion,
-				cache,
-				commonDataBuffer,
-				opinionData);
-	}
-
-	TEST(TEST_CLASS, FailureWhenReocurringIndividualParts) {
-		// Arrange:
-		auto cache = test::StorageCacheFactory::Create();
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
-		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
-		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
-
-		const auto totalKeysCount = test::RandomInRange(2ul, replicatorKeyPairs.size());
-		const auto opinionCount = test::RandomInRange<uint8_t>(2, totalKeysCount);	// Need at least 2 different opinions
-		const auto totalJudgingKeysCount = test::RandomInRange<uint8_t>(opinionCount, totalKeysCount);
-		const auto judgedKeysCount = totalKeysCount - totalJudgingKeysCount;
-		const auto overlappingKeysCount = test::RandomInRange<uint8_t>(judgedKeysCount ? 0 : 1, totalJudgingKeysCount);
-		const auto judgingKeysCount = totalJudgingKeysCount - overlappingKeysCount;
-		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer, {judgingKeysCount, overlappingKeysCount, judgedKeysCount}, opinionCount, true);
-
-		// Act:
-		auto sourceOpinionIndex = test::RandomInRange(0ul, opinionData.Opinions.size()-2);	// Select random opinion as a source; it can't be the last opinion
-		auto targetOpinionIndex = test::RandomInRange(sourceOpinionIndex+1, opinionData.Opinions.size()-1);	// Select random opinion from following opinions as a target
-		targetOpinionIndex += targetOpinionIndex == opinionData.FilledPresenceRowIndex;	// Compensate for the fully present opinion. Safe since this opinion is guaranteed not to be the last
-		opinionData.OpinionElementCount += opinionData.Opinions.at(sourceOpinionIndex).size() - opinionData.Opinions.at(targetOpinionIndex).size();	// Update OpinionElementCount
-		opinionData.Opinions.at(targetOpinionIndex) = opinionData.Opinions.at(sourceOpinionIndex);	// Replace target opinion with a source opinion
-		opinionData.PresentOpinions.at(targetOpinionIndex) = opinionData.PresentOpinions.at(sourceOpinionIndex);	// Replace target opinion row in PresentOpinions with a source opinion row
-
-		// Assert:
-		AssertValidationResult(
-				Failure_Storage_Opinions_Reocurring_Individual_Parts,
-				cache,
-				commonDataBuffer,
-				opinionData);
-	}
-
-	TEST(TEST_CLASS, FailureWhenInvalidBlsSignature) {
-		// Arrange:
-		auto cache = test::StorageCacheFactory::Create();
-		std::vector<std::pair<Key, crypto::BLSKeyPair>> replicatorKeyPairs;
-		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
-		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
-		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
-
-		// Act:
-		const auto signatureIndex = test::RandomInRange(0ul, opinionData.BlsSignatures.size()-1);	// Select random signature
-		opinionData.BlsSignatures.at(signatureIndex) = test::GenerateRandomByteArray<BLSSignature>();	// Replace selected signature with random data
-
-		// Assert:
-		AssertValidationResult(
-				Failure_Storage_Invalid_BLS_Signature,
+				Failure_Storage_Opinion_Invalid_Signature,
 				cache,
 				commonDataBuffer,
 				opinionData);

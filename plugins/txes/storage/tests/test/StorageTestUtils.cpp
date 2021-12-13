@@ -224,22 +224,16 @@ namespace catapult { namespace test {
 		return entry;
 	};
 
-	void AddReplicators(cache::CatapultCache& cache, std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs, const uint8_t count, const Height height) {
+	void AddReplicators(cache::CatapultCache& cache, std::vector<crypto::KeyPair>& replicatorKeyPairs, const uint8_t count, const Height height) {
 		auto delta = cache.createDelta();
 		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
-		auto& blsKeysDelta = delta.sub<cache::BlsKeysCache>();
 		const auto newSize = replicatorKeyPairs.size() + count;
 		replicatorKeyPairs.reserve(newSize);
 		for (auto i = replicatorKeyPairs.size(); i < newSize; ++i) {
-			replicatorKeyPairs.emplace_back(
-					test::GenerateRandomByteArray<Key>(),
-					crypto::BLSKeyPair::FromPrivate(crypto::BLSPrivateKey::Generate(test::RandomByte)));
-			const auto& key = replicatorKeyPairs.at(i).first;
-			const auto& blsPublicKey = replicatorKeyPairs.at(i).second.publicKey();
-			const auto replicatorEntry = test::CreateReplicatorEntry(key, blsPublicKey);
-			const auto blsKeyEntry = test::CreateBlsKeysEntry(blsPublicKey, key);
+			replicatorKeyPairs.emplace_back(crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(test::RandomByte)));
+			const auto& key = replicatorKeyPairs.at(i).publicKey();
+			const auto replicatorEntry = test::CreateReplicatorEntry(key);
 			replicatorDelta.insert(replicatorEntry);
-			blsKeysDelta.insert(blsKeyEntry);
 		}
 		cache.commit(height);
 	}
@@ -255,12 +249,10 @@ namespace catapult { namespace test {
 		return RawBuffer(mutableBuffer.pData, mutableBuffer.Size);
 	}
 
-	void PopulateReplicatorKeyPairs(std::vector<std::pair<Key, crypto::BLSKeyPair>>& replicatorKeyPairs, uint16_t replicatorCount) {
+	void PopulateReplicatorKeyPairs(std::vector<crypto::KeyPair>& replicatorKeyPairs, uint16_t replicatorCount) {
 		replicatorKeyPairs.reserve(replicatorCount);
 		for (auto i = replicatorKeyPairs.size(); i < replicatorCount; ++i)
-			replicatorKeyPairs.emplace_back(
-					test::GenerateRandomByteArray<Key>(),
-					crypto::BLSKeyPair::FromPrivate(crypto::BLSPrivateKey::Generate(test::RandomByte)));
+			replicatorKeyPairs.emplace_back(crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(test::RandomByte)));
 	};
 }}
 

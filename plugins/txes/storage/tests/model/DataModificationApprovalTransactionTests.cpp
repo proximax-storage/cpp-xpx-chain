@@ -27,14 +27,13 @@ namespace catapult { namespace model {
 					+ sizeof(uint64_t) // file structure size
 					+ sizeof(uint64_t) // metafiles size
 					+ sizeof(uint64_t) // used drive size
-					+ sizeof(uint8_t) // opinion count
 					+ sizeof(uint8_t) // judging keys count
 					+ sizeof(uint8_t) // overlapping keys count
 					+ sizeof(uint8_t) // judged keys count
 					+ sizeof(uint8_t); // opinion element count
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 125u, sizeof(T));
+			EXPECT_EQ(baseSize + 124u, sizeof(T));
 		}
 
 		template<typename T>
@@ -57,7 +56,6 @@ namespace catapult { namespace model {
 		transaction.JudgingKeysCount = 0;
 		transaction.OverlappingKeysCount = 0;
 		transaction.JudgedKeysCount = 0;
-		transaction.OpinionCount = 0;
 		transaction.OpinionElementCount = 0;
 		transaction.Size = 0;
 

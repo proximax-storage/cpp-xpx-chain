@@ -26,28 +26,22 @@ namespace catapult { namespace observers {
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 
-	  	// Nth element in opinionCounts indicates how many replicators have provided Nth opinion.
-		std::vector<uint8_t> opinionCounts(notification.OpinionCount, 0);
-		auto pIndex = notification.OpinionIndicesPtr;
-		const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
-		for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pIndex)
-			++opinionCounts.at(*pIndex);
-
 		// Maps each replicator key to a vector of opinions about that replicator.
 		std::map<Key, std::vector<uint64_t>> opinions;
 
 		// Bitset that represents boolean array of size (transaction.OpinionCount * totalJudgedKeysCount) of opinion presence.
-	  	const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
-		const auto presentOpinionByteCount = (notification.OpinionCount * totalJudgedKeysCount + 7) / 8;
+	  	const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
+		const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
+		const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
 		boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
 
 		// Filling in opinions map.
 		auto pOpinionElement = notification.OpinionsPtr;
-		for (auto i = 0; i < notification.OpinionCount; ++i)
+		for (auto i = 0; i < totalJudgingKeysCount; ++i)
 			for (auto j = 0; j < totalJudgedKeysCount; ++j)
 				if (presentOpinions[i*totalJudgedKeysCount + j]) {
 					auto& opinionVector = opinions[notification.PublicKeysPtr[notification.JudgingKeysCount + j]];
-					opinionVector.resize(opinionVector.size() + opinionCounts.at(i), *pOpinionElement);
+					opinionVector.emplace_back(*pOpinionElement);
 					++pOpinionElement;
 				}
 

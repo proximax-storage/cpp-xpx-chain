@@ -32,7 +32,6 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = CreateTransaction<TTraits>();
-		pTransaction->OpinionCount = 0;
 		pTransaction->JudgingKeysCount = 0;
 		pTransaction->OverlappingKeysCount = 0;
 		pTransaction->JudgedKeysCount = 0;

@@ -92,8 +92,8 @@ namespace catapult { namespace validators {
 	/// Opinion index is out of range.
 	DEFINE_STORAGE_RESULT(Invalid_Opinion_Index, 26);
 
-	/// BLS signature doesn't match the message.
-	DEFINE_STORAGE_RESULT(Invalid_BLS_Signature, 27);
+	/// Signature doesn't match the message (opinion).
+	DEFINE_STORAGE_RESULT(Opinion_Invalid_Signature, 27);
 
 	/// The key is present in the list of public keys, but no opinion about it is given.
 	DEFINE_STORAGE_RESULT(Opinion_Unused_Key, 28);

@@ -103,11 +103,10 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to opinion notifications and validates that:
 	/// - all replicators mentioned in opinions exist
-	/// - BLS signatures match corresponding parts of the transaction
+	/// - signatures match corresponding parts of the transaction
 	/// - each provided opinion is used at least once
 	/// - each provided public key is unique
 	/// - each provided public key is used in at least one opinion
-	/// - all provided individual parts are unique
 	DECLARE_STATEFUL_VALIDATOR(Opinion, model::OpinionNotification<1>)();
 
 	/// A validator implementation that applies to download approval notifications and validates that:

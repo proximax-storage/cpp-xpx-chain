@@ -392,12 +392,10 @@ namespace catapult { namespace model {
 				const uint64_t fileStructureSize,
 				const uint64_t metaFilesSize,
 				const uint64_t usedDriveSize,
-				const uint8_t opinionCount,
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
 				const Key* publicKeysPtr,
-				const uint8_t* opinionIndicesPtr,
 				const uint8_t* presentOpinionsPtr)
 			: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
 			, DriveKey(driveKey)
@@ -406,12 +404,10 @@ namespace catapult { namespace model {
 			, FileStructureSize(fileStructureSize)
 			, MetaFilesSize(metaFilesSize)
 			, UsedDriveSize(usedDriveSize)
-			, OpinionCount(opinionCount)
 			, JudgingKeysCount(judgingKeysCount)
 			, OverlappingKeysCount(overlappingKeysCount)
 			, JudgedKeysCount(judgedKeysCount)
 			, PublicKeysPtr(publicKeysPtr)
-			, OpinionIndicesPtr(opinionIndicesPtr)
 			, PresentOpinionsPtr(presentOpinionsPtr)
 		{}
 
@@ -434,9 +430,6 @@ namespace catapult { namespace model {
 		/// Total used disk space of the drive.
 		uint64_t UsedDriveSize;
 
-		/// Number of unique opinions.
-		uint8_t OpinionCount;
-
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;
 
@@ -448,9 +441,6 @@ namespace catapult { namespace model {
 
 		/// Replicators' public keys.
 		const Key* PublicKeysPtr;
-
-		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
-		const uint8_t* OpinionIndicesPtr;
 
 		/// Two-dimensional array of opinion element presence.
 		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
@@ -507,22 +497,18 @@ namespace catapult { namespace model {
 	public:
 		explicit DataModificationApprovalUploadWorkNotification(
 				const Key& driveKey,
-				const uint8_t opinionCount,
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
 				const Key* publicKeysPtr,
-				const uint8_t* opinionIndicesPtr,
 				const uint8_t* presentOpinionsPtr,
 				const uint64_t* opinionsPtr)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
 				, DriveKey(driveKey)
-				, OpinionCount(opinionCount)
 				, JudgingKeysCount(judgingKeysCount)
 				, OverlappingKeysCount(overlappingKeysCount)
 				, JudgedKeysCount(judgedKeysCount)
 				, PublicKeysPtr(publicKeysPtr)
-				, OpinionIndicesPtr(opinionIndicesPtr)
 				, PresentOpinionsPtr(presentOpinionsPtr)
 				, OpinionsPtr(opinionsPtr)
 		{}
@@ -530,9 +516,6 @@ namespace catapult { namespace model {
 	public:
 		/// Key of drive.
 		Key DriveKey;
-
-		/// Number of unique opinions.
-		uint8_t OpinionCount;
 
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;
@@ -545,9 +528,6 @@ namespace catapult { namespace model {
 
 		/// Replicators' public keys.
 		const Key* PublicKeysPtr;
-
-		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
-		const uint8_t* OpinionIndicesPtr;
 
 		/// Two-dimensional array of opinion element presence.
 		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
@@ -875,26 +855,22 @@ namespace catapult { namespace model {
 	public:
 		explicit OpinionNotification(
 				const size_t commonDataSize,
-				const uint8_t opinionCount,
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
 				const uint8_t* commonDataPtr,
 				const Key* publicKeysPtr,
-				const uint8_t* opinionIndicesPtr,
-				const BLSSignature* blsSignaturesPtr,
+				const Signature* signaturesPtr,
 				const uint8_t* presentOpinionsPtr,
 				const uint64_t* opinionsPtr)
 			: Notification(Notification_Type, sizeof(OpinionNotification<1>))
 			, CommonDataSize(commonDataSize)
-			, OpinionCount(opinionCount)
 			, JudgingKeysCount(judgingKeysCount)
 			, OverlappingKeysCount(overlappingKeysCount)
 			, JudgedKeysCount(judgedKeysCount)
 			, CommonDataPtr(commonDataPtr)
 			, PublicKeysPtr(publicKeysPtr)
-			, OpinionIndicesPtr(opinionIndicesPtr)
-			, BlsSignaturesPtr(blsSignaturesPtr)
+			, SignaturesPtr(signaturesPtr)
 			, PresentOpinionsPtr(presentOpinionsPtr)
 			, OpinionsPtr(opinionsPtr)
 		{}
@@ -902,9 +878,6 @@ namespace catapult { namespace model {
 	public:
 		/// Size of common data of the transaction in bytes.
 		size_t CommonDataSize;
-
-		/// Number of unique opinions.
-		uint8_t OpinionCount;
 
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;
@@ -921,11 +894,8 @@ namespace catapult { namespace model {
 		/// Replicators' public keys.
 		const Key* PublicKeysPtr;
 
-		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
-		const uint8_t* OpinionIndicesPtr;
-
-		/// Aggregated BLS signatures of opinions.
-		const BLSSignature* BlsSignaturesPtr;
+		/// Signatures of replicators' opinions.
+		const Signature* SignaturesPtr;
 
 		/// Two-dimensional array of opinion element presence.
 		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
@@ -949,20 +919,16 @@ namespace catapult { namespace model {
 		explicit DownloadApprovalNotification(
 				const Hash256& id,
 				const uint16_t number,
-				const uint8_t opinionCount,
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
-				const uint8_t* opinionIndicesPtr,
 				const uint8_t* presentOpinionsPtr)
 			: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
 			, DownloadChannelId(id)
 			, SequenceNumber(number)
-			, OpinionCount(opinionCount)
 			, JudgingKeysCount(judgingKeysCount)
 			, OverlappingKeysCount(overlappingKeysCount)
 			, JudgedKeysCount(judgedKeysCount)
-			, OpinionIndicesPtr(opinionIndicesPtr)
 			, PresentOpinionsPtr(presentOpinionsPtr)
 		{}
 
@@ -973,9 +939,6 @@ namespace catapult { namespace model {
 		/// Sequence number of current download approval transaction in the download channel.
 		uint16_t SequenceNumber;
 
-		/// Number of unique opinions.
-		uint8_t OpinionCount;
-
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;
 
@@ -984,9 +947,6 @@ namespace catapult { namespace model {
 
 		/// Number of replicators that didn't provide their opinions, but on which at least one opinion was provided.
 		uint8_t JudgedKeysCount;
-
-		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
-		const uint8_t* OpinionIndicesPtr;
 
 		/// Two-dimensional array of opinion element presence.
 		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
@@ -1006,22 +966,18 @@ namespace catapult { namespace model {
 	public:
 		explicit DownloadApprovalPaymentNotification(
 				const Hash256& id,
-				const uint8_t opinionCount,
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
 				const Key* publicKeysPtr,
-				const uint8_t* opinionIndicesPtr,
 				const uint8_t* presentOpinionsPtr,
 				const uint64_t* opinionsPtr)
 			: Notification(Notification_Type, sizeof(DownloadApprovalPaymentNotification<1>))
 			, DownloadChannelId(id)
-			, OpinionCount(opinionCount)
 			, JudgingKeysCount(judgingKeysCount)
 			, OverlappingKeysCount(overlappingKeysCount)
 			, JudgedKeysCount(judgedKeysCount)
 			, PublicKeysPtr(publicKeysPtr)
-			, OpinionIndicesPtr(opinionIndicesPtr)
 			, PresentOpinionsPtr(presentOpinionsPtr)
 			, OpinionsPtr(opinionsPtr)
 		{}
@@ -1029,9 +985,6 @@ namespace catapult { namespace model {
 	public:
 		/// The identifier of the download channel.
 		Hash256 DownloadChannelId;
-
-		/// Number of unique opinions.
-		uint8_t OpinionCount;
 
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;
@@ -1044,9 +997,6 @@ namespace catapult { namespace model {
 
 		/// Replicators' public keys.
 		const Key* PublicKeysPtr;
-
-		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
-		const uint8_t* OpinionIndicesPtr;
 
 		/// Two-dimensional array of opinion element presence.
 		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).

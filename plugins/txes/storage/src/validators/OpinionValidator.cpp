@@ -19,42 +19,22 @@ namespace catapult { namespace validators {
 	  	const auto totalJudgingKeysCount = totalKeysCount - notification.JudgedKeysCount;
 	  	const auto totalJudgedKeysCount = totalKeysCount - notification.JudgingKeysCount;
 
-	  	// Nth vector in blsPublicKeys contains pointers to all public BLS keys of replicators that provided Nth opinion.
-		std::vector<std::vector<const BLSPublicKey*>> blsPublicKeys(notification.OpinionCount);
-
-	  	// Preparing blsPublicKeys.
-		auto pIndex = notification.OpinionIndicesPtr;
-	  	for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pIndex) {
-			if (*pIndex >= notification.OpinionCount)
-				return Failure_Storage_Invalid_Opinion_Index;
-			const auto replicatorIter = replicatorCache.find(notification.PublicKeysPtr[i]);
-	  		const auto& pReplicatorEntry = replicatorIter.tryGet();
-			if (!pReplicatorEntry)
-				return Failure_Storage_Replicator_Not_Found;
-			blsPublicKeys.at(*pIndex).push_back(&pReplicatorEntry->blsKey());
-		}
-
-	  	// Validating that each provided opinion is used at least once.
-		for (const auto& keys : blsPublicKeys)
-			if (keys.empty())
-				return Failure_Storage_Unused_Opinion;
-
-	  	// Bitset that represents boolean array of size (notification.OpinionCount * totalJudgedKeysCount) of opinion presence.
-	  	const auto presentOpinionByteCount = (notification.OpinionCount * totalJudgedKeysCount + 7) / 8;
+	  	// Bitset that represents boolean array of size (totalJudgingKeysCount * totalJudgedKeysCount) of opinion presence.
+	  	const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
 	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
 
 		// Validating that each provided public key
 	  	// - is unique
 		// - is used in at least one opinion, if belongs to judged keys (i.e. that each column of PresentOpinions has at least one set bit)
 		std::set<Key> providedKeys;
-		auto pKey = notification.PublicKeysPtr;
-		for (auto i = 0; i < totalKeysCount; ++i, ++pKey) {
-			if (providedKeys.count(*pKey))
+		for (auto i = 0; i < totalKeysCount; ++i) {
+			const auto key = notification.PublicKeysPtr[i];
+			if (providedKeys.count(key))
 				return Failure_Storage_Opinion_Reocurring_Keys;
-			providedKeys.insert(*pKey);
+			providedKeys.insert(key);
 			if (i >= notification.JudgingKeysCount) {
 				bool isUsed = false;
-				for (auto j = 0; !isUsed && j < notification.OpinionCount; ++j)
+				for (auto j = 0; !isUsed && j < totalJudgingKeysCount; ++j)
 					isUsed = presentOpinions[j*totalJudgedKeysCount + i - notification.JudgingKeysCount];
 				if (!isUsed)
 					return Failure_Storage_Opinion_Unused_Key;
@@ -68,14 +48,14 @@ namespace catapult { namespace validators {
 	  	auto* const pIndividualDataBegin = pDataBegin.get() + notification.CommonDataSize;
 
 		// Validating signatures.
-	  	auto pBlsSignature = notification.BlsSignaturesPtr;
+	  	auto pKey = notification.PublicKeysPtr;
+	  	auto pSignature = notification.SignaturesPtr;
 	  	auto pOpinionElement = notification.OpinionsPtr;
 	  	using OpinionElement = std::pair<Key, uint64_t>;
 		const auto comparator = [](const OpinionElement& a, const OpinionElement& b){ return a.first < b.first; };
 		using IndividualPart = std::set<OpinionElement, decltype(comparator)>;
 	  	IndividualPart individualPart(comparator);	// Set that represents complete opinion of one of the replicators. Opinion elements are sorted in ascending order of keys.
-		std::set<IndividualPart> providedIndividualParts;	// Set of provided complete opinions. Used to determine if there are reoccurring individual parts.
-		for (auto i = 0; i < notification.OpinionCount; ++i, ++pBlsSignature) {
+		for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pKey, ++pSignature) {
 			individualPart.clear();
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
 				if (presentOpinions[i * totalJudgedKeysCount + j]) {
@@ -83,10 +63,6 @@ namespace catapult { namespace validators {
 					++pOpinionElement;
 				}
 			}
-
-			if (providedIndividualParts.count(individualPart))
-				return Failure_Storage_Opinions_Reocurring_Individual_Parts;
-			providedIndividualParts.insert(individualPart);
 
 			const auto dataSize = notification.CommonDataSize + (sizeof(Key) + sizeof(uint64_t)) * individualPart.size();
 			auto* pIndividualData = pIndividualDataBegin;
@@ -97,8 +73,8 @@ namespace catapult { namespace validators {
 
 			RawBuffer dataBuffer(pDataBegin.get(), dataSize);
 
-			if (!crypto::FastAggregateVerify(blsPublicKeys.at(i), dataBuffer, *pBlsSignature)) {
-				return Failure_Storage_Invalid_BLS_Signature;
+			if (!crypto::Verify(*pKey, dataBuffer, *pSignature)) {
+				return Failure_Storage_Opinion_Invalid_Signature;
 			}
 		}
 
