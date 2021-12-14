@@ -60,12 +60,6 @@ namespace catapult { namespace mongo { namespace mappers {
 		return ToBinary(array.data(), array.size());
 	}
 
-	/// Converts \a bytes into bson binary type.
-	template<size_t N>
-	auto ToBinary(const utils::Bytes<N>& bytes) {
-		return ToBinary(bytes.data(), bytes.size());
-	}
-
 	/// Converts base \a value to int32_t.
 	template<
 		typename TBaseValue,
@@ -106,15 +100,6 @@ namespace catapult { namespace mongo { namespace mappers {
 	void DbBinaryToModelArray(utils::ByteArray<N, TTag>& dest, const TMongoContainer& source) {
 		if (dest.size() != source.size)
 			CATAPULT_THROW_INVALID_ARGUMENT_1("invalid size of dest array", dest.size());
-
-		std::memcpy(dest.data(), source.bytes, dest.size());
-	}
-
-	/// Populates \a dest with data from \a source.
-	template<size_t N, typename TMongoContainer>
-	void DbBinaryToModelBytes(utils::Bytes<N>& dest, const TMongoContainer& source) {
-		if (dest.size() != source.size)
-		CATAPULT_THROW_INVALID_ARGUMENT_1("invalid size of dest", dest.size());
 
 		std::memcpy(dest.data(), source.bytes, dest.size());
 	}

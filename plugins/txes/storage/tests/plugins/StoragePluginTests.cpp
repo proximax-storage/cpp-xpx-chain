@@ -49,12 +49,13 @@ namespace catapult { namespace plugins {
 					model::Entity_Type_StoragePayment,
 					model::Entity_Type_DataModificationSingleApproval,
 					model::Entity_Type_VerificationPayment,
-					model::Entity_Type_DownloadApproval
+					model::Entity_Type_DownloadApproval,
+					model::Entity_Type_EndDriveVerification
 				};
 			}
 
 			static std::vector<std::string> GetCacheNames() {
-				return { "BcDriveCache", "DownloadChannelCache", "ReplicatorCache", "BlsKeysCache" };
+				return { "BcDriveCache", "DownloadChannelCache", "ReplicatorCache" };
 			}
 
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
@@ -62,11 +63,11 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
-				return { ionet::PacketType::BcDrive_State_Path, ionet::PacketType::DownloadChannel_State_Path, ionet::PacketType::Replicator_State_Path};
+				return { ionet::PacketType::BcDrive_State_Path, ionet::PacketType::DownloadChannel_State_Path, ionet::PacketType::Replicator_State_Path };
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {
-				return { "BC DRIVE C", "DOWNLOAD CH C", "REPLICATOR C", "BLS KEYS C" };
+				return { "BC DRIVE C", "DOWNLOAD CH C", "REPLICATOR C" };
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
@@ -93,7 +94,13 @@ namespace catapult { namespace plugins {
 						"DownloadApprovalPaymentValidator",
 						"DownloadChannelRefundValidator",
 						"DriveClosureValidator",
-						"StreamStartValidator"
+						"DataModificationApprovalDownloadWorkValidator",
+						"DataModificationApprovalUploadWorkValidator",
+						"DataModificationApprovalRefundValidator",
+						"StreamStartValidator",
+						"StreamFinishValidator",
+						"StreamPaymentValidator",
+						"EndDriveVerificationValidator"
 				};
 			}
 
@@ -112,7 +119,13 @@ namespace catapult { namespace plugins {
 					"DownloadApprovalPaymentObserver",
 					"DownloadChannelRefundObserver",
 					"DriveClosureObserver",
-					"StreamStartObserver"
+					"DataModificationApprovalDownloadWorkObserver",
+					"DataModificationApprovalUploadWorkObserver",
+					"DataModificationApprovalRefundObserver",
+					"StreamStartObserver",
+					"StreamFinishObserver",
+					"StreamPaymentObserver",
+					"EndDriveVerificationObserver"
 				};
 			}
 

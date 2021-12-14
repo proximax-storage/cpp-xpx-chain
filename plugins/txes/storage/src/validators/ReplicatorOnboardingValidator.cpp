@@ -15,10 +15,6 @@ namespace catapult { namespace validators {
 		if (replicatorCache.contains(notification.PublicKey))
 			return Failure_Storage_Replicator_Already_Registered;
 
-		auto blsKeysCache = context.Cache.sub<cache::BlsKeysCache>();
-		if (blsKeysCache.contains(notification.BlsKey))
-			  return Failure_Storage_BLS_Key_Already_Registered;
-
 		return ValidationResult::Success;
 	});
 

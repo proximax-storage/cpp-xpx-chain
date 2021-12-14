@@ -441,6 +441,8 @@ namespace catapult { namespace utils {
 		AssertUnsignedIntDecimalParseSuccess<uint64_t>(maxValue, "B", FileSize::FromBytes);
 		AssertUnsignedIntDecimalParseSuccess<uint64_t>(maxValue, "KB", FileSize::FromKilobytes);
 		AssertUnsignedIntDecimalParseSuccess<uint64_t>(maxValue, "MB", FileSize::FromMegabytes);
+		AssertUnsignedIntDecimalParseSuccess<uint64_t>(maxValue, "GB", FileSize::FromGigabytes);
+		AssertUnsignedIntDecimalParseSuccess<uint64_t>(maxValue, "TB", FileSize::FromTerabytes);
 	}
 
 	TEST(TEST_CLASS, CannotParseInvalidFileSize) {
@@ -451,7 +453,6 @@ namespace catapult { namespace utils {
 		AssertFailedParse("1234", initialValue); // no specifier
 		AssertFailedParse("12KB34", initialValue); // non-terminating specifier
 		AssertFailedParse("1234Kb", initialValue); // wrong case specifier
-		AssertFailedParse("1234GB", initialValue); // unknown specifier
 	}
 
 	// endregion

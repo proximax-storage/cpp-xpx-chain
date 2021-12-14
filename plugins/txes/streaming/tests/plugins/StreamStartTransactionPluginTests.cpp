@@ -27,6 +27,7 @@ namespace catapult { namespace plugins {
 
 		const auto Generation_Hash = utils::ParseByteArray<GenerationHash>("CE076EF4ABFBC65B046987429E274EC31506D173E91BF102F16BEB7FB8176230");
 		constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
+		constexpr auto Folder_Name_Size = 10u;
 
 		auto CreateConfiguration() {
 			auto config = config::ImmutableConfiguration::Uninitialized();
@@ -49,12 +50,13 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 		auto pTransaction = CreateTransaction<TTraits>();
+		pTransaction->FolderNameSize = Folder_Name_Size;
 
 		// Act:
 		auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(typename TTraits::TransactionType), realSize);
+		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + Folder_Name_Size, realSize);
 	}
 
 	// region publish - basic

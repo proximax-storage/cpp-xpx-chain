@@ -8,7 +8,6 @@
 #include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCacheSubCachePlugin.h"
-#include "src/cache/BlsKeysCacheStorage.h"
 #include "src/plugins/PrepareBcDriveTransactionPlugin.h"
 #include "src/plugins/DataModificationTransactionPlugin.h"
 #include "src/plugins/DownloadTransactionPlugin.h"
@@ -94,38 +93,6 @@ namespace catapult { namespace plugins {
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 			switch (unresolved.Type) {
-		  	case UnresolvedAmountType::DownloadWork: {
-				const auto& pDownloadWork = castToUnresolvedData<model::DownloadWork>(unresolved.DataPtr);
-
-				const auto& replicatorCache = cache.template sub<cache::ReplicatorCache>();
-				const auto replicatorIter = replicatorCache.find(pDownloadWork->Replicator);
-				const auto& pReplicatorEntry = replicatorIter.tryGet();
-				const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-				const auto driveIter = driveCache.find(pDownloadWork->DriveKey);
-				const auto& pDriveEntry = driveIter.tryGet();
-
-				if (!pReplicatorEntry || !pDriveEntry)
-					break;
-
-				resolved = Amount(calculateApprovableDownloadWork(pReplicatorEntry, pDriveEntry, pDownloadWork->DriveKey) + pReplicatorEntry->drives().at(pDownloadWork->DriveKey).InitialDownloadWork);
-				return true;
-		  	}
-		  	case UnresolvedAmountType::UploadWork: {
-			  	const auto& pUploadWork = castToUnresolvedData<model::UploadWork>(unresolved.DataPtr);
-
-				const auto& replicatorCache = cache.template sub<cache::ReplicatorCache>();
-				const auto replicatorIter = replicatorCache.find(pUploadWork->Replicator);
-				const auto& pReplicatorEntry = replicatorIter.tryGet();
-				const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-				const auto driveIter = driveCache.find(pUploadWork->DriveKey);
-				const auto& pDriveEntry = driveIter.tryGet();
-
-				if (!pReplicatorEntry || !pDriveEntry)
-					break;
-
-				resolved = Amount(calculateApprovableDownloadWork(pReplicatorEntry, pDriveEntry, pUploadWork->DriveKey) * pUploadWork->Opinion);
-			  	return true;
-			}
 			case UnresolvedAmountType::DownloadPayment: {
 				const auto& pDownloadPayment = castToUnresolvedData<model::DownloadPayment>(unresolved.DataPtr);
 
@@ -196,18 +163,6 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		manager.addCacheSupport<cache::BlsKeysCacheStorage>(
-				std::make_unique<cache::BlsKeysCache>(manager.cacheConfig(cache::BlsKeysCache::Name), pConfigHolder));
-
-		using BlsKeysCacheHandlersService = CacheHandlers<cache::BlsKeysCacheDescriptor>;
-		BlsKeysCacheHandlersService::Register<model::FacilityCode::BlsKeys>(manager);
-
-		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-		  	counters.emplace_back(utils::DiagnosticCounterId("BLS KEYS C"), [&cache]() {
-				return cache.sub<cache::BlsKeysCache>().createView(cache.height())->size();
-		  	});
-		});
-
 		manager.setStorageState(std::make_unique<state::CachedStorageState>(pKeyCollector));
 
 		manager.addStatelessValidatorHook([](auto& builder) {
@@ -220,6 +175,9 @@ namespace catapult { namespace plugins {
 				.add(validators::CreatePrepareDriveValidator(pKeyCollector))
 				.add(validators::CreateDataModificationValidator())
 				.add(validators::CreateDataModificationApprovalValidator())
+				.add(validators::CreateDataModificationApprovalDownloadWorkValidator())
+				.add(validators::CreateDataModificationApprovalUploadWorkValidator())
+				.add(validators::CreateDataModificationApprovalRefundValidator())
 				.add(validators::CreateDataModificationCancelValidator())
 				.add(validators::CreateDriveClosureValidator())
 				.add(validators::CreateReplicatorOnboardingValidator())
@@ -245,6 +203,9 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDownloadChannelObserver())
 				.add(observers::CreateDataModificationObserver())
 				.add(observers::CreateDataModificationApprovalObserver())
+				.add(observers::CreateDataModificationApprovalDownloadWorkObserver())
+				.add(observers::CreateDataModificationApprovalUploadWorkObserver())
+				.add(observers::CreateDataModificationApprovalRefundObserver())
 				.add(observers::CreateDataModificationCancelObserver())
 				.add(observers::CreateDriveClosureObserver())
 				.add(observers::CreateReplicatorOnboardingObserver())

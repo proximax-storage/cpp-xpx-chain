@@ -43,6 +43,28 @@ namespace catapult { namespace test {
             }
         }
 
+		void AssertEqualVerifications(const state::Verifications& expectedVerifications, const state::Verifications& verifications) {
+			ASSERT_EQ(expectedVerifications.size(), verifications.size());
+			for (auto i = 0u; i < verifications.size(); i++) {
+				const auto &expectedVerification = expectedVerifications[i];
+				const auto &verification = verifications[i];
+				EXPECT_EQ(expectedVerification.VerificationTrigger, verification.VerificationTrigger);
+				EXPECT_EQ(expectedVerification.State, verification.State);
+				EXPECT_EQ(expectedVerification.Results, verification.Results);
+			}
+		}
+
+		void AssertEqualDriveInfos(const std::map<Key, state::DriveInfo>& expectedDriveInfos, const std::map<Key, state::DriveInfo>& driveInfos) {
+			ASSERT_EQ(expectedDriveInfos.size(), driveInfos.size());
+			for (const auto& pair : driveInfos) {
+				const auto expIter = expectedDriveInfos.find(pair.first);
+				ASSERT_NE(expIter, expectedDriveInfos.end());
+				EXPECT_EQ(expIter->second.LastApprovedDataModificationId, pair.second.LastApprovedDataModificationId);
+				EXPECT_EQ(expIter->second.DataModificationIdIsValid, pair.second.DataModificationIdIsValid);
+				EXPECT_EQ(expIter->second.InitialDownloadWork, pair.second.InitialDownloadWork);
+			}
+		}
+
         void AssertEqualActiveDownloads(const std::vector<Hash256>& expectedActiveDownloads, const std::vector<Hash256>& activeDownloads) {
             ASSERT_EQ(expectedActiveDownloads.size(), activeDownloads.size());
             for (auto i = 0u; i < activeDownloads.size(); ++i) {
@@ -115,10 +137,16 @@ namespace catapult { namespace test {
         EXPECT_EQ(expectedEntry.owner(), entry.owner());
         EXPECT_EQ(expectedEntry.rootHash(), entry.rootHash());
         EXPECT_EQ(expectedEntry.size(), entry.size());
+		EXPECT_EQ(expectedEntry.usedSize(), entry.usedSize());
+		EXPECT_EQ(expectedEntry.metaFilesSize(), entry.metaFilesSize());
         EXPECT_EQ(expectedEntry.replicatorCount(), entry.replicatorCount());
+		EXPECT_EQ(expectedEntry.ownerCumulativeUploadSize(), entry.ownerCumulativeUploadSize());
+		EXPECT_EQ(expectedEntry.confirmedUsedSizes(), entry.confirmedUsedSizes());
+		EXPECT_EQ(expectedEntry.replicators(), entry.replicators());
 
         AssertEqualActiveDataModifications(expectedEntry.activeDataModifications(), entry.activeDataModifications());
         AssertEqualCompletedDataModifications(expectedEntry.completedDataModifications(), entry.completedDataModifications());
+		AssertEqualVerifications(expectedEntry.verifications(), entry.verifications());
     }
 
     state::DownloadChannelEntry CreateDownloadChannelEntry(
@@ -169,11 +197,9 @@ namespace catapult { namespace test {
     state::ReplicatorEntry CreateReplicatorEntry(
             Key key,
             Amount capacity,
-            BLSPublicKey blsKey,
             uint16_t drivesCount) {
         state::ReplicatorEntry entry(key);
-        entry.setCapacity(capacity);
-        entry.setBlsKey(blsKey);
+		entry.setCapacity(capacity);
         for (auto dC = 0u; dC < drivesCount; ++dC)
             entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
 
@@ -183,21 +209,37 @@ namespace catapult { namespace test {
     void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry) {
         EXPECT_EQ(expectedEntry.key(), entry.key());
         EXPECT_EQ(expectedEntry.capacity(), entry.capacity());
-        EXPECT_EQ(expectedEntry.blsKey(), entry.blsKey());
+		EXPECT_EQ(expectedEntry.blsKey(), entry.blsKey());
 
-        const auto& expectedDrives = expectedEntry.drives();
-		const auto& drives = entry.drives();
-        ASSERT_EQ(expectedDrives.size(), drives.size());
-        for (auto& pair : expectedDrives) {
-            auto iter = drives.find(pair.first);
-            EXPECT_EQ(pair.second, iter->second);
-        }
+		AssertEqualDriveInfos(expectedEntry.drives(), entry.drives());
     }
 
-    void AssertEqualBlskeyData(const state::BlsKeysEntry& expectedEntry, const state::BlsKeysEntry& entry){
-        EXPECT_EQ(expectedEntry.key(), entry.key());
-    }
+	void AddReplicators(cache::CatapultCache& cache, std::vector<crypto::KeyPair>& replicatorKeyPairs, const uint8_t count, const Height height) {
+		auto delta = cache.createDelta();
+		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
+		const auto newSize = replicatorKeyPairs.size() + count;
+		replicatorKeyPairs.reserve(newSize);
+		for (auto i = replicatorKeyPairs.size(); i < newSize; ++i) {
+			replicatorKeyPairs.emplace_back(crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(test::RandomByte)));
+			const auto& key = replicatorKeyPairs.at(i).publicKey();
+			const auto replicatorEntry = test::CreateReplicatorEntry(key);
+			replicatorDelta.insert(replicatorEntry);
+		}
+		cache.commit(height);
+	}
 
+	RawBuffer GenerateCommonDataBuffer(const size_t& size) {
+		auto* const pCommonData = new uint8_t[size];
+		MutableRawBuffer mutableBuffer(pCommonData, size);
+		test::FillWithRandomData(mutableBuffer);
+		return RawBuffer(mutableBuffer.pData, mutableBuffer.Size);
+	}
+
+	void PopulateReplicatorKeyPairs(std::vector<crypto::KeyPair>& replicatorKeyPairs, uint16_t replicatorCount) {
+		replicatorKeyPairs.reserve(replicatorCount);
+		for (auto i = replicatorKeyPairs.size(); i < replicatorCount; ++i)
+			replicatorKeyPairs.emplace_back(crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(test::RandomByte)));
+	};
 }}
 
 

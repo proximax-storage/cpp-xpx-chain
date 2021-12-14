@@ -94,9 +94,7 @@ namespace catapult { namespace state {
 
 	using ActiveDataModifications = std::vector<ActiveDataModification>;
 	using CompletedDataModifications = std::vector<CompletedDataModification>;
-	/// The map where key is replicator public key and value is last used drive size approved by the replicator.
-	using UsedSizeMap = std::map<Key, uint64_t>;
-
+	using SizeMap = std::map<Key, uint64_t>;
 	using ConfirmedStates = std::map<Key, Hash256>; // last approved root hash
 
 	/// Verification State.
@@ -134,6 +132,7 @@ namespace catapult { namespace state {
 			, m_usedSize(0)
 			, m_metaFilesSize(0)
 			, m_replicatorCount(0)
+			, m_ownerCumulativeUploadSize(0)
 		{}
 
 	public:
@@ -197,6 +196,21 @@ namespace catapult { namespace state {
 			return m_replicatorCount;
 		}
 
+		/// Sets the cumulative upload size made by the owner.
+		void setOwnerCumulativeUploadSize(uint64_t uploadSize) {
+			m_ownerCumulativeUploadSize = uploadSize;
+		}
+
+		/// Increases the cumulative upload size made by the owner by \a delta.
+		void increaseOwnerCumulativeUploadSize(uint64_t delta) {
+			m_ownerCumulativeUploadSize = m_ownerCumulativeUploadSize + delta;
+		}
+
+		/// Gets the cumulative upload size made by the owner.
+		const uint64_t& ownerCumulativeUploadSize() const {
+			return m_ownerCumulativeUploadSize;
+		}
+
 		/// Gets active data modifications.
 		const ActiveDataModifications& activeDataModifications() const {
 			return m_activeDataModifications;
@@ -218,13 +232,23 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets map with key replicator public key and value used drive size.
-		const UsedSizeMap& confirmedUsedSizes() const {
+		const SizeMap& confirmedUsedSizes() const {
 			return m_confirmedUsedSizeMap;
 		}
 
 		/// Gets infos of drives assigned to the replicator.
-		UsedSizeMap& confirmedUsedSizes() {
+		SizeMap& confirmedUsedSizes() {
 			return m_confirmedUsedSizeMap;
+		}
+
+		/// Gets map with replicators' cumulative upload sizes.
+		const SizeMap& cumulativeUploadSizes() const {
+			return m_cumulativeUploadSizeMap;
+		}
+
+		/// Gets map with replicators' cumulative upload sizes.
+		SizeMap& cumulativeUploadSizes() {
+			return m_cumulativeUploadSizeMap;
 		}
 
 		/// Gets replicators.
@@ -264,9 +288,11 @@ namespace catapult { namespace state {
 		uint64_t m_usedSize;
 		uint64_t m_metaFilesSize;
 		uint16_t m_replicatorCount;
+		uint64_t m_ownerCumulativeUploadSize;
 		ActiveDataModifications m_activeDataModifications;
 		CompletedDataModifications m_completedDataModifications;
-		UsedSizeMap m_confirmedUsedSizeMap;
+		SizeMap m_confirmedUsedSizeMap;
+		SizeMap m_cumulativeUploadSizeMap;
 		utils::KeySet m_replicators;
 		Verifications m_verifications;
 		ConfirmedStates m_confirmedStates;

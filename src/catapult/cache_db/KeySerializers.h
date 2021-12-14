@@ -37,10 +37,4 @@ namespace catapult { namespace cache {
 	RawBuffer SerializeKey(const utils::ByteArray<N, TTag>& container) {
 		return container;
 	}
-
-	/// Serializes bytes-based key (\a container).
-	template<size_t N>
-	RawBuffer SerializeKey(const utils::Bytes<N>& container) {
-		return container;
-	}
 }}

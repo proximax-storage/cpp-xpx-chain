@@ -22,7 +22,9 @@ namespace catapult { namespace observers {
 		completedDataModifications.emplace_back(*activeDataModifications.begin(), state::DataModificationState::Succeeded);
 		activeDataModifications.erase(activeDataModifications.begin());
 
-		driveEntry.confirmedUsedSizes().insert({notification.PublicKey, notification.UsedDriveSize});
+		const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
+		for (auto i = 0u; i < totalJudgingKeysCount; ++i)
+			driveEntry.confirmedUsedSizes().insert({notification.PublicKeysPtr[i], notification.UsedDriveSize});
 
 		auto it = std::find_if(
 				driveEntry.verifications().begin(),

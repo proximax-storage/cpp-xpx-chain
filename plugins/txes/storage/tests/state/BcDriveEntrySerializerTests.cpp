@@ -64,9 +64,9 @@ namespace catapult { namespace state {
                 test::Random16(),
                 Active_Data_Modifications_Count,
                 Completed_Data_Modifications_Count,
+				Verifications_Count,
 				test::Random16(),
-				test::Random16(),
-                Verifications_Count);
+				test::Random16());
         }
 
 		void AssertActiveDataModification(const ActiveDataModification& active, const uint8_t*& pData) {
@@ -97,15 +97,35 @@ namespace catapult { namespace state {
             }
         }
 
-       void AssertCompletedDataModifications(const CompletedDataModifications& completedDataModifications, const uint8_t*& pData) {
-            EXPECT_EQ(completedDataModifications.size(), *reinterpret_cast<const uint16_t*>(pData));
+       	void AssertCompletedDataModifications(const CompletedDataModifications& completedDataModifications, const uint8_t*& pData) {
+			EXPECT_EQ(completedDataModifications.size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
             for (const auto& completed : completedDataModifications) {
 				AssertActiveDataModification(completed, pData);
                 EXPECT_EQ(completed.State, static_cast<DataModificationState>(*pData));
                 pData++;
             }
-        }
+		}
+
+		void AssertConfirmedUsedSizes(const SizeMap& confirmedUsedSizes, const uint8_t*& pData) {
+			EXPECT_EQ(confirmedUsedSizes.size(), *reinterpret_cast<const uint16_t*>(pData));
+			pData += sizeof(uint16_t);
+			for (const auto& pair : confirmedUsedSizes) {
+				EXPECT_EQ_MEMORY(pair.first.data(), pData, Key_Size);
+				pData += Key_Size;
+				EXPECT_EQ(pair.second, *reinterpret_cast<const uint64_t*>(pData));
+				pData += sizeof(uint64_t);
+			}
+		}
+
+		void AssertReplicators(const utils::KeySet& replicators, const uint8_t*& pData) {
+			EXPECT_EQ(replicators.size(), *reinterpret_cast<const uint16_t*>(pData));
+			pData += sizeof(uint16_t);
+			for (const auto& replicator : replicators) {
+				EXPECT_EQ_MEMORY(replicator.data(), pData, Key_Size);
+				pData += Key_Size;
+			}
+		}
 
         void AssertVerifications(const Verifications& verifications, const uint8_t*& pData) {
             EXPECT_EQ(verifications.size(), *reinterpret_cast<const uint16_t*>(pData));
@@ -138,9 +158,13 @@ namespace catapult { namespace state {
 			pData += sizeof(uint64_t);
             EXPECT_EQ(entry.replicatorCount(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
+			EXPECT_EQ(entry.ownerCumulativeUploadSize(), *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
 
             AssertActiveDataModifications(entry.activeDataModifications(), pData);
             AssertCompletedDataModifications(entry.completedDataModifications(), pData);
+			AssertConfirmedUsedSizes(entry.confirmedUsedSizes(), pData);
+			AssertReplicators(entry.replicators(), pData);
             AssertVerifications(entry.verifications(), pData);
 
             EXPECT_EQ(pExpectedEnd, pData);
@@ -236,6 +260,22 @@ namespace catapult { namespace state {
             }
         }
 
+		void SaveConfirmedUsedSizes(const SizeMap& confirmedUsedSizes, std::vector<uint8_t>& data) {
+			uint16_t pairsCount = utils::checked_cast<size_t, uint16_t>(confirmedUsedSizes.size());
+			CopyToVector(data, (const uint8_t *) &pairsCount, sizeof(uint16_t));
+			for (const auto& pair : confirmedUsedSizes) {
+				CopyToVector(data, pair.first.data(), Key_Size);
+				CopyToVector(data, (const uint8_t *) &pair.second, sizeof(uint64_t));
+			}
+		}
+
+		void SaveReplicators(const utils::KeySet& replicators, std::vector<uint8_t>& data) {
+			uint16_t replicatorsCount = utils::checked_cast<size_t, uint16_t>(replicators.size());
+			CopyToVector(data, (const uint8_t *) &replicatorsCount, sizeof(uint16_t));
+			for (const auto& replicator : replicators)
+				CopyToVector(data, replicator.data(), Key_Size);
+		}
+
         void SaveVerifications(const Verifications& verifications, std::vector<uint8_t>& data) {
             uint16_t verificationsCount = utils::checked_cast<size_t, uint16_t>(verifications.size());
 			CopyToVector(data, (const uint8_t *) &verificationsCount, sizeof(uint16_t));
@@ -256,9 +296,12 @@ namespace catapult { namespace state {
 			CopyToVector(data, (const uint8_t*) &entry.usedSize(), sizeof(uint64_t));
 			CopyToVector(data, (const uint8_t*) &entry.metaFilesSize(), sizeof(uint64_t));
 			CopyToVector(data, (const uint8_t*) &entry.replicatorCount(), sizeof(uint16_t));
+			CopyToVector(data, (const uint8_t*) &entry.ownerCumulativeUploadSize(), sizeof(uint64_t));
 
             SaveActiveDataModifications(entry.activeDataModifications(), data);
             SaveCompletedDataModifications(entry.completedDataModifications(), data);
+			SaveConfirmedUsedSizes(entry.confirmedUsedSizes(), data);
+			SaveReplicators(entry.replicators(), data);
             SaveVerifications(entry.verifications(), data);
 
             return data;

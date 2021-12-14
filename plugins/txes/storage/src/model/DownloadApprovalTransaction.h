@@ -35,14 +35,14 @@ namespace catapult { namespace model {
 		/// Reason of the transaction release.
 		bool ResponseToFinishDownloadTransaction;
 
-		/// Number of unique opinions.
-		uint8_t OpinionCount;
+		/// Number of replicators that provided their opinions, but on which no opinions were provided.
+		uint8_t JudgingKeysCount;
 
-		/// Number of replicators that provided their opinions.
-		uint8_t JudgingCount;
+		/// Number of replicators that both provided their opinions, and on which at least one opinion was provided.
+		uint8_t OverlappingKeysCount;
 
-		/// Number of replicators on which at least one opinion was provided.
-		uint8_t JudgedCount;
+		/// Number of replicators that didn't provide their opinions, but on which at least one opinion was provided.
+		uint8_t JudgedKeysCount;
 
 		/// Total number of opinion elements.
 		// TODO: Remove; instead process PresentOpinions to count up existing opinion elements
@@ -51,11 +51,8 @@ namespace catapult { namespace model {
 		/// Replicators' public keys.
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(PublicKeys, Key)
 
-		/// Nth element of OpinionIndices indicates an index of an opinion that was provided by Nth replicator in PublicKeys.
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(OpinionIndices, uint8_t)
-
-		/// Aggregated BLS signatures of opinions.
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(BlsSignatures, BLSSignature)
+		/// Signatures of replicators' opinions.
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Signatures, Signature)
 
 		/// Two-dimensional array of opinion element presence.
 		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
@@ -67,52 +64,51 @@ namespace catapult { namespace model {
 	private:
 		template<typename T>
 		static auto* PublicKeysPtrT(T& transaction) {
-			return transaction.JudgedCount ? THeader::PayloadStart(transaction) : nullptr;
+			const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
+			return totalKeysCount ? THeader::PayloadStart(transaction) : nullptr;
 		}
 
 		template<typename T>
-		static auto* OpinionIndicesPtrT(T& transaction) {
+		static auto* SignaturesPtrT(T& transaction) {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
-			return transaction.JudgingCount && pPayloadStart ? pPayloadStart
-					+ transaction.JudgedCount * sizeof(Key) : nullptr;
-		}
-
-		template<typename T>
-		static auto* BlsSignaturesPtrT(T& transaction) {
-			auto* pPayloadStart = THeader::PayloadStart(transaction);
-			return transaction.OpinionCount && pPayloadStart ? pPayloadStart
-					+ transaction.JudgedCount * sizeof(Key)
-					+ transaction.JudgingCount * sizeof(uint8_t) : nullptr;
+			const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
+			const auto totalJudgingKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount;
+			return totalJudgingKeysCount && pPayloadStart ? pPayloadStart
+					+ totalKeysCount * sizeof(Key) : nullptr;
 		}
 
 		template<typename T>
 		static auto* PresentOpinionsPtrT(T& transaction) {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
-			return transaction.OpinionCount * transaction.JudgedCount && pPayloadStart ? pPayloadStart
-					+ transaction.JudgedCount * sizeof(Key)
-					+ transaction.JudgingCount * sizeof(uint8_t)
-				   	+ transaction.OpinionCount * sizeof(BLSSignature) : nullptr;
+			const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
+			const auto totalJudgingKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount;
+			const auto totalJudgedKeysCount = transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
+			return totalJudgingKeysCount && totalJudgedKeysCount && pPayloadStart ? pPayloadStart
+					+ totalKeysCount * sizeof(Key)
+					+ totalJudgingKeysCount * sizeof(Signature) : nullptr;
 		}
 
 		template<typename T>
 		static auto* OpinionsPtrT(T& transaction) {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
-			const auto presentOpinionByteCount = (transaction.OpinionCount * transaction.JudgedCount + 7) / 8;
+			const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
+			const auto totalJudgingKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount;
+			const auto presentOpinionByteCount = (totalJudgingKeysCount * (transaction.OverlappingKeysCount + transaction.JudgedKeysCount) + 7) / 8;
 			return transaction.OpinionElementCount && pPayloadStart ? pPayloadStart
-					+ transaction.JudgedCount * sizeof(Key)
-					+ transaction.JudgingCount * sizeof(uint8_t)
-					+ transaction.OpinionCount * sizeof(BLSSignature)
-				 	+ presentOpinionByteCount * sizeof(uint8_t) : nullptr;
+					+ totalKeysCount * sizeof(Key)
+				  	+ totalJudgingKeysCount * sizeof(Signature)
+					+ presentOpinionByteCount * sizeof(uint8_t) : nullptr;
 		}
 
 	public:
 		// Calculates the real size of a download approval \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			const auto presentOpinionByteCount = (transaction.OpinionCount * transaction.JudgedCount + 7) / 8;
+			const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
+			const auto totalJudgingKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount;
+			const auto presentOpinionByteCount = (totalJudgingKeysCount * (transaction.OverlappingKeysCount + transaction.JudgedKeysCount) + 7) / 8;
 			return sizeof(TransactionType)
-				   + transaction.JudgedCount * sizeof(Key)
-				   + transaction.JudgingCount * sizeof(uint8_t)
-				   + transaction.OpinionCount * sizeof(BLSSignature)
+				   + totalKeysCount * sizeof(Key)
+				   + totalJudgingKeysCount * sizeof(Signature)
 				   + presentOpinionByteCount * sizeof(uint8_t)
 				   + transaction.OpinionElementCount * sizeof(uint64_t);
 		}

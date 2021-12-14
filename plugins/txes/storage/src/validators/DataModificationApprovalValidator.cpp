@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <boost/dynamic_bitset.hpp>
 #include "Validators.h"
 #include "src/cache/BcDriveCache.h"
 
@@ -15,17 +16,37 @@ namespace catapult { namespace validators {
 	  	const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		const auto driveIter = driveCache.find(notification.DriveKey);
 		const auto& pDriveEntry = driveIter.tryGet();
+
+		// Check if respective drive exists
 		if (!pDriveEntry)
 			return Failure_Storage_Drive_Not_Found;
-	  	const auto& activeDataModifications = pDriveEntry->activeDataModifications();
 
 	  	// Check if there are any active data modifications
+	  	const auto& activeDataModifications = pDriveEntry->activeDataModifications();
 		if (activeDataModifications.empty())
 			return Failure_Storage_No_Active_Data_Modifications;
 
 	  	// Check if respective data modification is the first (oldest) element in activeDataModifications
 	  	if (activeDataModifications.begin()->Id != notification.DataModificationId)
 		  	return Failure_Storage_Invalid_Data_Modification_Id;
+
+		// Check if all public keys are either Replicator keys of Drive Owner key
+		const auto& replicators = pDriveEntry->replicators();
+	  	const auto& driveOwner = pDriveEntry->owner();
+		const auto totalKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount + notification.JudgedKeysCount;
+		auto pKey = notification.PublicKeysPtr;
+		for (auto i = 0; i < totalKeysCount; ++i, ++pKey)
+			if (!replicators.count(*pKey) && *pKey != driveOwner)
+				return Failure_Storage_Opinion_Invalid_Key;
+
+		// Check if none of the replicators has provided an opinion on itself
+	  	const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
+	  	const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
+	  	const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
+	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
+	  	for (auto i = notification.JudgingKeysCount; i < totalJudgingKeysCount; ++i)
+			if (presentOpinions[i*totalJudgedKeysCount + (i - notification.JudgingKeysCount)])
+				return Failure_Storage_Opinion_Provided_On_Self;
 
 		return ValidationResult::Success;
 	});

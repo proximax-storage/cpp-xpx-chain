@@ -19,7 +19,7 @@ namespace catapult { namespace config {
 							"",
 							{
 									{ "enabled", "true" },
-									{ "maxFolderNameNameSize", "512" },
+									{ "maxFolderNameSize", "512" },
 							}
 					}
 				};
