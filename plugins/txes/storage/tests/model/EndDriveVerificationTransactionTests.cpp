@@ -9,55 +9,55 @@
 
 namespace catapult { namespace model {
 
-        using TransactionType = EndDriveVerificationTransaction;
+    using TransactionType = EndDriveVerificationTransaction;
 
 #define TEST_CLASS EndDriveVerificationTransactionTests
 
-        // region size + properties
+    // region size + properties
 
-        namespace {
-            template<typename T>
-            void AssertEntityHasExpectedSize(size_t baseSize) {
-                // Arrange:
-                auto expectedSize =
-                        baseSize // base
-                        + Key_Size // drive key size
-                        + Hash256_Size // verification trigger hash size
-                        + sizeof(uint16_t) // count of provers
-                        + sizeof(uint16_t); // count of opinions
-
-                // Assert:
-                EXPECT_EQ(expectedSize, sizeof(T));
-                EXPECT_EQ(baseSize + 68u, sizeof(T));
-            }
-
-            template<typename T>
-            void AssertTransactionHasExpectedProperties() {
-                // Assert:
-                EXPECT_EQ(Entity_Type_EndDriveVerification, T::Entity_Type);
-                EXPECT_EQ(1u, T::Current_Version);
-            }
-        }
-
-        ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS(EndDriveVerification)
-
-        // endregion
-
-        // region CalculateRealSize
-
-        TEST(TEST_CLASS, CanCalculateRealSizeWithReasonableValues) {
+    namespace {
+        template<typename T>
+        void AssertEntityHasExpectedSize(size_t baseSize) {
             // Arrange:
-			EndDriveVerificationTransaction transaction;
-			transaction.ProversCount = 0;
-			transaction.VerificationOpinionsCount = 0;
-			transaction.Size = 0;
-
-            // Act:
-            auto realSize = EndDriveVerificationTransaction::CalculateRealSize(transaction);
+            auto expectedSize =
+                    baseSize // base
+                    + Key_Size // drive key size
+                    + Hash256_Size // verification trigger hash size
+                    + sizeof(uint16_t) // count of provers
+                    + sizeof(uint16_t); // count of opinions
 
             // Assert:
-            EXPECT_EQ(sizeof(EndDriveVerificationTransaction), realSize);
+            EXPECT_EQ(expectedSize, sizeof(T));
+            EXPECT_EQ(baseSize + 68u, sizeof(T));
         }
 
-        // endregion
-    }}
+        template<typename T>
+        void AssertTransactionHasExpectedProperties() {
+            // Assert:
+            EXPECT_EQ(Entity_Type_EndDriveVerification, T::Entity_Type);
+            EXPECT_EQ(1u, T::Current_Version);
+        }
+    }
+
+    ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS(EndDriveVerification)
+
+    // endregion
+
+    // region CalculateRealSize
+
+    TEST(TEST_CLASS, CanCalculateRealSizeWithReasonableValues) {
+        // Arrange:
+        EndDriveVerificationTransaction transaction;
+        transaction.ProversCount = 0;
+        transaction.VerificationOpinionsCount = 0;
+        transaction.Size = 0;
+
+        // Act:
+        auto realSize = EndDriveVerificationTransaction::CalculateRealSize(transaction);
+
+        // Assert:
+        EXPECT_EQ(sizeof(EndDriveVerificationTransaction), realSize);
+    }
+
+    // endregion
+}}

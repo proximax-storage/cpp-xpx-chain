@@ -18,95 +18,95 @@ namespace catapult { namespace plugins {
 
 #define TEST_CLASS EndDriveVerificationTransactionPluginTests
 
-        // region TransactionPlugin
+    // region TransactionPlugin
 
-        namespace {
-            DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(EndDriveVerification, config::ImmutableConfiguration, 1, 1,)
+    namespace {
+        DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(EndDriveVerification, config::ImmutableConfiguration, 1, 1,)
 
-            const auto Generation_Hash = utils::ParseByteArray<GenerationHash>("CE076EF4ABFBC65B046987429E274EC31506D173E91BF102F16BEB7FB8176230");
-            constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
+        const auto Generation_Hash = utils::ParseByteArray<GenerationHash>("CE076EF4ABFBC65B046987429E274EC31506D173E91BF102F16BEB7FB8176230");
+        constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
 
-            auto CreateConfiguration() {
-                auto config = config::ImmutableConfiguration::Uninitialized();
-                config.GenerationHash = Generation_Hash;
-                config.NetworkIdentifier = Network_Identifier;
-                return config;
-            }
-
-            template<typename TTraits>
-            auto CreateTransaction() {
-                return test::CreateEndDriveVerificationTransaction<typename TTraits::TransactionType>();
-            }
+        auto CreateConfiguration() {
+            auto config = config::ImmutableConfiguration::Uninitialized();
+            config.GenerationHash = Generation_Hash;
+            config.NetworkIdentifier = Network_Identifier;
+            return config;
         }
 
-        DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , Entity_Type_EndDriveVerification, CreateConfiguration())
+		template<typename TTraits>
+		auto CreateTransaction() {
+			return test::CreateEndDriveVerificationTransaction<typename TTraits::TransactionType>();
+		}
+	}
 
-        PLUGIN_TEST(CanCalculateSize) {
-            // Arrange:
-            auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
-            auto pTransaction = CreateTransaction<TTraits>();
-			pTransaction->ProversCount = 0;
-			pTransaction->VerificationOpinionsCount = 0;
+    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , Entity_Type_EndDriveVerification, CreateConfiguration())
 
-            // Act:
-            auto realSize = pPlugin->calculateRealSize(*pTransaction);
+	PLUGIN_TEST(CanCalculateSize) {
+		// Arrange:
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		auto pTransaction = CreateTransaction<TTraits>();
+		pTransaction->ProversCount = 0;
+		pTransaction->VerificationOpinionsCount = 0;
 
-            // Assert:
-            EXPECT_EQ(sizeof(typename TTraits::TransactionType), realSize);
-        }
+        // Act:
+        auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
-        // region publish - basic
+        // Assert:
+        EXPECT_EQ(sizeof(typename TTraits::TransactionType), realSize);
+    }
 
-        PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
-            // Arrange:
-            mocks::MockNotificationSubscriber sub;
-            auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+    // region publish - basic
 
-            typename TTraits::TransactionType transaction;
-            transaction.Size = sizeof(transaction);
-            transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
+    PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
+        // Arrange:
+        mocks::MockNotificationSubscriber sub;
+        auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
-            // Act:
-            test::PublishTransaction(*pPlugin, transaction, sub);
+        typename TTraits::TransactionType transaction;
+        transaction.Size = sizeof(transaction);
+        transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
 
-            // Assert:
-            ASSERT_EQ(0, sub.numNotifications());
-        }
+        // Act:
+        test::PublishTransaction(*pPlugin, transaction, sub);
 
-        PLUGIN_TEST(CanPublishCorrectNumberOfNotifications) {
-            // Arrange:
-            auto pTransaction = CreateTransaction<TTraits>();
-            mocks::MockNotificationSubscriber sub;
-            auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+        // Assert:
+        ASSERT_EQ(0, sub.numNotifications());
+    }
 
-            // Act:
-            test::PublishTransaction(*pPlugin, *pTransaction, sub);
+    PLUGIN_TEST(CanPublishCorrectNumberOfNotifications) {
+        // Arrange:
+        auto pTransaction = CreateTransaction<TTraits>();
+        mocks::MockNotificationSubscriber sub;
+        auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
-            // Assert:
-            ASSERT_EQ(1u, sub.numNotifications());
-            auto i = 0u;
-            EXPECT_EQ(Storage_End_Drive_Verification_v1_Notification, sub.notificationTypes()[i++]);
-        }
+        // Act:
+        test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
-        // endregion
+        // Assert:
+        ASSERT_EQ(1u, sub.numNotifications());
+        auto i = 0u;
+        EXPECT_EQ(Storage_End_Drive_Verification_v1_Notification, sub.notificationTypes()[i++]);
+    }
 
-        // region publish - end drive verification notification
+    // endregion
 
-        PLUGIN_TEST(CanPublishEndDriveVerificationNotification) {
-            // Arrange:
-            mocks::MockTypedNotificationSubscriber<EndDriveVerificationNotification<1>> sub;
-            auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
-            auto pTransaction = CreateTransaction<TTraits>();
+    // region publish - end drive verification notification
 
-            // Act:
-            test::PublishTransaction(*pPlugin, *pTransaction, sub);
+    PLUGIN_TEST(CanPublishEndDriveVerificationNotification) {
+        // Arrange:
+        mocks::MockTypedNotificationSubscriber<EndDriveVerificationNotification<1>> sub;
+        auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+        auto pTransaction = CreateTransaction<TTraits>();
 
-            // Assert:
-            ASSERT_EQ(1u, sub.numMatchingNotifications());
-            const auto& notification = sub.matchingNotifications()[0];
-            EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
-            EXPECT_EQ(pTransaction->VerificationTrigger, notification.VerificationTrigger);
-        }
+        // Act:
+        test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
-        // endregion
-    }}
+        // Assert:
+        ASSERT_EQ(1u, sub.numMatchingNotifications());
+        const auto& notification = sub.matchingNotifications()[0];
+        EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
+        EXPECT_EQ(pTransaction->VerificationTrigger, notification.VerificationTrigger);
+    }
+
+    // endregion
+}}

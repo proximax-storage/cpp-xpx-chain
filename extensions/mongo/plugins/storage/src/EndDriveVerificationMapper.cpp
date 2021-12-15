@@ -19,14 +19,14 @@ namespace catapult { namespace mongo { namespace plugins {
         auto pOpinion = transaction.VerificationOpinionsPtr();
         for (auto i = 0u; i < transaction.VerificationOpinionsCount; ++i, ++pOpinion) {
             auto doc = verificationOpinions << bson_stream::open_document
-                                            << "verifier" << ToBinary((*pOpinion).Verifier)
+                                            << "verifier" << (*pOpinion).Verifier
                                             << "signature" << ToBinary((*pOpinion).Signature);
 
             auto opinions = doc << "results" << bson_stream::open_array;
             for (auto j = 0u; j < transaction.ProversCount-1; ++j) {
                 opinions
                         << bson_stream::open_document
-                            << "prover" << ToBinary((*pOpinion).Results[j].first)
+                            << "prover" << (*pOpinion).Results[j].first
                             << "result" << (*pOpinion).Results[j].second
                         << bson_stream::close_document;
             }

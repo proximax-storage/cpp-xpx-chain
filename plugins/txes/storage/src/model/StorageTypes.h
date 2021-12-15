@@ -14,14 +14,14 @@ namespace catapult { namespace model {
 
         /// Binary layout of a verification opinion.
         struct VerificationOpinion {
-            /// Public Keys of the Verifier.
-            Key Verifier;
+            /// Index of Prover from Provers array.
+            uint16_t Verifier;
 
             /// Signatures of opinions.
             catapult::Signature Signature;
 
             /// Opinion about verification results for each Prover. Success or Failure.
-            std::vector<std::pair<Key, uint8_t>> Results;
+            std::vector<std::pair<uint16_t , uint8_t>> Results;
         };
 
 #pragma pack(pop)

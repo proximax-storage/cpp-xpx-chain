@@ -41,14 +41,14 @@ namespace catapult { namespace observers {
             uint8_t result = 0;
 
             for (auto j = 0; j < notification.VerificationOpinionsCount; ++j) {
-                if (notification.ProversPtr[i] == notification.VerificationOpinionsPtr[j].Verifier)
+                if (i == notification.VerificationOpinionsPtr[j].Verifier)
                     continue;
 
                 auto it = std::find_if(
                         notification.VerificationOpinionsPtr[j].Results.begin(),
                         notification.VerificationOpinionsPtr[j].Results.end(),
-                        [&notification, i](const std::pair<Key, uint8_t>& el) {
-                            return el.first == notification.ProversPtr[i];
+                        [&notification, i](const std::pair<uint16_t, uint8_t>& el) {
+                            return el.first == i;
                         }
                 );
 
