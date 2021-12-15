@@ -4,9 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/ionet/PacketPayloadFactory.h"
-#include "extensions/fastfinality/src/WeightedVotingChainPackets.h"
-#include "src/catapult/crypto/Signer.h"
 #include "src/catapult/model/BlockUtils.cpp"
 #include "fastfinality/src/WeightedVotingFsm.h"
 #include "tests/test/core/BlockTestUtils.h"
@@ -33,6 +30,7 @@ namespace catapult { namespace fastfinality {
 			// Arrange:
 			std::shared_ptr<thread::IoThreadPool> pPool = test::CreateStartedIoThreadPool();
 			auto config = test::CreateUninitializedBlockchainConfiguration();
+			const_cast<utils::FileSize&>(config.Node.MaxPacketDataSize) = utils::FileSize::FromMegabytes(150);
 			std::shared_ptr<WeightedVotingFsm> pFsm = std::make_shared<WeightedVotingFsm>(pPool, config);
 			pFsm->committeeData().setCommitteeStage(stage);
 			ionet::ServerPacketHandlers handlers;
@@ -231,6 +229,7 @@ namespace catapult { namespace fastfinality {
 			const auto keyPair = crypto::KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
 			std::shared_ptr<thread::IoThreadPool> pPool = test::CreateStartedIoThreadPool();
 			auto config = test::CreateUninitializedBlockchainConfiguration();
+			const_cast<utils::FileSize&>(config.Node.MaxPacketDataSize) = utils::FileSize::FromMegabytes(150);
 			std::shared_ptr<WeightedVotingFsm> pFsm = std::make_shared<WeightedVotingFsm>(pPool, config);
 			ionet::ServerPacketHandlers handlers;
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
