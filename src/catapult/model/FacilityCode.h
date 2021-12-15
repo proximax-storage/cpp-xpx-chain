@@ -27,10 +27,6 @@ namespace catapult { namespace model {
 	enum class FacilityCode : uint8_t {
 		/// Account link facility code.
 		AccountLink = 0x4C,
-		/// Node Key link facility code.
-		NodeKeyLink = 0x4B,
-		/// VRF Key link facility code.
-		VrfKeyLink = 0x4A,
 		/// Aggregate facility code.
 		Aggregate = 0x41,
 		/// Network config facility code.
@@ -59,8 +55,6 @@ namespace catapult { namespace model {
 		Transfer = 0x54,
 		/// Blockchain upgrade facility code.
 		BlockchainUpgrade = 0x58,
-		/// Blockchain upgrade facility code.
-		AccountV2Upgrade = 0x70,
 		/// Service facility code.
 		Service = 0x5A,
 		/// Drive facility code.

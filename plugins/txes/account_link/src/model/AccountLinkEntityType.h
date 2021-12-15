@@ -29,9 +29,9 @@ namespace catapult { namespace model {
 	/// Account link transaction.
 	DEFINE_TRANSACTION_TYPE(AccountLink, Account_Link, 0x1);
 	/// Node key link transaction.
-	DEFINE_TRANSACTION_TYPE(NodeKeyLink, Node_Key_Link, 0x2);
+	DEFINE_TRANSACTION_TYPE(AccountLink, Node_Key_Link, 0x2);
 	/// VRF key link transaction.
-	DEFINE_TRANSACTION_TYPE(VrfKeyLink, Vrf_Key_Link, 0x3);
+	DEFINE_TRANSACTION_TYPE(AccountLink, Vrf_Key_Link, 0x3);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
