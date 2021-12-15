@@ -42,5 +42,6 @@ namespace catapult {
 
 	const DerivationScheme Vrf_Key_Derivation_Scheme = DerivationScheme::Ed25519_Sha2;
 
-	const DerivationScheme Ephemeral_Key_Derivation_Scheme = DerivationScheme::Ed25519_Sha2;
+	// Ephemeral key derivation scheme must always match node key derivation scheme for delegation requests to be authenticated
+	const DerivationScheme Ephemeral_Key_Derivation_Scheme = DerivationScheme::Ed25519_Sha3;
 }
