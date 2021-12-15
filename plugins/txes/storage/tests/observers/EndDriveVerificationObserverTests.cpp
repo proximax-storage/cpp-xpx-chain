@@ -15,135 +15,136 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS EndDriveVerificationObserverTests
 
-        DEFINE_COMMON_OBSERVER_TESTS(EndDriveVerification,)
+    DEFINE_COMMON_OBSERVER_TESTS(EndDriveVerification,)
 
-        namespace {
-            using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
-            using Notification = model::EndDriveVerificationNotification<1>;
+    namespace {
+        using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
+        using Notification = model::EndDriveVerificationNotification<1>;
 
-            constexpr auto Current_Height = Height(10);
-            const auto Verification_Trigger = test::GenerateRandomByteArray<Hash256>();
+        constexpr auto Current_Height = Height(10);
 
-            state::Verification CreateInitialVerificationEntry() {
-                return state::Verification{
-                        Verification_Trigger,
-                        state::VerificationState::Pending,
-                        state::VerificationResults{},
-                };
-            }
+        const auto Verification_Trigger = test::GenerateRandomByteArray<Hash256>();
 
-            state::Verification CreateExpectedVerificationEntry(const state::VerificationResults& results) {
-                return state::Verification{
-                        Verification_Trigger,
-                        state::VerificationState::Finished,
-                        results,
-                };
-            }
-
-            struct CacheValues {
-            public:
-                explicit CacheValues()
-                        : InitialVerificationEntry()
-                        , ExpectedVerificationEntry()
-                {}
-
-            public:
-                state::Verification InitialVerificationEntry;
-                state::Verification ExpectedVerificationEntry;
+        state::Verification CreateInitialVerificationEntry() {
+            return state::Verification{
+                    Verification_Trigger,
+                    state::VerificationState::Pending,
+                    state::VerificationResults{},
             };
+        }
 
-            void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
-                // Arrange:
-                ObserverTestContext context(mode, currentHeight);
+        state::Verification CreateExpectedVerificationEntry(const state::VerificationResults& results) {
+            return state::Verification{
+                    Verification_Trigger,
+                    state::VerificationState::Finished,
+                    results,
+            };
+        }
 
-                auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
-                auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
-                auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
+        struct CacheValues {
+        public:
+            explicit CacheValues()
+                    : InitialVerificationEntry()
+                      , ExpectedVerificationEntry() {}
 
-                // Populate cache.
-                state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-                driveEntry.verifications().emplace_back(values.InitialVerificationEntry);
+        public:
+            state::Verification InitialVerificationEntry;
+            state::Verification ExpectedVerificationEntry;
+        };
 
-                std::vector<model::VerificationOpinion> verificationOpinion;
-                for (auto& resultPair : values.ExpectedVerificationEntry.Results) {
-                    const auto& verifier = resultPair.first;
-                    const auto& blsKey = test::GenerateRandomByteArray<BLSPublicKey>();
+        void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
+            // Arrange:
+            ObserverTestContext context(mode, currentHeight);
 
-                    accountStateCache.addAccount(verifier, currentHeight);
+            auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
+            auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
+            auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 
-                    state::ReplicatorEntry replicatorEntry(verifier);
-                    replicatorEntry.setBlsKey(blsKey);
-                    replicatorEntry.setCapacity(Amount(1000));
-                    replicatorEntry.drives().emplace(driveEntry.key(), state::DriveInfo{Hash256(), false, 0 });
-                    replicatorCache.insert(replicatorEntry);
+            // Populate cache.
+            state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+            driveEntry.verifications().emplace_back(values.InitialVerificationEntry);
 
-                    driveEntry.replicators().emplace(replicatorEntry.key());
-
-                    std::vector<std::pair<Key, uint8_t>> opinions;
-                    for (auto& result : values.ExpectedVerificationEntry.Results) {
-                        if (verifier == result.first)
-                            continue;
-
-                        opinions.emplace_back(std::pair<Key, uint8_t>{result.first, result.second});
-                    }
-
-                    verificationOpinion.emplace_back(model::VerificationOpinion{
-                            verifier,
-                            test::GenerateRandomByteArray<BLSSignature>(),
-                            opinions,
-                    });
-                }
-                bcDriveCache.insert(driveEntry);
-
-                Notification notification(
-                        driveEntry.key(),
-                        driveEntry.verifications().back().VerificationTrigger,
-                        driveEntry.replicators().size(),
-                        &(*driveEntry.replicators().begin()),
-                        verificationOpinion.size(),
-                        &(*verificationOpinion.begin())
-                );
-
-                auto pObserver = CreateEndDriveVerificationObserver();
-
-                // Act:
-                test::ObserveNotification(*pObserver, notification, context);
-
-                // Assert: check the cache
-                auto driveIter = bcDriveCache.find(driveEntry.key());
-                const auto& actualDrive = driveIter.tryGet();
-                const auto& actualEntry = actualDrive->verifications().back();
-
-                EXPECT_EQ(values.ExpectedVerificationEntry.VerificationTrigger, actualEntry.VerificationTrigger);
-                EXPECT_EQ(values.ExpectedVerificationEntry.State, actualEntry.State);
-                EXPECT_EQ(values.ExpectedVerificationEntry.Results, actualEntry.Results);
+            std::vector<std::pair<uint16_t, uint8_t>> results;
+            uint16_t resultNumber = 0;
+            for (auto& result: values.ExpectedVerificationEntry.Results) {
+                results.emplace_back(std::pair<uint16_t, uint8_t>{resultNumber, result.second});
+                ++resultNumber;
             }
+
+            std::vector<model::VerificationOpinion> verificationOpinion;
+            uint16_t opinionNumber = 0;
+            for (auto& resultPair: values.ExpectedVerificationEntry.Results) {
+                const auto& verifier = resultPair.first;
+                const auto& blsKey = test::GenerateRandomByteArray<BLSPublicKey>();
+
+                accountStateCache.addAccount(verifier, currentHeight);
+
+                state::ReplicatorEntry replicatorEntry(verifier);
+                replicatorEntry.setBlsKey(blsKey);
+                replicatorEntry.setCapacity(Amount(1000));
+                replicatorEntry.drives().emplace(driveEntry.key(), state::DriveInfo{Hash256(), false, 0});
+                replicatorCache.insert(replicatorEntry);
+
+                driveEntry.replicators().emplace(replicatorEntry.key());
+
+                verificationOpinion.emplace_back(model::VerificationOpinion{
+                        opinionNumber,
+                        test::GenerateRandomByteArray<BLSSignature>(),
+                        results,
+                });
+                ++opinionNumber;
+            }
+            bcDriveCache.insert(driveEntry);
+
+            Notification notification(
+                    driveEntry.key(),
+                    driveEntry.verifications().back().VerificationTrigger,
+                    driveEntry.replicators().size(),
+                    &(*driveEntry.replicators().begin()),
+                    verificationOpinion.size(),
+                    &(*verificationOpinion.begin())
+            );
+
+            auto pObserver = CreateEndDriveVerificationObserver();
+
+            // Act:
+            test::ObserveNotification(*pObserver, notification, context);
+
+            // Assert: check the cache
+            auto driveIter = bcDriveCache.find(driveEntry.key());
+            const auto& actualDrive = driveIter.tryGet();
+            const auto& actualEntry = actualDrive->verifications().back();
+
+            EXPECT_EQ(values.ExpectedVerificationEntry.VerificationTrigger, actualEntry.VerificationTrigger);
+            EXPECT_EQ(values.ExpectedVerificationEntry.State, actualEntry.State);
+            EXPECT_EQ(values.ExpectedVerificationEntry.Results, actualEntry.Results);
         }
+    }
 
-        TEST(TEST_CLASS, EndDriveVerification_Commit) {
-            // Arrange:
-            CacheValues values;
+    TEST(TEST_CLASS, EndDriveVerification_Commit) {
+        // Arrange:
+        CacheValues values;
 
-            values.InitialVerificationEntry = CreateInitialVerificationEntry();
+        values.InitialVerificationEntry = CreateInitialVerificationEntry();
 
-            // TODO add results
-            state::VerificationResults results;
-            values.ExpectedVerificationEntry = CreateExpectedVerificationEntry(results);
+        // TODO add results
+        state::VerificationResults results;
+        values.ExpectedVerificationEntry = CreateExpectedVerificationEntry(results);
 
-            // Assert
-            RunTest(NotifyMode::Commit, values, Current_Height);
-        }
+        // Assert
+        RunTest(NotifyMode::Commit, values, Current_Height);
+    }
 
-        TEST(TEST_CLASS, EndDriveVerification_Rollback) {
-            // Arrange:
-            CacheValues values;
-            auto driveKey = test::GenerateRandomByteArray<Key>();
+    TEST(TEST_CLASS, EndDriveVerification_Rollback) {
+        // Arrange:
+        CacheValues values;
+        auto driveKey = test::GenerateRandomByteArray<Key>();
 
-            values.ExpectedVerificationEntry = CreateExpectedVerificationEntry(state::VerificationResults{});
-            values.InitialVerificationEntry = values.ExpectedVerificationEntry;
+        values.ExpectedVerificationEntry = CreateExpectedVerificationEntry(state::VerificationResults{});
+        values.InitialVerificationEntry = values.ExpectedVerificationEntry;
 
-            // Assert
-            EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
-        }
+        // Assert
+        EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
+    }
 
-    }}
+}}
