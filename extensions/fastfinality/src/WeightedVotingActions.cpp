@@ -71,11 +71,6 @@ namespace catapult { namespace fastfinality {
 				callback();
 			});
 		}
-
-		void UpdateConnections(std::shared_ptr<WeightedVotingFsm> pFsmShared) {
-			for (const auto& task : pFsmShared->peerConnectionTasks())
-				task.Callback();
-		}
 	}
 
 	action CreateDefaultCheckLocalChainAction(
@@ -87,8 +82,6 @@ namespace catapult { namespace fastfinality {
 			const chain::CommitteeManager& committeeManager) {
 		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager]() {
 			TRY_GET_FSM()
-
-			UpdateConnections(pFsmShared);
 			
 			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
 			pFsmShared->resetChainSyncData();
@@ -402,8 +395,6 @@ namespace catapult { namespace fastfinality {
 			const chain::TimeSupplier& timeSupplier) {
 		return [pFsmWeak, &committeeManager, pConfigHolder, timeSupplier]() {
 			TRY_GET_FSM()
-
-			UpdateConnections(pFsmShared);
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto stage = committeeData.committeeStage();

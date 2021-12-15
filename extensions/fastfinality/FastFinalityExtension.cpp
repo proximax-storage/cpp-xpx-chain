@@ -16,7 +16,6 @@ namespace catapult { namespace fastfinality {
 			ValidateHarvestingConfiguration(config);
 
 			bootstrapper.extensionManager().addServiceRegistrar(CreateWeightedVotingServiceRegistrar(config));
-			bootstrapper.extensionManager().addServiceRegistrar(CreateWeightedVotingStartServiceRegistrar());
 		}
 	}
 }}

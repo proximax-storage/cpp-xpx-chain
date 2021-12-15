@@ -26,7 +26,7 @@ namespace catapult { namespace fastfinality {
 
 	class WeightedVotingFsm {
 	public:
-		explicit WeightedVotingFsm(std::shared_ptr<thread::IoThreadPool> pPool)
+		explicit WeightedVotingFsm(std::shared_ptr<thread::IoThreadPool> pPool, const config::BlockchainConfiguration& config)
 			: m_pPool(std::move(pPool))
 			, m_timer(m_pPool->ioContext())
 			, m_proposalWaitTimer(m_pPool->ioContext())
@@ -35,6 +35,7 @@ namespace catapult { namespace fastfinality {
 			, m_strand(m_pPool->ioContext())
 			, m_nodeWorkState(NodeWorkState::None)
 			, m_stopped(false)
+			, m_packetHandlers(config.Node.MaxPacketDataSize.bytes32())
 		{}
 
 	public:
@@ -108,21 +109,20 @@ namespace catapult { namespace fastfinality {
 			return m_stopped;
 		}
 
-		void setPeerConnectionTasks(extensions::ServiceState& state) {
-			m_peerConnectionTasks = state.peerConnectionTasks();
-			state.peerConnectionTasks().clear();
-		}
-
-		const auto& peerConnectionTasks() {
-			return m_peerConnectionTasks;
-		}
-
 		auto nodeWorkState() {
 			return m_nodeWorkState;
 		}
 
 		void setNodeWorkState(NodeWorkState state) {
 			m_nodeWorkState = state;
+		}
+
+		auto& packetHandlers() {
+			return m_packetHandlers;
+		}
+
+		auto& packetIoPickers() {
+			return m_packetIoPickers;
 		}
 
 	private:
@@ -134,9 +134,10 @@ namespace catapult { namespace fastfinality {
 		boost::sml::sm<WeightedVotingTransitionTable> m_sm;
 		std::unique_ptr<ChainSyncData> m_pChainSyncData;
 		CommitteeData m_committeeData;
-		std::vector<thread::Task> m_peerConnectionTasks;
 		boost::asio::io_context::strand m_strand;
 		NodeWorkState m_nodeWorkState;
 		bool m_stopped;
+		ionet::ServerPacketHandlers m_packetHandlers;
+		net::PacketIoPickerContainer m_packetIoPickers;
 	};
 }}

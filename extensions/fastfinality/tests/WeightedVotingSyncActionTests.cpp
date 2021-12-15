@@ -44,7 +44,7 @@ namespace catapult {
 						std::map<Key, uint64_t> importances,
 						uint8_t expectedAction)
 					: m_pPool(test::CreateStartedIoThreadPool())
-					, m_pFsm(std::make_shared<fastfinality::WeightedVotingFsm>(m_pPool))
+					, m_pFsm(std::make_shared<fastfinality::WeightedVotingFsm>(m_pPool, pConfigHolder->Config()))
 					, m_states(std::move(states))
 					, m_pConfigHolder(pConfigHolder)
 					, m_pLastBlockElement(pLastBlockElement)

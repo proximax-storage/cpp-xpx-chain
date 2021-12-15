@@ -32,10 +32,10 @@ namespace catapult { namespace fastfinality {
 		void RunPushHandlerTest(CommitteeStage& stage, THandler handlerFn, TAct actFunc) {
 			// Arrange:
 			std::shared_ptr<thread::IoThreadPool> pPool = test::CreateStartedIoThreadPool();
-			std::shared_ptr<WeightedVotingFsm> pFsm = std::make_shared<WeightedVotingFsm>(pPool);
+			auto config = test::CreateUninitializedBlockchainConfiguration();
+			std::shared_ptr<WeightedVotingFsm> pFsm = std::make_shared<WeightedVotingFsm>(pPool, config);
 			pFsm->committeeData().setCommitteeStage(stage);
 			ionet::ServerPacketHandlers handlers;
-			auto config = test::CreateUninitializedBlockchainConfiguration();
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			plugins::PluginManager pluginManager(pConfigHolder, plugins::StorageConfiguration());
 
@@ -230,9 +230,9 @@ namespace catapult { namespace fastfinality {
 		void RunPushVoteMessageHandlerTest(TAct actFunc, TAssert assertFunc) {
 			const auto keyPair = crypto::KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
 			std::shared_ptr<thread::IoThreadPool> pPool = test::CreateStartedIoThreadPool();
-			std::shared_ptr<WeightedVotingFsm> pFsm = std::make_shared<WeightedVotingFsm>(pPool);
-			ionet::ServerPacketHandlers handlers;
 			auto config = test::CreateUninitializedBlockchainConfiguration();
+			std::shared_ptr<WeightedVotingFsm> pFsm = std::make_shared<WeightedVotingFsm>(pPool, config);
+			ionet::ServerPacketHandlers handlers;
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			plugins::PluginManager pluginManager(pConfigHolder, plugins::StorageConfiguration());
 
