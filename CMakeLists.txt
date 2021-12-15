@@ -11,8 +11,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -DDEADLOCK_THRESHOLD_MILLISECONDS=600000 -w")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
-set(ZLIB_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/tools/health/prometheus-cpp/3rdparty/zlib1211/include")
-set(ZLIB_LIBRARY "${CMAKE_SOURCE_DIR}/tools/health/prometheus-cpp/3rdparty/zlib1211/lib/libz.so")
+set(ZLIB_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/tools/prometheus-cpp/3rdparty/zlib1211/include")
+set(ZLIB_LIBRARY "${CMAKE_SOURCE_DIR}/tools/prometheus-cpp/3rdparty/zlib1211/lib/libz.so")
 
 message(STATUS "CATAPULT_VERSION_DESCRIPTION: ${CATAPULT_VERSION_DESCRIPTION}")
 message(STATUS "CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
@@ -69,6 +69,8 @@ add_subdirectory(sdk)
 add_subdirectory(plugins)
 add_subdirectory(extensions)
 
+add_subdirectory(tools)
+
 add_subdirectory(resources)
 
 if (EXISTS "${CMAKE_SOURCE_DIR}/internal/CMakeLists.txt")
@@ -76,7 +78,7 @@ if (EXISTS "${CMAKE_SOURCE_DIR}/internal/CMakeLists.txt")
 	add_subdirectory(internal)
 endif()
 
-add_subdirectory(tools)
+# add_subdirectory(tools)
 
 # Help programs
 add_subdirectory(spammer)

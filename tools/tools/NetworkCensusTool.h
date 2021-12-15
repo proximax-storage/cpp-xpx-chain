@@ -83,7 +83,7 @@ namespace catapult { namespace tools {
 			return std::min(static_cast<int>(result), 255);
 		}
 
-	public:
+	private:
 		NodeInfoFuture createNodeInfoFuture(MultiNodeConnector& connector, const ionet::Node& node) {
 			auto pNodeInfo = std::make_shared<TNodeInfo>(node);
 			return thread::compose(connector.connect(node), [this, node, pNodeInfo, &connector](auto&& ioFuture) {
