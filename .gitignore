@@ -28,7 +28,6 @@ npm-*.log*
 .cproject
 .project
 .settings
-internal
 
 # IntelliJ project files
 .idea
