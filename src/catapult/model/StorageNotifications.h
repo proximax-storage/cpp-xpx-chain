@@ -853,16 +853,18 @@ namespace catapult { namespace model {
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
+				const uint8_t opinionElementSize,
 				const uint8_t* commonDataPtr,
 				const Key* publicKeysPtr,
 				const Signature* signaturesPtr,
 				const uint8_t* presentOpinionsPtr,
-				const uint64_t* opinionsPtr)
+				const uint8_t* opinionsPtr)
 			: Notification(Notification_Type, sizeof(OpinionNotification<1>))
 			, CommonDataSize(commonDataSize)
 			, JudgingKeysCount(judgingKeysCount)
 			, OverlappingKeysCount(overlappingKeysCount)
 			, JudgedKeysCount(judgedKeysCount)
+			, OpinionElementSize(opinionElementSize)
 			, CommonDataPtr(commonDataPtr)
 			, PublicKeysPtr(publicKeysPtr)
 			, SignaturesPtr(signaturesPtr)
@@ -883,6 +885,9 @@ namespace catapult { namespace model {
 		/// Number of replicators that didn't provide their opinions, but on which at least one opinion was provided.
 		uint8_t JudgedKeysCount;
 
+		/// Size of one opinion element in bytes.
+		uint8_t OpinionElementSize;
+
 		/// Common data of the transaction.
 		const uint8_t* CommonDataPtr;
 
@@ -896,8 +901,8 @@ namespace catapult { namespace model {
 		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
 		const uint8_t* PresentOpinionsPtr;
 
-		/// Jagged array of opinion elements.
-		const uint64_t* OpinionsPtr;
+		/// Pointer to the beginning of jagged array of opinion elements.
+		const uint8_t* OpinionsPtr;
 	};
 
 	/// Notification of a download approval.

@@ -68,11 +68,12 @@ namespace catapult { namespace validators {
 					opinionData.JudgingKeysCount,
 					opinionData.OverlappingKeysCount,
 					opinionData.JudgedKeysCount,
+					sizeof(uint64_t),
 					commonDataBuffer.pData,
 					pPublicKeysBegin,
 					pSignaturesBegin,
 					pPresentOpinionsBegin,
-					pOpinionsBegin
+					reinterpret_cast<const uint8_t*>(pOpinionsBegin)
 			);
 			auto pValidator = CreateOpinionValidator();
 

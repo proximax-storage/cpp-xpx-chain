@@ -36,11 +36,12 @@ namespace catapult { namespace plugins {
 							transaction.JudgingKeysCount,
 							transaction.OverlappingKeysCount,
 							transaction.JudgedKeysCount,
+							sizeof(uint64_t),
 							commonDataPtr,
 							transaction.PublicKeysPtr(),
 							transaction.SignaturesPtr(),
 							transaction.PresentOpinionsPtr(),
-							transaction.OpinionsPtr()
+							reinterpret_cast<const uint8_t*>(transaction.OpinionsPtr())
 					));
 
 				  	sub.notify(DownloadApprovalNotification<1>(

@@ -42,11 +42,12 @@ namespace catapult { namespace plugins {
 						transaction.JudgingKeysCount,
 						transaction.OverlappingKeysCount,
 						transaction.JudgedKeysCount,
+						sizeof(uint64_t),
 						commonDataPtr.get(),
 						transaction.PublicKeysPtr(),
 						transaction.SignaturesPtr(),
 						transaction.PresentOpinionsPtr(),
-						transaction.OpinionsPtr()
+						reinterpret_cast<const uint8_t*>(transaction.OpinionsPtr())
 				));
 
 				// Must be applied before UsedSize of the drive is changed,

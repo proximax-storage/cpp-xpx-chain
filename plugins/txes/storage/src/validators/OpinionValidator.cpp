@@ -51,7 +51,7 @@ namespace catapult { namespace validators {
 	  	auto pKey = notification.PublicKeysPtr;
 	  	auto pSignature = notification.SignaturesPtr;
 	  	auto pOpinionElement = notification.OpinionsPtr;
-	  	using OpinionElement = std::pair<Key, uint64_t>;
+	  	using OpinionElement = std::pair<Key, const uint8_t*>;
 		const auto comparator = [](const OpinionElement& a, const OpinionElement& b){ return a.first < b.first; };
 		using IndividualPart = std::set<OpinionElement, decltype(comparator)>;
 	  	IndividualPart individualPart(comparator);	// Set that represents complete opinion of one of the replicators. Opinion elements are sorted in ascending order of keys.
@@ -59,8 +59,8 @@ namespace catapult { namespace validators {
 			individualPart.clear();
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
 				if (presentOpinions[i * totalJudgedKeysCount + j]) {
-					individualPart.emplace(notification.PublicKeysPtr[notification.JudgingKeysCount + j], *pOpinionElement);
-					++pOpinionElement;
+					individualPart.emplace(notification.PublicKeysPtr[notification.JudgingKeysCount + j], pOpinionElement);
+					pOpinionElement += notification.OpinionElementSize;
 				}
 			}
 
@@ -68,7 +68,10 @@ namespace catapult { namespace validators {
 			auto* pIndividualData = pIndividualDataBegin;
 			for (auto individualPartIter = individualPart.begin(); individualPartIter != individualPart.end(); ++individualPartIter) {
 				utils::WriteToByteArray(pIndividualData, individualPartIter->first);
-				utils::WriteToByteArray(pIndividualData, individualPartIter->second);
+				pIndividualData = std::copy(
+						individualPartIter->second,
+						individualPartIter->second + notification.OpinionElementSize,
+						pIndividualData);
 			}
 
 			RawBuffer dataBuffer(pDataBegin.get(), dataSize);
