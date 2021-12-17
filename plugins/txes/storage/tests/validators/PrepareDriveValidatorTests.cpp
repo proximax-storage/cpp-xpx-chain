@@ -19,7 +19,6 @@ namespace catapult { namespace validators {
     namespace {
         using Notification = model::PrepareDriveNotification<1>;
 
-        constexpr auto Drive_Size = 100;
         constexpr auto Replicator_Count = 5;
         constexpr auto Current_Height = Height(10);
 
@@ -27,11 +26,16 @@ namespace catapult { namespace validators {
             test::MutableBlockchainConfiguration config;
             auto pluginConfig = config::StorageConfiguration::Uninitialized();
             pluginConfig.MinDriveSize = utils::FileSize::FromMegabytes(30);
-            pluginConfig.MinDriveSize = utils::FileSize::FromTerabytes(30);
+            pluginConfig.MaxDriveSize = utils::FileSize::FromTerabytes(30);
             pluginConfig.MinReplicatorCount = 5;
             config.Network.SetPluginConfiguration(pluginConfig);
             return (config.ToConst());
         }
+
+		auto RandomDriveSize() {
+			const auto storageConfig = CreateConfig().Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			return test::RandomInRange<uint64_t>(storageConfig.MinDriveSize.megabytes(), storageConfig.MaxDriveSize.megabytes());
+		}
 
         void AssertValidationResult(
                 ValidationResult expectedResult,
@@ -65,7 +69,7 @@ namespace catapult { namespace validators {
         auto driveKey = test::GenerateRandomByteArray<Key>();
         auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
 		state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-        driveEntry.setSize(10);
+        driveEntry.setSize(0);
         state::ReplicatorEntry replicatorEntry(driveKey);
         Replicator_Key_Collector->addKey(replicatorEntry);
         replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin(), state::DriveInfo());
@@ -102,7 +106,7 @@ namespace catapult { namespace validators {
         // Arrange:
         auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
         state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-        driveEntry.setSize(Drive_Size);
+        driveEntry.setSize(RandomDriveSize());
         driveEntry.setReplicatorCount(2);
         state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
         Replicator_Key_Collector->addKey(replicatorEntry);
@@ -122,7 +126,7 @@ namespace catapult { namespace validators {
         auto driveKey = test::GenerateRandomByteArray<Key>();
         auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
         state::BcDriveEntry driveEntry(driveKey);
-        driveEntry.setSize(Drive_Size);
+        driveEntry.setSize(RandomDriveSize());
         driveEntry.setReplicatorCount(Replicator_Count);
         state::ReplicatorEntry replicatorEntry(driveKey);
         Replicator_Key_Collector->addKey(replicatorEntry);
@@ -141,7 +145,7 @@ namespace catapult { namespace validators {
         // Arrange:
         auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
         state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-        driveEntry.setSize(Drive_Size);
+        driveEntry.setSize(RandomDriveSize());
         driveEntry.setReplicatorCount(Replicator_Count);
         state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
 
@@ -158,7 +162,7 @@ namespace catapult { namespace validators {
         // Arrange:
         auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
         state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-        driveEntry.setSize(Drive_Size);
+        driveEntry.setSize(RandomDriveSize());
         driveEntry.setReplicatorCount(Replicator_Count);
         state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
         Replicator_Key_Collector->addKey(state::ReplicatorEntry(test::GenerateRandomByteArray<Key>()));
@@ -177,7 +181,7 @@ namespace catapult { namespace validators {
         auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
         auto driveKey = test::GenerateRandomByteArray<Key>();
         state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-        driveEntry.setSize(Drive_Size);
+        driveEntry.setSize(RandomDriveSize());
         driveEntry.setReplicatorCount(Replicator_Count);
         state::ReplicatorEntry replicatorEntry(driveKey);
         Replicator_Key_Collector->addKey(replicatorEntry);

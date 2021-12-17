@@ -89,7 +89,7 @@ namespace catapult { namespace observers {
 
                     verificationOpinion.emplace_back(model::VerificationOpinion{
                             verifier,
-                            test::GenerateRandomByteArray<BLSSignature>(),
+                            test::GenerateRandomByteArray<Signature>(),
                             opinions,
                     });
                 }

@@ -14,7 +14,6 @@
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/ReplicatorCache.h"
-#include "src/cache/BlsKeysCache.h"
 
 namespace catapult { namespace validators {
 
@@ -39,7 +38,27 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to drive data modification approval notifications and validates that:
 	/// - respective data modification is present in activeDataModifications
 	/// - respective data modification is the first (oldest) element in activeDataModifications
+	/// - all public keys are either Replicator keys of Drive Owner key
+	/// - none of the replicators has provided an opinion on itself
 	DECLARE_STATEFUL_VALIDATOR(DataModificationApproval, model::DataModificationApprovalNotification<1>)();
+
+	/// A validator implementation that applies to drive data modification approval download work notifications and validates that:
+	/// - respective drive and replicators exist
+	/// - drive's and replicators' account states exist
+	/// - all respective drive infos
+	/// - and replicators' keys are present in drive's confirmedUsedSizes
+	DECLARE_STATEFUL_VALIDATOR(DataModificationApprovalDownloadWork, model::DataModificationApprovalDownloadWorkNotification<1>)();
+
+	/// A validator implementation that applies to drive data modification approval upload work notifications and validates that:
+	/// - respective drive exists
+	/// - drive's and uploaders' account states exist
+	/// - all replicators' keys are present in drive's cumulativeUploadSizes
+	DECLARE_STATEFUL_VALIDATOR(DataModificationApprovalUploadWork, model::DataModificationApprovalUploadWorkNotification<1>)();
+
+	/// A validator implementation that applies to drive data modification approval refund notifications and validates that:
+	/// - respective drive exists
+	/// - drive's and drive owner's account states exist
+	DECLARE_STATEFUL_VALIDATOR(DataModificationApprovalRefund, model::DataModificationApprovalRefundNotification<1>)();
 
 	/// A validator implementation that applies to drive data modification cancel notifications and validates that:
 	/// -
@@ -71,9 +90,9 @@ namespace catapult { namespace validators {
 	/// - respective drive exists
 	/// - transaction signer is a replicator of the drive
 	/// - respective data modification is the last (newest) among approved data modifications
-	/// - percents in upload opinion sum up to 100
 	/// - each key in upload opinion is either a key of one of the current replicators of the drive, or a key of the drive owner
 	/// - each key in upload opinion appears exactly once
+	/// - transaction singer's key is present in drive's confirmedUsedSizes
 	DECLARE_STATEFUL_VALIDATOR(DataModificationSingleApproval, model::DataModificationSingleApprovalNotification<1>)();
 
 	/// A validator implementation that applies to drive verification payment notifications and validates that:
@@ -81,17 +100,18 @@ namespace catapult { namespace validators {
 	/// - transaction signer is the owner of the respective drive
 	DECLARE_STATEFUL_VALIDATOR(VerificationPayment, model::VerificationPaymentNotification<1>)();
 
-	/// A validator implementation that applies to download approval notifications and validates that:
+	/// A validator implementation that applies to opinion notifications and validates that:
 	/// - all replicators mentioned in opinions exist
-	/// - BLS signatures match corresponding parts of the transaction
+	/// - signatures match corresponding parts of the transaction
+	/// - each provided opinion is used at least once
 	/// - each provided public key is unique
 	/// - each provided public key is used in at least one opinion
-	/// - all provided individual parts are unique
 	DECLARE_STATEFUL_VALIDATOR(Opinion, model::OpinionNotification<1>)();
 
 	/// A validator implementation that applies to download approval notifications and validates that:
 	/// - respective download channel exists
 	/// - transaction sequence number is exactly one more than the number of completed download approval transactions of the download channel
+	/// - every replicator has provided an opinion on itself
 	DECLARE_STATEFUL_VALIDATOR(DownloadApproval, model::DownloadApprovalNotification<1>)();
 
 	/// A validator implementation that applies to drive closure notifications and validates that:

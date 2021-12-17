@@ -92,8 +92,8 @@ namespace catapult { namespace validators {
 	/// Opinion index is out of range.
 	DEFINE_STORAGE_RESULT(Invalid_Opinion_Index, 26);
 
-	/// BLS signature doesn't match the message.
-	DEFINE_STORAGE_RESULT(Invalid_BLS_Signature, 27);
+	/// Signature doesn't match the message (opinion).
+	DEFINE_STORAGE_RESULT(Opinion_Invalid_Signature, 27);
 
 	/// The key is present in the list of public keys, but no opinion about it is given.
 	DEFINE_STORAGE_RESULT(Opinion_Unused_Key, 28);
@@ -101,8 +101,8 @@ namespace catapult { namespace validators {
 	/// Not every individual part of the multisig transaction appears exactly once.
 	DEFINE_STORAGE_RESULT(Opinions_Reocurring_Individual_Parts, 29);
 
-	/// Download approval transaction for the corresponding billing period has already been approved.
-	DEFINE_STORAGE_RESULT(Overdue_Download_Approval, 30);
+	/// Multisig transaction for the corresponding billing period has already been approved.
+	DEFINE_STORAGE_RESULT(Transaction_Already_Approved, 30);
 
 	/// Download approval transaction sequence number is invalid
 	DEFINE_STORAGE_RESULT(Invalid_Sequence_Number, 31);
@@ -113,35 +113,47 @@ namespace catapult { namespace validators {
 	/// Recipient's account state is not found.
 	DEFINE_STORAGE_RESULT(Recipient_State_Not_Found, 33);
 
+	/// Replicator hasn't provided an opinion on itself.
+	DEFINE_STORAGE_RESULT(No_Opinion_Provided_On_Self, 34);
+
+	/// Opinion is provided, but its index does not appear in the list of opinion indices.
+	DEFINE_STORAGE_RESULT(Unused_Opinion, 35);
+
+	/// Replicator has provided an opinion on itself when he shouldn't have done this.
+	DEFINE_STORAGE_RESULT(Opinion_Provided_On_Self, 36);
+
+	/// There are no drive infos in the replicator entry with given drive key.
+	DEFINE_STORAGE_RESULT(Drive_Info_Not_Found, 37);
+
 	/// Verification Trigger is not equal to the pending verification.
-	DEFINE_STORAGE_RESULT(Verification_Bad_Verification_Trigger, 34);
+	DEFINE_STORAGE_RESULT(Verification_Bad_Verification_Trigger, 38);
 
 	/// The provided count of Provers is not equal to desired.
-	DEFINE_STORAGE_RESULT(Verification_Wrong_Number_Of_Provers, 35);
+	DEFINE_STORAGE_RESULT(Verification_Wrong_Number_Of_Provers, 39);
 
 	/// Not all Provers were in the Confirmed state at the start of Verification.
-	DEFINE_STORAGE_RESULT(Verification_Some_Provers_Are_Illegal, 36);
+	DEFINE_STORAGE_RESULT(Verification_Some_Provers_Are_Illegal, 40);
 
 	/// Validation failed because the data modification already exists.
-	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 38);
+	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 41);
 
 	/// Validation failed because the stream if not first in the queue.
-	DEFINE_STORAGE_RESULT(Invalid_Stream_Id, 39);
+	DEFINE_STORAGE_RESULT(Invalid_Stream_Id, 42);
 
 	/// Validation failed because the stream has already been finished.
-	DEFINE_STORAGE_RESULT(Stream_Already_Finished, 40);
+	DEFINE_STORAGE_RESULT(Stream_Already_Finished, 43);
 
 	/// Validation failed because declared stream actual size exceeds prepaid expected size
-	DEFINE_STORAGE_RESULT(Expected_Upload_Size_Exceeded, 41);
+	DEFINE_STORAGE_RESULT(Expected_Upload_Size_Exceeded, 44);
 
 	/// Desired drive size is greater than maximal.
-	DEFINE_STORAGE_RESULT(Drive_Size_Excessive, 42);
+	DEFINE_STORAGE_RESULT(Drive_Size_Excessive, 45);
 
 	/// Desired modification size is greater than maximal.
-	DEFINE_STORAGE_RESULT(Upload_Size_Excessive, 43);
+	DEFINE_STORAGE_RESULT(Upload_Size_Excessive, 46);
 
 	/// Desired download size is greater than maximal.
-	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 44);
+	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 47);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

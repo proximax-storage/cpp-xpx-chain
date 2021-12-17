@@ -23,7 +23,6 @@
 #include "storages/MongoBcDriveCacheStorage.h"
 #include "storages/MongoDownloadChannelCacheStorage.h"
 #include "storages/MongoReplicatorCacheStorage.h"
-#include "storages/MongoBlsKeysCacheStorage.h"
 
 extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
@@ -54,10 +53,6 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 			manager.configHolder()
 	));
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoReplicatorCacheStorage(
-			manager.mongoContext(),
-			manager.configHolder()
-	));
-	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoBlsKeysCacheStorage(
 			manager.mongoContext(),
 			manager.configHolder()
 	));

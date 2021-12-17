@@ -36,8 +36,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto doc = builder << "replicator" << bson_stream::open_document
 				<< "key" << ToBinary(entry.key())
 				<< "version" << static_cast<int32_t>(entry.version())
-				<< "capacity" << ToInt64(entry.capacity())
-				<< "blsKey" << ToBinary(entry.blsKey());
+				<< "capacity" << ToInt64(entry.capacity());
 
 		StreamDrives(builder, entry.drives());
 
@@ -77,12 +76,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		DbBinaryToModelArray(key, dbReplicatorEntry["key"].get_binary());
 		state::ReplicatorEntry entry(key);
 
-		entry.setVersion(static_cast<VersionType>(dbReplicatorEntry["capacity"].get_int32()));	// TODO: dbReplicatorEntry["version"]
+		entry.setVersion(static_cast<VersionType>(dbReplicatorEntry["version"].get_int32()));
 		entry.setCapacity(Amount(dbReplicatorEntry["capacity"].get_int64()));
-
-		BLSPublicKey blsKey;
-		DbBinaryToModelBytes(blsKey, dbReplicatorEntry["blsKey"].get_binary());
-		entry.setBlsKey(blsKey);
 
 		ReadDrives(entry.drives(), dbReplicatorEntry["drives"].get_array().value);
 

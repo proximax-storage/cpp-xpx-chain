@@ -29,6 +29,12 @@ namespace catapult { namespace validators {
         	return (config.ToConst());
         }
 
+		auto RandomUploadSize() {
+			const auto config = CreateConfig();
+			const auto maxModificationSize = config.Network.template GetPluginConfiguration<config::StorageConfiguration>().MaxModificationSize;
+			return test::RandomInRange<uint64_t>(1, maxModificationSize.megabytes());
+		}
+
         void AssertValidationResult(
                 ValidationResult expectedResult,
                 const state::BcDriveEntry& driveEntry,
@@ -69,7 +75,7 @@ namespace catapult { namespace validators {
                 state::ActiveDataModification(
 					test::GenerateRandomByteArray<Hash256>(),
 					test::GenerateRandomByteArray<Key>(),
-					test::Random(),
+					RandomUploadSize(),
 					std::string(folderNameBytes.begin(), folderNameBytes.end())
 				)
 			});
@@ -101,10 +107,12 @@ namespace catapult { namespace validators {
     TEST(TEST_CLASS, FailureWhenStreamAlreadyExists) {
         // Arrange:
         auto driveKey = test::GenerateRandomByteArray<Key>();
+		auto owner = test::GenerateRandomByteArray<Key>();
         auto id = test::GenerateRandomByteArray<Hash256>();
         state::BcDriveEntry entry(driveKey);
+		entry.setOwner(owner);
         entry.activeDataModifications().emplace_back(state::ActiveDataModification {
-            id, test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Hash256>(), test::Random()
+            id, owner, test::GenerateRandomByteArray<Hash256>(), test::Random()
         });
 		auto folderNameBytes = test::GenerateRandomVector(512);
 
@@ -115,8 +123,8 @@ namespace catapult { namespace validators {
             driveKey,
             {state::ActiveDataModification(
 				id,
-				test::GenerateRandomByteArray<Key>(),
-				test::Random(),
+				owner,
+				RandomUploadSize(),
 				std::string(folderNameBytes.begin(), folderNameBytes.end())
 			)}
 		);
@@ -126,7 +134,7 @@ namespace catapult { namespace validators {
     	// Arrange:
     	Key driveKey = test::GenerateRandomByteArray<Key>();
     	Key owner = test::GenerateRandomByteArray<Key>();
-    	uint64_t expectedUploadSize = test::Random();
+    	uint64_t expectedUploadSize = RandomUploadSize();
     	state::BcDriveEntry entry(driveKey);
     	auto folderNameBytes = test::GenerateRandomVector(512);
     	entry.activeDataModifications().emplace_back(state::ActiveDataModification(
@@ -149,8 +157,9 @@ namespace catapult { namespace validators {
         // Arrange:
         Key driveKey = test::GenerateRandomByteArray<Key>();
         Key owner = test::GenerateRandomByteArray<Key>();
-        uint64_t expectedUploadSize = test::Random();
+        uint64_t expectedUploadSize = RandomUploadSize();
         state::BcDriveEntry entry(driveKey);
+		entry.setOwner(owner);
 		auto folderNameBytes = test::GenerateRandomVector(512);
         entry.activeDataModifications().emplace_back(state::ActiveDataModification(
             test::GenerateRandomByteArray<Hash256>(), owner, expectedUploadSize,
