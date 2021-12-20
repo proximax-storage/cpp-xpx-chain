@@ -74,8 +74,9 @@ namespace catapult { namespace model {
 	private:
 		template<typename T>
 		static auto* PublicKeysPtrT(T& transaction) {
+			auto* pPayloadStart = THeader::PayloadStart(transaction);
 			const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
-			return totalKeysCount ? THeader::PayloadStart(transaction) : nullptr;
+			return totalKeysCount ? pPayloadStart : nullptr;
 		}
 
 		template<typename T>

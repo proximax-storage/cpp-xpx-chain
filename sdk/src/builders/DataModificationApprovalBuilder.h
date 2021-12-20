@@ -31,7 +31,23 @@ namespace catapult { namespace builders {
 
         void setFileStructureSize(uint64_t fileStructureSize);
 
+        void setMetaFilesSize(uint64_t metaFilesSize);
+
         void setUsedDriveSize(uint64_t usedDriveSize);
+
+        void setJudgingKeysCount(uint8_t judgingKeysCount);
+
+        void setOverlappingKeysCount(uint8_t overlappingKeysCount);
+
+        void setJudgedKeysCount(uint8_t judgedKeysCount);
+
+        void setPublicKeys(const std::vector<Key>& publicKeys);
+
+        void setSignatures(const std::vector<Signature>& signatures);
+
+        void setPresentOpinions(const std::vector<uint8_t>& presentOpinions);
+
+        void setOpinions(const std::vector<uint64_t>& opinions);
 
     public:
         /// Builds a new data modification approval transaction.
@@ -49,6 +65,14 @@ namespace catapult { namespace builders {
         Hash256 m_dataModificationId;
         Hash256 m_fileStructureCdi;
         uint64_t m_fileStructureSize;
+        uint64_t m_metaFilesSize;
         uint64_t m_usedDriveSize;
+        uint8_t m_judgingKeysCount;
+        uint8_t m_overlappingKeysCount;
+        uint8_t m_judgedKeysCount;
+        std::vector<Key> m_publicKeys;
+        std::vector<Signature> m_signatures;
+        std::vector<uint8_t> m_presentOpinions;
+        std::vector<uint64_t> m_opinions;
     };
 }}

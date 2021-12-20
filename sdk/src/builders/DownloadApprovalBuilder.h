@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+
 #include "TransactionBuilder.h"
 #include "plugins/txes/storage/src/model/DownloadApprovalTransaction.h"
 #include <vector>
@@ -23,13 +24,25 @@ namespace catapult { namespace builders {
 
     public:
 //        void setDriveKey(const Key& driveKey);
+
         void setDownloadChannelId(const Hash256& downloadChannelId);
+
         void setSequenceNumber(uint16_t sequenceNumber);
+
         void setResponseToFinishDownloadTransaction(bool responseToFinishDownloadTransaction);
-        void setReplicatorsKeys(const std::vector<Key>& keys);
-        void setOpinionIndices(const std::vector<uint8_t>& opinionIndices);
-        void setBlsSignatures(const std::vector<BLSSignature>& blsSignatures);
+
+        void setJudgingKeysCount(uint8_t judgingKeysCount);
+
+        void setOverlappingKeysCount(uint8_t overlappingKeysCount);
+
+        void setJudgedKeysCount(uint8_t judgedKeysCount);
+
+        void setPublicKeys(const std::vector<Key>& keys);
+
+        void setSignatures(const std::vector<Signature>& signatures);
+
         void setPresentOpinions(const std::vector<uint8_t>& presentOpinions);
+
         void setOpinions(const std::vector<uint64_t>& opinions);
 
     public:
@@ -48,9 +61,11 @@ namespace catapult { namespace builders {
         Hash256 m_downloadChannelId;
         uint16_t m_sequenceNumber;
         bool m_responseToFinishDownloadTransaction;
-        std::vector<Key> m_replicatorsKeys;
-        std::vector<uint8_t> m_opinionIndices;
-        std::vector<BLSSignature> m_blsSignatures;
+        uint8_t m_judgingKeysCount;
+        uint8_t m_overlappingKeysCount;
+        uint8_t m_judgedKeysCount;
+        std::vector<Key> m_publicKeys;
+        std::vector<Signature> m_signatures;
         std::vector<uint8_t> m_presentOpinions;
         std::vector<uint64_t> m_opinions;
     };

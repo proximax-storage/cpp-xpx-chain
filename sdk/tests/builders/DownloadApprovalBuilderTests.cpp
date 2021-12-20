@@ -4,41 +4,35 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/builders/DataModificationApprovalBuilder.h"
+#include "src/builders/DownloadApprovalBuilder.h"
 #include "sdk/tests/builders/test/BuilderTestUtils.h"
 
 namespace catapult { namespace builders {
 
-#define TEST_CLASS DataModificationApprovalTests
+#define TEST_CLASS DownloadApprovalTests
 
     namespace {
-        using RegularTraits = test::RegularTransactionTraits<model::DataModificationApprovalTransaction>;
-        using EmbeddedTraits = test::EmbeddedTransactionTraits<model::EmbeddedDataModificationApprovalTransaction>;
+        using RegularTraits = test::RegularTransactionTraits<model::DownloadApprovalTransaction>;
+        using EmbeddedTraits = test::EmbeddedTransactionTraits<model::EmbeddedDownloadApprovalTransaction>;
 
         struct TransactionProperties {
         public:
             TransactionProperties()
-                    : DriveKey(Key{})
-                      , DataModificationId(Hash256{})
-                      , FileStructureCdi(Hash256{})
-                      , FileStructureSize(0)
-                      , MetaFilesSize(0)
-                      , UsedDriveSize(0)
-                      , JudgingKeysCount(0)
-                      , OverlappingKeysCount(0)
-                      , JudgedKeysCount(0)
-                      , PublicKeys({})
-                      , Signatures({})
-                      , PresentOpinions({})
-                      , Opinions({}) {}
+                    : DownloadChannelId(Hash256{})
+                    , SequenceNumber(0)
+                    , ResponseToFinishDownloadTransaction(false)
+                    , JudgingKeysCount(0)
+                    , OverlappingKeysCount(0)
+                    , JudgedKeysCount(0)
+                    , PublicKeys({})
+                    , Signatures({})
+                    , PresentOpinions({})
+                    , Opinions({}) {}
 
         public:
-            Key DriveKey;
-            Hash256 DataModificationId;
-            Hash256 FileStructureCdi;
-            uint64_t FileStructureSize;
-            uint64_t MetaFilesSize;
-            uint64_t UsedDriveSize;
+            Hash256 DownloadChannelId;
+            uint16_t SequenceNumber;
+            bool ResponseToFinishDownloadTransaction;
             uint8_t JudgingKeysCount;
             uint8_t OverlappingKeysCount;
             uint8_t JudgedKeysCount;
@@ -51,12 +45,9 @@ namespace catapult { namespace builders {
         template<typename TTransaction>
         void
         AssertTransactionProperties(const TransactionProperties& expectedProperties, const TTransaction& transaction) {
-            EXPECT_EQ(expectedProperties.DriveKey, transaction.DriveKey);
-            EXPECT_EQ(expectedProperties.DataModificationId, transaction.DataModificationId);
-            EXPECT_EQ(expectedProperties.FileStructureCdi, transaction.FileStructureCdi);
-            EXPECT_EQ(expectedProperties.FileStructureSize, transaction.FileStructureSize);
-            EXPECT_EQ(expectedProperties.MetaFilesSize, transaction.MetaFilesSize);
-            EXPECT_EQ(expectedProperties.UsedDriveSize, transaction.UsedDriveSize);
+            EXPECT_EQ(expectedProperties.DownloadChannelId, transaction.DownloadChannelId);
+            EXPECT_EQ(expectedProperties.SequenceNumber, transaction.SequenceNumber);
+            EXPECT_EQ(expectedProperties.ResponseToFinishDownloadTransaction, transaction.ResponseToFinishDownloadTransaction);
             EXPECT_EQ(expectedProperties.JudgingKeysCount, transaction.JudgingKeysCount);
             EXPECT_EQ(expectedProperties.OverlappingKeysCount, transaction.OverlappingKeysCount);
             EXPECT_EQ(expectedProperties.JudgedKeysCount, transaction.JudgedKeysCount);
@@ -94,13 +85,13 @@ namespace catapult { namespace builders {
         void AssertCanBuildTransaction(
                 size_t propertiesSize,
                 const TransactionProperties& expectedProperties,
-                const consumer<DataModificationApprovalBuilder&>& buildTransaction) {
+                const consumer<DownloadApprovalBuilder&>& buildTransaction) {
             // Arrange:
             auto networkId = static_cast<model::NetworkIdentifier>(0x62);
             auto signer = test::GenerateRandomByteArray<Key>();
 
             // Act:
-            DataModificationApprovalBuilder builder(networkId, signer);
+            DownloadApprovalBuilder builder(networkId, signer);
             buildTransaction(builder);
             auto pTransaction = TTraits::InvokeBuilder(builder);
 
@@ -108,7 +99,7 @@ namespace catapult { namespace builders {
             TTraits::CheckFields(propertiesSize, *pTransaction);
             EXPECT_EQ(signer, pTransaction->Signer);
             EXPECT_EQ(0x62000001, pTransaction->Version);
-            EXPECT_EQ(model::Entity_Type_DataModificationApproval, pTransaction->Type);
+            EXPECT_EQ(model::Entity_Type_DownloadApproval, pTransaction->Type);
 
             AssertTransactionProperties(expectedProperties, *pTransaction);
         }
@@ -131,76 +122,39 @@ namespace catapult { namespace builders {
 
     // region required properties
 
-    TRAITS_BASED_TEST(CanSetDriveKey) {
+    TRAITS_BASED_TEST(CanSetDownloadChannelId) {
         // Arrange:
-        Key driveKey = test::GenerateRandomByteArray<Key>();
+        auto downloadChannelId = test::GenerateRandomByteArray<Hash256>();
         auto expectedProperties = TransactionProperties();
-        expectedProperties.DriveKey = driveKey;
+        expectedProperties.DownloadChannelId = downloadChannelId;
 
         // Assert:
         AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) {
-            builder.setDriveKey(driveKey);
+            builder.setDownloadChannelId(downloadChannelId);
         });
     }
 
-    TRAITS_BASED_TEST(CanSetDataModificationId) {
+    TRAITS_BASED_TEST(CanSetSequenceNumber) {
         // Arrange:
-        auto dataModificationId = test::GenerateRandomByteArray<Hash256>();
+        auto sequenceNumber = 3;
         auto expectedProperties = TransactionProperties();
-        expectedProperties.DataModificationId = dataModificationId;
+        expectedProperties.SequenceNumber = sequenceNumber;
 
         // Assert:
         AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) {
-            builder.setDataModificationId(dataModificationId);
+            builder.setSequenceNumber(sequenceNumber);
         });
     }
 
-    TRAITS_BASED_TEST(CanSetFileStructureCdi) {
+    TRAITS_BASED_TEST(CanSetResponseToFinishDownloadTransaction) {
         // Arrange:
-        auto fileStructureCdi = test::GenerateRandomByteArray<Hash256>();
-
+        auto responseToFinishDownloadTransaction = true;
         auto expectedProperties = TransactionProperties();
-        expectedProperties.FileStructureCdi = fileStructureCdi;
+        expectedProperties.ResponseToFinishDownloadTransaction = responseToFinishDownloadTransaction;
 
         // Assert:
         AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) {
-            builder.setFileStructureCdi(fileStructureCdi);
-        });
-    }
-
-    TRAITS_BASED_TEST(CanSetFileStructureSize) {
-        // Arrange:
-        auto fileStructureSize = 100;
-        auto expectedProperties = TransactionProperties();
-        expectedProperties.FileStructureSize = fileStructureSize;
-
-        // Assert:
-        AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) {
-            builder.setFileStructureSize(fileStructureSize);
-        });
-    }
-
-    TRAITS_BASED_TEST(CanSetMetaFilesSize) {
-        // Arrange:
-        auto metaFilesSize = 100;
-        auto expectedProperties = TransactionProperties();
-        expectedProperties.MetaFilesSize = metaFilesSize;
-
-        // Assert:
-        AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) {
-            builder.setMetaFilesSize(metaFilesSize);
-        });
-    }
-
-    TRAITS_BASED_TEST(CanSetUsedDriveSize) {
-        // Arrange:
-        auto usedDriveSize = 100;
-        auto expectedProperties = TransactionProperties();
-        expectedProperties.UsedDriveSize = usedDriveSize;
-
-        // Assert:
-        AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) {
-            builder.setUsedDriveSize(usedDriveSize);
+            builder.setResponseToFinishDownloadTransaction(responseToFinishDownloadTransaction);
         });
     }
 
