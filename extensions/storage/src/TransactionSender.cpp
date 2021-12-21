@@ -19,12 +19,99 @@ namespace catapult { namespace storage {
         CATAPULT_LOG(debug) << "sending data modification approval transaction "
                             << transactionInfo.m_modifyTransactionHash.data();
 
+        // TODO looks really overcomplicated
+
+        std::vector<Key> judgedKeys;
+        std::vector<Key> judgingKeys;
+        judgingKeys.reserve(transactionInfo.m_opinions.size());
+
+        std::vector<Signature> signatures;
+        signatures.reserve(transactionInfo.m_opinions.size());
+
+        // collect judging and judged keys
+        for (const auto& opinion : transactionInfo.m_opinions) {
+            judgingKeys.emplace_back(opinion.m_replicatorKey);
+            signatures.emplace_back(reinterpret_cast<const Signature&>(opinion.m_signature));
+
+            for (const auto& layout: opinion.m_uploadLayout)
+                judgedKeys.emplace_back(layout.m_key);
+        }
+
+        // separate overlapping keys
+        auto overlappingKeysCount = 0;
+        for (auto it = judgingKeys.begin(); it < judgingKeys.end(); ++it) {
+            auto judgedIter = std::find(judgedKeys.begin(), judgedKeys.end(), judgingKeys);
+            if (judgedIter == judgedKeys.end())
+                continue;
+
+            ++overlappingKeysCount;
+            std::iter_swap(it, judgingKeys.end() - overlappingKeysCount);
+            judgedKeys.erase(judgedIter);
+        }
+
+        const auto judgingKeysCount = judgingKeys.size() - overlappingKeysCount;
+        const auto judgedKeysCount = judgedKeys.size();
+
+        // merge all keys
+        std::vector<Key> publicKeys = std::move(judgingKeys);
+        publicKeys.insert(publicKeys.end(), judgedKeys.begin(), judgedKeys.end());
+
+        auto totalJudgingKeysCount = judgingKeysCount+overlappingKeysCount;
+        auto totalJudgedKeysCount = overlappingKeysCount+judgedKeysCount;
+
+        // prepare present opinions vector
+        boost::dynamic_bitset<std::uint8_t> presentOpinionsBitset;
+        presentOpinionsBitset.reserve(totalJudgingKeysCount*totalJudgedKeysCount);
+
+        // prepare opinions vector
+        std::vector<std::pair<Key, std::vector<uint64_t>>> opinions;
+        opinions.reserve(totalJudgingKeysCount);
+
+        // fill opinions by Public Keys with zero opinions
+        for (auto i = 0; i < totalJudgingKeysCount; i++)
+            opinions[0].first = publicKeys[i];
+
+        // parse opinions
+        for (const auto& opinion: transactionInfo.m_opinions) {
+            auto judgingKeyIter = std::find(publicKeys.begin(), publicKeys.end()-judgedKeysCount, opinion.m_replicatorKey);
+            const auto judgingKeyIndex = judgingKeyIter - publicKeys.begin();
+
+            for (const auto& layout: opinion.m_uploadLayout) {
+                auto judgedKeyIter = std::find(publicKeys.begin()+judgingKeysCount, publicKeys.end(), opinion.m_replicatorKey);
+                const auto judgedKeyIndex = publicKeys.end() - judgedKeyIter;
+
+                auto presentOpinionIndex = judgingKeyIndex * totalJudgedKeysCount + judgedKeyIndex;
+                presentOpinionsBitset[presentOpinionIndex] = true;
+
+                auto opinionIter = std::find(opinions.begin(), opinions.end(), opinion.m_replicatorKey);
+                opinionIter->second.emplace_back(layout.m_uploadedBytes);
+            }
+        }
+
+        // convert presentOpinionsBitset to uint8_t vector
+        std::vector<uint8_t> presentOpinions;
+        boost::to_block_range(presentOpinionsBitset, std::back_inserter(presentOpinions));
+
+        // convert opinions paired vector to uint64_t vector
+        std::vector<uint64_t> flatOpinions;
+        for (const auto& pairedOpinions : opinions)
+            for (const auto& opinion : pairedOpinions.second)
+                flatOpinions.emplace_back(opinion);
+
         builders::DataModificationApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
         builder.setDriveKey(transactionInfo.m_driveKey);
         builder.setDataModificationId(transactionInfo.m_modifyTransactionHash);
         builder.setFileStructureCdi(transactionInfo.m_rootHash);
         builder.setFileStructureSize(transactionInfo.m_fsTreeFileSize);
+        builder.setMetaFilesSize(transactionInfo.m_metaFilesSize);
         builder.setUsedDriveSize(transactionInfo.m_driveSize);
+        builder.setJudgingKeysCount(judgingKeysCount);
+        builder.setOverlappingKeysCount(overlappingKeysCount);
+        builder.setJudgedKeysCount(judgedKeysCount);
+        builder.setPublicKeys(publicKeys);
+        builder.setSignatures(signatures);
+        builder.setPresentOpinions(presentOpinions);
+        builder.setOpinions(flatOpinions);
 
         auto pTransaction = utils::UniqueToShared(builder.build());
         pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
@@ -42,24 +129,23 @@ namespace catapult { namespace storage {
                             << transactionInfo.m_modifyTransactionHash.data();
 
         auto singleOpinion = transactionInfo.m_opinions.at(0);
+
         std::vector<Key> keys;
         keys.reserve(singleOpinion.m_uploadLayout.size());
 
-        // TODO count percents here?
-        // in percent
-        std::vector<uint8_t> opinions;
-        keys.reserve(singleOpinion.m_uploadLayout.size());
+        std::vector<uint64_t> opinions;
+        opinions.reserve(singleOpinion.m_uploadLayout.size());
 
         for (const auto& layout: singleOpinion.m_uploadLayout) {
             keys.emplace_back(layout.m_key);
+            opinions.emplace_back(layout.m_uploadedBytes);
         }
 
         builders::DataModificationSingleApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
         builder.setDriveKey(transactionInfo.m_driveKey);
         builder.setDataModificationId(transactionInfo.m_modifyTransactionHash);
-        builder.setUsedDriveSize(transactionInfo.m_driveSize);
-        builder.setUploaderKeys(keys);
-        builder.setUploadOpinion(opinions);
+        builder.setPublicKeys(keys);
+        builder.setOpinions(opinions);
 
         auto pTransaction = utils::UniqueToShared(builder.build());
         pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
@@ -76,85 +162,95 @@ namespace catapult { namespace storage {
             const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
         CATAPULT_LOG(debug) << "sending download approval transaction " << transactionInfo.m_blockHash.data();
 
-        std::vector<uint8_t> opinionIndices;
-        opinionIndices.reserve(transactionInfo.m_opinions.size());
+        // TODO copy paste
 
-        std::vector<BLSSignature> signatures;
+        std::vector<Key> judgedKeys;
+        std::vector<Key> judgingKeys;
+        judgingKeys.reserve(transactionInfo.m_opinions.size());
+
+        std::vector<Signature> signatures;
         signatures.reserve(transactionInfo.m_opinions.size());
 
-        std::set<Key> judgingPubKeys;
-        std::set<Key> judgedPubKeys;
-        auto opinionIndex = 0;
-        for (const auto& opinion: transactionInfo.m_opinions) {
-            opinionIndices.emplace_back(opinionIndex);
-            judgingPubKeys.insert(opinion.m_replicatorKey);
-//            signatures.emplace_back(opinion.m_signature);
+        // collect judging and judged keys
+        for (const auto& opinion : transactionInfo.m_opinions) {
+            judgingKeys.emplace_back(opinion.m_replicatorKey);
+            signatures.emplace_back(reinterpret_cast<const Signature&>(opinion.m_signature));
 
             for (const auto& layout: opinion.m_downloadLayout)
-                judgedPubKeys.insert(layout.m_key);
-
-            opinionIndex++;
+                judgedKeys.emplace_back(layout.m_key);
         }
 
-        // TODO set them properly
-        std::vector<std::vector<bool>> presentOpinions;
-        presentOpinions.reserve(judgingPubKeys.size());
-
-        std::vector<std::vector<uint64_t>> opinions;
-        opinions.reserve(judgingPubKeys.size());
-
-        std::set<Key> allPubKeys = judgingPubKeys;
-        allPubKeys.insert(judgedPubKeys.begin(), judgedPubKeys.end());
-
-        for (auto row = 0; row < allPubKeys.size(); ++row) {
-            opinions.at(row).reserve(judgedPubKeys.size());
-            std::fill(opinions.at(row).begin(), opinions.at(row).end(), 0);
-
-            presentOpinions.at(row).reserve(judgedPubKeys.size());
-            std::fill(presentOpinions.at(row).begin(), presentOpinions.at(row).end(), false);
-
-            if (row >= judgingPubKeys.size())
+        // separate overlapping keys
+        auto overlappingKeysCount = 0;
+        for (auto it = judgingKeys.begin(); it < judgingKeys.end(); ++it) {
+            auto judgedIter = std::find(judgedKeys.begin(), judgedKeys.end(), judgingKeys);
+            if (judgedIter == judgedKeys.end())
                 continue;
 
-            for (const auto& layout: transactionInfo.m_opinions[row].m_downloadLayout) {
-                auto column = 0;
-                for (const auto& key: allPubKeys) {
-                    if (key == layout.m_key)
-                        break;
-
-                    column++;
-                }
-
-                presentOpinions[row][column] = true;
-                opinions[row][column] = layout.m_uploadedBytes;
-            }
-
-            row++;
+            ++overlappingKeysCount;
+            std::iter_swap(it, judgingKeys.end() - overlappingKeysCount);
+            judgedKeys.erase(judgedIter);
         }
 
-        std::vector<uint64_t> flatOpinions;
-        for (const auto& opinion: opinions)
-            flatOpinions.insert(flatOpinions.end(), opinion.begin(), opinion.end());
+        const auto judgingKeysCount = judgingKeys.size() - overlappingKeysCount;
+        const auto judgedKeysCount = judgedKeys.size();
 
-        boost::dynamic_bitset<uint8_t> bitset((flatOpinions.size() + 7) / 8);
-        auto index = 0;
-        for (const auto& presentOpinion: presentOpinions)
-            for (const auto& value: presentOpinion) {
-                bitset[index] = value;
-                index++;
+        // merge all keys
+        std::vector<Key> publicKeys = std::move(judgingKeys);
+        publicKeys.insert(publicKeys.end(), judgedKeys.begin(), judgedKeys.end());
+
+        auto totalJudgingKeysCount = judgingKeysCount+overlappingKeysCount;
+        auto totalJudgedKeysCount = overlappingKeysCount+judgedKeysCount;
+
+        // prepare present opinions vector
+        boost::dynamic_bitset<std::uint8_t> presentOpinionsBitset;
+        presentOpinionsBitset.reserve(totalJudgingKeysCount*totalJudgedKeysCount);
+
+        // prepare opinions vector
+        std::vector<std::pair<Key, std::vector<uint64_t>>> opinions;
+        opinions.reserve(totalJudgingKeysCount);
+
+        // fill opinions by Public Keys with zero opinions
+        for (auto i = 0; i < totalJudgingKeysCount; i++)
+            opinions[0].first = publicKeys[i];
+
+        // parse opinions
+        for (const auto& opinion: transactionInfo.m_opinions) {
+            auto judgingKeyIter = std::find(publicKeys.begin(), publicKeys.end()-judgedKeysCount, opinion.m_replicatorKey);
+            const auto judgingKeyIndex = judgingKeyIter - publicKeys.begin();
+
+            for (const auto& layout: opinion.m_downloadLayout) {
+                auto judgedKeyIter = std::find(publicKeys.begin()+judgingKeysCount, publicKeys.end(), opinion.m_replicatorKey);
+                const auto judgedKeyIndex = publicKeys.end() - judgedKeyIter;
+
+                auto presentOpinionIndex = judgingKeyIndex * totalJudgedKeysCount + judgedKeyIndex;
+                presentOpinionsBitset[presentOpinionIndex] = true;
+
+                auto opinionIter = std::find(opinions.begin(), opinions.end(), opinion.m_replicatorKey);
+                opinionIter->second.emplace_back(layout.m_uploadedBytes);
             }
+        }
 
-        std::vector<uint8_t> flatPresentOpinions;
-        boost::to_block_range(bitset, std::back_inserter(flatPresentOpinions));
+        // convert presentOpinionsBitset to uint8_t vector
+        std::vector<uint8_t> presentOpinions;
+        boost::to_block_range(presentOpinionsBitset, std::back_inserter(presentOpinions));
+
+        // convert opinions paired vector to uint64_t vector
+        std::vector<uint64_t> flatOpinions;
+        for (const auto& pairedOpinions : opinions)
+            for (const auto& opinion : pairedOpinions.second)
+                flatOpinions.emplace_back(opinion);
 
         builders::DownloadApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
         builder.setDownloadChannelId(transactionInfo.m_downloadChannelId);
         builder.setSequenceNumber(sequenceNumber);
         builder.setResponseToFinishDownloadTransaction(false); // TODO set right value
-        builder.setReplicatorsKeys(std::vector<Key>(allPubKeys.begin(), allPubKeys.end()));
-        builder.setOpinionIndices(opinionIndices);
-        builder.setBlsSignatures(signatures);
-        builder.setPresentOpinions(flatPresentOpinions);
+        builder.setJudgingKeysCount(judgingKeysCount);
+        builder.setOverlappingKeysCount(overlappingKeysCount);
+        builder.setJudgedKeysCount(judgedKeysCount);
+        builder.setPublicKeys(publicKeys);
+        builder.setSignatures(signatures);
+        builder.setPresentOpinions(presentOpinions);
         builder.setOpinions(flatOpinions);
 
         auto pTransaction = utils::UniqueToShared(builder.build());
