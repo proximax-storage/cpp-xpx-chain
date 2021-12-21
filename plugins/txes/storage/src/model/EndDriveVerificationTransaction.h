@@ -60,8 +60,8 @@ namespace catapult { namespace model {
         static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
             return sizeof(TransactionType)
                    + transaction.ProversCount * sizeof(Key)
-                   + transaction.VerificationOpinionsCount * (sizeof(Key) + sizeof(Signature))
-                   + transaction.VerificationOpinionsCount * transaction.ProversCount * (sizeof(Key) + sizeof(uint8_t)); // size of VerificationOpinion.Results
+                   + transaction.VerificationOpinionsCount * (sizeof(uint16_t) + sizeof(Signature))
+                   + transaction.VerificationOpinionsCount * transaction.ProversCount * (sizeof(uint16_t) + sizeof(uint8_t)); // size of VerificationOpinion.Results
         }
     };
 

@@ -86,11 +86,11 @@ namespace catapult { namespace validators {
 	/// Data modification is not present in activeDataModifications.
 	DEFINE_STORAGE_RESULT(No_Confirmed_Used_Sizes, 24);
 
-	/// Respective BLS public key already exists in BLS keys cache.
-	DEFINE_STORAGE_RESULT(BLS_Key_Already_Registered, 25);
+	/// Public keys mentioned in the transaction appear in wrong order.
+	DEFINE_STORAGE_RESULT(Opinion_Invalid_Key_Order, 25);
 
 	/// Opinion index is out of range.
-	DEFINE_STORAGE_RESULT(Invalid_Opinion_Index, 26);
+	DEFINE_STORAGE_RESULT(Opinion_Invalid_Index, 26);
 
 	/// Signature doesn't match the message (opinion).
 	DEFINE_STORAGE_RESULT(Opinion_Invalid_Signature, 27);

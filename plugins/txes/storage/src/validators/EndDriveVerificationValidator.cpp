@@ -43,6 +43,43 @@ namespace catapult { namespace validators {
                 return Failure_Storage_Verification_Some_Provers_Are_Illegal;
         }
 
+		// TODO: Check that ProversCount >= VerificationOpinionsCount
+
+		// Check if all indices in VerificationOpinions are valid
+		// TODO: Check for reoccurring and unused indices
+	  	std::vector<std::vector<bool>> presentOpinions;
+	  	presentOpinions.resize(notification.VerificationOpinionsCount);
+	  	auto pVerificationOpinion = notification.VerificationOpinionsPtr;
+	  	for (auto i = 0u; i < notification.VerificationOpinionsCount; ++i, ++pVerificationOpinion) {
+		  	const auto& verifierIndex = pVerificationOpinion->Verifier;
+			if (verifierIndex > notification.VerificationOpinionsCount)
+				return Failure_Storage_Opinion_Invalid_Index;
+			presentOpinions.at(verifierIndex).resize(notification.ProversCount, false);
+		  	for (const auto& result : pVerificationOpinion->Results) {
+				if (result.first > notification.ProversCount)
+					return Failure_Storage_Opinion_Invalid_Index;
+				presentOpinions.at(verifierIndex).at(result.first) = true;
+			}
+	  	}
+
+	  	// Check if the order of keys in Provers is valid (all judging keys should go before overlapping and judged ones)
+	  	auto switchesCount = 0u;	// Number of switches between series of empty and non-empty columns in presentOpinions
+		bool previousColumnIsEmpty = true;
+	  	for (auto j = 0u; j < notification.ProversCount; ++j) {
+		  	bool currentColumnIsEmpty = true;
+		  	for (auto i = 0u; i < notification.VerificationOpinionsCount; ++i)
+			  	if (presentOpinions.at(i).at(j)) {
+					currentColumnIsEmpty = false;
+				  	break;
+			  	}
+		  	if (currentColumnIsEmpty != previousColumnIsEmpty) {
+				++switchesCount;
+				if (switchesCount > 1)
+					return Failure_Storage_Opinion_Invalid_Key_Order;
+				previousColumnIsEmpty = currentColumnIsEmpty;
+			}
+	  	}
+
         return ValidationResult::Success;
     });
 }}
