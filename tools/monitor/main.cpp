@@ -176,7 +176,6 @@ namespace catapult { namespace tools { namespace monitor {
 				.Name("observed_blockchain")
 				.Help("Value of observed packets")
 				.Register(*registry);
-				
 				exposer.RegisterCollectable(registry);
 
 				for (;;) {
@@ -213,13 +212,17 @@ namespace catapult { namespace tools { namespace monitor {
 							ssoScore << pNodeInfo->ChainScore;
 							std::string score (ssoScore.str());
 
-							std::cout << node; 
-
 							//register node info to prometheus
 							auto& node_counter = packet_counter.Add({{"NodeInfo", node},
 							{"Height", height}, 
 							{"Score", score},  
 							{"Type", (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P")}});
+
+							double double_height;
+							ssoHeight >> double_height;
+							if (node_counter.Value() != double_height) {
+								node_counter.Increment(double_height);
+							}
 						}
 					});
 				
