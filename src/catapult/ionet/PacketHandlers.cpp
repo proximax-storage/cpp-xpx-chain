@@ -108,15 +108,19 @@ namespace catapult { namespace ionet {
 		m_handlers[rawType] = handler;
 	}
 
-	const ServerPacketHandlers::PacketHandler* ServerPacketHandlers::findHandler(const Packet& packet) const {
-		auto rawType = utils::to_underlying_type(packet.Type);
+	const ServerPacketHandlers::PacketHandler* ServerPacketHandlers::findHandler(PacketType type) const {
+		auto rawType = utils::to_underlying_type(type);
 		if (rawType >= m_handlers.size()) {
-			CATAPULT_LOG(warning) << "requested unknown handler: " << packet;
+			CATAPULT_LOG(warning) << "requested unknown handler: " << type;
 			return nullptr;
 		}
 
 		const auto& handler = m_handlers[rawType];
 		return handler ? &handler : nullptr;
+	}
+
+	const ServerPacketHandlers::PacketHandler* ServerPacketHandlers::findHandler(const Packet& packet) const {
+		return findHandler(packet.Type);
 	}
 
 	// endregion

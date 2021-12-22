@@ -50,7 +50,8 @@ namespace catapult { namespace fastfinality {
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		extensions::ServiceState& state,
 		consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&> rangeConsumer,
-		chain::CommitteeManager& committeeManager);
+		chain::CommitteeManager& committeeManager,
+		net::PacketIoPickerContainer& packetIoPickers);
 
 	action CreateDefaultDetectStageAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,

@@ -32,15 +32,23 @@ namespace catapult { namespace fastfinality {
 			, m_proposalWaitTimer(m_pPool->ioContext())
 			, m_confirmedBlockWaitTimer(m_pPool->ioContext())
 			, m_sm(boost::sml::sm<WeightedVotingTransitionTable>(m_actions))
-			, m_strand(m_pPool->ioContext())
 			, m_nodeWorkState(NodeWorkState::None)
 			, m_stopped(false)
 			, m_packetHandlers(config.Node.MaxPacketDataSize.bytes32())
 		{}
 
 	public:
-		void start() {
-			boost::asio::post(m_strand, [this] {
+		void start(const std::chrono::system_clock::duration& delay) {
+			m_timer.expires_after(delay);
+			m_timer.async_wait([this](const boost::system::error_code& ec) {
+				if (ec) {
+					if (ec == boost::asio::error::operation_aborted) {
+						return;
+					}
+
+					CATAPULT_THROW_EXCEPTION(boost::system::system_error(ec));
+				}
+
 				processEvent(StartLocalChainCheck{});
 			});
 		}
@@ -134,7 +142,6 @@ namespace catapult { namespace fastfinality {
 		boost::sml::sm<WeightedVotingTransitionTable> m_sm;
 		std::unique_ptr<ChainSyncData> m_pChainSyncData;
 		CommitteeData m_committeeData;
-		boost::asio::io_context::strand m_strand;
 		NodeWorkState m_nodeWorkState;
 		bool m_stopped;
 		ionet::ServerPacketHandlers m_packetHandlers;

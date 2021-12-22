@@ -80,7 +80,7 @@ namespace catapult { namespace model {
 							{ "minCommitteePhaseTime", "1s" },
 							{ "maxCommitteePhaseTime", "1m" },
 							{ "committeeMessageBroadcastInterval", "100ms" },
-							{ "committeeRequestInterval", "300ms" },
+							{ "committeeRequestInterval", "30s" },
 							{ "committeeTimeAdjustment", "1.1" },
 							{ "committeeEndSyncApproval", "0.45" },
 							{ "committeeBaseTotalImportance", "100" },
@@ -205,7 +205,7 @@ namespace catapult { namespace model {
 				EXPECT_EQ(utils::TimeSpan::FromSeconds(1), config.MinCommitteePhaseTime);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(1), config.MaxCommitteePhaseTime);
 				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(100), config.CommitteeMessageBroadcastInterval);
-				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(300), config.CommitteeRequestInterval);
+				EXPECT_EQ(utils::TimeSpan::FromSeconds(30), config.CommitteeRequestInterval);
 				EXPECT_EQ(1.1, config.CommitteeTimeAdjustment);
 
 				EXPECT_EQ(2u, config.Plugins.size());

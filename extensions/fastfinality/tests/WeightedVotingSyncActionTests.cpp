@@ -56,7 +56,7 @@ namespace catapult {
 				{};
 
 				void start() {
-					m_pFsm->start();
+					m_pFsm->start(std::chrono::seconds(0));
 					m_pPool->join();
 				}
 

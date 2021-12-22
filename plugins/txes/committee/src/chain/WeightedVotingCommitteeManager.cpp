@@ -126,7 +126,7 @@ namespace catapult { namespace chain {
 
 	const Committee& WeightedVotingCommitteeManager::selectCommittee(const model::NetworkConfiguration& networkConfig) {
 		auto previousRound = m_committee.Round;
-		CATAPULT_LOG_LEVEL(utils::LogLevel::Debug) << "selecting committee for round " << previousRound + 1;
+		CATAPULT_LOG_LEVEL(utils::LogLevel::Trace) << "selecting committee for round " << previousRound + 1;
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
 		if (previousRound < 0) {
 			LogAccountData(m_accounts);

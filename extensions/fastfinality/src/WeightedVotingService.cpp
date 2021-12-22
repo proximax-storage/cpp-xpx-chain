@@ -191,6 +191,10 @@ namespace catapult { namespace fastfinality {
 				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
 
 				auto& packetHandlers = pFsmShared->packetHandlers();
+				auto pPullBlocksHandler = state.packetHandlers().findHandler(ionet::PacketType::Pull_Blocks);
+				if (!pPullBlocksHandler)
+					CATAPULT_THROW_RUNTIME_ERROR("Pull blocks handler is not registered");
+				packetHandlers.registerHandler(ionet::PacketType::Pull_Blocks, *pPullBlocksHandler);
 				RegisterPushProposedBlockHandler(pFsmShared, packetHandlers, pluginManager);
 				RegisterPushConfirmedBlockHandler(pFsmShared, packetHandlers, pluginManager);
 				RegisterPushPrevoteMessageHandler(pFsmShared, packetHandlers);
@@ -223,7 +227,8 @@ namespace catapult { namespace fastfinality {
 					pFsmShared,
 					state,
 					blockRangeConsumer,
-					pluginManager.getCommitteeManager());
+					pluginManager.getCommitteeManager(),
+					packetIoPickers);
 				actions.DetectStage = CreateDefaultDetectStageAction(
 					pFsmShared,
 					pConfigHolder,
@@ -263,7 +268,7 @@ namespace catapult { namespace fastfinality {
 				actions.ResetRound = CreateDefaultResetRoundAction(pFsmShared, pConfigHolder, pluginManager.getCommitteeManager());
 				actions.WaitForConfirmedBlock = CreateDefaultWaitForConfirmedBlockAction(pFsmShared, lastBlockElementSupplier);
 
-				pFsmShared->start();
+				pFsmShared->start(10 * std::chrono::seconds(config.Network.CommitteeRequestInterval.seconds()));
 			}
 
 		private:

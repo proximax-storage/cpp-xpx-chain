@@ -29,23 +29,6 @@ namespace catapult { namespace fastfinality {
 			return approvalRating / totalRating >= config.CommitteeEndSyncApproval;
 		}
 
-		template<typename TValue, typename TValueArray, typename TValueAdapter>
-		auto FindMostFrequentValue(const TValueArray& values, const TValueAdapter& adapter) {
-			TValue mostFrequentValue;
-			uint32_t maxFrequency = 0;
-			std::map<TValue, uint32_t> valueFrequencies;
-			for (const auto& valueWrapper : values) {
-				const auto& value = adapter(valueWrapper);
-				auto frequency = ++valueFrequencies[value];
-				if (maxFrequency <= frequency) {
-					maxFrequency = frequency;
-					mostFrequentValue = value;
-				}
-			}
-
-			return std::make_pair(mostFrequentValue, maxFrequency);
-		}
-
 		void DelayAction(
 				std::shared_ptr<WeightedVotingFsm> pFsmShared,
 				boost::asio::system_timer& timer,
@@ -93,7 +76,8 @@ namespace catapult { namespace fastfinality {
 			}
 
 		  	const auto& config = pConfigHolder->Config().Network;
-		  	if (remoteNodeStates.empty()) {
+		  	if (remoteNodeStates.size() < config.CommitteeSize) {
+				CATAPULT_LOG(debug) << "insufficient number of remote node states collected (" << remoteNodeStates.size() << ")";
 				DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeRequestInterval.millis(),
 					[pFsmWeak] {
 						TRY_GET_FSM()
@@ -125,14 +109,14 @@ namespace catapult { namespace fastfinality {
 					}
 
 					auto& pair = hashKeys[state.BlockHash];
-					pair.first += importanceGetter(state.NodeKey);
+					pair.first = 0;
 					for (const auto& key : state.HarvesterKeys) {
 						pair.first += importanceGetter(key);
 					}
 					pair.second.push_back(state.NodeKey);
 				}
 
-				std::map<uint64_t, std::vector<Key>> importanceKeys;
+				std::map<uint64_t, std::vector<Key>, std::greater<uint64_t>> importanceKeys;
 				for (const auto& pair : hashKeys)
 					importanceKeys[pair.second.first] = pair.second.second;
 
@@ -230,8 +214,9 @@ namespace catapult { namespace fastfinality {
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			extensions::ServiceState& state,
 			consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&> rangeConsumer,
-			chain::CommitteeManager& committeeManager) {
-		return [pFsmWeak, &state, rangeConsumer, &committeeManager]() {
+			chain::CommitteeManager& committeeManager,
+			net::PacketIoPickerContainer& packetIoPickers) {
+		return [pFsmWeak, &state, rangeConsumer, &committeeManager, &packetIoPickers]() {
 			TRY_GET_FSM()
 
 			const auto& config = state.config();
@@ -249,7 +234,7 @@ namespace catapult { namespace fastfinality {
 			for (const auto& identityKey : chainSyncData.NodeIdentityKeys) {
 				std::vector<std::shared_ptr<model::Block>> blocks;
 				{
-					auto packetIoPair = state.packetIoPickers().pickMatching(syncTimeout, identityKey);
+					auto packetIoPair = packetIoPickers.pickMatching(syncTimeout, identityKey);
 					if (!packetIoPair)
 						continue;
 
@@ -272,6 +257,7 @@ namespace catapult { namespace fastfinality {
 					committeeManager.reset();
 					while (committeeManager.committee().Round < pBlock->round())
 						committeeManager.selectCommittee(config.Network);
+					CATAPULT_LOG(debug) << "selected committee for round " << committeeManager.committee().Round;
 
 					if (ValidateBlockCosignatures(pBlock, committeeManager, committeeApproval)) {
 						auto pPromise = std::make_shared<thread::promise<bool>>();
@@ -373,6 +359,7 @@ namespace catapult { namespace fastfinality {
 
 				committeeManager.selectCommittee(config);
 			}
+			CATAPULT_LOG(debug) << "selected committee for round " << committeeManager.committee().Round;
 
 			CommitteeStage stage {
 				committeeManager.committee().Round,
@@ -407,6 +394,7 @@ namespace catapult { namespace fastfinality {
 			const auto& config = pConfigHolder->Config().Network;
 			while (committeeManager.committee().Round < stage.Round)
 				committeeManager.selectCommittee(config);
+			CATAPULT_LOG(debug) << "selected committee for round " << committeeManager.committee().Round;
 
 			const auto& committee = committeeManager.committee();
 			auto accounts = committeeData.unlockedAccounts()->view();
@@ -641,6 +629,9 @@ namespace catapult { namespace fastfinality {
 			auto pProposedBlock = committeeData.proposedBlock();
 			if (!pProposedBlock)
 				CATAPULT_THROW_RUNTIME_ERROR("no proposal to validate");
+			CATAPULT_LOG(debug) << "Proposed block:\nsigner " << pProposedBlock->Signer
+					<< "\nheight " << pProposedBlock->Height << "\nround " << pProposedBlock->round()
+					<< "\ntimestamp " << pProposedBlock->Timestamp << "\nstate hash " << pProposedBlock->StateHash;
 
 			if (pProposedBlock->Height > lastBlockElementSupplier()->Block.Height + Height(1)) {
 				pFsmShared->processEvent(UnexpectedBlockHeight{});

@@ -92,7 +92,7 @@ namespace catapult { namespace ionet {
 		/// Registers a \a handler for the specified packet \a type.
 		void registerHandler(PacketType type, const PacketHandler& handler);
 
-	private:
+		const PacketHandler* findHandler(PacketType type) const;
 		const PacketHandler* findHandler(const Packet& packet) const;
 
 	private:
