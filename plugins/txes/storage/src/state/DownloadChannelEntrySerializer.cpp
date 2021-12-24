@@ -53,6 +53,7 @@ namespace catapult { namespace state {
 
 		io::Write(output, downloadEntry.id());
 		io::Write(output, downloadEntry.consumer());
+		io::Write(output, downloadEntry.drive());
 		io::Write64(output, downloadEntry.downloadSize());
 		io::Write16(output, downloadEntry.downloadApprovalCount());
 
@@ -74,6 +75,10 @@ namespace catapult { namespace state {
 		Key consumer;
 		input.read(consumer);
 		entry.setConsumer(consumer);
+
+		Key drive;
+		input.read(drive);
+		entry.setDrive(drive);
 
 		entry.setDownloadSize(io::Read64(input));
 		entry.setDownloadApprovalCount(io::Read16(input));

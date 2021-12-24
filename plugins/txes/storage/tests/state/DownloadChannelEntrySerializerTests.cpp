@@ -68,6 +68,8 @@ namespace catapult { namespace state {
 			pData += Hash256_Size;
             EXPECT_EQ_MEMORY(entry.consumer().data(), pData, Key_Size);
             pData += Key_Size;
+			EXPECT_EQ_MEMORY(entry.drive().data(), pData, Key_Size);
+			pData += Key_Size;
 			uint64_t downloadSize = *reinterpret_cast<const uint64_t*>(pData);
 			pData += sizeof(downloadSize);
 			EXPECT_EQ(entry.downloadSize(), downloadSize);
@@ -90,7 +92,7 @@ namespace catapult { namespace state {
             DownloadChannelEntrySerializer::Save(entry, context.outputStream());
 
             // Assert:
-//            ASSERT_EQ(Entry_Size, context.buffer().size());
+			// ASSERT_EQ(Entry_Size, context.buffer().size());
             AssertEntryBuffer(entry, context.buffer().data(), context.buffer().size(), version);
         }
 
@@ -158,6 +160,7 @@ namespace catapult { namespace state {
 			CopyToVector(buffer, (const uint8_t*) &version, sizeof(VersionType));
 			CopyToVector(buffer, entry.id().data(), Hash256_Size);
 			CopyToVector(buffer, entry.consumer().data(), Key_Size);
+			CopyToVector(buffer, entry.drive().data(), Key_Size);
 			CopyToVector(buffer, (const uint8_t*) &entry.downloadSize(), sizeof(uint64_t));
 			CopyToVector(buffer, (const uint8_t*) &entry.downloadApprovalCount(), sizeof(uint16_t));
 

@@ -108,6 +108,10 @@ namespace catapult { namespace validators {
 	/// - each provided public key is used in at least one opinion
 	DECLARE_STATEFUL_VALIDATOR(Opinion, model::OpinionNotification<1>)();
 
+	/// A validator implementation that applies to download notifications and validates that:
+	/// - respective drive exists
+	DECLARE_STATEFUL_VALIDATOR(DownloadChannel, model::DownloadNotification<1>)();
+
 	/// A validator implementation that applies to download approval notifications and validates that:
 	/// - respective download channel exists
 	/// - transaction sequence number is exactly one more than the number of completed download approval transactions of the download channel

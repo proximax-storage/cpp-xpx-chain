@@ -21,13 +21,14 @@ namespace catapult { namespace model {
 			// Arrange:
 			auto expectedSize =
 					baseSize // base
+					+ sizeof(Key) // drive key
 					+ sizeof(uint64_t) // prepaid download size
 					+ sizeof(Amount) // feedback fee size
 					+ sizeof(uint16_t); // public keys size
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 18u, sizeof(T));
+			EXPECT_EQ(baseSize + 50u, sizeof(T));
 		}
 
 		template<typename T>

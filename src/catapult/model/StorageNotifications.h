@@ -283,12 +283,14 @@ namespace catapult { namespace model {
 		explicit DownloadNotification(
 				const Hash256& id,
 				const Key& consumer,
+				const Key& drive,
 				uint64_t downloadSize,
 				uint16_t listOfPublicKeysSize,
 				const Key* listOfPublicKeysPtr)
 			: Notification(Notification_Type, sizeof(DownloadNotification<1>))
 			, Id(id)
 			, Consumer(consumer)
+			, DriveKey(drive)
 			, DownloadSize(downloadSize)
 			, ListOfPublicKeysSize(listOfPublicKeysSize)
 			, ListOfPublicKeysPtr(listOfPublicKeysPtr)
@@ -301,6 +303,9 @@ namespace catapult { namespace model {
 
 		/// Public key of the download consumer.
 		Key Consumer;
+
+		/// Public key of the drive.
+		Key DriveKey;
 
 		/// Delta size of download.
 		uint64_t DownloadSize;

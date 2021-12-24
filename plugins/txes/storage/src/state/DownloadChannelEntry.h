@@ -33,6 +33,16 @@ namespace catapult { namespace state {
 			return m_consumer;
 		}
 
+		/// Sets \a drive of download channel.
+		void setDrive(const Key& drive) {
+			m_drive = drive;
+		}
+
+		/// Gets drive of download channel.
+		const Key& drive() const {
+			return m_drive;
+		}
+
         /// Sets \a downloadSize of download channel.
         void setDownloadSize(const uint64_t& downloadSize) {
 			m_downloadSize = downloadSize;
@@ -85,6 +95,7 @@ namespace catapult { namespace state {
 
 	private:
 		Key m_consumer;
+		Key m_drive;
 		uint64_t m_downloadSize; // In Mbytes
 		uint16_t m_downloadApprovalCount;
 		std::vector<Key> m_listOfPublicKeys;

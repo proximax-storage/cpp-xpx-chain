@@ -36,6 +36,7 @@ namespace catapult { namespace plugins {
 					sub.notify(DownloadNotification<1>(
 							downloadChannelId,
 							transaction.Signer,
+							transaction.DriveKey,
 							transaction.DownloadSize,
 							transaction.ListOfPublicKeysSize,
 							transaction.ListOfPublicKeysPtr()

@@ -27,6 +27,9 @@ namespace catapult { namespace model {
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Download, 1)
 
 	public:
+		/// Public key of the drive.
+		Key DriveKey;
+
 		/// Prepaid Download Size.
 		uint64_t DownloadSize;
 

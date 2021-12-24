@@ -180,6 +180,7 @@ maxDownloadSize = 10TB
 storageBillingPeriod = 672h
 downloadBillingPeriod = 24h
 expectedVerificationFrequency = 4h
+maxShardSize = 20
 
 [plugin:catapult.plugins.streaming]
 

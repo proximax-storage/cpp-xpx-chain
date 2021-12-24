@@ -152,12 +152,14 @@ namespace catapult { namespace test {
     state::DownloadChannelEntry CreateDownloadChannelEntry(
             Hash256 id,
             Key consumer,
+			Key drive,
 			uint64_t downloadSize,
 			uint16_t downloadApprovalCount,
 			std::vector<Key> listOfPublicKeys,
 			std::map<Key, Amount> cumulativePayments) {
         state::DownloadChannelEntry entry(id);
         entry.setConsumer(consumer);
+		entry.setDrive(drive);
 		entry.setDownloadSize(downloadSize);
 		entry.setDownloadApprovalCount(downloadApprovalCount);
 		entry.listOfPublicKeys() = listOfPublicKeys;
@@ -187,6 +189,7 @@ namespace catapult { namespace test {
     void AssertEqualDownloadChannelData(const state::DownloadChannelEntry& expectedEntry, const state::DownloadChannelEntry& entry) {
         EXPECT_EQ(expectedEntry.id(), entry.id());
         EXPECT_EQ(expectedEntry.consumer(), entry.consumer());
+		EXPECT_EQ(expectedEntry.drive(), entry.drive());
 		EXPECT_EQ(expectedEntry.downloadSize(), entry.downloadSize());
 		EXPECT_EQ(expectedEntry.downloadApprovalCount(), entry.downloadApprovalCount());
 

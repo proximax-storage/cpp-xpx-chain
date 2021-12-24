@@ -188,6 +188,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDataModificationSingleApprovalValidator())
 		  		.add(validators::CreateVerificationPaymentValidator())
 				.add(validators::CreateOpinionValidator())
+				.add(validators::CreateDownloadChannelValidator())
 				.add(validators::CreateDownloadApprovalValidator())
 				.add(validators::CreateDownloadApprovalPaymentValidator())
 				.add(validators::CreateDownloadChannelRefundValidator())

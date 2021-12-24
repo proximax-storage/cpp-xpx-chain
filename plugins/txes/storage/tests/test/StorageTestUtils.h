@@ -109,6 +109,7 @@ namespace catapult { namespace test {
     state::DownloadChannelEntry CreateDownloadChannelEntry(
         Hash256 id = test::GenerateRandomByteArray<Hash256>(),
         Key consumer = test::GenerateRandomByteArray<Key>(),
+		Key drive = test::GenerateRandomByteArray<Key>(),
 		uint64_t downloadSize = test::Random(),
 		uint16_t downloadApprovalCount = test::Random16(),
 		std::vector<Key> listOfPublicKeys = {test::GenerateRandomByteArray<Key>()},

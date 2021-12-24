@@ -179,6 +179,7 @@ maxDownloadSize = 10TB
 # 4 weeks = 28 days = 672 hours
 storageBillingPeriod = 672h
 downloadBillingPeriod = 24h
+maxShardSize = 20
 
 [plugin:catapult.plugins.streaming]
 

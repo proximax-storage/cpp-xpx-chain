@@ -49,6 +49,9 @@ namespace catapult { namespace config {
 		/// Expected Verification frequency.
 		utils::TimeSpan ExpectedVerificationFrequency;
 
+		/// Maximum number of replicators that one shard can contain.
+		uint16_t MaxShardSize;
+
 	private:
 		StorageConfiguration() = default;
 
