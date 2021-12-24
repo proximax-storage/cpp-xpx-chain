@@ -44,13 +44,11 @@ namespace catapult { namespace storage {
                 );
 
                 auto signature = m_transactionSender.sendDataModificationApprovalTransaction(
-                        (const crypto::KeyPair&) replicator.keyPair(), transactionInfo);
+                        (const crypto::KeyPair&) replicator.keyPair(),
+                        transactionInfo
+                );
                 auto handler = [&](const Hash256& hash, uint32_t status) {
-                    if (!!status)
-                        replicator.asyncApprovalTransactionHasBeenPublished(transactionInfo);
-
-                    validators::ValidationResult validationResult{status};
-                    if (validationResult == validators::Failure_Storage_Opinion_Invalid_Key)
+                    if (validators::ValidationResult{status} == validators::Failure_Storage_Opinion_Invalid_Key)
                         replicator.asyncApprovalTransactionHasFailedInvalidSignatures(
                                 sirius::Key{}, //TODO pass real key
                                 (const std::array<uint8_t, 32UL>&) hash
@@ -70,15 +68,6 @@ namespace catapult { namespace storage {
                         (const crypto::KeyPair&) replicator.keyPair(),
                         transactionInfo
                 );
-
-                auto signature = m_transactionSender.sendDataModificationApprovalTransaction(
-                        (const crypto::KeyPair&) replicator.keyPair(), transactionInfo);
-                auto handler = [&](const Hash256& hash, uint32_t status) {
-                    if (!!status)
-                        replicator.asyncSingleApprovalTransactionHasBeenPublished(transactionInfo);
-                };
-
-                m_transactionStatusHandler.addHandler(signature, handler);
             }
 
             void downloadApprovalTransactionIsReady(
@@ -93,12 +82,7 @@ namespace catapult { namespace storage {
                         info
                 );
                 auto handler = [&](const Hash256& hash, uint32_t status) {
-                    if (!!status)
-                        replicator.asyncDownloadApprovalTransactionHasBeenPublished(info.m_blockHash,
-                                                                                    info.m_downloadChannelId);
-
-                    validators::ValidationResult validationResult{status};
-                    if (validationResult != validators::Failure_Storage_Invalid_Sequence_Number)
+                    if (validators::ValidationResult{status} != validators::Failure_Storage_Invalid_Sequence_Number)
                         replicator.asyncDownloadApprovalTransactionHasFailedInvalidSignatures(
                                 (const sirius::utils::ByteArray<32, sirius::Hash256_tag>&) hash,
                                 info.m_downloadChannelId
