@@ -227,6 +227,26 @@ namespace catapult { namespace storage {
             );
         }
 
+        void dataModificationApprovalPublished(
+                const Key& driveKey,
+                const Hash256& modificationId,
+                const Hash256& rootHash,
+                std::vector<Key>& replicators) {
+            m_pReplicator->asyncApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationApprovalTransactionInfo{
+                    (const std::array<uint8_t,32>&) driveKey,
+                    (const std::array<uint8_t,32>&) modificationId,
+                    (const std::array<uint8_t,32>&) rootHash,
+                    reinterpret_cast<const std::vector<std::array<unsigned char, 32>>&>(replicators)
+            });
+        }
+
+        void dataModificationSingleApprovalPublished(const Key& driveKey, const Hash256& modificationId) {
+            m_pReplicator->asyncSingleApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationSingleApprovalTransactionInfo{
+                    (const std::array<uint8_t,32>&) driveKey,
+                    (const std::array<uint8_t,32>&) modificationId
+            });
+        }
+
         void notifyTransactionStatus(
                 const model::Transaction& transaction,
                 const Height& height,
@@ -368,6 +388,20 @@ namespace catapult { namespace storage {
             uint32_t status) {
         if (m_pImpl)
             m_pImpl->notifyTransactionStatus(transaction, height, hash, status);
+    }
+
+    void ReplicatorService::dataModificationApprovalPublished(
+            const Key& driveKey,
+            const Hash256& modificationId,
+            const Hash256& rootHash,
+            std::vector<Key>& replicators) {
+        if (m_pImpl)
+            m_pImpl->dataModificationApprovalPublished(driveKey, modificationId, rootHash, replicators);
+    }
+
+    void ReplicatorService::dataModificationSingleApprovalPublished(const Key& driveKey, const Hash256& modificationId) {
+        if (m_pImpl)
+            m_pImpl->dataModificationSingleApprovalPublished(driveKey, modificationId);
     }
 
     // endregion

@@ -23,7 +23,6 @@ namespace catapult { namespace storage {
 
     public:
         void start();
-
         void stop();
 
         void setServiceState(extensions::ServiceState* pServiceState) {
@@ -35,21 +34,19 @@ namespace catapult { namespace storage {
         bool isReplicatorRegistered(const Key& key);
 
         void addDriveModification(const Key& driveKey, const Hash256& downloadDataCdi, const Hash256& modificationId, const Key& owner, uint64_t dataSize);
-
         void removeDriveModification(const Key& driveKey, const Hash256& dataModificationId);
 
         void addDriveChannel(const Hash256& channelId, const Key& driveKey, size_t prepaidDownloadSize, const std::vector<Key>& consumers);
-
-        // TODO update download channel size
         void increaseDownloadChannelSize(const Hash256& channelId, size_t downloadSize);
-
         void closeDriveChannel(const Hash256& channelId);
 
         void addDrive(const Key& driveKey, uint64_t driveSize, uint64_t usedSize);
-
         bool containsDrive(const Key& driveKey);
-
         void closeDrive(const Key& driveKey, const Hash256& transactionHash);
+
+    public:
+        void dataModificationApprovalPublished(const Key& driveKey, const Hash256& modificationId, const Hash256& rootHash, std::vector<Key>& replicators);
+        void dataModificationSingleApprovalPublished(const Key& driveKey, const Hash256& modificationId);
 
     public:
         void notifyTransactionStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status);

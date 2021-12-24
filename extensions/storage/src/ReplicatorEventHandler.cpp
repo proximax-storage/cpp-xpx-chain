@@ -82,9 +82,20 @@ namespace catapult { namespace storage {
                         info
                 );
                 auto handler = [&](const Hash256& hash, uint32_t status) {
-                    if (validators::ValidationResult{status} != validators::Failure_Storage_Invalid_Sequence_Number)
+                    // success transaction handles here because it's a bit complicate to find `eventHash`
+                    // in notification handlers
+                    if (!!status) {
+//                        auto driveClosed = m_storageState.driveExist(driveKey); // TODO for V3
+                        replicator.asyncDownloadApprovalTransactionHasBeenPublished(
+                                info.m_blockHash,
+                                info.m_downloadChannelId
+                        );
+                    }
+
+                    validators::ValidationResult validationResult{status};
+                    if (validationResult != validators::Failure_Storage_Invalid_Sequence_Number)
                         replicator.asyncDownloadApprovalTransactionHasFailedInvalidSignatures(
-                                (const sirius::utils::ByteArray<32, sirius::Hash256_tag>&) hash,
+                                info.m_blockHash,
                                 info.m_downloadChannelId
                         );
                 };
