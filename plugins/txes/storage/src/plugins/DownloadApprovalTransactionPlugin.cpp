@@ -49,7 +49,8 @@ namespace catapult { namespace plugins {
 							transaction.JudgingKeysCount,
 							transaction.OverlappingKeysCount,
 							transaction.JudgedKeysCount,
-							transaction.PresentOpinionsPtr()
+							transaction.PresentOpinionsPtr(),
+							transaction.PublicKeysPtr()
 				  	));
 
 					sub.notify(DownloadApprovalPaymentNotification<1>(

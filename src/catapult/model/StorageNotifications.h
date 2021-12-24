@@ -917,7 +917,8 @@ namespace catapult { namespace model {
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
-				const uint8_t* presentOpinionsPtr)
+				const uint8_t* presentOpinionsPtr,
+				const Key* publicKeysPtr)
 			: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
 			, DownloadChannelId(id)
 			, SequenceNumber(number)
@@ -925,6 +926,7 @@ namespace catapult { namespace model {
 			, OverlappingKeysCount(overlappingKeysCount)
 			, JudgedKeysCount(judgedKeysCount)
 			, PresentOpinionsPtr(presentOpinionsPtr)
+			, PublicKeysPtr(publicKeysPtr)
 		{}
 
 	public:
@@ -946,6 +948,9 @@ namespace catapult { namespace model {
 		/// Two-dimensional array of opinion element presence.
 		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).
 		const uint8_t* PresentOpinionsPtr;
+
+		/// Replicators' public keys.
+		const Key* PublicKeysPtr;
 	};
 
 	/// Notification of an opinion-based payment for a download approval transaction.
