@@ -16,47 +16,55 @@ namespace catapult { namespace observers {
 		auto& driveEntry = driveCache.find(notification.DriveKey).get();
 
 		auto& activeDataModifications = driveEntry.activeDataModifications();
-		auto activeDataModificationIter = activeDataModifications.begin();
+        auto cancelingDataModificationIter = std::find_if(
+                activeDataModifications.begin(),
+                activeDataModifications.end(),
+                [&notification](state::ActiveDataModification& modification){
+                    return modification.Id == notification.DataModificationId;
+		});
 
-		for (; activeDataModificationIter != activeDataModifications.end(); ++activeDataModificationIter) {
-			if (activeDataModificationIter->Id == notification.DataModificationId) {
-				activeDataModifications.erase(activeDataModificationIter);
-				driveEntry.completedDataModifications().emplace_back(state::CompletedDataModification{
-						*activeDataModificationIter,
-						state::DataModificationState::Cancelled
-				});
-				break;
-			}
-		}
-
+        const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+        auto driveStateIter = accountStateCache.find(notification.DriveKey);
+        auto& driveState = driveStateIter.get();
 		auto driveOwnerIter = accountStateCache.find(driveEntry.owner());
-		auto& driveOwner = driveOwnerIter.get();
+        auto& driveOwnerState = driveOwnerIter.get();
 
-		if (activeDataModificationIter->Id != activeDataModifications.front().Id) {
-			const auto refund = Amount(2 * activeDataModificationIter->ExpectedUploadSize * driveEntry.replicatorCount());
-			driveOwner.Balances.debit(streamingMosaicId, refund, context.Height);
+        // Making payments:
+        const auto& modificationSize = cancelingDataModificationIter->ExpectedUploadSize;
+		if (cancelingDataModificationIter->Id == activeDataModifications.front().Id) {
+            // Performing download & upload work transfer for replicators
+            const auto& replicators = driveEntry.replicators();
+            const auto totalReplicatorAmount = Amount(
+                    modificationSize +	// Download work
+                    modificationSize * (replicators.size() - 1) / replicators.size());	// Upload work
 
-			return;
+            for (const auto& replicatorKey : replicators) {
+                auto replicatorIter = accountStateCache.find(replicatorKey);
+                auto& replicatorState = replicatorIter.get();
+                driveState.Balances.debit(streamingMosaicId, totalReplicatorAmount, context.Height);
+                replicatorState.Balances.credit(currencyMosaicId, totalReplicatorAmount, context.Height);
+		    }
+
+            // Performing upload work transfer & stream refund for the drive owner
+            const auto totalDriveOwnerAmount = Amount(
+                    modificationSize +	// Upload work
+                    2 * modificationSize * (driveEntry.replicatorCount() - replicators.size()));	// Stream refund
+            driveState.Balances.debit(streamingMosaicId, totalDriveOwnerAmount, context.Height);
+            driveOwnerState.Balances.credit(currencyMosaicId, totalDriveOwnerAmount, context.Height);
+        } else {
+            // Performing refund for the drive owner
+            const auto refundAmount = Amount(2 * modificationSize * driveEntry.replicatorCount());
+            driveState.Balances.debit(streamingMosaicId, refundAmount, context.Height);
+            driveOwnerState.Balances.credit(currencyMosaicId, refundAmount, context.Height);
 		}
 
-		const auto downloadRefund = Amount(activeDataModificationIter->ExpectedUploadSize);
-		const auto uploadRefund = Amount(activeDataModificationIter->ExpectedUploadSize
-										 * (driveEntry.replicators().size() - 1) / driveEntry.replicators().size());
-
-		for (const auto& replicator: driveEntry.replicators()) {
-			auto replicatorIter = accountStateCache.find(replicator);
-			auto& rep = replicatorIter.get();
-
-			rep.Balances.debit(streamingMosaicId, downloadRefund, context.Height);
-			rep.Balances.debit(streamingMosaicId, uploadRefund, context.Height);
-		}
-
-		const auto clientUploadRefund = Amount(activeDataModificationIter->ExpectedUploadSize);
-		const auto streamingRefundAmount = Amount(2 * activeDataModificationIter->ExpectedUploadSize *
-											   (driveEntry.replicatorCount() - driveEntry.replicators().size()));
-		driveOwner.Balances.debit(streamingMosaicId, clientUploadRefund, context.Height);
-		driveOwner.Balances.debit(streamingMosaicId, streamingRefundAmount, context.Height);
+        // Updating data modification lists in the drive entry:
+        driveEntry.completedDataModifications().emplace_back(state::CompletedDataModification{
+                *cancelingDataModificationIter,
+                state::DataModificationState::Cancelled
+        });
+        activeDataModifications.erase(cancelingDataModificationIter);
 	})
 }}
