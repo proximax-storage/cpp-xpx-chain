@@ -177,7 +177,7 @@ namespace catapult { namespace tools { namespace monitor {
 				.Name("observed_blockchain")
 				.Help("Value of observed packets")
 				.Register(*registry);
-				exposer.RegisterCollectable(registry);
+				// exposer.RegisterCollectable(registry);
 
 				auto& height_gauge = BuildGauge()
 									.Name("height_gauge")
@@ -194,7 +194,7 @@ namespace catapult { namespace tools { namespace monitor {
   // ask the exposer to scrape the registry on incoming HTTP requests
   exposer.RegisterCollectable(registry);
 
-				auto& height_count = height_gauge.Add({{"Height", "height"}});
+				// auto& height_count = height_gauge.Add({{"Height", "height"}});
 
 // auto& tcp_rx_counter =
 //       packet_counter.Add({{"protocol", "tcp"}, {"direction", "rx"}});
@@ -260,6 +260,8 @@ namespace catapult { namespace tools { namespace monitor {
 							ssoScore << pNodeInfo->ChainScore;
 							std::string score (ssoScore.str());
 
+							auto& height_count = height_gauge.Add({{"Node", node}});
+
 							//register node info to prometheus
 							// auto& node_counter = packet_counter.Add({{"NodeInfo", node},
 							// {"Height", height}, 
@@ -282,6 +284,30 @@ namespace catapult { namespace tools { namespace monitor {
 					std::this_thread::sleep_for(std::chrono::seconds(8));
 				}
 			}
+
+		//-----------------------------------------------------------------------------
+
+		// void PrettyPrintSummary(const std::vector<NodeInfoPointer>& nodeInfos) {
+		// 	Height maxChainHeight;
+		// 	size_t maxNodeNameSize = 0;
+		// 	size_t maxHeightSize = 0;
+		// 	for (const auto& pNodeInfo : nodeInfos) {
+		// 		maxChainHeight = std::max(maxChainHeight, pNodeInfo->ChainHeight);
+		// 		maxNodeNameSize = std::max(maxNodeNameSize, GetStringSize(pNodeInfo->Node));
+		// 		maxHeightSize = std::max(maxHeightSize, GetStringSize(pNodeInfo->ChainHeight));
+		// 	}
+
+		// 	for (const auto& pNodeInfo : nodeInfos) {
+		// 		auto level = MapRelativeHeightToLogLevel(pNodeInfo->ChainHeight, maxChainHeight);
+		// 		CATAPULT_LOG_LEVEL(level)
+		// 				<< std::string(GetLevelLeftPadding(level), ' ') << std::setw(static_cast<int>(maxNodeNameSize)) << pNodeInfo->Node
+		// 				<< " [" << (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P") << "]"
+		// 				<< " at height " << std::setw(static_cast<int>(maxHeightSize)) << pNodeInfo->ChainHeight
+		// 				<< " with score " << pNodeInfo->ChainScore;
+		// 	}
+		// }
+
+		//-----------------------------------------------------------------------------
 
 		private:
 			std::string m_resourcesPath;
