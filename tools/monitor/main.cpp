@@ -166,62 +166,16 @@ namespace catapult { namespace tools { namespace monitor {
 				auto apiNodes = LoadOptionalApiPeers(m_resourcesPath, config.Immutable.NetworkIdentifier);
 
 				using namespace prometheus;
-				//prometheus : create a http server running on port 8080
 				Exposer exposer{"0.0.0.0:8080"};
 
-				//prometheus : create a metric registry
 				auto registry = std::make_shared<Registry>();
-
-				//prometheus : add a counter family to the registry
-				auto& packet_counter = BuildCounter()
-				.Name("observed_blockchain")
-				.Help("Value of observed packets")
-				.Register(*registry);
-				// exposer.RegisterCollectable(registry);
 
 				auto& height_gauge = BuildGauge()
 									.Name("height_gauge")
                                     .Help("Chain height")
                                     .Register(*registry);
 
-
-//				
-				auto& http_requests_counter = BuildCounter()
-                                    .Name("http_requests_total")
-                                    .Help("Number of HTTP requests")
-                                    .Register(*registry);
-
-  // ask the exposer to scrape the registry on incoming HTTP requests
-  exposer.RegisterCollectable(registry);
-
-				// auto& height_count = height_gauge.Add({{"Height", "height"}});
-
-// auto& tcp_rx_counter =
-//       packet_counter.Add({{"protocol", "tcp"}, {"direction", "rx"}});
-//   auto& tcp_tx_counter =
-//       packet_counter.Add({{"protocol", "tcp"}, {"direction", "tx"}});
-//   auto& udp_rx_counter =
-//       packet_counter.Add({{"protocol", "udp"}, {"direction", "rx"}});
-//   auto& udp_tx_counter =
-//       packet_counter.Add({{"protocol", "udp"}, {"direction", "tx"}});
-// //
-// 				for (;;) {
-//     std::this_thread::sleep_for(std::chrono::seconds(1));
-//     const auto random_value = std::rand();
-
-//     if (random_value & 1) tcp_rx_counter.Increment();
-//     if (random_value & 2) tcp_tx_counter.Increment();
-//     if (random_value & 4) udp_rx_counter.Increment();
-//     if (random_value & 8) udp_tx_counter.Increment();
-
-//     const std::array<std::string, 4> methods = {"GET", "PUT", "POST", "HEAD"};
-//     auto method = methods.at(random_value % methods.size());
-//     // dynamically calling Family<T>.Add() works but is slow and should be
-//     // avoided
-//     http_requests_counter.Add({{"method", method}}).Increment();
-//   }
-
-
+				exposer.RegisterCollectable(registry);
 
 				for (;;) {
 					MultiNodeConnector connector;
@@ -239,7 +193,7 @@ namespace catapult { namespace tools { namespace monitor {
 					std::vector<NodeInfoPointer> nodeInfos;
 
 					auto finalFuture = thread::when_all(std::move(nodeInfoFutures))
-							.then([this, &nodeInfos, &packet_counter, &height_count, &height_gauge]
+							.then([this, &nodeInfos, &packet_counter, &height_gauge]
 							(auto&& allFutures) {
 
 						for (auto& nodeInfoFuture : allFutures.get()) {
@@ -262,52 +216,18 @@ namespace catapult { namespace tools { namespace monitor {
 
 							auto& height_count = height_gauge.Add({{"Node", node}});
 
-							//register node info to prometheus
-							// auto& node_counter = packet_counter.Add({{"NodeInfo", node},
-							// {"Height", height}, 
-							// {"Score", score},  
-							// {"Type", (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P")}});
-						
-							// height_gauge.Add({{"Height", height}}).Increment();
-
 							double double_height;
 							ssoHeight >> double_height;
+
 							if (height_count.Value() != double_height) {
 								height_count.Increment(double_height-height_count.Value());
 							}
-							// if (height_gauge.Value() != double_height) {
-							// 	height_gauge.Increment(double_height-height_gauge.Value());
-							// }
 						}
 					});
 				
-					std::this_thread::sleep_for(std::chrono::seconds(8));
+					std::this_thread::sleep_for(std::chrono::seconds(50));
 				}
 			}
-
-		//-----------------------------------------------------------------------------
-
-		// void PrettyPrintSummary(const std::vector<NodeInfoPointer>& nodeInfos) {
-		// 	Height maxChainHeight;
-		// 	size_t maxNodeNameSize = 0;
-		// 	size_t maxHeightSize = 0;
-		// 	for (const auto& pNodeInfo : nodeInfos) {
-		// 		maxChainHeight = std::max(maxChainHeight, pNodeInfo->ChainHeight);
-		// 		maxNodeNameSize = std::max(maxNodeNameSize, GetStringSize(pNodeInfo->Node));
-		// 		maxHeightSize = std::max(maxHeightSize, GetStringSize(pNodeInfo->ChainHeight));
-		// 	}
-
-		// 	for (const auto& pNodeInfo : nodeInfos) {
-		// 		auto level = MapRelativeHeightToLogLevel(pNodeInfo->ChainHeight, maxChainHeight);
-		// 		CATAPULT_LOG_LEVEL(level)
-		// 				<< std::string(GetLevelLeftPadding(level), ' ') << std::setw(static_cast<int>(maxNodeNameSize)) << pNodeInfo->Node
-		// 				<< " [" << (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P") << "]"
-		// 				<< " at height " << std::setw(static_cast<int>(maxHeightSize)) << pNodeInfo->ChainHeight
-		// 				<< " with score " << pNodeInfo->ChainScore;
-		// 	}
-		// }
-
-		//-----------------------------------------------------------------------------
 
 		private:
 			std::string m_resourcesPath;
