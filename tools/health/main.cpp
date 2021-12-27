@@ -125,6 +125,8 @@ namespace catapult { namespace tools { namespace health {
 				{"Type", (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P")}});
 			}
 		}
+
+		
 	
 		//endregion
 
