@@ -92,7 +92,6 @@ namespace catapult { namespace plugins {
 						"VerificationPaymentValidator",
 						"OpinionValidator",
 						"DownloadApprovalValidator",
-						"DownloadApprovalPaymentValidator",
 						"DownloadChannelRefundValidator",
 						"DriveClosureValidator",
 						"DataModificationApprovalDownloadWorkValidator",

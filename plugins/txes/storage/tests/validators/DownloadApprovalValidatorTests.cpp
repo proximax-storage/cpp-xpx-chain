@@ -20,8 +20,24 @@ namespace catapult { namespace validators {
 		using Notification = model::DownloadApprovalNotification<1>;
 
 		constexpr auto Current_Height = Height(10);
-		constexpr auto Replicator_Count = 5;
-		constexpr auto Common_Data_Size_Download_Approval = sizeof(Hash256) + sizeof(uint16_t) + sizeof(bool);
+		constexpr auto Shard_Size = 5;
+		constexpr auto Required_Signatures_Count = Shard_Size * 2 / 3 + 1;
+		constexpr auto Common_Data_Size_Download_Approval = sizeof(Hash256) + sizeof(Hash256) + sizeof(uint16_t) + sizeof(bool);
+
+		std::vector<crypto::KeyPair> CreateReplicatorKeyPairs(const uint16_t& replicatorCount = Shard_Size) {
+			std::vector<crypto::KeyPair> replicatorKeyPairs;
+			test::PopulateReplicatorKeyPairs(replicatorKeyPairs, replicatorCount);
+			return replicatorKeyPairs;
+		};
+
+		state::DownloadChannelEntry CreateDownloadChannelEntry(const std::vector<crypto::KeyPair>& replicatorKeyPairs) {
+			auto entry = test::CreateDownloadChannelEntry();
+			entry.cumulativePayments().clear();
+			for (const auto& keyPair : replicatorKeyPairs)
+				entry.cumulativePayments().emplace(keyPair.publicKey(), Amount(0));
+
+			return entry;
+		}
 
 		void AssertValidationResult(
 				const ValidationResult& expectedResult,
@@ -30,19 +46,24 @@ namespace catapult { namespace validators {
 				const uint16_t sequenceNumber,
 				const test::OpinionData<uint64_t>& opinionData) {
 			// Arrange:
-			const auto totalJudgingKeysCount = opinionData.JudgingKeysCount + opinionData.OverlappingKeysCount;
-			const auto totalJudgedKeysCount = opinionData.OverlappingKeysCount + opinionData.JudgedKeysCount;
+			const auto totalKeysCount = opinionData.JudgingKeysCount + opinionData.OverlappingKeysCount + opinionData.JudgedKeysCount;
+			const auto totalJudgingKeysCount = totalKeysCount - opinionData.JudgedKeysCount;
+			const auto totalJudgedKeysCount = totalKeysCount - opinionData.JudgingKeysCount;
 			const auto presentOpinionElementCount = totalJudgingKeysCount * totalJudgedKeysCount;
 			const auto presentOpinionByteCount = (presentOpinionElementCount + 7) / 8;
 
-			const auto pPresentOpinionsBegin = std::unique_ptr<uint8_t[]>(new uint8_t[presentOpinionByteCount]);
+			const auto pPublicKeys = std::make_unique<Key[]>(totalKeysCount);
+			for (auto i = 0u; i < totalKeysCount; ++i)
+				pPublicKeys[i] = opinionData.PublicKeys.at(i);
+
+			const auto pPresentOpinions = std::make_unique<uint8_t[]>(presentOpinionByteCount);
 			for (auto i = 0u; i < presentOpinionByteCount; ++i) {
 				boost::dynamic_bitset<uint8_t> byte(8, 0u);
 				for (auto j = 0u; j < std::min(8u, presentOpinionElementCount - i*8); ++j) {
 					const auto bitNumber = i*8 + j;
 					byte[j] = opinionData.PresentOpinions.at(bitNumber / totalJudgedKeysCount).at(bitNumber % totalJudgedKeysCount);
 				}
-				boost::to_block_range(byte, &pPresentOpinionsBegin[i]);
+				boost::to_block_range(byte, &pPresentOpinions[i]);
 			}
 
 			Notification notification(
@@ -51,7 +72,8 @@ namespace catapult { namespace validators {
 					opinionData.JudgingKeysCount,
 					opinionData.OverlappingKeysCount,
 					opinionData.JudgedKeysCount,
-					pPresentOpinionsBegin.get()
+					pPublicKeys.get(),
+					pPresentOpinions.get()
 			);
 			auto pValidator = CreateDownloadApprovalValidator();
 
@@ -65,14 +87,12 @@ namespace catapult { namespace validators {
 		void AssertValidationResultWithoutOpinionData(
 				const ValidationResult& expectedResult,
 				cache::CatapultCache& cache,
+				const std::vector<crypto::KeyPair>& replicatorKeyPairs,
 				const Hash256& downloadChannelId,
 				const uint16_t sequenceNumber) {
 			// Generate valid opinion data:
-			std::vector<crypto::KeyPair> replicatorKeyPairs;
-			test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
-
-			const auto totalKeysCount = test::RandomInRange<uint8_t>(1, replicatorKeyPairs.size());
-			const auto overlappingKeysCount = test::RandomInRange<uint8_t>(1, totalKeysCount);
+			const auto totalKeysCount = test::RandomInRange<uint8_t>(Required_Signatures_Count, Shard_Size);
+			const auto overlappingKeysCount = test::RandomInRange<uint8_t>(Required_Signatures_Count, totalKeysCount);
 			const auto judgedKeysCount = totalKeysCount - overlappingKeysCount;
 			const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 			auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer, {0, overlappingKeysCount, judgedKeysCount});
@@ -97,7 +117,8 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
-		auto downloadChannelEntry = test::CreateDownloadChannelEntry();
+		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
 		downloadChannelDelta.insert(downloadChannelEntry);
 		cache.commit(Current_Height);
 
@@ -105,6 +126,7 @@ namespace catapult { namespace validators {
 		AssertValidationResultWithoutOpinionData(
 				ValidationResult::Success,
 				cache,
+				replicatorKeyPairs,
 				downloadChannelEntry.id(),
 				downloadChannelEntry.downloadApprovalCount()+1);
 	}
@@ -112,13 +134,39 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenDownloadChannelNotFound) {
 		// Arrange:
 		auto cache = test::StorageCacheFactory::Create();
-		auto downloadChannelEntry = test::CreateDownloadChannelEntry();
+		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
 		// Not inserting downloadChannelEntry into DownloadChannelCache.
 
 		// Assert:
 		AssertValidationResultWithoutOpinionData(
 				Failure_Storage_Download_Channel_Not_Found,
 				cache,
+				replicatorKeyPairs,
+				downloadChannelEntry.id(),
+				downloadChannelEntry.downloadApprovalCount()+1);
+	}
+
+	TEST(TEST_CLASS, FailureWhenSignatureCountInsufficient) {
+		// Arrange:
+		auto cache = test::StorageCacheFactory::Create();
+		auto delta = cache.createDelta();
+		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
+		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
+
+		// Double the number of replicators in downloadChannelEntry's shard
+		for (auto i = 0u; i < Shard_Size; ++i)
+			downloadChannelEntry.cumulativePayments().emplace(test::GenerateRandomByteArray<Key>(), Amount(0));
+
+		downloadChannelDelta.insert(downloadChannelEntry);
+		cache.commit(Current_Height);
+
+		// Assert:
+		AssertValidationResultWithoutOpinionData(
+				Failure_Storage_Signature_Count_Insufficient,
+				cache,
+				replicatorKeyPairs,
 				downloadChannelEntry.id(),
 				downloadChannelEntry.downloadApprovalCount()+1);
 	}
@@ -128,7 +176,8 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
-		auto downloadChannelEntry = test::CreateDownloadChannelEntry();
+		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
 		downloadChannelDelta.insert(downloadChannelEntry);
 		cache.commit(Current_Height);
 
@@ -136,6 +185,7 @@ namespace catapult { namespace validators {
 		AssertValidationResultWithoutOpinionData(
 				Failure_Storage_Transaction_Already_Approved,
 				cache,
+				replicatorKeyPairs,
 				downloadChannelEntry.id(),
 				downloadChannelEntry.downloadApprovalCount());
 	}
@@ -145,7 +195,8 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
-		auto downloadChannelEntry = test::CreateDownloadChannelEntry();
+		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
 		if (downloadChannelEntry.downloadApprovalCount() == 0)	// Overflow prevention
 			downloadChannelEntry.incrementDownloadApprovalCount();
 		downloadChannelDelta.insert(downloadChannelEntry);
@@ -155,6 +206,7 @@ namespace catapult { namespace validators {
 		AssertValidationResultWithoutOpinionData(
 				Failure_Storage_Invalid_Sequence_Number,
 				cache,
+				replicatorKeyPairs,
 				downloadChannelEntry.id(),
 				test::RandomInRange<uint16_t>(0, downloadChannelEntry.downloadApprovalCount() - 1));
 	}
@@ -164,7 +216,8 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
-		auto downloadChannelEntry = test::CreateDownloadChannelEntry();
+		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
 		const auto upperLimit = std::numeric_limits<uint16_t>::max();
 		if (downloadChannelEntry.downloadApprovalCount() > upperLimit - 2)	// Overflow prevention
 			downloadChannelEntry.setDownloadApprovalCount(upperLimit - 2);
@@ -175,6 +228,7 @@ namespace catapult { namespace validators {
 		AssertValidationResultWithoutOpinionData(
 				Failure_Storage_Invalid_Sequence_Number,
 				cache,
+				replicatorKeyPairs,
 				downloadChannelEntry.id(),
 				test::RandomInRange<uint16_t>(downloadChannelEntry.downloadApprovalCount() + 2, upperLimit));
 	}
@@ -184,16 +238,14 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
-		auto downloadChannelEntry = test::CreateDownloadChannelEntry();
+		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
 		downloadChannelDelta.insert(downloadChannelEntry);
 		cache.commit(Current_Height);
 
-		std::vector<crypto::KeyPair> replicatorKeyPairs;
-		test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
-
-		const auto totalKeysCount = test::RandomInRange<uint8_t>(2, replicatorKeyPairs.size());
+		const auto totalKeysCount = test::RandomInRange<uint8_t>(Required_Signatures_Count, Shard_Size);
 		const auto judgingKeysCount = test::RandomInRange<uint8_t>(1, totalKeysCount-1);
-		const auto overlappingKeysCount = test::RandomInRange<uint8_t>(0, totalKeysCount - judgingKeysCount);
+		const auto overlappingKeysCount = test::RandomInRange<uint8_t>(Required_Signatures_Count - judgingKeysCount, totalKeysCount - judgingKeysCount);
 		const auto judgedKeysCount = totalKeysCount - judgingKeysCount - overlappingKeysCount;
 		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer, {judgingKeysCount, overlappingKeysCount, judgedKeysCount});
@@ -213,15 +265,13 @@ namespace catapult { namespace validators {
 		auto cache = test::StorageCacheFactory::Create();
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
-		auto downloadChannelEntry = test::CreateDownloadChannelEntry();
+		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
 		downloadChannelDelta.insert(downloadChannelEntry);
 		cache.commit(Current_Height);
 
-		std::vector<crypto::KeyPair> replicatorKeyPairs;
-		test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);
-
-		const auto totalKeysCount = test::RandomInRange<uint8_t>(1, replicatorKeyPairs.size());
-		const auto overlappingKeysCount = test::RandomInRange<uint8_t>(1, totalKeysCount);
+		const auto totalKeysCount = test::RandomInRange<uint8_t>(Required_Signatures_Count, Shard_Size);
+		const auto overlappingKeysCount = test::RandomInRange<uint8_t>(Required_Signatures_Count, totalKeysCount);
 		const auto judgedKeysCount = totalKeysCount - overlappingKeysCount;
 		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
 		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer, {0, overlappingKeysCount, judgedKeysCount});
@@ -239,5 +289,28 @@ namespace catapult { namespace validators {
 				downloadChannelEntry.id(),
 				downloadChannelEntry.downloadApprovalCount()+1,
 				opinionData);
+	}
+
+	TEST(TEST_CLASS, FailureWhenInvalidKey) {
+		// Arrange:
+		auto cache = test::StorageCacheFactory::Create();
+		auto delta = cache.createDelta();
+		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
+		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
+		downloadChannelDelta.insert(downloadChannelEntry);
+		cache.commit(Current_Height);
+
+		// Act:
+		const auto targetKeyIndex = test::RandomInRange(0, Required_Signatures_Count-1);
+		replicatorKeyPairs.at(targetKeyIndex) = crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(test::RandomByte));
+
+		// Assert:
+		AssertValidationResultWithoutOpinionData(
+				Failure_Storage_Opinion_Invalid_Key,
+				cache,
+				replicatorKeyPairs,
+				downloadChannelEntry.id(),
+				downloadChannelEntry.downloadApprovalCount()+1);
 	}
 }}

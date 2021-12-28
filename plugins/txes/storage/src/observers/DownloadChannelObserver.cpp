@@ -37,7 +37,7 @@ namespace catapult { namespace observers {
 					shardSize, std::mt19937{std::random_device{}()});
 	  	auto& cumulativePayments = downloadEntry.cumulativePayments();
 		for (const auto& key : sampleReplicators)
-			cumulativePayments.emplace(key, 0);
+			cumulativePayments.emplace(key, Amount(0));
 
 		downloadCache.insert(downloadEntry);
 	});

@@ -23,11 +23,13 @@ namespace catapult { namespace plugins {
 			  	switch (transaction.EntityVersion()) {
 			  	case 1: {
 					const auto commonDataSize = sizeof(transaction.DownloadChannelId)
+												+ sizeof(transaction.ApprovalTrigger)
 												+ sizeof(transaction.SequenceNumber)
 												+ sizeof(transaction.ResponseToFinishDownloadTransaction);
 					auto* const commonDataPtr = new uint8_t[commonDataSize];
 					auto* pCommonData = commonDataPtr;
 					utils::WriteToByteArray(pCommonData, transaction.DownloadChannelId);
+					utils::WriteToByteArray(pCommonData, transaction.ApprovalTrigger);
 					utils::WriteToByteArray(pCommonData, transaction.SequenceNumber);
 					utils::WriteToByteArray(pCommonData, transaction.ResponseToFinishDownloadTransaction);
 
@@ -50,6 +52,7 @@ namespace catapult { namespace plugins {
 							transaction.JudgingKeysCount,
 							transaction.OverlappingKeysCount,
 							transaction.JudgedKeysCount,
+							transaction.PublicKeysPtr(),
 							transaction.PresentOpinionsPtr()
 				  	));
 

@@ -38,12 +38,13 @@ namespace catapult { namespace observers {
 		// Filling in opinions map.
 		auto pOpinionElement = notification.OpinionsPtr;
 		for (auto i = 0; i < totalJudgingKeysCount; ++i)
-			for (auto j = 0; j < totalJudgedKeysCount; ++j)
-				if (presentOpinions[i*totalJudgedKeysCount + j]) {
-					auto& opinionVector = opinions[notification.PublicKeysPtr[notification.JudgingKeysCount + j]];
-					opinionVector.emplace_back(*pOpinionElement);
-					++pOpinionElement;
-				}
+			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
+				const auto& replicatorKey = notification.PublicKeysPtr[notification.JudgingKeysCount + j];
+				auto& opinionVector = opinions[replicatorKey];
+				opinionVector.emplace_back(presentOpinions[i*totalJudgedKeysCount + j] ?
+			 			*pOpinionElement++ :
+					   	downloadChannelEntry.cumulativePayments().at(replicatorKey).unwrap());
+			}
 
 		// Calculating full payments to the replicators based on median opinions about them.
 		std::map<Key, uint64_t> payments;

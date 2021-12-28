@@ -155,6 +155,9 @@ namespace catapult { namespace validators {
 	/// Desired download size is greater than maximal.
 	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 47);
 
+	/// Number of signatures in opinion-based multisignature transaction is less than minimal.
+	DEFINE_STORAGE_RESULT(Signature_Count_Insufficient, 48);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

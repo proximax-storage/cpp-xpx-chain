@@ -114,18 +114,15 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to download approval notifications and validates that:
 	/// - respective download channel exists
+	/// - there are enough cosigners
 	/// - transaction sequence number is exactly one more than the number of completed download approval transactions of the download channel
 	/// - every replicator has provided an opinion on itself
+	/// - all public keys belong to the download channel's shard
 	DECLARE_STATEFUL_VALIDATOR(DownloadApproval, model::DownloadApprovalNotification<1>)();
 
 	/// A validator implementation that applies to drive closure notifications and validates that:
 	/// -
 	DECLARE_STATEFUL_VALIDATOR(DriveClosure, model::DriveClosureNotification<1>)();
-
-	/// A validator implementation that applies to download approval payment notifications and validates that:
-	/// - respective download channel exists
-	/// - all necessary account states exist
-	DECLARE_STATEFUL_VALIDATOR(DownloadApprovalPayment, model::DownloadApprovalPaymentNotification<1>)();
 
 	/// A validator implementation that applies to download channel refund notifications and validates that:
 	/// - respective download channel exists

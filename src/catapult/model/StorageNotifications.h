@@ -927,6 +927,7 @@ namespace catapult { namespace model {
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
+				const Key* publicKeysPtr,
 				const uint8_t* presentOpinionsPtr)
 			: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
 			, DownloadChannelId(id)
@@ -934,6 +935,7 @@ namespace catapult { namespace model {
 			, JudgingKeysCount(judgingKeysCount)
 			, OverlappingKeysCount(overlappingKeysCount)
 			, JudgedKeysCount(judgedKeysCount)
+			, PublicKeysPtr(publicKeysPtr)
 			, PresentOpinionsPtr(presentOpinionsPtr)
 		{}
 
@@ -952,6 +954,9 @@ namespace catapult { namespace model {
 
 		/// Number of replicators that didn't provide their opinions, but on which at least one opinion was provided.
 		uint8_t JudgedKeysCount;
+
+		/// Replicators' public keys.
+		const Key* PublicKeysPtr;
 
 		/// Two-dimensional array of opinion element presence.
 		/// Must be interpreted bitwise (1 if corresponding element exists, 0 otherwise).

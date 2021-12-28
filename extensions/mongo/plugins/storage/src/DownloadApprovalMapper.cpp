@@ -16,6 +16,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	template<typename TTransaction>
 	void StreamDownloadApprovalTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "downloadChannelId" << ToBinary(transaction.DownloadChannelId);
+		builder << "approvalTrigger" << ToBinary(transaction.ApprovalTrigger);
 		builder << "sequenceNumber" << static_cast<int16_t>(transaction.SequenceNumber);
 		builder << "responseToFinishDownloadTransaction" << transaction.ResponseToFinishDownloadTransaction;
 

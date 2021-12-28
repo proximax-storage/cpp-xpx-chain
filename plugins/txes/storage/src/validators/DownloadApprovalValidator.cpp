@@ -17,9 +17,17 @@ namespace catapult { namespace validators {
 		const auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
 		const auto& pDownloadChannelEntry = downloadChannelIter.tryGet();
 
+	 	const auto totalKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount + notification.JudgedKeysCount;
+	  	const auto totalJudgingKeysCount = totalKeysCount - notification.JudgedKeysCount;
+	  	const auto totalJudgedKeysCount = totalKeysCount - notification.JudgingKeysCount;
+
 		// Check if download channel exists
 		if (!pDownloadChannelEntry)
 			return Failure_Storage_Download_Channel_Not_Found;
+
+	  	// Check if there are enough cosigners
+	  	if (totalJudgingKeysCount < pDownloadChannelEntry->cumulativePayments().size()*2 / 3 + 1)
+		  	return Failure_Storage_Signature_Count_Insufficient;
 
 	  	// Check if transaction sequence number is exactly one more than the number of completed download approval transactions
 	  	const auto targetSequenceNumber = pDownloadChannelEntry->downloadApprovalCount() + 1;
@@ -31,12 +39,17 @@ namespace catapult { namespace validators {
 	  	// Check if every replicator has provided an opinion on itself
 		if (notification.JudgingKeysCount > 0)
 			return Failure_Storage_No_Opinion_Provided_On_Self;
-	  	const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
 		const auto presentOpinionByteCount = (notification.OverlappingKeysCount * totalJudgedKeysCount + 7) / 8;
 	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
 		for (auto i = 0; i < notification.OverlappingKeysCount; ++i)
 			if (!presentOpinions[i*totalJudgedKeysCount + i])
 				return Failure_Storage_No_Opinion_Provided_On_Self;
+
+	  	// Check if all public keys belong to the download channel's shard (i.e. they exist in cumulativePayments)
+	  	const auto& cumulativePayments = pDownloadChannelEntry->cumulativePayments();
+	  	for (auto i = 0; i < totalKeysCount; ++i)
+		  	if (!cumulativePayments.count(notification.PublicKeysPtr[i]))
+			  	return Failure_Storage_Opinion_Invalid_Key;
 
 		return ValidationResult::Success;
 	});

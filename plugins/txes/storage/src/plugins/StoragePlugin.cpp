@@ -190,7 +190,6 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateOpinionValidator())
 				.add(validators::CreateDownloadChannelValidator())
 				.add(validators::CreateDownloadApprovalValidator())
-				.add(validators::CreateDownloadApprovalPaymentValidator())
 				.add(validators::CreateDownloadChannelRefundValidator())
 				.add(validators::CreateStreamStartValidator())
 				.add(validators::CreateStreamFinishValidator())
