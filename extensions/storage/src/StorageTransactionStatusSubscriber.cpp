@@ -17,12 +17,12 @@ namespace catapult { namespace storage {
 			{}
 
 		public:
-			void notifyStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) override {
+			void notifyStatus(const model::Transaction&, const Height&, const Hash256& hash, uint32_t status) override {
 				auto pReplicatorService = m_pReplicatorServiceWeak.lock();
 				if (!pReplicatorService)
 					return;
 
-				pReplicatorService->notifyTransactionStatus(transaction, height, hash, status);
+				pReplicatorService->notifyTransactionStatus(hash, status);
 			}
 
 			void flush() override {

@@ -5,7 +5,6 @@
 **/
 
 #include "tests/TestHarness.h"
-#include "src/StorageConfiguration.h"
 #include "src/TransactionStatusHandler.h"
 
 namespace catapult { namespace storage {
@@ -13,22 +12,21 @@ namespace catapult { namespace storage {
 #define TEST_CLASS TransactionStatusHandlerTests
 
     TEST(TEST_CLASS, TransactionStatusHandler_CanAddHandler) {
-        // Act:
-        TransactionStatusHandler handler{};
-        Signature signature{};
+        // Arrange:
+        TransactionStatusHandler handler;
 
-        // Assert:
-        EXPECT_NO_THROW(handler.addHandler(signature, [](const Hash256& hash, uint32_t status) {}));
+        // Act + Assert:
+        EXPECT_NO_THROW(handler.addHandler(Hash256({ 1 }), [](uint32_t status) {}));
     }
 
     TEST(TEST_CLASS, TransactionStatusHandler_CanHandle) {
-        // Act:
-        TransactionStatusHandler handler{};
-        Signature signature{};
+        // Arrange:
+        TransactionStatusHandler handler;
         auto counter = 0;
 
-        handler.addHandler(signature, [&counter](const Hash256& hash, uint32_t status) { counter++; });
-        handler.handle(signature, Hash256{}, 0);
+		// Act:
+        handler.addHandler(Hash256({ 1 }), [&counter](uint32_t status) { counter++; });
+        handler.handle(Hash256({ 1 }), 0);
 
         // Assert:
         EXPECT_EQ(1, counter);
@@ -36,13 +34,12 @@ namespace catapult { namespace storage {
 
     TEST(TEST_CLASS, TransactionStatusHandler_CannotHandleTwoTimes) {
         // Act:
-        TransactionStatusHandler handler{};
-        Signature signature{};
+        TransactionStatusHandler handler;
         auto counter = 0;
 
-        handler.addHandler(signature, [&counter](const Hash256& hash, uint32_t status) { counter++; });
-        handler.handle(signature, Hash256{}, 0);
-        handler.handle(signature, Hash256{}, 0);
+        handler.addHandler(Hash256({ 1 }), [&counter](uint32_t status) { counter++; });
+        handler.handle(Hash256({ 1 }), 0);
+        handler.handle(Hash256({ 1 }), 0);
 
         // Assert:
         EXPECT_EQ(1, counter);

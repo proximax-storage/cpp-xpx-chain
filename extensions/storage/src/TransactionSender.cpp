@@ -10,14 +10,12 @@
 #include "sdk/src/builders/DataModificationSingleApprovalBuilder.h"
 #include "sdk/src/builders/DownloadApprovalBuilder.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
+#include "catapult/model/EntityHasher.h"
 
 namespace catapult { namespace storage {
 
-    catapult::Signature TransactionSender::sendDataModificationApprovalTransaction(
-            const crypto::KeyPair& sender,
-            const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
-        CATAPULT_LOG(debug) << "sending data modification approval transaction "
-                            << transactionInfo.m_modifyTransactionHash.data();
+    Hash256 TransactionSender::sendDataModificationApprovalTransaction(const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
+        CATAPULT_LOG(debug) << "sending data modification approval transaction " << transactionInfo.m_modifyTransactionHash.data();
 
         // TODO looks really overcomplicated
 
@@ -40,7 +38,7 @@ namespace catapult { namespace storage {
         // separate overlapping keys
         auto overlappingKeysCount = 0;
         for (auto it = judgingKeys.begin(); it < judgingKeys.end(); ++it) {
-            auto judgedIter = std::find(judgedKeys.begin(), judgedKeys.end(), judgingKeys);
+            auto judgedIter = std::find(judgedKeys.begin(), judgedKeys.end(), *it);
             if (judgedIter == judgedKeys.end())
                 continue;
 
@@ -83,8 +81,8 @@ namespace catapult { namespace storage {
                 auto presentOpinionIndex = judgingKeyIndex * totalJudgedKeysCount + judgedKeyIndex;
                 presentOpinionsBitset[presentOpinionIndex] = true;
 
-                auto opinionIter = std::find(opinions.begin(), opinions.end(), opinion.m_replicatorKey);
-                opinionIter->second.emplace_back(layout.m_uploadedBytes);
+//                auto opinionIter = std::find(opinions.begin(), opinions.end(), Key(opinion.m_replicatorKey));
+//                opinionIter->second.emplace_back(layout.m_uploadedBytes);
             }
         }
 
@@ -98,7 +96,7 @@ namespace catapult { namespace storage {
             for (const auto& opinion : pairedOpinions.second)
                 flatOpinions.emplace_back(opinion);
 
-        builders::DataModificationApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
+        builders::DataModificationApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
         builder.setDriveKey(transactionInfo.m_driveKey);
         builder.setDataModificationId(transactionInfo.m_modifyTransactionHash);
         builder.setFileStructureCdi(transactionInfo.m_rootHash);
@@ -115,18 +113,14 @@ namespace catapult { namespace storage {
 
         auto pTransaction = utils::UniqueToShared(builder.build());
         pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
-        extensions::TransactionExtensions(m_generationHash).sign(sender, *pTransaction);
+		auto transactionHash = model::CalculateHash(*pTransaction, m_generationHash);
+        send(pTransaction);
 
-        send(sender, pTransaction);
-
-        return pTransaction->Signature;
+        return transactionHash;
     }
 
-    catapult::Signature TransactionSender::sendDataModificationSingleApprovalTransaction(
-            const crypto::KeyPair& sender,
-            const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
-        CATAPULT_LOG(debug) << "sending data modification single approval transaction "
-                            << transactionInfo.m_modifyTransactionHash.data();
+    Hash256 TransactionSender::sendDataModificationSingleApprovalTransaction(const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
+        CATAPULT_LOG(debug) << "sending data modification single approval transaction " << transactionInfo.m_modifyTransactionHash.data();
 
         auto singleOpinion = transactionInfo.m_opinions.at(0);
 
@@ -141,7 +135,7 @@ namespace catapult { namespace storage {
             opinions.emplace_back(layout.m_uploadedBytes);
         }
 
-        builders::DataModificationSingleApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
+        builders::DataModificationSingleApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
         builder.setDriveKey(transactionInfo.m_driveKey);
         builder.setDataModificationId(transactionInfo.m_modifyTransactionHash);
         builder.setPublicKeys(keys);
@@ -149,15 +143,13 @@ namespace catapult { namespace storage {
 
         auto pTransaction = utils::UniqueToShared(builder.build());
         pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
-        extensions::TransactionExtensions(m_generationHash).sign(sender, *pTransaction);
+		auto transactionHash = model::CalculateHash(*pTransaction, m_generationHash);
+        send(pTransaction);
 
-        send(sender, pTransaction);
-
-        return pTransaction->Signature;
+        return transactionHash;
     }
 
-    catapult::Signature TransactionSender::sendDownloadApprovalTransaction(
-            const crypto::KeyPair& sender,
+    Hash256 TransactionSender::sendDownloadApprovalTransaction(
             uint16_t sequenceNumber,
             const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
         CATAPULT_LOG(debug) << "sending download approval transaction " << transactionInfo.m_blockHash.data();
@@ -183,7 +175,7 @@ namespace catapult { namespace storage {
         // separate overlapping keys
         auto overlappingKeysCount = 0;
         for (auto it = judgingKeys.begin(); it < judgingKeys.end(); ++it) {
-            auto judgedIter = std::find(judgedKeys.begin(), judgedKeys.end(), judgingKeys);
+            auto judgedIter = std::find(judgedKeys.begin(), judgedKeys.end(), *it);
             if (judgedIter == judgedKeys.end())
                 continue;
 
@@ -215,21 +207,21 @@ namespace catapult { namespace storage {
             opinions[0].first = publicKeys[i];
 
         // parse opinions
-        for (const auto& opinion: transactionInfo.m_opinions) {
-            auto judgingKeyIter = std::find(publicKeys.begin(), publicKeys.end()-judgedKeysCount, opinion.m_replicatorKey);
-            const auto judgingKeyIndex = judgingKeyIter - publicKeys.begin();
-
-            for (const auto& layout: opinion.m_downloadLayout) {
-                auto judgedKeyIter = std::find(publicKeys.begin()+judgingKeysCount, publicKeys.end(), opinion.m_replicatorKey);
-                const auto judgedKeyIndex = publicKeys.end() - judgedKeyIter;
-
-                auto presentOpinionIndex = judgingKeyIndex * totalJudgedKeysCount + judgedKeyIndex;
-                presentOpinionsBitset[presentOpinionIndex] = true;
-
-                auto opinionIter = std::find(opinions.begin(), opinions.end(), opinion.m_replicatorKey);
-                opinionIter->second.emplace_back(layout.m_uploadedBytes);
-            }
-        }
+//        for (const auto& opinion: transactionInfo.m_opinions) {
+//            auto judgingKeyIter = std::find(publicKeys.begin(), publicKeys.end()-judgedKeysCount, opinion.m_replicatorKey);
+//            const auto judgingKeyIndex = judgingKeyIter - publicKeys.begin();
+//
+//            for (const auto& layout: opinion.m_downloadLayout) {
+//                auto judgedKeyIter = std::find(publicKeys.begin()+judgingKeysCount, publicKeys.end(), opinion.m_replicatorKey);
+//                const auto judgedKeyIndex = publicKeys.end() - judgedKeyIter;
+//
+//                auto presentOpinionIndex = judgingKeyIndex * totalJudgedKeysCount + judgedKeyIndex;
+//                presentOpinionsBitset[presentOpinionIndex] = true;
+//
+//                auto opinionIter = std::find(opinions.begin(), opinions.end(), opinion.m_replicatorKey);
+//                opinionIter->second.emplace_back(layout.m_uploadedBytes);
+//            }
+//        }
 
         // convert presentOpinionsBitset to uint8_t vector
         std::vector<uint8_t> presentOpinions;
@@ -241,7 +233,7 @@ namespace catapult { namespace storage {
             for (const auto& opinion : pairedOpinions.second)
                 flatOpinions.emplace_back(opinion);
 
-        builders::DownloadApprovalBuilder builder(m_networkIdentifier, sender.publicKey());
+        builders::DownloadApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
         builder.setDownloadChannelId(transactionInfo.m_downloadChannelId);
         builder.setSequenceNumber(sequenceNumber);
         builder.setResponseToFinishDownloadTransaction(false); // TODO set right value
@@ -255,15 +247,15 @@ namespace catapult { namespace storage {
 
         auto pTransaction = utils::UniqueToShared(builder.build());
         pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
-        extensions::TransactionExtensions(m_generationHash).sign(sender, *pTransaction);
+		auto transactionHash = model::CalculateHash(*pTransaction, m_generationHash);
+        send(pTransaction);
 
-        send(sender, pTransaction);
-
-        return pTransaction->Signature;
+        return transactionHash;
     }
 
-    void TransactionSender::send(const crypto::KeyPair& sender, std::shared_ptr<model::Transaction> pTransaction) {
+    void TransactionSender::send(std::shared_ptr<model::Transaction> pTransaction) {
+		extensions::TransactionExtensions(m_generationHash).sign(m_keyPair, *pTransaction);
         auto range = model::TransactionRange::FromEntity(pTransaction);
-        m_transactionRangeHandler({std::move(range), sender.publicKey()});
+        m_transactionRangeHandler({std::move(range), m_keyPair.publicKey()});
     }
 }}

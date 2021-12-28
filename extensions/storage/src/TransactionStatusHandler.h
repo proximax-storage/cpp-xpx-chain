@@ -7,11 +7,10 @@
 #include <map>
 #include <mutex>
 #include <cstdint>
-#include <functional>
+#include "catapult/functions.h"
 #include "catapult/types.h"
 
 namespace catapult { namespace storage {
-    using Callback = std::function<void(const Hash256& hash, uint32_t status)>;
 
     class TransactionStatusHandler {
     public:
@@ -20,13 +19,13 @@ namespace catapult { namespace storage {
     public:
 
         /// addHandler saves a handler in map with transactionSignature key
-        void addHandler(catapult::Signature& transactionSignature, Callback handler);
+        void addHandler(const Hash256& hash, consumer<uint32_t> handler);
 
         /// handle finds a handler by transactionSignature and calls it
-        void handle(const catapult::Signature& transactionSignature, const Hash256& hash, uint32_t status);
+        void handle(const Hash256& hash, uint32_t status);
 
     private:
         std::mutex m_mutex;
-        std::map<catapult::Signature, Callback> m_callbacks;
+        std::map<Hash256, consumer<uint32_t>> m_callbacks;
     };
 }}

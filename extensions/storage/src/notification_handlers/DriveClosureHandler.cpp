@@ -16,7 +16,7 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			if (pReplicatorService->containsDrive(notification.DriveKey))
+			if (pReplicatorService->isAssignedToDrive(notification.DriveKey))
 				pReplicatorService->closeDrive(notification.DriveKey, Hash256{}); // TODO real transaction hash?
 		});
 	}
