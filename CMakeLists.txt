@@ -54,6 +54,8 @@ function(catapult_add_rocksdb_dependencies TARGET_NAME)
 	endif()
 endfunction()
 
+### extension settings
+
 ### add source directories
 add_subdirectory(external)
 

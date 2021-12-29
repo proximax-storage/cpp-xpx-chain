@@ -25,6 +25,9 @@ namespace catapult { namespace state {
 		/// Set to \p 0 after replicator’s first data modification approval.
 		uint64_t InitialDownloadWork;
 
+		// Modfication hash and size of cumulative download work
+		uint64_t LastCompletedCumulativeDownloadWork;
+
 		bool operator==(const DriveInfo& rhs) const {
 			return LastApprovedDataModificationId == rhs.LastApprovedDataModificationId &&
 				DataModificationIdIsValid == rhs.DataModificationIdIsValid &&

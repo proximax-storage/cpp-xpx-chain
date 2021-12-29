@@ -20,7 +20,7 @@ namespace catapult { namespace state {
             Key_Size + // drive key
             sizeof(Amount) + // capacity
             sizeof(uint16_t) + // drive count
-            Drives_Count * (Key_Size + Hash256_Size + sizeof(bool) + sizeof(uint64_t)); // drives
+            Drives_Count * (Key_Size + Hash256_Size + sizeof(bool) + sizeof(uint64_t) + sizeof(uint64_t)); // drives
 
         class TestContext {
         public:
@@ -70,6 +70,8 @@ namespace catapult { namespace state {
 				pData += sizeof(bool);
 				EXPECT_EQ(info.InitialDownloadWork, *reinterpret_cast<const uint64_t*>(pData));
 				pData += sizeof(uint64_t);
+                EXPECT_EQ(info.LastCompletedCumulativeDownloadWork, *reinterpret_cast<const uint64_t*>(pData));
+                pData += sizeof(uint64_t);
             }
 
             EXPECT_EQ(pExpectedEnd, pData);
@@ -147,6 +149,8 @@ namespace catapult { namespace state {
 				pData += sizeof(bool);
 				memcpy(pData, &info.InitialDownloadWork, sizeof(uint64_t));
 				pData += sizeof(uint64_t);
+                memcpy(pData, &info.LastCompletedCumulativeDownloadWork, sizeof(uint64_t));
+                pData += sizeof(uint64_t);
             }
 
             // end region

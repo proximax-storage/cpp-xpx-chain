@@ -29,6 +29,9 @@ namespace catapult { namespace storage {
 		/// Storage sandbox directory.
 		std::string SandboxDirectory;
 
+		/// Use TCP socket.
+		bool UseTcpSocket;
+
 	private:
 		StorageConfiguration() = default;
 

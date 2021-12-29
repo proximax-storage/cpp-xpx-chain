@@ -6,18 +6,47 @@
 
 #pragma once
 #include "catapult/types.h"
+#include "catapult/utils/ArraySet.h"
 #include "catapult/utils/NonCopyable.h"
 #include <vector>
-#include <map>
 
 namespace catapult { namespace cache { class CatapultCache; } }
 
 namespace catapult { namespace state {
 
-	struct ReplicatorData {
-		std::vector<std::pair<Key, uint64_t>> Drives;
-		std::map<Key, std::vector<std::pair<Hash256, Hash256>>> DriveModifications;
-		std::map<Key, std::pair<std::vector<Key>, uint64_t>> Consumers;
+	struct DataModification {
+		Hash256 Id;
+		Key Owner;
+		Key DriveKey;
+		Hash256 DownloadDataCdi;
+		uint64_t ExpectedUploadSize;
+		uint64_t ActualUploadSize;
+	};
+
+	struct ApprovedDataModification : DataModification {
+		std::vector<Key> Signers;
+		uint64_t UsedSize;
+	};
+
+	struct Drive {
+		Key Id;
+		Key Owner;
+		uint64_t Size;
+		utils::KeySet Replicators;
+		std::vector<DataModification> DataModifications;
+	};
+
+	struct DownloadChannel {
+		Hash256 Id;
+		uint64_t DownloadSize;
+		uint16_t DownloadApprovalCount;
+		std::vector<Key> Consumers;
+		Key DriveKey;
+	};
+
+	struct DriveVerification {
+		Hash256 VerificationTrigger;
+		Hash256 RootHash;
 	};
 
 	/// Interface for storage state.
@@ -26,7 +55,30 @@ namespace catapult { namespace state {
 		virtual ~StorageState() = default;
 
 	public:
+		void setCache(cache::CatapultCache* pCache) {
+			m_pCache = pCache;
+		}
+
+	public:
 		virtual bool isReplicatorRegistered(const Key& key) = 0;
-		virtual ReplicatorData getReplicatorData(const Key& replicatorKey, cache::CatapultCache& m_cache) = 0;
+
+		virtual bool driveExist(const Key& driveKey) = 0;
+		virtual Drive getDrive(const Key& driveKey) = 0;
+		virtual bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) = 0;
+		virtual std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) = 0;
+		virtual std::vector<Key> getDriveReplicators(const Key& driveKey) = 0;
+
+        virtual std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) = 0;
+
+		virtual uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) = 0;
+
+		virtual bool downloadChannelExist(const Hash256& id) = 0;
+		virtual std::vector<DownloadChannel> getDownloadChannels() = 0;
+		virtual DownloadChannel getDownloadChannel(const Hash256& id) = 0;
+
+        virtual std::unique_ptr<DriveVerification> getActiveVerification(const Key& driveKey) = 0;
+
+	protected:
+		cache::CatapultCache* m_pCache;
 	};
 }}
