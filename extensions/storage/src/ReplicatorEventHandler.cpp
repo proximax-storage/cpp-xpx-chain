@@ -23,16 +23,6 @@ namespace catapult { namespace storage {
 			{}
 
         public:
-            void modifyTransactionEndedWithError(
-                    sirius::drive::Replicator& replicator,
-                    const sirius::Key& driveKey,
-                    const sirius::drive::ModifyRequest& modifyRequest,
-                    const std::string& reason, int errorCode) override {
-                CATAPULT_LOG(warning) << "modify transaction " << modifyRequest.m_transactionHash
-                                      << " for drive " << driveKey
-                                      << " finished with error (" << errorCode << ") " << reason;
-            }
-
             void modifyApprovalTransactionIsReady(
                     sirius::drive::Replicator& replicator,
                     sirius::drive::ApprovalTransactionInfo&& transactionInfo) override {
@@ -99,7 +89,7 @@ namespace catapult { namespace storage {
 
                     validators::ValidationResult validationResult{status};
                     if (validationResult != validators::Failure_Storage_Invalid_Sequence_Number)
-                        replicator.asyncDownloadApprovalTransactionHasFailedInvalidSignatures(
+                        replicator.asyncDownloadApprovalTransactionHasFailedInvalidOpinions(
                                 (const sirius::utils::ByteArray<32, sirius::Hash256_tag>&) hash,
                                 info.m_downloadChannelId
                         );

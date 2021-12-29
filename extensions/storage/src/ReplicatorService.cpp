@@ -251,7 +251,7 @@ namespace catapult { namespace storage {
                     continue;
 
                 boost::asio::ip::tcp::endpoint endpoint;
-                endpoint.address(boost::asio::ip::address::from_string(node.endpoint().Host));
+                endpoint.address(boost::asio::ip::make_address(node.endpoint().Host));
                 endpoint.port(node.endpoint().Port);
 
                 requestedNodes.emplace_back(sirius::drive::ReplicatorInfo{
