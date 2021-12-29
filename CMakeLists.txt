@@ -56,9 +56,6 @@ endfunction()
 
 ### extension settings
 
-# storage
-add_definitions(-DSIRIUS_DRIVE_MULTI)
-
 ### add source directories
 add_subdirectory(external)
 
