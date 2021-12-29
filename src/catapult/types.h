@@ -159,7 +159,7 @@ namespace catapult {
 		return N;
 	}
 
-	// Network type (8 bit) + Signature Version (8 bit) + entity type (16 bit).
+	// Network type (8 bit) + Signature Key Derivation Scheme (8 bit) + entity type (16 bit).
 	using VersionType = uint32_t;
 	/// Version set.
 	using VersionSet = std::unordered_set<VersionType>;

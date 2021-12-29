@@ -31,6 +31,10 @@ module Catapult
         @harvest_keys ||= Config::Keys::Nemesis.get_keys_info_array_for_harvesting(self.input_attributes).map(&:private)
       end
 
+      def harvest_public_keys
+        @harvest_public_keys ||= Config::Keys::Nemesis.get_keys_info_array_for_harvesting(self.input_attributes).map(&:public)
+      end
+
       def network_public_key
         @network_public_key ||= Config::Keys::Nemesis.key_info_signer_private_key(self.input_attributes).public
       end

@@ -28,6 +28,7 @@ module Catapult
             network_generation_hash: self.parent.network_generation_hash,
             harvesting_is_on: self.harvesting_is_on?,
             harvest_key: self.harvest_key?,
+            harvest_public_key: self.harvest_public_key?,
             mongo_host: self.mongo_host_for_api_node, # just used when there is an api host
             bootkey: self.private_key,
             subscriberPort: Peer.port(self.type, self.index) + 2,
@@ -55,6 +56,10 @@ module Catapult
           harvest_key if harvesting_is_on?
         end
 
+        def harvest_public_key?
+          harvest_public_key if harvesting_is_on?
+        end
+
         def private_key
           self.parent.component_keys.get_key(:private, self.type, self.index)
         end
@@ -64,6 +69,11 @@ module Catapult
         def harvest_key
           fail "Only should have harvesting on peer_node" unless self.type  == :peer_node
           self.parent.harvest_keys[self.index] || fail("Do not have a harvest key for index #{self.index}")
+        end
+
+        def harvest_public_key
+          fail "Only should have harvesting on peer_node" unless self.type  == :peer_node
+          self.parent.harvest_public_keys[self.index] || fail("Do not have a harvest key for index #{self.index}")
         end
 
       end
