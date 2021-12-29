@@ -17,19 +17,19 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamDataModificationSingleApprovalTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "driveKey" << ToBinary(transaction.DriveKey);
 		builder << "dataModificationId" << ToBinary(transaction.DataModificationId);
-		builder << "uploadOpinionPairCount" << static_cast<int16_t>(transaction.UploadOpinionPairCount);	// TODO: Remove?
+		builder << "publicKeysCount" << static_cast<int8_t>(transaction.PublicKeysCount);	// TODO: Remove?
 
-		auto uploaderKeys = builder << "uploaderKeys" << bson_stream::open_array;
-		auto pKey = transaction.UploaderKeysPtr();
-		for (auto i = 0u; i < transaction.UploadOpinionPairCount; ++i, ++pKey)
-			uploaderKeys << ToBinary(*pKey);
-		uploaderKeys << bson_stream::close_array;
+		auto publicKeys = builder << "publicKeys" << bson_stream::open_array;
+		auto pKey = transaction.PublicKeysPtr();
+		for (auto i = 0u; i < transaction.PublicKeysCount; ++i, ++pKey)
+			publicKeys << ToBinary(*pKey);
+		publicKeys << bson_stream::close_array;
 
-		auto uploadOpinion = builder << "uploadOpinion" << bson_stream::open_array;
-		auto pPercent = transaction.UploadOpinionPtr();
-		for (auto i = 0u; i < transaction.UploadOpinionPairCount; ++i, ++pPercent)
-			uploadOpinion << *pPercent;
-		uploadOpinion << bson_stream::close_array;
+		auto opinions = builder << "opinions" << bson_stream::open_array;
+		auto pOpinion = transaction.OpinionsPtr();
+		for (auto i = 0u; i < transaction.PublicKeysCount; ++i, ++pOpinion)
+			opinions << static_cast<int64_t>(*pOpinion);
+		opinions << bson_stream::close_array;
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(DataModificationSingleApproval, StreamDataModificationSingleApprovalTransaction)

@@ -5,10 +5,8 @@
 **/
 
 #include "src/ReplicatorService.h"
-#include "tests/TestHarness.h"
-#include "tests/test/core/AddressTestUtils.h"
+#include "catapult/ionet/Node.h"
 #include "tests/test/other/mocks/MockServiceState.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace storage {
 

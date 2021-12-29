@@ -7,13 +7,11 @@
 #pragma once
 
 #include "StorageConfiguration.h"
-#include "ReplicatorEventHandler.h"
 #include "catapult/types.h"
 #include "catapult/crypto/KeyPair.h"
-#include "catapult/state/StorageState.h"
 #include "catapult/extensions/ServiceRegistrar.h"
-#include "drive/FlatDrive.h"
-#include "drive/Session.h"
+
+namespace catapult { namespace model { class Transaction; } }
 
 namespace catapult { namespace storage {
 
@@ -23,7 +21,6 @@ namespace catapult { namespace storage {
 
     public:
         void start();
-
         void stop();
 
         void setServiceState(extensions::ServiceState* pServiceState) {
@@ -35,24 +32,22 @@ namespace catapult { namespace storage {
         bool isReplicatorRegistered(const Key& key);
 
         void addDriveModification(const Key& driveKey, const Hash256& downloadDataCdi, const Hash256& modificationId, const Key& owner, uint64_t dataSize);
-
         void removeDriveModification(const Key& driveKey, const Hash256& dataModificationId);
 
-        void addDriveChannel(const Hash256& channelId, const Key& driveKey, size_t prepaidDownloadSize, const std::vector<Key>& consumers);
-
-        // TODO update download channel size
+        void addDownloadChannel(const Hash256& channelId, const Key& driveKey, size_t prepaidDownloadSize, const std::vector<Key>& consumers);
         void increaseDownloadChannelSize(const Hash256& channelId, size_t downloadSize);
+        void closeDownloadChannel(const Hash256& channelId);
 
-        void closeDriveChannel(const Hash256& channelId);
-
-        void addDrive(const Key& driveKey, uint64_t driveSize, uint64_t usedSize);
-
-        bool containsDrive(const Key& driveKey);
-
+        void addDrive(const Key& driveKey, uint64_t driveSize);
+        bool isAssignedToDrive(const Key& driveKey);
         void closeDrive(const Key& driveKey, const Hash256& transactionHash);
 
     public:
-        void notifyTransactionStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status);
+        void dataModificationApprovalPublished(const Key& driveKey, const Hash256& modificationId, const Hash256& rootHash, std::vector<Key>& replicators);
+        void dataModificationSingleApprovalPublished(const Key& driveKey, const Hash256& modificationId);
+
+    public:
+        void notifyTransactionStatus(const Hash256& hash, uint32_t status);
 
     private:
         class Impl;

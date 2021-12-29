@@ -41,5 +41,14 @@ namespace catapult { namespace plugins {
         }
     }
 
-    DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(EndDriveVerification, Default, CreatePublisher, config::ImmutableConfiguration)
+	std::unique_ptr<TransactionPlugin>
+			CreateEndDriveVerificationTransactionPlugin(const config::ImmutableConfiguration& config) {
+		using Factory = TransactionPluginFactory<TransactionPluginFactoryOptions::Default>;
+		return Factory::Create<
+				EndDriveVerificationTransaction,
+				EmbeddedEndDriveVerificationTransaction,
+				ExtendedEmbeddedEndDriveVerificationTransaction>(
+				CreatePublisher<EndDriveVerificationTransaction>(config),
+				CreatePublisher<ExtendedEmbeddedEndDriveVerificationTransaction>(config));
+	}
 }}

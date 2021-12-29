@@ -10,6 +10,11 @@ namespace catapult { namespace builders {
 
     DownloadApprovalBuilder::DownloadApprovalBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer)
             : TransactionBuilder(networkIdentifier, signer)
+            , m_sequenceNumber(0)
+            , m_responseToFinishDownloadTransaction(false)
+            , m_judgingKeysCount(0)
+            , m_overlappingKeysCount(0)
+            , m_judgedKeysCount(0)
     {}
 
 //    void DownloadApprovalBuilder::setDriveKey(const Key& driveKey) {
@@ -28,16 +33,24 @@ namespace catapult { namespace builders {
         m_responseToFinishDownloadTransaction = responseToFinishDownloadTransaction;
     }
 
-    void DownloadApprovalBuilder::setReplicatorsKeys(const std::vector<Key>& keys) {
-        m_replicatorsKeys = keys;
+    void DownloadApprovalBuilder::setJudgingKeysCount(uint8_t judgingKeysCount) {
+        m_judgingKeysCount = judgingKeysCount;
     }
 
-    void DownloadApprovalBuilder::setOpinionIndices(const std::vector<uint8_t>& opinionIndices) {
-        m_opinionIndices = opinionIndices;
+    void DownloadApprovalBuilder::setOverlappingKeysCount(uint8_t overlappingKeysCount) {
+        m_overlappingKeysCount = overlappingKeysCount;
     }
 
-    void DownloadApprovalBuilder::setBlsSignatures(const std::vector<BLSSignature>& blsSignatures) {
-        m_blsSignatures = blsSignatures;
+    void DownloadApprovalBuilder::setJudgedKeysCount(uint8_t judgedKeysCount) {
+        m_judgedKeysCount = judgedKeysCount;
+    }
+
+    void DownloadApprovalBuilder::setPublicKeys(const std::vector<Key>& keys) {
+        m_publicKeys = keys;
+    }
+
+    void DownloadApprovalBuilder::setSignatures(const std::vector<Signature>& signatures) {
+        m_signatures = signatures;
     }
 
     void DownloadApprovalBuilder::setPresentOpinions(const std::vector<uint8_t>& presentOpinions) {
@@ -51,21 +64,25 @@ namespace catapult { namespace builders {
     template<typename TransactionType>
     model::UniqueEntityPtr<TransactionType> DownloadApprovalBuilder::buildImpl() const {
         // 1. allocate
-        auto pTransaction = createTransaction<TransactionType>(sizeof(TransactionType));
+        auto size = sizeof(TransactionType)
+                    + m_publicKeys.size() * sizeof(Key)
+                    + m_signatures.size() * sizeof(Signature)
+                    + m_presentOpinions.size() * sizeof(uint8_t)
+                    + m_opinions.size() * sizeof(uint64_t);
+        auto pTransaction = createTransaction<TransactionType>(size);
 
         // 2. set transaction fields
         pTransaction->DownloadChannelId = m_downloadChannelId;
         pTransaction->SequenceNumber = m_sequenceNumber;
         pTransaction->ResponseToFinishDownloadTransaction = m_responseToFinishDownloadTransaction;
-        pTransaction->OpinionCount = m_opinionIndices.size();
-        pTransaction->JudgingCount = m_opinionIndices.size();
-        pTransaction->JudgedCount = m_replicatorsKeys.size();
+        pTransaction->JudgingKeysCount = m_judgingKeysCount;
+        pTransaction->OverlappingKeysCount = m_overlappingKeysCount;
+        pTransaction->JudgedKeysCount = m_judgedKeysCount;
         pTransaction->OpinionElementCount = m_opinions.size();
 
         // 3. set transaction attachments
-        std::copy(m_replicatorsKeys.cbegin(), m_replicatorsKeys.cend(), pTransaction->PublicKeysPtr());
-        std::copy(m_opinionIndices.cbegin(), m_opinionIndices.cend(), pTransaction->OpinionIndicesPtr());
-        std::copy(m_blsSignatures.cbegin(), m_blsSignatures.cend(), pTransaction->BlsSignaturesPtr());
+        std::copy(m_publicKeys.cbegin(), m_publicKeys.cend(), pTransaction->PublicKeysPtr());
+        std::copy(m_signatures.cbegin(), m_signatures.cend(), pTransaction->SignaturesPtr());
         std::copy(m_presentOpinions.cbegin(), m_presentOpinions.cend(), pTransaction->PresentOpinionsPtr());
         std::copy(m_opinions.cbegin(), m_opinions.cend(), pTransaction->OpinionsPtr());
 

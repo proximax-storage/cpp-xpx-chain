@@ -32,7 +32,6 @@ namespace catapult { namespace state {
 		Key Id;
 		Key Owner;
 		uint64_t Size;
-		uint64_t UsedSize;
 		utils::KeySet Replicators;
 		std::vector<DataModification> DataModifications;
 	};
@@ -42,7 +41,12 @@ namespace catapult { namespace state {
 		uint64_t DownloadSize;
 		uint16_t DownloadApprovalCount;
 		std::vector<Key> Consumers;
-		Key DriveKey; // TODO inv V3
+		Key DriveKey;
+	};
+
+	struct DriveVerification {
+		Hash256 VerificationTrigger;
+		Hash256 RootHash;
 	};
 
 	/// Interface for storage state.
@@ -57,21 +61,22 @@ namespace catapult { namespace state {
 
 	public:
 		virtual bool isReplicatorRegistered(const Key& key) = 0;
-		virtual std::vector<Key> getAllReplicators() = 0; // TODO only for V2. Delete in V3
 
 		virtual bool driveExist(const Key& driveKey) = 0;
 		virtual Drive getDrive(const Key& driveKey) = 0;
-		virtual bool isReplicatorBelongToDrive(const Key& key, const Key& driveKey) = 0;
+		virtual bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) = 0;
 		virtual std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) = 0;
 		virtual std::vector<Key> getDriveReplicators(const Key& driveKey) = 0;
 
-        virtual ApprovedDataModification getLastApprovedDataModification(const Key& driveKey) = 0;
+        virtual std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) = 0;
 
 		virtual uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) = 0;
 
 		virtual bool downloadChannelExist(const Hash256& id) = 0;
 		virtual std::vector<DownloadChannel> getDownloadChannels() = 0;
 		virtual DownloadChannel getDownloadChannel(const Hash256& id) = 0;
+
+        virtual std::unique_ptr<DriveVerification> getActiveVerification(const Key& driveKey) = 0;
 
 	protected:
 		cache::CatapultCache* m_pCache;

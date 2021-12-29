@@ -76,7 +76,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(utils::FileSize::FromTerabytes(10u), config.MaxModificationSize);
 				EXPECT_EQ(1, config.MinReplicatorCount);
 				EXPECT_EQ(utils::FileSize::FromMegabytes(1u), config.MaxFreeDownloadSize);
-				EXPECT_EQ(utils::FileSize::FromTerabytes(11u), config.MaxDownloadSize);
+				EXPECT_EQ(utils::FileSize::FromTerabytes(10u), config.MaxDownloadSize);
 				EXPECT_EQ(utils::TimeSpan::FromHours(24 * 7), config.StorageBillingPeriod);
 				EXPECT_EQ(utils::TimeSpan::FromHours(24), config.DownloadBillingPeriod);
 				EXPECT_EQ(utils::TimeSpan::FromHours(4), config.ExpectedVerificationFrequency);

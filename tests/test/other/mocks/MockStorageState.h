@@ -23,10 +23,6 @@ namespace catapult { namespace mocks {
             return false;
         }
 
-        std::vector<Key> getAllReplicators() override {
-            return std::vector<Key>();
-        }
-
         bool driveExist(const Key& driveKey) override {
             return false;
         }
@@ -35,7 +31,7 @@ namespace catapult { namespace mocks {
             return state::Drive();
         }
 
-        bool isReplicatorBelongToDrive(const Key& key, const Key& driveKey) override {
+        bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) override {
             return false;
         }
 
@@ -47,8 +43,8 @@ namespace catapult { namespace mocks {
             return std::vector<Key>();
         }
 
-        state::ApprovedDataModification getLastApprovedDataModification(const Key& driveKey) override {
-            return {};
+		std::unique_ptr<state::ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) override {
+            return nullptr;
         }
 
         uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) override {
@@ -65,6 +61,10 @@ namespace catapult { namespace mocks {
 
         state::DownloadChannel getDownloadChannel(const Hash256& id) override {
             return state::DownloadChannel();
+        }
+
+		virtual std::unique_ptr<state::DriveVerification> getActiveVerification(const Key& driveKey) override {
+            return nullptr;
         }
     };
 

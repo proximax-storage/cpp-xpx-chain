@@ -4,16 +4,18 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <numeric>
 #include "ReplicatorEventHandler.h"
+#include "TransactionSender.h"
+#include "TransactionStatusHandler.h"
 #include "plugins/txes/storage/src/validators/Results.h"
+#include <numeric>
 
 namespace catapult { namespace storage {
 
     namespace {
-        class ReplicatorEventHandler : public sirius::drive::ReplicatorEventHandler {
+        class DefaultReplicatorEventHandler : public ReplicatorEventHandler/*, public std::enable_shared_from_this<DefaultReplicatorEventHandler>*/ {
         public:
-            explicit ReplicatorEventHandler(
+            explicit DefaultReplicatorEventHandler(
                     TransactionSender&& transactionSender,
                     state::StorageState& storageState,
                     TransactionStatusHandler& transactionStatusHandler)
@@ -24,83 +26,81 @@ namespace catapult { namespace storage {
 
         public:
             void modifyApprovalTransactionIsReady(
-                    sirius::drive::Replicator& replicator,
+                    sirius::drive::Replicator&,
                     sirius::drive::ApprovalTransactionInfo&& transactionInfo) override {
-                CATAPULT_LOG(debug) << "modify approval transaction for "
-                                    << transactionInfo.m_modifyTransactionHash.data() << " is ready";
-                m_transactionSender.sendDataModificationApprovalTransaction(
-                        (const crypto::KeyPair&) replicator.keyPair(),
-                        transactionInfo
-                );
+                CATAPULT_LOG(debug) << "modify approval transaction for " << Hash256(transactionInfo.m_modifyTransactionHash) << " is ready";
 
-                auto signature = m_transactionSender.sendDataModificationApprovalTransaction(
-                        (const crypto::KeyPair&) replicator.keyPair(), transactionInfo);
-                auto handler = [&](const Hash256& hash, uint32_t status) {
-                    if (!!status)
-                        replicator.asyncApprovalTransactionHasBeenPublished(transactionInfo);
+				auto pReplicator = m_pReplicator.lock();
+				if (!pReplicator)
+					return;
 
-                    validators::ValidationResult validationResult{status};
-                    if (validationResult == validators::Failure_Storage_Opinion_Invalid_Key)
-                        replicator.asyncApprovalTransactionHasFailedInvalidSignatures(
-                                sirius::Key{}, //TODO pass real key
-                                (const std::array<uint8_t, 32UL>&) hash
-                        );
+                auto transactionHash = m_transactionSender.sendDataModificationApprovalTransaction(transactionInfo);
+
+                auto handler = [transactionHash, driveKey = transactionInfo.m_driveKey, pReplicatorWeak = m_pReplicator](uint32_t status) {
+					auto pReplicator = pReplicatorWeak.lock();
+					if (!pReplicator)
+						return;
+
+                    if (validators::ValidationResult(status) == validators::Failure_Storage_Opinion_Invalid_Key) {
+						pReplicator->asyncApprovalTransactionHasFailedInvalidSignatures(
+							driveKey,
+							transactionHash.array());
+					}
                 };
 
-                m_transactionStatusHandler.addHandler(signature, handler);
+                m_transactionStatusHandler.addHandler(transactionHash, handler);
             }
 
             void singleModifyApprovalTransactionIsReady(
-                    sirius::drive::Replicator& replicator,
+                    sirius::drive::Replicator&,
                     sirius::drive::ApprovalTransactionInfo&& transactionInfo) override {
-                CATAPULT_LOG(debug) << "single modify approval transaction for "
-                                    << transactionInfo.m_modifyTransactionHash.data() << " is ready";
+                CATAPULT_LOG(debug) << "single modify approval transaction for " << Hash256(transactionInfo.m_modifyTransactionHash) << " is ready";
 
-                m_transactionSender.sendDataModificationSingleApprovalTransaction(
-                        (const crypto::KeyPair&) replicator.keyPair(),
-                        transactionInfo
-                );
+				auto pReplicator = m_pReplicator.lock();
+				if (!pReplicator)
+					return;
 
-                auto signature = m_transactionSender.sendDataModificationApprovalTransaction(
-                        (const crypto::KeyPair&) replicator.keyPair(), transactionInfo);
-                auto handler = [&](const Hash256& hash, uint32_t status) {
-                    if (!!status)
-                        replicator.asyncSingleApprovalTransactionHasBeenPublished(transactionInfo);
-                };
-
-                m_transactionStatusHandler.addHandler(signature, handler);
+                m_transactionSender.sendDataModificationSingleApprovalTransaction(transactionInfo);
             }
 
             void downloadApprovalTransactionIsReady(
-                    sirius::drive::Replicator& replicator,
+                    sirius::drive::Replicator&,
                     const sirius::drive::DownloadApprovalTransactionInfo& info) override {
-                CATAPULT_LOG(debug) << "download approval transaction for" << info.m_blockHash.data()
-                                    << " is ready";
+                CATAPULT_LOG(debug) << "download approval transaction for" << Hash256(info.m_blockHash) << " is ready";
 
-                auto signature = m_transactionSender.sendDownloadApprovalTransaction(
-                        (const crypto::KeyPair&) replicator.keyPair(),
-                        m_storageState.getDownloadChannel(info.m_downloadChannelId).DownloadApprovalCount + 1,
-                        info
-                );
-                auto handler = [&](const Hash256& hash, uint32_t status) {
-                    if (!!status)
-                        replicator.asyncDownloadApprovalTransactionHasBeenPublished(info.m_blockHash,
-                                                                                    info.m_downloadChannelId);
+				auto pReplicator = m_pReplicator.lock();
+				if (!pReplicator)
+					return;
 
-                    validators::ValidationResult validationResult{status};
-                    if (validationResult != validators::Failure_Storage_Invalid_Sequence_Number)
-                        replicator.asyncDownloadApprovalTransactionHasFailedInvalidOpinions(
-                                (const sirius::utils::ByteArray<32, sirius::Hash256_tag>&) hash,
-                                info.m_downloadChannelId
-                        );
-                };
+                auto transactionHash = m_transactionSender.sendDownloadApprovalTransaction(
+					m_storageState.getDownloadChannel(info.m_downloadChannelId).DownloadApprovalCount + 1,
+					info);
 
-                m_transactionStatusHandler.addHandler(signature, handler);
+				m_transactionStatusHandler.addHandler(transactionHash, [transactionHash, blockHash = info.m_blockHash, downloadChannelId = info.m_downloadChannelId,
+						pReplicatorWeak = m_pReplicator](uint32_t status) {
+					auto pReplicator = pReplicatorWeak.lock();
+					if (!pReplicator)
+						return;
+
+                    // success transaction handles here because it's a bit complicate to find `eventHash`
+                    // in notification handlers
+					validators::ValidationResult validationResult{status};
+                    if (validationResult == validators::ValidationResult::Success) {
+//                        auto driveClosed = m_storageState.driveExist(driveKey); // TODO for V3
+                        pReplicator->asyncDownloadApprovalTransactionHasBeenPublished(blockHash, downloadChannelId);
+                    } else if (validationResult != validators::Failure_Storage_Invalid_Sequence_Number) {
+                        pReplicator->asyncDownloadApprovalTransactionHasFailedInvalidOpinions(blockHash, downloadChannelId);
+					}
+                });
             }
 
             void opinionHasBeenReceived(
-                    sirius::drive::Replicator& replicator,
+                    sirius::drive::Replicator&,
                     const sirius::drive::ApprovalTransactionInfo& info) override {
+				auto pReplicator = m_pReplicator.lock();
+				if (!pReplicator)
+					return;
+
                 if (!m_storageState.driveExist(info.m_driveKey))
                     return;
 
@@ -109,7 +109,7 @@ namespace catapult { namespace storage {
 
                 const auto& opinion = info.m_opinions.at(0);
                 auto isValid = opinion.Verify(
-                        replicator.keyPair(),
+                        pReplicator->keyPair(),
                         info.m_driveKey,
                         info.m_modifyTransactionHash,
                         info.m_rootHash,
@@ -166,12 +166,16 @@ namespace catapult { namespace storage {
                 if (actualSum != expectedSum)
                     return;
 
-                replicator.asyncOnOpinionReceived(info);
+                pReplicator->asyncOnOpinionReceived(info);
             }
 
             void downloadOpinionHasBeenReceived(
-                    sirius::drive::Replicator& replicator,
+                    sirius::drive::Replicator&,
                     const sirius::drive::DownloadApprovalTransactionInfo& info) override {
+				auto pReplicator = m_pReplicator.lock();
+				if (!pReplicator)
+					return;
+
                 if (!m_storageState.downloadChannelExist(info.m_downloadChannelId))
                     return;
 
@@ -189,7 +193,7 @@ namespace catapult { namespace storage {
                     return;
                 }
 
-                replicator.asyncOnDownloadOpinionReceived(info);
+                pReplicator->asyncOnDownloadOpinionReceived(info);
             }
 
         private:
@@ -199,10 +203,10 @@ namespace catapult { namespace storage {
         };
     }
 
-    std::unique_ptr<sirius::drive::ReplicatorEventHandler> CreateReplicatorEventHandler(
+    std::unique_ptr<ReplicatorEventHandler> CreateReplicatorEventHandler(
             TransactionSender&& transactionSender,
             state::StorageState& storageState,
             TransactionStatusHandler& operations) {
-        return std::make_unique<ReplicatorEventHandler>(std::move(transactionSender), storageState, operations);
+        return std::make_unique<DefaultReplicatorEventHandler>(std::move(transactionSender), storageState, operations);
     }
 }}

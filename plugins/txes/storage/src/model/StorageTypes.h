@@ -17,8 +17,8 @@ namespace catapult { namespace model {
             /// Public Keys of the Verifier.
             Key Verifier;
 
-            /// Aggregated BLS signatures of opinions.
-            BLSSignature BlsSignature;
+            /// Signatures of opinions.
+            catapult::Signature Signature;
 
             /// Opinion about verification results for each Prover. Success or Failure.
             std::vector<std::pair<Key, uint8_t>> Results;

@@ -21,7 +21,6 @@ namespace catapult { namespace observers {
         using Notification = model::ReplicatorOnboardingNotification<1>;
 
         const Key Public_Key = test::GenerateRandomByteArray<Key>();
-        const BLSPublicKey Bls_Key = test::GenerateRandomByteArray<BLSPublicKey>();
         constexpr auto Capacity = Amount(50);
         constexpr auto Replicator_Count = 10;
         constexpr auto Current_Height = Height(25);
@@ -29,73 +28,42 @@ namespace catapult { namespace observers {
         state::ReplicatorEntry CreateReplicatorEntry() {
             state::ReplicatorEntry entry(Public_Key);
             entry.setCapacity(Capacity);
-            entry.setBlsKey(Bls_Key);
 
             return entry;
         }
 
-        state::BlsKeysEntry CreateBlsKeyEntry() {
-            state::BlsKeysEntry entry(Bls_Key);
-            entry.setKey(Public_Key);
-
-            return entry;
-        }
-
-        struct CacheValues {
-            public:
-			    explicit CacheValues()
-                    : ReplicatorEntry(Key())
-                    , BlsKeyEntry(BLSPublicKey())
-                {}
-
-            public:
-                state::ReplicatorEntry ReplicatorEntry;
-                state::BlsKeysEntry BlsKeyEntry;
-        };
-
-        void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
+        void RunTest(NotifyMode mode, const state::ReplicatorEntry& expectedReplicatorEntry, const Height& currentHeight) {
             // Arrange:
             ObserverTestContext context(mode, currentHeight);
             Notification notification(
-                values.ReplicatorEntry.key(),
-                values.ReplicatorEntry.blsKey(),
-                values.ReplicatorEntry.capacity());
+				expectedReplicatorEntry.key(),
+				expectedReplicatorEntry.capacity());
             auto pObserver = CreateReplicatorOnboardingObserver();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
-            
-            auto& blsKeysCache = context.cache().sub<cache::BlsKeysCache>();
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
-     		auto replicatorIter = replicatorCache.find(values.ReplicatorEntry.key());
-			const auto& replicatorEntry = replicatorIter.get();
-			test::AssertEqualReplicatorData(values.ReplicatorEntry, replicatorEntry);
-
-            auto BlsKeyIter = blsKeysCache.find(values.BlsKeyEntry.blsKey());
-			const auto &blsKeysEntry = BlsKeyIter.get();
-			test::AssertEqualBlskeyData(values.BlsKeyEntry, blsKeysEntry);
+     		auto replicatorIter = replicatorCache.find(expectedReplicatorEntry.key());
+			const auto& actualReplicatorEntry = replicatorIter.get();
+			test::AssertEqualReplicatorData(expectedReplicatorEntry, actualReplicatorEntry);
         }
     }
 
     TEST(TEST_CLASS, ReplicatorOnboarding_Commit) {
         // Arrange:
-        CacheValues values;
-        values.ReplicatorEntry = CreateReplicatorEntry();
-        values.BlsKeyEntry = CreateBlsKeyEntry();
+        const auto expectedReplicatorEntry = CreateReplicatorEntry();
 
         // Assert:
-        RunTest(NotifyMode::Commit, values, Current_Height);
+        RunTest(NotifyMode::Commit, expectedReplicatorEntry, Current_Height);
     }
 
     TEST(TEST_CLASS, ReplicatorOnboarding_Rollback) {
         // Arrange:
-        CacheValues values;
-        values.ReplicatorEntry = CreateReplicatorEntry();
-        values.BlsKeyEntry = CreateBlsKeyEntry();
+		const auto expectedReplicatorEntry = CreateReplicatorEntry();
 
         // Assert
-		EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
+		EXPECT_THROW(RunTest(NotifyMode::Rollback, expectedReplicatorEntry, Current_Height), catapult_runtime_error);
     }
 }}

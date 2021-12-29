@@ -19,9 +19,8 @@ namespace catapult { namespace state {
             sizeof(VersionType) + // version
             Key_Size + // drive key
             sizeof(Amount) + // capacity
-			sizeof(BLSPublicKey) + // bls key
             sizeof(uint16_t) + // drive count
-            Drives_Count * (Key_Size + Hash256_Size + sizeof(bool) + sizeof(uint64_t)); // drives
+            Drives_Count * (Key_Size + Hash256_Size + sizeof(bool) + sizeof(uint64_t) + sizeof(uint64_t)); // drives
 
         class TestContext {
         public:
@@ -47,7 +46,6 @@ namespace catapult { namespace state {
             return test::CreateReplicatorEntry(
                 test::GenerateRandomByteArray<Key>(),
                 test::GenerateRandomValue<Amount>(),
-                test::GenerateRandomByteArray<BLSPublicKey>(),
                 Drives_Count);
         }
 
@@ -59,8 +57,6 @@ namespace catapult { namespace state {
             pData += Key_Size;
             EXPECT_EQ(entry.capacity(), *reinterpret_cast<const Amount*>(pData));
             pData += sizeof(Amount);
-			EXPECT_EQ_MEMORY(entry.blsKey().data(), pData, sizeof(BLSPublicKey));
-			pData += sizeof(BLSPublicKey);
 
             EXPECT_EQ(entry.drives().size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
@@ -74,6 +70,8 @@ namespace catapult { namespace state {
 				pData += sizeof(bool);
 				EXPECT_EQ(info.InitialDownloadWork, *reinterpret_cast<const uint64_t*>(pData));
 				pData += sizeof(uint64_t);
+                EXPECT_EQ(info.LastCompletedCumulativeDownloadWork, *reinterpret_cast<const uint64_t*>(pData));
+                pData += sizeof(uint64_t);
             }
 
             EXPECT_EQ(pExpectedEnd, pData);
@@ -136,8 +134,6 @@ namespace catapult { namespace state {
             pData += Key_Size;
             memcpy(pData, &entry.capacity(), sizeof(Amount));
             pData += sizeof(Amount);
-			memcpy(pData, entry.blsKey().data(), sizeof(BLSPublicKey));
-			pData += sizeof(BLSPublicKey);
             //region drives
             
             uint16_t drivesCount = utils::checked_cast<size_t, uint16_t>(entry.drives().size());
@@ -153,6 +149,8 @@ namespace catapult { namespace state {
 				pData += sizeof(bool);
 				memcpy(pData, &info.InitialDownloadWork, sizeof(uint64_t));
 				pData += sizeof(uint64_t);
+                memcpy(pData, &info.LastCompletedCumulativeDownloadWork, sizeof(uint64_t));
+                pData += sizeof(uint64_t);
             }
 
             // end region

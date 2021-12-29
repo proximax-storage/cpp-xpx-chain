@@ -21,20 +21,19 @@ namespace catapult { namespace state {
             dataModifications.reserve(activeDataModifications.size());
             for (const auto& modification: activeDataModifications)
                 dataModifications.emplace_back(DataModification{
-                        modification.Id,
-                        modification.Owner,
-                        driveKey,
-                        modification.DownloadDataCdi,
-                        modification.ExpectedUploadSize,
-                        modification.ActualUploadSize});
+					modification.Id,
+					modification.Owner,
+					driveKey,
+					modification.DownloadDataCdi,
+					modification.ExpectedUploadSize,
+					modification.ActualUploadSize});
 
             return Drive{
-                    driveEntry.key(),
-                    driveEntry.owner(),
-                    driveEntry.size(),
-                    driveEntry.usedSize(),
-                    driveEntry.replicators(),
-                    dataModifications
+				driveEntry.key(),
+				driveEntry.owner(),
+				driveEntry.size(),
+				driveEntry.replicators(),
+				dataModifications
             };
         }
     }
@@ -42,10 +41,6 @@ namespace catapult { namespace state {
     bool StorageStateImpl::isReplicatorRegistered(const Key& key) {
         const auto& keys = m_pKeyCollector->keys();
         return (keys.find(key) != keys.end());
-    }
-
-    std::vector<Key> StorageStateImpl::getAllReplicators() {
-        return {m_pKeyCollector->keys().begin(), m_pKeyCollector->keys().end()};
     }
 
     bool StorageStateImpl::driveExist(const Key& driveKey) {
@@ -57,7 +52,7 @@ namespace catapult { namespace state {
         return GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
     }
 
-    bool StorageStateImpl::isReplicatorBelongToDrive(const Key& key, const Key& driveKey) {
+    bool StorageStateImpl::isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) {
         auto drive = GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
         auto it = drive.Replicators.find(key);
         if (it != drive.Replicators.end())
@@ -86,7 +81,7 @@ namespace catapult { namespace state {
         return {drive.Replicators.begin(), drive.Replicators.end()};
     }
 
-    ApprovedDataModification StorageStateImpl::getLastApprovedDataModification(const Key& driveKey) {
+	std::unique_ptr<ApprovedDataModification> StorageStateImpl::getLastApprovedDataModification(const Key& driveKey) {
         auto driveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
         auto driveIter = driveCacheView->find(driveKey);
         auto driveEntry = driveIter.get();
@@ -100,7 +95,7 @@ namespace catapult { namespace state {
         }
 
         if (completedModificationsIter == driveEntry.completedDataModifications().rend())
-            return {};
+            return nullptr;
 
         std::vector<Key> signers;
         for (const auto& state : driveEntry.confirmedStates()) {
@@ -108,16 +103,15 @@ namespace catapult { namespace state {
                 signers.emplace_back(state.first);
         }
 
-        return ApprovedDataModification{
-                completedModificationsIter->Id,
-                driveEntry.owner(),
-                driveEntry.key(),
-                completedModificationsIter->DownloadDataCdi,
-                completedModificationsIter->ExpectedUploadSize,
-                completedModificationsIter->ActualUploadSize,
-                signers,
-                driveEntry.usedSize()
-        };
+        return std::make_unique<ApprovedDataModification>(ApprovedDataModification{
+			completedModificationsIter->Id,
+			driveEntry.owner(),
+			driveEntry.key(),
+			completedModificationsIter->DownloadDataCdi,
+			completedModificationsIter->ExpectedUploadSize,
+			completedModificationsIter->ActualUploadSize,
+			signers,
+			driveEntry.usedSize()});
     }
 
     uint64_t StorageStateImpl::getDownloadWork(const Key& replicatorKey, const Key& driveKey) {
@@ -156,19 +150,38 @@ namespace catapult { namespace state {
     DownloadChannel StorageStateImpl::getDownloadChannel(const Hash256& id) {
         auto downloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
 
-        auto channel = downloadChannelCacheView->find(id);
-        auto channelEntry = channel.get();
+        auto channelIter = downloadChannelCacheView->find(id);
+        auto channelEntry = channelIter.get();
 
         auto consumers = channelEntry.listOfPublicKeys();
         consumers.emplace_back(channelEntry.consumer());
 
         return DownloadChannel{
-                channelEntry.id(),
-                channelEntry.downloadSize(),
-                channelEntry.downloadApprovalCount(),
-                consumers,
-                Key{} // TODO set real key
-        };
+			channelEntry.id(),
+			channelEntry.downloadSize(),
+			channelEntry.downloadApprovalCount(),
+			consumers,
+			Key()}; // TODO set real key
     }
 
+	std::unique_ptr<DriveVerification> StorageStateImpl::getActiveVerification(const Key& driveKey) {
+        auto driveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+        auto driveIter = driveCacheView->find(driveKey);
+        auto driveEntry = driveIter.get();
+
+        auto verificationsIter = driveEntry.verifications().rbegin();
+        while (verificationsIter != driveEntry.verifications().rend()) {
+            if (verificationsIter->State == state::VerificationState::Pending)
+                break;
+
+            ++verificationsIter;
+        }
+
+        if (verificationsIter == driveEntry.verifications().rend())
+            return nullptr;
+
+        return std::make_unique<DriveVerification>(DriveVerification{
+			verificationsIter->VerificationTrigger,
+			driveEntry.rootHash()});
+	}
 }}

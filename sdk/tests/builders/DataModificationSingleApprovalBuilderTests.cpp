@@ -19,36 +19,32 @@ namespace catapult { namespace builders {
         public:
             TransactionProperties()
                     : DriveKey(Key{})
-                    , DataModificationId(Hash256{})
-                    , UploaderKeys(std::vector<Key>{})
-                    , UploadOpinions(std::vector<uint8_t>{})
-                    , UsedDriveSize(0)
-            {}
+                      , DataModificationId(Hash256{})
+                      , PublicKeys({})
+                      , Opinions({}) {}
 
         public:
             Key DriveKey;
             Hash256 DataModificationId;
-            std::vector<Key> UploaderKeys;
-            std::vector<uint8_t> UploadOpinions;
-            uint64_t UsedDriveSize;
+            std::vector<Key> PublicKeys;
+            std::vector<uint64_t> Opinions;
         };
 
         template<typename TTransaction>
         void AssertTransactionProperties(const TransactionProperties& expectedProperties, const TTransaction& transaction) {
             EXPECT_EQ(expectedProperties.DriveKey, transaction.DriveKey);
             EXPECT_EQ(expectedProperties.DataModificationId, transaction.DataModificationId);
-            EXPECT_EQ(expectedProperties.UsedDriveSize, transaction.UsedDriveSize);
-            EXPECT_EQ(expectedProperties.UploadOpinions.size(), transaction.UploadOpinionPairCount);
+            EXPECT_EQ(expectedProperties.PublicKeys.size(), transaction.PublicKeysCount);
 
-            auto uploaderKeysPtr = transaction.UploaderKeysPtr();
-            for (const auto& key : expectedProperties.UploaderKeys) {
+            auto uploaderKeysPtr = transaction.PublicKeysPtr();
+            for (const auto& key: expectedProperties.PublicKeys) {
                 auto property = *uploaderKeysPtr;
                 EXPECT_EQ(property, key);
                 ++uploaderKeysPtr;
             }
 
-            auto uploadOpinionPtr = transaction.UploadOpinionPtr();
-            for (auto opinion : expectedProperties.UploadOpinions) {
+            auto uploadOpinionPtr = transaction.OpinionsPtr();
+            for (auto opinion: expectedProperties.Opinions) {
                 auto expectedOpinion = *uploadOpinionPtr;
                 EXPECT_EQ(expectedOpinion, opinion);
                 ++uploadOpinionPtr;
@@ -80,16 +76,16 @@ namespace catapult { namespace builders {
     }
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_Regular) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RegularTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Embedded) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<EmbeddedTraits>(); } \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+    template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+    TEST(TEST_CLASS, TEST_NAME##_Regular) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RegularTraits>(); } \
+    TEST(TEST_CLASS, TEST_NAME##_Embedded) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<EmbeddedTraits>(); } \
+    template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
     // region constructor
 
     TRAITS_BASED_TEST(CanCreateTransaction) {
         // Assert:
-        AssertCanBuildTransaction<TTraits>(0, TransactionProperties(), [](auto& builder) {builder.setUsedDriveSize(0);});
+        AssertCanBuildTransaction<TTraits>(0, TransactionProperties(), [](auto& builder) {});
     }
 
     // endregion
@@ -105,7 +101,6 @@ namespace catapult { namespace builders {
         // Assert:
         AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) {
             builder.setDriveKey(driveKey);
-            builder.setUsedDriveSize(0);
         });
     }
 
@@ -118,42 +113,29 @@ namespace catapult { namespace builders {
         // Assert:
         AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) {
             builder.setDataModificationId(dataModificationId);
-            builder.setUsedDriveSize(0);
         });
     }
 
-    TRAITS_BASED_TEST(CanSetUploadOpinionPairs) {
+    TRAITS_BASED_TEST(CanSetPublicKeysAndOpinions) {
         // Arrange:
-        std::vector<Key> uploaderKeys{
-            test::GenerateRandomByteArray<Key>(),
-            test::GenerateRandomByteArray<Key>(),
-            test::GenerateRandomByteArray<Key>()
+        std::vector<Key> publicKeys{
+                test::GenerateRandomByteArray<Key>(),
+                test::GenerateRandomByteArray<Key>(),
+                test::GenerateRandomByteArray<Key>()
         };
-        std::vector<uint8_t> uploadOpinions{1, 1, 1};
 
         auto expectedProperties = TransactionProperties();
-        expectedProperties.UploaderKeys = uploaderKeys;
-        expectedProperties.UploadOpinions = uploadOpinions;
+        expectedProperties.PublicKeys = publicKeys;
+
+        std::vector<uint64_t> opinions{1, 1, 1};
+        expectedProperties.Opinions = opinions;
+
+        auto additionalSize = publicKeys.size() * sizeof(Key) + opinions.size() * sizeof(uint64_t);
 
         // Assert:
-        auto additionalSize = uploaderKeys.size() * sizeof(Key) + uploadOpinions.size() * sizeof(uint8_t);
-
         AssertCanBuildTransaction<TTraits>(additionalSize, expectedProperties, [&](auto& builder) {
-            builder.setUploaderKeys(uploaderKeys);
-            builder.setUploadOpinion(uploadOpinions);
-            builder.setUsedDriveSize(0);
-        });
-    }
-
-    TRAITS_BASED_TEST(CanSetUsedDriveSize) {
-        // Arrange:
-        auto usedDriveSize = 100;
-        auto expectedProperties = TransactionProperties();
-        expectedProperties.UsedDriveSize = usedDriveSize;
-
-        // Assert:
-        AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) {
-            builder.setUsedDriveSize(usedDriveSize);
+            builder.setPublicKeys(publicKeys);
+            builder.setOpinions(opinions);
         });
     }
 

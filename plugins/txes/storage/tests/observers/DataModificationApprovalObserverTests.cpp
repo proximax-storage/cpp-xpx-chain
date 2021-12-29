@@ -22,7 +22,11 @@ namespace catapult { namespace observers {
 
         constexpr auto Current_Height = Height(10);
         constexpr auto File_Structure_Size = 50;
+		constexpr auto Meta_Files_Size = 50;
         constexpr auto Used_Drive_Size = 50;
+		constexpr auto Judging_Keys_Count = 2;
+		constexpr auto Overlapping_Keys_Count = 2;
+		constexpr auto Judged_Keys_Count = 2;
 
         state::BcDriveEntry CreateInitialEntry(const Key& driveKey) {
             state::BcDriveEntry entry(driveKey);
@@ -36,10 +40,13 @@ namespace catapult { namespace observers {
 
         state::BcDriveEntry CreateExpectedEntry(const Key& driveKey, const state::ActiveDataModifications& activeDataModifications) {
             state::BcDriveEntry entry(driveKey);
-            for (const auto &activeDataModification: activeDataModifications) {
+            for (const auto &activeDataModification: activeDataModifications)
                 entry.completedDataModifications().emplace_back(activeDataModification, state::DataModificationState::Succeeded);
-            }
-            
+
+			const auto totalJudgingKeysCount = Judging_Keys_Count + Overlapping_Keys_Count;
+			for (auto i = 0u; i < totalJudgingKeysCount; ++i)
+				entry.confirmedUsedSizes().insert({test::GenerateRandomByteArray<Key>(), Used_Drive_Size});
+
             return entry;
         }
 
@@ -57,14 +64,26 @@ namespace catapult { namespace observers {
 
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
             // Arrange:
+			const auto& confirmedUsedSizes = values.ExpectedBcDriveEntry.confirmedUsedSizes();
+			auto pPublicKeys = std::make_unique<Key[]>(confirmedUsedSizes.size());
+			auto pPair = confirmedUsedSizes.begin();
+			for (auto i = 0u; i < confirmedUsedSizes.size(); ++i, ++pPair)
+				pPublicKeys[i] = pPair->first;
+			const auto pPresentOpinions = std::make_unique<uint8_t>();
+
             ObserverTestContext context(mode, currentHeight);
             Notification notification(
-            	Key(),
-                values.InitialBcDriveEntry.key(), 
+            	values.InitialBcDriveEntry.key(),
                 values.InitialBcDriveEntry.activeDataModifications().begin()->Id, 
                 values.InitialBcDriveEntry.activeDataModifications().begin()->DownloadDataCdi,
                 File_Structure_Size,
-                Used_Drive_Size);
+				Meta_Files_Size,
+				Used_Drive_Size,
+				Judging_Keys_Count,
+				Overlapping_Keys_Count,
+				Judged_Keys_Count,
+				pPublicKeys.get(),
+				pPresentOpinions.get());
             auto pObserver = CreateDataModificationApprovalObserver();
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 
@@ -84,7 +103,7 @@ namespace catapult { namespace observers {
     TEST(TEST_CLASS, DataModificationApproval_Commit) {
         // Arrange:
         CacheValues values;
-        auto driveKey = test::GenerateRandomByteArray<Key>();
+        const auto driveKey = test::GenerateRandomByteArray<Key>();
         values.InitialBcDriveEntry = CreateInitialEntry(driveKey);
         values.ExpectedBcDriveEntry = CreateExpectedEntry(driveKey, values.InitialBcDriveEntry.activeDataModifications());
 
@@ -95,7 +114,7 @@ namespace catapult { namespace observers {
     TEST(TEST_CLASS, DataModificationApproval_Rollback) {
         // Arrange:
         CacheValues values;
-        auto driveKey = test::GenerateRandomByteArray<Key>();
+        const auto driveKey = test::GenerateRandomByteArray<Key>();
         values.ExpectedBcDriveEntry = CreateInitialEntry(driveKey);
         values.InitialBcDriveEntry = values.ExpectedBcDriveEntry;
 

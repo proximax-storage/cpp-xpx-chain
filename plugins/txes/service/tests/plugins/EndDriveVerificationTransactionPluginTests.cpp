@@ -35,6 +35,7 @@ namespace catapult { namespace plugins {
 
 	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_End_Drive_Verification, Network_Identifier)
 
+	// TODO: Fix
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
 		auto pPlugin = TTraits::CreatePlugin(Network_Identifier);

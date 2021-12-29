@@ -45,6 +45,8 @@ namespace catapult { namespace plugins {
             // Arrange:
             auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
             auto pTransaction = CreateTransaction<TTraits>();
+			pTransaction->ProversCount = 0;
+			pTransaction->VerificationOpinionsCount = 0;
 
             // Act:
             auto realSize = pPlugin->calculateRealSize(*pTransaction);

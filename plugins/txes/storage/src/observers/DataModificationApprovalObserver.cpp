@@ -31,12 +31,16 @@ namespace catapult { namespace observers {
 			driveInfo.LastCompletedCumulativeDownloadWork += completedDataModifications.back().ActualUploadSize;
 		}
 
-		driveEntry.confirmedUsedSizes().insert({notification.PublicKey, notification.UsedDriveSize});
+        const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
+		for (auto i = 0u; i < totalJudgingKeysCount; ++i)
+			driveEntry.confirmedUsedSizes().insert({notification.PublicKeysPtr[i], notification.UsedDriveSize});
 
 		auto it = std::find_if(
 				driveEntry.verifications().begin(),
 				driveEntry.verifications().end(),
-				[&notification](const state::Verification& v) {return v.State == state::VerificationState::Pending;}
+				[&notification](const state::Verification& v) {
+					return v.State == state::VerificationState::Pending;
+				}
 		);
 
 		if (it != driveEntry.verifications().end())
