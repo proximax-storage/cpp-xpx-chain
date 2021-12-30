@@ -19,20 +19,27 @@ namespace catapult { namespace validators {
     namespace {
         using Notification = model::DataModificationNotification<1>;
 
-        constexpr auto Current_Height = Height(10);
+		constexpr auto Current_Height = Height(10);
+		constexpr auto Drive_Size = 100;
+		constexpr auto Drive_Used_Size = 80;
+		constexpr auto Drive_Free_Size = Drive_Size - Drive_Used_Size;
+		constexpr auto Max_Modification_Size = 30;	// Must be greater than Drive_Free_Size
 
-        auto CreateConfig() {
-        	test::MutableBlockchainConfiguration config;
-        	auto pluginConfig = config::StorageConfiguration::Uninitialized();
-        	pluginConfig.MaxModificationSize = utils::FileSize::FromMegabytes(30);
-        	config.Network.SetPluginConfiguration(pluginConfig);
-        	return (config.ToConst());
-        }
+		auto CreateConfig() {
+			test::MutableBlockchainConfiguration config;
+			auto pluginConfig = config::StorageConfiguration::Uninitialized();
+			pluginConfig.MaxModificationSize = utils::FileSize::FromMegabytes(Max_Modification_Size);
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return (config.ToConst());
+		}
 
-		auto RandomUploadSize() {
-			const auto config = CreateConfig();
-			const auto maxModificationSize = config.Network.template GetPluginConfiguration<config::StorageConfiguration>().MaxModificationSize;
-			return test::RandomInRange<uint64_t>(1, maxModificationSize.megabytes());
+		state::BcDriveEntry CreateDriveEntry(
+				const Key& driveKey = test::GenerateRandomByteArray<Key>(),
+				const Key& owner = test::GenerateRandomByteArray<Key>()) {
+			auto entry = test::CreateBcDriveEntry(driveKey, owner);
+			entry.setSize(Drive_Size);
+			entry.setUsedSize(Drive_Used_Size);
+			return entry;
 		}
 
         void AssertValidationResult(
@@ -62,7 +69,7 @@ namespace catapult { namespace validators {
 
     TEST(TEST_CLASS, FailureWhenUploadSizeExcessive) {
     	// Arrange:
-    	state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
+    	const auto entry = CreateDriveEntry();
 
     	// Assert:
     	AssertValidationResult(
@@ -80,7 +87,7 @@ namespace catapult { namespace validators {
 
     TEST(TEST_CLASS, FailureWhenDriveNotFound) {
         // Arrange:
-        state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
+		const auto entry = CreateDriveEntry();
 
         // Assert:
         AssertValidationResult(
@@ -92,18 +99,40 @@ namespace catapult { namespace validators {
 					test::GenerateRandomByteArray<Hash256>(),
 					test::GenerateRandomByteArray<Key>(),
 					test::GenerateRandomByteArray<Hash256>(),
-					RandomUploadSize())
+					test::RandomInRange<uint64_t>(1, Drive_Free_Size))
             });
     }
+
+	TEST(TEST_CLASS, FailureWhenDriveSizeInsufficient) {
+		// Arrange:
+		Key driveKey = test::GenerateRandomByteArray<Key>();
+		Key owner = test::GenerateRandomByteArray<Key>();
+		Hash256 id = test::GenerateRandomByteArray<Hash256>();
+		uint64_t uploadSize = test::RandomInRange<uint64_t>(Drive_Free_Size + 1, Max_Modification_Size);
+
+		auto entry = CreateDriveEntry(driveKey, owner);
+		entry.activeDataModifications().emplace_back(state::ActiveDataModification(
+				id, owner, test::GenerateRandomByteArray<Hash256>(), uploadSize
+		));
+
+		// Assert:
+		AssertValidationResult(
+				Failure_Storage_Drive_Size_Insufficient,
+				entry,
+				driveKey,
+				{ state::ActiveDataModification(
+						id, owner, test::GenerateRandomByteArray<Hash256>(), uploadSize)
+				});
+	}
 
     TEST(TEST_CLASS, FailureWhenDataModificationAlreadyExists) {
         // Arrange:
 		Key driveKey = test::GenerateRandomByteArray<Key>();
 		Key owner = test::GenerateRandomByteArray<Key>();
 		Hash256 id = test::GenerateRandomByteArray<Hash256>();
-		uint64_t uploadSize = RandomUploadSize();
-		state::BcDriveEntry entry(driveKey);
-		entry.setOwner(owner);
+		uint64_t uploadSize = test::RandomInRange<uint64_t>(1, Drive_Free_Size);
+
+		auto entry = CreateDriveEntry(driveKey, owner);
         entry.activeDataModifications().emplace_back(state::ActiveDataModification(
             id, owner, test::GenerateRandomByteArray<Hash256>(), uploadSize
 		));
@@ -123,8 +152,9 @@ namespace catapult { namespace validators {
     	Key driveKey = test::GenerateRandomByteArray<Key>();
     	Key owner = test::GenerateRandomByteArray<Key>();
     	Hash256 downloadDataCdi = test::GenerateRandomByteArray<Hash256>();
-    	uint64_t uploadSize = RandomUploadSize();
-    	state::BcDriveEntry entry(driveKey);
+    	uint64_t uploadSize = test::RandomInRange<uint64_t>(1, Drive_Free_Size);
+
+		auto entry = CreateDriveEntry(driveKey, owner);
     	entry.activeDataModifications().emplace_back(state::ActiveDataModification (
     			test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize
     			));
@@ -144,9 +174,9 @@ namespace catapult { namespace validators {
         Key driveKey = test::GenerateRandomByteArray<Key>();
         Key owner = test::GenerateRandomByteArray<Key>();
         Hash256 downloadDataCdi = test::GenerateRandomByteArray<Hash256>();
-        uint64_t uploadSize = RandomUploadSize();
-        state::BcDriveEntry entry(driveKey);
-		entry.setOwner(owner);
+        uint64_t uploadSize = test::RandomInRange<uint64_t>(1, Drive_Free_Size);
+
+		auto entry = CreateDriveEntry(driveKey, owner);
         entry.activeDataModifications().emplace_back(state::ActiveDataModification (
             test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize
 		));

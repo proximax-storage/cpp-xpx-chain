@@ -23,6 +23,10 @@ namespace catapult { namespace validators {
 		if (!pDriveEntry)
 			return Failure_Storage_Drive_Not_Found;
 
+	  	// Check if there is enough free space on the drive
+	  	if (notification.UploadSize > pDriveEntry->size() - pDriveEntry->usedSize())
+		  	return Failure_Storage_Drive_Size_Insufficient;
+
 		const auto& owner = pDriveEntry->owner();
 		if (owner != notification.Owner) {
 			return Failure_Storage_Is_Not_Owner;
