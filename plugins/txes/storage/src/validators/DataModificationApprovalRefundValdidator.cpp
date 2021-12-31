@@ -31,21 +31,6 @@ namespace catapult { namespace validators {
 
 		// TODO: Check if UsedDriveSize - MetaFilesSize > 0?
 
-	  	const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-	  	const auto senderStateIter = accountStateCache.find(notification.DriveKey);
-	  	const auto& pSenderState = senderStateIter.tryGet();
-
-	  	// Check if account state of the drive exists
-	  	if (!pSenderState)
-		  	return Failure_Storage_Sender_State_Not_Found;
-
-		const auto recipientStateIter = accountStateCache.find(pDriveEntry->owner());
-		const auto& pRecipientState = recipientStateIter.tryGet();
-
-		// Check if account state of the drive owner exists
-		if (!pRecipientState)
-			return Failure_Storage_Recipient_State_Not_Found;
-
 		// TODO: Check if there are enough mosaics for the transfer?
 
 		return ValidationResult::Success;

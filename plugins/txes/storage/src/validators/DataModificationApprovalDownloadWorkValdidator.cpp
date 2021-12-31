@@ -20,14 +20,6 @@ namespace catapult { namespace validators {
 	  	if (!pDriveEntry)
 		  	return Failure_Storage_Drive_Not_Found;
 
-	  	const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-	  	const auto senderStateIter = accountStateCache.find(notification.DriveKey);
-	  	const auto& pSenderState = senderStateIter.tryGet();
-
-	  	// Check if account state of the drive exists
-	  	if (!pSenderState)
-		  	return Failure_Storage_Sender_State_Not_Found;
-
 	  	const auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 	  	auto pKey = notification.PublicKeysPtr;
 		for (auto i = 0; i < notification.PublicKeysCount; ++i, ++pKey) {
@@ -36,12 +28,6 @@ namespace catapult { namespace validators {
 			const auto& pReplicatorEntry = replicatorIter.tryGet();
 			if (!pReplicatorEntry)
 				return Failure_Storage_Replicator_Not_Found;
-
-			// Check if judging replicator's account state exists
-			const auto recipientStateIter = accountStateCache.find(*pKey);
-			const auto& pRecipientState = recipientStateIter.tryGet();
-			if (!pRecipientState)
-				return Failure_Storage_Recipient_State_Not_Found;
 
 			// Check if the replicator has respective drive info with given drive key
 			if (!pReplicatorEntry->drives().count(notification.DriveKey))

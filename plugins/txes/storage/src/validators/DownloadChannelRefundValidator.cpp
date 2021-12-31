@@ -19,21 +19,6 @@ namespace catapult { namespace validators {
 		if (!pDownloadChannelEntry)
 			return Failure_Storage_Download_Channel_Not_Found;
 
-		const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-	  	const auto senderStateIter = accountStateCache.find(Key(notification.DownloadChannelId.array()));
-	  	const auto& pSenderState = senderStateIter.tryGet();
-
-	  	// Check if account state of the download channel exists
-		if (!pSenderState)
-		  	return Failure_Storage_Sender_State_Not_Found;
-
-		const auto recipientStateIter = accountStateCache.find(pDownloadChannelEntry->consumer());
-		const auto& pRecipientState = recipientStateIter.tryGet();
-
-		// Check if account state of the download channel consumer exists
-		if (!pRecipientState)
-			return Failure_Storage_Recipient_State_Not_Found;
-
 		return ValidationResult::Success;
 	}))
 
