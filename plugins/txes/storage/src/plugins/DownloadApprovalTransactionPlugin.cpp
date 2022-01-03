@@ -25,8 +25,7 @@ namespace catapult { namespace plugins {
 					const auto commonDataSize = sizeof(transaction.DownloadChannelId)
 												+ sizeof(transaction.SequenceNumber)
 												+ sizeof(transaction.ResponseToFinishDownloadTransaction);
-					auto* const commonDataPtr = new uint8_t[commonDataSize];
-					auto* pCommonData = commonDataPtr;
+					auto* pCommonData = sub.mempool().malloc<uint8_t>(commonDataSize);
 					utils::WriteToByteArray(pCommonData, transaction.DownloadChannelId);
 					utils::WriteToByteArray(pCommonData, transaction.SequenceNumber);
 					utils::WriteToByteArray(pCommonData, transaction.ResponseToFinishDownloadTransaction);
@@ -36,7 +35,7 @@ namespace catapult { namespace plugins {
 							transaction.JudgingKeysCount,
 							transaction.OverlappingKeysCount,
 							transaction.JudgedKeysCount,
-							commonDataPtr,
+							pCommonData,
 							transaction.PublicKeysPtr(),
 							transaction.SignaturesPtr(),
 							transaction.PresentOpinionsPtr(),

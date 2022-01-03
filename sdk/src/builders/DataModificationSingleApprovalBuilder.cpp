@@ -21,12 +21,12 @@ namespace catapult { namespace builders {
         m_dataModificationId = dataModificationId;
     }
 
-    void DataModificationSingleApprovalBuilder::setPublicKeys(const std::vector<Key>& publicKeys) {
-        m_publicKeys = publicKeys;
+    void DataModificationSingleApprovalBuilder::setPublicKeys(std::vector<Key>&& publicKeys) {
+        m_publicKeys = std::move(publicKeys);
     }
 
-    void DataModificationSingleApprovalBuilder::setOpinions(const std::vector<uint64_t>& opinions) {
-        m_opinions = opinions;
+    void DataModificationSingleApprovalBuilder::setOpinions(std::vector<uint64_t>&& opinions) {
+        m_opinions = std::move(opinions);
     }
 
     template<typename TransactionType>

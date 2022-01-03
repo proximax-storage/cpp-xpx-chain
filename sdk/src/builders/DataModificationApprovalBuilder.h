@@ -41,13 +41,13 @@ namespace catapult { namespace builders {
 
         void setJudgedKeysCount(uint8_t judgedKeysCount);
 
-        void setPublicKeys(const std::vector<Key>& publicKeys);
+        void setPublicKeys(std::vector<Key>&& publicKeys);
 
-        void setSignatures(const std::vector<Signature>& signatures);
+        void setSignatures(std::vector<Signature>&& signatures);
 
-        void setPresentOpinions(const std::vector<uint8_t>& presentOpinions);
+        void setPresentOpinions(std::vector<uint8_t>&& presentOpinions);
 
-        void setOpinions(const std::vector<uint64_t>& opinions);
+        void setOpinions(std::vector<uint64_t>&& opinions);
 
     public:
         /// Builds a new data modification approval transaction.

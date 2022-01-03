@@ -1,4 +1,4 @@
-PATH_TO_CATAPULT_SERVER="/home/newman/projects/catapult/cpp-xpx-chain"
+PATH_TO_CATAPULT_SERVER="/home/oleg/hdd/Projects/catapult/cpp-xpx-chain"
 PATH_TO_BOOTSTRAP=$PATH_TO_CATAPULT_SERVER/scripts/bootstrap
 
 WORK_DIR=$PATH_TO_CATAPULT_SERVER/cmake-build-debug
@@ -47,12 +47,12 @@ generate_nem() {
     cd $WORK_DIR/data/$1/
     echo "running nemgen $1"
 
-    cp -R $WORK_DIR/config-build/$1/userconfig/resources resources
     if [ ! -d $WORK_DIR/nemesis/data ]; then
       mkdir settings
       mkdir -p seed/mijin-test/00000
       dd if=/dev/zero of=seed/mijin-test/00000/hashes.dat bs=1 count=64
       cd settings
+      cp -R $WORK_DIR/config-build/$1/userconfig/resources ../resources
       $WORK_DIR/bin/catapult.tools.nemgen --nemesisProperties $WORK_DIR/nemesis/block-properties-file.properties
       cp -r $WORK_DIR/data/$1/seed/mijin-test/* $WORK_DIR/data/$1/data/
       cp -r $WORK_DIR/data/$1/data $WORK_DIR/nemesis/
@@ -61,6 +61,7 @@ generate_nem() {
       cd -
     else
       cp $WORK_DIR/nemesis/data -r $WORK_DIR/data/$1/
+      cp -R $WORK_DIR/config-build/$1/userconfig/resources $WORK_DIR/data/$1/
     fi
 
   else
@@ -73,10 +74,10 @@ generate_nem() {
 
 generate_nem "api-node-0"
 generate_nem "peer-node-0"
-#generate_nem "peer-node-1"
-#generate_nem "peer-node-2"
-#generate_nem "peer-node-3"
-#generate_nem "peer-node-4"
+generate_nem "peer-node-1"
+generate_nem "peer-node-2"
+generate_nem "peer-node-3"
+generate_nem "peer-node-4"
 
 echo "You can kill all catapult servers 'killall $WORK_DIR/bin/sirius.bc'"
 echo "multitail -i $WORK_DIR/data/api-node-0/catapult_server0000.log -i $WORK_DIR/data/peer-node-0/catapult_server0000.log -i $WORK_DIR/data/peer-node-1/catapult_server0000.log -i $WORK_DIR/data/peer-node-2/catapult_server0000.log -i $WORK_DIR/data/peer-node-3/catapult_server0000.log -i $WORK_DIR/data/peer-node-4/catapult_server0000.log"

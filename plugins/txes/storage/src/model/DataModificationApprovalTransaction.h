@@ -56,7 +56,7 @@ namespace catapult { namespace model {
 
 		/// Total number of opinion elements.
 		// TODO: Remove; instead process PresentOpinions to count up existing opinion elements
-		uint8_t OpinionElementCount;
+		uint16_t OpinionElementCount;
 
 		/// Replicators' public keys.
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(PublicKeys, Key)

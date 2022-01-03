@@ -262,11 +262,11 @@ namespace catapult { namespace builders {
 
         // Assert:
         AssertCanBuildTransaction<TTraits>(additionalSize, expectedProperties, [&](auto& builder) {
-            builder.setPublicKeys(publicKeys);
-            builder.setSignatures(signatures);
+            builder.setPublicKeys(std::move(publicKeys));
+            builder.setSignatures(std::move(signatures));
             builder.setJudgingKeysCount(signatures.size());
             builder.setJudgedKeysCount(signatures.size());
-            builder.setPresentOpinions(presentOpinions);
+            builder.setPresentOpinions(std::move(presentOpinions));
         });
     }
 
@@ -280,7 +280,7 @@ namespace catapult { namespace builders {
 
         // Assert:
         AssertCanBuildTransaction<TTraits>(additionalSize, expectedProperties, [&](auto& builder) {
-            builder.setOpinions(opinions);
+            builder.setOpinions(std::move(opinions));
         });
     }
 

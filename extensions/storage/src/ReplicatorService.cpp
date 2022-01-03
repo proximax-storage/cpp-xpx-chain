@@ -79,7 +79,8 @@ namespace catapult { namespace storage {
 				m_keyPair,
 				immutableConfig,
 				storageConfig,
-				m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local));
+				m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local),
+				m_storageState);
 
             m_pReplicatorEventHandler = CreateReplicatorEventHandler(
 				std::move(transactionSender),
@@ -125,6 +126,7 @@ namespace catapult { namespace storage {
 						drive.Id.array(),
 						sirius::drive::VerificationRequest{
 							pActiveVerification->VerificationTrigger.array(),
+							0u, // TODO: set shard id
 							pActiveVerification->RootHash.array(),
 							replicators});
 				}

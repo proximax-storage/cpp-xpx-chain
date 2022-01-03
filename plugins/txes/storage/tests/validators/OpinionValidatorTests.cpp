@@ -145,7 +145,7 @@ namespace catapult { namespace validators {
 
 		// Assert:
 		AssertValidationResult(
-				Failure_Storage_Opinion_Reocurring_Keys,
+				Failure_Storage_Opinion_Duplicated_Keys,
 				cache,
 				commonDataBuffer,
 				opinionData);

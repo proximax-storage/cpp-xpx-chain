@@ -8,17 +8,15 @@
 
 namespace catapult { namespace builders {
 
-    DataModificationApprovalBuilder::DataModificationApprovalBuilder(
-            model::NetworkIdentifier networkIdentifier,
-            const Key& signer)
-            : TransactionBuilder(networkIdentifier, signer)
-            , m_fileStructureSize(0)
-            , m_usedDriveSize(0)
-            , m_metaFilesSize(0)
-            , m_judgingKeysCount(0)
-            , m_overlappingKeysCount(0)
-            , m_judgedKeysCount(0)
-            {}
+    DataModificationApprovalBuilder::DataModificationApprovalBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer)
+		: TransactionBuilder(networkIdentifier, signer)
+		, m_fileStructureSize(0)
+		, m_usedDriveSize(0)
+		, m_metaFilesSize(0)
+		, m_judgingKeysCount(0)
+		, m_overlappingKeysCount(0)
+		, m_judgedKeysCount(0)
+	{}
 
     void DataModificationApprovalBuilder::setDriveKey(const Key& driveKey) {
         m_driveKey = driveKey;
@@ -56,20 +54,20 @@ namespace catapult { namespace builders {
         m_judgedKeysCount = judgedKeysCount;
     }
 
-    void DataModificationApprovalBuilder::setPublicKeys(const std::vector<Key>& publicKeys) {
-        m_publicKeys = publicKeys;
+    void DataModificationApprovalBuilder::setPublicKeys(std::vector<Key>&& publicKeys) {
+        m_publicKeys = std::move(publicKeys);
     }
 
-    void DataModificationApprovalBuilder::setSignatures(const std::vector<Signature>& signatures) {
-        m_signatures = signatures;
+    void DataModificationApprovalBuilder::setSignatures(std::vector<Signature>&& signatures) {
+        m_signatures = std::move(signatures);
     }
 
-    void DataModificationApprovalBuilder::setPresentOpinions(const std::vector<uint8_t>& presentOpinions) {
-        m_presentOpinions = presentOpinions;
+    void DataModificationApprovalBuilder::setPresentOpinions(std::vector<uint8_t>&& presentOpinions) {
+        m_presentOpinions = std::move(presentOpinions);
     }
 
-    void DataModificationApprovalBuilder::setOpinions(const std::vector<uint64_t>& opinions) {
-        m_opinions = opinions;
+    void DataModificationApprovalBuilder::setOpinions(std::vector<uint64_t>&& opinions) {
+        m_opinions = std::move(opinions);
     }
 
     template<typename TransactionType>
@@ -92,7 +90,7 @@ namespace catapult { namespace builders {
         pTransaction->JudgingKeysCount = m_judgingKeysCount;
         pTransaction->OverlappingKeysCount = m_overlappingKeysCount;
         pTransaction->JudgedKeysCount = m_judgedKeysCount;
-        pTransaction->OpinionElementCount = m_opinions.size();
+        pTransaction->OpinionElementCount = utils::checked_cast<size_t, uint16_t>(m_opinions.size());
 
         // 3. set transaction attachments
         std::copy(m_publicKeys.cbegin(), m_publicKeys.cend(), pTransaction->PublicKeysPtr());

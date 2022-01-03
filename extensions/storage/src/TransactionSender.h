@@ -17,15 +17,17 @@ namespace catapult { namespace storage {
     class TransactionSender {
     public:
         TransactionSender(
-			const crypto::KeyPair& keyPair,
-			const config::ImmutableConfiguration& immutableConfig,
-			StorageConfiguration storageConfig,
-			handlers::TransactionRangeHandler transactionRangeHandler)
+				const crypto::KeyPair& keyPair,
+				const config::ImmutableConfiguration& immutableConfig,
+				StorageConfiguration storageConfig,
+				handlers::TransactionRangeHandler transactionRangeHandler,
+				state::StorageState& storageState)
 			: m_keyPair(keyPair)
 			, m_networkIdentifier(immutableConfig.NetworkIdentifier)
 			, m_generationHash(immutableConfig.GenerationHash)
 			, m_storageConfig(std::move(storageConfig))
 			, m_transactionRangeHandler(std::move(transactionRangeHandler))
+			, m_storageState(storageState)
 		{}
 
     public:
@@ -33,7 +35,7 @@ namespace catapult { namespace storage {
         Hash256 sendDataModificationSingleApprovalTransaction(const sirius::drive::ApprovalTransactionInfo& transactionInfo);
         Hash256 sendDownloadApprovalTransaction(uint16_t sequenceNumber, const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo);
 
-    private:
+	private:
         void send(std::shared_ptr<model::Transaction> pTransaction);
 
     private:
@@ -42,5 +44,6 @@ namespace catapult { namespace storage {
         GenerationHash m_generationHash;
         StorageConfiguration m_storageConfig;
         handlers::TransactionRangeHandler m_transactionRangeHandler;
+		state::StorageState& m_storageState;
     };
 }}

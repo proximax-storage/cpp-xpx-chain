@@ -39,8 +39,6 @@ namespace catapult { namespace validators {
 			const auto& pRecipientState = recipientStateIter.tryGet();
 			if (!pRecipientState)
 				return Failure_Storage_Recipient_State_Not_Found;
-			if (*pKey != driveOwnerPublicKey && !pDriveEntry->cumulativeUploadSizes().count(*pKey))
-				return Failure_Storage_Replicator_Not_Found;
 		}
 
 	  	// TODO: Check if there are enough mosaics for the transfer?

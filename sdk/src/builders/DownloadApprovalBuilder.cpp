@@ -78,7 +78,7 @@ namespace catapult { namespace builders {
         pTransaction->JudgingKeysCount = m_judgingKeysCount;
         pTransaction->OverlappingKeysCount = m_overlappingKeysCount;
         pTransaction->JudgedKeysCount = m_judgedKeysCount;
-        pTransaction->OpinionElementCount = m_opinions.size();
+        pTransaction->OpinionElementCount = utils::checked_cast<size_t, uint16_t>(m_opinions.size());
 
         // 3. set transaction attachments
         std::copy(m_publicKeys.cbegin(), m_publicKeys.cend(), pTransaction->PublicKeysPtr());

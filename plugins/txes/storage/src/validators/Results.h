@@ -75,7 +75,7 @@ namespace catapult { namespace validators {
 	DEFINE_STORAGE_RESULT(No_Approved_Data_Modifications, 20);
 
 	/// Not every key in the opinion appears exactly once.
-	DEFINE_STORAGE_RESULT(Opinion_Reocurring_Keys, 21);
+	DEFINE_STORAGE_RESULT(Opinion_Duplicated_Keys, 21);
 
 	/// The key in upload opinion is neither a key of one of the current replicators of the drive nor a key of the drive owner.
 	DEFINE_STORAGE_RESULT(Opinion_Invalid_Key, 22);

@@ -134,8 +134,8 @@ namespace catapult { namespace builders {
 
         // Assert:
         AssertCanBuildTransaction<TTraits>(additionalSize, expectedProperties, [&](auto& builder) {
-            builder.setPublicKeys(publicKeys);
-            builder.setOpinions(opinions);
+            builder.setPublicKeys(std::move(publicKeys));
+            builder.setOpinions(std::move(opinions));
         });
     }
 

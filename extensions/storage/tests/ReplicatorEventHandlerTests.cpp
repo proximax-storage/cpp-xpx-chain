@@ -8,7 +8,6 @@
 #include "src/TransactionSender.h"
 #include "src/TransactionStatusHandler.h"
 #include "tests/TestHarness.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/mocks/MockStorageState.h"
 
 namespace catapult { namespace storage {
@@ -17,23 +16,20 @@ namespace catapult { namespace storage {
 
     TEST(TEST_CLASS, CanCreateReplicatorEventHandler) {
         // Arrange:
-        auto config = config::CreateMockConfigurationHolder();
+		TransactionStatusHandler transactionStatusHandler;
         mocks::MockStorageState storageState;
-        StorageConfiguration storageConfig{};
-        handlers::TransactionRangeHandler transactionRangeHandler{};
         auto transactionSender = TransactionSender(
 			crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"),
-			config->Config().Immutable,
-			storageConfig,
-			transactionRangeHandler);
-        TransactionStatusHandler transactionStatusHandler;
+			config::ImmutableConfiguration::Uninitialized(),
+			StorageConfiguration::Uninitialized(),
+			[](auto&&){},
+			storageState);
 
         // Act:
         auto testee = storage::CreateReplicatorEventHandler(
 			std::move(transactionSender),
-			(state::StorageState&) storageState,
-			transactionStatusHandler
-        );
+			storageState,
+			transactionStatusHandler);
 
         // Assert:
         EXPECT_NE(nullptr, testee);

@@ -24,12 +24,9 @@ namespace catapult { namespace builders {
 
     public:
         void setDriveKey(const Key& driveKey);
-
         void setDataModificationId(const Hash256& dataModificationId);
-
-        void setPublicKeys(const std::vector<Key>& publicKeys);
-
-        void setOpinions(const std::vector<uint64_t>& opinions);
+        void setPublicKeys(std::vector<Key>&& publicKeys);
+        void setOpinions(std::vector<uint64_t>&& opinions);
 
     public:
         /// Builds a new data modification single approval transaction.

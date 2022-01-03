@@ -39,7 +39,7 @@ namespace catapult { namespace observers {
 		for (auto i = notification.JudgingKeysCount; i < totalKeysCount; ++i) {
 			const auto key = notification.PublicKeysPtr[i];
 			const auto initialSize = (key != driveOwnerPublicKey) ?
-					driveEntry.cumulativeUploadSizes().at(key) :
+					driveEntry.cumulativeUploadSizes()[key] :
 					driveEntry.ownerCumulativeUploadSize();
 			initialCumulativeUploadSizes.push_back(initialSize);
 		}
@@ -50,7 +50,7 @@ namespace catapult { namespace observers {
 		for (auto i = 0; i < totalJudgingKeysCount; ++i) {
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
 				if (presentOpinions[i*totalJudgedKeysCount + j]) {
-					uploadSizesIncrements.at(j) += std::max(*pOpinion - initialCumulativeUploadSizes.at(j), 0ul);
+					uploadSizesIncrements.at(j) += *pOpinion - initialCumulativeUploadSizes.at(j);
 					++pOpinion;
 				}
 			}
