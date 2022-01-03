@@ -16,7 +16,7 @@ NOTE: Commands are using `\` as marker for line continuations
 
 ```sh
 curl -o boost_1_71_0.tar.gz -SL \
-    https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
+    https://boostorg.jfrog.io/artifactory/main/release/1.71.0/source/boost_1_71_0.tar.gz
 tar -xzf boost_1_71_0.tar.gz
 
 ## WARNING: below use $HOME rather than ~ - boost scripts might treat it literally
@@ -60,7 +60,7 @@ mongo-c
 ```sh
 git clone https://github.com/mongodb/mongo-c-driver.git mongo-c-driver.git
 cd mongo-c-driver.git
-git checkout 1.15.1
+git checkout 1.20
 
 mkdir _build && cd _build
 cmake -DENABLE_AUTOMATIC_INIT_AND_CLEANUP=OFF -DCMAKE_BUILD_TYPE=Release \
@@ -71,9 +71,9 @@ sudo make install
 
 mongocxx
 ```sh
-git clone https://github.com/nemtech/mongo-cxx-driver.git mongo-cxx-driver.git
+git clone https://github.com/mongodb/mongo-cxx-driver.git
 cd mongo-cxx-driver.git
-git checkout r3.4.0-nem
+git checkout r3.6.0
 
 mkdir _build && cd _build
 cmake -DCMAKE_CXX_STANDARD=17 -DLIBBSON_DIR=/usr/local -DLIBMONGOC_DIR=/usr/local \
@@ -103,7 +103,7 @@ cd cppzmq.git
 git checkout v4.4.1
 
 mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
+cmake -DCPPZMQ_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
 make
 sudo make install
 ```
@@ -114,9 +114,9 @@ Currently ubuntu 18.04 has gflags in version 2.2.1 and snappy in version 1.1.7 w
 
 rocks
 ```sh
-git clone https://github.com/nemtech/rocksdb.git rocksdb.git
+git clone https://github.com/facebook/rocksdb.git
 cd rocksdb.git
-git checkout v6.6.4-nem
+git checkout v6.6.4
 
 mkdir _build && cd _build
 cmake -DCMAKE_BUILD_TYPE=Release -DWITH_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..

@@ -56,7 +56,7 @@ namespace catapult { namespace model {
 
 		/// Total number of opinion elements.
 		// TODO: Remove; instead process PresentOpinions to count up existing opinion elements
-		uint8_t OpinionElementCount;
+		uint16_t OpinionElementCount;
 
 		/// Replicators' public keys.
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(PublicKeys, Key)
@@ -74,8 +74,9 @@ namespace catapult { namespace model {
 	private:
 		template<typename T>
 		static auto* PublicKeysPtrT(T& transaction) {
+			auto* pPayloadStart = THeader::PayloadStart(transaction);
 			const auto totalKeysCount = transaction.JudgingKeysCount + transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
-			return totalKeysCount ? THeader::PayloadStart(transaction) : nullptr;
+			return totalKeysCount ? pPayloadStart : nullptr;
 		}
 
 		template<typename T>

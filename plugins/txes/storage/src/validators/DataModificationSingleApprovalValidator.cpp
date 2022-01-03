@@ -34,7 +34,7 @@ namespace catapult { namespace validators {
 	  	const auto& driveOwner = pDriveEntry->owner();
 	  	for (auto i = 0; i < notification.PublicKeysCount; ++i, ++pKey) {
 		  	if (providedKeys.count(*pKey))
-			  	return Failure_Storage_Opinion_Reocurring_Keys;
+			  	return Failure_Storage_Opinion_Duplicated_Keys;
 			providedKeys.insert(*pKey);
 			if (*pKey == notification.PublicKey)
 				return Failure_Storage_Opinion_Provided_On_Self;

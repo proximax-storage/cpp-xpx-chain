@@ -5,69 +5,60 @@
 **/
 
 #pragma once
+
 #include "StorageConfiguration.h"
-#include "catapult/crypto/KeyPair.h"
-#include "catapult/extensions/ServerHooks.h"
-#include "catapult/extensions/ServiceRegistrar.h"
 #include "catapult/types.h"
-#include "drive/Drive.h"
-#include "drive/Session.h"
-#include <mutex>
+#include "catapult/crypto/KeyPair.h"
+#include "catapult/extensions/ServiceRegistrar.h"
+
+namespace catapult { namespace model { class Transaction; } }
 
 namespace catapult { namespace storage {
 
-	using FileNames = std::vector<std::string>;
+    class ReplicatorService {
+    public:
+        ReplicatorService(crypto::KeyPair&& keyPair, StorageConfiguration&& storageConfig);
 
-	class ReplicatorService {
-	public:
-		ReplicatorService(
-				crypto::KeyPair&& keyPair,
-				model::NetworkIdentifier networkIdentifier,
-				const GenerationHash& generationHash,
-				StorageConfiguration&& storageConfig)
-			: m_keyPair(std::move(keyPair))
-			, m_networkIdentifier(networkIdentifier)
-			, m_generationHash(generationHash)
-			, m_storageConfig(std::move(storageConfig))
-		{}
+    public:
+        void start();
+        void stop();
 
-	public:
-		void setTransactionRangeHandler(handlers::TransactionRangeHandler transactionRangeHandler) {
-			m_transactionRangeHandler = std::move(transactionRangeHandler);
-		}
+        void setServiceState(extensions::ServiceState* pServiceState) {
+            m_pServiceState = pServiceState;
+        }
 
-		Key replicatorKey() const;
+        const Key& replicatorKey() const;
 
-		void start();
+        bool isReplicatorRegistered(const Key& key);
 
-		void addDrive(const Key& driveKey, size_t driveSize);
-		void removeDrive(const Key& driveKey);
+        void addDriveModification(const Key& driveKey, const Hash256& downloadDataCdi, const Hash256& modificationId, const Key& owner, uint64_t dataSize);
+        void removeDriveModification(const Key& driveKey, const Hash256& dataModificationId);
 
-		void addDriveModification(const Key& driveKey, const Hash256& dataModificationId, const Hash256& rootHash);
-		void removeDriveModification(const Key& driveKey, const Hash256& dataModificationId);
+        void addDownloadChannel(const Hash256& channelId, const Key& driveKey, size_t prepaidDownloadSize, const std::vector<Key>& consumers);
+        void increaseDownloadChannelSize(const Hash256& channelId, size_t downloadSize);
+        void closeDownloadChannel(const Hash256& channelId);
 
-		void addConsumer(const Key& consumer, const std::vector<Key> listOfPublicKeys, const uint64_t downloadSize);
-		void removeConsumer(const Key& consumer);
-		void increaseDownloadSize(const Key& consumer, const uint64_t downloadSizeDelta);
+        void addDrive(const Key& driveKey, uint64_t driveSize);
+        bool isAssignedToDrive(const Key& driveKey);
+        void closeDrive(const Key& driveKey, const Hash256& transactionHash);
 
-		FileNames startDownloadFiles(const Key& consumer, const Key& driveKey, FileNames&& fileNames);
-		FileNames stopDownloadFiles(const Key& driveKey, FileNames&& fileNames);
+    public:
+        void dataModificationApprovalPublished(const Key& driveKey, const Hash256& modificationId, const Hash256& rootHash, std::vector<Key>& replicators);
+        void dataModificationSingleApprovalPublished(const Key& driveKey, const Hash256& modificationId);
 
-		void closeDrive(const Key& driveKey);
+    public:
+        void notifyTransactionStatus(const Hash256& hash, uint32_t status);
 
-		void shutdown();
+    private:
+        class Impl;
 
-	private:
-		class Impl;
-		std::shared_ptr<Impl> m_pImpl;
+        std::shared_ptr<Impl> m_pImpl;
 
-		crypto::KeyPair m_keyPair;
-		model::NetworkIdentifier m_networkIdentifier;
-		GenerationHash m_generationHash;
-		StorageConfiguration m_storageConfig;
-		handlers::TransactionRangeHandler m_transactionRangeHandler;
-	};
+        crypto::KeyPair m_keyPair;
+        StorageConfiguration m_storageConfig;
+        extensions::ServiceState* m_pServiceState;
+    };
 
-	/// Creates a registrar for the replicator service.
-	DECLARE_SERVICE_REGISTRAR(Replicator)(std::shared_ptr<storage::ReplicatorService> pReplicatorService);
+    /// Creates a registrar for the replicator service.
+    DECLARE_SERVICE_REGISTRAR(Replicator)(std::shared_ptr<storage::ReplicatorService> pReplicatorService);
 }}

@@ -49,6 +49,7 @@ namespace catapult { namespace validators {
 			const auto totalKeysCount = opinionData.JudgingKeysCount + opinionData.OverlappingKeysCount + opinionData.JudgedKeysCount;
 			const auto totalJudgingKeysCount = totalKeysCount - opinionData.JudgedKeysCount;
 			const auto totalJudgedKeysCount = totalKeysCount - opinionData.JudgingKeysCount;
+			const auto totalKeysCount = opinionData.JudgingKeysCount + opinionData.OverlappingKeysCount + opinionData.JudgedKeysCount;
 			const auto presentOpinionElementCount = totalJudgingKeysCount * totalJudgedKeysCount;
 			const auto presentOpinionByteCount = (presentOpinionElementCount + 7) / 8;
 
@@ -66,6 +67,11 @@ namespace catapult { namespace validators {
 				boost::to_block_range(byte, &pPresentOpinions[i]);
 			}
 
+			std::vector<Key> replicators;
+			replicators.reserve(totalKeysCount);
+			for (auto i = 0u; i < totalKeysCount; ++i)
+				replicators.emplace_back(test::GenerateRandomByteArray<Key>());
+
 			Notification notification(
 					downloadChannelId,
 					sequenceNumber,
@@ -73,7 +79,8 @@ namespace catapult { namespace validators {
 					opinionData.OverlappingKeysCount,
 					opinionData.JudgedKeysCount,
 					pPublicKeys.get(),
-					pPresentOpinions.get()
+					pPresentOpinions.get(),
+					replicators.begin().base()
 			);
 			auto pValidator = CreateDownloadApprovalValidator();
 

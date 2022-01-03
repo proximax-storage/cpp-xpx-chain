@@ -928,7 +928,8 @@ namespace catapult { namespace model {
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
 				const Key* publicKeysPtr,
-				const uint8_t* presentOpinionsPtr)
+				const uint8_t* presentOpinionsPtr,
+				const Key* publicKeysPtr)
 			: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
 			, DownloadChannelId(id)
 			, SequenceNumber(number)
@@ -937,6 +938,7 @@ namespace catapult { namespace model {
 			, JudgedKeysCount(judgedKeysCount)
 			, PublicKeysPtr(publicKeysPtr)
 			, PresentOpinionsPtr(presentOpinionsPtr)
+			, PublicKeysPtr(publicKeysPtr)
 		{}
 
 	public:

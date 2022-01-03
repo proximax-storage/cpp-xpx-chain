@@ -29,13 +29,12 @@ namespace catapult { namespace validators {
 		std::set<Key> providedKeys;
 		for (auto i = 0; i < totalKeysCount; ++i) {
 			const auto key = notification.PublicKeysPtr[i];
-			if (providedKeys.count(key))
-				return Failure_Storage_Opinion_Reocurring_Keys;
-			providedKeys.insert(key);
+			if (!providedKeys.insert(key).second)
+				return Failure_Storage_Opinion_Duplicated_Keys;
 			if (i >= notification.JudgingKeysCount) {
 				bool isUsed = false;
 				for (auto j = 0; !isUsed && j < totalJudgingKeysCount; ++j)
-					isUsed = presentOpinions[j*totalJudgedKeysCount + i - notification.JudgingKeysCount];
+					isUsed = presentOpinions[j * totalJudgedKeysCount + i - notification.JudgingKeysCount];
 				if (!isUsed)
 					return Failure_Storage_Opinion_Unused_Key;
 			}
@@ -76,9 +75,8 @@ namespace catapult { namespace validators {
 
 			RawBuffer dataBuffer(pDataBegin.get(), dataSize);
 
-			if (!crypto::Verify(*pKey, dataBuffer, *pSignature)) {
+			if (!crypto::Verify(*pKey, dataBuffer, *pSignature))
 				return Failure_Storage_Opinion_Invalid_Signature;
-			}
 		}
 
 		return ValidationResult::Success;

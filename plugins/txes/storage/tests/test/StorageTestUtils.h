@@ -200,7 +200,7 @@ namespace catapult { namespace test {
 		uint8_t JudgingKeysCount;
 		uint8_t OverlappingKeysCount;
 		uint8_t JudgedKeysCount;
-		uint8_t OpinionElementCount;
+		uint16_t OpinionElementCount;
 		int16_t FilledPresenceRowIndex;
 		std::vector<Key> PublicKeys;
 		std::vector<Signature> Signatures;

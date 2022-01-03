@@ -5,6 +5,11 @@ option(ENABLE_CODE_COVERAGE "Enable code coverage" OFF)
 option(SANITIZE_ADDRESS "Enable address sanitizer" OFF)
 option(SANITIZE_THREAD "Enable thread sanitizer" OFF)
 option(SANITIZE_UNDEFINED "Enable undefined behavior sanitizer" OFF)
+option(SIRIUS_DRIVE_MULTI "changes for sirius drive-multi" ON)
+
+if (SIRIUS_DRIVE_MULTI)
+	add_definitions(-DSIRIUS_DRIVE_MULTI)
+endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -53,6 +58,8 @@ function(catapult_add_rocksdb_dependencies TARGET_NAME)
 		target_link_libraries(${TARGET_NAME} ${ROCKSDB_LIBRARIES})
 	endif()
 endfunction()
+
+### extension settings
 
 ### add source directories
 add_subdirectory(external)
