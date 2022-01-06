@@ -33,8 +33,9 @@ namespace catapult { namespace observers {
 		const auto& replicators = driveEntry.replicators();
 	  	const auto& shardSize = std::min<uint16_t>(pluginConfig.MaxShardSize, replicators.size());
 		std::set<Key> sampleReplicators;
+		std::seed_seq hashSeed(notification.Id.begin(), notification.Id.end());
 	  	std::sample(replicators.begin(), replicators.end(), std::inserter(sampleReplicators, sampleReplicators.end()),
-					shardSize, std::mt19937{std::random_device{}()});
+					shardSize, std::mt19937(hashSeed));
 	  	auto& cumulativePayments = downloadEntry.cumulativePayments();
 		for (const auto& key : sampleReplicators)
 			cumulativePayments.emplace(key, Amount(0));
