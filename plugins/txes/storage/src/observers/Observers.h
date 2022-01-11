@@ -13,11 +13,13 @@
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/ReplicatorCache.h"
+#include "src/utils/StorageUtils.h"
+#include <queue>
 
 namespace catapult { namespace observers {
 
 	/// Observes changes triggered by prepare drive notifications.
-	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector);
+	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::unique_ptr<std::priority_queue<std::pair<Key, double>>>& pDriveQueue);
 
 	/// Observes changes triggered by download notifications.
 	DECLARE_OBSERVER(DownloadChannel, model::DownloadNotification<1>)();
@@ -41,7 +43,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DataModificationCancel, model::DataModificationCancelNotification<1>)();
 
 	/// Observes changes triggered by replicator onboarding notifications.
-	DECLARE_OBSERVER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
+	DECLARE_OBSERVER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)(const std::unique_ptr<std::priority_queue<std::pair<Key, double>>>& pDriveQueue);
 
 	/// Observes changes triggered by drive closure notifications.
 	DECLARE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>)();

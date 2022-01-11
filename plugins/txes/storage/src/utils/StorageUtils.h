@@ -9,6 +9,7 @@
 #include "catapult/config/ImmutableConfiguration.h"
 #include "catapult/model/Mosaic.h"
 #include "catapult/model/NotificationSubscriber.h"
+#include "src/state/BcDriveEntry.h"
 
 namespace catapult { namespace utils {
 
@@ -30,4 +31,7 @@ namespace catapult { namespace utils {
 		const auto pData = reinterpret_cast<const uint8_t*>(&data);
 		ptr = std::copy(pData, pData + sizeof(data), ptr);
 	}
+
+	/// Calculates priority value of \a driveEntry. Used for the queue of drives with missing replicators.
+	double CalculateDrivePriority(const state::BcDriveEntry&, const uint16_t&);
 }}

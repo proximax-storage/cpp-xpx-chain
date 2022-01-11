@@ -170,6 +170,9 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateStoragePluginConfigValidator());
 		});
 
+		using DrivePriority = std::pair<Key, double>;
+		auto pDriveQueue = std::make_unique<std::priority_queue<DrivePriority>>();
+
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, pKeyCollector](auto& builder) {
 		  	builder
 				.add(validators::CreatePrepareDriveValidator(pKeyCollector))
@@ -197,9 +200,9 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateEndDriveVerificationValidator());
 		});
 
-		manager.addObserverHook([pKeyCollector](auto& builder) {
+		manager.addObserverHook([pKeyCollector, &pDriveQueue](auto& builder) {
 			builder
-				.add(observers::CreatePrepareDriveObserver(pKeyCollector))
+				.add(observers::CreatePrepareDriveObserver(pKeyCollector, pDriveQueue))
 				.add(observers::CreateDownloadChannelObserver())
 				.add(observers::CreateDataModificationObserver())
 				.add(observers::CreateDataModificationApprovalObserver())
@@ -208,8 +211,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDataModificationApprovalRefundObserver())
 				.add(observers::CreateDataModificationCancelObserver())
 				.add(observers::CreateDriveClosureObserver())
-				.add(observers::CreateReplicatorOnboardingObserver())
-				.add(observers::CreateReplicatorOffboardingObserver())
+				.add(observers::CreateReplicatorOnboardingObserver(pDriveQueue))
+				.add(observers::CreateReplicatorOffboardingObserver(pDriveQueue))
 				.add(observers::CreateDownloadPaymentObserver())
 				.add(observers::CreateDataModificationSingleApprovalObserver())
 				.add(observers::CreateDownloadApprovalObserver())

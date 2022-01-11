@@ -76,4 +76,11 @@ namespace catapult { namespace utils {
 			SwapOperation operation) {
 		return SwapMosaics(account, account, mosaics, sub, immutableCfg, operation);
 	}
+
+	double CalculateDrivePriority(const state::BcDriveEntry& driveEntry, const uint16_t& Rmin) {
+		const auto& N = driveEntry.replicatorCount();
+		const auto& R = driveEntry.replicators().size() - driveEntry.offboardingReplicators().size();
+
+		return R < Rmin ? (R + 1)/Rmin : (N - R)/(2*Rmin*(N - Rmin));
+	}
 }}

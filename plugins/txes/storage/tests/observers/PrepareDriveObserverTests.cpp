@@ -14,7 +14,9 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PrepareDriveObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive, std::make_shared<cache::ReplicatorKeyCollector>())
+	using DrivePriority = std::pair<Key, double>;
+
+    DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive, std::make_shared<cache::ReplicatorKeyCollector>(), std::make_unique<std::priority_queue<DrivePriority>>())
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -26,6 +28,7 @@ namespace catapult { namespace observers {
         constexpr auto Replicator_Count = 10;
 		const Key Replicator_Key = test::GenerateRandomByteArray<Key>();
         const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
+		const auto Drive_Queue = std::make_unique<std::priority_queue<DrivePriority>>();
         constexpr Height Current_Height(20);
         
         state::BcDriveEntry CreateBcDriveEntry() {
@@ -65,7 +68,7 @@ namespace catapult { namespace observers {
 				Drive_Key,
 				Drive_Size,
 				Replicator_Count);
-            auto pObserver = CreatePrepareDriveObserver(Replicator_Key_Collector);
+            auto pObserver = CreatePrepareDriveObserver(Replicator_Key_Collector, Drive_Queue);
             auto& driveCache = context.cache().sub<cache::BcDriveCache>();
             auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 

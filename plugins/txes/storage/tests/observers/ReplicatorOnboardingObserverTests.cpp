@@ -14,13 +14,16 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS ReplicatorOnboardingObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboarding,)
+	using DrivePriority = std::pair<Key, double>;
+
+    DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboarding, std::make_unique<std::priority_queue<DrivePriority>>())
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::StorageCacheFactory>;
         using Notification = model::ReplicatorOnboardingNotification<1>;
 
         const Key Public_Key = test::GenerateRandomByteArray<Key>();
+		const auto Drive_Queue = std::make_unique<std::priority_queue<DrivePriority>>();
         constexpr auto Capacity = Amount(50);
         constexpr auto Replicator_Count = 10;
         constexpr auto Current_Height = Height(25);
@@ -38,7 +41,7 @@ namespace catapult { namespace observers {
             Notification notification(
 				expectedReplicatorEntry.key(),
 				expectedReplicatorEntry.capacity());
-            auto pObserver = CreateReplicatorOnboardingObserver();
+            auto pObserver = CreateReplicatorOnboardingObserver(Drive_Queue);
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 
             // Act:
