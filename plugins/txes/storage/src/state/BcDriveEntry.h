@@ -96,30 +96,14 @@ namespace catapult { namespace state {
 	using CompletedDataModifications = std::vector<CompletedDataModification>;
 	using SizeMap = std::map<Key, uint64_t>;
 	using ConfirmedStates = std::map<Key, Hash256>; // last approved root hash
-
-	/// Verification State.
-	enum class VerificationState : uint8_t {
-		/// Verification waits for opinions.
-		Pending,
-
-		/// Verification was canceled. For example by DataModificationApprovalTransaction.
-		Canceled,
-
-		/// Verification finished.
-		Finished
-	};
-
-    using VerificationResults = std::map<Key, uint8_t>;
+	using Shards = std::vector<std::vector<Key>>;
 
 	struct Verification {
 		/// The hash of block that initiated the Verification.
 		Hash256 VerificationTrigger;
 
-		/// State of verification.
-		VerificationState State;
-
-		/// Verification opinions.
-		VerificationResults Results;
+		/// Replicator shards.
+		state::Shards Shards;
 	};
 
 	using Verifications = std::vector<Verification>;
@@ -252,12 +236,12 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets replicators.
-		const utils::KeySet& replicators() const {
+		const utils::SortedKeySet& replicators() const {
 			return m_replicators;
 		}
 
 		/// Gets replicators.
-		utils::KeySet& replicators() {
+		utils::SortedKeySet& replicators() {
 			return m_replicators;
 		}
 
@@ -293,7 +277,7 @@ namespace catapult { namespace state {
 		CompletedDataModifications m_completedDataModifications;
 		SizeMap m_confirmedUsedSizeMap;
 		SizeMap m_cumulativeUploadSizeMap;
-		utils::KeySet m_replicators;
+		utils::SortedKeySet m_replicators;
 		Verifications m_verifications;
 		ConfirmedStates m_confirmedStates;
 	};

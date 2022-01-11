@@ -6,8 +6,6 @@
 
 #include "StorageTestUtils.h"
 #include "tests/TestHarness.h"
-#include "catapult/model/EntityHasher.h"
-#include "tests/test/core/mocks/MockNotificationSubscriber.h"
 
 namespace catapult { namespace test {
 
@@ -49,8 +47,12 @@ namespace catapult { namespace test {
 				const auto &expectedVerification = expectedVerifications[i];
 				const auto &verification = verifications[i];
 				EXPECT_EQ(expectedVerification.VerificationTrigger, verification.VerificationTrigger);
-				EXPECT_EQ(expectedVerification.State, verification.State);
-				EXPECT_EQ(expectedVerification.Results, verification.Results);
+				ASSERT_EQ(expectedVerification.Shards.size(), verification.Shards.size());
+				for (auto i = 0u; i < expectedVerification.Shards.size(); ++i) {
+					ASSERT_EQ(expectedVerification.Shards[i].size(), verification.Shards[i].size());
+					for (auto k = 0u; k < expectedVerification.Shards[i].size(); ++k)
+						EXPECT_EQ(expectedVerification.Shards[i][k], verification.Shards[i][k]);
+				}
 			}
 		}
 
@@ -108,7 +110,7 @@ namespace catapult { namespace test {
                 test::GenerateRandomByteArray<Hash256>(),   					/// CDI of download data.
 				uploadSize,                             						/// ExpectedUpload size of data.
 				uploadSize,														/// ActualUpload size of data.
-		std::string(folderNameBytes.begin(), folderNameBytes.end()),	/// FolderName (for stream)
+				std::string(folderNameBytes.begin(), folderNameBytes.end()),	/// FolderName (for stream)
 				readyForApproval												/// Flag whether modification can be approved
 			));
         }
@@ -121,13 +123,13 @@ namespace catapult { namespace test {
         }
 
         entry.verifications().reserve(verificationsCount);
-        for (auto vc = 0u; vc < verificationsCount; ++vc){
-            entry.verifications().emplace_back(state::Verification{
-                    test::GenerateRandomByteArray<Hash256>(),
-                    state::VerificationState::Finished,
-                    state::VerificationResults{}
-            });
-        }
+        for (auto i = 0u; i < verificationsCount; ++i) {
+			entry.verifications().emplace_back(state::Verification{test::GenerateRandomByteArray<Hash256>(), {}});
+			entry.verifications().back().Shards.emplace_back();
+			auto& shard = entry.verifications().back().Shards.back();
+			for (uint16_t k = 0u; k < replicatorCount; ++k)
+				shard.emplace_back(test::GenerateRandomByteArray<Key>());
+		}
 
         return entry;
     }

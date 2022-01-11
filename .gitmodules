@@ -1,5 +1,6 @@
 [submodule "cpp-xpx-storage-sdk"]
 	path = cpp-xpx-storage-sdk
 	url = https://github.com/proximax-storage/cpp-xpx-storage-sdk
+	branch = alex-flat-drive
 [submodule]
 	cpp-xpx-storage-sdk = test/storage

@@ -56,7 +56,7 @@ namespace catapult { namespace model {
 				const auto* pBlockHeader = entityInfo.isAssociatedBlockHeaderSet() ? &entityInfo.associatedBlockHeader() : nullptr;
 				switch (basicEntityType) {
 				case BasicEntityType::Block:
-					return publish(static_cast<const Block&>(entity), sub);
+					return publish(static_cast<const Block&>(entity), entityInfo.hash(), sub);
 
 				case BasicEntityType::Transaction:
 					return publish(static_cast<const Transaction&>(entity), entityInfo.hash(), pBlockHeader, entityInfo.associatedHeight(), sub);
@@ -86,13 +86,14 @@ namespace catapult { namespace model {
 				}
 			}
 
-			void publish(const Block& block, NotificationSubscriber& sub) const {
+			void publish(const Block& block, const Hash256& hash, NotificationSubscriber& sub) const {
 				auto headerSize = VerifiableEntity::Header_Size;
 				auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, block.GetHeaderSize() - headerSize };
 
 				// raise an entity notification
 				switch (block.EntityVersion()) {
 				case 4: {
+					sub.notify(BlockNotification<2>(hash, block.Timestamp));
 					sub.notify(BlockCommitteeNotification<1>(block.round(), block.FeeInterest, block.FeeInterestDenominator));
 
 					auto pCosignature = block.CosignaturesPtr();

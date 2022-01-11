@@ -22,19 +22,19 @@ namespace catapult { namespace observers {
 		completedDataModifications.emplace_back(*activeDataModifications.begin(), state::DataModificationState::Succeeded);
 		activeDataModifications.erase(activeDataModifications.begin());
 
-		const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		for (const auto& replicator : driveEntry.replicators()) {
+			auto replicatorIter = replicatorCache.find(replicator);
+			auto& replicatorEntry = replicatorIter.get();
+
+			auto& driveInfo = replicatorEntry.drives()[notification.DriveKey];
+			driveInfo.LastCompletedCumulativeDownloadWork += completedDataModifications.back().ActualUploadSize;
+		}
+
+        const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
 		for (auto i = 0u; i < totalJudgingKeysCount; ++i)
 			driveEntry.confirmedUsedSizes().insert({notification.PublicKeysPtr[i], notification.UsedDriveSize});
 
-		auto it = std::find_if(
-				driveEntry.verifications().begin(),
-				driveEntry.verifications().end(),
-				[&notification](const state::Verification& v) {
-					return v.State == state::VerificationState::Pending;
-				}
-		);
-
-		if (it != driveEntry.verifications().end())
-			it->State = state::VerificationState::Canceled;
+		driveEntry.verifications().clear();
 	});
 }}

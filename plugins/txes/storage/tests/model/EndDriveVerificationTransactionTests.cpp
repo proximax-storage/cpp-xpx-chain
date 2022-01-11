@@ -23,8 +23,9 @@ namespace catapult { namespace model {
                     baseSize // base
                     + Key_Size // drive key size
                     + Hash256_Size // verification trigger hash size
-                    + sizeof(uint16_t) // count of provers
-                    + sizeof(uint16_t); // count of opinions
+                    + sizeof(uint16_t) // shard id
+                    + sizeof(uint8_t) // total key count
+                    + sizeof(uint8_t); // judging key count
 
             // Assert:
             EXPECT_EQ(expectedSize, sizeof(T));
@@ -48,15 +49,15 @@ namespace catapult { namespace model {
     TEST(TEST_CLASS, CanCalculateRealSizeWithReasonableValues) {
         // Arrange:
         EndDriveVerificationTransaction transaction;
-        transaction.ProversCount = 0;
-        transaction.VerificationOpinionsCount = 0;
+        transaction.KeyCount = 5;
+        transaction.JudgingKeyCount = 3;
         transaction.Size = 0;
 
         // Act:
         auto realSize = EndDriveVerificationTransaction::CalculateRealSize(transaction);
 
         // Assert:
-        EXPECT_EQ(sizeof(EndDriveVerificationTransaction), realSize);
+        EXPECT_EQ(sizeof(EndDriveVerificationTransaction) + 354u, realSize);
     }
 
     // endregion

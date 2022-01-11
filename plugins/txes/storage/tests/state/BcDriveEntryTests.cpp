@@ -147,7 +147,7 @@ namespace catapult { namespace state {
 
     TEST(TEST_CLASS, CanAccessReplicators) {
         // Arrange:
-        utils::KeySet replicators = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
+        utils::SortedKeySet replicators = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
         auto entry = BcDriveEntry(Key());
 
         // Sanity:
@@ -163,13 +163,7 @@ namespace catapult { namespace state {
 
     TEST(TEST_CLASS, CanAccessVerifications) {
         // Arrange:
-        Verifications verifications = {
-                Verification{
-                    test::GenerateRandomByteArray<Hash256>(),
-                    VerificationState::Pending,
-                    VerificationResults{},
-                }
-        };
+        Verifications verifications = { Verification{ test::GenerateRandomByteArray<Hash256>(), {} }};
         auto entry = BcDriveEntry(Key());
 
         // Sanity:
@@ -181,8 +175,7 @@ namespace catapult { namespace state {
         // Assert:
         ASSERT_EQ(1, entry.verifications().size());
         EXPECT_EQ(verifications.front().VerificationTrigger, entry.verifications().front().VerificationTrigger);
-        EXPECT_EQ(verifications.front().Results.size(), entry.verifications().front().Results.size());
-        EXPECT_EQ(verifications.front().State, entry.verifications().front().State);
+        EXPECT_EQ(0, entry.verifications().front().Shards.size());
     }
     
 }}

@@ -31,7 +31,7 @@ namespace catapult { namespace observers {
 	  	auto& driveEntry = driveIter.get();
 	  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 		const auto& replicators = driveEntry.replicators();
-	  	const auto& shardSize = std::min<uint16_t>(pluginConfig.MaxShardSize, replicators.size());
+	  	const auto& shardSize = std::min<uint16_t>(pluginConfig.ShardSize, replicators.size());
 		std::set<Key> sampleReplicators;
 		std::seed_seq hashSeed(notification.Id.begin(), notification.Id.end());
 	  	std::sample(replicators.begin(), replicators.end(), std::inserter(sampleReplicators, sampleReplicators.end()),

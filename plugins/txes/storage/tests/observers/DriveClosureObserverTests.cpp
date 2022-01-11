@@ -50,7 +50,7 @@ namespace catapult { namespace observers {
 				accountState.Balances.credit(mosaic.MosaicId, mosaic.Amount);
 		}
 
-        state::BcDriveEntry CreateInitialBcDriveEntry(const Key& driveKey, const utils::KeySet& replicatorKeys){
+        state::BcDriveEntry CreateInitialBcDriveEntry(const Key& driveKey, const utils::SortedKeySet& replicatorKeys){
             state::BcDriveEntry entry(driveKey);
 			entry.setOwner(Owner_Key);
             entry.setSize(Drive_Size);
@@ -129,7 +129,7 @@ namespace catapult { namespace observers {
         // Arrange:
         CacheValues values;
         auto driveKey = test::GenerateRandomByteArray<Key>();
-        utils::KeySet replicatorKeys;
+        utils::SortedKeySet replicatorKeys;
         for (auto i = 0u; i < Num_Replicators; ++i) {
         	auto replicatorKey = test::GenerateRandomByteArray<Key>();
 			replicatorKeys.emplace(replicatorKey);

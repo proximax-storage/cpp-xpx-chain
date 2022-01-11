@@ -66,21 +66,22 @@ namespace catapult { namespace mongo { namespace plugins {
 			array << bson_stream::close_array;
 		}
 
-		void StreamReplicators(bson_stream::document& builder, const utils::KeySet& replicators) {
+		template<class TContainer>
+		void StreamReplicators(bson_stream::document& builder, const TContainer& replicators) {
 			auto array = builder << "replicators" << bson_stream::open_array;
 			for (const auto& replicatorKey : replicators)
 				array << ToBinary(replicatorKey);
 			array << bson_stream::close_array;
 		}
 
-		void StreamVerificationOpinions(bson_stream::document& builder, const state::VerificationResults& opinions) {
-			auto array = builder << "results" << bson_stream::open_array;
-			for (const auto& pair : opinions)
-				array
-						<< bson_stream::open_document
-							<< "prover" << ToBinary(pair.first)
-							<< "result" << static_cast<int8_t>(pair.second)
-						<< bson_stream::close_document;
+		void StreamShards(bson_stream::document& builder, const state::Shards& shards) {
+			auto array = builder << "shards" << bson_stream::open_array;
+			for (int32_t i = 0u; i < shards.size(); ++i) {
+				bson_stream::document shardBuilder;
+				shardBuilder << "id" << i;
+				StreamReplicators(shardBuilder, shards[i]);
+				array << shardBuilder;
+			}
 
 			array << bson_stream::close_array;
 		}
@@ -89,11 +90,8 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto array = builder << "verifications" << bson_stream::open_array;
 			for (const auto& verification : verifications) {
 				bson_stream::document verificationBuilder;
-				verificationBuilder
-						<< "verificationTrigger" << ToBinary(verification.VerificationTrigger)
-						<< "state" << utils::to_underlying_type(verification.State);
-
-				StreamVerificationOpinions(verificationBuilder, verification.Results);
+				verificationBuilder << "verificationTrigger" << ToBinary(verification.VerificationTrigger);
+				StreamShards(verificationBuilder, verification.Shards);
 				array << verificationBuilder;
 			}
 
@@ -182,34 +180,37 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 		}
 
-		void ReadReplicators(utils::KeySet& replicators, const bsoncxx::array::view& dbReplicators) {
+		void ReadReplicators(utils::SortedKeySet& replicators, const bsoncxx::array::view& dbReplicators) {
 			for (const auto& dbReplicator : dbReplicators) {
 				Key replicatorKey;
 				DbBinaryToModelArray(replicatorKey, dbReplicator.get_binary());
-				replicators.insert(replicatorKey);
+				replicators.emplace(std::move(replicatorKey));
 			}
 		}
 
-		void ReadVerificationOpinions(state::VerificationResults& opinions, const bsoncxx::array::view& dbOpinions) {
-			for (const auto& dbPair : dbOpinions) {
-				auto doc = dbPair.get_document().view();
+		void ReadReplicators(std::vector<Key>& replicators, const bsoncxx::array::view& dbReplicators) {
+			replicators.reserve(dbReplicators.length());
+			for (const auto& dbReplicator : dbReplicators) {
+				Key replicatorKey;
+				DbBinaryToModelArray(replicatorKey, dbReplicator.get_binary());
+				replicators.emplace_back(std::move(replicatorKey));
+			}
+		}
 
-				Key prover;
-				DbBinaryToModelArray(prover, doc["prover"].get_binary());
-
-				opinions[prover] = static_cast<uint8_t>(dbPair["result"].get_int64());
+		void ReadShards(state::Shards& shards, const bsoncxx::array::view& dbShards) {
+			shards.reserve(dbShards.length());
+			for (const auto& dbShard : dbShards) {
+				shards.emplace_back();
+				ReadReplicators(shards.back(), dbShard["replicators"].get_array().value);
 			}
 		}
 
 		void ReadVerifications(state::Verifications& verifications, const bsoncxx::array::view& dbVerifications) {
 			for (const auto& dbVerification : dbVerifications) {
 				auto doc = dbVerification.get_document().view();
-
 				state::Verification verification;
 				DbBinaryToModelArray(verification.VerificationTrigger, doc["verificationTrigger"].get_binary());
-				verification.State = static_cast<state::VerificationState>(static_cast<uint8_t>(doc["state"].get_int32()));
-
-				ReadVerificationOpinions(verification.Results, doc["results"].get_array().value);
+				ReadShards(verification.Shards, doc["shards"].get_array().value);
 				verifications.emplace_back(verification);
 			}
 		}

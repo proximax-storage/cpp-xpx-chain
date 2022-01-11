@@ -29,23 +29,21 @@ namespace catapult { namespace validators {
 		std::set<Key> providedKeys;
 		for (auto i = 0; i < totalKeysCount; ++i) {
 			const auto key = notification.PublicKeysPtr[i];
-			if (providedKeys.count(key))
-				return Failure_Storage_Opinion_Reocurring_Keys;
-			providedKeys.insert(key);
+			if (!providedKeys.insert(key).second)
+				return Failure_Storage_Opinion_Duplicated_Keys;
 			if (i >= notification.JudgingKeysCount) {
 				bool isUsed = false;
 				for (auto j = 0; !isUsed && j < totalJudgingKeysCount; ++j)
-					isUsed = presentOpinions[j*totalJudgedKeysCount + i - notification.JudgingKeysCount];
+					isUsed = presentOpinions[j * totalJudgedKeysCount + i - notification.JudgingKeysCount];
 				if (!isUsed)
 					return Failure_Storage_Opinion_Unused_Key;
 			}
 		}
 
 	  	// Preparing common data.
-	  	const auto maxDataSize = notification.CommonDataSize + (sizeof(Key) + sizeof(uint64_t)) * totalJudgedKeysCount;	// Guarantees that every possible individual opinion will fit in.
-		const auto pDataBegin = std::unique_ptr<uint8_t[]>(new uint8_t[maxDataSize]);
-	  	std::copy(notification.CommonDataPtr, notification.CommonDataPtr + notification.CommonDataSize, pDataBegin.get());
-	  	auto* const pIndividualDataBegin = pDataBegin.get() + notification.CommonDataSize;
+		std::vector<uint8_t> buffer(notification.CommonDataSize + (Key_Size + notification.OpinionElementSize) * totalJudgedKeysCount); // Guarantees that every possible individual opinion will fit in.
+	  	std::copy(notification.CommonDataPtr, notification.CommonDataPtr + notification.CommonDataSize, buffer.data());
+	  	auto* const pIndividualDataBegin = buffer.data() + notification.CommonDataSize;
 
 		// Validating signatures.
 	  	auto pKey = notification.PublicKeysPtr;
@@ -64,21 +62,17 @@ namespace catapult { namespace validators {
 				}
 			}
 
-			const auto dataSize = notification.CommonDataSize + (sizeof(Key) + sizeof(uint64_t)) * individualPart.size();
+			const auto dataSize = notification.CommonDataSize + (Key_Size + notification.OpinionElementSize) * individualPart.size();
 			auto* pIndividualData = pIndividualDataBegin;
-			for (auto individualPartIter = individualPart.begin(); individualPartIter != individualPart.end(); ++individualPartIter) {
-				utils::WriteToByteArray(pIndividualData, individualPartIter->first);
-				pIndividualData = std::copy(
-						individualPartIter->second,
-						individualPartIter->second + notification.OpinionElementSize,
-						pIndividualData);
+			for (const auto& pair : individualPart) {
+				utils::WriteToByteArray(pIndividualData, pair.first);
+				pIndividualData = std::copy(pair.second, pair.second + notification.OpinionElementSize, pIndividualData);
 			}
 
-			RawBuffer dataBuffer(pDataBegin.get(), dataSize);
+			RawBuffer dataBuffer(buffer.data(), dataSize);
 
-			if (!crypto::Verify(*pKey, dataBuffer, *pSignature)) {
+			if (!crypto::Verify(*pKey, dataBuffer, *pSignature))
 				return Failure_Storage_Opinion_Invalid_Signature;
-			}
 		}
 
 		return ValidationResult::Success;

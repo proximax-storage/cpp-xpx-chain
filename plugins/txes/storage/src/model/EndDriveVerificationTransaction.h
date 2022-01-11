@@ -5,7 +5,6 @@
 **/
 
 #pragma once
-#include "StorageTypes.h"
 #include "StorageEntityType.h"
 #include "catapult/model/Transaction.h"
 
@@ -31,37 +30,50 @@ namespace catapult { namespace model {
         /// The hash of block that initiated the Verification.
         Hash256 VerificationTrigger;
 
-        /// Number of Provers.
-        uint16_t ProversCount;
+        /// Shard identifier.
+        uint16_t ShardId;
 
-        /// Number of Verification opinions.
-        uint16_t VerificationOpinionsCount;
+		/// Total number of replicators.
+		uint8_t KeyCount;
 
-        /// Public Keys of the Provers.
-        DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Provers, Key)
+		/// Number of replicators that provided their opinions.
+		uint8_t JudgingKeyCount;
 
-        /// Verification Results.
-        DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(VerificationOpinions, VerificationOpinion)
+		/// Replicators' public keys.
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(PublicKeys, Key)
 
-    public:
+		/// Signatures of replicators' opinions.
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Signatures, Signature)
+
+		/// Two-dimensional bit array of opinions (1 is success, 0 is failure).
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Opinions, uint8_t)
+
+	private:
         template<typename T>
-        static auto* ProversPtrT(T& transaction) {
-            return transaction.ProversCount ? THeader::PayloadStart(transaction) : nullptr;
+        static auto* PublicKeysPtrT(T& transaction) {
+            return transaction.KeyCount ? THeader::PayloadStart(transaction) : nullptr;
         }
 
         template<typename T>
-        static auto* VerificationOpinionsPtrT(T& transaction) {
+        static auto* SignaturesPtrT(T& transaction) {
             auto* pPayloadStart = THeader::PayloadStart(transaction);
-            return transaction.VerificationOpinionsCount && pPayloadStart ? pPayloadStart
-                    + transaction.ProversCount * sizeof(Key) : nullptr;
+            return transaction.JudgingKeyCount && pPayloadStart ? pPayloadStart + transaction.KeyCount * Key_Size : nullptr;
         }
 
+        template<typename T>
+        static auto* OpinionsPtrT(T& transaction) {
+            auto* pPayloadStart = THeader::PayloadStart(transaction);
+            return transaction.KeyCount && transaction.JudgingKeyCount && pPayloadStart ? pPayloadStart
+				+ transaction.KeyCount * Key_Size + transaction.JudgingKeyCount * Signature_Size : nullptr;
+        }
+
+	public:
         // Calculates the real size of a storage \a transaction.
         static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
             return sizeof(TransactionType)
-                   + transaction.ProversCount * sizeof(Key)
-                   + transaction.VerificationOpinionsCount * (sizeof(uint16_t) + sizeof(Signature))
-                   + transaction.VerificationOpinionsCount * transaction.ProversCount * (sizeof(uint16_t) + sizeof(uint8_t)); // size of VerificationOpinion.Results
+                   + transaction.KeyCount * Key_Size
+                   + transaction.JudgingKeyCount * Signature_Size
+                   + (transaction.JudgingKeyCount * transaction.KeyCount + 7) / 8;
         }
     };
 

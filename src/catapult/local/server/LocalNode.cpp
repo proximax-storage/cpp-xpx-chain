@@ -97,6 +97,7 @@ namespace catapult { namespace local {
 				CATAPULT_LOG(debug) << "initializing cache";
 				m_cacheHolder.cache() = m_pluginManager.createCache();
 				m_pluginManager.configHolder()->SetCache(&m_cacheHolder.cache());
+				m_pluginManager.storageState().setCache(&m_cacheHolder.cache());
 				auto initializers = m_pluginManager.createPluginInitializer();
 				initializers(const_cast<model::NetworkConfiguration&>(m_pluginManager.configHolder()->Config().Network));
 				m_pluginManager.configHolder()->SetPluginInitializer(std::move(initializers));

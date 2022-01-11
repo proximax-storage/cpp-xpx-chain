@@ -8,7 +8,6 @@
 #include "BcDriveCacheTypes.h"
 #include "src/state/BcDriveEntrySerializer.h"
 #include "catapult/cache/CacheSerializerAdapter.h"
-#include "catapult/cache/IdentifierGroupSerializer.h"
 
 namespace catapult { namespace cache {
 

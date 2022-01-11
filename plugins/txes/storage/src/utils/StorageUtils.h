@@ -32,6 +32,11 @@ namespace catapult { namespace utils {
 		ptr = std::copy(pData, pData + sizeof(data), ptr);
 	}
 
+	template<typename TIo, size_t Array_Size>
+	void WriteToByteArray(uint8_t*& ptr, const std::array<uint8_t, Array_Size>& buffer) {
+		ptr = std::copy(buffer.data(), buffer.data() + Array_Size, ptr);
+	}
+
 	/// Calculates priority value of \a driveEntry. Used for the queue of drives with missing replicators.
 	double CalculateDrivePriority(const state::BcDriveEntry&, const uint16_t&);
 }}

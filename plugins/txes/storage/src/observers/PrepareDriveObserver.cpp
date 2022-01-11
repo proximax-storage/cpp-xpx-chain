@@ -50,7 +50,7 @@ namespace catapult { namespace observers {
 				// Updating drives() and replicators()
 				auto replicatorIter = replicatorCache.find(replicatorKey);
 				auto& replicatorEntry = replicatorIter.get();
-				replicatorEntry.drives().emplace(notification.DriveKey, state::DriveInfo{ Hash256(), false, 0 });
+				replicatorEntry.drives().emplace(notification.DriveKey, state::DriveInfo{ Hash256(), false, 0, 0 });
 				driveEntry.replicators().emplace(replicatorKey);
 
 				// Making mosaic transfers

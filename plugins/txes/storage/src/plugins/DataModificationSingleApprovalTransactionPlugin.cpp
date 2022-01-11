@@ -32,7 +32,7 @@ namespace catapult { namespace plugins {
 							transaction.OpinionsPtr()
 					));
 
-					auto pPublicKeys = std::unique_ptr<Key[]>(new Key[transaction.PublicKeysCount + 1]);
+					auto* pPublicKeys = sub.mempool().malloc<Key>(transaction.PublicKeysCount + 1);
 					pPublicKeys[0] = transaction.Signer;
 					std::copy(transaction.PublicKeysPtr(), transaction.PublicKeysPtr() + transaction.PublicKeysCount, &pPublicKeys[1]);	// TODO: Double-check
 
@@ -40,13 +40,11 @@ namespace catapult { namespace plugins {
 							transaction.DriveKey,
 							transaction.DataModificationId,
 							1,
-							pPublicKeys.get()
+							pPublicKeys
 					));
 
-					auto pOpinionIndices = std::unique_ptr<uint8_t[]>(new uint8_t[1]);
-					pOpinionIndices[0] = 0;
 					const auto presentOpinionByteCount = (transaction.PublicKeysCount + 7) / 8;
-					auto pPresentOpinions = std::unique_ptr<uint8_t[]>(new uint8_t[presentOpinionByteCount]);
+					auto* pPresentOpinions = sub.mempool().malloc<uint8_t>(presentOpinionByteCount);
 					for (auto i = 0u; i < presentOpinionByteCount; ++i) {
 						boost::dynamic_bitset<uint8_t> byte(8, 0u);
 						for (auto j = 0u; j < std::min(8u, transaction.PublicKeysCount - i*8); ++j)
@@ -59,8 +57,8 @@ namespace catapult { namespace plugins {
 							1,
 							0,
 							transaction.PublicKeysCount,
-							pPublicKeys.get(),
-							pPresentOpinions.get(),
+							pPublicKeys,
+							pPresentOpinions,
 							transaction.OpinionsPtr()
 					));
 

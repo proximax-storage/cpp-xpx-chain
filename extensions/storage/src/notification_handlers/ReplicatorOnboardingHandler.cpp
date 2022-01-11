@@ -16,10 +16,14 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			if (pReplicatorService->replicatorKey() == notification.PublicKey) {
-				CATAPULT_LOG(debug) << "replicator on-boarding: starting replicator service";
-				pReplicatorService->start();
-			}
+			if (pReplicatorService->replicatorKey() == notification.PublicKey)
+				return;
+
+			if (pReplicatorService->isReplicatorRegistered(notification.PublicKey))
+				return;
+
+			CATAPULT_LOG(debug) << "replicator on-boarding: starting replicator service";
+			pReplicatorService->start();
 		});
 	}
 }}

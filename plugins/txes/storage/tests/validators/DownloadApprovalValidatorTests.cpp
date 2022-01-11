@@ -66,6 +66,11 @@ namespace catapult { namespace validators {
 				boost::to_block_range(byte, &pPresentOpinions[i]);
 			}
 
+			std::vector<Key> replicators;
+			replicators.reserve(totalKeysCount);
+			for (auto i = 0u; i < totalKeysCount; ++i)
+				replicators.emplace_back(test::GenerateRandomByteArray<Key>());
+
 			Notification notification(
 					downloadChannelId,
 					sequenceNumber,
