@@ -53,12 +53,10 @@ namespace catapult { namespace state {
     }
 
     bool StorageStateImpl::isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) {
-        auto drive = GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
-        auto it = drive.Replicators.find(key);
-        if (it != drive.Replicators.end())
-            return true;
-
-        return false;
+		const auto& pDriveCacheView = *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+		auto driveIter = pDriveCacheView.find(driveKey);
+		auto driveEntry = driveIter.get();
+        return driveEntry.replicators().find(key) != driveEntry.replicators().end();
     }
 
     std::vector<Drive> StorageStateImpl::getReplicatorDrives(const Key& replicatorKey) {
@@ -169,19 +167,14 @@ namespace catapult { namespace state {
         auto driveIter = driveCacheView->find(driveKey);
         auto driveEntry = driveIter.get();
 
-        auto verificationsIter = driveEntry.verifications().rbegin();
-        while (verificationsIter != driveEntry.verifications().rend()) {
-            if (verificationsIter->State == state::VerificationState::Pending)
-                break;
+        if (driveEntry.verifications().size() > 0) {
+			const auto& verification = driveEntry.verifications()[0];
+			return std::make_unique<DriveVerification>(DriveVerification{
+				verification.VerificationTrigger,
+				driveEntry.rootHash(),
+				verification.Shards});
+		}
 
-            ++verificationsIter;
-        }
-
-        if (verificationsIter == driveEntry.verifications().rend())
-            return nullptr;
-
-        return std::make_unique<DriveVerification>(DriveVerification{
-			verificationsIter->VerificationTrigger,
-			driveEntry.rootHash()});
+		return nullptr;
 	}
 }}

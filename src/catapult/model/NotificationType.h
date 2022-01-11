@@ -132,6 +132,9 @@ namespace catapult { namespace model {
 	/// Block cosignatures.
 	DEFINE_CORE_NOTIFICATION(Block_Committee_v1, 0x0011, All);
 
+	/// Block was received.
+	DEFINE_CORE_NOTIFICATION(Block_v2, 0x0012, All);
+
 #undef DEFINE_CORE_NOTIFICATION
 
 	// endregion

@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "catapult/model/Elements.h"
 #include "catapult/types.h"
 #include "catapult/utils/ArraySet.h"
 #include "catapult/utils/NonCopyable.h"
@@ -32,7 +33,7 @@ namespace catapult { namespace state {
 		Key Id;
 		Key Owner;
 		uint64_t Size;
-		utils::KeySet Replicators;
+		utils::SortedKeySet Replicators;
 		std::vector<DataModification> DataModifications;
 	};
 
@@ -47,6 +48,7 @@ namespace catapult { namespace state {
 	struct DriveVerification {
 		Hash256 VerificationTrigger;
 		Hash256 RootHash;
+		std::vector<std::vector<Key>> Shards;
 	};
 
 	/// Interface for storage state.
@@ -57,6 +59,20 @@ namespace catapult { namespace state {
 	public:
 		void setCache(cache::CatapultCache* pCache) {
 			m_pCache = pCache;
+		}
+
+		void setLastBlockElementSupplier(const model::BlockElementSupplier& lastBlockElementSupplier) {
+			if (!!m_lastBlockElementSupplier)
+				CATAPULT_THROW_RUNTIME_ERROR("last block element supplier already set");
+
+			m_lastBlockElementSupplier = lastBlockElementSupplier;
+		}
+
+		const model::BlockElementSupplier& lastBlockElementSupplier() const {
+			if (!m_lastBlockElementSupplier)
+				CATAPULT_THROW_RUNTIME_ERROR("last block element supplier not set");
+
+			return m_lastBlockElementSupplier;
 		}
 
 	public:
@@ -80,5 +96,6 @@ namespace catapult { namespace state {
 
 	protected:
 		cache::CatapultCache* m_pCache;
+		model::BlockElementSupplier m_lastBlockElementSupplier;
 	};
 }}

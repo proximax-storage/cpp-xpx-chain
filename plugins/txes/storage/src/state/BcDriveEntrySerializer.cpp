@@ -25,9 +25,8 @@ namespace catapult { namespace state {
 
 		void SaveActiveDataModifications(io::OutputStream& output, const ActiveDataModifications& activeDataModifications) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(activeDataModifications.size()));
-			for (const auto& modification : activeDataModifications) {
+			for (const auto& modification : activeDataModifications)
 				SaveActiveDataModification(output, modification);
-			}
 		}
 
 		void SaveCompletedDataModifications(io::OutputStream& output, const CompletedDataModifications& completedDataModifications) {
@@ -38,20 +37,23 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void SaveVerificationOpinions(io::OutputStream& output, const VerificationResults& opinions) {
-			io::Write16(output, opinions.size());
-			for (const auto& pair : opinions) {
-				io::Write(output, pair.first);
-				io::Write8(output, pair.second);
-			}
+		void SaveShard(io::OutputStream& output, const std::vector<Key>& shard) {
+			io::Write8(output, utils::checked_cast<size_t, uint8_t>(shard.size()));
+			for (auto key : shard)
+				io::Write(output, key);
+		}
+
+		void SaveShards(io::OutputStream& output, const Shards& shards) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(shards.size()));
+			for (auto shard : shards)
+				SaveShard(output, shard);
 		}
 
 		void SaveVerifications(io::OutputStream& output, const Verifications& verifications) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(verifications.size()));
 			for (const auto& verification : verifications) {
 				io::Write(output, verification.VerificationTrigger);
-				io::Write8(output, utils::to_underlying_type(verification.State));
-				SaveVerificationOpinions(output, verification.Results);
+				SaveShards(output, verification.Shards);
 			}
 		}
 
@@ -63,7 +65,7 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void SaveReplicators(io::OutputStream& output, const utils::KeySet& replicators) {
+		void SaveReplicators(io::OutputStream& output, const utils::SortedKeySet& replicators) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(replicators.size()));
 			for (const auto& replicatorKey : replicators)
 				io::Write(output, replicatorKey);
@@ -113,7 +115,7 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void LoadReplicators(io::InputStream& input, utils::KeySet& replicators) {
+		void LoadReplicators(io::InputStream& input, utils::SortedKeySet& replicators) {
 			auto count = io::Read16(input);
 			while (count--) {
 				Key replicatorKey;
@@ -122,12 +124,20 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void LoadVerificationOpinions(io::InputStream& input, VerificationResults& opinions) {
-			auto pairCount = io::Read16(input);
-			while (pairCount--) {
-				Key prover;
-				io::Read(input, prover);
-				opinions[prover] = io::Read8(input);
+		void LoadShard(io::InputStream& input, std::vector<Key>& shard) {
+			auto count = io::Read8(input);
+			while (count--) {
+				Key replicatorKey;
+				io::Read(input, replicatorKey);
+				shard.emplace_back(replicatorKey);
+			}
+		}
+
+		void LoadShards(io::InputStream& input, Shards& shards) {
+			auto count = io::Read16(input);
+			while (count--) {
+				shards.emplace_back();
+				LoadShard(input, shards.back());
 			}
 		}
 
@@ -136,9 +146,7 @@ namespace catapult { namespace state {
 		    while (count--) {
 		        state::Verification verification;
 		        io::Read(input, verification.VerificationTrigger);
-				verification.State = static_cast<VerificationState>(io::Read8(input));
-				LoadVerificationOpinions(input, verification.Results);
-
+				LoadShards(input, verification.Shards);
 		        verifications.emplace_back(verification);
 		    }
 		}

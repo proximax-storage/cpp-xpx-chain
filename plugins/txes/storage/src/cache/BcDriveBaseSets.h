@@ -25,11 +25,10 @@ namespace catapult { namespace cache {
 		using Serializer = BcDriveCacheDescriptor::Serializer;
 	};
 
-	using BcDriveSingleSetCacheTypesAdapter =
-		SingleSetAndPatriciaTreeCacheTypesAdapter<BcDriveCacheTypes::PrimaryTypes, BcDrivePatriciaTree>;
-
 	struct BcDriveBaseSetDeltaPointers {
 		BcDriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType pPrimary;
+		BcDriveCacheTypes::KeyTypes::BaseSetDeltaPointerType pDeltaKeys;
+		const BcDriveCacheTypes::KeyTypes::BaseSetType& PrimaryKeys;
 		std::shared_ptr<BcDrivePatriciaTree::DeltaType> pPatriciaTree;
 	};
 
@@ -40,29 +39,34 @@ namespace catapult { namespace cache {
 
 	public:
 		explicit BcDriveBaseSets(const CacheConfiguration& config)
-				: CacheDatabaseMixin(config, { "default"})
+				: CacheDatabaseMixin(config, { "default" })
 				, Primary(GetContainerMode(config), database(), 0)
+				, Keys(deltaset::ConditionalContainerMode::Memory, database(), -1)
 				, PatriciaTree(hasPatriciaTreeSupport(), database(), 1)
 		{}
 
 	public:
 		BcDriveCacheTypes::PrimaryTypes::BaseSetType Primary;
+		BcDriveCacheTypes::KeyTypes::BaseSetType Keys;
 		CachePatriciaTree<BcDrivePatriciaTree> PatriciaTree;
 
 	public:
 		BcDriveBaseSetDeltaPointers rebase() {
-			return { Primary.rebase(), PatriciaTree.rebase() };
+			return { Primary.rebase(), Keys.rebase(), Keys, PatriciaTree.rebase() };
 		}
 
 		BcDriveBaseSetDeltaPointers rebaseDetached() const {
 			return {
-					Primary.rebaseDetached(),
-					PatriciaTree.rebaseDetached()
+				Primary.rebaseDetached(),
+				Keys.rebaseDetached(),
+				Keys,
+				PatriciaTree.rebaseDetached()
 			};
 		}
 
 		void commit() {
 			Primary.commit();
+			Keys.commit();
 			PatriciaTree.commit();
 			flush();
 		}

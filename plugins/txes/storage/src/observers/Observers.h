@@ -14,6 +14,8 @@
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/ReplicatorCache.h"
 
+namespace catapult { namespace state { class StorageStateImpl; }}
+
 namespace catapult { namespace observers {
 
 	/// Observes changes triggered by prepare drive notifications.
@@ -74,7 +76,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(StreamPayment, model::StreamPaymentNotification<1>)();
 
 	/// Observes changes triggered by start drive verification notifications.
-	DECLARE_OBSERVER(StartDriveVerification, model::StartDriveVerificationNotification<1>)();
+	DECLARE_OBSERVER(StartDriveVerification, model::BlockNotification<2>)(state::StorageStateImpl& state, const cache::DriveKeyCollector& driveKeyCollector);
 
 	/// Observes changes triggered by end drive verification notifications.
 	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)();

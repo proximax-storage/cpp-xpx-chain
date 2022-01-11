@@ -35,15 +35,6 @@ namespace catapult { namespace observers {
 		for (auto i = 0u; i < totalJudgingKeysCount; ++i)
 			driveEntry.confirmedUsedSizes().insert({notification.PublicKeysPtr[i], notification.UsedDriveSize});
 
-		auto it = std::find_if(
-				driveEntry.verifications().begin(),
-				driveEntry.verifications().end(),
-				[&notification](const state::Verification& v) {
-					return v.State == state::VerificationState::Pending;
-				}
-		);
-
-		if (it != driveEntry.verifications().end())
-			it->State = state::VerificationState::Canceled;
+		driveEntry.verifications().clear();
 	});
 }}

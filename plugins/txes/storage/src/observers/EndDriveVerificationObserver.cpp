@@ -12,115 +12,52 @@ namespace catapult { namespace observers {
         if (NotifyMode::Rollback == context.Mode)
             CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (EndDriveVerification)");
 
-        //Mosaic ids
-        const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
-        const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
-
-        // Replicator cache
-        auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-
-        // Drive entry
-        auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-        auto driveIter = driveCache.find(notification.DriveKey);
-        auto& driveEntry = driveIter.get();
-
-        // Pending verification
-        auto pendingVerification = std::find_if(
-                driveEntry.verifications().begin(),
-                driveEntry.verifications().end(),
-                [&notification](const state::Verification& v) {
-                    return v.VerificationTrigger == notification.VerificationTrigger &&
-                           v.State == state::VerificationState::Pending;
-                }
-        );
-
-        auto totalSplittingSoDeposit = 0;
-
         // Find median opinion for every Prover
-        for (auto i = 0; i < notification.ProversCount; ++i) {
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+		auto storageDepositSlashing = 0;
+        for (auto i = 0; i < notification.KeyCount; ++i) {
             uint8_t result = 0;
+            for (auto j = 0; j < notification.JudgingKeyCount; ++j)
+                result += notification.OpinionsPtr[i + j * (notification.KeyCount - 1)];
 
-            for (auto j = 0; j < notification.VerificationOpinionsCount; ++j) {
-                if (i == notification.VerificationOpinionsPtr[j].Verifier)
-                    continue;
-
-                auto it = std::find_if(
-                        notification.VerificationOpinionsPtr[j].Results.begin(),
-                        notification.VerificationOpinionsPtr[j].Results.end(),
-                        [&notification, i](const std::pair<uint16_t, uint8_t>& el) {
-                            return el.first == i;
-                        }
-                );
-
-                result += it->second;
-            }
-
-            // Check result` median
-            auto proverIt = pendingVerification->Results.find(notification.ProversPtr[i]);
-            if (result > notification.VerificationOpinionsCount / 2) {
-                proverIt->second = 1;
+            if (result >= notification.JudgingKeyCount / 2)
                 continue;
-            }
-            proverIt->second = 0;
 
-            // Get replicator entry
-            auto replicatorIter = replicatorCache.find(notification.ProversPtr[i]);
+            auto replicatorIter = replicatorCache.find(notification.PublicKeysPtr[i]);
             auto& replicatorEntry = replicatorIter.get();
 
             // Count deposited Storage mosaics and delete the replicator from drives
-            auto deposit = replicatorEntry.capacity().unwrap();
-            for (const auto& iter: replicatorEntry.drives()) {
-                auto driveIter = driveCache.find(iter.first);
+			storageDepositSlashing += replicatorEntry.capacity().unwrap();
+            for (const auto& pair: replicatorEntry.drives()) {
+                auto driveIter = driveCache.find(pair.first);
                 auto& drive = driveIter.get();
 
-                deposit += drive.size();
-                drive.replicators().erase(drive.replicators().find(notification.ProversPtr[i]));
+				storageDepositSlashing += drive.size();
+                drive.replicators().erase(notification.PublicKeysPtr[i]);
             }
-            totalSplittingSoDeposit += deposit;
 
-            // Remove the replicator from the replicators cache and clear replicator`s drives
-            replicatorCache.remove(notification.ProversPtr[i]);
-            replicatorEntry.drives().clear();
-
-            // Credit drive`s account for replicator`s Streaming deposit
-            auto& cache = context.Cache.sub<cache::AccountStateCache>();
-            auto accountIter = cache.find(notification.DriveKey);
-            auto& driveState = accountIter.get();
-
-            driveState.Balances.credit(streamingMosaicId, Amount(deposit * 2), context.Height);
+            replicatorCache.remove(notification.PublicKeysPtr[i]);
         }
 
-        pendingVerification->State = state::VerificationState::Finished;
-
-        if (totalSplittingSoDeposit == 0)
+        if (storageDepositSlashing == 0)
             return;
 
-        // Split failed replicators` Storage deposits between left replicators
-        auto& cache = context.Cache.sub<cache::AccountStateCache>();
-        driveIter = driveCache.find(notification.DriveKey);
-        driveEntry = driveIter.get();
+        // Split storage deposit slashing between left replicators
+		auto driveIter = driveCache.find(notification.DriveKey);
+		auto& driveEntry = driveIter.get();
+        auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto accountIter = accountStateCache.find(notification.DriveKey);
+		auto& driveAccountState = accountIter.get();
+		auto storageDepositSlashingShare = Amount(storageDepositSlashing / driveEntry.replicators().size());
+		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 
-        for (const auto& iter: driveEntry.replicators()) {
-            auto accountIter = cache.find(iter);
-            auto& replicatorState = accountIter.get();
-
-            replicatorState.Balances.credit(
-                    storageMosaicId,
-                    Amount(totalSplittingSoDeposit / driveEntry.replicators().size()),
-                    context.Height
-            );
-        }
-
-        // If there are left Storage mosaics send them to the first replicator
-        if (totalSplittingSoDeposit % driveEntry.replicators().size() != 0) {
-            auto accountIter = cache.find(*driveEntry.replicators().begin());
-            auto& replicatorState = accountIter.get();
-
-            replicatorState.Balances.credit(
-                    storageMosaicId,
-                    Amount(totalSplittingSoDeposit % driveEntry.replicators().size()),
-                    context.Height
-            );
+		driveEntry.verifications().clear();
+        for (const auto& replicatorKey : driveEntry.replicators()) {
+            accountIter = accountStateCache.find(replicatorKey);
+            auto& replicatorAccountState = accountIter.get();
+			driveAccountState.Balances.debit(storageMosaicId, storageDepositSlashingShare, context.Height);
+            replicatorAccountState.Balances.credit(storageMosaicId, storageDepositSlashingShare, context.Height);
         }
     }))
 }}

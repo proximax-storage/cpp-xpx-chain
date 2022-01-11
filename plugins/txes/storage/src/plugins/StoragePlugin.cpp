@@ -5,7 +5,7 @@
 **/
 
 #include "StoragePlugin.h"
-#include "src/cache/BcDriveCacheStorage.h"
+#include "src/cache/BcDriveCacheSubCachePlugin.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCacheSubCachePlugin.h"
 #include "src/plugins/PrepareBcDriveTransactionPlugin.h"
@@ -126,8 +126,9 @@ namespace catapult { namespace plugins {
 			return false;
 		});
 
-		manager.addCacheSupport<cache::BcDriveCacheStorage>(
-			std::make_unique<cache::BcDriveCache>(manager.cacheConfig(cache::BcDriveCache::Name), pConfigHolder));
+		auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
+		manager.addCacheSupport(std::make_unique<cache::BcDriveCacheSubCachePlugin>(
+			manager.cacheConfig(cache::BcDriveCache::Name), pDriveKeyCollector, pConfigHolder));
 
 		using BcDriveCacheHandlersService = CacheHandlers<cache::BcDriveCacheDescriptor>;
 		BcDriveCacheHandlersService::Register<model::FacilityCode::BcDrive>(manager);
@@ -150,9 +151,9 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		auto pKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
+		auto pReplicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
 		manager.addCacheSupport(std::make_unique<cache::ReplicatorCacheSubCachePlugin>(
-			manager.cacheConfig(cache::ReplicatorCache::Name), pKeyCollector, pConfigHolder));
+			manager.cacheConfig(cache::ReplicatorCache::Name), pReplicatorKeyCollector, pConfigHolder));
 
 		using ReplicatorCacheHandlersService = CacheHandlers<cache::ReplicatorCacheDescriptor>;
 		ReplicatorCacheHandlersService::Register<model::FacilityCode::Replicator>(manager);
@@ -163,16 +164,17 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		manager.setStorageState(std::make_unique<state::StorageStateImpl>(pKeyCollector));
+		auto pStorageState = std::make_shared<state::StorageStateImpl>(pReplicatorKeyCollector);
+		manager.setStorageState(pStorageState);
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateStoragePluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, pKeyCollector](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, pReplicatorKeyCollector](auto& builder) {
 		  	builder
-				.add(validators::CreatePrepareDriveValidator(pKeyCollector))
+				.add(validators::CreatePrepareDriveValidator(pReplicatorKeyCollector))
 				.add(validators::CreateDataModificationValidator())
 				.add(validators::CreateDataModificationApprovalValidator())
 				.add(validators::CreateDataModificationApprovalDownloadWorkValidator())
@@ -197,9 +199,9 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateEndDriveVerificationValidator());
 		});
 
-		manager.addObserverHook([pKeyCollector](auto& builder) {
+		manager.addObserverHook([pReplicatorKeyCollector, &state = *pStorageState, &driveKeyCollector = *pDriveKeyCollector](auto& builder) {
 			builder
-				.add(observers::CreatePrepareDriveObserver(pKeyCollector))
+				.add(observers::CreatePrepareDriveObserver(pReplicatorKeyCollector))
 				.add(observers::CreateDownloadChannelObserver())
 				.add(observers::CreateDataModificationObserver())
 				.add(observers::CreateDataModificationApprovalObserver())
@@ -218,6 +220,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateStreamStartObserver())
 				.add(observers::CreateStreamFinishObserver())
 				.add(observers::CreateStreamPaymentObserver())
+				.add(observers::CreateStartDriveVerificationObserver(state, driveKeyCollector))
 				.add(observers::CreateEndDriveVerificationObserver());
 		});
 	}

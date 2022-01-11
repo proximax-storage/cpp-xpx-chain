@@ -30,7 +30,7 @@ namespace catapult { namespace observers {
 		auto CreateConfig() {
 			test::MutableBlockchainConfiguration config;
 			auto pluginConfig = config::StorageConfiguration::Uninitialized();
-			pluginConfig.MaxShardSize = 20;
+			pluginConfig.ShardSize = 20;
 			config.Network.SetPluginConfiguration(pluginConfig);
 			return (config.ToConst());
 		}

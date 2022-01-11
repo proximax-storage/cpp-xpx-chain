@@ -12,10 +12,10 @@ namespace catapult { namespace state {
 #define TEST_CLASS BcDriveEntrySerializerTests
 
 	namespace {
-
+		constexpr auto Replicator_Count = 10;
         constexpr auto Active_Data_Modifications_Count = 5;
         constexpr auto Completed_Data_Modifications_Count = 5;
-        constexpr auto Verifications_Count = 2;
+        constexpr auto Verifications_Count = 1;
 
         constexpr auto Entry_Size =
             sizeof(VersionType) + // version
@@ -31,8 +31,7 @@ namespace catapult { namespace state {
             sizeof(uint16_t) + // completed data modifications count
             Completed_Data_Modifications_Count * (Hash256_Size + Key_Size + Hash256_Size + sizeof(uint64_t) + sizeof(uint8_t)) + // completed data modifications
             sizeof(uint16_t) + // verifications count
-            Verifications_Count * sizeof(uint16_t) + // verifications` opinions count
-            Verifications_Count * (Hash256_Size + sizeof(VerificationState)); // verifications
+            Verifications_Count * (Hash256_Size + sizeof(uint16_t) + Replicator_Count * sizeof(uint16_t)); // verification data
 
         class TestContext {
         public:
@@ -61,7 +60,7 @@ namespace catapult { namespace state {
                 test::GenerateRandomByteArray<Key>(),
                 test::GenerateRandomByteArray<Hash256>(),
                 test::Random(),
-                test::Random16(),
+				Replicator_Count,
                 Active_Data_Modifications_Count,
                 Completed_Data_Modifications_Count,
 				Verifications_Count,
@@ -118,7 +117,7 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void AssertReplicators(const utils::KeySet& replicators, const uint8_t*& pData) {
+		void AssertReplicators(const utils::SortedKeySet& replicators, const uint8_t*& pData) {
 			EXPECT_EQ(replicators.size(), *reinterpret_cast<const uint16_t*>(pData));
 			pData += sizeof(uint16_t);
 			for (const auto& replicator : replicators) {
@@ -133,10 +132,16 @@ namespace catapult { namespace state {
             for (const auto& verification : verifications) {
                 EXPECT_EQ_MEMORY(verification.VerificationTrigger.data(), pData, Hash256_Size);
                 pData += Hash256_Size;
-                EXPECT_EQ(verification.State, static_cast<VerificationState>(*pData));
-                pData += sizeof(VerificationState);
-                EXPECT_EQ(verification.Results.size(), *reinterpret_cast<const uint16_t*>(pData));
+                EXPECT_EQ(verification.Shards.size(), *reinterpret_cast<const uint16_t*>(pData));
                 pData += sizeof(uint16_t);
+				for (const auto& shard : verification.Shards) {
+					EXPECT_EQ(shard.size(), *reinterpret_cast<const uint8_t*>(pData));
+					pData += sizeof(uint8_t);
+					for (const auto& key : shard) {
+						EXPECT_EQ_MEMORY(key.data(), pData, Key_Size);
+						pData += Key_Size;
+					}
+				}
             }
         }
 
@@ -251,15 +256,6 @@ namespace catapult { namespace state {
             }
 		}
 
-        void SaveVerificationResults(const VerificationResults& results, std::vector<uint8_t>& data) {
-            uint16_t resultsCount = utils::checked_cast<size_t, uint16_t>(results.size());
-			CopyToVector(data, (const uint8_t *) &resultsCount, sizeof(uint16_t));
-            for (const auto& result : results) {
-				CopyToVector(data, result.first.data(), Key_Size);
-				CopyToVector(data, (const uint8_t *) &result.second, sizeof(uint8_t));
-            }
-        }
-
 		void SaveConfirmedUsedSizes(const SizeMap& confirmedUsedSizes, std::vector<uint8_t>& data) {
 			uint16_t pairsCount = utils::checked_cast<size_t, uint16_t>(confirmedUsedSizes.size());
 			CopyToVector(data, (const uint8_t *) &pairsCount, sizeof(uint16_t));
@@ -269,7 +265,7 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void SaveReplicators(const utils::KeySet& replicators, std::vector<uint8_t>& data) {
+		void SaveReplicators(const utils::SortedKeySet& replicators, std::vector<uint8_t>& data) {
 			uint16_t replicatorsCount = utils::checked_cast<size_t, uint16_t>(replicators.size());
 			CopyToVector(data, (const uint8_t *) &replicatorsCount, sizeof(uint16_t));
 			for (const auto& replicator : replicators)
@@ -281,8 +277,14 @@ namespace catapult { namespace state {
 			CopyToVector(data, (const uint8_t *) &verificationsCount, sizeof(uint16_t));
             for (const auto& verification : verifications) {
 				CopyToVector(data, verification.VerificationTrigger.data(), Hash256_Size);
-				CopyToVector(data, (const uint8_t *) &verification.State, sizeof(uint8_t));
-                SaveVerificationResults(verification.Results, data);
+				uint16_t shardCount = utils::checked_cast<size_t, uint16_t>(verification.Shards.size());
+				CopyToVector(data, (const uint8_t *) &shardCount, sizeof(uint16_t));
+                for (const auto& shard : verification.Shards) {
+					uint8_t shardSize = utils::checked_cast<size_t, uint8_t>(shard.size());
+					CopyToVector(data, (const uint8_t *) &shardSize, sizeof(uint8_t));
+					for (const auto& key : shard)
+						CopyToVector(data, key.data(), Key_Size);
+				}
             }
         }
 

@@ -120,37 +120,40 @@ namespace catapult { namespace validators {
 	DEFINE_STORAGE_RESULT(Drive_Info_Not_Found, 35);
 
 	/// Verification Trigger is not equal to the pending verification.
-	DEFINE_STORAGE_RESULT(Verification_Bad_Verification_Trigger, 36);
+	DEFINE_STORAGE_RESULT(Bad_Verification_Trigger, 36);
 
 	/// The provided count of Provers is not equal to desired.
-	DEFINE_STORAGE_RESULT(Verification_Wrong_Number_Of_Provers, 37);
+	DEFINE_STORAGE_RESULT(Verification_Not_In_Progress, 37);
 
 	/// Not all Provers were in the Confirmed state at the start of Verification.
-	DEFINE_STORAGE_RESULT(Verification_Some_Provers_Are_Illegal, 38);
+	DEFINE_STORAGE_RESULT(Verification_Invalid_Prover_Count, 38);
+
+	/// Not all Provers were in the Confirmed state at the start of Verification.
+	DEFINE_STORAGE_RESULT(Verification_Invalid_Prover, 39);
 
 	/// Validation failed because the data modification already exists.
-	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 39);
+	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 40);
 
 	/// Validation failed because the stream if not first in the queue.
-	DEFINE_STORAGE_RESULT(Invalid_Stream_Id, 40);
+	DEFINE_STORAGE_RESULT(Invalid_Stream_Id, 41);
 
 	/// Validation failed because the stream has already been finished.
-	DEFINE_STORAGE_RESULT(Stream_Already_Finished, 41);
+	DEFINE_STORAGE_RESULT(Stream_Already_Finished, 42);
 
 	/// Validation failed because declared stream actual size exceeds prepaid expected size
-	DEFINE_STORAGE_RESULT(Expected_Upload_Size_Exceeded, 42);
+	DEFINE_STORAGE_RESULT(Expected_Upload_Size_Exceeded, 43);
 
 	/// Desired drive size is greater than maximal.
-	DEFINE_STORAGE_RESULT(Drive_Size_Excessive, 43);
+	DEFINE_STORAGE_RESULT(Drive_Size_Excessive, 44);
 
 	/// Desired modification size is greater than maximal.
-	DEFINE_STORAGE_RESULT(Upload_Size_Excessive, 44);
+	DEFINE_STORAGE_RESULT(Upload_Size_Excessive, 45);
 
 	/// Desired download size is greater than maximal.
-	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 45);
+	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 46);
 
 	/// Number of signatures in opinion-based multisignature transaction is less than minimal.
-	DEFINE_STORAGE_RESULT(Signature_Count_Insufficient, 46);
+	DEFINE_STORAGE_RESULT(Signature_Count_Insufficient, 47);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

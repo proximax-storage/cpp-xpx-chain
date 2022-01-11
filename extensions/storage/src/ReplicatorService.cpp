@@ -11,6 +11,7 @@
 #include "src/catapult/ionet/NodeContainer.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
+#include "catapult/io/BlockStorageCache.h"
 
 namespace catapult { namespace storage {
 
@@ -37,8 +38,16 @@ namespace catapult { namespace storage {
             void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
                 locator.registerRootedService(Service_Name, m_pReplicatorService);
 
-                m_pReplicatorService->setServiceState(&state);
+				m_pReplicatorService->setServiceState(&state);
+
+				const auto& storage = state.storage();
+				auto lastBlockElementSupplier = [&storage]() {
+					auto storageView = storage.view();
+					return storageView.loadBlockElement(storageView.chainHeight());
+				};
                 auto& storageState = state.pluginManager().storageState();
+				storageState.setLastBlockElementSupplier(lastBlockElementSupplier);
+
                 if (storageState.isReplicatorRegistered(m_pReplicatorService->replicatorKey())) {
                     CATAPULT_LOG(debug) << "starting replicator service";
                     m_pReplicatorService->start();
@@ -74,10 +83,10 @@ namespace catapult { namespace storage {
 
     public:
         void init(const StorageConfiguration& storageConfig) {
-            const auto& immutableConfig = m_serviceState.config().Immutable;
+			const auto& config = m_serviceState.config();
             TransactionSender transactionSender(
 				m_keyPair,
-				immutableConfig,
+				config.Immutable,
 				storageConfig,
 				m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local),
 				m_storageState);
@@ -93,6 +102,7 @@ namespace catapult { namespace storage {
 				std::string(storageConfig.Port), // TODO: do not use move semantics.
 				std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
 				std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
+				{},
 				storageConfig.UseTcpSocket,
 				*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
 				nullptr,
@@ -118,17 +128,23 @@ namespace catapult { namespace storage {
 				auto pActiveVerification = m_storageState.getActiveVerification(drive.Id);
 				if (!!pActiveVerification) {
 					std::vector<sirius::Key> replicators;
-					replicators.reserve(drive.Replicators.size());
-					std::for_each(drive.Replicators.begin(), drive.Replicators.end(),
-						[&replicators](const auto& key) { replicators.push_back(key.array()); });
+					sirius::Hash256 verificationTrigger(pActiveVerification->VerificationTrigger.array());
+					sirius::drive::InfoHash rootHash(pActiveVerification->RootHash.array());
+					replicators.reserve(pActiveVerification->Shards[0].size());
 
-					m_pReplicator->asyncStartDriveVerification(
-						drive.Id.array(),
-						sirius::drive::VerificationRequest{
-							pActiveVerification->VerificationTrigger.array(),
-							0u, // TODO: set shard id
-							pActiveVerification->RootHash.array(),
-							replicators});
+					for (uint32_t i = 0u; i < pActiveVerification->Shards.size(); ++i) {
+						replicators.clear();
+						const auto& shard = pActiveVerification->Shards[i];
+						std::for_each(shard.begin(), shard.end(), [&replicators](const auto& key) { replicators.push_back(key.array()); });
+
+						m_pReplicator->asyncStartDriveVerification(
+							drive.Id.array(),
+							sirius::drive::VerificationRequest{
+								verificationTrigger,
+								i,
+								rootHash,
+								replicators});
+					}
 				}
 
                 for (const auto& dataModification: drive.DataModifications) {
@@ -150,7 +166,7 @@ namespace catapult { namespace storage {
 					channel.Consumers);
             }
 
-			// TODO: call asyncInitializationFinished()
+			m_pReplicator->asyncInitializationFinished();
         }
 
         void addDriveModification(
@@ -161,7 +177,7 @@ namespace catapult { namespace storage {
                 uint64_t dataSize) {
             CATAPULT_LOG(debug) << "new modify request " << modificationId << " for drive " << driveKey;
 
-            auto replicators = getReplicatorInfos(m_storageState.getDriveReplicators(driveKey));
+            auto replicators = castReplicatorKeys(m_storageState.getDriveReplicators(driveKey));
             m_pReplicator->asyncModify(
 				driveKey.array(),
 				sirius::drive::ModifyRequest{
@@ -185,7 +201,7 @@ namespace catapult { namespace storage {
                 const std::vector<Key>& consumers) {
             CATAPULT_LOG(debug) << "add download channel " << channelId.data();
 
-			auto replicators = getReplicatorInfos(m_storageState.getDriveReplicators(driveKey));
+			auto replicators = castReplicatorKeys(m_storageState.getDriveReplicators(driveKey));
 			std::vector<sirius::Key> castedConsumers;
 			castedConsumers.reserve(consumers.size());
 			std::for_each(consumers.begin(), consumers.end(), [&castedConsumers](const auto& key) { castedConsumers.push_back(key.array()); });
@@ -213,13 +229,13 @@ namespace catapult { namespace storage {
         void closeDownloadChannel(const Hash256& channelId) {
             CATAPULT_LOG(debug) << "closing download channel " << channelId.data();
 
-            m_pReplicator->removeDownloadChannelInfo(channelId.array());
+//            m_pReplicator->removeDownloadChannelInfo(channelId.array());
         }
 
         void addDrive(const Key& driveKey, uint64_t driveSize) {
             CATAPULT_LOG(debug) << "add drive " << driveKey;
 
-            auto replicators = getReplicatorInfos(m_storageState.getDriveReplicators(driveKey));
+            auto replicators = castReplicatorKeys(m_storageState.getDriveReplicators(driveKey));
             auto downloadWork = m_storageState.getDownloadWork(m_keyPair.publicKey(), driveKey);
             sirius::drive::AddDriveRequest request{driveSize, downloadWork, replicators};
             m_pReplicator->asyncAddDrive(driveKey.array(), request);
@@ -267,12 +283,19 @@ namespace catapult { namespace storage {
         }
 
     private:
-        std::vector<sirius::drive::ReplicatorInfo> getReplicatorInfos(const std::vector<Key>& keys) {
-            std::vector<sirius::drive::ReplicatorInfo> requestedNodes;
-            requestedNodes.reserve(keys.size());
+        std::vector<sirius::Key> castReplicatorKeys(const std::vector<Key>& keys) {
+            std::vector<sirius::Key> replicators;
+			replicators.reserve(keys.size());
             for (const auto& key: keys)
-                requestedNodes.emplace_back(sirius::drive::ReplicatorInfo{boost::asio::ip::tcp::endpoint(), key.array()});
+				replicators.emplace_back(key.array());
         }
+
+		std::vector<sirius::drive::ReplicatorInfo> getReplicatorInfos(const std::vector<Key>& keys) {
+			std::vector<sirius::drive::ReplicatorInfo> requestedNodes;
+			requestedNodes.reserve(keys.size());
+			for (const auto& key: keys)
+				requestedNodes.emplace_back(sirius::drive::ReplicatorInfo{boost::asio::ip::tcp::endpoint(), key.array()});
+		}
 
     private:
         const crypto::KeyPair& m_keyPair;
