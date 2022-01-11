@@ -17,7 +17,8 @@ namespace catapult { namespace validators {
 	/// Desired drive size is less than minimal.
 	DEFINE_STORAGE_RESULT(Drive_Size_Insufficient, 1);
 
-	/// Desired number of replicators is less than minimal.
+	/// Desired number of replicators is less than minimal,
+	/// or offboarding of the replicator is not possible as drive's actual replicator count will become less than minimal.
 	DEFINE_STORAGE_RESULT(Replicator_Count_Insufficient, 2);
 
 	/// Validation failed because plugin configuration data is malformed.
@@ -154,6 +155,9 @@ namespace catapult { namespace validators {
 
 	/// Number of signatures in opinion-based multisignature transaction is less than minimal.
 	DEFINE_STORAGE_RESULT(Signature_Count_Insufficient, 47);
+
+	/// The replicator has already applied for offboarding from the drive.
+	DEFINE_STORAGE_RESULT(Already_Applied_For_Offboarding, 48);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

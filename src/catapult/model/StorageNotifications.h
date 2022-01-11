@@ -670,15 +670,18 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Storage_Replicator_Offboarding_v1_Notification;
 
 	public:
-		explicit ReplicatorOffboardingNotification(
-				const Key& publicKey)
-			: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
+		explicit ReplicatorOffboardingNotification(const Key& publicKey, const Key& drive)
+			: Notification(Notification_Type, sizeof(ReplicatorOffboardingNotification<1>))
 			, PublicKey(publicKey)
+			, DriveKey(drive)
 		{}
 
 	public:
 		/// Key of the replicator.
 		Key PublicKey;
+
+		/// Public key of a drive.
+		Key DriveKey;
 
 	};
 

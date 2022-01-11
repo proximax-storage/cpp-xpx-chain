@@ -214,7 +214,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDataModificationCancelObserver())
 				.add(observers::CreateDriveClosureObserver())
 				.add(observers::CreateReplicatorOnboardingObserver(pDriveQueue))
-				.add(observers::CreateReplicatorOffboardingObserver())
+				.add(observers::CreateReplicatorOffboardingObserver(pDriveQueue))
 				.add(observers::CreateDownloadPaymentObserver())
 				.add(observers::CreateDataModificationSingleApprovalObserver())
 				.add(observers::CreateDownloadApprovalObserver())

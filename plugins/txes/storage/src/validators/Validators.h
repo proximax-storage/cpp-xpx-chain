@@ -70,7 +70,11 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
 
 	/// A validator implementation that applies to drive replicator offboarding notifications and validates that:
-	/// - the replicator public key is removed
+	/// - signer is registered as replicator
+	/// - respective drive exists
+	/// - replicator is assigned to the drive
+	/// - replicator hasn't applied for offboarding
+	/// - drive will be able to function after another replicator offboards
 	DECLARE_STATEFUL_VALIDATOR(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)();
 
 	/// A validator implementation that applies to drive finish download notifications and validates that:

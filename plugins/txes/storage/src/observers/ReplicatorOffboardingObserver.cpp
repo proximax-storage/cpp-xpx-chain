@@ -8,52 +8,77 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>, [](const auto& notification, auto& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorOffboarding)");
+	using Notification = model::ReplicatorOffboardingNotification<1>;
+	using DrivePriority = std::pair<Key, double>;
 
-	  	auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
-		auto replicatorIter = replicatorCache.find(notification.PublicKey);
-		auto& replicatorEntry = replicatorIter.get();
+	DECLARE_OBSERVER(ReplicatorOffboarding, Notification)(const std::unique_ptr<std::priority_queue<DrivePriority>>& pDriveQueue) {
+		return MAKE_OBSERVER(ReplicatorOffboarding, Notification, ([&pDriveQueue](const Notification& notification, const ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorOffboarding)");
 
-		auto& cache = context.Cache.template sub<cache::AccountStateCache>();
-		auto accountIter = cache.find(notification.PublicKey);
-		auto& replicatorState = accountIter.get();
+  			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
+		  	auto driveIter = driveCache.find(notification.DriveKey);
+		  	auto& driveEntry = driveIter.get();
 
-		// Storage deposit equals to the remaining capacity plus the sum of drive
-		// sizes that the replicator serves.
-		auto storageDepositReturn = replicatorEntry.capacity().unwrap();
+		  	driveEntry.offboardingReplicators().emplace(notification.PublicKey);
 
-		// Streaming Deposit Slashing equals 2 * min(u1, u2) where
-		// u1 - the UsedDriveSize according to the last approved by the Replicator modification
-		// u2 - the UsedDriveSize according to the last approved modification on the Drive.
-		uint64_t streamingDepositSlashing = 0;
+		  	std::priority_queue<DrivePriority> originalQueue = *pDriveQueue.get();
+		  	std::priority_queue<DrivePriority> newQueue;
+		  	while (!originalQueue.empty()) {
+			  	const auto drivePriorityPair = originalQueue.top();
+			  	const auto& driveKey = drivePriorityPair.first;
+			  	originalQueue.pop();
 
-		const auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
-		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
-		for(const auto& iter : replicatorEntry.drives()){
-			auto driveIter = driveCache.find(iter.first);
-			const auto& drive = driveIter.get();
-			storageDepositReturn += drive.size();
+			  	if (driveKey == notification.DriveKey)
+					newQueue.emplace(driveKey, utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount));
+				else
+				  	newQueue.push(drivePriorityPair);
+		  	}
+		  	*pDriveQueue.get() = std::move(newQueue);
 
-			auto& confirmedUsedSizes = drive.confirmedUsedSizes();
-			auto sizeIter = confirmedUsedSizes.find(notification.PublicKey);
-			streamingDepositSlashing += (confirmedUsedSizes.end() != sizeIter) ?
-				2 * std::min(sizeIter->second, drive.usedSize()) :
-				2 * drive.usedSize();
-		}
+			auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
+			auto replicatorIter = replicatorCache.find(notification.PublicKey);
+			auto& replicatorEntry = replicatorIter.get();
 
-		// Streaming deposit return = streaming deposit - streaming deposit slashing
-		auto streamingDeposit = 2 * storageDepositReturn;
-		if (streamingDeposit < streamingDepositSlashing)
-			CATAPULT_THROW_RUNTIME_ERROR_2("streaming deposit slashing exceeds streaming deposit", streamingDeposit, streamingDepositSlashing);
-		auto streamingDepositReturn = streamingDeposit - streamingDepositSlashing;
+			auto& cache = context.Cache.template sub<cache::AccountStateCache>();
+			auto accountIter = cache.find(notification.PublicKey);
+			auto& replicatorState = accountIter.get();
 
-		// Swap storage unit to xpx
-		replicatorState.Balances.credit(currencyMosaicId, Amount(storageDepositReturn), context.Height);
-		// Swap streaming unit to xpx
-		replicatorState.Balances.credit(currencyMosaicId, Amount(streamingDepositReturn), context.Height);
+			// Storage deposit equals to the remaining capacity plus the sum of drive
+			// sizes that the replicator serves.
+			auto storageDepositReturn = replicatorEntry.capacity().unwrap();
 
-		replicatorCache.remove(notification.PublicKey);
-	});
+			// Streaming Deposit Slashing equals 2 * min(u1, u2) where
+			// u1 - the UsedDriveSize according to the last approved by the Replicator modification
+			// u2 - the UsedDriveSize according to the last approved modification on the Drive.
+			uint64_t streamingDepositSlashing = 0;
+
+			const auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+			for(const auto& iter : replicatorEntry.drives()){
+				auto driveIter = driveCache.find(iter.first);
+				const auto& drive = driveIter.get();
+				storageDepositReturn += drive.size();
+
+				auto& confirmedUsedSizes = drive.confirmedUsedSizes();
+				auto sizeIter = confirmedUsedSizes.find(notification.PublicKey);
+				streamingDepositSlashing += (confirmedUsedSizes.end() != sizeIter) ?
+					2 * std::min(sizeIter->second, drive.usedSize()) :
+					2 * drive.usedSize();
+			}
+
+			// Streaming deposit return = streaming deposit - streaming deposit slashing
+			auto streamingDeposit = 2 * storageDepositReturn;
+			if (streamingDeposit < streamingDepositSlashing)
+				CATAPULT_THROW_RUNTIME_ERROR_2("streaming deposit slashing exceeds streaming deposit", streamingDeposit, streamingDepositSlashing);
+			auto streamingDepositReturn = streamingDeposit - streamingDepositSlashing;
+
+			// Swap storage unit to xpx
+			replicatorState.Balances.credit(currencyMosaicId, Amount(storageDepositReturn), context.Height);
+			// Swap streaming unit to xpx
+			replicatorState.Balances.credit(currencyMosaicId, Amount(streamingDepositReturn), context.Height);
+
+			replicatorCache.remove(notification.PublicKey);
+		}))
+	}
 }}

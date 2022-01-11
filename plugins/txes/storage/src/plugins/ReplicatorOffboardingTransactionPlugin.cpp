@@ -19,7 +19,7 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1: {
-				sub.notify(ReplicatorOffboardingNotification<1>(transaction.Signer));
+				sub.notify(ReplicatorOffboardingNotification<1>(transaction.Signer, transaction.DriveKey));
 				break;
 			}
 

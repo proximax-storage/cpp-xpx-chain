@@ -51,7 +51,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>)();
 
 	/// Observes changes triggered by replicator offboarding notifications.
-	DECLARE_OBSERVER(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)();
+	DECLARE_OBSERVER(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)(const std::unique_ptr<std::priority_queue<std::pair<Key, double>>>& pDriveQueue);
 
 	/// Observes changes triggered by download payment notifications.
 	DECLARE_OBSERVER(DownloadPayment, model::DownloadPaymentNotification<1>)();

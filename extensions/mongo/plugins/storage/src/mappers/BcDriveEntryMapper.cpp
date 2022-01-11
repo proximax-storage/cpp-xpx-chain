@@ -67,8 +67,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		}
 
 		template<class TContainer>
-		void StreamReplicators(bson_stream::document& builder, const TContainer& replicators) {
-			auto array = builder << "replicators" << bson_stream::open_array;
+		void StreamReplicators(std::string&& arrayName, bson_stream::document& builder, const TContainer& replicators) {
+			auto array = builder << arrayName << bson_stream::open_array;
 			for (const auto& replicatorKey : replicators)
 				array << ToBinary(replicatorKey);
 			array << bson_stream::close_array;
@@ -79,7 +79,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			for (int32_t i = 0u; i < shards.size(); ++i) {
 				bson_stream::document shardBuilder;
 				shardBuilder << "id" << i;
-				StreamReplicators(shardBuilder, shards[i]);
+				StreamReplicators("replicators", shardBuilder, shards[i]);
 				array << shardBuilder;
 			}
 
@@ -115,7 +115,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
 		StreamCompletedDataModifications(builder, entry.completedDataModifications());
 		StreamConfirmedUsedSizes(builder, entry.confirmedUsedSizes());
-		StreamReplicators(builder, entry.replicators());
+		StreamReplicators("replicators", builder, entry.replicators());
+		StreamReplicators("offboardingReplicators", builder, entry.offboardingReplicators());
 		StreamVerifications(builder, entry.verifications());
 
 		return doc
@@ -242,6 +243,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		ReadCompletedDataModifications(entry.completedDataModifications(), dbDriveEntry["completedDataModifications"].get_array().value);
 		ReadConfirmedUsedSizes(entry.confirmedUsedSizes(), dbDriveEntry["confirmedUsedSizes"].get_array().value);
 		ReadReplicators(entry.replicators(), dbDriveEntry["replicators"].get_array().value);
+		ReadReplicators(entry.offboardingReplicators(), dbDriveEntry["offboardingReplicators"].get_array().value);
 		ReadVerifications(entry.verifications(), dbDriveEntry["verifications"].get_array().value);
 
 		return entry;

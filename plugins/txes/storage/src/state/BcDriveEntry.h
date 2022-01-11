@@ -245,6 +245,18 @@ namespace catapult { namespace state {
 			return m_replicators;
 		}
 
+		/// Gets replicators that applied for offboarding.
+		/// Must be a subset of \a m_replicators.
+		const utils::SortedKeySet& offboardingReplicators() const {
+			return m_offboardingReplicators;
+		}
+
+		/// Gets replicators that applied for offboarding.
+		/// Must be a subset of \a m_replicators.
+		utils::SortedKeySet& offboardingReplicators() {
+			return m_offboardingReplicators;
+		}
+
 		/// Gets verifications.
 		Verifications& verifications() {
 			return m_verifications;
@@ -278,6 +290,7 @@ namespace catapult { namespace state {
 		SizeMap m_confirmedUsedSizeMap;
 		SizeMap m_cumulativeUploadSizeMap;
 		utils::SortedKeySet m_replicators;
+		utils::SortedKeySet m_offboardingReplicators;
 		Verifications m_verifications;
 		ConfirmedStates m_confirmedStates;
 	};

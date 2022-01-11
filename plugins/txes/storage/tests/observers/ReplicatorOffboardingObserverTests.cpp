@@ -15,7 +15,9 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS ReplicatorOffboardingObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOffboarding,)
+	using DrivePriority = std::pair<Key, double>;
+
+	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOffboarding, std::make_unique<std::priority_queue<DrivePriority>>())
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::ReplicatorCacheFactory>;
@@ -24,6 +26,7 @@ namespace catapult { namespace observers {
 		Key Replicator_Key = test::GenerateRandomByteArray<Key>();
 		Key Drive_Key1 = test::GenerateRandomByteArray<Key>();
 		Key Drive_Key2 = test::GenerateRandomByteArray<Key>();
+		const auto Drive_Queue = std::make_unique<std::priority_queue<DrivePriority>>();
         constexpr auto Current_Height = Height(25);
 		constexpr auto Capacity = Amount(30);
 		constexpr uint64_t Drive1_Size = 100;
@@ -77,8 +80,8 @@ namespace catapult { namespace observers {
         void RunTest(NotifyMode mode) {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
-            Notification notification(Replicator_Key);
-            auto pObserver = CreateReplicatorOffboardingObserver();
+            Notification notification(Replicator_Key, Drive_Key1);
+            auto pObserver = CreateReplicatorOffboardingObserver(Drive_Queue);
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
             auto& accountCache = context.cache().sub<cache::AccountStateCache>();
             auto& driveCache = context.cache().sub<cache::BcDriveCache>();

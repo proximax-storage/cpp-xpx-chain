@@ -24,6 +24,8 @@ namespace catapult { namespace validators {
         void AssertValidationResult(
                 ValidationResult expectedResult,
 				const state::ReplicatorEntry& replicatorEntry,
+				const state::BcDriveEntry& driveEntry,
+				const Key& replicatorKey,
                 const Key& driveKey) {
             // Arrange:
             auto cache = test::ReplicatorCacheFactory::Create();
@@ -31,9 +33,11 @@ namespace catapult { namespace validators {
                 auto delta = cache.createDelta();
                 auto& replicatorCacheDelta = delta.sub<cache::ReplicatorCache>();
                 replicatorCacheDelta.insert(replicatorEntry);
+				auto& driveCacheDelta = delta.sub<cache::BcDriveCache>();
+				driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(driveKey);
+            Notification notification(replicatorKey, driveKey);
             auto pValidator = CreateReplicatorOffboardingValidator();
             
             // Act:
@@ -48,23 +52,35 @@ namespace catapult { namespace validators {
     TEST(TEST_CLASS, Success) {
         // Arrange:
 		Key replicatorKey = test::GenerateRandomByteArray<Key>();
-        state::ReplicatorEntry replicatorEntry(replicatorKey);
+		Key driveKey = test::GenerateRandomByteArray<Key>();
+		state::ReplicatorEntry replicatorEntry(replicatorKey);
+		state::BcDriveEntry driveEntry(driveKey);
+		driveEntry.replicators().emplace(replicatorKey);
+		for (auto i = 0u; i < 3u; ++i)
+			driveEntry.replicators().emplace(test::GenerateRandomByteArray<Key>());
 
         // Assert:
         AssertValidationResult(
 				ValidationResult::Success,
             	replicatorEntry,
-				replicatorKey);
+				driveEntry,
+				replicatorKey,
+				driveKey);
     }
 
     TEST(TEST_CLASS, FailureWhenReplicatorNotRegistered) {
 		// Arrange:
-        state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
+		Key replicatorKey = test::GenerateRandomByteArray<Key>();
+		Key driveKey = test::GenerateRandomByteArray<Key>();
+		state::ReplicatorEntry replicatorEntry(replicatorKey);
+		state::BcDriveEntry driveEntry(driveKey);
 
         // Assert:
 		AssertValidationResult(
 				Failure_Storage_Replicator_Not_Registered,
-            	replicatorEntry,
-				test::GenerateRandomByteArray<Key>());
+				replicatorEntry,
+				driveEntry,
+				test::GenerateRandomByteArray<Key>(),
+				driveKey);
 	}
 }}

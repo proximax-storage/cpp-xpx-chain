@@ -15,6 +15,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	template<typename TTransaction>
 	void StreamReplicatorOffboardingTransaction(bson_stream::document& builder, const TTransaction& transaction) {
+		builder << "driveKey" << ToBinary(transaction.DriveKey);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(ReplicatorOffboarding, StreamReplicatorOffboardingTransaction)

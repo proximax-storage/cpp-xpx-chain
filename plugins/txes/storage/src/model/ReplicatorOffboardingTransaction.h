@@ -25,8 +25,9 @@ namespace catapult { namespace model {
 	public:
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_ReplicatorOffboarding, 1)
 
-	// public:
-		/// Signer only
+	public:
+		/// Public key of the drive.
+		Key DriveKey;
 
 	public:
 		// Calculates the real size of a storage \a transaction.

@@ -169,6 +169,7 @@ namespace catapult { namespace state {
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
 		SaveConfirmedUsedSizes(output, driveEntry.confirmedUsedSizes());
 		SaveReplicators(output, driveEntry.replicators());
+		SaveReplicators(output, driveEntry.offboardingReplicators());
 		SaveVerifications(output, driveEntry.verifications());
 	}
 
@@ -202,6 +203,7 @@ namespace catapult { namespace state {
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
 		LoadConfirmedUsedSizes(input, entry.confirmedUsedSizes());
 		LoadReplicators(input, entry.replicators());
+		LoadReplicators(input, entry.offboardingReplicators());
 		LoadVerifications(input, entry.verifications());
 
 		return entry;

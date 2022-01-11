@@ -79,7 +79,7 @@ namespace catapult { namespace utils {
 
 	double CalculateDrivePriority(const state::BcDriveEntry& driveEntry, const uint16_t& Rmin) {
 		const auto& N = driveEntry.replicatorCount();
-		const auto& R = driveEntry.replicators().size();	// TODO: - driveEntry.offboardingReplicators().size();
+		const auto& R = driveEntry.replicators().size() - driveEntry.offboardingReplicators().size();
 
 		return R < Rmin ? (R + 1)/Rmin : (N - R)/(2*Rmin*(N - Rmin));
 	}
