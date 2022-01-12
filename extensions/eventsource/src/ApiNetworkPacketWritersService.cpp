@@ -73,7 +73,7 @@ namespace catapult { namespace eventsource {
 				state.hooks().addNewTransactionsSink(extensions::CreatePushEntitySink<TransactionsSink>(locator, Service_Name));
 
 				// add tasks
-				state.peerConnectionTasks().push_back(CreateAgePeersTask(state, *pWriters));
+				state.tasks().push_back(CreateAgePeersTask(state, *pWriters));
 			}
 		};
 	}

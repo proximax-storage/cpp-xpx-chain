@@ -34,7 +34,6 @@ namespace catapult { namespace nodediscovery {
 
 	namespace {
 		constexpr auto Service_Name = "nd.ping_requestor";
-		using ConstNetworkNodePointer = std::shared_ptr<const ionet::NetworkNode>;
 
 		thread::Task CreatePingTask(extensions::ServiceState& state) {
 			return thread::CreateNamedTask("node discovery ping task", [packetPayloadSink = state.hooks().packetPayloadSink(), &state]() {

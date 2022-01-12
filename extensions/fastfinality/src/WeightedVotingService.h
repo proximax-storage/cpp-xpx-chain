@@ -12,7 +12,4 @@ namespace catapult { namespace fastfinality {
 
 	/// Creates a registrar for a weighted voting service.
 	DECLARE_SERVICE_REGISTRAR(WeightedVoting)(const harvesting::HarvestingConfiguration& config);
-
-	/// Creates a registrar for starting weighted voting service.
-	DECLARE_SERVICE_REGISTRAR(WeightedVotingStart)();
 }}
