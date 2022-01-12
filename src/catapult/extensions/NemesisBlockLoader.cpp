@@ -100,7 +100,7 @@ namespace catapult { namespace extensions {
 			OutputNemesisBalance(out, currencyMosaicId, balances.get(currencyMosaicId), 'C');
 			OutputNemesisBalance(out, harvestingMosaicId, balances.get(harvestingMosaicId), 'H');
 
-			for (const auto& pair : balances) {
+			for (const auto& pair : balances.balances()) {
 				if (currencyMosaicId != pair.first && harvestingMosaicId != pair.first)
 					OutputNemesisBalance(out, pair.first, pair.second);
 			}
@@ -158,7 +158,7 @@ namespace catapult { namespace extensions {
 		}
 
 		void CheckMaxMosaicAtomicUnits(const state::AccountBalances& totalFundedMosaics, Amount maxMosaicAtomicUnits) {
-			for (const auto& pair : totalFundedMosaics) {
+			for (const auto& pair : totalFundedMosaics.balances()) {
 				if (maxMosaicAtomicUnits < pair.second) {
 					std::ostringstream out;
 					out

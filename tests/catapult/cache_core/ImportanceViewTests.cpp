@@ -95,11 +95,13 @@ namespace catapult { namespace cache {
 		void AddAccount(
 				AccountStateCache& cache,
 				const Key& publicKey,
-				Amount balance = Amount(0)) {
+				Amount balance = Amount(0),
+				Amount lockedBalance = Amount(0)) {
 			auto delta = cache.createDelta(Height{0});
 			auto accountStateIter = TTraits::AddAccount(*delta, publicKey, Height(100));
 			auto& accountState = accountStateIter.get();
-			accountState.Balances.credit(Harvesting_Mosaic_Id, balance, Height(100));
+			accountState.Balances.credit(Harvesting_Mosaic_Id, balance+lockedBalance, Height(100));
+			accountState.Balances.lock(Harvesting_Mosaic_Id, lockedBalance, Height(100));
 			cache.commit();
 		}
 
@@ -166,6 +168,25 @@ namespace catapult { namespace cache {
 			EXPECT_EQ(accountImportance, importance);
 			EXPECT_EQ(accountImportance, importanceOrDefault);
 		}
+		template<typename TTraits>
+		void AssertCanFindImportance(Amount unlocked, Amount locked) {
+			// Arrange:
+			auto key = test::GenerateRandomByteArray<Key>();
+			auto height = Height(1000);
+			auto pCache = CreateAccountStateCache();
+			AddAccount<TTraits>(*pCache, key, unlocked, locked);
+			auto pView = test::CreateImportanceView(*pCache);
+
+			// Act:
+			Importance importance;
+			auto foundImportance = pView->tryGetAccountImportance(key, height, importance);
+			auto importanceOrDefault = pView->getAccountImportanceOrDefault(key, height);
+
+			// Assert:
+			EXPECT_TRUE(foundImportance);
+			EXPECT_EQ(unlocked+locked, Amount(importance.unwrap()));
+			EXPECT_EQ(unlocked+locked, Amount(importanceOrDefault.unwrap()));
+		}
 	}
 
 	KEY_TRAITS_BASED_TEST(CanRetrieveZeroImportanceFromAccount) {
@@ -176,6 +197,11 @@ namespace catapult { namespace cache {
 	KEY_TRAITS_BASED_TEST(CanRetrieveNonZeroImportanceFromAccount) {
 		// Assert:
 		AssertCanFindImportance<TTraits>(Importance(1234));
+	}
+
+	KEY_TRAITS_BASED_TEST(CanRetrieveNonZeroSharedImportanceFromAccount) {
+		// Assert:
+		AssertCanFindImportance<TTraits>(Amount(1234), Amount(1234));
 	}
 
 	// endregion
@@ -217,12 +243,12 @@ namespace catapult { namespace cache {
 
 	namespace {
 		template<typename TTraits>
-		bool CanHarvest(int64_t minBalanceDelta, Height testHeight) {
+		bool CanHarvest(int64_t minBalanceDelta, int64_t lockAmount, Height testHeight) {
 			// Arrange:
 			auto key = test::GenerateRandomByteArray<Key>();
 			auto pCache = CreateAccountStateCache();
 			auto initialBalance = Amount(static_cast<Amount::ValueType>(1234 + minBalanceDelta));
-			AddAccount<TTraits>(*pCache, key, initialBalance);
+			AddAccount<TTraits>(*pCache, key, initialBalance, Amount(lockAmount));
 
 			// Act:
 			return TTraits::CanHarvest(*pCache, key, testHeight, Amount(1234), Amount(UINT64_MAX));
@@ -232,16 +258,20 @@ namespace catapult { namespace cache {
 	CAN_HARVEST_TRAITS_BASED_TEST(CannotHarvestIfBalanceIsBelowMinBalance) {
 		// Assert:
 		auto height = Height(10000);
-		EXPECT_FALSE(CanHarvest<TTraits>(-1, height));
-		EXPECT_FALSE(CanHarvest<TTraits>(-100, height));
+		EXPECT_FALSE(CanHarvest<TTraits>(-1, 0, height));
+		EXPECT_FALSE(CanHarvest<TTraits>(-100, 0, height));
+		EXPECT_FALSE(CanHarvest<TTraits>(-101, 100, height));
 	}
 
 	CAN_HARVEST_TRAITS_BASED_TEST(CanHarvestIfAllCriteriaAreMet) {
 		// Assert:
 		auto height = Height(10000);
-		EXPECT_TRUE(CanHarvest<TTraits>(0, height));
-		EXPECT_TRUE(CanHarvest<TTraits>(1, height));
-		EXPECT_TRUE(CanHarvest<TTraits>(12345, height));
+		EXPECT_TRUE(CanHarvest<TTraits>(0, 0, height));
+		EXPECT_TRUE(CanHarvest<TTraits>(-250, 250, height));
+		EXPECT_TRUE(CanHarvest<TTraits>(1, 0, height));
+		EXPECT_TRUE(CanHarvest<TTraits>(12345, 0, height));
+		EXPECT_TRUE(CanHarvest<TTraits>(-1234, 1234, height));
+		EXPECT_TRUE(CanHarvest<TTraits>(1234, 1234, height));
 	}
 
 	// endregion

@@ -36,14 +36,20 @@ namespace catapult { namespace mongo { namespace mappers {
 
 		auto& StreamAccountBalances(bson_stream::document& builder, const state::AccountBalances& balances) {
 			auto mosaicsArray = builder << "mosaics" << bson_stream::open_array;
-			for (const auto& entry : balances)
+			for (const auto& entry : balances.balances())
 				StreamMosaic(mosaicsArray, entry.first, entry.second);
 
 			mosaicsArray << bson_stream::close_array;
 
+			auto lockedMosaicsArray = builder << "lockedMosaics" << bson_stream::open_array;
+			for (const auto& entry : balances.lockedBalances())
+				StreamMosaic(lockedMosaicsArray, entry.first, entry.second);
+
+			lockedMosaicsArray << bson_stream::close_array;
+
 			auto snapshotsArray = builder << "snapshots" << bson_stream::open_array;
 			for (const auto& snapshot : balances.snapshots())
-				StreamSnapshot(snapshotsArray, snapshot.Amount, snapshot.BalanceHeight);
+				StreamSnapshot(snapshotsArray, snapshot.Amount, snapshot.LockedAmount, snapshot.BalanceHeight);
 
 			snapshotsArray << bson_stream::close_array;
 			return builder;
@@ -104,11 +110,16 @@ namespace catapult { namespace mongo { namespace mappers {
 		void ToAccountBalance(state::AccountBalances& accountBalances, const bsoncxx::document::view& mosaicDocument) {
 			accountBalances.credit(GetValue64<MosaicId>(mosaicDocument["id"]), GetValue64<Amount>(mosaicDocument["amount"]));
 		}
+		void ToAccountLockedBalance(state::AccountBalances& accountBalances, const bsoncxx::document::view& mosaicDocument) {
+			accountBalances.credit(GetValue64<MosaicId>(mosaicDocument["id"]), GetValue64<Amount>(mosaicDocument["amount"]));
+			accountBalances.lock(GetValue64<MosaicId>(mosaicDocument["id"]), GetValue64<Amount>(mosaicDocument["amount"]));
+		}
 
 		void ToAccountBalanceSnapshot(state::AccountBalances& accountBalances, const bsoncxx::document::view& mosaicDocument) {
 			accountBalances.addSnapshot(
 					model::BalanceSnapshot{
 						GetValue64<Amount>(mosaicDocument["amount"]),
+						GetValue64<Amount>(mosaicDocument["lockedAmount"]),
 				        GetValue64<Height>(mosaicDocument["height"])
 				    }
 			);
@@ -153,6 +164,10 @@ namespace catapult { namespace mongo { namespace mappers {
 		auto dbMosaics = accountDocument["mosaics"].get_array().value;
 		for (const auto& mosaicEntry : dbMosaics)
 			ToAccountBalance(accountState->Balances, mosaicEntry.get_document().view());
+
+		auto dbLockedMosaics = accountDocument["lockedMosaics"].get_array().value;
+		for (const auto& mosaicEntry : dbLockedMosaics)
+			ToAccountLockedBalance(accountState->Balances, mosaicEntry.get_document().view());
 
 		auto dbSnapshots = accountDocument["snapshots"].get_array().value;
 		for (const auto& snapshotEntry : dbSnapshots)

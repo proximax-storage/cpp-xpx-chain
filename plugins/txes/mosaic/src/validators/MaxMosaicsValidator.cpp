@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 			const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 			auto accountStateIter = accountStateCache.find(key);
 			const auto& balances = accountStateIter.get().Balances;
-			if (balances.get(mosaicId) != Amount())
+			if (balances.get(mosaicId) != Amount() || balances.getLocked(mosaicId) != Amount())
 				return ValidationResult::Success;
 
 			return maxMosaics <= balances.size() ? Failure_Mosaic_Max_Mosaics_Exceeded : ValidationResult::Success;

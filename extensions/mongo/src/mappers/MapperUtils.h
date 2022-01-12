@@ -142,7 +142,7 @@ namespace catapult { namespace mongo { namespace mappers {
 	bson_stream::document& StreamReceipt(bson_stream::document& builder, const model::Receipt& receipt);
 
 	/// Streams a snapshot composed of \a amount and \a height to \a context.
-	bson_stream::array_context& StreamSnapshot(bson_stream::array_context& context, Amount amount, Height height);
+	bson_stream::array_context& StreamSnapshot(bson_stream::array_context& context, Amount amount, Amount lockedAmount, Height height);
 
 	// endregion
 }}}

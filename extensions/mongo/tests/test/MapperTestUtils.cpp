@@ -173,8 +173,17 @@ namespace catapult { namespace test {
 			EXPECT_EQ(accountState.Balances.get(id), Amount(GetUint64(mosaicDocument.view(), "amount")));
 			++numMosaics;
 		}
+		EXPECT_EQ(accountState.Balances.balances().size(), numMosaics);
 
-		EXPECT_EQ(accountState.Balances.size(), numMosaics);
+		auto dbLockedMosaics = dbAccount["lockedMosaics"].get_array().value;
+		size_t numLockedMosaics = 0;
+		for (const auto& mosaicElement : dbLockedMosaics) {
+			auto mosaicDocument = mosaicElement.get_document();
+			auto id = MosaicId(GetUint64(mosaicDocument.view(), "id"));
+			EXPECT_EQ(accountState.Balances.getLocked(id), Amount(GetUint64(mosaicDocument.view(), "amount")));
+			++numLockedMosaics;
+		}
+		EXPECT_EQ(accountState.Balances.lockedBalances().size(), numLockedMosaics);
 
 		auto dbSnapshots = dbAccount["snapshots"].get_array().value;
 		size_t numSnapshots = 0;
@@ -182,9 +191,11 @@ namespace catapult { namespace test {
 		for (const auto& snapshotsElement : dbSnapshots) {
 			auto snapshotsDocument = snapshotsElement.get_document();
 			auto amount = GetUint64(snapshotsDocument.view(), "amount");
+			auto lockedAmount = GetUint64(snapshotsDocument.view(), "lockedAmount");
 			auto height = GetUint64(snapshotsDocument.view(), "height");
 
 			EXPECT_EQ(snapshotIterator->Amount, Amount(amount));
+			EXPECT_EQ(snapshotIterator->LockedAmount, Amount(lockedAmount));
 			EXPECT_EQ(snapshotIterator->BalanceHeight, Height(height));
 			++numSnapshots;
 			++snapshotIterator;

@@ -80,7 +80,7 @@ namespace catapult {
 	struct Timestamp_tag {};
 	using Timestamp = utils::BaseValue<uint64_t, Timestamp_tag>;
 
-	struct Amount_tag {};
+	struct Amount_tag {static constexpr auto Size = 8;};
 	using Amount = utils::BaseValue<uint64_t, Amount_tag>;
 
 	struct FinalizationEpoch_tag {};

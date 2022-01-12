@@ -30,8 +30,16 @@ namespace catapult { namespace model {
 		/// Balance amount when snapshot was done.
 		catapult::Amount Amount;
 
+		/// Locked balance amount when snapshot was done.
+		catapult::Amount LockedAmount;
+
 		/// Height of balance when snapshot was done.
 		Height BalanceHeight;
+
+		catapult::Amount GetEffectiveAmount() const
+		{
+			return LockedAmount + Amount;
+		}
 	};
 
 #pragma pack(pop)

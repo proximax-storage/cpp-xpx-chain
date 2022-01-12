@@ -133,7 +133,7 @@ namespace catapult { namespace tools { namespace address {
 					}
 
 					pt::ptree mosaics;
-					for (auto& pair : accountState.Balances) {
+					for (auto& pair : accountState.Balances.balances()) {
 						pt::ptree mosaic;
 						mosaic.put("MosaicId", pair.first.unwrap());
 						mosaic.put("Amount", pair.second);
@@ -143,10 +143,22 @@ namespace catapult { namespace tools { namespace address {
 
 					accountJson.put_child("mosaics", mosaics);
 
+					  pt::ptree lockedMosaics;
+					  for (auto& pair : accountState.Balances.balances()) {
+						  pt::ptree mosaic;
+						  lockedMosaics.put("MosaicId", pair.first.unwrap());
+						  lockedMosaics.put("Amount", pair.second);
+
+						  lockedMosaics.push_back({ "", mosaic });
+					  }
+
+					  accountJson.put_child("lockedMosaics", mosaics);
+
 					pt::ptree snapshots;
 					for (auto& pair : accountState.Balances.snapshots()) {
 						pt::ptree snapshot;
 						snapshot.put("Amount", pair.Amount.unwrap());
+						snapshot.put("LockedAmount", pair.LockedAmount.unwrap());
 						snapshot.put("Height", pair.BalanceHeight.unwrap());
 
 						snapshots.push_back({ "", snapshot });
@@ -232,10 +244,30 @@ namespace catapult { namespace tools { namespace address {
 						);
 					}
 
+					auto lockedMosaicJson = account.get_child_optional("lockedMosaics");
+					if(lockedMosaicJson)
+					{
+						for (pt::ptree::value_type&  mosaicJson: lockedMosaicJson.value()) {
+							auto& mosaic = mosaicJson.second;
+							auto amount = Amount(mosaic.get<uint64_t>("Amount"));
+							auto id = MosaicId(mosaic.get<std::uint64_t>("MosaicId"));
+							accountState.Balances.credit(
+									id,
+									amount
+							);
+							accountState.Balances.lock(
+									id,
+									amount
+							);
+						}
+					}
+
 					for (pt::ptree::value_type&  snapshotJson: account.get_child("snapshots")) {
 						auto& snapshot = snapshotJson.second;
+						auto lockedAmount = snapshot.get_optional<uint64_t>("LockedAmount");
 						accountState.Balances.addSnapshot({
 							Amount(snapshot.get<uint64_t>("Amount")),
+							Amount( lockedAmount ? lockedAmount.value() : 0),
 							Height(snapshot.get<uint64_t>("Height"))
 						});
 					}

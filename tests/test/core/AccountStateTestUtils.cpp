@@ -32,7 +32,7 @@ namespace catapult { namespace test {
 		}
 
 		for (auto i = 0u; i < numSnapshots; ++i) {
-			state.Balances.addSnapshot(model::BalanceSnapshot{Amount(seed * 1000 + i + 1), state.AddressHeight + Height(i + 1)});
+			state.Balances.addSnapshot(model::BalanceSnapshot{Amount(seed * 1000 + i + 1), Amount(0), state.AddressHeight + Height(i + 1)});
 		}
 	}
 	void AssertEqual(const state::AccountState& expected, const state::AccountState& actual, const std::string& message) {
@@ -54,9 +54,10 @@ namespace catapult { namespace test {
 
 		EXPECT_EQ(expected.Balances.size(), actual.Balances.size()) << message;
 		EXPECT_EQ(expected.Balances.size(), actual.Balances.size());
-		for (const auto& pair : expected.Balances)
+		for (const auto& pair : expected.Balances.balances())
 			EXPECT_EQ(pair.second, actual.Balances.get(pair.first)) << message << ": for mosaic " << pair.first;
-
+		for (const auto& pair : expected.Balances.lockedBalances())
+			EXPECT_EQ(pair.second, actual.Balances.get(pair.first)) << message << ": for mosaic " << pair.first;
 		const auto& expectedSnapshots = expected.Balances.snapshots();
 		const auto& actualSnapshots = actual.Balances.snapshots();
 		for (auto expectedIt = expectedSnapshots.begin(), actualIt = actualSnapshots.begin();

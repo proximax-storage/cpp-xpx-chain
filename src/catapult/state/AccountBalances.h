@@ -26,6 +26,7 @@
 #include "catapult/model/NetworkConfiguration.h"
 #include "catapult/types.h"
 #include "catapult/utils/Hashers.h"
+#include <boost/iterator/zip_iterator.hpp>
 #include <list>
 
 namespace catapult { namespace state {
@@ -51,6 +52,16 @@ namespace catapult { namespace state {
 		AccountBalances& operator=(AccountBalances&& accountBalances);
 
 	public:
+
+		const CompactMosaicMap& balances() const
+		{
+			return m_balances;
+		}
+
+		const CompactMosaicMap& lockedBalances() const
+		{
+			return m_lockedBalances;
+		}
 		/// Returns const ref to snapshots.
 		const std::list<model::BalanceSnapshot>& snapshots() const {
 			return m_localSnapshots;
@@ -61,20 +72,9 @@ namespace catapult { namespace state {
 			return pushSnapshot(snapshot, true /* committed */);
 		}
 
-		/// Returns the number of mosaics owned.
-		size_t size() const {
-			return m_balances.size();
-		}
 
-		/// Returns a const iterator to the first element of the underlying set.
-		auto begin() const {
-			return m_balances.begin();
-		}
 
-		/// Returns a const iterator to the element following the last element of the underlying set.
-		auto end() const {
-			return m_balances.end();
-		}
+
 
 		/// Gets the optimized mosaic id.
 		MosaicId optimizedMosaicId() const;
@@ -84,6 +84,12 @@ namespace catapult { namespace state {
 
 		/// Returns amount of funds of a given mosaic (\a mosaicId).
 		Amount get(MosaicId mosaicId) const;
+
+		/// Returns total amount of mosaics in this balances (\a mosaicId).
+		size_t size() const;
+
+		/// Returns amount of locked funds of a given mosaic (\a mosaicId).
+		Amount getLocked(MosaicId mosaicId) const;
 
 	public:
 		/// Steals all the balances from the target /a balances
@@ -97,6 +103,14 @@ namespace catapult { namespace state {
 		/// It will decrease balance of account without tracking of it in snapshots array.
 		AccountBalances& debit(const MosaicId& mosaicId, const Amount& amount);
 
+		/// Locks \a amount funds to a given mosaic (\a mosaicId).
+		/// It will increase balance of account without tracking of it in snapshots array.
+		AccountBalances& lock(const MosaicId& mosaicId, const Amount& amount);
+
+		/// Unlocks \a amount funds from a given mosaic (\a mosaicId).
+		/// It will decrease balance of account without tracking of it in snapshots array.
+		AccountBalances& unlock(const MosaicId& mosaicId, const Amount& amount);
+
 		/// Adds \a amount funds to a given mosaic (\a mosaicId) at \a height.
 		/// Increasing of XPX balance will be tracked in snapshots array.
 		AccountBalances& credit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
@@ -104,6 +118,14 @@ namespace catapult { namespace state {
 		/// Subtracts \a amount funds from a given mosaic (\a mosaicId) at \a height.
 		/// Decreasing of XPX balance will be tracked in snapshots array.
 		AccountBalances& debit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
+		/// Locks \a amount funds to a given mosaic (\a mosaicId).
+		/// It will increase balance of account without tracking of it in snapshots array.
+		AccountBalances& lock(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
+		/// Unlocks \a amount funds from a given mosaic (\a mosaicId).
+		/// It will decrease balance of account without tracking of it in snapshots array.
+		AccountBalances& unlock(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
 		/// Optimizes access of the mosaic with \a id.
 		void optimize(MosaicId id);
@@ -129,7 +151,7 @@ namespace catapult { namespace state {
 
 	private:
 		/// Maybe push snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
-		void maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+		void maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Amount& lockedAmount, const Height& height);
 
 		/// Push snapshot to deque
 		void pushSnapshot(const model::BalanceSnapshot& snapshot, bool committed = false);
@@ -140,12 +162,20 @@ namespace catapult { namespace state {
 		/// Subtracts \a amount funds from a given mosaic (\a mosaicId) at \a height.
 		AccountBalances& internalDebit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
+		/// Locks \a amount funds to a given mosaic (\a mosaicId) at \a height.
+		AccountBalances& internalLock(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
+		/// Unlocks \a amount funds from a given mosaic (\a mosaicId) at \a height.
+		AccountBalances& internalUnlock(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
 	private:
 		std::list<model::BalanceSnapshot> m_localSnapshots;
 		std::list<model::BalanceSnapshot> m_remoteSnapshots;
 		AccountState* m_accountState = nullptr;
 		CompactMosaicMap m_balances;
+		CompactMosaicMap m_lockedBalances;
 		MosaicId m_optimizedMosaicId;
 		MosaicId m_trackedMosaicId;
+
 	};
 }}

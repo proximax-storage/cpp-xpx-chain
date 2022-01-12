@@ -46,6 +46,14 @@ namespace catapult { namespace state {
 	namespace {
 #pragma pack(push, 1)
 
+		struct NoLockBalanceSnapshot {
+			/// Balance amount when snapshot was done.
+			catapult::Amount Amount;
+
+			/// Height of balance when snapshot was done.
+			Height BalanceHeight;
+		};
+
 		template<uint32_t TVersion>
 		struct AccountStateHeader{};
 
@@ -73,6 +81,8 @@ namespace catapult { namespace state {
 			MosaicId OptimizedMosaicId;
 			MosaicId TrackedMosaicId;
 			uint16_t MosaicsCount;
+			uint16_t LockedMosaicsCount;
+			uint8_t AdditionalDataMask;
 			AccountPublicKeys::KeyType LinkedKeysMask;
 		};
 		struct MAY_ALIAS HistoricalSnapshotsHeader {
@@ -80,11 +90,6 @@ namespace catapult { namespace state {
 		};
 
 #pragma pack(pop)
-
-		const Key* GetSupplementalKeysPointer(const AccountStateHeader<2>& header)
-		{
-			return reinterpret_cast<const Key*>(&header + 1);
-		}
 
 		size_t SetPublicKeyFromDataToBuffer(const AccountPublicKeys::PublicKeyAccessor<Key>& publicKeyAccessor, uint8_t* pData) {
 			auto tData = reinterpret_cast<Key*>(pData);
@@ -121,12 +126,14 @@ namespace catapult { namespace state {
 		struct VersionedStateSerializerUtils<TTraits, 1> {
 			static size_t CalculatePackedSize(const AccountState& accountState) {
 				return sizeof(VersionType) + sizeof(AccountStateHeader<1>) + sizeof(HistoricalSnapshotsHeader)
-					   + accountState.Balances.size() * sizeof(model::Mosaic)
-					   + accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot);
+					   + accountState.Balances.balances().size() * sizeof(model::Mosaic)
+					   + accountState.Balances.snapshots().size() * sizeof(NoLockBalanceSnapshot);
 			}
-			static const model::Mosaic* GetMosaicPointer(const AccountStateHeader<1>& header) {
-				const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&header + 1);
-				return reinterpret_cast<const model::Mosaic*>(pHeaderData);
+			static const model::Mosaic* GetMosaicPointer(const AccountStateHeader<1>&header) {
+				return reinterpret_cast<const model::Mosaic*>(GetBodyPointer(header));
+			}
+			static const uint8_t* GetBodyPointer(const AccountStateHeader<1>& header) {
+				return reinterpret_cast<const uint8_t*>(&header + 1);
 			}
 			static AccountState CopyHeaderToAccountState(const AccountStateHeader<1>& header) {
 				auto accountState = AccountState(header.Address, header.AddressHeight, 1);
@@ -139,7 +146,7 @@ namespace catapult { namespace state {
 
 				accountState.Balances.optimize(header.OptimizedMosaicId);
 				accountState.Balances.track(header.TrackedMosaicId);
-				const auto* pMosaic = GetMosaicPointer(header);
+				const auto* pMosaic = reinterpret_cast<const model::Mosaic*>(GetBodyPointer(header));
 				for (auto i = 0u; i < header.MosaicsCount; ++i, ++pMosaic)
 					accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
 
@@ -147,9 +154,9 @@ namespace catapult { namespace state {
 					const auto& historicalSnapshotsHeader = reinterpret_cast<const HistoricalSnapshotsHeader&>(*pMosaic);
 					const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&historicalSnapshotsHeader + 1);
 
-					const auto* pBalanceSnapshot = reinterpret_cast<const model::BalanceSnapshot*>(pHeaderData);
+					const auto* pBalanceSnapshot = reinterpret_cast<const NoLockBalanceSnapshot*>(pHeaderData);
 					for (int i = 0; i < historicalSnapshotsHeader.SnapshotsCount; ++i, ++pBalanceSnapshot)
-						accountState.Balances.addSnapshot(*pBalanceSnapshot);
+						accountState.Balances.addSnapshot(model::BalanceSnapshot({pBalanceSnapshot->Amount, Amount(0), pBalanceSnapshot->BalanceHeight}));
 				}
 
 				return accountState;
@@ -168,7 +175,7 @@ namespace catapult { namespace state {
 
 				header.OptimizedMosaicId = accountState.Balances.optimizedMosaicId();
 				header.TrackedMosaicId = accountState.Balances.trackedMosaicId();
-				header.MosaicsCount = static_cast<uint16_t>(accountState.Balances.size());
+				header.MosaicsCount = static_cast<uint16_t>(accountState.Balances.balances().size());
 
 				auto* pData = buffer.data();
 
@@ -180,7 +187,7 @@ namespace catapult { namespace state {
 				pData += sizeof(AccountStateHeader<1>);
 
 				auto* pUint64Data = reinterpret_cast<uint64_t*>(pData);
-				for (const auto& pair : accountState.Balances) {
+				for (const auto& pair : accountState.Balances.balances()) {
 					*pUint64Data++ = pair.first.unwrap();
 					*pUint64Data++ = pair.second.unwrap();
 				}
@@ -203,29 +210,56 @@ namespace catapult { namespace state {
 
 		template<typename TTraits>
 		struct VersionedStateSerializerUtils<TTraits, 2> {
+			static size_t CalculateAdditionalDataSize(const AccountState& accountState)
+			{
+				if(HasAdditionalData(AdditionalDataFlags::HasOldState, accountState.GetAdditionalDataMask()))
+				{
+					if(accountState.OldState->GetVersion() == 1)
+						return VersionedStateSerializerUtils<TTraits, 1>::CalculatePackedSize(*accountState.OldState);
+					else if(accountState.OldState->GetVersion() == 2)
+						return VersionedStateSerializerUtils<TTraits, 2>::CalculatePackedSize(*accountState.OldState);
+				}
+				return 0;
+			}
 			static size_t CalculatePackedSize(const AccountState& accountState) {
 				auto size = sizeof(VersionType) + sizeof(AccountStateHeader<2>) + sizeof(HistoricalSnapshotsHeader)
 					   + (HasFlag(AccountPublicKeys::KeyType::Linked, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
 					   + (HasFlag(AccountPublicKeys::KeyType::Node, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
 					   + (HasFlag(AccountPublicKeys::KeyType::VRF, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
-					   + 1
-					   + accountState.Balances.size() * sizeof(model::Mosaic)
-					   + accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot);
-				if(HasAdditionalData(AdditionalDataFlags::HasOldState, accountState.GetAdditionalDataMask()))
-				{
-					if(accountState.OldState->GetVersion() == 1)
-						size += VersionedStateSerializerUtils<TTraits, 1>::CalculatePackedSize(*accountState.OldState);
-					else if(accountState.OldState->GetVersion() == 2)
-						size += VersionedStateSerializerUtils<TTraits, 2>::CalculatePackedSize(*accountState.OldState);
-				}
+					   + accountState.Balances.lockedBalances().size() * sizeof(model::Mosaic)
+					   + accountState.Balances.balances().size() * sizeof(model::Mosaic)
+					   + accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot)
+					   + CalculateAdditionalDataSize(accountState);
 				return size;
 			}
-			static const model::Mosaic* GetMosaicPointer(const AccountStateHeader<2>& header) {
-				const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&header + 1) + 1
-										  + (HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask) ? Key::Size : 0)
-										  + (HasFlag(AccountPublicKeys::KeyType::VRF, header.LinkedKeysMask) ? Key::Size : 0)
-										  + (HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask) ? Key::Size : 0);
-				return reinterpret_cast<const model::Mosaic*>(pHeaderData);
+			static const uint8_t* GetBodyPointer(const AccountStateHeader<2>& header) {
+				return reinterpret_cast<const uint8_t*>(&header + 1);
+			}
+			static const model::Mosaic* GetMosaicPointer(const AccountStateHeader<2>&header) {
+				auto* pKeysPointer = reinterpret_cast<const Key*>(GetBodyPointer(header));
+				if(HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
+				{
+					pKeysPointer++;
+				}
+				if(HasFlag(AccountPublicKeys::KeyType::Node, header.LinkedKeysMask))
+				{
+					pKeysPointer++;
+				}
+				if(HasFlag(AccountPublicKeys::KeyType::VRF, header.LinkedKeysMask))
+				{
+					pKeysPointer++;
+				}
+				auto bytePointer = reinterpret_cast<const uint8_t*>(pKeysPointer);
+				if(HasAdditionalData(AdditionalDataFlags::HasOldState, header.AdditionalDataMask))
+				{
+					auto accountState = CopyHeaderToAccountState(*reinterpret_cast<const AccountStateHeader<2>*>(bytePointer));
+					if(accountState.OldState->GetVersion() == 1)
+						bytePointer += VersionedStateSerializerUtils<TTraits, 1>::CalculatePackedSize(*accountState.OldState);
+					else if(accountState.OldState->GetVersion() == 2)
+						bytePointer += VersionedStateSerializerUtils<TTraits, 2>::CalculatePackedSize(*accountState.OldState);
+				}
+				bytePointer += header.LockedMosaicsCount * sizeof(model::Mosaic);
+				return reinterpret_cast<const model::Mosaic*>(bytePointer);
 			}
 			static AccountState CopyHeaderToAccountState(const AccountStateHeader<2>& header) {
 				auto accountState = AccountState(header.Address, header.AddressHeight, 2);
@@ -239,7 +273,7 @@ namespace catapult { namespace state {
 				accountState.SupplementalPublicKeys.linked().unset();
 				accountState.SupplementalPublicKeys.node().unset();
 				accountState.SupplementalPublicKeys.vrf().unset();
-				auto* pKeysPointer = GetSupplementalKeysPointer(header);
+				auto* pKeysPointer = reinterpret_cast<const Key*>(GetBodyPointer(header));
 				if(HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
 				{
 					accountState.SupplementalPublicKeys.linked().set(*pKeysPointer);
@@ -256,23 +290,21 @@ namespace catapult { namespace state {
 					pKeysPointer++;
 				}
 				auto bytePointer = reinterpret_cast<const uint8_t*>(pKeysPointer);
-				auto mask = *bytePointer;
-				bytePointer++;
-				int forwardMove = 0;
-				if(HasAdditionalData(AdditionalDataFlags::HasOldState, mask))
+				if(HasAdditionalData(AdditionalDataFlags::HasOldState, header.AdditionalDataMask))
 				{
 					auto accountState = CopyHeaderToAccountState(*reinterpret_cast<const AccountStateHeader<2>*>(bytePointer));
 					if(accountState.OldState->GetVersion() == 1)
-						forwardMove = VersionedStateSerializerUtils<TTraits, 1>::CalculatePackedSize(*accountState.OldState);
+						bytePointer += VersionedStateSerializerUtils<TTraits, 1>::CalculatePackedSize(*accountState.OldState);
 					else if(accountState.OldState->GetVersion() == 2)
-						forwardMove = VersionedStateSerializerUtils<TTraits, 2>::CalculatePackedSize(*accountState.OldState);
+						bytePointer += VersionedStateSerializerUtils<TTraits, 2>::CalculatePackedSize(*accountState.OldState);
 				}
-				accountState.Balances.optimize(header.OptimizedMosaicId);
-				accountState.Balances.track(header.TrackedMosaicId);
 
-				const auto* pMosaicExpectedLocation = reinterpret_cast<const uint8_t*>(GetMosaicPointer(header));
-				pMosaicExpectedLocation+=forwardMove;
-				const auto* pMosaic = reinterpret_cast<const model::Mosaic*>(pMosaicExpectedLocation);
+				const auto* pMosaic = reinterpret_cast<const model::Mosaic*>(bytePointer);
+				for (auto i = 0u; i < header.LockedMosaicsCount; ++i, ++pMosaic)
+				{
+					accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
+					accountState.Balances.lock(pMosaic->MosaicId, pMosaic->Amount);
+				}
 				for (auto i = 0u; i < header.MosaicsCount; ++i, ++pMosaic)
 					accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
 
@@ -300,8 +332,9 @@ namespace catapult { namespace state {
 				header.LinkedKeysMask = accountState.SupplementalPublicKeys.mask();
 				header.OptimizedMosaicId = accountState.Balances.optimizedMosaicId();
 				header.TrackedMosaicId = accountState.Balances.trackedMosaicId();
-				header.MosaicsCount = static_cast<uint16_t>(accountState.Balances.size());
-
+				header.MosaicsCount = static_cast<uint16_t>(accountState.Balances.balances().size());
+				header.LockedMosaicsCount = static_cast<uint16_t>(accountState.Balances.lockedBalances().size());
+				header.AdditionalDataMask = accountState.GetAdditionalDataMask();
 				auto* pData = buffer.data();
 
 				VersionType version{2};
@@ -317,9 +350,6 @@ namespace catapult { namespace state {
 
 				if (HasFlag(AccountPublicKeys::KeyType::VRF, header.LinkedKeysMask))
 					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.vrf(), pData);
-				auto mask = accountState.GetAdditionalDataMask();
-				*pData = mask;
-				pData++;
 				if(HasAdditionalData(AdditionalDataFlags::HasOldState, accountState.GetAdditionalDataMask()))
 				{
 					auto data = CopyToBuffer(*accountState.OldState);
@@ -329,7 +359,11 @@ namespace catapult { namespace state {
 
 
 				auto* pUint64Data = reinterpret_cast<uint64_t*>(pData);
-				for (const auto& pair : accountState.Balances) {
+				for (const auto& pair : accountState.Balances.lockedBalances()) {
+					*pUint64Data++ = pair.first.unwrap();
+					*pUint64Data++ = pair.second.unwrap();
+				}
+				for (const auto& pair : accountState.Balances.balances()) {
 					*pUint64Data++ = pair.first.unwrap();
 					*pUint64Data++ = pair.second.unwrap();
 				}
@@ -343,6 +377,7 @@ namespace catapult { namespace state {
 				pUint64Data = reinterpret_cast<uint64_t*>(pData);
 				for (const auto& snapshot : accountState.Balances.snapshots()) {
 					*pUint64Data++ = snapshot.Amount.unwrap();
+					*pUint64Data++ = snapshot.LockedAmount.unwrap();
 					*pUint64Data++ = snapshot.BalanceHeight.unwrap();
 				}
 
@@ -361,6 +396,7 @@ namespace catapult { namespace state {
 
 			static constexpr auto Has_Historical_Snapshots = true;
 
+			template<uint32_t TAccountVersion>
 			static size_t bufferPaddingSize(const AccountState&) {
 				return 0;
 			}
@@ -377,9 +413,10 @@ namespace catapult { namespace state {
 
 			static constexpr auto Has_Historical_Snapshots = false;
 
-			static size_t bufferPaddingSize(const AccountState& accountState) {
-				return accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot) + sizeof(HistoricalSnapshotsHeader);
-			}
+			template<uint32_t TAccountVersion>
+			static size_t bufferPaddingSize(const AccountState& accountState);
+
+
 
 			static void AssertEqual(const AccountState& expected, const AccountState& actual) {
 				// strip historical importances
@@ -388,6 +425,16 @@ namespace catapult { namespace state {
 				test::AssertEqual(expectedCopy, actual);
 			}
 		};
+
+		template<>
+		size_t NonHistoricalTraits::bufferPaddingSize<1>(const AccountState& accountState) {
+			return accountState.Balances.snapshots().size() * sizeof(NoLockBalanceSnapshot) + sizeof(HistoricalSnapshotsHeader);
+		}
+
+		template<>
+		size_t NonHistoricalTraits::bufferPaddingSize<2>(const AccountState& accountState) {
+			return accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot) + sizeof(HistoricalSnapshotsHeader);
+		}
 	}
 
 #define SERIALIZER_TEST(TEST_NAME) \
@@ -415,7 +462,7 @@ namespace catapult { namespace state {
 			// Act:
 			TTraits::Serializer::Save(originalAccountState, stream);
 			auto packetSize = VersionedStateSerializerUtils<TTraits, TVersion>::CalculatePackedSize(originalAccountState);
-			auto paddingSize = TTraits::bufferPaddingSize(originalAccountState);
+			auto paddingSize = TTraits::template bufferPaddingSize<TVersion>(originalAccountState);
 			// Assert:
 			ASSERT_EQ( packetSize - paddingSize , buffer.size()) << "\n Packed Size: " << packetSize << "Padding Size: " << paddingSize;
 
@@ -488,7 +535,7 @@ namespace catapult { namespace state {
 			auto result = TTraits::Serializer::Load(stream);
 
 			// Assert:
-			EXPECT_EQ(numMosaics, result.Balances.size());
+			EXPECT_EQ(numMosaics, result.Balances.balances().size());
 			TTraits::AssertEqual(originalAccountState, result);
 		}
 		template<typename TTraits, uint32_t TVersion>
@@ -497,7 +544,7 @@ namespace catapult { namespace state {
 			auto buffer = VersionedStateSerializerUtils<TTraits, TVersion>::CopyToBuffer(originalAccountState);
 
 			// - size the buffer one byte too small
-			buffer.resize(buffer.size() - TTraits::bufferPaddingSize(originalAccountState) - 1);
+			buffer.resize(buffer.size() - TTraits::template bufferPaddingSize<TVersion>(originalAccountState) - 1);
 			mocks::MockMemoryStream stream(buffer);
 			// Act + Assert:
 			AssertCannotLoad<TTraits>(stream);

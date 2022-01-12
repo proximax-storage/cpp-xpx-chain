@@ -121,8 +121,11 @@ namespace catapult { namespace test {
 	}
 
 	void AssertAccount(const state::AccountState& expected, const state::AccountState& actual) {
-		ASSERT_EQ(expected.Balances.size(), actual.Balances.size());
-		for (auto iter = expected.Balances.begin(); iter != expected.Balances.end(); ++iter)
+		ASSERT_EQ(expected.Balances.balances().size(), actual.Balances.balances().size());
+		ASSERT_EQ(expected.Balances.lockedBalances().size(), actual.Balances.lockedBalances().size());
+		for (auto iter = expected.Balances.balances().begin(); iter != expected.Balances.balances().end(); ++iter)
+			EXPECT_EQ(iter->second, actual.Balances.get(iter->first));
+		for (auto iter = expected.Balances.lockedBalances().begin(); iter != expected.Balances.lockedBalances().end(); ++iter)
 			EXPECT_EQ(iter->second, actual.Balances.get(iter->first));
 	}
 

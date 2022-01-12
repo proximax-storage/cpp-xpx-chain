@@ -58,11 +58,12 @@ namespace catapult { namespace state {
 				// write mosaics
 				io::Write(output, accountState.Balances.optimizedMosaicId());
 				io::Write(output, accountState.Balances.trackedMosaicId());
-				io::Write16(output, static_cast<uint16_t>(accountState.Balances.size()));
+				io::Write16(output, static_cast<uint16_t>(accountState.Balances.balances().size()));
 				break;
 			}
 			case 2:
 			{
+				// first write all fixed size data
 				// write identifying information
 				output.write(accountState.Address);
 				io::Write(output, accountState.AddressHeight);
@@ -73,31 +74,44 @@ namespace catapult { namespace state {
 				io::Write8(output, utils::to_underlying_type(accountState.AccountType));
 
 
+
 				// write mosaics
 				io::Write(output, accountState.Balances.optimizedMosaicId());
 				io::Write(output, accountState.Balances.trackedMosaicId());
-				io::Write16(output, static_cast<uint16_t>(accountState.Balances.size()));
-				WriteSupplementalPublicKeys(output, accountState.SupplementalPublicKeys);
-
+				io::Write16(output, static_cast<uint16_t>(accountState.Balances.balances().size()));
+				io::Write16(output, static_cast<uint16_t>(accountState.Balances.lockedBalances().size()));
 				auto mask = accountState.GetAdditionalDataMask();
 				io::Write8(output, mask);
+				// then write all data with variable size
+
+				WriteSupplementalPublicKeys(output, accountState.SupplementalPublicKeys);
+
 				if(HasAdditionalData(AdditionalDataFlags::HasOldState, mask))
 				{
 					Save(*accountState.OldState, output);
 				}
+
+				for (const auto& pair : accountState.Balances.lockedBalances()) {
+					io::Write(output, pair.first);
+					io::Write(output, pair.second);
+				}
+
 				break;
 			}
 		}
-		for (const auto& pair : accountState.Balances) {
+		for (const auto& pair : accountState.Balances.balances()) {
 			io::Write(output, pair.first);
 			io::Write(output, pair.second);
 		}
 	}
 
 	namespace {
-		model::BalanceSnapshot ReadBalanceSnapshot(io::InputStream& input) {
+
+		model::BalanceSnapshot ReadBalanceSnapshot(io::InputStream& input, uint32_t stateVersion) {
 			model::BalanceSnapshot snapshot;
 			snapshot.Amount = io::Read<Amount>(input);
+			if(stateVersion == 2)
+				snapshot.LockedAmount = io::Read<Amount>(input);
 			snapshot.BalanceHeight = io::Read<Height>(input);
 			return snapshot;
 		}
@@ -110,6 +124,7 @@ namespace catapult { namespace state {
 
 
 		void ReadSupplementalPublicKeys(io::InputStream& input, AccountPublicKeys& accountPublicKeys) {
+			// supplemental keys mask
 			auto accountPublicKeysMask = static_cast<AccountPublicKeys::KeyType>(io::Read8(input));
 			accountPublicKeys.linked().unset();
 			accountPublicKeys.node().unset();
@@ -179,15 +194,30 @@ namespace catapult { namespace state {
 					// read mosaics
 					accountState.Balances.optimize(io::Read<MosaicId>(input));
 					accountState.Balances.track(io::Read<MosaicId>(input));
+
 					auto numMosaics = io::Read16(input);
+					auto numLockedMosaics = io::Read16(input);
+
+
+					// read additional data mask
+					auto mask = io::Read8(input);
+
 					// read supplemental public keys
 					ReadSupplementalPublicKeys(input, accountState.SupplementalPublicKeys);
-					auto mask = io::Read8(input);
+
 					if(HasAdditionalData(AdditionalDataFlags::HasOldState, mask))
 					{
 						VersionType _discard;
 						accountState.OldState = std::make_shared<state::AccountState>(LoadAccountStateWithoutHistory(input, _discard));
 					}
+
+					for (auto i = 0u; i < numLockedMosaics; ++i) {
+						auto mosaicId = io::Read<MosaicId>(input);
+						auto amount = io::Read<Amount>(input);
+						accountState.Balances.credit(mosaicId, amount);
+						accountState.Balances.lock(mosaicId, amount);
+					}
+
 					for (auto i = 0u; i < numMosaics; ++i) {
 						auto mosaicId = io::Read<MosaicId>(input);
 						auto amount = io::Read<Amount>(input);
@@ -217,10 +247,26 @@ namespace catapult { namespace state {
 
 		// write snapshots
 		io::Write16(output, static_cast<uint16_t>(accountState.Balances.snapshots().size()));
-		for (const auto& pair : accountState.Balances.snapshots()) {
-			io::Write(output, pair.Amount);
-			io::Write(output, pair.BalanceHeight);
+		switch(accountState.GetVersion())
+		{
+			case 1: {
+				for (const auto& snapshot : accountState.Balances.snapshots()) {
+					io::Write(output, snapshot.Amount);
+					io::Write(output, snapshot.BalanceHeight);
+				}
+				break;
+			}
+			case 2:{
+				for (const auto& snapshot : accountState.Balances.snapshots()) {
+					io::Write(output, snapshot.Amount);
+					io::Write(output, snapshot.LockedAmount);
+					io::Write(output, snapshot.BalanceHeight);
+				}
+				break;
+			}
 		}
+
+
 	}
 
 	AccountState AccountStateSerializer::Load(io::InputStream& input) {
@@ -231,7 +277,7 @@ namespace catapult { namespace state {
 		// read snapshots
 		auto numSnapshots = io::Read16(input);
 		for (auto i = 0u; i < numSnapshots; ++i) {
-			accountState.Balances.addSnapshot(ReadBalanceSnapshot(input));
+			accountState.Balances.addSnapshot(ReadBalanceSnapshot(input, version));
 		}
 
 		return accountState;

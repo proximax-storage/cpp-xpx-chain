@@ -439,7 +439,7 @@ namespace catapult { namespace cache {
 		AddThreeMosaicBalances(delta->find(accountId).get());
 
 		// Assert:
-		EXPECT_EQ(Currency_Mosaic_Id, delta->find(accountId).get().Balances.begin()->first);
+		EXPECT_EQ(Currency_Mosaic_Id, delta->find(accountId).get().Balances.balances().begin()->first);
 	}
 
 	ID_BASED_TEST(SubsequentAddAccountHasNoEffect) {
@@ -567,7 +567,7 @@ namespace catapult { namespace cache {
 		AddThreeMosaicBalances(delta->find(accountState.Address).get());
 
 		// Assert:
-		EXPECT_EQ(Currency_Mosaic_Id, delta->find(accountState.Address).get().Balances.begin()->first);
+		EXPECT_EQ(Currency_Mosaic_Id, delta->find(accountState.Address).get().Balances.balances().begin()->first);
 	}
 
 	TEST(TEST_CLASS, CanAddAccountViaAccountStateWithoutPublicKey) {
@@ -623,7 +623,7 @@ namespace catapult { namespace cache {
 			// Arrange:
 			auto accountState = CreateAccountStateWithRandomAddressAndPublicKey();
 			accountState.Balances.track(Harvesting_Mosaic_Id);
-			accountState.Balances.addSnapshot({ Amount(777), Height(123)});
+			accountState.Balances.addSnapshot({ Amount(777), Amount(0), Height(123)});
 
 			AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 			auto delta = cache.createDelta(Height{0});
@@ -631,7 +631,7 @@ namespace catapult { namespace cache {
 			// Act: add the state using add and set importance to 123
 			add(*delta, accountState);
 			auto& addedAccountState = delta->find(accountState.Address).get();
-			addedAccountState.Balances.addSnapshot({ Amount(123), Height(123)});
+			addedAccountState.Balances.addSnapshot({ Amount(123), Amount(0), Height(123)});
 
 			// - add the state again (with importance 777)
 			delta->addAccount(accountState);

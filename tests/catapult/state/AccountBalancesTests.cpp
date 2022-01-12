@@ -359,6 +359,256 @@ namespace catapult { namespace state {
 
 	// endregion
 
+	// region lock
+
+	TEST(TEST_CLASS, CanLockZeroFromZeroBalance) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+
+		// Act:
+		balances.lock(Test_Mosaic_Id3, Amount(0), Height(1));
+
+		// Assert:
+		EXPECT_EQ(0u, balances.size());
+		EXPECT_EQ(Amount(0), balances.get(Test_Mosaic_Id3));
+		EXPECT_EQ(0, balances.snapshots().size());
+	}
+
+	TEST(TEST_CLASS, LockDecreasesAmountStored) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
+		balances.commitSnapshots();
+
+		// Act:
+		balances.lock(Test_Mosaic_Id3, Amount(222), Height(1));
+		balances.commitSnapshots();
+
+		// Assert:
+		EXPECT_EQ(1u, balances.size());
+		EXPECT_EQ(Amount(12345 - 222), balances.get(Test_Mosaic_Id3));
+		EXPECT_EQ(Amount(222), balances.getLocked(Test_Mosaic_Id3));
+		EXPECT_EQ(1, balances.snapshots().size());
+		EXPECT_EQ(Amount(222), balances.snapshots().front().LockedAmount);
+		EXPECT_EQ(Height(1), balances.snapshots().front().BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, FullLockRemovesMosaicFromCache) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		Amount amount = Amount(12345);
+		balances.credit(Test_Mosaic_Id3, amount, Height(1));
+		balances.commitSnapshots();
+
+		// Act:
+		balances.lock(Test_Mosaic_Id3, amount, Height(2));
+		balances.commitSnapshots();
+		auto xpxHeld = balances.get(Test_Mosaic_Id3);
+
+		// Assert:
+		EXPECT_EQ(0u, balances.balances().size());
+		EXPECT_EQ(1u, balances.lockedBalances().size());
+		EXPECT_EQ(Amount(0), xpxHeld);
+		EXPECT_EQ(2, balances.snapshots().size());
+		EXPECT_EQ(amount, balances.snapshots().front().Amount);
+		EXPECT_EQ(Height(1), balances.snapshots().front().BalanceHeight);
+		EXPECT_EQ(Amount(0), balances.snapshots().back().Amount);
+		EXPECT_EQ(Height(2), balances.snapshots().back().BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, InterleavingLocksYieldCorrectState) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
+		balances.credit(Test_Mosaic_Id1, Amount(3456), Height(1));
+
+		// Act:
+		balances.lock(Test_Mosaic_Id3, Amount(222), Height(1));
+		balances.lock(Test_Mosaic_Id1, Amount(1111), Height(1));
+		balances.lock(Test_Mosaic_Id3, Amount(111), Height(1));
+		balances.commitSnapshots();
+
+		// Assert:
+		EXPECT_EQ(2u, balances.size());
+		EXPECT_EQ(Amount(12345 - 222 - 111), balances.get(Test_Mosaic_Id3));
+		EXPECT_EQ(Amount(3456 - 1111), balances.get(Test_Mosaic_Id1));
+		EXPECT_EQ(Amount(222 + 111), balances.getLocked(Test_Mosaic_Id3));
+		EXPECT_EQ(Amount(1111), balances.getLocked(Test_Mosaic_Id1));
+		EXPECT_EQ(1, balances.snapshots().size());
+		EXPECT_EQ(Amount(12345 - 222 - 111), balances.snapshots().front().Amount);
+		EXPECT_EQ(Amount(222 + 111), balances.snapshots().front().LockedAmount);
+		EXPECT_EQ(Height(1), balances.snapshots().front().BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, LockDoesNotAllowUnderflowOfNonZeroBalance) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
+
+		// Act + Assert:
+		EXPECT_THROW(balances.lock(Test_Mosaic_Id3, Amount(12346), Height(2)), catapult_runtime_error);
+		balances.commitSnapshots();
+
+		// Assert:
+		EXPECT_EQ(1u, balances.size());
+		EXPECT_EQ(Amount(12345), balances.get(Test_Mosaic_Id3));
+		EXPECT_EQ(1, balances.snapshots().size());
+		EXPECT_EQ(Amount(12345), balances.snapshots().front().Amount);
+		EXPECT_EQ(Amount(0), balances.snapshots().front().LockedAmount);
+		EXPECT_EQ(Height(1), balances.snapshots().front().BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, LockDoesNotAllowUnderflowOfZeroBalance) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+
+		// Act + Assert:
+		EXPECT_THROW(balances.debit(Test_Mosaic_Id3, Amount(222), Height(1)), catapult_runtime_error);
+
+		// Assert:
+		EXPECT_EQ(0u, balances.size());
+		EXPECT_EQ(Amount(0), balances.get(Test_Mosaic_Id3));
+		EXPECT_EQ(Amount(0), balances.getLocked(Test_Mosaic_Id3));
+		EXPECT_EQ(0, balances.snapshots().size());
+	}
+
+	// endregion
+
+	// region unlock
+
+	TEST(TEST_CLASS, CanUnlockZeroFromZeroBalance) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+
+		// Act:
+		balances.unlock(Test_Mosaic_Id3, Amount(0), Height(1));
+
+		// Assert:
+		EXPECT_EQ(0u, balances.size());
+		EXPECT_EQ(Amount(0), balances.get(Test_Mosaic_Id3));
+		EXPECT_EQ(0, balances.snapshots().size());
+	}
+
+	TEST(TEST_CLASS, UnlockDecreasesAmountStored) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
+		balances.commitSnapshots();
+		balances.lock(Test_Mosaic_Id3, Amount(222), Height(1));
+		balances.commitSnapshots();
+		// Act:
+		balances.unlock(Test_Mosaic_Id3, Amount(111), Height(1));
+		balances.commitSnapshots();
+
+		// Assert:
+		EXPECT_EQ(1u, balances.size());
+		EXPECT_EQ(Amount(12345 - 222 + 111), balances.get(Test_Mosaic_Id3));
+		EXPECT_EQ(Amount(222 - 111), balances.getLocked(Test_Mosaic_Id3));
+		EXPECT_EQ(1, balances.snapshots().size());
+		EXPECT_EQ(Amount(222 - 111), balances.snapshots().front().LockedAmount);
+		EXPECT_EQ(Height(1), balances.snapshots().front().BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, UnlockRemovesMosaicFromCache) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		Amount amount = Amount(12345);
+		balances.credit(Test_Mosaic_Id3, amount, Height(1));
+		balances.lock(Test_Mosaic_Id3, amount, Height(1));
+		balances.commitSnapshots();
+
+		// Act:
+		balances.unlock(Test_Mosaic_Id3, amount, Height(2));
+		balances.commitSnapshots();
+		auto xpxHeld = balances.get(Test_Mosaic_Id3);
+
+		// Assert:
+		EXPECT_EQ(1u, balances.balances().size());
+		EXPECT_EQ(0u, balances.lockedBalances().size());
+		EXPECT_EQ(Amount(12345), xpxHeld);
+		EXPECT_EQ(2, balances.snapshots().size());
+		EXPECT_EQ(amount, balances.snapshots().front().LockedAmount);
+		EXPECT_EQ(Height(1), balances.snapshots().front().BalanceHeight);
+		EXPECT_EQ(Amount(amount), balances.snapshots().back().Amount);
+		EXPECT_EQ(Amount(0), balances.snapshots().back().LockedAmount);
+		EXPECT_EQ(Height(2), balances.snapshots().back().BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, InterleavingUnlocksYieldCorrectState) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
+		balances.credit(Test_Mosaic_Id1, Amount(3456), Height(1));
+		balances.lock(Test_Mosaic_Id3, Amount(222), Height(1));
+		balances.lock(Test_Mosaic_Id1, Amount(1111), Height(1));
+		balances.lock(Test_Mosaic_Id3, Amount(111), Height(1));
+		balances.commitSnapshots();
+		// Act:
+		balances.unlock(Test_Mosaic_Id3, Amount(111), Height(1));
+		balances.unlock(Test_Mosaic_Id1, Amount(111), Height(1));
+		balances.unlock(Test_Mosaic_Id3, Amount(11), Height(1));
+		balances.commitSnapshots();
+
+		// Assert:
+		EXPECT_EQ(2u, balances.size());
+		EXPECT_EQ(Amount(12345 - 222 - 111 + 111 + 11), balances.get(Test_Mosaic_Id3));
+		EXPECT_EQ(Amount(3456 - 1111 + 111), balances.get(Test_Mosaic_Id1));
+		EXPECT_EQ(Amount(222 + 111 - 111 - 11), balances.getLocked(Test_Mosaic_Id3));
+		EXPECT_EQ(Amount(1111 - 111), balances.getLocked(Test_Mosaic_Id1));
+		EXPECT_EQ(1, balances.snapshots().size());
+		EXPECT_EQ(Amount(12345 - 222 - 111 + 111 + 11), balances.snapshots().front().Amount);
+		EXPECT_EQ(Amount(222 + 111 - 111 - 11), balances.snapshots().front().LockedAmount);
+		EXPECT_EQ(Height(1), balances.snapshots().front().BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, UnlockDoesNotAllowUnderflowOfNonZeroBalance) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
+		balances.lock(Test_Mosaic_Id3, Amount(12345), Height(1));
+		balances.commitSnapshots();
+
+		// Act + Assert:
+		EXPECT_THROW(balances.unlock(Test_Mosaic_Id3, Amount(12346), Height(2)), catapult_runtime_error);
+		balances.commitSnapshots();
+
+		// Assert:
+		EXPECT_EQ(1u, balances.size());
+		EXPECT_EQ(Amount(12345), balances.getLocked(Test_Mosaic_Id3));
+		EXPECT_EQ(1, balances.snapshots().size());
+		EXPECT_EQ(Amount(0), balances.snapshots().front().Amount);
+		EXPECT_EQ(Amount(12345), balances.snapshots().front().LockedAmount);
+		EXPECT_EQ(Height(1), balances.snapshots().front().BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, UnlockDoesNotAllowUnderflowOfZeroBalance) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+
+		// Act + Assert:
+		EXPECT_THROW(balances.unlock(Test_Mosaic_Id3, Amount(222), Height(1)), catapult_runtime_error);
+
+		// Assert:
+		EXPECT_EQ(0u, balances.size());
+		EXPECT_EQ(Amount(0), balances.get(Test_Mosaic_Id3));
+		EXPECT_EQ(Amount(0), balances.getLocked(Test_Mosaic_Id3));
+		EXPECT_EQ(0, balances.snapshots().size());
+	}
+
+	// endregion
+
 	// region credit + debit
 
 	TEST(TEST_CLASS, InterleavingDebitsAndCreditsYieldCorrectState) {
@@ -426,14 +676,14 @@ namespace catapult { namespace state {
 			.credit(Test_Mosaic_Id2, Amount(3456));
 
 		// Sanity:
-		EXPECT_EQ(Test_Mosaic_Id1, balances.begin()->first);
+		EXPECT_EQ(Test_Mosaic_Id1, balances.balances().begin()->first);
 
 		// Act:
 		balances.optimize(Test_Mosaic_Id2);
 
 		// Assert:
 		EXPECT_EQ(Test_Mosaic_Id2, balances.optimizedMosaicId());
-		EXPECT_EQ(Test_Mosaic_Id2, balances.begin()->first);
+		EXPECT_EQ(Test_Mosaic_Id2, balances.balances().begin()->first);
 	}
 
 	// endregion
@@ -448,11 +698,15 @@ namespace catapult { namespace state {
 			.credit(Test_Mosaic_Id3, Amount(12345), Height(1))
 			.credit(Test_Mosaic_Id2, Amount(0), Height(1))
 			.credit(Test_Mosaic_Id1, Amount(3456), Height(1));
+		balances
+				.lock(Test_Mosaic_Id3, Amount(5), Height(1))
+				.lock(Test_Mosaic_Id2, Amount(0), Height(1))
+				.lock(Test_Mosaic_Id1, Amount(6), Height(1));
 
 		// Act:
 		auto numBalances = 0u;
 		std::map<MosaicId, Amount> iteratedBalances;
-		for (const auto& pair : balances) {
+		for (const auto& pair : balances.balances()) {
 			iteratedBalances.emplace(pair);
 			++numBalances;
 		}
@@ -461,10 +715,10 @@ namespace catapult { namespace state {
 		// Assert:
 		EXPECT_EQ(2u, numBalances);
 		EXPECT_EQ(2u, iteratedBalances.size());
-		EXPECT_EQ(Amount(12345), iteratedBalances[Test_Mosaic_Id3]);
-		EXPECT_EQ(Amount(3456), iteratedBalances[Test_Mosaic_Id1]);
+		EXPECT_EQ(Amount(12340), iteratedBalances[Test_Mosaic_Id3]);
+		EXPECT_EQ(Amount(3450), iteratedBalances[Test_Mosaic_Id1]);
 		EXPECT_EQ(1, balances.snapshots().size());
-		EXPECT_EQ(Amount(12345), balances.snapshots().front().Amount);
+		EXPECT_EQ(Amount(12340), balances.snapshots().front().Amount);
 		EXPECT_EQ(Height(1), balances.snapshots().front().BalanceHeight);
 	}
 
