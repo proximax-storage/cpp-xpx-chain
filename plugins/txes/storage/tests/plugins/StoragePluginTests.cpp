@@ -106,6 +106,7 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
+					"StartDriveVerificationObserver",
 					"DataModificationObserver",
 					"DownloadChannelObserver",
 					"PrepareDriveObserver",

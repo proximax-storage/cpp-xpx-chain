@@ -10,8 +10,9 @@ namespace catapult { namespace observers {
 
 	using Notification = model::ReplicatorOnboardingNotification<1>;
 	using DrivePriority = std::pair<Key, double>;
+	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-	DECLARE_OBSERVER(ReplicatorOnboarding, Notification)(const std::unique_ptr<std::priority_queue<DrivePriority>>& pDriveQueue) {
+	DECLARE_OBSERVER(ReplicatorOnboarding, Notification)(const std::unique_ptr<DriveQueue>& pDriveQueue) {
 		return MAKE_OBSERVER(ReplicatorOnboarding, Notification, ([&pDriveQueue](const Notification& notification, const ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorOnboarding)");
@@ -26,10 +27,11 @@ namespace catapult { namespace observers {
 		  	auto& replicatorState = replicatorStateIter.get();
 		  	const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		  	const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
 			// Assign queued drives to the replicator, as long as there is enough capacity:
-		  	std::priority_queue<DrivePriority> originalQueue = *pDriveQueue.get();
-			std::priority_queue<DrivePriority> newQueue;
+		  	DriveQueue originalQueue = *pDriveQueue;
+	  		DriveQueue newQueue;
 			auto remainingCapacity = notification.Capacity.unwrap();
 			while (!originalQueue.empty()) {
 				const auto drivePriorityPair = originalQueue.top();
@@ -39,7 +41,9 @@ namespace catapult { namespace observers {
 				auto driveIter = driveCache.find(driveKey);
 				auto& driveEntry = driveIter.get();
 				const auto& driveSize = driveEntry.size();
+				CATAPULT_LOG(debug) << "DriveSize = " << driveSize << ", DrivePriority = " << drivePriorityPair.second;
 				if (driveSize <= remainingCapacity) {
+
 					// Updating drives() and replicators()
 					replicatorEntry.drives().emplace(driveKey, state::DriveInfo{ Hash256(), false, 0 });
 					driveEntry.replicators().emplace(notification.PublicKey);
@@ -54,11 +58,10 @@ namespace catapult { namespace observers {
 					driveState.Balances.credit(storageMosaicId, storageDepositAmount);
 					driveState.Balances.credit(streamingMosaicId, streamingDepositAmount);
 
-					// Pushing back updated DrivePriority to originalQueue if the drive still requires any replicators
+					// Keeping updated DrivePriority in newQueue if the drive still requires any replicators
 					if (driveEntry.replicators().size() < driveEntry.replicatorCount()) {
-						const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 						const auto newPriority = utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount);
-						originalQueue.emplace(driveKey, newPriority);
+						newQueue.emplace(driveKey, newPriority);
 					}
 
 					// Updating remaining capacity
@@ -67,7 +70,7 @@ namespace catapult { namespace observers {
 					newQueue.push(drivePriorityPair);
 				}
 			}
-			*pDriveQueue.get() = std::move(newQueue);
+			*pDriveQueue = std::move(newQueue);
 
 			replicatorCache.insert(replicatorEntry);
 		}))

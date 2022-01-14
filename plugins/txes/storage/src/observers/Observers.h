@@ -20,8 +20,11 @@ namespace catapult { namespace state { class StorageStateImpl; }}
 
 namespace catapult { namespace observers {
 
+	using DrivePriority = std::pair<Key, double>;
+	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
+
 	/// Observes changes triggered by prepare drive notifications.
-	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::unique_ptr<std::priority_queue<std::pair<Key, double>>>& pDriveQueue);
+	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::unique_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by download notifications.
 	DECLARE_OBSERVER(DownloadChannel, model::DownloadNotification<1>)();
@@ -45,13 +48,13 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DataModificationCancel, model::DataModificationCancelNotification<1>)();
 
 	/// Observes changes triggered by replicator onboarding notifications.
-	DECLARE_OBSERVER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)(const std::unique_ptr<std::priority_queue<std::pair<Key, double>>>& pDriveQueue);
+	DECLARE_OBSERVER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)(const std::unique_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by drive closure notifications.
 	DECLARE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>)();
 
 	/// Observes changes triggered by replicator offboarding notifications.
-	DECLARE_OBSERVER(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)(const std::unique_ptr<std::priority_queue<std::pair<Key, double>>>& pDriveQueue);
+	DECLARE_OBSERVER(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)(const std::unique_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by download payment notifications.
 	DECLARE_OBSERVER(DownloadPayment, model::DownloadPaymentNotification<1>)();

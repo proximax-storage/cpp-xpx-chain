@@ -81,6 +81,6 @@ namespace catapult { namespace utils {
 		const auto& N = driveEntry.replicatorCount();
 		const auto& R = driveEntry.replicators().size() - driveEntry.offboardingReplicators().size();
 
-		return R < Rmin ? (R + 1)/Rmin : (N - R)/(2*Rmin*(N - Rmin));
+		return R < Rmin ? static_cast<double>(R + 1)/Rmin : static_cast<double>(N - R)/(2*Rmin*(N - Rmin));
 	}
 }}

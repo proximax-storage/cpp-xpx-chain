@@ -10,8 +10,9 @@ namespace catapult { namespace observers {
 
 	using Notification = model::ReplicatorOffboardingNotification<1>;
 	using DrivePriority = std::pair<Key, double>;
+	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-	DECLARE_OBSERVER(ReplicatorOffboarding, Notification)(const std::unique_ptr<std::priority_queue<DrivePriority>>& pDriveQueue) {
+	DECLARE_OBSERVER(ReplicatorOffboarding, Notification)(const std::unique_ptr<DriveQueue>& pDriveQueue) {
 		return MAKE_OBSERVER(ReplicatorOffboarding, Notification, ([&pDriveQueue](const Notification& notification, const ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorOffboarding)");
@@ -23,19 +24,18 @@ namespace catapult { namespace observers {
 
 		  	driveEntry.offboardingReplicators().emplace(notification.PublicKey);
 
-		  	std::priority_queue<DrivePriority> originalQueue = *pDriveQueue.get();
-		  	std::priority_queue<DrivePriority> newQueue;
+		  	DriveQueue originalQueue = *pDriveQueue;
+		  	DriveQueue newQueue;
+		  	newQueue.emplace(notification.DriveKey, utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount));
 		  	while (!originalQueue.empty()) {
 			  	const auto drivePriorityPair = originalQueue.top();
 			  	const auto& driveKey = drivePriorityPair.first;
 			  	originalQueue.pop();
 
-			  	if (driveKey == notification.DriveKey)
-					newQueue.emplace(driveKey, utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount));
-				else
-				  	newQueue.push(drivePriorityPair);
+			  	if (driveKey != notification.DriveKey)
+					newQueue.push(drivePriorityPair);
 		  	}
-		  	*pDriveQueue.get() = std::move(newQueue);
+			*pDriveQueue = std::move(newQueue);
 
 			auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
 			auto replicatorIter = replicatorCache.find(notification.PublicKey);
@@ -77,8 +77,6 @@ namespace catapult { namespace observers {
 			replicatorState.Balances.credit(currencyMosaicId, Amount(storageDepositReturn), context.Height);
 			// Swap streaming unit to xpx
 			replicatorState.Balances.credit(currencyMosaicId, Amount(streamingDepositReturn), context.Height);
-
-			replicatorCache.remove(notification.PublicKey);
 		}))
 	}
 }}

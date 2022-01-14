@@ -170,6 +170,7 @@ namespace catapult { namespace state {
             AssertCompletedDataModifications(entry.completedDataModifications(), pData);
 			AssertConfirmedUsedSizes(entry.confirmedUsedSizes(), pData);
 			AssertReplicators(entry.replicators(), pData);
+			AssertReplicators(entry.offboardingReplicators(), pData);
             AssertVerifications(entry.verifications(), pData);
 
             EXPECT_EQ(pExpectedEnd, pData);
@@ -304,6 +305,7 @@ namespace catapult { namespace state {
             SaveCompletedDataModifications(entry.completedDataModifications(), data);
 			SaveConfirmedUsedSizes(entry.confirmedUsedSizes(), data);
 			SaveReplicators(entry.replicators(), data);
+			SaveReplicators(entry.offboardingReplicators(), data);
             SaveVerifications(entry.verifications(), data);
 
             return data;

@@ -30,10 +30,10 @@ namespace catapult { namespace model {
 					+ sizeof(uint8_t) // judging keys count
 					+ sizeof(uint8_t) // overlapping keys count
 					+ sizeof(uint8_t) // judged keys count
-					+ sizeof(uint8_t); // opinion element count
+					+ sizeof(uint16_t); // opinion element count
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 124u, sizeof(T));
+			EXPECT_EQ(baseSize + 125u, sizeof(T));
 		}
 
 		template<typename T>

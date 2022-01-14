@@ -173,7 +173,8 @@ namespace catapult { namespace plugins {
 		});
 
 		using DrivePriority = std::pair<Key, double>;
-		auto pDriveQueue = std::make_unique<std::priority_queue<DrivePriority>>();
+		using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
+		auto pDriveQueue = std::make_unique<DriveQueue>();
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, pReplicatorKeyCollector](auto& builder) {
 		  	builder

@@ -20,6 +20,15 @@ namespace catapult { namespace validators {
         using Notification = model::ReplicatorOffboardingNotification<1>;
 
         constexpr auto Current_Height = Height(10);
+		constexpr auto Min_Replicator_Count = 4;
+
+		auto CreateConfig() {
+			test::MutableBlockchainConfiguration config;
+			auto pluginConfig = config::StorageConfiguration::Uninitialized();
+			pluginConfig.MinReplicatorCount = Min_Replicator_Count;
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return (config.ToConst());
+		}
 
         void AssertValidationResult(
                 ValidationResult expectedResult,
@@ -41,8 +50,8 @@ namespace catapult { namespace validators {
             auto pValidator = CreateReplicatorOffboardingValidator();
             
             // Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, 
-                config::BlockchainConfiguration::Uninitialized(), Current_Height);
+			auto result = test::ValidateNotification(*pValidator, notification, cache,
+					CreateConfig(), Current_Height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
@@ -56,7 +65,7 @@ namespace catapult { namespace validators {
 		state::ReplicatorEntry replicatorEntry(replicatorKey);
 		state::BcDriveEntry driveEntry(driveKey);
 		driveEntry.replicators().emplace(replicatorKey);
-		for (auto i = 0u; i < 3u; ++i)
+		for (auto i = 1u; i < Min_Replicator_Count; ++i)
 			driveEntry.replicators().emplace(test::GenerateRandomByteArray<Key>());
 
         // Assert:
@@ -69,18 +78,80 @@ namespace catapult { namespace validators {
     }
 
     TEST(TEST_CLASS, FailureWhenReplicatorNotRegistered) {
+		// Assert:
+		AssertValidationResult(
+				Failure_Storage_Replicator_Not_Registered,
+				test::CreateReplicatorEntry(),
+				test::CreateBcDriveEntry(),
+				test::GenerateRandomByteArray<Key>(),
+				test::GenerateRandomByteArray<Key>());
+	}
+
+	TEST(TEST_CLASS, FailureWhenDriveNotFound) {
+		// Arrange:
+		Key replicatorKey = test::GenerateRandomByteArray<Key>();
+		state::ReplicatorEntry replicatorEntry(replicatorKey);
+
+		// Assert:
+		AssertValidationResult(
+				Failure_Storage_Drive_Not_Found,
+				replicatorEntry,
+				test::CreateBcDriveEntry(),
+				replicatorKey,
+				test::GenerateRandomByteArray<Key>());
+	}
+
+	TEST(TEST_CLASS, FailureWhenDriveNotAssignedToReplicator) {
 		// Arrange:
 		Key replicatorKey = test::GenerateRandomByteArray<Key>();
 		Key driveKey = test::GenerateRandomByteArray<Key>();
 		state::ReplicatorEntry replicatorEntry(replicatorKey);
 		state::BcDriveEntry driveEntry(driveKey);
 
-        // Assert:
+		// Assert:
 		AssertValidationResult(
-				Failure_Storage_Replicator_Not_Registered,
+				Failure_Storage_Drive_Not_Assigned_To_Replicator,
 				replicatorEntry,
 				driveEntry,
-				test::GenerateRandomByteArray<Key>(),
+				replicatorKey,
 				driveKey);
 	}
+
+	TEST(TEST_CLASS, FailureWhenAlreadyAppliedForOffboarding) {
+		// Arrange:
+		Key replicatorKey = test::GenerateRandomByteArray<Key>();
+		Key driveKey = test::GenerateRandomByteArray<Key>();
+		state::ReplicatorEntry replicatorEntry(replicatorKey);
+		state::BcDriveEntry driveEntry(driveKey);
+		driveEntry.replicators().emplace(replicatorKey);
+		driveEntry.offboardingReplicators().emplace(replicatorKey);
+
+		// Assert:
+		AssertValidationResult(
+				Failure_Storage_Already_Applied_For_Offboarding,
+				replicatorEntry,
+				driveEntry,
+				replicatorKey,
+				driveKey);
+	}
+
+	TEST(TEST_CLASS, FailureWhenReplicatorCountInsufficient) {
+		// Arrange:
+		Key replicatorKey = test::GenerateRandomByteArray<Key>();
+		Key driveKey = test::GenerateRandomByteArray<Key>();
+		state::ReplicatorEntry replicatorEntry(replicatorKey);
+		state::BcDriveEntry driveEntry(driveKey);
+		driveEntry.replicators().emplace(replicatorKey);
+		for (auto i = 1u; i < Min_Replicator_Count*2 / 3 + 1; ++i)
+			driveEntry.replicators().emplace(test::GenerateRandomByteArray<Key>());
+
+		// Assert:
+		AssertValidationResult(
+				Failure_Storage_Replicator_Count_Insufficient,
+				replicatorEntry,
+				driveEntry,
+				replicatorKey,
+				driveKey);
+	}
+
 }}

@@ -10,6 +10,7 @@
 #include "catapult/model/Mosaic.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "src/state/BcDriveEntry.h"
+#include <queue>
 
 namespace catapult { namespace utils {
 
@@ -36,6 +37,22 @@ namespace catapult { namespace utils {
 	void WriteToByteArray(uint8_t*& ptr, const std::array<uint8_t, Array_Size>& buffer) {
 		ptr = std::copy(buffer.data(), buffer.data() + Array_Size, ptr);
 	}
+
+//	/// Creates priority queue for drives with correct comparator.
+//	using DrivePriority = std::pair<Key, double>;
+//	auto CreateDriveQueue() {
+//		auto comparator = [](const DrivePriority& a, const DrivePriority& b) {
+//			return a.second == b.second ? a.first < b.first : a.second < b.second;
+//		};
+//		return std::priority_queue<DrivePriority, std::vector<DrivePriority>, decltype(comparator)>(comparator);
+//	};
+
+	using DrivePriority = std::pair<Key, double>;
+	struct DriveQueueComparator {
+		bool operator() (const DrivePriority& a, const DrivePriority& b) const {
+			return a.second == b.second ? a.first < b.first : a.second < b.second;
+		}
+	};
 
 	/// Calculates priority value of \a driveEntry. Used for the queue of drives with missing replicators.
 	double CalculateDrivePriority(const state::BcDriveEntry&, const uint16_t&);

@@ -15,21 +15,37 @@ namespace catapult { namespace observers {
 #define TEST_CLASS PrepareDriveObserverTests
 
 	using DrivePriority = std::pair<Key, double>;
+	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-    DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive, std::make_shared<cache::ReplicatorKeyCollector>(), std::make_unique<std::priority_queue<DrivePriority>>())
+    DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive, std::make_shared<cache::ReplicatorKeyCollector>(), std::make_unique<DriveQueue>())
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
         using Notification = model::PrepareDriveNotification<1>;
+		using ReplicatorWithAmounts = std::tuple<state::ReplicatorEntry, Amount, Amount>;	// Replicator entry, SO amount, SM amount
 
         const Key Drive_Key = test::GenerateRandomByteArray<Key>();
         const Key Owner = test::GenerateRandomByteArray<Key>();
         constexpr auto Drive_Size = 50;
-        constexpr auto Replicator_Count = 10;
-		const Key Replicator_Key = test::GenerateRandomByteArray<Key>();
-        const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
-		const auto Drive_Queue = std::make_unique<std::priority_queue<DrivePriority>>();
+        constexpr auto Replicator_Count = 3;
+		constexpr auto Unacceptable_Replicator_Count = 1;	// Number of replicators that don't have enough mosaics
+		const auto Drive_Queue = std::make_unique<DriveQueue>();
         constexpr Height Current_Height(20);
+		constexpr auto Min_Replicator_Count = 2;
+		constexpr auto Storage_Mosaic_Id = MosaicId(1234);
+		constexpr auto Streaming_Mosaic_Id = MosaicId(4321);
+
+		auto CreateConfig() {
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.StorageMosaicId = Storage_Mosaic_Id;
+			config.Immutable.StreamingMosaicId = Streaming_Mosaic_Id;
+
+			auto pluginConfig = config::StorageConfiguration::Uninitialized();
+			pluginConfig.MinReplicatorCount = Min_Replicator_Count;
+			config.Network.SetPluginConfiguration(pluginConfig);
+
+			return config.ToConst();
+		}
         
         state::BcDriveEntry CreateBcDriveEntry() {
             state::BcDriveEntry entry(Drive_Key);
@@ -40,71 +56,148 @@ namespace catapult { namespace observers {
             return entry;
         }
 
-        state::ReplicatorEntry CreateReplicatorEntry(state::BcDriveEntry& driveEntry, const std::shared_ptr<cache::ReplicatorKeyCollector>& replicatorKeyCollector) {
-            state::ReplicatorEntry entry(Replicator_Key);
+		ReplicatorWithAmounts CreateInitialReplicatorWithAmounts(const std::shared_ptr<cache::ReplicatorKeyCollector>& replicatorKeyCollector, bool acceptable = true) {
+            state::ReplicatorEntry entry(test::GenerateRandomByteArray<Key>());
             replicatorKeyCollector->addKey(entry);
-            entry.drives().emplace(Drive_Key, state::DriveInfo());
-			driveEntry.replicators().insert(Replicator_Key);
-            
-            return entry;
+			const auto storageMosaics = acceptable ?
+					test::RandomInRange(Drive_Size, Drive_Size+10) :
+					test::RandomInRange(0, Drive_Size-1);
+			const auto streamingMosaics = acceptable ?
+					test::RandomInRange(2*Drive_Size, 2*Drive_Size+10) :
+					test::RandomInRange(0, 2*Drive_Size-1);
+
+			return std::make_tuple(entry, Amount(storageMosaics), Amount(streamingMosaics));
         }
+
+		ReplicatorWithAmounts CreateExpectedReplicatorWithAmounts(ReplicatorWithAmounts initialReplicatorWithAmounts) {
+			auto& entry = std::get<0>(initialReplicatorWithAmounts);
+			auto& storageMosaics = std::get<1>(initialReplicatorWithAmounts);
+			auto& streamingMosaics = std::get<2>(initialReplicatorWithAmounts);
+
+			// Here it is suggested that if the replicator has enough mosaics, it will be always assigned to the drive.
+			// In fact, if there are more acceptable replicators than it was requested by the drive, then, obviously,
+			// some of them won't be assigned.
+			if (storageMosaics.unwrap() >= Drive_Size && streamingMosaics.unwrap() >= 2*Drive_Size) {
+				entry.drives().emplace(Drive_Key, state::DriveInfo{ Hash256(), false, 0, 0 });
+				storageMosaics = Amount(storageMosaics.unwrap() - Drive_Size);
+				streamingMosaics = Amount(streamingMosaics.unwrap() - 2*Drive_Size);
+			}
+
+			return initialReplicatorWithAmounts;
+		}
 
         struct CacheValues {
             public:
 			    explicit CacheValues()
-                    : BcDriveEntry(Key())
-                    , ReplicatorEntry(Key())
-                {}
+                    : InitialReplicatorsWithAmounts()
+					, ExpectedReplicatorsWithAmounts()
+					, ExpectedBcDriveEntry(Key())
+				{}
 
             public:
-                state::BcDriveEntry BcDriveEntry;
-                state::ReplicatorEntry ReplicatorEntry;
+                std::vector<ReplicatorWithAmounts> InitialReplicatorsWithAmounts;
+				std::vector<ReplicatorWithAmounts> ExpectedReplicatorsWithAmounts;
+				state::BcDriveEntry ExpectedBcDriveEntry;
         };
         
-        void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
-            ObserverTestContext context(mode, currentHeight);
+        void RunTest(NotifyMode mode,
+					 const CacheValues& values,
+					 const std::shared_ptr<cache::ReplicatorKeyCollector>& replicatorKeyCollector,
+					 const size_t expectedDriveQueueSize,
+					 const Height& currentHeight) {
+            ObserverTestContext context(mode, currentHeight, CreateConfig());
             Notification notification(
 				Owner,
 				Drive_Key,
 				Drive_Size,
 				Replicator_Count);
-            auto pObserver = CreatePrepareDriveObserver(Replicator_Key_Collector, Drive_Queue);
+            auto pObserver = CreatePrepareDriveObserver(replicatorKeyCollector, Drive_Queue);
             auto& driveCache = context.cache().sub<cache::BcDriveCache>();
             auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
+			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
 
             // Populate cache.
-            replicatorCache.insert(values.ReplicatorEntry);
+			test::AddAccountState(accountStateCache, values.ExpectedBcDriveEntry.key(), Current_Height);
+			for (const auto& tuple : values.InitialReplicatorsWithAmounts) {
+				const auto& entry = std::get<0>(tuple);
+				replicatorCache.insert(entry);
+				test::AddAccountState(accountStateCache, entry.key(), Current_Height,
+						{{Storage_Mosaic_Id, std::get<1>(tuple)}, {Streaming_Mosaic_Id, std::get<2>(tuple)}}
+ 				);
+			}
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
-            auto driveIter = driveCache.find(values.BcDriveEntry.key());
+            auto driveIter = driveCache.find(values.ExpectedBcDriveEntry.key());
             const auto& actualEntry = driveIter.get();
-            test::AssertEqualBcDriveData(values.BcDriveEntry, actualEntry);
+            test::AssertEqualBcDriveData(values.ExpectedBcDriveEntry, actualEntry);
 
-            auto replicatorIter = replicatorCache.find(values.ReplicatorEntry.key());
-			auto& replicatorEntry = replicatorIter.get();
-            test::AssertEqualReplicatorData(values.ReplicatorEntry, replicatorEntry);
+            for (auto i = 0u; i < Replicator_Count + Unacceptable_Replicator_Count; ++i) {
+				const auto& expectedEntry = std::get<0>(values.ExpectedReplicatorsWithAmounts.at(i));
+
+				auto replicatorIter = replicatorCache.find(expectedEntry.key());
+				auto& replicatorEntry = replicatorIter.get();
+				test::AssertEqualReplicatorData(expectedEntry, replicatorEntry);
+
+				auto replicatorStateIter = accountStateCache.find(expectedEntry.key());
+				auto& replicatorState = replicatorStateIter.get();
+				EXPECT_EQ(replicatorState.Balances.get(Storage_Mosaic_Id), std::get<1>(values.ExpectedReplicatorsWithAmounts.at(i)));
+				EXPECT_EQ(replicatorState.Balances.get(Streaming_Mosaic_Id), std::get<2>(values.ExpectedReplicatorsWithAmounts.at(i)));
+			}
+
+			EXPECT_EQ(expectedDriveQueueSize, Drive_Queue->size());
         }
     }
 
-    TEST(TEST_CLASS, PrepareDrive_Commit) {
+    TEST(TEST_CLASS, PrepareDrive_Commit_ExactReplicatorCount) {
         // Arrange:
+		const auto replicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
         CacheValues values;
-        values.BcDriveEntry = CreateBcDriveEntry();
-        values.ReplicatorEntry = CreateReplicatorEntry(values.BcDriveEntry, Replicator_Key_Collector);
+        values.ExpectedBcDriveEntry = CreateBcDriveEntry();
+		for (auto i = 0u; i < Replicator_Count + Unacceptable_Replicator_Count; ++i) {
+			const bool acceptable = i < Replicator_Count;	// First (Replicator_Count) replicators will have enough mosaics
+															// and are expected to be assigned to the drive.
+			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(replicatorKeyCollector, acceptable);
+			values.InitialReplicatorsWithAmounts.push_back(replicatorWithAmounts);
+			values.ExpectedReplicatorsWithAmounts.push_back(CreateExpectedReplicatorWithAmounts(replicatorWithAmounts));
+			if (acceptable)
+				values.ExpectedBcDriveEntry.replicators().emplace(std::get<0>(replicatorWithAmounts).key());
+		}
+		const auto expectedDriveQueueSize = 0;
 
         // Assert:
-        RunTest(NotifyMode::Commit, values, Current_Height);
+        RunTest(NotifyMode::Commit, values, replicatorKeyCollector, expectedDriveQueueSize, Current_Height);
     }
+
+	TEST(TEST_CLASS, PrepareDrive_Commit_InsufficientReplicatorCount) {
+		// Arrange:
+		const auto replicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
+		CacheValues values;
+		values.ExpectedBcDriveEntry = CreateBcDriveEntry();
+		for (auto i = 0u; i < Replicator_Count + Unacceptable_Replicator_Count; ++i) {
+			const bool acceptable = i < Replicator_Count - 1;	// First (Replicator_Count - 1) replicators will have enough mosaics
+																// and are expected to be assigned to the drive.
+			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(replicatorKeyCollector, acceptable);
+			values.InitialReplicatorsWithAmounts.push_back(replicatorWithAmounts);
+			values.ExpectedReplicatorsWithAmounts.push_back(CreateExpectedReplicatorWithAmounts(replicatorWithAmounts));
+			if (acceptable)
+				values.ExpectedBcDriveEntry.replicators().emplace(std::get<0>(replicatorWithAmounts).key());
+		}
+		const auto expectedDriveQueueSize = 1;
+
+		// Assert:
+		RunTest(NotifyMode::Commit, values, replicatorKeyCollector, expectedDriveQueueSize, Current_Height);
+	}
 
     TEST(TEST_CLASS, PrepareDrive_Rollback) {
         // Arrange:
+		const auto replicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
         CacheValues values;
 
         // Assert:
-        EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
+        EXPECT_THROW(RunTest(NotifyMode::Rollback, values, replicatorKeyCollector, 0, Current_Height), catapult_runtime_error);
     }
 
 }}

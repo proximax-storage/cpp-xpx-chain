@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 	  	// Check if the drive will be able to function after another replicator offboards
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 		const auto nonOffboardingCount = pDriveEntry->replicators().size() - pDriveEntry->offboardingReplicators().size();
-	  	if (nonOffboardingCount - 1 < pluginConfig.MinReplicatorCount*2/3)
+	  	if (nonOffboardingCount - 1 < pluginConfig.MinReplicatorCount*2 / 3 + 1)
 		  	return Failure_Storage_Replicator_Count_Insufficient;
 
 		return ValidationResult::Success;

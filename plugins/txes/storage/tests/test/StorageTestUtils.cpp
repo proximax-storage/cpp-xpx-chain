@@ -245,6 +245,18 @@ namespace catapult { namespace test {
 		for (auto i = replicatorKeyPairs.size(); i < replicatorCount; ++i)
 			replicatorKeyPairs.emplace_back(crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(test::RandomByte)));
 	};
+
+	void AddAccountState(
+			cache::AccountStateCacheDelta& accountStateCache,
+			const Key& publicKey,
+			const Height& height,
+			const std::vector<model::Mosaic>& mosaics){
+		accountStateCache.addAccount(publicKey, height);
+		auto accountStateIter = accountStateCache.find(publicKey);
+		auto& accountState = accountStateIter.get();
+		for (auto& mosaic : mosaics)
+			accountState.Balances.credit(mosaic.MosaicId, mosaic.Amount);
+	}
 }}
 
 

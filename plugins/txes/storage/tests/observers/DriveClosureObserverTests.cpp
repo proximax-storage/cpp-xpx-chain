@@ -39,17 +39,6 @@ namespace catapult { namespace observers {
 			return config.ToConst();
 		}
 
-		void AddAccountState(
-				cache::AccountStateCacheDelta& accountStateCache,
-				const Key& publicKey,
-				const std::vector<model::Mosaic>& mosaics = {}){
-			accountStateCache.addAccount(publicKey, Current_Height);
-			auto accountStateIter = accountStateCache.find(publicKey);
-			auto& accountState = accountStateIter.get();
-			for (auto& mosaic : mosaics)
-				accountState.Balances.credit(mosaic.MosaicId, mosaic.Amount);
-		}
-
         state::BcDriveEntry CreateInitialBcDriveEntry(const Key& driveKey, const utils::SortedKeySet& replicatorKeys){
             state::BcDriveEntry entry(driveKey);
 			entry.setOwner(Owner_Key);
@@ -102,11 +91,11 @@ namespace catapult { namespace observers {
 
             // Populate cache.
             bcDriveCache.insert(values.InitialBcDriveEntry);
-			AddAccountState(accountStateCache, values.InitialBcDriveEntry.key(), {{Streaming_Mosaic_Id, Drive_Balance}});
-			AddAccountState(accountStateCache, values.InitialBcDriveEntry.owner());
+			test::AddAccountState(accountStateCache, values.InitialBcDriveEntry.key(), Current_Height, {{Streaming_Mosaic_Id, Drive_Balance}});
+			test::AddAccountState(accountStateCache, values.InitialBcDriveEntry.owner(), Current_Height);
             for (const auto& entry : values.InitialReplicatorEntries) {
 				replicatorCache.insert(entry);
-				AddAccountState(accountStateCache, entry.key());
+				test::AddAccountState(accountStateCache, entry.key(), Current_Height);
 			}
 
             // Act:

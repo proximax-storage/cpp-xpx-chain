@@ -6,6 +6,7 @@
 
 #pragma once
 #include <random>
+#include "catapult/cache_core/AccountStateCacheDelta.h"
 #include "boost/dynamic_bitset.hpp"
 #include "boost/iterator/counting_iterator.hpp"
 #include "catapult/model/EntityBody.h"
@@ -217,6 +218,13 @@ namespace catapult { namespace test {
 
 	/// Populates \a replicatorKeyPairs up to \a replicatorCount random key pairs.
 	void PopulateReplicatorKeyPairs(std::vector<crypto::KeyPair>& replicatorKeyPairs, uint16_t replicatorCount);
+
+	/// Adds account state with \a publicKey and provided \a mosaics to \a accountStateCache at height \a height.
+	void AddAccountState(
+			cache::AccountStateCacheDelta& accountStateCache,
+			const Key& publicKey,
+			const Height& height = Height(1),
+			const std::vector<model::Mosaic>& mosaics = {});
 
 	/// Creates an OpinionData filled with valid data.
 	/// Tuple \c publicKeysCounts contains \a JudgingKeysCount, \a OverlappingKeysCount and \a JudgedKeysCount in that order.
