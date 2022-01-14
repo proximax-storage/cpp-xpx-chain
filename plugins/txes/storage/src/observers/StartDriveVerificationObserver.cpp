@@ -19,6 +19,9 @@ namespace catapult { namespace observers {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
 
+			if (context.Height < Height(2))
+				return;
+
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto verificationInterval = pluginConfig.VerificationInterval.seconds();
 
@@ -42,14 +45,8 @@ namespace catapult { namespace observers {
 				if (value % verificationFactor)
 					continue;
 
-				uint16_t replicatorCount = driveEntry.replicators().size();
-				if (replicatorCount < 2 * pluginConfig.ShardSize) {
-					driveEntry.verifications().emplace_back(state::Verification{ notification.Hash, {} });
-					continue;
-				}
-
 				std::vector<Key> replicators;
-				replicators.reserve(replicatorCount);
+				replicators.reserve(driveEntry.replicators().size());
 				const auto& confirmedStates = driveEntry.confirmedStates();
 				const auto& rootHash = driveEntry.rootHash();
 				for (const auto& key : driveEntry.replicators()) {
@@ -57,6 +54,13 @@ namespace catapult { namespace observers {
 					if (iter != confirmedStates.end() && iter->second == rootHash)
 						replicators.emplace_back(key);
 				}
+
+				uint16_t replicatorCount = driveEntry.replicators().size();
+				if (replicatorCount < 2 * pluginConfig.ShardSize) {
+					driveEntry.verifications().emplace_back(state::Verification{ notification.Hash, state::Shards{ replicators }});
+					continue;
+				}
+
 				std::seed_seq hashSeed(driveKeyXorBlockHash.begin(), driveKeyXorBlockHash.end());
 				std::shuffle(replicators.begin(), replicators.end(), std::mt19937_64(hashSeed));
 
