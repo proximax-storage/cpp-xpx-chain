@@ -202,11 +202,14 @@ namespace catapult { namespace test {
     state::ReplicatorEntry CreateReplicatorEntry(
             Key key,
             Amount capacity,
-            uint16_t drivesCount) {
+            uint16_t drivesCount,
+			uint16_t downloadChannelCount) {
         state::ReplicatorEntry entry(key);
 		entry.setCapacity(capacity);
         for (auto dC = 0u; dC < drivesCount; ++dC)
             entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
+        for (auto i = 0u; i < downloadChannelCount; ++i)
+            entry.downloadChannels().emplace_back(test::GenerateRandomByteArray<Hash256>());
 
         return entry;
     }

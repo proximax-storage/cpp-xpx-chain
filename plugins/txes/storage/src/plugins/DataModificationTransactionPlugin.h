@@ -5,11 +5,13 @@
 **/
 
 #pragma once
-#include "catapult/config/ImmutableConfiguration.h"
 #include "catapult/plugins.h"
 #include <memory>
 
-namespace catapult { namespace model { class TransactionPlugin; } }
+namespace catapult {
+	namespace model { class TransactionPlugin; }
+	namespace config { class ImmutableConfiguration; }
+}
 
 namespace catapult { namespace plugins {
 

@@ -31,8 +31,8 @@ namespace catapult { namespace state {
         uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) override;
 
         bool downloadChannelExist(const Hash256& id) override;
-        std::vector<DownloadChannel> getDownloadChannels() override;
-        DownloadChannel getDownloadChannel(const Hash256& id) override;
+        std::vector<DownloadChannel> getDownloadChannels(const Key& replicatorKey) override;
+		std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) override;
 
 		virtual std::unique_ptr<DriveVerification> getActiveVerification(const Key& driveKey) override;
 

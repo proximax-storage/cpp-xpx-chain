@@ -34,6 +34,7 @@ namespace catapult { namespace storage {
         Hash256 sendDataModificationApprovalTransaction(const sirius::drive::ApprovalTransactionInfo& transactionInfo);
         Hash256 sendDataModificationSingleApprovalTransaction(const sirius::drive::ApprovalTransactionInfo& transactionInfo);
         Hash256 sendDownloadApprovalTransaction(uint16_t sequenceNumber, const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo);
+        Hash256 sendEndDriveVerificationTransaction(const sirius::drive::VerifyApprovalTxInfo& transactionInfo);
 
 	private:
         void send(std::shared_ptr<model::Transaction> pTransaction);

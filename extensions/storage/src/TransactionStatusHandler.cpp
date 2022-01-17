@@ -12,7 +12,6 @@ namespace catapult { namespace storage {
     void TransactionStatusHandler::addHandler(const Hash256& hash, consumer<uint32_t> handler) {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        CATAPULT_LOG(debug) << "New handler for " << hash;
         m_callbacks[hash] = std::move(handler);
     }
 
@@ -20,10 +19,8 @@ namespace catapult { namespace storage {
         std::lock_guard<std::mutex> lock(m_mutex);
 
         auto callbackIter = m_callbacks.find(hash);
-        if (callbackIter == m_callbacks.end()) {
-            CATAPULT_LOG(debug) << "Handler for " << hash << " not found";
+        if (callbackIter == m_callbacks.end())
             return;
-        }
 
         callbackIter->second(status);
         m_callbacks.erase(callbackIter);

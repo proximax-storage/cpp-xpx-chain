@@ -12,8 +12,8 @@
 namespace catapult { namespace state {
 
     namespace {
-        Drive GetDrive(const Key& driveKey, const cache::BcDriveCacheView& pDriveCacheView) {
-            auto driveIter = pDriveCacheView.find(driveKey);
+        Drive GetDrive(const Key& driveKey, const cache::BcDriveCacheView& driveCacheView) {
+            auto driveIter = driveCacheView.find(driveKey);
             auto driveEntry = driveIter.get();
 
             std::vector<DataModification> dataModifications;
@@ -44,8 +44,8 @@ namespace catapult { namespace state {
     }
 
     bool StorageStateImpl::driveExist(const Key& driveKey) {
-        auto driveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-        return driveCacheView->contains(driveKey);
+        auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+        return pDriveCacheView->contains(driveKey);
     }
 
     Drive StorageStateImpl::getDrive(const Key& driveKey) {
@@ -53,9 +53,9 @@ namespace catapult { namespace state {
     }
 
     bool StorageStateImpl::isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) {
-		const auto& pDriveCacheView = *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-		auto driveIter = pDriveCacheView.find(driveKey);
-		auto driveEntry = driveIter.get();
+		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+		auto driveIter = pDriveCacheView->find(driveKey);
+		const auto& driveEntry = driveIter.get();
         return driveEntry.replicators().find(key) != driveEntry.replicators().end();
     }
 
@@ -64,7 +64,7 @@ namespace catapult { namespace state {
         auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
 
         auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
-        auto replicatorEntry = replicatorIter.get();
+		const auto& replicatorEntry = replicatorIter.get();
 
         std::vector<Drive> drives;
         drives.reserve(replicatorEntry.drives().size());
@@ -80,9 +80,9 @@ namespace catapult { namespace state {
     }
 
 	std::unique_ptr<ApprovedDataModification> StorageStateImpl::getLastApprovedDataModification(const Key& driveKey) {
-        auto driveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-        auto driveIter = driveCacheView->find(driveKey);
-        auto driveEntry = driveIter.get();
+        auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+        auto driveIter = pDriveCacheView->find(driveKey);
+		const auto& driveEntry = driveIter.get();
 
         auto completedModificationsIter = driveEntry.completedDataModifications().rbegin();
         while (completedModificationsIter != driveEntry.completedDataModifications().rend()) {
@@ -115,57 +115,70 @@ namespace catapult { namespace state {
     uint64_t StorageStateImpl::getDownloadWork(const Key& replicatorKey, const Key& driveKey) {
         auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
         auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
-        auto replicatorEntry = replicatorIter.get();
+        const auto& replicatorEntry = replicatorIter.get();
 
         return replicatorEntry.drives().find(driveKey)->second.LastCompletedCumulativeDownloadWork;
     }
 
     bool StorageStateImpl::downloadChannelExist(const Hash256& id) {
-        auto downloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
-        return downloadChannelCacheView->contains(id);
+        auto pDownloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
+        return pDownloadChannelCacheView->contains(id);
     }
 
-    std::vector<DownloadChannel> StorageStateImpl::getDownloadChannels() {
-        auto downloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
-        auto iterableView = downloadChannelCacheView->tryMakeIterableView();
+    std::vector<DownloadChannel> StorageStateImpl::getDownloadChannels(const Key& replicatorKey) {
+        auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
+        auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
+        const auto& replicatorEntry = replicatorIter.get();
+
+        auto pDownloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
 
         std::vector<DownloadChannel> channels;
-        channels.reserve(downloadChannelCacheView->size());
-        for (auto it = iterableView->begin(); it != iterableView->end(); ++it) {
-            auto consumers = it->second.listOfPublicKeys();
-            consumers.emplace_back(it->second.consumer());
+        channels.reserve(replicatorEntry.downloadChannels().size());
+        for (const auto& id : replicatorEntry.downloadChannels()) {
+			auto channelIter = pDownloadChannelCacheView->find(id);
+			const auto& channelEntry = channelIter.get();
+            auto consumers = channelEntry.listOfPublicKeys();
+            consumers.emplace_back(channelEntry.consumer());
             channels.emplace_back(DownloadChannel{
-                    it->first,
-                    it->second.downloadSize(),
-                    it->second.downloadApprovalCount(),
-                    consumers
-            });
+				id,
+				channelEntry.downloadSize(),
+				channelEntry.downloadApprovalCount(),
+				consumers});
         }
 
         return channels;
     }
 
-    DownloadChannel StorageStateImpl::getDownloadChannel(const Hash256& id) {
-        auto downloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
+	std::unique_ptr<DownloadChannel> StorageStateImpl::getDownloadChannel(const Key& replicatorKey, const Hash256& id) {
+        auto pDownloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
+        auto channelIter = pDownloadChannelCacheView->find(id);
+        const auto& channelEntry = channelIter.get();
 
-        auto channelIter = downloadChannelCacheView->find(id);
-        auto channelEntry = channelIter.get();
+		const auto& cumulativePayments = channelEntry.cumulativePayments();
+		if (cumulativePayments.find(replicatorKey) == cumulativePayments.end())
+			return nullptr;
+
+		std::vector<Key> replicators;
+		replicators.reserve(cumulativePayments.size());
+		for (const auto& pair : cumulativePayments)
+			replicators.emplace_back(pair.first);
 
         auto consumers = channelEntry.listOfPublicKeys();
         consumers.emplace_back(channelEntry.consumer());
 
-        return DownloadChannel{
+        return std::make_unique<DownloadChannel>(DownloadChannel{
 			channelEntry.id(),
 			channelEntry.downloadSize(),
 			channelEntry.downloadApprovalCount(),
 			consumers,
-			Key()}; // TODO set real key
+			replicators,
+			channelEntry.drive()});
     }
 
 	std::unique_ptr<DriveVerification> StorageStateImpl::getActiveVerification(const Key& driveKey) {
-        auto driveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-        auto driveIter = driveCacheView->find(driveKey);
-        auto driveEntry = driveIter.get();
+        auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+        auto driveIter = pDriveCacheView->find(driveKey);
+        const auto& driveEntry = driveIter.get();
 
         if (driveEntry.verifications().size() > 0) {
 			const auto& verification = driveEntry.verifications()[0];

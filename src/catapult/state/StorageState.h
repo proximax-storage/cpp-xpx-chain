@@ -42,6 +42,7 @@ namespace catapult { namespace state {
 		uint64_t DownloadSize;
 		uint16_t DownloadApprovalCount;
 		std::vector<Key> Consumers;
+		std::vector<Key> Replicators;
 		Key DriveKey;
 	};
 
@@ -89,8 +90,8 @@ namespace catapult { namespace state {
 		virtual uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) = 0;
 
 		virtual bool downloadChannelExist(const Hash256& id) = 0;
-		virtual std::vector<DownloadChannel> getDownloadChannels() = 0;
-		virtual DownloadChannel getDownloadChannel(const Hash256& id) = 0;
+		virtual std::vector<DownloadChannel> getDownloadChannels(const Key& replicatorKey) = 0;
+		virtual std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) = 0;
 
         virtual std::unique_ptr<DriveVerification> getActiveVerification(const Key& driveKey) = 0;
 

@@ -157,13 +157,14 @@ namespace catapult { namespace storage {
                 }
             }
 
-            auto channels = m_storageState.getDownloadChannels();
+            auto channels = m_storageState.getDownloadChannels(m_keyPair.publicKey());
             for (const auto& channel: channels) {
                 addDownloadChannel(
 					channel.Id,
 					channel.DriveKey,
 					channel.DownloadSize,
-					channel.Consumers);
+					channel.Consumers,
+					channel.Replicators);
             }
 
 			m_pReplicator->asyncInitializationFinished();
@@ -198,10 +199,14 @@ namespace catapult { namespace storage {
                 const Hash256& channelId,
                 const Key& driveKey,
                 size_t prepaidDownloadSize,
-                const std::vector<Key>& consumers) {
+                const std::vector<Key>& consumers,
+                const std::vector<Key>& replicators) {
             CATAPULT_LOG(debug) << "add download channel " << channelId.data();
 
-			auto replicators = castReplicatorKeys(m_storageState.getDriveReplicators(driveKey));
+			std::vector<sirius::Key> castedReplicators;
+			castedReplicators.reserve(replicators.size());
+			std::for_each(replicators.begin(), replicators.end(), [&castedReplicators](const auto& key) { castedReplicators.push_back(key.array()); });
+
 			std::vector<sirius::Key> castedConsumers;
 			castedConsumers.reserve(consumers.size());
 			std::for_each(consumers.begin(), consumers.end(), [&castedConsumers](const auto& key) { castedConsumers.push_back(key.array()); });
@@ -211,25 +216,44 @@ namespace catapult { namespace storage {
 				sirius::drive::DownloadRequest{
 					channelId.array(),
 					prepaidDownloadSize,
-					replicators,
+					castedReplicators,
 					castedConsumers});
+        }
+
+        void addDownloadChannel(const Hash256& channelId) {
+            auto pChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), channelId);
+			if (!!pChannel) {
+				addDownloadChannel(
+					channelId,
+					pChannel->DriveKey,
+					pChannel->DownloadSize,
+					pChannel->Consumers,
+					pChannel->Replicators);
+			}
         }
 
         void increaseDownloadChannelSize(const Hash256& channelId, size_t downloadSize) {
             CATAPULT_LOG(debug) << "updating download channel " << channelId.data();
 
-            auto channel = m_storageState.getDownloadChannel(channelId.array());
-            addDownloadChannel(
-				channelId,
-				channel.DriveKey,
-				channel.DownloadSize + downloadSize,
-				channel.Consumers);
+            auto pChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), channelId);
+			if (!!pChannel) {
+				addDownloadChannel(
+					channelId,
+					pChannel->DriveKey,
+					pChannel->DownloadSize + downloadSize,
+					pChannel->Consumers,
+					pChannel->Replicators);
+			}
         }
 
         void closeDownloadChannel(const Hash256& channelId) {
             CATAPULT_LOG(debug) << "closing download channel " << channelId.data();
 
-//            m_pReplicator->removeDownloadChannelInfo(channelId.array());
+            auto pChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), channelId);
+			if (!!pChannel) {
+				m_pReplicator->asyncInitiateDownloadApprovalTransactionInfo(m_storageState.lastBlockElementSupplier()()->EntityHash.array(), channelId.array());
+				m_pReplicator->asyncRemoveDownloadChannelInfo(pChannel->DriveKey.array(), channelId.array());
+			}
         }
 
         void addDrive(const Key& driveKey, uint64_t driveSize) {
@@ -359,13 +383,9 @@ namespace catapult { namespace storage {
             m_pImpl->removeDriveModification(driveKey, dataModificationId);
     }
 
-    void ReplicatorService::addDownloadChannel(
-            const Hash256& channelId,
-            const Key& driveKey,
-            size_t prepaidDownloadSize,
-            const std::vector<Key>& consumers) {
+    void ReplicatorService::addDownloadChannel(const Hash256& channelId) {
         if (m_pImpl)
-            m_pImpl->addDownloadChannel(channelId, driveKey, prepaidDownloadSize, consumers);
+            m_pImpl->addDownloadChannel(channelId);
     }
 
     void ReplicatorService::increaseDownloadChannelSize(const Hash256& channelId, size_t downloadSize) {

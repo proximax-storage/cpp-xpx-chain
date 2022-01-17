@@ -74,8 +74,8 @@ namespace catapult { namespace builders {
     model::UniqueEntityPtr<TransactionType> DataModificationApprovalBuilder::buildImpl() const {
         // 1. allocate
         auto size = sizeof(TransactionType)
-                    + m_publicKeys.size() * sizeof(Key)
-                    + m_signatures.size() * sizeof(Signature)
+                    + m_publicKeys.size() * Key_Size
+                    + m_signatures.size() * Signature_Size
                     + m_presentOpinions.size() * sizeof(uint8_t)
                     + m_opinions.size() * sizeof(uint64_t);
         auto pTransaction = createTransaction<TransactionType>(size);

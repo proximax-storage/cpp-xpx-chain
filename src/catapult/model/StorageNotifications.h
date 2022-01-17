@@ -645,13 +645,17 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Storage_Drive_Closure_v1_Notification;
 
 	public:
-		explicit DriveClosureNotification(const Key& drive, const Key& owner)
+		explicit DriveClosureNotification(const Hash256& transactionHash, const Key& drive, const Key& owner)
 			: Notification(Notification_Type, sizeof(DriveClosureNotification<1>))
+			, TransactionHash(transactionHash)
 			, DriveKey(drive)
 			, DriveOwner(owner)
 		{}
 
 	public:
+		/// Hash of the drive closure transaction.
+		Hash256 TransactionHash;
+
 		/// Public key of a drive.
 		Key DriveKey;
 

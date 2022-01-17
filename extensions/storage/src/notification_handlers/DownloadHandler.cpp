@@ -16,20 +16,7 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-//			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey))
-//				return;
-
-			std::vector<Key> listOfPublicKeys;
-			auto pKey = notification.ListOfPublicKeysPtr;
-		  	for (auto i = 0u; i < notification.ListOfPublicKeysSize; ++pKey, ++i)
-				listOfPublicKeys.push_back(*pKey);
-
-			pReplicatorService->addDownloadChannel(
-					notification.Id,
-                    Key(), // TODO add real drive key
-					notification.DownloadSize,
-					std::move(listOfPublicKeys)
-			);
+			pReplicatorService->addDownloadChannel(notification.Id);
 		});
 	}
 }}

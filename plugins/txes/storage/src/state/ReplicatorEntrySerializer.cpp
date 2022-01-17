@@ -11,7 +11,6 @@
 namespace catapult { namespace state {
 
 	namespace {
-
 		void SaveDrives(io::OutputStream& output, const DrivesMap& drives) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(drives.size()));
 			for (const auto& drivePair : drives) {
@@ -39,6 +38,20 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void SaveDownloadChannels(io::OutputStream& output, const std::vector<Hash256>& downloadChannels) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(downloadChannels.size()));
+			for (const auto& id : downloadChannels)
+				io::Write(output, id);
+		}
+
+		void LoadDownloadChannels(io::InputStream& input, std::vector<Hash256>& downloadChannels) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Hash256 id;
+				io::Read(input, id);
+				downloadChannels.emplace_back(std::move(id));
+			}
+		}
 	}
 
 	void ReplicatorEntrySerializer::Save(const ReplicatorEntry& replicatorEntry, io::OutputStream& output) {
@@ -48,6 +61,7 @@ namespace catapult { namespace state {
 		io::Write(output, replicatorEntry.capacity());
 
 		SaveDrives(output, replicatorEntry.drives());
+		SaveDownloadChannels(output, replicatorEntry.downloadChannels());
 	}
 
 	ReplicatorEntry ReplicatorEntrySerializer::Load(io::InputStream& input) {
@@ -63,7 +77,8 @@ namespace catapult { namespace state {
 		entry.setVersion(version);
 		entry.setCapacity(Amount(io::Read64(input)));
 
-		 LoadDrives(input, entry.drives());
+		LoadDrives(input, entry.drives());
+		LoadDownloadChannels(input, entry.downloadChannels());
 
 		return entry;
 	}

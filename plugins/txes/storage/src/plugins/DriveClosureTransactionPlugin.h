@@ -8,13 +8,14 @@
 #include "catapult/plugins.h"
 #include <memory>
 
-namespace catapult { namespace model {
-	class TransactionPlugin;
-}}
+namespace catapult {
+	namespace model { class TransactionPlugin; }
+	namespace config { class ImmutableConfiguration; }
+}
 
 namespace catapult { namespace plugins {
 
 	/// Creates a drive closure transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateDriveClosureTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateDriveClosureTransactionPlugin(const config::ImmutableConfiguration& config);
 }}
