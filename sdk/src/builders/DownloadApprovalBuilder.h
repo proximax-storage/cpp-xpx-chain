@@ -23,27 +23,18 @@ namespace catapult { namespace builders {
         DownloadApprovalBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer);
 
     public:
-//        void setDriveKey(const Key& driveKey);
-
         void setDownloadChannelId(const Hash256& downloadChannelId);
-
+        void setApprovalTrigger(const Hash256& approvalTrigger);
         void setSequenceNumber(uint16_t sequenceNumber);
-
         void setResponseToFinishDownloadTransaction(bool responseToFinishDownloadTransaction);
-
         void setJudgingKeysCount(uint8_t judgingKeysCount);
-
         void setOverlappingKeysCount(uint8_t overlappingKeysCount);
-
         void setJudgedKeysCount(uint8_t judgedKeysCount);
 
-        void setPublicKeys(const std::vector<Key>& keys);
-
-        void setSignatures(const std::vector<Signature>& signatures);
-
-        void setPresentOpinions(const std::vector<uint8_t>& presentOpinions);
-
-        void setOpinions(const std::vector<uint64_t>& opinions);
+        void setPublicKeys(std::vector<Key>&& keys);
+        void setSignatures(std::vector<Signature>&& signatures);
+        void setPresentOpinions(std::vector<uint8_t>&& presentOpinions);
+        void setOpinions(std::vector<uint64_t>&& opinions);
 
     public:
         /// Builds a new download approval approval transaction.
@@ -57,8 +48,8 @@ namespace catapult { namespace builders {
         model::UniqueEntityPtr<TTransaction> buildImpl() const;
 
     private:
-//        Key m_driveKey;
         Hash256 m_downloadChannelId;
+        Hash256 m_approvalTrigger;
         uint16_t m_sequenceNumber;
         bool m_responseToFinishDownloadTransaction;
         uint8_t m_judgingKeysCount;

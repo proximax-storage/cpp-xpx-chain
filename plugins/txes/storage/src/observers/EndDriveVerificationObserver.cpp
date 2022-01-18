@@ -40,19 +40,41 @@ namespace catapult { namespace observers {
             replicatorCache.remove(notification.PublicKeysPtr[i]);
         }
 
+		auto driveIter = driveCache.find(notification.DriveKey);
+		auto& driveEntry = driveIter.get();
+
+		const auto& replicatorKey = notification.PublicKeysPtr[0];
+		auto& shards = driveEntry.verifications()[0].Shards;
+		for (auto iter = shards.begin(); iter != shards.end(); ++iter) {
+			const auto& shard = *iter;
+
+			bool found = false;
+			for (const auto& key : shard) {
+				if (key == replicatorKey) {
+					found = true;
+					break;
+				}
+			}
+
+			if (found) {
+				shards.erase(iter);
+				break;
+			}
+		}
+
+		if (shards.empty())
+			driveEntry.verifications().clear();
+
         if (storageDepositSlashing == 0)
             return;
 
         // Split storage deposit slashing between left replicators
-		auto driveIter = driveCache.find(notification.DriveKey);
-		auto& driveEntry = driveIter.get();
         auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		auto accountIter = accountStateCache.find(notification.DriveKey);
 		auto& driveAccountState = accountIter.get();
 		auto storageDepositSlashingShare = Amount(storageDepositSlashing / driveEntry.replicators().size());
 		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 
-		driveEntry.verifications().clear();
         for (const auto& replicatorKey : driveEntry.replicators()) {
             accountIter = accountStateCache.find(replicatorKey);
             auto& replicatorAccountState = accountIter.get();

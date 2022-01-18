@@ -81,7 +81,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDataModificationApprovalTransactionPlugin());
 		manager.addTransactionSupport(CreateDataModificationCancelTransactionPlugin());
 		manager.addTransactionSupport(CreateReplicatorOnboardingTransactionPlugin(immutableConfig));
-		manager.addTransactionSupport(CreateDriveClosureTransactionPlugin());
+		manager.addTransactionSupport(CreateDriveClosureTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateReplicatorOffboardingTransactionPlugin());
 		manager.addTransactionSupport(CreateFinishDownloadTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDownloadPaymentTransactionPlugin(immutableConfig));

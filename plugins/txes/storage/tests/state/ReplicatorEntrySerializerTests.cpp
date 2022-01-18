@@ -14,13 +14,15 @@ namespace catapult { namespace state {
 	namespace {
 
         constexpr auto Drives_Count = 5;
+        constexpr auto DownloadChannels_Count = 3;
 
         constexpr auto Entry_Size =
             sizeof(VersionType) + // version
             Key_Size + // drive key
             sizeof(Amount) + // capacity
             sizeof(uint16_t) + // drive count
-            Drives_Count * (Key_Size + Hash256_Size + sizeof(bool) + sizeof(uint64_t) + sizeof(uint64_t)); // drives
+            Drives_Count * (Key_Size + Hash256_Size + sizeof(bool) + sizeof(uint64_t) + sizeof(uint64_t)) + // drives
+			DownloadChannels_Count * Hash256_Size; // download channels
 
         class TestContext {
         public:
@@ -46,7 +48,8 @@ namespace catapult { namespace state {
             return test::CreateReplicatorEntry(
                 test::GenerateRandomByteArray<Key>(),
                 test::GenerateRandomValue<Amount>(),
-                Drives_Count);
+                Drives_Count,
+				DownloadChannels_Count);
         }
 
         void AssertEntryBuffer(const state::ReplicatorEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {
@@ -72,6 +75,13 @@ namespace catapult { namespace state {
 				pData += sizeof(uint64_t);
                 EXPECT_EQ(info.LastCompletedCumulativeDownloadWork, *reinterpret_cast<const uint64_t*>(pData));
                 pData += sizeof(uint64_t);
+            }
+
+            EXPECT_EQ(entry.downloadChannels().size(), *reinterpret_cast<const uint16_t*>(pData));
+            pData += sizeof(uint16_t);
+            for (const auto& id : entry.downloadChannels()) {
+                EXPECT_EQ_MEMORY(id.data(), pData, Hash256_Size);
+                pData += Hash256_Size;
             }
 
             EXPECT_EQ(pExpectedEnd, pData);
@@ -134,7 +144,6 @@ namespace catapult { namespace state {
             pData += Key_Size;
             memcpy(pData, &entry.capacity(), sizeof(Amount));
             pData += sizeof(Amount);
-            //region drives
             
             uint16_t drivesCount = utils::checked_cast<size_t, uint16_t>(entry.drives().size());
             memcpy(pData, &drivesCount, sizeof(uint16_t));
@@ -153,7 +162,13 @@ namespace catapult { namespace state {
                 pData += sizeof(uint64_t);
             }
 
-            // end region
+            uint16_t downloadChannelCount = utils::checked_cast<size_t, uint16_t>(entry.downloadChannels().size());
+            memcpy(pData, &downloadChannelCount, sizeof(uint16_t));
+            pData += sizeof(uint16_t);
+            for (const auto& id : entry.downloadChannels()) {
+                memcpy(pData, id.data(), Hash256_Size);
+                pData += Hash256_Size;
+            }
 
             return buffer;
         }

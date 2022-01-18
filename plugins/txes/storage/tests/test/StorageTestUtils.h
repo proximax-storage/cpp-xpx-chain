@@ -155,8 +155,8 @@ namespace catapult { namespace test {
     state::ReplicatorEntry CreateReplicatorEntry(
         Key key = test::GenerateRandomByteArray<Key>(),
         Amount capacity = test::GenerateRandomValue<Amount>(),
-		uint16_t drivesCount = 2
-    );
+		uint16_t drivesCount = 2,
+		uint16_t downloadChannelCount = 4);
 
     /// Verifies that \a entry1 is equivalent to \a entry2.
     void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry);

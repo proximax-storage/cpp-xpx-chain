@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "WeightedVotingActions.h"
 #include "WeightedVotingFsm.h"
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
@@ -14,11 +13,9 @@
 #include "catapult/crypto/Signer.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "catapult/harvesting_core/UnlockedAccounts.h"
-#include "catapult/ionet/PacketPayloadFactory.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/utils/StackLogger.h"
 #include "catapult/validators/AggregateEntityValidator.h"
-#include <cmath>
 
 namespace catapult { namespace fastfinality {
 
@@ -74,11 +71,6 @@ namespace catapult { namespace fastfinality {
 				callback();
 			});
 		}
-
-		void UpdateConnections(std::shared_ptr<WeightedVotingFsm> pFsmShared) {
-			for (const auto& task : pFsmShared->peerConnectionTasks())
-				task.Callback();
-		}
 	}
 
 	action CreateDefaultCheckLocalChainAction(
@@ -90,8 +82,6 @@ namespace catapult { namespace fastfinality {
 			const chain::CommitteeManager& committeeManager) {
 		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager]() {
 			TRY_GET_FSM()
-
-			UpdateConnections(pFsmShared);
 			
 			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
 			pFsmShared->resetChainSyncData();
@@ -278,6 +268,7 @@ namespace catapult { namespace fastfinality {
 
 				bool success = false;
 				for (const auto& pBlock : blocks) {
+					CATAPULT_LOG(debug) << "committee round " << committeeManager.committee().Round << ", block round " << pBlock->round();
 					committeeManager.reset();
 					while (committeeManager.committee().Round < pBlock->round())
 						committeeManager.selectCommittee(config.Network);
@@ -374,12 +365,6 @@ namespace catapult { namespace fastfinality {
 			DecreasePhaseTime(phaseTimeMillis, config);
 			auto nextRoundStart = roundStart + Timestamp(CommitteePhaseCount * phaseTimeMillis);
 			committeeManager.selectCommittee(config);
-			CommitteeStage stage{
-				0,
-				CommitteePhase::None,
-				utils::ToTimePoint(roundStart),
-				phaseTimeMillis
-			};
 
 			while (nextRoundStart < timeSupplier()) {
 				roundStart = nextRoundStart;
@@ -387,14 +372,17 @@ namespace catapult { namespace fastfinality {
 				nextRoundStart = nextRoundStart + Timestamp(CommitteePhaseCount * phaseTimeMillis);
 
 				committeeManager.selectCommittee(config);
-				stage.Round++;
-				stage.PhaseTimeMillis = phaseTimeMillis;
 			}
 
-			stage.RoundStart = utils::ToTimePoint(roundStart);
-			stage.Phase = (timeSupplier() < roundStart + Timestamp(stage.PhaseTimeMillis - 3 * config.CommitteeMessageBroadcastInterval.millis())) ?
-				CommitteePhase::Propose : CommitteePhase::Prevote;
-			CATAPULT_LOG(debug) << "phase " << stage.Phase << ", phase time " << phaseTimeMillis << "ms";
+			CommitteeStage stage {
+				committeeManager.committee().Round,
+				(timeSupplier() < roundStart + Timestamp(stage.PhaseTimeMillis - 3 * config.CommitteeMessageBroadcastInterval.millis())) ?
+					CommitteePhase::Propose : CommitteePhase::Prevote,
+				utils::ToTimePoint(roundStart),
+				phaseTimeMillis
+			};
+
+			CATAPULT_LOG(debug) << "phase " << stage.Phase << ", phase time " << phaseTimeMillis << "ms, round " << stage.Round;
 			pFsmShared->committeeData().setCommitteeStage(stage);
 			pFsmShared->processEvent(StageDetectionSucceeded{});
 		};
@@ -407,8 +395,6 @@ namespace catapult { namespace fastfinality {
 			const chain::TimeSupplier& timeSupplier) {
 		return [pFsmWeak, &committeeManager, pConfigHolder, timeSupplier]() {
 			TRY_GET_FSM()
-
-			UpdateConnections(pFsmShared);
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto stage = committeeData.committeeStage();
@@ -722,7 +708,7 @@ namespace catapult { namespace fastfinality {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
-			const auto& stage = committeeData.committeeStage();
+			auto stage = committeeData.committeeStage();
 			auto phaseEndTimeMillis = GetPhaseEndTimeMillis(stage);
 
 			DelayAction(
@@ -782,7 +768,7 @@ namespace catapult { namespace fastfinality {
 
 				const auto& config = pluginManager.configHolder()->Config().Network;
 				auto& committeeData = pFsmShared->committeeData();
-				const auto& stage = committeeData.committeeStage();
+				auto stage = committeeData.committeeStage();
 				auto delay = GetPhaseEndTimeMillis(stage);
 				const auto& committeeManager = pluginManager.getCommitteeManager();
 
@@ -953,7 +939,7 @@ namespace catapult { namespace fastfinality {
 			if (!pBlock)
 				CATAPULT_THROW_RUNTIME_ERROR("commit confirmed block failed, no block");
 
-			const auto& stage = committeeData.committeeStage();
+			auto stage = committeeData.committeeStage();
 			if (stage.Round != pBlock->round() ||
 				!ValidateBlockCosignatures(pBlock, committeeManager, pConfigHolder->Config().Network.CommitteeApproval)) {
 				pFsmShared->processEvent(CommitBlockFailed{});
@@ -1014,14 +1000,16 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, pConfigHolder]() {
 			TRY_GET_FSM()
 
-			auto currentStage = pFsmShared->committeeData().committeeStage();
+			auto& committeeData = pFsmShared->committeeData();
+			auto currentStage = committeeData.committeeStage();
 			pFsmShared->resetCommitteeData();
 
 			int16_t nextRound = currentStage.Round + 1;
+			CATAPULT_LOG(debug) << "incremented round " << nextRound;
 			auto nextRoundStart = currentStage.RoundStart + std::chrono::milliseconds(GetPhaseEndTimeMillis(currentStage));
 			uint64_t nextPhaseTimeMillis = currentStage.PhaseTimeMillis;
 			IncreasePhaseTime(nextPhaseTimeMillis, pConfigHolder->Config().Network);
-			pFsmShared->committeeData().setCommitteeStage(CommitteeStage{
+			committeeData.setCommitteeStage(CommitteeStage{
 				nextRound,
 				CommitteePhase::Propose,
 				nextRoundStart,
@@ -1037,7 +1025,8 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, pConfigHolder, &committeeManager]() {
 			TRY_GET_FSM()
 
-			auto currentStage = pFsmShared->committeeData().committeeStage();
+			auto& committeeData = pFsmShared->committeeData();
+			auto currentStage = committeeData.committeeStage();
 			pFsmShared->resetCommitteeData();
 			committeeManager.reset();
 
@@ -1045,7 +1034,7 @@ namespace catapult { namespace fastfinality {
 			auto nextRoundStart = currentStage.RoundStart + std::chrono::milliseconds(GetPhaseEndTimeMillis(currentStage));
 			uint64_t nextPhaseTimeMillis = currentStage.PhaseTimeMillis;
 			DecreasePhaseTime(nextPhaseTimeMillis, pConfigHolder->Config().Network);
-			pFsmShared->committeeData().setCommitteeStage(CommitteeStage{
+			committeeData.setCommitteeStage(CommitteeStage{
 				0u,
 				CommitteePhase::Propose,
 				nextRoundStart,

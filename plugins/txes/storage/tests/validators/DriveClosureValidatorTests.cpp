@@ -34,7 +34,7 @@ namespace catapult { namespace validators {
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(driveKey, driveOwner);
+            Notification notification(Hash256(), driveKey, driveOwner);
             auto pValidator = CreateDriveClosureValidator();
             
             // Act:

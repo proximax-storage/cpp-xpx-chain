@@ -74,10 +74,21 @@ namespace catapult { namespace state {
 			return m_drives;
 		}
 
+		/// Gets the download channel ids the replicator is assigned to.
+		const std::vector<Hash256>& downloadChannels() const {
+			return m_downloadChannels;
+		}
+
+		/// Gets the download channel ids the replicator is assigned to.
+		std::vector<Hash256>& downloadChannels() {
+			return m_downloadChannels;
+		}
+
 	private:
 		Amount m_capacity;
 		BLSPublicKey m_blsKey;
 		DrivesMap m_drives;
+		std::vector<Hash256> m_downloadChannels;
 	};
 
 	// Replicator entry.

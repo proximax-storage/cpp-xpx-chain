@@ -53,6 +53,8 @@ namespace catapult { namespace state {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(verifications.size()));
 			for (const auto& verification : verifications) {
 				io::Write(output, verification.VerificationTrigger);
+				io::Write(output, verification.Expiration);
+				io::Write8(output, verification.Expired);
 				SaveShards(output, verification.Shards);
 			}
 		}
@@ -146,6 +148,8 @@ namespace catapult { namespace state {
 		    while (count--) {
 		        state::Verification verification;
 		        io::Read(input, verification.VerificationTrigger);
+		        io::Read(input, verification.Expiration);
+				verification.Expired = io::Read8(input);
 				LoadShards(input, verification.Shards);
 		        verifications.emplace_back(verification);
 		    }

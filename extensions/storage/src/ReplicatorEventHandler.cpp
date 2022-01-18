@@ -28,68 +28,132 @@ namespace catapult { namespace storage {
             void modifyApprovalTransactionIsReady(
                     sirius::drive::Replicator&,
                     sirius::drive::ApprovalTransactionInfo&& transactionInfo) override {
-                CATAPULT_LOG(debug) << "modify approval transaction for " << Hash256(transactionInfo.m_modifyTransactionHash) << " is ready";
+                CATAPULT_LOG(debug) << "sending data modification approval transaction";
 
 				auto pReplicator = m_pReplicator.lock();
 				if (!pReplicator)
 					return;
 
+				std::vector<std::array<uint8_t, 32>> replicatorKeys;
+				for (const auto& opinion : transactionInfo.m_opinions)
+					replicatorKeys.emplace_back(opinion.m_replicatorKey);
+
                 auto transactionHash = m_transactionSender.sendDataModificationApprovalTransaction(transactionInfo);
 
-                auto handler = [transactionHash, driveKey = transactionInfo.m_driveKey, pReplicatorWeak = m_pReplicator](uint32_t status) {
+				m_transactionStatusHandler.addHandler(transactionHash, [
+						transactionHash,
+						replicatorKeys,
+						modifyTransactionHash = transactionInfo.m_modifyTransactionHash,
+						driveKey = transactionInfo.m_driveKey,
+						pReplicatorWeak = m_pReplicator,
+						rootHash = transactionInfo.m_rootHash](uint32_t status) {
 					auto pReplicator = pReplicatorWeak.lock();
 					if (!pReplicator)
 						return;
 
-                    if (validators::ValidationResult(status) == validators::Failure_Storage_Opinion_Invalid_Key) {
-						pReplicator->asyncApprovalTransactionHasFailedInvalidSignatures(
+					auto validationResult = validators::ValidationResult(status);
+					CATAPULT_LOG(debug) << "data modification approval transaction completed with " << validationResult;
+                    if (validationResult == validators::ValidationResult::Success) {
+						pReplicator->asyncApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationApprovalTransactionInfo{
 							driveKey,
-							transactionHash.array());
+							modifyTransactionHash,
+							rootHash,
+							replicatorKeys});
+					} else if (validationResult == validators::Failure_Storage_Opinion_Invalid_Key) {
+						pReplicator->asyncApprovalTransactionHasFailedInvalidSignatures(driveKey, transactionHash.array());
 					}
-                };
-
-                m_transactionStatusHandler.addHandler(transactionHash, handler);
+                });
             }
 
             void singleModifyApprovalTransactionIsReady(
                     sirius::drive::Replicator&,
                     sirius::drive::ApprovalTransactionInfo&& transactionInfo) override {
-                CATAPULT_LOG(debug) << "single modify approval transaction for " << Hash256(transactionInfo.m_modifyTransactionHash) << " is ready";
+                CATAPULT_LOG(debug) << "sending data modification single approval transaction";
 
 				auto pReplicator = m_pReplicator.lock();
 				if (!pReplicator)
 					return;
 
-                m_transactionSender.sendDataModificationSingleApprovalTransaction(transactionInfo);
-            }
+                auto transactionHash = m_transactionSender.sendDataModificationSingleApprovalTransaction(transactionInfo);
 
-            void downloadApprovalTransactionIsReady(
-                    sirius::drive::Replicator&,
-                    const sirius::drive::DownloadApprovalTransactionInfo& info) override {
-                CATAPULT_LOG(debug) << "download approval transaction for" << Hash256(info.m_blockHash) << " is ready";
-
-				auto pReplicator = m_pReplicator.lock();
-				if (!pReplicator)
-					return;
-
-                auto transactionHash = m_transactionSender.sendDownloadApprovalTransaction(
-					m_storageState.getDownloadChannel(info.m_downloadChannelId).DownloadApprovalCount + 1,
-					info);
-
-				m_transactionStatusHandler.addHandler(transactionHash, [transactionHash, blockHash = info.m_blockHash, downloadChannelId = info.m_downloadChannelId,
+				m_transactionStatusHandler.addHandler(transactionHash, [
+						driveKey = transactionInfo.m_driveKey,
+						modifyTransactionHash = transactionInfo.m_modifyTransactionHash,
 						pReplicatorWeak = m_pReplicator](uint32_t status) {
 					auto pReplicator = pReplicatorWeak.lock();
 					if (!pReplicator)
 						return;
 
-                    // success transaction handles here because it's a bit complicate to find `eventHash`
-                    // in notification handlers
-					validators::ValidationResult validationResult{status};
+					auto validationResult = validators::ValidationResult(status);
+					CATAPULT_LOG(debug) << "data modification single approval transaction completed with " << validationResult;
                     if (validationResult == validators::ValidationResult::Success) {
-//                        auto driveClosed = m_storageState.driveExist(driveKey); // TODO for V3
-                        pReplicator->asyncDownloadApprovalTransactionHasBeenPublished(blockHash, downloadChannelId);
+                        pReplicator->asyncSingleApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationSingleApprovalTransactionInfo{
+							driveKey,
+							modifyTransactionHash});
+                    }
+                });
+            }
+
+            void downloadApprovalTransactionIsReady(
+                    sirius::drive::Replicator&,
+                    const sirius::drive::DownloadApprovalTransactionInfo& info) override {
+                CATAPULT_LOG(debug) << "sending download approval transaction";
+
+				auto pReplicator = m_pReplicator.lock();
+				if (!pReplicator)
+					return;
+
+				auto pDownloadChannel = m_storageState.getDownloadChannel(pReplicator->replicatorKey().array(), info.m_downloadChannelId);
+                auto transactionHash = m_transactionSender.sendDownloadApprovalTransaction(pDownloadChannel->DownloadApprovalCount + 1, info);
+
+				m_transactionStatusHandler.addHandler(transactionHash, [
+						&storageState = m_storageState,
+						driveKey = pDownloadChannel->DriveKey,
+						blockHash = info.m_blockHash,
+						downloadChannelId = info.m_downloadChannelId,
+						pReplicatorWeak = m_pReplicator](uint32_t status) {
+					auto pReplicator = pReplicatorWeak.lock();
+					if (!pReplicator)
+						return;
+
+					auto validationResult = validators::ValidationResult(status);
+					CATAPULT_LOG(debug) << "download approval transaction completed with " << validationResult;
+                    if (validationResult == validators::ValidationResult::Success) {
+                        auto driveClosed = storageState.driveExist(driveKey);
+                        pReplicator->asyncDownloadApprovalTransactionHasBeenPublished(blockHash, downloadChannelId, driveClosed);
                     } else if (validationResult != validators::Failure_Storage_Invalid_Sequence_Number) {
                         pReplicator->asyncDownloadApprovalTransactionHasFailedInvalidOpinions(blockHash, downloadChannelId);
+					}
+                });
+            }
+
+            void verificationTransactionIsReady(
+                    sirius::drive::Replicator&,
+					const sirius::drive::VerifyApprovalTxInfo& transactionInfo) override {
+                CATAPULT_LOG(debug) << "sending end drive verification transaction";
+
+				auto pReplicator = m_pReplicator.lock();
+				if (!pReplicator)
+					return;
+
+                auto transactionHash = m_transactionSender.sendEndDriveVerificationTransaction(transactionInfo);
+
+				m_transactionStatusHandler.addHandler(transactionHash, [
+						transactionHash,
+						driveKey = transactionInfo.m_driveKey,
+						pReplicatorWeak = m_pReplicator](uint32_t status) {
+					auto pReplicator = pReplicatorWeak.lock();
+					if (!pReplicator)
+						return;
+
+					auto validationResult = validators::ValidationResult(status);
+					CATAPULT_LOG(debug) << "end drive verification transaction completed with " << validationResult;
+                    if (validationResult == validators::ValidationResult::Success) {
+                        pReplicator->asyncVerifyApprovalTransactionHasBeenPublished(sirius::drive::PublishedVerificationApprovalTransactionInfo{
+							transactionHash.array(),
+							driveKey});
+                    } else if (validationResult == validators::Failure_Storage_Opinion_Invalid_Key) {
+						pReplicator->asyncVerifyApprovalTransactionHasFailedInvalidOpinions(driveKey, transactionHash.array());
 					}
                 });
             }

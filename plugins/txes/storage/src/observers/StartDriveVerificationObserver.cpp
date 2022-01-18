@@ -19,11 +19,14 @@ namespace catapult { namespace observers {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
 
+			if (context.Height < Height(2))
+				return;
+
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto verificationInterval = pluginConfig.VerificationInterval.seconds();
 
-			auto lastBlockTimestamp = state.lastBlockElementSupplier()()->Block.Timestamp.unwrap();
-			auto blockGenerationTimeSeconds = (notification.Timestamp.unwrap() - lastBlockTimestamp) / 1000;
+			auto lastBlockTimestamp = state.lastBlockElementSupplier()()->Block.Timestamp;
+			auto blockGenerationTimeSeconds = (notification.Timestamp - lastBlockTimestamp).unwrap() / 1000;
 			auto verificationFactor = verificationInterval / blockGenerationTimeSeconds;
 			auto blockHash = Key(notification.Hash.array());
 
@@ -32,8 +35,20 @@ namespace catapult { namespace observers {
 			for (const auto& driveKey : driveKeyCollector.keys()) {
 				auto driveIter = driveCache.find(driveKey);
 				auto& driveEntry = driveIter.get();
-				if (!driveEntry.verifications().empty())
-					continue;
+				auto& verifications = driveEntry.verifications();
+				if (!verifications.empty() && verifications[0].Expired)
+					verifications.clear();
+
+				if (!verifications.empty()) {
+					auto& verification = verifications[0];
+					if (verification.Expired) {
+						verifications.clear();
+					} else {
+						if (verification.Expiration > lastBlockTimestamp)
+							verification.Expired = true;
+						continue;
+					}
+				}
 
 				auto driveKeyXorBlockHash = driveKey ^ blockHash;
 				std::ostringstream out;
@@ -42,14 +57,8 @@ namespace catapult { namespace observers {
 				if (value % verificationFactor)
 					continue;
 
-				uint16_t replicatorCount = driveEntry.replicators().size();
-				if (replicatorCount < 2 * pluginConfig.ShardSize) {
-					driveEntry.verifications().emplace_back(state::Verification{ notification.Hash, {} });
-					continue;
-				}
-
 				std::vector<Key> replicators;
-				replicators.reserve(replicatorCount);
+				replicators.reserve(driveEntry.replicators().size());
 				const auto& confirmedStates = driveEntry.confirmedStates();
 				const auto& rootHash = driveEntry.rootHash();
 				for (const auto& key : driveEntry.replicators()) {
@@ -57,6 +66,16 @@ namespace catapult { namespace observers {
 					if (iter != confirmedStates.end() && iter->second == rootHash)
 						replicators.emplace_back(key);
 				}
+
+				auto timeoutMinutes = pluginConfig.VerificationExpirationCoefficient * driveEntry.usedSize() + pluginConfig.VerificationExpirationConstant;
+				auto expiration = lastBlockTimestamp + Timestamp(timeoutMinutes * 60 * 1000);
+
+				uint16_t replicatorCount = driveEntry.replicators().size();
+				if (replicatorCount < 2 * pluginConfig.ShardSize) {
+					verifications.emplace_back(state::Verification{ notification.Hash, expiration, false, state::Shards{ replicators }});
+					continue;
+				}
+
 				std::seed_seq hashSeed(driveKeyXorBlockHash.begin(), driveKeyXorBlockHash.end());
 				std::shuffle(replicators.begin(), replicators.end(), std::mt19937_64(hashSeed));
 
@@ -92,7 +111,7 @@ namespace catapult { namespace observers {
 					}
 				}
 
-				driveEntry.verifications().emplace_back(state::Verification{ notification.Hash, std::move(shards) });
+				verifications.emplace_back(state::Verification{ notification.Hash, expiration, false, std::move(shards) });
 			}
         }))
 	};

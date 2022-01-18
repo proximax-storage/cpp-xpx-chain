@@ -7,6 +7,7 @@
 #include "DriveClosureTransactionPlugin.h"
 #include "catapult/model/StorageNotifications.h"
 #include "src/model/DriveClosureTransaction.h"
+#include "catapult/model/EntityHasher.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 
@@ -16,21 +17,26 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
-			switch (transaction.EntityVersion()) {
-			case 1: {
-				sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
-				sub.notify(DriveClosureNotification<1>(
-						transaction.DriveKey, transaction.Signer));
-				break;
-			}
+		auto CreatePublisher(const config::ImmutableConfiguration& config) {
+			return [&config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+				switch (transaction.EntityVersion()) {
+				case 1: {
+					sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
+					auto transactionHash = CalculateHash(transaction, config.GenerationHash);
+					sub.notify(DriveClosureNotification<1>(
+							transactionHash,
+							transaction.DriveKey,
+							transaction.Signer));
 
-			default:
-				CATAPULT_LOG(debug) << "invalid version of DriveClosureTransaction: "
-									<< transaction.EntityVersion();
-			}
+					break;
+				}
+
+				default:
+					CATAPULT_LOG(debug) << "invalid version of DriveClosureTransaction: " << transaction.EntityVersion();
+				}
+			};
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(DriveClosure, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(DriveClosure, Default, CreatePublisher, config::ImmutableConfiguration)
 }}

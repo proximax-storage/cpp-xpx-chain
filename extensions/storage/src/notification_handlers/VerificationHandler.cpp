@@ -8,15 +8,15 @@
 
 namespace catapult { namespace notification_handlers {
 
-	using Notification = model::DownloadNotification<1>;
+	using Notification = model::BlockNotification<1>;
 
-	DECLARE_HANDLER(Download, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(Download, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+	DECLARE_HANDLER(Verification, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
+		return MAKE_HANDLER(Verification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
 
-			pReplicatorService->addDownloadChannel(notification.Id);
+			pReplicatorService->maybeCancelVerifications();
 		});
 	}
 }}

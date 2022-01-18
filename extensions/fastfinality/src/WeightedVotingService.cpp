@@ -10,16 +10,22 @@
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
+#include "catapult/extensions/NetworkUtils.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/harvesting_core/HarvestingUtFacadeFactory.h"
 #include "catapult/harvesting_core/UnlockedAccounts.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/thread/MultiServicePool.h"
+#include "catapult/ionet/NodeContainer.h"
+#include "catapult/net/PacketReaders.h"
+#include "catapult/net/PacketWriters.h"
 
 namespace catapult { namespace fastfinality {
 
 	namespace {
-		constexpr auto Service_Name = "weightedvoting";
+		constexpr auto Writers_Service_Name = "weightedvoting.writers";
+		constexpr auto Readers_Service_Name = "weightedvoting.readers";
+		constexpr auto Service_Id = ionet::ServiceIdentifier(0x54654144);
+		constexpr unsigned int Port_Diff = 3u;
 
 		std::shared_ptr<harvesting::UnlockedAccounts> CreateUnlockedAccounts(const harvesting::HarvestingConfiguration& config) {
 			auto pUnlockedAccounts = std::make_shared<harvesting::UnlockedAccounts>(config.MaxUnlockedAccounts);
@@ -76,6 +82,54 @@ namespace catapult { namespace fastfinality {
 			return harvesting::CreateHarvesterBlockGenerator(strategy, utFacadeFactory, state.utCache());
 		}
 
+		constexpr utils::LogLevel MapToLogLevel(net::PeerConnectCode connectCode) {
+			if (connectCode == net::PeerConnectCode::Accepted)
+				return utils::LogLevel::Info;
+			else
+				return utils::LogLevel::Warning;
+		}
+
+		thread::Task CreateConnectPeersTask(ionet::NodeContainer& nodes, net::PacketWriters& packetWriters, const Key& identityKey) {
+			return thread::CreateNamedTask("connect peers task for service WeightedVoting", [&nodes, &packetWriters, identityKey]() {
+				using ConnectResult = std::pair<ionet::Node, net::PeerConnectCode>;
+
+				auto connectedNodes = packetWriters.identities();
+				ionet::NodeSet addCandidates;
+				nodes.view().forEach([&connectedNodes, &addCandidates, identityKey](const auto& node, const auto& nodeInfo) {
+					const auto& endpoint = node.endpoint();
+					if (endpoint.Port != 0 && identityKey != node.identityKey() && connectedNodes.find(node.identityKey()) == connectedNodes.end()) {
+						unsigned short port = endpoint.Port + Port_Diff;
+						addCandidates.insert(ionet::Node(node.identityKey(), ionet::NodeEndpoint{ endpoint.Host, port }, node.metadata()));
+					}
+				});
+
+				if (addCandidates.size() == 0)
+					return thread::make_ready_future(thread::TaskResult::Continue);
+
+				auto i = 0u;
+				std::vector<thread::future<ConnectResult>> futures(addCandidates.size());
+				for (const auto& node : addCandidates) {
+					auto pPromise = std::make_shared<thread::promise<ConnectResult>>();
+					futures[i++] = pPromise->get_future();
+
+					packetWriters.connect(node, [node, pPromise](const auto& connectResult) {
+						pPromise->set_value(std::make_pair(node, connectResult.Code));
+					});
+				}
+
+				thread::when_all(std::move(futures)).then([](auto&& connectResultsFuture) {
+					for (auto& resultFuture : connectResultsFuture.get()) {
+						auto connectResult = resultFuture.get();
+						const auto& endpoint = connectResult.first.endpoint();
+						CATAPULT_LOG_LEVEL(MapToLogLevel(connectResult.second))
+							<< "connection attempt to " << connectResult.first << " @ " << endpoint.Host << " : " << endpoint.Port << " completed with " << connectResult.second;
+					}
+				});
+
+				return thread::make_ready_future(thread::TaskResult::Continue);
+			});
+		}
+
 		class WeightedVotingServiceRegistrar : public extensions::ServiceRegistrar {
 		public:
 			explicit WeightedVotingServiceRegistrar(const harvesting::HarvestingConfiguration& config) : m_harvestingConfig(config)
@@ -85,27 +139,38 @@ namespace catapult { namespace fastfinality {
 				return { "WeightedVoting", extensions::ServiceRegistrarPhase::Post_Extended_Range_Consumers };
 			}
 
-			void registerServiceCounters(extensions::ServiceLocator&) override {
-				// no additional counters
+			void registerServiceCounters(extensions::ServiceLocator& locator) override {
+				locator.registerServiceCounter<net::PacketWriters>(Writers_Service_Name, "WV WRITERS", [](const auto& writers) {
+					return writers.numActiveWriters();
+				});
+				locator.registerServiceCounter<net::PacketReaders>(Readers_Service_Name, "WV READERS", [](const auto& readers) {
+					return readers.numActiveReaders();
+				});
 			}
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
-				if (!state.config().Network.EnableWeightedVoting)
+				const auto& config = state.config();
+				if (!config.Network.EnableWeightedVoting)
 					CATAPULT_THROW_RUNTIME_ERROR("weighted voting is not enabled");
 
 				auto pValidatorPool = state.pool().pushIsolatedPool("proposal validator");
-
 				auto pServiceGroup = state.pool().pushServiceGroup("weighted voting");
-				auto pFsmShared = pServiceGroup->pushService([](std::shared_ptr<thread::IoThreadPool> pPool) {
-					return std::make_shared<WeightedVotingFsm>(pPool);
-				});
-				locator.registerService(Service_Name, pFsmShared);
 
-				auto& packetHandlers = state.packetHandlers();
+				auto connectionSettings = extensions::GetConnectionSettings(config);
+				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
+				locator.registerService(Writers_Service_Name, pWriters);
+				const auto& packetPayloadSink = [&writers = *pWriters](const auto& payload) { writers.broadcast(payload); };
+				auto identityKey = crypto::KeyPair::FromString(config.User.BootKey).publicKey();
+				state.tasks().push_back(CreateConnectPeersTask(state.nodes(), *pWriters, identityKey));
+
+				auto pFsmShared = pServiceGroup->pushService([&state, &config](std::shared_ptr<thread::IoThreadPool> pPool) {
+					return std::make_shared<WeightedVotingFsm>(pPool, config);
+				});
+
+				auto& packetIoPickers = pFsmShared->packetIoPickers();
+				packetIoPickers.insert(*pWriters, ionet::NodeRoles::Peer);
 				const auto& pluginManager = state.pluginManager();
 				const auto& pConfigHolder = pluginManager.configHolder();
-				const auto& packetIoPickers = state.packetIoPickers();
-				const auto& packetPayloadSink = state.hooks().packetPayloadSink();
 				const auto& storage = state.storage();
 				auto timeSupplier = state.timeSupplier();
 				auto blockRangeConsumer = state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Remote_Pull);
@@ -125,12 +190,21 @@ namespace catapult { namespace fastfinality {
 				};
 				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
 
+				auto& packetHandlers = pFsmShared->packetHandlers();
 				RegisterPushProposedBlockHandler(pFsmShared, packetHandlers, pluginManager);
 				RegisterPushConfirmedBlockHandler(pFsmShared, packetHandlers, pluginManager);
 				RegisterPushPrevoteMessageHandler(pFsmShared, packetHandlers);
 				RegisterPushPrecommitMessageHandler(pFsmShared, packetHandlers);
 				// TODO: Consider rewriting to (pFsmShared, packetHandlers, pluginManager, storage)
 				RegisterPullRemoteNodeStateHandler(pFsmShared, packetHandlers, pConfigHolder, blockElementGetter, lastBlockElementSupplier);
+
+				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, packetHandlers, locator.keyPair(), connectionSettings, 2u);
+				extensions::BootServer(*pServiceGroup, config.Node.Port + Port_Diff, Service_Id, config, state.nodeSubscriber(), [&acceptor = *pReaders](
+					const auto& socketInfo,
+					const auto& callback) {
+					acceptor.accept(socketInfo, callback);
+				});
+				locator.registerService(Readers_Service_Name, pReaders);
 
 				auto& committeeData = pFsmShared->committeeData();
 				committeeData.setUnlockedAccounts(CreateUnlockedAccounts(m_harvestingConfig));
@@ -188,40 +262,16 @@ namespace catapult { namespace fastfinality {
 				actions.IncrementRound = CreateDefaultIncrementRoundAction(pFsmShared, pConfigHolder);
 				actions.ResetRound = CreateDefaultResetRoundAction(pFsmShared, pConfigHolder, pluginManager.getCommitteeManager());
 				actions.WaitForConfirmedBlock = CreateDefaultWaitForConfirmedBlockAction(pFsmShared, lastBlockElementSupplier);
+
+				pFsmShared->start();
 			}
 
 		private:
 			harvesting::HarvestingConfiguration m_harvestingConfig;
 		};
-
-		std::shared_ptr<WeightedVotingFsm> GetWeightedVotingFsm(const extensions::ServiceLocator& locator) {
-			return locator.service<WeightedVotingFsm>(Service_Name);
-		}
-
-		class WeightedVotingStartServiceRegistrar : public extensions::ServiceRegistrar {
-		public:
-			extensions::ServiceRegistrarInfo info() const override {
-				return { "WeightedVotingStart", extensions::ServiceRegistrarPhase::Post_Packet_Readers };
-			}
-
-			void registerServiceCounters(extensions::ServiceLocator&) override {
-				// no additional counters
-			}
-
-			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
-				auto pFsmShared = GetWeightedVotingFsm(locator);
-
-				pFsmShared->setPeerConnectionTasks(state);
-				pFsmShared->start();
-			}
-		};
 	}
 
 	DECLARE_SERVICE_REGISTRAR(WeightedVoting)(const harvesting::HarvestingConfiguration& config) {
 		return std::make_unique<WeightedVotingServiceRegistrar>(config);
-	}
-
-	DECLARE_SERVICE_REGISTRAR(WeightedVotingStart)() {
-		return std::make_unique<WeightedVotingStartServiceRegistrar>();
 	}
 }}

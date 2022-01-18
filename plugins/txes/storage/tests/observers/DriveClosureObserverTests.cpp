@@ -83,7 +83,7 @@ namespace catapult { namespace observers {
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
-            Notification notification(values.InitialBcDriveEntry.key(), test::GenerateRandomByteArray<Key>());
+            Notification notification(Hash256(), values.InitialBcDriveEntry.key(), test::GenerateRandomByteArray<Key>());
             auto pObserver = CreateDriveClosureObserver();
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();

@@ -17,12 +17,12 @@ namespace catapult { namespace builders {
             , m_judgedKeysCount(0)
     {}
 
-//    void DownloadApprovalBuilder::setDriveKey(const Key& driveKey) {
-//        m_driveKey = driveKey;
-//    }
-
     void DownloadApprovalBuilder::setDownloadChannelId(const Hash256& downloadChannelId) {
         m_downloadChannelId = downloadChannelId;
+    }
+
+    void DownloadApprovalBuilder::setApprovalTrigger(const Hash256& approvalTrigger) {
+        m_approvalTrigger = approvalTrigger;
     }
 
     void DownloadApprovalBuilder::setSequenceNumber(uint16_t sequenceNumber) {
@@ -45,34 +45,35 @@ namespace catapult { namespace builders {
         m_judgedKeysCount = judgedKeysCount;
     }
 
-    void DownloadApprovalBuilder::setPublicKeys(const std::vector<Key>& keys) {
-        m_publicKeys = keys;
+    void DownloadApprovalBuilder::setPublicKeys(std::vector<Key>&& keys) {
+        m_publicKeys = std::move(keys);
     }
 
-    void DownloadApprovalBuilder::setSignatures(const std::vector<Signature>& signatures) {
-        m_signatures = signatures;
+    void DownloadApprovalBuilder::setSignatures(std::vector<Signature>&& signatures) {
+        m_signatures = std::move(signatures);
     }
 
-    void DownloadApprovalBuilder::setPresentOpinions(const std::vector<uint8_t>& presentOpinions) {
-        m_presentOpinions = presentOpinions;
+    void DownloadApprovalBuilder::setPresentOpinions(std::vector<uint8_t>&& presentOpinions) {
+        m_presentOpinions = std::move(presentOpinions);
     }
 
-    void DownloadApprovalBuilder::setOpinions(const std::vector<uint64_t>& opinions) {
-        m_opinions = opinions;
+    void DownloadApprovalBuilder::setOpinions(std::vector<uint64_t>&& opinions) {
+        m_opinions = std::move(opinions);
     }
 
     template<typename TransactionType>
     model::UniqueEntityPtr<TransactionType> DownloadApprovalBuilder::buildImpl() const {
         // 1. allocate
         auto size = sizeof(TransactionType)
-                    + m_publicKeys.size() * sizeof(Key)
-                    + m_signatures.size() * sizeof(Signature)
+                    + m_publicKeys.size() * Key_Size
+                    + m_signatures.size() * Signature_Size
                     + m_presentOpinions.size() * sizeof(uint8_t)
                     + m_opinions.size() * sizeof(uint64_t);
         auto pTransaction = createTransaction<TransactionType>(size);
 
         // 2. set transaction fields
         pTransaction->DownloadChannelId = m_downloadChannelId;
+        pTransaction->ApprovalTrigger = m_approvalTrigger;
         pTransaction->SequenceNumber = m_sequenceNumber;
         pTransaction->ResponseToFinishDownloadTransaction = m_responseToFinishDownloadTransaction;
         pTransaction->JudgingKeysCount = m_judgingKeysCount;

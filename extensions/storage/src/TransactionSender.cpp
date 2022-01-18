@@ -8,6 +8,7 @@
 #include "sdk/src/builders/DataModificationApprovalBuilder.h"
 #include "sdk/src/builders/DataModificationSingleApprovalBuilder.h"
 #include "sdk/src/builders/DownloadApprovalBuilder.h"
+#include "sdk/src/builders/EndDriveVerificationBuilder.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/model/EntityHasher.h"
 #include <boost/dynamic_bitset.hpp>
@@ -231,6 +232,7 @@ namespace catapult { namespace storage {
 		// build and send transaction
         builders::DownloadApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
         builder.setDownloadChannelId(transactionInfo.m_downloadChannelId);
+		builder.setApprovalTrigger(transactionInfo.m_blockHash);
         builder.setSequenceNumber(sequenceNumber);
         builder.setResponseToFinishDownloadTransaction(false); // TODO set right value
         builder.setJudgingKeysCount(judgingKeys.size());
@@ -246,6 +248,45 @@ namespace catapult { namespace storage {
 
         return model::CalculateHash(*pTransaction, m_generationHash);
     }
+
+    Hash256 TransactionSender::sendEndDriveVerificationTransaction(const sirius::drive::VerifyApprovalTxInfo& transactionInfo) {
+		uint8_t opinionCount = transactionInfo.m_opinions[0].m_opinions.size();
+		uint8_t keyCount = opinionCount + 1;
+		uint8_t judgingKeyCount = transactionInfo.m_opinions.size();
+		std::vector<Key> publicKeys;
+		publicKeys.reserve(keyCount);
+		std::vector<Signature> signatures;
+		signatures.reserve(judgingKeyCount);
+		boost::dynamic_bitset<uint8_t> opinionsBitset(judgingKeyCount * opinionCount);
+
+		for (auto i = 0u; i < transactionInfo.m_opinions.size(); ++i) {
+			const auto& opinion = transactionInfo.m_opinions[i];
+			publicKeys.emplace_back(opinion.m_publicKey);
+			signatures.emplace_back(opinion.m_signature.array());
+			for (auto k = 0u; k < opinionCount; ++k)
+				opinionsBitset[i * opinionCount + k] = opinion.m_opinions[k];
+		}
+
+		std::vector<uint8_t> opinions;
+		opinions.reserve((judgingKeyCount * opinionCount + 7) / 8);
+		boost::to_block_range(opinionsBitset, std::back_inserter(opinions));
+
+		// build and send transaction
+        builders::EndDriveVerificationBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
+        builder.setDriveKey(transactionInfo.m_driveKey);
+		builder.setVerificationTrigger(transactionInfo.m_tx);
+        builder.setShardId(transactionInfo.m_shardId);
+        builder.setKeyCount(keyCount);
+        builder.setJudgingKeyCount(judgingKeyCount);
+        builder.setPublicKeys(std::move(publicKeys));
+        builder.setSignatures(std::move(signatures));
+        builder.setOpinions(std::move(opinions));
+        auto pTransaction = utils::UniqueToShared(builder.build());
+        pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
+        send(pTransaction);
+
+        return model::CalculateHash(*pTransaction, m_generationHash);
+	}
 
     void TransactionSender::send(std::shared_ptr<model::Transaction> pTransaction) {
 		extensions::TransactionExtensions(m_generationHash).sign(m_keyPair, *pTransaction);

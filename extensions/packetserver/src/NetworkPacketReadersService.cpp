@@ -70,7 +70,7 @@ namespace catapult { namespace packetserver {
 				locator.registerService(Service_Name, pReaders);
 
 				// add tasks
-				state.peerConnectionTasks().push_back(CreateAgePeersTask(state, *pReaders));
+				state.tasks().push_back(CreateAgePeersTask(state, *pReaders));
 			}
 		};
 	}

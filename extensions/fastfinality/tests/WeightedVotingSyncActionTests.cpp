@@ -8,6 +8,7 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockCommitteeManager.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult {
 
@@ -44,7 +45,7 @@ namespace catapult {
 						std::map<Key, uint64_t> importances,
 						uint8_t expectedAction)
 					: m_pPool(test::CreateStartedIoThreadPool())
-					, m_pFsm(std::make_shared<fastfinality::WeightedVotingFsm>(m_pPool))
+					, m_pFsm(std::make_shared<fastfinality::WeightedVotingFsm>(m_pPool, pConfigHolder->Config()))
 					, m_states(std::move(states))
 					, m_pConfigHolder(pConfigHolder)
 					, m_pLastBlockElement(pLastBlockElement)
@@ -104,11 +105,12 @@ namespace catapult {
 			};
 
 			auto CreateConfigHolder() {
-				auto config = model::NetworkConfiguration::Uninitialized();
-				config.CommitteeEndSyncApproval = CommitteeEndSyncApproval;
-				config.CommitteeBaseTotalImportance = CommitteeBaseTotalImportance;
-				config.CommitteeNotRunningContribution = CommitteeNotRunningContribution;
-				return std::make_shared<config::MockBlockchainConfigurationHolder>(config);
+				test::MutableBlockchainConfiguration config;
+				config.Network.CommitteeEndSyncApproval = CommitteeEndSyncApproval;
+				config.Network.CommitteeBaseTotalImportance = CommitteeBaseTotalImportance;
+				config.Network.CommitteeNotRunningContribution = CommitteeNotRunningContribution;
+				config.Node.MaxPacketDataSize = utils::FileSize::FromMegabytes(150);
+				return std::make_shared<config::MockBlockchainConfigurationHolder>(config.ToConst());
 			}
 		}
 

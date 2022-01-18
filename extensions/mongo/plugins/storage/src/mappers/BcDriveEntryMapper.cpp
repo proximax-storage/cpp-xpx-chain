@@ -91,6 +91,8 @@ namespace catapult { namespace mongo { namespace plugins {
 			for (const auto& verification : verifications) {
 				bson_stream::document verificationBuilder;
 				verificationBuilder << "verificationTrigger" << ToBinary(verification.VerificationTrigger);
+				verificationBuilder << "expiration" << ToInt64(verification.Expiration);
+				verificationBuilder << "expired" << verification.Expired;
 				StreamShards(verificationBuilder, verification.Shards);
 				array << verificationBuilder;
 			}
@@ -211,6 +213,8 @@ namespace catapult { namespace mongo { namespace plugins {
 				auto doc = dbVerification.get_document().view();
 				state::Verification verification;
 				DbBinaryToModelArray(verification.VerificationTrigger, doc["verificationTrigger"].get_binary());
+				verification.Expiration = Timestamp(static_cast<uint64_t>(doc["expiration"].get_int64()));
+				verification.Expired = doc["expired"].get_bool();
 				ReadShards(verification.Shards, doc["shards"].get_array().value);
 				verifications.emplace_back(verification);
 			}

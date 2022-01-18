@@ -42,6 +42,10 @@ namespace catapult { namespace config {
 		TRY_LOAD_CHAIN_PROPERTY(VerificationInterval);
 		config.ShardSize = 20;
 		TRY_LOAD_CHAIN_PROPERTY(ShardSize);
+		config.VerificationExpirationCoefficient = 0.06;
+		TRY_LOAD_CHAIN_PROPERTY(VerificationExpirationCoefficient);
+		config.VerificationExpirationConstant = 10;
+		TRY_LOAD_CHAIN_PROPERTY(VerificationExpirationConstant);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

@@ -80,21 +80,21 @@ namespace catapult { namespace chain {
 			return 1.0 / (1.0 + std::exp(-accountData.Activity));
 		}
 
-		void LogAccountData(const cache::AccountMap& accounts, utils::LogLevel logLevel) {
+		void LogAccountData(const cache::AccountMap& accounts) {
 			for (const auto& pair : accounts) {
 				const auto& data = pair.second;
-				CATAPULT_LOG_LEVEL(logLevel) << "committee account " << pair.first << " data: "
+				CATAPULT_LOG_LEVEL(utils::LogLevel::Trace) << "committee account " << pair.first << " data: "
 					<< CalculateWeight(data) << "|" << data.Activity << data.Greed << "|" << data.LastSigningBlockHeight << "|"
 					<< data.CanHarvest << "|" << data.EffectiveBalance;
 			}
 		}
 
-		void DecreaseActivity(const Key& key, cache::AccountMap& accounts, const config::CommitteeConfiguration& config, utils::LogLevel logLevel) {
+		void DecreaseActivity(const Key& key, cache::AccountMap& accounts, const config::CommitteeConfiguration& config) {
 			auto& data = accounts.at(key);
 			auto& activity = data.Activity;
 			activity -= config.ActivityCommitteeNotCosignedDelta;
 
-			CATAPULT_LOG_LEVEL(logLevel) << "committee account " << key << ": activity " << activity << ", weight " << CalculateWeight(data);
+			CATAPULT_LOG_LEVEL(utils::LogLevel::Trace) << "committee account " << key << ": activity " << activity << ", weight " << CalculateWeight(data);
 		}
 	}
 
@@ -102,7 +102,6 @@ namespace catapult { namespace chain {
 		: m_pHasher(std::make_unique<DefaultHasher>())
 		, m_pAccountCollector(pAccountCollector)
 		, m_accounts(m_pAccountCollector->accounts())
-		, m_logLevel(utils::LogLevel::Debug)
 	{}
 
 	void WeightedVotingCommitteeManager::reset() {
@@ -118,19 +117,19 @@ namespace catapult { namespace chain {
 	}
 
 	void WeightedVotingCommitteeManager::decreaseActivities(const config::CommitteeConfiguration& config) {
-		CATAPULT_LOG_LEVEL(m_logLevel) << "decreasing activities of previous committee accounts";
-		DecreaseActivity(m_committee.BlockProposer, m_accounts, config, m_logLevel);
+		CATAPULT_LOG_LEVEL(utils::LogLevel::Trace) << "decreasing activities of previous committee accounts";
+		DecreaseActivity(m_committee.BlockProposer, m_accounts, config);
 		for (const auto& cosigner : m_committee.Cosigners) {
-			DecreaseActivity(cosigner, m_accounts, config, m_logLevel);
+			DecreaseActivity(cosigner, m_accounts, config);
 		}
 	}
 
 	const Committee& WeightedVotingCommitteeManager::selectCommittee(const model::NetworkConfiguration& networkConfig) {
 		auto previousRound = m_committee.Round;
-		CATAPULT_LOG_LEVEL(m_logLevel) << "selecting committee for round " << previousRound + 1;
+		CATAPULT_LOG_LEVEL(utils::LogLevel::Debug) << "selecting committee for round " << previousRound + 1;
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
 		if (previousRound < 0) {
-			LogAccountData(m_accounts, m_logLevel);
+			LogAccountData(m_accounts);
 		} else {
 			decreaseActivities(config);
 		}
@@ -188,9 +187,9 @@ namespace catapult { namespace chain {
 		m_committee.BlockProposer = blockProposerCandidates.begin()->second;
 		m_committee.Cosigners.erase(m_committee.BlockProposer);
 
-		CATAPULT_LOG_LEVEL(m_logLevel) << "committee: block proposer " << m_committee.BlockProposer;
+		CATAPULT_LOG_LEVEL(utils::LogLevel::Trace) << "committee: block proposer " << m_committee.BlockProposer;
 		for (const auto& cosigner : m_committee.Cosigners)
-			CATAPULT_LOG_LEVEL(m_logLevel) << "committee: cosigner " << cosigner;
+			CATAPULT_LOG_LEVEL(utils::LogLevel::Trace) << "committee: cosigner " << cosigner;
 
 		return m_committee;
 	}

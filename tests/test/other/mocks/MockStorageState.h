@@ -55,17 +55,21 @@ namespace catapult { namespace mocks {
             return false;
         }
 
-        std::vector<state::DownloadChannel> getDownloadChannels() override {
+        std::vector<state::DownloadChannel> getDownloadChannels(const Key&) override {
             return std::vector<state::DownloadChannel>();
         }
 
-        state::DownloadChannel getDownloadChannel(const Hash256& id) override {
-            return state::DownloadChannel();
+		std::unique_ptr<state::DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) override {
+            return nullptr;
         }
 
 		virtual std::unique_ptr<state::DriveVerification> getActiveVerification(const Key& driveKey) override {
             return nullptr;
         }
+
+		std::vector<state::DriveVerification> getActiveVerifications(const Key& replicatorKey) {
+			return {};
+		}
     };
 
 #pragma pack(pop)

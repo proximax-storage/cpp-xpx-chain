@@ -29,6 +29,8 @@ namespace catapult { namespace config {
 							{ "downloadBillingPeriod", "24h" },
 							{ "verificationInterval", "4h" },
 							{ "shardSize", "20" },
+							{ "verificationExpirationCoefficient", "0.06" },
+							{ "verificationExpirationConstant", "10" },
 						}
 					}
 				};
@@ -49,7 +51,9 @@ namespace catapult { namespace config {
 					"storageBillingPeriod",
 					"downloadBillingPeriod",
 					"verificationInterval",
-					"shardSize"}.count(name);
+					"shardSize",
+					"verificationExpirationCoefficient",
+					"verificationExpirationConstant"}.count(name);
 			}
 
 			static bool IsSectionOptional(const std::string&) {

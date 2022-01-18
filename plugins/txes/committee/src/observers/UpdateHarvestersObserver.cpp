@@ -17,20 +17,6 @@ namespace catapult { namespace observers {
 	using Notification = model::BlockCommitteeNotification<1>;
 
 	namespace {
-		class LogLevelSetter {
-		public:
-			explicit LogLevelSetter(std::shared_ptr<chain::WeightedVotingCommitteeManager> pCommitteeManager)
-				: m_pCommitteeManager(std::move(pCommitteeManager)) {
-				m_pCommitteeManager->setLogLevel(utils::LogLevel::Trace);
-			}
-			~LogLevelSetter() {
-				m_pCommitteeManager->setLogLevel(utils::LogLevel::Debug);
-			}
-
-		private:
-			std::shared_ptr<chain::WeightedVotingCommitteeManager> m_pCommitteeManager;
-		};
-
 		void UpdateHarvesters(
 				const Notification& notification,
 				ObserverContext& context,
@@ -49,7 +35,7 @@ namespace catapult { namespace observers {
 			cache::ImportanceView importanceView(readOnlyCache.sub<cache::AccountStateCache>());
 			auto& committeeCache = context.Cache.sub<cache::CommitteeCache>();
 
-			LogLevelSetter logLevelSetter(pCommitteeManager);
+			CATAPULT_LOG(debug) << "committee round " << pCommitteeManager->committee().Round << ", notification round " << notification.Round;
 			pCommitteeManager->reset();
 			while (pCommitteeManager->committee().Round < notification.Round)
 				pCommitteeManager->selectCommittee(networkConfig);

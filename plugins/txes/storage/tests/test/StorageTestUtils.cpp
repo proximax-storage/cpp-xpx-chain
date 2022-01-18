@@ -47,6 +47,8 @@ namespace catapult { namespace test {
 				const auto &expectedVerification = expectedVerifications[i];
 				const auto &verification = verifications[i];
 				EXPECT_EQ(expectedVerification.VerificationTrigger, verification.VerificationTrigger);
+				EXPECT_EQ(expectedVerification.Expiration, verification.Expiration);
+				EXPECT_EQ(expectedVerification.Expired, verification.Expired);
 				ASSERT_EQ(expectedVerification.Shards.size(), verification.Shards.size());
 				for (auto i = 0u; i < expectedVerification.Shards.size(); ++i) {
 					ASSERT_EQ(expectedVerification.Shards[i].size(), verification.Shards[i].size());
@@ -124,7 +126,7 @@ namespace catapult { namespace test {
 
         entry.verifications().reserve(verificationsCount);
         for (auto i = 0u; i < verificationsCount; ++i) {
-			entry.verifications().emplace_back(state::Verification{test::GenerateRandomByteArray<Hash256>(), {}});
+			entry.verifications().emplace_back(state::Verification{test::GenerateRandomByteArray<Hash256>(), Timestamp(test::Random()), bool(test::RandomByte()), {}});
 			entry.verifications().back().Shards.emplace_back();
 			auto& shard = entry.verifications().back().Shards.back();
 			for (uint16_t k = 0u; k < replicatorCount; ++k)
@@ -202,11 +204,14 @@ namespace catapult { namespace test {
     state::ReplicatorEntry CreateReplicatorEntry(
             Key key,
             Amount capacity,
-            uint16_t drivesCount) {
+            uint16_t drivesCount,
+			uint16_t downloadChannelCount) {
         state::ReplicatorEntry entry(key);
 		entry.setCapacity(capacity);
         for (auto dC = 0u; dC < drivesCount; ++dC)
             entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
+        for (auto i = 0u; i < downloadChannelCount; ++i)
+            entry.downloadChannels().emplace_back(test::GenerateRandomByteArray<Hash256>());
 
         return entry;
     }

@@ -18,7 +18,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS DriveClosureTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(DriveClosure, 1, 1,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(DriveClosure, config::ImmutableConfiguration, 1, 1,)
 	
 		template<typename TTraits>
 		auto CreateTransaction() {
@@ -26,11 +26,12 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_DriveClosure)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , Entity_Type_DriveClosure, config::ImmutableConfiguration::Uninitialized())
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin();
+		auto config = config::ImmutableConfiguration::Uninitialized();
+		auto pPlugin = TTraits::CreatePlugin(config);
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
@@ -45,7 +46,8 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto config = config::ImmutableConfiguration::Uninitialized();
+		auto pPlugin = TTraits::CreatePlugin(config);
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
@@ -62,7 +64,8 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto pTransaction = CreateTransaction<TTraits>();
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto config = config::ImmutableConfiguration::Uninitialized();
+		auto pPlugin = TTraits::CreatePlugin(config);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
@@ -81,7 +84,8 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishDriveNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<DriveNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto config = config::ImmutableConfiguration::Uninitialized();
+		auto pPlugin = TTraits::CreatePlugin(config);
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
@@ -101,7 +105,8 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishDriveClosureNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<DriveClosureNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto config = config::ImmutableConfiguration::Uninitialized();
+		auto pPlugin = TTraits::CreatePlugin(config);
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
