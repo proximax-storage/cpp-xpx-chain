@@ -23,7 +23,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
     template<typename TTransaction>
     void StreamEndDriveVerificationTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-        builder << "drive" << ToBinary(transaction.DriveKey);
+        builder << "driveKey" << ToBinary(transaction.DriveKey);
         builder << "verificationTrigger" << ToBinary(transaction.VerificationTrigger);
         builder << "shardId" << static_cast<int64_t>(transaction.ShardId);
 

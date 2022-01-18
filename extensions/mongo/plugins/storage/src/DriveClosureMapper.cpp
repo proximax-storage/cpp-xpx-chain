@@ -15,7 +15,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	template<typename TTransaction>
 	void StreamDriveClosureTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-		builder << "drive" << ToBinary(transaction.DriveKey);
+		builder << "driveKey" << ToBinary(transaction.DriveKey);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(DriveClosure, StreamDriveClosureTransaction)
