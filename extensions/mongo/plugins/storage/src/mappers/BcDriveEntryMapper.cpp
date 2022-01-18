@@ -104,7 +104,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto array = builder << "downloadShards" << bson_stream::open_array;
 			for (const auto& pair : downloadShards) {
 				bson_stream::document shardBuilder;
-				shardBuilder << "downloadChannelId" << pair.first;
+				shardBuilder << "downloadChannelId" << ToBinary(pair.first);
 				StreamReplicators("replicators", shardBuilder, pair.second);
 				array << shardBuilder;
 			}
