@@ -74,11 +74,11 @@ namespace catapult { namespace storage {
         Impl(const crypto::KeyPair& keyPair,
              extensions::ServiceState& serviceState,
              state::StorageState& storageState,
-             const ionet::NodeContainerView& nodesView)
+             const ionet::NodeContainer& nodeContainer)
              : m_keyPair(keyPair)
              , m_serviceState(serviceState)
              , m_storageState(storageState)
-             , m_nodesView(nodesView)
+             , m_nodeContainer(nodeContainer)
 		 {}
 
     public:
@@ -95,6 +95,14 @@ namespace catapult { namespace storage {
 				std::move(transactionSender),
 				m_storageState,
 				m_transactionStatusHandler);
+
+			auto nodesView = m_nodeContainer.view();
+			std::vector<sirius::drive::ReplicatorInfo> bootstrapNodes;
+			bootstrapNodes.reserve(nodesView.size());
+			nodesView.forEach([&bootstrapNodes](const ionet::Node& node, const ionet::NodeInfo&){
+				boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(node.endpoint().Host), node.endpoint().Port);
+				bootstrapNodes.emplace_back(sirius::drive::ReplicatorInfo{ endpoint, node.identityKey().array() });
+			});
 
             m_pReplicator = sirius::drive::createDefaultReplicator(
 				reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
@@ -337,7 +345,7 @@ namespace catapult { namespace storage {
         const crypto::KeyPair& m_keyPair;
         extensions::ServiceState& m_serviceState;
         state::StorageState& m_storageState;
-        const ionet::NodeContainerView& m_nodesView;
+        const ionet::NodeContainer& m_nodeContainer;
 
         std::shared_ptr<sirius::drive::Replicator> m_pReplicator;
         std::unique_ptr<ReplicatorEventHandler> m_pReplicatorEventHandler;
@@ -360,8 +368,7 @@ namespace catapult { namespace storage {
 			m_keyPair,
 			*m_pServiceState,
 			m_pServiceState->pluginManager().storageState(),
-			m_pServiceState->nodes().view()
-        );
+			m_pServiceState->nodes());
         m_pImpl->init(m_storageConfig);
     }
 
