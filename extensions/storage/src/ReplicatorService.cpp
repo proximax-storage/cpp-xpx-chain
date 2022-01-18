@@ -277,6 +277,18 @@ namespace catapult { namespace storage {
 				transactionHash.array());
         }
 
+        void maybeCancelVerifications() {
+			auto verifications = m_storageState.getActiveVerifications(m_keyPair.publicKey());
+			for (const auto& verification : verifications) {
+				if (verification.Expired) {
+					sirius::Hash256 verificationTrigger = verification.VerificationTrigger.array();
+					m_pReplicator->asyncCancelDriveVerification(
+						verification.DriveKey.array(),
+						std::move(verificationTrigger));
+				}
+			}
+        }
+
         void dataModificationApprovalPublished(
                 const Key& driveKey,
                 const Hash256& modificationId,
@@ -413,6 +425,11 @@ namespace catapult { namespace storage {
     void ReplicatorService::closeDrive(const Key& driveKey, const Hash256& transactionHash) {
         if (m_pImpl)
             m_pImpl->closeDrive(driveKey, transactionHash);
+    }
+
+    void ReplicatorService::maybeCancelVerifications() {
+        if (m_pImpl)
+            m_pImpl->maybeCancelVerifications();
     }
 
     void ReplicatorService::notifyTransactionStatus(const Hash256& hash, uint32_t status) {

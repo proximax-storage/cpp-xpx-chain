@@ -42,6 +42,8 @@ namespace catapult { namespace storage {
         bool isAssignedToDrive(const Key& driveKey);
         void closeDrive(const Key& driveKey, const Hash256& transactionHash);
 
+        void maybeCancelVerifications();
+
     public:
         void dataModificationApprovalPublished(const Key& driveKey, const Hash256& modificationId, const Hash256& rootHash, std::vector<Key>& replicators);
         void dataModificationSingleApprovalPublished(const Key& driveKey, const Hash256& modificationId);

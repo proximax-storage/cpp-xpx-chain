@@ -66,6 +66,10 @@ namespace catapult { namespace mocks {
 		virtual std::unique_ptr<state::DriveVerification> getActiveVerification(const Key& driveKey) override {
             return nullptr;
         }
+
+		std::vector<state::DriveVerification> getActiveVerifications(const Key& replicatorKey) {
+			return {};
+		}
     };
 
 #pragma pack(pop)

@@ -20,22 +20,22 @@ namespace catapult { namespace config {
 		DEFINE_CONFIG_CONSTANTS(storage)
 
 		/// Minimal size of the drive.
-		utils::FileSize MinDriveSize{};
+		utils::FileSize MinDriveSize;
 
 		/// Maximal size of the drive.
-		utils::FileSize MaxDriveSize{};
+		utils::FileSize MaxDriveSize;
 
 		/// Maximal size of the modification (for single payment).
-		utils::FileSize MaxModificationSize{};
+		utils::FileSize MaxModificationSize;
 
 		/// Minimal number of replicators.
-		uint16_t MinReplicatorCount{};
+		uint16_t MinReplicatorCount;
 
 		/// Max size to download files for free
-		utils::FileSize MaxFreeDownloadSize{};
+		utils::FileSize MaxFreeDownloadSize;
 
 		/// Maximal size of the download (for single payment).
-		utils::FileSize MaxDownloadSize{};
+		utils::FileSize MaxDownloadSize;
 
 		/// Storage billing period.
 		utils::TimeSpan StorageBillingPeriod;
@@ -51,6 +51,12 @@ namespace catapult { namespace config {
 
 		/// The number of replicators in shard.
 		uint8_t ShardSize;
+
+		/// The verification expiration coefficient.
+		double VerificationExpirationCoefficient;
+
+		/// The verification expiration constant.
+		double VerificationExpirationConstant;
 
 	private:
 		StorageConfiguration() = default;

@@ -47,6 +47,8 @@ namespace catapult { namespace state {
 	};
 
 	struct DriveVerification {
+		Key DriveKey;
+		bool Expired;
 		Hash256 VerificationTrigger;
 		Hash256 RootHash;
 		std::vector<std::vector<Key>> Shards;
@@ -94,6 +96,7 @@ namespace catapult { namespace state {
 		virtual std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) = 0;
 
         virtual std::unique_ptr<DriveVerification> getActiveVerification(const Key& driveKey) = 0;
+        virtual std::vector<DriveVerification> getActiveVerifications(const Key& replicatorKey) = 0;
 
 	protected:
 		cache::CatapultCache* m_pCache;

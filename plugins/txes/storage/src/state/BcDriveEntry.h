@@ -99,8 +99,14 @@ namespace catapult { namespace state {
 	using Shards = std::vector<std::vector<Key>>;
 
 	struct Verification {
-		/// The hash of block that initiated the Verification.
+		/// The hash of block that initiated the verification.
 		Hash256 VerificationTrigger;
+
+		/// The expiration time of the verification.
+		Timestamp Expiration;
+
+		/// Whether the verification is expired or not.
+		bool Expired;
 
 		/// Replicator shards.
 		state::Shards Shards;

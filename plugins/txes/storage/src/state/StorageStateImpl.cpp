@@ -36,6 +36,23 @@ namespace catapult { namespace state {
 				dataModifications
             };
         }
+
+		std::unique_ptr<DriveVerification> GetActiveVerification(const Key& driveKey, const cache::BcDriveCacheView& driveCacheView) {
+			auto driveIter = driveCacheView.find(driveKey);
+			const auto& driveEntry = driveIter.get();
+
+			if (driveEntry.verifications().size() > 0) {
+				const auto& verification = driveEntry.verifications()[0];
+				return std::make_unique<DriveVerification>(DriveVerification{
+					driveKey,
+					verification.Expired,
+					verification.VerificationTrigger,
+					driveEntry.rootHash(),
+					verification.Shards});
+			}
+
+			return nullptr;
+		}
     }
 
     bool StorageStateImpl::isReplicatorRegistered(const Key& key) {
@@ -176,18 +193,37 @@ namespace catapult { namespace state {
     }
 
 	std::unique_ptr<DriveVerification> StorageStateImpl::getActiveVerification(const Key& driveKey) {
-        auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-        auto driveIter = pDriveCacheView->find(driveKey);
-        const auto& driveEntry = driveIter.get();
+		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+		return GetActiveVerification(driveKey, *pDriveCacheView);
+	}
 
-        if (driveEntry.verifications().size() > 0) {
-			const auto& verification = driveEntry.verifications()[0];
-			return std::make_unique<DriveVerification>(DriveVerification{
-				verification.VerificationTrigger,
-				driveEntry.rootHash(),
-				verification.Shards});
+	std::vector<DriveVerification> StorageStateImpl::getActiveVerifications(const Key& replicatorKey) {
+		auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
+		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+
+		auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
+		const auto& replicatorEntry = replicatorIter.get();
+
+		std::vector<DriveVerification> verifications;
+		verifications.reserve(replicatorEntry.drives().size());
+		for (const auto& pair: replicatorEntry.drives()) {
+			auto pVerification = GetActiveVerification(pair.first, *pDriveCacheView);
+			if (!!pVerification) {
+				for (const auto& shard : pVerification->Shards) {
+					bool found = false;
+					for (const auto &key: shard) {
+						if (key == replicatorKey) {
+							found = true;
+							verifications.emplace_back(*pVerification);
+							break;
+						}
+					}
+					if (found)
+						break;
+				}
+			}
 		}
 
-		return nullptr;
+		return verifications;
 	}
 }}
