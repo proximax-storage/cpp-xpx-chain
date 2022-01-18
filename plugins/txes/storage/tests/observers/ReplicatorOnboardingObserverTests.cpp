@@ -5,7 +5,6 @@
 **/
 
 #include "tests/test/StorageTestUtils.h"
-#include "catapult/model/StorageNotifications.h"
 #include "src/observers/Observers.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
@@ -17,7 +16,7 @@ namespace catapult { namespace observers {
 	using DrivePriority = std::pair<Key, double>;
 	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-    DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboarding, std::make_unique<DriveQueue>())
+    DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboarding, std::make_shared<DriveQueue>())
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::StorageCacheFactory>;
@@ -115,7 +114,7 @@ namespace catapult { namespace observers {
 				test::AddAccountState(accountCache, driveEntry.key(), Current_Height);
 			}
 
-			auto pDriveQueue = std::make_unique<DriveQueue>(values.InitialDriveQueue);
+			auto pDriveQueue = std::make_shared<DriveQueue>(values.InitialDriveQueue);
 			auto pObserver = CreateReplicatorOnboardingObserver(pDriveQueue);
 
             // Act:

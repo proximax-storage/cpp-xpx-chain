@@ -5,7 +5,6 @@
 **/
 
 #include "tests/test/StorageTestUtils.h"
-#include "catapult/model/StorageNotifications.h"
 #include "src/observers/Observers.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
@@ -17,7 +16,7 @@ namespace catapult { namespace observers {
 	using DrivePriority = std::pair<Key, double>;
 	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-    DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive, std::make_shared<cache::ReplicatorKeyCollector>(), std::make_unique<DriveQueue>())
+    DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive, std::make_shared<cache::ReplicatorKeyCollector>(), std::make_shared<DriveQueue>())
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -29,7 +28,7 @@ namespace catapult { namespace observers {
         constexpr auto Drive_Size = 50;
         constexpr auto Replicator_Count = 3;
 		constexpr auto Unacceptable_Replicator_Count = 1;	// Number of replicators that don't have enough mosaics
-		const auto Drive_Queue = std::make_unique<DriveQueue>();
+		const auto Drive_Queue = std::make_shared<DriveQueue>();
         constexpr Height Current_Height(20);
 		constexpr auto Min_Replicator_Count = 2;
 		constexpr auto Storage_Mosaic_Id = MosaicId(1234);

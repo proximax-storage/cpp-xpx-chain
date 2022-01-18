@@ -12,8 +12,8 @@ namespace catapult { namespace observers {
 	using DrivePriority = std::pair<Key, double>;
 	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-	DECLARE_OBSERVER(ReplicatorOnboarding, Notification)(const std::unique_ptr<DriveQueue>& pDriveQueue) {
-		return MAKE_OBSERVER(ReplicatorOnboarding, Notification, ([&pDriveQueue](const Notification& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(ReplicatorOnboarding, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue) {
+		return MAKE_OBSERVER(ReplicatorOnboarding, Notification, ([pDriveQueue](const Notification& notification, const ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorOnboarding)");
 

@@ -18,7 +18,7 @@ namespace catapult { namespace observers {
 	using DrivePriority = std::pair<Key, double>;
 	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOffboarding, std::make_unique<DriveQueue>())
+	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOffboarding, std::make_shared<DriveQueue>())
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::ReplicatorCacheFactory>;
@@ -28,7 +28,7 @@ namespace catapult { namespace observers {
 		Key Drive_Key1 = test::GenerateRandomByteArray<Key>();
 		Key Drive_Key2 = test::GenerateRandomByteArray<Key>();
 		Key Target_Drive_Key = Drive_Key2;	// Drive key that is mentioned in notification
-		const auto Drive_Queue = std::make_unique<std::priority_queue<DrivePriority>>();
+		const auto Drive_Queue = std::make_shared<std::priority_queue<DrivePriority>>();
         constexpr auto Current_Height = Height(25);
 		constexpr auto Capacity = Amount(30);
 		constexpr auto Min_Replicator_Count = 4;
@@ -132,7 +132,7 @@ namespace catapult { namespace observers {
             	driveCache.insert(driveEntry);
             accountCache.addAccount(CreateAccount());
 
-			auto pDriveQueue = std::make_unique<DriveQueue>(CreateDriveQueue(initialDriveEntries));
+			auto pDriveQueue = std::make_shared<DriveQueue>(CreateDriveQueue(initialDriveEntries));
 			auto pObserver = CreateReplicatorOffboardingObserver(pDriveQueue);
 
             // Act:

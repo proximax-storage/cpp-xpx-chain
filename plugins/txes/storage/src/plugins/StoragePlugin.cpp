@@ -174,7 +174,7 @@ namespace catapult { namespace plugins {
 
 		using DrivePriority = std::pair<Key, double>;
 		using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
-		auto pDriveQueue = std::make_unique<DriveQueue>();
+		auto pDriveQueue = std::make_shared<DriveQueue>();
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, pReplicatorKeyCollector](auto& builder) {
 		  	builder
@@ -203,7 +203,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateEndDriveVerificationValidator());
 		});
 
-		manager.addObserverHook([pReplicatorKeyCollector, &state = *pStorageState, &driveKeyCollector = *pDriveKeyCollector, &pDriveQueue](auto& builder) {
+		manager.addObserverHook([pReplicatorKeyCollector, &state = *pStorageState, &driveKeyCollector = *pDriveKeyCollector, pDriveQueue](auto& builder) {
 			builder
 				.add(observers::CreatePrepareDriveObserver(pReplicatorKeyCollector, pDriveQueue))
 				.add(observers::CreateDownloadChannelObserver())
