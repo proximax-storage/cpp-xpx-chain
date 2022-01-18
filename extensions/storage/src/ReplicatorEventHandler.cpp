@@ -127,9 +127,9 @@ namespace catapult { namespace storage {
                 });
             }
 
-            void verifyApprovalTransactionIsReady(
+            void verificationTransactionIsReady(
                     sirius::drive::Replicator&,
-                    sirius::drive::VerifyApprovalTxInfo&& transactionInfo) override {
+					const sirius::drive::VerifyApprovalTxInfo& transactionInfo) override {
                 CATAPULT_LOG(debug) << "sending end drive verification transaction";
 
 				auto pReplicator = m_pReplicator.lock();

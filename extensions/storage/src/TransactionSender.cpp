@@ -259,12 +259,9 @@ namespace catapult { namespace storage {
 		signatures.reserve(judgingKeyCount);
 		boost::dynamic_bitset<uint8_t> opinionsBitset(judgingKeyCount * opinionCount);
 
-		publicKeys.emplace_back(transactionInfo.m_opinions[0].m_publicKey);
-		for (const auto& key : transactionInfo.m_opinions[0].m_opinionKeys)
-			publicKeys.emplace_back(key);
-
 		for (auto i = 0u; i < transactionInfo.m_opinions.size(); ++i) {
 			const auto& opinion = transactionInfo.m_opinions[i];
+			publicKeys.emplace_back(opinion.m_publicKey);
 			signatures.emplace_back(opinion.m_signature.array());
 			for (auto k = 0u; k < opinionCount; ++k)
 				opinionsBitset[i * opinionCount + k] = opinion.m_opinions[k];
