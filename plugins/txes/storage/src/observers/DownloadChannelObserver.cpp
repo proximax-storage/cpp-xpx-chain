@@ -9,7 +9,7 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(DownloadChannel, model::DownloadNotification<1>, [](const model::DownloadNotification<1>& notification, ObserverContext& context) {
+	DEFINE_OBSERVER(DownloadChannel, model::DownloadNotification<1>, ([](const model::DownloadNotification<1>& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadChannel)");
 
@@ -31,15 +31,27 @@ namespace catapult { namespace observers {
 	  	auto& driveEntry = driveIter.get();
 	  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 		const auto& replicators = driveEntry.replicators();
-	  	const auto& shardSize = std::min<uint16_t>(pluginConfig.ShardSize, replicators.size());
-		std::set<Key> sampleReplicators;
-		std::seed_seq hashSeed(notification.Id.begin(), notification.Id.end());
-	  	std::sample(replicators.begin(), replicators.end(), std::inserter(sampleReplicators, sampleReplicators.end()),
-					shardSize, std::mt19937(hashSeed));
 	  	auto& cumulativePayments = downloadEntry.cumulativePayments();
-		for (const auto& key : sampleReplicators)
-			cumulativePayments.emplace(key, Amount(0));
+		if (replicators.size() <= pluginConfig.ShardSize) {
+			// When the drive has no more than ShardSize replicators, add them all
+			for (const auto& key : replicators) {
+				cumulativePayments.emplace(key, Amount(0));
+				driveEntry.downloadShards()[notification.Id].insert(key);
+			}
+		} else {
+			// Otherwise, add ShardSize closest replicators in terms of XOR distance to the download channel id.
+			const Key downloadChannelKey = Key(notification.Id.array());
+			const auto comparator = [&downloadChannelKey](const Key& a, const Key& b) { return (a ^ downloadChannelKey) < (b ^ downloadChannelKey); };
+			std::set<Key, decltype(comparator)> shardKeys(comparator);
+			for (const auto& key : replicators)
+				shardKeys.insert(key);
+			auto keyIter = shardKeys.begin();
+			for (auto i = 0u; i < pluginConfig.ShardSize; ++i) {
+				cumulativePayments.emplace(*keyIter++, Amount(0));
+				driveEntry.downloadShards()[notification.Id].insert(*keyIter++);
+			}
+		}
 
 		downloadCache.insert(downloadEntry);
-	});
+	}));
 }}

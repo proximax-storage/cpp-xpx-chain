@@ -73,6 +73,16 @@ namespace catapult { namespace state {
 				io::Write(output, replicatorKey);
 		}
 
+		void SaveDownloadShards(io::OutputStream& output, const DownloadShards& downloadShards) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(downloadShards.size()));
+			for (const auto& shard : downloadShards) {
+				io::Write(output, shard.first);
+				io::Write8(output, utils::checked_cast<size_t, uint8_t>(shard.second.size()));
+				for (const auto& replicatorKey : shard.second)
+					io::Write(output, replicatorKey);
+			}
+		}
+
 		auto LoadActiveDataModification(io::InputStream& input) {
 			Hash256 id;
 			io::Read(input, id);
@@ -154,6 +164,21 @@ namespace catapult { namespace state {
 		        verifications.emplace_back(verification);
 		    }
 		}
+
+		void LoadDownloadShards(io::InputStream& input, DownloadShards& downloadShards) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Hash256 downloadChannelId;
+				io::Read(input, downloadChannelId);
+				auto& shard = downloadShards[downloadChannelId];
+				auto shardSize = io::Read8(input);
+				while (shardSize--) {
+					Key replicatorKey;
+					io::Read(input, replicatorKey);
+					shard.emplace(replicatorKey);
+				}
+			}
+		}
 	}
 
 	void BcDriveEntrySerializer::Save(const BcDriveEntry& driveEntry, io::OutputStream& output) {
@@ -175,6 +200,7 @@ namespace catapult { namespace state {
 		SaveReplicators(output, driveEntry.replicators());
 		SaveReplicators(output, driveEntry.offboardingReplicators());
 		SaveVerifications(output, driveEntry.verifications());
+		SaveDownloadShards(output, driveEntry.downloadShards());
 	}
 
 	BcDriveEntry BcDriveEntrySerializer::Load(io::InputStream& input) {
@@ -209,6 +235,7 @@ namespace catapult { namespace state {
 		LoadReplicators(input, entry.replicators());
 		LoadReplicators(input, entry.offboardingReplicators());
 		LoadVerifications(input, entry.verifications());
+		LoadDownloadShards(input, entry.downloadShards());
 
 		return entry;
 	}

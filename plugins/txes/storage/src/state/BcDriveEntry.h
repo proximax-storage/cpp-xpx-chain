@@ -97,6 +97,7 @@ namespace catapult { namespace state {
 	using SizeMap = std::map<Key, uint64_t>;
 	using ConfirmedStates = std::map<Key, Hash256>; // last approved root hash
 	using Shards = std::vector<std::vector<Key>>;
+	using DownloadShards = std::map<Hash256, std::set<Key>>;
 
 	struct Verification {
 		/// The hash of block that initiated the verification.
@@ -283,6 +284,16 @@ namespace catapult { namespace state {
 			return m_confirmedStates;
 		}
 
+		/// Gets map of download channels and replicators that belong to respective download shards.
+		const DownloadShards& downloadShards() const {
+			return m_downloadShards;
+		}
+
+		/// Gets map of download channels and replicators that belong to respective download shards.
+		DownloadShards& downloadShards() {
+			return m_downloadShards;
+		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
@@ -299,6 +310,7 @@ namespace catapult { namespace state {
 		utils::SortedKeySet m_offboardingReplicators;
 		Verifications m_verifications;
 		ConfirmedStates m_confirmedStates;
+		DownloadShards m_downloadShards;
 	};
 
 	// Drive entry.

@@ -99,6 +99,18 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			array << bson_stream::close_array;
 		}
+
+		void StreamDownloadShards(bson_stream::document& builder, const state::DownloadShards& downloadShards) {
+			auto array = builder << "downloadShards" << bson_stream::open_array;
+			for (const auto& pair : downloadShards) {
+				bson_stream::document shardBuilder;
+				shardBuilder << "downloadChannelId" << pair.first;
+				StreamReplicators("replicators", shardBuilder, pair.second);
+				array << shardBuilder;
+			}
+
+			array << bson_stream::close_array;
+		}
 	}
 
 	bsoncxx::document::value ToDbModel(const state::BcDriveEntry& entry, const Address& accountAddress) {
@@ -120,6 +132,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		StreamReplicators("replicators", builder, entry.replicators());
 		StreamReplicators("offboardingReplicators", builder, entry.offboardingReplicators());
 		StreamVerifications(builder, entry.verifications());
+		StreamDownloadShards(builder, entry.downloadShards());
 
 		return doc
 			   << bson_stream::close_document
@@ -219,6 +232,16 @@ namespace catapult { namespace mongo { namespace plugins {
 				verifications.emplace_back(verification);
 			}
 		}
+
+		void ReadDownloadShards(state::DownloadShards& downloadShards, const bsoncxx::array::view& dbDownloadShards) {
+			for (const auto& dbPair : dbDownloadShards) {
+				auto doc = dbPair.get_document().view();
+				Hash256 downloadChannelId;
+				DbBinaryToModelArray(downloadChannelId, doc["downloadChannelId"].get_binary());
+				auto& shard = downloadShards[downloadChannelId];
+				ReadReplicators(shard, doc["replicators"].get_array().value);
+			}
+		}
 	}
 
 	state::BcDriveEntry ToDriveEntry(const bsoncxx::document::view& document) {
@@ -249,6 +272,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		ReadReplicators(entry.replicators(), dbDriveEntry["replicators"].get_array().value);
 		ReadReplicators(entry.offboardingReplicators(), dbDriveEntry["offboardingReplicators"].get_array().value);
 		ReadVerifications(entry.verifications(), dbDriveEntry["verifications"].get_array().value);
+		ReadDownloadShards(entry.downloadShards(), dbDriveEntry["downloadShards"].get_array().value);
 
 		return entry;
 	}

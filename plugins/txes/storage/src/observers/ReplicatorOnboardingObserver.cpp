@@ -22,6 +22,7 @@ namespace catapult { namespace observers {
 			replicatorEntry.setCapacity(notification.Capacity);
 
 		  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+		  	auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
 		  	auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		  	auto replicatorStateIter = accountStateCache.find(notification.PublicKey);
 		  	auto& replicatorState = replicatorStateIter.get();
@@ -29,7 +30,8 @@ namespace catapult { namespace observers {
 		  	const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 		  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
-			// Assign queued drives to the replicator, as long as there is enough capacity:
+			// Assign queued drives to the replicator, as long as there is enough capacity,
+			// and update download shards:
 		  	DriveQueue originalQueue = *pDriveQueue;
 	  		DriveQueue newQueue;
 			auto remainingCapacity = notification.Capacity.unwrap();
@@ -41,12 +43,49 @@ namespace catapult { namespace observers {
 				auto driveIter = driveCache.find(driveKey);
 				auto& driveEntry = driveIter.get();
 				const auto& driveSize = driveEntry.size();
-				CATAPULT_LOG(debug) << "DriveSize = " << driveSize << ", DrivePriority = " << drivePriorityPair.second;
 				if (driveSize <= remainingCapacity) {
 
 					// Updating drives() and replicators()
 					replicatorEntry.drives().emplace(driveKey, state::DriveInfo{ Hash256(), false, 0 });
 					driveEntry.replicators().emplace(notification.PublicKey);
+
+					// Updating download shards of the drive
+					if (driveEntry.replicators().size() <= pluginConfig.ShardSize) {
+						// If drive has no more than ShardSize replicators, then each one of them
+						// (except the onboarding replicator) is currently assigned to every download shard.
+						// Just add the onboarding replicator to every shard.
+						for (auto& pair : driveEntry.downloadShards()) {
+							pair.second.insert(notification.PublicKey);
+							auto downloadChannelIter = downloadChannelCache.find(pair.first);
+							auto& downloadChannelEntry = downloadChannelIter.get();
+							downloadChannelEntry.cumulativePayments().emplace(notification.PublicKey, Amount(0));
+						}
+					} else {
+						for (auto& pair : driveEntry.downloadShards()) {
+							// For every download shard, the new replicator key will either be
+							// - close enough to the download channel id (XOR-wise), replacing the most distant key of that shard, or
+							// - not close enough, leaving the download shard unchanged
+							const Key downloadChannelKey = Key(pair.first.array());
+							auto& shardKeys = pair.second;
+							auto mostDistantKeyIter = shardKeys.begin();
+							auto greatestDistance = *mostDistantKeyIter ^ downloadChannelKey;
+							for (auto replicatorKeyIter = ++shardKeys.begin(); replicatorKeyIter != shardKeys.end(); ++replicatorKeyIter) {
+								const auto distance = *replicatorKeyIter ^ downloadChannelKey;
+								if (distance > greatestDistance) {
+									greatestDistance = distance;
+									mostDistantKeyIter = replicatorKeyIter;
+								}
+							}
+							if ((notification.PublicKey ^ downloadChannelKey) < greatestDistance) {
+								shardKeys.erase(mostDistantKeyIter);
+								shardKeys.insert(notification.PublicKey);
+								auto downloadChannelIter = downloadChannelCache.find(pair.first);
+								auto& downloadChannelEntry = downloadChannelIter.get();
+								downloadChannelEntry.cumulativePayments().emplace(notification.PublicKey, Amount(0));
+								// Cumulative payments of the removed replicator are kept in download channel entry
+							}
+						}
+					}
 
 					// Making mosaic transfers
 					auto driveStateIter = accountStateCache.find(driveKey);

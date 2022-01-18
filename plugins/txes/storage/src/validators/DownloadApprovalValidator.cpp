@@ -17,9 +17,8 @@ namespace catapult { namespace validators {
 		const auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
 		const auto& pDownloadChannelEntry = downloadChannelIter.tryGet();
 
-	 	const auto totalKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount + notification.JudgedKeysCount;
-	  	const auto totalJudgingKeysCount = totalKeysCount - notification.JudgedKeysCount;
-	  	const auto totalJudgedKeysCount = totalKeysCount - notification.JudgingKeysCount;
+	 	const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
+	  	const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
 
 		// Check if download channel exists
 		if (!pDownloadChannelEntry)
@@ -45,9 +44,9 @@ namespace catapult { namespace validators {
 			if (!presentOpinions[i*totalJudgedKeysCount + i])
 				return Failure_Storage_No_Opinion_Provided_On_Self;
 
-	  	// Check if all public keys belong to the download channel's shard (i.e. they exist in cumulativePayments)
+	  	// Check if all judging keys belong to the download channel's shard (i.e. they exist in cumulativePayments)
 	  	const auto& cumulativePayments = pDownloadChannelEntry->cumulativePayments();
-	  	for (auto i = 0; i < totalKeysCount; ++i)
+	  	for (auto i = 0; i < totalJudgingKeysCount; ++i)
 		  	if (!cumulativePayments.count(notification.PublicKeysPtr[i]))
 			  	return Failure_Storage_Opinion_Invalid_Key;
 
