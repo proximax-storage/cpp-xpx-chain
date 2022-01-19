@@ -81,7 +81,6 @@ namespace catapult { namespace storage {
 
     public:
         void start(const StorageConfiguration& storageConfig) {
-			CATAPULT_LOG(debug) << "===========================> INITIALIZING replicator " << m_keyPair.publicKey();
 			const auto& config = m_serviceState.config();
             TransactionSender transactionSender(
 				m_keyPair,
@@ -101,24 +100,6 @@ namespace catapult { namespace storage {
 				boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(node.endpoint().Host), node.endpoint().Port);
 				bootstrapReplicators.emplace_back(sirius::drive::ReplicatorInfo{ endpoint, node.identityKey().array() });
 			}
-
-//			std::vector<sirius::drive::ReplicatorInfo> bootstrapReplicators{
-//				sirius::drive::ReplicatorInfo{
-//					boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("0.0.0.0"), 7909),
-//					crypto::ParseKey("E8D4B7BEB2A531ECA8CC7FD93F79A4C828C24BE33F99CF7C5609FF5CE14605F4").array() },
-//				sirius::drive::ReplicatorInfo{
-//					boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("0.0.0.0"), 7914),
-//					crypto::ParseKey("7C756F2D5E9F21E7215851FC26C9F6819DB7992F0CDD22D822AFBE764404E976").array() },
-//				sirius::drive::ReplicatorInfo{
-//					boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("0.0.0.0"), 7919),
-//					crypto::ParseKey("0A0EAC0E56FE4C052B66D070434621E74793FBF1D6F45286897240681A668BB1").array() },
-//				sirius::drive::ReplicatorInfo{
-//					boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("0.0.0.0"), 7924),
-//					crypto::ParseKey("1AAD933111E340E74FE9A44C12CEB359744BC9F8A6630ECA7DEA8B5AECE5C1C5").array() },
-//				sirius::drive::ReplicatorInfo{
-//					boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("0.0.0.0"), 7929),
-//					crypto::ParseKey("71FA42E336DE2DD74CE864A7A5A747C23EAB41BC6235CBA4C28E96B1900565FC").array() },
-//			};
 
             m_pReplicator = sirius::drive::createDefaultReplicator(
 				reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.

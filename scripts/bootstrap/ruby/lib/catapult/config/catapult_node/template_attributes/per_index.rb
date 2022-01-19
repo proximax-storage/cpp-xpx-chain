@@ -37,6 +37,7 @@ module Catapult
             host: Peer.host(self.type, self.index),
             friendly_name: Peer.name(self.type, self.index),
             replicator_host: Global.replicator_host(self.type, self.index),
+            node_index: self.index,
           }
         end
 
