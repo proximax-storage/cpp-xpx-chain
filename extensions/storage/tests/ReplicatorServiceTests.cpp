@@ -5,7 +5,6 @@
 **/
 
 #include "src/ReplicatorService.h"
-#include "catapult/ionet/Node.h"
 #include "tests/test/other/mocks/MockServiceState.h"
 
 namespace catapult { namespace storage {
@@ -16,12 +15,13 @@ namespace catapult { namespace storage {
         // Act:
         auto config = config::CreateMockConfigurationHolder();
         auto keyPair = test::GenerateKeyPair();
-        StorageConfiguration storageConfig{};
+        auto storageConfig = StorageConfiguration::Uninitialized();
+		std::vector<ionet::Node> bootstrapReplicators;
 
         auto pReplicatorService = std::make_shared<ReplicatorService>(
                 std::move(keyPair),
-                std::move(storageConfig)
-        );
+                std::move(storageConfig),
+				std::move(bootstrapReplicators));
 
         mocks::MockServiceState serviceState{};
         pReplicatorService->setServiceState(serviceState.ServiceState());

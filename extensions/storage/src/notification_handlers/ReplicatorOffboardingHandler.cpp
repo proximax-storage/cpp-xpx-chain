@@ -16,10 +16,7 @@ namespace catapult { namespace notification_handlers {
             if (!pReplicatorService)
                 return;
 
-            if (pReplicatorService->replicatorKey() != notification.PublicKey)
-                return;
-
-            if (!pReplicatorService->isReplicatorRegistered(notification.PublicKey))
+			if (pReplicatorService->replicatorKey() != notification.PublicKey || !pReplicatorService->isReplicatorRegistered(notification.PublicKey))
                 return;
 
             CATAPULT_LOG(debug) << "replicator off-boarding: stopping replicator service";

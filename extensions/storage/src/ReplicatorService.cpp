@@ -8,7 +8,7 @@
 #include "ReplicatorEventHandler.h"
 #include "TransactionSender.h"
 #include "TransactionStatusHandler.h"
-#include "src/catapult/ionet/NodeContainer.h"
+#include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
@@ -19,8 +19,6 @@ namespace catapult { namespace storage {
 
     namespace {
         constexpr auto Service_Name = "replicator";
-
-        constexpr auto Replicator_Host = "127.0.0.1:";
 
         class ReplicatorServiceRegistrar : public extensions::ServiceRegistrar {
         public:
@@ -74,15 +72,16 @@ namespace catapult { namespace storage {
         Impl(const crypto::KeyPair& keyPair,
              extensions::ServiceState& serviceState,
              state::StorageState& storageState,
-             const ionet::NodeContainer& nodeContainer)
+			 const std::vector<ionet::Node>& bootstrapReplicators)
              : m_keyPair(keyPair)
              , m_serviceState(serviceState)
              , m_storageState(storageState)
-             , m_nodeContainer(nodeContainer)
+             , m_bootstrapReplicators(bootstrapReplicators)
 		 {}
 
     public:
-        void init(const StorageConfiguration& storageConfig) {
+        void start(const StorageConfiguration& storageConfig) {
+			CATAPULT_LOG(debug) << "===========================> INITIALIZING replicator " << m_keyPair.publicKey();
 			const auto& config = m_serviceState.config();
             TransactionSender transactionSender(
 				m_keyPair,
@@ -96,27 +95,45 @@ namespace catapult { namespace storage {
 				m_storageState,
 				m_transactionStatusHandler);
 
-			auto nodesView = m_nodeContainer.view();
-			std::vector<sirius::drive::ReplicatorInfo> bootstrapNodes;
-			bootstrapNodes.reserve(nodesView.size());
-			nodesView.forEach([&bootstrapNodes](const ionet::Node& node, const ionet::NodeInfo&){
+			std::vector<sirius::drive::ReplicatorInfo> bootstrapReplicators;
+			bootstrapReplicators.reserve(m_bootstrapReplicators.size());
+			for (const auto& node : m_bootstrapReplicators) {
 				boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(node.endpoint().Host), node.endpoint().Port);
-				bootstrapNodes.emplace_back(sirius::drive::ReplicatorInfo{ endpoint, node.identityKey().array() });
-			});
+				bootstrapReplicators.emplace_back(sirius::drive::ReplicatorInfo{ endpoint, node.identityKey().array() });
+			}
+
+//			std::vector<sirius::drive::ReplicatorInfo> bootstrapReplicators{
+//				sirius::drive::ReplicatorInfo{
+//					boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("0.0.0.0"), 7909),
+//					crypto::ParseKey("E8D4B7BEB2A531ECA8CC7FD93F79A4C828C24BE33F99CF7C5609FF5CE14605F4").array() },
+//				sirius::drive::ReplicatorInfo{
+//					boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("0.0.0.0"), 7914),
+//					crypto::ParseKey("7C756F2D5E9F21E7215851FC26C9F6819DB7992F0CDD22D822AFBE764404E976").array() },
+//				sirius::drive::ReplicatorInfo{
+//					boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("0.0.0.0"), 7919),
+//					crypto::ParseKey("0A0EAC0E56FE4C052B66D070434621E74793FBF1D6F45286897240681A668BB1").array() },
+//				sirius::drive::ReplicatorInfo{
+//					boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("0.0.0.0"), 7924),
+//					crypto::ParseKey("1AAD933111E340E74FE9A44C12CEB359744BC9F8A6630ECA7DEA8B5AECE5C1C5").array() },
+//				sirius::drive::ReplicatorInfo{
+//					boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("0.0.0.0"), 7929),
+//					crypto::ParseKey("71FA42E336DE2DD74CE864A7A5A747C23EAB41BC6235CBA4C28E96B1900565FC").array() },
+//			};
 
             m_pReplicator = sirius::drive::createDefaultReplicator(
 				reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
-				Replicator_Host,
+				std::string(storageConfig.Host), // TODO: do not use move semantics.
 				std::string(storageConfig.Port), // TODO: do not use move semantics.
 				std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
 				std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
-				{},
+				bootstrapReplicators,
 				storageConfig.UseTcpSocket,
 				*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
 				nullptr,
 				Service_Name);
 
 			m_pReplicatorEventHandler->setReplicator(m_pReplicator);
+			m_pReplicator->start();
 
             auto drives = m_storageState.getReplicatorDrives(m_keyPair.publicKey());
             for (const auto& drive: drives) {
@@ -323,7 +340,7 @@ namespace catapult { namespace storage {
         }
 
         void stop() {
-            // TODO: stop replicator.
+			m_pReplicator.reset();
         }
 
     private:
@@ -332,50 +349,51 @@ namespace catapult { namespace storage {
 			replicators.reserve(keys.size());
             for (const auto& key: keys)
 				replicators.emplace_back(key.array());
-        }
 
-		std::vector<sirius::drive::ReplicatorInfo> getReplicatorInfos(const std::vector<Key>& keys) {
-			std::vector<sirius::drive::ReplicatorInfo> requestedNodes;
-			requestedNodes.reserve(keys.size());
-			for (const auto& key: keys)
-				requestedNodes.emplace_back(sirius::drive::ReplicatorInfo{boost::asio::ip::tcp::endpoint(), key.array()});
-		}
+			return replicators;
+        }
 
     private:
         const crypto::KeyPair& m_keyPair;
         extensions::ServiceState& m_serviceState;
         state::StorageState& m_storageState;
-        const ionet::NodeContainer& m_nodeContainer;
 
         std::shared_ptr<sirius::drive::Replicator> m_pReplicator;
         std::unique_ptr<ReplicatorEventHandler> m_pReplicatorEventHandler;
         TransactionStatusHandler m_transactionStatusHandler;
+		const std::vector<ionet::Node>& m_bootstrapReplicators;
     };
 
     // endregion
 
     // region - replicator service
 
-    ReplicatorService::ReplicatorService(crypto::KeyPair&& keyPair, StorageConfiguration&& storageConfig)
+    ReplicatorService::ReplicatorService(crypto::KeyPair&& keyPair, StorageConfiguration&& storageConfig, std::vector<ionet::Node>&& bootstrapReplicators)
 		: m_keyPair(std::move(keyPair))
 		, m_storageConfig(std::move(storageConfig))
+		, m_bootstrapReplicators(std::move(bootstrapReplicators))
 	{}
 
-    void ReplicatorService::start() {
-        if (m_pImpl) CATAPULT_THROW_RUNTIME_ERROR("replicator service already started");
+	ReplicatorService::~ReplicatorService() {
+		stop();
+	}
 
-        m_pImpl = std::make_shared<ReplicatorService::Impl>(
+    void ReplicatorService::start() {
+        if (m_pImpl)
+			CATAPULT_THROW_RUNTIME_ERROR("replicator service already started");
+
+        m_pImpl = std::make_unique<ReplicatorService::Impl>(
 			m_keyPair,
 			*m_pServiceState,
 			m_pServiceState->pluginManager().storageState(),
-			m_pServiceState->nodes());
-        m_pImpl->init(m_storageConfig);
+			m_bootstrapReplicators);
+        m_pImpl->start(m_storageConfig);
     }
 
     void ReplicatorService::stop() {
         if (m_pImpl) {
             m_pImpl->stop();
-            m_pImpl = nullptr;
+            m_pImpl.reset();
         }
     }
 

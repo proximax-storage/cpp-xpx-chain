@@ -17,6 +17,9 @@ namespace catapult { namespace storage {
 	/// Storage configuration settings.
 	struct StorageConfiguration {
 	public:
+		/// Replicator host.
+		std::string Host;
+
 		/// Replicator port.
 		std::string Port;
 

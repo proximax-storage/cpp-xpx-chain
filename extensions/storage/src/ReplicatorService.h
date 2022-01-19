@@ -5,11 +5,11 @@
 **/
 
 #pragma once
-
 #include "StorageConfiguration.h"
 #include "catapult/types.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ServiceRegistrar.h"
+#include "catapult/ionet/Node.h"
 
 namespace catapult { namespace model { class Transaction; } }
 
@@ -17,7 +17,8 @@ namespace catapult { namespace storage {
 
     class ReplicatorService {
     public:
-        ReplicatorService(crypto::KeyPair&& keyPair, StorageConfiguration&& storageConfig);
+        ReplicatorService(crypto::KeyPair&& keyPair, StorageConfiguration&& storageConfig, std::vector<ionet::Node>&& bootstrapReplicators);
+		~ReplicatorService();
 
     public:
         void start();
@@ -54,11 +55,12 @@ namespace catapult { namespace storage {
     private:
         class Impl;
 
-        std::shared_ptr<Impl> m_pImpl;
+        std::unique_ptr<Impl> m_pImpl;
 
         crypto::KeyPair m_keyPair;
         StorageConfiguration m_storageConfig;
         extensions::ServiceState* m_pServiceState;
+		std::vector<ionet::Node> m_bootstrapReplicators;
     };
 
     /// Creates a registrar for the replicator service.

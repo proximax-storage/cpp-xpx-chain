@@ -56,8 +56,8 @@ namespace catapult { namespace state {
     }
 
     bool StorageStateImpl::isReplicatorRegistered(const Key& key) {
-        const auto& keys = m_pKeyCollector->keys();
-        return (keys.find(key) != keys.end());
+		auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
+		return pReplicatorCacheView->contains(key);
     }
 
     bool StorageStateImpl::driveExist(const Key& driveKey) {

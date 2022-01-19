@@ -9,7 +9,6 @@
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "src/ReplicatorService.h"
-#include "src/StorageConfiguration.h"
 
 namespace catapult { namespace storage {
 
@@ -19,11 +18,13 @@ namespace catapult { namespace storage {
         // Act:
         auto config = config::CreateMockConfigurationHolder();
         auto keyPair = test::GenerateKeyPair();
-        StorageConfiguration storageConfig{};
+			auto storageConfig = StorageConfiguration::Uninitialized();
+			std::vector<ionet::Node> bootstrapReplicators;
 
         auto pReplicatorService = std::make_shared<ReplicatorService>(
                 std::move(keyPair),
-                std::move(storageConfig));
+                std::move(storageConfig),
+				std::move(bootstrapReplicators));
         auto testee = CreateStorageTransactionStatusSubscriber(pReplicatorService);
 
         // Assert:
