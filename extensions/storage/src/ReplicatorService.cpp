@@ -8,7 +8,6 @@
 #include "ReplicatorEventHandler.h"
 #include "TransactionSender.h"
 #include "TransactionStatusHandler.h"
-#include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
@@ -272,7 +271,7 @@ namespace catapult { namespace storage {
         }
 
         bool isAssignedToDrive(const Key& driveKey) {
-            return m_storageState.isReplicatorAssignedToDrive(m_keyPair.publicKey(), driveKey);
+			return m_storageState.isReplicatorAssignedToDrive(m_keyPair.publicKey(), driveKey);
         }
 
         void closeDrive(const Key& driveKey, const Hash256& transactionHash) {
@@ -393,7 +392,7 @@ namespace catapult { namespace storage {
             const Key& owner,
             uint64_t dataSize) {
         if (m_pImpl)
-            m_pImpl->addDriveModification(driveKey, downloadDataCdi, modificationId, owner, dataSize);
+			m_pImpl->addDriveModification(driveKey, downloadDataCdi, modificationId, owner, dataSize);
     }
 
     void ReplicatorService::removeDriveModification(const Key& driveKey, const Hash256& dataModificationId) {
@@ -423,7 +422,7 @@ namespace catapult { namespace storage {
 
     bool ReplicatorService::isAssignedToDrive(const Key& driveKey) {
         if (m_pImpl)
-            m_pImpl->isAssignedToDrive(driveKey);
+            return m_pImpl->isAssignedToDrive(driveKey);
 
         return false;
     }

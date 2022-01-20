@@ -246,21 +246,6 @@
 			"supportedVersions": [1]
 		},
 		{
-			"name": "prepareBcDrive",
-			"type": "16738",
-			"supportedVersions": [1]
-		},
-		{
-			"name": "dataModification",
-			"type": "16994",
-			"supportedVersions": [1]
-		},
-		{
-			"name": "download",
-			"type": "17250",
-			"supportedVersions": [1]
-		},
-		{
 			"name": "dataModificationApproval",
 			"type": "17506",
 			"supportedVersions": [1]
@@ -271,8 +256,28 @@
 			"supportedVersions": [1]
 		},
 		{
-			"name": "replicatorOnboarding",
-			"type": "18018",
+			"name": "dataModificationSingleApproval",
+			"type": "19298",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "dataModification",
+			"type": "16994",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "downloadApproval",
+			"type": "19810",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "downloadPayment",
+			"type": "18786",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "download",
+			"type": "17250",
 			"supportedVersions": [1]
 		},
 		{
@@ -281,8 +286,38 @@
 			"supportedVersions": [1]
 		},
 		{
+			"name": "endDriveVerification",
+			"type": "20322",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "finishDownload",
+			"type": "18530",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "prepareBcDrive",
+			"type": "16738",
+			"supportedVersions": [1]
+		},
+		{
 			"name": "replicatorOffboarding",
 			"type": "20066",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "replicatorOnboarding",
+			"type": "18018",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "storagePayment",
+			"type": "19042",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "verificationPayment",
+			"type": "19554",
 			"supportedVersions": [1]
 		},
 		{
@@ -298,11 +333,6 @@
 		{
 			"name": "streamPayment",
 			"type": "17255",
-			"supportedVersions": [1]
-		},
-		{
-			"name": "endDriveVerification",
-			"type": "20322",
 			"supportedVersions": [1]
 		}
 	]

@@ -16,14 +16,14 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			if (pReplicatorService->isAssignedToDrive(notification.DriveKey))
+			if (pReplicatorService->isAssignedToDrive(notification.DriveKey)) {
 				pReplicatorService->addDriveModification(
-						notification.DriveKey,
-						notification.DownloadDataCdi,
-						notification.DataModificationId,
-						notification.Owner,
-						notification.Size
-				);
+					notification.DriveKey,
+					notification.DownloadDataCdi,
+					notification.DataModificationId,
+					notification.Owner,
+					notification.Size);
+			}
 		});
 	}
 }}
