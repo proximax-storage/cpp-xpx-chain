@@ -75,89 +75,95 @@ namespace catapult { namespace validators {
 	/// There are no data modifications in completedDataModifications with 'succeeded' state.
 	DEFINE_STORAGE_RESULT(No_Approved_Data_Modifications, 20);
 
+	/// Used drive size exceeds total size of the drive.
+	DEFINE_STORAGE_RESULT(Invalid_Used_Size, 21);
+
 	/// Not every key in the opinion appears exactly once.
-	DEFINE_STORAGE_RESULT(Opinion_Duplicated_Keys, 21);
+	DEFINE_STORAGE_RESULT(Opinion_Duplicated_Keys, 22);
 
 	/// The key in upload opinion is neither a key of one of the current replicators of the drive nor a key of the drive owner.
-	DEFINE_STORAGE_RESULT(Opinion_Invalid_Key, 22);
+	DEFINE_STORAGE_RESULT(Opinion_Invalid_Key, 23);
 
-	/// Percents in replicator's upload opinion do not sum up to 100.
-	DEFINE_STORAGE_RESULT(Opinion_Incorrect_Percentage, 23);
+	/// Incorrect value in opinion.
+	DEFINE_STORAGE_RESULT(Invalid_Opinion, 24);
+
+	/// Incorrect sum of opinions in data modification approval transaction.
+	DEFINE_STORAGE_RESULT(Invalid_Opinions_Sum, 25);
 
 	/// Data modification is not present in activeDataModifications.
-	DEFINE_STORAGE_RESULT(No_Confirmed_Used_Sizes, 24);
+	DEFINE_STORAGE_RESULT(No_Confirmed_Used_Sizes, 26);
 
 	/// Public keys mentioned in the transaction appear in wrong order.
-	DEFINE_STORAGE_RESULT(Opinion_Invalid_Key_Order, 25);
+	DEFINE_STORAGE_RESULT(Opinion_Invalid_Key_Order, 27);
 
 	/// Opinion index is out of range.
-	DEFINE_STORAGE_RESULT(Opinion_Invalid_Index, 26);
+	DEFINE_STORAGE_RESULT(Opinion_Invalid_Index, 28);
 
 	/// Signature doesn't match the message (opinion).
-	DEFINE_STORAGE_RESULT(Opinion_Invalid_Signature, 27);
+	DEFINE_STORAGE_RESULT(Opinion_Invalid_Signature, 29);
 
 	/// The key is present in the list of public keys, but no opinion about it is given.
-	DEFINE_STORAGE_RESULT(Opinion_Unused_Key, 28);
+	DEFINE_STORAGE_RESULT(Opinion_Unused_Key, 30);
 
 	/// Not every individual part of the multisig transaction appears exactly once.
-	DEFINE_STORAGE_RESULT(Opinions_Reocurring_Individual_Parts, 29);
+	DEFINE_STORAGE_RESULT(Opinions_Reocurring_Individual_Parts, 31);
 
 	/// Multisig transaction for the corresponding billing period has already been approved.
-	DEFINE_STORAGE_RESULT(Transaction_Already_Approved, 30);
+	DEFINE_STORAGE_RESULT(Transaction_Already_Approved, 32);
 
 	/// Download approval transaction sequence number is invalid
-	DEFINE_STORAGE_RESULT(Invalid_Sequence_Number, 31);
+	DEFINE_STORAGE_RESULT(Invalid_Sequence_Number, 33);
 
 	/// Replicator hasn't provided an opinion on itself.
-	DEFINE_STORAGE_RESULT(No_Opinion_Provided_On_Self, 32);
+	DEFINE_STORAGE_RESULT(No_Opinion_Provided_On_Self, 34);
 
 	/// Opinion is provided, but its index does not appear in the list of opinion indices.
-	DEFINE_STORAGE_RESULT(Unused_Opinion, 33);
+	DEFINE_STORAGE_RESULT(Unused_Opinion, 35);
 
 	/// Replicator has provided an opinion on itself when he shouldn't have done this.
-	DEFINE_STORAGE_RESULT(Opinion_Provided_On_Self, 34);
+	DEFINE_STORAGE_RESULT(Opinion_Provided_On_Self, 36);
 
 	/// There are no drive infos in the replicator entry with given drive key.
-	DEFINE_STORAGE_RESULT(Drive_Info_Not_Found, 35);
+	DEFINE_STORAGE_RESULT(Drive_Info_Not_Found, 37);
 
 	/// Verification Trigger is not equal to the pending verification.
-	DEFINE_STORAGE_RESULT(Bad_Verification_Trigger, 36);
+	DEFINE_STORAGE_RESULT(Bad_Verification_Trigger, 38);
 
 	/// The provided count of Provers is not equal to desired.
-	DEFINE_STORAGE_RESULT(Verification_Not_In_Progress, 37);
+	DEFINE_STORAGE_RESULT(Verification_Not_In_Progress, 39);
 
 	/// Not all Provers were in the Confirmed state at the start of Verification.
-	DEFINE_STORAGE_RESULT(Verification_Invalid_Prover_Count, 38);
+	DEFINE_STORAGE_RESULT(Verification_Invalid_Prover_Count, 40);
 
 	/// Not all Provers were in the Confirmed state at the start of Verification.
-	DEFINE_STORAGE_RESULT(Verification_Invalid_Prover, 39);
+	DEFINE_STORAGE_RESULT(Verification_Invalid_Prover, 41);
 
 	/// Validation failed because the data modification already exists.
-	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 40);
+	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 42);
 
 	/// Validation failed because the stream if not first in the queue.
-	DEFINE_STORAGE_RESULT(Invalid_Stream_Id, 41);
+	DEFINE_STORAGE_RESULT(Invalid_Stream_Id, 43);
 
 	/// Validation failed because the stream has already been finished.
-	DEFINE_STORAGE_RESULT(Stream_Already_Finished, 42);
+	DEFINE_STORAGE_RESULT(Stream_Already_Finished, 44);
 
 	/// Validation failed because declared stream actual size exceeds prepaid expected size
-	DEFINE_STORAGE_RESULT(Expected_Upload_Size_Exceeded, 43);
+	DEFINE_STORAGE_RESULT(Expected_Upload_Size_Exceeded, 45);
 
 	/// Desired drive size is greater than maximal.
-	DEFINE_STORAGE_RESULT(Drive_Size_Excessive, 44);
+	DEFINE_STORAGE_RESULT(Drive_Size_Excessive, 46);
 
 	/// Desired modification size is greater than maximal.
-	DEFINE_STORAGE_RESULT(Upload_Size_Excessive, 45);
+	DEFINE_STORAGE_RESULT(Upload_Size_Excessive, 47);
 
 	/// Desired download size is greater than maximal.
-	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 46);
+	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 48);
 
 	/// Number of signatures in opinion-based multisignature transaction is less than minimal.
-	DEFINE_STORAGE_RESULT(Signature_Count_Insufficient, 47);
+	DEFINE_STORAGE_RESULT(Signature_Count_Insufficient, 49);
 
 	/// The replicator has already applied for offboarding from the drive.
-	DEFINE_STORAGE_RESULT(Already_Applied_For_Offboarding, 48);
+	DEFINE_STORAGE_RESULT(Already_Applied_For_Offboarding, 50);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

@@ -32,11 +32,6 @@ namespace catapult { namespace validators {
 			// Check if the replicator has respective drive info with given drive key
 			if (!pReplicatorEntry->drives().count(notification.DriveKey))
 				return Failure_Storage_Drive_Info_Not_Found;
-
-			// Check if the replicator key is present in drive's confirmedUsedSizes
-			// TODO: Double-check if needed
-			if (!pDriveEntry->confirmedUsedSizes().count(*pKey))
-				return Failure_Storage_Replicator_Not_Found;
 		}
 
 	  	// TODO: Check if there are enough mosaics for the transfer?

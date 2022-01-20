@@ -44,10 +44,22 @@ namespace catapult { namespace observers {
 				auto& driveEntry = driveIter.get();
 				const auto& driveSize = driveEntry.size();
 				if (driveSize <= remainingCapacity) {
-
 					// Updating drives() and replicators()
-					replicatorEntry.drives().emplace(driveKey, state::DriveInfo{ Hash256(), false, 0 });
+					const auto& completedDataModifications = driveEntry.completedDataModifications();
+					const auto lastApprovedDataModificationIter = std::find_if(
+							completedDataModifications.rbegin(),
+							completedDataModifications.rend(),
+							[](const state::CompletedDataModification& modification){
+								return modification.State == state::DataModificationState::Succeeded;
+							});
+					const bool dataModificationIdIsValid = lastApprovedDataModificationIter != completedDataModifications.rend();
+					const auto lastApprovedDataModificationId = dataModificationIdIsValid ? lastApprovedDataModificationIter->Id : Hash256();
+					const auto initialDownloadWork = driveEntry.usedSize() - driveEntry.metaFilesSize();
+					replicatorEntry.drives().emplace(driveKey, state::DriveInfo{
+							lastApprovedDataModificationId, dataModificationIdIsValid, initialDownloadWork
+				   	});
 					driveEntry.replicators().emplace(notification.PublicKey);
+					driveEntry.cumulativeUploadSizes().emplace(notification.PublicKey, 0);
 
 					// Updating download shards of the drive
 					if (driveEntry.replicators().size() <= pluginConfig.ShardSize) {

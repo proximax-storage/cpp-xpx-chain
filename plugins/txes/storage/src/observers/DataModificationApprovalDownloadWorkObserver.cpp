@@ -62,6 +62,7 @@ namespace catapult { namespace observers {
 			driveInfo.LastApprovedDataModificationId = notification.DataModificationId;
 			driveInfo.DataModificationIdIsValid = true;
 			driveInfo.InitialDownloadWork = 0;
+			driveInfo.LastCompletedCumulativeDownloadWork = transferAmount.unwrap();
 		}
 	});
 }}
