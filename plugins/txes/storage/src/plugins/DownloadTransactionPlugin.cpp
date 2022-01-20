@@ -47,6 +47,7 @@ namespace catapult { namespace plugins {
 					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
 
+					sub.notify(AccountPublicKeyNotification<1>(downloadChannelKey));
 					sub.notify(BalanceTransferNotification<1>(
 							transaction.Signer, downloadChannelAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
 					utils::SwapMosaics(
