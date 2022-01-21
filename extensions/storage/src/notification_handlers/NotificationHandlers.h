@@ -30,7 +30,5 @@ namespace catapult { namespace notification_handlers {
 
 	DECLARE_HANDLER(DriveClosure, model::DriveClosureNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
-	DECLARE_HANDLER(Transaction, model::TransactionNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
-
 	DECLARE_HANDLER(Verification, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 }}

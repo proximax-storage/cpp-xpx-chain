@@ -930,6 +930,7 @@ namespace catapult { namespace model {
 	public:
 		explicit DownloadApprovalNotification(
 				const Hash256& id,
+				const Hash256& approvalTrigger,
 				const uint16_t number,
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
@@ -938,6 +939,7 @@ namespace catapult { namespace model {
 				const uint8_t* presentOpinionsPtr)
 			: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
 			, DownloadChannelId(id)
+			, ApprovalTrigger(approvalTrigger)
 			, SequenceNumber(number)
 			, JudgingKeysCount(judgingKeysCount)
 			, OverlappingKeysCount(overlappingKeysCount)
@@ -949,6 +951,9 @@ namespace catapult { namespace model {
 	public:
 		/// The identifier of the download channel.
 		Hash256 DownloadChannelId;
+
+		/// The hash of the block that initiated the rewards approval.
+		Hash256 ApprovalTrigger;
 
 		/// Sequence number of current download approval transaction in the download channel.
 		uint16_t SequenceNumber;

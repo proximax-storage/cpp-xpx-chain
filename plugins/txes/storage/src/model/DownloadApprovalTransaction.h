@@ -29,7 +29,7 @@ namespace catapult { namespace model {
 		/// The identifier of the download channel.
 		Hash256 DownloadChannelId;
 
-		/// The hash block that initiated the rewards approval.
+		/// The hash of the block that initiated the rewards approval.
 		Hash256 ApprovalTrigger;
 
 		/// Sequence number of current download approval transaction in the download channel.

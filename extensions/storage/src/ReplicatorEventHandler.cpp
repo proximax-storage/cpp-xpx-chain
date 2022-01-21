@@ -13,7 +13,7 @@
 namespace catapult { namespace storage {
 
     namespace {
-        class DefaultReplicatorEventHandler : public ReplicatorEventHandler/*, public std::enable_shared_from_this<DefaultReplicatorEventHandler>*/ {
+        class DefaultReplicatorEventHandler : public ReplicatorEventHandler {
         public:
             explicit DefaultReplicatorEventHandler(
                     TransactionSender&& transactionSender,
@@ -28,87 +28,54 @@ namespace catapult { namespace storage {
             void modifyApprovalTransactionIsReady(
                     sirius::drive::Replicator&,
                     sirius::drive::ApprovalTransactionInfo&& transactionInfo) override {
-                CATAPULT_LOG(debug) << "sending data modification approval transaction";
-
 				auto pReplicator = m_pReplicator.lock();
 				if (!pReplicator)
 					return;
 
-				std::vector<std::array<uint8_t, 32>> replicatorKeys;
-				for (const auto& opinion : transactionInfo.m_opinions)
-					replicatorKeys.emplace_back(opinion.m_replicatorKey);
+				CATAPULT_LOG(debug) << "sending data modification approval transaction";
 
                 auto transactionHash = m_transactionSender.sendDataModificationApprovalTransaction(transactionInfo);
 
 				m_transactionStatusHandler.addHandler(transactionHash, [
 						transactionHash,
-						replicatorKeys,
-						modifyTransactionHash = transactionInfo.m_modifyTransactionHash,
 						driveKey = transactionInfo.m_driveKey,
-						pReplicatorWeak = m_pReplicator,
-						rootHash = transactionInfo.m_rootHash](uint32_t status) {
-					auto pReplicator = pReplicatorWeak.lock();
-					if (!pReplicator)
-						return;
-
-					auto validationResult = validators::ValidationResult(status);
-					CATAPULT_LOG(debug) << "data modification approval transaction completed with " << validationResult;
-                    if (validationResult == validators::ValidationResult::Success) {
-						pReplicator->asyncApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationApprovalTransactionInfo{
-							driveKey,
-							modifyTransactionHash,
-							rootHash,
-							replicatorKeys});
-					} else if (validationResult == validators::Failure_Storage_Opinion_Invalid_Key) {
-						pReplicator->asyncApprovalTransactionHasFailedInvalidSignatures(driveKey, transactionHash.array());
-					}
-                });
-            }
-
-            void singleModifyApprovalTransactionIsReady(
-                    sirius::drive::Replicator&,
-                    sirius::drive::ApprovalTransactionInfo&& transactionInfo) override {
-                CATAPULT_LOG(debug) << "sending data modification single approval transaction";
-
-				auto pReplicator = m_pReplicator.lock();
-				if (!pReplicator)
-					return;
-
-                auto transactionHash = m_transactionSender.sendDataModificationSingleApprovalTransaction(transactionInfo);
-
-				m_transactionStatusHandler.addHandler(transactionHash, [
-						driveKey = transactionInfo.m_driveKey,
-						modifyTransactionHash = transactionInfo.m_modifyTransactionHash,
 						pReplicatorWeak = m_pReplicator](uint32_t status) {
 					auto pReplicator = pReplicatorWeak.lock();
 					if (!pReplicator)
 						return;
 
 					auto validationResult = validators::ValidationResult(status);
-					CATAPULT_LOG(debug) << "data modification single approval transaction completed with " << validationResult;
-                    if (validationResult == validators::ValidationResult::Success) {
-                        pReplicator->asyncSingleApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationSingleApprovalTransactionInfo{
-							driveKey,
-							modifyTransactionHash});
-                    }
+					CATAPULT_LOG(debug) << "data modification approval transaction completed with " << validationResult;
+                    if (validationResult == validators::Failure_Storage_Opinion_Invalid_Key)
+						pReplicator->asyncApprovalTransactionHasFailedInvalidSignatures(driveKey, transactionHash.array());
                 });
+            }
+
+            void singleModifyApprovalTransactionIsReady(
+                    sirius::drive::Replicator&,
+                    sirius::drive::ApprovalTransactionInfo&& transactionInfo) override {
+				auto pReplicator = m_pReplicator.lock();
+				if (!pReplicator)
+					return;
+
+				CATAPULT_LOG(debug) << "sending data modification single approval transaction";
+
+                auto transactionHash = m_transactionSender.sendDataModificationSingleApprovalTransaction(transactionInfo);
             }
 
             void downloadApprovalTransactionIsReady(
                     sirius::drive::Replicator&,
                     const sirius::drive::DownloadApprovalTransactionInfo& info) override {
-                CATAPULT_LOG(debug) << "sending download approval transaction";
-
 				auto pReplicator = m_pReplicator.lock();
 				if (!pReplicator)
 					return;
+
+				CATAPULT_LOG(debug) << "sending download approval transaction";
 
 				auto pDownloadChannel = m_storageState.getDownloadChannel(pReplicator->replicatorKey().array(), info.m_downloadChannelId);
                 auto transactionHash = m_transactionSender.sendDownloadApprovalTransaction(pDownloadChannel->DownloadApprovalCount + 1, info);
 
 				m_transactionStatusHandler.addHandler(transactionHash, [
-						&storageState = m_storageState,
-						driveKey = pDownloadChannel->DriveKey,
 						blockHash = info.m_blockHash,
 						downloadChannelId = info.m_downloadChannelId,
 						pReplicatorWeak = m_pReplicator](uint32_t status) {
@@ -118,12 +85,8 @@ namespace catapult { namespace storage {
 
 					auto validationResult = validators::ValidationResult(status);
 					CATAPULT_LOG(debug) << "download approval transaction completed with " << validationResult;
-                    if (validationResult == validators::ValidationResult::Success) {
-                        auto driveClosed = storageState.driveExist(driveKey);
-                        pReplicator->asyncDownloadApprovalTransactionHasBeenPublished(blockHash, downloadChannelId, driveClosed);
-                    } else if (validationResult != validators::Failure_Storage_Invalid_Sequence_Number) {
+                    if (validationResult != validators::Failure_Storage_Invalid_Sequence_Number)
                         pReplicator->asyncDownloadApprovalTransactionHasFailedInvalidOpinions(blockHash, downloadChannelId);
-					}
                 });
             }
 
@@ -161,74 +124,75 @@ namespace catapult { namespace storage {
             void opinionHasBeenReceived(
                     sirius::drive::Replicator&,
                     const sirius::drive::ApprovalTransactionInfo& info) override {
+				CATAPULT_LOG(debug) << "opinionHasBeenReceived() " << int(info.m_opinions[0].m_replicatorKey[0]);
 				auto pReplicator = m_pReplicator.lock();
 				if (!pReplicator)
 					return;
 
-                if (!m_storageState.driveExist(info.m_driveKey))
-                    return;
-
-                if (info.m_opinions.size() != 1)
-                    return;
-
-                const auto& opinion = info.m_opinions.at(0);
-                auto isValid = opinion.Verify(
-                        pReplicator->keyPair(),
-                        info.m_driveKey,
-                        info.m_modifyTransactionHash,
-                        info.m_rootHash,
-                        info.m_fsTreeFileSize,
-                        info.m_metaFilesSize,
-                        info.m_driveSize);
-
-                if (!isValid) {
-                    CATAPULT_LOG(warning) << "failed verification";
-                    return;
-                }
-
-                const auto pDriveEntry = m_storageState.getDrive(info.m_driveKey);
-                const auto& replicators = pDriveEntry.Replicators;
-                auto it = replicators.find(opinion.m_replicatorKey);
-                if (it == replicators.end())
-                    return;
-
-                if (pDriveEntry.DataModifications.empty())
-                    return;
-
-                auto actualSum = opinion.m_clientUploadBytes;
-                auto expectedSum = m_storageState.getDownloadWork(opinion.m_replicatorKey, info.m_driveKey);
-
-                // TODO check also offboarded/excluded replicators
-                for (const auto& layout: opinion.m_uploadLayout) {
-                    auto repIt = replicators.find(layout.m_key);
-                    if (repIt == replicators.end() && *repIt != pDriveEntry.Owner)
-                        return;
-
-                    actualSum += layout.m_uploadedBytes;
-                }
-
-                auto modificationIt = std::find_if(
-                        pDriveEntry.DataModifications.begin(),
-                        pDriveEntry.DataModifications.end(),
-                        [&info](const auto& item) { return item.Id == info.m_modifyTransactionHash; }
-                );
-
-                if (modificationIt == pDriveEntry.DataModifications.end())
-                    return;
-
-                modificationIt++;
-                expectedSum += std::accumulate(
-                        pDriveEntry.DataModifications.begin(),
-                        modificationIt,
-                        0,
-                        [](int64_t accumulator, const auto& currentModification) {
-                            return accumulator + currentModification.ActualUploadSize;
-                        }
-                );
-
-                // TODO compare current cumulativeSizes with exist ones (for each current should be grater or equal then exist)
-                if (actualSum != expectedSum)
-                    return;
+//                if (!m_storageState.driveExist(info.m_driveKey))
+//                    return;
+//
+//                if (info.m_opinions.size() != 1)
+//                    return;
+//
+//                const auto& opinion = info.m_opinions.at(0);
+//                auto isValid = opinion.Verify(
+//                        pReplicator->keyPair(),
+//                        info.m_driveKey,
+//                        info.m_modifyTransactionHash,
+//                        info.m_rootHash,
+//                        info.m_fsTreeFileSize,
+//                        info.m_metaFilesSize,
+//                        info.m_driveSize);
+//
+//                if (!isValid) {
+//                    CATAPULT_LOG(warning) << "failed verification";
+//                    return;
+//                }
+//
+//                const auto pDriveEntry = m_storageState.getDrive(info.m_driveKey);
+//                const auto& replicators = pDriveEntry.Replicators;
+//                auto it = replicators.find(opinion.m_replicatorKey);
+//                if (it == replicators.end())
+//                    return;
+//
+//                if (pDriveEntry.DataModifications.empty())
+//                    return;
+//
+//                auto actualSum = opinion.m_clientUploadBytes;
+//                auto expectedSum = m_storageState.getDownloadWork(opinion.m_replicatorKey, info.m_driveKey);
+//
+//                // TODO check also offboarded/excluded replicators
+//                for (const auto& layout: opinion.m_uploadLayout) {
+//                    auto repIt = replicators.find(layout.m_key);
+//                    if (repIt == replicators.end() && *repIt != pDriveEntry.Owner)
+//                        return;
+//
+//                    actualSum += layout.m_uploadedBytes;
+//                }
+//
+//                auto modificationIt = std::find_if(
+//                        pDriveEntry.DataModifications.begin(),
+//                        pDriveEntry.DataModifications.end(),
+//                        [&info](const auto& item) { return item.Id == info.m_modifyTransactionHash; }
+//                );
+//
+//                if (modificationIt == pDriveEntry.DataModifications.end())
+//                    return;
+//
+//                modificationIt++;
+//                expectedSum += std::accumulate(
+//                        pDriveEntry.DataModifications.begin(),
+//                        modificationIt,
+//                        0,
+//                        [](int64_t accumulator, const auto& currentModification) {
+//                            return accumulator + currentModification.ActualUploadSize;
+//                        }
+//                );
+//
+//                // TODO compare current cumulativeSizes with exist ones (for each current should be grater or equal then exist)
+//                if (actualSum != expectedSum)
+//                    return;
 
                 pReplicator->asyncOnOpinionReceived(info);
             }
@@ -240,22 +204,22 @@ namespace catapult { namespace storage {
 				if (!pReplicator)
 					return;
 
-                if (!m_storageState.downloadChannelExist(info.m_downloadChannelId))
-                    return;
-
-                if (info.m_opinions.size() != 1)
-                    return;
-
-                const auto& opinion = info.m_opinions.at(0);
-                if (!opinion.Verify(info.m_blockHash, info.m_downloadChannelId)) {
-                    CATAPULT_LOG(warning) << "failed verification";
-                    return;
-                }
-
-                if (!m_storageState.isReplicatorRegistered(opinion.m_replicatorKey)) {
-                    CATAPULT_LOG(warning) << "replicator not registered";
-                    return;
-                }
+//                if (!m_storageState.downloadChannelExist(info.m_downloadChannelId))
+//                    return;
+//
+//                if (info.m_opinions.size() != 1)
+//                    return;
+//
+//                const auto& opinion = info.m_opinions.at(0);
+//                if (!opinion.Verify(info.m_blockHash, info.m_downloadChannelId)) {
+//                    CATAPULT_LOG(warning) << "failed verification";
+//                    return;
+//                }
+//
+//                if (!m_storageState.isReplicatorRegistered(opinion.m_replicatorKey)) {
+//                    CATAPULT_LOG(warning) << "replicator not registered";
+//                    return;
+//                }
 
                 pReplicator->asyncOnDownloadOpinionReceived(info);
             }

@@ -16,10 +16,12 @@ namespace catapult { namespace notification_handlers {
             if (!pReplicatorService)
                 return;
 
+			if (pReplicatorService->replicatorKey() != notification.PublicKey || !pReplicatorService->isAssignedToDrive(notification.DriveKey))
+				return;
+
             pReplicatorService->dataModificationSingleApprovalPublished(
-                    notification.DriveKey,
-                    notification.DataModificationId
-            );
+				notification.DriveKey,
+				notification.DataModificationId);
         });
     }
 }}

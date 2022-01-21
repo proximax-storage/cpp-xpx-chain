@@ -37,8 +37,8 @@ namespace catapult { namespace observers {
 	  	initialCumulativeUploadSizes.reserve(totalJudgedKeysCount);
 	  	const auto& driveOwnerPublicKey = driveEntry.owner();
 		for (auto i = notification.JudgingKeysCount; i < totalKeysCount; ++i) {
-			const auto key = notification.PublicKeysPtr[i];
-			const auto initialSize = (key != driveOwnerPublicKey) ?
+			const auto& key = notification.PublicKeysPtr[i];
+			const auto& initialSize = (key != driveOwnerPublicKey) ?
 					driveEntry.cumulativeUploadSizes()[key] :
 					driveEntry.ownerCumulativeUploadSize();
 			initialCumulativeUploadSizes.push_back(initialSize);

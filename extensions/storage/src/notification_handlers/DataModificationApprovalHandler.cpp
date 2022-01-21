@@ -16,12 +16,23 @@ namespace catapult { namespace notification_handlers {
             if (!pReplicatorService)
                 return;
 
-            auto replicatorsCount = notification.JudgedKeysCount + notification.OverlappingKeysCount + notification.JudgingKeysCount;
+			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey))
+				return;
+
+            auto replicatorsCount = notification.JudgedKeysCount + notification.OverlappingKeysCount;
             std::vector<Key> replicators;
             replicators.reserve(replicatorsCount);
 
-            for (auto i = 0; i < replicatorsCount; i++)
-                replicators.emplace_back(notification.PublicKeysPtr[i]);
+			bool found = false;
+            for (auto i = 0; i < replicatorsCount; i++) {
+				if (pReplicatorService->replicatorKey() == notification.PublicKeysPtr[i])
+					found = true;
+
+				replicators.emplace_back(notification.PublicKeysPtr[i]);
+			}
+
+			if (!found)
+				return;
 
             pReplicatorService->dataModificationApprovalPublished(
                     notification.DriveKey,

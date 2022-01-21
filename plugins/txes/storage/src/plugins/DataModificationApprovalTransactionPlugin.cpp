@@ -8,7 +8,6 @@
 #include "catapult/model/StorageNotifications.h"
 #include "src/model/DataModificationApprovalTransaction.h"
 #include "src/utils/StorageUtils.h"
-#include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 
 using namespace catapult::model;

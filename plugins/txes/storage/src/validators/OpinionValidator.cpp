@@ -41,39 +41,39 @@ namespace catapult { namespace validators {
 		}
 
 	  	// Preparing common data.
-		std::vector<uint8_t> buffer(notification.CommonDataSize + (Key_Size + notification.OpinionElementSize) * totalJudgedKeysCount); // Guarantees that every possible individual opinion will fit in.
-	  	std::copy(notification.CommonDataPtr, notification.CommonDataPtr + notification.CommonDataSize, buffer.data());
-	  	auto* const pIndividualDataBegin = buffer.data() + notification.CommonDataSize;
-
-		// Validating signatures.
-	  	auto pKey = notification.PublicKeysPtr;
-	  	auto pSignature = notification.SignaturesPtr;
-	  	auto pOpinionElement = notification.OpinionsPtr;
-	  	using OpinionElement = std::pair<Key, const uint8_t*>;
-		const auto comparator = [](const OpinionElement& a, const OpinionElement& b){ return a.first < b.first; };
-		using IndividualPart = std::set<OpinionElement, decltype(comparator)>;
-	  	IndividualPart individualPart(comparator);	// Set that represents complete opinion of one of the replicators. Opinion elements are sorted in ascending order of keys.
-		for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pKey, ++pSignature) {
-			individualPart.clear();
-			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
-				if (presentOpinions[i * totalJudgedKeysCount + j]) {
-					individualPart.emplace(notification.PublicKeysPtr[notification.JudgingKeysCount + j], pOpinionElement);
-					pOpinionElement += notification.OpinionElementSize;
-				}
-			}
-
-			const auto dataSize = notification.CommonDataSize + (Key_Size + notification.OpinionElementSize) * individualPart.size();
-			auto* pIndividualData = pIndividualDataBegin;
-			for (const auto& pair : individualPart) {
-				utils::WriteToByteArray(pIndividualData, pair.first);
-				pIndividualData = std::copy(pair.second, pair.second + notification.OpinionElementSize, pIndividualData);
-			}
-
-			RawBuffer dataBuffer(buffer.data(), dataSize);
-
-			if (!crypto::Verify(*pKey, dataBuffer, *pSignature))
-				return Failure_Storage_Opinion_Invalid_Signature;
-		}
+//		std::vector<uint8_t> buffer(notification.CommonDataSize + (Key_Size + notification.OpinionElementSize) * totalJudgedKeysCount); // Guarantees that every possible individual opinion will fit in.
+//	  	std::copy(notification.CommonDataPtr, notification.CommonDataPtr + notification.CommonDataSize, buffer.data());
+//	  	auto* const pIndividualDataBegin = buffer.data() + notification.CommonDataSize;
+//
+//		// Validating signatures.
+//	  	auto pKey = notification.PublicKeysPtr;
+//	  	auto pSignature = notification.SignaturesPtr;
+//	  	auto pOpinionElement = notification.OpinionsPtr;
+//	  	using OpinionElement = std::pair<Key, const uint8_t*>;
+//		const auto comparator = [](const OpinionElement& a, const OpinionElement& b){ return a.first < b.first; };
+//		using IndividualPart = std::set<OpinionElement, decltype(comparator)>;
+//	  	IndividualPart individualPart(comparator);	// Set that represents complete opinion of one of the replicators. Opinion elements are sorted in ascending order of keys.
+//		for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pKey, ++pSignature) {
+//			individualPart.clear();
+//			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
+//				if (presentOpinions[i * totalJudgedKeysCount + j]) {
+//					individualPart.emplace(notification.PublicKeysPtr[notification.JudgingKeysCount + j], pOpinionElement);
+//					pOpinionElement += notification.OpinionElementSize;
+//				}
+//			}
+//
+//			const auto dataSize = notification.CommonDataSize + (Key_Size + notification.OpinionElementSize) * individualPart.size();
+//			auto* pIndividualData = pIndividualDataBegin;
+//			for (const auto& pair : individualPart) {
+//				utils::WriteToByteArray(pIndividualData, pair.first);
+//				pIndividualData = std::copy(pair.second, pair.second + notification.OpinionElementSize, pIndividualData);
+//			}
+//
+//			RawBuffer dataBuffer(buffer.data(), dataSize);
+//
+//			if (!crypto::Verify(*pKey, dataBuffer, *pSignature))
+//				return Failure_Storage_Opinion_Invalid_Signature;
+//		}
 
 		return ValidationResult::Success;
 	}))

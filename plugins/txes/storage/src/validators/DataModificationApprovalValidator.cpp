@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 	  	if (activeDataModifications.begin()->Id != notification.DataModificationId)
 		  	return Failure_Storage_Invalid_Data_Modification_Id;
 
-		// Check if all public keys are either Replicator keys of Drive Owner key
+		// Check if all public keys are either Replicator keys or Drive Owner key
 		const auto& replicators = pDriveEntry->replicators();
 	  	const auto& driveOwner = pDriveEntry->owner();
 		const auto totalKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount + notification.JudgedKeysCount;

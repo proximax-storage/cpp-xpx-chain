@@ -23,7 +23,7 @@ namespace catapult { namespace validators {
 	  	// Check if there are any active data modifications
 		const auto& activeDataModifications = pDriveEntry->activeDataModifications();
 	  	if (activeDataModifications.empty())
-		  	return Failure_Storage_No_Active_Data_Modifications;
+			return Failure_Storage_No_Active_Data_Modifications;
 
 	  	// Check if respective data modification is the first (oldest) element in activeDataModifications
 	  	if (activeDataModifications.begin()->Id != notification.DataModificationId)

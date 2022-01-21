@@ -15,6 +15,8 @@ namespace catapult { namespace notification_handlers {
             auto pReplicatorService = pReplicatorServiceWeak.lock();
             if (!pReplicatorService)
                 return;
+
+            pReplicatorService->downloadApprovalPublished(notification.ApprovalTrigger, notification.DownloadChannelId);
         });
     }
 }}

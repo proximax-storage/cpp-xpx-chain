@@ -315,6 +315,15 @@ namespace catapult { namespace storage {
 				modificationId.array()});
         }
 
+        void downloadApprovalPublished(const Hash256& approvalTrigger, const Hash256& downloadChannelId) {
+			auto pDownloadChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), downloadChannelId);
+			if (!pDownloadChannel)
+				return;
+
+			auto driveClosed = !m_storageState.driveExist(pDownloadChannel->DriveKey);
+            m_pReplicator->asyncDownloadApprovalTransactionHasBeenPublished(approvalTrigger.array(), downloadChannelId.array(), driveClosed);
+        }
+
         void notifyTransactionStatus(const Hash256& hash, uint32_t status) {
             m_transactionStatusHandler.handle(hash, status);
         }
@@ -454,6 +463,11 @@ namespace catapult { namespace storage {
     void ReplicatorService::dataModificationSingleApprovalPublished(const Key& driveKey, const Hash256& modificationId) {
         if (m_pImpl)
             m_pImpl->dataModificationSingleApprovalPublished(driveKey, modificationId);
+    }
+
+    void ReplicatorService::downloadApprovalPublished(const Hash256& approvalTrigger, const Hash256& downloadChannelId) {
+        if (m_pImpl)
+            m_pImpl->downloadApprovalPublished(approvalTrigger, downloadChannelId);
     }
 
     // endregion

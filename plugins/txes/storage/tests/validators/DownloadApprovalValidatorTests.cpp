@@ -73,6 +73,7 @@ namespace catapult { namespace validators {
 
 			Notification notification(
 					downloadChannelId,
+					test::GenerateRandomByteArray<Hash256>(),
 					sequenceNumber,
 					opinionData.JudgingKeysCount,
 					opinionData.OverlappingKeysCount,
