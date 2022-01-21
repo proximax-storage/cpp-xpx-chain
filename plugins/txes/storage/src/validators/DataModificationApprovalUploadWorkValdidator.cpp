@@ -5,6 +5,7 @@
 **/
 
 #include "Validators.h"
+#include <boost/dynamic_bitset.hpp>
 #include "src/cache/BcDriveCache.h"
 
 namespace catapult { namespace validators {
@@ -12,7 +13,11 @@ namespace catapult { namespace validators {
 	using Notification = model::DataModificationApprovalUploadWorkNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(DataModificationApprovalUploadWork, [](const Notification& notification, const ValidatorContext& context) {
-	  	const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+	  	const auto totalKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount + notification.JudgedKeysCount;
+	  	const auto totalJudgingKeysCount = totalKeysCount - notification.JudgedKeysCount;
+	  	const auto totalJudgedKeysCount = totalKeysCount - notification.JudgingKeysCount;
+
+		const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 	  	const auto driveIter = driveCache.find(notification.DriveKey);
 	 	const auto& pDriveEntry = driveIter.tryGet();
 
@@ -21,12 +26,45 @@ namespace catapult { namespace validators {
 		  	return Failure_Storage_Drive_Not_Found;
 
 		// Check if all replicators' keys are present in drive's cumulativeUploadSizes
-//		const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
-//	  	const auto& driveOwnerPublicKey = pDriveEntry->owner();
-//		auto pKey = &notification.PublicKeysPtr[notification.JudgingKeysCount];
-//		for (auto i = 0; i < totalJudgedKeysCount; ++i, ++pKey)
-//			if (*pKey != driveOwnerPublicKey && !pDriveEntry->cumulativeUploadSizes().count(*pKey))
-//				return Failure_Storage_Replicator_Not_Found;
+		const auto& driveOwnerPublicKey = pDriveEntry->owner();
+		auto pKey = &notification.PublicKeysPtr[notification.JudgingKeysCount];
+		for (auto i = 0; i < totalJudgedKeysCount; ++i, ++pKey)
+			if (*pKey != driveOwnerPublicKey && !pDriveEntry->cumulativeUploadSizes().count(*pKey))
+				return Failure_Storage_Replicator_Not_Found;
+
+		// Check if
+		// - all opinions are not less than respective cumulativeUploadSizes
+		// - each replicator's opinion increments sum up to his LastCompletedCumulativeDownloadWork
+//	  	const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
+//	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
+//
+//	  	std::vector<uint64_t> initialCumulativeUploadSizes;
+//	  	initialCumulativeUploadSizes.reserve(totalJudgedKeysCount);
+//	  	for (auto i = notification.JudgingKeysCount; i < totalKeysCount; ++i) {
+//		  	const auto key = notification.PublicKeysPtr[i];
+//		  	const auto initialSize = (key != driveOwnerPublicKey) ?
+//					pDriveEntry->cumulativeUploadSizes().at(key) :
+//					pDriveEntry->ownerCumulativeUploadSize();
+//		  	initialCumulativeUploadSizes.push_back(initialSize);
+//	  	}
+//
+//		const auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+//		auto pOpinion = notification.OpinionsPtr;
+//		for (auto i = 0; i < totalJudgingKeysCount; ++i) {
+//			uint64_t totalIncrements = 0;
+//			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
+//				if (presentOpinions[i*totalJudgedKeysCount + j]) {
+//					const auto increment = *pOpinion++ - initialCumulativeUploadSizes.at(j);
+//					if (increment < 0)
+//						return Failure_Storage_Invalid_Opinion;
+//					totalIncrements += increment;
+//				}
+//			}
+//			const auto replicatorIter = replicatorCache.find(notification.PublicKeysPtr[i]);
+//			const auto& pReplicatorEntry = replicatorIter.tryGet();
+//			if (pReplicatorEntry->drives().at(notification.DriveKey).LastCompletedCumulativeDownloadWork != totalIncrements)
+//				return Failure_Storage_Invalid_Opinions_Sum;
+//		}
 
 	  	// TODO: Check if there are enough mosaics for the transfer?
 
