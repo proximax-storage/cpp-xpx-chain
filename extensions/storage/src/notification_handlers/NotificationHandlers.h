@@ -12,23 +12,29 @@
 
 namespace catapult { namespace notification_handlers {
 
-	DECLARE_HANDLER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+	DECLARE_HANDLER(DataModificationApproval, model::DataModificationApprovalNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
+	DECLARE_HANDLER(DataModificationCancel, model::DataModificationCancelNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(DataModification, model::DataModificationNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
-	DECLARE_HANDLER(DataModificationCancel, model::DataModificationCancelNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+	DECLARE_HANDLER(DataModificationSingleApproval, model::DataModificationSingleApprovalNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
+	DECLARE_HANDLER(DownloadApproval, model::DownloadApprovalNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(Download, model::DownloadNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(DownloadPayment, model::DownloadPaymentNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
+	DECLARE_HANDLER(DriveClosure, model::DriveClosureNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
 	DECLARE_HANDLER(FinishDownload, model::FinishDownloadNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
-	DECLARE_HANDLER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+	DECLARE_HANDLER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
-	DECLARE_HANDLER(DriveClosure, model::DriveClosureNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+	DECLARE_HANDLER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(Verification, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 }}

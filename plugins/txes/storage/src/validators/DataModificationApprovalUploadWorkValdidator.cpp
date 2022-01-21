@@ -26,11 +26,11 @@ namespace catapult { namespace validators {
 		  	return Failure_Storage_Drive_Not_Found;
 
 		// Check if all replicators' keys are present in drive's cumulativeUploadSizes
-		const auto& driveOwnerPublicKey = pDriveEntry->owner();
-		auto pKey = &notification.PublicKeysPtr[notification.JudgingKeysCount];
-		for (auto i = 0; i < totalJudgedKeysCount; ++i, ++pKey)
-			if (*pKey != driveOwnerPublicKey && !pDriveEntry->cumulativeUploadSizes().count(*pKey))
-				return Failure_Storage_Replicator_Not_Found;
+//		const auto& driveOwnerPublicKey = pDriveEntry->owner();
+//		auto pKey = &notification.PublicKeysPtr[notification.JudgingKeysCount];
+//		for (auto i = 0; i < totalJudgedKeysCount; ++i, ++pKey)
+//			if (*pKey != driveOwnerPublicKey && !pDriveEntry->cumulativeUploadSizes().count(*pKey))
+//				return Failure_Storage_Replicator_Not_Found;
 
 		// Check if
 		// - all opinions are not less than respective cumulativeUploadSizes

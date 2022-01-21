@@ -29,11 +29,11 @@ namespace catapult { namespace validators {
 	  	if (activeDataModifications.begin()->Id != notification.DataModificationId)
 		  	return Failure_Storage_Invalid_Data_Modification_Id;
 
-	  	const auto usedSizeDifference = pDriveEntry->activeDataModifications().begin()->ActualUploadSize
-				+ pDriveEntry->usedSize()
-				- (notification.UsedDriveSize - notification.MetaFilesSize);
-		if (usedSizeDifference < 0)
-			return Failure_Storage_Invalid_Used_Size;
+//	  	const auto usedSizeDifference = pDriveEntry->activeDataModifications().begin()->ActualUploadSize
+//				+ pDriveEntry->usedSize()
+//				- (notification.UsedDriveSize - notification.MetaFilesSize);
+//		if (usedSizeDifference < 0)
+//			return Failure_Storage_Invalid_Used_Size;
 
 		// TODO: Check if UsedDriveSize - MetaFilesSize > 0?
 

@@ -10,8 +10,8 @@ namespace catapult { namespace notification_handlers {
 
     using Notification = model::DataModificationSingleApprovalNotification<1>;
 
-    DECLARE_HANDLER(DataModificationSingleApprovalNotification, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-        return MAKE_HANDLER(DataModificationSingleApprovalNotification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+    DECLARE_HANDLER(DataModificationSingleApproval, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
+        return MAKE_HANDLER(DataModificationSingleApproval, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
             auto pReplicatorService = pReplicatorServiceWeak.lock();
             if (!pReplicatorService)
                 return;

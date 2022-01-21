@@ -22,8 +22,8 @@ namespace catapult { namespace validators {
 			return Failure_Storage_Drive_Not_Found;
 
 	  	// Check if new used drive size does not exceed total drive size
-	  	if (notification.UsedDriveSize > pDriveEntry->size())
-		  	return Failure_Storage_Invalid_Used_Size;
+//	  	if (notification.UsedDriveSize > pDriveEntry->size())
+//		  	return Failure_Storage_Invalid_Used_Size;
 
 	  	// Check if there are any active data modifications
 	  	const auto& activeDataModifications = pDriveEntry->activeDataModifications();

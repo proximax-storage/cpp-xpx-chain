@@ -10,8 +10,8 @@ namespace catapult { namespace notification_handlers {
 
     using Notification = model::DownloadApprovalNotification<1>;
 
-    DECLARE_HANDLER(DownloadApprovalNotification, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-        return MAKE_HANDLER(DownloadApprovalNotification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+    DECLARE_HANDLER(DownloadApproval, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
+        return MAKE_HANDLER(DownloadApproval, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
             auto pReplicatorService = pReplicatorServiceWeak.lock();
             if (!pReplicatorService)
                 return;

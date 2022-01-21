@@ -26,15 +26,18 @@ namespace catapult { namespace storage {
 
 			notification_handlers::DemuxHandlerBuilder builder;
 			builder
-				.add(notification_handlers::CreatePrepareDriveHandler(pReplicatorService))
-				.add(notification_handlers::CreateDataModificationHandler(pReplicatorService))
+				.add(notification_handlers::CreateDataModificationApprovalHandler(pReplicatorService))
 				.add(notification_handlers::CreateDataModificationCancelHandler(pReplicatorService))
+				.add(notification_handlers::CreateDataModificationHandler(pReplicatorService))
+				.add(notification_handlers::CreateDataModificationSingleApprovalHandler(pReplicatorService))
+				.add(notification_handlers::CreateDownloadApprovalHandler(pReplicatorService))
 				.add(notification_handlers::CreateDownloadHandler(pReplicatorService))
 				.add(notification_handlers::CreateDownloadPaymentHandler(pReplicatorService))
-				.add(notification_handlers::CreateFinishDownloadHandler(pReplicatorService))
-				.add(notification_handlers::CreateReplicatorOnboardingHandler(pReplicatorService))
-				.add(notification_handlers::CreateReplicatorOffboardingHandler(pReplicatorService))
 				.add(notification_handlers::CreateDriveClosureHandler(pReplicatorService))
+				.add(notification_handlers::CreateFinishDownloadHandler(pReplicatorService))
+				.add(notification_handlers::CreatePrepareDriveHandler(pReplicatorService))
+				.add(notification_handlers::CreateReplicatorOffboardingHandler(pReplicatorService))
+				.add(notification_handlers::CreateReplicatorOnboardingHandler(pReplicatorService))
 				.add(notification_handlers::CreateVerificationHandler(pReplicatorService));
 
 			bootstrapper.subscriptionManager().addPostBlockCommitSubscriber(
