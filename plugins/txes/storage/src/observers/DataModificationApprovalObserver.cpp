@@ -26,6 +26,7 @@ namespace catapult { namespace observers {
 		for (auto i = 0u; i < totalJudgingKeysCount; ++i)
 			driveEntry.confirmedUsedSizes().insert({notification.PublicKeysPtr[i], notification.UsedDriveSize});
 
+		driveEntry.setRootHash(notification.FileStructureCdi);
 		driveEntry.setUsedSize(notification.UsedDriveSize);
 
 		driveEntry.verifications().clear();
