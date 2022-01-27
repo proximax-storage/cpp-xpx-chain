@@ -21,9 +21,12 @@ namespace catapult { namespace observers {
 		downloadEntry.setDownloadSize(notification.DownloadSize);
 	  	downloadEntry.setDownloadApprovalCount(0);
 
-		auto pKey = notification.ListOfPublicKeysPtr;
-		for (auto i = 0; i < notification.ListOfPublicKeysSize; ++i, ++pKey)
-			downloadEntry.listOfPublicKeys().push_back(*pKey);
+		if (notification.ListOfPublicKeysSize == 0) {
+			downloadEntry.listOfPublicKeys().push_back(notification.Consumer);
+		} else {
+			for (auto i = 0; i < notification.ListOfPublicKeysSize; ++i)
+				downloadEntry.listOfPublicKeys().push_back(notification.ListOfPublicKeysPtr[i]);
+		}
 
 		// Forming a shard:
 	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();

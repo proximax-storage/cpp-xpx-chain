@@ -46,6 +46,7 @@ namespace catapult { namespace plugins {
 					const auto downloadChannelAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(downloadChannelKey, config.NetworkIdentifier));
 					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+					const auto streamingAmount = Amount(transaction.DownloadSize * std::max<uint16_t>(1, transaction.ListOfPublicKeysSize));
 
 					sub.notify(AccountPublicKeyNotification<1>(downloadChannelKey));
 					sub.notify(BalanceTransferNotification<1>(
@@ -53,7 +54,7 @@ namespace catapult { namespace plugins {
 					utils::SwapMosaics(
 							transaction.Signer,
 							downloadChannelKey,
-							{ { streamingMosaicId, Amount(transaction.DownloadSize * transaction.ListOfPublicKeysSize) } },
+							{ {streamingMosaicId, streamingAmount} },
 							sub,
 							config,
 							utils::SwapOperation::Buy);
