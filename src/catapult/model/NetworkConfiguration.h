@@ -99,6 +99,9 @@ namespace catapult { namespace model {
 		/// Allows validate deadline of transaction. It means that you can send old transactions to blockchain if it is false.
 		bool EnableDeadlineValidation;
 
+		/// Enable lock fund plugin
+		bool EnableMosaicLocking;
+
 		/// Minimum Version of the Account State that is currently allowed to be created. OPTIONAL DEFAULTS TO 1
 		uint32_t MinimumAccountVersion = 1;
 

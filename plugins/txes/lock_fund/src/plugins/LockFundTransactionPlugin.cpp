@@ -18,16 +18,29 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#pragma once
-
-namespace catapult { namespace plugins { class PluginManager; } }
+#include "LockFundTransactionPlugin.h"
+#include "catapult/model/NotificationSubscriber.h"
+#include "catapult/model/TransactionPluginFactory.h"
+#include "src/model/LockFundTransaction.h"
+#include "src/model/LockFundNotifications.h"
+using namespace catapult::model;
 
 namespace catapult { namespace plugins {
 
-	/// Registers the core system with \a manager.
-	/// \note This plugin is required for basic system operation.
-	void RegisterCoreSystem(PluginManager& manager);
+	namespace {
+		template<typename TTransaction>
+		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+			switch (transaction.EntityVersion()) {
+			case 1: {
+				const auto *pMosaics = transaction.MosaicsPtr();
+				sub.notify(LockFundNotification<1>(transaction.Signer, transaction.MosaicsCount, transaction.Duration, pMosaics, transaction.Action));
+				break;
+			}
 
-	/// Only used for testing
-	void RegisterTestCoreSystem(PluginManager& manager);
+			default:
+				CATAPULT_LOG(debug) << "invalid version of LockFundTransaction: " << transaction.EntityVersion();
+			}
+		}
+	}
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(LockFund, Default, Publish)
 }}

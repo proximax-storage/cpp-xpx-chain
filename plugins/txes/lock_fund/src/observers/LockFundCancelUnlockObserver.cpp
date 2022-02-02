@@ -18,37 +18,19 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#pragma once
-#include <stdint.h>
+#include "src/cache/LockFundCache.h"
+#include "Observers.h"
+#include "src/config/LockFundConfiguration.h"
+#include "catapult/cache_core/AccountStateCache.h"
 
-namespace catapult { namespace cache {
+namespace catapult { namespace observers {
 
-	/// Cache ids for well-known caches.
-	enum class CacheId : uint32_t {
-		NetworkConfig,
-		AccountState,
-		BlockDifficulty,
-		Hash,
-		Namespace,
-		Metadata,
-		Mosaic,
-		Multisig,
-		HashLockInfo,
-		SecretLockInfo,
-		Property,
-		Reputation,
-		Contract,
-		BlockchainUpgrade,
-		Drive,
-		Exchange,
-		Download,
-		SuperContract,
-		Operation,
-		LockFund,
-	};
+	DEFINE_OBSERVER(LockFundCancelUnlock, model::LockFundCancelUnlockNotification<1>, ([](const auto& notification, const ObserverContext& context) {
+		auto& lockFundCache = context.Cache.sub<cache::LockFundCache>();
+		if(context.Mode == NotifyMode::Commit)
+			lockFundCache.disable(notification.Sender, notification.Height);
+		else
+			lockFundCache.enable(notification.Sender, notification.Height);
 
-/// Defines cache constants for a cache with \a NAME.
-#define DEFINE_CACHE_CONSTANTS(NAME) \
-	static constexpr size_t Id = utils::to_underlying_type(CacheId::NAME); \
-	static constexpr auto Name = #NAME "Cache";
+	}));
 }}

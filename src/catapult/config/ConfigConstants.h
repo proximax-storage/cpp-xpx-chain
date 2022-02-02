@@ -17,6 +17,7 @@ namespace catapult { namespace config {
 		contractConfigId,
 		locksecretConfigId,
 		lockhashConfigId,
+		lockfundConfigId,
 		metadataConfigId,
 		mosaicConfigId,
 		multisigConfigId,

@@ -342,6 +342,52 @@ namespace catapult { namespace state {
 		return *this;
 	}
 
+	AccountBalances& AccountBalances::requestUnlock(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
+		if(m_accountState && m_accountState->IsLocked())
+		CATAPULT_THROW_RUNTIME_ERROR("Locked accounts cannot be modified!");
+		if (IsZero(amount))
+			return *this;
+
+		auto iter = m_balances.find(mosaicId);
+
+		auto lockedIter = m_lockedBalances.find(mosaicId);
+		auto hasZeroBalance = m_lockedBalances.end() == lockedIter;
+
+		if (hasZeroBalance || amount > lockedIter->second) {
+			auto currentBalance = hasZeroBalance ? Amount(0) : lockedIter->second;
+			std::ostringstream out;
+			out
+					<< "unlock amount (" << amount << ") is greater than current balance (" << currentBalance
+					<< ") for mosaic " << utils::HexFormat(mosaicId);
+			CATAPULT_THROW_RUNTIME_ERROR(out.str().c_str());
+		}
+
+		auto originalBalance = lockedIter->second;
+
+		lockedIter->second = lockedIter->second - amount;
+
+		if (m_balances.end() == iter) {
+			if (m_remoteSnapshots.empty() && m_localSnapshots.empty()) {
+				maybePushSnapshot(mosaicId, Amount(0), originalBalance, height - Height(1));
+			}
+			m_balances.insert(std::make_pair(mosaicId, amount));
+			maybePushSnapshot(mosaicId, amount, lockedIter->second, height);
+
+		} else {
+			if (m_remoteSnapshots.empty() && m_localSnapshots.empty()) {
+				maybePushSnapshot(mosaicId, Amount(0), originalBalance, height - Height(1));
+			}
+			iter->second = iter->second + amount;
+			maybePushSnapshot(mosaicId, iter->second, lockedIter->second, height);
+		}
+
+
+		if (IsZero(lockedIter->second))
+			m_lockedBalances.erase(mosaicId);
+
+		return *this;
+	}
+
 	void AccountBalances::optimize(MosaicId id) {
 		m_balances.optimize(id);
 		m_lockedBalances.optimize(id);

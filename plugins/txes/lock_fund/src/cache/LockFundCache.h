@@ -19,36 +19,27 @@
 **/
 
 #pragma once
-#include <stdint.h>
+#include "catapult/cache/BasicCache.h"
+#include "LockFundCacheView.h"
+#include "LockFundCacheDelta.h"
+#include "LockFundCacheTypes.h"
 
 namespace catapult { namespace cache {
 
-	/// Cache ids for well-known caches.
-	enum class CacheId : uint32_t {
-		NetworkConfig,
-		AccountState,
-		BlockDifficulty,
-		Hash,
-		Namespace,
-		Metadata,
-		Mosaic,
-		Multisig,
-		HashLockInfo,
-		SecretLockInfo,
-		Property,
-		Reputation,
-		Contract,
-		BlockchainUpgrade,
-		Drive,
-		Exchange,
-		Download,
-		SuperContract,
-		Operation,
-		LockFund,
-	};
+	/// Cache composed of hash lock info information.
+	using BasicLockFundCache = BasicCache<LockFundCacheDescriptor, LockFundCacheTypes::BaseSets>;
 
-/// Defines cache constants for a cache with \a NAME.
-#define DEFINE_CACHE_CONSTANTS(NAME) \
-	static constexpr size_t Id = utils::to_underlying_type(CacheId::NAME); \
-	static constexpr auto Name = #NAME "Cache";
+	/// Synchronized cache composed of hash lock info information.
+	class LockFundCache : public SynchronizedCache<BasicLockFundCache> {
+	public:
+		DEFINE_CACHE_CONSTANTS(LockFund)
+
+	public:
+		/// Creates a cache around \a config.
+		explicit LockFundCache(const CacheConfiguration& config)
+				: SynchronizedCache<BasicLockFundCache>(BasicLockFundCache(config))
+		{}
+
+
+	};
 }}

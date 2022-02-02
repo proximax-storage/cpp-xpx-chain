@@ -19,36 +19,34 @@
 **/
 
 #pragma once
+#include "catapult/model/PluginConfiguration.h"
 #include <stdint.h>
+#include <catapult/types.h>
 
-namespace catapult { namespace cache {
+namespace catapult { namespace utils { class ConfigurationBag; } }
 
-	/// Cache ids for well-known caches.
-	enum class CacheId : uint32_t {
-		NetworkConfig,
-		AccountState,
-		BlockDifficulty,
-		Hash,
-		Namespace,
-		Metadata,
-		Mosaic,
-		Multisig,
-		HashLockInfo,
-		SecretLockInfo,
-		Property,
-		Reputation,
-		Contract,
-		BlockchainUpgrade,
-		Drive,
-		Exchange,
-		Download,
-		SuperContract,
-		Operation,
-		LockFund,
+namespace catapult { namespace config {
+
+	/// Lock fund plugin configuration settings.
+	struct LockFundConfiguration : public model::PluginConfiguration {
+	public:
+		DEFINE_CONFIG_CONSTANTS(lockfund)
+
+	public:
+		/// Blocks after which a request to unlock is fulfilled
+		BlockDuration RequestCooldownBlocks;
+
+		/// Maximum transaction mosaics size.
+		uint16_t MaxMosaicsSize;
+
+	private:
+		LockFundConfiguration() = default;
+
+	public:
+		/// Creates an uninitialized lock fund configuration.
+		static LockFundConfiguration Uninitialized();
+
+		/// Loads a lock fund configuration from \a bag.
+		static LockFundConfiguration LoadFromBag(const utils::ConfigurationBag& bag);
 	};
-
-/// Defines cache constants for a cache with \a NAME.
-#define DEFINE_CACHE_CONSTANTS(NAME) \
-	static constexpr size_t Id = utils::to_underlying_type(CacheId::NAME); \
-	static constexpr auto Name = #NAME "Cache";
 }}

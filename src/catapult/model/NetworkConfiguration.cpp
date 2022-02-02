@@ -85,6 +85,9 @@ namespace catapult { namespace model {
 		config.MaxHarvesterBalance = Amount(UINT64_MAX);
 		TRY_LOAD_CHAIN_PROPERTY(MaxHarvesterBalance);
 
+		config.EnableMosaicLocking = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableMosaicLocking);
+
 #undef TRY_LOAD_CHAIN_PROPERTY
 
 		size_t numPluginProperties = 0;

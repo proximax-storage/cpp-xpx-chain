@@ -18,37 +18,21 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#pragma once
-#include <stdint.h>
+#include "LockFundConfiguration.h"
+#include "catapult/utils/ConfigurationBag.h"
+#include "catapult/utils/ConfigurationUtils.h"
 
-namespace catapult { namespace cache {
+namespace catapult { namespace config {
 
-	/// Cache ids for well-known caches.
-	enum class CacheId : uint32_t {
-		NetworkConfig,
-		AccountState,
-		BlockDifficulty,
-		Hash,
-		Namespace,
-		Metadata,
-		Mosaic,
-		Multisig,
-		HashLockInfo,
-		SecretLockInfo,
-		Property,
-		Reputation,
-		Contract,
-		BlockchainUpgrade,
-		Drive,
-		Exchange,
-		Download,
-		SuperContract,
-		Operation,
-		LockFund,
-	};
+		LockFundConfiguration LockFundConfiguration::Uninitialized() {
+		return LockFundConfiguration();
+	}
 
-/// Defines cache constants for a cache with \a NAME.
-#define DEFINE_CACHE_CONSTANTS(NAME) \
-	static constexpr size_t Id = utils::to_underlying_type(CacheId::NAME); \
-	static constexpr auto Name = #NAME "Cache";
+		LockFundConfiguration LockFundConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
+			LockFundConfiguration config;
+		utils::LoadIniProperty(bag, "", "MaxMosaicsSize", config.MaxMosaicsSize);
+		utils::LoadIniProperty(bag, "", "RequestCooldownBlocks", config.RequestCooldownBlocks);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 2);
+		return config;
+	}
 }}

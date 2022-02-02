@@ -19,36 +19,14 @@
 **/
 
 #pragma once
-#include <stdint.h>
+#include "catapult/plugins.h"
+#include <memory>
 
-namespace catapult { namespace cache {
+namespace catapult { namespace model { class TransactionPlugin; } }
 
-	/// Cache ids for well-known caches.
-	enum class CacheId : uint32_t {
-		NetworkConfig,
-		AccountState,
-		BlockDifficulty,
-		Hash,
-		Namespace,
-		Metadata,
-		Mosaic,
-		Multisig,
-		HashLockInfo,
-		SecretLockInfo,
-		Property,
-		Reputation,
-		Contract,
-		BlockchainUpgrade,
-		Drive,
-		Exchange,
-		Download,
-		SuperContract,
-		Operation,
-		LockFund,
-	};
+namespace catapult { namespace plugins {
 
-/// Defines cache constants for a cache with \a NAME.
-#define DEFINE_CACHE_CONSTANTS(NAME) \
-	static constexpr size_t Id = utils::to_underlying_type(CacheId::NAME); \
-	static constexpr auto Name = #NAME "Cache";
+	/// Creates a lock fund transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<model::TransactionPlugin> CreateLockFundTransactionPlugin();
 }}

@@ -19,36 +19,15 @@
 **/
 
 #pragma once
-#include <stdint.h>
+#include "catapult/cache/CacheSerializerAdapter.h"
+#include "catapult/cache/IdentifierGroupSerializer.h"
+#include "src/state/LockFundRecordSerializer.h"
+#include "LockFundCacheTypes.h"
 
 namespace catapult { namespace cache {
 
-	/// Cache ids for well-known caches.
-	enum class CacheId : uint32_t {
-		NetworkConfig,
-		AccountState,
-		BlockDifficulty,
-		Hash,
-		Namespace,
-		Metadata,
-		Mosaic,
-		Multisig,
-		HashLockInfo,
-		SecretLockInfo,
-		Property,
-		Reputation,
-		Contract,
-		BlockchainUpgrade,
-		Drive,
-		Exchange,
-		Download,
-		SuperContract,
-		Operation,
-		LockFund,
-	};
-
-/// Defines cache constants for a cache with \a NAME.
-#define DEFINE_CACHE_CONSTANTS(NAME) \
-	static constexpr size_t Id = utils::to_underlying_type(CacheId::NAME); \
-	static constexpr auto Name = #NAME "Cache";
+	/// Primary serializer for lock fund cache.
+	struct LockFundPrimarySerializer : public CacheSerializerAdapter<state::LockFundRecordSerializer<LockFundHeightIndexDescriptor>, LockFundCacheDescriptor> {};
+	/// Serializer for keyed lock fund record groups.
+	struct KeyedLockFundSerializer : public CacheSerializerAdapter<state::LockFundRecordSerializer<LockFundKeyIndexDescriptor>, LockFundCacheTypes::KeyedLockFundTypesDescriptor> {};
 }}

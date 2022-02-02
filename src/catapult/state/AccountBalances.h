@@ -26,6 +26,7 @@
 #include "catapult/model/NetworkConfiguration.h"
 #include "catapult/types.h"
 #include "catapult/utils/Hashers.h"
+#include "MosaicUnlockRequest.h"
 #include <boost/iterator/zip_iterator.hpp>
 #include <list>
 
@@ -126,6 +127,10 @@ namespace catapult { namespace state {
 		/// Unlocks \a amount funds from a given mosaic (\a mosaicId).
 		/// It will decrease balance of account without tracking of it in snapshots array.
 		AccountBalances& unlock(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
+		/// Unlocks \a amount funds from a given mosaic (\a mosaicId).
+		/// It will decrease balance of account without tracking of it in snapshots array.
+		AccountBalances& requestUnlock(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
 		/// Optimizes access of the mosaic with \a id.
 		void optimize(MosaicId id);

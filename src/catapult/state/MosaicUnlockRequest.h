@@ -19,36 +19,33 @@
 **/
 
 #pragma once
-#include <stdint.h>
+#include "CompactMosaicMap.h"
+#include "catapult/utils/Hashers.h"
+#include "catapult/exceptions.h"
+#include "catapult/model/BalanceSnapshot.h"
+#include "catapult/model/NetworkConfiguration.h"
+#include "catapult/types.h"
+#include "catapult/utils/Hashers.h"
+#include <boost/iterator/zip_iterator.hpp>
+#include <list>
 
-namespace catapult { namespace cache {
+namespace catapult { namespace state {
+	struct AccountState;
 
-	/// Cache ids for well-known caches.
-	enum class CacheId : uint32_t {
-		NetworkConfig,
-		AccountState,
-		BlockDifficulty,
-		Hash,
-		Namespace,
-		Metadata,
-		Mosaic,
-		Multisig,
-		HashLockInfo,
-		SecretLockInfo,
-		Property,
-		Reputation,
-		Contract,
-		BlockchainUpgrade,
-		Drive,
-		Exchange,
-		Download,
-		SuperContract,
-		Operation,
-		LockFund,
+	/// Container holding information about account.
+	class MosaicUnlockRequest {
+	public:
+		/// Creates an empty account balances.
+		explicit MosaicUnlockRequest(Amount mosaicAmount, Height requestHeight) :
+			m_Amount(mosaicAmount),
+			m_Height(requestHeight)
+		{
+		}
+
+	private:
+		MosaicId m_MosaicId;
+		Amount m_Amount;
+		Height m_Height;
+
 	};
-
-/// Defines cache constants for a cache with \a NAME.
-#define DEFINE_CACHE_CONSTANTS(NAME) \
-	static constexpr size_t Id = utils::to_underlying_type(CacheId::NAME); \
-	static constexpr auto Name = #NAME "Cache";
 }}
