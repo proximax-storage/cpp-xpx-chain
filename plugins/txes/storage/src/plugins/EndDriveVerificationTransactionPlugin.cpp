@@ -9,6 +9,7 @@
 #include "src/model/EndDriveVerificationTransaction.h"
 #include "src/utils/StorageUtils.h"
 #include "catapult/model/TransactionPluginFactory.h"
+#include "catapult/model/EntityHasher.h"
 #include <boost/dynamic_bitset.hpp>
 
 using namespace catapult::model;
@@ -52,6 +53,9 @@ namespace catapult { namespace plugins {
 							transaction.SignaturesPtr(),
 							pPresentOpinions,
 							transaction.OpinionsPtr()));
+
+						auto hashSeed = CalculateHash(transaction, config.GenerationHash);
+						sub.notify(ShardsUpdateNotification<1>(transaction.DriveKey, hashSeed));
 
                         break;
                     }

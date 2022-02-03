@@ -98,6 +98,7 @@ namespace catapult { namespace state {
 	using ConfirmedStates = std::map<Key, Hash256>; // last approved root hash
 	using Shards = std::vector<std::vector<Key>>;
 	using DownloadShards = std::map<Hash256, std::set<Key>>;
+	using ModificationShards = std::map<Key, std::pair<std::set<Key>, std::set<Key>>>;
 
 	struct Verification {
 		/// The hash of block that initiated the verification.
@@ -294,6 +295,18 @@ namespace catapult { namespace state {
 			return m_downloadShards;
 		}
 
+		/// Gets map of data modification shards. The first set in pair represents replicator's current shard,
+		/// and the second set contains additional keys on which this replicator is allowed to provide opinion as well.
+		const ModificationShards& dataModificationShards() const {
+			return m_dataModificationShards;
+		}
+
+		/// Gets map of data modification shards. The first set in pair represents replicator's current shard,
+		/// and the second set contains additional keys on which this replicator is allowed to provide opinion as well.
+		ModificationShards& dataModificationShards() {
+			return m_dataModificationShards;
+		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
@@ -311,6 +324,7 @@ namespace catapult { namespace state {
 		Verifications m_verifications;
 		ConfirmedStates m_confirmedStates;
 		DownloadShards m_downloadShards;
+		ModificationShards m_dataModificationShards;
 	};
 
 	// Drive entry.

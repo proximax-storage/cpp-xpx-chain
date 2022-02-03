@@ -45,8 +45,10 @@ namespace catapult { namespace observers {
 		}
 	  	std::vector<uint64_t> uploadSizesIncrements(totalJudgedKeysCount);
 
-		// Iterating over opinions row by row and calculating upload sizes increments for each judged uploader.
+		// Iterating over opinions row by row and calculating upload sizes increments for each judged uploader;
+	  	// resetting the set of additional keys in dataModificationShards for each judging replicator.
 		auto pOpinion = notification.OpinionsPtr;
+	  	auto& shardsPair = driveEntry.dataModificationShards();
 		for (auto i = 0; i < totalJudgingKeysCount; ++i) {
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
 				if (presentOpinions[i*totalJudgedKeysCount + j]) {
@@ -54,6 +56,7 @@ namespace catapult { namespace observers {
 					++pOpinion;
 				}
 			}
+			shardsPair.at(notification.PublicKeysPtr[i]).second.clear();
 		}
 
 	  	// Making mosaic transfers and updating cumulative upload sizes.

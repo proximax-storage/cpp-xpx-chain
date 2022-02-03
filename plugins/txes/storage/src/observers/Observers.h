@@ -85,4 +85,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by end drive verification notifications.
 	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)();
+
+	/// Observes changes triggered by shards update notifications.
+	DECLARE_OBSERVER(ShardsUpdate, model::ShardsUpdateNotification<1>)();
 }}

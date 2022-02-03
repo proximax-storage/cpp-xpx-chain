@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <random>
 #include "Observers.h"
 
 namespace catapult { namespace observers {
@@ -47,12 +48,13 @@ namespace catapult { namespace observers {
 			auto driveStateIter = accountStateCache.find(notification.DriveKey);
 		  	auto& driveState = driveStateIter.get();
 		  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		  	auto& replicators = driveEntry.replicators();
 		  	for (const auto& replicatorKey : acceptableReplicators) {
 				// Updating drives() and replicators()
 				auto replicatorIter = replicatorCache.find(replicatorKey);
 				auto& replicatorEntry = replicatorIter.get();
 				replicatorEntry.drives().emplace(notification.DriveKey, state::DriveInfo{ Hash256(), false, 0, 0 });
-				driveEntry.replicators().emplace(replicatorKey);
+				replicators.emplace(replicatorKey);
 
 				// Making mosaic transfers
 				auto replicatorStateIter = accountStateCache.find(replicatorKey);
@@ -64,17 +66,40 @@ namespace catapult { namespace observers {
 				driveState.Balances.credit(storageMosaicId, storageDepositAmount);
 				driveState.Balances.credit(streamingMosaicId, streamingDepositAmount);
 
-				if (driveEntry.replicators().size() >= notification.ReplicatorCount)
+				if (replicators.size() >= notification.ReplicatorCount)
 					break;
 		  	}
 
 			// If the actual number of assigned replicators is less than ordered,
 			// put the drive in the queue:
-		  	if (driveEntry.replicators().size() < notification.ReplicatorCount) {
+		  	if (replicators.size() < notification.ReplicatorCount) {
 				const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 				const auto drivePriority = utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount);
-				pDriveQueue->emplace(driveEntry.key(), drivePriority);
+				pDriveQueue->emplace(notification.DriveKey, drivePriority);
 			}
+
+			// Form initial data modification shards:
+		  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+		  	auto& dataModificationShards = driveEntry.dataModificationShards();
+		  	if (replicators.size() <= pluginConfig.ShardSize + 1) {
+			  	// If the drive has no more than (ShardSize + 1) replicators, then for each one of them
+			  	// all other replicators will be added to this replicator's shard.
+			  	for (const auto& mainKey : replicators) {
+					dataModificationShards[mainKey].first = replicators;
+					dataModificationShards[mainKey].first.erase(mainKey);
+				}
+		  	} else {
+				auto sampleSource = replicators;
+				for (const auto& mainKey : replicators) {
+					sampleSource.erase(mainKey);	// Replicator cannot be a member of his own shard
+					auto& target = dataModificationShards[mainKey].first;
+					const auto driveKeyXorMainKey = notification.DriveKey ^ mainKey;
+					std::seed_seq seed(driveKeyXorMainKey.begin(), driveKeyXorMainKey.end());
+					std::sample(sampleSource.begin(), sampleSource.end(), std::inserter(target, target.end()),
+								pluginConfig.ShardSize, std::mt19937(seed));
+					sampleSource.insert(mainKey);	// Restoring original state of sampleSource
+				}
+		  	}
 
 			driveCache.insert(driveEntry);
 		}))

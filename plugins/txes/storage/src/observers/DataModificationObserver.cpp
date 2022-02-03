@@ -23,5 +23,15 @@ namespace catapult { namespace observers {
 			notification.DownloadDataCdi,
 			notification.UploadSize
 		));
+
+		// Removing replicators that are queued for offboarding
+	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		for (const auto& replicatorKey : driveEntry.offboardingReplicators()) {
+			auto replicatorIter = replicatorCache.find(replicatorKey);
+			auto& replicatorEntry = replicatorIter.get();
+			replicatorEntry.drives().erase(notification.DriveKey);
+			driveEntry.replicators().erase(replicatorKey);
+		}
+	  	driveEntry.offboardingReplicators().clear();
 	});
 }}

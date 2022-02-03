@@ -24,6 +24,7 @@ namespace catapult { namespace observers {
 
         const Key Replicator_Key = test::GenerateRandomByteArray<Key>();
         constexpr auto Capacity = Amount(50);
+		const Hash256 Hash_Seed = test::GenerateRandomByteArray<Hash256>();
 		constexpr auto Min_Replicator_Count = 4;
 		const Key Drive1_Key = test::GenerateRandomByteArray<Key>();	// Requires a replicator, has the highest priority
 		constexpr uint64_t Drive1_Size = 30;
@@ -101,7 +102,7 @@ namespace catapult { namespace observers {
         void RunTest(NotifyMode mode, TestValues& values, const Height& currentHeight) {
             // Arrange:
             ObserverTestContext context(mode, currentHeight, CreateConfig());
-            Notification notification(Replicator_Key, Capacity);
+            Notification notification(Replicator_Key, Capacity, Hash_Seed);
 			auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountCache = context.cache().sub<cache::AccountStateCache>();
 			auto& driveCache = context.cache().sub<cache::BcDriveCache>();

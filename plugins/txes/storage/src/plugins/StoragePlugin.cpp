@@ -225,7 +225,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateStreamFinishObserver())
 				.add(observers::CreateStreamPaymentObserver())
 				.add(observers::CreateStartDriveVerificationObserver(state, driveKeyCollector))
-				.add(observers::CreateEndDriveVerificationObserver());
+				.add(observers::CreateEndDriveVerificationObserver())
+				.add(observers::CreateShardsUpdateObserver());
 		});
 	}
 }}

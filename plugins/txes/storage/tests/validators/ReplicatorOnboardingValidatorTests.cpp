@@ -20,6 +20,7 @@ namespace catapult { namespace validators {
         using Notification = model::ReplicatorOnboardingNotification<1>;
 
         constexpr auto Current_Height = Height(10);
+		const Hash256 Hash_Seed = test::GenerateRandomByteArray<Hash256>();
 
         void AssertValidationResult(
                 ValidationResult expectedResult,
@@ -33,7 +34,7 @@ namespace catapult { namespace validators {
                 replicatorCacheDelta.insert(replicatorEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(publicKey, replicatorEntry.capacity());
+            Notification notification(publicKey, replicatorEntry.capacity(), Hash_Seed);
             auto pValidator = CreateReplicatorOnboardingValidator();
             
             // Act:

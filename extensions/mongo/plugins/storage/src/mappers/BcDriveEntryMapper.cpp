@@ -111,6 +111,19 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			array << bson_stream::close_array;
 		}
+
+		void StreamModificationShards(bson_stream::document& builder, const state::ModificationShards& dataModificationShards) {
+			auto array = builder << "dataModificationShards" << bson_stream::open_array;
+			for (const auto& pair : dataModificationShards) {
+				bson_stream::document shardBuilder;
+				shardBuilder << "replicator" << ToBinary(pair.first);
+				StreamReplicators("shardReplicators", shardBuilder, pair.second.first);
+				StreamReplicators("additionalReplicators", shardBuilder, pair.second.second);
+				array << shardBuilder;
+			}
+
+			array << bson_stream::close_array;
+		}
 	}
 
 	bsoncxx::document::value ToDbModel(const state::BcDriveEntry& entry, const Address& accountAddress) {
@@ -133,6 +146,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		StreamReplicators("offboardingReplicators", builder, entry.offboardingReplicators());
 		StreamVerifications(builder, entry.verifications());
 		StreamDownloadShards(builder, entry.downloadShards());
+		StreamModificationShards(builder, entry.dataModificationShards());
 
 		return doc
 			   << bson_stream::close_document
@@ -234,12 +248,23 @@ namespace catapult { namespace mongo { namespace plugins {
 		}
 
 		void ReadDownloadShards(state::DownloadShards& downloadShards, const bsoncxx::array::view& dbDownloadShards) {
-			for (const auto& dbPair : dbDownloadShards) {
-				auto doc = dbPair.get_document().view();
+			for (const auto& dbShard : dbDownloadShards) {
+				auto doc = dbShard.get_document().view();
 				Hash256 downloadChannelId;
 				DbBinaryToModelArray(downloadChannelId, doc["downloadChannelId"].get_binary());
 				auto& shard = downloadShards[downloadChannelId];
 				ReadReplicators(shard, doc["replicators"].get_array().value);
+			}
+		}
+
+		void ReadModificationShards(state::ModificationShards& dataModificationShards, const bsoncxx::array::view& dbModificationShards) {
+			for (const auto& dbShard : dbModificationShards) {
+				auto doc = dbShard.get_document().view();
+				Key replicatorKey;
+				DbBinaryToModelArray(replicatorKey, doc["replicator"].get_binary());
+				auto& shardsPair = dataModificationShards[replicatorKey];
+				ReadReplicators(shardsPair.first, doc["shardReplicators"].get_array().value);
+				ReadReplicators(shardsPair.second, doc["additionalReplicators"].get_array().value);
 			}
 		}
 	}
@@ -273,6 +298,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		ReadReplicators(entry.offboardingReplicators(), dbDriveEntry["offboardingReplicators"].get_array().value);
 		ReadVerifications(entry.verifications(), dbDriveEntry["verifications"].get_array().value);
 		ReadDownloadShards(entry.downloadShards(), dbDriveEntry["downloadShards"].get_array().value);
+		ReadModificationShards(entry.dataModificationShards(), dbDriveEntry["dataModificationShards"].get_array().value);
 
 		return entry;
 	}

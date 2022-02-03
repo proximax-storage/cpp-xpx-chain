@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <random>
 #include "Observers.h"
 
 namespace catapult { namespace observers {
@@ -97,6 +98,50 @@ namespace catapult { namespace observers {
 								// Cumulative payments of the removed replicator are kept in download channel entry
 							}
 						}
+					}
+
+					// Updating data modification shards of the drive
+					auto& shardsMap = driveEntry.dataModificationShards();
+					std::set<Key> shardKeys;
+					for (const auto& pair : shardsMap)
+						shardKeys.insert(pair.first);
+
+					auto replicatorsSampleSource = driveEntry.replicators();
+					replicatorsSampleSource.erase(notification.PublicKey); // Replicator cannot be a member of his own shard
+
+					std::seed_seq seed(notification.Seed.begin(), notification.Seed.end());
+					std::mt19937 rng(seed);
+
+					if (driveEntry.replicators().size() <= pluginConfig.ShardSize + 1) {
+						// Adding the new replicator to all existing shards
+						for (auto& pair : shardsMap) {
+							auto& shardsPair = pair.second;
+							shardsPair.first.insert(notification.PublicKey);
+						}
+						// Creating an entry for the new replicator in shardsMap
+						shardsMap[notification.PublicKey].first = replicatorsSampleSource;
+					} else {
+						// Selecting random shards to which the new replicator will be added
+						const auto sampleSize = pluginConfig.ShardSize * shardsMap.size() / (shardsMap.size() - 1);
+						std::set<Key> sampledShardKeys;
+						std::sample(shardKeys.begin(), shardKeys.end(),
+									std::inserter(sampledShardKeys, sampledShardKeys.end()), sampleSize, rng);
+						// Updating selected shards
+						for (auto& sampledKey : sampledShardKeys) {
+							auto& shardsPair = shardsMap[sampledKey];
+							if (shardsPair.first.size() == pluginConfig.ShardSize) {	// TODO: Remove size check?
+								const auto replacedKeyIndex = rng() % pluginConfig.ShardSize;
+								auto replacedKeyIter = shardsPair.first.begin();
+								std::advance(replacedKeyIter, replacedKeyIndex);
+								shardsPair.second.insert(*replacedKeyIter);
+								shardsPair.first.erase(replacedKeyIter);
+							}
+							shardsPair.first.insert(notification.PublicKey);
+						}
+						// Creating an entry for the new replicator in shardsMap
+						auto& newShardEntry = shardsMap[notification.PublicKey].first;
+						std::sample(replicatorsSampleSource.begin(), replicatorsSampleSource.end(),
+									std::inserter(newShardEntry, newShardEntry.end()), pluginConfig.ShardSize, rng);
 					}
 
 					// Making mosaic transfers

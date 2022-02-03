@@ -9,6 +9,7 @@
 #include "src/model/ReplicatorOnboardingTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
+#include "catapult/model/EntityHasher.h"
 #include "src/utils/StorageUtils.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 
@@ -22,9 +23,11 @@ namespace catapult { namespace plugins {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
+					auto hashSeed = CalculateHash(transaction, config.GenerationHash);
+
 					sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
 					sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
-					sub.notify(ReplicatorOnboardingNotification<1>(transaction.Signer, transaction.Capacity));
+					sub.notify(ReplicatorOnboardingNotification<1>(transaction.Signer, transaction.Capacity, hashSeed));
 					sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
 
 					const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);

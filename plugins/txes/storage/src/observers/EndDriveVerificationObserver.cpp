@@ -15,6 +15,8 @@ namespace catapult { namespace observers {
         // Find median opinion for every Prover
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+	  	auto driveIter = driveCache.find(notification.DriveKey);
+	  	auto& driveEntry = driveIter.get();
 		auto storageDepositSlashing = 0;
         for (auto i = 0; i < notification.KeyCount; ++i) {
             uint8_t result = 0;
@@ -27,21 +29,11 @@ namespace catapult { namespace observers {
             auto replicatorIter = replicatorCache.find(notification.PublicKeysPtr[i]);
             auto& replicatorEntry = replicatorIter.get();
 
-            // Count deposited Storage mosaics and delete the replicator from drives
-			storageDepositSlashing += replicatorEntry.capacity().unwrap();
-            for (const auto& pair: replicatorEntry.drives()) {
-                auto driveIter = driveCache.find(pair.first);
-                auto& drive = driveIter.get();
-
-				storageDepositSlashing += drive.size();
-                drive.replicators().erase(notification.PublicKeysPtr[i]);
-            }
-
-            replicatorCache.remove(notification.PublicKeysPtr[i]);
+            // Count deposited Storage mosaics and delete the replicator from the drive
+			storageDepositSlashing += driveEntry.size();
+			replicatorEntry.drives().erase(notification.DriveKey);
+			driveEntry.replicators().erase(notification.PublicKeysPtr[i]);
         }
-
-		auto driveIter = driveCache.find(notification.DriveKey);
-		auto& driveEntry = driveIter.get();
 
 		const auto& replicatorKey = notification.PublicKeysPtr[0];
 		auto& shards = driveEntry.verifications()[0].Shards;
@@ -68,7 +60,7 @@ namespace catapult { namespace observers {
         if (storageDepositSlashing == 0)
             return;
 
-        // Split storage deposit slashing between left replicators
+        // Split storage deposit slashing between remaining replicators
         auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		auto accountIter = accountStateCache.find(notification.DriveKey);
 		auto& driveAccountState = accountIter.get();

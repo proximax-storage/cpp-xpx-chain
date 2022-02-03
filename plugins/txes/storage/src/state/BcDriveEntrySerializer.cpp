@@ -37,7 +37,8 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void SaveShard(io::OutputStream& output, const std::vector<Key>& shard) {
+		template<typename TContainer>
+		void SaveShard(io::OutputStream& output, const TContainer& shard) {
 			io::Write8(output, utils::checked_cast<size_t, uint8_t>(shard.size()));
 			for (auto key : shard)
 				io::Write(output, key);
@@ -80,6 +81,17 @@ namespace catapult { namespace state {
 				io::Write8(output, utils::checked_cast<size_t, uint8_t>(shard.second.size()));
 				for (const auto& replicatorKey : shard.second)
 					io::Write(output, replicatorKey);
+			}
+		}
+
+		void SaveModificationShards(io::OutputStream& output, const ModificationShards& dataModificationShards) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(dataModificationShards.size()));
+			for (const auto& item : dataModificationShards) {
+				auto& mainKey = item.first;
+				auto& shardsPair = item.second;
+				io::Write(output, mainKey);
+				SaveShard(output, shardsPair.first);
+				SaveShard(output, shardsPair.second);
 			}
 		}
 
@@ -145,6 +157,15 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void LoadShard(io::InputStream& input, std::set<Key>& shard) {
+			auto count = io::Read8(input);
+			while (count--) {
+				Key replicatorKey;
+				io::Read(input, replicatorKey);
+				shard.emplace(replicatorKey);
+			}
+		}
+
 		void LoadShards(io::InputStream& input, Shards& shards) {
 			auto count = io::Read16(input);
 			while (count--) {
@@ -171,12 +192,18 @@ namespace catapult { namespace state {
 				Hash256 downloadChannelId;
 				io::Read(input, downloadChannelId);
 				auto& shard = downloadShards[downloadChannelId];
-				auto shardSize = io::Read8(input);
-				while (shardSize--) {
-					Key replicatorKey;
-					io::Read(input, replicatorKey);
-					shard.emplace(replicatorKey);
-				}
+				LoadShard(input, shard);
+			}
+		}
+
+		void LoadModificationShards(io::InputStream& input, ModificationShards& dataModificationShards) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Key mainKey;
+				io::Read(input, mainKey);
+				auto& shardsPair = dataModificationShards[mainKey];
+				LoadShard(input, shardsPair.first);
+				LoadShard(input, shardsPair.second);
 			}
 		}
 	}
@@ -201,6 +228,7 @@ namespace catapult { namespace state {
 		SaveReplicators(output, driveEntry.offboardingReplicators());
 		SaveVerifications(output, driveEntry.verifications());
 		SaveDownloadShards(output, driveEntry.downloadShards());
+		SaveModificationShards(output, driveEntry.dataModificationShards());
 	}
 
 	BcDriveEntry BcDriveEntrySerializer::Load(io::InputStream& input) {
@@ -236,6 +264,7 @@ namespace catapult { namespace state {
 		LoadReplicators(input, entry.offboardingReplicators());
 		LoadVerifications(input, entry.verifications());
 		LoadDownloadShards(input, entry.downloadShards());
+		LoadModificationShards(input, entry.dataModificationShards());
 
 		return entry;
 	}

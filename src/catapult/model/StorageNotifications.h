@@ -88,6 +88,9 @@ namespace catapult { namespace model {
 	/// Defines an start drive verification notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Start_Drive_Verification_v1, 0x001A);
 
+	/// Defines a shards update notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Shards_Update_v1, 0x001B);
+
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
 		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)
@@ -620,10 +623,12 @@ namespace catapult { namespace model {
 	public:
 		explicit ReplicatorOnboardingNotification(
 				const Key& publicKey,
-				const Amount& capacity)
+				const Amount& capacity,
+				const Hash256& seed)
 			: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
 			, PublicKey(publicKey)
 			, Capacity(capacity)
+			, Seed(seed)
 		{}
 
 	public:
@@ -632,6 +637,9 @@ namespace catapult { namespace model {
 
 		/// The storage size that the replicator provides to the system.
 		Amount Capacity;
+
+		/// Seed that is used for random number generator.
+		Hash256 Seed;
 	};
 
 	/// Notification of a drive closure.
@@ -1048,5 +1056,32 @@ namespace catapult { namespace model {
 	public:
 		/// The identifier of the download channel.
 		Hash256 DownloadChannelId;
+	};
+
+	/// Notification of a shards update.
+	template<VersionType version>
+	struct ShardsUpdateNotification;
+
+	template<>
+	struct ShardsUpdateNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Shards_Update_v1_Notification;
+
+	public:
+		explicit ShardsUpdateNotification(
+				const Key& driveKey,
+				const Hash256& seed)
+				: Notification(Notification_Type, sizeof(ShardsUpdateNotification<1>))
+				, DriveKey(driveKey)
+				, Seed(seed)
+		{}
+
+	public:
+		/// Public key of a drive.
+		Key DriveKey;
+
+		/// Seed that is used for random number generator.
+		Hash256 Seed;
 	};
 }}
