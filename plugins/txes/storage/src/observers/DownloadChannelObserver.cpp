@@ -49,9 +49,9 @@ namespace catapult { namespace observers {
 			for (const auto& key : replicators)
 				shardKeys.insert(key);
 			auto keyIter = shardKeys.begin();
-			for (auto i = 0u; i < pluginConfig.ShardSize; ++i) {
-				cumulativePayments.emplace(*keyIter++, Amount(0));
-				driveEntry.downloadShards()[notification.Id].insert(*keyIter++);
+			for (auto i = 0u; i < pluginConfig.ShardSize; ++i, ++keyIter) {
+				cumulativePayments.emplace(*keyIter, Amount(0));
+				driveEntry.downloadShards()[notification.Id].insert(*keyIter);
 			}
 		}
 

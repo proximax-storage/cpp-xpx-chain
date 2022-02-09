@@ -42,13 +42,20 @@ namespace catapult { namespace plugins {
 						auto* pPresentOpinions = sub.mempool().malloc<uint8_t>((transaction.KeyCount * transaction.JudgingKeyCount + 7u) / 8u);
 						boost::to_block_range(presentOpinions, pPresentOpinions);
 
+						const auto commonDataSize = Key_Size + Hash256_Size + sizeof(uint16_t);
+						auto* const pCommonDataBegin = sub.mempool().malloc<uint8_t>(commonDataSize);
+						auto* pCommonData = pCommonDataBegin;
+						utils::WriteToByteArray(pCommonData, transaction.DriveKey);
+						utils::WriteToByteArray(pCommonData, transaction.VerificationTrigger);
+						utils::WriteToByteArray(pCommonData, transaction.ShardId);
+
 						sub.notify(OpinionNotification<1>(
-							Key_Size + Hash256_Size + sizeof(uint16_t),
+							commonDataSize,
 							0u,
 							transaction.JudgingKeyCount,
 							transaction.KeyCount - transaction.JudgingKeyCount,
 							sizeof(uint8_t),
-							transaction.DriveKey.data(),
+							pCommonDataBegin,
 							transaction.PublicKeysPtr(),
 							transaction.SignaturesPtr(),
 							pPresentOpinions,

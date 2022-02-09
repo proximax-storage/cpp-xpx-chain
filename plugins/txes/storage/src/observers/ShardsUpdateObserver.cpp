@@ -9,7 +9,7 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(ShardsUpdate, model::ShardsUpdateNotification<1>, [](const model::ShardsUpdateNotification<1>& notification, ObserverContext& context) {
+	DEFINE_OBSERVER(ShardsUpdate, model::ShardsUpdateNotification<1>, ([](const model::ShardsUpdateNotification<1>& notification, ObserverContext& context) {
 	  	if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ShardsUpdate)");
 
@@ -56,5 +56,37 @@ namespace catapult { namespace observers {
 						std::inserter(target, target.end()), shardSizeDifference, rng);
 			}
 		}
-	});
+
+		// Updating download shards of the drive
+	  	auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+		if (replicators.size() <= pluginConfig.ShardSize) {
+			// If drive has no more than ShardSize replicators, then each one of them
+			// must be assigned to every download shard.
+			for (auto& pair : driveEntry.downloadShards()) {
+				auto downloadIter = downloadCache.find(pair.first);
+				auto& downloadEntry = downloadIter.get();
+				auto& cumulativePayments = downloadEntry.cumulativePayments();
+				for (const auto& key : replicators)
+					if (!cumulativePayments.count(key))
+						cumulativePayments.emplace(key, Amount(0));
+				// Offboarded replicators' cumulative payments remain in cumulativePayments
+				pair.second = replicators;
+			}
+		} else {
+			std::vector<Key> shardKeys(replicators.begin(), replicators.end());
+			for (auto& pair : driveEntry.downloadShards()) {
+				auto downloadIter = downloadCache.find(pair.first);
+				auto& downloadEntry = downloadIter.get();
+				auto& cumulativePayments = downloadEntry.cumulativePayments();
+				const Key downloadChannelKey = Key(pair.first.array());
+				const auto comparator = [&downloadChannelKey](const Key& a, const Key& b) { return (a ^ downloadChannelKey) < (b ^ downloadChannelKey); };
+				std::sort(shardKeys.begin(), shardKeys.end(), comparator);
+				auto keyIter = shardKeys.begin();
+				for (auto i = 0u; i < pluginConfig.ShardSize; ++i, ++keyIter)
+					if (!cumulativePayments.count(*keyIter))
+						cumulativePayments.emplace(*keyIter, Amount(0));
+				pair.second = std::set<Key>(shardKeys.begin(), keyIter);	// keyIter now points to the element past the (ShardSize)th
+			}
+		}
+	}));
 }}

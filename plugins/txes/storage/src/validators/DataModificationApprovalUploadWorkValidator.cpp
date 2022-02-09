@@ -58,7 +58,7 @@ namespace catapult { namespace validators {
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
 				if (presentOpinions[i*totalJudgedKeysCount + j]) {
 					const auto judgedKey = notification.PublicKeysPtr[notification.JudgingKeysCount + j];
-					if (!shardsPair.first.count(judgedKey) && !shardsPair.second.count(judgedKey))
+					if (!shardsPair.first.count(judgedKey) && !shardsPair.second.count(judgedKey) && judgedKey != driveOwnerPublicKey)
 						return Failure_Storage_Opinion_Invalid_Key;
 					const auto increment = *pOpinion++ - initialCumulativeUploadSizes.at(j);
 					if (increment < 0)
