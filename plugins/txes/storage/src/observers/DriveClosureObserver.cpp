@@ -28,7 +28,7 @@ namespace catapult { namespace observers {
 	  	// Making payments to replicators, if there is a pending data modification
 	  	auto& activeDataModifications = driveEntry.activeDataModifications();
 	  	if (!activeDataModifications.empty()) {
-			const auto& modificationSize = activeDataModifications.front().ExpectedUploadSize;
+			const auto& modificationSize = activeDataModifications.front().ExpectedUploadSizeMegabytes;
 		  	const auto& replicators = driveEntry.replicators();
 		  	const auto totalReplicatorAmount = Amount(
 				  	modificationSize +	// Download work

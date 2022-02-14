@@ -49,7 +49,7 @@ namespace catapult { namespace validators {
                 cache.commit(Current_Height);
             }
 			const auto& modification = activeDataModification.front();
-            Notification notification(modification.Id, driveKey, modification.Owner, modification.ExpectedUploadSize, modification.FolderName);
+            Notification notification(modification.Id, driveKey, modification.Owner, modification.ExpectedUploadSizeMegabytes, modification.FolderName);
             auto pValidator = CreateStreamStartValidator();
             
             // Act:

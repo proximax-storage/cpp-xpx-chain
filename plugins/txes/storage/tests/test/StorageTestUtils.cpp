@@ -18,8 +18,8 @@ namespace catapult { namespace test {
                 EXPECT_EQ(expectedActiveDataModification.Id, activeDataModification.Id);
                 EXPECT_EQ(expectedActiveDataModification.Owner, activeDataModification.Owner);
                 EXPECT_EQ(expectedActiveDataModification.DownloadDataCdi, activeDataModification.DownloadDataCdi);
-                EXPECT_EQ(expectedActiveDataModification.ExpectedUploadSize, activeDataModification.ExpectedUploadSize);
-				EXPECT_EQ(expectedActiveDataModification.ActualUploadSize, activeDataModification.ActualUploadSize);
+                EXPECT_EQ(expectedActiveDataModification.ExpectedUploadSizeMegabytes, activeDataModification.ExpectedUploadSizeMegabytes);
+				EXPECT_EQ(expectedActiveDataModification.ActualUploadSizeMegabytes, activeDataModification.ActualUploadSizeMegabytes);
 				EXPECT_EQ(expectedActiveDataModification.FolderName, activeDataModification.FolderName);
 				EXPECT_EQ(expectedActiveDataModification.ReadyForApproval, activeDataModification.ReadyForApproval);
             }
@@ -33,8 +33,8 @@ namespace catapult { namespace test {
                 EXPECT_EQ(expectedCompletedDataModification.Id, completedDataModification.Id);
                 EXPECT_EQ(expectedCompletedDataModification.Owner, completedDataModification.Owner);
                 EXPECT_EQ(expectedCompletedDataModification.DownloadDataCdi, completedDataModification.DownloadDataCdi);
-                EXPECT_EQ(expectedCompletedDataModification.ExpectedUploadSize, completedDataModification.ExpectedUploadSize);
-				EXPECT_EQ(expectedCompletedDataModification.ActualUploadSize, completedDataModification.ActualUploadSize);
+                EXPECT_EQ(expectedCompletedDataModification.ExpectedUploadSizeMegabytes, completedDataModification.ExpectedUploadSizeMegabytes);
+				EXPECT_EQ(expectedCompletedDataModification.ActualUploadSizeMegabytes, completedDataModification.ActualUploadSizeMegabytes);
 				EXPECT_EQ(expectedCompletedDataModification.FolderName, completedDataModification.FolderName);
                 EXPECT_EQ(expectedCompletedDataModification.State, completedDataModification.State);
                 EXPECT_EQ(expectedCompletedDataModification.ReadyForApproval, expectedCompletedDataModification.ReadyForApproval);
@@ -65,7 +65,7 @@ namespace catapult { namespace test {
 				ASSERT_NE(expIter, expectedDriveInfos.end());
 				EXPECT_EQ(expIter->second.LastApprovedDataModificationId, pair.second.LastApprovedDataModificationId);
 				EXPECT_EQ(expIter->second.DataModificationIdIsValid, pair.second.DataModificationIdIsValid);
-				EXPECT_EQ(expIter->second.InitialDownloadWork, pair.second.InitialDownloadWork);
+				EXPECT_EQ(expIter->second.InitialDownloadWorkMegabytes, pair.second.InitialDownloadWorkMegabytes);
 			}
 		}
 
@@ -141,10 +141,10 @@ namespace catapult { namespace test {
         EXPECT_EQ(expectedEntry.owner(), entry.owner());
         EXPECT_EQ(expectedEntry.rootHash(), entry.rootHash());
         EXPECT_EQ(expectedEntry.size(), entry.size());
-		EXPECT_EQ(expectedEntry.usedSize(), entry.usedSize());
-		EXPECT_EQ(expectedEntry.metaFilesSize(), entry.metaFilesSize());
+		EXPECT_EQ(expectedEntry.usedSizeBytes(), entry.usedSizeBytes());
+		EXPECT_EQ(expectedEntry.metaFilesSizeBytes(), entry.metaFilesSizeBytes());
         EXPECT_EQ(expectedEntry.replicatorCount(), entry.replicatorCount());
-		EXPECT_EQ(expectedEntry.ownerCumulativeUploadSize(), entry.ownerCumulativeUploadSize());
+		EXPECT_EQ(expectedEntry.ownerCumulativeUploadSizeBytes(), entry.ownerCumulativeUploadSizeBytes());
 		EXPECT_EQ(expectedEntry.confirmedUsedSizes(), entry.confirmedUsedSizes());
 		EXPECT_EQ(expectedEntry.replicators(), entry.replicators());
 

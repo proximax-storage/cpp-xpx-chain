@@ -44,13 +44,10 @@ namespace catapult { namespace observers {
 
 				if (!verifications.empty()) {
 					auto& verification = verifications[0];
-					if (verification.Expired) {
-						verifications.clear();
-					} else {
-						if (verification.Expiration > lastBlockTimestamp)
-							verification.Expired = true;
-						continue;
+					if (verification.Expiration > lastBlockTimestamp) {
+						verification.Expired = true;
 					}
+					continue;
 				}
 
 				auto driveKeyXorBlockHash = driveKey ^ blockHash;
@@ -70,7 +67,7 @@ namespace catapult { namespace observers {
 						replicators.emplace_back(key);
 				}
 
-				auto timeoutMinutes = pluginConfig.VerificationExpirationCoefficient * driveEntry.usedSize() + pluginConfig.VerificationExpirationConstant;
+				auto timeoutMinutes = pluginConfig.VerificationExpirationCoefficient * driveEntry.usedSizeBytes() + pluginConfig.VerificationExpirationConstant;
 				auto expiration = lastBlockTimestamp + Timestamp(timeoutMinutes * 60 * 1000);
 
 				uint16_t replicatorCount = driveEntry.replicators().size();

@@ -15,8 +15,8 @@ namespace catapult { namespace state {
 			io::Write(output, modification.Id);
 			io::Write(output, modification.Owner);
 			io::Write(output, modification.DownloadDataCdi);
-			io::Write64(output, modification.ExpectedUploadSize);
-			io::Write64(output, modification.ActualUploadSize);
+			io::Write64(output, modification.ExpectedUploadSizeMegabytes);
+			io::Write64(output, modification.ActualUploadSizeMegabytes);
 			io::Write16(output, (uint16_t) modification.FolderName.size());
 			io::Write8(output, modification.ReadyForApproval);
 			auto pFolderName = (const uint8_t*) (modification.FolderName.c_str());
@@ -63,6 +63,14 @@ namespace catapult { namespace state {
 		void SaveConfirmedUsedSizes(io::OutputStream& output, const SizeMap& confirmedUsedSizes) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(confirmedUsedSizes.size()));
 			for (const auto& pair : confirmedUsedSizes) {
+				io::Write(output, pair.first);
+				io::Write64(output, pair.second);
+			}
+		}
+
+		void SaveCumulativeUploadSizes(io::OutputStream& output, const SizeMap& cumulativeUploadSizes) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(cumulativeUploadSizes.size()));
+			for (const auto& pair : cumulativeUploadSizes) {
 				io::Write(output, pair.first);
 				io::Write64(output, pair.second);
 			}
@@ -136,6 +144,16 @@ namespace catapult { namespace state {
 				io::Read(input, replicatorKey);
 				auto size = io::Read64(input);
 				confirmedUsedSizes.emplace(replicatorKey, size);
+			}
+		}
+
+		void LoadCumulativeUploadSizes(io::InputStream& input, SizeMap& cumulativeUploadSizes) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Key replicatorKey;
+				io::Read(input, replicatorKey);
+				auto size = io::Read64(input);
+				cumulativeUploadSizes.emplace(replicatorKey, size);
 			}
 		}
 
@@ -216,14 +234,15 @@ namespace catapult { namespace state {
 		io::Write(output, driveEntry.owner());
 		io::Write(output, driveEntry.rootHash());
 		io::Write64(output, driveEntry.size());
-		io::Write64(output, driveEntry.usedSize());
-		io::Write64(output, driveEntry.metaFilesSize());
+		io::Write64(output, driveEntry.usedSizeBytes());
+		io::Write64(output, driveEntry.metaFilesSizeBytes());
 		io::Write16(output, driveEntry.replicatorCount());
-		io::Write64(output, driveEntry.ownerCumulativeUploadSize());
+		io::Write64(output, driveEntry.ownerCumulativeUploadSizeBytes());
 
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
 		SaveConfirmedUsedSizes(output, driveEntry.confirmedUsedSizes());
+		SaveCumulativeUploadSizes(output, driveEntry.cumulativeUploadSizesBytes());
 		SaveReplicators(output, driveEntry.replicators());
 		SaveReplicators(output, driveEntry.offboardingReplicators());
 		SaveVerifications(output, driveEntry.verifications());
@@ -252,14 +271,15 @@ namespace catapult { namespace state {
 		entry.setRootHash(rootHash);
 
 		entry.setSize(io::Read64(input));
-		entry.setUsedSize(io::Read64(input));
-		entry.setMetaFilesSize(io::Read64(input));
+		entry.setUsedSizeBytes(io::Read64(input));
+		entry.setMetaFilesSizeBytes(io::Read64(input));
 		entry.setReplicatorCount(io::Read16(input));
-		entry.setOwnerCumulativeUploadSize(io::Read64(input));
+		entry.setOwnerCumulativeUploadSizeBytes(io::Read64(input));
 
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
 		LoadConfirmedUsedSizes(input, entry.confirmedUsedSizes());
+		LoadCumulativeUploadSizes(input, entry.cumulativeUploadSizesBytes());
 		LoadReplicators(input, entry.replicators());
 		LoadReplicators(input, entry.offboardingReplicators());
 		LoadVerifications(input, entry.verifications());

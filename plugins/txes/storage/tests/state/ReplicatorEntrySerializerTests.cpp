@@ -71,9 +71,9 @@ namespace catapult { namespace state {
 				pData += Hash256_Size;
 				EXPECT_EQ(info.DataModificationIdIsValid, *reinterpret_cast<const bool*>(pData));
 				pData += sizeof(bool);
-				EXPECT_EQ(info.InitialDownloadWork, *reinterpret_cast<const uint64_t*>(pData));
+				EXPECT_EQ(info.InitialDownloadWorkMegabytes, *reinterpret_cast<const uint64_t*>(pData));
 				pData += sizeof(uint64_t);
-                EXPECT_EQ(info.LastCompletedCumulativeDownloadWork, *reinterpret_cast<const uint64_t*>(pData));
+                EXPECT_EQ(info.LastCompletedCumulativeDownloadWorkBytes, *reinterpret_cast<const uint64_t*>(pData));
                 pData += sizeof(uint64_t);
             }
 
@@ -156,9 +156,9 @@ namespace catapult { namespace state {
 				pData += Hash256_Size;
 				memcpy(pData, &info.DataModificationIdIsValid, sizeof(bool));
 				pData += sizeof(bool);
-				memcpy(pData, &info.InitialDownloadWork, sizeof(uint64_t));
+				memcpy(pData, &info.InitialDownloadWorkMegabytes, sizeof(uint64_t));
 				pData += sizeof(uint64_t);
-                memcpy(pData, &info.LastCompletedCumulativeDownloadWork, sizeof(uint64_t));
+                memcpy(pData, &info.LastCompletedCumulativeDownloadWorkBytes, sizeof(uint64_t));
                 pData += sizeof(uint64_t);
             }
 

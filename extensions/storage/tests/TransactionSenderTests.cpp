@@ -29,13 +29,14 @@ namespace catapult { namespace storage {
 		auto CreateDataModificationApprovalTransactionInfo() {
 			sirius::drive::ApprovalTransactionInfo transactionInfo;
 
+			const Key clientKey({ 11 });
 			auto& opinions = transactionInfo.m_opinions;
 			opinions.emplace_back(Key({ 1 }).array());
 			opinions[opinions.size() - 1].m_uploadLayout = {
 				sirius::drive::KeyAndBytes{ Key({ 4 }).array(), 100u },
 				sirius::drive::KeyAndBytes{ Key({ 7 }).array(), 200u },
+				sirius::drive::KeyAndBytes{ clientKey.array(), 0u }
 			};
-			opinions[opinions.size() - 1].m_clientUploadBytes = 0u;
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 1 });
 
 			transactionInfo.m_opinions.emplace_back(Key({ 2 }).array());
@@ -43,16 +44,16 @@ namespace catapult { namespace storage {
 				sirius::drive::KeyAndBytes{ Key({ 1 }).array(), 300u },
 				sirius::drive::KeyAndBytes{ Key({ 3 }).array(), 400u },
 				sirius::drive::KeyAndBytes{ Key({ 6 }).array(), 500u },
+				sirius::drive::KeyAndBytes{ clientKey.array(), 600u }
 			};
-			opinions[opinions.size() - 1].m_clientUploadBytes = 600u;
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 2 });
 
 			transactionInfo.m_opinions.emplace_back(Key({ 3 }).array());
 			opinions[opinions.size() - 1].m_uploadLayout = {
 				sirius::drive::KeyAndBytes{ Key({ 4 }).array(), 700u },
 				sirius::drive::KeyAndBytes{ Key({ 7 }).array(), 800u },
+				sirius::drive::KeyAndBytes{ clientKey.array(), 0u }
 			};
-			opinions[opinions.size() - 1].m_clientUploadBytes = 0u;
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 3 });
 
 			transactionInfo.m_opinions.emplace_back(Key({ 5 }).array());
@@ -60,12 +61,14 @@ namespace catapult { namespace storage {
 				sirius::drive::KeyAndBytes{ Key({ 1 }).array(), 900u },
 				sirius::drive::KeyAndBytes{ Key({ 6 }).array(), 1000u },
 				sirius::drive::KeyAndBytes{ Key({ 7 }).array(), 1100u },
+				sirius::drive::KeyAndBytes{ clientKey.array(), 0u }
 			};
-			opinions[opinions.size() - 1].m_clientUploadBytes = 0u;
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 5 });
 
 			transactionInfo.m_opinions.emplace_back(Key({ 7 }).array());
-			opinions[opinions.size() - 1].m_clientUploadBytes = 1200u;
+			opinions[opinions.size() - 1].m_uploadLayout = {
+					sirius::drive::KeyAndBytes{ clientKey.array(), 1200u }
+			};
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 7 });
 
 			return transactionInfo;
@@ -80,7 +83,7 @@ namespace catapult { namespace storage {
 			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
 		};
 		auto testee = CreateTransactionSender(storageState, transactionRangeHandler);
-		std::vector<Key> expectedPublicKeys{ Key({ 5 }), Key({ 2 }), Key({ 7 }), Key({ 3 }), Key({ 1 }), Key({ 6 }), Key({ 4 }), Key() };
+		std::vector<Key> expectedPublicKeys{ Key({ 5 }), Key({ 2 }), Key({ 7 }), Key({ 3 }), Key({ 1 }), Key({ 6 }), Key({ 4 }), Key( {11} ) };
 		std::vector<uint64_t> expectedOpinions{ 1100, 900, 1000, 400, 300, 500, 600, 1200, 800, 700, 200, 100 };
 		std::vector<uint8_t> presentOpinions{ 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0 };
 		std::vector<uint8_t> expectedPresentOpinions;
@@ -119,8 +122,6 @@ namespace catapult { namespace storage {
 		std::vector<Signature> expectedSignatures{ Signature({ 5 }), Signature({ 2 }), Signature({ 3 }), Signature({ 1 }) };
 
 		auto transactionInfo = CreateDataModificationApprovalTransactionInfo();
-		for (auto& opinion : transactionInfo.m_opinions)
-			opinion.m_clientUploadBytes = 0;
 
 		testee.sendDataModificationApprovalTransaction(transactionInfo);
 
@@ -136,13 +137,14 @@ namespace catapult { namespace storage {
 		auto CreateDataModificationSingleApprovalTransactionInfo() {
 			sirius::drive::ApprovalTransactionInfo transactionInfo;
 
+			const Key clientKey({ 11 });
 			auto& opinions = transactionInfo.m_opinions;
 			opinions.emplace_back(Key({ 1 }).array());
 			opinions[opinions.size() - 1].m_uploadLayout = {
 				sirius::drive::KeyAndBytes{ Key({ 2 }).array(), 100u },
 				sirius::drive::KeyAndBytes{ Key({ 3 }).array(), 200u },
+				sirius::drive::KeyAndBytes{ clientKey.array(), 300u },
 			};
-			opinions[opinions.size() - 1].m_clientUploadBytes = 300u;
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 1 });
 
 			return transactionInfo;
@@ -157,7 +159,7 @@ namespace catapult { namespace storage {
 			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
 		};
 		auto testee = CreateTransactionSender(storageState, transactionRangeHandler);
-		std::vector<Key> expectedPublicKeys{ Key({ 2 }), Key({ 3 }), Key() };
+		std::vector<Key> expectedPublicKeys{ Key({ 2 }), Key({ 3 }), Key({ 11 }) };
 		std::vector<uint64_t> expectedOpinions{ 100, 200, 300 };
 
 		testee.sendDataModificationSingleApprovalTransaction(CreateDataModificationSingleApprovalTransactionInfo());

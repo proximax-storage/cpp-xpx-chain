@@ -4,6 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#pragma GCC diagnostic error "-Wmissing-field-initializers"
+
 #include "ReplicatorService.h"
 #include "ReplicatorEventHandler.h"
 #include "TransactionSender.h"
@@ -11,6 +13,8 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
+
+#include <map>
 
 namespace catapult { namespace storage {
 
@@ -117,49 +121,7 @@ namespace catapult { namespace storage {
 
             auto drives = m_storageState.getReplicatorDrives(m_keyPair.publicKey());
             for (const auto& drive: drives) {
-                addDrive(drive.Id, drive.Size);
-
-                auto pLastApprovedModification = m_storageState.getLastApprovedDataModification(drive.Id);
-				if (!!pLastApprovedModification) {
-					m_pReplicator->asyncApprovalTransactionHasBeenPublished(sirius::drive::ApprovalTransactionInfo{
-						pLastApprovedModification->DriveKey.array(),
-						pLastApprovedModification->Id.array(),
-						pLastApprovedModification->DownloadDataCdi.array(),
-						pLastApprovedModification->ExpectedUploadSize,
-						pLastApprovedModification->ActualUploadSize - pLastApprovedModification->ExpectedUploadSize,
-						pLastApprovedModification->UsedSize});
-				}
-
-				auto pActiveVerification = m_storageState.getActiveVerification(drive.Id);
-				if (!!pActiveVerification) {
-					std::vector<sirius::Key> replicators;
-					sirius::Hash256 verificationTrigger(pActiveVerification->VerificationTrigger.array());
-					sirius::drive::InfoHash rootHash(pActiveVerification->RootHash.array());
-					replicators.reserve(pActiveVerification->Shards[0].size());
-
-					for (uint32_t i = 0u; i < pActiveVerification->Shards.size(); ++i) {
-						replicators.clear();
-						const auto& shard = pActiveVerification->Shards[i];
-						std::for_each(shard.begin(), shard.end(), [&replicators](const auto& key) { replicators.push_back(key.array()); });
-
-						m_pReplicator->asyncStartDriveVerification(
-							drive.Id.array(),
-							sirius::drive::VerificationRequest{
-								verificationTrigger,
-								i,
-								rootHash,
-								replicators});
-					}
-				}
-
-                for (const auto& dataModification: drive.DataModifications) {
-                    addDriveModification(
-						drive.Id,
-						dataModification.DownloadDataCdi,
-						dataModification.Id,
-						dataModification.Owner,
-						dataModification.ExpectedUploadSize);
-                }
+                addDrive(drive.Id);
             }
 
             auto channels = m_storageState.getDownloadChannels(m_keyPair.publicKey());
@@ -167,7 +129,7 @@ namespace catapult { namespace storage {
                 addDownloadChannel(
 					channel.Id,
 					channel.DriveKey,
-					channel.DownloadSize,
+					channel.DownloadSizeMegabytes,
 					channel.Consumers,
 					channel.Replicators);
             }
@@ -180,21 +142,19 @@ namespace catapult { namespace storage {
                 const Hash256& downloadDataCdi,
                 const Hash256& modificationId,
                 const Key& owner,
-                uint64_t dataSize) {
+                uint64_t dataSizeMegabytes) {
             CATAPULT_LOG(debug) << "new modify request " << modificationId << " for drive " << driveKey;
 
-            auto replicators = castReplicatorKeys(m_storageState.getDriveReplicators(driveKey));
+            auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(driveKey));
             m_pReplicator->asyncModify(
 				driveKey.array(),
-				sirius::drive::ModifyRequest{
+				sirius::drive::ModificationRequest{
 					downloadDataCdi.array(),
-					modificationId.array(),
-					dataSize,
-					replicators,
-					owner.array()});
+					modificationId.array(), utils::FileSize::FromMegabytes(dataSizeMegabytes).bytes(),
+					replicators});
         }
 
-        void removeDriveModification(const Key& driveKey, const Hash256& transactionHash) {
+		void removeDriveModification(const Key& driveKey, const Hash256& transactionHash) {
             CATAPULT_LOG(debug) << "remove modify request " << transactionHash.data() << " for drive " << driveKey;
 
             m_pReplicator->asyncCancelModify(driveKey.array(), transactionHash.array());
@@ -203,7 +163,7 @@ namespace catapult { namespace storage {
         void addDownloadChannel(
                 const Hash256& channelId,
                 const Key& driveKey,
-                size_t prepaidDownloadSize,
+                size_t prepaidDownloadSizeMegabytes,
                 const std::vector<Key>& consumers,
                 const std::vector<Key>& replicators) {
             CATAPULT_LOG(debug) << "add download channel " << channelId.data();
@@ -219,8 +179,7 @@ namespace catapult { namespace storage {
             m_pReplicator->asyncAddDownloadChannelInfo(
 				driveKey.array(),
 				sirius::drive::DownloadRequest{
-					channelId.array(),
-					prepaidDownloadSize,
+					channelId.array(), utils::FileSize::FromMegabytes(prepaidDownloadSizeMegabytes).bytes(),
 					castedReplicators,
 					castedConsumers});
         }
@@ -231,7 +190,7 @@ namespace catapult { namespace storage {
 				addDownloadChannel(
 					channelId,
 					pChannel->DriveKey,
-					pChannel->DownloadSize,
+					pChannel->DownloadSizeMegabytes,
 					pChannel->Consumers,
 					pChannel->Replicators);
 			}
@@ -245,7 +204,7 @@ namespace catapult { namespace storage {
 				addDownloadChannel(
 					channelId,
 					pChannel->DriveKey,
-					pChannel->DownloadSize + downloadSize,
+					pChannel->DownloadSizeMegabytes + downloadSize,
 					pChannel->Consumers,
 					pChannel->Replicators);
 			}
@@ -261,40 +220,168 @@ namespace catapult { namespace storage {
 			}
         }
 
-        void addDrive(const Key& driveKey, uint64_t driveSize) {
-            CATAPULT_LOG(debug) << "add drive " << driveKey;
+        void addDrive(const Key& driveKey) {
+			CATAPULT_LOG(debug) << "add drive" << driveKey;
 
-            auto replicators = castReplicatorKeys(m_storageState.getDriveReplicators(driveKey));
-            auto downloadWork = m_storageState.getDownloadWork(m_keyPair.publicKey(), driveKey);
-            sirius::drive::AddDriveRequest request{driveSize, downloadWork, replicators};
-            m_pReplicator->asyncAddDrive(driveKey.array(), request);
+			if (  m_alreadyAddedDrives.find(driveKey) != m_alreadyAddedDrives.end() )
+			{
+				CATAPULT_LOG( error ) << "The drive is already added";
+				return;
+			}
+
+			m_alreadyAddedDrives[driveKey] = m_storageState.getChainHeight();
+
+            auto drive = m_storageState.getDrive(driveKey);
+            std::vector<sirius::Key> replicators = castReplicatorKeys<sirius::Key>({drive.Replicators.begin(), drive.Replicators.end()});
+            auto donatorShard = castReplicatorKeys<sirius::Key>(m_storageState.getDonatorShard(driveKey, m_keyPair.publicKey()));
+            auto recipientShard = castReplicatorKeys<sirius::Key>(m_storageState.getRecipientShard(driveKey, m_keyPair.publicKey()));
+            auto downloadWorkBytes = m_storageState.getDownloadWorkBytes(m_keyPair.publicKey(), driveKey);
+
+			sirius::drive::AddDriveRequest request{drive.Size, downloadWorkBytes, replicators, m_storageState.getDrive(driveKey).Owner.array(), donatorShard, recipientShard};
+			m_pReplicator->asyncAddDrive(driveKey.array(), request);
+
+			auto pLastApprovedModification = m_storageState.getLastApprovedDataModification(drive.Id);
+			if (!!pLastApprovedModification) {
+				m_pReplicator->asyncApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationApprovalTransactionInfo{
+					pLastApprovedModification->DriveKey.array(),
+					pLastApprovedModification->Id.array(),
+					pLastApprovedModification->DownloadDataCdi.array(),
+					castReplicatorKeys<std::array<uint8_t, 32>>(pLastApprovedModification->Signers)});
+			}
+
+			auto pActiveVerification = m_storageState.getActiveVerification(drive.Id);
+			if (!!pActiveVerification) {
+				sirius::Hash256 verificationTrigger(pActiveVerification->VerificationTrigger.array());
+				sirius::drive::InfoHash rootHash(pActiveVerification->RootHash.array());
+
+				bool foundShard = false;
+				for (uint32_t i = 0u; i < pActiveVerification->Shards.size() && !foundShard; ++i) {
+					const auto& shard = pActiveVerification->Shards[i];
+
+					if (std::find(shard.begin(), shard.end(), m_keyPair.publicKey()) != shard.end()) {
+						foundShard = true;
+						m_pReplicator->asyncStartDriveVerification(
+								drive.Id.array(),
+								sirius::drive::VerificationRequest {
+									verificationTrigger, i, rootHash, castReplicatorKeys<sirius::Key>(shard) });
+					}
+				}
+			}
+
+			for (const auto& dataModification: drive.DataModifications) {
+				addDriveModification(
+						drive.Id,
+						dataModification.DownloadDataCdi,
+						dataModification.Id,
+						dataModification.Owner,
+						dataModification.ExpectedUploadSize);
+			}
         }
+
+		void removeDrive(const Key& driveKey)
+		{
+        	CATAPULT_LOG(debug) << "maybe remove drive " << driveKey;
+
+			m_pReplicator->asyncRemoveDrive(driveKey.array());
+			m_alreadyAddedDrives.erase(driveKey);
+		}
 
         bool isAssignedToDrive(const Key& driveKey) {
 			return m_storageState.isReplicatorAssignedToDrive(m_keyPair.publicKey(), driveKey);
         }
 
         void closeDrive(const Key& driveKey, const Hash256& transactionHash) {
-            CATAPULT_LOG(debug) << "closing drive " << driveKey;
+			CATAPULT_LOG(debug) << "closing drive " << driveKey;
 
-            m_pReplicator->asyncCloseDrive(
-				driveKey.array(),
-				transactionHash.array());
+			m_pReplicator->asyncCloseDrive(
+					driveKey.array(),
+					transactionHash.array());
+			m_alreadyAddedDrives.erase(driveKey);
         }
 
-        void maybeCancelVerifications() {
-			auto verifications = m_storageState.getActiveVerifications(m_keyPair.publicKey());
-			for (const auto& verification : verifications) {
-				if (verification.Expired) {
-					sirius::Hash256 verificationTrigger = verification.VerificationTrigger.array();
-					m_pReplicator->asyncCancelDriveVerification(
-						verification.DriveKey.array(),
-						std::move(verificationTrigger));
+        std::optional<Height> driveAddedAt(const Key& driveKey) {
+        	if (auto it = m_alreadyAddedDrives.find(driveKey); it != m_alreadyAddedDrives.end()) {
+				return it->second;
+			}
+			return {};
+		}
+
+		void exploreNewDrives() {
+        	auto drives = m_storageState.getReplicatorDriveKeys(m_keyPair.publicKey());
+			for (const auto& drive: drives) {
+				if (m_alreadyAddedDrives.find(drive) == m_alreadyAddedDrives.end()) {
+					addDrive(drive);
+				}
+			}
+		}
+
+        void processVerifications(const Hash256& blockHash) {
+			auto drives = m_storageState.getReplicatorDriveKeys(m_keyPair.publicKey());
+			auto height = m_storageState.getChainHeight();
+			for (const auto& driveKey: drives) {
+				if (auto it = m_alreadyAddedDrives.find(driveKey); it != m_alreadyAddedDrives.end()) {
+
+					if (it->second == height)
+					{
+						continue;
+					}
+
+					auto verification = m_storageState.getActiveVerification(driveKey);
+
+					if (!verification) {
+						continue;
+					}
+
+					sirius::Hash256 verificationTrigger = verification->VerificationTrigger.array();
+					if (verification->Expired) {
+						m_pReplicator->asyncCancelDriveVerification(driveKey.array(),verificationTrigger);
+					}
+					else if (verification->VerificationTrigger == blockHash) {
+						m_pReplicator->asyncStartDriveVerification(driveKey.array(), verificationTrigger);
+					}
+				}
+				else {
+					CATAPULT_LOG( error ) << "Could Not Find Drive to Verify " << driveKey << " " << blockHash;
 				}
 			}
         }
 
-        void dataModificationApprovalPublished(
+        void updateReplicators(const Key& driveKey) {
+			CATAPULT_LOG(debug) << "update replicators" << driveKey;
+
+        	auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(driveKey));
+			m_pReplicator->asyncSetReplicators(driveKey.array(), replicators);
+        }
+
+        void updateShardDonator(const Key& driveKey) {
+        	CATAPULT_LOG(debug) << "update shardDonator" << driveKey;
+
+        	auto donatorShard = castReplicatorKeys<sirius::Key>(m_storageState.getDonatorShard(driveKey, m_keyPair.publicKey()));
+			m_pReplicator->asyncSetShardDonator(driveKey.array(), donatorShard);
+		}
+
+        void updateShardRecipient(const Key& driveKey) {
+        	CATAPULT_LOG(debug) << "update shardRecipient" << driveKey;
+
+        	auto recipientShard = castReplicatorKeys<sirius::Key>(m_storageState.getRecipientShard(driveKey, m_keyPair.publicKey()));
+			m_pReplicator->asyncSetShardRecipient(driveKey.array(), recipientShard);
+		}
+
+		void anotherReplicatorOnboarded(const Key& replicatorKey)
+		{
+			auto drives = m_storageState.getReplicatorDriveKeys(replicatorKey);
+			for (const auto& driveKey: drives) {
+				if (isAssignedToDrive(driveKey)) {
+					updateReplicators(driveKey);
+					updateShardDonator(driveKey);
+					updateShardRecipient(driveKey);
+				}
+			}
+
+			// TODO Update Download Channels
+		}
+
+		void dataModificationApprovalPublished(
                 const Key& driveKey,
                 const Hash256& modificationId,
                 const Hash256& rootHash,
@@ -333,8 +420,9 @@ namespace catapult { namespace storage {
         }
 
     private:
-        std::vector<sirius::Key> castReplicatorKeys(const std::vector<Key>& keys) {
-            std::vector<sirius::Key> replicators;
+		template<class T>
+		std::vector<T> castReplicatorKeys(const std::vector<Key>& keys) {
+            std::vector<T> replicators;
 			replicators.reserve(keys.size());
             for (const auto& key: keys)
 				replicators.emplace_back(key.array());
@@ -351,6 +439,9 @@ namespace catapult { namespace storage {
         std::unique_ptr<ReplicatorEventHandler> m_pReplicatorEventHandler;
         TransactionStatusHandler m_transactionStatusHandler;
 		const std::vector<ionet::Node>& m_bootstrapReplicators;
+
+		// The fields are needed to generate correct events
+		std::map<Key, Height> m_alreadyAddedDrives;
     };
 
     // endregion
@@ -399,9 +490,9 @@ namespace catapult { namespace storage {
             const Hash256& downloadDataCdi,
             const Hash256& modificationId,
             const Key& owner,
-            uint64_t dataSize) {
+            uint64_t dataSizeMegabytes) {
         if (m_pImpl)
-			m_pImpl->addDriveModification(driveKey, downloadDataCdi, modificationId, owner, dataSize);
+			m_pImpl->addDriveModification(driveKey, downloadDataCdi, modificationId, owner, dataSizeMegabytes);
     }
 
     void ReplicatorService::removeDriveModification(const Key& driveKey, const Hash256& dataModificationId) {
@@ -424,10 +515,15 @@ namespace catapult { namespace storage {
             m_pImpl->closeDownloadChannel(channelId);
     }
 
-    void ReplicatorService::addDrive(const Key& driveKey, uint64_t driveSize) {
+    void ReplicatorService::addDrive(const Key& driveKey) {
         if (m_pImpl)
-            m_pImpl->addDrive(driveKey, driveSize);
+            m_pImpl->addDrive(driveKey);
     }
+
+	void ReplicatorService::removeDrive(const Key& driveKey) {
+    	if (m_pImpl)
+    		m_pImpl->removeDrive(driveKey);
+	}
 
     bool ReplicatorService::isAssignedToDrive(const Key& driveKey) {
         if (m_pImpl)
@@ -441,15 +537,49 @@ namespace catapult { namespace storage {
             m_pImpl->closeDrive(driveKey, transactionHash);
     }
 
-    void ReplicatorService::maybeCancelVerifications() {
+    std::optional<Height> ReplicatorService::driveAddedAt(const Key& driveKey) {
+    	if (m_pImpl)
+    		return m_pImpl->driveAddedAt(driveKey);
+		return {};
+	}
+
+	void ReplicatorService::exploreNewDrives() {
+    	if (m_pImpl)
+    		return m_pImpl->exploreNewDrives();
+	}
+
+	void ReplicatorService::processVerifications(const Hash256& blockHash) {
         if (m_pImpl)
-            m_pImpl->maybeCancelVerifications();
+        	m_pImpl->processVerifications(blockHash);
     }
+
+    void ReplicatorService::updateReplicators(const Key& driveKey) {
+		if (m_pImpl) {
+			m_pImpl->updateReplicators(driveKey);
+		}
+	}
+
+	void ReplicatorService::updateShardDonator(const Key& driveKey) {
+    	if (m_pImpl) {
+    		m_pImpl->updateShardDonator(driveKey);
+    	}
+	}
+
+	void ReplicatorService::updateShardRecipient(const Key& driveKey) {
+    	if (m_pImpl) {
+    		m_pImpl->updateShardRecipient(driveKey);
+    	}
+	}
 
     void ReplicatorService::notifyTransactionStatus(const Hash256& hash, uint32_t status) {
         if (m_pImpl)
             m_pImpl->notifyTransactionStatus(hash, status);
     }
+
+    void ReplicatorService::anotherReplicatorOnboarded(const Key& replicatorKey) {
+    	if (m_pImpl)
+    		m_pImpl->anotherReplicatorOnboarded(replicatorKey);
+	}
 
     void ReplicatorService::dataModificationApprovalPublished(
             const Key& driveKey,

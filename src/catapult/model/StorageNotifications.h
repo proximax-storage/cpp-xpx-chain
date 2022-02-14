@@ -137,7 +137,7 @@ namespace catapult { namespace model {
 			, DriveKey(drive)
 			, Owner(owner)
 			, DownloadDataCdi(cdi)
-			, UploadSize(uploadSize)
+			, UploadSizeMegabytes(uploadSize)
 		{}
 
 	public:
@@ -154,7 +154,7 @@ namespace catapult { namespace model {
 		Hash256 DownloadDataCdi;
 
 		/// Upload size of data.
-		uint64_t UploadSize;
+		uint64_t UploadSizeMegabytes;
 	};
 
 	/// Notification of a stream start.
@@ -559,13 +559,13 @@ namespace catapult { namespace model {
 		explicit DataModificationApprovalRefundNotification(
 				const Key& driveKey,
 				const Hash256& dataModificationId,
-				const uint64_t metaFilesSize,
-				const uint64_t usedDriveSize)
+				const uint64_t metaFilesSizeBytes,
+				const uint64_t usedDriveSizeBytes)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
-				, MetaFilesSize(metaFilesSize)
-				, UsedDriveSize(usedDriveSize)
+				, MetaFilesSizeBytes(metaFilesSizeBytes)
+				, UsedDriveSize(usedDriveSizeBytes)
 		{}
 
 	public:
@@ -576,7 +576,7 @@ namespace catapult { namespace model {
 		Hash256 DataModificationId;
 
 		/// The size of metafiles including File Structure.
-		uint64_t MetaFilesSize;
+		uint64_t MetaFilesSizeBytes;
 
 		/// Total used disk space of the drive.
 		uint64_t UsedDriveSize;
@@ -1056,6 +1056,63 @@ namespace catapult { namespace model {
 	public:
 		/// The identifier of the download channel.
 		Hash256 DownloadChannelId;
+	};
+
+	/// Notification of end drive verification.
+	template<VersionType version>
+	struct EndDriveVerificationNotification;
+
+	template<>
+	struct EndDriveVerificationNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_End_Drive_Verification_v1_Notification;
+
+	public:
+		explicit EndDriveVerificationNotification(
+				const Key& driveKey,
+				const Hash256& verificationTrigger,
+				const uint16_t shardId,
+				const uint16_t keyCount,
+				const uint16_t judgingKeyCount,
+				const Key* pPublicKeys,
+				const Signature* pSignatures,
+				const uint8_t* pOpinions)
+				: Notification(Notification_Type, sizeof(EndDriveVerificationNotification<1>))
+				, DriveKey(driveKey)
+				, VerificationTrigger(verificationTrigger)
+				, ShardId(shardId)
+				, KeyCount(keyCount)
+				, JudgingKeyCount(judgingKeyCount)
+				, PublicKeysPtr(pPublicKeys)
+				, SignaturesPtr(pSignatures)
+				, OpinionsPtr(pOpinions)
+				{}
+
+	public:
+		/// Key of the drive.
+		Key DriveKey;
+
+		/// The hash of block that initiated the Verification.
+		Hash256 VerificationTrigger;
+
+		/// Shard identifier.
+		uint16_t ShardId;
+
+		/// Number of replicators.
+		uint16_t KeyCount;
+
+		/// Number of replicators that provided their opinions.
+		uint8_t JudgingKeyCount;
+
+		/// Array of the replicator keys.
+		const Key* PublicKeysPtr;
+
+		/// Array or signatures.
+		const Signature* SignaturesPtr;
+
+		/// Array or signatures.
+		const uint8_t* OpinionsPtr;
 	};
 
 	/// Notification of a shards update.

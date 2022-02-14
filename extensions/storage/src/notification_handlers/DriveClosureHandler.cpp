@@ -16,8 +16,16 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			if (pReplicatorService->isAssignedToDrive(notification.DriveKey))
+			auto addedToDriveHeight = pReplicatorService->driveAddedAt(notification.DriveKey);
+
+			if (addedToDriveHeight) {
+				// Note that Drive does not already exist in Cache
 				pReplicatorService->closeDrive(notification.DriveKey, notification.TransactionHash);
+			}
+
+			// We could be assigned to the Drive in the same block, so in any case we try to explore new Drives.
+			// It can be optimized if the cache stores all former Drives of the Replicator
+			pReplicatorService->exploreNewDrives();
 		});
 	}
 }}

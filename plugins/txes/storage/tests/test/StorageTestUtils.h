@@ -336,7 +336,7 @@ namespace catapult { namespace test {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DataModification);
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->DownloadDataCdi = test::GenerateRandomByteArray<Hash256>();
-        pTransaction->UploadSize = test::Random();
+        pTransaction->UploadSizeMegabytes = test::Random();
         return pTransaction;
     }
 
@@ -344,7 +344,7 @@ namespace catapult { namespace test {
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateDownloadTransaction() {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_Download);
-        pTransaction->DownloadSize = test::Random();
+        pTransaction->DownloadSizeMegabytes = test::Random();
 		pTransaction->FeedbackFeeAmount = Amount(test::Random());
 		pTransaction->ListOfPublicKeysSize = test::Random16();
         return pTransaction;
@@ -357,8 +357,8 @@ namespace catapult { namespace test {
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->DataModificationId = test::GenerateRandomByteArray<Hash256>();
         pTransaction->FileStructureCdi = test::GenerateRandomByteArray<Hash256>();
-        pTransaction->FileStructureSize = test::Random();
-        pTransaction->UsedDriveSize = test::Random();
+        pTransaction->FileStructureSizeBytes = test::Random();
+        pTransaction->UsedDriveSizeBytes = test::Random();
         return pTransaction;
     }
 

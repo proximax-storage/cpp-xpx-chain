@@ -8,10 +8,10 @@
 
 namespace catapult { namespace notification_handlers {
 
-	using Notification = model::DataModificationNotification<1>;
+	using Notification = model::EndDriveVerificationNotification<1>;
 
-	DECLARE_HANDLER(DataModification, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(DataModification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
+	DECLARE_HANDLER(EndDriveVerification, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
+		return MAKE_HANDLER(FinishDownload, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
@@ -26,15 +26,12 @@ namespace catapult { namespace notification_handlers {
 					pReplicatorService->updateShardDonator(notification.DriveKey);
 					pReplicatorService->updateShardRecipient(notification.DriveKey);
 
-					pReplicatorService->addDriveModification(
+					pReplicatorService->endDriveVerificationPublished(
 							notification.DriveKey,
-							notification.DownloadDataCdi,
-							notification.DataModificationId,
-							notification.Owner,
-							notification.UploadSizeMegabytes);
+							notification.VerificationTrigger);
 				}
 				else {
-					// The modification has already been processed when adding the Drive
+					// The transaction has already been taken into account when adding the Drive
 				}
 			}
 			else if (assignedToDrive) {

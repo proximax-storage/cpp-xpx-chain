@@ -9,6 +9,7 @@
 #include "TransactionStatusHandler.h"
 #include "plugins/txes/storage/src/validators/Results.h"
 #include <numeric>
+#include <iostream>
 
 namespace catapult { namespace storage {
 
@@ -27,7 +28,7 @@ namespace catapult { namespace storage {
         public:
             void modifyApprovalTransactionIsReady(
                     sirius::drive::Replicator&,
-                    sirius::drive::ApprovalTransactionInfo&& transactionInfo) override {
+                    const sirius::drive::ApprovalTransactionInfo& transactionInfo) override {
 				auto pReplicator = m_pReplicator.lock();
 				if (!pReplicator)
 					return;
@@ -47,13 +48,13 @@ namespace catapult { namespace storage {
 					auto validationResult = validators::ValidationResult(status);
 					CATAPULT_LOG(debug) << "data modification approval transaction completed with " << validationResult;
                     if (validationResult == validators::Failure_Storage_Opinion_Invalid_Key)
-						pReplicator->asyncApprovalTransactionHasFailedInvalidSignatures(driveKey, transactionHash.array());
+                    	pReplicator->asyncApprovalTransactionHasFailedInvalidOpinions(driveKey, transactionHash.array());
                 });
             }
 
             void singleModifyApprovalTransactionIsReady(
                     sirius::drive::Replicator&,
-                    sirius::drive::ApprovalTransactionInfo&& transactionInfo) override {
+                    const sirius::drive::ApprovalTransactionInfo& transactionInfo) override {
 				auto pReplicator = m_pReplicator.lock();
 				if (!pReplicator)
 					return;

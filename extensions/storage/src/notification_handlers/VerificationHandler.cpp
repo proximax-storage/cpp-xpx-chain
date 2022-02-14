@@ -8,15 +8,15 @@
 
 namespace catapult { namespace notification_handlers {
 
-	using Notification = model::BlockNotification<1>;
+	using Notification = model::BlockNotification<2>;
 
 	DECLARE_HANDLER(Verification, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(Verification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+		return MAKE_HANDLER(Verification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
 
-			pReplicatorService->maybeCancelVerifications();
+			pReplicatorService->processVerifications(notification.Hash);
 		});
 	}
 }}

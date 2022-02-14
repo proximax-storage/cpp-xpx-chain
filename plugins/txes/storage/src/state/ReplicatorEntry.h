@@ -21,17 +21,17 @@ namespace catapult { namespace state {
 		/// Set to \b true after replicator’s first data modification approval.
 		bool DataModificationIdIsValid;
 
-		/// Used drive size at the time of the replicator’s onboarding excluding metafiles size.
+		/// Used drive size at the time of the replicator’s onboarding excluding metafiles size in megabytes.
 		/// Set to \p 0 after replicator’s first data modification approval.
-		uint64_t InitialDownloadWork;
+		uint64_t InitialDownloadWorkMegabytes;
 
 		// Modfication hash and size of cumulative download work
-		uint64_t LastCompletedCumulativeDownloadWork;
+		uint64_t LastCompletedCumulativeDownloadWorkBytes;
 
 		bool operator==(const DriveInfo& rhs) const {
 			return LastApprovedDataModificationId == rhs.LastApprovedDataModificationId &&
 				DataModificationIdIsValid == rhs.DataModificationIdIsValid &&
-				InitialDownloadWork == rhs.InitialDownloadWork;
+				   InitialDownloadWorkMegabytes == rhs.InitialDownloadWorkMegabytes;
 		}
 	};
 

@@ -16,11 +16,14 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			if (pReplicatorService->replicatorKey() != notification.PublicKey || !pReplicatorService->isReplicatorRegistered(notification.PublicKey))
-				return;
-
-			CATAPULT_LOG(debug) << "replicator on-boarding: starting replicator service";
-			pReplicatorService->start();
+			if (pReplicatorService->replicatorKey() == notification.PublicKey || !pReplicatorService->isReplicatorRegistered(notification.PublicKey)) {
+				CATAPULT_LOG(debug) << "replicator on-boarding: starting replicator service";
+				pReplicatorService->start();
+			}
+			else {
+				// Replicator could be assigned to some of our Drives, Download Channels, Shards
+				pReplicatorService->anotherReplicatorOnboarded(notification.PublicKey);
+			}
 		});
 	}
 }}

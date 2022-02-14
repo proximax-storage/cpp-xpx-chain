@@ -18,7 +18,7 @@ namespace catapult { namespace state {
 	class DownloadChannelMixin {
 	public:
 		DownloadChannelMixin()
-			: m_downloadSize(0)
+			: m_downloadSizeMegabytes(0)
 			, m_downloadApprovalCount(0)
 		{}
 
@@ -45,17 +45,17 @@ namespace catapult { namespace state {
 
         /// Sets \a downloadSize of download channel.
         void setDownloadSize(const uint64_t& downloadSize) {
-			m_downloadSize = downloadSize;
+			m_downloadSizeMegabytes = downloadSize;
         }
 
 		/// Increases download size of the download channel by \a delta.
 		void increaseDownloadSize(const uint64_t& delta) {
-			m_downloadSize = m_downloadSize + delta;
+			m_downloadSizeMegabytes = m_downloadSizeMegabytes + delta;
 		}
 
         /// Gets download size.
         const uint64_t& downloadSize() const {
-            return m_downloadSize;
+            return m_downloadSizeMegabytes;
         }
 
 		/// Gets number of completed download approval transactions.
@@ -96,7 +96,7 @@ namespace catapult { namespace state {
 	private:
 		Key m_consumer;
 		Key m_drive;
-		uint64_t m_downloadSize; // In Mbytes
+		uint64_t m_downloadSizeMegabytes; // In Mbytes
 		uint16_t m_downloadApprovalCount;
 		std::vector<Key> m_listOfPublicKeys;
 		std::map<Key, Amount> m_cumulativePayments;

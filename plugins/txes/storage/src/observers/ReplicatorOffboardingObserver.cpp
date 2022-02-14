@@ -63,8 +63,8 @@ namespace catapult { namespace observers {
 				auto& confirmedUsedSizes = drive.confirmedUsedSizes();
 				auto sizeIter = confirmedUsedSizes.find(notification.PublicKey);
 				streamingDepositSlashing += (confirmedUsedSizes.end() != sizeIter) ?
-					2 * std::min(sizeIter->second, drive.usedSize()) :
-					2 * drive.usedSize();
+					2 * std::min(sizeIter->second, drive.usedSizeBytes()) :
+					2 * drive.usedSizeBytes();
 			}
 
 			// Streaming deposit return = streaming deposit - streaming deposit slashing

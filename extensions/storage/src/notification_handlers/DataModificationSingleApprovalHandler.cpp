@@ -11,13 +11,25 @@ namespace catapult { namespace notification_handlers {
     using Notification = model::DataModificationSingleApprovalNotification<1>;
 
     DECLARE_HANDLER(DataModificationSingleApproval, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-        return MAKE_HANDLER(DataModificationSingleApproval, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+        return MAKE_HANDLER(DataModificationSingleApproval, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
             auto pReplicatorService = pReplicatorServiceWeak.lock();
             if (!pReplicatorService)
                 return;
 
 			if (pReplicatorService->replicatorKey() != notification.PublicKey || !pReplicatorService->isAssignedToDrive(notification.DriveKey))
 				return;
+
+			auto driveAddedHeight = pReplicatorService->driveAddedAt(notification.DriveKey);
+
+			if (!driveAddedHeight) {
+				CATAPULT_LOG( error ) << "Replicator Is Assigned to Drive but it is not Added";
+				return;
+			}
+
+			if (driveAddedHeight == context.Height) {
+				// The cancel has been already taken into account when adding the Drive
+				return;
+			}
 
             pReplicatorService->dataModificationSingleApprovalPublished(
 				notification.DriveKey,

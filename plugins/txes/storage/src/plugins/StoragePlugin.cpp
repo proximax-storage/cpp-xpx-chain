@@ -61,7 +61,7 @@ namespace catapult { namespace plugins {
 
 				// If current data modification was approved (not cancelled), account its size.
 				if (it->State == state::DataModificationState::Succeeded)
-					approvableDownloadWork += it->ActualUploadSize;
+					approvableDownloadWork += it->ActualUploadSizeMegabytes;
 			}
 
 			return approvableDownloadWork;

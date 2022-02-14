@@ -55,12 +55,13 @@ namespace catapult { namespace observers {
 							});
 					const bool dataModificationIdIsValid = lastApprovedDataModificationIter != completedDataModifications.rend();
 					const auto lastApprovedDataModificationId = dataModificationIdIsValid ? lastApprovedDataModificationIter->Id : Hash256();
-					const auto initialDownloadWork = driveEntry.usedSize() - driveEntry.metaFilesSize();
+					const auto initialDownloadWork = utils::FileSize::FromMegabytes(
+							utils::FileSize::FromBytes(driveEntry.usedSizeBytes() - driveEntry.metaFilesSizeBytes()).megabytes());
 					replicatorEntry.drives().emplace(driveKey, state::DriveInfo{
-							lastApprovedDataModificationId, dataModificationIdIsValid, initialDownloadWork
+						lastApprovedDataModificationId, dataModificationIdIsValid, initialDownloadWork.megabytes(), initialDownloadWork.bytes()
 				   	});
 					driveEntry.replicators().emplace(notification.PublicKey);
-					driveEntry.cumulativeUploadSizes().emplace(notification.PublicKey, 0);
+					driveEntry.cumulativeUploadSizesBytes().emplace(notification.PublicKey, 0);
 
 					// Updating download shards of the drive
 					if (driveEntry.replicators().size() <= pluginConfig.ShardSize) {

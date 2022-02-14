@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 		const auto& driveOwnerPublicKey = pDriveEntry->owner();
 		auto pKey = &notification.PublicKeysPtr[notification.JudgingKeysCount];
 		for (auto i = 0; i < totalJudgedKeysCount; ++i, ++pKey)
-			if (*pKey != driveOwnerPublicKey && !pDriveEntry->cumulativeUploadSizes().count(*pKey))
+			if (*pKey != driveOwnerPublicKey && !pDriveEntry->cumulativeUploadSizesBytes().count(*pKey))
 				return Failure_Storage_Replicator_Not_Found;
 
 		// Check if
@@ -43,9 +43,7 @@ namespace catapult { namespace validators {
 	  	initialCumulativeUploadSizes.reserve(totalJudgedKeysCount);
 	  	for (auto i = notification.JudgingKeysCount; i < totalKeysCount; ++i) {
 		  	const auto key = notification.PublicKeysPtr[i];
-		  	const auto initialSize = (key != driveOwnerPublicKey) ?
-					pDriveEntry->cumulativeUploadSizes().at(key) :
-					pDriveEntry->ownerCumulativeUploadSize();
+		  	const auto initialSize = (key != driveOwnerPublicKey) ? pDriveEntry->cumulativeUploadSizesBytes().at(key) : pDriveEntry->ownerCumulativeUploadSizeBytes();
 		  	initialCumulativeUploadSizes.push_back(initialSize);
 	  	}
 
@@ -54,22 +52,23 @@ namespace catapult { namespace validators {
 		for (auto i = 0; i < totalJudgingKeysCount; ++i) {
 			const auto judgingKey = notification.PublicKeysPtr[i];
 			const auto& shardsPair = pDriveEntry->dataModificationShards().at(judgingKey);
-			uint64_t totalIncrements = 0;
+			uint64_t totalCumulativeUpload = 0;
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
 				if (presentOpinions[i*totalJudgedKeysCount + j]) {
 					const auto judgedKey = notification.PublicKeysPtr[notification.JudgingKeysCount + j];
-					if (!shardsPair.first.count(judgedKey) && !shardsPair.second.count(judgedKey))
+					if (!shardsPair.first.count(judgedKey) && !shardsPair.second.count(judgedKey) && judgedKey != driveOwnerPublicKey)
 						return Failure_Storage_Opinion_Invalid_Key;
-					const auto increment = *pOpinion++ - initialCumulativeUploadSizes.at(j);
+					const auto increment = *pOpinion - initialCumulativeUploadSizes.at(j);
 					if (increment < 0)
 						return Failure_Storage_Invalid_Opinion;
-					totalIncrements += increment;
+					totalCumulativeUpload += *pOpinion++;;
 				}
 			}
 			const auto replicatorIter = replicatorCache.find(notification.PublicKeysPtr[i]);
 			const auto& pReplicatorEntry = replicatorIter.tryGet();
-			if (pReplicatorEntry->drives().at(notification.DriveKey).LastCompletedCumulativeDownloadWork != totalIncrements)
+			if (pReplicatorEntry->drives().at(notification.DriveKey).LastCompletedCumulativeDownloadWorkBytes != totalCumulativeUpload) {
 				return Failure_Storage_Invalid_Opinions_Sum;
+			}
 		}
 
 	  	// TODO: Check if there are enough mosaics for the transfer?

@@ -49,8 +49,8 @@ namespace catapult { namespace observers {
             }
 			for (auto& modification: entry.activeDataModifications()) {
 				if (modification.Id == values.Stream_Id) {
-					modification.ExpectedUploadSize += values.Additional_Size;
-					modification.ActualUploadSize += values.Additional_Size;
+					modification.ExpectedUploadSizeMegabytes += values.Additional_Size;
+					modification.ActualUploadSizeMegabytes += values.Additional_Size;
 					break;
 				}
 			}

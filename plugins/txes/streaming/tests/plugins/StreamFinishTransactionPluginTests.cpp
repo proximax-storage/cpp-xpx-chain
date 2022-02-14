@@ -129,7 +129,7 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(pTransaction->StreamId, notification.StreamId);
-		EXPECT_EQ(pTransaction->ActualUploadSize, notification.ActualUploadSize);
+		EXPECT_EQ(pTransaction->ActualUploadSizeMegabytes, notification.ActualUploadSize);
 		EXPECT_EQ(pTransaction->StreamStructureCdi, notification.StreamStructureCdi);
 	}
 

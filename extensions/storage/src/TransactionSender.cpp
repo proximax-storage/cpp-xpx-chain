@@ -20,28 +20,22 @@ namespace catapult { namespace storage {
         utils::KeySet judgedKeys;
 		utils::KeySet judgingKeys;
         std::vector<Key> overlappingKeys;
-		std::map<Key, std::pair<uint64_t, std::map<Key, uint64_t>>> opinionMap;
+		std::map<Key, std::map<Key, uint64_t>> opinionMap;
 		uint16_t opinionCount = 0u;
 		std::map<Key, Signature> signatureMap;
-		bool hasClientUploads = false;
 
         // collect judging and judged keys, opinions and signatures.
         for (const auto& opinion : transactionInfo.m_opinions) {
-			if (opinion.m_uploadLayout.empty() && opinion.m_clientUploadBytes == 0)
+			if (opinion.m_uploadLayout.empty() )
 				continue;
 
             judgingKeys.emplace(opinion.m_replicatorKey);
 			signatureMap[opinion.m_replicatorKey] = opinion.m_signature.array();
-			auto& pair = opinionMap[opinion.m_replicatorKey];
-			pair.first = opinion.m_clientUploadBytes;
-			if (opinion.m_clientUploadBytes > 0) {
-				opinionCount++;
-				hasClientUploads = true;
-			}
+			auto& uploads = opinionMap[opinion.m_replicatorKey];
 
             for (const auto& layout: opinion.m_uploadLayout) {
 				judgedKeys.emplace(layout.m_key);
-				pair.second[layout.m_key] = layout.m_uploadedBytes;
+				uploads[layout.m_key] = layout.m_uploadedBytes;
 				opinionCount++;
 			}
         }
@@ -69,11 +63,6 @@ namespace catapult { namespace storage {
         publicKeys.insert(publicKeys.end(), judgedKeys.begin(), judgedKeys.end());
 		auto totalJudgingKeysCount = judgingKeys.size() + overlappingKeys.size();
 		auto totalJudgedKeysCount = overlappingKeys.size() + judgedKeys.size();
-		if (hasClientUploads) {
-			publicKeys.push_back(m_storageState.getDrive(transactionInfo.m_driveKey).Owner);
-			totalKeyCount++;
-			totalJudgedKeysCount++;
-		}
 
 		// prepare opinions
         boost::dynamic_bitset<uint8_t> presentOpinionsBitset(totalJudgingKeysCount * totalJudgedKeysCount, 0u);
@@ -82,20 +71,15 @@ namespace catapult { namespace storage {
 		std::vector<Signature> signatures;
 		signatures.reserve(transactionInfo.m_opinions.size());
 		auto judgingKeysOffset = totalKeyCount - totalJudgedKeysCount;
-		auto replicatorJudgedKeysCount = totalJudgedKeysCount - (hasClientUploads ? 1 : 0);
 		for (auto i = 0u; i < totalJudgingKeysCount; ++i) {
 			signatures.push_back(signatureMap.at(publicKeys[i]));
 			const auto& opinion = opinionMap.at(publicKeys[i]);
-			for (auto k = 0u; k < replicatorJudgedKeysCount; ++k) {
-				auto iter = opinion.second.find(publicKeys[k + judgingKeysOffset]);
-				if (iter != opinion.second.end()) {
+			for (auto k = 0u; k < totalJudgedKeysCount; ++k) {
+				auto iter = opinion.find(publicKeys[k + judgingKeysOffset]);
+				if (iter != opinion.end()) {
 					presentOpinionsBitset[i * totalJudgedKeysCount + k] = 1;
 					opinions.push_back(iter->second);
 				}
-			}
-			if (opinion.first > 0) {
-				presentOpinionsBitset[i * totalJudgedKeysCount + replicatorJudgedKeysCount] = 1;
-				opinions.push_back(opinion.first);
 			}
 		}
 		std::vector<uint8_t> presentOpinions;
@@ -112,7 +96,7 @@ namespace catapult { namespace storage {
         builder.setUsedDriveSize(transactionInfo.m_driveSize);
         builder.setJudgingKeysCount(judgingKeys.size());
         builder.setOverlappingKeysCount(overlappingKeys.size());
-        builder.setJudgedKeysCount(judgedKeys.size() + (hasClientUploads ? 1 : 0));
+        builder.setJudgedKeysCount(judgedKeys.size());
         builder.setPublicKeys(std::move(publicKeys));
         builder.setSignatures(std::move(signatures));
         builder.setPresentOpinions(std::move(presentOpinions));
@@ -130,7 +114,7 @@ namespace catapult { namespace storage {
         auto singleOpinion = transactionInfo.m_opinions.at(0);
 
         std::vector<Key> keys;
-        keys.reserve(singleOpinion.m_uploadLayout.size() + (singleOpinion.m_clientUploadBytes > 0 ? 1 : 0));
+        keys.reserve(singleOpinion.m_uploadLayout.size());
 
         std::vector<uint64_t> opinions;
         opinions.reserve(singleOpinion.m_uploadLayout.size());
@@ -139,11 +123,6 @@ namespace catapult { namespace storage {
             keys.emplace_back(layout.m_key);
             opinions.emplace_back(layout.m_uploadedBytes);
         }
-
-		if (singleOpinion.m_clientUploadBytes > 0) {
-			keys.emplace_back(m_storageState.getDrive(transactionInfo.m_driveKey).Owner);
-			opinions.emplace_back(singleOpinion.m_clientUploadBytes);
-		}
 
         builders::DataModificationSingleApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
         builder.setDriveKey(transactionInfo.m_driveKey);

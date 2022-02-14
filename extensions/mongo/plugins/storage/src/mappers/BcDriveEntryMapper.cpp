@@ -24,8 +24,8 @@ namespace catapult { namespace mongo { namespace plugins {
 						<< "id" << ToBinary(modification.Id)
 						<< "owner" << ToBinary(modification.Owner)
 						<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
-						<< "expectedUploadSize" << static_cast<int64_t>(modification.ExpectedUploadSize)
-						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSize)
+						<< "expectedUploadSize" << static_cast<int64_t>(modification.ExpectedUploadSizeMegabytes)
+						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSizeMegabytes)
 						<< "folderName" << ToBinary(pFolderName, modification.FolderName.size())
 						<< "readyForApproval" << modification.ReadyForApproval
 						<< bson_stream::close_document;
@@ -43,8 +43,8 @@ namespace catapult { namespace mongo { namespace plugins {
 						<< "id" << ToBinary(modification.Id)
 						<< "owner" << ToBinary(modification.Owner)
 						<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
-						<< "expectedUploadSize" << static_cast<int64_t>(modification.ExpectedUploadSize)
-						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSize)
+						<< "expectedUploadSize" << static_cast<int64_t>(modification.ExpectedUploadSizeMegabytes)
+						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSizeMegabytes)
 						<< "folderName" << ToBinary(pFolderName, modification.FolderName.size())
 						<< "readyForApproval" << modification.ReadyForApproval
 						<< "state" << utils::to_underlying_type(modification.State)
@@ -134,10 +134,10 @@ namespace catapult { namespace mongo { namespace plugins {
 				           << "owner" << ToBinary(entry.owner())
 				           << "rootHash" << ToBinary(entry.rootHash())
 						   << "size" << static_cast<int64_t>(entry.size())
-				           << "usedSize" << static_cast<int64_t>(entry.usedSize())
-				           << "metaFilesSize" << static_cast<int64_t>(entry.metaFilesSize())
+				           << "usedSizeBytes" << static_cast<int64_t>(entry.usedSizeBytes())
+				           << "metaFilesSizeBytes" << static_cast<int64_t>(entry.metaFilesSizeBytes())
 				           << "replicatorCount" << static_cast<int32_t>(entry.replicatorCount())
-				           << "ownerCumulativeUploadSize" << static_cast<int64_t>(entry.ownerCumulativeUploadSize());
+				           << "ownerCumulativeUploadSizeBytes" << static_cast<int64_t>(entry.ownerCumulativeUploadSizeBytes());
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
 		StreamCompletedDataModifications(builder, entry.completedDataModifications());
@@ -286,10 +286,11 @@ namespace catapult { namespace mongo { namespace plugins {
 		entry.setRootHash(rootHash);
 
 		entry.setSize(static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
-		entry.setUsedSize(static_cast<uint64_t>(dbDriveEntry["usedSize"].get_int64()));
-		entry.setMetaFilesSize(static_cast<uint64_t>(dbDriveEntry["metaFilesSize"].get_int64()));
+		entry.setUsedSizeBytes(static_cast<uint64_t>(dbDriveEntry["usedSizeBytes"].get_int64()));
+		entry.setMetaFilesSizeBytes(static_cast<uint64_t>(dbDriveEntry["metaFilesSizeBytes"].get_int64()));
 		entry.setReplicatorCount(static_cast<uint16_t>(dbDriveEntry["replicatorCount"].get_int32()));
-		entry.setOwnerCumulativeUploadSize(static_cast<uint64_t>(dbDriveEntry["ownerCumulativeUploadSize"].get_int64()));
+		entry.setOwnerCumulativeUploadSizeBytes(
+				static_cast<uint64_t>(dbDriveEntry["ownerCumulativeUploadSizeBytes"].get_int64()));
 
 		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);
 		ReadCompletedDataModifications(entry.completedDataModifications(), dbDriveEntry["completedDataModifications"].get_array().value);

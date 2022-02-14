@@ -50,11 +50,13 @@ namespace catapult { namespace observers {
 		  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		  	auto& replicators = driveEntry.replicators();
 		  	for (const auto& replicatorKey : acceptableReplicators) {
-				// Updating drives() and replicators()
+		  		// Updating the cache entries
 				auto replicatorIter = replicatorCache.find(replicatorKey);
 				auto& replicatorEntry = replicatorIter.get();
 				replicatorEntry.drives().emplace(notification.DriveKey, state::DriveInfo{ Hash256(), false, 0, 0 });
 				replicators.emplace(replicatorKey);
+				driveEntry.cumulativeUploadSizesBytes().emplace(replicatorKey, 0);
+				CATAPULT_LOG( error ) << "added to cumulativeUploadSizesBytes " << replicatorKey;
 
 				// Making mosaic transfers
 				auto replicatorStateIter = accountStateCache.find(replicatorKey);

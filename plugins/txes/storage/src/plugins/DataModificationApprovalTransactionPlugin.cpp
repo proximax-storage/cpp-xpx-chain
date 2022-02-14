@@ -25,16 +25,17 @@ namespace catapult { namespace plugins {
 				const auto commonDataSize = sizeof(transaction.DriveKey)
 											+ sizeof(transaction.DataModificationId)
 											+ sizeof(transaction.FileStructureCdi)
-											+ sizeof(transaction.FileStructureSize)
-											+ sizeof(transaction.MetaFilesSize)
-											+ sizeof(transaction.UsedDriveSize);
-				auto* pCommonData = sub.mempool().malloc<uint8_t>(commonDataSize);
+											+ sizeof(transaction.FileStructureSizeBytes)
+											+ sizeof(transaction.MetaFilesSizeBytes)
+											+ sizeof(transaction.UsedDriveSizeBytes);
+				auto* const pCommonDataBegin = sub.mempool().malloc<uint8_t>(commonDataSize);
+				auto* pCommonData = pCommonDataBegin;
 				utils::WriteToByteArray(pCommonData, transaction.DriveKey);
 				utils::WriteToByteArray(pCommonData, transaction.DataModificationId);
 				utils::WriteToByteArray(pCommonData, transaction.FileStructureCdi);
-				utils::WriteToByteArray(pCommonData, transaction.FileStructureSize);
-				utils::WriteToByteArray(pCommonData, transaction.MetaFilesSize);
-				utils::WriteToByteArray(pCommonData, transaction.UsedDriveSize);
+				utils::WriteToByteArray(pCommonData, transaction.FileStructureSizeBytes);
+				utils::WriteToByteArray(pCommonData, transaction.MetaFilesSizeBytes);
+				utils::WriteToByteArray(pCommonData, transaction.UsedDriveSizeBytes);
 
 				sub.notify(OpinionNotification<1>(
 						commonDataSize,
@@ -42,7 +43,7 @@ namespace catapult { namespace plugins {
 						transaction.OverlappingKeysCount,
 						transaction.JudgedKeysCount,
 						sizeof(uint64_t),
-						pCommonData,
+						pCommonDataBegin,
 						transaction.PublicKeysPtr(),
 						transaction.SignaturesPtr(),
 						transaction.PresentOpinionsPtr(),
@@ -54,17 +55,16 @@ namespace catapult { namespace plugins {
 				sub.notify(DataModificationApprovalRefundNotification<1>(
 						transaction.DriveKey,
 						transaction.DataModificationId,
-						transaction.UsedDriveSize,
-						transaction.MetaFilesSize
-				));
+						transaction.UsedDriveSizeBytes,
+						transaction.MetaFilesSizeBytes));
 
 				sub.notify(DataModificationApprovalNotification<1>(
 						transaction.DriveKey,
 						transaction.DataModificationId,
 						transaction.FileStructureCdi,
-						transaction.FileStructureSize,
-						transaction.MetaFilesSize,
-						transaction.UsedDriveSize,
+						transaction.FileStructureSizeBytes,
+						transaction.MetaFilesSizeBytes,
+						transaction.UsedDriveSizeBytes,
 						transaction.JudgingKeysCount,
 						transaction.OverlappingKeysCount,
 						transaction.JudgedKeysCount,

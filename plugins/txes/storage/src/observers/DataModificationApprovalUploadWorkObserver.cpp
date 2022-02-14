@@ -38,9 +38,7 @@ namespace catapult { namespace observers {
 	  	const auto& driveOwnerPublicKey = driveEntry.owner();
 		for (auto i = notification.JudgingKeysCount; i < totalKeysCount; ++i) {
 			const auto& key = notification.PublicKeysPtr[i];
-			const auto& initialSize = (key != driveOwnerPublicKey) ?
-					driveEntry.cumulativeUploadSizes()[key] :
-					driveEntry.ownerCumulativeUploadSize();
+			const auto& initialSize = (key != driveOwnerPublicKey) ? driveEntry.cumulativeUploadSizesBytes()[key] : driveEntry.ownerCumulativeUploadSizeBytes();
 			initialCumulativeUploadSizes.push_back(initialSize);
 		}
 	  	std::vector<uint64_t> uploadSizesIncrements(totalJudgedKeysCount);
@@ -64,11 +62,11 @@ namespace catapult { namespace observers {
 	  	for (auto i = 0; i < totalJudgedKeysCount; ++i, ++pKey) {
 			auto recipientIter = accountStateCache.find(*pKey);
 			auto& recipientState = recipientIter.get();
-			const auto transferAmount = Amount(uploadSizesIncrements.at(i));
+			const auto transferAmount = Amount(utils::FileSize::FromBytes(uploadSizesIncrements.at(i)).megabytes());
 			senderState.Balances.debit(streamingMosaicId, transferAmount, context.Height);
 			recipientState.Balances.credit(currencyMosaicId, transferAmount, context.Height);
 			if (*pKey != driveOwnerPublicKey)
-				driveEntry.cumulativeUploadSizes().at(*pKey) += uploadSizesIncrements.at(i);
+				driveEntry.cumulativeUploadSizesBytes().at(*pKey) += uploadSizesIncrements.at(i);
 			else
 				driveEntry.increaseOwnerCumulativeUploadSize(uploadSizesIncrements.at(i));
 		}

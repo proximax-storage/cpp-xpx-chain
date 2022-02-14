@@ -25,8 +25,7 @@ namespace catapult { namespace plugins {
 					sub.notify(DownloadPaymentNotification<1>(
 							transaction.Signer,
 							transaction.DownloadChannelId,
-							transaction.DownloadSize
-					));
+							transaction.DownloadSizeMegabytes));
 
 					const auto downloadChannelKey = Key(transaction.DownloadChannelId.array());
 					const auto downloadChannelAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(downloadChannelKey, config.NetworkIdentifier));
@@ -35,7 +34,7 @@ namespace catapult { namespace plugins {
 
 					sub.notify(BalanceTransferNotification<1>(
 							transaction.Signer, downloadChannelAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
-					const auto pDownloadPayment = sub.mempool().malloc(model::DownloadPayment(transaction.DownloadChannelId, transaction.DownloadSize));
+					const auto pDownloadPayment = sub.mempool().malloc(model::DownloadPayment(transaction.DownloadChannelId, transaction.DownloadSizeMegabytes));
 					utils::SwapMosaics(
 							transaction.Signer,
 							downloadChannelKey,

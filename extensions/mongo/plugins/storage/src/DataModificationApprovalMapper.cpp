@@ -18,9 +18,9 @@ namespace catapult { namespace mongo { namespace plugins {
 		builder << "driveKey" << ToBinary(transaction.DriveKey);
 		builder << "dataModificationId" << ToBinary(transaction.DataModificationId);
 		builder << "FileStructureCdi" << ToBinary(transaction.FileStructureCdi);
-		builder << "fileStructureSize" << static_cast<int64_t>(transaction.FileStructureSize);
-		builder << "metaFilesSize" << static_cast<int64_t>(transaction.MetaFilesSize);
-		builder << "usedDriveSize" << static_cast<int64_t>(transaction.UsedDriveSize);
+		builder << "fileStructureSize" << static_cast<int64_t>(transaction.FileStructureSizeBytes);
+		builder << "metaFilesSizeBytes" << static_cast<int64_t>(transaction.MetaFilesSizeBytes);
+		builder << "usedDriveSize" << static_cast<int64_t>(transaction.UsedDriveSizeBytes);
 
 		// Streaming PublicKeys
 		auto publicKeysArray = builder << "publicKeys" << bson_stream::open_array;

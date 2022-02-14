@@ -25,8 +25,8 @@ namespace catapult { namespace state {
 					modification.Owner,
 					driveKey,
 					modification.DownloadDataCdi,
-					modification.ExpectedUploadSize,
-					modification.ActualUploadSize});
+					modification.ExpectedUploadSizeMegabytes,
+					modification.ActualUploadSizeMegabytes });
 
             return Drive{
 				driveEntry.key(),
@@ -55,6 +55,10 @@ namespace catapult { namespace state {
 		}
     }
 
+    Height StorageStateImpl::getChainHeight() {
+    	return m_pCache->height();
+    }
+
     bool StorageStateImpl::isReplicatorRegistered(const Key& key) {
 		auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
 		return pReplicatorCacheView->contains(key);
@@ -76,6 +80,21 @@ namespace catapult { namespace state {
         return driveEntry.replicators().find(key) != driveEntry.replicators().end();
     }
 
+    std::vector<Key> StorageStateImpl::getReplicatorDriveKeys(const Key& replicatorKey) {
+    	auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
+    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+
+    	auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
+    	const auto& replicatorEntry = replicatorIter.get();
+
+    	std::vector<Key> drives;
+    	drives.reserve(replicatorEntry.drives().size());
+    	for (const auto& [key, _]: replicatorEntry.drives())
+    		drives.emplace_back(key);
+
+    	return drives;
+	}
+
     std::vector<Drive> StorageStateImpl::getReplicatorDrives(const Key& replicatorKey) {
         auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
         auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
@@ -95,6 +114,32 @@ namespace catapult { namespace state {
         auto drive = GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
         return {drive.Replicators.begin(), drive.Replicators.end()};
     }
+
+    std::vector<Key> StorageStateImpl::getDonatorShard(const Key& driveKey, const Key& replicatorKey) {
+    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+    	auto driveIter = pDriveCacheView->find(driveKey);
+    	const auto& driveEntry = driveIter.get();
+    	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
+    	return {shard.first.begin(), shard.first.end()};
+	}
+
+	std::vector<Key> StorageStateImpl::getRecipientShard(const Key& driveKey, const Key& replicatorKey) {
+		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+		auto driveIter = pDriveCacheView->find(driveKey);
+		const auto& driveEntry = driveIter.get();
+
+		std::vector<Key> donatorShard;
+
+		for (const auto& [key, shard]: driveEntry.dataModificationShards()){
+			const auto& actualShard = shard.first;
+			if (actualShard.find(replicatorKey) != actualShard.end())
+			{
+				donatorShard.push_back(key);
+			}
+		}
+
+		return donatorShard;
+	}
 
 	std::unique_ptr<ApprovedDataModification> StorageStateImpl::getLastApprovedDataModification(const Key& driveKey) {
         auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
@@ -123,18 +168,18 @@ namespace catapult { namespace state {
 			driveEntry.owner(),
 			driveEntry.key(),
 			completedModificationsIter->DownloadDataCdi,
-			completedModificationsIter->ExpectedUploadSize,
-			completedModificationsIter->ActualUploadSize,
+			completedModificationsIter->ExpectedUploadSizeMegabytes,
+			completedModificationsIter->ActualUploadSizeMegabytes,
 			signers,
-			driveEntry.usedSize()});
+										   driveEntry.usedSizeBytes()});
     }
 
-    uint64_t StorageStateImpl::getDownloadWork(const Key& replicatorKey, const Key& driveKey) {
+    uint64_t StorageStateImpl::getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) {
         auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
         auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
         const auto& replicatorEntry = replicatorIter.get();
 
-        return replicatorEntry.drives().find(driveKey)->second.LastCompletedCumulativeDownloadWork;
+        return replicatorEntry.drives().find(driveKey)->second.LastCompletedCumulativeDownloadWorkBytes;
     }
 
     bool StorageStateImpl::downloadChannelExist(const Hash256& id) {
@@ -155,7 +200,6 @@ namespace catapult { namespace state {
 			auto channelIter = pDownloadChannelCacheView->find(id);
 			const auto& channelEntry = channelIter.get();
             auto consumers = channelEntry.listOfPublicKeys();
-            consumers.emplace_back(channelEntry.consumer());
             channels.emplace_back(DownloadChannel{
 				id,
 				channelEntry.downloadSize(),
@@ -195,35 +239,5 @@ namespace catapult { namespace state {
 	std::unique_ptr<DriveVerification> StorageStateImpl::getActiveVerification(const Key& driveKey) {
 		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
 		return GetActiveVerification(driveKey, *pDriveCacheView);
-	}
-
-	std::vector<DriveVerification> StorageStateImpl::getActiveVerifications(const Key& replicatorKey) {
-		auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-
-		auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
-		const auto& replicatorEntry = replicatorIter.get();
-
-		std::vector<DriveVerification> verifications;
-		verifications.reserve(replicatorEntry.drives().size());
-		for (const auto& pair: replicatorEntry.drives()) {
-			auto pVerification = GetActiveVerification(pair.first, *pDriveCacheView);
-			if (!!pVerification) {
-				for (const auto& shard : pVerification->Shards) {
-					bool found = false;
-					for (const auto &key: shard) {
-						if (key == replicatorKey) {
-							found = true;
-							verifications.emplace_back(*pVerification);
-							break;
-						}
-					}
-					if (found)
-						break;
-				}
-			}
-		}
-
-		return verifications;
 	}
 }}

@@ -84,9 +84,9 @@ namespace catapult { namespace builders {
         pTransaction->DriveKey = m_driveKey;
         pTransaction->DataModificationId = m_dataModificationId;
         pTransaction->FileStructureCdi = m_fileStructureCdi;
-        pTransaction->FileStructureSize = m_fileStructureSize;
-        pTransaction->MetaFilesSize = m_metaFilesSize;
-        pTransaction->UsedDriveSize = m_usedDriveSize;
+        pTransaction->FileStructureSizeBytes = m_fileStructureSize;
+        pTransaction->MetaFilesSizeBytes = m_metaFilesSize;
+        pTransaction->UsedDriveSizeBytes = m_usedDriveSize;
         pTransaction->JudgingKeysCount = m_judgingKeysCount;
         pTransaction->OverlappingKeysCount = m_overlappingKeysCount;
         pTransaction->JudgedKeysCount = m_judgedKeysCount;

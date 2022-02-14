@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 				const Key& owner = test::GenerateRandomByteArray<Key>()) {
 			auto entry = test::CreateBcDriveEntry(driveKey, owner);
 			entry.setSize(Drive_Size);
-			entry.setUsedSize(Drive_Used_Size);
+			entry.setUsedSizeBytes(Drive_Used_Size);
 			return entry;
 		}
 
@@ -55,7 +55,7 @@ namespace catapult { namespace validators {
                 driveCacheDelta.insert(driveEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(activeDataModification.front().Id, driveKey, activeDataModification.front().Owner, activeDataModification.front().DownloadDataCdi, activeDataModification.front().ActualUploadSize);
+            Notification notification(activeDataModification.front().Id, driveKey, activeDataModification.front().Owner, activeDataModification.front().DownloadDataCdi, activeDataModification.front().ActualUploadSizeMegabytes);
             auto pValidator = CreateDataModificationValidator();
             
             // Act:

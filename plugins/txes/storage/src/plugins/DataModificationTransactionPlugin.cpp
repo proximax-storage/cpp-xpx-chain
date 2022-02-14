@@ -30,7 +30,7 @@ namespace catapult { namespace plugins {
 							transaction.DriveKey,
 							transaction.Signer,
 							transaction.DownloadDataCdi,
-							transaction.UploadSize));
+							transaction.UploadSizeMegabytes));
 
 					const auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.NetworkIdentifier));
 					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
@@ -38,7 +38,7 @@ namespace catapult { namespace plugins {
 
 					sub.notify(BalanceTransferNotification<1>(
 							transaction.Signer, driveAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
-					const auto pStreamingWork = sub.mempool().malloc(model::StreamingWork(transaction.DriveKey, transaction.UploadSize));
+					const auto pStreamingWork = sub.mempool().malloc(model::StreamingWork(transaction.DriveKey, transaction.UploadSizeMegabytes));
 					utils::SwapMosaics(
 							transaction.Signer,
 							transaction.DriveKey,

@@ -32,7 +32,7 @@ namespace catapult { namespace plugins {
 							transactionHash,
 							transaction.DriveKey,
 							transaction.Signer,
-							transaction.ExpectedUploadSize,
+							transaction.ExpectedUploadSizeMegabytes,
 							folderName
 					));
 					sub.notify(StreamStartFolderNameNotification<1>(
@@ -45,7 +45,7 @@ namespace catapult { namespace plugins {
 
 					sub.notify(BalanceTransferNotification<1>(
 							transaction.Signer, driveAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
-					const auto pStreamingWork = sub.mempool().malloc(model::StreamingWork(transaction.DriveKey, transaction.ExpectedUploadSize));
+					const auto pStreamingWork = sub.mempool().malloc(model::StreamingWork(transaction.DriveKey, transaction.ExpectedUploadSizeMegabytes));
 					utils::SwapMosaics(
 							transaction.Signer,
 							transaction.DriveKey,

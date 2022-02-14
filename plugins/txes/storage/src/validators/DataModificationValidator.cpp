@@ -15,7 +15,7 @@ namespace catapult { namespace validators {
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
 	  	// Check if modification size does not exceed maxModificationSize
-	  	if (utils::FileSize::FromMegabytes(notification.UploadSize) > pluginConfig.MaxModificationSize)
+	  	if (utils::FileSize::FromMegabytes(notification.UploadSizeMegabytes) > pluginConfig.MaxModificationSize)
 	  		return Failure_Storage_Upload_Size_Excessive;
 
 	  	auto driveIter = driveCache.find(notification.DriveKey);
@@ -24,7 +24,7 @@ namespace catapult { namespace validators {
 			return Failure_Storage_Drive_Not_Found;
 
 	  	// Check if modification size does not exceed total drive size
-	  	if (notification.UploadSize > pDriveEntry->size())
+	  	if (notification.UploadSizeMegabytes > pDriveEntry->size())
 		  	return Failure_Storage_Drive_Size_Insufficient;
 
 		const auto& owner = pDriveEntry->owner();

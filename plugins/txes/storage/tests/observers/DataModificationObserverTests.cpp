@@ -55,7 +55,7 @@ namespace catapult { namespace observers {
                 values.Drive_Key, 
                 values.Active_Data_Modification.begin()->Owner, 
                 values.Active_Data_Modification.begin()->DownloadDataCdi, 
-                values.Active_Data_Modification.begin()->ExpectedUploadSize);
+                values.Active_Data_Modification.begin()->ExpectedUploadSizeMegabytes);
             auto pObserver = CreateDataModificationObserver();
         	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 

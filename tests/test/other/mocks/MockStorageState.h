@@ -47,7 +47,7 @@ namespace catapult { namespace mocks {
             return nullptr;
         }
 
-        uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) override {
+        uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) override {
             return 0;
         }
 
@@ -70,7 +70,15 @@ namespace catapult { namespace mocks {
 		std::vector<state::DriveVerification> getActiveVerifications(const Key& replicatorKey) {
 			return {};
 		}
-    };
+
+		std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) override {
+			return std::vector<Key>();
+		}
+
+		std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) override {
+			return std::vector<Key>();
+		}
+	};
 
 #pragma pack(pop)
 }}

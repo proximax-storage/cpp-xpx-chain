@@ -75,9 +75,9 @@ namespace catapult { namespace state {
 			pData += Key_Size;
 			EXPECT_EQ_MEMORY(active.DownloadDataCdi.data(), pData, Hash256_Size);
 			pData += Hash256_Size;
-			EXPECT_EQ(active.ExpectedUploadSize, *reinterpret_cast<const uint64_t*>(pData));
+			EXPECT_EQ(active.ExpectedUploadSizeMegabytes, *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
-			EXPECT_EQ(active.ActualUploadSize, *reinterpret_cast<const uint64_t*>(pData));
+			EXPECT_EQ(active.ActualUploadSizeMegabytes, *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
 			auto folderNameSize = active.FolderName.size();
 			EXPECT_EQ(folderNameSize, *reinterpret_cast<const uint16_t*>(pData));
@@ -157,13 +157,13 @@ namespace catapult { namespace state {
 			pData += Hash256_Size;
             EXPECT_EQ(entry.size(), *reinterpret_cast<const uint64_t*>(pData));
             pData += sizeof(uint64_t);
-			EXPECT_EQ(entry.usedSize(), *reinterpret_cast<const uint64_t*>(pData));
+			EXPECT_EQ(entry.usedSizeBytes(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
-			EXPECT_EQ(entry.metaFilesSize(), *reinterpret_cast<const uint64_t*>(pData));
+			EXPECT_EQ(entry.metaFilesSizeBytes(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
             EXPECT_EQ(entry.replicatorCount(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
-			EXPECT_EQ(entry.ownerCumulativeUploadSize(), *reinterpret_cast<const uint64_t*>(pData));
+			EXPECT_EQ(entry.ownerCumulativeUploadSizeBytes(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
 
             AssertActiveDataModifications(entry.activeDataModifications(), pData);
@@ -232,8 +232,8 @@ namespace catapult { namespace state {
 			CopyToVector(data, modification.Id.data(), Hash256_Size);
 			CopyToVector(data, modification.Owner.data(), Key_Size);
 			CopyToVector(data, modification.DownloadDataCdi.data(), Hash256_Size);
-			CopyToVector(data, (const uint8_t *) &modification.ExpectedUploadSize, sizeof(uint64_t));
-			CopyToVector(data, (const uint8_t *) &modification.ActualUploadSize, sizeof(uint64_t));
+			CopyToVector(data, (const uint8_t *) &modification.ExpectedUploadSizeMegabytes, sizeof(uint64_t));
+			CopyToVector(data, (const uint8_t *) &modification.ActualUploadSizeMegabytes, sizeof(uint64_t));
 			auto folderNameSize = (uint16_t) modification.FolderName.size();
 			CopyToVector(data, (const uint8_t *) &folderNameSize, sizeof(folderNameSize));
 			CopyToVector(data, (const uint8_t *) &modification.ReadyForApproval, sizeof(bool));
@@ -296,10 +296,10 @@ namespace catapult { namespace state {
 			CopyToVector(data, entry.owner().data(), Key_Size);
 			CopyToVector(data, entry.rootHash().data(), Hash256_Size);
 			CopyToVector(data, (const uint8_t*) &entry.size(), sizeof(uint64_t));
-			CopyToVector(data, (const uint8_t*) &entry.usedSize(), sizeof(uint64_t));
-			CopyToVector(data, (const uint8_t*) &entry.metaFilesSize(), sizeof(uint64_t));
+			CopyToVector(data, (const uint8_t*) &entry.usedSizeBytes(), sizeof(uint64_t));
+			CopyToVector(data, (const uint8_t*) &entry.metaFilesSizeBytes(), sizeof(uint64_t));
 			CopyToVector(data, (const uint8_t*) &entry.replicatorCount(), sizeof(uint16_t));
-			CopyToVector(data, (const uint8_t*) &entry.ownerCumulativeUploadSize(), sizeof(uint64_t));
+			CopyToVector(data, (const uint8_t*) &entry.ownerCumulativeUploadSizeBytes(), sizeof(uint64_t));
 
             SaveActiveDataModifications(entry.activeDataModifications(), data);
             SaveCompletedDataModifications(entry.completedDataModifications(), data);

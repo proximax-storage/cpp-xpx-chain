@@ -35,7 +35,7 @@ namespace catapult { namespace validators {
                 cache.commit(Current_Height);
             }
 			const auto& modification = activeDataModification.front();
-            Notification notification(driveKey, modification.Id, modification.Owner, modification.ActualUploadSize, modification.DownloadDataCdi);
+            Notification notification(driveKey, modification.Id, modification.Owner, modification.ActualUploadSizeMegabytes, modification.DownloadDataCdi);
             auto pValidator = CreateStreamFinishValidator();
             
             // Act:

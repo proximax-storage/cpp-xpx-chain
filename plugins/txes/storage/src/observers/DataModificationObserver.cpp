@@ -21,8 +21,7 @@ namespace catapult { namespace observers {
 			notification.DataModificationId,
 			notification.Owner,
 			notification.DownloadDataCdi,
-			notification.UploadSize
-		));
+			notification.UploadSizeMegabytes));
 
 		// Removing replicators that are queued for offboarding
 	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
