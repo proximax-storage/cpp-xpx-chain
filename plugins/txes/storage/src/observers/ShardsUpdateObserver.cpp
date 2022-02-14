@@ -70,22 +70,24 @@ namespace catapult { namespace observers {
 					if (!cumulativePayments.count(key))
 						cumulativePayments.emplace(key, Amount(0));
 				// Offboarded replicators' cumulative payments remain in cumulativePayments
+				downloadEntry.shardReplicators() = replicators;
 				pair.second = replicators;
 			}
 		} else {
-			std::vector<Key> shardKeys(replicators.begin(), replicators.end());
+			std::vector<Key> sampleSource(replicators.begin(), replicators.end());
 			for (auto& pair : driveEntry.downloadShards()) {
 				auto downloadIter = downloadCache.find(pair.first);
 				auto& downloadEntry = downloadIter.get();
 				auto& cumulativePayments = downloadEntry.cumulativePayments();
 				const Key downloadChannelKey = Key(pair.first.array());
 				const auto comparator = [&downloadChannelKey](const Key& a, const Key& b) { return (a ^ downloadChannelKey) < (b ^ downloadChannelKey); };
-				std::sort(shardKeys.begin(), shardKeys.end(), comparator);
-				auto keyIter = shardKeys.begin();
+				std::sort(sampleSource.begin(), sampleSource.end(), comparator);
+				auto keyIter = sampleSource.begin();
 				for (auto i = 0u; i < pluginConfig.ShardSize; ++i, ++keyIter)
 					if (!cumulativePayments.count(*keyIter))
 						cumulativePayments.emplace(*keyIter, Amount(0));
-				pair.second = std::set<Key>(shardKeys.begin(), keyIter);	// keyIter now points to the element past the (ShardSize)th
+				downloadEntry.shardReplicators() = std::set<Key>(sampleSource.begin(), keyIter);	// keyIter now points to the element past the (ShardSize)th
+				pair.second = std::set<Key>(sampleSource.begin(), keyIter);
 			}
 		}
 	}));

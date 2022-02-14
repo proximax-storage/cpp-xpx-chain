@@ -23,7 +23,7 @@ namespace catapult { namespace observers {
 			replicatorEntry.setCapacity(notification.Capacity);
 
 		  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-		  	auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
+		  	auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 		  	auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		  	auto replicatorStateIter = accountStateCache.find(notification.PublicKey);
 		  	auto& replicatorState = replicatorStateIter.get();
@@ -69,9 +69,10 @@ namespace catapult { namespace observers {
 						// Just add the onboarding replicator to every shard.
 						for (auto& pair : driveEntry.downloadShards()) {
 							pair.second.insert(notification.PublicKey);
-							auto downloadChannelIter = downloadChannelCache.find(pair.first);
-							auto& downloadChannelEntry = downloadChannelIter.get();
-							downloadChannelEntry.cumulativePayments().emplace(notification.PublicKey, Amount(0));
+							auto downloadIter = downloadCache.find(pair.first);
+							auto& downloadEntry = downloadIter.get();
+							downloadEntry.shardReplicators().insert(notification.PublicKey);
+							downloadEntry.cumulativePayments().emplace(notification.PublicKey, Amount(0));
 						}
 					} else {
 						for (auto& pair : driveEntry.downloadShards()) {
@@ -79,10 +80,10 @@ namespace catapult { namespace observers {
 							// - close enough to the download channel id (XOR-wise), replacing the most distant key of that shard, or
 							// - not close enough, leaving the download shard unchanged
 							const Key downloadChannelKey = Key(pair.first.array());
-							auto& shardKeys = pair.second;
-							auto mostDistantKeyIter = shardKeys.begin();
+							auto& driveShardKeys = pair.second;
+							auto mostDistantKeyIter = driveShardKeys.begin();
 							auto greatestDistance = *mostDistantKeyIter ^ downloadChannelKey;
-							for (auto replicatorKeyIter = ++shardKeys.begin(); replicatorKeyIter != shardKeys.end(); ++replicatorKeyIter) {
+							for (auto replicatorKeyIter = ++driveShardKeys.begin(); replicatorKeyIter != driveShardKeys.end(); ++replicatorKeyIter) {
 								const auto distance = *replicatorKeyIter ^ downloadChannelKey;
 								if (distance > greatestDistance) {
 									greatestDistance = distance;
@@ -90,11 +91,13 @@ namespace catapult { namespace observers {
 								}
 							}
 							if ((notification.PublicKey ^ downloadChannelKey) < greatestDistance) {
-								shardKeys.erase(mostDistantKeyIter);
-								shardKeys.insert(notification.PublicKey);
-								auto downloadChannelIter = downloadChannelCache.find(pair.first);
-								auto& downloadChannelEntry = downloadChannelIter.get();
-								downloadChannelEntry.cumulativePayments().emplace(notification.PublicKey, Amount(0));
+								driveShardKeys.erase(mostDistantKeyIter);
+								driveShardKeys.insert(notification.PublicKey);
+								auto downloadIter = downloadCache.find(pair.first);
+								auto& downloadEntry = downloadIter.get();
+								downloadEntry.shardReplicators().erase(*mostDistantKeyIter);
+								downloadEntry.shardReplicators().insert(notification.PublicKey);
+								downloadEntry.cumulativePayments().emplace(notification.PublicKey, Amount(0));
 								// Cumulative payments of the removed replicator are kept in download channel entry
 							}
 						}

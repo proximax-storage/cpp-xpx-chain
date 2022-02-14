@@ -25,7 +25,7 @@ namespace catapult { namespace validators {
 			return Failure_Storage_Download_Channel_Not_Found;
 
 	  	// Check if there are enough cosigners
-	  	if (totalJudgingKeysCount < pDownloadChannelEntry->cumulativePayments().size()*2 / 3 + 1)
+	  	if (totalJudgingKeysCount < pDownloadChannelEntry->shardReplicators().size()*2 / 3 + 1)
 		  	return Failure_Storage_Signature_Count_Insufficient;
 
 	  	// Check if transaction sequence number is exactly one more than the number of completed download approval transactions
@@ -44,10 +44,10 @@ namespace catapult { namespace validators {
 			if (!presentOpinions[i*totalJudgedKeysCount + i])
 				return Failure_Storage_No_Opinion_Provided_On_Self;
 
-	  	// Check if all judging keys belong to the download channel's shard (i.e. they exist in cumulativePayments)
-	  	const auto& cumulativePayments = pDownloadChannelEntry->cumulativePayments();
+	  	// Check if all judging keys belong to the download channel's shard
+	  	const auto& shardReplicators = pDownloadChannelEntry->shardReplicators();
 	  	for (auto i = 0; i < totalJudgingKeysCount; ++i)
-		  	if (!cumulativePayments.count(notification.PublicKeysPtr[i]))
+		  	if (!shardReplicators.count(notification.PublicKeysPtr[i]))
 			  	return Failure_Storage_Opinion_Invalid_Key;
 
 		return ValidationResult::Success;

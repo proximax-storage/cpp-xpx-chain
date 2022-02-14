@@ -34,22 +34,24 @@ namespace catapult { namespace observers {
 	  	auto& driveEntry = driveIter.get();
 	  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 		const auto& replicators = driveEntry.replicators();
+	  	auto& shardReplicators = downloadEntry.shardReplicators();
 	  	auto& cumulativePayments = downloadEntry.cumulativePayments();
 		if (replicators.size() <= pluginConfig.ShardSize) {
 			// When the drive has no more than ShardSize replicators, add them all
 			for (const auto& key : replicators) {
+				shardReplicators.insert(key);
 				cumulativePayments.emplace(key, Amount(0));
 				driveEntry.downloadShards()[notification.Id].insert(key);
 			}
 		} else {
 			// Otherwise, add ShardSize closest replicators in terms of XOR distance to the download channel id.
 			const Key downloadChannelKey = Key(notification.Id.array());
+			std::vector<Key> sampleSource(replicators.begin(), replicators.end());
 			const auto comparator = [&downloadChannelKey](const Key& a, const Key& b) { return (a ^ downloadChannelKey) < (b ^ downloadChannelKey); };
-			std::set<Key, decltype(comparator)> shardKeys(comparator);
-			for (const auto& key : replicators)
-				shardKeys.insert(key);
-			auto keyIter = shardKeys.begin();
+			std::sort(sampleSource.begin(), sampleSource.end(), comparator);
+			auto keyIter = sampleSource.begin();
 			for (auto i = 0u; i < pluginConfig.ShardSize; ++i, ++keyIter) {
+				shardReplicators.insert(*keyIter);
 				cumulativePayments.emplace(*keyIter, Amount(0));
 				driveEntry.downloadShards()[notification.Id].insert(*keyIter);
 			}
