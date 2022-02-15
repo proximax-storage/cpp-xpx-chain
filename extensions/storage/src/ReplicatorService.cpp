@@ -204,19 +204,18 @@ namespace catapult { namespace storage {
 				addDownloadChannel(
 					channelId,
 					pChannel->DriveKey,
-					pChannel->DownloadSizeMegabytes + downloadSize,
+					pChannel->DownloadSizeMegabytes,
 					pChannel->Consumers,
 					pChannel->Replicators);
 			}
         }
 
-        void closeDownloadChannel(const Hash256& channelId) {
-            CATAPULT_LOG(debug) << "closing download channel " << channelId.data();
+        void initiateDownloadApproval(const Hash256& channelId, const Hash256& eventHash) {
+        	CATAPULT_LOG(debug) << "initiate download approval" << channelId.data();
 
             auto pChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), channelId);
 			if (!!pChannel) {
-				m_pReplicator->asyncInitiateDownloadApprovalTransactionInfo(m_storageState.lastBlockElementSupplier()()->EntityHash.array(), channelId.array());
-				m_pReplicator->asyncRemoveDownloadChannelInfo(pChannel->DriveKey.array(), channelId.array());
+				m_pReplicator->asyncInitiateDownloadApprovalTransactionInfo(eventHash, channelId.array());
 			}
         }
 
@@ -290,6 +289,10 @@ namespace catapult { namespace storage {
 			return m_storageState.isReplicatorAssignedToDrive(m_keyPair.publicKey(), driveKey);
         }
 
+        bool isAssignedToChannel(const Hash256& channelId) {
+			return m_storageState.isReplicatorAssignedToChannel(m_keyPair.publicKey(), channelId);
+		}
+
         void closeDrive(const Key& driveKey, const Hash256& transactionHash) {
 			CATAPULT_LOG(debug) << "closing drive " << driveKey;
 
@@ -304,6 +307,13 @@ namespace catapult { namespace storage {
 				return it->second;
 			}
 			return {};
+		}
+
+		std::optional<Height> channelAddedAt(const Hash256& channelId) {
+        	if (auto it = m_alreadyAddedChannels.find(channelId); it != m_alreadyAddedChannels.end()) {
+        		return it->second;
+        	}
+        	return {};
 		}
 
 		void exploreNewDrives() {
@@ -346,11 +356,11 @@ namespace catapult { namespace storage {
 			}
         }
 
-        void updateReplicators(const Key& driveKey) {
-			CATAPULT_LOG(debug) << "update replicators" << driveKey;
+        void updateDriveReplicators(const Key& driveKey) {
+			CATAPULT_LOG(debug) << "update drive replicators" << driveKey;
 
         	auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(driveKey));
-			m_pReplicator->asyncSetReplicators(driveKey.array(), replicators);
+			m_pReplicator->asyncSetDriveReplicators(driveKey.array(), replicators);
         }
 
         void updateShardDonator(const Key& driveKey) {
@@ -367,18 +377,49 @@ namespace catapult { namespace storage {
 			m_pReplicator->asyncSetShardRecipient(driveKey.array(), recipientShard);
 		}
 
+		void updateDownloadChannelReplicators(const Hash256& channelId) {
+        	CATAPULT_LOG(debug) << "update channel replicators" << channelId;
+
+        	auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(channelId));
+        	m_pReplicator->asyncSetDownloadChannelShard(channelId.array(), replicators);
+        }
+
+		void updateDriveDownloadChannels(const Key& driveKey) {
+        	CATAPULT_LOG(debug) << "update drive channels replicators" << driveKey;
+
+			auto driveChannels = m_storageState.getDriveChannels(driveKey);
+
+			for (const auto& channel: driveChannels) {
+				updateDownloadChannelReplicators(channel);
+			}
+		}
+
 		void anotherReplicatorOnboarded(const Key& replicatorKey)
 		{
 			auto drives = m_storageState.getReplicatorDriveKeys(replicatorKey);
 			for (const auto& driveKey: drives) {
-				if (isAssignedToDrive(driveKey)) {
-					updateReplicators(driveKey);
+				if (m_alreadyAddedDrives.find(driveKey) != m_alreadyAddedDrives.end()) {
+					updateDriveReplicators(driveKey);
 					updateShardDonator(driveKey);
 					updateShardRecipient(driveKey);
 				}
 			}
 
-			// TODO Update Download Channels
+			auto onboardedReplicatorChannels = m_storageState.getReplicatorChannelIds(replicatorKey);
+			auto myChannels = m_storageState.getReplicatorChannelIds(m_keyPair.publicKey());
+			std::set<Hash256> myChannelsSet = {myChannels.begin(), myChannels.end()};
+			for (const auto& channelId: onboardedReplicatorChannels) {
+				if (myChannelsSet.find(channelId) != myChannelsSet.end())
+				{
+					updateDownloadChannelReplicators(channelId);
+				}
+				else if (m_alreadyAddedChannels.find(channelId) != m_alreadyAddedChannels.end())
+				{
+					// The Replicator has been removed from the Channel with the transaction
+					m_pReplicator->asyncRemoveDownloadChannelInfo(channelId.array());
+					m_alreadyAddedChannels.erase(channelId);
+				}
+			}
 		}
 
 		void dataModificationApprovalPublished(
@@ -407,8 +448,8 @@ namespace catapult { namespace storage {
 			if (!pDownloadChannel)
 				return;
 
-			auto driveClosed = !m_storageState.driveExist(pDownloadChannel->DriveKey);
-            m_pReplicator->asyncDownloadApprovalTransactionHasBeenPublished(approvalTrigger.array(), downloadChannelId.array(), driveClosed);
+			auto channelClosed = !m_storageState.downloadChannelExists(downloadChannelId);
+			m_pReplicator->asyncDownloadApprovalTransactionHasBeenPublished(approvalTrigger.array(), downloadChannelId.array(), channelClosed);
         }
 
         void notifyTransactionStatus(const Hash256& hash, uint32_t status) {
@@ -442,6 +483,7 @@ namespace catapult { namespace storage {
 
 		// The fields are needed to generate correct events
 		std::map<Key, Height> m_alreadyAddedDrives;
+		std::map<Hash256, Height> m_alreadyAddedChannels;
     };
 
     // endregion
@@ -505,14 +547,14 @@ namespace catapult { namespace storage {
             m_pImpl->addDownloadChannel(channelId);
     }
 
-    void ReplicatorService::increaseDownloadChannelSize(const Hash256& channelId, size_t downloadSize) {
+    void ReplicatorService::increaseDownloadChannelSize(const Hash256& channelId) {
         if (m_pImpl)
-            m_pImpl->increaseDownloadChannelSize(channelId, downloadSize);
+            m_pImpl->increaseDownloadChannelSize(channelId);
     }
 
-    void ReplicatorService::closeDownloadChannel(const Hash256& channelId) {
+    void ReplicatorService::initiateDownloadApproval(const Hash256& channelId, const Hash256& eventHash) {
         if (m_pImpl)
-            m_pImpl->closeDownloadChannel(channelId);
+			m_pImpl->initiateDownloadApproval(channelId, eventHash);
     }
 
     void ReplicatorService::addDrive(const Key& driveKey) {
@@ -543,6 +585,12 @@ namespace catapult { namespace storage {
 		return {};
 	}
 
+	std::optional<Height> ReplicatorService::channelAddedAt(const Hash256& channelId) {
+    	if (m_pImpl)
+    		return m_pImpl->channelAddedAt(channelId);
+    	return {};
+    }
+
 	void ReplicatorService::exploreNewDrives() {
     	if (m_pImpl)
     		return m_pImpl->exploreNewDrives();
@@ -553,9 +601,9 @@ namespace catapult { namespace storage {
         	m_pImpl->processVerifications(blockHash);
     }
 
-    void ReplicatorService::updateReplicators(const Key& driveKey) {
+    void ReplicatorService::updateDriveReplicators(const Key& driveKey) {
 		if (m_pImpl) {
-			m_pImpl->updateReplicators(driveKey);
+			m_pImpl->updateDriveReplicators(driveKey);
 		}
 	}
 
@@ -568,6 +616,12 @@ namespace catapult { namespace storage {
 	void ReplicatorService::updateShardRecipient(const Key& driveKey) {
     	if (m_pImpl) {
     		m_pImpl->updateShardRecipient(driveKey);
+    	}
+	}
+
+	void ReplicatorService::updateDriveDownloadChannels(const Key& driveKey) {
+    	if (m_pImpl) {
+    		m_pImpl->updateDriveDownloadChannels(driveKey);
     	}
 	}
 

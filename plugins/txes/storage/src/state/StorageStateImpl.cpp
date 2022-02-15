@@ -64,7 +64,7 @@ namespace catapult { namespace state {
 		return pReplicatorCacheView->contains(key);
     }
 
-    bool StorageStateImpl::driveExist(const Key& driveKey) {
+    bool StorageStateImpl::driveExists(const Key& driveKey) {
         auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
         return pDriveCacheView->contains(driveKey);
     }
@@ -76,8 +76,21 @@ namespace catapult { namespace state {
     bool StorageStateImpl::isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) {
 		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
 		auto driveIter = pDriveCacheView->find(driveKey);
-		const auto& driveEntry = driveIter.get();
-        return driveEntry.replicators().find(key) != driveEntry.replicators().end();
+		const auto* driveEntry = driveIter.tryGet();
+		if (!driveEntry) {
+			return false;
+		}
+        return driveEntry->replicators().find(key) != driveEntry.replicators().end();
+    }
+
+    bool StorageStateImpl::isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) {
+    	auto pDriveCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
+    	auto driveIter = pDriveCacheView->find(channelId);
+    	const auto* driveEntry = driveIter.tryGet();
+		if (!driveEntry) {
+			return false;
+		}
+    	return driveEntry->replicators().find(key) != driveEntry.replicators().end();
     }
 
     std::vector<Key> StorageStateImpl::getReplicatorDriveKeys(const Key& replicatorKey) {
@@ -109,6 +122,13 @@ namespace catapult { namespace state {
 
         return drives;
     }
+
+    std::vector<Hash256> StorageStateImpl::getDriveChannels(const Key& driveKey) {
+    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+    	auto driveIter = pDriveCacheView->find(driveKey);
+    	const auto& driveEntry = driveIter.get();
+		return driveEntry.downloadShards();
+	}
 
     std::vector<Key> StorageStateImpl::getDriveReplicators(const Key& driveKey) {
         auto drive = GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
@@ -182,7 +202,7 @@ namespace catapult { namespace state {
         return replicatorEntry.drives().find(driveKey)->second.LastCompletedCumulativeDownloadWorkBytes;
     }
 
-    bool StorageStateImpl::downloadChannelExist(const Hash256& id) {
+    bool StorageStateImpl::downloadChannelExists(const Hash256& id) {
         auto pDownloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
         return pDownloadChannelCacheView->contains(id);
     }

@@ -83,12 +83,15 @@ namespace catapult { namespace state {
 
 		virtual bool isReplicatorRegistered(const Key& key) = 0;
 
-		virtual bool driveExist(const Key& driveKey) = 0;
+		virtual bool driveExists(const Key& driveKey) = 0;
 		virtual Drive getDrive(const Key& driveKey) = 0;
 		virtual bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) = 0;
+		virtual bool isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) = 0;
 		virtual std::vector<Key> getReplicatorDriveKeys(const Key& replicatorKey) = 0;
+		virtual std::vector<Hash256> getReplicatorChannelIds(const Key& replicatorKey) = 0;
 		virtual std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) = 0;
 		virtual std::vector<Key> getDriveReplicators(const Key& driveKey) = 0;
+		virtual std::vector<Hash256> getDriveChannels(const Key& driveKey) = 0;
 		virtual std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) = 0;
 		virtual std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) = 0;
 
@@ -96,7 +99,7 @@ namespace catapult { namespace state {
 
 		virtual uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) = 0;
 
-		virtual bool downloadChannelExist(const Hash256& id) = 0;
+		virtual bool downloadChannelExists(const Hash256& id) = 0;
 		virtual std::vector<DownloadChannel> getDownloadChannels(const Key& replicatorKey) = 0;
 		virtual std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) = 0;
 

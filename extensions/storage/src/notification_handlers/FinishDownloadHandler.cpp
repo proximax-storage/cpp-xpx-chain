@@ -16,7 +16,7 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			pReplicatorService->closeDownloadChannel(notification.DownloadChannelId);
+			pReplicatorService->initiateDownloadApproval(notification.DownloadChannelId, notification.eventHash);
 		});
 	}
 }}

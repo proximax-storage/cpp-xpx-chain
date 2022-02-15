@@ -22,12 +22,14 @@ namespace catapult { namespace state {
 
 		bool isReplicatorRegistered(const Key& key) override;
 
-        bool driveExist(const Key& driveKey) override;
+        bool driveExists(const Key& driveKey) override;
         Drive getDrive(const Key& driveKey) override;
         bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) override;
+        bool isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) override;
         std::vector<Key> getReplicatorDriveKeys(const Key& replicatorKey) override;
         std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) override;
         std::vector<Key> getDriveReplicators(const Key& driveKey) override;
+        std::vector<Hash256> getDriveChannels(const Key& driveKey) override;
         std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) override;
         std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) override;
 
@@ -35,7 +37,7 @@ namespace catapult { namespace state {
 
         uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) override;
 
-        bool downloadChannelExist(const Hash256& id) override;
+        bool downloadChannelExists(const Hash256& id) override;
         std::vector<DownloadChannel> getDownloadChannels(const Key& replicatorKey) override;
 		std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) override;
 

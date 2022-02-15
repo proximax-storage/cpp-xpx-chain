@@ -68,6 +68,11 @@ namespace catapult { namespace state {
 			m_downloadApprovalCount = count;
 		}
 
+		/// Sets last download approval initiation timestamp.
+		void setLastDownloadApprovalInitiated(const catapult::Timestamp& timestamp) {
+			m_lastDownloadApprovalInitiated = timestamp;
+		}
+
 		/// Increases number of completed download approval transactions by one.
 		void incrementDownloadApprovalCount() {
 			++m_downloadApprovalCount;
@@ -93,6 +98,16 @@ namespace catapult { namespace state {
 			return m_cumulativePayments;
 		}
 
+		/// Gets last download approval initiation timestamp.
+		const catapult::Timestamp& lastDownloadApprovalInitiated() const {
+			return m_lastDownloadApprovalInitiated;
+		}
+
+		/// Gets last download approval initiation timestamp.
+		catapult::Timestamp& lastDownloadApprovalInitiated() {
+			return m_lastDownloadApprovalInitiated;
+		}
+
 	private:
 		Key m_consumer;
 		Key m_drive;
@@ -100,6 +115,7 @@ namespace catapult { namespace state {
 		uint16_t m_downloadApprovalCount;
 		std::vector<Key> m_listOfPublicKeys;
 		std::map<Key, Amount> m_cumulativePayments;
+		catapult::Timestamp m_lastDownloadApprovalInitiated;
 	};
 
 	// DownloadChannel channel entry.

@@ -23,7 +23,7 @@ namespace catapult { namespace mocks {
             return false;
         }
 
-        bool driveExist(const Key& driveKey) override {
+        bool channelExists(const Key& driveKey) override {
             return false;
         }
 
@@ -51,7 +51,7 @@ namespace catapult { namespace mocks {
             return 0;
         }
 
-        bool downloadChannelExist(const Hash256& id) override {
+        bool downloadChannelExists(const Hash256& id) override {
             return false;
         }
 
@@ -67,15 +67,18 @@ namespace catapult { namespace mocks {
             return nullptr;
         }
 
-		std::vector<state::DriveVerification> getActiveVerifications(const Key& replicatorKey) {
-			return {};
-		}
-
 		std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) override {
 			return std::vector<Key>();
 		}
 
 		std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) override {
+			return std::vector<Key>();
+		}
+
+		Height getChainHeight() override {
+			return catapult::Height();
+		}
+		std::vector<Key> getReplicatorDriveKeys(const Key& replicatorKey) override {
 			return std::vector<Key>();
 		}
 	};

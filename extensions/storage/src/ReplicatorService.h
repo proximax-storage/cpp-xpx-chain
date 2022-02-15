@@ -32,26 +32,30 @@ namespace catapult { namespace storage {
 
         bool isReplicatorRegistered(const Key& key);
 
-        void addDriveModification(const Key& driveKey, const Hash256& downloadDataCdi, const Hash256& modificationId, const Key& owner, uint64_t dataSizeMegabytes);
+		void addDriveModification(const Key& driveKey, const Hash256& downloadDataCdi, const Hash256& modificationId, const Key& owner, uint64_t dataSizeMegabytes);
         void removeDriveModification(const Key& driveKey, const Hash256& dataModificationId);
 
         void addDownloadChannel(const Hash256& channelId);
-        void increaseDownloadChannelSize(const Hash256& channelId, size_t downloadSize);
-        void closeDownloadChannel(const Hash256& channelId);
+        void increaseDownloadChannelSize(const Hash256& channelId);
+        void initiateDownloadApproval(const Hash256& channelId, const Hash256& eventHash);
 
 		void addDrive(const Key& driveKey);
 		void removeDrive(const Key& driveKey);
         bool isAssignedToDrive(const Key& driveKey);
+        bool isAssignedToChannel(const Hash256& channelId);
         void closeDrive(const Key& driveKey, const Hash256& transactionHash);
         std::optional<Height> driveAddedAt(const Key& driveKey);
+        std::optional<Height> channelAddedAt(const Hash256& driveKey);
+
         void exploreNewDrives();
 
         void processVerifications(const Hash256& blockHash);
 
 	public:
-		void updateReplicators(const Key& driveKey);
+		void updateDriveReplicators(const Key& driveKey);
 		void updateShardDonator(const Key& driveKey);
 		void updateShardRecipient(const Key& driveKey);
+		void updateDriveDownloadChannels(const Key& driveKey);
 
     public:
     	void anotherReplicatorOnboarded(const Key& replicatorKey);

@@ -287,14 +287,14 @@ namespace catapult { namespace model {
 				const Hash256& id,
 				const Key& consumer,
 				const Key& drive,
-				uint64_t downloadSize,
+				uint64_t downloadSizeMegabytes,
 				uint16_t listOfPublicKeysSize,
 				const Key* listOfPublicKeysPtr)
 			: Notification(Notification_Type, sizeof(DownloadNotification<1>))
 			, Id(id)
 			, Consumer(consumer)
 			, DriveKey(drive)
-			, DownloadSize(downloadSize)
+			, DownloadSizeMegabytes(downloadSizeMegabytes)
 			, ListOfPublicKeysSize(listOfPublicKeysSize)
 			, ListOfPublicKeysPtr(listOfPublicKeysPtr)
 
@@ -311,7 +311,7 @@ namespace catapult { namespace model {
 		Key DriveKey;
 
 		/// Delta size of download.
-		uint64_t DownloadSize;
+		uint64_t DownloadSizeMegabytes;
 
 		/// Size of the list of public keys
 		uint16_t ListOfPublicKeysSize;
@@ -738,11 +738,11 @@ namespace catapult { namespace model {
 		explicit DownloadPaymentNotification(
 				const Key& signer,
 				const Hash256& downloadChannelId,
-				const uint64_t downloadSize)
+				const uint64_t downloadSizeMegabytes)
 			: Notification(Notification_Type, sizeof(DownloadPaymentNotification<1>))
 			, PublicKey(signer)
 			, DownloadChannelId(downloadChannelId)
-			, DownloadSize(downloadSize)
+			, DownloadSizeMegabytes(downloadSizeMegabytes)
 		{}
 
 	public:
@@ -753,7 +753,7 @@ namespace catapult { namespace model {
 		Hash256 DownloadChannelId;
 
 		/// Download size to add to the prepaid size of the download channel.
-		uint64_t DownloadSize;
+		uint64_t DownloadSizeMegabytes;
 	};
 
 	/// Notification of a storage payment.

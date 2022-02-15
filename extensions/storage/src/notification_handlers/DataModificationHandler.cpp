@@ -22,9 +22,11 @@ namespace catapult { namespace notification_handlers {
 			if (assignedToDrive && driveAddedHeight) {
 				if(driveAddedHeight < context.Height) {
 					// Drive Replicators Can be Changed with this transaction
-					pReplicatorService->updateReplicators(notification.DriveKey);
+					pReplicatorService->updateDriveReplicators(notification.DriveKey);
 					pReplicatorService->updateShardDonator(notification.DriveKey);
 					pReplicatorService->updateShardRecipient(notification.DriveKey);
+
+					pReplicatorService->updateDriveDownloadChannels(notification.DriveKey);
 
 					pReplicatorService->addDriveModification(
 							notification.DriveKey,

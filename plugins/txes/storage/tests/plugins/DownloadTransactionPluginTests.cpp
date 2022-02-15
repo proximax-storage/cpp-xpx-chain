@@ -124,7 +124,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-        EXPECT_EQ(pTransaction->DownloadSizeMegabytes, notification.DownloadSize);
+        EXPECT_EQ(pTransaction->DownloadSizeMegabytes, notification.DownloadSizeMegabytes);
 	}
 
 	// endregion

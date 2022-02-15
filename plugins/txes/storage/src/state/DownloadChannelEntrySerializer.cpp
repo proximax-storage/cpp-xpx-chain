@@ -56,6 +56,7 @@ namespace catapult { namespace state {
 		io::Write(output, downloadEntry.drive());
 		io::Write64(output, downloadEntry.downloadSize());
 		io::Write16(output, downloadEntry.downloadApprovalCount());
+		io::Write64(output, downloadEntry.lastDownloadApprovalInitiated().unwrap());
 
 		SaveListOfPublicKeys(output, downloadEntry.listOfPublicKeys());
 		SaveCumulativePayments(output, downloadEntry.cumulativePayments());
@@ -82,6 +83,7 @@ namespace catapult { namespace state {
 
 		entry.setDownloadSize(io::Read64(input));
 		entry.setDownloadApprovalCount(io::Read16(input));
+		entry.setLastDownloadApprovalInitiated(Timestamp(io::Read64(input)));
 
 		LoadListOfPublicKeys(input, entry.listOfPublicKeys());
 		LoadCumulativePayments(input, entry.cumulativePayments());
