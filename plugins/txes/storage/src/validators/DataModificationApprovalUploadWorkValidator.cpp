@@ -58,7 +58,7 @@ namespace catapult { namespace validators {
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
 				if (presentOpinions[i*totalJudgedKeysCount + j]) {
 					const auto judgedKey = notification.PublicKeysPtr[notification.JudgingKeysCount + j];
-					if (!shardsPair.first.count(judgedKey) && !shardsPair.second.count(judgedKey))
+					if (!shardsPair.first.count(judgedKey) && !shardsPair.second.count(judgedKey) && judgedKey != driveOwnerPublicKey)
 						return Failure_Storage_Opinion_Invalid_Key;
 					const auto increment = *pOpinion++ - initialCumulativeUploadSizes.at(j);
 					if (increment < 0)
@@ -68,8 +68,8 @@ namespace catapult { namespace validators {
 			}
 			const auto replicatorIter = replicatorCache.find(notification.PublicKeysPtr[i]);
 			const auto& pReplicatorEntry = replicatorIter.tryGet();
-			if (pReplicatorEntry->drives().at(notification.DriveKey).LastCompletedCumulativeDownloadWork != totalIncrements)
-				return Failure_Storage_Invalid_Opinions_Sum;
+//			if (pReplicatorEntry->drives().at(notification.DriveKey).LastCompletedCumulativeDownloadWork != totalIncrements)
+//				return Failure_Storage_Invalid_Opinions_Sum;
 		}
 
 	  	// TODO: Check if there are enough mosaics for the transfer?

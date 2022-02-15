@@ -55,6 +55,7 @@ namespace catapult { namespace observers {
 				auto& replicatorEntry = replicatorIter.get();
 				replicatorEntry.drives().emplace(notification.DriveKey, state::DriveInfo{ Hash256(), false, 0, 0 });
 				replicators.emplace(replicatorKey);
+				driveEntry.cumulativeUploadSizes().emplace(replicatorKey, 0);
 
 				// Making mosaic transfers
 				auto replicatorStateIter = accountStateCache.find(replicatorKey);
