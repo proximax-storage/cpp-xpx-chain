@@ -30,12 +30,12 @@ namespace catapult { namespace model {
 
 	/// Binary layout for a lcok fund transaction body.
 	template<typename THeader>
-	struct LockFundTransactionBody : public THeader {
+	struct LockFundTransferTransactionBody : public THeader {
 	private:
-		using TransactionType = LockFundTransactionBody<THeader>;
+		using TransactionType = LockFundTransferTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Lock_Fund, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Lock_Fund_Transfer, 1)
 
 	public:
 
@@ -63,7 +63,7 @@ namespace catapult { namespace model {
 		}
 	};
 
-	DEFINE_EMBEDDABLE_TRANSACTION(LockFund)
+	DEFINE_EMBEDDABLE_TRANSACTION(LockFundTransfer)
 
 #pragma pack(pop)
 }}

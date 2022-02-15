@@ -25,7 +25,7 @@
 namespace catapult { namespace state {
 
 	namespace {
-		void WriteLockFundRecord(io::OutputStream& output, const LockFundRecord& record)
+		void WriteLockFundRecord(io::OutputStream& output, const LockFundRecordMosaicMap& record)
 		{
 			io::Write8(output, utils::checked_cast<size_t, uint8_t>(record.size()));
 			for (const auto& mosaicPair : record) {
@@ -34,7 +34,7 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void LoadLockFundRecord(io::InputStream& input, LockFundRecord& record)
+		void LoadLockFundRecord(io::InputStream& input, LockFundRecordMosaicMap& record)
 		{
 			auto mosaicCount = io::Read8(input);
 			while (mosaicCount--) {
@@ -44,9 +44,9 @@ namespace catapult { namespace state {
 			}
 		}
 
-		LockFundRecord LoadLockFundRecord(io::InputStream& input)
+		LockFundRecordMosaicMap LoadLockFundRecord(io::InputStream& input)
 		{
-			LockFundRecord record;
+			LockFundRecordMosaicMap record;
 			auto mosaicCount = io::Read8(input);
 			while (mosaicCount--) {
 				auto mosaicId = MosaicId{io::Read64(input)};
@@ -67,15 +67,14 @@ namespace catapult { namespace state {
 			io::Write32(output, 1);
 			io::Write(output, lockFundRecordGroup.Identifier);
 			io::Write32(output, lockFundRecordGroup.LockFundRecords.size());
-			for(const std::pair<typename TIndexDescriptor::ValueIdentifier, LockFundRecordContainer>& lockFundRecordPair : lockFundRecordGroup.LockFundRecords)
+			for(const std::pair<typename TIndexDescriptor::ValueIdentifier, LockFundRecord>& lockFundRecordPair : lockFundRecordGroup.LockFundRecords)
 			{
 				io::Write(output, lockFundRecordPair.first);
-				auto hasActiveRecord = lockFundRecordPair.second.ActiveRecord.has_value();
+				auto hasActiveRecord = lockFundRecordPair.second.Active();
 				io::Write8(output, (uint8_t)hasActiveRecord);
 				if(hasActiveRecord)
-					WriteLockFundRecord(output, lockFundRecordPair.second.ActiveRecord.value());
-				io::Write8(output, utils::checked_cast<size_t, uint8_t>(lockFundRecordPair.second.Mosaics.size()));
-				io::Write32(output, lockFundRecordPair.second.InactiveRecords.size());
+					WriteLockFundRecord(output, lockFundRecordPair.second.Get());
+				io::Write32(output, lockFundRecordPair.second.Size());
 				for (const auto& record : lockFundRecordPair.second.InactiveRecords) {
 					WriteLockFundRecord(output, record);
 				}
@@ -96,18 +95,18 @@ namespace catapult { namespace state {
 			{
 				typename TIndexDescriptor::ValueIdentifier identifier;
 				io::Read(input, identifier);
-				LockFundRecordContainer recordContainer;
+				LockFundRecord recordContainer;
 				bool isActive = io::Read8(input);
 				if(isActive)
 				{
-					recordContainer.ActiveRecord.emplace(LoadLockFundRecord(input));
+					recordContainer.Set(LoadLockFundRecord(input));
 				}
 
-				std::pair<typename TIndexDescriptor::ValueIdentifier,LockFundRecordContainer> entry(identifier, std::move(recordContainer));
+				std::pair<typename TIndexDescriptor::ValueIdentifier,LockFundRecord> entry(identifier, std::move(recordContainer));
 
 				auto inactiveSize = io::Read32(input);
 				while (inactiveSize--) {
-					entry.second.InactiveRecords.emplace(LoadLockFundRecord(input));
+					entry.second.InactiveRecords.emplace_back(LoadLockFundRecord(input));
 				}
 				lockFundRecordGroup.LockFundRecords.insert(std::move(entry));
 			}

@@ -31,7 +31,7 @@ namespace catapult { namespace model {
 #define DEFINE_LOCK_FUND_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, LockFund, DESCRIPTION, CODE)
 
 	/// LockFund lock/unlock request was received.
-	DEFINE_LOCK_FUND_NOTIFICATION(LockFund, 0x001, All);
+	DEFINE_LOCK_FUND_NOTIFICATION(Transfer, 0x001, All);
 
 	/// LockFund request to cancel funds unlocking was received.
 	DEFINE_LOCK_FUND_NOTIFICATION(Cancel_Unlock, 0x002, All);
@@ -42,18 +42,18 @@ namespace catapult { namespace model {
 
 	/// Notification of a lock fund lock transaction with a mosaicId and amount to lock.
 	template<VersionType version>
-	struct LockFundNotification;
+	struct LockFundTransferNotification;
 
 	template<>
-	struct LockFundNotification<1> : public Notification {
+	struct LockFundTransferNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockFund_LockFund_Notification;
+		static constexpr auto Notification_Type = LockFund_Transfer_Notification;
 
 	public:
 		/// Creates a notification around \a messageSize.
-		explicit LockFundNotification(Key sender, uint8_t mosaicsCount, BlockDuration duration, const UnresolvedMosaic* pMosaics, model::LockFundAction action)
-				: Notification(Notification_Type, sizeof(LockFundNotification<1>))
+		explicit LockFundTransferNotification(Key sender, uint8_t mosaicsCount, BlockDuration duration, const UnresolvedMosaic* pMosaics, model::LockFundAction action)
+				: Notification(Notification_Type, sizeof(LockFundTransferNotification<1>))
 				, Sender(sender)
 				, MosaicsCount(mosaicsCount)
 				, Duration(duration)
@@ -93,7 +93,7 @@ namespace catapult { namespace model {
 		explicit LockFundCancelUnlockNotification(Key sender, Height height)
 				: Notification(Notification_Type, sizeof(LockFundCancelUnlockNotification<1>))
 				, Sender(sender)
-				, Height(height)
+				, TargetHeight(height)
 		{}
 
 	public:
@@ -101,6 +101,6 @@ namespace catapult { namespace model {
 		const Key& Sender;
 
 		/// Target unlock height
-		Height Height;
+		Height TargetHeight;
 	};
 }}

@@ -20,13 +20,15 @@
 
 #include <catapult/model/Address.h>
 #include "LockFundPlugin.h"
-#include "LockFundTransactionPlugin.h"
+#include "LockFundTransferTransactionPlugin.h"
+#include "LockFundCancelUnlockTransactionPlugin.h"
 #include "src/config/LockFundConfiguration.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/config/CatapultDataDirectory.h"
 #include "src/observers/Observers.h"
+
 
 namespace catapult { namespace plugins {
 
@@ -35,8 +37,8 @@ namespace catapult { namespace plugins {
 			config.template InitPluginConfiguration<config::LockFundConfiguration>();
 		});
 
-		manager.addTransactionSupport(CreateLockFundTransactionPlugin());
-
+		manager.addTransactionSupport(CreateLockFundTransferTransactionPlugin());
+		manager.addTransactionSupport(CreateLockFundCancelUnlockTransactionPlugin());
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateLockFundPluginConfigValidator());
@@ -44,7 +46,7 @@ namespace catapult { namespace plugins {
 
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateLockFundValidator());
+				.add(validators::CreateLockFundTransferValidator());
 		});
 		manager.addObserverHook([](auto& builder) {
 		  builder.add(observers::CreateLockFundTransferObserver())

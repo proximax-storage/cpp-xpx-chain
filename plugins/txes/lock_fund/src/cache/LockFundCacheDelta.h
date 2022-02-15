@@ -97,8 +97,8 @@ namespace catapult { namespace cache {
 							tiedRecord.second.Reactivate();
 						}
 
-						if(tiedRecord.second.ActiveRecord.has_value())
-							action(tiedRecord.first, tiedRecord.second.ActiveRecord.value());
+						if(tiedRecord.second.Active())
+							action(tiedRecord.first, tiedRecord.second.Get());
 
 						if(!isActive)
 						{

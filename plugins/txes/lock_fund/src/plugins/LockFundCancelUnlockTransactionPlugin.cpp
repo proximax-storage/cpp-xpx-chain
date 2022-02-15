@@ -18,10 +18,10 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "LockFundTransactionPlugin.h"
+#include "LockFundCancelUnlockTransactionPlugin.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "src/model/LockFundTransaction.h"
+#include "src/model/LockFundCancelUnlockTransaction.h"
 #include "src/model/LockFundNotifications.h"
 using namespace catapult::model;
 
@@ -32,15 +32,14 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1: {
-				const auto *pMosaics = transaction.MosaicsPtr();
-				sub.notify(LockFundNotification<1>(transaction.Signer, transaction.MosaicsCount, transaction.Duration, pMosaics, transaction.Action));
+				sub.notify(LockFundCancelUnlockNotification<1>(transaction.Signer, transaction.TargetHeight));
 				break;
 			}
 
 			default:
-				CATAPULT_LOG(debug) << "invalid version of LockFundTransaction: " << transaction.EntityVersion();
+				CATAPULT_LOG(debug) << "invalid version of LockFundCancelUnlockTransaction: " << transaction.EntityVersion();
 			}
 		}
 	}
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(LockFund, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(LockFundCancelUnlock, Default, Publish)
 }}

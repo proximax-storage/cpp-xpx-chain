@@ -38,7 +38,7 @@ namespace catapult { namespace state {
 		LockFundRecordGroup()
 		{}
 
-		/// Creates a hash lock info around \a account, \a mosaicId, \a amount, \a height and \a hash.
+		/// Creates a Lock Fund Record Group around \a identifier and \a records.
 		LockFundRecordGroup(
 				typename TIndexDescriptor::KeyType identifier,
 				const LockFundRecordMap<TIndexDescriptor>& records)

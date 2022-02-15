@@ -27,7 +27,10 @@ namespace catapult { namespace model {
 #endif
 
 	/// Lock Fund transaction.
-	DEFINE_TRANSACTION_TYPE(LockFund, Lock_Fund, 0x1);
+	DEFINE_TRANSACTION_TYPE(LockFund, Lock_Fund_Transfer, 0x1);
+
+	/// Lock Fund transaction.
+	DEFINE_TRANSACTION_TYPE(LockFund, Lock_Fund_Cancel_Unlock, 0x2);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

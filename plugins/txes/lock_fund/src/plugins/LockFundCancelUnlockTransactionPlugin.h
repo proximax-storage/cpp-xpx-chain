@@ -18,19 +18,15 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/cache/LockFundCache.h"
-#include "Observers.h"
-#include "src/config/LockFundConfiguration.h"
-#include "catapult/cache_core/AccountStateCache.h"
+#pragma once
+#include "catapult/plugins.h"
+#include <memory>
 
-namespace catapult { namespace observers {
+namespace catapult { namespace model { class TransactionPlugin; } }
 
-	DEFINE_OBSERVER(LockFundCancelUnlock, model::LockFundCancelUnlockNotification<1>, ([](const auto& notification, const ObserverContext& context) {
-		auto& lockFundCache = context.Cache.sub<cache::LockFundCache>();
-		if(context.Mode == NotifyMode::Commit)
-			lockFundCache.disable(notification.Sender, notification.TargetHeight);
-		else
-			lockFundCache.enable(notification.Sender, notification.TargetHeight);
+namespace catapult { namespace plugins {
 
-	}));
+	/// Creates a lock fund transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<model::TransactionPlugin> CreateLockFundCancelUnlockTransactionPlugin();
 }}

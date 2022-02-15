@@ -28,5 +28,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates a lock fund transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateLockFundTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateLockFundTransferTransactionPlugin();
 }}

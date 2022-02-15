@@ -33,8 +33,8 @@ namespace catapult { namespace config {
 		DEFINE_CONFIG_CONSTANTS(lockfund)
 
 	public:
-		/// Blocks after which a request to unlock is fulfilled
-		BlockDuration RequestCooldownBlocks;
+		/// Blocks after which a request to unlock can be fulfilled
+		BlockDuration MinRequestUnlockCooldown;
 
 		/// Maximum transaction mosaics size.
 		uint16_t MaxMosaicsSize;

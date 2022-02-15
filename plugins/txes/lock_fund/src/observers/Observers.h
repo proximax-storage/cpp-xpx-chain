@@ -28,7 +28,7 @@ namespace catapult { namespace config { class CatapultDirectory; } }
 namespace catapult { namespace observers {
 
 	/// Observes LockFund notifications and moves mosaics to the respective balance.
-	DECLARE_OBSERVER(LockFundTransfer, model::LockFundNotification<1>)();
+	DECLARE_OBSERVER(LockFundTransfer, model::LockFundTransferNotification<1>)();
 
 	/// Observes Block notifications and processes existing requests for the given block height.
 	DECLARE_OBSERVER(LockFundBlock, model::BlockNotification<1>)();

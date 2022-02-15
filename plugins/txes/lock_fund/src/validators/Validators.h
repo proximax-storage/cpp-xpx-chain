@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 	/// - there are enough mosaics to either lock/unlock
 	/// - the signing account is of version 2 or higher and exists in cache
 	/// - there are no existing unlock requests at the requested unlock height for this signer
-	DECLARE_STATEFUL_VALIDATOR(LockFund, model::LockFundNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(LockFundTransfer, model::LockFundTransferNotification<1>)();
 
 	/// A validator implementation that applies to lock fund cancel unlock notifications and validates that:
 	/// - a record exists at the specified height for the specified key.

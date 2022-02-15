@@ -40,7 +40,7 @@ namespace catapult { namespace model {
 	public:
 
 		/// Height at which to cancel the unlock request for this signer.
-		Height Height;
+		Height TargetHeight;
 
 	public:
 		// Calculates the real size of hash lock \a transaction.

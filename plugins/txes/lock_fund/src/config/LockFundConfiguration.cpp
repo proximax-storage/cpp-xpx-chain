@@ -31,7 +31,7 @@ namespace catapult { namespace config {
 		LockFundConfiguration LockFundConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
 			LockFundConfiguration config;
 		utils::LoadIniProperty(bag, "", "MaxMosaicsSize", config.MaxMosaicsSize);
-		utils::LoadIniProperty(bag, "", "RequestCooldownBlocks", config.RequestCooldownBlocks);
+		utils::LoadIniProperty(bag, "", "MinRequestUnlockCooldown", config.MinRequestUnlockCooldown);
 		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 2);
 		return config;
 	}

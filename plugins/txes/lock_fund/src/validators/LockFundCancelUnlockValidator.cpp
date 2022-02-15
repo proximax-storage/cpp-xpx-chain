@@ -30,11 +30,11 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(LockFundCancelUnlockValidator, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(LockFundCancelUnlockValidator, ([](const Notification& notification, const ValidatorContext& context) {
             auto& lockFundCache = context.Cache.sub<cache::LockFundCache>();
-			auto keyRecordIt = lockFundCache.find(notificatWion.Sender);
+			auto keyRecordIt = lockFundCache.find(notification.Sender);
 			auto keyRecord = keyRecordIt.tryGet();
 			if(!keyRecord)
 				return Failure_LockFund_Request_Non_Existant;
-			if(keyRecord->LockFundRecords.find(notification.Height) == keyRecord->LockFundRecords.end())
+			if(keyRecord->LockFundRecords.find(notification.TargetHeight) == keyRecord->LockFundRecords.end())
 				return Failure_LockFund_Request_Non_Existant;
 			return ValidationResult::Success;
 		}));

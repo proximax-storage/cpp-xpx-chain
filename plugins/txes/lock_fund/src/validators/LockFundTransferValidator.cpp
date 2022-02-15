@@ -25,7 +25,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::LockFundNotification<1>;
+	using Notification = model::LockFundTransferNotification<1>;
 
 
 	namespace {
@@ -64,7 +64,7 @@ namespace catapult { namespace validators {
 					{
 						for(auto record : unlockingFundsRecord->LockFundRecords)
 						{
-							if(Height(context.Height.unwrap() + notification.Duration.unwrap()) == record.first && record.second.ActiveRecord.has_value())
+							if(Height(context.Height.unwrap() + notification.Duration.unwrap()) == record.first && record.second.Active())
 								return Failure_LockFund_Duplicate_Record;
 						}
 					}
@@ -74,7 +74,7 @@ namespace catapult { namespace validators {
 			{
 				uint64_t targetHeight = context.Height.unwrap() + notification.Duration.unwrap();
 				if(notification.Duration == BlockDuration(0))
-					targetHeight += pluginConfig.RequestCooldownBlocks.unwrap();
+					targetHeight += pluginConfig.MinRequestUnlockCooldown.unwrap();
 
 				const auto& lockFundCache = context.Cache.template sub<cache::LockFundCache>();
 				auto unlockingFundsRecordIt = lockFundCache.find(notification.Sender);
@@ -83,12 +83,12 @@ namespace catapult { namespace validators {
 				{
 					for(auto record : unlockingFundsRecord->LockFundRecords)
 					{
-						if(targetHeight == record.first.unwrap() && record.second.ActiveRecord.has_value())
+						if(targetHeight == record.first.unwrap() && record.second.Active())
 							return Failure_LockFund_Duplicate_Record;
 						for(auto mosaic : funds)
 						{
-							auto mosaicRecord = record.second.ActiveRecord.value().find(MosaicId(mosaic.first));
-							if(mosaicRecord != record.second.ActiveRecord.value().end())
+							auto mosaicRecord = record.second.Get().find(MosaicId(mosaic.first));
+							if(mosaicRecord != record.second.Get().end())
 							{
 								funds[mosaic.first].first = funds[mosaic.first].first - mosaicRecord->second;
 							}
@@ -104,10 +104,10 @@ namespace catapult { namespace validators {
 			return ValidationResult::Success;
 		}
 	}
-	DECLARE_STATEFUL_VALIDATOR(LockFundValidator, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(LockFundValidator, ([](const Notification& notification, const ValidatorContext& context) {
+	DECLARE_STATEFUL_VALIDATOR(LockFundTransferValidator, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(LockFundTransferValidator, ([](const Notification& notification, const ValidatorContext& context) {
             const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::LockFundConfiguration>();
-			if(notification.Duration != BlockDuration(0) && notification.Duration < pluginConfig.RequestCooldownBlocks)
+			if(notification.Duration != BlockDuration(0) && notification.Duration < pluginConfig.MinRequestUnlockCooldown)
 				return Failure_LockFund_Duration_Smaller_Than_Configured;
 
 			if (1 > notification.MosaicsCount)

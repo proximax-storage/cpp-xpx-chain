@@ -65,6 +65,17 @@ namespace catapult { namespace test {
 				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, config, height, mode, CreateResolverContextXor())
 		{}
 
+	private:
+		explicit ObserverTestContextT(observers::NotifyMode mode, ObserverTestContextT&& context)
+		: m_cache(std::move(context.m_cache))
+		, m_cacheDelta(std::move(context.m_cacheDelta))
+		, m_config(std::move(context.m_config))
+		, m_state(std::move(context.m_state))
+		, m_blockStatementBuilder(std::move(context.m_blockStatementBuilder))
+		, m_context({m_cacheDelta, m_state, m_blockStatementBuilder}, context.m_context.Config, context.m_context.Height, mode, CreateResolverContextXor())
+		{
+
+		}
 	public:
 		/// Gets the observer context.
 		observers::ObserverContext& observerContext() {
@@ -89,6 +100,12 @@ namespace catapult { namespace test {
 		/// Gets the catapult state.
 		state::CatapultState& state() {
 			return m_state;
+		}
+
+		/// Creates a new context from this modifying the mode
+		ObserverTestContextT<TCacheFactory> alterMode(observers::NotifyMode mode)
+		{
+			return ObserverTestContextT<TCacheFactory>(mode, std::move(*this));
 		}
 
 		/// Gets the block statement builder.

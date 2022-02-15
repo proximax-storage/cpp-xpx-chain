@@ -52,7 +52,7 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	DEFINE_OBSERVER(LockFundTransfer, model::LockFundNotification<1>, ([](const auto& notification, const ObserverContext& context) {
+	DEFINE_OBSERVER(LockFundTransfer, model::LockFundTransferNotification<1>, ([](const auto& notification, const ObserverContext& context) {
 		auto& cache = context.Cache.sub<cache::AccountStateCache>();
 		auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::LockFundConfiguration>();
 		auto senderIter = cache.find(notification.Sender);
@@ -74,7 +74,7 @@ namespace catapult { namespace observers {
 		{
 			auto targetHeight = notification.Duration.unwrap() + context.Height.unwrap();
 			if(notification.Duration == BlockDuration(0))
-				targetHeight += pluginConfig.RequestCooldownBlocks.unwrap();
+				targetHeight += pluginConfig.MinRequestUnlockCooldown.unwrap();
 			if (NotifyMode::Commit == context.Mode)
 				Unlock<model::LockFundAction::Unlock>(senderState, lockFundCache, pluginConfig, mosaics, Height(targetHeight));
 			else
