@@ -37,6 +37,14 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void SaveCumulativeUploadSizes(io::OutputStream& output, const SizeMap& cumulativeUploadSizes) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(cumulativeUploadSizes.size()));
+			for (const auto& pair : cumulativeUploadSizes) {
+				io::Write(output, pair.first);
+				io::Write64(output, pair.second);
+			}
+		}
+
 		template<typename TContainer>
 		void SaveShard(io::OutputStream& output, const TContainer& shard) {
 			io::Write8(output, utils::checked_cast<size_t, uint8_t>(shard.size()));
@@ -65,6 +73,16 @@ namespace catapult { namespace state {
 			for (const auto& pair : confirmedUsedSizes) {
 				io::Write(output, pair.first);
 				io::Write64(output, pair.second);
+			}
+		}
+
+		void LoadCumulativeUploadSizes(io::InputStream& input, SizeMap& cumulativeUploadSizes) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Key replicatorKey;
+				io::Read(input, replicatorKey);
+				auto size = io::Read64(input);
+				cumulativeUploadSizes.emplace(replicatorKey, size);
 			}
 		}
 
@@ -224,6 +242,7 @@ namespace catapult { namespace state {
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
 		SaveConfirmedUsedSizes(output, driveEntry.confirmedUsedSizes());
+		SaveCumulativeUploadSizes(output, driveEntry.cumulativeUploadSizes());
 		SaveReplicators(output, driveEntry.replicators());
 		SaveReplicators(output, driveEntry.offboardingReplicators());
 		SaveVerifications(output, driveEntry.verifications());
@@ -260,6 +279,7 @@ namespace catapult { namespace state {
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
 		LoadConfirmedUsedSizes(input, entry.confirmedUsedSizes());
+		LoadCumulativeUploadSizes(input, entry.cumulativeUploadSizes());
 		LoadReplicators(input, entry.replicators());
 		LoadReplicators(input, entry.offboardingReplicators());
 		LoadVerifications(input, entry.verifications());

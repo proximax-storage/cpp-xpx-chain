@@ -68,8 +68,8 @@ namespace catapult { namespace validators {
 			}
 			const auto replicatorIter = replicatorCache.find(notification.PublicKeysPtr[i]);
 			const auto& pReplicatorEntry = replicatorIter.tryGet();
-			if (pReplicatorEntry->drives().at(notification.DriveKey).LastCompletedCumulativeDownloadWork != totalIncrements)
-				return Failure_Storage_Invalid_Opinions_Sum;
+//			if (pReplicatorEntry->drives().at(notification.DriveKey).LastCompletedCumulativeDownloadWork != totalIncrements)
+//				return Failure_Storage_Invalid_Opinions_Sum;
 		}
 
 	  	// TODO: Check if there are enough mosaics for the transfer?

@@ -35,7 +35,6 @@ namespace catapult { namespace storage {
 				sirius::drive::KeyAndBytes{ Key({ 4 }).array(), 100u },
 				sirius::drive::KeyAndBytes{ Key({ 7 }).array(), 200u },
 			};
-			opinions[opinions.size() - 1].m_clientUploadBytes = 0u;
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 1 });
 
 			transactionInfo.m_opinions.emplace_back(Key({ 2 }).array());
@@ -44,7 +43,6 @@ namespace catapult { namespace storage {
 				sirius::drive::KeyAndBytes{ Key({ 3 }).array(), 400u },
 				sirius::drive::KeyAndBytes{ Key({ 6 }).array(), 500u },
 			};
-			opinions[opinions.size() - 1].m_clientUploadBytes = 600u;
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 2 });
 
 			transactionInfo.m_opinions.emplace_back(Key({ 3 }).array());
@@ -52,7 +50,6 @@ namespace catapult { namespace storage {
 				sirius::drive::KeyAndBytes{ Key({ 4 }).array(), 700u },
 				sirius::drive::KeyAndBytes{ Key({ 7 }).array(), 800u },
 			};
-			opinions[opinions.size() - 1].m_clientUploadBytes = 0u;
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 3 });
 
 			transactionInfo.m_opinions.emplace_back(Key({ 5 }).array());
@@ -61,11 +58,9 @@ namespace catapult { namespace storage {
 				sirius::drive::KeyAndBytes{ Key({ 6 }).array(), 1000u },
 				sirius::drive::KeyAndBytes{ Key({ 7 }).array(), 1100u },
 			};
-			opinions[opinions.size() - 1].m_clientUploadBytes = 0u;
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 5 });
 
 			transactionInfo.m_opinions.emplace_back(Key({ 7 }).array());
-			opinions[opinions.size() - 1].m_clientUploadBytes = 1200u;
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 7 });
 
 			return transactionInfo;
@@ -119,8 +114,6 @@ namespace catapult { namespace storage {
 		std::vector<Signature> expectedSignatures{ Signature({ 5 }), Signature({ 2 }), Signature({ 3 }), Signature({ 1 }) };
 
 		auto transactionInfo = CreateDataModificationApprovalTransactionInfo();
-		for (auto& opinion : transactionInfo.m_opinions)
-			opinion.m_clientUploadBytes = 0;
 
 		testee.sendDataModificationApprovalTransaction(transactionInfo);
 
@@ -142,7 +135,6 @@ namespace catapult { namespace storage {
 				sirius::drive::KeyAndBytes{ Key({ 2 }).array(), 100u },
 				sirius::drive::KeyAndBytes{ Key({ 3 }).array(), 200u },
 			};
-			opinions[opinions.size() - 1].m_clientUploadBytes = 300u;
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 1 });
 
 			return transactionInfo;

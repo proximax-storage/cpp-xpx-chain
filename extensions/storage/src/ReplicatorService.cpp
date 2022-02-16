@@ -266,7 +266,7 @@ namespace catapult { namespace storage {
 
             auto replicators = castReplicatorKeys(m_storageState.getDriveReplicators(driveKey));
             auto downloadWork = m_storageState.getDownloadWork(m_keyPair.publicKey(), driveKey);
-            sirius::drive::AddDriveRequest request{driveSize, downloadWork, replicators};
+            sirius::drive::AddDriveRequest request{driveSize, downloadWork, replicators, m_storageState.getDrive(driveKey).Owner.array()};
             m_pReplicator->asyncAddDrive(driveKey.array(), request);
         }
 
