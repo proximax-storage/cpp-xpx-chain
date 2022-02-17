@@ -79,27 +79,6 @@ namespace catapult { namespace validators {
             });
     }
 
-    TEST(TEST_CLASS, FailureWhenDataModificationIsActive) {
-        // Arrange:
-        auto owner = test::GenerateRandomByteArray<Key>();
-        auto dataModificationId = test::GenerateRandomByteArray<Hash256>();
-        state::BcDriveEntry entry(test::GenerateRandomByteArray<Key>());
-        entry.setOwner(owner);
-        entry.activeDataModifications().emplace_back(state::ActiveDataModification {
-            dataModificationId, test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Hash256>(), test::Random()
-        });
-
-        // Assert:
-        AssertValidationResult(
-            Failure_Storage_Data_Modification_Is_Active,
-            entry,
-            owner,
-            {
-                { dataModificationId, test::GenerateRandomByteArray<Key>(), 
-                    test::GenerateRandomByteArray<Hash256>(), test::Random() }
-            });
-    }
-
     TEST(TEST_CLASS, FailureWhenDataModificationNotFound) {
         // Arrange:
         auto owner = test::GenerateRandomByteArray<Key>();
