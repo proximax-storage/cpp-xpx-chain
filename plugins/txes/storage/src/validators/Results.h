@@ -36,9 +36,6 @@ namespace catapult { namespace validators {
 	/// Validation failed DataModificationTransaction is not found.
 	DEFINE_STORAGE_RESULT(Data_Modification_Not_Found, 7);
 
-	/// Validation failed DataModificationTransaction is Active.
-	DEFINE_STORAGE_RESULT(Data_Modification_Is_Active, 8);
-
 	/// Validation failed because transaction signer is not an owner of the drive or download channel.
 	DEFINE_STORAGE_RESULT(Is_Not_Owner, 9);
 

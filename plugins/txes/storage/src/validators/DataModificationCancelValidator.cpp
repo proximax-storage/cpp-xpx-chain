@@ -25,10 +25,7 @@ namespace catapult { namespace validators {
 		if (activeDataModifications.empty())
 			return Failure_Storage_No_Active_Data_Modifications;
 
-		if (activeDataModifications.front().Id == notification.DataModificationId)
-			return Failure_Storage_Data_Modification_Is_Active;
-
-		auto dataModificationIter = ++activeDataModifications.begin();
+		auto dataModificationIter = activeDataModifications.begin();
 		for (; dataModificationIter != activeDataModifications.end(); ++dataModificationIter) {
 			if (dataModificationIter->Id == notification.DataModificationId)
 				break;
