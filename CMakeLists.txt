@@ -85,4 +85,4 @@ add_subdirectory(tools)
 # Help programs
 add_subdirectory(spammer)
 
-add_subdirectory(cpp-xpx-storage-sdk)
+#add_subdirectory(cpp-xpx-storage-sdk)
