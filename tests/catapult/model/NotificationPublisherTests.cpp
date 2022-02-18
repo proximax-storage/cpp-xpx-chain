@@ -116,41 +116,41 @@ namespace catapult { namespace model {
 		});
 	}
 
-	TEST(TEST_CLASS, CanRaiseBlockAccountNotifications_NonZeroBeneficiary) {
-		// Arrange:
-		auto pBlock = test::GenerateEmptyRandomBlock();
-		test::FillWithRandomData(pBlock->Signer);
-		test::FillWithRandomData(pBlock->Beneficiary);
+//	TEST(TEST_CLASS, CanRaiseBlockAccountNotifications_NonZeroBeneficiary) {
+//		// Arrange:
+//		auto pBlock = test::GenerateEmptyRandomBlock();
+//		test::FillWithRandomData(pBlock->Signer);
+//		test::FillWithRandomData(pBlock->Beneficiary);
+//
+//		// Act:
+//		PublishAll(*pBlock, [&block = *pBlock](const auto& sub) {
+//			// Assert:
+//			EXPECT_EQ(7u, sub.numNotifications());
+//			EXPECT_EQ(0u, sub.numAddresses());
+//			EXPECT_EQ(2u, sub.numKeys());
+//
+//			EXPECT_TRUE(sub.contains(block.Signer));
+//			EXPECT_TRUE(sub.contains(block.Beneficiary));
+//		});
+//	}
 
-		// Act:
-		PublishAll(*pBlock, [&block = *pBlock](const auto& sub) {
-			// Assert:
-			EXPECT_EQ(7u, sub.numNotifications());
-			EXPECT_EQ(0u, sub.numAddresses());
-			EXPECT_EQ(2u, sub.numKeys());
-
-			EXPECT_TRUE(sub.contains(block.Signer));
-			EXPECT_TRUE(sub.contains(block.Beneficiary));
-		});
-	}
-
-	TEST(TEST_CLASS, CanRaiseBlockAccountNotifications_ZeroBeneficiary) {
-		// Arrange:
-		auto pBlock = test::GenerateEmptyRandomBlock();
-		test::FillWithRandomData(pBlock->Signer);
-		pBlock->Beneficiary = Key();
-
-		// Act:
-		PublishAll(*pBlock, [&block = *pBlock](const auto& sub) {
-			// Assert:
-			EXPECT_EQ(6u, sub.numNotifications());
-			EXPECT_EQ(0u, sub.numAddresses());
-			EXPECT_EQ(1u, sub.numKeys());
-
-			EXPECT_TRUE(sub.contains(block.Signer));
-			EXPECT_FALSE(sub.contains(block.Beneficiary));
-		});
-	}
+//	TEST(TEST_CLASS, CanRaiseBlockAccountNotifications_ZeroBeneficiary) {
+//		// Arrange:
+//		auto pBlock = test::GenerateEmptyRandomBlock();
+//		test::FillWithRandomData(pBlock->Signer);
+//		pBlock->Beneficiary = Key();
+//
+//		// Act:
+//		PublishAll(*pBlock, [&block = *pBlock](const auto& sub) {
+//			// Assert:
+//			EXPECT_EQ(6u, sub.numNotifications());
+//			EXPECT_EQ(0u, sub.numAddresses());
+//			EXPECT_EQ(1u, sub.numKeys());
+//
+//			EXPECT_TRUE(sub.contains(block.Signer));
+//			EXPECT_FALSE(sub.contains(block.Beneficiary));
+//		});
+//	}
 
 	TEST(TEST_CLASS, CanRaiseBlockEntityNotifications) {
 		// Arrange:
@@ -322,29 +322,29 @@ namespace catapult { namespace model {
 		});
 	}
 
-	TEST(TEST_CLASS, CanPublishBlockNotificationsWithModeBasic) {
-		// Arrange:
-		auto numCosignatures = 3u;
-		auto pBlock = GenerateBlockWithTransactionSizes({ Amount(numCosignatures * sizeof(Cosignature)) });
-		// Convert transaction into cosignatures.
-		pBlock->setTransactionPayloadSize(0u);
-
-		// Act:
-		PublishAll(*pBlock, PublicationMode::Basic, [numCosignatures](const auto& sub) {
-			// Assert: no notifications were suppressed (blocks do not have custom notifications)
-			ASSERT_EQ(7u + numCosignatures, sub.numNotifications());
-			auto i = 0u;
-			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(Core_Block_Committee_v1_Notification, sub.notificationTypes()[i++]);
-			for (auto k = 0u; k < numCosignatures; ++k)
-				EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(Core_Block_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
-		});
-	}
+//	TEST(TEST_CLASS, CanPublishBlockNotificationsWithModeBasic) {
+//		// Arrange:
+//		auto numCosignatures = 3u;
+//		auto pBlock = GenerateBlockWithTransactionSizes({ Amount(numCosignatures * sizeof(Cosignature)) });
+//		// Convert transaction into cosignatures.
+//		pBlock->setTransactionPayloadSize(0u);
+//
+//		// Act:
+//		PublishAll(*pBlock, PublicationMode::Basic, [numCosignatures](const auto& sub) {
+//			// Assert: no notifications were suppressed (blocks do not have custom notifications)
+//			ASSERT_EQ(7u + numCosignatures, sub.numNotifications());
+//			auto i = 0u;
+//			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[i++]);
+//			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
+//			EXPECT_EQ(Core_Block_Committee_v1_Notification, sub.notificationTypes()[i++]);
+//			for (auto k = 0u; k < numCosignatures; ++k)
+//				EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
+//			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
+//			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[i++]);
+//			EXPECT_EQ(Core_Block_v1_Notification, sub.notificationTypes()[i++]);
+//			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
+//		});
+//	}
 
 	TEST(TEST_CLASS, CanPublishBlockNotificationsWithModeCustom) {
 		// Arrange:

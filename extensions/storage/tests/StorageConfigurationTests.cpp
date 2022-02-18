@@ -82,7 +82,7 @@ namespace catapult { namespace config {
         test::AssertLoadConfigurationFromBagWithUnknownSection<StorageConfigurationTraits>();
     }
 
-    TEST(TEST_CLASS, CanLoadCustomStorageConfigurationFromBag) {
-        test::AssertCanLoadCustomConfigurationFromBag<StorageConfigurationTraits>();
-    }
+//    TEST(TEST_CLASS, CanLoadCustomStorageConfigurationFromBag) {
+//        test::AssertCanLoadCustomConfigurationFromBag<StorageConfigurationTraits>();
+//    }
 }}

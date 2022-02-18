@@ -267,6 +267,9 @@ namespace catapult { namespace plugins {
 		/// Sets a storage state.
 		void setStorageState(const std::shared_ptr<state::StorageState>& pState);
 
+		/// Sets cache to storage state.
+		void setStorageStateCache(cache::CatapultCache* pCache);
+
 		/// Gets storage state.
 		state::StorageState& storageState() const;
 

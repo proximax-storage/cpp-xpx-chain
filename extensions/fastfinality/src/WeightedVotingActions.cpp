@@ -5,6 +5,8 @@
 **/
 
 #include "WeightedVotingFsm.h"
+#include "api/RemoteNodeApi.h"
+#include "utils/WeightedVotingUtils.h"
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PluginUtils.h"
@@ -29,33 +31,16 @@ namespace catapult { namespace fastfinality {
 			return approvalRating / totalRating >= config.CommitteeEndSyncApproval;
 		}
 
-		template<typename TValue, typename TValueArray, typename TValueAdapter>
-		auto FindMostFrequentValue(const TValueArray& values, const TValueAdapter& adapter) {
-			TValue mostFrequentValue;
-			uint32_t maxFrequency = 0;
-			std::map<TValue, uint32_t> valueFrequencies;
-			for (const auto& valueWrapper : values) {
-				const auto& value = adapter(valueWrapper);
-				auto frequency = ++valueFrequencies[value];
-				if (maxFrequency <= frequency) {
-					maxFrequency = frequency;
-					mostFrequentValue = value;
-				}
-			}
-
-			return std::make_pair(mostFrequentValue, maxFrequency);
-		}
-
 		void DelayAction(
 				std::shared_ptr<WeightedVotingFsm> pFsmShared,
 				boost::asio::system_timer& timer,
-				uint64_t delay,
+				utils::TimePoint expirationTime,
 				action callback,
 				action cancelledCallback = [](){}) {
 			auto& committeeData = pFsmShared->committeeData();
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak = pFsmShared;
-			timer.expires_at(committeeData.committeeStage().RoundStart + std::chrono::milliseconds(delay));
-			timer.async_wait([pFsmWeak, callback, cancelledCallback, delay](const boost::system::error_code& ec) {
+			timer.expires_at(expirationTime);
+			timer.async_wait([pFsmWeak, callback, cancelledCallback](const boost::system::error_code& ec) {
 				TRY_GET_FSM()
 
 				if (ec) {
@@ -70,6 +55,16 @@ namespace catapult { namespace fastfinality {
 
 				callback();
 			});
+		}
+
+		void DelayAction(
+				std::shared_ptr<WeightedVotingFsm> pFsmShared,
+				boost::asio::system_timer& timer,
+				uint64_t delay,
+				action callback,
+				action cancelledCallback = [](){}) {
+			auto expirationTime = pFsmShared->committeeData().committeeStage().RoundStart + std::chrono::milliseconds(delay);
+			DelayAction(pFsmShared, timer, expirationTime, callback, cancelledCallback);
 		}
 	}
 
@@ -94,12 +89,11 @@ namespace catapult { namespace fastfinality {
 
 		  	const auto& config = pConfigHolder->Config().Network;
 		  	if (remoteNodeStates.empty()) {
-				DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeRequestInterval.millis(),
-					[pFsmWeak] {
-						TRY_GET_FSM()
-						pFsmShared->processEvent(NetworkHeightDetectionFailure{});
-					}
-				);
+				DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
+					TRY_GET_FSM()
+
+					pFsmShared->processEvent(NetworkHeightDetectionFailure{});
+				});
 				return;
 			}
 
@@ -166,12 +160,11 @@ namespace catapult { namespace fastfinality {
 				if (ApprovalRatingSufficient(approvalRating, totalRating, config)) {
 					pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 				} else {
-					DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeRequestInterval.millis(),
-						[pFsmWeak] {
-							TRY_GET_FSM()
-							pFsmShared->processEvent(NetworkHeightDetectionFailure{});
-						}
-					);
+					DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
+						TRY_GET_FSM()
+
+						pFsmShared->processEvent(NetworkHeightDetectionFailure{});
+					});
 				}
 			}
 		};
@@ -209,8 +202,7 @@ namespace catapult { namespace fastfinality {
 					CATAPULT_LOG(warning) << "rejecting block, invalid cosigner " << pCosignature->Signer;
 					return false;
 				}
-				auto weight = committeeManager.weight(pCosignature->Signer);
-				actualSumOfVotes += weight;
+				actualSumOfVotes += committeeManager.weight(pCosignature->Signer);
 			}
 
 			auto totalSumOfVotes = blockProposerWeight;
@@ -274,6 +266,8 @@ namespace catapult { namespace fastfinality {
 						committeeManager.selectCommittee(config.Network);
 
 					if (ValidateBlockCosignatures(pBlock, committeeManager, committeeApproval)) {
+						std::lock_guard<std::mutex> guard(pFsmShared->mutex());
+
 						auto pPromise = std::make_shared<thread::promise<bool>>();
 						auto blockHeight = pBlock->Height;
 						rangeConsumer(model::BlockRange::FromEntity(pBlock), [pPromise, blockHeight](auto, const auto& result) {
@@ -376,8 +370,9 @@ namespace catapult { namespace fastfinality {
 
 			CommitteeStage stage {
 				committeeManager.committee().Round,
-				(timeSupplier() < roundStart + Timestamp(stage.PhaseTimeMillis - 3 * config.CommitteeMessageBroadcastInterval.millis())) ?
-					CommitteePhase::Propose : CommitteePhase::Prevote,
+				(timeSupplier() < roundStart +
+					Timestamp(phaseTimeMillis - config.CommitteeRequestInterval.millis() - config.CommitteeSilenceInterval.millis())) ?
+						CommitteePhase::Propose : CommitteePhase::Prevote,
 				utils::ToTimePoint(roundStart),
 				phaseTimeMillis
 			};
@@ -471,8 +466,9 @@ namespace catapult { namespace fastfinality {
 			const cache::CatapultCache& cache,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const harvesting::BlockGenerator& blockGenerator,
-			const model::BlockElementSupplier& lastBlockElementSupplier) {
-		return [pFsmWeak, &cache, pConfigHolder, blockGenerator, lastBlockElementSupplier]() {
+			const model::BlockElementSupplier& lastBlockElementSupplier,
+			const extensions::PacketPayloadSink& packetPayloadSink) {
+		return [pFsmWeak, &cache, pConfigHolder, blockGenerator, lastBlockElementSupplier, packetPayloadSink]() {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
@@ -497,6 +493,7 @@ namespace catapult { namespace fastfinality {
 			if (pBlock) {
 				model::SignBlockHeader(*committeeData.blockProposer(), *pBlock);
 				committeeData.setProposedBlock(pBlock);
+				packetPayloadSink(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Push_Proposed_Block, pBlock));
 
 				pFsmShared->processEvent(BlockProposingSucceeded{});
 			} else {
@@ -522,23 +519,64 @@ namespace catapult { namespace fastfinality {
 		}
 	}
 
-	action CreateDefaultWaitForProposalAction(
-			std::weak_ptr<WeightedVotingFsm> pFsmWeak) {
-		return [pFsmWeak]() {
+	action CreateDefaultRequestProposalAction(
+			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+			extensions::ServiceState& state) {
+		return [pFsmWeak, &state]() {
 			TRY_GET_FSM()
 
-			DelayAction(pFsmShared, pFsmShared->proposalWaitTimer(), GetPhaseEndTimeMillis(pFsmShared->committeeData().committeeStage()),
-				[pFsmWeak] {
+			auto& committeeData = pFsmShared->committeeData();
+			if (committeeData.proposedBlock()) {
+				pFsmShared->processEvent(ProposalReceived{});
+				return;
+			}
+
+			const auto& config = state.config().Network;
+			auto stage = committeeData.committeeStage();
+			auto requestInterval = std::chrono::milliseconds(config.CommitteeRequestInterval.millis());
+			auto requestStartTime = stage.RoundStart + requestInterval;
+			if (utils::ToTimePoint(utils::NetworkTime()) < requestStartTime) {
+				DelayAction(pFsmShared, pFsmShared->timer(), requestStartTime, [pFsmWeak] {
+					TRY_GET_FSM()
+
+					pFsmShared->processEvent(ProposalRequest{});
+				});
+			}
+
+			auto timeout = utils::TimeSpan::FromSeconds(60);
+			auto packetIoPairs = pFsmShared->packetIoPickers().pickMultiple(timeout);
+			CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling proposed block";
+			for (const auto& packetIoPair : packetIoPairs) {
+				auto pRemoteApi = CreateRemoteNodeApi(*packetIoPair.io(), state.pluginManager().transactionRegistry());
+				std::shared_ptr<model::Block> pProposedBlock;
+
+				try {
+					pProposedBlock = pRemoteApi->proposedBlock().get();
+				} catch (...) {}
+
+				if (pProposedBlock) {
+					committeeData.setProposedBlock(pProposedBlock);
+					pFsmShared->processEvent(ProposalReceived{});
+					return;
+				}
+			}
+
+			auto phaseEndTime = stage.RoundStart + std::chrono::milliseconds(GetPhaseEndTimeMillis(stage));
+			auto currentTime = utils::ToTimePoint(utils::NetworkTime());
+			if (currentTime >= phaseEndTime - std::chrono::milliseconds(config.CommitteeSilenceInterval.millis())) {
+				DelayAction(pFsmShared, pFsmShared->timer(), phaseEndTime, [pFsmWeak] {
 					TRY_GET_FSM()
 
 					pFsmShared->processEvent(ProposalNotReceived{});
-				},
-				[pFsmWeak] {
-					TRY_GET_FSM()
+				});
+				return;
+			}
 
-					pFsmShared->processEvent(ProposalReceived{});
-				}
-			);
+			DelayAction(pFsmShared, pFsmShared->timer(), currentTime + requestInterval, [pFsmWeak] {
+				TRY_GET_FSM()
+
+				pFsmShared->processEvent(ProposalRequest{});
+			});
 		};
 	}
 
@@ -673,79 +711,24 @@ namespace catapult { namespace fastfinality {
 		};
 	}
 
-	namespace {
-		void ScheduleBroadcast(
-				const std::shared_ptr<boost::asio::system_timer>& pTimer,
-				utils::TimePoint endPoint,
-				const std::chrono::milliseconds& interval,
-				action broadcast) {
-			auto expireTime = utils::ToTimePoint(utils::NetworkTime()) + interval;
-			if (expireTime >= endPoint)
-				return;
-
-			pTimer->expires_at(expireTime);
-			pTimer->async_wait([pTimer, broadcast, endPoint, interval](const boost::system::error_code& ec) {
-				if (ec) {
-					if (ec == boost::asio::error::operation_aborted) {
-						return;
-					}
-
-					CATAPULT_THROW_EXCEPTION(boost::system::system_error(ec));
-				}
-
-				broadcast();
-
-				ScheduleBroadcast(pTimer, endPoint, interval, broadcast);
-			});
-		}
-	}
-
 	action CreateDefaultWaitForProposalPhaseEndAction(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			const extensions::PacketPayloadSink& packetPayloadSink) {
-		return [pFsmWeak, pConfigHolder, packetPayloadSink]() {
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+		return [pFsmWeak, pConfigHolder]() {
 			TRY_GET_FSM()
 
-			auto& committeeData = pFsmShared->committeeData();
-			auto stage = committeeData.committeeStage();
-			auto phaseEndTimeMillis = GetPhaseEndTimeMillis(stage);
+			auto phaseEndTimeMillis = GetPhaseEndTimeMillis(pFsmShared->committeeData().committeeStage());
+			DelayAction(pFsmShared, pFsmShared->timer(), phaseEndTimeMillis, [pFsmWeak] {
+				TRY_GET_FSM()
 
-			DelayAction(
-				pFsmShared,
-				pFsmShared->timer(),
-				phaseEndTimeMillis,
-				[pFsmWeak] {
-					TRY_GET_FSM()
-
-					pFsmShared->processEvent(ProposalPhaseEnded{});
-				}
-			);
-
-			auto pTimer = std::make_shared<boost::asio::system_timer>(pFsmShared->ioContext());
-			auto interval = std::chrono::milliseconds(pConfigHolder->Config().Network.CommitteeMessageBroadcastInterval.millis());
-			auto endPoint = stage.RoundStart + std::chrono::milliseconds(phaseEndTimeMillis) - 2 * interval;
-			ScheduleBroadcast(
-				pTimer,
-				endPoint,
-				interval,
-				[pFsmWeak, packetPayloadSink]() {
-					auto pFsmShared = pFsmWeak.lock();
-					if (!pFsmShared)
-						return;
-
-					auto pBlock = pFsmShared->committeeData().proposedBlock();
-					if (pBlock)
-						packetPayloadSink(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Push_Proposed_Block, pBlock));
-				}
-			);
+				pFsmShared->processEvent(ProposalPhaseEnded{});
+			});
 		};
 	}
 
 	namespace {
-		template<typename TPacket>
 		bool IsSumOfVotesSufficient(
-				const VoteMap<TPacket>& votes,
+				const VoteMap& votes,
 				double committeeApproval,
 				double totalSumOfVotes,
 				const chain::CommitteeManager& committeeManager) {
@@ -756,27 +739,90 @@ namespace catapult { namespace fastfinality {
 			return sum >= committeeApproval * totalSumOfVotes;
 		}
 
-		template<typename TPacket>
-		action CreateWaitForVotesAction(
+		action CreateRequestVotesAction(
 				std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 				const plugins::PluginManager& pluginManager,
-				std::function<VoteMap<TPacket> (const CommitteeData&)> voteSupplier,
-				consumer<bool> onVoteResult,
-				const extensions::PacketPayloadSink& packetPayloadSink) {
-			return [pFsmWeak, &pluginManager, voteSupplier, onVoteResult, packetPayloadSink]() {
+				const std::string& name,
+				CommitteePhase committeePhase,
+				CommitteeMessageType messageType,
+				std::function<std::vector<CommitteeMessage> (const RemoteNodeApi&)> remoteVoteSupplier,
+				std::function<VoteMap (const CommitteeData&)> voteSupplier,
+				consumer<bool> onVoteResult) {
+			return [pFsmWeak, &pluginManager, name, committeePhase, messageType, remoteVoteSupplier, voteSupplier, onVoteResult]() {
 				TRY_GET_FSM()
 
+				const auto& committeeManager = pluginManager.getCommitteeManager();
 				const auto& config = pluginManager.configHolder()->Config().Network;
 				auto& committeeData = pFsmShared->committeeData();
 				auto stage = committeeData.committeeStage();
-				auto delay = GetPhaseEndTimeMillis(stage);
-				const auto& committeeManager = pluginManager.getCommitteeManager();
+				auto timeout = utils::TimeSpan::FromSeconds(60);
+				auto packetIoPairs = pFsmShared->packetIoPickers().pickMultiple(timeout);
+				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling " << name << "s";
+				for (const auto& packetIoPair : packetIoPairs) {
+					auto pRemoteApi = CreateRemoteNodeApiWithoutRegistry(*packetIoPair.io());
+					auto messages = remoteVoteSupplier(*pRemoteApi);
+					for (const auto& message : messages) {
+						if (message.Type != messageType) {
+							CATAPULT_LOG(warning) << "rejecting " << name << ", invalid message type " << utils::to_underlying_type(message.Type);
+							continue;
+						}
 
-				DelayAction(
-					pFsmShared,
-					pFsmShared->timer(),
-					delay,
-					[pFsmWeak, committeeApproval = config.CommitteeApproval, &committeeManager, voteSupplier, onVoteResult] {
+						const auto& signer = message.BlockCosignature.Signer;
+						if (committeeData.hasVote(signer, message.Type)) {
+							CATAPULT_LOG(trace) << "already has vote " << signer << ", phase " << committeePhase;
+							continue;
+						}
+
+						auto pProposedBlock = committeeData.proposedBlock();
+						if (!pProposedBlock) {
+							CATAPULT_LOG(warning) << "rejecting " << name << ", no proposed block" << ", phase " << committeePhase;
+							continue;
+						}
+
+						if (message.BlockHash != committeeData.proposedBlockHash()) {
+							CATAPULT_LOG(warning) << "rejecting " << name << ", block hash invalid";
+							continue;
+						}
+
+						const auto& cosignature = message.BlockCosignature;
+						if (!crypto::Verify(cosignature.Signer, CommitteeMessageDataBuffer(message), message.MessageSignature)) {
+							CATAPULT_LOG(warning) << "rejecting " << name << ", signature invalid";
+							continue;
+						}
+
+						if (!model::VerifyBlockHeaderCosignature(*pProposedBlock, cosignature)) {
+							CATAPULT_LOG(warning) << "rejecting " << name << ", block signature invalid";
+							continue;
+						}
+
+						committeeData.addVote(message);
+					}
+
+					auto voteCount = utils::checked_cast<size_t, uint32_t>(voteSupplier(committeeData).size());
+					if (voteCount == config.CommitteeSize) {
+						DelayAction(pFsmShared, pFsmShared->timer(), GetPhaseEndTimeMillis(stage),
+							[pFsmWeak, committeeApproval = config.CommitteeApproval, &committeeManager, voteSupplier, onVoteResult] {
+								TRY_GET_FSM()
+
+								const auto& committeeData = pFsmShared->committeeData();
+								bool sumOfVotesSufficient = IsSumOfVotesSufficient(
+									voteSupplier(committeeData),
+									committeeApproval,
+									committeeData.totalSumOfVotes(),
+									committeeManager);
+								onVoteResult(sumOfVotesSufficient);
+							}
+						);
+
+						return;
+					}
+				}
+
+				auto phaseEndTime = stage.RoundStart + std::chrono::milliseconds(GetPhaseEndTimeMillis(stage));
+				auto currentTime = utils::ToTimePoint(utils::NetworkTime());
+				if (currentTime >= phaseEndTime - std::chrono::milliseconds(config.CommitteeSilenceInterval.millis())) {
+					DelayAction(pFsmShared, pFsmShared->timer(), phaseEndTime,
+							[pFsmWeak, committeeApproval = config.CommitteeApproval, &committeeManager, voteSupplier, onVoteResult] {
 						TRY_GET_FSM()
 
 						const auto& committeeData = pFsmShared->committeeData();
@@ -786,42 +832,43 @@ namespace catapult { namespace fastfinality {
 							committeeData.totalSumOfVotes(),
 							committeeManager);
 						onVoteResult(sumOfVotesSufficient);
-					}
-				);
+					});
+					return;
+				}
 
-				auto pTimer = std::make_shared<boost::asio::system_timer>(pFsmShared->ioContext());
-				auto interval = std::chrono::milliseconds(config.CommitteeMessageBroadcastInterval.millis());
-				auto endPoint = stage.RoundStart + std::chrono::milliseconds(delay) - 2 * interval;
-				ScheduleBroadcast(
-					pTimer,
-					endPoint,
-					interval,
-					[pFsmWeak, packetPayloadSink, voteSupplier]() {
-						auto pFsmShared = pFsmWeak.lock();
-						if (!pFsmShared)
-							return;
+				auto requestInterval = std::chrono::milliseconds(config.CommitteeRequestInterval.millis());
+				DelayAction(pFsmShared, pFsmShared->timer(), currentTime + requestInterval, [pFsmWeak, name] {
+					TRY_GET_FSM()
 
-						auto votes = voteSupplier(pFsmShared->committeeData());
-						for (const auto& pair : votes)
-							packetPayloadSink(ionet::PacketPayload(pair.second));
-					}
-				);
+					pFsmShared->processEvent(VoteRequest{});
+				});
 			};
 		}
 	}
 
-	action CreateDefaultWaitForPrevotesAction(
+	action CreateDefaultRequestPrevotesAction(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			const plugins::PluginManager& pluginManager,
-			const extensions::PacketPayloadSink& packetPayloadSink) {
-		return CreateWaitForVotesAction<PrevoteMessagePacket>(
+			const plugins::PluginManager& pluginManager) {
+		return CreateRequestVotesAction(
 			pFsmWeak,
 			pluginManager,
+			"prevote message",
+			CommitteePhase::Prevote,
+			CommitteeMessageType::Prevote,
+			[](auto& remoteApi) {
+				std::vector<CommitteeMessage> prevotes;
+				try {
+					prevotes = remoteApi.prevotes().get();
+				} catch (...) {}
+				return prevotes;
+			},
 			[](auto& committeeData) {
 				return committeeData.prevotes();
 			},
 			[pFsmWeak] (bool sumOfPrevotesSufficient) {
 				TRY_GET_FSM()
+
+				SetPhase(pFsmShared, CommitteePhase::Precommit);
 
 				pFsmShared->committeeData().setSumOfPrevotesSufficient(sumOfPrevotesSufficient);
 				if (sumOfPrevotesSufficient) {
@@ -829,38 +876,49 @@ namespace catapult { namespace fastfinality {
 				} else {
 					pFsmShared->processEvent(SumOfPrevotesInsufficient{});
 				}
-			},
-			packetPayloadSink);
+			});
 	}
 
-	action CreateDefaultWaitForPrecommitsAction(
+	action CreateDefaultRequestPrecommitsAction(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			const plugins::PluginManager& pluginManager,
-			const extensions::PacketPayloadSink& packetPayloadSink) {
-		return CreateWaitForVotesAction<PrecommitMessagePacket>(
+			const plugins::PluginManager& pluginManager) {
+		return CreateRequestVotesAction(
 			pFsmWeak,
 			pluginManager,
+			"precommit message",
+			CommitteePhase::Precommit,
+			CommitteeMessageType::Precommit,
+			[](auto& remoteApi) {
+				std::vector<CommitteeMessage> precommits;
+				try {
+					precommits = remoteApi.precommits().get();
+				} catch (...) {}
+				return precommits;
+			},
 			[](auto& committeeData) {
 				return committeeData.precommits();
 			},
 			[pFsmWeak] (bool sumOfPrecommitsSufficient) {
 				TRY_GET_FSM()
 
+				SetPhase(pFsmShared, CommitteePhase::Commit);
+
 				if (sumOfPrecommitsSufficient && pFsmShared->committeeData().sumOfPrevotesSufficient()) {
 					pFsmShared->processEvent(SumOfPrecommitsSufficient{});
 				} else {
 					pFsmShared->processEvent(SumOfPrecommitsInsufficient{});
 				}
-			},
-			packetPayloadSink);
+			});
 	}
 
 	namespace {
 		template<typename TPacket>
 		action CreateAddVoteAction(
 				std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-				CommitteePhase phase) {
-			return [pFsmWeak, phase]() {
+				CommitteePhase phase,
+				CommitteeMessageType messageType,
+				const extensions::PacketPayloadSink& packetPayloadSink) {
+			return [pFsmWeak, phase, messageType, packetPayloadSink]() {
 				TRY_GET_FSM()
 
 				SetPhase(pFsmShared, phase);
@@ -872,25 +930,56 @@ namespace catapult { namespace fastfinality {
 					CATAPULT_THROW_RUNTIME_ERROR_1("add vote failed, no proposed block", phase);
 
 				for (const auto* pKeyPair : committeeData.localCommittee()) {
-					auto pPacket = ionet::CreateSharedPacket<TPacket>();
-					pPacket->Message.Type = TPacket::Message_Type;
-					pPacket->Message.BlockHash = committeeData.proposedBlockHash();
-					auto& cosignature = pPacket->Message.BlockCosignature;
+					CommitteeMessage message;
+					message.Type = messageType;
+					message.BlockHash = committeeData.proposedBlockHash();
+					auto& cosignature = message.BlockCosignature;
 					cosignature.Signer = pKeyPair->publicKey();
 					model::CosignBlockHeader(*pKeyPair, *pProposedBlock, cosignature.Signature);
-					crypto::Sign(*pKeyPair, CommitteeMessageDataBuffer(*pPacket), pPacket->MessageSignature);
-					committeeData.addVote(std::move(pPacket));
+					crypto::Sign(*pKeyPair, CommitteeMessageDataBuffer(message), message.MessageSignature);
+					committeeData.addVote(message);
 				}
+
+				auto votes = committeeData.votes(messageType);
+				if (votes.size() == 0)
+					return;
+
+				auto pPacket = ionet::CreateSharedPacket<TPacket>(utils::checked_cast<size_t, uint32_t>(sizeof(CommitteeMessage) * votes.size()));
+				pPacket->MessageCount = utils::checked_cast<size_t, uint8_t>(votes.size());
+
+				auto* pMessage = reinterpret_cast<CommitteeMessage*>(pPacket.get() + 1);
+				auto index = 0u;
+				for (const auto& pair : votes)
+					pMessage[index++] = pair.second;
+
+				packetPayloadSink(ionet::PacketPayload(pPacket));
 			};
 		}
 	}
 
-	action CreateDefaultAddPrevoteAction(std::weak_ptr<WeightedVotingFsm> pFsmWeak) {
-		return CreateAddVoteAction<PrevoteMessagePacket>(pFsmWeak, CommitteePhase::Prevote);
+	action CreateDefaultAddPrevoteAction(std::weak_ptr<WeightedVotingFsm> pFsmWeak, const extensions::PacketPayloadSink& packetPayloadSink) {
+		return CreateAddVoteAction<PushPrevoteMessagesRequest>(pFsmWeak, CommitteePhase::Prevote, CommitteeMessageType::Prevote, packetPayloadSink);
 	}
 
-	action CreateDefaultAddPrecommitAction(std::weak_ptr<WeightedVotingFsm> pFsmWeak) {
-		return CreateAddVoteAction<PrecommitMessagePacket>(pFsmWeak, CommitteePhase::Precommit);
+	action CreateDefaultAddPrecommitAction(std::weak_ptr<WeightedVotingFsm> pFsmWeak, const extensions::PacketPayloadSink& packetPayloadSink) {
+		return CreateAddVoteAction<PushPrecommitMessagesRequest>(pFsmWeak, CommitteePhase::Precommit, CommitteeMessageType::Precommit, packetPayloadSink);
+	}
+
+	action CreateDefaultWaitForPrecommitPhaseEndAction(
+			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+		return [pFsmWeak, pConfigHolder]() {
+			TRY_GET_FSM()
+
+			SetPhase(pFsmShared, CommitteePhase::Precommit);
+			auto phaseEndTimeMillis = GetPhaseEndTimeMillis(pFsmShared->committeeData().committeeStage());
+			DelayAction(pFsmShared, pFsmShared->timer(), phaseEndTimeMillis, [pFsmWeak] {
+				TRY_GET_FSM()
+
+				SetPhase(pFsmShared, CommitteePhase::Commit);
+				pFsmShared->processEvent(PrecommitPhaseEnded{});
+			});
+		};
 	}
 
 	action CreateDefaultUpdateConfirmedBlockAction(
@@ -906,7 +995,7 @@ namespace catapult { namespace fastfinality {
 			const auto& blockProposer = committeeManager.committee().BlockProposer;
 			for (const auto &pair : votes) {
 				if (pair.first != blockProposer)
-					cosignatures.push_back(pair.second->Message.BlockCosignature);
+					cosignatures.push_back(pair.second.BlockCosignature);
 			}
 			auto cosignaturesSize = cosignatures.size() * sizeof(model::Cosignature);
 
@@ -919,6 +1008,7 @@ namespace catapult { namespace fastfinality {
 			std::memcpy(static_cast<void *>(pBlock.get()), pProposedBlock.get(), pProposedBlock->Size);
 			pBlock->Size = blockSize;
 			std::memcpy(static_cast<void *>(pBlock->CosignaturesPtr()), cosignatures.data(), cosignaturesSize);
+			committeeData.setProposedBlock(nullptr);
 			committeeData.setConfirmedBlock(pBlock);
 		};
 	}
@@ -927,69 +1017,66 @@ namespace catapult { namespace fastfinality {
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&> rangeConsumer,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			const extensions::PacketPayloadSink& packetPayloadSink,
 			chain::CommitteeManager& committeeManager) {
-		return [pFsmWeak, rangeConsumer, pConfigHolder, packetPayloadSink, &committeeManager]() {
+		return [pFsmWeak, rangeConsumer, pConfigHolder, &committeeManager]() {
 			TRY_GET_FSM()
 
-			SetPhase(pFsmShared, CommitteePhase::Commit);
-
-			const auto& committeeData = pFsmShared->committeeData();
+			auto& committeeData = pFsmShared->committeeData();
 			auto pBlock = committeeData.confirmedBlock();
 			if (!pBlock)
 				CATAPULT_THROW_RUNTIME_ERROR("commit confirmed block failed, no block");
 
 			auto stage = committeeData.committeeStage();
-			if (stage.Round != pBlock->round() ||
-				!ValidateBlockCosignatures(pBlock, committeeManager, pConfigHolder->Config().Network.CommitteeApproval)) {
-				pFsmShared->processEvent(CommitBlockFailed{});
+			const auto& config = pConfigHolder->Config().Network;
+			auto requestInterval = std::chrono::milliseconds(config.CommitteeRequestInterval.millis());
+			if (stage.Round != pBlock->round() || !ValidateBlockCosignatures(pBlock, committeeManager, config.CommitteeApproval)) {
+				committeeData.setConfirmedBlock(nullptr);
+
+				DelayAction(pFsmShared, pFsmShared->timer(), utils::ToTimePoint(utils::NetworkTime()) + requestInterval, [pFsmWeak] {
+					TRY_GET_FSM()
+
+					pFsmShared->processEvent(CommitBlockFailed{});
+				});
 				return;
 			}
 
+
 			// Commit block.
-			auto pPromise = std::make_shared<thread::promise<bool>>();
-			rangeConsumer(model::BlockRange::FromEntity(pBlock), [pPromise](auto, const auto& result) {
-				bool success = (disruptor::CompletionStatus::Aborted != result.CompletionStatus);
-				if (success) {
-					CATAPULT_LOG(info) << "successfully committed confirmed block";
-				} else {
-					auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
-					CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult))
-						<< "confirmed block commit failed due to " << validationResult;
-				}
+			bool success = false;
+			{
+				std::lock_guard<std::mutex> guard(pFsmShared->mutex());
 
-				pPromise->set_value(std::move(success));
-			});
+				auto pPromise = std::make_shared<thread::promise<bool>>();
+				rangeConsumer(model::BlockRange::FromEntity(pBlock), [pPromise](auto, const auto &result) {
+					bool success = (disruptor::CompletionStatus::Aborted != result.CompletionStatus);
+					if (success) {
+						CATAPULT_LOG(info) << "successfully committed confirmed block";
+					} else {
+						auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
+						CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult))
+							<< "confirmed block commit failed due to " << validationResult;
+					}
 
-			bool success = pPromise->get_future().get();
+					pPromise->set_value(std::move(success));
+				});
+
+				success = pPromise->get_future().get();
+			}
 
 			if (success) {
-				auto roundEndTimeMillis = GetPhaseEndTimeMillis(stage);
-				DelayAction(pFsmShared, pFsmShared->timer(), roundEndTimeMillis, [pFsmWeak] {
+				DelayAction(pFsmShared, pFsmShared->timer(), GetPhaseEndTimeMillis(stage), [pFsmWeak] {
 					TRY_GET_FSM()
 
 					pFsmShared->processEvent(CommitBlockSucceeded{});
 				});
-
-				auto pTimer = std::make_shared<boost::asio::system_timer>(pFsmShared->ioContext());
-				auto interval = std::chrono::milliseconds(pConfigHolder->Config().Network.CommitteeMessageBroadcastInterval.millis());
-				auto endPoint = stage.RoundStart + std::chrono::milliseconds(roundEndTimeMillis) - 2 * interval;
-				ScheduleBroadcast(
-					pTimer,
-					endPoint,
-					interval,
-					[pFsmWeak, packetPayloadSink]() {
-						auto pFsmShared = pFsmWeak.lock();
-						if (!pFsmShared)
-							return;
-
-						auto pBlock = pFsmShared->committeeData().confirmedBlock();
-						if (pBlock)
-							packetPayloadSink(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Push_Confirmed_Block, pBlock));
-					}
-				);
 			} else {
-				pFsmShared->processEvent(CommitBlockFailed{});
+				committeeData.setConfirmedBlock(nullptr);
+
+				DelayAction(pFsmShared, pFsmShared->timer(), utils::ToTimePoint(utils::NetworkTime()) + requestInterval, [pFsmWeak] {
+					TRY_GET_FSM()
+
+					pFsmShared->processEvent(CommitBlockFailed{});
+				});
 			}
 		};
 	}
@@ -1043,39 +1130,62 @@ namespace catapult { namespace fastfinality {
 		};
 	}
 
-	action CreateDefaultWaitForConfirmedBlockAction(
+	action CreateDefaultRequestConfirmedBlockAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		extensions::ServiceState& state,
 		const model::BlockElementSupplier& lastBlockElementSupplier) {
-		return [pFsmWeak, lastBlockElementSupplier]() {
+		return [pFsmWeak, &state, lastBlockElementSupplier]() {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
 			committeeData.setProposedBlock(nullptr);
-			committeeData.setConfirmedBlock(nullptr);
-			SetPhase(pFsmShared, CommitteePhase::Commit);
-			DelayAction(
-				pFsmShared,
-				pFsmShared->confirmedBlockWaitTimer(),
-				GetPhaseEndTimeMillis(committeeData.committeeStage()),
-				[pFsmWeak] {
+
+			if (committeeData.confirmedBlock()) {
+				pFsmShared->processEvent(ConfirmedBlockReceived{});
+				return;
+			}
+
+			auto timeout = utils::TimeSpan::FromSeconds(60);
+			auto packetIoPairs = pFsmShared->packetIoPickers().pickMultiple(timeout);
+			CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling confirmed block";
+			for (const auto& packetIoPair : packetIoPairs) {
+				auto pRemoteApi = CreateRemoteNodeApi(*packetIoPair.io(), state.pluginManager().transactionRegistry());
+				std::shared_ptr<model::Block> pBlock;
+
+				try {
+					pBlock = pRemoteApi->confirmedBlock().get();
+				} catch (...) {}
+
+				if (pBlock) {
+					if (pBlock->Height > lastBlockElementSupplier()->Block.Height + Height(1)) {
+						pFsmShared->processEvent(UnexpectedBlockHeight{});
+					} else {
+						pFsmShared->committeeData().setConfirmedBlock(pBlock);
+						pFsmShared->processEvent(ConfirmedBlockReceived{});
+					}
+					return;
+				}
+			}
+
+			auto stage = pFsmShared->committeeData().committeeStage();
+			auto phaseEndTime = stage.RoundStart + std::chrono::milliseconds(GetPhaseEndTimeMillis(stage));
+			auto currentTime = utils::ToTimePoint(utils::NetworkTime());
+			auto requestInterval = std::chrono::milliseconds(state.config().Network.CommitteeRequestInterval.millis());
+			auto silenceInterval = std::chrono::milliseconds(state.config().Network.CommitteeSilenceInterval.millis());
+			if (currentTime >= phaseEndTime - silenceInterval - requestInterval) {
+				DelayAction(pFsmShared, pFsmShared->timer(), phaseEndTime, [pFsmWeak] {
 					TRY_GET_FSM()
 
 					pFsmShared->processEvent(ConfirmedBlockNotReceived{});
-				},
-				[pFsmWeak, lastBlockElementSupplier] {
-					TRY_GET_FSM()
+				});
+				return;
+			}
 
-					auto pConfirmedBlock = pFsmShared->committeeData().confirmedBlock();
-					if (!pConfirmedBlock)
-						CATAPULT_THROW_RUNTIME_ERROR("wait for confirmed block failed, no block");
+			DelayAction(pFsmShared, pFsmShared->timer(), currentTime + requestInterval, [pFsmWeak] {
+				TRY_GET_FSM()
 
-					if (pConfirmedBlock->Height > lastBlockElementSupplier()->Block.Height + Height(1)) {
-						pFsmShared->processEvent(UnexpectedBlockHeight{});
-					} else {
-						pFsmShared->processEvent(ConfirmedBlockReceived{});
-					}
-				}
-			);
+				pFsmShared->processEvent(ConfirmedBlockRequest{});
+			});
 		};
 	}
 }}

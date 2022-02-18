@@ -329,6 +329,13 @@ namespace catapult { namespace plugins {
 		m_pStorageState = pState;
 	}
 
+	void PluginManager::setStorageStateCache(cache::CatapultCache* pCache) {
+		if (!m_pStorageState)
+			return;
+
+		m_pStorageState->setCache(pCache);
+	}
+
 	state::StorageState& PluginManager::storageState() const {
 		if (!m_pStorageState)
 			CATAPULT_THROW_RUNTIME_ERROR("storage state not set");
