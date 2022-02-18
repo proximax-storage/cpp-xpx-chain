@@ -105,6 +105,10 @@ namespace catapult { namespace cache {
 			}
 		}
 
+		auto pruningBoundary() const {
+			return deltaset::PruningBoundary<Key>();
+		}
+
 	private:
 		BcDriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pBcDriveEntries;
 		BcDriveCacheTypes::KeyTypes::BaseSetDeltaPointerType m_pDeltaKeys;

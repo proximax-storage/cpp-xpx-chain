@@ -30,7 +30,7 @@ namespace catapult { namespace observers {
 			auto& downloadCache = context.Cache.template sub<cache::DownloadChannelCache>();
 
 			for (const auto& downloadChannelCache : driveKeyCollector.keys()) {
-				auto deltaHours = (notification.Timestamp - )
+//				auto deltaHours = (notification.Timestamp - )
 			}
         }))
 	};

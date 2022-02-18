@@ -35,7 +35,7 @@ namespace catapult { namespace cache {
 	struct BcDriveBaseSets : public CacheDatabaseMixin {
 	public:
 		/// Indicates the set is not ordered.
-		using IsOrderedSet = std::false_type;
+		using IsOrderedSet = std::true_type;
 
 	public:
 		explicit BcDriveBaseSets(const CacheConfiguration& config)
@@ -64,9 +64,9 @@ namespace catapult { namespace cache {
 			};
 		}
 
-		void commit() {
+		void commit(const deltaset::PruningBoundary<Key>& boundary) {
 			Primary.commit();
-			Keys.commit();
+			Keys.commit(boundary);
 			PatriciaTree.commit();
 			flush();
 		}

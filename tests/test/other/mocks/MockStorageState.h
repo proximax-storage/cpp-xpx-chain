@@ -23,10 +23,6 @@ namespace catapult { namespace mocks {
             return false;
         }
 
-        bool channelExists(const Key& driveKey) override {
-            return false;
-        }
-
         state::Drive getDrive(const Key& driveKey) override {
             return state::Drive();
         }
@@ -34,8 +30,20 @@ namespace catapult { namespace mocks {
         bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) override {
             return false;
         }
+		bool driveExists(const Key& driveKey) override {
+			return false;
+		}
+		bool isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) override {
+			return false;
+		}
+		std::vector<Hash256> getReplicatorChannelIds(const Key& replicatorKey) override {
+			return std::vector<Hash256>();
+		}
 
-        std::vector<state::Drive> getReplicatorDrives(const Key& replicatorKey) override {
+		std::vector<Hash256> getDriveChannels(const Key& driveKey) override {
+			return std::vector<Hash256>();
+		}
+		std::vector<state::Drive> getReplicatorDrives(const Key& replicatorKey) override {
             return std::vector<state::Drive>();
         }
 

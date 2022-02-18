@@ -28,7 +28,7 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Initializes the cache with \a keys.
-		void init(const std::unordered_set<Key, utils::ArrayHasher<Key>>& keys) {
+		void init(const std::set<Key>& keys) {
 			auto delta = createDelta(Height());
 			for (const auto& key : keys)
 				delta.insertKey(key);

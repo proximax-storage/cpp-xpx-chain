@@ -55,4 +55,37 @@ namespace catapult { namespace cache {
 			return TDescriptor::KeyToBoundary(key);
 		}
 	};
+
+	template<typename TDescriptor>
+	class OrderedSetIdentifierSerializer {
+	private:
+		using ValueType = typename TDescriptor::ValueType;
+
+	public:
+		/// Serializes \a value to string.
+		static std::string SerializeValue(const ValueType& value) {
+			io::StringOutputStream output(sizeof(VersionType) + sizeof(ValueType));
+
+			// write version
+			io::Write32(output, 1);
+
+			io::Write(output, value);
+
+			return output.str();
+		}
+
+		/// Deserializes value from \a buffer.
+		static ValueType DeserializeValue(const RawBuffer& buffer) {
+			io::BufferInputStreamAdapter<RawBuffer> input(buffer);
+
+			// read version
+			VersionType version = io::Read32(input);
+			if (version > 1)
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of identifier", version);
+
+			auto value = io::Read<ValueType>(input);
+
+			return value;
+		}
+	};
 }}

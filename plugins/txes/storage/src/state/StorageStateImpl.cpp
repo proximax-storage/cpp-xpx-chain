@@ -80,7 +80,8 @@ namespace catapult { namespace state {
 		if (!driveEntry) {
 			return false;
 		}
-        return driveEntry->replicators().find(key) != driveEntry.replicators().end();
+		return true;
+        // return driveEntry->replicators().find(key) != driveEntry.replicators().end();
     }
 
     bool StorageStateImpl::isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) {
@@ -90,7 +91,8 @@ namespace catapult { namespace state {
 		if (!driveEntry) {
 			return false;
 		}
-    	return driveEntry->replicators().find(key) != driveEntry.replicators().end();
+		return true;
+		// return driveEntry->replicators().find(key) != driveEntry.replicators().end();
     }
 
     std::vector<Key> StorageStateImpl::getReplicatorDriveKeys(const Key& replicatorKey) {
@@ -127,10 +129,14 @@ namespace catapult { namespace state {
     	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
     	auto driveIter = pDriveCacheView->find(driveKey);
     	const auto& driveEntry = driveIter.get();
-		return driveEntry.downloadShards();
+		return {};
+//		return driveEntry.downloadShards();
+	}
+	std::vector<Hash256> StorageStateImpl::getReplicatorChannelIds(const Key& replicatorKey) {
+		return std::vector<Hash256>();
 	}
 
-    std::vector<Key> StorageStateImpl::getDriveReplicators(const Key& driveKey) {
+	std::vector<Key> StorageStateImpl::getDriveReplicators(const Key& driveKey) {
         auto drive = GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
         return {drive.Replicators.begin(), drive.Replicators.end()};
     }

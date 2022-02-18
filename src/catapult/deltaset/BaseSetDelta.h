@@ -126,6 +126,18 @@ namespace catapult { namespace deltaset {
 			return iter;
 		}
 
+		FindConstIterator optimisticFindLowerOrEqual(const KeyType& key) const {
+			return OptimisticFindLowerOrEqual<FindConstIterator>(*this, key);
+		}
+
+		FindIterator optimisticFindLowerOrEqual(const KeyType& key) {
+			auto iter = OptimisticFindLowerOrEqual<FindIterator>(*this, key);
+			if (!!iter.get())
+				markFoundElement(key, ElementMutabilityTag());
+
+			return iter;
+		}
+
 	private:
 		template<typename TResultIterator, typename TBaseSetDelta>
 		static TResultIterator Find(TBaseSetDelta& set, const KeyType& key) {
@@ -174,7 +186,73 @@ namespace catapult { namespace deltaset {
 			// find can never modify an immutable element
 		}
 
-	public:
+//		template<typename TResultIterator, typename TBaseSetDelta>
+//		static TResultIterator LowerBound(TBaseSetDelta& set, const KeyType& key);
+
+	template<typename TResultIterator, typename TBaseSetDelta>
+	static TResultIterator OptimisticFindLowerOrEqual(TBaseSetDelta& set, const KeyType& key) {
+		auto addedIterGreater = set.m_addedElements.upper_bound(key);
+		FindConstIterator addedIter = addedIterGreater == set.m_addedElements.cbegin() ? FindConstIterator(std::move(--addedIterGreater)) : FindConstIterator();
+
+		auto originalIter = set.optimisticFindLowerOrEqual(key, ElementMutabilityTag());
+
+		FindConstIterator possibleIter;
+
+		const auto* pAddedKey = addedIter.template getKey<const KeyType*>();
+		const auto* pOriginalKey = originalIter.template getKey<const KeyType*>();
+
+		if (!pOriginalKey) {
+			possibleIter = std::move(addedIter);
+		}
+		else if (!pAddedKey) {
+			possibleIter = std::move(originalIter);
+		}
+		else
+		{
+			// Both iterators point to real object
+			if (*pOriginalKey > *pAddedKey) {
+				possibleIter = std::move(originalIter);
+			}
+			else {
+				possibleIter = std::move(addedIter);
+			}
+		}
+
+		auto * possibleKey = possibleIter.template getKey<const KeyType*>();
+		if (!possibleKey || Contains(set.m_removedElements, *possibleKey)) {
+			return TResultIterator();
+		}
+
+		return TResultIterator(std::move(possibleIter));
+	}
+
+	FindIterator optimisticFindLowerOrEqual(const KeyType& key, MutableTypeTag) {
+		auto copiedIter = m_copiedElements.upper_bound(key);
+		if (m_copiedElements.cbegin() != copiedIter)
+			return FindIterator(std::move(--copiedIter));
+
+		auto originalIter = optimisticFindLowerOrEqual(key, ImmutableTypeTag());
+		if (!originalIter.get())
+			return FindIterator();
+
+		auto copy = TElementTraits::Copy(originalIter.get());
+		auto result = m_copiedElements.insert(SetTraits::ToStorage(copy));
+		return FindIterator(std::move(result.first));
+	}
+
+	FindConstIterator optimisticFindLowerOrEqual(const KeyType& key, MutableTypeTag) const {
+		auto copiedIter = m_copiedElements.upper_bound(key);
+		return m_copiedElements.cbegin() != copiedIter ? FindConstIterator(std::move(--copiedIter))
+												: optimisticFindLowerOrEqual(key, ImmutableTypeTag());
+	}
+
+	FindConstIterator optimisticFindLowerOrEqual(const KeyType& key, ImmutableTypeTag) const {
+		auto originalIter = m_originalElements.findLowerOrEqual2(key);
+		return m_originalElements.cend() != originalIter ? FindConstIterator(std::move(originalIter))
+														 : FindConstIterator();
+	}
+
+public:
 		/// Searches for \a key in this set.
 		/// Returns \c true if it is found or \c false if it is not found.
 		bool contains(const KeyType& key) const {

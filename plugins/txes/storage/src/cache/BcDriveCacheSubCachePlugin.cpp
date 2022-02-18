@@ -26,7 +26,7 @@ namespace catapult { namespace cache {
 	}
 
 	void BcDriveCacheSummaryCacheStorage::loadAll(io::InputStream& input, size_t) {
-		std::unordered_set<Key, utils::ArrayHasher<Key>> keys;
+		std::set<Key> keys;
 		// TODO: remove this temporary workaround after mainnet upgrade to 0.8.0
 		if (!input.eof()) {
 			// read version

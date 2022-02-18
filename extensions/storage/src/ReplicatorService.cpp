@@ -196,7 +196,7 @@ namespace catapult { namespace storage {
 			}
         }
 
-        void increaseDownloadChannelSize(const Hash256& channelId, size_t downloadSize) {
+        void increaseDownloadChannelSize(const Hash256& channelId) {
             CATAPULT_LOG(debug) << "updating download channel " << channelId.data();
 
             auto pChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), channelId);
@@ -215,7 +215,7 @@ namespace catapult { namespace storage {
 
             auto pChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), channelId);
 			if (!!pChannel) {
-				m_pReplicator->asyncInitiateDownloadApprovalTransactionInfo(eventHash, channelId.array());
+				m_pReplicator->asyncInitiateDownloadApprovalTransactionInfo(eventHash.array(), channelId.array());
 			}
         }
 
@@ -380,7 +380,7 @@ namespace catapult { namespace storage {
 		void updateDownloadChannelReplicators(const Hash256& channelId) {
         	CATAPULT_LOG(debug) << "update channel replicators" << channelId;
 
-        	auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(channelId));
+        	auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(channelId.array()));
         	m_pReplicator->asyncSetDownloadChannelShard(channelId.array(), replicators);
         }
 
