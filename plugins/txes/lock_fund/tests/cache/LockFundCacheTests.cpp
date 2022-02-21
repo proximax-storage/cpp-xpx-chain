@@ -18,13 +18,11 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-
-#include "tests/test/LockFundTestUtils.h"
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/CacheMixinsTests.h"
-#include "tests/test/cache/CachePruneTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
-#include "tests/TestHarness.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/LockFundTestUtils.h"
 
 namespace catapult { namespace cache {
 
@@ -282,7 +280,7 @@ namespace catapult { namespace cache {
 				for(auto& record : recordGroup.LockFundRecords)
 				{
 					state::LockFundRecordGroup<LockFundKeyIndexDescriptor> cacheRecord = view->find(record.first).get();
-					EXPECT_EQ(cacheRecord.LockFundRecords.begin()->second, record.second);
+					test::AssertEqual(cacheRecord.LockFundRecords.begin()->second, record.second);
 				}
 			}
 		});

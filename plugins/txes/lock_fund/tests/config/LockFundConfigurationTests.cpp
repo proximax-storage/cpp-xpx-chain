@@ -54,13 +54,13 @@ namespace catapult { namespace config {
 
 			static void AssertZero(const LockFundConfiguration& config) {
 				// Assert:
-				EXPECT_EQ(0u, config.MinRequestUnlockCooldown);
+				EXPECT_EQ(0u, config.MinRequestUnlockCooldown.unwrap());
 				EXPECT_EQ(0u, config.MaxMosaicsSize);
 			}
 
 			static void AssertCustom(const LockFundConfiguration& config) {
 				// Assert:
-				EXPECT_EQ(161280u, config.MinRequestUnlockCooldown);
+				EXPECT_EQ(161280u, config.MinRequestUnlockCooldown.unwrap());
 				EXPECT_EQ(256u, config.MaxMosaicsSize);
 			}
 		};

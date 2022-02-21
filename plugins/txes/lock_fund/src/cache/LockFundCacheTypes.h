@@ -90,6 +90,7 @@ namespace catapult { namespace cache {
 			using KeyType = Key;
 			using ValueType = state::LockFundRecordGroup<LockFundKeyIndexDescriptor>;
 			using Serializer = KeyedLockFundSerializer;
+			static constexpr auto Name = "LockFundCacheKeyed";
 
 		public:
 			static auto GetKeyFromValue(const ValueType& LockFund) {

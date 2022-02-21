@@ -18,18 +18,16 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/validators/ValidationResult.h"
-#include "src/cache/LockFundCache.h"
+#pragma once
 #include "catapult/cache_core/AccountStateCache.h"
-#include "src/config/LockFundConfiguration.h"
-#include "src/validators/Validators.h"
-#include "src/model/LockFundNotifications.h"
-#include "tests/test/plugins/ValidatorTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "src/cache/LockFundCache.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
+#include "src/validators/Validators.h"
+#include "catapult/validators/ValidationResult.h"
+#include "src/config/LockFundConfiguration.h"
+#include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
-#include "tests/test/nodeps/KeyTestUtils.h"
-#include "src/cache/LockFundCacheTypes.h"
+
 namespace catapult { namespace test {
 
 	constexpr auto Success_Result = validators::ValidationResult::Success;
@@ -80,48 +78,24 @@ namespace catapult { namespace test {
 			EXPECT_EQ(pair.second.Active(), deserializedPair->second.Active());
 			for(auto mosaic : pair.second.Get())
 			{
-				EXPECT_EQ(deserializedPair->second.Get().find(mosaic.first), mosaic.second);
+				EXPECT_EQ(deserializedPair->second.Get().find(mosaic.first)->second, mosaic.second);
 			}
 			for(auto inactiveRecord  : pair.second.InactiveRecords)
 			{
 				int i = 0;
 				for(auto mosaic : inactiveRecord)
 				{
-					EXPECT_EQ(deserializedPair->second.InactiveRecords[i].find(mosaic.first), mosaic.second);
+					EXPECT_EQ(deserializedPair->second.InactiveRecords[i].find(mosaic.first)->second, mosaic.second);
 					i++;
 				}
 			}
 		}
 	}
 
-	auto DeriveKeyRecordsFromHeightRecord(state::LockFundRecordGroup<cache::LockFundHeightIndexDescriptor> record)
-	{
-		std::unordered_map<Key, state::LockFundRecordGroup<cache::LockFundKeyIndexDescriptor>, utils::ArrayHasher<Key>> results;
-		for(auto lockFundRecord : record.LockFundRecords)
-		{
-			auto keyGroup = results.find(lockFundRecord.first);
-			if(keyGroup != results.end())
-			{
-				auto heightRecord = keyGroup->second.LockFundRecords.find(record.Identifier);
-				if(heightRecord != keyGroup->second.LockFundRecords.end())
-				{
-					if(lockFundRecord.second.Active())
-						heightRecord->second.Set(lockFundRecord.second.Get());
-					heightRecord->second.InactiveRecords = lockFundRecord.second.InactiveRecords;
-				}
-				else
-					keyGroup->second.LockFundRecords.insert(std::make_pair(record.Identifier, lockFundRecord.second));
-			}
-			else
-			{
-				state::LockFundRecordGroup<cache::LockFundKeyIndexDescriptor> group;
-				group.Identifier = lockFundRecord.first;
-				group.LockFundRecords.insert(std::make_pair(record.Identifier, lockFundRecord.second));
-				results.insert(std::make_pair(group.Identifier, group));
-			}
-		}
-		return results;
-	}
+	void AssertEqual(state::LockFundRecord originalRecord, state::LockFundRecord loadedRecord);
+
+	std::unordered_map<Key, state::LockFundRecordGroup<cache::LockFundKeyIndexDescriptor>, utils::ArrayHasher<Key>> DeriveKeyRecordsFromHeightRecord(state::LockFundRecordGroup<cache::LockFundHeightIndexDescriptor> record);
+
 	struct DefaultRecordGroupGeneratorTraitsBase
 	{
 		static std::optional<state::LockFundRecordMosaicMap> GenerateActiveRecord(uint32_t index)

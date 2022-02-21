@@ -18,17 +18,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/cache/LockFundCache.h"
-#include "catapult/cache_core/AccountStateCache.h"
-#include "src/config/LockFundConfiguration.h"
-#include "src/validators/Validators.h"
-#include "src/model/LockFundNotifications.h"
-#include "tests/test/plugins/ValidatorTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/LockFundTestUtils.h"
-#include "tests/TestHarness.h"
 #include "tests/test/nodeps/KeyTestUtils.h"
+
 namespace catapult { namespace validators {
 
 #define TEST_CLASS LockFundCancelUnlockValidatorTests

@@ -21,6 +21,7 @@
 #pragma once
 
 #include <map>
+#include "catapult/types.h"
 #include <optional>
 namespace catapult { namespace state {
 

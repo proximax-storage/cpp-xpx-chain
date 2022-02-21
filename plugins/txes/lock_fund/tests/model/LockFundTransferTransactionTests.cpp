@@ -62,7 +62,7 @@ namespace catapult { namespace model {
 
 	namespace {
 		struct LockFundTransferTransactionTraits {
-			static auto GenerateEntityWithAttachments(uint16_t messageSize, uint8_t numMosaics) {
+			static auto GenerateEntityWithAttachments(uint8_t numMosaics) {
 				uint32_t entitySize = sizeof(LockFundTransferTransaction) + numMosaics * sizeof(Mosaic);
 				auto pTransaction = utils::MakeUniqueWithSize<LockFundTransferTransaction>(entitySize);
 				pTransaction->Size = entitySize;

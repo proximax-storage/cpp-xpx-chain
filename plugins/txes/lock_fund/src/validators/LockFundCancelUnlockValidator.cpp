@@ -27,8 +27,8 @@ namespace catapult { namespace validators {
 
 	using Notification = model::LockFundCancelUnlockNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(LockFundCancelUnlockValidator, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(LockFundCancelUnlockValidator, ([](const Notification& notification, const ValidatorContext& context) {
+	DECLARE_STATEFUL_VALIDATOR(LockFundCancelUnlock, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(LockFundCancelUnlock, ([](const Notification& notification, const ValidatorContext& context) {
             auto& lockFundCache = context.Cache.sub<cache::LockFundCache>();
 			auto keyRecordIt = lockFundCache.find(notification.Sender);
 			auto keyRecord = keyRecordIt.tryGet();

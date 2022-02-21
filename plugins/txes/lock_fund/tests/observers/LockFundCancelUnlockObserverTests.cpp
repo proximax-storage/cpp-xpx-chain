@@ -18,7 +18,6 @@
 *** You should have received a copy of the GNU Lesser General Public License
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
-#include "catapult/cache_core/AccountStateCache.h"
 #include "src/cache/LockFundCache.h"
 #include "src/config/LockFundConfiguration.h"
 #include "src/observers/Observers.h"

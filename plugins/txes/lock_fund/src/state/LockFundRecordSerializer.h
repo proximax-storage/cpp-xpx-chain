@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/io/Stream.h"
 #include "LockFundRecordGroup.h"
+#include "catapult/utils/Casting.h"
 
 namespace catapult { namespace state {
 

@@ -104,8 +104,8 @@ namespace catapult { namespace validators {
 			return ValidationResult::Success;
 		}
 	}
-	DECLARE_STATEFUL_VALIDATOR(LockFundTransferValidator, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(LockFundTransferValidator, ([](const Notification& notification, const ValidatorContext& context) {
+	DECLARE_STATEFUL_VALIDATOR(LockFundTransfer, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(LockFundTransfer, ([](const Notification& notification, const ValidatorContext& context) {
             const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::LockFundConfiguration>();
 			if(notification.Duration != BlockDuration(0) && notification.Duration < pluginConfig.MinRequestUnlockCooldown)
 				return Failure_LockFund_Duration_Smaller_Than_Configured;

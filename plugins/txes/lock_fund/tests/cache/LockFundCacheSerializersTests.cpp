@@ -19,8 +19,6 @@
 **/
 
 #include "src/cache/LockFundCacheSerializers.h"
-#include "tests/TestHarness.h"
-#include "src/cache/LockFundCacheTypes.h"
 #include "tests/test/LockFundTestUtils.h"
 
 namespace catapult { namespace cache {

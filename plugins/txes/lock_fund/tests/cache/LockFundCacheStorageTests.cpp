@@ -5,7 +5,6 @@
 **/
 #include "tests/test/LockFundTestUtils.h"
 #include "src/cache/LockFundCacheStorage.h"
-#include "tests/TestHarness.h"
 
 
 namespace catapult { namespace cache {

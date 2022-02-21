@@ -65,28 +65,28 @@ namespace catapult { namespace state {
 		// Sanity check:
 		EXPECT_TRUE(lockFundRecord.Active());
 		EXPECT_EQ(2, lockFundRecord.Size());
-		EXPECT_TRUE(lockFundRecord.Get().find(MosaicId(272)).tryGet());
+		EXPECT_NE(lockFundRecord.Get().find(MosaicId(272)), lockFundRecord.Get().end());
 
 		lockFundRecord.Reactivate();
 
 		// Sanity check:
 		EXPECT_TRUE(lockFundRecord.Active());
 		EXPECT_EQ(1, lockFundRecord.Size());
-		EXPECT_TRUE(lockFundRecord.Get().find(MosaicId(172)).tryGet());
+			EXPECT_NE(lockFundRecord.Get().find(MosaicId(272)), lockFundRecord.Get().end());
 
 		lockFundRecord.Reactivate();
 
 		// Sanity check:
 		EXPECT_TRUE(lockFundRecord.Active());
 		EXPECT_EQ(0, lockFundRecord.Size());
-		EXPECT_TRUE(lockFundRecord.Get().find(MosaicId(72)).tryGet());
+		EXPECT_NE(lockFundRecord.Get().find(MosaicId(272)), lockFundRecord.Get().end());
 
 		lockFundRecord.Unset();
 
 		// Sanity check:
 		EXPECT_FALSE(lockFundRecord.Active());
 		EXPECT_EQ(0, lockFundRecord.Size());
-		EXPECT_FALSE(lockFundRecord.Get().find(MosaicId(72)).tryGet());
+		EXPECT_EQ(lockFundRecord.Get().find(MosaicId(72)), lockFundRecord.Get().end());
 
 	}
 

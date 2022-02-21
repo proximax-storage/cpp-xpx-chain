@@ -104,7 +104,7 @@ namespace catapult { namespace observers {
 			  for(auto& mosaic : mosaics)
 			  {
 				  EXPECT_EQ(mosaic.second, account.Balances.get(mosaic.first));
-				  EXPECT_EQ(0, account.Balances.getLocked(mosaic.first));
+				  EXPECT_EQ(0, account.Balances.getLocked(mosaic.first).unwrap());
 			  }
 			});
 		}
@@ -130,8 +130,8 @@ namespace catapult { namespace observers {
 				  EXPECT_EQ(1u, account.Balances.size());
 				  EXPECT_EQ(1u, account.Balances.lockedBalances().size());
 				  EXPECT_EQ(1u, account.Balances.balances().size());
-				  EXPECT_EQ(100, account.Balances.get(MosaicId(72)));
-				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(72)));
+				  EXPECT_EQ(100, account.Balances.get(MosaicId(72)).unwrap());
+				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(72)).unwrap());
 				});
 
 		auto newContext = context.alterMode(NotifyMode::Rollback);
@@ -164,12 +164,12 @@ namespace catapult { namespace observers {
 				  EXPECT_EQ(3u, account.Balances.size());
 				  EXPECT_EQ(3u, account.Balances.lockedBalances().size());
 				  EXPECT_EQ(3u, account.Balances.balances().size());
-				  EXPECT_EQ(100, account.Balances.get(MosaicId(72)));
-				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(72)));
-				  EXPECT_EQ(100, account.Balances.get(MosaicId(172)));
-				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(172)));
-				  EXPECT_EQ(100, account.Balances.get(MosaicId(200)));
-				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(200)));
+				  EXPECT_EQ(100, account.Balances.get(MosaicId(72)).unwrap());
+				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(72)).unwrap());
+				  EXPECT_EQ(100, account.Balances.get(MosaicId(172)).unwrap());
+				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(172)).unwrap());
+				  EXPECT_EQ(100, account.Balances.get(MosaicId(200)).unwrap());
+				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(200)).unwrap());
 				});
 
 		auto newContext = context.alterMode(NotifyMode::Rollback);
@@ -195,8 +195,8 @@ namespace catapult { namespace observers {
 				  EXPECT_EQ(1u, account.Balances.size());
 				  EXPECT_EQ(1u, account.Balances.lockedBalances().size());
 				  EXPECT_EQ(0u, account.Balances.balances().size());
-				  EXPECT_EQ(0, account.Balances.get(MosaicId(72)));
-				  EXPECT_EQ(200, account.Balances.getLocked(MosaicId(72)));
+				  EXPECT_EQ(0, account.Balances.get(MosaicId(72)).unwrap());
+				  EXPECT_EQ(200, account.Balances.getLocked(MosaicId(72)).unwrap());
 				});
 
 		auto newContext = context.alterMode(NotifyMode::Rollback);
@@ -228,12 +228,12 @@ namespace catapult { namespace observers {
 				  EXPECT_EQ(3u, account.Balances.size());
 				  EXPECT_EQ(3u, account.Balances.lockedBalances().size());
 				  EXPECT_EQ(1u, account.Balances.balances().size());
-				  EXPECT_EQ(0, account.Balances.get(MosaicId(72)));
-				  EXPECT_EQ(200, account.Balances.getLocked(MosaicId(72)));
-				  EXPECT_EQ(100, account.Balances.get(MosaicId(172)));
-				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(172)));
-				  EXPECT_EQ(0, account.Balances.get(MosaicId(200)));
-				  EXPECT_EQ(200, account.Balances.getLocked(MosaicId(200)));
+				  EXPECT_EQ(0, account.Balances.get(MosaicId(72)).unwrap());
+				  EXPECT_EQ(200, account.Balances.getLocked(MosaicId(72)).unwrap());
+				  EXPECT_EQ(100, account.Balances.get(MosaicId(172)).unwrap());
+				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(172)).unwrap());
+				  EXPECT_EQ(0, account.Balances.get(MosaicId(200)).unwrap());
+				  EXPECT_EQ(200, account.Balances.getLocked(MosaicId(200)).unwrap());
 				});
 
 		auto newContext = context.alterMode(NotifyMode::Rollback);
@@ -275,16 +275,16 @@ namespace catapult { namespace observers {
 		  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Get();
 		  auto heightRecord = lockFundHeightRecord->LockFundRecords.find(signer)->second.Get();
 		  EXPECT_EQ(heightRecord.size(), 1);
-		  EXPECT_EQ(heightRecord.find(MosaicId(72))->second, 200);
+		  EXPECT_EQ(heightRecord.find(MosaicId(72))->second.unwrap(), 200);
 		  EXPECT_EQ(keyRecord.size(), 1);
-		  EXPECT_EQ(keyRecord.find(MosaicId(72))->second, 200);
+		  EXPECT_EQ(keyRecord.find(MosaicId(72))->second.unwrap(), 200);
 
 		  //Validate Balances
 		  EXPECT_EQ(1u, account.Balances.size());
 		  EXPECT_EQ(1u, account.Balances.lockedBalances().size());
 		  EXPECT_EQ(0u, account.Balances.balances().size());
-		  EXPECT_EQ(0, account.Balances.get(MosaicId(72)));
-		  EXPECT_EQ(200, account.Balances.getLocked(MosaicId(72)));
+		  EXPECT_EQ(0, account.Balances.get(MosaicId(72)).unwrap());
+		  EXPECT_EQ(200, account.Balances.getLocked(MosaicId(72)).unwrap());
 		});
 		// Act: rollback and verify
 		auto newContext = context.alterMode(NotifyMode::Rollback);
@@ -344,7 +344,7 @@ namespace catapult { namespace observers {
 
 				  for(auto mosaic : mosaics)
 				  {
-					  EXPECT_EQ(0, account.Balances.get(mosaic.first));
+					  EXPECT_EQ(0, account.Balances.get(mosaic.first).unwrap());
 					  EXPECT_EQ(mosaic.second, account.Balances.getLocked(mosaic.first));
 				  }
 
