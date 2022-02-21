@@ -71,7 +71,7 @@ namespace catapult { namespace cache {
 			using CacheDeltaType = BcDriveCacheDelta;
 			using CacheViewType = BcDriveCacheView;
 
-			using Serializer = OrderedSetIdentifierSerializer<KeyTypesDescriptor>;
+			using Serializer = UnorderedSetIdentifierSerializer<KeyTypesDescriptor>;
 
 		public:
 			static auto GetKeyFromValue(const ValueType& key) {
@@ -81,8 +81,8 @@ namespace catapult { namespace cache {
 
 		// endregion
 
-		using PrimaryTypes = MutableOrderedMapAdapter<BcDriveCacheDescriptor>;
-		using KeyTypes = MutableOrderedMemorySetAdapter<KeyTypesDescriptor>;
+		using PrimaryTypes = MutableUnorderedMapAdapter<BcDriveCacheDescriptor, utils::ArrayHasher<Key>>;
+		using KeyTypes = MutableUnorderedMemorySetAdapter<KeyTypesDescriptor, utils::ArrayHasher<Key>>;
 
 		using BaseSetDeltaPointers = BcDriveBaseSetDeltaPointers;
 		using BaseSets = BcDriveBaseSets;

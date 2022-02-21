@@ -286,7 +286,7 @@ namespace catapult { namespace cache {
 		TDescriptor>;
 
 	namespace detail {
-		/// Defines cache types for an unordered map based cache.
+		/// Defines cache types for an ordered map based cache.
 		template<typename TElementTraits, typename TDescriptor>
 		struct OrderedMapAdapter {
 		private:

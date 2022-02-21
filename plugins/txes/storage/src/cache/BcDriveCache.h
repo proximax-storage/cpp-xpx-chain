@@ -21,8 +21,6 @@ namespace catapult { namespace cache {
 		explicit BasicBcDriveCache(
 			const CacheConfiguration& config,
 			const std::shared_ptr<DriveKeyCollector>& pKeyCollector,
-//			const Key m_storagePaymentsQueueFirst,
-//			Key m_storagePaymentsQueueFirst,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: BcDriveBasicCache(config, std::move(pConfigHolder))
 				, m_pKeyCollector(pKeyCollector)
@@ -30,7 +28,7 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Initializes the cache with \a keys.
-		void init(const std::set<Key>& keys) {
+		void init(const std::unordered_set<Key, utils::ArrayHasher<Key>>& keys) {
 			auto delta = createDelta(Height());
 			for (const auto& key : keys)
 				delta.insertKey(key);
@@ -43,8 +41,6 @@ namespace catapult { namespace cache {
 		}
 
 	private:
-		Key m_storagePaymentsQueueFirst;
-		Key m_storagePaymentsQueueLast;
 		std::shared_ptr<DriveKeyCollector> m_pKeyCollector;
 	};
 
