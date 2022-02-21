@@ -263,17 +263,17 @@ namespace catapult { namespace observers {
 		  EXPECT_TRUE(lockFundHeightRecord);
 		  EXPECT_EQ(lockFundKeyRecord->LockFundRecords.size(), lockFundHeightRecord->LockFundRecords.size());
 		  EXPECT_EQ(lockFundKeyRecord->LockFundRecords.size(), 1);
-		  EXPECT_TRUE(lockFundHeightRecord->LockFundRecords.find(signer)->second.ActiveRecord.has_value());
+		  EXPECT_TRUE(lockFundHeightRecord->LockFundRecords.find(signer)->second.Active());
 		  EXPECT_FALSE(lockFundHeightRecord->LockFundRecords.find(signer)->second.InactiveRecords.size());
-		  EXPECT_TRUE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.ActiveRecord.has_value());
+		  EXPECT_TRUE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Active());
 		  EXPECT_FALSE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.InactiveRecords.size());
 		  EXPECT_EQ(lockFundKeyRecord->Identifier, signer);
 		  EXPECT_EQ(lockFundHeightRecord->Identifier, Height(10));
 
 		  //Validate unlocking amounts
 
-		  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(10))->second.ActiveRecord.value();
-		  auto heightRecord = lockFundHeightRecord->LockFundRecords.find(signer)->second.ActiveRecord.value();
+		  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Get();
+		  auto heightRecord = lockFundHeightRecord->LockFundRecords.find(signer)->second.Get();
 		  EXPECT_EQ(heightRecord.size(), 1);
 		  EXPECT_EQ(heightRecord.find(MosaicId(72))->second, 200);
 		  EXPECT_EQ(keyRecord.size(), 1);
@@ -318,16 +318,16 @@ namespace catapult { namespace observers {
 				  EXPECT_TRUE(lockFundHeightRecord);
 				  EXPECT_EQ(lockFundKeyRecord->LockFundRecords.size(), lockFundHeightRecord->LockFundRecords.size());
 				  EXPECT_EQ(lockFundKeyRecord->LockFundRecords.size(), 1);
-				  EXPECT_TRUE(lockFundHeightRecord->LockFundRecords.find(signer)->second.ActiveRecord.has_value());
+				  EXPECT_TRUE(lockFundHeightRecord->LockFundRecords.find(signer)->second.Active());
 				  EXPECT_FALSE(lockFundHeightRecord->LockFundRecords.find(signer)->second.InactiveRecords.size());
-				  EXPECT_TRUE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.ActiveRecord.has_value());
+				  EXPECT_TRUE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Active());
 				  EXPECT_FALSE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.InactiveRecords.size());
 				  EXPECT_EQ(lockFundKeyRecord->Identifier, signer);
 				  EXPECT_EQ(lockFundHeightRecord->Identifier, Height(10));
 
 				  //Validate unlocking amounts
-				  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(10))->second.ActiveRecord.value();
-				  auto heightRecord = lockFundHeightRecord->LockFundRecords.find(signer)->second.ActiveRecord.value();
+				  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Get();
+				  auto heightRecord = lockFundHeightRecord->LockFundRecords.find(signer)->second.Get();
 				  EXPECT_EQ(heightRecord.size(), mosaics.size());
 				  EXPECT_EQ(keyRecord.size(), mosaics.size());
 				  for(auto mosaic : mosaics)
@@ -384,16 +384,16 @@ namespace catapult { namespace observers {
 				  EXPECT_TRUE(lockFundHeightRecord);
 				  EXPECT_EQ(lockFundKeyRecord->LockFundRecords.size(), lockFundHeightRecord->LockFundRecords.size());
 				  EXPECT_EQ(lockFundKeyRecord->LockFundRecords.size(), 1);
-				  EXPECT_TRUE(lockFundHeightRecord->LockFundRecords.find(signer)->second.ActiveRecord.has_value());
+				  EXPECT_TRUE(lockFundHeightRecord->LockFundRecords.find(signer)->second.Active());
 				  EXPECT_FALSE(lockFundHeightRecord->LockFundRecords.find(signer)->second.InactiveRecords.size());
-				  EXPECT_TRUE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.ActiveRecord.has_value());
+				  EXPECT_TRUE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Active());
 				  EXPECT_FALSE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.InactiveRecords.size());
 				  EXPECT_EQ(lockFundKeyRecord->Identifier, signer);
 				  EXPECT_EQ(lockFundHeightRecord->Identifier, Height(10));
 
 				  //Validate unlocking amounts
-				  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(10))->second.ActiveRecord.value();
-				  auto heightRecord = lockFundHeightRecord->LockFundRecords.find(signer)->second.ActiveRecord.value();
+				  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Get();
+				  auto heightRecord = lockFundHeightRecord->LockFundRecords.find(signer)->second.Get();
 				  EXPECT_EQ(heightRecord.size(), mosaics.size());
 				  EXPECT_EQ(keyRecord.size(), mosaics.size());
 				  for(auto mosaic : mosaics)

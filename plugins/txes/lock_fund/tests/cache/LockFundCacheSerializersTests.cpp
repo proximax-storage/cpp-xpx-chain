@@ -65,58 +65,161 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, HeightBasedSerializer_CanSerializeFullValue) {
 		// Arrange:
-		auto ns = test::GenerateRecordGroup<LockFundHeightIndexDescriptor, test::DefaultRecordGroupGeneratorKeyTraits>(Height(10), 3);
+		auto ns = test::GenerateRecordGroup<LockFundHeightIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<LockFundHeightIndexDescriptor>>(Height(10), 3);
 
 		// Act:
 		auto result = HeightBasedSerializer::SerializeValue(ns);
 
 		// Assert:
+
+		// Size
+		ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) + sizeof(uint32_t) + 3 * (sizeof(Key) + sizeof(uint32_t) + ACTIVE_RECORD_SIZE + 2*(MOSAIC_SIZE)), result.size());
+
+		// Data
+		const auto* pWalker = reinterpret_cast<const uint8_t*>(result.data() + sizeof(VersionType));
+		EXPECT_EQ(10, *reinterpret_cast<const uint64_t*>(pWalker));
+		pWalker += sizeof(Height);
+		EXPECT_EQ(3, *reinterpret_cast<const uint32_t*>(pWalker));
+		pWalker += sizeof(uint32_t);
+		for(auto i = 0; i < 3; i++)
+		{
+			EXPECT_EQ(ns.LockFundRecords.find(*reinterpret_cast<const Key*>(pWalker))->first, *reinterpret_cast<const Key*>(pWalker));
+			pWalker += sizeof(Key);
+			EXPECT_EQ(*reinterpret_cast<const uint8_t*>(pWalker), 1);
+			pWalker += sizeof(uint8_t);
+			EXPECT_EQ(*reinterpret_cast<const uint8_t*>(pWalker), 1);
+			pWalker += sizeof(uint8_t);
+			EXPECT_EQ(*reinterpret_cast<const MosaicId*>(pWalker), MosaicId(72));
+			pWalker += sizeof(MosaicId);
+			EXPECT_EQ(*reinterpret_cast<const Amount*>(pWalker), Amount(200));
+			pWalker += sizeof(Amount);
+			EXPECT_EQ(*reinterpret_cast<const uint32_t*>(pWalker), 2);
+			pWalker += sizeof(uint32_t);
+			EXPECT_EQ(*reinterpret_cast<const MosaicId*>(pWalker), MosaicId(73));
+			pWalker += sizeof(MosaicId);
+			EXPECT_EQ(*reinterpret_cast<const Amount*>(pWalker), Amount(400));
+			pWalker += sizeof(Amount);
+			EXPECT_EQ(*reinterpret_cast<const MosaicId*>(pWalker), MosaicId(73));
+			pWalker += sizeof(MosaicId);
+			EXPECT_EQ(*reinterpret_cast<const Amount*>(pWalker), Amount(400));
+		}
+	}
+
+	TEST(TEST_CLASS, KeyBasedSerializer_CanSerializeFullValue) {
+		// Arrange:
+		auto key = test::GenerateRandomByteArray<Key>();
+		auto ns = test::GenerateRecordGroup<LockFundKeyIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<LockFundKeyIndexDescriptor>>(key, 3);
+
+		// Act:
+		auto result = KeyBasedSerializer::SerializeValue(ns);
+
+		// Assert:
+
+		// Size
 		ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) + sizeof(uint32_t) + 3 * (sizeof(Height) + sizeof(uint32_t) + ACTIVE_RECORD_SIZE + 2*(MOSAIC_SIZE)), result.size());
 
-		const auto* pIdentifier = reinterpret_cast<const uint64_t*>(result.data() + sizeof(VersionType));
-		EXPECT_EQ(10, *pIdentifier);
-		const auto* pSize = reinterpret_cast<const uint32_t*>(pIdentifier + sizeof(Height));
-		EXPECT_EQ(3, *pSize);
-		...
-	}
-
-	namespace {
-		void AssertFlatMapTypesSerializer_CanDeserializePartialValue(VersionType version) {
-			// Arrange:
-			auto buffer = std::vector<uint64_t>{ 0, 1, 11 };
-			auto* pData = reinterpret_cast<uint8_t*>(buffer.data()) + sizeof(uint64_t) - sizeof(VersionType);
-			memcpy(pData, &version, sizeof(VersionType));
-
-			// Act:
-			auto ns = Serializer::DeserializeValue({ pData, sizeof(VersionType) + (buffer.size() - 1) * sizeof(uint64_t) });
-
-			// Assert:
-			ASSERT_EQ(1u, ns.path().size());
-			EXPECT_EQ(NamespaceId(11), ns.path()[0]);
-		}
-
-		void AssertFlatMapTypesSerializer_CanDeserializeFullValue(VersionType version) {
-			// Arrange:
-			auto buffer = std::vector<uint64_t>{ 0, 3, 11, 7, 21 };
-			auto* pData = reinterpret_cast<uint8_t*>(buffer.data()) + sizeof(uint64_t) - sizeof(VersionType);
-			memcpy(pData, &version, sizeof(VersionType));
-
-			// Act:
-			auto ns = Serializer::DeserializeValue({ pData, sizeof(VersionType) + (buffer.size() - 1) * sizeof(uint64_t) });
-
-			// Assert:
-			ASSERT_EQ(3u, ns.path().size());
-			EXPECT_EQ(NamespaceId(11), ns.path()[0]);
-			EXPECT_EQ(NamespaceId(7), ns.path()[1]);
-			EXPECT_EQ(NamespaceId(21), ns.path()[2]);
+		// Data
+		const auto* pWalker = reinterpret_cast<const uint8_t*>(result.data() + sizeof(VersionType));
+		EXPECT_EQ(key, *reinterpret_cast<const Key*>(pWalker));
+		pWalker += sizeof(Key);
+		EXPECT_EQ(3, *reinterpret_cast<const uint32_t*>(pWalker));
+		pWalker += sizeof(uint32_t);
+		for(auto i = 0; i < 3; i++)
+		{
+			EXPECT_EQ(*reinterpret_cast<const Height*>(pWalker), Height(i));
+			EXPECT_EQ(ns.LockFundRecords.find(*reinterpret_cast<const Height*>(pWalker))->first, *reinterpret_cast<const Height*>(pWalker));
+			pWalker += sizeof(Height);
+			EXPECT_EQ(*reinterpret_cast<const uint8_t*>(pWalker), 1);
+			pWalker += sizeof(uint8_t);
+			EXPECT_EQ(*reinterpret_cast<const uint8_t*>(pWalker), 1);
+			pWalker += sizeof(uint8_t);
+			EXPECT_EQ(*reinterpret_cast<const MosaicId*>(pWalker), MosaicId(72));
+			pWalker += sizeof(MosaicId);
+			EXPECT_EQ(*reinterpret_cast<const Amount*>(pWalker), Amount(200));
+			pWalker += sizeof(Amount);
+			EXPECT_EQ(*reinterpret_cast<const uint32_t*>(pWalker), 2);
+			pWalker += sizeof(uint32_t);
+			EXPECT_EQ(*reinterpret_cast<const MosaicId*>(pWalker), MosaicId(73));
+			pWalker += sizeof(MosaicId);
+			EXPECT_EQ(*reinterpret_cast<const Amount*>(pWalker), Amount(400));
+			pWalker += sizeof(Amount);
+			EXPECT_EQ(*reinterpret_cast<const MosaicId*>(pWalker), MosaicId(73));
+			pWalker += sizeof(MosaicId);
+			EXPECT_EQ(*reinterpret_cast<const Amount*>(pWalker), Amount(400));
 		}
 	}
 
-	TEST(TEST_CLASS, FlatMapTypesSerializer_CanDeserializePartialValue_v1) {
-		AssertFlatMapTypesSerializer_CanDeserializePartialValue(1);
+	TEST(TEST_CLASS, HeightBasedSerializer_CanDerializeEmptyRecord) {
+		// Arrange:
+		auto record = state::LockFundRecordGroup<LockFundHeightIndexDescriptor>(Height(10), {});
+		auto serialized = HeightBasedSerializer::SerializeValue(record);
+
+		// Act:
+		auto ns = HeightBasedSerializer::DeserializeValue({ reinterpret_cast<uint8_t*>(serialized.data()), sizeof(VersionType) + sizeof(uint64_t) + sizeof(uint32_t) + 3 * (sizeof(Key) + sizeof(uint32_t) + ACTIVE_RECORD_SIZE + 2*(MOSAIC_SIZE)) });
+		EXPECT_EQ(record.Identifier, ns.Identifier);
+		EXPECT_EQ(record.LockFundRecords.size(), ns.LockFundRecords.size());
+		EXPECT_EQ(ns.LockFundRecords.size(), 0);
+
 	}
 
-	TEST(TEST_CLASS, FlatMapTypesSerializer_CanDeserializeFullValue_v1) {
-		AssertFlatMapTypesSerializer_CanDeserializeFullValue(1);
+	TEST(TEST_CLASS, KeyBasedSerializer_CanDerializeEmptyRecord) {
+		// Arrange:
+		auto key = test::GenerateRandomByteArray<Key>();
+		auto record = state::LockFundRecordGroup<LockFundKeyIndexDescriptor>(key, {});
+		auto serialized = KeyBasedSerializer::SerializeValue(record);
+
+		// Act:
+		auto ns = KeyBasedSerializer::DeserializeValue({ reinterpret_cast<uint8_t*>(serialized.data()), sizeof(VersionType) + sizeof(Key) + sizeof(uint32_t) + 3 * (sizeof(Height) + sizeof(uint32_t) + ACTIVE_RECORD_SIZE + 2*(MOSAIC_SIZE)) });
+		EXPECT_EQ(record.Identifier, ns.Identifier);
+		EXPECT_EQ(record.LockFundRecords.size(), ns.LockFundRecords.size());
+		EXPECT_EQ(ns.LockFundRecords.size(), 0);
+
+	}
+
+	TEST(TEST_CLASS, HeightBasedSerializer_CanDerializeFullRecord) {
+		// Arrange:
+		auto record = test::GenerateRecordGroup<LockFundHeightIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<LockFundHeightIndexDescriptor>>(Height(10), 3);
+		auto serialized = HeightBasedSerializer::SerializeValue(record);
+
+		// Act:
+		auto ns = HeightBasedSerializer::DeserializeValue({ reinterpret_cast<uint8_t*>(serialized.data()), sizeof(VersionType) + sizeof(uint64_t) + sizeof(uint32_t) + 3 * (sizeof(Key) + sizeof(uint32_t) + ACTIVE_RECORD_SIZE + 2*(MOSAIC_SIZE)) });
+		EXPECT_EQ(record.Identifier, ns.Identifier);
+		EXPECT_EQ(record.LockFundRecords.size(), ns.LockFundRecords.size());
+		EXPECT_EQ(ns.LockFundRecords.size(), 3);
+		for(auto &pair : record.LockFundRecords)
+		{
+			auto deserializedPair = ns.LockFundRecords.find(pair.first);
+			EXPECT_EQ(pair.first, deserializedPair->first);
+			EXPECT_EQ(pair.second.Size(), deserializedPair->second.Size());
+			EXPECT_EQ(pair.second.Active(), deserializedPair->second.Active());
+			EXPECT_EQ(pair.second.Get().find(MosaicId(72))->second, deserializedPair->second.Get().find(MosaicId(72))->second);
+			EXPECT_EQ(pair.second.InactiveRecords[0].find(MosaicId(73))->second, deserializedPair->second.InactiveRecords[0].find(MosaicId(73))->second);
+			EXPECT_EQ(pair.second.InactiveRecords[1].find(MosaicId(73))->second, deserializedPair->second.InactiveRecords[1].find(MosaicId(73))->second);
+		}
+
+	}
+
+	TEST(TEST_CLASS, KeyBasedSerializer_CanDerializeFullRecord) {
+		// Arrange:
+		auto key = test::GenerateRandomByteArray<Key>();
+		auto record = test::GenerateRecordGroup<LockFundKeyIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<LockFundKeyIndexDescriptor>>(key, 3);
+		auto serialized = KeyBasedSerializer::SerializeValue(record);
+
+		// Act:
+		auto ns = KeyBasedSerializer::DeserializeValue({ reinterpret_cast<uint8_t*>(serialized.data()), sizeof(VersionType) + sizeof(Key) + sizeof(uint32_t) + 3 * (sizeof(Height) + sizeof(uint32_t) + ACTIVE_RECORD_SIZE + 2*(MOSAIC_SIZE)) });
+		EXPECT_EQ(record.Identifier, ns.Identifier);
+		EXPECT_EQ(record.LockFundRecords.size(), ns.LockFundRecords.size());
+		EXPECT_EQ(ns.LockFundRecords.size(), 3);
+		for(auto &pair : record.LockFundRecords)
+		{
+			auto deserializedPair = ns.LockFundRecords.find(pair.first);
+			EXPECT_EQ(pair.first, deserializedPair->first);
+			EXPECT_EQ(pair.second.Size(), deserializedPair->second.Size());
+			EXPECT_EQ(pair.second.Active(), deserializedPair->second.Active());
+			EXPECT_EQ(pair.second.Get().find(MosaicId(72))->second, deserializedPair->second.Get().find(MosaicId(72))->second);
+			EXPECT_EQ(pair.second.InactiveRecords[0].find(MosaicId(73))->second, deserializedPair->second.InactiveRecords[0].find(MosaicId(73))->second);
+			EXPECT_EQ(pair.second.InactiveRecords[1].find(MosaicId(73))->second, deserializedPair->second.InactiveRecords[1].find(MosaicId(73))->second);
+		}
+
 	}
 }}

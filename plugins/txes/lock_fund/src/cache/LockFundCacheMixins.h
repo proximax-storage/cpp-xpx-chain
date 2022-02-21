@@ -24,7 +24,7 @@
 #include <numeric>
 
 namespace catapult { namespace cache {
-	/// A mixin for looking up namespaces.
+	/// A mixin for looking up records.
 	/// \note Due to double lookup, this cannot be replaced with one ConstAccessorMixin per set.
 	template<typename TPrimarySet, typename TSecondarySet>
 	class LockFundLookupMixin {
@@ -67,5 +67,29 @@ namespace catapult { namespace cache {
 	private:
 		const TPrimarySet& m_set;
 		const TSecondarySet& m_inverseSet;
+	};
+
+	/// A mixin for getting the set size compatible with both sets.
+	template<typename TPrimarySet, typename TSecondarySet>
+	class LockFundSizeMixin {
+		public:
+			/// Creates a mixin around \a sets.
+			explicit LockFundSizeMixin(const TPrimarySet& set, const TSecondarySet& inverseSet) : m_set(set), m_secondarySet(inverseSet)
+			{}
+
+		public:
+			/// Gets the number of elements in the primary set.
+			size_t size() const {
+				return m_set.size();
+			}
+
+			/// Gets the number of elements in the secondary set.
+			size_t secondarySize() const {
+				return m_secondarySet.size();
+			}
+
+		private:
+			const TPrimarySet& m_set;
+			const TSecondarySet& m_secondarySet;
 	};
 }}

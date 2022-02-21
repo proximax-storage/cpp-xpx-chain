@@ -35,34 +35,36 @@ namespace catapult { namespace cache {
 			using PrimaryMixins = PatriciaTreeCacheMixins<LockFundCacheTypes::PrimaryTypes::BaseSetType, LockFundCacheDescriptor>;
 			using KeyedMixins = BasicCacheMixins<LockFundCacheTypes::KeyedLockFundTypes::BaseSetType, LockFundCacheTypes::KeyedLockFundTypesDescriptor>;
 			using LookupMixin = LockFundLookupMixin<LockFundCacheTypes::PrimaryTypes::BaseSetType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetType>;
+			using Height = PrimaryMixins::Height;
+			using Size = LockFundSizeMixin<LockFundCacheTypes::PrimaryTypes::BaseSetType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetType>;
 		};
 
 
 		/// Basic view on top of the lock fund cache.
 		class BasicLockFundCacheView
 				: public utils::MoveOnly
-						, public LockFundCacheViewMixins::PrimaryMixins::Size
+						, public LockFundCacheViewMixins::Size
 						, public LockFundCacheViewMixins::PrimaryMixins::Contains
 						, public LockFundCacheViewMixins::PrimaryMixins::Iteration
 						, public LockFundCacheViewMixins::LookupMixin
-						, public LockFundCacheViewMixins::KeyedMixins::Size
 						, public LockFundCacheViewMixins::KeyedMixins::Contains
-						, public LockFundCacheViewMixins::KeyedMixins::Iteration
 						, public LockFundCacheViewMixins::PrimaryMixins::PatriciaTreeView
-						, public LockFundCacheViewMixins::PrimaryMixins::ActivePredicate {
+						, public LockFundCacheViewMixins::PrimaryMixins::ActivePredicate
+						, public LockFundCacheViewMixins::PrimaryMixins::Enable
+						, public LockFundCacheViewMixins::Height{
 		public:
+			using LockFundCacheViewMixins::KeyedMixins::Contains::contains;
+			using LockFundCacheViewMixins::PrimaryMixins::Contains::contains;
 			using ReadOnlyView = LockFundCacheTypes::CacheReadOnlyType;
 
 		public:
 			/// Creates a view around \a lockFundSets.
 			explicit BasicLockFundCacheView(const LockFundCacheTypes::BaseSets& lockFundSets)
-					: LockFundCacheViewMixins::PrimaryMixins::Size(lockFundSets.Primary)
+					: LockFundCacheViewMixins::Size(lockFundSets.Primary,  lockFundSets.KeyedInverseMap)
 					, LockFundCacheViewMixins::PrimaryMixins::Contains(lockFundSets.Primary)
 					, LockFundCacheViewMixins::PrimaryMixins::Iteration(lockFundSets.Primary)
 					, LockFundCacheViewMixins::LookupMixin(lockFundSets.Primary, lockFundSets.KeyedInverseMap)
-					, LockFundCacheViewMixins::KeyedMixins::Size(lockFundSets.KeyedInverseMap)
 					, LockFundCacheViewMixins::KeyedMixins::Contains(lockFundSets.KeyedInverseMap)
-					, LockFundCacheViewMixins::KeyedMixins::Iteration(lockFundSets.KeyedInverseMap)
 					, LockFundCacheViewMixins::PrimaryMixins::PatriciaTreeView(lockFundSets.PatriciaTree.get())
 					, LockFundCacheViewMixins::PrimaryMixins::ActivePredicate(lockFundSets.Primary)
 			{}
@@ -71,6 +73,7 @@ namespace catapult { namespace cache {
 		/// View on top of the lock fund cache.
 		class LockFundCacheView : public ReadOnlyViewSupplier<BasicLockFundCacheView> {
 		public:
+
 			/// Creates a view around \a lockFundSets and \a args.
 			template<typename... TArgs>
 			explicit LockFundCacheView(const typename LockFundCacheTypes::BaseSets& lockFundSets, TArgs&&... args)

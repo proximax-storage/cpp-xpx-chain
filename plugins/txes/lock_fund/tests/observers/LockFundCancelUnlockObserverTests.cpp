@@ -187,14 +187,14 @@ namespace catapult { namespace observers {
 						EXPECT_EQ(lockFundKeyRecord->LockFundRecords.size(), 1);
 
 						EXPECT_FALSE(lockFundHeightRecord->LockFundRecords.find(descriptor.key)
-											 ->second.ActiveRecord.has_value());
+											 ->second.Active());
 						EXPECT_EQ(
 								1,
 								lockFundHeightRecord->LockFundRecords.find(descriptor.key)
 										->second.InactiveRecords.size());
 
 						EXPECT_FALSE(
-								lockFundKeyRecord->LockFundRecords.find(descriptor.height)->second.ActiveRecord.has_value());
+								lockFundKeyRecord->LockFundRecords.find(descriptor.height)->second.Active());
 						EXPECT_EQ(
 								1, lockFundKeyRecord->LockFundRecords.find(Height(descriptor.height))->second.InactiveRecords.size());
 
@@ -240,14 +240,14 @@ namespace catapult { namespace observers {
 					  EXPECT_EQ(lockFundKeyRecord->LockFundRecords.size(), 2);
 
 					  EXPECT_FALSE(lockFundHeightRecord->LockFundRecords.find(descriptor.key)
-										   ->second.ActiveRecord.has_value());
+										   ->second.Active());
 					  EXPECT_EQ(
 							  1,
 							  lockFundHeightRecord->LockFundRecords.find(descriptor.key)
 									  ->second.InactiveRecords.size());
 
 					  EXPECT_FALSE(
-							  lockFundKeyRecord->LockFundRecords.find(Height(10))->second.ActiveRecord.has_value());
+							  lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Active());
 					  EXPECT_EQ(
 							  1, lockFundKeyRecord->LockFundRecords.find(Height(10))->second.InactiveRecords.size());
 

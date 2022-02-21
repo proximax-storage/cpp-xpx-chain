@@ -61,6 +61,12 @@ namespace catapult { namespace state {
 			return InactiveRecords.size();
 		}
 
+		/// Checks whether there Inactive Records vector is empty
+		bool Empty() const
+		{
+			return InactiveRecords.empty();
+		}
+
 		/// Sets the current active record
 		void Set(const LockFundRecordMosaicMap& record)
 		{
@@ -97,7 +103,5 @@ namespace catapult { namespace state {
 	private:
 		std::optional<LockFundRecordMosaicMap> ActiveRecord;
 	};
-	/// A lock fund record.
-	template<typename TIndexDescriptor>
-	using LockFundRecordMap = std::unordered_map<typename TIndexDescriptor::ValueIdentifier, LockFundRecord, typename TIndexDescriptor::KeyHashFunction>;
+
 }}

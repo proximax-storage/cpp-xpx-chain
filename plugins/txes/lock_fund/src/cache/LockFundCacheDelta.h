@@ -34,6 +34,7 @@ namespace catapult { namespace cache {
 			using PrimaryMixins = PatriciaTreeCacheMixins<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheDescriptor>;
 			using KeyedMixins = BasicCacheMixins<LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypesDescriptor>;
 			using LookupMixin = LockFundLookupMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
+			using Size = LockFundSizeMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
 		};
 
 
@@ -41,20 +42,19 @@ namespace catapult { namespace cache {
 		/// Basic delta on top of the namespace cache.
 		class BasicLockFundCacheDelta
 				: public utils::MoveOnly
-						, public LockFundCacheDeltaMixins::PrimaryMixins::Size
+						, public LockFundCacheDeltaMixins::Size
 						, public LockFundCacheDeltaMixins::PrimaryMixins::Contains
 						, public LockFundCacheDeltaMixins::PrimaryMixins::PatriciaTreeDelta
 						, public LockFundCacheDeltaMixins::PrimaryMixins::DeltaElements
 						, public LockFundCacheDeltaMixins::LookupMixin
-						, public LockFundCacheDeltaMixins::KeyedMixins::Size
 						, public LockFundCacheDeltaMixins::KeyedMixins::Contains
-						, public LockFundCacheDeltaMixins::KeyedMixins::DeltaElements
 						, public LockFundCacheDeltaMixins::PrimaryMixins::Enable
 						, public LockFundCacheDeltaMixins::PrimaryMixins::Height {
 		public:
 			using ReadOnlyView = LockFundCacheTypes::CacheReadOnlyType;
 			using CollectedHeights = std::unordered_set<Height, utils::BaseValueHasher<Height>>;
-
+			using LockFundCacheDeltaMixins::KeyedMixins::Contains::contains;
+			using LockFundCacheDeltaMixins::PrimaryMixins::Contains::contains;
 		public:
 			/// Creates a delta around \a lockFundSets.
 			BasicLockFundCacheDelta(
@@ -70,11 +70,17 @@ namespace catapult { namespace cache {
 			/// Tags as inactive the lock fund record specified by its \a publicKey and \a height from the cache.
 			void disable(const Key& publicKey, Height height);
 
+			/// Inserts the lockfund record \a ns into the cache by copying an existing record. Will not validate!
+			void insert(const state::LockFundRecordGroup<LockFundHeightIndexDescriptor>& record);
+
 			/// Reactivates the lock fund record specified by its \a publicKey and \a height from the cache.
 			void enable(const Key& publicKey, Height height);
 
-			/// Tags as inactive the lock fund record group specified by its \a height.
+			/// Tags as inactive the records in the lock fund record group specified by its \a height.
 			void remove(Height height);
+
+			/// Reactivates the records in the lock fund record group specified by its \a height.
+			void recover(Height height);
 
 			/// Removes the lock fund record group specified by its \a height.
 			void prune(Height height);
@@ -110,14 +116,13 @@ namespace catapult { namespace cache {
 			}
 
 		private:
-			
-		private:
 			LockFundCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pLockFundGroupsByHeight;
 			LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaPointerType m_pLockFundGroupsByKey;
 		};
 
 		/// Delta on top of the namespace cache.
 		class LockFundCacheDelta : public ReadOnlyViewSupplier<BasicLockFundCacheDelta> {
+
 		public:
 			/// Creates a delta around \a namespaceSets, \a options and \a namespaceSizes.
 			LockFundCacheDelta(

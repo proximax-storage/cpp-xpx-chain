@@ -20,17 +20,14 @@
 
 #pragma once
 
-#include "src/state/LockFundRecordSerializer.h"
-#include "LockFundCacheTypes.h"
-#include "catapult/cache/CacheStorageInclude.h"
+#include "LockFundCacheDelta.h"
+#include "LockFundCacheStorage.h"
+
 namespace catapult { namespace cache {
 
 		/// Policy for saving and loading lock fund cache data.
-		struct LockFundCacheStorage
-				: public CacheStorageFromDescriptor<LockFundCacheDescriptor>
-						, public state::LockFundRecordSerializer<LockFundHeightIndexDescriptor> {
-
-			/// Loads \a recordGroup into \a cacheDelta.
-			static void LoadInto(const ValueType& history, DestinationType& cacheDelta);
-		};
+		void LockFundCacheStorage::LoadInto(const ValueType& heightRecord, DestinationType& cacheDelta)
+		{
+			cacheDelta.insert(heightRecord);
+		}
 }}

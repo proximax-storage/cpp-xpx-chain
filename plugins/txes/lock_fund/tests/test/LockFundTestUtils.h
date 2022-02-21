@@ -29,6 +29,7 @@
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include "tests/test/nodeps/KeyTestUtils.h"
+#include "src/cache/LockFundCacheTypes.h"
 namespace catapult { namespace test {
 
 	constexpr auto Success_Result = validators::ValidationResult::Success;
@@ -66,30 +67,88 @@ namespace catapult { namespace test {
 		EXPECT_EQ(expectedResult, result);
 	}
 
+	template<typename TIdentifier>
+	void AssertEqual(state::LockFundRecordGroup<TIdentifier> originalRecord, state::LockFundRecordGroup<TIdentifier> loadedRecord)
+	{
+		EXPECT_EQ(originalRecord.Identifier, loadedRecord.Identifier);
+		EXPECT_EQ(originalRecord.LockFundRecords.size(), loadedRecord.LockFundRecords.size());
+		for(auto &pair : loadedRecord.LockFundRecords)
+		{
+			auto deserializedPair = originalRecord.LockFundRecords.find(pair.first);
+			EXPECT_EQ(pair.first, deserializedPair->first);
+			EXPECT_EQ(pair.second.Size(), deserializedPair->second.Size());
+			EXPECT_EQ(pair.second.Active(), deserializedPair->second.Active());
+			for(auto mosaic : pair.second.Get())
+			{
+				EXPECT_EQ(deserializedPair->second.Get().find(mosaic.first), mosaic.second);
+			}
+			for(auto inactiveRecord  : pair.second.InactiveRecords)
+			{
+				int i = 0;
+				for(auto mosaic : inactiveRecord)
+				{
+					EXPECT_EQ(deserializedPair->second.InactiveRecords[i].find(mosaic.first), mosaic.second);
+					i++;
+				}
+			}
+		}
+	}
+
+	auto DeriveKeyRecordsFromHeightRecord(state::LockFundRecordGroup<cache::LockFundHeightIndexDescriptor> record)
+	{
+		std::unordered_map<Key, state::LockFundRecordGroup<cache::LockFundKeyIndexDescriptor>, utils::ArrayHasher<Key>> results;
+		for(auto lockFundRecord : record.LockFundRecords)
+		{
+			auto keyGroup = results.find(lockFundRecord.first);
+			if(keyGroup != results.end())
+			{
+				auto heightRecord = keyGroup->second.LockFundRecords.find(record.Identifier);
+				if(heightRecord != keyGroup->second.LockFundRecords.end())
+				{
+					if(lockFundRecord.second.Active())
+						heightRecord->second.Set(lockFundRecord.second.Get());
+					heightRecord->second.InactiveRecords = lockFundRecord.second.InactiveRecords;
+				}
+				else
+					keyGroup->second.LockFundRecords.insert(std::make_pair(record.Identifier, lockFundRecord.second));
+			}
+			else
+			{
+				state::LockFundRecordGroup<cache::LockFundKeyIndexDescriptor> group;
+				group.Identifier = lockFundRecord.first;
+				group.LockFundRecords.insert(std::make_pair(record.Identifier, lockFundRecord.second));
+				results.insert(std::make_pair(group.Identifier, group));
+			}
+		}
+		return results;
+	}
 	struct DefaultRecordGroupGeneratorTraitsBase
 	{
-		std::optional<state::LockFundRecordMosaicMap> GenerateActiveRecord(uint32_t index)
+		static std::optional<state::LockFundRecordMosaicMap> GenerateActiveRecord(uint32_t index)
 		{
 			return std::optional<state::LockFundRecordMosaicMap>({{MosaicId(72), Amount(200)}});
 		}
 
-		std::vector<state::LockFundRecordMosaicMap> GenerateInactiveRecords(uint32_t index)
+		static std::vector<state::LockFundRecordMosaicMap> GenerateInactiveRecords(uint32_t index)
 		{
 			return std::vector<state::LockFundRecordMosaicMap>({{{MosaicId(73), Amount(400)}}, {{MosaicId(73), Amount(400)}}});
 		}
 	};
 
-	struct DefaultRecordGroupGeneratorHeightTraits : public DefaultRecordGroupGeneratorTraitsBase
+	template<typename TIdentifier>
+	struct DefaultRecordGroupGeneratorTraits;
+	template<>
+	struct DefaultRecordGroupGeneratorTraits<cache::LockFundKeyIndexDescriptor> : public DefaultRecordGroupGeneratorTraitsBase
 	{
-		Height GenerateIdentifier(uint32_t index)
+		static typename cache::LockFundKeyIndexDescriptor::ValueIdentifier GenerateIdentifier(uint32_t index)
 		{
 			return Height(index);
 		}
 	};
-
-	struct DefaultRecordGroupGeneratorKeyTraits : public DefaultRecordGroupGeneratorTraitsBase
+	template<>
+	struct DefaultRecordGroupGeneratorTraits<cache::LockFundHeightIndexDescriptor> : public DefaultRecordGroupGeneratorTraitsBase
 	{
-		Key GenerateIdentifier(uint32_t index)
+		static typename cache::LockFundHeightIndexDescriptor::ValueIdentifier GenerateIdentifier(uint32_t index)
 		{
 			return GenerateRandomByteArray<Key>();
 		}

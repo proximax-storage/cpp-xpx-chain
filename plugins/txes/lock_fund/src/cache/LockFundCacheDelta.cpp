@@ -29,14 +29,12 @@ namespace catapult { namespace cache {
 
 	BasicLockFundCacheDelta::BasicLockFundCacheDelta(
 			const LockFundCacheTypes::BaseSetDeltaPointers& LockFundSets)
-			: LockFundCacheDeltaMixins::PrimaryMixins::Size(*LockFundSets.pPrimary)
+			: LockFundCacheDeltaMixins::Size(*LockFundSets.pPrimary, *LockFundSets.pKeyedInverseMap)
 		, LockFundCacheDeltaMixins::LookupMixin(*LockFundSets.pPrimary, *LockFundSets.pKeyedInverseMap)
 		, LockFundCacheDeltaMixins::PrimaryMixins::Contains(*LockFundSets.pPrimary)
 		, LockFundCacheDeltaMixins::PrimaryMixins::PatriciaTreeDelta(*LockFundSets.pPrimary, LockFundSets.pPatriciaTree)
 		, LockFundCacheDeltaMixins::PrimaryMixins::DeltaElements(*LockFundSets.pPrimary)
-		, LockFundCacheDeltaMixins::KeyedMixins::Size(*LockFundSets.pKeyedInverseMap)
 		, LockFundCacheDeltaMixins::KeyedMixins::Contains(*LockFundSets.pKeyedInverseMap)
-		, LockFundCacheDeltaMixins::KeyedMixins::DeltaElements(*LockFundSets.pKeyedInverseMap)
 	{}
 
 	/// Important: No Validation happens here
@@ -48,32 +46,63 @@ namespace catapult { namespace cache {
 		if(heightGroup){
 			auto keyRecord = heightGroup->LockFundRecords.find(publicKey);
 			if(keyRecord != heightGroup->LockFundRecords.end())
-				keyRecord->second.ActiveRecord.emplace(state::LockFundRecord(mosaics));
+				keyRecord->second.Set(state::LockFundRecordMosaicMap(mosaics));
 			else
-				heightGroup->LockFundRecords.insert(std::make_pair(publicKey, state::LockFundRecordContainer(state::LockFundRecord(mosaics))));
+				heightGroup->LockFundRecords.insert(std::make_pair(publicKey, state::LockFundRecord(state::LockFundRecordMosaicMap(mosaics))));
 		}
 		else
 		{
 			state::LockFundRecordGroup<LockFundHeightIndexDescriptor> group;
 			group.Identifier = unlockHeight;
-			group.LockFundRecords.insert(std::make_pair(publicKey, state::LockFundRecordContainer(state::LockFundRecord(mosaics))));
+			group.LockFundRecords.insert(std::make_pair(publicKey, state::LockFundRecord(state::LockFundRecordMosaicMap(mosaics))));
 			m_pLockFundGroupsByHeight->insert(group);
 		}
 		if(keyGroup)
 		{
 			auto heightRecord = keyGroup->LockFundRecords.find(unlockHeight);
 			if(heightRecord != keyGroup->LockFundRecords.end())
-				heightRecord->second.ActiveRecord.emplace(state::LockFundRecord(mosaics));
+				heightRecord->second.Set(state::LockFundRecordMosaicMap(mosaics));
 			else
-				keyGroup->LockFundRecords.insert(std::make_pair(unlockHeight, state::LockFundRecordContainer(state::LockFundRecord(mosaics))));
+				keyGroup->LockFundRecords.insert(std::make_pair(unlockHeight, state::LockFundRecord(state::LockFundRecordMosaicMap(mosaics))));
 		}
 		else
 		{
 			state::LockFundRecordGroup<LockFundKeyIndexDescriptor> group;
 			group.Identifier = publicKey;
-			group.LockFundRecords.insert(std::make_pair(unlockHeight, state::LockFundRecordContainer(state::LockFundRecord(mosaics))));
+			group.LockFundRecords.insert(std::make_pair(unlockHeight, state::LockFundRecord(state::LockFundRecordMosaicMap(mosaics))));
 			m_pLockFundGroupsByKey->insert(group);
 		}
+	}
+
+	/// Important: No Validation happens here
+	void BasicLockFundCacheDelta::insert(const state::LockFundRecordGroup<LockFundHeightIndexDescriptor>& record) {
+		m_pLockFundGroupsByHeight->insert(record);
+		for(auto lockFundRecord : record.LockFundRecords)
+		{
+			auto keyGroupIterator = m_pLockFundGroupsByKey->find(lockFundRecord.first);
+			auto* keyGroup = keyGroupIterator.get();
+			if(keyGroup)
+			{
+				auto heightRecord = keyGroup->LockFundRecords.find(record.Identifier);
+				if(heightRecord != keyGroup->LockFundRecords.end())
+				{
+					if(lockFundRecord.second.Active())
+						heightRecord->second.Set(lockFundRecord.second.Get());
+					heightRecord->second.InactiveRecords = lockFundRecord.second.InactiveRecords;
+				}
+				else
+					keyGroup->LockFundRecords.insert(std::make_pair(record.Identifier, lockFundRecord.second));
+			}
+			else
+			{
+				state::LockFundRecordGroup<LockFundKeyIndexDescriptor> group;
+				group.Identifier = lockFundRecord.first;
+				group.LockFundRecords.insert(std::make_pair(record.Identifier, lockFundRecord.second));
+				m_pLockFundGroupsByKey->insert(group);
+			}
+		}
+
+
 	}
 
 	void BasicLockFundCacheDelta::remove(const Key& publicKey, Height height)
@@ -85,24 +114,27 @@ namespace catapult { namespace cache {
 			auto heightGroupIterator = m_pLockFundGroupsByHeight->find(height);
 			auto* heightGroup = heightGroupIterator.get();
 			if(keyGroup->LockFundRecords.find(height) != keyGroup->LockFundRecords.end()){
-				if(keyGroup->LockFundRecords[height].InactiveRecords.empty())
+				if(keyGroup->LockFundRecords[height].Empty())
 					keyGroup->LockFundRecords.erase(height);
 				else
-					keyGroup->LockFundRecords[height].ActiveRecord.reset();
-				if(heightGroup->LockFundRecords[publicKey].InactiveRecords.empty())
+					keyGroup->LockFundRecords[height].Unset();
+				if(heightGroup->LockFundRecords[publicKey].Empty())
 					heightGroup->LockFundRecords.erase(publicKey);
 				else
-					heightGroup->LockFundRecords[publicKey].ActiveRecord.reset();
+					heightGroup->LockFundRecords[publicKey].Unset();
+				if(keyGroup->LockFundRecords.empty())
+				{
+					m_pLockFundGroupsByKey->remove(publicKey);
+				}
+				if(heightGroup->LockFundRecords.empty())
+				{
+					m_pLockFundGroupsByHeight->remove(height);
+				}
+				return;
 			}
-			if(keyGroup->LockFundRecords.empty())
-			{
-				m_pLockFundGroupsByKey->remove(publicKey);
-			}
-			if(heightGroup->LockFundRecords.empty())
-			{
-				m_pLockFundGroupsByHeight->remove(height);
-			}
+			CATAPULT_THROW_INVALID_ARGUMENT("Height does not exist!");
 		}
+		CATAPULT_THROW_INVALID_ARGUMENT("Key does not exist!");
 	}
 
 	void BasicLockFundCacheDelta::disable(const Key& publicKey, Height height)
@@ -116,8 +148,11 @@ namespace catapult { namespace cache {
 			if(keyGroup->LockFundRecords.find(height) != keyGroup->LockFundRecords.end()){
 				keyGroup->LockFundRecords[height].Inactivate();
 				heightGroup->LockFundRecords[publicKey].Inactivate();
+				return;
 			}
+			CATAPULT_THROW_INVALID_ARGUMENT("Height does not exist!");
 		}
+		CATAPULT_THROW_INVALID_ARGUMENT("Key does not exist!");
 	}
 
 	void BasicLockFundCacheDelta::enable(const Key& publicKey, Height height)
@@ -131,8 +166,11 @@ namespace catapult { namespace cache {
 			if(keyGroup->LockFundRecords.find(height) != keyGroup->LockFundRecords.end()){
 				keyGroup->LockFundRecords[height].Reactivate();
 				heightGroup->LockFundRecords[publicKey].Reactivate();
+				return;
 			}
+			CATAPULT_THROW_INVALID_ARGUMENT("Height does not exist!");
 		}
+		CATAPULT_THROW_INVALID_ARGUMENT("Key does not exist!");
 	}
 
 	void BasicLockFundCacheDelta::remove(Height height)
@@ -148,7 +186,27 @@ namespace catapult { namespace cache {
 				keyGroup->LockFundRecords[height].Inactivate();
 				tiedRecord.second.Inactivate();
 			}
+			return;
 		}
+		CATAPULT_THROW_INVALID_ARGUMENT("Record at Height does not exist!");
+	}
+
+	void BasicLockFundCacheDelta::recover(Height height)
+	{
+		auto heightGroupIterator = m_pLockFundGroupsByHeight->find(height);
+		auto* heightGroup = heightGroupIterator.get();
+		if(heightGroup)
+		{
+			for(auto& tiedRecord : heightGroup->LockFundRecords)
+			{
+				auto keyGroupIterator = m_pLockFundGroupsByKey->find(tiedRecord.first);
+				auto* keyGroup = keyGroupIterator.get();
+				keyGroup->LockFundRecords[height].Reactivate();
+				tiedRecord.second.Reactivate();
+			}
+			return;
+		}
+		CATAPULT_THROW_INVALID_ARGUMENT("Record at Height does not exist!");
 	}
 
 
@@ -169,7 +227,9 @@ namespace catapult { namespace cache {
 				}
 			}
 			m_pLockFundGroupsByHeight->remove(height);
+			return;
 		}
+		CATAPULT_THROW_INVALID_ARGUMENT("Record at Height does not exist!");
 	}
 
 

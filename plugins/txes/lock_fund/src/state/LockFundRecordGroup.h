@@ -24,6 +24,10 @@
 #include "LockFundRecord.h"
 namespace catapult { namespace state {
 
+	/// A lock fund record.
+	template<typename TIndexDescriptor>
+	using LockFundRecordMap = std::unordered_map<typename TIndexDescriptor::ValueIdentifier, LockFundRecord, typename TIndexDescriptor::KeyHashFunction>;
+
 	template<typename TKeyType, typename TValueIdentifier, typename TKeyHashFunction>
 	struct LockFundRecordGroupIndexDescriptor{
 		using KeyType = TKeyType;

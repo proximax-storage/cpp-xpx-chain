@@ -98,7 +98,7 @@ namespace catapult { namespace cache {
 	/// A read-only overlay on top of a cache that provides support for contains, get and isActive.
 	/// Perf Note: Using complex cache will result in as many duplicated cache pointers as descriptors are provided!
 	template<typename TCache, typename TCacheDelta, typename ...TDescriptors>
-	class ReadOnlyComplexArtifactCache : public ReadOnlyComplexCache<TCache, TCacheDelta, TDescriptors>...,
+	class ReadOnlyComplexArtifactCache : public ReadOnlyComplexCache<TCache, TCacheDelta, TDescriptors...>,
 	        public ReadOnlyComplexArtifactCacheImpl<TCache, TCacheDelta, TDescriptors>...{
 	public:
 
@@ -106,13 +106,13 @@ namespace catapult { namespace cache {
 	public:
 		/// Creates a read-only overlay on top of \a cache.
 		explicit ReadOnlyComplexArtifactCache(const TCache& cache)
-				: ReadOnlyComplexCache<TCache, TCacheDelta, TDescriptors>(cache)...
+				: ReadOnlyComplexCache<TCache, TCacheDelta, TDescriptors...>(cache)
 				, ReadOnlyComplexArtifactCacheImpl<TCache, TCacheDelta, TDescriptors>(cache)...
 		{}
 
 		/// Creates a read-only overlay on top of \a cache.
 		explicit ReadOnlyComplexArtifactCache(const TCacheDelta& cache)
-				: ReadOnlyComplexCache<TCache, TCacheDelta, TDescriptors>(cache)...
+				: ReadOnlyComplexCache<TCache, TCacheDelta, TDescriptors...>(cache)
 				, ReadOnlyComplexArtifactCacheImpl<TCache, TCacheDelta, TDescriptors>(cache)...
 		{}
 
