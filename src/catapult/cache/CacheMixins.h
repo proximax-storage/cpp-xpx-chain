@@ -210,10 +210,10 @@ namespace catapult { namespace cache {
 			return const_iterator(std::move(setIter), key);
 		}
 
-		const_iterator optimisticFindLowerOrEqual(const KeyType& key) const {
-			auto setIter = m_set.optimisticFindLowerOrEqual(key);
-			return const_iterator(std::move(setIter), key);
-		}
+//		const_iterator optimisticFindLowerOrEqual(const KeyType& key) const {
+//			auto setIter = m_set.find(key);
+//			return const_iterator(std::move(setIter), key);
+//		}
 
 	private:
 		const TSet& m_set;
@@ -247,10 +247,10 @@ namespace catapult { namespace cache {
 			return iterator(std::move(setIter), key);
 		}
 
-//		iterator optimisticFindLowerOrEqual(const KeyType& key) {
-//			auto setIter = m_set.optimisticFindLowerOrEqual(key);
-//			return iterator(std::move(setIter), key);
-//		}
+		iterator optimisticFindLowerOrEqual(const KeyType& key) {
+			auto setIter = m_set.optimisticFindLowerOrEqual(key);
+			return iterator(std::move(setIter), key);
+		}
 
 	private:
 		TSet& m_set;

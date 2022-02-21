@@ -19,8 +19,7 @@ namespace catapult { namespace observers {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
 
-			// TODO: temporary turn off verifications.
-			return;
+			CATAPULT_LOG( error ) << "Verification Observer";
 
 			if (context.Height < Height(2))
 				return;
@@ -41,16 +40,21 @@ namespace catapult { namespace observers {
 
 			std::seed_seq hashSeed(notification.Hash.begin(), notification.Hash.end());
 
+			CATAPULT_LOG( error ) << "drivesToVerify: " << drivesToVerify << " verifyEfforts: " << verifyEfforts;
+
 			uint successfulEfforts = 0;
 			for (uint i = 0; i < verifyEfforts && successfulEfforts < drivesToVerify; i++) {
 				Key randomKey;
 				hashSeed.generate(randomKey.begin(), randomKey.end());
+
 				auto driveIter = driveCache.optimisticFindLowerOrEqual(randomKey);
 				auto* pDriveEntry = driveIter.tryGet();
+				CATAPULT_LOG( error ) << "random Key: " << randomKey << " pDrive is null " << (pDriveEntry == nullptr);
 				if (pDriveEntry) {
 					successfulEfforts++;
 					auto& driveEntry = driveIter.get();
 					auto& verifications = driveEntry.verifications();
+					CATAPULT_LOG( error ) << "driveKey " << driveEntry.key() << " verifications size " << verifications.size();
 					if (!verifications.empty() && verifications[0].Expired)
 						verifications.clear();
 

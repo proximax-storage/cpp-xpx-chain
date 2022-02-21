@@ -90,6 +90,10 @@ namespace catapult { namespace model {
 				auto headerSize = VerifiableEntity::Header_Size;
 				auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, block.GetHeaderSize() - headerSize };
 
+				auto version = block.EntityVersion();
+
+				CATAPULT_LOG( error ) << "block version " << version;
+
 				// raise an entity notification
 				switch (block.EntityVersion()) {
 				case 4: {

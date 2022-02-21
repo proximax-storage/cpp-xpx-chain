@@ -309,6 +309,13 @@ namespace catapult { namespace state {
 			return m_dataModificationShards;
 		}
 
+//		const Key& getStoragePaymentsQueueNext() const {
+//			return m_storagePaymentsQueueNext;
+//		}
+//		void setStoragePaymentsQueueNext(const Key& storagePaymentsQueueNext) {
+//			m_storagePaymentsQueueNext = storagePaymentsQueueNext;
+//		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
@@ -327,6 +334,7 @@ namespace catapult { namespace state {
 		ConfirmedStates m_confirmedStates;
 		DownloadShards m_downloadShards;
 		ModificationShards m_dataModificationShards;
+//		Key m_storagePaymentsQueueNext;
 	};
 
 	// Drive entry.

@@ -192,11 +192,11 @@ namespace catapult { namespace deltaset {
 	template<typename TResultIterator, typename TBaseSetDelta>
 	static TResultIterator OptimisticFindLowerOrEqual(TBaseSetDelta& set, const KeyType& key) {
 		auto addedIterGreater = set.m_addedElements.upper_bound(key);
-		FindConstIterator addedIter = addedIterGreater == set.m_addedElements.cbegin() ? FindConstIterator(std::move(--addedIterGreater)) : FindConstIterator();
+		TResultIterator addedIter = addedIterGreater != set.m_addedElements.cbegin() ? TResultIterator(std::move(--addedIterGreater)) : TResultIterator();
 
 		auto originalIter = set.optimisticFindLowerOrEqual(key, ElementMutabilityTag());
 
-		FindConstIterator possibleIter;
+		TResultIterator possibleIter;
 
 		const auto* pAddedKey = addedIter.template getKey<const KeyType*>();
 		const auto* pOriginalKey = originalIter.template getKey<const KeyType*>();

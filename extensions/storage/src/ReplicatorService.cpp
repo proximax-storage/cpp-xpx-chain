@@ -360,7 +360,7 @@ namespace catapult { namespace storage {
 			CATAPULT_LOG(debug) << "update drive replicators" << driveKey;
 
         	auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(driveKey));
-			m_pReplicator->asyncSetDriveReplicators(driveKey.array(), replicators);
+//			m_pReplicator->asyncSetDriveReplicators(driveKey.array(), replicators);
         }
 
         void updateShardDonator(const Key& driveKey) {
@@ -381,7 +381,7 @@ namespace catapult { namespace storage {
         	CATAPULT_LOG(debug) << "update channel replicators" << channelId;
 
         	auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(channelId.array()));
-        	m_pReplicator->asyncSetDownloadChannelShard(channelId.array(), replicators);
+//        	m_pReplicator->asyncSetDownloadChannelShard(channelId.array(), replicators);
         }
 
 		void updateDriveDownloadChannels(const Key& driveKey) {
@@ -416,7 +416,7 @@ namespace catapult { namespace storage {
 				else if (m_alreadyAddedChannels.find(channelId) != m_alreadyAddedChannels.end())
 				{
 					// The Replicator has been removed from the Channel with the transaction
-					m_pReplicator->asyncRemoveDownloadChannelInfo(channelId.array());
+//					m_pReplicator->asyncRemoveDownloadChannelInfo(channelId.array());
 					m_alreadyAddedChannels.erase(channelId);
 				}
 			}
@@ -550,6 +550,11 @@ namespace catapult { namespace storage {
     void ReplicatorService::increaseDownloadChannelSize(const Hash256& channelId) {
         if (m_pImpl)
             m_pImpl->increaseDownloadChannelSize(channelId);
+    }
+
+    bool ReplicatorService::isAssignedToChannel(const Hash256& channelId) {
+    	if (m_pImpl)
+    		m_pImpl->isAssignedToChannel(channelId);
     }
 
     void ReplicatorService::initiateDownloadApproval(const Hash256& channelId, const Hash256& eventHash) {
