@@ -25,36 +25,21 @@
 
 namespace catapult { namespace observers {
 
+	/// Note: Consider removing records in batches instead
 	DEFINE_OBSERVER(LockFundBlock, model::BlockNotification<1>, ([](const auto& notification, const ObserverContext& context) {
-		auto& cache = context.Cache.sub<cache::AccountStateCache>();
+		if (context.Mode == NotifyMode::Rollback)
+			return;
+		const model::NetworkConfiguration& config = context.Config.Network;
+	  	if (context.Height.unwrap() - config.MaxRollbackBlocks <= 0)
+			return;
+
+		auto targetHeight = context.Height-Height(config.MaxRollbackBlocks);
 		auto& lockFundCache = context.Cache.sub<cache::LockFundCache>();
-		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-		auto heightRecord = lockFundCache.find(context.Height);
+		auto heightRecord = lockFundCache.find(targetHeight);
 		auto records = heightRecord.tryGet();
-		if(context.Mode == NotifyMode::Commit)
+		if(records)
 		{
-			if(records)
-			{
-				lockFundCache.template actAndToggle(context.Height, false, [&accountStateCache, &context](const Key& publicKey, const std::map<MosaicId, Amount>& mosaics)
-				{
-				  auto accountState = accountStateCache.find(publicKey).get();
-				  for(auto& mosaic : mosaics)
-				  {
-					  accountState.Balances.unlock(mosaic.first, mosaic.second, context.Height);
-				  }
-				});
-			}
-		}
-		else
-		{
-			lockFundCache.template actAndToggle(context.Height, true, [&accountStateCache, &context](const Key& publicKey, const std::map<MosaicId, Amount>& mosaics)
-			{
-			  auto accountState = accountStateCache.find(publicKey).get();
-			  for(auto& mosaic : mosaics)
-			  {
-				  accountState.Balances.lock(mosaic.first, mosaic.second, context.Height);
-			  }
-			});
+			lockFundCache.prune(targetHeight);
 		}
 	}));
 }}
