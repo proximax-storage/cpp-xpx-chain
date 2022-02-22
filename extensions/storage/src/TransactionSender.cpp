@@ -27,18 +27,12 @@ namespace catapult { namespace storage {
 
         // collect judging and judged keys, opinions and signatures.
         for (const auto& opinion : transactionInfo.m_opinions) {
-			if (opinion.m_uploadLayout.empty() && opinion.m_clientUploadBytes == 0)
+			if (opinion.m_uploadLayout.empty())
 				continue;
 
             judgingKeys.emplace(opinion.m_replicatorKey);
 			signatureMap[opinion.m_replicatorKey] = opinion.m_signature.array();
 			auto& pair = opinionMap[opinion.m_replicatorKey];
-			pair.first = opinion.m_clientUploadBytes;
-			if (opinion.m_clientUploadBytes > 0) {
-				opinionCount++;
-				hasClientUploads = true;
-			}
-
             for (const auto& layout: opinion.m_uploadLayout) {
 				judgedKeys.emplace(layout.m_key);
 				pair.second[layout.m_key] = layout.m_uploadedBytes;
@@ -130,7 +124,7 @@ namespace catapult { namespace storage {
         auto singleOpinion = transactionInfo.m_opinions.at(0);
 
         std::vector<Key> keys;
-        keys.reserve(singleOpinion.m_uploadLayout.size() + (singleOpinion.m_clientUploadBytes > 0 ? 1 : 0));
+        keys.reserve(singleOpinion.m_uploadLayout.size());
 
         std::vector<uint64_t> opinions;
         opinions.reserve(singleOpinion.m_uploadLayout.size());
@@ -139,11 +133,6 @@ namespace catapult { namespace storage {
             keys.emplace_back(layout.m_key);
             opinions.emplace_back(layout.m_uploadedBytes);
         }
-
-		if (singleOpinion.m_clientUploadBytes > 0) {
-			keys.emplace_back(m_storageState.getDrive(transactionInfo.m_driveKey).Owner);
-			opinions.emplace_back(singleOpinion.m_clientUploadBytes);
-		}
 
         builders::DataModificationSingleApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
         builder.setDriveKey(transactionInfo.m_driveKey);
