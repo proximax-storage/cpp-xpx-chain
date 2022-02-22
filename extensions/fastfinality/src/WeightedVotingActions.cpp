@@ -1091,7 +1091,7 @@ namespace catapult { namespace fastfinality {
 			auto currentStage = committeeData.committeeStage();
 			pFsmShared->resetCommitteeData();
 
-			int16_t nextRound = currentStage.Round + 1;
+			int64_t nextRound = currentStage.Round + 1;
 			CATAPULT_LOG(debug) << "incremented round " << nextRound;
 			auto nextRoundStart = currentStage.RoundStart + std::chrono::milliseconds(GetPhaseEndTimeMillis(currentStage));
 			uint64_t nextPhaseTimeMillis = currentStage.PhaseTimeMillis;
