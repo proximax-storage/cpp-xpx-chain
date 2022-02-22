@@ -52,13 +52,13 @@ namespace catapult { namespace cache {
 						, public LockFundCacheDeltaMixins::PrimaryMixins::Height {
 		public:
 			using ReadOnlyView = LockFundCacheTypes::CacheReadOnlyType;
-			using CollectedHeights = std::unordered_set<Height, utils::BaseValueHasher<Height>>;
 			using LockFundCacheDeltaMixins::KeyedMixins::Contains::contains;
 			using LockFundCacheDeltaMixins::PrimaryMixins::Contains::contains;
 		public:
 			/// Creates a delta around \a lockFundSets.
 			BasicLockFundCacheDelta(
-					const LockFundCacheTypes::BaseSetDeltaPointers& lockFundSets);
+					const LockFundCacheTypes::BaseSetDeltaPointers& lockFundSets,
+					std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder);
 
 		public:
 			/// Inserts the lockfund record \a ns into the cache.
@@ -126,8 +126,9 @@ namespace catapult { namespace cache {
 		public:
 			/// Creates a delta around \a namespaceSets, \a options and \a namespaceSizes.
 			LockFundCacheDelta(
-					const LockFundCacheTypes::BaseSetDeltaPointers& namespaceSets)
-					: ReadOnlyViewSupplier(namespaceSets)
+					const LockFundCacheTypes::BaseSetDeltaPointers& namespaceSets,
+					std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+					: ReadOnlyViewSupplier(namespaceSets, pConfigHolder)
 			{}
 		};
 }}

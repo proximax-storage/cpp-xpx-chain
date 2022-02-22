@@ -34,7 +34,7 @@ namespace catapult { namespace config {
 						"",
 						{
 							{ "minRequestUnlockCooldown", "161280" },
-							{ "maxMosaicsSize", "512" },
+							{ "maxMosaicsSize", "256" },
 						}
 					}
 				};

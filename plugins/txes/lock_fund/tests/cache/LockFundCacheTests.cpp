@@ -46,7 +46,7 @@ namespace catapult { namespace cache {
 		struct LockFundCacheMixinTraits {
 			class CacheType : public cache::LockFundCache {
 			public:
-				CacheType() : cache::LockFundCache(CacheConfiguration())
+				CacheType() : cache::LockFundCache(CacheConfiguration(), test::CreateLockFundConfigHolder())
 				{}
 			};
 

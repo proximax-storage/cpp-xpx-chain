@@ -59,7 +59,8 @@ namespace catapult { namespace cache {
 
 		public:
 			/// Creates a view around \a lockFundSets.
-			explicit BasicLockFundCacheView(const LockFundCacheTypes::BaseSets& lockFundSets)
+			explicit BasicLockFundCacheView(const LockFundCacheTypes::BaseSets& lockFundSets,
+											std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 					: LockFundCacheViewMixins::Size(lockFundSets.Primary,  lockFundSets.KeyedInverseMap)
 					, LockFundCacheViewMixins::PrimaryMixins::Contains(lockFundSets.Primary)
 					, LockFundCacheViewMixins::PrimaryMixins::Iteration(lockFundSets.Primary)
@@ -76,8 +77,9 @@ namespace catapult { namespace cache {
 
 			/// Creates a view around \a lockFundSets and \a args.
 			template<typename... TArgs>
-			explicit LockFundCacheView(const typename LockFundCacheTypes::BaseSets& lockFundSets, TArgs&&... args)
-					: ReadOnlyViewSupplier<BasicLockFundCacheView>(lockFundSets, std::forward<TArgs>(args)...)
+			explicit LockFundCacheView(const typename LockFundCacheTypes::BaseSets& lockFundSets,
+									   std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder, TArgs&&... args)
+					: ReadOnlyViewSupplier<BasicLockFundCacheView>(lockFundSets, pConfigHolder, std::forward<TArgs>(args)...)
 			{}
 		};
 }}

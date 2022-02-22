@@ -28,13 +28,16 @@ namespace catapult { namespace cache {
 		}
 
 	BasicLockFundCacheDelta::BasicLockFundCacheDelta(
-			const LockFundCacheTypes::BaseSetDeltaPointers& LockFundSets)
+			const LockFundCacheTypes::BaseSetDeltaPointers& LockFundSets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 			: LockFundCacheDeltaMixins::Size(*LockFundSets.pPrimary, *LockFundSets.pKeyedInverseMap)
 		, LockFundCacheDeltaMixins::LookupMixin(*LockFundSets.pPrimary, *LockFundSets.pKeyedInverseMap)
 		, LockFundCacheDeltaMixins::PrimaryMixins::Contains(*LockFundSets.pPrimary)
 		, LockFundCacheDeltaMixins::PrimaryMixins::PatriciaTreeDelta(*LockFundSets.pPrimary, LockFundSets.pPatriciaTree)
 		, LockFundCacheDeltaMixins::PrimaryMixins::DeltaElements(*LockFundSets.pPrimary)
 		, LockFundCacheDeltaMixins::KeyedMixins::Contains(*LockFundSets.pKeyedInverseMap)
+		, m_pLockFundGroupsByHeight(LockFundSets.pPrimary)
+		, m_pLockFundGroupsByKey(LockFundSets.pKeyedInverseMap)
 	{}
 
 	/// Important: No Validation happens here

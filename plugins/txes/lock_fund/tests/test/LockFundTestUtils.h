@@ -127,7 +127,7 @@ namespace catapult { namespace test {
 			return GenerateRandomByteArray<Key>();
 		}
 	};
-
+	std::shared_ptr<config::BlockchainConfigurationHolder> CreateLockFundConfigHolder();
 	template<typename TIdentifier, typename TGeneratorTraits>
 	state::LockFundRecordGroup<TIdentifier> GenerateRecordGroup(typename TIdentifier::KeyType identifier, uint32_t numRecords)
 	{

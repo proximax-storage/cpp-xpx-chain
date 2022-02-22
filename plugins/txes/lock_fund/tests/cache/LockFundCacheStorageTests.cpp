@@ -11,12 +11,13 @@ namespace catapult { namespace cache {
 
 #define TEST_CLASS LockFundCacheStorageTests
 
+
 	TEST(TEST_CLASS, CanLoadValueIntoCache) {
 		// Arrange:
 		auto originalRecord = test::GenerateRecordGroup<LockFundHeightIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<LockFundHeightIndexDescriptor>>(Height(10), 3);
 
 		// Act:
-		LockFundCache cache(CacheConfiguration{});
+		LockFundCache cache(CacheConfiguration{ }, test::CreateLockFundConfigHolder());
 		{
 			auto delta = cache.createDelta(Height{0});
 			LockFundCacheStorage::LoadInto(originalRecord, *delta);
@@ -27,7 +28,7 @@ namespace catapult { namespace cache {
 		auto view = cache.createView(Height{0});
 		EXPECT_EQ(1u, view->size());
 		EXPECT_EQ(3u, view->secondarySize());
-		ASSERT_TRUE(view->contains(Height(0)));
+		ASSERT_TRUE(view->contains(Height(10)));
 		for(auto& keyRecord : originalRecord.LockFundRecords)
 		{
 			ASSERT_TRUE(view->contains(keyRecord.first));

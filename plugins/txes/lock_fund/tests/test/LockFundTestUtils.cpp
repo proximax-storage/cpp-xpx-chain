@@ -19,6 +19,7 @@
 **/
 
 #include "LockFundTestUtils.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace test {
 
@@ -50,7 +51,15 @@ namespace catapult { namespace test {
 		}
 		return results;
 	}
-
+	std::shared_ptr<config::BlockchainConfigurationHolder> CreateLockFundConfigHolder() {
+		auto pluginConfig = config::LockFundConfiguration::Uninitialized();
+		pluginConfig.MinRequestUnlockCooldown = BlockDuration(200000);
+		pluginConfig.MaxMosaicsSize = 256;
+		auto networkConfig = model::NetworkConfiguration::Uninitialized();
+		networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+		networkConfig.SetPluginConfiguration(pluginConfig);
+		return config::CreateMockConfigurationHolder(networkConfig);
+	}
 	void AssertEqual(state::LockFundRecord originalRecord, state::LockFundRecord loadedRecord)
 	{
 		EXPECT_EQ(originalRecord.Size(), loadedRecord.Size());

@@ -83,7 +83,7 @@ namespace catapult { namespace state {
 		}
 
 		/// Loads lock fund record from \a input into \a lockFundRecord.
-		static LockFundRecordGroup<TIndexDescriptor>& Load(io::InputStream& input)
+		static LockFundRecordGroup<TIndexDescriptor> Load(io::InputStream& input)
 		{
 			// read version
 			LockFundRecordGroup<TIndexDescriptor> lockFundRecordGroup;

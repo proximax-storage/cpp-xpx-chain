@@ -44,7 +44,7 @@ namespace catapult { namespace state {
 
 		/// Creates a Lock Fund Record Group around \a identifier and \a records.
 		LockFundRecordGroup(
-				typename TIndexDescriptor::KeyType identifier,
+				const typename TIndexDescriptor::KeyType& identifier,
 				const LockFundRecordMap<TIndexDescriptor>& records)
 				: LockFundRecords(records),
 				Identifier(identifier)

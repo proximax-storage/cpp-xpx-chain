@@ -27,7 +27,7 @@
 namespace catapult { namespace cache {
 
 	/// Cache composed of hash lock info information.
-	using BasicLockFundCache = BasicCache<LockFundCacheDescriptor, LockFundCacheTypes::BaseSets>;
+	using BasicLockFundCache = BasicCache<LockFundCacheDescriptor, LockFundCacheTypes::BaseSets, std::shared_ptr<config::BlockchainConfigurationHolder>>;
 
 	/// Synchronized cache composed of hash lock info information.
 	class LockFundCache : public SynchronizedCache<BasicLockFundCache> {
@@ -36,8 +36,8 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a cache around \a config.
-		explicit LockFundCache(const CacheConfiguration& config)
-				: SynchronizedCache<BasicLockFundCache>(BasicLockFundCache(config))
+		explicit LockFundCache(const CacheConfiguration& config, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+				: SynchronizedCache<BasicLockFundCache>(BasicLockFundCache(config, std::move(pConfigHolder)))
 		{}
 
 
