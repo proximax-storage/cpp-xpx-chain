@@ -30,6 +30,19 @@ namespace catapult { namespace observers {
 			driveInfo.LastCompletedCumulativeDownloadWorkBytes += completedDataModifications.back().ActualUploadSizeMegabytes;
 		}
 
+		for (auto& [key, info]: driveEntry.confirmedStorageInfos()) {
+			if (info.m_confirmedStorageSince) {
+				info.m_timeInConfirmedStorage = info.m_timeInConfirmedStorage
+												+ context.Timestamp - *info.m_confirmedStorageSince;
+			}
+			info.m_confirmedStorageSince.reset();
+		}
+
+		for(int i = 0; i < notification.JudgingKeysCount + notification.OverlappingKeysCount; i++) {
+			const auto& key = notification.PublicKeysPtr[i];
+			driveEntry.confirmedStorageInfos()[key].m_confirmedStorageSince = context.Timestamp;
+		}
+
 		const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
 		for (auto i = 0u; i < totalJudgingKeysCount; ++i)
 			driveEntry.confirmedUsedSizes().insert({notification.PublicKeysPtr[i], notification.UsedDriveSize});

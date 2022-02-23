@@ -18,7 +18,9 @@
 #include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
+#include "src/cache/QueueCacheStorage.h"
 #include "src/cache/ReplicatorCache.h"
+#include "src/cache/QueueCache.h"
 #include "src/cache/ReplicatorCacheStorage.h"
 #include "src/model/StorageEntityType.h"
 #include "src/utils/StorageUtils.h"
@@ -83,7 +85,7 @@ namespace catapult { namespace test {
     struct BcDriveCacheFactory {
         private:
             static auto CreateSubCacheWithBcDriveCache(const config::BlockchainConfiguration& config) {
-                auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id));
+                auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, std::max(cache::ReplicatorCache::Id, cache::QueueCache::Id)));
                 std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
                 auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
@@ -91,7 +93,8 @@ namespace catapult { namespace test {
 			    subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pDriveKeyCollector, pConfigHolder);
 			    subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
                 subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pReplicatorKeyCollector, pConfigHolder);
-                return subCaches;
+                subCaches[cache::QueueCache::Id] = MakeSubCachePlugin<cache::QueueCache, cache::QueueCacheStorage>(pConfigHolder);
+				return subCaches;
             }
 
         public:

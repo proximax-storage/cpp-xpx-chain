@@ -4,19 +4,19 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "BcDriveCacheSubCachePlugin.h"
+#include "QueueCacheSubCachePlugin.h"
 
 namespace catapult { namespace cache {
 
-	void BcDriveCacheSummaryCacheStorage::saveAll(const CatapultCacheView&, io::OutputStream&) const {
-		CATAPULT_THROW_INVALID_ARGUMENT("BcDriveCacheSummaryCacheStorage does not support saveAll");
+	void QueueCacheSummaryCacheStorage::saveAll(const CatapultCacheView&, io::OutputStream&) const {
+		CATAPULT_THROW_INVALID_ARGUMENT("QueueCacheSummaryCacheStorage does not support saveAll");
 	}
 
-	void BcDriveCacheSummaryCacheStorage::saveSummary(const CatapultCacheDelta& cacheDelta, io::OutputStream& output) const {
+	void QueueCacheSummaryCacheStorage::saveSummary(const CatapultCacheDelta& cacheDelta, io::OutputStream& output) const {
 		// write version
 		io::Write32(output, 1);
 
-		const auto& delta = cacheDelta.sub<BcDriveCache>();
+		const auto& delta = cacheDelta.sub<QueueCache>();
 		const auto& keys = delta.keys();
 		io::Write64(output, keys.size());
 		for (const auto& key : keys)
@@ -25,7 +25,7 @@ namespace catapult { namespace cache {
 		output.flush();
 	}
 
-	void BcDriveCacheSummaryCacheStorage::loadAll(io::InputStream& input, size_t) {
+	void QueueCacheSummaryCacheStorage::loadAll(io::InputStream& input, size_t) {
 		std::unordered_set<Key, utils::ArrayHasher<Key>> keys;
 		// TODO: remove this temporary workaround after mainnet upgrade to 0.8.0
 		if (!input.eof()) {
@@ -45,10 +45,9 @@ namespace catapult { namespace cache {
 		cache().init(keys);
 	}
 
-	BcDriveCacheSubCachePlugin::BcDriveCacheSubCachePlugin(
+	QueueCacheSubCachePlugin::QueueCacheSubCachePlugin(
 		const CacheConfiguration& config,
-		const std::shared_ptr<DriveKeyCollector>& pKeyCollector,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
-		: BaseBcDriveCacheSubCachePlugin(std::make_unique<BcDriveCache>(config, pKeyCollector, pConfigHolder))
+		: BaseQueueCacheSubCachePlugin(std::make_unique<QueueCache>(config, pConfigHolder))
 	{}
 }}

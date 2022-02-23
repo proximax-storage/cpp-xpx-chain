@@ -101,6 +101,9 @@ namespace catapult { namespace observers {
 		/// Alias resolvers.
 		const model::ResolverContext Resolvers;
 
+		/// Current block time
+		const catapult::Timestamp Timestamp;
+
 	public:
 		/// Statement builder.
 		ObserverStatementBuilder& StatementBuilder();

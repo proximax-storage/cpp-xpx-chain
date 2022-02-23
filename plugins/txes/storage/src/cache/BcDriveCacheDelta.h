@@ -105,6 +105,10 @@ namespace catapult { namespace cache {
 			}
 		}
 
+		void updateStoragePaymentQueue(const Key& first, const Key& last) {
+
+		}
+
 		auto pruningBoundary() const {
 			return deltaset::PruningBoundary<Key>();
 		}

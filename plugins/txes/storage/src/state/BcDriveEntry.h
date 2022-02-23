@@ -94,10 +94,16 @@ namespace catapult { namespace state {
 		DataModificationState State;
 	};
 
+	struct ConfirmedStorageInfo {
+		Timestamp m_timeInConfirmedStorage;
+		std::optional<Timestamp> m_confirmedStorageSince;
+	};
+
 	using ActiveDataModifications = std::vector<ActiveDataModification>;
 	using CompletedDataModifications = std::vector<CompletedDataModification>;
 	using SizeMap = std::map<Key, uint64_t>;
 	using ConfirmedStates = std::map<Key, Hash256>; // last approved root hash
+	using ConfirmedStoragePeriods = std::map<Key, ConfirmedStorageInfo>;
 	using Shards = std::vector<std::vector<Key>>;
 	using DownloadShards = std::map<Hash256, std::set<Key>>;
 	using ModificationShards = std::map<Key, std::pair<std::set<Key>, std::set<Key>>>;
@@ -287,6 +293,16 @@ namespace catapult { namespace state {
 			return m_confirmedStates;
 		}
 
+		/// Gets replicators last confirmed storage infos.
+		const ConfirmedStoragePeriods& confirmedStorageInfos() const {
+			return m_confirmedStoragePeriods;
+		}
+
+		/// Gets replicators last confirmed storage infos.
+		ConfirmedStoragePeriods& confirmedStorageInfos() {
+			return m_confirmedStoragePeriods;
+		}
+
 		/// Gets map of download channels and replicators that belong to respective download shards.
 		const DownloadShards& downloadShards() const {
 			return m_downloadShards;
@@ -309,12 +325,29 @@ namespace catapult { namespace state {
 			return m_dataModificationShards;
 		}
 
-//		const Key& getStoragePaymentsQueueNext() const {
-//			return m_storagePaymentsQueueNext;
-//		}
-//		void setStoragePaymentsQueueNext(const Key& storagePaymentsQueueNext) {
-//			m_storagePaymentsQueueNext = storagePaymentsQueueNext;
-//		}
+		const Key& getStoragePaymentsQueueNext() const {
+			return m_storagePaymentsQueueNext;
+		}
+
+		void setStoragePaymentsQueueNext(const Key& storagePaymentsQueueNext) {
+			m_storagePaymentsQueueNext = storagePaymentsQueueNext;
+		}
+
+		const Key& getStoragePaymentsQueuePrevious() const {
+			return m_storagePaymentsQueuePrevious;
+		}
+
+		void setStoragePaymentsQueuePrevious(const Key& storagePaymentsQueuePrevious) {
+			m_storagePaymentsQueuePrevious = storagePaymentsQueuePrevious;
+		}
+
+		const Timestamp& getLastPayment() const {
+			return m_lastPayment;
+		}
+
+		void setLastPayment(const Timestamp& lastPayment) {
+			m_lastPayment = lastPayment;
+		}
 
 	private:
 		Key m_owner;
@@ -332,9 +365,12 @@ namespace catapult { namespace state {
 		utils::SortedKeySet m_offboardingReplicators;
 		Verifications m_verifications;
 		ConfirmedStates m_confirmedStates;
+		ConfirmedStoragePeriods m_confirmedStoragePeriods;
 		DownloadShards m_downloadShards;
 		ModificationShards m_dataModificationShards;
-//		Key m_storagePaymentsQueueNext;
+		Key m_storagePaymentsQueueNext;
+		Key m_storagePaymentsQueuePrevious;
+		Timestamp m_lastPayment;
 	};
 
 	// Drive entry.

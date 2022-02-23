@@ -103,6 +103,18 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void SaveConfirmedStorageInfos(io::OutputStream& output, const ConfirmedStoragePeriods& infos) {
+			io::Write16(output, infos.size());
+			for (const auto& [key, info]: infos) {
+				io::Write(output, key);
+				io::Write(output, info.m_timeInConfirmedStorage);
+				io::Write8(output, (bool) info.m_confirmedStorageSince);
+				if (info.m_confirmedStorageSince) {
+					io::Write(output, *info.m_confirmedStorageSince);
+				}
+			}
+		}
+
 		auto LoadActiveDataModification(io::InputStream& input) {
 			Hash256 id;
 			io::Read(input, id);
@@ -224,6 +236,27 @@ namespace catapult { namespace state {
 				LoadShard(input, shardsPair.second);
 			}
 		}
+
+		void LoadConfirmedStorageInfos(io::InputStream& input, ConfirmedStoragePeriods& infos) {
+			auto size = io::Read16(input);
+			while (size--) {
+				Key key;
+				io::Read(input, key);
+
+				ConfirmedStorageInfo info;
+				io::Read(input, info.m_timeInConfirmedStorage);
+
+				bool inConfirmed = io::Read8(input);
+
+				if (inConfirmed) {
+					Timestamp confirmedSince;
+					io::Read(input, confirmedSince);
+					info.m_confirmedStorageSince = confirmedSince;
+				}
+
+				infos[key] = info;
+			}
+		}
 	}
 
 	void BcDriveEntrySerializer::Save(const BcDriveEntry& driveEntry, io::OutputStream& output) {
@@ -239,6 +272,8 @@ namespace catapult { namespace state {
 		io::Write16(output, driveEntry.replicatorCount());
 		io::Write64(output, driveEntry.ownerCumulativeUploadSizeBytes());
 
+		io::Write(output, driveEntry.getStoragePaymentsQueueNext());
+
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
 		SaveConfirmedUsedSizes(output, driveEntry.confirmedUsedSizes());
@@ -248,6 +283,7 @@ namespace catapult { namespace state {
 		SaveVerifications(output, driveEntry.verifications());
 		SaveDownloadShards(output, driveEntry.downloadShards());
 		SaveModificationShards(output, driveEntry.dataModificationShards());
+		SaveConfirmedStorageInfos(output, driveEntry.confirmedStorageInfos());
 	}
 
 	BcDriveEntry BcDriveEntrySerializer::Load(io::InputStream& input) {
@@ -276,6 +312,18 @@ namespace catapult { namespace state {
 		entry.setReplicatorCount(io::Read16(input));
 		entry.setOwnerCumulativeUploadSizeBytes(io::Read64(input));
 
+		Key queuePrevious;
+		io::Read(input, queuePrevious);
+		entry.setStoragePaymentsQueuePrevious(queuePrevious);
+
+		Key queueNext;
+		io::Read(input, queueNext);
+		entry.setStoragePaymentsQueueNext(queueNext);
+
+		Timestamp lastPayment;
+		io::Read(input, lastPayment);
+		entry.setLastPayment(lastPayment);
+
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
 		LoadConfirmedUsedSizes(input, entry.confirmedUsedSizes());
@@ -285,6 +333,7 @@ namespace catapult { namespace state {
 		LoadVerifications(input, entry.verifications());
 		LoadDownloadShards(input, entry.downloadShards());
 		LoadModificationShards(input, entry.dataModificationShards());
+		LoadConfirmedStorageInfos(input, entry.confirmedStorageInfos());
 
 		return entry;
 	}

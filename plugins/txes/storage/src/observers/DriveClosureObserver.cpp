@@ -6,8 +6,11 @@
 
 #include "Observers.h"
 #include "src/utils/StorageUtils.h"
+#include <boost/multiprecision/cpp_int.hpp>
 
 namespace catapult { namespace observers {
+
+	using BigUint = boost::multiprecision::uint128_t;
 
     DEFINE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>, ([](const auto& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
@@ -17,8 +20,13 @@ namespace catapult { namespace observers {
 		auto driveIter = driveCache.find(notification.DriveKey);
 		auto& driveEntry = driveIter.get();
 
+		auto& queueCache = context.Cache.sub<cache::QueueCache>();
+		auto queueIter = queueCache.find(state::DrivePaymentQueueKey);
+		auto& queueEntry = queueIter.get();
+
 	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 	  	const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+	  	const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 	  	auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 	  	auto driveStateIter = accountStateCache.find(notification.DriveKey);
 	  	auto& driveState = driveStateIter.get();
@@ -40,6 +48,55 @@ namespace catapult { namespace observers {
 			  	replicatorState.Balances.credit(currencyMosaicId, totalReplicatorAmount, context.Height);
 		  	}
 	  	}
+
+	  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+	  	auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
+
+	  	auto timeSinceLastPayment = (context.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
+	  	for (auto& [replicatorKey, info]: driveEntry.confirmedStorageInfos()) {
+	  		auto replicatorIter = accountStateCache.find(replicatorKey);
+	  		auto& replicatorState = replicatorIter.get();
+
+	  		if (info.m_confirmedStorageSince) {
+	  			info.m_timeInConfirmedStorage = info.m_timeInConfirmedStorage
+	  					+ context.Timestamp - *info.m_confirmedStorageSince;
+	  			info.m_confirmedStorageSince = context.Timestamp;
+	  		}
+	  		BigUint driveSize = driveEntry.size();
+	  		auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / paymentInterval).template convert_to<uint64_t>());
+	  		driveState.Balances.debit(storageMosaicId, payment, context.Height);
+	  		replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);
+		}
+
+	  	// The Drive is Removed, so we should make removal in linked list
+	  	if (driveEntry.getStoragePaymentsQueuePrevious() != Key()) {
+	  		auto previousDriveIter = driveCache.find(driveEntry.getStoragePaymentsQueuePrevious());
+			auto& previousDriveEntry = previousDriveIter.get();
+			previousDriveEntry.setStoragePaymentsQueueNext(driveEntry.getStoragePaymentsQueueNext());
+		}
+		else {
+			// Previous link is "null" so the Drive is first in the queue
+			queueEntry.setFirst(driveEntry.getStoragePaymentsQueueNext());
+			if (driveEntry.getStoragePaymentsQueueNext() != Key()) {
+				auto nextDriveIter = driveCache.find(driveEntry.getStoragePaymentsQueueNext());
+				auto& nextDriveEntry = nextDriveIter.get();
+				nextDriveEntry.setStoragePaymentsQueuePrevious(Key());
+			}
+		}
+
+	  	if (driveEntry.getStoragePaymentsQueueNext() != Key()) {
+	  		auto nextDriveIter = driveCache.find(driveEntry.getStoragePaymentsQueueNext());
+	  		auto& nextDriveEntry = nextDriveIter.get();
+	  		nextDriveEntry.setStoragePaymentsQueuePrevious(driveEntry.getStoragePaymentsQueuePrevious());
+	  	}
+		else {
+			queueEntry.setLast(driveEntry.getStoragePaymentsQueuePrevious());
+			if (driveEntry.getStoragePaymentsQueuePrevious() != Key()) {
+				auto previousDriveIter = driveCache.find(driveEntry.getStoragePaymentsQueuePrevious());
+				auto& previousDriveEntry = previousDriveIter.get();
+				previousDriveEntry.setStoragePaymentsQueueNext(Key());
+			}
+		}
 
 		// Returning the rest to the drive owner
 		const auto refundAmount = driveState.Balances.get(streamingMosaicId);

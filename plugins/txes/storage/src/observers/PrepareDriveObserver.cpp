@@ -23,6 +23,7 @@ namespace catapult { namespace observers {
 			driveEntry.setOwner(notification.Owner);
 			driveEntry.setSize(notification.DriveSize);
 			driveEntry.setReplicatorCount(notification.ReplicatorCount);
+			driveEntry.setLastPayment(context.Timestamp);
 
 		  	// Filter out replicators that are ready to be assigned to the drive,
 			// i.e. which have at least (notification.DriveSize) of storage units
@@ -104,6 +105,32 @@ namespace catapult { namespace observers {
 		  	}
 
 			driveCache.insert(driveEntry);
+
+			// Insert the Drive into the payment Queue
+		  	auto& queueCache = context.Cache.template sub<cache::QueueCache>();
+		  	auto queueIter = queueCache.find(state::DrivePaymentQueueKey);
+
+		  	if (!queueIter.tryGet()) {
+		  		state::QueueEntry entry(state::DrivePaymentQueueKey);
+				entry.setFirst(driveEntry.key());
+				entry.setLast(driveEntry.key());
+				queueCache.insert(entry);
+		  	}
+			else {
+				auto& queueEntry = queueIter.get();
+
+				driveEntry.setStoragePaymentsQueuePrevious(queueEntry.getLast());
+				queueEntry.setLast(driveEntry.key());
+				if (driveEntry.getStoragePaymentsQueuePrevious() != Key()) {
+					// There are element in the queue
+					auto& lastDriveEntry = driveCache.find(driveEntry.getStoragePaymentsQueuePrevious()).get();
+					lastDriveEntry.setStoragePaymentsQueueNext(driveEntry.key());
+				}
+				else {
+					// There are no element in the queue
+					queueEntry.setFirst(driveEntry.key());
+				}
+			}
 		}))
 	}
 }}

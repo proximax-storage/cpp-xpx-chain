@@ -12,6 +12,7 @@
 #include "src/model/InternalStorageNotifications.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/BcDriveCache.h"
+#include "src/cache/QueueCache.h"
 #include "src/cache/ReplicatorCache.h"
 #include "src/utils/StorageUtils.h"
 #include <queue>
@@ -88,4 +89,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by shards update notifications.
 	DECLARE_OBSERVER(ShardsUpdate, model::ShardsUpdateNotification<1>)();
+
+	/// Observes changes triggered by block
+	DECLARE_OBSERVER(PeriodicStoragePayment, model::BlockNotification<2>)();
 }}
