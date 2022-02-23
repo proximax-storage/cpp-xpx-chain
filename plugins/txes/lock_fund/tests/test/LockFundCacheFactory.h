@@ -18,19 +18,24 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/cache/LockFundCache.h"
-#include "Observers.h"
-#include "src/config/LockFundConfiguration.h"
-#include "catapult/cache_core/AccountStateCache.h"
+#pragma once
 
-namespace catapult { namespace observers {
+#include "catapult/config/BlockchainConfiguration.h"
+#include "catapult/cache/CacheConfiguration.h"
 
-	DEFINE_OBSERVER(LockFundCancelUnlock, model::LockFundCancelUnlockNotification<1>, ([](const auto& notification, const ObserverContext& context) {
-		auto& lockFundCache = context.Cache.sub<cache::LockFundCache>();
-		if(context.Mode == NotifyMode::Commit)
-			lockFundCache.disable(notification.Sender, notification.TargetHeight);
-		else
-			lockFundCache.recover(notification.Sender, notification.TargetHeight);
+namespace catapult { namespace test {
 
-	}));
+	/// Cache factory for creating a catapult cache composed of all core sub caches plus LockFundCache.
+	struct LockFundCacheFactory{
+
+		/// Creates an empty catapult cache around \a config.
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config);
+
+		/// Adds all core sub caches initialized with \a config and \a cacheConfig to \a subCaches.
+		static void CreateSubCaches(
+				const config::BlockchainConfiguration& config,
+				const cache::CacheConfiguration& cacheConfig,
+				std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches);
+	};
+
 }}

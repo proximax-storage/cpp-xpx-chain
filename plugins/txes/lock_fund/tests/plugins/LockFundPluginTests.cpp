@@ -57,7 +57,12 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetObserverNames()
 			{
-				return { "LockFundTransferObserver", "LockFundBlockObserver", "LockFundCancelUnlockObserver"};
+				return { "LockFundBlockObserver", "LockFundTransferObserver", "LockFundCancelUnlockObserver"};
+			}
+
+			static std::vector<std::string> GetPermanentObserverNames()
+			{
+				return GetObserverNames();
 			}
 		};
 	}

@@ -68,25 +68,4 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(sizeof(typename TTraits::TransactionType), realSize);
 	}
 
-	PLUGIN_TEST(CanExtractAccounts) {
-		// Arrange:
-		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin();
-
-		typename TTraits::TransactionType transaction;
-		transaction.Size = sizeof(transaction);
-		transaction.Version = Transaction_Version;
-		transaction.TargetHeight = Height(10);
-		test::FillWithRandomData(transaction.Signer);
-
-		// Act:
-		test::PublishTransaction(*pPlugin, transaction, sub);
-
-		// Assert:
-		EXPECT_EQ(1u, sub.numNotifications());
-		EXPECT_EQ(1u, sub.numKeys());
-		EXPECT_EQ(0u, sub.numAddresses());
-
-		EXPECT_TRUE(sub.contains(transaction.Signer));
-	}
 }}

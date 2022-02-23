@@ -117,14 +117,8 @@ namespace catapult { namespace cache {
 			auto heightGroupIterator = m_pLockFundGroupsByHeight->find(height);
 			auto* heightGroup = heightGroupIterator.get();
 			if(keyGroup->LockFundRecords.find(height) != keyGroup->LockFundRecords.end()){
-				if(keyGroup->LockFundRecords[height].Empty())
-					keyGroup->LockFundRecords.erase(height);
-				else
-					keyGroup->LockFundRecords[height].Unset();
-				if(heightGroup->LockFundRecords[publicKey].Empty())
-					heightGroup->LockFundRecords.erase(publicKey);
-				else
-					heightGroup->LockFundRecords[publicKey].Unset();
+				keyGroup->LockFundRecords.erase(height);
+				heightGroup->LockFundRecords.erase(publicKey);
 				if(keyGroup->LockFundRecords.empty())
 				{
 					m_pLockFundGroupsByKey->remove(publicKey);
@@ -158,7 +152,7 @@ namespace catapult { namespace cache {
 		CATAPULT_THROW_INVALID_ARGUMENT("Key does not exist!");
 	}
 
-	void BasicLockFundCacheDelta::enable(const Key& publicKey, Height height)
+	void BasicLockFundCacheDelta::recover(const Key& publicKey, Height height)
 	{
 		auto keyGroupIterator = m_pLockFundGroupsByKey->find(publicKey);
 		auto* keyGroup = keyGroupIterator.get();
@@ -176,7 +170,7 @@ namespace catapult { namespace cache {
 		CATAPULT_THROW_INVALID_ARGUMENT("Key does not exist!");
 	}
 
-	void BasicLockFundCacheDelta::remove(Height height)
+	void BasicLockFundCacheDelta::disable(Height height)
 	{
 		auto heightGroupIterator = m_pLockFundGroupsByHeight->find(height);
 		auto* heightGroup = heightGroupIterator.get();
@@ -213,7 +207,7 @@ namespace catapult { namespace cache {
 	}
 
 
-	void BasicLockFundCacheDelta::prune(Height height)
+	void BasicLockFundCacheDelta::remove(Height height)
 	{
 		auto heightGroupIterator = m_pLockFundGroupsByHeight->find(height);
 		auto* heightGroup = heightGroupIterator.get();

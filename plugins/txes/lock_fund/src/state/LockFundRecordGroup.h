@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include <map>
 #include "LockFundRecord.h"
+#include <unordered_map>
 namespace catapult { namespace state {
 
 	/// A lock fund record.

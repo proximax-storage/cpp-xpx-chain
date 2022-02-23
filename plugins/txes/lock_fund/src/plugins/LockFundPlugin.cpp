@@ -18,15 +18,14 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <catapult/model/Address.h>
+#include "src/cache/LockFundCacheStorage.h"
 #include "LockFundPlugin.h"
+#include "src/cache/LockFundCache.h"
 #include "LockFundTransferTransactionPlugin.h"
 #include "LockFundCancelUnlockTransactionPlugin.h"
 #include "src/config/LockFundConfiguration.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/PluginManager.h"
-#include "catapult/crypto/KeyPair.h"
-#include "catapult/config/CatapultDataDirectory.h"
 #include "src/observers/Observers.h"
 
 
@@ -36,21 +35,24 @@ namespace catapult { namespace plugins {
 		manager.addPluginInitializer([](auto& config) {
 			config.template InitPluginConfiguration<config::LockFundConfiguration>();
 		});
-
+		const auto& pConfigHolder = manager.configHolder();
 		manager.addTransactionSupport(CreateLockFundTransferTransactionPlugin());
 		manager.addTransactionSupport(CreateLockFundCancelUnlockTransactionPlugin());
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateLockFundPluginConfigValidator());
 		});
-
+		manager.addCacheSupport<cache::LockFundCacheStorage>(
+				std::make_unique<cache::LockFundCache>(manager.cacheConfig(cache::LockFundCache::Name), pConfigHolder));
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateLockFundTransferValidator());
+				.add(validators::CreateLockFundTransferValidator())
+				.add(validators::CreateLockFundCancelUnlockValidator());
 		});
 		manager.addObserverHook([](auto& builder) {
 		  builder.add(observers::CreateLockFundTransferObserver())
-				 .add(observers::CreateLockFundBlockObserver());
+				 .add(observers::CreateLockFundBlockObserver())
+				.add(observers::CreateLockFundCancelUnlockObserver());
 		});
 	}
 }}

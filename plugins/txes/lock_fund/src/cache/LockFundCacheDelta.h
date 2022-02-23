@@ -74,16 +74,16 @@ namespace catapult { namespace cache {
 			void insert(const state::LockFundRecordGroup<LockFundHeightIndexDescriptor>& record);
 
 			/// Reactivates the lock fund record specified by its \a publicKey and \a height from the cache.
-			void enable(const Key& publicKey, Height height);
+			void recover(const Key& publicKey, Height height);
 
 			/// Tags as inactive the records in the lock fund record group specified by its \a height.
-			void remove(Height height);
+			void disable(Height height);
 
 			/// Reactivates the records in the lock fund record group specified by its \a height.
 			void recover(Height height);
 
 			/// Removes the lock fund record group specified by its \a height.
-			void prune(Height height);
+			void remove(Height height);
 
 			/// Acts on the lock fund group and then prunes the height
 			template<typename TAction>

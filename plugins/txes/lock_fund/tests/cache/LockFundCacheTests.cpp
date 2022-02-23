@@ -229,9 +229,8 @@ namespace catapult { namespace cache {
 				{
 					auto delta = cache.createDelta(Height{0});
 					DefaultPopulateCache<test::DefaultRecordGroupGeneratorTraits<LockFundHeightIndexDescriptor>>(delta, records);
+					cache.commit();
 				}
-				cache.commit();
-
 				// Act:
 				auto view = cache.createView(Height{0});
 				action(view, records);
@@ -363,11 +362,11 @@ namespace catapult { namespace cache {
 
 		// Act + Assert:
 		// Valid height invalid key
-		EXPECT_THROW(delta->enable(test::GenerateRandomByteArray<Key>(), Height(10)), catapult_invalid_argument);
+		EXPECT_THROW(delta->recover(test::GenerateRandomByteArray<Key>(), Height(10)), catapult_invalid_argument);
 		// Invalid both
-		EXPECT_THROW(delta->enable(test::GenerateRandomByteArray<Key>(), Height(100)), catapult_invalid_argument);
+		EXPECT_THROW(delta->recover(test::GenerateRandomByteArray<Key>(), Height(100)), catapult_invalid_argument);
 		// Valid key invalid height
-		EXPECT_THROW(delta->enable(records[0].LockFundRecords.begin()->first, Height(100)), catapult_invalid_argument);
+		EXPECT_THROW(delta->recover(records[0].LockFundRecords.begin()->first, Height(100)), catapult_invalid_argument);
 	}
 
 	TEST(TEST_CLASS, CannotPruneUnknownHeight) {
@@ -378,7 +377,7 @@ namespace catapult { namespace cache {
 		DefaultPopulateCache<test::DefaultRecordGroupGeneratorTraits<LockFundHeightIndexDescriptor>>(delta, records);
 
 		// Act + Assert:
-		EXPECT_THROW(delta->prune(Height(100)), catapult_invalid_argument);
+		EXPECT_THROW(delta->remove(Height(100)), catapult_invalid_argument);
 	}
 
 
@@ -493,7 +492,7 @@ namespace catapult { namespace cache {
 		DefaultPopulateCache<test::DefaultRecordGroupGeneratorTraits<LockFundHeightIndexDescriptor>>(delta, records);
 		auto removeKey = records[0].LockFundRecords.begin()->first;
 		// Act:
-		delta->enable(removeKey, Height(10));
+		delta->recover(removeKey, Height(10));
 
 		// Assert:
 		EXPECT_EQ(delta->size(), 3);
@@ -513,7 +512,7 @@ namespace catapult { namespace cache {
 		auto delta = cache.createDelta(Height{0});
 		DefaultPopulateCache<test::DefaultRecordGroupGeneratorTraits<LockFundHeightIndexDescriptor>>(delta, records);
 		// Act:
-		delta->prune(Height(10));
+		delta->remove(Height(10));
 
 		// Assert:
 		EXPECT_EQ(delta->size(), 2);
@@ -528,14 +527,14 @@ namespace catapult { namespace cache {
 			EXPECT_FALSE(delta->contains(innerRecord.first));
 		}
 	}
-	TEST(TEST_CLASS, CanRemoveHeight) {
+	TEST(TEST_CLASS, CanDisableHeight) {
 		// Arrange:
 		LockFundCacheMixinTraits::CacheType cache;
 		std::vector<state::LockFundRecordGroup<LockFundHeightIndexDescriptor>> records;
 		auto delta = cache.createDelta(Height{0});
 		DefaultPopulateCache<test::DefaultRecordGroupGeneratorTraits<LockFundHeightIndexDescriptor>>(delta, records);
 		// Act:
-		delta->remove(Height(10));
+		delta->disable(Height(10));
 
 		// Assert:
 		EXPECT_EQ(delta->size(), 3);

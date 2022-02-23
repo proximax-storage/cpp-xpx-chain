@@ -39,7 +39,7 @@ namespace catapult { namespace observers {
 		auto records = heightRecord.tryGet();
 		if(records)
 		{
-			lockFundCache.prune(targetHeight);
+			lockFundCache.remove(targetHeight);
 		}
 	}));
 }}

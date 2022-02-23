@@ -19,9 +19,10 @@
 **/
 
 #pragma once
-#include "catapult/io/Stream.h"
 #include "LockFundRecordGroup.h"
 #include "catapult/utils/Casting.h"
+#include "catapult/io/PodIoUtils.h"
+#include "catapult/io/Stream.h"
 
 namespace catapult { namespace state {
 
@@ -39,8 +40,8 @@ namespace catapult { namespace state {
 		{
 			auto mosaicCount = io::Read8(input);
 			while (mosaicCount--) {
-				auto mosaicId = MosaicId{io::Read64(input)};
-				auto amount = Amount{io::Read64(input)};
+				auto mosaicId = MosaicId(io::Read64(input));
+				auto amount = Amount(io::Read64(input));
 				record.emplace(mosaicId, amount);
 			}
 		}
@@ -50,8 +51,8 @@ namespace catapult { namespace state {
 			LockFundRecordMosaicMap record;
 			auto mosaicCount = io::Read8(input);
 			while (mosaicCount--) {
-				auto mosaicId = MosaicId{io::Read64(input)};
-				auto amount = Amount{io::Read64(input)};
+				auto mosaicId = MosaicId(io::Read64(input));
+				auto amount = Amount(io::Read64(input));
 				record.emplace(mosaicId, amount);
 			}
 			return std::move(record);

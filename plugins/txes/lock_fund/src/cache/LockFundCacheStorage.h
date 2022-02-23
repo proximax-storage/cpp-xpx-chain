@@ -27,7 +27,7 @@ namespace catapult { namespace cache {
 
 		/// Policy for saving and loading lock fund cache data.
 		struct LockFundCacheStorage
-				: public CacheStorageFromDescriptor<LockFundCacheDescriptor>
+				: public CacheStorageForBasicInsertRemoveCache<LockFundCacheDescriptor>
 						, public state::LockFundRecordSerializer<LockFundHeightIndexDescriptor> {
 
 			/// Loads \a recordGroup into \a cacheDelta.
