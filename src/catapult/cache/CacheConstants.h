@@ -46,6 +46,7 @@ namespace catapult { namespace cache {
 		Operation,
 		MosaicLevy,
 		Metadata_v2,
+		ExchangeSda,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

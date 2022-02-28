@@ -71,5 +71,7 @@ namespace catapult { namespace model {
 		Levy = 0x4F,
 		/// NEM's Metadata facility code.
 		Metadata_v2 = 0x3F,
+		/// SDA-SDA Exchange facility code.
+		ExchangeSda = 0x61,
 	};
 }}
