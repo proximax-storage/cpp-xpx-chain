@@ -13,19 +13,19 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-	/// Binary layout for an SDA-SDA exchange transaction body.
+	/// Binary layout for a remove SDA-SDA exchange offer transaction body.
 	template<typename THeader>
-	struct ExchangeSdaTransactionBody : public THeader {
+	struct RemoveSdaExchangeOfferTransactionBody : public THeader {
 	private:
-		using TransactionType = ExchangeSdaTransactionBody<THeader>;
+		using TransactionType = RemoveSdaExchangeOfferTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Sda_Exchange, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Remove_Sda_Exchange_Offer, 1)
 
 	public:
 		uint8_t SdaOfferCount;
 
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(SdaOffers, MatchedSdaOffer)
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(SdaOffers, SdaOfferMosaic)
 
 	private:
 		template<typename T>
@@ -34,13 +34,13 @@ namespace catapult { namespace model {
 		}
 
 	public:
-		// Calculates the real size of an exchange transaction.
+		// Calculates the real size of a remove SDA-SDA exchange offer transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + transaction.SdaOfferCount * sizeof(MatchedSdaOffer);
+			return sizeof(TransactionType) + transaction.SdaOfferCount * sizeof(SdaOfferMosaic);
 		}
 	};
 
-	DEFINE_EMBEDDABLE_TRANSACTION(ExchangeSda)
+	DEFINE_EMBEDDABLE_TRANSACTION(RemoveSdaExchangeOffer)
 
 #pragma pack(pop)
 }}

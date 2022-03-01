@@ -15,13 +15,13 @@ namespace catapult { namespace model {
 /// Defines an SDA-SDA exchange notification type with \a DESCRIPTION, \a CODE and \a CHANNEL.
 #define DEFINE_EXCHANGESDA_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, ExchangeSda, DESCRIPTION, CODE)
 
-	/// Place Offer.
+	/// Place SDA-SDA Offer.
 	DEFINE_EXCHANGESDA_NOTIFICATION(Place_Sda_Offer_v1, 0x001, All);
 
-	/// Exchange.
+	/// SDA-SDA Exchange.
 	DEFINE_EXCHANGESDA_NOTIFICATION(Sda_Exchange_v1, 0x002, All);
 
-	/// Remove offer.
+	/// Remove SDA-SDA offer.
 	DEFINE_EXCHANGESDA_NOTIFICATION(Remove_Sda_Offer_v1, 0x003, All);
 
 #undef DEFINE_EXCHANGESDA_NOTIFICATION
@@ -33,23 +33,23 @@ namespace catapult { namespace model {
 		BaseOfferNotification(
 				NotificationType type,
 				const Key& owner,
-				uint8_t offerCount,
-				const SdaOfferWithDuration* pOffers)
+				uint8_t sdaOfferCount,
+				const SdaOfferWithDuration* pSdaOffers)
 			: Notification(type, sizeof(BaseOfferNotification))
 			, Owner(owner)
-			, OfferCount(offerCount)
-			, OffersPtr(pOffers)
+			, SdaOfferCount(sdaOfferCount)
+			, SdaOffersPtr(pSdaOffers)
 		{}
 
 	public:
-		/// Offer owner.
+		/// SDA-SDA Offer owner.
 		const Key& Owner;
 
-		/// Offer count.
-		uint8_t OfferCount;
+		/// SDA-SDA Offer count.
+		uint8_t SdaOfferCount;
 
-		/// Offers.
-		const SdaOfferWithDuration* OffersPtr;
+		/// SDA-SDA Offers.
+		const SdaOfferWithDuration* SdaOffersPtr;
 	};
 
 	/// Notification of an SDA-SDA offer.
@@ -65,13 +65,13 @@ namespace catapult { namespace model {
 	public:
 		SdaOfferNotification(
 				const Key& owner,
-				uint8_t offerCount,
+				uint8_t sdaOfferCount,
 				const SdaOfferWithDuration* pOffers)
-			: BaseOfferNotification(Notification_Type, owner, offerCount, pOffers)
+			: BaseOfferNotification(Notification_Type, owner, sdaOfferCount, pOffers)
 		{}
 	};
 
-	/// Notification of an exchange.
+	/// Notification of an SDA-SDA exchange.
 	template<VersionType version>
 	struct SdaExchangeNotification;
 
@@ -84,23 +84,23 @@ namespace catapult { namespace model {
 	public:
 		SdaExchangeNotification(
 				const Key& signer,
-				uint8_t offerCount,
-				const MatchedSdaOffer* pOffers)
+				uint8_t sdaOfferCount,
+				const MatchedSdaOffer* pSdaOffers)
 			: Notification(Notification_Type, sizeof(SdaExchangeNotification<1>))
 			, Signer(signer)
-			, OfferCount(offerCount)
-			, OffersPtr(pOffers)
+			, SdaOfferCount(sdaOfferCount)
+			, SdaOffersPtr(pSdaOffers)
 		{}
 
 	public:
 		/// Transaction signer.
 		const Key& Signer;
 
-		/// Number of matched offers.
-		uint8_t OfferCount;
+		/// Number of matched SDA-SDA offers.
+		uint8_t SdaOfferCount;
 
-		/// Matched offers.
-		const MatchedSdaOffer* OffersPtr;
+		/// Matched SDA-SDA offers.
+		const MatchedSdaOffer* SdaOffersPtr;
 	};
 
 	/// Notification of an offer removing.
@@ -116,22 +116,22 @@ namespace catapult { namespace model {
 	public:
 		RemoveSdaOfferNotification(
 				const Key& owner,
-				uint8_t offerCount,
-				const SdaOfferMosaic* pOffers)
+				uint8_t sdaOfferCount,
+				const SdaOfferMosaic* pSdaOffers)
 			: Notification(Notification_Type, sizeof(RemoveSdaOfferNotification<1>))
 			, Owner(owner)
-			, OfferCount(offerCount)
-			, OffersPtr(pOffers)
+			, SdaOfferCount(sdaOfferCount)
+			, SdaOffersPtr(pSdaOffers)
 		{}
 
 	public:
-		/// Offer owner.
+		/// SDA-SDA Offer owner.
 		const Key& Owner;
 
 		/// Mosaic count.
-		uint8_t OfferCount;
+		uint8_t SdaOfferCount;
 
-		/// Mosaic ids of offers to remove.
-		const SdaOfferMosaic* OffersPtr;
+		/// Mosaic ids of SDA-SDA offers to remove.
+		const SdaOfferMosaic* SdaOffersPtr;
 	};
 }}
