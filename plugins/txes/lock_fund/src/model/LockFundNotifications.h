@@ -52,12 +52,11 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a messageSize.
-		explicit LockFundTransferNotification(Key sender, uint8_t mosaicsCount, BlockDuration duration, const UnresolvedMosaic* pMosaics, model::LockFundAction action)
+		explicit LockFundTransferNotification(const Key& sender, BlockDuration duration, const std::vector<UnresolvedMosaic>& mosaics, model::LockFundAction action)
 				: Notification(Notification_Type, sizeof(LockFundTransferNotification<1>))
 				, Sender(sender)
-				, MosaicsCount(mosaicsCount)
 				, Duration(duration)
-				, MosaicsPtr(pMosaics)
+				, Mosaics(mosaics)
 				, Action(action)
 		{}
 
@@ -66,13 +65,10 @@ namespace catapult { namespace model {
 		const Key& Sender;
 
 		/// Number of mosaics.
-		uint8_t MosaicsCount;
-
-		/// Number of mosaics.
 		BlockDuration Duration;
 
 		/// Const pointer to the first mosaic.
-		const UnresolvedMosaic* MosaicsPtr;
+		const std::vector<UnresolvedMosaic>& Mosaics;
 
 		// Action
 		LockFundAction Action;
@@ -90,7 +86,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a messageSize.
-		explicit LockFundCancelUnlockNotification(Key sender, Height height)
+		explicit LockFundCancelUnlockNotification(const Key& sender, Height height)
 				: Notification(Notification_Type, sizeof(LockFundCancelUnlockNotification<1>))
 				, Sender(sender)
 				, TargetHeight(height)

@@ -34,7 +34,11 @@ namespace catapult { namespace plugins {
 			case 1: {
 				sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
 				const auto *pMosaics = transaction.MosaicsPtr();
-				sub.notify(LockFundTransferNotification<1>(transaction.Signer, transaction.MosaicsCount, transaction.Duration, pMosaics, transaction.Action));
+				std::vector<UnresolvedMosaic> mosaics;
+				for (auto i = 0u; i < transaction.MosaicsCount; ++i) {
+					mosaics.push_back(pMosaics[i]);
+				}
+				sub.notify(LockFundTransferNotification<1>(transaction.Signer, transaction.Duration, mosaics, transaction.Action));
 				break;
 			}
 

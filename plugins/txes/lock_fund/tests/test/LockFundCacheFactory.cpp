@@ -28,6 +28,7 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "catapult/cache/CatapultCache.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 namespace catapult { namespace test {
 
 	namespace {
@@ -41,12 +42,21 @@ namespace catapult { namespace test {
 			};
 		}
 	}
+
+	cache::CatapultCache LockFundCacheFactory::Create() {
+		return Create(test::MutableBlockchainConfiguration().ToConst());
+	}
+
 	cache::CatapultCache LockFundCacheFactory::Create(const config::BlockchainConfiguration& config) {
-		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(4);
+		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(20);
 		CreateSubCaches(config, cache::CacheConfiguration(), subCaches);
 		return cache::CatapultCache(std::move(subCaches));
 	}
-
+	void LockFundCacheFactory::CreateSubCaches(
+			const config::BlockchainConfiguration& config,
+			std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches) {
+		CreateSubCaches(config, cache::CacheConfiguration(), subCaches);
+	}
 	void LockFundCacheFactory::CreateSubCaches(
 			const config::BlockchainConfiguration& config,
 			const cache::CacheConfiguration& cacheConfig,

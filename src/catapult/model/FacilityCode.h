@@ -53,8 +53,6 @@ namespace catapult { namespace model {
 		Property = 0x50,
 		/// Transfer facility code.
 		Transfer = 0x54,
-		/// Lock Fund facility code.
-		LockFund = 0x55,
 		/// Blockchain upgrade facility code.
 		BlockchainUpgrade = 0x58,
 		/// Service facility code.
@@ -69,5 +67,7 @@ namespace catapult { namespace model {
 		Operation = 0x5F,
 		/// SuperContract facility code.
 		SuperContract = 0x60,
+		/// Lock Fund facility code.
+		LockFund = 0x61,
 	};
 }}

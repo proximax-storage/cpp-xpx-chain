@@ -27,6 +27,7 @@
 #include "src/config/LockFundConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
+#include "LockFundCacheFactory.h"
 
 namespace catapult { namespace test {
 
@@ -48,18 +49,23 @@ namespace catapult { namespace test {
 		test::MutableBlockchainConfiguration mutableConfig;
 		mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 		auto config = mutableConfig.ToConst();
-		auto cache = test::CreateEmptyCatapultCache(config);
+		auto cache = test::CreateEmptyCatapultCache<LockFundCacheFactory>(config);
 		auto delta = cache.createDelta();
 		auto& accountCache = delta.sub<cache::AccountStateCache>();
 		auto& lockFundCache = delta.sub<cache::LockFundCache>();
 		accountCache.addAccount(keypair.publicKey(), Height(0), 2);
-		auto account = accountCache.find(keypair.publicKey()).get();
+		auto& account = accountCache.find(keypair.publicKey()).get();
 		prepareAccount(account);
 		modifyCache(lockFundCache);
-		cache.commit(Height(1));
+		cache.commit(Height(0));
+
+		auto cacheView = cache.createView();
+		auto readOnlyCache = cacheView.toReadOnly();
+		model::ResolverContext resolverContext;
+		auto context = validators::ValidatorContext(config, Height(100), Timestamp(8888), resolverContext, readOnlyCache);
 
 		// Act:
-		auto result = test::ValidateNotification(*pValidator, notification, cache, config);
+		auto result = test::ValidateNotification(*pValidator, notification, context);
 
 		// Assert:
 		EXPECT_EQ(expectedResult, result);

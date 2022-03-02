@@ -64,6 +64,9 @@ namespace catapult { namespace plugins {
 			{
 				return GetObserverNames();
 			}
+			static std::vector<std::string> GetCacheNames() {
+				return { "LockFundCache" };
+			}
 		};
 	}
 

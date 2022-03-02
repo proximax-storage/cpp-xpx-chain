@@ -34,7 +34,7 @@ namespace catapult { namespace validators {
 									const crypto::KeyPair& keypair,
 									TPrepareFunc prepareAccount,
 									TModifier modifyCache = [](cache::LockFundCacheDelta&){}) {
-			model::LockFundTransferNotification<1> notification(keypair.publicKey(), mosaics.size(), blocksUntilUnlock, mosaics.data(), lockFundAction);
+			model::LockFundTransferNotification<1> notification(keypair.publicKey(), blocksUntilUnlock, mosaics, lockFundAction);
 			auto pValidator = CreateLockFundTransferValidator();
 			test::AssertValidationResult(expectedResult,
 				notification,
@@ -399,7 +399,7 @@ TEST(TEST_CLASS, FailureWhenValidatingNotificationLockingMultipleOutOfOrderMosai
 			 accountState.Balances.lock(MosaicId(71), Amount(5));
 		   },
 			[&keyPair](cache::LockFundCacheDelta& lockFundCache){
-				lockFundCache.insert(keyPair.publicKey(), Height(30), {{MosaicId(71), Amount(3)}});
+				lockFundCache.insert(keyPair.publicKey(), Height(130), {{MosaicId(71), Amount(3)}});
 		});
 	}
 
@@ -418,8 +418,8 @@ TEST(TEST_CLASS, FailureWhenValidatingNotificationLockingMultipleOutOfOrderMosai
 			 accountState.Balances.lock(MosaicId(71), Amount(5));
 		   },
 		   [&keyPair](cache::LockFundCacheDelta& lockFundCache){
-			 lockFundCache.insert(keyPair.publicKey(), Height(30), {{MosaicId(71), Amount(3)}});
-			 lockFundCache.insert(keyPair.publicKey(), Height(30), {{MosaicId(71), Amount(1)}});
+			 lockFundCache.insert(keyPair.publicKey(), Height(130), {{MosaicId(71), Amount(3)}});
+			 lockFundCache.insert(keyPair.publicKey(), Height(132), {{MosaicId(71), Amount(1)}});
 		   });
 	}
 
@@ -430,7 +430,7 @@ TEST(TEST_CLASS, FailureWhenValidatingNotificationLockingMultipleOutOfOrderMosai
 		   BlockDuration(16),
 		   {{ UnresolvedMosaicId(71), Amount(2) }},
 		   model::LockFundAction::Unlock,
-		   BlockDuration(15),
+		   BlockDuration(16),
 		   256,
 		   keyPair,
 		   [](state::AccountState& accountState){
@@ -438,7 +438,7 @@ TEST(TEST_CLASS, FailureWhenValidatingNotificationLockingMultipleOutOfOrderMosai
 			 accountState.Balances.lock(MosaicId(71), Amount(5));
 		   },
 		   [&keyPair](cache::LockFundCacheDelta& lockFundCache){
-			 lockFundCache.insert(keyPair.publicKey(), Height(16), {{MosaicId(71), Amount(3)}});
+			 lockFundCache.insert(keyPair.publicKey(), Height(116), {{MosaicId(71), Amount(3)}});
 
 		   });
 	}
@@ -449,15 +449,14 @@ TEST(TEST_CLASS, FailureWhenValidatingNotificationLockingMultipleOutOfOrderMosai
 		   BlockDuration(16),
 		   {{ UnresolvedMosaicId(71), Amount(2) }},
 		   model::LockFundAction::Lock,
-		   BlockDuration(15),
+		   BlockDuration(16),
 		   256,
 		   keyPair,
 		   [](state::AccountState& accountState){
 			 accountState.Balances.credit(MosaicId(71), Amount(5));
-			 accountState.Balances.lock(MosaicId(71), Amount(5));
 		   },
 		   [&keyPair](cache::LockFundCacheDelta& lockFundCache){
-			 lockFundCache.insert(keyPair.publicKey(), Height(16), {{MosaicId(71), Amount(3)}});
+			 lockFundCache.insert(keyPair.publicKey(), Height(116), {{MosaicId(71), Amount(3)}});
 
 		   });
 	}

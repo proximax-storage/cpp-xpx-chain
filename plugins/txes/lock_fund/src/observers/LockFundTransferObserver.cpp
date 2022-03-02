@@ -46,40 +46,41 @@ namespace catapult { namespace observers {
 		template<model::LockFundAction TLockAction>
 		void Unlock(state::AccountState& accountState, cache::LockFundCacheDelta& lockFundCache, const config::LockFundConfiguration& pluginConfig, const std::map<MosaicId, Amount>& mosaics, Height unlockHeight) {
 			if constexpr(TLockAction == model::LockFundAction::Unlock)
-				lockFundCache.remove(accountState.PublicKey, unlockHeight);
-			else
 				lockFundCache.insert(accountState.PublicKey, unlockHeight, mosaics);
+			else
+				lockFundCache.remove(accountState.PublicKey, unlockHeight);
+		}
+		void ObserveAndValidate(const model::LockFundTransferNotification<1>& notification, const ObserverContext& context)
+		{
+			auto& cache = context.Cache.sub<cache::AccountStateCache>();
+			auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::LockFundConfiguration>();
+			auto senderIter = cache.find(notification.Sender);
+			auto& senderState = senderIter.get();
+			std::map<MosaicId, Amount> mosaics;
+			for (auto& mosaic : notification.Mosaics)
+				mosaics.insert(std::make_pair(context.Resolvers.resolve(mosaic.MosaicId), mosaic.Amount));
+			auto& lockFundCache = context.Cache.sub<cache::LockFundCache>();
+
+			if(notification.Action == model::LockFundAction::Lock)
+			{
+				if (NotifyMode::Commit == context.Mode)
+					Lock<model::LockFundAction::Lock>(senderState, lockFundCache, mosaics, context.Height, notification.Duration);
+				else
+					Lock<model::LockFundAction::Unlock>(senderState, lockFundCache, mosaics, context.Height, notification.Duration);
+			}
+			else
+			{
+				auto targetHeight = notification.Duration.unwrap() + context.Height.unwrap();
+				if(notification.Duration == BlockDuration(0))
+					targetHeight += pluginConfig.MinRequestUnlockCooldown.unwrap();
+				if (NotifyMode::Commit == context.Mode)
+					Unlock<model::LockFundAction::Unlock>(senderState, lockFundCache, pluginConfig, mosaics, Height(targetHeight));
+				else
+					Unlock<model::LockFundAction::Lock>(senderState, lockFundCache, pluginConfig, mosaics, Height(targetHeight));
+			}
+
 		}
 	}
 
-	DEFINE_OBSERVER(LockFundTransfer, model::LockFundTransferNotification<1>, ([](const auto& notification, const ObserverContext& context) {
-		auto& cache = context.Cache.sub<cache::AccountStateCache>();
-		auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::LockFundConfiguration>();
-		auto senderIter = cache.find(notification.Sender);
-		auto& senderState = senderIter.get();
-		auto pMosaics = notification.MosaicsPtr;
-		std::map<MosaicId, Amount> mosaics;
-		for (auto i = 0u; i < notification.MosaicsCount; ++i)
-			mosaics.insert(std::make_pair(context.Resolvers.resolve(pMosaics[i].MosaicId), pMosaics[i].Amount));
-		auto& lockFundCache = context.Cache.sub<cache::LockFundCache>();
-
-		if(notification.Action == model::LockFundAction::Lock)
-		{
-			if (NotifyMode::Commit == context.Mode)
-				Lock<model::LockFundAction::Lock>(senderState, lockFundCache, mosaics, context.Height, notification.Duration);
-			else
-				Lock<model::LockFundAction::Unlock>(senderState, lockFundCache, mosaics, context.Height, notification.Duration);
-		}
-		else
-		{
-			auto targetHeight = notification.Duration.unwrap() + context.Height.unwrap();
-			if(notification.Duration == BlockDuration(0))
-				targetHeight += pluginConfig.MinRequestUnlockCooldown.unwrap();
-			if (NotifyMode::Commit == context.Mode)
-				Unlock<model::LockFundAction::Unlock>(senderState, lockFundCache, pluginConfig, mosaics, Height(targetHeight));
-			else
-				Unlock<model::LockFundAction::Lock>(senderState, lockFundCache, pluginConfig, mosaics, Height(targetHeight));
-		}
-
-	}));
+	DEFINE_OBSERVER(LockFundTransfer, model::LockFundTransferNotification<1>, ObserveAndValidate);
 }}

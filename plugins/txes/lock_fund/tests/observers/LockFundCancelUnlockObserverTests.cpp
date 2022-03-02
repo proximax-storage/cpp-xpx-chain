@@ -21,6 +21,7 @@
 #include "src/cache/LockFundCache.h"
 #include "src/config/LockFundConfiguration.h"
 #include "src/observers/Observers.h"
+#include "tests/test/LockFundCacheFactory.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -28,7 +29,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS LockFundCancelUnlockObserverTests
 
-		using ObserverTestContext = test::ObserverTestContextT<test::CoreSystemCacheFactory>;
+		using ObserverTestContext = test::ObserverTestContextT<test::LockFundCacheFactory>;
 
 		DEFINE_COMMON_OBSERVER_TESTS(LockFundCancelUnlock, )
 
@@ -164,9 +165,9 @@ namespace catapult { namespace observers {
 
 		TEST(TEST_CLASS, ObserverCancelsExistingUnlock) {
 			// Arrange
-			std::vector<RecordDescriptor> descriptors = { { Height(10), test::GenerateRandomByteArray<Key>() } };
+			std::vector<RecordDescriptor> descriptors = { { Height(20), test::GenerateRandomByteArray<Key>() } };
 			auto notification = CreateLockFundCancelUnlockNotification(descriptors[0]);
-			auto context = PrepareContext(Height { 444 }, 256, BlockDuration(10));
+			auto context = PrepareContext(Height { 10 }, 256, BlockDuration(10));
 			// Act: add it
 			RunCancelUnlockTest(
 					notification,

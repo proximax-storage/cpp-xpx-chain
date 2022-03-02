@@ -18,8 +18,10 @@
 *** You should have received a copy of the GNU Lesser General Public License
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
+#include "tests/test/LockFundCacheFactory.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "src/cache/LockFundCache.h"
+#include "catapult/model/ResolverContext.h"
 #include "src/config/LockFundConfiguration.h"
 #include "src/observers/Observers.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
@@ -29,14 +31,14 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS LockFundTransferObserverTests
 
-	using ObserverTestContext = test::ObserverTestContextT<test::CoreSystemCacheFactory>;
+	using ObserverTestContext = test::ObserverTestContextT<test::LockFundCacheFactory>;
 
 	DEFINE_COMMON_OBSERVER_TESTS(LockFundTransfer,)
 
 	namespace {
 
 		model::LockFundTransferNotification<1> CreateTransferNotification(const Key& signer, const std::vector<model::UnresolvedMosaic>& mosaics, BlockDuration blocksUntilUnlock, model::LockFundAction lockFundAction) {
-			return model::LockFundTransferNotification<1>(signer, mosaics.size(), blocksUntilUnlock, mosaics.data(), lockFundAction);
+			return model::LockFundTransferNotification<1>(signer, blocksUntilUnlock, mosaics, lockFundAction);
 		}
 
 		template<typename TSeedCacheFunc, typename TCheckCacheFunc>
@@ -52,6 +54,7 @@ namespace catapult { namespace observers {
 			auto& lockFundCacheDelta = context.cache().sub<cache::LockFundCache>();
 			auto& accountStateCacheDelta = context.cache().sub<cache::AccountStateCache>();
 			seedCache(lockFundCacheDelta, accountStateCacheDelta);
+
 			// Act:
 			test::ObserveNotification(*pObserver, notification, context);
 
@@ -61,9 +64,9 @@ namespace catapult { namespace observers {
 
 		auto PrepareDefaultAccount(const Key& signer, std::map<MosaicId, Amount> mosaics = {{MosaicId(72), Amount(200)}})
 		{
-			return [&signer, &mosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
+			return  [&signer, &mosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
 				accountStateCacheDelta.addAccount(signer, Height(1), 2);
-				auto account = accountStateCacheDelta.find(signer).get();
+				auto& account = accountStateCacheDelta.find(signer).get();
 				for(auto mosaic : mosaics)
 					account.Balances.credit(mosaic.first, mosaic.second);
 
@@ -82,7 +85,7 @@ namespace catapult { namespace observers {
 
 		auto PrepareContext(Height height, uint8_t maxMosaicsSize, BlockDuration unlockCooldown, NotifyMode mode = NotifyMode::Commit)
 		{
-			return ObserverTestContext(mode, height, PrepareConfiguration(maxMosaicsSize, unlockCooldown));
+			return ObserverTestContext(mode, height, PrepareConfiguration(maxMosaicsSize, unlockCooldown), model::ResolverContext());
 		}
 
 		auto VerifyDefaultCacheStateAfterRollback(const model::LockFundTransferNotification<1>& notification, const Key& signer, ObserverTestContext& context, std::map<MosaicId, Amount> mosaics = {{MosaicId(72), Amount(200)}})
@@ -115,7 +118,8 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ObserverLocksMosaicOnCommit) {
 		// Arrange
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateTransferNotification(signer, { { UnresolvedMosaicId(72), UnresolvedAmount(100) } }, BlockDuration(0), model::LockFundAction::Lock);
+		std::vector<model::UnresolvedMosaic> mosaics = { { UnresolvedMosaicId(72), UnresolvedAmount(100) } };
+		auto notification = CreateTransferNotification(signer, mosaics, BlockDuration(0), model::LockFundAction::Lock);
 		auto context = PrepareContext(Height{444}, 256, BlockDuration(10));
 		// Act: add it
 		RunChildTest(
@@ -142,20 +146,21 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ObserverLocksMultipleMosaicsOnCommit) {
 		// Arrange
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateTransferNotification(signer, {
-																		{ UnresolvedMosaicId(72), UnresolvedAmount(100) },
-																		{ UnresolvedMosaicId(172), UnresolvedAmount(100) },
-																		{ UnresolvedMosaicId(200), UnresolvedAmount(100) }
-															   		   },
+		std::vector<model::UnresolvedMosaic> mosaics = {
+				{ UnresolvedMosaicId(72), UnresolvedAmount(100) },
+				{ UnresolvedMosaicId(172), UnresolvedAmount(100) },
+				{ UnresolvedMosaicId(200), UnresolvedAmount(100) }
+		};
+		auto notification = CreateTransferNotification(signer, mosaics,
 																		BlockDuration(0), model::LockFundAction::Lock);
 		auto context = PrepareContext(Height{444}, 256, BlockDuration(10));
-		std::map<MosaicId, Amount> mosaics = { { MosaicId(72), Amount(200) }, { MosaicId(172), Amount(100) }, { MosaicId(200), Amount(200) } };
+		std::map<MosaicId, Amount> initialMosaics = { { MosaicId(72), Amount(200) }, { MosaicId(172), Amount(100) }, { MosaicId(200), Amount(200) } };
 
 		// Act: add it
 		RunChildTest(
 				notification,
 				context,
-				PrepareDefaultAccount(signer, mosaics),
+				PrepareDefaultAccount(signer, initialMosaics),
 				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
 				  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 				  auto account = accountStateCacheDelta.find(signer).get();
@@ -163,10 +168,10 @@ namespace catapult { namespace observers {
 				  EXPECT_FALSE(lockFundKeyRecord);
 				  EXPECT_EQ(3u, account.Balances.size());
 				  EXPECT_EQ(3u, account.Balances.lockedBalances().size());
-				  EXPECT_EQ(3u, account.Balances.balances().size());
+				  EXPECT_EQ(2u, account.Balances.balances().size());
 				  EXPECT_EQ(100, account.Balances.get(MosaicId(72)).unwrap());
 				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(72)).unwrap());
-				  EXPECT_EQ(100, account.Balances.get(MosaicId(172)).unwrap());
+				  EXPECT_EQ(0, account.Balances.get(MosaicId(172)).unwrap());
 				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(172)).unwrap());
 				  EXPECT_EQ(100, account.Balances.get(MosaicId(200)).unwrap());
 				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(200)).unwrap());
@@ -174,13 +179,14 @@ namespace catapult { namespace observers {
 
 		auto newContext = context.alterMode(NotifyMode::Rollback);
 		// Act: rollback and verify
-		VerifyDefaultCacheStateAfterRollback(notification, signer, newContext, mosaics);
+		VerifyDefaultCacheStateAfterRollback(notification, signer, newContext, initialMosaics);
 	}
 
 	TEST(TEST_CLASS, ObserverLocksAllOfMosaicOnCommit) {
 		// Arrange
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateTransferNotification(signer, { { UnresolvedMosaicId(72), UnresolvedAmount(200) } }, BlockDuration(0), model::LockFundAction::Lock);
+		std::vector<model::UnresolvedMosaic> mosaics = { { UnresolvedMosaicId(72), UnresolvedAmount(200) } };
+		auto notification = CreateTransferNotification(signer, mosaics, BlockDuration(0), model::LockFundAction::Lock);
 		auto context = PrepareContext(Height{444}, 256, BlockDuration(10));
 		// Act: add it
 		RunChildTest(
@@ -207,19 +213,20 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ObserverLocksAllOfMultipleMosaicsOnCommit) {
 		// Arrange
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateTransferNotification(signer, {
-															   { UnresolvedMosaicId(72), UnresolvedAmount(200) },
-															   { UnresolvedMosaicId(172), UnresolvedAmount(100) },
-															   { UnresolvedMosaicId(200), UnresolvedAmount(200) }
-													   },
+		std::vector<model::UnresolvedMosaic> mosaics = {
+				{ UnresolvedMosaicId(72), UnresolvedAmount(200) },
+				{ UnresolvedMosaicId(172), UnresolvedAmount(100) },
+				{ UnresolvedMosaicId(200), UnresolvedAmount(200) }
+		};
+		auto notification = CreateTransferNotification(signer, mosaics,
 													   BlockDuration(0), model::LockFundAction::Lock);
 		auto context = PrepareContext(Height{444}, 256, BlockDuration(10));
-		std::map<MosaicId, Amount> mosaics = { { MosaicId(72), Amount(200) }, { MosaicId(172), Amount(100) }, { MosaicId(200), Amount(200) } };
+		std::map<MosaicId, Amount> initialMosaics = { { MosaicId(72), Amount(200) }, { MosaicId(172), Amount(200) }, { MosaicId(200), Amount(200) } };
 		// Act: add it
 		RunChildTest(
 				notification,
 				context,
-				PrepareDefaultAccount(signer, { { MosaicId(72), Amount(200) }, { MosaicId(172), Amount(200) }, { MosaicId(200), Amount(200) } }),
+				PrepareDefaultAccount(signer, initialMosaics),
 				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
 				  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 				  auto account = accountStateCacheDelta.find(signer).get();
@@ -238,14 +245,15 @@ namespace catapult { namespace observers {
 
 		auto newContext = context.alterMode(NotifyMode::Rollback);
 		// Act: rollback and verify
-		VerifyDefaultCacheStateAfterRollback(notification, signer, newContext, mosaics);
+		VerifyDefaultCacheStateAfterRollback(notification, signer, newContext, initialMosaics);
 	}
 
 	TEST(TEST_CLASS, ObserverLocksAllOfMosaicOnCommitAndGeneratesUnlockRecord) {
 		// Arrange: create a child namespace with a root parent
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateTransferNotification(signer, { { UnresolvedMosaicId(72), UnresolvedAmount(200) } }, BlockDuration(10), model::LockFundAction::Lock);
-		auto context = PrepareContext(Height{444}, 256, BlockDuration(10));
+		std::vector<model::UnresolvedMosaic> mosaics = { { UnresolvedMosaicId(72), UnresolvedAmount(200) } };
+		auto notification = CreateTransferNotification(signer, mosaics, BlockDuration(10), model::LockFundAction::Lock);
+		auto context = PrepareContext(Height{10}, 256, BlockDuration(10));
 
 		// Act: add it
 		RunChildTest(
@@ -256,7 +264,7 @@ namespace catapult { namespace observers {
 		  // Assert: balances was locked but no unlocking record was added.All funds are no locked so regular balance is empty.
 		  auto account = accountStateCacheDelta.find(signer).get();
 		  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
-		  auto lockFundHeightRecord = lockFundCacheDelta.find(Height(10)).tryGet();
+		  auto lockFundHeightRecord = lockFundCacheDelta.find(Height(20)).tryGet();
 
 		  //Validate unlocking records
 		  EXPECT_TRUE(lockFundKeyRecord);
@@ -265,14 +273,14 @@ namespace catapult { namespace observers {
 		  EXPECT_EQ(lockFundKeyRecord->LockFundRecords.size(), 1);
 		  EXPECT_TRUE(lockFundHeightRecord->LockFundRecords.find(signer)->second.Active());
 		  EXPECT_FALSE(lockFundHeightRecord->LockFundRecords.find(signer)->second.InactiveRecords.size());
-		  EXPECT_TRUE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Active());
-		  EXPECT_FALSE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.InactiveRecords.size());
+		  EXPECT_TRUE(lockFundKeyRecord->LockFundRecords.find(Height(20))->second.Active());
+		  EXPECT_FALSE(lockFundKeyRecord->LockFundRecords.find(Height(20))->second.InactiveRecords.size());
 		  EXPECT_EQ(lockFundKeyRecord->Identifier, signer);
-		  EXPECT_EQ(lockFundHeightRecord->Identifier, Height(10));
+		  EXPECT_EQ(lockFundHeightRecord->Identifier, Height(20));
 
 		  //Validate unlocking amounts
 
-		  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Get();
+		  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(20))->second.Get();
 		  auto heightRecord = lockFundHeightRecord->LockFundRecords.find(signer)->second.Get();
 		  EXPECT_EQ(heightRecord.size(), 1);
 		  EXPECT_EQ(heightRecord.find(MosaicId(72))->second.unwrap(), 200);
@@ -294,24 +302,25 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ObserverLocksAllOfMultipleMosaicsOnCommitAndGeneratesUnlockRecord) {
 		// Arrange: create a child namespace with a root parent
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateTransferNotification(signer, {
+		std::vector<model::UnresolvedMosaic> mosaics = {
 				{ UnresolvedMosaicId(72), UnresolvedAmount(200) },
 				{ UnresolvedMosaicId(172), UnresolvedAmount(100) },
 				{ UnresolvedMosaicId(200), UnresolvedAmount(200) }
-		}, BlockDuration(10), model::LockFundAction::Lock);
-		auto context = PrepareContext(Height{444}, 256, BlockDuration(10));
-		std::map<MosaicId, Amount> mosaics = { { MosaicId(72), Amount(200) }, { MosaicId(172), Amount(100) }, { MosaicId(200), Amount(200) } };
+		};
+		auto notification = CreateTransferNotification(signer, mosaics, BlockDuration(10), model::LockFundAction::Lock);
+		auto context = PrepareContext(Height{10}, 256, BlockDuration(10));
+		std::map<MosaicId, Amount> initialMosaics = { { MosaicId(72), Amount(200) }, { MosaicId(172), Amount(100) }, { MosaicId(200), Amount(200) } };
 
 		// Act: add it
 		RunChildTest(
 				notification,
 				context,
-				PrepareDefaultAccount(signer, mosaics),
-				[&signer, &mosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
+				PrepareDefaultAccount(signer, initialMosaics),
+				[&signer, &initialMosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
 				  // Assert: balances was locked but no unlocking record was added.All funds are no locked so regular balance is empty.
 				  auto account = accountStateCacheDelta.find(signer).get();
 				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
-				  auto lockFundHeightRecord = lockFundCacheDelta.find(Height(10)).tryGet();
+				  auto lockFundHeightRecord = lockFundCacheDelta.find(Height(20)).tryGet();
 
 				  //Validate unlocking records
 				  EXPECT_TRUE(lockFundKeyRecord);
@@ -320,17 +329,17 @@ namespace catapult { namespace observers {
 				  EXPECT_EQ(lockFundKeyRecord->LockFundRecords.size(), 1);
 				  EXPECT_TRUE(lockFundHeightRecord->LockFundRecords.find(signer)->second.Active());
 				  EXPECT_FALSE(lockFundHeightRecord->LockFundRecords.find(signer)->second.InactiveRecords.size());
-				  EXPECT_TRUE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Active());
-				  EXPECT_FALSE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.InactiveRecords.size());
+				  EXPECT_TRUE(lockFundKeyRecord->LockFundRecords.find(Height(20))->second.Active());
+				  EXPECT_FALSE(lockFundKeyRecord->LockFundRecords.find(Height(20))->second.InactiveRecords.size());
 				  EXPECT_EQ(lockFundKeyRecord->Identifier, signer);
-				  EXPECT_EQ(lockFundHeightRecord->Identifier, Height(10));
+				  EXPECT_EQ(lockFundHeightRecord->Identifier, Height(20));
 
 				  //Validate unlocking amounts
-				  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Get();
+				  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(20))->second.Get();
 				  auto heightRecord = lockFundHeightRecord->LockFundRecords.find(signer)->second.Get();
-				  EXPECT_EQ(heightRecord.size(), mosaics.size());
-				  EXPECT_EQ(keyRecord.size(), mosaics.size());
-				  for(auto mosaic : mosaics)
+				  EXPECT_EQ(heightRecord.size(), initialMosaics.size());
+				  EXPECT_EQ(keyRecord.size(), initialMosaics.size());
+				  for(auto mosaic : initialMosaics)
 				  {
 					  EXPECT_EQ(heightRecord.find(mosaic.first)->second, mosaic.second);
 					  EXPECT_EQ(keyRecord.find(mosaic.first)->second, mosaic.second);
@@ -338,11 +347,11 @@ namespace catapult { namespace observers {
 
 				  //Validate Balances
 
-				  EXPECT_EQ(mosaics.size(), account.Balances.size());
-				  EXPECT_EQ(mosaics.size(), account.Balances.lockedBalances().size());
+				  EXPECT_EQ(initialMosaics.size(), account.Balances.size());
+				  EXPECT_EQ(initialMosaics.size(), account.Balances.lockedBalances().size());
 				  EXPECT_EQ(0u, account.Balances.balances().size());
 
-				  for(auto mosaic : mosaics)
+				  for(auto mosaic : initialMosaics)
 				  {
 					  EXPECT_EQ(0, account.Balances.get(mosaic.first).unwrap());
 					  EXPECT_EQ(mosaic.second, account.Balances.getLocked(mosaic.first));
@@ -351,7 +360,7 @@ namespace catapult { namespace observers {
 				});
 		// Act: rollback and verify
 		auto newContext = context.alterMode(NotifyMode::Rollback);
-		VerifyDefaultCacheStateAfterRollback(notification, signer, newContext, mosaics);
+		VerifyDefaultCacheStateAfterRollback(notification, signer, newContext, initialMosaics);
 	}
 
 	// endregion
@@ -360,24 +369,25 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ObserverUnlockingMultipleMosaicsWithZeroDurationGeneratesUnlockRecordWithMinimumDuration) {
 		// Arrange: create a child namespace with a root parent
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateTransferNotification(signer, {
+		std::vector<model::UnresolvedMosaic> mosaics = {
 				{ UnresolvedMosaicId(72), UnresolvedAmount(200) },
 				{ UnresolvedMosaicId(172), UnresolvedAmount(100) },
 				{ UnresolvedMosaicId(200), UnresolvedAmount(200) }
-		}, BlockDuration(0), model::LockFundAction::Unlock);
-		auto context = PrepareContext(Height{444}, 256, BlockDuration(10));
-		std::map<MosaicId, Amount> mosaics = { { MosaicId(72), Amount(200) }, { MosaicId(172), Amount(100) }, { MosaicId(200), Amount(200) } };
+		};
+		auto notification = CreateTransferNotification(signer, mosaics, BlockDuration(0), model::LockFundAction::Unlock);
+		auto context = PrepareContext(Height{10}, 256, BlockDuration(10));
+		std::map<MosaicId, Amount> initialMosaics = { { MosaicId(72), Amount(200) }, { MosaicId(172), Amount(100) }, { MosaicId(200), Amount(200) } };
 
 		// Act: add it
 		RunChildTest(
 				notification,
 				context,
-				PrepareDefaultAccount(signer, mosaics), //To be able to use the test rollback function
-				[&signer, &mosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
+				PrepareDefaultAccount(signer, initialMosaics), //To be able to use the test rollback function
+				[&signer, &initialMosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
 				  // Assert: balances was locked but no unlocking record was added.All funds are no locked so regular balance is empty.
 				  auto account = accountStateCacheDelta.find(signer).get();
 				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
-				  auto lockFundHeightRecord = lockFundCacheDelta.find(Height(10)).tryGet();
+				  auto lockFundHeightRecord = lockFundCacheDelta.find(Height(20)).tryGet();
 
 				  //Validate unlocking records
 				  EXPECT_TRUE(lockFundKeyRecord);
@@ -386,17 +396,17 @@ namespace catapult { namespace observers {
 				  EXPECT_EQ(lockFundKeyRecord->LockFundRecords.size(), 1);
 				  EXPECT_TRUE(lockFundHeightRecord->LockFundRecords.find(signer)->second.Active());
 				  EXPECT_FALSE(lockFundHeightRecord->LockFundRecords.find(signer)->second.InactiveRecords.size());
-				  EXPECT_TRUE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Active());
-				  EXPECT_FALSE(lockFundKeyRecord->LockFundRecords.find(Height(10))->second.InactiveRecords.size());
+				  EXPECT_TRUE(lockFundKeyRecord->LockFundRecords.find(Height(20))->second.Active());
+				  EXPECT_FALSE(lockFundKeyRecord->LockFundRecords.find(Height(20))->second.InactiveRecords.size());
 				  EXPECT_EQ(lockFundKeyRecord->Identifier, signer);
-				  EXPECT_EQ(lockFundHeightRecord->Identifier, Height(10));
+				  EXPECT_EQ(lockFundHeightRecord->Identifier, Height(20));
 
 				  //Validate unlocking amounts
-				  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(10))->second.Get();
+				  auto keyRecord = lockFundKeyRecord->LockFundRecords.find(Height(20))->second.Get();
 				  auto heightRecord = lockFundHeightRecord->LockFundRecords.find(signer)->second.Get();
-				  EXPECT_EQ(heightRecord.size(), mosaics.size());
-				  EXPECT_EQ(keyRecord.size(), mosaics.size());
-				  for(auto mosaic : mosaics)
+				  EXPECT_EQ(heightRecord.size(), initialMosaics.size());
+				  EXPECT_EQ(keyRecord.size(), initialMosaics.size());
+				  for(auto mosaic : initialMosaics)
 				  {
 					  EXPECT_EQ(heightRecord.find(mosaic.first)->second, mosaic.second);
 					  EXPECT_EQ(keyRecord.find(mosaic.first)->second, mosaic.second);
@@ -405,7 +415,7 @@ namespace catapult { namespace observers {
 				});
 		// Act: rollback and verify
 		auto newContext = context.alterMode(NotifyMode::Rollback);
-		VerifyDefaultCacheStateAfterRollback(notification, signer, newContext, mosaics);
+		VerifyDefaultCacheStateAfterRollback(notification, signer, newContext, initialMosaics);
 	}
 	// endregion
 }}

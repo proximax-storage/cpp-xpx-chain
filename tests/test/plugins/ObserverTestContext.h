@@ -50,6 +50,14 @@ namespace catapult { namespace test {
 				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, m_config, height, mode, CreateResolverContextXor())
 		{}
 
+		/// Creates a test context around \a mode, \a height, \a config and \a resolvers.
+		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, const config::BlockchainConfiguration& config, const model::ResolverContext& resolvers)
+				: m_config(config)
+				, m_cache(TCacheFactory::Create(m_config))
+				, m_cacheDelta(m_cache.createDelta())
+				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, m_config, height, mode, resolvers)
+		{}
+
 		/// Creates a test context around \a mode, \a height and \a gracePeriodDuration.
 		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, BlockDuration gracePeriodDuration)
 				: m_config(config::BlockchainConfiguration::Uninitialized())
@@ -72,7 +80,7 @@ namespace catapult { namespace test {
 		, m_config(std::move(context.m_config))
 		, m_state(std::move(context.m_state))
 		, m_blockStatementBuilder(std::move(context.m_blockStatementBuilder))
-		, m_context({m_cacheDelta, m_state, m_blockStatementBuilder}, context.m_context.Config, context.m_context.Height, mode, CreateResolverContextXor())
+		, m_context({m_cacheDelta, m_state, m_blockStatementBuilder}, context.m_context.Config, context.m_context.Height, mode, context.m_context.Resolvers)
 		{
 
 		}

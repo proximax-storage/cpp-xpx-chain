@@ -34,23 +34,22 @@ namespace catapult { namespace validators {
 		ValidationResult ValidateCanOperateOnFunds(const Notification& notification, const ValidatorContext& context, const state::AccountState& account, const config::LockFundConfiguration& pluginConfig)
 		{
 			UnresolvedMosaicId lastMosaicId;
-			auto pMosaics = notification.MosaicsPtr;
 			/// Container to keep track of funds available to unlock and the amounts to unlock.
 			std::unordered_map<uint64_t, std::pair<Amount, Amount>> funds;
-			for (auto i = 0u; i < notification.MosaicsCount; ++i) {
-				auto currentMosaicId = pMosaics[i].MosaicId;
+			for (auto i = 0u; i < notification.Mosaics.size(); ++i) {
+				auto currentMosaicId = notification.Mosaics[i].MosaicId;
 				if (i != 0 && lastMosaicId >= currentMosaicId)
 					return Failure_LockFund_Out_Of_Order_Mosaics;
 
-				if (1 > pMosaics[i].Amount.unwrap())
+				if (1 > notification.Mosaics[i].Amount.unwrap())
 					return Failure_LockFund_Zero_Amount;
 
 				lastMosaicId = currentMosaicId;
 				auto resolvedMosaic = context.Resolvers.resolve(currentMosaicId);
 				if constexpr(TAction == model::LockFundAction::Lock)
-					funds[resolvedMosaic.unwrap()] = std::make_pair(account.Balances.get(resolvedMosaic), pMosaics[i].Amount);
+					funds[resolvedMosaic.unwrap()] = std::make_pair(account.Balances.get(resolvedMosaic), notification.Mosaics[i].Amount);
 				else
-					funds[resolvedMosaic.unwrap()] = std::make_pair(account.Balances.getLocked(resolvedMosaic), pMosaics[i].Amount);
+					funds[resolvedMosaic.unwrap()] = std::make_pair(account.Balances.getLocked(resolvedMosaic), notification.Mosaics[i].Amount);
 			}
 			if constexpr( TAction == model::LockFundAction::Lock)
 			{
@@ -110,10 +109,10 @@ namespace catapult { namespace validators {
 			if(notification.Duration != BlockDuration(0) && notification.Duration < pluginConfig.MinRequestUnlockCooldown)
 				return Failure_LockFund_Duration_Smaller_Than_Configured;
 
-			if (1 > notification.MosaicsCount)
+			if (1 > notification.Mosaics.size())
 				return Failure_LockFund_Zero_Amount;
 
-			if (pluginConfig.MaxMosaicsSize < notification.MosaicsCount)
+			if (pluginConfig.MaxMosaicsSize < notification.Mosaics.size())
 				return Failure_LockFund_Too_Many_Mosaics;
 
 			const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
