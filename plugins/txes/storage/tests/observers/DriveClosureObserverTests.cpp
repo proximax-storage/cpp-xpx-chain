@@ -132,9 +132,9 @@ namespace catapult { namespace observers {
             EXPECT_EQ(queueCacheEntry.getLast(), values.ExpectedBcDriveEntries.back().key());
             for (const auto& entry: values.ExpectedBcDriveEntries) {
             	EXPECT_EQ(driveKey, entry.key());
-            	EXPECT_EQ(bcDriveCache.find(driveKey).get().getStoragePaymentsQueuePrevious(), previousKey);
+            	EXPECT_EQ(bcDriveCache.find(driveKey).get().getQueuePrevious(), previousKey);
             	previousKey = driveKey;
-            	driveKey = bcDriveCache.find(driveKey).get().getStoragePaymentsQueueNext();
+            	driveKey = bcDriveCache.find(driveKey).get().getQueueNext();
             }
             EXPECT_EQ(driveKey, Key());
 		}
@@ -166,11 +166,11 @@ namespace catapult { namespace observers {
     	}
 
     	for (int i = 0; i < values.InitialBcDriveEntries.size() - 1; i++) {
-    		values.InitialBcDriveEntries[i].setStoragePaymentsQueueNext(values.InitialBcDriveEntries[i + 1].key());
+			values.InitialBcDriveEntries[i].setQueueNext(values.InitialBcDriveEntries[i + 1].key());
     	}
 
     	for (int i = 1; i < values.InitialBcDriveEntries.size(); i++) {
-    		values.InitialBcDriveEntries[i].setStoragePaymentsQueuePrevious(values.InitialBcDriveEntries[i - 1].key());
+			values.InitialBcDriveEntries[i].setQueuePrevious(values.InitialBcDriveEntries[i - 1].key());
     	}
 
     	for (const auto& driveKey: expectedDriveKeys) {
@@ -207,11 +207,11 @@ namespace catapult { namespace observers {
 		}
 
 		for (int i = 0; i < values.InitialBcDriveEntries.size() - 1; i++) {
-			values.InitialBcDriveEntries[i].setStoragePaymentsQueueNext(values.InitialBcDriveEntries[i + 1].key());
+			values.InitialBcDriveEntries[i].setQueueNext(values.InitialBcDriveEntries[i + 1].key());
 		}
 
 		for (int i = 1; i < values.InitialBcDriveEntries.size(); i++) {
-			values.InitialBcDriveEntries[i].setStoragePaymentsQueuePrevious(values.InitialBcDriveEntries[i - 1].key());
+			values.InitialBcDriveEntries[i].setQueuePrevious(values.InitialBcDriveEntries[i - 1].key());
 		}
 
 		for (const auto& driveKey: expectedDriveKeys) {
@@ -248,11 +248,11 @@ namespace catapult { namespace observers {
     	}
 
     	for (int i = 0; i < values.InitialBcDriveEntries.size() - 1; i++) {
-    		values.InitialBcDriveEntries[i].setStoragePaymentsQueueNext(values.InitialBcDriveEntries[i + 1].key());
+			values.InitialBcDriveEntries[i].setQueueNext(values.InitialBcDriveEntries[i + 1].key());
     	}
 
     	for (int i = 1; i < values.InitialBcDriveEntries.size(); i++) {
-    		values.InitialBcDriveEntries[i].setStoragePaymentsQueuePrevious(values.InitialBcDriveEntries[i - 1].key());
+			values.InitialBcDriveEntries[i].setQueuePrevious(values.InitialBcDriveEntries[i - 1].key());
     	}
 
     	for (const auto& driveKey: expectedDriveKeys) {

@@ -5,6 +5,7 @@
 **/
 
 #include "Observers.h"
+#include "Queue.h"
 #include "src/utils/StorageUtils.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
@@ -19,10 +20,6 @@ namespace catapult { namespace observers {
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		auto driveIter = driveCache.find(notification.DriveKey);
 		auto& driveEntry = driveIter.get();
-
-		auto& queueCache = context.Cache.sub<cache::QueueCache>();
-		auto queueIter = queueCache.find(state::DrivePaymentQueueKey);
-		auto& queueEntry = queueIter.get();
 
 	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 	  	const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
@@ -69,34 +66,9 @@ namespace catapult { namespace observers {
 		}
 
 	  	// The Drive is Removed, so we should make removal in linked list
-	  	if (driveEntry.getStoragePaymentsQueuePrevious() != Key()) {
-	  		auto previousDriveIter = driveCache.find(driveEntry.getStoragePaymentsQueuePrevious());
-			auto& previousDriveEntry = previousDriveIter.get();
-			previousDriveEntry.setStoragePaymentsQueueNext(driveEntry.getStoragePaymentsQueueNext());
-		}
-		else {
-			// Previous link is "null" so the Drive is first in the queue
-			queueEntry.setFirst(driveEntry.getStoragePaymentsQueueNext());
-			if (driveEntry.getStoragePaymentsQueueNext() != Key()) {
-				auto nextDriveIter = driveCache.find(driveEntry.getStoragePaymentsQueueNext());
-				auto& nextDriveEntry = nextDriveIter.get();
-				nextDriveEntry.setStoragePaymentsQueuePrevious(Key());
-			}
-		}
-
-	  	if (driveEntry.getStoragePaymentsQueueNext() != Key()) {
-	  		auto nextDriveIter = driveCache.find(driveEntry.getStoragePaymentsQueueNext());
-	  		auto& nextDriveEntry = nextDriveIter.get();
-	  		nextDriveEntry.setStoragePaymentsQueuePrevious(driveEntry.getStoragePaymentsQueuePrevious());
-	  	}
-		else {
-			queueEntry.setLast(driveEntry.getStoragePaymentsQueuePrevious());
-			if (driveEntry.getStoragePaymentsQueuePrevious() != Key()) {
-				auto previousDriveIter = driveCache.find(driveEntry.getStoragePaymentsQueuePrevious());
-				auto& previousDriveEntry = previousDriveIter.get();
-				previousDriveEntry.setStoragePaymentsQueueNext(Key());
-			}
-		}
+	  	auto& queueCache = context.Cache.sub<cache::QueueCache>();
+	  	QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
+	  	queueAdapter.remove(driveEntry.entryKey());
 
 		// Returning the rest to the drive owner
 		const auto refundAmount = driveState.Balances.get(streamingMosaicId);

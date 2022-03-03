@@ -94,7 +94,8 @@ namespace catapult { namespace test {
 		    uint16_t completedDataModificationsCount,
             uint16_t verificationsCount,
 		    uint16_t activeDownloadsCount,
-		    uint16_t completedDownloadsCount) {
+		    uint16_t completedDownloadsCount,
+			uint16_t downloadShardsCount) {
         state::BcDriveEntry entry(key);
         entry.setOwner(owner);
         entry.setRootHash(rootHash);
@@ -133,6 +134,43 @@ namespace catapult { namespace test {
 				shard.emplace_back(test::GenerateRandomByteArray<Key>());
 		}
 
+        CATAPULT_LOG( error ) << "downloadShardCount " << downloadShardsCount;
+		for (int i = 0; i < downloadShardsCount; i++) {
+			auto size = 2;
+			CATAPULT_LOG( error ) << "shard size " << downloadShardsCount;
+			std::set<Key> shard;
+			for (int i = 0; i < size; i++) {
+				auto replicatorKey = GenerateRandomByteArray<Key>();
+				shard.insert(replicatorKey);
+//				CATAPULT_LOG( error ) << "shard size " << downloadShardsCount;
+			}
+			auto channelId = GenerateRandomByteArray<Hash256>();
+			CATAPULT_LOG( error ) << "channelId " << channelId;
+			entry.downloadShards()[channelId] = shard;
+		}
+
+		for (int i = 0; i < replicatorCount; i++) {
+			auto activeSize = RandomByte();
+			std::set<Key> activeShard;
+			for (int i = 0; i < activeSize; i++) {
+				activeShard.insert(GenerateRandomByteArray<Key>());
+			}
+
+			auto notActiveSize = RandomByte();
+			std::set<Key> notActiveShard;
+			for (int i = 0; i < notActiveSize; i++) {
+				notActiveShard.insert(GenerateRandomByteArray<Key>());
+			}
+
+			entry.dataModificationShards()[GenerateRandomByteArray<Key>()]
+					= {activeShard, notActiveShard};
+		}
+
+		for (int i = 0; i < replicatorCount; i++) {
+			entry.confirmedStorageInfos()[GenerateRandomByteArray<Key>()]
+					= {Timestamp(Random16()), Timestamp(Random16())};
+		}
+
         return entry;
     }
 
@@ -165,14 +203,21 @@ namespace catapult { namespace test {
         entry.setConsumer(consumer);
 		entry.setDrive(drive);
 		entry.setDownloadSize(downloadSize);
-		entry.setDownloadApprovalCount(downloadApprovalCount);
+		entry.setDownloadApprovalCountLeft(downloadApprovalCount);
 		entry.listOfPublicKeys() = listOfPublicKeys;
 		entry.cumulativePayments() = cumulativePayments;
+		entry.setQueuePrevious(GenerateRandomByteArray<Key>());
+		entry.setQueueNext(GenerateRandomByteArray<Key>());
+		entry.setLastDownloadApprovalInitiated(Timestamp(Random16()));
+		entry.downloadApprovalInitiationEvent() = GenerateRandomByteArray<Hash256>();
 
         return entry;
     }
 
 	void AssertEqualListOfPublicKeys(const std::vector<Key>& expected, const std::vector<Key>& actual) {
+		if (expected.size() != actual.size()) {
+			CATAPULT_LOG( error ) << "asserted";
+		}
 		EXPECT_EQ(expected.size(), actual.size());
 		for (int i = 0; i < expected.size(); i++) {
 			EXPECT_EQ(expected[i], actual[i]);
@@ -195,7 +240,10 @@ namespace catapult { namespace test {
         EXPECT_EQ(expectedEntry.consumer(), entry.consumer());
 		EXPECT_EQ(expectedEntry.drive(), entry.drive());
 		EXPECT_EQ(expectedEntry.downloadSize(), entry.downloadSize());
-		EXPECT_EQ(expectedEntry.downloadApprovalCount(), entry.downloadApprovalCount());
+		EXPECT_EQ(expectedEntry.downloadApprovalCountLeft(), entry.downloadApprovalCountLeft());
+		EXPECT_EQ(expectedEntry.getQueuePrevious(), entry.getQueuePrevious());
+		EXPECT_EQ(expectedEntry.getQueueNext(), entry.getQueueNext());
+		EXPECT_EQ(expectedEntry.getLastDownloadApprovalInitiated(), entry.getLastDownloadApprovalInitiated());
 
 		AssertEqualListOfPublicKeys(expectedEntry.listOfPublicKeys(), entry.listOfPublicKeys());
 		AssertEqualCumulativePayments(expectedEntry.cumulativePayments(), entry.cumulativePayments());

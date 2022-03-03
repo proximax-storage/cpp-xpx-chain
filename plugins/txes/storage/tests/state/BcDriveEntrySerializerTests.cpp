@@ -75,21 +75,21 @@ namespace catapult { namespace state {
 			pData += Key_Size;
 			EXPECT_EQ_MEMORY(active.DownloadDataCdi.data(), pData, Hash256_Size);
 			pData += Hash256_Size;
-			EXPECT_EQ(active.ExpectedUploadSizeMegabytes, *reinterpret_cast<const uint64_t*>(pData));
+			ASSERT_EQ(active.ExpectedUploadSizeMegabytes, *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
-			EXPECT_EQ(active.ActualUploadSizeMegabytes, *reinterpret_cast<const uint64_t*>(pData));
+			ASSERT_EQ(active.ActualUploadSizeMegabytes, *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
 			auto folderNameSize = active.FolderName.size();
-			EXPECT_EQ(folderNameSize, *reinterpret_cast<const uint16_t*>(pData));
+			ASSERT_EQ(folderNameSize, *reinterpret_cast<const uint16_t*>(pData));
 			pData += sizeof(uint16_t);
-			EXPECT_EQ(active.ReadyForApproval, *reinterpret_cast<const uint8_t*>(pData));
+			ASSERT_EQ(active.ReadyForApproval, *reinterpret_cast<const uint8_t*>(pData));
 			pData += sizeof(uint8_t);
 			EXPECT_EQ_MEMORY(active.FolderName.c_str(), pData, folderNameSize);
 			pData += folderNameSize;
 		}
 
         void AssertActiveDataModifications(const ActiveDataModifications& activeDataModifications, const uint8_t*& pData) {
-            EXPECT_EQ(activeDataModifications.size(), *reinterpret_cast<const uint16_t*>(pData));
+            ASSERT_EQ(activeDataModifications.size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
             for (const auto& active : activeDataModifications) {
 				AssertActiveDataModification(active, pData);
@@ -97,28 +97,39 @@ namespace catapult { namespace state {
         }
 
        	void AssertCompletedDataModifications(const CompletedDataModifications& completedDataModifications, const uint8_t*& pData) {
-			EXPECT_EQ(completedDataModifications.size(), *reinterpret_cast<const uint16_t*>(pData));
+			ASSERT_EQ(completedDataModifications.size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
             for (const auto& completed : completedDataModifications) {
 				AssertActiveDataModification(completed, pData);
-                EXPECT_EQ(completed.State, static_cast<DataModificationState>(*pData));
+                ASSERT_EQ(completed.State, static_cast<DataModificationState>(*pData));
                 pData++;
             }
 		}
 
 		void AssertConfirmedUsedSizes(const SizeMap& confirmedUsedSizes, const uint8_t*& pData) {
-			EXPECT_EQ(confirmedUsedSizes.size(), *reinterpret_cast<const uint16_t*>(pData));
+			ASSERT_EQ(confirmedUsedSizes.size(), *reinterpret_cast<const uint16_t*>(pData));
 			pData += sizeof(uint16_t);
 			for (const auto& pair : confirmedUsedSizes) {
 				EXPECT_EQ_MEMORY(pair.first.data(), pData, Key_Size);
 				pData += Key_Size;
-				EXPECT_EQ(pair.second, *reinterpret_cast<const uint64_t*>(pData));
+				ASSERT_EQ(pair.second, *reinterpret_cast<const uint64_t*>(pData));
 				pData += sizeof(uint64_t);
 			}
 		}
 
+		void AssertCumulativeUploadSizes(const SizeMap& confirmedUsedSizes, const uint8_t*& pData) {
+        	ASSERT_EQ(confirmedUsedSizes.size(), *reinterpret_cast<const uint16_t*>(pData));
+        	pData += sizeof(uint16_t);
+        	for (const auto& pair : confirmedUsedSizes) {
+        		EXPECT_EQ_MEMORY(pair.first.data(), pData, Key_Size);
+        		pData += Key_Size;
+        		ASSERT_EQ(pair.second, *reinterpret_cast<const uint64_t*>(pData));
+        		pData += sizeof(uint64_t);
+        	}
+		}
+
 		void AssertReplicators(const utils::SortedKeySet& replicators, const uint8_t*& pData) {
-			EXPECT_EQ(replicators.size(), *reinterpret_cast<const uint16_t*>(pData));
+			ASSERT_EQ(replicators.size(), *reinterpret_cast<const uint16_t*>(pData));
 			pData += sizeof(uint16_t);
 			for (const auto& replicator : replicators) {
 				EXPECT_EQ_MEMORY(replicator.data(), pData, Key_Size);
@@ -127,15 +138,19 @@ namespace catapult { namespace state {
 		}
 
         void AssertVerifications(const Verifications& verifications, const uint8_t*& pData) {
-            EXPECT_EQ(verifications.size(), *reinterpret_cast<const uint16_t*>(pData));
+            ASSERT_EQ(verifications.size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
             for (const auto& verification : verifications) {
                 EXPECT_EQ_MEMORY(verification.VerificationTrigger.data(), pData, Hash256_Size);
                 pData += Hash256_Size;
-                EXPECT_EQ(verification.Shards.size(), *reinterpret_cast<const uint16_t*>(pData));
+                ASSERT_EQ(verification.Expiration.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+				pData += sizeof(Timestamp);
+				ASSERT_EQ(verification.Expired, *reinterpret_cast<const uint8_t*>(pData));
+				pData += sizeof(uint8_t);
+				ASSERT_EQ(verification.Shards.size(), *reinterpret_cast<const uint16_t*>(pData));
                 pData += sizeof(uint16_t);
 				for (const auto& shard : verification.Shards) {
-					EXPECT_EQ(shard.size(), *reinterpret_cast<const uint8_t*>(pData));
+					ASSERT_EQ(shard.size(), *reinterpret_cast<const uint8_t*>(pData));
 					pData += sizeof(uint8_t);
 					for (const auto& key : shard) {
 						EXPECT_EQ_MEMORY(key.data(), pData, Key_Size);
@@ -145,9 +160,61 @@ namespace catapult { namespace state {
             }
         }
 
+		template<class T>
+		void AssertShard(const T& shard, const uint8_t*& pData) {
+			ASSERT_EQ(shard.size(), *pData);
+			pData += sizeof(uint8_t);
+
+        	for (const auto& key: shard) {
+        		ASSERT_EQ(key, *reinterpret_cast<const Key*>(pData));
+				pData += Key_Size;
+			}
+        	auto nextChannelId = *reinterpret_cast<const Hash256*>(pData);
+		}
+
+        void AssertDownloadShards(const DownloadShards& downloadShards, const uint8_t*& pData) {
+        	ASSERT_EQ(downloadShards.size(), *reinterpret_cast<const uint16_t*>(pData));
+        	pData += sizeof(uint16_t);
+        	for (const auto& [channelId, shard]: downloadShards) {
+				CATAPULT_LOG( error ) << "Assert Channel Id " << channelId;
+				ASSERT_EQ(channelId, *reinterpret_cast<const Hash256*>(pData));
+				pData += Hash256_Size;
+				AssertShard(shard, pData);
+			}
+		}
+
+		void AssertModificationShards(const ModificationShards& modificationShards, const uint8_t*& pData) {
+        	ASSERT_EQ(modificationShards.size(), *reinterpret_cast<const uint16_t*>(pData));
+        	pData += sizeof(uint16_t);
+        	for (const auto& [key, shard]: modificationShards) {
+        		ASSERT_EQ(key, *reinterpret_cast<const Key *>(pData));
+        		pData += Key_Size;
+        		AssertShard(shard.first, pData);
+				AssertShard(shard.second, pData);
+        	}
+		}
+
+		void AssertConfirmedInfos(const ConfirmedStoragePeriods& confirmedInfos, const uint8_t*& pData) {
+        	ASSERT_EQ(confirmedInfos.size(), *reinterpret_cast<const uint16_t*>(pData));
+        	pData += sizeof(uint16_t);
+        	for (const auto& [key, info]: confirmedInfos) {
+				CATAPULT_LOG( error ) << "assert confirmed infos " << key;
+        		ASSERT_EQ(key, *reinterpret_cast<const Key *>(pData));
+        		pData += Key_Size;
+        		ASSERT_EQ(info.m_timeInConfirmedStorage.unwrap(), *reinterpret_cast<const uint64_t *>(pData));
+        		pData += sizeof(uint64_t);
+        		ASSERT_EQ(info.m_confirmedStorageSince.has_value(), *reinterpret_cast<const bool *>(pData));
+				pData += sizeof(bool);
+				if (info.m_confirmedStorageSince) {
+					ASSERT_EQ(info.m_confirmedStorageSince->unwrap(), *reinterpret_cast<const uint64_t *>(pData));
+					pData += sizeof(uint64_t);
+				}
+        	}
+        }
+
         void AssertEntryBuffer(const state::BcDriveEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {
-            const auto* pExpectedEnd = pData + expectedSize;
-            EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
+            const auto* const pExpectedEnd = pData + expectedSize;
+            ASSERT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
 			pData += sizeof(VersionType);
             EXPECT_EQ_MEMORY(entry.key().data(), pData, Key_Size);
             pData += Key_Size;
@@ -155,25 +222,38 @@ namespace catapult { namespace state {
 			pData += Key_Size;
             EXPECT_EQ_MEMORY(entry.rootHash().data(), pData, Hash256_Size);
 			pData += Hash256_Size;
-            EXPECT_EQ(entry.size(), *reinterpret_cast<const uint64_t*>(pData));
+            ASSERT_EQ(entry.size(), *reinterpret_cast<const uint64_t*>(pData));
             pData += sizeof(uint64_t);
-			EXPECT_EQ(entry.usedSizeBytes(), *reinterpret_cast<const uint64_t*>(pData));
+			ASSERT_EQ(entry.usedSizeBytes(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
-			EXPECT_EQ(entry.metaFilesSizeBytes(), *reinterpret_cast<const uint64_t*>(pData));
+			ASSERT_EQ(entry.metaFilesSizeBytes(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
-            EXPECT_EQ(entry.replicatorCount(), *reinterpret_cast<const uint16_t*>(pData));
+            ASSERT_EQ(entry.replicatorCount(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
-			EXPECT_EQ(entry.ownerCumulativeUploadSizeBytes(), *reinterpret_cast<const uint64_t*>(pData));
+			ASSERT_EQ(entry.ownerCumulativeUploadSizeBytes(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
+
+			ASSERT_EQ(entry.getQueuePrevious(), *reinterpret_cast<const Key *>(pData));
+			pData += Key_Size;
+
+			ASSERT_EQ(entry.getQueueNext(), *reinterpret_cast<const Key *>(pData));
+			pData += Key_Size;
+
+			ASSERT_EQ(entry.getLastPayment(), *reinterpret_cast<const Timestamp *>(pData));
+			pData += sizeof(Timestamp);
 
             AssertActiveDataModifications(entry.activeDataModifications(), pData);
             AssertCompletedDataModifications(entry.completedDataModifications(), pData);
 			AssertConfirmedUsedSizes(entry.confirmedUsedSizes(), pData);
+			AssertCumulativeUploadSizes(entry.cumulativeUploadSizesBytes(), pData);
 			AssertReplicators(entry.replicators(), pData);
 			AssertReplicators(entry.offboardingReplicators(), pData);
             AssertVerifications(entry.verifications(), pData);
+            AssertDownloadShards(entry.downloadShards(), pData);
+			AssertModificationShards(entry.dataModificationShards(), pData);
+			AssertConfirmedInfos(entry.confirmedStorageInfos(), pData);
 
-            EXPECT_EQ(pExpectedEnd, pData);
+			ASSERT_EQ(pExpectedEnd, pData);
         }
 
 		void AssertCanSaveSingleEntry(VersionType version) {
@@ -266,6 +346,16 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void SaveCumulativeUploadSizes(const SizeMap& cumulativeUploadsSizes, std::vector<uint8_t>& data) {
+			uint16_t pairsCount = utils::checked_cast<size_t, uint16_t>(cumulativeUploadsSizes.size());
+			CopyToVector(data, (const uint8_t *) &pairsCount, sizeof(uint16_t));
+			for (const auto& pair : cumulativeUploadsSizes) {
+				CopyToVector(data, pair.first.data(), Key_Size);
+				CopyToVector(data, (const uint8_t *) &pair.second, sizeof(uint64_t));
+				CATAPULT_LOG( error ) << "saved size " << pair.second << " " << pair.first;
+			}
+		}
+
 		void SaveReplicators(const utils::SortedKeySet& replicators, std::vector<uint8_t>& data) {
 			uint16_t replicatorsCount = utils::checked_cast<size_t, uint16_t>(replicators.size());
 			CopyToVector(data, (const uint8_t *) &replicatorsCount, sizeof(uint16_t));
@@ -275,9 +365,14 @@ namespace catapult { namespace state {
 
         void SaveVerifications(const Verifications& verifications, std::vector<uint8_t>& data) {
             uint16_t verificationsCount = utils::checked_cast<size_t, uint16_t>(verifications.size());
+			CATAPULT_LOG( error ) << "save verifications " << verificationsCount;
 			CopyToVector(data, (const uint8_t *) &verificationsCount, sizeof(uint16_t));
             for (const auto& verification : verifications) {
 				CopyToVector(data, verification.VerificationTrigger.data(), Hash256_Size);
+
+				auto expiration = verification.Expiration.unwrap();
+				CopyToVector(data, (const uint8_t* ) &expiration, sizeof(uint64_t));
+				CopyToVector(data, (const uint8_t* ) &verification.Expired, sizeof(bool));
 				uint16_t shardCount = utils::checked_cast<size_t, uint16_t>(verification.Shards.size());
 				CopyToVector(data, (const uint8_t *) &shardCount, sizeof(uint16_t));
                 for (const auto& shard : verification.Shards) {
@@ -288,6 +383,50 @@ namespace catapult { namespace state {
 				}
             }
         }
+
+        template<typename TContainer>
+        void SaveShard(const TContainer& shard, std::vector<uint8_t>& data) {
+			uint8_t size = shard.size();
+			CopyToVector(data, (const uint8_t *) &size, sizeof(uint8_t));
+			for (auto key : shard) {
+				CopyToVector(data, (const uint8_t *) &key, Key_Size);
+			}
+		}
+
+        void SaveDownloadShards(const DownloadShards& shards, std::vector<uint8_t>& data) {
+			uint16_t shardsCount = utils::checked_cast<size_t, uint16_t>(shards.size());
+			CopyToVector(data, (const uint8_t *) &shardsCount, sizeof(uint16_t));
+			for (const auto& [key, shard] : shards) {
+				CopyToVector(data, (const uint8_t*) &key, Hash256_Size);
+				SaveShard(shard, data);
+			}
+		}
+
+		void SaveModificationShards(const ModificationShards& shards, std::vector<uint8_t>& data) {
+			uint16_t shardsCount = utils::checked_cast<size_t, uint16_t>(shards.size());
+			CopyToVector(data, (const uint8_t *) &shardsCount, sizeof(uint16_t));
+			for (const auto& [key, shard] : shards) {
+				CopyToVector(data, (const uint8_t*) &key, Key_Size);
+				SaveShard(shard.first, data);
+				SaveShard(shard.second, data);
+			}
+		}
+
+		void SaveConfirmedStorageInfos(const ConfirmedStoragePeriods& infos, std::vector<uint8_t>& data) {
+			uint16_t size = infos.size();
+			CopyToVector(data, (const uint8_t *) &size, sizeof(uint16_t));
+			for (const auto& [key, info] : infos) {
+				CopyToVector(data, (const uint8_t*) &key, Key_Size);
+				CopyToVector(data, (const uint8_t* ) &info.m_timeInConfirmedStorage, sizeof(Timestamp));
+
+				bool inConfirmed = info.m_confirmedStorageSince.has_value();
+				CopyToVector(data, (const uint8_t* ) &inConfirmed, sizeof(bool));
+				if (inConfirmed) {
+					Timestamp confirmedSince = *info.m_confirmedStorageSince;
+					CopyToVector(data, (const uint8_t*) &confirmedSince, sizeof(Timestamp));
+				}
+			}
+		}
 
         std::vector<uint8_t> CreateEntryBuffer(const state::BcDriveEntry& entry, VersionType version) {
             std::vector<uint8_t> data;
@@ -301,12 +440,21 @@ namespace catapult { namespace state {
 			CopyToVector(data, (const uint8_t*) &entry.replicatorCount(), sizeof(uint16_t));
 			CopyToVector(data, (const uint8_t*) &entry.ownerCumulativeUploadSizeBytes(), sizeof(uint64_t));
 
+			CopyToVector(data, (const uint8_t*) &entry.getQueuePrevious(), Key_Size);
+			CopyToVector(data, (const uint8_t*) &entry.getQueueNext(), Key_Size);
+			CopyToVector(data,  (const uint8_t*) &entry.getLastPayment(), sizeof(uint64_t));
+
             SaveActiveDataModifications(entry.activeDataModifications(), data);
             SaveCompletedDataModifications(entry.completedDataModifications(), data);
 			SaveConfirmedUsedSizes(entry.confirmedUsedSizes(), data);
+			SaveCumulativeUploadSizes(entry.cumulativeUploadSizesBytes(), data);
 			SaveReplicators(entry.replicators(), data);
 			SaveReplicators(entry.offboardingReplicators(), data);
             SaveVerifications(entry.verifications(), data);
+			SaveDownloadShards(entry.downloadShards(), data);
+			SaveModificationShards(entry.dataModificationShards(), data);
+			SaveConfirmedStorageInfos(entry.confirmedStorageInfos(), data);
+
 
             return data;
         }

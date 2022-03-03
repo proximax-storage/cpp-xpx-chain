@@ -230,7 +230,7 @@ namespace catapult { namespace storage {
 		boost::to_block_range(presentOpinionsBitset, std::back_inserter(expectedPresentOpinions));
 		std::vector<Signature> expectedSignatures{ Signature({ 5 }), Signature({ 2 }), Signature({ 3 }), Signature({ 1 }) };
 
-		testee.sendDownloadApprovalTransaction(10u, CreateDownloadApprovalTransactionInfo());
+//		testee.sendDownloadApprovalTransaction(10u, CreateDownloadApprovalTransactionInfo());
 
         // Assert:
 		auto& transaction = static_cast<const model::DownloadApprovalTransaction&>(*pTransaction);

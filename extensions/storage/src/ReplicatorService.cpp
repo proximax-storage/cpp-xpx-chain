@@ -422,6 +422,39 @@ namespace catapult { namespace storage {
 			}
 		}
 
+		void storageBlockPublished(const Hash256& blockHash) {
+			auto drives = m_storageState.getReplicatorDriveKeys(m_keyPair.publicKey());
+
+			auto height = m_storageState.getChainHeight();
+
+			std::vector<Key> newlyAddedDrives;
+			std::vector<Key> newlyRemovedDrives;
+			for (const auto& blockchainDriveKey: drives) {
+				if (m_alreadyAddedDrives.find(blockchainDriveKey) == m_alreadyAddedDrives.end()) {
+					// We are assigned to Drive, but it is not added
+					addDrive(blockchainDriveKey);
+					m_alreadyAddedDrives[blockchainDriveKey] = height;
+				}
+			}
+			for (const auto& [addedDriveKey, _]: m_alreadyAddedDrives) {
+				if (m_storageState.driveExists(addedDriveKey)) {
+					m_pReplicator->asyncCloseDrive(
+							addedDriveKey.array(),
+							blockHash.array());
+					m_alreadyAddedDrives.erase(addedDriveKey);
+				}
+			}
+		}
+
+		void downloadBlockPublished(const Hash256& blockHash) {
+			for (const auto& [channelId, _]: m_alreadyAddedChannels) {
+				if (!m_storageState.downloadChannelExists(channelId)) {
+					auto driveKey = Key(); // m_storageState.getC
+					m_pReplicator->asyncRemoveDownloadChannelInfo(driveKey.array(), channelId.array());
+				}
+			}
+		}
+
 		void dataModificationApprovalPublished(
                 const Key& driveKey,
                 const Hash256& modificationId,
@@ -583,6 +616,18 @@ namespace catapult { namespace storage {
         if (m_pImpl)
             m_pImpl->closeDrive(driveKey, transactionHash);
     }
+
+    void ReplicatorService::storageBlockPublished(const Hash256& blockHash) {
+		if (m_pImpl) {
+			m_pImpl->storageBlockPublished(blockHash);
+		}
+	}
+
+	void ReplicatorService::downloadBlockPublished(const Hash256& blockHash) {
+    	if (m_pImpl) {
+    		m_pImpl->downloadBlockPublished(blockHash);
+		}
+	}
 
     std::optional<Height> ReplicatorService::driveAddedAt(const Key& driveKey) {
     	if (m_pImpl)

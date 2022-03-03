@@ -130,9 +130,9 @@ namespace catapult { namespace observers {
 			EXPECT_EQ(queueCacheEntry.getLast(), values.ExpectedBcDriveKeys[values.ExpectedBcDriveKeys.size() - 1]);
 			for (const auto& key: values.ExpectedBcDriveKeys) {
 				EXPECT_EQ(driveKey, key);
-				EXPECT_EQ(bcDriveCache.find(driveKey).get().getStoragePaymentsQueuePrevious(), previousKey);
+				EXPECT_EQ(bcDriveCache.find(driveKey).get().getQueuePrevious(), previousKey);
 				previousKey = driveKey;
-				driveKey = bcDriveCache.find(driveKey).get().getStoragePaymentsQueueNext();
+				driveKey = bcDriveCache.find(driveKey).get().getQueueNext();
 			}
 			EXPECT_EQ(driveKey, Key());
         }
@@ -152,19 +152,19 @@ namespace catapult { namespace observers {
 
     	state::BcDriveEntry firstEntry(firstKey);
     	firstEntry.setSize(0);
-    	firstEntry.setStoragePaymentsQueueNext(secondKey);
+		firstEntry.setQueueNext(secondKey);
     	firstEntry.setLastPayment(firstTimestamp);
 
     	state::BcDriveEntry secondEntry(secondKey);
     	secondEntry.setSize(1);
 		secondEntry.setReplicatorCount(1);
-    	secondEntry.setStoragePaymentsQueuePrevious(firstKey);
-    	secondEntry.setStoragePaymentsQueueNext(thirdKey);
+		secondEntry.setQueuePrevious(firstKey);
+		secondEntry.setQueueNext(thirdKey);
     	secondEntry.setLastPayment(secondTimestamp);
 
     	state::BcDriveEntry thirdEntry(thirdKey);
     	thirdEntry.setSize(0);
-    	thirdEntry.setStoragePaymentsQueuePrevious(secondKey);
+		thirdEntry.setQueuePrevious(secondKey);
     	thirdEntry.setLastPayment(thirdTimestamp);
 
     	std::vector<state::BcDriveEntry> initialEntries = {firstEntry, secondEntry, thirdEntry};
@@ -215,18 +215,18 @@ namespace catapult { namespace observers {
 
     	state::BcDriveEntry firstEntry(firstKey);
     	firstEntry.setSize(0);
-    	firstEntry.setStoragePaymentsQueueNext(secondKey);
+		firstEntry.setQueueNext(secondKey);
     	firstEntry.setLastPayment(firstTimestamp);
 
     	state::BcDriveEntry secondEntry(secondKey);
     	secondEntry.setSize(0);
-    	secondEntry.setStoragePaymentsQueuePrevious(firstKey);
-    	secondEntry.setStoragePaymentsQueueNext(thirdKey);
+		secondEntry.setQueuePrevious(firstKey);
+		secondEntry.setQueueNext(thirdKey);
     	secondEntry.setLastPayment(secondTimestamp);
 
     	state::BcDriveEntry thirdEntry(thirdKey);
     	thirdEntry.setSize(0);
-    	thirdEntry.setStoragePaymentsQueuePrevious(secondKey);
+		thirdEntry.setQueuePrevious(secondKey);
     	thirdEntry.setLastPayment(thirdTimestamp);
 
     	std::vector<state::BcDriveEntry> initialEntries = {firstEntry, secondEntry, thirdEntry};

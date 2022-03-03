@@ -85,10 +85,13 @@ namespace catapult { namespace state {
 		void SaveDownloadShards(io::OutputStream& output, const DownloadShards& downloadShards) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(downloadShards.size()));
 			for (const auto& shard : downloadShards) {
+				CATAPULT_LOG( error ) << "saved channelId " << shard.first;
 				io::Write(output, shard.first);
 				io::Write8(output, utils::checked_cast<size_t, uint8_t>(shard.second.size()));
-				for (const auto& replicatorKey : shard.second)
+				for (const auto& replicatorKey : shard.second) {
 					io::Write(output, replicatorKey);
+					CATAPULT_LOG( error ) << "saved replicatorKey " << replicatorKey;
+				}
 			}
 		}
 
@@ -108,7 +111,7 @@ namespace catapult { namespace state {
 			for (const auto& [key, info]: infos) {
 				io::Write(output, key);
 				io::Write(output, info.m_timeInConfirmedStorage);
-				io::Write8(output, (bool) info.m_confirmedStorageSince);
+				io::Write8(output, info.m_confirmedStorageSince.has_value());
 				if (info.m_confirmedStorageSince) {
 					io::Write(output, *info.m_confirmedStorageSince);
 				}
@@ -166,6 +169,7 @@ namespace catapult { namespace state {
 				io::Read(input, replicatorKey);
 				auto size = io::Read64(input);
 				cumulativeUploadSizes.emplace(replicatorKey, size);
+				CATAPULT_LOG( error ) << "load cumulative upload " << replicatorKey << " " << size;
 			}
 		}
 
@@ -206,6 +210,7 @@ namespace catapult { namespace state {
 
 		void LoadVerifications(io::InputStream& input, Verifications& verifications) {
 		    auto count = io::Read16(input);
+			CATAPULT_LOG( error ) << "LoadVerifications " << count;
 		    while (count--) {
 		        state::Verification verification;
 		        io::Read(input, verification.VerificationTrigger);
@@ -272,7 +277,9 @@ namespace catapult { namespace state {
 		io::Write16(output, driveEntry.replicatorCount());
 		io::Write64(output, driveEntry.ownerCumulativeUploadSizeBytes());
 
-		io::Write(output, driveEntry.getStoragePaymentsQueueNext());
+		io::Write(output, driveEntry.getQueuePrevious());
+		io::Write(output, driveEntry.getQueueNext());
+		io::Write(output, driveEntry.getLastPayment());
 
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
@@ -314,11 +321,11 @@ namespace catapult { namespace state {
 
 		Key queuePrevious;
 		io::Read(input, queuePrevious);
-		entry.setStoragePaymentsQueuePrevious(queuePrevious);
+		entry.setQueuePrevious(queuePrevious);
 
 		Key queueNext;
 		io::Read(input, queueNext);
-		entry.setStoragePaymentsQueueNext(queueNext);
+		entry.setQueueNext(queueNext);
 
 		Timestamp lastPayment;
 		io::Read(input, lastPayment);

@@ -138,7 +138,6 @@ namespace catapult { namespace storage {
     }
 
     Hash256 TransactionSender::sendDownloadApprovalTransaction(
-            uint16_t sequenceNumber,
             const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
         CATAPULT_LOG(debug) << "sending download approval transaction initiated by " << Hash256(transactionInfo.m_blockHash);
         utils::KeySet judgedKeys;
@@ -212,7 +211,6 @@ namespace catapult { namespace storage {
         builders::DownloadApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
         builder.setDownloadChannelId(transactionInfo.m_downloadChannelId);
 		builder.setApprovalTrigger(transactionInfo.m_blockHash);
-        builder.setSequenceNumber(sequenceNumber);
         builder.setResponseToFinishDownloadTransaction(false); // TODO set right value
         builder.setJudgingKeysCount(judgingKeys.size());
         builder.setOverlappingKeysCount(overlappingKeys.size());

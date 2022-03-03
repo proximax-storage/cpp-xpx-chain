@@ -29,11 +29,10 @@ namespace catapult { namespace validators {
 		  	return Failure_Storage_Signature_Count_Insufficient;
 
 	  	// Check if transaction sequence number is exactly one more than the number of completed download approval transactions
-	  	const auto targetSequenceNumber = pDownloadChannelEntry->downloadApprovalCount() + 1;
-		if (notification.SequenceNumber == targetSequenceNumber - 1)		// Considered a regular case
-			return Failure_Storage_Transaction_Already_Approved;
-		else if (notification.SequenceNumber != targetSequenceNumber)	// Considered an irregular case, may be worth investigating
-			return Failure_Storage_Invalid_Sequence_Number;
+	  	if (!pDownloadChannelEntry->downloadApprovalInitiationEvent() ||
+			*pDownloadChannelEntry->downloadApprovalInitiationEvent() != notification.ApprovalTrigger) {
+	  		return Failure_Storage_Invalid_Approval_Trigger;
+		}
 
 	  	// Check if every replicator has provided an opinion on itself
 		if (notification.JudgingKeysCount > 0)

@@ -25,10 +25,6 @@ namespace catapult { namespace builders {
         m_approvalTrigger = approvalTrigger;
     }
 
-    void DownloadApprovalBuilder::setSequenceNumber(uint16_t sequenceNumber) {
-        m_sequenceNumber = sequenceNumber;
-    }
-
     void DownloadApprovalBuilder::setResponseToFinishDownloadTransaction(bool responseToFinishDownloadTransaction) {
         m_responseToFinishDownloadTransaction = responseToFinishDownloadTransaction;
     }
@@ -74,7 +70,6 @@ namespace catapult { namespace builders {
         // 2. set transaction fields
         pTransaction->DownloadChannelId = m_downloadChannelId;
         pTransaction->ApprovalTrigger = m_approvalTrigger;
-        pTransaction->SequenceNumber = m_sequenceNumber;
         pTransaction->ResponseToFinishDownloadTransaction = m_responseToFinishDownloadTransaction;
         pTransaction->JudgingKeysCount = m_judgingKeysCount;
         pTransaction->OverlappingKeysCount = m_overlappingKeysCount;

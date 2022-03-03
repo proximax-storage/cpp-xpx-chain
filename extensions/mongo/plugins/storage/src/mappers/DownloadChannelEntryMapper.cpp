@@ -44,7 +44,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "consumer" << ToBinary(entry.consumer())
 				<< "drive" << ToBinary(entry.drive())
 				<< "downloadSize" << static_cast<int64_t>(entry.downloadSize())
-				<< "downloadApprovalCount" << static_cast<int16_t>(entry.downloadApprovalCount());
+				<< "downloadApprovalCountLeft" << static_cast<int16_t>(entry.downloadApprovalCountLeft());
 
 		StreamListOfPublicKeys(builder, entry.listOfPublicKeys());
 		StreamCumulativePayments(builder, entry.cumulativePayments());
@@ -101,7 +101,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		entry.setDrive(drive);
 
 		entry.setDownloadSize(static_cast<uint64_t>(dbDownloadChannelEntry["downloadSize"].get_int64()));
-		entry.setDownloadApprovalCount(static_cast<uint16_t>(dbDownloadChannelEntry["downloadApprovalCount"].get_int32()));
+		entry.setDownloadApprovalCountLeft(static_cast<uint16_t>(dbDownloadChannelEntry["downloadApprovalCountLeft"].get_int32()));
 
 		ReadListOfPublicKeys(entry.listOfPublicKeys(), dbDownloadChannelEntry["listOfPublicKeys"].get_array().value);
 		ReadCumulativePayments(entry.cumulativePayments(), dbDownloadChannelEntry["cumulativePayments"].get_array().value);

@@ -75,7 +75,8 @@ namespace catapult { namespace test {
 		uint16_t completedDataModificationsCount = 2,
         uint16_t verificationsCount = 2,
         uint16_t activeDownloadsCount = 2,
-        uint16_t completedDownloadsCount = 2
+        uint16_t completedDownloadsCount = 2,
+        uint16_t downloadShardsCount = 3
     );
 
 	/// Verifies that \a entry1 is equivalent to \a entry2.

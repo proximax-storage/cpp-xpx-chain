@@ -24,13 +24,11 @@ namespace catapult { namespace plugins {
 			  	case 1: {
 					const auto commonDataSize = sizeof(transaction.DownloadChannelId)
 												+ sizeof(transaction.ApprovalTrigger)
-												+ sizeof(transaction.SequenceNumber)
 												+ sizeof(transaction.ResponseToFinishDownloadTransaction);
 					auto* const pCommonDataBegin = sub.mempool().malloc<uint8_t>(commonDataSize);
 					auto* pCommonData = pCommonDataBegin;
 					utils::WriteToByteArray(pCommonData, transaction.DownloadChannelId);
 					utils::WriteToByteArray(pCommonData, transaction.ApprovalTrigger);
-					utils::WriteToByteArray(pCommonData, transaction.SequenceNumber);
 					utils::WriteToByteArray(pCommonData, transaction.ResponseToFinishDownloadTransaction);
 
 					sub.notify(OpinionNotification<1>(
@@ -49,7 +47,6 @@ namespace catapult { namespace plugins {
 				  	sub.notify(DownloadApprovalNotification<1>(
 						  	transaction.DownloadChannelId,
 							transaction.ApprovalTrigger,
-							transaction.SequenceNumber,
 							transaction.JudgingKeysCount,
 							transaction.OverlappingKeysCount,
 							transaction.JudgedKeysCount,

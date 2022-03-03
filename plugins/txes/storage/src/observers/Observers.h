@@ -92,4 +92,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by block
 	DECLARE_OBSERVER(PeriodicStoragePayment, model::BlockNotification<2>)();
+
+	/// Observes changes triggered by block
+	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, model::BlockNotification<2>)();
 }}

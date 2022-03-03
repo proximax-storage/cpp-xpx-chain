@@ -55,8 +55,15 @@ namespace catapult { namespace state {
 		io::Write(output, downloadEntry.consumer());
 		io::Write(output, downloadEntry.drive());
 		io::Write64(output, downloadEntry.downloadSize());
-		io::Write16(output, downloadEntry.downloadApprovalCount());
-		io::Write64(output, downloadEntry.lastDownloadApprovalInitiated().unwrap());
+		io::Write16(output, downloadEntry.downloadApprovalCountLeft());
+
+		io::Write(output, downloadEntry.getQueuePrevious());
+		io::Write(output, downloadEntry.getQueueNext());
+		io::Write(output, downloadEntry.getLastDownloadApprovalInitiated());
+		io::Write8(output, downloadEntry.downloadApprovalInitiationEvent().has_value());
+		if (downloadEntry.downloadApprovalInitiationEvent().has_value()) {
+			io::Write(output, *downloadEntry.downloadApprovalInitiationEvent());
+		}
 
 		SaveListOfPublicKeys(output, downloadEntry.listOfPublicKeys());
 		SaveCumulativePayments(output, downloadEntry.cumulativePayments());
@@ -82,8 +89,25 @@ namespace catapult { namespace state {
 		entry.setDrive(drive);
 
 		entry.setDownloadSize(io::Read64(input));
-		entry.setDownloadApprovalCount(io::Read16(input));
+
+		entry.setDownloadApprovalCountLeft(io::Read16(input));
+
+		Key queuePrevious;
+		input.read(queuePrevious);
+		entry.setQueuePrevious(queuePrevious);
+
+		Key queueNext;
+		input.read(queueNext);
+		entry.setQueueNext(queueNext);
+
 		entry.setLastDownloadApprovalInitiated(Timestamp(io::Read64(input)));
+
+		bool hasApprovalEvent = io::Read8(input);
+		if (hasApprovalEvent) {
+			Hash256 event;
+			input.read(event);
+			entry.downloadApprovalInitiationEvent() = event;
+		}
 
 		LoadListOfPublicKeys(input, entry.listOfPublicKeys());
 		LoadCumulativePayments(input, entry.cumulativePayments());

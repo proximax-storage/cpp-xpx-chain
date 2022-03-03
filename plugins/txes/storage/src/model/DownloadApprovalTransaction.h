@@ -32,9 +32,6 @@ namespace catapult { namespace model {
 		/// The hash of the block that initiated the rewards approval.
 		Hash256 ApprovalTrigger;
 
-		/// Sequence number of current download approval transaction in the download channel.
-		uint16_t SequenceNumber;
-
 		/// Reason of the transaction release.
 		bool ResponseToFinishDownloadTransaction;
 

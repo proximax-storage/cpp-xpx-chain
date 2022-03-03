@@ -8,6 +8,7 @@
 #include "src/state/StorageStateImpl.h"
 #include <random>
 #include <boost/multiprecision/cpp_int.hpp>
+#include "Queue.h"
 
 namespace catapult { namespace observers {
 
@@ -25,49 +26,27 @@ namespace catapult { namespace observers {
 				return;
 
 			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
-			auto queueIter = queueCache.find(state::DrivePaymentQueueKey);
+			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
 
-			if (!queueIter.tryGet()) {
-				return;
-			}
+			QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
 
-			auto& queueEntry = queueIter.get();
-
-			if (queueEntry.getFirst() == Key()) {
-				// Empty Queue of Drives
+			if (queueAdapter.isEmpty()) {
 				return;
 			}
 
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
 
-			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
-
-			auto lastDriveIter = driveCache.find(queueEntry.getLast());
-
 			for (int i = 0; i < driveCache.size(); i++) {
-				auto driveIter = driveCache.find(queueEntry.getFirst());
+				auto driveIter = driveCache.find(queueAdapter.front());
 				auto& driveEntry = driveIter.get();
 
 				auto timeSinceLastPayment = (notification.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
-				CATAPULT_LOG( error ) << "time " << timeSinceLastPayment << " " << paymentInterval;
 				if (timeSinceLastPayment < paymentInterval) {
 					break;
 				}
 
-				// Pop element from the Queue
-				queueEntry.setFirst(driveEntry.getStoragePaymentsQueueNext());
-				CATAPULT_LOG( error ) << "set first " << queueEntry.getFirst();
-				if (driveEntry.getStoragePaymentsQueueNext() != Key())
-				{
-					// Previous of the first MUST be "null"
-					driveCache.find(queueEntry.getFirst()).get().setStoragePaymentsQueuePrevious(Key());
-				}
-				else {
-					// There is only one element in the Queue. So after removal there are no elements at all
-					queueEntry.setFirst(Key());
-					queueEntry.setLast(Key());
-				}
+				queueAdapter.popFront();
 
 				const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 				const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
@@ -95,37 +74,12 @@ namespace catapult { namespace observers {
 				if (driveState.Balances.get(storageMosaicId).unwrap() >= driveEntry.size() * driveEntry.replicatorCount()) {
 
 					// Drive Continues To Work
-					CATAPULT_LOG( error ) << "drive continues " << driveEntry.key()
-							<< " " << driveState.Balances.get(storageMosaicId).unwrap()
-							<< " " << driveEntry.size()
-							<< " " << driveEntry.replicatorCount();
-
 					driveEntry.setLastPayment(notification.Timestamp);
-
-					queueEntry.setLast(driveEntry.key());
-					driveEntry.setStoragePaymentsQueueNext(Key());
-
-					auto& lastDriveEntry = lastDriveIter.get();
-
-					CATAPULT_LOG( error ) << "last " <<lastDriveEntry.key();
-
-					if (queueEntry.getFirst() != Key()) {
-						// The first and the last element are different
-						lastDriveEntry.setStoragePaymentsQueueNext(driveEntry.key());
-						driveEntry.setStoragePaymentsQueuePrevious(lastDriveEntry.key());
-					}
-					else {
-						// There is only one element in the queue. Its next and previous must be null
-						queueEntry.setFirst(driveEntry.key());
-						lastDriveEntry.setStoragePaymentsQueueNext(Key());
-						driveEntry.setStoragePaymentsQueuePrevious(Key());
-					}
-
-					lastDriveIter = driveIter;
+					queueAdapter.pushBack(driveEntry.entryKey());
 				}
 				else {
 					// Drive is Closed
-					CATAPULT_LOG( error ) << "drive is closed";
+
 					// Making payments to replicators, if there is a pending data modification
 					auto& activeDataModifications = driveEntry.activeDataModifications();
 					if (!activeDataModifications.empty()) {

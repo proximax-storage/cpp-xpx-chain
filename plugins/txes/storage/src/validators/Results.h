@@ -112,7 +112,7 @@ namespace catapult { namespace validators {
 	DEFINE_STORAGE_RESULT(Transaction_Already_Approved, 32);
 
 	/// Download approval transaction sequence number is invalid
-	DEFINE_STORAGE_RESULT(Invalid_Sequence_Number, 33);
+	DEFINE_STORAGE_RESULT(Invalid_Approval_Trigger, 33);
 
 	/// Replicator hasn't provided an opinion on itself.
 	DEFINE_STORAGE_RESULT(No_Opinion_Provided_On_Self, 34);

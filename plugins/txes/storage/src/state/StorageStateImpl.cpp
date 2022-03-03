@@ -229,7 +229,6 @@ namespace catapult { namespace state {
             channels.emplace_back(DownloadChannel{
 				id,
 				channelEntry.downloadSize(),
-				channelEntry.downloadApprovalCount(),
 				consumers});
         }
 
@@ -256,7 +255,6 @@ namespace catapult { namespace state {
         return std::make_unique<DownloadChannel>(DownloadChannel{
 			channelEntry.id(),
 			channelEntry.downloadSize(),
-			channelEntry.downloadApprovalCount(),
 			consumers,
 			replicators,
 			channelEntry.drive()});

@@ -80,7 +80,7 @@ namespace catapult { namespace observers {
 	public:
 		/// Creates an observer context around \a state and \a config at \a height with specified \a mode and \a resolvers.
 		/// \note \a state is const to enable more consise code even though it only contains non-const references.
-		ObserverContext(const ObserverState& state, const config::BlockchainConfiguration& config, Height height, NotifyMode mode, const model::ResolverContext& resolvers);
+		ObserverContext(const ObserverState& state, const config::BlockchainConfiguration& config, Height height, NotifyMode mode, const model::ResolverContext& resolvers, const Timestamp& timestamp);
 
 	public:
 		/// Catapult cache.

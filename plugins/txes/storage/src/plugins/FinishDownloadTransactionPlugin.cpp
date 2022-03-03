@@ -11,6 +11,7 @@
 #include "src/model/FinishDownloadTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
+#include "catapult/model/EntityHasher.h"
 
 using namespace catapult::model;
 
@@ -22,9 +23,13 @@ namespace catapult { namespace plugins {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
+
+					auto txHash = CalculateHash(transaction, config.GenerationHash).array();
+
 					sub.notify(FinishDownloadNotification<1>(
 							transaction.Signer,
-							transaction.DownloadChannelId
+							transaction.DownloadChannelId,
+							txHash
 					));
 
 					const auto downloadChannelAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(Key(transaction.DownloadChannelId.array()), config.NetworkIdentifier));

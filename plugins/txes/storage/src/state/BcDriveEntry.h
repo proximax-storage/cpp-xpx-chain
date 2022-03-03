@@ -325,19 +325,19 @@ namespace catapult { namespace state {
 			return m_dataModificationShards;
 		}
 
-		const Key& getStoragePaymentsQueueNext() const {
+		const Key& getQueueNext() const {
 			return m_storagePaymentsQueueNext;
 		}
 
-		void setStoragePaymentsQueueNext(const Key& storagePaymentsQueueNext) {
+		void setQueueNext(const Key& storagePaymentsQueueNext) {
 			m_storagePaymentsQueueNext = storagePaymentsQueueNext;
 		}
 
-		const Key& getStoragePaymentsQueuePrevious() const {
+		const Key& getQueuePrevious() const {
 			return m_storagePaymentsQueuePrevious;
 		}
 
-		void setStoragePaymentsQueuePrevious(const Key& storagePaymentsQueuePrevious) {
+		void setQueuePrevious(const Key& storagePaymentsQueuePrevious) {
 			m_storagePaymentsQueuePrevious = storagePaymentsQueuePrevious;
 		}
 
@@ -383,6 +383,10 @@ namespace catapult { namespace state {
 	public:
 		// Gets the drive public key.
 		const Key& key() const {
+			return m_key;
+		}
+
+		Key entryKey() {
 			return m_key;
 		}
 

@@ -710,10 +710,12 @@ namespace catapult { namespace model {
 	public:
 		explicit FinishDownloadNotification(
 				const Key& signer,
-				const Hash256& downloadChannelId)
+				const Hash256& downloadChannelId,
+				const Hash256& transactionHash)
 			: Notification(Notification_Type, sizeof(FinishDownloadNotification<1>))
 			, PublicKey(signer)
 			, DownloadChannelId(downloadChannelId)
+			, TransactionHash(transactionHash)
 		{}
 
 	public:
@@ -722,6 +724,9 @@ namespace catapult { namespace model {
 
 		/// The identifier of the download channel.
 		Hash256 DownloadChannelId;
+
+		/// The hash of the transaction
+		Hash256 TransactionHash;
 	};
 
 	/// Notification of a download payment.
@@ -939,7 +944,6 @@ namespace catapult { namespace model {
 		explicit DownloadApprovalNotification(
 				const Hash256& id,
 				const Hash256& approvalTrigger,
-				const uint16_t number,
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
@@ -948,7 +952,6 @@ namespace catapult { namespace model {
 			: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
 			, DownloadChannelId(id)
 			, ApprovalTrigger(approvalTrigger)
-			, SequenceNumber(number)
 			, JudgingKeysCount(judgingKeysCount)
 			, OverlappingKeysCount(overlappingKeysCount)
 			, JudgedKeysCount(judgedKeysCount)
@@ -962,9 +965,6 @@ namespace catapult { namespace model {
 
 		/// The hash of the block that initiated the rewards approval.
 		Hash256 ApprovalTrigger;
-
-		/// Sequence number of current download approval transaction in the download channel.
-		uint16_t SequenceNumber;
 
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;

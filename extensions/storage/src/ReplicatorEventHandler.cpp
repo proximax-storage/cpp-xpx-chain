@@ -73,8 +73,7 @@ namespace catapult { namespace storage {
 
 				CATAPULT_LOG(debug) << "sending download approval transaction";
 
-				auto pDownloadChannel = m_storageState.getDownloadChannel(pReplicator->replicatorKey().array(), info.m_downloadChannelId);
-                auto transactionHash = m_transactionSender.sendDownloadApprovalTransaction(pDownloadChannel->DownloadApprovalCount + 1, info);
+				auto transactionHash = m_transactionSender.sendDownloadApprovalTransaction(info);
 
 				m_transactionStatusHandler.addHandler(transactionHash, [
 						blockHash = info.m_blockHash,
@@ -86,7 +85,7 @@ namespace catapult { namespace storage {
 
 					auto validationResult = validators::ValidationResult(status);
 					CATAPULT_LOG(debug) << "download approval transaction completed with " << validationResult;
-                    if (validationResult != validators::Failure_Storage_Invalid_Sequence_Number)
+                    if (validationResult != validators::Failure_Storage_Invalid_Approval_Trigger)
                         pReplicator->asyncDownloadApprovalTransactionHasFailedInvalidOpinions(blockHash, downloadChannelId);
                 });
             }

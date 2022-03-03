@@ -40,7 +40,6 @@ namespace catapult { namespace state {
 	struct DownloadChannel {
 		Hash256 Id;
 		uint64_t DownloadSizeMegabytes;
-		uint16_t DownloadApprovalCount;
 		std::vector<Key> Consumers;
 		std::vector<Key> Replicators;
 		Key DriveKey;

@@ -19,7 +19,7 @@ namespace catapult { namespace observers {
 	  	downloadEntry.setDrive(notification.DriveKey);
 		// TODO: Buy storage units for xpx in notification.DownloadSize
 		downloadEntry.setDownloadSize(notification.DownloadSizeMegabytes);
-	  	downloadEntry.setDownloadApprovalCount(0);
+		downloadEntry.setDownloadApprovalCountLeft(1);
 
 		if (notification.ListOfPublicKeysSize == 0) {
 			downloadEntry.listOfPublicKeys().push_back(notification.Consumer);

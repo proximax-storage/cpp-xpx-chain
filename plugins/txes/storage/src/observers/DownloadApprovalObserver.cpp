@@ -15,7 +15,6 @@ namespace catapult { namespace observers {
 	  	auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
 	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
-
-	  	downloadChannelEntry.incrementDownloadApprovalCount();
+		downloadChannelEntry.downloadApprovalInitiationEvent().reset();
 	});
 }}
