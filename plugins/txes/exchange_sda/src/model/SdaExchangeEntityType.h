@@ -11,14 +11,11 @@
 namespace catapult { namespace model {
 
 #endif
-	/// Place SDA-SDA Exchange offer transaction.
+	/// Place and Exchange SDA-SDA offer transaction.
 	DEFINE_TRANSACTION_TYPE(ExchangeSda, Place_Sda_Exchange_Offer, 0x1);
 
-	/// SDA-SDA Exchange transaction.
-	DEFINE_TRANSACTION_TYPE(ExchangeSda, Sda_Exchange, 0x2);
-
-	/// Remove SDA-SDA exchange offer transaction.
-	DEFINE_TRANSACTION_TYPE(ExchangeSda, Remove_Sda_Exchange_Offer, 0x3);
+	/// Remove SDA-SDA offer transaction.
+	DEFINE_TRANSACTION_TYPE(ExchangeSda, Remove_Sda_Exchange_Offer, 0x2);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

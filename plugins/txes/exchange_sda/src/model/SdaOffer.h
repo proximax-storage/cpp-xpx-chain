@@ -11,31 +11,13 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-	/// Offer type
-	enum class SdaOfferType : uint8_t {
-        /// Sell offer.
-        Sell,
-
-		/// Buy offer.
-		Buy,
-
-		Begin = Sell,
-		End = Buy,
-	};
-
-	/// Insertion operator for outputting \a type to \a out.
-	std::ostream& operator<<(std::ostream& out, SdaOfferType type);
-
 	struct SdaOffer {
 	public:
 		/// Mosaic for exchange.
-		UnresolvedMosaic Mosaic;
+		UnresolvedMosaic MosaicGive;
 
-		/// Sum of mosaic suggested to be paid in exchange with another mosaic.
-		UnresolvedMosaic Cost;
-
-		/// Offer type.
-		SdaOfferType Type;
+		/// Sum of mosaic suggested to be exchanged with another mosaic.
+		UnresolvedMosaic MosaicGet;
 	};
 
 	struct MatchedSdaOffer : public SdaOffer {
@@ -53,9 +35,6 @@ namespace catapult { namespace model {
 	struct SdaOfferMosaic {
 		/// Mosaic id of the offer.
 		UnresolvedMosaicId MosaicId;
-
-		/// Offer type.
-		model::SdaOfferType SdaOfferType;
 	};
 
 #pragma pack(pop)

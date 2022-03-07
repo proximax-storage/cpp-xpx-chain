@@ -18,92 +18,44 @@ namespace catapult { namespace model {
 	/// Place SDA-SDA Offer.
 	DEFINE_EXCHANGESDA_NOTIFICATION(Place_Sda_Offer_v1, 0x001, All);
 
-	/// SDA-SDA Exchange.
-	DEFINE_EXCHANGESDA_NOTIFICATION(Sda_Exchange_v1, 0x002, All);
-
 	/// Remove SDA-SDA offer.
-	DEFINE_EXCHANGESDA_NOTIFICATION(Remove_Sda_Offer_v1, 0x003, All);
+	DEFINE_EXCHANGESDA_NOTIFICATION(Remove_Sda_Offer_v1, 0x002, All);
 
 #undef DEFINE_EXCHANGESDA_NOTIFICATION
 
-	// endregion
+	/// Notification of an SDA-SDA offer placing.
+	template<VersionType version>
+	struct PlaceSdaOfferNotification;
 
-	struct BaseOfferNotification : public Notification {
+	template<>
+	struct PlaceSdaOfferNotification<1> : public Notification {
 	public:
-		BaseOfferNotification(
-				NotificationType type,
+		/// Matching notification type.
+		static constexpr auto Notification_Type = ExchangeSda_Place_Sda_Offer_v1_Notification;
+
+	public:
+		PlaceSdaOfferNotification(
 				const Key& owner,
 				uint8_t sdaOfferCount,
 				const SdaOfferWithDuration* pSdaOffers)
-			: Notification(type, sizeof(BaseOfferNotification))
+			: Notification(Notification_Type, sizeof(PlaceSdaOfferNotification<1>))
 			, Owner(owner)
 			, SdaOfferCount(sdaOfferCount)
 			, SdaOffersPtr(pSdaOffers)
 		{}
-
+	
 	public:
 		/// SDA-SDA Offer owner.
 		const Key& Owner;
 
-		/// SDA-SDA Offer count.
+		/// Mosaic count.
 		uint8_t SdaOfferCount;
 
 		/// SDA-SDA Offers.
 		const SdaOfferWithDuration* SdaOffersPtr;
 	};
 
-	/// Notification of an SDA-SDA offer.
-	template<VersionType version>
-	struct SdaOfferNotification;
-
-	template<>
-	struct SdaOfferNotification<1> : public BaseOfferNotification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = ExchangeSda_Place_Sda_Offer_v1_Notification;
-
-	public:
-		SdaOfferNotification(
-				const Key& owner,
-				uint8_t sdaOfferCount,
-				const SdaOfferWithDuration* pOffers)
-			: BaseOfferNotification(Notification_Type, owner, sdaOfferCount, pOffers)
-		{}
-	};
-
-	/// Notification of an SDA-SDA exchange.
-	template<VersionType version>
-	struct SdaExchangeNotification;
-
-	template<>
-	struct SdaExchangeNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = ExchangeSda_Sda_Exchange_v1_Notification;
-
-	public:
-		SdaExchangeNotification(
-				const Key& signer,
-				uint8_t sdaOfferCount,
-				const MatchedSdaOffer* pSdaOffers)
-			: Notification(Notification_Type, sizeof(SdaExchangeNotification<1>))
-			, Signer(signer)
-			, SdaOfferCount(sdaOfferCount)
-			, SdaOffersPtr(pSdaOffers)
-		{}
-
-	public:
-		/// Transaction signer.
-		const Key& Signer;
-
-		/// Number of matched SDA-SDA offers.
-		uint8_t SdaOfferCount;
-
-		/// Matched SDA-SDA offers.
-		const MatchedSdaOffer* SdaOffersPtr;
-	};
-
-	/// Notification of an offer removing.
+	/// Notification of an SDA-SDA offer removing.
 	template<VersionType version>
 	struct RemoveSdaOfferNotification;
 
