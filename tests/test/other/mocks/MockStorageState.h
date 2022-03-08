@@ -89,6 +89,10 @@ namespace catapult { namespace mocks {
 		std::vector<Key> getReplicatorDriveKeys(const Key& replicatorKey) override {
 			return std::vector<Key>();
 		}
+
+		state::ModificationShard getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) override {
+			return state::ModificationShard();
+		}
 	};
 
 #pragma pack(pop)

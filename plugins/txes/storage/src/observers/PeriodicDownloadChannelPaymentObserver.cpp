@@ -49,7 +49,7 @@ namespace catapult { namespace observers {
 				// Pop element from the Queue
 				queueAdapter.popFront();
 
-				if (downloadEntry.isFinishPublished()) {
+				if (downloadEntry.isCloseInitiated()) {
 					continue;
 				}
 
@@ -60,6 +60,10 @@ namespace catapult { namespace observers {
 				if (downloadEntry.downloadApprovalCountLeft() > 0) {
 					// Channel Continues To Exist
 					queueAdapter.pushBack(downloadEntry.entryKey());
+				}
+				else {
+					downloadEntry.setFinishPublished(true);
+					downloadEntry.downloadApprovalInitiationEvent() = notification.Hash;
 				}
 			}
         }))

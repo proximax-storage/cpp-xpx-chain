@@ -43,6 +43,7 @@ namespace catapult { namespace state {
 		std::vector<Key> Consumers;
 		std::vector<Key> Replicators;
 		Key DriveKey;
+		std::optional<Hash256> ApprovalTrigger;
 	};
 
 	struct DriveVerification {
@@ -51,6 +52,12 @@ namespace catapult { namespace state {
 		Hash256 VerificationTrigger;
 		Hash256 RootHash;
 		std::vector<std::vector<Key>> Shards;
+	};
+
+	struct ModificationShard {
+		std::map<Key, uint64_t> m_actualShardMembers;
+		std::map<Key, uint64_t> m_formerShardMembers;
+		uint64_t m_ownerUpload = 0;
 	};
 
 	/// Interface for storage state.
@@ -92,7 +99,9 @@ namespace catapult { namespace state {
 		virtual std::vector<Key> getDriveReplicators(const Key& driveKey) = 0;
 		virtual std::vector<Hash256> getDriveChannels(const Key& driveKey) = 0;
 		virtual std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) = 0;
+		virtual ModificationShard getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) = 0;
 		virtual std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) = 0;
+//		virtual SizeMap getCumulativeUploadSizesBytes(const Key& driveKey, const Key& replicatorKey) = 0;
 
         virtual std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) = 0;
 

@@ -127,6 +127,10 @@ namespace catapult { namespace state {
 			m_finishPublished = finishPublished;
 		}
 
+		bool isCloseInitiated() const {
+			return isFinishPublished() or downloadApprovalCountLeft() == 0;
+		}
+
 		const std::optional<Hash256>& downloadApprovalInitiationEvent() const {
 			return m_downloadApprovalInitiationEvent;
 		}

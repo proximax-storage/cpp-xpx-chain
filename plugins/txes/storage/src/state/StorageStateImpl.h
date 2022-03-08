@@ -31,7 +31,9 @@ namespace catapult { namespace state {
         std::vector<Key> getDriveReplicators(const Key& driveKey) override;
         std::vector<Hash256> getDriveChannels(const Key& driveKey) override;
         std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) override;
+        ModificationShard getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) override;
         std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) override;
+//        SizeMap getCumulativeUploadSizesBytes(const Key& driveKey, const Key& replicatorKey) override;
 
 		std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) override;
 

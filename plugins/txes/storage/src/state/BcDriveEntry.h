@@ -95,18 +95,31 @@ namespace catapult { namespace state {
 	};
 
 	struct ConfirmedStorageInfo {
-		Timestamp m_timeInConfirmedStorage;
+		Timestamp m_timeInConfirmedStorage = Timestamp(0);
 		std::optional<Timestamp> m_confirmedStorageSince;
+	};
+
+	struct ModificationShardInfo {
+		std::map<Key, uint64_t> m_actualShardMembers;
+		std::map<Key, uint64_t> m_formerShardMembers;
+		uint64_t m_ownerUpload = 0;
+
+		std::set<Key> getActualShardMembersKeys() {
+			std::set<Key> keys;
+			for (const auto& [key, _]: m_actualShardMembers) {
+				keys.insert(key);
+			}
+		};
 	};
 
 	using ActiveDataModifications = std::vector<ActiveDataModification>;
 	using CompletedDataModifications = std::vector<CompletedDataModification>;
 	using SizeMap = std::map<Key, uint64_t>;
 	using ConfirmedStates = std::map<Key, Hash256>; // last approved root hash
-	using ConfirmedStoragePeriods = std::map<Key, ConfirmedStorageInfo>;
+	using ConfirmedStorageInfos = std::map<Key, ConfirmedStorageInfo>;
 	using Shards = std::vector<std::vector<Key>>;
 	using DownloadShards = std::map<Hash256, std::set<Key>>;
-	using ModificationShards = std::map<Key, std::pair<std::set<Key>, std::set<Key>>>;
+	using ModificationShards = std::map<Key, ModificationShardInfo>;
 
 	struct Verification {
 		/// The hash of block that initiated the verification.
@@ -132,7 +145,6 @@ namespace catapult { namespace state {
 			, m_usedSizeBytes(0)
 			, m_metaFilesSizeBytes(0)
 			, m_replicatorCount(0)
-			, m_ownerCumulativeUploadSizeBytes(0)
 		{}
 
 	public:
@@ -196,21 +208,6 @@ namespace catapult { namespace state {
 			return m_replicatorCount;
 		}
 
-		/// Sets the cumulative upload size made by the owner.
-		void setOwnerCumulativeUploadSizeBytes(uint64_t uploadSize) {
-			m_ownerCumulativeUploadSizeBytes = uploadSize;
-		}
-
-		/// Increases the cumulative upload size made by the owner by \a delta.
-		void increaseOwnerCumulativeUploadSize(uint64_t delta) {
-			m_ownerCumulativeUploadSizeBytes = m_ownerCumulativeUploadSizeBytes + delta;
-		}
-
-		/// Gets the cumulative upload size made by the owner.
-		const uint64_t& ownerCumulativeUploadSizeBytes() const {
-			return m_ownerCumulativeUploadSizeBytes;
-		}
-
 		/// Gets active data modifications.
 		const ActiveDataModifications& activeDataModifications() const {
 			return m_activeDataModifications;
@@ -239,16 +236,6 @@ namespace catapult { namespace state {
 		/// Gets infos of drives assigned to the replicator.
 		SizeMap& confirmedUsedSizes() {
 			return m_confirmedUsedSizeMap;
-		}
-
-		/// Gets map with replicators' cumulative upload sizes.
-		const SizeMap& cumulativeUploadSizesBytes() const {
-			return m_cumulativeUploadSizeBytesMap;
-		}
-
-		/// Gets map with replicators' cumulative upload sizes.
-		SizeMap& cumulativeUploadSizesBytes() {
-			return m_cumulativeUploadSizeBytesMap;
 		}
 
 		/// Gets replicators.
@@ -294,12 +281,12 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets replicators last confirmed storage infos.
-		const ConfirmedStoragePeriods& confirmedStorageInfos() const {
+		const ConfirmedStorageInfos& confirmedStorageInfos() const {
 			return m_confirmedStoragePeriods;
 		}
 
 		/// Gets replicators last confirmed storage infos.
-		ConfirmedStoragePeriods& confirmedStorageInfos() {
+		ConfirmedStorageInfos& confirmedStorageInfos() {
 			return m_confirmedStoragePeriods;
 		}
 
@@ -356,16 +343,14 @@ namespace catapult { namespace state {
 		uint64_t m_usedSizeBytes;
 		uint64_t m_metaFilesSizeBytes;
 		uint16_t m_replicatorCount;
-		uint64_t m_ownerCumulativeUploadSizeBytes;
 		ActiveDataModifications m_activeDataModifications;
 		CompletedDataModifications m_completedDataModifications;
 		SizeMap m_confirmedUsedSizeMap;
-		SizeMap m_cumulativeUploadSizeBytesMap;
 		utils::SortedKeySet m_replicators;
 		utils::SortedKeySet m_offboardingReplicators;
 		Verifications m_verifications;
 		ConfirmedStates m_confirmedStates;
-		ConfirmedStoragePeriods m_confirmedStoragePeriods;
+		ConfirmedStorageInfos m_confirmedStoragePeriods;
 		DownloadShards m_downloadShards;
 		ModificationShards m_dataModificationShards;
 		Key m_storagePaymentsQueueNext;

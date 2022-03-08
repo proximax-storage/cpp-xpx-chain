@@ -17,6 +17,7 @@ namespace catapult { namespace notification_handlers {
 				return;
 
 			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey)) {
+				// This case includes the situation when the drive does not already exist
 				return;
 			}
 

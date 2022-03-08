@@ -29,7 +29,8 @@ namespace catapult { namespace storage {
         auto testee = storage::CreateReplicatorEventHandler(
 			std::move(transactionSender),
 			storageState,
-			transactionStatusHandler);
+			transactionStatusHandler,
+			crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"));
 
         // Assert:
         EXPECT_NE(nullptr, testee);

@@ -117,17 +117,6 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void AssertCumulativeUploadSizes(const SizeMap& confirmedUsedSizes, const uint8_t*& pData) {
-        	ASSERT_EQ(confirmedUsedSizes.size(), *reinterpret_cast<const uint16_t*>(pData));
-        	pData += sizeof(uint16_t);
-        	for (const auto& pair : confirmedUsedSizes) {
-        		EXPECT_EQ_MEMORY(pair.first.data(), pData, Key_Size);
-        		pData += Key_Size;
-        		ASSERT_EQ(pair.second, *reinterpret_cast<const uint64_t*>(pData));
-        		pData += sizeof(uint64_t);
-        	}
-		}
-
 		void AssertReplicators(const utils::SortedKeySet& replicators, const uint8_t*& pData) {
 			ASSERT_EQ(replicators.size(), *reinterpret_cast<const uint16_t*>(pData));
 			pData += sizeof(uint16_t);
@@ -176,10 +165,20 @@ namespace catapult { namespace state {
         	ASSERT_EQ(downloadShards.size(), *reinterpret_cast<const uint16_t*>(pData));
         	pData += sizeof(uint16_t);
         	for (const auto& [channelId, shard]: downloadShards) {
-				CATAPULT_LOG( error ) << "Assert Channel Id " << channelId;
 				ASSERT_EQ(channelId, *reinterpret_cast<const Hash256*>(pData));
 				pData += Hash256_Size;
 				AssertShard(shard, pData);
+			}
+		}
+
+		void AssertUploadInfo(const std::map<Key, uint64_t>& info, const uint8_t*& pData) {
+        	ASSERT_EQ(info.size(), *reinterpret_cast<const uint16_t*>(pData));
+			pData += sizeof(uint16_t);
+			for (const auto& [key, uploadSize]: info) {
+				ASSERT_EQ(key, *reinterpret_cast<const Key *>(pData));
+				pData += sizeof(key);
+				ASSERT_EQ(uploadSize, *reinterpret_cast<const uint64_t *>(pData));
+				pData += sizeof(uint64_t);
 			}
 		}
 
@@ -189,12 +188,14 @@ namespace catapult { namespace state {
         	for (const auto& [key, shard]: modificationShards) {
         		ASSERT_EQ(key, *reinterpret_cast<const Key *>(pData));
         		pData += Key_Size;
-        		AssertShard(shard.first, pData);
-				AssertShard(shard.second, pData);
+        		AssertUploadInfo(shard.m_actualShardMembers, pData);
+				AssertUploadInfo(shard.m_formerShardMembers, pData);
+				ASSERT_EQ(shard.m_ownerUpload, *reinterpret_cast<const uint64_t *>(pData));
+				pData += sizeof(uint64_t);
         	}
 		}
 
-		void AssertConfirmedInfos(const ConfirmedStoragePeriods& confirmedInfos, const uint8_t*& pData) {
+		void AssertConfirmedInfos(const ConfirmedStorageInfos& confirmedInfos, const uint8_t*& pData) {
         	ASSERT_EQ(confirmedInfos.size(), *reinterpret_cast<const uint16_t*>(pData));
         	pData += sizeof(uint16_t);
         	for (const auto& [key, info]: confirmedInfos) {
@@ -230,8 +231,6 @@ namespace catapult { namespace state {
 			pData += sizeof(uint64_t);
             ASSERT_EQ(entry.replicatorCount(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
-			ASSERT_EQ(entry.ownerCumulativeUploadSizeBytes(), *reinterpret_cast<const uint64_t*>(pData));
-			pData += sizeof(uint64_t);
 
 			ASSERT_EQ(entry.getQueuePrevious(), *reinterpret_cast<const Key *>(pData));
 			pData += Key_Size;
@@ -245,7 +244,6 @@ namespace catapult { namespace state {
             AssertActiveDataModifications(entry.activeDataModifications(), pData);
             AssertCompletedDataModifications(entry.completedDataModifications(), pData);
 			AssertConfirmedUsedSizes(entry.confirmedUsedSizes(), pData);
-			AssertCumulativeUploadSizes(entry.cumulativeUploadSizesBytes(), pData);
 			AssertReplicators(entry.replicators(), pData);
 			AssertReplicators(entry.offboardingReplicators(), pData);
             AssertVerifications(entry.verifications(), pData);
@@ -402,17 +400,27 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void SaveModificationUploadInfo(const std::map<Key, uint64_t>& info, std::vector<uint8_t>& data) {
+			uint64_t size = info.size();
+			CopyToVector(data, (const uint8_t *) &size, sizeof(uint16_t));
+			for (const auto& [key, uploadSize]: info) {
+				CopyToVector(data, (const uint8_t*) &key, Key_Size);
+				CopyToVector(data, (const uint8_t*) &uploadSize, sizeof(uint64_t));
+			}
+		}
+
 		void SaveModificationShards(const ModificationShards& shards, std::vector<uint8_t>& data) {
 			uint16_t shardsCount = utils::checked_cast<size_t, uint16_t>(shards.size());
 			CopyToVector(data, (const uint8_t *) &shardsCount, sizeof(uint16_t));
 			for (const auto& [key, shard] : shards) {
 				CopyToVector(data, (const uint8_t*) &key, Key_Size);
-				SaveShard(shard.first, data);
-				SaveShard(shard.second, data);
+				SaveModificationUploadInfo(shard.m_actualShardMembers, data);
+				SaveModificationUploadInfo(shard.m_formerShardMembers, data);
+				CopyToVector(data, (const uint8_t*) &shard.m_ownerUpload, sizeof(uint64_t));
 			}
 		}
 
-		void SaveConfirmedStorageInfos(const ConfirmedStoragePeriods& infos, std::vector<uint8_t>& data) {
+		void SaveConfirmedStorageInfos(const ConfirmedStorageInfos& infos, std::vector<uint8_t>& data) {
 			uint16_t size = infos.size();
 			CopyToVector(data, (const uint8_t *) &size, sizeof(uint16_t));
 			for (const auto& [key, info] : infos) {
@@ -438,7 +446,6 @@ namespace catapult { namespace state {
 			CopyToVector(data, (const uint8_t*) &entry.usedSizeBytes(), sizeof(uint64_t));
 			CopyToVector(data, (const uint8_t*) &entry.metaFilesSizeBytes(), sizeof(uint64_t));
 			CopyToVector(data, (const uint8_t*) &entry.replicatorCount(), sizeof(uint16_t));
-			CopyToVector(data, (const uint8_t*) &entry.ownerCumulativeUploadSizeBytes(), sizeof(uint64_t));
 
 			CopyToVector(data, (const uint8_t*) &entry.getQueuePrevious(), Key_Size);
 			CopyToVector(data, (const uint8_t*) &entry.getQueueNext(), Key_Size);
@@ -447,7 +454,6 @@ namespace catapult { namespace state {
             SaveActiveDataModifications(entry.activeDataModifications(), data);
             SaveCompletedDataModifications(entry.completedDataModifications(), data);
 			SaveConfirmedUsedSizes(entry.confirmedUsedSizes(), data);
-			SaveCumulativeUploadSizes(entry.cumulativeUploadSizesBytes(), data);
 			SaveReplicators(entry.replicators(), data);
 			SaveReplicators(entry.offboardingReplicators(), data);
             SaveVerifications(entry.verifications(), data);

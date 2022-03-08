@@ -57,7 +57,6 @@ namespace catapult { namespace observers {
 				auto& replicatorEntry = replicatorIter.get();
 				replicatorEntry.drives().emplace(notification.DriveKey, state::DriveInfo{ Hash256(), false, 0, 0 });
 				replicators.emplace(replicatorKey);
-				driveEntry.cumulativeUploadSizesBytes().emplace(replicatorKey, 0);
 				CATAPULT_LOG( error ) << "added to cumulativeUploadSizesBytes " << replicatorKey;
 
 				// Making mosaic transfers
@@ -89,19 +88,28 @@ namespace catapult { namespace observers {
 			  	// If the drive has no more than (ShardSize + 1) replicators, then for each one of them
 			  	// all other replicators will be added to this replicator's shard.
 			  	for (const auto& mainKey : replicators) {
-					dataModificationShards[mainKey].first = replicators;
-					dataModificationShards[mainKey].first.erase(mainKey);
+			  		auto& mainKeyShard = dataModificationShards[mainKey];
+					for (const auto& replicatorKey: replicators) {
+						if (replicatorKey != mainKey) {
+							mainKeyShard.m_actualShardMembers.insert({ replicatorKey, 0 });
+						}
+					}
 				}
 		  	} else {
 				auto sampleSource = replicators;
 				for (const auto& mainKey : replicators) {
 					sampleSource.erase(mainKey);	// Replicator cannot be a member of his own shard
-					auto& target = dataModificationShards[mainKey].first;
+					std::set<Key> target;
 					const auto driveKeyXorMainKey = notification.DriveKey ^ mainKey;
 					std::seed_seq seed(driveKeyXorMainKey.begin(), driveKeyXorMainKey.end());
 					std::sample(sampleSource.begin(), sampleSource.end(), std::inserter(target, target.end()),
 								pluginConfig.ShardSize, std::mt19937(seed));
 					sampleSource.insert(mainKey);	// Restoring original state of sampleSource
+
+					auto& shard = dataModificationShards[mainKey].m_actualShardMembers;
+					for (const auto& key: target) {
+						shard.insert({key, 0});
+					}
 				}
 		  	}
 

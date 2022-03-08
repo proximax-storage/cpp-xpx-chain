@@ -50,6 +50,20 @@ namespace catapult { namespace state {
 				SaveShard(output, shard);
 		}
 
+		void SaveUploadInfo(io::OutputStream& output, const std::map<Key, uint64_t>& info) {
+			io::Write16(output, info.size());
+			for (const auto& [key, uploadValue]: info) {
+				io::Write(output, key);
+				io::Write64(output, uploadValue);
+			}
+		}
+
+		void SaveModificationShardInfo(io::OutputStream& output, const ModificationShardInfo& shard) {
+			SaveUploadInfo(output, shard.m_actualShardMembers);
+			SaveUploadInfo(output, shard.m_formerShardMembers);
+			io::Write64(output, shard.m_ownerUpload);
+		}
+
 		void SaveVerifications(io::OutputStream& output, const Verifications& verifications) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(verifications.size()));
 			for (const auto& verification : verifications) {
@@ -85,12 +99,10 @@ namespace catapult { namespace state {
 		void SaveDownloadShards(io::OutputStream& output, const DownloadShards& downloadShards) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(downloadShards.size()));
 			for (const auto& shard : downloadShards) {
-				CATAPULT_LOG( error ) << "saved channelId " << shard.first;
 				io::Write(output, shard.first);
 				io::Write8(output, utils::checked_cast<size_t, uint8_t>(shard.second.size()));
 				for (const auto& replicatorKey : shard.second) {
 					io::Write(output, replicatorKey);
-					CATAPULT_LOG( error ) << "saved replicatorKey " << replicatorKey;
 				}
 			}
 		}
@@ -99,14 +111,12 @@ namespace catapult { namespace state {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(dataModificationShards.size()));
 			for (const auto& item : dataModificationShards) {
 				auto& mainKey = item.first;
-				auto& shardsPair = item.second;
 				io::Write(output, mainKey);
-				SaveShard(output, shardsPair.first);
-				SaveShard(output, shardsPair.second);
+				SaveModificationShardInfo(output, item.second);
 			}
 		}
 
-		void SaveConfirmedStorageInfos(io::OutputStream& output, const ConfirmedStoragePeriods& infos) {
+		void SaveConfirmedStorageInfos(io::OutputStream& output, const ConfirmedStorageInfos& infos) {
 			io::Write16(output, infos.size());
 			for (const auto& [key, info]: infos) {
 				io::Write(output, key);
@@ -231,18 +241,32 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void LoadUploadInfo(io::InputStream& input, std::map<Key, uint64_t>& info) {
+			auto activeSize = io::Read16(input);
+			while (activeSize--) {
+				Key key;
+				input.read(key);
+				info[key] = io::Read64(input);
+			}
+		}
+
+		void LoadModificationShardInfo(io::InputStream& input, ModificationShardInfo& info) {
+			LoadUploadInfo(input, info.m_actualShardMembers);
+			LoadUploadInfo(input, info.m_formerShardMembers);
+			info.m_ownerUpload = io::Read64(input);
+		}
+
 		void LoadModificationShards(io::InputStream& input, ModificationShards& dataModificationShards) {
 			auto count = io::Read16(input);
 			while (count--) {
 				Key mainKey;
 				io::Read(input, mainKey);
-				auto& shardsPair = dataModificationShards[mainKey];
-				LoadShard(input, shardsPair.first);
-				LoadShard(input, shardsPair.second);
+				auto& shardInfo = dataModificationShards[mainKey];
+				LoadModificationShardInfo(input, shardInfo);
 			}
 		}
 
-		void LoadConfirmedStorageInfos(io::InputStream& input, ConfirmedStoragePeriods& infos) {
+		void LoadConfirmedStorageInfos(io::InputStream& input, ConfirmedStorageInfos& infos) {
 			auto size = io::Read16(input);
 			while (size--) {
 				Key key;
@@ -275,7 +299,6 @@ namespace catapult { namespace state {
 		io::Write64(output, driveEntry.usedSizeBytes());
 		io::Write64(output, driveEntry.metaFilesSizeBytes());
 		io::Write16(output, driveEntry.replicatorCount());
-		io::Write64(output, driveEntry.ownerCumulativeUploadSizeBytes());
 
 		io::Write(output, driveEntry.getQueuePrevious());
 		io::Write(output, driveEntry.getQueueNext());
@@ -284,7 +307,6 @@ namespace catapult { namespace state {
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
 		SaveConfirmedUsedSizes(output, driveEntry.confirmedUsedSizes());
-		SaveCumulativeUploadSizes(output, driveEntry.cumulativeUploadSizesBytes());
 		SaveReplicators(output, driveEntry.replicators());
 		SaveReplicators(output, driveEntry.offboardingReplicators());
 		SaveVerifications(output, driveEntry.verifications());
@@ -317,7 +339,6 @@ namespace catapult { namespace state {
 		entry.setUsedSizeBytes(io::Read64(input));
 		entry.setMetaFilesSizeBytes(io::Read64(input));
 		entry.setReplicatorCount(io::Read16(input));
-		entry.setOwnerCumulativeUploadSizeBytes(io::Read64(input));
 
 		Key queuePrevious;
 		io::Read(input, queuePrevious);
@@ -334,7 +355,6 @@ namespace catapult { namespace state {
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
 		LoadConfirmedUsedSizes(input, entry.confirmedUsedSizes());
-		LoadCumulativeUploadSizes(input, entry.cumulativeUploadSizesBytes());
 		LoadReplicators(input, entry.replicators());
 		LoadReplicators(input, entry.offboardingReplicators());
 		LoadVerifications(input, entry.verifications());

@@ -134,36 +134,32 @@ namespace catapult { namespace test {
 				shard.emplace_back(test::GenerateRandomByteArray<Key>());
 		}
 
-        CATAPULT_LOG( error ) << "downloadShardCount " << downloadShardsCount;
 		for (int i = 0; i < downloadShardsCount; i++) {
 			auto size = 2;
-			CATAPULT_LOG( error ) << "shard size " << downloadShardsCount;
 			std::set<Key> shard;
 			for (int i = 0; i < size; i++) {
 				auto replicatorKey = GenerateRandomByteArray<Key>();
 				shard.insert(replicatorKey);
-//				CATAPULT_LOG( error ) << "shard size " << downloadShardsCount;
 			}
 			auto channelId = GenerateRandomByteArray<Hash256>();
-			CATAPULT_LOG( error ) << "channelId " << channelId;
 			entry.downloadShards()[channelId] = shard;
 		}
 
 		for (int i = 0; i < replicatorCount; i++) {
 			auto activeSize = RandomByte();
-			std::set<Key> activeShard;
+			std::map<Key, uint64_t> activeShard;
 			for (int i = 0; i < activeSize; i++) {
-				activeShard.insert(GenerateRandomByteArray<Key>());
+				activeShard.insert({GenerateRandomByteArray<Key>(), 0});
 			}
 
 			auto notActiveSize = RandomByte();
-			std::set<Key> notActiveShard;
+			std::map<Key, uint64_t> notActiveShard;
 			for (int i = 0; i < notActiveSize; i++) {
-				notActiveShard.insert(GenerateRandomByteArray<Key>());
+				notActiveShard.insert({GenerateRandomByteArray<Key>(), 0});
 			}
 
 			entry.dataModificationShards()[GenerateRandomByteArray<Key>()]
-					= {activeShard, notActiveShard};
+					= {activeShard, notActiveShard, 0};
 		}
 
 		for (int i = 0; i < replicatorCount; i++) {
@@ -182,7 +178,6 @@ namespace catapult { namespace test {
 		EXPECT_EQ(expectedEntry.usedSizeBytes(), entry.usedSizeBytes());
 		EXPECT_EQ(expectedEntry.metaFilesSizeBytes(), entry.metaFilesSizeBytes());
         EXPECT_EQ(expectedEntry.replicatorCount(), entry.replicatorCount());
-		EXPECT_EQ(expectedEntry.ownerCumulativeUploadSizeBytes(), entry.ownerCumulativeUploadSizeBytes());
 		EXPECT_EQ(expectedEntry.confirmedUsedSizes(), entry.confirmedUsedSizes());
 		EXPECT_EQ(expectedEntry.replicators(), entry.replicators());
 

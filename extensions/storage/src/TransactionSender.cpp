@@ -211,7 +211,6 @@ namespace catapult { namespace storage {
         builders::DownloadApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
         builder.setDownloadChannelId(transactionInfo.m_downloadChannelId);
 		builder.setApprovalTrigger(transactionInfo.m_blockHash);
-        builder.setResponseToFinishDownloadTransaction(false); // TODO set right value
         builder.setJudgingKeysCount(judgingKeys.size());
         builder.setOverlappingKeysCount(overlappingKeys.size());
         builder.setJudgedKeysCount(judgedKeys.size());

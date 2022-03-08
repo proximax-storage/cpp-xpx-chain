@@ -56,6 +56,7 @@ namespace catapult { namespace storage {
 		void updateShardDonator(const Key& driveKey);
 		void updateShardRecipient(const Key& driveKey);
 		void updateDriveDownloadChannels(const Key& driveKey);
+		void updateReplicatorDownloadChannels(const Key& driveKey);
 
     public:
     	void anotherReplicatorOnboarded(const Key& replicatorKey);
@@ -66,7 +67,11 @@ namespace catapult { namespace storage {
         void downloadApprovalPublished(const Hash256& approvalTrigger, const Hash256& downloadChannelId);
 		void endDriveVerificationPublished(const Key& driveKey, const Hash256& verificationTrigger);
 
-    public:
+	public:
+		bool driveExists(const Key& driveKey);
+		bool channelExists(const Hash256& channelId);
+
+	public:
         void notifyTransactionStatus(const Hash256& hash, uint32_t status);
 
     private:

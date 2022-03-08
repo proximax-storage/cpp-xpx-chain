@@ -16,6 +16,11 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
+			if (!pReplicatorService->driveExists(notification.DriveKey)) {
+				// The drive does not already exist so we are not inerested in its modifications and replicators changes
+				return;
+			}
+
 			auto driveAddedHeight = pReplicatorService->driveAddedAt(notification.DriveKey);
 			bool assignedToDrive = pReplicatorService->isAssignedToDrive(notification.DriveKey);
 
@@ -47,10 +52,12 @@ namespace catapult { namespace notification_handlers {
 				// We were deleted from the Drive with the transaction
 				pReplicatorService->removeDrive(notification.DriveKey);
 			}
-			// Actually, it is possible that we were added to the drive with the transaction
-			// but were removed from it in the same block.
-			// Such a situation is ignored since we are not interested in the Drive anymore.
-			// Note, that the transaction can assign the Replicator ONLY on this Drive
+			else if (!pReplicatorService->driveExists(notification.DriveKey)){
+				// Actually, it is possible that we were added to the drive with the transaction
+				// but were removed from it in the same block.
+				// Such a situation is ignored when working with Drives
+				// but requires correct closing Download Channels if needed so we can not fully ignore it
+			}
 		});
 	}
 }}

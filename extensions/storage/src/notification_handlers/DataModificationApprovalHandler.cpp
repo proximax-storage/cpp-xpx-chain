@@ -16,10 +16,12 @@ namespace catapult { namespace notification_handlers {
             if (!pReplicatorService)
                 return;
 
-			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey))
+			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey)) {
+				// This case includes the situation when the drive does not already exist
 				return;
+			}
 
-            auto driveAddedHeight = pReplicatorService->driveAddedAt(notification.DriveKey);
+			auto driveAddedHeight = pReplicatorService->driveAddedAt(notification.DriveKey);
 
 			if (!driveAddedHeight) {
 				CATAPULT_LOG( error ) << "Replicator Is Assigned to Drive but it is not Added";

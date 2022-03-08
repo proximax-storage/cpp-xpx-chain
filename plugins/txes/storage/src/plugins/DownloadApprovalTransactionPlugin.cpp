@@ -23,13 +23,11 @@ namespace catapult { namespace plugins {
 			  	switch (transaction.EntityVersion()) {
 			  	case 1: {
 					const auto commonDataSize = sizeof(transaction.DownloadChannelId)
-												+ sizeof(transaction.ApprovalTrigger)
-												+ sizeof(transaction.ResponseToFinishDownloadTransaction);
+												+ sizeof(transaction.ApprovalTrigger);
 					auto* const pCommonDataBegin = sub.mempool().malloc<uint8_t>(commonDataSize);
 					auto* pCommonData = pCommonDataBegin;
 					utils::WriteToByteArray(pCommonData, transaction.DownloadChannelId);
 					utils::WriteToByteArray(pCommonData, transaction.ApprovalTrigger);
-					utils::WriteToByteArray(pCommonData, transaction.ResponseToFinishDownloadTransaction);
 
 					sub.notify(OpinionNotification<1>(
 							commonDataSize,
@@ -64,8 +62,7 @@ namespace catapult { namespace plugins {
 							transaction.OpinionsPtr()
 					));
 
-					if (transaction.ResponseToFinishDownloadTransaction)
-						sub.notify(DownloadChannelRefundNotification<1>(transaction.DownloadChannelId));
+					sub.notify(DownloadChannelRefundNotification<1>(transaction.DownloadChannelId));
 
 				  	break;
 			  	}

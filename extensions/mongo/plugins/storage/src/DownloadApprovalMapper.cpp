@@ -17,7 +17,6 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamDownloadApprovalTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "downloadChannelId" << ToBinary(transaction.DownloadChannelId);
 		builder << "approvalTrigger" << ToBinary(transaction.ApprovalTrigger);
-		builder << "responseToFinishDownloadTransaction" << transaction.ResponseToFinishDownloadTransaction;
 
 		// Streaming PublicKeys
 		auto publicKeysArray = builder << "publicKeys" << bson_stream::open_array;

@@ -46,6 +46,11 @@ namespace catapult { namespace validators {
 		// Check if none of the replicators has provided an opinion on itself
 	  	const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
 	  	const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
+
+	  	// Check if there are enough cosigners
+	  	if (totalJudgingKeysCount < pDriveEntry->replicators().size() * 2 / 3 + 1)
+	  		return Failure_Storage_Signature_Count_Insufficient;
+
 	  	const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
 	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
 	  	for (auto i = notification.JudgingKeysCount; i < totalJudgingKeysCount; ++i)

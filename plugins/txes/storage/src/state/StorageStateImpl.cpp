@@ -146,8 +146,20 @@ namespace catapult { namespace state {
     	auto driveIter = pDriveCacheView->find(driveKey);
     	const auto& driveEntry = driveIter.get();
     	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
-    	return {shard.first.begin(), shard.first.end()};
+    	std::vector<Key> keys;
+		for (const auto& [key, _]: shard.m_actualShardMembers) {
+			keys.push_back(key);
+		}
+		return keys;
 	}
+
+	ModificationShard StorageStateImpl::getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) {
+    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+    	auto driveIter = pDriveCacheView->find(driveKey);
+    	const auto& driveEntry = driveIter.get();
+    	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
+    	return {shard.m_actualShardMembers, shard.m_formerShardMembers, shard.m_ownerUpload};
+    }
 
 	std::vector<Key> StorageStateImpl::getRecipientShard(const Key& driveKey, const Key& replicatorKey) {
 		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
@@ -157,7 +169,7 @@ namespace catapult { namespace state {
 		std::vector<Key> donatorShard;
 
 		for (const auto& [key, shard]: driveEntry.dataModificationShards()){
-			const auto& actualShard = shard.first;
+			const auto& actualShard = shard.m_actualShardMembers;
 			if (actualShard.find(replicatorKey) != actualShard.end())
 			{
 				donatorShard.push_back(key);
@@ -257,7 +269,9 @@ namespace catapult { namespace state {
 			channelEntry.downloadSize(),
 			consumers,
 			replicators,
-			channelEntry.drive()});
+			channelEntry.drive(),
+			channelEntry.downloadApprovalInitiationEvent()
+		});
     }
 
 	std::unique_ptr<DriveVerification> StorageStateImpl::getActiveVerification(const Key& driveKey) {

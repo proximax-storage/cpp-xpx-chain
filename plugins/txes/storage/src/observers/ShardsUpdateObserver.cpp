@@ -40,20 +40,26 @@ namespace catapult { namespace observers {
 	  	for (auto& pair : shardsMap) {
 			auto& shardsPair = pair.second;
 			for (const auto& key : removedReplicators)
-				if (shardsPair.first.count(key)) {
-					shardsPair.first.erase(key);
-					shardsPair.second.insert(key);
+				if (auto it = shardsPair.m_actualShardMembers.find(key); it != shardsPair.m_actualShardMembers.end()) {
+					shardsPair.m_formerShardMembers.insert(*it);
+					shardsPair.m_actualShardMembers.erase(it);
 				}
-			const auto shardSizeDifference = shardSize - shardsPair.first.size();
+			const auto shardSizeDifference = shardSize - shardsPair.m_actualShardMembers.size();
 			if (shardSizeDifference > 0) {
-				auto& target = shardsPair.first;
+				auto initialKeys = shardsPair.getActualShardMembersKeys();
 				// Filtering out replicators that already belong to the shard
 				std::set<Key> replicatorsSampleSource;
-				std::set_difference(replicators.begin(), replicators.end(), target.begin(), target.end(),
+				std::set_difference(replicators.begin(), replicators.end(), initialKeys.begin(), initialKeys.end(),
 						std::inserter(replicatorsSampleSource, replicatorsSampleSource.begin()));
 				replicatorsSampleSource.erase(pair.first); // Replicator cannot be a member of his own shard
+
+				std::set<Key> sampledKeys;
 				std::sample(replicatorsSampleSource.begin(), replicatorsSampleSource.end(),
-						std::inserter(target, target.end()), shardSizeDifference, rng);
+							std::inserter(sampledKeys, sampledKeys.end()), shardSizeDifference, rng);
+
+				for (const auto& key: sampledKeys) {
+					shardsPair.m_actualShardMembers[key] = 0;
+				}
 			}
 		}
 	});

@@ -95,7 +95,8 @@ namespace catapult { namespace storage {
             m_pReplicatorEventHandler = CreateReplicatorEventHandler(
 				std::move(transactionSender),
 				m_storageState,
-				m_transactionStatusHandler);
+				m_transactionStatusHandler,
+				m_keyPair);
 
 			std::vector<sirius::drive::ReplicatorInfo> bootstrapReplicators;
 			bootstrapReplicators.reserve(m_bootstrapReplicators.size());
@@ -124,14 +125,9 @@ namespace catapult { namespace storage {
                 addDrive(drive.Id);
             }
 
-            auto channels = m_storageState.getDownloadChannels(m_keyPair.publicKey());
+            auto channels = m_storageState.getReplicatorChannelIds(m_keyPair.publicKey());
             for (const auto& channel: channels) {
-                addDownloadChannel(
-					channel.Id,
-					channel.DriveKey,
-					channel.DownloadSizeMegabytes,
-					channel.Consumers,
-					channel.Replicators);
+				addDownloadChannel(channel);
             }
 
 			m_pReplicator->asyncInitializationFinished();
@@ -166,34 +162,30 @@ namespace catapult { namespace storage {
                 size_t prepaidDownloadSizeMegabytes,
                 const std::vector<Key>& consumers,
                 const std::vector<Key>& replicators) {
-            CATAPULT_LOG(debug) << "add download channel " << channelId.data();
-
-			std::vector<sirius::Key> castedReplicators;
-			castedReplicators.reserve(replicators.size());
-			std::for_each(replicators.begin(), replicators.end(), [&castedReplicators](const auto& key) { castedReplicators.push_back(key.array()); });
-
-			std::vector<sirius::Key> castedConsumers;
-			castedConsumers.reserve(consumers.size());
-			std::for_each(consumers.begin(), consumers.end(), [&castedConsumers](const auto& key) { castedConsumers.push_back(key.array()); });
-
-            m_pReplicator->asyncAddDownloadChannelInfo(
-				driveKey.array(),
-				sirius::drive::DownloadRequest{
-					channelId.array(), utils::FileSize::FromMegabytes(prepaidDownloadSizeMegabytes).bytes(),
-					castedReplicators,
-					castedConsumers});
         }
 
         void addDownloadChannel(const Hash256& channelId) {
+        	CATAPULT_LOG(debug) << "add download channel " << channelId.data();
+
             auto pChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), channelId);
-			if (!!pChannel) {
-				addDownloadChannel(
-					channelId,
-					pChannel->DriveKey,
-					pChannel->DownloadSizeMegabytes,
-					pChannel->Consumers,
-					pChannel->Replicators);
+			if (!pChannel) {
+				return;
 			}
+
+			std::vector<sirius::Key> castedReplicators;
+			castedReplicators.reserve(pChannel->Replicators.size());
+			std::for_each(pChannel->Replicators.begin(), pChannel->Replicators.end(), [&castedReplicators](const auto& key) { castedReplicators.push_back(key.array()); });
+
+			std::vector<sirius::Key> castedConsumers;
+			castedConsumers.reserve(pChannel->Consumers.size());
+			std::for_each(pChannel->Consumers.begin(), pChannel->Consumers.end(), [&castedConsumers](const auto& key) { castedConsumers.push_back(key.array()); });
+
+			m_pReplicator->asyncAddDownloadChannelInfo(
+					pChannel->DriveKey.array(),
+					sirius::drive::DownloadRequest{
+						channelId.array(), utils::FileSize::FromMegabytes(pChannel->DownloadSizeMegabytes).bytes(),
+						castedReplicators,
+						castedConsumers});
         }
 
         void increaseDownloadChannelSize(const Hash256& channelId) {
@@ -222,7 +214,7 @@ namespace catapult { namespace storage {
         void addDrive(const Key& driveKey) {
 			CATAPULT_LOG(debug) << "add drive" << driveKey;
 
-			if (  m_alreadyAddedDrives.find(driveKey) != m_alreadyAddedDrives.end() )
+			if ( m_alreadyAddedDrives.find(driveKey) != m_alreadyAddedDrives.end() )
 			{
 				CATAPULT_LOG( error ) << "The drive is already added";
 				return;
@@ -360,7 +352,7 @@ namespace catapult { namespace storage {
 			CATAPULT_LOG(debug) << "update drive replicators" << driveKey;
 
         	auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(driveKey));
-//			m_pReplicator->asyncSetDriveReplicators(driveKey.array(), replicators);
+			m_pReplicator->asyncSetReplicators(driveKey.array(), replicators);
         }
 
         void updateShardDonator(const Key& driveKey) {
@@ -391,6 +383,18 @@ namespace catapult { namespace storage {
 
 			for (const auto& channel: driveChannels) {
 				updateDownloadChannelReplicators(channel);
+			}
+		}
+
+		void updateReplicatorDownloadChannels(const Key& driveKey) {
+        	CATAPULT_LOG(debug) << "update replicator channels" << driveKey;
+
+			auto channels = m_storageState.getReplicatorChannelIds(m_keyPair.publicKey());
+
+			for (const auto& channelId: channels) {
+				if (m_alreadyAddedChannels.find(channelId) == m_alreadyAddedChannels.end()) {
+					addDownloadChannel(channelId);
+				}
 			}
 		}
 
@@ -427,8 +431,7 @@ namespace catapult { namespace storage {
 
 			auto height = m_storageState.getChainHeight();
 
-			std::vector<Key> newlyAddedDrives;
-			std::vector<Key> newlyRemovedDrives;
+			std::set<Key> newlyRemovedDrives;
 			for (const auto& blockchainDriveKey: drives) {
 				if (m_alreadyAddedDrives.find(blockchainDriveKey) == m_alreadyAddedDrives.end()) {
 					// We are assigned to Drive, but it is not added
@@ -437,7 +440,7 @@ namespace catapult { namespace storage {
 				}
 			}
 			for (const auto& [addedDriveKey, _]: m_alreadyAddedDrives) {
-				if (m_storageState.driveExists(addedDriveKey)) {
+				if (!m_storageState.driveExists(addedDriveKey)) {
 					m_pReplicator->asyncCloseDrive(
 							addedDriveKey.array(),
 							blockHash.array());
@@ -448,9 +451,9 @@ namespace catapult { namespace storage {
 
 		void downloadBlockPublished(const Hash256& blockHash) {
 			for (const auto& [channelId, _]: m_alreadyAddedChannels) {
-				if (!m_storageState.downloadChannelExists(channelId)) {
-					auto driveKey = Key(); // m_storageState.getC
-					m_pReplicator->asyncRemoveDownloadChannelInfo(driveKey.array(), channelId.array());
+				auto pDownloadChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), channelId);
+				if (pDownloadChannel && pDownloadChannel->ApprovalTrigger && pDownloadChannel->ApprovalTrigger == blockHash) {
+					m_pReplicator->asyncInitiateDownloadApprovalTransactionInfo(pDownloadChannel->DriveKey.array(), channelId.array());
 				}
 			}
 		}
@@ -483,6 +486,14 @@ namespace catapult { namespace storage {
 
 			auto channelClosed = !m_storageState.downloadChannelExists(downloadChannelId);
 			m_pReplicator->asyncDownloadApprovalTransactionHasBeenPublished(approvalTrigger.array(), downloadChannelId.array(), channelClosed);
+        }
+
+		bool driveExists(const Key& driveKey) {
+        	return m_storageState.driveExists(driveKey);
+		}
+
+		bool channelExists(const Hash256& channelId) {
+        	return m_storageState.downloadChannelExists(channelId);
         }
 
         void notifyTransactionStatus(const Hash256& hash, uint32_t status) {
@@ -702,6 +713,16 @@ namespace catapult { namespace storage {
     void ReplicatorService::downloadApprovalPublished(const Hash256& approvalTrigger, const Hash256& downloadChannelId) {
         if (m_pImpl)
             m_pImpl->downloadApprovalPublished(approvalTrigger, downloadChannelId);
+    }
+
+    bool ReplicatorService::driveExists(const Key& driveKey) {
+		if (m_pImpl)
+			m_pImpl->driveExists(driveKey);
+	}
+
+	bool ReplicatorService::channelExists(const Hash256& channelId) {
+    	if (m_pImpl)
+    		m_pImpl->channelExists(channelId);
     }
 
     // endregion

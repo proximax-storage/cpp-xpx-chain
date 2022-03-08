@@ -75,6 +75,17 @@ namespace catapult { namespace observers {
 	  	driveState.Balances.debit(streamingMosaicId, refundAmount, context.Height);
 	  	driveOwnerState.Balances.credit(currencyMosaicId, refundAmount, context.Height);
 
+		// Simulate publishing of finish download for all download channels
+		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+		for (const auto& [key, _]: driveEntry.downloadShards()) {
+			auto downloadIter = downloadCache.find(key);
+			auto& downloadEntry = downloadIter.get();
+			if (!downloadEntry.isCloseInitiated()) {
+				downloadEntry.setFinishPublished(true);
+				downloadEntry.downloadApprovalInitiationEvent() = notification.TransactionHash;
+			}
+		}
+
 		// Removing the drive from caches
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		for (const auto& replicatorKey : driveEntry.replicators())

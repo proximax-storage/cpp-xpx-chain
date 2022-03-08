@@ -32,9 +32,6 @@ namespace catapult { namespace model {
 		/// The hash of the block that initiated the rewards approval.
 		Hash256 ApprovalTrigger;
 
-		/// Reason of the transaction release.
-		bool ResponseToFinishDownloadTransaction;
-
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;
 
