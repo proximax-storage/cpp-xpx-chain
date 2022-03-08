@@ -1,0 +1,65 @@
+/**
+*** Copyright 2022 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#include "catapult/plugins/CacheHandlers.h"
+#include "catapult/plugins/PluginManager.h"
+#include "SdaExchangePlugin.h"
+#include "src/cache/SdaExchangeCache.h"
+#include "src/cache/SdaExchangeCacheStorage.h"
+#include "src/observers/Observers.h"
+#include "src/plugins/PlaceSdaExchangeOfferTransactionPlugin.h"
+#include "src/plugins/RemoveSdaExchangeOfferTransactionPlugin.h"
+#include "src/validators/Validators.h"
+
+namespace catapult { namespace plugins {
+
+	void RegisterSdaExchangeSubsystem(PluginManager& manager) {
+
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::SdaExchangeConfiguration>();
+		});
+
+		const auto& immutableConfig = manager.immutableConfig();
+		manager.addTransactionSupport(CreatePlaceSdaExchangeOfferTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateRemoveSdaExchangeOfferTransactionPlugin());
+
+		auto pConfigHolder = manager.configHolder();
+		manager.addCacheSupport<cache::SdaExchangeCacheStorage>(
+			std::make_unique<cache::SdaExchangeCache>(manager.cacheConfig(cache::SdaExchangeCache::Name), pConfigHolder));
+
+		using CacheHandlersOffer = CacheHandlers<cache::SdaExchangeCacheDescriptor>;
+		CacheHandlersOffer::Register<model::FacilityCode::ExchangeSda>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("EXCHANGESDA C"), [&cache]() {
+				return cache.sub<cache::SdaExchangeCache>().createView(cache.height())->size();
+			});
+		});
+
+		manager.addStatelessValidatorHook([](auto& builder) {
+			builder
+				.add(validators::CreateSdaExchangePluginConfigValidator());
+		});
+
+		manager.addStatefulValidatorHook([](auto& builder) {
+			builder
+				.add(validators::CreatePlaceSdaExchangeOfferV1Validator())
+				.add(validators::CreateRemoveSdaExchangeOfferV1Validator());
+		});
+
+		manager.addObserverHook([pConfigHolder](auto& builder) {
+			builder
+				.add(observers::CreatePlaceSdaExchangeOfferV1Observer())
+				.add(observers::CreateRemoveSdaExchangeOfferV1Observer())
+				.add(observers::CreateCleanupSdaOffersObserver());
+		});
+	}
+}}
+
+extern "C" PLUGIN_API
+void RegisterSubsystem(catapult::plugins::PluginManager& manager) {
+	catapult::plugins::RegisterSdaExchangeSubsystem(manager);
+}
