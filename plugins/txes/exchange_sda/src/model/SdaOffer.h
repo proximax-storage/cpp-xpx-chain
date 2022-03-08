@@ -24,10 +24,7 @@ namespace catapult { namespace model {
 	public:
 		/// The owner of the matched offer.
 		Key Owner;
-	};
 
-	struct SdaOfferWithDuration : public SdaOffer {
-	public:
 		/// The duration of the offer.
 		BlockDuration Duration;
 	};

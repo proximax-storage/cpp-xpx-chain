@@ -90,7 +90,7 @@ namespace catapult { namespace state {
 			consumer<const SwapOfferMap::const_iterator&> swapOfferAction);
 
 		bool offerExists(const MosaicId& mosaicId) const;
-		void addOffer(const MosaicId& mosaicId, const model::SdaOfferWithDuration* pOffer, const Height& deadline);
+		void addOffer(const MosaicId& mosaicId, const model::MatchedSdaOffer* pOffer, const Height& deadline);
 		void removeOffer(const MosaicId& mosaicId);
 		state::SdaOfferBase& getSdaBaseOffer(const MosaicId& mosaicId);
 		bool empty() const;

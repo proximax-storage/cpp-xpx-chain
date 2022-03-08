@@ -142,7 +142,7 @@ namespace catapult { namespace state {
 		return m_swapOffers.count(mosaicId);
 	}
 
-	void SdaExchangeEntry::addOffer(const MosaicId& mosaicId, const model::SdaOfferWithDuration* pOffer, const Height& deadline) {
+	void SdaExchangeEntry::addOffer(const MosaicId& mosaicId, const model::MatchedSdaOffer* pOffer, const Height& deadline) {
 		state::SdaOfferBase baseOffer{pOffer->MosaicGive.Amount, pOffer->MosaicGive.Amount, pOffer->MosaicGet.Amount, deadline};
 		m_swapOffers.emplace(mosaicId, state::SwapOffer{baseOffer, pOffer->MosaicGet.Amount});
 	}
