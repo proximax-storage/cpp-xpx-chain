@@ -25,7 +25,7 @@ namespace catapult { namespace model {
 	public:
 		uint8_t SdaOfferCount;
 
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(SdaOffers, MatchedSdaOffer)
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(SdaOffers, SdaOfferWithOwnerAndDuration)
 
 	private:
 		template<typename T>
@@ -36,7 +36,7 @@ namespace catapult { namespace model {
 	public:
 		// Calculates the real size of a place SDA-SDA exchange offer transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + transaction.SdaOfferCount * sizeof(MatchedSdaOffer);
+			return sizeof(TransactionType) + transaction.SdaOfferCount * sizeof(SdaOfferWithOwnerAndDuration);
 		}
 	};
 

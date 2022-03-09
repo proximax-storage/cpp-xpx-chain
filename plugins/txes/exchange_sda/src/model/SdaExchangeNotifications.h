@@ -35,24 +35,29 @@ namespace catapult { namespace model {
 
 	public:
 		PlaceSdaOfferNotification(
-				const Key& owner,
+				const Key& signer,
 				uint8_t sdaOfferCount,
-				const MatchedSdaOffer* pSdaOffers)
+				const SdaOfferWithOwnerAndDuration* pSdaOffers,
+				const Key& owner)
 			: Notification(Notification_Type, sizeof(PlaceSdaOfferNotification<1>))
-			, Owner(owner)
+			, Signer(signer)
 			, SdaOfferCount(sdaOfferCount)
 			, SdaOffersPtr(pSdaOffers)
+			, OwnerOfSdaOfferToExchangeWith(owner)
 		{}
 	
 	public:
-		/// SDA-SDA Offer owner.
-		const Key& Owner;
+		/// Transaction signer.
+		const Key& Signer;
 
 		/// Mosaic count.
 		uint8_t SdaOfferCount;
 
-		/// Matched offers.
-		const MatchedSdaOffer* SdaOffersPtr;
+		/// Own SDA-SDA Offers to exchange.
+		const SdaOfferWithOwnerAndDuration* SdaOffersPtr;
+
+		/// The person's SDA-SDA Offers to exchange with.
+		const Key& OwnerOfSdaOfferToExchangeWith;
 	};
 
 	/// Notification of an SDA-SDA offer removing.

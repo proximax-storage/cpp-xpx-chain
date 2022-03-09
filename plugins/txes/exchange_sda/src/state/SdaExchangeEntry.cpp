@@ -19,13 +19,13 @@ namespace catapult { namespace state {
 		return catapult::Amount(static_cast<typeof(Amount::ValueType)>(cost));
 	}
 
-	SwapOffer& SwapOffer::operator+=(const model::MatchedSdaOffer& offer) {
+	SwapOffer& SwapOffer::operator+=(const model::SdaOfferWithOwnerAndDuration& offer) {
 		CurrentMosaicGive = CurrentMosaicGive + offer.MosaicGive.Amount;
 		ResidualMosaicGet = ResidualMosaicGet + offer.MosaicGet.Amount;
 		return *this;
 	}
 
-	SwapOffer& SwapOffer::operator-=(const model::MatchedSdaOffer& offer) {
+	SwapOffer& SwapOffer::operator-=(const model::SdaOfferWithOwnerAndDuration& offer) {
 		if (offer.MosaicGive.Amount > CurrentMosaicGive)
 			CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than swap offer amount", offer.MosaicGive.Amount, CurrentMosaicGive)
 		
@@ -142,7 +142,7 @@ namespace catapult { namespace state {
 		return m_swapOffers.count(mosaicId);
 	}
 
-	void SdaExchangeEntry::addOffer(const MosaicId& mosaicId, const model::MatchedSdaOffer* pOffer, const Height& deadline) {
+	void SdaExchangeEntry::addOffer(const MosaicId& mosaicId, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline) {
 		state::SdaOfferBase baseOffer{pOffer->MosaicGive.Amount, pOffer->MosaicGive.Amount, pOffer->MosaicGet.Amount, deadline};
 		m_swapOffers.emplace(mosaicId, state::SwapOffer{baseOffer, pOffer->MosaicGet.Amount});
 	}

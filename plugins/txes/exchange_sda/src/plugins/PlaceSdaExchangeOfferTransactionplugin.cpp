@@ -25,12 +25,12 @@ namespace catapult { namespace plugins {
 						sub.notify(PlaceSdaOfferNotification<1>(
 								transaction.Signer,
 								transaction.SdaOfferCount,
-								transaction.SdaOffersPtr()));
+								transaction.SdaOffersPtr(),
+								transaction.OwnerOfSdaOfferToExchangeWith));
 
-						Amount lockMosaicGiveAmount(0);
 						auto pOffer = transaction.SdaOffersPtr();
 						for (uint8_t i = 0; i < transaction.SdaOfferCount; ++i, ++pOffer) {
-							auto offerOwnerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(pOffer->Owner, config.NetworkIdentifier);
+							auto offerOwnerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(pOffer->OwnerOfSdaOfferToExchangeWith, config.NetworkIdentifier));
 							sub.notify(BalanceTransferNotification<1>(transaction.Signer, offerOwnerAddress, pOffer->MosaicGive.MosaicId, pOffer->MosaicGive.Amount));
 							sub.notify(BalanceTransferNotification<1>(offerOwnerAddress, transaction.Signer, pOffer->MosaicGet.MosaicId, pOffer->MosaicGive.Amount));
 						}
