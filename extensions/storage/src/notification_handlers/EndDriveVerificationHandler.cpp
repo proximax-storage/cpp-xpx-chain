@@ -16,6 +16,11 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
+			if (!pReplicatorService->driveExists(notification.DriveKey)) {
+				pReplicatorService->updateReplicatorDownloadChannels();
+				return;
+			}
+
 			auto driveAddedHeight = pReplicatorService->driveAddedAt(notification.DriveKey);
 			bool assignedToDrive = pReplicatorService->isAssignedToDrive(notification.DriveKey);
 
@@ -32,21 +37,20 @@ namespace catapult { namespace notification_handlers {
 							notification.VerificationTrigger);
 				}
 				else {
-					// The transaction has already been taken into account when adding the Drive
+					// The transaction has already been processed when adding the Drive
 				}
 			}
 			else if (assignedToDrive) {
 				// We were added to Drive with the transaction
 				pReplicatorService->addDrive(notification.DriveKey);
+				pReplicatorService->updateDriveDownloadChannels(notification.DriveKey);
 			}
 			else if (driveAddedHeight) {
 				// We were deleted from the Drive with the transaction
 				pReplicatorService->removeDrive(notification.DriveKey);
+				pReplicatorService->updateDriveDownloadChannels(notification.DriveKey);
+				// In order to increase efficiency maybe it is needed to removed all channels and not update
 			}
-			// Actually, it is possible that we were added to the drive with the transaction
-			// but were removed from it in the same block.
-			// Such a situation is ignored since we are not interested in the Drive anymore.
-			// Note, that the transaction can assign the Replicator ONLY on this Drive
 		});
 	}
 }}

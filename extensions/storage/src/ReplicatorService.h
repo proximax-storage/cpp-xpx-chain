@@ -32,8 +32,7 @@ namespace catapult { namespace storage {
 
         bool isReplicatorRegistered(const Key& key);
 
-		void addDriveModification(const Key& driveKey, const Hash256& downloadDataCdi, const Hash256& modificationId, const Key& owner, uint64_t dataSizeMegabytes);
-        void removeDriveModification(const Key& driveKey, const Hash256& dataModificationId);
+		void removeDriveModification(const Key& driveKey, const Hash256& dataModificationId);
 
         void addDownloadChannel(const Hash256& channelId);
         void increaseDownloadChannelSize(const Hash256& channelId);
@@ -45,7 +44,7 @@ namespace catapult { namespace storage {
         bool isAssignedToChannel(const Hash256& channelId);
         void closeDrive(const Key& driveKey, const Hash256& transactionHash);
         std::optional<Height> driveAddedAt(const Key& driveKey);
-        std::optional<Height> channelAddedAt(const Hash256& driveKey);
+        std::optional<Height> channelAddedAt(const Hash256& channelId);
 
         void exploreNewDrives();
 
@@ -56,12 +55,15 @@ namespace catapult { namespace storage {
 		void updateShardDonator(const Key& driveKey);
 		void updateShardRecipient(const Key& driveKey);
 		void updateDriveDownloadChannels(const Key& driveKey);
-		void updateReplicatorDownloadChannels(const Key& driveKey);
+		void updateReplicatorDownloadChannels();
+		void updateReplicatorDrives(const Hash256& eventHash);
+		void exploreNewReplicatorDrives();
 
     public:
     	void anotherReplicatorOnboarded(const Key& replicatorKey);
-    	void storageBlockPublished(const Hash256& blockHash);
-    	void downloadBlockPublished(const Hash256& blockHash);
+    	void storageBlockPublished(const Hash256& eventHash);
+    	void downloadBlockPublished(const Hash256& eventHash);
+    	void addDriveModification(const Key& driveKey, const Hash256& downloadDataCdi, const Hash256& modificationId, const Key& owner, uint64_t dataSizeMegabytes);
 		void dataModificationApprovalPublished(const Key& driveKey, const Hash256& modificationId, const Hash256& rootHash, std::vector<Key>& replicators);
         void dataModificationSingleApprovalPublished(const Key& driveKey, const Hash256& modificationId);
         void downloadApprovalPublished(const Hash256& approvalTrigger, const Hash256& downloadChannelId);

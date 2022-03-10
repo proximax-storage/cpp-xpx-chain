@@ -37,6 +37,15 @@ namespace catapult { namespace observers {
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
 
+			// Creating unique eventHash for the observer
+			Hash256 eventHash;
+			crypto::Sha3_256_Builder sha3;
+			const std::string salt = "Storage";
+			sha3.update({notification.Hash,
+						 utils::RawBuffer(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()),
+						 context.Config.Immutable.GenerationHash});
+			sha3.final(eventHash);
+
 			for (int i = 0; i < driveCache.size(); i++) {
 				auto driveIter = driveCache.find(queueAdapter.front());
 				auto& driveEntry = driveIter.get();
@@ -105,13 +114,14 @@ namespace catapult { namespace observers {
 					driveOwnerState.Balances.credit(currencyMosaicId, refundAmount, context.Height);
 
 					// Simulate publishing of finish download for all download channels
+
 					auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 					for (const auto& [key, _]: driveEntry.downloadShards()) {
 						auto downloadIter = downloadCache.find(key);
 						auto& downloadEntry = downloadIter.get();
 						if (!downloadEntry.isCloseInitiated()) {
 							downloadEntry.setFinishPublished(true);
-							downloadEntry.downloadApprovalInitiationEvent() = notification.Hash;
+							downloadEntry.downloadApprovalInitiationEvent() = eventHash;
 						}
 					}
 

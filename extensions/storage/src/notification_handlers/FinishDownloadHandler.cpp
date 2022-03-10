@@ -11,12 +11,23 @@ namespace catapult { namespace notification_handlers {
 	using Notification = model::FinishDownloadNotification<1>;
 
 	DECLARE_HANDLER(FinishDownload, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(FinishDownload, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+		return MAKE_HANDLER(FinishDownload, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
 
-			pReplicatorService->initiateDownloadApproval(notification.DownloadChannelId, {});
+			auto channelAddedAt = pReplicatorService->channelAddedAt(notification.DownloadChannelId);
+
+			if (!channelAddedAt) {
+				return;
+			}
+
+			if (channelAddedAt == context.Height) {
+				// The approval trigger has already been processed when adding the channel
+				return;
+			}
+
+			pReplicatorService->initiateDownloadApproval(notification.DownloadChannelId, notification.TransactionHash);
 		});
 	}
 }}

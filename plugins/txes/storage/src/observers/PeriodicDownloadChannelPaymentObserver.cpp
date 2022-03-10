@@ -37,6 +37,15 @@ namespace catapult { namespace observers {
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentInterval = pluginConfig.DownloadBillingPeriod.seconds();
 
+			// Creating unique eventHash for the observer
+			Hash256 eventHash;
+			crypto::Sha3_256_Builder sha3;
+			const std::string salt = "Download";
+			sha3.update({notification.Hash,
+						 utils::RawBuffer(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()),
+						 context.Config.Immutable.GenerationHash});
+			sha3.final(eventHash);
+
 			for (int i = 0; i < downloadCache.size(); i++) {
 				auto& downloadEntry = downloadCache.find(queueAdapter.front().array()).get();
 
@@ -55,7 +64,7 @@ namespace catapult { namespace observers {
 
 				downloadEntry.decrementDownloadApprovalCount();
 				downloadEntry.setLastDownloadApprovalInitiated(notification.Timestamp);
-				downloadEntry.downloadApprovalInitiationEvent() = notification.Hash;
+				downloadEntry.downloadApprovalInitiationEvent() = eventHash;
 
 				if (downloadEntry.downloadApprovalCountLeft() > 0) {
 					// Channel Continues To Exist
@@ -63,7 +72,6 @@ namespace catapult { namespace observers {
 				}
 				else {
 					downloadEntry.setFinishPublished(true);
-					downloadEntry.downloadApprovalInitiationEvent() = notification.Hash;
 				}
 			}
         }))

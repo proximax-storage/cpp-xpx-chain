@@ -5,6 +5,7 @@
 **/
 
 #include "NotificationHandlers.h"
+#include "src/catapult/crypto/Hashes.h"
 
 namespace catapult { namespace notification_handlers {
 
@@ -16,7 +17,16 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			pReplicatorService->storageBlockPublished(notification.Hash);
+			Hash256 eventHash;
+			crypto::Sha3_256_Builder sha3;
+			const std::string salt = "Storage";
+			sha3.update({notification.Hash,
+						 utils::RawBuffer(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()),
+						 context.Config.Immutable.GenerationHash});
+			sha3.final(eventHash);
+
+			pReplicatorService->updateReplicatorDrives(eventHash);
+			pReplicatorService->updateReplicatorDownloadChannels();
 		});
 	}
 }}
