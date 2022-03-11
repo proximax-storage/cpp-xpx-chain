@@ -83,9 +83,9 @@ namespace catapult { namespace storage {
 			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
 		};
 		auto testee = CreateTransactionSender(storageState, transactionRangeHandler);
-		std::vector<Key> expectedPublicKeys{ Key({ 5 }), Key({ 2 }), Key({ 7 }), Key({ 3 }), Key({ 1 }), Key({ 6 }), Key({ 4 }), Key( {11} ) };
-		std::vector<uint64_t> expectedOpinions{ 1100, 900, 1000, 400, 300, 500, 600, 1200, 800, 700, 200, 100 };
-		std::vector<uint8_t> presentOpinions{ 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0 };
+		std::vector<Key> expectedPublicKeys{ Key({ 5 }), Key({ 2 }), Key({ 7 }), Key({ 3 }), Key({ 1 }), Key({ 6 }), Key( {11} ), Key({ 4 }) };
+		std::vector<uint64_t> expectedOpinions{ 1100, 900, 1000, 0, 400, 300, 500, 600, 1200, 800, 0, 700, 200, 0, 100 };
+		std::vector<uint8_t> presentOpinions{ 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1};
 		std::vector<uint8_t> expectedPresentOpinions;
 		boost::dynamic_bitset<uint8_t> presentOpinionsBitset(30, 0u);
 		for (auto i = 0u; i < presentOpinions.size(); ++i)
@@ -97,11 +97,11 @@ namespace catapult { namespace storage {
 
         // Assert:
 		auto& transaction = static_cast<const model::DataModificationApprovalTransaction&>(*pTransaction);
-        EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);
+		EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);
         EXPECT_EQ_MEMORY(expectedSignatures.data(), transaction.SignaturesPtr(), expectedSignatures.size() * Signature_Size);
-        EXPECT_EQ_MEMORY(expectedPresentOpinions.data(), transaction.PresentOpinionsPtr(), expectedPresentOpinions.size());
+		EXPECT_EQ_MEMORY(expectedPresentOpinions.data(), transaction.PresentOpinionsPtr(), expectedPresentOpinions.size());
 		EXPECT_EQ_MEMORY(expectedOpinions.data(), transaction.OpinionsPtr(), expectedOpinions.size() * sizeof(uint64_t));
-    }
+	}
 
     TEST(TEST_CLASS, SendDataModificationApprovalTransaction_WithoutOwnerUpload) {
         // Arrange:
@@ -230,7 +230,7 @@ namespace catapult { namespace storage {
 		boost::to_block_range(presentOpinionsBitset, std::back_inserter(expectedPresentOpinions));
 		std::vector<Signature> expectedSignatures{ Signature({ 5 }), Signature({ 2 }), Signature({ 3 }), Signature({ 1 }) };
 
-//		testee.sendDownloadApprovalTransaction(10u, CreateDownloadApprovalTransactionInfo());
+		testee.sendDownloadApprovalTransaction(CreateDownloadApprovalTransactionInfo());
 
         // Assert:
 		auto& transaction = static_cast<const model::DownloadApprovalTransaction&>(*pTransaction);
