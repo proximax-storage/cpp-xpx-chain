@@ -71,8 +71,10 @@ namespace catapult { namespace chain {
 		{}
 
 	public:
-		void update(const std::vector<model::TransactionInfo>& utInfos) {
+		std::vector<UtUpdateResult> update(const std::vector<model::TransactionInfo>& utInfos) {
 			std::vector<FailureInfo> failureTransactions;
+			std::vector<UtUpdateResult> results;
+			results.resize(utInfos.size());
 
 			{
 				// 1. lock the UT cache and lock the unconfirmed copy
@@ -82,7 +84,10 @@ namespace catapult { namespace chain {
 					// if there is no unconfirmed cache state, it means that a block update is forthcoming
 					// just add all to the cache and they will be validated later
 					addAll(modifier, utInfos);
-					return;
+					for (auto i = 0u; i < utInfos.size(); ++i) {
+						results[i].Type = UtUpdateResult::UpdateType::Neutral;
+					}
+					return results;
 				}
 
 				auto applyState = ApplyState(modifier, *pUnconfirmedCatapultCache, failureTransactions);
@@ -92,6 +97,15 @@ namespace catapult { namespace chain {
 			for (const auto& info : failureTransactions) {
 				m_failedTransactionSink(info.Transaction, info.EffectiveHeight, info.Hash, info.Result);
 			}
+			int j = 0;
+			for (auto i = 0u; i < utInfos.size() && j < failureTransactions.size(); ++i) {
+				if (utInfos[i].EntityHash == failureTransactions[j].Hash) {
+					results[i].Type = UtUpdateResult::UpdateType::Invalid;
+					++j;
+				}
+			}
+
+			return results;
 		}
 
 		void update(const utils::HashPointerSet& confirmedTransactionHashes, const std::vector<model::TransactionInfo>& utInfos) {
@@ -246,8 +260,8 @@ namespace catapult { namespace chain {
 
 	UtUpdater::~UtUpdater() = default;
 
-	void UtUpdater::update(const std::vector<model::TransactionInfo>& utInfos) {
-		m_pImpl->update(utInfos);
+	std::vector<UtUpdateResult> UtUpdater::update(const std::vector<model::TransactionInfo>& utInfos) {
+		return m_pImpl->update(utInfos);
 	}
 
 	void UtUpdater::update(const utils::HashPointerSet& confirmedTransactionHashes, const std::vector<model::TransactionInfo>& utInfos) {

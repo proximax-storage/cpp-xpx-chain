@@ -27,7 +27,7 @@ namespace catapult { namespace model {
 
 	namespace {
 		void CheckPluginName(const std::string& pluginName) {
-			if (std::any_of(pluginName.cbegin(), pluginName.cend(), [](auto ch) { return (ch < 'a' || ch > 'z') && '.' != ch; }))
+			if (std::any_of(pluginName.cbegin(), pluginName.cend(), [](auto ch) { return (ch < '0' || ch > '9') && (ch < 'a' || ch > 'z') && '.' != ch && '_' != ch; }))
 				CATAPULT_THROW_INVALID_ARGUMENT_1("plugin name contains unexpected character", pluginName);
 		}
 	}

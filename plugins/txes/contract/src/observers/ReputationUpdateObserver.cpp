@@ -37,7 +37,8 @@ namespace catapult { namespace observers {
 
 			void removeIfEmpty(const Key& key) {
 				if (m_reputationCache.contains(key)) {
-					auto& entry = m_reputationCache.find(key).get();
+					auto entryIter = m_reputationCache.find(key);
+					const auto& entry = entryIter.get();
 					if (!entry.positiveInteractions().unwrap() &&
 						!entry.negativeInteractions().unwrap())
 						m_reputationCache.remove(key);
@@ -45,11 +46,12 @@ namespace catapult { namespace observers {
 			}
 
 		private:
-			state::ReputationEntry& getReputationEntry(const Key& key) {
+			inline state::ReputationEntry& getReputationEntry(const Key& key) {
 				if (!m_reputationCache.contains(key))
 					m_reputationCache.insert(state::ReputationEntry(key));
 
-				return m_reputationCache.find(key).get();
+				auto iter = m_reputationCache.find(key);
+				return iter.get();
 			}
 
 		private:

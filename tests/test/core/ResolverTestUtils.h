@@ -34,4 +34,7 @@ namespace catapult { namespace test {
 
 	/// Unresolves \a address by XORing it.
 	UnresolvedAddress UnresolveXor(const Address& address);
+
+	/// Unresolves \a address by XORing it.
+	Key UnresolveXor(const Key& address);
 }}

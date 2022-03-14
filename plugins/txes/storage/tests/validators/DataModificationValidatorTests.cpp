@@ -103,27 +103,27 @@ namespace catapult { namespace validators {
             });
     }
 
-	TEST(TEST_CLASS, FailureWhenDriveSizeInsufficient) {
-		// Arrange:
-		Key driveKey = test::GenerateRandomByteArray<Key>();
-		Key owner = test::GenerateRandomByteArray<Key>();
-		Hash256 id = test::GenerateRandomByteArray<Hash256>();
-		uint64_t uploadSize = test::RandomInRange<uint64_t>(Drive_Free_Size + 1, Max_Modification_Size);
-
-		auto entry = CreateDriveEntry(driveKey, owner);
-		entry.activeDataModifications().emplace_back(state::ActiveDataModification(
-				id, owner, test::GenerateRandomByteArray<Hash256>(), uploadSize
-		));
-
-		// Assert:
-		AssertValidationResult(
-				Failure_Storage_Drive_Size_Insufficient,
-				entry,
-				driveKey,
-				{ state::ActiveDataModification(
-						id, owner, test::GenerateRandomByteArray<Hash256>(), uploadSize)
-				});
-	}
+//	TEST(TEST_CLASS, FailureWhenDriveSizeInsufficient) {
+//		// Arrange:
+//		Key driveKey = test::GenerateRandomByteArray<Key>();
+//		Key owner = test::GenerateRandomByteArray<Key>();
+//		Hash256 id = test::GenerateRandomByteArray<Hash256>();
+//		uint64_t uploadSize = test::RandomInRange<uint64_t>(Drive_Free_Size + 1, Max_Modification_Size);
+//
+//		auto entry = CreateDriveEntry(driveKey, owner);
+//		entry.activeDataModifications().emplace_back(state::ActiveDataModification(
+//				id, owner, test::GenerateRandomByteArray<Hash256>(), uploadSize
+//		));
+//
+//		// Assert:
+//		AssertValidationResult(
+//				Failure_Storage_Drive_Size_Insufficient,
+//				entry,
+//				driveKey,
+//				{ state::ActiveDataModification(
+//						id, owner, test::GenerateRandomByteArray<Hash256>(), uploadSize)
+//				});
+//	}
 
     TEST(TEST_CLASS, FailureWhenDataModificationAlreadyExists) {
         // Arrange:
