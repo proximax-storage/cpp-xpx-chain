@@ -13,13 +13,17 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS DriveClosureObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(DriveClosure,)
+	using DrivePriority = std::pair<Key, double>;
+	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
+
+    DEFINE_COMMON_OBSERVER_TESTS(DriveClosure, std::make_shared<DriveQueue>())
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
         using Notification = model::DriveClosureNotification<1>;
 
         constexpr Height Current_Height(20);
+		const auto Drive_Queue = std::make_shared<DriveQueue>();
 		const auto Owner_Key = test::GenerateRandomByteArray<Key>();
         constexpr auto Drive_Size = 100;
         constexpr auto Num_Replicators = 10;
@@ -84,7 +88,7 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
             Notification notification(Hash256(), values.InitialBcDriveEntry.key(), test::GenerateRandomByteArray<Key>());
-            auto pObserver = CreateDriveClosureObserver();
+            auto pObserver = CreateDriveClosureObserver(Drive_Queue);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();

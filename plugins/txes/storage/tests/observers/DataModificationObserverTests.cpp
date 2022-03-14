@@ -14,13 +14,18 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS DataModificationObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(DataModification,)
+	using DrivePriority = std::pair<Key, double>;
+	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
+
+	DEFINE_COMMON_OBSERVER_TESTS(DataModification, std::make_shared<cache::ReplicatorKeyCollector>(), std::make_shared<DriveQueue>())
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
         using Notification = model::DataModificationNotification<1>;
 
         constexpr auto Current_Height = Height(10);
+		const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
+		const auto Drive_Queue = std::make_shared<DriveQueue>();
 
         struct BcDriveValues {
             public:
@@ -56,7 +61,7 @@ namespace catapult { namespace observers {
                 values.Active_Data_Modification.begin()->Owner, 
                 values.Active_Data_Modification.begin()->DownloadDataCdi, 
                 values.Active_Data_Modification.begin()->ExpectedUploadSize);
-            auto pObserver = CreateDataModificationObserver();
+            auto pObserver = CreateDataModificationObserver(Replicator_Key_Collector, Drive_Queue);
         	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 
             // Populate cache.

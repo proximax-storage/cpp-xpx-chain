@@ -6,6 +6,10 @@
 
 #pragma once
 #include "StorageUtils.h"
+#include "catapult/cache_core/AccountStateCache.h"
+#include "src/cache/BcDriveCache.h"
+#include "src/cache/DownloadChannelCache.h"
+#include "src/cache/ReplicatorCache.h"
 
 namespace catapult { namespace utils {
 
@@ -82,5 +86,355 @@ namespace catapult { namespace utils {
 		const auto& R = driveEntry.replicators().size() - driveEntry.offboardingReplicators().size();
 
 		return R < Rmin ? static_cast<double>(R + 1)/Rmin : static_cast<double>(N - R)/(2*Rmin*(N - Rmin));
+	}
+
+	void OffboardReplicatorsFromDrive(
+			const Key& driveKey,
+			const std::set<Key>& offboardingReplicators,
+			const observers::ObserverContext& context,
+			std::mt19937& rng) {
+		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+		auto driveIter = driveCache.find(driveKey);
+		auto& driveEntry = driveIter.get();
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+
+		for (const auto& replicatorKey : offboardingReplicators) {
+			driveEntry.replicators().erase(replicatorKey);
+			driveEntry.cumulativeUploadSizes().erase(replicatorKey);
+			driveEntry.dataModificationShards().erase(replicatorKey);
+			driveEntry.offboardingReplicators().erase(replicatorKey);
+
+			auto replicatorIter = replicatorCache.find(replicatorKey);
+			auto& replicatorEntry = replicatorIter.get();
+			replicatorEntry.drives().erase(driveKey);
+		}
+
+		// Replacing keys in other replicators' data modification shards
+		const auto& replicators = driveEntry.replicators();
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+		const auto shardSize = std::min<uint8_t>(pluginConfig.ShardSize, replicators.size() - 1);
+		for (auto& pair : driveEntry.dataModificationShards()) {
+			auto& shardsPair = pair.second;
+			for (const auto& key : offboardingReplicators)
+				if (shardsPair.first.count(key)) {
+					shardsPair.first.erase(key);
+					shardsPair.second.insert(key);
+				}
+			const auto shardSizeDifference = shardSize - shardsPair.first.size();
+			if (shardSizeDifference > 0) {
+				auto& target = shardsPair.first;
+				// Filtering out replicators that already belong to the shard
+				std::set<Key> replicatorsSampleSource;
+				std::set_difference(replicators.begin(), replicators.end(), target.begin(), target.end(),
+									std::inserter(replicatorsSampleSource, replicatorsSampleSource.begin()));
+				replicatorsSampleSource.erase(pair.first); // Replicator cannot be a member of his own shard
+				std::sample(replicatorsSampleSource.begin(), replicatorsSampleSource.end(),
+							std::inserter(target, target.end()), shardSizeDifference, rng);
+			}
+		}
+
+		// Updating download shards of the drive
+		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+		if (replicators.size() <= pluginConfig.ShardSize) {
+			// If drive has no more than ShardSize replicators, then each one of them
+			// must be assigned to every download shard.
+			for (auto& pair : driveEntry.downloadShards()) {
+				auto downloadIter = downloadCache.find(pair.first);
+				auto& downloadEntry = downloadIter.get();
+				auto& cumulativePayments = downloadEntry.cumulativePayments();
+				for (const auto& key : replicators)
+					if (!cumulativePayments.count(key))
+						cumulativePayments.emplace(key, Amount(0));
+				// Offboarded replicators' cumulative payments remain in cumulativePayments
+				downloadEntry.shardReplicators() = replicators;
+				pair.second = replicators;
+			}
+		} else {
+			std::vector<Key> sampleSource(replicators.begin(), replicators.end());
+			for (auto& pair : driveEntry.downloadShards()) {
+				auto downloadIter = downloadCache.find(pair.first);
+				auto& downloadEntry = downloadIter.get();
+				auto& cumulativePayments = downloadEntry.cumulativePayments();
+				const Key downloadChannelKey = Key(pair.first.array());
+				const auto comparator = [&downloadChannelKey](const Key& a, const Key& b) { return (a ^ downloadChannelKey) < (b ^ downloadChannelKey); };
+				std::sort(sampleSource.begin(), sampleSource.end(), comparator);
+				auto keyIter = sampleSource.begin();
+				for (auto i = 0u; i < pluginConfig.ShardSize; ++i, ++keyIter)
+					if (!cumulativePayments.count(*keyIter))
+						cumulativePayments.emplace(*keyIter, Amount(0));
+				downloadEntry.shardReplicators() = std::set<Key>(sampleSource.begin(), keyIter);	// keyIter now points to the element past the (ShardSize)th
+				pair.second = std::set<Key>(sampleSource.begin(), keyIter);
+			}
+		}
+	}
+
+	void UpdateShardsOnAddedReplicator(
+			state::BcDriveEntry& driveEntry,
+			const Key& replicatorKey,
+			const observers::ObserverContext& context,
+			std::mt19937& rng) {
+		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+
+		// Updating download shards
+		if (driveEntry.replicators().size() <= pluginConfig.ShardSize) {
+			// If drive has no more than ShardSize replicators, then each one of them
+			// (except the onboarding replicator) is currently assigned to every download shard.
+			// Just add the onboarding replicator to every shard.
+			for (auto& pair : driveEntry.downloadShards()) {
+				pair.second.insert(replicatorKey);
+				auto downloadIter = downloadCache.find(pair.first);
+				auto& downloadEntry = downloadIter.get();
+				downloadEntry.shardReplicators().insert(replicatorKey);
+				downloadEntry.cumulativePayments().emplace(replicatorKey, Amount(0));
+			}
+		} else {
+			for (auto& pair : driveEntry.downloadShards()) {
+				// For every download shard, the new replicator key will either be
+				// - close enough to the download channel id (XOR-wise), replacing the most distant key of that shard, or
+				// - not close enough, leaving the download shard unchanged
+				const Key downloadChannelKey = Key(pair.first.array());
+				auto& driveShardKeys = pair.second;
+				auto mostDistantKeyIter = driveShardKeys.begin();
+				auto greatestDistance = *mostDistantKeyIter ^ downloadChannelKey;
+				for (auto replicatorKeyIter = ++driveShardKeys.begin(); replicatorKeyIter != driveShardKeys.end(); ++replicatorKeyIter) {
+					const auto distance = *replicatorKeyIter ^ downloadChannelKey;
+					if (distance > greatestDistance) {
+						greatestDistance = distance;
+						mostDistantKeyIter = replicatorKeyIter;
+					}
+				}
+				if ((replicatorKey ^ downloadChannelKey) < greatestDistance) {
+					driveShardKeys.erase(mostDistantKeyIter);
+					driveShardKeys.insert(replicatorKey);
+					auto downloadIter = downloadCache.find(pair.first);
+					auto& downloadEntry = downloadIter.get();
+					downloadEntry.shardReplicators().erase(*mostDistantKeyIter);
+					downloadEntry.shardReplicators().insert(replicatorKey);
+					downloadEntry.cumulativePayments().emplace(replicatorKey, Amount(0));
+					// Cumulative payments of the removed replicator are kept in download channel entry
+				}
+			}
+		}
+
+		// Updating data modification shards
+		auto& shardsMap = driveEntry.dataModificationShards();
+		std::set<Key> shardKeys;
+		for (const auto& pair : shardsMap)
+			shardKeys.insert(pair.first);
+
+		auto replicatorsSampleSource = driveEntry.replicators();
+		replicatorsSampleSource.erase(replicatorKey); // Replicator cannot be a member of his own shard
+
+		if (driveEntry.replicators().size() <= pluginConfig.ShardSize + 1) {
+			// Adding the new replicator to all existing shards
+			for (auto& pair : shardsMap) {
+				auto& shardsPair = pair.second;
+				shardsPair.first.insert(replicatorKey);
+			}
+			// Creating an entry for the new replicator in shardsMap
+			shardsMap[replicatorKey].first = replicatorsSampleSource;
+		} else {
+			// Selecting random shards to which the new replicator will be added
+			const auto sampleSize = pluginConfig.ShardSize * shardsMap.size() / (shardsMap.size() - 1);
+			std::set<Key> sampledShardKeys;
+			std::sample(shardKeys.begin(), shardKeys.end(),
+						std::inserter(sampledShardKeys, sampledShardKeys.end()), sampleSize, rng);
+			// Updating selected shards
+			for (auto& sampledKey : sampledShardKeys) {
+				auto& shardsPair = shardsMap[sampledKey];
+				if (shardsPair.first.size() == pluginConfig.ShardSize) {	// TODO: Remove size check?
+					const auto replacedKeyIndex = rng() % pluginConfig.ShardSize;
+					auto replacedKeyIter = shardsPair.first.begin();
+					std::advance(replacedKeyIter, replacedKeyIndex);
+					shardsPair.second.insert(*replacedKeyIter);
+					shardsPair.first.erase(replacedKeyIter);
+				}
+				shardsPair.first.insert(replicatorKey);
+			}
+			// Creating an entry for the new replicator in shardsMap
+			auto& newShardEntry = shardsMap[replicatorKey].first;
+			std::sample(replicatorsSampleSource.begin(), replicatorsSampleSource.end(),
+						std::inserter(newShardEntry, newShardEntry.end()), pluginConfig.ShardSize, rng);
+		}
+	}
+
+	void PopulateDriveWithReplicators(
+			const Key& driveKey,
+			const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector,
+			const std::shared_ptr<DriveQueue>& pDriveQueue,
+			const observers::ObserverContext& context,
+			std::mt19937& rng) {
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
+		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+
+		auto& driveEntry = driveCache.find(driveKey).get();
+		const auto driveSize = driveEntry.size();
+		const auto requiredReplicatorCount = driveEntry.replicatorCount() - driveEntry.replicators().size();
+
+		if (requiredReplicatorCount == 0)
+			return;
+
+		// Filter out replicators that are ready to be assigned to the drive,
+		// i.e. which have at least (driveSize) of storage units
+		// and at least (2 * driveSize) of streaming units:
+		const auto comparator = [&driveKey](const Key& a, const Key& b){ return (a ^ driveKey) < (b ^ driveKey); };
+		std::set<Key, decltype(comparator)> acceptableReplicators(comparator);
+		for (const auto& replicatorKey : pKeyCollector->keys()) {
+			auto replicatorStateIter = accountStateCache.find(replicatorKey);
+			auto& replicatorState = replicatorStateIter.get();
+			const bool hasEnoughMosaics = replicatorState.Balances.get(storageMosaicId).unwrap() >= driveSize &&
+										  replicatorState.Balances.get(streamingMosaicId).unwrap() >= 2 * driveSize;
+			if (hasEnoughMosaics)
+				acceptableReplicators.insert(replicatorKey);	// Inserted keys are ordered by their
+																// XOR distance to the drive key.
+		}
+
+		// Preparing DriveInfo:
+		const auto& completedDataModifications = driveEntry.completedDataModifications();
+		const auto lastApprovedDataModificationIter = std::find_if(
+				completedDataModifications.rbegin(),
+				completedDataModifications.rend(),
+				[](const state::CompletedDataModification& modification){
+					return modification.State == state::DataModificationState::Succeeded;
+				});
+		const bool dataModificationIdIsValid = lastApprovedDataModificationIter != completedDataModifications.rend();
+		const auto lastApprovedDataModificationId = dataModificationIdIsValid ? lastApprovedDataModificationIter->Id : Hash256();
+		const auto initialDownloadWork = driveEntry.usedSize() - driveEntry.metaFilesSize();
+		const state::DriveInfo driveInfo{ lastApprovedDataModificationId, dataModificationIdIsValid, initialDownloadWork };
+
+		// Pick the first (requiredReplicatorCount) replicators from acceptableReplicators
+		// and assign them to the drive. If (acceptableReplicators.size() < requiredReplicatorCount),
+		// assign all that are in acceptableReplicators:
+		auto& replicators = driveEntry.replicators();
+		auto driveStateIter = accountStateCache.find(driveKey);
+		auto& driveState = driveStateIter.get();
+		for (const auto& replicatorKey : acceptableReplicators) {
+			// Updating the cache entries
+			auto replicatorIter = replicatorCache.find(replicatorKey);
+			auto& replicatorEntry = replicatorIter.get();
+			replicatorEntry.drives().emplace(driveKey, driveInfo);
+			replicators.emplace(replicatorKey);
+			driveEntry.cumulativeUploadSizes().emplace(replicatorKey, 0);
+
+			// Updating drive's shards
+			UpdateShardsOnAddedReplicator(driveEntry, replicatorKey, context, rng);
+
+			// Making mosaic transfers
+			auto replicatorStateIter = accountStateCache.find(replicatorKey);
+			auto& replicatorState = replicatorStateIter.get();
+			const auto storageDepositAmount = Amount(driveSize);
+			const auto streamingDepositAmount = Amount(2 * driveSize);
+			replicatorState.Balances.debit(storageMosaicId, storageDepositAmount);
+			replicatorState.Balances.debit(streamingMosaicId, streamingDepositAmount);
+			driveState.Balances.credit(storageMosaicId, storageDepositAmount);
+			driveState.Balances.credit(streamingMosaicId, streamingDepositAmount);
+
+			if (replicators.size() >= driveEntry.replicatorCount())
+				break;
+		}
+
+		// If the actual number of assigned replicators is less than ordered,
+		// put the drive in the queue:
+		DriveQueue originalQueue = *pDriveQueue;
+		DriveQueue newQueue;
+		while (!originalQueue.empty()) {
+			auto drivePriorityPair = originalQueue.top();
+			const auto& key = drivePriorityPair.first;
+			originalQueue.pop();
+
+			if (key != driveKey)
+				newQueue.push(std::move(drivePriorityPair));
+		}
+		if (replicators.size() < driveEntry.replicatorCount()) {
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			const auto drivePriority = utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount);
+			newQueue.emplace(driveKey, drivePriority);
+		}
+		*pDriveQueue = std::move(newQueue);
+	}
+
+	void AssignReplicatorsToQueuedDrives(
+			const std::set<Key>& replicatorKeys,
+			const std::shared_ptr<DriveQueue>& pDriveQueue,
+			const observers::ObserverContext& context,
+			std::mt19937& rng) {
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
+		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+
+		for (const auto& replicatorKey : replicatorKeys) {
+			auto replicatorIter = replicatorCache.find(replicatorKey);
+			auto& replicatorEntry = replicatorIter.get();
+			auto replicatorStateIter = accountStateCache.find(replicatorKey);
+			auto& replicatorState = replicatorStateIter.get();
+
+			// Assign queued drives to the replicator, as long as there is enough capacity,
+			// and update drive's shards:
+			DriveQueue originalQueue = *pDriveQueue;
+			DriveQueue newQueue;
+			auto remainingCapacity = replicatorEntry.capacity().unwrap();
+			while (!originalQueue.empty()) {
+				const auto drivePriorityPair = originalQueue.top();
+				const auto& driveKey = drivePriorityPair.first;
+				originalQueue.pop();
+
+				auto driveIter = driveCache.find(driveKey);
+				auto& driveEntry = driveIter.get();
+				const auto& driveSize = driveEntry.size();
+				if (driveSize <= remainingCapacity) {
+					// Updating drives() and replicators()
+					const auto& completedDataModifications = driveEntry.completedDataModifications();
+					const auto lastApprovedDataModificationIter = std::find_if(
+							completedDataModifications.rbegin(),
+							completedDataModifications.rend(),
+							[](const state::CompletedDataModification& modification){
+							  	return modification.State == state::DataModificationState::Succeeded;
+							});
+					const bool dataModificationIdIsValid = lastApprovedDataModificationIter != completedDataModifications.rend();
+					const auto lastApprovedDataModificationId = dataModificationIdIsValid ? lastApprovedDataModificationIter->Id : Hash256();
+					const auto initialDownloadWork = driveEntry.usedSize() - driveEntry.metaFilesSize();
+					replicatorEntry.drives().emplace(driveKey, state::DriveInfo{
+							lastApprovedDataModificationId, dataModificationIdIsValid, initialDownloadWork
+					});
+					driveEntry.replicators().emplace(replicatorKey);
+					driveEntry.cumulativeUploadSizes().emplace(replicatorKey, 0);
+
+					// Updating drive's shards
+					UpdateShardsOnAddedReplicator(driveEntry, replicatorKey, context, rng);
+
+					// Making mosaic transfers
+					auto driveStateIter = accountStateCache.find(driveKey);
+					auto& driveState = driveStateIter.get();
+					const auto storageDepositAmount = Amount(driveSize);
+					const auto streamingDepositAmount = Amount(2 * driveSize);
+					replicatorState.Balances.debit(storageMosaicId, storageDepositAmount);
+					replicatorState.Balances.debit(streamingMosaicId, streamingDepositAmount);
+					driveState.Balances.credit(storageMosaicId, storageDepositAmount);
+					driveState.Balances.credit(streamingMosaicId, streamingDepositAmount);
+
+					// Keeping updated DrivePriority in newQueue if the drive still requires any replicators
+					if (driveEntry.replicators().size() < driveEntry.replicatorCount()) {
+						const auto newPriority = utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount);
+						newQueue.emplace(driveKey, newPriority);
+					}
+
+					// Updating remaining capacity
+					remainingCapacity -= driveSize;
+				} else {
+					newQueue.push(drivePriorityPair);
+				}
+			}
+			*pDriveQueue = std::move(newQueue);
+		}
 	}
 }}

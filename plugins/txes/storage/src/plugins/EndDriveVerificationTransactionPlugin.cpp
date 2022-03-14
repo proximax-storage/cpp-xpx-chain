@@ -22,9 +22,11 @@ namespace catapult { namespace plugins {
             return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
                 switch (transaction.EntityVersion()) {
                     case 1: {
+						auto hashSeed = CalculateHash(transaction, config.GenerationHash);
                         sub.notify(EndDriveVerificationNotification<1>(
 							transaction.DriveKey,
 							transaction.VerificationTrigger,
+							hashSeed,
 							transaction.ShardId,
 							transaction.KeyCount,
 							transaction.JudgingKeyCount,
@@ -60,9 +62,6 @@ namespace catapult { namespace plugins {
 							transaction.SignaturesPtr(),
 							pPresentOpinions,
 							transaction.OpinionsPtr()));
-
-						auto hashSeed = CalculateHash(transaction, config.GenerationHash);
-						sub.notify(ShardsUpdateNotification<1>(transaction.DriveKey, hashSeed));
 
                         break;
                     }
