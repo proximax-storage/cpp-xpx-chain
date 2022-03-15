@@ -38,6 +38,7 @@ namespace catapult { namespace observers {
 	  	recipientState.Balances.credit(currencyMosaicId, streamingRefundAmount, context.Height);
 
 		downloadChannelCache.remove(notification.DownloadChannelId);
+		// TODO: Remove channel from Replicator's Cache
 
 		// TODO: Add currency refunding
 	})

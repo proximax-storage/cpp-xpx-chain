@@ -92,8 +92,6 @@ namespace catapult { namespace model {
 
 				auto version = block.EntityVersion();
 
-				CATAPULT_LOG( error ) << "block version " << version;
-
 				// raise an entity notification
 				switch (block.EntityVersion()) {
 				case 4: {

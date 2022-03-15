@@ -238,6 +238,19 @@ namespace catapult { namespace observers {
     	RunTest(NotifyMode::Commit, values, Current_Height);
     }
 
+    TEST(TEST_CLASS, PeriodicStoragePayment_NoDrives) {
+    	// Arrange:
+    	Timestamp notificationTimestamp = Timestamp(billingPeriodSeconds);
+
+    	std::vector<state::BcDriveEntry> initialEntries = {};
+    	std::vector<Key> expectedKeys = {};
+
+    	CacheValues values(initialEntries, expectedKeys, notificationTimestamp);
+
+    	// Assert
+    	RunTest(NotifyMode::Commit, values, Current_Height);
+    }
+
     TEST(TEST_CLASS, PeriodicStoragePayment_Rollback) {
         // Arrange:
         CacheValues values({}, {}, Timestamp());

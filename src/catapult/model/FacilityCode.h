@@ -81,5 +81,7 @@ namespace catapult { namespace model {
 		DownloadChannel = 0x65,
 		/// Streaming facility code
 		Streaming = 0x66,
+		/// Queue facility code.
+		Queue = 0x67
 	};
 }}

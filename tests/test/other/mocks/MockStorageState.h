@@ -36,8 +36,8 @@ namespace catapult { namespace mocks {
 		bool isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) override {
 			return false;
 		}
-		std::vector<Hash256> getReplicatorChannelIds(const Key& replicatorKey) override {
-			return std::vector<Hash256>();
+		std::set<Hash256> getReplicatorChannelIds(const Key& replicatorKey) override {
+			return std::set<Hash256>();
 		}
 
 		std::vector<Hash256> getDriveChannels(const Key& driveKey) override {
@@ -61,10 +61,6 @@ namespace catapult { namespace mocks {
 
         bool downloadChannelExists(const Hash256& id) override {
             return false;
-        }
-
-        std::vector<state::DownloadChannel> getDownloadChannels(const Key&) override {
-            return std::vector<state::DownloadChannel>();
         }
 
 		std::unique_ptr<state::DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) override {

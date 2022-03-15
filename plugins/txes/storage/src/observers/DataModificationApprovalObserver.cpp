@@ -12,7 +12,7 @@ namespace catapult { namespace observers {
 	  	if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModificationApproval)");
 
-	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 	  	auto driveIter = driveCache.find(notification.DriveKey);
 	  	auto& driveEntry = driveIter.get();
 
@@ -22,12 +22,15 @@ namespace catapult { namespace observers {
 		completedDataModifications.emplace_back(*activeDataModifications.begin(), state::DataModificationState::Succeeded);
 		activeDataModifications.erase(activeDataModifications.begin());
 
+		CATAPULT_LOG( error ) << "replicators size " << driveEntry.replicators().size();
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		for (const auto& replicator : driveEntry.replicators()) {
 			auto replicatorIter = replicatorCache.find(replicator);
 			auto& replicatorEntry = replicatorIter.get();
 			auto& driveInfo = replicatorEntry.drives().at(notification.DriveKey);
-			driveInfo.LastCompletedCumulativeDownloadWorkBytes += completedDataModifications.back().ActualUploadSizeMegabytes;
+			CATAPULT_LOG( error ) << "Actual Upload Size " << completedDataModifications.back().ActualUploadSizeMegabytes
+								<< " " << utils::FileSize::FromMegabytes(completedDataModifications.back().ActualUploadSizeMegabytes).bytes();
+			driveInfo.LastCompletedCumulativeDownloadWorkBytes += utils::FileSize::FromMegabytes(completedDataModifications.back().ActualUploadSizeMegabytes).bytes();
 		}
 
 		for (auto& [key, info]: driveEntry.confirmedStorageInfos()) {

@@ -505,6 +505,7 @@ namespace catapult { namespace model {
 	public:
 		explicit DataModificationApprovalUploadWorkNotification(
 				const Key& driveKey,
+				const Hash256& modificationId,
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
@@ -513,6 +514,7 @@ namespace catapult { namespace model {
 				const uint64_t* opinionsPtr)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
 				, DriveKey(driveKey)
+				, ModificationId(modificationId)
 				, JudgingKeysCount(judgingKeysCount)
 				, OverlappingKeysCount(overlappingKeysCount)
 				, JudgedKeysCount(judgedKeysCount)
@@ -524,6 +526,9 @@ namespace catapult { namespace model {
 	public:
 		/// Key of drive.
 		Key DriveKey;
+
+		/// Id of the approved modification
+		Hash256 ModificationId;
 
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;

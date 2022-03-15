@@ -20,23 +20,28 @@ namespace catapult { namespace observers {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
 
-			CATAPULT_LOG( error ) << "Verification Observer";
+			CATAPULT_LOG( error ) << "Storage Observer 23";
 
 			if (context.Height < Height(2))
 				return;
 
+			CATAPULT_LOG( error ) << "Storage Observer 28";
 			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
 			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
 
 			QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
 
+			CATAPULT_LOG( error ) << "before queue empty";
 			if (queueAdapter.isEmpty()) {
 				return;
 			}
+			CATAPULT_LOG( error ) << "after queue empty";
 
+			CATAPULT_LOG( error ) << "Storage Observer 38";
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
 
+			CATAPULT_LOG( error ) << "Storage Observer 42";
 			// Creating unique eventHash for the observer
 			Hash256 eventHash;
 			crypto::Sha3_256_Builder sha3;
@@ -46,6 +51,7 @@ namespace catapult { namespace observers {
 						 context.Config.Immutable.GenerationHash});
 			sha3.final(eventHash);
 
+			CATAPULT_LOG( error ) << "Storage Observer 52";
 			for (int i = 0; i < driveCache.size(); i++) {
 				auto driveIter = driveCache.find(queueAdapter.front());
 				auto& driveEntry = driveIter.get();
@@ -135,6 +141,7 @@ namespace catapult { namespace observers {
 					// TODO Replicators assignment
 				}
 			}
+			CATAPULT_LOG( error ) << "Storage Observer 142";
         }))
 	};
 }}

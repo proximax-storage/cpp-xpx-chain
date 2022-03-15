@@ -79,7 +79,14 @@ namespace catapult { namespace validators {
 			}
 			const auto replicatorIter = replicatorCache.find(notification.PublicKeysPtr[i]);
 			const auto& pReplicatorEntry = replicatorIter.tryGet();
-			if (pReplicatorEntry->drives().at(notification.DriveKey).LastCompletedCumulativeDownloadWorkBytes != totalCumulativeUpload) {
+
+			uint64_t unaccountedSize = 0;
+			if (!pDriveEntry->activeDataModifications().empty()
+				&& pDriveEntry->activeDataModifications().front().Id == notification.ModificationId) {
+				unaccountedSize += utils::FileSize::FromMegabytes(pDriveEntry->activeDataModifications().front().ActualUploadSizeMegabytes).bytes();
+			}
+
+			if (pReplicatorEntry->drives().at(notification.DriveKey).LastCompletedCumulativeDownloadWorkBytes + unaccountedSize != totalCumulativeUpload) {
 				return Failure_Storage_Invalid_Opinions_Sum;
 			}
 		}

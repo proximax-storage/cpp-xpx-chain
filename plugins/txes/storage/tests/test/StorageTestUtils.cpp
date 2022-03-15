@@ -254,7 +254,7 @@ namespace catapult { namespace test {
         for (auto dC = 0u; dC < drivesCount; ++dC)
             entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
         for (auto i = 0u; i < downloadChannelCount; ++i)
-            entry.downloadChannels().emplace_back(test::GenerateRandomByteArray<Hash256>());
+            entry.downloadChannels().insert(test::GenerateRandomByteArray<Hash256>());
 
         return entry;
     }

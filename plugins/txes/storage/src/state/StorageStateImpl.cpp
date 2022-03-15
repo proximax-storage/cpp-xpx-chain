@@ -73,26 +73,26 @@ namespace catapult { namespace state {
         return GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
     }
 
-    bool StorageStateImpl::isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) {
-		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-		auto driveIter = pDriveCacheView->find(driveKey);
-		const auto* driveEntry = driveIter.tryGet();
-		if (!driveEntry) {
+    bool StorageStateImpl::isReplicatorAssignedToDrive(const Key& replicatorKey, const Key& driveKey) {
+		auto m_pReplicatorCache = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
+		auto replicatorIter = m_pReplicatorCache->find(replicatorKey);
+		const auto* replicatorEntry = replicatorIter.tryGet();
+		if (!replicatorEntry) {
 			return false;
 		}
-		return true;
-        // return driveEntry->replicators().find(key) != driveEntry.replicators().end();
+		const auto& drives = replicatorEntry->drives();
+		return drives.find(driveKey) != drives.end();
     }
 
-    bool StorageStateImpl::isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) {
-    	auto pDriveCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
-    	auto driveIter = pDriveCacheView->find(channelId);
-    	const auto* driveEntry = driveIter.tryGet();
-		if (!driveEntry) {
-			return false;
-		}
-		return true;
-		// return driveEntry->replicators().find(key) != driveEntry.replicators().end();
+    bool StorageStateImpl::isReplicatorAssignedToChannel(const Key& replicatorKey, const Hash256& channelId) {
+    	auto m_pReplicatorCache = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
+    	auto replicatorIter = m_pReplicatorCache->find(replicatorKey);
+    	const auto* replicatorEntry = replicatorIter.tryGet();
+    	if (!replicatorEntry) {
+    		return false;
+    	}
+    	const auto& downloadChannels = replicatorEntry->downloadChannels();
+    	return downloadChannels.find(channelId) != downloadChannels.end();
     }
 
     std::vector<Key> StorageStateImpl::getReplicatorDriveKeys(const Key& replicatorKey) {
@@ -136,7 +136,7 @@ namespace catapult { namespace state {
 		}
 		return downloadChannels;
 	}
-	std::vector<Hash256> StorageStateImpl::getReplicatorChannelIds(const Key& replicatorKey) {
+	std::set<Hash256> StorageStateImpl::getReplicatorChannelIds(const Key& replicatorKey) {
     	auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
     	auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
 		const auto& replicatorEntry = replicatorIter.get();
@@ -166,6 +166,17 @@ namespace catapult { namespace state {
     	auto driveIter = pDriveCacheView->find(driveKey);
     	const auto& driveEntry = driveIter.get();
     	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
+
+    	std::ostringstream s;
+    	s << "extended shards ";
+    	for (const auto& [mainKey, shard]: driveEntry.dataModificationShards()) {
+    		s << "shard of " << mainKey << ": ";
+    		for (const auto& [key, _]: shard.m_actualShardMembers) {
+    			s << key << std::endl;
+    		}
+    	}
+    	CATAPULT_LOG( error ) << s.str();
+
     	return {shard.m_actualShardMembers, shard.m_formerShardMembers, shard.m_ownerUpload};
     }
 
@@ -231,22 +242,6 @@ namespace catapult { namespace state {
     bool StorageStateImpl::downloadChannelExists(const Hash256& id) {
         auto pDownloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
         return pDownloadChannelCacheView->contains(id);
-    }
-
-    std::vector<DownloadChannel> StorageStateImpl::getDownloadChannels(const Key& replicatorKey) {
-        auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-        auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
-        const auto& replicatorEntry = replicatorIter.get();
-
-        auto pDownloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
-
-        std::vector<DownloadChannel> channels;
-        channels.reserve(replicatorEntry.downloadChannels().size());
-        for (const auto& id : replicatorEntry.downloadChannels()) {
-            channels.emplace_back(*getDownloadChannel(replicatorKey, id));
-        }
-
-        return channels;
     }
 
 	std::unique_ptr<DownloadChannel> StorageStateImpl::getDownloadChannel(const Key& replicatorKey, const Hash256& id) {

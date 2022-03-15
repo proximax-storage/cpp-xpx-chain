@@ -140,18 +140,32 @@ namespace catapult { namespace storage {
             void opinionHasBeenReceived(
                     sirius::drive::Replicator&,
                     const sirius::drive::ApprovalTransactionInfo& info) override {
-				CATAPULT_LOG(debug) << "opinionHasBeenReceived() " << int(info.m_opinions[0].m_replicatorKey[0]);
+				CATAPULT_LOG(debug) << "modificationOpinionHasBeenReceived() " << int(info.m_opinions[0].m_replicatorKey[0]);
 				auto pReplicator = m_pReplicator.lock();
 				if (!pReplicator)
 					return;
 
                 if (!m_storageState.driveExists(info.m_driveKey)) {
-					CATAPULT_LOG(warning) << "received opinion for a non existing drive";
+					CATAPULT_LOG(warning) << "received modification opinion for a non existing drive";
 					return;
 				}
 
 				if (info.m_opinions.size() != 1) {
-					CATAPULT_LOG(warning) << "received opinion with many opinions";
+					CATAPULT_LOG(warning) << "received modification opinion with many opinions";
+					return;
+				}
+
+				bool sorted = true;
+
+				const auto& uploadLayout = info.m_opinions[0].m_uploadLayout;
+				for (int i = 0; i < uploadLayout.size() - 1 && sorted; i++) {
+					if (Key(uploadLayout[i + 1].m_key) < Key(uploadLayout[i].m_key)) {
+						sorted = false;
+					}
+				}
+
+				if (!sorted) {
+					CATAPULT_LOG( error ) << "received unsorted modification opinion";
 					return;
 				}
 
@@ -183,14 +197,24 @@ namespace catapult { namespace storage {
 					return;
 				}
 
-				auto expectedSum = m_storageState.getDownloadWorkBytes(opinion.m_replicatorKey, info.m_driveKey);
+				auto expectedSumBytes = m_storageState.getDownloadWorkBytes(opinion.m_replicatorKey, info.m_driveKey);
 
                 // TODO check also offboarded/excluded replicators
 				auto donatorShardExtended = m_storageState.getDonatorShardExtended(info.m_driveKey, opinion.m_replicatorKey);
 
-				uint64_t actualSum = 0;
-				for (const auto& layout: opinion.m_uploadLayout) {
+				uint64_t actualSumBytes = 0;
 
+				std::ostringstream s;
+				s << "shard ";
+				for (const auto& [key, _]: donatorShardExtended.m_actualShardMembers) {
+					s << key << " ";
+				}
+
+				s << "owner " << pDriveEntry.Owner;
+
+				CATAPULT_LOG( error ) << s.str();
+
+				for (const auto& layout: opinion.m_uploadLayout) {
 					uint64_t initialCumulativeUploadSize;
 					if ( auto it = donatorShardExtended.m_actualShardMembers.find(layout.m_key); it != donatorShardExtended.m_actualShardMembers.end() ) {
 						initialCumulativeUploadSize = it->second;
@@ -202,16 +226,16 @@ namespace catapult { namespace storage {
 						initialCumulativeUploadSize = donatorShardExtended.m_ownerUpload;
 					}
 					else {
-						CATAPULT_LOG( warning ) << "received modification opinion from incorrect replicator";
+						CATAPULT_LOG( warning ) << "received modification opinion from incorrect replicator " << Key(layout.m_key);
 						return;
 					}
 
-					if (initialCumulativeUploadSize < layout.m_uploadedBytes) {
+					if (layout.m_uploadedBytes < initialCumulativeUploadSize) {
 						CATAPULT_LOG( warning ) << "received modification with negative increment";
 						return;
 					}
 
-                    actualSum += layout.m_uploadedBytes;
+					actualSumBytes += layout.m_uploadedBytes;
                 }
 
                 auto modificationIt = std::find_if(
@@ -226,19 +250,19 @@ namespace catapult { namespace storage {
 				}
 
                 modificationIt++;
-                expectedSum += std::accumulate(
+                expectedSumBytes += std::accumulate(
                         pDriveEntry.DataModifications.begin(),
                         modificationIt,
                         0,
                         [](int64_t accumulator, const auto& currentModification) {
-                            return accumulator + currentModification.ActualUploadSize;
+                        	return accumulator + utils::FileSize::FromMegabytes(currentModification.ActualUploadSize).bytes();
                         }
                 );
 
                 // TODO compare current cumulativeSizes with exist ones (for each current should be grater or equal then exist)
 
-                if (actualSum != expectedSum) {
-                	CATAPULT_LOG( warning ) << "received opinion with invalid opinion sum";
+                if (actualSumBytes != expectedSumBytes) {
+                	CATAPULT_LOG( warning ) << "received opinion with invalid opinion sum " << expectedSumBytes << " " << actualSumBytes;
                 	return;
 				}
 

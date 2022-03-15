@@ -115,10 +115,10 @@ namespace catapult { namespace mongo { namespace plugins {
 		void StreamUploadInfo(const std::string& arrayName, bson_stream::document& builder, const std::map<Key, uint64_t>& info) {
 			auto array = builder << arrayName << bson_stream::open_array;
 			for (const auto& [replicatorKey, uploadSize] : info)
-				array
-				<< bson_stream::open_document
-				<< "key" << ToBinary(replicatorKey)
-				<< "uploadSize" << static_cast<int64_t>(uploadSize);
+				array << bson_stream::open_document
+					  << "key" << ToBinary(replicatorKey)
+					  << "uploadSize" << static_cast<int64_t>(uploadSize)
+					  << bson_stream::close_document;
 			array << bson_stream::close_array;
 		}
 
@@ -283,8 +283,8 @@ namespace catapult { namespace mongo { namespace plugins {
 				Key replicatorKey;
 				DbBinaryToModelArray(replicatorKey, doc["replicator"].get_binary());
 				auto& shardsPair = dataModificationShards[replicatorKey];
-				ReadUploadInfo(shardsPair.m_actualShardMembers, doc["actualShardReplicators"].get_array().value);
-				ReadUploadInfo(shardsPair.m_formerShardMembers, doc["formerShardReplicators"].get_array().value);
+//				ReadUploadInfo(shardsPair.m_actualShardMembers, doc["actualShardReplicators"].get_array().value);
+//				ReadUploadInfo(shardsPair.m_formerShardMembers, doc["formerShardReplicators"].get_array().value);
 				shardsPair.m_ownerUpload = static_cast<uint64_t>(doc["ownerUpload"].get_int64());
 			}
 		}

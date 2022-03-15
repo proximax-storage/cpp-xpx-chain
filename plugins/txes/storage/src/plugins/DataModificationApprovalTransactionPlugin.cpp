@@ -85,6 +85,7 @@ namespace catapult { namespace plugins {
 				// Updates drive's replicator infos (updates CumulativeUploadPayments) and owner cumulative upload size.
 				sub.notify(DataModificationApprovalUploadWorkNotification<1>(
 						transaction.DriveKey,
+						transaction.DataModificationId,
 						transaction.JudgingKeysCount,
 						transaction.OverlappingKeysCount,
 						transaction.JudgedKeysCount,

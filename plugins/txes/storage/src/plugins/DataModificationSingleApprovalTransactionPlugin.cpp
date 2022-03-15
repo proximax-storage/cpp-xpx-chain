@@ -54,6 +54,7 @@ namespace catapult { namespace plugins {
 
 					sub.notify(DataModificationApprovalUploadWorkNotification<1>(
 							transaction.DriveKey,
+							transaction.DataModificationId,
 							1,
 							0,
 							transaction.PublicKeysCount,

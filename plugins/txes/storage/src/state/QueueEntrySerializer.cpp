@@ -12,6 +12,7 @@ namespace catapult { namespace state {
 
 	void QueueEntrySerializer::Save(const QueueEntry& entry, io::OutputStream& output) {
 		io::Write32(output, entry.version());
+		io::Write(output, entry.key());
 		io::Write(output, entry.getFirst());
 		io::Write(output, entry.getLast());
 	}

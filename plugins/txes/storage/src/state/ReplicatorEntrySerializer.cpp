@@ -38,18 +38,18 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void SaveDownloadChannels(io::OutputStream& output, const std::vector<Hash256>& downloadChannels) {
+		void SaveDownloadChannels(io::OutputStream& output, const std::set<Hash256>& downloadChannels) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(downloadChannels.size()));
 			for (const auto& id : downloadChannels)
 				io::Write(output, id);
 		}
 
-		void LoadDownloadChannels(io::InputStream& input, std::vector<Hash256>& downloadChannels) {
+		void LoadDownloadChannels(io::InputStream& input, std::set<Hash256>& downloadChannels) {
 			auto count = io::Read16(input);
 			while (count--) {
 				Hash256 id;
 				io::Read(input, id);
-				downloadChannels.emplace_back(std::move(id));
+				downloadChannels.insert(std::move(id));
 			}
 		}
 	}

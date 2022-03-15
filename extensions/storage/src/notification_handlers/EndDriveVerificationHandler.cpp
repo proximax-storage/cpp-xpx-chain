@@ -32,9 +32,9 @@ namespace catapult { namespace notification_handlers {
 					pReplicatorService->updateShardRecipient(notification.DriveKey);
 					pReplicatorService->updateDriveDownloadChannels(notification.DriveKey);
 
-					pReplicatorService->endDriveVerificationPublished(
-							notification.DriveKey,
-							notification.VerificationTrigger);
+//					pReplicatorService->endDriveVerificationPublished(
+//							notification.DriveKey,
+//							notification.VerificationTrigger);
 				}
 				else {
 					// The transaction has already been processed when adding the Drive
