@@ -86,14 +86,13 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-        ASSERT_EQ(6u, sub.numNotifications());
+        ASSERT_EQ(5u, sub.numNotifications());
         auto i = 0u;
         EXPECT_EQ(Storage_Drive_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Storage_Data_Modification_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Transfer_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Storage_Shards_Update_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
 	// endregion
