@@ -16,7 +16,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	template<typename TTransaction>
 	void StreamStreamStartTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "driveKey" << ToBinary(transaction.DriveKey);
-		builder << "expectedUploadSize" << static_cast<int64_t>(transaction.ExpectedUploadSize);
+		builder << "expectedUploadSize" << static_cast<int64_t>(transaction.ExpectedUploadSizeMegabytes);
 		builder << "feedbackFeeAmount" << ToInt64(transaction.FeedbackFeeAmount);
 		auto pFolderName = (const uint8_t*) (transaction.FolderNamePtr());
 		builder << "folderName" << ToBinary(pFolderName, transaction.FolderNameSize);

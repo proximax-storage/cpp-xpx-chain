@@ -18,8 +18,8 @@ namespace catapult { namespace test {
                 EXPECT_EQ(expectedActiveDataModification.Id, activeDataModification.Id);
                 EXPECT_EQ(expectedActiveDataModification.Owner, activeDataModification.Owner);
                 EXPECT_EQ(expectedActiveDataModification.DownloadDataCdi, activeDataModification.DownloadDataCdi);
-                EXPECT_EQ(expectedActiveDataModification.ExpectedUploadSize, activeDataModification.ExpectedUploadSize);
-				EXPECT_EQ(expectedActiveDataModification.ActualUploadSize, activeDataModification.ActualUploadSize);
+                EXPECT_EQ(expectedActiveDataModification.ExpectedUploadSizeMegabytes, activeDataModification.ExpectedUploadSizeMegabytes);
+				EXPECT_EQ(expectedActiveDataModification.ActualUploadSizeMegabytes, activeDataModification.ActualUploadSizeMegabytes);
 				EXPECT_EQ(expectedActiveDataModification.FolderName, activeDataModification.FolderName);
 				EXPECT_EQ(expectedActiveDataModification.ReadyForApproval, activeDataModification.ReadyForApproval);
             }
@@ -33,8 +33,8 @@ namespace catapult { namespace test {
                 EXPECT_EQ(expectedCompletedDataModification.Id, completedDataModification.Id);
                 EXPECT_EQ(expectedCompletedDataModification.Owner, completedDataModification.Owner);
                 EXPECT_EQ(expectedCompletedDataModification.DownloadDataCdi, completedDataModification.DownloadDataCdi);
-                EXPECT_EQ(expectedCompletedDataModification.ExpectedUploadSize, completedDataModification.ExpectedUploadSize);
-				EXPECT_EQ(expectedCompletedDataModification.ActualUploadSize, completedDataModification.ActualUploadSize);
+                EXPECT_EQ(expectedCompletedDataModification.ExpectedUploadSizeMegabytes, completedDataModification.ExpectedUploadSizeMegabytes);
+				EXPECT_EQ(expectedCompletedDataModification.ActualUploadSizeMegabytes, completedDataModification.ActualUploadSizeMegabytes);
 				EXPECT_EQ(expectedCompletedDataModification.FolderName, completedDataModification.FolderName);
                 EXPECT_EQ(expectedCompletedDataModification.State, completedDataModification.State);
                 EXPECT_EQ(expectedCompletedDataModification.ReadyForApproval, expectedCompletedDataModification.ReadyForApproval);
@@ -65,7 +65,7 @@ namespace catapult { namespace test {
 				ASSERT_NE(expIter, expectedDriveInfos.end());
 				EXPECT_EQ(expIter->second.LastApprovedDataModificationId, pair.second.LastApprovedDataModificationId);
 				EXPECT_EQ(expIter->second.DataModificationIdIsValid, pair.second.DataModificationIdIsValid);
-				EXPECT_EQ(expIter->second.InitialDownloadWork, pair.second.InitialDownloadWork);
+				EXPECT_EQ(expIter->second.InitialDownloadWorkMegabytes, pair.second.InitialDownloadWorkMegabytes);
 			}
 		}
 
@@ -94,7 +94,8 @@ namespace catapult { namespace test {
 		    uint16_t completedDataModificationsCount,
             uint16_t verificationsCount,
 		    uint16_t activeDownloadsCount,
-		    uint16_t completedDownloadsCount) {
+		    uint16_t completedDownloadsCount,
+			uint16_t downloadShardsCount) {
         state::BcDriveEntry entry(key);
         entry.setOwner(owner);
         entry.setRootHash(rootHash);
@@ -133,6 +134,39 @@ namespace catapult { namespace test {
 				shard.emplace_back(test::GenerateRandomByteArray<Key>());
 		}
 
+		for (int i = 0; i < downloadShardsCount; i++) {
+			auto size = 2;
+			std::set<Key> shard;
+			for (int i = 0; i < size; i++) {
+				auto replicatorKey = GenerateRandomByteArray<Key>();
+				shard.insert(replicatorKey);
+			}
+			auto channelId = GenerateRandomByteArray<Hash256>();
+			entry.downloadShards()[channelId] = shard;
+		}
+
+		for (int i = 0; i < replicatorCount; i++) {
+			auto activeSize = RandomByte();
+			std::map<Key, uint64_t> activeShard;
+			for (int i = 0; i < activeSize; i++) {
+				activeShard.insert({GenerateRandomByteArray<Key>(), 0});
+			}
+
+			auto notActiveSize = RandomByte();
+			std::map<Key, uint64_t> notActiveShard;
+			for (int i = 0; i < notActiveSize; i++) {
+				notActiveShard.insert({GenerateRandomByteArray<Key>(), 0});
+			}
+
+			entry.dataModificationShards()[GenerateRandomByteArray<Key>()]
+					= {activeShard, notActiveShard, 0};
+		}
+
+		for (int i = 0; i < replicatorCount; i++) {
+			entry.confirmedStorageInfos()[GenerateRandomByteArray<Key>()]
+					= {Timestamp(Random16()), Timestamp(Random16())};
+		}
+
         return entry;
     }
 
@@ -141,10 +175,9 @@ namespace catapult { namespace test {
         EXPECT_EQ(expectedEntry.owner(), entry.owner());
         EXPECT_EQ(expectedEntry.rootHash(), entry.rootHash());
         EXPECT_EQ(expectedEntry.size(), entry.size());
-		EXPECT_EQ(expectedEntry.usedSize(), entry.usedSize());
-		EXPECT_EQ(expectedEntry.metaFilesSize(), entry.metaFilesSize());
+		EXPECT_EQ(expectedEntry.usedSizeBytes(), entry.usedSizeBytes());
+		EXPECT_EQ(expectedEntry.metaFilesSizeBytes(), entry.metaFilesSizeBytes());
         EXPECT_EQ(expectedEntry.replicatorCount(), entry.replicatorCount());
-		EXPECT_EQ(expectedEntry.ownerCumulativeUploadSize(), entry.ownerCumulativeUploadSize());
 		EXPECT_EQ(expectedEntry.confirmedUsedSizes(), entry.confirmedUsedSizes());
 		EXPECT_EQ(expectedEntry.replicators(), entry.replicators());
 
@@ -165,14 +198,21 @@ namespace catapult { namespace test {
         entry.setConsumer(consumer);
 		entry.setDrive(drive);
 		entry.setDownloadSize(downloadSize);
-		entry.setDownloadApprovalCount(downloadApprovalCount);
+		entry.setDownloadApprovalCountLeft(downloadApprovalCount);
 		entry.listOfPublicKeys() = listOfPublicKeys;
 		entry.cumulativePayments() = cumulativePayments;
+		entry.setQueuePrevious(GenerateRandomByteArray<Key>());
+		entry.setQueueNext(GenerateRandomByteArray<Key>());
+		entry.setLastDownloadApprovalInitiated(Timestamp(Random16()));
+		entry.downloadApprovalInitiationEvent() = GenerateRandomByteArray<Hash256>();
 
         return entry;
     }
 
 	void AssertEqualListOfPublicKeys(const std::vector<Key>& expected, const std::vector<Key>& actual) {
+		if (expected.size() != actual.size()) {
+			CATAPULT_LOG( error ) << "asserted";
+		}
 		EXPECT_EQ(expected.size(), actual.size());
 		for (int i = 0; i < expected.size(); i++) {
 			EXPECT_EQ(expected[i], actual[i]);
@@ -195,7 +235,10 @@ namespace catapult { namespace test {
         EXPECT_EQ(expectedEntry.consumer(), entry.consumer());
 		EXPECT_EQ(expectedEntry.drive(), entry.drive());
 		EXPECT_EQ(expectedEntry.downloadSize(), entry.downloadSize());
-		EXPECT_EQ(expectedEntry.downloadApprovalCount(), entry.downloadApprovalCount());
+		EXPECT_EQ(expectedEntry.downloadApprovalCountLeft(), entry.downloadApprovalCountLeft());
+		EXPECT_EQ(expectedEntry.getQueuePrevious(), entry.getQueuePrevious());
+		EXPECT_EQ(expectedEntry.getQueueNext(), entry.getQueueNext());
+		EXPECT_EQ(expectedEntry.getLastDownloadApprovalInitiated(), entry.getLastDownloadApprovalInitiated());
 
 		AssertEqualListOfPublicKeys(expectedEntry.listOfPublicKeys(), entry.listOfPublicKeys());
 		AssertEqualCumulativePayments(expectedEntry.cumulativePayments(), entry.cumulativePayments());
@@ -211,7 +254,7 @@ namespace catapult { namespace test {
         for (auto dC = 0u; dC < drivesCount; ++dC)
             entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
         for (auto i = 0u; i < downloadChannelCount; ++i)
-            entry.downloadChannels().emplace_back(test::GenerateRandomByteArray<Hash256>());
+            entry.downloadChannels().insert(test::GenerateRandomByteArray<Hash256>());
 
         return entry;
     }

@@ -20,6 +20,10 @@ namespace catapult { namespace validators {
 		if (!pDownloadChannelEntry)
 			return Failure_Storage_Download_Channel_Not_Found;
 
+		if (pDownloadChannelEntry->isCloseInitiated()) {
+			return Failure_Storage_Already_Initiated_Channel_Closure;
+		}
+
 	  	// Check if transaction signer is the owner of the download channel
 	  	if (notification.PublicKey != pDownloadChannelEntry->consumer())
 		  	return Failure_Storage_Is_Not_Owner;

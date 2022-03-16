@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
 		// Check if stream size >= maxDownloadSize
-		if (utils::FileSize::FromMegabytes(notification.DownloadSize) > pluginConfig.MaxDownloadSize)
+		if (utils::FileSize::FromMegabytes(notification.DownloadSizeMegabytes) > pluginConfig.MaxDownloadSize)
 			return Failure_Storage_Upload_Size_Excessive;
 
 		// Check if download channel exists

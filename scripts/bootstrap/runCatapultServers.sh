@@ -1,4 +1,4 @@
-PATH_TO_CATAPULT_SERVER="/home/oleg/hdd/Projects/catapult/cpp-xpx-chain"
+PATH_TO_CATAPULT_SERVER="$HOME/CLionProjects/cpp-xpx-chain-3"
 PATH_TO_BOOTSTRAP=$PATH_TO_CATAPULT_SERVER/scripts/bootstrap
 
 WORK_DIR=$PATH_TO_CATAPULT_SERVER/cmake-build-debug

@@ -50,6 +50,7 @@ namespace catapult { namespace cache {
 		BcDrive,
 		DownloadChannel,
 		Replicator,
+		Queue,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

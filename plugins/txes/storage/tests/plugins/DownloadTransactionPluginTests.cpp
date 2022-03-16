@@ -125,7 +125,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-        EXPECT_EQ(pTransaction->DownloadSize, notification.DownloadSize);
+        EXPECT_EQ(pTransaction->DownloadSizeMegabytes, notification.DownloadSizeMegabytes);
 	}
 
 	// endregion
@@ -191,7 +191,7 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(UnresolvedAmountType::Default, notification.Amount.Type);
 
 		auto pActualAmount = notification.Amount;
-		EXPECT_EQ(pTransaction->ListOfPublicKeysSize * pTransaction->DownloadSize, pActualAmount.unwrap());
+		EXPECT_EQ(pTransaction->ListOfPublicKeysSize * pTransaction->DownloadSizeMegabytes, pActualAmount.unwrap());
 	}
 
 	// endregion
@@ -222,7 +222,7 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(UnresolvedAmountType::Default, notification.Amount.Type);
 
 		auto pActualAmount = notification.Amount;
-		EXPECT_EQ(pTransaction->ListOfPublicKeysSize * pTransaction->DownloadSize, pActualAmount.unwrap());
+		EXPECT_EQ(pTransaction->ListOfPublicKeysSize * pTransaction->DownloadSizeMegabytes, pActualAmount.unwrap());
 	}
 
 	// endregion

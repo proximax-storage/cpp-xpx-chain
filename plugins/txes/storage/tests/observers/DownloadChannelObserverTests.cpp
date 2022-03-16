@@ -52,11 +52,12 @@ namespace catapult { namespace observers {
             entry.setConsumer(Consumer);
 			entry.setDrive(driveEntry.key());
 			entry.setDownloadSize(Download_Size);
-			for (const auto& key : driveEntry.replicators())
+			for (const auto& key : driveEntry.replicators()) {
 				entry.cumulativePayments().emplace(key, 0);
+			}
+			entry.listOfPublicKeys().push_back(Consumer);
 
-
-            return entry;
+			return entry;
         }
 
         state::BcDriveEntry CreateBcDriveEntry(const Key& driveKey, const uint16_t& replicatorCount) {

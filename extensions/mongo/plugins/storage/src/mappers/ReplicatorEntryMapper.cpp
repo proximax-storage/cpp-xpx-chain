@@ -22,8 +22,8 @@ namespace catapult { namespace mongo { namespace plugins {
 						<< "drive" << ToBinary(drivePair.first)
 						<< "lastApprovedDataModificationId" << ToBinary(drivePair.second.LastApprovedDataModificationId)
 						<< "dataModificationIdIsValid" << drivePair.second.DataModificationIdIsValid	// TODO: Double-check if streamed correctly
-						<< "initialDownloadWork" << static_cast<int64_t>(drivePair.second.InitialDownloadWork)
-						<< "lastCompletedCumulativeDownloadWork" << static_cast<int64_t>(drivePair.second.LastCompletedCumulativeDownloadWork);
+						<< "initialDownloadWork" << static_cast<int64_t>(drivePair.second.InitialDownloadWorkMegabytes)
+						<< "lastCompletedCumulativeDownloadWork" << static_cast<int64_t>(drivePair.second.LastCompletedCumulativeDownloadWorkBytes);
 				array << driveBuilder;
 			}
 
@@ -58,8 +58,8 @@ namespace catapult { namespace mongo { namespace plugins {
 				state::DriveInfo info;
 				DbBinaryToModelArray(info.LastApprovedDataModificationId, doc["lastApprovedDataModificationId"].get_binary());
 				info.DataModificationIdIsValid = doc["dataModificationIdIsValid"].get_bool();	// TODO: Double-check if read correctly
-				info.InitialDownloadWork = doc["initialDownloadWork"].get_int64();
-				info.LastCompletedCumulativeDownloadWork = doc["lastCompletedCumulativeDownloadWork"].get_int64();
+				info.InitialDownloadWorkMegabytes = doc["initialDownloadWork"].get_int64();
+				info.LastCompletedCumulativeDownloadWorkBytes = doc["lastCompletedCumulativeDownloadWork"].get_int64();
 
 				drives.emplace(drive, info);
 			}

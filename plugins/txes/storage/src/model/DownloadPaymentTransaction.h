@@ -30,7 +30,7 @@ namespace catapult { namespace model {
 		Hash256 DownloadChannelId;
 
 		/// Download size to add to the prepaid size of the download channel.
-		uint64_t DownloadSize;
+		uint64_t DownloadSizeMegabytes;
 
 		/// Amount of XPXs to transfer to the download channel.
 		Amount FeedbackFeeAmount;

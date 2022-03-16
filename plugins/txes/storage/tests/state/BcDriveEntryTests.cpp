@@ -105,8 +105,8 @@ namespace catapult { namespace state {
         EXPECT_EQ(activeDataModification.Id, entry.activeDataModifications().back().Id);
         EXPECT_EQ(activeDataModification.Owner, entry.activeDataModifications().back().Owner);
         EXPECT_EQ(activeDataModification.DownloadDataCdi, entry.activeDataModifications().back().DownloadDataCdi);
-        EXPECT_EQ(activeDataModification.ExpectedUploadSize, entry.activeDataModifications().back().ExpectedUploadSize);
-		EXPECT_EQ(activeDataModification.ActualUploadSize, entry.activeDataModifications().back().ActualUploadSize);
+        EXPECT_EQ(activeDataModification.ExpectedUploadSizeMegabytes, entry.activeDataModifications().back().ExpectedUploadSizeMegabytes);
+		EXPECT_EQ(activeDataModification.ActualUploadSizeMegabytes, entry.activeDataModifications().back().ActualUploadSizeMegabytes);
 		EXPECT_EQ(activeDataModification.FolderName, entry.activeDataModifications().back().FolderName);
 		EXPECT_EQ(activeDataModification.ReadyForApproval, entry.activeDataModifications().back().ReadyForApproval);
 	}
@@ -139,8 +139,8 @@ namespace catapult { namespace state {
         EXPECT_EQ(completedDataModification.Id, entry.completedDataModifications().back().Id);
         EXPECT_EQ(completedDataModification.Owner, entry.completedDataModifications().back().Owner);
         EXPECT_EQ(completedDataModification.DownloadDataCdi, entry.completedDataModifications().back().DownloadDataCdi);
-		EXPECT_EQ(completedDataModification.ExpectedUploadSize, entry.completedDataModifications().back().ExpectedUploadSize);
-		EXPECT_EQ(completedDataModification.ActualUploadSize, entry.completedDataModifications().back().ActualUploadSize);
+		EXPECT_EQ(completedDataModification.ExpectedUploadSizeMegabytes, entry.completedDataModifications().back().ExpectedUploadSizeMegabytes);
+		EXPECT_EQ(completedDataModification.ActualUploadSizeMegabytes, entry.completedDataModifications().back().ActualUploadSizeMegabytes);
 		EXPECT_EQ(completedDataModification.FolderName, entry.completedDataModifications().back().FolderName);
         EXPECT_EQ(completedDataModification.State, entry.completedDataModifications().back().State);
     }

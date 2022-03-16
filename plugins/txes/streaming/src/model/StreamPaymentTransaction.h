@@ -34,7 +34,7 @@ namespace catapult { namespace model {
 		Hash256 StreamId;
 
 		/// Actual size of stream
-		uint64_t AdditionalUploadSize;
+		uint64_t AdditionalUploadSizeMegabytes;
 
 	public:
 		// Calculates the real size of a stream payment \a transaction.

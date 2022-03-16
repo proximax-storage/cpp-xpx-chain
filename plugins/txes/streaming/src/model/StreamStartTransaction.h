@@ -31,7 +31,7 @@ namespace catapult { namespace model {
 		Key DriveKey;
 
 		/// Expected size of stream.
-		uint64_t ExpectedUploadSize;
+		uint64_t ExpectedUploadSizeMegabytes;
 
 		/// Message of folderName string in bytes
 		uint16_t FolderNameSize;

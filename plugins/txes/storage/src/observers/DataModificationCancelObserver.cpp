@@ -32,7 +32,7 @@ namespace catapult { namespace observers {
         auto& driveOwnerState = driveOwnerIter.get();
 
         // Making payments:
-        const auto& modificationSize = cancelingDataModificationIter->ExpectedUploadSize;
+        const auto& modificationSize = cancelingDataModificationIter->ExpectedUploadSizeMegabytes;
         if (cancelingDataModificationIter->Id == activeDataModifications.front().Id) {
             // Performing download & upload work transfer for replicators
             const auto& replicators = driveEntry.replicators();

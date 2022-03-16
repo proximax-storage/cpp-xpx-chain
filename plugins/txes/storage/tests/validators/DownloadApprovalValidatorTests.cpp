@@ -30,11 +30,13 @@ namespace catapult { namespace validators {
 			return replicatorKeyPairs;
 		};
 
-		state::DownloadChannelEntry CreateDownloadChannelEntry(const std::vector<crypto::KeyPair>& replicatorKeyPairs) {
+		state::DownloadChannelEntry CreateDownloadChannelEntry(const std::vector<crypto::KeyPair>& replicatorKeyPairs, const std::optional<Hash256>& event) {
 			auto entry = test::CreateDownloadChannelEntry();
 			entry.cumulativePayments().clear();
 			for (const auto& keyPair : replicatorKeyPairs)
 				entry.cumulativePayments().emplace(keyPair.publicKey(), Amount(0));
+
+			entry.downloadApprovalInitiationEvent() = event;
 
 			return entry;
 		}
@@ -43,6 +45,7 @@ namespace catapult { namespace validators {
 				const ValidationResult& expectedResult,
 				const cache::CatapultCache& cache,
 				const Hash256& downloadChannelId,
+				const Hash256& event,
 				const uint16_t sequenceNumber,
 				const test::OpinionData<uint64_t>& opinionData) {
 			// Arrange:
@@ -73,8 +76,7 @@ namespace catapult { namespace validators {
 
 			Notification notification(
 					downloadChannelId,
-					test::GenerateRandomByteArray<Hash256>(),
-					sequenceNumber,
+					event,
 					opinionData.JudgingKeysCount,
 					opinionData.OverlappingKeysCount,
 					opinionData.JudgedKeysCount,
@@ -95,6 +97,7 @@ namespace catapult { namespace validators {
 				cache::CatapultCache& cache,
 				const std::vector<crypto::KeyPair>& replicatorKeyPairs,
 				const Hash256& downloadChannelId,
+				const Hash256& eventHash,
 				const uint16_t sequenceNumber) {
 			// Generate valid opinion data:
 			const auto totalKeysCount = test::RandomInRange<uint8_t>(Required_Signatures_Count, Shard_Size);
@@ -113,6 +116,7 @@ namespace catapult { namespace validators {
 					expectedResult,
 					cache,
 					downloadChannelId,
+					eventHash,
 					sequenceNumber,
 					opinionData);
 		}
@@ -124,7 +128,8 @@ namespace catapult { namespace validators {
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
 		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
-		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
+		auto eventHash = test::GenerateRandomByteArray<Hash256>();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs, eventHash);
 		downloadChannelDelta.insert(downloadChannelEntry);
 		cache.commit(Current_Height);
 
@@ -134,14 +139,16 @@ namespace catapult { namespace validators {
 				cache,
 				replicatorKeyPairs,
 				downloadChannelEntry.id(),
-				downloadChannelEntry.downloadApprovalCount()+1);
+				eventHash,
+				1); // downloadChannelEntry.downloadApprovalCount()+1);
 	}
 
 	TEST(TEST_CLASS, FailureWhenDownloadChannelNotFound) {
 		// Arrange:
 		auto cache = test::StorageCacheFactory::Create();
 		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
-		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
+		auto eventHash = test::GenerateRandomByteArray<Hash256>();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs, eventHash);
 		// Not inserting downloadChannelEntry into DownloadChannelCache.
 
 		// Assert:
@@ -150,7 +157,8 @@ namespace catapult { namespace validators {
 				cache,
 				replicatorKeyPairs,
 				downloadChannelEntry.id(),
-				downloadChannelEntry.downloadApprovalCount()+1);
+				eventHash,
+				1);// downloadChannelEntry.downloadApprovalCount()+1);
 	}
 
 	TEST(TEST_CLASS, FailureWhenSignatureCountInsufficient) {
@@ -159,7 +167,8 @@ namespace catapult { namespace validators {
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
 		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
-		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
+		auto eventHash = test::GenerateRandomByteArray<Hash256>();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs, eventHash);
 
 		// Double the number of replicators in downloadChannelEntry's shard
 		for (auto i = 0u; i < Shard_Size; ++i)
@@ -174,7 +183,8 @@ namespace catapult { namespace validators {
 				cache,
 				replicatorKeyPairs,
 				downloadChannelEntry.id(),
-				downloadChannelEntry.downloadApprovalCount()+1);
+				eventHash,
+				1);// downloadChannelEntry.downloadApprovalCount()+1);
 	}
 
 	TEST(TEST_CLASS, FailureWhenTransactionAlreadyApproved) {
@@ -183,60 +193,42 @@ namespace catapult { namespace validators {
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
 		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
-		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
+		auto eventHash = test::GenerateRandomByteArray<Hash256>();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs, {});
 		downloadChannelDelta.insert(downloadChannelEntry);
 		cache.commit(Current_Height);
 
 		// Assert:
 		AssertValidationResultWithoutOpinionData(
-				Failure_Storage_Transaction_Already_Approved,
+				Failure_Storage_Invalid_Approval_Trigger,
 				cache,
 				replicatorKeyPairs,
 				downloadChannelEntry.id(),
-				downloadChannelEntry.downloadApprovalCount());
+				eventHash,
+				1); // downloadChannelEntry.downloadApprovalCount());
 	}
 
-	TEST(TEST_CLASS, FailureWhenSequenceNumberLowerThanExpected) {
+	TEST(TEST_CLASS, FailureWhenInvalidApprovalTrigger) {
 		// Arrange:
 		auto cache = test::StorageCacheFactory::Create();
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
 		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
-		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
-		if (downloadChannelEntry.downloadApprovalCount() == 0)	// Overflow prevention
-			downloadChannelEntry.incrementDownloadApprovalCount();
+		auto eventHash = test::GenerateRandomByteArray<Hash256>();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs, test::GenerateRandomByteArray<Hash256>());
+//		if (downloadChannelEntry.downloadApprovalCount() == 0)	// Overflow prevention
+//			downloadChannelEntry.incrementDownloadApprovalCount();
 		downloadChannelDelta.insert(downloadChannelEntry);
 		cache.commit(Current_Height);
 
 		// Assert:
 		AssertValidationResultWithoutOpinionData(
-				Failure_Storage_Invalid_Sequence_Number,
+				Failure_Storage_Invalid_Approval_Trigger,
 				cache,
 				replicatorKeyPairs,
 				downloadChannelEntry.id(),
-				test::RandomInRange<uint16_t>(0, downloadChannelEntry.downloadApprovalCount() - 1));
-	}
-
-	TEST(TEST_CLASS, FailureWhenSequenceNumberGreaterThanExpected) {
-		// Arrange:
-		auto cache = test::StorageCacheFactory::Create();
-		auto delta = cache.createDelta();
-		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
-		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
-		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
-		const auto upperLimit = std::numeric_limits<uint16_t>::max();
-		if (downloadChannelEntry.downloadApprovalCount() > upperLimit - 2)	// Overflow prevention
-			downloadChannelEntry.setDownloadApprovalCount(upperLimit - 2);
-		downloadChannelDelta.insert(downloadChannelEntry);
-		cache.commit(Current_Height);
-
-		// Assert:
-		AssertValidationResultWithoutOpinionData(
-				Failure_Storage_Invalid_Sequence_Number,
-				cache,
-				replicatorKeyPairs,
-				downloadChannelEntry.id(),
-				test::RandomInRange<uint16_t>(downloadChannelEntry.downloadApprovalCount() + 2, upperLimit));
+				eventHash,
+				1); // downloadChannelEntry.downloadApprovalCount() - 1));
 	}
 
 	TEST(TEST_CLASS, FailureWhenHaveJudgingReplicators) {
@@ -245,7 +237,8 @@ namespace catapult { namespace validators {
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
 		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
-		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
+		auto eventHash = test::GenerateRandomByteArray<Hash256>();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs, eventHash);
 		downloadChannelDelta.insert(downloadChannelEntry);
 		cache.commit(Current_Height);
 
@@ -262,7 +255,8 @@ namespace catapult { namespace validators {
 				Failure_Storage_No_Opinion_Provided_On_Self,
 				cache,
 				downloadChannelEntry.id(),
-				downloadChannelEntry.downloadApprovalCount()+1,
+				eventHash,
+				1,
 				opinionData);
 	}
 
@@ -272,7 +266,8 @@ namespace catapult { namespace validators {
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
 		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
-		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
+		auto eventHash = test::GenerateRandomByteArray<Hash256>();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs, eventHash);
 		downloadChannelDelta.insert(downloadChannelEntry);
 		cache.commit(Current_Height);
 
@@ -293,7 +288,8 @@ namespace catapult { namespace validators {
 				Failure_Storage_No_Opinion_Provided_On_Self,
 				cache,
 				downloadChannelEntry.id(),
-				downloadChannelEntry.downloadApprovalCount()+1,
+				eventHash,
+				1,
 				opinionData);
 	}
 
@@ -303,7 +299,8 @@ namespace catapult { namespace validators {
 		auto delta = cache.createDelta();
 		auto& downloadChannelDelta = delta.sub<cache::DownloadChannelCache>();
 		auto replicatorKeyPairs = CreateReplicatorKeyPairs();
-		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs);
+		auto eventHash = test::GenerateRandomByteArray<Hash256>();
+		auto downloadChannelEntry = CreateDownloadChannelEntry(replicatorKeyPairs, eventHash);
 		downloadChannelDelta.insert(downloadChannelEntry);
 		cache.commit(Current_Height);
 
@@ -317,6 +314,7 @@ namespace catapult { namespace validators {
 				cache,
 				replicatorKeyPairs,
 				downloadChannelEntry.id(),
-				downloadChannelEntry.downloadApprovalCount()+1);
+				eventHash,
+				1);
 	}
 }}

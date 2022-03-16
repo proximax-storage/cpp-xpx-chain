@@ -18,26 +18,34 @@ namespace catapult { namespace state {
                 : m_pKeyCollector(std::move(pKeyCollector)) {}
 
     public:
-        bool isReplicatorRegistered(const Key& key) override;
+    	Height getChainHeight() override;
 
-        bool driveExist(const Key& driveKey) override;
+		bool isReplicatorRegistered(const Key& key) override;
+
+        bool driveExists(const Key& driveKey) override;
         Drive getDrive(const Key& driveKey) override;
         bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) override;
+        bool isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) override;
+        std::vector<Key> getReplicatorDriveKeys(const Key& replicatorKey) override;
         std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) override;
         std::vector<Key> getDriveReplicators(const Key& driveKey) override;
+        std::vector<Hash256> getDriveChannels(const Key& driveKey) override;
+        std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) override;
+        ModificationShard getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) override;
+        std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) override;
+//        SizeMap getCumulativeUploadSizesBytes(const Key& driveKey, const Key& replicatorKey) override;
 
 		std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) override;
 
-        uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) override;
+        uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) override;
 
-        bool downloadChannelExist(const Hash256& id) override;
-        std::vector<DownloadChannel> getDownloadChannels(const Key& replicatorKey) override;
-		std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) override;
+        bool downloadChannelExists(const Hash256& id) override;
+        std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) override;
 
 		virtual std::unique_ptr<DriveVerification> getActiveVerification(const Key& driveKey) override;
-		virtual std::vector<DriveVerification> getActiveVerifications(const Key& replicatorKey) override;
+		std::set<Hash256> getReplicatorChannelIds(const Key& replicatorKey) override;
 
-    private:
+	private:
         std::shared_ptr<cache::ReplicatorKeyCollector> m_pKeyCollector;
     };
 }}

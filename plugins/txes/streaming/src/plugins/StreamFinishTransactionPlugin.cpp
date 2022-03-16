@@ -26,7 +26,7 @@ namespace catapult { namespace plugins {
 							transaction.DriveKey,
 							transaction.StreamId,
 							transaction.Signer,
-							transaction.ActualUploadSize,
+							transaction.ActualUploadSizeMegabytes,
 							transaction.StreamStructureCdi
 					));
 

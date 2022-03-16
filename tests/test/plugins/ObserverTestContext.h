@@ -38,7 +38,7 @@ namespace catapult { namespace test {
 				: m_config(config::BlockchainConfiguration::Uninitialized())
 				, m_cache(TCacheFactory::Create())
 				, m_cacheDelta(m_cache.createDelta())
-				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, m_config, height, mode, CreateResolverContextXor())
+				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, m_config, height, Timestamp(0), mode, CreateResolverContextXor())
 		{}
 
 		/// Creates a test context around \a mode, \a height and \a config.
@@ -46,7 +46,7 @@ namespace catapult { namespace test {
 				: m_config(config)
 				, m_cache(TCacheFactory::Create(m_config))
 				, m_cacheDelta(m_cache.createDelta())
-				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, m_config, height, mode, CreateResolverContextXor())
+				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, m_config, height, Timestamp(0), mode, CreateResolverContextXor())
 		{}
 
 		/// Creates a test context around \a mode, \a height and \a gracePeriodDuration.
@@ -54,14 +54,14 @@ namespace catapult { namespace test {
 				: m_config(config::BlockchainConfiguration::Uninitialized())
 				, m_cache(TCacheFactory::Create(gracePeriodDuration))
 				, m_cacheDelta(m_cache.createDelta())
-				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, m_config, height, mode, CreateResolverContextXor())
+				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, m_config, height, Timestamp(0), mode, CreateResolverContextXor())
 		{}
 
 		/// Creates a test context around \a mode, \a height, \a config and \a gracePeriodDuration.
 		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, const config::BlockchainConfiguration& config, BlockDuration gracePeriodDuration)
 				: m_cache(TCacheFactory::Create(config, gracePeriodDuration))
 				, m_cacheDelta(m_cache.createDelta())
-				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, config, height, mode, CreateResolverContextXor())
+				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, config, height, Timestamp(0), mode, CreateResolverContextXor())
 		{}
 
 	public:

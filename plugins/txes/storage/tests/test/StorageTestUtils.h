@@ -18,7 +18,9 @@
 #include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
+#include "src/cache/QueueCacheStorage.h"
 #include "src/cache/ReplicatorCache.h"
+#include "src/cache/QueueCache.h"
 #include "src/cache/ReplicatorCacheStorage.h"
 #include "src/model/StorageEntityType.h"
 #include "src/utils/StorageUtils.h"
@@ -73,7 +75,8 @@ namespace catapult { namespace test {
 		uint16_t completedDataModificationsCount = 2,
         uint16_t verificationsCount = 2,
         uint16_t activeDownloadsCount = 2,
-        uint16_t completedDownloadsCount = 2
+        uint16_t completedDownloadsCount = 2,
+        uint16_t downloadShardsCount = 3
     );
 
 	/// Verifies that \a entry1 is equivalent to \a entry2.
@@ -83,7 +86,7 @@ namespace catapult { namespace test {
     struct BcDriveCacheFactory {
         private:
             static auto CreateSubCacheWithBcDriveCache(const config::BlockchainConfiguration& config) {
-                auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id));
+                auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, std::max(cache::ReplicatorCache::Id, cache::QueueCache::Id)));
                 std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
                 auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
@@ -91,7 +94,8 @@ namespace catapult { namespace test {
 			    subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pDriveKeyCollector, pConfigHolder);
 			    subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
                 subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pReplicatorKeyCollector, pConfigHolder);
-                return subCaches;
+                subCaches[cache::QueueCache::Id] = MakeSubCachePlugin<cache::QueueCache, cache::QueueCacheStorage>(pConfigHolder);
+				return subCaches;
             }
 
         public:
@@ -336,7 +340,7 @@ namespace catapult { namespace test {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DataModification);
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->DownloadDataCdi = test::GenerateRandomByteArray<Hash256>();
-        pTransaction->UploadSize = test::Random();
+        pTransaction->UploadSizeMegabytes = test::Random();
         return pTransaction;
     }
 
@@ -344,7 +348,7 @@ namespace catapult { namespace test {
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateDownloadTransaction() {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_Download);
-        pTransaction->DownloadSize = test::Random();
+        pTransaction->DownloadSizeMegabytes = test::Random();
 		pTransaction->FeedbackFeeAmount = Amount(test::Random());
 		pTransaction->ListOfPublicKeysSize = test::Random16();
         return pTransaction;
@@ -357,8 +361,8 @@ namespace catapult { namespace test {
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->DataModificationId = test::GenerateRandomByteArray<Hash256>();
         pTransaction->FileStructureCdi = test::GenerateRandomByteArray<Hash256>();
-        pTransaction->FileStructureSize = test::Random();
-        pTransaction->UsedDriveSize = test::Random();
+        pTransaction->FileStructureSizeBytes = test::Random();
+        pTransaction->UsedDriveSizeBytes = test::Random();
         return pTransaction;
     }
 

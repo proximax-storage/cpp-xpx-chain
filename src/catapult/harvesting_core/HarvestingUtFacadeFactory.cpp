@@ -116,7 +116,7 @@ namespace catapult { namespace harvesting {
 
 			auto resolverContext = m_executionConfig.ResolverContextFactory(readOnlyCache);
 			auto validatorContext = validators::ValidatorContext(config, height(), m_blockTime, resolverContext, readOnlyCache);
-			auto observerContext = observers::ObserverContext(observerState, config, height(), notifyMode, resolverContext);
+			auto observerContext = observers::ObserverContext(observerState, config, height(), m_blockTime, notifyMode, resolverContext);
 
 			const auto& validator = *m_executionConfig.pValidator;
 			const auto& observer = *m_executionConfig.pObserver;

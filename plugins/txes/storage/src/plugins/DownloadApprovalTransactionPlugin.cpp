@@ -23,14 +23,11 @@ namespace catapult { namespace plugins {
 			  	switch (transaction.EntityVersion()) {
 			  	case 1: {
 					const auto commonDataSize = sizeof(transaction.DownloadChannelId)
-												+ sizeof(transaction.ApprovalTrigger)
-												+ sizeof(transaction.SequenceNumber)
-												+ sizeof(transaction.ResponseToFinishDownloadTransaction);
-					auto* pCommonData = sub.mempool().malloc<uint8_t>(commonDataSize);
+												+ sizeof(transaction.ApprovalTrigger);
+					auto* const pCommonDataBegin = sub.mempool().malloc<uint8_t>(commonDataSize);
+					auto* pCommonData = pCommonDataBegin;
 					utils::WriteToByteArray(pCommonData, transaction.DownloadChannelId);
 					utils::WriteToByteArray(pCommonData, transaction.ApprovalTrigger);
-					utils::WriteToByteArray(pCommonData, transaction.SequenceNumber);
-					utils::WriteToByteArray(pCommonData, transaction.ResponseToFinishDownloadTransaction);
 
 					sub.notify(OpinionNotification<1>(
 							commonDataSize,
@@ -38,7 +35,7 @@ namespace catapult { namespace plugins {
 							transaction.OverlappingKeysCount,
 							transaction.JudgedKeysCount,
 							sizeof(uint64_t),
-							pCommonData,
+							pCommonDataBegin,
 							transaction.PublicKeysPtr(),
 							transaction.SignaturesPtr(),
 							transaction.PresentOpinionsPtr(),
@@ -48,7 +45,6 @@ namespace catapult { namespace plugins {
 				  	sub.notify(DownloadApprovalNotification<1>(
 						  	transaction.DownloadChannelId,
 							transaction.ApprovalTrigger,
-							transaction.SequenceNumber,
 							transaction.JudgingKeysCount,
 							transaction.OverlappingKeysCount,
 							transaction.JudgedKeysCount,
@@ -66,8 +62,7 @@ namespace catapult { namespace plugins {
 							transaction.OpinionsPtr()
 					));
 
-					if (transaction.ResponseToFinishDownloadTransaction)
-						sub.notify(DownloadChannelRefundNotification<1>(transaction.DownloadChannelId));
+					sub.notify(DownloadChannelRefundNotification<1>(transaction.DownloadChannelId));
 
 				  	break;
 			  	}

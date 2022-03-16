@@ -75,7 +75,20 @@ namespace catapult { namespace state {
 			EXPECT_EQ(entry.downloadSize(), downloadSize);
 			uint16_t downloadApprovalCount = *reinterpret_cast<const uint16_t*>(pData);
 			pData += sizeof(downloadApprovalCount);
-			EXPECT_EQ(entry.downloadApprovalCount(), downloadApprovalCount);
+			EXPECT_EQ(entry.downloadApprovalCountLeft(), downloadApprovalCount);
+
+			EXPECT_EQ(entry.getQueuePrevious(), *reinterpret_cast<const Key*>(pData));
+			pData += Key_Size;
+			EXPECT_EQ(entry.getQueueNext(), *reinterpret_cast<const Key*>(pData));
+			pData += Key_Size;
+			EXPECT_EQ(entry.getLastDownloadApprovalInitiated().unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
+			EXPECT_EQ(entry.downloadApprovalInitiationEvent().has_value(), *reinterpret_cast<const bool*>(pData));
+			pData += sizeof(bool);
+			if (entry.downloadApprovalInitiationEvent()) {
+				EXPECT_EQ(*entry.downloadApprovalInitiationEvent(), *reinterpret_cast<const Hash256*>(pData));
+				pData += Hash256_Size;
+			}
 
 			AssertListOfPublicKeysBuffer(entry.listOfPublicKeys(), pData);
 			AssertCumulativePaymentsBuffer(entry.cumulativePayments(), pData);
@@ -162,7 +175,17 @@ namespace catapult { namespace state {
 			CopyToVector(buffer, entry.consumer().data(), Key_Size);
 			CopyToVector(buffer, entry.drive().data(), Key_Size);
 			CopyToVector(buffer, (const uint8_t*) &entry.downloadSize(), sizeof(uint64_t));
-			CopyToVector(buffer, (const uint8_t*) &entry.downloadApprovalCount(), sizeof(uint16_t));
+			CopyToVector(buffer, (const uint8_t*) &entry.downloadApprovalCountLeft(), sizeof(uint16_t));
+
+			CopyToVector(buffer, (const uint8_t*) &entry.getQueuePrevious(), Key_Size);
+			CopyToVector(buffer, (const uint8_t*) &entry.getQueueNext(), Key_Size);
+			CopyToVector(buffer, (const uint8_t *) &entry.getLastDownloadApprovalInitiated(), sizeof(Timestamp));
+
+			bool hasApprovalEvent = entry.downloadApprovalInitiationEvent().has_value();
+			CopyToVector(buffer, (const uint8_t *) &hasApprovalEvent, sizeof(bool));
+			if (hasApprovalEvent) {
+				CopyToVector(buffer, (const uint8_t *) &(*entry.downloadApprovalInitiationEvent()), Hash256_Size);
+			}
 
 			SaveListOfPublicKeys(entry.listOfPublicKeys(), buffer);
 			SaveCumulativePayments(entry.cumulativePayments(), buffer);

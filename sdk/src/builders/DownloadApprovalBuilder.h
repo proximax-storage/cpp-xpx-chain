@@ -25,8 +25,6 @@ namespace catapult { namespace builders {
     public:
         void setDownloadChannelId(const Hash256& downloadChannelId);
         void setApprovalTrigger(const Hash256& approvalTrigger);
-        void setSequenceNumber(uint16_t sequenceNumber);
-        void setResponseToFinishDownloadTransaction(bool responseToFinishDownloadTransaction);
         void setJudgingKeysCount(uint8_t judgingKeysCount);
         void setOverlappingKeysCount(uint8_t overlappingKeysCount);
         void setJudgedKeysCount(uint8_t judgedKeysCount);
@@ -51,7 +49,6 @@ namespace catapult { namespace builders {
         Hash256 m_downloadChannelId;
         Hash256 m_approvalTrigger;
         uint16_t m_sequenceNumber;
-        bool m_responseToFinishDownloadTransaction;
         uint8_t m_judgingKeysCount;
         uint8_t m_overlappingKeysCount;
         uint8_t m_judgedKeysCount;

@@ -24,16 +24,15 @@ namespace catapult { namespace validators {
 		if (!pDownloadChannelEntry)
 			return Failure_Storage_Download_Channel_Not_Found;
 
+		// Check if transaction approval trigger is the actual one
+		if (!pDownloadChannelEntry->downloadApprovalInitiationEvent() ||
+		*pDownloadChannelEntry->downloadApprovalInitiationEvent() != notification.ApprovalTrigger) {
+			return Failure_Storage_Invalid_Approval_Trigger;
+		}
+
 	  	// Check if there are enough cosigners
 	  	if (totalJudgingKeysCount < pDownloadChannelEntry->shardReplicators().size()*2 / 3 + 1)
 		  	return Failure_Storage_Signature_Count_Insufficient;
-
-	  	// Check if transaction sequence number is exactly one more than the number of completed download approval transactions
-	  	const auto targetSequenceNumber = pDownloadChannelEntry->downloadApprovalCount() + 1;
-		if (notification.SequenceNumber == targetSequenceNumber - 1)		// Considered a regular case
-			return Failure_Storage_Transaction_Already_Approved;
-		else if (notification.SequenceNumber != targetSequenceNumber)	// Considered an irregular case, may be worth investigating
-			return Failure_Storage_Invalid_Sequence_Number;
 
 	  	// Check if every replicator has provided an opinion on itself
 		if (notification.JudgingKeysCount > 0)

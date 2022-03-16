@@ -19,12 +19,13 @@ namespace catapult { namespace observers {
 	  	auto& info = replicatorEntry.drives().at(notification.DriveKey);
 	  	info.LastApprovedDataModificationId = notification.DataModificationId;
 	  	info.DataModificationIdIsValid = true;
-		info.InitialDownloadWork = 0;
+		info.InitialDownloadWorkMegabytes = 0;
 
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 	  	auto driveIter = driveCache.find(notification.DriveKey);
 	  	auto& driveEntry = driveIter.get();
 
-		driveEntry.confirmedUsedSizes()[notification.PublicKey] = driveEntry.usedSize();
+		driveEntry.confirmedUsedSizes()[notification.PublicKey] = driveEntry.usedSizeBytes();
+		driveEntry.confirmedStorageInfos()[notification.PublicKey].m_confirmedStorageSince = context.Timestamp;
 	});
 }}

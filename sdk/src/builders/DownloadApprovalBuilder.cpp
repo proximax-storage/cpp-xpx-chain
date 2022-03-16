@@ -11,7 +11,6 @@ namespace catapult { namespace builders {
     DownloadApprovalBuilder::DownloadApprovalBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer)
             : TransactionBuilder(networkIdentifier, signer)
             , m_sequenceNumber(0)
-            , m_responseToFinishDownloadTransaction(false)
             , m_judgingKeysCount(0)
             , m_overlappingKeysCount(0)
             , m_judgedKeysCount(0)
@@ -23,14 +22,6 @@ namespace catapult { namespace builders {
 
     void DownloadApprovalBuilder::setApprovalTrigger(const Hash256& approvalTrigger) {
         m_approvalTrigger = approvalTrigger;
-    }
-
-    void DownloadApprovalBuilder::setSequenceNumber(uint16_t sequenceNumber) {
-        m_sequenceNumber = sequenceNumber;
-    }
-
-    void DownloadApprovalBuilder::setResponseToFinishDownloadTransaction(bool responseToFinishDownloadTransaction) {
-        m_responseToFinishDownloadTransaction = responseToFinishDownloadTransaction;
     }
 
     void DownloadApprovalBuilder::setJudgingKeysCount(uint8_t judgingKeysCount) {
@@ -74,8 +65,6 @@ namespace catapult { namespace builders {
         // 2. set transaction fields
         pTransaction->DownloadChannelId = m_downloadChannelId;
         pTransaction->ApprovalTrigger = m_approvalTrigger;
-        pTransaction->SequenceNumber = m_sequenceNumber;
-        pTransaction->ResponseToFinishDownloadTransaction = m_responseToFinishDownloadTransaction;
         pTransaction->JudgingKeysCount = m_judgingKeysCount;
         pTransaction->OverlappingKeysCount = m_overlappingKeysCount;
         pTransaction->JudgedKeysCount = m_judgedKeysCount;

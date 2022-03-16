@@ -17,7 +17,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamStreamPaymentTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "driveKey" << ToBinary(transaction.DriveKey);
 		builder << "streamId" << ToBinary(transaction.StreamId);
-		builder << "additionalUploadSize" << static_cast<int64_t>(transaction.AdditionalUploadSize);
+		builder << "additionalUploadSize" << static_cast<int64_t>(transaction.AdditionalUploadSizeMegabytes);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(StreamPayment, StreamStreamPaymentTransaction)

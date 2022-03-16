@@ -45,6 +45,12 @@ namespace catapult { namespace deltaset {
 				return m_isSet ? TFindTraits::ToResult(TSetTraits::ToValue(*m_storageIter)) : nullptr;
 			}
 
+			/// Gets the underlying key.
+			template<class TKeyPointer>
+			TKeyPointer getKey() const {
+				return m_isSet ? TFindTraits::ToResult(TSetTraits::ToKey(*m_storageIter)) : nullptr;
+			}
+
 		private:
 			bool m_isSet;
 			TStorageIterator m_storageIter;
@@ -79,6 +85,20 @@ namespace catapult { namespace deltaset {
 					return TFindTraits::ToResult(TSetTraits::ToValue(*m_storageIter));
 				case IteratorType::Memory:
 					return TFindTraits::ToResult(TSetTraits::ToValue(*m_memoryIter));
+				default:
+					return nullptr;
+				}
+			}
+
+			/// Gets the underlying key.
+			/// Use TKet in order to avoid adding additional template parameter
+			template<class TKeyPointer>
+			TKeyPointer getKey() const {
+				switch (m_iteratorType) {
+				case IteratorType::Storage:
+					return TFindTraits::ToResult(TSetTraits::ToKey(*m_storageIter));
+				case IteratorType::Memory:
+					return TFindTraits::ToResult(TSetTraits::ToKey(*m_memoryIter));
 				default:
 					return nullptr;
 				}

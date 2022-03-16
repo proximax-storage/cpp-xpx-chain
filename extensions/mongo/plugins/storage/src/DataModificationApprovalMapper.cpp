@@ -18,9 +18,9 @@ namespace catapult { namespace mongo { namespace plugins {
 		builder << "driveKey" << ToBinary(transaction.DriveKey);
 		builder << "dataModificationId" << ToBinary(transaction.DataModificationId);
 		builder << "fileStructureCdi" << ToBinary(transaction.FileStructureCdi);
-		builder << "fileStructureSize" << static_cast<int64_t>(transaction.FileStructureSize);
-		builder << "metaFilesSize" << static_cast<int64_t>(transaction.MetaFilesSize);
-		builder << "usedDriveSize" << static_cast<int64_t>(transaction.UsedDriveSize);
+		builder << "fileStructureSize" << static_cast<int64_t>(transaction.FileStructureSizeBytes);
+		builder << "metaFileSizeBytes" << static_cast<int64_t>(transaction.MetaFilesSizeBytes);
+		builder << "usedDriveSize" << static_cast<int64_t>(transaction.UsedDriveSizeBytes);
 		builder << "judgingKeysCount" << static_cast<int8_t>(transaction.JudgingKeysCount);
 		builder << "overlappingKeysCount" << static_cast<int8_t>(transaction.OverlappingKeysCount);
 		builder << "judgedKeysCount" << static_cast<int8_t>(transaction.JudgedKeysCount);

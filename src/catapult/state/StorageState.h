@@ -39,11 +39,11 @@ namespace catapult { namespace state {
 
 	struct DownloadChannel {
 		Hash256 Id;
-		uint64_t DownloadSize;
-		uint16_t DownloadApprovalCount;
+		uint64_t DownloadSizeMegabytes;
 		std::vector<Key> Consumers;
 		std::vector<Key> Replicators;
 		Key DriveKey;
+		std::optional<Hash256> ApprovalTrigger;
 	};
 
 	struct DriveVerification {
@@ -52,6 +52,12 @@ namespace catapult { namespace state {
 		Hash256 VerificationTrigger;
 		Hash256 RootHash;
 		std::vector<std::vector<Key>> Shards;
+	};
+
+	struct ModificationShard {
+		std::map<Key, uint64_t> m_actualShardMembers;
+		std::map<Key, uint64_t> m_formerShardMembers;
+		uint64_t m_ownerUpload = 0;
 	};
 
 	/// Interface for storage state.
@@ -79,24 +85,32 @@ namespace catapult { namespace state {
 		}
 
 	public:
+		virtual Height getChainHeight() = 0;
+
 		virtual bool isReplicatorRegistered(const Key& key) = 0;
 
-		virtual bool driveExist(const Key& driveKey) = 0;
+		virtual bool driveExists(const Key& driveKey) = 0;
 		virtual Drive getDrive(const Key& driveKey) = 0;
 		virtual bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) = 0;
+		virtual bool isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) = 0;
+		virtual std::vector<Key> getReplicatorDriveKeys(const Key& replicatorKey) = 0;
+		virtual std::set<Hash256> getReplicatorChannelIds(const Key& replicatorKey) = 0;
 		virtual std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) = 0;
 		virtual std::vector<Key> getDriveReplicators(const Key& driveKey) = 0;
+		virtual std::vector<Hash256> getDriveChannels(const Key& driveKey) = 0;
+		virtual std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) = 0;
+		virtual ModificationShard getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) = 0;
+		virtual std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) = 0;
+//		virtual SizeMap getCumulativeUploadSizesBytes(const Key& driveKey, const Key& replicatorKey) = 0;
 
         virtual std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) = 0;
 
-		virtual uint64_t getDownloadWork(const Key& replicatorKey, const Key& driveKey) = 0;
+		virtual uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) = 0;
 
-		virtual bool downloadChannelExist(const Hash256& id) = 0;
-		virtual std::vector<DownloadChannel> getDownloadChannels(const Key& replicatorKey) = 0;
+		virtual bool downloadChannelExists(const Hash256& id) = 0;
 		virtual std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) = 0;
 
         virtual std::unique_ptr<DriveVerification> getActiveVerification(const Key& driveKey) = 0;
-        virtual std::vector<DriveVerification> getActiveVerifications(const Key& replicatorKey) = 0;
 
 	protected:
 		cache::CatapultCache* m_pCache;

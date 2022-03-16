@@ -34,7 +34,7 @@ namespace catapult { namespace model {
 		Hash256 DownloadDataCdi;
 
 		/// Size of upload.
-		uint64_t UploadSize;
+		uint64_t UploadSizeMegabytes ;
 
 		/// Amount of XPXs to transfer to the drive.
 		Amount FeedbackFeeAmount;

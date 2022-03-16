@@ -17,8 +17,8 @@ namespace catapult { namespace state {
 				io::Write(output, drivePair.first);
 				io::Write(output, drivePair.second.LastApprovedDataModificationId);
 				io::Write8(output, drivePair.second.DataModificationIdIsValid);
-				io::Write64(output, drivePair.second.InitialDownloadWork);
-				io::Write64(output, drivePair.second.LastCompletedCumulativeDownloadWork);
+				io::Write64(output, drivePair.second.InitialDownloadWorkMegabytes);
+				io::Write64(output, drivePair.second.LastCompletedCumulativeDownloadWorkBytes);
 			}
 		}
 
@@ -31,25 +31,25 @@ namespace catapult { namespace state {
 				DriveInfo info;
 				io::Read(input, info.LastApprovedDataModificationId);
 				info.DataModificationIdIsValid = io::Read8(input);
-				info.InitialDownloadWork = io::Read64(input);
-				info.LastCompletedCumulativeDownloadWork = io::Read64(input);
+				info.InitialDownloadWorkMegabytes = io::Read64(input);
+				info.LastCompletedCumulativeDownloadWorkBytes = io::Read64(input);
 
 				drives.emplace(drive, info);
 			}
 		}
 
-		void SaveDownloadChannels(io::OutputStream& output, const std::vector<Hash256>& downloadChannels) {
+		void SaveDownloadChannels(io::OutputStream& output, const std::set<Hash256>& downloadChannels) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(downloadChannels.size()));
 			for (const auto& id : downloadChannels)
 				io::Write(output, id);
 		}
 
-		void LoadDownloadChannels(io::InputStream& input, std::vector<Hash256>& downloadChannels) {
+		void LoadDownloadChannels(io::InputStream& input, std::set<Hash256>& downloadChannels) {
 			auto count = io::Read16(input);
 			while (count--) {
 				Hash256 id;
 				io::Read(input, id);
-				downloadChannels.emplace_back(std::move(id));
+				downloadChannels.insert(std::move(id));
 			}
 		}
 	}

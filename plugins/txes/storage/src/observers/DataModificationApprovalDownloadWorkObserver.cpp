@@ -48,21 +48,20 @@ namespace catapult { namespace observers {
 
 				// If current data modification was approved (not cancelled), account its size.
 				if (it->State == state::DataModificationState::Succeeded)
-					approvableDownloadWork += it->ActualUploadSize;
+					approvableDownloadWork += it->ActualUploadSizeMegabytes;
 			}
 
 			// Making mosaic transfers.
 			auto recipientIter = accountStateCache.find(*pKey);
 			auto& recipientState = recipientIter.get();
-			const auto transferAmount = Amount(approvableDownloadWork + driveInfo.InitialDownloadWork);
+			const auto transferAmount = Amount(approvableDownloadWork + driveInfo.InitialDownloadWorkMegabytes);
 			senderState.Balances.debit(streamingMosaicId, transferAmount, context.Height);
 			recipientState.Balances.credit(currencyMosaicId, transferAmount, context.Height);
 
 			// Updating current replicator's drive info.
 			driveInfo.LastApprovedDataModificationId = notification.DataModificationId;
 			driveInfo.DataModificationIdIsValid = true;
-			driveInfo.InitialDownloadWork = 0;
-			driveInfo.LastCompletedCumulativeDownloadWork = transferAmount.unwrap();
+			driveInfo.InitialDownloadWorkMegabytes = 0;
 		}
 	});
 }}

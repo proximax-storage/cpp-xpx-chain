@@ -37,13 +37,13 @@ namespace catapult { namespace model {
 		Hash256 FileStructureCdi;
 
 		/// Size of the File Structure.
-		uint64_t FileStructureSize;
+		uint64_t FileStructureSizeBytes;
 
 		/// The size of metafiles including File Structure.
-		uint64_t MetaFilesSize;
+		uint64_t MetaFilesSizeBytes;
 
 		/// Total used disk space of the drive.
-		uint64_t UsedDriveSize;
+		uint64_t UsedDriveSizeBytes;
 
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;

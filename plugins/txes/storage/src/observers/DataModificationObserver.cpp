@@ -22,13 +22,13 @@ namespace catapult { namespace observers {
 			auto driveIter = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveIter.get();
 
-			auto& activeDataModifications = driveEntry.activeDataModifications();
-			activeDataModifications.emplace_back(state::ActiveDataModification(
-				notification.DataModificationId,
-				notification.Owner,
-				notification.DownloadDataCdi,
-				notification.UploadSize
-			));
+		auto& activeDataModifications = driveEntry.activeDataModifications();
+		activeDataModifications.emplace_back(state::ActiveDataModification(
+			notification.DataModificationId,
+			notification.Owner,
+			notification.DownloadDataCdi,
+			notification.UploadSizeMegabytes
+		));
 
 			std::seed_seq seed(notification.DataModificationId.begin(), notification.DataModificationId.end());
 			std::mt19937 rng(seed);
