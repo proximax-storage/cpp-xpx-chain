@@ -126,7 +126,8 @@ namespace catapult { namespace plugins {
 					"StreamStartObserver",
 					"StreamFinishObserver",
 					"StreamPaymentObserver",
-					"EndDriveVerificationObserver"
+					"EndDriveVerificationObserver",
+					"ShardsUpdateObserver",
 				};
 			}
 

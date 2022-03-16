@@ -9,34 +9,32 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::DataModificationCancelNotification<1>;
+    using Notification = model::DataModificationCancelNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(DataModificationCancel, [](const Notification& notification, const ValidatorContext& context) {
-		const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-		const auto driveIter = driveCache.find(notification.DriveKey);
-		const auto& pDriveEntry = driveIter.tryGet();
-		if (!pDriveEntry)
-			return Failure_Storage_Drive_Not_Found;
-		const auto& activeDataModifications = pDriveEntry->activeDataModifications();
+    DEFINE_STATEFUL_VALIDATOR(DataModificationCancel, [](const Notification& notification, const ValidatorContext& context) {
+        const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+        const auto driveIter = driveCache.find(notification.DriveKey);
+        const auto& pDriveEntry = driveIter.tryGet();
+        if (!pDriveEntry)
+          return Failure_Storage_Drive_Not_Found;
+        const auto& activeDataModifications = pDriveEntry->activeDataModifications();
 
-		if (notification.Owner != pDriveEntry->owner())
-		  return Failure_Storage_Is_Not_Owner;
+        if (notification.Owner != pDriveEntry->owner())
+          return Failure_Storage_Is_Not_Owner;
 
-		if (activeDataModifications.empty())
-			return Failure_Storage_No_Active_Data_Modifications;
+        if (activeDataModifications.empty())
+          return Failure_Storage_No_Active_Data_Modifications;
 
-		if (activeDataModifications.front().Id == notification.DataModificationId)
-			return Failure_Storage_Data_Modification_Is_Active;
+        auto dataModificationIter = activeDataModifications.begin();
+        for (; dataModificationIter !=
+             activeDataModifications.end(); ++dataModificationIter) {
+          if (dataModificationIter->Id == notification.DataModificationId)
+              break;
+        }
 
-		auto dataModificationIter = ++activeDataModifications.begin();
-		for (; dataModificationIter != activeDataModifications.end(); ++dataModificationIter) {
-			if (dataModificationIter->Id == notification.DataModificationId)
-				break;
-		}
+        if (dataModificationIter == activeDataModifications.end())
+          return Failure_Storage_Data_Modification_Not_Found;
 
-		if (dataModificationIter == activeDataModifications.end())
-			return Failure_Storage_Data_Modification_Not_Found;
-
-		return ValidationResult::Success;
-	})
+        return ValidationResult::Success;
+    })
 }}

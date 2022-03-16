@@ -60,4 +60,13 @@ namespace catapult { namespace test {
 
 		return unresolved;
 	}
+
+	Key Xor(const Key& address) {
+		auto i = 0u;
+		Key unresolved;
+		for (auto byte : address)
+			unresolved[i++] = byte ^ 0xFF;
+
+		return unresolved;
+	}
 }}

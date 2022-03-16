@@ -102,16 +102,16 @@ namespace catapult { namespace observers {
         }
     }
 
-    TEST(TEST_CLASS, DataModificationApproval_Commit) {
-        // Arrange:
-        CacheValues values;
-        const auto driveKey = test::GenerateRandomByteArray<Key>();
-        values.InitialBcDriveEntry = CreateInitialEntry(driveKey);
-        values.ExpectedBcDriveEntry = CreateExpectedEntry(driveKey, values.InitialBcDriveEntry.activeDataModifications());
-
-        // Assert
-        RunTest(NotifyMode::Commit, values, Current_Height);
-    }
+//    TEST(TEST_CLASS, DataModificationApproval_Commit) {
+//        // Arrange:
+//        CacheValues values;
+//        const auto driveKey = test::GenerateRandomByteArray<Key>();
+//        values.InitialBcDriveEntry = CreateInitialEntry(driveKey);
+//        values.ExpectedBcDriveEntry = CreateExpectedEntry(driveKey, values.InitialBcDriveEntry.activeDataModifications());
+//
+//        // Assert
+//        RunTest(NotifyMode::Commit, values, Current_Height);
+//    }
 
     TEST(TEST_CLASS, DataModificationApproval_Rollback) {
         // Arrange:

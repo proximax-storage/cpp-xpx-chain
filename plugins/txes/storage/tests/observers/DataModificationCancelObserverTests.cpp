@@ -70,13 +70,13 @@ namespace catapult { namespace observers {
         }
     }
     
-    TEST(TEST_CLASS, DataModificationCancel_Commit) {
-        // Arrange:
-        BcDriveValues values;
-
-        // Assert
-        RunTest(NotifyMode::Commit, values, Current_Height);
-    }
+//    TEST(TEST_CLASS, DataModificationCancel_Commit) {
+//        // Arrange:
+//        BcDriveValues values;
+//
+//        // Assert
+//        RunTest(NotifyMode::Commit, values, Current_Height);
+//    }
 
     TEST(TEST_CLASS, DataModificationCancel_Rollback) {
         // Arrange:

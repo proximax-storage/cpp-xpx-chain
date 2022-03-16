@@ -220,13 +220,13 @@ namespace catapult { namespace plugins {
 			builder
 				.add(observers::CreatePrepareDriveObserver(pReplicatorKeyCollector, pDriveQueue))
 				.add(observers::CreateDownloadChannelObserver())
-				.add(observers::CreateDataModificationObserver())
+				.add(observers::CreateDataModificationObserver(pReplicatorKeyCollector, pDriveQueue))
 				.add(observers::CreateDataModificationApprovalObserver())
 				.add(observers::CreateDataModificationApprovalDownloadWorkObserver())
 				.add(observers::CreateDataModificationApprovalUploadWorkObserver())
 				.add(observers::CreateDataModificationApprovalRefundObserver())
 				.add(observers::CreateDataModificationCancelObserver())
-				.add(observers::CreateDriveClosureObserver())
+				.add(observers::CreateDriveClosureObserver(pDriveQueue))
 				.add(observers::CreateReplicatorOnboardingObserver(pDriveQueue))
 				.add(observers::CreateReplicatorOffboardingObserver(pDriveQueue))
 				.add(observers::CreateDownloadPaymentObserver())
@@ -238,8 +238,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateStreamFinishObserver())
 				.add(observers::CreateStreamPaymentObserver())
 				.add(observers::CreateStartDriveVerificationObserver(state, driveKeyCollector))
-				.add(observers::CreateEndDriveVerificationObserver())
-				.add(observers::CreateShardsUpdateObserver())
+				.add(observers::CreateEndDriveVerificationObserver(pReplicatorKeyCollector, pDriveQueue))
 				.add(observers::CreatePeriodicStoragePaymentObserver())
 				.add(observers::CreatePeriodicDownloadChannelPaymentObserver());
 		});

@@ -57,24 +57,26 @@ namespace catapult { namespace plugins {
 			static std::vector<model::EntityType> GetTransactionTypes() {
 				return {
 					model::Entity_Type_Mosaic_Definition,
-					model::Entity_Type_Mosaic_Supply_Change
+					model::Entity_Type_Mosaic_Supply_Change,
+					model::Entity_Type_Mosaic_Modify_Levy,
+					model::Entity_Type_Mosaic_Remove_Levy
 				};
 			}
 
 			static std::vector<std::string> GetCacheNames() {
-				return { "MosaicCache" };
+				return { "MosaicCache", "MosaicLevyCache" };
 			}
 
 			static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
-				return { ionet::PacketType::Mosaic_State_Path };
+				return { ionet::PacketType::Mosaic_State_Path, ionet::PacketType::Levy_State_Path };
 			}
 
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
-				return { ionet::PacketType::Mosaic_Infos };
+				return { ionet::PacketType::Mosaic_Infos, ionet::PacketType::Levy_Infos };
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {
-				return { "MOSAIC C" };
+				return { "MOSAIC C", "LEVY C" };
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
@@ -91,19 +93,26 @@ namespace catapult { namespace plugins {
 					"MosaicPropertiesValidator",
 					"MosaicTransferValidator",
 					"MaxMosaicsBalanceTransferValidator",
+					"LevyTransferValidator",
 					"MosaicAvailabilityValidator",
 					"MosaicDurationValidator",
 					"MaxMosaicsSupplyChangeValidator",
-					"MosaicSupplyChangeAllowedValidator"
+					"MosaicSupplyChangeAllowedValidator",
+					"ModifyLevyValidator",
+					"RemoveLevyValidator"
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
 					"MosaicRentalFeeObserver",
+					"LevyBalanceTransferObserver",
 					"MosaicTouchObserver",
+					"PruneLevyHistoryObserver",
 					"MosaicDefinitionObserver",
 					"MosaicSupplyChangeObserver",
+					"ModifyLevyObserver",
+					"RemoveLevyObserver"
 				};
 			}
 

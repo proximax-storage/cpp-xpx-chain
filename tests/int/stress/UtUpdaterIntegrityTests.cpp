@@ -27,6 +27,8 @@
 #include "tests/test/nodeps/TestConstants.h"
 #include <boost/thread.hpp>
 #include <plugins/txes/transfer/src/config/TransferConfiguration.h>
+#include "plugins/txes/mosaic/src/config/MosaicConfiguration.h"
+#include "tests/test/nodeps/MijinConstants.h"
 
 namespace catapult { namespace chain {
 
@@ -45,8 +47,19 @@ namespace catapult { namespace chain {
 				{ "maxMessageSize", "0" },
 				{ "maxMosaicsSize", "512" },
 				} }}));
-			const_cast<model::NetworkConfiguration&>(config.Network).template InitPluginConfiguration<config::TransferConfiguration>();
+			
+			const_cast<model::NetworkConfiguration&>(config.Network).Plugins.emplace(PLUGIN_NAME(mosaic), utils::ConfigurationBag({ { "", {
+                { "maxMosaicsPerAccount", "123" },
+                { "maxMosaicDuration", "456d" },
+                { "maxMosaicDivisibility", "6" },
 
+                { "mosaicRentalFeeSinkPublicKey", test::Mosaic_Rental_Fee_Sink_Public_Key },
+                { "mosaicRentalFee", "500" },
+                {"levyEnabled", "true"}
+            } } }));
+			
+			const_cast<model::NetworkConfiguration&>(config.Network).template InitPluginConfiguration<config::TransferConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).template InitPluginConfiguration<config::MosaicConfiguration>();
 			return test::CreatePluginManagerWithRealPlugins(config);
 		}
 

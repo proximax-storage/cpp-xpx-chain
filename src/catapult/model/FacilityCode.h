@@ -69,6 +69,8 @@ namespace catapult { namespace model {
 		SuperContract = 0x60,
 		/// Levy facility code.
 		Levy = 0x4F,
+		/// NEM's Metadata facility code.
+		Metadata_v2 = 0x3F,
 		/// Committee facility code.
 		Committee = 0x61,
 		/// Storage facility code.

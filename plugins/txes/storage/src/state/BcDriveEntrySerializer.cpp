@@ -82,14 +82,6 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void SaveCumulativeUploadSizes(io::OutputStream& output, const SizeMap& cumulativeUploadSizes) {
-			io::Write16(output, utils::checked_cast<size_t, uint16_t>(cumulativeUploadSizes.size()));
-			for (const auto& pair : cumulativeUploadSizes) {
-				io::Write(output, pair.first);
-				io::Write64(output, pair.second);
-			}
-		}
-
 		void SaveReplicators(io::OutputStream& output, const utils::SortedKeySet& replicators) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(replicators.size()));
 			for (const auto& replicatorKey : replicators)

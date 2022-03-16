@@ -33,8 +33,8 @@ namespace catapult { namespace observers {
 		using ObserverTestContext = test::ObserverTestContextT<test::MultisigCacheFactory>;
 		using Notification = model::ModifyMultisigSettingsNotification<1>;
 
-		auto CreateNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta) {
-			return Notification(signer, minRemovalDelta, minApprovalDelta);
+		auto CreateNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta, uint8_t modificationCount) {
+			return Notification(signer, minRemovalDelta, minApprovalDelta, modificationCount);
 		}
 
 		struct MultisigSettings {
@@ -86,7 +86,7 @@ namespace catapult { namespace observers {
 			static void AssertTestWithSettings(const TestSettings& removal, const TestSettings& approval) {
 				// Arrange:
 				auto signer = test::GenerateRandomByteArray<Key>();
-				auto notification = CreateNotification(signer, removal.Delta, approval.Delta);
+				auto notification = CreateNotification(signer, removal.Delta, approval.Delta, 0);
 
 				// Act + Assert:
 				RunTest(
@@ -105,7 +105,7 @@ namespace catapult { namespace observers {
 			static void AssertTestWithSettings(const TestSettings& removal, const TestSettings& approval) {
 				// Arrange:
 				auto signer = test::GenerateRandomByteArray<Key>();
-				auto notification = CreateNotification(signer, removal.Delta, approval.Delta);
+				auto notification = CreateNotification(signer, removal.Delta, approval.Delta, 0);
 
 				// Act + Assert:
 				RunTest(
@@ -153,7 +153,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ObserverIgnoresNotificationWhenAccountIsUnknown_ModeCommit) {
 		// Arrange:
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateNotification(signer, -1, -2);
+		auto notification = CreateNotification(signer, -1, -2, 0);
 
 		auto pObserver = CreateModifyMultisigSettingsObserver();
 		ObserverTestContext context(NotifyMode::Commit, Height(777));
@@ -169,7 +169,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ObserverAddsUnknownAccountToCacheAndProcessesDeltas_ModeRollback) {
 		// Arrange:
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateNotification(signer, -1, -2);
+		auto notification = CreateNotification(signer, -1, -2, 1);
 
 		auto pObserver = CreateModifyMultisigSettingsObserver();
 		ObserverTestContext context(NotifyMode::Rollback, Height(777));
@@ -190,6 +190,22 @@ namespace catapult { namespace observers {
 		EXPECT_EQ(1u, multisigEntry.minRemoval());
 		EXPECT_TRUE(multisigEntry.cosignatories().empty());
 		EXPECT_TRUE(multisigEntry.multisigAccounts().empty());
+	}
+
+	TEST(TEST_CLASS, ObserverAddsUnknownAccountToCacheAndProcessesDeltas_ModeRollback_ZeroModifications) {
+		// Arrange:
+		auto signer = test::GenerateRandomByteArray<Key>();
+		auto notification = CreateNotification(signer, -1, -2, 0);
+
+		auto pObserver = CreateModifyMultisigSettingsObserver();
+		ObserverTestContext context(NotifyMode::Rollback, Height(777));
+
+		// Act:
+		test::ObserveNotification(*pObserver, notification, context);
+
+		// Assert:
+		const auto& multisigCache = context.cache().sub<cache::MultisigCache>();
+		EXPECT_EQ(0u, multisigCache.size());
 	}
 
 	// endregion

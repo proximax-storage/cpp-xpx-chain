@@ -36,6 +36,24 @@ namespace catapult {
 
 namespace catapult { namespace chain {
 
+	/// Result of a transaction update.
+	struct UtUpdateResult {
+		/// Possible update types.
+		enum class UpdateType {
+			/// New transaction.
+			New,
+
+			/// Invalid transaction.
+			Invalid,
+
+			/// Neutral transaction (e.g. cache is full).
+			Neutral
+		};
+
+		/// Type of the update.
+		UpdateType Type;
+	};
+
 	/// Provides batch updating of an unconfirmed transactions cache.
 	class UtUpdater {
 	public:
@@ -88,7 +106,7 @@ namespace catapult { namespace chain {
 
 	public:
 		/// Updates this cache by applying new transaction infos in \a utInfos.
-		void update(const std::vector<model::TransactionInfo>& utInfos);
+		std::vector<UtUpdateResult> update(const std::vector<model::TransactionInfo>& utInfos);
 
 		/// Updates this cache by applying new transaction infos in \a utInfos and
 		/// removing transactions with hashes in \a confirmedTransactionHashes.

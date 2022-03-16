@@ -45,6 +45,7 @@ namespace catapult { namespace cache {
 		SuperContract,
 		Operation,
 		MosaicLevy,
+		Metadata_v2,
 		Committee,
 		BcDrive,
 		DownloadChannel,

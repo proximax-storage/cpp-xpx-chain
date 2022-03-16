@@ -18,19 +18,19 @@ namespace catapult { namespace builders {
         struct TransactionProperties {
         public:
             TransactionProperties()
-                    : DriveKey(Key{})
-                      , DataModificationId(Hash256{})
-                      , FileStructureCdi(Hash256{})
-                      , FileStructureSize(0)
-                      , MetaFilesSize(0)
-                      , UsedDriveSize(0)
-                      , JudgingKeysCount(0)
-                      , OverlappingKeysCount(0)
-                      , JudgedKeysCount(0)
-                      , PublicKeys({})
-                      , Signatures({})
-                      , PresentOpinions({})
-                      , Opinions({}) {}
+				: DriveKey(Key{})
+				, DataModificationId(Hash256{})
+				, FileStructureCdi(Hash256{})
+				, FileStructureSize(0)
+				, MetaFilesSize(0)
+				, UsedDriveSize(0)
+				, JudgingKeysCount(0)
+				, OverlappingKeysCount(0)
+				, JudgedKeysCount(0)
+				, PublicKeys({})
+				, Signatures({})
+				, PresentOpinions({})
+				, Opinions({}) {}
 
         public:
             Key DriveKey;
@@ -247,7 +247,6 @@ namespace catapult { namespace builders {
         };
         auto expectedProperties = TransactionProperties();
         expectedProperties.PublicKeys = publicKeys;
-        expectedProperties.JudgingKeysCount = publicKeys.size();
 
         std::vector<Signature> signatures{test::GenerateRandomByteArray<Signature>()};
         expectedProperties.Signatures = signatures;
@@ -262,9 +261,9 @@ namespace catapult { namespace builders {
         // Assert:
         AssertCanBuildTransaction<TTraits>(additionalSize, expectedProperties, [&](auto& builder) {
             builder.setPublicKeys(std::move(publicKeys));
+			builder.setJudgingKeysCount(signatures.size());
+			builder.setJudgedKeysCount(signatures.size());
             builder.setSignatures(std::move(signatures));
-            builder.setJudgingKeysCount(signatures.size());
-            builder.setJudgedKeysCount(signatures.size());
             builder.setPresentOpinions(std::move(presentOpinions));
         });
     }

@@ -18,6 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <tests/test/other/MutableBlockchainConfiguration.h>
+#include <tests/test/NamespaceCacheTestUtils.h>
 #include "src/plugins/MosaicAliasTransactionPlugin.h"
 #include "src/model/MosaicAliasTransaction.h"
 #include "tests/test/AliasTransactionPluginTests.h"
@@ -31,7 +33,12 @@ namespace catapult { namespace plugins {
 	// region TransactionPlugin
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicAlias, 1, 1,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicAlias, std::shared_ptr<config::BlockchainConfigurationHolder>, 1, 1,)
+
+		auto CreateConfiguration() {
+			test::MutableBlockchainConfiguration config;
+			return config.ToConst();
+		}
 
 		struct NotificationTraits {
 		public:
@@ -50,14 +57,15 @@ namespace catapult { namespace plugins {
 		};
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , Entity_Type_Alias_Mosaic)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , Entity_Type_Alias_Mosaic,
+													 config::CreateMockConfigurationHolder(CreateConfiguration()))
 
 	DEFINE_ALIAS_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, MosaicAlias, NotificationTraits)
 
 	PLUGIN_TEST(CanExtractMosaicRequiredNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<model::MosaicRequiredNotification<1>> mosaicSub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
 
 		typename TTraits::TransactionType transaction;
 		transaction.Size = sizeof(transaction);

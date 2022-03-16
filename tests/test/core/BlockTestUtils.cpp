@@ -83,7 +83,7 @@ namespace catapult { namespace test {
 				size_t numCosignatures = 0,
 				VersionType version = model::Block::Current_Version) {
 			model::PreviousBlockContext context;
-			auto pBlock = model::CreateBlock(context, Network_Identifier, options.Signer.publicKey(), transactions.get());
+			auto pBlock = model::CreateBlock(context, Network_Identifier, options.Signer.publicKey(), transactions.get(), version);
 			RandomizeBlock(*pBlock);
 
 			if (Height() != options.Height)

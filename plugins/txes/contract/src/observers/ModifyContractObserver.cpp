@@ -113,7 +113,8 @@ namespace catapult { namespace observers {
 			MODIFY_CONTRACTORS(Verifier)
 
 			auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
-			auto& multisigEntry = multisigCache.find(notification.Multisig).get();
+			auto multisigEntryIter = multisigCache.find(notification.Multisig);
+		  	auto& multisigEntry = multisigEntryIter.get();
 			float verifierCount = contractFacade.verifierCount();
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::ContractConfiguration>();
 			multisigEntry.setMinApproval(ceil(verifierCount * pluginConfig.MinPercentageOfApproval / 100));

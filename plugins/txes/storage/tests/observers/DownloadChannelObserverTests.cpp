@@ -99,17 +99,17 @@ namespace catapult { namespace observers {
         }
     }
 
-    TEST(TEST_CLASS, DownloadChannel_Commit) {
-        // Arrange:
-        CacheValues values;
-        auto driveKey = test::GenerateRandomByteArray<Key>();
-        auto activeDownloadId = test::GenerateRandomByteArray<Hash256>();
-        values.BcDriveEntry = CreateBcDriveEntry(driveKey, Replicator_Count);
-        values.ExpectedDownloadChannelEntry = CreateExpectedDownloadChannelEntry(activeDownloadId, values.BcDriveEntry);
-
-        // Assert:
-        RunTest(NotifyMode::Commit, values, Current_Height);
-    }
+//    TEST(TEST_CLASS, DownloadChannel_Commit) {
+//        // Arrange:
+//        CacheValues values;
+//        auto driveKey = test::GenerateRandomByteArray<Key>();
+//        auto activeDownloadId = test::GenerateRandomByteArray<Hash256>();
+//        values.BcDriveEntry = CreateBcDriveEntry(driveKey, Replicator_Count);
+//        values.ExpectedDownloadChannelEntry = CreateExpectedDownloadChannelEntry(activeDownloadId, values.BcDriveEntry);
+//
+//        // Assert:
+//        RunTest(NotifyMode::Commit, values, Current_Height);
+//    }
 
     TEST(TEST_CLASS, DownloadChannel_Rollback) {
         // Arrange:

@@ -17,6 +17,9 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamDownloadApprovalTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "downloadChannelId" << ToBinary(transaction.DownloadChannelId);
 		builder << "approvalTrigger" << ToBinary(transaction.ApprovalTrigger);
+		builder << "judgingKeysCount" << static_cast<int8_t>(transaction.JudgingKeysCount);
+		builder << "overlappingKeysCount" << static_cast<int8_t>(transaction.OverlappingKeysCount);
+		builder << "judgedKeysCount" << static_cast<int8_t>(transaction.JudgedKeysCount);
 
 		// Streaming PublicKeys
 		auto publicKeysArray = builder << "publicKeys" << bson_stream::open_array;
@@ -35,13 +38,9 @@ namespace catapult { namespace mongo { namespace plugins {
 		signaturesArray << bson_stream::close_array;
 
 		// Streaming PresentOpinions
-		auto presentOpinionsArray = builder << "presentOpinions" << bson_stream::open_array;
-		auto pBlock = transaction.PresentOpinionsPtr();
 		const auto totalJudgedKeysCount = transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
 		const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
-		for (auto i = 0; i < presentOpinionByteCount; ++i, ++pBlock)
-			presentOpinionsArray << static_cast<int8_t>(*pBlock);
-		presentOpinionsArray << bson_stream::close_array;
+		builder << "presentOpinions" << ToBinary(transaction.PresentOpinionsPtr(), presentOpinionByteCount);
 
 		// Streaming Opinions
 		auto opinionsArray = builder << "opinions" << bson_stream::open_array;

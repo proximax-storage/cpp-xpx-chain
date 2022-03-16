@@ -11,11 +11,15 @@
 
 namespace catapult { namespace observers {
 
+	using Notification = model::DriveClosureNotification<1>;
+	using DrivePriority = std::pair<Key, double>;
+	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 	using BigUint = boost::multiprecision::uint128_t;
 
-    DEFINE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>, ([](const auto& notification, ObserverContext& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
+	DECLARE_OBSERVER(DriveClosure, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue) {
+		return MAKE_OBSERVER(DriveClosure, Notification, ([pDriveQueue](const Notification& notification, const ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
 
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		auto driveIter = driveCache.find(notification.DriveKey);
@@ -63,34 +67,55 @@ namespace catapult { namespace observers {
 	  		auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / paymentInterval).template convert_to<uint64_t>());
 	  		driveState.Balances.debit(storageMosaicId, payment, context.Height);
 	  		replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);
-		}
+	  	}
 
 	  	// The Drive is Removed, so we should make removal in linked list
 	  	auto& queueCache = context.Cache.sub<cache::QueueCache>();
 	  	QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
 	  	queueAdapter.remove(driveEntry.entryKey());
 
-		// Returning the rest to the drive owner
-		const auto refundAmount = driveState.Balances.get(streamingMosaicId);
+	  	// Returning the rest to the drive owner
+	  	const auto refundAmount = driveState.Balances.get(streamingMosaicId);
 	  	driveState.Balances.debit(streamingMosaicId, refundAmount, context.Height);
 	  	driveOwnerState.Balances.credit(currencyMosaicId, refundAmount, context.Height);
 
-		// Simulate publishing of finish download for all download channels
-		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
-		for (const auto& [key, _]: driveEntry.downloadShards()) {
-			auto downloadIter = downloadCache.find(key);
-			auto& downloadEntry = downloadIter.get();
-			if (!downloadEntry.isCloseInitiated()) {
-				downloadEntry.setFinishPublished(true);
-				downloadEntry.downloadApprovalInitiationEvent() = notification.TransactionHash;
-			}
-		}
+	  	// Removing the drive from queue, if necessary
+	  	const auto replicators = driveEntry.replicators();
+	  	if (replicators.size() < driveEntry.replicatorCount()) {
+	  		DriveQueue originalQueue = *pDriveQueue;
+	  		DriveQueue newQueue;
+	  		while (!originalQueue.empty()) {
+	  			const auto drivePriorityPair = originalQueue.top();
+	  			const auto& driveKey = drivePriorityPair.first;
+	  			originalQueue.pop();
+
+	  			if (driveKey != notification.DriveKey)
+	  				newQueue.push(drivePriorityPair);
+	  		}
+	  		*pDriveQueue = std::move(newQueue);
+	  	}
+
+	  	// Simulate publishing of finish download for all download channels
+	  	auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+	  	for (const auto& [key, _]: driveEntry.downloadShards()) {
+	  		auto downloadIter = downloadCache.find(key);
+	  		auto& downloadEntry = downloadIter.get();
+	  		if (!downloadEntry.isCloseInitiated()) {
+	  			downloadEntry.setFinishPublished(true);
+	  			downloadEntry.downloadApprovalInitiationEvent() = notification.TransactionHash;
+	  		}
+	  	}
 
 		// Removing the drive from caches
-		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-		for (const auto& replicatorKey : driveEntry.replicators())
-			replicatorCache.find(replicatorKey).get().drives().erase(notification.DriveKey);
+	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+	  	for (const auto& replicatorKey : driveEntry.replicators())
+	  		replicatorCache.find(replicatorKey).get().drives().erase(notification.DriveKey);
 
-		driveCache.remove(notification.DriveKey);
-	}));
+	  	driveCache.remove(notification.DriveKey);
+
+	  	// Assigning drive's former replicators to queued drives
+	  	std::seed_seq seed(notification.TransactionHash.begin(), notification.TransactionHash.end());
+	  	std::mt19937 rng(seed);
+	  	utils::AssignReplicatorsToQueuedDrives(replicators, pDriveQueue, context, rng);
+	}))
 }}

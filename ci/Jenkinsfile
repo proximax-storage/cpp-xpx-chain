@@ -16,7 +16,7 @@ pipeline {
     }
 
 	stages {
-		stage ('Build') {
+	  stage ('Build') {
             steps {
                 echo 'Building catapult-server inside a docker'
                 script {
@@ -38,27 +38,27 @@ pipeline {
                     }
                 }
             }
-		}
+        }
 
         stage('Unit Test') {
             steps {
-                script {
-                    def buildImage = docker.image("${BUILD_IMAGE}")
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                        docker.image("mongo:4.4").run("-p 27017:27017") // mongo is required for unit test
-                        // to use buildImage with host's network stack
-                        buildImage.inside("--net host") {
-                            sh """
-                                echo 'Running unit tests'
-                                # Disable exit on non 0
-                                set +e
-                                cd _build
-                                # pipe to true to prevent exit failure
-                                ctest -T Test --no-compress-output || true
-                            """
-                        }
+              script {
+                def buildImage = docker.image("${BUILD_IMAGE}")
+                docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                    docker.image("mongo:4.4").run("-p 27017:27017") // mongo is required for unit test
+                    // to use buildImage with host's network stack
+                    buildImage.inside("--net host") {
+                        sh """
+                            echo 'Running unit tests'
+                            # Disable exit on non 0
+                            set +e
+                            cd _build
+                            # pipe to true to prevent exit failure
+                            ctest -T Test --no-compress-output || true
+                        """
                     }
                 }
+              }
             }
             post {
                 always {

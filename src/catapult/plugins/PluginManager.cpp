@@ -329,6 +329,10 @@ namespace catapult { namespace plugins {
 		m_pStorageState = pState;
 	}
 
+	bool PluginManager::isStorageStateSet() {
+		return !!m_pStorageState;
+	}
+
 	state::StorageState& PluginManager::storageState() const {
 		if (!m_pStorageState)
 			CATAPULT_THROW_RUNTIME_ERROR("storage state not set");

@@ -31,7 +31,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DownloadChannel, model::DownloadNotification<1>)();
 
 	/// Observes changes triggered by data modification notifications.
-	DECLARE_OBSERVER(DataModification, model::DataModificationNotification<1>)();
+	DECLARE_OBSERVER(DataModification, model::DataModificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by data modification approval notifications.
 	DECLARE_OBSERVER(DataModificationApproval, model::DataModificationApprovalNotification<1>)();
@@ -52,7 +52,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by drive closure notifications.
-	DECLARE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>)();
+	DECLARE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by replicator offboarding notifications.
 	DECLARE_OBSERVER(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
@@ -85,10 +85,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(StartDriveVerification, model::BlockNotification<2>)(state::StorageStateImpl& state, const cache::DriveKeyCollector& driveKeyCollector);
 
 	/// Observes changes triggered by end drive verification notifications.
-	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)();
-
-	/// Observes changes triggered by shards update notifications.
-	DECLARE_OBSERVER(ShardsUpdate, model::ShardsUpdateNotification<1>)();
+	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by block
 	DECLARE_OBSERVER(PeriodicStoragePayment, model::BlockNotification<2>)();

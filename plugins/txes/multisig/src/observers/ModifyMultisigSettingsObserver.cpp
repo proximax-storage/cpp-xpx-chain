@@ -37,6 +37,9 @@ namespace catapult { namespace observers {
 		if (isNotContained && observers::NotifyMode::Commit == context.Mode)
 			return;
 
+		if (isNotContained && observers::NotifyMode::Rollback == context.Mode && notification.ModificationsCount == 0)
+			return;
+
 		// note that in case of a rollback the multisig entry needs to be restored to the original state, else the multisig settings
 		// validator will reject the (invalid) min approval / removal
 		if (isNotContained)

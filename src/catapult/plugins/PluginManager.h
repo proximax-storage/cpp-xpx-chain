@@ -267,6 +267,9 @@ namespace catapult { namespace plugins {
 		/// Sets a storage state.
 		void setStorageState(const std::shared_ptr<state::StorageState>& pState);
 
+		/// Returns whether the storage state set or not.
+		bool isStorageStateSet();
+
 		/// Gets storage state.
 		state::StorageState& storageState() const;
 

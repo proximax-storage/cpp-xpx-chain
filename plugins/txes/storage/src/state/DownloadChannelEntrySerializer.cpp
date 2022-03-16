@@ -18,6 +18,12 @@ namespace catapult { namespace state {
 				io::Write(output, key);
 		}
 
+		void SaveShardReplicators(io::OutputStream& output, const utils::SortedKeySet& shardReplicators) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(shardReplicators.size()));
+			for (const auto& replicatorKey : shardReplicators)
+				io::Write(output, replicatorKey);
+		}
+
 		void SaveCumulativePayments(io::OutputStream& output, const std::map<Key, Amount>& cumulativePayments) {
 			io::Write16(output, cumulativePayments.size());
 			for (const auto& pair : cumulativePayments) {
@@ -32,6 +38,15 @@ namespace catapult { namespace state {
 				Key key;
 				io::Read(input, key);
 				listOfPublicKeys.push_back(key);
+			}
+		}
+
+		void LoadShardReplicators(io::InputStream& input, utils::SortedKeySet& shardReplicators) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Key replicatorKey;
+				io::Read(input, replicatorKey);
+				shardReplicators.insert(replicatorKey);
 			}
 		}
 
@@ -66,6 +81,7 @@ namespace catapult { namespace state {
 		}
 
 		SaveListOfPublicKeys(output, downloadEntry.listOfPublicKeys());
+		SaveShardReplicators(output, downloadEntry.shardReplicators());
 		SaveCumulativePayments(output, downloadEntry.cumulativePayments());
 	}
 
@@ -110,6 +126,7 @@ namespace catapult { namespace state {
 		}
 
 		LoadListOfPublicKeys(input, entry.listOfPublicKeys());
+		LoadShardReplicators(input, entry.shardReplicators());
 		LoadCumulativePayments(input, entry.cumulativePayments());
 
 		return entry;

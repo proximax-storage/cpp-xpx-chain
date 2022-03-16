@@ -1,7 +1,5 @@
 pipeline {
-	agent {
-        label 'catapult-build-node'
-    }
+	agent none
 
     // using the Timestamper plugin we can add timestamps to the console log
     options {
@@ -12,129 +10,69 @@ pipeline {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
         IMAGE = "proximax-sirius-chain"
-        BUILD_IMAGE = "proximax-catapult-server-dependencies-build-image:v1.1-buster"
     }
 
 	stages {
-		stage ('Build') {
-            steps {
-                echo 'Building catapult-server inside a docker'
-                script {
-                    def buildImage = docker.image("${BUILD_IMAGE}")
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                        buildImage.inside {
-                            sh """
-                                echo 'Building catapult-server'
-                                rm -rf _build
-                                mkdir _build 
-                                cd _build
-                                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" .. 
-                                make publish 
-                                make \
-                                catapult.mongo.plugins.accountlink \
-                                catapult.mongo.plugins.aggregate \
-				                catapult.mongo.plugins.committee \
-                                catapult.mongo.plugins.config \
-                                catapult.mongo.plugins.contract \
-                                catapult.mongo.plugins.exchange \
-                                catapult.mongo.plugins.lockhash \
-                                catapult.mongo.plugins.locksecret \
-                                catapult.mongo.plugins.metadata \
-                                catapult.mongo.plugins.mosaic \
-                                catapult.mongo.plugins.multisig \
-                                catapult.mongo.plugins.namespace \
-                                catapult.mongo.plugins.operation \
-                                catapult.mongo.plugins.property \
-                                catapult.mongo.plugins.service \
-                                catapult.mongo.plugins.supercontract \
-                                catapult.mongo.plugins.transfer \
-                                catapult.mongo.plugins.upgrade \
-                                catapult.plugins.accountlink \
-                                catapult.plugins.aggregate \
-				                catapult.plugins.committee \
-                                catapult.plugins.config \
-                                catapult.plugins.contract \
-                                catapult.plugins.exchange \
-                                catapult.plugins.hashcache \
-                                catapult.plugins.hashcache.cache \
-                                catapult.plugins.lockhash \
-                                catapult.plugins.locksecret \
-                                catapult.plugins.metadata \
-                                catapult.plugins.mosaic \
-                                catapult.plugins.multisig \
-                                catapult.plugins.namespace \
-                                catapult.plugins.operation \
-                                catapult.plugins.property \
-                                catapult.plugins.service \
-                                catapult.plugins.signature \
-                                catapult.plugins.supercontract \
-                                catapult.plugins.transfer \
-                                catapult.plugins.upgrade \
-                                extension.addressextraction \
-                                extension.diagnostics \
-                                extension.eventsource \
-				                extension.fastfinality \
-                                extension.filespooling \
-                                extension.harvesting \
-                                extension.hashcache \
-                                extension.mongo \
-                                extension.networkheight \
-                                extension.nodediscovery \
-                                extension.packetserver \
-                                extension.partialtransaction \
-                                extension.pluginhandlers \
-                                extension.sync \
-                                extension.syncsource \
-                                extension.timesync \
-                                extension.transactionsink \
-                                extension.unbondedpruning \
-                                extension.zeromq \
-                                sirius.bc \
-                                catapult.broker \
-                                catapult.recovery \
-                                catapult.tools.address \
-                                catapult.tools.benchmark \
-                                catapult.tools.health \
-                                catapult.tools.nemgen \
-                                catapult.tools.nemgen.blockhashes \
-                                catapult.tools.network \
-                                catapult.tools.statusgen \
-                                -j4
-                                cd ..
-                                ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
-                            """    
+        stage ('Multi-architecture Docker Build and Push'){
+            when {
+                tag 'v*-bullseye'
+            }
+            parallel {
+                stage('Build on AMD64'){
+                    agent {
+                        label 'docker-c5-xlarge'
+                    }
+                    steps {
+                        echo 'Build and Publish Image'
+                        script {
+                            def newImage = docker.build("${IMAGE}","-f ./scripts/catapult-server-docker/DockerfileDebian .")
+                            docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                                newImage.push("${env.GIT_BRANCH}-amd64") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
+                            }
                         }
                     }
-                    archiveArtifacts "_build/bin/*"
                 }
-            }
-		}
-        
-        stage('Build and Publish Image') {
-            when {
-                tag 'v*-buster'
-            }
-            steps {
-                echo 'Publish Image'
-                script {
-                    sh 'cp ci/debian/.dockerignore .'
-                    def newImage = docker.build("${IMAGE}","-f ./ci/debian/Dockerfile .")
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                        newImage.push("${env.GIT_BRANCH}") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
+
+                stage('Build on ARM64'){
+                    agent {
+                        label 'docker-c6g-xlarge'
+                    }
+
+                    steps {
+                        echo 'Build and Publish Image'
+                        script {
+                            def newImage = docker.build("${IMAGE}","-f ./scripts/catapult-server-docker/DockerfileDebian .")
+                            docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                                newImage.push("${env.GIT_BRANCH}-arm64") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
+                            }
+                        }
                     }
                 }
             }
-            post {
-                success {
-                    slackSend channel: '#devops',
-                        color: 'good',
-                        message: "Release with Tag *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\nPushed Docker image ${IMAGE}:${env.GIT_BRANCH}"
+        }
+        stage('Build Manifest and Push'){
+            agent {
+                label 'docker-c6g-xlarge'
+            }
+            steps {
+                script {
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                        sh """
+                            docker manifest create ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH} ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}-arm64 ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}-amd64
+                            docker manifest push ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}
+                        """
+                    }
                 }
             }
         }
     }
 
     post {
+        success {
+            slackSend channel: '#devops',
+                color: 'good',
+                message: "Branch *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\nPushed Docker images ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}"
+        }
         failure {
             slackSend channel: '#devops',
               color: 'bad',

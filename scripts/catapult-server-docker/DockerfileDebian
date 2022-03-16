@@ -1,4 +1,4 @@
-FROM debian:unstable-20200607
+FROM debian:bullseye-20210816
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
   software-properties-common \
@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libczmq-dev \
   libsasl2-dev \
   libssl-dev \
+  libboost-dev \
   libboost-atomic-dev \
   libboost-date-time-dev \
   libboost-regex-dev \
@@ -26,32 +27,32 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libboost-stacktrace-dev \
   libboost-random-dev \
   libmongoc-dev \
-  libzstd-dev
+  libzstd-dev \
+  googletest \
+  libzmq3-dev
 
 WORKDIR /usr/local/src
 
 # Install cppzmq
-RUN curl -OL https://github.com/zeromq/cppzmq/archive/v4.4.1.tar.gz && \
-  tar xzf v4.4.1.tar.gz && \
-  cd cppzmq-4.4.1 && \
+RUN curl -OL https://github.com/zeromq/cppzmq/archive/v4.7.1.tar.gz && \
+  tar xzf v4.7.1.tar.gz && \
+  cd cppzmq-4.7.1 && \
   mkdir build && \
   cd build && \
-  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. && \
+  cmake -DCPPZMQ_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. && \
   make -j4 && \
   make install
 
 # Install mongo-cxx
-RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/archive/r3.4.0.tar.gz && \
-  tar xzf r3.4.0.tar.gz && \
-  cd mongo-cxx-driver-r3.4.0 && \
-  sed -i 's/kvp("maxAwaitTimeMS", count)/kvp("maxAwaitTimeMS", static_cast<int64_t>(count))/' src/mongocxx/options/change_stream.cpp && \
-  cd build && \
+RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.2/mongo-cxx-driver-r3.6.2.tar.gz && \
+  tar -xzf mongo-cxx-driver-r3.6.2.tar.gz && \
+  cd mongo-cxx-driver-r3.6.2/build && \
   cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBSONCXX_POLY_USE_BOOST=1 .. && \
   make -j4 && \
   make install
 
 # Clean Downloads
-RUN rm v4.4.1.tar.gz r3.4.0.tar.gz
+RUN rm v4.7.1.tar.gz mongo-cxx-driver-r3.6.2.tar.gz
 
 # Copy local directory to image
 COPY . /catapult
@@ -61,11 +62,7 @@ RUN cd /catapult \
     && rm -rf _build \
     && mkdir _build && cd _build \
     && cmake -DCMAKE_BUILD_TYPE=Release  \
-
-    -DCMAKE_CXX_FLAGS="-pthread -O3" \
-    -DPYTHON_EXECUTABLE=/usr/bin/python3 \
-    -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so \
-    -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so \
+    -DCMAKE_CXX_FLAGS="-pthread" \
     .. \
     && make publish \
     && make \
@@ -79,15 +76,16 @@ RUN cd /catapult \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
     catapult.mongo.plugins.metadata \
+    catapult.mongo.plugins.metadata_nem \
     catapult.mongo.plugins.mosaic \
     catapult.mongo.plugins.multisig \
     catapult.mongo.plugins.namespace \
     catapult.mongo.plugins.operation \
     catapult.mongo.plugins.property \
-    catapult.mongo.plugins.transfer \
-    catapult.mongo.plugins.upgrade \
     catapult.mongo.plugins.service \
     catapult.mongo.plugins.supercontract \
+    catapult.mongo.plugins.transfer \
+    catapult.mongo.plugins.upgrade \
     catapult.plugins.accountlink \
     catapult.plugins.aggregate \
     catapult.plugins.committee \
@@ -99,16 +97,17 @@ RUN cd /catapult \
     catapult.plugins.lockhash \
     catapult.plugins.locksecret \
     catapult.plugins.metadata \
+    catapult.plugins.metadata_nem \
     catapult.plugins.mosaic \
     catapult.plugins.multisig \
     catapult.plugins.namespace \
     catapult.plugins.operation \
     catapult.plugins.property \
-    catapult.plugins.signature \
-    catapult.plugins.transfer \
-    catapult.plugins.upgrade \
     catapult.plugins.service \
+    catapult.plugins.signature \
     catapult.plugins.supercontract \
+    catapult.plugins.transfer \
+    catapult.plugins.upgrade \    
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \
@@ -150,16 +149,32 @@ RUN /catapult/scripts/release-script/copyDeps.sh /catapult/_build/bin/ /deps
 #------------------------
 # Actual target image which only contains the required binaries
 #------------------------
-FROM debian
+FROM debian:bullseye-slim
 
 # copy required libs
 COPY --from=0 /deps /
 
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  libboost-atomic-dev \
+  libboost-date-time-dev \
+  libboost-regex-dev \
+  libboost-system-dev \
+  libboost-timer-dev \
+  libboost-chrono-dev \
+  libboost-log-dev \
+  libboost-thread-dev \
+  libboost-filesystem-dev \
+  libboost-program-options-dev \
+  libboost-stacktrace-dev \
+  libboost-random-dev \
+  libzstd-dev \
+  librocksdb6.11 
+
 # copy executables
-COPY --from=0 /catapult/_build/bin /catapult/bin
+COPY --from=0 /catapult/_build/bin /sirius/bin
 
 # sirius.bc as the entry point
-ENTRYPOINT ["/catapult/bin/sirius.bc"]
+ENTRYPOINT ["/sirius/bin/sirius.bc"]
 
 # set the config directory by default
-CMD ["/catapultconfig"]
+CMD ["/chainconfig"]

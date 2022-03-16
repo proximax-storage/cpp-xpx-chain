@@ -144,7 +144,7 @@ namespace catapult { namespace state {
             pData += Key_Size;
             memcpy(pData, &entry.capacity(), sizeof(Amount));
             pData += sizeof(Amount);
-            
+
             uint16_t drivesCount = utils::checked_cast<size_t, uint16_t>(entry.drives().size());
             memcpy(pData, &drivesCount, sizeof(uint16_t));
             pData += sizeof(uint16_t);
