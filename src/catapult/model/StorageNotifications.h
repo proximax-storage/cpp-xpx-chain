@@ -1073,6 +1073,7 @@ namespace catapult { namespace model {
 	public:
 		explicit EndDriveVerificationNotification(
 				const Key& driveKey,
+				const Hash256& seed,
 				const Hash256& verificationTrigger,
 				const uint16_t shardId,
 				const uint16_t keyCount,
@@ -1082,6 +1083,7 @@ namespace catapult { namespace model {
 				const uint8_t* pOpinions)
 				: Notification(Notification_Type, sizeof(EndDriveVerificationNotification<1>))
 				, DriveKey(driveKey)
+				, Seed(seed)
 				, VerificationTrigger(verificationTrigger)
 				, ShardId(shardId)
 				, KeyCount(keyCount)
@@ -1094,6 +1096,9 @@ namespace catapult { namespace model {
 	public:
 		/// Key of the drive.
 		Key DriveKey;
+
+		/// Seed for the Random
+		Hash256 Seed;
 
 		/// The hash of block that initiated the Verification.
 		Hash256 VerificationTrigger;

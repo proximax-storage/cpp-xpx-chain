@@ -22,7 +22,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		builder << "metaFileSizeBytes" << static_cast<int64_t>(transaction.MetaFilesSizeBytes);
 		builder << "usedDriveSize" << static_cast<int64_t>(transaction.UsedDriveSizeBytes);
 		builder << "judgingKeysCount" << static_cast<int8_t>(transaction.JudgingKeysCount);
-		builder << "overlappingKeysCount" << static_cast<int8_t>(transaction.OverlappingKey
+		builder << "overlappingKeysCount" << static_cast<int8_t>(transaction.OverlappingKeysCount);
 		builder << "judgedKeysCount" << static_cast<int8_t>(transaction.JudgedKeysCount);
 
 		// Streaming PublicKeys
