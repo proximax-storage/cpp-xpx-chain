@@ -202,7 +202,6 @@ namespace catapult { namespace builders {
         };
         auto expectedProperties = TransactionProperties();
         expectedProperties.PublicKeys = publicKeys;
-        expectedProperties.JudgingKeysCount = publicKeys.size();
 
         std::vector<Signature> signatures{test::GenerateRandomByteArray<Signature>()};
         expectedProperties.Signatures = signatures;
@@ -217,9 +216,9 @@ namespace catapult { namespace builders {
         // Assert:
         AssertCanBuildTransaction<TTraits>(additionalSize, expectedProperties, [&](auto& builder) {
             builder.setPublicKeys(std::move(publicKeys));
+			builder.setJudgingKeysCount(signatures.size());
+			builder.setJudgedKeysCount(signatures.size());
             builder.setSignatures(std::move(signatures));
-            builder.setJudgingKeysCount(signatures.size());
-            builder.setJudgedKeysCount(signatures.size());
             builder.setPresentOpinions(std::move(presentOpinions));
         });
     }

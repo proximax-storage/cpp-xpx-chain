@@ -18,9 +18,9 @@ namespace catapult { namespace config {
 		MockBlockchainConfigurationHolder(const BlockchainConfiguration& config);
 
 	public:
-		const BlockchainConfiguration& Config(const Height&) override;
-		const BlockchainConfiguration& Config() override;
-		const BlockchainConfiguration& ConfigAtHeightOrLatest(const Height&) override;
+		const BlockchainConfiguration& Config(const Height&) const override;
+		const BlockchainConfiguration& Config() const override;
+		const BlockchainConfiguration& ConfigAtHeightOrLatest(const Height&) const override;
 	};
 
 	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder();

@@ -9,8 +9,11 @@
 #include "catapult/config/ImmutableConfiguration.h"
 #include "catapult/model/Mosaic.h"
 #include "catapult/model/NotificationSubscriber.h"
+#include "catapult/observers/ObserverContext.h"
+#include "src/cache/ReplicatorKeyCollector.h"
 #include "src/state/BcDriveEntry.h"
 #include <queue>
+#include <random>
 
 namespace catapult { namespace utils {
 
@@ -56,4 +59,37 @@ namespace catapult { namespace utils {
 
 	/// Calculates priority value of \a driveEntry. Used for the queue of drives with missing replicators.
 	double CalculateDrivePriority(const state::BcDriveEntry&, const uint16_t&);
+
+	/// Performs actual offboarding of \a offboardingReplicators from the drive with \a driveKey;
+	/// updates drive's data modification and download shards to keep them valid.
+	void OffboardReplicatorsFromDrive(
+			const Key&,
+			const std::set<Key>&,
+			const observers::ObserverContext&,
+			std::mt19937&);
+
+	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, DriveQueueComparator>;
+
+	/// Updates download and data modification shards of the \a driveEntry
+	/// after a new replicator with \a replicatorKey has been added to the drive.
+	void UpdateShardsOnAddedReplicator(
+			state::BcDriveEntry&,
+			const Key&,
+			const observers::ObserverContext&,
+			std::mt19937&);
+
+	/// Assigns acceptable replicators from \a pKeyCollector to the drive with \a driveKey.
+	void PopulateDriveWithReplicators(
+			const Key&,
+			const std::shared_ptr<cache::ReplicatorKeyCollector>&,
+			const std::shared_ptr<DriveQueue>&,
+			const observers::ObserverContext&,
+			std::mt19937&);
+
+	/// Assigns each replicator from \a replicatorKeys to drives according to \a pDriveQueue.
+	void AssignReplicatorsToQueuedDrives(
+			const std::set<Key>&,
+			const std::shared_ptr<DriveQueue>&,
+			const observers::ObserverContext&,
+			std::mt19937&);
 }}

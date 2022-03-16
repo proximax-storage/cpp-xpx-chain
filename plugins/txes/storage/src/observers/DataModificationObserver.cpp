@@ -5,33 +5,39 @@
 **/
 
 #include "Observers.h"
+#include "src/utils/StorageUtils.h"
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(DataModification, model::DataModificationNotification<1>, [](const model::DataModificationNotification<1>& notification, ObserverContext& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModification)");
+	using Notification = model::DataModificationNotification<1>;
+	using DrivePriority = std::pair<Key, double>;
+	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-	  	auto driveIter = driveCache.find(notification.DriveKey);
-	  	auto& driveEntry = driveIter.get();
+	DECLARE_OBSERVER(DataModification, Notification)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue) {
+		return MAKE_OBSERVER(DataModification, Notification, ([pKeyCollector, pDriveQueue](const Notification& notification, const ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModification)");
 
-		auto& activeDataModifications = driveEntry.activeDataModifications();
-		activeDataModifications.emplace_back(state::ActiveDataModification(
-			notification.DataModificationId,
-			notification.Owner,
-			notification.DownloadDataCdi,
-			notification.UploadSize
-		));
+			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+			auto driveIter = driveCache.find(notification.DriveKey);
+			auto& driveEntry = driveIter.get();
 
-		// Removing replicators that are queued for offboarding
-	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-		for (const auto& replicatorKey : driveEntry.offboardingReplicators()) {
-			auto replicatorIter = replicatorCache.find(replicatorKey);
-			auto& replicatorEntry = replicatorIter.get();
-			replicatorEntry.drives().erase(notification.DriveKey);
-			driveEntry.replicators().erase(replicatorKey);
-		}
-	  	driveEntry.offboardingReplicators().clear();
-	});
+			auto& activeDataModifications = driveEntry.activeDataModifications();
+			activeDataModifications.emplace_back(state::ActiveDataModification(
+				notification.DataModificationId,
+				notification.Owner,
+				notification.DownloadDataCdi,
+				notification.UploadSize
+			));
+
+			std::seed_seq seed(notification.DataModificationId.begin(), notification.DataModificationId.end());
+			std::mt19937 rng(seed);
+
+		  	const auto offboardingReplicators = driveEntry.offboardingReplicators();
+
+			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
+		  	utils::PopulateDriveWithReplicators(notification.DriveKey, pKeyCollector, pDriveQueue, context, rng);
+		  	utils::AssignReplicatorsToQueuedDrives(offboardingReplicators, pDriveQueue, context, rng);
+		}))
+	}
 }}

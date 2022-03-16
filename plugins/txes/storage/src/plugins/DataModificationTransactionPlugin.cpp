@@ -47,9 +47,6 @@ namespace catapult { namespace plugins {
 							config,
 							utils::SwapOperation::Buy);
 
-					auto hashSeed = CalculateHash(transaction, config.GenerationHash);
-					sub.notify(ShardsUpdateNotification<1>(transaction.DriveKey, hashSeed));
-
 					break;
 				}
 

@@ -23,6 +23,13 @@ namespace catapult { namespace mongo { namespace plugins {
 			array << bson_stream::close_array;
 		}
 
+		void StreamShardReplicators(bson_stream::document& builder, const utils::SortedKeySet& shardReplicators) {
+			auto array = builder << "shardReplicators" << bson_stream::open_array;
+			for (const auto& replicatorKey : shardReplicators)
+				array << ToBinary(replicatorKey);
+			array << bson_stream::close_array;
+		}
+
 		void StreamCumulativePayments(bson_stream::document& builder, const std::map<Key, Amount>& cumulativePayments) {
 			auto array = builder << "cumulativePayments" << bson_stream::open_array;
 			for (const auto& pair : cumulativePayments) {
@@ -47,6 +54,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "downloadApprovalCount" << static_cast<int16_t>(entry.downloadApprovalCount());
 
 		StreamListOfPublicKeys(builder, entry.listOfPublicKeys());
+		StreamShardReplicators(builder, entry.shardReplicators());
 		StreamCumulativePayments(builder, entry.cumulativePayments());
 
 		return doc
@@ -68,6 +76,14 @@ namespace catapult { namespace mongo { namespace plugins {
 				DbBinaryToModelArray(key, doc);
 
 				listOfPublicKeys.push_back(key);
+			}
+		}
+
+		void ReadShardReplicators(utils::SortedKeySet& shardReplicators, const bsoncxx::array::view& dbShardReplicators) {
+			for (const auto& dbReplicator : dbShardReplicators) {
+				Key replicatorKey;
+				DbBinaryToModelArray(replicatorKey, dbReplicator.get_binary());
+				shardReplicators.emplace(std::move(replicatorKey));
 			}
 		}
 
@@ -104,6 +120,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		entry.setDownloadApprovalCount(static_cast<uint16_t>(dbDownloadChannelEntry["downloadApprovalCount"].get_int32()));
 
 		ReadListOfPublicKeys(entry.listOfPublicKeys(), dbDownloadChannelEntry["listOfPublicKeys"].get_array().value);
+		ReadShardReplicators(entry.shardReplicators(), dbDownloadChannelEntry["shardReplicators"].get_array().value);
 		ReadCumulativePayments(entry.cumulativePayments(), dbDownloadChannelEntry["cumulativePayments"].get_array().value);
 
 		return entry;

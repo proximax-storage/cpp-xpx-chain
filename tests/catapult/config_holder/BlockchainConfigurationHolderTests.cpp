@@ -172,13 +172,13 @@ namespace catapult { namespace config {
 				, NetworkConfig(test::MutableBlockchainConfiguration().ToConst())
 			{}
 
-			BlockchainConfiguration& Config(const Height& height) override {
+			const BlockchainConfiguration& Config(const Height& height) const override {
 				ConfigCalledAtHeight = height;
 				return NetworkConfig;
 			}
 
 		public:
-			Height ConfigCalledAtHeight;
+			mutable Height ConfigCalledAtHeight;
 			BlockchainConfiguration NetworkConfig;
 		};
 	}
@@ -223,19 +223,19 @@ namespace catapult { namespace config {
 				, NetworkConfig(test::MutableBlockchainConfiguration().ToConst())
 			{}
 
-			BlockchainConfiguration& Config(const Height&) override {
+			const BlockchainConfiguration& Config(const Height&) const override {
 				ConfigAtHeightCalled = true;
 				return NetworkConfig;
 			}
 
-			BlockchainConfiguration& Config() override {
+			const BlockchainConfiguration& Config() const override {
 				ConfigCalled = true;
 				return NetworkConfig;
 			}
 
 		public:
-			bool ConfigAtHeightCalled = false;
-			bool ConfigCalled = false;
+			mutable bool ConfigAtHeightCalled = false;
+			mutable bool ConfigCalled = false;
 			BlockchainConfiguration NetworkConfig;
 		};
 	}

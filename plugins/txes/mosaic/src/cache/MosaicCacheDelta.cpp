@@ -32,7 +32,7 @@ namespace catapult { namespace cache {
 
 		void UpdateExpiryMap(HeightBasedMosaicIdsMap& mosaicIdsByExpiryHeight, const state::MosaicEntry& entry) {
 			// in case the mosaic is not eternal, update the expiry height based mosaic ids map
-			const auto& definition = entry.definition();
+			const auto &definition = entry.definition();
 			if (definition.isEternal())
 				return;
 
@@ -61,9 +61,9 @@ namespace catapult { namespace cache {
 
 	void BasicMosaicCacheDelta::remove(MosaicId mosaicId) {
 		auto iter = m_pEntryById->find(mosaicId);
-		const auto* pEntry = iter.get();
+		const auto *pEntry = iter.get();
 		if (!!pEntry) {
-			const auto& definition = pEntry->definition();
+			const auto &definition = pEntry->definition();
 			if (!definition.isEternal())
 				RemoveIdentifierWithGroup(*m_pMosaicIdsByExpiryHeight, GetExpiryHeight(definition), mosaicId);
 		}

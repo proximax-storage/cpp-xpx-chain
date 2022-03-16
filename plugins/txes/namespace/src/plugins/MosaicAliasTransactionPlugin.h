@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/plugins.h"
 #include <memory>
+#include <catapult/config_holder/BlockchainConfigurationHolder.h>
 
 namespace catapult { namespace model { class TransactionPlugin; } }
 
@@ -28,5 +29,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates a mosaic alias transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateMosaicAliasTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateMosaicAliasTransactionPlugin(const std::shared_ptr<config::BlockchainConfigurationHolder>&);
 }}

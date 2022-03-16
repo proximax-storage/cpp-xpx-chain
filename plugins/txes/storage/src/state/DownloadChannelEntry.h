@@ -83,6 +83,16 @@ namespace catapult { namespace state {
 			return m_listOfPublicKeys;
 		}
 
+		/// Gets replicators of the download shard.
+		const utils::SortedKeySet& shardReplicators() const {
+			return m_shardReplicators;
+		}
+
+		/// Gets replicators of the download shard.
+		utils::SortedKeySet& shardReplicators() {
+			return m_shardReplicators;
+		}
+
 		/// Gets replicators' cumulative payment amounts
 		const std::map<Key, Amount>& cumulativePayments() const {
 			return m_cumulativePayments;
@@ -99,6 +109,7 @@ namespace catapult { namespace state {
 		uint64_t m_downloadSize; // In Mbytes
 		uint16_t m_downloadApprovalCount;
 		std::vector<Key> m_listOfPublicKeys;
+		utils::SortedKeySet m_shardReplicators;
 		std::map<Key, Amount> m_cumulativePayments;
 	};
 

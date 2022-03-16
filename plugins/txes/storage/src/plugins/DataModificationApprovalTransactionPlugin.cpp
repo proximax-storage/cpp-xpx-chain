@@ -28,7 +28,8 @@ namespace catapult { namespace plugins {
 											+ sizeof(transaction.FileStructureSize)
 											+ sizeof(transaction.MetaFilesSize)
 											+ sizeof(transaction.UsedDriveSize);
-				auto* pCommonData = sub.mempool().malloc<uint8_t>(commonDataSize);
+				auto* const pCommonDataBegin = sub.mempool().malloc<uint8_t>(commonDataSize);
+				auto* pCommonData = pCommonDataBegin;
 				utils::WriteToByteArray(pCommonData, transaction.DriveKey);
 				utils::WriteToByteArray(pCommonData, transaction.DataModificationId);
 				utils::WriteToByteArray(pCommonData, transaction.FileStructureCdi);
@@ -42,7 +43,7 @@ namespace catapult { namespace plugins {
 						transaction.OverlappingKeysCount,
 						transaction.JudgedKeysCount,
 						sizeof(uint64_t),
-						pCommonData,
+						pCommonDataBegin,
 						transaction.PublicKeysPtr(),
 						transaction.SignaturesPtr(),
 						transaction.PresentOpinionsPtr(),

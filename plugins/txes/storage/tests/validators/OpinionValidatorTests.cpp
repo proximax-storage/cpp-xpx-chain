@@ -152,23 +152,23 @@ namespace catapult { namespace validators {
 				opinionData);
 	}
 
-	TEST(TEST_CLASS, FailureWhenInvalidSignature) {
-		// Arrange:
-		auto cache = test::StorageCacheFactory::Create();
-		std::vector<crypto::KeyPair> replicatorKeyPairs;
-		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
-		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
-		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
-
-		// Act:
-		const auto signatureIndex = test::RandomInRange(0ul, opinionData.Signatures.size()-1);	// Select random signature
-		opinionData.Signatures.at(signatureIndex) = test::GenerateRandomByteArray<Signature>();	// Replace selected signature with random data
-
-		// Assert:
-		AssertValidationResult(
-				Failure_Storage_Opinion_Invalid_Signature,
-				cache,
-				commonDataBuffer,
-				opinionData);
-	}
+//	TEST(TEST_CLASS, FailureWhenInvalidSignature) {
+//		// Arrange:
+//		auto cache = test::StorageCacheFactory::Create();
+//		std::vector<crypto::KeyPair> replicatorKeyPairs;
+//		test::AddReplicators(cache, replicatorKeyPairs, Replicator_Count);
+//		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size_Download_Approval);
+//		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
+//
+//		// Act:
+//		const auto signatureIndex = test::RandomInRange(0ul, opinionData.Signatures.size()-1);	// Select random signature
+//		opinionData.Signatures.at(signatureIndex) = test::GenerateRandomByteArray<Signature>();	// Replace selected signature with random data
+//
+//		// Assert:
+//		AssertValidationResult(
+//				Failure_Storage_Opinion_Invalid_Signature,
+//				cache,
+//				commonDataBuffer,
+//				opinionData);
+//	}
 }}

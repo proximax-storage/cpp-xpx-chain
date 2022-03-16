@@ -24,18 +24,22 @@ namespace catapult { namespace observers {
 
 		  	driveEntry.offboardingReplicators().emplace(notification.PublicKey);
 
-		  	DriveQueue originalQueue = *pDriveQueue;
-		  	DriveQueue newQueue;
-		  	newQueue.emplace(notification.DriveKey, utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount));
-		  	while (!originalQueue.empty()) {
-			  	const auto drivePriorityPair = originalQueue.top();
-			  	const auto& driveKey = drivePriorityPair.first;
-			  	originalQueue.pop();
+			if (driveEntry.replicators().size() < driveEntry.replicatorCount()) {
+				DriveQueue originalQueue = *pDriveQueue;
+				DriveQueue newQueue;
+				newQueue.emplace(
+						notification.DriveKey,
+						utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount));
+				while (!originalQueue.empty()) {
+					const auto drivePriorityPair = originalQueue.top();
+					const auto& driveKey = drivePriorityPair.first;
+					originalQueue.pop();
 
-			  	if (driveKey != notification.DriveKey)
-					newQueue.push(drivePriorityPair);
-		  	}
-			*pDriveQueue = std::move(newQueue);
+					if (driveKey != notification.DriveKey)
+						newQueue.push(drivePriorityPair);
+				}
+				*pDriveQueue = std::move(newQueue);
+			}
 
 			auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
 			auto replicatorIter = replicatorCache.find(notification.PublicKey);

@@ -18,6 +18,7 @@ namespace catapult { namespace config {
                         {
                             "replicator",
                             {
+                                    {"host", "127.0.0.1"},
                                     {"port", "5000"},
                                     {"transactionTimeout", "1s"},
                                     {"storageDirectory", "/tmp/storage"},
@@ -42,6 +43,7 @@ namespace catapult { namespace config {
 
             static void AssertZero(const storage::StorageConfiguration& config) {
                 // Assert:
+                EXPECT_EQ("", config.Host);
                 EXPECT_EQ("", config.Port);
                 EXPECT_EQ(utils::TimeSpan::FromHours(0), config.TransactionTimeout);
                 EXPECT_EQ("", config.StorageDirectory);
@@ -51,6 +53,7 @@ namespace catapult { namespace config {
 
             static void AssertCustom(const storage::StorageConfiguration& config) {
                 // Assert:
+                EXPECT_EQ("127.0.0.1", config.Host);
                 EXPECT_EQ("5000", config.Port);
                 EXPECT_EQ(utils::TimeSpan::FromSeconds(1), config.TransactionTimeout);
                 EXPECT_EQ("/tmp/storage", config.StorageDirectory);
