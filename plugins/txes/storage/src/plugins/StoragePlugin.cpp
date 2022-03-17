@@ -239,7 +239,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateStreamPaymentObserver())
 				.add(observers::CreateStartDriveVerificationObserver(state, driveKeyCollector))
 				.add(observers::CreateEndDriveVerificationObserver(pReplicatorKeyCollector, pDriveQueue))
-				.add(observers::CreatePeriodicStoragePaymentObserver())
+				.add(observers::CreatePeriodicStoragePaymentObserver(pDriveQueue))
 				.add(observers::CreatePeriodicDownloadChannelPaymentObserver());
 		});
 	}

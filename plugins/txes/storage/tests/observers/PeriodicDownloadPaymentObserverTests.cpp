@@ -13,9 +13,13 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PeriodicDownloadChannelPaymentObserverTests
 
+	using DrivePriority = std::pair<Key, double>;
+	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
+
 	DEFINE_COMMON_OBSERVER_TESTS(PeriodicDownloadChannelPayment,)
 
 	const auto billingPeriodSeconds = 20000;
+	const auto Drive_Queue = std::make_shared<DriveQueue>();
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -96,7 +100,7 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
             Notification notification({ { 1 } }, values.NotificationTime);
-            auto pObserver = CreatePeriodicStoragePaymentObserver();
+            auto pObserver = CreatePeriodicStoragePaymentObserver(Drive_Queue);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
