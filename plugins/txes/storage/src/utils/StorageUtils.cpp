@@ -233,9 +233,10 @@ namespace catapult { namespace utils {
 			shardKeys.insert(pair.first);
 
 		auto replicatorsSampleSource = driveEntry.replicators();
+		const auto replicatorsSize = replicatorsSampleSource.size();
 		replicatorsSampleSource.erase(replicatorKey); // Replicator cannot be a member of his own shard
 
-		if (driveEntry.replicators().size() <= pluginConfig.ShardSize + 1) {
+		if (replicatorsSize <= pluginConfig.ShardSize + 1) {
 			// Adding the new replicator to all existing shards
 			for (auto& pair : shardsMap) {
 				auto& shardsPair = pair.second;
@@ -248,7 +249,7 @@ namespace catapult { namespace utils {
 			}
 		} else {
 			// Selecting random shards to which the new replicator will be added
-			const auto sampleSize = pluginConfig.ShardSize * shardsMap.size() / (shardsMap.size() - 1);
+			const auto sampleSize = pluginConfig.ShardSize * replicatorsSize / (replicatorsSize - 1);
 			std::set<Key> sampledShardKeys;
 			std::sample(shardKeys.begin(), shardKeys.end(),
 						std::inserter(sampledShardKeys, sampledShardKeys.end()), sampleSize, rng);
