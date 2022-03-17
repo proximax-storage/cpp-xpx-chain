@@ -131,6 +131,6 @@ git clone https://github.com/proximax-storage/cpp-xpx-chain.git
 cd cpp-xpx-chain
 
 mkdir _build && cd _build
-cmake -DBOOST_ROOT=~/boost-build-1.71.0 -DCMAKE_BUILD_TYPE=Release
+cmake -DBOOST_ROOT=~/boost-build-1.71.0 -DCMAKE_BUILD_TYPE=Release .. -B .
 make publish && make -j 4
 ```

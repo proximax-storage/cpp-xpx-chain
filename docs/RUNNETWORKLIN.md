@@ -15,7 +15,7 @@ After building cpp-xpx-chain, copy the configuration templates from the root fol
 
 ```sh
 cd cpp-xpx-chain/_build
-cp ../resources/* resources/
+cp -r ../resources/* resources/
 cp ../tools/nemgen/resources/mijin-test.properties resources/
 ```
 

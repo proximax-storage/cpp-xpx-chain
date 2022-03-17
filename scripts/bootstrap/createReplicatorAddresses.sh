@@ -17,3 +17,6 @@ ip address change dev eth23 192.168.20.23
 
 ip link add eth24 type dummy
 ip address change dev eth24 192.168.20.24
+
+ip link add eth30 type dummy
+ip address change dev eth30 192.168.20.30
