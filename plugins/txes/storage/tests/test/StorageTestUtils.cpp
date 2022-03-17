@@ -142,7 +142,7 @@ namespace catapult { namespace test {
 				shard.insert(replicatorKey);
 			}
 			auto channelId = GenerateRandomByteArray<Hash256>();
-			entry.downloadShards()[channelId] = shard;
+			entry.downloadShards().insert(channelId);
 		}
 
 		for (int i = 0; i < replicatorCount; i++) {

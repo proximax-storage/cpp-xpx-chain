@@ -37,8 +37,12 @@ namespace catapult { namespace observers {
 	  	senderState.Balances.debit(streamingMosaicId, streamingRefundAmount, context.Height);
 	  	recipientState.Balances.credit(currencyMosaicId, streamingRefundAmount, context.Height);
 
+	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		for (const auto& replicatorKey: downloadChannelEntry.shardReplicators()) {
+			auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+			replicatorEntry.downloadChannels().erase(notification.DownloadChannelId);
+		}
 		downloadChannelCache.remove(notification.DownloadChannelId);
-		// TODO: Remove channel from Replicator's Cache
 
 		// TODO: Add currency refunding
 	})

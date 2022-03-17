@@ -147,8 +147,8 @@ namespace catapult { namespace utils {
 		if (replicators.size() <= pluginConfig.ShardSize) {
 			// If drive has no more than ShardSize replicators, then each one of them
 			// must be assigned to every download shard.
-			for (auto& pair : driveEntry.downloadShards()) {
-				auto downloadIter = downloadCache.find(pair.first);
+			for (const auto& id : driveEntry.downloadShards()) {
+				auto downloadIter = downloadCache.find(id);
 				auto& downloadEntry = downloadIter.get();
 				auto& cumulativePayments = downloadEntry.cumulativePayments();
 				for (const auto& key : replicators)
@@ -156,15 +156,18 @@ namespace catapult { namespace utils {
 						cumulativePayments.emplace(key, Amount(0));
 				// Offboarded replicators' cumulative payments remain in cumulativePayments
 				downloadEntry.shardReplicators() = replicators;
-				pair.second = replicators;
+				for (const auto& replicatorKey: downloadEntry.shardReplicators()) {
+					auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+					replicatorEntry.downloadChannels().insert(id);
+				}
 			}
 		} else {
 			std::vector<Key> sampleSource(replicators.begin(), replicators.end());
-			for (auto& pair : driveEntry.downloadShards()) {
-				auto downloadIter = downloadCache.find(pair.first);
+			for (const auto& id : driveEntry.downloadShards()) {
+				auto downloadIter = downloadCache.find(id);
 				auto& downloadEntry = downloadIter.get();
 				auto& cumulativePayments = downloadEntry.cumulativePayments();
-				const Key downloadChannelKey = Key(pair.first.array());
+				const Key downloadChannelKey = Key(id.array());
 				const auto comparator = [&downloadChannelKey](const Key& a, const Key& b) { return (a ^ downloadChannelKey) < (b ^ downloadChannelKey); };
 				std::sort(sampleSource.begin(), sampleSource.end(), comparator);
 				auto keyIter = sampleSource.begin();
@@ -172,7 +175,10 @@ namespace catapult { namespace utils {
 					if (!cumulativePayments.count(*keyIter))
 						cumulativePayments.emplace(*keyIter, Amount(0));
 				downloadEntry.shardReplicators() = std::set<Key>(sampleSource.begin(), keyIter);	// keyIter now points to the element past the (ShardSize)th
-				pair.second = std::set<Key>(sampleSource.begin(), keyIter);
+				for (const auto& replicatorKey: downloadEntry.shardReplicators()) {
+					auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+					replicatorEntry.downloadChannels().insert(id);
+				}
 			}
 		}
 	}
@@ -183,6 +189,7 @@ namespace catapult { namespace utils {
 			const observers::ObserverContext& context,
 			std::mt19937& rng) {
 		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
 		// Updating download shards
@@ -190,20 +197,25 @@ namespace catapult { namespace utils {
 			// If drive has no more than ShardSize replicators, then each one of them
 			// (except the onboarding replicator) is currently assigned to every download shard.
 			// Just add the onboarding replicator to every shard.
-			for (auto& pair : driveEntry.downloadShards()) {
-				pair.second.insert(replicatorKey);
-				auto downloadIter = downloadCache.find(pair.first);
+			for (const auto& id : driveEntry.downloadShards()) {
+				auto downloadIter = downloadCache.find(id);
 				auto& downloadEntry = downloadIter.get();
 				downloadEntry.shardReplicators().insert(replicatorKey);
 				downloadEntry.cumulativePayments().emplace(replicatorKey, Amount(0));
+				auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+				replicatorEntry.downloadChannels().insert(id);
 			}
 		} else {
-			for (auto& pair : driveEntry.downloadShards()) {
+			for (const auto& id : driveEntry.downloadShards()) {
 				// For every download shard, the new replicator key will either be
 				// - close enough to the download channel id (XOR-wise), replacing the most distant key of that shard, or
 				// - not close enough, leaving the download shard unchanged
-				const Key downloadChannelKey = Key(pair.first.array());
-				auto& driveShardKeys = pair.second;
+				const Key downloadChannelKey = Key(id.array());
+
+				auto downloadIter = downloadCache.find(id);
+				auto& downloadEntry = downloadIter.get();
+				auto& driveShardKeys = downloadEntry.shardReplicators();
+
 				auto mostDistantKeyIter = driveShardKeys.begin();
 				auto greatestDistance = *mostDistantKeyIter ^ downloadChannelKey;
 				for (auto replicatorKeyIter = ++driveShardKeys.begin(); replicatorKeyIter != driveShardKeys.end(); ++replicatorKeyIter) {
@@ -214,12 +226,15 @@ namespace catapult { namespace utils {
 					}
 				}
 				if ((replicatorKey ^ downloadChannelKey) < greatestDistance) {
-					driveShardKeys.erase(mostDistantKeyIter);
-					driveShardKeys.insert(replicatorKey);
-					auto downloadIter = downloadCache.find(pair.first);
-					auto& downloadEntry = downloadIter.get();
 					downloadEntry.shardReplicators().erase(*mostDistantKeyIter);
 					downloadEntry.shardReplicators().insert(replicatorKey);
+
+					auto& removedReplicatorEntry = replicatorCache.find(*mostDistantKeyIter).get();
+					removedReplicatorEntry.downloadChannels().erase(id);
+
+					auto& addedReplicatorEntry = replicatorCache.find(replicatorKey).get();
+					addedReplicatorEntry.downloadChannels().insert(id);
+
 					downloadEntry.cumulativePayments().emplace(replicatorKey, Amount(0));
 					// Cumulative payments of the removed replicator are kept in download channel entry
 				}

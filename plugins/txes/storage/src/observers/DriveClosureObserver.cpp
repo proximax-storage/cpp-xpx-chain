@@ -102,7 +102,7 @@ namespace catapult { namespace observers {
 
 					// Simulate publishing of finish download for all download channels
 					auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
-					for (const auto& [key, _] : driveEntry.downloadShards()) {
+					for (const auto& key: driveEntry.downloadShards()) {
 						auto downloadIter = downloadCache.find(key);
 						auto& downloadEntry = downloadIter.get();
 						if (!downloadEntry.isCloseInitiated()) {

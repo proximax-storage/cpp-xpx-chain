@@ -28,11 +28,11 @@ maxTransactionsPerBlock = 200'000
 
 enableUnconfirmedTransactionMinFeeValidation = true
 
-enableUndoBlock = true
-enableBlockSync = true
+enableUndoBlock = false
+enableBlockSync = false
 
-enableWeightedVoting = false
-committeeSize = 21
+enableWeightedVoting = true
+committeeSize = 3
 committeeApproval = 0.67
 committeePhaseTime = 5s
 minCommitteePhaseTime = 1s

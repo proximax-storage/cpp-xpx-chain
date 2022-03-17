@@ -130,10 +130,7 @@ namespace catapult { namespace state {
     	auto driveIter = pDriveCacheView->find(driveKey);
     	const auto& driveEntry = driveIter.get();
 
-		std::vector<Hash256> downloadChannels;
-		for (const auto& [key, _]: driveEntry.downloadShards()) {
-			downloadChannels.push_back(key);
-		}
+    	std::vector<Hash256> downloadChannels(driveEntry.downloadShards().begin(), driveEntry.downloadShards().end());
 		return downloadChannels;
 	}
 	std::set<Hash256> StorageStateImpl::getReplicatorChannelIds(const Key& replicatorKey) {

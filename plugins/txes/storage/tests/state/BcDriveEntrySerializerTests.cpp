@@ -164,10 +164,8 @@ namespace catapult { namespace state {
         void AssertDownloadShards(const DownloadShards& downloadShards, const uint8_t*& pData) {
         	ASSERT_EQ(downloadShards.size(), *reinterpret_cast<const uint16_t*>(pData));
         	pData += sizeof(uint16_t);
-        	for (const auto& [channelId, shard]: downloadShards) {
+        	for (const auto& channelId: downloadShards) {
 				ASSERT_EQ(channelId, *reinterpret_cast<const Hash256*>(pData));
-				pData += Hash256_Size;
-				AssertShard(shard, pData);
 			}
 		}
 
@@ -394,9 +392,8 @@ namespace catapult { namespace state {
         void SaveDownloadShards(const DownloadShards& shards, std::vector<uint8_t>& data) {
 			uint16_t shardsCount = utils::checked_cast<size_t, uint16_t>(shards.size());
 			CopyToVector(data, (const uint8_t *) &shardsCount, sizeof(uint16_t));
-			for (const auto& [key, shard] : shards) {
+			for (const auto& key : shards) {
 				CopyToVector(data, (const uint8_t*) &key, Hash256_Size);
-				SaveShard(shard, data);
 			}
 		}
 

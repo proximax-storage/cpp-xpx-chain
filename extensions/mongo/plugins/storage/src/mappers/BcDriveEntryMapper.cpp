@@ -102,11 +102,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		void StreamDownloadShards(bson_stream::document& builder, const state::DownloadShards& downloadShards) {
 			auto array = builder << "downloadShards" << bson_stream::open_array;
-			for (const auto& pair : downloadShards) {
+			for (const auto& id : downloadShards) {
 				bson_stream::document shardBuilder;
-				shardBuilder << "downloadChannelId" << ToBinary(pair.first);
-				StreamReplicators("replicators", shardBuilder, pair.second);
-				array << shardBuilder;
+				shardBuilder << "downloadChannelId" << ToBinary(id);
 			}
 
 			array << bson_stream::close_array;
@@ -262,8 +260,6 @@ namespace catapult { namespace mongo { namespace plugins {
 				auto doc = dbShard.get_document().view();
 				Hash256 downloadChannelId;
 				DbBinaryToModelArray(downloadChannelId, doc["downloadChannelId"].get_binary());
-				auto& shard = downloadShards[downloadChannelId];
-				ReadReplicators(shard, doc["replicators"].get_array().value);
 			}
 		}
 

@@ -118,7 +118,7 @@ namespace catapult { namespace state {
 	using ConfirmedStates = std::map<Key, Hash256>; // last approved root hash
 	using ConfirmedStorageInfos = std::map<Key, ConfirmedStorageInfo>;
 	using Shards = std::vector<std::vector<Key>>;
-	using DownloadShards = std::map<Hash256, std::set<Key>>;
+	using DownloadShards = std::set<Hash256>;
 	using ModificationShards = std::map<Key, ModificationShardInfo>;
 
 	struct Verification {

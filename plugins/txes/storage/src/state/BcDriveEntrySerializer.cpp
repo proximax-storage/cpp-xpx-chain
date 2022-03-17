@@ -91,11 +91,7 @@ namespace catapult { namespace state {
 		void SaveDownloadShards(io::OutputStream& output, const DownloadShards& downloadShards) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(downloadShards.size()));
 			for (const auto& shard : downloadShards) {
-				io::Write(output, shard.first);
-				io::Write8(output, utils::checked_cast<size_t, uint8_t>(shard.second.size()));
-				for (const auto& replicatorKey : shard.second) {
-					io::Write(output, replicatorKey);
-				}
+				io::Write(output, shard);
 			}
 		}
 
@@ -228,8 +224,6 @@ namespace catapult { namespace state {
 			while (count--) {
 				Hash256 downloadChannelId;
 				io::Read(input, downloadChannelId);
-				auto& shard = downloadShards[downloadChannelId];
-				LoadShard(input, shard);
 			}
 		}
 

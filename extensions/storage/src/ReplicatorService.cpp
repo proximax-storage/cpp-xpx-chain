@@ -159,7 +159,7 @@ namespace catapult { namespace storage {
         }
 
         void addDownloadChannel(const Hash256& channelId) {
-        	CATAPULT_LOG(debug) << "add download channel " << channelId.data();
+        	CATAPULT_LOG(debug) << "add download channel " << channelId;
 
 			if (m_alreadyAddedChannels.find(channelId) != m_alreadyAddedChannels.end()) {
 				CATAPULT_LOG( error ) << "Attempt To Add already added Download Channel " << channelId;

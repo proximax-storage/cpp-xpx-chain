@@ -32,6 +32,9 @@ namespace catapult { namespace observers {
 	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 	  	auto driveIter = driveCache.find(notification.DriveKey);
 	  	auto& driveEntry = driveIter.get();
+
+		driveEntry.downloadShards().insert(notification.Id);
+
 	  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 		const auto& replicators = driveEntry.replicators();
 	  	auto& shardReplicators = downloadEntry.shardReplicators();
@@ -41,7 +44,6 @@ namespace catapult { namespace observers {
 			for (const auto& key : replicators) {
 				shardReplicators.insert(key);
 				cumulativePayments.emplace(key, Amount(0));
-				driveEntry.downloadShards()[notification.Id].insert(key);
 			}
 		} else {
 			// Otherwise, add ShardSize closest replicators in terms of XOR distance to the download channel id.
@@ -53,8 +55,14 @@ namespace catapult { namespace observers {
 			for (auto i = 0u; i < pluginConfig.ShardSize; ++i, ++keyIter) {
 				shardReplicators.insert(*keyIter);
 				cumulativePayments.emplace(*keyIter, Amount(0));
-				driveEntry.downloadShards()[notification.Id].insert(*keyIter);
 			}
+		}
+
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		for (const auto& key: downloadEntry.shardReplicators()) {
+			auto replicatorIter = replicatorCache.find(key);
+			auto& replicatorEntry = replicatorIter.get();
+			replicatorEntry.downloadChannels().insert(notification.Id);
 		}
 
 		downloadCache.insert(downloadEntry);
