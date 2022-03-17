@@ -17,11 +17,13 @@ namespace catapult { namespace storage {
         class DefaultReplicatorEventHandler : public ReplicatorEventHandler {
         public:
             explicit DefaultReplicatorEventHandler(
+					boost::asio::io_context& context,
                     TransactionSender&& transactionSender,
                     state::StorageState& storageState,
                     TransactionStatusHandler& transactionStatusHandler,
                     const crypto::KeyPair& keyPair)
-				: m_transactionSender(std::move(transactionSender))
+				: m_context(context)
+				, m_transactionSender(std::move(transactionSender))
 				, m_storageState(storageState)
 				, m_transactionStatusHandler(transactionStatusHandler)
 				, m_keyPair(keyPair)
@@ -140,174 +142,182 @@ namespace catapult { namespace storage {
             void opinionHasBeenReceived(
                     sirius::drive::Replicator&,
                     const sirius::drive::ApprovalTransactionInfo& info) override {
-				CATAPULT_LOG(debug) << "modificationOpinionHasBeenReceived() " << int(info.m_opinions[0].m_replicatorKey[0]);
-				auto pReplicator = m_pReplicator.lock();
-				if (!pReplicator)
-					return;
+				boost::asio::post(m_context, [this, info] {
+				  CATAPULT_LOG(debug) << "modificationOpinionHasBeenReceived() " << int(info.m_opinions[0].m_replicatorKey[0]);
+				  auto pReplicator = m_pReplicator.lock();
+				  if (!pReplicator)
+				  	return;
 
-                if (!m_storageState.driveExists(info.m_driveKey)) {
-					CATAPULT_LOG(warning) << "received modification opinion for a non existing drive";
-					return;
-				}
+				  if (!m_storageState.driveExists(info.m_driveKey)) {
+				  	CATAPULT_LOG(warning) << "received modification opinion for a non existing drive";
+				  	return;
+				  }
 
-				if (info.m_opinions.size() != 1) {
-					CATAPULT_LOG(warning) << "received modification opinion with many opinions";
-					return;
-				}
+				  if (info.m_opinions.size() != 1) {
+				  	CATAPULT_LOG(warning) << "received modification opinion with many opinions";
+				  	return;
+				  }
 
-				bool sorted = true;
+				  bool sorted = true;
 
-				const auto& uploadLayout = info.m_opinions[0].m_uploadLayout;
-				for (int i = 0; i < uploadLayout.size() - 1 && sorted; i++) {
-					if (Key(uploadLayout[i + 1].m_key) < Key(uploadLayout[i].m_key)) {
-						sorted = false;
-					}
-				}
+				  const auto& uploadLayout = info.m_opinions[0].m_uploadLayout;
+				  for (int i = 0; i < uploadLayout.size() - 1 && sorted; i++) {
+				  	if (Key(uploadLayout[i + 1].m_key) < Key(uploadLayout[i].m_key)) {
+				  		sorted = false;
+				  	}
+				  }
 
-				if (!sorted) {
-					CATAPULT_LOG( error ) << "received unsorted modification opinion";
-					return;
-				}
+				  if (!sorted) {
+				  	CATAPULT_LOG( error ) << "received unsorted modification opinion";
+				  	return;
+				  }
 
-                const auto& opinion = info.m_opinions.at(0);
-                auto isValid = opinion.Verify(
-                		reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair),
-                        info.m_driveKey,
-                        info.m_modifyTransactionHash,
-                        info.m_rootHash,
-                        info.m_fsTreeFileSize,
-                        info.m_metaFilesSize,
-                        info.m_driveSize);
+				  const auto& opinion = info.m_opinions.at(0);
+				  auto isValid = opinion.Verify(
+				  		reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair),
+				  		info.m_driveKey,
+				  		info.m_modifyTransactionHash,
+				  		info.m_rootHash,
+				  		info.m_fsTreeFileSize,
+				  		info.m_metaFilesSize,
+				  		info.m_driveSize);
 
-                if (!isValid) {
-                    CATAPULT_LOG(warning) << "received opinion with incorrect signature";
-                    return;
-                }
+				  if (!isValid) {
+				  	CATAPULT_LOG(warning) << "received opinion with incorrect signature";
+				  	return;
+				  }
 
-                const auto pDriveEntry = m_storageState.getDrive(info.m_driveKey);
-                const auto& replicators = pDriveEntry.Replicators;
-                auto it = replicators.find(opinion.m_replicatorKey);
-                if (it == replicators.end()) {
-					CATAPULT_LOG( warning ) << "received opinion from not a replicator";
-					return;
-				}
+				  const auto pDriveEntry = m_storageState.getDrive(info.m_driveKey);
+				  const auto& replicators = pDriveEntry.Replicators;
+				  auto it = replicators.find(opinion.m_replicatorKey);
+				  if (it == replicators.end()) {
+				  	CATAPULT_LOG( warning ) << "received opinion from not a replicator";
+				  	return;
+				  }
 
-				if (pDriveEntry.DataModifications.empty()) {
-					CATAPULT_LOG( warning ) << "received opinion but empty active modifications";
-					return;
-				}
+				  if (pDriveEntry.DataModifications.empty()) {
+				  	CATAPULT_LOG( warning ) << "received opinion but empty active modifications";
+				  	return;
+				  }
 
-				auto expectedSumBytes = m_storageState.getDownloadWorkBytes(opinion.m_replicatorKey, info.m_driveKey);
+				  auto expectedSumBytes = m_storageState.getDownloadWorkBytes(opinion.m_replicatorKey, info.m_driveKey);
 
-                // TODO check also offboarded/excluded replicators
-				auto donatorShardExtended = m_storageState.getDonatorShardExtended(info.m_driveKey, opinion.m_replicatorKey);
+				  auto donatorShardExtended = m_storageState.getDonatorShardExtended(info.m_driveKey, opinion.m_replicatorKey);
 
-				uint64_t actualSumBytes = 0;
+				  uint64_t actualSumBytes = 0;
 
-				std::ostringstream s;
-				s << "shard ";
-				for (const auto& [key, _]: donatorShardExtended.m_actualShardMembers) {
-					s << key << " ";
-				}
+				  for (const auto& layout: opinion.m_uploadLayout) {
+				  	uint64_t initialCumulativeUploadSize;
+				  	if ( auto it = donatorShardExtended.m_actualShardMembers.find(layout.m_key); it != donatorShardExtended.m_actualShardMembers.end() ) {
+				  		initialCumulativeUploadSize = it->second;
+				  	}
+				  	else if (auto it = donatorShardExtended.m_formerShardMembers.find(layout.m_key); it != donatorShardExtended.m_formerShardMembers.end()) {
+				  		initialCumulativeUploadSize = it->second;
+				  	}
+				  	else if (layout.m_key == pDriveEntry.Owner.array()){
+				  		initialCumulativeUploadSize = donatorShardExtended.m_ownerUpload;
+				  	}
+				  	else {
+				  		CATAPULT_LOG( warning ) << "received modification opinion from incorrect replicator " << Key(layout.m_key);
+				  		return;
+				  	}
 
-				s << "owner " << pDriveEntry.Owner;
+				  	if (layout.m_uploadedBytes < initialCumulativeUploadSize) {
+				  		CATAPULT_LOG( warning ) << "received modification with negative increment";
+				  		return;
+				  	}
 
-				CATAPULT_LOG( error ) << s.str();
+				  	actualSumBytes += layout.m_uploadedBytes;
+				  }
 
-				for (const auto& layout: opinion.m_uploadLayout) {
-					uint64_t initialCumulativeUploadSize;
-					if ( auto it = donatorShardExtended.m_actualShardMembers.find(layout.m_key); it != donatorShardExtended.m_actualShardMembers.end() ) {
-						initialCumulativeUploadSize = it->second;
-					}
-					else if (auto it = donatorShardExtended.m_formerShardMembers.find(layout.m_key); it != donatorShardExtended.m_formerShardMembers.end()) {
-						initialCumulativeUploadSize = it->second;
-					}
-					else if (layout.m_key == pDriveEntry.Owner.array()){
-						initialCumulativeUploadSize = donatorShardExtended.m_ownerUpload;
-					}
-					else {
-						CATAPULT_LOG( warning ) << "received modification opinion from incorrect replicator " << Key(layout.m_key);
-						return;
-					}
+				  auto modificationIt = std::find_if(
+				  		pDriveEntry.DataModifications.begin(),
+				  		pDriveEntry.DataModifications.end(),
+				  		[&info](const auto& item) { return item.Id == info.m_modifyTransactionHash; }
+				  		);
 
-					if (layout.m_uploadedBytes < initialCumulativeUploadSize) {
-						CATAPULT_LOG( warning ) << "received modification with negative increment";
-						return;
-					}
+				  if (modificationIt == pDriveEntry.DataModifications.end()) {
+				  	CATAPULT_LOG( warning ) << "received opinion for non-existing modification";
+				  	return;
+				  }
 
-					actualSumBytes += layout.m_uploadedBytes;
-                }
+				  modificationIt++;
+				  expectedSumBytes += std::accumulate(
+				  		pDriveEntry.DataModifications.begin(),
+				  		modificationIt,
+				  		0,
+				  		[](int64_t accumulator, const auto& currentModification) {
+				  			return accumulator + utils::FileSize::FromMegabytes(currentModification.ActualUploadSize).bytes();
+				  		}
+				  		);
 
-                auto modificationIt = std::find_if(
-                        pDriveEntry.DataModifications.begin(),
-                        pDriveEntry.DataModifications.end(),
-                        [&info](const auto& item) { return item.Id == info.m_modifyTransactionHash; }
-                );
+				  if (actualSumBytes != expectedSumBytes) {
+				  	CATAPULT_LOG( warning ) << "received opinion with invalid opinion sum " << expectedSumBytes << " " << actualSumBytes;
+				  	return;
+				  }
 
-                if (modificationIt == pDriveEntry.DataModifications.end()) {
-                	CATAPULT_LOG( warning ) << "received opinion for non-existing modification";
-                	return;
-				}
-
-                modificationIt++;
-                expectedSumBytes += std::accumulate(
-                        pDriveEntry.DataModifications.begin(),
-                        modificationIt,
-                        0,
-                        [](int64_t accumulator, const auto& currentModification) {
-                        	return accumulator + utils::FileSize::FromMegabytes(currentModification.ActualUploadSize).bytes();
-                        }
-                );
-
-                // TODO compare current cumulativeSizes with exist ones (for each current should be grater or equal then exist)
-
-                if (actualSumBytes != expectedSumBytes) {
-                	CATAPULT_LOG( warning ) << "received opinion with invalid opinion sum " << expectedSumBytes << " " << actualSumBytes;
-                	return;
-				}
-
-                pReplicator->asyncOnOpinionReceived(info);
+				  pReplicator->asyncOnOpinionReceived(info);
+				});
             }
 
             void downloadOpinionHasBeenReceived(
                     sirius::drive::Replicator&,
                     const sirius::drive::DownloadApprovalTransactionInfo& info) override {
-				auto pReplicator = m_pReplicator.lock();
-				if (!pReplicator)
-					return;
+            	boost::asio::post(m_context, [this, info] {
+					auto pReplicator = m_pReplicator.lock();
+					if (!pReplicator)
+						return;
 
-                if (!m_storageState.downloadChannelExists(info.m_downloadChannelId)) {
-					CATAPULT_LOG( error ) << "download channel opinion received id does not exist " << Hash256(info.m_downloadChannelId);
-                	return;
-				}
+					if (!m_storageState.downloadChannelExists(info.m_downloadChannelId)) {
+						CATAPULT_LOG(error) << "download channel opinion received id does not exist "
+											<< Hash256(info.m_downloadChannelId);
+						return;
+					}
 
-                if (info.m_opinions.size() != 1) {
-                	CATAPULT_LOG(warning) << "received download opinion with many opinions";
-					return;
-				}
+					if (info.m_opinions.size() != 1) {
+						CATAPULT_LOG(warning) << "received download opinion with many opinions";
+						return;
+					}
 
-				const auto& opinion = info.m_opinions.at(0);
-                if (!opinion.Verify(info.m_blockHash, info.m_downloadChannelId)) {
-                	CATAPULT_LOG(warning) << "received download opinion with incorrect signature";
-                    return;
-                }
+					bool sorted = true;
 
-				const auto& downloadLayout = opinion.m_downloadLayout;
-				if (std::find_if(downloadLayout.begin(), downloadLayout.end(), [&opinion](const auto& item) {
-						return opinion.m_replicatorKey == opinion.m_downloadLayout.front().m_key;
-					}) == downloadLayout.end()) {
-					CATAPULT_LOG(warning) << "received download opinion, no opinion on itself";
-				}
+					const auto& uploadLayout = info.m_opinions[0].m_uploadLayout;
+					for (int i = 0; i < uploadLayout.size() - 1 && sorted; i++) {
+						if (Key(uploadLayout[i + 1].m_key) < Key(uploadLayout[i].m_key)) {
+							sorted = false;
+						}
+					}
 
-				if (!m_storageState.isReplicatorAssignedToChannel(opinion.m_replicatorKey, info.m_downloadChannelId)) {
-					CATAPULT_LOG(warning) << "received download opinion from wrong replicator";
-                    return;
-                }
+					if (!sorted) {
+						CATAPULT_LOG( error ) << "received unsorted modification opinion";
+						return;
+					}
 
-                pReplicator->asyncOnDownloadOpinionReceived(info);
-            }
+					const auto& opinion = info.m_opinions.at(0);
+					if (!opinion.Verify(info.m_blockHash, info.m_downloadChannelId)) {
+						CATAPULT_LOG(warning) << "received download opinion with incorrect signature";
+						return;
+					}
+
+					const auto& downloadLayout = opinion.m_downloadLayout;
+					if (std::find_if(downloadLayout.begin(), downloadLayout.end(), [&opinion](const auto& item) {
+							return opinion.m_replicatorKey == opinion.m_downloadLayout.front().m_key;
+						}) == downloadLayout.end()) {
+						CATAPULT_LOG(warning) << "received download opinion, no opinion on itself";
+					}
+
+					if (!m_storageState.isReplicatorAssignedToChannel(
+								opinion.m_replicatorKey, info.m_downloadChannelId)) {
+						CATAPULT_LOG(warning) << "received download opinion from wrong replicator";
+						return;
+					}
+
+					pReplicator->asyncOnDownloadOpinionReceived(info);
+				});
+			}
 
         private:
+			boost::asio::io_context& m_context;
             TransactionSender m_transactionSender;
             state::StorageState& m_storageState;
             TransactionStatusHandler& m_transactionStatusHandler;
@@ -316,10 +326,11 @@ namespace catapult { namespace storage {
     }
 
     std::unique_ptr<ReplicatorEventHandler> CreateReplicatorEventHandler(
+			boost::asio::io_context& context,
             TransactionSender&& transactionSender,
             state::StorageState& storageState,
             TransactionStatusHandler& operations,
 			const catapult::crypto::KeyPair& keyPair) {
-    	return std::make_unique<DefaultReplicatorEventHandler>(std::move(transactionSender), storageState, operations, keyPair);
+    	return std::make_unique<DefaultReplicatorEventHandler>(context, std::move(transactionSender), storageState, operations, keyPair);
     }
 }}

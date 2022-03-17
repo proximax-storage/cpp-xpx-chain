@@ -127,6 +127,13 @@ namespace catapult { namespace observers {
             auto& queueCacheEntry = queueCache.find(state::DrivePaymentQueueKey).get();
             auto driveKey = queueCacheEntry.getFirst();
 			auto previousKey = Key();
+
+			if(values.ExpectedBcDriveKeys.empty()) {
+				EXPECT_EQ(queueCacheEntry.getFirst(), Key());
+				EXPECT_EQ(queueCacheEntry.getLast(), Key());
+				return;
+			}
+
 			EXPECT_EQ(queueCacheEntry.getLast(), values.ExpectedBcDriveKeys[values.ExpectedBcDriveKeys.size() - 1]);
 			for (const auto& key: values.ExpectedBcDriveKeys) {
 				EXPECT_EQ(driveKey, key);
