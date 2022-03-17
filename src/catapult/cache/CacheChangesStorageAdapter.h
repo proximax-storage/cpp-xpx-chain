@@ -21,6 +21,7 @@
 #pragma once
 #include "CacheChangesSerializer.h"
 #include "CacheChangesStorage.h"
+#include "catapult/utils/Functional.h"
 
 namespace catapult { namespace cache {
 
@@ -60,6 +61,49 @@ namespace catapult { namespace cache {
 			for (const auto* pRemoved : subCacheChanges.removedElements())
 				TStorageTraits::Purge(*pRemoved, *delta);
 
+			m_cache.commit();
+		}
+
+	private:
+		TCache& m_cache;
+	};
+
+	template<typename TCache, typename TStorageTraits>
+	class MultisetCacheChangesStorageAdapter : public CacheChangesStorage {
+	public:
+		/// Creates an adapter around \a cache.
+		explicit MultisetCacheChangesStorageAdapter(TCache& cache) : m_cache(cache)
+		{}
+
+	public:
+		void saveAll(const CacheChanges& changes, io::OutputStream& output) const override {
+			WriteCacheChanges<TStorageTraits>(output, changes.sub<TCache>());
+		}
+
+		std::unique_ptr<const MemoryCacheChanges> loadAll(io::InputStream& input) const override {
+			auto pMemoryCacheChanges = std::make_unique<MemoryCacheChangesT<typename TCache::CacheValueType>>();
+			ReadCacheChanges<TStorageTraits>(input, *pMemoryCacheChanges);
+			return std::move(pMemoryCacheChanges);
+		}
+
+		void apply(const CacheChanges& changes, const Height& height) const override {
+			auto delta = m_cache.createDelta(height);
+
+			auto subCacheChanges = changes.sub<TCache>();
+			utils::for_sequence(std::make_index_sequence<std::tuple_size_v<typename TCache::CacheValueTypes>>{}, [&](auto i){
+				for (const auto* pAdded : std::get<i>(subCacheChanges.addedElements())) {
+					TStorageTraits::Purge<i>(*pAdded, *delta);
+					TStorageTraits::LoadInto<i>(*pAdded, *delta);
+				}
+
+				for (const auto* pModified : std::get<i>(subCacheChanges.modifiedElements())) {
+					TStorageTraits::Purge<i>(*pModified, *delta);
+					TStorageTraits::LoadInto<i>(*pModified, *delta);
+				}
+
+				for (const auto* pRemoved : std::get<i>(subCacheChanges.removedElements()))
+					TStorageTraits::Purge<i>(*pRemoved, *delta);
+			});
 			m_cache.commit();
 		}
 

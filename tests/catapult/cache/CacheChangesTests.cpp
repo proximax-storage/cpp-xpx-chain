@@ -48,13 +48,13 @@ namespace catapult { namespace cache {
 
 		void SeedRandom(VectorMemoryCacheChanges& changes, uint8_t numAdded, uint8_t numModified, uint8_t numRemoved) {
 			for (uint8_t i = 0; i < numAdded; ++i)
-				changes.Added.emplace_back(test::GenerateRandomVector(12 + i));
+				std::get<0>(changes.Added).emplace_back(test::GenerateRandomVector(12 + i));
 
 			for (uint8_t i = 0; i < numModified; ++i)
-				changes.Copied.emplace_back(test::GenerateRandomVector(10 + i));
+				std::get<0>(changes.Copied).emplace_back(test::GenerateRandomVector(10 + i));
 
 			for (uint8_t i = 0; i < numRemoved; ++i)
-				changes.Removed.emplace_back(test::GenerateRandomVector(14 + i));
+				std::get<0>(changes.Removed).emplace_back(test::GenerateRandomVector(14 + i));
 		}
 	}
 
@@ -122,7 +122,7 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(2u, result.size());
-		decltype(result) expected{ &memoryCacheChanges.Added[0], &memoryCacheChanges.Added[1] };
+		decltype(result) expected{ &std::get<0>(memoryCacheChanges.Added)[0], &std::get<0>(memoryCacheChanges.Added)[1] };
 		EXPECT_EQ(expected, result);
 	}
 
@@ -137,7 +137,7 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		ASSERT_EQ(3u, result.size());
-		decltype(result) expected{ &memoryCacheChanges.Copied[0], &memoryCacheChanges.Copied[1], &memoryCacheChanges.Copied[2] };
+		decltype(result) expected{ &std::get<0>(memoryCacheChanges.Copied)[0], &std::get<0>(memoryCacheChanges.Copied)[1], &std::get<0>(memoryCacheChanges.Copied)[2] };
 		EXPECT_EQ(expected, result);
 	}
 
@@ -153,7 +153,7 @@ namespace catapult { namespace cache {
 		// Assert:
 		ASSERT_EQ(4u, result.size());
 		decltype(result) expected{
-			&memoryCacheChanges.Removed[0], &memoryCacheChanges.Removed[1], &memoryCacheChanges.Removed[2], &memoryCacheChanges.Removed[3]
+			&std::get<0>(memoryCacheChanges.Removed)[0], &std::get<0>(memoryCacheChanges.Removed)[1], &std::get<0>(memoryCacheChanges.Removed)[2], &std::get<0>(memoryCacheChanges.Removed)[3]
 		};
 		EXPECT_EQ(expected, result);
 	}
@@ -168,6 +168,27 @@ namespace catapult { namespace cache {
 				return value == *pValue;
 			});
 		}
+		template<typename TUnwrap, typename TDeltas>
+		struct DeltaAsserter
+		{
+			static void Assert(const std::unordered_set<const std::vector<uint8_t>*>& pointers, const TDeltas& deltas, TUnwrap unwrap)
+			{
+				auto i = 0u;
+				for (const auto& value : deltas.Added)
+					EXPECT_TRUE(Contains(pointers, unwrap(value))) << "at " << i;
+			}
+		};
+
+		template<typename TUnwrap, typename ...TParams>
+		struct DeltaAsserter<TUnwrap,  MemoryCacheChangesT<TParams...>>
+		{
+			static void Assert(const std::unordered_set<const std::vector<uint8_t>*>& pointers, const MemoryCacheChangesT<TParams...>& deltas, TUnwrap unwrap)
+			{
+				auto i = 0u;
+				for (const auto& value : std::get<0>(deltas.Added))
+					EXPECT_TRUE(Contains(pointers, unwrap(value))) << "at " << i;
+			}
+		};
 
 		template<typename TDeltas, typename TUnwrap>
 		void AssertCacheChanges(const CacheChanges& cacheChanges, const TDeltas& deltas1, const TDeltas& deltas2, TUnwrap unwrap) {
@@ -185,13 +206,8 @@ namespace catapult { namespace cache {
 			EXPECT_EQ(4u, subCacheChanges2.removedElements().size());
 
 			// - check added as proxy
-			auto i = 0u;
-			for (const auto& value : deltas1.Added)
-				EXPECT_TRUE(Contains(subCacheChanges0.addedElements(), unwrap(value))) << "at " << i;
-
-			i = 0;
-			for (const auto& value : deltas2.Added)
-				EXPECT_TRUE(Contains(subCacheChanges2.addedElements(), unwrap(value))) << "at " << i;
+			DeltaAsserter<TUnwrap, TDeltas>::Assert(subCacheChanges0.addedElements(), deltas1, unwrap);
+			DeltaAsserter<TUnwrap, TDeltas>::Assert(subCacheChanges2.addedElements(), deltas2, unwrap);
 		}
 	}
 

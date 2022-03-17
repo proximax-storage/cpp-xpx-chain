@@ -14,7 +14,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanLoadValueIntoCache) {
 		// Arrange:
-		auto originalRecord = test::GenerateRecordGroup<LockFundHeightIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<LockFundHeightIndexDescriptor>>(Height(10), 3);
+		auto originalRecord = test::GenerateRecordGroup<state::LockFundHeightIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<state::LockFundHeightIndexDescriptor>>(Height(10), 3);
 
 		// Act:
 		LockFundCache cache(CacheConfiguration{ }, test::CreateLockFundConfigHolder());

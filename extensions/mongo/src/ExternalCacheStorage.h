@@ -75,4 +75,24 @@ namespace catapult { namespace mongo {
 		/// Saves cache \a changes to external storage.
 		virtual void saveDelta(const CacheChangesType& changes) = 0;
 	};
+
+	/// Typed interface for multiset caches for saving cache data to external storage.
+	template<typename TCache, typename... TValues>
+	class ExternalMultiSetCacheStorageT : public ExternalCacheStorage {
+	public:
+		/// Creates an external cache storage.
+		ExternalMultiSetCacheStorageT() : ExternalCacheStorage(TCache::Name, TCache::Id)
+		{}
+
+	public:
+		void saveDelta(const cache::CacheChanges& changes) final override {
+			saveDelta(changes.sub<TCache, cache::MultiSetCacheChangesT, TValues...>());
+		}
+
+	private:
+		using CacheChangesType = cache::MultiSetCacheChangesT<typename TCache::CacheDeltaType, TValues...>;
+
+		/// Saves cache \a changes to external storage.
+		virtual void saveDelta(const CacheChangesType& changes) = 0;
+	};
 }}

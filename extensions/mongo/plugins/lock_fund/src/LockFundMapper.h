@@ -19,18 +19,16 @@
 **/
 
 #pragma once
+#include "mongo/src/MongoTransactionPlugin.h"
 
-#include "src/state/LockFundRecordSerializer.h"
-#include "LockFundCacheTypes.h"
-#include "catapult/cache/CacheStorageInclude.h"
-namespace catapult { namespace cache {
+namespace catapult { namespace mongo { namespace plugins {
 
-		/// Policy for saving and loading lock fund cache data.
-		struct LockFundCacheStorage
-			: public CacheStorageForBasicInsertRemoveCache<LockFundCacheDescriptor>
-						, public state::LockFundRecordSerializer<state::LockFundHeightIndexDescriptor>{
+	/// Creates a mongo lock fund transfer transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<MongoTransactionPlugin> CreateLockFundTransferTransactionMongoPlugin();
 
-			/// Loads \a recordGroup into \a cacheDelta.
-			static void LoadInto(const ValueType& history, DestinationType& cacheDelta);
-		};
-}}
+	/// Creates a mongo lock fund cancel unlock transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<MongoTransactionPlugin> CreateLockFundCancelUnlockTransactionMongoPlugin();
+
+}}}

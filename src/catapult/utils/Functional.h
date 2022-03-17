@@ -20,6 +20,7 @@
 
 #pragma once
 #include <type_traits>
+#include <tuple>
 
 namespace catapult { namespace utils {
 
@@ -44,4 +45,35 @@ namespace catapult { namespace utils {
 
 		return sum;
 	}
+	/// Expands a tuple and repacks it's types as a tuple of containers, each containing elements of one of the tuple types.
+	template<template<typename...> class TContainer, typename...>
+	struct ExpandPackTo { };
+
+	/// Expands a tuple and repacks it's types as a tuple of containers, each containing elements of one of the tuple types.
+	template<template<typename...> class TContainer, typename... Ts>
+	struct ExpandPackTo<TContainer, std::tuple<Ts...>>
+	{
+		using type = std::tuple<TContainer<Ts>...>;
+	};
+
+	template<typename TMapper, typename TTupleArg>
+	auto make_tuple_unpack(TMapper map, TTupleArg args)
+	{
+		return std::apply([&map](auto& ...args){
+		  return std::make_tuple(map(args)...);
+		}, args);
+	}
+
+	template <typename T, T... S, typename F>
+	constexpr void for_sequence(std::integer_sequence<T, S...>, F&& f) {
+		using unpack_t = int[];
+		(void)unpack_t{(static_cast<void>(f(std::integral_constant<T, S>{})), 0)..., 0};
+	}
+
+	template <typename> struct is_tuple: std::false_type {};
+
+	template <typename ...T> struct is_tuple<std::tuple<T...>>: std::true_type {};
+
+	template<typename T>
+	static constexpr bool is_tuple_v = is_tuple<T>::value;
 }}

@@ -46,9 +46,6 @@ namespace catapult {
 
 namespace catapult { namespace cache {
 
-
-	using LockFundKeyIndexDescriptor = state::LockFundRecordGroupIndexDescriptor<Key, Height, utils::BaseValueHasher<Height>>;
-	using LockFundHeightIndexDescriptor = state::LockFundRecordGroupIndexDescriptor<Height, Key, utils::ArrayHasher<Key>>;
 	/// Describes a lock fund info cache.
 	struct LockFundCacheDescriptor {
 	public:
@@ -57,7 +54,7 @@ namespace catapult { namespace cache {
 	public:
 		// key value types
 		using KeyType = Height;
-		using ValueType = state::LockFundRecordGroup<LockFundHeightIndexDescriptor>;
+		using ValueType = state::LockFundRecordGroup<state::LockFundHeightIndexDescriptor>;
 
 		// cache types
 		using CacheType = LockFundCache;
@@ -88,7 +85,9 @@ namespace catapult { namespace cache {
 		struct KeyedLockFundTypesDescriptor {
 		public:
 			using KeyType = Key;
-			using ValueType = state::LockFundRecordGroup<LockFundKeyIndexDescriptor>;
+			using CacheType = LockFundCacheDescriptor::CacheType;
+			using CacheDeltaType = LockFundCacheDescriptor::CacheDeltaType;
+			using ValueType = state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor>;
 			using Serializer = KeyedLockFundSerializer;
 			static constexpr auto Name = "LockFundCacheKeyed";
 

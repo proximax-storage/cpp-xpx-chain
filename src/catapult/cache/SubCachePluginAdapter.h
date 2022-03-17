@@ -28,7 +28,7 @@
 namespace catapult { namespace cache {
 
 	/// A SubCachePlugin implementation that wraps a SynchronizedCache.
-	template<typename TCache, typename TStorageTraits>
+	template<typename TCache, typename TStorageTraits, typename TMultisetEnabled = std::false_type>
 	class SubCachePluginAdapter : public SubCachePlugin {
 	public:
 		/// Creates an adapter around \a pCache.
@@ -81,9 +81,13 @@ namespace catapult { namespace cache {
 					? std::make_unique<CacheStorageAdapter<TCache, TStorageTraits>>(*m_pCache)
 					: nullptr;
 		}
-
 		std::unique_ptr<CacheChangesStorage> createChangesStorage() const override {
+			if constexpr(std::is_base_of_v<std::true_type, TMultisetEnabled>)
+			{
+				return std::make_unique<MultisetCacheChangesStorageAdapter<TCache, TStorageTraits>>(*m_pCache);
+			}
 			return std::make_unique<CacheChangesStorageAdapter<TCache, TStorageTraits>>(*m_pCache);
+
 		}
 
 	public:

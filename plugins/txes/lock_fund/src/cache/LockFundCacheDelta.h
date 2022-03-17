@@ -25,6 +25,7 @@
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "LockFundCacheTypes.h"
 #include "LockFundCacheMixins.h"
+#include "catapult/deltaset/DeltaElementsMixin.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 
 namespace catapult { namespace cache {
@@ -33,8 +34,10 @@ namespace catapult { namespace cache {
 		public:
 			using PrimaryMixins = PatriciaTreeCacheMixins<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheDescriptor>;
 			using KeyedMixins = BasicCacheMixins<LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypesDescriptor>;
-			using LookupMixin = LockFundLookupMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
+			using LookupMixin = LockFundMutableLookupMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
+			using ReadOnlyLookupMixin = LockFundConstLookupMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
 			using Size = LockFundSizeMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
+			using DeltaElements = deltaset::DeltaElementsMultiSetMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
 		};
 
 
@@ -45,8 +48,9 @@ namespace catapult { namespace cache {
 						, public LockFundCacheDeltaMixins::Size
 						, public LockFundCacheDeltaMixins::PrimaryMixins::Contains
 						, public LockFundCacheDeltaMixins::PrimaryMixins::PatriciaTreeDelta
-						, public LockFundCacheDeltaMixins::PrimaryMixins::DeltaElements
+						, public LockFundCacheDeltaMixins::DeltaElements
 						, public LockFundCacheDeltaMixins::LookupMixin
+						, public LockFundCacheDeltaMixins::ReadOnlyLookupMixin
 						, public LockFundCacheDeltaMixins::KeyedMixins::Contains
 						, public LockFundCacheDeltaMixins::PrimaryMixins::Enable
 						, public LockFundCacheDeltaMixins::PrimaryMixins::Height {
@@ -54,6 +58,8 @@ namespace catapult { namespace cache {
 			using ReadOnlyView = LockFundCacheTypes::CacheReadOnlyType;
 			using LockFundCacheDeltaMixins::KeyedMixins::Contains::contains;
 			using LockFundCacheDeltaMixins::PrimaryMixins::Contains::contains;
+			using LockFundCacheDeltaMixins::LookupMixin::find;
+			using LockFundCacheDeltaMixins::ReadOnlyLookupMixin::find;
 		public:
 			/// Creates a delta around \a lockFundSets.
 			BasicLockFundCacheDelta(
@@ -71,7 +77,7 @@ namespace catapult { namespace cache {
 			void disable(const Key& publicKey, Height height);
 
 			/// Inserts the lockfund record \a ns into the cache by copying an existing record. Will not validate!
-			void insert(const state::LockFundRecordGroup<LockFundHeightIndexDescriptor>& record);
+			void insert(const state::LockFundRecordGroup<state::LockFundHeightIndexDescriptor>& record);
 
 			/// Reactivates the lock fund record specified by its \a publicKey and \a height from the cache.
 			void recover(const Key& publicKey, Height height);

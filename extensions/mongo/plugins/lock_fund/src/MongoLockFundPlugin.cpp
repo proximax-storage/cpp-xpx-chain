@@ -18,19 +18,19 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#pragma once
+#include "LockFundMapper.h"
+#include "storages/MongoLockFundCacheStorage.h"
+#include "mongo/src/MongoPluginManager.h"
 
-#include "src/state/LockFundRecordSerializer.h"
-#include "LockFundCacheTypes.h"
-#include "catapult/cache/CacheStorageInclude.h"
-namespace catapult { namespace cache {
 
-		/// Policy for saving and loading lock fund cache data.
-		struct LockFundCacheStorage
-			: public CacheStorageForBasicInsertRemoveCache<LockFundCacheDescriptor>
-						, public state::LockFundRecordSerializer<state::LockFundHeightIndexDescriptor>{
+extern "C" PLUGIN_API
+void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
+	// transaction support
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateLockFundTransferTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateLockFundCancelUnlockTransactionMongoPlugin());
 
-			/// Loads \a recordGroup into \a cacheDelta.
-			static void LoadInto(const ValueType& history, DestinationType& cacheDelta);
-		};
-}}
+	// cache storage support
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoLockFundCacheStorage(
+			manager.mongoContext(),
+			manager.configHolder()));
+}

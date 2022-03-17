@@ -27,7 +27,7 @@
 namespace catapult { namespace cache {
 
 	/// Primary serializer for lock fund cache.
-	struct LockFundPrimarySerializer : public CacheSerializerAdapter<state::LockFundRecordSerializer<LockFundHeightIndexDescriptor>, LockFundCacheDescriptor> {};
+	struct LockFundPrimarySerializer : public CacheSerializerAdapter<state::LockFundRecordSerializer<state::LockFundHeightIndexDescriptor>, LockFundCacheDescriptor> {};
 	/// Serializer for keyed lock fund record groups.
-	struct KeyedLockFundSerializer : public CacheSerializerAdapter<state::LockFundRecordSerializer<LockFundKeyIndexDescriptor>, LockFundCacheTypes::KeyedLockFundTypesDescriptor> {};
+	struct KeyedLockFundSerializer : public CacheSerializerAdapter<state::LockFundRecordSerializer<state::LockFundKeyIndexDescriptor>, LockFundCacheTypes::KeyedLockFundTypesDescriptor> {};
 }}

@@ -25,13 +25,22 @@
 
 namespace catapult { namespace cache {
 
+	struct MultisetTraits : std::true_type {
+
+	};
 	/// Builder for creating a catapult cache around sub caches.
 	class CatapultCacheBuilder {
 	public:
 		/// Adds \a pSubCache to the builder with the specified storage traits.
 		template<typename TStorageTraits, typename TCache>
 		void add(std::unique_ptr<TCache>&& pSubCache) {
-			add(std::make_unique<SubCachePluginAdapter<TCache, TStorageTraits>>(std::move(pSubCache)));
+			add(std::make_unique<SubCachePluginAdapter<TCache, TStorageTraits, std::false_type>>(std::move(pSubCache)));
+		}
+
+		/// Adds \a pSubCache to the builder with the specified storage traits.
+		template<typename TStorageTraits, typename TCache>
+		void add(std::unique_ptr<TCache>&& pSubCache, MultisetTraits) {
+			add(std::make_unique<SubCachePluginAdapter<TCache, TStorageTraits, MultisetTraits>>(std::move(pSubCache)));
 		}
 
 		/// Adds \a pSubCachePlugin to the builder.

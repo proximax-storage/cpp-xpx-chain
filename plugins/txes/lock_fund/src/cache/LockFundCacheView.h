@@ -34,7 +34,7 @@ namespace catapult { namespace cache {
 		public:
 			using PrimaryMixins = PatriciaTreeCacheMixins<LockFundCacheTypes::PrimaryTypes::BaseSetType, LockFundCacheDescriptor>;
 			using KeyedMixins = BasicCacheMixins<LockFundCacheTypes::KeyedLockFundTypes::BaseSetType, LockFundCacheTypes::KeyedLockFundTypesDescriptor>;
-			using LookupMixin = LockFundLookupMixin<LockFundCacheTypes::PrimaryTypes::BaseSetType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetType>;
+			using LookupMixin = LockFundConstLookupMixin<LockFundCacheTypes::PrimaryTypes::BaseSetType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetType>;
 			using Height = PrimaryMixins::Height;
 			using Size = LockFundSizeMixin<LockFundCacheTypes::PrimaryTypes::BaseSetType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetType>;
 		};

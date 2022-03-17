@@ -25,11 +25,14 @@
 #include "catapult/thread/FutureUtils.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include <set>
+#include <tuple>
 #include <unordered_set>
+#include "catapult/utils/Functional.h"
 
 namespace catapult { namespace mongo { namespace storages {
 
 	namespace detail {
+
 		/// Defines a mongo element filter.
 		template<typename TCacheTraits, typename TElementContainerType>
 		struct MongoElementFilter {
@@ -70,7 +73,59 @@ namespace catapult { namespace mongo { namespace storages {
 				}
 			}
 		};
+
+		template<typename TCacheTraits, typename TElementContainerType>
+		struct MongoMultiSetElementFilter {
+			using IdContainerType = typename utils::ExpandPackTo<std::set, typename TCacheTraits::KeyTypes>::type;
+		private:
+			static auto GetCommonIds(const TElementContainerType& addedElements, const TElementContainerType& removedElements) {
+				IdContainerType addedElementIds;
+				IdContainerType removedElementIds;
+				IdContainerType commonIds;
+				constexpr auto size = std::tuple_size<IdContainerType>::value;
+				utils::for_sequence(std::make_index_sequence<size>{}, [&](auto i){
+				  for(const auto& elem : std::get<i>(addedElements))
+				  {
+					  std::get<i>(addedElementIds).insert(TCacheTraits::template GetId<i, std::tuple_element_t<i, typename TCacheTraits::CacheType::CacheValueTypes>, std::tuple_element_t<i, typename TCacheTraits::KeyTypes>>(*elem));
+				  }
+				  for(const auto& elem : std::get<i>(removedElements))
+				  {
+					  std::get<i>(removedElementIds).insert(TCacheTraits::template GetId<i, std::tuple_element_t<i, typename TCacheTraits::CacheType::CacheValueTypes>, std::tuple_element_t<i, typename TCacheTraits::KeyTypes>>(*elem));
+				  }
+				  std::set_intersection(
+						  std::get<i>(addedElementIds).cbegin(),
+						  std::get<i>(addedElementIds).cend(),
+						  std::get<i>(removedElementIds).cbegin(),
+						  std::get<i>(removedElementIds).cend(),
+						  std::inserter(std::get<i>(commonIds), std::get<i>(commonIds).cbegin()));
+				});
+				return commonIds;
+			}
+
+			static void RemoveElements(TElementContainerType& elements, IdContainerType& ids) {
+
+				constexpr auto size = std::tuple_size<IdContainerType>::value;
+				utils::for_sequence(std::make_index_sequence<size>{}, [&](auto i){
+				  auto &set = std::get<i>(elements);
+				  auto &idSet = std::get<i>(ids);
+					for (auto iter = set.cbegin(); set.cend() != iter;) {
+						if (idSet.cend() != idSet.find(TCacheTraits::template GetId<i, std::tuple_element_t<i, typename TCacheTraits::CacheType::CacheValueTypes>, std::tuple_element_t<i, typename TCacheTraits::KeyTypes>>(**iter)))
+							iter = set.erase(iter);
+						else
+							++iter;
+					}
+				});
+			}
+		public:
+			/// Filters all elements common to added elements (\a addedElements) and removed elements (\a removedElements).
+			static void RemoveCommonElements(TElementContainerType& addedElements, TElementContainerType& removedElements) {
+				auto commonIds = GetCommonIds(addedElements, removedElements);
+				RemoveElements(addedElements, commonIds);
+				RemoveElements(removedElements, commonIds);
+			}
+		};
 	}
+
 
 	/// Defines types for mongo cache storage given a cache descriptor.
 	template<typename TDescriptor>
@@ -91,6 +146,110 @@ namespace catapult { namespace mongo { namespace storages {
 		static constexpr auto GetId = TDescriptor::GetKeyFromValue;
 	};
 
+
+	namespace detail{
+		template<typename TCache, template<typename...> class TStorageType, typename ...TArgs>
+		struct UnpackStorageTerms;
+
+		template<typename TCache, template<typename...> class TStorageType, typename ...TArgs>
+		struct UnpackStorageTerms<TCache, TStorageType, std::tuple<TArgs...>>
+		{
+			using type = TStorageType<TCache, TArgs...>;
+		};
+	}
+
+	template<typename TCacheTraits>
+	class MongoMultisetCacheStorage : public detail::UnpackStorageTerms<typename TCacheTraits::CacheType, ExternalMultiSetCacheStorageT, typename TCacheTraits::CacheType::CacheValueTypes>::type {
+	private:
+		using CacheChangesType = typename detail::UnpackStorageTerms<typename TCacheTraits::CacheDeltaType, cache::MultiSetCacheChangesT, typename TCacheTraits::CacheType::CacheValueTypes>::type;
+		using ElementContainerType = typename TCacheTraits::ElementContainerType;
+		using IdContainerType = typename TCacheTraits::IdContainerType;
+		static constexpr int TypesSize = std::tuple_size<typename TCacheTraits::CacheType::CacheValueTypes>::value;
+	public:
+		/// Creates a cache storage around \a storageContext and \a networkIdentifier.
+		MongoMultisetCacheStorage(MongoStorageContext& storageContext, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
+				: m_database(storageContext.createDatabaseConnection())
+				, m_errorPolicy(storageContext.createCollectionErrorPolicy("lockFundRecords"))
+				, m_bulkWriter(storageContext.bulkWriter())
+				, m_pConfigHolder(pConfigHolder)
+		{}
+
+	private:
+		void saveDelta(const CacheChangesType& changes) override {
+			auto addedElements = changes.addedElements();
+			auto modifiedElements = changes.modifiedElements();
+			auto removedElements = changes.removedElements();
+
+			// 1. remove elements common to both added and removed
+			detail::MongoMultiSetElementFilter<TCacheTraits, ElementContainerType>::RemoveCommonElements(addedElements, removedElements);
+
+			// 2. remove all removed elements from db
+			removeAll(removedElements);
+
+			// 3. insert new elements and modified elements into db
+			utils::for_sequence(std::make_index_sequence<TypesSize>{}, [&](auto i){
+			  std::get<i>(modifiedElements).insert(std::get<i>(addedElements).cbegin(), std::get<i>(addedElements).cend());
+			});
+			upsertAll(modifiedElements, changes.height());
+		}
+	private:
+		template<int TIndex, typename TModel>
+		static bsoncxx::document::value CreateFilter(const TModel* pModel) {
+			return CreateFilterByKey<TIndex, std::tuple_element_t<TIndex, typename TCacheTraits::KeyTypes>>(TCacheTraits::template GetId<TIndex, TModel, std::tuple_element_t<TIndex, typename TCacheTraits::KeyTypes>>(*pModel));
+		}
+		template<int TIndex, typename TKey>
+		static bsoncxx::document::value CreateFilterByKey(const TKey& key) {
+			using namespace bsoncxx::builder::stream;
+
+			return document() << std::string(TCacheTraits::Id_Property_Names[TIndex]) << TCacheTraits::template MapToMongoId<TIndex, TKey, std::tuple_element_t<TIndex, typename TCacheTraits::MongoKeyTypes>>(key)
+							  << finalize;
+		}
+	private:
+		void removeAll(const ElementContainerType& elements) {
+			utils::for_sequence(std::make_index_sequence<TypesSize>{}, [&](auto i){
+				auto &elementsSet = std::get<i>(elements);
+				if (!elementsSet.empty())
+				{
+					auto deleteResults = m_bulkWriter.bulkDelete(std::string(TCacheTraits::Collection_Names[i]).c_str(), elementsSet, CreateFilter<i, std::tuple_element_t<i, typename TCacheTraits::CacheType::CacheValueTypes>>).get();
+					auto aggregateResult = BulkWriteResult::Aggregate(thread::get_all(std::move(deleteResults)));
+					m_errorPolicy.checkDeleted(elementsSet.size(), aggregateResult, "removed elements");
+				}
+			});
+		}
+\
+		void upsertAll(const ElementContainerType& elements, const Height& height) {
+
+			auto networkIdentifier = m_pConfigHolder->Config(height).Immutable.NetworkIdentifier;
+			utils::for_sequence(std::make_index_sequence<TypesSize>{}, [&](auto i){
+			  auto& currentSet = std::get<i>(elements);
+			  if (!currentSet.empty())
+			  {
+				  auto createDocument = [&i, networkIdentifier = m_pConfigHolder->Config(height).Immutable.NetworkIdentifier](const auto* pModel, auto) {
+					return TCacheTraits::template MapToMongoDocument<i, std::tuple_element_t<i, typename TCacheTraits::CacheType::CacheValueTypes>>(*pModel, networkIdentifier);
+				  };
+				  auto upsertResults = m_bulkWriter.bulkUpsert(std::string(TCacheTraits::Collection_Names[i]).c_str(), currentSet, createDocument, CreateFilter<i, std::tuple_element_t<i, typename TCacheTraits::CacheType::CacheValueTypes>>).get();
+				  auto aggregateResult = BulkWriteResult::Aggregate(thread::get_all(std::move(upsertResults)));
+				  m_errorPolicy.checkUpserted(currentSet.size(), aggregateResult, "modified and added elements");
+			  }
+			});
+		}
+
+	private:
+		static IdContainerType GetIds(const ElementContainerType& elements) {
+			IdContainerType ids;
+			utils::for_sequence(std::make_index_sequence<TypesSize>{}, [&](auto i){
+			  for (const auto* pElement : std::get<i>(elements))
+				  std::get<i>(ids).insert(TCacheTraits::template GetId<i, std::tuple_element_t<i, typename TCacheTraits::CacheType::CacheValueTypes>, std::tuple_element_t<i, typename TCacheTraits::KeyTypes>>(*pElement));
+			});
+			return ids;
+		}
+
+	private:
+		MongoDatabase m_database;
+		MongoErrorPolicy m_errorPolicy;
+		MongoBulkWriter& m_bulkWriter;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
+	};
 	/// A mongo cache storage that persists historical cache data using delete and insert.
 	template<typename TCacheTraits>
 	class MongoHistoricalCacheStorage : public ExternalCacheStorageT<typename TCacheTraits::CacheType> {
@@ -131,6 +290,7 @@ namespace catapult { namespace mongo { namespace storages {
 		}
 
 	private:
+
 		void removeAll(const IdContainerType& ids) {
 			if (ids.empty())
 				return;
@@ -271,4 +431,5 @@ namespace catapult { namespace mongo { namespace storages {
 		MongoBulkWriter& m_bulkWriter;
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
+
 }}}

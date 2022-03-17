@@ -32,9 +32,10 @@ namespace catapult { namespace cache {
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 			: LockFundCacheDeltaMixins::Size(*LockFundSets.pPrimary, *LockFundSets.pKeyedInverseMap)
 		, LockFundCacheDeltaMixins::LookupMixin(*LockFundSets.pPrimary, *LockFundSets.pKeyedInverseMap)
+		, LockFundCacheDeltaMixins::ReadOnlyLookupMixin(*LockFundSets.pPrimary, *LockFundSets.pKeyedInverseMap)
 		, LockFundCacheDeltaMixins::PrimaryMixins::Contains(*LockFundSets.pPrimary)
 		, LockFundCacheDeltaMixins::PrimaryMixins::PatriciaTreeDelta(*LockFundSets.pPrimary, LockFundSets.pPatriciaTree)
-		, LockFundCacheDeltaMixins::PrimaryMixins::DeltaElements(*LockFundSets.pPrimary)
+		, LockFundCacheDeltaMixins::DeltaElements(*LockFundSets.pPrimary, *LockFundSets.pKeyedInverseMap)
 		, LockFundCacheDeltaMixins::KeyedMixins::Contains(*LockFundSets.pKeyedInverseMap)
 		, m_pLockFundGroupsByHeight(LockFundSets.pPrimary)
 		, m_pLockFundGroupsByKey(LockFundSets.pKeyedInverseMap)
@@ -55,7 +56,7 @@ namespace catapult { namespace cache {
 		}
 		else
 		{
-			state::LockFundRecordGroup<LockFundHeightIndexDescriptor> group;
+			state::LockFundRecordGroup<state::LockFundHeightIndexDescriptor> group;
 			group.Identifier = unlockHeight;
 			group.LockFundRecords.insert(std::make_pair(publicKey, state::LockFundRecord(state::LockFundRecordMosaicMap(mosaics))));
 			m_pLockFundGroupsByHeight->insert(group);
@@ -70,7 +71,7 @@ namespace catapult { namespace cache {
 		}
 		else
 		{
-			state::LockFundRecordGroup<LockFundKeyIndexDescriptor> group;
+			state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor> group;
 			group.Identifier = publicKey;
 			group.LockFundRecords.insert(std::make_pair(unlockHeight, state::LockFundRecord(state::LockFundRecordMosaicMap(mosaics))));
 			m_pLockFundGroupsByKey->insert(group);
@@ -78,7 +79,7 @@ namespace catapult { namespace cache {
 	}
 
 	/// Important: No Validation happens here
-	void BasicLockFundCacheDelta::insert(const state::LockFundRecordGroup<LockFundHeightIndexDescriptor>& record) {
+	void BasicLockFundCacheDelta::insert(const state::LockFundRecordGroup<state::LockFundHeightIndexDescriptor>& record) {
 		m_pLockFundGroupsByHeight->insert(record);
 		for(auto lockFundRecord : record.LockFundRecords)
 		{
@@ -98,7 +99,7 @@ namespace catapult { namespace cache {
 			}
 			else
 			{
-				state::LockFundRecordGroup<LockFundKeyIndexDescriptor> group;
+				state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor> group;
 				group.Identifier = lockFundRecord.first;
 				group.LockFundRecords.insert(std::make_pair(record.Identifier, lockFundRecord.second));
 				m_pLockFundGroupsByKey->insert(group);

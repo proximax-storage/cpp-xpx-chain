@@ -23,9 +23,9 @@
 
 namespace catapult { namespace test {
 
-	std::unordered_map<Key, state::LockFundRecordGroup<cache::LockFundKeyIndexDescriptor>, utils::ArrayHasher<Key>> DeriveKeyRecordsFromHeightRecord(state::LockFundRecordGroup<cache::LockFundHeightIndexDescriptor> record)
+	std::unordered_map<Key, state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor>, utils::ArrayHasher<Key>> DeriveKeyRecordsFromHeightRecord(state::LockFundRecordGroup<state::LockFundHeightIndexDescriptor> record)
 	{
-		std::unordered_map<Key, state::LockFundRecordGroup<cache::LockFundKeyIndexDescriptor>, utils::ArrayHasher<Key>> results;
+		std::unordered_map<Key, state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor>, utils::ArrayHasher<Key>> results;
 		for(auto lockFundRecord : record.LockFundRecords)
 		{
 			auto keyGroup = results.find(lockFundRecord.first);
@@ -43,7 +43,7 @@ namespace catapult { namespace test {
 			}
 			else
 			{
-				state::LockFundRecordGroup<cache::LockFundKeyIndexDescriptor> group;
+				state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor> group;
 				group.Identifier = lockFundRecord.first;
 				group.LockFundRecords.insert(std::make_pair(record.Identifier, lockFundRecord.second));
 				results.insert(std::make_pair(group.Identifier, group));

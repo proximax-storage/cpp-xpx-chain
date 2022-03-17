@@ -18,19 +18,33 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#pragma once
+#include "mongo/tests/test/MongoPluginTestUtils.h"
+#include "plugins/txes/lock_fund/src/model/LockFundEntityType.h"
+#include "tests/TestHarness.h"
 
-#include "src/state/LockFundRecordSerializer.h"
-#include "LockFundCacheTypes.h"
-#include "catapult/cache/CacheStorageInclude.h"
-namespace catapult { namespace cache {
+namespace catapult { namespace mongo { namespace plugins {
 
-		/// Policy for saving and loading lock fund cache data.
-		struct LockFundCacheStorage
-			: public CacheStorageForBasicInsertRemoveCache<LockFundCacheDescriptor>
-						, public state::LockFundRecordSerializer<state::LockFundHeightIndexDescriptor>{
+	namespace {
+		struct MongoPropertyPluginTraits {
+		public:
+			static constexpr auto RegisterSubsystem = RegisterMongoSubsystem;
 
-			/// Loads \a recordGroup into \a cacheDelta.
-			static void LoadInto(const ValueType& history, DestinationType& cacheDelta);
+			static std::vector<model::EntityType> GetTransactionTypes() {
+				return {
+					model::Entity_Type_Lock_Fund_Cancel_Unlock,
+					model::Entity_Type_Lock_Fund_Transfer
+				};
+			}
+
+			static std::vector<model::ReceiptType> GetReceiptTypes() {
+				return {};
+			}
+
+			static std::string GetStorageName() {
+				return "{ LockFundCache }";
+			}
 		};
-}}
+	}
+
+	DEFINE_MONGO_PLUGIN_TESTS(MongoPropertyPluginTests, MongoPropertyPluginTraits)
+}}}

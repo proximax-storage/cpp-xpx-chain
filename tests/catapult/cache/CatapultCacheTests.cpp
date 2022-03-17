@@ -506,13 +506,13 @@ namespace catapult { namespace cache {
 				const std::unordered_set<uint64_t>& expectedRemoved,
 				const std::unordered_set<uint64_t>& expectedModified,
 				const std::string& message) {
-			EXPECT_EQ(expectedAdded.size(), changes.Added.size()) << message;
-			EXPECT_EQ(expectedRemoved.size(), changes.Removed.size()) << message;
-			EXPECT_EQ(expectedModified.size(), changes.Copied.size()) << message;
+			EXPECT_EQ(expectedAdded.size(), std::get<0>(changes.Added).size()) << message;
+			EXPECT_EQ(expectedRemoved.size(), std::get<0>(changes.Removed).size()) << message;
+			EXPECT_EQ(expectedModified.size(), std::get<0>(changes.Copied).size()) << message;
 
-			EXPECT_EQ(expectedAdded, std::unordered_set<uint64_t>(changes.Added.cbegin(), changes.Added.cend())) << message;
-			EXPECT_EQ(expectedRemoved, std::unordered_set<uint64_t>(changes.Removed.cbegin(), changes.Removed.cend())) << message;
-			EXPECT_EQ(expectedModified, std::unordered_set<uint64_t>(changes.Copied.cbegin(), changes.Copied.cend())) << message;
+			EXPECT_EQ(expectedAdded, std::unordered_set<uint64_t>(std::get<0>(changes.Added).cbegin(), std::get<0>(changes.Added).cend())) << message;
+			EXPECT_EQ(expectedRemoved, std::unordered_set<uint64_t>(std::get<0>(changes.Removed).cbegin(), std::get<0>(changes.Removed).cend())) << message;
+			EXPECT_EQ(expectedModified, std::unordered_set<uint64_t>(std::get<0>(changes.Copied).cbegin(), std::get<0>(changes.Copied).cend())) << message;
 		}
 	}
 

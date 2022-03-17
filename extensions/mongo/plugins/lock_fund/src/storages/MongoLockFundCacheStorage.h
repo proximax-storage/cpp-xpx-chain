@@ -19,18 +19,12 @@
 **/
 
 #pragma once
+#include "mongo/src/CacheStorageInclude.h"
+#include "mongo/src/MongoStorageContext.h"
 
-#include "src/state/LockFundRecordSerializer.h"
-#include "LockFundCacheTypes.h"
-#include "catapult/cache/CacheStorageInclude.h"
-namespace catapult { namespace cache {
+namespace catapult { namespace mongo { namespace plugins {
 
-		/// Policy for saving and loading lock fund cache data.
-		struct LockFundCacheStorage
-			: public CacheStorageForBasicInsertRemoveCache<LockFundCacheDescriptor>
-						, public state::LockFundRecordSerializer<state::LockFundHeightIndexDescriptor>{
+	/// Creates a mongo lock fund multiset cache storage around \a database, \a bulkWriter and \a networkIdentifier.
+	DECLARE_MONGO_CACHE_STORAGE(LockFund);
 
-			/// Loads \a recordGroup into \a cacheDelta.
-			static void LoadInto(const ValueType& history, DestinationType& cacheDelta);
-		};
-}}
+}}}

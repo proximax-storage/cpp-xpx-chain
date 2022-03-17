@@ -52,6 +52,15 @@ function(catapult_mongo_plugin_tests_with_deps TARGET_NAME)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
 endfunction()
 
+function(catapult_mongo_plugin_tests_with_deps_no_test TARGET_NAME)
+	string(REGEX MATCH "\.[a-z]+$" PLUGIN_NAME ${TARGET_NAME})
+	string(SUBSTRING ${PLUGIN_NAME} 1 -1 PLUGIN_NAME)
+
+	catapult_mongo_plugin_tests_with_header_only_deps(${TARGET_NAME} "${ARGN}")
+
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
+endfunction()
+
 add_subdirectory(account_link)
 add_subdirectory(aggregate)
 add_subdirectory(config)
@@ -70,3 +79,4 @@ add_subdirectory(transfer)
 add_subdirectory(upgrade)
 add_subdirectory(service)
 add_subdirectory(supercontract)
+add_subdirectory(lock_fund)

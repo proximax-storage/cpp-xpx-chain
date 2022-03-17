@@ -44,4 +44,8 @@ namespace catapult { namespace utils { namespace traits {
 	/// \c true if T is a standard map type, \c false otherwise.
 	template<typename T>
 	inline constexpr bool is_map_v = is_map<T>::value;
+
+	/// \c true if all types are a standard map type, \c false otherwise.
+	template<typename T>
+	inline constexpr bool all_are_map_v = is_map<T>::value;
 }}}

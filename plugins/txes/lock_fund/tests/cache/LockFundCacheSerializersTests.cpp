@@ -46,7 +46,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, HeightBasedSerializer_CanSerializeEmptyRecord) {
 		// Arrange:
-		auto ns = state::LockFundRecordGroup<LockFundHeightIndexDescriptor>(Height(10), {});
+		auto ns = state::LockFundRecordGroup<state::LockFundHeightIndexDescriptor>(Height(10), {});
 
 		// Act:
 		auto result = HeightBasedSerializer::SerializeValue(ns);
@@ -61,7 +61,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, KeyBasedSerializer_CanSerializeEmptyRecord) {
 		// Arrange:
 		auto key = test::GenerateRandomByteArray<Key>();
-		auto ns = state::LockFundRecordGroup<LockFundKeyIndexDescriptor>(key, {});
+		auto ns = state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor>(key, {});
 
 		// Act:
 		auto result = KeyBasedSerializer::SerializeValue(ns);
@@ -75,7 +75,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, HeightBasedSerializer_CanSerializeFullValue) {
 		// Arrange:
-		auto ns = test::GenerateRecordGroup<LockFundHeightIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<LockFundHeightIndexDescriptor>>(Height(10), 3);
+		auto ns = test::GenerateRecordGroup<state::LockFundHeightIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<state::LockFundHeightIndexDescriptor>>(Height(10), 3);
 
 		// Act:
 		auto result = HeightBasedSerializer::SerializeValue(ns);
@@ -83,7 +83,7 @@ namespace catapult { namespace cache {
 		// Assert:
 
 		// Size
-		ASSERT_EQ((FULL_HEIGHT_RECORD_GROUP_SIZE<LockFundHeightIndexDescriptor, 3, 1, 2, 1>), result.size());
+		ASSERT_EQ((FULL_HEIGHT_RECORD_GROUP_SIZE<state::LockFundHeightIndexDescriptor, 3, 1, 2, 1>), result.size());
 
 		// Data
 		const auto* pWalker = reinterpret_cast<const uint8_t*>(result.data() + sizeof(VersionType));
@@ -123,7 +123,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, KeyBasedSerializer_CanSerializeFullValue) {
 		// Arrange:
 		auto key = test::GenerateRandomByteArray<Key>();
-		auto ns = test::GenerateRecordGroup<LockFundKeyIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<LockFundKeyIndexDescriptor>>(key, 3);
+		auto ns = test::GenerateRecordGroup<state::LockFundKeyIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<state::LockFundKeyIndexDescriptor>>(key, 3);
 
 		// Act:
 		auto result = KeyBasedSerializer::SerializeValue(ns);
@@ -131,7 +131,7 @@ namespace catapult { namespace cache {
 		// Assert:
 
 		// Size
-		ASSERT_EQ((FULL_HEIGHT_RECORD_GROUP_SIZE<LockFundKeyIndexDescriptor, 3, 1, 2, 1>), result.size());
+		ASSERT_EQ((FULL_HEIGHT_RECORD_GROUP_SIZE<state::LockFundKeyIndexDescriptor, 3, 1, 2, 1>), result.size());
 
 		// Data
 		const auto* pWalker = reinterpret_cast<const uint8_t*>(result.data() + sizeof(VersionType));
@@ -170,11 +170,11 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, HeightBasedSerializer_CanDerializeEmptyRecord) {
 		// Arrange:
-		auto record = state::LockFundRecordGroup<LockFundHeightIndexDescriptor>(Height(10), {});
+		auto record = state::LockFundRecordGroup<state::LockFundHeightIndexDescriptor>(Height(10), {});
 		auto serialized = HeightBasedSerializer::SerializeValue(record);
 
 		// Act:
-		auto ns = HeightBasedSerializer::DeserializeValue({ reinterpret_cast<uint8_t*>(serialized.data()), (FULL_HEIGHT_RECORD_GROUP_SIZE<LockFundHeightIndexDescriptor, 0, 0, 0, 0>) });
+		auto ns = HeightBasedSerializer::DeserializeValue({ reinterpret_cast<uint8_t*>(serialized.data()), (FULL_HEIGHT_RECORD_GROUP_SIZE<state::LockFundHeightIndexDescriptor, 0, 0, 0, 0>) });
 		EXPECT_EQ(record.Identifier, ns.Identifier);
 		EXPECT_EQ(record.LockFundRecords.size(), ns.LockFundRecords.size());
 		EXPECT_EQ(ns.LockFundRecords.size(), 0);
@@ -184,11 +184,11 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, KeyBasedSerializer_CanDerializeEmptyRecord) {
 		// Arrange:
 		auto key = test::GenerateRandomByteArray<Key>();
-		auto record = state::LockFundRecordGroup<LockFundKeyIndexDescriptor>(key, {});
+		auto record = state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor>(key, {});
 		auto serialized = KeyBasedSerializer::SerializeValue(record);
 
 		// Act:
-		auto ns = KeyBasedSerializer::DeserializeValue({ reinterpret_cast<uint8_t*>(serialized.data()), (FULL_HEIGHT_RECORD_GROUP_SIZE<LockFundKeyIndexDescriptor, 0, 0, 0, 0>) });
+		auto ns = KeyBasedSerializer::DeserializeValue({ reinterpret_cast<uint8_t*>(serialized.data()), (FULL_HEIGHT_RECORD_GROUP_SIZE<state::LockFundKeyIndexDescriptor, 0, 0, 0, 0>) });
 		EXPECT_EQ(record.Identifier, ns.Identifier);
 		EXPECT_EQ(record.LockFundRecords.size(), ns.LockFundRecords.size());
 		EXPECT_EQ(ns.LockFundRecords.size(), 0);
@@ -197,11 +197,11 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, HeightBasedSerializer_CanDerializeFullRecord) {
 		// Arrange:
-		auto record = test::GenerateRecordGroup<LockFundHeightIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<LockFundHeightIndexDescriptor>>(Height(10), 3);
+		auto record = test::GenerateRecordGroup<state::LockFundHeightIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<state::LockFundHeightIndexDescriptor>>(Height(10), 3);
 		auto serialized = HeightBasedSerializer::SerializeValue(record);
 
 		// Act:
-		auto ns = HeightBasedSerializer::DeserializeValue({ reinterpret_cast<uint8_t*>(serialized.data()), (FULL_HEIGHT_RECORD_GROUP_SIZE<LockFundHeightIndexDescriptor, 3, 1, 2, 1>) });
+		auto ns = HeightBasedSerializer::DeserializeValue({ reinterpret_cast<uint8_t*>(serialized.data()), (FULL_HEIGHT_RECORD_GROUP_SIZE<state::LockFundHeightIndexDescriptor, 3, 1, 2, 1>) });
 		EXPECT_EQ(record.Identifier, ns.Identifier);
 		EXPECT_EQ(record.LockFundRecords.size(), ns.LockFundRecords.size());
 		EXPECT_EQ(ns.LockFundRecords.size(), 3);
@@ -221,11 +221,11 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, KeyBasedSerializer_CanDerializeFullRecord) {
 		// Arrange:
 		auto key = test::GenerateRandomByteArray<Key>();
-		auto record = test::GenerateRecordGroup<LockFundKeyIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<LockFundKeyIndexDescriptor>>(key, 3);
+		auto record = test::GenerateRecordGroup<state::LockFundKeyIndexDescriptor, test::DefaultRecordGroupGeneratorTraits<state::LockFundKeyIndexDescriptor>>(key, 3);
 		auto serialized = KeyBasedSerializer::SerializeValue(record);
 
 		// Act:
-		auto ns = KeyBasedSerializer::DeserializeValue({ reinterpret_cast<uint8_t*>(serialized.data()), (FULL_HEIGHT_RECORD_GROUP_SIZE<LockFundKeyIndexDescriptor, 3, 1, 2, 1>) });
+		auto ns = KeyBasedSerializer::DeserializeValue({ reinterpret_cast<uint8_t*>(serialized.data()), (FULL_HEIGHT_RECORD_GROUP_SIZE<state::LockFundKeyIndexDescriptor, 3, 1, 2, 1>) });
 		EXPECT_EQ(record.Identifier, ns.Identifier);
 		EXPECT_EQ(record.LockFundRecords.size(), ns.LockFundRecords.size());
 		EXPECT_EQ(ns.LockFundRecords.size(), 3);

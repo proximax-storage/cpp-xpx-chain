@@ -35,12 +35,12 @@ namespace catapult { namespace cache {
 		// Arrange: seed random data
 		test::ByteVectorCacheChanges subCacheChanges;
 		subCacheChanges.Height = Height{5};
-		subCacheChanges.Added.push_back(test::GenerateRandomVector(21));
-		subCacheChanges.Removed.push_back(test::GenerateRandomVector(21));
-		subCacheChanges.Removed.push_back(test::GenerateRandomVector(14));
-		subCacheChanges.Removed.push_back(test::GenerateRandomVector(17));
-		subCacheChanges.Copied.push_back(test::GenerateRandomVector(21));
-		subCacheChanges.Copied.push_back(test::GenerateRandomVector(14));
+		std::get<0>(subCacheChanges.Added).push_back(test::GenerateRandomVector(21));
+		std::get<0>(subCacheChanges.Removed).push_back(test::GenerateRandomVector(21));
+		std::get<0>(subCacheChanges.Removed).push_back(test::GenerateRandomVector(14));
+		std::get<0>(subCacheChanges.Removed).push_back(test::GenerateRandomVector(17));
+		std::get<0>(subCacheChanges.Copied).push_back(test::GenerateRandomVector(21));
+		std::get<0>(subCacheChanges.Copied).push_back(test::GenerateRandomVector(14));
 
 		// - create cache changes around single sub cache
 		CacheChanges::MemoryCacheChangesContainer cacheChangesContainer;
@@ -65,9 +65,9 @@ namespace catapult { namespace cache {
 		ASSERT_EQ(3u, reader.read64());
 		ASSERT_EQ(2u, reader.read64());
 
-		test::AssertEquivalent(subCacheChanges.Added, reader, "added");
-		test::AssertEquivalent(subCacheChanges.Removed, reader, "removed");
-		test::AssertEquivalent(subCacheChanges.Copied, reader, "copied");
+		test::AssertEquivalent(std::get<0>(subCacheChanges.Added), reader, "added");
+		test::AssertEquivalent(std::get<0>(subCacheChanges.Removed), reader, "removed");
+		test::AssertEquivalent(std::get<0>(subCacheChanges.Copied), reader, "copied");
 	}
 
 	// endregion
@@ -103,13 +103,13 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(Height{10u}, changes.Height);
-		EXPECT_EQ(1u, changes.Added.size());
-		EXPECT_EQ(3u, changes.Removed.size());
-		EXPECT_EQ(2u, changes.Copied.size());
+		EXPECT_EQ(1u, std::get<0>(changes.Added).size());
+		EXPECT_EQ(3u, std::get<0>(changes.Removed).size());
+		EXPECT_EQ(2u, std::get<0>(changes.Copied).size());
 
-		EXPECT_EQ(std::vector<std::vector<uint8_t>>({ added1 }), changes.Added);
-		EXPECT_EQ(std::vector<std::vector<uint8_t>>({ removed1, removed2, removed3 }), changes.Removed);
-		EXPECT_EQ(std::vector<std::vector<uint8_t>>({ copied1, copied2 }), changes.Copied);
+		EXPECT_EQ(std::vector<std::vector<uint8_t>>({ added1 }), std::get<0>(changes.Added));
+		EXPECT_EQ(std::vector<std::vector<uint8_t>>({ removed1, removed2, removed3 }), std::get<0>(changes.Removed));
+		EXPECT_EQ(std::vector<std::vector<uint8_t>>({ copied1, copied2 }), std::get<0>(changes.Copied));
 	}
 
 	// endregion
@@ -142,12 +142,12 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CanApplyTypedChanges) {
 		// Arrange: seed random data
 		test::ByteVectorCacheChanges subCacheChanges;
-		subCacheChanges.Added.push_back(test::GenerateRandomVector(21));
-		subCacheChanges.Removed.push_back(test::GenerateRandomVector(21));
-		subCacheChanges.Removed.push_back(test::GenerateRandomVector(14));
-		subCacheChanges.Removed.push_back(test::GenerateRandomVector(17));
-		subCacheChanges.Copied.push_back(test::GenerateRandomVector(21));
-		subCacheChanges.Copied.push_back(test::GenerateRandomVector(14));
+		std::get<0>(subCacheChanges.Added).push_back(test::GenerateRandomVector(21));
+		std::get<0>(subCacheChanges.Removed).push_back(test::GenerateRandomVector(21));
+		std::get<0>(subCacheChanges.Removed).push_back(test::GenerateRandomVector(14));
+		std::get<0>(subCacheChanges.Removed).push_back(test::GenerateRandomVector(17));
+		std::get<0>(subCacheChanges.Copied).push_back(test::GenerateRandomVector(21));
+		std::get<0>(subCacheChanges.Copied).push_back(test::GenerateRandomVector(14));
 
 		// - create cache changes around single sub cache
 		CacheChanges::MemoryCacheChangesContainer cacheChangesContainer;
@@ -169,8 +169,8 @@ namespace catapult { namespace cache {
 
 		// - check added and copied (breadcrumbs in [0, 2] should be added and copied)
 		{
-			std::set<std::vector<uint8_t>> expectedBuffersSet(subCacheChanges.Added.cbegin(), subCacheChanges.Added.cend());
-			expectedBuffersSet.insert(subCacheChanges.Copied.cbegin(), subCacheChanges.Copied.cend());
+			std::set<std::vector<uint8_t>> expectedBuffersSet(std::get<0>(subCacheChanges.Added).cbegin(), std::get<0>(subCacheChanges.Added).cend());
+			expectedBuffersSet.insert(std::get<0>(subCacheChanges.Copied).cbegin(), std::get<0>(subCacheChanges.Copied).cend());
 			AssertApplied(expectedBuffersSet, breadcrumbs, 0, 2, {
 				test::BasicDeltasAwareCache::OperationType::Purge,
 				test::BasicDeltasAwareCache::OperationType::Load_Into
@@ -179,7 +179,7 @@ namespace catapult { namespace cache {
 
 		// - check removed (breadcrumbs in [3, 5] should be removed)
 		{
-			std::set<std::vector<uint8_t>> expectedBuffersSet(subCacheChanges.Removed.cbegin(), subCacheChanges.Removed.cend());
+			std::set<std::vector<uint8_t>> expectedBuffersSet(std::get<0>(subCacheChanges.Removed).cbegin(), std::get<0>(subCacheChanges.Removed).cend());
 			AssertApplied(expectedBuffersSet, breadcrumbs, 3, 5, { test::BasicDeltasAwareCache::OperationType::Purge });
 		}
 	}

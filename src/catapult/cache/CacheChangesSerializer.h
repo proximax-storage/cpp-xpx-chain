@@ -27,8 +27,8 @@
 namespace catapult { namespace cache {
 
 	/// Reads serialized cache \a changes from \a inputStream.
-	template<typename TSerializer, typename TValue>
-	void ReadCacheChanges(io::InputStream& inputStream, MemoryCacheChangesT<TValue>& changes) {
+	template<typename TSerializer, typename ...TValue>
+	void ReadCacheChanges(io::InputStream& inputStream, MemoryCacheChangesT<TValue...>& changes) {
 		io::Read(inputStream, changes.Height);
 
 		auto readAllInto = [&inputStream](auto& dest, auto count) {
@@ -36,13 +36,17 @@ namespace catapult { namespace cache {
 				dest.push_back(TSerializer::Load(inputStream));
 		};
 
-		auto numAdded = io::Read64(inputStream);
-		auto numRemoved = io::Read64(inputStream);
-		auto numCopied = io::Read64(inputStream);
+		constexpr auto size = sizeof...(TValue);
+		utils::for_sequence(std::make_index_sequence<size>{}, [&](auto i){
+		  auto numAdded = io::Read64(inputStream);
+		  auto numRemoved = io::Read64(inputStream);
+		  auto numCopied = io::Read64(inputStream);
 
-		readAllInto(changes.Added, numAdded);
-		readAllInto(changes.Removed, numRemoved);
-		readAllInto(changes.Copied, numCopied);
+		  readAllInto(std::get<i>(changes.Added), numAdded);
+		  readAllInto(std::get<i>(changes.Removed), numRemoved);
+		  readAllInto(std::get<i>(changes.Copied), numCopied);
+		});
+
 	}
 
 	/// Writes serialized cache \a changes into \a outputStream.

@@ -100,7 +100,7 @@ namespace catapult { namespace test {
 
 	void AssertEqual(state::LockFundRecord originalRecord, state::LockFundRecord loadedRecord);
 
-	std::unordered_map<Key, state::LockFundRecordGroup<cache::LockFundKeyIndexDescriptor>, utils::ArrayHasher<Key>> DeriveKeyRecordsFromHeightRecord(state::LockFundRecordGroup<cache::LockFundHeightIndexDescriptor> record);
+	std::unordered_map<Key, state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor>, utils::ArrayHasher<Key>> DeriveKeyRecordsFromHeightRecord(state::LockFundRecordGroup<state::LockFundHeightIndexDescriptor> record);
 
 	struct DefaultRecordGroupGeneratorTraitsBase
 	{
@@ -118,17 +118,17 @@ namespace catapult { namespace test {
 	template<typename TIdentifier>
 	struct DefaultRecordGroupGeneratorTraits;
 	template<>
-	struct DefaultRecordGroupGeneratorTraits<cache::LockFundKeyIndexDescriptor> : public DefaultRecordGroupGeneratorTraitsBase
+	struct DefaultRecordGroupGeneratorTraits<state::LockFundKeyIndexDescriptor> : public DefaultRecordGroupGeneratorTraitsBase
 	{
-		static typename cache::LockFundKeyIndexDescriptor::ValueIdentifier GenerateIdentifier(uint32_t index)
+		static typename state::LockFundKeyIndexDescriptor::ValueIdentifier GenerateIdentifier(uint32_t index)
 		{
 			return Height(index);
 		}
 	};
 	template<>
-	struct DefaultRecordGroupGeneratorTraits<cache::LockFundHeightIndexDescriptor> : public DefaultRecordGroupGeneratorTraitsBase
+	struct DefaultRecordGroupGeneratorTraits<state::LockFundHeightIndexDescriptor> : public DefaultRecordGroupGeneratorTraitsBase
 	{
-		static typename cache::LockFundHeightIndexDescriptor::ValueIdentifier GenerateIdentifier(uint32_t index)
+		static typename state::LockFundHeightIndexDescriptor::ValueIdentifier GenerateIdentifier(uint32_t index)
 		{
 			return GenerateRandomByteArray<Key>();
 		}

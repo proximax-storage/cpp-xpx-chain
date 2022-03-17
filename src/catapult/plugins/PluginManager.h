@@ -140,6 +140,14 @@ namespace catapult { namespace plugins {
 			m_cacheBuilder.add<TStorageTraits>(std::move(pSubCache));
 		}
 
+		/// Adds support for a sub cache described by \a pSubCache.
+		template<typename TStorageTraits, typename TCache>
+		void addCacheSupport(std::unique_ptr<TCache>&& pSubCache, cache::MultisetTraits t) {
+			m_cacheBuilder.add<TStorageTraits>(std::move(pSubCache), t);
+		}
+
+
+
 		/// Adds support for a sub cache registered by \a pSubCachePlugin.
 		void addCacheSupport(std::unique_ptr<cache::SubCachePlugin>&& pSubCachePlugin);
 

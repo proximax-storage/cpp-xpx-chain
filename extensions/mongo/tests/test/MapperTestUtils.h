@@ -108,6 +108,12 @@ namespace catapult { namespace test {
 		return static_cast<uint64_t>(doc[name].get_int64().value);
 	}
 
+	/// Returns value \a name from a document (\a doc) as an signed 64 bit value.
+	template<typename TDocument>
+	Height GetHeight(const TDocument& doc, const std::string& name) {
+		return Height(GetUint64(doc, name));
+	}
+
 	/// Returns number of fields in a document \a view.
 	template<typename TDocumentView>
 	size_t GetFieldCount(const TDocumentView& view) {

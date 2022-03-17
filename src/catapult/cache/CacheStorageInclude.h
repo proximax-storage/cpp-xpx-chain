@@ -46,7 +46,7 @@ namespace catapult { namespace cache {
 		using ValueType = typename TDescriptor::ValueType;
 	};
 
-	/// Defines cache storage for cache with basic insert remove support.
+	/// Defines cache storage for cache with basic insert remove support for single sets.
 	template<typename TDescriptor>
 	struct CacheStorageForBasicInsertRemoveCache : public CacheStorageFromDescriptor<TDescriptor> {
 		/// Loads \a value into \a cacheDelta.

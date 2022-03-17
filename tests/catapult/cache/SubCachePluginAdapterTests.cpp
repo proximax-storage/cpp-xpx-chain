@@ -601,9 +601,9 @@ namespace catapult { namespace cache {
 		// - create cache changes (simple cache id is 3)
 		auto pSubCacheChanges = std::make_unique<MemoryCacheChangesT<uint64_t>>();
 		pSubCacheChanges->Height = Height{3};
-		pSubCacheChanges->Added = { 1, 16 };
-		pSubCacheChanges->Removed = { 9, 25, 36 };
-		pSubCacheChanges->Copied = { 4 };
+		pSubCacheChanges->Added = {{ 1, 16 }};
+		pSubCacheChanges->Removed = {{ 9, 25, 36 }};
+		pSubCacheChanges->Copied = {{ 4 }};
 
 		CacheChanges::MemoryCacheChangesContainer cacheChangesContainer;
 		cacheChangesContainer.emplace_back(nullptr);
@@ -655,13 +655,13 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(Height{4u}, changes.Height);
-		EXPECT_EQ(2u, changes.Added.size());
-		EXPECT_EQ(3u, changes.Removed.size());
-		EXPECT_EQ(1u, changes.Copied.size());
+		EXPECT_EQ(2u, std::get<0>(changes.Added).size());
+		EXPECT_EQ(3u, std::get<0>(changes.Removed).size());
+		EXPECT_EQ(1u, std::get<0>(changes.Copied).size());
 
-		EXPECT_EQ(std::vector<uint64_t>({ 1, 16 }), changes.Added);
-		EXPECT_EQ(std::vector<uint64_t>({ 9, 25, 36 }), changes.Removed);
-		EXPECT_EQ(std::vector<uint64_t>({ 4 }), changes.Copied);
+		EXPECT_EQ(std::vector<uint64_t>({ 1, 16 }), std::get<0>(changes.Added));
+		EXPECT_EQ(std::vector<uint64_t>({ 9, 25, 36 }), std::get<0>(changes.Removed));
+		EXPECT_EQ(std::vector<uint64_t>({ 4 }), std::get<0>(changes.Copied));
 	}
 
 	// endregion

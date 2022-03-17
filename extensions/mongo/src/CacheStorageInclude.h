@@ -44,6 +44,10 @@ namespace catapult {
 #define DEFINE_MONGO_FLAT_CACHE_STORAGE(NAME, TRAITS_NAME) \
 	DEFINE_MONGO_CACHE_STORAGE(NAME, MongoFlatCacheStorage, TRAITS_NAME)
 
+/// Defines a mongo multiset cache storage with \a NAME using \a TRAITS_NAME.
+#define DEFINE_MONGO_MULTISET_CACHE_STORAGE(NAME, TRAITS_NAME) \
+	DEFINE_MONGO_CACHE_STORAGE(NAME, MongoMultisetCacheStorage, TRAITS_NAME)
+
 /// Defines a mongo historical cache storage with \a NAME using \a TRAITS_NAME.
 #define DEFINE_MONGO_HISTORICAL_CACHE_STORAGE(NAME, TRAITS_NAME) \
 	DEFINE_MONGO_CACHE_STORAGE(NAME, MongoHistoricalCacheStorage, TRAITS_NAME)

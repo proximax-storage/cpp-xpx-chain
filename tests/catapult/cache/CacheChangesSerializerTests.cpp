@@ -56,12 +56,16 @@ namespace catapult { namespace cache {
 		// Act:
 		test::ByteVectorCacheChanges changes;
 		ReadFromBuffer(buffer, changes);
-
 		// Assert:
+
 		EXPECT_EQ(Height{1u}, changes.Height);
-		EXPECT_EQ(0u, changes.Added.size());
-		EXPECT_EQ(0u, changes.Removed.size());
-		EXPECT_EQ(0u, changes.Copied.size());
+		constexpr auto size = std::tuple_size_v<decltype(changes.Added)>;
+		utils::for_sequence(std::make_index_sequence<size>{}, [&](auto i){
+		  EXPECT_EQ(0u, std::get<i>(changes.Added).size());
+		  EXPECT_EQ(0u, std::get<i>(changes.Removed).size());
+		  EXPECT_EQ(0u, std::get<i>(changes.Copied).size());
+		});
+
 	}
 
 	TEST(TEST_CLASS, CanReadCacheChanges_OnlyAdded) {
@@ -81,12 +85,12 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(Height{2u}, changes.Height);
-		ASSERT_EQ(2u, changes.Added.size());
-		EXPECT_EQ(0u, changes.Removed.size());
-		EXPECT_EQ(0u, changes.Copied.size());
+		ASSERT_EQ(2u, std::get<0>(changes.Added).size());
+		EXPECT_EQ(0u, std::get<0>(changes.Removed).size());
+		EXPECT_EQ(0u, std::get<0>(changes.Copied).size());
 
-		EXPECT_EQ(added1, changes.Added[0]);
-		EXPECT_EQ(added2, changes.Added[1]);
+		EXPECT_EQ(added1, std::get<0>(changes.Added)[0]);
+		EXPECT_EQ(added2, std::get<0>(changes.Added)[1]);
 	}
 
 	TEST(TEST_CLASS, CanReadCacheChanges_OnlyRemoved) {
@@ -106,12 +110,12 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(Height{3u}, changes.Height);
-		EXPECT_EQ(0u, changes.Added.size());
-		ASSERT_EQ(2u, changes.Removed.size());
-		EXPECT_EQ(0u, changes.Copied.size());
+		EXPECT_EQ(0u, std::get<0>(changes.Added).size());
+		ASSERT_EQ(2u, std::get<0>(changes.Removed).size());
+		EXPECT_EQ(0u, std::get<0>(changes.Copied).size());
 
-		EXPECT_EQ(removed1, changes.Removed[0]);
-		EXPECT_EQ(removed2, changes.Removed[1]);
+		EXPECT_EQ(removed1, std::get<0>(changes.Removed)[0]);
+		EXPECT_EQ(removed2, std::get<0>(changes.Removed)[1]);
 	}
 
 	TEST(TEST_CLASS, CanReadCacheChanges_OnlyCopied) {
@@ -131,12 +135,12 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(Height{4u}, changes.Height);
-		EXPECT_EQ(0u, changes.Added.size());
-		EXPECT_EQ(0u, changes.Removed.size());
-		ASSERT_EQ(2u, changes.Copied.size());
+		EXPECT_EQ(0u, std::get<0>(changes.Added).size());
+		ASSERT_EQ(0u, std::get<0>(changes.Removed).size());
+		EXPECT_EQ(2u, std::get<0>(changes.Copied).size());
 
-		EXPECT_EQ(copied1, changes.Copied[0]);
-		EXPECT_EQ(copied2, changes.Copied[1]);
+		EXPECT_EQ(copied1, std::get<0>(changes.Copied)[0]);
+		EXPECT_EQ(copied2, std::get<0>(changes.Copied)[1]);
 	}
 
 	TEST(TEST_CLASS, CanReadCacheChanges_All) {
@@ -160,16 +164,16 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(Height{5u}, changes.Height);
-		ASSERT_EQ(1u, changes.Added.size());
-		ASSERT_EQ(3u, changes.Removed.size());
-		ASSERT_EQ(2u, changes.Copied.size());
+		ASSERT_EQ(1u, std::get<0>(changes.Added).size());
+		ASSERT_EQ(3u, std::get<0>(changes.Removed).size());
+		ASSERT_EQ(2u, std::get<0>(changes.Copied).size());
 
-		EXPECT_EQ(added1, changes.Added[0]);
-		EXPECT_EQ(removed1, changes.Removed[0]);
-		EXPECT_EQ(removed2, changes.Removed[1]);
-		EXPECT_EQ(removed3, changes.Removed[2]);
-		EXPECT_EQ(copied1, changes.Copied[0]);
-		EXPECT_EQ(copied2, changes.Copied[1]);
+		EXPECT_EQ(added1, std::get<0>(changes.Added)[0]);
+		EXPECT_EQ(removed1, std::get<0>(changes.Removed)[0]);
+		EXPECT_EQ(removed2, std::get<0>(changes.Removed)[1]);
+		EXPECT_EQ(removed3, std::get<0>(changes.Removed)[2]);
+		EXPECT_EQ(copied1, std::get<0>(changes.Copied)[0]);
+		EXPECT_EQ(copied2, std::get<0>(changes.Copied)[1]);
 	}
 
 	// endregion
@@ -206,8 +210,8 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CanWriteCacheChanges_OnlyAdded) {
 		// Arrange:
 		test::ByteVectorCacheChanges changes;
-		changes.Added.push_back(test::GenerateRandomVector(21));
-		changes.Added.push_back(test::GenerateRandomVector(14));
+		std::get<0>(changes.Added).push_back(test::GenerateRandomVector(21));
+		std::get<0>(changes.Added).push_back(test::GenerateRandomVector(14));
 
 		// Act:
 		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{2}));
@@ -221,14 +225,14 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(0u, reader.read64());
 		EXPECT_EQ(0u, reader.read64());
 
-		test::AssertEquivalent(changes.Added, reader);
+		test::AssertEquivalent(std::get<0>(changes.Added), reader);
 	}
 
 	TEST(TEST_CLASS, CanWriteCacheChanges_OnlyRemoved) {
 		// Arrange:
 		test::ByteVectorCacheChanges changes;
-		changes.Removed.push_back(test::GenerateRandomVector(21));
-		changes.Removed.push_back(test::GenerateRandomVector(14));
+		std::get<0>(changes.Removed).push_back(test::GenerateRandomVector(21));
+			std::get<0>(changes.Removed).push_back(test::GenerateRandomVector(14));
 
 		// Act:
 		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{3}));
@@ -242,14 +246,14 @@ namespace catapult { namespace cache {
 		ASSERT_EQ(2u, reader.read64());
 		EXPECT_EQ(0u, reader.read64());
 
-		test::AssertEquivalent(changes.Removed, reader);
+		test::AssertEquivalent(std::get<0>(changes.Removed), reader);
 	}
 
 	TEST(TEST_CLASS, CanWriteCacheChanges_OnlyCopied) {
 		// Arrange:
 		test::ByteVectorCacheChanges changes;
-		changes.Copied.push_back(test::GenerateRandomVector(21));
-		changes.Copied.push_back(test::GenerateRandomVector(14));
+		std::get<0>(changes.Copied).push_back(test::GenerateRandomVector(21));
+		std::get<0>(changes.Copied).push_back(test::GenerateRandomVector(14));
 
 		// Act:
 		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{4}));
@@ -263,18 +267,18 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(0u, reader.read64());
 		ASSERT_EQ(2u, reader.read64());
 
-		test::AssertEquivalent(changes.Copied, reader);
+		test::AssertEquivalent(std::get<0>(changes.Copied), reader);
 	}
 
 	TEST(TEST_CLASS, CanWriteCacheChanges_All) {
 		// Arrange:
 		test::ByteVectorCacheChanges changes;
-		changes.Added.push_back(test::GenerateRandomVector(21));
-		changes.Removed.push_back(test::GenerateRandomVector(21));
-		changes.Removed.push_back(test::GenerateRandomVector(14));
-		changes.Removed.push_back(test::GenerateRandomVector(17));
-		changes.Copied.push_back(test::GenerateRandomVector(21));
-		changes.Copied.push_back(test::GenerateRandomVector(14));
+		std::get<0>(changes.Added).push_back(test::GenerateRandomVector(21));
+		std::get<0>(changes.Removed).push_back(test::GenerateRandomVector(21));
+		std::get<0>(changes.Removed).push_back(test::GenerateRandomVector(14));
+		std::get<0>(changes.Removed).push_back(test::GenerateRandomVector(17));
+		std::get<0>(changes.Copied).push_back(test::GenerateRandomVector(21));
+		std::get<0>(changes.Copied).push_back(test::GenerateRandomVector(14));
 
 		// Act:
 		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{5}));
@@ -288,9 +292,9 @@ namespace catapult { namespace cache {
 		ASSERT_EQ(3u, reader.read64());
 		ASSERT_EQ(2u, reader.read64());
 
-		test::AssertEquivalent(changes.Added, reader, "added");
-		test::AssertEquivalent(changes.Removed, reader, "removed");
-		test::AssertEquivalent(changes.Copied, reader, "copied");
+		test::AssertEquivalent(std::get<0>(changes.Added), reader, "added");
+		test::AssertEquivalent(std::get<0>(changes.Removed), reader, "removed");
+		test::AssertEquivalent(std::get<0>(changes.Copied), reader, "copied");
 	}
 
 	// endregion

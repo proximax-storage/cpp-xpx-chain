@@ -20,6 +20,7 @@
 
 #pragma once
 #include "tests/TestHarness.h"
+#include "catapult/utils/Functional.h"
 #include <set>
 
 namespace catapult { namespace test {

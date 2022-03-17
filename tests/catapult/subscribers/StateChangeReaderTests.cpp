@@ -48,7 +48,7 @@ namespace catapult { namespace subscribers {
 
 			std::unique_ptr<const cache::MemoryCacheChanges> loadAll(io::InputStream& input) const override {
 				auto pMemoryCacheChanges = std::make_unique<cache::MemoryCacheChangesT<uint32_t>>();
-				pMemoryCacheChanges->Added.push_back(io::Read32(input));
+				std::get<0>(pMemoryCacheChanges->Added).push_back(io::Read32(input));
 				return std::move(pMemoryCacheChanges);
 			}
 

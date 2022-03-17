@@ -22,6 +22,7 @@
 #include "catapult/cache/BasicCache.h"
 #include "LockFundCacheView.h"
 #include "LockFundCacheDelta.h"
+#include "src/state/LockFundRecordGroup.h"
 #include "LockFundCacheTypes.h"
 
 namespace catapult { namespace cache {
@@ -34,6 +35,7 @@ namespace catapult { namespace cache {
 	public:
 		DEFINE_CACHE_CONSTANTS(LockFund)
 
+		using CacheValueTypes = std::tuple<typename LockFundCache::CacheValueType, state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor>>;
 	public:
 		/// Creates a cache around \a config.
 		explicit LockFundCache(const CacheConfiguration& config, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)

@@ -27,7 +27,52 @@ namespace catapult { namespace cache {
 	/// A mixin for looking up records.
 	/// \note Due to double lookup, this cannot be replaced with one ConstAccessorMixin per set.
 	template<typename TPrimarySet, typename TSecondarySet>
-	class LockFundLookupMixin {
+	class LockFundMutableLookupMixin {
+	public:
+		/// An iterator that is returned by namespace cache find functions.
+		using PrimaryKeyType = typename LockFundCacheDescriptor::KeyType;
+		using PrimaryValueAdapter = detail::NoOpAdapter<typename LockFundCacheDescriptor::ValueType>;
+		using PrimaryValueType = typename PrimaryValueAdapter::AdaptedValueType;
+		using PrimarySetIteratorType = typename TPrimarySet::FindConstIterator;
+
+		using InverseKeyType = typename LockFundCacheTypes::KeyedLockFundTypesDescriptor::KeyType;
+		using InverseValueAdapter = detail::NoOpAdapter<typename LockFundCacheTypes::KeyedLockFundTypesDescriptor::ValueType>;
+		using InverseValueType = typename InverseValueAdapter::AdaptedValueType;
+		using InverseSetIteratorType = typename TSecondarySet::FindConstIterator;
+
+		using primary_iterator = detail::CacheFindIterator<LockFundCacheDescriptor, PrimaryValueAdapter, typename TPrimarySet::FindIterator, PrimaryValueType>;
+		using inverse_iterator = detail::CacheFindIterator<LockFundCacheTypes::KeyedLockFundTypesDescriptor, InverseValueAdapter, typename TSecondarySet::FindIterator, InverseValueType>;
+
+	public:
+		/// Creates a mixin around (history by id) \a set and \a flatMap.
+		explicit LockFundMutableLookupMixin(TPrimarySet& set, TSecondarySet& inverseSet)
+				: m_set(set)
+				, m_inverseSet(inverseSet)
+		{}
+
+	public:
+
+		/// Finds the cache value identified by \a height.
+		primary_iterator find(Height height) {
+			auto setIter = m_set.find(height);
+			return primary_iterator(std::move(setIter), height);
+		}
+
+		/// Finds the cache value identified by \a key.
+		inverse_iterator find(Key key) {
+			auto setIter = m_inverseSet.find(key);
+			return inverse_iterator(std::move(setIter), key);
+		}
+
+	private:
+		TPrimarySet& m_set;
+		TSecondarySet& m_inverseSet;
+	};
+
+	/// A mixin for looking up records.
+	/// \note Due to double lookup, this cannot be replaced with one ConstAccessorMixin per set.
+	template<typename TPrimarySet, typename TSecondarySet>
+	class LockFundConstLookupMixin {
 	public:
 		/// An iterator that is returned by namespace cache find functions.
 		using PrimaryKeyType = typename LockFundCacheDescriptor::KeyType;
@@ -42,10 +87,9 @@ namespace catapult { namespace cache {
 
 		using const_primary_iterator = detail::CacheFindIterator<LockFundCacheDescriptor, PrimaryValueAdapter, typename TPrimarySet::FindConstIterator, const PrimaryValueType>;
 		using const_inverse_iterator = detail::CacheFindIterator<LockFundCacheTypes::KeyedLockFundTypesDescriptor, InverseValueAdapter, typename TSecondarySet::FindConstIterator, const InverseValueType>;
-
 	public:
 		/// Creates a mixin around (history by id) \a set and \a flatMap.
-		explicit LockFundLookupMixin(const TPrimarySet& set, const TSecondarySet& inverseSet)
+		explicit LockFundConstLookupMixin(const TPrimarySet& set, const TSecondarySet& inverseSet)
 				: m_set(set)
 				, m_inverseSet(inverseSet)
 		{}
