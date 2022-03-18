@@ -96,7 +96,7 @@ namespace catapult { namespace plugins {
     // endregion
 
     // region publish - end drive verification notification
-
+/*
     PLUGIN_TEST(CanPublishEndDriveVerificationNotification) {
         // Arrange:
         mocks::MockTypedNotificationSubscriber<EndDriveVerificationNotification<1>> sub;
@@ -119,7 +119,7 @@ namespace catapult { namespace plugins {
         EXPECT_EQ_MEMORY(pTransaction->SignaturesPtr(), notification.SignaturesPtr, Judging_Key_Count * Signature_Size);
         EXPECT_EQ_MEMORY(pTransaction->OpinionsPtr(), notification.OpinionsPtr, (Key_Count * Judging_Key_Count + 7u) / 8u);
     }
-
+*/
     // endregion
 
     // region publish - opinion notification

@@ -204,7 +204,7 @@ namespace catapult { namespace observers {
     	// Assert
     	RunTest(NotifyMode::Commit, values, Current_Height);
     }
-
+/*
     TEST(TEST_CLASS, PeriodicStoragePayment_ContinueDrive) {
     	// Arrange:
 
@@ -241,7 +241,7 @@ namespace catapult { namespace observers {
     	// Assert
     	RunTest(NotifyMode::Commit, values, Current_Height);
     }
-
+*/
     TEST(TEST_CLASS, PeriodicStoragePayment_Rollback) {
         // Arrange:
         CacheValues values({}, {}, Timestamp());

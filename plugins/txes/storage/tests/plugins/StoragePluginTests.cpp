@@ -137,5 +137,5 @@ namespace catapult { namespace plugins {
 		};
 	}
 
-	DEFINE_PLUGIN_TESTS(StoragePluginTests, StoragePluginTraits)
+	// DEFINE_PLUGIN_TESTS(StoragePluginTests, StoragePluginTraits)
 }}
