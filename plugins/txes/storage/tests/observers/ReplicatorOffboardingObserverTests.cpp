@@ -94,7 +94,7 @@ namespace catapult { namespace observers {
 		DriveQueue CreateDriveQueue(const std::vector<state::BcDriveEntry>& driveEntries) {
 			DriveQueue driveQueue;
 			for (const auto& entry : driveEntries) {
-				if ((entry.replicators().size() - entry.offboardingReplicators().size()) < entry.replicatorCount())
+				if (entry.replicators().size() < entry.replicatorCount())
 					driveQueue.emplace(entry.key(), utils::CalculateDrivePriority(entry, Min_Replicator_Count));
 			}
 

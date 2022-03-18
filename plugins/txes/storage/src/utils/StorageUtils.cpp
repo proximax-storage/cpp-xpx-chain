@@ -305,7 +305,6 @@ namespace catapult { namespace utils {
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
-		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
 		auto& driveEntry = driveCache.find(driveKey).get();
 		const auto driveSize = driveEntry.size();
