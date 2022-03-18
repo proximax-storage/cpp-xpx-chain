@@ -103,10 +103,14 @@ namespace catapult { namespace mongo { namespace plugins {
 		bsoncxx::builder::basic::document basic_builder{};
 
 		basic_builder.append(
-			kvp("identifier", detail::ToMongoId<typename TDescriptor::KeyType, detail::AssociatedKeyType<TDescriptor>>(lockFundRecordGroup.Identifier)),
-			kvp("records", [&](sub_array lockFundRecordsArray) {
-				for (const auto& field : lockFundRecordGroup.LockFundRecords)
-					detail::StreamLockFundRecordField<TDescriptor>(lockFundRecordsArray, field);
+			kvp("lockFundRecordGroup", [&](sub_document recordGroup){
+				recordGroup.append(
+					kvp("identifier", detail::ToMongoId<typename TDescriptor::KeyType, detail::AssociatedKeyType<TDescriptor>>(lockFundRecordGroup.Identifier)),
+					kvp("records", [&](sub_array lockFundRecordsArray) {
+					  for (const auto& field : lockFundRecordGroup.LockFundRecords)
+						  detail::StreamLockFundRecordField<TDescriptor>(lockFundRecordsArray, field);
+					})
+				);
 			})
 		);
 		return basic_builder.extract();

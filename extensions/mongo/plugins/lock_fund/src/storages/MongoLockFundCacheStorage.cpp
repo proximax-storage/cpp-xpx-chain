@@ -49,7 +49,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			using ElementContainerType = std::tuple<std::unordered_set<const state::LockFundRecordGroup<state::LockFundHeightIndexDescriptor>*>, std::unordered_set<const state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor>*>>;
 
 			static constexpr std::string_view  Collection_Names[] = {"lockFundHeightRecords", "lockFundKeyRecords"};
-			static constexpr std::string_view Id_Property_Names[] = {"lockFundHeightRecords.identifier", "lockFundKeyRecords.identifier"};
+			static constexpr std::string_view Id_Property_Names[] = {"lockFundRecordGroup.identifier", "lockFundRecordGroup.identifier"};
 
 			// TEMP: Verify we can remove index because disambiguation will not ever be needed!!
 			template<int TIndex, typename TParam, typename TReturn>

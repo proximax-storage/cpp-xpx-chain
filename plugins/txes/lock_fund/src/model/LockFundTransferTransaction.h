@@ -27,10 +27,10 @@ namespace catapult { namespace model {
 
 		/// Number of blocks until unlock. Must be higher than configured minimum.
 		BlockDuration Duration;
-		/// Number of mosaics.
-		uint8_t MosaicsCount;
 		/// Number of blocks until unlock. Must be higher than configured minimum.
 		model::LockFundAction Action;
+		/// Number of mosaics.
+		uint8_t MosaicsCount;
 		// followed by mosaics data if MosaicsCount != 0
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Mosaics, UnresolvedMosaic)
 

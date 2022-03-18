@@ -69,11 +69,12 @@ namespace catapult { namespace mongo { namespace plugins {
 			// Act:
 			auto document = ToDbModel(descriptor);
 			auto documentView = document.view();
+			auto recordGroupView = documentView["lockFundRecordGroup"].get_document().view();
 
 			// Assert:
-			EXPECT_EQ(2u, test::GetFieldCount(documentView));
+			EXPECT_EQ(2u, test::GetFieldCount(recordGroupView));
 
-			auto lockFundRecords = documentView["records"].get_array().value;
+			auto lockFundRecords = recordGroupView["records"].get_array().value;
 
 			ASSERT_EQ(numRecords, test::GetFieldCount(lockFundRecords));
 			auto iter = lockFundRecords.cbegin();
