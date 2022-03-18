@@ -26,7 +26,7 @@ module Catapult
             nemesis_generation_hash: generation_info.generation_hash,
             nemesis_signer_private_key: generation_info.signer_private_key,
             xpx: xpx(key_info_array),
-            harvester_keys: key_info_array[0..4].map { |key_info| harvesters(key_info) }
+            harvester_keys: key_info_array[0..XPX_NUM_OF_ACCOUNTS-1].map { |key_info| harvesters(key_info) }
           }
         end
 
