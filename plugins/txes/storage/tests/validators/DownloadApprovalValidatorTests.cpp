@@ -33,8 +33,10 @@ namespace catapult { namespace validators {
 		state::DownloadChannelEntry CreateDownloadChannelEntry(const std::vector<crypto::KeyPair>& replicatorKeyPairs, const std::optional<Hash256>& event) {
 			auto entry = test::CreateDownloadChannelEntry();
 			entry.cumulativePayments().clear();
-			for (const auto& keyPair : replicatorKeyPairs)
+			for (const auto& keyPair : replicatorKeyPairs) {
+				entry.shardReplicators().insert(keyPair.publicKey());
 				entry.cumulativePayments().emplace(keyPair.publicKey(), Amount(0));
+			}
 
 			entry.downloadApprovalInitiationEvent() = event;
 
@@ -172,7 +174,7 @@ namespace catapult { namespace validators {
 
 		// Double the number of replicators in downloadChannelEntry's shard
 		for (auto i = 0u; i < Shard_Size; ++i)
-			downloadChannelEntry.cumulativePayments().emplace(test::GenerateRandomByteArray<Key>(), Amount(0));
+			downloadChannelEntry.shardReplicators().insert(test::GenerateRandomByteArray<Key>());
 
 		downloadChannelDelta.insert(downloadChannelEntry);
 		cache.commit(Current_Height);

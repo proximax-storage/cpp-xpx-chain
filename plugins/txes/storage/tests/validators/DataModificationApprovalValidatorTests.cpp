@@ -21,6 +21,7 @@ namespace catapult { namespace validators {
 
         constexpr auto Current_Height = Height(10);
 		constexpr auto Replicator_Count = 5;
+		constexpr auto Required_Signatures_Count = Replicator_Count * 2 / 3 + 1;
 		constexpr auto Common_Data_Size = sizeof(Key) + 2 * sizeof(Hash256) + 3 * sizeof(uint64_t);
         const auto File_Structure_Cdi =  test::GenerateRandomByteArray<Hash256>();
         constexpr auto File_Structure_Size = 50;
@@ -87,11 +88,15 @@ namespace catapult { namespace validators {
 				const std::vector<crypto::KeyPair>& replicatorKeyPairs,
 				const bool includeDriveOwner = true) {
 			// Generate valid opinion data:
-			const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size);
-			auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
-			delete[] commonDataBuffer.pData;
+			const auto totalJudgingKeysCount = test::RandomInRange(Required_Signatures_Count, Replicator_Count);
+			const auto judgedKeysCount = Replicator_Count - totalJudgingKeysCount;
+			const auto overlappingKeysCount = test::RandomInRange(judgedKeysCount ? 0 : 1, totalJudgingKeysCount);
+			const auto judgingKeysCount = totalJudgingKeysCount - overlappingKeysCount;
 
-			const auto totalJudgingKeysCount = opinionData.JudgingKeysCount + opinionData.OverlappingKeysCount;
+			const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size);
+			auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer,
+					{ judgingKeysCount, overlappingKeysCount, judgedKeysCount });
+			delete[] commonDataBuffer.pData;
 
 			// If includeDriveOwner is enabled and there are any judged keys, replace one of them with Drive Owner key with probability 0.5:
 			if (includeDriveOwner && opinionData.JudgedKeysCount && test::RandomByte() % 2) {
@@ -252,7 +257,7 @@ namespace catapult { namespace validators {
 		driveDelta.insert(driveEntry);
 		cache.commit(Current_Height);
 
-		const auto totalJudgingKeysCount = test::RandomInRange(1, Replicator_Count);
+		const auto totalJudgingKeysCount = test::RandomInRange(Required_Signatures_Count, Replicator_Count);
 		const auto overlappingKeysCount = test::RandomInRange(1, totalJudgingKeysCount);	// Need at least one overlapping key.
 		const auto judgingKeysCount = totalJudgingKeysCount - overlappingKeysCount;
 		const auto judgedKeysCount = Replicator_Count - totalJudgingKeysCount;

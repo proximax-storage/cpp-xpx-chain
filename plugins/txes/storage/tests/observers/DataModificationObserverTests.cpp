@@ -26,6 +26,19 @@ namespace catapult { namespace observers {
         constexpr auto Current_Height = Height(10);
 		const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
 		const auto Drive_Queue = std::make_shared<DriveQueue>();
+		constexpr auto Min_Replicator_Count = 4;
+		constexpr auto Shard_Size = 3;
+
+		auto CreateConfig() {
+			test::MutableBlockchainConfiguration config;
+			auto pluginConfig = config::StorageConfiguration::Uninitialized();
+
+			pluginConfig.MinReplicatorCount = Min_Replicator_Count;
+			pluginConfig.ShardSize = Shard_Size;
+			config.Network.SetPluginConfiguration(pluginConfig);
+
+			return config.ToConst();
+		}
 
         struct BcDriveValues {
             public:
@@ -54,7 +67,7 @@ namespace catapult { namespace observers {
 
         void RunTest(NotifyMode mode, const BcDriveValues& values, const Height& currentHeight) {
             // Arrange:
-            ObserverTestContext context(mode, currentHeight);
+            ObserverTestContext context(mode, currentHeight, CreateConfig());
             Notification notification(
                 values.Active_Data_Modification.begin()->Id, 
                 values.Drive_Key, 

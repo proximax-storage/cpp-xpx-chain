@@ -285,7 +285,7 @@ namespace catapult { namespace state {
     }
 
     // region Save
-
+/*
     TEST(TEST_CLASS, CanSaveSingleEntry_v1) {
         AssertCanSaveSingleEntry(1);
     }
@@ -293,7 +293,7 @@ namespace catapult { namespace state {
     TEST(TEST_CLASS, CanSaveMultipleEntries_v1) {
         AssertCanSaveMultipleEntries(1);
     }
-
+*/
     // endregion
 
     // region Load
