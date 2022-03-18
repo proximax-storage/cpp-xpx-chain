@@ -103,36 +103,6 @@ namespace catapult { namespace storage {
 		EXPECT_EQ_MEMORY(expectedOpinions.data(), transaction.OpinionsPtr(), expectedOpinions.size() * sizeof(uint64_t));
 	}
 
-    TEST(TEST_CLASS, SendDataModificationApprovalTransaction_WithoutOwnerUpload) {
-        // Arrange:
-        mocks::MockStorageState storageState;
-		std::shared_ptr<model::Transaction> pTransaction;
-		auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
-			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
-		};
-		auto testee = CreateTransactionSender(storageState, transactionRangeHandler);
-		std::vector<Key> expectedPublicKeys{ Key({ 5 }), Key({ 2 }), Key({ 3 }), Key({ 1 }), Key({ 6 }), Key({ 7 }), Key({ 4 }) };
-		std::vector<uint64_t> expectedOpinions{ 900, 1000, 1100, 400, 300, 500, 800, 700, 200, 100 };
-		std::vector<uint8_t> presentOpinions{ 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1 };
-		std::vector<uint8_t> expectedPresentOpinions;
-		boost::dynamic_bitset<uint8_t> presentOpinionsBitset(20, 0u);
-		for (auto i = 0u; i < presentOpinions.size(); ++i)
-			presentOpinionsBitset[i] = presentOpinions[i];
-		boost::to_block_range(presentOpinionsBitset, std::back_inserter(expectedPresentOpinions));
-		std::vector<Signature> expectedSignatures{ Signature({ 5 }), Signature({ 2 }), Signature({ 3 }), Signature({ 1 }) };
-
-		auto transactionInfo = CreateDataModificationApprovalTransactionInfo();
-
-		testee.sendDataModificationApprovalTransaction(transactionInfo);
-
-        // Assert:
-		auto& transaction = static_cast<const model::DataModificationApprovalTransaction&>(*pTransaction);
-        EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);
-        EXPECT_EQ_MEMORY(expectedSignatures.data(), transaction.SignaturesPtr(), expectedSignatures.size() * Signature_Size);
-        EXPECT_EQ_MEMORY(expectedPresentOpinions.data(), transaction.PresentOpinionsPtr(), expectedPresentOpinions.size());
-		EXPECT_EQ_MEMORY(expectedOpinions.data(), transaction.OpinionsPtr(), expectedOpinions.size() * sizeof(uint64_t));
-    }
-
 	namespace {
 		auto CreateDataModificationSingleApprovalTransactionInfo() {
 			sirius::drive::ApprovalTransactionInfo transactionInfo;

@@ -17,13 +17,13 @@ namespace catapult { namespace storage {
         class DefaultReplicatorEventHandler : public ReplicatorEventHandler {
         public:
             explicit DefaultReplicatorEventHandler(
-					boost::asio::io_context& context,
+//					boost::asio::io_context& context,
                     TransactionSender&& transactionSender,
                     state::StorageState& storageState,
                     TransactionStatusHandler& transactionStatusHandler,
                     const crypto::KeyPair& keyPair)
-				: m_context(context)
-				, m_transactionSender(std::move(transactionSender))
+				: m_transactionSender(std::move(transactionSender))
+//				, m_context(context)
 				, m_storageState(storageState)
 				, m_transactionStatusHandler(transactionStatusHandler)
 				, m_keyPair(keyPair)
@@ -142,7 +142,7 @@ namespace catapult { namespace storage {
             void opinionHasBeenReceived(
                     sirius::drive::Replicator&,
                     const sirius::drive::ApprovalTransactionInfo& info) override {
-				boost::asio::post(m_context, [this, info] {
+//				boost::asio::post(m_context, [this, info] {
 				  CATAPULT_LOG(debug) << "modificationOpinionHasBeenReceived() " << int(info.m_opinions[0].m_replicatorKey[0]);
 				  auto pReplicator = m_pReplicator.lock();
 				  if (!pReplicator)
@@ -257,13 +257,13 @@ namespace catapult { namespace storage {
 				  }
 
 				  pReplicator->asyncOnOpinionReceived(info);
-				});
+//				});
             }
 
             void downloadOpinionHasBeenReceived(
                     sirius::drive::Replicator&,
                     const sirius::drive::DownloadApprovalTransactionInfo& info) override {
-            	boost::asio::post(m_context, [this, info] {
+//            	boost::asio::post(m_context, [this, info] {
 					auto pReplicator = m_pReplicator.lock();
 					if (!pReplicator)
 						return;
@@ -281,7 +281,7 @@ namespace catapult { namespace storage {
 
 					bool sorted = true;
 
-					const auto& uploadLayout = info.m_opinions[0].m_uploadLayout;
+					const auto& uploadLayout = info.m_opinions[0].m_downloadLayout;
 					for (int i = 0; i < uploadLayout.size() - 1 && sorted; i++) {
 						if (Key(uploadLayout[i + 1].m_key) < Key(uploadLayout[i].m_key)) {
 							sorted = false;
@@ -313,11 +313,11 @@ namespace catapult { namespace storage {
 					}
 
 					pReplicator->asyncOnDownloadOpinionReceived(info);
-				});
+//				});
 			}
 
         private:
-			boost::asio::io_context& m_context;
+//			boost::asio::io_context& m_context;
             TransactionSender m_transactionSender;
             state::StorageState& m_storageState;
             TransactionStatusHandler& m_transactionStatusHandler;
@@ -326,11 +326,13 @@ namespace catapult { namespace storage {
     }
 
     std::unique_ptr<ReplicatorEventHandler> CreateReplicatorEventHandler(
-			boost::asio::io_context& context,
+//			boost::asio::io_context& context,
             TransactionSender&& transactionSender,
             state::StorageState& storageState,
             TransactionStatusHandler& operations,
 			const catapult::crypto::KeyPair& keyPair) {
-    	return std::make_unique<DefaultReplicatorEventHandler>(context, std::move(transactionSender), storageState, operations, keyPair);
+    	return std::make_unique<DefaultReplicatorEventHandler>(
+//				context,
+				std::move(transactionSender), storageState, operations, keyPair);
     }
 }}
