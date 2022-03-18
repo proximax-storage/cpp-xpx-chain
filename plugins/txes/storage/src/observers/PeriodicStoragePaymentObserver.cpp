@@ -13,10 +13,12 @@
 namespace catapult { namespace observers {
 
 	using Notification = model::BlockNotification<2>;
+	using DrivePriority = std::pair<Key, double>;
+	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 	using BigUint = boost::multiprecision::uint256_t;
 
-	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)() {
-		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue) {
+		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([pDriveQueue](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
 
@@ -132,13 +134,17 @@ namespace catapult { namespace observers {
 					}
 
 					// Removing the drive from caches
+					const auto replicators = driveEntry.replicators();
 					auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-					for (const auto& replicatorKey : driveEntry.replicators())
+					for (const auto& replicatorKey : replicators)
 						replicatorCache.find(replicatorKey).get().drives().erase(driveEntry.key());
 
 					driveCache.remove(driveEntry.key());
 
-					// TODO Replicators assignment
+					// Assigning drive's former replicators to queued drives
+					std::seed_seq seed(eventHash.begin(), eventHash.end());
+					std::mt19937 rng(seed);
+					utils::AssignReplicatorsToQueuedDrives(replicators, pDriveQueue, context, rng);
 				}
 			}
 			CATAPULT_LOG( error ) << "Storage Observer 142";

@@ -88,7 +88,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by block
-	DECLARE_OBSERVER(PeriodicStoragePayment, model::BlockNotification<2>)();
+	DECLARE_OBSERVER(PeriodicStoragePayment, model::BlockNotification<2>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by block
 	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, model::BlockNotification<2>)();
