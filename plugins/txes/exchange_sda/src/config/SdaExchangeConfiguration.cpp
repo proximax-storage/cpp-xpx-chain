@@ -21,6 +21,7 @@ namespace catapult { namespace config {
 		LOAD_PROPERTY(Enabled);
 		LOAD_PROPERTY(MaxSdaOfferDuration);
 		LOAD_PROPERTY(LongSdaOfferKey);
+		LOAD_PROPERTY(SortPolicies);
 #undef LOAD_PROPERTY
 
 		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 3);

@@ -29,6 +29,17 @@ namespace catapult { namespace config {
 		/// offer duration exceeding MaxOfferDuration.
 		Key LongSdaOfferKey;
 
+		/// Policy to sort SDA-SDA offers.
+		enum class SortPolicies : uint8_t {
+			SmallToBig,
+			SmallToBigSortedByEarliestExpiry,
+			BigToSmall, 
+			BigToSmallSortedByEarliestExpiry,
+			ExactOrClosest
+		};
+
+		SortPolicies SortPolicies;
+
 	private:
 		SdaExchangeConfiguration() = default;
 
