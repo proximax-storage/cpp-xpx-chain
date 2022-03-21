@@ -34,7 +34,7 @@ namespace catapult { namespace model {
 		Hash256 StreamId;
 
 		/// Actual size of stream
-		uint64_t ActualUploadSize;
+		uint64_t ActualUploadSizeMegabytes;
 
 		/// Stream Structure CDI
 		Hash256 StreamStructureCdi;

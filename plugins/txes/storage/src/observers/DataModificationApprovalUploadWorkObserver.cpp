@@ -33,44 +33,47 @@ namespace catapult { namespace observers {
 	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
 
 		// Preparing vectors related to cumulative upload sizes.
-		std::vector<uint64_t> initialCumulativeUploadSizes;
-	  	initialCumulativeUploadSizes.reserve(totalJudgedKeysCount);
+//		std::vector<uint64_t> initialCumulativeUploadSizes;
+//	  	initialCumulativeUploadSizes.reserve(totalJudgedKeysCount);
 	  	const auto& driveOwnerPublicKey = driveEntry.owner();
-		for (auto i = notification.JudgingKeysCount; i < totalKeysCount; ++i) {
-			const auto& key = notification.PublicKeysPtr[i];
-			const auto& initialSize = (key != driveOwnerPublicKey) ?
-					driveEntry.cumulativeUploadSizes()[key] :
-					driveEntry.ownerCumulativeUploadSize();
-			initialCumulativeUploadSizes.push_back(initialSize);
-		}
+//		for (auto i = notification.JudgingKeysCount; i < totalKeysCount; ++i) {
+//			const auto& key = notification.PublicKeysPtr[i];
+//			const auto& initialSize = (key != driveOwnerPublicKey) ? driveEntry.cumulativeUploadSizesBytes()[key] : driveEntry.ownerCumulativeUploadSizeBytes();
+//			initialCumulativeUploadSizes.push_back(initialSize);
+//		}
 	  	std::vector<uint64_t> uploadSizesIncrements(totalJudgedKeysCount);
 
 		// Iterating over opinions row by row and calculating upload sizes increments for each judged uploader;
 	  	// resetting the set of additional keys in dataModificationShards for each judging replicator.
 		auto pOpinion = notification.OpinionsPtr;
-	  	auto& shardsPair = driveEntry.dataModificationShards();
 		for (auto i = 0; i < totalJudgingKeysCount; ++i) {
+			auto& shardsInfo = driveEntry.dataModificationShards().at(notification.PublicKeysPtr[i]);
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
 				if (presentOpinions[i*totalJudgedKeysCount + j]) {
-					uploadSizesIncrements.at(j) += *pOpinion - initialCumulativeUploadSizes.at(j);
+					const auto judgedKey = notification.PublicKeysPtr[notification.JudgingKeysCount + j];
+
+					uint64_t* initialCumulativeUploadSize = nullptr;
+					if ( auto it = shardsInfo.m_actualShardMembers.find(judgedKey); it != shardsInfo.m_actualShardMembers.end() ) {
+						initialCumulativeUploadSize = &it->second;
+					}
+					else if (auto it = shardsInfo.m_formerShardMembers.find(judgedKey); it != shardsInfo.m_formerShardMembers.end()) {
+						initialCumulativeUploadSize = &it->second;
+					}
+					else {
+						initialCumulativeUploadSize = &shardsInfo.m_ownerUpload;
+					}
+
+					uploadSizesIncrements.at(j) += *pOpinion - *initialCumulativeUploadSize;
+					*initialCumulativeUploadSize = *pOpinion;
 					++pOpinion;
+
+					auto recipientIter = accountStateCache.find(judgedKey);
+					auto& recipientState = recipientIter.get();
+					const auto transferAmount = Amount(utils::FileSize::FromBytes(uploadSizesIncrements.at(i)).megabytes());
+					senderState.Balances.debit(streamingMosaicId, transferAmount, context.Height);
+					recipientState.Balances.credit(currencyMosaicId, transferAmount, context.Height);
 				}
 			}
-			shardsPair.at(notification.PublicKeysPtr[i]).second.clear();
-		}
-
-	  	// Making mosaic transfers and updating cumulative upload sizes.
-		auto pKey = &notification.PublicKeysPtr[notification.JudgingKeysCount];
-	  	for (auto i = 0; i < totalJudgedKeysCount; ++i, ++pKey) {
-			auto recipientIter = accountStateCache.find(*pKey);
-			auto& recipientState = recipientIter.get();
-			const auto transferAmount = Amount(uploadSizesIncrements.at(i));
-			senderState.Balances.debit(streamingMosaicId, transferAmount, context.Height);
-			recipientState.Balances.credit(currencyMosaicId, transferAmount, context.Height);
-			if (*pKey != driveOwnerPublicKey)
-				driveEntry.cumulativeUploadSizes().at(*pKey) += uploadSizesIncrements.at(i);
-			else
-				driveEntry.increaseOwnerCumulativeUploadSize(uploadSizesIncrements.at(i));
 		}
 	});
 }}

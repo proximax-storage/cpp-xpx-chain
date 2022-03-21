@@ -26,6 +26,7 @@ namespace catapult { namespace observers {
         constexpr auto Capacity = Amount(50);
 		const Hash256 Hash_Seed = test::GenerateRandomByteArray<Hash256>();
 		constexpr auto Min_Replicator_Count = 4;
+		constexpr auto Shard_Size = 3;
 		const Key Drive1_Key = test::GenerateRandomByteArray<Key>();	// Requires a replicator, has the highest priority
 		constexpr uint64_t Drive1_Size = 30;
 		constexpr uint16_t Drive1_Replicator_Count = 4;
@@ -49,6 +50,7 @@ namespace catapult { namespace observers {
 
 			auto pluginConfig = config::StorageConfiguration::Uninitialized();
 			pluginConfig.MinReplicatorCount = Min_Replicator_Count;
+			pluginConfig.ShardSize = Shard_Size;
 			config.Network.SetPluginConfiguration(pluginConfig);
 
 			return config.ToConst();

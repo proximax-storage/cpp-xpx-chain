@@ -24,8 +24,8 @@ namespace catapult { namespace mongo { namespace plugins {
 						<< "id" << ToBinary(modification.Id)
 						<< "owner" << ToBinary(modification.Owner)
 						<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
-						<< "expectedUploadSize" << static_cast<int64_t>(modification.ExpectedUploadSize)
-						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSize)
+						<< "expectedUploadSize" << static_cast<int64_t>(modification.ExpectedUploadSizeMegabytes)
+						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSizeMegabytes)
 						<< "folderName" << ToBinary(pFolderName, modification.FolderName.size())
 						<< "readyForApproval" << modification.ReadyForApproval
 						<< bson_stream::close_document;
@@ -43,8 +43,8 @@ namespace catapult { namespace mongo { namespace plugins {
 						<< "id" << ToBinary(modification.Id)
 						<< "owner" << ToBinary(modification.Owner)
 						<< "downloadDataCdi" << ToBinary(modification.DownloadDataCdi)
-						<< "expectedUploadSize" << static_cast<int64_t>(modification.ExpectedUploadSize)
-						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSize)
+						<< "expectedUploadSize" << static_cast<int64_t>(modification.ExpectedUploadSizeMegabytes)
+						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSizeMegabytes)
 						<< "folderName" << ToBinary(pFolderName, modification.FolderName.size())
 						<< "readyForApproval" << modification.ReadyForApproval
 						<< "state" << utils::to_underlying_type(modification.State)
@@ -102,13 +102,21 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		void StreamDownloadShards(bson_stream::document& builder, const state::DownloadShards& downloadShards) {
 			auto array = builder << "downloadShards" << bson_stream::open_array;
-			for (const auto& pair : downloadShards) {
+			for (const auto& id : downloadShards) {
 				bson_stream::document shardBuilder;
-				shardBuilder << "downloadChannelId" << ToBinary(pair.first);
-				StreamReplicators("replicators", shardBuilder, pair.second);
-				array << shardBuilder;
+				shardBuilder << "downloadChannelId" << ToBinary(id);
 			}
 
+			array << bson_stream::close_array;
+		}
+
+		void StreamUploadInfo(const std::string& arrayName, bson_stream::document& builder, const std::map<Key, uint64_t>& info) {
+			auto array = builder << arrayName << bson_stream::open_array;
+			for (const auto& [replicatorKey, uploadSize] : info)
+				array << bson_stream::open_document
+					  << "key" << ToBinary(replicatorKey)
+					  << "uploadSize" << static_cast<int64_t>(uploadSize)
+					  << bson_stream::close_document;
 			array << bson_stream::close_array;
 		}
 
@@ -117,8 +125,9 @@ namespace catapult { namespace mongo { namespace plugins {
 			for (const auto& pair : dataModificationShards) {
 				bson_stream::document shardBuilder;
 				shardBuilder << "replicator" << ToBinary(pair.first);
-				StreamReplicators("shardReplicators", shardBuilder, pair.second.first);
-				StreamReplicators("additionalReplicators", shardBuilder, pair.second.second);
+				StreamUploadInfo("actualShardReplicators", shardBuilder, pair.second.m_actualShardMembers);
+				StreamUploadInfo("formerShardReplicators", shardBuilder, pair.second.m_formerShardMembers);
+				shardBuilder << "ownerUpload" << static_cast<int64_t>(pair.second.m_ownerUpload);
 				array << shardBuilder;
 			}
 
@@ -134,10 +143,9 @@ namespace catapult { namespace mongo { namespace plugins {
 				           << "owner" << ToBinary(entry.owner())
 				           << "rootHash" << ToBinary(entry.rootHash())
 						   << "size" << static_cast<int64_t>(entry.size())
-				           << "usedSize" << static_cast<int64_t>(entry.usedSize())
-				           << "metaFilesSize" << static_cast<int64_t>(entry.metaFilesSize())
-				           << "replicatorCount" << static_cast<int32_t>(entry.replicatorCount())
-				           << "ownerCumulativeUploadSize" << static_cast<int64_t>(entry.ownerCumulativeUploadSize());
+				           << "usedSizeBytes" << static_cast<int64_t>(entry.usedSizeBytes())
+				           << "metaFilesSizeBytes" << static_cast<int64_t>(entry.metaFilesSizeBytes())
+				           << "replicatorCount" << static_cast<int32_t>(entry.replicatorCount());
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
 		StreamCompletedDataModifications(builder, entry.completedDataModifications());
@@ -252,8 +260,16 @@ namespace catapult { namespace mongo { namespace plugins {
 				auto doc = dbShard.get_document().view();
 				Hash256 downloadChannelId;
 				DbBinaryToModelArray(downloadChannelId, doc["downloadChannelId"].get_binary());
-				auto& shard = downloadShards[downloadChannelId];
-				ReadReplicators(shard, doc["replicators"].get_array().value);
+			}
+		}
+
+		void ReadUploadInfo(std::map<Key, uint64_t>& shard, const bsoncxx::array::view& dbShard) {
+			for (const auto& replicator: dbShard) {
+				auto doc = replicator.get_document().view();
+				Key replicatorKey;
+				DbBinaryToModelArray(replicatorKey, doc["key"].get_binary());
+				uint64_t uploadSize = static_cast<uint64_t>(doc["uploadSize"].get_int64());
+				shard[replicatorKey] = uploadSize;
 			}
 		}
 
@@ -263,8 +279,9 @@ namespace catapult { namespace mongo { namespace plugins {
 				Key replicatorKey;
 				DbBinaryToModelArray(replicatorKey, doc["replicator"].get_binary());
 				auto& shardsPair = dataModificationShards[replicatorKey];
-				ReadReplicators(shardsPair.first, doc["shardReplicators"].get_array().value);
-				ReadReplicators(shardsPair.second, doc["additionalReplicators"].get_array().value);
+//				ReadUploadInfo(shardsPair.m_actualShardMembers, doc["actualShardReplicators"].get_array().value);
+//				ReadUploadInfo(shardsPair.m_formerShardMembers, doc["formerShardReplicators"].get_array().value);
+				shardsPair.m_ownerUpload = static_cast<uint64_t>(doc["ownerUpload"].get_int64());
 			}
 		}
 	}
@@ -286,10 +303,9 @@ namespace catapult { namespace mongo { namespace plugins {
 		entry.setRootHash(rootHash);
 
 		entry.setSize(static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
-		entry.setUsedSize(static_cast<uint64_t>(dbDriveEntry["usedSize"].get_int64()));
-		entry.setMetaFilesSize(static_cast<uint64_t>(dbDriveEntry["metaFilesSize"].get_int64()));
+		entry.setUsedSizeBytes(static_cast<uint64_t>(dbDriveEntry["usedSizeBytes"].get_int64()));
+		entry.setMetaFilesSizeBytes(static_cast<uint64_t>(dbDriveEntry["metaFilesSizeBytes"].get_int64()));
 		entry.setReplicatorCount(static_cast<uint16_t>(dbDriveEntry["replicatorCount"].get_int32()));
-		entry.setOwnerCumulativeUploadSize(static_cast<uint64_t>(dbDriveEntry["ownerCumulativeUploadSize"].get_int64()));
 
 		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);
 		ReadCompletedDataModifications(entry.completedDataModifications(), dbDriveEntry["completedDataModifications"].get_array().value);

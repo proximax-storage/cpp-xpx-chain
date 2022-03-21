@@ -15,30 +15,30 @@
 
 namespace catapult { namespace storage {
 
-	Hash256 TransactionSender::sendDataModificationApprovalTransaction(const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
-		CATAPULT_LOG(debug) << "sending data modification approval transaction initiated by " << Hash256(transactionInfo.m_modifyTransactionHash);
-		utils::KeySet judgedKeys;
+    Hash256 TransactionSender::sendDataModificationApprovalTransaction(const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
+        CATAPULT_LOG(debug) << "sending data modification approval transaction initiated by " << Hash256(transactionInfo.m_modifyTransactionHash);
+        utils::KeySet judgedKeys;
 		utils::KeySet judgingKeys;
-		std::vector<Key> overlappingKeys;
+        std::vector<Key> overlappingKeys;
 		std::map<Key, std::map<Key, uint64_t>> opinionMap;
 		uint16_t opinionCount = 0u;
 		std::map<Key, Signature> signatureMap;
 
-		// collect judging and judged keys, opinions and signatures.
-		for (const auto& opinion : transactionInfo.m_opinions) {
+        // collect judging and judged keys, opinions and signatures.
+        for (const auto& opinion : transactionInfo.m_opinions) {
 			if (opinion.m_uploadLayout.empty() )
 				continue;
 
-			judgingKeys.emplace(opinion.m_replicatorKey);
+            judgingKeys.emplace(opinion.m_replicatorKey);
 			signatureMap[opinion.m_replicatorKey] = opinion.m_signature.array();
 			auto& uploads = opinionMap[opinion.m_replicatorKey];
 
-			for (const auto& layout: opinion.m_uploadLayout) {
+            for (const auto& layout: opinion.m_uploadLayout) {
 				judgedKeys.emplace(layout.m_key);
 				uploads[layout.m_key] = layout.m_uploadedBytes;
 				opinionCount++;
 			}
-		}
+        }
 
 		// separate overlapping keys
 		auto& set1 = judgedKeys.size() < judgingKeys.size() ? judgedKeys : judgingKeys;
@@ -54,18 +54,18 @@ namespace catapult { namespace storage {
 			}
 		}
 
-		// merge all keys
-		std::vector<Key> publicKeys;
+        // merge all keys
+        std::vector<Key> publicKeys;
 		auto totalKeyCount = judgingKeys.size() + overlappingKeys.size() + judgedKeys.size();
 		publicKeys.reserve(totalKeyCount + 1);
-		publicKeys.insert(publicKeys.end(), judgingKeys.begin(), judgingKeys.end());
-		publicKeys.insert(publicKeys.end(), overlappingKeys.begin(), overlappingKeys.end());
-		publicKeys.insert(publicKeys.end(), judgedKeys.begin(), judgedKeys.end());
+        publicKeys.insert(publicKeys.end(), judgingKeys.begin(), judgingKeys.end());
+        publicKeys.insert(publicKeys.end(), overlappingKeys.begin(), overlappingKeys.end());
+        publicKeys.insert(publicKeys.end(), judgedKeys.begin(), judgedKeys.end());
 		auto totalJudgingKeysCount = judgingKeys.size() + overlappingKeys.size();
 		auto totalJudgedKeysCount = overlappingKeys.size() + judgedKeys.size();
 
 		// prepare opinions
-		boost::dynamic_bitset<uint8_t> presentOpinionsBitset(totalJudgingKeysCount * totalJudgedKeysCount, 0u);
+        boost::dynamic_bitset<uint8_t> presentOpinionsBitset(totalJudgingKeysCount * totalJudgedKeysCount, 0u);
 		std::vector<uint64_t> opinions;
 		opinions.reserve(opinionCount);
 		std::vector<Signature> signatures;
@@ -87,80 +87,79 @@ namespace catapult { namespace storage {
 		boost::to_block_range(presentOpinionsBitset, std::back_inserter(presentOpinions));
 
 		// build and send transaction
-		builders::DataModificationApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
-		builder.setDriveKey(transactionInfo.m_driveKey);
-		builder.setDataModificationId(transactionInfo.m_modifyTransactionHash);
-		builder.setFileStructureCdi(transactionInfo.m_rootHash);
-		builder.setFileStructureSize(transactionInfo.m_fsTreeFileSize);
-		builder.setMetaFilesSize(transactionInfo.m_metaFilesSize);
-		builder.setUsedDriveSize(transactionInfo.m_driveSize);
-		builder.setJudgingKeysCount(judgingKeys.size());
-		builder.setOverlappingKeysCount(overlappingKeys.size());
-		builder.setJudgedKeysCount(judgedKeys.size());
-		builder.setPublicKeys(std::move(publicKeys));
-		builder.setSignatures(std::move(signatures));
-		builder.setPresentOpinions(std::move(presentOpinions));
-		builder.setOpinions(std::move(opinions));
-		auto pTransaction = utils::UniqueToShared(builder.build());
-		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
-		send(pTransaction);
+        builders::DataModificationApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
+        builder.setDriveKey(transactionInfo.m_driveKey);
+        builder.setDataModificationId(transactionInfo.m_modifyTransactionHash);
+        builder.setFileStructureCdi(transactionInfo.m_rootHash);
+        builder.setFileStructureSize(transactionInfo.m_fsTreeFileSize);
+        builder.setMetaFilesSize(transactionInfo.m_metaFilesSize);
+        builder.setUsedDriveSize(transactionInfo.m_driveSize);
+        builder.setJudgingKeysCount(judgingKeys.size());
+        builder.setOverlappingKeysCount(overlappingKeys.size());
+        builder.setJudgedKeysCount(judgedKeys.size());
+        builder.setPublicKeys(std::move(publicKeys));
+        builder.setSignatures(std::move(signatures));
+        builder.setPresentOpinions(std::move(presentOpinions));
+        builder.setOpinions(std::move(opinions));
+        auto pTransaction = utils::UniqueToShared(builder.build());
+        pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
+        send(pTransaction);
 
-		return model::CalculateHash(*pTransaction, m_generationHash);
-	}
+        return model::CalculateHash(*pTransaction, m_generationHash);
+    }
 
-	Hash256 TransactionSender::sendDataModificationSingleApprovalTransaction(const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
-		CATAPULT_LOG(debug) << "sending data modification single approval transaction initiated by " << Hash256(transactionInfo.m_modifyTransactionHash);
+    Hash256 TransactionSender::sendDataModificationSingleApprovalTransaction(const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
+        CATAPULT_LOG(debug) << "sending data modification single approval transaction initiated by " << Hash256(transactionInfo.m_modifyTransactionHash);
 
-		auto singleOpinion = transactionInfo.m_opinions.at(0);
+        auto singleOpinion = transactionInfo.m_opinions.at(0);
 
-		std::vector<Key> keys;
-		keys.reserve(singleOpinion.m_uploadLayout.size());
+        std::vector<Key> keys;
+        keys.reserve(singleOpinion.m_uploadLayout.size());
 
-		std::vector<uint64_t> opinions;
-		opinions.reserve(singleOpinion.m_uploadLayout.size());
+        std::vector<uint64_t> opinions;
+        opinions.reserve(singleOpinion.m_uploadLayout.size());
 
-		for (const auto& layout: singleOpinion.m_uploadLayout) {
-			keys.emplace_back(layout.m_key);
-			opinions.emplace_back(layout.m_uploadedBytes);
-		}
+        for (const auto& layout: singleOpinion.m_uploadLayout) {
+            keys.emplace_back(layout.m_key);
+            opinions.emplace_back(layout.m_uploadedBytes);
+        }
 
-		builders::DataModificationSingleApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
-		builder.setDriveKey(transactionInfo.m_driveKey);
-		builder.setDataModificationId(transactionInfo.m_modifyTransactionHash);
-		builder.setPublicKeys(std::move(keys));
-		builder.setOpinions(std::move(opinions));
+        builders::DataModificationSingleApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
+        builder.setDriveKey(transactionInfo.m_driveKey);
+        builder.setDataModificationId(transactionInfo.m_modifyTransactionHash);
+        builder.setPublicKeys(std::move(keys));
+        builder.setOpinions(std::move(opinions));
 
-		auto pTransaction = utils::UniqueToShared(builder.build());
-		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
-		send(pTransaction);
+        auto pTransaction = utils::UniqueToShared(builder.build());
+        pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
+        send(pTransaction);
 
-		return model::CalculateHash(*pTransaction, m_generationHash);
-	}
+        return model::CalculateHash(*pTransaction, m_generationHash);
+    }
 
-	Hash256 TransactionSender::sendDownloadApprovalTransaction(
-			uint16_t sequenceNumber,
-			const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
-		CATAPULT_LOG(debug) << "sending download approval transaction initiated by " << Hash256(transactionInfo.m_blockHash);
-		utils::KeySet judgedKeys;
+    Hash256 TransactionSender::sendDownloadApprovalTransaction(
+            const sirius::drive::DownloadApprovalTransactionInfo& transactionInfo) {
+        CATAPULT_LOG(debug) << "sending download approval transaction initiated by " << Hash256(transactionInfo.m_blockHash);
+        utils::KeySet judgedKeys;
 		utils::KeySet judgingKeys;
-		std::vector<Key> overlappingKeys;
+        std::vector<Key> overlappingKeys;
 		std::map<Key, std::map<Key, uint64_t>> opinionMap;
 		uint16_t opinionCount = 0u;
 		std::map<Key, Signature> signatureMap;
 
-		// collect judging and judged keys, opinions and signatures.
-		for (const auto& opinion : transactionInfo.m_opinions) {
+        // collect judging and judged keys, opinions and signatures.
+        for (const auto& opinion : transactionInfo.m_opinions) {
 			if (opinion.m_downloadLayout.empty())
 				continue;
 
-			judgingKeys.emplace(opinion.m_replicatorKey);
+            judgingKeys.emplace(opinion.m_replicatorKey);
 			signatureMap[opinion.m_replicatorKey] = opinion.m_signature.array();
-			for (const auto& layout: opinion.m_downloadLayout) {
+            for (const auto& layout: opinion.m_downloadLayout) {
 				judgedKeys.emplace(layout.m_key);
 				opinionMap[opinion.m_replicatorKey][layout.m_key] = layout.m_uploadedBytes;
 				opinionCount++;
 			}
-		}
+        }
 
 		// separate overlapping keys
 		auto& set1 = judgedKeys.size() < judgingKeys.size() ? judgedKeys : judgingKeys;
@@ -176,18 +175,18 @@ namespace catapult { namespace storage {
 			}
 		}
 
-		// merge all keys
-		std::vector<Key> publicKeys;
+        // merge all keys
+        std::vector<Key> publicKeys;
 		auto totalKeyCount = judgingKeys.size() + overlappingKeys.size() + judgedKeys.size();
 		publicKeys.reserve(totalKeyCount);
-		publicKeys.insert(publicKeys.end(), judgingKeys.begin(), judgingKeys.end());
-		publicKeys.insert(publicKeys.end(), overlappingKeys.begin(), overlappingKeys.end());
-		publicKeys.insert(publicKeys.end(), judgedKeys.begin(), judgedKeys.end());
+        publicKeys.insert(publicKeys.end(), judgingKeys.begin(), judgingKeys.end());
+        publicKeys.insert(publicKeys.end(), overlappingKeys.begin(), overlappingKeys.end());
+        publicKeys.insert(publicKeys.end(), judgedKeys.begin(), judgedKeys.end());
 		auto totalJudgingKeysCount = judgingKeys.size() + overlappingKeys.size();
 		auto totalJudgedKeysCount = overlappingKeys.size() + judgedKeys.size();
 
 		// prepare opinions
-		boost::dynamic_bitset<uint8_t> presentOpinionsBitset(totalJudgingKeysCount * totalJudgedKeysCount, 0u);
+        boost::dynamic_bitset<uint8_t> presentOpinionsBitset(totalJudgingKeysCount * totalJudgedKeysCount, 0u);
 		std::vector<uint64_t> opinions;
 		opinions.reserve(opinionCount);
 		std::vector<Signature> signatures;
@@ -209,26 +208,24 @@ namespace catapult { namespace storage {
 		boost::to_block_range(presentOpinionsBitset, std::back_inserter(presentOpinions));
 
 		// build and send transaction
-		builders::DownloadApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
-		builder.setDownloadChannelId(transactionInfo.m_downloadChannelId);
+        builders::DownloadApprovalBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
+        builder.setDownloadChannelId(transactionInfo.m_downloadChannelId);
 		builder.setApprovalTrigger(transactionInfo.m_blockHash);
-		builder.setSequenceNumber(sequenceNumber);
-		builder.setResponseToFinishDownloadTransaction(false); // TODO set right value
-		builder.setJudgingKeysCount(judgingKeys.size());
-		builder.setOverlappingKeysCount(overlappingKeys.size());
-		builder.setJudgedKeysCount(judgedKeys.size());
-		builder.setPublicKeys(std::move(publicKeys));
-		builder.setSignatures(std::move(signatures));
-		builder.setPresentOpinions(std::move(presentOpinions));
-		builder.setOpinions(std::move(opinions));
-		auto pTransaction = utils::UniqueToShared(builder.build());
-		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
-		send(pTransaction);
+        builder.setJudgingKeysCount(judgingKeys.size());
+        builder.setOverlappingKeysCount(overlappingKeys.size());
+        builder.setJudgedKeysCount(judgedKeys.size());
+        builder.setPublicKeys(std::move(publicKeys));
+        builder.setSignatures(std::move(signatures));
+        builder.setPresentOpinions(std::move(presentOpinions));
+        builder.setOpinions(std::move(opinions));
+        auto pTransaction = utils::UniqueToShared(builder.build());
+        pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
+        send(pTransaction);
 
-		return model::CalculateHash(*pTransaction, m_generationHash);
-	}
+        return model::CalculateHash(*pTransaction, m_generationHash);
+    }
 
-	Hash256 TransactionSender::sendEndDriveVerificationTransaction(const sirius::drive::VerifyApprovalTxInfo& transactionInfo) {
+    Hash256 TransactionSender::sendEndDriveVerificationTransaction(const sirius::drive::VerifyApprovalTxInfo& transactionInfo) {
 		uint8_t opinionCount = transactionInfo.m_opinions[0].m_opinions.size();
 		uint8_t keyCount = opinionCount + 1;
 		uint8_t judgingKeyCount = transactionInfo.m_opinions.size();
@@ -251,25 +248,25 @@ namespace catapult { namespace storage {
 		boost::to_block_range(opinionsBitset, std::back_inserter(opinions));
 
 		// build and send transaction
-		builders::EndDriveVerificationBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
-		builder.setDriveKey(transactionInfo.m_driveKey);
+        builders::EndDriveVerificationBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
+        builder.setDriveKey(transactionInfo.m_driveKey);
 		builder.setVerificationTrigger(transactionInfo.m_tx);
-		builder.setShardId(transactionInfo.m_shardId);
-		builder.setKeyCount(keyCount);
-		builder.setJudgingKeyCount(judgingKeyCount);
-		builder.setPublicKeys(std::move(publicKeys));
-		builder.setSignatures(std::move(signatures));
-		builder.setOpinions(std::move(opinions));
-		auto pTransaction = utils::UniqueToShared(builder.build());
-		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
-		send(pTransaction);
+        builder.setShardId(transactionInfo.m_shardId);
+        builder.setKeyCount(keyCount);
+        builder.setJudgingKeyCount(judgingKeyCount);
+        builder.setPublicKeys(std::move(publicKeys));
+        builder.setSignatures(std::move(signatures));
+        builder.setOpinions(std::move(opinions));
+        auto pTransaction = utils::UniqueToShared(builder.build());
+        pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
+        send(pTransaction);
 
-		return model::CalculateHash(*pTransaction, m_generationHash);
+        return model::CalculateHash(*pTransaction, m_generationHash);
 	}
 
-	void TransactionSender::send(std::shared_ptr<model::Transaction> pTransaction) {
+    void TransactionSender::send(std::shared_ptr<model::Transaction> pTransaction) {
 		extensions::TransactionExtensions(m_generationHash).sign(m_keyPair, *pTransaction);
-		auto range = model::TransactionRange::FromEntity(pTransaction);
-		m_transactionRangeHandler({std::move(range), m_keyPair.publicKey()});
-	}
+        auto range = model::TransactionRange::FromEntity(pTransaction);
+        m_transactionRangeHandler({std::move(range), m_keyPair.publicKey()});
+    }
 }}

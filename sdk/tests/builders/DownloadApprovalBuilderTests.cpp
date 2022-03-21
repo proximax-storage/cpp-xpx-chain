@@ -46,8 +46,6 @@ namespace catapult { namespace builders {
         void
         AssertTransactionProperties(const TransactionProperties& expectedProperties, const TTransaction& transaction) {
             EXPECT_EQ(expectedProperties.DownloadChannelId, transaction.DownloadChannelId);
-            EXPECT_EQ(expectedProperties.SequenceNumber, transaction.SequenceNumber);
-            EXPECT_EQ(expectedProperties.ResponseToFinishDownloadTransaction, transaction.ResponseToFinishDownloadTransaction);
             EXPECT_EQ(expectedProperties.JudgingKeysCount, transaction.JudgingKeysCount);
             EXPECT_EQ(expectedProperties.OverlappingKeysCount, transaction.OverlappingKeysCount);
             EXPECT_EQ(expectedProperties.JudgedKeysCount, transaction.JudgedKeysCount);
@@ -138,11 +136,9 @@ namespace catapult { namespace builders {
         // Arrange:
         auto sequenceNumber = 3;
         auto expectedProperties = TransactionProperties();
-        expectedProperties.SequenceNumber = sequenceNumber;
 
         // Assert:
         AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) {
-            builder.setSequenceNumber(sequenceNumber);
         });
     }
 
@@ -154,7 +150,6 @@ namespace catapult { namespace builders {
 
         // Assert:
         AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) {
-            builder.setResponseToFinishDownloadTransaction(responseToFinishDownloadTransaction);
         });
     }
 

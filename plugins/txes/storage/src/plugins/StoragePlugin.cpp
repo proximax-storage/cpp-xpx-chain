@@ -5,6 +5,7 @@
 **/
 
 #include "StoragePlugin.h"
+#include <src/cache/QueueCacheStorage.h>
 #include "src/cache/BcDriveCacheSubCachePlugin.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCacheSubCachePlugin.h"
@@ -61,7 +62,7 @@ namespace catapult { namespace plugins {
 
 				// If current data modification was approved (not cancelled), account its size.
 				if (it->State == state::DataModificationState::Succeeded)
-					approvableDownloadWork += it->ActualUploadSize;
+					approvableDownloadWork += it->ActualUploadSizeMegabytes;
 			}
 
 			return approvableDownloadWork;
@@ -151,6 +152,18 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		manager.addCacheSupport<cache::QueueCacheStorage>(
+				std::make_unique<cache::QueueCache>(manager.cacheConfig(cache::QueueCache::Name), pConfigHolder));
+
+		using QueueCacheHandlersService = CacheHandlers<cache::QueueCacheDescriptor>;
+		QueueCacheHandlersService::Register<model::FacilityCode::Queue>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("QUEUE C"), [&cache]() {
+				return cache.sub<cache::QueueCache>().createView(cache.height())->size();
+			});
+		});
+
 		auto pReplicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
 		manager.addCacheSupport(std::make_unique<cache::ReplicatorCacheSubCachePlugin>(
 			manager.cacheConfig(cache::ReplicatorCache::Name), pReplicatorKeyCollector, pConfigHolder));
@@ -225,7 +238,9 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateStreamFinishObserver())
 				.add(observers::CreateStreamPaymentObserver())
 				.add(observers::CreateStartDriveVerificationObserver(state, driveKeyCollector))
-				.add(observers::CreateEndDriveVerificationObserver(pReplicatorKeyCollector, pDriveQueue));
+				.add(observers::CreateEndDriveVerificationObserver(pReplicatorKeyCollector, pDriveQueue))
+				.add(observers::CreatePeriodicStoragePaymentObserver(pDriveQueue))
+				.add(observers::CreatePeriodicDownloadChannelPaymentObserver());
 		});
 	}
 }}

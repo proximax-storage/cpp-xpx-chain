@@ -166,7 +166,7 @@ namespace catapult { namespace harvesting {
 				observers::NotificationObserverAdapter entityObserver(
 						m_pPluginManager->createObserver(),
 						m_pPluginManager->createNotificationPublisher());
-				auto observerContext = observers::ObserverContext(observerState, m_pPluginManager->configHolder()->Config(), Height(1), notifyMode, resolverContext);
+				auto observerContext = observers::ObserverContext(observerState, m_pPluginManager->configHolder()->Config(), Height(1), Timestamp(0), notifyMode, resolverContext);
 				entityObserver.notify(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, Height(1)), observerContext);
 				m_cache.commit(Height(1));
 			}

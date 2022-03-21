@@ -17,8 +17,6 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamDownloadApprovalTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "downloadChannelId" << ToBinary(transaction.DownloadChannelId);
 		builder << "approvalTrigger" << ToBinary(transaction.ApprovalTrigger);
-		builder << "sequenceNumber" << static_cast<int16_t>(transaction.SequenceNumber);
-		builder << "responseToFinishDownloadTransaction" << transaction.ResponseToFinishDownloadTransaction;
 		builder << "judgingKeysCount" << static_cast<int8_t>(transaction.JudgingKeysCount);
 		builder << "overlappingKeysCount" << static_cast<int8_t>(transaction.OverlappingKeysCount);
 		builder << "judgedKeysCount" << static_cast<int8_t>(transaction.JudgedKeysCount);

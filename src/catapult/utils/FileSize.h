@@ -63,9 +63,19 @@ namespace catapult { namespace utils {
 		}
 
 	public:
-		/// Returns the number of gigabytes.
+	    /// Returns the number of terabytes rounded up.
+	    constexpr uint64_t terabytesCeil() const {
+		    return gigabytes() / 1024;
+		}
+
+		/// Returns the number of terabytes.
 		constexpr uint64_t terabytes() const {
 			return gigabytes() / 1024;
+		}
+
+		/// Returns the number of gigabytes rounded up.
+		constexpr uint64_t gigabytesCeil() const {
+		    return (megabytesCeil() + 1023) / 1024;
 		}
 
 		/// Returns the number of gigabytes.
@@ -73,9 +83,19 @@ namespace catapult { namespace utils {
 			return megabytes() / 1024;
 		}
 
-		/// Returns the number of megabytes.
+		/// Returns the number of megabytes rounded up.
+		constexpr uint64_t megabytesCeil() const {
+		    return (kilobytesCeil() + 1023) / 1024;
+		}
+
+		/// Returns the number of megabytes .
 		constexpr uint64_t megabytes() const {
 			return kilobytes() / 1024;
+		}
+
+		/// Returns the number of kilobytes rounded up.
+		constexpr uint64_t kilobytesCeil() const {
+		    return (bytes() + 1023) / 1024;
 		}
 
 		/// Returns the number of kilobytes.

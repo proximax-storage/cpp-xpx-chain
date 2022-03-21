@@ -109,7 +109,7 @@ namespace catapult { namespace validators {
 	DEFINE_STORAGE_RESULT(Transaction_Already_Approved, 31);
 
 	/// Download approval transaction sequence number is invalid
-	DEFINE_STORAGE_RESULT(Invalid_Sequence_Number, 32);
+	DEFINE_STORAGE_RESULT(Invalid_Approval_Trigger, 32);
 
 	/// Replicator hasn't provided an opinion on itself.
 	DEFINE_STORAGE_RESULT(No_Opinion_Provided_On_Self, 33);
@@ -161,6 +161,9 @@ namespace catapult { namespace validators {
 
 	/// The replicator has already applied for offboarding from the drive.
 	DEFINE_STORAGE_RESULT(Already_Applied_For_Offboarding, 49);
+
+	/// The replicator has already applied for offboarding from the drive.
+	DEFINE_STORAGE_RESULT(Already_Initiated_Channel_Closure, 51);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

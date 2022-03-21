@@ -33,7 +33,7 @@ namespace catapult { namespace test {
 		uint8_t folderNameSize = 255u;
 		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_StreamStart, folderNameSize);
 		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
-		pTransaction->ExpectedUploadSize = test::Random();
+		pTransaction->ExpectedUploadSizeMegabytes = test::Random();
 		pTransaction->FolderNameSize = folderNameSize;
 		test::FillWithRandomData(MutableRawBuffer(pTransaction->FolderNamePtr(), folderNameSize));
 		return pTransaction;
@@ -45,7 +45,7 @@ namespace catapult { namespace test {
 		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_StreamFinish);
 		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
 		pTransaction->StreamId = test::GenerateRandomByteArray<Hash256>();
-		pTransaction->ActualUploadSize = test::Random();
+		pTransaction->ActualUploadSizeMegabytes = test::Random();
 		return pTransaction;
 	}
 
@@ -55,7 +55,7 @@ namespace catapult { namespace test {
 		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_StreamPayment);
 		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
 		pTransaction->StreamId = test::GenerateRandomByteArray<Hash256>();
-		pTransaction->AdditionalUploadSize = test::Random();
+		pTransaction->AdditionalUploadSizeMegabytes = test::Random();
 		return pTransaction;
 	}
 }}

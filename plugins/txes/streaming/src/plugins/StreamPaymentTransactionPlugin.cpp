@@ -29,14 +29,13 @@ namespace catapult { namespace plugins {
 					sub.notify(StreamPaymentNotification<1>(
 							transaction.DriveKey,
 							transaction.StreamId,
-							transaction.AdditionalUploadSize
-					));
+							transaction.AdditionalUploadSizeMegabytes));
 
 					const auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.NetworkIdentifier));
 					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
 
-					const auto pStreamingWork = sub.mempool().malloc(model::StreamingWork(transaction.DriveKey, transaction.AdditionalUploadSize));
+					const auto pStreamingWork = sub.mempool().malloc(model::StreamingWork(transaction.DriveKey, transaction.AdditionalUploadSizeMegabytes));
 					utils::SwapMosaics(
 							transaction.Signer,
 							transaction.DriveKey,

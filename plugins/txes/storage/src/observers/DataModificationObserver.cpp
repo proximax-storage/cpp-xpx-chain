@@ -27,7 +27,7 @@ namespace catapult { namespace observers {
 				notification.DataModificationId,
 				notification.Owner,
 				notification.DownloadDataCdi,
-				notification.UploadSize
+				notification.UploadSizeMegabytes
 			));
 
 			std::seed_seq seed(notification.DataModificationId.begin(), notification.DataModificationId.end());

@@ -18,6 +18,11 @@ namespace catapult { namespace observers {
 	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
 
+		if (downloadChannelEntry.downloadApprovalCountLeft() > 0 && !downloadChannelEntry.isFinishPublished()) {
+			// THe download channel continues to work, so no refund is needed
+			return;
+		}
+
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		auto senderIter = accountStateCache.find(Key(notification.DownloadChannelId.array()));
 	  	auto& senderState = senderIter.get();
@@ -31,6 +36,13 @@ namespace catapult { namespace observers {
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);
 	  	senderState.Balances.debit(streamingMosaicId, streamingRefundAmount, context.Height);
 	  	recipientState.Balances.credit(currencyMosaicId, streamingRefundAmount, context.Height);
+
+	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		for (const auto& replicatorKey: downloadChannelEntry.shardReplicators()) {
+			auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+			replicatorEntry.downloadChannels().erase(notification.DownloadChannelId);
+		}
+		downloadChannelCache.remove(notification.DownloadChannelId);
 
 		// TODO: Add currency refunding
 	})

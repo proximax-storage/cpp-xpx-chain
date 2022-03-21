@@ -52,7 +52,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to drive data modification approval upload work notifications and validates that:
 	/// - respective drive exists
 	/// - drive's and uploaders' account states exist
-	/// - all replicators' keys are present in drive's cumulativeUploadSizes
+	/// - all replicators' keys are present in drive's cumulativeUploadSizesBytes
 	DECLARE_STATEFUL_VALIDATOR(DataModificationApprovalUploadWork, model::DataModificationApprovalUploadWorkNotification<1>)();
 
 	/// A validator implementation that applies to drive data modification approval refund notifications and validates that:

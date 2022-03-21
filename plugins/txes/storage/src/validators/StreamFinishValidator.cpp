@@ -35,7 +35,7 @@ namespace catapult { namespace validators {
 			return Failure_Storage_Stream_Already_Finished;
 		}
 
-		if (activeDataModification->ExpectedUploadSize < notification.ActualUploadSize) {
+		if (activeDataModification->ExpectedUploadSizeMegabytes < notification.ActualUploadSize) {
 			return Failure_Storage_Expected_Upload_Size_Exceeded;
 		}
 

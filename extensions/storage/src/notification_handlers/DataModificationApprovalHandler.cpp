@@ -11,28 +11,35 @@ namespace catapult { namespace notification_handlers {
     using Notification = model::DataModificationApprovalNotification<1>;
 
     DECLARE_HANDLER(DataModificationApproval, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-        return MAKE_HANDLER(DataModificationApproval, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+        return MAKE_HANDLER(DataModificationApproval, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
             auto pReplicatorService = pReplicatorServiceWeak.lock();
             if (!pReplicatorService)
                 return;
 
-			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey))
+			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey)) {
+				// This case includes the situation when the drive does not already exist
 				return;
+			}
 
-            auto replicatorsCount = notification.JudgedKeysCount + notification.OverlappingKeysCount;
+			auto driveAddedHeight = pReplicatorService->driveAddedAt(notification.DriveKey);
+
+			if (!driveAddedHeight) {
+				CATAPULT_LOG( error ) << "Replicator Is Assigned to Drive but it is not Added";
+				return;
+			}
+
+			if (driveAddedHeight == context.Height) {
+				// The approval has been already processed when adding the Drive
+				return;
+			}
+
+			auto replicatorsCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
             std::vector<Key> replicators;
             replicators.reserve(replicatorsCount);
 
-			bool found = false;
             for (auto i = 0; i < replicatorsCount; i++) {
-				if (pReplicatorService->replicatorKey() == notification.PublicKeysPtr[i])
-					found = true;
-
 				replicators.emplace_back(notification.PublicKeysPtr[i]);
 			}
-
-			if (!found)
-				return;
 
             pReplicatorService->dataModificationApprovalPublished(
                     notification.DriveKey,

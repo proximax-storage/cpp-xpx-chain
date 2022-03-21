@@ -61,7 +61,7 @@ namespace catapult { namespace observers {
 			std::vector<state::BcDriveEntry> ret;
             state::BcDriveEntry entry1(Drive_Key1);
             entry1.setSize(Drive1_Size);
-            entry1.setUsedSize(Drive1_Used_Size);
+			entry1.setUsedSizeBytes(Drive1_Used_Size);
 			entry1.setReplicatorCount(Drive1_Replicator_Count);
 			entry1.replicators().emplace(Replicator_Key);
 			for (auto i = 0u; i < Drive1_Actual_Replicator_Count - 1; ++i)
@@ -70,7 +70,7 @@ namespace catapult { namespace observers {
 
             state::BcDriveEntry entry2(Drive_Key2);
             entry2.setSize(Drive2_Size);
-            entry2.setUsedSize(Drive2_Used_Size);
+			entry2.setUsedSizeBytes(Drive2_Used_Size);
 			entry2.setReplicatorCount(Drive2_Replicator_Count);
 			entry2.replicators().emplace(Replicator_Key);
 			for (auto i = 0u; i < Drive2_Actual_Replicator_Count - 1; ++i)
@@ -94,7 +94,7 @@ namespace catapult { namespace observers {
 		DriveQueue CreateDriveQueue(const std::vector<state::BcDriveEntry>& driveEntries) {
 			DriveQueue driveQueue;
 			for (const auto& entry : driveEntries) {
-				if ((entry.replicators().size() - entry.offboardingReplicators().size()) < entry.replicatorCount())
+				if (entry.replicators().size() < entry.replicatorCount())
 					driveQueue.emplace(entry.key(), utils::CalculateDrivePriority(entry, Min_Replicator_Count));
 			}
 

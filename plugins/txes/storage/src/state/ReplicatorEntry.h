@@ -21,17 +21,17 @@ namespace catapult { namespace state {
 		/// Set to \b true after replicator’s first data modification approval.
 		bool DataModificationIdIsValid;
 
-		/// Used drive size at the time of the replicator’s onboarding excluding metafiles size.
+		/// Used drive size at the time of the replicator’s onboarding excluding metafiles size in megabytes.
 		/// Set to \p 0 after replicator’s first data modification approval.
-		uint64_t InitialDownloadWork;
+		uint64_t InitialDownloadWorkMegabytes;
 
 		// Modfication hash and size of cumulative download work
-		uint64_t LastCompletedCumulativeDownloadWork;
+		uint64_t LastCompletedCumulativeDownloadWorkBytes;
 
 		bool operator==(const DriveInfo& rhs) const {
 			return LastApprovedDataModificationId == rhs.LastApprovedDataModificationId &&
 				DataModificationIdIsValid == rhs.DataModificationIdIsValid &&
-				InitialDownloadWork == rhs.InitialDownloadWork;
+				   InitialDownloadWorkMegabytes == rhs.InitialDownloadWorkMegabytes;
 		}
 	};
 
@@ -75,12 +75,12 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets the download channel ids the replicator is assigned to.
-		const std::vector<Hash256>& downloadChannels() const {
+		const std::set<Hash256>& downloadChannels() const {
 			return m_downloadChannels;
 		}
 
 		/// Gets the download channel ids the replicator is assigned to.
-		std::vector<Hash256>& downloadChannels() {
+		std::set<Hash256>& downloadChannels() {
 			return m_downloadChannels;
 		}
 
@@ -88,7 +88,7 @@ namespace catapult { namespace state {
 		Amount m_capacity;
 		BLSPublicKey m_blsKey;
 		DrivesMap m_drives;
-		std::vector<Hash256> m_downloadChannels;
+		std::set<Hash256> m_downloadChannels;
 	};
 
 	// Replicator entry.

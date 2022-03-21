@@ -11,12 +11,28 @@ namespace catapult { namespace notification_handlers {
 	using Notification = model::DownloadPaymentNotification<1>;
 
 	DECLARE_HANDLER(DownloadPayment, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(DownloadPayment, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+		return MAKE_HANDLER(DownloadPayment, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
 
-			pReplicatorService->increaseDownloadChannelSize(notification.DownloadChannelId, notification.DownloadSize);
+			if(!pReplicatorService->isAssignedToChannel(notification.DownloadChannelId)) {
+				return;
+			}
+
+			auto channelAddedHeight = pReplicatorService->channelAddedAt(notification.DownloadChannelId);
+
+			if (!channelAddedHeight) {
+				CATAPULT_LOG( error ) << "Replicator Is Assigned to Channel but it is not Added";
+				return;
+			}
+
+			if (channelAddedHeight == context.Height) {
+				// The increase has been already taken into account when adding the Channel
+				return;
+			}
+
+			pReplicatorService->increaseDownloadChannelSize(notification.DownloadChannelId);
 		});
 	}
 }}

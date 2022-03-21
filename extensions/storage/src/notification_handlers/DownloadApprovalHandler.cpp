@@ -16,7 +16,13 @@ namespace catapult { namespace notification_handlers {
             if (!pReplicatorService)
                 return;
 
-            pReplicatorService->downloadApprovalPublished(notification.ApprovalTrigger, notification.DownloadChannelId);
+			auto channelAddedHeight = pReplicatorService->channelAddedAt(notification.DownloadChannelId);
+
+			// Channel can already be removed from the cache,
+			// so it is not possible to check whether the Replicator has been assigned to the Channel
+			if (channelAddedHeight) {
+				pReplicatorService->downloadApprovalPublished(notification.ApprovalTrigger, notification.DownloadChannelId);
+			}
         });
     }
 }}

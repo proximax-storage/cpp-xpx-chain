@@ -12,6 +12,7 @@
 #include "src/model/InternalStorageNotifications.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/BcDriveCache.h"
+#include "src/cache/QueueCache.h"
 #include "src/cache/ReplicatorCache.h"
 #include "src/utils/StorageUtils.h"
 #include <queue>
@@ -85,4 +86,10 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by end drive verification notifications.
 	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue);
+
+	/// Observes changes triggered by block
+	DECLARE_OBSERVER(PeriodicStoragePayment, model::BlockNotification<2>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
+
+	/// Observes changes triggered by block
+	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, model::BlockNotification<2>)();
 }}

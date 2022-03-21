@@ -6,6 +6,7 @@
 
 #include "drive/Replicator.h"
 #include <memory>
+#include <catapult/crypto/KeyPair.h>
 
 namespace catapult {
 	namespace storage {
@@ -30,7 +31,9 @@ namespace catapult { namespace storage {
 	};
 
     std::unique_ptr<ReplicatorEventHandler> CreateReplicatorEventHandler(
+//		boost::asio::io_context& context,
 		TransactionSender&& transactionSender,
 		state::StorageState& storageState,
-		TransactionStatusHandler& m_transactionStatusHandler);
+		TransactionStatusHandler& m_transactionStatusHandler,
+		const crypto::KeyPair& keyPair);
 }}

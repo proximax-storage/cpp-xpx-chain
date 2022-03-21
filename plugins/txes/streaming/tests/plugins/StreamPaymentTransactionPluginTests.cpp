@@ -130,7 +130,7 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(pTransaction->StreamId, notification.StreamId);
-		EXPECT_EQ(pTransaction->AdditionalUploadSize, notification.AdditionalUploadSize);
+		EXPECT_EQ(pTransaction->AdditionalUploadSizeMegabytes, notification.AdditionalUploadSize);
 	}
 
 	// endregion
@@ -159,7 +159,7 @@ namespace catapult { namespace plugins {
 
 		auto pActualAmount = (model::StreamingWork *) notification.Amount.DataPtr;
 		EXPECT_EQ(pTransaction->DriveKey, pActualAmount->DriveKey);
-		EXPECT_EQ(pTransaction->AdditionalUploadSize, pActualAmount->UploadSize);
+		EXPECT_EQ(pTransaction->AdditionalUploadSizeMegabytes, pActualAmount->UploadSize);
 	}
 
 	// endregion
@@ -188,7 +188,7 @@ namespace catapult { namespace plugins {
 
 		auto pActualAmount = (model::StreamingWork *) notification.Amount.DataPtr;
 		EXPECT_EQ(pTransaction->DriveKey, pActualAmount->DriveKey);
-		EXPECT_EQ(pTransaction->AdditionalUploadSize, pActualAmount->UploadSize);
+		EXPECT_EQ(pTransaction->AdditionalUploadSizeMegabytes, pActualAmount->UploadSize);
 	}
 
 	// endregion

@@ -146,6 +146,15 @@ namespace catapult { namespace observers {
 				EXPECT_EQ(replicatorState.Balances.get(Streaming_Mosaic_Id), std::get<2>(values.ExpectedReplicatorsWithAmounts.at(i)));
 			}
 
+            auto& paymentQueueCache = context.cache().sub<cache::QueueCache>();
+			int paymentQueueSize = 0;
+
+			auto* pQueueEntry = paymentQueueCache.find(state::DrivePaymentQueueKey).tryGet();
+			if (pQueueEntry && pQueueEntry->getFirst() != Key()) {
+				paymentQueueSize = 1;
+			}
+
+			// EXPECT_NE(expectedDriveQueueSize, paymentQueueSize);
 			EXPECT_EQ(expectedDriveQueueSize, Drive_Queue->size());
         }
     }

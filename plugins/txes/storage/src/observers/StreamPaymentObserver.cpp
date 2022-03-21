@@ -23,7 +23,7 @@ namespace catapult { namespace observers {
 				[notification] (const state::ActiveDataModification& modification) -> bool {
 					return notification.StreamId == modification.Id;
 				});
-		pModification->ExpectedUploadSize += notification.AdditionalUploadSize;
-		pModification->ActualUploadSize += notification.AdditionalUploadSize;
+		pModification->ExpectedUploadSizeMegabytes += notification.AdditionalUploadSize;
+		pModification->ActualUploadSizeMegabytes += notification.AdditionalUploadSize;
 	});
 }}

@@ -27,11 +27,13 @@ namespace catapult { namespace chain {
 		observers::ObserverContext CreateObserverContext(
 				const BlockExecutionContext& executionContext,
 				Height height,
+				const Timestamp& timestamp,
 				observers::NotifyMode mode) {
 			return observers::ObserverContext(
 				executionContext.State,
 				executionContext.ConfigHolder->Config(height),
 				height,
+				timestamp,
 				mode,
 				executionContext.Resolvers
 			);
@@ -51,7 +53,7 @@ namespace catapult { namespace chain {
 		model::ExtractEntityInfos(blockElement, entityInfos);
 
 		executionContext.State.Cache.setHeight(blockElement.Block.Height);
-		auto context = CreateObserverContext(executionContext, blockElement.Block.Height, observers::NotifyMode::Commit);
+		auto context = CreateObserverContext(executionContext, blockElement.Block.Height, blockElement.Block.Timestamp, observers::NotifyMode::Commit);
 		ObserveAll(executionContext.Observer, context, entityInfos);
 	}
 
@@ -61,7 +63,7 @@ namespace catapult { namespace chain {
 		std::reverse(entityInfos.begin(), entityInfos.end());
 
 		executionContext.State.Cache.setHeight(blockElement.Block.Height);
-		auto context = CreateObserverContext(executionContext, blockElement.Block.Height, observers::NotifyMode::Rollback);
+		auto context = CreateObserverContext(executionContext, blockElement.Block.Height, blockElement.Block.Timestamp, observers::NotifyMode::Rollback);
 		ObserveAll(executionContext.Observer, context, entityInfos);
 
 		// commit removals

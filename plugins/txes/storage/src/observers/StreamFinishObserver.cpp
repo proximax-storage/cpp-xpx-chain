@@ -18,7 +18,7 @@ namespace catapult { namespace observers {
 
 		auto activeDataModification = driveEntry.activeDataModifications().begin();
 		activeDataModification->DownloadDataCdi = notification.StreamStructureCdi;
-		activeDataModification->ActualUploadSize = notification.ActualUploadSize;
+		activeDataModification->ActualUploadSizeMegabytes = notification.ActualUploadSize;
 		activeDataModification->ReadyForApproval = true;
 	});
 }}

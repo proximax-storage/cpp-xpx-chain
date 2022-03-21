@@ -47,6 +47,8 @@ namespace catapult { namespace observers {
 			for (auto i = 0u; i < totalJudgingKeysCount; ++i)
 				entry.confirmedUsedSizes().insert({test::GenerateRandomByteArray<Key>(), Used_Drive_Size});
 
+			entry.setRootHash(entry.completedDataModifications().back().DownloadDataCdi);
+
             return entry;
         }
 

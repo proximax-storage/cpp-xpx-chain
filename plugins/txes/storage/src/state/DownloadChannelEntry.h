@@ -18,7 +18,7 @@ namespace catapult { namespace state {
 	class DownloadChannelMixin {
 	public:
 		DownloadChannelMixin()
-			: m_downloadSize(0)
+			: m_downloadSizeMegabytes(0)
 			, m_downloadApprovalCount(0)
 		{}
 
@@ -45,31 +45,31 @@ namespace catapult { namespace state {
 
         /// Sets \a downloadSize of download channel.
         void setDownloadSize(const uint64_t& downloadSize) {
-			m_downloadSize = downloadSize;
+			m_downloadSizeMegabytes = downloadSize;
         }
 
 		/// Increases download size of the download channel by \a delta.
 		void increaseDownloadSize(const uint64_t& delta) {
-			m_downloadSize = m_downloadSize + delta;
+			m_downloadSizeMegabytes = m_downloadSizeMegabytes + delta;
 		}
 
         /// Gets download size.
         const uint64_t& downloadSize() const {
-            return m_downloadSize;
+            return m_downloadSizeMegabytes;
         }
 
 		/// Gets number of completed download approval transactions.
-		const uint16_t& downloadApprovalCount() const {
+		const uint16_t& downloadApprovalCountLeft() const {
 			return m_downloadApprovalCount;
 		}
 
 		/// Sets number of completed download approval transactions.
-		void setDownloadApprovalCount(const uint16_t& count) {
+		void setDownloadApprovalCountLeft(const uint16_t& count) {
 			m_downloadApprovalCount = count;
 		}
 
 		/// Increases number of completed download approval transactions by one.
-		void incrementDownloadApprovalCount() {
+		void decrementDownloadApprovalCount() {
 			++m_downloadApprovalCount;
 		}
 
@@ -103,14 +103,66 @@ namespace catapult { namespace state {
 			return m_cumulativePayments;
 		}
 
+		/// Gets last download approval initiation timestamp.
+		const Timestamp& getLastDownloadApprovalInitiated() const {
+			return m_lastDownloadApprovalInitiated;
+		}
+
+		/// Gets last download approval initiation timestamp.
+		void setLastDownloadApprovalInitiated(const Timestamp& timestamp) {
+			m_lastDownloadApprovalInitiated = timestamp;
+		}
+
+		const Key& getQueueNext() const {
+			return m_paymentsQueueNext;
+		}
+
+		void setQueueNext(const Key& paymentsQueueNext) {
+			m_paymentsQueueNext = paymentsQueueNext;
+		}
+
+		const Key& getQueuePrevious() const {
+			return m_paymentsQueuePrevious;
+		}
+
+		void setQueuePrevious(const Key& paymentsQueuePrevious) {
+			m_paymentsQueuePrevious = paymentsQueuePrevious;
+		}
+
+		bool isFinishPublished() const {
+			return m_finishPublished;
+		}
+
+		void setFinishPublished(bool finishPublished) {
+			m_finishPublished = finishPublished;
+		}
+
+		bool isCloseInitiated() const {
+			return isFinishPublished() or downloadApprovalCountLeft() == 0;
+		}
+
+		const std::optional<Hash256>& downloadApprovalInitiationEvent() const {
+			return m_downloadApprovalInitiationEvent;
+		}
+
+		std::optional<Hash256>& downloadApprovalInitiationEvent() {
+			return m_downloadApprovalInitiationEvent;
+		}
+
 	private:
 		Key m_consumer;
 		Key m_drive;
-		uint64_t m_downloadSize; // In Mbytes
+		uint64_t m_downloadSizeMegabytes; // In Mbytes
 		uint16_t m_downloadApprovalCount;
 		std::vector<Key> m_listOfPublicKeys;
 		utils::SortedKeySet m_shardReplicators;
 		std::map<Key, Amount> m_cumulativePayments;
+		std::optional<Hash256> m_downloadApprovalInitiationEvent;
+		catapult::Timestamp m_lastDownloadApprovalInitiated;
+		bool m_finishPublished;
+
+		Key m_paymentsQueuePrevious;
+		Key m_paymentsQueueNext;
 	};
 
 	// DownloadChannel channel entry.
@@ -124,6 +176,10 @@ namespace catapult { namespace state {
 		// Gets the download channel id.
 		const Hash256 & id() const {
 			return m_id;
+		}
+
+		Key entryKey() {
+			return m_id.array();
 		}
 
 		void setVersion(VersionType version) {

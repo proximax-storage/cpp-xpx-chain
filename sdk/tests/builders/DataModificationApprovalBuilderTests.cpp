@@ -54,9 +54,9 @@ namespace catapult { namespace builders {
             EXPECT_EQ(expectedProperties.DriveKey, transaction.DriveKey);
             EXPECT_EQ(expectedProperties.DataModificationId, transaction.DataModificationId);
             EXPECT_EQ(expectedProperties.FileStructureCdi, transaction.FileStructureCdi);
-            EXPECT_EQ(expectedProperties.FileStructureSize, transaction.FileStructureSize);
-            EXPECT_EQ(expectedProperties.MetaFilesSize, transaction.MetaFilesSize);
-            EXPECT_EQ(expectedProperties.UsedDriveSize, transaction.UsedDriveSize);
+            EXPECT_EQ(expectedProperties.FileStructureSize, transaction.FileStructureSizeBytes);
+            EXPECT_EQ(expectedProperties.MetaFilesSize, transaction.MetaFilesSizeBytes);
+            EXPECT_EQ(expectedProperties.UsedDriveSize, transaction.UsedDriveSizeBytes);
             EXPECT_EQ(expectedProperties.JudgingKeysCount, transaction.JudgingKeysCount);
             EXPECT_EQ(expectedProperties.OverlappingKeysCount, transaction.OverlappingKeysCount);
             EXPECT_EQ(expectedProperties.JudgedKeysCount, transaction.JudgedKeysCount);
@@ -187,8 +187,7 @@ namespace catapult { namespace builders {
         expectedProperties.MetaFilesSize = metaFilesSize;
 
         // Assert:
-        AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) {
-            builder.setMetaFilesSize(metaFilesSize);
+        AssertCanBuildTransaction<TTraits>(0, expectedProperties, [&](auto& builder) { builder.setMetaFilesSize(metaFilesSize);
         });
     }
 

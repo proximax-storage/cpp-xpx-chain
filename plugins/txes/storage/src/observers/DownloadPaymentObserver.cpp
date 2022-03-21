@@ -16,6 +16,6 @@ namespace catapult { namespace observers {
 	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
 
-		downloadChannelEntry.increaseDownloadSize(notification.DownloadSize);
+		downloadChannelEntry.increaseDownloadSize(notification.DownloadSizeMegabytes);
 	});
 }}

@@ -64,7 +64,7 @@ namespace catapult { namespace observers {
 				values.Drive_Key,
                 values.Active_Data_Modifications.begin()->Id,
                 values.Active_Data_Modifications.begin()->Owner,
-                values.Active_Data_Modifications.begin()->ActualUploadSize,
+                values.Active_Data_Modifications.begin()->ActualUploadSizeMegabytes,
 				values.Active_Data_Modifications.begin()->DownloadDataCdi);
             auto pObserver = CreateStreamFinishObserver();
         	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
@@ -74,7 +74,7 @@ namespace catapult { namespace observers {
 			entry.activeDataModifications().push_back(state::ActiveDataModification(
 				values.Active_Data_Modifications.begin()->Id,
 				values.Active_Data_Modifications.begin()->Owner,
-				values.Active_Data_Modifications.begin()->ExpectedUploadSize,
+				values.Active_Data_Modifications.begin()->ExpectedUploadSizeMegabytes,
 				values.Active_Data_Modifications.begin()->FolderName
 			));
             bcDriveCache.insert(entry);

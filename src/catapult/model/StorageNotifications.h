@@ -134,7 +134,7 @@ namespace catapult { namespace model {
 			, DriveKey(drive)
 			, Owner(owner)
 			, DownloadDataCdi(cdi)
-			, UploadSize(uploadSize)
+			, UploadSizeMegabytes(uploadSize)
 		{}
 
 	public:
@@ -151,7 +151,7 @@ namespace catapult { namespace model {
 		Hash256 DownloadDataCdi;
 
 		/// Upload size of data.
-		uint64_t UploadSize;
+		uint64_t UploadSizeMegabytes;
 	};
 
 	/// Notification of a stream start.
@@ -284,14 +284,14 @@ namespace catapult { namespace model {
 				const Hash256& id,
 				const Key& consumer,
 				const Key& drive,
-				uint64_t downloadSize,
+				uint64_t downloadSizeMegabytes,
 				uint16_t listOfPublicKeysSize,
 				const Key* listOfPublicKeysPtr)
 			: Notification(Notification_Type, sizeof(DownloadNotification<1>))
 			, Id(id)
 			, Consumer(consumer)
 			, DriveKey(drive)
-			, DownloadSize(downloadSize)
+			, DownloadSizeMegabytes(downloadSizeMegabytes)
 			, ListOfPublicKeysSize(listOfPublicKeysSize)
 			, ListOfPublicKeysPtr(listOfPublicKeysPtr)
 
@@ -308,7 +308,7 @@ namespace catapult { namespace model {
 		Key DriveKey;
 
 		/// Delta size of download.
-		uint64_t DownloadSize;
+		uint64_t DownloadSizeMegabytes;
 
 		/// Size of the list of public keys
 		uint16_t ListOfPublicKeysSize;
@@ -502,6 +502,7 @@ namespace catapult { namespace model {
 	public:
 		explicit DataModificationApprovalUploadWorkNotification(
 				const Key& driveKey,
+				const Hash256& modificationId,
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
@@ -510,6 +511,7 @@ namespace catapult { namespace model {
 				const uint64_t* opinionsPtr)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
 				, DriveKey(driveKey)
+				, ModificationId(modificationId)
 				, JudgingKeysCount(judgingKeysCount)
 				, OverlappingKeysCount(overlappingKeysCount)
 				, JudgedKeysCount(judgedKeysCount)
@@ -521,6 +523,9 @@ namespace catapult { namespace model {
 	public:
 		/// Key of drive.
 		Key DriveKey;
+
+		/// Id of the approved modification
+		Hash256 ModificationId;
 
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;
@@ -556,13 +561,13 @@ namespace catapult { namespace model {
 		explicit DataModificationApprovalRefundNotification(
 				const Key& driveKey,
 				const Hash256& dataModificationId,
-				const uint64_t metaFilesSize,
-				const uint64_t usedDriveSize)
+				const uint64_t metaFilesSizeBytes,
+				const uint64_t usedDriveSizeBytes)
 				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
-				, MetaFilesSize(metaFilesSize)
-				, UsedDriveSize(usedDriveSize)
+				, MetaFilesSizeBytes(metaFilesSizeBytes)
+				, UsedDriveSize(usedDriveSizeBytes)
 		{}
 
 	public:
@@ -573,7 +578,7 @@ namespace catapult { namespace model {
 		Hash256 DataModificationId;
 
 		/// The size of metafiles including File Structure.
-		uint64_t MetaFilesSize;
+		uint64_t MetaFilesSizeBytes;
 
 		/// Total used disk space of the drive.
 		uint64_t UsedDriveSize;
@@ -707,10 +712,12 @@ namespace catapult { namespace model {
 	public:
 		explicit FinishDownloadNotification(
 				const Key& signer,
-				const Hash256& downloadChannelId)
+				const Hash256& downloadChannelId,
+				const Hash256& transactionHash)
 			: Notification(Notification_Type, sizeof(FinishDownloadNotification<1>))
 			, PublicKey(signer)
 			, DownloadChannelId(downloadChannelId)
+			, TransactionHash(transactionHash)
 		{}
 
 	public:
@@ -719,6 +726,9 @@ namespace catapult { namespace model {
 
 		/// The identifier of the download channel.
 		Hash256 DownloadChannelId;
+
+		/// The hash of the transaction
+		Hash256 TransactionHash;
 	};
 
 	/// Notification of a download payment.
@@ -735,11 +745,11 @@ namespace catapult { namespace model {
 		explicit DownloadPaymentNotification(
 				const Key& signer,
 				const Hash256& downloadChannelId,
-				const uint64_t downloadSize)
+				const uint64_t downloadSizeMegabytes)
 			: Notification(Notification_Type, sizeof(DownloadPaymentNotification<1>))
 			, PublicKey(signer)
 			, DownloadChannelId(downloadChannelId)
-			, DownloadSize(downloadSize)
+			, DownloadSizeMegabytes(downloadSizeMegabytes)
 		{}
 
 	public:
@@ -750,7 +760,7 @@ namespace catapult { namespace model {
 		Hash256 DownloadChannelId;
 
 		/// Download size to add to the prepaid size of the download channel.
-		uint64_t DownloadSize;
+		uint64_t DownloadSizeMegabytes;
 	};
 
 	/// Notification of a storage payment.
@@ -936,7 +946,6 @@ namespace catapult { namespace model {
 		explicit DownloadApprovalNotification(
 				const Hash256& id,
 				const Hash256& approvalTrigger,
-				const uint16_t number,
 				const uint8_t judgingKeysCount,
 				const uint8_t overlappingKeysCount,
 				const uint8_t judgedKeysCount,
@@ -945,7 +954,6 @@ namespace catapult { namespace model {
 			: Notification(Notification_Type, sizeof(DownloadApprovalNotification<1>))
 			, DownloadChannelId(id)
 			, ApprovalTrigger(approvalTrigger)
-			, SequenceNumber(number)
 			, JudgingKeysCount(judgingKeysCount)
 			, OverlappingKeysCount(overlappingKeysCount)
 			, JudgedKeysCount(judgedKeysCount)
@@ -959,9 +967,6 @@ namespace catapult { namespace model {
 
 		/// The hash of the block that initiated the rewards approval.
 		Hash256 ApprovalTrigger;
-
-		/// Sequence number of current download approval transaction in the download channel.
-		uint16_t SequenceNumber;
 
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;
@@ -1053,5 +1058,67 @@ namespace catapult { namespace model {
 	public:
 		/// The identifier of the download channel.
 		Hash256 DownloadChannelId;
+	};
+
+	/// Notification of end drive verification.
+	template<VersionType version>
+	struct EndDriveVerificationNotification;
+
+	template<>
+	struct EndDriveVerificationNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_End_Drive_Verification_v1_Notification;
+
+	public:
+		explicit EndDriveVerificationNotification(
+				const Key& driveKey,
+				const Hash256& seed,
+				const Hash256& verificationTrigger,
+				const uint16_t shardId,
+				const uint16_t keyCount,
+				const uint16_t judgingKeyCount,
+				const Key* pPublicKeys,
+				const Signature* pSignatures,
+				const uint8_t* pOpinions)
+				: Notification(Notification_Type, sizeof(EndDriveVerificationNotification<1>))
+				, DriveKey(driveKey)
+				, Seed(seed)
+				, VerificationTrigger(verificationTrigger)
+				, ShardId(shardId)
+				, KeyCount(keyCount)
+				, JudgingKeyCount(judgingKeyCount)
+				, PublicKeysPtr(pPublicKeys)
+				, SignaturesPtr(pSignatures)
+				, OpinionsPtr(pOpinions)
+				{}
+
+	public:
+		/// Key of the drive.
+		Key DriveKey;
+
+		/// Seed for the Random
+		Hash256 Seed;
+
+		/// The hash of block that initiated the Verification.
+		Hash256 VerificationTrigger;
+
+		/// Shard identifier.
+		uint16_t ShardId;
+
+		/// Number of replicators.
+		uint16_t KeyCount;
+
+		/// Number of replicators that provided their opinions.
+		uint8_t JudgingKeyCount;
+
+		/// Array of the replicator keys.
+		const Key* PublicKeysPtr;
+
+		/// Array or signatures.
+		const Signature* SignaturesPtr;
+
+		/// Array or signatures.
+		const uint8_t* OpinionsPtr;
 	};
 }}

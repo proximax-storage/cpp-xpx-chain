@@ -100,7 +100,6 @@ namespace catapult { namespace utils {
 
 		for (const auto& replicatorKey : offboardingReplicators) {
 			driveEntry.replicators().erase(replicatorKey);
-			driveEntry.cumulativeUploadSizes().erase(replicatorKey);
 			driveEntry.dataModificationShards().erase(replicatorKey);
 			driveEntry.offboardingReplicators().erase(replicatorKey);
 
@@ -114,22 +113,32 @@ namespace catapult { namespace utils {
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 		const auto shardSize = std::min<uint8_t>(pluginConfig.ShardSize, replicators.size() - 1);
 		for (auto& pair : driveEntry.dataModificationShards()) {
-			auto& shardsPair = pair.second;
+			auto& shardInfo = pair.second;
 			for (const auto& key : offboardingReplicators)
-				if (shardsPair.first.count(key)) {
-					shardsPair.first.erase(key);
-					shardsPair.second.insert(key);
+				if (shardInfo.m_actualShardMembers.count(key)) {
+					shardInfo.m_actualShardMembers.erase(key);
+					shardInfo.m_formerShardMembers.insert({key, 0});
 				}
-			const auto shardSizeDifference = shardSize - shardsPair.first.size();
+			const auto shardSizeDifference = shardSize - shardInfo.m_actualShardMembers.size();
 			if (shardSizeDifference > 0) {
-				auto& target = shardsPair.first;
+				std::set<Key> existingKeys;
+				for (const auto& [key, _]: shardInfo.m_actualShardMembers) {
+					existingKeys.insert(key);
+				}
+
 				// Filtering out replicators that already belong to the shard
 				std::set<Key> replicatorsSampleSource;
-				std::set_difference(replicators.begin(), replicators.end(), target.begin(), target.end(),
+				std::set_difference(replicators.begin(), replicators.end(), existingKeys.begin(), existingKeys.end(),
 									std::inserter(replicatorsSampleSource, replicatorsSampleSource.begin()));
 				replicatorsSampleSource.erase(pair.first); // Replicator cannot be a member of his own shard
+
+				std::set<Key> target;
 				std::sample(replicatorsSampleSource.begin(), replicatorsSampleSource.end(),
 							std::inserter(target, target.end()), shardSizeDifference, rng);
+
+				for (const auto& key: target) {
+					shardInfo.m_actualShardMembers.insert({key, 0});
+				}
 			}
 		}
 
@@ -138,8 +147,8 @@ namespace catapult { namespace utils {
 		if (replicators.size() <= pluginConfig.ShardSize) {
 			// If drive has no more than ShardSize replicators, then each one of them
 			// must be assigned to every download shard.
-			for (auto& pair : driveEntry.downloadShards()) {
-				auto downloadIter = downloadCache.find(pair.first);
+			for (const auto& id : driveEntry.downloadShards()) {
+				auto downloadIter = downloadCache.find(id);
 				auto& downloadEntry = downloadIter.get();
 				auto& cumulativePayments = downloadEntry.cumulativePayments();
 				for (const auto& key : replicators)
@@ -147,15 +156,18 @@ namespace catapult { namespace utils {
 						cumulativePayments.emplace(key, Amount(0));
 				// Offboarded replicators' cumulative payments remain in cumulativePayments
 				downloadEntry.shardReplicators() = replicators;
-				pair.second = replicators;
+				for (const auto& replicatorKey: downloadEntry.shardReplicators()) {
+					auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+					replicatorEntry.downloadChannels().insert(id);
+				}
 			}
 		} else {
 			std::vector<Key> sampleSource(replicators.begin(), replicators.end());
-			for (auto& pair : driveEntry.downloadShards()) {
-				auto downloadIter = downloadCache.find(pair.first);
+			for (const auto& id : driveEntry.downloadShards()) {
+				auto downloadIter = downloadCache.find(id);
 				auto& downloadEntry = downloadIter.get();
 				auto& cumulativePayments = downloadEntry.cumulativePayments();
-				const Key downloadChannelKey = Key(pair.first.array());
+				const Key downloadChannelKey = Key(id.array());
 				const auto comparator = [&downloadChannelKey](const Key& a, const Key& b) { return (a ^ downloadChannelKey) < (b ^ downloadChannelKey); };
 				std::sort(sampleSource.begin(), sampleSource.end(), comparator);
 				auto keyIter = sampleSource.begin();
@@ -163,7 +175,10 @@ namespace catapult { namespace utils {
 					if (!cumulativePayments.count(*keyIter))
 						cumulativePayments.emplace(*keyIter, Amount(0));
 				downloadEntry.shardReplicators() = std::set<Key>(sampleSource.begin(), keyIter);	// keyIter now points to the element past the (ShardSize)th
-				pair.second = std::set<Key>(sampleSource.begin(), keyIter);
+				for (const auto& replicatorKey: downloadEntry.shardReplicators()) {
+					auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+					replicatorEntry.downloadChannels().insert(id);
+				}
 			}
 		}
 	}
@@ -174,6 +189,7 @@ namespace catapult { namespace utils {
 			const observers::ObserverContext& context,
 			std::mt19937& rng) {
 		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
 		// Updating download shards
@@ -181,20 +197,25 @@ namespace catapult { namespace utils {
 			// If drive has no more than ShardSize replicators, then each one of them
 			// (except the onboarding replicator) is currently assigned to every download shard.
 			// Just add the onboarding replicator to every shard.
-			for (auto& pair : driveEntry.downloadShards()) {
-				pair.second.insert(replicatorKey);
-				auto downloadIter = downloadCache.find(pair.first);
+			for (const auto& id : driveEntry.downloadShards()) {
+				auto downloadIter = downloadCache.find(id);
 				auto& downloadEntry = downloadIter.get();
 				downloadEntry.shardReplicators().insert(replicatorKey);
 				downloadEntry.cumulativePayments().emplace(replicatorKey, Amount(0));
+				auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+				replicatorEntry.downloadChannels().insert(id);
 			}
 		} else {
-			for (auto& pair : driveEntry.downloadShards()) {
+			for (const auto& id : driveEntry.downloadShards()) {
 				// For every download shard, the new replicator key will either be
 				// - close enough to the download channel id (XOR-wise), replacing the most distant key of that shard, or
 				// - not close enough, leaving the download shard unchanged
-				const Key downloadChannelKey = Key(pair.first.array());
-				auto& driveShardKeys = pair.second;
+				const Key downloadChannelKey = Key(id.array());
+
+				auto downloadIter = downloadCache.find(id);
+				auto& downloadEntry = downloadIter.get();
+				auto& driveShardKeys = downloadEntry.shardReplicators();
+
 				auto mostDistantKeyIter = driveShardKeys.begin();
 				auto greatestDistance = *mostDistantKeyIter ^ downloadChannelKey;
 				for (auto replicatorKeyIter = ++driveShardKeys.begin(); replicatorKeyIter != driveShardKeys.end(); ++replicatorKeyIter) {
@@ -205,12 +226,15 @@ namespace catapult { namespace utils {
 					}
 				}
 				if ((replicatorKey ^ downloadChannelKey) < greatestDistance) {
-					driveShardKeys.erase(mostDistantKeyIter);
-					driveShardKeys.insert(replicatorKey);
-					auto downloadIter = downloadCache.find(pair.first);
-					auto& downloadEntry = downloadIter.get();
 					downloadEntry.shardReplicators().erase(*mostDistantKeyIter);
 					downloadEntry.shardReplicators().insert(replicatorKey);
+
+					auto& removedReplicatorEntry = replicatorCache.find(*mostDistantKeyIter).get();
+					removedReplicatorEntry.downloadChannels().erase(id);
+
+					auto& addedReplicatorEntry = replicatorCache.find(replicatorKey).get();
+					addedReplicatorEntry.downloadChannels().insert(id);
+
 					downloadEntry.cumulativePayments().emplace(replicatorKey, Amount(0));
 					// Cumulative payments of the removed replicator are kept in download channel entry
 				}
@@ -224,38 +248,48 @@ namespace catapult { namespace utils {
 			shardKeys.insert(pair.first);
 
 		auto replicatorsSampleSource = driveEntry.replicators();
+		const auto replicatorsSize = replicatorsSampleSource.size();
 		replicatorsSampleSource.erase(replicatorKey); // Replicator cannot be a member of his own shard
 
-		if (driveEntry.replicators().size() <= pluginConfig.ShardSize + 1) {
+		if (replicatorsSize <= pluginConfig.ShardSize + 1) {
 			// Adding the new replicator to all existing shards
 			for (auto& pair : shardsMap) {
 				auto& shardsPair = pair.second;
-				shardsPair.first.insert(replicatorKey);
+				shardsPair.m_actualShardMembers.insert({replicatorKey, 0});
 			}
 			// Creating an entry for the new replicator in shardsMap
-			shardsMap[replicatorKey].first = replicatorsSampleSource;
+			auto& replicatorKeyShard = shardsMap[replicatorKey].m_actualShardMembers;
+			for (const auto& key: replicatorsSampleSource) {
+				 replicatorKeyShard.insert({key, 0});
+			}
 		} else {
 			// Selecting random shards to which the new replicator will be added
-			const auto sampleSize = pluginConfig.ShardSize * shardsMap.size() / (shardsMap.size() - 1);
+			const auto sampleSize = pluginConfig.ShardSize * replicatorsSize / (replicatorsSize - 1);
 			std::set<Key> sampledShardKeys;
 			std::sample(shardKeys.begin(), shardKeys.end(),
 						std::inserter(sampledShardKeys, sampledShardKeys.end()), sampleSize, rng);
 			// Updating selected shards
 			for (auto& sampledKey : sampledShardKeys) {
 				auto& shardsPair = shardsMap[sampledKey];
-				if (shardsPair.first.size() == pluginConfig.ShardSize) {	// TODO: Remove size check?
+				if (shardsPair.m_actualShardMembers.size() == pluginConfig.ShardSize) {	// TODO: Remove size check?
 					const auto replacedKeyIndex = rng() % pluginConfig.ShardSize;
-					auto replacedKeyIter = shardsPair.first.begin();
+					auto replacedKeyIter = shardsPair.m_actualShardMembers.begin();
 					std::advance(replacedKeyIter, replacedKeyIndex);
-					shardsPair.second.insert(*replacedKeyIter);
-					shardsPair.first.erase(replacedKeyIter);
+					shardsPair.m_formerShardMembers.insert(*replacedKeyIter);
+					shardsPair.m_actualShardMembers.erase(replacedKeyIter);
 				}
-				shardsPair.first.insert(replicatorKey);
+				shardsPair.m_actualShardMembers.insert({replicatorKey, 0});
 			}
 			// Creating an entry for the new replicator in shardsMap
-			auto& newShardEntry = shardsMap[replicatorKey].first;
+
+			std::set<Key> target;
 			std::sample(replicatorsSampleSource.begin(), replicatorsSampleSource.end(),
-						std::inserter(newShardEntry, newShardEntry.end()), pluginConfig.ShardSize, rng);
+						std::inserter(target, target.end()), pluginConfig.ShardSize, rng);
+
+			auto& newShardEntry = shardsMap[replicatorKey].m_actualShardMembers;
+			for (const auto& key: target) {
+				newShardEntry.insert({key, 0});
+			}
 		}
 	}
 
@@ -271,7 +305,6 @@ namespace catapult { namespace utils {
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
-		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
 		auto& driveEntry = driveCache.find(driveKey).get();
 		const auto driveSize = driveEntry.size();
@@ -305,7 +338,7 @@ namespace catapult { namespace utils {
 				});
 		const bool dataModificationIdIsValid = lastApprovedDataModificationIter != completedDataModifications.rend();
 		const auto lastApprovedDataModificationId = dataModificationIdIsValid ? lastApprovedDataModificationIter->Id : Hash256();
-		const auto initialDownloadWork = driveEntry.usedSize() - driveEntry.metaFilesSize();
+		const auto initialDownloadWork = driveEntry.usedSizeBytes() - driveEntry.metaFilesSizeBytes();
 		const state::DriveInfo driveInfo{ lastApprovedDataModificationId, dataModificationIdIsValid, initialDownloadWork };
 
 		// Pick the first (requiredReplicatorCount) replicators from acceptableReplicators
@@ -320,7 +353,6 @@ namespace catapult { namespace utils {
 			auto& replicatorEntry = replicatorIter.get();
 			replicatorEntry.drives().emplace(driveKey, driveInfo);
 			replicators.emplace(replicatorKey);
-			driveEntry.cumulativeUploadSizes().emplace(replicatorKey, 0);
 
 			// Updating drive's shards
 			UpdateShardsOnAddedReplicator(driveEntry, replicatorKey, context, rng);
@@ -402,12 +434,11 @@ namespace catapult { namespace utils {
 							});
 					const bool dataModificationIdIsValid = lastApprovedDataModificationIter != completedDataModifications.rend();
 					const auto lastApprovedDataModificationId = dataModificationIdIsValid ? lastApprovedDataModificationIter->Id : Hash256();
-					const auto initialDownloadWork = driveEntry.usedSize() - driveEntry.metaFilesSize();
+					const auto initialDownloadWork = driveEntry.usedSizeBytes() - driveEntry.metaFilesSizeBytes();
 					replicatorEntry.drives().emplace(driveKey, state::DriveInfo{
 							lastApprovedDataModificationId, dataModificationIdIsValid, initialDownloadWork
 					});
 					driveEntry.replicators().emplace(replicatorKey);
-					driveEntry.cumulativeUploadSizes().emplace(replicatorKey, 0);
 
 					// Updating drive's shards
 					UpdateShardsOnAddedReplicator(driveEntry, replicatorKey, context, rng);

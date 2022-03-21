@@ -6,6 +6,7 @@
 
 #include <random>
 #include "Observers.h"
+#include "Queue.h"
 
 namespace catapult { namespace observers {
 
@@ -23,6 +24,7 @@ namespace catapult { namespace observers {
 			driveEntry.setOwner(notification.Owner);
 			driveEntry.setSize(notification.DriveSize);
 			driveEntry.setReplicatorCount(notification.ReplicatorCount);
+			driveEntry.setLastPayment(context.Timestamp);
 
 			driveCache.insert(driveEntry);
 
@@ -30,6 +32,11 @@ namespace catapult { namespace observers {
 		  	std::mt19937 rng(seed);
 
 		  	PopulateDriveWithReplicators(notification.DriveKey, pKeyCollector, pDriveQueue, context, rng);
+
+		  	// Insert the Drive into the payment Queue
+		  	auto& queueCache = context.Cache.template sub<cache::QueueCache>();
+		  	QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
+		  	queueAdapter.pushBack(driveEntry.entryKey());
 		}))
 	}
 }}

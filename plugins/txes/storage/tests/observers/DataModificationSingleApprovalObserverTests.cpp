@@ -30,7 +30,7 @@ namespace catapult { namespace observers {
 			const auto driveOwnerKey = test::GenerateRandomByteArray<Key>();
 			entry.replicators().insert(replicatorKey);
 			entry.setOwner(driveOwnerKey);
-			entry.setUsedSize(Used_Drive_Size);
+			entry.setUsedSizeBytes(Used_Drive_Size);
             entry.completedDataModifications().emplace_back(state::CompletedDataModification {
 					{
                 		test::GenerateRandomByteArray<Hash256>(), driveOwnerKey,
@@ -68,7 +68,7 @@ namespace catapult { namespace observers {
 			auto& driveInfo = entry.drives().begin()->second;
 			driveInfo.LastApprovedDataModificationId = dataModificationId;
 			driveInfo.DataModificationIdIsValid = true;
-			driveInfo.InitialDownloadWork = 0;
+			driveInfo.InitialDownloadWorkMegabytes = 0;
 			return entry;
 		}
 

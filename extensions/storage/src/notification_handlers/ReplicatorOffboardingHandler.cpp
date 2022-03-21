@@ -12,15 +12,8 @@ namespace catapult { namespace notification_handlers {
 
     DECLARE_HANDLER(ReplicatorOffboarding, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
         return MAKE_HANDLER(ReplicatorOffboarding, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
-            auto pReplicatorService = pReplicatorServiceWeak.lock();
-            if (!pReplicatorService)
-                return;
-
-			if (pReplicatorService->replicatorKey() != notification.PublicKey || !pReplicatorService->isReplicatorRegistered(notification.PublicKey))
-                return;
-
-            CATAPULT_LOG(debug) << "replicator off-boarding: stopping replicator service";
-            pReplicatorService->stop();
+            // In the version actual Replicator offboarding takes place in DataModification or EndDriveVerification Transaction
+			return;
         });
     }
 }}
