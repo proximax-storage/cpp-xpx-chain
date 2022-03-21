@@ -82,7 +82,7 @@ namespace catapult { namespace config {
 		auto result = config::BlockchainConfiguration::LoadFromPath(resourcesPath, "server");
 
 		// Assert:
-		EXPECT_EQ(14, result.Extensions.Names.size());
+		EXPECT_EQ(13, result.Extensions.Names.size());
 	}
 
 	TEST(TEST_CLASS, CanLoadRecoveryConfig) {

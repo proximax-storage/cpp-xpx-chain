@@ -70,29 +70,28 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(Push_Proposed_Block, 13) \
 	\
 	/* A prevote message has been pushed by a peer. */ \
-	ENUM_VALUE(Push_Prevote_Message, 14) \
+	ENUM_VALUE(Push_Prevote_Messages, 14) \
 	\
 	/* A precommit message has been pushed by a peer. */ \
-	ENUM_VALUE(Push_Precommit_Message, 15) \
+	ENUM_VALUE(Push_Precommit_Messages, 15) \
 	\
 	/* A block confirmed by committee has been pushed by a peer. */ \
 	ENUM_VALUE(Push_Confirmed_Block, 16) \
 	\
     /* A remote node state has been requested by a peer. */ \
     ENUM_VALUE(Pull_Remote_Node_State, 17) \
-	\
-    /* Peer requested file download. */ \
-    ENUM_VALUE(Start_Download_Files, 18) \
-	\
-    /* Peer response on file download request. */ \
-    ENUM_VALUE(Start_Download_Files_Response, 19) \
-	\
-    /* Peer requested file download stop. */ \
-    ENUM_VALUE(Stop_Download_Files, 20) \
-	\
-    /* Peer response on file download request. */ \
-    ENUM_VALUE(Stop_Download_Files_Response, 21) \
     \
+	/* A block proposed by committee has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Proposed_Block, 18) \
+	\
+	/* Prevote messages has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Prevote_Messages, 19) \
+	\
+	/* Precommit messages has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Precommit_Messages, 20) \
+	\
+	/* A block confirmed by committee has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Confirmed_Block, 21) \
 	/* api only packets have types [500, 600) */ \
 	\
 	/* Partial aggregate transactions have been pushed by an api-node. */ \

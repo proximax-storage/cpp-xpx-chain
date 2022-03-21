@@ -33,13 +33,16 @@ namespace catapult { namespace fastfinality {
 	struct BlockProposingFailed{};
 	struct BlockProposingSucceeded{};
 
-	struct ProposalNotReceived{};
+	struct ProposalRequest{};
 	struct ProposalReceived{};
+	struct ProposalNotReceived{};
 
 	struct ProposalInvalid{};
 	struct ProposalValid{};
 
 	struct ProposalPhaseEnded{};
+
+	struct VoteRequest{};
 
 	struct SumOfPrevotesInsufficient{};
 	struct SumOfPrevotesSufficient{};
@@ -47,9 +50,12 @@ namespace catapult { namespace fastfinality {
 	struct SumOfPrecommitsInsufficient{};
 	struct SumOfPrecommitsSufficient{};
 
+	struct PrecommitPhaseEnded{};
+
 	struct CommitBlockFailed{};
 	struct CommitBlockSucceeded{};
 
+	struct ConfirmedBlockRequest{};
 	struct ConfirmedBlockNotReceived{};
 	struct ConfirmedBlockReceived{};
 

@@ -29,8 +29,6 @@ namespace catapult { namespace fastfinality {
 		explicit WeightedVotingFsm(std::shared_ptr<thread::IoThreadPool> pPool, const config::BlockchainConfiguration& config)
 			: m_pPool(std::move(pPool))
 			, m_timer(m_pPool->ioContext())
-			, m_proposalWaitTimer(m_pPool->ioContext())
-			, m_confirmedBlockWaitTimer(m_pPool->ioContext())
 			, m_sm(boost::sml::sm<WeightedVotingTransitionTable>(m_actions))
 			, m_strand(m_pPool->ioContext())
 			, m_nodeWorkState(NodeWorkState::None)
@@ -52,6 +50,7 @@ namespace catapult { namespace fastfinality {
 		}
 
 		void shutdown() {
+			std::lock_guard<std::mutex> guard(m_mutex);
 			m_stopped = true;
 			m_timer.cancel();
 			processEvent(Stop{});
@@ -65,14 +64,6 @@ namespace catapult { namespace fastfinality {
 
 		auto& timer() {
 			return m_timer;
-		}
-
-		auto& proposalWaitTimer() {
-			return m_proposalWaitTimer;
-		}
-
-		auto& confirmedBlockWaitTimer() {
-			return m_confirmedBlockWaitTimer;
 		}
 
 		auto& actions() {
@@ -125,11 +116,13 @@ namespace catapult { namespace fastfinality {
 			return m_packetIoPickers;
 		}
 
+		auto& mutex() {
+			return m_mutex;
+		}
+
 	private:
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
 		boost::asio::system_timer m_timer;
-		boost::asio::system_timer m_proposalWaitTimer;
-		boost::asio::system_timer m_confirmedBlockWaitTimer;
 		WeightedVotingActions m_actions;
 		boost::sml::sm<WeightedVotingTransitionTable> m_sm;
 		std::unique_ptr<ChainSyncData> m_pChainSyncData;
@@ -139,5 +132,6 @@ namespace catapult { namespace fastfinality {
 		bool m_stopped;
 		ionet::ServerPacketHandlers m_packetHandlers;
 		net::PacketIoPickerContainer m_packetIoPickers;
+		mutable std::mutex m_mutex;
 	};
 }}
