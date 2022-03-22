@@ -73,5 +73,7 @@ namespace catapult { namespace model {
 		Metadata_v2 = 0x3F,
 		/// SDA-SDA Exchange facility code.
 		ExchangeSda = 0x61,
+		/// SDA-SDA Offer Group facility code.
+		SdaOfferGroup = 0x62,
 	};
 }}

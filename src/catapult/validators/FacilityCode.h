@@ -50,6 +50,7 @@ namespace catapult { namespace validators {
 		COPY_FACILITY_CODE(Operation),
 		COPY_FACILITY_CODE(SuperContract),
 		COPY_FACILITY_CODE(ExchangeSda),
+		COPY_FACILITY_CODE(SdaOfferGroup),
 
 		/// Chain facility code.
 		Chain = 0xFF,
