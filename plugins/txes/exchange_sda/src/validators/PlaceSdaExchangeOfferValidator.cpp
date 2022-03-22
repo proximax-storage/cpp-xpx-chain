@@ -55,12 +55,6 @@ namespace catapult { namespace validators {
         std::set<std::pair<Key, MosaicId>> offers;
 	    const auto* pSdaOffer = notification.SdaOffersPtr;
         for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
-            if (notification.OwnerOfSdaOfferToExchangeWith == notification.Signer)
-			    return Failure_ExchangeSda_Exchanging_Own_Units_Is_Not_Allowed;
-            
-            if (!cache.contains(notification.OwnerOfSdaOfferToExchangeWith))
-				return Failure_ExchangeSda_Account_Doesnt_Have_Any_Offer;
-            
             auto mosaicId = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
             std::pair<Key, MosaicId> pair(pSdaOffer->Owner, mosaicId);
             if (offers.count(pair))

@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "src/model/SdaOffer.h"
 #include "src/catapult/types.h"
 #include <map>
 
@@ -13,11 +14,10 @@ namespace catapult { namespace state {
     struct SdaOffer {
         Key Owner;
         catapult::Amount MosaicGive;
-        catapult::Amount MosaicGet;
         Height Deadline;
     };
     
-    using SdaOfferGroupMap = std::vector<SdaOffer>;
+    using SdaOfferGroupMap = std::map<Hash256, std::vector<SdaOffer>>;
 
     // SDA-SDA Offer Group entry.
     class SdaOfferGroupEntry {
@@ -45,19 +45,22 @@ namespace catapult { namespace state {
     
     public:
         /// Returns offers arranged from the smallest to the biggest MosaicGive amount.
-        SdaOfferGroupMap smallToBig(const SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupMap smallToBig(const Hash256 groupHash, const SdaOfferGroupMap& sdaOfferGroup);
 
         /// Returns offers arranged from the smallest to the biggest MosaicGive amount by the earliest expiry date.
-        SdaOfferGroupMap smallToBigSortedByEarliestExpiry(const SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupMap smallToBigSortedByEarliestExpiry(const Hash256 groupHash, const SdaOfferGroupMap& sdaOfferGroup);
 
         /// Returns offers arranged from the biggest to the smallest MosaicGive amount.
-        SdaOfferGroupMap bigToSmall(const SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupMap bigToSmall(const Hash256 groupHash, const SdaOfferGroupMap& sdaOfferGroup);
         
         /// Returns offers arranged from the biggest to the smallest MosaicGive amount by the earliest expiry date.
-        SdaOfferGroupMap bigToSmallSortedByEarliestExpiry(const SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupMap bigToSmallSortedByEarliestExpiry(const Hash256 groupHash, const SdaOfferGroupMap& sdaOfferGroup);
 
         /// Returns offers arranged from the exact or closest MosaicGive amount.
-        SdaOfferGroupMap exactOrClosest(const SdaOffer offer, const SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupMap exactOrClosest(const Hash256 groupHash, const SdaOffer offer, const SdaOfferGroupMap& sdaOfferGroup);
+
+        void addSdaOfferToGroup(const Hash256& groupHash, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
+        void removeSdaOfferFromGroup(const Hash256& groupHash, const Key& offerOwner);
 
     private:
 		Hash256 m_groupHash;

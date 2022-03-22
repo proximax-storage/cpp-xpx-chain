@@ -5,6 +5,7 @@
 **/
 
 #include "Observers.h"
+#include <boost/lexical_cast.hpp>
 
 namespace catapult { namespace observers {
 
@@ -24,6 +25,25 @@ namespace catapult { namespace observers {
 			
             return dynamic_cast<state::SdaOfferBase&>(offer);
 		}
+
+        int denominator(int mosaicGive, int mosaicGet) {
+            return (mosaicGet == 0) ? mosaicGive: denominator(mosaicGet, mosaicGive % mosaicGet);
+        };
+
+        std::string reducedFraction(Amount mosaicGive, Amount mosaicGet) {
+            int denom = denominator(static_cast<int>(mosaicGive.unwrap()), static_cast<int>(mosaicGet.unwrap()));
+            int mosaicGiveReduced = static_cast<int>(mosaicGive.unwrap())/denom;
+            int mosaicGetReduced = static_cast<int>(mosaicGet.unwrap())/denom;
+            return boost::lexical_cast<std::string>(mosaicGiveReduced) + "/" + boost::lexical_cast<std::string>(mosaicGetReduced);
+        }
+
+        Hash256 calculateGroupHash(MosaicId mosaicGiveId, MosaicId mosaicGetId, std::string reduced) {
+            std::string key = boost::lexical_cast<std::string>(mosaicGiveId) + boost::lexical_cast<std::string>(mosaicGetId) + reduced;
+            Hash256 groupHash;
+			std::memcpy(groupHash.data(), key.data(), Hash256_Size);
+
+            return groupHash;
+        }
 	}
 
     DEFINE_OBSERVER(PlaceSdaExchangeOfferV1, model::PlaceSdaOfferNotification<1>, [](const model::PlaceSdaOfferNotification<1>& notification, const ObserverContext& context) {
@@ -35,24 +55,43 @@ namespace catapult { namespace observers {
         auto& entry = iter.get();
         SdaOfferExpiryUpdater sdaOfferExpiryUpdater(cache, entry);
 
+        /// Save offers in cache
         const auto* pSdaOffer = notification.SdaOffersPtr;
         for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
-            auto mosaicId = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
+            auto mosaicGiveId = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
+            auto mosaicGetId = context.Resolvers.resolve(pSdaOffer->MosaicGet.MosaicId);
+
             auto deadline = GetOfferDeadline(pSdaOffer->Duration, context.Height);
-            entry.addOffer(mosaicId, pSdaOffer, deadline);
+            entry.addOffer(mosaicGiveId, pSdaOffer, deadline);
+            
+            std::string reduced = reducedFraction(pSdaOffer->MosaicGive.Amount, pSdaOffer->MosaicGet.Amount);
+            auto groupHash = calculateGroupHash(mosaicGiveId, mosaicGetId, reduced);
+
+            auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
+            if (!groupCache.contains(groupHash))
+                groupCache.insert(state::SdaOfferGroupEntry(groupHash));
+
+            auto groupIter = groupCache.find(groupHash);
+            auto& groupEntry = groupIter.get();
+
+            groupEntry.addSdaOfferToGroup(groupHash, pSdaOffer, deadline);
         }
 
-        if (notification.OwnerOfSdaOfferToExchangeWith.size() != 0) {
-            auto iter = cache.find(notification.OwnerOfSdaOfferToExchangeWith);
-            auto& entry = iter.get();
-            SdaOfferExpiryUpdater sdaOfferExpiryUpdater(cache, entry);
+        /// Exchange offers when a match is found in cache
+        for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
+            auto mosaicGiveId = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
+            auto mosaicGetId = context.Resolvers.resolve(pSdaOffer->MosaicGet.MosaicId);
 
-            for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
-                auto mosaicIdGive = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
-                auto mosaicIdGet = context.Resolvers.resolve(pSdaOffer->MosaicGet.MosaicId);
-                auto& offer = ModifyOffer(entry.swapOffers(), mosaicIdGive, mosaicIdGet, pSdaOffer);
-                if (Amount(0) == offer.CurrentMosaicGive)
-                    entry.expireOffer(mosaicIdGive, context.Height);
+            std::string reduced = reducedFraction(pSdaOffer->MosaicGive.Amount, pSdaOffer->MosaicGet.Amount);
+            auto groupHash = calculateGroupHash(mosaicGiveId, mosaicGetId, reduced);
+
+            auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
+            auto groupIter = groupCache.find(groupHash);
+            auto& groupEntry = groupIter.get();
+
+            auto& offer = ModifyOffer(entry.swapOffers(), mosaicGiveId, mosaicGetId, pSdaOffer);
+            if (Amount(0) == offer.CurrentMosaicGive) {
+                entry.expireOffer(mosaicGiveId, context.Height);
             }
         }
     });

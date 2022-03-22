@@ -37,13 +37,11 @@ namespace catapult { namespace model {
 		PlaceSdaOfferNotification(
 				const Key& signer,
 				uint8_t sdaOfferCount,
-				const SdaOfferWithOwnerAndDuration* pSdaOffers,
-				const Key& owner)
+				const SdaOfferWithOwnerAndDuration* pSdaOffers)
 			: Notification(Notification_Type, sizeof(PlaceSdaOfferNotification<1>))
 			, Signer(signer)
 			, SdaOfferCount(sdaOfferCount)
 			, SdaOffersPtr(pSdaOffers)
-			, OwnerOfSdaOfferToExchangeWith(owner)
 		{}
 	
 	public:
@@ -55,9 +53,6 @@ namespace catapult { namespace model {
 
 		/// Own SDA-SDA Offers to exchange.
 		const SdaOfferWithOwnerAndDuration* SdaOffersPtr;
-
-		/// The person's SDA-SDA Offers to exchange with.
-		const Key& OwnerOfSdaOfferToExchangeWith;
 	};
 
 	/// Notification of an SDA-SDA offer removing.

@@ -18,30 +18,26 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		auto CreatePublisher(const config::ImmutableConfiguration& config) {
-			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
-					case 1: {
-						sub.notify(PlaceSdaOfferNotification<1>(
-								transaction.Signer,
-								transaction.SdaOfferCount,
-								transaction.SdaOffersPtr(),
-								transaction.OwnerOfSdaOfferToExchangeWith));
+				case 1: {
+					sub.notify(PlaceSdaOfferNotification<1>(
+							transaction.Signer,
+							transaction.SdaOfferCount,
+							transaction.SdaOffersPtr()));
 
-						auto pOffer = transaction.SdaOffersPtr();
-						for (uint8_t i = 0; i < transaction.SdaOfferCount; ++i, ++pOffer) {
-							auto offerOwnerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(pOffer->OwnerOfSdaOfferToExchangeWith, config.NetworkIdentifier));
-							sub.notify(BalanceTransferNotification<1>(transaction.Signer, offerOwnerAddress, pOffer->MosaicGive.MosaicId, pOffer->MosaicGive.Amount));
-							sub.notify(BalanceTransferNotification<1>(offerOwnerAddress, transaction.Signer, pOffer->MosaicGet.MosaicId, pOffer->MosaicGive.Amount));
-						}
-						break;
+					auto pOffer = transaction.SdaOffersPtr();
+					for (uint8_t i = 0; i < transaction.SdaOfferCount; ++i, ++pOffer) {
+						sub.notify(BalanceDebitNotification<1>(transaction.Signer, pOffer->MosaicGet.MosaicId, pOffer->MosaicGet.Amount));
+						sub.notify(BalanceCreditNotification<1>(transaction.Signer, pOffer->MosaicGive.MosaicId, pOffer->MosaicGive.Amount));
 					}
-					default:
-						CATAPULT_LOG(debug) << "invalid version of PlaceSdaExchangeOfferTransaction: " << transaction.EntityVersion();
+					break;
 				}
-			};
+				default:
+					CATAPULT_LOG(debug) << "invalid version of PlaceSdaExchangeOfferTransaction: " << transaction.EntityVersion();
+			}
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(PlaceSdaExchangeOffer, Default, CreatePublisher, config::ImmutableConfiguration)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(PlaceSdaExchangeOffer, Default, Publish)
 }}

@@ -7,6 +7,7 @@
 #pragma once
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/observers/ObserverTypes.h"
+#include "src/cache/SdaOfferGroupCache.h"
 #include "src/cache/SdaExchangeCache.h"
 #include "src/model/SdaExchangeNotifications.h"
 
