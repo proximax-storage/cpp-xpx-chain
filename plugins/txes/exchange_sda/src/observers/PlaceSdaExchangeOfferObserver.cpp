@@ -59,6 +59,7 @@ namespace catapult { namespace observers {
         }
 
         /// Exchange offers when a match is found in cache
+        const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SdaExchangeConfiguration>();
         for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
             auto mosaicIdGive = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
             auto mosaicIdGet = context.Resolvers.resolve(pSdaOffer->MosaicGet.MosaicId);
@@ -70,9 +71,30 @@ namespace catapult { namespace observers {
             auto groupIter = groupCache.find(groupHash);
             auto& groupEntry = groupIter.get();
 
-            auto& offer = ModifyOffer(entry.sdaOfferBalances(), mosaicIdGive, mosaicIdGet, pSdaOffer);
+            auto& arrangedOffers = groupEntry.sdaOfferGroup();
+            switch (pluginConfig.SortPolicy) {
+                case config::SdaExchangeConfiguration::SortPolicies::SmallToBig: 
+                    arrangedOffers = groupEntry.smallToBig(groupHash, arrangedOffers);
+                    break;
+                case config::SdaExchangeConfiguration::SortPolicies::SmallToBigSortedByEarliestExpiry: 
+                    arrangedOffers = groupEntry.smallToBigSortedByEarliestExpiry(groupHash, arrangedOffers);
+                    break;
+                case config::SdaExchangeConfiguration::SortPolicies::BigToSmall: 
+                    arrangedOffers = groupEntry.bigToSmall(groupHash, arrangedOffers);
+                    break;
+                case config::SdaExchangeConfiguration::SortPolicies::BigToSmallSortedByEarliestExpiry: 
+                    arrangedOffers = groupEntry.bigToSmallSortedByEarliestExpiry(groupHash, arrangedOffers);
+                    break;
+                case config::SdaExchangeConfiguration::SortPolicies::ExactOrClosest:
+                    arrangedOffers = groupEntry.exactOrClosest(groupHash, state::SdaOfferBasicInfo{pSdaOffer->Owner, pSdaOffer->MosaicGive.Amount}, arrangedOffers);
+                    break;
+            }
+
+            auto& offer = ModifyOffer(arrangedOffers, mosaicIdGive, mosaicIdGet, pSdaOffer);
+
             if (Amount(0) == offer.CurrentMosaicGive) {
                 entry.expireOffer(mosaicIdGive, context.Height);
+                groupEntry.removeSdaOfferFromGroup(groupHash, entry.owner());
             }
         }
     });

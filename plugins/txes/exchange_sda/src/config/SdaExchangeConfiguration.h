@@ -31,6 +31,7 @@ namespace catapult { namespace config {
 
 		/// Policy to sort SDA-SDA offers.
 		enum class SortPolicies : uint8_t {
+			Default,
 			SmallToBig,
 			SmallToBigSortedByEarliestExpiry,
 			BigToSmall, 
@@ -38,7 +39,7 @@ namespace catapult { namespace config {
 			ExactOrClosest
 		};
 
-		SortPolicies SortPolicies;
+		SortPolicies SortPolicy;
 
 	private:
 		SdaExchangeConfiguration() = default;
