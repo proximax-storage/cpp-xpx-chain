@@ -68,6 +68,6 @@ namespace catapult { namespace model {
 		/// SuperContract facility code.
 		SuperContract = 0x60,
 		/// Lock Fund facility code.
-		LockFund = 0x61,
+		LockFund = 0x62,
 	};
 }}
