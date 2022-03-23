@@ -13,26 +13,23 @@
 
 namespace catapult { namespace state {
 
-	struct SdaOfferBase {
+	struct SdaOfferBalance {
 	public:
 		catapult::Amount CurrentMosaicGive;
+		catapult::Amount CurrentMosaicGet;
 		catapult::Amount InitialMosaicGive;
 		catapult::Amount InitialMosaicGet;
 		Height Deadline;
-	};
-
-	struct SwapOffer : public SdaOfferBase {
-	public:
-		catapult::Amount ResidualMosaicGet;
 
 	public:
 		catapult::Amount cost(const catapult::Amount& amount) const;
-		SwapOffer& operator+=(const model::SdaOfferWithOwnerAndDuration& offer);
-		SwapOffer& operator-=(const model::SdaOfferWithOwnerAndDuration& offer);
+		SdaOfferBalance& sender(const model::SdaOfferWithOwnerAndDuration& offer);
+		SdaOfferBalance& receiver(const model::SdaOfferWithOwnerAndDuration& offer);
 	};
 
-	using SwapOfferMap = std::map<MosaicId, SwapOffer>;
-	using ExpiredSwapOfferMap = std::map<Height, SwapOfferMap>;
+	SdaOfferBalance& operator+=(const model::SdaOfferWithOwnerAndDuration& offer, const model::SdaOfferWithOwnerAndDuration& poffer);
+	using SdaOfferBalanceMap = std::map<MosaicId, SdaOfferBalance>;
+	using ExpiredSdaOfferBalanceMap = std::map<Height, SdaOfferBalanceMap>;
 
 	// SDA-SDA Exchange entry.
 	class SdaExchangeEntry {
@@ -58,14 +55,14 @@ namespace catapult { namespace state {
 			return m_owner;
 		}
 
-		/// Gets the swap offers.
-		SwapOfferMap& swapOffers() {
-			return m_swapOffers;
+		/// Gets the balance SDA-SDA offers.
+		SdaOfferBalanceMap& sdaOfferBalances() {
+			return m_sdaOfferBalances;
 		}
 
-		/// Gets the swap offers.
-		const SwapOfferMap& swapOffers() const {
-			return m_swapOffers;
+		/// Gets the balance SDA-SDA offers.
+		const SdaOfferBalanceMap& sdaOfferBalances() const {
+			return m_sdaOfferBalances;
 		}
 
 	public:
@@ -83,33 +80,33 @@ namespace catapult { namespace state {
 
 		void expireOffers(
 			const Height& height,
-			consumer<const SwapOfferMap::const_iterator&> swapOfferAction);
+			consumer<const SdaOfferBalanceMap::const_iterator&> sdaOfferBalanceAction);
 
 		void unexpireOffers(
 			const Height& height,
-			consumer<const SwapOfferMap::const_iterator&> swapOfferAction);
+			consumer<const SdaOfferBalanceMap::const_iterator&> sdaOfferBalanceAction);
 
 		bool offerExists(const MosaicId& mosaicId) const;
 		void addOffer(const MosaicId& mosaicId, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
 		void removeOffer(const MosaicId& mosaicId);
-		state::SdaOfferBase& getSdaBaseOffer(const MosaicId& mosaicId);
+		state::SdaOfferBalance& getSdaOfferBalance(const MosaicId& mosaicId);
 		bool empty() const;
 
 	public:
 		/// Gets the expired swap offers.
-		ExpiredSwapOfferMap& expiredSwapOffers() {
-			return m_expiredSwapOffers;
+		ExpiredSdaOfferBalanceMap& expiredSdaOfferBalances() {
+			return m_expiredSdaOfferBalances;
 		}
 
 		/// Gets the expired sell offers.
-		const ExpiredSwapOfferMap& expiredSwapOffers() const {
-			return m_expiredSwapOffers;
+		const ExpiredSdaOfferBalanceMap& expiredSdaOfferBalances() const {
+			return m_expiredSdaOfferBalances;
 		}
 
 	private:
 		Key m_owner;
 		VersionType m_version;
-		SwapOfferMap m_swapOffers;
-		ExpiredSwapOfferMap m_expiredSwapOffers;
+		SdaOfferBalanceMap m_sdaOfferBalances;
+		ExpiredSdaOfferBalanceMap m_expiredSdaOfferBalances;
 	};
 }}

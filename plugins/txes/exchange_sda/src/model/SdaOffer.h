@@ -30,8 +30,11 @@ namespace catapult { namespace model {
 	};
 
 	struct SdaOfferMosaic {
-		/// Mosaic id of the offer.
-		UnresolvedMosaicId MosaicId;
+		/// Mosaic id of the mosaic to exchange.
+		UnresolvedMosaicId MosaicIdGive;
+
+		/// Mosaic id of the mosaic received in exchange. 
+		UnresolvedMosaicId MosaicIdGet;
 	};
 
 #pragma pack(pop)

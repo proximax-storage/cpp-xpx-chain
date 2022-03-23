@@ -11,39 +11,39 @@
 
 namespace catapult { namespace state {
 
-	catapult::Amount SwapOffer::cost(const catapult::Amount& amount) const {
+	catapult::Amount SdaOfferBalance::cost(const catapult::Amount& amount) const {
 		if (catapult::Amount(0) == InitialMosaicGive)
-			CATAPULT_THROW_RUNTIME_ERROR("failed to calculate swap offer cost, initial amount is zero");
+			CATAPULT_THROW_RUNTIME_ERROR("failed to calculate offer cost, initial amount is zero");
 
 		auto cost = std::ceil(static_cast<double>(InitialMosaicGet.unwrap()) * static_cast<double>(amount.unwrap()) / static_cast<double>(InitialMosaicGive.unwrap()));
 		return catapult::Amount(static_cast<typeof(Amount::ValueType)>(cost));
 	}
 
-	SwapOffer& SwapOffer::operator+=(const model::SdaOfferWithOwnerAndDuration& offer) {
-		CurrentMosaicGive = CurrentMosaicGive + offer.MosaicGive.Amount;
-		ResidualMosaicGet = ResidualMosaicGet + offer.MosaicGet.Amount;
+	SdaOfferBalance& SdaOfferBalance::sender(const model::SdaOfferWithOwnerAndDuration& offer) {
+		if (offer.MosaicGive.Amount > CurrentMosaicGive)
+			CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than offer to give amount", offer.MosaicGive.Amount, CurrentMosaicGive)
+
+		CurrentMosaicGive = CurrentMosaicGive - offer.MosaicGive.Amount;
+		CurrentMosaicGet = CurrentMosaicGet + offer.MosaicGet.Amount;
 		return *this;
 	}
 
-	SwapOffer& SwapOffer::operator-=(const model::SdaOfferWithOwnerAndDuration& offer) {
-		if (offer.MosaicGive.Amount > CurrentMosaicGive)
-			CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than swap offer amount", offer.MosaicGive.Amount, CurrentMosaicGive)
-		
-		if (offer.MosaicGet.Amount > ResidualMosaicGet)
-			CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than residual cost", offer.MosaicGet.Amount, ResidualMosaicGet)
+	SdaOfferBalance& SdaOfferBalance::receiver(const model::SdaOfferWithOwnerAndDuration& offer) {
+		if (offer.MosaicGet.Amount > CurrentMosaicGet)
+			CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than offer to get amount", offer.MosaicGet.Amount, CurrentMosaicGet)
 
-		CurrentMosaicGive = CurrentMosaicGive - offer.MosaicGive.Amount;
-		ResidualMosaicGet = ResidualMosaicGet - offer.MosaicGet.Amount;
+		CurrentMosaicGive = CurrentMosaicGive + offer.MosaicGive.Amount;
+		CurrentMosaicGet = CurrentMosaicGet - offer.MosaicGet.Amount;
 		return *this;
 	}
 
 	/// Gets the height of the earliest expiring offer.
 	Height SdaExchangeEntry::minExpiryHeight() const {
-		if (m_swapOffers.empty())
+		if (m_sdaOfferBalances.empty())
 			return Invalid_Expiry_Height;
 
 		Height expiryHeight = Height(std::numeric_limits<Height::ValueType>::max());
-		std::for_each(m_swapOffers.begin(), m_swapOffers.end(), [&expiryHeight](const auto &pair) {
+		std::for_each(m_sdaOfferBalances.begin(), m_sdaOfferBalances.end(), [&expiryHeight](const auto &pair) {
 			if (expiryHeight > pair.second.Deadline)
 				expiryHeight = pair.second.Deadline;
 		});
@@ -53,7 +53,7 @@ namespace catapult { namespace state {
 
 	/// Gets the earliest height at which to prune expiring offers.
 	Height SdaExchangeEntry::minPruneHeight() const {
-		return m_expiredSwapOffers.empty() ? Invalid_Expiry_Height : m_expiredSwapOffers.begin()->first;
+		return m_expiredSdaOfferBalances.empty() ? Invalid_Expiry_Height : m_expiredSdaOfferBalances.begin()->first;
 	}
 
 	/// Moves offer of \a type with \a mosaicId to expired offer buffer.
@@ -67,7 +67,7 @@ namespace catapult { namespace state {
 			offers.erase(mosaicId);
 		};
 		
-		expireFunc(m_swapOffers, m_expiredSwapOffers);
+		expireFunc(m_sdaOfferBalances, m_expiredSdaOfferBalances);
 	}
 
 	/// Moves offer of \a type with \a mosaicId back from expired offer buffer.
@@ -83,82 +83,66 @@ namespace catapult { namespace state {
 				expiredOffers.erase(height);
 		};
 		
-		unexpireFunc(m_swapOffers, m_expiredSwapOffers);
+		unexpireFunc(m_sdaOfferBalances, m_expiredSdaOfferBalances);
 	}
 
-	namespace {
-		/// Moves offers to expired offer buffer if offer expiry height is equal \a height.
-		template<typename TOfferMap, typename TExpiredOfferMap>
-		void expireOffers(TOfferMap& offers, TExpiredOfferMap& expiredOffers, const Height& height, consumer<const typename TOfferMap::const_iterator&> action) {
-			for (auto iter = offers.begin(); iter != offers.end();) {
+	/// Moves offers to expired offer buffer if offer expiry height is equal \a height.
+	void SdaExchangeEntry::expireOffers(const Height& height, consumer<const SdaOfferBalanceMap::const_iterator&> sdaOfferBalanceAction) {
+		for (auto iter = m_sdaOfferBalances.begin(); iter != m_sdaOfferBalances.end();) {
+			if (iter->second.Deadline == height) {
+				auto &expiredOffersAtHeight = m_expiredSdaOfferBalances[height];
+				if (expiredOffersAtHeight.count(iter->first))
+					CATAPULT_THROW_RUNTIME_ERROR_2("offer already expired at height", iter->first, height);
+				expiredOffersAtHeight.emplace(iter->first, iter->second);
+				sdaOfferBalanceAction(iter);
+				iter = m_sdaOfferBalances.erase(iter);
+			} else {
+				++iter;
+			}
+		}
+	}
+
+	/// Moves offers back from expired offer buffer if offer expiry height is equal \a height.
+	void SdaExchangeEntry::unexpireOffers(const Height& height, consumer<const SdaOfferBalanceMap::const_iterator&> sdaOfferBalanceAction) {
+		if (m_expiredSdaOfferBalances.count(height)) {
+			auto& expiredOffersAtHeight = m_expiredSdaOfferBalances.at(height);
+			for (auto iter = expiredOffersAtHeight.begin(); iter != expiredOffersAtHeight.end();) {
 				if (iter->second.Deadline == height) {
-					auto &expiredOffersAtHeight = expiredOffers[height];
-					if (expiredOffersAtHeight.count(iter->first))
-						CATAPULT_THROW_RUNTIME_ERROR_2("offer already expired at height", iter->first, height);
-					expiredOffersAtHeight.emplace(iter->first, iter->second);
-					action(iter);
-					iter = offers.erase(iter);
+					if (m_sdaOfferBalances.count(iter->first))
+						CATAPULT_THROW_RUNTIME_ERROR_2("offer exists at height", iter->first, height);
+					m_sdaOfferBalances.emplace(iter->first, iter->second);
+					sdaOfferBalanceAction(m_sdaOfferBalances.find(iter->first));
+					iter = expiredOffersAtHeight.erase(iter);
 				} else {
 					++iter;
 				}
 			}
+			if (expiredOffersAtHeight.empty())
+				m_expiredSdaOfferBalances.erase(height);
 		}
-
-		/// Moves offers back from expired offer buffer if offer expiry height is equal \a height.
-		template<typename TOfferMap, typename TExpiredOfferMap>
-		void unexpireOffers(TOfferMap& offers, TExpiredOfferMap& expiredOffers, const Height& height, consumer<const typename TOfferMap::const_iterator&> action) {
-			if (expiredOffers.count(height)) {
-				auto& expiredOffersAtHeight = expiredOffers.at(height);
-				for (auto iter = expiredOffersAtHeight.begin(); iter != expiredOffersAtHeight.end();) {
-					if (iter->second.Deadline == height) {
-						if (offers.count(iter->first))
-							CATAPULT_THROW_RUNTIME_ERROR_2("offer exists at height", iter->first, height);
-						offers.emplace(iter->first, iter->second);
-						action(offers.find(iter->first));
-						iter = expiredOffersAtHeight.erase(iter);
-					} else {
-						++iter;
-					}
-				}
-				if (expiredOffersAtHeight.empty())
-					expiredOffers.erase(height);
-			}
-		}
-	}
-
-	void SdaExchangeEntry::expireOffers(
-			const Height& height,
-			consumer<const SwapOfferMap::const_iterator&> swapOfferAction) {
-		state::expireOffers(m_swapOffers, m_expiredSwapOffers, height, swapOfferAction);
-	}
-
-	void SdaExchangeEntry::unexpireOffers(
-			const Height& height,
-			consumer<const SwapOfferMap::const_iterator&> swapOfferAction) {
-		state::unexpireOffers(m_swapOffers, m_expiredSwapOffers, height, swapOfferAction);
 	}
 
 	bool SdaExchangeEntry::offerExists(const MosaicId& mosaicId) const {
-		return m_swapOffers.count(mosaicId);
+		return m_sdaOfferBalances.count(mosaicId);
 	}
 
 	void SdaExchangeEntry::addOffer(const MosaicId& mosaicId, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline) {
-		state::SdaOfferBase baseOffer{pOffer->MosaicGive.Amount, pOffer->MosaicGive.Amount, pOffer->MosaicGet.Amount, deadline};
-		m_swapOffers.emplace(mosaicId, state::SwapOffer{baseOffer, pOffer->MosaicGet.Amount});
+		state::SdaOfferBalance baseOffer{pOffer->MosaicGive.Amount, pOffer->MosaicGet.Amount, pOffer->MosaicGive.Amount, pOffer->MosaicGet.Amount, deadline};
+		m_sdaOfferBalances.emplace(mosaicId, baseOffer);
 	}
 
 	void SdaExchangeEntry::removeOffer(const MosaicId& mosaicId) {
-		m_swapOffers.erase(mosaicId);
+		m_sdaOfferBalances.erase(mosaicId);
 	}
 
-	state::SdaOfferBase& SdaExchangeEntry::getSdaBaseOffer(const MosaicId& mosaicId) {
-		if (!m_swapOffers.count(mosaicId))
+	state::SdaOfferBalance& SdaExchangeEntry::getSdaOfferBalance(const MosaicId& mosaicId) {
+		if (!m_sdaOfferBalances.count(mosaicId))
 			CATAPULT_THROW_INVALID_ARGUMENT_1("offer doesn't exist", mosaicId);
 
-		return dynamic_cast<state::SdaOfferBase&>(m_swapOffers.at(mosaicId));
+		return dynamic_cast<state::SdaOfferBalance&>(m_sdaOfferBalances.at(mosaicId));
 	}
 
 	bool SdaExchangeEntry::empty() const {
-		return m_swapOffers.empty() && m_expiredSwapOffers.empty();
+		return m_sdaOfferBalances.empty() && m_expiredSdaOfferBalances.empty();
 	}
 }}

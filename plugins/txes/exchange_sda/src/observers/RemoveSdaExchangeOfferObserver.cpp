@@ -17,10 +17,25 @@ namespace catapult { namespace observers {
 
         auto pSdaOffer = notification.SdaOffersPtr;
         for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
-            auto mosaicId = context.Resolvers.resolve(pSdaOffer->MosaicId);
-            Amount amount = entry.swapOffers().at(mosaicId).ResidualMosaicGet;
-            CreditAccount(entry.owner(), mosaicId, amount, context);
-            entry.expireOffer(mosaicId, context.Height);
+            auto mosaicIdGive = context.Resolvers.resolve(pSdaOffer->MosaicIdGive);
+            auto mosaicIdGet = context.Resolvers.resolve(pSdaOffer->MosaicIdGet);
+
+            Amount mosaicGiveAmount = entry.sdaOfferBalances().at(mosaicIdGive).CurrentMosaicGive;
+            Amount mosaicGetAmount = entry.sdaOfferBalances().at(mosaicIdGet).CurrentMosaicGet;
+            CreditAccount(entry.owner(), mosaicIdGive, mosaicGiveAmount, context);
+
+            std::string reduced = reducedFraction(mosaicGiveAmount, mosaicGetAmount);
+            auto groupHash = calculateGroupHash(mosaicIdGive, mosaicIdGet, reduced);
+
+            auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
+            if (!groupCache.contains(groupHash))
+                groupCache.insert(state::SdaOfferGroupEntry(groupHash));
+
+            auto groupIter = groupCache.find(groupHash);
+            auto& groupEntry = groupIter.get();
+
+            entry.expireOffer(mosaicIdGive, context.Height);
+            groupEntry.removeSdaOfferFromGroup(groupHash, notification.Owner);
 		}
     });
 }}

@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 			if (offer.Deadline <= height)
 				return Failure_ExchangeSda_Offer_Expired;
 
-			if (OfferCostInvalid(offer, pSdaOffer))
+			if (SdaOfferCostInvalid(offer, pSdaOffer))
 				return Failure_ExchangeSda_Invalid_Price;
 
 			if (offer.Amount < pSdaOffer->MosaicGive.Amount)
@@ -89,7 +89,7 @@ namespace catapult { namespace validators {
 			    return Failure_ExchangeSda_Offer_Exists;
 
             auto result = ValidationResult::Success;
-            result = ValidateSdaOffer(entry.swapOffers(), entry.expiredSwapOffers(), pSdaOffer, mosaicId, context.Height);
+            result = ValidateSdaOffer(entry.sdaOfferBalances(), entry.expiredSdaOfferBalances(), pSdaOffer, mosaicId, context.Height);
             if (ValidationResult::Success != result)
 				return result;
         }

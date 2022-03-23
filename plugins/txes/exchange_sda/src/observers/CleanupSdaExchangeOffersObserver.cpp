@@ -22,20 +22,23 @@ namespace catapult { namespace observers {
             auto& entry = *pEntry;
             SdaOfferExpiryUpdater sdaOfferExpiryUpdater(cache, entry);
 
-            for (const auto& map :entry.swapOffers()) {
+            for (const auto& map :entry.sdaOfferBalances()) {
                 Amount amount(0);
-                auto onSwapOfferExpired = [&amount](const state::SwapOfferMap::const_iterator& iter) {
-                    amount = amount + iter->second.ResidualMosaicGet;
+                auto onSdaOfferBalancesExpired = [&amount](const state::SdaOfferBalanceMap::const_iterator& iter) {
+                    amount = amount + iter->second.CurrentMosaicGet;
                 };
-                entry.expireOffers(context.Height, onSwapOfferExpired);
+                entry.expireOffers(context.Height, onSdaOfferBalancesExpired);
 
                 CreditAccount(entry.owner(), map.first, amount, context);
             }
         }
 
         auto maxRollbackBlocks = context.Config.Network.MaxRollbackBlocks;
-        auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
-        expiringSdaOfferOwners = cache.expiringOfferOwners(pruneHeight);
+		if (context.Height.unwrap() <= maxRollbackBlocks)
+		    return;
+
+		auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
+		expiringSdaOfferOwners = cache.expiringOfferOwners(pruneHeight);
         for (const auto& key : expiringSdaOfferOwners) {
             auto cacheIter = cache.find(key);
             auto* pEntry = cacheIter.tryGet();
@@ -45,17 +48,17 @@ namespace catapult { namespace observers {
 
             auto& entry = *pEntry;
             SdaOfferExpiryUpdater offerExpiryUpdater(cache, entry);
-            auto expiredOffers = entry.expiredSwapOffers();
+            auto expiredOffers = entry.expiredSdaOfferBalances();
             if (expiredOffers.count(pruneHeight)) {
-				expiredOffers.at(pruneHeight).clear();
-				expiredOffers.erase(pruneHeight);
-			}
+                expiredOffers.at(pruneHeight).clear();
+                expiredOffers.erase(pruneHeight);
+            }
         }
 
-        auto cleanUpHeight = Height(context.Height.unwrap() - 2 * maxRollbackBlocks);
-        expiringSdaOfferOwners = cache.expiringOfferOwners(cleanUpHeight);
-        for (const auto& key : expiringSdaOfferOwners) {
-            cache.removeExpiryHeight(key, cleanUpHeight);
-        }
+		auto cleanUpHeight = Height(context.Height.unwrap() - 2 * maxRollbackBlocks);
+		expiringSdaOfferOwners = cache.expiringOfferOwners(cleanUpHeight);
+		for (const auto& key : expiringSdaOfferOwners) {
+		    cache.removeExpiryHeight(key, cleanUpHeight);
+	    }
     });
 }}

@@ -11,13 +11,13 @@
 
 namespace catapult { namespace state {
 
-    struct SdaOffer {
+    struct SdaOfferBasicInfo {
         Key Owner;
         catapult::Amount MosaicGive;
         Height Deadline;
     };
     
-    using SdaOfferGroupMap = std::map<Hash256, std::vector<SdaOffer>>;
+    using SdaOfferGroupMap = std::map<Hash256, std::vector<SdaOfferBasicInfo>>;
 
     // SDA-SDA Offer Group entry.
     class SdaOfferGroupEntry {
@@ -57,7 +57,7 @@ namespace catapult { namespace state {
         SdaOfferGroupMap bigToSmallSortedByEarliestExpiry(const Hash256 groupHash, const SdaOfferGroupMap& sdaOfferGroup);
 
         /// Returns offers arranged from the exact or closest MosaicGive amount.
-        SdaOfferGroupMap exactOrClosest(const Hash256 groupHash, const SdaOffer offer, const SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupMap exactOrClosest(const Hash256 groupHash, const SdaOfferBasicInfo offer, const SdaOfferGroupMap& sdaOfferGroup);
 
         void addSdaOfferToGroup(const Hash256& groupHash, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
         void removeSdaOfferFromGroup(const Hash256& groupHash, const Key& offerOwner);

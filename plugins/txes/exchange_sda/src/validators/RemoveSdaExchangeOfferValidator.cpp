@@ -22,14 +22,14 @@ namespace catapult { namespace validators {
         std::set<MosaicId> offeredMosaicIds;
         auto pSdaOffer = notification.SdaOffersPtr;
         for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
-            auto mosaicId = context.Resolvers.resolve(pSdaOffer->MosaicId);
+            auto mosaicId = context.Resolvers.resolve(pSdaOffer->MosaicIdGive);
             if (offeredMosaicIds.count(mosaicId))
                 return Failure_ExchangeSda_Duplicated_Offer_In_Request;
             offeredMosaicIds.insert(mosaicId);
 
             auto result = ValidationResult::Success;
-            auto offers = entry.swapOffers();
-            auto expiredOffers = entry.expiredSwapOffers();
+            auto offers = entry.sdaOfferBalances();
+            auto expiredOffers = entry.expiredSdaOfferBalances();
             const Height& height = context.Height;
 
             if (!offers.count(mosaicId))
