@@ -25,8 +25,8 @@ namespace catapult { namespace plugins {
 						auto hashSeed = CalculateHash(transaction, config.GenerationHash);
                         sub.notify(EndDriveVerificationNotification<1>(
 							transaction.DriveKey,
-							transaction.VerificationTrigger,
 							hashSeed,
+							transaction.VerificationTrigger,
 							transaction.ShardId,
 							transaction.KeyCount,
 							transaction.JudgingKeyCount,

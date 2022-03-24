@@ -55,19 +55,21 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetCacheNames() {
-				return { "BcDriveCache", "DownloadChannelCache", "ReplicatorCache" };
+				return { "BcDriveCache", "DownloadChannelCache", "ReplicatorCache", "QueueCache" };
 			}
 
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
-				return { ionet::PacketType::BcDrive_Infos, ionet::PacketType::DownloadChannel_Infos, ionet::PacketType::Replicator_Infos };
+				return { ionet::PacketType::BcDrive_Infos, ionet::PacketType::DownloadChannel_Infos,
+						 ionet::PacketType::Replicator_Infos, ionet::PacketType::Queue_Infos };
 			}
 
 			static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
-				return { ionet::PacketType::BcDrive_State_Path, ionet::PacketType::DownloadChannel_State_Path, ionet::PacketType::Replicator_State_Path };
+				return { ionet::PacketType::BcDrive_State_Path, ionet::PacketType::DownloadChannel_State_Path,
+						 ionet::PacketType::Replicator_State_Path, ionet::PacketType::Queue_State_Path };
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {
-				return { "BC DRIVE C", "DOWNLOAD CH C", "REPLICATOR C" };
+				return { "BC DRIVE C", "DOWNLOAD CH C", "QUEUE C", "REPLICATOR C" };
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
@@ -107,6 +109,8 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetObserverNames() {
 				return {
 					"StartDriveVerificationObserver",
+					"PeriodicStoragePaymentObserver",
+					"PeriodicDownloadChannelPaymentObserver",
 					"DataModificationObserver",
 					"DownloadChannelObserver",
 					"PrepareDriveObserver",
@@ -127,7 +131,6 @@ namespace catapult { namespace plugins {
 					"StreamFinishObserver",
 					"StreamPaymentObserver",
 					"EndDriveVerificationObserver",
-					"ShardsUpdateObserver",
 				};
 			}
 
@@ -137,5 +140,5 @@ namespace catapult { namespace plugins {
 		};
 	}
 
-	// DEFINE_PLUGIN_TESTS(StoragePluginTests, StoragePluginTraits)
+	DEFINE_PLUGIN_TESTS(StoragePluginTests, StoragePluginTraits)
 }}
