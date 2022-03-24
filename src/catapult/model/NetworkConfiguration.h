@@ -123,11 +123,14 @@ namespace catapult { namespace model {
 		/// Maximum time per each committee phase.
 		utils::TimeSpan MaxCommitteePhaseTime;
 
-		/// Time interval between committee message broadcasts.
-		utils::TimeSpan CommitteeMessageBroadcastInterval;
+		/// Time interval at the end of committee phase without message requests.
+		utils::TimeSpan CommitteeSilenceInterval;
 
-		/// Time interval between committee requests.
+		/// Time interval between committee message requests.
 		utils::TimeSpan CommitteeRequestInterval;
+
+		/// Time interval between committee chain height requests.
+		utils::TimeSpan CommitteeChainHeightRequestInterval;
 
 		/// Time adjustment after each committee round.
 		double CommitteeTimeAdjustment;

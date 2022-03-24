@@ -6,7 +6,7 @@
 
 #include "WeightedVotingService.h"
 #include "WeightedVotingFsm.h"
-#include <catapult/api/RemoteRequestDispatcher.h>
+#include "catapult/api/RemoteRequestDispatcher.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
@@ -193,8 +193,12 @@ namespace catapult { namespace fastfinality {
 				auto& packetHandlers = pFsmShared->packetHandlers();
 				RegisterPushProposedBlockHandler(pFsmShared, packetHandlers, pluginManager);
 				RegisterPushConfirmedBlockHandler(pFsmShared, packetHandlers, pluginManager);
-				RegisterPushPrevoteMessageHandler(pFsmShared, packetHandlers);
-				RegisterPushPrecommitMessageHandler(pFsmShared, packetHandlers);
+				RegisterPushPrevoteMessagesHandler(pFsmShared, packetHandlers);
+				RegisterPushPrecommitMessagesHandler(pFsmShared, packetHandlers);
+				RegisterPullProposedBlockHandler(pFsmShared, packetHandlers);
+				RegisterPullConfirmedBlockHandler(pFsmShared, packetHandlers);
+				RegisterPullPrevoteMessagesHandler(pFsmShared, packetHandlers);
+				RegisterPullPrecommitMessagesHandler(pFsmShared, packetHandlers);
 				// TODO: Consider rewriting to (pFsmShared, packetHandlers, pluginManager, storage)
 				RegisterPullRemoteNodeStateHandler(pFsmShared, packetHandlers, pConfigHolder, blockElementGetter, lastBlockElementSupplier);
 
@@ -240,28 +244,29 @@ namespace catapult { namespace fastfinality {
 					state.cache(),
 					pConfigHolder,
 					CreateHarvesterBlockGenerator(state),
-					lastBlockElementSupplier);
-				actions.WaitForProposal = CreateDefaultWaitForProposalAction(pFsmShared);
+					lastBlockElementSupplier,
+					packetPayloadSink);
+				actions.RequestProposal = CreateDefaultRequestProposalAction(pFsmShared, state);
 				actions.ValidateProposal = CreateDefaultValidateProposalAction(
 					pFsmShared,
 					state,
 					lastBlockElementSupplier,
 					pValidatorPool);
-				actions.WaitForProposalPhaseEnd = CreateDefaultWaitForProposalPhaseEndAction(pFsmShared, pConfigHolder, packetPayloadSink);
-				actions.WaitForPrevotes = CreateDefaultWaitForPrevotesAction(pFsmShared, pluginManager, packetPayloadSink);
-				actions.WaitForPrecommits = CreateDefaultWaitForPrecommitsAction(pFsmShared, pluginManager, packetPayloadSink);
-				actions.AddPrevote = CreateDefaultAddPrevoteAction(pFsmShared);
-				actions.AddPrecommit = CreateDefaultAddPrecommitAction(pFsmShared);
+				actions.WaitForProposalPhaseEnd = CreateDefaultWaitForProposalPhaseEndAction(pFsmShared, pConfigHolder);
+				actions.RequestPrevotes = CreateDefaultRequestPrevotesAction(pFsmShared, pluginManager);
+				actions.RequestPrecommits = CreateDefaultRequestPrecommitsAction(pFsmShared, pluginManager);
+				actions.AddPrevote = CreateDefaultAddPrevoteAction(pFsmShared, packetPayloadSink);
+				actions.AddPrecommit = CreateDefaultAddPrecommitAction(pFsmShared, packetPayloadSink);
+				actions.WaitForPrecommitPhaseEnd = CreateDefaultWaitForPrecommitPhaseEndAction(pFsmShared, pConfigHolder);
 				actions.UpdateConfirmedBlock = CreateDefaultUpdateConfirmedBlockAction(pFsmShared, pluginManager.getCommitteeManager());
 				actions.CommitConfirmedBlock = CreateDefaultCommitConfirmedBlockAction(
 					pFsmShared,
 					blockRangeConsumer,
 					pConfigHolder,
-					packetPayloadSink,
 					pluginManager.getCommitteeManager());
 				actions.IncrementRound = CreateDefaultIncrementRoundAction(pFsmShared, pConfigHolder);
 				actions.ResetRound = CreateDefaultResetRoundAction(pFsmShared, pConfigHolder, pluginManager.getCommitteeManager());
-				actions.WaitForConfirmedBlock = CreateDefaultWaitForConfirmedBlockAction(pFsmShared, lastBlockElementSupplier);
+				actions.RequestConfirmedBlock = CreateDefaultRequestConfirmedBlockAction(pFsmShared, state, lastBlockElementSupplier);
 
 				pFsmShared->start();
 			}

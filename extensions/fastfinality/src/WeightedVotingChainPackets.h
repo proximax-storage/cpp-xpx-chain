@@ -19,11 +19,6 @@ namespace catapult { namespace fastfinality {
 
 #pragma pack(push, 1)
 
-	enum class CommitteeMessageType : uint8_t {
-		Prevote,
-		Precommit,
-	};
-
 	enum class NodeWorkState : uint8_t {
 		None,
 		Synchronizing,
@@ -76,31 +71,29 @@ namespace catapult { namespace fastfinality {
 		}
 	};
 
+	enum class CommitteeMessageType : uint8_t {
+		Prevote,
+		Precommit,
+	};
+
 	struct CommitteeMessage {
 		CommitteeMessageType Type;
 		Hash256 BlockHash;
 		model::Cosignature BlockCosignature;
-	};
-
-	template<ionet::PacketType PacketType, CommitteeMessageType MessageType>
-	struct CommitteeMessagePacket : public ionet::Packet {
-		static constexpr ionet::PacketType Packet_Type = PacketType;
-		static constexpr CommitteeMessageType Message_Type = MessageType;
-
-		CommitteeMessage Message;
 		Signature MessageSignature;
 	};
 
-	template<ionet::PacketType PacketType, CommitteeMessageType MessageType>
-	RawBuffer CommitteeMessageDataBuffer(const CommitteeMessagePacket<PacketType, MessageType>& packet) {
-		return {
-			reinterpret_cast<const uint8_t*>(&packet) + sizeof(ionet::Packet),
-			sizeof(CommitteeMessage)
-		};
-	}
+	template<ionet::PacketType PacketType>
+	struct CommitteeMessagesPacket : public ionet::Packet {
+		static constexpr ionet::PacketType Packet_Type = PacketType;
 
-	using PrevoteMessagePacket = CommitteeMessagePacket<ionet::PacketType::Push_Prevote_Message, CommitteeMessageType::Prevote>;
-	using PrecommitMessagePacket = CommitteeMessagePacket<ionet::PacketType::Push_Precommit_Message, CommitteeMessageType::Precommit>;
+		uint8_t MessageCount;
+	};
+
+	using PushPrevoteMessagesRequest = CommitteeMessagesPacket<ionet::PacketType::Push_Prevote_Messages>;
+	using PushPrecommitMessagesRequest = CommitteeMessagesPacket<ionet::PacketType::Push_Precommit_Messages>;
+	using PullPrevoteMessagesRequest = CommitteeMessagesPacket<ionet::PacketType::Pull_Prevote_Messages>;
+	using PullPrecommitMessagesRequest = CommitteeMessagesPacket<ionet::PacketType::Pull_Precommit_Messages>;
 
 #pragma pack(pop)
 }}

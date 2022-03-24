@@ -239,34 +239,35 @@ namespace catapult { namespace builders {
         });
     }
 
-    TRAITS_BASED_TEST(CanSetPublicKeysAndSignaturesAndPresentOpinions) {
-        // Arrange:
-        std::vector<Key> publicKeys{
-                test::GenerateRandomByteArray<Key>(),
-                test::GenerateRandomByteArray<Key>(),
-        };
-        auto expectedProperties = TransactionProperties();
-        expectedProperties.PublicKeys = publicKeys;
-
-        std::vector<Signature> signatures{test::GenerateRandomByteArray<Signature>()};
-        expectedProperties.Signatures = signatures;
-        expectedProperties.JudgingKeysCount = signatures.size();
-        expectedProperties.JudgedKeysCount = signatures.size();
-
-        std::vector<uint8_t> presentOpinions{3}; //0000011
-        expectedProperties.PresentOpinions = presentOpinions;
-
-        auto additionalSize = publicKeys.size() * sizeof(Key) + signatures.size() * sizeof(Signature) + presentOpinions.size() * sizeof(uint8_t);
-
-        // Assert:
-        AssertCanBuildTransaction<TTraits>(additionalSize, expectedProperties, [&](auto& builder) {
-            builder.setPublicKeys(std::move(publicKeys));
-			builder.setJudgingKeysCount(signatures.size());
-			builder.setJudgedKeysCount(signatures.size());
-            builder.setSignatures(std::move(signatures));
-            builder.setPresentOpinions(std::move(presentOpinions));
-        });
-    }
+//    TRAITS_BASED_TEST(CanSetPublicKeysAndSignaturesAndPresentOpinions) {
+//        // Arrange:
+//        std::vector<Key> publicKeys{
+//                test::GenerateRandomByteArray<Key>(),
+//                test::GenerateRandomByteArray<Key>(),
+//        };
+//        auto expectedProperties = TransactionProperties();
+//        expectedProperties.PublicKeys = publicKeys;
+//        expectedProperties.JudgingKeysCount = publicKeys.size();
+//
+//        std::vector<Signature> signatures{test::GenerateRandomByteArray<Signature>()};
+//        expectedProperties.Signatures = signatures;
+//        expectedProperties.JudgingKeysCount = signatures.size();
+//        expectedProperties.JudgedKeysCount = signatures.size();
+//
+//        std::vector<uint8_t> presentOpinions{3}; //0000011
+//        expectedProperties.PresentOpinions = presentOpinions;
+//
+//        auto additionalSize = publicKeys.size() * sizeof(Key) + signatures.size() * sizeof(Signature) + presentOpinions.size() * sizeof(uint8_t);
+//
+//        // Assert:
+//        AssertCanBuildTransaction<TTraits>(additionalSize, expectedProperties, [&](auto& builder) {
+//            builder.setPublicKeys(std::move(publicKeys));
+//            builder.setSignatures(std::move(signatures));
+//            builder.setJudgingKeysCount(signatures.size());
+//            builder.setJudgedKeysCount(signatures.size());
+//            builder.setPresentOpinions(std::move(presentOpinions));
+//        });
+//    }
 
     TRAITS_BASED_TEST(CanSetOpinions) {
         // Arrange:
