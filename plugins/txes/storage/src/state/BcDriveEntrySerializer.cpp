@@ -11,6 +11,13 @@
 namespace catapult { namespace state {
 
 	namespace {
+
+		void SaveVerificationNode(io::OutputStream& output, const AVLTreeNode& node) {
+			io::Write(output, node.m_left);
+			io::Write(output, node.m_right);
+			io::Write16(output, node.m_height);
+		}
+
 		void SaveActiveDataModification(io::OutputStream& output, const ActiveDataModification& modification) {
 			io::Write(output, modification.Id);
 			io::Write(output, modification.Owner);
@@ -64,13 +71,13 @@ namespace catapult { namespace state {
 			io::Write64(output, shard.m_ownerUpload);
 		}
 
-		void SaveVerifications(io::OutputStream& output, const Verifications& verifications) {
-			io::Write16(output, utils::checked_cast<size_t, uint16_t>(verifications.size()));
-			for (const auto& verification : verifications) {
-				io::Write(output, verification.VerificationTrigger);
-				io::Write(output, verification.Expiration);
-				io::Write8(output, verification.Expired);
-				SaveShards(output, verification.Shards);
+		void SaveVerification(io::OutputStream& output, const std::optional<Verification>& verification) {
+			bool hasVerification = verification.has_value();
+			io::Write8(output, hasVerification);
+			if (hasVerification) {
+				io::Write(output, verification->VerificationTrigger);
+				io::Write(output, verification->Expiration);
+				SaveShards(output, verification->Shards);
 			}
 		}
 
@@ -114,6 +121,15 @@ namespace catapult { namespace state {
 					io::Write(output, *info.m_confirmedStorageSince);
 				}
 			}
+		}
+
+		void LoadVerificationNode(io::InputStream& input, AVLTreeNode& node) {
+			Key left;
+			io::Read(input, left);
+			Key right;
+			io::Read(input, right);
+			uint16_t height = io::Read16(input);
+			node = AVLTreeNode{left, right, height};
 		}
 
 		auto LoadActiveDataModification(io::InputStream& input) {
@@ -206,17 +222,16 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void LoadVerifications(io::InputStream& input, Verifications& verifications) {
-		    auto count = io::Read16(input);
-			CATAPULT_LOG( error ) << "LoadVerifications " << count;
-		    while (count--) {
-		        state::Verification verification;
-		        io::Read(input, verification.VerificationTrigger);
-		        io::Read(input, verification.Expiration);
-				verification.Expired = io::Read8(input);
-				LoadShards(input, verification.Shards);
-		        verifications.emplace_back(verification);
-		    }
+		void LoadVerification(io::InputStream& input, std::optional<Verification>& verification) {
+			bool hasVerification = io::Read8(input);
+			if (hasVerification) {
+				io::Read(input, verification->VerificationTrigger);
+				io::Read(input, verification->Expiration);
+				LoadShards(input, verification->Shards);
+			}
+			else {
+				verification = {};
+			}
 		}
 
 		void LoadDownloadShards(io::InputStream& input, DownloadShards& downloadShards) {
@@ -290,12 +305,14 @@ namespace catapult { namespace state {
 		io::Write(output, driveEntry.getQueueNext());
 		io::Write(output, driveEntry.getLastPayment());
 
+//		SaveVerificationNode(output, driveEntry.verificationNode());
+
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
 		SaveConfirmedUsedSizes(output, driveEntry.confirmedUsedSizes());
 		SaveReplicators(output, driveEntry.replicators());
 		SaveReplicators(output, driveEntry.offboardingReplicators());
-		SaveVerifications(output, driveEntry.verifications());
+//		SaveVerification(output, driveEntry.verification());
 		SaveDownloadShards(output, driveEntry.downloadShards());
 		SaveModificationShards(output, driveEntry.dataModificationShards());
 		SaveConfirmedStorageInfos(output, driveEntry.confirmedStorageInfos());
@@ -338,12 +355,14 @@ namespace catapult { namespace state {
 		io::Read(input, lastPayment);
 		entry.setLastPayment(lastPayment);
 
+//		LoadVerificationNode(input, entry.verificationNode());
+
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
 		LoadConfirmedUsedSizes(input, entry.confirmedUsedSizes());
 		LoadReplicators(input, entry.replicators());
 		LoadReplicators(input, entry.offboardingReplicators());
-		LoadVerifications(input, entry.verifications());
+//		LoadVerification(input, entry.verification());
 		LoadDownloadShards(input, entry.downloadShards());
 		LoadModificationShards(input, entry.dataModificationShards());
 		LoadConfirmedStorageInfos(input, entry.confirmedStorageInfos());

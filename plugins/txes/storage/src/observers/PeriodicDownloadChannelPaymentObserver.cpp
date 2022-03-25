@@ -8,7 +8,8 @@
 #include "src/state/StorageStateImpl.h"
 #include <random>
 #include <boost/multiprecision/cpp_int.hpp>
-#include "Queue.h"
+#include <catapult/utils/StorageUtils.h>
+#include "src/utils/Queue.h"
 
 namespace catapult { namespace observers {
 
@@ -26,7 +27,7 @@ namespace catapult { namespace observers {
 			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
 			auto& downloadCache = context.Cache.template sub<cache::DownloadChannelCache>();
 
-			QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
+			utils::QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
 
 			if (queueAdapter.isEmpty()) {
 				return;
@@ -36,13 +37,7 @@ namespace catapult { namespace observers {
 			auto paymentInterval = pluginConfig.DownloadBillingPeriod.seconds();
 
 			// Creating unique eventHash for the observer
-			Hash256 eventHash;
-			crypto::Sha3_256_Builder sha3;
-			const std::string salt = "Download";
-			sha3.update({notification.Hash,
-						 utils::RawBuffer(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()),
-						 context.Config.Immutable.GenerationHash});
-			sha3.final(eventHash);
+			auto eventHash = utils::getDownloadPaymentEventHash(notification.Hash, context.Config.Immutable.GenerationHash);
 
 			for (int i = 0; i < downloadCache.size(); i++) {
 				auto& downloadEntry = downloadCache.find(queueAdapter.front().array()).get();

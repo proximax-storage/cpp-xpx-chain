@@ -53,6 +53,6 @@ namespace catapult { namespace observers {
 		driveEntry.setRootHash(notification.FileStructureCdi);
 //		driveEntry.setUsedSize(notification.UsedDriveSize);
 
-		driveEntry.verifications().clear();
+		driveEntry.verification().reset();
 	});
 }}

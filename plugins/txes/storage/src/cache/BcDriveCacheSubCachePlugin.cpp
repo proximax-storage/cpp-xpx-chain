@@ -47,8 +47,7 @@ namespace catapult { namespace cache {
 
 	BcDriveCacheSubCachePlugin::BcDriveCacheSubCachePlugin(
 		const CacheConfiguration& config,
-		const std::shared_ptr<DriveKeyCollector>& pKeyCollector,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
-		: BaseBcDriveCacheSubCachePlugin(std::make_unique<BcDriveCache>(config, pKeyCollector, pConfigHolder))
+		: BaseBcDriveCacheSubCachePlugin(std::make_unique<BcDriveCache>(config, pConfigHolder))
 	{}
 }}

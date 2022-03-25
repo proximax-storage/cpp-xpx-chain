@@ -8,7 +8,9 @@
 #include "src/state/StorageStateImpl.h"
 #include <random>
 #include <boost/multiprecision/cpp_int.hpp>
-#include "Queue.h"
+#include "src/utils/Queue.h"
+#include "src/utils/AVLTree.h"
+#include "src/catapult/utils/StorageUtils.h"
 
 namespace catapult { namespace observers {
 
@@ -28,7 +30,7 @@ namespace catapult { namespace observers {
 			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
 			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
 
-			QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
+			utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
 
 			if (queueAdapter.isEmpty()) {
 				return;
@@ -38,13 +40,7 @@ namespace catapult { namespace observers {
 			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
 
 			// Creating unique eventHash for the observer
-			Hash256 eventHash;
-			crypto::Sha3_256_Builder sha3;
-			const std::string salt = "Storage";
-			sha3.update({notification.Hash,
-						 utils::RawBuffer(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()),
-						 context.Config.Immutable.GenerationHash});
-			sha3.final(eventHash);
+			auto eventHash = getStoragePaymentEventHash(notification.Hash, context.Config.Immutable.GenerationHash);
 
 			for (int i = 0; i < driveCache.size(); i++) {
 				auto driveIter = driveCache.find(queueAdapter.front());
@@ -130,6 +126,16 @@ namespace catapult { namespace observers {
 					auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 					for (const auto& replicatorKey : replicators)
 						replicatorCache.find(replicatorKey).get().drives().erase(driveEntry.key());
+
+					// The Drive is Removed, so we should make removal from verification tree
+					utils::AVLTreeAdapter<Key> treeAdapter(
+							queueCache,
+							state::DriveVerificationsTree,
+							[](const Key& key) { return key; },
+							[&](const Key& key) -> state::AVLTreeNode& {
+								return driveCache.find(key).get().verificationNode();
+							});
+					treeAdapter.remove(driveEntry.key());
 
 					driveCache.remove(driveEntry.key());
 

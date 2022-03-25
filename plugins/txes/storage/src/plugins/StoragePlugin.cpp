@@ -127,9 +127,8 @@ namespace catapult { namespace plugins {
 			return false;
 		});
 
-		auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
 		manager.addCacheSupport(std::make_unique<cache::BcDriveCacheSubCachePlugin>(
-			manager.cacheConfig(cache::BcDriveCache::Name), pDriveKeyCollector, pConfigHolder));
+			manager.cacheConfig(cache::BcDriveCache::Name), pConfigHolder));
 
 		using BcDriveCacheHandlersService = CacheHandlers<cache::BcDriveCacheDescriptor>;
 		BcDriveCacheHandlersService::Register<model::FacilityCode::BcDrive>(manager);
@@ -216,7 +215,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateEndDriveVerificationValidator());
 		});
 
-		manager.addObserverHook([pReplicatorKeyCollector, &state = *pStorageState, &driveKeyCollector = *pDriveKeyCollector, pDriveQueue](auto& builder) {
+		manager.addObserverHook([pReplicatorKeyCollector, &state = *pStorageState, pDriveQueue](auto& builder) {
 			builder
 				.add(observers::CreatePrepareDriveObserver(pReplicatorKeyCollector, pDriveQueue))
 				.add(observers::CreateDownloadChannelObserver())
@@ -237,7 +236,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateStreamStartObserver())
 				.add(observers::CreateStreamFinishObserver())
 				.add(observers::CreateStreamPaymentObserver())
-				.add(observers::CreateStartDriveVerificationObserver(state, driveKeyCollector))
+				.add(observers::CreateStartDriveVerificationObserver(state))
 				.add(observers::CreateEndDriveVerificationObserver(pReplicatorKeyCollector, pDriveQueue))
 				.add(observers::CreatePeriodicStoragePaymentObserver(pDriveQueue))
 				.add(observers::CreatePeriodicDownloadChannelPaymentObserver());

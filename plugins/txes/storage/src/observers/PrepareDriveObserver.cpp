@@ -6,7 +6,8 @@
 
 #include <random>
 #include "Observers.h"
-#include "Queue.h"
+#include "src/utils/Queue.h"
+#include "src/utils/AVLTree.h"
 
 namespace catapult { namespace observers {
 
@@ -35,8 +36,18 @@ namespace catapult { namespace observers {
 
 		  	// Insert the Drive into the payment Queue
 		  	auto& queueCache = context.Cache.template sub<cache::QueueCache>();
-		  	QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
+		  	utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
 		  	queueAdapter.pushBack(driveEntry.entryKey());
+
+			// Insert the Drive into the Verification Queue
+			utils::AVLTreeAdapter<Key> treeAdapter(
+					queueCache,
+					state::DriveVerificationsTree,
+					[](const Key& key) { return key; },
+					[&](const Key& key) -> state::AVLTreeNode& {
+						return driveCache.find(key).get().verificationNode();
+					});
+			treeAdapter.insert(driveEntry.key());
 		}))
 	}
 }}

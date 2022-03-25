@@ -17,7 +17,7 @@
 #include "src/utils/StorageUtils.h"
 #include <queue>
 
-namespace catapult { namespace state { class StorageStateImpl; }}
+namespace catapult { namespace state { class StorageState; }}
 
 namespace catapult { namespace observers {
 
@@ -82,7 +82,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(StreamPayment, model::StreamPaymentNotification<1>)();
 
 	/// Observes changes triggered by start drive verification notifications.
-	DECLARE_OBSERVER(StartDriveVerification, model::BlockNotification<2>)(state::StorageStateImpl& state, const cache::DriveKeyCollector& driveKeyCollector);
+	DECLARE_OBSERVER(StartDriveVerification, model::BlockNotification<2>)(state::StorageState& state);
 
 	/// Observes changes triggered by end drive verification notifications.
 	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue);

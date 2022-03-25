@@ -41,15 +41,15 @@ namespace catapult { namespace state {
 			auto driveIter = driveCacheView.find(driveKey);
 			const auto& driveEntry = driveIter.get();
 
-			if (driveEntry.verifications().size() > 0) {
-				const auto& verification = driveEntry.verifications()[0];
-				return std::make_unique<DriveVerification>(DriveVerification{
-					driveKey,
-					verification.Expired,
-					verification.VerificationTrigger,
-					driveEntry.rootHash(),
-					verification.Shards});
-			}
+//			if (driveEntry.verifications().size() > 0) {
+//				const auto& verification = driveEntry.verifications()[0];
+//				return std::make_unique<DriveVerification>(DriveVerification{
+//					driveKey,
+//					verification.Expired,
+//					verification.VerificationTrigger,
+//					driveEntry.rootHash(),
+//					verification.Shards});
+//			}
 
 			return nullptr;
 		}

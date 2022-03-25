@@ -6,7 +6,6 @@
 
 #include <random>
 #include "Observers.h"
-#include "Queue.h"
 
 namespace catapult { namespace observers {
 

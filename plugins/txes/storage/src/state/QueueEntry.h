@@ -16,6 +16,7 @@ namespace catapult { namespace state {
 
 	static const Key DrivePaymentQueueKey = { { 1 } };
 	static const Key DownloadChannelPaymentQueueKey = { { 2 } };
+	static const Key DriveVerificationsTree = { { 3 } };
 
 	// Mixin for storing drive details.
 	class QueueMixin {

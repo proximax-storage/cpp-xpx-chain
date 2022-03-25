@@ -10,6 +10,7 @@
 #include "catapult/model/Mosaic.h"
 #include "catapult/utils/ArraySet.h"
 #include "catapult/utils/IntegerMath.h"
+#include "CommonEntities.h"
 #include <vector>
 
 namespace catapult { namespace state {
@@ -128,14 +129,13 @@ namespace catapult { namespace state {
 		/// The expiration time of the verification.
 		Timestamp Expiration;
 
-		/// Whether the verification is expired or not.
-		bool Expired;
-
 		/// Replicator shards.
 		state::Shards Shards;
-	};
 
-	using Verifications = std::vector<Verification>;
+		bool expired(const Timestamp& timestamp) const {
+			return timestamp >= Expiration;
+		}
+	};
 
 	// Mixin for storing drive details.
 	class DriveMixin {
@@ -261,13 +261,13 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets verifications.
-		Verifications& verifications() {
-			return m_verifications;
+		std::optional<Verification>& verification() {
+			return m_verification;
 		}
 
 		/// Gets verifications.
-		const Verifications& verifications() const {
-			return m_verifications;
+		const std::optional<Verification>& verification() const {
+			return m_verification;
 		}
 
 		/// Gets replicators last confirmed states.
@@ -336,6 +336,14 @@ namespace catapult { namespace state {
 			m_lastPayment = lastPayment;
 		}
 
+		const AVLTreeNode& verificationNode() const {
+			return m_verificationNode;
+		}
+
+		AVLTreeNode& verificationNode() {
+			return m_verificationNode;
+		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
@@ -348,7 +356,7 @@ namespace catapult { namespace state {
 		SizeMap m_confirmedUsedSizeMap;
 		utils::SortedKeySet m_replicators;
 		utils::SortedKeySet m_offboardingReplicators;
-		Verifications m_verifications;
+		std::optional<Verification> m_verification;
 		ConfirmedStates m_confirmedStates;
 		ConfirmedStorageInfos m_confirmedStoragePeriods;
 		DownloadShards m_downloadShards;
@@ -356,6 +364,8 @@ namespace catapult { namespace state {
 		Key m_storagePaymentsQueueNext;
 		Key m_storagePaymentsQueuePrevious;
 		Timestamp m_lastPayment;
+
+		AVLTreeNode m_verificationNode;
 	};
 
 	// Drive entry.

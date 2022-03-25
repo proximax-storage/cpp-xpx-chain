@@ -2,7 +2,7 @@
 
 #include "src/state/QueueEntry.h"
 
-namespace catapult::observers {
+namespace catapult::utils {
 
 template<class TCache>
 class QueueAdapter {

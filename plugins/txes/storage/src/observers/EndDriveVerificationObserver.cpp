@@ -50,7 +50,7 @@ namespace catapult { namespace observers {
 			utils::AssignReplicatorsToQueuedDrives(offboardingReplicators, pDriveQueue, context, rng);
 
 			const auto& replicatorKey = notification.PublicKeysPtr[0];
-			auto& shards = driveEntry.verifications()[0].Shards;
+			auto& shards = driveEntry.verification()->Shards;
 			for (auto iter = shards.begin(); iter != shards.end(); ++iter) {
 				const auto& shard = *iter;
 
@@ -69,7 +69,7 @@ namespace catapult { namespace observers {
 			}
 
 			if (shards.empty())
-				driveEntry.verifications().clear();
+				driveEntry.verification().reset();
 
 			if (storageDepositSlashing == 0)
 				return;

@@ -5,8 +5,9 @@
 **/
 
 #include "Observers.h"
-#include "Queue.h"
+#include "src/utils/Queue.h"
 #include "src/utils/StorageUtils.h"
+#include "src/utils/AVLTree.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
 namespace catapult { namespace observers {
@@ -74,10 +75,20 @@ namespace catapult { namespace observers {
 						replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);
 					}
 
-					// The Drive is Removed, so we should make removal in linked list
+					// The Drive is Removed, so we should make removal from payment queue
 					auto& queueCache = context.Cache.sub<cache::QueueCache>();
-					QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
+					utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
 					queueAdapter.remove(driveEntry.entryKey());
+
+					// The Drive is Removed, so we should make removal from verification tree
+					utils::AVLTreeAdapter<Key> treeAdapter(
+							queueCache,
+							state::DriveVerificationsTree,
+							[](const Key& key) { return key; },
+							[&](const Key& key) -> state::AVLTreeNode& {
+								return driveCache.find(key).get().verificationNode();
+							});
+					treeAdapter.remove(driveEntry.key());
 
 					// Returning the rest to the drive owner
 					const auto refundAmount = driveState.Balances.get(streamingMosaicId);
