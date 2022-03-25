@@ -62,7 +62,7 @@ namespace catapult { namespace observers {
 
 				for (uint i = 0; i < drivesToVerify; i++) {
 					Key randomKey;
-					std::generate_n(randomKey.begin(), sizeof(Key), rng);
+//					std::generate_n(randomKey.begin(), sizeof(Key), rng);
 
 					Key driveKey = treeAdapter.lowerBound(randomKey);
 
