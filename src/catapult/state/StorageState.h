@@ -110,7 +110,7 @@ namespace catapult { namespace state {
 		virtual bool downloadChannelExists(const Hash256& id) = 0;
 		virtual std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) = 0;
 
-        virtual std::unique_ptr<DriveVerification> getActiveVerification(const Key& driveKey) = 0;
+		virtual std::optional<DriveVerification> getActiveVerification(const Key& driveKey, const Timestamp& blockTimestamp) = 0;
 
 	protected:
 		cache::CatapultCache* m_pCache;

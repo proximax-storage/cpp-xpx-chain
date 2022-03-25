@@ -265,7 +265,7 @@ namespace catapult { namespace storage {
 					castReplicatorKeys<std::array<uint8_t, 32>>(pLastApprovedModification->Signers)});
 			}
 
-			auto pActiveVerification = m_storageState.getActiveVerification(drive.Id);
+			auto pActiveVerification = m_storageState.getActiveVerification(drive.Id, Timestamp(0));
 			if (!!pActiveVerification) {
 				sirius::Hash256 verificationTrigger(pActiveVerification->VerificationTrigger.array());
 				sirius::drive::InfoHash rootHash(pActiveVerification->RootHash.array());
@@ -366,7 +366,7 @@ namespace catapult { namespace storage {
 						continue;
 					}
 
-					auto verification = m_storageState.getActiveVerification(driveKey);
+					auto verification = m_storageState.getActiveVerification(driveKey, Timestamp());
 
 					if (!verification) {
 						continue;
