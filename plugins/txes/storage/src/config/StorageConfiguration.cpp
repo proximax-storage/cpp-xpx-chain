@@ -26,6 +26,8 @@ namespace catapult { namespace config {
 		TRY_LOAD_CHAIN_PROPERTY(MinDriveSize);
 		config.MaxDriveSize = utils::FileSize::FromTerabytes(10);
 		TRY_LOAD_CHAIN_PROPERTY(MaxDriveSize);
+		config.MinCapacity = utils::FileSize::FromMegabytes(1);
+		TRY_LOAD_CHAIN_PROPERTY(MinCapacity);
 		config.MaxModificationSize = utils::FileSize::FromTerabytes(10);
 		TRY_LOAD_CHAIN_PROPERTY(MaxModificationSize);
 		config.MinReplicatorCount = 1;
