@@ -23,8 +23,8 @@ namespace catapult { namespace state {
 
 	public:
 		catapult::Amount cost(const catapult::Amount& amount) const;
-		SdaOfferBalance& sender(const model::SdaOfferWithOwnerAndDuration& offer);
-		SdaOfferBalance& receiver(const model::SdaOfferWithOwnerAndDuration& offer);
+		SdaOfferBalance& operator+=(const model::SdaOfferWithOwnerAndDuration& offer);
+		SdaOfferBalance& operator-=(const model::SdaOfferWithOwnerAndDuration& offer);
 	};
 
 	SdaOfferBalance& operator+=(const model::SdaOfferWithOwnerAndDuration& offer, const model::SdaOfferWithOwnerAndDuration& poffer);

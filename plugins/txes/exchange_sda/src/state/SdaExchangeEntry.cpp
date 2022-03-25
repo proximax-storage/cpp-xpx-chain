@@ -19,21 +19,18 @@ namespace catapult { namespace state {
 		return catapult::Amount(static_cast<typeof(Amount::ValueType)>(cost));
 	}
 
-	SdaOfferBalance& SdaOfferBalance::sender(const model::SdaOfferWithOwnerAndDuration& offer) {
-		if (offer.MosaicGive.Amount > CurrentMosaicGive)
-			CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than offer to give amount", offer.MosaicGive.Amount, CurrentMosaicGive)
-
-		CurrentMosaicGive = CurrentMosaicGive - offer.MosaicGive.Amount;
+	SdaOfferBalance& SdaOfferBalance::operator+=(const model::SdaOfferWithOwnerAndDuration& offer) {
 		CurrentMosaicGet = CurrentMosaicGet + offer.MosaicGet.Amount;
 		return *this;
 	}
 
-	SdaOfferBalance& SdaOfferBalance::receiver(const model::SdaOfferWithOwnerAndDuration& offer) {
-		if (offer.MosaicGet.Amount > CurrentMosaicGet)
-			CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than offer to get amount", offer.MosaicGet.Amount, CurrentMosaicGet)
-
-		CurrentMosaicGive = CurrentMosaicGive + offer.MosaicGive.Amount;
-		CurrentMosaicGet = CurrentMosaicGet - offer.MosaicGet.Amount;
+	SdaOfferBalance& SdaOfferBalance::operator-=(const model::SdaOfferWithOwnerAndDuration& offer) {
+		if (offer.MosaicGive.Amount > CurrentMosaicGive) {
+			CurrentMosaicGive = offer.MosaicGive.Amount - CurrentMosaicGive;
+		}
+		else {
+			CurrentMosaicGive = CurrentMosaicGive - offer.MosaicGive.Amount;
+		}
 		return *this;
 	}
 

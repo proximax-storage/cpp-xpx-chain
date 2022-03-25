@@ -17,13 +17,11 @@ namespace catapult { namespace observers {
 
         template<typename TOfferMap>
 		state::SdaOfferBalance& ModifyOffer(TOfferMap& offers, const MosaicId& mosaicIdGive, const MosaicId& mosaicIdGet, const model::SdaOfferWithOwnerAndDuration* pSdaOffer) {
-			auto& offer = offers.at(mosaicIdGive);
-            *pSdaOffer.sender(offer);
-			
-            offer = offers.at(mosaicIdGet);
-            offer.receiver(*pSdaOffer);
-	
-            return dynamic_cast<state::SdaOfferBalance&>(offer);
+            auto& offer = offers.at(mosaicIdGive);
+			offer -= *pSdaOffer;
+            auto& offer = offers.at(mosaicIdGet);
+			offer += *pSdaOffer;
+			return dynamic_cast<state::SdaOfferBalance&>(offer);
 		}
 	}
 
@@ -90,11 +88,16 @@ namespace catapult { namespace observers {
                     break;
             }
 
-            auto& offer = ModifyOffer(arrangedOffers, mosaicIdGive, mosaicIdGet, pSdaOffer);
-
-            if (Amount(0) == offer.CurrentMosaicGive) {
-                entry.expireOffer(mosaicIdGive, context.Height);
-                groupEntry.removeSdaOfferFromGroup(groupHash, entry.owner());
+            auto& groupOffer = arrangedOffers.at(groupHash);
+            for (auto& offerList : groupOffer) {
+                auto iter = cache.find(offerList.Owner);
+                auto& offer = iter.get();
+                auto& result = ModifyOffer(offer.sdaOfferBalances(), mosaicIdGive, mosaicIdGet, pSdaOffer);
+              
+                if (Amount(0) == result.CurrentMosaicGive) {
+                    entry.expireOffer(mosaicIdGive, context.Height);
+                    groupEntry.removeSdaOfferFromGroup(groupHash, entry.owner());
+                }
             }
         }
     });
