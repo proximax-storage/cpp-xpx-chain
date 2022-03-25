@@ -5,6 +5,7 @@
 **/
 
 #include "NotificationHandlers.h"
+#include <catapult/utils/StorageUtils.h>
 
 namespace catapult { namespace notification_handlers {
 
@@ -16,7 +17,8 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			pReplicatorService->processVerifications(notification.Hash);
+			auto eventHash = utils::getVerificationEventHash(notification.Hash, context.Config.Immutable.GenerationHash);
+			pReplicatorService->processVerifications(notification.Hash, notification.Timestamp);
 		});
 	}
 }}

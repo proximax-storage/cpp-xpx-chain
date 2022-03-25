@@ -46,7 +46,7 @@ namespace catapult { namespace storage {
         std::optional<Height> driveAddedAt(const Key& driveKey);
         std::optional<Height> channelAddedAt(const Hash256& channelId);
 
-        void processVerifications(const Hash256& blockHash);
+        void processVerifications(const Hash256& eventHash, const Timestamp& timestamp);
 
 	public:
 		void updateDriveReplicators(const Key& driveKey);

@@ -355,7 +355,7 @@ namespace catapult { namespace storage {
         	return {};
 		}
 
-        void processVerifications(const Hash256& blockHash) {
+		void processVerifications(const Hash256& blockHash, const Timestamp& blockTimestamp) {
 			auto drives = m_storageState.getReplicatorDriveKeys(m_keyPair.publicKey());
 			auto height = m_storageState.getChainHeight();
 			for (const auto& driveKey: drives) {
@@ -363,20 +363,18 @@ namespace catapult { namespace storage {
 
 					if (it->second == height)
 					{
+						// The verification has already been processed
 						continue;
 					}
 
-					auto verification = m_storageState.getActiveVerification(driveKey, Timestamp());
+					auto verification = m_storageState.getActiveVerification(driveKey, blockTimestamp);
 
-					if (!verification) {
-						continue;
-					}
-
-					sirius::Hash256 verificationTrigger = verification->VerificationTrigger.array();
-					if (verification->Expired) {
-						m_pReplicator->asyncCancelDriveVerification(driveKey.array(),verificationTrigger);
+					if (!verification || verification->Expired) {
+						m_pReplicator->asyncCancelDriveVerification(driveKey.array());
 					}
 					else if (verification->VerificationTrigger == blockHash) {
+						CATAPULT_LOG( error ) << "will start verification";
+						sirius::Hash256 verificationTrigger = verification->VerificationTrigger.array();
 						m_pReplicator->asyncStartDriveVerification(driveKey.array(), verificationTrigger);
 					}
 				}
@@ -733,9 +731,9 @@ namespace catapult { namespace storage {
     		return m_pImpl->exploreNewReplicatorDrives();
 	}
 
-	void ReplicatorService::processVerifications(const Hash256& blockHash) {
+	void ReplicatorService::processVerifications(const Hash256& eventHash, const Timestamp& timestamp) {
         if (m_pImpl)
-        	m_pImpl->processVerifications(blockHash);
+        	m_pImpl->processVerifications(eventHash, timestamp);
     }
 
     void ReplicatorService::updateDriveReplicators(const Key& driveKey) {
