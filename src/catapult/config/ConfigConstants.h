@@ -32,8 +32,9 @@ namespace catapult { namespace config {
 		committeeConfigId,
 		storageConfigId,
 		streamingConfigId,
+		liquidityproviderConfigId,
         First = static_cast<uint32_t>(aggregateConfigId),
-        Latest = static_cast<uint32_t>(streamingConfigId),
+        Latest = static_cast<uint32_t>(liquidityproviderConfigId),
 	};
 
 /// Defines config constants for a config with \a NAME.
