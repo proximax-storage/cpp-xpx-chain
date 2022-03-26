@@ -18,7 +18,7 @@ namespace catapult { namespace validators {
         const auto driveIter = driveCache.find(notification.DriveKey);
         const auto& driveEntry = driveIter.get();
 
-		if (driveEntry.verification() || driveEntry.verification()->expired(context.BlockTime))
+		if (!driveEntry.verification() || driveEntry.verification()->expired(context.BlockTime))
             return Failure_Storage_Verification_Not_In_Progress;
 
 		const auto& verification = *driveEntry.verification();

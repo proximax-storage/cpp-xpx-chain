@@ -18,7 +18,7 @@ namespace catapult { namespace notification_handlers {
 				return;
 
 			auto eventHash = utils::getVerificationEventHash(notification.Hash, context.Config.Immutable.GenerationHash);
-			pReplicatorService->processVerifications(notification.Hash, notification.Timestamp);
+//			pReplicatorService->processVerifications(eventHash, notification.Timestamp);
 		});
 	}
 }}

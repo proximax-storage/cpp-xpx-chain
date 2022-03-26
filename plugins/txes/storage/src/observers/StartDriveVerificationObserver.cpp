@@ -62,7 +62,7 @@ namespace catapult { namespace observers {
 
 				for (uint i = 0; i < drivesToVerify; i++) {
 					Key randomKey;
-					std::generate_n(randomKey.begin(), sizeof(Key), rng);
+//					std::generate_n(randomKey.begin(), sizeof(Key), rng);
 
 					Key driveKey = treeAdapter.lowerBound(randomKey);
 
@@ -82,59 +82,64 @@ namespace catapult { namespace observers {
 
 					verification = state::Verification();
 
-					verification->VerificationTrigger = eventHash;
+					Hash256 trigger;
+//					std::generate_n(trigger.begin(), Key_Size, rng);
+					verification->VerificationTrigger = notification.Hash;
+//					verification->VerificationTrigger = { { 11 } };
 
-					auto timeoutMinutes =
-							pluginConfig.VerificationExpirationCoefficient *
-									utils::FileSize::FromBytes(driveEntry.usedSizeBytes()).gigabytesCeil() +
-							pluginConfig.VerificationExpirationConstant;
+//					verification->VerificationTrigger = eventHash;
+
+//					auto timeoutMinutes =
+//							pluginConfig.VerificationExpirationCoefficient *
+//									utils::FileSize::FromBytes(driveEntry.usedSizeBytes()).gigabytesCeil() +
+//							pluginConfig.VerificationExpirationConstant;
 //					verification->Expiration = notification.Timestamp + Timestamp(timeoutMinutes * 60 * 1000);
 
-					verification->Expiration = Timestamp((uint64_t) 1e15);
+//					verification->Expiration = Timestamp((uint64_t) 1e15);
 
-					std::vector<Key> replicators;
-					replicators.reserve(driveEntry.replicators().size());
-					const auto& confirmedStates = driveEntry.confirmedStates();
-					const auto& rootHash = driveEntry.rootHash();
-					for (const auto& key : driveEntry.replicators()) {
-						auto iter = confirmedStates.find(key);
-						if (iter != confirmedStates.end() && iter->second == rootHash)
-							replicators.emplace_back(key);
-					}
-
-					uint16_t replicatorCount = replicators.size();
-					auto shardSize = 10; //pluginConfig.VerificationShardSize;
-
-					if (replicatorCount < 2 * shardSize) {
-						verification->Shards = state::Shards { replicators };
-						continue;
-					}
-
-					std::shuffle(replicators.begin(), replicators.end(), rng);
-
-					auto shardCount = replicatorCount / shardSize;
-
-					state::Shards shards;
-					shards.resize(shardCount);
-
-					auto replicatorIt = replicators.begin();
-					for (int i = 0; i < replicatorCount / shardCount; i++) {
-						// We have the possibility to add at least one Replicator to each shard;
-						for (auto& shard : shards) {
-							shard.push_back(*replicatorIt);
-							replicatorIt++;
-						}
-					}
-
-					auto shardIt = shards.begin();
-					while (replicatorIt != replicators.end()) {
-						// The number of replicators left is less than the number of shards
-						shardIt->push_back(*replicatorIt);
-						replicatorIt++;
-						shardIt++;
-					}
-
-					verification->Shards = std::move(shards);
+//					std::vector<Key> replicators;
+//					replicators.reserve(driveEntry.replicators().size());
+//					const auto& confirmedStates = driveEntry.confirmedStates();
+//					const auto& rootHash = driveEntry.rootHash();
+//					for (const auto& key : driveEntry.replicators()) {
+//						auto iter = confirmedStates.find(key);
+//						if (iter != confirmedStates.end() && iter->second == rootHash)
+//							replicators.emplace_back(key);
+//					}
+//
+//					uint16_t replicatorCount = replicators.size();
+//					auto shardSize = 10; //pluginConfig.VerificationShardSize;
+//
+//					if (replicatorCount < 2 * shardSize) {
+//						verification->Shards = state::Shards { replicators };
+//						continue;
+//					}
+//
+//					std::shuffle(replicators.begin(), replicators.end(), rng);
+//
+//					auto shardCount = replicatorCount / shardSize;
+//
+//					state::Shards shards;
+//					shards.resize(shardCount);
+//
+//					auto replicatorIt = replicators.begin();
+//					for (int i = 0; i < replicatorCount / shardCount; i++) {
+//						// We have the possibility to add at least one Replicator to each shard;
+//						for (auto& shard : shards) {
+//							shard.push_back(*replicatorIt);
+//							replicatorIt++;
+//						}
+//					}
+//
+//					auto shardIt = shards.begin();
+//					while (replicatorIt != replicators.end()) {
+//						// The number of replicators left is less than the number of shards
+//						shardIt->push_back(*replicatorIt);
+//						replicatorIt++;
+//						shardIt++;
+//					}
+//
+//					verification->Shards = std::move(shards);
 				}
 			})) };
 }} // namespace catapult::observers

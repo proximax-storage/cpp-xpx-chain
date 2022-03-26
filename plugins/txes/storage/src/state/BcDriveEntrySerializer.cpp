@@ -229,9 +229,6 @@ namespace catapult { namespace state {
 				io::Read(input, verification->Expiration);
 				LoadShards(input, verification->Shards);
 			}
-			else {
-				verification = {};
-			}
 		}
 
 		void LoadDownloadShards(io::InputStream& input, DownloadShards& downloadShards) {
@@ -305,14 +302,14 @@ namespace catapult { namespace state {
 		io::Write(output, driveEntry.getQueueNext());
 		io::Write(output, driveEntry.getLastPayment());
 
-//		SaveVerificationNode(output, driveEntry.verificationNode());
+		SaveVerification(output, driveEntry.verification());
+		SaveVerificationNode(output, driveEntry.verificationNode());
 
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
 		SaveConfirmedUsedSizes(output, driveEntry.confirmedUsedSizes());
 		SaveReplicators(output, driveEntry.replicators());
 		SaveReplicators(output, driveEntry.offboardingReplicators());
-//		SaveVerification(output, driveEntry.verification());
 		SaveDownloadShards(output, driveEntry.downloadShards());
 		SaveModificationShards(output, driveEntry.dataModificationShards());
 		SaveConfirmedStorageInfos(output, driveEntry.confirmedStorageInfos());
@@ -355,14 +352,14 @@ namespace catapult { namespace state {
 		io::Read(input, lastPayment);
 		entry.setLastPayment(lastPayment);
 
-//		LoadVerificationNode(input, entry.verificationNode());
+		LoadVerification(input, entry.verification());
+		LoadVerificationNode(input, entry.verificationNode());
 
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
 		LoadConfirmedUsedSizes(input, entry.confirmedUsedSizes());
 		LoadReplicators(input, entry.replicators());
 		LoadReplicators(input, entry.offboardingReplicators());
-//		LoadVerification(input, entry.verification());
 		LoadDownloadShards(input, entry.downloadShards());
 		LoadModificationShards(input, entry.dataModificationShards());
 		LoadConfirmedStorageInfos(input, entry.confirmedStorageInfos());

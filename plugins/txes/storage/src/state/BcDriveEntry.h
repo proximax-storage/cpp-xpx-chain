@@ -132,6 +132,11 @@ namespace catapult { namespace state {
 		/// Replicator shards.
 		state::Shards Shards;
 
+		Verification()
+			: VerificationTrigger()
+			, Expiration(0)
+		{}
+
 		bool expired(const Timestamp& timestamp) const {
 			return timestamp >= Expiration;
 		}

@@ -265,24 +265,27 @@ namespace catapult { namespace storage {
 					castReplicatorKeys<std::array<uint8_t, 32>>(pLastApprovedModification->Signers)});
 			}
 
-			auto pActiveVerification = m_storageState.getActiveVerification(drive.Id, Timestamp(0));
-			if (!!pActiveVerification) {
-				sirius::Hash256 verificationTrigger(pActiveVerification->VerificationTrigger.array());
-				sirius::drive::InfoHash rootHash(pActiveVerification->RootHash.array());
-
-				bool foundShard = false;
-				for (uint32_t i = 0u; i < pActiveVerification->Shards.size() && !foundShard; ++i) {
-					const auto& shard = pActiveVerification->Shards[i];
-
-					if (std::find(shard.begin(), shard.end(), m_keyPair.publicKey()) != shard.end()) {
-						foundShard = true;
-						m_pReplicator->asyncStartDriveVerification(
-								drive.Id.array(),
-								sirius::drive::VerificationRequest {
-									verificationTrigger, i, rootHash, castReplicatorKeys<sirius::Key>(shard) });
-					}
-				}
-			}
+			// Actually the time may not be the time of the last block,
+			// the main requirement is that this is time in the past
+//			auto time = m_storageState.lastBlockElementSupplier()()->Block.Timestamp;
+//			auto activeVerification = m_storageState.getActiveVerification(drive.Id, Timestamp(0));
+//			if (activeVerification && !activeVerification->Expired) {
+//				sirius::Hash256 verificationTrigger(activeVerification->VerificationTrigger.array());
+//				sirius::drive::InfoHash rootHash(activeVerification->RootHash.array());
+//
+//				bool foundShard = false;
+//				for (uint32_t i = 0u; i < activeVerification->Shards.size() && !foundShard; ++i) {
+//					const auto& shard = activeVerification->Shards[i];
+//
+//					if (std::find(shard.begin(), shard.end(), m_keyPair.publicKey()) != shard.end()) {
+//						foundShard = true;
+//						m_pReplicator->asyncStartDriveVerification(
+//								drive.Id.array(),
+//								sirius::drive::VerificationRequest {
+//									verificationTrigger, i, rootHash, castReplicatorKeys<sirius::Key>(shard) });
+//					}
+//				}
+//			}
 
 			for (const auto& dataModification: drive.DataModifications) {
 				addDriveModification(
@@ -358,12 +361,16 @@ namespace catapult { namespace storage {
 		void processVerifications(const Hash256& blockHash, const Timestamp& blockTimestamp) {
 			auto drives = m_storageState.getReplicatorDriveKeys(m_keyPair.publicKey());
 			auto height = m_storageState.getChainHeight();
+
+			CATAPULT_LOG( error ) << "process verifications " << blockHash;
+
 			for (const auto& driveKey: drives) {
 				if (auto it = m_alreadyAddedDrives.find(driveKey); it != m_alreadyAddedDrives.end()) {
 
 					if (it->second == height)
 					{
 						// The verification has already been processed
+						CATAPULT_LOG( error ) << "verification has already been processed " << driveKey;
 						continue;
 					}
 
