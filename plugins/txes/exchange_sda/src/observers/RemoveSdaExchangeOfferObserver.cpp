@@ -20,8 +20,8 @@ namespace catapult { namespace observers {
             auto mosaicIdGive = context.Resolvers.resolve(pSdaOffer->MosaicIdGive);
             auto mosaicIdGet = context.Resolvers.resolve(pSdaOffer->MosaicIdGet);
 
-            Amount mosaicGiveAmount = entry.sdaOfferBalances().at(mosaicIdGive).CurrentMosaicGive;
-            Amount mosaicGetAmount = entry.sdaOfferBalances().at(mosaicIdGet).CurrentMosaicGet;
+            Amount mosaicGiveAmount = entry.sdaOfferBalances().at(state::MosaicsPair{mosaicIdGive, mosaicIdGet}).CurrentMosaicGive;
+            Amount mosaicGetAmount = entry.sdaOfferBalances().at(state::MosaicsPair{mosaicIdGive, mosaicIdGet}).CurrentMosaicGet;
             CreditAccount(entry.owner(), mosaicIdGive, mosaicGiveAmount, context);
 
             std::string reduced = reducedFraction(mosaicGiveAmount, mosaicGetAmount);
@@ -34,7 +34,7 @@ namespace catapult { namespace observers {
             auto groupIter = groupCache.find(groupHash);
             auto& groupEntry = groupIter.get();
 
-            entry.expireOffer(mosaicIdGive, context.Height);
+            entry.expireOffer(state::MosaicsPair{mosaicIdGive,mosaicIdGet}, context.Height);
             groupEntry.removeSdaOfferFromGroup(groupHash, notification.Owner);
 		}
     });

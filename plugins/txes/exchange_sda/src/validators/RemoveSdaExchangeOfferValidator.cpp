@@ -19,27 +19,30 @@ namespace catapult { namespace validators {
 
         auto iter = cache.find(notification.Owner);
         const auto& entry = iter.get();
-        std::set<MosaicId> offeredMosaicIds;
+        std::set<std::pair<MosaicId, MosaicId>> offeredMosaicIds;
         auto pSdaOffer = notification.SdaOffersPtr;
         for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
-            auto mosaicId = context.Resolvers.resolve(pSdaOffer->MosaicIdGive);
-            if (offeredMosaicIds.count(mosaicId))
+            auto mosaicIdGive = context.Resolvers.resolve(pSdaOffer->MosaicIdGive);
+			auto mosaicIdGet = context.Resolvers.resolve(pSdaOffer->MosaicIdGet);
+
+            std::pair<MosaicId, MosaicId> pair(mosaicIdGive, mosaicIdGet);
+            if (offeredMosaicIds.count(pair))
                 return Failure_ExchangeSda_Duplicated_Offer_In_Request;
-            offeredMosaicIds.insert(mosaicId);
+            offeredMosaicIds.insert(pair);
 
             auto result = ValidationResult::Success;
             auto offers = entry.sdaOfferBalances();
             auto expiredOffers = entry.expiredSdaOfferBalances();
             const Height& height = context.Height;
 
-            if (!offers.count(mosaicId))
+            if (!offers.count(pair))
 				return Failure_ExchangeSda_Offer_Doesnt_Exist;
 
-			auto& offer = offers.at(mosaicId);
+			auto& offer = offers.at(pair);
 			if (offer.Deadline <= height)
 				return Failure_ExchangeSda_Offer_Expired;
 
-			if (expiredOffers.count(height) && expiredOffers.at(height).count(mosaicId))
+			if (expiredOffers.count(height) && expiredOffers.at(height).count(pair))
 				return Failure_ExchangeSda_Cant_Remove_Offer_At_Height;
         }
 

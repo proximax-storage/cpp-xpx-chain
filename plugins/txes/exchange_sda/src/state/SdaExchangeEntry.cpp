@@ -11,26 +11,13 @@
 
 namespace catapult { namespace state {
 
-	catapult::Amount SdaOfferBalance::cost(const catapult::Amount& amount) const {
-		if (catapult::Amount(0) == InitialMosaicGive)
-			CATAPULT_THROW_RUNTIME_ERROR("failed to calculate offer cost, initial amount is zero");
-
-		auto cost = std::ceil(static_cast<double>(InitialMosaicGet.unwrap()) * static_cast<double>(amount.unwrap()) / static_cast<double>(InitialMosaicGive.unwrap()));
-		return catapult::Amount(static_cast<typeof(Amount::ValueType)>(cost));
-	}
-
-	SdaOfferBalance& SdaOfferBalance::operator+=(const model::SdaOfferWithOwnerAndDuration& offer) {
-		CurrentMosaicGet = CurrentMosaicGet + offer.MosaicGet.Amount;
+	SdaOfferBalance& SdaOfferBalance::operator+=(const Amount& offerAmount) {
+		CurrentMosaicGet = CurrentMosaicGet + offerAmount;
 		return *this;
 	}
 
-	SdaOfferBalance& SdaOfferBalance::operator-=(const model::SdaOfferWithOwnerAndDuration& offer) {
-		if (offer.MosaicGive.Amount > CurrentMosaicGive) {
-			CurrentMosaicGive = offer.MosaicGive.Amount - CurrentMosaicGive;
-		}
-		else {
-			CurrentMosaicGive = CurrentMosaicGive - offer.MosaicGive.Amount;
-		}
+	SdaOfferBalance& SdaOfferBalance::operator-=(const Amount& offerAmount) {
+		CurrentMosaicGive = CurrentMosaicGive - offerAmount;
 		return *this;
 	}
 
@@ -53,8 +40,8 @@ namespace catapult { namespace state {
 		return m_expiredSdaOfferBalances.empty() ? Invalid_Expiry_Height : m_expiredSdaOfferBalances.begin()->first;
 	}
 
-	/// Moves offer of \a type with \a mosaicId to expired offer buffer.
-	void SdaExchangeEntry::expireOffer(const MosaicId& mosaicId, const Height& height) {
+	/// Moves pair offer of \a mosaicIdGive and \a mosaicIdGet to expired offer buffer.
+	void SdaExchangeEntry::expireOffer(const MosaicsPair& mosaicId, const Height& height) {
 		auto expireFunc = [height, mosaicId](auto& offers, auto& expiredOffers) {
 			auto& offer = offers.at(mosaicId);
 			auto &expiredOffersAtHeight = expiredOffers[height];
@@ -67,8 +54,8 @@ namespace catapult { namespace state {
 		expireFunc(m_sdaOfferBalances, m_expiredSdaOfferBalances);
 	}
 
-	/// Moves offer of \a type with \a mosaicId back from expired offer buffer.
-	void SdaExchangeEntry::unexpireOffer(const MosaicId& mosaicId, const Height& height) {
+	/// Moves pair offer of \a mosaicIdGive and \a mosaicIdGet back from expired offer buffer.
+	void SdaExchangeEntry::unexpireOffer(const MosaicsPair& mosaicId, const Height& height) {
 		auto unexpireFunc = [height, mosaicId](auto& offers, auto& expiredOffers) {
 			if (offers.count(mosaicId))
 				CATAPULT_THROW_RUNTIME_ERROR_1("offer exists", mosaicId);
@@ -119,24 +106,27 @@ namespace catapult { namespace state {
 		}
 	}
 
-	bool SdaExchangeEntry::offerExists(const MosaicId& mosaicId) const {
+	bool SdaExchangeEntry::offerExists(const MosaicsPair& mosaicId) const {
 		return m_sdaOfferBalances.count(mosaicId);
 	}
 
-	void SdaExchangeEntry::addOffer(const MosaicId& mosaicId, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline) {
+	void SdaExchangeEntry::addOffer(const MosaicId& mosaicIdGive, const MosaicId& mosaicIdGet, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline) {
 		state::SdaOfferBalance baseOffer{pOffer->MosaicGive.Amount, pOffer->MosaicGet.Amount, pOffer->MosaicGive.Amount, pOffer->MosaicGet.Amount, deadline};
-		m_sdaOfferBalances.emplace(mosaicId, baseOffer);
+		std::pair<MosaicId, MosaicId> mosaics;
+		mosaics.first = mosaicIdGive;
+		mosaics.second = mosaicIdGet;
+		m_sdaOfferBalances.emplace(mosaics, baseOffer);
 	}
 
-	void SdaExchangeEntry::removeOffer(const MosaicId& mosaicId) {
-		m_sdaOfferBalances.erase(mosaicId);
+	void SdaExchangeEntry::removeOffer(const MosaicsPair& mosaicIds) {
+		m_sdaOfferBalances.erase(mosaicIds);
 	}
 
-	state::SdaOfferBalance& SdaExchangeEntry::getSdaOfferBalance(const MosaicId& mosaicId) {
-		if (!m_sdaOfferBalances.count(mosaicId))
-			CATAPULT_THROW_INVALID_ARGUMENT_1("offer doesn't exist", mosaicId);
+	state::SdaOfferBalance& SdaExchangeEntry::getSdaOfferBalance(const MosaicsPair& mosaicIds) {
+		if (!m_sdaOfferBalances.count(mosaicIds))
+			CATAPULT_THROW_INVALID_ARGUMENT_1("offer doesn't exist", mosaicIds);
 
-		return dynamic_cast<state::SdaOfferBalance&>(m_sdaOfferBalances.at(mosaicId));
+		return dynamic_cast<state::SdaOfferBalance&>(m_sdaOfferBalances.at(mosaicIds));
 	}
 
 	bool SdaExchangeEntry::empty() const {

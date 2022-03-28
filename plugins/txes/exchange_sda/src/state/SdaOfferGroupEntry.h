@@ -57,7 +57,7 @@ namespace catapult { namespace state {
         SdaOfferGroupMap bigToSmallSortedByEarliestExpiry(const Hash256 groupHash, const SdaOfferGroupMap& sdaOfferGroup);
 
         /// Returns offers arranged from the exact or closest MosaicGive amount.
-        SdaOfferGroupMap exactOrClosest(const Hash256 groupHash, const SdaOfferBasicInfo offer, const SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupMap exactOrClosest(const Hash256 groupHash, const Amount offer, const SdaOfferGroupMap& sdaOfferGroup);
 
         void addSdaOfferToGroup(const Hash256& groupHash, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
         void removeSdaOfferFromGroup(const Hash256& groupHash, const Key& offerOwner);

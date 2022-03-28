@@ -50,11 +50,11 @@ namespace catapult { namespace state {
     }
 
     /// Returns offers arranged from the exact or closest MosaicGive amount.
-    SdaOfferGroupMap SdaOfferGroupEntry::exactOrClosest(const Hash256 groupHash, const SdaOfferBasicInfo offerTarget, const SdaOfferGroupMap& sdaOfferGroup) {
+    SdaOfferGroupMap SdaOfferGroupEntry::exactOrClosest(const Hash256 groupHash, const Amount offerTarget, const SdaOfferGroupMap& sdaOfferGroup) {
         auto& offer = sdaOfferGroup.find(groupHash)->second;
         std::sort(offer.begin(), offer.end(), [offerTarget](SdaOfferBasicInfo a, SdaOfferBasicInfo b) {
-            return std::abs(static_cast<int64_t>(offerTarget.MosaicGive.unwrap())-static_cast<int64_t>(a.MosaicGive.unwrap())) 
-                        < std::abs(static_cast<int64_t>(offerTarget.MosaicGive.unwrap())-static_cast<int64_t>(b.MosaicGive.unwrap()));
+            return std::abs(static_cast<int64_t>(offerTarget.unwrap())-static_cast<int64_t>(a.MosaicGive.unwrap())) 
+                        < std::abs(static_cast<int64_t>(offerTarget.unwrap())-static_cast<int64_t>(b.MosaicGive.unwrap()));
         });
 
         return sdaOfferGroup;

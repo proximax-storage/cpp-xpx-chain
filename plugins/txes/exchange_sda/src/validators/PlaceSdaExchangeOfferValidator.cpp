@@ -11,18 +11,7 @@
 namespace catapult { namespace validators {
 
     namespace {
-        template<typename TOffer>
-		bool SdaOfferCostInvalid(TOffer& offer, const model::SdaOfferWithOwnerAndDuration* pSdaOffer) {
-			return (offer.cost(pSdaOffer->MosaicGive.Amount) != pSdaOffer->MosaicGet.Amount);
-		}
-
-        template<typename TOfferMap, typename TExpiredOfferMap>
-		ValidationResult ValidateSdaOffer(
-				const TOfferMap& offers,
-				const TExpiredOfferMap& expiredOffers,
-				const model::SdaOfferWithOwnerAndDuration* pSdaOffer,
-				const MosaicId& mosaicId,
-				const Height& height) {
+		ValidationResult ValidateSdaOffer(const state::SdaOfferBalanceMap& offers, const state::ExpiredSdaOfferBalanceMap& expiredOffers, const model::SdaOfferWithOwnerAndDuration* pSdaOffer, const state::MosaicsPair& mosaicId, const Height& height) {
 			if (!offers.count(mosaicId))
 				return Failure_ExchangeSda_Offer_Doesnt_Exist;
 
@@ -30,14 +19,11 @@ namespace catapult { namespace validators {
 			if (offer.Deadline <= height)
 				return Failure_ExchangeSda_Offer_Expired;
 
-			if (SdaOfferCostInvalid(offer, pSdaOffer))
-				return Failure_ExchangeSda_Invalid_Price;
-
-			if (offer.Amount < pSdaOffer->MosaicGive.Amount)
+			if (offer.CurrentMosaicGive < pSdaOffer->MosaicGive.Amount)
 				return Failure_ExchangeSda_Not_Enough_Units_In_Offer;
 
 			// Check whether fulfilled offer can be moved to array of expired offers.
-			if (offer.Amount == pSdaOffer->MosaicGive.Amount && expiredOffers.count(height) && expiredOffers.at(height).count(mosaicId))
+			if (offer.CurrentMosaicGive == pSdaOffer->MosaicGive.Amount && expiredOffers.count(height) && expiredOffers.at(height).count(mosaicId))
 				return Failure_ExchangeSda_Cant_Remove_Offer_At_Height;
 
 			return ValidationResult::Success;
@@ -52,11 +38,13 @@ namespace catapult { namespace validators {
         const auto& cache = context.Cache.sub<cache::SdaExchangeCache>();
 	    const auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();
 
-        std::set<std::pair<Key, MosaicId>> offers;
+        std::set<state::MosaicsPair> offers;
 	    const auto* pSdaOffer = notification.SdaOffersPtr;
         for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
-            auto mosaicId = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
-            std::pair<Key, MosaicId> pair(pSdaOffer->Owner, mosaicId);
+            auto mosaicIdGive = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
+			auto mosaicIdGet = context.Resolvers.resolve(pSdaOffer->MosaicGet.MosaicId);
+
+            state::MosaicsPair pair(mosaicIdGive, mosaicIdGet);
             if (offers.count(pair))
 				return Failure_ExchangeSda_Duplicated_Offer_In_Request;
 			offers.insert(pair);
@@ -67,7 +55,7 @@ namespace catapult { namespace validators {
 		    if (pSdaOffer->Duration > pluginConfig.MaxSdaOfferDuration && notification.Signer != pluginConfig.LongSdaOfferKey)
 			    return Failure_ExchangeSda_Offer_Duration_Too_Large;
             
-            auto mosaicEntryIter = mosaicCache.find(mosaicId);
+            auto mosaicEntryIter = mosaicCache.find(mosaicIdGive);
 		    const auto& mosaicEntry = mosaicEntryIter.get();
 		    auto mosaicBlockDuration = mosaicEntry.definition().properties().duration();
 
@@ -85,11 +73,11 @@ namespace catapult { namespace validators {
 
             auto iter = cache.find(notification.Signer);
 			const auto& entry = iter.get();
-            if (entry.offerExists(mosaicId))
+            if (entry.offerExists(pair))
 			    return Failure_ExchangeSda_Offer_Exists;
 
             auto result = ValidationResult::Success;
-            result = ValidateSdaOffer(entry.sdaOfferBalances(), entry.expiredSdaOfferBalances(), pSdaOffer, mosaicId, context.Height);
+            result = ValidateSdaOffer(entry.sdaOfferBalances(), entry.expiredSdaOfferBalances(), pSdaOffer, pair, context.Height);
             if (ValidationResult::Success != result)
 				return result;
         }

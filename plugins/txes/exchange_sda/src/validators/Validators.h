@@ -13,6 +13,11 @@
 
 namespace catapult { namespace validators {
 
+	class SdaOfferValidator {
+	public:
+		ValidationResult ValidateSdaOffer(const state::SdaOfferBalanceMap& offers, const state::ExpiredSdaOfferBalanceMap& expiredOffers, const model::SdaOfferWithOwnerAndDuration* pSdaOffer, const state::MosaicsPair& mosaicId, const Height& height);
+	};
+
 	/// A validator implementation that applies to place and exchange offer notifications and validates that:
 	/// - at least one offer to add is present
 	/// - offer duration does not exceed maximum if transaction signer is not nemesis signer.

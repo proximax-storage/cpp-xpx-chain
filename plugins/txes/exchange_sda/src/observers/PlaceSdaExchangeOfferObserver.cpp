@@ -15,13 +15,20 @@ namespace catapult { namespace observers {
 			return Height((duration.unwrap() < maxDeadline - currentHeight.unwrap()) ? currentHeight.unwrap() + duration.unwrap() : maxDeadline);
 		}
 
-        template<typename TOfferMap>
-		state::SdaOfferBalance& ModifyOffer(TOfferMap& offers, const MosaicId& mosaicIdGive, const MosaicId& mosaicIdGet, const model::SdaOfferWithOwnerAndDuration* pSdaOffer) {
-            auto& offer = offers.at(mosaicIdGive);
-			offer -= *pSdaOffer;
-            auto& offer = offers.at(mosaicIdGet);
-			offer += *pSdaOffer;
-			return dynamic_cast<state::SdaOfferBalance&>(offer);
+        SdaOfferExpiryUpdater::BalancePair ModifyOffer(state::SdaOfferBalanceMap& existingOffer, state::SdaOfferBalanceMap& offerToExchange, const state::MosaicsPair mosaicId) {
+            auto& offer = existingOffer.at(mosaicId);
+            auto& offerExchange = offerToExchange.at(mosaicId);
+            
+			Amount mosaicExchange1 = offerExchange.CurrentMosaicGet <= offer.CurrentMosaicGive ? offerExchange.CurrentMosaicGet : offer.CurrentMosaicGive;
+            Amount mosaicExchange2 = offerExchange.CurrentMosaicGive <= offer.CurrentMosaicGet ? offerExchange.CurrentMosaicGive : offer.CurrentMosaicGet;
+            
+            offerExchange += mosaicExchange1;
+            offerExchange -= mosaicExchange1;
+
+            offer += mosaicExchange2;
+            offer -= mosaicExchange2;
+            
+            return SdaOfferExpiryUpdater::BalancePair{offer, offerExchange};
 		}
 	}
 
@@ -37,14 +44,14 @@ namespace catapult { namespace observers {
         /// Save offers in cache
         const auto* pSdaOffer = notification.SdaOffersPtr;
         for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
-            auto mosaicGiveId = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
-            auto mosaicGetId = context.Resolvers.resolve(pSdaOffer->MosaicGet.MosaicId);
+            auto mosaicIdGive = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
+            auto mosaicIdGet = context.Resolvers.resolve(pSdaOffer->MosaicGet.MosaicId);
 
             auto deadline = GetOfferDeadline(pSdaOffer->Duration, context.Height);
-            entry.addOffer(mosaicGiveId, pSdaOffer, deadline);
+            entry.addOffer(mosaicIdGive, mosaicIdGet, pSdaOffer, deadline);
             
             std::string reduced = reducedFraction(pSdaOffer->MosaicGive.Amount, pSdaOffer->MosaicGet.Amount);
-            auto groupHash = calculateGroupHash(mosaicGiveId, mosaicGetId, reduced);
+            auto groupHash = calculateGroupHash(mosaicIdGive, mosaicIdGet, reduced);
 
             auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
             if (!groupCache.contains(groupHash))
@@ -58,11 +65,12 @@ namespace catapult { namespace observers {
 
         /// Exchange offers when a match is found in cache
         const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SdaExchangeConfiguration>();
-        for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
-            auto mosaicIdGive = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
-            auto mosaicIdGet = context.Resolvers.resolve(pSdaOffer->MosaicGet.MosaicId);
+        for (auto&offersBySigner : entry.sdaOfferBalances()) {
+            auto mosaicIdGive = offersBySigner.first.first;
+            auto mosaicIdGet = offersBySigner.first.second;
 
-            std::string reduced = reducedFraction(pSdaOffer->MosaicGive.Amount, pSdaOffer->MosaicGet.Amount);
+            // Sort existing offers of the same group hash
+            std::string reduced = reducedFraction(offersBySigner.second.CurrentMosaicGive, offersBySigner.second.CurrentMosaicGet);
             auto groupHash = calculateGroupHash(mosaicIdGive, mosaicIdGet, reduced);
 
             auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
@@ -84,19 +92,26 @@ namespace catapult { namespace observers {
                     arrangedOffers = groupEntry.bigToSmallSortedByEarliestExpiry(groupHash, arrangedOffers);
                     break;
                 case config::SdaExchangeConfiguration::SortPolicies::ExactOrClosest:
-                    arrangedOffers = groupEntry.exactOrClosest(groupHash, state::SdaOfferBasicInfo{pSdaOffer->Owner, pSdaOffer->MosaicGive.Amount}, arrangedOffers);
+                    arrangedOffers = groupEntry.exactOrClosest(groupHash, offersBySigner.second.CurrentMosaicGive, arrangedOffers);
                     break;
             }
 
-            auto& groupOffer = arrangedOffers.at(groupHash);
-            for (auto& offerList : groupOffer) {
-                auto iter = cache.find(offerList.Owner);
-                auto& offer = iter.get();
-                auto& result = ModifyOffer(offer.sdaOfferBalances(), mosaicIdGive, mosaicIdGet, pSdaOffer);
-              
-                if (Amount(0) == result.CurrentMosaicGive) {
-                    entry.expireOffer(mosaicIdGive, context.Height);
-                    groupEntry.removeSdaOfferFromGroup(groupHash, entry.owner());
+            for (auto& offerList : arrangedOffers) {
+                for (auto& offer : offerList.second) {
+                    if (offer.Owner == notification.Signer) continue;
+
+                    auto iter = cache.find(offer.Owner);
+                    auto& existingOffer = iter.get();
+                    auto result = ModifyOffer(existingOffer.sdaOfferBalances(), entry.sdaOfferBalances(), offersBySigner.first);
+
+                    if (Amount(0) == result.first.CurrentMosaicGive && Amount(0) == result.first.CurrentMosaicGet) {
+                        existingOffer.expireOffer(offersBySigner.first, context.Height);
+                        groupEntry.removeSdaOfferFromGroup(groupHash, existingOffer.owner());
+                    }
+                    if (Amount(0) == result.second.CurrentMosaicGive && Amount(0) == result.second.CurrentMosaicGet) {
+                        entry.expireOffer(offersBySigner.first, context.Height);
+                        groupEntry.removeSdaOfferFromGroup(groupHash, entry.owner());
+                    }
                 }
             }
         }

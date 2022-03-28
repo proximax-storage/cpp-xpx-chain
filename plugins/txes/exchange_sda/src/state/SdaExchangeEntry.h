@@ -23,12 +23,12 @@ namespace catapult { namespace state {
 
 	public:
 		catapult::Amount cost(const catapult::Amount& amount) const;
-		SdaOfferBalance& operator+=(const model::SdaOfferWithOwnerAndDuration& offer);
-		SdaOfferBalance& operator-=(const model::SdaOfferWithOwnerAndDuration& offer);
+		SdaOfferBalance& operator+=(const Amount& offerAmount);
+		SdaOfferBalance& operator-=(const Amount& offerAmount);
 	};
 
-	SdaOfferBalance& operator+=(const model::SdaOfferWithOwnerAndDuration& offer, const model::SdaOfferWithOwnerAndDuration& poffer);
-	using SdaOfferBalanceMap = std::map<MosaicId, SdaOfferBalance>;
+	using MosaicsPair = std::pair<MosaicId, MosaicId>;
+	using SdaOfferBalanceMap = std::map<MosaicsPair, SdaOfferBalance>;
 	using ExpiredSdaOfferBalanceMap = std::map<Height, SdaOfferBalanceMap>;
 
 	// SDA-SDA Exchange entry.
@@ -72,11 +72,11 @@ namespace catapult { namespace state {
 		/// Gets the earliest height at which to prune expiring offers.
 		Height minPruneHeight() const;
 
-		/// Moves offer of \a type with \a mosaicId to expired offer buffer.
-		void expireOffer(const MosaicId& mosaicId, const Height& height);
+		/// Moves pair offer of \a mosaicIdGive and \a mosaicIdGet to expired offer buffer.
+		void expireOffer(const MosaicsPair& mosaicId, const Height& height);
 
-		/// Moves offer of \a type with \a mosaicId back from expired offer buffer.
-		void unexpireOffer(const MosaicId& mosaicId, const Height& height);
+		/// Moves pair offer of \a mosaicIdGive and \a mosaicIdGet back from expired offer buffer.
+		void unexpireOffer(const MosaicsPair& mosaicId, const Height& height);
 
 		void expireOffers(
 			const Height& height,
@@ -86,10 +86,10 @@ namespace catapult { namespace state {
 			const Height& height,
 			consumer<const SdaOfferBalanceMap::const_iterator&> sdaOfferBalanceAction);
 
-		bool offerExists(const MosaicId& mosaicId) const;
-		void addOffer(const MosaicId& mosaicId, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
-		void removeOffer(const MosaicId& mosaicId);
-		state::SdaOfferBalance& getSdaOfferBalance(const MosaicId& mosaicId);
+		bool offerExists(const MosaicsPair& mosaicId) const;
+		void addOffer(const MosaicId& mosaicIdGive, const MosaicId& mosaicIdGet, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
+		void removeOffer(const MosaicsPair& mosaicId);
+		state::SdaOfferBalance& getSdaOfferBalance(const MosaicsPair& mosaicId);
 		bool empty() const;
 
 	public:
