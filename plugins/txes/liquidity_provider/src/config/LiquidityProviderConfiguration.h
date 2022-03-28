@@ -10,6 +10,8 @@
 #include "catapult/model/PluginConfiguration.h"
 #include "catapult/types.h"
 
+#include <set>
+
 namespace catapult { namespace utils { class ConfigurationBag; } }
 
 namespace catapult { namespace config {
@@ -21,6 +23,12 @@ namespace catapult { namespace config {
 
 		/// Whether the plugin is enabled.
 		bool Enabled;
+
+		/// The public keys that are allowed to create liquidity providers
+		std::set<Key> ManagerPublicKeys;
+
+		/// The maximum history window size
+		uint16_t MaxWindowSize;
 
 	private:
 		LiquidityProviderConfiguration() = default;

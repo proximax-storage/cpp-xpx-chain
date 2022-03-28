@@ -5,16 +5,16 @@
 **/
 
 #pragma once
-#include "LPCache.h"
-#include "LPCacheStorage.h"
+#include "LiquidityProviderCache.h"
+#include "LiquidityProviderCacheStorage.h"
 #include "catapult/cache/SummaryAwareSubCachePluginAdapter.h"
 
 namespace catapult { namespace cache {
 
 	/// CacheStorage implementation for saving and loading summary network config cache data.
-	class LPCacheSummaryCacheStorage : public SummaryCacheStorage<LPCache> {
+	class LiquidityProviderCacheSummaryCacheStorage : public SummaryCacheStorage<LiquidityProviderCache> {
 	public:
-		using SummaryCacheStorage<LPCache>::SummaryCacheStorage;
+		using SummaryCacheStorage<LiquidityProviderCache>::SummaryCacheStorage;
 
 	public:
 		void saveAll(const CatapultCacheView& cacheView, io::OutputStream& output) const override;
@@ -24,15 +24,18 @@ namespace catapult { namespace cache {
 		void loadAll(io::InputStream& input, size_t) override;
 	};
 
-	using BaseLPCacheSubCachePlugin =
-		SummaryAwareSubCachePluginAdapter<LPCache, LPCacheStorage, LPCacheSummaryCacheStorage>;
+	using BaseLiquidityProviderCacheSubCachePlugin =
+		SummaryAwareSubCachePluginAdapter<
+			LiquidityProviderCache,
+			LiquidityProviderCacheStorage, LiquidityProviderCacheSummaryCacheStorage>;
 
 	/// Specialized network config cache sub cache plugin.
-	class LPCacheSubCachePlugin : public BaseLPCacheSubCachePlugin {
+	class LiquidityProviderCacheSubCachePlugin : public BaseLiquidityProviderCacheSubCachePlugin {
 	public:
-		/// Creates a plugin around \a config, \a pKeyCollector and \a pConfigHolder.
-		explicit LPCacheSubCachePlugin(
+		/// Creates a plugin around \a config, \a pcacheidCollector and \a pConfigHolder.
+		explicit LiquidityProviderCacheSubCachePlugin(
 			const CacheConfiguration& config,
+			const std::shared_ptr<LiquidityProviderKeyCollector>& pKeyCollector,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 	};
 }}

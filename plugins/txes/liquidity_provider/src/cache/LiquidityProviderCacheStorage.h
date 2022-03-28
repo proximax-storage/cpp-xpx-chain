@@ -5,15 +5,15 @@
 **/
 
 #pragma once
-#include "LPCacheTypes.h"
+#include "LiquidityProviderCacheTypes.h"
 #include "src/state/LPEntrySerializer.h"
 #include "catapult/cache/CacheStorageInclude.h"
 
 namespace catapult { namespace cache {
 
-	/// Policy for saving and loading drive cache data.
-	struct LPCacheStorage
-			: public CacheStorageForBasicInsertRemoveCache<LPCacheDescriptor>
+	/// Policy for saving and loading LiquidityProvider cache data.
+	struct LiquidityProviderCacheStorage
+		: public CacheStorageForBasicInsertRemoveCache<LiquidityProviderCacheDescriptor>
 			, public state::LiquidityProviderEntrySerializer {
 		/// Loads \a entry into \a cacheDelta.
 		static void LoadInto(const ValueType& entry, DestinationType& cacheDelta);

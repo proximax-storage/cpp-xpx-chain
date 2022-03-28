@@ -26,47 +26,49 @@ namespace catapult { namespace state {
 			BigUint currency = m_currencyAmount.unwrap();
 			return Amount{ ((currency * mosaicAmount.unwrap()) / m_mosaicAmount.unwrap()).convert_to<uint64_t>() };
 		}
+
+		bool operator <(const ExchangeRate& other) const {
+			BigUint aCurrency = m_currencyAmount.unwrap();
+			BigUint bCurrency = other.m_currencyAmount.unwrap();
+
+			return (aCurrency * other.m_mosaicAmount.unwrap()) < (bCurrency * other.m_mosaicAmount.unwrap());
+		}
 	};
-
-	bool operator <(const ExchangeRate& a, ExchangeRate& b) {
-		BigUint aCurrency = a.m_currencyAmount.unwrap();
-		BigUint bCurrency = b.m_currencyAmount.unwrap();
-
-		return (aCurrency * b.m_mosaicAmount.unwrap()) < (bCurrency * a.m_mosaicAmount.unwrap());
-	}
 
 	struct HistoryObservation {
 
 		// Rate at the beginning of the observation
-		ExchangeRate m_rate;
+		ExchangeRate m_rate = {Amount{0}, Amount{0}};
 
-		Amount m_turnover;
+		Amount m_turnover = Amount{0};
 	};
 
 	// Mixin for storing drive details.
 	class LiquidityProviderMixin {
 	public:
 		LiquidityProviderMixin()
-			: m_initiallyMinted(0)
-			, m_additionallyMinted(0)
+			: m_additionallyMinted(0)
+			, m_slashingPeriod(0)
+			, m_windowSize(0)
+			, m_creationHeight(0)
+			, m_alpha(0)
+			, m_beta(0)
 		{}
 
 	public:
-		/// Sets \a owner of the liquidity pool.
+		const Key& providerKey() const {
+			return m_providerKey;
+		}
+		void setProviderKey(const Key& providerKey) {
+			m_providerKey = providerKey;
+		}
+
 		void setOwner(const Key& owner) {
 			m_owner = owner;
 		}
 
-		/// Gets \a owner of the liquidity pool.
 		const Key& owner() const {
 			return m_owner;
-		}
-
-		const Amount& initiallyMinted() const {
-			return m_initiallyMinted;
-		}
-		void setInitiallyMinted(const Amount& initiallyMinted) {
-			m_initiallyMinted = initiallyMinted;
 		}
 
 		const Amount& additionallyMinted() const {
@@ -124,14 +126,32 @@ namespace catapult { namespace state {
 			return m_recentTurnover;
 		}
 
+		uint32_t alpha() const {
+			return m_alpha;
+		}
+
+		void setAlpha(uint32_t alpha) {
+			m_alpha = alpha;
+		}
+
+		uint32_t beta() const {
+			return m_beta;
+		}
+
+		void setBeta(uint32_t beta) {
+			m_beta = beta;
+		}
+
 	private:
+		Key m_providerKey;
 		Key m_owner;
-		Amount m_initiallyMinted;
 		Amount m_additionallyMinted;
 		uint32_t m_slashingPeriod;
 		uint16_t m_windowSize;
 		Height m_creationHeight;
 		Key m_slashingAccount;
+		uint32_t m_alpha;
+		uint32_t m_beta;
 
 		std::deque<HistoryObservation> m_turnoverHistory;
 		HistoryObservation m_recentTurnover;
@@ -141,12 +161,12 @@ namespace catapult { namespace state {
 	class LiquidityProviderEntry : public LiquidityProviderMixin {
 	public:
 		// Creates a drive entry around \a key.
-		explicit LiquidityProviderEntry(const MosaicId& mosaicId) : m_mosaicId(mosaicId), m_version(1)
+		explicit LiquidityProviderEntry(const UnresolvedMosaicId& mosaicId) : m_mosaicId(mosaicId), m_version(1)
 		{}
 
 	public:
 		// Gets the drive public key.
-		const MosaicId& mosaicId() const {
+		const UnresolvedMosaicId& mosaicId() const {
 			return m_mosaicId;
 		}
 
@@ -159,7 +179,7 @@ namespace catapult { namespace state {
 		}
 
 	private:
-		MosaicId m_mosaicId;
+		UnresolvedMosaicId m_mosaicId;
 		VersionType m_version;
 	};
 }}

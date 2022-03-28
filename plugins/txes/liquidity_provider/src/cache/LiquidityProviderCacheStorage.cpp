@@ -4,12 +4,12 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "LPCacheStorage.h"
-#include "LPCacheDelta.h"
+#include "LiquidityProviderCacheStorage.h"
+#include "LiquidityProviderCacheDelta.h"
 
 namespace catapult { namespace cache {
 
-	void LPCacheStorage::LoadInto(const ValueType& entry, DestinationType& cacheDelta) {
+	void LiquidityProviderCacheStorage::LoadInto(const ValueType& entry, DestinationType& cacheDelta) {
 		cacheDelta.insert(entry);
 	}
 }}

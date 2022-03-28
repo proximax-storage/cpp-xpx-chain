@@ -10,11 +10,11 @@
 namespace catapult { namespace config {
 
 	LiquidityProviderConfiguration LiquidityProviderConfiguration::Uninitialized() {
-		return StorageConfiguration();
+		return {};
 	}
 
 	LiquidityProviderConfiguration LiquidityProviderConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
-		StorageConfiguration config;
+		LiquidityProviderConfiguration config;
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
 		LOAD_PROPERTY(Enabled);

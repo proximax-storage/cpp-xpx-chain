@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "StorageEntityType.h"
+#include "LiquidityProviderEntityType.h"
 #include "catapult/model/Transaction.h"
 
 namespace catapult { namespace model {
@@ -22,15 +22,18 @@ namespace catapult { namespace model {
 		explicit CreateLiquidityProviderTransactionBody<THeader>() {};
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_DataModificationCancel, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_CreateLiquidityProvider, 1)
 
 	public:
-		///
-		Amount currencyDeposit;
-		Amount initialMosaicsMinting;
-		uint32_t slashingPeriod;
-		uint16_t m_windowSize;
-		Key m_slashingAccount;
+		UnresolvedMosaicId ProviderMosaicId;
+		Amount CurrencyDeposit;
+		Amount InitialMosaicsMinting;
+		uint32_t SlashingPeriod;
+		uint16_t WindowSize;
+		Key SlashingAccount;
+		uint32_t Alpha;
+		uint32_t Beta;
+
 
 	public:
 		// Calculates the real size of a storage \a transaction.
@@ -39,7 +42,7 @@ namespace catapult { namespace model {
 		}
 	};
 
-	DEFINE_EMBEDDABLE_TRANSACTION(LiquidityProvider)
+	DEFINE_EMBEDDABLE_TRANSACTION(CreateLiquidityProvider)
 
 #pragma pack(pop)
 }}

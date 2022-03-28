@@ -56,6 +56,7 @@ namespace catapult { namespace validators {
 		COPY_FACILITY_CODE(BcDrive),
 		COPY_FACILITY_CODE(DownloadChannel),
 		COPY_FACILITY_CODE(Streaming),
+		COPY_FACILITY_CODE(LiquidityProvider),
 
 		/// Chain facility code.
 		Chain = 0xFF,

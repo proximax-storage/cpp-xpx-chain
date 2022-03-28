@@ -5,13 +5,13 @@
 **/
 
 #pragma once
-#include "LPCacheTypes.h"
+#include "LiquidityProviderCacheTypes.h"
 #include "src/state/LPEntrySerializer.h"
 #include "catapult/cache/CacheSerializerAdapter.h"
 
 namespace catapult { namespace cache {
 
-	/// Primary serializer for drive cache.
-	struct LPEntryPrimarySerializer : public CacheSerializerAdapter<state::LiquidityProviderEntrySerializer, LPCacheDescriptor>
+	/// Primary serializer for LiquidityProvider cache.
+	struct LiquidityProviderEntryPrimarySerializer : public CacheSerializerAdapter<state::LiquidityProviderEntrySerializer, LiquidityProviderCacheDescriptor>
 	{};
 }}

@@ -84,6 +84,8 @@ namespace catapult { namespace model {
 		/// Streaming facility code
 		Streaming = 0x66,
 		/// Queue facility code.
-		Queue = 0x67
+		Queue = 0x67,
+		/// Liquidity Provider facility code
+		LiquidityProvider = 0x68
 	};
 }}

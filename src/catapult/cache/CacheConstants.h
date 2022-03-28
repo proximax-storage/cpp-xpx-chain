@@ -51,7 +51,7 @@ namespace catapult { namespace cache {
 		DownloadChannel,
 		Replicator,
 		Queue,
-		LP,
+		LiquidityProvider,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

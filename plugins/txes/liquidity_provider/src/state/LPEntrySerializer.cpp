@@ -20,7 +20,6 @@ namespace catapult { namespace state {
 		io::Write64(output, entry.mosaicId().unwrap());
 
 		io::Write(output, entry.owner());
-		io::Write64(output, entry.initiallyMinted().unwrap());
 		io::Write64(output, entry.additionallyMinted().unwrap());
 		io::Write(output, entry.slashingAccount());
 	}
@@ -32,7 +31,7 @@ namespace catapult { namespace state {
 		if (version > 1)
 			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of DriveEntry", version);
 
-		MosaicId mosaicId = MosaicId{io::Read64(input)};
+		UnresolvedMosaicId mosaicId = UnresolvedMosaicId{io::Read64(input)};
 		state::LiquidityProviderEntry entry(mosaicId);
 		entry.setVersion(version);
 
@@ -40,7 +39,6 @@ namespace catapult { namespace state {
 		input.read(owner);
 		entry.setOwner(owner);
 
-		entry.setInitiallyMinted(Amount{io::Read64(input)});
 		entry.setAdditionallyMinted(Amount{io::Read64(input)});
 
 		Key slashingAccount;

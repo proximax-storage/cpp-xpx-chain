@@ -4,11 +4,14 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "DataModificationCancelTransactionPlugin.h"
-#include "catapult/model/StorageNotifications.h"
-#include "src/model/DataModificationCancelTransaction.h"
+#include <catapult/model/Address.h>
+#include "src/model/CreateLiquidityProviderTransaction.h"
+#include "CreateLiquidityProviderTransactionPlugin.h"
 #include "catapult/model/NotificationSubscriber.h"
+#include "src/model/LiquidityProviderNotifications.h"
 #include "catapult/model/TransactionPluginFactory.h"
+#include "sdk/src/extensions/ConversionExtensions.h"
+#include "catapult/model/EntityHasher.h"
 
 using namespace catapult::model;
 
@@ -16,21 +19,46 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
-			switch (transaction.EntityVersion()) {
-			case 1: {
-				sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
-				sub.notify(DataModificationCancelNotification<1>(
-						transaction.DriveKey, transaction.Signer, transaction.DataModificationId));
-				break;
-			}
+		auto CreatePublisher(const config::ImmutableConfiguration& config) {
+			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+				switch (transaction.EntityVersion()) {
+				case 1: {
+					auto providerKey = Key(CalculateHash(transaction, config.GenerationHash).array());
+					sub.notify(AccountPublicKeyNotification<1>(providerKey));
 
-			default:
-				CATAPULT_LOG(debug) << "invalid version of DataModificationCancelTransaction: "
-									<< transaction.EntityVersion();
-			}
+					const auto providerAddress = extensions::CopyToUnresolvedAddress(
+							PublicKeyToAddress(providerKey, config.NetworkIdentifier));
+					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
+
+					sub.notify(BalanceTransferNotification<1>(
+							transaction.Signer, providerAddress, currencyMosaicId, transaction.CurrencyDeposit));
+
+					sub.notify(BalanceTransferNotification<1>(transaction.Signer, providerAddress, currencyMosaicId, transaction.CurrencyDeposit));
+
+					sub.notify(BalanceCreditNotification<1>(providerKey, transaction.ProviderMosaicId, transaction.InitialMosaicsMinting));
+
+					sub.notify(CreateLiquidityProviderNotification<1>(
+							providerKey,
+							transaction.Signer,
+							transaction.ProviderMosaicId,
+							transaction.CurrencyDeposit,
+							transaction.InitialMosaicsMinting,
+							transaction.SlashingPeriod,
+							transaction.WindowSize,
+							transaction.SlashingAccount,
+							transaction.Alpha,
+							transaction.Beta));
+
+					break;
+				}
+
+				default:
+					CATAPULT_LOG(debug) << "invalid version of CreateLiquidityProviderTransaction: "
+										<< transaction.EntityVersion();
+				}
+			};
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(DataModificationCancel, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(CreateLiquidityProvider, Default, CreatePublisher, config::ImmutableConfiguration)
 }}
