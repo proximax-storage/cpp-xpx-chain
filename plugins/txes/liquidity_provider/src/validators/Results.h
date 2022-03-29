@@ -26,6 +26,12 @@ namespace catapult { namespace validators {
 	// The Liquidity Provider History Window Size Is Invalid
 	DEFINE_LIQUIDITY_PROVIDER_RESULT(Invalid_Window_Size, 4);
 
+	// The Liquidity Provider Is Not Registered
+	DEFINE_LIQUIDITY_PROVIDER_RESULT(Liquidity_Provider_Is_Not_Registered, 5);
+
+	// Insufficient Currency on Balance
+	DEFINE_LIQUIDITY_PROVIDER_RESULT(Insufficient_Currency, 6);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

@@ -19,24 +19,24 @@
 **/
 
 #pragma once
+#include "src/catapult/validators/LiquidityProviderExchangeValidator.h"
 
-namespace catapult::utils {
+namespace catapult { namespace validators {
 
-	uint64_t sqrt(uint64_t value) {
-		const uint64_t maxRoot = 4294967295UL;
-		uint64_t left = 0;
-		// Right bound is unreachable
-		uint64_t right = std::min(value, maxRoot) + 1;
+	class LiquidityProviderExchangeValidatorImpl : public LiquidityProviderExchangeValidator {
+	public:
+		ValidationResult validateCreditMosaics(
+				const cache::ReadOnlyCatapultCache& cache,
+				const Key& debtor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount,
+				const MosaicId& currencyId) override;
 
-		while (left + 1 < right) {
-			uint64_t m = (left + right) / 2;
-			if (m * m <= value) {
-				left = m;
-			}
-			else {
-				right = m;
-			}
-		}
-		return left;
+		ValidationResult validateDebitMosaics(
+				const cache::ReadOnlyCatapultCache& cache,
+				const model::ResolverContext& resolvers,
+				const Key& creditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) override;
 	}
-}
+}}

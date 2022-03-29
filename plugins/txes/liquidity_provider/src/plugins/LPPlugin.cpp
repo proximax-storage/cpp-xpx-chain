@@ -28,7 +28,7 @@ namespace catapult { namespace plugins {
 			manager.cacheConfig(cache::LiquidityProviderCache::Name), pKeyCollector, pConfigHolder));
 
 		using LiquidityProviderCacheHandlersService = CacheHandlers<cache::LiquidityProviderCacheDescriptor>;
-		LiquidityProviderCacheHandlersService::Register<model::FacilityCode::BcDrive>(manager);
+		LiquidityProviderCacheHandlersService::Register<model::FacilityCode::LiquidityProvider>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("LP C"), [&cache]() {
