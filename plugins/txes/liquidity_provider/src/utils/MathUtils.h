@@ -20,23 +20,22 @@
 
 #pragma once
 
+#include <cstdint>
 namespace catapult::utils {
 
-	uint64_t sqrt(uint64_t value) {
-		const uint64_t maxRoot = 4294967295UL;
-		uint64_t left = 0;
-		// Right bound is unreachable
-		uint64_t right = std::min(value, maxRoot) + 1;
+	uint64_t sqrt(uint64_t value);
+	uint64_t pow(uint64_t a, uint64_t b);
 
-		while (left + 1 < right) {
-			uint64_t m = (left + right) / 2;
-			if (m * m <= value) {
-				left = m;
-			}
-			else {
-				right = m;
-			}
+	template<class T>
+	T ceilDivision(T numerator, T denominator) {
+		if (numerator == 0) {
+			return 0;
 		}
-		return left;
+		return (numerator - 1) / denominator + 1;
 	}
-}
+
+	template<class T>
+	T floorDivision(T numerator, T denominator) {
+		return numerator / denominator;
+	}
+} // namespace catapult::utils

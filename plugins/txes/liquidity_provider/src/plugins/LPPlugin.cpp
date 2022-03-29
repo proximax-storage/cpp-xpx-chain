@@ -4,7 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <src/cache/LiquidityProviderCacheSubCachePlugin.h>
+#include <src/observers/LiquidityProviderExchangeObserverImpl.h>
+#include "src/cache/LiquidityProviderCacheSubCachePlugin.h"
+#include "src/validators/LiquidityProviderExchangeValidatorImpl.h"
+#include "src/observers/LiquidityProviderExchangeObserverImpl.h"
 #include "CreateLiquidityProviderTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
@@ -22,6 +25,9 @@ namespace catapult { namespace plugins {
 		const auto& immutableConfig = manager.immutableConfig();
 
 		manager.addTransactionSupport(CreateCreateLiquidityProviderTransactionPlugin(immutableConfig));
+
+		manager.setLiquidityProviderExchangeValidator(std::make_shared<validators::LiquidityProviderExchangeValidatorImpl>());
+		manager.setLiquidityProviderExchangeObserver(std::make_shared<observers::LiquidityProviderExchangeObserverImpl>());
 
 		auto pKeyCollector = std::make_shared<cache::LiquidityProviderKeyCollector>();
 		manager.addCacheSupport(std::make_unique<cache::LiquidityProviderCacheSubCachePlugin>(

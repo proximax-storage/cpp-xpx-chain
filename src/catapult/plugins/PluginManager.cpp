@@ -341,4 +341,25 @@ namespace catapult { namespace plugins {
 	}
 
 	// endregion
+
+	// region liquidity provider
+	void PluginManager::setLiquidityProviderExchangeValidator(
+			const std::shared_ptr<validators::LiquidityProviderExchangeValidator>& validator) {
+		m_pLiquidityProviderExchangeValidator = validator;
+	}
+
+	const validators::LiquidityProviderExchangeValidator& PluginManager::liquidityProviderExchangeValidator() const {
+		return *m_pLiquidityProviderExchangeValidator;
+	}
+
+	void PluginManager::setLiquidityProviderExchangeObserver(
+			const std::shared_ptr<observers::LiquidityProviderExchangeObserver>& observer) {
+		m_pLiquidityProviderExchangeObserver = observer;
+	}
+
+	const observers::LiquidityProviderExchangeObserver& PluginManager::liquidityProviderExchangeObserver() const {
+		return *m_pLiquidityProviderExchangeObserver;
+	}
+
+	// endregion
 }}

@@ -30,6 +30,9 @@ namespace catapult { namespace config {
 		/// The maximum history window size
 		uint16_t MaxWindowSize;
 
+		/// Describes the number of digits after dot for percent. For example, 2 allows the following notation 15.34%
+		uint8_t PercentsDigitsAfterDot;
+
 	private:
 		LiquidityProviderConfiguration() = default;
 

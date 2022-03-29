@@ -19,29 +19,27 @@
 **/
 
 #pragma once
-#include "src/catapult/cache/CatapultCache.h"
 #include "ValidationResult.h"
+#include "ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	class LiquidityProviderExchangeValidator {
 	public:
 
-		virtual ~LiquidityProviderExchangeValidator()
-		{}
+		virtual ~LiquidityProviderExchangeValidator() = default;
 
 		// Verifies whether the debtor has enough CURRENCY to buy the approppriate amount of Mosaics
-		virtual ValidationResult validateCreditMosaics(const cache::ReadOnlyCatapultCache& cache,
+		virtual ValidationResult validateCreditMosaics(const ValidatorContext& context,
 													   const Key& debtor,
 													   const UnresolvedMosaicId& mosaicId,
 													   const Amount& mosaicAmount,
-													   const MosaicId& currencyId) = 0;
+													   const MosaicId& currencyId) const = 0;
 
 		// Verifies whether the creditor has enough MOSAIC to sell
-		virtual ValidationResult validateDebitMosaics(const cache::ReadOnlyCatapultCache& cache,
-													  const model::ResolverContext& resolvers,
+		virtual ValidationResult validateDebitMosaics(const ValidatorContext& context,
 													  const Key& creditor,
 													  const UnresolvedMosaicId& mosaicId,
-													  const Amount& mosaicAmount) = 0;
-	}
+													  const Amount& mosaicAmount) const = 0;
+	};
 }}

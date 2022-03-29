@@ -23,11 +23,16 @@
 #include "src/state/LPEntry.h"
 
 namespace catapult::utils {
-	Amount computeCreditCurrencyAmount(const state::LiquidityProviderEntry& lpEntry, const Amount& mosaicAmount) {
 
-	}
+	Amount computeCreditCurrencyAmount(const state::LiquidityProviderEntry& lpEntry,
+									   const Amount& currencyBalance,
+									   const Amount& mosaicBalance,
+									   const Amount& mosaicAmount,
+									   uint8_t percentsDigitAfterDot);
 
-	Amount computeDebitCurrencyAmount(const state::LiquidityProviderEntry& lpEntry, const Amount& mosaicAmount) {
-
-	}
-}
+	Amount computeDebitCurrencyAmount(const state::LiquidityProviderEntry& lpEntry,
+									  const Amount& currencyBalance,
+									  const Amount& mosaicBalance,
+									  const Amount& mosaicAmount,
+									  uint8_t percentsDigitAfterDot);
+} // namespace catapult::utils

@@ -19,23 +19,26 @@
 **/
 
 #pragma once
-#include "src/catapult/validators/LiquidityProviderExchangeValidator.h"
+#include "ObserverContext.h"
 
-namespace catapult { namespace validators {
+namespace catapult { namespace observers {
 
-	class LiquidityProviderExchangeValidatorImpl : public LiquidityProviderExchangeValidator {
+	class LiquidityProviderExchangeObserver {
 	public:
-		ValidationResult validateCreditMosaics(
-				const ValidatorContext& context,
+		virtual ~LiquidityProviderExchangeObserver() = default;
+
+		virtual void creditMosaics(
+				ObserverContext& context,
 				const Key& debtor,
 				const UnresolvedMosaicId& mosaicId,
 				const Amount& mosaicAmount,
-				const MosaicId& currencyId) const override;
+				const MosaicId& currencyId) const = 0;
 
-		ValidationResult validateDebitMosaics(
-				const ValidatorContext& context,
+		virtual void debitMosaics(
+				ObserverContext& context,
 				const Key& creditor,
 				const UnresolvedMosaicId& mosaicId,
-				const Amount& mosaicAmount) const override;
+				const Amount& mosaicAmount,
+				const MosaicId& currencyId) const = 0;
 	};
-}}
+}} // namespace catapult::observers
