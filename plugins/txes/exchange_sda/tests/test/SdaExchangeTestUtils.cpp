@@ -22,21 +22,14 @@ namespace catapult { namespace test {
 	state::SdaExchangeEntry CreateSdaExchangeEntry(uint8_t sdaOfferCount, uint8_t expiredSdaOfferCount, Key key, VersionType version) {
 		state::SdaExchangeEntry entry(key, version);
 		for (uint8_t i = 1; i <= sdaOfferCount; ++i) {
-            entry.sdaOfferBalances().emplace(MosaicId(i), state::SdaOfferBalance{test::GenerateSdaOfferBalance()});
+            entry.sdaOfferBalances().emplace(state::MosaicsPair{MosaicId(i), MosaicId(i)}, state::SdaOfferBalance{test::GenerateSdaOfferBalance()});
 		}
 		for (uint8_t i = 1; i <= expiredSdaOfferCount; ++i) {
 			state::SdaOfferBalanceMap sdaOfferBalances;
-			sdaOfferBalances.emplace(MosaicId(i), state::SdaOfferBalance{test::GenerateSdaOfferBalance()});
+			sdaOfferBalances.emplace(state::MosaicsPair{MosaicId(i), MosaicId(i)}, state::SdaOfferBalance{test::GenerateSdaOfferBalance()});
 			entry.expiredSdaOfferBalances().emplace(Height(i), sdaOfferBalances);
 		}
 		return entry;
-	}
-
-	void AssertSdaOffer(const model::SdaOffer& offer1, const model::SdaOffer& offer2) {
-		EXPECT_EQ(offer1.MosaicGive.MosaicId, offer2.MosaicGive.MosaicId);
-		EXPECT_EQ(offer1.MosaicGive.Amount, offer2.MosaicGive.Amount);
-		EXPECT_EQ(offer1.MosaicGet.MosaicId, offer2.MosaicGet.MosaicId);
-		EXPECT_EQ(offer1.MosaicGet.Amount, offer2.MosaicGet.Amount);
 	}
 
 	void AssertSdaOfferBalance(const state::SdaOfferBalance& offer1, const state::SdaOfferBalance& offer2) {
@@ -44,6 +37,7 @@ namespace catapult { namespace test {
 		EXPECT_EQ(offer1.CurrentMosaicGet, offer2.CurrentMosaicGet);
 		EXPECT_EQ(offer1.InitialMosaicGive, offer2.InitialMosaicGive);
 		EXPECT_EQ(offer1.InitialMosaicGet, offer2.InitialMosaicGet);
+		EXPECT_EQ(offer1.Deadline, offer2.Deadline);
 	}
 
 	namespace {

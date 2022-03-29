@@ -17,7 +17,7 @@ namespace catapult { namespace observers {
             auto* pEntry = cacheIter.tryGet();
             // Entry can not exist because in old versions of blockchain we remove exchange entry
             if (!pEntry)
-            continue;
+                continue;
 
             auto& entry = *pEntry;
             SdaOfferExpiryUpdater sdaOfferExpiryUpdater(cache, entry);
@@ -29,7 +29,7 @@ namespace catapult { namespace observers {
                 };
                 entry.expireOffers(context.Height, onSdaOfferBalancesExpired);
 
-                CreditAccount(entry.owner(), map.first, amount, context);
+                CreditAccount(entry.owner(), map.first.first, amount, context);
             }
         }
 

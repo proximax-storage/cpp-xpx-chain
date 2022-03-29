@@ -28,7 +28,6 @@ namespace catapult { namespace test {
 	state::SdaExchangeEntry CreateSdaExchangeEntry(uint8_t sdaOfferCount = 5, uint8_t expiredSdaOfferCount = 5, Key key = test::GenerateRandomByteArray<Key>(), VersionType version = 1);
 
 	/// Verifies that \a offer1 is equivalent to \a offer2.
-	void AssertSdaOffer(const model::SdaOffer& offer1, const model::SdaOffer& offer2);
 	void AssertSdaOfferBalance(const state::SdaOfferBalance& offer1, const state::SdaOfferBalance& offer2);
 
 	/// Verifies that \a entry1 is equivalent to \a entry2.
