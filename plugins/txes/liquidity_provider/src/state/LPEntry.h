@@ -141,10 +141,10 @@ namespace catapult { namespace state {
 		Key m_providerKey;
 		Key m_owner;
 		Amount m_additionallyMinted;
+		Key m_slashingAccount;
 		uint32_t m_slashingPeriod;
 		uint16_t m_windowSize;
 		Height m_creationHeight;
-		Key m_slashingAccount;
 		uint32_t m_alpha;
 		uint32_t m_beta;
 
