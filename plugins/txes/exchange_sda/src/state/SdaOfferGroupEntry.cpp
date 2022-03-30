@@ -62,7 +62,10 @@ namespace catapult { namespace state {
 
     void SdaOfferGroupEntry::addSdaOfferToGroup(const Hash256& groupHash, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline) {
         state::SdaOfferBasicInfo offer{ pOffer->Owner, pOffer->MosaicGive.Amount, deadline };
-        m_sdaOfferGroup.emplace(groupHash, offer);
+        if (!m_sdaOfferGroup.count(groupHash) == 0)
+            m_sdaOfferGroup.emplace(groupHash, offer);
+        else
+            (m_sdaOfferGroup.find(groupHash)->second).emplace_back(offer);
     }
 
     void SdaOfferGroupEntry::removeSdaOfferFromGroup(const Hash256& groupHash, const Key& offerOwner) {

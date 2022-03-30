@@ -28,6 +28,7 @@ namespace catapult { namespace test {
 	state::SdaExchangeEntry CreateSdaExchangeEntry(uint8_t sdaOfferCount = 5, uint8_t expiredSdaOfferCount = 5, Key key = test::GenerateRandomByteArray<Key>(), VersionType version = 1);
 
 	/// Verifies that \a offer1 is equivalent to \a offer2.
+	void AssertSdaOffer(const model::SdaOffer& offer1, const model::SdaOffer& offer2);
 	void AssertSdaOfferBalance(const state::SdaOfferBalance& offer1, const state::SdaOfferBalance& offer2);
 
 	/// Verifies that \a entry1 is equivalent to \a entry2.
@@ -80,6 +81,19 @@ namespace catapult { namespace test {
 			return cache::CatapultCache(std::move(subCaches));
 		}
 	};
+
+
+	/// Generates an offer group for sorting.
+	state::SdaOfferBasicInfo GenerateSdaOfferBasicInfo();
+
+	/// Creates test SDA-SDA offer group entry.
+	state::SdaOfferGroupEntry CreateSdaOfferGroupEntry(uint8_t offerCount = 5, Hash256 groupHash = test::GenerateRandomByteArray<Hash256>());
+
+	/// Verifies that \a offerGroup1 is equivalent to \a offerGroup2.
+	void AssertSdaOfferBasicInfo(const std::vector<state::SdaOfferBasicInfo>& offerGroup1, const std::vector<state::SdaOfferBasicInfo>& offerGroup2);
+
+	/// Verifies that \a entry1 is equivalent to \a entry2.
+	void AssertEqualSdaOfferGroupData(const state::SdaOfferGroupEntry& entry1, const state::SdaOfferGroupEntry& entry2);
 }}
 
 

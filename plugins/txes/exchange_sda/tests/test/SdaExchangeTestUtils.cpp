@@ -9,61 +9,110 @@
 
 namespace catapult { namespace test {
 
-	state::SdaOfferBalance GenerateSdaOfferBalance() {
-		return state::SdaOfferBalance{
-			test::GenerateRandomValue<Amount>(),
-			test::GenerateRandomValue<Amount>(),
-			test::GenerateRandomValue<Amount>(),
+    state::SdaOfferBalance GenerateSdaOfferBalance() {
+        return state::SdaOfferBalance{
             test::GenerateRandomValue<Amount>(),
-			test::GenerateRandomValue<Height>(),
-		};
-	}
+            test::GenerateRandomValue<Amount>(),
+            test::GenerateRandomValue<Amount>(),
+            test::GenerateRandomValue<Amount>(),
+            test::GenerateRandomValue<Height>(),
+        };
+    }
 
-	state::SdaExchangeEntry CreateSdaExchangeEntry(uint8_t sdaOfferCount, uint8_t expiredSdaOfferCount, Key key, VersionType version) {
-		state::SdaExchangeEntry entry(key, version);
-		for (uint8_t i = 1; i <= sdaOfferCount; ++i) {
+    state::SdaExchangeEntry CreateSdaExchangeEntry(uint8_t sdaOfferCount, uint8_t expiredSdaOfferCount, Key key, VersionType version) {
+        state::SdaExchangeEntry entry(key, version);
+        for (uint8_t i = 1; i <= sdaOfferCount; ++i) {
             entry.sdaOfferBalances().emplace(state::MosaicsPair{MosaicId(i), MosaicId(i)}, state::SdaOfferBalance{test::GenerateSdaOfferBalance()});
-		}
-		for (uint8_t i = 1; i <= expiredSdaOfferCount; ++i) {
-			state::SdaOfferBalanceMap sdaOfferBalances;
-			sdaOfferBalances.emplace(state::MosaicsPair{MosaicId(i), MosaicId(i)}, state::SdaOfferBalance{test::GenerateSdaOfferBalance()});
-			entry.expiredSdaOfferBalances().emplace(Height(i), sdaOfferBalances);
-		}
-		return entry;
-	}
+        }
+        for (uint8_t i = 1; i <= expiredSdaOfferCount; ++i) {
+            state::SdaOfferBalanceMap sdaOfferBalances;
+            sdaOfferBalances.emplace(state::MosaicsPair{MosaicId(i), MosaicId(i)}, state::SdaOfferBalance{test::GenerateSdaOfferBalance()});
+            entry.expiredSdaOfferBalances().emplace(Height(i), sdaOfferBalances);
+        }
+        return entry;
+    }
 
-	void AssertSdaOfferBalance(const state::SdaOfferBalance& offer1, const state::SdaOfferBalance& offer2) {
-		EXPECT_EQ(offer1.CurrentMosaicGive, offer2.CurrentMosaicGive);
-		EXPECT_EQ(offer1.CurrentMosaicGet, offer2.CurrentMosaicGet);
-		EXPECT_EQ(offer1.InitialMosaicGive, offer2.InitialMosaicGive);
-		EXPECT_EQ(offer1.InitialMosaicGet, offer2.InitialMosaicGet);
-		EXPECT_EQ(offer1.Deadline, offer2.Deadline);
-	}
+    void AssertSdaOffer(const model::SdaOffer& offer1, const model::SdaOffer& offer2) {
+        EXPECT_EQ(offer1.MosaicGive.MosaicId, offer2.MosaicGive.MosaicId);
+        EXPECT_EQ(offer1.MosaicGive.Amount, offer2.MosaicGive.Amount);
+        EXPECT_EQ(offer1.MosaicGive.MosaicId, offer2.MosaicGive.MosaicId);
+        EXPECT_EQ(offer1.MosaicGive.Amount, offer2.MosaicGive.Amount);
+    }
 
-	namespace {
-		template<typename TOfferMap>
-		void AssertOffers(const TOfferMap& offers1, const TOfferMap& offers2) {
-			ASSERT_EQ(offers1.size(), offers2.size());
-			for (const auto& pair : offers1) {
-				AssertSdaOfferBalance(pair.second, offers2.find(pair.first)->second);
-			}
-		}
+    void AssertSdaOfferBalance(const state::SdaOfferBalance& offer1, const state::SdaOfferBalance& offer2) {
+        EXPECT_EQ(offer1.CurrentMosaicGive, offer2.CurrentMosaicGive);
+        EXPECT_EQ(offer1.CurrentMosaicGet, offer2.CurrentMosaicGet);
+        EXPECT_EQ(offer1.InitialMosaicGive, offer2.InitialMosaicGive);
+        EXPECT_EQ(offer1.InitialMosaicGet, offer2.InitialMosaicGet);
+        EXPECT_EQ(offer1.Deadline, offer2.Deadline);
+    }
 
-		template<typename TExpiredOfferMap>
-		void AssertExpiredOffers(const TExpiredOfferMap& offers1, const TExpiredOfferMap& offers2) {
-			ASSERT_EQ(offers1.size(), offers2.size());
-			for (const auto& pair : offers1) {
-				AssertSdaOfferBalance(pair.second, offers2.find(pair.first)->second);
-			}
-		}
-	}
+    namespace {
+        void AssertOffers(const state::SdaOfferBalanceMap& offers1, const state::SdaOfferBalanceMap& offers2) {
+            ASSERT_EQ(offers1.size(), offers2.size());
+            for (const auto& pair : offers1) {
+                AssertSdaOfferBalance(pair.second, offers2.find(pair.first)->second);
+            }
+        }
 
-	void AssertEqualExchangeData(const state::SdaExchangeEntry& entry1, const state::SdaExchangeEntry& entry2) {
-		EXPECT_EQ(entry1.version(), entry2.version());
-		EXPECT_EQ(entry1.owner(), entry2.owner());
-		AssertOffers(entry1.sdaOfferBalances(), entry2.sdaOfferBalances());
-		AssertExpiredOffers(entry1.expiredSdaOfferBalances(), entry2.expiredSdaOfferBalances());
-	}
+        void AssertExpiredOffers(const state::ExpiredSdaOfferBalanceMap& offers1, const state::ExpiredSdaOfferBalanceMap& offers2) {
+            ASSERT_EQ(offers1.size(), offers2.size());
+            for (const auto& pair : offers1) {
+                AssertOffers(pair.second, offers2.find(pair.first)->second);
+            }
+        }
+    }
+
+    void AssertEqualExchangeData(const state::SdaExchangeEntry& entry1, const state::SdaExchangeEntry& entry2) {
+        EXPECT_EQ(entry1.version(), entry2.version());
+        EXPECT_EQ(entry1.owner(), entry2.owner());
+        AssertOffers(entry1.sdaOfferBalances(), entry2.sdaOfferBalances());
+        AssertExpiredOffers(entry1.expiredSdaOfferBalances(), entry2.expiredSdaOfferBalances());
+    }
+
+    state::SdaOfferBasicInfo GenerateSdaOfferBasicInfo() {
+        return state::SdaOfferBasicInfo{
+            test::GenerateRandomByteArray<Key>(),
+            test::GenerateRandomValue<Amount>(),
+            test::GenerateRandomValue<Height>(),
+        };
+    }
+
+    state::SdaOfferGroupEntry CreateSdaOfferGroupEntry(uint8_t offerCount = 5, Hash256 groupHash) {
+        state::SdaOfferGroupEntry entry(groupHash);
+        std::vector<state::SdaOfferBasicInfo> groupInfo;
+        for (uint8_t i = 1; i <= offerCount; ++i) {
+            groupInfo.push_back(test::GenerateSdaOfferBasicInfo());
+        }
+        entry.sdaOfferGroup().emplace(groupHash, groupInfo);
+        return entry;
+    }
+
+    void AssertSdaOfferBasicInfo(const std::vector<state::SdaOfferBasicInfo>& offerGroup1, const std::vector<state::SdaOfferBasicInfo>& offerGroup2) {
+        ASSERT_EQ(offerGroup1.size(), offerGroup1.size());
+        for (auto i = 0u; i < offerGroup2.size(); ++i) {
+            const auto &group1 = offerGroup1[i];
+			const auto &group2 = offerGroup2[i];
+            EXPECT_EQ(group1.Owner, group2.Owner);
+            EXPECT_EQ(group1.MosaicGive, group2.MosaicGive);
+            EXPECT_EQ(group1.Deadline, group2.Deadline);
+        }
+    }
+
+    namespace {
+        void AssertSdaOfferGroupData(const state::SdaOfferGroupMap& offerGroup1, const state::SdaOfferGroupMap& offerGroup2) {
+            ASSERT_EQ(offerGroup1.size(), offerGroup2.size());
+            for (const auto& pair : offerGroup1) {
+                ASSERT_EQ(pair.first, offerGroup2.find(pair.first));
+                AssertSdaOfferBasicInfo(pair.second, offerGroup2.find(pair.first)->second);
+            }
+        }
+    }
+
+    void AssertEqualSdaOfferGroupData(const state::SdaOfferGroupEntry& entry1, const state::SdaOfferGroupEntry& entry2) {
+        EXPECT_EQ(entry1.groupHash(), entry2.groupHash());
+        AssertSdaOfferGroupData(entry1.sdaOfferGroup(), entry2.sdaOfferGroup());
+    }
 }}
 
 

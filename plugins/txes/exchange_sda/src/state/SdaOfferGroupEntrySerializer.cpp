@@ -11,25 +11,42 @@
 namespace catapult { namespace state {
 
     namespace {
-        void SaveSdaOfferGroup(io::OutputStream& output, const std::vector<SdaOffer>& offers) {
+        void SaveSdaOfferInfo(io::OutputStream& output, const std::vector<SdaOfferBasicInfo>& offers) {
             io::Write16(output, utils::checked_cast<size_t, uint16_t>(offers.size()));
             for (const auto& offer : offers) {
                 io::Write(output, offer.Owner);
                 io::Write(output, offer.MosaicGive);
-                io::Write(output, offer.MosaicGet);
                 io::Write(output, offer.Deadline);
             }
         }
 
-        auto LoadSdaOfferGroup(io::InputStream& input, std::vector<SdaOffer>& offers) {
+        void SaveSdaOfferGroup(io::OutputStream& output, const SdaOfferGroupMap& offers) {
+            io::Write16(output, utils::checked_cast<size_t, uint16_t>(offers.size()));
+            for (const auto& pair : offers) {
+                io::Write(output, pair.first);
+                SaveSdaOfferInfo(output, pair.second);
+            }
+        }
+
+        auto LoadSdaOfferGroup(io::InputStream& input, std::vector<SdaOfferBasicInfo>& offers) {
             auto count = io::Read16(input);
             while (count--) {
-                SdaOffer offer;
+                SdaOfferBasicInfo offer;
                 io::Read(input, offer.Owner);
                 io::Read(input, offer.MosaicGive);
-                io::Read(input, offer.MosaicGet);
                 io::Read(input, offer.Deadline);
                 offers.emplace_back(offer);
+            }
+        }
+
+        auto LoadSdaOfferGroup(io::InputStream& input, SdaOfferGroupMap& offers) {
+            auto offerCount = io::Read16(input);
+            for (uint16_t i = 0; i < offerCount; ++i) {
+                Hash256 groupHash;
+				io::Read(input, groupHash);
+                std::vector<SdaOfferBasicInfo> info;
+                LoadSdaOfferGroup(input, info);
+                offers.emplace(groupHash, info);
             }
         }
     }

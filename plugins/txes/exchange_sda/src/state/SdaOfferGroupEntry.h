@@ -16,7 +16,7 @@ namespace catapult { namespace state {
         catapult::Amount MosaicGive;
         Height Deadline;
     };
-    
+
     using SdaOfferGroupMap = std::map<Hash256, std::vector<SdaOfferBasicInfo>>;
 
     // SDA-SDA Offer Group entry.
