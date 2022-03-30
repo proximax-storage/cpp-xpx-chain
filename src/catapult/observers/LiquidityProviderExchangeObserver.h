@@ -25,20 +25,35 @@ namespace catapult { namespace observers {
 
 	class LiquidityProviderExchangeObserver {
 	public:
+
 		virtual ~LiquidityProviderExchangeObserver() = default;
 
 		virtual void creditMosaics(
 				ObserverContext& context,
-				const Key& debtor,
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
 				const UnresolvedMosaicId& mosaicId,
-				const Amount& mosaicAmount,
-				const MosaicId& currencyId) const = 0;
+				const UnresolvedAmount& mosaicAmount) const = 0;
 
 		virtual void debitMosaics(
 				ObserverContext& context,
-				const Key& creditor,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
 				const UnresolvedMosaicId& mosaicId,
-				const Amount& mosaicAmount,
-				const MosaicId& currencyId) const = 0;
+				const UnresolvedAmount& mosaicAmount) const = 0;
+
+		virtual void creditMosaics(
+				ObserverContext& context,
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) const = 0;
+
+		virtual void debitMosaics(
+				ObserverContext& context,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) const = 0;
 	};
 }} // namespace catapult::observers

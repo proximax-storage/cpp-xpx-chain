@@ -22,11 +22,6 @@ namespace catapult { namespace state {
 		Amount m_currencyAmount;
 		Amount m_mosaicAmount;
 
-		Amount computeCurrencyAmount(Amount mosaicAmount) const {
-			BigUint currency = m_currencyAmount.unwrap();
-			return Amount{ ((currency * mosaicAmount.unwrap()) / m_mosaicAmount.unwrap()).convert_to<uint64_t>() };
-		}
-
 		bool operator <(const ExchangeRate& other) const {
 			BigUint aCurrency = m_currencyAmount.unwrap();
 			BigUint bCurrency = other.m_currencyAmount.unwrap();

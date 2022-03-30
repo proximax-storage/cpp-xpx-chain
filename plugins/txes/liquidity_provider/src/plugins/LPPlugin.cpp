@@ -42,14 +42,20 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
-//		  	builder
+		const auto& liquidityProviderValidator = manager.liquidityProviderExchangeValidator();
+		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, &liquidityProviderValidator](auto& builder) {
+			builder
+			.add(validators::CreateCreditMosaicNotificationValidator(liquidityProviderValidator))
+			.add(validators::CreateDebitMosaicNotificationValidator(liquidityProviderValidator));
 		});
 
-		manager.addObserverHook([pKeyCollector] (auto& builder) {
+		const auto& liquidityProviderObserver = manager.liquidityProviderExchangeObserver();
+		manager.addObserverHook([pKeyCollector, &liquidityProvider=liquidityProviderObserver] (auto& builder) {
 			builder
 			.add(observers::CreateSlashingObserver(pKeyCollector))
-			.add(observers::CreateSlashingObserver(pKeyCollector));
+			.add(observers::CreateCreateLiquidityProviderObserver())
+			.add(observers::CreateCreditMosaicObserver(liquidityProvider))
+			.add(observers::CreateDebitMosaicObserver(liquidityProvider));
 		});
 	}
 }}

@@ -8,24 +8,20 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(DataModificationApprovalDownloadWork, model::DataModificationApprovalDownloadWorkNotification<1>, [](const model::DataModificationApprovalDownloadWorkNotification<1>& notification, ObserverContext& context) {
-	  	if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModificationApprovalDownloadWork)");
+	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DataModificationApprovalDownloadWork, model::DataModificationApprovalDownloadWorkNotification<1>, [&liquidityProvider](const model::DataModificationApprovalDownloadWorkNotification<1>& notification, ObserverContext& context) {
+		if (NotifyMode::Rollback == context.Mode)
+			CATAPULT_THROW_RUNTIME_ERROR(
+					"Invalid observer mode ROLLBACK (DataModificationApprovalDownloadWork)");
 
-	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-	  	auto driveIter = driveCache.find(notification.DriveKey);
-	  	auto& driveEntry = driveIter.get();
-
-	  	auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-	  	auto senderIter = accountStateCache.find(notification.DriveKey);
-	  	auto& senderState = senderIter.get();
+		auto driveIter = driveCache.find(notification.DriveKey);
+		auto& driveEntry = driveIter.get();
 
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
-	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 
-	  	auto pKey = notification.PublicKeysPtr;
-	  	for (auto i = 0; i < notification.PublicKeysCount; ++i, ++pKey) {
+		auto pKey = notification.PublicKeysPtr;
+		for (auto i = 0; i < notification.PublicKeysCount; ++i, ++pKey) {
 			// All keys have been previously validated in DataModificationApprovalValidator.
 			auto replicatorIter = replicatorCache.find(*pKey);
 			auto& replicatorEntry = replicatorIter.get();
@@ -39,10 +35,11 @@ namespace catapult { namespace observers {
 
 			// Iterating over completed data modifications in reverse order (from newest to oldest).
 			for (auto it = completedDataModifications.rbegin(); it != completedDataModifications.rend(); ++it) {
-
-				// Exit the loop as soon as the most recent data modification approved by the replicator is reached. Don't account its size.
-				// dataModificationIdIsValid prevents rare cases of premature exits when the drive had no approved data modifications when the replicator
-				// joined it, but current data modification id happens to match the stored lastApprovedDataModification (zero hash by default).
+				// Exit the loop as soon as the most recent data modification approved by the replicator is
+				// reached. Don't account its size. dataModificationIdIsValid prevents rare cases of premature
+				// exits when the drive had no approved data modifications when the replicator joined it, but
+				// current data modification id happens to match the stored lastApprovedDataModification (zero
+				// hash by default).
 				if (dataModificationIdIsValid && it->Id == lastApprovedDataModificationId)
 					break;
 
@@ -52,11 +49,8 @@ namespace catapult { namespace observers {
 			}
 
 			// Making mosaic transfers.
-			auto recipientIter = accountStateCache.find(*pKey);
-			auto& recipientState = recipientIter.get();
-			const auto transferAmount = Amount(approvableDownloadWork + driveInfo.InitialDownloadWorkMegabytes);
-			senderState.Balances.debit(streamingMosaicId, transferAmount, context.Height);
-			recipientState.Balances.credit(currencyMosaicId, transferAmount, context.Height);
+			const auto mosaicAmount = Amount(approvableDownloadWork + driveInfo.InitialDownloadWorkMegabytes);
+			liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorEntry.key(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), mosaicAmount);
 
 			// Updating current replicator's drive info.
 			driveInfo.LastApprovedDataModificationId = notification.DataModificationId;
@@ -64,4 +58,4 @@ namespace catapult { namespace observers {
 			driveInfo.InitialDownloadWorkMegabytes = 0;
 		}
 	});
-}}
+}} // namespace catapult::observers

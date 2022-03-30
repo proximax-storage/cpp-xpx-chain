@@ -16,11 +16,11 @@ namespace catapult { namespace observers {
 	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 	using BigUint = boost::multiprecision::uint128_t;
 
-	DECLARE_OBSERVER(DriveClosure, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue) {
+	DECLARE_OBSERVER(DriveClosure, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue, const LiquidityProviderExchangeObserver& liquidityProvider) {
 		return MAKE_OBSERVER(
 				DriveClosure,
 				Notification,
-				([pDriveQueue](const Notification& notification, const ObserverContext& context) {
+				([pDriveQueue, &liquidityProvider](const Notification& notification, ObserverContext& context) {
 					if (NotifyMode::Rollback == context.Mode)
 						CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
 
@@ -31,11 +31,9 @@ namespace catapult { namespace observers {
 					const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 					const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 					const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
-					auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+					const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 					auto driveStateIter = accountStateCache.find(notification.DriveKey);
-					auto& driveState = driveStateIter.get();
-					auto driveOwnerIter = accountStateCache.find(driveEntry.owner());
-					auto& driveOwnerState = driveOwnerIter.get();
+					const auto& driveState = driveStateIter.get();
 
 					// Making payments to replicators, if there is a pending data modification
 					auto& activeDataModifications = driveEntry.activeDataModifications();
@@ -46,10 +44,7 @@ namespace catapult { namespace observers {
 								Amount(modificationSize + // Download work
 									   modificationSize * (replicators.size() - 1) / replicators.size()); // Upload work
 						for (const auto& replicatorKey : replicators) {
-							auto replicatorIter = accountStateCache.find(replicatorKey);
-							auto& replicatorState = replicatorIter.get();
-							driveState.Balances.debit(streamingMosaicId, totalReplicatorAmount, context.Height);
-							replicatorState.Balances.credit(currencyMosaicId, totalReplicatorAmount, context.Height);
+							liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
 						}
 					}
 
@@ -70,8 +65,7 @@ namespace catapult { namespace observers {
 						BigUint driveSize = driveEntry.size();
 						auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / paymentInterval)
 													  .template convert_to<uint64_t>());
-						driveState.Balances.debit(storageMosaicId, payment, context.Height);
-						replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);
+						liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
 					}
 
 					// The Drive is Removed, so we should make removal in linked list
@@ -80,9 +74,11 @@ namespace catapult { namespace observers {
 					queueAdapter.remove(driveEntry.entryKey());
 
 					// Returning the rest to the drive owner
-					const auto refundAmount = driveState.Balances.get(streamingMosaicId);
-					driveState.Balances.debit(streamingMosaicId, refundAmount, context.Height);
-					driveOwnerState.Balances.credit(currencyMosaicId, refundAmount, context.Height);
+					const auto refundStreamingAmount = driveState.Balances.get(streamingMosaicId);
+					liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), refundStreamingAmount);
+
+					const auto refundStorageAmount = driveState.Balances.get(storageMosaicId);
+					liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStorageMosaicId(context.Config.Immutable), refundStorageAmount);
 
 					// Removing the drive from queue, if necessary
 					const auto replicators = driveEntry.replicators();

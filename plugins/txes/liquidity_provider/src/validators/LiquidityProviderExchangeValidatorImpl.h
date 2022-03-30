@@ -27,14 +27,24 @@ namespace catapult { namespace validators {
 	public:
 		ValidationResult validateCreditMosaics(
 				const ValidatorContext& context,
-				const Key& debtor,
-				const UnresolvedMosaicId& mosaicId,
-				const Amount& mosaicAmount,
-				const MosaicId& currencyId) const override;
+				const Key& currencyDebtor,
+				const UnresolvedMosaicId& unresolvedMosaicId,
+				const UnresolvedAmount& mosaicAmount) const override;
 
 		ValidationResult validateDebitMosaics(
 				const ValidatorContext& context,
-				const Key& creditor,
+				const Key& mosaicCreditor,
+				const UnresolvedMosaicId& unresolvedMosaicId,
+				const UnresolvedAmount& mosaicAmount) const override;
+
+		ValidationResult validateCreditMosaics(
+				const ValidatorContext& context,
+				const Key& currencyDebtor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) const override;
+		ValidationResult validateDebitMosaics(
+				const ValidatorContext& context,
+				const Key& mosaicCreditor,
 				const UnresolvedMosaicId& mosaicId,
 				const Amount& mosaicAmount) const override;
 	};

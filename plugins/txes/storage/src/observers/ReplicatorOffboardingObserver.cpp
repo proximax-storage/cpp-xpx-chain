@@ -12,8 +12,8 @@ namespace catapult { namespace observers {
 	using DrivePriority = std::pair<Key, double>;
 	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-	DECLARE_OBSERVER(ReplicatorOffboarding, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue) {
-		return MAKE_OBSERVER(ReplicatorOffboarding, Notification, ([pDriveQueue](const Notification& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(ReplicatorOffboarding, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue, const LiquidityProviderExchangeObserver& liquidityProvider) {
+		return MAKE_OBSERVER(ReplicatorOffboarding, Notification, ([pDriveQueue, &liquidityProvider](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorOffboarding)");
 
@@ -77,10 +77,8 @@ namespace catapult { namespace observers {
 				CATAPULT_THROW_RUNTIME_ERROR_2("streaming deposit slashing exceeds streaming deposit", streamingDeposit, streamingDepositSlashing);
 			auto streamingDepositReturn = streamingDeposit - streamingDepositSlashing;
 
-			// Swap storage unit to xpx
-			replicatorState.Balances.credit(currencyMosaicId, Amount(storageDepositReturn), context.Height);
-			// Swap streaming unit to xpx
-			replicatorState.Balances.credit(currencyMosaicId, Amount(streamingDepositReturn), context.Height);
+			liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorEntry.key(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), Amount{streamingDepositReturn});
+			liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorEntry.key(), config::GetUnresolvedStorageMosaicId(context.Config.Immutable), Amount{storageDepositReturn});
 		}))
 	}
 }}

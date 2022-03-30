@@ -17,33 +17,26 @@ namespace catapult { namespace observers {
 	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 	using BigUint = boost::multiprecision::uint256_t;
 
-	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue) {
-		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([pDriveQueue](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue, const LiquidityProviderExchangeObserver& liquidityProvider) {
+		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([pDriveQueue, &liquidityProvider](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
-
-			CATAPULT_LOG( error ) << "Storage Observer 23";
 
 			if (context.Height < Height(2))
 				return;
 
-			CATAPULT_LOG( error ) << "Storage Observer 28";
 			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
 			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
 
 			QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
 
-			CATAPULT_LOG( error ) << "before queue empty";
 			if (queueAdapter.isEmpty()) {
 				return;
 			}
-			CATAPULT_LOG( error ) << "after queue empty";
 
-			CATAPULT_LOG( error ) << "Storage Observer 38";
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
 
-			CATAPULT_LOG( error ) << "Storage Observer 42";
 			// Creating unique eventHash for the observer
 			Hash256 eventHash;
 			crypto::Sha3_256_Builder sha3;
@@ -53,7 +46,6 @@ namespace catapult { namespace observers {
 						 context.Config.Immutable.GenerationHash});
 			sha3.final(eventHash);
 
-			CATAPULT_LOG( error ) << "Storage Observer 52";
 			for (int i = 0; i < driveCache.size(); i++) {
 				auto driveIter = driveCache.find(queueAdapter.front());
 				auto& driveEntry = driveIter.get();
@@ -69,14 +61,11 @@ namespace catapult { namespace observers {
 				const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 				const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 
-				auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+				const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 				auto driveStateIter = accountStateCache.find(driveEntry.key());
-				auto& driveState = driveStateIter.get();
+				const auto& driveState = driveStateIter.get();
 
 				for (auto& [replicatorKey, info]: driveEntry.confirmedStorageInfos()) {
-					auto replicatorIter = accountStateCache.find(replicatorKey);
-					auto& replicatorState = replicatorIter.get();
-
 					if (info.m_confirmedStorageSince) {
 						info.m_timeInConfirmedStorage = info.m_timeInConfirmedStorage
 								+ notification.Timestamp - *info.m_confirmedStorageSince;
@@ -84,8 +73,7 @@ namespace catapult { namespace observers {
 					}
 					BigUint driveSize = driveEntry.size();
 					auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / timeSinceLastPayment).template convert_to<uint64_t>());
-					driveState.Balances.debit(storageMosaicId, payment, context.Height);
-					replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);
+					liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
 				}
 
 				if (driveState.Balances.get(storageMosaicId).unwrap() >= driveEntry.size() * driveEntry.replicatorCount()) {
@@ -108,18 +96,16 @@ namespace catapult { namespace observers {
 								for (const auto& replicatorKey : replicators) {
 									auto replicatorIter = accountStateCache.find(replicatorKey);
 									auto& replicatorState = replicatorIter.get();
-									driveState.Balances.debit(streamingMosaicId, totalReplicatorAmount, context.Height);
-									replicatorState.Balances.credit(currencyMosaicId, totalReplicatorAmount, context.Height);
+									liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
 								}
 					}
 
 					// Returning the rest to the drive owner
-					const auto refundAmount = driveState.Balances.get(streamingMosaicId);
-					driveState.Balances.debit(streamingMosaicId, refundAmount, context.Height);
+					const auto refundStreamingAmount = driveState.Balances.get(streamingMosaicId);
+					liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), refundStreamingAmount);
 
-					auto driveOwnerIter = accountStateCache.find(driveEntry.owner());
-					auto& driveOwnerState = driveOwnerIter.get();
-					driveOwnerState.Balances.credit(currencyMosaicId, refundAmount, context.Height);
+					const auto refundStorageAmount = driveState.Balances.get(storageMosaicId);
+					liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStorageMosaicId(context.Config.Immutable), refundStorageAmount);
 
 					// Simulate publishing of finish download for all download channels
 
@@ -147,7 +133,6 @@ namespace catapult { namespace observers {
 					utils::AssignReplicatorsToQueuedDrives(replicators, pDriveQueue, context, rng);
 				}
 			}
-			CATAPULT_LOG( error ) << "Storage Observer 142";
         }))
 	};
 }}

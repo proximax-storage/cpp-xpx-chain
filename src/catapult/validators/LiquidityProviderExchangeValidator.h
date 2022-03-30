@@ -31,14 +31,25 @@ namespace catapult { namespace validators {
 
 		// Verifies whether the debtor has enough CURRENCY to buy the approppriate amount of Mosaics
 		virtual ValidationResult validateCreditMosaics(const ValidatorContext& context,
-													   const Key& debtor,
+													   const Key& currencyDebtor,
 													   const UnresolvedMosaicId& mosaicId,
-													   const Amount& mosaicAmount,
-													   const MosaicId& currencyId) const = 0;
+													   const UnresolvedAmount& mosaicAmount) const = 0;
 
 		// Verifies whether the creditor has enough MOSAIC to sell
 		virtual ValidationResult validateDebitMosaics(const ValidatorContext& context,
-													  const Key& creditor,
+													  const Key& mosaicCreditor,
+													  const UnresolvedMosaicId& mosaicId,
+													  const UnresolvedAmount& mosaicAmount) const = 0;
+
+		// Verifies whether the debtor has enough CURRENCY to buy the approppriate amount of Mosaics
+		virtual ValidationResult validateCreditMosaics(const ValidatorContext& context,
+													   const Key& currencyDebtor,
+													   const UnresolvedMosaicId& mosaicId,
+													   const Amount& mosaicAmount) const = 0;
+
+		// Verifies whether the creditor has enough MOSAIC to sell
+		virtual ValidationResult validateDebitMosaics(const ValidatorContext& context,
+													  const Key& mosaicCreditor,
 													  const UnresolvedMosaicId& mosaicId,
 													  const Amount& mosaicAmount) const = 0;
 	};

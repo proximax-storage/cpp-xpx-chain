@@ -30,10 +30,27 @@ namespace catapult::validators {
 
 	ValidationResult LiquidityProviderExchangeValidatorImpl::validateCreditMosaics(
 			const ValidatorContext& context,
-			const Key& debtor,
+			const Key& currencyDebtor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		return validateCreditMosaics(context, currencyDebtor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	ValidationResult LiquidityProviderExchangeValidatorImpl::validateDebitMosaics(
+			const ValidatorContext& context,
+			const Key& mosaicCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		return validateDebitMosaics(context, mosaicCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	ValidationResult LiquidityProviderExchangeValidatorImpl::validateCreditMosaics(
+			const ValidatorContext& context,
+			const Key& currencyDebtor,
 			const UnresolvedMosaicId& mosaicId,
-			const Amount& mosaicAmount,
-			const MosaicId& currencyId) const {
+			const Amount& mosaicAmount) const {
 		const auto& lpCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
 		const auto* pLpEntry = lpCache.find(mosaicId).tryGet();
@@ -50,21 +67,23 @@ namespace catapult::validators {
 
 		auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
 
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+
 		Amount currencyAmount = utils::computeCreditCurrencyAmount(
 				*pLpEntry,
-				lpAccount.Balances.get(currencyId),
+				lpAccount.Balances.get(currencyMosaicId),
 				lpAccount.Balances.get(resolvedMosaicId),
 				mosaicAmount,
 				pluginConfig.PercentsDigitsAfterDot);
 
-		const auto* pDebtorAccount = accountStateCache.find(debtor).tryGet();
+		const auto* pDebtorAccount = accountStateCache.find(currencyDebtor).tryGet();
 
 		// Unlikely
 		if (!pDebtorAccount) {
 			return Failure_LiquidityProvider_Insufficient_Currency;
 		}
 
-		auto currencyBalance = pDebtorAccount->Balances.get(currencyId);
+		auto currencyBalance = pDebtorAccount->Balances.get(currencyMosaicId);
 
 		if (currencyBalance < currencyAmount) {
 			return Failure_LiquidityProvider_Insufficient_Currency;
@@ -75,10 +94,9 @@ namespace catapult::validators {
 
 	ValidationResult LiquidityProviderExchangeValidatorImpl::validateDebitMosaics(
 			const ValidatorContext& context,
-			const Key& creditor,
+			const Key& mosaicCreditor,
 			const UnresolvedMosaicId& mosaicId,
 			const Amount& mosaicAmount) const {
-
 		const auto& lpCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
 		const auto* pLpEntry = lpCache.find(mosaicId).tryGet();
@@ -88,7 +106,7 @@ namespace catapult::validators {
 		}
 
 		const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-		const auto* pDebtorAccount = accountStateCache.find(creditor).tryGet();
+		const auto* pDebtorAccount = accountStateCache.find(mosaicCreditor).tryGet();
 
 		// Unlikely
 		if (!pDebtorAccount) {

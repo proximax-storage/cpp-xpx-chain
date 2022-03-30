@@ -57,7 +57,8 @@ namespace catapult { namespace observers {
 
 						// We are able only to decrease the exchange rate
 						if (bestRate < currentRate) {
-							uint64_t left = bestRate.computeCurrencyAmount(totalMosaicsMinted).unwrap();
+							BigUint currency = bestRate.m_currencyAmount.unwrap();
+							auto left = ((currency * totalMosaicsMinted.unwrap()) / bestRate.m_mosaicAmount.unwrap()).convert_to<uint64_t>();
 
 							// Right bound is unreachable
 							uint64_t right = lpCurrencyBalance.unwrap() + 1;

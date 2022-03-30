@@ -8,7 +8,7 @@
 #include "src/model/CreateLiquidityProviderTransaction.h"
 #include "CreateLiquidityProviderTransactionPlugin.h"
 #include "catapult/model/NotificationSubscriber.h"
-#include "src/model/LiquidityProviderNotifications.h"
+#include "src/model/InternalLiquidityProviderNotifications.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "catapult/model/EntityHasher.h"

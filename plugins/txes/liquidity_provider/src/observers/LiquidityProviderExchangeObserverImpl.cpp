@@ -28,33 +28,59 @@ namespace catapult::observers {
 
 	void LiquidityProviderExchangeObserverImpl::creditMosaics(
 			ObserverContext& context,
-			const Key& debtor,
+			const Key& currencyDebtor,
+			const Key& mosaicCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		creditMosaics(context, currencyDebtor, mosaicCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::debitMosaics(
+			ObserverContext& context,
+			const Key& mosaicDebtor,
+			const Key& currencyCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		debitMosaics(context, mosaicDebtor, currencyCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::creditMosaics(
+			ObserverContext& context,
+			const Key& currencyDebtor,
+			const Key& mosaicCreditor,
 			const UnresolvedMosaicId& mosaicId,
-			const Amount& mosaicAmount,
-			const MosaicId& currencyId) const {
+			const Amount& mosaicAmount) const {
 		auto& lpCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
 		auto& lpEntry = lpCache.find(mosaicId).get();
 
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-		auto& debtorAccount = accountStateCache.find(debtor).get();
+
 		auto& lpAccount = accountStateCache.find(lpEntry.providerKey()).get();
 
 		const auto& pluginConfig =
 				context.Config.Network.template GetPluginConfiguration<config::LiquidityProviderConfiguration>();
 
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+
 		auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
+
 		Amount currencyAmount = utils::computeCreditCurrencyAmount(
 				lpEntry,
-				lpAccount.Balances.get(currencyId),
+				lpAccount.Balances.get(currencyMosaicId),
 				lpAccount.Balances.get(resolvedMosaicId),
 				mosaicAmount,
 				pluginConfig.PercentsDigitsAfterDot);
 
-		debtorAccount.Balances.debit(currencyId, currencyAmount);
-		lpAccount.Balances.credit(currencyId, currencyAmount);
+		auto& debtorAccount = accountStateCache.find(currencyDebtor).get();
+		debtorAccount.Balances.debit(currencyMosaicId, currencyAmount);
 
-		debtorAccount.Balances.credit(resolvedMosaicId, mosaicAmount);
+		lpAccount.Balances.credit(currencyMosaicId, currencyAmount);
+
+		auto& creditorAccount = accountStateCache.find(mosaicCreditor).get();
+		creditorAccount.Balances.credit(resolvedMosaicId, mosaicAmount);
 
 		lpEntry.setAdditionallyMinted(lpEntry.additionallyMinted() + mosaicAmount);
 
@@ -63,10 +89,10 @@ namespace catapult::observers {
 
 	void LiquidityProviderExchangeObserverImpl::debitMosaics(
 			ObserverContext& context,
-			const Key& creditor,
+			const Key& mosaicDebtor,
+			const Key& currencyCreditor,
 			const UnresolvedMosaicId& mosaicId,
-			const Amount& mosaicAmount,
-			const MosaicId& currencyId) const {
+			const Amount& mosaicAmount) const {
 		auto& lpCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
 		auto& lpEntry = lpCache.find(mosaicId).get();
@@ -77,20 +103,23 @@ namespace catapult::observers {
 		const auto& pluginConfig =
 				context.Config.Network.template GetPluginConfiguration<config::LiquidityProviderConfiguration>();
 
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+
 		auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
 		Amount currencyAmount = utils::computeDebitCurrencyAmount(
 				lpEntry,
-				lpAccount.Balances.get(currencyId),
+				lpAccount.Balances.get(currencyMosaicId),
 				lpAccount.Balances.get(resolvedMosaicId),
 				mosaicAmount,
 				pluginConfig.PercentsDigitsAfterDot);
 
-		auto& creditorAccount = accountStateCache.find(creditor).get();
+		auto& creditorAccount = accountStateCache.find(currencyCreditor).get();
+		creditorAccount.Balances.credit(currencyMosaicId, currencyAmount);
 
-		creditorAccount.Balances.credit(currencyId, currencyAmount);
-		lpAccount.Balances.debit(currencyId, currencyAmount);
+		lpAccount.Balances.debit(currencyMosaicId, currencyAmount);
 
-		creditorAccount.Balances.debit(resolvedMosaicId, mosaicAmount);
+		auto& debtorAccount = accountStateCache.find(mosaicDebtor).get();
+		debtorAccount.Balances.debit(resolvedMosaicId, mosaicAmount);
 
 		lpEntry.setAdditionallyMinted(lpEntry.additionallyMinted() - mosaicAmount);
 

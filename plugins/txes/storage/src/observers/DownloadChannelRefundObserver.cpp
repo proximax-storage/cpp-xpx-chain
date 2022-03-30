@@ -10,7 +10,7 @@ namespace catapult { namespace observers {
 
 	using Notification = model::DownloadChannelRefundNotification<1>;
 
-	DEFINE_OBSERVER(DownloadChannelRefund, Notification, [](const Notification& notification, ObserverContext& context) {
+	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DownloadChannelRefund, Notification, [&liquidityProvider](const Notification& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadChannelRefund)");
 
@@ -23,19 +23,15 @@ namespace catapult { namespace observers {
 			return;
 		}
 
-		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		auto senderIter = accountStateCache.find(Key(notification.DownloadChannelId.array()));
-	  	auto& senderState = senderIter.get();
-	  	auto recipientIter = accountStateCache.find(downloadChannelEntry.consumer());
-	  	auto& recipientState = recipientIter.get();
+	  	const auto& senderState = senderIter.get();
 
 	  	const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
-	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 
 		// Refunding streaming mosaics.
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);
-	  	senderState.Balances.debit(streamingMosaicId, streamingRefundAmount, context.Height);
-	  	recipientState.Balances.credit(currencyMosaicId, streamingRefundAmount, context.Height);
+		liquidityProvider.debitMosaics(context, downloadChannelEntry.id().array(), downloadChannelEntry.consumer(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), streamingRefundAmount);
 
 	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		for (const auto& replicatorKey: downloadChannelEntry.shardReplicators()) {

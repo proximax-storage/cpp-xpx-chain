@@ -10,6 +10,7 @@
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/ReplicatorCache.h"
+#include "src/catapult/model/LiquidityProviderNotifications.h"
 
 namespace catapult { namespace utils {
 
@@ -26,12 +27,10 @@ namespace catapult { namespace utils {
 		for (auto& mosaic : mosaics) {
 			switch (operation) {
 			case SwapOperation::Buy:
-				sub.notify(model::BalanceDebitNotification<1>(sender, currencyMosaicId, mosaic.Amount));
-				sub.notify(model::BalanceCreditNotification<1>(receiver, mosaic.MosaicId, mosaic.Amount));
+				sub.notify(model::CreditMosaicNotification<1>(sender, receiver, mosaic.MosaicId, mosaic.Amount));
 				break;
 			case SwapOperation::Sell:
-				sub.notify(model::BalanceDebitNotification<1>(sender, mosaic.MosaicId, mosaic.Amount));
-				sub.notify(model::BalanceCreditNotification<1>(receiver, currencyMosaicId, mosaic.Amount));
+				sub.notify(model::DebitMosaicNotification<1>(sender, receiver, mosaic.MosaicId, mosaic.Amount));
 				break;
 			default:
 				CATAPULT_THROW_INVALID_ARGUMENT_1("unsupported operation", operation);
@@ -50,12 +49,10 @@ namespace catapult { namespace utils {
 		for (auto& mosaic : mosaics) {
 			switch (operation) {
 			case SwapOperation::Buy:
-				sub.notify(model::BalanceDebitNotification<1>(sender, currencyMosaicId, mosaic.second));
-				sub.notify(model::BalanceCreditNotification<1>(receiver, mosaic.first, mosaic.second));
+				sub.notify(model::CreditMosaicNotification<1>(sender, receiver, mosaic.first, mosaic.second));
 				break;
 			case SwapOperation::Sell:
-				sub.notify(model::BalanceDebitNotification<1>(sender, mosaic.first, mosaic.second));
-				sub.notify(model::BalanceCreditNotification<1>(receiver, currencyMosaicId, mosaic.second));
+				sub.notify(model::DebitMosaicNotification<1>(sender, receiver, mosaic.first, mosaic.second));
 				break;
 			default:
 				CATAPULT_THROW_INVALID_ARGUMENT_1("unsupported operation", operation);

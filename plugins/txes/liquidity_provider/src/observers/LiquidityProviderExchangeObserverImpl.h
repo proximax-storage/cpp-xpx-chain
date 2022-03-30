@@ -27,16 +27,28 @@ namespace catapult { namespace observers {
 	public:
 		void creditMosaics(
 				ObserverContext& context,
-				const Key& debtor,
-				const UnresolvedMosaicId& mosaicId,
-				const Amount& mosaicAmount,
-				const MosaicId& currencyId) const override;
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
+				const UnresolvedMosaicId& unresolvedMosaicId,
+				const UnresolvedAmount& mosaicAmount) const override;
 
 		void debitMosaics(
 				ObserverContext& context,
-				const Key& creditor,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
+				const UnresolvedMosaicId& unresolvedMosaicId,
+				const UnresolvedAmount& mosaicAmount) const override;
+		void creditMosaics(
+				ObserverContext& context,
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
 				const UnresolvedMosaicId& mosaicId,
-				const Amount& mosaicAmount,
-				const MosaicId& currencyId) const override;
+				const Amount& mosaicAmount) const override;
+		void debitMosaics(
+				ObserverContext& context,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) const override;
 	};
 }}

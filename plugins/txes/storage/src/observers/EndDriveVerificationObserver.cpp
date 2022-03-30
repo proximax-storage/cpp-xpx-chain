@@ -13,8 +13,8 @@ namespace catapult { namespace observers {
 	using DrivePriority = std::pair<Key, double>;
 	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-	DECLARE_OBSERVER(EndDriveVerification, Notification)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue) {
-		return MAKE_OBSERVER(EndDriveVerification, Notification, ([pKeyCollector, pDriveQueue](const Notification& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(EndDriveVerification, Notification)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue, const LiquidityProviderExchangeObserver& liquidityProvider) {
+		return MAKE_OBSERVER(EndDriveVerification, Notification, ([pKeyCollector, pDriveQueue, &liquidityProvider](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (EndDriveVerification)");
 
@@ -75,17 +75,10 @@ namespace catapult { namespace observers {
 				return;
 
 			// Split storage deposit slashing between remaining replicators
-			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-			auto accountIter = accountStateCache.find(notification.DriveKey);
-			auto& driveAccountState = accountIter.get();
 			auto storageDepositSlashingShare = Amount(storageDepositSlashing / driveEntry.replicators().size());
-			const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 
 			for (const auto& replicatorKey : driveEntry.replicators()) {
-				accountIter = accountStateCache.find(replicatorKey);
-				auto& replicatorAccountState = accountIter.get();
-				driveAccountState.Balances.debit(storageMosaicId, storageDepositSlashingShare, context.Height);
-				replicatorAccountState.Balances.credit(storageMosaicId, storageDepositSlashingShare, context.Height);
+				liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), storageDepositSlashingShare);
 			}
     	}))
 	}
