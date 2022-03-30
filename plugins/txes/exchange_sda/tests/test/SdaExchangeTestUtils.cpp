@@ -70,21 +70,21 @@ namespace catapult { namespace test {
         AssertExpiredOffers(entry1.expiredSdaOfferBalances(), entry2.expiredSdaOfferBalances());
     }
 
-    state::SdaOfferBasicInfo GenerateSdaOfferBasicInfo() {
-        return state::SdaOfferBasicInfo{
-            test::GenerateRandomByteArray<Key>(),
-            test::GenerateRandomValue<Amount>(),
-            test::GenerateRandomValue<Height>(),
-        };
+    std::vector<state::SdaOfferBasicInfo> GenerateSdaOfferBasicInfo(uint8_t count = 5) {
+        std::vector<state::SdaOfferBasicInfo> groupInfo;
+        for (uint8_t i = 1; i <= count; ++i) {
+            groupInfo.push_back(state::SdaOfferBasicInfo{
+                test::GenerateRandomByteArray<Key>(),
+                test::GenerateRandomValue<Amount>(),
+                test::GenerateRandomValue<Height>(),
+            });
+        }
+        return groupInfo;
     }
 
     state::SdaOfferGroupEntry CreateSdaOfferGroupEntry(uint8_t offerCount = 5, Hash256 groupHash) {
         state::SdaOfferGroupEntry entry(groupHash);
-        std::vector<state::SdaOfferBasicInfo> groupInfo;
-        for (uint8_t i = 1; i <= offerCount; ++i) {
-            groupInfo.push_back(test::GenerateSdaOfferBasicInfo());
-        }
-        entry.sdaOfferGroup().emplace(groupHash, groupInfo);
+        entry.sdaOfferGroup().emplace(groupHash, test::GenerateSdaOfferBasicInfo(offerCount));
         return entry;
     }
 

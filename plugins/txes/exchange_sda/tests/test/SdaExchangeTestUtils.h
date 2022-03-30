@@ -83,8 +83,8 @@ namespace catapult { namespace test {
 	};
 
 
-	/// Generates an offer group for sorting.
-	state::SdaOfferBasicInfo GenerateSdaOfferBasicInfo();
+	/// Generates an offers in a group for sorting.
+	std::vector<state::SdaOfferBasicInfo> GenerateSdaOfferBasicInfo(uint8_t offerCount = 5);
 
 	/// Creates test SDA-SDA offer group entry.
 	state::SdaOfferGroupEntry CreateSdaOfferGroupEntry(uint8_t offerCount = 5, Hash256 groupHash = test::GenerateRandomByteArray<Hash256>());

@@ -18,12 +18,8 @@ namespace catapult { namespace state {
                 return entry.sdaOfferGroup();
             }
 
-            static std::vector<SdaOfferBasicInfo> GenerateSdaOfferBasicInfo(auto offerCount = 5) {
-                std::vector<SdaOfferBasicInfo> groupInfo;
-                for (uint8_t i = 1; i <= offerCount; ++i) {
-                    groupInfo.emplace(test::GenerateSdaOfferBasicInfo());
-                }
-                return groupInfo;
+            static std::vector<SdaOfferBasicInfo> GenerateSdaOfferBasicInfo(uint8_t offerCount = 5) {
+                return test::GenerateSdaOfferBasicInfo(offerCount);
             }
 
             static SdaOfferBasicInfo CreateSdaOfferBasicInfo(const SdaOfferBasicInfo& offer) {
