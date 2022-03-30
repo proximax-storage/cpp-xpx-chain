@@ -45,19 +45,19 @@ namespace catapult { namespace state {
     
     public:
         /// Returns offers arranged from the smallest to the biggest MosaicGive amount.
-        SdaOfferGroupMap smallToBig(const Hash256 groupHash, const SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupMap smallToBig(const Hash256 groupHash, SdaOfferGroupMap& sdaOfferGroup);
 
         /// Returns offers arranged from the smallest to the biggest MosaicGive amount by the earliest expiry date.
-        SdaOfferGroupMap smallToBigSortedByEarliestExpiry(const Hash256 groupHash, const SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupMap smallToBigSortedByEarliestExpiry(const Hash256 groupHash, SdaOfferGroupMap& sdaOfferGroup);
 
         /// Returns offers arranged from the biggest to the smallest MosaicGive amount.
-        SdaOfferGroupMap bigToSmall(const Hash256 groupHash, const SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupMap bigToSmall(const Hash256 groupHash, SdaOfferGroupMap& sdaOfferGroup);
         
         /// Returns offers arranged from the biggest to the smallest MosaicGive amount by the earliest expiry date.
-        SdaOfferGroupMap bigToSmallSortedByEarliestExpiry(const Hash256 groupHash, const SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupMap bigToSmallSortedByEarliestExpiry(const Hash256 groupHash, SdaOfferGroupMap& sdaOfferGroup);
 
         /// Returns offers arranged from the exact or closest MosaicGive amount.
-        SdaOfferGroupMap exactOrClosest(const Hash256 groupHash, const Amount offer, const SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupMap exactOrClosest(const Hash256 groupHash, const Amount offer, SdaOfferGroupMap& sdaOfferGroup);
 
         void addSdaOfferToGroup(const Hash256& groupHash, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
         void removeSdaOfferFromGroup(const Hash256& groupHash, const Key& offerOwner);

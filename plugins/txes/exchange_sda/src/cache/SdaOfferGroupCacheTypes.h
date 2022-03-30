@@ -74,7 +74,7 @@ namespace catapult { namespace cache {
 		using PrimaryTypes = MutableUnorderedMapAdapter<SdaOfferGroupCacheDescriptor, utils::ArrayHasher<Hash256>>;
 		using HeightGroupingTypes = MutableUnorderedMapAdapter<HeightGroupingTypesDescriptor, utils::BaseValueHasher<Height>>;
 
-		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicSdaOfferGroupCacheView, BasicSdaOfferGroupCacheDelta, const Key&, state::SdaOfferGroupEntry>;
+		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicSdaOfferGroupCacheView, BasicSdaOfferGroupCacheDelta, const Hash256&, state::SdaOfferGroupEntry>;
 
 		using BaseSetDeltaPointers = SdaOfferGroupBaseSetDeltaPointers;
 		using BaseSets = SdaOfferGroupBaseSets;

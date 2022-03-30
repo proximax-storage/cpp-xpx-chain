@@ -70,7 +70,7 @@ namespace catapult { namespace test {
         AssertExpiredOffers(entry1.expiredSdaOfferBalances(), entry2.expiredSdaOfferBalances());
     }
 
-    std::vector<state::SdaOfferBasicInfo> GenerateSdaOfferBasicInfo(uint8_t count = 5) {
+    std::vector<state::SdaOfferBasicInfo> GenerateSdaOfferBasicInfo(uint8_t count) {
         std::vector<state::SdaOfferBasicInfo> groupInfo;
         for (uint8_t i = 1; i <= count; ++i) {
             groupInfo.push_back(state::SdaOfferBasicInfo{
@@ -82,7 +82,7 @@ namespace catapult { namespace test {
         return groupInfo;
     }
 
-    state::SdaOfferGroupEntry CreateSdaOfferGroupEntry(uint8_t offerCount = 5, Hash256 groupHash) {
+    state::SdaOfferGroupEntry CreateSdaOfferGroupEntry(uint8_t offerCount, Hash256 groupHash) {
         state::SdaOfferGroupEntry entry(groupHash);
         entry.sdaOfferGroup().emplace(groupHash, test::GenerateSdaOfferBasicInfo(offerCount));
         return entry;
@@ -103,7 +103,6 @@ namespace catapult { namespace test {
         void AssertSdaOfferGroupData(const state::SdaOfferGroupMap& offerGroup1, const state::SdaOfferGroupMap& offerGroup2) {
             ASSERT_EQ(offerGroup1.size(), offerGroup2.size());
             for (const auto& pair : offerGroup1) {
-                ASSERT_EQ(pair.first, offerGroup2.find(pair.first));
                 AssertSdaOfferBasicInfo(pair.second, offerGroup2.find(pair.first)->second);
             }
         }
