@@ -175,6 +175,11 @@ maxSuperContractsOnDrive = 10
 enabled = true
 maxValueSize = 1024
 
+[plugin:catapult.plugins.liquidity_provider]
+enabled = true
+maxWindowSize = 10
+PercentsDigitsAfterDot = 2
+
 [plugin:catapult.plugins.storage]
 
 enabled = true
