@@ -23,9 +23,14 @@ DECLARE_STATEFUL_VALIDATOR(NAME, validators::Notification)(const LiquidityProvid
 
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid
-	DECLARE_STATELESS_VALIDATOR(StoragePluginConfig, model::PluginConfigNotification<1>)();
+	DECLARE_STATELESS_VALIDATOR(LiquidityProviderPluginConfig, model::PluginConfigNotification<1>)();
+
+	DECLARE_STATEFUL_VALIDATOR(CreateLiquidityProvider, model::CreateLiquidityProviderNotification<1>)();
 
 	DECLARE_STATEFUL_VALIDATOR(CreditMosaicNotification, model::CreditMosaicNotification<1>)(const LiquidityProviderExchangeValidator&);
 
 	DECLARE_STATEFUL_VALIDATOR(DebitMosaicNotification, model::DebitMosaicNotification<1>)(const LiquidityProviderExchangeValidator&);
+
+	DECLARE_STATEFUL_VALIDATOR(ManualRateChange, model::ManualRateChangeNotification<1>)();
+
 }}

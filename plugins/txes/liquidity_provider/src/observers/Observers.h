@@ -12,8 +12,6 @@
 #include "src/catapult/model/LiquidityProviderNotifications.h"
 #include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
 
-namespace catapult { namespace state { class StorageStateImpl; }}
-
 namespace catapult { namespace observers {
 
 #define DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(NAME, NOTIFICATION_TYPE, HANDLER) \
@@ -28,4 +26,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DebitMosaic, model::DebitMosaicNotification<1>)(const LiquidityProviderExchangeObserver&);
 
 	DECLARE_OBSERVER(CreditMosaic, model::CreditMosaicNotification<1>)(const LiquidityProviderExchangeObserver&);
+
+	DECLARE_OBSERVER(ManualRateChange, model::ManualRateChangeNotification<1>)();
+
 }}

@@ -33,7 +33,11 @@ namespace catapult { namespace validators {
 	DEFINE_LIQUIDITY_PROVIDER_RESULT(Insufficient_Currency, 6);
 
 	// Insufficient Exchange Rate
-	DEFINE_LIQUIDITY_PROVIDER_RESULT(Invalid_Exchange_Rate, 6);
+	DEFINE_LIQUIDITY_PROVIDER_RESULT(Invalid_Exchange_Rate, 7);
+
+	/// Validation failed because plugin configuration data is malformed.
+	DEFINE_LIQUIDITY_PROVIDER_RESULT(Plugin_Config_Malformed, 8);
+
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

@@ -42,11 +42,18 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		manager.addStatelessValidatorHook([](auto& builder) {
+			builder
+			.add(validators::CreateLiquidityProviderPluginConfigValidator());
+		});
+
 		const auto& liquidityProviderValidator = manager.liquidityProviderExchangeValidator();
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, &liquidityProviderValidator](auto& builder) {
 			builder
 			.add(validators::CreateCreditMosaicNotificationValidator(liquidityProviderValidator))
-			.add(validators::CreateDebitMosaicNotificationValidator(liquidityProviderValidator));
+			.add(validators::CreateDebitMosaicNotificationValidator(liquidityProviderValidator))
+			.add(validators::CreateCreditMosaicNotificationValidator(liquidityProviderValidator))
+			.add(validators::CreateManualRateChangeValidator());
 		});
 
 		const auto& liquidityProviderObserver = manager.liquidityProviderExchangeObserver();
@@ -55,7 +62,8 @@ namespace catapult { namespace plugins {
 			.add(observers::CreateSlashingObserver(pKeyCollector))
 			.add(observers::CreateCreateLiquidityProviderObserver())
 			.add(observers::CreateCreditMosaicObserver(liquidityProvider))
-			.add(observers::CreateDebitMosaicObserver(liquidityProvider));
+			.add(observers::CreateDebitMosaicObserver(liquidityProvider))
+			.add(observers::CreateManualRateChangeObserver());
 		});
 	}
 }}
