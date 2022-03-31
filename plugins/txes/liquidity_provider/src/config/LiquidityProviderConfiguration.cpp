@@ -22,7 +22,7 @@ namespace catapult { namespace config {
 
 #define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
 
-		config.ManagerPublicKeys = std::set<Key>();
+		config.ManagerPublicKeys = {};
 		TRY_LOAD_CHAIN_PROPERTY(ManagerPublicKeys);
 
 		config.MaxWindowSize = 10;

@@ -22,6 +22,7 @@
 #include "Logging.h"
 #include "catapult/types.h"
 #include "catapult/utils/Hashers.h"
+#include "ArraySet.h"
 #include <array>
 #include <unordered_set>
 
@@ -109,6 +110,10 @@ namespace catapult { namespace utils {
 	/// Tries to parse \a str into a set of strings (\a parsedValue).
 	/// \note \a str is expected to be comma separated
 	bool TryParseValue(const std::string& str, std::unordered_set<std::string>& parsedValue);
+
+	/// Tries to parse \a str into a set of keys (\a parsedValue).
+	/// \note \a str is expected to be comma separated
+	bool TryParseValue(const std::string& str, utils::KeySet& parsedSet);
 
 	/// Tries to parse \a str into an enum value (\a parsedValue) given a mapping of strings to values (\a stringToValueMapping).
 	template<typename T, size_t N>

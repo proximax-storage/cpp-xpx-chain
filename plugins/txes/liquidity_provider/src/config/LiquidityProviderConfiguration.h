@@ -11,6 +11,7 @@
 #include "catapult/types.h"
 
 #include <set>
+#include "catapult/utils/ArraySet.h"
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
 
@@ -25,7 +26,7 @@ namespace catapult { namespace config {
 		bool Enabled;
 
 		/// The public keys that are allowed to create liquidity providers
-		std::set<Key> ManagerPublicKeys;
+		utils::KeySet ManagerPublicKeys;
 
 		/// The maximum history window size
 		uint16_t MaxWindowSize;
