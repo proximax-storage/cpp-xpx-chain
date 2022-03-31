@@ -12,8 +12,9 @@ namespace catapult { namespace model {
 
 #endif
 
-	/// PrepareBcDrive transaction.
 	DEFINE_TRANSACTION_TYPE(LiquidityProvider, CreateLiquidityProvider, 0x1);
+
+	DEFINE_TRANSACTION_TYPE(LiquidityProvider, ManualRateChange, 0x2);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

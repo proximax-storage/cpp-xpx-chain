@@ -5,7 +5,7 @@
 **/
 
 #include "Observers.h"
-#include "src/state/LPEntry.h"
+#include "src/state/LiquidityProviderEntry.h"
 #include "src/utils/MathUtils.h"
 
 #include <boost/multiprecision/cpp_int.hpp>

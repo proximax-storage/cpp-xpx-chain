@@ -6,7 +6,7 @@
 
 #pragma once
 #include "LiquidityProviderCacheTypes.h"
-#include "src/state/LPEntrySerializer.h"
+#include "src/state/LiquidityProviderEntrySerializer.h"
 #include "catapult/cache/CacheSerializerAdapter.h"
 
 namespace catapult { namespace cache {

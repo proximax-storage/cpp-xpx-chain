@@ -6,7 +6,7 @@
 
 #pragma once
 #include "catapult/utils/ArraySet.h"
-#include "src/state/LPEntry.h"
+#include "src/state/LiquidityProviderEntry.h"
 
 namespace catapult { namespace cache {
 

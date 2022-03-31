@@ -13,26 +13,22 @@ namespace catapult { namespace model {
 #pragma pack(push, 1)
 
 	template<typename THeader>
-	struct CreateLiquidityProviderTransactionBody : public THeader {
+	struct ManualRateChangeTransactionBody : public THeader {
 	private:
-		using TransactionType = CreateLiquidityProviderTransactionBody<THeader>;
+		using TransactionType = ManualRateChangeTransactionBody<THeader>;
 
 	public:
-		explicit CreateLiquidityProviderTransactionBody<THeader>() {};
+		explicit ManualRateChangeTransactionBody<THeader>() {};
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_CreateLiquidityProvider, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_ManualRateChange, 1)
 
 	public:
 		UnresolvedMosaicId ProviderMosaicId;
-		Amount CurrencyDeposit;
-		Amount InitialMosaicsMinting;
-		uint32_t SlashingPeriod;
-		uint16_t WindowSize;
-		Key SlashingAccount;
-		uint32_t Alpha;
-		uint32_t Beta;
-
+		bool CurrencyBalanceIncrease;
+		Amount CurrencyBalanceChange;
+		bool MosaicBalanceIncrease;
+		Amount MosaicBalanceChange;
 
 	public:
 		// Calculates the real size of a storage \a transaction.
@@ -41,7 +37,7 @@ namespace catapult { namespace model {
 		}
 	};
 
-	DEFINE_EMBEDDABLE_TRANSACTION(CreateLiquidityProvider)
+	DEFINE_EMBEDDABLE_TRANSACTION(ManualRateChange)
 
 #pragma pack(pop)
 }}

@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "LPEntry.h"
+#include "LiquidityProviderEntry.h"
 #include "catapult/io/Stream.h"
 
 namespace catapult { namespace state {

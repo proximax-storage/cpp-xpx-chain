@@ -7,7 +7,7 @@
 #include <random>
 #include "Observers.h"
 #include "src/model/InternalLiquidityProviderNotifications.h"
-#include "src/state/LPEntry.h"
+#include "src/state/LiquidityProviderEntry.h"
 
 namespace catapult { namespace observers {
 

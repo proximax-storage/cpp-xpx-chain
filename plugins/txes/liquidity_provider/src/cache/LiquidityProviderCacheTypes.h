@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "src/state/LPEntry.h"
+#include "src/state/LiquidityProviderEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/cache/IdentifierSerializer.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"

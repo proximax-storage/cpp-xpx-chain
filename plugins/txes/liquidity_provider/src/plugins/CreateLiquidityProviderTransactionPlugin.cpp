@@ -26,6 +26,8 @@ namespace catapult { namespace plugins {
 					auto providerKey = Key(CalculateHash(transaction, config.GenerationHash).array());
 					sub.notify(AccountPublicKeyNotification<1>(providerKey));
 
+					sub.notify(AccountPublicKeyNotification<1>(transaction.SlashingAccount));
+
 					const auto providerAddress = extensions::CopyToUnresolvedAddress(
 							PublicKeyToAddress(providerKey, config.NetworkIdentifier));
 					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);

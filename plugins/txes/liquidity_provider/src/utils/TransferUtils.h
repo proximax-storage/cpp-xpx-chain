@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "src/state/LPEntry.h"
+#include "src/state/LiquidityProviderEntry.h"
 
 namespace catapult::utils {
 

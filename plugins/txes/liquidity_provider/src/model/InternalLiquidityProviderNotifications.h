@@ -10,10 +10,9 @@
 
 namespace catapult { namespace model {
 
-	/// Defines a data modification notification type.
 	DEFINE_NOTIFICATION_TYPE(All, LiquidityProvider, Create_Liquidity_Provider_v1, 0x0001);
+	DEFINE_NOTIFICATION_TYPE(All, LiquidityProvider, Manual_Rate_Change_v1, 0x0002);
 
-	/// Notification of a data modification cancel.
 	template<VersionType version>
 	struct CreateLiquidityProviderNotification;
 
@@ -52,6 +51,7 @@ namespace catapult { namespace model {
 		Key Owner;
 		UnresolvedMosaicId ProviderMosaicId;
 		Amount CurrencyDeposit;
+		Amount InitialMosaicsMinting;
 		uint32_t SlashingPeriod;
 		uint16_t WindowSize;
 		Key SlashingAccount;
@@ -59,4 +59,38 @@ namespace catapult { namespace model {
 		uint32_t Beta;
 	};
 
+	template<VersionType version>
+	struct ManualRateChangeNotification;
+
+	template<>
+	struct ManualRateChangeNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = LiquidityProvider_Create_Liquidity_Provider_v1_Notification;
+
+	public:
+
+		explicit ManualRateChangeNotification(
+				const Key& signer,
+				const UnresolvedMosaicId& providerMosaicId,
+				bool currencyBalanceIncrease,
+				const Amount& currencyBalanceChange,
+				bool mosaicBalanceIncrease,
+				const Amount& mosaicBalanceChange)
+			: Notification(Notification_Type, sizeof(ManualRateChangeNotification<1>))
+			, Signer(signer)
+			, ProviderMosaicId(providerMosaicId)
+			, CurrencyBalanceIncrease(currencyBalanceIncrease)
+			, CurrencyBalanceChange(currencyBalanceChange)
+			, MosaicBalanceIncrease(mosaicBalanceIncrease)
+			, MosaicBalanceChange(mosaicBalanceChange) {}
+
+	public:
+		Key Signer;
+		UnresolvedMosaicId ProviderMosaicId;
+		bool CurrencyBalanceIncrease;
+		Amount CurrencyBalanceChange;
+		bool MosaicBalanceIncrease;
+		Amount MosaicBalanceChange;
+	};
 }}; // namespace catapult::model

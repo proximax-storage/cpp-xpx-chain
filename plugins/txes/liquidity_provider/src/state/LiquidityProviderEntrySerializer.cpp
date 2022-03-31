@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "LPEntrySerializer.h"
+#include "LiquidityProviderEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
 #include "catapult/utils/Casting.h"
 

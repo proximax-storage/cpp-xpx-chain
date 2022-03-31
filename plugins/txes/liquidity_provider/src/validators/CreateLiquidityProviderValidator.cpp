@@ -31,6 +31,14 @@ namespace catapult { namespace validators {
 			return Failure_LiquidityProvider_Invalid_Window_Size;
 		}
 
+		if (notification.CurrencyDeposit.unwrap() == 0) {
+			return Failure_LiquidityProvider_Invalid_Exchange_Rate;
+		}
+
+		if (notification.InitialMosaicsMinting.unwrap() == 0) {
+			return Failure_LiquidityProvider_Invalid_Exchange_Rate;
+		}
+
         return ValidationResult::Success;
     })
 }}

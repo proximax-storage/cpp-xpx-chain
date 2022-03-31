@@ -17,7 +17,7 @@ namespace catapult { namespace validators {
 	/// The liquidity provider has already been created for the corresponding mosaic
 	DEFINE_LIQUIDITY_PROVIDER_RESULT(Liquidity_Provider_Already_Exists, 1);
 
-	/// The liquidity provider has already been created for the corresponding mosaic
+	/// The liquidity provider is tried to be manager by invalid owner
 	DEFINE_LIQUIDITY_PROVIDER_RESULT(Invalid_Owner, 2);
 
 	// The Liquidity Provider Slashing Period Is Invalid
@@ -31,6 +31,9 @@ namespace catapult { namespace validators {
 
 	// Insufficient Currency on Balance
 	DEFINE_LIQUIDITY_PROVIDER_RESULT(Insufficient_Currency, 6);
+
+	// Insufficient Exchange Rate
+	DEFINE_LIQUIDITY_PROVIDER_RESULT(Invalid_Exchange_Rate, 6);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
