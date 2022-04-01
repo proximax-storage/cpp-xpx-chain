@@ -22,11 +22,11 @@ namespace catapult { namespace validators {
     namespace {
         using MosaicSetup = std::function<void(cache::CatapultCacheDelta&)>;
 
-        auto CreateConfig(const Key& longSdaOfferKey) {
+        auto CreateConfig(const Key& longOfferKey) {
             test::MutableBlockchainConfiguration config;
             auto pluginConfig = config::SdaExchangeConfiguration::Uninitialized();
-            pluginConfig.MaxSdaOfferDuration = BlockDuration{500};
-            pluginConfig.LongSdaOfferKey = longSdaOfferKey;
+            pluginConfig.MaxOfferDuration = BlockDuration{500};
+            pluginConfig.LongOfferKey = longOfferKey;
             config.Network.SetPluginConfiguration(pluginConfig);
             return (config.ToConst());
         }
@@ -60,7 +60,7 @@ namespace catapult { namespace validators {
                 const std::vector<model::SdaOfferWithOwnerAndDuration> offers = {},
                 const Key& signer = test::GenerateRandomByteArray<Key>(),
                 const state::SdaExchangeEntry* pEntry = nullptr,
-                const Key& longSdaOfferKey = test::GenerateRandomByteArray<Key>()) {
+                const Key& longOfferKey = test::GenerateRandomByteArray<Key>()) {
             // Arrange:
             Height currentHeight(1);
             auto cache = test::SdaExchangeCacheFactory::Create();
@@ -76,7 +76,7 @@ namespace catapult { namespace validators {
             }
 
             model::PlaceSdaOfferNotification<TTraits::Version> notification(signer, offers.size(), offers.data());
-            auto config = CreateConfig(longSdaOfferKey);
+            auto config = CreateConfig(longOfferKey);
             auto pValidator = TTraits::CreateValidator();
 
             // Act:
@@ -86,7 +86,7 @@ namespace catapult { namespace validators {
             EXPECT_EQ(expectedResult, result);
 
             model::PlaceSdaOfferNotification<TTraits::Version> notification(signer, offers.size(), offers.data());
-            auto config = CreateConfig(longSdaOfferKey);
+            auto config = CreateConfig(longOfferKey);
             auto pValidator = TTraits::CreateValidator();
 
             // Act:
@@ -102,14 +102,14 @@ namespace catapult { namespace validators {
             const std::vector<model::SdaOfferWithOwnerAndDuration> offers = {},
             const Key& signer = test::GenerateRandomByteArray<Key>(),
             const state::SdaExchangeEntry* pEntry = nullptr,
-            const Key& longSdaOfferKey = test::GenerateRandomByteArray<Key>()) {
+            const Key& longOfferKey = test::GenerateRandomByteArray<Key>()) {
             
             AssertValidationResultBase<TTraits>(
                 expectedResult,
                 [](cache::CatapultCacheDelta& delta){
                     AddMosaicEternal(delta, MosaicId(1), Amount(100));
                     AddMosaicEternal(delta, MosaicId(2), Amount(100));
-                }, offers, signer, pEntry, longSdaOfferKey);
+                }, offers, signer, pEntry, longOfferKey);
         }
 
         template<typename TTraits>
@@ -118,14 +118,14 @@ namespace catapult { namespace validators {
             const std::vector<model::SdaOfferWithOwnerAndDuration> offers = {},
             const Key& signer = test::GenerateRandomByteArray<Key>(),
             const state::SdaExchangeEntry* pEntry = nullptr,
-            const Key& longSdaOfferKey = test::GenerateRandomByteArray<Key>()) {
+            const Key& longOfferKey = test::GenerateRandomByteArray<Key>()) {
             
             AssertValidationResultBase<TTraits>(
                 expectedResult,
                 [](cache::CatapultCacheDelta& delta){
                     AddMosaic(delta, MosaicId(1), Height(1), BlockDuration(50), Amount(100));
                     AddMosaic(delta, MosaicId(2), Height(1), BlockDuration(50),Amount(100));
-                }, offers, signer, pEntry, longSdaOfferKey);
+                }, offers, signer, pEntry, longOfferKey);
         }
 
         struct SdaOfferBalanceTraits {
@@ -292,7 +292,7 @@ namespace catapult { namespace validators {
                 test::GenerateRandomByteArray<Key>());
         }
 
-        TRAITS_BASED_TEST(Success_LongSdaOffer) {
+        TRAITS_BASED_TEST(Success_LongOffer) {
             // Arrange:
             auto offerOwner = test::GenerateRandomByteArray<Key>();
 

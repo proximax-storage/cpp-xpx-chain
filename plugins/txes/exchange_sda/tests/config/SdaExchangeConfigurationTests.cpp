@@ -21,8 +21,8 @@ namespace catapult { namespace config {
 						"",
 						{
 							{ "enabled", "true" },
-							{ "maxSdaOfferDuration", "57600" },
-							{ "longSdaOfferKey", "CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE" },
+							{ "maxOfferDuration", "57600" },
+							{ "longOfferKey", "CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE" },
                             { "sortPolicy", "1"},
 						}
 					}
@@ -44,16 +44,16 @@ namespace catapult { namespace config {
 			static void AssertZero(const SdaExchangeConfiguration& config) {
 				// Assert:
 				EXPECT_EQ(false, config.Enabled);
-				EXPECT_EQ(BlockDuration(0), config.MaxSdaOfferDuration);
-				EXPECT_EQ(Key(), config.LongSdaOfferKey);
+				EXPECT_EQ(BlockDuration(0), config.maxOfferDuration);
+				EXPECT_EQ(Key(), config.longOfferKey);
                 EXPECT_EQ(0, config.SortPolicy);
 			}
 
 			static void AssertCustom(const SdaExchangeConfiguration& config) {
 				// Assert:
 				EXPECT_EQ(true, config.Enabled);
-				EXPECT_EQ(BlockDuration(57600), config.MaxSdaOfferDuration);
-				EXPECT_EQ(crypto::ParseKey("CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE"), config.LongSdaOfferKey);
+				EXPECT_EQ(BlockDuration(57600), config.MaxOfferDuration);
+				EXPECT_EQ(crypto::ParseKey("CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE"), config.LongOfferKey);
                 EXPECT_EQ(1, config.SortPolicy);
 			}
 		};

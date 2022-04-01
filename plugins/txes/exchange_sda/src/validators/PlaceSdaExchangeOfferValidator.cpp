@@ -52,7 +52,7 @@ namespace catapult { namespace validators {
             if (BlockDuration(0) == pSdaOffer->Duration)
 			    return Failure_ExchangeSda_Zero_Offer_Duration;
 
-		    if (pSdaOffer->Duration > pluginConfig.MaxSdaOfferDuration && notification.Signer != pluginConfig.LongSdaOfferKey)
+		    if (pSdaOffer->Duration > pluginConfig.MaxOfferDuration && notification.Signer != pluginConfig.LongOfferKey)
 			    return Failure_ExchangeSda_Offer_Duration_Too_Large;
             
             auto mosaicEntryIter = mosaicCache.find(mosaicIdGive);

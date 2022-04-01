@@ -23,11 +23,11 @@ namespace catapult { namespace config {
 		bool Enabled;
 
 		/// Maximum offer duration.
-		BlockDuration MaxSdaOfferDuration;
+		BlockDuration MaxOfferDuration;
 
 		/// A public key of the account allowed to set
 		/// offer duration exceeding MaxOfferDuration.
-		Key LongSdaOfferKey;
+		Key LongOfferKey;
 
 		/// Policy to sort SDA-SDA offers.
 		enum class SortPolicies : uint8_t {

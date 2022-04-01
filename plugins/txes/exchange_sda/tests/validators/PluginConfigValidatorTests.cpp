@@ -25,8 +25,8 @@ namespace catapult { namespace validators {
                     "",
                     {
                         { "enabled", "true" },
-                        { "maxSdaOfferDuration", "57600" },
-                        { "longSdaOfferKey", "CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE" },
+                        { "maxOfferDuration", "57600" },
+                        { "longOfferKey", "CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE" },
                         { "sortPolicy", "1"},
                     }
                 }});
