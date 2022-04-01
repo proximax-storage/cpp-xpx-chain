@@ -7,6 +7,7 @@
 #include "SdaExchangeEntry.h"
 #include "catapult/exceptions.h"
 #include "catapult/utils/Casting.h"
+#include <boost/lexical_cast.hpp>
 #include <cmath>
 
 namespace catapult { namespace state {
@@ -45,8 +46,10 @@ namespace catapult { namespace state {
         auto expireFunc = [height, mosaicId](SdaOfferBalanceMap& offers, ExpiredSdaOfferBalanceMap& expiredOffers) {
             auto& offer = offers.at(mosaicId);
             auto& expiredOffersAtHeight = expiredOffers[height];
-            if (expiredOffersAtHeight.count(mosaicId))
-                CATAPULT_THROW_RUNTIME_ERROR_2("offer already expired at height", mosaicId.first, height);
+            if (expiredOffersAtHeight.count(mosaicId)) {
+                auto pair = boost::lexical_cast<std::string>(mosaicId.first) + ", " + boost::lexical_cast<std::string>(mosaicId.second);
+                CATAPULT_THROW_RUNTIME_ERROR_2("offer already expired at height", pair, height);
+            }
             expiredOffersAtHeight.emplace(mosaicId, offer);
             offers.erase(mosaicId);
         };
@@ -75,8 +78,10 @@ namespace catapult { namespace state {
         for (auto iter = m_sdaOfferBalances.begin(); iter != m_sdaOfferBalances.end();) {
             if (iter->second.Deadline == height) {
                 auto &expiredOffersAtHeight = m_expiredSdaOfferBalances[height];
-                if (expiredOffersAtHeight.count(iter->first))
-                    CATAPULT_THROW_RUNTIME_ERROR_2("offer already expired at height", iter->first.first, height);
+                if (expiredOffersAtHeight.count(iter->first)) {
+                    auto pair = boost::lexical_cast<std::string>(iter->first.first) + ", " + boost::lexical_cast<std::string>(iter->first.second);
+                    CATAPULT_THROW_RUNTIME_ERROR_2("offer already expired at height", pair, height);
+                }
                 expiredOffersAtHeight.emplace(iter->first, iter->second);
                 sdaOfferBalanceAction(iter);
                 iter = m_sdaOfferBalances.erase(iter);
@@ -92,8 +97,10 @@ namespace catapult { namespace state {
             auto& expiredOffersAtHeight = m_expiredSdaOfferBalances.at(height);
             for (auto iter = expiredOffersAtHeight.begin(); iter != expiredOffersAtHeight.end();) {
                 if (iter->second.Deadline == height) {
-                    if (m_sdaOfferBalances.count(iter->first))
-                        CATAPULT_THROW_RUNTIME_ERROR_2("offer exists at height", iter->first.first, height);
+                    if (m_sdaOfferBalances.count(iter->first)) {
+                        auto pair = boost::lexical_cast<std::string>(iter->first.first) + ", " + boost::lexical_cast<std::string>(iter->first.second);
+                        CATAPULT_THROW_RUNTIME_ERROR_2("offer exists at height", pair, height);
+                    }
                     m_sdaOfferBalances.emplace(iter->first, iter->second);
                     sdaOfferBalanceAction(m_sdaOfferBalances.find(iter->first));
                     iter = expiredOffersAtHeight.erase(iter);
