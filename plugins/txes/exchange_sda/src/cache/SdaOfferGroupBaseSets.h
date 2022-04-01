@@ -15,54 +15,53 @@
 namespace catapult { namespace cache {
 
     using BasicSdaOfferGroupPatriciaTree = tree::BasePatriciaTree<
-		SerializerHashedKeyEncoder<SdaOfferGroupCacheDescriptor::Serializer>,
-		PatriciaTreeRdbDataSource,
-		utils::ArrayHasher<Hash256>>;
+        SerializerHashedKeyEncoder<SdaOfferGroupCacheDescriptor::Serializer>,
+        PatriciaTreeRdbDataSource,
+        utils::ArrayHasher<Hash256>>;
 
-	class SdaOfferGroupPatriciaTree : public BasicSdaOfferGroupPatriciaTree {
-	public:
-		using BasicSdaOfferGroupPatriciaTree::BasicSdaOfferGroupPatriciaTree;
-		using Serializer = SdaOfferGroupCacheDescriptor::Serializer;
-	};
+    class SdaOfferGroupPatriciaTree : public BasicSdaOfferGroupPatriciaTree {
+    public:
+        using BasicSdaOfferGroupPatriciaTree::BasicSdaOfferGroupPatriciaTree;
+        using Serializer = SdaOfferGroupCacheDescriptor::Serializer;
+    };
 
-	struct SdaOfferGroupBaseSetDeltaPointers {
-		SdaOfferGroupCacheTypes::PrimaryTypes::BaseSetDeltaPointerType pPrimary;
-		SdaOfferGroupCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType pHeightGrouping;
-		std::shared_ptr<SdaOfferGroupPatriciaTree::DeltaType> pPatriciaTree;
-	};
+    using SdaOfferGroupSingleSetCacheTypesAdapter =
+        SingleSetAndPatriciaTreeCacheTypesAdapter<SdaOfferGroupCacheTypes::PrimaryTypes, SdaOfferGroupPatriciaTree>;
 
-	struct SdaOfferGroupBaseSets : public CacheDatabaseMixin {
-	public:
-		/// Indicates the set is not ordered.
-		using IsOrderedSet = std::false_type;
+    struct SdaOfferGroupBaseSetDeltaPointers {
+        SdaOfferGroupCacheTypes::PrimaryTypes::BaseSetDeltaPointerType pPrimary;
+        std::shared_ptr<SdaOfferGroupPatriciaTree::DeltaType> pPatriciaTree;
+    };
 
-	public:
-		explicit SdaOfferGroupBaseSets(const CacheConfiguration& config)
-				: CacheDatabaseMixin(config, { "default", "height_grouping" })
-				, Primary(GetContainerMode(config), database(), 0)
-				, HeightGrouping(GetContainerMode(config), database(), 1)
-				, PatriciaTree(hasPatriciaTreeSupport(), database(), 2)
-		{}
+    struct SdaOfferGroupBaseSets : public CacheDatabaseMixin {
+    public:
+        /// Indicates the set is not ordered.
+        using IsOrderedSet = std::false_type;
 
-	public:
-		SdaOfferGroupCacheTypes::PrimaryTypes::BaseSetType Primary;
-		SdaOfferGroupCacheTypes::HeightGroupingTypes::BaseSetType HeightGrouping;
-		CachePatriciaTree<SdaOfferGroupPatriciaTree> PatriciaTree;
+    public:
+        explicit SdaOfferGroupBaseSets(const CacheConfiguration& config)
+                : CacheDatabaseMixin(config, { "default" })
+                , Primary(GetContainerMode(config), database(), 0)
+                , PatriciaTree(hasPatriciaTreeSupport(), database(), 1)
+        {}
 
-	public:
-		SdaOfferGroupBaseSetDeltaPointers rebase() {
-			return { Primary.rebase(), HeightGrouping.rebase(), PatriciaTree.rebase() };
-		}
+    public:
+        SdaOfferGroupCacheTypes::PrimaryTypes::BaseSetType Primary;
+        CachePatriciaTree<SdaOfferGroupPatriciaTree> PatriciaTree;
 
-		SdaOfferGroupBaseSetDeltaPointers rebaseDetached() const {
-			return { Primary.rebaseDetached(), HeightGrouping.rebaseDetached(), PatriciaTree.rebaseDetached() };
-		}
+    public:
+        SdaOfferGroupBaseSetDeltaPointers rebase() {
+            return { Primary.rebase(), PatriciaTree.rebase() };
+        }
 
-		void commit() {
-			Primary.commit();
-			HeightGrouping.commit();
-			PatriciaTree.commit();
-			flush();
-		}
-	};
+        SdaOfferGroupBaseSetDeltaPointers rebaseDetached() const {
+            return { Primary.rebaseDetached(), PatriciaTree.rebaseDetached() };
+        }
+
+        void commit() {
+            Primary.commit();
+            PatriciaTree.commit();
+            flush();
+        }
+    };
 }}

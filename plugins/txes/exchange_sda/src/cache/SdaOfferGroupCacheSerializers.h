@@ -14,7 +14,4 @@ namespace catapult { namespace cache {
 
 	/// Primary serializer for SDA-SDA offer group cache.
 	struct SdaOfferGroupEntryPrimarySerializer : public CacheSerializerAdapter<state::SdaOfferGroupEntrySerializer, SdaOfferGroupCacheDescriptor> {};
-
-	/// Serializer for SDA-SDA offer group cache height grouped elements.
-	struct SdaOfferGroupHeightGroupingSerializer : public IdentifierGroupSerializer<SdaOfferGroupCacheTypes::HeightGroupingTypesDescriptor> {};
 }}

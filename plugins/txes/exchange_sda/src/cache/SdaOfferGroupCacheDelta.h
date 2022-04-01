@@ -14,56 +14,63 @@
 
 namespace catapult { namespace cache {
 
-	/// Mixins used by the SDA-SDA exchange cache delta.
-	struct SdaOfferGroupCacheDeltaMixins : public PatriciaTreeCacheMixins<SdaOfferGroupCacheTypes::PrimaryTypes::BaseSetDeltaType, SdaOfferGroupCacheDescriptor> {
-		using Pruning = HeightBasedPruningMixin<
-			SdaOfferGroupCacheTypes::PrimaryTypes::BaseSetDeltaType,
-			SdaOfferGroupCacheTypes::HeightGroupingTypes::BaseSetDeltaType>;
-	};
+    /// Mixins used by the SDA-SDA exchange cache delta.
+    struct SdaOfferGroupCacheDeltaMixins {
+    private:
+        using PrimaryMixins = PatriciaTreeCacheMixins<SdaOfferGroupCacheTypes::PrimaryTypes::BaseSetDeltaType, SdaOfferGroupCacheDescriptor>;
+    
+    public:
+        using Size = PrimaryMixins::Size;
+        using Contains = PrimaryMixins::Contains;
+        using ConstAccessor = PrimaryMixins::ConstAccessor;
+        using MutableAccessor = PrimaryMixins::MutableAccessor;
+        using PatriciaTreeDelta = PrimaryMixins::PatriciaTreeDelta;
+        using BasicInsertRemove = PrimaryMixins::BasicInsertRemove;
+        using DeltaElements = PrimaryMixins::DeltaElements;
+    };
 
-	/// Basic delta on top of the SDA-SDA exchange cache.
-	class BasicSdaOfferGroupCacheDelta
-			: public utils::MoveOnly
-			, public SdaOfferGroupCacheDeltaMixins::Size
-			, public SdaOfferGroupCacheDeltaMixins::Contains
-			, public SdaOfferGroupCacheDeltaMixins::ConstAccessor
-			, public SdaOfferGroupCacheDeltaMixins::MutableAccessor
-			, public SdaOfferGroupCacheDeltaMixins::PatriciaTreeDelta
-			, public SdaOfferGroupCacheDeltaMixins::BasicInsertRemove
-			, public SdaOfferGroupCacheDeltaMixins::Pruning
-			, public SdaOfferGroupCacheDeltaMixins::DeltaElements {
-	public:
-		using ReadOnlyView = SdaOfferGroupCacheTypes::CacheReadOnlyType;
-		using SdaOfferGroupHash = SdaOfferGroupCacheTypes::HeightGroupingTypes::BaseSetDeltaType::ElementType::Identifiers;
+    /// Basic delta on top of the SDA-SDA exchange cache.
+    class BasicSdaOfferGroupCacheDelta
+            : public utils::MoveOnly
+            , public SdaOfferGroupCacheDeltaMixins::Size
+            , public SdaOfferGroupCacheDeltaMixins::Contains
+            , public SdaOfferGroupCacheDeltaMixins::ConstAccessor
+            , public SdaOfferGroupCacheDeltaMixins::MutableAccessor
+            , public SdaOfferGroupCacheDeltaMixins::PatriciaTreeDelta
+            , public SdaOfferGroupCacheDeltaMixins::BasicInsertRemove
+            , public SdaOfferGroupCacheDeltaMixins::DeltaElements {
+    public:
+        using ReadOnlyView = SdaOfferGroupCacheTypes::CacheReadOnlyType;
 
-	public:
-		/// Creates a delta around \a sdaOfferGroupSets.
-		explicit BasicSdaOfferGroupCacheDelta(
-			const SdaOfferGroupCacheTypes::BaseSetDeltaPointers& sdaOfferGroupSets,
-			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder);
+    public:
+        /// Creates a delta around \a sdaOfferGroupSets.
+        explicit BasicSdaOfferGroupCacheDelta(
+            const SdaOfferGroupCacheTypes::BaseSetDeltaPointers& sdaOfferGroupSets)
+                    : SdaOfferGroupCacheDeltaMixins::Size(*sdaOfferGroupSets.pPrimary)
+                    , SdaOfferGroupCacheDeltaMixins::Contains(*sdaOfferGroupSets.pPrimary)
+                    , SdaOfferGroupCacheDeltaMixins::ConstAccessor(*sdaOfferGroupSets.pPrimary)
+                    , SdaOfferGroupCacheDeltaMixins::MutableAccessor(*sdaOfferGroupSets.pPrimary)
+                    , SdaOfferGroupCacheDeltaMixins::PatriciaTreeDelta(*sdaOfferGroupSets.pPrimary, sdaOfferGroupSets.pPatriciaTree)
+                    , SdaOfferGroupCacheDeltaMixins::BasicInsertRemove(*sdaOfferGroupSets.pPrimary)
+                    , SdaOfferGroupCacheDeltaMixins::DeltaElements(*sdaOfferGroupSets.pPrimary)
+                    , m_pSdaOfferGroupEntries(sdaOfferGroupSets.pPrimary)
+        {}
 
-	public:
-		using SdaOfferGroupCacheDeltaMixins::ConstAccessor::find;
-		using SdaOfferGroupCacheDeltaMixins::MutableAccessor::find;
+    public:
+        using SdaOfferGroupCacheDeltaMixins::ConstAccessor::find;
+        using SdaOfferGroupCacheDeltaMixins::MutableAccessor::find;
 
-	public:
-		/// return the SDA Offers by group hash
-		SdaOfferGroupHash getSdaOffersByGroupHash(const Hash256& groupHash);
+    private:
+        SdaOfferGroupCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pSdaOfferGroupEntries;
+    };
 
-	private:
-		SdaOfferGroupCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pSdaOfferGroupEntries;
-		SdaOfferGroupCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pHeightGroupingDelta;
-		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
-	};
-
-	/// Delta on top of the SDA-SDA exchange cache.
-	class SdaOfferGroupCacheDelta : public ReadOnlyViewSupplier<BasicSdaOfferGroupCacheDelta> {
-	public:
-		/// Creates a delta around \a sdaOfferGroupSets.
-		explicit SdaOfferGroupCacheDelta(
-			const SdaOfferGroupCacheTypes::BaseSetDeltaPointers& sdaOfferGroupSets,
-			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
-				: ReadOnlyViewSupplier(sdaOfferGroupSets, pConfigHolder)
-		{}
-	};
+    /// Delta on top of the SDA-SDA exchange cache.
+    class SdaOfferGroupCacheDelta : public ReadOnlyViewSupplier<BasicSdaOfferGroupCacheDelta> {
+    public:
+        /// Creates a delta around \a sdaOfferGroupSets.
+        explicit SdaOfferGroupCacheDelta(
+            const SdaOfferGroupCacheTypes::BaseSetDeltaPointers& sdaOfferGroupSets)
+                : ReadOnlyViewSupplier(sdaOfferGroupSets)
+        {}
+    };
 }}
