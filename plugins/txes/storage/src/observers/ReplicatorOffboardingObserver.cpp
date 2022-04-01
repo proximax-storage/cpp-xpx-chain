@@ -40,47 +40,6 @@ namespace catapult { namespace observers {
 				}
 				*pDriveQueue = std::move(newQueue);
 			}
-
-			auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
-			auto replicatorIter = replicatorCache.find(notification.PublicKey);
-			auto& replicatorEntry = replicatorIter.get();
-
-			auto& cache = context.Cache.template sub<cache::AccountStateCache>();
-			auto accountIter = cache.find(notification.PublicKey);
-			auto& replicatorState = accountIter.get();
-
-			// Storage deposit equals to the remaining capacity plus the sum of drive
-			// sizes that the replicator serves.
-			auto storageDepositReturn = replicatorEntry.capacity().unwrap();
-
-			// Streaming Deposit Slashing equals 2 * min(u1, u2) where
-			// u1 - the UsedDriveSize according to the last approved by the Replicator modification
-			// u2 - the UsedDriveSize according to the last approved modification on the Drive.
-			uint64_t streamingDepositSlashing = 0;
-
-			const auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
-			for(const auto& iter : replicatorEntry.drives()){
-				auto driveIter = driveCache.find(iter.first);
-				const auto& drive = driveIter.get();
-				storageDepositReturn += drive.size();
-
-				auto& confirmedUsedSizes = drive.confirmedUsedSizes();
-				auto sizeIter = confirmedUsedSizes.find(notification.PublicKey);
-				streamingDepositSlashing += (confirmedUsedSizes.end() != sizeIter) ?
-					2 * std::min(sizeIter->second, drive.usedSizeBytes()) :
-					2 * drive.usedSizeBytes();
-			}
-
-			// Streaming deposit return = streaming deposit - streaming deposit slashing
-			auto streamingDeposit = 2 * storageDepositReturn;
-			if (streamingDeposit < streamingDepositSlashing)
-				CATAPULT_THROW_RUNTIME_ERROR_2("streaming deposit slashing exceeds streaming deposit", streamingDeposit, streamingDepositSlashing);
-			auto streamingDepositReturn = streamingDeposit - streamingDepositSlashing;
-
-			// Swap storage unit to xpx
-			replicatorState.Balances.credit(currencyMosaicId, Amount(storageDepositReturn), context.Height);
-			// Swap streaming unit to xpx
-			replicatorState.Balances.credit(currencyMosaicId, Amount(streamingDepositReturn), context.Height);
 		}))
 	}
 }}
