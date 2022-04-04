@@ -86,6 +86,12 @@ namespace catapult { namespace crypto {
 		HashPrivateKey<TDerivationScheme>(privateKey, hash);
 	}
 
+	template<DerivationScheme TDerivationScheme>
+	void HashPrivateKey(const PrivateKey& privateKey, Hash512& hash)
+	{
+		HashPrivateKey<TDerivationScheme>(privateKey, hash);
+	}
+
 
 	extern template void HashPrivateKey<DerivationScheme::Ed25519_Sha3>(const PrivateKey& privateKey, Hash512& hash);
 	extern template void HashPrivateKey<DerivationScheme::Ed25519_Sha2>(const PrivateKey& privateKey, Hash512& hash);

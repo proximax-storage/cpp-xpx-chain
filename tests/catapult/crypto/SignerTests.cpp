@@ -167,6 +167,29 @@ namespace catapult { namespace crypto {
 		}
 	}
 
+	TEST(TEST_CLASS, SignatureImplementationsOutputIsAMatchSha3) {
+		// Arrange:
+		auto keyPair = GetDefaultKeyPair();
+		auto payload = test::GenerateRandomArray<100>();
+		RawSignature signature;
+		RawSignature signature2;
+		SignatureFeatureSolver::SignRef10(keyPair, {payload}, signature);
+		SignatureFeatureSolver::Sign(keyPair, {payload}, signature2);
+		EXPECT_EQ(signature, signature2);
+	}
+
+	TEST(TEST_CLASS, SignatureImplementationsOutputIsAMatchSha2) {
+		// Arrange:
+		auto keyPair = GetDefaultKeyPair(DerivationScheme::Ed25519_Sha2);
+		auto payload = test::GenerateRandomArray<100>();
+		RawSignature signature;
+		RawSignature signature2;
+		SignatureFeatureSolver::SignRef10(keyPair, {payload}, signature);
+		SignatureFeatureSolver::Sign(keyPair, {payload}, signature2);
+		EXPECT_EQ(signature, signature2);
+	}
+
+
 	TEST(TEST_CLASS, PublicKeyNotOnACurveCausesVerifyToFail) {
 		// Arrange:
 		auto hackedKeyPair = GetDefaultKeyPair();

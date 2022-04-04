@@ -68,7 +68,7 @@ namespace catapult { namespace process {
 		// endregion
 
 		void Run(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, ProcessOptions processOptions, const CreateProcessHost& createProcessHost) {
-			auto keyPair = crypto::KeyPair::FromString(pConfigHolder->Config().User.BootKey, 1);
+			auto keyPair = crypto::KeyPair::FromString(pConfigHolder->Config().User.BootKey, Node_Boot_Key_Derivation_Scheme);
 
 			CATAPULT_LOG(info) << "booting process with public key " << crypto::FormatKey(keyPair.publicKey());
 			auto pProcessHost = createProcessHost(pConfigHolder, keyPair);

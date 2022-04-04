@@ -52,6 +52,9 @@ namespace catapult { namespace crypto {
 		/// Signs the \a dataBuffer outputting the \a signature with the given \a keyPair
 		static void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> dataBuffer, Signature& signature);
 
+		/// Signs the \a dataBuffer outputting the \a signature with the given \a keyPair using Ref10 implementation
+		static void SignRef10(const KeyPair& keyPair, std::initializer_list<const RawBuffer> dataBuffer, RawSignature& signature);
+
 		/// Signs the \a buffersList outputting the \a signature with the given \a keyPair
 		/// Perf note: Evaluate whether to replace functors with code duplication
 		static void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, RawSignature& signature);

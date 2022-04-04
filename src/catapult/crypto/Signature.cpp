@@ -318,6 +318,27 @@ namespace catapult { namespace crypto {
 		}
 	}
 
+	void SignatureFeatureSolver::SignRef10(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, RawSignature& signature)
+	{
+		switch(keyPair.derivationScheme())
+		{
+		case DerivationScheme::Ed25519_Sha3:
+		{
+			SignInternalRef10(keyPair, buffersList, signature, HashPrivateKey<DerivationScheme::Ed25519_Sha3>, BuildHash<DerivationScheme::Ed25519_Sha3>);
+			break;
+		}
+		case DerivationScheme::Ed25519_Sha2:
+		{
+			SignInternalRef10(keyPair, buffersList, signature, HashPrivateKey<DerivationScheme::Ed25519_Sha2>, BuildHash<DerivationScheme::Ed25519_Sha2>);
+			break;
+		}
+		default:
+		{
+			CATAPULT_THROW_RUNTIME_ERROR("Unable to recognize derivation scheme used in this key!");
+		}
+		}
+	}
+
 	/// Verifies the \a buffers with the \a signature for the given \a publicKey
 	bool SignatureFeatureSolver::Verify(const Key& publicKey, std::initializer_list<const RawBuffer> buffers, Signature& signature) {
 		return Verify(publicKey, buffers, GetRawSignature(signature), GetDerivationScheme(signature));
