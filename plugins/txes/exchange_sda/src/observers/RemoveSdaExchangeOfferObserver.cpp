@@ -5,7 +5,8 @@
 **/
 
 #include "Observers.h"
-#include "src/cache/ExchangeCache.h"
+#include "src/cache/SdaExchangeCache.h"
+#include "src/cache/SdaOfferGroupCache.h"
 
 namespace catapult { namespace observers {
 
