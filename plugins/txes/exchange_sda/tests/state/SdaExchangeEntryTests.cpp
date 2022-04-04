@@ -87,7 +87,7 @@ namespace catapult { namespace state {
 		// Assert:
 		offers = TTraits::GetSdaOfferBalances(entry);
 		ASSERT_EQ(1, offers.size());
-		test::AssertSdaOfferBalance(offer, offers.at(pair);
+		test::AssertSdaOfferBalance(offer, offers.at(pair));
 	}
 
 	TRAITS_BASED_TEST(CanAccessExpiredSdaOffers) {
@@ -102,7 +102,7 @@ namespace catapult { namespace state {
 		expiredOffers[Height(1)].emplace(pair, offer);
 
 		// Assert:
-		expiredOffers = TTraits::GetExpiredOffers(entry);
+		expiredOffers = TTraits::GetExpiredSdaOfferBalances(entry);
 		ASSERT_EQ(1, expiredOffers.size());
 		const auto& offers = expiredOffers.at(Height(1));
 		ASSERT_EQ(1, offers.size());
@@ -166,7 +166,7 @@ namespace catapult { namespace state {
 		entry.expireOffer(pair, Height(10));
 
 		// Assert:
-		auto& expiredOffers = TTraits::GetExpiredSdaOfferBalancesedSdaOffers(entry);
+		auto& expiredOffers = TTraits::GetExpiredSdaOfferBalances(entry);
 		ASSERT_EQ(1, expiredOffers.size());
 		const auto& offers = expiredOffers.at(Height(10));
 		ASSERT_EQ(1, offers.size());
@@ -239,8 +239,8 @@ namespace catapult { namespace state {
         entry.sdaOfferBalances().emplace(pair3, SdaOfferBalance{ Amount(300), Amount(30), Amount(300), Amount(30), Height(3) });
 
 		auto expectedEntry = SdaExchangeEntry(Key());
-		expectedEntry.expiredSdaOfferBalances().emplace(pair1, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(2) });
-		expectedEntry.expiredSdaOfferBalances().emplace(pair2, SdaOfferBalance{ Amount(200), Amount(20), Amount(200), Amount(20), Height(2) });
+		expectedEntry.expiredSdaOfferBalances()[Height(2)].emplace(pair1, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(2) });
+		expectedEntry.expiredSdaOfferBalances()[Height(2)].emplace(pair2, SdaOfferBalance{ Amount(200), Amount(20), Amount(200), Amount(20), Height(2) });
         expectedEntry.sdaOfferBalances().emplace(pair3, SdaOfferBalance{ Amount(300), Amount(30), Amount(300), Amount(30), Height(3) });
 
 		// Act:

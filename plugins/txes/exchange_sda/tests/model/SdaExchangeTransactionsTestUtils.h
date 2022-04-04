@@ -38,13 +38,13 @@ namespace catapult { namespace model {
 			uint32_t entitySize = sizeof(TTransaction) + offerCount * sizeof(TOffer);
 			auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(entitySize);
 			pTransaction->Size = entitySize;
-			pTransaction->OfferCount = offerCount;
+			pTransaction->SdaOfferCount = offerCount;
 			return pTransaction;
 		}
 
 		template<typename TEntity>
 		static auto GetAttachmentPointer(TEntity& entity) {
-			return entity.OffersPtr();
+			return entity.SdaOffersPtr();
 		}
 	};
 
@@ -53,7 +53,7 @@ namespace catapult { namespace model {
 		// Arrange:
 		TTransaction transaction;
 		transaction.Size = 0;
-		transaction.OfferCount = 4;
+		transaction.SdaOfferCount = 4;
 
 		// Act:
 		auto realSize = TTransaction::CalculateRealSize(transaction);
@@ -67,7 +67,7 @@ namespace catapult { namespace model {
 		// Arrange:
 		TTransaction transaction;
 		test::SetMaxValue(transaction.Size);
-		test::SetMaxValue(transaction.OfferCount);
+		test::SetMaxValue(transaction.SdaOfferCount);
 
 		// Act:
 		auto realSize = TTransaction::CalculateRealSize(transaction);

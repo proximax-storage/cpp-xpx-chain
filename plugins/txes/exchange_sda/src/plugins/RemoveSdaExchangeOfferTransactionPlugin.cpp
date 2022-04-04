@@ -19,10 +19,10 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1:
-				sub.notify(RemoveOfferNotification<1>(
+				sub.notify(RemoveSdaOfferNotification<1>(
 					transaction.Signer,
-					transaction.OfferCount,
-					transaction.OffersPtr()));
+					transaction.SdaOfferCount,
+					transaction.SdaOffersPtr()));
 				break;
 
 			default:

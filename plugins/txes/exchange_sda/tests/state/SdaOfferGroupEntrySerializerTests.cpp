@@ -85,14 +85,14 @@ namespace catapult { namespace state {
         void AssertCanSaveSingleEntry(VersionType version) {
             // Arrange:
             TestContext context;
-            auto entry = test::CreateSdaOfferGroupEntry(Offer_Count, test::GenerateRandomByteArray<Hash256>(), version);
+            auto entry = test::CreateSdaOfferGroupEntry(Offer_Count, test::GenerateRandomByteArray<Hash256>());
 
             // Act:
             TSerializer::Save(entry, context.outputStream());
 
             // Assert:
             ASSERT_EQ(Entry_Size, context.buffer().size());
-            TTraits::AssertEntryBuffer(entry, context.buffer().data(), Entry_Size);
+            AssertEntryBuffer(entry, context.buffer().data(), Entry_Size);
         }
 
         template<typename TSerializer>
@@ -110,8 +110,8 @@ namespace catapult { namespace state {
             ASSERT_EQ(2 * Entry_Size, context.buffer().size());
             const auto* pBuffer1 = context.buffer().data();
             const auto* pBuffer2 = pBuffer1 + Entry_Size;
-            TTraits::AssertEntryBuffer(entry1, pBuffer1, Entry_Size);
-            TTraits::AssertEntryBuffer(entry2, pBuffer2, Entry_Size);
+            AssertEntryBuffer(entry1, pBuffer1, Entry_Size);
+            AssertEntryBuffer(entry2, pBuffer2, Entry_Size);
         }
 
         // endregion
@@ -154,12 +154,12 @@ namespace catapult { namespace state {
             return buffer;
         }
 
-        template<typename TTraits, typename TSerializer>
+        template<typename TSerializer>
         void AssertCanLoadSingleEntry(VersionType version) {
             // Arrange:
             TestContext context;
             auto originalEntry = test::CreateSdaOfferGroupEntry(Offer_Count, test::GenerateRandomByteArray<Hash256>());
-            auto buffer = TTraits::CreateEntryBuffer(originalEntry, Entry_Size);
+            auto buffer = CreateEntryBuffer(originalEntry, Entry_Size);
 
             // Act:
             SdaOfferGroupEntry result((Hash256()));

@@ -111,7 +111,7 @@ namespace catapult { namespace state {
 
             // Assert:
             ASSERT_EQ(Entry_Size, context.buffer().size());
-            TTraits::AssertEntryBuffer(entry, context.buffer().data(), Entry_Size);
+            AssertEntryBuffer(entry, context.buffer().data(), Entry_Size);
         }
 
         template<typename TSerializer>
@@ -129,8 +129,8 @@ namespace catapult { namespace state {
             ASSERT_EQ(2 * Entry_Size, context.buffer().size());
             const auto* pBuffer1 = context.buffer().data();
             const auto* pBuffer2 = pBuffer1 + Entry_Size;
-            TTraits::AssertEntryBuffer(entry1, pBuffer1, Entry_Size);
-            TTraits::AssertEntryBuffer(entry2, pBuffer2, Entry_Size);
+            AssertEntryBuffer(entry1, pBuffer1, Entry_Size);
+            AssertEntryBuffer(entry2, pBuffer2, Entry_Size);
         }
 
         // endregion
@@ -140,7 +140,7 @@ namespace catapult { namespace state {
         void WriteSdaOffer(const MosaicsPair& pair, const SdaOfferBalance& offer, uint8_t*& pData) {
             auto value = pair.first.unwrap();
             memcpy(pData, &value, sizeof(uint64_t));
-            auto value = pair.second.unwrap();
+            value = pair.second.unwrap();
             memcpy(pData, &value, sizeof(uint64_t));
             pData += sizeof(uint64_t);
             value = offer.CurrentMosaicGive.unwrap();
@@ -196,12 +196,12 @@ namespace catapult { namespace state {
             return buffer;
         }
 
-        template<typename TTraits, typename TSerializer>
+        template<typename TSerializer>
         void AssertCanLoadSingleEntry(VersionType version) {
             // Arrange:
             TestContext context;
             auto originalEntry = test::CreateSdaExchangeEntry(Offer_Count, Expired_Offer_Count, test::GenerateRandomByteArray<Key>(), version);
-            auto buffer = TTraits::CreateEntryBuffer(originalEntry, Entry_Size);
+            auto buffer = CreateEntryBuffer(originalEntry, Entry_Size);
 
             // Act:
             SdaExchangeEntry result((Key()));
@@ -216,7 +216,7 @@ namespace catapult { namespace state {
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
     template<typename TSerializer> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(VersionType version); \
-    TEST(TEST_CLASS, TEST_NAME) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SdaExchangeEntrySerializer>(1); } \
+    TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SdaExchangeEntrySerializer>(1); } \
     template<typename TSerializer> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(VersionType version)
 
     TRAITS_BASED_TEST(CanSaveSingleEntry) {

@@ -42,7 +42,7 @@ namespace catapult { namespace test {
 		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, version);
 		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
         pTransaction->Size = entitySize;
-		pTransaction->OfferCount = offers.size();
+		pTransaction->SdaOfferCount = offers.size();
 
         auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
         for (const auto& offer : offers) {

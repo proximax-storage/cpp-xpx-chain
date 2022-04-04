@@ -11,6 +11,7 @@
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
+#include "src/config/SdaExchangeConfiguration.h"
 
 namespace catapult { namespace cache {
 
@@ -27,6 +28,7 @@ namespace catapult { namespace cache {
         using PatriciaTreeDelta = PrimaryMixins::PatriciaTreeDelta;
         using BasicInsertRemove = PrimaryMixins::BasicInsertRemove;
         using DeltaElements = PrimaryMixins::DeltaElements;
+        using ConfigBasedEnable = PrimaryMixins::ConfigBasedEnable<config::SdaExchangeConfiguration>;
     };
 
     /// Basic delta on top of the SDA-SDA exchange cache.
@@ -38,14 +40,16 @@ namespace catapult { namespace cache {
             , public SdaOfferGroupCacheDeltaMixins::MutableAccessor
             , public SdaOfferGroupCacheDeltaMixins::PatriciaTreeDelta
             , public SdaOfferGroupCacheDeltaMixins::BasicInsertRemove
-            , public SdaOfferGroupCacheDeltaMixins::DeltaElements {
+            , public SdaOfferGroupCacheDeltaMixins::DeltaElements
+            , public SdaOfferGroupCacheDeltaMixins::ConfigBasedEnable {
     public:
         using ReadOnlyView = SdaOfferGroupCacheTypes::CacheReadOnlyType;
 
     public:
         /// Creates a delta around \a sdaOfferGroupSets.
         explicit BasicSdaOfferGroupCacheDelta(
-            const SdaOfferGroupCacheTypes::BaseSetDeltaPointers& sdaOfferGroupSets)
+            const SdaOfferGroupCacheTypes::BaseSetDeltaPointers& sdaOfferGroupSets,
+            std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
                     : SdaOfferGroupCacheDeltaMixins::Size(*sdaOfferGroupSets.pPrimary)
                     , SdaOfferGroupCacheDeltaMixins::Contains(*sdaOfferGroupSets.pPrimary)
                     , SdaOfferGroupCacheDeltaMixins::ConstAccessor(*sdaOfferGroupSets.pPrimary)
@@ -53,6 +57,7 @@ namespace catapult { namespace cache {
                     , SdaOfferGroupCacheDeltaMixins::PatriciaTreeDelta(*sdaOfferGroupSets.pPrimary, sdaOfferGroupSets.pPatriciaTree)
                     , SdaOfferGroupCacheDeltaMixins::BasicInsertRemove(*sdaOfferGroupSets.pPrimary)
                     , SdaOfferGroupCacheDeltaMixins::DeltaElements(*sdaOfferGroupSets.pPrimary)
+                    , SdaOfferGroupCacheDeltaMixins::ConfigBasedEnable(pConfigHolder, [](const auto& config) { return config.Enabled; })
                     , m_pSdaOfferGroupEntries(sdaOfferGroupSets.pPrimary)
         {}
 
@@ -69,8 +74,9 @@ namespace catapult { namespace cache {
     public:
         /// Creates a delta around \a sdaOfferGroupSets.
         explicit SdaOfferGroupCacheDelta(
-            const SdaOfferGroupCacheTypes::BaseSetDeltaPointers& sdaOfferGroupSets)
-                : ReadOnlyViewSupplier(sdaOfferGroupSets)
+            const SdaOfferGroupCacheTypes::BaseSetDeltaPointers& sdaOfferGroupSets,
+            std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+                : ReadOnlyViewSupplier(sdaOfferGroupSets, pConfigHolder)
         {}
     };
 }}
