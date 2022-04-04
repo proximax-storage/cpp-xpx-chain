@@ -8,5 +8,5 @@
 #include "src/config/SdaExchangeConfiguration.h"
 
 namespace catapult { namespace validators {
-	DEFINE_PLUGIN_CONFIG_VALIDATOR(exchangesda, ExchangeSda, 1)
+	DEFINE_PLUGIN_CONFIG_VALIDATOR_WITH_FAILURE(exchangesda, SdaExchange, Failure_ExchangeSda_Plugin_Config_Malformed, 1)
 }}

@@ -63,6 +63,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because there is no offered mosaic to remove.
 	DEFINE_CATAPULT_EXCHANGESDA_RESULT(No_Offered_Mosaics_To_Remove, 16);
 
+	/// Validation failed because plugin configuration data is malformed.
+	DEFINE_CATAPULT_EXCHANGESDA_RESULT(Plugin_Config_Malformed, 17);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif
