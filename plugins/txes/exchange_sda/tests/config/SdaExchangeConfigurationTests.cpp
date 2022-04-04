@@ -44,8 +44,8 @@ namespace catapult { namespace config {
 			static void AssertZero(const SdaExchangeConfiguration& config) {
 				// Assert:
 				EXPECT_EQ(false, config.Enabled);
-				EXPECT_EQ(BlockDuration(0), config.maxOfferDuration);
-				EXPECT_EQ(Key(), config.longOfferKey);
+				EXPECT_EQ(BlockDuration(0), config.MaxOfferDuration);
+				EXPECT_EQ(Key(), config.LongOfferKey);
                 EXPECT_EQ(0, config.SortPolicy);
 			}
 
