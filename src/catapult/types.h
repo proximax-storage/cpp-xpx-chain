@@ -137,6 +137,15 @@ namespace catapult {
 	struct Reputation_tag {};
 	using Reputation = utils::BaseValue<uint64_t, Reputation_tag>;
 
+	enum class SortPolicy : uint8_t {
+		Default,
+		SmallToBig,
+		SmallToBigSortedByEarliestExpiry,
+		BigToSmall, 
+		BigToSmallSortedByEarliestExpiry,
+		ExactOrClosest
+	};
+
 	// endregion
 
 	using utils::RawBuffer;

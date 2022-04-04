@@ -30,16 +30,7 @@ namespace catapult { namespace config {
 		Key LongOfferKey;
 
 		/// Policy to sort SDA-SDA offers.
-		enum class SortPolicies : uint8_t {
-			Default,
-			SmallToBig,
-			SmallToBigSortedByEarliestExpiry,
-			BigToSmall, 
-			BigToSmallSortedByEarliestExpiry,
-			ExactOrClosest
-		};
-
-		SortPolicies SortPolicy;
+		SortPolicy OfferSortPolicy;
 
 	private:
 		SdaExchangeConfiguration() = default;

@@ -78,20 +78,20 @@ namespace catapult { namespace observers {
             auto& groupEntry = groupIter.get();
 
             auto& arrangedOffers = groupEntry.sdaOfferGroup();
-            switch (pluginConfig.SortPolicy) {
-                case config::SdaExchangeConfiguration::SortPolicies::SmallToBig: 
+            switch (pluginConfig.OfferSortPolicy) {
+                case SortPolicy::SmallToBig: 
                     arrangedOffers = groupEntry.smallToBig(groupHash, arrangedOffers);
                     break;
-                case config::SdaExchangeConfiguration::SortPolicies::SmallToBigSortedByEarliestExpiry: 
+                case SortPolicy::SmallToBigSortedByEarliestExpiry: 
                     arrangedOffers = groupEntry.smallToBigSortedByEarliestExpiry(groupHash, arrangedOffers);
                     break;
-                case config::SdaExchangeConfiguration::SortPolicies::BigToSmall: 
+                case SortPolicy::BigToSmall: 
                     arrangedOffers = groupEntry.bigToSmall(groupHash, arrangedOffers);
                     break;
-                case config::SdaExchangeConfiguration::SortPolicies::BigToSmallSortedByEarliestExpiry: 
+                case SortPolicy::BigToSmallSortedByEarliestExpiry: 
                     arrangedOffers = groupEntry.bigToSmallSortedByEarliestExpiry(groupHash, arrangedOffers);
                     break;
-                case config::SdaExchangeConfiguration::SortPolicies::ExactOrClosest:
+                case SortPolicy::ExactOrClosest:
                     arrangedOffers = groupEntry.exactOrClosest(groupHash, offersBySigner.second.CurrentMosaicGive, arrangedOffers);
                     break;
             }
