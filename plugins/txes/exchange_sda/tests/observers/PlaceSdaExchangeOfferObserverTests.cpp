@@ -42,7 +42,7 @@ namespace catapult { namespace observers {
         };
 
         template<typename Notification>
-        std::unique_ptr<Notification> CreateNotification(PlaceSdaExchangeOfferValues& values) {
+        std::unique_ptr<Notification> CreateNotification(const PlaceSdaExchangeOfferValues& values) {
             return std::make_unique<Notification>(
                 values.InitialEntry.owner(),
                 values.SdaOffers.size(),
@@ -106,7 +106,7 @@ namespace catapult { namespace observers {
                 auto mosaicIdGive = context.observerContext().Resolvers.resolve(offer.MosaicGive.MosaicId);
                 auto mosaicIdGet = context.observerContext().Resolvers.resolve(offer.MosaicGet.MosaicId);
                 auto deadline = GetOfferDeadline(offer.Duration, context.observerContext().Height);
-                state::SdaOfferBalance sdaOffer{{mosaicIdGive, offer.MosaicGive.Amount}, {mosaicIdGet, offer.MosaicGet.Amount}, offer.Owner, deadline};
+                state::SdaOfferBalance sdaOffer{offer.MosaicGive.Amount, offer.MosaicGet.Amount, offer.MosaicGive.Amount, offer.MosaicGet.Amount, deadline};
                 state::MosaicsPair pair {mosaicIdGive, mosaicIdGet};
                 test::AssertSdaOfferBalance(entry.sdaOfferBalances().at(pair), sdaOffer);
             }

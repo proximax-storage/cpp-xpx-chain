@@ -9,7 +9,7 @@
 #include "catapult/utils/MemoryUtils.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/plugins/PlaceSdaExchangeOfferTransactionPlugin.h"
-#include "src/model/SdaExchangeTransaction.h"
+#include "src/model/PlaceSdaExchangeOfferTransaction.h"
 #include "src/model/SdaExchangeNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 
         template<typename TTraits, VersionType Version>
         auto CreateTransaction(const Key& offerOwner1 = test::GenerateRandomByteArray<Key>(), const Key& offerOwner2 = test::GenerateRandomByteArray<Key>()) {
-            return test::CreateSdaExchangeTransaction<typename TTraits::TransactionType, model::SdaOfferWithOwnerAndDuration>(
+            return test::CreatePlaceSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferWithOwnerAndDuration>(
                 {
                     model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(10)}, {UnresolvedMosaicId(2), Amount(100)}}, offerOwner1, BlockDuration(1000)},
                     model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(2), Amount(200)}, {UnresolvedMosaicId(1), Amount(20)}}, offerOwner2, BlockDuration(1000)},
@@ -44,8 +44,8 @@ namespace catapult { namespace plugins {
     DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_Place_Sda_Exchange_Offer, test::MutableBlockchainConfiguration().ToConst().Immutable)
 
     namespace {
-        template<typename TTraits>
-        void AssertCanCalculateSize(VersionType version) {
+        template<typename TTraits, VersionType Version>
+        void AssertCanCalculateSize() {
             // Arrange:
             test::MutableBlockchainConfiguration config;
             auto pPlugin = TTraits::CreatePlugin(config.Immutable);
@@ -97,7 +97,7 @@ namespace catapult { namespace plugins {
             // Assert:
             ASSERT_EQ(1 + Sda_Offer_Count * 2, sub.numNotifications());
             EXPECT_EQ(expectedPlaceSdaExchangeOfferType, sub.notificationTypes()[0]);
-            for (auto i = 0u; i < Offer_Count; ++i) {
+            for (auto i = 0u; i < Sda_Offer_Count; ++i) {
                 EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[2 * i + 1]);
                 EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[2 * i + 2]);
             }
@@ -105,7 +105,7 @@ namespace catapult { namespace plugins {
     }
 
     PLUGIN_TEST(CanPublishCorrectNumberOfNotifications_v1) {
-        AssertCanPublishCorrectNumberOfNotifications<TTraits, 1>(Place_Sda_Exchange_Offer_v1_Notification);
+        AssertCanPublishCorrectNumberOfNotifications<TTraits, 1>(ExchangeSda_Place_Sda_Offer_v1_Notification);
     }
 
     // endregion

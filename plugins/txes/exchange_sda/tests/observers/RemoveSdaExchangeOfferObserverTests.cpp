@@ -43,7 +43,7 @@ namespace catapult { namespace observers {
         };
 
         template<typename Notification>
-        std::unique_ptr<Notification> CreateNotification(RemoveSdaExchangeOfferValues& values) {
+        std::unique_ptr<Notification> CreateNotification(const RemoveSdaExchangeOfferValues& values) {
             return std::make_unique<Notification>(
                 values.InitialEntry.owner(),
                 values.OffersToRemove.size(),
@@ -120,8 +120,8 @@ namespace catapult { namespace observers {
     TRAITS_BASED_TEST(RemoveOffer_Commit) {
 		// Arrange:
 		auto offerOwner = test::GenerateRandomByteArray<Key>();
-		state::ExchangeEntry initialEntry(offerOwner);
-		state::ExchangeEntry expectedEntry(offerOwner);
+		state::SdaExchangeEntry initialEntry(offerOwner);
+		state::SdaExchangeEntry expectedEntry(offerOwner);
 		PrepareEntries(initialEntry, expectedEntry);
 		auto values = CreateRemoveSdaExchangeOfferValues(std::move(initialEntry), std::move(expectedEntry));
 

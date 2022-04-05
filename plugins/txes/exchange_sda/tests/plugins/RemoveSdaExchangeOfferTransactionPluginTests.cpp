@@ -25,7 +25,7 @@ namespace catapult { namespace plugins {
 
         template<typename TTraits, VersionType Version>
         auto CreateTransaction() {
-            return test::CreateExchangeTransaction<typename TTraits::TransactionType, model::SdaOfferMosaic>(
+            return test::CreatePlaceSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferMosaic>(
                 {
                     model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
                     model::SdaOfferMosaic{UnresolvedMosaicId(2), UnresolvedMosaicId(1)},
@@ -92,7 +92,7 @@ namespace catapult { namespace plugins {
     }
 
     PLUGIN_TEST(CanPublishCorrectNumberOfNotifications_v1) {
-        AssertCanPublishCorrectNumberOfNotifications<TTraits, 1>(Exchange_Remove_Sda_Offer_v1_Notification);
+        AssertCanPublishCorrectNumberOfNotifications<TTraits, 1>(ExchangeSda_Remove_Sda_Offer_v1_Notification);
     }
 
     // endregion
@@ -115,7 +115,7 @@ namespace catapult { namespace plugins {
             const auto& notification = sub.matchingNotifications()[0];
             EXPECT_EQ(pTransaction->Signer, notification.Owner);
             EXPECT_EQ(2, notification.SdaOfferCount);
-            EXPECT_EQ_MEMORY(pTransaction->OffersPtr(), notification.SdaOffersPtr, 2 * sizeof(SdaOfferMosaic));
+            EXPECT_EQ_MEMORY(pTransaction->SdaOffersPtr(), notification.SdaOffersPtr, 2 * sizeof(SdaOfferMosaic));
         }
     }
 

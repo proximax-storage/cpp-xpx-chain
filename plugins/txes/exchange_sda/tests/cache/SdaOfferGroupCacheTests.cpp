@@ -48,11 +48,7 @@ namespace catapult { namespace cache {
             static void Modify(SdaOfferGroupCacheDelta& delta, const state::SdaOfferGroupEntry& entry) {
                 auto iter = delta.find(entry.groupHash());
                 auto& entryFromCache = iter.get();
-                std::vector<state::SdaOfferBasicInfo> info;
-                for (uint8_t i = 1; i <= 5; ++i) {
-                    info.emplace_back(test::GenerateSdaOfferBasicInfo());
-                }
-                entryFromCache.sdaOfferGroup().emplace(entry.groupHash(), info);
+                entryFromCache.sdaOfferGroup().emplace(entry.groupHash(), test::GenerateSdaOfferBasicInfo());
             }
         };
     }

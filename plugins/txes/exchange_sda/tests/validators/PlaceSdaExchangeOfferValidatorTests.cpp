@@ -84,16 +84,6 @@ namespace catapult { namespace validators {
 
             // Assert:
             EXPECT_EQ(expectedResult, result);
-
-            model::PlaceSdaOfferNotification<TTraits::Version> notification(signer, offers.size(), offers.data());
-            auto config = CreateConfig(longOfferKey);
-            auto pValidator = TTraits::CreateValidator();
-
-            // Act:
-            auto result = test::ValidateNotification(*pValidator, notification, cache, config, currentHeight);
-
-            // Assert:
-            EXPECT_EQ(expectedResult, result);
         }
 
         template<typename TTraits>
@@ -159,8 +149,8 @@ namespace catapult { namespace validators {
             AssertValidationResult<TValidatorTraits>(
                 Failure_ExchangeSda_Duplicated_Offer_In_Request,
                 {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(100)}, {MosaicId(2), Amount(10)}}, Key(), BlockDuration(100)},
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(100)}, {MosaicId(2), Amount(10)}}, Key(), BlockDuration(100)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(100)}, {UnresolvedMosaicId(2), Amount(10)}}, Key(), BlockDuration(100)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(100)}, {UnresolvedMosaicId(2), Amount(10)}}, Key(), BlockDuration(100)},
                 });
         }
 
@@ -169,7 +159,7 @@ namespace catapult { namespace validators {
             AssertValidationResult<TValidatorTraits>(
                 Failure_ExchangeSda_Zero_Offer_Duration,
                 {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(100)}, {MosaicId(2), Amount(10)}}, Key(), BlockDuration(0)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(100)}, {UnresolvedMosaicId(2), Amount(10)}}, Key(), BlockDuration(0)},
                 });
         }
 
@@ -178,7 +168,7 @@ namespace catapult { namespace validators {
             AssertValidationResult<TValidatorTraits>(
                 Failure_ExchangeSda_Offer_Duration_Too_Large,
                 {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(100)}, {MosaicId(2), Amount(10)}}, Key(), BlockDuration(1000)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(100)}, {UnresolvedMosaicId(2), Amount(10)}}, Key(), BlockDuration(1000)},
                 });
         }
 
@@ -187,7 +177,7 @@ namespace catapult { namespace validators {
             AssertValidationResult<TValidatorTraits>(
                 Failure_ExchangeSda_Zero_Amount,
                 {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(0)}, {MosaicId(2), Amount(10)}}, Key(), BlockDuration(100)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(0)}, {UnresolvedMosaicId(2), Amount(10)}}, Key(), BlockDuration(100)},
                 });
         }
 
@@ -196,7 +186,7 @@ namespace catapult { namespace validators {
             AssertValidationResult<TValidatorTraits>(
                 Failure_ExchangeSda_Zero_Price,
                 {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(100)}, {MosaicId(2), Amount(0)}}, Key(), BlockDuration(100)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(100)}, {UnresolvedMosaicId(2), Amount(0)}}, Key(), BlockDuration(100)},
                 });
         }
 
@@ -210,7 +200,7 @@ namespace catapult { namespace validators {
             AssertValidationResult<TValidatorTraits>(
                 Failure_ExchangeSda_Offer_Exists,
                 {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(100)}, {MosaicId(2), Amount(10)}}, offerOwner, BlockDuration(100)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(100)}, {UnresolvedMosaicId(2), Amount(10)}}, offerOwner, BlockDuration(100)},
                 },
                 offerOwner,
                 &entry);
@@ -225,7 +215,7 @@ namespace catapult { namespace validators {
             AssertValidationResult<TValidatorTraits>(
                     Failure_ExchangeSda_Offer_Doesnt_Exist,
                     {
-                        model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(100)}, {MosaicId(2), Amount(10)}}, offerOwner, BlockDuration(100)},
+                        model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{test::UnresolveXor(MosaicId(1)), Amount(100)}, {test::UnresolveXor(MosaicId(2)), Amount(10)}}, offerOwner, BlockDuration(100)},
                     },
                     &entry);
         }
@@ -240,7 +230,7 @@ namespace catapult { namespace validators {
             AssertValidationResult<TValidatorTraits>(
                     Failure_ExchangeSda_Offer_Expired,
                     {
-                        model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(100)}, {MosaicId(2), Amount(10)}}, offerOwner, BlockDuration(1)},
+                        model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(100)}, {UnresolvedMosaicId(2), Amount(10)}}, offerOwner, BlockDuration(1)},
                     },
                     &entry);
         }
@@ -255,7 +245,7 @@ namespace catapult { namespace validators {
             AssertValidationResult<TValidatorTraits>(
                     Failure_ExchangeSda_Not_Enough_Units_In_Offer,
                     {
-                        model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(50)}, {MosaicId(2), Amount(10)}}, offerOwner, BlockDuration(100)},
+                        model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(50)}, {UnresolvedMosaicId(2), Amount(10)}}, offerOwner, BlockDuration(100)},
                     },
                     &entry);
         }
@@ -270,7 +260,7 @@ namespace catapult { namespace validators {
             AssertValidationResult<TValidatorTraits>(
                     Failure_ExchangeSda_Cant_Remove_Offer_At_Height,
                     {
-                        model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(50)}, {MosaicId(2), Amount(10)}}, offerOwner, BlockDuration(100)},
+                        model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(50)}, {UnresolvedMosaicId(2), Amount(10)}}, offerOwner, BlockDuration(100)},
                     },
                     &entry);
         }
@@ -286,8 +276,8 @@ namespace catapult { namespace validators {
             AssertValidationResult<TValidatorTraits>(
                 ValidationResult::Success,
                 {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(100)}, {MosaicId(2), Amount(10)}}, Key(), BlockDuration(100)},
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(2), Amount(200)}, {MosaicId(1), Amount(10)}}, Key(), BlockDuration(200)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(100)}, {UnresolvedMosaicId(2), Amount(10)}}, Key(), BlockDuration(100)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(2), Amount(200)}, {UnresolvedMosaicId(1), Amount(10)}}, Key(), BlockDuration(200)},
                 },
                 test::GenerateRandomByteArray<Key>());
         }
@@ -300,8 +290,8 @@ namespace catapult { namespace validators {
             AssertValidationResult<TValidatorTraits>(
                 ValidationResult::Success,
                 {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(100)}, {MosaicId(2), Amount(10)}}, offerOwner, BlockDuration(1000)},
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(2), Amount(100)}, {MosaicId(1), Amount(10)}}, offerOwner, BlockDuration(2000)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(100)}, {UnresolvedMosaicId(2), Amount(10)}}, offerOwner, BlockDuration(1000)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(2), Amount(100)}, {UnresolvedMosaicId(1), Amount(10)}}, offerOwner, BlockDuration(2000)},
                 },
                 offerOwner,
                 nullptr,
@@ -316,8 +306,8 @@ namespace catapult { namespace validators {
             AssertValidationResultExpiringMosaic<TValidatorTraits>(
                 ValidationResult::Success,
                 {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(100)}, {MosaicId(2), Amount(10)}}, offerOwner, BlockDuration(50)},
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(2), Amount(100)}, {MosaicId(1), Amount(10)}}, offerOwner, BlockDuration(50)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(100)}, {UnresolvedMosaicId(2), Amount(10)}}, offerOwner, BlockDuration(50)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(2), Amount(100)}, {UnresolvedMosaicId(1), Amount(10)}}, offerOwner, BlockDuration(50)},
                 },
                 offerOwner,
                 nullptr,
@@ -332,8 +322,8 @@ namespace catapult { namespace validators {
             AssertValidationResultExpiringMosaic<TValidatorTraits>(
                 Failure_ExchangeSda_Offer_Duration_Exceeds_Mosaic_Duration,
                 {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(1), Amount(100)}, {MosaicId(2), Amount(10)}}, offerOwner, BlockDuration(1000)},
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{MosaicId(2), Amount(100)}, {MosaicId(1), Amount(10)}}, offerOwner, BlockDuration(2000)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(100)}, {UnresolvedMosaicId(2), Amount(10)}}, offerOwner, BlockDuration(1000)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(2), Amount(100)}, {UnresolvedMosaicId(1), Amount(10)}}, offerOwner, BlockDuration(2000)},
                 },
                 offerOwner,
                 nullptr,

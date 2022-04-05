@@ -68,7 +68,7 @@ namespace catapult { namespace validators {
                     Failure_ExchangeSda_Account_Doesnt_Have_Any_Offer,
                     test::GenerateRandomByteArray<Key>(),
                     {
-                        model::SdaOfferMosaic{MosaicId(1), MosaicId(2)},
+                        model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
                     });
         }
 
@@ -76,15 +76,15 @@ namespace catapult { namespace validators {
             // Arrange:
             auto offerOwner = test::GenerateRandomByteArray<Key>();
             state::SdaExchangeEntry entry(offerOwner);
-            entry.sdaOfferBalances().emplace(state::MosaicsPair{MosaicId(1), MosaicId(2)}, state::SdaOfferBalance{state::OfferBase{Amount(10),  Amount(100), Amount(10), Amount(100), Height(20)}});
+            entry.sdaOfferBalances().emplace(state::MosaicsPair{MosaicId(1), MosaicId(2)}, state::SdaOfferBalance{Amount(10),  Amount(100), Amount(10), Amount(100), Height(20)});
 
             // Assert:
             AssertValidationResult<TValidatorTraits>(
-                    Failure_ExchangSdae_Duplicated_Offer_In_Request,
+                    Failure_ExchangeSda_Duplicated_Offer_In_Request,
                     offerOwner,
                     {
-                        model::SdaOfferMosaic{MosaicId(1), MosaicId(2)},
-                        model::SdaOfferMosaic{MosaicId(1), MosaicId(2)},
+                        model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
+                        model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
                     },
                     &entry);
         }
@@ -99,7 +99,7 @@ namespace catapult { namespace validators {
                     Failure_ExchangeSda_Offer_Doesnt_Exist,
                     offerOwner,
                     {
-                        model::SdaOfferMosaic{MosaicId(1), MosaicId(2)},
+                        model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
                     },
                     &entry);
         }
@@ -108,14 +108,14 @@ namespace catapult { namespace validators {
             // Arrange:
             auto offerOwner = test::GenerateRandomByteArray<Key>();
             state::SdaExchangeEntry entry(offerOwner);
-            entry.sdaOfferBalances().emplace(state::MosaicsPair{MosaicId(1), MosaicId(2)}, state::SdaOfferBalance{state::OfferBase{Amount(10),  Amount(100), Amount(10), Amount(100), Height(10)}});
+            entry.sdaOfferBalances().emplace(state::MosaicsPair{MosaicId(1), MosaicId(2)}, state::SdaOfferBalance{Amount(10),  Amount(100), Amount(10), Amount(100), Height(10)});
 
             // Assert:
             AssertValidationResult<TValidatorTraits>(
                     Failure_ExchangeSda_Offer_Expired,
                     offerOwner,
                     {
-                        model::SdaOfferMosaic{MosaicId(1), MosaicId(2)},
+                        model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
                     },
                     &entry);
         }
@@ -132,7 +132,7 @@ namespace catapult { namespace validators {
                     Failure_ExchangeSda_Cant_Remove_Offer_At_Height,
                     offerOwner,
                     {
-                        model::SdaOfferMosaic{MosaicId(1), MosaicId(2)},
+                        model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
                     },
                     &entry);
         }
@@ -149,8 +149,8 @@ namespace catapult { namespace validators {
 					ValidationResult::Success,
 					offerOwner,
 					{
-						model::SdaOfferMosaic{MosaicId(1), MosaicId(2)},
-                        model::SdaOfferMosaic{MosaicId(2), MosaicId(1)},
+						model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
+                        model::SdaOfferMosaic{UnresolvedMosaicId(2), UnresolvedMosaicId(1)},
 					},
 					&entry);
 		}

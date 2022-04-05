@@ -24,7 +24,8 @@ namespace catapult { namespace cache {
 			, public SdaOfferGroupCacheViewMixins::Contains
 			, public SdaOfferGroupCacheViewMixins::Iteration
 			, public SdaOfferGroupCacheViewMixins::ConstAccessor
-			, public SdaOfferGroupCacheViewMixins::PatriciaTreeView {
+			, public SdaOfferGroupCacheViewMixins::PatriciaTreeView
+			, public SdaOfferGroupCacheViewMixins::ConfigBasedEnable<config::SdaExchangeConfiguration> {
 	public:
 		using ReadOnlyView = SdaOfferGroupCacheTypes::CacheReadOnlyType;
 
@@ -38,6 +39,7 @@ namespace catapult { namespace cache {
 				, SdaOfferGroupCacheViewMixins::Iteration(sdaOfferGroupSets.Primary)
 				, SdaOfferGroupCacheViewMixins::ConstAccessor(sdaOfferGroupSets.Primary)
                 , SdaOfferGroupCacheViewMixins::PatriciaTreeView(sdaOfferGroupSets.PatriciaTree.get())
+				, SdaOfferGroupCacheViewMixins::ConfigBasedEnable<config::SdaExchangeConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
 		{}
 	};
 
