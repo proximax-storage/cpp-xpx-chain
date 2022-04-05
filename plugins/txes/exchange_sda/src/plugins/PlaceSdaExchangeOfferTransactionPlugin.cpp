@@ -5,7 +5,6 @@
 **/
 
 #include "PlaceSdaExchangeOfferTransactionPlugin.h"
-#include "catapult/config/ImmutableConfiguration.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "src/model/PlaceSdaExchangeOfferTransaction.h"

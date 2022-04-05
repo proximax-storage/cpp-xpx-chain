@@ -25,7 +25,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS PlaceSdaExchangeOfferTransactionPluginTests
 
     namespace {
-        DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(PlaceSdaExchangeOffer, config::ImmutableConfiguration, 1, 1,)
+        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(PlaceSdaExchangeOffer, 1, 1,)
 
         constexpr auto Sda_Offer_Count = 4u;
 
@@ -41,14 +41,13 @@ namespace catapult { namespace plugins {
         }
     }
 
-    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_Place_Sda_Exchange_Offer, test::MutableBlockchainConfiguration().ToConst().Immutable)
+    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_Place_Sda_Exchange_Offer)
 
     namespace {
         template<typename TTraits, VersionType Version>
         void AssertCanCalculateSize() {
             // Arrange:
-            test::MutableBlockchainConfiguration config;
-            auto pPlugin = TTraits::CreatePlugin(config.Immutable);
+            auto pPlugin = TTraits::CreatePlugin();
             auto pTransaction = CreateTransaction<TTraits, Version>();
 
             // Act:
@@ -68,8 +67,7 @@ namespace catapult { namespace plugins {
     PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
         // Arrange:
         mocks::MockNotificationSubscriber sub;
-        test::MutableBlockchainConfiguration config;
-        auto pPlugin = TTraits::CreatePlugin(config.Immutable);
+        auto pPlugin = TTraits::CreatePlugin();
 
         typename TTraits::TransactionType transaction;
         transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
@@ -88,8 +86,7 @@ namespace catapult { namespace plugins {
             // Arrange:
             auto pTransaction = CreateTransaction<TTraits, Version>();
             mocks::MockNotificationSubscriber sub;
-            test::MutableBlockchainConfiguration config;
-            auto pPlugin = TTraits::CreatePlugin(config.Immutable);
+            auto pPlugin = TTraits::CreatePlugin();
 
             // Act:
             test::PublishTransaction(*pPlugin, *pTransaction, sub);
@@ -117,8 +114,7 @@ namespace catapult { namespace plugins {
         void AssertCanPublishPlaceSdaOfferNotification() {
             // Arrange:
             mocks::MockTypedNotificationSubscriber<PlaceSdaOfferNotification<Version>> sub;
-            test::MutableBlockchainConfiguration config;
-            auto pPlugin = TTraits::CreatePlugin(config.Immutable);
+            auto pPlugin = TTraits::CreatePlugin();
             auto pTransaction = CreateTransaction<TTraits, Version>();
 
             // Act:
@@ -146,8 +142,7 @@ namespace catapult { namespace plugins {
         void AssertCanPublishBalanceDebitNotifications() {
             // Arrange:
             mocks::MockTypedNotificationSubscriber<BalanceDebitNotification<1>> sub;
-            test::MutableBlockchainConfiguration config;
-            auto pPlugin = TTraits::CreatePlugin(config.Immutable);
+            auto pPlugin = TTraits::CreatePlugin();
             auto pTransaction = CreateTransaction<TTraits, Version>();
 
             // Act:
@@ -181,8 +176,7 @@ namespace catapult { namespace plugins {
         void AssertCanPublishBalanceCreditNotifications() {
             // Arrange:
             mocks::MockTypedNotificationSubscriber<BalanceCreditNotification<1>> sub;
-            test::MutableBlockchainConfiguration config;
-            auto pPlugin = TTraits::CreatePlugin(config.Immutable);
+            auto pPlugin = TTraits::CreatePlugin();
             auto pTransaction = CreateTransaction<TTraits, Version>();
 
             // Act:

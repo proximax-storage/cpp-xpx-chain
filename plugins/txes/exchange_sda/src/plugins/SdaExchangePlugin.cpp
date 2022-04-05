@@ -22,8 +22,7 @@ namespace catapult { namespace plugins {
 			config.template InitPluginConfiguration<config::SdaExchangeConfiguration>();
 		});
 
-		const auto& immutableConfig = manager.immutableConfig();
-		manager.addTransactionSupport(CreatePlaceSdaExchangeOfferTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreatePlaceSdaExchangeOfferTransactionPlugin());
 		manager.addTransactionSupport(CreateRemoveSdaExchangeOfferTransactionPlugin());
 
 		auto pConfigHolder = manager.configHolder();

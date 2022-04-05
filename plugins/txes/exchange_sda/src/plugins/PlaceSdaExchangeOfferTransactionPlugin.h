@@ -8,14 +8,11 @@
 #include "catapult/plugins.h"
 #include <memory>
 
-namespace catapult {
-	namespace model { class TransactionPlugin; }
-	namespace config { class ImmutableConfiguration; }
-}
+namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
 	/// Creates a place and exchange SDA-SDA offer transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreatePlaceSdaExchangeOfferTransactionPlugin(const config::ImmutableConfiguration& config);
+	std::unique_ptr<model::TransactionPlugin> CreatePlaceSdaExchangeOfferTransactionPlugin();
 }}
