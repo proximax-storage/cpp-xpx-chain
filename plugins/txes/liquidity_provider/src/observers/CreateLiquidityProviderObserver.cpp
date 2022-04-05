@@ -5,6 +5,7 @@
 **/
 
 #include <random>
+#include <src/cache/LiquidityProviderCache.h>
 #include "Observers.h"
 #include "src/model/InternalLiquidityProviderNotifications.h"
 #include "src/state/LiquidityProviderEntry.h"
@@ -24,15 +25,9 @@ namespace catapult { namespace observers {
 		entry.setAlpha(notification.Alpha);
 		entry.setBeta(notification.Beta);
 
-		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-		auto& accountEntry = accountStateCache.find(notification.ProviderKey).get();
+		entry.recentTurnover() = state::HistoryObservation{ {notification.CurrencyDeposit, notification.InitialMosaicsMinting}, Amount{0} };
 
-		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
-		auto currencyBalance = accountEntry.Balances.get(currencyMosaicId);
-
-		auto resolvedMosaicId = context.Resolvers.resolve(entry.mosaicId());
-		auto mosaicBalance = accountEntry.Balances.get(resolvedMosaicId);
-
-		entry.recentTurnover() = state::HistoryObservation{ {currencyBalance, mosaicBalance}, Amount{0} };
+		auto& liquidityProviderCache = context.Cache.sub<cache::LiquidityProviderCache>();
+		liquidityProviderCache.insert(entry);
 	}));
 }}

@@ -13,5 +13,5 @@ namespace catapult { namespace plugins {
 
 	/// Registers storage support with \a manager.
 	PLUGIN_API
-	void RegisterStorageSubsystem(PluginManager& manager);
+	void RegisterLiquidityProviderSubsystem(PluginManager& manager);
 }}

@@ -116,7 +116,9 @@ namespace catapult::observers {
 		auto& creditorAccount = accountStateCache.find(currencyCreditor).get();
 		creditorAccount.Balances.credit(currencyMosaicId, currencyAmount);
 
+		auto a = lpAccount.Balances.get(currencyMosaicId);
 		lpAccount.Balances.debit(currencyMosaicId, currencyAmount);
+		auto b = lpAccount.Balances.get(currencyMosaicId);
 
 		auto& debtorAccount = accountStateCache.find(mosaicDebtor).get();
 		debtorAccount.Balances.debit(resolvedMosaicId, mosaicAmount);

@@ -35,7 +35,6 @@ namespace catapult { namespace observers {
 		}
 
 
-		// We can not allow zero on LP balance
 		auto resolvedMosaicId = context.Resolvers.resolve(entry.mosaicId());
 		if (notification.MosaicBalanceIncrease) {
 			lpStateEntry.Balances.credit(resolvedMosaicId, notification.MosaicBalanceChange);

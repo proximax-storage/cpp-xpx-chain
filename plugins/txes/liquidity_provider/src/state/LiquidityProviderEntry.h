@@ -26,7 +26,11 @@ namespace catapult { namespace state {
 			BigUint aCurrency = m_currencyAmount.unwrap();
 			BigUint bCurrency = other.m_currencyAmount.unwrap();
 
-			return (aCurrency * other.m_mosaicAmount.unwrap()) < (bCurrency * other.m_mosaicAmount.unwrap());
+			return (aCurrency * other.m_mosaicAmount.unwrap()) < (bCurrency * m_mosaicAmount.unwrap());
+		}
+
+		explicit operator double() const {
+			return ((double) m_currencyAmount.unwrap()) / ((double) m_mosaicAmount.unwrap());
 		}
 	};
 

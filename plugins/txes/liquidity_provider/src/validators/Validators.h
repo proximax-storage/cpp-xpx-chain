@@ -27,9 +27,9 @@ DECLARE_STATEFUL_VALIDATOR(NAME, validators::Notification)(const LiquidityProvid
 
 	DECLARE_STATEFUL_VALIDATOR(CreateLiquidityProvider, model::CreateLiquidityProviderNotification<1>)();
 
-	DECLARE_STATEFUL_VALIDATOR(CreditMosaicNotification, model::CreditMosaicNotification<1>)(const LiquidityProviderExchangeValidator&);
+	DECLARE_STATEFUL_VALIDATOR(CreditMosaic, model::CreditMosaicNotification<1>)(const LiquidityProviderExchangeValidator&);
 
-	DECLARE_STATEFUL_VALIDATOR(DebitMosaicNotification, model::DebitMosaicNotification<1>)(const LiquidityProviderExchangeValidator&);
+	DECLARE_STATEFUL_VALIDATOR(DebitMosaic, model::DebitMosaicNotification<1>)(const LiquidityProviderExchangeValidator&);
 
 	DECLARE_STATEFUL_VALIDATOR(ManualRateChange, model::ManualRateChangeNotification<1>)();
 

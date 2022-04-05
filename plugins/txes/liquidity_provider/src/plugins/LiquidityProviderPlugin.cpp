@@ -4,19 +4,20 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <src/observers/LiquidityProviderExchangeObserverImpl.h>
 #include "src/cache/LiquidityProviderCacheSubCachePlugin.h"
 #include "src/validators/LiquidityProviderExchangeValidatorImpl.h"
 #include "src/observers/LiquidityProviderExchangeObserverImpl.h"
 #include "CreateLiquidityProviderTransactionPlugin.h"
+#include "ManualRateChangeTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "src/config/LiquidityProviderConfiguration.h"
 #include "catapult/plugins/CacheHandlers.h"
+#include "LiquidityProviderPlugin.h"
 
 namespace catapult { namespace plugins {
 
-	void RegisterStorageSubsystem(PluginManager& manager) {
+	void RegisterLiquidityProviderSubsystem(PluginManager& manager) {
 		manager.addPluginInitializer([](auto& config) {
 			config.template InitPluginConfiguration<config::LiquidityProviderConfiguration>();
 		});
@@ -25,6 +26,7 @@ namespace catapult { namespace plugins {
 		const auto& immutableConfig = manager.immutableConfig();
 
 		manager.addTransactionSupport(CreateCreateLiquidityProviderTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateManualRateChangeTransactionPlugin(immutableConfig));
 
 		manager.setLiquidityProviderExchangeValidator(std::make_shared<validators::LiquidityProviderExchangeValidatorImpl>());
 		manager.setLiquidityProviderExchangeObserver(std::make_shared<observers::LiquidityProviderExchangeObserverImpl>());
@@ -50,9 +52,9 @@ namespace catapult { namespace plugins {
 		const auto& liquidityProviderValidator = manager.liquidityProviderExchangeValidator();
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, &liquidityProviderValidator](auto& builder) {
 			builder
-			.add(validators::CreateCreditMosaicNotificationValidator(liquidityProviderValidator))
-			.add(validators::CreateDebitMosaicNotificationValidator(liquidityProviderValidator))
-			.add(validators::CreateCreditMosaicNotificationValidator(liquidityProviderValidator))
+			.add(validators::CreateCreateLiquidityProviderValidator())
+			.add(validators::CreateCreditMosaicValidator(liquidityProviderValidator))
+			.add(validators::CreateDebitMosaicValidator(liquidityProviderValidator))
 			.add(validators::CreateManualRateChangeValidator());
 		});
 
@@ -71,5 +73,5 @@ namespace catapult { namespace plugins {
 
 extern "C" PLUGIN_API
 void RegisterSubsystem(catapult::plugins::PluginManager& manager) {
-    catapult::plugins::RegisterStorageSubsystem(manager);
+	catapult::plugins::RegisterLiquidityProviderSubsystem(manager);
 }

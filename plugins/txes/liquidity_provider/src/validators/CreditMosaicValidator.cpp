@@ -10,7 +10,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::CreditMosaicNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR_WITH_LIQUIDITY_PROVIDER(CreditMosaicNotification, [&liquidityProvider](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR_WITH_LIQUIDITY_PROVIDER(CreditMosaic, [&liquidityProvider](const Notification& notification, const ValidatorContext& context) {
         return liquidityProvider.validateCreditMosaics(context, notification.CurrencyDebtor, notification.MosaicId, notification.MosaicAmount);
     })
 }}

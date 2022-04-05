@@ -40,6 +40,7 @@ namespace catapult { namespace model {
 			, Owner(owner)
 			, ProviderMosaicId(providerMosaicId)
 			, CurrencyDeposit(currencyDeposit)
+			, InitialMosaicsMinting(initialMosaicsMinting)
 			, SlashingPeriod(slashingPeriod)
 			, WindowSize(windowSize)
 			, SlashingAccount(slashingAccount)

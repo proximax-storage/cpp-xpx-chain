@@ -11,7 +11,7 @@ namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DebitMosaic, model::DebitMosaicNotification<1>, [&liquidityProvider](const model::DebitMosaicNotification<1>& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModificationApprovalUploadWork)");
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DebitMosaic)");
 
 		liquidityProvider.debitMosaics(context, notification.MosaicDebtor, notification.CurrencyCreditor, notification.MosaicId, notification.MosaicAmount);
 	});
