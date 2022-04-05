@@ -9,7 +9,7 @@
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 #include "src/config/LiquidityProviderConfiguration.h"
-#include "tests/utils/LiquidityProviderTestUtils.h"
+#include "plugins/txes/liquidity_provider/tests/test/LiquidityProviderTestUtils.h"
 
 namespace catapult { namespace observers {
 

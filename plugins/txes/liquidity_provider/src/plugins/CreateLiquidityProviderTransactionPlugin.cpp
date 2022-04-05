@@ -24,6 +24,7 @@ namespace catapult { namespace plugins {
 				switch (transaction.EntityVersion()) {
 				case 1: {
 					auto providerKey = Key(CalculateHash(transaction, config.GenerationHash).array());
+
 					sub.notify(AccountPublicKeyNotification<1>(providerKey));
 
 					sub.notify(AccountPublicKeyNotification<1>(transaction.SlashingAccount));
@@ -34,8 +35,6 @@ namespace catapult { namespace plugins {
 
 					sub.notify(BalanceTransferNotification<1>(
 							transaction.Signer, providerAddress, currencyMosaicId, transaction.CurrencyDeposit));
-
-					sub.notify(BalanceTransferNotification<1>(transaction.Signer, providerAddress, currencyMosaicId, transaction.CurrencyDeposit));
 
 					sub.notify(BalanceCreditNotification<1>(providerKey, transaction.ProviderMosaicId, transaction.InitialMosaicsMinting));
 

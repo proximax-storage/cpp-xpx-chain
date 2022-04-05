@@ -15,5 +15,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates a data modification transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateManualRateChangeTransactionPlugin(const config::ImmutableConfiguration&);
+	std::unique_ptr<model::TransactionPlugin> CreateManualRateChangeTransactionPlugin();
 }}

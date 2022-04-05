@@ -15,9 +15,9 @@ namespace catapult { namespace observers {
 	using Notification = model::ManualRateChangeNotification<1>;
 
 	DEFINE_OBSERVER(ManualRateChange, Notification, ([](const Notification& notification, ObserverContext& context) {
-		const auto& liquidityProviderCache = context.Cache.sub<cache::LiquidityProviderCache>();
+		auto& liquidityProviderCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
-		const auto& entry = liquidityProviderCache.find(notification.ProviderMosaicId).get();
+		auto& entry = liquidityProviderCache.find(notification.ProviderMosaicId).get();
 
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		auto& lpStateEntry = accountStateCache.find(entry.providerKey()).get();
@@ -28,19 +28,23 @@ namespace catapult { namespace observers {
 		if (notification.CurrencyBalanceIncrease) {
 			ownerStateEntry.Balances.debit(currencyMosaicId, notification.CurrencyBalanceChange);
 			lpStateEntry.Balances.credit(currencyMosaicId, notification.CurrencyBalanceChange);
-		}
-		else {
+		} else {
 			lpStateEntry.Balances.debit(currencyMosaicId, notification.CurrencyBalanceChange);
 			slashingStateEntry.Balances.credit(currencyMosaicId, notification.CurrencyBalanceChange);
 		}
 
-
 		auto resolvedMosaicId = context.Resolvers.resolve(entry.mosaicId());
 		if (notification.MosaicBalanceIncrease) {
 			lpStateEntry.Balances.credit(resolvedMosaicId, notification.MosaicBalanceChange);
-		}
-		else {
+		} else {
 			lpStateEntry.Balances.debit(resolvedMosaicId, notification.MosaicBalanceChange);
 		}
+
+		entry.setCreationHeight(context.Height);
+		entry.turnoverHistory().clear();
+		entry.recentTurnover() =
+				state::HistoryObservation { { lpStateEntry.Balances.get(currencyMosaicId),
+											  lpStateEntry.Balances.get(resolvedMosaicId) },
+											Amount { 0 } };
 	}));
-}}
+}} // namespace catapult::observers

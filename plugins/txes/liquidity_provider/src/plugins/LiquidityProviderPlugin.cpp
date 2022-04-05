@@ -26,7 +26,7 @@ namespace catapult { namespace plugins {
 		const auto& immutableConfig = manager.immutableConfig();
 
 		manager.addTransactionSupport(CreateCreateLiquidityProviderTransactionPlugin(immutableConfig));
-		manager.addTransactionSupport(CreateManualRateChangeTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateManualRateChangeTransactionPlugin());
 
 		manager.setLiquidityProviderExchangeValidator(std::make_shared<validators::LiquidityProviderExchangeValidatorImpl>());
 		manager.setLiquidityProviderExchangeObserver(std::make_shared<observers::LiquidityProviderExchangeObserverImpl>());

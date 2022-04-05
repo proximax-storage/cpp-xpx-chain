@@ -67,7 +67,7 @@ namespace catapult { namespace model {
 	struct ManualRateChangeNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LiquidityProvider_Create_Liquidity_Provider_v1_Notification;
+		static constexpr auto Notification_Type = LiquidityProvider_Manual_Rate_Change_v1_Notification;
 
 	public:
 

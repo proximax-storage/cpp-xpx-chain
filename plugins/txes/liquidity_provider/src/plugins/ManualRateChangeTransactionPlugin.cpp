@@ -17,28 +17,25 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		auto CreatePublisher(const config::ImmutableConfiguration& config) {
-			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
-				switch (transaction.EntityVersion()) {
-				case 1:
-					sub.notify(model::ManualRateChangeNotification<1>(
-							transaction.Signer,
-							transaction.ProviderMosaicId,
-							transaction.CurrencyBalanceIncrease,
-							transaction.CurrencyBalanceChange,
-							transaction.MosaicBalanceIncrease,
-							transaction.MosaicBalanceChange
-							));
+		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+			switch (transaction.EntityVersion()) {
+			case 1:
+				sub.notify(model::ManualRateChangeNotification<1>(
+						transaction.Signer,
+						transaction.ProviderMosaicId,
+						transaction.CurrencyBalanceIncrease,
+						transaction.CurrencyBalanceChange,
+						transaction.MosaicBalanceIncrease,
+						transaction.MosaicBalanceChange));
 
-					break;
+				break;
 
-				default:
-					CATAPULT_LOG(debug) << "invalid version of CreateLiquidityProviderTransaction: "
-										<< transaction.EntityVersion();
-				}
-			};
-		}
-	}
+			default:
+				CATAPULT_LOG(debug) << "invalid version of CreateLiquidityProviderTransaction: "
+									<< transaction.EntityVersion();
+			}
+		};
+	} // namespace
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(ManualRateChange, Default, CreatePublisher, config::ImmutableConfiguration);
-}}
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(ManualRateChange, Default, Publish);
+}} // namespace catapult::plugins
