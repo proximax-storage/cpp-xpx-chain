@@ -5,10 +5,11 @@
 **/
 
 #pragma once
-#include "mongo/src/CacheStorageInclude.h"
+#include "mongo/src/MongoTransactionPlugin.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 
-    /// Creates a mongo SDA-SDA exchange cache storage around \a database, \a bulkWriter and \a networkIdentifier.
-    DECLARE_MONGO_CACHE_STORAGE(SdaExchange);
+	/// Creates a mongo exchange transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<MongoTransactionPlugin> CreateRemoveSdaExchangeOfferTransactionMongoPlugin();
 }}}
