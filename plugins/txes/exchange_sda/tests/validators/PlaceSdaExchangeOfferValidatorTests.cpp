@@ -217,6 +217,7 @@ namespace catapult { namespace validators {
                     {
                         model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{test::UnresolveXor(MosaicId(1)), Amount(100)}, {test::UnresolveXor(MosaicId(2)), Amount(10)}}, offerOwner, BlockDuration(100)},
                     },
+                    offerOwner,
                     &entry);
         }
 
@@ -232,13 +233,14 @@ namespace catapult { namespace validators {
                     {
                         model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(100)}, {UnresolvedMosaicId(2), Amount(10)}}, offerOwner, BlockDuration(1)},
                     },
+                    offerOwner,
                     &entry);
         }
 
         TRAITS_BASED_TEST(FailureWhenNotEnoughSdaOfferUnits) {
             // Arrange:
             auto offerOwner = test::GenerateRandomByteArray<Key>();
-            state::SdaExchangeEntry entry(offerOwner);
+            state::SdaExchangeEntry entry(offerOwner, 1);
             TOfferTraits::InsertOffer(entry);
 
             // Assert:
@@ -247,13 +249,14 @@ namespace catapult { namespace validators {
                     {
                         model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(50)}, {UnresolvedMosaicId(2), Amount(10)}}, offerOwner, BlockDuration(100)},
                     },
+                    offerOwner,
                     &entry);
         }
 
         TRAITS_BASED_TEST(FailureWhenSdaOfferCantBeRemoved) {
             // Arrange:
             auto offerOwner = test::GenerateRandomByteArray<Key>();
-            state::SdaExchangeEntry entry(offerOwner);
+            state::SdaExchangeEntry entry(offerOwner, 1);
             TOfferTraits::InsertOffer(entry);
 
             // Assert:
@@ -262,13 +265,14 @@ namespace catapult { namespace validators {
                     {
                         model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(50)}, {UnresolvedMosaicId(2), Amount(10)}}, offerOwner, BlockDuration(100)},
                     },
+                    offerOwner,
                     &entry);
         }
         
         TRAITS_BASED_TEST(Success) {
             // Arrange:
             auto offerOwner = test::GenerateRandomByteArray<Key>();
-            state::SdaExchangeEntry entry(offerOwner);
+            state::SdaExchangeEntry entry(offerOwner, 1);
             entry.sdaOfferBalances().emplace(state::MosaicsPair{MosaicId(1), MosaicId(2)}, state::SdaOfferBalance{Amount(100), Amount(10), Amount(100), Amount(10), Height(20)});
             entry.sdaOfferBalances().emplace(state::MosaicsPair{MosaicId(2), MosaicId(1)}, state::SdaOfferBalance{Amount(200), Amount(10), Amount(200), Amount(10), Height(20)});
 

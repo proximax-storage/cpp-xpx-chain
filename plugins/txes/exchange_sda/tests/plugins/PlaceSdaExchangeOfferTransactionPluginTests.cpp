@@ -84,7 +84,7 @@ namespace catapult { namespace plugins {
 
     namespace {
         template<typename TTraits, VersionType Version>
-        void AssertCanPublishCorrectNumberOfNotifications(VersionType version, NotificationType expectedPlaceSdaExchangeOfferType) {
+        void AssertCanPublishCorrectNumberOfNotifications(NotificationType expectedPlaceSdaExchangeOfferType) {
             // Arrange:
             auto pTransaction = CreateTransaction<TTraits, Version>();
             mocks::MockNotificationSubscriber sub;
@@ -129,7 +129,7 @@ namespace catapult { namespace plugins {
             const auto& notification = sub.matchingNotifications()[0];
             EXPECT_EQ(pTransaction->Signer, notification.Signer);
             EXPECT_EQ(Sda_Offer_Count, notification.SdaOfferCount);
-            EXPECT_EQ_MEMORY(pTransaction->OffersPtr(), notification.SdaOffersPtr, Sda_Offer_Count * sizeof(model::SdaOfferWithOwnerAndDuration));
+            EXPECT_EQ_MEMORY(pTransaction->SdaOffersPtr(), notification.SdaOffersPtr, Sda_Offer_Count * sizeof(model::SdaOfferWithOwnerAndDuration));
         }
     }
 
@@ -148,7 +148,7 @@ namespace catapult { namespace plugins {
             mocks::MockTypedNotificationSubscriber<BalanceDebitNotification<1>> sub;
             test::MutableBlockchainConfiguration config;
             auto pPlugin = TTraits::CreatePlugin(config.Immutable);
-            auto pTransaction = CreateTransaction<TTraits, Version>;
+            auto pTransaction = CreateTransaction<TTraits, Version>();
 
             // Act:
             test::PublishTransaction(*pPlugin, *pTransaction, sub);

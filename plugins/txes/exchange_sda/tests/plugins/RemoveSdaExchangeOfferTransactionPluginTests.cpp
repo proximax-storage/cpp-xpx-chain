@@ -124,4 +124,4 @@ namespace catapult { namespace plugins {
     }
 
     // endregion
-}
+}}
