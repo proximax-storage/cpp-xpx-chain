@@ -32,11 +32,14 @@ namespace catapult { namespace validators {
 	// Insufficient Currency on Balance
 	DEFINE_LIQUIDITY_PROVIDER_RESULT(Insufficient_Currency, 6);
 
+	// Insufficient Currency on Balance
+	DEFINE_LIQUIDITY_PROVIDER_RESULT(Insufficient_Mosaic, 7);
+
 	// Insufficient Exchange Rate
-	DEFINE_LIQUIDITY_PROVIDER_RESULT(Invalid_Exchange_Rate, 7);
+	DEFINE_LIQUIDITY_PROVIDER_RESULT(Invalid_Exchange_Rate, 8);
 
 	/// Validation failed because plugin configuration data is malformed.
-	DEFINE_LIQUIDITY_PROVIDER_RESULT(Plugin_Config_Malformed, 8);
+	DEFINE_LIQUIDITY_PROVIDER_RESULT(Plugin_Config_Malformed, 9);
 
 
 #ifndef CUSTOM_RESULT_DEFINITION

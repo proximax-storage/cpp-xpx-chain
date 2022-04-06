@@ -116,10 +116,6 @@ namespace catapult { namespace observers {
 
 			ASSERT_LT(initialRate, actualRate);
 
-			if (!(initialRate < actualRate)) {
-				CATAPULT_LOG(error) << (double)initialRate << " " << (double)actualRate;
-			}
-
 			ASSERT_EQ(actualEntry.additionallyMinted(), initialEntry.additionallyMinted() + mosaicAmount);
 		}
 	}

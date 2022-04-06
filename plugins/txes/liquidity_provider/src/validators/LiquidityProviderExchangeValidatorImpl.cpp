@@ -110,14 +110,14 @@ namespace catapult::validators {
 
 		// Unlikely
 		if (!pDebtorAccount) {
-			return Failure_LiquidityProvider_Insufficient_Currency;
+			return Failure_LiquidityProvider_Insufficient_Mosaic;
 		}
 
 		auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
 		auto mosaicBalance = pDebtorAccount->Balances.get(resolvedMosaicId);
 
 		if (mosaicBalance < mosaicAmount) {
-			return Failure_LiquidityProvider_Insufficient_Currency;
+			return Failure_LiquidityProvider_Insufficient_Mosaic;
 		}
 
 		return ValidationResult::Success;
