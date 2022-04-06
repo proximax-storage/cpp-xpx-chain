@@ -116,6 +116,10 @@ namespace catapult { namespace observers {
 
 			ASSERT_LT(initialRate, actualRate);
 
+			if (!(initialRate < actualRate)) {
+				CATAPULT_LOG(error) << (double)initialRate << " " << (double)actualRate;
+			}
+
 			ASSERT_EQ(actualEntry.additionallyMinted(), initialEntry.additionallyMinted() + mosaicAmount);
 		}
 	}
@@ -126,7 +130,7 @@ namespace catapult { namespace observers {
 		CacheValues values(CreateInitialLInfo());
 
 		// Assert
-		for (int i = 0; i < 10000; i++) {
+		for (int i = 0; i < 110000; i++) {
 			Amount toTransfer =
 					Amount { test::RandomInRange(0UL, values.InitialEntry.entry.additionallyMinted().unwrap()) };
 			RunTest(NotifyMode::Commit,

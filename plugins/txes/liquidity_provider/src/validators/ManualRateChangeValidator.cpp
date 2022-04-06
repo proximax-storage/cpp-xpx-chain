@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 		if (notification.CurrencyBalanceIncrease) {
-			auto ownerBalance = lpStateEntry.Balances.get(currencyMosaicId);
+			auto ownerBalance = ownerStateEntry.Balances.get(currencyMosaicId);
 
 			if (ownerBalance < notification.CurrencyBalanceChange) {
 				return Failure_LiquidityProvider_Insufficient_Currency;
