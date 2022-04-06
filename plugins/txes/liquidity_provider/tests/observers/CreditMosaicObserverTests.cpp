@@ -115,10 +115,12 @@ namespace catapult { namespace observers {
 			state::ExchangeRate actualRate = {lpCurrencyBalance, lpMosaicBalance + actualEntry.additionallyMinted()};
 
 			ASSERT_LT(initialRate, actualRate);
+
+			ASSERT_EQ(actualEntry.additionallyMinted(), initialEntry.additionallyMinted() + mosaicAmount);
 		}
 	}
 
-	TEST(TEST_CLASS, DebitMosaicObserver_Success) {
+	TEST(TEST_CLASS, CreditMosaicObserver_Success) {
 		// Arrange:
 
 		CacheValues values(CreateInitialLInfo());
@@ -135,7 +137,7 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	TEST(TEST_CLASS, DebitMosaicObserver_Rollback) {
+	TEST(TEST_CLASS, CreditMosaicObserver_Rollback) {
 		// Arrange:
 		CacheValues values(CreateInitialLInfo());
 

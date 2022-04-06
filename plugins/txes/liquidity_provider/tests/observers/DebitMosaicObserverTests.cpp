@@ -113,6 +113,8 @@ namespace catapult { namespace observers {
 			state::ExchangeRate actualRate = {lpCurrencyBalance, lpMosaicBalance + actualEntry.additionallyMinted()};
 
 			ASSERT_LT(initialRate, actualRate);
+
+			ASSERT_EQ(actualEntry.additionallyMinted(), initialEntry.additionallyMinted() - mosaicAmount);
 		}
 	}
 
