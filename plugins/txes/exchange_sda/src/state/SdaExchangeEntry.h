@@ -22,7 +22,6 @@ namespace catapult { namespace state {
 		Height Deadline;
 
 	public:
-		catapult::Amount cost(const catapult::Amount& amount) const;
 		SdaOfferBalance& operator+=(const Amount& offerAmount);
 		SdaOfferBalance& operator-=(const Amount& offerAmount);
 	};
