@@ -20,8 +20,6 @@ namespace catapult { namespace observers {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
 
-			CATAPULT_LOG( error ) << "Verification Observer";
-
 			if (context.Height < Height(2))
 				return;
 
@@ -50,7 +48,6 @@ namespace catapult { namespace observers {
 				auto& downloadEntry = downloadCache.find(queueAdapter.front().array()).get();
 
 				auto timeSinceLastPayment = (notification.Timestamp - downloadEntry.getLastDownloadApprovalInitiated()).unwrap() / 1000;
-				CATAPULT_LOG( error ) << "time " << timeSinceLastPayment << " " << paymentInterval;
 				if (timeSinceLastPayment < paymentInterval) {
 					break;
 				}
@@ -61,7 +58,6 @@ namespace catapult { namespace observers {
 				if (downloadEntry.isCloseInitiated()) {
 					continue;
 				}
-
 				downloadEntry.decrementDownloadApprovalCount();
 				downloadEntry.setLastDownloadApprovalInitiated(notification.Timestamp);
 				downloadEntry.downloadApprovalInitiationEvent() = eventHash;

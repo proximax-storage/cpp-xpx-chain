@@ -70,7 +70,7 @@ namespace catapult { namespace state {
 
 		/// Increases number of completed download approval transactions by one.
 		void decrementDownloadApprovalCount() {
-			++m_downloadApprovalCount;
+			m_downloadApprovalCount--;
 		}
 
 		/// Gets list of public keys.
@@ -159,7 +159,7 @@ namespace catapult { namespace state {
 		std::map<Key, Amount> m_cumulativePayments;
 		std::optional<Hash256> m_downloadApprovalInitiationEvent;
 		catapult::Timestamp m_lastDownloadApprovalInitiated;
-		bool m_finishPublished;
+		bool m_finishPublished = false;
 
 		Key m_paymentsQueuePrevious;
 		Key m_paymentsQueueNext;

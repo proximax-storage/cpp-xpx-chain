@@ -80,17 +80,17 @@ namespace catapult { namespace observers {
 
         struct CacheValues {
 		public:
-			CacheValues(const std::vector<state::BcDriveEntry>& initialBcDriveEntries,
-						const std::vector<Key>& expectedBcDriveKeys,
+			CacheValues(const std::vector<state::DownloadChannelEntry>& initialEntries,
+						const std::vector<Hash256>& expectedKeys,
 						const Timestamp& notificationTime)
-				: InitialBcDriveEntries(initialBcDriveEntries)
-				, ExpectedBcDriveKeys(expectedBcDriveKeys)
+				: InitialEntries(initialEntries)
+				, ExpectedKeys(expectedKeys)
 				, NotificationTime(notificationTime)
 			{}
 
 		public:
-			std::vector<state::BcDriveEntry> InitialBcDriveEntries;
-			std::vector<Key> ExpectedBcDriveKeys;
+			std::vector<state::DownloadChannelEntry> InitialEntries;
+			std::vector<Hash256> ExpectedKeys;
 			std::vector<state::ReplicatorEntry> InitialReplicatorEntries;
 			std::vector<state::ReplicatorEntry> ExpectedReplicatorEntries;
 			Timestamp NotificationTime;
@@ -100,49 +100,44 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
             Notification notification({ { 1 } }, values.NotificationTime);
-            auto pObserver = CreatePeriodicStoragePaymentObserver(Drive_Queue);
-            auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
+            auto pObserver = CreatePeriodicDownloadChannelPaymentObserver();
+            auto& downloadCache = context.cache().sub<cache::DownloadChannelCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
 			auto& queueCache = context.cache().sub<cache::QueueCache>();
 
             // Populate cache.
-			if (!values.InitialBcDriveEntries.empty()) {
-				state::QueueEntry queueEntry(state::DrivePaymentQueueKey);
-				queueEntry.setFirst(values.InitialBcDriveEntries[0].key());
-				queueEntry.setLast(values.InitialBcDriveEntries[values.InitialBcDriveEntries.size() - 1].key());
+			if (!values.InitialEntries.empty()) {
+				state::QueueEntry queueEntry(state::DownloadChannelPaymentQueueKey);
+				queueEntry.setFirst(values.InitialEntries[0].id().array());
+				queueEntry.setLast(values.InitialEntries[values.InitialEntries.size() - 1].id().array());
 				queueCache.insert(queueEntry);
 			}
 
-			for (const auto& entry: values.InitialBcDriveEntries) {
-				bcDriveCache.insert(entry);
-				test::AddAccountState(accountStateCache, entry.key(), Current_Height, {{Streaming_Mosaic_Id, Drive_Balance}});
-				test::AddAccountState(accountStateCache, entry.owner(), Current_Height);
-			}
-			for (const auto& entry : values.InitialReplicatorEntries) {
-				replicatorCache.insert(entry);
-				test::AddAccountState(accountStateCache, entry.key(), Current_Height);
+			for (const auto& entry: values.InitialEntries) {
+				downloadCache.insert(entry);
 			}
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
-            auto& queueCacheEntry = queueCache.find(state::DrivePaymentQueueKey).get();
-            auto driveKey = queueCacheEntry.getFirst();
-			auto previousKey = Key();
-			EXPECT_EQ(queueCacheEntry.getLast(), values.ExpectedBcDriveKeys[values.ExpectedBcDriveKeys.size() - 1]);
-			for (const auto& key: values.ExpectedBcDriveKeys) {
-				EXPECT_EQ(driveKey, key);
-				EXPECT_EQ(bcDriveCache.find(driveKey).get().getQueuePrevious(), previousKey);
-				previousKey = driveKey;
-				driveKey = bcDriveCache.find(driveKey).get().getQueueNext();
+            auto& queueCacheEntry = queueCache.find(state::DownloadChannelPaymentQueueKey).get();
+            Hash256 channelId = queueCacheEntry.getFirst().array();
+			auto previousKey = Hash256();
+
+			EXPECT_EQ(queueCacheEntry.getLast().array(), values.ExpectedKeys.back().array());
+			for (const auto& id: values.ExpectedKeys) {
+				EXPECT_EQ(channelId, id);
+				EXPECT_EQ(downloadCache.find(channelId).get().getQueuePrevious().array(), previousKey.array());
+				previousKey = id;
+				channelId = downloadCache.find(channelId).get().getQueueNext().array();
 			}
-			EXPECT_EQ(driveKey, Key());
+			EXPECT_EQ(channelId, Hash256());
         }
     }
 
-    TEST(TEST_CLASS, PeriodicStoragePayment_RemoveDrive) {
+    TEST(TEST_CLASS, PeriodicDownloadPayment_RemoveChannel) {
     	// Arrange:
 
     	Timestamp firstTimestamp(10000);
@@ -150,29 +145,28 @@ namespace catapult { namespace observers {
     	Timestamp secondTimestamp = firstTimestamp;
     	Timestamp thirdTimestamp = notificationTimestamp;
 
-    	Key firstKey =  { { 1 } };
-    	Key secondKey = { { 2 } };
-    	Key thirdKey = { { 3 } };
+    	Hash256 firstKey =  { { 1 } };
+    	Hash256 secondKey = { { 2 } };
+    	Hash256 thirdKey = { { 3 } };
 
-    	state::BcDriveEntry firstEntry(firstKey);
-    	firstEntry.setSize(0);
-		firstEntry.setQueueNext(secondKey);
-    	firstEntry.setLastPayment(firstTimestamp);
+    	state::DownloadChannelEntry firstEntry(firstKey);
+    	firstEntry.setQueueNext(secondKey.array());
+    	firstEntry.setDownloadApprovalCountLeft(2);
+    	firstEntry.setLastDownloadApprovalInitiated(firstTimestamp);
 
-    	state::BcDriveEntry secondEntry(secondKey);
-    	secondEntry.setSize(1);
-		secondEntry.setReplicatorCount(1);
-		secondEntry.setQueuePrevious(firstKey);
-		secondEntry.setQueueNext(thirdKey);
-    	secondEntry.setLastPayment(secondTimestamp);
+    	state::DownloadChannelEntry secondEntry(secondKey);
+    	secondEntry.setQueuePrevious(firstKey.array());
+    	secondEntry.setQueueNext(thirdKey.array());
+    	secondEntry.setDownloadApprovalCountLeft(1);
+    	secondEntry.setLastDownloadApprovalInitiated(secondTimestamp);
 
-    	state::BcDriveEntry thirdEntry(thirdKey);
-    	thirdEntry.setSize(0);
-		thirdEntry.setQueuePrevious(secondKey);
-    	thirdEntry.setLastPayment(thirdTimestamp);
+    	state::DownloadChannelEntry thirdEntry(thirdKey);
+    	thirdEntry.setQueuePrevious(secondKey.array());
+    	thirdEntry.setDownloadApprovalCountLeft(2);
+    	thirdEntry.setLastDownloadApprovalInitiated(thirdTimestamp);
 
-    	std::vector<state::BcDriveEntry> initialEntries = {firstEntry, secondEntry, thirdEntry};
-    	std::vector<Key> expectedKeys = {thirdKey, firstKey};
+    	std::vector<state::DownloadChannelEntry> initialEntries = {firstEntry, secondEntry, thirdEntry};
+    	std::vector<Hash256> expectedKeys = {thirdKey, firstKey};
 
     	CacheValues values(initialEntries, expectedKeys, notificationTimestamp);
 
@@ -180,7 +174,7 @@ namespace catapult { namespace observers {
     	RunTest(NotifyMode::Commit, values, Current_Height);
     }
 
-    TEST(TEST_CLASS, PeriodicStoragePayment_SingleDrive) {
+    TEST(TEST_CLASS, PeriodicDownloadPayment_ContinueChannels) {
     	// Arrange:
 
     	Timestamp firstTimestamp(10000);
@@ -188,60 +182,35 @@ namespace catapult { namespace observers {
     	Timestamp secondTimestamp = firstTimestamp;
     	Timestamp thirdTimestamp = notificationTimestamp;
 
-    	Key firstKey =  { { 1 } };
-    	Key secondKey = { { 2 } };
-    	Key thirdKey = { { 3 } };
+    	Hash256 firstKey =  { { 1 } };
+    	Hash256 secondKey = { { 2 } };
+    	Hash256 thirdKey = { { 3 } };
 
-    	state::BcDriveEntry firstEntry(firstKey);
-    	firstEntry.setSize(0);
-    	firstEntry.setLastPayment(firstTimestamp);
+    	state::DownloadChannelEntry firstEntry(firstKey);
+    	firstEntry.setQueueNext(secondKey.array());
+    	firstEntry.setDownloadApprovalCountLeft(2);
+    	firstEntry.setLastDownloadApprovalInitiated(firstTimestamp);
 
-    	std::vector<state::BcDriveEntry> initialEntries = {firstEntry};
-    	std::vector<Key> expectedKeys = {firstKey};
+    	state::DownloadChannelEntry secondEntry(secondKey);
+    	secondEntry.setQueuePrevious(firstKey.array());
+    	secondEntry.setQueueNext(thirdKey.array());
+    	secondEntry.setDownloadApprovalCountLeft(2);
+    	secondEntry.setLastDownloadApprovalInitiated(secondTimestamp);
 
-    	CacheValues values(initialEntries, expectedKeys, notificationTimestamp);
+    	state::DownloadChannelEntry thirdEntry(thirdKey);
+    	thirdEntry.setQueuePrevious(secondKey.array());
+    	secondEntry.setDownloadApprovalCountLeft(2);
+    	thirdEntry.setLastDownloadApprovalInitiated(thirdTimestamp);
 
-    	// Assert
-    	RunTest(NotifyMode::Commit, values, Current_Height);
-    }
-/*
-    TEST(TEST_CLASS, PeriodicStoragePayment_ContinueDrive) {
-    	// Arrange:
-
-    	Timestamp firstTimestamp(10000);
-    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodSeconds);
-    	Timestamp secondTimestamp = firstTimestamp;
-    	Timestamp thirdTimestamp = notificationTimestamp;
-
-    	Key firstKey =  { { 1 } };
-    	Key secondKey = { { 2 } };
-    	Key thirdKey = { { 3 } };
-
-    	state::BcDriveEntry firstEntry(firstKey);
-    	firstEntry.setSize(0);
-		firstEntry.setQueueNext(secondKey);
-    	firstEntry.setLastPayment(firstTimestamp);
-
-    	state::BcDriveEntry secondEntry(secondKey);
-    	secondEntry.setSize(0);
-		secondEntry.setQueuePrevious(firstKey);
-		secondEntry.setQueueNext(thirdKey);
-    	secondEntry.setLastPayment(secondTimestamp);
-
-    	state::BcDriveEntry thirdEntry(thirdKey);
-    	thirdEntry.setSize(0);
-		thirdEntry.setQueuePrevious(secondKey);
-    	thirdEntry.setLastPayment(thirdTimestamp);
-
-    	std::vector<state::BcDriveEntry> initialEntries = {firstEntry, secondEntry, thirdEntry};
-    	std::vector<Key> expectedKeys = {thirdKey, firstKey, secondKey};
+    	std::vector<state::DownloadChannelEntry> initialEntries = {firstEntry, secondEntry, thirdEntry};
+    	std::vector<Hash256> expectedKeys = {thirdKey, firstKey, secondKey};
 
     	CacheValues values(initialEntries, expectedKeys, notificationTimestamp);
 
     	// Assert
     	RunTest(NotifyMode::Commit, values, Current_Height);
     }
-*/
+
     TEST(TEST_CLASS, PeriodicStoragePayment_Rollback) {
         // Arrange:
         CacheValues values({}, {}, Timestamp());
