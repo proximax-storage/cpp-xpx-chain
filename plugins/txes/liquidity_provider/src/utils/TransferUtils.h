@@ -26,23 +26,20 @@ namespace catapult::utils {
 
 	using BigUint = boost::multiprecision::uint256_t;
 
-	Amount computeCreditCurrencyAmount(const state::LiquidityProviderEntry& lpEntry,
+	// Optional is returned in order to handle overflows
+	std::optional<Amount> computeCreditCurrencyAmount(const state::LiquidityProviderEntry& lpEntry,
 									   const Amount& currencyBalance,
 									   const Amount& mosaicBalance,
 									   const Amount& mosaicAmount,
 									   uint8_t percentsDigitAfterDot);
 
+	// Overflow is not possible in case of debit mosaics
 	Amount computeDebitCurrencyAmount(const state::LiquidityProviderEntry& lpEntry,
 									  const Amount& currencyBalance,
 									  const Amount& mosaicBalance,
 									  const Amount& mosaicAmount,
 									  uint8_t percentsDigitAfterDot);
 
-	bool isValidAmount(const BigUint& value) {
-		auto truncated = value.convert_to<uint64_t>();
-		if (value == truncated) {
-			return true;
-		}
-		return false;
-	}
+	bool isValidAmount(const BigUint& value);
+
 } // namespace catapult::utils

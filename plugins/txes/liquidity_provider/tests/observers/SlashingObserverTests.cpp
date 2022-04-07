@@ -157,8 +157,6 @@ namespace catapult { namespace observers {
 	}
 
 	TEST(TEST_CLASS, SlashingObserver_Success) {
-		// Arrange:
-
 		for (int i = 0; i < 1000; i++) {
 			auto slashingPeriod = test::Random16();
 			std::vector<LiquidityProviderInfo> initialInfos = { CreateInitialLInfo(slashingPeriod),

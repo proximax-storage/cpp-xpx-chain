@@ -67,7 +67,8 @@ namespace catapult::observers {
 
 		auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
 
-		Amount currencyAmount = utils::computeCreditCurrencyAmount(
+		// In the observer the optional alwasys has the value
+		auto currencyAmount = *utils::computeCreditCurrencyAmount(
 				lpEntry,
 				lpAccount.Balances.get(currencyMosaicId),
 				lpAccount.Balances.get(resolvedMosaicId),

@@ -77,6 +77,10 @@ namespace catapult { namespace test {
 		return static_cast<uint16_t>(Random());
 	}
 
+	uint32_t Random32() {
+		return static_cast<uint32_t>(Random());
+	}
+
 	std::string GenerateRandomString(size_t size) {
 		return GenerateRandomContainer<std::string>(size);
 	}

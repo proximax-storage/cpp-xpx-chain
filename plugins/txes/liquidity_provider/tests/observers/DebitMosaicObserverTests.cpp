@@ -119,14 +119,12 @@ namespace catapult { namespace observers {
 	}
 
 	TEST(TEST_CLASS, DebitMosaicObserver_Success) {
-		// Arrange:
-
-		CacheValues values(CreateInitialLInfo());
-
-		// Assert
 		for (int i = 0; i < 1000; i++) {
+			CacheValues values(CreateInitialLInfo());
+
 			Amount toTransfer =
 					Amount { test::RandomInRange(0UL, values.InitialEntry.entry.additionallyMinted().unwrap()) };
+
 			RunTest(NotifyMode::Commit,
 					values,
 					test::GenerateRandomByteArray<Key>(),

@@ -69,12 +69,27 @@ namespace catapult::validators {
 
 		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 
-		Amount currencyAmount = utils::computeCreditCurrencyAmount(
+		auto expectedMosaicMinted = utils::BigUint(lpAccount.Balances.get(resolvedMosaicId).unwrap()) +
+									utils::BigUint(pLpEntry->additionallyMinted().unwrap()) +
+									utils::BigUint(mosaicAmount.unwrap());
+
+		if (!utils::isValidAmount(expectedMosaicMinted)) {
+			return Failure_LiquidityProvider_Invalid_Mosaic_Amount;
+		}
+
+		auto optionalCurrencyAmount = utils::computeCreditCurrencyAmount(
 				*pLpEntry,
 				lpAccount.Balances.get(currencyMosaicId),
 				lpAccount.Balances.get(resolvedMosaicId),
 				mosaicAmount,
 				pluginConfig.PercentsDigitsAfterDot);
+
+		if (!optionalCurrencyAmount) {
+			// An attempt to emit to many mosaics
+			return Failure_LiquidityProvider_Invalid_Currency_Amount;
+		}
+
+		auto currencyAmount = *optionalCurrencyAmount;
 
 		const auto* pDebtorAccount = accountStateCache.find(currencyDebtor).tryGet();
 

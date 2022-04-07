@@ -41,6 +41,11 @@ namespace catapult { namespace validators {
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_LIQUIDITY_PROVIDER_RESULT(Plugin_Config_Malformed, 9);
 
+	/// An attempt to emit to much mosaics (overflow attack)
+	DEFINE_LIQUIDITY_PROVIDER_RESULT(Invalid_Mosaic_Amount, 10);
+
+	/// An attempt to emit to much currency (overflow attack)
+	DEFINE_LIQUIDITY_PROVIDER_RESULT(Invalid_Currency_Amount, 11);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

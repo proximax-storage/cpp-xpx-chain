@@ -44,9 +44,13 @@ namespace catapult { namespace observers {
 		LiquidityProviderInfo CreateInitialLInfo() {
 			state::LiquidityProviderEntry entry(UnresolvedMosaicId {test::Random()});
 
-			entry.setAdditionallyMinted(Amount {test::Random() / 4});
+			entry.setAdditionallyMinted(Amount {test::Random32() });
 			entry.setAlpha(500); // 5% fee
-			return {entry, test::GenerateRandomValue<Amount>(), Amount {test::Random() / 4}};
+
+			auto additionallyMinted = entry.additionallyMinted().unwrap();
+			auto currencyBalance = Amount{test::RandomInRange(additionallyMinted / 3, additionallyMinted * 3)};
+			auto mosaicBalance = Amount{test::RandomInRange(additionallyMinted / 3, additionallyMinted * 3)};
+			return {entry, currencyBalance, mosaicBalance};
 		}
 
 		struct CacheValues {
@@ -126,14 +130,12 @@ namespace catapult { namespace observers {
 	}
 
 	TEST(TEST_CLASS, CreditMosaicObserver_Success) {
-		// Arrange:
+		for (int i = 0; i < 11000; i++) {
+			CacheValues values(CreateInitialLInfo());
 
-		CacheValues values(CreateInitialLInfo());
-
-		// Assert
-		for (int i = 0; i < 110000; i++) {
 			Amount toTransfer =
 					Amount { test::RandomInRange(0UL, values.InitialEntry.entry.additionallyMinted().unwrap()) };
+
 			RunTest(NotifyMode::Commit,
 					values,
 					test::GenerateRandomByteArray<Key>(),

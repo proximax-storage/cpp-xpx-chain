@@ -109,6 +109,38 @@ namespace catapult { namespace validators {
 				test::GenerateRandomValue<Amount>());
 	}
 
+	TEST(TEST_CLASS, FailureWhenInvalidMosaicAmount) {
+		// Arrange
+		auto mosaicId = test::GenerateRandomValue<UnresolvedMosaicId>();
+
+		LiquidityProviderInfo info = {state::LiquidityProviderEntry(mosaicId), Amount{ULLONG_MAX}, test::GenerateRandomValue<Amount>()};
+
+		// Assert:sert:
+		AssertValidationResult(
+				Failure_LiquidityProvider_Invalid_Mosaic_Amount,
+				test::GenerateRandomByteArray<Key>(),
+				mosaicId,
+				test::GenerateRandomValue<Amount>(),
+				info,
+				Amount{ULLONG_MAX});
+	}
+
+	TEST(TEST_CLASS, FailureWhenCurrencyOverflow) {
+		// Arrange
+		auto mosaicId = test::GenerateRandomValue<UnresolvedMosaicId>();
+
+		LiquidityProviderInfo info = {state::LiquidityProviderEntry(mosaicId), Amount{ULLONG_MAX}, Amount{1}};
+
+		// Assert:sert:
+		AssertValidationResult(
+				Failure_LiquidityProvider_Invalid_Currency_Amount,
+				test::GenerateRandomByteArray<Key>(),
+				mosaicId,
+				Amount{2},
+				info,
+				Amount{ULLONG_MAX});
+	}
+
 	TEST(TEST_CLASS, FailureWhenInsufficientCurrency) {
 		// Arrange
 		auto mosaicId = test::GenerateRandomValue<UnresolvedMosaicId>();
