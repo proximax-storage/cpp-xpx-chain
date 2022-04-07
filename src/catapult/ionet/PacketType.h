@@ -190,6 +190,9 @@ namespace catapult { namespace ionet {
 	/* Replicator state path has been requested by a client. */ \
 	ENUM_VALUE(Replicator_State_Path, FACILITY_BASED_CODE(800, Replicator)) \
 	\
+	/* Queue state path has been requested by a client. */ \
+	ENUM_VALUE(Queue_State_Path, FACILITY_BASED_CODE(800, Queue)) \
+	\
 	/* Replicator state path has been requested by a client. */ \
 	ENUM_VALUE(LiquidityProvider_State_Path, FACILITY_BASED_CODE(800, LiquidityProvider)) \
 	\
@@ -271,10 +274,7 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(DownloadChannel_Infos, FACILITY_BASED_CODE(1200, DownloadChannel)) \
 	\
 	/* Replicator infos have been requested by a client. */ \
-	ENUM_VALUE(Replicator_Infos, FACILITY_BASED_CODE(1200, Replicator))\
-	\
-	/* Replicator infos have been requested by a client. */ \
-	ENUM_VALUE(LiquidityProvider_Infos, FACILITY_BASED_CODE(1200, LiquidityProvider))
+	ENUM_VALUE(Replicator_Infos, FACILITY_BASED_CODE(1200, Replicator)) \
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

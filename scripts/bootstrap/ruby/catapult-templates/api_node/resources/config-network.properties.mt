@@ -186,6 +186,7 @@ percentsDigitsAfterDot = 2
 enabled = true
 minDriveSize = 1MB
 maxDriveSize = 10TB
+minCapacity = 1MB
 maxModificationSize = 10TB
 minReplicatorCount = 1
 maxFreeDownloadSize = 1MB

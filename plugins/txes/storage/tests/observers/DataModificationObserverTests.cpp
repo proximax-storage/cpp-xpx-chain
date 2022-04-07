@@ -26,6 +26,8 @@ namespace catapult { namespace observers {
         constexpr auto Current_Height = Height(10);
 		const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
 		const auto Drive_Queue = std::make_shared<DriveQueue>();
+		const auto Replicator_Key = test::GenerateRandomByteArray<Key>();
+		const auto Offboarding_Replicator_Key = test::GenerateRandomByteArray<Key>();
 		constexpr auto Min_Replicator_Count = 4;
 		constexpr auto Shard_Size = 3;
 
@@ -56,14 +58,26 @@ namespace catapult { namespace observers {
                 std::vector<state::ActiveDataModification> Active_Data_Modification;
         };
 
-        state::BcDriveEntry CreateEntry(const BcDriveValues& values) {
+        state::BcDriveEntry CreateInitialEntry(const BcDriveValues& values) {
             state::BcDriveEntry entry(values.Drive_Key);
-            for (const auto &activeDataModification : values.Active_Data_Modification) {
-                entry.activeDataModifications().emplace_back(activeDataModification);
-            }
+
+			entry.replicators() = { Replicator_Key, Offboarding_Replicator_Key };
+			entry.offboardingReplicators() = { Offboarding_Replicator_Key };
 
             return entry;
         }
+
+		state::BcDriveEntry CreateExpectedEntry(const BcDriveValues& values) {
+			state::BcDriveEntry entry(values.Drive_Key);
+
+			for (const auto &activeDataModification : values.Active_Data_Modification) {
+				entry.activeDataModifications().emplace_back(activeDataModification);
+			}
+			entry.replicators() = { Replicator_Key };
+			entry.offboardingReplicators() = {};
+
+			return entry;
+		}
 
         void RunTest(NotifyMode mode, const BcDriveValues& values, const Height& currentHeight) {
             // Arrange:
@@ -76,9 +90,16 @@ namespace catapult { namespace observers {
                 values.Active_Data_Modification.begin()->ExpectedUploadSizeMegabytes);
             auto pObserver = CreateDataModificationObserver(Replicator_Key_Collector, Drive_Queue);
         	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
+			auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
+			auto& accountCache = context.cache().sub<cache::AccountStateCache>();
 
-            // Populate cache.                values.Active_Data_Modification.begin()->ExpectedUploadSize);
-            bcDriveCache.insert(state::BcDriveEntry(values.Drive_Key));
+            // Populate cache.
+            bcDriveCache.insert(CreateInitialEntry(values));
+			accountCache.addAccount(values.Drive_Key, Current_Height);
+			for (const auto& replicatorKey : { Replicator_Key, Offboarding_Replicator_Key }) {
+				replicatorCache.insert(test::CreateReplicatorEntry(replicatorKey));
+				accountCache.addAccount(replicatorKey, Current_Height);
+			}
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
@@ -86,7 +107,7 @@ namespace catapult { namespace observers {
             // Assert: check the cache
             auto driveIter = bcDriveCache.find(values.Drive_Key);
             const auto& actualEntry = driveIter.get();
-            test::AssertEqualBcDriveData(CreateEntry(values), actualEntry);
+            test::AssertEqualBcDriveData(CreateExpectedEntry(values), actualEntry);
         }
     }
 

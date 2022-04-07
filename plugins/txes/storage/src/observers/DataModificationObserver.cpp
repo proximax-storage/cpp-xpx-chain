@@ -35,6 +35,7 @@ namespace catapult { namespace observers {
 
 		  	const auto offboardingReplicators = driveEntry.offboardingReplicators();
 
+		  	utils::RefundDepositsToReplicators(notification.DriveKey, offboardingReplicators, context);
 			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
 		  	utils::PopulateDriveWithReplicators(notification.DriveKey, pKeyCollector, pDriveQueue, context, rng);
 		  	utils::AssignReplicatorsToQueuedDrives(offboardingReplicators, pDriveQueue, context, rng);

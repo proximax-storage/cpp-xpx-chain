@@ -85,6 +85,54 @@ namespace catapult { namespace utils {
 		return R < Rmin ? static_cast<double>(R + 1)/Rmin : static_cast<double>(N - R)/(2*Rmin*(N - Rmin));
 	}
 
+	void RefundDepositsToReplicators(
+			const Key& driveKey,
+			const std::set<Key>& replicators,
+			const observers::ObserverContext& context) {
+		auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
+		auto& accountCache = context.Cache.template sub<cache::AccountStateCache>();
+		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
+
+		auto driveIter = driveCache.find(driveKey);
+		auto& driveEntry = driveIter.get();
+		auto driveStateIter = accountCache.find(driveKey);
+		auto& driveState = driveStateIter.get();
+
+		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
+		const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+
+		for (const auto& replicatorKey : replicators) {
+			auto replicatorIter = replicatorCache.find(replicatorKey);
+			auto& replicatorEntry = replicatorIter.get();
+			auto replicatorStateIter = accountCache.find(replicatorKey);
+			auto& replicatorState = replicatorStateIter.get();
+
+			// Storage deposit equals to the drive size.
+			const auto storageDepositRefundAmount = Amount(driveEntry.size());
+
+			// Streaming Deposit Slashing equals 2 * min(u1, u2) where
+			// u1 - the UsedDriveSize according to the last approved by the Replicator modification
+			// u2 - the UsedDriveSize according to the last approved modification on the Drive.
+			const auto& confirmedUsedSizes = driveEntry.confirmedUsedSizes();
+			auto sizeIter = confirmedUsedSizes.find(replicatorKey);
+			const auto streamingDepositSlashing = (confirmedUsedSizes.end() != sizeIter) ?
+					2 * std::min(sizeIter->second, driveEntry.usedSizeBytes()) :
+					2 * driveEntry.usedSizeBytes();
+
+			// Streaming deposit refund = streaming deposit - streaming deposit slashing
+			const auto streamingDeposit = 2 * driveEntry.size();
+			if (streamingDeposit < streamingDepositSlashing)
+				CATAPULT_THROW_RUNTIME_ERROR_2("streaming deposit slashing exceeds streaming deposit", streamingDeposit, streamingDepositSlashing);
+			const auto streamingDepositRefundAmount = Amount(streamingDeposit - streamingDepositSlashing);
+
+			// Making mosaic transfers
+			driveState.Balances.debit(storageMosaicId, storageDepositRefundAmount, context.Height);
+			driveState.Balances.debit(streamingMosaicId, streamingDepositRefundAmount, context.Height);
+			replicatorState.Balances.credit(storageMosaicId, storageDepositRefundAmount, context.Height);
+			replicatorState.Balances.credit(streamingMosaicId, streamingDepositRefundAmount, context.Height);
+		}
+	}
+
 	void OffboardReplicatorsFromDrive(
 			const Key& driveKey,
 			const std::set<Key>& offboardingReplicators,
