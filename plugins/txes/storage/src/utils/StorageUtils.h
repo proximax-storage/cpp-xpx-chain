@@ -60,6 +60,13 @@ namespace catapult { namespace utils {
 	/// Calculates priority value of \a driveEntry. Used for the queue of drives with missing replicators.
 	double CalculateDrivePriority(const state::BcDriveEntry&, const uint16_t&);
 
+	/// Calculates amounts of storage and streaming deposit refunds of \a replicators
+	/// with respect to the drive with \a driveKey, and transfers them to replicators' accounts.
+	void RefundDepositsToReplicators(
+			const Key&,
+			const std::set<Key>&,
+			const observers::ObserverContext&);
+
 	/// Performs actual offboarding of \a offboardingReplicators from the drive with \a driveKey;
 	/// updates drive's data modification and download shards to keep them valid.
 	void OffboardReplicatorsFromDrive(

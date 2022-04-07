@@ -41,19 +41,12 @@ namespace catapult { namespace observers {
 		constexpr uint64_t Drive2_Used_Size = 60;
 		constexpr uint16_t Drive2_Replicator_Count = 4;
 		constexpr uint16_t Drive2_Actual_Replicator_Count = 4;
-		constexpr uint64_t Expected_Storage_Deposit_Return = Capacity.unwrap() + Drive1_Size + Drive2_Size;
-		constexpr uint64_t Expected_Streaming_Deposit_Return = 2 * (Expected_Storage_Deposit_Return - Drive1_Used_Size - Drive2_Confirmed_Used_Size);
-		constexpr auto Expected_Replicator_Balance = Amount(Expected_Storage_Deposit_Return + Expected_Streaming_Deposit_Return);
-		constexpr auto Currency_Mosaic_Id = MosaicId(1234);
 
 		auto CreateConfig() {
 			test::MutableBlockchainConfiguration config;
-			config.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
-
 			auto pluginConfig = config::StorageConfiguration::Uninitialized();
 			pluginConfig.MinReplicatorCount = Min_Replicator_Count;
 			config.Network.SetPluginConfiguration(pluginConfig);
-
 			return config.ToConst();
 		}
 
@@ -109,20 +102,11 @@ namespace catapult { namespace observers {
             return entry;
         }
 
-        state::AccountState CreateAccount() {
-		    auto address = model::PublicKeyToAddress(Replicator_Key, model::NetworkIdentifier::Mijin_Test);
-		    state::AccountState account(address, Current_Height);
-		    account.PublicKey = Replicator_Key;
-		    account.PublicKeyHeight = Current_Height;
-		    return account;
-	    }
-
         void RunTest(NotifyMode mode) {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
             Notification notification(Replicator_Key, Target_Drive_Key);
             auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
-            auto& accountCache = context.cache().sub<cache::AccountStateCache>();
             auto& driveCache = context.cache().sub<cache::BcDriveCache>();
 
             //Populate cache
@@ -130,7 +114,6 @@ namespace catapult { namespace observers {
 			auto initialDriveEntries = CreateInitialDriveEntries();
 			for (const auto& driveEntry : initialDriveEntries)
             	driveCache.insert(driveEntry);
-            accountCache.addAccount(CreateAccount());
 
 			auto pDriveQueue = std::make_shared<DriveQueue>(CreateDriveQueue(initialDriveEntries));
 			auto pObserver = CreateReplicatorOffboardingObserver(pDriveQueue);
@@ -146,7 +129,6 @@ namespace catapult { namespace observers {
 				auto& driveEntry = driveIter.get();
 				test::AssertEqualBcDriveData(expectedEntry, driveEntry);
 			}
-            test::AssertBalances(context.cache(), Replicator_Key, { model::Mosaic{ Currency_Mosaic_Id, Expected_Replicator_Balance } });
 
 			// Check drive queue
 			EXPECT_EQ(pDriveQueue->size(), expectedDriveQueue.size());

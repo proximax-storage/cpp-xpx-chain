@@ -22,10 +22,19 @@ namespace catapult { namespace validators {
         constexpr auto Current_Height = Height(10);
 		const Hash256 Hash_Seed = test::GenerateRandomByteArray<Hash256>();
 
+		auto CreateConfig() {
+			test::MutableBlockchainConfiguration config;
+			auto pluginConfig = config::StorageConfiguration::Uninitialized();
+			pluginConfig.MinCapacity = utils::FileSize::FromMegabytes(1);
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return (config.ToConst());
+		}
+
         void AssertValidationResult(
                 ValidationResult expectedResult,
 				const state::ReplicatorEntry& replicatorEntry,
-                const Key& publicKey) {
+                const Key& publicKey,
+				const Amount& capacity) {
             // Arrange:
             auto cache = test::StorageCacheFactory::Create();
             {
@@ -34,12 +43,11 @@ namespace catapult { namespace validators {
                 replicatorCacheDelta.insert(replicatorEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(publicKey, replicatorEntry.capacity(), Hash_Seed);
+            Notification notification(publicKey, capacity, Hash_Seed);
             auto pValidator = CreateReplicatorOnboardingValidator();
             
             // Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, 
-                config::BlockchainConfiguration::Uninitialized(), Current_Height);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, CreateConfig(), Current_Height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
@@ -55,8 +63,22 @@ namespace catapult { namespace validators {
         AssertValidationResult(
             Failure_Storage_Replicator_Already_Registered,
             replicatorEntry,
-            publicKey);
+            publicKey,
+			test::GenerateRandomValue<Amount>());
     }
+
+	TEST(TEST_CLASS, FailureWhenReplicatorCapacityInsufficient) {
+		// Arrange:
+		Key publicKey = test::GenerateRandomByteArray<Key>();
+		state::ReplicatorEntry replicatorEntry(publicKey);
+
+		// Assert:
+		AssertValidationResult(
+				Failure_Storage_Replicator_Capacity_Insufficient,
+				replicatorEntry,
+				test::GenerateRandomByteArray<Key>(),
+				Amount(0u));
+	}
 
     TEST(TEST_CLASS, Success) {
 		// Arrange:
@@ -67,6 +89,7 @@ namespace catapult { namespace validators {
 		AssertValidationResult(
 			ValidationResult::Success,
             replicatorEntry,
-            test::GenerateRandomByteArray<Key>());
+            test::GenerateRandomByteArray<Key>(),
+			test::GenerateRandomValue<Amount>());
 	}
 }}
