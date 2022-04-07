@@ -80,17 +80,18 @@ namespace catapult { namespace mongo { namespace plugins {
                 offers.emplace(groupHash, info);
             }
         }
-
-        state::SdaOfferGroupEntry ToSdaOfferGroupEntry(const bsoncxx::document::view& document) {
-            auto dbSdaOfferGroupEntry = document["sdaoffergroups"];
-            Hash256 groupHash;
-            DbBinaryToModelArray(groupHash, dbSdaOfferGroupEntry["groupHash"].get_binary());
-            state::SdaOfferGroupEntry entry(groupHash);
-
-            ReadSdaOfferGroups(dbSdaOfferGroupEntry["sdaOfferGroup"].get_array().value, entry.sdaOfferGroup());
-
-            return entry;
-        }
     }
+
+    state::SdaOfferGroupEntry ToSdaOfferGroupEntry(const bsoncxx::document::view& document) {
+        auto dbSdaOfferGroupEntry = document["sdaoffergroups"];
+        Hash256 groupHash;
+        DbBinaryToModelArray(groupHash, dbSdaOfferGroupEntry["groupHash"].get_binary());
+        state::SdaOfferGroupEntry entry(groupHash);
+
+        ReadSdaOfferGroups(dbSdaOfferGroupEntry["sdaOfferGroup"].get_array().value, entry.sdaOfferGroup());
+
+        return entry;
+    }
+
     // endregion
 }}}
