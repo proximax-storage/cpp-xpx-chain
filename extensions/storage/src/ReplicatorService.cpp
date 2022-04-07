@@ -253,7 +253,15 @@ namespace catapult { namespace storage {
 			auto recipientShard = castReplicatorKeys<sirius::Key>(m_storageState.getRecipientShard(driveKey, m_keyPair.publicKey()));
             auto downloadWorkBytes = m_storageState.getDownloadWorkBytes(m_keyPair.publicKey(), driveKey);
 
-			sirius::drive::AddDriveRequest request{drive.Size, downloadWorkBytes, replicators, m_storageState.getDrive(driveKey).Owner.array(), donatorShard, recipientShard};
+			sirius::drive::AddDriveRequest request {
+				utils::FileSize::FromMegabytes(drive.Size).bytes(),
+				downloadWorkBytes,
+				replicators,
+				m_storageState.getDrive(driveKey).Owner.array(),
+				donatorShard,
+				recipientShard
+			};
+
 			m_pReplicator->asyncAddDrive(driveKey.array(), request);
 
 			auto pLastApprovedModification = m_storageState.getLastApprovedDataModification(drive.Id);
