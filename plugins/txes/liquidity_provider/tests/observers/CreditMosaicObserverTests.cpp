@@ -114,6 +114,11 @@ namespace catapult { namespace observers {
 			state::ExchangeRate initialRate = {info.currencyAmount, info.mosaicAmount + info.entry.additionallyMinted()};
 			state::ExchangeRate actualRate = {lpCurrencyBalance, lpMosaicBalance + actualEntry.additionallyMinted()};
 
+			if (!(initialRate < actualRate)) {
+				CATAPULT_LOG( error ) << (double) initialRate << " " << (double) actualRate;
+			}
+
+			ASSERT_TRUE(lpCurrencyBalance > info.currencyAmount);
 			ASSERT_LT(initialRate, actualRate);
 
 			ASSERT_EQ(actualEntry.additionallyMinted(), initialEntry.additionallyMinted() + mosaicAmount);

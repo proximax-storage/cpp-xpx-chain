@@ -24,6 +24,8 @@
 
 namespace catapult::utils {
 
+	using BigUint = boost::multiprecision::uint256_t;
+
 	Amount computeCreditCurrencyAmount(const state::LiquidityProviderEntry& lpEntry,
 									   const Amount& currencyBalance,
 									   const Amount& mosaicBalance,
@@ -35,4 +37,12 @@ namespace catapult::utils {
 									  const Amount& mosaicBalance,
 									  const Amount& mosaicAmount,
 									  uint8_t percentsDigitAfterDot);
+
+	bool isValidAmount(const BigUint& value) {
+		auto truncated = value.convert_to<uint64_t>();
+		if (value == truncated) {
+			return true;
+		}
+		return false;
+	}
 } // namespace catapult::utils

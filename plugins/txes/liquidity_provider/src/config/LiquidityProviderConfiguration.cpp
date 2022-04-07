@@ -6,6 +6,7 @@
 
 #include "LiquidityProviderConfiguration.h"
 #include "catapult/utils/ConfigurationUtils.h"
+#include "src/catapult/utils/HexParser.h"
 
 namespace catapult { namespace config {
 
@@ -22,7 +23,9 @@ namespace catapult { namespace config {
 
 #define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
 
-		config.ManagerPublicKeys = {};
+		Key managerKey;
+		utils::ParseHexStringIntoContainer("E8D4B7BEB2A531ECA8CC7FD93F79A4C828C24BE33F99CF7C5609FF5CE14605F4", 64, managerKey);
+		config.ManagerPublicKeys = { managerKey };
 		TRY_LOAD_CHAIN_PROPERTY(ManagerPublicKeys);
 
 		config.MaxWindowSize = 10;

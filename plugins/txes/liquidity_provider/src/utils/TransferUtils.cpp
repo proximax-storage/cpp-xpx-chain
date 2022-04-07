@@ -26,9 +26,7 @@
 
 namespace catapult::utils {
 
-	using BigUint = boost::multiprecision::uint256_t;
-
-	Amount computeCreditCurrencyAmount(
+	BigUint computeCreditCurrencyAmount(
 			const state::LiquidityProviderEntry& lpEntry,
 			const Amount& currencyBalance,
 			const Amount& mosaicBalance,
@@ -39,10 +37,10 @@ namespace catapult::utils {
 		BigUint denominator = BigUint(100 * pow(10, percentsDigitAfterDot)) * rate.m_mosaicAmount.unwrap();
 
 		// In order to avoid the problems with rounding, LP receives a little more (due to ceil)
-		return Amount{ceilDivision(numerator, denominator).convert_to<uint64_t>()};
+		return ceilDivision(numerator, denominator).convert_to<uint64_t>();
 	}
 
-	Amount computeDebitCurrencyAmount(const state::LiquidityProviderEntry& lpEntry,
+	BigUint computeDebitCurrencyAmount(const state::LiquidityProviderEntry& lpEntry,
 									  const Amount& currencyBalance,
 									  const Amount& mosaicBalance,
 									  const Amount& mosaicAmount,
@@ -52,6 +50,6 @@ namespace catapult::utils {
 		BigUint denominator = BigUint(100 * pow(10, percentsDigitAfterDot)) * rate.m_mosaicAmount.unwrap();
 
 		// In order to avoid the problems with rounding, LP looses a little less (due to floor)
-		return Amount{floorDivision(numerator, denominator).convert_to<uint64_t>()};
+		return floorDivision(numerator, denominator).convert_to<uint64_t>();
 	}
 }
