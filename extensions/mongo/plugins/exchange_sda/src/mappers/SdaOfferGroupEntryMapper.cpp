@@ -32,7 +32,7 @@ namespace catapult { namespace mongo { namespace plugins {
             auto offerArray = builder << "sdaOfferGroup" << bson_stream::open_array;
             for (const auto& pair : offers) {
                 bson_stream::document offerBuilder;
-                offerBuilder << "groupHash" << pair.first;
+                offerBuilder << "groupHash" << ToBinary(pair.first);
                 StreamSdaOfferBasicInfo(offerBuilder, pair.second);
                 offerArray << offerBuilder;
             }

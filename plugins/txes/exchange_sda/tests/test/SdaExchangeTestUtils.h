@@ -34,9 +34,9 @@ namespace catapult { namespace test {
     /// Verifies that \a entry1 is equivalent to \a entry2.
     void AssertEqualExchangeData(const state::SdaExchangeEntry& entry1, const state::SdaExchangeEntry& entry2);
 
-    /// Creates a place SDA-SDA exchange transaction with \a offers.
+    /// Creates a SDA-SDA exchange transaction with \a offers.
     template<typename TTransaction, typename TOffer>
-    model::UniqueEntityPtr<TTransaction> CreatePlaceSdaExchangeOfferTransaction(std::initializer_list<TOffer> offers, VersionType version = 1) {
+    model::UniqueEntityPtr<TTransaction> CreateSdaExchangeOfferTransaction(std::initializer_list<TOffer> offers, VersionType version = 1) {
         uint32_t entitySize = sizeof(TTransaction) + offers.size() * sizeof(TOffer);
         auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(entitySize);
         pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, version);

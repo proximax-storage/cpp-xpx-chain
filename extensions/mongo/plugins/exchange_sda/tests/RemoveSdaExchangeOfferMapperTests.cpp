@@ -25,14 +25,14 @@ namespace catapult { namespace mongo { namespace plugins {
             for (uint8_t i = 0; i < transaction.SdaOfferCount; ++i, ++pOffer, ++iter) {
                 const auto& doc = iter->get_document().view();
                 EXPECT_EQ(pOffer->MosaicIdGive.unwrap(), test::GetUint64(doc, "mosaicIdGive"));
-                EXPECT_EQ(pOffer->MosaicIdGet.Amount.unwrap(), test::GetUint64(doc, "mosaicIdGet"));
+                EXPECT_EQ(pOffer->MosaicIdGet.unwrap(), test::GetUint64(doc, "mosaicIdGet"));
             }
         }
 
         template<typename TTraits>
         void AssertCanMapRemoveSdaExchangeOfferTransaction(std::initializer_list<model::SdaOfferMosaic> offers) {
             // Arrange:
-            auto pTransaction = test::CreateRemoveSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferMosaic>(offers);
+            auto pTransaction = test::CreateSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferMosaic>(offers);
             auto pPlugin = TTraits::CreatePlugin();
 
             // Act:

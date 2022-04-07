@@ -28,7 +28,9 @@ namespace catapult { namespace mongo { namespace plugins {
                 EXPECT_EQ(pOffer->MosaicGive.Amount.unwrap(), test::GetUint64(doc, "mosaicAmountGive"));
                 EXPECT_EQ(pOffer->MosaicGet.MosaicId.unwrap(), test::GetUint64(doc, "mosaicIdGet"));
                 EXPECT_EQ(pOffer->MosaicGet.Amount.unwrap(), test::GetUint64(doc, "mosaicAmountGet"));
-                EXPECT_EQ(pOffer->Owner.unwrap(), test::GetKeyValue(doc, "owner"));
+                Key owner;
+				mongo::mappers::DbBinaryToModelArray(owner, doc["owner"].get_binary());
+                EXPECT_EQ(pOffer->Owner, owner);
                 EXPECT_EQ(pOffer->Duration.unwrap(), test::GetUint64(doc, "duration"));
             }
         }
@@ -36,7 +38,7 @@ namespace catapult { namespace mongo { namespace plugins {
         template<typename TTraits>
         void AssertCanMapPlaceSdaExchangeOfferTransaction(std::initializer_list<model::SdaOfferWithOwnerAndDuration> offers) {
             // Arrange:
-            auto pTransaction = test::CreatePlaceSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferWithOwnerAndDuration>(offers);
+            auto pTransaction = test::CreateSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferWithOwnerAndDuration>(offers);
             auto pPlugin = TTraits::CreatePlugin();
 
             // Act:
@@ -68,7 +70,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
     PLUGIN_TEST(CanMapPlaceSdaExchangeOfferTransactionWithOffers) {
         // Arrange:
-        Key& owner = test::GenerateRandomByteArray<Key>();
+        Key owner = test::GenerateRandomByteArray<Key>();
 
         // Assert:
         AssertCanMapPlaceSdaExchangeOfferTransaction<TTraits>({

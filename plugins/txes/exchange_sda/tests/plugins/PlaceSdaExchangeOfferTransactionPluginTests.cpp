@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 
         template<typename TTraits, VersionType Version>
         auto CreateTransaction(const Key& offerOwner1 = test::GenerateRandomByteArray<Key>(), const Key& offerOwner2 = test::GenerateRandomByteArray<Key>()) {
-            return test::CreatePlaceSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferWithOwnerAndDuration>(
+            return test::CreateSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferWithOwnerAndDuration>(
                 {
                     model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(10)}, {UnresolvedMosaicId(2), Amount(100)}}, offerOwner1, BlockDuration(1000)},
                     model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(2), Amount(200)}, {UnresolvedMosaicId(1), Amount(20)}}, offerOwner2, BlockDuration(1000)},

@@ -25,7 +25,7 @@ namespace catapult { namespace plugins {
 
         template<typename TTraits, VersionType Version>
         auto CreateTransaction() {
-            return test::CreatePlaceSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferMosaic>(
+            return test::CreateSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferMosaic>(
                 {
                     model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
                     model::SdaOfferMosaic{UnresolvedMosaicId(2), UnresolvedMosaicId(1)},
