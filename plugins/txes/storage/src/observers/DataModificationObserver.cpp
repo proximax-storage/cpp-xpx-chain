@@ -13,8 +13,8 @@ namespace catapult { namespace observers {
 	using DrivePriority = std::pair<Key, double>;
 	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-	DECLARE_OBSERVER(DataModification, Notification)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue) {
-		return MAKE_OBSERVER(DataModification, Notification, ([pKeyCollector, pDriveQueue](const Notification& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(DataModification, Notification)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue, const LiquidityProviderExchangeObserver& liquidityProvider) {
+		return MAKE_OBSERVER(DataModification, Notification, ([pKeyCollector, pDriveQueue, &liquidityProvider](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModification)");
 
@@ -35,7 +35,7 @@ namespace catapult { namespace observers {
 
 		  	const auto offboardingReplicators = driveEntry.offboardingReplicators();
 
-		  	utils::RefundDepositsToReplicators(notification.DriveKey, offboardingReplicators, context);
+		  	utils::RefundDepositsToReplicators(notification.DriveKey, offboardingReplicators, context, liquidityProvider);
 			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
 		  	utils::PopulateDriveWithReplicators(notification.DriveKey, pKeyCollector, pDriveQueue, context, rng);
 		  	utils::AssignReplicatorsToQueuedDrives(offboardingReplicators, pDriveQueue, context, rng);

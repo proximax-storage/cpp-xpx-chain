@@ -37,7 +37,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DownloadChannel, model::DownloadNotification<1>)();
 
 	/// Observes changes triggered by data modification notifications.
-	DECLARE_OBSERVER(DataModification, model::DataModificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue);
+	DECLARE_OBSERVER(DataModification, model::DataModificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue, const LiquidityProviderExchangeObserver&);
 
 	/// Observes changes triggered by data modification approval notifications.
 	DECLARE_OBSERVER(DataModificationApproval, model::DataModificationApprovalNotification<1>)();

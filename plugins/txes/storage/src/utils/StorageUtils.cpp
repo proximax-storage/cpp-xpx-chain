@@ -88,7 +88,8 @@ namespace catapult { namespace utils {
 	void RefundDepositsToReplicators(
 			const Key& driveKey,
 			const std::set<Key>& replicators,
-			const observers::ObserverContext& context) {
+			observers::ObserverContext& context,
+			const observers::LiquidityProviderExchangeObserver& liquidityProvider) {
 		auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
 		auto& accountCache = context.Cache.template sub<cache::AccountStateCache>();
 		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
@@ -126,10 +127,9 @@ namespace catapult { namespace utils {
 			const auto streamingDepositRefundAmount = Amount(streamingDeposit - streamingDepositSlashing);
 
 			// Making mosaic transfers
-			driveState.Balances.debit(storageMosaicId, storageDepositRefundAmount, context.Height);
-			driveState.Balances.debit(streamingMosaicId, streamingDepositRefundAmount, context.Height);
-			replicatorState.Balances.credit(storageMosaicId, storageDepositRefundAmount, context.Height);
-			replicatorState.Balances.credit(streamingMosaicId, streamingDepositRefundAmount, context.Height);
+
+			liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), storageDepositRefundAmount);
+			liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), streamingDepositRefundAmount);
 		}
 	}
 

@@ -223,7 +223,7 @@ namespace catapult { namespace plugins {
 			builder
 				.add(observers::CreatePrepareDriveObserver(pReplicatorKeyCollector, pDriveQueue))
 				.add(observers::CreateDownloadChannelObserver())
-				.add(observers::CreateDataModificationObserver(pReplicatorKeyCollector, pDriveQueue))
+				.add(observers::CreateDataModificationObserver(pReplicatorKeyCollector, pDriveQueue, liquidityProviderObserver))
 				.add(observers::CreateDataModificationApprovalObserver())
 				.add(observers::CreateDataModificationApprovalDownloadWorkObserver(liquidityProviderObserver))
 				.add(observers::CreateDataModificationApprovalUploadWorkObserver(liquidityProviderObserver))

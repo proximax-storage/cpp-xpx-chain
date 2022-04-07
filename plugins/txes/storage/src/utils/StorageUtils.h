@@ -12,6 +12,7 @@
 #include "catapult/observers/ObserverContext.h"
 #include "src/cache/ReplicatorKeyCollector.h"
 #include "src/state/BcDriveEntry.h"
+#include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
 #include <queue>
 #include <random>
 
@@ -65,7 +66,8 @@ namespace catapult { namespace utils {
 	void RefundDepositsToReplicators(
 			const Key&,
 			const std::set<Key>&,
-			const observers::ObserverContext&);
+			observers::ObserverContext&,
+			const observers::LiquidityProviderExchangeObserver&);
 
 	/// Performs actual offboarding of \a offboardingReplicators from the drive with \a driveKey;
 	/// updates drive's data modification and download shards to keep them valid.
