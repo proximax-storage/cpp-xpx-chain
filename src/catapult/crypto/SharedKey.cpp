@@ -45,6 +45,24 @@ namespace catapult { namespace crypto {
 		return sharedKey;
 	}
 
+	SharedKey Hkdf_Hmac_Sha3_256_32(const Key& sharedSecret) {
+		Hash256 salt;
+		Hash256 pseudoRandomKey;
+		Hmac_Sha3_256(salt, sharedSecret, pseudoRandomKey);
+
+		// specialized for single repetition, last byte contains counter value
+		constexpr auto Buffer_Length = 8 + 1;
+		std::array<uint8_t, Buffer_Length> buffer{ { 0x63, 0x61, 0x74, 0x61, 0x70, 0x75, 0x6C, 0x74, 0x01 } };
+
+		Hash256 outputKeyingMaterial;
+		Hmac_Sha3_256(pseudoRandomKey, buffer, outputKeyingMaterial);
+
+		auto sharedKey = outputKeyingMaterial.copyTo<SharedKey>();
+		SecureZero(pseudoRandomKey);
+		SecureZero(outputKeyingMaterial);
+		return sharedKey;
+	}
+
 	Key DeriveSharedSecret(const KeyPair& keyPair, const Key& otherPublicKey) {
 		ScalarMultiplier multiplier;
 		if(keyPair.derivationScheme() == DerivationScheme::Ed25519_Sha3)
@@ -64,8 +82,16 @@ namespace catapult { namespace crypto {
 		if (Key() == sharedSecret)
 			return SharedKey();
 
+		if(keyPair.derivationScheme() == DerivationScheme::Ed25519_Sha3)
+		{
+			auto sharedKey = Hkdf_Hmac_Sha3_256_32(sharedSecret);
+			SecureZero(sharedSecret);
+			return sharedKey;
+		}
 		auto sharedKey = Hkdf_Hmac_Sha256_32(sharedSecret);
 		SecureZero(sharedSecret);
 		return sharedKey;
+
+
 	}
 }}

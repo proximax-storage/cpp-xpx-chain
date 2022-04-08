@@ -118,6 +118,11 @@ namespace catapult { namespace crypto {
 		unsigned int outputSize = 0;
 		HMAC(EVP_sha256(), key.pData, static_cast<int>(key.Size), input.pData, input.Size, output.data(), &outputSize);
 	}
+	
+	void Hmac_Sha3_256(const RawBuffer& key, const RawBuffer& input, Hash256& output) {
+		unsigned int outputSize = 0;
+		HMAC(EVP_sha3_256(), key.pData, static_cast<int>(key.Size), input.pData, input.Size, output.data(), &outputSize);
+	}
 
 	void Hmac_Sha512(const RawBuffer& key, const RawBuffer& input, Hash512& output) {
 		unsigned int outputSize = 0;

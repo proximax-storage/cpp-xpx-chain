@@ -56,6 +56,9 @@ namespace catapult { namespace crypto {
 	/// Calculates the sha256 HMAC of \a input with \a key, producing \a output.
 	void Hmac_Sha256(const RawBuffer& key, const RawBuffer& input, Hash256& output);
 
+	/// Calculates the sha3 256 HMAC of \a input with \a key, producing \a output.
+	void Hmac_Sha3_256(const RawBuffer& key, const RawBuffer& input, Hash256& output);
+
 	/// Calculates the sha512 HMAC of \a input with \a key, producing \a output.
 	void Hmac_Sha512(const RawBuffer& key, const RawBuffer& input, Hash512& output);
 	// endregion
