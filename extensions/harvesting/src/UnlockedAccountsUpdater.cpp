@@ -101,18 +101,41 @@ namespace catapult { namespace harvesting {
 				  	auto maxHarvesterBalance = m_ConfigHolder->Config(height).Network.MaxHarvesterBalance;
 					auto shouldPruneAccount = !view.canHarvest(signingPublicKey, height, minHarvesterBalance, maxHarvesterBalance);
 
+#ifdef DEBUG
+					if(shouldPruneAccount)
+					{
+						if(m_signingPublicKey == signingPublicKey)
+						{
+							CATAPULT_LOG_THROTTLE(warning, utils::TimeSpan::FromHours(6).millis()) << "primary signing public key " << m_signingPublicKey << " does not meet harvesting requirements";
+							return false;
+						}
+						else
+						{
+							CATAPULT_LOG_THROTTLE(warning, utils::TimeSpan::FromHours(6).millis()) << "non-primary signing public key " << signingPublicKey << " does not meet harvesting requirements for height " << height
+									<< "with minHarvesterBalance of " << minHarvesterBalance
+									<< "and maxHarvesterBalance of " << maxHarvesterBalance;
+						}
+					}
+#else
 					if (shouldPruneAccount && m_signingPublicKey == signingPublicKey) {
 						CATAPULT_LOG_THROTTLE(warning, utils::TimeSpan::FromHours(6).millis())
-								<< "primary signing public key " << m_signingPublicKey << " does not meet harvesting requirements";
+							<< "primary signing public key " << m_signingPublicKey << " does not meet harvesting requirements";
 						return false;
 					}
-
+#endif
 					if (!shouldPruneAccount) {
 						auto accountStateIter = readOnlyAccountStateCache.find(address);
 						auto accountState = accountStateIter.get();
 						if (state::AccountType::Remote == accountStateIter.get().AccountType) {
 							auto mainAccountStateIter = readOnlyAccountStateCache.find(GetLinkedPublicKey(accountState));
 							shouldPruneAccount = !isMainAccountEligibleForDelegation(mainAccountStateIter.get(), descriptor);
+#ifdef DEBUG
+							if(shouldPruneAccount)
+							{
+								CATAPULT_LOG_THROTTLE(warning, utils::TimeSpan::FromHours(6).millis())
+										<< "signing public key " << m_signingPublicKey << " corresponding main account is not eligible for delegation";
+							}
+#endif
 						}
 						else
 						{

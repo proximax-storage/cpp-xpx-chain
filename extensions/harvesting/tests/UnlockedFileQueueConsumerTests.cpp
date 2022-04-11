@@ -62,7 +62,7 @@ namespace catapult { namespace harvesting {
 	TEST(TEST_CLASS, TryDecryptBlockGeneratorAccountDescriptor_SucceedsWhenDecryptedDataHasProperSize) {
 		// Arrange:
 		auto clearText = test::GenerateRandomVector(Encrypted_Data_Size);
-		auto recipientKeyPair = test::GenerateKeyPair(2);
+		auto recipientKeyPair = test::GenerateKeyPair(Node_Boot_Key_Derivation_Scheme);
 		auto publicKeyPrefixedEncryptedPayload = test::GenerateEphemeralAndEncrypt(clearText, recipientKeyPair.publicKey());
 
 		// Act:
@@ -83,7 +83,7 @@ namespace catapult { namespace harvesting {
 
 		class TestContext {
 		public:
-			TestContext() : m_keyPair(test::GenerateKeyPair(2))
+			TestContext() : m_keyPair(test::GenerateKeyPair(Node_Boot_Key_Derivation_Scheme))
 			{}
 
 		public:

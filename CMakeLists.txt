@@ -20,7 +20,7 @@ message(STATUS "BOOST_ROOT: $ENV{BOOST_ROOT}")
 set(CORE_CATAPULT_LIBS catapult.io catapult.ionet catapult.model catapult.thread catapult.utils)
 
 ### setup boost
-
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 	find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random REQUIRED)
 else()
@@ -93,3 +93,5 @@ add_subdirectory(tools)
 
 # Help programs
 add_subdirectory(spammer)
+
+add_compile_options("$<$<CONFIG:DEBUG>:-DDEBUG>")

@@ -150,7 +150,7 @@ namespace catapult { namespace harvesting {
 					const BlockGeneratorAccountDescriptor& descriptor,
 					const Key& mainAccountPublicKey,
 					Height height = Default_Height) {
-				return queueAddMessageWithHarvester(test::GenerateKeyPair(2), descriptor, mainAccountPublicKey, height);
+				return queueAddMessageWithHarvester(test::GenerateKeyPair(Node_Boot_Key_Derivation_Scheme), descriptor, mainAccountPublicKey, height);
 			}
 
 			auto queueAddMessageWithHarvester(const BlockGeneratorAccountDescriptor& descriptor) {

@@ -54,7 +54,7 @@ namespace catapult { namespace harvesting {
 
 			return BlockGeneratorAccountDescriptor(
 					crypto::KeyPair::FromString(config.HarvestKey, configuredAccountVersion),
-					crypto::KeyPair::FromString(config.HarvesterVrfPrivateKey, configuredAccountVersion),
+					crypto::KeyPair::FromString(config.HarvesterVrfPrivateKey, Vrf_Key_Derivation_Scheme),
 					configuredAccountVersion);
 		}
 
