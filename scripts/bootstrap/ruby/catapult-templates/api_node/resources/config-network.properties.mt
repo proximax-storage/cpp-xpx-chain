@@ -146,3 +146,12 @@ maxSuperContractsOnDrive = 10
 
 enabled = true
 maxValueSize = 1024
+
+[plugin:catapult.plugins.exchangesda]
+
+enabled = true
+
+maxOfferDuration = 57600
+longOfferKey = CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE
+
+offerSortPolicy = 1
