@@ -47,14 +47,16 @@ namespace catapult { namespace state {
 		template<typename TContainer>
 		void SaveShard(io::OutputStream& output, const TContainer& shard) {
 			io::Write8(output, utils::checked_cast<size_t, uint8_t>(shard.size()));
-			for (auto key : shard)
+			for (const auto& key : shard) {
 				io::Write(output, key);
+			}
 		}
 
 		void SaveShards(io::OutputStream& output, const Shards& shards) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(shards.size()));
-			for (auto shard : shards)
+			for (const auto& shard : shards) {
 				SaveShard(output, shard);
+			}
 		}
 
 		void SaveUploadInfo(io::OutputStream& output, const std::map<Key, uint64_t>& info) {
@@ -215,11 +217,13 @@ namespace catapult { namespace state {
 		}
 
 		void LoadShards(io::InputStream& input, Shards& shards) {
+			CATAPULT_LOG( error ) << "Started Loading Shards";
 			auto count = io::Read16(input);
 			while (count--) {
 				shards.emplace_back();
 				LoadShard(input, shards.back());
 			}
+			CATAPULT_LOG( error ) << "Finished Loading Shards";
 		}
 
 		void LoadVerification(io::InputStream& input, std::optional<Verification>& verification) {
@@ -302,8 +306,8 @@ namespace catapult { namespace state {
 		io::Write(output, driveEntry.getQueueNext());
 		io::Write(output, driveEntry.getLastPayment());
 
-		SaveVerification(output, driveEntry.verification());
 		SaveVerificationNode(output, driveEntry.verificationNode());
+		SaveVerification(output, driveEntry.verification());
 
 		SaveActiveDataModifications(output, driveEntry.activeDataModifications());
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
@@ -316,6 +320,7 @@ namespace catapult { namespace state {
 	}
 
 	BcDriveEntry BcDriveEntrySerializer::Load(io::InputStream& input) {
+		CATAPULT_LOG( error ) << "Started Loading Entry";
 
 		// read version
 		VersionType version = io::Read32(input);
@@ -352,8 +357,8 @@ namespace catapult { namespace state {
 		io::Read(input, lastPayment);
 		entry.setLastPayment(lastPayment);
 
-		LoadVerification(input, entry.verification());
 		LoadVerificationNode(input, entry.verificationNode());
+		LoadVerification(input, entry.verification());
 
 		LoadActiveDataModifications(input, entry.activeDataModifications());
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
@@ -363,6 +368,8 @@ namespace catapult { namespace state {
 		LoadDownloadShards(input, entry.downloadShards());
 		LoadModificationShards(input, entry.dataModificationShards());
 		LoadConfirmedStorageInfos(input, entry.confirmedStorageInfos());
+
+		CATAPULT_LOG( error ) << "Finished Loading Entry";
 
 		return entry;
 	}

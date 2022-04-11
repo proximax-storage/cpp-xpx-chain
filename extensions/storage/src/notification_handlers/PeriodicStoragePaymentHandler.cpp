@@ -18,7 +18,7 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			Hash256 eventHash = utils::getStoragePaymentEventHash(notification.Hash, context.Config.Immutable.GenerationHash);
+			Hash256 eventHash = utils::getStoragePaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
 
 			pReplicatorService->updateReplicatorDrives(eventHash);
 			pReplicatorService->updateReplicatorDownloadChannels();

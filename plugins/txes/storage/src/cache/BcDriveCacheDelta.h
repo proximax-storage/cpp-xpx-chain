@@ -96,6 +96,15 @@ namespace catapult { namespace cache {
 			return result;
 		}
 
+		void updateKeyCollector(const std::shared_ptr<DriveKeyCollector>& pKeyCollector) const {
+			pKeyCollector->keys().clear();
+			for (const auto& key : keys()) {
+				auto iter = m_pBcDriveEntries->find(key);
+				auto pEntry = iter.get();
+				pKeyCollector->addKey(*pEntry);
+			}
+		}
+
 	private:
 		BcDriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pBcDriveEntries;
 		BcDriveCacheTypes::KeyTypes::BaseSetDeltaPointerType m_pDeltaKeys;

@@ -30,10 +30,10 @@ namespace catapult { namespace validators {
 			return Failure_Storage_Verification_Invalid_Prover_Count;
 
 		auto pPublicKey = notification.PublicKeysPtr;
-		for (auto i = 0u; i < notification.KeyCount; ++i, ++pPublicKey) {
-			if (shard[i] != *pPublicKey)
-				return Failure_Storage_Verification_Invalid_Prover;
-		}
+//		for (auto i = 0u; i < notification.KeyCount; ++i, ++pPublicKey) {
+//			if (shard[i] != *pPublicKey)
+//				return Failure_Storage_Verification_Invalid_Prover;
+//		}
 
         return ValidationResult::Success;
     });

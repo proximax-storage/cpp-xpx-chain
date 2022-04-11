@@ -45,7 +45,7 @@ namespace catapult { namespace observers {
 
 				// Creating unique eventHash for the observer
 				Hash256 eventHash =
-						utils::getVerificationEventHash(notification.Hash, context.Config.Immutable.GenerationHash);
+						utils::getVerificationEventHash(context.Timestamp, context.Config.Immutable.GenerationHash);
 
 				std::seed_seq seed(eventHash.begin(), eventHash.end());
 				std::mt19937 rng(seed);
@@ -62,7 +62,7 @@ namespace catapult { namespace observers {
 
 				for (uint i = 0; i < drivesToVerify; i++) {
 					Key randomKey;
-//					std::generate_n(randomKey.begin(), sizeof(Key), rng);
+					std::generate_n(randomKey.begin(), sizeof(Key), rng);
 
 					Key driveKey = treeAdapter.lowerBound(randomKey);
 
@@ -71,31 +71,29 @@ namespace catapult { namespace observers {
 					if (driveKey == Key()) {
 						continue;
 					}
+
+					CATAPULT_LOG( error ) << "not null key " << driveKey;
+
 					auto& driveEntry = driveCache.find(driveKey).get();
 
-					auto& verification = driveEntry.verification();
+					auto& xVerification = driveEntry.verification();
 
-					if (verification && !verification->expired(notification.Timestamp)) {
+					if (xVerification && !xVerification->expired(notification.Timestamp)) {
 						// The Verification Has Not Expired Yet
 						continue;
 					}
 
-					verification = state::Verification();
+					state::Verification verification;
 
-					Hash256 trigger;
-//					std::generate_n(trigger.begin(), Key_Size, rng);
-					verification->VerificationTrigger = notification.Hash;
-//					verification->VerificationTrigger = { { 11 } };
+					verification.VerificationTrigger = eventHash;
 
-//					verification->VerificationTrigger = eventHash;
+					auto timeoutMinutes =
+							pluginConfig.VerificationExpirationCoefficient *
+									utils::FileSize::FromBytes(driveEntry.usedSizeBytes()).gigabytesCeil() +
+							pluginConfig.VerificationExpirationConstant;
+					verification.Expiration = notification.Timestamp + Timestamp(timeoutMinutes * 60 * 1000);
 
-//					auto timeoutMinutes =
-//							pluginConfig.VerificationExpirationCoefficient *
-//									utils::FileSize::FromBytes(driveEntry.usedSizeBytes()).gigabytesCeil() +
-//							pluginConfig.VerificationExpirationConstant;
-//					verification->Expiration = notification.Timestamp + Timestamp(timeoutMinutes * 60 * 1000);
-
-//					verification->Expiration = Timestamp((uint64_t) 1e15);
+					verification.Expiration = Timestamp((uint64_t) 1e15);
 
 //					std::vector<Key> replicators;
 //					replicators.reserve(driveEntry.replicators().size());
@@ -110,10 +108,33 @@ namespace catapult { namespace observers {
 //					uint16_t replicatorCount = replicators.size();
 //					auto shardSize = 10; //pluginConfig.VerificationShardSize;
 //
+//					CATAPULT_LOG( error ) << "before shards";
+//
+//
+//					std::vector<Key> r = { *driveEntry.replicators().begin() };
+
+					std::ostringstream s;
+
+					s << driveEntry.replicators().size() << " ";
+					for (const auto& r: driveEntry.replicators()) {
+						s << r << " ";
+					}
+
+//					std::set<Key> keys = { Key{{0x0A, 0x0E, 0xAC, 0x0E, 0x56, 0xFE, 0x4C, 0x05, 0x2B, 0x66, 0xD0, 0x70, 0x43, 0x46, 0x21, 0xE7, 0x47, 0x93, 0xFB, 0xF1, 0xD6, 0xF4, 0x52, 0x86, 0x89, 0x72, 0x40, 0x68, 0x1A, 0x66, 0x8B, 0xB1}} };
+
+//					std::set<Key> keys = { Key{{1}} };
+
+					CATAPULT_LOG( error ) << s.str();
+					verification.Shards = state::Shards { driveEntry.replicators() };
+
+					driveEntry.verification() = verification;
+
 //					if (replicatorCount < 2 * shardSize) {
 //						verification->Shards = state::Shards { replicators };
 //						continue;
 //					}
+//
+//					CATAPULT_LOG( error ) << "after shards";
 //
 //					std::shuffle(replicators.begin(), replicators.end(), rng);
 //

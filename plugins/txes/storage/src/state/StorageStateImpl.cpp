@@ -41,16 +41,18 @@ namespace catapult { namespace state {
 			auto driveIter = driveCacheView.find(driveKey);
 			const auto& driveEntry = driveIter.get();
 
-			if (driveEntry.verification()) {
-				const auto& verification = *driveEntry.verification();
-				return DriveVerification{driveKey,
-					verification.expired(blockTimestamp),
-					verification.VerificationTrigger,
-				   	driveEntry.rootHash(),
-					verification.Shards};
-			}
-
 			return {};
+
+//			if (driveEntry.verification()) {
+//				const auto& verification = *driveEntry.verification();
+//				return DriveVerification{driveKey,
+//					verification.expired(blockTimestamp),
+//					verification.VerificationTrigger,
+//				   	driveEntry.rootHash(),
+//					verification.Shards};
+//			}
+//
+//			return {};
 		}
     }
 

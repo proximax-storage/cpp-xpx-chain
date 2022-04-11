@@ -367,23 +367,23 @@ namespace catapult { namespace storage {
 			for (const auto& driveKey: drives) {
 				if (auto it = m_alreadyAddedDrives.find(driveKey); it != m_alreadyAddedDrives.end()) {
 
-					if (it->second == height)
-					{
-						// The verification has already been processed
-						CATAPULT_LOG( error ) << "verification has already been processed " << driveKey;
-						continue;
-					}
-
-					auto verification = m_storageState.getActiveVerification(driveKey, blockTimestamp);
-
-					if (!verification || verification->Expired) {
-						m_pReplicator->asyncCancelDriveVerification(driveKey.array());
-					}
-					else if (verification->VerificationTrigger == blockHash) {
-						CATAPULT_LOG( error ) << "will start verification";
-						sirius::Hash256 verificationTrigger = verification->VerificationTrigger.array();
-						m_pReplicator->asyncStartDriveVerification(driveKey.array(), verificationTrigger);
-					}
+//					if (it->second == height)
+//					{
+//						// The verification has already been processed
+//						CATAPULT_LOG( error ) << "verification has already been processed " << driveKey;
+//						continue;
+//					}
+//
+//					auto verification = m_storageState.getActiveVerification(driveKey, blockTimestamp);
+//
+//					if (!verification || verification->Expired) {
+//						m_pReplicator->asyncCancelDriveVerification(driveKey.array());
+//					}
+//					else if (verification->VerificationTrigger == blockHash) {
+//						CATAPULT_LOG( error ) << "will start verification";
+//						sirius::Hash256 verificationTrigger = verification->VerificationTrigger.array();
+//						m_pReplicator->asyncStartDriveVerification(driveKey.array(), verificationTrigger);
+//					}
 				}
 				else {
 					CATAPULT_LOG( error ) << "Could Not Find Drive to Verify " << driveKey << " " << blockHash;

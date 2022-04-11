@@ -33,6 +33,7 @@ namespace catapult { namespace cache {
 		/// Creates a plugin around \a config, \a pKeyCollector and \a pConfigHolder.
 		explicit BcDriveCacheSubCachePlugin(
 			const CacheConfiguration& config,
+			const std::shared_ptr<DriveKeyCollector>& pKeyCollector,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 	};
 }}

@@ -22,7 +22,7 @@
 #include <catapult/types.h>
 
 namespace catapult { namespace utils {
-	Hash256 getVerificationEventHash(const Hash256& blockHash, const catapult::GenerationHash& generationHash);
-	Hash256 getStoragePaymentEventHash(const Hash256& blockHash, const catapult::GenerationHash& generationHash);
-	Hash256 getDownloadPaymentEventHash(const Hash256& blockHash, const catapult::GenerationHash& generationHash);
+	Hash256 getVerificationEventHash(const Timestamp& blockTimestamp, const catapult::GenerationHash& generationHash);
+	Hash256 getStoragePaymentEventHash(const Timestamp& blockTimestamp, const catapult::GenerationHash& generationHash);
+	Hash256 getDownloadPaymentEventHash(const Timestamp& blockTimestamp, const catapult::GenerationHash& generationHash);
 }}

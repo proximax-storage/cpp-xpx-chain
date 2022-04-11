@@ -20,8 +20,10 @@ namespace catapult { namespace cache {
 		/// Creates a cache.
 		explicit BasicBcDriveCache(
 			const CacheConfiguration& config,
+			const std::shared_ptr<DriveKeyCollector>& pKeyCollector,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: BcDriveBasicCache(config, std::move(pConfigHolder))
+				, m_pKeyCollector(pKeyCollector)
 		{}
 
 	public:
@@ -34,8 +36,12 @@ namespace catapult { namespace cache {
 		}
 
 		void commit(const CacheDeltaType& delta) {
+			delta.updateKeyCollector(m_pKeyCollector);
 			BcDriveBasicCache::commit(delta);
 		}
+
+	private:
+		std::shared_ptr<DriveKeyCollector> m_pKeyCollector;
 	};
 
 	/// Synchronized cache composed of drive information.
@@ -47,8 +53,9 @@ namespace catapult { namespace cache {
 		/// Creates a cache around \a config.
 		explicit BcDriveCache(
 			const CacheConfiguration& config,
+			const std::shared_ptr<DriveKeyCollector>& pKeyCollector,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
-				: SynchronizedCacheWithInit(BasicBcDriveCache(config, pConfigHolder))
+				: SynchronizedCacheWithInit(BasicBcDriveCache(config, pKeyCollector, pConfigHolder))
 		{}
 	};
 }}

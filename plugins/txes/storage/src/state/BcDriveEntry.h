@@ -118,7 +118,7 @@ namespace catapult { namespace state {
 	using SizeMap = std::map<Key, uint64_t>;
 	using ConfirmedStates = std::map<Key, Hash256>; // last approved root hash
 	using ConfirmedStorageInfos = std::map<Key, ConfirmedStorageInfo>;
-	using Shards = std::vector<std::vector<Key>>;
+	using Shards = std::vector<std::set<Key>>;
 	using DownloadShards = std::set<Hash256>;
 	using ModificationShards = std::map<Key, ModificationShardInfo>;
 
@@ -131,11 +131,6 @@ namespace catapult { namespace state {
 
 		/// Replicator shards.
 		state::Shards Shards;
-
-		Verification()
-			: VerificationTrigger()
-			, Expiration(0)
-		{}
 
 		bool expired(const Timestamp& timestamp) const {
 			return timestamp >= Expiration;
