@@ -14,10 +14,10 @@ namespace catapult { namespace state {
 #define TEST_CLASS SdaOfferGroupEntrySerializerTests
 
     namespace {
-        constexpr size_t Offer_Count = 5;
+        constexpr size_t Offer_Count = 1;
         constexpr auto Entry_Size =
             Hash256_Size
-            + Hash256_Size * (Offer_Count * sizeof(SdaOfferBasicInfo));
+            + Hash256_Size + 2 + Offer_Count * (2 + sizeof(SdaOfferBasicInfo));
 
         class TestContext {
         public:
@@ -50,6 +50,7 @@ namespace catapult { namespace state {
 
         void AssertSdaOfferBasicInfo(const std::vector<SdaOfferBasicInfo>& info, const uint8_t*& pData) {
             EXPECT_EQ(info.size(), *reinterpret_cast<const uint16_t*>(pData));
+            pData += sizeof(uint16_t);
             for (const auto& offer : info) {
                 EXPECT_EQ_MEMORY(offer.Owner.data(), pData, Key_Size);
                 pData += Key_Size;
@@ -61,8 +62,8 @@ namespace catapult { namespace state {
         }
 
         void AssertSdaOfferGroup(const SdaOfferGroupMap& offers, const uint8_t*& pData) {
-            EXPECT_EQ(offers.size(), *pData);
-            pData++;
+            EXPECT_EQ(offers.size(), *reinterpret_cast<const uint16_t*>(pData));
+            pData += sizeof(uint16_t);
             for (const auto& pair : offers) {
                 EXPECT_EQ_MEMORY(pair.first.data(), pData, Hash256_Size);
 			    pData += Hash256_Size;
@@ -133,8 +134,9 @@ namespace catapult { namespace state {
         }
 
         void WriteSdaOfferGroup(const SdaOfferGroupMap& offers, uint8_t*& pData) {
-            *pData = utils::checked_cast<size_t, uint8_t>(offers.size());
-            pData++;
+            uint16_t size = utils::checked_cast<size_t, uint16_t>(offers.size());
+            memcpy(pData, &size, sizeof(uint16_t));
+            pData += sizeof(uint16_t);
             for (const auto& pair : offers) {
                 memcpy(pData, pair.first.data(), Hash256_Size);
                 pData += Hash256_Size;

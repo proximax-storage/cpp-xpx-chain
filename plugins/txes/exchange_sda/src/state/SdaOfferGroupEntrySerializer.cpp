@@ -58,8 +58,8 @@ namespace catapult { namespace state {
 
 	SdaOfferGroupEntry SdaOfferGroupEntrySerializer::Load(io::InputStream& input) {
         Hash256 groupHash;
+        io::Read(input, groupHash);
         state::SdaOfferGroupEntry entry(groupHash);
-        input.read(groupHash);
 		LoadSdaOfferGroup(input, entry.sdaOfferGroup());
 
         return entry;

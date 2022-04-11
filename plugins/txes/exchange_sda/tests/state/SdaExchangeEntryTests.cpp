@@ -123,7 +123,7 @@ namespace catapult { namespace state {
 		auto minExpiryHeight = entry.minExpiryHeight();
 
 		// Assert:
-		EXPECT_EQ(Height(1), minExpiryHeight);
+		EXPECT_EQ(Height(3), minExpiryHeight);
 	}
 
 	TEST(TEST_CLASS, MinPruneHeight) {
@@ -210,9 +210,9 @@ namespace catapult { namespace state {
 		auto entry = SdaExchangeEntry(Key());
         MosaicsPair pair1{MosaicId(1), MosaicId(1)};
         MosaicsPair pair2{MosaicId(2), MosaicId(2)};
-		entry.sdaOfferBalances().emplace(pair1, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(2) });
+		entry.sdaOfferBalances().emplace(pair1, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(1) });
 		entry.sdaOfferBalances().emplace(pair2, SdaOfferBalance{ Amount(200), Amount(20), Amount(200), Amount(20), Height(2) });
-        entry.expiredSdaOfferBalances()[Height(2)].emplace(pair2,  SdaOfferBalance{ Amount(200), Amount(20), Amount(200), Amount(20), Height(2) });
+        entry.expiredSdaOfferBalances()[Height(2)].emplace(pair2, SdaOfferBalance{ Amount(200), Amount(20), Amount(200), Amount(20), Height(2) });
 
 		// Act:    
 		EXPECT_THROW(
@@ -284,20 +284,19 @@ namespace catapult { namespace state {
         MosaicsPair pair1{MosaicId(1), MosaicId(1)};
         MosaicsPair pair2{MosaicId(2), MosaicId(2)};
         MosaicsPair pair3{MosaicId(3), MosaicId(3)};
+		MosaicsPair pair4{MosaicId(4), MosaicId(4)};
 
         auto entry = SdaExchangeEntry(Key());
         entry.sdaOfferBalances().emplace(pair1, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(2) });
-        entry.sdaOfferBalances().emplace(pair3, SdaOfferBalance{ Amount(300), Amount(30), Amount(300), Amount(30), Height(3) });
+        entry.sdaOfferBalances().emplace(pair4, SdaOfferBalance{ Amount(300), Amount(30), Amount(300), Amount(30), Height(3) });
         entry.expiredSdaOfferBalances()[Height(2)].emplace(pair2, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(2) });
-        entry.expiredSdaOfferBalances()[Height(2)].emplace(pair3, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(2) });
-        entry.expiredSdaOfferBalances()[Height(2)].emplace(pair2,SdaOfferBalance{ Amount(200), Amount(20), Amount(200), Amount(20), Height(3) });
+        entry.expiredSdaOfferBalances()[Height(2)].emplace(pair3, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(3) });
 
 		auto expectedEntry = SdaExchangeEntry(Key());
         expectedEntry.sdaOfferBalances().emplace(pair1, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(2) });
-		expectedEntry.sdaOfferBalances().emplace(pair3, SdaOfferBalance{ Amount(300), Amount(30), Amount(300), Amount(30), Height(3) });
+		expectedEntry.sdaOfferBalances().emplace(pair4, SdaOfferBalance{ Amount(300), Amount(30), Amount(300), Amount(30), Height(3) });
         expectedEntry.sdaOfferBalances().emplace(pair2, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(2) });
-        expectedEntry.sdaOfferBalances().emplace(pair3, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(2) });
-        expectedEntry.expiredSdaOfferBalances()[Height(2)].emplace(pair2,SdaOfferBalance{ Amount(200), Amount(20), Amount(200), Amount(20), Height(3) });
+        expectedEntry.expiredSdaOfferBalances()[Height(2)].emplace(pair3, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(3) });
 
 		// Act:
 		entry.unexpireOffers(
@@ -359,8 +358,8 @@ namespace catapult { namespace state {
         entry.sdaOfferBalances().emplace(pair3, SdaOfferBalance{ Amount(300), Amount(30), Amount(300), Amount(30), Height(2) });
 
 		auto expectedEntry = SdaExchangeEntry(Key());
-		entry.sdaOfferBalances().emplace(pair1, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(1) });
-        entry.sdaOfferBalances().emplace(pair2, SdaOfferBalance{ Amount(200), Amount(20), Amount(200), Amount(20), Height(2) });
+		expectedEntry.sdaOfferBalances().emplace(pair1, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(1) });
+        expectedEntry.sdaOfferBalances().emplace(pair2, SdaOfferBalance{ Amount(200), Amount(20), Amount(200), Amount(20), Height(2) });
 
 		// Act:
 		entry.removeOffer(pair3);
@@ -385,14 +384,11 @@ namespace catapult { namespace state {
 		// Arrange:
 		auto entry = SdaExchangeEntry(Key());
 		auto offer = test::GenerateSdaOfferBalance();
-		MosaicsPair pair1{MosaicId(1), MosaicId(1)};
-        MosaicsPair pair2{MosaicId(2), MosaicId(2)};
-        entry.sdaOfferBalances().emplace(pair1, SdaOfferBalance{ Amount(100), Amount(10), Amount(100), Amount(10), Height(1) });
-        entry.sdaOfferBalances().emplace(pair2, SdaOfferBalance{ Amount(200), Amount(20), Amount(200), Amount(20), Height(2) });
+		MosaicsPair pair{MosaicId(1), MosaicId(1)};
+        entry.sdaOfferBalances().emplace(pair, offer);
 
 		// Assert:
-		test::AssertSdaOfferBalance(offer, entry.getSdaOfferBalance(pair1));
-		test::AssertSdaOfferBalance(offer, entry.getSdaOfferBalance(pair2));
+		test::AssertSdaOfferBalance(offer, entry.getSdaOfferBalance(pair));
 	}
 
 	TEST(TEST_CLASS, Empty) {

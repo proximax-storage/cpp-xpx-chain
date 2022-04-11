@@ -56,6 +56,7 @@ namespace catapult { namespace state {
             pair.first = io::Read<MosaicId>(input);
             pair.second = io::Read<MosaicId>(input);
             offer.CurrentMosaicGive = io::Read<Amount>(input);
+            offer.CurrentMosaicGet = io::Read<Amount>(input);
             offer.InitialMosaicGive = io::Read<Amount>(input);
             offer.InitialMosaicGet = io::Read<Amount>(input);
             offer.Deadline = io::Read<Height>(input);

@@ -62,7 +62,7 @@ namespace catapult { namespace state {
 
     void SdaOfferGroupEntry::addSdaOfferToGroup(const Hash256& groupHash, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline) {
         state::SdaOfferBasicInfo offer{ pOffer->Owner, pOffer->MosaicGive.Amount, deadline };
-        if (!m_sdaOfferGroup.count(groupHash) == 0) {
+        if (m_sdaOfferGroup.count(groupHash) == 0) {
             std::vector<state::SdaOfferBasicInfo> info;
             info.emplace_back(offer);
             m_sdaOfferGroup.emplace(groupHash, info);
@@ -74,8 +74,8 @@ namespace catapult { namespace state {
 
     void SdaOfferGroupEntry::removeSdaOfferFromGroup(const Hash256& groupHash, const Key& offerOwner) {
         auto& offer = m_sdaOfferGroup.find(groupHash)->second;
-        for (auto it = offer.begin(); it != offer.end(); ++it) {
-            if (it->Owner==offerOwner) offer.erase(it);
+        for (auto i = 0; i < offer.size(); ++i) {
+            if (offer[i].Owner==offerOwner) offer.erase(offer.begin()+i);
         }
     }
 }}

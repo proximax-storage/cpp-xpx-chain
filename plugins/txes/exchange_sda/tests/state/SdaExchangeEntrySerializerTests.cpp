@@ -14,13 +14,13 @@ namespace catapult { namespace state {
 #define TEST_CLASS SdaExchangeEntrySerializerTests
 
     namespace {
-        constexpr size_t Offer_Count = 2;
-        constexpr size_t Expired_Offer_Count = 2;
+        constexpr size_t Offer_Count = 1;
+        constexpr size_t Expired_Offer_Count = 1;
         constexpr auto Entry_Size = 
             sizeof(VersionType)
             + Key_Size
-            + Offer_Count * (sizeof(MosaicsPair) + sizeof(SdaOfferBalance))
-            + Expired_Offer_Count * (sizeof(Height) + sizeof(MosaicsPair) + sizeof(SdaOfferBalance));
+            + 1 + Offer_Count * (sizeof(MosaicsPair) + sizeof(SdaOfferBalance))
+            + 2 + Expired_Offer_Count * (sizeof(Height) + 1 + sizeof(MosaicsPair) + sizeof(SdaOfferBalance));
 
         class TestContext {
         public:
@@ -69,6 +69,7 @@ namespace catapult { namespace state {
             pData++;
             for (const auto& pair : offers) {
                 EXPECT_EQ(pair.first.first.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+                pData += sizeof(uint64_t);
                 EXPECT_EQ(pair.first.second.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
                 pData += sizeof(uint64_t);
                 AssertSdaOffer(pair.second, pData);
@@ -140,6 +141,7 @@ namespace catapult { namespace state {
         void WriteSdaOffer(const MosaicsPair& pair, const SdaOfferBalance& offer, uint8_t*& pData) {
             auto value = pair.first.unwrap();
             memcpy(pData, &value, sizeof(uint64_t));
+            pData += sizeof(uint64_t);
             value = pair.second.unwrap();
             memcpy(pData, &value, sizeof(uint64_t));
             pData += sizeof(uint64_t);
