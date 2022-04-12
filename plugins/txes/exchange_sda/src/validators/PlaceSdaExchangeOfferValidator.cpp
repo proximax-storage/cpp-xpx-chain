@@ -11,24 +11,6 @@
 namespace catapult { namespace validators {
 
     namespace {
-        ValidationResult ValidateSdaOffer(const state::SdaOfferBalanceMap& offers, const state::ExpiredSdaOfferBalanceMap& expiredOffers, const model::SdaOfferWithOwnerAndDuration* pSdaOffer, const state::MosaicsPair& mosaicId, const Height& height) {
-            if (!offers.count(mosaicId))
-                return Failure_ExchangeSda_Offer_Doesnt_Exist;
-
-            auto& offer = offers.at(mosaicId);
-            if (offer.Deadline <= height)
-                return Failure_ExchangeSda_Offer_Expired;
-
-            if (offer.CurrentMosaicGive < pSdaOffer->MosaicGive.Amount)
-                return Failure_ExchangeSda_Not_Enough_Units_In_Offer;
-
-            // Check whether fulfilled offer can be moved to array of expired offers.
-            if (offer.CurrentMosaicGive == pSdaOffer->MosaicGive.Amount && expiredOffers.count(height) && expiredOffers.at(height).count(mosaicId))
-                return Failure_ExchangeSda_Cant_Remove_Offer_At_Height;
-
-            return ValidationResult::Success;
-        }
-
         ValidationResult ValidateMosaicId(const ValidatorContext &context, const MosaicId& mosaicId, const BlockDuration& duration) {
             const auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();
             auto mosaicEntryIter = mosaicCache.find(mosaicId);
@@ -85,14 +67,11 @@ namespace catapult { namespace validators {
             const auto& entry = iter.get();
             if (entry.offerExists(pair))
                 return Failure_ExchangeSda_Offer_Exists;
-
-            result = ValidationResult::Success;
-            result = ValidateSdaOffer(entry.sdaOfferBalances(), entry.expiredSdaOfferBalances(), pSdaOffer, pair, context.Height);
-            if (ValidationResult::Success != result)
-                return result;
         }
 
         if (!cache.contains(notification.Signer))
             return ValidationResult::Success;
+
+        return ValidationResult::Success;
     }));
 }}
