@@ -16,9 +16,18 @@ namespace catapult { namespace config {
 
 		LockFundConfiguration LockFundConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
 			LockFundConfiguration config;
-		utils::LoadIniProperty(bag, "", "MaxMosaicsSize", config.MaxMosaicsSize);
-		utils::LoadIniProperty(bag, "", "MinRequestUnlockCooldown", config.MinRequestUnlockCooldown);
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 2);
+#define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
+			LOAD_PROPERTY(Enabled);
+#undef LOAD_PROPERTY
+
+#define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
+
+			config.MaxMosaicsSize = 256;
+			TRY_LOAD_CHAIN_PROPERTY(MinRequestUnlockCooldown);
+			config.MinRequestUnlockCooldown = BlockDuration(161280);
+			TRY_LOAD_CHAIN_PROPERTY(MinRequestUnlockCooldown);
+
+#undef TRY_LOAD_CHAIN_PROPERTY
 		return config;
 	}
 }}

@@ -19,6 +19,7 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
+							{"enabled", "true"},
 							{ "minRequestUnlockCooldown", "161280" },
 							{ "maxMosaicsSize", "256" },
 						}
@@ -40,12 +41,14 @@ namespace catapult { namespace config {
 
 			static void AssertZero(const LockFundConfiguration& config) {
 				// Assert:
+				EXPECT_EQ(false, config.Enabled);
 				EXPECT_EQ(0u, config.MinRequestUnlockCooldown.unwrap());
 				EXPECT_EQ(0u, config.MaxMosaicsSize);
 			}
 
 			static void AssertCustom(const LockFundConfiguration& config) {
 				// Assert:
+				EXPECT_EQ(true, config.Enabled);
 				EXPECT_EQ(161280u, config.MinRequestUnlockCooldown.unwrap());
 				EXPECT_EQ(256u, config.MaxMosaicsSize);
 			}

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "src/config/LockFundConfiguration.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "LockFundBaseSets.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
@@ -24,6 +25,7 @@ namespace catapult { namespace cache {
 			using ReadOnlyLookupMixin = LockFundConstLookupMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
 			using Size = LockFundSizeMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
 			using DeltaElements = deltaset::DeltaElementsMultiSetMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
+			using ConfigBasedEnable = PrimaryMixins::ConfigBasedEnable<config::LockFundConfiguration>;
 		};
 
 
@@ -38,8 +40,7 @@ namespace catapult { namespace cache {
 						, public LockFundCacheDeltaMixins::LookupMixin
 						, public LockFundCacheDeltaMixins::ReadOnlyLookupMixin
 						, public LockFundCacheDeltaMixins::KeyedMixins::Contains
-						, public LockFundCacheDeltaMixins::PrimaryMixins::Enable
-						, public LockFundCacheDeltaMixins::PrimaryMixins::Height {
+						, public LockFundCacheDeltaMixins::ConfigBasedEnable{
 		public:
 			using ReadOnlyView = LockFundCacheTypes::CacheReadOnlyType;
 			using LockFundCacheDeltaMixins::KeyedMixins::Contains::contains;

@@ -9,9 +9,6 @@
 
 namespace catapult { namespace cache {
 
-		namespace {
-
-		}
 
 	BasicLockFundCacheDelta::BasicLockFundCacheDelta(
 			const LockFundCacheTypes::BaseSetDeltaPointers& LockFundSets,
@@ -23,6 +20,7 @@ namespace catapult { namespace cache {
 		, LockFundCacheDeltaMixins::PrimaryMixins::PatriciaTreeDelta(*LockFundSets.pPrimary, LockFundSets.pPatriciaTree)
 		, LockFundCacheDeltaMixins::DeltaElements(*LockFundSets.pPrimary, *LockFundSets.pKeyedInverseMap)
 		, LockFundCacheDeltaMixins::KeyedMixins::Contains(*LockFundSets.pKeyedInverseMap)
+		, LockFundCacheDeltaMixins::ConfigBasedEnable(pConfigHolder, [](const auto& config) { return config.Enabled; })
 		, m_pLockFundGroupsByHeight(LockFundSets.pPrimary)
 		, m_pLockFundGroupsByKey(LockFundSets.pKeyedInverseMap)
 	{}

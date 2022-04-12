@@ -19,6 +19,9 @@ namespace catapult { namespace config {
 		DEFINE_CONFIG_CONSTANTS(lockfund)
 
 	public:
+		/// Whether the plugin is enabled.
+		bool Enabled;
+		
 		/// Blocks after which a request to unlock can be fulfilled
 		BlockDuration MinRequestUnlockCooldown;
 

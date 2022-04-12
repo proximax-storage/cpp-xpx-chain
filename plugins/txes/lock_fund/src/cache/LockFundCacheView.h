@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "src/config/LockFundConfiguration.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
@@ -21,8 +22,8 @@ namespace catapult { namespace cache {
 			using PrimaryMixins = PatriciaTreeCacheMixins<LockFundCacheTypes::PrimaryTypes::BaseSetType, LockFundCacheDescriptor>;
 			using KeyedMixins = BasicCacheMixins<LockFundCacheTypes::KeyedLockFundTypes::BaseSetType, LockFundCacheTypes::KeyedLockFundTypesDescriptor>;
 			using LookupMixin = LockFundConstLookupMixin<LockFundCacheTypes::PrimaryTypes::BaseSetType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetType>;
-			using Height = PrimaryMixins::Height;
 			using Size = LockFundSizeMixin<LockFundCacheTypes::PrimaryTypes::BaseSetType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetType>;
+			using ConfigBasedEnable = PrimaryMixins::ConfigBasedEnable<config::LockFundConfiguration>;
 		};
 
 
@@ -36,8 +37,7 @@ namespace catapult { namespace cache {
 						, public LockFundCacheViewMixins::KeyedMixins::Contains
 						, public LockFundCacheViewMixins::PrimaryMixins::PatriciaTreeView
 						, public LockFundCacheViewMixins::PrimaryMixins::ActivePredicate
-						, public LockFundCacheViewMixins::PrimaryMixins::Enable
-						, public LockFundCacheViewMixins::Height{
+						, public LockFundCacheViewMixins::ConfigBasedEnable {
 		public:
 			using LockFundCacheViewMixins::KeyedMixins::Contains::contains;
 			using LockFundCacheViewMixins::PrimaryMixins::Contains::contains;
@@ -54,6 +54,7 @@ namespace catapult { namespace cache {
 					, LockFundCacheViewMixins::KeyedMixins::Contains(lockFundSets.KeyedInverseMap)
 					, LockFundCacheViewMixins::PrimaryMixins::PatriciaTreeView(lockFundSets.PatriciaTree.get())
 					, LockFundCacheViewMixins::PrimaryMixins::ActivePredicate(lockFundSets.Primary)
+					, LockFundCacheViewMixins::ConfigBasedEnable(pConfigHolder, [](const auto& config) { return config.Enabled; })
 			{}
 		};
 

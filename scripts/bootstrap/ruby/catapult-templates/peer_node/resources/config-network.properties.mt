@@ -139,3 +139,10 @@ downloadCacheEnabled = true
 
 enabled = true
 maxSuperContractsOnDrive = 10
+
+[plugin:catapult.plugins.lockfund]
+
+#default to 28 days of blocks
+enabled = true
+minRequestUnlockCooldown = 161280
+maxMosaicsSize = 256
