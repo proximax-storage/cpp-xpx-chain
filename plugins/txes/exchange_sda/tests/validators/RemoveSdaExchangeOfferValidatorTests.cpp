@@ -83,8 +83,8 @@ namespace catapult { namespace validators {
                     Failure_ExchangeSda_Duplicated_Offer_In_Request,
                     offerOwner,
                     {
-                        model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
-                        model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
+                        model::SdaOfferMosaic{test::UnresolveXor(MosaicId(1)), test::UnresolveXor(MosaicId(2))},
+                        model::SdaOfferMosaic{test::UnresolveXor(MosaicId(1)), test::UnresolveXor(MosaicId(2))},
                     },
                     &entry);
         }
@@ -115,7 +115,7 @@ namespace catapult { namespace validators {
                     Failure_ExchangeSda_Offer_Expired,
                     offerOwner,
                     {
-                        model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
+                        model::SdaOfferMosaic{test::UnresolveXor(MosaicId(1)), test::UnresolveXor(MosaicId(2))},
                     },
                     &entry);
         }
@@ -132,7 +132,7 @@ namespace catapult { namespace validators {
                     Failure_ExchangeSda_Cant_Remove_Offer_At_Height,
                     offerOwner,
                     {
-                        model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
+                        model::SdaOfferMosaic{test::UnresolveXor(MosaicId(1)), test::UnresolveXor(MosaicId(2))},
                     },
                     &entry);
         }
@@ -149,8 +149,8 @@ namespace catapult { namespace validators {
 					ValidationResult::Success,
 					offerOwner,
 					{
-						model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
-                        model::SdaOfferMosaic{UnresolvedMosaicId(2), UnresolvedMosaicId(1)},
+						model::SdaOfferMosaic{test::UnresolveXor(MosaicId(1)), test::UnresolveXor(MosaicId(2))},
+                        model::SdaOfferMosaic{test::UnresolveXor(MosaicId(2)), test::UnresolveXor(MosaicId(1))},
 					},
 					&entry);
 		}
