@@ -67,12 +67,12 @@ namespace catapult { namespace test {
             }
         }
 
-        void AssertSdaOfferGroups(const state::SdaOfferGroupMap offers, const bsoncxx::document::view& dbOffers) {
+        void AssertSdaOfferGroups(const state::SdaOfferGroupMap& offers, const bsoncxx::array::view& dbOffers) {
             ASSERT_EQ(offers.size(), test::GetFieldCount(dbOffers));
             for (const auto& dbOffer : dbOffers) {
                 Hash256 groupHash;
                 DbBinaryToModelArray(groupHash, dbOffer["groupHash"].get_binary());
-                auto& offer = offers.at(groupHash);
+                auto& offer = offers.find(groupHash)->second;
                 AssertSdaOfferBasicInfo(offer, dbOffer["sdaOfferInfo"].get_array());
             }
         }

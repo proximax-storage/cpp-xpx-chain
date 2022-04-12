@@ -27,7 +27,7 @@ namespace catapult { namespace mongo { namespace plugins {
             }
 
             static std::string GetStorageName() {
-                return "{ SdaExchangeCache }";
+                return "{ ExchangeSdaCache, SdaOfferGroupCache }";
             }
         };
     }

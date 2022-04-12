@@ -57,7 +57,7 @@ namespace catapult { namespace mongo { namespace plugins {
     // region ToModel
 
     namespace {
-        void ReadSdaOfferBasicInfo(const bsoncxx::document::view& dbOfferVector, std::vector<state::SdaOfferBasicInfo>& offers) {
+        void ReadSdaOfferBasicInfo(const bsoncxx::array::view& dbOfferVector, std::vector<state::SdaOfferBasicInfo>& offers) {
             for (const auto& offerMap : dbOfferVector) {
                 auto doc = offerMap.get_document().view();
 
@@ -75,8 +75,10 @@ namespace catapult { namespace mongo { namespace plugins {
                 auto doc = dbOffer.get_document().view();
 
                 Hash256 groupHash;
+                DbBinaryToModelArray(groupHash, doc["groupHash"].get_binary());
+
                 std::vector<state::SdaOfferBasicInfo> info;
-                ReadSdaOfferBasicInfo(doc, info);
+                ReadSdaOfferBasicInfo(doc["sdaOfferInfo"].get_array().value, info);
                 offers.emplace(groupHash, info);
             }
         }
