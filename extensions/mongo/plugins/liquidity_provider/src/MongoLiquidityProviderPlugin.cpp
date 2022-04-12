@@ -12,8 +12,8 @@
 extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	// transaction support
-	manager.addTransactionSupport(catapult::mongo::plugins::CreateCreateLiquidityProviderMongoPlugin());
-	manager.addTransactionSupport(catapult::mongo::plugins::CreateManualRateChangeMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateCreateLiquidityProviderTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateManualRateChangeTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoLiquidityProviderCacheStorage(
