@@ -46,7 +46,7 @@ namespace catapult { namespace plugins {
             }
 
             static std::vector<std::string> GetCacheNames() {
-                return { "SdaExchangeCache" };
+                return { "ExchangeSdaCache" };
             }
 
             static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
@@ -69,16 +69,16 @@ namespace catapult { namespace plugins {
 
             static std::vector<std::string> GetStatefulValidatorNames() {
                 return {
-                    "PlaceSdaExchangeOfferV1",
-                    "RemoveSdaExchangeOfferV1",
+                    "PlaceSdaExchangeOfferV1Validator",
+                    "RemoveSdaExchangeOfferV1Validator",
                 };
             }
 
             static std::vector<std::string> GetObserverNames() {
                 return {
+                    "CleanupSdaOffersObserver",
                     "PlaceSdaExchangeOfferV1Observer",
                     "RemoveSdaExchangeOfferV1Observer",
-                    "CleanupSdaOffersObserver",
                 };
             }
 

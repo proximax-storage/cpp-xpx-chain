@@ -27,7 +27,7 @@ namespace catapult { namespace plugins {
     namespace {
         DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(PlaceSdaExchangeOffer, 1, 1,)
 
-        constexpr auto Sda_Offer_Count = 4u;
+        constexpr auto Sda_Offer_Count = 2u;
 
         template<typename TTraits, VersionType Version>
         auto CreateTransaction(const Key& offerOwner1 = test::GenerateRandomByteArray<Key>(), const Key& offerOwner2 = test::GenerateRandomByteArray<Key>()) {
@@ -153,13 +153,13 @@ namespace catapult { namespace plugins {
 
             const auto& notification1 = sub.matchingNotifications()[0];
             EXPECT_EQ(pTransaction->Signer, notification1.Sender);
-            EXPECT_EQ(UnresolvedMosaicId(1), notification1.MosaicId);
-            EXPECT_EQ(Amount(10), notification1.Amount);
+            EXPECT_EQ(UnresolvedMosaicId(2), notification1.MosaicId);
+            EXPECT_EQ(Amount(100), notification1.Amount);
 
             const auto& notification2 = sub.matchingNotifications()[1];
             EXPECT_EQ(pTransaction->Signer, notification2.Sender);
-            EXPECT_EQ(UnresolvedMosaicId(3), notification2.MosaicId);
-            EXPECT_EQ(Amount(30), notification2.Amount);
+            EXPECT_EQ(UnresolvedMosaicId(1), notification2.MosaicId);
+            EXPECT_EQ(Amount(20), notification2.Amount);
         }
     }
 
@@ -192,8 +192,8 @@ namespace catapult { namespace plugins {
 
             const auto& notification2 = sub.matchingNotifications()[1];
             EXPECT_EQ(pTransaction->Signer, notification2.Sender);
-            EXPECT_EQ(UnresolvedMosaicId(3), notification2.MosaicId);
-            EXPECT_EQ(Amount(30), notification2.Amount);
+            EXPECT_EQ(UnresolvedMosaicId(2), notification2.MosaicId);
+            EXPECT_EQ(Amount(200), notification2.Amount);
         }
     }
 
