@@ -9,6 +9,8 @@
 #include "SdaExchangePlugin.h"
 #include "src/cache/SdaExchangeCache.h"
 #include "src/cache/SdaExchangeCacheStorage.h"
+#include "src/cache/SdaOfferGroupCache.h"
+#include "src/cache/SdaOfferGroupCacheStorage.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/PlaceSdaExchangeOfferTransactionPlugin.h"
 #include "src/plugins/RemoveSdaExchangeOfferTransactionPlugin.h"
@@ -29,12 +31,24 @@ namespace catapult { namespace plugins {
 		manager.addCacheSupport<cache::SdaExchangeCacheStorage>(
 			std::make_unique<cache::SdaExchangeCache>(manager.cacheConfig(cache::SdaExchangeCache::Name), pConfigHolder));
 
-		using CacheHandlersOffer = CacheHandlers<cache::SdaExchangeCacheDescriptor>;
-		CacheHandlersOffer::Register<model::FacilityCode::ExchangeSda>(manager);
+		using SdaExchangeCacheHandlersOffer = CacheHandlers<cache::SdaExchangeCacheDescriptor>;
+		SdaExchangeCacheHandlersOffer::Register<model::FacilityCode::ExchangeSda>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("EXCHANGESDA C"), [&cache]() {
 				return cache.sub<cache::SdaExchangeCache>().createView(cache.height())->size();
+			});
+		});
+
+		manager.addCacheSupport<cache::SdaOfferGroupCacheStorage>(
+				std::make_unique<cache::SdaOfferGroupCache>(manager.cacheConfig(cache::SdaOfferGroupCache::Name), pConfigHolder));
+
+		using SdaOfferGroupCacheHandlersOffer = CacheHandlers<cache::SdaOfferGroupCacheDescriptor>;
+		SdaOfferGroupCacheHandlersOffer::Register<model::FacilityCode::SdaOfferGroup>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("SDA GR C"), [&cache]() {
+				return cache.sub<cache::SdaOfferGroupCache>().createView(cache.height())->size();
 			});
 		});
 

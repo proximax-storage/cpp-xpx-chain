@@ -46,19 +46,19 @@ namespace catapult { namespace plugins {
             }
 
             static std::vector<std::string> GetCacheNames() {
-                return { "ExchangeSdaCache" };
+                return { "ExchangeSdaCache", "SdaOfferGroupCache" };
             }
 
             static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
-                return { ionet::PacketType::SdaExchange_Infos };
+                return { ionet::PacketType::SdaExchange_Infos, ionet::PacketType::SdaOfferGroup_Infos };
             }
 
             static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
-                return { ionet::PacketType::SdaExchange_State_Path };
+                return { ionet::PacketType::SdaExchange_State_Path, ionet::PacketType::SdaOfferGroup_State_Path };
             }
 
             static std::vector<std::string> GetDiagnosticCounterNames() {
-                return { "EXCHANGESDA C" };
+                return { "EXCHANGESDA C", "SDA GR C" };
             }
 
             static std::vector<std::string> GetStatelessValidatorNames() {

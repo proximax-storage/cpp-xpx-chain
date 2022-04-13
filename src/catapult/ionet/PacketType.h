@@ -153,7 +153,10 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(Levy_State_Path, FACILITY_BASED_CODE(800, Levy)) \
 	\
 	/* SDA-SDA Exchange state path has been requested by a client. */ \
-	ENUM_VALUE(SdaExchange_State_Path, FACILITY_BASED_CODE(800, ExchangeSda)) \
+	ENUM_VALUE(SdaExchange_State_Path, FACILITY_BASED_CODE(800, ExchangeSda))     \
+	\
+    /* SDA-SDA Offer Group state path has been requested by a client. */ \
+    ENUM_VALUE(SdaOfferGroup_State_Path, FACILITY_BASED_CODE(800, SdaOfferGroup)) \
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
 	/* Request for the current diagnostic counter values. */ \
@@ -224,6 +227,9 @@ namespace catapult { namespace ionet {
 	\
 	/* SDA-SDA Exchange infos have been requested by a client. */ \
 	ENUM_VALUE(SdaExchange_Infos, FACILITY_BASED_CODE(1200, ExchangeSda)) \
+	\
+	/* SDA-SDA Offer Group  infos have been requested by a client. */ \
+	ENUM_VALUE(SdaOfferGroup_Infos, FACILITY_BASED_CODE(1200, SdaOfferGroup))  \
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.
