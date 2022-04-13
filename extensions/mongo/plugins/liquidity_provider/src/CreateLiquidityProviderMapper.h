@@ -10,5 +10,5 @@
 namespace catapult { namespace mongo { namespace plugins {
 
 	PLUGIN_API
-	std::unique_ptr<MongoTransactionPlugin> CreateCreateLiquidityProviderMongoPlugin();
+	std::unique_ptr<MongoTransactionPlugin> CreateCreateLiquidityProviderTransactionMongoPlugin();
 }}}

@@ -17,6 +17,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamCreateLiquidityProviderTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "providerMosaicId" << static_cast<int64_t>(transaction.ProviderMosaicId.unwrap());
 		builder << "currencyDeposit" << static_cast<int64_t>(transaction.CurrencyDeposit.unwrap());
+		builder << "initialMosaicsMinting" << static_cast<int64_t>(transaction.InitialMosaicsMinting.unwrap());
 		builder << "slashingPeriod" << static_cast<int32_t>(transaction.SlashingPeriod);
 		builder << "windowSize" << static_cast<int32_t>(transaction.WindowSize);
 		builder << "slashingAccount" << ToBinary(transaction.SlashingAccount);

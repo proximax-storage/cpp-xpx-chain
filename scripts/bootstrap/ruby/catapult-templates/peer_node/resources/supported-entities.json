@@ -349,6 +349,16 @@
 			"name": "streamPayment",
 			"type": "17255",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "createLiquidityProvider",
+			"type": "16744",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "manualRateChange",
+			"type": "17000",
+			"supportedVersions": [1]
 		}
 	]
 }
