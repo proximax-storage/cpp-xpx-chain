@@ -94,19 +94,6 @@ namespace catapult { namespace plugins {
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 			switch (unresolved.Type) {
-			case UnresolvedAmountType::DownloadPayment: {
-				const auto& pDownloadPayment = castToUnresolvedData<model::DownloadPayment>(unresolved.DataPtr);
-
-				const auto& downloadChannelCache = cache.template sub<cache::DownloadChannelCache>();
-				const auto downloadChannelIter = downloadChannelCache.find(pDownloadPayment->DownloadChannelId);
-				const auto& pDownloadChannelEntry = downloadChannelIter.tryGet();
-
-				if (!pDownloadChannelEntry)
-					break;
-
-				resolved = Amount(pDownloadPayment->DownloadSize * pDownloadChannelEntry->listOfPublicKeys().size());
-				return true;
-			}
 			case UnresolvedAmountType::StreamingWork: {
 				const auto& pStreamingWork = castToUnresolvedData<model::StreamingWork>(unresolved.DataPtr);
 

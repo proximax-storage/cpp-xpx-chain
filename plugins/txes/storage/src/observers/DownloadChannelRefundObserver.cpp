@@ -19,27 +19,38 @@ namespace catapult { namespace observers {
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
 
 		if (downloadChannelEntry.downloadApprovalCountLeft() > 0 && !downloadChannelEntry.isFinishPublished()) {
-			// THe download channel continues to work, so no refund is needed
+			// The download channel continues to work, so no refund is needed
 			return;
 		}
 
-		const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		auto senderIter = accountStateCache.find(Key(notification.DownloadChannelId.array()));
-	  	const auto& senderState = senderIter.get();
+	  	auto& senderState = senderIter.get();
+		auto recipientIter = accountStateCache.find(downloadChannelEntry.consumer());
+	  	auto& recipientState = recipientIter.get();
 
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 	  	const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 
-		// Refunding streaming mosaics.
+		// Refunding currency and streaming mosaics.
+	  	const auto& currencyRefundAmount = senderState.Balances.get(currencyMosaicId);
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);
+	  	recipientState.Balances.credit(currencyMosaicId, currencyRefundAmount);
+		senderState.Balances.debit(currencyMosaicId, currencyRefundAmount);
 		liquidityProvider.debitMosaics(context, downloadChannelEntry.id().array(), downloadChannelEntry.consumer(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), streamingRefundAmount);
 
-	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+	  	// Removing associations with the download channel in respective drive and replicator entries.
+	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+	  	auto& driveEntry = driveCache.find(downloadChannelEntry.drive()).get();
+	  	driveEntry.downloadShards().erase(notification.DownloadChannelId);
+
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		for (const auto& replicatorKey: downloadChannelEntry.shardReplicators()) {
 			auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
 			replicatorEntry.downloadChannels().erase(notification.DownloadChannelId);
 		}
-		downloadChannelCache.remove(notification.DownloadChannelId);
 
-		// TODO: Add currency refunding
+	  	// Removing download channel entry from the cache.
+		downloadChannelCache.remove(notification.DownloadChannelId);
 	})
 }}

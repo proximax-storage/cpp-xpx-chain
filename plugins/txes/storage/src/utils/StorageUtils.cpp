@@ -23,7 +23,6 @@ namespace catapult { namespace utils {
 			model::NotificationSubscriber& sub,
 			const config::ImmutableConfiguration& immutableCfg,
 			SwapOperation operation) {
-		auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(immutableCfg);
 		for (auto& mosaic : mosaics) {
 			switch (operation) {
 			case SwapOperation::Buy:
