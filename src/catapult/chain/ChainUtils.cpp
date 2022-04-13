@@ -26,9 +26,29 @@
 namespace catapult { namespace chain {
 
 	bool IsChainLink(const model::Block& parent, const Hash256& parentHash, const model::Block& child) {
+#ifdef DEBUG
+		if (parent.Height + Height(1) != child.Height)
+		{
+			CATAPULT_LOG(warning)
+				<< "Chain Link Failure: Parent height differs from height defined in child: " << parent.Height + Height(1) << "(parent) vs " << child.Height <<"(child)";
+			return false;
+		}
+
+		if(parentHash != child.PreviousBlockHash)
+		{
+			CATAPULT_LOG(warning)
+				<< "Chain Link Failure: Parent hash differs from hash set in child: " << parentHash << "(parent) vs " << child.PreviousBlockHash <<"(child)";
+			return false;
+		}
+		if(parent.Timestamp >= child.Timestamp)
+		{
+			CATAPULT_LOG(warning)
+				<< "Chain Link Failure: Parent timestamp is newer than child: " << parent.Timestamp  << "(parent) vs " << child.Timestamp <<"(child)";
+		}
+#elif
 		if (parent.Height + Height(1) != child.Height || parentHash != child.PreviousBlockHash)
 			return false;
-
+#endif
 		return parent.Timestamp < child.Timestamp;
 	}
 

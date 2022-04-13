@@ -31,6 +31,11 @@
 			"supportedVersions": [1]
 		},
 		{
+			"name": "AccountV2_Upgrade",
+			"type": "16984",
+			"supportedVersions": [1]
+		},
+		{
 			"name": "Modify_Multisig_Account",
 			"type": "16725",
 			"supportedVersions": [3]
@@ -122,7 +127,12 @@
 		},
 		{
 			"name": "Node_Key_Link",
-			"type": "16971",
+			"type": "16972",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Vrf_Key_Link",
+			"type": "17228",
 			"supportedVersions": [1]
 		},
 		{
@@ -228,6 +238,16 @@
 		{
 			"name": "deactivate",
 			"type": "17760",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Lock_Fund_Cancel_Unlock",
+			"type": "16738",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Lock_Fund_Cancel_Unlock",
+			"type": "16994",
 			"supportedVersions": [1]
 		}
 	]

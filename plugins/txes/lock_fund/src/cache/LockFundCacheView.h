@@ -36,7 +36,6 @@ namespace catapult { namespace cache {
 						, public LockFundCacheViewMixins::LookupMixin
 						, public LockFundCacheViewMixins::KeyedMixins::Contains
 						, public LockFundCacheViewMixins::PrimaryMixins::PatriciaTreeView
-						, public LockFundCacheViewMixins::PrimaryMixins::ActivePredicate
 						, public LockFundCacheViewMixins::ConfigBasedEnable {
 		public:
 			using LockFundCacheViewMixins::KeyedMixins::Contains::contains;
@@ -53,7 +52,6 @@ namespace catapult { namespace cache {
 					, LockFundCacheViewMixins::LookupMixin(lockFundSets.Primary, lockFundSets.KeyedInverseMap)
 					, LockFundCacheViewMixins::KeyedMixins::Contains(lockFundSets.KeyedInverseMap)
 					, LockFundCacheViewMixins::PrimaryMixins::PatriciaTreeView(lockFundSets.PatriciaTree.get())
-					, LockFundCacheViewMixins::PrimaryMixins::ActivePredicate(lockFundSets.Primary)
 					, LockFundCacheViewMixins::ConfigBasedEnable(pConfigHolder, [](const auto& config) { return config.Enabled; })
 			{}
 		};
