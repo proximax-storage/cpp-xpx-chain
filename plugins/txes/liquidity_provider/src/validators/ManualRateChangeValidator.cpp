@@ -13,7 +13,8 @@ namespace catapult { namespace validators {
     DEFINE_STATEFUL_VALIDATOR(ManualRateChange, [](const Notification& notification, const ValidatorContext& context) {
         const auto& liquidityProviderCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
-		const auto* pEntry = liquidityProviderCache.find(notification.ProviderMosaicId).tryGet();
+ 		const auto entryIter = liquidityProviderCache.find(notification.ProviderMosaicId);
+		const auto* pEntry = entryIter.tryGet();
 
 		if (!pEntry) {
 			return Failure_LiquidityProvider_Liquidity_Provider_Is_Not_Registered;
@@ -24,8 +25,12 @@ namespace catapult { namespace validators {
 		}
 
 		const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-		const auto& lpStateEntry = accountStateCache.find(pEntry->providerKey()).get();
-		const auto& ownerStateEntry = accountStateCache.find(pEntry->owner()).get();
+
+		auto lpStateEntryIter = accountStateCache.find(pEntry->providerKey());
+		const auto& lpStateEntry = lpStateEntryIter.get();
+
+		auto ownerStateEntryIter = accountStateCache.find(pEntry->owner());
+		const auto& ownerStateEntry = ownerStateEntryIter.get();
 
 		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 		if (notification.CurrencyBalanceIncrease) {

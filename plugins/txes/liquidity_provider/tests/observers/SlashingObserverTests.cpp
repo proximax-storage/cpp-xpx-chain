@@ -125,11 +125,13 @@ namespace catapult { namespace observers {
 					return a.m_turnover < b.m_turnover;
 				});
 
-				const auto& actualLiquidityProviderEntry = lpCache.find(initialEntry.mosaicId()).get();
+				auto actualLiquidityProviderEntryIter = lpCache.find(initialEntry.mosaicId());
+				const auto& actualLiquidityProviderEntry = actualLiquidityProviderEntryIter.get();
 				const auto& actualRecentTurnover = actualLiquidityProviderEntry.recentTurnover();
 				ASSERT_EQ(actualRecentTurnover.m_turnover, Amount{0});
 
-				const auto& accountEntry = accountCache.find(initialEntry.providerKey()).get();
+				auto accountEntryIter = accountCache.find(initialEntry.providerKey());
+				const auto& accountEntry = accountEntryIter.get();
 
 				auto resolvedMosaicId = context.observerContext().Resolvers.resolve(actualLiquidityProviderEntry.mosaicId());
 				state::ExchangeRate actualRate = {accountEntry.Balances.get(currencyId),

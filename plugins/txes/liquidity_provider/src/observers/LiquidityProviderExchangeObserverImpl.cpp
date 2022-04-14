@@ -54,11 +54,13 @@ namespace catapult::observers {
 			const Amount& mosaicAmount) const {
 		auto& lpCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
-		auto& lpEntry = lpCache.find(mosaicId).get();
+		auto lpEntryIter = lpCache.find(mosaicId);
+		auto& lpEntry = lpEntryIter.get();
 
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 
-		auto& lpAccount = accountStateCache.find(lpEntry.providerKey()).get();
+		auto lpAccountIter = accountStateCache.find(lpEntry.providerKey());
+		auto& lpAccount = lpAccountIter.get();
 
 		const auto& pluginConfig =
 				context.Config.Network.template GetPluginConfiguration<config::LiquidityProviderConfiguration>();
@@ -75,12 +77,14 @@ namespace catapult::observers {
 				mosaicAmount,
 				pluginConfig.PercentsDigitsAfterDot);
 
-		auto& debtorAccount = accountStateCache.find(currencyDebtor).get();
+		auto debtorAccountIter = accountStateCache.find(currencyDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
 		debtorAccount.Balances.debit(currencyMosaicId, currencyAmount);
 
 		lpAccount.Balances.credit(currencyMosaicId, currencyAmount);
 
-		auto& creditorAccount = accountStateCache.find(mosaicCreditor).get();
+		auto creditorAccountIter = accountStateCache.find(mosaicCreditor);
+		auto& creditorAccount = creditorAccountIter.get();
 		creditorAccount.Balances.credit(resolvedMosaicId, mosaicAmount);
 
 		lpEntry.setAdditionallyMinted(lpEntry.additionallyMinted() + mosaicAmount);
@@ -96,10 +100,12 @@ namespace catapult::observers {
 			const Amount& mosaicAmount) const {
 		auto& lpCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
-		auto& lpEntry = lpCache.find(mosaicId).get();
+		auto lpEntryIter = lpCache.find(mosaicId);
+		auto& lpEntry = lpEntryIter.get();
 
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-		auto& lpAccount = accountStateCache.find(lpEntry.providerKey()).get();
+		auto lpAccountIter = accountStateCache.find(lpEntry.providerKey());
+		auto& lpAccount = lpAccountIter.get();
 
 		const auto& pluginConfig =
 				context.Config.Network.template GetPluginConfiguration<config::LiquidityProviderConfiguration>();
@@ -114,14 +120,16 @@ namespace catapult::observers {
 				mosaicAmount,
 				pluginConfig.PercentsDigitsAfterDot);
 
-		auto& creditorAccount = accountStateCache.find(currencyCreditor).get();
+		auto creditorAccountIter = accountStateCache.find(currencyCreditor);
+		auto& creditorAccount = creditorAccountIter.get();
 		creditorAccount.Balances.credit(currencyMosaicId, currencyAmount);
 
 		auto a = lpAccount.Balances.get(currencyMosaicId);
 		lpAccount.Balances.debit(currencyMosaicId, currencyAmount);
 		auto b = lpAccount.Balances.get(currencyMosaicId);
 
-		auto& debtorAccount = accountStateCache.find(mosaicDebtor).get();
+		auto debtorAccountIter = accountStateCache.find(mosaicDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
 		debtorAccount.Balances.debit(resolvedMosaicId, mosaicAmount);
 
 		lpEntry.setAdditionallyMinted(lpEntry.additionallyMinted() - mosaicAmount);

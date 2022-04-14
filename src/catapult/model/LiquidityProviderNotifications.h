@@ -11,9 +11,9 @@
 namespace catapult { namespace model {
 
 	/// Defines a data modification notification type.
-	DEFINE_NOTIFICATION_TYPE(All, LiquidityProvider, Debit_Mosaic_v1, 0x0001);
+	DEFINE_NOTIFICATION_TYPE(All, LiquidityProvider, Debit_Mosaic_v1, 0x0003);
 
-	DEFINE_NOTIFICATION_TYPE(All, LiquidityProvider, Credit_Mosaic_v1, 0x0002);
+	DEFINE_NOTIFICATION_TYPE(All, LiquidityProvider, Credit_Mosaic_v1, 0x0004);
 
 	template<VersionType version>
 	struct CreditMosaicNotification;

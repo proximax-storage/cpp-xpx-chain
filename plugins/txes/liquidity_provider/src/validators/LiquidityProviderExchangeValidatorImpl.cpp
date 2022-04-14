@@ -60,7 +60,9 @@ namespace catapult::validators {
 		}
 
 		const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-		auto& lpAccount = accountStateCache.find(pLpEntry->providerKey()).get();
+
+		auto lpAccountIter = accountStateCache.find(pLpEntry->providerKey());
+		auto& lpAccount = lpAccountIter.get();
 
 		const auto& pluginConfig =
 				context.Config.Network.template GetPluginConfiguration<config::LiquidityProviderConfiguration>();

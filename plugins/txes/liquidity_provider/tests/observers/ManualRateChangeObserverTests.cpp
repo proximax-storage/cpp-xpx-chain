@@ -123,9 +123,11 @@ namespace catapult { namespace observers {
 			test::ObserveNotification(*pObserver, notification, context);
 
 			// Assert: check the cache
-			const auto& actualEntry = lpCache.find(initialEntry.mosaicId()).get();
+			auto actualEntryIter = lpCache.find(initialEntry.mosaicId());
+			const auto& actualEntry = actualEntryIter.get();
 
-			const auto& lpAccountState = accountCache.find(actualEntry.providerKey()).get();
+			auto lpAccountStateIter = accountCache.find(actualEntry.providerKey());
+			const auto& lpAccountState = lpAccountStateIter.get();
 			auto lpCurrencyBalance = lpAccountState.Balances.get(currencyId);
 			auto lpMosaicBalance = lpAccountState.Balances.get(mosaicId);
 

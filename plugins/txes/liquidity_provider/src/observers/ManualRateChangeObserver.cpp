@@ -17,12 +17,19 @@ namespace catapult { namespace observers {
 	DEFINE_OBSERVER(ManualRateChange, Notification, ([](const Notification& notification, ObserverContext& context) {
 		auto& liquidityProviderCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
-		auto& entry = liquidityProviderCache.find(notification.ProviderMosaicId).get();
+		auto entryIter = liquidityProviderCache.find(notification.ProviderMosaicId);
+		auto& entry = entryIter.get();
 
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-		auto& lpStateEntry = accountStateCache.find(entry.providerKey()).get();
-		auto& ownerStateEntry = accountStateCache.find(entry.owner()).get();
-		auto& slashingStateEntry = accountStateCache.find(entry.slashingAccount()).get();
+
+		auto lpStateEntryIter = accountStateCache.find(entry.providerKey());
+		auto& lpStateEntry = lpStateEntryIter.get();
+
+		auto ownerStateEntryIter = accountStateCache.find(entry.owner());
+		auto& ownerStateEntry = ownerStateEntryIter.get();
+
+		auto slashingStateEntryIter = accountStateCache.find(entry.slashingAccount());
+		auto& slashingStateEntry = slashingStateEntryIter.get();
 
 		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 		if (notification.CurrencyBalanceIncrease) {

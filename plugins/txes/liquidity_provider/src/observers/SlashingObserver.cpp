@@ -26,7 +26,8 @@ namespace catapult { namespace observers {
 
 			for (const auto& mosaicId: pKeyCollector->keys()) {
 
-				auto& entry = liquidityProviderCache.find(mosaicId).get();
+				auto entryIter = liquidityProviderCache.find(mosaicId);
+				auto& entry = entryIter.get();
 
 				if ((context.Height - entry.creationHeight()).unwrap() % entry.slashingPeriod() == 0) {
 					auto& turnoverHistory = entry.turnoverHistory();
@@ -45,7 +46,10 @@ namespace catapult { namespace observers {
 					const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 					Key providerKey = entry.providerKey();
 					auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-					auto& lpAccountEntry = accountStateCache.find(providerKey).get();
+
+					auto lpAccountEntryIter = accountStateCache.find(providerKey);
+					auto& lpAccountEntry = lpAccountEntryIter.get();
+
 					Amount lpCurrencyBalance = lpAccountEntry.Balances.get(currencyMosaicId);
 
 					auto resolvedMosaicId = context.Resolvers.resolve(entry.mosaicId());
@@ -104,7 +108,9 @@ namespace catapult { namespace observers {
 						Amount currencyAfterSlashing = Amount { left };
 						Amount slashAmount = lpCurrencyBalance - currencyAfterSlashing;
 
-						auto& slashingEntry = accountStateCache.find(entry.slashingAccount()).get();
+						auto slashingEntryIter = accountStateCache.find(entry.slashingAccount());
+						auto& slashingEntry = slashingEntryIter.get();
+
 						slashingEntry.Balances.credit(currencyMosaicId, slashAmount, context.Height);
 						lpAccountEntry.Balances.debit(currencyMosaicId, slashAmount, context.Height);
 					}

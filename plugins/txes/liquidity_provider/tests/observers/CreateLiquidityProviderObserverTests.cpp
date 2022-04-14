@@ -67,7 +67,9 @@ namespace catapult { namespace observers {
 
 			// Assert: check the cache
 			auto& lpCache = context.cache().sub<cache::LiquidityProviderCache>();
-			const auto& actualEntry = lpCache.find(providerMosaicId).get();
+
+			auto actualEntryIter = lpCache.find(providerMosaicId);
+			const auto& actualEntry = actualEntryIter.get();
 
 			ASSERT_EQ(actualEntry.providerKey(), providerKey);
 			ASSERT_EQ(actualEntry.owner(), owner);

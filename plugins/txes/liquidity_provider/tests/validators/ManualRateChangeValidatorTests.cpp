@@ -200,6 +200,7 @@ namespace catapult { namespace validators {
 		auto mosaicId = test::GenerateRandomValue<UnresolvedMosaicId>();
 		state::LiquidityProviderEntry entry(mosaicId);
 		entry.setOwner(test::GenerateRandomByteArray<Key>());
+		entry.setProviderKey( { {1} } );
 
 		LiquidityProviderInfo info = {entry, Amount(5), Amount(5)};
 

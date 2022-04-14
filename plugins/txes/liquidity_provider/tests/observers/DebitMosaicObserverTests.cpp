@@ -96,7 +96,8 @@ namespace catapult { namespace observers {
 			test::ObserveNotification(*pObserver, notification, context);
 
 			// Assert: check the cache
-			const auto& actualEntry = lpCache.find(initialEntry.mosaicId()).get();
+			auto actualEntryIter = lpCache.find(initialEntry.mosaicId());
+			const auto& actualEntry = actualEntryIter.get();
 
 			auto fromBalance = accountCache.find(from).get().Balances.get(mosaicId);
 			ASSERT_EQ(fromBalance, Amount{0});

@@ -74,11 +74,11 @@ namespace catapult { namespace state {
 		entry.setVersion(version);
 
 		Key providerKey;
-		input.read(providerKey);
+		io::Read(input, providerKey);
 		entry.setProviderKey(providerKey);
 
 		Key owner;
-		input.read(owner);
+		io::Read(input, owner);
 		entry.setOwner(owner);
 
 		entry.setAdditionallyMinted(Amount{io::Read64(input)});
