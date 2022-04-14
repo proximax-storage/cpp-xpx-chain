@@ -69,12 +69,13 @@ namespace catapult { namespace observers {
 		}
 
 		// Making mosaic transfers and updating cumulative payments.
-		for (const auto& pair: payments) {
-			auto recipientIter = accountStateCache.find(pair.first);
+		for (const auto& [replicatorKey, bytesPayment]: payments) {
+			auto recipientIter = accountStateCache.find(replicatorKey);
 			auto& recipientState = recipientIter.get();
-			liquidityProvider.debitMosaics(context, downloadChannelEntry.id().array(), pair.first, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), Amount(pair.second));
-			auto& cumulativePayment = downloadChannelEntry.cumulativePayments().at(pair.first);
-			cumulativePayment = cumulativePayment + Amount(pair.second);
+			const auto megabytesPayment = utils::FileSize::FromBytes(bytesPayment).megabytes();
+			liquidityProvider.debitMosaics(context, downloadChannelEntry.id().array(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), Amount(megabytesPayment));
+			auto& cumulativePayment = downloadChannelEntry.cumulativePayments().at(replicatorKey);
+			cumulativePayment = cumulativePayment + Amount(bytesPayment);
 		}
 	}))
 }}

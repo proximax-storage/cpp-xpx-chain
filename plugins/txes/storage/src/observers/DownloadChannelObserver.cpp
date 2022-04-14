@@ -17,7 +17,6 @@ namespace catapult { namespace observers {
 		state::DownloadChannelEntry downloadEntry(notification.Id);
 		downloadEntry.setConsumer(notification.Consumer);
 	  	downloadEntry.setDrive(notification.DriveKey);
-		// TODO: Buy storage units for xpx in notification.DownloadSize
 		downloadEntry.setDownloadSize(notification.DownloadSizeMegabytes);
 		downloadEntry.setDownloadApprovalCountLeft(1);
 
@@ -59,7 +58,7 @@ namespace catapult { namespace observers {
 		}
 
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-		for (const auto& key: downloadEntry.shardReplicators()) {
+		for (const auto& key: shardReplicators) {
 			auto replicatorIter = replicatorCache.find(key);
 			auto& replicatorEntry = replicatorIter.get();
 			replicatorEntry.downloadChannels().insert(notification.Id);
