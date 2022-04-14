@@ -92,7 +92,7 @@ namespace catapult { namespace test {
         ASSERT_EQ(offerGroup1.size(), offerGroup1.size());
         for (auto i = 0u; i < offerGroup2.size(); ++i) {
             const auto &group1 = offerGroup1[i];
-			const auto &group2 = offerGroup2[i];
+            const auto &group2 = offerGroup2[i];
             EXPECT_EQ(group1.Owner, group2.Owner);
             EXPECT_EQ(group1.MosaicGive, group2.MosaicGive);
             EXPECT_EQ(group1.Deadline, group2.Deadline);
@@ -111,6 +111,27 @@ namespace catapult { namespace test {
     void AssertEqualSdaOfferGroupData(const state::SdaOfferGroupEntry& entry1, const state::SdaOfferGroupEntry& entry2) {
         EXPECT_EQ(entry1.groupHash(), entry2.groupHash());
         AssertSdaOfferGroupData(entry1.sdaOfferGroup(), entry2.sdaOfferGroup());
+    }
+
+    void AddAccountState(
+            cache::AccountStateCacheDelta& accountStateCache,
+            cache::SdaExchangeCacheDelta& sdaExchangeCache, 
+            const Key& owner,
+            const Height& height,
+            const std::vector<model::SdaOfferMosaic>& mosaics){
+        accountStateCache.addAccount(owner, height);
+        auto accountStateIter = accountStateCache.find(owner);
+        auto& accountState = accountStateIter.get();
+
+        auto sdaExchangeIter = sdaExchangeCache.find(owner);
+        auto& sdaExchange = sdaExchangeIter.get();
+
+        for (auto& mosaic : mosaics) {
+            MosaicId mosaicIdGive = model::ResolverContext().resolve(mosaic.MosaicIdGive);
+            MosaicId mosaicIdGet = model::ResolverContext().resolve(mosaic.MosaicIdGet);
+            Amount mosaicAmountGive = sdaExchange.getSdaOfferBalance(state::MosaicsPair{mosaicIdGive, mosaicIdGet}).CurrentMosaicGive;
+            accountState.Balances.credit(mosaicIdGive, mosaicAmountGive, height);
+        }
     }
 }}
 

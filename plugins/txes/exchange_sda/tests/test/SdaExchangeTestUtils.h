@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "catapult/cache_core/AccountStateCacheDelta.h"
 #include "plugins/txes/mosaic/src/cache/MosaicCache.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "catapult/model/EntityBody.h"
@@ -16,6 +17,7 @@
 #include "src/cache/SdaOfferGroupCacheStorage.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/nodeps/Random.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 
@@ -57,14 +59,16 @@ namespace catapult { namespace test {
     struct SdaExchangeCacheFactory {
     private:
         static auto CreateSubCachesWithSdaExchangeCache(const config::BlockchainConfiguration& config) {
-            auto sdaExchangeCacheId = cache::SdaExchangeCache::Id;
-            auto mosaicCacheId = cache::MosaicCache::Id;
-            
-            auto max = std::max(sdaExchangeCacheId, mosaicCacheId);
-            std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(max + 1);
+            std::vector<size_t> cacheIds = {
+                    cache::SdaExchangeCache::Id,
+                    cache::SdaOfferGroupCache::Id,
+                    cache::MosaicCache::Id};
+            auto maxId = std::max_element(cacheIds.begin(), cacheIds.end());
+            std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(*maxId + 1);
             auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-            subCaches[sdaExchangeCacheId] = MakeSubCachePlugin<cache::SdaExchangeCache, cache::SdaExchangeCacheStorage>(pConfigHolder);
-            subCaches[mosaicCacheId] = MakeSubCachePlugin<cache::MosaicCache, cache::MosaicCacheStorage>();
+            subCaches[cache::SdaExchangeCache::Id] = MakeSubCachePlugin<cache::SdaExchangeCache, cache::SdaExchangeCacheStorage>(pConfigHolder);
+            subCaches[cache::SdaOfferGroupCache::Id] = MakeSubCachePlugin<cache::SdaOfferGroupCache, cache::SdaOfferGroupCacheStorage>(pConfigHolder);
+            subCaches[cache::MosaicCache::Id] = MakeSubCachePlugin<cache::MosaicCache, cache::MosaicCacheStorage>();
             return subCaches;
         }
 
@@ -99,16 +103,16 @@ namespace catapult { namespace test {
     struct SdaOfferGroupCacheFactory {
     private:
         static auto CreateSubCachesWithSdaOfferGroupCache(const config::BlockchainConfiguration& config) {
-            auto sdaExchangeCacheId = cache::SdaExchangeCache::Id;
-            auto mosaicCacheId = cache::MosaicCache::Id;
-            auto sdaOfferGroupCacheId = cache::SdaOfferGroupCache::Id;
-            
-            auto max = std::max(sdaOfferGroupCacheId, std::max(sdaExchangeCacheId, mosaicCacheId));
-            std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(max + 1);
+            std::vector<size_t> cacheIds = {
+                    cache::SdaExchangeCache::Id,
+                    cache::SdaOfferGroupCache::Id,
+                    cache::MosaicCache::Id};
+            auto maxId = std::max_element(cacheIds.begin(), cacheIds.end());
+            std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(*maxId + 1);       
             auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-            subCaches[sdaExchangeCacheId] = MakeSubCachePlugin<cache::SdaExchangeCache, cache::SdaExchangeCacheStorage>(pConfigHolder);
-            subCaches[mosaicCacheId] = MakeSubCachePlugin<cache::MosaicCache, cache::MosaicCacheStorage>();
-            subCaches[sdaOfferGroupCacheId] = MakeSubCachePlugin<cache::SdaOfferGroupCache, cache::SdaOfferGroupCacheStorage>(pConfigHolder);
+            subCaches[cache::SdaExchangeCache::Id] = MakeSubCachePlugin<cache::SdaExchangeCache, cache::SdaExchangeCacheStorage>(pConfigHolder);
+            subCaches[cache::SdaOfferGroupCache::Id] = MakeSubCachePlugin<cache::SdaOfferGroupCache, cache::SdaOfferGroupCacheStorage>(pConfigHolder);
+            subCaches[cache::MosaicCache::Id] = MakeSubCachePlugin<cache::MosaicCache, cache::MosaicCacheStorage>();
             return subCaches;
         }
 
@@ -125,6 +129,9 @@ namespace catapult { namespace test {
             return cache::CatapultCache(std::move(subCaches));
         }
     };
+
+    /// Adds account state with \a owner and provided \a mosaics to \a accountStateCache at height \a height.
+    void AddAccountState(cache::AccountStateCacheDelta& accountStateCache, cache::SdaExchangeCacheDelta& sdaExchangeCache, const Key& owner, const Height& height, const std::vector<model::SdaOfferMosaic>& mosaics = {});
 }}
 
 

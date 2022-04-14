@@ -22,16 +22,21 @@ namespace catapult { namespace state {
     // SDA-SDA Offer Group entry.
     class SdaOfferGroupEntry {
     public:
-		// Creates an SDA-SDA Offer Groups entry around \a group hash.
-		SdaOfferGroupEntry(const Hash256& groupHash)
-			: m_groupHash(groupHash)
-		{}
+        // Creates an SDA-SDA Offer Groups entry around \a group hash.
+        SdaOfferGroupEntry(const Hash256& groupHash)
+            : m_groupHash(groupHash)
+        {}
 
     public:
+        /// Sets \a groupHash of SdaOfferBasicInfo.
+        void setGroupHash(const Hash256& groupHash) {
+            m_groupHash = groupHash;
+        }
+
         /// Gets the group hash of the offers.
-		const Hash256& groupHash() const {
-			return m_groupHash;
-		}
+        const Hash256& groupHash() const {
+            return m_groupHash;
+        }
 
         /// Gets the offers from the same group.
         SdaOfferGroupMap& sdaOfferGroup() {
@@ -63,7 +68,7 @@ namespace catapult { namespace state {
         void removeSdaOfferFromGroup(const Hash256& groupHash, const Key& offerOwner);
 
     private:
-		Hash256 m_groupHash;
+        Hash256 m_groupHash;
         SdaOfferGroupMap m_sdaOfferGroup;
     };
 }}
