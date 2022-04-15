@@ -8,6 +8,7 @@
 #include "tests/test/SdaExchangeTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
+#include <boost/lexical_cast.hpp>
 
 namespace catapult { namespace observers {
 
@@ -18,33 +19,33 @@ namespace catapult { namespace observers {
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::SdaExchangeCacheFactory>;
 
+        auto CreateConfig() {
+			test::MutableBlockchainConfiguration config;
+			auto sdaExchangeConfig = config::SdaExchangeConfiguration::Uninitialized();
+            sdaExchangeConfig.OfferSortPolicy = SortPolicy::Default;
+			config.Network.SetPluginConfiguration(sdaExchangeConfig);
+
+			return config.ToConst();
+		}
+
         struct PlaceSdaExchangeOfferValues {
         public:
             explicit PlaceSdaExchangeOfferValues(
-                    Height&& initialExpiryHeight,
-                    Height&& expectedExpiryHeight,
-                    std::vector<model::SdaOfferWithOwnerAndDuration>&& offers,
-                    state::SdaExchangeEntry&& initialEntry,
-                    state::SdaExchangeEntry&& expectedEntry)
-                : InitialExpiryHeight(std::move(initialExpiryHeight))
-                , ExpectedExpiryHeight(std::move(expectedExpiryHeight))
+                    Key&& owner,
+                    std::vector<model::SdaOfferWithOwnerAndDuration>&& offers)
+                : Owner(std::move(owner))
                 , SdaOffers(std::move(offers))
-                , InitialEntry(std::move(initialEntry))
-                , ExpectedEntry(std::move(expectedEntry))
             {}
 
         public:
-            Height InitialExpiryHeight;
-            Height ExpectedExpiryHeight;
+            Key Owner;
             std::vector<model::SdaOfferWithOwnerAndDuration> SdaOffers;
-            state::SdaExchangeEntry InitialEntry;
-            state::SdaExchangeEntry ExpectedEntry;
         };
 
         template<typename Notification>
         std::unique_ptr<Notification> CreateNotification(const PlaceSdaExchangeOfferValues& values) {
             return std::make_unique<Notification>(
-                values.InitialEntry.owner(),
+                values.Owner,
                 values.SdaOffers.size(),
                 values.SdaOffers.data());
         }
@@ -54,68 +55,67 @@ namespace catapult { namespace observers {
             return Height((duration.unwrap() < maxDeadline - currentHeight.unwrap()) ? currentHeight.unwrap() + duration.unwrap() : maxDeadline);
         }
 
-        void PrepareEntries(state::SdaExchangeEntry& entry1, state::SdaExchangeEntry& entry2) {
-            state::MosaicsPair pair1 {MosaicId(1), MosaicId(2)};
-            state::MosaicsPair pair2 {MosaicId(2), MosaicId(1)};
-            entry1.sdaOfferBalances().emplace(pair1,
-                state::SdaOfferBalance {Amount(10), Amount(100), Amount(10), Amount(100), Height(15)});
-            entry1.sdaOfferBalances().emplace(pair2, 
-                state::SdaOfferBalance {Amount(20), Amount(200), Amount(20), Amount(200), Height(5)});
-
-            entry2.sdaOfferBalances().emplace(pair1,
-                state::SdaOfferBalance {Amount(10), Amount(100), Amount(10), Amount(100), Height(15)});
-            auto pair = entry2.expiredSdaOfferBalances().emplace(Height(1), entry1.sdaOfferBalances());
-            pair.first->second.at(pair2).CurrentMosaicGive = Amount(0);
-        }
-
-        auto CreatePlaceSdaExchangeOfferValues(state::SdaExchangeEntry&& initialEntry, state::SdaExchangeEntry&& expectedEntry, const Key& offerOwner) {
-            return PlaceSdaExchangeOfferValues(
-                Height(5),
-                Height(15),
-                {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(10)}, {UnresolvedMosaicId(2), Amount(10)}}, offerOwner, BlockDuration(1000)},
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(2), Amount(200)}, {UnresolvedMosaicId(1), Amount(20)}}, offerOwner, BlockDuration(2000)},
-                },
-                std::move(initialEntry),
-                std::move(expectedEntry));
-        }
-
         template<typename TTraits>
-        void RunTest(const PlaceSdaExchangeOfferValues& values, std::initializer_list<Height> expiryHeights) {
+        void RunTest(const PlaceSdaExchangeOfferValues& expectedValues) {
             // Arrange:
             Height currentHeight(1);
-            ObserverTestContext context(NotifyMode::Commit, currentHeight);
-            auto pNotification = CreateNotification<model::PlaceSdaOfferNotification<TTraits::Version>>(values);
+            ObserverTestContext context(NotifyMode::Commit, currentHeight, CreateConfig());
+            auto pNotification = CreateNotification<model::PlaceSdaOfferNotification<TTraits::Version>>(expectedValues);
             auto pObserver = TTraits::CreateObserver();
-            auto& delta = context.cache().sub<cache::SdaExchangeCache>();
-            const auto& owner = values.InitialEntry.owner();
+            auto& sdaExchangeCache = context.cache().sub<cache::SdaExchangeCache>();
+            auto& sdaOfferGroupCache = context.cache().sub<cache::SdaOfferGroupCache>();
 
             // Populate cache.
-            delta.insert(values.InitialEntry);
+            state::SdaExchangeEntry sdaExchangeEntry(expectedValues.Owner, TTraits::Version);
+            for (const auto& offer : expectedValues.SdaOffers) {
+                auto mosaicIdGive = context.observerContext().Resolvers.resolve(offer.MosaicGive.MosaicId);
+                auto mosaicIdGet = context.observerContext().Resolvers.resolve(offer.MosaicGet.MosaicId);
+                auto deadline = GetOfferDeadline(offer.Duration, context.observerContext().Height);
+                sdaExchangeEntry.sdaOfferBalances().emplace(state::MosaicsPair{mosaicIdGive, mosaicIdGet}, state::SdaOfferBalance{offer.MosaicGive.Amount, offer.MosaicGet.Amount, offer.MosaicGive.Amount, offer.MosaicGet.Amount, deadline});
+
+                std::string reduced = reducedFraction(offer.MosaicGive.Amount, offer.MosaicGet.Amount);
+                auto groupHash = calculateGroupHash(mosaicIdGive, mosaicIdGet, reduced);
+                state::SdaOfferGroupEntry sdaOfferGroupEntry(groupHash);
+                if (!sdaOfferGroupCache.contains(groupHash))
+                    sdaOfferGroupCache.insert(sdaOfferGroupEntry);
+                state::SdaOfferBasicInfo basicInfo{ expectedValues.Owner, offer.MosaicGive.Amount, deadline };
+                if (sdaOfferGroupEntry.sdaOfferGroup().count(groupHash) == 0) {
+                    std::vector<state::SdaOfferBasicInfo> info;
+                    info.emplace_back(basicInfo);
+                    sdaOfferGroupEntry.sdaOfferGroup().emplace(groupHash, info);
+                }
+                else {
+                    (sdaOfferGroupEntry.sdaOfferGroup().find(groupHash)->second).emplace_back(basicInfo);
+                }
+            }
+            sdaExchangeCache.insert(sdaExchangeEntry);
 
             // Act:
             test::ObserveNotification(*pObserver, *pNotification, context);
 
             // Assert: check the cache
-            auto iter = delta.find(owner);
+            EXPECT_TRUE(sdaExchangeCache.contains(expectedValues.Owner));
+            auto iter = sdaExchangeCache.find(expectedValues.Owner);
             const auto& entry = iter.get();
-            test::AssertEqualExchangeData(entry, values.ExpectedEntry);
-            EXPECT_EQ(values.InitialEntry.minExpiryHeight(), values.InitialExpiryHeight);
-            EXPECT_EQ(entry.minExpiryHeight(), values.ExpectedExpiryHeight);
-            for (const auto& offer : values.SdaOffers) {
+            EXPECT_EQ(entry.sdaOfferBalances().size(), expectedValues.SdaOffers.size());
+            for (const auto& offer : expectedValues.SdaOffers) {
                 auto mosaicIdGive = context.observerContext().Resolvers.resolve(offer.MosaicGive.MosaicId);
                 auto mosaicIdGet = context.observerContext().Resolvers.resolve(offer.MosaicGet.MosaicId);
                 auto deadline = GetOfferDeadline(offer.Duration, context.observerContext().Height);
-                state::SdaOfferBalance sdaOffer{offer.MosaicGive.Amount, offer.MosaicGet.Amount, offer.MosaicGive.Amount, offer.MosaicGet.Amount, deadline};
                 state::MosaicsPair pair {mosaicIdGive, mosaicIdGet};
+                state::SdaOfferBalance sdaOffer{offer.MosaicGive.Amount, offer.MosaicGet.Amount, offer.MosaicGive.Amount, offer.MosaicGet.Amount, deadline};
                 test::AssertSdaOfferBalance(entry.sdaOfferBalances().at(pair), sdaOffer);
             }
+        }
 
-            for (const auto& expiryHeight : expiryHeights) {
-                auto keys = delta.expiringOfferOwners(expiryHeight);
-                EXPECT_EQ(1, keys.size());
-                EXPECT_EQ(owner, *keys.begin());
-            }
+        PlaceSdaExchangeOfferValues CreatePlaceSdaExchangeOfferValues(Key&& owner) {
+            return  PlaceSdaExchangeOfferValues(std::move(owner), {
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(10)}, {UnresolvedMosaicId(2), Amount(100)}}, owner, BlockDuration(1000)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(2), Amount(200)}, {UnresolvedMosaicId(1), Amount(20)}}, owner, BlockDuration(2000)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(3), Amount(30)}, {UnresolvedMosaicId(4), Amount(300)}}, owner, BlockDuration(3000)},
+                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(4), Amount(150)}, {UnresolvedMosaicId(3), Amount(15)}}, owner, BlockDuration(std::numeric_limits<Height::ValueType>::max())},
+                }
+            );
         }
 
         struct PlaceSdaExchangeOfferObserverV1Traits {
@@ -133,13 +133,9 @@ namespace catapult { namespace observers {
 
     TRAITS_BASED_TEST(PlaceSdaOffer_Commit) {
         // Arrange:
-        auto offerOwner = test::GenerateRandomByteArray<Key>();
-		state::SdaExchangeEntry initialEntry(offerOwner);
-		state::SdaExchangeEntry expectedEntry(offerOwner);
-		PrepareEntries(initialEntry, expectedEntry);
-        auto values = CreatePlaceSdaExchangeOfferValues(std::move(initialEntry), std::move(expectedEntry), offerOwner);
+        auto values = CreatePlaceSdaExchangeOfferValues(std::move(test::GenerateRandomByteArray<Key>()));
 
         // Assert:
-        RunTest<TTraits>(values, { Height(1), Height(15) });
+        RunTest<TTraits>(values);
     }
 }}
