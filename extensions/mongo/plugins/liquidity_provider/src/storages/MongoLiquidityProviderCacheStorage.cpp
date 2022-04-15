@@ -16,7 +16,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
 		struct LiquidityProviderCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::LiquidityProviderCacheDescriptor> {
-			static constexpr const char* Collection_Name = "liquidityproviders";
+			static constexpr const char* Collection_Name = "liquidityProviders";
 			static constexpr const char* Id_Property_Name = "liquidityProvider.mosaicId";
 
 			static auto MapToMongoId(const KeyType& key) {
