@@ -142,18 +142,27 @@ namespace catapult { namespace disruptor {
 		std::vector<ConsumerCompletionResult> capturedResults;
 
 		// Act:
+		std::condition_variable condVar;
+		std::mutex mtx;
 		std::atomic<size_t> numCapturedElements(0);
 		for (auto i = 0u; i < ranges.size(); ++i) {
 			// note: the alternating result consumer starts with ConsumerResult::Abort()
-			auto processingCompleteCallback = [&capturedElementIds, &capturedResults, &numCapturedElements](auto id, const auto& result) {
+			auto processingCompleteCallback = [&capturedElementIds, &capturedResults, &numCapturedElements, &condVar, &mtx](auto id, const auto& result) {
+				std::lock_guard<std::mutex> guard(mtx);
 				capturedElementIds.push_back(id);
 				capturedResults.push_back(result);
 				++numCapturedElements;
+				condVar.notify_one();
 			};
 			elementIds.push_back(dispatcher.processElement(ConsumerInput(std::move(ranges[i])), processingCompleteCallback));
 		}
 
-		WAIT_FOR_VALUE(ranges.size(), numCapturedElements);
+		
+		std::unique_lock<std::mutex> mlock(mtx);
+		condVar.wait(mlock, [&ranges, &numCapturedElements]{return ranges.size() == numCapturedElements;});
+		
+
+		// WAIT_FOR_VALUE(ranges.size(), numCapturedElements);
 
 		// Assert:
 		std::vector<DisruptorElementId> expectedElementIds{ 1u, 2u, 3u };
