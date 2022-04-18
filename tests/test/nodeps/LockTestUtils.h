@@ -23,6 +23,7 @@
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
 #include <thread>
+#include <condition_variable>
 
 namespace catapult { namespace test {
 
@@ -199,13 +200,19 @@ namespace catapult { namespace test {
 	void AssertExclusiveLocks(TAcquireFirstLockFunc acquireFirstLock, TAcquireSecondLockFunc acquireSecondLock) {
 		// Arrange: get the first lock
 		std::atomic<int> flag = 0;
+
+		std::condition_variable condVar;
+		std::mutex mtx;
+
 		{
 			auto lock1 = acquireFirstLock();
 
 			// - spawn another thread to acquire the second lock
-			std::thread([&flag, acquireSecondLock]() {
+			std::thread([&flag, acquireSecondLock, &condVar, &mtx]() {
+				std::lock_guard<std::mutex> guard(mtx);
 				acquireSecondLock();
 				flag = 1;
+				condVar.notify_one();
 			}).detach();
 
 			// Act: sleep a small amount
@@ -218,7 +225,8 @@ namespace catapult { namespace test {
 		}
 
 		// - wait for the flag value to change
-		WAIT_FOR_EXPR(0 != flag);
+		std::unique_lock<std::mutex> mlock(mtx);
+		condVar.wait(mlock, [&flag]{return flag != 0;});
 
 		// Assert: the other thread acquired the (second) lock
 		EXPECT_EQ(1, flag);
