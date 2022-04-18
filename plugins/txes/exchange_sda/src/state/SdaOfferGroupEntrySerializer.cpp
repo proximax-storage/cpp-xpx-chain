@@ -11,57 +11,36 @@
 namespace catapult { namespace state {
 
     namespace {
-        void SaveSdaOfferInfo(io::OutputStream& output, const std::vector<SdaOfferBasicInfo>& offers) {
-            io::Write16(output, utils::checked_cast<size_t, uint16_t>(offers.size()));
-            for (const auto& offer : offers) {
+        void SaveSdaOfferGroupEntry(const SdaOfferGroupEntry& entry, io::OutputStream& output) {
+            io::Write(output, entry.groupHash());
+            io::Write16(output, utils::checked_cast<size_t, uint16_t>(entry.sdaOfferGroup().size()));
+            for (const auto& offer : entry.sdaOfferGroup()) {
                 io::Write(output, offer.Owner);
                 io::Write(output, offer.MosaicGive);
                 io::Write(output, offer.Deadline);
             }
         }
 
-        void SaveSdaOfferGroup(io::OutputStream& output, const SdaOfferGroupMap& offers) {
-            io::Write16(output, utils::checked_cast<size_t, uint16_t>(offers.size()));
-            for (const auto& pair : offers) {
-                io::Write(output, pair.first);
-                SaveSdaOfferInfo(output, pair.second);
-            }
-        }
-
-        auto LoadSdaOfferGroup(io::InputStream& input, std::vector<SdaOfferBasicInfo>& offers) {
+        SdaOfferGroupEntry LoadSdaOfferGroupEntry(io::InputStream& input) {
+            Hash256 groupHash;
+            io::Read(input, groupHash);
+            state::SdaOfferGroupEntry entry(groupHash);
             auto count = io::Read16(input);
             while (count--) {
                 SdaOfferBasicInfo offer;
                 io::Read(input, offer.Owner);
                 io::Read(input, offer.MosaicGive);
                 io::Read(input, offer.Deadline);
-                offers.emplace_back(offer);
-            }
-        }
-
-        auto LoadSdaOfferGroup(io::InputStream& input, SdaOfferGroupMap& offers) {
-            auto offerCount = io::Read16(input);
-            for (uint16_t i = 0; i < offerCount; ++i) {
-                Hash256 groupHash;
-				io::Read(input, groupHash);
-                std::vector<SdaOfferBasicInfo> info;
-                LoadSdaOfferGroup(input, info);
-                offers.emplace(groupHash, info);
+                entry.sdaOfferGroup().emplace_back(offer);
             }
         }
     }
 
-    void SdaOfferGroupEntrySerializer::Save(const SdaOfferGroupEntry& sdaOfferGroupEntry, io::OutputStream& output) {
-        io::Write(output, sdaOfferGroupEntry.groupHash());
-        SaveSdaOfferGroup(output, sdaOfferGroupEntry.sdaOfferGroup());
+    void SdaOfferGroupEntrySerializer::Save(const SdaOfferGroupEntry& entry, io::OutputStream& output) {
+        SaveSdaOfferGroupEntry(entry, output);
     }
 
 	SdaOfferGroupEntry SdaOfferGroupEntrySerializer::Load(io::InputStream& input) {
-        Hash256 groupHash;
-        io::Read(input, groupHash);
-        state::SdaOfferGroupEntry entry(groupHash);
-		LoadSdaOfferGroup(input, entry.sdaOfferGroup());
-
-        return entry;
+		return LoadSdaOfferGroupEntry(input);
 	}
 }}

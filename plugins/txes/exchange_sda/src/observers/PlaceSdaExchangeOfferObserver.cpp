@@ -60,17 +60,17 @@ namespace catapult { namespace observers {
             auto groupIter = groupCache.find(groupHash);
             auto& groupEntry = groupIter.get();
 
-            groupEntry.addSdaOfferToGroup(groupHash, pSdaOffer, deadline);
+            groupEntry.addSdaOfferToGroup(pSdaOffer, deadline);
         }
 
         /// Exchange offers when a match is found in cache
         const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SdaExchangeConfiguration>();
-        for (auto&offersBySigner : entry.sdaOfferBalances()) {
+        for (auto& offersBySigner : entry.sdaOfferBalances()) {
             auto mosaicIdGive = offersBySigner.first.first;
             auto mosaicIdGet = offersBySigner.first.second;
 
             // Sort existing offers of the same group hash
-            std::string reduced = reducedFraction(offersBySigner.second.CurrentMosaicGive, offersBySigner.second.CurrentMosaicGet);
+            std::string reduced = reducedFraction(offersBySigner.second.InitialMosaicGive, offersBySigner.second.InitialMosaicGet);
             auto groupHash = calculateGroupHash(mosaicIdGive, mosaicIdGet, reduced);
 
             auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
@@ -79,39 +79,42 @@ namespace catapult { namespace observers {
 
             auto& arrangedOffers = groupEntry.sdaOfferGroup();
             switch (pluginConfig.OfferSortPolicy) {
+                case SortPolicy::Default:
+                    return arrangedOffers;
                 case SortPolicy::SmallToBig: 
-                    arrangedOffers = groupEntry.smallToBig(groupHash, arrangedOffers);
+                    arrangedOffers = groupEntry.smallToBig(arrangedOffers);
                     break;
                 case SortPolicy::SmallToBigSortedByEarliestExpiry: 
-                    arrangedOffers = groupEntry.smallToBigSortedByEarliestExpiry(groupHash, arrangedOffers);
+                    arrangedOffers = groupEntry.smallToBigSortedByEarliestExpiry(arrangedOffers);
                     break;
                 case SortPolicy::BigToSmall: 
-                    arrangedOffers = groupEntry.bigToSmall(groupHash, arrangedOffers);
+                    arrangedOffers = groupEntry.bigToSmall(arrangedOffers);
                     break;
                 case SortPolicy::BigToSmallSortedByEarliestExpiry: 
-                    arrangedOffers = groupEntry.bigToSmallSortedByEarliestExpiry(groupHash, arrangedOffers);
+                    arrangedOffers = groupEntry.bigToSmallSortedByEarliestExpiry(arrangedOffers);
                     break;
                 case SortPolicy::ExactOrClosest:
-                    arrangedOffers = groupEntry.exactOrClosest(groupHash, offersBySigner.second.CurrentMosaicGive, arrangedOffers);
+                    arrangedOffers = groupEntry.exactOrClosest(offersBySigner.second.CurrentMosaicGive, arrangedOffers);
                     break;
             }
 
-            for (auto& offerList : arrangedOffers) {
-                for (auto& offer : offerList.second) {
-                    if (offer.Owner == notification.Signer) continue;
+            // Exchange sorted offers not belonging to the signer 
+            for (auto& offer : arrangedOffers) {
+                if (offer.Owner == notification.Signer) continue;
 
-                    auto iter = cache.find(offer.Owner);
-                    auto& existingOffer = iter.get();
-                    auto result = ModifyOffer(existingOffer.sdaOfferBalances(), entry.sdaOfferBalances(), offersBySigner.first);
+                auto iter = cache.find(offer.Owner);
+                auto& existingOffer = iter.get();
+                auto result = ModifyOffer(existingOffer.sdaOfferBalances(), entry.sdaOfferBalances(), offersBySigner.first);
 
-                    if (Amount(0) == result.first.CurrentMosaicGive && Amount(0) == result.first.CurrentMosaicGet) {
-                        existingOffer.expireOffer(offersBySigner.first, context.Height);
-                        groupEntry.removeSdaOfferFromGroup(groupHash, existingOffer.owner());
-                    }
-                    if (Amount(0) == result.second.CurrentMosaicGive && Amount(0) == result.second.CurrentMosaicGet) {
-                        entry.expireOffer(offersBySigner.first, context.Height);
-                        groupEntry.removeSdaOfferFromGroup(groupHash, entry.owner());
-                    }
+                // Check if existing offer still has balance after the exchange
+                if (Amount(0) == result.first.CurrentMosaicGive && Amount(0) == result.first.CurrentMosaicGet) {
+                    existingOffer.expireOffer(offersBySigner.first, context.Height);
+                    groupEntry.removeSdaOfferFromGroup(existingOffer.owner());
+                }
+                // Check if offer belonging to the signer still has balance after the exchange
+                if (Amount(0) == result.second.CurrentMosaicGive && Amount(0) == result.second.CurrentMosaicGet) {
+                    entry.expireOffer(offersBySigner.first, context.Height);
+                    groupEntry.removeSdaOfferFromGroup(entry.owner());
                 }
             }
         }

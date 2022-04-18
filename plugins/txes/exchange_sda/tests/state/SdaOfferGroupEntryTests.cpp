@@ -15,16 +15,16 @@ namespace catapult { namespace state {
 
     namespace {
         struct SdaOfferGroupTraits {
-            static SdaOfferGroupMap& GetSdaOfferGroup(SdaOfferGroupEntry& entry) {
+            static SdaOfferGroupVector& GetSdaOfferGroup(SdaOfferGroupEntry& entry) {
                 return entry.sdaOfferGroup();
             }
 
-            static std::vector<SdaOfferBasicInfo> GenerateSdaOfferBasicInfo(uint8_t offerCount = 5) {
-                return test::GenerateSdaOfferBasicInfo(offerCount);
-            }
-
-            static SdaOfferBasicInfo CreateSdaOfferBasicInfo(const SdaOfferBasicInfo& offer) {
-                return SdaOfferBasicInfo{ offer };
+            static SdaOfferGroupVector GenerateSdaOfferGroupVector(uint16_t offerCount = 5) {
+                SdaOfferGroupVector offerGroup;
+                for (auto i = 0u; i < offerCount; ++i) {
+                    offerGroup.push_back(test::GenerateSdaOfferBasicInfo());
+                }
+                return offerGroup;
             }
         };
     }
@@ -42,23 +42,19 @@ namespace catapult { namespace state {
             owner[o] = test::GenerateRandomByteArray<Key>();
 
         auto entry = SdaOfferGroupEntry(groupHash);
-        std::vector<SdaOfferBasicInfo> info;
-        info.emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(1) });
-        entry.sdaOfferGroup().emplace(groupHash, info);
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(1) });
 
         auto expectedEntry = SdaOfferGroupEntry(groupHash);
-        std::vector<SdaOfferBasicInfo> expectedInfo;
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(1) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
-        expectedEntry.sdaOfferGroup().emplace(groupHash, expectedInfo);
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(1) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });;
 
-        Act:
-        entry.smallToBig(entry.groupHash(), entry.sdaOfferGroup());
+        // Act:
+        entry.smallToBig(entry.sdaOfferGroup());
 
-        Assert:
+        // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);
     }
 
@@ -70,25 +66,21 @@ namespace catapult { namespace state {
             owner[o] = test::GenerateRandomByteArray<Key>();
 
         auto entry = SdaOfferGroupEntry(groupHash);
-        std::vector<SdaOfferBasicInfo> info;
-        info.emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[4], Amount(50), Height(2) });
-        entry.sdaOfferGroup().emplace(groupHash, info);
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[4], Amount(50), Height(2) });
 
         auto expectedEntry = SdaOfferGroupEntry(groupHash);
-        std::vector<SdaOfferBasicInfo> expectedInfo;
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[4], Amount(50), Height(2) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
-        expectedEntry.sdaOfferGroup().emplace(groupHash, expectedInfo);
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[4], Amount(50), Height(2) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
 
         // Act:
-        entry.smallToBigSortedByEarliestExpiry(entry.groupHash(), entry.sdaOfferGroup());
+        entry.smallToBigSortedByEarliestExpiry(entry.sdaOfferGroup());
 
         // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);
@@ -102,21 +94,17 @@ namespace catapult { namespace state {
             owner[o] = test::GenerateRandomByteArray<Key>();
 
         auto entry = SdaOfferGroupEntry(groupHash);
-        std::vector<SdaOfferBasicInfo> info;
-        info.emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(1) });
-        entry.sdaOfferGroup().emplace(groupHash, info);
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(1) });
 
         auto expectedEntry = SdaOfferGroupEntry(groupHash);
-        std::vector<SdaOfferBasicInfo> expectedInfo;
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(1) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
-        expectedEntry.sdaOfferGroup().emplace(groupHash, expectedInfo);       
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(1) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });      
 
         // Act:
-        entry.bigToSmall(entry.groupHash(), entry.sdaOfferGroup());
+        entry.bigToSmall(entry.sdaOfferGroup());
 
         // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);
@@ -130,25 +118,21 @@ namespace catapult { namespace state {
             owner[o] = test::GenerateRandomByteArray<Key>();
 
         auto entry = SdaOfferGroupEntry(groupHash);
-        std::vector<SdaOfferBasicInfo> info;
-        info.emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[4], Amount(50), Height(2) });
-        entry.sdaOfferGroup().emplace(groupHash, info);
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[4], Amount(50), Height(2) });
 
-        auto expectedEntry = SdaOfferGroupEntry(groupHash);
-        std::vector<SdaOfferBasicInfo> expectedInfo;       
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[4], Amount(50), Height(2) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
-        expectedEntry.sdaOfferGroup().emplace(groupHash, expectedInfo);
+        auto expectedEntry = SdaOfferGroupEntry(groupHash);   
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[4], Amount(50), Height(2) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
 
         // Act:
-        entry.bigToSmallSortedByEarliestExpiry(entry.groupHash(), entry.sdaOfferGroup());
+        entry.bigToSmallSortedByEarliestExpiry(entry.sdaOfferGroup());
 
         // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);
@@ -162,25 +146,21 @@ namespace catapult { namespace state {
             owner[o] = test::GenerateRandomByteArray<Key>();
 
         auto entry = SdaOfferGroupEntry(groupHash);
-        std::vector<SdaOfferBasicInfo> info;
-        info.emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
-        info.emplace_back(SdaOfferBasicInfo{ owner[4], Amount(50), Height(2) });
-        entry.sdaOfferGroup().emplace(groupHash, info);
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[4], Amount(50), Height(2) });
 
         auto expectedEntry = SdaOfferGroupEntry(groupHash);
-        std::vector<SdaOfferBasicInfo> expectedInfo;
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[4], Amount(50), Height(2) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
-        expectedEntry.sdaOfferGroup().emplace(groupHash, expectedInfo);
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[4], Amount(50), Height(2) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
 
         // Act:
-        entry.exactOrClosest(entry.groupHash(), Amount(40), entry.sdaOfferGroup());
+        entry.exactOrClosest(Amount(40), entry.sdaOfferGroup());
 
         // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);
@@ -201,15 +181,17 @@ namespace catapult { namespace state {
         auto entry = SdaOfferGroupEntry(groupHash);
         auto& offers = TTraits::GetSdaOfferGroup(entry);
         ASSERT_TRUE(offers.empty());
-        auto offer = TTraits::GenerateSdaOfferBasicInfo(5);
+        auto offer = TTraits::GenerateSdaOfferGroupVector(5);
 
         // Act:
-        offers.emplace(groupHash, offer);
+        for (auto o : offer) {
+            offers.emplace_back(o);
+        }
 
         // Assert:
         offers = TTraits::GetSdaOfferGroup(entry);
-        ASSERT_EQ(1, offers.size());
-        test::AssertSdaOfferBasicInfo(offer, offers.at(groupHash));
+        ASSERT_EQ(5, offers.size());
+        test::AssertSdaOfferGroupInfo(offer, offers);
     }
 
     TEST(TEST_CLASS, AddSdaOfferToGroup) {
@@ -220,14 +202,12 @@ namespace catapult { namespace state {
         model::SdaOfferWithOwnerAndDuration sdaOffer2{ {{ UnresolvedMosaicId(1), Amount(100) }, { UnresolvedMosaicId(2), Amount(10) }}, Key(), BlockDuration(100)};
 
         auto expectedEntry = SdaOfferGroupEntry(groupHash);
-        std::vector<SdaOfferBasicInfo> expectedInfo;
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ Key(), Amount(10), Height(1) });
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ Key(), Amount(100), Height(2) });
-        expectedEntry.sdaOfferGroup().emplace(groupHash, expectedInfo);
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ Key(), Amount(10), Height(1) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ Key(), Amount(100), Height(2) });
 
         // Act:
-        entry.addSdaOfferToGroup(groupHash, &sdaOffer1, Height(1));
-        entry.addSdaOfferToGroup(groupHash, &sdaOffer2, Height(2));
+        entry.addSdaOfferToGroup(&sdaOffer1, Height(1));
+        entry.addSdaOfferToGroup(&sdaOffer2, Height(2));
 
         // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);
@@ -240,19 +220,16 @@ namespace catapult { namespace state {
         auto owner2 = test::GenerateRandomByteArray<Key>();
 
         auto entry = SdaOfferGroupEntry(groupHash);
-        std::vector<state::SdaOfferBasicInfo> info;
-        info.emplace_back(SdaOfferBasicInfo{ owner1, Amount(10), Height(1) });
-        info.emplace_back(SdaOfferBasicInfo{ owner2, Amount(100), Height(2) });
-        info.emplace_back(SdaOfferBasicInfo{ owner1, Amount(500), Height(3) });
-        entry.sdaOfferGroup().emplace(groupHash, info);
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner1, Amount(10), Height(1) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner2, Amount(100), Height(2) });
+        entry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner1, Amount(500), Height(3) });
 
         auto expectedEntry = SdaOfferGroupEntry(groupHash);
-        std::vector<SdaOfferBasicInfo> expectedInfo;
-        expectedInfo.emplace_back(SdaOfferBasicInfo{ owner2, Amount(100), Height(2) });
-        expectedEntry.sdaOfferGroup().emplace(groupHash, expectedInfo);
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner2, Amount(100), Height(2) });
 
         // Act:
-        entry.removeSdaOfferFromGroup(groupHash, owner1);
+        entry.removeSdaOfferFromGroup(owner1);
+
         // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);
     }

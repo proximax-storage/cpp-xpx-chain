@@ -14,8 +14,8 @@ namespace catapult { namespace mongo { namespace plugins {
     // region ToDbModel
 
     namespace {
-        void StreamSdaOfferBasicInfo(bson_stream::document& builder, const std::vector<state::SdaOfferBasicInfo>& offers) {
-            auto array = builder << "sdaOfferInfo" << bson_stream::open_array;
+        void StreamSdaOfferGroups(bson_stream::document& builder,  const state::SdaOfferGroupVector& offers) {
+            auto array = builder << "sdaOfferGroup" << bson_stream::open_array;
             for (const auto& offer : offers) {
                 array
                     << bson_stream::open_document
@@ -26,17 +26,6 @@ namespace catapult { namespace mongo { namespace plugins {
             }
 
             array << bson_stream::close_array;
-        }
-
-        void StreamSdaOfferGroups(bson_stream::document& builder, const state::SdaOfferGroupMap& offers) {
-            auto offerArray = builder << "sdaOfferGroup" << bson_stream::open_array;
-            for (const auto& pair : offers) {
-                bson_stream::document offerBuilder;
-                offerBuilder << "groupHash" << ToBinary(pair.first);
-                StreamSdaOfferBasicInfo(offerBuilder, pair.second);
-                offerArray << offerBuilder;
-            }
-            offerArray << bson_stream::close_array;
         }
     }
 
@@ -57,7 +46,7 @@ namespace catapult { namespace mongo { namespace plugins {
     // region ToModel
 
     namespace {
-        void ReadSdaOfferBasicInfo(const bsoncxx::array::view& dbOfferVector, std::vector<state::SdaOfferBasicInfo>& offers) {
+        void ReadSdaOfferGroups(const bsoncxx::array::view& dbOfferVector, state::SdaOfferGroupVector& offers) {
             for (const auto& offerMap : dbOfferVector) {
                 auto doc = offerMap.get_document().view();
 
@@ -67,19 +56,6 @@ namespace catapult { namespace mongo { namespace plugins {
                 info.Deadline = Height{static_cast<uint64_t>(doc["deadline"].get_int64())};
 
                 offers.emplace_back(info);
-            }
-        }
-
-        void ReadSdaOfferGroups(const bsoncxx::document::view& dbOffers, state::SdaOfferGroupMap& offers) {
-            for (const auto& dbOffer : dbOffers) {
-                auto doc = dbOffer.get_document().view();
-
-                Hash256 groupHash;
-                DbBinaryToModelArray(groupHash, doc["groupHash"].get_binary());
-
-                std::vector<state::SdaOfferBasicInfo> info;
-                ReadSdaOfferBasicInfo(doc["sdaOfferInfo"].get_array().value, info);
-                offers.emplace(groupHash, info);
             }
         }
     }

@@ -56,7 +56,7 @@ namespace catapult { namespace test {
     }
 
     namespace {
-        void AssertSdaOfferBasicInfo(const std::vector<state::SdaOfferBasicInfo>& offers, const bsoncxx::array::view& dbOffers) {
+        void AssertSdaOfferGroup(const state::SdaOfferGroupVector& offers, const bsoncxx::array::view& dbOffers) {
             ASSERT_EQ(offers.size(), test::GetFieldCount(dbOffers));
             auto i = 0u;
             for (const auto& dbOffer : dbOffers) {
@@ -66,16 +66,6 @@ namespace catapult { namespace test {
                 EXPECT_EQ(offer.Deadline.unwrap(), GetUint64(dbOffer, "deadline"));
             }
         }
-
-        void AssertSdaOfferGroups(const state::SdaOfferGroupMap& offers, const bsoncxx::array::view& dbOffers) {
-            ASSERT_EQ(offers.size(), test::GetFieldCount(dbOffers));
-            for (const auto& dbOffer : dbOffers) {
-                Hash256 groupHash;
-                DbBinaryToModelArray(groupHash, dbOffer["groupHash"].get_binary());
-                auto& offer = offers.find(groupHash)->second;
-                AssertSdaOfferBasicInfo(offer, dbOffer["sdaOfferInfo"].get_array());
-            }
-        }
     }
 
     void AssertEqualSdaOfferGroupData(const state::SdaOfferGroupEntry& entry, const bsoncxx::document::view& dbSdaOfferGroupEntry) {
@@ -83,6 +73,6 @@ namespace catapult { namespace test {
 
         EXPECT_EQ(entry.groupHash(), GetHashValue(dbSdaOfferGroupEntry, "groupHash"));
 
-        AssertSdaOfferGroups(entry.sdaOfferGroup(), dbSdaOfferGroupEntry["sdaOfferGroup"].get_array().value);
+        AssertSdaOfferGroup(entry.sdaOfferGroup(), dbSdaOfferGroupEntry["sdaOfferGroup"].get_array().value);
     }
 }}

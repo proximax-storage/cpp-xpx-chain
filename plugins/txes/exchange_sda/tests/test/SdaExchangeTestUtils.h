@@ -86,15 +86,14 @@ namespace catapult { namespace test {
         }
     };
 
-
-    /// Generates an offers in a group for sorting.
-    std::vector<state::SdaOfferBasicInfo> GenerateSdaOfferBasicInfo(uint8_t offerCount = 5);
+    /// Generates an offer for arrangement.
+    state::SdaOfferBasicInfo GenerateSdaOfferBasicInfo();
 
     /// Creates test SDA-SDA offer group entry.
-    state::SdaOfferGroupEntry CreateSdaOfferGroupEntry(uint8_t offerCount = 5, Hash256 groupHash = test::GenerateRandomByteArray<Hash256>());
+    state::SdaOfferGroupEntry CreateSdaOfferGroupEntry(uint16_t offerCount = 5, Hash256 groupHash = test::GenerateRandomByteArray<Hash256>());
 
     /// Verifies that \a offerGroup1 is equivalent to \a offerGroup2.
-    void AssertSdaOfferBasicInfo(const std::vector<state::SdaOfferBasicInfo>& offerGroup1, const std::vector<state::SdaOfferBasicInfo>& offerGroup2);
+    void AssertSdaOfferGroupInfo(const state::SdaOfferGroupVector& offerGroup1, const state::SdaOfferGroupVector& offerGroup2);
 
     /// Verifies that \a entry1 is equivalent to \a entry2.
     void AssertEqualSdaOfferGroupData(const state::SdaOfferGroupEntry& entry1, const state::SdaOfferGroupEntry& entry2);

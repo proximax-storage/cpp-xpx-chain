@@ -29,14 +29,11 @@ namespace catapult { namespace observers {
             auto groupHash = calculateGroupHash(mosaicIdGive, mosaicIdGet, reduced);
 
             auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
-            if (!groupCache.contains(groupHash))
-                groupCache.insert(state::SdaOfferGroupEntry(groupHash));
-
             auto groupIter = groupCache.find(groupHash);
             auto& groupEntry = groupIter.get();
 
             entry.expireOffer(state::MosaicsPair{mosaicIdGive,mosaicIdGet}, context.Height);
-            groupEntry.removeSdaOfferFromGroup(groupHash, notification.Owner);
+            groupEntry.removeSdaOfferFromGroup(notification.Owner);
         }
     });
 }}

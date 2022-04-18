@@ -48,7 +48,7 @@ namespace catapult { namespace cache {
             static void Modify(SdaOfferGroupCacheDelta& delta, const state::SdaOfferGroupEntry& entry) {
                 auto iter = delta.find(entry.groupHash());
                 auto& entryFromCache = iter.get();
-                entryFromCache.sdaOfferGroup().emplace(entry.groupHash(), test::GenerateSdaOfferBasicInfo());
+                entryFromCache.sdaOfferGroup().emplace_back(test::GenerateSdaOfferBasicInfo());
             }
         };
     }
@@ -77,7 +77,9 @@ namespace catapult { namespace cache {
         // Arrange:
         SdaOfferGroupCacheMixinTraits::CacheType cache;
         auto groupHash = test::GenerateRandomByteArray<Hash256>();
-        auto offer = test::GenerateSdaOfferBasicInfo(2);
+        auto offer = test::GenerateSdaOfferBasicInfo();
+        state::SdaOfferGroupVector groupOffer;
+        groupOffer.emplace_back(offer);
 
         // - insert single account groupHash
         {
@@ -94,7 +96,7 @@ namespace catapult { namespace cache {
         {
             auto delta = cache.createDelta(Height(1));
             auto& entry = delta->find(groupHash).get();
-            entry.sdaOfferGroup().emplace(groupHash, offer);
+            entry.sdaOfferGroup().emplace_back(offer);
             cache.commit();
         }
 
@@ -102,7 +104,7 @@ namespace catapult { namespace cache {
         auto view = cache.createView(Height{0});
         const auto& entry = view->find(groupHash).get();
         EXPECT_EQ(1, entry.sdaOfferGroup().size());
-        test::AssertSdaOfferBasicInfo(offer, entry.sdaOfferGroup().at(groupHash));
+        test::AssertSdaOfferGroupInfo(groupOffer, entry.sdaOfferGroup());
     }
 
     // endregion

@@ -48,7 +48,7 @@ namespace catapult { namespace state {
 
         // region Save
 
-        void AssertSdaOfferBasicInfo(const std::vector<SdaOfferBasicInfo>& info, const uint8_t*& pData) {
+        void AssertSdaOfferGroup(const SdaOfferGroupVector& info, const uint8_t*& pData) {
             EXPECT_EQ(info.size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
             for (const auto& offer : info) {
@@ -58,16 +58,6 @@ namespace catapult { namespace state {
                 pData += sizeof(uint64_t);
                 EXPECT_EQ(offer.Deadline.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
                 pData += sizeof(uint64_t);
-            }
-        }
-
-        void AssertSdaOfferGroup(const SdaOfferGroupMap& offers, const uint8_t*& pData) {
-            EXPECT_EQ(offers.size(), *reinterpret_cast<const uint16_t*>(pData));
-            pData += sizeof(uint16_t);
-            for (const auto& pair : offers) {
-                EXPECT_EQ_MEMORY(pair.first.data(), pData, Hash256_Size);
-			    pData += Hash256_Size;
-                AssertSdaOfferBasicInfo(pair.second, pData);
             }
         }
 
@@ -119,7 +109,7 @@ namespace catapult { namespace state {
 
         // region Load
 
-        void WriteSdaOfferInfo(const std::vector<SdaOfferBasicInfo>& offers, uint8_t*& pData) {
+        void WriteSdaOfferGroup(const SdaOfferGroupVector& offers, uint8_t*& pData) {
             uint16_t infoCount = utils::checked_cast<size_t, uint16_t>(offers.size());
             memcpy(pData, &infoCount, sizeof(uint16_t));
 			pData += sizeof(uint16_t);
@@ -130,17 +120,6 @@ namespace catapult { namespace state {
                 pData += sizeof(uint64_t);
                 memcpy(pData, &info.Deadline, sizeof(uint64_t));
                 pData += sizeof(uint64_t);
-            }
-        }
-
-        void WriteSdaOfferGroup(const SdaOfferGroupMap& offers, uint8_t*& pData) {
-            uint16_t size = utils::checked_cast<size_t, uint16_t>(offers.size());
-            memcpy(pData, &size, sizeof(uint16_t));
-            pData += sizeof(uint16_t);
-            for (const auto& pair : offers) {
-                memcpy(pData, pair.first.data(), Hash256_Size);
-                pData += Hash256_Size;
-                WriteSdaOfferInfo(pair.second, pData);
             }
         }
 

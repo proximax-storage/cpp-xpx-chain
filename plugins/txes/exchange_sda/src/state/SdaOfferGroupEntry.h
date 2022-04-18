@@ -7,7 +7,6 @@
 #pragma once
 #include "src/model/SdaOffer.h"
 #include "src/catapult/types.h"
-#include <map>
 
 namespace catapult { namespace state {
 
@@ -17,7 +16,7 @@ namespace catapult { namespace state {
         Height Deadline;
     };
 
-    using SdaOfferGroupMap = std::map<Hash256, std::vector<SdaOfferBasicInfo>>;
+    using SdaOfferGroupVector = std::vector<SdaOfferBasicInfo>;
 
     // SDA-SDA Offer Group entry.
     class SdaOfferGroupEntry {
@@ -39,36 +38,36 @@ namespace catapult { namespace state {
         }
 
         /// Gets the offers from the same group.
-        SdaOfferGroupMap& sdaOfferGroup() {
+        SdaOfferGroupVector& sdaOfferGroup() {
             return m_sdaOfferGroup;
         }
 
         /// Gets the offers from the same group.
-        const SdaOfferGroupMap& sdaOfferGroup() const {
+        const SdaOfferGroupVector& sdaOfferGroup() const {
             return m_sdaOfferGroup;
         }
     
     public:
         /// Returns offers arranged from the smallest to the biggest MosaicGive amount.
-        SdaOfferGroupMap smallToBig(const Hash256 groupHash, SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupVector smallToBig(SdaOfferGroupVector& sdaOfferGroup);
 
         /// Returns offers arranged from the smallest to the biggest MosaicGive amount by the earliest expiry date.
-        SdaOfferGroupMap smallToBigSortedByEarliestExpiry(const Hash256 groupHash, SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupVector smallToBigSortedByEarliestExpiry(SdaOfferGroupVector& sdaOfferGroup);
 
         /// Returns offers arranged from the biggest to the smallest MosaicGive amount.
-        SdaOfferGroupMap bigToSmall(const Hash256 groupHash, SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupVector bigToSmall(SdaOfferGroupVector& sdaOfferGroup);
         
         /// Returns offers arranged from the biggest to the smallest MosaicGive amount by the earliest expiry date.
-        SdaOfferGroupMap bigToSmallSortedByEarliestExpiry(const Hash256 groupHash, SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupVector bigToSmallSortedByEarliestExpiry(SdaOfferGroupVector& sdaOfferGroup);
 
         /// Returns offers arranged from the exact or closest MosaicGive amount.
-        SdaOfferGroupMap exactOrClosest(const Hash256 groupHash, const Amount offer, SdaOfferGroupMap& sdaOfferGroup);
+        SdaOfferGroupVector exactOrClosest(const Amount offerTarget, SdaOfferGroupVector& sdaOfferGroup);
 
-        void addSdaOfferToGroup(const Hash256& groupHash, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
-        void removeSdaOfferFromGroup(const Hash256& groupHash, const Key& offerOwner);
+        void addSdaOfferToGroup(const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
+        void removeSdaOfferFromGroup(const Key& offerOwner);
 
     private:
         Hash256 m_groupHash;
-        SdaOfferGroupMap m_sdaOfferGroup;
+        SdaOfferGroupVector m_sdaOfferGroup;
     };
 }}

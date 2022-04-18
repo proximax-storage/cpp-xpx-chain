@@ -70,27 +70,24 @@ namespace catapult { namespace test {
         AssertExpiredOffers(entry1.expiredSdaOfferBalances(), entry2.expiredSdaOfferBalances());
     }
 
-    std::vector<state::SdaOfferBasicInfo> GenerateSdaOfferBasicInfo(uint8_t count) {
-        std::vector<state::SdaOfferBasicInfo> groupInfo;
-        for (uint8_t i = 1; i <= count; ++i) {
-            groupInfo.push_back(state::SdaOfferBasicInfo{
-                test::GenerateRandomByteArray<Key>(),
-                test::GenerateRandomValue<Amount>(),
-                test::GenerateRandomValue<Height>(),
-            });
-        }
-        return groupInfo;
+    state::SdaOfferBasicInfo GenerateSdaOfferBasicInfo() {
+        return state::SdaOfferBasicInfo{
+            test::GenerateRandomByteArray<Key>(),
+            test::GenerateRandomValue<Amount>(),
+            test::GenerateRandomValue<Height>(),
+        };
     }
 
-    state::SdaOfferGroupEntry CreateSdaOfferGroupEntry(uint8_t offerCount, Hash256 groupHash) {
+    state::SdaOfferGroupEntry CreateSdaOfferGroupEntry(uint16_t offerCount, Hash256 groupHash) {
         state::SdaOfferGroupEntry entry(groupHash);
-        entry.sdaOfferGroup().emplace(groupHash, test::GenerateSdaOfferBasicInfo(offerCount));
+        for (uint16_t i = 1; i <= offerCount; ++i)
+            entry.sdaOfferGroup().emplace_back(test::GenerateSdaOfferBasicInfo());
         return entry;
     }
 
-    void AssertSdaOfferBasicInfo(const std::vector<state::SdaOfferBasicInfo>& offerGroup1, const std::vector<state::SdaOfferBasicInfo>& offerGroup2) {
-        ASSERT_EQ(offerGroup1.size(), offerGroup1.size());
-        for (auto i = 0u; i < offerGroup2.size(); ++i) {
+    void AssertSdaOfferGroupInfo(const state::SdaOfferGroupVector& offerGroup1, const state::SdaOfferGroupVector& offerGroup2) {
+        ASSERT_EQ(offerGroup1.size(), offerGroup2.size());
+        for (auto i = 0u; i < offerGroup1.size(); ++i) {
             const auto &group1 = offerGroup1[i];
             const auto &group2 = offerGroup2[i];
             EXPECT_EQ(group1.Owner, group2.Owner);
@@ -99,18 +96,9 @@ namespace catapult { namespace test {
         }
     }
 
-    namespace {
-        void AssertSdaOfferGroupData(const state::SdaOfferGroupMap& offerGroup1, const state::SdaOfferGroupMap& offerGroup2) {
-            ASSERT_EQ(offerGroup1.size(), offerGroup2.size());
-            for (const auto& pair : offerGroup1) {
-                AssertSdaOfferBasicInfo(pair.second, offerGroup2.find(pair.first)->second);
-            }
-        }
-    }
-
     void AssertEqualSdaOfferGroupData(const state::SdaOfferGroupEntry& entry1, const state::SdaOfferGroupEntry& entry2) {
         EXPECT_EQ(entry1.groupHash(), entry2.groupHash());
-        AssertSdaOfferGroupData(entry1.sdaOfferGroup(), entry2.sdaOfferGroup());
+        AssertSdaOfferGroupInfo(entry1.sdaOfferGroup(), entry2.sdaOfferGroup());
     }
 
     void AddAccountState(

@@ -78,15 +78,8 @@ namespace catapult { namespace observers {
                 state::SdaOfferGroupEntry sdaOfferGroupEntry(groupHash);
                 if (!sdaOfferGroupCache.contains(groupHash))
                     sdaOfferGroupCache.insert(sdaOfferGroupEntry);
-                state::SdaOfferBasicInfo basicInfo{ expectedValues.Owner, offer.MosaicGive.Amount, deadline };
-                if (sdaOfferGroupEntry.sdaOfferGroup().count(groupHash) == 0) {
-                    std::vector<state::SdaOfferBasicInfo> info;
-                    info.emplace_back(basicInfo);
-                    sdaOfferGroupEntry.sdaOfferGroup().emplace(groupHash, info);
-                }
-                else {
-                    (sdaOfferGroupEntry.sdaOfferGroup().find(groupHash)->second).emplace_back(basicInfo);
-                }
+                state::SdaOfferBasicInfo info{ expectedValues.Owner, offer.MosaicGive.Amount, deadline };
+                sdaOfferGroupEntry.sdaOfferGroup().emplace_back(info);
             }
             sdaExchangeCache.insert(sdaExchangeEntry);
 
