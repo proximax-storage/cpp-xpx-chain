@@ -27,19 +27,19 @@ namespace catapult { namespace validators {
 	DEFINE_LockFund_RESULT(Duplicate_Record, 4);
 
 	/// Validation failed because no record exists at this height for this key.
-	DEFINE_LockFund_RESULT(Request_Non_Existant, 4);
+	DEFINE_LockFund_RESULT(Request_Non_Existant, 5);
 
 	/// Validation failed because mosaics are out of order.
-	DEFINE_LockFund_RESULT(Out_Of_Order_Mosaics, 5);
+	DEFINE_LockFund_RESULT(Out_Of_Order_Mosaics, 6);
 
 	/// Validation failed because plugin configuration data is malformed.
-	DEFINE_LockFund_RESULT(Plugin_Config_Malformed, 6);
+	DEFINE_LockFund_RESULT(Plugin_Config_Malformed, 7);
 
 	/// Validation failed because number of mosaics exceeded the limit.
-	DEFINE_LockFund_RESULT(Too_Many_Mosaics, 7);
+	DEFINE_LockFund_RESULT(Too_Many_Mosaics, 8);
 
 	/// Validation failed because mosaic amount is zero.
-	DEFINE_LockFund_RESULT(Zero_Amount, 8);
+	DEFINE_LockFund_RESULT(Zero_Amount, 9);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
