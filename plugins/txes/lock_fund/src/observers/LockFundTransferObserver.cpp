@@ -12,9 +12,9 @@
 namespace catapult { namespace observers {
 
 	namespace {
-		template<model::LockFundAction TLockAction>
+		template<NotifyMode TLockAction>
 		void Lock(state::AccountState& accountState, cache::LockFundCacheDelta& lockFundCache, const std::map<MosaicId, Amount>& mosaics, Height height, BlockDuration duration) {
-			if constexpr(TLockAction == model::LockFundAction::Lock)
+			if constexpr(TLockAction == NotifyMode::Commit)
 			{
 				for(auto mosaic : mosaics)
 					accountState.Balances.lock(mosaic.first, mosaic.second, height);
@@ -29,9 +29,9 @@ namespace catapult { namespace observers {
 					lockFundCache.remove(accountState.PublicKey, Height(height.unwrap()+duration.unwrap()));
 			}
 		}
-		template<model::LockFundAction TLockAction>
+		template<NotifyMode TLockAction>
 		void Unlock(state::AccountState& accountState, cache::LockFundCacheDelta& lockFundCache, const config::LockFundConfiguration& pluginConfig, const std::map<MosaicId, Amount>& mosaics, Height unlockHeight) {
-			if constexpr(TLockAction == model::LockFundAction::Unlock)
+			if constexpr(TLockAction == NotifyMode::Commit)
 				lockFundCache.insert(accountState.PublicKey, unlockHeight, mosaics);
 			else
 				lockFundCache.remove(accountState.PublicKey, unlockHeight);
@@ -50,9 +50,9 @@ namespace catapult { namespace observers {
 			if(notification.Action == model::LockFundAction::Lock)
 			{
 				if (NotifyMode::Commit == context.Mode)
-					Lock<model::LockFundAction::Lock>(senderState, lockFundCache, mosaics, context.Height, notification.Duration);
+					Lock<NotifyMode::Commit>(senderState, lockFundCache, mosaics, context.Height, notification.Duration);
 				else
-					Lock<model::LockFundAction::Unlock>(senderState, lockFundCache, mosaics, context.Height, notification.Duration);
+					Lock<NotifyMode::Rollback>(senderState, lockFundCache, mosaics, context.Height, notification.Duration);
 			}
 			else
 			{
@@ -60,9 +60,9 @@ namespace catapult { namespace observers {
 				if(notification.Duration == BlockDuration(0))
 					targetHeight += pluginConfig.MinRequestUnlockCooldown.unwrap();
 				if (NotifyMode::Commit == context.Mode)
-					Unlock<model::LockFundAction::Unlock>(senderState, lockFundCache, pluginConfig, mosaics, Height(targetHeight));
+					Unlock<NotifyMode::Commit>(senderState, lockFundCache, pluginConfig, mosaics, Height(targetHeight));
 				else
-					Unlock<model::LockFundAction::Lock>(senderState, lockFundCache, pluginConfig, mosaics, Height(targetHeight));
+					Unlock<NotifyMode::Rollback>(senderState, lockFundCache, pluginConfig, mosaics, Height(targetHeight));
 			}
 
 		}

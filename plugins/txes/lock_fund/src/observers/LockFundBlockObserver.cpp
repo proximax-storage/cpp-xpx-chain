@@ -21,10 +21,22 @@ namespace catapult { namespace observers {
 
 		auto targetHeight = context.Height-Height(config.MaxRollbackBlocks);
 		auto& lockFundCache = context.Cache.sub<cache::LockFundCache>();
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		auto heightRecord = lockFundCache.find(targetHeight);
-		auto records = heightRecord.tryGet();
-		if(records)
+		auto record = heightRecord.tryGet();
+		if(record)
 		{
+			// Unlock amounts
+			for(auto& record : record->LockFundRecords)
+			{
+				auto account = accountStateCache.find(record.first).get();
+				for(auto& mosaic : record.second.Get())
+				{
+					account.Balances.unlock(mosaic.first, mosaic.second);
+				}
+			}
+
+			// Clear records
 			lockFundCache.remove(targetHeight);
 		}
 	}));
