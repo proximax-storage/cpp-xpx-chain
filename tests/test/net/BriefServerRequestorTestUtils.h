@@ -121,7 +121,6 @@ namespace catapult { namespace test {
 		// wait for one
 		std::unique_lock<std::mutex> mlock(mtx);
 		condVar.wait(mlock, [&numCallbacks]{return numCallbacks == 1u;});
-		// WAIT_FOR_ONE(numCallbacks);
 
 		// Assert:
 		ASSERT_EQ(1u, resultPairs.size());
