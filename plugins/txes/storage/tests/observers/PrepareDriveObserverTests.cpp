@@ -34,6 +34,8 @@ namespace catapult { namespace observers {
 		constexpr auto Storage_Mosaic_Id = MosaicId(1234);
 		constexpr auto Streaming_Mosaic_Id = MosaicId(4321);
 
+		constexpr auto Total_Replicator_Count = Replicator_Count + Unacceptable_Replicator_Count;
+
 		auto CreateConfig() {
 			test::MutableBlockchainConfiguration config;
 			config.Immutable.StorageMosaicId = Storage_Mosaic_Id;
@@ -133,7 +135,7 @@ namespace catapult { namespace observers {
             const auto& actualEntry = driveIter.get();
             test::AssertEqualBcDriveData(values.ExpectedBcDriveEntry, actualEntry);
 
-            for (auto i = 0u; i < Replicator_Count + Unacceptable_Replicator_Count; ++i) {
+            for (auto i = 0u; i < Total_Replicator_Count; ++i) {
 				const auto& expectedEntry = std::get<0>(values.ExpectedReplicatorsWithAmounts.at(i));
 
 				auto replicatorIter = replicatorCache.find(expectedEntry.key());
@@ -164,7 +166,7 @@ namespace catapult { namespace observers {
 		const auto replicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
         CacheValues values;
         values.ExpectedBcDriveEntry = CreateBcDriveEntry();
-		for (auto i = 0u; i < Replicator_Count + Unacceptable_Replicator_Count; ++i) {
+		for (auto i = 0u; i < Total_Replicator_Count; ++i) {
 			const bool acceptable = i < Replicator_Count;	// First (Replicator_Count) replicators will have enough mosaics
 															// and are expected to be assigned to the drive.
 			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(replicatorKeyCollector, acceptable);
@@ -184,7 +186,7 @@ namespace catapult { namespace observers {
 		const auto replicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
 		CacheValues values;
 		values.ExpectedBcDriveEntry = CreateBcDriveEntry();
-		for (auto i = 0u; i < Replicator_Count + Unacceptable_Replicator_Count; ++i) {
+		for (auto i = 0u; i < Total_Replicator_Count; ++i) {
 			const bool acceptable = i < Replicator_Count - 1;	// First (Replicator_Count - 1) replicators will have enough mosaics
 																// and are expected to be assigned to the drive.
 			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(replicatorKeyCollector, acceptable);
@@ -192,6 +194,38 @@ namespace catapult { namespace observers {
 			values.ExpectedReplicatorsWithAmounts.push_back(CreateExpectedReplicatorWithAmounts(replicatorWithAmounts));
 			if (acceptable)
 				values.ExpectedBcDriveEntry.replicators().emplace(std::get<0>(replicatorWithAmounts).key());
+		}
+		const auto expectedDriveQueueSize = 1;
+
+		// Assert:
+		RunTest(NotifyMode::Commit, values, replicatorKeyCollector, expectedDriveQueueSize, Current_Height);
+	}
+
+	TEST(TEST_CLASS, PrepareDrive_Commit_NoAcceptableReplicators) {
+		// Arrange:
+		const auto replicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
+		CacheValues values;
+		values.ExpectedBcDriveEntry = CreateBcDriveEntry();
+		for (auto i = 0u; i < Total_Replicator_Count; ++i) {
+			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(replicatorKeyCollector, false);
+			values.InitialReplicatorsWithAmounts.push_back(replicatorWithAmounts);
+			values.ExpectedReplicatorsWithAmounts.push_back(CreateExpectedReplicatorWithAmounts(replicatorWithAmounts));
+		}
+		const auto expectedDriveQueueSize = 1;
+
+		// Assert:
+		RunTest(NotifyMode::Commit, values, replicatorKeyCollector, expectedDriveQueueSize, Current_Height);
+	}
+
+	TEST(TEST_CLASS, PrepareDrive_Commit_NoReplicators) {
+		// Arrange:
+		const auto replicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
+		CacheValues values;
+		values.ExpectedBcDriveEntry = CreateBcDriveEntry();
+		for (auto i = 0u; i < Total_Replicator_Count; ++i) {
+			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(replicatorKeyCollector, false);
+			values.InitialReplicatorsWithAmounts.push_back(replicatorWithAmounts);
+			values.ExpectedReplicatorsWithAmounts.push_back(CreateExpectedReplicatorWithAmounts(replicatorWithAmounts));
 		}
 		const auto expectedDriveQueueSize = 1;
 
