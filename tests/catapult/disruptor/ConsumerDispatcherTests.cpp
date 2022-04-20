@@ -156,13 +156,9 @@ namespace catapult { namespace disruptor {
 			};
 			elementIds.push_back(dispatcher.processElement(ConsumerInput(std::move(ranges[i])), processingCompleteCallback));
 		}
-
 		
 		std::unique_lock<std::mutex> mlock(mtx);
 		condVar.wait(mlock, [&ranges, &numCapturedElements]{return ranges.size() == numCapturedElements;});
-		
-
-		// WAIT_FOR_VALUE(ranges.size(), numCapturedElements);
 
 		// Assert:
 		std::vector<DisruptorElementId> expectedElementIds{ 1u, 2u, 3u };
