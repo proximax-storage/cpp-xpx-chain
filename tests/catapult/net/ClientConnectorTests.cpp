@@ -58,25 +58,30 @@ namespace catapult { namespace net {
 
 		struct AcceptCallbackParams {
 		public:
-			AcceptCallbackParams() : NumCallbacks(0)
+			AcceptCallbackParams() : 
+				FirstCallBack(0),
+				SecondCallBack(0)
 			{}
 
 		public:
 			PeerConnectCode Code;
 			std::shared_ptr<ionet::PacketSocket> pClientSocket;
 			Key ClientKey;
-			std::atomic<size_t> NumCallbacks;
+			std::atomic<size_t> FirstCallBack;
+			std::atomic<size_t> SecondCallBack;
 		};
 
 		void AcceptAndCapture(
 				ClientConnector& connector,
 				const std::shared_ptr<ionet::PacketSocket>& pSocket,
-				AcceptCallbackParams& capture) {
-			connector.accept(pSocket, [&capture](auto acceptConnectCode, const auto& pVerifiedSocket, const auto& key) {
+				AcceptCallbackParams& capture, std::mutex& mtx, std::condition_variable& condVar) {
+			connector.accept(pSocket, [&](auto acceptConnectCode, const auto& pVerifiedSocket, const auto& key) {
+				std::lock_guard<std::mutex> guard(mtx);
 				capture.Code = acceptConnectCode;
 				capture.pClientSocket = pVerifiedSocket;
 				capture.ClientKey = key;
-				++capture.NumCallbacks;
+				++capture.FirstCallBack;
+				condVar.notify_one();
 			});
 		}
 
@@ -97,11 +102,13 @@ namespace catapult { namespace net {
 
 	TEST(TEST_CLASS, AcceptFailsOnAcceptError) {
 		// Arrange:
+		std::condition_variable condVar;
+		std::mutex mtx;
 		ConnectorTestContext context;
 
 		// Act: on an accept error, the server will pass nullptr
 		AcceptCallbackParams capture;
-		AcceptAndCapture(*context.pConnector, nullptr, capture);
+		AcceptAndCapture(*context.pConnector, nullptr, capture, mtx, condVar);
 
 		// Assert:
 		AssertFailed(PeerConnectCode::Socket_Error, capture);
@@ -110,23 +117,34 @@ namespace catapult { namespace net {
 
 	TEST(TEST_CLASS, AcceptFailsOnVerifyError) {
 		// Arrange:
+		std::condition_variable condVar;
+		std::mutex mtx;
 		ConnectorTestContext context;
 
 		// Act: start a server and client verify operation
 		AcceptCallbackParams capture;
 		test::SpawnPacketServerWork(context.IoContext, [&](const auto& pSocket) {
-			AcceptAndCapture(*context.pConnector, pSocket, capture);
+			AcceptAndCapture(*context.pConnector, pSocket, capture, mtx, condVar);
 		});
 
 		test::SpawnPacketClientWork(context.IoContext, [&](const auto& pSocket) {
 			// - trigger a verify error by closing the socket without responding
+			std::lock_guard<std::mutex> guard(mtx);
 			pSocket->close();
-			++capture.NumCallbacks;
+			++capture.SecondCallBack;
+			condVar.notify_one();
 		});
 
 		// - wait for both callbacks to complete and the connection to close
-		WAIT_FOR_VALUE(2u, capture.NumCallbacks);
-		WAIT_FOR_ZERO_EXPR(context.pConnector->numActiveConnections());
+		std::unique_lock<std::mutex> mlock(mtx);
+		condVar.wait(mlock, [&]{return capture.FirstCallBack == 1u && capture.SecondCallBack == 1u;});
+		// new thread to wait some time and trigger the condition variable again
+		std::thread([&](){
+			std::lock_guard<std::mutex> guard(mtx);
+			test::Sleep(15);
+			condVar.notify_one();
+		}).detach();
+		condVar.wait(mlock, [&]{return context.pConnector->numActiveConnections() == 0u;});
 
 		// Assert: the verification should have failed and all connections should have been destroyed
 		AssertFailed(PeerConnectCode::Verify_Error, capture);
