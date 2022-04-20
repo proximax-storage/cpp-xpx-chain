@@ -425,11 +425,15 @@ namespace catapult { namespace net {
 
 	TEST(TEST_CLASS, ServerForwardsAppropriateAcceptedSocketInfoOnSuccess) {
 		// Arrange: set up a multithreaded server
+		std::condition_variable condVar;
+		std::mutex mtx;
 		ionet::AcceptedPacketSocketInfo* pAcceptedSocketInfoRaw;
 		std::atomic_bool isAccepted(false);
-		auto acceptHandler = [&pAcceptedSocketInfoRaw, &isAccepted](const auto& acceptedSocketInfo) {
+		auto acceptHandler = [&pAcceptedSocketInfoRaw, &isAccepted, &condVar, &mtx](const auto& acceptedSocketInfo) {
+			std::lock_guard<std::mutex> guard(mtx);
 			*pAcceptedSocketInfoRaw = acceptedSocketInfo;
 			isAccepted = true;
+			condVar.notify_one();
 		};
 		auto pServer = CreateLocalHostAsyncTcpServer(CreateSettings(acceptHandler));
 
@@ -439,7 +443,8 @@ namespace catapult { namespace net {
 
 		// Act: connect to the server
 		ClientService clientService(1, 1);
-		WAIT_FOR(isAccepted);
+		std::unique_lock<std::mutex> mlock(mtx);
+		condVar.wait(mlock, [&isAccepted]{return isAccepted == true;});
 
 		// Assert: check the accept info (loopback address is used in tests)
 		const auto& acceptedSocketInfo = *pAcceptedSocketInfo;
