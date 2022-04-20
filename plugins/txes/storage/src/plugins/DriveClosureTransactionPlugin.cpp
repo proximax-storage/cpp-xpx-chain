@@ -21,7 +21,6 @@ namespace catapult { namespace plugins {
 			return [&config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
-					sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
 					auto transactionHash = CalculateHash(transaction, config.GenerationHash);
 					sub.notify(DriveClosureNotification<1>(
 							transactionHash,
