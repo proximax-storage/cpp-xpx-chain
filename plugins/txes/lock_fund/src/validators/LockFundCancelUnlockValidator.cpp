@@ -20,7 +20,7 @@ namespace catapult { namespace validators {
 			auto keyRecord = keyRecordIt.tryGet();
 			if(!keyRecord)
 				return Failure_LockFund_Request_Non_Existant;
-			if(keyRecord->LockFundRecords.find(notification.TargetHeight) == keyRecord->LockFundRecords.end())
+			if(keyRecord->LockFundRecords.find(notification.TargetHeight) == keyRecord->LockFundRecords.end() || notification.TargetHeight <= context.Height)
 				return Failure_LockFund_Request_Non_Existant;
 			return ValidationResult::Success;
 		}));

@@ -13,31 +13,66 @@ namespace catapult { namespace observers {
 
 	/// Note: Consider removing records in batches instead
 	DEFINE_OBSERVER(LockFundBlock, model::BlockNotification<1>, ([](const auto& notification, const ObserverContext& context) {
-		if (context.Mode == NotifyMode::Rollback)
-			return;
-		const model::NetworkConfiguration& config = context.Config.Network;
-	  	if (context.Height.unwrap() - config.MaxRollbackBlocks <= 0)
-			return;
 
-		auto targetHeight = context.Height-Height(config.MaxRollbackBlocks);
+		const model::NetworkConfiguration& config = context.Config.Network;
 		auto& lockFundCache = context.Cache.sub<cache::LockFundCache>();
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-		auto heightRecord = lockFundCache.find(targetHeight);
-		auto record = heightRecord.tryGet();
-		if(record)
+		if (context.Mode == NotifyMode::Commit)
 		{
-			// Unlock amounts
-			for(auto& record : record->LockFundRecords)
+
+
+			auto activeHeightRecord = lockFundCache.find(context.Height);
+			auto record = activeHeightRecord.tryGet();
+			if(record)
 			{
-				auto account = accountStateCache.find(record.first).get();
-				for(auto& mosaic : record.second.Get())
+				// Unlock amounts
+				for(auto& irecord : record->LockFundRecords)
 				{
-					account.Balances.unlock(mosaic.first, mosaic.second);
+					if(irecord.second.Active())
+					{
+						auto account = accountStateCache.find(irecord.first).get();
+						for(auto& mosaic : irecord.second.Get())
+						{
+							account.Balances.unlock(mosaic.first, mosaic.second);
+						}
+					}
+				}
+				// Disable records
+				lockFundCache.disable(context.Height);
+			}
+			//Clear aged records
+			if (context.Height.unwrap() - config.MaxRollbackBlocks <= 0)
+				return;
+			auto clearHeight = context.Height-Height(config.MaxRollbackBlocks);
+			auto heightRecord = lockFundCache.find(clearHeight);
+			auto agedRecord = heightRecord.tryGet();
+			if(record)
+			{
+				// Clear records
+				lockFundCache.remove(clearHeight);
+			}
+		}
+		else
+		{
+			auto activeHeightRecord = lockFundCache.find(context.Height);
+			auto record = activeHeightRecord.tryGet();
+			if(record)
+			{
+				// Disable records
+				lockFundCache.recover(context.Height);
+				// Unlock amounts
+				for(auto& irecord : record->LockFundRecords)
+				{
+					auto account = accountStateCache.find(irecord.first).get();
+					if(irecord.second.Active()) //Redundant
+					{
+						for(auto& mosaic : irecord.second.Get())
+						{
+							account.Balances.lock(mosaic.first, mosaic.second);
+						}
+					}
 				}
 			}
-
-			// Clear records
-			lockFundCache.remove(targetHeight);
 		}
 	}));
 }}
