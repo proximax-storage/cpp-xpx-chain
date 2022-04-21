@@ -63,7 +63,7 @@ namespace catapult { namespace test {
         }
     }
 
-    void AssertEqualExchangeData(const state::SdaExchangeEntry& entry1, const state::SdaExchangeEntry& entry2) {
+    void AssertEqualSdaExchangeData(const state::SdaExchangeEntry& entry1, const state::SdaExchangeEntry& entry2) {
         EXPECT_EQ(entry1.version(), entry2.version());
         EXPECT_EQ(entry1.owner(), entry2.owner());
         AssertOffers(entry1.sdaOfferBalances(), entry2.sdaOfferBalances());

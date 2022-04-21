@@ -34,7 +34,7 @@ namespace catapult { namespace test {
     void AssertSdaOfferBalance(const state::SdaOfferBalance& offer1, const state::SdaOfferBalance& offer2);
 
     /// Verifies that \a entry1 is equivalent to \a entry2.
-    void AssertEqualExchangeData(const state::SdaExchangeEntry& entry1, const state::SdaExchangeEntry& entry2);
+    void AssertEqualSdaExchangeData(const state::SdaExchangeEntry& entry1, const state::SdaExchangeEntry& entry2);
 
     /// Creates a SDA-SDA exchange transaction with \a offers.
     template<typename TTransaction, typename TOffer>

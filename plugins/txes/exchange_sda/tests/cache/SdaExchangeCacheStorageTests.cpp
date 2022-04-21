@@ -30,6 +30,6 @@ namespace catapult { namespace cache {
 		const auto& loadedEntry = view->find(originalEntry.owner()).get();
 
 		// - the loaded cache value is correct
-		test::AssertEqualExchangeData(originalEntry, loadedEntry);
+		test::AssertEqualSdaExchangeData(originalEntry, loadedEntry);
 	}
 }}

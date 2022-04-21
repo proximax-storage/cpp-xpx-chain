@@ -129,13 +129,13 @@ namespace catapult { namespace observers {
             for (const auto& expectedEntry : values.ExpectedEntries) {
                 auto iter = exchangeCache.find(expectedEntry.owner());
                 const auto& actualEntry = iter.get();
-                test::AssertEqualExchangeData(actualEntry, expectedEntry);
+                test::AssertEqualSdaExchangeData(actualEntry, expectedEntry);
             }
 
             for (auto i = values.ExpectedEntries.size(); i < values.InitialEntries.size(); ++i) {
                 auto iter = exchangeCache.find(values.InitialEntries[i].owner());
                 const auto& entry = iter.get();
-                test::AssertEqualExchangeData(state::SdaExchangeEntry(entry.owner()), entry);
+                test::AssertEqualSdaExchangeData(state::SdaExchangeEntry(entry.owner()), entry);
             }
 
             for (const auto& expectedAccount : values.ExpectedAccounts) {

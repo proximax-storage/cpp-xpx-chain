@@ -249,7 +249,7 @@ namespace catapult { namespace state {
         });
 
 		// Assert:
-		test::AssertEqualExchangeData(expectedEntry, entry);
+		test::AssertEqualSdaExchangeData(expectedEntry, entry);
 		EXPECT_TRUE(expireSdaOfferBalanceCalled);
 	}
 
@@ -307,7 +307,7 @@ namespace catapult { namespace state {
 		);
 
 		// Assert:
-		test::AssertEqualExchangeData(expectedEntry, entry);
+		test::AssertEqualSdaExchangeData(expectedEntry, entry);
 		EXPECT_TRUE(unexpireSdaOfferBalanceCalled);
 	}
 
@@ -343,7 +343,7 @@ namespace catapult { namespace state {
 		entry.addOffer(MosaicId(2), MosaicId(2), &sdaOffer2, Height(2));
 
 		// Assert:
-		test::AssertEqualExchangeData(expectedEntry, entry);
+		test::AssertEqualSdaExchangeData(expectedEntry, entry);
 	}
 
 	TEST(TEST_CLASS, RemoveSdaOffer) {
@@ -366,7 +366,7 @@ namespace catapult { namespace state {
 		entry.removeOffer(pair4);
 
 		// Assert:
-		test::AssertEqualExchangeData(expectedEntry, entry);
+		test::AssertEqualSdaExchangeData(expectedEntry, entry);
 	}
 
 	TEST(TEST_CLASS, CannotGetSdaOfferWhenSdaOfferDoesntExist) {

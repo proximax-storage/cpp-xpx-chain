@@ -210,7 +210,7 @@ namespace catapult { namespace state {
             test::RunLoadValueTest<TSerializer>(buffer, result);
 
             // Assert:
-            test::AssertEqualExchangeData(originalEntry, result);
+            test::AssertEqualSdaExchangeData(originalEntry, result);
         }
 
         // endregion
