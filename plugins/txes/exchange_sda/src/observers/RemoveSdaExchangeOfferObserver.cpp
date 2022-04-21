@@ -21,17 +21,17 @@ namespace catapult { namespace observers {
             auto mosaicIdGive = context.Resolvers.resolve(pSdaOffer->MosaicIdGive);
             auto mosaicIdGet = context.Resolvers.resolve(pSdaOffer->MosaicIdGet);
 
-            Amount mosaicGiveAmount = entry.sdaOfferBalances().find(state::MosaicsPair{mosaicIdGive, mosaicIdGet})->second.CurrentMosaicGive;
-            Amount mosaicGetAmount = entry.sdaOfferBalances().find(state::MosaicsPair{mosaicIdGive, mosaicIdGet})->second.CurrentMosaicGet;
-            CreditAccount(entry.owner(), mosaicIdGive, mosaicGiveAmount, context);
+            Amount mosaicAmountGive = entry.sdaOfferBalances().find(state::MosaicsPair{mosaicIdGive, mosaicIdGet})->second.InitialMosaicGive;
+            Amount mosaicAmountGet = entry.sdaOfferBalances().find(state::MosaicsPair{mosaicIdGive, mosaicIdGet})->second.InitialMosaicGet;
 
-            std::string reduced = reducedFraction(mosaicGiveAmount, mosaicGetAmount);
+            std::string reduced = reducedFraction(mosaicAmountGive, mosaicAmountGet);
             auto groupHash = calculateGroupHash(mosaicIdGive, mosaicIdGet, reduced);
 
             auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
             auto groupIter = groupCache.find(groupHash);
             auto& groupEntry = groupIter.get();
 
+            CreditAccount(entry.owner(), mosaicIdGive, mosaicAmountGive, context);
             entry.expireOffer(state::MosaicsPair{mosaicIdGive,mosaicIdGet}, context.Height);
             groupEntry.removeSdaOfferFromGroup(notification.Owner);
         }

@@ -115,8 +115,9 @@ namespace catapult { namespace test {
         auto& sdaExchange = sdaExchangeIter.get();
 
         for (auto& mosaic : mosaics) {
-            MosaicId mosaicIdGive = model::ResolverContext().resolve(mosaic.MosaicIdGive);
-            MosaicId mosaicIdGet = model::ResolverContext().resolve(mosaic.MosaicIdGet);
+            auto resolver = test::CreateResolverContextXor();
+            MosaicId mosaicIdGive = resolver.resolve(mosaic.MosaicIdGive);
+            MosaicId mosaicIdGet = resolver.resolve(mosaic.MosaicIdGet);
             Amount mosaicAmountGive = sdaExchange.getSdaOfferBalance(state::MosaicsPair{mosaicIdGive, mosaicIdGet}).CurrentMosaicGive;
             accountState.Balances.credit(mosaicIdGive, mosaicAmountGive, height);
         }

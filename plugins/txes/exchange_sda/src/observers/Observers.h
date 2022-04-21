@@ -37,8 +37,8 @@ namespace catapult { namespace observers {
 	void CreditAccount(const Key& owner, const MosaicId& mosaicId, const Amount& amount, const ObserverContext &context);
 
 	int denominator(int mosaicGive, int mosaicGet);
-	std::string reducedFraction(Amount mosaicGive, Amount mosaicGet);
-	Hash256 calculateGroupHash(MosaicId mosaicGiveId, MosaicId mosaicGetId, std::string reduced);
+	std::string reducedFraction(Amount mosaicGiveAmount, Amount mosaicGetAmount);
+	Hash256 calculateGroupHash(const MosaicId& mosaicIdGive, const MosaicId& mosaicIdGet, const std::string& reduced);
 
 	/// Observes changes triggered by place and exchange offer notifications
 	DECLARE_OBSERVER(PlaceSdaExchangeOfferV1, model::PlaceSdaOfferNotification<1>)();
