@@ -462,7 +462,9 @@ namespace catapult { namespace utils {
 			// and update drive's shards:
 			DriveQueue originalQueue = *pDriveQueue;
 			DriveQueue newQueue;
-			auto remainingCapacity = replicatorEntry.capacity().unwrap();
+			const auto storageMosaicAmount = replicatorState.Balances.get(storageMosaicId);
+			const auto streamingMosaicAmount = replicatorState.Balances.get(streamingMosaicId);
+			auto remainingCapacity = std::min(storageMosaicAmount.unwrap(), streamingMosaicAmount.unwrap() / 2);
 			while (!originalQueue.empty()) {
 				const auto drivePriorityPair = originalQueue.top();
 				const auto& driveKey = drivePriorityPair.first;
