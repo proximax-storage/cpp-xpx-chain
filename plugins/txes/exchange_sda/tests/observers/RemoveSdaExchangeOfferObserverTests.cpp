@@ -9,12 +9,13 @@
 #include "tests/test/SdaExchangeTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
+#include <boost/lexical_cast.hpp>
 
 namespace catapult { namespace observers {
 
 #define TEST_CLASS RemoveSdaExchangeOfferObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(RemoveSdaExchangeOfferV1)
+    DEFINE_COMMON_OBSERVER_TESTS(RemoveSdaExchangeOfferV1,)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::SdaExchangeCacheFactory>;
@@ -25,52 +26,63 @@ namespace catapult { namespace observers {
                     Height&& initialExpiryHeight,
                     Height&& expectedExpiryHeight,
                     std::vector<model::SdaOfferMosaic>&& offersToRemove,
-                    state::SdaExchangeEntry&& initialEntry,
-                    state::SdaExchangeEntry&& expectedEntry)
+                    state::SdaExchangeEntry&& initialSdaExchangeEntry,
+                    state::SdaExchangeEntry&& expectedSdaExchangeEntry,
+                    std::vector<state::SdaOfferGroupEntry>&& initialSdaOfferGroupEntries,
+                    std::vector<state::SdaOfferGroupEntry>&& expectedSdaOfferGroupEntries)
                 : InitialExpiryHeight(std::move(initialExpiryHeight))
                 , ExpectedExpiryHeight(std::move(expectedExpiryHeight))
                 , OffersToRemove(std::move(offersToRemove))
-                , InitialEntry(std::move(initialEntry))
-                , ExpectedEntry(std::move(expectedEntry))
+                , InitialSdaExchangeEntry(std::move(initialSdaExchangeEntry))
+                , ExpectedSdaExchangeEntry(std::move(expectedSdaExchangeEntry))
+                , InitialSdaOfferGroupEntries(std::move(initialSdaOfferGroupEntries))
+                , ExpectedSdaOfferGroupEntries(std::move(expectedSdaOfferGroupEntries))
             {}
 
         public:
             Height InitialExpiryHeight;
             Height ExpectedExpiryHeight;
             std::vector<model::SdaOfferMosaic> OffersToRemove;
-            state::SdaExchangeEntry InitialEntry;
-            state::SdaExchangeEntry ExpectedEntry;
+            state::SdaExchangeEntry InitialSdaExchangeEntry;
+            state::SdaExchangeEntry ExpectedSdaExchangeEntry;
+            std::vector<state::SdaOfferGroupEntry> InitialSdaOfferGroupEntries;
+            std::vector<state::SdaOfferGroupEntry> ExpectedSdaOfferGroupEntries;
         };
 
         template<typename Notification>
         std::unique_ptr<Notification> CreateNotification(const RemoveSdaExchangeOfferValues& values) {
             return std::make_unique<Notification>(
-                values.InitialEntry.owner(),
+                values.InitialSdaExchangeEntry.owner(),
                 values.OffersToRemove.size(),
                 values.OffersToRemove.data());
         }
 
-        void PrepareEntries(state::SdaExchangeEntry& entry1, state::SdaExchangeEntry& entry2) {
+        void PrepareEntries(state::SdaExchangeEntry& sdaExchangeEntry1, state::SdaExchangeEntry& sdaExchangeEntry2, std::vector<state::SdaOfferGroupEntry>& sdaOfferGroupEntries1, std::vector<state::SdaOfferGroupEntry>& sdaOfferGroupEntries2, const Key& owner) {
             state::MosaicsPair pair1 {MosaicId(1), MosaicId(2)};
             state::MosaicsPair pair2 {MosaicId(2), MosaicId(1)};
-            entry1.sdaOfferBalances().emplace(pair1,
+
+            sdaExchangeEntry1.sdaOfferBalances().emplace(pair1,
                 state::SdaOfferBalance {Amount(10), Amount(100), Amount(10), Amount(100), Height(15)});
-            entry1.sdaOfferBalances().emplace(pair2, 
-                state::SdaOfferBalance {Amount(20), Amount(200), Amount(20), Amount(200), Height(5)});
+            sdaExchangeEntry1.sdaOfferBalances().emplace(pair2,
+                state::SdaOfferBalance {Amount(20), Amount(200), Amount(20), Amount(200), Height(5)});         
+            for (auto offer : sdaExchangeEntry1.sdaOfferBalances()) {
+                std::string reduced = reducedFraction(offer.second.InitialMosaicGive, offer.second.InitialMosaicGet);
+                auto groupHash = calculateGroupHash(offer.first.first, offer.first.second, reduced);
+                state::SdaOfferBasicInfo info{ owner, offer.second.CurrentMosaicGive, offer.second.Deadline };
+                state::SdaOfferGroupEntry sdaOfferGroupEntry(groupHash);          
+                sdaOfferGroupEntry.sdaOfferGroup().emplace_back(info);
+                sdaOfferGroupEntries1.emplace_back(sdaOfferGroupEntry);
+            }
 
-            entry2.expiredSdaOfferBalances().emplace(Height(1), entry1.sdaOfferBalances());
-        }
-
-        auto CreateRemoveSdaExchangeOfferValues(state::SdaExchangeEntry&& initialEntry, state::SdaExchangeEntry&& expectedEntry) {
-            return RemoveSdaExchangeOfferValues(
-                Height(5),
-                Height(0),
-                {
-                    model::SdaOfferMosaic{UnresolvedMosaicId(1), UnresolvedMosaicId(2)},
-                    model::SdaOfferMosaic{UnresolvedMosaicId(2), UnresolvedMosaicId(1)},
-                },
-                std::move(initialEntry),
-                std::move(expectedEntry));
+            sdaExchangeEntry2.expiredSdaOfferBalances().emplace(Height(1), sdaExchangeEntry1.sdaOfferBalances());
+            for (auto offer : sdaExchangeEntry2.sdaOfferBalances()) {
+                std::string reduced = reducedFraction(offer.second.InitialMosaicGive, offer.second.InitialMosaicGet);
+                auto groupHash = calculateGroupHash(offer.first.first, offer.first.second, reduced);
+                state::SdaOfferBasicInfo info{ owner, offer.second.CurrentMosaicGive, offer.second.Deadline };
+                state::SdaOfferGroupEntry sdaOfferGroupEntry(groupHash);          
+                sdaOfferGroupEntry.sdaOfferGroup().emplace_back(info);
+                sdaOfferGroupEntries2.emplace_back(sdaOfferGroupEntry);
+            }          
         }
 
         template<typename TTraits>
@@ -78,39 +90,57 @@ namespace catapult { namespace observers {
             // Arrange:
             Height currentHeight(1);
             ObserverTestContext context(NotifyMode::Commit, currentHeight);
-            auto pNotification =  CreateNotification<model::RemoveSdaOfferNotification<TTraits::Version>>(values);
+            auto pNotification = CreateNotification<model::RemoveSdaOfferNotification<TTraits::Version>>(values);
             auto pObserver = TTraits::CreateObserver();
-            auto& accountCache = context.cache().sub<cache::AccountStateCache>();
-            auto& exchangeCache = context.cache().sub<cache::SdaExchangeCache>();
-            auto owner = values.InitialEntry.owner();
+            auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
+            auto& sdaExchangeCache = context.cache().sub<cache::SdaExchangeCache>();
+            auto& sdaOfferGroupCache = context.cache().sub<cache::SdaOfferGroupCache>();
+            const auto& owner = values.InitialSdaExchangeEntry.owner();
 
             // Populate cache.
-            accountCache.addAccount(owner, currentHeight);
-            exchangeCache.insert(values.InitialEntry);
+            sdaExchangeCache.insert(values.InitialSdaExchangeEntry);
+            for (auto& val : values.InitialSdaOfferGroupEntries)
+                sdaOfferGroupCache.insert(val);
+            test::AddAccountState(accountStateCache, sdaExchangeCache, owner, currentHeight, values.OffersToRemove);
 
             // Act:
             test::ObserveNotification(*pObserver, *pNotification, context);
 
             // Assert: check the cache
-            auto exchangeIter = exchangeCache.find(owner);
+            auto exchangeIter = sdaExchangeCache.find(owner);
             const auto& exchangeEntry = exchangeIter.get();
-            test::AssertEqualExchangeData(exchangeEntry, values.ExpectedEntry);
-            EXPECT_EQ(values.InitialEntry.minExpiryHeight(), values.InitialExpiryHeight);
+            test::AssertEqualSdaExchangeData(exchangeEntry, values.ExpectedSdaExchangeEntry);
+            EXPECT_EQ(values.InitialSdaExchangeEntry.minExpiryHeight(), values.InitialExpiryHeight);
             EXPECT_EQ(exchangeEntry.minExpiryHeight(), values.ExpectedExpiryHeight);
 
-            auto accountIter = accountCache.find(owner);
+            auto accountIter = accountStateCache.find(owner);
             const auto& accountEntry = accountIter.get();
-            EXPECT_EQ(Amount(0), accountEntry.Balances.get(MosaicId(1)));
-            EXPECT_EQ(Amount(20), accountEntry.Balances.get(MosaicId(2)));
+            EXPECT_EQ(Amount(20), accountEntry.Balances.get(MosaicId(1)));
+            EXPECT_EQ(Amount(40), accountEntry.Balances.get(MosaicId(2)));
         }
-    }
 
-    struct RemoveSdaExchangeOfferObserverV1Traits {
-		static constexpr VersionType Version = 1;
-		static auto CreateObserver() {
-			return CreateRemoveSdaExchangeOfferV1Observer();
-		}
-	};
+
+        auto CreateRemoveSdaExchangeOfferValues(state::SdaExchangeEntry&& initialSdaExchangeEntry, state::SdaExchangeEntry&& expectedSdaExchangeEntry, std::vector<state::SdaOfferGroupEntry>&& initialSdaOfferGroupEntries, std::vector<state::SdaOfferGroupEntry>&& expectedSdaOfferGroupEntries) {
+            return RemoveSdaExchangeOfferValues(
+                Height(5),
+                Height(0),
+                {
+                    model::SdaOfferMosaic{test::UnresolveXor(MosaicId(1)), test::UnresolveXor(MosaicId(2))},
+                    model::SdaOfferMosaic{test::UnresolveXor(MosaicId(2)), test::UnresolveXor(MosaicId(1))},
+                },
+                std::move(initialSdaExchangeEntry),
+                std::move(expectedSdaExchangeEntry),
+                std::move(initialSdaOfferGroupEntries),
+                std::move(expectedSdaOfferGroupEntries));
+        }
+
+        struct RemoveSdaExchangeOfferObserverV1Traits {
+            static constexpr VersionType Version = 1;
+            static auto CreateObserver() {
+                return CreateRemoveSdaExchangeOfferV1Observer();
+            }
+        };
+    }
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
@@ -120,10 +150,14 @@ namespace catapult { namespace observers {
     TRAITS_BASED_TEST(RemoveOffer_Commit) {
 		// Arrange:
 		auto offerOwner = test::GenerateRandomByteArray<Key>();
-		state::SdaExchangeEntry initialEntry(offerOwner);
-		state::SdaExchangeEntry expectedEntry(offerOwner);
-		PrepareEntries(initialEntry, expectedEntry);
-		auto values = CreateRemoveSdaExchangeOfferValues(std::move(initialEntry), std::move(expectedEntry));
+        state::SdaExchangeEntry initialSdaExchangeEntry(offerOwner);
+        state::SdaExchangeEntry expectedSdaExchangeEntry(offerOwner);
+        std::vector<state::SdaOfferGroupEntry> initialSdaOfferGroupEntries;
+        std::vector<state::SdaOfferGroupEntry> expectedSdaOfferGroupEntries;
+        PrepareEntries(initialSdaExchangeEntry, expectedSdaExchangeEntry, initialSdaOfferGroupEntries, expectedSdaOfferGroupEntries, offerOwner);
+        auto values = CreateRemoveSdaExchangeOfferValues(
+            std::move(initialSdaExchangeEntry), std::move(expectedSdaExchangeEntry),
+            std::move(initialSdaOfferGroupEntries), std::move(expectedSdaOfferGroupEntries));
 
 		// Assert:
 		RunTest<TTraits>(values);
