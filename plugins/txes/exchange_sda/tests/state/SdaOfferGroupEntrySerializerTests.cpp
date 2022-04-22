@@ -17,7 +17,7 @@ namespace catapult { namespace state {
         constexpr size_t Offer_Count = 1;
         constexpr auto Entry_Size =
             Hash256_Size
-            + Hash256_Size + 2 + Offer_Count * (2 + sizeof(SdaOfferBasicInfo));
+            + 2 + Offer_Count * sizeof(SdaOfferBasicInfo);
 
         class TestContext {
         public:

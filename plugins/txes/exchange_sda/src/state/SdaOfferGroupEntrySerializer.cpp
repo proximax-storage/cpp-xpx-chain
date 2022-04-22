@@ -33,6 +33,8 @@ namespace catapult { namespace state {
                 io::Read(input, offer.Deadline);
                 entry.sdaOfferGroup().emplace_back(offer);
             }
+
+            return entry;
         }
     }
 
