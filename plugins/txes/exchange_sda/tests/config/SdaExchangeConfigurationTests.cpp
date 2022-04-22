@@ -54,7 +54,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(true, config.Enabled);
 				EXPECT_EQ(BlockDuration(57600), config.MaxOfferDuration);
 				EXPECT_EQ(crypto::ParseKey("CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE"), config.LongOfferKey);
-                EXPECT_EQ(SortPolicy::Default, config.OfferSortPolicy);
+                EXPECT_EQ(SortPolicy::SmallToBig, config.OfferSortPolicy);
 			}
 		};
 	}

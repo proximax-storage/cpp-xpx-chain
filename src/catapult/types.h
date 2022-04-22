@@ -138,7 +138,7 @@ namespace catapult {
 	using Reputation = utils::BaseValue<uint64_t, Reputation_tag>;
 
 	enum class SortPolicy : uint8_t {
-		Default = 1,
+		Default,
 		SmallToBig,
 		SmallToBigSortedByEarliestExpiry,
 		BigToSmall, 

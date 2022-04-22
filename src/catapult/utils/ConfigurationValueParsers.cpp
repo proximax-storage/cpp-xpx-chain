@@ -64,12 +64,12 @@ namespace catapult { namespace utils {
 			{ std::make_pair("BigToSmall", SortPolicy::BigToSmall) },
 			{ std::make_pair("BigToSmallSortedByEarliestExpiry", SortPolicy::BigToSmallSortedByEarliestExpiry) },
 			{ std::make_pair("ExactOrClosest", SortPolicy::ExactOrClosest) },
-			{ std::make_pair("1", SortPolicy::Default) },
-			{ std::make_pair("2", SortPolicy::SmallToBig) },
-			{ std::make_pair("3", SortPolicy::SmallToBigSortedByEarliestExpiry) },
-			{ std::make_pair("4", SortPolicy::BigToSmall) },
-			{ std::make_pair("5", SortPolicy::BigToSmallSortedByEarliestExpiry) },
-			{ std::make_pair("6", SortPolicy::ExactOrClosest) }
+			{ std::make_pair("0", SortPolicy::Default) },
+			{ std::make_pair("1", SortPolicy::SmallToBig) },
+			{ std::make_pair("2", SortPolicy::SmallToBigSortedByEarliestExpiry) },
+			{ std::make_pair("3", SortPolicy::BigToSmall) },
+			{ std::make_pair("4", SortPolicy::BigToSmallSortedByEarliestExpiry) },
+			{ std::make_pair("5", SortPolicy::ExactOrClosest) }
 		}};
 	}
 
