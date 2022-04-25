@@ -128,11 +128,21 @@ namespace catapult { namespace extensions {
 					auto pPromise = std::make_shared<thread::promise<ConnectResult>>();
 					futures[i++] = pPromise->get_future();
 
-					m_state.PacketWriters.connect(node, [node, pPromise](const auto& connectResult) {
+					std::condition_variable condVar;
+					std::mutex mtx;
+					std::atomic<int> flag = 0;
+
+					m_state.PacketWriters.connect(node, [node, pPromise, &flag, &mtx, &condVar](const auto& connectResult) {
+						std::lock_guard<std::mutex> guard(mtx);
 						CATAPULT_LOG_LEVEL(MapToLogLevel(connectResult.Code))
 								<< "connection attempt to " << node << " completed with " << connectResult.Code;
 						pPromise->set_value(std::make_pair(node.identityKey(), connectResult.Code));
+						flag++;
+						condVar.notify_one();
 					});
+
+					std::unique_lock<std::mutex> mlock(mtx);
+					condVar.wait(mlock, [&flag]{return flag != 0;});
 				}
 
 				return futures;
