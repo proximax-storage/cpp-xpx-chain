@@ -36,25 +36,51 @@ namespace catapult { namespace thread {
 		future<int> CreateSleepValueFuture(long numMillis, int value) {
 			promise<int> promise;
 			auto future = promise.get_future();
-			std::thread([promise = std::move(promise), numMillis, value]() mutable {
+
+			std::condition_variable condVar;
+			std::mutex mtx;
+			std::atomic<int> flag = 0;
+
+			std::thread([promise = std::move(promise), numMillis, value, &flag, &mtx, &condVar]() mutable {
+				std::lock_guard<std::mutex> guard(mtx);
 				LogAndSleep(numMillis);
 				CATAPULT_LOG(debug) << "returning " << value << " after sleep";
 
 				promise.set_value(std::move(value));
+
+				flag++;
+				condVar.notify_one();
 			}).detach();
+
+			std::unique_lock<std::mutex> mlock(mtx);
+			condVar.wait(mlock, [&flag]{return flag != 0;});
+			
 			return future;
 		}
 
 		future<int> CreateSleepExceptionFuture(long numMillis) {
 			promise<int> promise;
 			auto future = promise.get_future();
-			std::thread([promise = std::move(promise), numMillis]() mutable {
+
+			std::condition_variable condVar;
+			std::mutex mtx;
+			std::atomic<int> flag = 0;
+
+			std::thread([promise = std::move(promise), numMillis, &flag, &mtx, &condVar]() mutable {
+				std::lock_guard<std::mutex> guard(mtx);
 				LogAndSleep(numMillis);
 				CATAPULT_LOG(debug) << "throwing exception after sleep";
 
 				auto pException = std::make_exception_ptr(catapult_runtime_error("throwing exception after sleep"));
 				promise.set_exception(pException);
+
+				flag++;
+				condVar.notify_one();
 			}).detach();
+
+			std::unique_lock<std::mutex> mlock(mtx);
+			condVar.wait(mlock, [&flag]{return flag != 0;});
+
 			return future;
 		}
 
