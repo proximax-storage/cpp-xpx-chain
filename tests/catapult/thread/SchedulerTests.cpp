@@ -296,16 +296,29 @@ namespace catapult { namespace thread {
 			auto task = CreateImmediateTask([&, wait, pPool]() {
 				isAccepted = true;
 				auto pPromise = std::make_shared<promise<TaskResult>>();
+
+				std::condition_variable condVar;
+				std::mutex mtx;
+				std::atomic<int> flag = 0;
+
 				wait(pPool->ioContext(), [&, pPromise]() {
+					std::lock_guard<std::mutex> guard(mtx);
 					if (numWaits < maxWaits) {
 						++numWaits;
 						return true;
 					}
 
 					pPromise->set_value(TaskResult::Break);
+					
+					flag++;
+					condVar.notify_one();
+
 					return false;
 				});
 
+				std::unique_lock<std::mutex> mlock(mtx);
+				condVar.wait(mlock, [&flag]{return flag != 0;});
+				
 				return pPromise->get_future();
 			});
 
