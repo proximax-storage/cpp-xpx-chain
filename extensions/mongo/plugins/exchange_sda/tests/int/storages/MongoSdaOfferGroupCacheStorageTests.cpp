@@ -52,13 +52,13 @@ namespace catapult { namespace mongo { namespace plugins {
             static void Mutate(cache::CatapultCacheDelta& delta, ModelType& entry) {
                 // update expected
                 auto groupHash = test::GenerateRandomByteArray<Hash256>();
-                auto offer = test::GenerateSdaOfferBasicInfo(5);
-                entry.sdaOfferGroup().emplace(groupHash, offer);
+                auto offer = test::GenerateSdaOfferBasicInfo();
+                entry.sdaOfferGroup().emplace_back(offer);
 
                 // update cache
                 auto& offerCacheDelta = delta.sub<cache::SdaOfferGroupCache>();
                 auto& entryFromCache = offerCacheDelta.find(entry.groupHash()).get();
-                entryFromCache.sdaOfferGroup().emplace(groupHash, offer);
+                entryFromCache.sdaOfferGroup().emplace_back(offer);
             }
 
             static auto GetFindFilter(const ModelType& entry) {
