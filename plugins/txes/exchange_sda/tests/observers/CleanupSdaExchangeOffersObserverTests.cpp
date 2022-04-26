@@ -24,14 +24,7 @@ namespace catapult { namespace observers {
         using Notification = model::BlockNotification<1>;
 
         constexpr Height Current_Height(55);
-        constexpr uint32_t Max_Rollback_Blocks(50);
         constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
-
-        auto CreateConfig() {
-            test::MutableBlockchainConfiguration config;
-            config.Network.MaxRollbackBlocks = Max_Rollback_Blocks;
-            return config.ToConst();
-        }
 
         struct CacheValues {
         public:
@@ -72,39 +65,48 @@ namespace catapult { namespace observers {
                 std::vector<state::SdaExchangeEntry>& expectedEntries,
                 std::vector<state::AccountState>& initialAccounts,
                 std::vector<state::AccountState>& expectedAccounts) {
-            state::MosaicsPair pair1 {MosaicId(1), MosaicId(2)};
-            state::MosaicsPair pair2 {MosaicId(2), MosaicId(1)};
+            constexpr state::MosaicsPair pair1 {MosaicId(1), MosaicId(210)};
+            constexpr state::MosaicsPair pair2 {MosaicId(210), MosaicId(1)};
             state::SdaOfferBalance offer1 {Amount(10), Amount(100), Amount(10), Amount(100), Current_Height + Height(5)};
             state::SdaOfferBalance offer2 {Amount(20), Amount(200), Amount(20), Amount(200), Current_Height};
-            Height pruneHeight(Current_Height.unwrap() - Max_Rollback_Blocks);
+            Height pruneHeight = Current_Height;
 
-            // SDA-SDA offers expired.
+            // Some SDA-SDA offers expired.
             state::SdaExchangeEntry initialEntry1(test::GenerateRandomByteArray<Key>());
             initialEntry1.sdaOfferBalances().emplace(pair1, offer1);
-            offer1.Deadline = Current_Height;
             initialEntry1.sdaOfferBalances().emplace(pair2, offer2);
             initialEntries.push_back(initialEntry1);
 
             state::SdaExchangeEntry expectedEntry1(initialEntry1.owner());
-            expectedEntry1.expiredSdaOfferBalances()[Current_Height].emplace(pair1, offer1);
-            expectedEntry1.expiredSdaOfferBalances()[Current_Height].emplace(pair2, offer2);
+            expectedEntry1.sdaOfferBalances().emplace(pair1, offer1);
             expectedEntries.push_back(expectedEntry1);
 
             initialAccounts.push_back(CreateAccount(initialEntry1.owner()));
             expectedAccounts.push_back(CreateAccount(initialEntry1.owner()));
-            expectedAccounts.back().Balances.credit(pair1.first, Amount(100));
             expectedAccounts.back().Balances.credit(pair2.first, Amount(20));
 
-            // SDA-SDA offers pruned along with the entry.
+            // All SDA-SDA offers expired.
             state::SdaExchangeEntry initialEntry2(test::GenerateRandomByteArray<Key>());
-            initialEntry2.expiredSdaOfferBalances()[pruneHeight].emplace(pair1, offer1);
-            initialEntry2.expiredSdaOfferBalances()[pruneHeight].emplace(pair2, offer2);
+            offer1.Deadline = Current_Height;
+            initialEntry2.sdaOfferBalances().emplace(pair1, offer1);
+            initialEntry2.sdaOfferBalances().emplace(pair2, offer2);
             initialEntries.push_back(initialEntry2);
+
+            initialAccounts.push_back(CreateAccount(initialEntry2.owner()));
+            expectedAccounts.push_back(CreateAccount(initialEntry2.owner()));
+            expectedAccounts.back().Balances.credit(pair1.first, Amount(10));
+            expectedAccounts.back().Balances.credit(pair2.first, Amount(20));
+
+            // SDA-SDA offers pruned immediately along with the entry.
+            state::SdaExchangeEntry initialEntry3(test::GenerateRandomByteArray<Key>());
+            initialEntry3.expiredSdaOfferBalances()[pruneHeight].emplace(pair1, offer1);
+            initialEntry3.expiredSdaOfferBalances()[pruneHeight].emplace(pair2, offer2);
+            initialEntries.push_back(initialEntry3);
         }
 
         void RunTest(const CacheValues& values) {
             // Arrange:
-            ObserverTestContext context(NotifyMode::Commit, Current_Height, CreateConfig());
+            ObserverTestContext context(NotifyMode::Commit, Current_Height);
             model::BlockNotification<1> notification = test::CreateBlockNotification();
             auto pObserver = CreateCleanupSdaOffersObserver();
             auto& exchangeCache = context.cache().sub<cache::SdaExchangeCache>();
