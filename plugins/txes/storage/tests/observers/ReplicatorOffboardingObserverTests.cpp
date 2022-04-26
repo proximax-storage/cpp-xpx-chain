@@ -96,7 +96,6 @@ namespace catapult { namespace observers {
 
         state::ReplicatorEntry CreateReplicatorEntry() {
             state::ReplicatorEntry entry(Replicator_Key);
-            entry.setCapacity(Capacity);
             entry.drives().emplace(Drive_Key1, state::DriveInfo{});
             entry.drives().emplace(Drive_Key2, state::DriveInfo{});
             return entry;

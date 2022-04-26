@@ -97,7 +97,6 @@ namespace catapult { namespace observers {
 			AddDriveToTestValues(values, Drive2_Key, Drive2_Size, Drive2_Replicator_Count, Drive2_Actual_Replicator_Count, false);
 			AddDriveToTestValues(values, Drive3_Key, Drive3_Size, Drive3_Replicator_Count, Drive3_Actual_Replicator_Count, false);
 
-			values.ExpectedReplicatorEntry.setCapacity(Capacity);
 			values.ExpectedReplicatorEntry.drives().emplace(Drive1_Key, state::DriveInfo{ Hash256(), false, 0 });
 		}
 
