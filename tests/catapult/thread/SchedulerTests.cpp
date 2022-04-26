@@ -497,11 +497,21 @@ namespace catapult { namespace thread {
 				std::atomic<uint32_t>& counter) {
 			auto pTimer = std::make_shared<boost::asio::steady_timer>(ioContext);
 			return CreateContinuousTaskWithCounterAndSleep(startDelayMs, repeatDelayMs, counter, [callbackDelayMs, pTimer]() {
+				std::condition_variable condVar;
+				std::mutex mtx;
+				std::atomic<int> flag = 0;
+
 				auto pPromise = std::make_shared<promise<TaskResult>>();
 				pTimer->expires_from_now(std::chrono::milliseconds(callbackDelayMs));
-				pTimer->async_wait([pPromise](const auto&) {
+				pTimer->async_wait([pPromise, &flag, &mtx, &condVar](const auto&) {
+					std::lock_guard<std::mutex> guard(mtx);
 					pPromise->set_value(TaskResult::Continue);
+					flag++;
+					condVar.notify_one();
 				});
+
+				std::unique_lock<std::mutex> mlock(mtx);
+				condVar.wait(mlock, [&flag]{return flag != 0;});
 
 				return pPromise->get_future();
 			});
