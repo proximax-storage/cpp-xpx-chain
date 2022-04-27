@@ -268,7 +268,7 @@ namespace catapult { namespace config {
 			"extension.eventsource", "extension.harvesting", "extension.syncsource",
 			"extension.diagnostics", "extension.hashcache", "extension.networkheight",
 			"extension.nodediscovery", "extension.packetserver", "extension.pluginhandlers", "extension.sync",
-			"extension.timesync", "extension.transactionsink", "extension.unbondedpruning", "extension.storage"
+			"extension.timesync", "extension.transactionsink", "extension.unbondedpruning"
 		});
 		AssertDefaultInflationConfiguration(config.Inflation);
 		AssertDefaultSupportedEntityVersions(config.SupportedEntityVersions);

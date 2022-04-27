@@ -3,13 +3,13 @@
 name=$(ip link | awk -F: '$0 ~ "eth*"{print $2;getline}')
 if [ -z "$var" ];
 then
-	name=$(ip link | awk -F: '$0 ~ "wl*"{print $2;getline}')
+	name=$(ip link | awk -F: '$0 ~ "wl"{print $2;getline}')
 fi
 
 printf "Chosen network interface: $name\n"
 printf "Creating addresses...\n"
 
-client=192.168.20.31
+client=192.168.20.30
 printf "Client: $client\n"
 sudo ip addr add $client dev $name
 
@@ -23,4 +23,3 @@ do
 	printf "Peer node/replicator $i: ${peers[$i]}\n"
 	sudo ip addr add ${peers[$i]} dev $name
 done
-

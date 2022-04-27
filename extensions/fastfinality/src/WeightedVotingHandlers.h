@@ -5,11 +5,11 @@
 **/
 
 #pragma once
+#include "WeightedVotingChainPackets.h"
 #include "catapult/extensions/ServerHooks.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/thread/Future.h"
 #include "catapult/types.h"
-#include "WeightedVotingChainPackets.h"
 #include <functional>
 #include <memory>
 
@@ -33,19 +33,39 @@ namespace catapult { namespace fastfinality {
 		ionet::ServerPacketHandlers& handlers,
 		const plugins::PluginManager& pluginManager);
 
+	/// Registers a pull proposed block handler in \a handlers constructing response from \a pFsmWeak.
+	void RegisterPullProposedBlockHandler(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		ionet::ServerPacketHandlers& handlers);
+
 	/// Registers a push confirmed block handler in \a handlers verifying data with \a pFsmWeak and \a pluginManager.
 	void RegisterPushConfirmedBlockHandler(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers,
 		const plugins::PluginManager& pluginManager);
 
+	/// Registers a pull confirmed block handler in \a handlers constructing response from \a pFsmWeak.
+	void RegisterPullConfirmedBlockHandler(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		ionet::ServerPacketHandlers& handlers);
+
 	/// Registers a push prevote message handler in \a handlers constructing response from \a pFsmWeak.
-	void RegisterPushPrevoteMessageHandler(
+	void RegisterPushPrevoteMessagesHandler(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers);
 
 	/// Registers a push precommit message handler in \a handlers that adds the message to \a pFsmWeak.
-	void RegisterPushPrecommitMessageHandler(
+	void RegisterPushPrecommitMessagesHandler(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		ionet::ServerPacketHandlers& handlers);
+
+	/// Registers a pull prevote message handler in \a handlers constructing response from \a pFsmWeak.
+	void RegisterPullPrevoteMessagesHandler(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		ionet::ServerPacketHandlers& handlers);
+
+	/// Registers a pull precommit message handler in \a handlers constructing response from \a pFsmWeak.
+	void RegisterPullPrecommitMessagesHandler(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers);
 

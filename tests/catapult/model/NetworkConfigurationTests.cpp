@@ -79,8 +79,9 @@ namespace catapult { namespace model {
 							{ "committeePhaseTime", "5s" },
 							{ "minCommitteePhaseTime", "1s" },
 							{ "maxCommitteePhaseTime", "1m" },
-							{ "committeeMessageBroadcastInterval", "100ms" },
-							{ "committeeRequestInterval", "300ms" },
+							{ "committeeSilenceInterval", "100ms" },
+							{ "committeeRequestInterval", "500ms" },
+							{ "committeeChainHeightRequestInterval", "30s" },
 							{ "committeeTimeAdjustment", "1.1" },
 							{ "committeeEndSyncApproval", "0.45" },
 							{ "committeeBaseTotalImportance", "100" },
@@ -122,8 +123,9 @@ namespace catapult { namespace model {
 					"committeePhaseTime",
 					"minCommitteePhaseTime",
 					"maxCommitteePhaseTime",
-					"committeeMessageBroadcastInterval",
+					"committeeSilenceInterval",
 					"committeeRequestInterval",
+					"committeeChainHeightRequestInterval",
 					"committeeTimeAdjustment",
 					"committeeEndSyncApproval",
 					"committeeBaseTotalImportance",
@@ -164,8 +166,9 @@ namespace catapult { namespace model {
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteePhaseTime);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.MinCommitteePhaseTime);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.MaxCommitteePhaseTime);
-				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteeMessageBroadcastInterval);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteeSilenceInterval);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteeRequestInterval);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteeChainHeightRequestInterval);
 				EXPECT_EQ(0.0, config.CommitteeTimeAdjustment);
 
 				EXPECT_TRUE(config.Plugins.empty());
@@ -204,8 +207,9 @@ namespace catapult { namespace model {
 				EXPECT_EQ(utils::TimeSpan::FromSeconds(5), config.CommitteePhaseTime);
 				EXPECT_EQ(utils::TimeSpan::FromSeconds(1), config.MinCommitteePhaseTime);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(1), config.MaxCommitteePhaseTime);
-				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(100), config.CommitteeMessageBroadcastInterval);
-				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(300), config.CommitteeRequestInterval);
+				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(100), config.CommitteeSilenceInterval);
+				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(500), config.CommitteeRequestInterval);
+				EXPECT_EQ(utils::TimeSpan::FromSeconds(30), config.CommitteeChainHeightRequestInterval);
 				EXPECT_EQ(1.1, config.CommitteeTimeAdjustment);
 
 				EXPECT_EQ(2u, config.Plugins.size());

@@ -25,6 +25,9 @@ namespace catapult { namespace config {
 		/// Maximal size of the drive.
 		utils::FileSize MaxDriveSize;
 
+		/// Minimal capacity of the replicator.
+		utils::FileSize MinCapacity;
+
 		/// Maximal size of the modification (for single payment).
 		utils::FileSize MaxModificationSize;
 

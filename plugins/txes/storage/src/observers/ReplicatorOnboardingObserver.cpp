@@ -20,7 +20,6 @@ namespace catapult { namespace observers {
 
 			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 			state::ReplicatorEntry replicatorEntry(notification.PublicKey);
-			replicatorEntry.setCapacity(notification.Capacity);
 			replicatorCache.insert(replicatorEntry);
 
 		  	std::seed_seq seed(notification.Seed.begin(), notification.Seed.end());

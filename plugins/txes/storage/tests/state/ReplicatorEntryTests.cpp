@@ -20,21 +20,6 @@ namespace catapult { namespace state {
         EXPECT_EQ(key, entry.key());
     }
 
-    TEST(TEST_CLASS, CanAccessCapacity) {
-        // Arrange:
-        auto capacity = Amount(10);
-        auto entry = ReplicatorEntry(Key());
-
-        // Sanity:
-        ASSERT_EQ(Amount(0), entry.capacity());
-
-        // Act:
-        entry.setCapacity(capacity);
-
-        // Assert:
-        EXPECT_EQ(capacity, entry.capacity());
-    }
-
     TEST(TEST_CLASS, CanAccessDrives) {
         // Arrange:
         auto entry = ReplicatorEntry(Key());
@@ -51,5 +36,21 @@ namespace catapult { namespace state {
         ASSERT_EQ(1, entry.drives().size());
         EXPECT_EQ(driveInfo, entry.drives().at(driveKey));
     }
+
+	TEST(TEST_CLASS, CanAccessDownloadChannels) {
+		// Arrange:
+		auto entry = ReplicatorEntry(Key());
+		std::set<Hash256> downloadChannels = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
+
+		// Sanity:
+		ASSERT_TRUE(entry.downloadChannels().empty());
+
+		// Act:
+		entry.downloadChannels() = downloadChannels;
+
+		// Assert:
+		ASSERT_EQ(2, entry.downloadChannels().size());
+		EXPECT_EQ(downloadChannels, entry.downloadChannels());
+	}
 
 }}

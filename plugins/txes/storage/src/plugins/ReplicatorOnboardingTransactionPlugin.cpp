@@ -25,7 +25,6 @@ namespace catapult { namespace plugins {
 				case 1: {
 					auto hashSeed = CalculateHash(transaction, config.GenerationHash);
 
-					sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
 					sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
 					sub.notify(ReplicatorOnboardingNotification<1>(transaction.Signer, transaction.Capacity, hashSeed));
 					sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));

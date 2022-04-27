@@ -22,8 +22,7 @@ namespace catapult {
 
 namespace catapult { namespace fastfinality {
 
-	template<typename TPacket>
-	using VoteMap = std::map<Key, std::shared_ptr<TPacket>>;
+	using VoteMap = std::map<Key, CommitteeMessage>;
 
 	class CommitteeData {
 	public:
@@ -118,34 +117,40 @@ namespace catapult { namespace fastfinality {
 			return m_precommits;
 		}
 
-		void addVote(std::shared_ptr<PrevoteMessagePacket>&& pPacket) {
+		auto votes(CommitteeMessageType type) const {
 			std::lock_guard<std::mutex> guard(m_mutex);
-			m_prevotes.emplace(pPacket->Message.BlockCosignature.Signer, std::move(pPacket));
+			if (type == CommitteeMessageType::Prevote) {
+				return m_prevotes;
+			} else {
+				return m_precommits;
+			}
 		}
 
-		void addVote(std::shared_ptr<PrecommitMessagePacket>&& pPacket) {
+		bool hasVote(const Key& signer, CommitteeMessageType type) {
 			std::lock_guard<std::mutex> guard(m_mutex);
-			m_precommits.emplace(pPacket->Message.BlockCosignature.Signer, std::move(pPacket));
+			if (type == CommitteeMessageType::Prevote) {
+				return (m_prevotes.find(signer) != m_prevotes.end());
+			} else {
+				return (m_precommits.find(signer) != m_precommits.end());
+			}
+		}
+
+		void addVote(const CommitteeMessage& message) {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			const auto& signer = message.BlockCosignature.Signer;
+			if (message.Type == CommitteeMessageType::Prevote) {
+				if ((m_prevotes.find(signer) == m_prevotes.end()))
+					m_prevotes.emplace(signer, message);
+			} else {
+				if (m_precommits.find(signer) == m_precommits.end())
+					m_precommits.emplace(signer, message);
+			}
 		}
 
 		void clearVotes() {
 			std::lock_guard<std::mutex> guard(m_mutex);
 			m_prevotes.clear();
 			m_precommits.clear();
-		}
-
-		bool hasVote(const Key& signer, CommitteeMessageType type) {
-			std::lock_guard<std::mutex> guard(m_mutex);
-			switch (type) {
-				case CommitteeMessageType::Prevote:
-					return (m_prevotes.find(signer) != m_prevotes.end());
-
-				case CommitteeMessageType::Precommit:
-					return (m_precommits.find(signer) != m_precommits.end());
-
-				default:
-					return false;
-			}
 		}
 
 		void setSumOfPrevotesSufficient(bool value) {
@@ -170,10 +175,10 @@ namespace catapult { namespace fastfinality {
 		Hash256 m_proposedBlockHash;
 		std::shared_ptr<model::Block> m_pConfirmedBlock;
 
-		VoteMap<PrevoteMessagePacket> m_prevotes;
-		VoteMap<PrecommitMessagePacket> m_precommits;
-		mutable std::mutex m_mutex;
-
+		VoteMap m_prevotes;
+		VoteMap m_precommits;
 		bool m_sumOfPrevotesSufficient;
+
+		mutable std::mutex m_mutex;
 	};
 }}

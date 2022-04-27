@@ -72,6 +72,9 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by download channel refund notifications.
 	DECLARE_OBSERVER(DownloadChannelRefund, model::DownloadChannelRefundNotification<1>)();
 
+    /// Observes change triggered by finish download
+    DECLARE_OBSERVER(FinishDownload, model::FinishDownloadNotification<1>)();
+
 	/// Observes changes triggered by stream start notifications.
 	DECLARE_OBSERVER(StreamStart, model::StreamStartNotification<1>)();
 

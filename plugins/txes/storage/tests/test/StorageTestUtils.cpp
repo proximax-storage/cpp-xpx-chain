@@ -250,7 +250,6 @@ namespace catapult { namespace test {
             uint16_t drivesCount,
 			uint16_t downloadChannelCount) {
         state::ReplicatorEntry entry(key);
-		entry.setCapacity(capacity);
         for (auto dC = 0u; dC < drivesCount; ++dC)
             entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
         for (auto i = 0u; i < downloadChannelCount; ++i)
@@ -261,8 +260,6 @@ namespace catapult { namespace test {
 
     void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry) {
         EXPECT_EQ(expectedEntry.key(), entry.key());
-        EXPECT_EQ(expectedEntry.capacity(), entry.capacity());
-		EXPECT_EQ(expectedEntry.blsKey(), entry.blsKey());
 
 		AssertEqualDriveInfos(expectedEntry.drives(), entry.drives());
     }
