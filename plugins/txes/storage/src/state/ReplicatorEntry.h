@@ -44,26 +44,6 @@ namespace catapult { namespace state {
 		ReplicatorMixin() = default;
 
 	public:
-		/// Sets the capacity of the replicator.
-		void setCapacity(const Amount& capacity) {
-			m_capacity = capacity;
-		}
-
-		/// Gets the capacity of the replicator.
-		const Amount& capacity() const {
-			return m_capacity;
-		}
-
-		/// Sets BLS public key of the replicator.
-		void setBlsKey(const BLSPublicKey& blsKey) {
-			m_blsKey = blsKey;
-		}
-
-		/// Gets BLS public key of the replicator.
-		const BLSPublicKey& blsKey() const {
-			return m_blsKey;
-		}
-
 		/// Gets infos of drives assigned to the replicator.
 		const DrivesMap& drives() const {
 			return m_drives;
@@ -85,8 +65,6 @@ namespace catapult { namespace state {
 		}
 
 	private:
-		Amount m_capacity;
-		BLSPublicKey m_blsKey;
 		DrivesMap m_drives;
 		std::set<Hash256> m_downloadChannels;
 	};

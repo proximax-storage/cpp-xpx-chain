@@ -29,16 +29,23 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			array << bson_stream::close_array;
 		}
+
+		void StreamDownloadChannels(bson_stream::document& builder, const std::set<Hash256>& downloadChannels) {
+			auto array = builder << "downloadChannels" << bson_stream::open_array;
+			for (const auto& downloadChannelId : downloadChannels)
+				array << ToBinary(downloadChannelId);
+			array << bson_stream::close_array;
+		}
 	}
 
 	bsoncxx::document::value ToDbModel(const state::ReplicatorEntry& entry, const Key& key) {
 		bson_stream::document builder;
 		auto doc = builder << "replicator" << bson_stream::open_document
 				<< "key" << ToBinary(entry.key())
-				<< "version" << static_cast<int32_t>(entry.version())
-				<< "capacity" << ToInt64(entry.capacity());
+				<< "version" << static_cast<int32_t>(entry.version());
 
 		StreamDrives(builder, entry.drives());
+		StreamDownloadChannels(builder, entry.downloadChannels());
 
 		return doc
 				<< bson_stream::close_document
@@ -64,6 +71,14 @@ namespace catapult { namespace mongo { namespace plugins {
 				drives.emplace(drive, info);
 			}
 		}
+
+		void ReadDownloadChannels(std::set<Hash256>& downloadChannels, const bsoncxx::array::view& dbDownloadChannels) {
+			for (const auto& dbDownloadChannelId : dbDownloadChannels) {
+				Hash256 downloadChannelId;
+				DbBinaryToModelArray(downloadChannelId, dbDownloadChannelId.get_binary());
+				downloadChannels.emplace(std::move(downloadChannelId));
+			}
+		}
 	}
 
 	// region ToModel
@@ -77,9 +92,9 @@ namespace catapult { namespace mongo { namespace plugins {
 		state::ReplicatorEntry entry(key);
 
 		entry.setVersion(static_cast<VersionType>(dbReplicatorEntry["version"].get_int32()));
-		entry.setCapacity(Amount(dbReplicatorEntry["capacity"].get_int64()));
 
 		ReadDrives(entry.drives(), dbReplicatorEntry["drives"].get_array().value);
+		ReadDownloadChannels(entry.downloadChannels(), dbReplicatorEntry["downloadChannels"].get_array().value);
 
 		return entry;
 	}
