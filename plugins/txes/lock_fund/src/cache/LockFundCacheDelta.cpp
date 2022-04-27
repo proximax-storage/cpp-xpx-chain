@@ -43,7 +43,7 @@ namespace catapult { namespace cache {
 			state::LockFundRecordGroup<state::LockFundHeightIndexDescriptor> group;
 			group.Identifier = unlockHeight;
 			group.LockFundRecords.insert(std::make_pair(publicKey, state::LockFundRecord(state::LockFundRecordMosaicMap(mosaics))));
-			m_pLockFundGroupsByHeight->insert(group);
+			m_pLockFundGroupsByHeight->insert(std::move(group));
 		}
 		if(keyGroup)
 		{
@@ -58,7 +58,7 @@ namespace catapult { namespace cache {
 			state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor> group;
 			group.Identifier = publicKey;
 			group.LockFundRecords.insert(std::make_pair(unlockHeight, state::LockFundRecord(state::LockFundRecordMosaicMap(mosaics))));
-			m_pLockFundGroupsByKey->insert(group);
+			m_pLockFundGroupsByKey->insert(std::move(group));
 		}
 	}
 

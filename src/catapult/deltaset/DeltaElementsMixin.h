@@ -71,19 +71,19 @@ namespace catapult { namespace deltaset {
 	public:
 		/// Gets pointers to all added elements.
 		PointerContainer addedElements() const {
-			auto structurizedElements = utils::make_tuple_unpack([](auto& data){return data.deltas().Added;}, m_setsDelta);
+			auto structurizedElements = utils::make_tuple_unpack([](auto& data){return &data.deltas().Added;}, m_setsDelta);
 			return CollectAllPointers(structurizedElements);
 		}
 
 		/// Gets pointers to all modified elements.
 		PointerContainer modifiedElements() const {
-			auto structurizedElements = utils::make_tuple_unpack([](auto& data){return data.deltas().Copied;}, m_setsDelta);
+			auto structurizedElements = utils::make_tuple_unpack([](auto& data){return &data.deltas().Copied;}, m_setsDelta);
 			return CollectAllPointers(structurizedElements);
 		}
 
 		/// Gets pointers to all removed elements.
 		PointerContainer removedElements() const {
-			auto structurizedElements = utils::make_tuple_unpack([](auto& data){return data.deltas().Removed;}, m_setsDelta);
+			auto structurizedElements = utils::make_tuple_unpack([](auto& data) {return &data.deltas().Removed;}, m_setsDelta);
 			return CollectAllPointers(structurizedElements);
 		}
 
@@ -93,14 +93,13 @@ namespace catapult { namespace deltaset {
 			PointerContainer dest;
 			constexpr auto size = std::tuple_size<typename std::remove_reference<decltype(source)>::type>::value;
 			utils::for_sequence(std::make_index_sequence<size>{}, [&](auto i){
-			  for(auto& elem : std::get<i>(source))
+			  for(auto& elem : *std::get<i>(source))
 			  {
 				  std::get<i>(dest).insert(ValueAccessor<typename std::remove_cv<typename std::remove_reference<decltype(std::get<i>(m_setsDelta))>::type>::type>::GetPointer(elem));
 			  }
 			});
 			return dest;
 		}
-
 	private:
 		std::tuple<const TSetDelta&...> m_setsDelta;
 	};

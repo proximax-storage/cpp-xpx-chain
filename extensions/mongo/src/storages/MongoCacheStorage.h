@@ -169,7 +169,7 @@ namespace catapult { namespace mongo { namespace storages {
 		/// Creates a cache storage around \a storageContext and \a networkIdentifier.
 		MongoMultisetCacheStorage(MongoStorageContext& storageContext, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 				: m_database(storageContext.createDatabaseConnection())
-				, m_errorPolicy(storageContext.createCollectionErrorPolicy("lockFundRecords"))
+				, m_errorPolicy(storageContext.createCollectionErrorPolicy(std::string(TCacheTraits::Collection_Names[0])))
 				, m_bulkWriter(storageContext.bulkWriter())
 				, m_pConfigHolder(pConfigHolder)
 		{}
@@ -177,7 +177,7 @@ namespace catapult { namespace mongo { namespace storages {
 	private:
 		void saveDelta(const CacheChangesType& changes) override {
 			auto addedElements = changes.addedElements();
-			auto modifiedElements = changes.modifiedElements();
+ 			auto modifiedElements = changes.modifiedElements();
 			auto removedElements = changes.removedElements();
 
 			// 1. remove elements common to both added and removed

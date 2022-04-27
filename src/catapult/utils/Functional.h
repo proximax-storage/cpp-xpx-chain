@@ -57,7 +57,7 @@ namespace catapult { namespace utils {
 	};
 
 	template<typename TMapper, typename TTupleArg>
-	auto make_tuple_unpack(TMapper map, TTupleArg args)
+	auto make_tuple_unpack(TMapper map, TTupleArg& args)
 	{
 		return std::apply([&map](auto& ...args){
 		  return std::make_tuple(map(args)...);

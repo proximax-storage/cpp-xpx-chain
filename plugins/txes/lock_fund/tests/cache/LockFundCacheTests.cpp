@@ -71,11 +71,12 @@ namespace catapult { namespace cache {
 	// *** custom tests ***
 
 #define LF_EMPTY_SET { {},{} }
-#define LF_SET(HeightValues, KeyValues) { {HeightValues},{KeyValues} }
-
+#define BRACED_INIT_LIST(...) {__VA_ARGS__}
+#define LF_SET(HeightValues, KeyValues) { BRACED_INIT_LIST(HeightValues), BRACED_INIT_LIST(KeyValues)}
+#define LF_MSET(HeightValues, KeyValues) { BRACED_INIT_LIST HeightValues, BRACED_INIT_LIST KeyValues}
 
 	namespace {
-
+// 119 209 213  252
 		static std::tuple<std::set<Height>, std::set<Key>> CollectIds(const std::tuple<std::unordered_set<const state::LockFundRecordGroup<state::LockFundHeightIndexDescriptor>*>, std::unordered_set<const state::LockFundRecordGroup<state::LockFundKeyIndexDescriptor>*>>& elements) {
 			std::tuple<std::set<Height>, std::set<Key>> ids;
 			for (const auto& pElement : std::get<0>(elements))
@@ -126,7 +127,8 @@ namespace catapult { namespace cache {
 
 			// Act:
 			auto &record = delta->find(LockFundCacheMixinTraits::MakeId(123)).get();
-			record.LockFundRecords.clear(); // Remove if not needed.
+			auto &record2 = delta->find(insertRecord.LockFundRecords.cbegin()->first).get();
+
 			// Assert: if elements are immutable, no modifications are possible
 			AssertMarkedElements(*delta, LF_EMPTY_SET, LF_SET(LockFundCacheMixinTraits::MakeId(123), insertRecord.LockFundRecords.cbegin()->first), LF_EMPTY_SET);
 		}
@@ -151,7 +153,7 @@ namespace catapult { namespace cache {
 			LockFundCacheMixinTraits::CacheType cache;
 			std::vector<Key> associatedKeys(140);
 			auto delta = cache.createDelta(Height{0});
-			for (uint8_t i = 100; i < 110; ++i)
+			for (uint8_t i = 100; i < 109; ++i)
 			{
 				auto record = LockFundCacheMixinTraits::CreateWithId(i);
 				associatedKeys[i] = record.LockFundRecords.cbegin()->first;
@@ -162,13 +164,21 @@ namespace catapult { namespace cache {
 
 			// Act:
 			// - add two
-			delta->insert(LockFundCacheMixinTraits::CreateWithId(123));
-			delta->insert(LockFundCacheMixinTraits::CreateWithId(128));
+			for (uint8_t i = 109; i < 111; ++i)
+			{
+				auto record = LockFundCacheMixinTraits::CreateWithId(i);
+				associatedKeys[i] = record.LockFundRecords.cbegin()->first;
+				delta->insert(record);
+			}
 
 			// - modify three
 			delta->find(LockFundCacheMixinTraits::MakeId(105)).get();
 			delta->find(LockFundCacheMixinTraits::MakeId(107)).get();
 			delta->find(LockFundCacheMixinTraits::MakeId(108)).get();
+
+			delta->find(associatedKeys[105]).get();
+			delta->find(associatedKeys[107]).get();
+			delta->find(associatedKeys[108]).get();
 
 			// - remove four
 			delta->remove(LockFundCacheMixinTraits::MakeId(100));
@@ -176,15 +186,17 @@ namespace catapult { namespace cache {
 			delta->remove(LockFundCacheMixinTraits::MakeId(104));
 			delta->remove(LockFundCacheMixinTraits::MakeId(106));
 
+
 			// Assert
 			AssertMarkedElements(
 					*delta,
-					LF_SET((LockFundCacheMixinTraits::MakeId(123), LockFundCacheMixinTraits::MakeId(128)),
-						   (associatedKeys[123], associatedKeys[128])),
-					LF_SET((LockFundCacheMixinTraits::MakeId(105), LockFundCacheMixinTraits::MakeId(107), LockFundCacheMixinTraits::MakeId(108)),
+					LF_MSET((LockFundCacheMixinTraits::MakeId(109), LockFundCacheMixinTraits::MakeId(110)),
+						   (associatedKeys[109], associatedKeys[110])),
+					LF_MSET((LockFundCacheMixinTraits::MakeId(105), LockFundCacheMixinTraits::MakeId(107), LockFundCacheMixinTraits::MakeId(108)),
 						   (associatedKeys[105], associatedKeys[107], associatedKeys[108])),
-					LF_SET((LockFundCacheMixinTraits::MakeId(100), LockFundCacheMixinTraits::MakeId(101), LockFundCacheMixinTraits::MakeId(104), LockFundCacheMixinTraits::MakeId(106)),
-						   (associatedKeys[100], associatedKeys[101], associatedKeys[104], associatedKeys[106])));
+					LF_MSET((LockFundCacheMixinTraits::MakeId(100), LockFundCacheMixinTraits::MakeId(101), LockFundCacheMixinTraits::MakeId(104), LockFundCacheMixinTraits::MakeId(106)),
+						   (associatedKeys[100], associatedKeys[101], associatedKeys[104], associatedKeys[106]))
+					);
 		}
 
 	}
@@ -192,7 +204,25 @@ namespace catapult { namespace cache {
 #undef LF_EMPTY_SET;
 #undef LF_SET;
 	// region delta elements tests
+	TEST(TEST_CLASS, AssertInitiallyNoElementsAreMarkedAsAddedOrModifiedOrRemoved) {
+		AssertInitiallyNoElementsAreMarkedAsAddedOrModifiedOrRemoved();
+	}
 
+	TEST(TEST_CLASS, AssertAddedElementsAreMarkedAsAdded) {
+		AssertAddedElementsAreMarkedAsAdded();
+	}
+
+	TEST(TEST_CLASS, AssertModifiedElementsAreMarkedAsModified) {
+		AssertModifiedElementsAreMarkedAsModified();
+	}
+
+	TEST(TEST_CLASS, AssertRemovedElementsAreMarkedAsRemoved) {
+		AssertRemovedElementsAreMarkedAsRemoved();
+	}
+
+	TEST(TEST_CLASS, AssertMultipleMarkedElementsCanBeTracked) {
+		AssertMultipleMarkedElementsCanBeTracked();
+	}
 
 	// endregion
 

@@ -19,8 +19,6 @@ namespace catapult { namespace observers {
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		if (context.Mode == NotifyMode::Commit)
 		{
-
-
 			auto activeHeightRecord = lockFundCache.find(context.Height);
 			auto record = activeHeightRecord.tryGet();
 			if(record)
@@ -46,7 +44,7 @@ namespace catapult { namespace observers {
 			auto clearHeight = context.Height-Height(config.MaxRollbackBlocks);
 			auto heightRecord = lockFundCache.find(clearHeight);
 			auto agedRecord = heightRecord.tryGet();
-			if(record)
+			if(agedRecord)
 			{
 				// Clear records
 				lockFundCache.remove(clearHeight);

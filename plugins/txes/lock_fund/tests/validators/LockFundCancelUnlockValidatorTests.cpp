@@ -40,7 +40,7 @@ namespace catapult { namespace validators {
 		// Assert:
 		auto keyPair = test::GenerateKeyPair(DerivationScheme::Ed25519_Sha2);
 		AssertValidationResult(test::Success_Result,
-	   Height(16),
+	   Height(116),
 	   BlockDuration(15),
 	   256,
 	   keyPair,
@@ -48,7 +48,7 @@ namespace catapult { namespace validators {
 
 	   },
 	   [&keyPair](cache::LockFundCacheDelta& lockFundCache){
-		 lockFundCache.insert(keyPair.publicKey(), Height(16), {{MosaicId(71), Amount(3)}});
+		 lockFundCache.insert(keyPair.publicKey(), Height(116), {{MosaicId(71), Amount(3)}});
 
 	   });
 	}
