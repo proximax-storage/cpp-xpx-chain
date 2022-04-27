@@ -11,7 +11,7 @@ namespace catapult { namespace notification_handlers {
 	using Notification = model::EndDriveVerificationNotification<1>;
 
 	DECLARE_HANDLER(EndDriveVerification, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(FinishDownload, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
+		return MAKE_HANDLER(EndDriveVerification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
