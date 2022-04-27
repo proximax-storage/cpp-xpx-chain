@@ -13,9 +13,9 @@ namespace catapult { namespace state {
 	namespace {
 
 		void SaveVerificationNode(io::OutputStream& output, const AVLTreeNode& node) {
-			io::Write(output, node.m_left);
-			io::Write(output, node.m_right);
-			io::Write16(output, node.m_height);
+			io::Write(output, node.Left);
+			io::Write(output, node.Right);
+			io::Write16(output, node.Height);
 		}
 
 		void SaveActiveDataModification(io::OutputStream& output, const ActiveDataModification& modification) {
@@ -178,17 +178,6 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void LoadCumulativeUploadSizes(io::InputStream& input, SizeMap& cumulativeUploadSizes) {
-			auto count = io::Read16(input);
-			while (count--) {
-				Key replicatorKey;
-				io::Read(input, replicatorKey);
-				auto size = io::Read64(input);
-				cumulativeUploadSizes.emplace(replicatorKey, size);
-				CATAPULT_LOG( error ) << "load cumulative upload " << replicatorKey << " " << size;
-			}
-		}
-
 		void LoadReplicators(io::InputStream& input, utils::SortedKeySet& replicators) {
 			auto count = io::Read16(input);
 			while (count--) {
@@ -217,18 +206,17 @@ namespace catapult { namespace state {
 		}
 
 		void LoadShards(io::InputStream& input, Shards& shards) {
-			CATAPULT_LOG( error ) << "Started Loading Shards";
 			auto count = io::Read16(input);
 			while (count--) {
 				shards.emplace_back();
 				LoadShard(input, shards.back());
 			}
-			CATAPULT_LOG( error ) << "Finished Loading Shards";
 		}
 
 		void LoadVerification(io::InputStream& input, std::optional<Verification>& verification) {
 			bool hasVerification = io::Read8(input);
 			if (hasVerification) {
+				verification = Verification();
 				io::Read(input, verification->VerificationTrigger);
 				io::Read(input, verification->Expiration);
 				LoadShards(input, verification->Shards);
@@ -291,7 +279,6 @@ namespace catapult { namespace state {
 	}
 
 	void BcDriveEntrySerializer::Save(const BcDriveEntry& driveEntry, io::OutputStream& output) {
-
 		io::Write32(output, driveEntry.version());
 		io::Write(output, driveEntry.key());
 
@@ -320,8 +307,6 @@ namespace catapult { namespace state {
 	}
 
 	BcDriveEntry BcDriveEntrySerializer::Load(io::InputStream& input) {
-		CATAPULT_LOG( error ) << "Started Loading Entry";
-
 		// read version
 		VersionType version = io::Read32(input);
 		if (version > 1)
@@ -368,8 +353,6 @@ namespace catapult { namespace state {
 		LoadDownloadShards(input, entry.downloadShards());
 		LoadModificationShards(input, entry.dataModificationShards());
 		LoadConfirmedStorageInfos(input, entry.confirmedStorageInfos());
-
-		CATAPULT_LOG( error ) << "Finished Loading Entry";
 
 		return entry;
 	}

@@ -13,7 +13,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::BlockNotification<2>;
+	using Notification = model::BlockNotification<1>;
 	using BigUint = boost::multiprecision::uint256_t;
 
 	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, Notification)() {

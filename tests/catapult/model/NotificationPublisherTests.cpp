@@ -332,11 +332,10 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pBlock, PublicationMode::Basic, [numCosignatures](const auto& sub) {
 			// Assert: no notifications were suppressed (blocks do not have custom notifications)
-			ASSERT_EQ(8u + numCosignatures, sub.numNotifications());
+			ASSERT_EQ(7u + numCosignatures, sub.numNotifications());
 			auto i = 0u;
 			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[i++]);
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(Core_Block_v2_Notification, sub.notificationTypes()[i++]);
 			EXPECT_EQ(Core_Block_Committee_v1_Notification, sub.notificationTypes()[i++]);
 			for (auto k = 0u; k < numCosignatures; ++k)
 				EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);

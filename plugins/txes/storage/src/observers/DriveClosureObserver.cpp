@@ -6,7 +6,6 @@
 
 #include "Observers.h"
 #include "src/utils/Queue.h"
-#include "src/utils/StorageUtils.h"
 #include "src/utils/AVLTree.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
@@ -81,13 +80,15 @@ namespace catapult { namespace observers {
 					queueAdapter.remove(driveEntry.entryKey());
 
 					// The Drive is Removed, so we should make removal from verification tree
-					utils::AVLTreeAdapter<Key> treeAdapter(
-							queueCache,
-							state::DriveVerificationsTree,
-							[](const Key& key) { return key; },
-							[&](const Key& key) -> state::AVLTreeNode& {
-								return driveCache.find(key).get().verificationNode();
-							});
+					utils::AVLTreeAdapter treeAdapter(
+						queueCache,
+						state::DriveVerificationsTree,
+						[&driveEntry](const Key&) -> state::AVLTreeNode& {
+							return driveEntry.verificationNode();
+						},
+						[&driveEntry](const Key&, const state::AVLTreeNode& node) {
+							driveEntry.verificationNode() = node;
+						});
 					treeAdapter.remove(driveEntry.key());
 
 					// Returning the rest to the drive owner

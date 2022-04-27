@@ -165,16 +165,6 @@ namespace catapult { namespace state {
     	const auto& driveEntry = driveIter.get();
     	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
 
-    	std::ostringstream s;
-    	s << "extended shards ";
-    	for (const auto& [mainKey, shard]: driveEntry.dataModificationShards()) {
-    		s << "shard of " << mainKey << ": ";
-    		for (const auto& [key, _]: shard.m_actualShardMembers) {
-    			s << key << std::endl;
-    		}
-    	}
-    	CATAPULT_LOG( error ) << s.str();
-
     	return {shard.m_actualShardMembers, shard.m_formerShardMembers, shard.m_ownerUpload};
     }
 

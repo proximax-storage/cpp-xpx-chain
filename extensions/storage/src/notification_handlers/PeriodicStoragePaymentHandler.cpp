@@ -10,7 +10,7 @@
 
 namespace catapult { namespace notification_handlers {
 
-	using Notification = model::BlockNotification<2>;
+	using Notification = model::BlockNotification<1>;
 
 	DECLARE_HANDLER(PeriodicStoragePayment, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
 		return MAKE_HANDLER(PeriodicStoragePayment, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {

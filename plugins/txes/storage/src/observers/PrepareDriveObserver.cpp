@@ -40,13 +40,15 @@ namespace catapult { namespace observers {
 		  	queueAdapter.pushBack(driveEntry.entryKey());
 
 			// Insert the Drive into the Verification Queue
-			utils::AVLTreeAdapter<Key> treeAdapter(
-					queueCache,
-					state::DriveVerificationsTree,
-					[](const Key& key) { return key; },
-					[&](const Key& key) -> state::AVLTreeNode& {
-						return driveCache.find(key).get().verificationNode();
-					});
+			utils::AVLTreeAdapter treeAdapter(
+				queueCache,
+				state::DriveVerificationsTree,
+				[&driveEntry](const Key&) -> state::AVLTreeNode& {
+					return driveEntry.verificationNode();
+				},
+				[&driveEntry](const Key&, const state::AVLTreeNode& node) {
+					driveEntry.verificationNode() = node;
+				});
 			treeAdapter.insert(driveEntry.key());
 		}))
 	}

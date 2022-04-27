@@ -1,12 +1,16 @@
-#pragma once
+/**
+*** Copyright 2022 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
 
+#pragma once
 #include "src/state/QueueEntry.h"
 #include "src/utils/StorageUtils.h"
 #include "src/state/CommonEntities.h"
+#include <utility>
 
 namespace catapult::utils {
-
-using Pointer = Key;
 
 enum class Rotation {
 	NO_ROTATION,
@@ -16,29 +20,28 @@ enum class Rotation {
 	RL_ROTATION
 };
 
-template<class TKeyType>
 class AVLTreeAdapter {
 public:
 	AVLTreeAdapter(
 			cache::QueueCache::CacheDeltaType& queueCache,
 			const Key& queueKey,
-			const std::function<TKeyType(const Pointer& pointer)>& keyExtractor,
-			const std::function<state::AVLTreeNode& (const Pointer& pointer)>& nodeExtractor)
+			std::function<state::AVLTreeNode (const Key&)> nodeExtractor,
+			std::function<void (const Key&, const state::AVLTreeNode&)> nodeSaver)
 		: m_queueCache(queueCache)
 		, m_queueKey(queueKey)
-		, m_keyExtractor(keyExtractor)
-		, m_nodeExtractor(nodeExtractor)
+		, m_nodeExtractor(std::move(nodeExtractor))
+		, m_nodeSaver(std::move(nodeSaver))
 	{}
 
-	void insert(const Pointer& pValue) {
+	void insert(const Key& pValue) {
 		setRoot(insert(getRoot(), pValue));
 	}
 
-	void remove(const TKeyType& key) {
+	void remove(const Key& key) {
 		setRoot(remove(getRoot(), key));
 	}
 
-	Pointer lowerBound(const TKeyType& key) {
+	Key lowerBound(const Key& key) {
 		return lowerBound(getRoot(), key);
 	};
 
@@ -50,7 +53,7 @@ public:
 
 private:
 
-	Pointer getRoot() {
+	Key getRoot() {
 		if (!m_queueCache.contains(m_queueKey)) {
 			state::QueueEntry entry(m_queueKey);
 			m_queueCache.insert(entry);
@@ -58,20 +61,20 @@ private:
 		return m_queueCache.find(m_queueKey).get().getFirst();
 	}
 
-	int checkTreeValidity(const Pointer& pointer, bool& valid) {
-		if (isNull(pointer)) {
+	int checkTreeValidity(const Key& nodeKey, bool& valid) {
+		if (isNull(nodeKey))
 			return 0;
-		}
-		const auto& node = m_nodeExtractor(pointer);
-		auto leftHeight = checkTreeValidity(node.m_left, valid);
-		auto rightHeight = checkTreeValidity(node.m_right, valid);
+
+		auto node = m_nodeExtractor(nodeKey);
+		auto leftHeight = checkTreeValidity(node.Left, valid);
+		auto rightHeight = checkTreeValidity(node.Right, valid);
 		if (abs(leftHeight - rightHeight) > 1) {
 			valid = false;
 		}
 		return std::max(leftHeight, rightHeight) + 1;
 	}
 
-	Pointer setRoot(const Pointer& root) {
+	Key setRoot(const Key& root) {
 		if (!m_queueCache.contains(m_queueKey)) {
 			state::QueueEntry entry(m_queueKey);
 			m_queueCache.insert(entry);
@@ -79,137 +82,129 @@ private:
 		m_queueCache.find(m_queueKey).get().setFirst(root);
 	}
 
-	bool isNull(const Pointer& pNode) const {
-		return pNode == Pointer();
+	bool isNull(const Key& nodeKey) const {
+		return nodeKey == Key();
 	}
 
-	Pointer insert(const Pointer& pNode, const Pointer& pInsertedValue) {
-		if (isNull(pNode)) {
-			return pInsertedValue;
-		}
+	Key insert(const Key& nodeKey, const Key& insertedKey) {
+		if (isNull(nodeKey))
+			return insertedKey;
 
-		state::AVLTreeNode& node = m_nodeExtractor(pNode);
-		const auto nodeKey = m_keyExtractor(pNode);
-
-		const auto insertedKey = m_keyExtractor(pInsertedValue);
+		state::AVLTreeNode node = m_nodeExtractor(nodeKey);
 
 		if (insertedKey < nodeKey) {
-			node.m_left = insert(node.m_left, pInsertedValue);
+			node.Left = insert(node.Left, insertedKey);
 		}
 		else {
-			node.m_right = insert(node.m_right, pInsertedValue);
+			node.Right = insert(node.Right, insertedKey);
 		}
 
-		updateHeight(pNode);
-		return maybeRotate(pNode);
+		m_nodeSaver(nodeKey, node);
+
+		updateHeight(nodeKey);
+		return maybeRotate(nodeKey);
 	}
 
-	Pointer remove(Pointer pNode, const TKeyType& removedKey) {
-		if (isNull(pNode)) {
-			return pNode;
-		}
+	Key remove(Key nodeKey, const Key& removedKey) {
+		if (isNull(nodeKey))
+			return nodeKey;
 
-		auto& node = m_nodeExtractor(pNode);
-		const auto nodeKey = m_keyExtractor(pNode);
+		auto node = m_nodeExtractor(nodeKey);
 
 		if (nodeKey == removedKey) {
-			if (isNull(node.m_left) && isNull(node.m_right)) {
-				pNode = {};
+			if (isNull(node.Left) && isNull(node.Right)) {
+				nodeKey = {};
 			}
-			else if (isNull(node.m_left)) {
-				pNode = node.m_right;
+			else if (isNull(node.Left)) {
+				nodeKey = node.Right;
 			}
 			else {
-				auto [leftChild, replacer] = findReplacer(node.m_left);
-				auto rightChild = node.m_right;
-				pNode = replacer;
-				auto& newNode = m_nodeExtractor(pNode);
-				newNode.m_left = leftChild;
-				newNode.m_right = rightChild;
+				auto [leftChild, replacer] = findReplacer(node.Left);
+				auto rightChild = node.Right;
+				nodeKey = replacer;
+				auto newNode = m_nodeExtractor(nodeKey);
+				newNode.Left = leftChild;
+				newNode.Right = rightChild;
+				m_nodeSaver(nodeKey, newNode);
 			}
 		}
 		else if (removedKey < nodeKey) {
-			node.m_left = remove(node.m_left, removedKey);
+			node.Left = remove(node.Left, removedKey);
 		}
 		else {
-			node.m_right = remove(node.m_right, removedKey);
+			node.Right = remove(node.Right, removedKey);
 		}
-		updateHeight(pNode);
-		return maybeRotate(pNode);
+
+		m_nodeSaver(nodeKey, node);
+
+		updateHeight(nodeKey);
+		return maybeRotate(nodeKey);
 	}
 
 	// First element of the pair is standard return as in the insert case
 	// Second element of the pair is the element that replaces the removed one
-	std::pair<Pointer, Pointer> findReplacer(const Pointer& pNode) {
+	std::pair<Key, Key> findReplacer(const Key& nodeKey) {
+		// nodeKey is always not null
+		auto node = m_nodeExtractor(nodeKey);
 
-		// pNode is always not null
-		auto& node = m_nodeExtractor(pNode);
-
-		if (isNull(node.m_right)) {
-			Pointer replacer = pNode;
-			Pointer tmpParent = node.m_left;
+		if (isNull(node.Right)) {
+			Key replacer = nodeKey;
+			Key tmpParent = node.Left;
 			updateHeight(tmpParent);
 			return {maybeRotate(tmpParent), replacer};
 		}
 		else {
-			auto replacer = findReplacer(node.m_right);
-			node.m_right = replacer.first;
-			updateHeight(pNode);
-			return {maybeRotate(pNode), replacer.second};
+			auto replacer = findReplacer(node.Right);
+			node.Right = replacer.first;
+			updateHeight(nodeKey);
+			return {maybeRotate(nodeKey), replacer.second};
 		}
 	}
 
-	Pointer lowerBound(const Pointer& pNode, const Key& key) {
-		if (isNull(pNode)) {
-			return pNode;
-		}
+	Key lowerBound(const Key& nodeKey, const Key& key) {
+		if (isNull(nodeKey))
+			return nodeKey;
 
-		const auto nodeKey = m_keyExtractor(pNode);
-		const auto& node = m_nodeExtractor(pNode);
+		auto node = m_nodeExtractor(nodeKey);
 
 		if (nodeKey < key) {
-			return lowerBound(node.m_right, key);
+			return lowerBound(node.Right, key);
 		}
 		else {
-			Pointer leftLowerBound = lowerBound(node.m_left, key);
+			Key leftLowerBound = lowerBound(node.Left, key);
 			if (!isNull(leftLowerBound)) {
 				return leftLowerBound;
 			}
 			else {
-				return pNode;
+				return nodeKey;
 			}
 		}
 	}
 
-	int getHeight(const Pointer& pNode) const {
-
-		if (isNull(pNode)) {
+	uint16_t getHeight(const Key& nodeKey) const {
+		if (isNull(nodeKey))
 			return 0;
-		}
 
-		const auto& node = m_nodeExtractor(pNode);
-		return node.m_height;
+		return m_nodeExtractor(nodeKey).Height;
 	}
 
-	void updateHeight(const Pointer& pNode) {
-		if (isNull(pNode)) {
+	void updateHeight(const Key& nodeKey) {
+		if (isNull(nodeKey))
 			return;
-		}
 
-		state::AVLTreeNode& node = m_nodeExtractor(pNode);
-
-		node.m_height = std::max(getHeight(node.m_left), getHeight(node.m_right)) + 1;
+		auto node = m_nodeExtractor(nodeKey);
+		node.Height = std::max(getHeight(node.Left), getHeight(node.Right)) + 1;
+		m_nodeSaver(nodeKey, node);
 	}
 
-	Rotation getRotationType(const Pointer& pNode) {
-		if (isNull(pNode)) {
+	Rotation getRotationType(const Key& nodeKey) {
+		if (isNull(nodeKey))
 			return Rotation::NO_ROTATION;
-		}
 
-		auto& node = m_nodeExtractor(pNode);
+		auto node = m_nodeExtractor(nodeKey);
 
-		auto leftHeight = getHeight(node.m_left);
-		auto rightHeight = getHeight(node.m_right);
+		auto leftHeight = getHeight(node.Left);
+		auto rightHeight = getHeight(node.Right);
 
 		if (abs(leftHeight - rightHeight) <= 1) {
 			return Rotation::NO_ROTATION;
@@ -217,8 +212,8 @@ private:
 
 		if (leftHeight > rightHeight) {
 			// Left rotation is needed
-			const auto& left = m_nodeExtractor(node.m_left);
-			if (getHeight(left.m_left) >= getHeight(left.m_right)) {
+			const auto& left = m_nodeExtractor(node.Left);
+			if (getHeight(left.Left) >= getHeight(left.Right)) {
 				return Rotation::LL_ROTATION;
 			}
 			else {
@@ -227,8 +222,8 @@ private:
 		}
 		else {
 			// Right rotation is needed
-			const auto& right = m_nodeExtractor(node.m_right);
-			if (getHeight(right.m_right) >= getHeight(right.m_left)) {
+			const auto& right = m_nodeExtractor(node.Right);
+			if (getHeight(right.Right) >= getHeight(right.Left)) {
 				return Rotation::RR_ROTATION;
 			}
 			else {
@@ -237,111 +232,112 @@ private:
 		}
 	}
 
-	Pointer maybeRotate(const Pointer& pNode) {
-		if (isNull(pNode)) {
-			return pNode;
-		}
+	Key maybeRotate(const Key& nodeKey) {
+		if (isNull(nodeKey))
+			return nodeKey;
 
-		auto rotation = getRotationType(pNode);
+		auto rotation = getRotationType(nodeKey);
 
 		switch (rotation) {
 			case Rotation::LL_ROTATION: {
-				return llRotation(pNode);
+				return llRotation(nodeKey);
 			}
 			case Rotation::LR_ROTATION: {
-				return lrRotation(pNode);
+				return lrRotation(nodeKey);
 			}
 			case Rotation::RL_ROTATION: {
-				return rlRotation(pNode);
+				return rlRotation(nodeKey);
 			}
 			case Rotation::RR_ROTATION: {
-				return rrRotation(pNode);
+				return rrRotation(nodeKey);
 			}
 		}
-		return pNode;
+		return nodeKey;
 	}
 
-	Pointer llRotation(const Pointer& pNode) {
+	Key llRotation(const Key& nodeKey) {
+		auto node = m_nodeExtractor(nodeKey);
 
-		auto& node = m_nodeExtractor(pNode);
+		Key parentKey = node.Left;
+		auto parent = m_nodeExtractor(parentKey);
 
-		Pointer pParent = node.m_left;
-		auto& parent = m_nodeExtractor(pParent);
+		node.Left = parent.Right;
+		m_nodeSaver(nodeKey, node);
+		updateHeight(nodeKey);
 
-		node.m_left = parent.m_right;
-		updateHeight(pNode);
+		parent.Right = nodeKey;
+		m_nodeSaver(parentKey, parent);
+		updateHeight(parentKey);
 
-		parent.m_right = pNode;
-		updateHeight(pParent);
-
-		return pParent;
+		return parentKey;
 	}
 
-	Pointer lrRotation(const Pointer& pNode) {
+	Key lrRotation(const Key& nodeKey) {
+		auto node = m_nodeExtractor(nodeKey);
+		auto left = m_nodeExtractor(node.Left);
+		Key parentKey = left.Right;
+		auto parent = m_nodeExtractor(parentKey);
 
-		auto& node = m_nodeExtractor(pNode);
+		left.Right = parent.Left;
+		m_nodeSaver(node.Left, left);
+		updateHeight(node.Left);
 
-		auto& left = m_nodeExtractor(node.m_left);
+		parent.Left = node.Left;
 
-		Pointer pParent = left.m_right;
-		auto& parent = m_nodeExtractor(pParent);
+		node.Left = parent.Right;
+		m_nodeSaver(nodeKey, node);
+		updateHeight(nodeKey);
 
-		left.m_right = parent.m_left;
-		updateHeight(node.m_left);
+		parent.Right = nodeKey;
+		m_nodeSaver(parentKey, parent);
+		updateHeight(parentKey);
 
-		parent.m_left = node.m_left;
-
-		node.m_left = parent.m_right;
-		updateHeight(pNode);
-
-		parent.m_right = pNode;
-		updateHeight(pParent);
-
-		return pParent;
+		return parentKey;
 	}
 
-	Pointer rlRotation(const Pointer& pNode) {
+	Key rlRotation(const Key& nodeKey) {
+		auto node = m_nodeExtractor(nodeKey);
+		auto right = m_nodeExtractor(node.Right);
+		Key parentKey = right.Left;
+		auto parent = m_nodeExtractor(parentKey);
 
-		auto& node = m_nodeExtractor(pNode);
+		right.Left = parent.Right;
+		m_nodeSaver(node.Right, right);
+		updateHeight(node.Right);
 
-		auto& right = m_nodeExtractor(node.m_right);
+		parent.Right = node.Right;
 
-		Pointer pParent = right.m_left;
-		auto& parent = m_nodeExtractor(pParent);
+		node.Right = parent.Left;
+		m_nodeSaver(nodeKey, node);
+		updateHeight(nodeKey);
 
-		right.m_left = parent.m_right;
-		updateHeight(node.m_right);
+		parent.Left = nodeKey;
+		m_nodeSaver(parentKey, parent);
+		updateHeight(parentKey);
 
-		parent.m_right = node.m_right;
-
-		node.m_right = parent.m_left;
-		updateHeight(pNode);
-
-		parent.m_left = pNode;
-		updateHeight(pParent);
-
-		return pParent;
+		return parentKey;
 	}
 
-	Pointer rrRotation(const Pointer& pNode) {
-		auto& node = m_nodeExtractor(pNode);
+	Key rrRotation(const Key& nodeKey) {
+		auto node = m_nodeExtractor(nodeKey);
+		Key parentKey = node.Right;
+		auto parent = m_nodeExtractor(parentKey);
 
-		Pointer pParent = node.m_right;
-		auto& parent = m_nodeExtractor(pParent);
+		node.Right = parent.Left;
+		m_nodeSaver(nodeKey, node);
+		updateHeight(nodeKey);
 
-		node.m_right = parent.m_left;
-		updateHeight(pNode);
+		parent.Left = nodeKey;
+		m_nodeSaver(parentKey, parent);
+		updateHeight(parentKey);
 
-		parent.m_left = pNode;
-		updateHeight(pParent);
-
-		return pParent;
+		return parentKey;
 	}
 
 	cache::QueueCache::CacheDeltaType& m_queueCache;
 	Key m_queueKey;
 
-	std::function<const TKeyType (const Pointer& pointer)> m_keyExtractor;
-	std::function<state::AVLTreeNode& (const Pointer& pointer)> m_nodeExtractor;
+	std::function<state::AVLTreeNode (const Key&)> m_nodeExtractor;
+	std::function<void (const Key&, const state::AVLTreeNode&)> m_nodeSaver;
 };
 }

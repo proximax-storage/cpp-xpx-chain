@@ -6,7 +6,7 @@
 
 #include "StoragePlugin.h"
 #include <src/cache/QueueCacheStorage.h>
-#include "src/cache/BcDriveCacheSubCachePlugin.h"
+#include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCacheSubCachePlugin.h"
 #include "src/plugins/PrepareBcDriveTransactionPlugin.h"
@@ -127,9 +127,8 @@ namespace catapult { namespace plugins {
 			return false;
 		});
 
-		auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
-		manager.addCacheSupport(std::make_unique<cache::BcDriveCacheSubCachePlugin>(
-				manager.cacheConfig(cache::BcDriveCache::Name), pDriveKeyCollector, pConfigHolder));
+		manager.addCacheSupport<cache::BcDriveCacheStorage>(
+			std::make_unique<cache::BcDriveCache>(manager.cacheConfig(cache::BcDriveCache::Name), pConfigHolder));
 
 		using BcDriveCacheHandlersService = CacheHandlers<cache::BcDriveCacheDescriptor>;
 		BcDriveCacheHandlersService::Register<model::FacilityCode::BcDrive>(manager);

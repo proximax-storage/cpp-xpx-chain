@@ -43,8 +43,7 @@ namespace catapult { namespace test {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(*maxId + 1);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pReplicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
-			auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
-			subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pDriveKeyCollector, pConfigHolder);
+			subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 			subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
 			subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pReplicatorKeyCollector, pConfigHolder);
 			return subCaches;
@@ -90,8 +89,7 @@ namespace catapult { namespace test {
                 std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
                 auto pReplicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
-                auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
-                subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pDriveKeyCollector, pConfigHolder);
+                subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 			    subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
                 subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pReplicatorKeyCollector, pConfigHolder);
                 subCaches[cache::QueueCache::Id] = MakeSubCachePlugin<cache::QueueCache, cache::QueueCacheStorage>(pConfigHolder);
@@ -134,8 +132,7 @@ namespace catapult { namespace test {
                 std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 				auto pReplicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
-				auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
-				subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pDriveKeyCollector, pConfigHolder);
+				subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 				subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
 				subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pReplicatorKeyCollector, pConfigHolder);
                 return subCaches;
@@ -174,8 +171,7 @@ namespace catapult { namespace test {
                 std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 				auto pReplicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
-				auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
-				subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pDriveKeyCollector, pConfigHolder);
+				subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 				subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
 				subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pReplicatorKeyCollector, pConfigHolder);
 				return subCaches;

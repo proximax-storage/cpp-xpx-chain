@@ -14,7 +14,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::BlockNotification<2>;
+	using Notification = model::BlockNotification<1>;
 	using DrivePriority = std::pair<Key, double>;
 	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 	using BigUint = boost::multiprecision::uint256_t;
