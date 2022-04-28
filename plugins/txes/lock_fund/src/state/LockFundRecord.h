@@ -75,13 +75,19 @@ namespace catapult { namespace state {
 		/// Inactivates the current record moving it to the inactive records stack
 		void Inactivate()
 		{
-			InactiveRecords.emplace_back(std::move(ActiveRecord.value()));
-			ActiveRecord.reset();
+			if(ActiveRecord.has_value())
+			{
+				InactiveRecords.emplace_back(std::move(ActiveRecord.value()));
+				ActiveRecord.reset();
+			}
+
 		}
 
 		/// Reactives the last inactivated record
 		void Reactivate()
 		{
+			if(InactiveRecords.empty())
+				return;
 			ActiveRecord.emplace(std::move(InactiveRecords.back()));
 			InactiveRecords.pop_back();
 		}
