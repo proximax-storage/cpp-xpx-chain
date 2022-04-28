@@ -68,14 +68,17 @@ namespace catapult { namespace validators {
 				{
 					for(auto record : unlockingFundsRecord->LockFundRecords)
 					{
-						if(targetHeight == record.first.unwrap() && record.second.Active())
-							return Failure_LockFund_Duplicate_Record;
-						for(auto mosaic : funds)
+						if(record.second.Active())
 						{
-							auto mosaicRecord = record.second.Get().find(MosaicId(mosaic.first));
-							if(mosaicRecord != record.second.Get().end())
+							if(targetHeight == record.first.unwrap())
+								return Failure_LockFund_Duplicate_Record;
+							for(auto mosaic : funds)
 							{
-								funds[mosaic.first].first = funds[mosaic.first].first - mosaicRecord->second;
+								auto mosaicRecord = record.second.Get().find(MosaicId(mosaic.first));
+								if(mosaicRecord != record.second.Get().end())
+								{
+									funds[mosaic.first].first = funds[mosaic.first].first - mosaicRecord->second;
+								}
 							}
 						}
 					}
