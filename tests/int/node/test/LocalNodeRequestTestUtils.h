@@ -146,8 +146,13 @@ namespace catapult { namespace test {
 		bool isExceptionRaised = false;
 		typename TApiTraits::ResultType result;
 		ExternalSourceConnection connection;
+
+		std::condition_variable condVar;
+		std::mutex mtx;
+
 		connection.apiCall([&](const auto& pRemoteChainApi) {
 			TApiTraits::InitiateValidRequest(*pRemoteChainApi).then([&, pRemoteChainApi](auto&& future) {
+				std::lock_guard<std::mutex> guard(mtx);
 				try {
 					result = std::move(future.get());
 				} catch (const catapult_runtime_error& ex) {
@@ -156,10 +161,12 @@ namespace catapult { namespace test {
 				}
 
 				isReadFinished = true;
+				condVar.notify_one();
 			});
 		});
 
-		WAIT_FOR(isReadFinished);
+		std::unique_lock<std::mutex> mlock(mtx);
+		condVar.wait(mlock, [&]{return isReadFinished == true;});
 
 		// Assert:
 		EXPECT_FALSE(isExceptionRaised);
