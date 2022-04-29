@@ -376,7 +376,7 @@ namespace catapult { namespace storage {
 						m_pReplicator->asyncCancelDriveVerification(driveKey.array());
 					}
 					else if (verification->VerificationTrigger == blockHash) {
-						CATAPULT_LOG( error ) << "Will Start Verification";
+						m_pReplicator->asyncCancelDriveVerification(driveKey.array());
 						startVerification(driveKey, *verification);
 					}
 				}
@@ -563,6 +563,10 @@ namespace catapult { namespace storage {
 			m_pReplicator->asyncDownloadApprovalTransactionHasBeenPublished(approvalTrigger.array(), downloadChannelId.array(), channelClosed);
         }
 
+        void endDriveVerificationPublished(const Key& driveKey, const Hash256& verificationTrigger) {
+			m_pReplicator->asyncVerifyApprovalTransactionHasBeenPublished({driveKey.array(), verificationTrigger.array()});
+		}
+
 		bool driveExists(const Key& driveKey) {
         	return m_storageState.driveExists(driveKey);
 		}
@@ -582,13 +586,18 @@ namespace catapult { namespace storage {
     private:
 
 		void startVerification( const Key& driveKey, const state::DriveVerification& verification ) {
-
-			CATAPULT_LOG( error ) << "In process verification " << driveKey;
-
 			sirius::Hash256 verificationTrigger(verification.VerificationTrigger.array());
 			sirius::drive::InfoHash rootHash(verification.RootHash.array());
 			bool foundShard = false;
-			for (uint32_t i = 0u; i < verification.Shards.size() && !foundShard; ++i) {
+
+			std::set<sirius::Key> flattenShards;
+			for (const auto& shard: verification.Shards) {
+				for (const auto& key: shard) {
+					flattenShards.insert(key.array());
+				}
+			}
+
+			for (uint16_t i = 0u; i < verification.Shards.size() && !foundShard; ++i) {
 				const auto& shard = verification.Shards[i];
 
 				std::vector<Key> shardList = { shard.begin(), shard.end() };
@@ -601,7 +610,8 @@ namespace catapult { namespace storage {
 																 i,
 																 rootHash,
 																 castReplicatorKeys<sirius::Key>(shardList),
-																 30 * 1000 });
+																 verification.Duration,
+																 flattenShards});
 				}
 			}
 		}
@@ -706,6 +716,11 @@ namespace catapult { namespace storage {
     void ReplicatorService::initiateDownloadApproval(const Hash256& channelId, const Hash256& eventHash) {
         if (m_pImpl)
 			m_pImpl->initiateDownloadApproval(channelId, eventHash);
+    }
+
+    void ReplicatorService::endDriveVerificationPublished(const Key& driveKey, const Hash256& verificationTrigger) {
+    	if (m_pImpl)
+    		m_pImpl->endDriveVerificationPublished(driveKey.array(), verificationTrigger.array());
     }
 
     void ReplicatorService::addDrive(const Key& driveKey) {

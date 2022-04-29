@@ -78,6 +78,7 @@ namespace catapult { namespace observers {
 					utils::FileSize::FromBytes(driveEntry.usedSizeBytes()).gigabytesCeil() +
 				pluginConfig.VerificationExpirationConstant;
 			verification->Expiration = notification.Timestamp + Timestamp(timeoutMinutes * 60 * 1000);
+			verification->Duration = uint64_t(timeoutMinutes * 60 * 1000);
 
 			std::vector<Key> replicators;
 			replicators.reserve(driveEntry.replicators().size());

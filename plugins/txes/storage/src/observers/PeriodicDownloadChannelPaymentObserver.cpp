@@ -21,50 +21,50 @@ namespace catapult { namespace observers {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
 
-//			if (context.Height < Height(2))
-//				return;
-//
-//			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
-//			auto& downloadCache = context.Cache.template sub<cache::DownloadChannelCache>();
-//
-//			utils::QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
-//
-//			if (queueAdapter.isEmpty()) {
-//				return;
-//			}
-//
-//			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
-//			auto paymentInterval = pluginConfig.DownloadBillingPeriod.seconds();
-//
-//			// Creating unique eventHash for the observer
-//			auto eventHash = utils::getDownloadPaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
-//
-//			for (int i = 0; i < downloadCache.size(); i++) {
-//				auto& downloadEntry = downloadCache.find(queueAdapter.front().array()).get();
-//
-//				auto timeSinceLastPayment = (notification.Timestamp - downloadEntry.getLastDownloadApprovalInitiated()).unwrap() / 1000;
-//				if (timeSinceLastPayment < paymentInterval) {
-//					break;
-//				}
-//
-//				// Pop element from the Queue
-//				queueAdapter.popFront();
-//
-//				if (downloadEntry.isCloseInitiated()) {
-//					continue;
-//				}
-//				downloadEntry.decrementDownloadApprovalCount();
-//				downloadEntry.setLastDownloadApprovalInitiated(notification.Timestamp);
-//				downloadEntry.downloadApprovalInitiationEvent() = eventHash;
-//
-//				if (downloadEntry.downloadApprovalCountLeft() > 0) {
-//					// Channel Continues To Exist
-//					queueAdapter.pushBack(downloadEntry.entryKey());
-//				}
-//				else {
-//					downloadEntry.setFinishPublished(true);
-//				}
-//			}
+			if (context.Height < Height(2))
+				return;
+
+			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
+			auto& downloadCache = context.Cache.template sub<cache::DownloadChannelCache>();
+
+			utils::QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
+
+			if (queueAdapter.isEmpty()) {
+				return;
+			}
+
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			auto paymentInterval = pluginConfig.DownloadBillingPeriod.seconds();
+
+			// Creating unique eventHash for the observer
+			auto eventHash = utils::getDownloadPaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
+
+			for (int i = 0; i < downloadCache.size(); i++) {
+				auto& downloadEntry = downloadCache.find(queueAdapter.front().array()).get();
+
+				auto timeSinceLastPayment = (notification.Timestamp - downloadEntry.getLastDownloadApprovalInitiated()).unwrap() / 1000;
+				if (timeSinceLastPayment < paymentInterval) {
+					break;
+				}
+
+				// Pop element from the Queue
+				queueAdapter.popFront();
+
+				if (downloadEntry.isCloseInitiated()) {
+					continue;
+				}
+				downloadEntry.decrementDownloadApprovalCount();
+				downloadEntry.setLastDownloadApprovalInitiated(notification.Timestamp);
+				downloadEntry.downloadApprovalInitiationEvent() = eventHash;
+
+				if (downloadEntry.downloadApprovalCountLeft() > 0) {
+					// Channel Continues To Exist
+					queueAdapter.pushBack(downloadEntry.entryKey());
+				}
+				else {
+					downloadEntry.setFinishPublished(true);
+				}
+			}
         }))
 	};
 }}

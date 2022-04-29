@@ -48,6 +48,7 @@ namespace catapult { namespace state {
 
 	struct DriveVerification {
 		Key DriveKey;
+		uint32_t Duration;
 		bool Expired;
 		Hash256 VerificationTrigger;
 		Hash256 RootHash;

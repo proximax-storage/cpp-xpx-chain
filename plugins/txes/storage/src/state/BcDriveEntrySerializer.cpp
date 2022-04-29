@@ -79,6 +79,7 @@ namespace catapult { namespace state {
 			if (hasVerification) {
 				io::Write(output, verification->VerificationTrigger);
 				io::Write(output, verification->Expiration);
+				io::Write32(output, verification->Duration);
 				SaveShards(output, verification->Shards);
 			}
 		}
@@ -219,6 +220,7 @@ namespace catapult { namespace state {
 				verification = Verification();
 				io::Read(input, verification->VerificationTrigger);
 				io::Read(input, verification->Expiration);
+				verification->Duration = io::Read32(input);
 				LoadShards(input, verification->Shards);
 			}
 		}

@@ -44,6 +44,7 @@ namespace catapult { namespace state {
 			if (driveEntry.verification()) {
 				const auto& verification = *driveEntry.verification();
 				return DriveVerification{driveKey,
+				    verification.Duration,
 					verification.expired(blockTimestamp),
 					verification.VerificationTrigger,
 				   	driveEntry.rootHash(),
