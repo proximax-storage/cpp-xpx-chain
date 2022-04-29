@@ -53,41 +53,48 @@ namespace catapult { namespace observers {
 			std::generate_n(randomKey.begin(), sizeof(Key), rng);
 
 			Key driveKey = treeAdapter.lowerBound(randomKey);
+
 			if (driveKey == Key()) {
 				continue;
 			}
 
 			auto iter = driveCache.find(driveKey);
 			auto& driveEntry = iter.get();
-			if (driveEntry.verification() && !driveEntry.verification()->expired(notification.Timestamp)) {
+
+			if (driveEntry.completedDataModifications().empty() ||
+				driveEntry.verification() && !driveEntry.verification()->expired(notification.Timestamp)) {
 				// The Verification Has Not Expired Yet
 				continue;
 			}
 
-			state::Verification verification;
-			verification.VerificationTrigger = eventHash;
+			auto& verification = driveEntry.verification();
+			verification = state::Verification();
+
+
+			verification->VerificationTrigger = eventHash;
 
 			auto timeoutMinutes =
 				pluginConfig.VerificationExpirationCoefficient *
 					utils::FileSize::FromBytes(driveEntry.usedSizeBytes()).gigabytesCeil() +
 				pluginConfig.VerificationExpirationConstant;
-			verification.Expiration = notification.Timestamp + Timestamp(timeoutMinutes * 60 * 1000);
+			verification->Expiration = notification.Timestamp + Timestamp(timeoutMinutes * 60 * 1000);
 
 			std::vector<Key> replicators;
 			replicators.reserve(driveEntry.replicators().size());
 			const auto& confirmedStates = driveEntry.confirmedStates();
 			const auto& rootHash = driveEntry.rootHash();
 			for (const auto& key : driveEntry.replicators()) {
-				auto iter = confirmedStates.find(key);
-				if (iter != confirmedStates.end() && iter->second == rootHash)
+				const auto& confirmedStorageInfo = driveEntry.confirmedStorageInfos()[key];
+				if (confirmedStorageInfo.m_confirmedStorageSince) {
 					replicators.emplace_back(key);
+				}
 			}
 
 			uint16_t replicatorCount = replicators.size();
 			auto shardSize = pluginConfig.ShardSize / 2;
 
 			if (replicatorCount < 2 * shardSize) {
-				verification.Shards = state::Shards{
+				verification->Shards = state::Shards{
 					std::set<Key>(std::make_move_iterator(replicators.begin()),
 					std::make_move_iterator(replicators.end()))};
 				continue;
@@ -117,8 +124,7 @@ namespace catapult { namespace observers {
 				shardIt++;
 			}
 
-			verification.Shards = std::move(shards);
-			driveEntry.verification() = verification;
+			verification->Shards = std::move(shards);
 		}
 	}
 

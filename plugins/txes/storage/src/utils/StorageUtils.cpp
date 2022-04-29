@@ -354,6 +354,12 @@ namespace catapult { namespace utils {
 			replicatorEntry.drives().emplace(driveKey, driveInfo);
 			replicators.emplace(replicatorKey);
 
+			state::ConfirmedStorageInfo confirmedStorageInfo;
+			if (driveEntry.completedDataModifications().empty()) {
+				confirmedStorageInfo.m_confirmedStorageSince = context.Timestamp;
+			}
+			driveEntry.confirmedStorageInfos().insert({ replicatorKey, confirmedStorageInfo });
+
 			// Updating drive's shards
 			UpdateShardsOnAddedReplicator(driveEntry, replicatorKey, context, rng);
 
@@ -439,6 +445,12 @@ namespace catapult { namespace utils {
 							lastApprovedDataModificationId, dataModificationIdIsValid, initialDownloadWork
 					});
 					driveEntry.replicators().emplace(replicatorKey);
+
+					state::ConfirmedStorageInfo confirmedStorageInfo;
+					if (driveEntry.completedDataModifications().empty()) {
+						confirmedStorageInfo.m_confirmedStorageSince = context.Timestamp;
+					}
+					driveEntry.confirmedStorageInfos().insert({ replicatorKey, confirmedStorageInfo });
 
 					// Updating drive's shards
 					UpdateShardsOnAddedReplicator(driveEntry, replicatorKey, context, rng);
