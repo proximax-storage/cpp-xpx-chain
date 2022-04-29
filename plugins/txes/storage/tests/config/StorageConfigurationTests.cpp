@@ -21,6 +21,7 @@ namespace catapult { namespace config {
 							{ "enabled", "true" },
 							{ "minDriveSize", "1MB" },
 							{ "maxDriveSize", "10TB" },
+							{ "minCapacity", "1MB" },
 							{ "maxModificationSize", "10TB" },
 							{ "minReplicatorCount", "1" },
 							{ "maxFreeDownloadSize", "1MB" },
@@ -44,6 +45,7 @@ namespace catapult { namespace config {
 				return std::set<std::string>{
 					"minDriveSize",
 					"maxDriveSize",
+					"minCapacity",
 					"maxModificationSize",
 					"minReplicatorCount",
 					"maxFreeDownloadSize",
@@ -65,6 +67,7 @@ namespace catapult { namespace config {
 				EXPECT_FALSE(config.Enabled);
 				EXPECT_EQ(utils::FileSize::FromMegabytes(0u), config.MinDriveSize);
 				EXPECT_EQ(utils::FileSize::FromTerabytes(0u), config.MaxDriveSize);
+				EXPECT_EQ(utils::FileSize::FromMegabytes(0u), config.MinCapacity);
 				EXPECT_EQ(utils::FileSize::FromTerabytes(0u), config.MaxModificationSize);
 				EXPECT_EQ(0, config.MinReplicatorCount);
 				EXPECT_EQ(utils::FileSize::FromMegabytes(0u), config.MaxFreeDownloadSize);
@@ -80,6 +83,7 @@ namespace catapult { namespace config {
 				EXPECT_TRUE(config.Enabled);
 				EXPECT_EQ(utils::FileSize::FromMegabytes(1u), config.MinDriveSize);
 				EXPECT_EQ(utils::FileSize::FromTerabytes(10u), config.MaxDriveSize);
+				EXPECT_EQ(utils::FileSize::FromMegabytes(1u), config.MinCapacity);
 				EXPECT_EQ(utils::FileSize::FromTerabytes(10u), config.MaxModificationSize);
 				EXPECT_EQ(1, config.MinReplicatorCount);
 				EXPECT_EQ(utils::FileSize::FromMegabytes(1u), config.MaxFreeDownloadSize);

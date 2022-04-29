@@ -22,18 +22,19 @@ namespace catapult { namespace fastfinality {
 		action DetectStage = [] {};
 		action SelectCommittee = [] {};
 		action ProposeBlock = [] {};
-		action WaitForProposal = [] {};
+		action RequestProposal = [] {};
 		action ValidateProposal = [] {};
 		action AddPrevote = [] {};
-		action WaitForPrevotes = [] {};
+		action RequestPrevotes = [] {};
 		action WaitForProposalPhaseEnd = [] {};
 		action AddPrecommit = [] {};
-		action WaitForPrecommits = [] {};
+		action RequestPrecommits = [] {};
+		action WaitForPrecommitPhaseEnd = [] {};
 		action UpdateConfirmedBlock = [] {};
 		action CommitConfirmedBlock = [] {};
 		action IncrementRound = [] {};						
 		action ResetRound = [] {};
-		action WaitForConfirmedBlock = [] {};
+		action RequestConfirmedBlock = [] {};
 	};
 
 	action CreateDefaultCheckLocalChainAction(
@@ -70,10 +71,12 @@ namespace catapult { namespace fastfinality {
 		const cache::CatapultCache& cache,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const harvesting::BlockGenerator& blockGenerator,
-		const model::BlockElementSupplier& lastBlockElementSupplier);
+		const model::BlockElementSupplier& lastBlockElementSupplier,
+		const extensions::PacketPayloadSink& packetPayloadSink);
 
-	action CreateDefaultWaitForProposalAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
+	action CreateDefaultRequestProposalAction(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		extensions::ServiceState& state);
 
 	action CreateDefaultValidateProposalAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
@@ -82,25 +85,28 @@ namespace catapult { namespace fastfinality {
 		const std::shared_ptr<thread::IoThreadPool>& pValidatorPool);
 
 	action CreateDefaultAddPrevoteAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const extensions::PacketPayloadSink& packetPayloadSink);
 
 	action CreateDefaultWaitForProposalPhaseEndAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-		const extensions::PacketPayloadSink& packetPayloadSink);
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
-	action CreateDefaultWaitForPrevotesAction(
+	action CreateDefaultRequestPrevotesAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const plugins::PluginManager& pluginManager,
-		const extensions::PacketPayloadSink& packetPayloadSink);
+		const plugins::PluginManager& pluginManager);
 
 	action CreateDefaultAddPrecommitAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
-
-	action CreateDefaultWaitForPrecommitsAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const plugins::PluginManager& pluginManager,
 		const extensions::PacketPayloadSink& packetPayloadSink);
+
+	action CreateDefaultRequestPrecommitsAction(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const plugins::PluginManager& pluginManager);
+
+	action CreateDefaultWaitForPrecommitPhaseEndAction(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	action CreateDefaultUpdateConfirmedBlockAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
@@ -110,7 +116,6 @@ namespace catapult { namespace fastfinality {
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&> rangeConsumer,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-		const extensions::PacketPayloadSink& packetPayloadSink,
 		chain::CommitteeManager& committeeManager);
 
 	action CreateDefaultIncrementRoundAction(
@@ -122,7 +127,8 @@ namespace catapult { namespace fastfinality {
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		chain::CommitteeManager& committeeManager);
 
-	action CreateDefaultWaitForConfirmedBlockAction(
+	action CreateDefaultRequestConfirmedBlockAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		extensions::ServiceState& state,
 		const model::BlockElementSupplier& lastBlockElementSupplier);
 }}

@@ -40,7 +40,11 @@ namespace catapult { namespace mongo { namespace plugins {
 		// Streaming PresentOpinions
 		const auto totalJudgedKeysCount = transaction.OverlappingKeysCount + transaction.JudgedKeysCount;
 		const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
-		builder << "presentOpinions" << ToBinary(transaction.PresentOpinionsPtr(), presentOpinionByteCount);
+		auto pPresentOpinions = transaction.PresentOpinionsPtr();
+		auto presentOpinionsArray = builder << "presentOpinions" << bson_stream::open_array;
+		for (auto i = 0; i < presentOpinionByteCount; ++i, ++pPresentOpinions)
+			presentOpinionsArray << static_cast<uint8_t>(*pPresentOpinions);
+		presentOpinionsArray << bson_stream::close_array;
 
 		// Streaming Opinions
 		auto opinionsArray = builder << "opinions" << bson_stream::open_array;
