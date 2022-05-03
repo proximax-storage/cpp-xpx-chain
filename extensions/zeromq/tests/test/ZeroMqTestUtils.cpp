@@ -80,6 +80,13 @@ namespace catapult { namespace test {
 		}
 	}
 
+	void SubscribeForTypes(zmq::socket_t& socket, zeromq::TransactionMarker marker, const model::TransactionTypeSet& types) {
+		for (const auto& type : types) {
+			auto topic = zeromq::CreateTopic(marker, type);
+			socket.setsockopt(ZMQ_SUBSCRIBE, topic.data(), topic.size());
+		}
+	}
+
 	void ZmqReceive(zmq::multipart_t& message, zmq::socket_t& socket) {
 		constexpr uint8_t Max_Attempts = 20;
 		auto counter = 0u;
@@ -190,6 +197,29 @@ namespace catapult { namespace test {
 
 		// - all addresses were used exactly once
 		EXPECT_TRUE(addressesCopy.empty());
+	}
+	void AssertMessagesByType(
+			zmq::socket_t& zmqSocket,
+			zeromq::TransactionMarker marker,
+			const model::TransactionTypeSet& types,
+			const AssertMessage& assertMessage) {
+		zmq::multipart_t message;
+
+		// Assert: each type should get a message
+		auto typesCopy = types;
+		for (size_t i = 0u; i < types.size(); ++i) {
+			ZmqReceive(message, zmqSocket);
+
+			const auto* pTypeData = reinterpret_cast<const uint8_t*>(message[0].data()) + 1;
+			const auto& type = reinterpret_cast<const model::EntityType&>(*pTypeData);
+			EXPECT_EQ(1u, typesCopy.erase(type)) << "type " << type;
+
+			auto topic = CreateTopic(marker, type);
+			assertMessage(message, topic);
+		}
+
+		// - all addresses were used exactly once
+		EXPECT_TRUE(typesCopy.empty());
 	}
 
 	void AssertNoPendingMessages(zmq::socket_t& zmqSocket) {

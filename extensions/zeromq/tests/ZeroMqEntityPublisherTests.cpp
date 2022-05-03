@@ -177,7 +177,6 @@ namespace catapult { namespace zeromq {
 			Height height(123);
 			auto addresses = generateAddresses(transactionElement);
 			context.subscribeAll(Marker, addresses);
-
 			// Act:
 			context.publishTransaction(Marker, transactionElement, height);
 
@@ -185,6 +184,42 @@ namespace catapult { namespace zeromq {
 			auto& zmqSocket = context.zmqSocket();
 			test::AssertMessages(zmqSocket, Marker, addresses, [&transactionElement, height](const auto& message, const auto& topic) {
 				test::AssertTransactionElementMessage(message, topic, transactionElement, height);
+			});
+		}
+
+		void AssertCanPublishTransactionInfoValidateType() {
+			// Arrange:
+			EntityPublisherContext context;
+			Height height(123);
+			auto transactionInfo = ToTransactionInfo(mocks::CreateMockTransaction(0), height);
+			context.subscribe(zeromq::CreateTopic(Marker, mocks::MockTransaction::Entity_Type));
+
+			// Act:
+			context.publishTransaction(Marker, transactionInfo);
+
+			// Assert:
+			auto& zmqSocket = context.zmqSocket();
+
+			test::AssertMessagesByType(zmqSocket, Marker,
+					{ mocks::MockTransaction::Entity_Type }, [&transactionInfo, height](const auto& message, const auto& topic) {
+			  test::AssertTransactionInfoMessage(message, topic, transactionInfo, height);
+			});
+		}
+
+		void AssertCanPublishTransactionElementValidateType() {
+			// Arrange:
+			EntityPublisherContext context;
+			auto pTransaction = mocks::CreateMockTransaction(0);
+			auto transactionElement = ToTransactionElement(*pTransaction);
+			Height height(123);
+			context.subscribe(zeromq::CreateTopic(Marker, mocks::MockTransaction::Entity_Type));
+			// Act:
+			context.publishTransaction(Marker, transactionElement, height);
+
+			// Assert:
+			auto& zmqSocket = context.zmqSocket();
+			test::AssertMessagesByType(zmqSocket, Marker, { mocks::MockTransaction::Entity_Type }, [&transactionElement, height](const auto& message, const auto& topic) {
+			  test::AssertTransactionElementMessage(message, topic, transactionElement, height);
 			});
 		}
 	}
@@ -209,6 +244,16 @@ namespace catapult { namespace zeromq {
 		AssertCanPublishTransactionElement([](const auto& transactionElement) {
 			return test::ExtractAddresses(test::ToMockTransaction(transactionElement.Transaction));
 		});
+	}
+
+	TEST(TEST_CLASS, CanPublishTransaction_TransactionInfo_ValidateType) {
+		// Assert:
+		AssertCanPublishTransactionInfoValidateType();
+	}
+
+	TEST(TEST_CLASS, CanPublishTransaction_TransactionElement_ValidateType) {
+		// Assert:
+		AssertCanPublishTransactionElementValidateType();
 	}
 
 	TEST(TEST_CLASS, CanPublishTransactionToCustomAddresses_TransactionElement) {

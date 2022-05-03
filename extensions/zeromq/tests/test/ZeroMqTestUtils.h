@@ -66,6 +66,9 @@ namespace catapult { namespace test {
 	/// Subscribes \a socket to topics created from \a marker and \a addresses.
 	void SubscribeForAddresses(zmq::socket_t& socket, zeromq::TransactionMarker marker, const model::UnresolvedAddressSet& addresses);
 
+	/// Susbcribes \a socket to topics created from \a marker and \a types.
+	void SubscribeForTypes(zmq::socket_t& socket, zeromq::TransactionMarker marker, const model::TransactionTypeSet& types);
+
 	/// Attempts to receive a \a message using \a socket.
 	void ZmqReceive(zmq::multipart_t& message, zmq::socket_t& socket);
 
@@ -112,6 +115,14 @@ namespace catapult { namespace test {
 			const model::UnresolvedAddressSet& addresses,
 			const AssertMessage& assertMessage);
 
+	/// Asserts that all pending messages of the socket (\a zmqSocket) that are subscribed to the topic composed of
+	/// \a marker and \a types can be asserted using \a assertMessage.
+	void AssertMessagesByType(
+			zmq::socket_t& zmqSocket,
+			zeromq::TransactionMarker marker,
+			const model::TransactionTypeSet& types,
+			const AssertMessage& assertMessage);
+
 	/// Asserts that the socket (\a zmqSocket) has no messages pending.
 	void AssertNoPendingMessages(zmq::socket_t& zmqSocket);
 
@@ -134,15 +145,28 @@ namespace catapult { namespace test {
 		/// Subscribes to \a topic.
 		template<typename TTopic>
 		void subscribe(TTopic topic) {
-			m_zmqSocket.setsockopt(ZMQ_SUBSCRIBE, &topic, sizeof(TTopic));
+			if constexpr (std::is_same_v<std::vector<uint8_t>, TTopic>) {
+				m_zmqSocket.setsockopt(ZMQ_SUBSCRIBE, topic.data(), topic.size());
+			} else {
+				m_zmqSocket.setsockopt(ZMQ_SUBSCRIBE, &topic, sizeof(TTopic));
+			}
 
 			// make an additional subscription and wait until messages can be received
 			waitForReceiveSuccess();
 		}
 
+
 		/// Subscribes to all topics using \a marker and \a addresses.
 		void subscribeAll(zeromq::TransactionMarker marker, const model::UnresolvedAddressSet& addresses) {
 			SubscribeForAddresses(m_zmqSocket, marker, addresses);
+
+			// make an additional subscription and wait until messages can be received
+			waitForReceiveSuccess();
+		}
+
+		/// Subscribes to all topics using \a marker and \a transaction types.
+		void subscribeAll(zeromq::TransactionMarker marker, const model::TransactionTypeSet& types) {
+			SubscribeForTypes(m_zmqSocket, marker, types);
 
 			// make an additional subscription and wait until messages can be received
 			waitForReceiveSuccess();

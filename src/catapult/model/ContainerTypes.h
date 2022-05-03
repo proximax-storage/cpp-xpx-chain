@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/utils/Hashers.h"
 #include "catapult/types.h"
+#include "catapult/model/EntityType.h"
 #include <unordered_set>
 
 namespace catapult {
@@ -42,6 +43,10 @@ namespace catapult { namespace model {
 
 	/// Unordered set of unresolved addresses.
 	using UnresolvedAddressSet = std::unordered_set<UnresolvedAddress, utils::ArrayHasher<UnresolvedAddress>>;
+
+	// Unordered set of transaction types
+
+	using TransactionTypeSet = std::unordered_set<model::EntityType>;
 
 	/// Unordered set of public keys.
 	using PublicKeySet = std::unordered_set<Key, utils::ArrayHasher<Key>>;

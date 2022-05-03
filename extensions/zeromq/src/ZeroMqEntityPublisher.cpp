@@ -272,17 +272,25 @@ namespace catapult { namespace zeromq {
 				? *transactionInfo.OptionalAddresses
 				: model::ExtractAddresses(transactionInfo.Transaction, transactionInfo.EntityHash, transactionInfo.AssociatedHeight, *m_pNotificationPublisher, m_extractorContextFactory());
 
+		{
+			zmq::multipart_t multipart_ev;
+			auto typeTopic = CreateTopic(topicMarker, transactionInfo.Transaction.Type);
+			multipart_ev.addmem(typeTopic.data(), typeTopic.size());
+			payloadBuilder(multipart_ev);
+			pMessageGroup->add(std::move(multipart_ev));
+		}
+		
 		if (addresses.empty())
 			CATAPULT_LOG(warning) << "no addresses are associated with transaction " << transactionInfo.EntityHash;
 
 		for (const auto& address : addresses) {
-			zmq::multipart_t multipart;
-			auto topic = CreateTopic(topicMarker, address);
-			multipart.addmem(topic.data(), topic.size());
-			payloadBuilder(multipart);
-			pMessageGroup->add(std::move(multipart));
-		}
+			zmq::multipart_t multipart_ev;
+			auto addressTopic = CreateTopic(topicMarker, address);
+			multipart_ev.addmem(addressTopic.data(), addressTopic.size());
+			payloadBuilder(multipart_ev);
+			pMessageGroup->add(std::move(multipart_ev));
 
+		}
 		m_pSynchronizedPublisher->queue(std::move(pMessageGroup));
 	}
 }}
