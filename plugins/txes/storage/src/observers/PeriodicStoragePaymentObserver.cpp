@@ -128,16 +128,16 @@ namespace catapult { namespace observers {
 						replicatorCache.find(replicatorKey).get().drives().erase(driveEntry.key());
 
 					// The Drive is Removed, so we should make removal from verification tree
-					utils::AVLTreeAdapter treeAdapter(
-							queueCache,
-							state::DriveVerificationsTree,
-							[&driveEntry](const Key&) -> state::AVLTreeNode& {
-								return driveEntry.verificationNode();
+					utils::AVLTreeAdapter<Key> treeAdapter(
+							context.Cache.template sub<cache::QueueCache>(),
+									state::DriveVerificationsTree,
+									[](const Key& key) { return key; },
+									[&driveCache](const Key& key) -> state::AVLTreeNode {
+								return driveCache.find(key).get().verificationNode();
 								},
-								[&driveEntry](const Key&, const state::AVLTreeNode& node) {
-								driveEntry.verificationNode() = node;
+								[&driveCache](const Key& key, const state::AVLTreeNode& node) {
+								driveCache.find(key).get().verificationNode() = node;
 							});
-					treeAdapter.remove(driveEntry.key());
 
 					driveCache.remove(driveEntry.key());
 

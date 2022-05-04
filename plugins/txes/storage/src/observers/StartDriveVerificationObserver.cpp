@@ -32,15 +32,16 @@ namespace catapult { namespace observers {
 		auto totalDrives = driveCache.size();
 		auto drivesToVerify = totalDrives / std::max(verificationFactor, 1ul) + 1; // + 1 instead of ceil
 
-		utils::AVLTreeAdapter treeAdapter(
-			context.Cache.template sub<cache::QueueCache>(),
-			state::DriveVerificationsTree,
-			[&driveCache](const Key& key) -> state::AVLTreeNode {
-				return driveCache.find(key).get().verificationNode();
-			},
-			[&driveCache](const Key& key, const state::AVLTreeNode& node) {
-				driveCache.find(key).get().verificationNode() = node;
-			});
+		utils::AVLTreeAdapter<Key> treeAdapter(
+				context.Cache.template sub<cache::QueueCache>(),
+				state::DriveVerificationsTree,
+				[](const Key& key) { return key; },
+				[&driveCache](const Key& key) -> state::AVLTreeNode {
+					return driveCache.find(key).get().verificationNode();
+				},
+				[&driveCache](const Key& key, const state::AVLTreeNode& node) {
+					driveCache.find(key).get().verificationNode() = node;
+				});
 
 		// Creating unique eventHash for the observer
 		Hash256 eventHash = utils::getVerificationEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
