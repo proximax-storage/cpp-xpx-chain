@@ -105,40 +105,43 @@ private:
 		return maybeRotate(nodeKey);
 	}
 
-	Key remove(Key nodeKey, const Key& removedKey) {
+	Key remove(const Key& nodeKey, const Key& removedKey) {
 		if (isNull(nodeKey))
 			return nodeKey;
 
 		auto node = m_nodeExtractor(nodeKey);
+		auto resultKey = nodeKey;
 
 		if (nodeKey == removedKey) {
 			if (isNull(node.Left) && isNull(node.Right)) {
-				nodeKey = {};
+				resultKey = {};
 			}
 			else if (isNull(node.Left)) {
-				nodeKey = node.Right;
+				resultKey = node.Right;
 			}
 			else {
 				auto [leftChild, replacer] = findReplacer(node.Left);
 				auto rightChild = node.Right;
-				nodeKey = replacer;
-				auto newNode = m_nodeExtractor(nodeKey);
+				resultKey = replacer;
+				auto newNode = m_nodeExtractor(resultKey);
 				newNode.Left = leftChild;
 				newNode.Right = rightChild;
-				m_nodeSaver(nodeKey, newNode);
+				m_nodeSaver(resultKey, newNode);
 			}
 		}
 		else if (removedKey < nodeKey) {
 			node.Left = remove(node.Left, removedKey);
+			m_nodeSaver(nodeKey, node);
+			updateHeight(nodeKey);
 		}
 		else {
 			node.Right = remove(node.Right, removedKey);
+			m_nodeSaver(nodeKey, node);
+			updateHeight(nodeKey);
 		}
 
-		m_nodeSaver(nodeKey, node);
-
-		updateHeight(nodeKey);
-		return maybeRotate(nodeKey);
+		updateHeight(resultKey);
+		return maybeRotate(resultKey);
 	}
 
 	// First element of the pair is standard return as in the insert case
@@ -156,6 +159,7 @@ private:
 		else {
 			auto replacer = findReplacer(node.Right);
 			node.Right = replacer.first;
+			m_nodeSaver(nodeKey, node);
 			updateHeight(nodeKey);
 			return {maybeRotate(nodeKey), replacer.second};
 		}
