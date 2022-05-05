@@ -396,6 +396,11 @@ namespace catapult { namespace utils {
 		auto driveStateIter = accountStateCache.find(driveKey);
 		auto& driveState = driveStateIter.get();
 		for (const auto& replicatorKey : acceptableReplicators) {
+
+			if (driveEntry.replicators().find(replicatorKey) != driveEntry.replicators().end()) {
+				continue;
+			}
+
 			// Updating the cache entries
 			auto replicatorIter = replicatorCache.find(replicatorKey);
 			auto& replicatorEntry = replicatorIter.get();
