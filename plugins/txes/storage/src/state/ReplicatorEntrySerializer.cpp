@@ -58,7 +58,6 @@ namespace catapult { namespace state {
 
 		io::Write32(output, replicatorEntry.version());
 		io::Write(output, replicatorEntry.key());
-		io::Write(output, replicatorEntry.capacity());
 
 		SaveDrives(output, replicatorEntry.drives());
 		SaveDownloadChannels(output, replicatorEntry.downloadChannels());
@@ -75,7 +74,6 @@ namespace catapult { namespace state {
 		input.read(key);
 		state::ReplicatorEntry entry(key);
 		entry.setVersion(version);
-		entry.setCapacity(Amount(io::Read64(input)));
 
 		LoadDrives(input, entry.drives());
 		LoadDownloadChannels(input, entry.downloadChannels());

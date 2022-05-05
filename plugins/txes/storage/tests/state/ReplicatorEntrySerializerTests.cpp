@@ -58,8 +58,6 @@ namespace catapult { namespace state {
             pData += sizeof(VersionType);
             EXPECT_EQ_MEMORY(entry.key().data(), pData, Key_Size);
             pData += Key_Size;
-            EXPECT_EQ(entry.capacity(), *reinterpret_cast<const Amount*>(pData));
-            pData += sizeof(Amount);
 
             EXPECT_EQ(entry.drives().size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
@@ -142,8 +140,6 @@ namespace catapult { namespace state {
             pData += sizeof(VersionType);
             memcpy(pData, entry.key().data(), Key_Size);
             pData += Key_Size;
-            memcpy(pData, &entry.capacity(), sizeof(Amount));
-            pData += sizeof(Amount);
 
             uint16_t drivesCount = utils::checked_cast<size_t, uint16_t>(entry.drives().size());
             memcpy(pData, &drivesCount, sizeof(uint16_t));

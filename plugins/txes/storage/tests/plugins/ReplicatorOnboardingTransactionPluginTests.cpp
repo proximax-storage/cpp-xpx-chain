@@ -75,9 +75,8 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-        ASSERT_EQ(8u, sub.numNotifications());
+        ASSERT_EQ(7u, sub.numNotifications());
         auto i = 0u;
-        EXPECT_EQ(Storage_Drive_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Storage_Replicator_Onboarding_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
@@ -85,26 +84,6 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[i++]);
-	}
-
-	// endregion
-
-	// region publish - drive notification
-
-	PLUGIN_TEST(CanPublishDriveNotification) {
-		// Arrange:
-		mocks::MockTypedNotificationSubscriber<DriveNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
-		auto pTransaction = CreateTransaction<TTraits>();
-
-		// Act:
-		test::PublishTransaction(*pPlugin, *pTransaction, sub);
-
-		// Assert:
-		ASSERT_EQ(1u, sub.numMatchingNotifications());
-		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
-		EXPECT_EQ(Entity_Type_ReplicatorOnboarding, notification.TransactionType);
 	}
 
 	// endregion

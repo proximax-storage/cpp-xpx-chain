@@ -31,14 +31,6 @@ namespace catapult { namespace validators {
 			if (driveCache.contains(notification.DriveKey))
 				return Failure_Storage_Drive_Already_Exists;
 
-			auto replicatorCount = pKeyCollector->keys().size();
-			if (!replicatorCount)
-				return Failure_Storage_No_Replicator;
-
-			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-			if (!replicatorCache.contains(*pKeyCollector->keys().begin()))
-				return Failure_Storage_Replicator_Not_Found;
-
 			return ValidationResult::Success;
 		})
 	}

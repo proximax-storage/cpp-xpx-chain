@@ -141,41 +141,6 @@ namespace catapult { namespace validators {
             Replicator_Key_Collector);
     }
 
-    TEST(TEST_CLASS, FailureWhenNoReplicator) { 
-        // Arrange:
-        auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
-        state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-        driveEntry.setSize(RandomDriveSize());
-        driveEntry.setReplicatorCount(Replicator_Count);
-        state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
-
-        // Assert:
-        AssertValidationResult(
-            Failure_Storage_No_Replicator,
-            driveEntry,
-            replicatorEntry,
-            test::GenerateRandomByteArray<Key>(),
-            Replicator_Key_Collector);
-    }
-
-    TEST(TEST_CLASS, FailureWhenReplicatorNotFound) { 
-        // Arrange:
-        auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
-        state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-        driveEntry.setSize(RandomDriveSize());
-        driveEntry.setReplicatorCount(Replicator_Count);
-        state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
-        Replicator_Key_Collector->addKey(state::ReplicatorEntry(test::GenerateRandomByteArray<Key>()));
-        
-        // Assert:
-        AssertValidationResult(
-            Failure_Storage_Replicator_Not_Found,
-            driveEntry,
-            replicatorEntry,
-            test::GenerateRandomByteArray<Key>(),
-            Replicator_Key_Collector);
-    }
-
     TEST(TEST_CLASS, Success) {
 		// Arrange:
         auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();

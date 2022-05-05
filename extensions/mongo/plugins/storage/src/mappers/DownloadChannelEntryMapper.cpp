@@ -50,8 +50,9 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "id" << ToBinary(entry.id())
 				<< "consumer" << ToBinary(entry.consumer())
 				<< "drive" << ToBinary(entry.drive())
-				<< "downloadSize" << static_cast<int64_t>(entry.downloadSize())
-				<< "downloadApprovalCountLeft" << static_cast<int16_t>(entry.downloadApprovalCountLeft());
+				<< "downloadSizeMegabytes" << static_cast<int64_t>(entry.downloadSize())
+				<< "downloadApprovalCount" << static_cast<int16_t>(entry.downloadApprovalCountLeft())
+				<< "finished" << entry.isFinishPublished();
 
 		StreamListOfPublicKeys(builder, entry.listOfPublicKeys());
 		StreamShardReplicators(builder, entry.shardReplicators());
@@ -116,8 +117,9 @@ namespace catapult { namespace mongo { namespace plugins {
 		DbBinaryToModelArray(drive, dbDownloadChannelEntry["drive"].get_binary());
 		entry.setDrive(drive);
 
-		entry.setDownloadSize(static_cast<uint64_t>(dbDownloadChannelEntry["downloadSize"].get_int64()));
-		entry.setDownloadApprovalCountLeft(static_cast<uint16_t>(dbDownloadChannelEntry["downloadApprovalCountLeft"].get_int32()));
+		entry.setDownloadSize(static_cast<uint64_t>(dbDownloadChannelEntry["downloadSizeMegabytes"].get_int64()));
+		entry.setDownloadApprovalCountLeft(static_cast<uint16_t>(dbDownloadChannelEntry["downloadApprovalCount"].get_int32()));
+		entry.setFinishPublished(dbDownloadChannelEntry["finished"].get_bool().value);
 
 		ReadListOfPublicKeys(entry.listOfPublicKeys(), dbDownloadChannelEntry["listOfPublicKeys"].get_array().value);
 		ReadShardReplicators(entry.shardReplicators(), dbDownloadChannelEntry["shardReplicators"].get_array().value);

@@ -223,7 +223,7 @@ namespace catapult { namespace storage {
 				return;
 			}
 
-			m_pReplicator->asyncIncreaseDownloadChannelSize(channelId.array(), pChannel->DownloadSizeMegabytes);
+			m_pReplicator->asyncIncreaseDownloadChannelSize(channelId.array(), utils::FileSize::FromMegabytes(pChannel->DownloadSizeMegabytes).bytes());
         }
 
         void initiateDownloadApproval(const Hash256& channelId, const Hash256& eventHash) {
