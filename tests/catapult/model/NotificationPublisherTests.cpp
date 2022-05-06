@@ -125,7 +125,7 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pBlock, [&block = *pBlock](const auto& sub) {
 			// Assert:
-			EXPECT_EQ(8u, sub.numNotifications());
+			EXPECT_EQ(7u, sub.numNotifications());
 			EXPECT_EQ(0u, sub.numAddresses());
 			EXPECT_EQ(2u, sub.numKeys());
 
@@ -143,7 +143,7 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pBlock, [&block = *pBlock](const auto& sub) {
 			// Assert:
-			EXPECT_EQ(7u, sub.numNotifications());
+			EXPECT_EQ(6u, sub.numNotifications());
 			EXPECT_EQ(0u, sub.numAddresses());
 			EXPECT_EQ(1u, sub.numKeys());
 
