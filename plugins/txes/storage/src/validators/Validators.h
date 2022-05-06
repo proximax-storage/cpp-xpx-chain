@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 	/// - drive size >= minDriveSize
 	/// - number of replicators >= minReplicatorCount
 	/// - the drive does not exist
-	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector);
+	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, model::PrepareDriveNotification<1>)();
 
 	/// A validator implementation that applies to drive data modification notifications and validates that:
 	/// - respective drive exists

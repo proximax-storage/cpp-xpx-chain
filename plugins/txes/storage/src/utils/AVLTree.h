@@ -6,7 +6,6 @@
 
 #pragma once
 #include "src/state/QueueEntry.h"
-#include "src/utils/StorageUtils.h"
 #include "src/state/CommonEntities.h"
 #include <utility>
 
@@ -58,6 +57,10 @@ public:
 		return extractedPointer;
 	}
 
+	uint32_t size() {
+		return getSize(getRoot());
+	}
+
 	bool checkTreeValidity() {
 		bool valid = true;
 		int totalHeight = checkTreeValidity(getRoot(), valid);
@@ -100,8 +103,9 @@ private:
 	}
 
 	Key insert(const Key& nodePointer, const Key& insertedNodePointer) {
-		if (isNull(nodePointer))
+		if (isNull(nodePointer)) {
 			return insertedNodePointer;
+		}
 
 		state::AVLTreeNode node = m_nodeExtractor(nodePointer);
 
@@ -122,8 +126,9 @@ private:
 	}
 
 	Key extract(const Key& nodePointer, int index, Key& extractedPointer) {
-		if (isNull(nodePointer))
+		if (isNull(nodePointer)) {
 			return nodePointer;
+		}
 
 		auto node = m_nodeExtractor(nodePointer);
 		auto resultPointer = nodePointer;
@@ -190,6 +195,7 @@ private:
 				newNode.Right = rightChild;
 				m_nodeSaver(resultPointer, newNode);
 			}
+			m_nodeSaver(nodePointer, {});
 		}
 		else if (removedKey < nodeKey) {
 			node.Left = remove(node.Left, removedKey);
@@ -257,8 +263,6 @@ private:
 		auto nodeKey = m_keyExtractor(nodePointer);
 
 		if (nodeKey < key) {
-			auto lefSize = getSize(node.Left);
-			auto rightLess = numberOfLess(node.Right, key);
 			return numberOfLess(node.Right, key) + getSize(node.Left) + 1;
 		}
 

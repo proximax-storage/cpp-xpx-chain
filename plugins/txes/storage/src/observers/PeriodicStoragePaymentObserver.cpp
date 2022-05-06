@@ -29,6 +29,7 @@ namespace catapult { namespace observers {
 
 			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
 			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
+			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 
 			utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
 
@@ -101,6 +102,26 @@ namespace catapult { namespace observers {
 								}
 					}
 
+					auto keyExtractor = [=, &accountStateCache](const Key& key) {
+						return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+					};
+
+					utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
+							context.Cache.template sub<cache::QueueCache>(),
+							state::ReplicatorsSetTree,
+							keyExtractor,
+							[&replicatorCache](const Key& key) -> state::AVLTreeNode {
+								return replicatorCache.find(key).get().replicatorsSetNode();
+							},
+							[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
+								replicatorCache.find(key).get().replicatorsSetNode() = node;
+							});
+
+					for (const auto& replicatorKey: driveEntry.replicators()) {
+						auto key = keyExtractor(replicatorKey);
+						replicatorTreeAdapter.remove(key);
+					}
+
 					// Returning the rest to the drive owner
 					const auto refundAmount = driveState.Balances.get(streamingMosaicId);
 					driveState.Balances.debit(streamingMosaicId, refundAmount, context.Height);
@@ -123,19 +144,18 @@ namespace catapult { namespace observers {
 
 					// Removing the drive from caches
 					const auto replicators = driveEntry.replicators();
-					auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 					for (const auto& replicatorKey : replicators)
 						replicatorCache.find(replicatorKey).get().drives().erase(driveEntry.key());
 
 					// The Drive is Removed, so we should make removal from verification tree
 					utils::AVLTreeAdapter<Key> treeAdapter(
 							context.Cache.template sub<cache::QueueCache>(),
-									state::DriveVerificationsTree,
-									[](const Key& key) { return key; },
-									[&driveCache](const Key& key) -> state::AVLTreeNode {
+							state::DriveVerificationsTree,
+							[](const Key& key) { return key; },
+							[&driveCache](const Key& key) -> state::AVLTreeNode {
 								return driveCache.find(key).get().verificationNode();
-								},
-								[&driveCache](const Key& key, const state::AVLTreeNode& node) {
+							},
+							[&driveCache](const Key& key, const state::AVLTreeNode& node) {
 								driveCache.find(key).get().verificationNode() = node;
 							});
 

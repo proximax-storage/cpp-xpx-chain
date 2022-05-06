@@ -11,7 +11,7 @@
 
 namespace catapult { namespace cache {
 
-	/// Primary serializer for replicator cache.
+	/// Primary serializer for drive cache.
 	struct ReplicatorEntryPrimarySerializer : public CacheSerializerAdapter<state::ReplicatorEntrySerializer, ReplicatorCacheDescriptor>
-	{};
+			{};
 }}

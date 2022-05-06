@@ -8,14 +8,12 @@
 
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/state/StorageState.h"
-#include "src/cache/ReplicatorKeyCollector.h"
 
 namespace catapult { namespace state {
 
     class StorageStateImpl : public StorageState {
     public:
-        explicit StorageStateImpl(std::shared_ptr<cache::ReplicatorKeyCollector> pKeyCollector)
-                : m_pKeyCollector(std::move(pKeyCollector)) {}
+        explicit StorageStateImpl() = default;
 
     public:
     	Height getChainHeight() override;
@@ -44,8 +42,5 @@ namespace catapult { namespace state {
 
 		std::optional<DriveVerification> getActiveVerification(const Key& driveKey, const Timestamp& blockTimestamp) override;
 		std::set<Hash256> getReplicatorChannelIds(const Key& replicatorKey) override;
-
-	private:
-        std::shared_ptr<cache::ReplicatorKeyCollector> m_pKeyCollector;
     };
 }}
