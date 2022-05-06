@@ -65,7 +65,7 @@ namespace catapult { namespace storage {
 		void dataModificationApprovalPublished(const Key& driveKey, const Hash256& modificationId, const Hash256& rootHash, std::vector<Key>& replicators);
         void dataModificationSingleApprovalPublished(const Key& driveKey, const Hash256& modificationId);
         void downloadApprovalPublished(const Hash256& approvalTrigger, const Hash256& downloadChannelId);
-//		void endDriveVerificationPublished(const Key& driveKey, const Hash256& verificationTrigger);
+		void endDriveVerificationPublished(const Key& driveKey, const Hash256& verificationTrigger);
 
 	public:
 		bool driveExists(const Key& driveKey);

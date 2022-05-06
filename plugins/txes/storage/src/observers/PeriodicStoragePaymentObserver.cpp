@@ -24,127 +24,129 @@ namespace catapult { namespace observers {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
 
-//			if (context.Height < Height(2))
-//				return;
-//
-//			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
-//			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
-//
-//			utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
-//
-//			if (queueAdapter.isEmpty()) {
-//				return;
-//			}
-//
-//			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
-//			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
-//
-//			// Creating unique eventHash for the observer
-//			auto eventHash = getStoragePaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
-//
-//			for (int i = 0; i < driveCache.size(); i++) {
-//				auto driveIter = driveCache.find(queueAdapter.front());
-//				auto& driveEntry = driveIter.get();
-//
-//				auto timeSinceLastPayment = (notification.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
-//				if (timeSinceLastPayment < paymentInterval) {
-//					break;
-//				}
-//
-//				queueAdapter.popFront();
-//
-//				const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
-//				const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
-//				const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
-//
-//				auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-//				auto driveStateIter = accountStateCache.find(driveEntry.key());
-//				auto& driveState = driveStateIter.get();
-//
-//				for (auto& [replicatorKey, info]: driveEntry.confirmedStorageInfos()) {
-//					auto replicatorIter = accountStateCache.find(replicatorKey);
-//					auto& replicatorState = replicatorIter.get();
-//
-//					if (info.m_confirmedStorageSince) {
-//						info.m_timeInConfirmedStorage = info.m_timeInConfirmedStorage
-//								+ notification.Timestamp - *info.m_confirmedStorageSince;
-//						info.m_confirmedStorageSince = notification.Timestamp;
-//					}
-//					BigUint driveSize = driveEntry.size();
-//					auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / timeSinceLastPayment).template convert_to<uint64_t>());
-//					driveState.Balances.debit(storageMosaicId, payment, context.Height);
-//					replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);
-//				}
-//
-//				if (driveState.Balances.get(storageMosaicId).unwrap() >= driveEntry.size() * driveEntry.replicatorCount()) {
-//
-//					// Drive Continues To Work
-//					driveEntry.setLastPayment(notification.Timestamp);
-//					queueAdapter.pushBack(driveEntry.entryKey());
-//				}
-//				else {
-//					// Drive is Closed
-//
-//					// Making payments to replicators, if there is a pending data modification
-//					auto& activeDataModifications = driveEntry.activeDataModifications();
-//					if (!activeDataModifications.empty()) {
-//						const auto& modificationSize = activeDataModifications.front().ExpectedUploadSizeMegabytes;
-//						const auto& replicators = driveEntry.replicators();
-//						const auto totalReplicatorAmount = Amount(
-//								modificationSize +	// Download work
-//								modificationSize * (replicators.size() - 1) / replicators.size());	// Upload work
-//								for (const auto& replicatorKey : replicators) {
-//									auto replicatorIter = accountStateCache.find(replicatorKey);
-//									auto& replicatorState = replicatorIter.get();
-//									driveState.Balances.debit(streamingMosaicId, totalReplicatorAmount, context.Height);
-//									replicatorState.Balances.credit(currencyMosaicId, totalReplicatorAmount, context.Height);
-//								}
-//					}
-//
-//					// Returning the rest to the drive owner
-//					const auto refundAmount = driveState.Balances.get(streamingMosaicId);
-//					driveState.Balances.debit(streamingMosaicId, refundAmount, context.Height);
-//
-//					auto driveOwnerIter = accountStateCache.find(driveEntry.owner());
-//					auto& driveOwnerState = driveOwnerIter.get();
-//					driveOwnerState.Balances.credit(currencyMosaicId, refundAmount, context.Height);
-//
-//					// Simulate publishing of finish download for all download channels
-//
-//					auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
-//					for (const auto& key: driveEntry.downloadShards()) {
-//						auto downloadIter = downloadCache.find(key);
-//						auto& downloadEntry = downloadIter.get();
-//						if (!downloadEntry.isCloseInitiated()) {
-//							downloadEntry.setFinishPublished(true);
-//							downloadEntry.downloadApprovalInitiationEvent() = eventHash;
-//						}
-//					}
-//
-//					// Removing the drive from caches
-//					const auto replicators = driveEntry.replicators();
-//					auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-//					for (const auto& replicatorKey : replicators)
-//						replicatorCache.find(replicatorKey).get().drives().erase(driveEntry.key());
-//
-//					// The Drive is Removed, so we should make removal from verification tree
-//					utils::AVLTreeAdapter<Key> treeAdapter(
-//							queueCache,
-//							state::DriveVerificationsTree,
-//							[](const Key& key) { return key; },
-//							[&](const Key& key) -> state::AVLTreeNode& {
-//								return driveCache.find(key).get().verificationNode();
-//							});
-//					treeAdapter.remove(driveEntry.key());
-//
-//					driveCache.remove(driveEntry.key());
-//
-//					// Assigning drive's former replicators to queued drives
-//					std::seed_seq seed(eventHash.begin(), eventHash.end());
-//					std::mt19937 rng(seed);
-//					utils::AssignReplicatorsToQueuedDrives(replicators, pDriveQueue, context, rng);
-//				}
-//			}
+			if (context.Height < Height(2))
+				return;
+
+			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
+			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
+
+			utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
+
+			if (queueAdapter.isEmpty()) {
+				return;
+			}
+
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
+
+			// Creating unique eventHash for the observer
+			auto eventHash = getStoragePaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
+
+			for (int i = 0; i < driveCache.size(); i++) {
+				auto driveIter = driveCache.find(queueAdapter.front());
+				auto& driveEntry = driveIter.get();
+
+				auto timeSinceLastPayment = (notification.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
+				if (timeSinceLastPayment < paymentInterval) {
+					break;
+				}
+
+				queueAdapter.popFront();
+
+				const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+				const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+				const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
+
+				auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+				auto driveStateIter = accountStateCache.find(driveEntry.key());
+				auto& driveState = driveStateIter.get();
+
+				for (auto& [replicatorKey, info]: driveEntry.confirmedStorageInfos()) {
+					auto replicatorIter = accountStateCache.find(replicatorKey);
+					auto& replicatorState = replicatorIter.get();
+
+					if (info.m_confirmedStorageSince) {
+						info.m_timeInConfirmedStorage = info.m_timeInConfirmedStorage
+								+ notification.Timestamp - *info.m_confirmedStorageSince;
+						info.m_confirmedStorageSince = notification.Timestamp;
+					}
+					BigUint driveSize = driveEntry.size();
+					auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / timeSinceLastPayment).template convert_to<uint64_t>());
+					driveState.Balances.debit(storageMosaicId, payment, context.Height);
+					replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);
+				}
+
+				if (driveState.Balances.get(storageMosaicId).unwrap() >= driveEntry.size() * driveEntry.replicatorCount()) {
+
+					// Drive Continues To Work
+					driveEntry.setLastPayment(notification.Timestamp);
+					queueAdapter.pushBack(driveEntry.entryKey());
+				}
+				else {
+					// Drive is Closed
+
+					// Making payments to replicators, if there is a pending data modification
+					auto& activeDataModifications = driveEntry.activeDataModifications();
+					if (!activeDataModifications.empty()) {
+						const auto& modificationSize = activeDataModifications.front().ExpectedUploadSizeMegabytes;
+						const auto& replicators = driveEntry.replicators();
+						const auto totalReplicatorAmount = Amount(
+								modificationSize +	// Download work
+								modificationSize * (replicators.size() - 1) / replicators.size());	// Upload work
+								for (const auto& replicatorKey : replicators) {
+									auto replicatorIter = accountStateCache.find(replicatorKey);
+									auto& replicatorState = replicatorIter.get();
+									driveState.Balances.debit(streamingMosaicId, totalReplicatorAmount, context.Height);
+									replicatorState.Balances.credit(currencyMosaicId, totalReplicatorAmount, context.Height);
+								}
+					}
+
+					// Returning the rest to the drive owner
+					const auto refundAmount = driveState.Balances.get(streamingMosaicId);
+					driveState.Balances.debit(streamingMosaicId, refundAmount, context.Height);
+
+					auto driveOwnerIter = accountStateCache.find(driveEntry.owner());
+					auto& driveOwnerState = driveOwnerIter.get();
+					driveOwnerState.Balances.credit(currencyMosaicId, refundAmount, context.Height);
+
+					// Simulate publishing of finish download for all download channels
+
+					auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+					for (const auto& key: driveEntry.downloadShards()) {
+						auto downloadIter = downloadCache.find(key);
+						auto& downloadEntry = downloadIter.get();
+						if (!downloadEntry.isCloseInitiated()) {
+							downloadEntry.setFinishPublished(true);
+							downloadEntry.downloadApprovalInitiationEvent() = eventHash;
+						}
+					}
+
+					// Removing the drive from caches
+					const auto replicators = driveEntry.replicators();
+					auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+					for (const auto& replicatorKey : replicators)
+						replicatorCache.find(replicatorKey).get().drives().erase(driveEntry.key());
+
+					// The Drive is Removed, so we should make removal from verification tree
+					utils::AVLTreeAdapter treeAdapter(
+							queueCache,
+							state::DriveVerificationsTree,
+							[&driveEntry](const Key&) -> state::AVLTreeNode& {
+								return driveEntry.verificationNode();
+								},
+								[&driveEntry](const Key&, const state::AVLTreeNode& node) {
+								driveEntry.verificationNode() = node;
+							});
+					treeAdapter.remove(driveEntry.key());
+
+					driveCache.remove(driveEntry.key());
+
+					// Assigning drive's former replicators to queued drives
+					std::seed_seq seed(eventHash.begin(), eventHash.end());
+					std::mt19937 rng(seed);
+					utils::AssignReplicatorsToQueuedDrives(replicators, pDriveQueue, context, rng);
+				}
+			}
         }))
 	};
 }}

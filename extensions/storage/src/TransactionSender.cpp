@@ -227,7 +227,7 @@ namespace catapult { namespace storage {
 
     Hash256 TransactionSender::sendEndDriveVerificationTransaction(const sirius::drive::VerifyApprovalTxInfo& transactionInfo) {
 		uint8_t opinionCount = transactionInfo.m_opinions[0].m_opinions.size();
-		uint8_t keyCount = opinionCount + 1;
+		uint8_t keyCount = opinionCount;
 		uint8_t judgingKeyCount = transactionInfo.m_opinions.size();
 		std::vector<Key> publicKeys;
 		publicKeys.reserve(keyCount);
@@ -259,6 +259,7 @@ namespace catapult { namespace storage {
         builder.setOpinions(std::move(opinions));
         auto pTransaction = utils::UniqueToShared(builder.build());
         pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
+
         send(pTransaction);
 
         return model::CalculateHash(*pTransaction, m_generationHash);

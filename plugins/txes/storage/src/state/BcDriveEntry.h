@@ -129,6 +129,9 @@ namespace catapult { namespace state {
 		/// The expiration time of the verification.
 		Timestamp Expiration;
 
+		/// The duration of the verification in ms
+		uint32_t Duration;
+
 		/// Replicator shards.
 		state::Shards Shards;
 
