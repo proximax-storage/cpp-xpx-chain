@@ -142,8 +142,22 @@ namespace catapult { namespace observers {
 						}
 					}
 
-					// Removing the drive from caches
 					const auto replicators = driveEntry.replicators();
+					if (replicators.size() < driveEntry.replicatorCount()) {
+						DriveQueue originalQueue = *pDriveQueue;
+						DriveQueue newQueue;
+						while (!originalQueue.empty()) {
+							const auto drivePriorityPair = originalQueue.top();
+							const auto& driveKey = drivePriorityPair.first;
+							originalQueue.pop();
+
+							if (driveKey != driveEntry.key())
+								newQueue.push(drivePriorityPair);
+						}
+						*pDriveQueue = std::move(newQueue);
+					}
+
+					// Removing the drive from caches
 					for (const auto& replicatorKey : replicators)
 						replicatorCache.find(replicatorKey).get().drives().erase(driveEntry.key());
 
