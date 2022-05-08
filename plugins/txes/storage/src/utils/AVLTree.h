@@ -51,10 +51,14 @@ public:
 		return numberOfLess(getRoot(), key);
 	}
 
-	Key extract(uint32_t index) {
+	Key extractOrderStatistics(uint32_t index) {
 		Key extractedPointer;
-		setRoot(extract(getRoot(), index, extractedPointer));
+		setRoot(extractOrderStatistics(getRoot(), index, extractedPointer));
 		return extractedPointer;
+	}
+
+	Key orderStatistics(uint32_t index) {
+		return orderStatistics(getRoot(), index);
 	}
 
 	uint32_t size() {
@@ -125,7 +129,7 @@ private:
 		return maybeRotate(nodePointer);
 	}
 
-	Key extract(const Key& nodePointer, int index, Key& extractedPointer) {
+	Key extractOrderStatistics(const Key& nodePointer, int index, Key& extractedPointer) {
 		if (isNull(nodePointer)) {
 			return nodePointer;
 		}
@@ -138,7 +142,7 @@ private:
 		auto leftSize = getSize(node.Left);
 
 		if (index < leftSize) {
-			node.Left = extract(node.Left, index, extractedPointer);
+			node.Left = extractOrderStatistics(node.Left, index, extractedPointer);
 			m_nodeSaver(nodePointer, node);
 			updateStatistics(nodePointer);
 		}
@@ -162,13 +166,33 @@ private:
 			extractedPointer = nodePointer;
 		}
 		else {
-			node.Right = extract(node.Right, index - leftSize - 1, extractedPointer);
+			node.Right = extractOrderStatistics(node.Right, index - leftSize - 1, extractedPointer);
 			m_nodeSaver(nodePointer, node);
 			updateStatistics(nodePointer);
 		}
 
 		updateStatistics(resultPointer);
 		return maybeRotate(resultPointer);
+	}
+
+	Key orderStatistics(const Key& nodePointer, int index) {
+		if (isNull(nodePointer)) {
+			return nodePointer;
+		}
+
+		auto node = m_nodeExtractor(nodePointer);
+
+		auto leftSize = getSize(node.Left);
+
+		if (index < leftSize) {
+			return orderStatistics(node.Left, index);
+		}
+		if (index == leftSize) {
+			return nodePointer;
+		}
+		else {
+			return orderStatistics(node.Right, index - leftSize - 1);
+		}
 	}
 
 	Key remove(const Key& nodePointer, const TKey& removedKey) {

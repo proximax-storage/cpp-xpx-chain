@@ -383,12 +383,10 @@ namespace catapult { namespace utils {
 					replicatorCache.find(key).get().replicatorsSetNode() = node;
 				});
 
-		CATAPULT_LOG( error ) << "Populate Before Removal " << treeAdapter.size();
 		for (const auto& replicatorKey: driveEntry.replicators()) {
 			std::pair<Amount, Key> keyToRemove = keyExtractor(replicatorKey);
 			treeAdapter.remove(keyToRemove);
 		}
-		CATAPULT_LOG( error ) << "Populate After Removal " << treeAdapter.size();
 
 		auto notSuitableReplicators = treeAdapter.numberOfLess({Amount(driveSize), Key()});
 		auto suitableReplicators = treeAdapter.size() - notSuitableReplicators;
@@ -417,7 +415,7 @@ namespace catapult { namespace utils {
 		for (int i = 0; i < replicatorsToAdd; i++) {
 			uint32_t index = rng() % suitableReplicators;
 			suitableReplicators--;
-			auto replicatorKey = treeAdapter.extract(notSuitableReplicators + index);
+			auto replicatorKey = treeAdapter.extractOrderStatistics(notSuitableReplicators + index);
 
 			// Updating the cache entries
 			auto replicatorIter = replicatorCache.find(replicatorKey);
