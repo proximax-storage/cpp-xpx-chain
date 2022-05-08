@@ -16,6 +16,7 @@ namespace catapult { namespace state {
 			io::Write(output, node.Left);
 			io::Write(output, node.Right);
 			io::Write16(output, node.Height);
+			io::Write32(output, node.Size);
 		}
 
 		void SaveActiveDataModification(io::OutputStream& output, const ActiveDataModification& modification) {
@@ -132,7 +133,8 @@ namespace catapult { namespace state {
 			Key right;
 			io::Read(input, right);
 			uint16_t height = io::Read16(input);
-			node = AVLTreeNode{left, right, height};
+			uint32_t size = io::Read32(input);
+			node = AVLTreeNode{left, right, height, size};
 		}
 
 		auto LoadActiveDataModification(io::InputStream& input) {

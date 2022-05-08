@@ -10,8 +10,8 @@ namespace catapult { namespace validators {
 
 	using Notification = model::PrepareDriveNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, Notification)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector) {
-		return MAKE_STATEFUL_VALIDATOR(PrepareDrive, [pKeyCollector](const Notification& notification, const ValidatorContext& context) {
+	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(PrepareDrive, [](const Notification& notification, const ValidatorContext& context) {
 			const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
@@ -30,14 +30,6 @@ namespace catapult { namespace validators {
 			// Check if the drive already exists
 			if (driveCache.contains(notification.DriveKey))
 				return Failure_Storage_Drive_Already_Exists;
-
-			auto replicatorCount = pKeyCollector->keys().size();
-			if (!replicatorCount)
-				return Failure_Storage_No_Replicator;
-
-			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-			if (!replicatorCache.contains(*pKeyCollector->keys().begin()))
-				return Failure_Storage_Replicator_Not_Found;
 
 			return ValidationResult::Success;
 		})

@@ -86,19 +86,16 @@ namespace catapult { namespace mongo { namespace plugins {
 			array << bson_stream::close_array;
 		}
 
-//		void StreamVerifications(bson_stream::document& builder, const state::Verifications& verifications) {
-//			auto array = builder << "verifications" << bson_stream::open_array;
-//			for (const auto& verification : verifications) {
-//				bson_stream::document verificationBuilder;
-//				verificationBuilder << "verificationTrigger" << ToBinary(verification.VerificationTrigger);
-//				verificationBuilder << "expiration" << ToInt64(verification.Expiration);
-//				verificationBuilder << "expired" << verification.Expired;
-//				StreamShards(verificationBuilder, verification.Shards);
-//				array << verificationBuilder;
-//			}
-//
-//			array << bson_stream::close_array;
-//		}
+		void StreamVerification(bson_stream::document& builder, const std::optional<state::Verification>& verification) {
+			if (verification) {
+				builder << "verification" << bson_stream::open_document
+					<< "verificationTrigger" << ToBinary(verification->VerificationTrigger)
+					<< "expiration" << ToInt64(verification->Expiration)
+					<< "duration" << static_cast<int64_t>(verification->Duration);
+					StreamShards(builder, verification->Shards);
+					builder << bson_stream::close_document;
+			}
+		}
 
 		void StreamDownloadShards(bson_stream::document& builder, const state::DownloadShards& downloadShards) {
 			auto array = builder << "downloadShards" << bson_stream::open_array;
@@ -152,7 +149,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		StreamConfirmedUsedSizes(builder, entry.confirmedUsedSizes());
 		StreamReplicators("replicators", builder, entry.replicators());
 		StreamReplicators("offboardingReplicators", builder, entry.offboardingReplicators());
-//		StreamVerifications(builder, entry.verifications());
+		StreamVerification(builder, entry.verification());
 		StreamDownloadShards(builder, entry.downloadShards());
 		StreamModificationShards(builder, entry.dataModificationShards());
 
@@ -243,17 +240,13 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 		}
 
-//		void ReadVerifications(state::Verifications& verifications, const bsoncxx::array::view& dbVerifications) {
-//			for (const auto& dbVerification : dbVerifications) {
-//				auto doc = dbVerification.get_document().view();
-//				state::Verification verification;
-//				DbBinaryToModelArray(verification.VerificationTrigger, doc["verificationTrigger"].get_binary());
-//				verification.Expiration = Timestamp(static_cast<uint64_t>(doc["expiration"].get_int64()));
-//				verification.Expired = doc["expired"].get_bool();
-//				ReadShards(verification.Shards, doc["shards"].get_array().value);
-//				verifications.emplace_back(verification);
-//			}
-//		}
+		void ReadVerification(std::optional<state::Verification>& verification, const bsoncxx::document::view& dbVerification) {
+			verification = state::Verification();
+			DbBinaryToModelArray(verification->VerificationTrigger, dbVerification["verificationTrigger"].get_binary());
+			verification->Expiration = Timestamp(static_cast<uint64_t>(dbVerification["expiration"].get_int64()));
+			verification->Duration = dbVerification["duration"].get_bool();
+			ReadShards(verification->Shards, dbVerification["shards"].get_array().value);
+		}
 
 		void ReadDownloadShards(state::DownloadShards& downloadShards, const bsoncxx::array::view& dbDownloadShards) {
 			for (const auto& dbShard : dbDownloadShards) {
@@ -312,7 +305,11 @@ namespace catapult { namespace mongo { namespace plugins {
 		ReadConfirmedUsedSizes(entry.confirmedUsedSizes(), dbDriveEntry["confirmedUsedSizes"].get_array().value);
 		ReadReplicators(entry.replicators(), dbDriveEntry["replicators"].get_array().value);
 		ReadReplicators(entry.offboardingReplicators(), dbDriveEntry["offboardingReplicators"].get_array().value);
-//		ReadVerifications(entry.verifications(), dbDriveEntry["verifications"].get_array().value);
+
+		auto verificationElement = dbDriveEntry["verification"];
+		if (verificationElement) {
+			ReadVerification(entry.verification(), verificationElement.get_value().get_document());
+		}
 		ReadDownloadShards(entry.downloadShards(), dbDriveEntry["downloadShards"].get_array().value);
 		ReadModificationShards(entry.dataModificationShards(), dbDriveEntry["dataModificationShards"].get_array().value);
 

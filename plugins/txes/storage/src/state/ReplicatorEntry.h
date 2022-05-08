@@ -7,6 +7,7 @@
 #pragma once
 #include "catapult/types.h"
 #include "catapult/exceptions.h"
+#include "CommonEntities.h"
 #include "catapult/state/StorageState.h"
 #include "catapult/utils/ArraySet.h"
 
@@ -64,9 +65,18 @@ namespace catapult { namespace state {
 			return m_downloadChannels;
 		}
 
+		const AVLTreeNode& replicatorsSetNode() const {
+			return m_replicatorsSetNode;
+		}
+
+		AVLTreeNode& replicatorsSetNode() {
+			return m_replicatorsSetNode;
+		}
+
 	private:
 		DrivesMap m_drives;
 		std::set<Hash256> m_downloadChannels;
+		state::AVLTreeNode m_replicatorsSetNode;
 	};
 
 	// Replicator entry.
