@@ -87,14 +87,26 @@ namespace catapult { namespace thread {
 		future<std::string> CreateSleepContinuationFuture(long numMillis, future<int>&& valueFuture) {
 			auto value = valueFuture.get();
 
+			std::condition_variable condVar;
+			std::mutex mtx;
+			std::atomic<int> flag = 0;
+
 			promise<std::string> promise;
 			auto future = promise.get_future();
-			std::thread([promise = std::move(promise), numMillis, value]() mutable {
+			std::thread([promise = std::move(promise), numMillis, value, &flag, &mtx, &condVar]() mutable {
+				std::lock_guard<std::mutex> guard(mtx);
 				LogAndSleep(numMillis);
 				CATAPULT_LOG(debug) << "returning " << value << " after sleep (continuation)";
 
 				promise.set_value(std::to_string(2 * value));
+
+				flag++;
+				condVar.notify_one();
 			}).detach();
+
+			std::unique_lock<std::mutex> mlock(mtx);
+			condVar.wait(mlock, [&flag]{return flag != 0;});
+
 			return future;
 		}
 
