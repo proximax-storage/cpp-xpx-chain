@@ -217,4 +217,19 @@ namespace catapult { namespace thread {
 			}
 		});
 	}
+
+	template<typename TItems, typename TWorkCallback>
+	thread::future<bool> ParallelForWithThreadSync(boost::asio::io_context& ioContext, TItems& items, size_t numPartitions, TWorkCallback callback) {
+		return ParallelForPartitionWithThreadSync(ioContext, items, numPartitions, [callback](auto itBegin, auto itEnd, auto startIndex, auto, std::atomic<int>& mainFlag, std::condition_variable& mainCondVar, std::mutex& mainMtx) {
+			auto i = 0u;
+			for (auto iter = itBegin; itEnd != iter; ++iter, ++i) {
+				if (!callback(*iter, startIndex + i))
+					break;
+			}
+
+			std::lock_guard<std::mutex> guard(mainMtx);
+			mainFlag = 1;
+			mainCondVar.notify_one();
+		});
+	}
 }}

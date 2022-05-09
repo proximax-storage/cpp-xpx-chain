@@ -82,8 +82,12 @@ namespace catapult { namespace thread {
 
 		// Act:
 		std::atomic<size_t> counter(0);
-		ParallelForPartition(context.pPool->ioContext(), items, context.NumThreads, [&counter](auto, auto, auto, auto) {
+		ParallelForPartitionWithThreadSync(context.pPool->ioContext(), items, context.NumThreads, [&counter](auto, auto, auto, auto, std::atomic<int>& mainFlag, std::condition_variable& mainCondVar, std::mutex& mainMtx) {
 			++counter;
+
+			std::lock_guard<std::mutex> guard(mainMtx);
+			mainFlag = 1;
+			mainCondVar.notify_one();
 		}).get();
 
 		// Assert: the partition callback was not called
@@ -109,7 +113,7 @@ namespace catapult { namespace thread {
 		};
 
 		auto CreatePartitionAggregate(PartitionAggregateCapture& capture) {
-			return [&capture](auto itBegin, auto itEnd, auto startIndex, auto batchIndex) {
+			return [&capture](auto itBegin, auto itEnd, auto startIndex, auto batchIndex, std::atomic<int>& mainFlag, std::condition_variable& mainCondVar, std::mutex& mainMtx) {
 				// Sanity: fail if any index is too large
 				ASSERT_GT(capture.IndexFlags.size(), startIndex) << "unexpected start index " << startIndex;
 				ASSERT_GT(capture.BatchIndexFlags.size(), batchIndex) << "unexpected batch index " << batchIndex;
@@ -120,6 +124,10 @@ namespace catapult { namespace thread {
 					++capture.IndexFlags[startIndex++]; // use start index to visit all items
 					capture.Sum += *iter;
 				}
+
+				std::lock_guard<std::mutex> guard(mainMtx);
+				mainFlag = 1;
+				mainCondVar.notify_one();
 			};
 		}
 	}
@@ -131,7 +139,7 @@ namespace catapult { namespace thread {
 
 		// Act:
 		PartitionAggregateCapture capture(1, 1);
-		ParallelForPartition(context.pPool->ioContext(), items, context.NumThreads, CreatePartitionAggregate(capture)).get();
+		ParallelForPartitionWithThreadSync(context.pPool->ioContext(), items, context.NumThreads, CreatePartitionAggregate(capture)).get();
 
 		// Assert: the callback was only called once (since there is only one item and one partition)
 		EXPECT_EQ(7u, capture.Sum);
@@ -147,7 +155,7 @@ namespace catapult { namespace thread {
 
 			// Act:
 			PartitionAggregateCapture capture(context.Items.size(), context.NumThreads);
-			ParallelForPartition(context.pPool->ioContext(), context.Items, context.NumThreads, CreatePartitionAggregate(capture)).get();
+			ParallelForPartitionWithThreadSync(context.pPool->ioContext(), context.Items, context.NumThreads, CreatePartitionAggregate(capture)).get();
 
 			// Assert:
 			EXPECT_EQ(context.ItemsSum, capture.Sum);
@@ -176,9 +184,13 @@ namespace catapult { namespace thread {
 		BasicTestContext<typename TTraits::ContainerType> context;
 
 		// Act:
-		ParallelForPartition(context.pPool->ioContext(), context.Items, context.NumThreads, [](auto itBegin, auto itEnd, auto, auto) {
+		ParallelForPartitionWithThreadSync(context.pPool->ioContext(), context.Items, context.NumThreads, [](auto itBegin, auto itEnd, auto, auto, std::atomic<int>& mainFlag, std::condition_variable& mainCondVar, std::mutex& mainMtx) {
 			for (auto iter = itBegin; itEnd != iter; ++iter)
 				*iter = *iter * *iter + 1;
+
+			std::lock_guard<std::mutex> guard(mainMtx);
+			mainFlag = 1;
+			mainCondVar.notify_one();
 		}).get();
 
 		// Assert: all values should have been modified
@@ -200,7 +212,7 @@ namespace catapult { namespace thread {
 
 		// Act:
 		std::atomic<size_t> counter(0);
-		ParallelFor(context.pPool->ioContext(), items, context.NumThreads, [&counter](auto, auto) {
+		ParallelForWithThreadSync(context.pPool->ioContext(), items, context.NumThreads, [&counter](auto, auto) {
 			++counter;
 			return true;
 		}).get();
@@ -234,7 +246,7 @@ namespace catapult { namespace thread {
 		// Act:
 		std::atomic<size_t> sum(0);
 		std::vector<uint8_t> indexFlags(1, 0);
-		ParallelFor(context.pPool->ioContext(), items, context.NumThreads, CreateItemAggregate(sum, indexFlags)).get();
+		ParallelForWithThreadSync(context.pPool->ioContext(), items, context.NumThreads, CreateItemAggregate(sum, indexFlags)).get();
 
 		// Assert: the callback was only called once (since there is only one item)
 		EXPECT_EQ(7u, sum);
@@ -250,7 +262,7 @@ namespace catapult { namespace thread {
 			// Act:
 			std::atomic<size_t> sum(0);
 			std::vector<uint8_t> indexFlags(context.NumItems, 0);
-			ParallelFor(context.pPool->ioContext(), context.Items, context.NumThreads, CreateItemAggregate(sum, indexFlags)).get();
+			ParallelForWithThreadSync(context.pPool->ioContext(), context.Items, context.NumThreads, CreateItemAggregate(sum, indexFlags)).get();
 
 			// Assert:
 			EXPECT_EQ(context.ItemsSum, sum);
@@ -279,7 +291,7 @@ namespace catapult { namespace thread {
 
 		// Act:
 		std::atomic<size_t> sum(0);
-		ParallelFor(context.pPool->ioContext(), context.Items, context.NumThreads, [&sum, itemsSum = context.ItemsSum](auto value, auto) {
+		ParallelForWithThreadSync(context.pPool->ioContext(), context.Items, context.NumThreads, [&sum, itemsSum = context.ItemsSum](auto value, auto) {
 			sum += value;
 			return itemsSum < sum;
 		}).get();
@@ -293,7 +305,7 @@ namespace catapult { namespace thread {
 		BasicTestContext<typename TTraits::ContainerType> context;
 
 		// Act:
-		ParallelFor(context.pPool->ioContext(), context.Items, context.NumThreads, [](auto& value, auto) {
+		ParallelForWithThreadSync(context.pPool->ioContext(), context.Items, context.NumThreads, [](auto& value, auto) {
 			value = value * value + 1;
 			return true;
 		}).get();
@@ -312,7 +324,7 @@ namespace catapult { namespace thread {
 
 		// Act: capture all values by their index
 		std::vector<uint32_t> capturedValues(context.NumItems, 0);
-		ParallelFor(context.pPool->ioContext(), context.Items, context.NumThreads, [&capturedValues](auto value, auto index) {
+		ParallelForWithThreadSync(context.pPool->ioContext(), context.Items, context.NumThreads, [&capturedValues](auto value, auto index) {
 			// Sanity: fail if any index is too large
 			EXPECT_GT(capturedValues.size(), index) << "unexpected index " << index;
 			if (capturedValues.size() <= index)
