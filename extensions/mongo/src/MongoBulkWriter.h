@@ -35,6 +35,8 @@
 #include <mongocxx/exception/bulk_write_exception.hpp>
 #include <mongocxx/pool.hpp>
 #include <unordered_set>
+#include <chrono>
+#include <thread>
 
 namespace catapult { namespace mongo {
 
@@ -161,22 +163,38 @@ namespace catapult { namespace mongo {
 		}
 
 	private:
-		thread::future<BulkWriteResult> handleBulkOperation(std::shared_ptr<BulkWriteParams>&& pBulkWriteParams) {
+		thread::future<BulkWriteResult> handleBulkOperation(std::shared_ptr<BulkWriteParams>&& pBulkWriteParams, std::atomic<int>& flag1, std::condition_variable& condVar1, std::mutex& mtx1) {
 			// note: pBulkWriteParams depends on pThis (pBulkWriteParams.pConnection depends on pThis.m_connectionPool)
 			// it's crucial to move pBulkWriteParams into lambda, otherwise it would be copied while pThis would be moved
+			std::atomic<int> flag2 = 0;
+			std::condition_variable condVar2;
+			std::mutex mtx2;
 			auto pPromise = std::make_shared<thread::promise<BulkWriteResult>>();
-			boost::asio::post(m_ioContext, [pThis = shared_from_this(), pBulkWriteParams{std::move(pBulkWriteParams)}, pPromise]() {
-				pThis->bulkWrite(*pBulkWriteParams, *pPromise);
+			boost::asio::post(m_ioContext, [pThis = shared_from_this(), pBulkWriteParams{std::move(pBulkWriteParams)}, pPromise, &flag2, &condVar2, &mtx2]() {
+				pThis->bulkWrite(*pBulkWriteParams, *pPromise, flag2, condVar2, mtx2);
 			});
+		
+			std::unique_lock<std::mutex> mlock(mtx2);
+			condVar2.wait(mlock, [&flag2]{return flag2 == 1;});
+
+			std::thread([&]() {
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				std::lock_guard<std::mutex> guard(mtx1);
+				flag1 = 1;
+				condVar1.notify_one();
+			}).detach();
 
 			return pPromise->get_future();
 		}
 
-		void bulkWrite(BulkWriteParams& bulkWriteParams, thread::promise<BulkWriteResult>& promise) {
+		void bulkWrite(BulkWriteParams& bulkWriteParams, thread::promise<BulkWriteResult>& promise, std::atomic<int>& flag2, std::condition_variable& condVar2, std::mutex& mtx2) {
 			try {
 				// if something goes wrong mongo will throw, else a result is always available
 				auto result = bulkWriteParams.Bulk.execute().value();
 				promise.set_value(BulkWriteResult(result));
+				std::lock_guard<std::mutex> guard(mtx2);
+				flag2 = 1;
+				condVar2.notify_one();
 			} catch (const mongocxx::bulk_write_exception& e) {
 				std::ostringstream stream;
 				stream << "message: " << e.code().message();
@@ -187,6 +205,9 @@ namespace catapult { namespace mongo {
 
 				CATAPULT_LOG(fatal) << "throwing exception: " << stream.str().c_str();
 				promise.set_exception(std::make_exception_ptr(catapult_runtime_error(stream.str().c_str())));
+				std::lock_guard<std::mutex> guard(mtx2);
+				flag2 = 1;
+				condVar2.notify_one();
 			}
 		}
 
@@ -200,7 +221,7 @@ namespace catapult { namespace mongo {
 				return thread::when_all(std::move(m_futures));
 			}
 
-			void setFutureAt(size_t index, thread::future<BulkWriteResult>&& future) {
+			void setFutureAt(size_t index, thread::future<BulkWriteResult>& future) {
 				m_futures[index] = std::move(future);
 			}
 
@@ -222,16 +243,32 @@ namespace catapult { namespace mongo {
 					auto itBegin,
 					auto itEnd,
 					auto startIndex,
-					auto batchIndex) {
+					auto batchIndex, 
+					std::atomic<int>& mainFlag, 
+					std::condition_variable& mainCondVar, 
+					std::mutex& mainMtx) {
 				auto pBulkWriteParams = std::make_shared<BulkWriteParams>(*pThis, collectionName);
 
 				auto index = static_cast<uint32_t>(startIndex);
 				for (auto iter = itBegin; itEnd != iter; ++iter, ++index)
 					appendOperation(pBulkWriteParams->Bulk, *iter, index);
 
-				pContext->setFutureAt(batchIndex, pThis->handleBulkOperation(std::move(pBulkWriteParams)));
+				std::atomic<int> flag1 = 0;
+				std::condition_variable condVar1;
+				std::mutex mtx1;
+
+				thread::future<BulkWriteResult> bulkWriteResultFuture = pThis->handleBulkOperation(std::move(pBulkWriteParams), flag1, condVar1, mtx1);
+
+				std::unique_lock<std::mutex> mlock(mtx1);
+				condVar1.wait(mlock, [&flag1]{return flag1 == 1;});
+
+				pContext->setFutureAt(batchIndex, bulkWriteResultFuture);
+
+				std::lock_guard<std::mutex> guard(mainMtx);
+				mainFlag = 1;
+				mainCondVar.notify_one();
 			};
-			return thread::compose(thread::ParallelForPartition(m_ioContext, entities, numThreads, workCallback), [pContext](const auto&) {
+			return thread::compose(thread::ParallelForPartitionWithThreadSync(m_ioContext, entities, numThreads, workCallback), [pContext](const auto&) {
 				return pContext->aggregateFuture();
 			});
 		}
