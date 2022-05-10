@@ -52,12 +52,31 @@ namespace catapult { namespace state {
 				downloadChannels.insert(std::move(id));
 			}
 		}
+
+		void SaveReplicatorsSetNode(io::OutputStream& output, const AVLTreeNode& node) {
+			io::Write(output, node.Left);
+			io::Write(output, node.Right);
+			io::Write16(output, node.Height);
+			io::Write32(output, node.Size);
+		}
+
+		void LoadReplicatorsSetNode(io::InputStream& input, AVLTreeNode& node) {
+			Key left;
+			io::Read(input, left);
+			Key right;
+			io::Read(input, right);
+			uint16_t height = io::Read16(input);
+			uint32_t size = io::Read32(input);
+			node = AVLTreeNode{left, right, height, size};
+		}
 	}
 
 	void ReplicatorEntrySerializer::Save(const ReplicatorEntry& replicatorEntry, io::OutputStream& output) {
 
 		io::Write32(output, replicatorEntry.version());
 		io::Write(output, replicatorEntry.key());
+
+		SaveReplicatorsSetNode(output, replicatorEntry.replicatorsSetNode());
 
 		SaveDrives(output, replicatorEntry.drives());
 		SaveDownloadChannels(output, replicatorEntry.downloadChannels());
@@ -74,6 +93,8 @@ namespace catapult { namespace state {
 		input.read(key);
 		state::ReplicatorEntry entry(key);
 		entry.setVersion(version);
+
+		LoadReplicatorsSetNode(input, entry.replicatorsSetNode());
 
 		LoadDrives(input, entry.drives());
 		LoadDownloadChannels(input, entry.downloadChannels());

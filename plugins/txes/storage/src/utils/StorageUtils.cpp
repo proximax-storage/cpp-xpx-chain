@@ -7,9 +7,11 @@
 #pragma once
 #include "StorageUtils.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "src/cache/ReplicatorCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/DownloadChannelCache.h"
-#include "src/cache/ReplicatorCache.h"
+#include "src/cache/QueueCache.h"
+#include "src/utils/AVLTree.h"
 
 namespace catapult { namespace utils {
 
@@ -103,6 +105,7 @@ namespace catapult { namespace utils {
 
 		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		const auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 
 		for (const auto& replicatorKey : replicators) {
 			auto replicatorIter = replicatorCache.find(replicatorKey);
@@ -131,8 +134,8 @@ namespace catapult { namespace utils {
 			// Making mosaic transfers
 			driveState.Balances.debit(storageMosaicId, storageDepositRefundAmount, context.Height);
 			driveState.Balances.debit(streamingMosaicId, streamingDepositRefundAmount, context.Height);
-			replicatorState.Balances.credit(storageMosaicId, storageDepositRefundAmount, context.Height);
-			replicatorState.Balances.credit(streamingMosaicId, streamingDepositRefundAmount, context.Height);
+			replicatorState.Balances.credit(currencyMosaicId, storageDepositRefundAmount, context.Height);
+			replicatorState.Balances.credit(currencyMosaicId, streamingDepositRefundAmount, context.Height);
 		}
 	}
 
@@ -145,6 +148,7 @@ namespace catapult { namespace utils {
 		auto driveIter = driveCache.find(driveKey);
 		auto& driveEntry = driveIter.get();
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 
 		for (const auto& replicatorKey : offboardingReplicators) {
 			driveEntry.replicators().erase(replicatorKey);
@@ -343,7 +347,6 @@ namespace catapult { namespace utils {
 
 	void PopulateDriveWithReplicators(
 			const Key& driveKey,
-			const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector,
 			const std::shared_ptr<DriveQueue>& pDriveQueue,
 			const observers::ObserverContext& context,
 			std::mt19937& rng) {
@@ -364,17 +367,31 @@ namespace catapult { namespace utils {
 		// Filter out replicators that are ready to be assigned to the drive,
 		// i.e. which have at least (driveSize) of storage units
 		// and at least (2 * driveSize) of streaming units:
-		const auto comparator = [&driveKey](const Key& a, const Key& b){ return (a ^ driveKey) < (b ^ driveKey); };
-		std::set<Key, decltype(comparator)> acceptableReplicators(comparator);
-		for (const auto& replicatorKey : pKeyCollector->keys()) {
-			auto replicatorStateIter = accountStateCache.find(replicatorKey);
-			auto& replicatorState = replicatorStateIter.get();
-			const bool hasEnoughMosaics = replicatorState.Balances.get(storageMosaicId).unwrap() >= driveSize &&
-										  replicatorState.Balances.get(streamingMosaicId).unwrap() >= 2 * driveSize;
-			if (hasEnoughMosaics)
-				acceptableReplicators.insert(replicatorKey);	// Inserted keys are ordered by their
-																// XOR distance to the drive key.
+
+		auto keyExtractor = [=, &accountStateCache](const Key& key) {
+			return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+		};
+
+		utils::AVLTreeAdapter<std::pair<Amount, Key>> treeAdapter(
+				context.Cache.template sub<cache::QueueCache>(),
+				state::ReplicatorsSetTree,
+				keyExtractor,
+				[&replicatorCache](const Key& key) -> state::AVLTreeNode {
+					return replicatorCache.find(key).get().replicatorsSetNode();
+				},
+				[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
+					replicatorCache.find(key).get().replicatorsSetNode() = node;
+				});
+
+		for (const auto& replicatorKey: driveEntry.replicators()) {
+			std::pair<Amount, Key> keyToRemove = keyExtractor(replicatorKey);
+			treeAdapter.remove(keyToRemove);
 		}
+
+		auto notSuitableReplicators = treeAdapter.numberOfLess({Amount(driveSize), Key()});
+		auto suitableReplicators = treeAdapter.size() - notSuitableReplicators;
+
+		auto replicatorsToAdd = std::min(suitableReplicators, static_cast<uint32_t>(requiredReplicatorCount));
 
 		// Preparing DriveInfo:
 		const auto& completedDataModifications = driveEntry.completedDataModifications();
@@ -395,7 +412,11 @@ namespace catapult { namespace utils {
 		auto& replicators = driveEntry.replicators();
 		auto driveStateIter = accountStateCache.find(driveKey);
 		auto& driveState = driveStateIter.get();
-		for (const auto& replicatorKey : acceptableReplicators) {
+		for (int i = 0; i < replicatorsToAdd; i++) {
+			uint32_t index = rng() % suitableReplicators;
+			suitableReplicators--;
+			auto replicatorKey = treeAdapter.extractOrderStatistics(notSuitableReplicators + index);
+
 			// Updating the cache entries
 			auto replicatorIter = replicatorCache.find(replicatorKey);
 			auto& replicatorEntry = replicatorIter.get();
@@ -420,9 +441,10 @@ namespace catapult { namespace utils {
 			replicatorState.Balances.debit(streamingMosaicId, streamingDepositAmount);
 			driveState.Balances.credit(storageMosaicId, storageDepositAmount);
 			driveState.Balances.credit(streamingMosaicId, streamingDepositAmount);
+		}
 
-			if (replicators.size() >= driveEntry.replicatorCount())
-				break;
+		for (const auto& replicatorKey: driveEntry.replicators()) {
+			treeAdapter.insert(replicatorKey);
 		}
 
 		// If the actual number of assigned replicators is less than ordered,
@@ -458,6 +480,23 @@ namespace catapult { namespace utils {
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
+		auto keyExtractor = [=, &accountStateCache](const Key& key) {
+			return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+		};
+
+		utils::AVLTreeAdapter<std::pair<Amount, Key>> treeAdapter(
+				context.Cache.template sub<cache::QueueCache>(),
+						state::ReplicatorsSetTree,
+						keyExtractor,
+						[&replicatorCache](const Key& key) -> state::AVLTreeNode {
+					return replicatorCache.find(key).get().replicatorsSetNode();
+					},
+					[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
+					replicatorCache.find(key).get().replicatorsSetNode() = node;
+				});
+
+		// Tree Adapter does NOT contain the Replicators
+
 		for (const auto& replicatorKey : replicatorKeys) {
 			auto replicatorIter = replicatorCache.find(replicatorKey);
 			auto& replicatorEntry = replicatorIter.get();
@@ -470,7 +509,7 @@ namespace catapult { namespace utils {
 			DriveQueue newQueue;
 			const auto storageMosaicAmount = replicatorState.Balances.get(storageMosaicId);
 			const auto streamingMosaicAmount = replicatorState.Balances.get(streamingMosaicId);
-			auto remainingCapacity = std::min(storageMosaicAmount.unwrap(), streamingMosaicAmount.unwrap() / 2);
+			auto remainingCapacity = storageMosaicAmount.unwrap();
 			while (!originalQueue.empty()) {
 				const auto drivePriorityPair = originalQueue.top();
 				const auto& driveKey = drivePriorityPair.first;
@@ -528,6 +567,9 @@ namespace catapult { namespace utils {
 				}
 			}
 			*pDriveQueue = std::move(newQueue);
+		}
+		for (const auto& replicatorKey: replicatorKeys) {
+			treeAdapter.insert(replicatorKey);
 		}
 	}
 }}

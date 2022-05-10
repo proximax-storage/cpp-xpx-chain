@@ -223,7 +223,7 @@ namespace catapult { namespace storage {
 				return;
 			}
 
-			m_pReplicator->asyncIncreaseDownloadChannelSize(channelId.array(), pChannel->DownloadSizeMegabytes);
+			m_pReplicator->asyncIncreaseDownloadChannelSize(channelId.array(), utils::FileSize::FromMegabytes(pChannel->DownloadSizeMegabytes).bytes());
         }
 
         void initiateDownloadApproval(const Hash256& channelId, const Hash256& eventHash) {
@@ -318,26 +318,6 @@ namespace catapult { namespace storage {
 					driveKey.array(),
 					eventHash.array());
 			m_alreadyAddedDrives.erase(driveKey);
-
-//			for (const auto& channelId: m_driveChannels[driveKey]) {
-//				auto addedAt = m_alreadyAddedChannels[channelId].addedAtHeight;
-//
-//				if (addedAt == m_storageState.getChainHeight()) {
-//					// The Approval Has Already Been Taken Into Account;
-//					continue;
-//				}
-//
-//				auto pChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), channelId);
-//
-//				if (!pChannel) {
-//					CATAPULT_LOG( error ) << "Attempt To Initiate Approval On the Channel The Replicator Is Not Assigned To " << channelId;
-//					continue;
-//				}
-//
-//				if (pChannel->ApprovalTrigger == eventHash) {
-//					initiateDownloadApproval(channelId, eventHash);
-//				}
-//			}
         }
 
         std::optional<Height> driveAddedAt(const Key& driveKey) {
@@ -357,8 +337,6 @@ namespace catapult { namespace storage {
 		void processVerifications(const Hash256& blockHash, const Timestamp& blockTimestamp) {
 			auto drives = m_storageState.getReplicatorDriveKeys(m_keyPair.publicKey());
 			auto height = m_storageState.getChainHeight();
-
-			CATAPULT_LOG( error ) << "process verifications " << blockHash;
 
 			for (const auto& driveKey: drives) {
 				if (auto it = m_alreadyAddedDrives.find(driveKey); it != m_alreadyAddedDrives.end()) {
