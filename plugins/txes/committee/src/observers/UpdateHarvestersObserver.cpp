@@ -20,8 +20,22 @@ namespace catapult { namespace observers {
 		void UpdateHarvesters(
 				const Notification& notification,
 				ObserverContext& context,
-				const std::shared_ptr<chain::WeightedVotingCommitteeManager>& pCommitteeManager) {
+				const std::shared_ptr<chain::WeightedVotingCommitteeManager>& pCommitteeManager,
+				const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
+			auto& committeeCache = context.Cache.sub<cache::CommitteeCache>();
 			const auto& networkConfig = context.Config.Network;
+			auto maxRollbackBlocks = networkConfig.MaxRollbackBlocks;
+			if (NotifyMode::Commit == context.Mode && context.Height.unwrap() > maxRollbackBlocks) {
+				auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
+				auto& disabledAccounts = pAccountCollector->disabledAccounts();
+				auto disabledAccountsIter = disabledAccounts.find(pruneHeight);
+				if (disabledAccounts.end() != disabledAccountsIter) {
+					for (const auto& key : disabledAccountsIter->second)
+						committeeCache.remove(key);
+					disabledAccounts.erase(disabledAccountsIter);
+				}
+			}
+
 			if (!networkConfig.EnableWeightedVoting)
 				return;
 
@@ -33,7 +47,6 @@ namespace catapult { namespace observers {
 
 			auto readOnlyCache = context.Cache.toReadOnly();
 			cache::ImportanceView importanceView(readOnlyCache.sub<cache::AccountStateCache>());
-			auto& committeeCache = context.Cache.sub<cache::CommitteeCache>();
 
 			CATAPULT_LOG(debug) << "committee round " << pCommitteeManager->committee().Round << ", notification round " << notification.Round;
 			pCommitteeManager->reset();
@@ -56,7 +69,7 @@ namespace catapult { namespace observers {
 			for (const auto& pair : accounts) {
 				const auto& key = pair.first;
 				auto effectiveBalance = importanceView.getAccountImportanceOrDefault(key, context.Height);
-				bool canHarvest = (effectiveBalance.unwrap() >= context.Config.Network.MinHarvesterBalance.unwrap());
+				bool canHarvest = (effectiveBalance.unwrap() >= networkConfig.MinHarvesterBalance.unwrap());
 
 				auto iter = committeeCache.find(key);
 				auto& entry = iter.get();
@@ -71,9 +84,11 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	DECLARE_OBSERVER(UpdateHarvesters, Notification)(const std::shared_ptr<chain::WeightedVotingCommitteeManager>& pCommitteeManager) {
-		return MAKE_OBSERVER(UpdateHarvesters, Notification, ([pCommitteeManager](const auto& notification, auto& context) {
-			UpdateHarvesters(notification, context, pCommitteeManager);
+	DECLARE_OBSERVER(UpdateHarvesters, Notification)(
+			const std::shared_ptr<chain::WeightedVotingCommitteeManager>& pCommitteeManager,
+			const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
+		return MAKE_OBSERVER(UpdateHarvesters, Notification, ([pCommitteeManager, pAccountCollector](const auto& notification, auto& context) {
+			UpdateHarvesters(notification, context, pCommitteeManager, pAccountCollector);
 		}));
 	}
 }}

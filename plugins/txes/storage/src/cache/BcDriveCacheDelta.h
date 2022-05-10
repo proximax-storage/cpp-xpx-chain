@@ -5,7 +5,6 @@
 **/
 
 #pragma once
-#include "DriveKeyCollector.h"
 #include "BcDriveBaseSets.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
@@ -17,7 +16,20 @@
 namespace catapult { namespace cache {
 
 	/// Mixins used by the drive cache delta.
-	using BcDriveCacheDeltaMixins = PatriciaTreeCacheMixins<BcDriveCacheTypes::PrimaryTypes::BaseSetDeltaType, BcDriveCacheDescriptor>;
+	struct BcDriveCacheDeltaMixins {
+	private:
+		using PrimaryMixins = PatriciaTreeCacheMixins<BcDriveCacheTypes::PrimaryTypes::BaseSetDeltaType, BcDriveCacheDescriptor>;
+
+	public:
+		using Size = PrimaryMixins::Size;
+		using Contains = PrimaryMixins::Contains;
+		using PatriciaTreeDelta = PrimaryMixins::PatriciaTreeDelta;
+		using MutableAccessor = PrimaryMixins::ConstAccessor;
+		using ConstAccessor = PrimaryMixins::MutableAccessor;
+		using DeltaElements = PrimaryMixins::DeltaElements;
+		using BasicInsertRemove = PrimaryMixins::BasicInsertRemove;
+		using ConfigBasedEnable = PrimaryMixins::ConfigBasedEnable<config::StorageConfiguration>;
+	};
 
 	/// Basic delta on top of the drive cache.
 	class BasicBcDriveCacheDelta
@@ -29,12 +41,12 @@ namespace catapult { namespace cache {
 			, public BcDriveCacheDeltaMixins::PatriciaTreeDelta
 			, public BcDriveCacheDeltaMixins::BasicInsertRemove
 			, public BcDriveCacheDeltaMixins::DeltaElements
-			, public BcDriveCacheDeltaMixins::ConfigBasedEnable<config::StorageConfiguration> {
+			, public BcDriveCacheDeltaMixins::ConfigBasedEnable {
 	public:
 		using ReadOnlyView = BcDriveCacheTypes::CacheReadOnlyType;
 
 	public:
-		/// Creates a delta around \a driveSets.
+		/// Creates a delta around \a driveSets and \a pConfigHolder.
 		explicit BasicBcDriveCacheDelta(
 			const BcDriveCacheTypes::BaseSetDeltaPointers& driveSets,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
@@ -45,84 +57,23 @@ namespace catapult { namespace cache {
 				, BcDriveCacheDeltaMixins::PatriciaTreeDelta(*driveSets.pPrimary, driveSets.pPatriciaTree)
 				, BcDriveCacheDeltaMixins::BasicInsertRemove(*driveSets.pPrimary)
 				, BcDriveCacheDeltaMixins::DeltaElements(*driveSets.pPrimary)
-				, BcDriveCacheDeltaMixins::ConfigBasedEnable<config::StorageConfiguration>(
+				, BcDriveCacheDeltaMixins::ConfigBasedEnable(
 					pConfigHolder, [](const auto& config) { return config.Enabled; })
 				, m_pBcDriveEntries(driveSets.pPrimary)
-				, m_pDeltaKeys(driveSets.pDeltaKeys)
-				, m_PrimaryKeys(driveSets.PrimaryKeys)
 		{}
 
 	public:
 		using BcDriveCacheDeltaMixins::ConstAccessor::find;
 		using BcDriveCacheDeltaMixins::MutableAccessor::find;
 
-	public:
-		/// Inserts the drive \a entry into the cache.
-		void insert(const state::BcDriveEntry& entry) {
-			BcDriveCacheDeltaMixins::BasicInsertRemove::insert(entry);
-			insertKey(entry.key());
-		}
-
-		/// Inserts the \a key into the cache.
-		void insertKey(const Key& key) {
-			if (!m_pDeltaKeys->contains(key))
-				m_pDeltaKeys->insert(key);
-		}
-
-		/// Removes the drive \a entry into the cache.
-		void remove(const Key& key) {
-			BcDriveCacheDeltaMixins::BasicInsertRemove::remove(key);
-			if (m_pDeltaKeys->contains(key))
-				m_pDeltaKeys->remove(key);
-		}
-
-		/// Returns keys available after commit
-		std::set<Key> keys() const {
-			std::set<Key> result;
-			for (const auto& key : deltaset::MakeIterableView(m_PrimaryKeys)) {
-				result.insert(key);
-			}
-
-			auto deltas = m_pDeltaKeys->deltas();
-
-			for (const auto& key : deltas.Added) {
-				result.insert(key);
-			}
-
-			for (const auto& key : deltas.Removed) {
-				result.erase(key);
-			}
-
-			return result;
-		}
-
-		void updateKeyCollector(const std::shared_ptr<DriveKeyCollector>& pKeyCollector) const {
-			pKeyCollector->keys().clear();
-			for (const auto& key : keys()) {
-				auto iter = m_pBcDriveEntries->find(key);
-				auto pEntry = iter.get();
-				pKeyCollector->addKey(*pEntry);
-			}
-		}
-
-		void updateStoragePaymentQueue(const Key& first, const Key& last) {
-
-		}
-
-		auto pruningBoundary() const {
-			return deltaset::PruningBoundary<Key>();
-		}
-
 	private:
 		BcDriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pBcDriveEntries;
-		BcDriveCacheTypes::KeyTypes::BaseSetDeltaPointerType m_pDeltaKeys;
-		const BcDriveCacheTypes::KeyTypes::BaseSetType& m_PrimaryKeys;
 	};
 
 	/// Delta on top of the drive cache.
 	class BcDriveCacheDelta : public ReadOnlyViewSupplier<BasicBcDriveCacheDelta> {
 	public:
-		/// Creates a delta around \a driveSets.
+		/// Creates a delta around \a driveSets and \a pConfigHolder.
 		explicit BcDriveCacheDelta(
 			const BcDriveCacheTypes::BaseSetDeltaPointers& driveSets,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)

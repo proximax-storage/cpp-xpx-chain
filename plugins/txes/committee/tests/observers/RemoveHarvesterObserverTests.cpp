@@ -20,33 +20,48 @@ namespace catapult { namespace observers {
 		using Notification = model::RemoveHarvesterNotification<1>;
 
 		const Key Harvester_Key = test::GenerateRandomByteArray<Key>();
+		const Key Owner = test::GenerateRandomByteArray<Key>();
 		const Height Current_Height = test::GenerateRandomValue<Height>();
 	}
 
 	TEST(TEST_CLASS, RemoveHarvester_Commit) {
 		// Arrange:
 		ObserverTestContext context(NotifyMode::Commit, Current_Height);
-		auto notification = Notification(Harvester_Key);
+		auto notification = Notification(Owner, Harvester_Key);
 		auto pObserver = CreateRemoveHarvesterObserver();
 		auto committeeEntry = test::CreateCommitteeEntry(Harvester_Key);
 		auto& committeeCache = context.cache().sub<cache::CommitteeCache>();
 		committeeCache.insert(committeeEntry);
+		auto expectedEntry = committeeEntry;
+		expectedEntry.setDisabledHeight(Current_Height);
 
 		// Act:
 		test::ObserveNotification(*pObserver, notification, context);
 
 		// Assert: check the cache
 		auto iter = committeeCache.find(committeeEntry.key());
-		EXPECT_EQ(nullptr, iter.tryGet());
+		const auto& actualEntry = iter.get();
+		test::AssertEqualCommitteeEntry(expectedEntry, actualEntry);
 	}
 
 	TEST(TEST_CLASS, RemoveHarvester_Rollback) {
 		// Arrange:
 		ObserverTestContext context(NotifyMode::Rollback, Current_Height);
-		auto notification = Notification(Harvester_Key);
+		auto notification = Notification(Owner, Harvester_Key);
 		auto pObserver = CreateRemoveHarvesterObserver();
+		auto committeeEntry = test::CreateCommitteeEntry(Harvester_Key);
+		committeeEntry.setDisabledHeight(Current_Height);
+		auto& committeeCache = context.cache().sub<cache::CommitteeCache>();
+		committeeCache.insert(committeeEntry);
+		auto expectedEntry = committeeEntry;
+		expectedEntry.setDisabledHeight(Height(0));
 
 		// Act:
-		EXPECT_THROW(test::ObserveNotification(*pObserver, notification, context), catapult_runtime_error);
+		test::ObserveNotification(*pObserver, notification, context);
+
+		// Assert: check the cache
+		auto iter = committeeCache.find(committeeEntry.key());
+		const auto& actualEntry = iter.get();
+		test::AssertEqualCommitteeEntry(expectedEntry, actualEntry);
 	}
 }}

@@ -17,7 +17,7 @@
 #include "src/utils/StorageUtils.h"
 #include <queue>
 
-namespace catapult { namespace state { class StorageStateImpl; }}
+namespace catapult { namespace state { class StorageState; }}
 
 namespace catapult { namespace observers {
 
@@ -25,13 +25,13 @@ namespace catapult { namespace observers {
 	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
 	/// Observes changes triggered by prepare drive notifications.
-	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue);
+	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by download notifications.
 	DECLARE_OBSERVER(DownloadChannel, model::DownloadNotification<1>)();
 
 	/// Observes changes triggered by data modification notifications.
-	DECLARE_OBSERVER(DataModification, model::DataModificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue);
+	DECLARE_OBSERVER(DataModification, model::DataModificationNotification<1>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by data modification approval notifications.
 	DECLARE_OBSERVER(DataModificationApproval, model::DataModificationApprovalNotification<1>)();
@@ -85,14 +85,14 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(StreamPayment, model::StreamPaymentNotification<1>)();
 
 	/// Observes changes triggered by start drive verification notifications.
-	DECLARE_OBSERVER(StartDriveVerification, model::BlockNotification<2>)(state::StorageStateImpl& state, const cache::DriveKeyCollector& driveKeyCollector);
+	DECLARE_OBSERVER(StartDriveVerification, model::BlockNotification<1>)(state::StorageState& state);
 
 	/// Observes changes triggered by end drive verification notifications.
-	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue);
+	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by block
-	DECLARE_OBSERVER(PeriodicStoragePayment, model::BlockNotification<2>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
+	DECLARE_OBSERVER(PeriodicStoragePayment, model::BlockNotification<1>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
 
 	/// Observes changes triggered by block
-	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, model::BlockNotification<2>)();
+	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, model::BlockNotification<1>)();
 }}

@@ -24,7 +24,7 @@ namespace catapult { namespace observers {
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
-        using Notification = model::BlockNotification<2>;
+        using Notification = model::BlockNotification<1>;
 
         constexpr Height Current_Height(20);
 		const auto Owner_Key = test::GenerateRandomByteArray<Key>();
@@ -100,7 +100,7 @@ namespace catapult { namespace observers {
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
-            Notification notification({ { 1 } }, values.NotificationTime);
+            Notification notification({ { 1 } }, { { 1 } }, values.NotificationTime, Difficulty(0), 0, 0);
             auto pObserver = CreatePeriodicStoragePaymentObserver(Drive_Queue);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();

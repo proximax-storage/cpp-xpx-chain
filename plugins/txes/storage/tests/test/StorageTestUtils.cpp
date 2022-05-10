@@ -41,22 +41,22 @@ namespace catapult { namespace test {
             }
         }
 
-		void AssertEqualVerifications(const state::Verifications& expectedVerifications, const state::Verifications& verifications) {
-			ASSERT_EQ(expectedVerifications.size(), verifications.size());
-			for (auto i = 0u; i < verifications.size(); i++) {
-				const auto &expectedVerification = expectedVerifications[i];
-				const auto &verification = verifications[i];
-				EXPECT_EQ(expectedVerification.VerificationTrigger, verification.VerificationTrigger);
-				EXPECT_EQ(expectedVerification.Expiration, verification.Expiration);
-				EXPECT_EQ(expectedVerification.Expired, verification.Expired);
-				ASSERT_EQ(expectedVerification.Shards.size(), verification.Shards.size());
-				for (auto i = 0u; i < expectedVerification.Shards.size(); ++i) {
-					ASSERT_EQ(expectedVerification.Shards[i].size(), verification.Shards[i].size());
-					for (auto k = 0u; k < expectedVerification.Shards[i].size(); ++k)
-						EXPECT_EQ(expectedVerification.Shards[i][k], verification.Shards[i][k]);
-				}
-			}
-		}
+        //		void AssertEqualVerifications(const state::Verifications& expectedVerifications, const state::Verifications& verifications) {
+//			ASSERT_EQ(expectedVerifications.size(), verifications.size());
+//			for (auto i = 0u; i < verifications.size(); i++) {
+//				const auto &expectedVerification = expectedVerifications[i];
+//				const auto &verification = verifications[i];
+//				EXPECT_EQ(expectedVerification.VerificationTrigger, verification.VerificationTrigger);
+//				EXPECT_EQ(expectedVerification.Expiration, verification.Expiration);
+//				EXPECT_EQ(expectedVerification.Expired, verification.Expired);
+//				ASSERT_EQ(expectedVerification.Shards.size(), verification.Shards.size());
+//				for (auto i = 0u; i < expectedVerification.Shards.size(); ++i) {
+//					ASSERT_EQ(expectedVerification.Shards[i].size(), verification.Shards[i].size());
+//					for (auto k = 0u; k < expectedVerification.Shards[i].size(); ++k)
+//						EXPECT_EQ(expectedVerification.Shards[i][k], verification.Shards[i][k]);
+//				}
+//			}
+//		}
 
 		void AssertEqualDriveInfos(const std::map<Key, state::DriveInfo>& expectedDriveInfos, const std::map<Key, state::DriveInfo>& driveInfos) {
 			ASSERT_EQ(expectedDriveInfos.size(), driveInfos.size());
@@ -125,14 +125,14 @@ namespace catapult { namespace test {
             });
         }
 
-        entry.verifications().reserve(verificationsCount);
-        for (auto i = 0u; i < verificationsCount; ++i) {
-			entry.verifications().emplace_back(state::Verification{test::GenerateRandomByteArray<Hash256>(), Timestamp(test::Random()), bool(test::RandomByte()), {}});
-			entry.verifications().back().Shards.emplace_back();
-			auto& shard = entry.verifications().back().Shards.back();
-			for (uint16_t k = 0u; k < replicatorCount; ++k)
-				shard.emplace_back(test::GenerateRandomByteArray<Key>());
-		}
+//        entry.verifications().reserve(verificationsCount);
+//        for (auto i = 0u; i < verificationsCount; ++i) {
+//			entry.verifications().emplace_back(state::Verification{test::GenerateRandomByteArray<Hash256>(), Timestamp(test::Random()), bool(test::RandomByte()), {}});
+//			entry.verifications().back().Shards.emplace_back();
+//			auto& shard = entry.verifications().back().Shards.back();
+//			for (uint16_t k = 0u; k < replicatorCount; ++k)
+//				shard.emplace_back(test::GenerateRandomByteArray<Key>());
+//		}
 
 		for (int i = 0; i < downloadShardsCount; i++) {
 			auto size = 2;
@@ -183,7 +183,7 @@ namespace catapult { namespace test {
 
         AssertEqualActiveDataModifications(expectedEntry.activeDataModifications(), entry.activeDataModifications());
         AssertEqualCompletedDataModifications(expectedEntry.completedDataModifications(), entry.completedDataModifications());
-		AssertEqualVerifications(expectedEntry.verifications(), entry.verifications());
+//		AssertEqualVerifications(expectedEntry.verifications(), entry.verifications());
     }
 
     state::DownloadChannelEntry CreateDownloadChannelEntry(

@@ -49,7 +49,11 @@ namespace catapult { namespace harvesting {
 
 		ScheduledHarvesterTaskOptions CreateHarvesterTaskOptions(extensions::ServiceState& state) {
 			ScheduledHarvesterTaskOptions options;
-			options.HarvestingAllowed = state.hooks().chainSyncedPredicate();
+			auto chainSyncedPredicate = state.hooks().chainSyncedPredicate();
+			auto pConfigHolder = state.pluginManager().configHolder();
+			options.HarvestingAllowed = [chainSyncedPredicate, pConfigHolder]() {
+				return !pConfigHolder->Config().Network.EnableWeightedVoting && chainSyncedPredicate();
+			};
 			options.LastBlockElementSupplier = [&storage = state.storage()]() {
 				auto storageView = storage.view();
 				return storageView.loadBlockElement(storageView.chainHeight());

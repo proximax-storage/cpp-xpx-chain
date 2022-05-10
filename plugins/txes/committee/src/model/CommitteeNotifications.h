@@ -27,14 +27,18 @@ namespace catapult { namespace model {
 	struct BaseHarvesterNotification : public Notification {
 	public:
 		/// Creates a notification around \a type and \a signer.
-		BaseHarvesterNotification(NotificationType type, const Key& signer)
+		BaseHarvesterNotification(NotificationType type, const Key& signer, const Key& harvesterKey)
 			: Notification(type, sizeof(BaseHarvesterNotification))
 			, Signer(signer)
+			, HarvesterKey(harvesterKey)
 		{}
 
 	public:
 		/// Transaction signer.
-		const Key& Signer;
+		Key Signer;
+
+		/// Harvester public key.
+		Key HarvesterKey;
 	};
 
 	/// Notification of adding a harvester to committee register.
@@ -49,8 +53,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer.
-		AddHarvesterNotification(const Key& signer)
-			: BaseHarvesterNotification(Notification_Type, signer)
+		AddHarvesterNotification(const Key& signer, const Key& harvesterKey)
+			: BaseHarvesterNotification(Notification_Type, signer, harvesterKey)
 		{}
 	};
 
@@ -66,8 +70,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer.
-		RemoveHarvesterNotification(const Key& signer)
-			: BaseHarvesterNotification(Notification_Type, signer)
+		RemoveHarvesterNotification(const Key& signer, const Key& harvesterKey)
+			: BaseHarvesterNotification(Notification_Type, signer, harvesterKey)
 		{}
 	};
 }}

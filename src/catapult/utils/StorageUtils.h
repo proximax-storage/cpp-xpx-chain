@@ -19,7 +19,10 @@
 **/
 
 #pragma once
-#define CATAPULT_VERSION_MAJOR 0
-#define CATAPULT_VERSION_MINOR 8
-#define CATAPULT_VERSION_REVISION 0
-#define CATAPULT_VERSION_BUILD 0
+#include <catapult/types.h>
+
+namespace catapult { namespace utils {
+	Hash256 getVerificationEventHash(const Timestamp& blockTimestamp, const catapult::GenerationHash& generationHash);
+	Hash256 getStoragePaymentEventHash(const Timestamp& blockTimestamp, const catapult::GenerationHash& generationHash);
+	Hash256 getDownloadPaymentEventHash(const Timestamp& blockTimestamp, const catapult::GenerationHash& generationHash);
+}}

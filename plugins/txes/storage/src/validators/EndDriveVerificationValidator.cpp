@@ -18,10 +18,10 @@ namespace catapult { namespace validators {
         const auto driveIter = driveCache.find(notification.DriveKey);
         const auto& driveEntry = driveIter.get();
 
-		if (driveEntry.verifications().empty())
+		if (!driveEntry.verification() || driveEntry.verification()->expired(context.BlockTime))
             return Failure_Storage_Verification_Not_In_Progress;
 
-		const auto& verification = driveEntry.verifications()[0];
+		const auto& verification = *driveEntry.verification();
 		if (verification.VerificationTrigger != notification.VerificationTrigger)
             return Failure_Storage_Bad_Verification_Trigger;
 
@@ -30,10 +30,10 @@ namespace catapult { namespace validators {
 			return Failure_Storage_Verification_Invalid_Prover_Count;
 
 		auto pPublicKey = notification.PublicKeysPtr;
-		for (auto i = 0u; i < notification.KeyCount; ++i, ++pPublicKey) {
-			if (shard[i] != *pPublicKey)
-				return Failure_Storage_Verification_Invalid_Prover;
-		}
+//		for (auto i = 0u; i < notification.KeyCount; ++i, ++pPublicKey) {
+//			if (shard[i] != *pPublicKey)
+//				return Failure_Storage_Verification_Invalid_Prover;
+//		}
 
         return ValidationResult::Success;
     });

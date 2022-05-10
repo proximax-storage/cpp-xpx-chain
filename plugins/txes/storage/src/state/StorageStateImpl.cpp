@@ -37,21 +37,21 @@ namespace catapult { namespace state {
             };
         }
 
-		std::unique_ptr<DriveVerification> GetActiveVerification(const Key& driveKey, const cache::BcDriveCacheView& driveCacheView) {
+		std::optional<DriveVerification> GetActiveVerification(const Key& driveKey, const cache::BcDriveCacheView& driveCacheView, const Timestamp& blockTimestamp) {
 			auto driveIter = driveCacheView.find(driveKey);
 			const auto& driveEntry = driveIter.get();
 
-			if (driveEntry.verifications().size() > 0) {
-				const auto& verification = driveEntry.verifications()[0];
-				return std::make_unique<DriveVerification>(DriveVerification{
-					driveKey,
-					verification.Expired,
+			if (driveEntry.verification()) {
+				const auto& verification = *driveEntry.verification();
+				return DriveVerification{driveKey,
+				    verification.Duration,
+					verification.expired(blockTimestamp),
 					verification.VerificationTrigger,
-					driveEntry.rootHash(),
-					verification.Shards});
+				   	driveEntry.rootHash(),
+					verification.Shards};
 			}
 
-			return nullptr;
+			return {};
 		}
     }
 
@@ -164,16 +164,6 @@ namespace catapult { namespace state {
     	const auto& driveEntry = driveIter.get();
     	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
 
-    	std::ostringstream s;
-    	s << "extended shards ";
-    	for (const auto& [mainKey, shard]: driveEntry.dataModificationShards()) {
-    		s << "shard of " << mainKey << ": ";
-    		for (const auto& [key, _]: shard.m_actualShardMembers) {
-    			s << key << std::endl;
-    		}
-    	}
-    	CATAPULT_LOG( error ) << s.str();
-
     	return {shard.m_actualShardMembers, shard.m_formerShardMembers, shard.m_ownerUpload};
     }
 
@@ -268,8 +258,8 @@ namespace catapult { namespace state {
 		});
     }
 
-	std::unique_ptr<DriveVerification> StorageStateImpl::getActiveVerification(const Key& driveKey) {
+	std::optional<DriveVerification> StorageStateImpl::getActiveVerification(const Key& driveKey, const Timestamp& blockTimestamp) {
 		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-		return GetActiveVerification(driveKey, *pDriveCacheView);
+		return GetActiveVerification(driveKey, *pDriveCacheView, blockTimestamp);
 	}
 }}

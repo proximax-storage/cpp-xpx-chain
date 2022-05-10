@@ -13,8 +13,17 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(RemoveHarvester, [](const auto& notification, const ValidatorContext& context) {
 		auto& cache = context.Cache.sub<cache::CommitteeCache>();
-		if (!cache.contains(notification.Signer))
+		if (!cache.contains(notification.HarvesterKey))
 			return Failure_Committee_Account_Does_Not_Exist;
+
+		auto iter = cache.find(notification.HarvesterKey);
+		const auto& entry = iter.get();
+
+		if (entry.owner() != notification.Signer)
+			return Failure_Committee_Signer_Is_Not_Owner;
+
+		if (entry.disabledHeight() != Height(0))
+			return Failure_Committee_Harvester_Already_Disabled;
 
 		return ValidationResult::Success;
 	});
