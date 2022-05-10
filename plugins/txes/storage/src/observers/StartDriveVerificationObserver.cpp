@@ -13,11 +13,11 @@ namespace catapult { namespace observers {
 	using Notification = model::BlockNotification<1>;
 
 	void Observe(const Notification& notification, ObserverContext& context, state::StorageState& state) {
+		if (!context.Config.Network.EnableWeightedVoting || context.Height < Height(2))
+			return;
+
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
-
-		if (context.Height < Height(2))
-			return;
 
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 		auto verificationInterval = pluginConfig.VerificationInterval.seconds();

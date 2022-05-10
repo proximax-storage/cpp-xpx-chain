@@ -21,11 +21,11 @@ namespace catapult { namespace observers {
 
 	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue) {
 		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([pDriveQueue](const Notification& notification, ObserverContext& context) {
+			if (!context.Config.Network.EnableWeightedVoting || context.Height < Height(2))
+				return;
+
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
-
-			if (context.Height < Height(2))
-				return;
 
 			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
 			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();

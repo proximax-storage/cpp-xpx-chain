@@ -18,11 +18,11 @@ namespace catapult { namespace observers {
 
 	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, Notification)() {
 		return MAKE_OBSERVER(PeriodicDownloadChannelPayment, Notification, ([](const Notification& notification, ObserverContext& context) {
+			if (!context.Config.Network.EnableWeightedVoting || context.Height < Height(2))
+				return;
+
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
-
-			if (context.Height < Height(2))
-				return;
 
 			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
 			auto& downloadCache = context.Cache.template sub<cache::DownloadChannelCache>();
