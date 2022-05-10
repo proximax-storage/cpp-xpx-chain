@@ -12,7 +12,7 @@
 namespace catapult { namespace test {
 
 	void AssertEqualCommitteeData(const state::CommitteeEntry& entry, const Address& address, const bsoncxx::document::view& dbEntry) {
-		EXPECT_EQ(8u, test::GetFieldCount(dbEntry));
+		EXPECT_EQ(9u, test::GetFieldCount(dbEntry));
 		EXPECT_EQ(entry.key(), GetKeyValue(dbEntry, "key"));
 		EXPECT_EQ(entry.owner(), GetKeyValue(dbEntry, "owner"));
 		EXPECT_EQ(address, test::GetAddressValue(dbEntry, "address"));

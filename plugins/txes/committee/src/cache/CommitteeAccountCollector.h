@@ -8,11 +8,12 @@
 #include "catapult/utils/Hashers.h"
 #include "src/state/CommitteeEntry.h"
 #include <unordered_map>
+#include <map>
 
 namespace catapult { namespace cache {
 
 	using AccountMap = std::unordered_map<Key, state::AccountData, utils::ArrayHasher<Key>>;
-	using DisabledAccountMap = std::map<Height, std::vector<Key>, utils::BaseValueHasher<Height>>;
+	using DisabledAccountMap = std::map<Height, std::vector<Key>>;
 
 	/// A class that collects harvester accounts from committee cache entries.
 	class CommitteeAccountCollector {

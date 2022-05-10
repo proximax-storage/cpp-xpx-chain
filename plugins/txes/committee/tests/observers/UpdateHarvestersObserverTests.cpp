@@ -14,7 +14,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS UpdateHarvestersObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(UpdateHarvesters, nullptr)
+	DEFINE_COMMON_OBSERVER_TESTS(UpdateHarvesters, nullptr, nullptr)
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::CommitteeCacheFactory>;
