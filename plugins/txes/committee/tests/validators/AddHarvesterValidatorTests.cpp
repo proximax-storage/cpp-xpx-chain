@@ -51,7 +51,7 @@ namespace catapult { namespace validators {
 
 				cache.commit(currentHeight);
 			}
-			Notification notification(harvesterKey);
+			Notification notification(entry.owner(), harvesterKey);
 			auto pValidator = CreateAddHarvesterValidator();
 
 			// Act:

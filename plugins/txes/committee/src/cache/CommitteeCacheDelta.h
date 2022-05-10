@@ -69,7 +69,7 @@ namespace catapult { namespace cache {
 				m_pDeltaKeys->insert(key);
 		}
 
-		/// Removes the committee \a entry into the cache.
+		/// Removes the committee \a entry from the cache.
 		void remove(const Key& key) {
 			CommitteeCacheDeltaMixins::BasicInsertRemove::remove(key);
 			if (m_pDeltaKeys->contains(key))
@@ -117,7 +117,7 @@ namespace catapult { namespace cache {
 		/// Creates a delta around \a committeeSets.
 		explicit CommitteeCacheDelta(
 			const CommitteeCacheTypes::BaseSetDeltaPointers& committeeSets,
-			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 				: ReadOnlyViewSupplier(committeeSets, pConfigHolder)
 		{}
 	};

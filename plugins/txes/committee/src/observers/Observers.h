@@ -8,7 +8,10 @@
 #include "src/model/CommitteeNotifications.h"
 #include "catapult/observers/ObserverTypes.h"
 
-namespace catapult { namespace chain { class WeightedVotingCommitteeManager; }}
+namespace catapult {
+	namespace chain { class WeightedVotingCommitteeManager; }
+	namespace cache { class CommitteeAccountCollector; }
+}
 
 namespace catapult { namespace observers {
 
@@ -20,5 +23,6 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by block cosignatures notifications
 	DECLARE_OBSERVER(UpdateHarvesters, model::BlockCommitteeNotification<1>)(
-		const std::shared_ptr<chain::WeightedVotingCommitteeManager>& pCommitteeManager);
+		const std::shared_ptr<chain::WeightedVotingCommitteeManager>& pCommitteeManager,
+		const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector);
 }}

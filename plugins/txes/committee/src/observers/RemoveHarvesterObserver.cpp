@@ -10,10 +10,9 @@
 namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER(RemoveHarvester, model::RemoveHarvesterNotification<1>, [](const auto& notification, const ObserverContext& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (RemoveHarvester)");
-
 		auto& cache = context.Cache.sub<cache::CommitteeCache>();
-		cache.remove(notification.Signer);
+		auto iter = cache.find(notification.HarvesterKey);
+		auto& entry = iter.get();
+		entry.setDisabledHeight((NotifyMode::Commit == context.Mode) ? context.Height : Height(0));
 	});
 }}

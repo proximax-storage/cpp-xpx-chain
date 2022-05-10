@@ -21,6 +21,7 @@ namespace catapult { namespace observers {
 		using Notification = model::BlockCommitteeNotification<1>;
 
 		const Key Block_Signer_Key = test::GenerateRandomByteArray<Key>();
+		const Key Owner = test::GenerateRandomByteArray<Key>();
 		const Height Initial_Height = Height(100);
 		const Height Current_Height = Height(200);
 		constexpr MosaicId Harvesting_Mosaic_Id(1234);
@@ -80,17 +81,17 @@ namespace catapult { namespace observers {
 
 		auto notification = Notification(1, Fee_Interest, Fee_Interest_Denominator);
 
-		auto pObserver = CreateUpdateHarvestersObserver(pCommitteeManager);
+		auto pObserver = CreateUpdateHarvestersObserver(pCommitteeManager, pAccountCollector);
 		auto& committeeCache = context.cache().sub<cache::CommitteeCache>();
 		auto& accountCache = context.cache().sub<cache::AccountStateCache>();
 
 		std::vector<state::CommitteeEntry> initialEntries{
-			{ state::CommitteeEntry(Block_Signer_Key, test::CreateAccountData(Initial_Height, Importance(), false, Initial_Activity)) },
-			{ state::CommitteeEntry(cosigners[0], test::CreateAccountData(Initial_Height, Importance(), false, Initial_Activity)) },
-			{ state::CommitteeEntry(cosigners[1], test::CreateAccountData(Initial_Height, Importance(), false, Initial_Activity)) },
-			{ state::CommitteeEntry(cosigners[2], test::CreateAccountData(Initial_Height, Importance(), false, Initial_Activity)) },
-			{ state::CommitteeEntry(cosigners[3], test::CreateAccountData(Initial_Height, Importance(), false, Initial_Activity)) },
-			{ state::CommitteeEntry(test::GenerateRandomByteArray<Key>(), test::CreateAccountData(Initial_Height, Importance(), false, Initial_Activity)) },
+			{ state::CommitteeEntry(Block_Signer_Key, Owner, test::CreateAccountData(Initial_Height, Importance(), false, Initial_Activity)) },
+			{ state::CommitteeEntry(cosigners[0], Owner, test::CreateAccountData(Initial_Height, Importance(), false, Initial_Activity)) },
+			{ state::CommitteeEntry(cosigners[1], Owner, test::CreateAccountData(Initial_Height, Importance(), false, Initial_Activity)) },
+			{ state::CommitteeEntry(cosigners[2], Owner, test::CreateAccountData(Initial_Height, Importance(), false, Initial_Activity)) },
+			{ state::CommitteeEntry(cosigners[3], Owner, test::CreateAccountData(Initial_Height, Importance(), false, Initial_Activity)) },
+			{ state::CommitteeEntry(test::GenerateRandomByteArray<Key>(), Owner, test::CreateAccountData(Initial_Height, Importance(), false, Initial_Activity)) },
 		};
 
 		size_t count = 0;
@@ -106,13 +107,13 @@ namespace catapult { namespace observers {
 		}
 
 		std::vector<state::CommitteeEntry> expectedEntries{
-			{ state::CommitteeEntry(initialEntries[0].key(), test::CreateAccountData(Current_Height, Importance(40), false, Initial_Activity + Activity_Committee_Cosigned_Delta - Activity_Delta,
+			{ state::CommitteeEntry(initialEntries[0].key(), Owner, test::CreateAccountData(Current_Height, Importance(40), false, Initial_Activity + Activity_Committee_Cosigned_Delta - Activity_Delta,
 				static_cast<double>(Fee_Interest) / Fee_Interest_Denominator)) },
-			{ state::CommitteeEntry(initialEntries[1].key(), test::CreateAccountData(Initial_Height, Importance(80), false, Initial_Activity - Activity_Committee_Not_Cosigned_Delta + Activity_Delta)) },
-			{ state::CommitteeEntry(initialEntries[2].key(), test::CreateAccountData(Initial_Height, Importance(120), true, Initial_Activity - Activity_Committee_Not_Cosigned_Delta + Activity_Delta)) },
-			{ state::CommitteeEntry(initialEntries[3].key(), test::CreateAccountData(Initial_Height, Importance(160), true, Initial_Activity - Activity_Committee_Not_Cosigned_Delta + Activity_Committee_Cosigned_Delta + Activity_Delta)) },
-			{ state::CommitteeEntry(initialEntries[4].key(), test::CreateAccountData(Initial_Height, Importance(200), true, Initial_Activity + Activity_Committee_Cosigned_Delta - Activity_Delta)) },
-			{ state::CommitteeEntry(initialEntries[5].key(), test::CreateAccountData(Initial_Height, Importance(240), true, -Activity_Delta)) },
+			{ state::CommitteeEntry(initialEntries[1].key(), Owner, test::CreateAccountData(Initial_Height, Importance(80), false, Initial_Activity - Activity_Committee_Not_Cosigned_Delta + Activity_Delta)) },
+			{ state::CommitteeEntry(initialEntries[2].key(), Owner, test::CreateAccountData(Initial_Height, Importance(120), true, Initial_Activity - Activity_Committee_Not_Cosigned_Delta + Activity_Delta)) },
+			{ state::CommitteeEntry(initialEntries[3].key(), Owner, test::CreateAccountData(Initial_Height, Importance(160), true, Initial_Activity - Activity_Committee_Not_Cosigned_Delta + Activity_Committee_Cosigned_Delta + Activity_Delta)) },
+			{ state::CommitteeEntry(initialEntries[4].key(), Owner, test::CreateAccountData(Initial_Height, Importance(200), true, Initial_Activity + Activity_Committee_Cosigned_Delta - Activity_Delta)) },
+			{ state::CommitteeEntry(initialEntries[5].key(), Owner, test::CreateAccountData(Initial_Height, Importance(240), true, -Activity_Delta)) },
 		};
 
 		// Act:
@@ -130,7 +131,7 @@ namespace catapult { namespace observers {
 		// Arrange:
 		ObserverTestContext context(NotifyMode::Rollback, Current_Height, CreateConfig());
 		auto notification = Notification(0, Fee_Interest, Fee_Interest_Denominator);
-		auto pObserver = CreateUpdateHarvestersObserver(nullptr);
+		auto pObserver = CreateUpdateHarvestersObserver(nullptr, nullptr);
 
 		// Act:
 		EXPECT_THROW(test::ObserveNotification(*pObserver, notification, context), catapult_runtime_error);

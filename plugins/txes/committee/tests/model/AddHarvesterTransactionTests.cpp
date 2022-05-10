@@ -18,7 +18,13 @@ namespace catapult { namespace model {
 	namespace {
 		template<typename T>
 		void AssertEntityHasExpectedSize(size_t baseSize) {
-			EXPECT_EQ(baseSize, sizeof(T));
+			// Arrange:
+			auto expectedSize = baseSize // base
+					+ Key_Size; // harvester key
+
+			// Assert:
+			EXPECT_EQ(expectedSize, sizeof(T));
+			EXPECT_EQ(baseSize + 32u, sizeof(T));
 		}
 
 		template<typename T>

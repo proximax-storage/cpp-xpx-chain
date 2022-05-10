@@ -14,6 +14,8 @@ namespace catapult { namespace state {
 	namespace {
 		constexpr auto Entry_Size = sizeof(VersionType) // version
 			+ Key_Size // key
+			+ Key_Size // owner
+			+ sizeof(uint64_t) // disabled height
 			+ sizeof(uint64_t) // last signing block height
 			+ sizeof(uint64_t) // effective balance
 			+ 1 // can harvest
@@ -46,6 +48,10 @@ namespace catapult { namespace state {
 			pData += sizeof(VersionType);
 			EXPECT_EQ_MEMORY(entry.key().data(), pData, Key_Size);
 			pData += Key_Size;
+			EXPECT_EQ_MEMORY(entry.owner().data(), pData, Key_Size);
+			pData += Key_Size;
+			EXPECT_EQ(entry.disabledHeight().unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
 			EXPECT_EQ(entry.lastSigningBlockHeight().unwrap(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
 			EXPECT_EQ(entry.effectiveBalance().unwrap(), *reinterpret_cast<const uint64_t*>(pData));
@@ -116,6 +122,11 @@ namespace catapult { namespace state {
 			pData += sizeof(VersionType);
 			memcpy(pData, entry.key().data(), Key_Size);
 			pData += Key_Size;
+			memcpy(pData, entry.owner().data(), Key_Size);
+			pData += Key_Size;
+			auto disabledHeight = entry.disabledHeight().unwrap();
+			memcpy(pData, &disabledHeight, sizeof(uint64_t));
+			pData += sizeof(uint64_t);
 			auto lastSigningBlockHeight = entry.lastSigningBlockHeight().unwrap();
 			memcpy(pData, &lastSigningBlockHeight, sizeof(uint64_t));
 			pData += sizeof(uint64_t);

@@ -17,7 +17,9 @@ namespace catapult { namespace mongo { namespace plugins {
 		bson_stream::document builder;
 		auto doc = builder << "harvester" << bson_stream::open_document
 				<< "key" << ToBinary(entry.key())
+				<< "owner" << ToBinary(entry.owner())
 				<< "address" << ToBinary(address)
+				<< "disabledHeight" << ToInt64(entry.disabledHeight())
 				<< "lastSigningBlockHeight" << ToInt64(entry.lastSigningBlockHeight())
 				<< "effectiveBalance" << ToInt64(entry.effectiveBalance())
 				<< "canHarvest" << entry.canHarvest()
@@ -37,13 +39,16 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto dbCommitteeEntry = document["harvester"];
 		Key key;
 		DbBinaryToModelArray(key, dbCommitteeEntry["key"].get_binary());
+		Key owner;
+		DbBinaryToModelArray(owner, dbCommitteeEntry["owner"].get_binary());
+		auto disabledHeight = GetValue64<Height>(dbCommitteeEntry["disabledHeight"]);
 		auto lastSigningBlockHeight = GetValue64<Height>(dbCommitteeEntry["lastSigningBlockHeight"]);
 		auto effectiveBalance = GetValue64<Importance>(dbCommitteeEntry["effectiveBalance"]);
 		auto canHarvest = dbCommitteeEntry["canHarvest"].get_bool().value;
 		auto activity = dbCommitteeEntry["activity"].get_double().value;
 		auto greed = dbCommitteeEntry["greed"].get_double().value;
 
-		return state::CommitteeEntry(key, lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed);
+		return state::CommitteeEntry(key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed, disabledHeight);
 	}
 
 	// endregion

@@ -11,12 +11,14 @@ namespace catapult { namespace test {
 
 	state::CommitteeEntry CreateCommitteeEntry(
 			Key key,
+			Key owner,
+			const Height& disabledHeight,
 			const Height& lastSigningBlockHeight,
 			const Importance& effectiveBalance,
 			bool canHarvest,
 			double activity,
 			double greed) {
-		return state::CommitteeEntry(key, lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed);
+		return state::CommitteeEntry(key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed, disabledHeight);
 	}
 
 	state::AccountData CreateAccountData(
@@ -38,6 +40,8 @@ namespace catapult { namespace test {
 
 	void AssertEqualCommitteeEntry(const state::CommitteeEntry& entry1, const state::CommitteeEntry& entry2) {
 		EXPECT_EQ(entry1.key(), entry2.key());
+		EXPECT_EQ(entry1.owner(), entry2.owner());
+		EXPECT_EQ(entry1.disabledHeight(), entry2.disabledHeight());
 		AssertEqualAccountData(entry1.data(), entry2.data());
 	}
 }}

@@ -83,7 +83,7 @@ namespace catapult { namespace chain {
 		for (uint8_t i = 1u; i <= Committee_Size / 2; ++i) {
 			auto key = test::GenerateRandomByteArray<Key>();
 			expectedCommittee.Cosigners.insert(key);
-			pAccountCollector->addAccount(state::CommitteeEntry(key, test::CreateAccountData(Height(), Importance(1))));
+			pAccountCollector->addAccount(state::CommitteeEntry(key, Key(), test::CreateAccountData(Height(), Importance(1))));
 			auto hit = *reinterpret_cast<const uint64_t*>(key.data());
 			if (hit < minHit) {
 				minHit = hit;
@@ -112,18 +112,19 @@ namespace catapult { namespace chain {
 		expectedCommittee.BlockProposer = Key{ { 1 } };
 		pAccountCollector->addAccount(state::CommitteeEntry(
 			expectedCommittee.BlockProposer,
+			Key(),
 			test::CreateAccountData(Height(), Importance(Committee_Size), true, test::Initial_Activity, 0.8)));
 		for (uint8_t i = 2u; i <= Committee_Size; ++i) {
 			auto key = Key{ { i } };
 			expectedCommittee.Cosigners.insert(key);
 			pAccountCollector->addAccount(state::CommitteeEntry(
-				key, test::CreateAccountData(Height(), Importance(Committee_Size), true, test::Initial_Activity, 0.8 / i)));
+				key, Key(), test::CreateAccountData(Height(), Importance(Committee_Size), true, test::Initial_Activity, 0.8 / i)));
 		}
 
 		// The next accounts have rates equal to the rate of the 21st account. The 21st account is selected to the
 		// committee because it has the lowest key.
 		for (uint8_t i = Committee_Size + 1u; i <= Account_Number; ++i)
-			pAccountCollector->addAccount(state::CommitteeEntry(Key{ { i } }, test::CreateAccountData(Height(), Importance(i))));
+			pAccountCollector->addAccount(state::CommitteeEntry(Key{ { i } }, Key(), test::CreateAccountData(Height(), Importance(i))));
 
 		RunTest(pAccountCollector, expectedCommittee);
 	}
