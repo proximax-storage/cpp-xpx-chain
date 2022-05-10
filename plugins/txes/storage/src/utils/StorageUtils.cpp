@@ -118,9 +118,11 @@ namespace catapult { namespace utils {
 			// u2 - the UsedDriveSize according to the last approved modification on the Drive.
 			const auto& confirmedUsedSizes = driveEntry.confirmedUsedSizes();
 			auto sizeIter = confirmedUsedSizes.find(replicatorKey);
-			const auto streamingDepositSlashing = (confirmedUsedSizes.end() != sizeIter) ?
+            const auto streamingDepositSlashing = utils::FileSize::FromBytes(
+					(confirmedUsedSizes.end() != sizeIter) ?
 					2 * std::min(sizeIter->second, driveEntry.usedSizeBytes()) :
-					2 * driveEntry.usedSizeBytes();
+					2 * driveEntry.usedSizeBytes()
+			).megabytes();
 
 			// Streaming deposit refund = streaming deposit - streaming deposit slashing
 			const auto streamingDeposit = 2 * driveEntry.size();

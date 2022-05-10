@@ -382,7 +382,7 @@ namespace catapult { namespace storage {
 
 					sirius::Hash256 verificationTrigger = verification->VerificationTrigger.array();
 					if (verification->Expired) {
-						m_pReplicator->asyncCancelDriveVerification(driveKey.array(),verificationTrigger);
+						m_pReplicator->asyncCancelDriveVerification(driveKey.array());
 					}
 					else if (verification->VerificationTrigger == blockHash) {
 						m_pReplicator->asyncStartDriveVerification(driveKey.array(), verificationTrigger);
