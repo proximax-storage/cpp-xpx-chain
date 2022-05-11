@@ -71,11 +71,17 @@ namespace catapult { namespace test {
 		// Act: connect to the server
 		net::PeerConnectCode connectCode;
 		std::atomic<size_t> numConnects(0);
+		std::condition_variable condVar;
+		std::mutex mtx;
 		packetWriters.connect(CreateLocalHostNode(serverPublicKey), [&](const auto& connectResult) {
+			std::lock_guard<std::mutex> guard(mtx);
 			connectCode = connectResult.Code;
 			++numConnects;
+			condVar.notify_one();
 		});
-		WAIT_FOR_ONE(numConnects);
+
+		std::unique_lock<std::mutex> mlock(mtx);
+		condVar.wait(mlock, [&]{return numConnects == 1u;});
 
 		// Assert: a single connection was accepted
 		EXPECT_EQ(net::PeerConnectCode::Accepted, connectCode);
