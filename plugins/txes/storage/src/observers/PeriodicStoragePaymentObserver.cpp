@@ -21,7 +21,8 @@ namespace catapult { namespace observers {
 
 	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue) {
 		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([pDriveQueue](const Notification& notification, ObserverContext& context) {
-			if (!context.Config.Network.EnableWeightedVoting || context.Height < Height(2))
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			if (!pluginConfig.Enabled || context.Height < Height(2))
 				return;
 
 			if (NotifyMode::Rollback == context.Mode)
@@ -37,7 +38,6 @@ namespace catapult { namespace observers {
 				return;
 			}
 
-			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
 
 			// Creating unique eventHash for the observer
