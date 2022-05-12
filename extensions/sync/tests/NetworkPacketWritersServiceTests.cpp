@@ -152,22 +152,15 @@ namespace catapult { namespace sync {
 					});
 				});
 
-				// - wait for first verification to complete
-				// std::unique_lock<std::mutex> mlock1(mtx);
-				// condVar.wait(mlock1, [&]{return numCallbacks == 1u;});
-
 				pWriters->connect(node, [&](auto) {
 					std::lock_guard<std::mutex> guard(mtx);
 					++numCallbacks;
 					condVar.notify_all();
 				});
 
-				// - wait for second verification to complete
+				// - wait for both verifications to complete
 				std::unique_lock<std::mutex> mlock1(mtx);
 				condVar.wait(mlock1, [&]{return numCallbacks == 2u;});
-
-				// - wait for both verifications to complete
-				// WAIT_FOR_VALUE(2u, numCallbacks);
 			}
 
 			// - wait for all connections
@@ -189,10 +182,13 @@ namespace catapult { namespace sync {
 			// - connect to the desired number of peers
 			auto pPool = test::CreateStartedIoThreadPool();
 			PacketSockets serverSockets;
+
 			std::mutex mtx;
 			std::condition_variable condVar;
 			std::atomic<int> flag = 0;
+
 			EstablishConnections(numConnections, pPool->ioContext(), context, serverSockets, mtx, condVar, flag);
+			
 			std::unique_lock<std::mutex> mlock(mtx);
 			condVar.wait(mlock, [&flag]{return flag == 1;});
 			CATAPULT_LOG(debug) << "established " << numConnections << " connection(s)";
