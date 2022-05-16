@@ -269,7 +269,7 @@ namespace catapult { namespace storage {
 				m_pReplicator->asyncApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationApprovalTransactionInfo{
 					pLastApprovedModification->DriveKey.array(),
 					pLastApprovedModification->Id.array(),
-					pLastApprovedModification->DownloadDataCdi.array(),
+					drive.RootHash.array(),
 					castReplicatorKeys<std::array<uint8_t, 32>>(pLastApprovedModification->Signers)});
 			}
 
