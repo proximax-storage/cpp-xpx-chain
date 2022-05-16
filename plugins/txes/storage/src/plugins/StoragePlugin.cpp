@@ -5,7 +5,9 @@
 **/
 
 #include "StoragePlugin.h"
-#include <src/cache/QueueCacheStorage.h>
+#include "src/cache/QueueCacheStorage.h"
+#include "src/cache/PriorityQueueCache.h"
+#include "src/cache/PriorityQueueCacheStorage.h"
 #include "src/cache/BcDriveCacheSubCachePlugin.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCacheSubCachePlugin.h"
@@ -161,6 +163,18 @@ namespace catapult { namespace plugins {
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("QUEUE C"), [&cache]() {
 				return cache.sub<cache::QueueCache>().createView(cache.height())->size();
+			});
+		});
+
+		manager.addCacheSupport<cache::PriorityQueueCacheStorage>(
+				std::make_unique<cache::PriorityQueueCache>(manager.cacheConfig(cache::PriorityQueueCache::Name), pConfigHolder));
+
+		using PriorityQueueCacheHandlersService = CacheHandlers<cache::PriorityQueueCacheDescriptor>;
+		PriorityQueueCacheHandlersService::Register<model::FacilityCode::PriorityQueue>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("PR QUEUE C"), [&cache]() {
+				return cache.sub<cache::PriorityQueueCache>().createView(cache.height())->size();
 			});
 		});
 

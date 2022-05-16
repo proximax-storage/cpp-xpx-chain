@@ -10,6 +10,7 @@
 #include "catapult/model/Mosaic.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/observers/ObserverContext.h"
+#include "src/cache/PriorityQueueCache.h"
 #include "src/cache/ReplicatorKeyCollector.h"
 #include "src/state/BcDriveEntry.h"
 #include <queue>
@@ -56,6 +57,10 @@ namespace catapult { namespace utils {
 			return a.second == b.second ? a.first < b.first : a.second < b.second;
 		}
 	};
+
+	/// Gets priority queue entry with given \a queueKey from \a priorityQueueCache.
+	/// If no entry was found, first creates one with an empty underlying priority queue.
+	state::PriorityQueueEntry& getPriorityQueueEntry(cache::PriorityQueueCache::CacheDeltaType&, const Key&);
 
 	/// Calculates priority value of \a driveEntry. Used for the queue of drives with missing replicators.
 	double CalculateDrivePriority(const state::BcDriveEntry&, const uint16_t&);

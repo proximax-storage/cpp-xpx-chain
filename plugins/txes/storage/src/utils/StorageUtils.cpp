@@ -81,6 +81,14 @@ namespace catapult { namespace utils {
 		return SwapMosaics(account, account, mosaics, sub, immutableCfg, operation);
 	}
 
+	state::PriorityQueueEntry& getPriorityQueueEntry(cache::PriorityQueueCache::CacheDeltaType& priorityQueueCache, const Key& queueKey) {
+		if (!priorityQueueCache.contains(queueKey)) {
+			state::PriorityQueueEntry entry(queueKey);
+			priorityQueueCache.insert(entry);
+		}
+		return priorityQueueCache.find(queueKey).get();
+	}
+
 	double CalculateDrivePriority(const state::BcDriveEntry& driveEntry, const uint16_t& Rmin) {
 		const auto& N = driveEntry.replicatorCount();
 		const auto& R = driveEntry.replicators().size() - driveEntry.offboardingReplicators().size();

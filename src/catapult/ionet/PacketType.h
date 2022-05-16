@@ -193,6 +193,9 @@ namespace catapult { namespace ionet {
 	/* Queue state path has been requested by a client. */ \
 	ENUM_VALUE(Queue_State_Path, FACILITY_BASED_CODE(800, Queue)) \
 	\
+    /* Priority queue state path has been requested by a client. */ \
+	ENUM_VALUE(Priority_Queue_State_Path, FACILITY_BASED_CODE(800, PriorityQueue)) \
+	\
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
 	/* Request for the current diagnostic counter values. */ \
@@ -275,6 +278,9 @@ namespace catapult { namespace ionet {
 	\
 	/* Queue infos have been requested by a client. */ \
 	ENUM_VALUE(Queue_Infos, FACILITY_BASED_CODE(1200, Queue)) \
+	\
+	/* Priority queue infos have been requested by a client. */ \
+	ENUM_VALUE(Priority_Queue_Infos, FACILITY_BASED_CODE(1200, PriorityQueue)) \
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.
