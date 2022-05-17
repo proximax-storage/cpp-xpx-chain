@@ -31,6 +31,7 @@ namespace catapult { namespace state {
             return Drive{
 				driveEntry.key(),
 				driveEntry.owner(),
+				driveEntry.rootHash(),
 				driveEntry.size(),
 				driveEntry.replicators(),
 				dataModifications

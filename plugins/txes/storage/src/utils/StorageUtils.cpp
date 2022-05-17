@@ -406,7 +406,7 @@ namespace catapult { namespace utils {
 		const bool dataModificationIdIsValid = lastApprovedDataModificationIter != completedDataModifications.rend();
 		const auto lastApprovedDataModificationId = dataModificationIdIsValid ? lastApprovedDataModificationIter->Id : Hash256();
 		const auto initialDownloadWork = driveEntry.usedSizeBytes() - driveEntry.metaFilesSizeBytes();
-		const state::DriveInfo driveInfo{ lastApprovedDataModificationId, dataModificationIdIsValid, initialDownloadWork };
+		const state::DriveInfo driveInfo{ lastApprovedDataModificationId, dataModificationIdIsValid, initialDownloadWork, initialDownloadWork };
 
 		// Pick the first (requiredReplicatorCount) replicators from acceptableReplicators
 		// and assign them to the drive. If (acceptableReplicators.size() < requiredReplicatorCount),

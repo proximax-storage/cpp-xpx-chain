@@ -32,6 +32,7 @@ namespace catapult { namespace state {
 	struct Drive {
 		Key Id;
 		Key Owner;
+		Hash256 RootHash;
 		uint64_t Size;
 		utils::SortedKeySet Replicators;
 		std::vector<DataModification> DataModifications;
