@@ -47,7 +47,9 @@ namespace catapult { namespace mongo {
 						<< finalize;
 
 				auto result = TrySetChainInfoDocument(m_database, scoreValue.view());
-				m_errorPolicy.checkUpserted(1, result, "chain score");
+				if ((result.NumModified + result.NumUpserted != 1) && (m_errorPolicy.mode() != MongoErrorPolicy::Mode::Idempotent))
+					CATAPULT_LOG(error) << "error upserting chain score";
+//				m_errorPolicy.checkUpserted(1, result, "chain score");
 			}
 
 		private:
