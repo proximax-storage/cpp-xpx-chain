@@ -13,13 +13,9 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PeriodicDownloadChannelPaymentObserverTests
 
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
-
 	DEFINE_COMMON_OBSERVER_TESTS(PeriodicDownloadChannelPayment,)
 
 	const auto billingPeriodSeconds = 20000;
-	const auto Drive_Queue = std::make_shared<DriveQueue>();
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;

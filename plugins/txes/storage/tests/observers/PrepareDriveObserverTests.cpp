@@ -13,10 +13,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PrepareDriveObserverTests
 
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
-
-    DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive, std::make_shared<cache::ReplicatorKeyCollector>(), std::make_shared<DriveQueue>())
+	DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive, std::make_shared<cache::ReplicatorKeyCollector>())
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -28,7 +25,6 @@ namespace catapult { namespace observers {
         constexpr auto Drive_Size = 50;
         constexpr auto Replicator_Count = 3;
 		constexpr auto Unacceptable_Replicator_Count = 1;	// Number of replicators that don't have enough mosaics
-		const auto Drive_Queue = std::make_shared<DriveQueue>();
         constexpr Height Current_Height(20);
 		constexpr auto Min_Replicator_Count = 2;
 		constexpr auto Storage_Mosaic_Id = MosaicId(1234);
@@ -112,8 +108,9 @@ namespace catapult { namespace observers {
 				Drive_Key,
 				Drive_Size,
 				Replicator_Count);
-            auto pObserver = CreatePrepareDriveObserver(replicatorKeyCollector, Drive_Queue);
+            auto pObserver = CreatePrepareDriveObserver(replicatorKeyCollector);
             auto& driveCache = context.cache().sub<cache::BcDriveCache>();
+			auto& priorityQueueCache = context.cache().sub<cache::PriorityQueueCache>();
             auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
 
@@ -157,7 +154,8 @@ namespace catapult { namespace observers {
 			}
 
 			// EXPECT_NE(expectedDriveQueueSize, paymentQueueSize);
-			EXPECT_EQ(expectedDriveQueueSize, Drive_Queue->size());
+			auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+			EXPECT_EQ(expectedDriveQueueSize, driveQueueEntry.priorityQueue().size());
         }
     }
 

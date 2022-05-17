@@ -21,17 +21,14 @@ namespace catapult { namespace state { class StorageStateImpl; }}
 
 namespace catapult { namespace observers {
 
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
-
 	/// Observes changes triggered by prepare drive notifications.
-	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue);
+	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector);
 
 	/// Observes changes triggered by download notifications.
 	DECLARE_OBSERVER(DownloadChannel, model::DownloadNotification<1>)();
 
 	/// Observes changes triggered by data modification notifications.
-	DECLARE_OBSERVER(DataModification, model::DataModificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue);
+	DECLARE_OBSERVER(DataModification, model::DataModificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector);
 
 	/// Observes changes triggered by data modification approval notifications.
 	DECLARE_OBSERVER(DataModificationApproval, model::DataModificationApprovalNotification<1>)();
@@ -49,13 +46,13 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DataModificationCancel, model::DataModificationCancelNotification<1>)();
 
 	/// Observes changes triggered by replicator onboarding notifications.
-	DECLARE_OBSERVER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
+	DECLARE_OBSERVER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
 
 	/// Observes changes triggered by drive closure notifications.
-	DECLARE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
+	DECLARE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>)();
 
 	/// Observes changes triggered by replicator offboarding notifications.
-	DECLARE_OBSERVER(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
+	DECLARE_OBSERVER(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)();
 
 	/// Observes changes triggered by download payment notifications.
 	DECLARE_OBSERVER(DownloadPayment, model::DownloadPaymentNotification<1>)();
@@ -85,10 +82,10 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(StartDriveVerification, model::BlockNotification<2>)(state::StorageStateImpl& state, const cache::DriveKeyCollector& driveKeyCollector);
 
 	/// Observes changes triggered by end drive verification notifications.
-	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue);
+	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector);
 
 	/// Observes changes triggered by block
-	DECLARE_OBSERVER(PeriodicStoragePayment, model::BlockNotification<2>)(const std::shared_ptr<DriveQueue>& pDriveQueue);
+	DECLARE_OBSERVER(PeriodicStoragePayment, model::BlockNotification<2>)();
 
 	/// Observes changes triggered by block
 	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, model::BlockNotification<2>)();

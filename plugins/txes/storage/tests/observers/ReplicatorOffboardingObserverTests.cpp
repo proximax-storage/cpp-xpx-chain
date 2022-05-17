@@ -15,10 +15,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS ReplicatorOffboardingObserverTests
 
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
-
-	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOffboarding, std::make_shared<DriveQueue>())
+	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOffboarding,)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::ReplicatorCacheFactory>;
@@ -28,7 +25,6 @@ namespace catapult { namespace observers {
 		Key Drive_Key1 = test::GenerateRandomByteArray<Key>();
 		Key Drive_Key2 = test::GenerateRandomByteArray<Key>();
 		Key Target_Drive_Key = Drive_Key2;	// Drive key that is mentioned in notification
-		const auto Drive_Queue = std::make_shared<std::priority_queue<DrivePriority>>();
         constexpr auto Current_Height = Height(25);
 		constexpr auto Capacity = Amount(30);
 		constexpr auto Min_Replicator_Count = 4;
@@ -84,14 +80,14 @@ namespace catapult { namespace observers {
 			return initialDriveEntries;
 		}
 
-		DriveQueue CreateDriveQueue(const std::vector<state::BcDriveEntry>& driveEntries) {
-			DriveQueue driveQueue;
-			for (const auto& entry : driveEntries) {
-				if (entry.replicators().size() < entry.replicatorCount())
-					driveQueue.emplace(entry.key(), utils::CalculateDrivePriority(entry, Min_Replicator_Count));
+		state::PriorityQueueEntry CreateDriveQueueEntry(const std::vector<state::BcDriveEntry>& driveEntries) {
+			state::PriorityQueueEntry driveQueueEntry(state::DrivePriorityQueueKey);
+			for (const auto& driveEntry : driveEntries) {
+				if (driveEntry.replicators().size() < driveEntry.replicatorCount())
+					driveQueueEntry.set(driveEntry.key(), utils::CalculateDrivePriority(driveEntry, Min_Replicator_Count));
 			}
 
-			return driveQueue;
+			return driveQueueEntry;
 		}
 
         state::ReplicatorEntry CreateReplicatorEntry() {
@@ -107,33 +103,35 @@ namespace catapult { namespace observers {
             Notification notification(Replicator_Key, Target_Drive_Key);
             auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
             auto& driveCache = context.cache().sub<cache::BcDriveCache>();
+			auto& priorityQueueCache = context.cache().sub<cache::PriorityQueueCache>();
 
             //Populate cache
             replicatorCache.insert(CreateReplicatorEntry());
 			auto initialDriveEntries = CreateInitialDriveEntries();
 			for (const auto& driveEntry : initialDriveEntries)
             	driveCache.insert(driveEntry);
+			auto initialDriveQueueEntry = CreateDriveQueueEntry(initialDriveEntries);
+			priorityQueueCache.insert(initialDriveQueueEntry);
 
-			auto pDriveQueue = std::make_shared<DriveQueue>(CreateDriveQueue(initialDriveEntries));
-			auto pObserver = CreateReplicatorOffboardingObserver(pDriveQueue);
+			auto pObserver = CreateReplicatorOffboardingObserver();
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
 			auto expectedDriveEntries = CreateExpectedDriveEntries(initialDriveEntries);
-			auto expectedDriveQueue = CreateDriveQueue(expectedDriveEntries);
 			for (const auto& expectedEntry : expectedDriveEntries) {
 				auto driveIter = driveCache.find(expectedEntry.key());
 				auto& driveEntry = driveIter.get();
 				test::AssertEqualBcDriveData(expectedEntry, driveEntry);
 			}
 
-			// Check drive queue
-			EXPECT_EQ(pDriveQueue->size(), expectedDriveQueue.size());
-			while (!pDriveQueue->empty()) {
-				EXPECT_EQ(pDriveQueue->top(), expectedDriveQueue.top());
-				pDriveQueue->pop();
+			auto expectedDriveQueue = CreateDriveQueueEntry(expectedDriveEntries).priorityQueue();
+			auto& driveQueue = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey).priorityQueue();
+			EXPECT_EQ(driveQueue.size(), expectedDriveQueue.size());
+			while (!driveQueue.empty()) {
+				EXPECT_EQ(driveQueue.top(), expectedDriveQueue.top());
+				driveQueue.pop();
 				expectedDriveQueue.pop();
 			}
         }

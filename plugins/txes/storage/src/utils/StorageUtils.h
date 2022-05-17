@@ -51,13 +51,6 @@ namespace catapult { namespace utils {
 //		return std::priority_queue<DrivePriority, std::vector<DrivePriority>, decltype(comparator)>(comparator);
 //	};
 
-	using DrivePriority = std::pair<Key, double>;
-	struct DriveQueueComparator {
-		bool operator() (const DrivePriority& a, const DrivePriority& b) const {
-			return a.second == b.second ? a.first < b.first : a.second < b.second;
-		}
-	};
-
 	/// Gets priority queue entry with given \a queueKey from \a priorityQueueCache.
 	/// If no entry was found, first creates one with an empty underlying priority queue.
 	state::PriorityQueueEntry& getPriorityQueueEntry(cache::PriorityQueueCache::CacheDeltaType&, const Key&);
@@ -80,8 +73,6 @@ namespace catapult { namespace utils {
 			const observers::ObserverContext&,
 			std::mt19937&);
 
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, DriveQueueComparator>;
-
 	/// Updates download and data modification shards of the \a driveEntry
 	/// after a new replicator with \a replicatorKey has been added to the drive.
 	void UpdateShardsOnAddedReplicator(
@@ -94,14 +85,12 @@ namespace catapult { namespace utils {
 	void PopulateDriveWithReplicators(
 			const Key&,
 			const std::shared_ptr<cache::ReplicatorKeyCollector>&,
-			const std::shared_ptr<DriveQueue>&,
 			const observers::ObserverContext&,
 			std::mt19937&);
 
-	/// Assigns each replicator from \a replicatorKeys to drives according to \a pDriveQueue.
+	/// Assigns each replicator from \a replicatorKeys to drives according to the drive priority queue.
 	void AssignReplicatorsToQueuedDrives(
 			const std::set<Key>&,
-			const std::shared_ptr<DriveQueue>&,
 			const observers::ObserverContext&,
 			std::mt19937&);
 }}

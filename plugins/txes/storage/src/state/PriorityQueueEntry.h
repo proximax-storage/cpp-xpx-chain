@@ -20,7 +20,11 @@ namespace catapult { namespace state {
 		catapult::Key Key;
 		double Priority = 0.0;
 
-		friend bool operator< (const PriorityPair& a, const PriorityPair& b) {
+		friend bool operator==(const PriorityPair& a, const PriorityPair& b) {
+			return (a.Key == b.Key) && (a.Priority == b.Priority);
+		}
+
+		friend bool operator<(const PriorityPair& a, const PriorityPair& b) {
 			return a.Priority == b.Priority ? a.Key < b.Key : a.Priority < b.Priority;
 		}
 	};
