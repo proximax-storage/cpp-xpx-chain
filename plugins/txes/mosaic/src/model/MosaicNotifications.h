@@ -97,11 +97,12 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Mosaic_Definition_v1_Notification;
 
 	public:
-		/// Creates a notification around \a signer, \a mosaicId and \a properties.
-		explicit MosaicDefinitionNotification(const Key& signer, MosaicId mosaicId, const MosaicProperties& properties)
+		/// Creates a notification around \a signer, \a mosaicId, \a mosaicSupply and \a properties.
+		explicit MosaicDefinitionNotification(const Key& signer, MosaicId mosaicId, Amount mosaicSupply, const MosaicProperties& properties)
 				: Notification(Notification_Type, sizeof(MosaicDefinitionNotification<1>))
 				, Signer(signer)
 				, MosaicId(mosaicId)
+				, MosaicSupply(mosaicSupply)
 				, Properties(properties)
 		{}
 
@@ -114,6 +115,9 @@ namespace catapult { namespace model {
 
 		/// Mosaic properties.
 		MosaicProperties Properties;
+
+		/// Amount of the set.
+		Amount MosaicSupply;
 	};
 
 	/// Notification of a mosaic nonce and id.
