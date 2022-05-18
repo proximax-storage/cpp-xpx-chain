@@ -19,7 +19,7 @@ namespace catapult { namespace state {
         // Assert:
         EXPECT_EQ(key, entry.key());
     }
-    
+
     TEST(TEST_CLASS, CanAccessOwner) {
         // Arrange:
         auto owner = test::GenerateRandomByteArray<Key>();
@@ -161,21 +161,21 @@ namespace catapult { namespace state {
         EXPECT_EQ(replicators, entry.replicators());
     }
 
-    TEST(TEST_CLASS, CanAccessVerifications) {
-        // Arrange:
-        Verifications verifications = { Verification{ test::GenerateRandomByteArray<Hash256>(), {} }};
-        auto entry = BcDriveEntry(Key());
+//    TEST(TEST_CLASS, CanAccessVerifications) {
+//        // Arrange:
+//        Verifications verifications = { Verification{ test::GenerateRandomByteArray<Hash256>(), {} }};
+//        auto entry = BcDriveEntry(Key());
+//
+//        // Sanity:
+//        ASSERT_TRUE(entry.verifications().empty());
+//
+//        // Act:
+//        entry.verifications() = verifications;
+//
+//        // Assert:
+//        ASSERT_EQ(1, entry.verifications().size());
+//        EXPECT_EQ(verifications.front().VerificationTrigger, entry.verifications().front().VerificationTrigger);
+//        EXPECT_EQ(0, entry.verifications().front().Shards.size());
+//    }
 
-        // Sanity:
-        ASSERT_TRUE(entry.verifications().empty());
-
-        // Act:
-        entry.verifications() = verifications;
-
-        // Assert:
-        ASSERT_EQ(1, entry.verifications().size());
-        EXPECT_EQ(verifications.front().VerificationTrigger, entry.verifications().front().VerificationTrigger);
-        EXPECT_EQ(0, entry.verifications().front().Shards.size());
-    }
-    
 }}

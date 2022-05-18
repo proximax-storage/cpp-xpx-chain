@@ -21,6 +21,7 @@ namespace catapult { namespace observers {
 		using Notification = model::AddHarvesterNotification<1>;
 
 		const Key Harvester_Key = test::GenerateRandomByteArray<Key>();
+		const Key Owner = test::GenerateRandomByteArray<Key>();
 		const Height Current_Height = test::GenerateRandomValue<Height>();
 		constexpr MosaicId Harvesting_Mosaic_Id(1234);
 		constexpr Amount Harvester_Balance(100);
@@ -38,11 +39,13 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, AddHarvester_Commit) {
 		// Arrange:
 		ObserverTestContext context(NotifyMode::Commit, Current_Height, CreateConfig());
-		auto notification = Notification(Harvester_Key);
+		auto notification = Notification(Owner, Harvester_Key);
 		auto pObserver = CreateAddHarvesterObserver();
 		auto& committeeCache = context.cache().sub<cache::CommitteeCache>();
 		auto expectedCommitteeEntry = test::CreateCommitteeEntry(
 			Harvester_Key,
+			Owner,
+			Height(0),
 			Current_Height,
 			Importance(Harvester_Balance.unwrap()),
 			true,
@@ -67,10 +70,15 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, AddHarvester_Rollback) {
 		// Arrange:
 		ObserverTestContext context(NotifyMode::Rollback, Current_Height);
-		auto notification = Notification(Harvester_Key);
+		auto notification = Notification(Owner, Harvester_Key);
 		auto pObserver = CreateAddHarvesterObserver();
+		auto& committeeCache = context.cache().sub<cache::CommitteeCache>();
+		committeeCache.insert(test::CreateCommitteeEntry(Harvester_Key));
 
 		// Act:
-		EXPECT_THROW(test::ObserveNotification(*pObserver, notification, context), catapult_runtime_error);
+		test::ObserveNotification(*pObserver, notification, context);
+
+		// Assert: check the cache
+		ASSERT_FALSE(committeeCache.contains(Harvester_Key));
 	}
 }}

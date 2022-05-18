@@ -67,8 +67,8 @@ namespace catapult { namespace mocks {
             return nullptr;
         }
 
-		virtual std::unique_ptr<state::DriveVerification> getActiveVerification(const Key& driveKey) override {
-            return nullptr;
+		virtual std::optional<state::DriveVerification> getActiveVerification(const Key& driveKey, const catapult::Timestamp& time) override {
+            return {};
         }
 
 		std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) override {

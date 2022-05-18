@@ -13,14 +13,15 @@
 namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER(AddHarvester, model::AddHarvesterNotification<1>, [](const auto& notification, const ObserverContext& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (AddHarvester)");
-
 		auto& cache = context.Cache.sub<cache::CommitteeCache>();
-		auto readOnlyCache = context.Cache.toReadOnly();
-		cache::ImportanceView view(readOnlyCache.sub<cache::AccountStateCache>());
-		auto effectiveBalance = view.getAccountImportanceOrDefault(notification.Signer, context.Height);
-		const auto& config = context.Config.Network.GetPluginConfiguration<config::CommitteeConfiguration>();
-		cache.insert(state::CommitteeEntry(notification.Signer, context.Height, effectiveBalance, true, config.InitialActivity, config.MinGreed));
+		if (NotifyMode::Commit == context.Mode) {
+			auto readOnlyCache = context.Cache.toReadOnly();
+			cache::ImportanceView view(readOnlyCache.sub<cache::AccountStateCache>());
+			auto effectiveBalance = view.getAccountImportanceOrDefault(notification.HarvesterKey, context.Height);
+			const auto& config = context.Config.Network.GetPluginConfiguration<config::CommitteeConfiguration>();
+			cache.insert(state::CommitteeEntry(notification.HarvesterKey, notification.Signer, context.Height, effectiveBalance, true, config.InitialActivity, config.MinGreed));
+		} else {
+			cache.remove(notification.HarvesterKey);
+		}
 	});
 }}

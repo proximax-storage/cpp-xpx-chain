@@ -11,7 +11,6 @@
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/observers/ObserverContext.h"
 #include "src/cache/PriorityQueueCache.h"
-#include "src/cache/ReplicatorKeyCollector.h"
 #include "src/state/BcDriveEntry.h"
 #include <queue>
 #include <random>
@@ -84,7 +83,6 @@ namespace catapult { namespace utils {
 	/// Assigns acceptable replicators from \a pKeyCollector to the drive with \a driveKey.
 	void PopulateDriveWithReplicators(
 			const Key&,
-			const std::shared_ptr<cache::ReplicatorKeyCollector>&,
 			const observers::ObserverContext&,
 			std::mt19937&);
 

@@ -14,7 +14,9 @@ using namespace catapult::mongo::mappers;
 namespace catapult { namespace mongo { namespace plugins {
 
 	template<typename TTransaction>
-	void StreamRemoveHarvesterTransaction(bson_stream::document&, const TTransaction&) {
+	void StreamRemoveHarvesterTransaction(bson_stream::document& builder, const TTransaction& transaction) {
+		builder
+			<< "harvesterKey" << ToBinary(transaction.HarvesterKey);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(RemoveHarvester, StreamRemoveHarvesterTransaction)

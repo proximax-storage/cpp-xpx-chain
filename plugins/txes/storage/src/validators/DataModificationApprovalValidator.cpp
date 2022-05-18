@@ -37,11 +37,6 @@ namespace catapult { namespace validators {
 		// Check if all public keys are either Replicator keys or Drive Owner key
 		const auto& replicators = pDriveEntry->replicators();
 	  	const auto& driveOwner = pDriveEntry->owner();
-		const auto totalKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount + notification.JudgedKeysCount;
-		auto pKey = notification.PublicKeysPtr;
-		for (auto i = 0; i < totalKeysCount; ++i, ++pKey)
-			if (!replicators.count(*pKey) && *pKey != driveOwner)
-				return Failure_Storage_Opinion_Invalid_Key;
 
 		// Check if none of the replicators has provided an opinion on itself
 	  	const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;

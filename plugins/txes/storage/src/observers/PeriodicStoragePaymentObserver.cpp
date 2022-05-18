@@ -8,41 +8,38 @@
 #include "src/state/StorageStateImpl.h"
 #include <random>
 #include <boost/multiprecision/cpp_int.hpp>
-#include "Queue.h"
+#include "src/utils/Queue.h"
+#include "src/utils/AVLTree.h"
+#include "src/catapult/utils/StorageUtils.h"
 
 namespace catapult { namespace observers {
 
-	using Notification = model::BlockNotification<2>;
+	using Notification = model::BlockNotification<1>;
 	using BigUint = boost::multiprecision::uint256_t;
 
 	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)() {
 		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([](const Notification& notification, ObserverContext& context) {
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			if (!pluginConfig.Enabled || context.Height < Height(2))
+				return;
+
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
 
-			if (context.Height < Height(2))
-				return;
-
 			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
 			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
+			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 
-			QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
+			utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
 
 			if (queueAdapter.isEmpty()) {
 				return;
 			}
 
-			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
 
 			// Creating unique eventHash for the observer
-			Hash256 eventHash;
-			crypto::Sha3_256_Builder sha3;
-			const std::string salt = "Storage";
-			sha3.update({notification.Hash,
-						 utils::RawBuffer(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()),
-						 context.Config.Immutable.GenerationHash});
-			sha3.final(eventHash);
+			auto eventHash = getStoragePaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
 
 			for (int i = 0; i < driveCache.size(); i++) {
 				auto driveIter = driveCache.find(queueAdapter.front());
@@ -103,6 +100,26 @@ namespace catapult { namespace observers {
 								}
 					}
 
+					auto keyExtractor = [=, &accountStateCache](const Key& key) {
+						return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+					};
+
+					utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
+							context.Cache.template sub<cache::QueueCache>(),
+							state::ReplicatorsSetTree,
+							keyExtractor,
+							[&replicatorCache](const Key& key) -> state::AVLTreeNode {
+								return replicatorCache.find(key).get().replicatorsSetNode();
+							},
+							[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
+								replicatorCache.find(key).get().replicatorsSetNode() = node;
+							});
+
+					for (const auto& replicatorKey: driveEntry.replicators()) {
+						auto key = keyExtractor(replicatorKey);
+						replicatorTreeAdapter.remove(key);
+					}
+
 					// Returning the rest to the drive owner
 					const auto refundAmount = driveState.Balances.get(streamingMosaicId);
 					driveState.Balances.debit(streamingMosaicId, refundAmount, context.Height);
@@ -123,11 +140,30 @@ namespace catapult { namespace observers {
 						}
 					}
 
-					// Removing the drive from caches
+					// Removing the drive from queue, if present
 					const auto replicators = driveEntry.replicators();
-					auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+					if (replicators.size() < driveEntry.replicatorCount()) {
+						auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
+						auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+
+						driveQueueEntry.remove(driveEntry.key());
+					}
+
+					// Removing the drive from caches
 					for (const auto& replicatorKey : replicators)
 						replicatorCache.find(replicatorKey).get().drives().erase(driveEntry.key());
+
+					// The Drive is Removed, so we should make removal from verification tree
+					utils::AVLTreeAdapter<Key> treeAdapter(
+							context.Cache.template sub<cache::QueueCache>(),
+							state::DriveVerificationsTree,
+							[](const Key& key) { return key; },
+							[&driveCache](const Key& key) -> state::AVLTreeNode {
+								return driveCache.find(key).get().verificationNode();
+							},
+							[&driveCache](const Key& key, const state::AVLTreeNode& node) {
+								driveCache.find(key).get().verificationNode() = node;
+							});
 
 					driveCache.remove(driveEntry.key());
 

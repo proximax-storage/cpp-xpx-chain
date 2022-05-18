@@ -6,10 +6,11 @@
 
 #include "NotificationHandlers.h"
 #include "src/catapult/crypto/Hashes.h"
+#include <catapult/utils/StorageUtils.h>
 
 namespace catapult { namespace notification_handlers {
 
-	using Notification = model::BlockNotification<2>;
+	using Notification = model::BlockNotification<1>;
 
 	DECLARE_HANDLER(DownloadChannelPayment, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
 		return MAKE_HANDLER(DownloadChannelPayment, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
@@ -17,15 +18,9 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			Hash256 eventHash;
-			crypto::Sha3_256_Builder sha3;
-			const std::string salt = "Download";
-			sha3.update({notification.Hash,
-						 utils::RawBuffer(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()),
-						 context.Config.Immutable.GenerationHash});
-			sha3.final(eventHash);
+			Hash256 eventHash = utils::getDownloadPaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
 
-			pReplicatorService->downloadBlockPublished(notification.Hash);
+			pReplicatorService->downloadBlockPublished(eventHash);
 		});
 	}
 }}

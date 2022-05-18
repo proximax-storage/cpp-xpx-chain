@@ -20,7 +20,7 @@ namespace catapult { namespace observers {
 			state::ReplicatorEntry replicatorEntry(notification.PublicKey);
 			replicatorCache.insert(replicatorEntry);
 
-		  	std::seed_seq seed(notification.Seed.begin(), notification.Seed.end());
+			std::seed_seq seed(notification.Seed.begin(), notification.Seed.end());
 		  	std::mt19937 rng(seed);
 			utils::AssignReplicatorsToQueuedDrives({notification.PublicKey}, context, rng);
 		}))

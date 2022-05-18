@@ -15,11 +15,11 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(AddHarvester, [](const auto& notification, const ValidatorContext& context) {
 		auto& cache = context.Cache.sub<cache::CommitteeCache>();
-		if (cache.contains(notification.Signer))
+		if (cache.contains(notification.HarvesterKey))
 			return Failure_Committee_Redundant;
 
 		cache::ImportanceView view(context.Cache.sub<cache::AccountStateCache>());
-		if (!view.canHarvest(notification.Signer, context.Height, context.Config.Network.MinHarvesterBalance))
+		if (!view.canHarvest(notification.HarvesterKey, context.Height, context.Config.Network.MinHarvesterBalance))
 			return Failure_Committee_Harvester_Ineligible;
 
 		return ValidationResult::Success;

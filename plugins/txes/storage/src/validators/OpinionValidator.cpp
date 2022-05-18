@@ -62,10 +62,17 @@ namespace catapult { namespace validators {
 				}
 			}
 
-			const auto dataSize = notification.CommonDataSize + (Key_Size + notification.OpinionElementSize) * individualPart.size();
+			auto dataSize = notification.CommonDataSize + (notification.OpinionElementSize) * individualPart.size();
+
+			if (notification.IncludeOpinionKeysToSignature) {
+				dataSize += Key_Size * individualPart.size();
+			}
+
 			auto* pIndividualData = pIndividualDataBegin;
 			for (const auto& pair : individualPart) {
-				utils::WriteToByteArray(pIndividualData, pair.first);
+				if (notification.IncludeOpinionKeysToSignature) {
+					utils::WriteToByteArray(pIndividualData, pair.first);
+				}
 				pIndividualData = std::copy(pair.second, pair.second + notification.OpinionElementSize, pIndividualData);
 			}
 

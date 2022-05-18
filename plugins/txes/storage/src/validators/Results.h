@@ -168,6 +168,9 @@ namespace catapult { namespace validators {
 	/// The replicator has already applied for offboarding from the drive.
 	DEFINE_STORAGE_RESULT(Already_Initiated_Channel_Closure, 51);
 
+	/// Download channels is finished
+	DEFINE_STORAGE_RESULT(Download_Channel_Is_Finished, 52);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

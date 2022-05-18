@@ -150,7 +150,9 @@ namespace catapult { namespace fastfinality {
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
 				const auto& config = state.config();
-				if (!config.Network.EnableWeightedVoting)
+				const auto& nextConfig = state.config(state.storage().view().chainHeight() + Height(1));
+				bool weightedVotingEnabled = config.Network.EnableWeightedVoting || nextConfig.Network.EnableWeightedVoting;
+				if (!weightedVotingEnabled)
 					CATAPULT_THROW_RUNTIME_ERROR("weighted voting is not enabled");
 
 				auto pValidatorPool = state.pool().pushIsolatedPool("proposal validator");

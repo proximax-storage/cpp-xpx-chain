@@ -48,6 +48,9 @@ namespace catapult { namespace model {
 		/// Properties header.
 		MosaicPropertiesHeader PropertiesHeader;
 
+		/// Mosaic supply.
+		Amount MosaicSupply;
+
 		// followed by optional properties
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Properties, MosaicProperty)
 

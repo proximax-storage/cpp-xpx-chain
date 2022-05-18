@@ -1,38 +1,52 @@
+/**
+*** Copyright 2022 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
 #pragma once
 
 #include "src/state/QueueEntry.h"
 
-namespace catapult::observers {
+namespace catapult::utils {
 
 template<class TCache>
 class QueueAdapter {
 public:
 	QueueAdapter(
-			cache::QueueCache::CacheDeltaType& queueCache,
-			const Key& queueKey,
-			typename TCache::CacheDeltaType& cache)
-		: m_cache(cache)
-		, m_queueCache(queueCache)
-		, m_queueKey(queueKey)
-	{}
+		cache::QueueCache::CacheDeltaType& queueCache,
+		const Key& queueKey,
+		typename TCache::CacheDeltaType& cache)
+			: m_cache(cache)
+			, m_queueCache(queueCache)
+			, m_queueKey(queueKey) {
+		if (!m_queueCache.contains(m_queueKey)) {
+			state::QueueEntry entry(m_queueKey);
+			m_queueCache.insert(entry);
+		}
+	}
 
 	bool isEmpty() {
-		return getQueueEntry().getFirst() == Key();
+		auto queueIter = m_queueCache.find(m_queueKey);
+		const auto& queueEntry = queueIter.get();
+		return queueEntry.getFirst() == Key();
 	}
 
 	Key front() {
-		return getQueueEntry().getFirst();
+		auto queueIter = m_queueCache.find(m_queueKey);
+		const auto& queueEntry = queueIter.get();
+		return queueEntry.getFirst();
 	}
 
 	void popFront() {
-		auto& queueEntry = getQueueEntry();
+		auto queueIter = m_queueCache.find(m_queueKey);
+		auto& queueEntry = queueIter.get();
 
 		auto iter = m_cache.find(queueEntry.getFirst().array());
 		auto& entry = iter.get();
 		queueEntry.setFirst(entry.getQueueNext().array());
 
-		if (entry.getQueueNext() != Key())
-		{
+		if (entry.getQueueNext() != Key()) {
 			// Previous of the first MUST be "null"
 			m_cache.find(queueEntry.getFirst().array()).get().setQueuePrevious(Key());
 		}
@@ -44,9 +58,11 @@ public:
 	}
 
 	void pushBack(const Key& key) {
-		auto& queueEntry = getQueueEntry();
+		auto queueIter = m_queueCache.find(m_queueKey);
+		auto& queueEntry = queueIter.get();
 
-		auto& entry = m_cache.find(key.array()).get();
+		auto iter = m_cache.find(key.array());
+		auto& entry = iter.get();
 		entry.setQueueNext(Key());
 
 		if (isEmpty()) {
@@ -55,7 +71,8 @@ public:
 			entry.setQueuePrevious(Key());
 		}
 		else {
-			auto& lastEntry = m_cache.find(queueEntry.getLast().array()).get();
+			auto iter2 = m_cache.find(queueEntry.getLast().array());
+			auto& lastEntry = iter2.get();
 			queueEntry.setLast(key);
 			lastEntry.setQueueNext(key);
 			entry.setQueuePrevious(lastEntry.entryKey());
@@ -63,10 +80,11 @@ public:
 	}
 
 	void remove(const Key& key) {
+		auto queueIter = m_queueCache.find(m_queueKey);
+		auto& queueEntry = queueIter.get();
 
-		auto& queueEntry = getQueueEntry();
-
-		auto& entry = m_cache.find(key).get();
+		auto iter = m_cache.find(key);
+		auto& entry = iter.get();
 
 		if (entry.getQueuePrevious() != Key()) {
 			auto previousDriveIter = m_cache.find(entry.getQueuePrevious());
@@ -99,15 +117,6 @@ public:
 	}
 
 private:
-
-	auto& getQueueEntry() {
-		if (!m_queueCache.contains(m_queueKey)) {
-			state::QueueEntry entry(m_queueKey);
-			m_queueCache.insert(entry);
-		}
-		return m_queueCache.find(m_queueKey).get();
-	}
-
 	cache::QueueCache::CacheDeltaType& m_queueCache;
 	Key m_queueKey;
 

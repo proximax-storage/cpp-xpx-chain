@@ -10,8 +10,8 @@ namespace catapult { namespace validators {
 
 	using Notification = model::PrepareDriveNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, Notification)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector) {
-		return MAKE_STATEFUL_VALIDATOR(PrepareDrive, [pKeyCollector](const Notification& notification, const ValidatorContext& context) {
+	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(PrepareDrive, [](const Notification& notification, const ValidatorContext& context) {
 			const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 

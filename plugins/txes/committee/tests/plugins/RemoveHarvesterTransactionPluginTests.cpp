@@ -92,6 +92,7 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.Signer);
+		EXPECT_EQ(pTransaction->HarvesterKey, notification.HarvesterKey);
 	}
 
 	// endregion

@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
 
 			// only allow an "immutable" supply to change if the owner owns full supply
 			const auto& properties = entry.definition().properties();
-			if (!properties.is(model::MosaicFlags::Supply_Mutable) && ownerAmount != entry.supply())
+			if (!properties.is(model::MosaicFlags::Supply_Mutable))
 				return Failure_Mosaic_Supply_Immutable;
 
 			if (model::MosaicSupplyChangeDirection::Decrease == notification.Direction)

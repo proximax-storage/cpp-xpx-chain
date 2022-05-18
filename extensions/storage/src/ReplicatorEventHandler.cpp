@@ -119,24 +119,24 @@ namespace catapult { namespace storage {
 
                 auto transactionHash = m_transactionSender.sendEndDriveVerificationTransaction(transactionInfo);
 
-				m_transactionStatusHandler.addHandler(transactionHash, [
-						transactionHash,
-						driveKey = transactionInfo.m_driveKey,
-						pReplicatorWeak = m_pReplicator](uint32_t status) {
-					auto pReplicator = pReplicatorWeak.lock();
-					if (!pReplicator)
-						return;
+//				m_transactionStatusHandler.addHandler(transactionHash, [
+//						transactionHash,
+//						driveKey = transactionInfo.m_driveKey,
+//						pReplicatorWeak = m_pReplicator](uint32_t status) {
+//					auto pReplicator = pReplicatorWeak.lock();
+//					if (!pReplicator)
+//						return;
 
-					auto validationResult = validators::ValidationResult(status);
-					CATAPULT_LOG(debug) << "end drive verification transaction completed with " << validationResult;
-                    if (validationResult == validators::ValidationResult::Success) {
-                        pReplicator->asyncVerifyApprovalTransactionHasBeenPublished(sirius::drive::PublishedVerificationApprovalTransactionInfo{
-							transactionHash.array(),
-							driveKey});
-                    } else if (validationResult == validators::Failure_Storage_Opinion_Invalid_Key) {
-						pReplicator->asyncVerifyApprovalTransactionHasFailedInvalidOpinions(driveKey, transactionHash.array());
-					}
-                });
+//					auto validationResult = validators::ValidationResult(status);
+//					CATAPULT_LOG(debug) << "end drive verification transaction completed with " << validationResult;
+//                    if (validationResult == validators::ValidationResult::Success) {
+//                        pReplicator->asyncVerifyApprovalTransactionHasBeenPublished(sirius::drive::PublishedVerificationApprovalTransactionInfo{
+//							transactionHash.array(),
+//							driveKey});
+//                    } else if (validationResult == validators::Failure_Storage_Opinion_Invalid_Key) {
+//						pReplicator->asyncVerifyApprovalTransactionHasFailedInvalidOpinions(driveKey, transactionHash.array());
+//					}
+//                });
             }
 
             void opinionHasBeenReceived(

@@ -22,6 +22,10 @@ namespace catapult { namespace model {
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_AddHarvester, 1)
 
 	public:
+		/// Harvester public key.
+		Key HarvesterKey;
+
+	public:
 		// Calculates the real size of an add harvester transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
 			return sizeof(TransactionType);

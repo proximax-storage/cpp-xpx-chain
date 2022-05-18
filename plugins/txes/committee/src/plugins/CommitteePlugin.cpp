@@ -47,11 +47,11 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateRemoveHarvesterValidator());
 		});
 
-		manager.addObserverHook([pCommitteeManager](auto& builder) {
+		manager.addObserverHook([pCommitteeManager, pAccountCollector](auto& builder) {
 			builder
 				.add(observers::CreateAddHarvesterObserver())
 				.add(observers::CreateRemoveHarvesterObserver())
-				.add(observers::CreateUpdateHarvestersObserver(pCommitteeManager));
+				.add(observers::CreateUpdateHarvestersObserver(pCommitteeManager, pAccountCollector));
 		});
 	}
 }}

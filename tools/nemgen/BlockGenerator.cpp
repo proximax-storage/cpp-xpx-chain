@@ -172,7 +172,7 @@ namespace catapult { namespace tools { namespace nemgen {
 
 			void addHarvester(const std::string& harvesterPrivateKey) {
 				auto signer = crypto::KeyPair::FromString(harvesterPrivateKey);
-				builders::AddHarvesterBuilder builder(m_networkIdentifier, signer.publicKey());
+				builders::AddHarvesterBuilder builder(m_networkIdentifier, signer.publicKey(), signer.publicKey());
 
 				signAndAdd(builder.build(), signer);
 			}

@@ -21,7 +21,8 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const state::CommitteeEntry& entry,
-				const Key& harvesterKey) {
+				const Key& harvesterKey,
+				const Key& owner) {
 			// Arrange:
 			Height currentHeight(1);
 			auto cache = test::CommitteeCacheFactory::Create();
@@ -31,7 +32,7 @@ namespace catapult { namespace validators {
 				driveCacheDelta.insert(entry);
 				cache.commit(currentHeight);
 			}
-			Notification notification(harvesterKey);
+			Notification notification(owner, harvesterKey);
 			auto pValidator = CreateRemoveHarvesterValidator();
 
 			// Act:
@@ -51,7 +52,33 @@ namespace catapult { namespace validators {
 		AssertValidationResult(
 			Failure_Committee_Account_Does_Not_Exist,
 			entry,
+			test::GenerateRandomByteArray<Key>(),
+			entry.owner());
+	}
+
+	TEST(TEST_CLASS, FailureWhenSignerIsNotOwner) {
+		// Arrange:
+		auto entry = test::CreateCommitteeEntry();
+
+		// Assert:
+		AssertValidationResult(
+			Failure_Committee_Signer_Is_Not_Owner,
+			entry,
+			entry.key(),
 			test::GenerateRandomByteArray<Key>());
+	}
+
+	TEST(TEST_CLASS, FailureWhenHarvesterAlreadyDisabled) {
+		// Arrange:
+		auto entry = test::CreateCommitteeEntry();
+		entry.setDisabledHeight(Height(10));
+
+		// Assert:
+		AssertValidationResult(
+			Failure_Committee_Harvester_Already_Disabled,
+			entry,
+			entry.key(),
+			entry.owner());
 	}
 
 	TEST(TEST_CLASS, Success) {
@@ -61,6 +88,7 @@ namespace catapult { namespace validators {
 		AssertValidationResult(
 			ValidationResult::Success,
 			entry,
-			entry.key());
+			entry.key(),
+			entry.owner());
 	}
 }}

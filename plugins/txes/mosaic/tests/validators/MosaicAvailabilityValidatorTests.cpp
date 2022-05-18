@@ -34,18 +34,19 @@ namespace catapult { namespace validators {
 		model::MosaicDefinitionNotification<1> CreateNotification(
 				const Key& signer,
 				MosaicId id,
+				Amount supply,
 				uint8_t divisibility,
 				BlockDuration duration) {
 			auto properties = model::MosaicProperties::FromValues({ { 0, divisibility, duration.unwrap() } });
-			return model::MosaicDefinitionNotification<1>(signer, id, properties);
+			return model::MosaicDefinitionNotification<1>(signer, id, supply, properties);
 		}
 
-		model::MosaicDefinitionNotification<1> CreateNotification(const Key& signer, MosaicId id, BlockDuration duration) {
-			return CreateNotification(signer, id, 0, duration);
+		model::MosaicDefinitionNotification<1> CreateNotification(const Key& signer, MosaicId id, Amount supply, BlockDuration duration) {
+			return CreateNotification(signer, id, supply, 0, duration);
 		}
 
-		model::MosaicDefinitionNotification<1> CreateNotification(const Key& signer, MosaicId id) {
-			return CreateNotification(signer, id, 0, Eternal_Artifact_Duration);
+		model::MosaicDefinitionNotification<1> CreateNotification(const Key& signer, MosaicId id, Amount supply) {
+			return CreateNotification(signer, id, supply, 0, Eternal_Artifact_Duration);
 		}
 
 		void AssertValidationResult(
@@ -83,7 +84,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, CanAddUnknownMosaic) {
 		// Arrange:
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateNotification(signer, MosaicId(123));
+		auto notification = CreateNotification(signer, MosaicId(123), Amount(100));
 
 		// - seed the cache with an unrelated mosaic
 		auto cache = test::MosaicCacheFactory::Create();
@@ -100,7 +101,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenMosaicExistsButIsNotActive) {
 		// Arrange:
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateNotification(signer, MosaicId(123));
+		auto notification = CreateNotification(signer, MosaicId(123), Amount(100));
 
 		// - seed the cache
 		auto cache = test::MosaicCacheFactory::Create();
@@ -119,7 +120,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, CannotReplaceActiveMosaicWhenDefinitionIsUnchanged) {
 		// Arrange: create a transaction with matching properties
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateNotification(signer, MosaicId(123), BlockDuration(0));
+		auto notification = CreateNotification(signer, MosaicId(123), Amount(100), BlockDuration(0));
 
 		// - seed the cache with an active mosaic with the same id (notice that added mosaic has duration of 100)
 		auto cache = test::MosaicCacheFactory::Create();
@@ -137,7 +138,7 @@ namespace catapult { namespace validators {
 		void AssertCanReplaceActiveMosaicWhenSupplyIsZero(uint8_t divisibility) {
 			// Arrange:
 			auto signer = test::GenerateRandomByteArray<Key>();
-			auto notification = CreateNotification(signer, MosaicId(123), divisibility, BlockDuration(200));
+			auto notification = CreateNotification(signer, MosaicId(123), Amount(0), divisibility, BlockDuration(200));
 
 			// - seed the cache with an active mosaic with the same id and zero supply
 			auto cache = test::MosaicCacheFactory::Create();
@@ -161,7 +162,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, CannotReplaceActiveMosaicWhenSupplyIsNonZero) {
 		// Arrange:
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto notification = CreateNotification(signer, MosaicId(123), BlockDuration(200));
+		auto notification = CreateNotification(signer, MosaicId(123), Amount(0), BlockDuration(200));
 
 		// - seed the cache with an active mosaic with the same id
 		auto cache = test::MosaicCacheFactory::Create();

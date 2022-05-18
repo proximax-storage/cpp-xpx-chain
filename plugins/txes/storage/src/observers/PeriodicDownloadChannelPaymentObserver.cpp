@@ -8,41 +8,36 @@
 #include "src/state/StorageStateImpl.h"
 #include <random>
 #include <boost/multiprecision/cpp_int.hpp>
-#include "Queue.h"
+#include <catapult/utils/StorageUtils.h>
+#include "src/utils/Queue.h"
 
 namespace catapult { namespace observers {
 
-	using Notification = model::BlockNotification<2>;
+	using Notification = model::BlockNotification<1>;
 	using BigUint = boost::multiprecision::uint256_t;
 
 	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, Notification)() {
 		return MAKE_OBSERVER(PeriodicDownloadChannelPayment, Notification, ([](const Notification& notification, ObserverContext& context) {
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			if (!pluginConfig.Enabled || context.Height < Height(2))
+				return;
+
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
-
-			if (context.Height < Height(2))
-				return;
 
 			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
 			auto& downloadCache = context.Cache.template sub<cache::DownloadChannelCache>();
 
-			QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
+			utils::QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
 
 			if (queueAdapter.isEmpty()) {
 				return;
 			}
 
-			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentInterval = pluginConfig.DownloadBillingPeriod.seconds();
 
 			// Creating unique eventHash for the observer
-			Hash256 eventHash;
-			crypto::Sha3_256_Builder sha3;
-			const std::string salt = "Download";
-			sha3.update({notification.Hash,
-						 utils::RawBuffer(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()),
-						 context.Config.Immutable.GenerationHash});
-			sha3.final(eventHash);
+			auto eventHash = utils::getDownloadPaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
 
 			for (int i = 0; i < downloadCache.size(); i++) {
 				auto& downloadEntry = downloadCache.find(queueAdapter.front().array()).get();

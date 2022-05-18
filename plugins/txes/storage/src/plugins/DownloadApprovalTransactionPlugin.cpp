@@ -39,7 +39,8 @@ namespace catapult { namespace plugins {
 							transaction.PublicKeysPtr(),
 							transaction.SignaturesPtr(),
 							transaction.PresentOpinionsPtr(),
-							reinterpret_cast<const uint8_t*>(transaction.OpinionsPtr())
+							reinterpret_cast<const uint8_t*>(transaction.OpinionsPtr()),
+							true
 					));
 
 				  	sub.notify(DownloadApprovalNotification<1>(

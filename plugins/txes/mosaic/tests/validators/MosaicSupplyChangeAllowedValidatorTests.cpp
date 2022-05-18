@@ -79,27 +79,27 @@ namespace catapult { namespace validators {
 	// region immutable supply
 
 	namespace {
-		void AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply(model::MosaicSupplyChangeDirection direction) {
+		void AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply(model::MosaicSupplyChangeDirection direction, model::MosaicFlags flags) {
 			// Arrange:
 			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
 
 			auto cache = test::MosaicCacheFactory::Create();
-			AddMosaic(cache, MosaicId(123), Amount(500), signer, Amount(500), model::MosaicFlags::None);
+			AddMosaic(cache, MosaicId(123), Amount(500), signer, Amount(500), flags);
 
 			// Assert:
 			AssertValidationResult(ValidationResult::Success, cache, Height(100), notification);
 		}
 	}
 
-	TEST(TEST_CLASS, CanIncreaseImmutableSupplyWhenOwnerHasCompleteSupply) {
+	TEST(TEST_CLASS, CanIncreaseMutableSupplyWhenOwnerHasCompleteSupply) {
 		// Assert:
-		AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply(model::MosaicSupplyChangeDirection::Increase);
+		AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply(model::MosaicSupplyChangeDirection::Increase, model::MosaicFlags::Supply_Mutable);
 	}
 
-	TEST(TEST_CLASS, CanDecreaseImmutableSupplyWhenOwnerHasCompleteSupply) {
+	TEST(TEST_CLASS, CanDecreaseMutableSupplyWhenOwnerHasCompleteSupply) {
 		// Assert:
-		AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply(model::MosaicSupplyChangeDirection::Decrease);
+		AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply(model::MosaicSupplyChangeDirection::Decrease, model::MosaicFlags::Supply_Mutable);
 	}
 
 	namespace {
@@ -124,6 +124,26 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, CannotDecreaseImmutableSupplyWhenOwnerHasPartialSupply) {
 		// Assert:
 		AssertCannotChangeImmutableSupplyWhenOwnerHasPartialSupply(model::MosaicSupplyChangeDirection::Decrease);
+	}
+
+	namespace {
+		void AssertCannotChangeImmutableSupplyWhenOwnerHasTotalSupply(model::MosaicSupplyChangeDirection direction) {
+			// Arrange:
+			auto signer = test::GenerateRandomByteArray<Key>();
+			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
+
+			auto cache = test::MosaicCacheFactory::Create();
+			AddMosaic(cache, MosaicId(123), Amount(100), signer, Amount(100), model::MosaicFlags::None);
+
+			// Assert:
+			AssertValidationResult(Failure_Mosaic_Supply_Immutable, cache, Height(100), notification);
+		}
+	}
+
+	TEST(TEST_CLASS, CannotChangeImmutableSupplyWhenOwnerHasTotalSupply) {
+		// Assert:
+		AssertCannotChangeImmutableSupplyWhenOwnerHasTotalSupply(model::MosaicSupplyChangeDirection::Increase);
+		AssertCannotChangeImmutableSupplyWhenOwnerHasTotalSupply(model::MosaicSupplyChangeDirection::Decrease);
 	}
 
 	// endregion

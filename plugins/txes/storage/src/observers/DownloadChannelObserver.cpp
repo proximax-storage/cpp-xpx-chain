@@ -6,6 +6,7 @@
 
 #include <random>
 #include "Observers.h"
+#include "src/utils/Queue.h"
 
 namespace catapult { namespace observers {
 
@@ -34,6 +35,7 @@ namespace catapult { namespace observers {
 	  	auto& driveEntry = driveIter.get();
 
 		driveEntry.downloadShards().insert(notification.Id);
+		driveEntry.setLastPayment(context.Timestamp);
 
 	  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 		const auto& replicators = driveEntry.replicators();
@@ -66,5 +68,10 @@ namespace catapult { namespace observers {
 		}
 
 		downloadCache.insert(downloadEntry);
+
+		// Insert the Drive into the payment Queue
+		auto& queueCache = context.Cache.template sub<cache::QueueCache>();
+		utils::QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
+		queueAdapter.pushBack(downloadEntry.entryKey());
 	}));
 }}

@@ -5,8 +5,8 @@
 **/
 
 #include "Observers.h"
-#include "Queue.h"
-#include "src/utils/StorageUtils.h"
+#include "src/utils/Queue.h"
+#include "src/utils/AVLTree.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
 namespace catapult { namespace observers {
@@ -22,6 +22,8 @@ namespace catapult { namespace observers {
 			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveIter.get();
+
+			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 
 			const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 			const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
@@ -52,6 +54,26 @@ namespace catapult { namespace observers {
 					context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
 
+			auto keyExtractor = [=, &accountStateCache](const Key& key) {
+				return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+			};
+
+			utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
+					context.Cache.template sub<cache::QueueCache>(),
+					state::ReplicatorsSetTree,
+					keyExtractor,
+					[&replicatorCache](const Key& key) -> state::AVLTreeNode {
+						return replicatorCache.find(key).get().replicatorsSetNode();
+					},
+					[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
+						replicatorCache.find(key).get().replicatorsSetNode() = node;
+					});
+
+			for (const auto& replicatorKey: driveEntry.replicators()) {
+				auto key = keyExtractor(replicatorKey);
+				replicatorTreeAdapter.remove(key);
+			}
+
 			auto timeSinceLastPayment = (context.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
 			for (auto& [replicatorKey, info] : driveEntry.confirmedStorageInfos()) {
 				auto replicatorIter = accountStateCache.find(replicatorKey);
@@ -69,10 +91,27 @@ namespace catapult { namespace observers {
 				replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);
 			}
 
-			// The Drive is Removed, so we should make removal in linked list
+			// The Drive is Removed, so we should make removal from payment queue
 			auto& queueCache = context.Cache.sub<cache::QueueCache>();
-			QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
+			utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
 			queueAdapter.remove(driveEntry.entryKey());
+
+			// The Drive is Removed, so we should make removal from verification tree
+			utils::AVLTreeAdapter<Key> driveTreeAdapter(
+					context.Cache.template sub<cache::QueueCache>(),
+					state::DriveVerificationsTree,
+					[](const Key& key) { return key; },
+					[&driveCache](const Key& key) -> state::AVLTreeNode {
+						return driveCache.find(key).get().verificationNode();
+					},
+					[&driveCache](const Key& key, const state::AVLTreeNode& node) {
+						driveCache.find(key).get().verificationNode() = node;
+					});
+
+			for (const auto& replicatorKey: driveEntry.replicators()) {
+				auto key = keyExtractor(replicatorKey);
+				replicatorTreeAdapter.remove(key);
+			}
 
 			// Returning the rest to the drive owner
 			const auto refundAmount = driveState.Balances.get(streamingMosaicId);
@@ -100,9 +139,14 @@ namespace catapult { namespace observers {
 			}
 
 			// Removing the drive from caches
-			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-			for (const auto& replicatorKey : driveEntry.replicators())
-				replicatorCache.find(replicatorKey).get().drives().erase(notification.DriveKey);
+			for (const auto& replicatorKey : driveEntry.replicators()) {
+				auto replicatorIter = replicatorCache.find(replicatorKey);
+				auto& replicatorEntry = replicatorIter.get();
+				replicatorEntry.drives().erase(notification.DriveKey);
+
+				replicatorTreeAdapter.remove(keyExtractor(replicatorKey));
+				replicatorTreeAdapter.insert(replicatorKey);
+			}
 
 			driveCache.remove(notification.DriveKey);
 

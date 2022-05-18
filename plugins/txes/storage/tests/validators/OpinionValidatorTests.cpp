@@ -73,7 +73,8 @@ namespace catapult { namespace validators {
 					pPublicKeysBegin,
 					pSignaturesBegin,
 					pPresentOpinionsBegin,
-					reinterpret_cast<const uint8_t*>(pOpinionsBegin)
+					reinterpret_cast<const uint8_t*>(pOpinionsBegin),
+					true
 			);
 			auto pValidator = CreateOpinionValidator();
 

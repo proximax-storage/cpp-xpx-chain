@@ -36,9 +36,6 @@ namespace catapult { namespace cache {
 		void commit(const CacheDeltaType& delta) {
 			QueueBasicCache::commit(delta);
 		}
-
-	private:
-		std::shared_ptr<DriveKeyCollector> m_pKeyCollector;
 	};
 
 	/// Synchronized cache composed of drive information.

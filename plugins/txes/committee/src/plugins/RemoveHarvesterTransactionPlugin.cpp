@@ -19,7 +19,7 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1:
-				sub.notify(model::RemoveHarvesterNotification<1>(transaction.Signer));
+				sub.notify(model::RemoveHarvesterNotification<1>(transaction.Signer, transaction.HarvesterKey));
 				break;
 
 			default:
