@@ -14,14 +14,13 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS DataModificationObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(DataModification, std::make_shared<cache::ReplicatorKeyCollector>())
+	DEFINE_COMMON_OBSERVER_TESTS(DataModification,)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
         using Notification = model::DataModificationNotification<1>;
 
         constexpr auto Current_Height = Height(10);
-		const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
 		const auto Replicator_Key = test::GenerateRandomByteArray<Key>();
 		const auto Offboarding_Replicator_Key = test::GenerateRandomByteArray<Key>();
 		constexpr auto Min_Replicator_Count = 4;
@@ -84,7 +83,7 @@ namespace catapult { namespace observers {
                 values.Active_Data_Modification.begin()->Owner, 
                 values.Active_Data_Modification.begin()->DownloadDataCdi, 
                 values.Active_Data_Modification.begin()->ExpectedUploadSizeMegabytes);
-            auto pObserver = CreateDataModificationObserver(Replicator_Key_Collector);
+            auto pObserver = CreateDataModificationObserver();
         	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 			auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountCache = context.cache().sub<cache::AccountStateCache>();

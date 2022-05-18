@@ -13,7 +13,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PrepareDriveObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive, std::make_shared<cache::ReplicatorKeyCollector>())
+	DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive,)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -53,9 +53,8 @@ namespace catapult { namespace observers {
             return entry;
         }
 
-		ReplicatorWithAmounts CreateInitialReplicatorWithAmounts(const std::shared_ptr<cache::ReplicatorKeyCollector>& replicatorKeyCollector, bool acceptable = true) {
+		ReplicatorWithAmounts CreateInitialReplicatorWithAmounts(bool acceptable = true) {
             state::ReplicatorEntry entry(test::GenerateRandomByteArray<Key>());
-            replicatorKeyCollector->addKey(entry);
 			const auto storageMosaics = acceptable ?
 					test::RandomInRange(Drive_Size, Drive_Size+10) :
 					test::RandomInRange(0, Drive_Size-1);
@@ -99,7 +98,6 @@ namespace catapult { namespace observers {
         
         void RunTest(NotifyMode mode,
 					 const CacheValues& values,
-					 const std::shared_ptr<cache::ReplicatorKeyCollector>& replicatorKeyCollector,
 					 const size_t expectedDriveQueueSize,
 					 const Height& currentHeight) {
             ObserverTestContext context(mode, currentHeight, CreateConfig());
@@ -108,7 +106,7 @@ namespace catapult { namespace observers {
 				Drive_Key,
 				Drive_Size,
 				Replicator_Count);
-            auto pObserver = CreatePrepareDriveObserver(replicatorKeyCollector);
+            auto pObserver = CreatePrepareDriveObserver();
             auto& driveCache = context.cache().sub<cache::BcDriveCache>();
 			auto& priorityQueueCache = context.cache().sub<cache::PriorityQueueCache>();
             auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
@@ -161,13 +159,12 @@ namespace catapult { namespace observers {
 
     TEST(TEST_CLASS, PrepareDrive_Commit_ExactReplicatorCount) {
         // Arrange:
-		const auto replicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
         CacheValues values;
         values.ExpectedBcDriveEntry = CreateBcDriveEntry();
 		for (auto i = 0u; i < Total_Replicator_Count; ++i) {
 			const bool acceptable = i < Replicator_Count;	// First (Replicator_Count) replicators will have enough mosaics
 															// and are expected to be assigned to the drive.
-			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(replicatorKeyCollector, acceptable);
+			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(acceptable);
 			values.InitialReplicatorsWithAmounts.push_back(replicatorWithAmounts);
 			values.ExpectedReplicatorsWithAmounts.push_back(CreateExpectedReplicatorWithAmounts(replicatorWithAmounts));
 			if (acceptable)
@@ -176,18 +173,17 @@ namespace catapult { namespace observers {
 		const auto expectedDriveQueueSize = 0;
 
         // Assert:
-        RunTest(NotifyMode::Commit, values, replicatorKeyCollector, expectedDriveQueueSize, Current_Height);
+        RunTest(NotifyMode::Commit, values, expectedDriveQueueSize, Current_Height);
     }
 
 	TEST(TEST_CLASS, PrepareDrive_Commit_InsufficientReplicatorCount) {
 		// Arrange:
-		const auto replicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
 		CacheValues values;
 		values.ExpectedBcDriveEntry = CreateBcDriveEntry();
 		for (auto i = 0u; i < Total_Replicator_Count; ++i) {
 			const bool acceptable = i < Replicator_Count - 1;	// First (Replicator_Count - 1) replicators will have enough mosaics
 																// and are expected to be assigned to the drive.
-			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(replicatorKeyCollector, acceptable);
+			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(acceptable);
 			values.InitialReplicatorsWithAmounts.push_back(replicatorWithAmounts);
 			values.ExpectedReplicatorsWithAmounts.push_back(CreateExpectedReplicatorWithAmounts(replicatorWithAmounts));
 			if (acceptable)
@@ -196,48 +192,45 @@ namespace catapult { namespace observers {
 		const auto expectedDriveQueueSize = 1;
 
 		// Assert:
-		RunTest(NotifyMode::Commit, values, replicatorKeyCollector, expectedDriveQueueSize, Current_Height);
+		RunTest(NotifyMode::Commit, values, expectedDriveQueueSize, Current_Height);
 	}
 
 	TEST(TEST_CLASS, PrepareDrive_Commit_NoAcceptableReplicators) {
 		// Arrange:
-		const auto replicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
 		CacheValues values;
 		values.ExpectedBcDriveEntry = CreateBcDriveEntry();
 		for (auto i = 0u; i < Total_Replicator_Count; ++i) {
-			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(replicatorKeyCollector, false);
+			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(false);
 			values.InitialReplicatorsWithAmounts.push_back(replicatorWithAmounts);
 			values.ExpectedReplicatorsWithAmounts.push_back(CreateExpectedReplicatorWithAmounts(replicatorWithAmounts));
 		}
 		const auto expectedDriveQueueSize = 1;
 
 		// Assert:
-		RunTest(NotifyMode::Commit, values, replicatorKeyCollector, expectedDriveQueueSize, Current_Height);
+		RunTest(NotifyMode::Commit, values, expectedDriveQueueSize, Current_Height);
 	}
 
 	TEST(TEST_CLASS, PrepareDrive_Commit_NoReplicators) {
 		// Arrange:
-		const auto replicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
 		CacheValues values;
 		values.ExpectedBcDriveEntry = CreateBcDriveEntry();
 		for (auto i = 0u; i < Total_Replicator_Count; ++i) {
-			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(replicatorKeyCollector, false);
+			const auto replicatorWithAmounts = CreateInitialReplicatorWithAmounts(false);
 			values.InitialReplicatorsWithAmounts.push_back(replicatorWithAmounts);
 			values.ExpectedReplicatorsWithAmounts.push_back(CreateExpectedReplicatorWithAmounts(replicatorWithAmounts));
 		}
 		const auto expectedDriveQueueSize = 1;
 
 		// Assert:
-		RunTest(NotifyMode::Commit, values, replicatorKeyCollector, expectedDriveQueueSize, Current_Height);
+		RunTest(NotifyMode::Commit, values, expectedDriveQueueSize, Current_Height);
 	}
 
     TEST(TEST_CLASS, PrepareDrive_Rollback) {
         // Arrange:
-		const auto replicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
         CacheValues values;
 
         // Assert:
-        EXPECT_THROW(RunTest(NotifyMode::Rollback, values, replicatorKeyCollector, 0, Current_Height), catapult_runtime_error);
+        EXPECT_THROW(RunTest(NotifyMode::Rollback, values, 0, Current_Height), catapult_runtime_error);
     }
 
 }}
