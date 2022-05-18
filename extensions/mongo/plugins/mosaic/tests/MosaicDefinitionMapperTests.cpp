@@ -50,10 +50,12 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		auto CreateMosaicDefinitionTransactionBuilder(
 				const Key& signer,
+				Amount mosaicSupply,
 				MosaicNonce mosaicNonce,
 				const model::MosaicProperties& properties) {
 			auto networkId = model::NetworkIdentifier::Mijin_Test;
 			builders::MosaicDefinitionBuilder builder(networkId, signer);
+			builder.setMosaicSupply(mosaicSupply);
 			builder.setMosaicNonce(mosaicNonce);
 			builder.setFlags(GetFlags(properties));
 			builder.setDivisibility(properties.divisibility());
@@ -65,12 +67,14 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		void AssertMosaicDefinitionData(
 				MosaicId id,
+				Amount mosaicSupply,
 				MosaicNonce mosaicNonce,
 				const PropertyValuesContainer& propertyValues,
 				size_t numExpectedProperties,
 				const bsoncxx::document::view& dbTransaction) {
 			// Assert:
 			EXPECT_EQ(id, MosaicId(test::GetUint64(dbTransaction, "mosaicId")));
+			EXPECT_EQ(mosaicSupply, Amount(test::GetUint64(dbTransaction, "mosaicSupply")));
 			EXPECT_EQ(mosaicNonce, MosaicNonce(test::GetUint32(dbTransaction, "mosaicNonce")));
 
 			auto dbProperties = dbTransaction["properties"].get_array().value;
@@ -89,8 +93,9 @@ namespace catapult { namespace mongo { namespace plugins {
 			PropertyValuesContainer propertyValues{ { 3, 5, duration.unwrap() } };
 			auto properties = model::MosaicProperties::FromValues(propertyValues);
 			auto signer = test::GenerateRandomByteArray<Key>();
+			auto mosaicSupply = test::GenerateRandomValue<Amount>();
 			auto mosaicNonce = test::GenerateRandomValue<MosaicNonce>();
-			auto pTransaction = TTraits::Adapt(CreateMosaicDefinitionTransactionBuilder(signer, mosaicNonce, properties));
+			auto pTransaction = TTraits::Adapt(CreateMosaicDefinitionTransactionBuilder(signer, mosaicSupply, mosaicNonce, properties));
 			auto mosaicId = pTransaction->MosaicId;
 			auto pPlugin = TTraits::CreatePlugin();
 
@@ -100,8 +105,8 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto view = builder.view();
 
 			// Assert:
-			EXPECT_EQ(3u, test::GetFieldCount(view));
-			AssertMosaicDefinitionData(mosaicId, mosaicNonce, propertyValues, numExpectedProperties, view);
+			EXPECT_EQ(4u, test::GetFieldCount(view));
+			AssertMosaicDefinitionData(mosaicId, mosaicSupply, mosaicNonce, propertyValues, numExpectedProperties, view);
 		}
 	}
 
