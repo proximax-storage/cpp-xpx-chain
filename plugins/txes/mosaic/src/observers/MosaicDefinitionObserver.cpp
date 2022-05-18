@@ -53,7 +53,7 @@ namespace catapult { namespace observers {
 			auto revision = NotifyMode::Commit == mode ? currentDefinition.revision() + 1 : currentDefinition.revision() - 1;
 			auto definition = state::MosaicDefinition(currentDefinition.height(), notification.Signer, revision, newProperties);
 			auto newMosaicEntry = state::MosaicEntry(notification.MosaicId, definition);
-			//newMosaicEntry.increaseSupply(notification.MosaicSupply);
+			newMosaicEntry.increaseSupply(notification.MosaicSupply);
 			return newMosaicEntry;
 		}
 	}
@@ -75,7 +75,7 @@ namespace catapult { namespace observers {
 		} else {
 			auto definition = state::MosaicDefinition(context.Height, notification.Signer, 1, notification.Properties);
 			auto newMosaicEntry = state::MosaicEntry(notification.MosaicId, definition);
-			//newMosaicEntry.increaseSupply(notification.MosaicSupply);
+			newMosaicEntry.increaseSupply(notification.MosaicSupply);
 			cache.insert(newMosaicEntry);
 		}
 	});
