@@ -63,14 +63,14 @@ namespace catapult { namespace validators {
             if (pSdaOffer->MosaicGet.Amount == Amount(0))
                 return Failure_ExchangeSda_Zero_Price;
 
+            if (!cache.contains(notification.Signer))
+                return ValidationResult::Success;
+
             auto iter = cache.find(notification.Signer);
             const auto& entry = iter.get();
             if (entry.offerExists(pair))
                 return Failure_ExchangeSda_Offer_Exists;
         }
-
-        if (!cache.contains(notification.Signer))
-            return ValidationResult::Success;
 
         return ValidationResult::Success;
     }));
