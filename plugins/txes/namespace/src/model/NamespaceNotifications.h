@@ -133,7 +133,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Signer.
-		const Key& Signer;
+		const Key Signer;
 
 		/// Id of the namespace.
 		catapult::NamespaceId NamespaceId;
