@@ -11,7 +11,7 @@
 namespace catapult { namespace mongo { namespace plugins {
 
 	/// Maps a priority queue \a entry and \a key to the corresponding db model value.
-	bsoncxx::document::value ToDbModel(const state::PriorityQueueEntry& entry, const Key& key);
+	bsoncxx::document::value ToDbModel(const state::PriorityQueueEntry& entry);
 
 	/// Maps a database \a document to the corresponding model value.
 	state::PriorityQueueEntry ToPriorityQueueEntry(const bsoncxx::document::view& document);
