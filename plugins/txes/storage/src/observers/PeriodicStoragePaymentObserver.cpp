@@ -43,7 +43,8 @@ namespace catapult { namespace observers {
 			// Creating unique eventHash for the observer
 			auto eventHash = getStoragePaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
 
-			for (int i = 0; i < driveCache.size(); i++) {
+			auto maxIterations = queueAdapter.size();
+			for (int i = 0; i < maxIterations; i++) {
 				auto driveIter = driveCache.find(queueAdapter.front());
 				auto& driveEntry = driveIter.get();
 

@@ -26,16 +26,22 @@ public:
 		}
 	}
 
-	bool isEmpty() {
+	bool isEmpty() const {
 		auto queueIter = m_queueCache.find(m_queueKey);
 		const auto& queueEntry = queueIter.get();
 		return queueEntry.getFirst() == Key();
 	}
 
-	Key front() {
+	Key front() const {
 		auto queueIter = m_queueCache.find(m_queueKey);
 		const auto& queueEntry = queueIter.get();
 		return queueEntry.getFirst();
+	}
+
+	uint32_t size() const {
+		auto queueIter = m_queueCache.find(m_queueKey);
+		const auto& queueEntry = queueIter.get();
+		return queueEntry.getSize();
 	}
 
 	void popFront() {
@@ -55,6 +61,7 @@ public:
 			queueEntry.setFirst(Key());
 			queueEntry.setLast(Key());
 		}
+		queueEntry.setSize(queueEntry.getSize() - 1);
 	}
 
 	void pushBack(const Key& key) {
@@ -77,6 +84,7 @@ public:
 			lastEntry.setQueueNext(key);
 			entry.setQueuePrevious(lastEntry.entryKey());
 		}
+		queueEntry.setSize(queueEntry.getSize() + 1);
 	}
 
 	void remove(const Key& key) {
@@ -114,6 +122,7 @@ public:
 				previousDriveEntry.setQueueNext(Key());
 			}
 		}
+		queueEntry.setSize(queueEntry.getSize() - 1);
 	}
 
 private:
