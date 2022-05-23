@@ -45,7 +45,7 @@ namespace catapult { namespace observers {
 
 		const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
 		for (auto i = 0u; i < totalJudgingKeysCount; ++i)
-			driveEntry.confirmedUsedSizes().insert({notification.PublicKeysPtr[i], notification.UsedDriveSize});
+			driveEntry.confirmedUsedSizes()[notification.PublicKeysPtr[i]] = notification.UsedDriveSize;
 
 		driveEntry.setRootHash(notification.FileStructureCdi);
 		driveEntry.setUsedSizeBytes(notification.UsedDriveSize);
