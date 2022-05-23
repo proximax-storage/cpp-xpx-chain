@@ -23,6 +23,7 @@ namespace catapult { namespace state {
 	class QueueMixin {
 	public:
 		QueueMixin()
+		: m_size(0)
 		{}
 
 	public:
@@ -38,10 +39,17 @@ namespace catapult { namespace state {
 		void setLast(const Key& last) {
 			m_last = last;
 		}
+		uint32_t getSize() const {
+			return m_size;
+		}
+		void setSize(uint32_t size) {
+			m_size = size;
+		}
 
 	private:
 		Key m_first;
 		Key m_last;
+		uint32_t m_size;
 	};
 
 	// Drive entry.

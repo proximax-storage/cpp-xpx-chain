@@ -39,7 +39,8 @@ namespace catapult { namespace observers {
 			// Creating unique eventHash for the observer
 			auto eventHash = utils::getDownloadPaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
 
-			for (int i = 0; i < downloadCache.size(); i++) {
+			auto maxIterations = queueAdapter.size();
+			for (int i = 0; i < maxIterations; i++) {
 				auto& downloadEntry = downloadCache.find(queueAdapter.front().array()).get();
 
 				auto timeSinceLastPayment = (notification.Timestamp - downloadEntry.getLastDownloadApprovalInitiated()).unwrap() / 1000;
