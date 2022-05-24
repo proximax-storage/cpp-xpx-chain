@@ -15,6 +15,7 @@ namespace catapult { namespace state {
 		io::Write(output, entry.key());
 		io::Write(output, entry.getFirst());
 		io::Write(output, entry.getLast());
+		io::Write32(output, entry.getSize());
 	}
 
 	QueueEntry QueueEntrySerializer::Load(io::InputStream& input) {
@@ -35,6 +36,8 @@ namespace catapult { namespace state {
 		Key last;
 		input.read(last);
 		entry.setLast(last);
+
+		entry.setSize(io::Read32(input));
 
 		return entry;
 	}

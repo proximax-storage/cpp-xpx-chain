@@ -21,6 +21,7 @@ namespace catapult { namespace observers {
 		// TODO: Buy storage units for xpx in notification.DownloadSize
 		downloadEntry.setDownloadSize(notification.DownloadSizeMegabytes);
 		downloadEntry.setDownloadApprovalCountLeft(1);
+		downloadEntry.setLastDownloadApprovalInitiated(context.Timestamp);
 
 		if (notification.ListOfPublicKeysSize == 0) {
 			downloadEntry.listOfPublicKeys().push_back(notification.Consumer);
@@ -35,7 +36,6 @@ namespace catapult { namespace observers {
 	  	auto& driveEntry = driveIter.get();
 
 		driveEntry.downloadShards().insert(notification.Id);
-		driveEntry.setLastPayment(context.Timestamp);
 
 	  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 		const auto& replicators = driveEntry.replicators();
