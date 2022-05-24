@@ -45,11 +45,11 @@ namespace catapult { namespace model {
 		/// \note This must match the generated id.
 		catapult::MosaicId MosaicId;
 
-		/// Properties header.
-		MosaicPropertiesHeader PropertiesHeader;
-
 		/// Mosaic supply.
 		Amount MosaicSupply;
+
+		/// Properties header.
+		MosaicPropertiesHeader PropertiesHeader;
 
 		// followed by optional properties
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Properties, MosaicProperty)
