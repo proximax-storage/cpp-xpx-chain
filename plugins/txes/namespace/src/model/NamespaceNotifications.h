@@ -65,11 +65,13 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a nameSize and \a pName given \a namespaceId and \a parentId.
 		explicit NamespaceNameNotification(
+                const Key& signer,
 				catapult::NamespaceId namespaceId,
 				catapult::NamespaceId parentId,
 				uint8_t nameSize,
 				const uint8_t* pName)
 				: Notification(Notification_Type, sizeof(NamespaceNameNotification<1>))
+                , Signer(signer)
 				, NamespaceId(namespaceId)
 				, ParentId(parentId)
 				, NameSize(nameSize)
@@ -77,6 +79,9 @@ namespace catapult { namespace model {
 		{}
 
 	public:
+        /// Signer.
+        const Key& Signer;
+
 		/// Id of the namespace.
 		catapult::NamespaceId NamespaceId;
 

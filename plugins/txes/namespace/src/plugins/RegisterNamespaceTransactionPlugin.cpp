@@ -109,6 +109,7 @@ namespace catapult { namespace plugins {
 					}
 
 					sub.notify(NamespaceNameNotification<1>(
+                        transaction.Signer,
 						transaction.NamespaceId,
 						parentId,
 						transaction.NamespaceNameSize,
