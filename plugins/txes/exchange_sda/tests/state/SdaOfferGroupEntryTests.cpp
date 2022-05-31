@@ -52,7 +52,7 @@ namespace catapult { namespace state {
         expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });;
 
         // Act:
-        entry.smallToBig(entry.sdaOfferGroup());
+        entry.smallToBig();
 
         // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);
@@ -80,7 +80,7 @@ namespace catapult { namespace state {
         expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[2], Amount(150), Height(3) });
 
         // Act:
-        entry.smallToBigSortedByEarliestExpiry(entry.sdaOfferGroup());
+        entry.smallToBigSortedByEarliestExpiry();
 
         // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);
@@ -104,7 +104,7 @@ namespace catapult { namespace state {
         expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[0], Amount(10), Height(1) });      
 
         // Act:
-        entry.bigToSmall(entry.sdaOfferGroup());
+        entry.bigToSmall();
 
         // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);
@@ -132,7 +132,7 @@ namespace catapult { namespace state {
         expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[3], Amount(50), Height(3) });
 
         // Act:
-        entry.bigToSmallSortedByEarliestExpiry(entry.sdaOfferGroup());
+        entry.bigToSmallSortedByEarliestExpiry();
 
         // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);
@@ -160,7 +160,7 @@ namespace catapult { namespace state {
         expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ owner[1], Amount(300), Height(1) });
 
         // Act:
-        entry.exactOrClosest(Amount(40), entry.sdaOfferGroup());
+        entry.exactOrClosest(Amount(40));
 
         // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);

@@ -10,49 +10,49 @@
 namespace catapult { namespace state {
 
     /// Returns offers arranged from the smallest to the biggest MosaicGive amount.
-    SdaOfferGroupVector SdaOfferGroupEntry::smallToBig(SdaOfferGroupVector& sdaOfferGroup) {
-        std::sort(sdaOfferGroup.begin(), sdaOfferGroup.end(), [](SdaOfferBasicInfo a, SdaOfferBasicInfo b) {
+    SdaOfferGroupVector SdaOfferGroupEntry::smallToBig() {
+        std::sort(m_sdaOfferGroup.begin(), m_sdaOfferGroup.end(), [](SdaOfferBasicInfo a, SdaOfferBasicInfo b) -> bool {
             return a.MosaicGive < b.MosaicGive;
         });
 
-        return sdaOfferGroup;
+        return m_sdaOfferGroup;
     }
 
     /// Returns offers arranged from the smallest to the biggest MosaicGive amount by the earliest expiry date.
-    SdaOfferGroupVector SdaOfferGroupEntry::smallToBigSortedByEarliestExpiry(SdaOfferGroupVector& sdaOfferGroup) {
-        std::sort(sdaOfferGroup.begin(), sdaOfferGroup.end(), [](SdaOfferBasicInfo a, SdaOfferBasicInfo b) {
+    SdaOfferGroupVector SdaOfferGroupEntry::smallToBigSortedByEarliestExpiry() {
+        std::sort(m_sdaOfferGroup.begin(), m_sdaOfferGroup.end(), [](SdaOfferBasicInfo a, SdaOfferBasicInfo b) {
             return std::tie(a.Deadline, a.MosaicGive) < std::tie(b.Deadline, b.MosaicGive);
         });
 
-        return sdaOfferGroup;
+        return m_sdaOfferGroup;
     }
 
     /// Returns offers arranged from the biggest to the smallest MosaicGive amount.
-    SdaOfferGroupVector SdaOfferGroupEntry::bigToSmall(SdaOfferGroupVector& sdaOfferGroup) {
-        std::sort(sdaOfferGroup.begin(), sdaOfferGroup.end(), [](SdaOfferBasicInfo a, SdaOfferBasicInfo b) {
+    SdaOfferGroupVector SdaOfferGroupEntry::bigToSmall() {
+        std::sort(m_sdaOfferGroup.begin(), m_sdaOfferGroup.end(), [](SdaOfferBasicInfo a, SdaOfferBasicInfo b) {
             return a.MosaicGive > b.MosaicGive;
         });
 
-        return sdaOfferGroup;
+        return m_sdaOfferGroup;
     }
     
     /// Returns offers arranged from the biggest to the smallest MosaicGive amount by the earliest expiry date.
-    SdaOfferGroupVector SdaOfferGroupEntry::bigToSmallSortedByEarliestExpiry(SdaOfferGroupVector& sdaOfferGroup) {
-        std::sort(sdaOfferGroup.begin(), sdaOfferGroup.end(), [](SdaOfferBasicInfo a, SdaOfferBasicInfo b) {
+    SdaOfferGroupVector SdaOfferGroupEntry::bigToSmallSortedByEarliestExpiry() {
+        std::sort(m_sdaOfferGroup.begin(), m_sdaOfferGroup.end(), [](SdaOfferBasicInfo a, SdaOfferBasicInfo b) {
             return a.Deadline<b.Deadline ? true : a.Deadline==b.Deadline ? a.MosaicGive>b.MosaicGive : false;
         });
 
-        return sdaOfferGroup;
+        return m_sdaOfferGroup;
     }
 
     /// Returns offers arranged from the exact or closest MosaicGive amount.
-    SdaOfferGroupVector SdaOfferGroupEntry::exactOrClosest(const Amount offerTarget, SdaOfferGroupVector& sdaOfferGroup) {
-        std::sort(sdaOfferGroup.begin(), sdaOfferGroup.end(), [offerTarget](SdaOfferBasicInfo a, SdaOfferBasicInfo b) {
+    SdaOfferGroupVector SdaOfferGroupEntry::exactOrClosest(const Amount offerTarget) {
+        std::sort(m_sdaOfferGroup.begin(), m_sdaOfferGroup.end(), [offerTarget](SdaOfferBasicInfo a, SdaOfferBasicInfo b) {
             return std::abs(static_cast<int64_t>(offerTarget.unwrap())-static_cast<int64_t>(a.MosaicGive.unwrap())) 
                         < std::abs(static_cast<int64_t>(offerTarget.unwrap())-static_cast<int64_t>(b.MosaicGive.unwrap()));
         });
 
-        return sdaOfferGroup;
+        return m_sdaOfferGroup;
     }
 
     void SdaOfferGroupEntry::addSdaOfferToGroup(const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline) {

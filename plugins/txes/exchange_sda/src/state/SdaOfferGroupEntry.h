@@ -49,19 +49,19 @@ namespace catapult { namespace state {
     
     public:
         /// Returns offers arranged from the smallest to the biggest MosaicGive amount.
-        SdaOfferGroupVector smallToBig(SdaOfferGroupVector& sdaOfferGroup);
+        SdaOfferGroupVector smallToBig();
 
         /// Returns offers arranged from the smallest to the biggest MosaicGive amount by the earliest expiry date.
-        SdaOfferGroupVector smallToBigSortedByEarliestExpiry(SdaOfferGroupVector& sdaOfferGroup);
+        SdaOfferGroupVector smallToBigSortedByEarliestExpiry();
 
         /// Returns offers arranged from the biggest to the smallest MosaicGive amount.
-        SdaOfferGroupVector bigToSmall(SdaOfferGroupVector& sdaOfferGroup);
+        SdaOfferGroupVector bigToSmall();
         
         /// Returns offers arranged from the biggest to the smallest MosaicGive amount by the earliest expiry date.
-        SdaOfferGroupVector bigToSmallSortedByEarliestExpiry(SdaOfferGroupVector& sdaOfferGroup);
+        SdaOfferGroupVector bigToSmallSortedByEarliestExpiry();
 
         /// Returns offers arranged from the exact or closest MosaicGive amount.
-        SdaOfferGroupVector exactOrClosest(const Amount offerTarget, SdaOfferGroupVector& sdaOfferGroup);
+        SdaOfferGroupVector exactOrClosest(const Amount offerTarget);
 
         void addSdaOfferToGroup(const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
         void removeSdaOfferFromGroup(const Key& offerOwner);
