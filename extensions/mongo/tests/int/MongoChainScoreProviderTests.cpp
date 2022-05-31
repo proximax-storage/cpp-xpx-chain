@@ -81,16 +81,16 @@ namespace catapult { namespace mongo {
 		AssertDbScore(score);
 	}
 
-//	TEST(TEST_CLASS, CannotSaveSameScoreTwiceWhenErrorModeIsStrict) {
-//		// Arrange:
-//		TestContext context;
-//		model::ChainScore score(0x12345670, 0x89ABCDEF);
-//
-//		context.chainScoreProvider().saveScore(score);
-//
-//		// Act + Assert:
-//		EXPECT_THROW(context.chainScoreProvider().saveScore(score), catapult_runtime_error);
-//	}
+	TEST(TEST_CLASS, CannotSaveSameScoreTwiceWhenErrorModeIsStrict) {
+		// Arrange:
+		TestContext context;
+		model::ChainScore score(0x12345670, 0x89ABCDEF);
+
+		context.chainScoreProvider().saveScore(score);
+
+		// Act + Assert:
+		EXPECT_THROW(context.chainScoreProvider().saveScore(score), catapult_runtime_error);
+	}
 
 	TEST(TEST_CLASS, CanSaveSameScoreTwiceWhenErrorModeIsIdempotent) {
 		// Arrange:
