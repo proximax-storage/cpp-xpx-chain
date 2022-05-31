@@ -44,8 +44,7 @@ namespace catapult { namespace plugins {
 						transaction.PublicKeysPtr(),
 						transaction.SignaturesPtr(),
 						transaction.PresentOpinionsPtr(),
-						reinterpret_cast<const uint8_t*>(transaction.OpinionsPtr()),
-						true
+						reinterpret_cast<const uint8_t*>(transaction.OpinionsPtr())
 				));
 
 				// Must be applied before UsedSize of the drive is changed,

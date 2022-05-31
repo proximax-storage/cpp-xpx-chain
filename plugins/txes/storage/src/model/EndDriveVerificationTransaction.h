@@ -51,7 +51,7 @@ namespace catapult { namespace model {
 	private:
         template<typename T>
         static auto* PublicKeysPtrT(T& transaction) {
-            return transaction.KeyCount ? THeader::PayloadStart(transaction) : nullptr;
+			return transaction.JudgingKeyCount ? THeader::PayloadStart(transaction) : nullptr;
         }
 
         template<typename T>
@@ -63,8 +63,8 @@ namespace catapult { namespace model {
         template<typename T>
         static auto* OpinionsPtrT(T& transaction) {
             auto* pPayloadStart = THeader::PayloadStart(transaction);
-            return transaction.KeyCount && transaction.JudgingKeyCount && pPayloadStart ? pPayloadStart
-				+ transaction.KeyCount * Key_Size + transaction.JudgingKeyCount * Signature_Size : nullptr;
+            return transaction.JudgingKeyCount && pPayloadStart
+						   ? pPayloadStart + transaction.JudgingKeyCount * Key_Size + transaction.JudgingKeyCount * Signature_Size : nullptr;
         }
 
 	public:
