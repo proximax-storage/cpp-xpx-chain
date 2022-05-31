@@ -252,12 +252,12 @@
 		},
 		{
 			"name": "placeSdaExchangeOffer",
-			"type": "16737",
+			"type": "16746",
 			"supportedVersions": [1]
 		},
 		{
 			"name": "removeSdaExchangeOffer",
-			"type": "16993",
+			"type": "17002",
 			"supportedVersions": [1]
 		}
 	]

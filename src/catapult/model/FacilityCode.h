@@ -72,8 +72,8 @@ namespace catapult { namespace model {
 		/// NEM's Metadata facility code.
 		Metadata_v2 = 0x3F,
 		/// SDA-SDA Exchange facility code.
-		ExchangeSda = 0x61,
+		ExchangeSda = 0x6A,
 		/// SDA-SDA Offer Group facility code.
-		SdaOfferGroup = 0x62,
+		SdaOfferGroup = 0x6B,
 	};
 }}
