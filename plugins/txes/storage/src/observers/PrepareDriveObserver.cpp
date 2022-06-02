@@ -12,11 +12,9 @@
 namespace catapult { namespace observers {
 
 	using Notification = model::PrepareDriveNotification<1>;
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-	DECLARE_OBSERVER(PrepareDrive, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue) {
-		return MAKE_OBSERVER(PrepareDrive, Notification, ([pDriveQueue](const Notification& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(PrepareDrive, Notification)() {
+		return MAKE_OBSERVER(PrepareDrive, Notification, ([](const Notification& notification, const ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (PrepareDrive)");
 
@@ -32,7 +30,7 @@ namespace catapult { namespace observers {
 		  	std::seed_seq seed(notification.DriveKey.begin(), notification.DriveKey.end());
 		  	std::mt19937 rng(seed);
 
-		  	PopulateDriveWithReplicators(notification.DriveKey, pDriveQueue, context, rng);
+		  	PopulateDriveWithReplicators(notification.DriveKey, context, rng);
 
 		  	// Insert the Drive into the payment Queue
 		  	auto& queueCache = context.Cache.template sub<cache::QueueCache>();

@@ -15,13 +15,12 @@
 namespace catapult { namespace observers {
 
 	using Notification = model::BlockNotification<1>;
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 	using BigUint = boost::multiprecision::uint256_t;
 
-	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue) {
-		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([pDriveQueue](const Notification& notification, ObserverContext& context) {
-			if (!context.Config.Network.EnableWeightedVoting || context.Height < Height(2))
+	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)() {
+		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([](const Notification& notification, ObserverContext& context) {
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			if (!pluginConfig.Enabled || context.Height < Height(2))
 				return;
 
 			if (NotifyMode::Rollback == context.Mode)
@@ -37,7 +36,6 @@ namespace catapult { namespace observers {
 				return;
 			}
 
-			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
 
 			// Creating unique eventHash for the observer
@@ -143,19 +141,13 @@ namespace catapult { namespace observers {
 						}
 					}
 
+					// Removing the drive from queue, if present
 					const auto replicators = driveEntry.replicators();
 					if (replicators.size() < driveEntry.replicatorCount()) {
-						DriveQueue originalQueue = *pDriveQueue;
-						DriveQueue newQueue;
-						while (!originalQueue.empty()) {
-							const auto drivePriorityPair = originalQueue.top();
-							const auto& driveKey = drivePriorityPair.first;
-							originalQueue.pop();
+						auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
+						auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
 
-							if (driveKey != driveEntry.key())
-								newQueue.push(drivePriorityPair);
-						}
-						*pDriveQueue = std::move(newQueue);
+						driveQueueEntry.remove(driveEntry.key());
 					}
 
 					// Removing the drive from caches
@@ -179,7 +171,7 @@ namespace catapult { namespace observers {
 					// Assigning drive's former replicators to queued drives
 					std::seed_seq seed(eventHash.begin(), eventHash.end());
 					std::mt19937 rng(seed);
-					utils::AssignReplicatorsToQueuedDrives(replicators, pDriveQueue, context, rng);
+					utils::AssignReplicatorsToQueuedDrives(replicators, context, rng);
 				}
 			}
         }))

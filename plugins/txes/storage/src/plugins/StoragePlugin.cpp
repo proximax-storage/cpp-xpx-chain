@@ -5,7 +5,9 @@
 **/
 
 #include "StoragePlugin.h"
-#include <src/cache/QueueCacheStorage.h>
+#include "src/cache/QueueCacheStorage.h"
+#include "src/cache/PriorityQueueCache.h"
+#include "src/cache/PriorityQueueCacheStorage.h"
 #include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCacheStorage.h"
@@ -163,6 +165,18 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		manager.addCacheSupport<cache::PriorityQueueCacheStorage>(
+				std::make_unique<cache::PriorityQueueCache>(manager.cacheConfig(cache::PriorityQueueCache::Name), pConfigHolder));
+
+		using PriorityQueueCacheHandlersService = CacheHandlers<cache::PriorityQueueCacheDescriptor>;
+		PriorityQueueCacheHandlersService::Register<model::FacilityCode::PriorityQueue>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+		 	counters.emplace_back(utils::DiagnosticCounterId("PR QUEUE C"), [&cache]() {
+				return cache.sub<cache::PriorityQueueCache>().createView(cache.height())->size();
+		  	});
+		});
+
 		manager.addCacheSupport<cache::ReplicatorCacheStorage>(
 				std::make_unique<cache::ReplicatorCache>(manager.cacheConfig(cache::ReplicatorCache::Name), pConfigHolder));
 
@@ -182,10 +196,6 @@ namespace catapult { namespace plugins {
 			builder
 				.add(validators::CreateStoragePluginConfigValidator());
 		});
-
-		using DrivePriority = std::pair<Key, double>;
-		using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
-		auto pDriveQueue = std::make_shared<DriveQueue>();
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 		  	builder
@@ -214,19 +224,19 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateEndDriveVerificationValidator());
 		});
 
-		manager.addObserverHook([&state = *pStorageState, pDriveQueue](auto& builder) {
+		manager.addObserverHook([&state = *pStorageState](auto& builder) {
 			builder
-				.add(observers::CreatePrepareDriveObserver(pDriveQueue))
+				.add(observers::CreatePrepareDriveObserver())
 				.add(observers::CreateDownloadChannelObserver())
-				.add(observers::CreateDataModificationObserver(pDriveQueue))
+				.add(observers::CreateDataModificationObserver())
 				.add(observers::CreateDataModificationApprovalObserver())
 				.add(observers::CreateDataModificationApprovalDownloadWorkObserver())
 				.add(observers::CreateDataModificationApprovalUploadWorkObserver())
 				.add(observers::CreateDataModificationApprovalRefundObserver())
 				.add(observers::CreateDataModificationCancelObserver())
-				.add(observers::CreateDriveClosureObserver(pDriveQueue))
-				.add(observers::CreateReplicatorOnboardingObserver(pDriveQueue))
-				.add(observers::CreateReplicatorOffboardingObserver(pDriveQueue))
+				.add(observers::CreateDriveClosureObserver())
+				.add(observers::CreateReplicatorOnboardingObserver())
+				.add(observers::CreateReplicatorOffboardingObserver())
 				.add(observers::CreateDownloadPaymentObserver())
 				.add(observers::CreateDataModificationSingleApprovalObserver())
 				.add(observers::CreateDownloadApprovalObserver())
@@ -237,8 +247,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateStreamFinishObserver())
 				.add(observers::CreateStreamPaymentObserver())
 				.add(observers::CreateStartDriveVerificationObserver(state))
-				.add(observers::CreateEndDriveVerificationObserver(pDriveQueue))
-				.add(observers::CreatePeriodicStoragePaymentObserver(pDriveQueue))
+				.add(observers::CreateEndDriveVerificationObserver())
+				.add(observers::CreatePeriodicStoragePaymentObserver())
 				.add(observers::CreatePeriodicDownloadChannelPaymentObserver());
 		});
 	}

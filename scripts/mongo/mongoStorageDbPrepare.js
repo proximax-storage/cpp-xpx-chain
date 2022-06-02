@@ -9,7 +9,11 @@
     db.createCollection('replicators');
     db.replicators.createIndex({ 'replicator.key': 1 }, { unique: true });
 
+    db.createCollection('priorityQueues');
+    db.priorityQueues.createIndex({ 'priorityQueueDoc.queueKey': 1 }, { unique: true });
+
     db.bcdrives.getIndexes();
     db.downloadChannels.getIndexes();
     db.replicators.getIndexes();
+    db.priorityQueues.getIndexes();
 })();

@@ -50,7 +50,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		void StreamTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 			builder
 					<< "mosaicNonce" << ToInt32(transaction.MosaicNonce)
-					<< "mosaicId" << ToInt64(transaction.MosaicId);
+					<< "mosaicId" << ToInt64(transaction.MosaicId)
+					<< "mosaicSupply" << ToInt64(transaction.MosaicSupply);
 			auto propertiesArray = builder << "properties" << bson_stream::open_array;
 			StreamRequiredProperties(propertiesArray, transaction.PropertiesHeader);
 			StreamOptionalProperties(propertiesArray, transaction.PropertiesPtr(), transaction.PropertiesHeader.Count);

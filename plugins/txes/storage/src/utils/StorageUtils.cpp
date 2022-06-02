@@ -83,6 +83,14 @@ namespace catapult { namespace utils {
 		return SwapMosaics(account, account, mosaics, sub, immutableCfg, operation);
 	}
 
+	state::PriorityQueueEntry& getPriorityQueueEntry(cache::PriorityQueueCache::CacheDeltaType& priorityQueueCache, const Key& queueKey) {
+		if (!priorityQueueCache.contains(queueKey)) {
+			state::PriorityQueueEntry entry(queueKey);
+			priorityQueueCache.insert(entry);
+		}
+		return priorityQueueCache.find(queueKey).get();
+	}
+
 	double CalculateDrivePriority(const state::BcDriveEntry& driveEntry, const uint16_t& Rmin) {
 		const auto& N = driveEntry.replicatorCount();
 		const auto& R = driveEntry.replicators().size() - driveEntry.offboardingReplicators().size();
@@ -156,6 +164,7 @@ namespace catapult { namespace utils {
 			driveEntry.replicators().erase(replicatorKey);
 			driveEntry.dataModificationShards().erase(replicatorKey);
 			driveEntry.offboardingReplicators().erase(replicatorKey);
+			driveEntry.confirmedUsedSizes().erase(replicatorKey);
 
 			auto replicatorIter = replicatorCache.find(replicatorKey);
 			auto& replicatorEntry = replicatorIter.get();
@@ -349,11 +358,11 @@ namespace catapult { namespace utils {
 
 	void PopulateDriveWithReplicators(
 			const Key& driveKey,
-			const std::shared_ptr<DriveQueue>& pDriveQueue,
 			const observers::ObserverContext& context,
 			std::mt19937& rng) {
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+		auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
 		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
@@ -451,31 +460,23 @@ namespace catapult { namespace utils {
 
 		// If the actual number of assigned replicators is less than ordered,
 		// put the drive in the queue:
-		DriveQueue originalQueue = *pDriveQueue;
-		DriveQueue newQueue;
-		while (!originalQueue.empty()) {
-			auto drivePriorityPair = originalQueue.top();
-			const auto& key = drivePriorityPair.first;
-			originalQueue.pop();
-
-			if (key != driveKey)
-				newQueue.push(std::move(drivePriorityPair));
-		}
+		auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
 		if (replicators.size() < driveEntry.replicatorCount()) {
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			const auto drivePriority = utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount);
-			newQueue.emplace(driveKey, drivePriority);
+			driveQueueEntry.set(driveKey, drivePriority);
+		} else {
+			driveQueueEntry.remove(driveKey);
 		}
-		*pDriveQueue = std::move(newQueue);
 	}
 
 	void AssignReplicatorsToQueuedDrives(
 			const std::set<Key>& replicatorKeys,
-			const std::shared_ptr<DriveQueue>& pDriveQueue,
 			const observers::ObserverContext& context,
 			std::mt19937& rng) {
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+		auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
 		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
@@ -507,14 +508,15 @@ namespace catapult { namespace utils {
 
 			// Assign queued drives to the replicator, as long as there is enough capacity,
 			// and update drive's shards:
-			DriveQueue originalQueue = *pDriveQueue;
-			DriveQueue newQueue;
+			auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto& originalQueue = driveQueueEntry.priorityQueue();
+			std::priority_queue<state::PriorityPair> newQueue;
 			const auto storageMosaicAmount = replicatorState.Balances.get(storageMosaicId);
 			const auto streamingMosaicAmount = replicatorState.Balances.get(streamingMosaicId);
 			auto remainingCapacity = storageMosaicAmount.unwrap();
 			while (!originalQueue.empty()) {
 				const auto drivePriorityPair = originalQueue.top();
-				const auto& driveKey = drivePriorityPair.first;
+				const auto& driveKey = drivePriorityPair.Key;
 				originalQueue.pop();
 
 				auto driveIter = driveCache.find(driveKey);
@@ -559,7 +561,7 @@ namespace catapult { namespace utils {
 					// Keeping updated DrivePriority in newQueue if the drive still requires any replicators
 					if (driveEntry.replicators().size() < driveEntry.replicatorCount()) {
 						const auto newPriority = utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount);
-						newQueue.emplace(driveKey, newPriority);
+						newQueue.push( {driveKey, newPriority} );
 					}
 
 					// Updating remaining capacity
@@ -568,7 +570,7 @@ namespace catapult { namespace utils {
 					newQueue.push(drivePriorityPair);
 				}
 			}
-			*pDriveQueue = std::move(newQueue);
+			originalQueue = std::move(newQueue);
 		}
 		for (const auto& replicatorKey: replicatorKeys) {
 			treeAdapter.insert(replicatorKey);

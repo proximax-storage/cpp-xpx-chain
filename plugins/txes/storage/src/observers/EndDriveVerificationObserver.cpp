@@ -10,11 +10,9 @@
 namespace catapult { namespace observers {
 
 	using Notification = model::EndDriveVerificationNotification<1>;
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-	DECLARE_OBSERVER(EndDriveVerification, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue) {
-		return MAKE_OBSERVER(EndDriveVerification, Notification, ([pDriveQueue](const Notification& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(EndDriveVerification, Notification)() {
+		return MAKE_OBSERVER(EndDriveVerification, Notification, ([](const Notification& notification, const ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (EndDriveVerification)");
 
@@ -59,8 +57,8 @@ namespace catapult { namespace observers {
 //
 //		  	utils::RefundDepositsToReplicators(notification.DriveKey, offboardingReplicatorsWithRefund, context);
 //			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
-//			utils::PopulateDriveWithReplicators(notification.DriveKey, pKeyCollector, pDriveQueue, context, rng);
-//			utils::AssignReplicatorsToQueuedDrives(offboardingReplicators, pDriveQueue, context, rng);
+//			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
+//			utils::AssignReplicatorsToQueuedDrives(offboardingReplicators, context, rng);
 //
 //			const auto& replicatorKey = notification.PublicKeysPtr[0];
 //			auto& shards = driveEntry.verification()->Shards;

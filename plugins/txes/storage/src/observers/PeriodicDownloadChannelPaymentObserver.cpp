@@ -18,7 +18,8 @@ namespace catapult { namespace observers {
 
 	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, Notification)() {
 		return MAKE_OBSERVER(PeriodicDownloadChannelPayment, Notification, ([](const Notification& notification, ObserverContext& context) {
-			if (!context.Config.Network.EnableWeightedVoting || context.Height < Height(2))
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			if (!pluginConfig.Enabled || context.Height < Height(2))
 				return;
 
 			if (NotifyMode::Rollback == context.Mode)
@@ -33,7 +34,6 @@ namespace catapult { namespace observers {
 				return;
 			}
 
-			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentInterval = pluginConfig.DownloadBillingPeriod.seconds();
 
 			// Creating unique eventHash for the observer

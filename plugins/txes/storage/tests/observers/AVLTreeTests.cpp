@@ -170,7 +170,7 @@ namespace catapult { namespace observers {
 		auto rounds = sortedValues.size();
 		for (uint32_t i = 0; i < rounds; i++) {
 			uint32_t j = test::Random() % sortedValues.size();
-			Key pointer = treeAdapter.extract(j);
+			Key pointer = treeAdapter.extractOrderStatistics(j);
 			ASSERT_EQ(pointer, sortedValues[j].second);
 			sortedValues.erase(sortedValues.begin() + j);
 		}
