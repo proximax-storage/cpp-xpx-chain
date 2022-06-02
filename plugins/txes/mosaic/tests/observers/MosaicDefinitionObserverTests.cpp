@@ -33,12 +33,11 @@ namespace catapult { namespace observers {
 
 	namespace {
 		constexpr MosaicId Default_Mosaic_Id(345);
-		constexpr Amount Default_Mosaic_Supply(0);
 		constexpr Height Seed_Height(7);
 
 		model::MosaicDefinitionNotification<1> CreateDefaultNotification(const Key& signer) {
 			auto properties = model::MosaicProperties::FromValues({ { 3, 6, 15 } });
-			return model::MosaicDefinitionNotification<1>(signer, Default_Mosaic_Id, Default_Mosaic_Supply, properties);
+			return model::MosaicDefinitionNotification<1>(signer, Default_Mosaic_Id, properties);
 		}
 
 		template<typename TSeedCacheFunc, typename TCheckCacheFunc>
