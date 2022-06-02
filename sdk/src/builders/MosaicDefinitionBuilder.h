@@ -46,9 +46,6 @@ namespace catapult { namespace builders {
 		/// Sets the mosaic divisibility to \a divisibility.
 		void setDivisibility(uint8_t divisibility);
 
-		/// Sets the mosaic supply to \a mosaicSupply.
-		void setMosaicSupply(Amount mosaicSupply);
-
 		/// Adds \a property to optional properties.
 		void addProperty(const model::MosaicProperty& property);
 
@@ -65,7 +62,6 @@ namespace catapult { namespace builders {
 
 	private:
 		MosaicNonce m_mosaicNonce;
-		Amount m_mosaicSupply;
 		MosaicId m_mosaicId;
 		model::MosaicFlags m_flags;
 		uint8_t m_divisibility;

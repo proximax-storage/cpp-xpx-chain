@@ -25,7 +25,6 @@ namespace catapult { namespace builders {
 
 	MosaicDefinitionBuilder::MosaicDefinitionBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer)
 			: TransactionBuilder(networkIdentifier, signer)
-		    , m_mosaicSupply()
 			, m_mosaicNonce()
 			, m_mosaicId()
 			, m_flags()
@@ -43,10 +42,6 @@ namespace catapult { namespace builders {
 
 	void MosaicDefinitionBuilder::setDivisibility(uint8_t divisibility) {
 		m_divisibility = divisibility;
-	}
-
-	void MosaicDefinitionBuilder::setMosaicSupply(Amount mosaicSupply) {
-		m_mosaicSupply = mosaicSupply;
 	}
 
 	void MosaicDefinitionBuilder::addProperty(const model::MosaicProperty& property) {
@@ -71,7 +66,6 @@ namespace catapult { namespace builders {
 		auto pTransaction = createTransaction<TransactionType>(size);
 
 		// 2. set fixed transaction fields
-		pTransaction->MosaicSupply = m_mosaicSupply;
 		pTransaction->MosaicNonce = m_mosaicNonce;
 		pTransaction->MosaicId = model::GenerateMosaicId(signer(), m_mosaicNonce);
 		pTransaction->PropertiesHeader.Count = utils::checked_cast<size_t, uint8_t>(m_properties.size());
