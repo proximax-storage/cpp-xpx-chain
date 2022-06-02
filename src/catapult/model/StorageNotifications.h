@@ -885,8 +885,7 @@ namespace catapult { namespace model {
 				const Key* publicKeysPtr,
 				const Signature* signaturesPtr,
 				const uint8_t* presentOpinionsPtr,
-				const uint8_t* opinionsPtr,
-				bool includeOpinionKeysToSignature)
+				const uint8_t* opinionsPtr)
 			: Notification(Notification_Type, sizeof(OpinionNotification<1>))
 			, CommonDataSize(commonDataSize)
 			, JudgingKeysCount(judgingKeysCount)
@@ -898,12 +897,11 @@ namespace catapult { namespace model {
 			, SignaturesPtr(signaturesPtr)
 			, PresentOpinionsPtr(presentOpinionsPtr)
 			, OpinionsPtr(opinionsPtr)
-			, IncludeOpinionKeysToSignature(includeOpinionKeysToSignature)
 		{}
 
 	public:
 		/// Size of common data of the transaction in bytes.
-		size_t CommonDataSize;
+		uint64_t CommonDataSize;
 
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;
@@ -932,9 +930,6 @@ namespace catapult { namespace model {
 
 		/// Pointer to the beginning of jagged array of opinion elements.
 		const uint8_t* OpinionsPtr;
-
-		/// Whether public keys should be taken into account during signature verification
-		const bool IncludeOpinionKeysToSignature;
 	};
 
 	/// Notification of a download approval.
