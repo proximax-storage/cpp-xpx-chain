@@ -9,6 +9,7 @@
 #include "plugins/txes/storage/src/model/DataModificationApprovalTransaction.h"
 #include "plugins/txes/storage/src/model/DataModificationSingleApprovalTransaction.h"
 #include "plugins/txes/storage/src/model/DownloadApprovalTransaction.h"
+#include "plugins/txes/storage/src/model/EndDriveVerificationTransaction.h"
 #include "tests/TestHarness.h"
 #include <boost/dynamic_bitset.hpp>
 
@@ -209,4 +210,97 @@ namespace catapult { namespace storage {
         EXPECT_EQ_MEMORY(expectedPresentOpinions.data(), transaction.PresentOpinionsPtr(), expectedPresentOpinions.size());
 		EXPECT_EQ_MEMORY(expectedOpinions.data(), transaction.OpinionsPtr(), expectedOpinions.size() * sizeof(uint64_t));
     }
+
+    namespace {
+		auto CreateEndDriveVerifyTransactionInfo(uint8_t numberOfCosigners, uint8_t shardSize) {
+
+			sirius::drive::VerifyApprovalTxInfo transactionInfo;
+
+			transactionInfo.m_driveKey = test::GenerateRandomByteArray<Key>().array();
+			transactionInfo.m_tx = test::GenerateRandomByteArray<Hash256>().array();
+			transactionInfo.m_shardId = 0;
+
+			auto& opinions = transactionInfo.m_opinions;
+			for (int i = 0; i < numberOfCosigners; i++) {
+				sirius::drive::VerifyOpinion opinion;
+				opinion.m_publicKey = test::GenerateRandomByteArray<Key>().array();
+				opinion.m_signature = test::GenerateRandomByteArray<Signature>().array();
+				for (int j = 0; j < shardSize; j++) {
+					opinion.m_opinions.push_back(1);
+				}
+				opinions.push_back(opinion);
+			}
+
+			return transactionInfo;
+		}
+	}
+
+	TEST(TEST_CLASS, SendEndDriveVerifyApprovalTransactionWithPartialOpinions) {
+		// Arrange:
+		mocks::MockStorageState storageState;
+		std::shared_ptr<model::Transaction> pTransaction;
+		auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
+			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
+		};
+		auto testee = CreateTransactionSender(storageState, transactionRangeHandler);
+
+		auto transactionInfo = CreateEndDriveVerifyTransactionInfo(4, 5);
+		testee.sendEndDriveVerificationTransaction(transactionInfo);
+
+		boost::dynamic_bitset<uint8_t> opinionsBitset;
+		std::vector<uint8_t> expectedOpinions;
+		boost::to_block_range(opinionsBitset, std::back_inserter(expectedOpinions));
+
+
+		std::vector<Key> expectedPublicKeys;
+		std::vector<Signature> expectedSignatures;
+
+		for (const auto& opinion: transactionInfo.m_opinions) {
+			expectedPublicKeys.emplace_back(opinion.m_publicKey);
+			expectedSignatures.emplace_back(opinion.m_signature.array());
+			for (const auto& d: opinion.m_opinions) {
+				opinionsBitset.push_back(d);
+			}
+		}
+
+		// Assert:
+		auto& transaction = static_cast<const model::EndDriveVerificationTransaction&>(*pTransaction);
+		EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);
+		EXPECT_EQ_MEMORY(expectedSignatures.data(), transaction.SignaturesPtr(), expectedSignatures.size() * Signature_Size);
+		EXPECT_EQ_MEMORY(expectedOpinions.data(), transaction.OpinionsPtr(), expectedOpinions.size());
+	}
+
+	TEST(TEST_CLASS, SendEndDriveVerifyApprovalTransactionWitFullOpinions) {
+		// Arrange:
+		mocks::MockStorageState storageState;
+		std::shared_ptr<model::Transaction> pTransaction;
+		auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
+			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
+		};
+		auto testee = CreateTransactionSender(storageState, transactionRangeHandler);
+
+		auto transactionInfo = CreateEndDriveVerifyTransactionInfo(5, 5);
+		testee.sendEndDriveVerificationTransaction(transactionInfo);
+
+		std::vector<Key> expectedPublicKeys;
+		std::vector<Signature> expectedSignatures;
+
+		boost::dynamic_bitset<uint8_t> opinionsBitset;
+		std::vector<uint8_t> expectedOpinions;
+		boost::to_block_range(opinionsBitset, std::back_inserter(expectedOpinions));
+
+		for (const auto& opinion: transactionInfo.m_opinions) {
+			expectedPublicKeys.emplace_back(opinion.m_publicKey);
+			expectedSignatures.emplace_back(opinion.m_signature.array());
+			for (const auto& d: opinion.m_opinions) {
+				opinionsBitset.push_back(d);
+			}
+		}
+
+		// Assert:
+		auto& transaction = static_cast<const model::EndDriveVerificationTransaction&>(*pTransaction);
+		EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);
+		EXPECT_EQ_MEMORY(expectedSignatures.data(), transaction.SignaturesPtr(), expectedSignatures.size() * Signature_Size);
+		EXPECT_EQ_MEMORY(expectedOpinions.data(), transaction.OpinionsPtr(), expectedOpinions.size());
+	}
 }}
