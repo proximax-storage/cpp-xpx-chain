@@ -65,4 +65,8 @@ namespace catapult { namespace state {
             if (m_sdaOfferGroup[i].Owner==offerOwner) m_sdaOfferGroup.erase(m_sdaOfferGroup.begin()+i);
         }
     }
+
+    bool SdaOfferGroupEntry::empty() const {
+        return m_sdaOfferGroup.empty();
+    }
 }}

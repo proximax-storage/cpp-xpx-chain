@@ -65,6 +65,7 @@ namespace catapult { namespace state {
 
         void addSdaOfferToGroup(const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
         void removeSdaOfferFromGroup(const Key& offerOwner);
+        bool empty() const;
 
     private:
         Hash256 m_groupHash;

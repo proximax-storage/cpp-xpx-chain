@@ -26,6 +26,22 @@ namespace catapult { namespace observers {
 
                 entry.expireOffers(context.Height, onSdaOfferBalancesExpired);
 
+                for (auto& expiredPair : entry.expiredSdaOfferBalances().at(context.Height)) {
+                    Amount mosaicAmountGive = expiredPair.second.InitialMosaicGive;
+                    Amount mosaicAmountGet =  expiredPair.second.InitialMosaicGet;
+                    std::string reduced = reducedFraction(mosaicAmountGive, mosaicAmountGet);
+                    auto groupHash = calculateGroupHash(expiredPair.first.first, expiredPair.first.second, reduced);
+
+                    auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
+                    auto groupIter = groupCache.find(groupHash);
+                    auto& groupEntry = groupIter.get();
+
+                    groupEntry.removeSdaOfferFromGroup(key);
+
+                    if (groupEntry.empty())
+                        groupCache.remove(groupHash);
+                }
+
                 // Immediately remove expired offers from the current cache Height
                 auto pruneHeight = context.Height;
                 auto& expiredOffers = entry.expiredSdaOfferBalances();
@@ -35,6 +51,9 @@ namespace catapult { namespace observers {
                 }
 
                 cache.removeExpiryHeight(key, context.Height);
+
+                if (entry.empty())
+                    cache.remove(key);
             }
         }))
     }

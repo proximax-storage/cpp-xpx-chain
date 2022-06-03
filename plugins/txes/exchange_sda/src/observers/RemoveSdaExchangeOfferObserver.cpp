@@ -35,5 +35,8 @@ namespace catapult { namespace observers {
             entry.expireOffer(state::MosaicsPair{mosaicIdGive,mosaicIdGet}, context.Height);
             groupEntry.removeSdaOfferFromGroup(notification.Owner);
         }
+
+        if (entry.empty())
+            cache.remove(notification.Owner);
     });
 }}
