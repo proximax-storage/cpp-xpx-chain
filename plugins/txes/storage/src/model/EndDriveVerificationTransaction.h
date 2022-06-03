@@ -57,7 +57,7 @@ namespace catapult { namespace model {
         template<typename T>
         static auto* SignaturesPtrT(T& transaction) {
             auto* pPayloadStart = THeader::PayloadStart(transaction);
-            return transaction.JudgingKeyCount && pPayloadStart ? pPayloadStart + transaction.KeyCount * Key_Size : nullptr;
+            return transaction.JudgingKeyCount && pPayloadStart ? pPayloadStart + transaction.JudgingKeyCount * Key_Size : nullptr;
         }
 
         template<typename T>
