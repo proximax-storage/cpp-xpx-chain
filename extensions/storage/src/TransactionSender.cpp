@@ -226,25 +226,25 @@ namespace catapult { namespace storage {
     }
 
     Hash256 TransactionSender::sendEndDriveVerificationTransaction(const sirius::drive::VerifyApprovalTxInfo& transactionInfo) {
-		uint8_t opinionCount = transactionInfo.m_opinions[0].m_opinions.size();
-		uint8_t keyCount = opinionCount;
+		uint8_t keyCount = transactionInfo.m_opinions[0].m_opinions.size();;
 		uint8_t judgingKeyCount = transactionInfo.m_opinions.size();
 		std::vector<Key> publicKeys;
-		publicKeys.reserve(keyCount);
+		publicKeys.reserve(judgingKeyCount);
 		std::vector<Signature> signatures;
 		signatures.reserve(judgingKeyCount);
-		boost::dynamic_bitset<uint8_t> opinionsBitset(judgingKeyCount * opinionCount);
+		boost::dynamic_bitset<uint8_t> opinionsBitset(judgingKeyCount * keyCount);
 
 		for (auto i = 0u; i < transactionInfo.m_opinions.size(); ++i) {
 			const auto& opinion = transactionInfo.m_opinions[i];
 			publicKeys.emplace_back(opinion.m_publicKey);
 			signatures.emplace_back(opinion.m_signature.array());
-			for (auto k = 0u; k < opinionCount; ++k)
-				opinionsBitset[i * opinionCount + k] = opinion.m_opinions[k];
-		}
+			for (auto k = 0u; k < keyCount; ++k) {
+				opinionsBitset[i * keyCount + k] = opinion.m_opinions[k];
+			}
+	}
 
 		std::vector<uint8_t> opinions;
-		opinions.reserve((judgingKeyCount * opinionCount + 7) / 8);
+		opinions.reserve((judgingKeyCount * keyCount + 7) / 8);
 		boost::to_block_range(opinionsBitset, std::back_inserter(opinions));
 
 		// build and send transaction

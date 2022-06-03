@@ -64,6 +64,7 @@ namespace catapult { namespace builders {
         pTransaction->JudgingKeyCount = m_judgingKeyCount;
 
         // 3. set transaction attachments
+		
         std::copy(m_publicKeys.cbegin(), m_publicKeys.cend(), pTransaction->PublicKeysPtr());
         std::copy(m_signatures.cbegin(), m_signatures.cend(), pTransaction->SignaturesPtr());
         std::copy(m_opinions.cbegin(), m_opinions.cend(), pTransaction->OpinionsPtr());

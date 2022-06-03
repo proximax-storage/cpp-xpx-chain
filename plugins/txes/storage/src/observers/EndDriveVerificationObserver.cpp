@@ -22,6 +22,14 @@ namespace catapult { namespace observers {
 			auto driveIter = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveIter.get();
 			driveEntry.verification().reset();
+
+			// !!! HINT !!!
+			// End Drive Verification Transaction contains only the public keys that provided the signatures
+			// And does not contain other replicators
+			// Since each verifier provides opinions in the order in which the provers appear in the shard list,
+			// The shard list from db should be used in order to determine which prover is the opinion about.
+
+
 //			auto storageDepositSlashing = 0;
 //			std::set<Key> offboardingReplicators;
 //		  	std::set<Key> offboardingReplicatorsWithRefund;
@@ -31,7 +39,7 @@ namespace catapult { namespace observers {
 //					result += notification.OpinionsPtr[i + j * (notification.KeyCount - 1)];
 //
 //				if (result >= notification.JudgingKeyCount / 2) {
-//					// If the replicator passes validation and is queued for offboarding,
+//					// If the replicator passes validation and\ is queued for offboarding,
 //					// include him into offboardingReplicators and offboardingReplicatorsWithRefund
 //					if (driveEntry.offboardingReplicators().count(notification.PublicKeysPtr[i])) {
 //						offboardingReplicators.insert(notification.PublicKeysPtr[i]);
