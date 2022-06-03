@@ -41,6 +41,7 @@ namespace catapult { namespace observers {
 
 			auto storageConfig = config::StorageConfiguration::Uninitialized();
 			storageConfig.StorageBillingPeriod = utils::TimeSpan::FromMilliseconds(billingPeriodSeconds);
+			storageConfig.Enabled = true;
 
 			config.Network.SetPluginConfiguration(storageConfig);
 
@@ -107,6 +108,7 @@ namespace catapult { namespace observers {
 				state::QueueEntry queueEntry(state::DrivePaymentQueueKey);
 				queueEntry.setFirst(values.InitialBcDriveEntries[0].key());
 				queueEntry.setLast(values.InitialBcDriveEntries[values.InitialBcDriveEntries.size() - 1].key());
+				queueEntry.setSize(values.InitialBcDriveEntries.size());
 				queueCache.insert(queueEntry);
 			}
 

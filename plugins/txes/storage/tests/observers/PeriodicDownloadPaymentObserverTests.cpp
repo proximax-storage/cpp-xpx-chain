@@ -41,6 +41,7 @@ namespace catapult { namespace observers {
 
 			auto storageConfig = config::StorageConfiguration::Uninitialized();
 			storageConfig.DownloadBillingPeriod = utils::TimeSpan::FromMilliseconds(billingPeriodSeconds);
+			storageConfig.Enabled = true;
 
 			config.Network.SetPluginConfiguration(storageConfig);
 
@@ -107,6 +108,7 @@ namespace catapult { namespace observers {
 				state::QueueEntry queueEntry(state::DownloadChannelPaymentQueueKey);
 				queueEntry.setFirst(values.InitialEntries[0].id().array());
 				queueEntry.setLast(values.InitialEntries[values.InitialEntries.size() - 1].id().array());
+				queueEntry.setSize(values.InitialEntries.size());
 				queueCache.insert(queueEntry);
 			}
 

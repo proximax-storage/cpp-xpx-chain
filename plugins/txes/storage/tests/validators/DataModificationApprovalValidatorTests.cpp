@@ -211,7 +211,7 @@ namespace catapult { namespace validators {
 				replicatorKeyPairs);
     }
 
-	TEST(TEST_CLASS, FailureWhenInvalidKey) {
+	TEST(TEST_CLASS, FailureWhenSignatureCountInsufficient) {
 		// Arrange:
 		auto cache = test::StorageCacheFactory::Create();
 		auto delta = cache.createDelta();
@@ -225,18 +225,17 @@ namespace catapult { namespace validators {
 		driveDelta.insert(driveEntry);
 		cache.commit(Current_Height);
 
+		const auto totalJudgingKeysCount = test::RandomInRange(1, Required_Signatures_Count-1);
+		const auto overlappingKeysCount = test::RandomInRange(0, totalJudgingKeysCount);
+		const auto judgingKeysCount = totalJudgingKeysCount - overlappingKeysCount;
+		const auto judgedKeysCount = Replicator_Count - totalJudgingKeysCount;
 		const auto commonDataBuffer = test::GenerateCommonDataBuffer(Common_Data_Size);
-		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer);
+		auto opinionData = test::CreateValidOpinionData<uint64_t>(replicatorKeyPairs, commonDataBuffer, {judgingKeysCount, overlappingKeysCount, judgedKeysCount});
 		delete[] commonDataBuffer.pData;
-
-		// Act:
-		const auto totalKeysCount = opinionData.JudgingKeysCount + opinionData.OverlappingKeysCount + opinionData.JudgedKeysCount;
-		const auto targetKeyIndex = test::RandomInRange(0, totalKeysCount-1);
-		opinionData.PublicKeys.at(targetKeyIndex) = test::GenerateRandomByteArray<Key>();
 
 		// Assert:
 		AssertValidationResult(
-				Failure_Storage_Opinion_Invalid_Key,
+				Failure_Storage_Signature_Count_Insufficient,
 				cache,
 				driveEntry.key(),
 				driveEntry.activeDataModifications().begin()->Id,
