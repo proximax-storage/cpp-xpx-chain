@@ -71,7 +71,7 @@ namespace catapult { namespace model {
         // Calculates the real size of a storage \a transaction.
         static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
             return sizeof(TransactionType)
-                   + transaction.KeyCount * Key_Size
+				   + transaction.JudgingKeyCount * Key_Size
                    + transaction.JudgingKeyCount * Signature_Size
                    + (transaction.JudgingKeyCount * transaction.KeyCount + 7) / 8;
         }
