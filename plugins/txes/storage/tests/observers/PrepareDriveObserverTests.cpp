@@ -6,6 +6,7 @@
 
 #include "tests/test/StorageTestUtils.h"
 #include "src/observers/Observers.h"
+#include "src/utils/AVLTree.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -42,6 +43,30 @@ namespace catapult { namespace observers {
 			config.Network.SetPluginConfiguration(pluginConfig);
 
 			return config.ToConst();
+		}
+
+		utils::AVLTreeAdapter<std::pair<Amount, Key>> CreateAvlTreeAdapter(const observers::ObserverContext& context) {
+			auto& queueCache = context.Cache.sub<cache::QueueCache>();
+			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+
+			auto keyExtractor = [=, &accountStateCache](const Key& key) {
+			  	return std::make_pair(accountStateCache.find(key).get().Balances.get(Storage_Mosaic_Id), key);
+			};
+			auto nodeExtractor = [&replicatorCache](const Key& key) -> state::AVLTreeNode {
+			  	return replicatorCache.find(key).get().replicatorsSetNode();
+			};
+			auto nodeSaver = [&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
+			  	replicatorCache.find(key).get().replicatorsSetNode() = node;
+			};
+
+			return utils::AVLTreeAdapter<std::pair<Amount, Key>> (
+					queueCache,
+					state::ReplicatorsSetTree,
+					keyExtractor,
+					nodeExtractor,
+					nodeSaver
+			);
 		}
         
         state::BcDriveEntry CreateBcDriveEntry() {
@@ -111,6 +136,7 @@ namespace catapult { namespace observers {
 			auto& priorityQueueCache = context.cache().sub<cache::PriorityQueueCache>();
             auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
+			auto treeAdapter = CreateAvlTreeAdapter(context.observerContext());
 
             // Populate cache.
 			test::AddAccountState(accountStateCache, values.ExpectedBcDriveEntry.key(), Current_Height);
@@ -120,6 +146,7 @@ namespace catapult { namespace observers {
 				test::AddAccountState(accountStateCache, entry.key(), Current_Height,
 						{{Storage_Mosaic_Id, std::get<1>(tuple)}, {Streaming_Mosaic_Id, std::get<2>(tuple)}}
  				);
+				treeAdapter.insert(entry.key());
 			}
 
             // Act:

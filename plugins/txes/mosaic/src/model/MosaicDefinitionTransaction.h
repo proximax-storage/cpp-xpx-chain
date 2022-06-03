@@ -45,9 +45,6 @@ namespace catapult { namespace model {
 		/// \note This must match the generated id.
 		catapult::MosaicId MosaicId;
 
-		/// Mosaic supply.
-		Amount MosaicSupply;
-
 		/// Properties header.
 		MosaicPropertiesHeader PropertiesHeader;
 

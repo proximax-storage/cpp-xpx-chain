@@ -120,6 +120,7 @@ namespace catapult { namespace plugins {
 					"DataModificationCancelObserver",
 					"ReplicatorOnboardingObserver",
 					"ReplicatorOffboardingObserver",
+					"FinishDownloadObserver",
 					"DownloadPaymentObserver",
 					"DataModificationSingleApprovalObserver",
 					"DownloadApprovalObserver",

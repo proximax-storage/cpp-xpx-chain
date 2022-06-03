@@ -41,13 +41,12 @@ namespace catapult { namespace model {
 			auto expectedSize =
 					baseSize // base
 					+ sizeof(uint32_t) // nonce
-					+ sizeof(uint64_t) // supply
 					+ sizeof(MosaicId) // id
 					+ expectedPropertiesHeaderSize;
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 23u, sizeof(T));
+			EXPECT_EQ(baseSize + 15u, sizeof(T));
 		}
 
 		template<typename T>
