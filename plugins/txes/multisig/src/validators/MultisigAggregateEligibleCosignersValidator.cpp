@@ -26,13 +26,12 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::AggregateCosignaturesNotification<1>;
-
 	namespace {
+		template<typename TNotification>
 		class AggregateCosignaturesChecker {
 		public:
 			explicit AggregateCosignaturesChecker(
-					const Notification& notification,
+					const TNotification& notification,
 					const model::TransactionRegistry& transactionRegistry,
 					const cache::MultisigCache::CacheReadOnlyType& multisigCache,
 					const config::BlockchainConfiguration& config)
@@ -47,7 +46,7 @@ namespace catapult { namespace validators {
 					m_cosigners.emplace(&m_notification.Signer, false);
 				
 				for (auto i = 0u; i < m_notification.CosignaturesCount; ++i)
-					m_cosigners.emplace(&m_notification.CosignaturesPtr[i].Signer, false);
+					m_cosigners.emplace(&m_notification.CosignaturesPtr[i].Signer(), false);
 			}
 
 		public:
@@ -98,20 +97,33 @@ namespace catapult { namespace validators {
 			}
 
 		private:
-			const Notification& m_notification;
+			const TNotification& m_notification;
 			const model::TransactionRegistry& m_transactionRegistry;
 			const cache::MultisigCache::CacheReadOnlyType& m_multisigCache;
 			utils::ArrayPointerFlagMap<Key> m_cosigners;
 			const config::BlockchainConfiguration& m_config;
 		};
-	}
-
-	DECLARE_STATEFUL_VALIDATOR(MultisigAggregateEligibleCosigners, Notification)(const model::TransactionRegistry& transactionRegistry) {
-		return MAKE_STATEFUL_VALIDATOR(MultisigAggregateEligibleCosigners, [&transactionRegistry](
-				const Notification& notification,
-				const ValidatorContext& context) {
+		template<typename TNotification>
+		ValidationResult Validate(const TNotification& notification, const ValidatorContext& context, const model::TransactionRegistry& transactionRegistry)
+		{
 			AggregateCosignaturesChecker checker(notification, transactionRegistry, context.Cache.sub<cache::MultisigCache>(), context.Config);
 			return checker.hasIneligibleCosigners() ? Failure_Aggregate_Ineligible_Cosigners : ValidationResult::Success;
+		}
+	}
+
+
+	DECLARE_STATEFUL_VALIDATOR(MultisigAggregateEligibleCosignersV1, model::AggregateCosignaturesNotification<1>)(const model::TransactionRegistry& transactionRegistry) {
+		return MAKE_STATEFUL_VALIDATOR_WITH_TYPE(MultisigAggregateEligibleCosignersV1, model::AggregateCosignaturesNotification<1>, [&transactionRegistry](
+				const model::AggregateCosignaturesNotification<1>& notification,
+				const ValidatorContext& context) {
+			return Validate<model::AggregateCosignaturesNotification<1>>(notification, context, transactionRegistry);
+		});
+	}
+	DECLARE_STATEFUL_VALIDATOR(MultisigAggregateEligibleCosignersV2, model::AggregateCosignaturesNotification<3>)(const model::TransactionRegistry& transactionRegistry) {
+		return MAKE_STATEFUL_VALIDATOR_WITH_TYPE(MultisigAggregateEligibleCosignersV2, model::AggregateCosignaturesNotification<3>, [&transactionRegistry](
+				const model::AggregateCosignaturesNotification<3>& notification,
+				const ValidatorContext& context) {
+		  return Validate<model::AggregateCosignaturesNotification<3>>(notification, context, transactionRegistry);
 		});
 	}
 }}

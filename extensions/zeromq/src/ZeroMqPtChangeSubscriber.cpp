@@ -38,8 +38,9 @@ namespace catapult { namespace zeromq {
 			void notifyAddCosignature(
 					const model::TransactionInfo& parentTransactionInfo,
 					const Key& signer,
-					const RawSignature& signature) override {
-				m_publisher.publishCosignature(parentTransactionInfo, signer, signature);
+					const RawSignature& signature,
+					DerivationScheme scheme) override {
+				m_publisher.publishCosignature(parentTransactionInfo, signer, signature, scheme);
 			}
 
 			void notifyRemovePartials(const TransactionInfos& transactionInfos) override {

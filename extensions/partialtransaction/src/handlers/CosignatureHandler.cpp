@@ -27,7 +27,7 @@ namespace catapult { namespace handlers {
 	namespace {
 		auto CreatePushCosignaturesHandler(const CosignatureRangeHandler& rangeHandler) {
 			return [rangeHandler](const ionet::Packet& packet, const auto& context) {
-				auto range = ionet::ExtractFixedSizeStructuresFromPacket<model::DetachedCosignature<SignatureLayout::Raw>>(packet);
+				auto range = ionet::ExtractFixedSizeStructuresFromPacket<model::DetachedCosignature>(packet);
 				if (range.empty()) {
 					CATAPULT_LOG(warning) << "rejecting empty range: " << packet;
 					return;

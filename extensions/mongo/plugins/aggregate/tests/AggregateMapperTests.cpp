@@ -33,39 +33,67 @@ namespace catapult { namespace mongo { namespace plugins {
 
 #define TEST_CLASS AggregateMapperTests
 
-	using TransactionType = model::AggregateTransaction<SignatureLayout::Raw>;
+	template<typename TDescriptor>
+	using TransactionType = model::AggregateTransaction<TDescriptor>;
 	using EmbeddedTransactionType = mocks::EmbeddedMockTransaction;
 
 	namespace {
 		constexpr auto Entity_Type = static_cast<model::EntityType>(9876);
 		auto Immutable_Config = config::ImmutableConfiguration::Uninitialized();
 
+		template<typename TDescriptor>
 		auto AllocateAggregateTransaction(uint16_t numTransactions, uint16_t numCosignatures) {
-			uint32_t entitySize = sizeof(TransactionType)
+			uint32_t entitySize = sizeof(TransactionType<TDescriptor>)
 					+ numTransactions * sizeof(EmbeddedTransactionType)
-					+ numCosignatures * sizeof(model::Cosignature<SignatureLayout::Raw>);
-			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+					+ numCosignatures * sizeof(typename TDescriptor::CosignatureType);
+			auto pTransaction = utils::MakeUniqueWithSize<TransactionType<TDescriptor>>(entitySize);
 			pTransaction->Size = entitySize;
 			pTransaction->PayloadSize = numTransactions * sizeof(EmbeddedTransactionType);
 			return pTransaction;
 		}
+
+		struct V1Traits {
+
+			using Descriptor = model::AggregateTransactionRawDescriptor;
+			static auto GeneratePlugin(const MongoTransactionRegistry &transactionRegistry, const config::ImmutableConfiguration &immutableConfig, model::EntityType transactionType)
+			{
+				return CreateAggregateTransactionMongoPluginV1(transactionRegistry, immutableConfig, transactionType);
+			}
+		};
+		struct V2Traits {
+
+			using Descriptor = model::AggregateTransactionExtendedDescriptor;
+			static auto GeneratePlugin(const MongoTransactionRegistry &transactionRegistry, const config::ImmutableConfiguration &immutableConfig, model::EntityType transactionType)
+			{
+				return CreateAggregateTransactionMongoPluginV2(transactionRegistry, immutableConfig, transactionType);
+			}
+		};
 	}
 
 	// region basic
+#define TRAITS_BASED_TEST(TEST_NAME) \
+    template<typename TTraits>                                 \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V1Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V2Traits>(); } \
+    template<typename TTraits> \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
-	TEST(TEST_CLASS, CanCreatePlugin) {
+	TRAITS_BASED_TEST(CanCreatePlugin) {
 		// Act:
 		MongoTransactionRegistry registry;
-		auto pPlugin = CreateAggregateTransactionMongoPlugin(registry, Immutable_Config, Entity_Type);
+		auto pPlugin = TTraits::GeneratePlugin(registry, Immutable_Config, Entity_Type);
 
 		// Assert:
 		EXPECT_EQ(Entity_Type, pPlugin->type());
 	}
 
-	TEST(TEST_CLASS, PluginDoesNotSupportEmbedding) {
+
+
+	TRAITS_BASED_TEST(PluginDoesNotSupportEmbedding) {
 		// Arrange:
 		MongoTransactionRegistry registry;
-		auto pPlugin = CreateAggregateTransactionMongoPlugin(registry, Immutable_Config, Entity_Type);
+		auto pPlugin = TTraits::GeneratePlugin(registry, Immutable_Config, Entity_Type);
 
 		// Act + Assert:
 		EXPECT_FALSE(pPlugin->supportsEmbedding());
@@ -77,20 +105,21 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region streamTransaction
 
 	namespace {
+		template<typename TTraits>
 		void AssertCanMapAggregateTransactionWithCosignatures(uint16_t numCosignatures) {
 			// Arrange: create aggregate with a single sub transaction
-			auto pTransaction = AllocateAggregateTransaction(1, numCosignatures);
+			auto pTransaction = AllocateAggregateTransaction<typename TTraits::Descriptor>(1, numCosignatures);
 
 			// - create and copy cosignatures
-			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(numCosignatures);
+			auto cosignatures = test::GenerateRandomDataVector<typename TTraits::Descriptor::CosignatureType>(numCosignatures);
 			std::memcpy(
 					static_cast<void*>(pTransaction->CosignaturesPtr()),
 					cosignatures.data(),
-					numCosignatures * sizeof(model::Cosignature<SignatureLayout::Raw>));
+					numCosignatures * sizeof(typename TTraits::Descriptor::CosignatureType));
 
 			// - create the plugin
 			MongoTransactionRegistry registry;
-			auto pPlugin = CreateAggregateTransactionMongoPlugin(registry, Immutable_Config, Entity_Type);
+			auto pPlugin = TTraits::GeneratePlugin(registry, Immutable_Config, Entity_Type);
 
 			// Act:
 			mappers::bson_stream::document builder;
@@ -103,23 +132,23 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto dbCosignatures = view["cosignatures"].get_array().value;
 			ASSERT_EQ(numCosignatures, test::GetFieldCount(dbCosignatures));
 
-			test::AssertEqualCosignatures(cosignatures, dbCosignatures);
+			test::AssertEqualCosignatures<typename TTraits::Descriptor>(cosignatures, dbCosignatures);
 		}
 	}
 
-	TEST(TEST_CLASS, CanMapAggregateTransactionWithoutCosignatures) {
+	TRAITS_BASED_TEST(CanMapAggregateTransactionWithoutCosignatures) {
 		// Assert:
-		AssertCanMapAggregateTransactionWithCosignatures(0);
+		AssertCanMapAggregateTransactionWithCosignatures<TTraits>(0);
 	}
 
-	TEST(TEST_CLASS, CanMapAggregateTransactionWithSingleCosignature) {
+	TRAITS_BASED_TEST(CanMapAggregateTransactionWithSingleCosignature) {
 		// Assert:
-		AssertCanMapAggregateTransactionWithCosignatures(1);
+		AssertCanMapAggregateTransactionWithCosignatures<TTraits>(1);
 	}
 
-	TEST(TEST_CLASS, CanMapAggregateTransactionWithMultipleCosignatures) {
+	TRAITS_BASED_TEST(CanMapAggregateTransactionWithMultipleCosignatures) {
 		// Assert:
-		AssertCanMapAggregateTransactionWithCosignatures(3);
+		AssertCanMapAggregateTransactionWithCosignatures<TTraits>(3);
 	}
 
 	// endregion
@@ -127,9 +156,10 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region extractDependentDocuments
 
 	namespace {
+		template<typename TTraits>
 		void AssertExtractDependentDocuments(uint16_t numTransactions) {
 			// Arrange: create aggregate with two cosignatures
-			auto pTransaction = AllocateAggregateTransaction(numTransactions, 2);
+			auto pTransaction = AllocateAggregateTransaction<typename TTraits::Descriptor>(numTransactions, 2);
 
 			// - create and copy sub transactions
 			auto subTransactions = test::GenerateRandomDataVector<EmbeddedTransactionType>(numTransactions);
@@ -145,7 +175,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			// - create the plugin
 			MongoTransactionRegistry registry;
 			registry.registerPlugin(mocks::CreateMockTransactionMongoPlugin());
-			auto pPlugin = CreateAggregateTransactionMongoPlugin(registry, Immutable_Config, Entity_Type);
+			auto pPlugin = TTraits::GeneratePlugin(registry, Immutable_Config, Entity_Type);
 
 			// Act:
 			model::TransactionElement transactionElement(*pTransaction);
@@ -189,20 +219,22 @@ namespace catapult { namespace mongo { namespace plugins {
 		}
 	}
 
-	TEST(TEST_CLASS, NoDependentDocumentsAreExtractedWhenThereAreNoSubTransactions) {
+	TRAITS_BASED_TEST(NoDependentDocumentsAreExtractedWhenThereAreNoSubTransactions) {
 		// Assert:
-		AssertExtractDependentDocuments(0);
+		AssertExtractDependentDocuments<TTraits>(0);
 	}
 
-	TEST(TEST_CLASS, SingleDependentDocumentIsExtractedWhenThereIsOneSubTransaction) {
+	TRAITS_BASED_TEST(SingleDependentDocumentIsExtractedWhenThereIsOneSubTransaction) {
 		// Assert:
-		AssertExtractDependentDocuments(1);
+		AssertExtractDependentDocuments<TTraits>(1);
 	}
 
-	TEST(TEST_CLASS, MultipleDependentDocumentsAreExtractedWhenThereAreMultipleSubTransactions) {
+	TRAITS_BASED_TEST(MultipleDependentDocumentsAreExtractedWhenThereAreMultipleSubTransactions) {
 		// Assert:
-		AssertExtractDependentDocuments(3);
+		AssertExtractDependentDocuments<TTraits>(3);
 	}
 
 	// endregion
+
+#undef TRAITS_BASED_TEST;
 }}}

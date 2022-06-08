@@ -36,7 +36,7 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, const model::EmbeddedTransaction* pTransactions) {
 			// Arrange:
-			Notification notification(Key(), Num_Transactions, pTransactions, 0, nullptr);
+			Notification notification(Key(), Num_Transactions, pTransactions, 0, static_cast<model::Cosignature<SignatureLayout::Raw> *>(nullptr));
 			auto pValidator = CreateAggregateTransactionValidator();
 
 			// Act:

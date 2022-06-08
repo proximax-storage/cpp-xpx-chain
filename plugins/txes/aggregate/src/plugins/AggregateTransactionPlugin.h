@@ -33,9 +33,16 @@ namespace catapult {
 
 namespace catapult { namespace plugins {
 
-	/// Creates an aggregate transaction plugin around \a transactionRegistry and \a pConfigHolder for transactions with type \a transactionType.
+	/// Creates an aggregate transaction plugin V1 around \a transactionRegistry and \a pConfigHolder for transactions with type \a transactionType.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateAggregateTransactionPlugin(
+	std::unique_ptr<model::TransactionPlugin> CreateAggregateTransactionV1Plugin(
+			const model::TransactionRegistry& transactionRegistry,
+			model::EntityType transactionType,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+
+	/// Creates an aggregate transaction plugin V2 around \a transactionRegistry and \a pConfigHolder for transactions with type \a transactionType.
+	PLUGIN_API
+	std::unique_ptr<model::TransactionPlugin> CreateAggregateTransactionV2Plugin(
 			const model::TransactionRegistry& transactionRegistry,
 			model::EntityType transactionType,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);

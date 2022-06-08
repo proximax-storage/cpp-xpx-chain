@@ -49,8 +49,8 @@ namespace catapult { namespace zeromq {
 				subscriber().notifyAddPartials(transactionInfos);
 			}
 
-			void notifyAddCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const RawSignature& signature) {
-				subscriber().notifyAddCosignature(parentTransactionInfo, signer, signature);
+			void notifyAddCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const RawSignature& signature, DerivationScheme scheme) {
+				subscriber().notifyAddCosignature(parentTransactionInfo, signer, signature, scheme);
 			}
 
 			void notifyRemovePartial(const model::TransactionInfo& transactionInfo) {
@@ -145,14 +145,15 @@ namespace catapult { namespace zeromq {
 		auto transactionInfo = test::RemoveExtractedAddresses(test::CreateRandomTransactionInfo());
 		auto signer = test::GenerateRandomByteArray<Key>();
 		auto signature = test::GenerateRandomByteArray<RawSignature>();
+		auto scheme = DerivationScheme::Ed25519_Sha3;
 		auto addresses = test::ExtractAddresses(test::ToMockTransaction(*transactionInfo.pEntity));
 		context.subscribeAll(marker, addresses);
 
 		// Act:
-		context.notifyAddCosignature(transactionInfo, signer, signature);
+		context.notifyAddCosignature(transactionInfo, signer, signature, scheme);
 
 		// Assert:
-		model::DetachedCosignature<SignatureLayout::Raw> detachedCosignature(signer, signature, transactionInfo.EntityHash);
+		model::DetachedCosignature detachedCosignature(signer, signature, transactionInfo.EntityHash);
 		test::AssertMessages(context.zmqSocket(), marker, addresses, [&detachedCosignature](const auto& message, const auto& topic) {
 			test::AssertDetachedCosignatureMessage(message, topic, detachedCosignature);
 		});
@@ -172,7 +173,7 @@ namespace catapult { namespace zeromq {
 		// Act:
 		auto i = 0u;
 		for (const auto& transactionInfo : transactionInfos) {
-			context.notifyAddCosignature(transactionInfo, signers[i], signatures[i]);
+			context.notifyAddCosignature(transactionInfo, signers[i], signatures[i], DerivationScheme::Ed25519_Sha3);
 			++i;
 		}
 
@@ -180,7 +181,7 @@ namespace catapult { namespace zeromq {
 		i = 0u;
 		for (const auto& transactionInfo : transactionInfos) {
 			auto addresses = test::ExtractAddresses(test::ToMockTransaction(*transactionInfo.pEntity));
-			model::DetachedCosignature<SignatureLayout::Raw>  detachedCosignature(signers[i], signatures[i], transactionInfo.EntityHash);
+			model::DetachedCosignature detachedCosignature(signers[i], signatures[i], transactionInfo.EntityHash);
 			test::AssertMessages(context.zmqSocket(), marker, addresses, [&detachedCosignature](const auto& message, const auto& topic) {
 				test::AssertDetachedCosignatureMessage(message, topic, detachedCosignature);
 			});

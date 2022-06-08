@@ -47,7 +47,7 @@ namespace catapult { namespace cache {
 			return m_transactionInfo.EntityHash;
 		}
 
-		const std::vector<model::Cosignature<SignatureLayout::Raw>>& cosignatures() const {
+		const std::vector<model::CosignatureInfo>& cosignatures() const {
 			return m_cosignatures;
 		}
 
@@ -64,7 +64,7 @@ namespace catapult { namespace cache {
 		}
 
 	public:
-		bool add(const Key& signer, const RawSignature& signature) {
+		bool add(const Key& signer, const RawSignature& signature, DerivationScheme derivationScheme) {
 			if (weakCosignedTransactionInfo().hasCosigner(signer))
 				return false;
 
@@ -73,11 +73,11 @@ namespace catapult { namespace cache {
 			while (m_cosignatures.end() != iter && iter->Signer < signer)
 				++iter;
 
-			m_cosignatures.insert(iter, { signer, signature });
+			m_cosignatures.insert(iter, { signer, crypto::SignatureFeatureSolver::ExpandSignature(signature, derivationScheme)});
 
 			// recalculate the cosignatures hash
 			crypto::Sha3_256(
-					{ reinterpret_cast<const uint8_t*>(m_cosignatures.data()), m_cosignatures.size() * sizeof(model::Cosignature<SignatureLayout::Raw>) },
+					{ reinterpret_cast<const uint8_t*>(m_cosignatures.data()), m_cosignatures.size() * sizeof(model::CosignatureInfo) },
 					m_cosignaturesHash);
 			return true;
 		}
@@ -85,7 +85,7 @@ namespace catapult { namespace cache {
 	private:
 		model::DetachedTransactionInfo m_transactionInfo;
 		Hash256 m_cosignaturesHash;
-		std::vector<model::Cosignature<SignatureLayout::Raw>> m_cosignatures; // sorted by signer so that sets of cosignatures added in different order match
+		std::vector<model::CosignatureInfo> m_cosignatures; // sorted by signer so that sets of cosignatures added in different order match
 	};
 
 	// region MemoryPtCacheView
@@ -135,7 +135,7 @@ namespace catapult { namespace cache {
 			if (knownShortHashPairs.cend() != iter && iter->second == utils::ToShortHash(ptData.cosignaturesHash()))
 				continue;
 
-			auto entrySize = sizeof(Hash256) + sizeof(model::Cosignature<SignatureLayout::Raw>) * ptData.cosignatures().size();
+			auto entrySize = sizeof(Hash256) + sizeof(model::CosignatureInfo) * ptData.cosignatures().size();
 			model::CosignedTransactionInfo transactionInfo;
 			transactionInfo.EntityHash = ptData.entityHash();
 			transactionInfo.Cosignatures = ptData.cosignatures();
@@ -198,9 +198,9 @@ namespace catapult { namespace cache {
 				return true;
 			}
 
-			model::DetachedTransactionInfo add(const Hash256& parentHash, const Key& signer, const RawSignature& signature) override {
+			model::DetachedTransactionInfo add(const Hash256& parentHash, const Key& signer, const RawSignature& signature, DerivationScheme derivationScheme) override {
 				auto iter = m_transactionDataContainer.find(parentHash);
-				return m_transactionDataContainer.cend() == iter || !iter->second.add(signer, signature)
+				return m_transactionDataContainer.cend() == iter || !iter->second.add(signer, signature, derivationScheme)
 						? model::DetachedTransactionInfo()
 						: ToTransactionInfo(*iter);
 			}

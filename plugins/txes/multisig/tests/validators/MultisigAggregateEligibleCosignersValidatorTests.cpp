@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include "src/validators/Validators.h"
 #include "src/plugins/ModifyMultisigAccountTransactionPlugin.h"
 #include "catapult/model/TransactionPlugin.h"
@@ -32,7 +33,8 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MultisigAggregateEligibleCosignersValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MultisigAggregateEligibleCosigners, model::TransactionRegistry())
+	DEFINE_COMMON_VALIDATOR_TESTS(MultisigAggregateEligibleCosignersV1, model::TransactionRegistry())
+	DEFINE_COMMON_VALIDATOR_TESTS(MultisigAggregateEligibleCosignersV2, model::TransactionRegistry())
 
 	namespace {
 		auto CreateTransactionRegistry() {
@@ -45,6 +47,7 @@ namespace catapult { namespace validators {
 			return transactionRegistry;
 		}
 
+		template<typename TTraits>
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const cache::CatapultCache& cache,
@@ -65,12 +68,12 @@ namespace catapult { namespace validators {
 			}
 
 			// - setup cosignatures
-			auto cosignatures = test::GenerateCosignaturesFromCosigners(cosigners);
+			auto cosignatures = test::GenerateCosignaturesFromCosigners<typename TTraits::Descriptor>(cosigners);
 			auto transactionRegistry = CreateTransactionRegistry();
 
-			using Notification = model::AggregateCosignaturesNotification<1>;
+			using Notification = typename TTraits::Notification;
 			Notification notification(signer, embeddedSigners.size(), pTransactions, cosignatures.size(), cosignatures.data());
-			auto pValidator = CreateMultisigAggregateEligibleCosignersValidator(transactionRegistry);
+			auto pValidator = TTraits::CreateValidator(transactionRegistry);
 
 			test::MutableBlockchainConfiguration config;
 			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
@@ -92,14 +95,35 @@ namespace catapult { namespace validators {
 	// region unknown account / known non-multisig account
 
 	namespace {
-		struct UnknownAccountTraits {
+
+		struct V1TraitsMixin {
+			using Notification = model::AggregateCosignaturesNotification<1>;
+			using Descriptor = model::AggregateTransactionRawDescriptor;
+			static auto CreateValidator(const model::TransactionRegistry& registry)
+			{
+				return CreateMultisigAggregateEligibleCosignersV1Validator(registry);
+			}
+		};
+
+		struct V2TraitsMixin {
+			using Descriptor = model::AggregateTransactionExtendedDescriptor;
+			using Notification = model::AggregateCosignaturesNotification<3>;
+			static auto CreateValidator(const model::TransactionRegistry& registry)
+			{
+				return CreateMultisigAggregateEligibleCosignersV2Validator(registry);
+			}
+		};
+
+		template<typename TMixin>
+		struct UnknownAccountTraits : public TMixin{
 			static auto CreateCache(const Key&) {
 				// return an empty cache
 				return test::MultisigCacheFactory::Create();
 			}
 		};
 
-		struct CosignatoryAccountTraits {
+		template<typename TMixin>
+		struct CosignatoryAccountTraits : public TMixin{
 			static auto CreateCache(const Key& aggregateSigner) {
 				auto cache = test::MultisigCacheFactory::Create();
 				auto cacheDelta = cache.createDelta();
@@ -124,16 +148,20 @@ namespace catapult { namespace validators {
 			auto cache = TTraits::CreateCache(aggregateSigner);
 
 			// Assert:
-			AssertValidationResult(expectedResult, cache, aggregateSigner, embeddedSigners, cosigners, newCosignersMustApprove, strictSigner);
+			AssertValidationResult<TTraits>(expectedResult, cache, aggregateSigner, embeddedSigners, cosigners, newCosignersMustApprove, strictSigner);
 		}
 	}
 
 #define NON_MULTISIG_TRAITS_TEST(TEST_NAME) \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(bool newCosignersMustApprove); \
-	TEST(TEST_CLASS, TEST_NAME##_UnknownAccount_NewCosignersMustApprove) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<UnknownAccountTraits>(true); } \
-	TEST(TEST_CLASS, TEST_NAME##_UnknownAccount_NewCosignersMustNotApprove) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<UnknownAccountTraits>(false); } \
-	TEST(TEST_CLASS, TEST_NAME##_CosignatoryAccount_NewCosignersMustApprove) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<CosignatoryAccountTraits>(true); } \
-	TEST(TEST_CLASS, TEST_NAME##_CosignatoryAccount_NewCosignersMustNotApprove) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<CosignatoryAccountTraits>(false); } \
+	TEST(TEST_CLASS, TEST_NAME##_UnknownAccount_NewCosignersMustApprove_V1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<UnknownAccountTraits<V1TraitsMixin>>(true); } \
+	TEST(TEST_CLASS, TEST_NAME##_UnknownAccount_NewCosignersMustNotApprove_V1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<UnknownAccountTraits<V1TraitsMixin>>(false); } \
+	TEST(TEST_CLASS, TEST_NAME##_CosignatoryAccount_NewCosignersMustApprove_V1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<CosignatoryAccountTraits<V1TraitsMixin>>(true); } \
+	TEST(TEST_CLASS, TEST_NAME##_CosignatoryAccount_NewCosignersMustNotApprove_V1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<CosignatoryAccountTraits<V1TraitsMixin>>(false); } \
+	TEST(TEST_CLASS, TEST_NAME##_UnknownAccount_NewCosignersMustApprove_V2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<UnknownAccountTraits<V2TraitsMixin>>(true); } \
+	TEST(TEST_CLASS, TEST_NAME##_UnknownAccount_NewCosignersMustNotApprove_V2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<UnknownAccountTraits<V2TraitsMixin>>(false); } \
+	TEST(TEST_CLASS, TEST_NAME##_CosignatoryAccount_NewCosignersMustApprove_V2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<CosignatoryAccountTraits<V2TraitsMixin>>(true); } \
+	TEST(TEST_CLASS, TEST_NAME##_CosignatoryAccount_NewCosignersMustNotApprove_V2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<CosignatoryAccountTraits<V2TraitsMixin>>(false); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(bool newCosignersMustApprove)
 
 	NON_MULTISIG_TRAITS_TEST(CosignerIsEligibleWhenItMatchesEmbeddedTransactionSigner) {
@@ -194,9 +222,13 @@ namespace catapult { namespace validators {
 	// endregion
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits>          \
 	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(bool newCosignersMustApprove); \
-	TEST(TEST_CLASS, TEST_NAME##_NewCosignersMustApprove) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(true); } \
-	TEST(TEST_CLASS, TEST_NAME##_NewCosignersMustNotApprove) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(false); } \
+	TEST(TEST_CLASS, TEST_NAME##_NewCosignersMustApproveV1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V1TraitsMixin>(true); } \
+	TEST(TEST_CLASS, TEST_NAME##_NewCosignersMustNotApproveV1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V1TraitsMixin>(false); } \
+	TEST(TEST_CLASS, TEST_NAME##_NewCosignersMustApproveV2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V1TraitsMixin>(true); } \
+	TEST(TEST_CLASS, TEST_NAME##_NewCosignersMustNotApproveV2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V1TraitsMixin>(false); } \
+    template<typename TTraits>                                 \
 	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(bool newCosignersMustApprove)
 
 	// region multisig
@@ -223,7 +255,7 @@ namespace catapult { namespace validators {
 		auto i = 0u;
 		for (const auto& embeddedCosignatory : embeddedCosignatories) {
 			CATAPULT_LOG(debug) << "cosigning with cosigner " << i++;
-			AssertValidationResult(ValidationResult::Success, cache, embeddedSigners[0], embeddedSigners, { embeddedCosignatory }, newCosignersMustApprove, true);
+			AssertValidationResult<TTraits>(ValidationResult::Success, cache, embeddedSigners[0], embeddedSigners, { embeddedCosignatory }, newCosignersMustApprove, true);
 		}
 	}
 
@@ -237,7 +269,7 @@ namespace catapult { namespace validators {
 		auto i = 0u;
 		for (const auto& embeddedCosignatory : embeddedCosignatories) {
 			CATAPULT_LOG(debug) << "signing aggregate with " << i++;
-			AssertValidationResult(ValidationResult::Success, cache, embeddedCosignatory, embeddedSigners, { embeddedSigners[0] }, newCosignersMustApprove, true);
+			AssertValidationResult<TTraits>(ValidationResult::Success, cache, embeddedCosignatory, embeddedSigners, { embeddedSigners[0] }, newCosignersMustApprove, true);
 		}
 	}
 
@@ -268,7 +300,7 @@ namespace catapult { namespace validators {
 		auto i = 0u;
 		for (const auto& embeddedCosignatory : embeddedCosignatoriesL2) {
 			CATAPULT_LOG(debug) << "cosigning with cosigner " << i++;
-			AssertValidationResult(ValidationResult::Success, cache, embeddedSigners[0], embeddedSigners, { embeddedCosignatory }, newCosignersMustApprove, true);
+			AssertValidationResult<TTraits>(ValidationResult::Success, cache, embeddedSigners[0], embeddedSigners, { embeddedCosignatory }, newCosignersMustApprove, true);
 		}
 	}
 
@@ -283,7 +315,7 @@ namespace catapult { namespace validators {
 		auto i = 0u;
 		for (const auto& embeddedCosignatory : embeddedCosignatoriesL2) {
 			CATAPULT_LOG(debug) << "signing aggregate with " << i++;
-			AssertValidationResult(ValidationResult::Success, cache, embeddedCosignatory, embeddedSigners, { embeddedSigners[0] }, newCosignersMustApprove, true);
+			AssertValidationResult<TTraits>(ValidationResult::Success, cache, embeddedCosignatory, embeddedSigners, { embeddedSigners[0] }, newCosignersMustApprove, true);
 		}
 	}
 
@@ -295,6 +327,7 @@ namespace catapult { namespace validators {
 		constexpr auto Add = model::CosignatoryModificationType::Add;
 		constexpr auto Del = model::CosignatoryModificationType::Del;
 
+		template<typename TTraits>
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const cache::CatapultCache& cache,
@@ -304,12 +337,12 @@ namespace catapult { namespace validators {
 				bool newCosignersMustApprove,
 				bool strictSigner) {
 			// Arrange: setup cosignatures
-			auto cosignatures = test::GenerateCosignaturesFromCosigners(cosigners);
+			auto cosignatures = test::GenerateCosignaturesFromCosigners<typename TTraits::Descriptor>(cosigners);
 			auto transactionRegistry = CreateTransactionRegistry();
 
-			using Notification = model::AggregateCosignaturesNotification<1>;
+			using Notification = typename TTraits::Notification;
 			Notification notification(signer, 1, &transaction, cosignatures.size(), cosignatures.data());
-			auto pValidator = CreateMultisigAggregateEligibleCosignersValidator(transactionRegistry);
+			auto pValidator = TTraits::CreateValidator(transactionRegistry);
 
 			test::MutableBlockchainConfiguration config;
 			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
@@ -328,7 +361,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, ModifyMultisigAccountAddedAccountsGainEligibilityWhenMustApprove) {
+	TEST(TEST_CLASS, ModifyMultisigAccountAddedAccountsGainEligibilityWhenMustApproveV1) {
 		// Arrange:
 		auto signer = test::GenerateRandomByteArray<Key>();
 		auto pTransaction = test::CreateModifyMultisigAccountTransaction(signer, { Add, Del, Add, Del });
@@ -339,7 +372,21 @@ namespace catapult { namespace validators {
 		const auto* pModifications = pTransaction->ModificationsPtr();
 		for (const auto& cosignatory : { signer, pModifications[0].CosignatoryPublicKey, pModifications[2].CosignatoryPublicKey }) {
 			CATAPULT_LOG(debug) << "cosigning with cosigner " << i++;
-			AssertValidationResult(ValidationResult::Success, cache, signer, *pTransaction, { cosignatory }, true, true);
+			AssertValidationResult<V1TraitsMixin>(ValidationResult::Success, cache, signer, *pTransaction, { cosignatory }, true, true);
+		}
+	}
+	TEST(TEST_CLASS, ModifyMultisigAccountAddedAccountsGainEligibilityWhenMustApproveV2) {
+		// Arrange:
+		auto signer = test::GenerateRandomByteArray<Key>();
+		auto pTransaction = test::CreateModifyMultisigAccountTransaction(signer, { Add, Del, Add, Del });
+		auto cache = test::MultisigCacheFactory::Create();
+
+		// Assert: added accounts are eligible cosigners even though they aren't in the multisig cache
+		auto i = 0u;
+		const auto* pModifications = pTransaction->ModificationsPtr();
+		for (const auto& cosignatory : { signer, pModifications[0].CosignatoryPublicKey, pModifications[2].CosignatoryPublicKey }) {
+			CATAPULT_LOG(debug) << "cosigning with cosigner " << i++;
+			AssertValidationResult<V2TraitsMixin>(ValidationResult::Success, cache, signer, *pTransaction, { cosignatory }, true, true);
 		}
 	}
 
@@ -354,7 +401,7 @@ namespace catapult { namespace validators {
 		const auto* pModifications = pTransaction->ModificationsPtr();
 		for (const auto& cosignatory : { pModifications[1].CosignatoryPublicKey, pModifications[3].CosignatoryPublicKey }) {
 			CATAPULT_LOG(debug) << "cosigning with cosigner " << i++;
-			AssertValidationResult(Failure_Aggregate_Ineligible_Cosigners, cache, signer, *pTransaction, { cosignatory }, newCosignersMustApprove, true);
+			AssertValidationResult<TTraits>(Failure_Aggregate_Ineligible_Cosigners, cache, signer, *pTransaction, { cosignatory }, newCosignersMustApprove, true);
 		}
 	}
 
@@ -367,7 +414,7 @@ namespace catapult { namespace validators {
 
 		// Assert: existing eligibility is retained
 		//         (the embedded tx signer account is still allowed to sign even though it was deleted from a multisig account)
-		AssertValidationResult(ValidationResult::Success, cache, signer, *pTransaction, { signer }, newCosignersMustApprove,true);
+		AssertValidationResult<TTraits>(ValidationResult::Success, cache, signer, *pTransaction, { signer }, newCosignersMustApprove,true);
 	}
 
 	// endregion

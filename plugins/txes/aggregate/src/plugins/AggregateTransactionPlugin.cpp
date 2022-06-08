@@ -33,11 +33,12 @@ using namespace catapult::model;
 namespace catapult { namespace plugins {
 
 	namespace {
-		template<uint32_t TCoSignatureVersion>
-		constexpr const AggregateTransaction<TCoSignatureVersion>& CastToDerivedType(const Transaction& transaction) {
-			return static_cast<const AggregateTransaction<TCoSignatureVersion>&>(transaction);
+		template<typename TDescriptor>
+		constexpr const AggregateTransaction<TDescriptor>& CastToDerivedType(const Transaction& transaction) {
+			return static_cast<const AggregateTransaction<TDescriptor>&>(transaction);
 		}
 
+		template<typename TDescriptor>
 		class AggregateTransactionPlugin : public TransactionPlugin {
 		public:
 			AggregateTransactionPlugin(
@@ -57,113 +58,30 @@ namespace catapult { namespace plugins {
 			TransactionAttributes attributes(const Height& height) const override {
 				const auto& config = m_pConfigHolder->ConfigAtHeightOrLatest(height);
 				const auto& pluginConfig = config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
-				return { AggregateTransaction<1>::Min_Version, AggregateTransaction<1>::Current_Version, pluginConfig.MaxBondedTransactionLifetime };
+				return { AggregateTransaction<TDescriptor>::Min_Version, AggregateTransaction<TDescriptor>::Current_Version, pluginConfig.MaxBondedTransactionLifetime };
 			}
 			uint64_t calculateRealSize(const Transaction& transaction) const override {
 				// if size is valid, the real size is the transaction size
 				// if size is invalid, return a size that can never be correct (transaction size is uint32_t)
-				return IsSizeValid(CastToDerivedType<SignatureLayout::Raw>(transaction), m_transactionRegistry)
+				return IsSizeValid(CastToDerivedType<TDescriptor>(transaction), m_transactionRegistry)
 						? transaction.Size
 						: std::numeric_limits<uint64_t>::max();
 			}
 
-			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override {
-				const auto& aggregate = CastToDerivedType<1>(transactionInfo.entity());
-				auto numTransactions = static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend()));
-				auto numCosignatures = aggregate.CosignaturesCount();
-
-				switch (aggregate.EntityVersion()) {
-				case 3: {
-					sub.notify(AggregateTransactionHashNotification<1>(
-						transactionInfo.hash(),
-						numTransactions,
-						aggregate.TransactionsPtr()));
-
-					sub.notify(AggregateCosignaturesNotification<2>(
-							aggregate.Signer,
-							numTransactions,
-							aggregate.TransactionsPtr(),
-							numCosignatures,
-							aggregate.CosignaturesPtr()));
-
-					[[fallthrough]];
-				}
-
-				case 2: {
-					sub.notify(AggregateTransactionTypeNotification<1>(m_transactionType));
-
-					// publish aggregate notifications
-					// (notice that this must be raised before embedded transaction notifications in order for cosigner aggregation to work)
-					sub.notify(AggregateCosignaturesNotification<1>(
-							aggregate.Signer,
-							numTransactions,
-							aggregate.TransactionsPtr(),
-							numCosignatures,
-							aggregate.CosignaturesPtr()));
-
-					std::map<Key, DerivationScheme> associatedVersion;
-					// publish all sub-transaction information
-					for (const auto& subTransaction : aggregate.Transactions()) {
-						// - change source
-						associatedVersion.try_emplace(subTransaction.Signer, subTransaction.SignatureDerivationScheme());
-						constexpr auto Relative = SourceChangeNotification<1>::SourceChangeType::Relative;
-						sub.notify(SourceChangeNotification<1>(Relative, 0, Relative, 1));
-
-						// - signers and entity
-						sub.notify(AccountPublicKeyNotification<1>(subTransaction.Signer));
-						const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
-
-						sub.notify(EntityNotification<1>(
-								subTransaction.Network(),
-								subTransaction.Type,
-								subTransaction.EntityVersion()));
-
-						// - generic sub-transaction notification
-						sub.notify(AggregateEmbeddedTransactionNotification<1>(
-								aggregate.Signer,
-								subTransaction,
-								numCosignatures,
-								aggregate.CosignaturesPtr()));
-
-						// - specific sub-transaction notifications
-						//   (calculateRealSize would have failed if plugin is unknown or not embeddable)
-						WeakEntityInfoT<EmbeddedTransaction> subTransactionInfo{
-							ConvertEmbeddedTransaction(subTransaction, aggregate.Deadline, sub.mempool()),
-							transactionInfo.associatedHeight()
-						};
-						plugin.publish(subTransactionInfo, sub);
-					}
-
-					// publish all cosigner information (as an optimization these are published with the source of the last sub-transaction)
-					const auto* pCosignature = aggregate.CosignaturesPtr();
-					for (auto i = 0u; i < numCosignatures; ++i) {
-						// - notice that all valid cosigners must have been observed previously as part of either
-						//   (1) sub-transaction execution or (2) composite account setup
-						// - require the cosigners to sign the aggregate indirectly via the hash of its data
-						auto it = associatedVersion.find(pCosignature->Signer);
-						sub.notify(SignatureNotification<2>(pCosignature->Signer, pCosignature->Signature, it != associatedVersion.end() ? it->second : DerivationScheme::Ed25519_Sha3,  transactionInfo.hash()));
-						++pCosignature;
-					}
-					break;
-				}
-
-				default:
-					CATAPULT_LOG(debug) << "invalid version of AggregateTransaction: " << aggregate.EntityVersion();
-				}
-			}
+			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override;
 
 			RawBuffer dataBuffer(const Transaction& transaction) const override {
-				const auto& aggregate = CastToDerivedType<1>(transaction);
+				const auto& aggregate = CastToDerivedType<TDescriptor>(transaction);
 
 				auto headerSize = VerifiableEntity::Header_Size;
 				return {
 					reinterpret_cast<const uint8_t*>(&aggregate) + headerSize,
-					sizeof(AggregateTransaction<1>) - headerSize + aggregate.PayloadSize
+					sizeof(AggregateTransaction<TDescriptor>) - headerSize + aggregate.PayloadSize
 				};
 			}
 
 			std::vector<RawBuffer> merkleSupplementaryBuffers(const Transaction& transaction) const override {
-				const auto& aggregate = CastToDerivedType<1>(transaction);
+				const auto& aggregate = CastToDerivedType<TDescriptor>(transaction);
 
 				std::vector<RawBuffer> buffers;
 				auto numCosignatures = aggregate.CosignaturesCount();
@@ -195,10 +113,173 @@ namespace catapult { namespace plugins {
 		};
 	}
 
-	std::unique_ptr<TransactionPlugin> CreateAggregateTransactionPlugin(
+	template<>
+	void AggregateTransactionPlugin<AggregateTransactionRawDescriptor>::publish(
+			const WeakEntityInfoT<Transaction>& transactionInfo,
+			NotificationSubscriber& sub) const {
+		const auto& aggregate = CastToDerivedType<AggregateTransactionRawDescriptor>(transactionInfo.entity());
+		auto numTransactions = static_cast<uint32_t>(
+				std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend()));
+		auto numCosignatures = aggregate.CosignaturesCount();
+
+		switch (aggregate.EntityVersion()) {
+		case 3: {
+			sub.notify(AggregateTransactionHashNotification<1>(
+					transactionInfo.hash(), numTransactions, aggregate.TransactionsPtr()));
+
+			sub.notify(AggregateCosignaturesNotification<2>(
+					aggregate.Signer,
+					numTransactions,
+					aggregate.TransactionsPtr(),
+					numCosignatures,
+					aggregate.CosignaturesPtr()));
+
+			[[fallthrough]];
+		}
+
+		case 2: {
+			sub.notify(AggregateTransactionTypeNotification<1>(m_transactionType));
+
+			// publish aggregate notifications
+			// (notice that this must be raised before embedded transaction notifications in order for cosigner
+			// aggregation to work)
+			sub.notify(AggregateCosignaturesNotification<1>(
+					aggregate.Signer,
+					numTransactions,
+					aggregate.TransactionsPtr(),
+					numCosignatures,
+					aggregate.CosignaturesPtr()));
+
+			// publish all sub-transaction information
+			for (const auto& subTransaction : aggregate.Transactions()) {
+				// - change source
+				constexpr auto Relative = SourceChangeNotification<1>::SourceChangeType::Relative;
+				sub.notify(SourceChangeNotification<1>(Relative, 0, Relative, 1));
+
+				// - signers and entity
+				sub.notify(AccountPublicKeyNotification<1>(subTransaction.Signer));
+				const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
+
+				sub.notify(EntityNotification<1>(
+						subTransaction.Network(), subTransaction.Type, subTransaction.EntityVersion()));
+
+				// - generic sub-transaction notification
+				sub.notify(AggregateEmbeddedTransactionNotification<1>(
+						aggregate.Signer, subTransaction, numCosignatures, aggregate.CosignaturesPtr()));
+
+				// - specific sub-transaction notifications
+				//   (calculateRealSize would have failed if plugin is unknown or not embeddable)
+				WeakEntityInfoT<EmbeddedTransaction> subTransactionInfo {
+					ConvertEmbeddedTransaction(subTransaction, aggregate.Deadline, sub.mempool()),
+					transactionInfo.associatedHeight()
+				};
+				plugin.publish(subTransactionInfo, sub);
+			}
+
+			// publish all cosigner information (as an optimization these are published with the source of the last
+			// sub-transaction)
+			const auto* pCosignature = aggregate.CosignaturesPtr();
+			for (auto i = 0u; i < numCosignatures; ++i) {
+				// - notice that all valid cosigners must have been observed previously as part of either
+				//   (1) sub-transaction execution or (2) composite account setup
+				// - require the cosigners to sign the aggregate indirectly via the hash of its data
+				sub.notify(SignatureNotification<1>(
+						pCosignature->Signer,
+						pCosignature->Signature,
+						transactionInfo.hash()));
+				++pCosignature;
+			}
+			break;
+		}
+
+		default:
+			CATAPULT_LOG(debug) << "invalid version of AggregateTransaction: " << aggregate.EntityVersion();
+		}
+	}
+
+	template<>
+	void AggregateTransactionPlugin<AggregateTransactionExtendedDescriptor>::publish(
+			const WeakEntityInfoT<Transaction>& transactionInfo,
+			NotificationSubscriber& sub) const {
+		const auto& aggregate = CastToDerivedType<AggregateTransactionExtendedDescriptor>(transactionInfo.entity());
+		auto numTransactions = static_cast<uint32_t>(
+				std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend()));
+		auto numCosignatures = aggregate.CosignaturesCount();
+
+		switch (aggregate.EntityVersion()) {
+		case 1: {
+			sub.notify(AggregateTransactionTypeNotification<1>(m_transactionType));
+
+			sub.notify(AggregateTransactionHashNotification<1>(
+					transactionInfo.hash(), numTransactions, aggregate.TransactionsPtr()));
+
+			sub.notify(AggregateCosignaturesNotification<3>(
+					aggregate.Signer,
+					numTransactions,
+					aggregate.TransactionsPtr(),
+					numCosignatures,
+					aggregate.CosignaturesPtr()));
+
+			std::map<Key, DerivationScheme> associatedVersion;
+			// publish all sub-transaction information
+			for (const auto& subTransaction : aggregate.Transactions()) {
+				// - change source
+				constexpr auto Relative = SourceChangeNotification<1>::SourceChangeType::Relative;
+				sub.notify(SourceChangeNotification<1>(Relative, 0, Relative, 1));
+
+				// - signers and entity
+				sub.notify(AccountPublicKeyNotification<1>(subTransaction.Signer));
+				const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
+
+				sub.notify(EntityNotification<1>(
+						subTransaction.Network(), subTransaction.Type, subTransaction.EntityVersion()));
+
+				// - generic sub-transaction notification
+				sub.notify(AggregateEmbeddedTransactionNotification<2>(
+						aggregate.Signer, subTransaction, numCosignatures, aggregate.CosignaturesPtr()));
+
+				// - specific sub-transaction notifications
+				//   (calculateRealSize would have failed if plugin is unknown or not embeddable)
+				WeakEntityInfoT<EmbeddedTransaction> subTransactionInfo {
+						ConvertEmbeddedTransaction(subTransaction, aggregate.Deadline, sub.mempool()),
+						transactionInfo.associatedHeight()
+				};
+				plugin.publish(subTransactionInfo, sub);
+			}
+
+			// publish all cosigner information (as an optimization these are published with the source of the last
+			// sub-transaction)
+			const auto* pCosignature = aggregate.CosignaturesPtr();
+			for (auto i = 0u; i < numCosignatures; ++i) {
+				// - notice that all valid cosigners must have been observed previously as part of either
+				//   (1) sub-transaction execution or (2) composite account setup
+				// - require the cosigners to sign the aggregate indirectly via the hash of its data
+				auto it = associatedVersion.find(pCosignature->Signer);
+				sub.notify(SignatureNotification<2>(
+						pCosignature->Signer,
+						pCosignature->GetRawSignature(),
+						pCosignature->GetDerivationScheme(),
+						transactionInfo.hash()));
+				++pCosignature;
+			}
+			break;
+		}
+
+		default:
+			CATAPULT_LOG(debug) << "invalid version of AggregateTransaction: " << aggregate.EntityVersion();
+		}
+	}
+
+	std::unique_ptr<TransactionPlugin> CreateAggregateTransactionV1Plugin(
 			const TransactionRegistry& transactionRegistry,
 			model::EntityType transactionType,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, transactionType, pConfigHolder);
+		return std::make_unique<AggregateTransactionPlugin<AggregateTransactionRawDescriptor>>(transactionRegistry, transactionType, pConfigHolder);
+	}
+	std::unique_ptr<TransactionPlugin> CreateAggregateTransactionV2Plugin(
+			const TransactionRegistry& transactionRegistry,
+			model::EntityType transactionType,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+		return std::make_unique<AggregateTransactionPlugin<AggregateTransactionExtendedDescriptor>>(transactionRegistry, transactionType, pConfigHolder);
 	}
 }}

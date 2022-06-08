@@ -108,6 +108,7 @@ namespace catapult { namespace subscribers {
 		io::Write8(stream, utils::to_underlying_type(PtChangeOperationType::Add_Cosignature));
 		stream.write(signer);
 		stream.write(signature);
+		io::Write8(stream, 1);
 		io::WriteTransactionInfo(stream, *transactionInfos.cbegin());
 
 		mocks::MockPtChangeSubscriber subscriber;
@@ -122,7 +123,7 @@ namespace catapult { namespace subscribers {
 
 		const auto& cosignatureInfo = subscriber.addedCosignatureInfos()[0];
 		EXPECT_EQ(signer, cosignatureInfo.second.Signer);
-		EXPECT_EQ(signature, cosignatureInfo.second.Signature);
+		EXPECT_EQ(signature, cosignatureInfo.second.GetRawSignature());
 		test::AssertEqual(*transactionInfos.cbegin(), *cosignatureInfo.first);
 
 		EXPECT_EQ(0u, subscriber.flushInfos().size());

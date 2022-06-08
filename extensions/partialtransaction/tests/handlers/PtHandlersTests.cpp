@@ -20,6 +20,7 @@
 
 #include "partialtransaction/src/handlers/PtHandlers.h"
 #include "plugins/txes/aggregate/src/model/AggregateEntityType.h"
+#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include "catapult/utils/Functional.h"
 #include "tests/test/core/PushHandlerTestUtils.h"
 #include "tests/test/core/mocks/MockTransaction.h"
@@ -35,6 +36,7 @@ namespace catapult { namespace handlers {
 	// region PushPartialTransactionsHandler
 
 	namespace {
+		template<typename TDescriptor>
 		struct PushPtTraits {
 			static constexpr auto Packet_Type = ionet::PacketType::Push_Partial_Transactions;
 			static constexpr auto Data_Size = sizeof(mocks::MockTransaction);
@@ -48,14 +50,20 @@ namespace catapult { namespace handlers {
 				for (auto i = 0u; i < count; ++i) {
 					auto size = Data_Size + i + 1;
 					test::SetTransactionAt(buffer, currentOffset, size);
-					reinterpret_cast<model::VerifiableEntity&>(buffer[currentOffset]).Type = model::Entity_Type_Aggregate_Bonded;
+					if constexpr(std::is_same_v<TDescriptor, model::AggregateTransactionRawDescriptor>)
+						reinterpret_cast<model::VerifiableEntity&>(buffer[currentOffset]).Type = model::Entity_Type_Aggregate_Bonded_V1;
+					else
+						reinterpret_cast<model::VerifiableEntity&>(buffer[currentOffset]).Type = model::Entity_Type_Aggregate_Bonded_V2;
 					currentOffset += size;
 				}
 			}
 
 			static auto CreateRegistry() {
 				model::TransactionRegistry registry;
-				registry.registerPlugin(mocks::CreateMockTransactionPlugin(model::Entity_Type_Aggregate_Bonded));
+				if constexpr(std::is_same_v<TDescriptor, model::AggregateTransactionRawDescriptor>)
+					registry.registerPlugin(mocks::CreateMockTransactionPlugin(model::Entity_Type_Aggregate_Bonded_V1));
+				else
+					registry.registerPlugin(mocks::CreateMockTransactionPlugin(model::Entity_Type_Aggregate_Bonded_V2));
 				registry.registerPlugin(mocks::CreateMockTransactionPlugin());
 				return registry;
 			}
@@ -69,20 +77,36 @@ namespace catapult { namespace handlers {
 		};
 	}
 
-	DEFINE_PUSH_HANDLER_TESTS(TEST_CLASS, PushPt)
+	DEFINE_PUSH_HANDLER_TEMPLATED_TESTS(TEST_CLASS, V1, PushPt, model::AggregateTransactionRawDescriptor)
+	DEFINE_PUSH_HANDLER_TEMPLATED_TESTS(TEST_CLASS, V2, PushPt, model::AggregateTransactionExtendedDescriptor)
 
-	TEST(TEST_CLASS, PushTransactionsHandler_ValidPacketWithUnhandledTransactionsIsRejected) {
+	TEST(TEST_CLASS, PushTransactionsHandler_ValidPacketWithUnhandledTransactionsIsRejectedV1) {
 		// Arrange: malform type of middle transaction, transactions have sizes: Data_Size + 1, Data_Size + 2, etc.
-		test::PushHandlerTests<PushPtTraits>::PushHandlerBuffer buffer(3, true);
+		test::PushHandlerTests<PushPtTraits<model::AggregateTransactionRawDescriptor>>::PushHandlerBuffer buffer(3, true);
 		auto dataOffset = sizeof(ionet::Packet);
-		auto tx1Size = PushPtTraits::Data_Size + 1;
+		auto tx1Size = PushPtTraits<model::AggregateTransactionRawDescriptor>::Data_Size + 1;
 		reinterpret_cast<model::VerifiableEntity&>(buffer.buffer()[dataOffset + tx1Size]).Type = mocks::MockTransaction::Entity_Type;
 
 		// Act:
-		test::PushHandlerTests<PushPtTraits>::RunPushTransactionsHandlerTest(PushPtTraits::RegisterHandler, buffer.packet(), [](
+		test::PushHandlerTests<PushPtTraits<model::AggregateTransactionRawDescriptor>>::RunPushTransactionsHandlerTest(PushPtTraits<model::AggregateTransactionRawDescriptor>::RegisterHandler, buffer.packet(), [](
 				const auto& counters) {
 			// Assert:
 			EXPECT_TRUE(counters.empty());
+		});
+	}
+
+	TEST(TEST_CLASS, PushTransactionsHandler_ValidPacketWithUnhandledTransactionsIsRejectedV2) {
+		// Arrange: malform type of middle transaction, transactions have sizes: Data_Size + 1, Data_Size + 2, etc.
+		test::PushHandlerTests<PushPtTraits<model::AggregateTransactionExtendedDescriptor>>::PushHandlerBuffer buffer(3, true);
+		auto dataOffset = sizeof(ionet::Packet);
+		auto tx1Size = PushPtTraits<model::AggregateTransactionExtendedDescriptor>::Data_Size + 1;
+		reinterpret_cast<model::VerifiableEntity&>(buffer.buffer()[dataOffset + tx1Size]).Type = mocks::MockTransaction::Entity_Type;
+
+		// Act:
+		test::PushHandlerTests<PushPtTraits<model::AggregateTransactionExtendedDescriptor>>::RunPushTransactionsHandlerTest(PushPtTraits<model::AggregateTransactionExtendedDescriptor>::RegisterHandler, buffer.packet(), [](
+				const auto& counters) {
+		  // Assert:
+		  EXPECT_TRUE(counters.empty());
 		});
 	}
 
@@ -128,7 +152,7 @@ namespace catapult { namespace handlers {
 					m_transactionInfos.push_back({
 						test::GenerateRandomByteArray<Hash256>(),
 						i % 2 ? nullptr : mocks::CreateMockTransaction(static_cast<uint16_t>(i)),
-						test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(i)
+						test::GenerateRandomDataVector<model::CosignatureInfo>(i)
 					});
 				}
 			}
@@ -142,7 +166,7 @@ namespace catapult { namespace handlers {
 				return utils::Sum(m_transactionInfos, [](const auto& transactionInfo){
 					return sizeof(uint16_t) // tag
 							+ (transactionInfo.pTransaction ? transactionInfo.pTransaction->Size : Hash256_Size)
-							+ transactionInfo.Cosignatures.size() * sizeof(model::Cosignature<SignatureLayout::Raw>);
+							+ transactionInfo.Cosignatures.size() * sizeof(model::CosignatureInfo);
 				});
 			}
 
@@ -173,7 +197,7 @@ namespace catapult { namespace handlers {
 
 					if (!transactionInfo.Cosignatures.empty()) {
 						const auto* pCosignatures = payload.buffers()[i + 2].pData;
-						auto expectedSize = transactionInfo.Cosignatures.size() * sizeof(model::Cosignature<SignatureLayout::Raw>);
+						auto expectedSize = transactionInfo.Cosignatures.size() * sizeof(model::CosignatureInfo);
 						EXPECT_EQ_MEMORY(transactionInfo.Cosignatures.data(), pCosignatures, expectedSize) << failedMessage;
 						i += 3;
 					} else {

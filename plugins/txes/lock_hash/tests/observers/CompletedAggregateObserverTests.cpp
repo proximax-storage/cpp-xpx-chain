@@ -19,11 +19,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include "src/observers/Observers.h"
 #include "src/model/HashLockReceiptType.h"
 #include "plugins/txes/aggregate/src/model/AggregateEntityType.h"
 #include "plugins/txes/lock_shared/tests/observers/LockStatusAndBalanceObserverTests.h"
-#include "tests/test/HashLockInfoCacheTestUtils.h"
+#include "tests/test/AggregateTransactionPluginTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 
 namespace catapult { namespace observers {
@@ -35,14 +36,16 @@ namespace catapult { namespace observers {
 	DEFINE_COMMON_OBSERVER_TESTS(CompletedAggregate,)
 
 	namespace {
+		template<typename TDescriptor>
 		struct HashTraits {
 		public:
 			using BasicTraits = test::BasicHashLockInfoTestTraits;
 
+
 			struct NotificationBuilder {
 			public:
 				NotificationBuilder()
-						: m_entityType(model::Entity_Type_Aggregate_Bonded)
+						: m_entityType(TDescriptor::BondedType)
 						, m_deadline(test::GenerateRandomValue<Timestamp>()) {
 					test::FillWithRandomData(m_signer);
 					test::FillWithRandomData(m_transactionHash);
@@ -81,28 +84,37 @@ namespace catapult { namespace observers {
 			}
 		};
 
+		template<typename TDescriptor>
 		void AssertObserverIgnoresUnknownTransactionType(model::EntityType entityType) {
 			// Arrange: cache is empty
 			ObserverTestContext context(NotifyMode::Commit, Height{444});
-			auto pObserver = HashTraits::CreateObserver();
+			auto pObserver = HashTraits<TDescriptor>::CreateObserver();
 
 			// Act:
-			HashTraits::NotificationBuilder notificationBuilder;
+			typename HashTraits<TDescriptor>::NotificationBuilder notificationBuilder;
 			notificationBuilder.setType(entityType);
 
 			test::ObserveNotification(*pObserver, notificationBuilder.notification(), context);
 
 			// Assert: observer would have thrown if it had accessed the cache
-			auto& lockInfoCacheDelta = context.cache().sub<HashTraits::BasicTraits::CacheType>();
+			auto& lockInfoCacheDelta = context.cache().sub<typename HashTraits<TDescriptor>::BasicTraits::CacheType>();
 			EXPECT_EQ(0u, lockInfoCacheDelta.size()) << entityType;
 		}
 	}
 
-	TEST(TEST_CLASS, ObserverIgnoresUnknownTransactionType) {
+	TEST(TEST_CLASS, ObserverIgnoresUnknownTransactionTypeV1) {
 		// Assert:
-		for (auto type : { model::Entity_Type_Aggregate_Complete, static_cast<model::EntityType>(0xFFFF) })
-			AssertObserverIgnoresUnknownTransactionType(type);
+		for (auto type : { model::Entity_Type_Aggregate_Complete_V1, static_cast<model::EntityType>(0xFFFF) })
+			AssertObserverIgnoresUnknownTransactionType<model::AggregateTransactionRawDescriptor>(type);
+	}
+	TEST(TEST_CLASS, ObserverIgnoresUnknownTransactionTypeV2) {
+		// Assert:
+		for (auto type : { model::Entity_Type_Aggregate_Complete_V2, static_cast<model::EntityType>(0xFFFF) })
+			AssertObserverIgnoresUnknownTransactionType<model::AggregateTransactionExtendedDescriptor>(type);
 	}
 
-	DEFINE_LOCK_STATUS_OBSERVER_TESTS(HashTraits)
+	DEFINE_LOCK_STATUS_OBSERVER_TESTS_EXT(HashTraits<model::AggregateTransactionRawDescriptor>, V1)
+	DEFINE_LOCK_STATUS_OBSERVER_TESTS_EXT(HashTraits<model::AggregateTransactionExtendedDescriptor>, V2)
+
+
 }}

@@ -47,7 +47,8 @@ namespace catapult { namespace addressextraction {
 			subscriber.notifyAddCosignature(
 					transactionInfo,
 					test::GenerateRandomByteArray<Key>(),
-					test::GenerateRandomByteArray<RawSignature>());
+					test::GenerateRandomByteArray<RawSignature>(),
+					DerivationScheme::Ed25519_Sha3);
 		});
 	}
 

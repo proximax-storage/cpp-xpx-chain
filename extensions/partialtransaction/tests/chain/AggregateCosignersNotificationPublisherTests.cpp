@@ -20,6 +20,7 @@
 
 #include "partialtransaction/src/chain/AggregateCosignersNotificationPublisher.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
+#include "plugins/txes/aggregate/tests/test/AggregateTestUtils.h"
 #include "catapult/model/WeakCosignedTransactionInfo.h"
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
@@ -31,15 +32,36 @@ namespace catapult { namespace chain {
 
 #define TEST_CLASS AggregateCosignersNotificationPublisherTests
 
+	namespace {
+		struct V1TestTraits {
+			using Descriptor = model::AggregateTransactionRawDescriptor;
+			using EmbeddedNotification = model::AggregateEmbeddedTransactionNotification<1>;
+			using CosignaturesNotification = model::AggregateCosignaturesNotification<1>;
+			static inline const std::vector<model::EntityType> EntityTypes = { Entity_Type_Aggregate_Complete_V1, Entity_Type_Aggregate_Bonded_V1 };
+		};
+
+		struct V2TestTraits {
+			using Descriptor = model::AggregateTransactionExtendedDescriptor;
+			using EmbeddedNotification = model::AggregateEmbeddedTransactionNotification<2>;
+			using CosignaturesNotification = model::AggregateCosignaturesNotification<3>;
+			static inline const std::vector<model::EntityType> EntityTypes = { Entity_Type_Aggregate_Complete_V2, Entity_Type_Aggregate_Bonded_V2 };
+		};
+	}
+
+#define TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_V1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V1TestTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_V2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V2TestTraits>(); } \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 	// region basic
 
-	TEST(TEST_CLASS, NonAggregateTransactionIsNotSupported) {
+	TRAITS_BASED_TEST(NonAggregateTransactionIsNotSupported) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<typename TTraits::EmbeddedNotification> sub;
 		AggregateCosignersNotificationPublisher publisher;
-		auto wrapper = test::CreateAggregateTransaction(2);
+		auto wrapper = test::CreateAggregateTransaction<typename TTraits::Descriptor>(2);
 
-		auto cosignatures = test::GenerateRandomDataVector<Cosignature<SignatureLayout::Raw>>(4);
+		auto cosignatures = test::GenerateRandomDataVector<CosignatureInfo>(4);
 		auto transactionInfo = WeakCosignedTransactionInfo(wrapper.pTransaction.get(), &cosignatures);
 
 		// - change the transaction type
@@ -50,18 +72,18 @@ namespace catapult { namespace chain {
 		EXPECT_THROW(publisher.publish(transactionInfo, sub), catapult_invalid_argument);
 	}
 
-	TEST(TEST_CLASS, AggregateWithCosignaturesIsNotSupported) {
+	TRAITS_BASED_TEST(AggregateWithCosignaturesIsNotSupported) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<typename TTraits::EmbeddedNotification> sub;
 		AggregateCosignersNotificationPublisher publisher;
-		auto wrapper = test::CreateAggregateTransaction(2);
+		auto wrapper = test::CreateAggregateTransaction<typename TTraits::Descriptor>(2);
 
-		auto cosignatures = test::GenerateRandomDataVector<Cosignature<SignatureLayout::Raw>>(4);
+		auto cosignatures = test::GenerateRandomDataVector<CosignatureInfo>(4);
 		auto transactionInfo = WeakCosignedTransactionInfo(wrapper.pTransaction.get(), &cosignatures);
 
 		// - make the transaction look like it has a cosignature
 		//   (since the transactions are not iterated before the check, only the first transaction needs to be valid)
-		wrapper.pTransaction->PayloadSize -= sizeof(Cosignature<SignatureLayout::Raw>);
+		wrapper.pTransaction->PayloadSize -= sizeof(typename TTraits::Descriptor::CosignatureType);
 
 		// Act + Assert: aggregate must not have any cosignatures
 		EXPECT_THROW(publisher.publish(transactionInfo, sub), catapult_invalid_argument);
@@ -72,17 +94,18 @@ namespace catapult { namespace chain {
 	// region publish: aggregate embedded transaction
 
 	namespace {
+		template<typename TTraits>
 		void AssertCanRaiseEmbeddedTransactionNotifications(
 				uint8_t numTransactions,
 				uint8_t numCosignatures,
 				model::EntityType transactionType) {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification<1>> sub;
+			mocks::MockTypedNotificationSubscriber<typename TTraits::EmbeddedNotification> sub;
 			AggregateCosignersNotificationPublisher publisher;
-			auto wrapper = test::CreateAggregateTransaction(numTransactions);
+			auto wrapper = test::CreateAggregateTransaction<typename TTraits::Descriptor>(numTransactions);
 			wrapper.pTransaction->Type = transactionType;
 
-			auto cosignatures = test::GenerateRandomDataVector<Cosignature<SignatureLayout::Raw>>(numCosignatures);
+			auto cosignatures = test::GenerateRandomDataVector<CosignatureInfo>(numCosignatures);
 			auto transactionInfo = WeakCosignedTransactionInfo(wrapper.pTransaction.get(), &cosignatures);
 
 			// Act:
@@ -99,34 +122,36 @@ namespace catapult { namespace chain {
 				EXPECT_EQ(wrapper.pTransaction->Signer, notification.Signer) << message;
 				EXPECT_EQ(*wrapper.SubTransactions[i], notification.Transaction) << message;
 				EXPECT_EQ(numCosignatures, notification.CosignaturesCount);
-				EXPECT_EQ(numTransactions > 0 ? cosignatures.data() : nullptr, notification.CosignaturesPtr);
+				test::CompareCosignatures(cosignatures.data(), notification.CosignaturesPtr, numCosignatures);
+
 			}
 		}
 	}
 
-	TEST(TEST_CLASS, EmptyAggregateDoesNotRaiseEmbeddedTransactionNotifications) {
+	TRAITS_BASED_TEST(EmptyAggregateDoesNotRaiseEmbeddedTransactionNotifications) {
 		// Assert:
-		for (auto transactionType : { Entity_Type_Aggregate_Complete, Entity_Type_Aggregate_Bonded })
-			AssertCanRaiseEmbeddedTransactionNotifications(0, 0, transactionType);
+		for (auto transactionType : TTraits::EntityTypes)
+			AssertCanRaiseEmbeddedTransactionNotifications<TTraits>(0, 0, transactionType);
 	}
 
-	TEST(TEST_CLASS, CanRaiseEmbeddedTransactionNotificationsFromAggregate) {
+	TRAITS_BASED_TEST(CanRaiseEmbeddedTransactionNotificationsFromAggregate) {
 		// Assert:
-		for (auto transactionType : { Entity_Type_Aggregate_Complete, Entity_Type_Aggregate_Bonded })
-			AssertCanRaiseEmbeddedTransactionNotifications(2, 3, transactionType);
+		for (auto transactionType : TTraits::EntityTypes)
+			AssertCanRaiseEmbeddedTransactionNotifications<TTraits>(2, 3, transactionType);
 	}
+
 
 	// endregion
 
 	// region publish: aggregate cosignatures
 
-	TEST(TEST_CLASS, CanRaiseAggregateCosignaturesNotificationsFromEmptyAggregate) {
+	TRAITS_BASED_TEST(CanRaiseAggregateCosignaturesNotificationsFromEmptyAggregate) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<typename TTraits::CosignaturesNotification> sub;
 		AggregateCosignersNotificationPublisher publisher;
-		auto wrapper = test::CreateAggregateTransaction(0);
+		auto wrapper = test::CreateAggregateTransaction<typename TTraits::Descriptor>(0);
 
-		auto cosignatures = test::GenerateRandomDataVector<Cosignature<SignatureLayout::Raw>>(0);
+		auto cosignatures = test::GenerateRandomDataVector<CosignatureInfo>(0);
 		auto transactionInfo = WeakCosignedTransactionInfo(wrapper.pTransaction.get(), &cosignatures);
 
 		// Act:
@@ -142,13 +167,13 @@ namespace catapult { namespace chain {
 		EXPECT_FALSE(!!notification.CosignaturesPtr);
 	}
 
-	TEST(TEST_CLASS, CanRaiseAggregateCosignaturesNotificationsFromAggregate) {
+	TRAITS_BASED_TEST(CanRaiseAggregateCosignaturesNotificationsFromAggregate) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<typename TTraits::CosignaturesNotification> sub;
 		AggregateCosignersNotificationPublisher publisher;
-		auto wrapper = test::CreateAggregateTransaction(2);
+		auto wrapper = test::CreateAggregateTransaction<typename TTraits::Descriptor>(2);
 
-		auto cosignatures = test::GenerateRandomDataVector<Cosignature<SignatureLayout::Raw>>(3);
+		auto cosignatures = test::GenerateRandomDataVector<CosignatureInfo>(3);
 		auto transactionInfo = WeakCosignedTransactionInfo(wrapper.pTransaction.get(), &cosignatures);
 
 		// Act:
@@ -161,7 +186,8 @@ namespace catapult { namespace chain {
 		EXPECT_EQ(2u, notification.TransactionsCount);
 		EXPECT_EQ(wrapper.pTransaction->TransactionsPtr(), notification.TransactionsPtr);
 		EXPECT_EQ(3u, notification.CosignaturesCount);
-		EXPECT_EQ(cosignatures.data(), notification.CosignaturesPtr);
+		EXPECT_EQ(cosignatures.data()->GetRawSignature(), notification.CosignaturesPtr.GetRawSignature());
+		EXPECT_EQ(cosignatures.data()->Signer, notification.CosignaturesPtr.Signer());
 	}
 
 	// endregion

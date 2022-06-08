@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 	using Notification = model::TransactionNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(AggregateHashPresent, [](const auto& notification, const auto& context) {
-		if (model::Entity_Type_Aggregate_Bonded != notification.TransactionType)
+		if (model::Entity_Type_Aggregate_Bonded_V1 != notification.TransactionType && model::Entity_Type_Aggregate_Bonded_V2 != notification.TransactionType)
 			return ValidationResult::Success;
 
 		const auto& cache = context.Cache.template sub<cache::HashLockInfoCache>();

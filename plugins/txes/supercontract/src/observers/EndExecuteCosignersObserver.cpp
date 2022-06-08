@@ -36,12 +36,12 @@ namespace catapult { namespace observers {
 
 			auto pCosignature = notification.CosignaturesPtr;
 			for (auto k = 0u; k < notification.CosignaturesCount; ++k, ++pCosignature) {
-				auto accountIter = accounts.find(pCosignature->Signer);
+				auto accountIter = accounts.find(pCosignature.Signer());
 				if (accounts.end() == accountIter) {
-					auto accountCacheIter = accountStateCache.find(pCosignature->Signer);
+					auto accountCacheIter = accountStateCache.find(pCosignature.Signer());
 					iterators.push_back(std::move(accountCacheIter));
-					accounts.emplace(pCosignature->Signer, iterators.back().get());
-					accountIter = accounts.find(pCosignature->Signer);
+					accounts.emplace(pCosignature.Signer(), iterators.back().get());
+					accountIter = accounts.find(pCosignature.Signer());
 				}
 				auto& accountState = accountIter->second;
 

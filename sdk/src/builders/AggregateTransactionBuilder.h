@@ -26,6 +26,7 @@
 namespace catapult { namespace builders {
 
 	/// Builder for an aggregate transaction.
+	template<typename TDescriptor>
 	class AggregateTransactionBuilder : public TransactionBuilder {
 	public:
 		using EmbeddedTransactionPointer = model::UniqueEntityPtr<model::EmbeddedTransaction>;
@@ -39,32 +40,39 @@ namespace catapult { namespace builders {
 
 	public:
 		/// Builds a new aggregate transaction.
-		model::UniqueEntityPtr<model::AggregateTransaction<1>> build() const;
+		model::UniqueEntityPtr<model::AggregateTransaction<TDescriptor>> build() const;
 
 	private:
 		std::vector<EmbeddedTransactionPointer> m_pTransactions;
 	};
 
+	extern template class AggregateTransactionBuilder<model::AggregateTransactionRawDescriptor>;
+	extern template class AggregateTransactionBuilder<model::AggregateTransactionExtendedDescriptor>;
+
 	/// Helper to add cosignatures to an aggregate transaction.
+	template<typename TDescriptor>
 	class AggregateCosignatureAppender {
 	public:
 		/// Creates aggregate cosignature appender around aggregate transaction (\a pAggregateTransaction)
 		/// for the network with the specified generation hash (\a generationHash).
 		AggregateCosignatureAppender(
 				const GenerationHash& generationHash,
-				model::UniqueEntityPtr<model::AggregateTransaction<1>>&& pAggregateTransaction);
+				model::UniqueEntityPtr<model::AggregateTransaction<TDescriptor>>&& pAggregateTransaction);
 
 	public:
 		/// Cosigns an aggregate \a transaction using \a cosigner key pair.
 		void cosign(const crypto::KeyPair& cosigner);
 
 		/// Builds an aggregate transaction with cosigatures appended.
-		model::UniqueEntityPtr<model::AggregateTransaction<1>> build() const;
+		model::UniqueEntityPtr<model::AggregateTransaction<TDescriptor>> build() const;
 
 	private:
 		GenerationHash m_generationHash;
-		model::UniqueEntityPtr<model::AggregateTransaction<1>> m_pAggregateTransaction;
+		model::UniqueEntityPtr<model::AggregateTransaction<TDescriptor>> m_pAggregateTransaction;
 		Hash256 m_transactionHash;
-		std::vector<model::Cosignature<1>> m_cosignatures;
+		std::vector<typename TDescriptor::CosignatureType> m_cosignatures;
 	};
+
+	extern template class AggregateCosignatureAppender<model::AggregateTransactionRawDescriptor>;
+	extern template class AggregateCosignatureAppender<model::AggregateTransactionExtendedDescriptor>;
 }}

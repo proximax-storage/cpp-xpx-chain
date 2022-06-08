@@ -35,7 +35,7 @@ namespace catapult { namespace validators {
 				driveCacheDelta.insert(*pEntry);
 				cache.commit(currentHeight);
 			}
-			Notification notification(signer, *pTransaction, 0, nullptr);
+			Notification notification(signer, *pTransaction, 0, static_cast<model::Cosignature<SignatureLayout::Raw> *>(nullptr));
 			auto pValidator = CreateDrivePermittedOperationValidator();
 
 			// Act:

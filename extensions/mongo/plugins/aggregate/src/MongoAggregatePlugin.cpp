@@ -25,9 +25,13 @@
 extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	using namespace catapult::model;
-	using catapult::mongo::plugins::CreateAggregateTransactionMongoPlugin;
+	using catapult::mongo::plugins::CreateAggregateTransactionMongoPluginV1;
+	using catapult::mongo::plugins::CreateAggregateTransactionMongoPluginV2;
 
 	const auto& config = manager.configHolder()->Config().Immutable;
-	manager.addTransactionSupport(CreateAggregateTransactionMongoPlugin(manager.transactionRegistry(), config, Entity_Type_Aggregate_Complete));
-	manager.addTransactionSupport(CreateAggregateTransactionMongoPlugin(manager.transactionRegistry(), config, Entity_Type_Aggregate_Bonded));
+	manager.addTransactionSupport(CreateAggregateTransactionMongoPluginV1(manager.transactionRegistry(), config, Entity_Type_Aggregate_Complete_V1));
+	manager.addTransactionSupport(CreateAggregateTransactionMongoPluginV1(manager.transactionRegistry(), config, Entity_Type_Aggregate_Bonded_V1));
+
+	manager.addTransactionSupport(CreateAggregateTransactionMongoPluginV2(manager.transactionRegistry(), config, Entity_Type_Aggregate_Complete_V2));
+	manager.addTransactionSupport(CreateAggregateTransactionMongoPluginV2(manager.transactionRegistry(), config, Entity_Type_Aggregate_Bonded_V2));
 }

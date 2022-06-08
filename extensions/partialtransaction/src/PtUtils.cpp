@@ -24,22 +24,56 @@
 
 namespace catapult { namespace partialtransaction {
 
+	namespace {
+		template<typename TCosignatureType>
+		void AssignCosignature(model::CosignatureInfo cosignature, TCosignatureType* targetCosignature);
+
+		template<typename TCosignatureType>
+		void AssignCosignature(model::CosignatureInfo cosignature, model::CosignatureInfo* targetCosignature)
+		{
+			*targetCosignature = cosignature;
+		}
+
+		template<typename TCosignatureType>
+		void AssignCosignature(model::CosignatureInfo cosignature, model::Cosignature<SignatureLayout::Raw>* targetCosignature)
+		{
+			targetCosignature->Signer = cosignature.Signer;
+			targetCosignature->Signature = cosignature.GetRawSignature();
+		}
+
+		template<typename TAggregateDescriptor>
+		model::UniqueEntityPtr<model::Transaction> StitchAggregateImpl(const model::WeakCosignedTransactionInfo& transactionInfo) {
+			uint32_t size = transactionInfo.transaction().Size
+							+ sizeof(typename TAggregateDescriptor::CosignatureType) * static_cast<uint32_t>(transactionInfo.cosignatures().size());
+			auto pTransactionWithCosignatures = utils::MakeUniqueWithSize<model::AggregateTransaction<TAggregateDescriptor>>(size);
+
+			// copy transaction data
+			auto transactionSize = transactionInfo.transaction().Size;
+			std::memcpy(static_cast<void*>(pTransactionWithCosignatures.get()), &transactionInfo.transaction(), transactionSize);
+			pTransactionWithCosignatures->Size = size;
+
+			// copy cosignatures
+			auto* pCosignature = pTransactionWithCosignatures->CosignaturesPtr();
+			for (const auto& cosignature : transactionInfo.cosignatures())
+				AssignCosignature<TAggregateDescriptor>(cosignature, pCosignature++);
+
+			return std::move(pTransactionWithCosignatures);
+		}
+	}
+
+
+	bool IsAggregateV1(model::EntityType type) {
+		return model::Entity_Type_Aggregate_Complete_V1 == type || model::Entity_Type_Aggregate_Bonded_V1 == type;
+	}
+
+	bool IsAggregateV2(model::EntityType type) {
+		return model::Entity_Type_Aggregate_Complete_V2 == type || model::Entity_Type_Aggregate_Bonded_V2 == type;
+	}
+
 	model::UniqueEntityPtr<model::Transaction> StitchAggregate(const model::WeakCosignedTransactionInfo& transactionInfo) {
-		uint32_t size = transactionInfo.transaction().Size
-				+ sizeof(model::Cosignature<SignatureLayout::Raw>) * static_cast<uint32_t>(transactionInfo.cosignatures().size());
-		auto pTransactionWithCosignatures = utils::MakeUniqueWithSize<model::AggregateTransaction<SignatureLayout::Raw>>(size);
-
-		// copy transaction data
-		auto transactionSize = transactionInfo.transaction().Size;
-		std::memcpy(static_cast<void*>(pTransactionWithCosignatures.get()), &transactionInfo.transaction(), transactionSize);
-		pTransactionWithCosignatures->Size = size;
-
-		// copy cosignatures
-		auto* pCosignature = pTransactionWithCosignatures->CosignaturesPtr();
-		for (const auto& cosignature : transactionInfo.cosignatures())
-			*pCosignature++ = cosignature;
-
-		return std::move(pTransactionWithCosignatures);
+		if(IsAggregateV2(transactionInfo.transaction().Type))
+			return std::move(StitchAggregateImpl<model::AggregateTransactionExtendedDescriptor>(transactionInfo));
+		return std::move(StitchAggregateImpl<model::AggregateTransactionRawDescriptor>(transactionInfo));
 	}
 
 	namespace {
@@ -49,10 +83,11 @@ namespace catapult { namespace partialtransaction {
 		}
 	}
 
+	
 	void SplitCosignedTransactionInfos(
 			CosignedTransactionInfos&& transactionInfos,
 			const consumer<model::TransactionRange&&>& transactionRangeConsumer,
-			const consumer<model::DetachedCosignature<SignatureLayout::Raw>&&>& cosignatureConsumer) {
+			const consumer<model::DetachedCosignature&&>& cosignatureConsumer) {
 		std::vector<model::TransactionRange> transactionRanges;
 		for (const auto& transactionInfo : transactionInfos) {
 			if (transactionInfo.pTransaction) {
@@ -61,7 +96,7 @@ namespace catapult { namespace partialtransaction {
 			}
 
 			for (const auto& cosignature : transactionInfo.Cosignatures)
-				cosignatureConsumer(model::DetachedCosignature<SignatureLayout::Raw>(cosignature.Signer, cosignature.Signature, transactionInfo.EntityHash));
+				cosignatureConsumer(model::DetachedCosignature(cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme(), transactionInfo.EntityHash));
 		}
 
 		if (!transactionRanges.empty())

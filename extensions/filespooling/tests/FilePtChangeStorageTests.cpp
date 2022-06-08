@@ -43,6 +43,7 @@ namespace catapult { namespace filespooling {
 			void assertCosignature(
 					const Key& expectedKey,
 					const RawSignature& expectedSignature,
+					const DerivationScheme expectedDerivationScheme,
 					const model::TransactionInfo& expectedTransactionInfo) {
 				auto inputStream = createInputStream();
 				Key key;
@@ -51,12 +52,13 @@ namespace catapult { namespace filespooling {
 				auto operationType = static_cast<OperationType>(io::Read8(inputStream));
 				inputStream.read(key);
 				inputStream.read(signature);
+				auto derivationScheme = (DerivationScheme)io::Read8(inputStream);
 				io::ReadTransactionInfo(inputStream, transactionInfo);
 
 				EXPECT_EQ(subscribers::PtChangeOperationType::Add_Cosignature, operationType);
 				EXPECT_EQ(expectedKey, key);
 				EXPECT_EQ(expectedSignature, signature);
-
+				EXPECT_EQ(expectedDerivationScheme, derivationScheme);
 				test::AssertEqual(expectedTransactionInfo, transactionInfo);
 			}
 		};
@@ -117,10 +119,10 @@ namespace catapult { namespace filespooling {
 		transactionInfo.OptionalExtractedAddresses = test::GenerateRandomUnresolvedAddressSetPointer(3);
 
 		// Act:
-		context.subscriber().notifyAddCosignature(transactionInfo, key, signature);
+		context.subscriber().notifyAddCosignature(transactionInfo, key, signature, DerivationScheme::Ed25519_Sha3);
 
 		// Assert:
-		context.assertCosignature(key, signature, transactionInfo);
+		context.assertCosignature(key, signature, DerivationScheme::Ed25519_Sha3, transactionInfo);
 		context.assertNumFlushes(0);
 	}
 

@@ -10,7 +10,7 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS PluginConfigValidatorTests
+#define TEST_CLASS LockFundPluginConfigValidatorTests
 
 	DEFINE_COMMON_VALIDATOR_TESTS(LockFundPluginConfig,)
 
@@ -26,6 +26,7 @@ namespace catapult { namespace validators {
 					{
 						{ "minRequestUnlockCooldown", "200000" },
 						{ "maxMosaicsSize", "256" },
+						{ "enabled", "true" },
 					}
 				}});
 			}

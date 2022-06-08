@@ -19,8 +19,9 @@
 **/
 
 #pragma once
+
 #include "Results.h"
-#include "src/model/MultisigNotifications.h"
+#include "../model/MultisigNotifications.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 #include "catapult/validators/ValidatorTypes.h"
 
@@ -68,14 +69,26 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to aggregate cosignatures notifications and validates that:
 	///  - all cosigners are eligible counterparties (using \a transactionRegistry to retrieve custom approval requirements)
 	DECLARE_STATEFUL_VALIDATOR(
-			MultisigAggregateEligibleCosigners,
+			MultisigAggregateEligibleCosignersV1,
 			model::AggregateCosignaturesNotification<1>)(const model::TransactionRegistry& transactionRegistry);
 
 	/// Validator that applies to aggregate embeded transaction notifications and validates that:
 	///  - present cosigners are sufficient (using \a transactionRegistry to retrieve custom approval requirements)
 	DECLARE_STATEFUL_VALIDATOR(
-			MultisigAggregateSufficientCosigners,
+			MultisigAggregateSufficientCosignersV1,
 			model::AggregateEmbeddedTransactionNotification<1>)(const model::TransactionRegistry& transactionRegistry);
+
+	/// A validator implementation that applies to aggregate V3 cosignatures notifications and validates that:
+	///  - all cosigners are eligible counterparties (using \a transactionRegistry to retrieve custom approval requirements)
+	DECLARE_STATEFUL_VALIDATOR(
+			MultisigAggregateEligibleCosignersV2,
+			model::AggregateCosignaturesNotification<3>)(const model::TransactionRegistry& transactionRegistry);
+
+	/// Validator that applies to aggregate embeded V2 transaction notifications and validates that:
+	///  - present cosigners are sufficient (using \a transactionRegistry to retrieve custom approval requirements)
+	DECLARE_STATEFUL_VALIDATOR(
+			MultisigAggregateSufficientCosignersV2,
+			model::AggregateEmbeddedTransactionNotification<2>)(const model::TransactionRegistry& transactionRegistry);
 
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid

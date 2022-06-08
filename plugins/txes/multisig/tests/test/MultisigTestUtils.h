@@ -54,7 +54,14 @@ namespace catapult { namespace test {
 	std::vector<Key> GenerateKeys(size_t count);
 
 	/// Generates random cosignatures from \a cosigners.
-	std::vector<model::Cosignature<SignatureLayout::Raw>> GenerateCosignaturesFromCosigners(const std::vector<Key>& cosigners);
+	template<typename TDescriptor>
+	std::vector<typename TDescriptor::CosignatureType> GenerateCosignaturesFromCosigners(const std::vector<Key>& cosigners) {
+		auto cosignatures = test::GenerateRandomDataVector<typename TDescriptor::CosignatureType>(cosigners.size());
+		for (auto i = 0u; i < cosigners.size(); ++i)
+			cosignatures[i].Signer = cosigners[i];
+
+		return cosignatures;
+	}
 
 	/// Creates a modify multisig account transaction from \a signer with \a modificationTypes.
 	model::UniqueEntityPtr<model::EmbeddedModifyMultisigAccountTransaction> CreateModifyMultisigAccountTransaction(

@@ -46,7 +46,7 @@ namespace catapult { namespace observers {
 	}
 
 	DEFINE_OBSERVER(CompletedAggregate, Notification, [](const auto& notification, auto& context) {
-		if (model::Entity_Type_Aggregate_Bonded != notification.TransactionType)
+		if (model::Entity_Type_Aggregate_Bonded_V1 != notification.TransactionType && model::Entity_Type_Aggregate_Bonded_V2 != notification.TransactionType)
 			return;
 
 		LockStatusAccountBalanceObserver<HashTraits>(notification, context);

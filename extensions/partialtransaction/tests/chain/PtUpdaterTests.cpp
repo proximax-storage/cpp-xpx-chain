@@ -52,8 +52,20 @@ namespace catapult { namespace chain {
 			return transactionInfo;
 		}
 
-		std::shared_ptr<model::AggregateTransaction<SignatureLayout::Raw>> CreateRandomAggregateTransaction(uint32_t numCosignatures, uint32_t numTransactions, uint32_t cosignersAccountVersion, std::vector<crypto::KeyPair>& cosigners, bool signerIsCosigner) {
-			return test::CreateRandomAggregateTransactionWithCosignatures(numCosignatures, numTransactions, cosigners, cosignersAccountVersion, signerIsCosigner);
+		template<typename TAcceptedVersions>
+		struct AcceptedVersionsDecomposer
+		{
+			static std::vector<uint32_t> Value(){
+				std::vector<uint32_t> Val;
+				utils::for_sequence(std::make_index_sequence<std::tuple_size_v<TAcceptedVersions>>{}, [&](auto i){
+				  Val.push_back(std::tuple_element_t<i, TAcceptedVersions>::value);
+				});
+				return std::move(Val);
+			}
+		};
+		template<typename TTypeTraits>
+		std::shared_ptr<model::AggregateTransaction<typename TTypeTraits::Descriptor>> CreateRandomAggregateTransaction(uint32_t numCosignatures, uint32_t numTransactions, const std::vector<uint32_t>& cosignersAccountVersions, std::vector<crypto::KeyPair>& cosigners, bool signerIsCosigner) {
+			return test::CreateRandomAggregateTransactionWithCosignatures<typename TTypeTraits::Descriptor>(numCosignatures, numTransactions, cosigners, cosignersAccountVersions, signerIsCosigner);
 		}
 
 		// region ExpectedValidatorCalls
@@ -258,16 +270,17 @@ namespace catapult { namespace chain {
 				m_transactionHashes.clear();
 			}
 
-			void assertCalls(const model::AggregateTransaction<SignatureLayout::Raw>& aggregateTransaction, const ExpectedValidatorCalls& expected) {
+			template<typename TDescriptor>
+			void assertCalls(const model::AggregateTransaction<TDescriptor>& aggregateTransaction, const ExpectedValidatorCalls& expected) {
 				// Assert: check calls
 				assertCallsImpl(aggregateTransaction, expected);
 
 				// - other overload should be used if there are verify partial calls
 				EXPECT_TRUE(expected.NumValidatePartialCalls(0));
 			}
-
+			template<typename TDescriptor>
 			void assertCalls(
-					const model::AggregateTransaction<SignatureLayout::Raw>& aggregateTransaction,
+					const model::AggregateTransaction<TDescriptor>& aggregateTransaction,
 					const Hash256& aggregateTransactionHash,
 					const ExpectedValidatorCalls& expected) {
 				// Assert: check calls
@@ -282,7 +295,8 @@ namespace catapult { namespace chain {
 			}
 
 		private:
-			void assertCallsImpl(const model::AggregateTransaction<SignatureLayout::Raw>& aggregateTransaction, const ExpectedValidatorCalls& expected) {
+			template<typename TDescriptor>
+			void assertCallsImpl(const model::AggregateTransaction<TDescriptor>& aggregateTransaction, const ExpectedValidatorCalls& expected) {
 				// Assert: check calls
 				CATAPULT_LOG(debug)
 						<< "NumValidatePartialCalls = " << m_numValidatePartialCalls
@@ -382,10 +396,11 @@ namespace catapult { namespace chain {
 
 		public:
 			/// Asserts that the pt cache contains a \em single \a aggregateTransaction with \a aggregateHash and \a cosignatures.
+			template<typename TDescriptor>
 			void assertSingleTransactionInCache(
 					const Hash256& aggregateHash,
-					const model::AggregateTransaction<SignatureLayout::Raw>& aggregateTransaction,
-					const std::vector<model::Cosignature<SignatureLayout::Raw>>& cosignatures) const {
+					const model::AggregateTransaction<TDescriptor>& aggregateTransaction,
+					const std::vector<typename TDescriptor::CosignatureType>& cosignatures) const {
 				// Assert:
 				EXPECT_EQ(1u, m_transactionsCache.view().size());
 
@@ -393,10 +408,11 @@ namespace catapult { namespace chain {
 			}
 
 		private:
+			template<typename TDescriptor>
 			void assertTransactionInCache(
 					const Hash256& aggregateHash,
-					const model::AggregateTransaction<SignatureLayout::Raw>& aggregateTransaction,
-					const std::vector<model::Cosignature<SignatureLayout::Raw>>& cosignatures) const {
+					const model::AggregateTransaction<TDescriptor>& aggregateTransaction,
+					const std::vector<typename TDescriptor::CosignatureType>& cosignatures) const {
 				// Assert: expected transaction is in the cache
 				auto view = m_transactionsCache.view();
 				auto transactionInfoFromCache = view.find(aggregateHash);
@@ -412,7 +428,7 @@ namespace catapult { namespace chain {
 					auto iter = expectedCosignaturesMap.find(cosignature.Signer);
 					ASSERT_NE(expectedCosignaturesMap.cend(), iter) << message;
 					EXPECT_EQ(iter->first, cosignature.Signer) << message;
-					EXPECT_EQ(iter->second, cosignature.Signature) << message;
+					EXPECT_EQ(iter->second, cosignature.GetRawSignature()) << message;
 					expectedCosignaturesMap.erase(iter);
 				}
 
@@ -469,13 +485,13 @@ namespace catapult { namespace chain {
 
 		// endregion
 
-		template<uint32_t TCosginatureAccountVersion, typename TAction>
-		void RunTestWithTransactionInCache(uint32_t numCosignatures, uint32_t numTransactions, TAction action) {
+		template<typename TTypeTraits, typename TAction>
+		void RunTestWithTransactionInCache(uint32_t numCosignatures, const std::vector<uint32_t>& cosignatureVersions, uint32_t numTransactions, TAction action) {
 			// Arrange:
 			UpdaterTestContext context;
 
 			// - add a transaction
-			auto pTransaction = CreateRandomAggregateTransaction(numCosignatures, numTransactions, TCosginatureAccountVersion, context.cosignerKeys(), false);
+			auto pTransaction = CreateRandomAggregateTransaction<TTypeTraits>(numCosignatures, numTransactions, cosignatureVersions, context.cosignerKeys(), false);
 			auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
 			test::FixCosignatures(context.cosignerKeys(), transactionInfo.EntityHash, *pTransaction, false);
 			context.updater().update(transactionInfo).get();
@@ -487,15 +503,67 @@ namespace catapult { namespace chain {
 	}
 
 	namespace {
-		using test_types = ::testing::Types<
+		using MultiVersionTypes = std::tuple<
 				std::integral_constant<uint32_t,1>,
+				std::integral_constant<uint32_t,2>>;
+		using V1VersionTypes = std::tuple<
+				std::integral_constant<uint32_t,1>>;
+		using V2VersionTypes = std::tuple<
 				std::integral_constant<uint32_t,2>>;
 
 		template<typename TBaseAccountVersion>
 		struct PtUpdaterTests : public ::testing::Test {};
+
+		template<typename TAcceptedVersions>
+		struct AlternatingGenerator
+		{
+			using AcceptedVersions = TAcceptedVersions;
+			static std::vector<uint32_t> Generate(uint32_t numberOfEntries)
+			{
+				std::vector<uint32_t> result;
+				auto cycler = AcceptedVersionsDecomposer<TAcceptedVersions>::Value();;
+				auto i = 1;
+				for(auto z = 0; z < numberOfEntries; z++)
+				{
+					result.push_back(cycler[i%cycler.size()]);
+					i++;
+				}
+				return result;
+			}
+		};
+
+
+		template<typename TDescriptor, typename TGenerator>
+		struct TestTraits {
+			using Descriptor = TDescriptor;
+			using AggregateType = model::AggregateTransaction<Descriptor>;
+			using CosignatureType = typename Descriptor::CosignatureType;
+			using Generator = TGenerator;
+		};
+		template<typename TGenerator>
+		struct TestTraitsV1 : public TestTraits<model::AggregateTransactionRawDescriptor, TGenerator>{
+			using TUsableAccountVersions = typename TGenerator::AcceptedVersions;
+			static inline std::vector<uint32_t> UsableAccountVersions  = AcceptedVersionsDecomposer<TUsableAccountVersions>::Value();
+
+		};
+		template<typename TGenerator>
+		struct TestTraitsV2 : public TestTraits<model::AggregateTransactionExtendedDescriptor, TGenerator>{
+			using TUsableAccountVersions = typename TGenerator::AcceptedVersions;
+			static inline std::vector<uint32_t> UsableAccountVersions  = AcceptedVersionsDecomposer<TUsableAccountVersions>::Value();
+		};
+
 	}
 
-	TYPED_TEST_CASE(PtUpdaterTests, test_types);
+#define TRAITS_BASED_TEST(TEST_NAME) \
+    template<typename TTestTypes>                                 \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<TestTraitsV1<AlternatingGenerator<V1VersionTypes>>>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<TestTraitsV2<AlternatingGenerator<MultiVersionTypes>>>(); } \
+    TEST(TEST_CLASS, TEST_NAME##_v2_SingleAccountVersion_1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<TestTraitsV2<AlternatingGenerator<V1VersionTypes>>>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2_SingleAccountVersion_2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<TestTraitsV2<AlternatingGenerator<V2VersionTypes>>>(); } \
+	template<typename TTestTypes>                                 \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
 	// region update transaction - invalid aggregate
 
 	TEST(TEST_CLASS, CannotAddNonAggregateTransaction) {
@@ -507,10 +575,10 @@ namespace catapult { namespace chain {
 		EXPECT_THROW(context.updater().update(transactionInfo), catapult_invalid_argument);
 	}
 
-	TEST(TEST_CLASS, CannotAddInvalidAggregateTransaction) {
+	TRAITS_BASED_TEST(CannotAddInvalidAggregateTransaction) {
 		// Arrange:
 		UpdaterTestContext context;
-		auto pTransaction = CreateRandomAggregateTransaction(2, 2, 1, context.cosignerKeys(), false);
+		auto pTransaction = CreateRandomAggregateTransaction<TTestTypes>(2, 2, {1,1}, context.cosignerKeys(), false);
 		auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
 
 		// - mark the transaction as invalid
@@ -532,10 +600,10 @@ namespace catapult { namespace chain {
 
 	// region update transaction - add (new) complete + incomplete
 
-	TEST(TEST_CLASS, CanAddIncompleteAggregateWithoutCosignatures) {
+	TRAITS_BASED_TEST(CanAddIncompleteAggregateWithoutCosignatures) {
 		// Arrange:
 		UpdaterTestContext context;
-		auto pTransaction = CreateRandomAggregateTransaction(0, 1, 1, context.cosignerKeys(), false);
+		auto pTransaction = CreateRandomAggregateTransaction<TTestTypes>(0, 1, TTestTypes::Generator::Generate(1), context.cosignerKeys(), false);
 		auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
 
 		// Act:
@@ -551,10 +619,10 @@ namespace catapult { namespace chain {
 		context.validator().assertCalls(*pTransaction, transactionInfo.EntityHash, { 1, 1, 0 });
 	}
 
-	TYPED_TEST(PtUpdaterTests, CanAddIncompleteAggregateWithCosignatures) {
+	TRAITS_BASED_TEST(CanAddIncompleteAggregateWithCosignatures) {
 		// Arrange:
 		UpdaterTestContext context;
-		auto pTransaction = CreateRandomAggregateTransaction(3, 4, TypeParam::value, context.cosignerKeys(), false);
+		auto pTransaction = CreateRandomAggregateTransaction<TTestTypes>(3, 4, TTestTypes::Generator::Generate(4), context.cosignerKeys(), false);
 		auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
 		test::FixCosignatures(context.cosignerKeys(), transactionInfo.EntityHash, *pTransaction, false);
 
@@ -576,10 +644,10 @@ namespace catapult { namespace chain {
 		context.validator().assertCalls(*pTransaction, transactionInfo.EntityHash, { 1, 6, 3 });
 	}
 
-	TEST(TEST_CLASS, CanAddCompleteAggregateWithoutCosignatures) {
+	TRAITS_BASED_TEST(CanAddCompleteAggregateWithoutCosignatures) {
 		// Arrange: this test simulates an aggregate that requires a single signature (and no cosignatures)
 		UpdaterTestContext context;
-		auto pTransaction = CreateRandomAggregateTransaction(0, 1, 1, context.cosignerKeys(), false);
+		auto pTransaction = CreateRandomAggregateTransaction<TTestTypes>(0, 1, TTestTypes::Generator::Generate(1), context.cosignerKeys(), false);
 		auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
 
 		// - mark the transaction as complete
@@ -594,15 +662,15 @@ namespace catapult { namespace chain {
 		EXPECT_EQ(0u, context.transactionsCache().view().size());
 
 		ASSERT_EQ(1u, context.completedTransactions().size());
-		test::AssertStitchedTransaction(*context.completedTransactions()[0], *pTransaction, {});
+		test::AssertStitchedTransaction(*context.completedTransactions()[0], *pTransaction, {}, 0);
 		EXPECT_TRUE(context.failedTransactionStatuses().empty());
 		context.validator().assertCalls(*pTransaction, transactionInfo.EntityHash, { 1, 1, 0 });
 	}
 
-	TYPED_TEST(PtUpdaterTests, CanAddCompleteAggregateWithCosignatures) {
+	TRAITS_BASED_TEST(CanAddCompleteAggregateWithCosignatures) {
 		// Arrange:
 		UpdaterTestContext context;
-		auto pTransaction = CreateRandomAggregateTransaction(3, 3, TypeParam::value, context.cosignerKeys(), false);
+		auto pTransaction = CreateRandomAggregateTransaction<TTestTypes>(3, 3,  TTestTypes::Generator::Generate(3), context.cosignerKeys(), false);
 		auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
 		test::FixCosignatures(context.cosignerKeys(), transactionInfo.EntityHash, *pTransaction, false);
 
@@ -620,8 +688,8 @@ namespace catapult { namespace chain {
 		const auto* pCosignatures = pTransaction->CosignaturesPtr();
 		ASSERT_EQ(1u, context.completedTransactions().size());
 		test::AssertStitchedTransaction(*context.completedTransactions()[0], *pTransaction, {
-			pCosignatures[0], pCosignatures[1], pCosignatures[2]
-		});
+			pCosignatures[0].ToInfo(), pCosignatures[1].ToInfo(), pCosignatures[2].ToInfo()
+		}, 0);
 		EXPECT_TRUE(context.failedTransactionStatuses().empty());
 		context.validator().assertCalls(*pTransaction, transactionInfo.EntityHash, { 1, 6, 3 });
 	}
@@ -640,12 +708,12 @@ namespace catapult { namespace chain {
 		}
 	}
 
-	TYPED_TEST(PtUpdaterTests, AddingExistingAggregateWithCosignaturesMergesCosignatures) {
+	TRAITS_BASED_TEST(AddingExistingAggregateWithCosignaturesMergesCosignatures) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 3, [](auto& context, const auto& transactionInfo1, const auto& transaction1) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(3), 3, [](auto& context, const auto& transactionInfo1, const auto& transaction1) {
 			// Act: add a second transaction with same hash
 		  	std::vector<crypto::KeyPair> cosignerKeys;
-			auto pTransaction2 = CreateRandomAggregateTransaction(2, 2, TypeParam::value, cosignerKeys, false);
+			auto pTransaction2 = CreateRandomAggregateTransaction<TTestTypes>(2, 2, TTestTypes::Generator::Generate(2), cosignerKeys, false);
 			auto transactionInfo2 = CopyAndReplaceTransaction(transactionInfo1, pTransaction2);
 			test::FixCosignatures(cosignerKeys, transactionInfo2.EntityHash, *pTransaction2, false);
 			auto result = context.updater().update(transactionInfo2).get();
@@ -667,12 +735,12 @@ namespace catapult { namespace chain {
 		});
 	}
 
-	TYPED_TEST(PtUpdaterTests, AddingExistingAggregateWithCosignaturesMergesCosignaturesAndIgnoresDuplicates) {
+	TRAITS_BASED_TEST(AddingExistingAggregateWithCosignaturesMergesCosignaturesAndIgnoresDuplicates) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 3, [](auto& context, const auto& transactionInfo1, const auto& transaction1) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(3), 3, [](auto& context, const auto& transactionInfo1, const auto& transaction1) {
 			// Act: add a second transaction with same hash and a duplicate cosignature
 		  	std::vector<crypto::KeyPair> cosignerKeys;
-			auto pTransaction2 = CreateRandomAggregateTransaction(3, 3, TypeParam::value, cosignerKeys, false);
+			auto pTransaction2 = CreateRandomAggregateTransaction<TTestTypes>(3, 3, TTestTypes::Generator::Generate(3), cosignerKeys, false);
 			auto transactionInfo2 = CopyAndReplaceTransaction(transactionInfo1, pTransaction2);
 			test::FixCosignatures(cosignerKeys, transactionInfo2.EntityHash, *pTransaction2, false);
 			pTransaction2->CosignaturesPtr()[1] = transaction1.CosignaturesPtr()[2];
@@ -695,15 +763,15 @@ namespace catapult { namespace chain {
 		});
 	}
 
-	TYPED_TEST(PtUpdaterTests, AddingExistingAggregateWithCosignaturesCanCompleteTransaction) {
+	TRAITS_BASED_TEST(AddingExistingAggregateWithCosignaturesCanCompleteTransaction) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 3, [](auto& context, const auto& transactionInfo1, const auto& transaction1) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(3), 3, [](auto& context, const auto& transactionInfo1, const auto& transaction1) {
 			// - mark the transaction as complete
 			context.validator().setValidateCosignersResult(CosignersValidationResult::Success, 4);
 
 			// Act: add a second transaction with same hash
 		 	std::vector<crypto::KeyPair> cosignerKeys;
-			auto pTransaction2 = CreateRandomAggregateTransaction(2, 2, TypeParam::value, cosignerKeys, false);
+			auto pTransaction2 = CreateRandomAggregateTransaction<TTestTypes>(2, 2, TTestTypes::Generator::Generate(2), cosignerKeys, false);
 			auto transactionInfo2 = CopyAndReplaceTransaction(transactionInfo1, pTransaction2);
 			test::FixCosignatures(cosignerKeys, transactionInfo2.EntityHash, *pTransaction2, false);
 			auto result = context.updater().update(transactionInfo2).get();
@@ -717,9 +785,9 @@ namespace catapult { namespace chain {
 
 			ASSERT_EQ(1u, context.completedTransactions().size());
 			test::AssertStitchedTransaction(*context.completedTransactions()[0], transaction1, {
-				pCosignatures1[0], pCosignatures1[1], pCosignatures1[2],
-				pCosignatures2[0], pCosignatures2[1]
-			});
+				pCosignatures1[0].ToInfo(), pCosignatures1[1].ToInfo(), pCosignatures1[2].ToInfo(),
+				pCosignatures2[0].ToInfo(), pCosignatures2[1].ToInfo()
+			}, 0);
 			EXPECT_TRUE(context.failedTransactionStatuses().empty());
 			context.validator().assertCalls(transaction1, { 0, 4, 3 + 2 });
 		});
@@ -730,14 +798,14 @@ namespace catapult { namespace chain {
 	// region update transaction - add invalid cosignatures
 
 	namespace {
-		template<uint32_t TCosignatureAccountVersion, typename TCorruptCosignature>
+		template<typename TTestTypes, typename TCorruptCosignature>
 		void RunTransactionWithInvalidCosignatureTest(
 				size_t numIneligibleCosigners,
 				bool isRejectedInCheckEligibility,
 				TCorruptCosignature corruptCosignature) {
 			// Arrange:
 			UpdaterTestContext context;
-			auto pTransaction = CreateRandomAggregateTransaction(3, 3, TCosignatureAccountVersion, context.cosignerKeys(), false);
+			auto pTransaction = CreateRandomAggregateTransaction<TTestTypes>(3, 3, TTestTypes::Generator::Generate(3), context.cosignerKeys(), false);
 			auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
 			test::FixCosignatures(context.cosignerKeys(), transactionInfo.EntityHash, *pTransaction, false);
 
@@ -774,28 +842,28 @@ namespace catapult { namespace chain {
 		}
 	}
 
-	TYPED_TEST(PtUpdaterTests, AddingAggregateWithCosignaturesIgnoresIneligibleCosignatures) {
+	TRAITS_BASED_TEST(AddingAggregateWithCosignaturesIgnoresIneligibleCosignatures) {
 		// Arrange:
-		RunTransactionWithInvalidCosignatureTest<TypeParam::value>(1, true, [](auto& context, const auto& cosignature) {
+		RunTransactionWithInvalidCosignatureTest<TTestTypes>(1, true, [](auto& context, const auto& cosignature) {
 			// - mark a cosigner as ineligible
 			context.validator().setValidateCosignersResult(CosignersValidationResult::Ineligible, cosignature.Signer);
 		});
 	}
 
-	TYPED_TEST(PtUpdaterTests, AddingAggregateWithCosignaturesIgnoresUnverifiableCosignatures) {
+	TRAITS_BASED_TEST(AddingAggregateWithCosignaturesIgnoresUnverifiableCosignatures) {
 		// Arrange:
 		// - validateCosigners is called before signature check, so corrupt cosignature will always be passed to validateCosigners
 		//   where it is captured
-		RunTransactionWithInvalidCosignatureTest<TypeParam::value>(0, false, [](const auto&, auto& cosignature) {
+		RunTransactionWithInvalidCosignatureTest<TTestTypes>(0, false, [](const auto&, auto& cosignature) {
 			// - corrupt a signature
-			cosignature.Signature[0] ^= 0xFF;
+			*(reinterpret_cast<uint16_t*>(&(cosignature.Signature[0]))+1) ^= 0xFF;
 		});
 	}
 
-	TYPED_TEST(PtUpdaterTests, AddingAggregateWithCosignaturesIgnoresDuplicateCosignatures) {
+	TRAITS_BASED_TEST(AddingAggregateWithCosignaturesIgnoresDuplicateCosignatures) {
 		// Arrange:
 		UpdaterTestContext context;
-		auto pTransaction = CreateRandomAggregateTransaction(3, 3, TypeParam::value, context.cosignerKeys(), false);
+		auto pTransaction = CreateRandomAggregateTransaction<TTestTypes>(3, 3, TTestTypes::Generator::Generate(3), context.cosignerKeys(), false);
 		auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
 		test::FixCosignatures(context.cosignerKeys(), transactionInfo.EntityHash, *pTransaction, false);
 
@@ -821,12 +889,12 @@ namespace catapult { namespace chain {
 
 	// region update cosignature - ignored (no matching transaction)
 
-	TYPED_TEST(PtUpdaterTests, AddingCosignatureWithoutMatchingTransactionIsIgnored) {
+	TRAITS_BASED_TEST(AddingCosignatureWithoutMatchingTransactionIsIgnored) {
 		// Arrange:
 		UpdaterTestContext context;
-		auto pTransaction = CreateRandomAggregateTransaction(3, 3, TypeParam::value, context.cosignerKeys(), false);
+		auto pTransaction = CreateRandomAggregateTransaction<TTestTypes>(3, 3, TTestTypes::Generator::Generate(3), context.cosignerKeys(), false);
 		auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
-		auto cosignature = test::GenerateValidCosignature(transactionInfo.EntityHash, TypeParam::value);
+		auto cosignature = test::GenerateValidCosignature<model::DetachedCosignature>(transactionInfo.EntityHash, 1);
 
 		// Act:
 		auto result = context.updater().update(cosignature).get();
@@ -844,11 +912,11 @@ namespace catapult { namespace chain {
 
 	// region update cosignature - add
 
-	TYPED_TEST(PtUpdaterTests, AddingCosignatureWithMatchingTransactionAddsCosignatureToTransaction) {
+	TRAITS_BASED_TEST(AddingCosignatureWithMatchingTransactionAddsCosignatureToTransaction) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(4), 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
 			// - create a compatible cosignature for the transaction whose signer has not been used to cosign yet
-			auto cosignature = test::GenerateValidCosignature(context.cosignerKeys()[3], transactionInfo.EntityHash);
+			auto cosignature = test::GenerateValidCosignature<model::DetachedCosignature>(context.cosignerKeys()[3], transactionInfo.EntityHash);
 
 			// Act:
 			auto result = context.updater().update(cosignature).get();
@@ -858,8 +926,8 @@ namespace catapult { namespace chain {
 
 			const auto* pCosignatures = transaction.CosignaturesPtr();
 			context.assertSingleTransactionInCache(transactionInfo.EntityHash, transaction, {
-				pCosignatures[0], pCosignatures[1], pCosignatures[2],
-				cosignature
+				pCosignatures[0].ToInfo(), pCosignatures[1].ToInfo(), pCosignatures[2].ToInfo(),
+				cosignature.ToInfo()
 			});
 			context.assertTransactionInCacheHasCorrectExtendedProperties(transactionInfo);
 
@@ -869,11 +937,11 @@ namespace catapult { namespace chain {
 		});
 	}
 
-	TYPED_TEST(PtUpdaterTests, AddingCosignatureWithMatchingTransactionCanCompleteTransaction) {
+	TRAITS_BASED_TEST(AddingCosignatureWithMatchingTransactionCanCompleteTransaction) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(4), 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
 			// - create a compatible cosignature
-			auto cosignature = test::GenerateValidCosignature(context.cosignerKeys()[3], transactionInfo.EntityHash);
+			auto cosignature = test::GenerateValidCosignature<model::DetachedCosignature>(context.cosignerKeys()[3], transactionInfo.EntityHash);
 
 			// - mark the transaction as complete
 			context.validator().setValidateCosignersResult(CosignersValidationResult::Success, 2);
@@ -889,9 +957,9 @@ namespace catapult { namespace chain {
 			const auto* pCosignatures = transaction.CosignaturesPtr();
 			ASSERT_EQ(1u, context.completedTransactions().size());
 			test::AssertStitchedTransaction(*context.completedTransactions()[0], transaction, {
-				pCosignatures[0], pCosignatures[1], pCosignatures[2],
-				cosignature
-			});
+				pCosignatures[0].ToInfo(), pCosignatures[1].ToInfo(), pCosignatures[2].ToInfo(),
+				cosignature.ToInfo()
+			}, 0);
 			EXPECT_TRUE(context.failedTransactionStatuses().empty());
 			context.validator().assertCalls(transaction, { 0, 2, 3 + 1 });
 		});
@@ -901,11 +969,11 @@ namespace catapult { namespace chain {
 
 	// region update cosignature - invalid
 
-	TYPED_TEST(PtUpdaterTests, AddingCosignatureThatTriggersUnexpectedTransactionFailurePurgesTransactionFromCache) {
+	TRAITS_BASED_TEST(AddingCosignatureThatTriggersUnexpectedTransactionFailurePurgesTransactionFromCache) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(4), 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
 			// - create a compatible cosignature
-			auto cosignature = test::GenerateValidCosignature(context.cosignerKeys()[3], transactionInfo.EntityHash);
+			auto cosignature = test::GenerateValidCosignature<model::DetachedCosignature>(context.cosignerKeys()[3], transactionInfo.EntityHash);
 
 			// - mark the transaction as failed
 			context.validator().setValidateCosignersResult(CosignersValidationResult::Failure, 1);
@@ -926,15 +994,15 @@ namespace catapult { namespace chain {
 	}
 
 	namespace {
-		template<uint32_t TCosignatureAccountVersion, typename TCorruptCosignature>
+		template<typename TTestTypes, typename TCorruptCosignature>
 		void RunAddingInvalidCosignatureTest(
 				CosignatureUpdateResult expectedResult,
 				const ExpectedValidatorCalls& expectedValidatorCalls,
 				TCorruptCosignature corruptCosignature) {
 			// Arrange:
-			RunTestWithTransactionInCache<TCosignatureAccountVersion>(3, 4,[=](auto& context, const auto& transactionInfo, const auto& transaction) {
+			RunTestWithTransactionInCache<TTestTypes>(3,TTestTypes::Generator::Generate(4),  4,[=](auto& context, const auto& transactionInfo, const auto& transaction) {
 				// - create a compatible cosignature
-				auto cosignature = test::GenerateValidCosignature(context.cosignerKeys()[3], transactionInfo.EntityHash);
+				auto cosignature = test::GenerateValidCosignature<model::DetachedCosignature>(context.cosignerKeys()[3], transactionInfo.EntityHash);
 
 				// - mark the cosignature as invalid
 				corruptCosignature(context, cosignature);
@@ -947,7 +1015,7 @@ namespace catapult { namespace chain {
 
 				const auto* pCosignatures = transaction.CosignaturesPtr();
 				context.assertSingleTransactionInCache(transactionInfo.EntityHash, transaction, {
-					pCosignatures[0], pCosignatures[1], pCosignatures[2],
+					pCosignatures[0].ToInfo(), pCosignatures[1].ToInfo(), pCosignatures[2].ToInfo(),
 				});
 				context.assertTransactionInCacheHasCorrectExtendedProperties(transactionInfo);
 
@@ -958,12 +1026,12 @@ namespace catapult { namespace chain {
 		}
 	}
 
-	TYPED_TEST(PtUpdaterTests, AddingIneligibleCosignatureWithMatchingTransactionIsIgnored) {
+	TRAITS_BASED_TEST(AddingIneligibleCosignatureWithMatchingTransactionIsIgnored) {
 		// Arrange:
 		ExpectedValidatorCalls expectedValidatorCalls;
 		expectedValidatorCalls.NumValidateCosignersCalls.setExactMatch(2); // 1 (new cosig) + 1 (ineligible cosig)
 		expectedValidatorCalls.NumLastCosigners.setExactMatch(1); // ineligible cosig only
-		RunAddingInvalidCosignatureTest<TypeParam::value>(CosignatureUpdateResult::Ineligible, expectedValidatorCalls, [](
+		RunAddingInvalidCosignatureTest<TTestTypes>(CosignatureUpdateResult::Ineligible, expectedValidatorCalls, [](
 				auto& context,
 				const auto& cosignature) {
 			// - mark the cosignature as ineligible
@@ -971,20 +1039,20 @@ namespace catapult { namespace chain {
 		});
 	}
 
-	TYPED_TEST(PtUpdaterTests, AddingUnverifiableCosignatureWithMatchingTransactionIsIgnored) {
+	TRAITS_BASED_TEST(AddingUnverifiableCosignatureWithMatchingTransactionIsIgnored) {
 		// Arrange:
 		ExpectedValidatorCalls expectedValidatorCalls;
 		expectedValidatorCalls.NumValidateCosignersCalls.setExactMatch(1); // 1 (new cosig)
 		expectedValidatorCalls.NumLastCosigners.setExactMatch(4); // 3 (existing cosigs) + 1 (new cosig)
-		RunAddingInvalidCosignatureTest<TypeParam::value>(CosignatureUpdateResult::Unverifiable, expectedValidatorCalls, [](const auto&, auto& cosignature) {
+		RunAddingInvalidCosignatureTest<TTestTypes>(CosignatureUpdateResult::Unverifiable, expectedValidatorCalls, [](const auto&, auto& cosignature) {
 			// - make the cosignature unverifiable
-			cosignature.Signature[0] ^= 0xFF;
+		  *(reinterpret_cast<uint16_t*>(&(cosignature.Signature[0]))+1) ^= 0xFF;
 		});
 	}
 
-	TYPED_TEST(PtUpdaterTests, AddingDuplicateCosignatureWithMatchingTransactionIsIgnored) {
+	TRAITS_BASED_TEST(AddingDuplicateCosignatureWithMatchingTransactionIsIgnored) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 3, [](auto& context, const auto& transactionInfo, const auto& transaction) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(3), 3, [](auto& context, const auto& transactionInfo, const auto& transaction) {
 			// Act: add an existing cosignature
 			const auto& existingCosignature = transaction.CosignaturesPtr()[1];
 			auto result = context.updater().update({
@@ -1012,11 +1080,11 @@ namespace catapult { namespace chain {
 
 	// region update cosignature - stale cosignature detected
 
-	TYPED_TEST(PtUpdaterTests, StaleCosignatureIsPurgedWhenNewValidCosignatureIsAdded) {
+	TRAITS_BASED_TEST(StaleCosignatureIsPurgedWhenNewValidCosignatureIsAdded) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(4), 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
 			// - create a compatible cosignature
-			auto cosignature = test::GenerateValidCosignature(context.cosignerKeys()[3], transactionInfo.EntityHash);
+			auto cosignature = test::GenerateValidCosignature<model::DetachedCosignature>(context.cosignerKeys()[3], transactionInfo.EntityHash);
 
 			// - change an already accepted and valid cosignature to be ineligible
 			//   this simulates edge case where: (1) account C1 cosigns, (2) account C1 is converted to multisig and thus invalid
@@ -1030,8 +1098,8 @@ namespace catapult { namespace chain {
 
 			const auto* pCosignatures = transaction.CosignaturesPtr();
 			context.assertSingleTransactionInCache(transactionInfo.EntityHash, transaction, {
-				pCosignatures[0], pCosignatures[2],
-				cosignature
+				pCosignatures[0].ToInfo(), pCosignatures[2].ToInfo(),
+				cosignature.ToInfo()
 			});
 			context.assertTransactionInCacheHasCorrectExtendedProperties(transactionInfo);
 
@@ -1046,11 +1114,11 @@ namespace catapult { namespace chain {
 		});
 	}
 
-	TYPED_TEST(PtUpdaterTests, MultipleStaleCosignaturesArePurgedWhenNewValidCosignatureIsAdded) {
+	TRAITS_BASED_TEST(MultipleStaleCosignaturesArePurgedWhenNewValidCosignatureIsAdded) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(4), 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
 			// - create a compatible cosignature
-			auto cosignature = test::GenerateValidCosignature(context.cosignerKeys()[3], transactionInfo.EntityHash);
+			auto cosignature = test::GenerateValidCosignature<model::DetachedCosignature>(context.cosignerKeys()[3], transactionInfo.EntityHash);
 
 			// - change two already accepted and valid cosignatures to be ineligible
 			//   this simulates edge case where: (1) account C1 cosigns, (2) account C1 is converted to multisig and thus invalid
@@ -1065,8 +1133,8 @@ namespace catapult { namespace chain {
 
 			const auto* pCosignatures = transaction.CosignaturesPtr();
 			context.assertSingleTransactionInCache(transactionInfo.EntityHash, transaction, {
-				pCosignatures[1],
-				cosignature
+				pCosignatures[1].ToInfo(),
+				cosignature.ToInfo()
 			});
 			context.assertTransactionInCacheHasCorrectExtendedProperties(transactionInfo);
 
@@ -1081,12 +1149,12 @@ namespace catapult { namespace chain {
 		});
 	}
 
-	TYPED_TEST(PtUpdaterTests, StaleCosignatureIsPurgedWhenNewUnverifiableCosignatureIsAdded) {
+	TRAITS_BASED_TEST(StaleCosignatureIsPurgedWhenNewUnverifiableCosignatureIsAdded) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(4), 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
 			// - create an unverifiable cosignature
-			auto cosignature = test::GenerateValidCosignature(context.cosignerKeys()[3], transactionInfo.EntityHash);
-			cosignature.Signature[0] ^= 0xFF;
+			auto cosignature = test::GenerateValidCosignature<model::DetachedCosignature>(context.cosignerKeys()[3], transactionInfo.EntityHash);
+		  *(reinterpret_cast<uint16_t*>(&(cosignature.Signature[0]))+1) ^= 0xFF;
 
 			// - change an already accepted and valid cosignature to be ineligible
 			//   this simulates edge case where: (1) account C1 cosigns, (2) account C1 is converted to multisig and thus invalid
@@ -1116,11 +1184,11 @@ namespace catapult { namespace chain {
 		});
 	}
 
-	TYPED_TEST(PtUpdaterTests, StaleCosignatureIsNotPurgedWhenNewIneligibleCosignatureIsAdded) {
+	TRAITS_BASED_TEST(StaleCosignatureIsNotPurgedWhenNewIneligibleCosignatureIsAdded) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(4),  4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
 			// - create an ineligible cosignature
-			auto cosignature = test::GenerateValidCosignature(context.cosignerKeys()[3], transactionInfo.EntityHash);
+			auto cosignature = test::GenerateValidCosignature<model::DetachedCosignature>(context.cosignerKeys()[3], transactionInfo.EntityHash);
 			context.validator().setValidateCosignersResult(CosignersValidationResult::Ineligible, cosignature.Signer);
 
 			// - change an already accepted and valid cosignature to be ineligible
@@ -1150,11 +1218,11 @@ namespace catapult { namespace chain {
 		});
 	}
 
-	TYPED_TEST(PtUpdaterTests, StaleCosignatureDoesNotPreventNewCosignatureFromCompletingTransaction) {
+	TRAITS_BASED_TEST(StaleCosignatureDoesNotPreventNewCosignatureFromCompletingTransaction) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(4), 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
 			// - create a compatible cosignature
-			auto cosignature = test::GenerateValidCosignature(context.cosignerKeys()[3], transactionInfo.EntityHash);
+			auto cosignature = test::GenerateValidCosignature<model::DetachedCosignature>(context.cosignerKeys()[3], transactionInfo.EntityHash);
 
 			// - change an already accepted and valid cosignature to be ineligible (notice that triggers are registered in priority order)
 			//   this simulates edge case where: (1) account C1 cosigns, (2) account C1 is converted to multisig and thus invalid
@@ -1174,9 +1242,9 @@ namespace catapult { namespace chain {
 			const auto* pCosignatures = transaction.CosignaturesPtr();
 			ASSERT_EQ(1u, context.completedTransactions().size());
 			test::AssertStitchedTransaction(*context.completedTransactions()[0], transaction, {
-				pCosignatures[0], pCosignatures[2],
-				cosignature
-			});
+				pCosignatures[0].ToInfo(), pCosignatures[2].ToInfo(),
+				cosignature.ToInfo()
+			}, 0);
 			EXPECT_TRUE(context.failedTransactionStatuses().empty());
 
 			ExpectedValidatorCalls expectedValidatorCalls;
@@ -1198,11 +1266,11 @@ namespace catapult { namespace chain {
 		}
 	}
 
-	TYPED_TEST(PtUpdaterTests, AddingManyDuplicateCosignaturesWithMatchingTransactionOnlyAddsOne) {
+	TRAITS_BASED_TEST(AddingManyDuplicateCosignaturesWithMatchingTransactionOnlyAddsOne) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(4), 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
 			// - create a compatible cosignature
-			auto cosignature = test::GenerateValidCosignature(context.cosignerKeys()[3], transactionInfo.EntityHash);
+			auto cosignature = test::GenerateValidCosignature<model::DetachedCosignature>(context.cosignerKeys()[3], transactionInfo.EntityHash);
 
 			// Act: add many duplicates of the same cosignature (make sure there are more adds than threads to queue some)
 			auto numAddAttempts = 2 * context.numWorkerThreads();
@@ -1227,8 +1295,8 @@ namespace catapult { namespace chain {
 
 			const auto* pCosignatures = transaction.CosignaturesPtr();
 			context.assertSingleTransactionInCache(transactionInfo.EntityHash, transaction, {
-				pCosignatures[0], pCosignatures[1], pCosignatures[2],
-				cosignature
+				pCosignatures[0].ToInfo(), pCosignatures[1].ToInfo(), pCosignatures[2].ToInfo(),
+				cosignature.ToInfo()
 			});
 			context.assertTransactionInCacheHasCorrectExtendedProperties(transactionInfo);
 
@@ -1248,9 +1316,9 @@ namespace catapult { namespace chain {
 		});
 	}
 
-	TYPED_TEST(PtUpdaterTests, AddingManyValidCompletingCosignaturesOnlyCompletesTransactionOnce) {
+	TRAITS_BASED_TEST(AddingManyValidCompletingCosignaturesOnlyCompletesTransactionOnce) {
 		// Arrange:
-		RunTestWithTransactionInCache<TypeParam::value>(3, 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
+		RunTestWithTransactionInCache<TTestTypes>(3, TTestTypes::Generator::Generate(4), 4, [](auto& context, const auto& transactionInfo, const auto& transaction) {
 			// - always mark the transaction as complete and randomly sleep in validateCosigners
 			const auto* pCosignatures = transaction.CosignaturesPtr();
 			context.validator().setValidateCosignersResult(CosignersValidationResult::Success, pCosignatures[0].Signer);
@@ -1260,7 +1328,7 @@ namespace catapult { namespace chain {
 			auto numAddAttempts = 2 * context.numWorkerThreads();
 			std::vector<thread::future<CosignatureUpdateResult>> futures;
 			for (auto i = 0u; i < numAddAttempts; ++i)
-				futures.push_back(context.updater().update(test::GenerateValidCosignature(context.cosignerKeys()[3], transactionInfo.EntityHash)));
+				futures.push_back(context.updater().update(test::GenerateValidCosignature<model::DetachedCosignature>(context.cosignerKeys()[3], transactionInfo.EntityHash)));
 
 			// - wait for all adds to finish
 			auto results = thread::get_all(std::move(futures));
@@ -1283,8 +1351,8 @@ namespace catapult { namespace chain {
 			ASSERT_EQ(1u, context.completedTransactions().size());
 
 			const auto& completedTransaction = *context.completedTransactions()[0];
-			std::vector<model::Cosignature<SignatureLayout::Raw>> expectedCosignatures{ pCosignatures[0], pCosignatures[1], pCosignatures[2] };
-			auto numUnknownCosignatures = (completedTransaction.Size - transaction.Size) / sizeof(model::Cosignature<SignatureLayout::Raw>);
+			std::vector<model::CosignatureInfo> expectedCosignatures{ pCosignatures[0].ToInfo(), pCosignatures[1].ToInfo(), pCosignatures[2].ToInfo() };
+			auto numUnknownCosignatures = (completedTransaction.Size - transaction.Size) / sizeof(typename TTestTypes::Descriptor::CosignatureType);
 			test::AssertStitchedTransaction(completedTransaction, transaction, expectedCosignatures, numUnknownCosignatures);
 
 			EXPECT_TRUE(context.failedTransactionStatuses().empty());
@@ -1312,16 +1380,16 @@ namespace catapult { namespace chain {
 
 	// region threading
 
-	TYPED_TEST(PtUpdaterTests, FuturesAreFulfilledEvenWhenUpdaterIsDestroyed) {
+	TRAITS_BASED_TEST(FuturesAreFulfilledEvenWhenUpdaterIsDestroyed) {
 		// Arrange:
 		UpdaterTestContext context;
-		auto pTransaction = CreateRandomAggregateTransaction(3, 3, TypeParam::value, context.cosignerKeys(), false);
+		auto pTransaction = CreateRandomAggregateTransaction<TTestTypes>(3, 3, TTestTypes::Generator::Generate(3), context.cosignerKeys(), false);
 		auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
 		test::FixCosignatures(context.cosignerKeys(), transactionInfo.EntityHash, *pTransaction, false);
 
 		// Act: start async operations and destroy the updater
 		auto future1 = context.updater().update(transactionInfo);
-		auto future2 = context.updater().update(test::GenerateValidCosignature(test::GenerateRandomByteArray<Hash256>(), TypeParam::value));
+		auto future2 = context.updater().update(test::GenerateValidCosignature<model::DetachedCosignature>(test::GenerateRandomByteArray<Hash256>(), 1));
 		context.destroyUpdater();
 
 		// - wait for operations to complete

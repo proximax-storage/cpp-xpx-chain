@@ -45,6 +45,7 @@ namespace catapult { namespace test {
 			io::Write8(outputStream, utils::to_underlying_type(subscribers::PtChangeOperationType::Add_Cosignature));
 			outputStream.write(signer);
 			outputStream.write(signature);
+			io::Write8(outputStream, DerivationScheme::Ed25519_Sha3);
 			io::WriteTransactionInfo(outputStream, transactionInfo);
 		}
 	}

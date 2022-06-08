@@ -101,14 +101,24 @@
 			"supportedVersions": [1]
 		},
 		{
-			"name": "Aggregate_Complete",
+			"name": "Aggregate_Complete_V1",
 			"type": "16705",
 			"supportedVersions": [2, 3]
 		},
 		{
-			"name": "Aggregate_Bonded",
+			"name": "Aggregate_Bonded_V1",
 			"type": "16961",
 			"supportedVersions": [2, 3]
+		},
+		{
+			"name": "Aggregate_Complete_V2",
+			"type": "17217",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Aggregate_Bonded_V2",
+			"type": "17473",
+			"supportedVersions": [1]
 		},
 		{
 			"name": "Mosaic_Definition",

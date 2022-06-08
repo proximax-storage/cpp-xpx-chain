@@ -23,10 +23,17 @@
 
 namespace catapult { namespace mongo { namespace plugins {
 
-	/// Creates a mongo aggregate transaction plugin around \a transactionRegistry and \a immutableConfig for transactions with type \a transactionType.
+	/// Creates a mongo aggregate V1 transaction plugin around \a transactionRegistry and \a immutableConfig for transactions with type \a transactionType.
 	PLUGIN_API
-	std::unique_ptr<MongoTransactionPlugin> CreateAggregateTransactionMongoPlugin(
+	std::unique_ptr<MongoTransactionPlugin> CreateAggregateTransactionMongoPluginV1(
 			const MongoTransactionRegistry& transactionRegistry,
 			const config::ImmutableConfiguration& immutableConfig,
 			model::EntityType transactionType);
+
+		/// Creates a mongo aggregate V2 transaction plugin around \a transactionRegistry and \a immutableConfig for transactions with type \a transactionType.
+		PLUGIN_API
+		std::unique_ptr<MongoTransactionPlugin> CreateAggregateTransactionMongoPluginV2(
+				const MongoTransactionRegistry& transactionRegistry,
+				const config::ImmutableConfiguration& immutableConfig,
+				model::EntityType transactionType);
 }}}

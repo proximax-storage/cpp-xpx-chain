@@ -30,6 +30,7 @@
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
+#include "tests/test/AggregateTestUtils.h"
 #include "tests/TestHarness.h"
 
 using namespace catapult::model;
@@ -43,8 +44,9 @@ namespace catapult { namespace plugins {
 	namespace {
 		constexpr auto Entity_Type = static_cast<EntityType>(9876);
 
+		template<typename TDescriptor>
 		struct AggregateTransactionWrapper {
-			model::UniqueEntityPtr<AggregateTransaction<SignatureLayout::Raw>> pTransaction;
+			model::UniqueEntityPtr<AggregateTransaction<TDescriptor>> pTransaction;
 			std::vector<const mocks::EmbeddedMockTransaction*> SubTransactions;
 			std::vector<Key> SubTransactionSigners;
 			std::vector<Key> SubTransactionRecipients;
@@ -52,13 +54,14 @@ namespace catapult { namespace plugins {
 			std::vector<RawSignature> CosignerSignatures;
 		};
 
-		AggregateTransactionWrapper CreateAggregateTransaction(uint8_t numTransactions, uint8_t numCosignatures, VersionType version) {
-			using TransactionType = AggregateTransaction<SignatureLayout::Raw>;
+		template<typename TDescriptor>
+		AggregateTransactionWrapper<TDescriptor> CreateAggregateTransaction(uint8_t numTransactions, uint8_t numCosignatures, VersionType version) {
+			using TransactionType = AggregateTransaction<TDescriptor>;
 			uint32_t entitySize = sizeof(TransactionType)
 					+ numTransactions * sizeof(mocks::EmbeddedMockTransaction)
-					+ numCosignatures * sizeof(Cosignature<SignatureLayout::Raw>);
+					+ numCosignatures * sizeof(typename TDescriptor::CosignatureType);
 
-			AggregateTransactionWrapper wrapper;
+			AggregateTransactionWrapper<TDescriptor> wrapper;
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
 			pTransaction->Version = MakeVersion(NetworkIdentifier::Mijin_Test, version);
 			pTransaction->Size = entitySize;
@@ -87,7 +90,7 @@ namespace catapult { namespace plugins {
 				test::FillWithRandomData(pCosignature->Signature);
 
 				wrapper.Cosigners.push_back(pCosignature->Signer);
-				wrapper.CosignerSignatures.push_back(pCosignature->Signature);
+				wrapper.CosignerSignatures.push_back(pCosignature->GetRawSignature());
 				++pCosignature;
 			}
 
@@ -103,8 +106,12 @@ namespace catapult { namespace plugins {
 			return config::CreateMockConfigurationHolder(blockchainConfig);
 		}
 
-		std::unique_ptr<model::TransactionPlugin> CreateTransactionPlugin(const model::TransactionRegistry& registry, utils::TimeSpan time = utils::TimeSpan{}) {
-			return CreateAggregateTransactionPlugin(registry, Entity_Type, CreateConfigHolder(time));
+
+		std::unique_ptr<model::TransactionPlugin> CreateTransactionPluginV1(const model::TransactionRegistry& registry, utils::TimeSpan time = utils::TimeSpan{}) {
+			return CreateAggregateTransactionV1Plugin(registry, Entity_Type, CreateConfigHolder(time));
+		}
+		std::unique_ptr<model::TransactionPlugin> CreateTransactionPluginV2(const model::TransactionRegistry& registry, utils::TimeSpan time = utils::TimeSpan{}) {
+			return CreateAggregateTransactionV2Plugin(registry, Entity_Type, CreateConfigHolder(time));
 		}
 	}
 
@@ -112,28 +119,56 @@ namespace catapult { namespace plugins {
 
 	// region basic
 
-	TEST(TEST_CLASS, CanCreatePlugin) {
+	TEST(TEST_CLASS, CanCreatePluginV1) {
 		// Act:
 		TransactionRegistry registry;
-		auto pPlugin = CreateTransactionPlugin(registry);
+		auto pPlugin = CreateTransactionPluginV1(registry);
 
 		// Assert:
 		EXPECT_EQ(Entity_Type, pPlugin->type());
 	}
 
-	TEST(TEST_CLASS, PluginSupportsTopLevel) {
+	TEST(TEST_CLASS, PluginV1SupportsTopLevel) {
 		// Arrange:
 		TransactionRegistry registry;
-		auto pPlugin = CreateTransactionPlugin(registry);
+		auto pPlugin = CreateTransactionPluginV1(registry);
 
 		// Act + Assert:
 		EXPECT_TRUE(pPlugin->supportsTopLevel());
 	}
 
-	TEST(TEST_CLASS, PluginDoesNotSupportEmbedding) {
+	TEST(TEST_CLASS, PluginV1DoesNotSupportEmbedding) {
 		// Arrange:
 		TransactionRegistry registry;
-		auto pPlugin = CreateTransactionPlugin(registry);
+		auto pPlugin = CreateTransactionPluginV1(registry);
+
+		// Act + Assert:
+		EXPECT_FALSE(pPlugin->supportsEmbedding());
+		EXPECT_THROW(pPlugin->embeddedPlugin(), catapult_runtime_error);
+	}
+
+	TEST(TEST_CLASS, CanCreatePluginV2) {
+		// Act:
+		TransactionRegistry registry;
+		auto pPlugin = CreateTransactionPluginV1(registry);
+
+		// Assert:
+		EXPECT_EQ(Entity_Type, pPlugin->type());
+	}
+
+	TEST(TEST_CLASS, PluginV2SupportsTopLevel) {
+		// Arrange:
+		TransactionRegistry registry;
+		auto pPlugin = CreateTransactionPluginV1(registry);
+
+		// Act + Assert:
+		EXPECT_TRUE(pPlugin->supportsTopLevel());
+	}
+
+	TEST(TEST_CLASS, PluginV2DoesNotSupportEmbedding) {
+		// Arrange:
+		TransactionRegistry registry;
+		auto pPlugin = CreateTransactionPluginV1(registry);
 
 		// Act + Assert:
 		EXPECT_FALSE(pPlugin->supportsEmbedding());
@@ -144,10 +179,10 @@ namespace catapult { namespace plugins {
 
 	// region attributes
 
-	TEST(TEST_CLASS, AttributesReturnsCorrectValuesWhenConfiguredWithDefaultMaxLifetime) {
+	TEST(TEST_CLASS, V1AttributesReturnsCorrectValuesWhenConfiguredWithDefaultMaxLifetime) {
 		// Arrange:
 		TransactionRegistry registry;
-		auto pPlugin = CreateTransactionPlugin(registry);
+		auto pPlugin = CreateTransactionPluginV1(registry);
 
 		// Act:
 		auto attributes = pPlugin->attributes(Height{0});
@@ -160,10 +195,41 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(utils::TimeSpan(), attributes.MaxLifetime);
 	}
 
-	TEST(TEST_CLASS, AttributesReturnsCorrectValuesWhenConfiguredWithCustomMaxLifetime) {
+	TEST(TEST_CLASS, V1AttributesReturnsCorrectValuesWhenConfiguredWithCustomMaxLifetime) {
 		// Arrange:
 		TransactionRegistry registry;
-		auto pPlugin = CreateTransactionPlugin(registry, utils::TimeSpan::FromMinutes(1234));
+		auto pPlugin = CreateTransactionPluginV1(registry, utils::TimeSpan::FromMinutes(1234));
+
+		// Act:
+		auto attributes = pPlugin->attributes(Height{0});
+
+		// Assert:
+		EXPECT_EQ(2u, attributes.MinVersion);
+		EXPECT_EQ(3u, attributes.MaxVersion);
+
+		EXPECT_EQ(utils::TimeSpan::FromMinutes(1234), attributes.MaxLifetime);
+	}
+
+	TEST(TEST_CLASS, V2AttributesReturnsCorrectValuesWhenConfiguredWithDefaultMaxLifetime) {
+		// Arrange:
+		TransactionRegistry registry;
+		auto pPlugin = CreateTransactionPluginV1(registry);
+
+		// Act:
+		auto attributes = pPlugin->attributes(Height{0});
+
+		// Assert:
+		EXPECT_EQ(2u, attributes.MinVersion);
+		EXPECT_EQ(3u, attributes.MaxVersion);
+
+		// - zero denotes default lifetime should be used
+		EXPECT_EQ(utils::TimeSpan(), attributes.MaxLifetime);
+	}
+
+	TEST(TEST_CLASS, V2AttributesReturnsCorrectValuesWhenConfiguredWithCustomMaxLifetime) {
+		// Arrange:
+		TransactionRegistry registry;
+		auto pPlugin = CreateTransactionPluginV1(registry, utils::TimeSpan::FromMinutes(1234));
 
 		// Act:
 		auto attributes = pPlugin->attributes(Height{0});
@@ -176,11 +242,37 @@ namespace catapult { namespace plugins {
 	}
 
 	// endregion
+namespace {
+	struct V1PluginFactory
+	{
+		using CosignaturesNotification = AggregateCosignaturesNotification<1>;
+		using EmbeddedNotification = AggregateEmbeddedTransactionNotification<1>;
+		using SignatureNotificationType = SignatureNotification<1>;
+		static std::unique_ptr<model::TransactionPlugin> Create(const model::TransactionRegistry& registry, utils::TimeSpan time = utils::TimeSpan{})
+		{
+			return CreateTransactionPluginV1(registry, time);
+		}
+	};
 
+	struct V2PluginFactory
+	{
+		using CosignaturesNotification = AggregateCosignaturesNotification<3>;
+		using EmbeddedNotification = AggregateEmbeddedTransactionNotification<2>;
+		using SignatureNotificationType = SignatureNotification<2>;
+		static std::unique_ptr<model::TransactionPlugin> Create(const model::TransactionRegistry& registry, utils::TimeSpan time = utils::TimeSpan{})
+		{
+			return CreateTransactionPluginV2(registry, time);
+		}
+	};
+
+}
 #define TRAITS_BASED_TEST(TEST_NAME) \
+    template<typename TDescriptor, typename TPluginFactory>                                 \
 	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(VersionType version); \
-	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(2); } \
-	TEST(TEST_CLASS, TEST_NAME##_v3) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(3); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<model::AggregateTransactionRawDescriptor, V1PluginFactory>(2); } \
+	TEST(TEST_CLASS, TEST_NAME##_v3) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<model::AggregateTransactionRawDescriptor, V1PluginFactory>(3); } \
+    TEST(TEST_CLASS, TEST_NAME##_v1_2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<model::AggregateTransactionExtendedDescriptor, V2PluginFactory>(1); } \
+    template<typename TDescriptor, typename TPluginFactory>                                 \
 	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(VersionType version)
 
 	// region size
@@ -188,21 +280,21 @@ namespace catapult { namespace plugins {
 	TRAITS_BASED_TEST(CanCalculateSizeWhenAllSubTransactionsAreSupported) {
 		// Arrange:
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(3, 4, version);
+		auto pPlugin = TPluginFactory::Create(registry);
+		auto wrapper = CreateAggregateTransaction<TDescriptor>(3, 4, version);
 
 		// Act:
 		auto realSize = pPlugin->calculateRealSize(*wrapper.pTransaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(AggregateTransaction<SignatureLayout::Raw>) + 3 * sizeof(mocks::EmbeddedMockTransaction) + 4 * sizeof(Cosignature<SignatureLayout::Raw>), realSize);
+		EXPECT_EQ(sizeof(AggregateTransaction<TDescriptor>) + 3 * sizeof(mocks::EmbeddedMockTransaction) + 4 * sizeof(typename TDescriptor::CosignatureType), realSize);
 	}
 
 	TRAITS_BASED_TEST(CannotCalculateSizeWhenAnySubTransactionIsNotSupported) {
 		// Arrange:
 		TransactionRegistry registry;
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(3, 4, version);
+		auto pPlugin = TPluginFactory::Create(registry);
+		auto wrapper = CreateAggregateTransaction<TDescriptor>(3, 4, version);
 
 		// Act:
 		auto realSize = pPlugin->calculateRealSize(*wrapper.pTransaction);
@@ -219,78 +311,136 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(0, 0, version);
+		auto pPlugin = TPluginFactory::Create(registry);
+		auto wrapper = CreateAggregateTransaction<TDescriptor>(0, 0, version);
 		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
 		test::PublishTransaction(*pPlugin, model::WeakEntityInfoT<model::Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
-		// Assert:
-		// - 1 AggregateTransactionHashNotification (version 3 and higher)
-		// - 1 AggregateCosignaturesNotification<2> (version 3 and higher)
-		// - 1 AggregateTransactionTypeNotification
-		// - 1 AggregateCosignaturesNotification<1>
-		ASSERT_EQ(2u + (version > 2u ? 2 : 0), sub.numNotifications());
+
+
 
 		auto i = 0u;
-		if (version > 2u) {
-			EXPECT_EQ(Aggregate_Hash_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(Aggregate_Cosignatures_v2_Notification, sub.notificationTypes()[i++]);
+		if constexpr(std::is_same_v<TDescriptor, model::AggregateTransactionRawDescriptor>) {
+			// Assert for V1:
+			// - 1 AggregateTransactionHashNotification (version 3 and higher)
+			// - 1 AggregateCosignaturesNotification<2> (version 3 and higher)
+			// - 1 AggregateTransactionTypeNotification
+			// - 1 AggregateCosignaturesNotification<1>
+
+			ASSERT_EQ(2u + (version > 2u ? 2 : 0), sub.numNotifications());
+
+			if (version > 2u) {
+				EXPECT_EQ(Aggregate_Hash_v1_Notification, sub.notificationTypes()[i++]);
+				EXPECT_EQ(Aggregate_Cosignatures_v2_Notification, sub.notificationTypes()[i++]);
+			}
+			// - aggregate transaction type notification must be the first raised notification
+			EXPECT_EQ(Aggregate_Type_v1_Notification, sub.notificationTypes()[i++]);
+			// - aggregate cosignatures notification must be the second raised notification
+			EXPECT_EQ(Aggregate_Cosignatures_v1_Notification, sub.notificationTypes()[i++]);
 		}
-		// - aggregate transaction type notification must be the first raised notification
-		EXPECT_EQ(Aggregate_Type_v1_Notification, sub.notificationTypes()[i++]);
-		// - aggregate cosignatures notification must be the second raised notification
-		EXPECT_EQ(Aggregate_Cosignatures_v1_Notification, sub.notificationTypes()[i++]);
+		else {
+			ASSERT_EQ(3u, sub.numNotifications());
+			// Assert V2:
+			// - 1 AggregateTransactionHashNotification (version 3 and higher)
+			// - 1 AggregateCosignaturesNotification<2> (version 3 and higher)
+			// - 1 AggregateTransactionTypeNotification
+			// - 1 AggregateCosignaturesNotification<1>
+			EXPECT_EQ(Aggregate_Type_v1_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Aggregate_Hash_v1_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Aggregate_Cosignatures_v3_Notification, sub.notificationTypes()[i++]);
+		}
+
 	}
 
 	TRAITS_BASED_TEST(CanRaiseCorrectNumberOfNotificationsFromAggregate) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(2, 3, version);
+		auto pPlugin = TPluginFactory::Create(registry);
+		auto wrapper = CreateAggregateTransaction<TDescriptor>(2, 3, version);
 		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
 		test::PublishTransaction(*pPlugin, model::WeakEntityInfoT<model::Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
-		// Assert:
-		// - 1 AggregateTransactionHashNotification (version 3 and higher)
-		// - 1 AggregateCosignaturesNotification<2> (version 3 and higher)
-		// - 1 AggregateTransactionTypeNotification
-		// - 1 AggregateCosignaturesNotification<1>
-		// - 3 SignatureNotification (one per cosigner)
-		// - 2 SourceChangeNotification (one per embedded-mock)
-		// - 4 AccountPublicKeyNotification (two per embedded-mock; one signer and one recipient each)
-		// - 2 EntityNotification (one per embedded-mock)
-		// - 2 AggregateEmbeddedTransactionNotification (one per embedded-mock)
-		ASSERT_EQ(1u + 1 + 3 + 2 + 4 + 2 + 2 + (version > 2u ? 2 : 0), sub.numNotifications());
+		if constexpr(std::is_same_v<TDescriptor, model::AggregateTransactionRawDescriptor>) {
+			// Assert:
+			// - 1 AggregateTransactionHashNotification (version 3 and higher)
+			// - 1 AggregateCosignaturesNotification<2> (version 3 and higher)
+			// - 1 AggregateTransactionTypeNotification
+			// - 1 AggregateCosignaturesNotification<1>
+			// - 3 SignatureNotification (one per cosigner)
+			// - 2 SourceChangeNotification (one per embedded-mock)
+			// - 4 AccountPublicKeyNotification (two per embedded-mock; one signer and one recipient each)
+			// - 2 EntityNotification (one per embedded-mock)
+			// - 2 AggregateEmbeddedTransactionNotification (one per embedded-mock)
 
-		auto i = 0u;
-		if (version > 2u) {
+			ASSERT_EQ(1u + 1 + 3 + 2 + 4 + 2 + 2 + (version > 2u ? 2 : 0), sub.numNotifications());
+
+			auto i = 0u;
+			if (version > 2u) {
+				EXPECT_EQ(Aggregate_Hash_v1_Notification, sub.notificationTypes()[i++]);
+				EXPECT_EQ(Aggregate_Cosignatures_v2_Notification, sub.notificationTypes()[i++]);
+			}
+			// - aggregate transaction type notification must be the first raised notification
+			EXPECT_EQ(Aggregate_Type_v1_Notification, sub.notificationTypes()[i++]);
+			// - aggregate cosignatures notification must be the second raised notification
+			EXPECT_EQ(Aggregate_Cosignatures_v1_Notification, sub.notificationTypes()[i++]);
+
+			// - source change notification must be the first raised sub-transaction notification
+			for (auto k = 0u; k < 2u; ++k) {
+				auto message = "sub-transaction at " + std::to_string(k);
+				EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[i++]) << message;
+				EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]) << message;
+				EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[i++]) << message;
+				EXPECT_EQ(Aggregate_EmbeddedTransaction_v1_Notification, sub.notificationTypes()[i++]) << message;
+				EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]) << message;
+			}
+
+			// - signature notifications are raised last (and with wrong source) for performance reasons
+			EXPECT_TRUE(Core_Signature_v1_Notification == sub.notificationTypes()[i++]);
+			EXPECT_TRUE(Core_Signature_v1_Notification == sub.notificationTypes()[i++]);
+			EXPECT_TRUE(Core_Signature_v1_Notification == sub.notificationTypes()[i++]);
+		}
+		else{
+			// Assert:
+			// - 1 AggregateTransactionTypeNotification
+			// - 1 AggregateTransactionHashNotification
+			// - 1 AggregateCosignaturesNotification<3>
+			// - 3 SignatureNotification (one per cosigner)
+			// - 2 SourceChangeNotification (one per embedded-mock)
+			// - 4 AccountPublicKeyNotification (two per embedded-mock; one signer and one recipient each)
+			// - 2 EntityNotification (one per embedded-mock)
+			// - 2 AggregateEmbeddedTransactionNotification<2> (one per embedded-mock)
+
+			ASSERT_EQ(1u + 1 + 1 + 3 + 2 + 4 + 2 + 2, sub.numNotifications());
+
+			auto i = 0u;
+			// - aggregate transaction type notification must be the first raised notification
+			EXPECT_EQ(Aggregate_Type_v1_Notification, sub.notificationTypes()[i++]);
+
 			EXPECT_EQ(Aggregate_Hash_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(Aggregate_Cosignatures_v2_Notification, sub.notificationTypes()[i++]);
-		}
-		// - aggregate transaction type notification must be the first raised notification
-		EXPECT_EQ(Aggregate_Type_v1_Notification, sub.notificationTypes()[i++]);
-		// - aggregate cosignatures notification must be the second raised notification
-		EXPECT_EQ(Aggregate_Cosignatures_v1_Notification, sub.notificationTypes()[i++]);
+			// - aggregate cosignatures notification must be the second raised notification
+			EXPECT_EQ(Aggregate_Cosignatures_v3_Notification, sub.notificationTypes()[i++]);
 
-		// - source change notification must be the first raised sub-transaction notification
-		for (auto k = 0u; k < 2u; ++k) {
-			auto message = "sub-transaction at " + std::to_string(k);
-			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[i++]) << message;
-			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]) << message;
-			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[i++]) << message;
-			EXPECT_EQ(Aggregate_EmbeddedTransaction_v1_Notification, sub.notificationTypes()[i++]) << message;
-			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]) << message;
+			// - source change notification must be the first raised sub-transaction notification
+			for (auto k = 0u; k < 2u; ++k) {
+				auto message = "sub-transaction at " + std::to_string(k);
+				EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[i++]) << message;
+				EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]) << message;
+				EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[i++]) << message;
+				EXPECT_EQ(Aggregate_EmbeddedTransaction_v2_Notification, sub.notificationTypes()[i++]) << message;
+				EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]) << message;
+			}
+
+			// - signature notifications are raised last (and with wrong source) for performance reasons
+			EXPECT_TRUE(Core_Signature_v2_Notification == sub.notificationTypes()[i++]);
+			EXPECT_TRUE(Core_Signature_v2_Notification == sub.notificationTypes()[i++]);
+			EXPECT_TRUE(Core_Signature_v2_Notification == sub.notificationTypes()[i++]);
 		}
 
-		// - signature notifications are raised last (and with wrong source) for performance reasons
-		EXPECT_TRUE(Core_Signature_v1_Notification == sub.notificationTypes()[i] || Core_Signature_v2_Notification == sub.notificationTypes()[i++]);
-		EXPECT_TRUE(Core_Signature_v1_Notification == sub.notificationTypes()[i] || Core_Signature_v2_Notification == sub.notificationTypes()[i++]);
-		EXPECT_TRUE(Core_Signature_v1_Notification == sub.notificationTypes()[i] || Core_Signature_v2_Notification == sub.notificationTypes()[i++]);
 	}
 
 	// endregion
@@ -298,7 +448,8 @@ namespace catapult { namespace plugins {
 	// region publish - account (including nested)
 
 	namespace {
-		void AssertContainsAllKeys(const mocks::MockNotificationSubscriber& sub, const AggregateTransactionWrapper& wrapper) {
+		template<typename TDescriptor>
+		void AssertContainsAllKeys(const mocks::MockNotificationSubscriber& sub, const AggregateTransactionWrapper<TDescriptor>& wrapper) {
 			auto i = 0u;
 			for (const auto& key : wrapper.SubTransactionSigners) {
 				EXPECT_TRUE(sub.contains(key)) << "sub transaction signer " << i;
@@ -319,8 +470,8 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(2, 3, version);
+		auto pPlugin = TPluginFactory::Create(registry);
+		auto wrapper = CreateAggregateTransaction<TDescriptor>(2, 3, version);
 		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
@@ -340,8 +491,8 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<SourceChangeNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(2, 3, version);
+		auto pPlugin = TPluginFactory::Create(registry);
+		auto wrapper = CreateAggregateTransaction<TDescriptor>(2, 3, version);
 		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
@@ -368,8 +519,8 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<EntityNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(2, 3, version);
+		auto pPlugin = TPluginFactory::Create(registry);
+		auto wrapper = CreateAggregateTransaction<TDescriptor>(2, 3, version);
 		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
@@ -393,12 +544,13 @@ namespace catapult { namespace plugins {
 	// region publish - aggregate embedded transaction
 
 	namespace {
+		template<typename TDescriptor, typename TPluginFactory>
 		void AssertCanRaiseEmbeddedTransactionNotifications(uint8_t numTransactions, uint8_t numCosignatures, VersionType version) {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification<1>> sub;
+			mocks::MockTypedNotificationSubscriber<typename TPluginFactory::EmbeddedNotification> sub;
 			auto registry = mocks::CreateDefaultTransactionRegistry();
-			auto pPlugin = CreateTransactionPlugin(registry);
-			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures, version);
+			auto pPlugin = TPluginFactory::Create(registry);
+			auto wrapper = CreateAggregateTransaction<TDescriptor>(numTransactions, numCosignatures, version);
 			auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 			// Act:
@@ -413,19 +565,19 @@ namespace catapult { namespace plugins {
 				EXPECT_EQ(wrapper.pTransaction->Signer, notification.Signer) << message;
 				EXPECT_EQ(*wrapper.SubTransactions[i], notification.Transaction) << message;
 				EXPECT_EQ(numCosignatures, notification.CosignaturesCount) << message;
-				EXPECT_EQ(wrapper.pTransaction->CosignaturesPtr(), notification.CosignaturesPtr) << message;
+				test::CompareCosignatures(wrapper.pTransaction->CosignaturesPtr(), notification.CosignaturesPtr, numCosignatures);
 			}
 		}
 	}
 
 	TRAITS_BASED_TEST(EmptyAggregateDoesNotRaiseEmbeddedTransactionNotifications) {
 		// Assert:
-		AssertCanRaiseEmbeddedTransactionNotifications(0, 0, version);
+		AssertCanRaiseEmbeddedTransactionNotifications<TDescriptor, TPluginFactory>(0, 0, version);
 	}
 
 	TRAITS_BASED_TEST(CanRaiseEmbeddedTransactionNotificationsFromAggregate) {
 		// Assert:
-		AssertCanRaiseEmbeddedTransactionNotifications(2, 3, version);
+		AssertCanRaiseEmbeddedTransactionNotifications<TDescriptor, TPluginFactory>(2, 3, version);
 	}
 
 	// endregion
@@ -433,16 +585,15 @@ namespace catapult { namespace plugins {
 	// region publish - signature
 
 	namespace {
-		template<DerivationScheme TDerivationScheme>
+		template<typename TDescriptor, typename TPluginFactory>
 		void AssertCanRaiseSignatureNotifications(uint8_t numTransactions, uint8_t numCosignatures, VersionType version) {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<SignatureNotification<2>> sub; //In updated node version subtransactions always issue a V2 notification
+			mocks::MockTypedNotificationSubscriber<typename TPluginFactory::SignatureNotificationType> sub; //In updated node version subtransactions always issue a V2 notification
 			auto registry = mocks::CreateDefaultTransactionRegistry();
-			auto pPlugin = CreateTransactionPlugin(registry);
-			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures, version);
+			auto pPlugin = TPluginFactory::Create(registry);
+			auto wrapper = CreateAggregateTransaction<TDescriptor>(numTransactions, numCosignatures, version);
 
 			auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
-			wrapper.pTransaction->SetSignatureDerivationScheme(TDerivationScheme);
 			// Act:
 			test::PublishTransaction(*pPlugin, WeakEntityInfoT<Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
@@ -469,26 +620,24 @@ namespace catapult { namespace plugins {
 
 	TRAITS_BASED_TEST(EmptyAggregateDoesNotRaiseSignatureNotifications) {
 		// Assert:
-		AssertCanRaiseSignatureNotifications<DerivationScheme::Ed25519_Sha3>(0, 0, version);
-		AssertCanRaiseSignatureNotifications<DerivationScheme::Ed25519_Sha2>(0, 0, version);
+		AssertCanRaiseSignatureNotifications<TDescriptor, TPluginFactory>(0, 0, version);
 	}
 
 	TRAITS_BASED_TEST(CanRaiseSignatureNotificationsFromAggregate) {
 		// Assert:
-		AssertCanRaiseSignatureNotifications<DerivationScheme::Ed25519_Sha3>(2, 3, version);
-		AssertCanRaiseSignatureNotifications<DerivationScheme::Ed25519_Sha2>(2, 3, version);
+		AssertCanRaiseSignatureNotifications<TDescriptor, TPluginFactory>(2, 3, version);
 	}
 
 	// endregion
 
 	// region publish - aggregate cosignatures v1
 
-	TRAITS_BASED_TEST(CanRaiseV1AggregateCosignaturesNotificationsFromEmptyAggregate) {
+	TRAITS_BASED_TEST(CanRaiseAggregateCosignaturesNotificationsFromEmptyAggregate) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<typename TPluginFactory::CosignaturesNotification> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(0, 0, version);
+		auto pPlugin = TPluginFactory::Create(registry);
+		auto wrapper = CreateAggregateTransaction<TDescriptor>(0, 0, version);
 		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
@@ -504,12 +653,12 @@ namespace catapult { namespace plugins {
 		EXPECT_FALSE(!!notification.CosignaturesPtr);
 	}
 
-	TRAITS_BASED_TEST(CanRaiseV1AggregateCosignaturesNotificationsFromAggregate) {
+	TRAITS_BASED_TEST(CanRaiseAggregateCosignaturesNotificationsFromAggregate) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<typename TPluginFactory::CosignaturesNotification> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(2, 3, version);
+		auto pPlugin = TPluginFactory::Create(registry);
+		auto wrapper = CreateAggregateTransaction<TDescriptor>(2, 3, version);
 		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
@@ -522,7 +671,7 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(2u, notification.TransactionsCount);
 		EXPECT_EQ(wrapper.pTransaction->TransactionsPtr(), notification.TransactionsPtr);
 		EXPECT_EQ(3u, notification.CosignaturesCount);
-		EXPECT_EQ(wrapper.pTransaction->CosignaturesPtr(), notification.CosignaturesPtr);
+		EXPECT_EQ(wrapper.pTransaction->CosignaturesPtr(), notification.CosignaturesPtr.template Get<typename TDescriptor::CosignatureType>());
 	}
 
 	// endregion
@@ -530,14 +679,15 @@ namespace catapult { namespace plugins {
 	// region dataBuffer
 
 	namespace {
+		template<typename TDescriptor, typename TPluginFactory>
 		void AssertCanExtractDataBufferFromAggregate(uint8_t numTransactions, uint8_t numCosignatures, VersionType version) {
 			// Arrange:
 			auto registry = mocks::CreateDefaultTransactionRegistry();
-			auto pPlugin = CreateTransactionPlugin(registry);
-			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures, version);
+			auto pPlugin = TPluginFactory::Create(registry);
+			auto wrapper = CreateAggregateTransaction<TDescriptor>(numTransactions, numCosignatures, version);
 
 			const auto* pAggregateDataStart = test::AsVoidPointer(&wrapper.pTransaction->Version);
-			auto aggregateDataSize = sizeof(AggregateTransaction<SignatureLayout::Raw>) - VerifiableEntity::Header_Size;
+			auto aggregateDataSize = sizeof(AggregateTransaction<TDescriptor>) - VerifiableEntity::Header_Size;
 			aggregateDataSize += numTransactions * sizeof(mocks::EmbeddedMockTransaction);
 
 			// Act:
@@ -551,12 +701,12 @@ namespace catapult { namespace plugins {
 
 	TRAITS_BASED_TEST(CanExtractDataBufferFromEmptyAggregate) {
 		// Assert:
-		AssertCanExtractDataBufferFromAggregate(0, 0, version);
+		AssertCanExtractDataBufferFromAggregate<TDescriptor, TPluginFactory>(0, 0, version);
 	}
 
 	TRAITS_BASED_TEST(CanExtractDataBufferFromNonEmptyAggregate) {
 		// Assert:
-		AssertCanExtractDataBufferFromAggregate(2, 3, version);
+		AssertCanExtractDataBufferFromAggregate<TDescriptor, TPluginFactory>(2, 3, version);
 	}
 
 	// endregion
@@ -564,11 +714,12 @@ namespace catapult { namespace plugins {
 	// region merkleSupplementaryBuffers
 
 	namespace {
+		template<typename TDescriptor, typename TPluginFactory>
 		void AssertCanExtractMerkleSupplementaryBuffersFromAggregate(uint8_t numTransactions, uint8_t numCosignatures, VersionType version) {
 			// Arrange:
 			auto registry = mocks::CreateDefaultTransactionRegistry();
-			auto pPlugin = CreateTransactionPlugin(registry);
-			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures, version);
+			auto pPlugin = TPluginFactory::Create(registry);
+			auto wrapper = CreateAggregateTransaction<TDescriptor>(numTransactions, numCosignatures, version);
 
 			// Act:
 			auto buffers = pPlugin->merkleSupplementaryBuffers(*wrapper.pTransaction);
@@ -588,12 +739,12 @@ namespace catapult { namespace plugins {
 
 	TRAITS_BASED_TEST(CanExtractMerkleSupplementaryBuffersFromEmptyAggregate) {
 		// Assert:
-		AssertCanExtractMerkleSupplementaryBuffersFromAggregate(0, 0, version);
+		AssertCanExtractMerkleSupplementaryBuffersFromAggregate<TDescriptor, TPluginFactory>(0, 0, version);
 	}
 
 	TRAITS_BASED_TEST(CanExtractMerkleSupplementaryBuffersFromNonEmptyAggregate) {
 		// Assert:
-		AssertCanExtractMerkleSupplementaryBuffersFromAggregate(2, 3, version);
+		AssertCanExtractMerkleSupplementaryBuffersFromAggregate<TDescriptor, TPluginFactory>(2, 3, version);
 	}
 
 	// region publish - aggregate transaction hash
@@ -602,45 +753,66 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<AggregateTransactionHashNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(0, 0, version);
+		auto pPlugin = TPluginFactory::Create(registry);
+		auto wrapper = CreateAggregateTransaction<TDescriptor>(0, 0, version);
 		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
 		test::PublishTransaction(*pPlugin, WeakEntityInfoT<Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
 		// Assert:
-		if (version > 2u) {
+		if constexpr(std::is_same_v<TDescriptor, model::AggregateTransactionRawDescriptor>) {
+			if (version > 2u) {
+				ASSERT_EQ(1u, sub.numMatchingNotifications());
+				const auto &notification = sub.matchingNotifications()[0];
+				EXPECT_EQ(aggregateDataHash, notification.AggregateHash);
+				EXPECT_EQ(0u, notification.TransactionsCount);
+				EXPECT_FALSE(!!notification.TransactionsPtr);
+			} else {
+				ASSERT_EQ(0u, sub.numMatchingNotifications());
+			}
+		}
+		else
+		{
 			ASSERT_EQ(1u, sub.numMatchingNotifications());
 			const auto &notification = sub.matchingNotifications()[0];
 			EXPECT_EQ(aggregateDataHash, notification.AggregateHash);
 			EXPECT_EQ(0u, notification.TransactionsCount);
 			EXPECT_FALSE(!!notification.TransactionsPtr);
-		} else {
-			ASSERT_EQ(0u, sub.numMatchingNotifications());
 		}
+
 	}
 
 	TRAITS_BASED_TEST(CanRaiseAggregateTransactionHashNotificationsFromAggregate) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<AggregateTransactionHashNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(2, 3, version);
+		auto pPlugin = TPluginFactory::Create(registry);
+		auto wrapper = CreateAggregateTransaction<TDescriptor>(2, 3, version);
 		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
 		test::PublishTransaction(*pPlugin, WeakEntityInfoT<Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
 		// Assert:
-		if (version > 2u) {
+		if constexpr(std::is_same_v<TDescriptor, model::AggregateTransactionRawDescriptor>) {
+			if (version > 2u) {
+				ASSERT_EQ(1u, sub.numMatchingNotifications());
+				const auto &notification = sub.matchingNotifications()[0];
+				EXPECT_EQ(aggregateDataHash, notification.AggregateHash);
+				EXPECT_EQ(2u, notification.TransactionsCount);
+				EXPECT_EQ(wrapper.pTransaction->TransactionsPtr(), notification.TransactionsPtr);
+			} else {
+				ASSERT_EQ(0u, sub.numMatchingNotifications());
+			}
+		}
+		else
+		{
 			ASSERT_EQ(1u, sub.numMatchingNotifications());
 			const auto &notification = sub.matchingNotifications()[0];
 			EXPECT_EQ(aggregateDataHash, notification.AggregateHash);
 			EXPECT_EQ(2u, notification.TransactionsCount);
 			EXPECT_EQ(wrapper.pTransaction->TransactionsPtr(), notification.TransactionsPtr);
-		} else {
-			ASSERT_EQ(0u, sub.numMatchingNotifications());
 		}
 	}
 
@@ -650,10 +822,12 @@ namespace catapult { namespace plugins {
 
 	TRAITS_BASED_TEST(CanRaiseV2AggregateCosignaturesNotificationsFromEmptyAggregate) {
 		// Arrange:
+		if constexpr(std::is_same_v<TDescriptor, model::AggregateTransactionExtendedDescriptor>)
+			return;
 		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<2>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(0, 0, version);
+		auto pPlugin = CreateTransactionPluginV1(registry);
+		auto wrapper = CreateAggregateTransaction<model::AggregateTransactionRawDescriptor>(0, 0, version);
 		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
@@ -675,10 +849,12 @@ namespace catapult { namespace plugins {
 
 	TRAITS_BASED_TEST(CanRaiseV2AggregateCosignaturesNotificationsFromAggregate) {
 		// Arrange:
+		if constexpr(std::is_same_v<TDescriptor, model::AggregateTransactionExtendedDescriptor>)
+			return;
 		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<2>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateTransactionPlugin(registry);
-		auto wrapper = CreateAggregateTransaction(2, 3, version);
+		auto pPlugin = CreateTransactionPluginV1(registry);
+		auto wrapper = CreateAggregateTransaction<model::AggregateTransactionRawDescriptor>(2, 3, version);
 		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
@@ -692,11 +868,11 @@ namespace catapult { namespace plugins {
 			EXPECT_EQ(2u, notification.TransactionsCount);
 			EXPECT_EQ(wrapper.pTransaction->TransactionsPtr(), notification.TransactionsPtr);
 			EXPECT_EQ(3u, notification.CosignaturesCount);
-			EXPECT_EQ(wrapper.pTransaction->CosignaturesPtr(), notification.CosignaturesPtr);
+			EXPECT_EQ(wrapper.pTransaction->CosignaturesPtr(), notification.CosignaturesPtr.template Get<model::AggregateTransactionRawDescriptor::CosignatureType>());
 		} else {
 			ASSERT_EQ(0u, sub.numMatchingNotifications());
 		}
 	}
-
+#undef TRAITS_BASED_TEST
 	// endregion
 }}

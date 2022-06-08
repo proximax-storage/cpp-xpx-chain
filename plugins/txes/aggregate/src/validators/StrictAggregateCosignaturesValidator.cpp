@@ -22,42 +22,44 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::AggregateCosignaturesNotification<1>;
+	namespace {
+		template<typename TNotification>
+		auto Validate(const TNotification& notification, const ValidatorContext& context) {
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
+			if (!pluginConfig.EnableStrictCosignatureCheck)
+				return ValidationResult::Success;
 
-	auto returnValidResult(const Notification& notification, const ValidatorContext& context) {
-		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
-		if (!pluginConfig.EnableStrictCosignatureCheck)
-			return ValidationResult::Success;
+			// collect all cosigners (initially set used flag to false)
+			utils::ArrayPointerFlagMap<Key> cosigners;
+			cosigners.emplace(&notification.Signer, false);
+			auto pCosignature = notification.CosignaturesPtr;
+			for (auto i = 0u; i < notification.CosignaturesCount; ++i) {
+				cosigners.emplace(&pCosignature.Signer(), false);
+				++pCosignature;
+			}
 
-		// collect all cosigners (initially set used flag to false)
-		utils::ArrayPointerFlagMap<Key> cosigners;
-		cosigners.emplace(&notification.Signer, false);
-		const auto* pCosignature = notification.CosignaturesPtr;
-		for (auto i = 0u; i < notification.CosignaturesCount; ++i) {
-			cosigners.emplace(&pCosignature->Signer, false);
-			++pCosignature;
+			// check all transaction signers and mark cosigners as used
+			// notice that ineligible cosigners must dominate missing cosigners in order for cosigner aggregation to work
+			auto hasMissingCosigners = false;
+			const auto* pTransaction = notification.TransactionsPtr;
+			for (auto i = 0u; i < notification.TransactionsCount; ++i) {
+				auto iter = cosigners.find(&pTransaction->Signer);
+				if (cosigners.cend() == iter)
+					hasMissingCosigners = true;
+				else
+					iter->second = true;
+
+				pTransaction = model::AdvanceNext(pTransaction);
+			}
+
+			// only return success if all cosigners are used
+			return std::all_of(cosigners.cbegin(), cosigners.cend(), [](const auto& pair) {
+			  return pair.second;
+			})
+				   ? hasMissingCosigners ? Failure_Aggregate_Missing_Cosigners : ValidationResult::Success
+				   : Failure_Aggregate_Ineligible_Cosigners;
 		}
-
-		// check all transaction signers and mark cosigners as used
-		// notice that ineligible cosigners must dominate missing cosigners in order for cosigner aggregation to work
-		auto hasMissingCosigners = false;
-		const auto* pTransaction = notification.TransactionsPtr;
-		for (auto i = 0u; i < notification.TransactionsCount; ++i) {
-			auto iter = cosigners.find(&pTransaction->Signer);
-			if (cosigners.cend() == iter)
-				hasMissingCosigners = true;
-			else
-				iter->second = true;
-
-			pTransaction = model::AdvanceNext(pTransaction);
-		}
-
-		// only return success if all cosigners are used
-		return std::all_of(cosigners.cbegin(), cosigners.cend(), [&signerKey = notification.Signer, strictlyRequireSignerAsCosigner = pluginConfig.StrictSigner](const auto& pair) { return pair.second || *pair.first == signerKey && !strictlyRequireSignerAsCosigner; })
-			   ? hasMissingCosigners ? Failure_Aggregate_Missing_Cosigners : ValidationResult::Success
-			   : Failure_Aggregate_Ineligible_Cosigners;
 	}
-	DECLARE_STATEFUL_VALIDATOR(StrictAggregateCosignatures, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(StrictAggregateCosignatures, returnValidResult);
-	}
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(StrictAggregateCosignaturesV1, model::AggregateCosignaturesNotification<1>, Validate<model::AggregateCosignaturesNotification<1>>);
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(StrictAggregateCosignaturesV3, model::AggregateCosignaturesNotification<3>, Validate<model::AggregateCosignaturesNotification<3>>);
 }}

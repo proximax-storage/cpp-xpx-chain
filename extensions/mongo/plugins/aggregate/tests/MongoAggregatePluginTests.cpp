@@ -30,7 +30,8 @@ namespace catapult { namespace mongo { namespace plugins {
 			static constexpr auto RegisterSubsystem = RegisterMongoSubsystem;
 
 			static std::vector<model::EntityType> GetTransactionTypes() {
-				return { model::Entity_Type_Aggregate_Complete, model::Entity_Type_Aggregate_Bonded };
+				return { model::Entity_Type_Aggregate_Complete_V1, model::Entity_Type_Aggregate_Bonded_V1,
+						 model::Entity_Type_Aggregate_Complete_V2, model::Entity_Type_Aggregate_Bonded_V2};
 			}
 
 			static std::vector<model::ReceiptType> GetReceiptTypes() {

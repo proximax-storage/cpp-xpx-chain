@@ -59,13 +59,13 @@ namespace catapult { namespace partialtransaction {
 		};
 
 		struct CosignatureRangeConsumerTraits {
-			using ParamType = model::AnnotatedEntityRange<model::DetachedCosignature<SignatureLayout::Raw>>;
+			using ParamType = model::AnnotatedEntityRange<model::DetachedCosignature>;
 
 			static auto Get(const PtServerHooks& hooks) {
 				return hooks.cosignatureRangeConsumer();
 			}
 
-			static void Set(PtServerHooks& hooks, const handlers::RangeHandler<model::DetachedCosignature<SignatureLayout::Raw>>& consumer) {
+			static void Set(PtServerHooks& hooks, const handlers::RangeHandler<model::DetachedCosignature>& consumer) {
 				hooks.setCosignatureRangeConsumer(consumer);
 			}
 		};
@@ -147,6 +147,7 @@ namespace catapult { namespace partialtransaction {
 
 		// Act:
 		context.boot();
+		context.initCache();
 
 		// Assert:
 		EXPECT_EQ(2u, context.locator().numServices());
@@ -166,6 +167,7 @@ namespace catapult { namespace partialtransaction {
 
 		// Act:
 		context.boot();
+		context.initCache();
 
 		// Assert:
 		EXPECT_EQ(2u, context.locator().numServices());
@@ -182,6 +184,7 @@ namespace catapult { namespace partialtransaction {
 		// Arrange:
 		TestContext context;
 		context.boot();
+		context.initCache();
 
 		// - seed the cache (deadlines t[+1]..t[+6])
 		auto transactionInfos = test::CreateTransactionInfos(6, [](auto i) {
@@ -217,6 +220,7 @@ namespace catapult { namespace partialtransaction {
 		// Arrange:
 		TestContext context;
 		context.boot();
+		context.initCache();
 
 		// - seed the cache (deadlines t[+1.5]..t[-3.5])
 		auto transactionInfos = test::CreateTransactionInfos(6, [](auto i) {
@@ -263,6 +267,7 @@ namespace catapult { namespace partialtransaction {
 			// Arrange:
 			TestContext context;
 			context.boot();
+			context.initCache();
 
 			// - seed the cache
 			auto transactionInfos = test::CreateTransactionInfos(3);
@@ -306,6 +311,7 @@ namespace catapult { namespace partialtransaction {
 		// Arrange:
 		TestContext context;
 		context.boot();
+		context.initCache();
 
 		// - seed the cache
 		auto transactionInfos = test::CreateTransactionInfos(5);

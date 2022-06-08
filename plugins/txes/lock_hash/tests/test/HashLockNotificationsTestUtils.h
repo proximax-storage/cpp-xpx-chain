@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "HashLockInfoCacheTestUtils.h"
+#include "AggregateTransactionPluginTestUtils.h"
 #include "src/model/HashLockNotifications.h"
 #include "tests/test/nodeps/Random.h"
 

@@ -44,10 +44,12 @@ namespace catapult { namespace filespooling {
 			void notifyAddCosignature(
 					const model::TransactionInfo& parentTransactionInfo,
 					const Key& signer,
-					const RawSignature& signature) override {
+					const RawSignature& signature,
+					DerivationScheme scheme) override {
 				io::Write8(*m_pOutputStream, utils::to_underlying_type(subscribers::PtChangeOperationType::Add_Cosignature));
 				m_pOutputStream->write(signer);
 				m_pOutputStream->write(signature);
+				io::Write8(*m_pOutputStream, scheme);
 				io::WriteTransactionInfo(*m_pOutputStream, parentTransactionInfo);
 			}
 

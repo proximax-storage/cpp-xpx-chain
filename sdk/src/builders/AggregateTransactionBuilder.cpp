@@ -25,24 +25,30 @@
 
 namespace catapult { namespace builders {
 
-	using TransactionType = model::AggregateTransaction<1>;
+	template<typename TDescriptor>
+	using TransactionType = model::AggregateTransaction<TDescriptor>;
 
-	AggregateTransactionBuilder::AggregateTransactionBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer)
+	template<typename TDescriptor>
+	AggregateTransactionBuilder<TDescriptor>::AggregateTransactionBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer)
 			: TransactionBuilder(networkIdentifier, signer)
 	{}
-
-	void AggregateTransactionBuilder::addTransaction(AggregateTransactionBuilder::EmbeddedTransactionPointer&& pTransaction) {
+	template<typename TDescriptor>
+	void AggregateTransactionBuilder<TDescriptor>::addTransaction(AggregateTransactionBuilder::EmbeddedTransactionPointer&& pTransaction) {
 		m_pTransactions.push_back(std::move(pTransaction));
 	}
-
-	model::UniqueEntityPtr<TransactionType> AggregateTransactionBuilder::build() const {
+	template<typename TDescriptor>
+	model::UniqueEntityPtr<TransactionType<TDescriptor>> AggregateTransactionBuilder<TDescriptor>::build() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto payloadSize = utils::Sum(m_pTransactions, [](const auto& pEmbeddedTransaction) { return pEmbeddedTransaction->Size; });
-		auto size = sizeof(TransactionType) + payloadSize;
-		auto pTransaction = createTransaction<TransactionType>(size);
+		auto size = sizeof(TransactionType<TDescriptor>) + payloadSize;
+		auto pTransaction = createTransaction<TransactionType<TDescriptor>>(size);
 
 		// 2. set transaction fields
-		pTransaction->Type = model::Entity_Type_Aggregate_Bonded;
+		if constexpr(std::is_same_v<TDescriptor, model::AggregateTransactionRawDescriptor>)
+			pTransaction->Type = model::Entity_Type_Aggregate_Bonded_V1;
+		else
+			pTransaction->Type = model::Entity_Type_Aggregate_Bonded_V2;
+
 		pTransaction->PayloadSize = payloadSize;
 
 		auto* pData = reinterpret_cast<uint8_t*>(pTransaction->TransactionsPtr());
@@ -54,44 +60,57 @@ namespace catapult { namespace builders {
 		return pTransaction;
 	}
 
+	template class AggregateTransactionBuilder<model::AggregateTransactionRawDescriptor>;
+	template class AggregateTransactionBuilder<model::AggregateTransactionExtendedDescriptor>;
+
 	namespace {
-		RawBuffer TransactionDataBuffer(const TransactionType& transaction) {
+		template<typename TDescriptor>
+		RawBuffer TransactionDataBuffer(const TransactionType<TDescriptor>& transaction) {
 			return {
 				reinterpret_cast<const uint8_t*>(&transaction) + model::VerifiableEntity::Header_Size,
-				sizeof(TransactionType) - model::VerifiableEntity::Header_Size + transaction.PayloadSize
+				sizeof(TransactionType<TDescriptor>) - model::VerifiableEntity::Header_Size + transaction.PayloadSize
 			};
 		}
 	}
 
-	AggregateCosignatureAppender::AggregateCosignatureAppender(
+	template<typename TDescriptor>
+	AggregateCosignatureAppender<TDescriptor>::AggregateCosignatureAppender(
 			const GenerationHash& generationHash,
-			model::UniqueEntityPtr<TransactionType>&& pAggregateTransaction)
+			model::UniqueEntityPtr<TransactionType<TDescriptor>>&& pAggregateTransaction)
 			: m_generationHash(generationHash)
 			, m_pAggregateTransaction(std::move(pAggregateTransaction))
 	{}
 
-	void AggregateCosignatureAppender::cosign(const crypto::KeyPair& cosigner) {
+	template<typename TDescriptor>
+	void AggregateCosignatureAppender<TDescriptor>::cosign(const crypto::KeyPair& cosigner) {
 		if (m_cosignatures.empty()) {
-			m_pAggregateTransaction->Type = model::Entity_Type_Aggregate_Complete;
+			if constexpr(std::is_same_v<TDescriptor, model::AggregateTransactionRawDescriptor>)
+				m_pAggregateTransaction->Type = model::Entity_Type_Aggregate_Complete_V1;
+			else
+				m_pAggregateTransaction->Type = model::Entity_Type_Aggregate_Complete_V2;
 			m_transactionHash = model::CalculateHash(
 					*m_pAggregateTransaction,
 					m_generationHash,
 					TransactionDataBuffer(*m_pAggregateTransaction));
 		}
 
-		model::Cosignature<1> cosignature{ cosigner.publicKey(), {} };
+		typename TDescriptor::CosignatureType cosignature{ cosigner.publicKey(), {} };
 		crypto::SignatureFeatureSolver::Sign(cosigner, m_transactionHash, cosignature.Signature);
 		m_cosignatures.push_back(cosignature);
 	}
 
-	model::UniqueEntityPtr<TransactionType> AggregateCosignatureAppender::build() const {
-		auto cosignaturesSize = sizeof(model::Cosignature<1>) * m_cosignatures.size();
+	template<typename TDescriptor>
+	model::UniqueEntityPtr<TransactionType<TDescriptor>> AggregateCosignatureAppender<TDescriptor>::build() const {
+		auto cosignaturesSize = sizeof(typename TDescriptor::CosignatureType) * m_cosignatures.size();
 		auto size = m_pAggregateTransaction->Size + static_cast<uint32_t>(cosignaturesSize);
-		auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(size);
+		auto pTransaction = utils::MakeUniqueWithSize<TransactionType<TDescriptor>>(size);
 
 		std::memcpy(static_cast<void*>(pTransaction.get()), m_pAggregateTransaction.get(), m_pAggregateTransaction->Size);
 		pTransaction->Size = size;
 		std::memcpy(static_cast<void*>(pTransaction->CosignaturesPtr()), m_cosignatures.data(), cosignaturesSize);
 		return pTransaction;
 	}
+
+	template class AggregateCosignatureAppender<model::AggregateTransactionRawDescriptor>;
+	template class AggregateCosignatureAppender<model::AggregateTransactionExtendedDescriptor>;
 }}

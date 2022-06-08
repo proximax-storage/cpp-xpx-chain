@@ -30,16 +30,17 @@ using namespace catapult::partialtransaction;
 namespace catapult { namespace handlers {
 
 	namespace {
-		auto CreateFilteringHandler(model::EntityType entityType, const TransactionRangeHandler& nextRangeHandler) {
-			return [entityType, nextRangeHandler](auto&& annotatedRange) {
-				for (const auto& tx : annotatedRange.Range) {
-					if (entityType != tx.Type) {
-						CATAPULT_LOG(warning) << "unhandled transaction type in range: " << tx.Type;
-						return;
-					}
-				}
+		auto CreateCompoundFilteringHandler(std::vector<model::EntityType> entityTypes, const TransactionRangeHandler& nextRangeHandler) {
+			return [entityTypes, nextRangeHandler](auto&& annotatedRange) {
+			  for (const auto& tx : annotatedRange.Range) {
 
-				nextRangeHandler(std::move(annotatedRange));
+				  if (std::find(entityTypes.cbegin(), entityTypes.cend(), tx.Type) == entityTypes.cend()) {
+					  CATAPULT_LOG(warning) << "unhandled transaction type in range: " << tx.Type;
+					  return;
+				  }
+			  }
+
+			  nextRangeHandler(std::move(annotatedRange));
 			};
 		}
 
@@ -71,7 +72,7 @@ namespace catapult { namespace handlers {
 		}
 
 		void AppendTransactionInfo(ionet::PacketPayloadBuilder& builder, const model::CosignedTransactionInfo& transactionInfo) {
-			using CosignatureRange = model::EntityRange<model::Cosignature<SignatureLayout::Raw>>;
+			using CosignatureRange = model::EntityRange<model::CosignatureInfo>;
 
 			auto numCosignatures = static_cast<uint16_t>(transactionInfo.Cosignatures.size());
 			if (transactionInfo.pTransaction) {
@@ -114,7 +115,7 @@ namespace catapult { namespace handlers {
 				ionet::PacketType::Push_Partial_Transactions,
 				CreatePushEntityHandler<model::Transaction>(
 						registry,
-						CreateFilteringHandler(model::Entity_Type_Aggregate_Bonded, transactionRangeHandler)));
+						CreateCompoundFilteringHandler({model::Entity_Type_Aggregate_Bonded_V1, model::Entity_Type_Aggregate_Bonded_V2}, transactionRangeHandler)));
 	}
 
 	void RegisterPullPartialTransactionInfosHandler(

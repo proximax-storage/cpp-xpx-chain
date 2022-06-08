@@ -29,7 +29,9 @@
 #include "catapult/utils/SpinReaderWriterLock.h"
 #include <unordered_map>
 
-namespace catapult { namespace cache { class PtData; } }
+namespace catapult { namespace cache {
+	class PtData;
+} }
 
 namespace catapult { namespace cache {
 

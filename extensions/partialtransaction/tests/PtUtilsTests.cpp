@@ -29,30 +29,41 @@ namespace catapult { namespace partialtransaction {
 	// region StitchAggregate
 
 	namespace {
+		template<typename TDescriptor>
 		void AssertCanStitchAggregate(size_t numCosignatures) {
 			// Arrange:
-			auto pTransaction = test::CreateAggregateTransaction(1).pTransaction;
-			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(numCosignatures);
+			auto pTransaction = test::CreateAggregateTransaction<TDescriptor>(1).pTransaction;
+			auto cosignatures = test::GenerateRandomDataVector<model::CosignatureInfo>(numCosignatures);
 
 			// Act:
 			auto pStitchedTransaction = StitchAggregate({ pTransaction.get(), &cosignatures });
 
 			// Assert:
-			test::AssertStitchedTransaction(*pStitchedTransaction, *pTransaction, cosignatures);
+			test::AssertStitchedTransaction(*pStitchedTransaction, *pTransaction, cosignatures, 0);
 
 			// Sanity:
-			EXPECT_EQ(numCosignatures, static_cast<const model::AggregateTransaction<SignatureLayout::Raw>&>(*pStitchedTransaction).CosignaturesCount());
+			EXPECT_EQ(numCosignatures, static_cast<const model::AggregateTransaction<TDescriptor>&>(*pStitchedTransaction).CosignaturesCount());
 		}
 	}
 
-	TEST(TEST_CLASS, StitchAggregateCanStitchTransactionWithoutCosignatures) {
+	TEST(TEST_CLASS, StitchAggregateV1CanStitchTransactionWithoutCosignatures) {
 		// Assert:
-		AssertCanStitchAggregate(0);
+		AssertCanStitchAggregate<model::AggregateTransactionRawDescriptor>(0);
 	}
 
-	TEST(TEST_CLASS, StitchAggregateCanStitchTransactionWithCosignatures) {
+	TEST(TEST_CLASS, StitchAggregateV2CanStitchTransactionWithoutCosignatures) {
 		// Assert:
-		AssertCanStitchAggregate(3);
+		AssertCanStitchAggregate<model::AggregateTransactionExtendedDescriptor>(0);
+	}
+
+	TEST(TEST_CLASS, StitchAggregateV1CanStitchTransactionWithCosignatures) {
+		// Assert:
+			AssertCanStitchAggregate<model::AggregateTransactionRawDescriptor>(3);
+	}
+
+	TEST(TEST_CLASS, StitchAggregateV2CanStitchTransactionWithCosignatures) {
+		// Assert:
+		AssertCanStitchAggregate<model::AggregateTransactionExtendedDescriptor>(3);
 	}
 
 	// endregion
@@ -62,7 +73,7 @@ namespace catapult { namespace partialtransaction {
 	namespace {
 		struct SplitForwardingCapture {
 			std::vector<model::TransactionRange> TransactionRanges;
-			std::vector<model::DetachedCosignature<SignatureLayout::Raw>> Cosignatures;
+			std::vector<model::DetachedCosignature> Cosignatures;
 		};
 
 		SplitForwardingCapture SplitAndCapture(const CosignedTransactionInfos& transactionInfos) {
@@ -78,17 +89,26 @@ namespace catapult { namespace partialtransaction {
 			return capture;
 		}
 
-		model::Cosignature<SignatureLayout::Raw> GenerateRandomCosignature() {
+		template<typename TDescriptor>
+		typename TDescriptor::CosignatureType GenerateRandomCosignature();
+		template<>
+		model::Cosignature<SignatureLayout::Raw> GenerateRandomCosignature<model::AggregateTransactionRawDescriptor>(){
 			return { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<RawSignature>() };
 		}
+		template<>
+		model::Cosignature<SignatureLayout::Extended> GenerateRandomCosignature<model::AggregateTransactionExtendedDescriptor>(){
+			return { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() };
+		}
+
 
 		class TransactionGenerator {
 		public:
+			template<typename TDescriptor>
 			void addData(CosignedTransactionInfos& transactionInfos, size_t numCosignatures) {
 				model::CosignedTransactionInfo transactionInfo;
-				transactionInfo.pTransaction = test::CreateAggregateTransaction(1).pTransaction;
+				transactionInfo.pTransaction = test::CreateAggregateTransaction<TDescriptor>(1).pTransaction;
 				for (auto i = 0u; i < numCosignatures; ++i)
-					transactionInfo.Cosignatures.push_back(GenerateRandomCosignature());
+					transactionInfo.Cosignatures.push_back(GenerateRandomCosignature<TDescriptor>().ToInfo());
 
 				transactionInfos.push_back(transactionInfo);
 				m_transactionInfos.push_back(transactionInfo);
@@ -100,9 +120,19 @@ namespace catapult { namespace partialtransaction {
 				auto i = 0u;
 				for (const auto& transaction : transactionRange) {
 					// notice that stitched transaction is always passed to range
-					const auto& originalTransaction =
-							static_cast<const model::AggregateTransaction<SignatureLayout::Raw>&>(*m_transactionInfos[i].pTransaction);
-					test::AssertStitchedTransaction(transaction, originalTransaction, m_transactionInfos[i].Cosignatures);
+					if(IsAggregateV1(m_transactionInfos[i].pTransaction->Type))
+					{
+						const auto& originalTransaction =
+								static_cast<const model::AggregateTransaction<model::AggregateTransactionRawDescriptor>&>(*m_transactionInfos[i].pTransaction);
+						test::AssertStitchedTransaction<model::AggregateTransactionRawDescriptor>(transaction, originalTransaction, m_transactionInfos[i].Cosignatures, 0);
+					}
+					else
+					{
+						const auto& originalTransaction =
+								static_cast<const model::AggregateTransaction<model::AggregateTransactionExtendedDescriptor>&>(*m_transactionInfos[i].pTransaction);
+						test::AssertStitchedTransaction<model::AggregateTransactionExtendedDescriptor>(transaction, originalTransaction, m_transactionInfos[i].Cosignatures, 0);
+					}
+
 					++i;
 				}
 			}
@@ -113,32 +143,34 @@ namespace catapult { namespace partialtransaction {
 
 		class CosignatureGenerator {
 		public:
+			template<typename TDescriptor>
 			void addData(CosignedTransactionInfos& transactionInfos, size_t numCosignatures) {
 				model::CosignedTransactionInfo transactionInfo;
 				transactionInfo.EntityHash = test::GenerateRandomByteArray<Hash256>();
 				for (auto i = 0u; i < numCosignatures; ++i) {
-					auto cosignature = GenerateRandomCosignature();
-					transactionInfo.Cosignatures.push_back(cosignature);
+					auto cosignature = GenerateRandomCosignature<TDescriptor>();
+					transactionInfo.Cosignatures.push_back(cosignature.ToInfo());
 					m_cosignatures.push_back(
-							model::DetachedCosignature<SignatureLayout::Raw>(cosignature.Signer, cosignature.Signature, transactionInfo.EntityHash));
+							model::DetachedCosignature(cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme(), transactionInfo.EntityHash));
 				}
 
 				transactionInfos.push_back(transactionInfo);
 			}
 
-			void assertData(const std::vector<model::DetachedCosignature<SignatureLayout::Raw>>& cosignatures) {
+			void assertData(const std::vector<model::DetachedCosignature>& cosignatures) {
 				ASSERT_EQ(m_cosignatures.size(), cosignatures.size());
 
 				for (auto i = 0u; i < m_cosignatures.size(); ++i) {
 					auto message = "cosignature at " + std::to_string(i);
 					EXPECT_EQ(m_cosignatures[i].Signer, cosignatures[i].Signer) << message;
 					EXPECT_EQ(m_cosignatures[i].Signature, cosignatures[i].Signature) << message;
+					EXPECT_EQ(m_cosignatures[i].Scheme, cosignatures[i].Scheme) << message;
 					EXPECT_EQ(m_cosignatures[i].ParentHash, cosignatures[i].ParentHash) << message;
 				}
 			}
 
 		private:
-			std::vector<model::DetachedCosignature<SignatureLayout::Raw>> m_cosignatures;
+			std::vector<model::DetachedCosignature> m_cosignatures;
 		};
 	}
 
@@ -151,13 +183,13 @@ namespace catapult { namespace partialtransaction {
 		EXPECT_TRUE(capture.Cosignatures.empty());
 	}
 
-	TEST(TEST_CLASS, SplitCosignedTransactionInfosForwardsTransactions) {
+	TEST(TEST_CLASS, SplitCosignedTransactionInfosForwardsTransactionsSameVersion) {
 		// Arrange:
 		auto transactionInfos = CosignedTransactionInfos();
 		TransactionGenerator generator;
-		generator.addData(transactionInfos, 1);
-		generator.addData(transactionInfos, 0);
-		generator.addData(transactionInfos, 3);
+		generator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 1);
+		generator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 0);
+		generator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 3);
 
 		// Act:
 		auto capture = SplitAndCapture(transactionInfos);
@@ -170,13 +202,32 @@ namespace catapult { namespace partialtransaction {
 		EXPECT_TRUE(capture.Cosignatures.empty());
 	}
 
-	TEST(TEST_CLASS, SplitCosignedTransactionInfosForwardsCosignatures) {
+	TEST(TEST_CLASS, SplitCosignedTransactionInfosForwardsTransactionsMultiVersion) {
+		// Arrange:
+		auto transactionInfos = CosignedTransactionInfos();
+		TransactionGenerator generator;
+		generator.addData<model::AggregateTransactionExtendedDescriptor>(transactionInfos, 1);
+		generator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 0);
+		generator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 3);
+
+		// Act:
+		auto capture = SplitAndCapture(transactionInfos);
+
+		// Assert: a single transaction range should have been forwarded
+		ASSERT_EQ(1u, capture.TransactionRanges.size());
+		generator.assertData(capture.TransactionRanges[0]);
+
+		// - no cosignatures should have been forwarded
+		EXPECT_TRUE(capture.Cosignatures.empty());
+	}
+
+	TEST(TEST_CLASS, SplitCosignedTransactionInfosForwardsCosignaturesSameVersion) {
 		// Arrange:
 		auto transactionInfos = CosignedTransactionInfos();
 		CosignatureGenerator generator;
-		generator.addData(transactionInfos, 1);
-		generator.addData(transactionInfos, 3);
-		generator.addData(transactionInfos, 2);
+		generator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 1);
+		generator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 3);
+		generator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 2);
 
 		// Act:
 		auto capture = SplitAndCapture(transactionInfos);
@@ -189,17 +240,36 @@ namespace catapult { namespace partialtransaction {
 		generator.assertData(capture.Cosignatures);
 	}
 
-	TEST(TEST_CLASS, SplitCosignedTransactionInfosForwardsTransactionsAndCosignatures) {
+	TEST(TEST_CLASS, SplitCosignedTransactionInfosForwardsCosignaturesMultiVersion) {
+		// Arrange:
+		auto transactionInfos = CosignedTransactionInfos();
+		CosignatureGenerator generator;
+		generator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 1);
+		generator.addData<model::AggregateTransactionExtendedDescriptor>(transactionInfos, 3);
+		generator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 2);
+
+		// Act:
+		auto capture = SplitAndCapture(transactionInfos);
+
+		// Assert: no transactions should have been forwarded
+		EXPECT_TRUE(capture.TransactionRanges.empty());
+
+		// - all cosignatures should have been forwarded
+		EXPECT_EQ(6u, capture.Cosignatures.size());
+		generator.assertData(capture.Cosignatures);
+	}
+
+	TEST(TEST_CLASS, SplitCosignedTransactionInfosForwardsTransactionsAndCosignaturesSameVersion) {
 		// Arrange: interleave cosignature and transaction infos
 		auto transactionInfos = CosignedTransactionInfos();
 		CosignatureGenerator cosignatureGenerator;
 		TransactionGenerator transactionGenerator;
-		transactionGenerator.addData(transactionInfos, 1);
-		cosignatureGenerator.addData(transactionInfos, 3);
-		transactionGenerator.addData(transactionInfos, 2);
-		cosignatureGenerator.addData(transactionInfos, 1);
-		transactionGenerator.addData(transactionInfos, 0);
-		cosignatureGenerator.addData(transactionInfos, 2);
+		transactionGenerator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 1);
+		cosignatureGenerator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 3);
+		transactionGenerator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 2);
+		cosignatureGenerator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 1);
+		transactionGenerator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 0);
+		cosignatureGenerator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 2);
 
 		// Act:
 		auto capture = SplitAndCapture(transactionInfos);
@@ -210,6 +280,32 @@ namespace catapult { namespace partialtransaction {
 
 		// - all cosignatures should have been forwarded
 		EXPECT_EQ(6u, capture.Cosignatures.size());
+		cosignatureGenerator.assertData(capture.Cosignatures);
+	}
+
+	// Notice: Aggregate V1 transactions do not support V2 cosignatures
+	TEST(TEST_CLASS, SplitCosignedTransactionInfosForwardsTransactionsAndCosignaturesMultiVersion) {
+		// Arrange: interleave cosignature and transaction infos
+		auto transactionInfos = CosignedTransactionInfos();
+		CosignatureGenerator cosignatureGenerator;
+		TransactionGenerator transactionGenerator;
+		transactionGenerator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 1);
+		cosignatureGenerator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 3);
+		transactionGenerator.addData<model::AggregateTransactionExtendedDescriptor>(transactionInfos, 2);
+		cosignatureGenerator.addData<model::AggregateTransactionExtendedDescriptor>(transactionInfos, 1);
+		cosignatureGenerator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 1);
+		transactionGenerator.addData<model::AggregateTransactionExtendedDescriptor>(transactionInfos, 0);
+		cosignatureGenerator.addData<model::AggregateTransactionRawDescriptor>(transactionInfos, 2);
+
+		// Act:
+		auto capture = SplitAndCapture(transactionInfos);
+
+		// Assert: a single transaction range should have been forwarded
+		ASSERT_EQ(1u, capture.TransactionRanges.size());
+		transactionGenerator.assertData(capture.TransactionRanges[0]);
+
+		// - all cosignatures should have been forwarded
+		EXPECT_EQ(7u, capture.Cosignatures.size());
 		cosignatureGenerator.assertData(capture.Cosignatures);
 	}
 

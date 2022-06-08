@@ -20,7 +20,7 @@
 
 #include "src/observers/Observers.h"
 #include "plugins/txes/lock_shared/tests/observers/ExpiredLockInfoObserverTests.h"
-#include "tests/test/HashLockInfoCacheTestUtils.h"
+#include "tests/test/AggregateTransactionPluginTestUtils.h"
 
 namespace catapult { namespace observers {
 

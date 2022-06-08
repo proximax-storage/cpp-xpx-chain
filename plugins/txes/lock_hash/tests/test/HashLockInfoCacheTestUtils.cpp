@@ -18,7 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "HashLockInfoCacheTestUtils.h"
+#include "AggregateTransactionPluginTestUtils.h"
 #include "tests/test/nodeps/Random.h"
 
 namespace catapult { namespace test {

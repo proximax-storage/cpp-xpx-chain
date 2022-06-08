@@ -29,17 +29,20 @@ using namespace catapult::mongo::mappers;
 namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
-		constexpr const model::AggregateTransaction<SignatureLayout::Raw>& CastToDerivedType(const model::Transaction& transaction) {
-			return static_cast<const model::AggregateTransaction<SignatureLayout::Raw>&>(transaction);
+		template<typename TDescriptor>
+		constexpr const model::AggregateTransaction<TDescriptor>& CastToDerivedType(const model::Transaction& transaction) {
+			return static_cast<const model::AggregateTransaction<TDescriptor>&>(transaction);
 		}
 
-		void StreamCosignatures(bson_stream::document& builder, const model::Cosignature<SignatureLayout::Raw>* pCosignature, size_t numCosignatures) {
+		template<typename TDescriptor>
+		void StreamCosignatures(bson_stream::document& builder, const typename TDescriptor::CosignatureType* pCosignature, size_t numCosignatures) {
 			auto cosignaturesArray = builder << "cosignatures" << bson_stream::open_array;
 			for (auto i = 0u; i < numCosignatures; ++i) {
 				cosignaturesArray
 						<< bson_stream::open_document
 							<< "signer" << ToBinary(pCosignature->Signer)
-							<< "signature" << ToBinary(pCosignature->Signature)
+							<< "signature" << ToBinary(pCosignature->GetRawSignature())
+							<< "scheme" << ToUint8(pCosignature->GetDerivationScheme())
 						<< bson_stream::close_document;
 				++pCosignature;
 			}
@@ -47,6 +50,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			cosignaturesArray << bson_stream::close_array;
 		}
 
+		template<typename TDescriptor>
 		class AggregateTransactionPlugin : public MongoTransactionPlugin {
 		public:
 			AggregateTransactionPlugin(const MongoTransactionRegistry& transactionRegistry, const config::ImmutableConfiguration& config, model::EntityType transactionType)
@@ -61,14 +65,14 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			void streamTransaction(bson_stream::document& builder, const model::Transaction& transaction) const override {
-				const auto& aggregate = CastToDerivedType(transaction);
-				StreamCosignatures(builder, aggregate.CosignaturesPtr(), aggregate.CosignaturesCount());
+				const auto& aggregate = CastToDerivedType<TDescriptor>(transaction);
+				StreamCosignatures<TDescriptor>(builder, aggregate.CosignaturesPtr(), aggregate.CosignaturesCount());
 			}
 
 			std::vector<bsoncxx::document::value> extractDependentDocuments(
 					const model::Transaction& transaction,
 					const MongoTransactionMetadata& metadata) const override {
-				const auto& aggregate = CastToDerivedType(transaction);
+				const auto& aggregate = CastToDerivedType<TDescriptor>(transaction);
 
 				utils::Mempool pool;
 
@@ -121,10 +125,17 @@ namespace catapult { namespace mongo { namespace plugins {
 		};
 	}
 
-	std::unique_ptr<MongoTransactionPlugin> CreateAggregateTransactionMongoPlugin(
+	std::unique_ptr<MongoTransactionPlugin> CreateAggregateTransactionMongoPluginV1(
 			const MongoTransactionRegistry& transactionRegistry,
 			const config::ImmutableConfiguration& immutableConfig,
 			model::EntityType transactionType) {
-		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, immutableConfig, transactionType);
+		return std::make_unique<AggregateTransactionPlugin<model::AggregateTransactionRawDescriptor>>(transactionRegistry, immutableConfig, transactionType);
+	}
+
+	std::unique_ptr<MongoTransactionPlugin> CreateAggregateTransactionMongoPluginV2(
+			const MongoTransactionRegistry& transactionRegistry,
+			const config::ImmutableConfiguration& immutableConfig,
+			model::EntityType transactionType) {
+		return std::make_unique<AggregateTransactionPlugin<model::AggregateTransactionExtendedDescriptor>>(transactionRegistry, immutableConfig, transactionType);
 	}
 }}}

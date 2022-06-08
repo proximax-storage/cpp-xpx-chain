@@ -44,10 +44,10 @@ namespace catapult { namespace cache {
 		void AddAll(
 				cache::PtCache& cache,
 				const model::TransactionInfo& transactionInfo,
-				const std::vector<model::Cosignature<SignatureLayout::Raw>>& cosignatures) {
+				const std::vector<model::CosignatureInfo>& cosignatures) {
 			auto modifier = cache.modifier();
 			for (const auto& cosignature : cosignatures)
-				modifier.add(transactionInfo.EntityHash, cosignature.Signer, cosignature.Signature);
+				modifier.add(transactionInfo.EntityHash, cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme());
 		}
 
 		void AssertCacheSize(MemoryPtCache& cache, size_t expectedSize) {
@@ -75,18 +75,18 @@ namespace catapult { namespace cache {
 			return pCache;
 		}
 
-		auto& Sort(std::vector<model::Cosignature<SignatureLayout::Raw>>& cosignatures) {
+		auto& Sort(std::vector<model::CosignatureInfo>& cosignatures) {
 			std::sort(cosignatures.begin(), cosignatures.end(), [](const auto& lhs, const auto& rhs) { return lhs.Signer < rhs.Signer; });
 			return cosignatures;
 		}
 
-		auto& Sort(std::vector<model::Cosignature<SignatureLayout::Raw>>&& cosignatures) {
+		auto& Sort(std::vector<model::CosignatureInfo>&& cosignatures) {
 			return Sort(cosignatures);
 		}
 
 		void AssertCosignatures(
-				const std::vector<model::Cosignature<SignatureLayout::Raw>>& expectedCosignatures,
-				const std::vector<model::Cosignature<SignatureLayout::Raw>>& actualCosignatures,
+				const std::vector<model::CosignatureInfo>& expectedCosignatures,
+				const std::vector<model::CosignatureInfo>& actualCosignatures,
 				const std::string& message = "") {
 			ASSERT_EQ(expectedCosignatures.size(), actualCosignatures.size()) << message;
 
@@ -101,7 +101,7 @@ namespace catapult { namespace cache {
 
 		void AssertTransactionWithCosignatures(
 				const model::Transaction& originalTransaction,
-				const std::vector<model::Cosignature<SignatureLayout::Raw>>& expectedCosignatures,
+				const std::vector<model::CosignatureInfo>& expectedCosignatures,
 				const model::WeakCosignedTransactionInfo& transactionInfoFromCache,
 				const std::string& message = "") {
 			// Assert:
@@ -226,8 +226,8 @@ namespace catapult { namespace cache {
 	// region add(cosignature)
 
 	namespace {
-		model::Cosignature<SignatureLayout::Raw> GenerateRandomCosignature() {
-			return { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<RawSignature>() };
+		model::CosignatureInfo GenerateRandomCosignature() {
+			return { test::GenerateRandomByteArray<Key>(), crypto::SignatureFeatureSolver::ExpandSignature(test::GenerateRandomByteArray<RawSignature>(), DerivationScheme::Ed25519_Sha3) };
 		}
 	}
 
@@ -242,7 +242,7 @@ namespace catapult { namespace cache {
 
 		// Act:
 		auto cosignature = GenerateRandomCosignature();
-		auto transactionInfoFromAdd = cache.modifier().add(originalInfos[3].EntityHash, cosignature.Signer, cosignature.Signature);
+		auto transactionInfoFromAdd = cache.modifier().add(originalInfos[3].EntityHash, cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme());
 
 		// Assert: added transaction is correct
 		ASSERT_TRUE(!!transactionInfoFromAdd);
@@ -263,11 +263,11 @@ namespace catapult { namespace cache {
 		AssertCacheSize(cache, 5);
 
 		// Act: add 20 cosignatures
-		std::vector<model::Cosignature<SignatureLayout::Raw>> cosignatures;
-		std::vector<model::Cosignature<SignatureLayout::Raw>> transactionsFromAdd;
+		std::vector<model::CosignatureInfo> cosignatures;
+		std::vector<model::CosignatureInfo> transactionsFromAdd;
 		for (auto i = 0u; i < 20; ++i) {
 			auto cosignature = GenerateRandomCosignature();
-			auto transactionInfoFromAdd = cache.modifier().add(originalInfos[3].EntityHash, cosignature.Signer, cosignature.Signature);
+			auto transactionInfoFromAdd = cache.modifier().add(originalInfos[3].EntityHash, cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme());
 			cosignatures.push_back(cosignature);
 
 			// Assert: notice that same transaction (without cosignatures) is returned by each add
@@ -288,7 +288,7 @@ namespace catapult { namespace cache {
 
 		// - add a cosignature
 		auto cosignature = GenerateRandomCosignature();
-		EXPECT_TRUE(!!cache.modifier().add(originalInfos[3].EntityHash, cosignature.Signer, cosignature.Signature));
+		EXPECT_TRUE(!!cache.modifier().add(originalInfos[3].EntityHash, cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme()));
 
 		// Sanity:
 		AssertCacheSize(cache, 5);
@@ -296,7 +296,7 @@ namespace catapult { namespace cache {
 		// Act: add another cosignature with the same signer
 		auto cosignature2 = GenerateRandomCosignature();
 		cosignature2.Signer = cosignature.Signer;
-		EXPECT_FALSE(!!cache.modifier().add(originalInfos[3].EntityHash, cosignature.Signer, cosignature.Signature));
+		EXPECT_FALSE(!!cache.modifier().add(originalInfos[3].EntityHash, cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme()));
 
 		// Assert:
 		auto transactionInfoFromCache = cache.view().find(originalInfos[3].EntityHash);
@@ -313,7 +313,7 @@ namespace catapult { namespace cache {
 
 		// Act + Assert: no transaction in the cache should match the random hash
 		auto cosignature = GenerateRandomCosignature();
-		EXPECT_FALSE(!!cache.modifier().add(test::GenerateRandomByteArray<Hash256>(), cosignature.Signer, cosignature.Signature));
+		EXPECT_FALSE(!!cache.modifier().add(test::GenerateRandomByteArray<Hash256>(), cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme()));
 	}
 
 	// endregion
@@ -606,10 +606,10 @@ namespace catapult { namespace cache {
 			EXPECT_TRUE(expectedShortHashes.empty());
 		}
 
-		Hash256 HashCosignatures(const std::vector<model::Cosignature<SignatureLayout::Raw>>& cosignatures) {
+		Hash256 HashCosignatures(const std::vector<model::CosignatureInfo>& cosignatures) {
 			Hash256 cosignaturesHash;
 			crypto::Sha3_256(
-					{ reinterpret_cast<const uint8_t*>(cosignatures.data()), cosignatures.size() * sizeof(model::Cosignature<SignatureLayout::Raw>) },
+					{ reinterpret_cast<const uint8_t*>(cosignatures.data()), cosignatures.size() * sizeof(model::CosignatureInfo) },
 					cosignaturesHash);
 			return cosignaturesHash;
 		}
@@ -635,7 +635,7 @@ namespace catapult { namespace cache {
 		AddAll(cache, transactionInfos);
 
 		// - generate and sort cosignatures and add them to a transaction
-		auto cosignatures = Sort(test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(10));
+		auto cosignatures = Sort(test::GenerateRandomDataVector<model::CosignatureInfo>(10));
 		AddAll(cache, transactionInfos[1], cosignatures);
 
 		// - calculate the expected cosignatures hash
@@ -662,11 +662,11 @@ namespace catapult { namespace cache {
 		AddAll(cache, transactionInfos);
 
 		// - generate cosignatures and add them to all transactions
-		auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(10);
+		auto cosignatures = test::GenerateRandomDataVector<model::CosignatureInfo>(10);
 		for (auto i = 0u; i < cosignatures.size(); ++i) {
 			for (auto j = 0u; j < transactionInfos.size(); ++j) {
 				const auto& cosignature = cosignatures[(i + j) % cosignatures.size()];
-				cache.modifier().add(transactionInfos[j].EntityHash, cosignature.Signer, cosignature.Signature);
+				cache.modifier().add(transactionInfos[j].EntityHash, cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme());
 			}
 		}
 
@@ -761,7 +761,7 @@ namespace catapult { namespace cache {
 			AddAll(cache, transactionInfos);
 
 			// - generate and sort cosignatures and add them to a transaction
-			auto cosignatures = Sort(test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(5));
+			auto cosignatures = Sort(test::GenerateRandomDataVector<model::CosignatureInfo>(5));
 			AddAll(cache, transactionInfos[0], cosignatures);
 
 			// - calculate the cosignatures hash
@@ -833,7 +833,7 @@ namespace catapult { namespace cache {
 			uint64_t totalSize = 0u;
 			for (const auto& unknownTransactionInfo : unknownTransactionInfos) {
 				auto transactionSize = unknownTransactionInfo.pTransaction ? unknownTransactionInfo.pTransaction->Size : 0;
-				totalSize += transactionSize + sizeof(model::Cosignature<SignatureLayout::Raw>) * unknownTransactionInfo.Cosignatures.size();
+				totalSize += transactionSize + sizeof(model::CosignatureInfo) * unknownTransactionInfo.Cosignatures.size();
 			}
 
 			return totalSize;
@@ -862,7 +862,7 @@ namespace catapult { namespace cache {
 			ShortHashPairMap knownShortHashes;
 			for (const auto& transactionInfo : transactionInfos) {
 				knownShortHashes.emplace(utils::ToShortHash(transactionInfo.EntityHash), utils::ShortHash());
-				AddAll(cache, transactionInfo, test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(3));
+				AddAll(cache, transactionInfo, test::GenerateRandomDataVector<model::CosignatureInfo>(3));
 			}
 
 			// Act:
@@ -881,7 +881,7 @@ namespace catapult { namespace cache {
 
 			// - add three cosignatures per info
 			for (const auto& transactionInfo : transactionInfos)
-				AddAll(cache, transactionInfo, test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(3));
+				AddAll(cache, transactionInfo, test::GenerateRandomDataVector<model::CosignatureInfo>(3));
 
 			// Act:
 			auto unknownInfos = cache.view().unknownTransactions({});
@@ -910,13 +910,13 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, UnknownTransactionsReturnsTransactionsWithTotalSizeOfAtMostMaxResponseSize_OnlyCosignatures) {
 		// Assert:
-		RunMaxResponseSizeTest(sizeof(Hash256) + 3 * sizeof(model::Cosignature<SignatureLayout::Raw>), AssertMaxResponseSizeIsRespectedOnlyCosignatures);
+		RunMaxResponseSizeTest(sizeof(Hash256) + 3 * sizeof(model::CosignatureInfo), AssertMaxResponseSizeIsRespectedOnlyCosignatures);
 	}
 
 	TEST(TEST_CLASS, UnknownTransactionsReturnsTransactionsWithTotalSizeOfAtMostMaxResponseSize_TransactionsWithCosignatures) {
 		// Assert:
 		RunMaxResponseSizeTest(
-				sizeof(Hash256) + GetTransactionSize() + 3 * sizeof(model::Cosignature<SignatureLayout::Raw>),
+				sizeof(Hash256) + GetTransactionSize() + 3 * sizeof(model::CosignatureInfo),
 				AssertMaxResponseSizeIsRespectedTransactionsWithCosignatures);
 	}
 

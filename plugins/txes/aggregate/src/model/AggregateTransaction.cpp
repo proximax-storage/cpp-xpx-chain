@@ -22,24 +22,24 @@
 
 namespace catapult { namespace model {
 
-	template<uint32_t TCoSignatureVersion>
-	size_t GetTransactionPayloadSize(const AggregateTransactionHeader<TCoSignatureVersion>& header) {
+	template<typename TDescriptor>
+	size_t GetTransactionPayloadSize(const AggregateTransactionHeader<TDescriptor>& header) {
 		return header.PayloadSize;
 	}
 
 	namespace {
-		template<uint32_t TCoSignatureVersion>
-		constexpr bool IsPayloadSizeValid(const AggregateTransaction<TCoSignatureVersion>& aggregate) {
+		template<typename TDescriptor>
+		constexpr bool IsPayloadSizeValid(const AggregateTransaction<TDescriptor>& aggregate) {
 			return
-					aggregate.Size >= sizeof(AggregateTransaction<TCoSignatureVersion>) &&
-					aggregate.Size - sizeof(AggregateTransaction<TCoSignatureVersion>) >= aggregate.PayloadSize &&
-					0 == (aggregate.Size - sizeof(AggregateTransaction<TCoSignatureVersion>) - aggregate.PayloadSize) % sizeof(Cosignature<TCoSignatureVersion>);
+					aggregate.Size >= sizeof(AggregateTransaction<TDescriptor>) &&
+					aggregate.Size - sizeof(AggregateTransaction<TDescriptor>) >= aggregate.PayloadSize &&
+					0 == (aggregate.Size - sizeof(AggregateTransaction<TDescriptor>) - aggregate.PayloadSize) % sizeof(typename AggregateTransaction<TDescriptor>::CosignatureType);
 		}
 	}
 
-	template<uint32_t TCoSignatureVersion>
-	bool IsSizeValid(const AggregateTransaction<TCoSignatureVersion>& aggregate, const TransactionRegistry& registry) {
-		if (!IsPayloadSizeValid<TCoSignatureVersion>(aggregate)) {
+	template<typename TDescriptor>
+	bool IsSizeValid(const AggregateTransaction<TDescriptor>& aggregate, const TransactionRegistry& registry) {
+		if (!IsPayloadSizeValid<TDescriptor>(aggregate)) {
 			CATAPULT_LOG(warning)
 					<< "aggregate transaction failed size validation with size "
 					<< aggregate.Size << " and payload size " << aggregate.PayloadSize;
@@ -59,6 +59,9 @@ namespace catapult { namespace model {
 				<< ", errors? " << transactions.hasError() << ")";
 		return false;
 	}
-	template size_t GetTransactionPayloadSize<1>(const AggregateTransactionHeader<1>& header);
-	template bool IsSizeValid<1>(const AggregateTransaction<1>& aggregate, const TransactionRegistry& registry);
+	template size_t GetTransactionPayloadSize<AggregateTransactionExtendedDescriptor>(const AggregateTransactionHeader<AggregateTransactionExtendedDescriptor>& header);
+	template bool IsSizeValid<AggregateTransactionExtendedDescriptor>(const AggregateTransaction<AggregateTransactionExtendedDescriptor>& aggregate, const TransactionRegistry& registry);
+
+	template size_t GetTransactionPayloadSize<AggregateTransactionRawDescriptor>(const AggregateTransactionHeader<AggregateTransactionRawDescriptor>& header);
+	template bool IsSizeValid<AggregateTransactionRawDescriptor>(const AggregateTransaction<AggregateTransactionRawDescriptor>& aggregate, const TransactionRegistry& registry);
 }}

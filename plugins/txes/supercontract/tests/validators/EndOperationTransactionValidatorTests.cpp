@@ -36,7 +36,7 @@ namespace catapult { namespace validators {
 				superContractCacheDelta.insert(entry);
 				cache.commit(currentHeight);
 			}
-			Notification notification(Key(), *pTransaction, 0, nullptr);
+			Notification notification(Key(), *pTransaction, 0, static_cast<model::Cosignature<SignatureLayout::Raw> *>(nullptr));
 			auto pValidator = CreateEndOperationTransactionValidator();
 
 			// Act:

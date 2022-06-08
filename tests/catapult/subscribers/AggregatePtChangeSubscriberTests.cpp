@@ -57,20 +57,22 @@ namespace catapult { namespace subscribers {
 		class MockPtChangeSubscriber : public UnsupportedPtChangeSubscriber {
 		public:
 			struct Param {
-				Param(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const RawSignature& signature)
+				Param(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const RawSignature& signature, DerivationScheme scheme)
 						: ParentTransactionInfo(parentTransactionInfo)
 						, Signer(signer)
 						, Signature(signature)
+						, Scheme(scheme)
 				{}
 
 				const model::TransactionInfo& ParentTransactionInfo;
 				const Key& Signer;
 				const catapult::RawSignature& Signature;
+				const DerivationScheme Scheme;
 			};
 
 		public:
-			void notifyAddCosignature(const model::TransactionInfo& parentInfo, const Key& signer, const RawSignature& signature) override {
-				CapturedParams.emplace_back(parentInfo, signer, signature);
+			void notifyAddCosignature(const model::TransactionInfo& parentInfo, const Key& signer, const RawSignature& signature, DerivationScheme scheme) override {
+				CapturedParams.emplace_back(parentInfo, signer, signature, scheme);
 			}
 
 		public:
@@ -81,12 +83,12 @@ namespace catapult { namespace subscribers {
 		auto transactionInfo = test::CreateRandomTransactionInfo();
 		auto signer = test::GenerateRandomByteArray<Key>();
 		auto signature = test::GenerateRandomByteArray<RawSignature>();
-
+		auto scheme = DerivationScheme::Ed25519_Sha3;
 		// Sanity:
 		EXPECT_EQ(3u, context.subscribers().size());
 
 		// Act:
-		context.aggregate().notifyAddCosignature(transactionInfo, signer, signature);
+		context.aggregate().notifyAddCosignature(transactionInfo, signer, signature, scheme);
 
 		// Assert:
 		auto i = 0u;

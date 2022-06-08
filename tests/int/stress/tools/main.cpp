@@ -220,7 +220,6 @@ namespace catapult { namespace tools { namespace address {
 					accountState.PublicKeyHeight = Height(account.get<uint64_t>("PublicKeyHeight"));
 					accountState.PublicKey = crypto::ParseKey(account.get<std::string>("PublicKey"));
 					accountState.AccountType = (state::AccountType)account.get<uint8_t>("AccountType");
-					accountState.AccountType = (state::AccountType)account.get<uint8_t>("AccountType");
 					accountState.Balances.optimize(MosaicId(account.get<uint64_t>("OptimizedMosaicId")));
 					accountState.Balances.track(MosaicId(account.get<uint64_t>("TrackedMosaicId")));
 					auto linkedKey = account.get_optional<std::string>("LinkedAccountKey");

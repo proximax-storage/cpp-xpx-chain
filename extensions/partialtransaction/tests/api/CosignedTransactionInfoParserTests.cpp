@@ -74,7 +74,7 @@ namespace catapult { namespace api {
 			explicit HashGenerator(uint8_t numCosignatures)
 					: m_numCosignatures(numCosignatures)
 					, m_hash(test::GenerateRandomByteArray<Hash256>())
-					, m_cosignatures(test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(numCosignatures))
+					, m_cosignatures(test::GenerateRandomDataVector<model::CosignatureInfo>(numCosignatures))
 			{}
 
 		public:
@@ -93,7 +93,7 @@ namespace catapult { namespace api {
 		private:
 			uint8_t m_numCosignatures;
 			Hash256 m_hash;
-			std::vector<model::Cosignature<SignatureLayout::Raw>> m_cosignatures;
+			std::vector<model::CosignatureInfo> m_cosignatures;
 		};
 
 		class TransactionGenerator {
@@ -101,7 +101,7 @@ namespace catapult { namespace api {
 			explicit TransactionGenerator(uint8_t numCosignatures)
 					: m_numCosignatures(numCosignatures)
 					, m_pTransaction(test::GenerateRandomTransaction())
-					, m_cosignatures(test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(numCosignatures))
+					, m_cosignatures(test::GenerateRandomDataVector<model::CosignatureInfo>(numCosignatures))
 			{}
 
 		public:
@@ -121,7 +121,7 @@ namespace catapult { namespace api {
 		private:
 			uint8_t m_numCosignatures;
 			std::shared_ptr<model::Transaction> m_pTransaction;
-			std::vector<model::Cosignature<SignatureLayout::Raw>> m_cosignatures;
+			std::vector<model::CosignatureInfo> m_cosignatures;
 		};
 
 		// endregion
@@ -274,7 +274,7 @@ namespace catapult { namespace api {
 			// Arrange: two cosignatures are present but only one is written
 			builder.appendValue(static_cast<uint16_t>(0x0002));
 			builder.appendValue(test::GenerateRandomByteArray<Hash256>());
-			AppendValues(builder, test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(1));
+			AppendValues(builder, test::GenerateRandomDataVector<model::CosignatureInfo>(1));
 		});
 	}
 

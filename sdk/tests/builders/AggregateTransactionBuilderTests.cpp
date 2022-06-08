@@ -31,8 +31,15 @@ namespace catapult { namespace builders {
 #define TEST_CLASS AggregateTransactionBuilderTests
 
 	namespace {
-		using RegularTraits = test::RegularTransactionTraits<model::AggregateTransaction<SignatureLayout::Raw>>;
 
+		template<typename TDescriptor>
+		struct RegularTraits  : public test::RegularTransactionTraits<model::AggregateTransaction<TDescriptor>> {
+			using Descriptor = TDescriptor;
+			static constexpr model::EntityType BondedType = TDescriptor::BondedType;
+			static constexpr model::EntityType CompleteType = TDescriptor::CompleteType;
+		};
+
+		template<typename TTraits>
 		class TestContext {
 		public:
 			explicit TestContext(size_t numTransactions)
@@ -44,23 +51,26 @@ namespace catapult { namespace builders {
 
 		public:
 			auto buildTransaction() {
-				AggregateTransactionBuilder builder(m_networkId, m_signer);
+				AggregateTransactionBuilder<typename TTraits::Descriptor> builder(m_networkId, m_signer);
 				for (const auto& pTransaction : m_pTransactions)
 					builder.addTransaction(test::CopyEntity(*pTransaction));
 
 				return builder.build();
 			}
 
-			void assertTransaction(const model::AggregateTransaction<SignatureLayout::Raw>& transaction, size_t numCosignatures, model::EntityType type) {
+			void assertTransaction(const model::AggregateTransaction<typename TTraits::Descriptor>& transaction, size_t numCosignatures, model::EntityType type) {
 				auto numTransactions = m_pTransactions.size();
 				size_t additionalSize = numTransactions * sizeof(mocks::EmbeddedMockTransaction);
 				for (auto i = 0u; i < numTransactions; ++i)
 					additionalSize += 31 + i;
 
-				additionalSize += numCosignatures * sizeof(model::Cosignature<SignatureLayout::Raw>);
-				RegularTraits::CheckFields(additionalSize, transaction);
+				additionalSize += numCosignatures * sizeof(typename TTraits::Descriptor::CosignatureType);
+				TTraits::CheckFields(additionalSize, transaction);
 				EXPECT_EQ(m_signer, transaction.Signer);
-				EXPECT_EQ(0x62000003, transaction.Version);
+				if constexpr(std::is_same_v<model::AggregateTransactionRawDescriptor, typename TTraits::Descriptor>)
+					EXPECT_EQ(0x62000003, transaction.Version);
+				else
+					EXPECT_EQ(0x62000001, transaction.Version);
 				EXPECT_EQ(type, transaction.Type);
 
 				auto i = 0u;
@@ -77,15 +87,16 @@ namespace catapult { namespace builders {
 			std::vector<model::UniqueEntityPtr<mocks::EmbeddedMockTransaction>> m_pTransactions;
 		};
 
+		template<typename TTraits>
 		void AssertAggregateBuilderTransaction(size_t numTransactions) {
 			// Arrange:
-			TestContext context(numTransactions);
+			TestContext<TTraits> context(numTransactions);
 
 			// Act:
 			auto pTransaction = context.buildTransaction();
 
 			// Assert:
-			context.assertTransaction(*pTransaction, 0, model::Entity_Type_Aggregate_Bonded);
+			context.assertTransaction(*pTransaction, 0, TTraits::BondedType);
 		}
 
 		auto GenerateKeys(size_t numKeysV1, size_t numKeysV2) {
@@ -97,19 +108,21 @@ namespace catapult { namespace builders {
 			return keys;
 		}
 
-		RawBuffer TransactionDataBuffer(const model::AggregateTransaction<SignatureLayout::Raw>& transaction) {
+		template<typename TDescriptor>
+		RawBuffer TransactionDataBuffer(const model::AggregateTransaction<TDescriptor>& transaction) {
 			return {
 				reinterpret_cast<const uint8_t*>(&transaction) + model::VerifiableEntity::Header_Size,
-				sizeof(model::AggregateTransaction<SignatureLayout::Raw>) - model::VerifiableEntity::Header_Size + transaction.PayloadSize
+				sizeof(model::AggregateTransaction<TDescriptor>) - model::VerifiableEntity::Header_Size + transaction.PayloadSize
 			};
 		}
 
-		void AssertAggregateCosignaturesTransaction(size_t numCosignatures, bool multipleKeyVersions = true) {
+		template<typename TTraits>
+		void AssertAggregateCosignaturesTransaction(size_t numCosignatures) {
 			// Arrange: create transaction with 3 embedded transactions
-			TestContext context(3);
+			TestContext<TTraits> context(3);
 			auto generationHash = test::GenerateRandomByteArray<GenerationHash>();
 			AggregateCosignatureAppender builder(generationHash, context.buildTransaction());
-			auto cosigners = GenerateKeys(numCosignatures/2+numCosignatures%2, !multipleKeyVersions ? 0 : numCosignatures/2);
+			auto cosigners = GenerateKeys(numCosignatures/2+numCosignatures%2, !std::is_same_v<typename TTraits::Descriptor, model::AggregateTransactionExtendedDescriptor> ? 0 : numCosignatures/2);
 
 			// Act:
 			for (const auto& cosigner : cosigners)
@@ -117,43 +130,45 @@ namespace catapult { namespace builders {
 
 			auto pTransaction = builder.build();
 
-			auto findCorrespondingKeyVersion = [&cosigners](const Key& publicKey) -> DerivationScheme{
-				auto result = std::find_if(cosigners.begin(), cosigners.end(), [&publicKey](auto& val){
-					return val.publicKey() == publicKey;
-				});
-				if(result != cosigners.end()) return result->derivationScheme();
-				CATAPULT_THROW_RUNTIME_ERROR("Unable to find expected derivation scheme!");
-			};
 			// Assert:
-			context.assertTransaction(*pTransaction, cosigners.size(), model::Entity_Type_Aggregate_Complete);
+			context.assertTransaction(*pTransaction, cosigners.size(), TTraits::CompleteType);
 			auto hash = model::CalculateHash(*pTransaction, generationHash, TransactionDataBuffer(*pTransaction));
 			const auto* pCosignature = pTransaction->CosignaturesPtr();
 			for (const auto& cosigner : cosigners) {
 				EXPECT_EQ(cosigner.publicKey(), pCosignature->Signer) << "invalid signer";
-				EXPECT_TRUE(crypto::SignatureFeatureSolver::Verify(pCosignature->Signer, {hash}, pCosignature->Signature, findCorrespondingKeyVersion(pCosignature->Signer)))
+				EXPECT_TRUE(crypto::SignatureFeatureSolver::Verify(pCosignature->Signer, {hash}, pCosignature->GetRawSignature(), pCosignature->GetDerivationScheme()))
 						<< "invalid cosignature " << pCosignature->Signature;
 				++pCosignature;
 			}
 		}
 	}
 
-	TEST(TEST_CLASS, AggregateBuilderCreatesProperTransaction_SingleTransaction) {
+#define TRAITS_BASED_TEST(TEST_NAME) \
+    template<typename TTraits>                                 \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RegularTraits<model::AggregateTransactionRawDescriptor>>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RegularTraits<model::AggregateTransactionExtendedDescriptor>>(); } \
+    template<typename TTraits> \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
+	TRAITS_BASED_TEST(AggregateBuilderCreatesProperTransaction_SingleTransaction) {
 		// Assert:
-		AssertAggregateBuilderTransaction(1);
+		AssertAggregateBuilderTransaction<TTraits>(1);
 	}
 
-	TEST(TEST_CLASS, AggregateBuilderCreatesProperTransaction_MultipleTransactions) {
+	TRAITS_BASED_TEST(AggregateBuilderCreatesProperTransaction_MultipleTransactions) {
 		// Assert:
-		AssertAggregateBuilderTransaction(3);
+		AssertAggregateBuilderTransaction<TTraits>(3);
 	}
 
-	TEST(TEST_CLASS, AggregateCosignatureAppenderAddsProperSignature_SingleCosignatory) {
+	TRAITS_BASED_TEST(AggregateCosignatureAppenderAddsProperSignature_SingleCosignatory) {
 		// Assert:
-		AssertAggregateCosignaturesTransaction(1);
+		AssertAggregateCosignaturesTransaction<TTraits>(1);
 	}
 
-	TEST(TEST_CLASS, AggregateCosignatureAppenderAddsProperSignature_MultipleCosignatories) {
+	TRAITS_BASED_TEST(AggregateCosignatureAppenderAddsProperSignature_MultipleCosignatories) {
 		// Assert:
-		AssertAggregateCosignaturesTransaction(3);
+		AssertAggregateCosignaturesTransaction<TTraits>(3);
 	}
+#undef TRAITS_BASED_TEST
 }}

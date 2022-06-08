@@ -33,13 +33,13 @@ namespace catapult { namespace mongo {
 	namespace {
 		constexpr auto Pt_Collection_Name = "partialTransactions";
 
-		using CosignaturesMap = std::unordered_map<Hash256, std::vector<model::Cosignature<SignatureLayout::Raw>>, utils::ArrayHasher<Hash256>>;
+		using CosignaturesMap = std::unordered_map<Hash256, std::vector<model::CosignatureInfo>, utils::ArrayHasher<Hash256>>;
 
 		auto CreateFilter(const Hash256& hash) {
 			return document() << "meta.hash" << mappers::ToBinary(hash) << finalize;
 		}
 
-		auto CreateAppendDocument(const std::vector<model::Cosignature<SignatureLayout::Raw>>& cosignatures) {
+		auto CreateAppendDocument(const std::vector<model::CosignatureInfo>& cosignatures) {
 			document doc{};
 			auto array = doc
 					<< "$push"
@@ -49,11 +49,12 @@ namespace catapult { namespace mongo {
 								<< "$each"
 								<< open_array;
 
-			for (const model::Cosignature<SignatureLayout::Raw>& cosignature : cosignatures) {
+			for (const model::CosignatureInfo& cosignature : cosignatures) {
 				array
 						<< open_document
 							<< "signer" << mappers::ToBinary(cosignature.Signer)
-							<< "signature" << mappers::ToBinary(cosignature.Signature)
+							<< "signature" << mappers::ToBinary(cosignature.GetRawSignature())
+							<< "scheme" << mappers::ToUint8(cosignature.GetDerivationScheme())
 						<< close_document;
 			}
 
@@ -86,10 +87,11 @@ namespace catapult { namespace mongo {
 			void notifyAddCosignature(
 					const model::TransactionInfo& parentTransactionInfo,
 					const Key& signer,
-					const RawSignature& signature) override {
+					const RawSignature& signature,
+					DerivationScheme scheme) override {
 				// this function is only called by the pt cache modifier if parentInfo corresponds to a known partial transaction
 				auto& cosignatures = m_cosignaturesMap[parentTransactionInfo.EntityHash];
-				cosignatures.push_back({ signer, signature });
+				cosignatures.push_back({ signer, crypto::SignatureFeatureSolver::ExpandSignature(signature, scheme) });
 			}
 
 			void notifyRemovePartials(const TransactionInfos& transactionInfos) override {

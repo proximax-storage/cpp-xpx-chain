@@ -35,8 +35,11 @@ namespace catapult { namespace plugins {
 		// (this works because the transaction registry is held by reference)
 		const auto& transactionRegistry = manager.transactionRegistry();
 		const auto& pConfigHolder = manager.configHolder();
-		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Complete, pConfigHolder));
-		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Bonded, pConfigHolder));
+		manager.addTransactionSupport(CreateAggregateTransactionV1Plugin(transactionRegistry, model::Entity_Type_Aggregate_Complete_V1, pConfigHolder));
+		manager.addTransactionSupport(CreateAggregateTransactionV1Plugin(transactionRegistry, model::Entity_Type_Aggregate_Bonded_V1, pConfigHolder));
+
+		manager.addTransactionSupport(CreateAggregateTransactionV2Plugin(transactionRegistry, model::Entity_Type_Aggregate_Complete_V2, pConfigHolder));
+		manager.addTransactionSupport(CreateAggregateTransactionV2Plugin(transactionRegistry, model::Entity_Type_Aggregate_Bonded_V2, pConfigHolder));
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(validators::CreateAggregatePluginConfigValidator());
@@ -44,8 +47,10 @@ namespace catapult { namespace plugins {
 
  		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateBasicAggregateCosignaturesValidator())
-				.add(validators::CreateStrictAggregateCosignaturesValidator())
+				.add(validators::CreateBasicAggregateCosignaturesV1Validator())
+				.add(validators::CreateStrictAggregateCosignaturesV1Validator())
+				.add(validators::CreateBasicAggregateCosignaturesV3Validator())
+				.add(validators::CreateStrictAggregateCosignaturesV3Validator())
 				.add(validators::CreateAggregateTransactionTypeValidator());
 		});
 		auto configuration = std::bitset<validators::ValidatorRegistrationFlags_SIZE>();

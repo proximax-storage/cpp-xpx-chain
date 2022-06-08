@@ -44,8 +44,12 @@ namespace catapult { namespace model {
 
 	/// Aggregate was received with cosignatures.
 	DEFINE_AGGREGATE_NOTIFICATION(Cosignatures_v2, 0x005, Observer);
+
 	/// Aggregate was received with cosignatures.
-	DEFINE_AGGREGATE_NOTIFICATION(Cosignatures_v3, 0x006, Observer);
+	DEFINE_AGGREGATE_NOTIFICATION(Cosignatures_v3, 0x006, All);
+
+	/// Aggregate was received with an embedded transaction.
+	DEFINE_AGGREGATE_NOTIFICATION(EmbeddedTransaction_v2, 0x007, Validator);
 
 
 #undef DEFINE_AGGREGATE_NOTIFICATION
@@ -53,11 +57,11 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// A basic aggregate notification.
-	template<typename TDerivedNotification, uint32_t TCosignatureVersion>
+	template<typename TDerivedNotification>
 	struct BasicAggregateNotification : public Notification {
 	public:
 		/// Creates a notification around \a signer, \a cosignaturesCount and \a pCosignatures.
-		explicit BasicAggregateNotification(const Key& signer, size_t cosignaturesCount, const Cosignature<TCosignatureVersion>* pCosignatures)
+		explicit BasicAggregateNotification(const Key& signer, size_t cosignaturesCount, WeakCosignaturePtr pCosignatures)
 				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 				, Signer(signer)
 				, CosignaturesCount(cosignaturesCount)
@@ -72,7 +76,7 @@ namespace catapult { namespace model {
 		size_t CosignaturesCount;
 
 		/// Const pointer to the first cosignature.
-		const Cosignature<TCosignatureVersion>* CosignaturesPtr;
+		const WeakCosignaturePtr CosignaturesPtr;
 	};
 
 	/// Notification of an embedded aggregate transaction with cosignatures.
@@ -80,19 +84,43 @@ namespace catapult { namespace model {
 	struct AggregateEmbeddedTransactionNotification;
 
 	template<>
-	struct AggregateEmbeddedTransactionNotification<1> : public BasicAggregateNotification<AggregateEmbeddedTransactionNotification<1>, 1> {
+	struct AggregateEmbeddedTransactionNotification<1> : public BasicAggregateNotification<AggregateEmbeddedTransactionNotification<1>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Aggregate_EmbeddedTransaction_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a transaction, \a cosignaturesCount and \a pCosignatures.
+		template<typename TCosignatureType>
 		explicit AggregateEmbeddedTransactionNotification(
 				const Key& signer,
 				const EmbeddedTransaction& transaction,
 				size_t cosignaturesCount,
-				const Cosignature<1>* pCosignatures)
-				: BasicAggregateNotification<AggregateEmbeddedTransactionNotification<1>, 1>(signer, cosignaturesCount, pCosignatures)
+				const TCosignatureType* pCosignatures)
+				: BasicAggregateNotification<AggregateEmbeddedTransactionNotification<1>>(signer, cosignaturesCount, WeakCosignaturePtr(pCosignatures))
+				, Transaction(transaction)
+		{}
+
+	public:
+		/// Embedded transaction.
+		const EmbeddedTransaction& Transaction;
+	};
+
+	template<>
+	struct AggregateEmbeddedTransactionNotification<2> : public BasicAggregateNotification<AggregateEmbeddedTransactionNotification<2>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Aggregate_EmbeddedTransaction_v2_Notification;
+
+	public:
+		/// Creates a notification around \a signer, \a transaction, \a cosignaturesCount and \a pCosignatures.
+		template<typename TCosignatureType>
+		explicit AggregateEmbeddedTransactionNotification(
+				const Key& signer,
+				const EmbeddedTransaction& transaction,
+				size_t cosignaturesCount,
+				const TCosignatureType* pCosignatures)
+				: BasicAggregateNotification<AggregateEmbeddedTransactionNotification<2>>(signer, cosignaturesCount, WeakCosignaturePtr(pCosignatures))
 				, Transaction(transaction)
 		{}
 
@@ -107,20 +135,21 @@ namespace catapult { namespace model {
 	struct AggregateCosignaturesNotification;
 
 	template<>
-	struct AggregateCosignaturesNotification<1> : public BasicAggregateNotification<AggregateCosignaturesNotification<1>, 1> {
+	struct AggregateCosignaturesNotification<1> : public BasicAggregateNotification<AggregateCosignaturesNotification<1>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Aggregate_Cosignatures_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a transactionsCount, \a pTransactions, \a cosignaturesCount and \a pCosignatures.
+		template<typename TCosignatureType>
 		explicit AggregateCosignaturesNotification(
 				const Key& signer,
 				size_t transactionsCount,
 				const EmbeddedTransaction* pTransactions,
 				size_t cosignaturesCount,
-				const Cosignature<1>* pCosignatures)
-				: BasicAggregateNotification<AggregateCosignaturesNotification<1>, 1>(signer, cosignaturesCount, pCosignatures)
+				const TCosignatureType* pCosignatures)
+				: BasicAggregateNotification<AggregateCosignaturesNotification<1>>(signer, cosignaturesCount, WeakCosignaturePtr(pCosignatures))
 				, TransactionsCount(transactionsCount)
 				, TransactionsPtr(pTransactions)
 		{}
@@ -141,17 +170,45 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer, \a transactionsCount, \a pTransactions, \a cosignaturesCount and \a pCosignatures.
+		template<typename TCosignatureType>
 		explicit AggregateCosignaturesNotification(
 				const Key& signer,
 				size_t transactionsCount,
 				const EmbeddedTransaction* pTransactions,
 				size_t cosignaturesCount,
-				const Cosignature<1>* pCosignatures)
+				const TCosignatureType* pCosignatures)
 				: AggregateCosignaturesNotification<1>(signer, transactionsCount, pTransactions, cosignaturesCount, pCosignatures) {
 			Type = Notification_Type;
 		}
 	};
 
+	template<>
+	struct AggregateCosignaturesNotification<3> : public BasicAggregateNotification<AggregateCosignaturesNotification<3>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Aggregate_Cosignatures_v3_Notification;
+
+	public:
+		/// Creates a notification around \a signer, \a transactionsCount, \a pTransactions, \a cosignaturesCount and \a pCosignatures.
+		template<typename TCosignatureType>
+		explicit AggregateCosignaturesNotification(
+				const Key& signer,
+				size_t transactionsCount,
+				const EmbeddedTransaction* pTransactions,
+				size_t cosignaturesCount,
+				const TCosignatureType* pCosignatures)
+				: BasicAggregateNotification<AggregateCosignaturesNotification<3>>(signer, cosignaturesCount, WeakCosignaturePtr(pCosignatures))
+				, TransactionsCount(transactionsCount)
+				, TransactionsPtr(pTransactions){
+			Type = Notification_Type;
+		}
+	public:
+		/// Number of transactions.
+		size_t TransactionsCount;
+
+		/// Const pointer to the first transaction.
+		const EmbeddedTransaction* TransactionsPtr;
+	};
 	/// Notification of transaction entity type.
 	template<VersionType version>
 	struct AggregateTransactionTypeNotification;

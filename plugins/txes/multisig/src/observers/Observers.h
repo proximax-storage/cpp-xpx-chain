@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "plugins/txes/upgrade/src/model/BlockchainUpgradeNotifications.h"
 #include "src/model/MultisigNotifications.h"
 #include "catapult/observers/ObserverTypes.h"
 
@@ -32,4 +33,8 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by modify multisig settings notifications and:
 	/// - sets new values of min removal and min approval
 	DECLARE_OBSERVER(ModifyMultisigSettings, model::ModifyMultisigSettingsNotification<1>)();
+
+	/// Observes changes triggered by account V2 upgrade notifications and:
+	/// - replaces old account key with new one for the associated multisig accounts
+	DECLARE_OBSERVER(UpgradeCosignatory, model::AccountV2UpgradeNotification<1>)();
 }}

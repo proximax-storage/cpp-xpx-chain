@@ -20,7 +20,7 @@
 
 #include "src/state/HashLockInfoSerializer.h"
 #include "plugins/txes/lock_shared/tests/state/LockInfoSerializerTests.h"
-#include "tests/test/HashLockInfoCacheTestUtils.h"
+#include "tests/test/AggregateTransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace state {

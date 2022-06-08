@@ -23,10 +23,9 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::AggregateCosignaturesNotification<1>;
-
-	DECLARE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, ([](const auto& notification, const auto& context) {
+	namespace {
+		template<typename TNotification>
+		auto Validate(const TNotification& notification, const ValidatorContext& context) {
 			if (0 == notification.TransactionsCount)
 				return Failure_Aggregate_No_Transactions;
 
@@ -39,15 +38,17 @@ namespace catapult { namespace validators {
 
 			utils::KeyPointerSet cosigners;
 			cosigners.insert(&notification.Signer);
-			const auto* pCosignature = notification.CosignaturesPtr;
+			auto pCosignature = notification.CosignaturesPtr;
 			for (auto i = 0u; i < notification.CosignaturesCount; ++i) {
-				if (!cosigners.insert(&pCosignature->Signer).second)
+				if (!cosigners.insert(&pCosignature.Signer()).second)
 					return Failure_Aggregate_Redundant_Cosignatures;
 
 				++pCosignature;
 			}
 
 			return ValidationResult::Success;
-		}));
+		}
 	}
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(BasicAggregateCosignaturesV1, model::AggregateCosignaturesNotification<1>, Validate<model::AggregateCosignaturesNotification<1>>);
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(BasicAggregateCosignaturesV3, model::AggregateCosignaturesNotification<3>, Validate<model::AggregateCosignaturesNotification<3>>);
 }}

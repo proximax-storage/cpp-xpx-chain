@@ -29,6 +29,7 @@
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/TestHarness.h"
 #include <bsoncxx/types.hpp>
+#include <plugins/txes/aggregate/src/model/AggregateTransaction.h>
 
 namespace catapult { namespace test {
 
@@ -212,15 +213,31 @@ namespace catapult { namespace test {
 				ToHexString(GetBinary(dbTransaction, "data"), transaction.Data.Size));
 	}
 
-	void AssertEqualCosignatures(const std::vector<model::Cosignature<SignatureLayout::Raw>>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures) {
+	template<typename TDescriptor>
+	void AssertEqualCosignatures(const std::vector<typename TDescriptor::CosignatureType>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures) {
 		auto iter = dbCosignatures.cbegin();
 		for (const auto& expectedCosignature : expectedCosignatures) {
 			auto cosignatureView = iter->get_document().view();
 			EXPECT_EQ(expectedCosignature.Signer, GetKeyValue(cosignatureView, "signer"));
-			EXPECT_EQ(expectedCosignature.Signature, GetSignatureValue(cosignatureView, "signature"));
+			EXPECT_EQ(expectedCosignature.GetRawSignature(), GetSignatureValue(cosignatureView, "signature"));
+			EXPECT_EQ(expectedCosignature.GetDerivationScheme(), GetUint8(cosignatureView, "scheme"));
 			++iter;
 		}
 	}
+
+	void AssertEqualCosignatures(const std::vector<model::CosignatureInfo>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures) {
+		auto iter = dbCosignatures.cbegin();
+		for (const auto& expectedCosignature : expectedCosignatures) {
+			auto cosignatureView = iter->get_document().view();
+			EXPECT_EQ(expectedCosignature.Signer, GetKeyValue(cosignatureView, "signer"));
+			EXPECT_EQ(expectedCosignature.GetRawSignature(), GetSignatureValue(cosignatureView, "signature"));
+			EXPECT_EQ(expectedCosignature.GetDerivationScheme(), GetUint8(cosignatureView, "scheme"));
+			++iter;
+		}
+	}
+
+	template void AssertEqualCosignatures<model::AggregateTransactionRawDescriptor>(const std::vector<model::AggregateTransactionRawDescriptor::CosignatureType>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures);
+	template void AssertEqualCosignatures<model::AggregateTransactionExtendedDescriptor>(const std::vector<typename model::AggregateTransactionExtendedDescriptor::CosignatureType>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures);
 
 	void AssertEqualReceiptData(const model::Receipt& receipt, const bsoncxx::document::view& dbReceipt) {
 		EXPECT_EQ(receipt.Version, GetInt32(dbReceipt, "version"));

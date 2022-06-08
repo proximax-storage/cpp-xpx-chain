@@ -128,7 +128,10 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, CanOutputPluginEnumValues) {
 		// Assert:
 		EXPECT_EQ("Account_Link", test::ToString(ToEntityType(0x414C)));
-		EXPECT_EQ("Aggregate_Complete", test::ToString(ToEntityType(0x4141)));
+		EXPECT_EQ("Aggregate_Complete_V1", test::ToString(ToEntityType(0x4141)));
+		EXPECT_EQ("Aggregate_Bonded_V1", test::ToString(ToEntityType(0x4241)));
+		EXPECT_EQ("Aggregate_Complete_V2", test::ToString(ToEntityType(0x4341)));
+		EXPECT_EQ("Aggregate_Bonded_V2", test::ToString(ToEntityType(0x4441)));
 		EXPECT_EQ("Hash_Lock", test::ToString(ToEntityType(0x4148)));
 		EXPECT_EQ("Mosaic_Supply_Change", test::ToString(ToEntityType(0x424D)));
 		EXPECT_EQ("Mosaic_Property", test::ToString(ToEntityType(0x4250)));

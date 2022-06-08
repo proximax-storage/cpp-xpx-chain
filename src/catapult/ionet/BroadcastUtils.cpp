@@ -41,7 +41,7 @@ namespace catapult { namespace ionet {
 		return builder.build();
 	}
 
-	PacketPayload CreateBroadcastPayload(const std::vector<model::DetachedCosignature<SignatureLayout::Raw>>& cosignatures) {
+	PacketPayload CreateBroadcastPayload(const std::vector<model::DetachedCosignature>& cosignatures) {
 		PacketPayloadBuilder builder(PacketType::Push_Detached_Cosignatures);
 		builder.appendValues(cosignatures);
 		return builder.build();

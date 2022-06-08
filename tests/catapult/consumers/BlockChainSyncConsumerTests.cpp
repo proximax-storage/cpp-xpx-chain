@@ -1225,16 +1225,21 @@ namespace catapult { namespace consumers {
 			}
 		};
 
+		template<typename TDescriptor>
 		struct EmbeddedTraits {
 			static auto CreateConfigTransaction(const BlockDuration& applyHeightDelta) {
 				auto pEmbeddedTransaction = CreateConfigTransactionBuilder(applyHeightDelta).buildEmbedded();
 
-				uint32_t size = sizeof(model::AggregateTransaction<SignatureLayout::Raw>) + pEmbeddedTransaction->Size;
-				auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<SignatureLayout::Raw>>(size);
-				pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
-				pTransaction->Type = model::AggregateTransaction<SignatureLayout::Raw>::Entity_Type;
+				uint32_t size = sizeof(model::AggregateTransaction<TDescriptor>) + pEmbeddedTransaction->Size;
+				auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction<TDescriptor>>(size);
+				if constexpr(std::is_same_v<TDescriptor, model::AggregateTransactionRawDescriptor>)
+					pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
+				else
+					pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
+
+				pTransaction->Type = model::AggregateTransaction<TDescriptor>::Entity_Type;
 				pTransaction->Size = size;
-				pTransaction->PayloadSize = size - sizeof(model::AggregateTransaction<SignatureLayout::Raw>);
+				pTransaction->PayloadSize = size - sizeof(model::AggregateTransaction<TDescriptor>);
 
 				std::memcpy(pTransaction.get() + 1, pEmbeddedTransaction.get(), pEmbeddedTransaction->Size);
 
@@ -1246,7 +1251,8 @@ namespace catapult { namespace consumers {
 #define TRAITS_BASED_TEST(TEST_NAME) \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
 	TEST(TEST_CLASS, TEST_NAME##_RegularConfigTransaction) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RegularTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_EmbeddedConfigTransaction) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<EmbeddedTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_EmbeddedConfigTransaction_V1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<EmbeddedTraits<model::AggregateTransactionRawDescriptor>>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_EmbeddedConfigTransaction_V2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<EmbeddedTraits<model::AggregateTransactionExtendedDescriptor>>(); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	TRAITS_BASED_TEST(CommitBlocksBeforeNetworkConfig) {

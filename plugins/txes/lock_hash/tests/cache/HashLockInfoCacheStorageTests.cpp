@@ -20,7 +20,7 @@
 
 #include "src/cache/HashLockInfoCacheStorage.h"
 #include "plugins/txes/lock_shared/tests/cache/LockInfoCacheStorageTests.h"
-#include "tests/test/HashLockInfoCacheTestUtils.h"
+#include "tests/test/AggregateTransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {

@@ -77,8 +77,8 @@ namespace catapult { namespace zeromq {
 				publisher().publishTransactionStatus(transaction, height, hash, status);
 			}
 
-			void publishCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const RawSignature& signature) {
-				publisher().publishCosignature(parentTransactionInfo, signer, signature);
+			void publishCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const RawSignature& signature, DerivationScheme scheme) {
+				publisher().publishCosignature(parentTransactionInfo, signer, signature, scheme);
 			}
 		};
 
@@ -387,10 +387,10 @@ namespace catapult { namespace zeromq {
 		context.subscribeAll(marker, addresses);
 
 		// Act:
-		context.publishCosignature(transactionInfo, signer, signature);
+		context.publishCosignature(transactionInfo, signer, signature, DerivationScheme::Ed25519_Sha3);
 
 		// Assert:
-		model::DetachedCosignature<SignatureLayout::Raw>  expectedDetachedCosignature(signer, signature, transactionInfo.EntityHash);
+		model::DetachedCosignature  expectedDetachedCosignature(signer, signature, transactionInfo.EntityHash);
 		auto& zmqSocket = context.zmqSocket();
 		test::AssertMessages(zmqSocket, marker, addresses, [&expectedDetachedCosignature](const auto& message, const auto& topic) {
 			test::AssertDetachedCosignatureMessage(message, topic, expectedDetachedCosignature);

@@ -258,6 +258,10 @@ namespace catapult { namespace test {
 			pRegistrar->registerServiceCounters(m_locator);
 			pRegistrar->registerServices(m_locator, m_testState.state());
 		}
+		void initCache()
+		{
+			m_testState.cache() = m_testState.pluginManager().createCache();
+		}
 
 		/// Shuts down the service.
 		void shutdown() {

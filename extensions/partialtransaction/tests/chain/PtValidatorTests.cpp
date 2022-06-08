@@ -99,6 +99,8 @@ namespace catapult { namespace chain {
 				std::vector<const test::ParamsCapture<mocks::VALIDATOR_TYPE##NotificationValidatorParams>*> subParamCapturers; \
 				builder.add(create##VALIDATOR_TYPE##Validator<model::AggregateCosignaturesNotification<1>>(options, subBasicValidators, subParamCapturers)); \
 				builder.add(create##VALIDATOR_TYPE##Validator<model::AggregateEmbeddedTransactionNotification<1>>(options, subBasicValidators, subParamCapturers)); \
+				builder.add(create##VALIDATOR_TYPE##Validator<model::AggregateCosignaturesNotification<3>>(options, subBasicValidators, subParamCapturers)); \
+				builder.add(create##VALIDATOR_TYPE##Validator<model::AggregateEmbeddedTransactionNotification<2>>(options, subBasicValidators, subParamCapturers)); \
 				builder.add(create##VALIDATOR_TYPE##Validator<model::EntityNotification<1>>(options, subBasicValidators, subParamCapturers)); \
 				builder.add(create##VALIDATOR_TYPE##Validator<model::TransactionNotification<1>>(options, subBasicValidators, subParamCapturers)); \
 				builder.add(create##VALIDATOR_TYPE##Validator<model::TransactionDeadlineNotification<1>>(options, subBasicValidators, subParamCapturers)); \
@@ -388,18 +390,20 @@ namespace catapult { namespace chain {
 			bool IsShortCircuited;
 		};
 
+		template<typename TDescriptor>
 		auto CreateAggregateTransaction(uint8_t numTransactions) {
-			return test::CreateAggregateTransaction(numTransactions).pTransaction;
+			return test::CreateAggregateTransaction<TDescriptor>(numTransactions).pTransaction;
 		}
 
+		template<typename TDescriptor>
 		void RunValidateCosignersTest(ValidationResult validationResult, const ValidateCosignersResult& expectedResult) {
 			// Arrange:
 			TestContext context(validationResult);
 			const auto& validator = context.validator();
 
 			// Act:
-			auto pTransaction = CreateAggregateTransaction(2);
-			auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(3);
+			auto pTransaction = CreateAggregateTransaction<TDescriptor>(2);
+			auto cosignatures = test::GenerateRandomDataVector<model::CosignatureInfo>(3);
 			auto result = validator.validateCosigners({ pTransaction.get(), &cosignatures });
 
 			// Assert:
@@ -408,14 +412,29 @@ namespace catapult { namespace chain {
 
 			// - short circuiting on failure
 			auto notificationTypes = context.notificationTypesAt(1); // cosigners
-			if (!expectedResult.IsShortCircuited) {
-				ASSERT_EQ(3u, notificationTypes.size());
-				EXPECT_EQ(model::Aggregate_Cosignatures_v1_Notification, notificationTypes[0]);
-				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_v1_Notification, notificationTypes[1]);
-				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_v1_Notification, notificationTypes[2]);
-			} else {
-				ASSERT_EQ(1u, notificationTypes.size());
-				EXPECT_EQ(model::Aggregate_Cosignatures_v1_Notification, notificationTypes[0]);
+			if constexpr(std::is_same_v<TDescriptor, model::AggregateTransactionRawDescriptor>)
+			{
+				if (!expectedResult.IsShortCircuited) {
+					ASSERT_EQ(3u, notificationTypes.size());
+					EXPECT_EQ(model::Aggregate_Cosignatures_v1_Notification, notificationTypes[0]);
+					EXPECT_EQ(model::Aggregate_EmbeddedTransaction_v1_Notification, notificationTypes[1]);
+					EXPECT_EQ(model::Aggregate_EmbeddedTransaction_v1_Notification, notificationTypes[2]);
+				} else {
+					ASSERT_EQ(1u, notificationTypes.size());
+					EXPECT_EQ(model::Aggregate_Cosignatures_v1_Notification, notificationTypes[0]);
+				}
+			}
+			else
+			{
+				if (!expectedResult.IsShortCircuited) {
+					ASSERT_EQ(3u, notificationTypes.size());
+					EXPECT_EQ(model::Aggregate_Cosignatures_v3_Notification, notificationTypes[0]);
+					EXPECT_EQ(model::Aggregate_EmbeddedTransaction_v2_Notification, notificationTypes[1]);
+					EXPECT_EQ(model::Aggregate_EmbeddedTransaction_v2_Notification, notificationTypes[2]);
+				} else {
+					ASSERT_EQ(1u, notificationTypes.size());
+					EXPECT_EQ(model::Aggregate_Cosignatures_v3_Notification, notificationTypes[0]);
+				}
 			}
 
 			// - correct timestamp was passed to validator
@@ -425,29 +444,54 @@ namespace catapult { namespace chain {
 		}
 	}
 
-	TEST(TEST_CLASS, ValidateCosignersMapsSuccessToSuccess) {
+	TEST(TEST_CLASS, ValidateCosignersMapsSuccessToSuccessV1) {
 		// Assert:
-		RunValidateCosignersTest(ValidationResult::Success, { CosignersValidationResult::Success, false });
+		RunValidateCosignersTest<model::AggregateTransactionRawDescriptor>(ValidationResult::Success, { CosignersValidationResult::Success, false });
 	}
 
-	TEST(TEST_CLASS, ValidateCosignersMapsNeutralToFailure) {
+	TEST(TEST_CLASS, ValidateCosignersMapsNeutralToFailureV1) {
 		// Assert:
-		RunValidateCosignersTest(ValidationResult::Neutral, { CosignersValidationResult::Failure, false });
+		RunValidateCosignersTest<model::AggregateTransactionRawDescriptor>(ValidationResult::Neutral, { CosignersValidationResult::Failure, false });
 	}
 
-	TEST(TEST_CLASS, ValidateCosignersMapsGenericFailureToFailure) {
+	TEST(TEST_CLASS, ValidateCosignersMapsGenericFailureToFailureV1) {
 		// Assert:
-		RunValidateCosignersTest(ValidationResult::Failure, { CosignersValidationResult::Failure, true });
+		RunValidateCosignersTest<model::AggregateTransactionRawDescriptor>(ValidationResult::Failure, { CosignersValidationResult::Failure, true });
 	}
 
-	TEST(TEST_CLASS, ValidateCosignersMapsFailureAggregateIneligibleCosignersToIneligible) {
+	TEST(TEST_CLASS, ValidateCosignersMapsFailureAggregateIneligibleCosignersToIneligibleV1) {
 		// Assert:
-		RunValidateCosignersTest(Failure_Aggregate_Ineligible_Cosigners, { CosignersValidationResult::Ineligible, true });
+		RunValidateCosignersTest<model::AggregateTransactionRawDescriptor>(Failure_Aggregate_Ineligible_Cosigners, { CosignersValidationResult::Ineligible, true });
 	}
 
-	TEST(TEST_CLASS, ValidateCosignersMapsFailureAggregateMissingCosignersToMissing) {
+	TEST(TEST_CLASS, ValidateCosignersMapsFailureAggregateMissingCosignersToMissingV1) {
 		// Assert:
-		RunValidateCosignersTest(Failure_Aggregate_Missing_Cosigners, { CosignersValidationResult::Missing, true });
+		RunValidateCosignersTest<model::AggregateTransactionRawDescriptor>(Failure_Aggregate_Missing_Cosigners, { CosignersValidationResult::Missing, true });
+	}
+
+	TEST(TEST_CLASS, ValidateCosignersMapsSuccessToSuccessV2) {
+		// Assert:
+		RunValidateCosignersTest<model::AggregateTransactionExtendedDescriptor>(ValidationResult::Success, { CosignersValidationResult::Success, false });
+	}
+
+	TEST(TEST_CLASS, ValidateCosignersMapsNeutralToFailureV2) {
+		// Assert:
+		RunValidateCosignersTest<model::AggregateTransactionExtendedDescriptor>(ValidationResult::Neutral, { CosignersValidationResult::Failure, false });
+	}
+
+	TEST(TEST_CLASS, ValidateCosignersMapsGenericFailureToFailureV2) {
+		// Assert:
+		RunValidateCosignersTest<model::AggregateTransactionExtendedDescriptor>(ValidationResult::Failure, { CosignersValidationResult::Failure, true });
+	}
+
+	TEST(TEST_CLASS, ValidateCosignersMapsFailureAggregateIneligibleCosignersToIneligibleV2) {
+		// Assert:
+		RunValidateCosignersTest<model::AggregateTransactionExtendedDescriptor>(Failure_Aggregate_Ineligible_Cosigners, { CosignersValidationResult::Ineligible, true });
+	}
+
+	TEST(TEST_CLASS, ValidateCosignersMapsFailureAggregateMissingCosignersToMissingV2) {
+		// Assert:
+		RunValidateCosignersTest<model::AggregateTransactionExtendedDescriptor>(Failure_Aggregate_Missing_Cosigners, { CosignersValidationResult::Missing, true });
 	}
 
 	// endregion

@@ -43,12 +43,14 @@ namespace catapult { namespace subscribers {
 		void ForwardCosignature(io::InputStream& inputStream, cache::PtChangeSubscriber& subscriber) {
 			Key signer;
 			RawSignature signature;
+			DerivationScheme scheme;
 			model::TransactionInfo transactionInfo;
 			inputStream.read(signer);
 			inputStream.read(signature);
+			scheme = (DerivationScheme)io::Read8(inputStream);
 			io::ReadTransactionInfo(inputStream, transactionInfo);
 
-			subscriber.notifyAddCosignature(transactionInfo, signer, signature);
+			subscriber.notifyAddCosignature(transactionInfo, signer, signature, scheme);
 		}
 	}
 

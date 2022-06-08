@@ -106,7 +106,7 @@ namespace catapult { namespace zeromq {
 		void publishTransactionStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status);
 
 		/// Publishes a cosignature composed of transaction info (\a parentTransactionInfo), \a signer and \a signature.
-		void publishCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const RawSignature& signature);
+		void publishCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const RawSignature& signature, DerivationScheme scheme);
 
 		void publishEmbeddedCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const Signature& signature);
 

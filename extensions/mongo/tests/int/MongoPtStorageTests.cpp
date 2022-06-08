@@ -74,13 +74,13 @@ namespace catapult { namespace mongo {
 				m_pStorage->notifyAddPartials(transactionInfos);
 			}
 
-			void saveCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const RawSignature& signature) {
-				m_pStorage->notifyAddCosignature(parentTransactionInfo, signer, signature);
+			void saveCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const RawSignature& signature, DerivationScheme scheme) {
+				m_pStorage->notifyAddCosignature(parentTransactionInfo, signer, signature, scheme);
 			}
 
-			void saveCosignatures(const model::TransactionInfo& transactionInfo, const std::vector<model::Cosignature<SignatureLayout::Raw>>& cosignatures) {
+			void saveCosignatures(const model::TransactionInfo& transactionInfo, const std::vector<model::CosignatureInfo>& cosignatures) {
 				for (const auto& cosignature : cosignatures)
-					saveCosignature(transactionInfo, cosignature.Signer, cosignature.Signature);
+					saveCosignature(transactionInfo, cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme());
 			}
 
 			void removeTransaction(const model::TransactionInfo& transactionInfo) {
@@ -110,7 +110,7 @@ namespace catapult { namespace mongo {
 			std::vector<model::TransactionInfo> m_transactionInfos;
 		};
 
-		void AssertCosignatures(const Hash256& parentHash, const std::vector<model::Cosignature<SignatureLayout::Raw>>& cosignatures) {
+		void AssertCosignatures(const Hash256& parentHash, const std::vector<model::CosignatureInfo>& cosignatures) {
 			auto connection = test::CreateDbConnection();
 			auto database = connection[test::DatabaseName()];
 			auto collection = database[Pt_Collection_Name];
@@ -154,8 +154,8 @@ namespace catapult { namespace mongo {
 		context.seedDatabase();
 		auto transactionInfo = test::CreateRandomTransactionInfo();
 		context.saveTransaction(transactionInfo);
-		auto cosignature = test::CreateRandomCosignature();
-		context.saveCosignature(transactionInfo, cosignature.Signer, cosignature.Signature);
+		auto cosignature = test::CreateRandomCosignature().ToInfo();
+		context.saveCosignature(transactionInfo, cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme());
 		context.flush();
 
 		// Sanity:
@@ -179,10 +179,10 @@ namespace catapult { namespace mongo {
 		context.seedDatabase();
 		auto transactionInfo = test::CreateRandomTransactionInfo();
 		context.saveTransaction(transactionInfo);
-		auto cosignature = test::CreateRandomCosignature();
+		auto cosignature = test::CreateRandomCosignature().ToInfo();
 
 		// Act:
-		context.saveCosignature(transactionInfo, cosignature.Signer, cosignature.Signature);
+		context.saveCosignature(transactionInfo, cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme());
 		context.flush();
 
 		// Assert:
@@ -195,7 +195,7 @@ namespace catapult { namespace mongo {
 		context.seedDatabase();
 		auto transactionInfo = test::CreateRandomTransactionInfo();
 		context.saveTransaction(transactionInfo);
-		auto cosignatures = test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(3);
+		auto cosignatures = test::GenerateRandomDataVector<model::CosignatureInfo>(3);
 
 		// Act:
 		context.saveCosignatures(transactionInfo, cosignatures);
@@ -214,10 +214,10 @@ namespace catapult { namespace mongo {
 		for (const auto& transactionInfo : transactionInfos)
 			context.saveTransaction(transactionInfo);
 
-		std::vector<std::vector<model::Cosignature<SignatureLayout::Raw>>> cosignaturesGroups{
-			test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(2),
-			test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(4),
-			test::GenerateRandomDataVector<model::Cosignature<SignatureLayout::Raw>>(3)
+		std::vector<std::vector<model::CosignatureInfo>> cosignaturesGroups{
+			test::GenerateRandomDataVector<model::CosignatureInfo>(2),
+			test::GenerateRandomDataVector<model::CosignatureInfo>(4),
+			test::GenerateRandomDataVector<model::CosignatureInfo>(3)
 		};
 
 		// Act:
@@ -240,10 +240,10 @@ namespace catapult { namespace mongo {
 		auto transactionInfo = test::CreateRandomTransactionInfo();
 		context.saveTransaction(transactionInfo);
 
-		auto cosignature = test::CreateRandomCosignature();
+		auto cosignature = test::CreateRandomCosignature().ToInfo();
 
 		// Act:
-		context.saveCosignature(transactionInfo, cosignature.Signer, cosignature.Signature);
+		context.saveCosignature(transactionInfo, cosignature.Signer, cosignature.GetRawSignature(), cosignature.GetDerivationScheme());
 		context.flush();
 
 		// Assert:
@@ -259,7 +259,7 @@ namespace catapult { namespace mongo {
 		auto cosignature = test::CreateRandomCosignature();
 
 		// Act:
-		context.saveCosignature(transactionInfo, cosignature.Signer, cosignature.Signature);
+		context.saveCosignature(transactionInfo, cosignature.Signer, cosignature.Signature, cosignature.Scheme);
 		context.removeTransaction(transactionInfo);
 		context.flush();
 

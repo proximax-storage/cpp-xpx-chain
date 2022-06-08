@@ -121,11 +121,12 @@ namespace catapult { namespace test {
 		return CreateEntityRange<model::Transaction>(transactions);
 	}
 
-	model::DetachedCosignature<SignatureLayout::Raw> CreateRandomCosignature() {
-		return model::DetachedCosignature<SignatureLayout::Raw>{
+	model::DetachedCosignature CreateRandomCosignature() {
+		return model::DetachedCosignature{
 			test::GenerateRandomByteArray<Key>(),
 			test::GenerateRandomByteArray<RawSignature>(),
-			test::GenerateRandomByteArray<Hash256>(),
+			(DerivationScheme)(rand()%2),
+			test::GenerateRandomByteArray<Hash256>()
 		};
 	}
 }}

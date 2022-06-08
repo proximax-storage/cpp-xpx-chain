@@ -23,7 +23,7 @@
 #include "catapult/model/Transaction.h"
 #include "catapult/utils/ArraySet.h"
 #include "catapult/config/BlockchainConfiguration.h"
-#include "src/config/MultisigConfiguration.h"
+#include "../config/MultisigConfiguration.h"
 
 namespace catapult { namespace model {
 

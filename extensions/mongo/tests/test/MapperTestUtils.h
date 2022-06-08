@@ -25,14 +25,13 @@
 #include "tests/test/nodeps/Conversions.h"
 #include <cstring>
 #include <vector>
+#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 
 namespace catapult {
 	namespace mocks { struct MockTransaction; }
 	namespace model {
 		struct Block;
 		struct BlockElement;
-		template<uint32_t TCosignatureVersion>
-		struct Cosignature;
 		struct EmbeddedTransaction;
 		struct Receipt;
 		struct Transaction;
@@ -212,9 +211,14 @@ namespace catapult { namespace test {
 	/// Verifies that mock \a transaction and db transaction (\a dbTransaction) are equivalent.
 	void AssertEqualMockTransactionData(const mocks::MockTransaction& transaction, const bsoncxx::document::view& dbTransaction);
 
-	/// Verifies that model \a expectedCosignatures and db cosignatures (\a dbCosignatures) are equivalent.
-	void AssertEqualCosignatures(const std::vector<model::Cosignature<SignatureLayout::Raw>>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures);
+	void AssertEqualCosignatures(const std::vector<model::CosignatureInfo>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures);
 
+	/// Verifies that model \a expectedCosignatures and db cosignatures (\a dbCosignatures) are equivalent.
+	template<typename TDescriptor>
+	void AssertEqualCosignatures(const std::vector<typename TDescriptor::CosignatureType>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures);
+
+	extern template void AssertEqualCosignatures<model::AggregateTransactionRawDescriptor>(const std::vector<model::AggregateTransactionRawDescriptor::CosignatureType>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures);
+	extern template void AssertEqualCosignatures<model::AggregateTransactionExtendedDescriptor>(const std::vector<model::AggregateTransactionExtendedDescriptor::CosignatureType>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures);
 	/// Verifies that model \a receipt and db receipt (\a dbReceipt) are equivalent.
 	void AssertEqualReceiptData(const model::Receipt& receipt, const bsoncxx::document::view& dbReceipt);
 

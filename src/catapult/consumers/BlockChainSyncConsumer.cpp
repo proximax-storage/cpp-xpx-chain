@@ -55,6 +55,18 @@ namespace catapult { namespace consumers {
 			configHeights.insert(blockHeight +  Height(transaction.ApplyHeightDelta.unwrap()));
 		}
 
+		template<typename TDescriptor, typename TContainer>
+		void AddAggregateConfigs(TContainer& configHeights, const Height& blockHeight, const model::Transaction& transaction)
+		{
+			const auto& aggregate = static_cast<const model::AggregateTransaction<TDescriptor>&>(transaction);
+			for (const auto& subTransaction : aggregate.Transactions()) {
+				if (model::Entity_Type_Network_Config == subTransaction.Type) {
+					AddConfig(configHeights, blockHeight,
+							  static_cast<const model::EmbeddedNetworkConfigTransaction&>(subTransaction));
+				}
+			}
+		}
+
 		template<typename TContainer>
 		bool ExtractConfigs(const BlockElements& elements, TContainer& configs) {
 			try {
@@ -65,14 +77,11 @@ namespace catapult { namespace consumers {
 						if (model::Entity_Type_Network_Config == type) {
 							AddConfig(configs, blockElement.Block.Height,
 								static_cast<const model::NetworkConfigTransaction&>(transaction));
-						} else if (model::Entity_Type_Aggregate_Complete == type || model::Entity_Type_Aggregate_Bonded == type) {
-							const auto& aggregate = static_cast<const model::AggregateTransaction<SignatureLayout::Raw>&>(transaction);
-							for (const auto& subTransaction : aggregate.Transactions()) {
-								if (model::Entity_Type_Network_Config == subTransaction.Type) {
-									AddConfig(configs, blockElement.Block.Height,
-										static_cast<const model::EmbeddedNetworkConfigTransaction&>(subTransaction));
-								}
-							}
+						} else if (model::Entity_Type_Aggregate_Complete_V1 == type || model::Entity_Type_Aggregate_Bonded_V1 == type) {
+							AddAggregateConfigs<model::AggregateTransactionRawDescriptor>(configs, blockElement.Block.Height, transaction);
+						}
+						else if (model::Entity_Type_Aggregate_Complete_V2 == type || model::Entity_Type_Aggregate_Bonded_V2 == type) {
+							AddAggregateConfigs<model::AggregateTransactionExtendedDescriptor>(configs, blockElement.Block.Height, transaction);
 						}
 					}
 				}

@@ -27,10 +27,16 @@ namespace catapult { namespace model {
 #endif
 
 	/// Fully complete aggregate transaction.
-	DEFINE_TRANSACTION_TYPE(Aggregate, Aggregate_Complete, 0x1);
+	DEFINE_TRANSACTION_TYPE(Aggregate, Aggregate_Complete_V1, 0x1);
 
 	/// Bonded aggregate transaction.
-	DEFINE_TRANSACTION_TYPE(Aggregate, Aggregate_Bonded, 0x2);
+	DEFINE_TRANSACTION_TYPE(Aggregate, Aggregate_Bonded_V1, 0x2);
+
+	/// Fully complete aggregate transaction.
+	DEFINE_TRANSACTION_TYPE(Aggregate, Aggregate_Complete_V2, 0x3);
+
+	/// Bonded aggregate transaction.
+	DEFINE_TRANSACTION_TYPE(Aggregate, Aggregate_Bonded_V2, 0x4);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

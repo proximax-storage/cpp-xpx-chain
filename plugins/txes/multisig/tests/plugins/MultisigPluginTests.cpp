@@ -77,23 +77,25 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
-					"MultisigAggregateEligibleCosignersValidator",
-					"MultisigAggregateSufficientCosignersValidator",
+					"MultisigAggregateEligibleCosignersV1Validator",
+					"MultisigAggregateSufficientCosignersV1Validator",
+					"MultisigAggregateSufficientCosignersV2Validator",
 					"ModifyMultisigMaxCosignedAccountsValidator",
 					"ModifyMultisigLoopAndLevelValidator",
+					"MultisigAggregateEligibleCosignersV2Validator",
 					"MultisigPermittedOperationValidator",
 					"ModifyMultisigMaxCosignersValidator",
 					"ModifyMultisigInvalidCosignersValidator",
-					"ModifyMultisigInvalidSettingsValidator",
+					"ModifyMultisigInvalidSettingsValidator"
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
-				return { "ModifyMultisigCosignersObserver", "ModifyMultisigSettingsObserver" };
+				return { "ModifyMultisigCosignersObserver", "ModifyMultisigSettingsObserver", "UpgradeCosignatoryObserver" };
 			}
 
 			static std::vector<std::string> GetPermanentObserverNames() {
-				return { "ModifyMultisigCosignersObserver", "ModifyMultisigSettingsObserver" };
+				return { "ModifyMultisigCosignersObserver", "ModifyMultisigSettingsObserver", "UpgradeCosignatoryObserver" };
 			}
 		};
 	}

@@ -89,8 +89,10 @@ namespace catapult { namespace plugins {
 				// notice that ModifyMultisigLoopAndLevelValidator must be called before multisig aggregate validators
 				.add(validators::CreateModifyMultisigLoopAndLevelValidator())
 				// notice that ineligible cosigners must dominate missing cosigners in order for cosigner aggregation to work
-				.add(validators::CreateMultisigAggregateEligibleCosignersValidator(transactionRegistry))
-				.add(validators::CreateMultisigAggregateSufficientCosignersValidator(transactionRegistry));
+				.add(validators::CreateMultisigAggregateEligibleCosignersV1Validator(transactionRegistry))
+				.add(validators::CreateMultisigAggregateSufficientCosignersV1Validator(transactionRegistry))
+				.add(validators::CreateMultisigAggregateEligibleCosignersV2Validator(transactionRegistry))
+				.add(validators::CreateMultisigAggregateSufficientCosignersV2Validator(transactionRegistry));
 		});
 
 		manager.addObserverHook([](auto& builder) {
@@ -99,7 +101,8 @@ namespace catapult { namespace plugins {
 			// as conversion from a multisig to a normal account done by the ModifyMultisigCosignersObserver
 			builder
 				.add(observers::CreateModifyMultisigCosignersObserver())
-				.add(observers::CreateModifyMultisigSettingsObserver());
+				.add(observers::CreateModifyMultisigSettingsObserver())
+				.add(observers::CreateUpgradeCosignatoryObserver());
 		});
 	}
 }}

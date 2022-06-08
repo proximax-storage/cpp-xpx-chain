@@ -21,7 +21,7 @@
 #pragma once
 #include "src/cache/HashLockInfoCacheTypes.h"
 #include "src/storages/MongoHashLockInfoCacheStorage.h"
-#include "tests/test/HashLockInfoCacheTestUtils.h"
+#include "tests/test/AggregateTransactionPluginTestUtils.h"
 
 namespace catapult { namespace mongo { class MongoStorageContext; } }
 

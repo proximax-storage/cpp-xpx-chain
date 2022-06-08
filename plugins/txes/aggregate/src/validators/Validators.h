@@ -32,11 +32,13 @@ namespace catapult { namespace validators {
 	/// - the number of transactions does not exceed \a maxTransactions
 	/// - the number of implicit and explicit cosignatures does not exceed \a maxCosignatures
 	/// - there are no redundant cosigners
-	DECLARE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, model::AggregateCosignaturesNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(BasicAggregateCosignaturesV1, model::AggregateCosignaturesNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(BasicAggregateCosignaturesV3, model::AggregateCosignaturesNotification<3>)();
 
 	/// A validator implementation that applies to aggregate cosignatures notifications and validates that:
 	/// - the set of component signers is equal to the set of cosigners
-	DECLARE_STATEFUL_VALIDATOR(StrictAggregateCosignatures, model::AggregateCosignaturesNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(StrictAggregateCosignaturesV1, model::AggregateCosignaturesNotification<1>)();
+		DECLARE_STATEFUL_VALIDATOR(StrictAggregateCosignaturesV3, model::AggregateCosignaturesNotification<3>)();
 
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid
@@ -45,4 +47,5 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to aggregate transaction entity types notifications and validates that:
 	/// - aggregate bonded transaction is enabled
 	DECLARE_STATEFUL_VALIDATOR(AggregateTransactionType, model::AggregateTransactionTypeNotification<1>)();
+
 }}

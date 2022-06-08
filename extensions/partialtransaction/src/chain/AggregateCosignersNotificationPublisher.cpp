@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "partialtransaction/src/PtUtils.h"
 #include "AggregateCosignersNotificationPublisher.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
@@ -27,18 +28,13 @@
 namespace catapult { namespace chain {
 
 	namespace {
-		constexpr bool IsAggregate(model::EntityType type) {
-			return model::Entity_Type_Aggregate_Complete == type || model::Entity_Type_Aggregate_Bonded == type;
-		}
 
+
+		template<typename TDescriptor>
 		const auto& CoerceToAggregate(const model::Transaction& transaction) {
-			if (!IsAggregate(transaction.Type))
-				CATAPULT_THROW_INVALID_ARGUMENT("AggregateNotificationPublisher only supports aggregate transactions");
-
-			const auto& aggregate = static_cast<const model::AggregateTransaction<SignatureLayout::Raw>&>(transaction);
+			const auto& aggregate = static_cast<const model::AggregateTransaction<TDescriptor>&>(transaction);
 			if (0 != aggregate.CosignaturesCount())
 				CATAPULT_THROW_INVALID_ARGUMENT("AggregateNotificationPublisher only supports aggregates without cosignatures");
-
 			return aggregate;
 		}
 	}
@@ -47,33 +43,66 @@ namespace catapult { namespace chain {
 			const model::WeakCosignedTransactionInfo& transactionInfo,
 			model::NotificationSubscriber& sub) const {
 		// publish aggregate notifications
-		const auto& aggregate = CoerceToAggregate(transactionInfo.transaction());
 		auto numCosignatures = transactionInfo.cosignatures().size();
-		switch (aggregate.EntityVersion()) {
-		case 3:
-			[[fallthrough]];
+		if(partialtransaction::IsAggregateV1(transactionInfo.transaction().Type))
+		{
+			const auto& aggregate = CoerceToAggregate<model::AggregateTransactionRawDescriptor>(transactionInfo.transaction());
+			switch (aggregate.EntityVersion()) {
+			case 3:
+				[[fallthrough]];
 
-		case 2:
-			sub.notify(model::AggregateCosignaturesNotification<1>(
-					aggregate.Signer,
-					static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
-					aggregate.TransactionsPtr(),
-					numCosignatures,
-					transactionInfo.cosignatures().data()));
-
-			// publish all sub-transaction information
-			for (const auto& subTransaction : aggregate.Transactions()) {
-				// - generic sub-transaction notification
-				sub.notify(model::AggregateEmbeddedTransactionNotification<1>(
+			case 2:
+				sub.notify(model::AggregateCosignaturesNotification<1>(
 						aggregate.Signer,
-						subTransaction,
+						static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
+						aggregate.TransactionsPtr(),
 						numCosignatures,
 						transactionInfo.cosignatures().data()));
-			}
-			break;
 
-		default:
-			CATAPULT_LOG(debug) << "invalid version of AggregateTransaction: " << aggregate.EntityVersion();
+				// publish all sub-transaction information
+				for (const auto& subTransaction : aggregate.Transactions()) {
+					// - generic sub-transaction notification
+					sub.notify(model::AggregateEmbeddedTransactionNotification<1>(
+							aggregate.Signer,
+							subTransaction,
+							numCosignatures,
+							transactionInfo.cosignatures().data()));
+				}
+				break;
+
+			default:
+				CATAPULT_LOG(debug) << "invalid version of AggregateTransaction: " << aggregate.EntityVersion();
+			}
 		}
+		else if(partialtransaction::IsAggregateV2(transactionInfo.transaction().Type))
+		{
+			const auto& aggregate = CoerceToAggregate<model::AggregateTransactionExtendedDescriptor>(transactionInfo.transaction());
+
+			switch (aggregate.EntityVersion()) {
+			case 1:
+				sub.notify(model::AggregateCosignaturesNotification<3>(
+						aggregate.Signer,
+						static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
+						aggregate.TransactionsPtr(),
+						numCosignatures,
+						transactionInfo.cosignatures().data()));
+
+				// publish all sub-transaction information
+				for (const auto& subTransaction : aggregate.Transactions()) {
+					// - generic sub-transaction notification
+					sub.notify(model::AggregateEmbeddedTransactionNotification<2>(
+							aggregate.Signer,
+							subTransaction,
+							numCosignatures,
+							transactionInfo.cosignatures().data()));
+				}
+				break;
+
+			default:
+				CATAPULT_LOG(debug) << "invalid version of AggregateTransaction: " << aggregate.EntityVersion();
+			}
+		}
+		else CATAPULT_THROW_INVALID_ARGUMENT("AggregateNotificationPublisher only supports aggregate transactions");
+
 	}
 }}

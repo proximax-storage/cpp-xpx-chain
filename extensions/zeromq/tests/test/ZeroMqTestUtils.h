@@ -35,7 +35,6 @@
 namespace catapult {
 	namespace model {
 		struct BlockElement;
-		template<uint32_t TCoSignatureVersion>
 		struct DetachedCosignature;
 		struct TransactionElement;
 		struct TransactionInfo;
@@ -105,7 +104,7 @@ namespace catapult { namespace test {
 	void AssertDetachedCosignatureMessage(
 			const zmq::multipart_t& message,
 			const std::vector<uint8_t>& topic,
-			const model::DetachedCosignature<SignatureLayout::Raw>& detachedCosignature);
+			const model::DetachedCosignature& detachedCosignature);
 
 	/// Asserts that all pending messages of the socket (\a zmqSocket) that are subscribed to the topic composed of
 	/// \a marker and \a address can be asserted using \a assertMessage.

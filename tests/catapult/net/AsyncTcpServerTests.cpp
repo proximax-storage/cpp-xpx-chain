@@ -583,7 +583,7 @@ namespace catapult { namespace net {
 #ifdef _WIN32
 			constexpr uint32_t Max_Test_Connections = 201;
 #else
-			constexpr uint32_t Max_Test_Connections = 10;
+			constexpr uint32_t Max_Test_Connections = 40;
 #endif
 			constexpr uint32_t Listener_Queue_Slack = 4;
 
