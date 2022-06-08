@@ -14,19 +14,18 @@ using namespace catapult::mongo::mappers;
 namespace catapult { namespace mongo { namespace plugins {
 
     namespace {
-        void StreamSdaOffer(bson_stream::array_context& context, const model::SdaOfferWithOwnerAndDuration& offer) {
+        void StreamSdaOffer(bson_stream::array_context& context, const model::SdaOfferWithDuration& offer) {
             context
                 << bson_stream::open_document
                 << "mosaicIdGive" << ToInt64(offer.MosaicGive.MosaicId)
                 << "mosaicAmountGive" << ToInt64(offer.MosaicGive.Amount)
                 << "mosaicIdGet" << ToInt64(offer.MosaicGet.MosaicId)
                 << "mosaicAmountGet" << ToInt64(offer.MosaicGet.Amount)
-                << "owner" << ToBinary(offer.Owner)
                 << "duration" << ToInt64(offer.Duration)
                 << bson_stream::close_document;
         }
 
-        void StreamSdaOffers(bson_stream::document& builder, const model::SdaOfferWithOwnerAndDuration* pOffer, size_t numOffers) {
+        void StreamSdaOffers(bson_stream::document& builder, const model::SdaOfferWithDuration* pOffer, size_t numOffers) {
             auto offerArray = builder << "offers" << bson_stream::open_array;
             for (auto i = 0u; i < numOffers; ++i, ++pOffer) {
                 StreamSdaOffer(offerArray, *pOffer);

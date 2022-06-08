@@ -63,7 +63,7 @@ namespace catapult { namespace state {
         /// Returns offers arranged from the exact or closest MosaicGive amount.
         SdaOfferGroupVector exactOrClosest(const Amount offerTarget);
 
-        void addSdaOfferToGroup(const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
+        void addSdaOfferToGroup(const model::SdaOfferWithDuration* pOffer, const Key& offerOwner, const Height& deadline);
         void removeSdaOfferFromGroup(const Key& offerOwner);
         bool empty() const;
 

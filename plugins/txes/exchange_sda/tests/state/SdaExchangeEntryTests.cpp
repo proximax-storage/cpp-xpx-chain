@@ -329,8 +329,8 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, PlaceSdaOffer) {
 		// Arrange:
 		auto entry = SdaExchangeEntry(Key());
-		model::SdaOfferWithOwnerAndDuration sdaOffer1{ {{ UnresolvedMosaicId(1), Amount(10) }, { UnresolvedMosaicId(2), Amount(100) }}, entry.owner(), BlockDuration(100)};
-	    model::SdaOfferWithOwnerAndDuration sdaOffer2{ {{ UnresolvedMosaicId(2), Amount(100) }, { UnresolvedMosaicId(1), Amount(10) }}, entry.owner(), BlockDuration(100)};
+		model::SdaOfferWithDuration sdaOffer1{ {{ UnresolvedMosaicId(1), Amount(10) }, { UnresolvedMosaicId(2), Amount(100) }}, BlockDuration(100)};
+	    model::SdaOfferWithDuration sdaOffer2{ {{ UnresolvedMosaicId(2), Amount(100) }, { UnresolvedMosaicId(1), Amount(10) }}, BlockDuration(100)};
 
 		auto expectedEntry = SdaExchangeEntry(Key());
         MosaicsPair pair1{MosaicId(1), MosaicId(1)};

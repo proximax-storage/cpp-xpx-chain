@@ -37,7 +37,7 @@ namespace catapult { namespace model {
 		PlaceSdaOfferNotification(
 				const Key& signer,
 				uint8_t sdaOfferCount,
-				const SdaOfferWithOwnerAndDuration* pSdaOffers)
+				const SdaOfferWithDuration* pSdaOffers)
 			: Notification(Notification_Type, sizeof(PlaceSdaOfferNotification<1>))
 			, Signer(signer)
 			, SdaOfferCount(sdaOfferCount)
@@ -51,8 +51,8 @@ namespace catapult { namespace model {
 		/// Mosaic count.
 		uint8_t SdaOfferCount;
 
-		/// Own SDA-SDA Offers to exchange.
-		const SdaOfferWithOwnerAndDuration* SdaOffersPtr;
+		/// SDA-SDA Offers to exchange.
+		const SdaOfferWithDuration* SdaOffersPtr;
 	};
 
 	/// Notification of an SDA-SDA offer removing.

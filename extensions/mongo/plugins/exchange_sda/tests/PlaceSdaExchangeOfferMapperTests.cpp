@@ -21,24 +21,21 @@ namespace catapult { namespace mongo { namespace plugins {
         template<typename TTransaction>
         void AssertEqualNonInheritedData(const TTransaction& transaction, const bsoncxx::document::view& dbTransaction) {
             auto iter = dbTransaction["offers"].get_array().value.cbegin();
-            const model::SdaOfferWithOwnerAndDuration* pOffer = transaction.SdaOffersPtr();
+            const model::SdaOfferWithDuration* pOffer = transaction.SdaOffersPtr();
             for (uint8_t i = 0; i < transaction.SdaOfferCount; ++i, ++pOffer, ++iter) {
                 const auto& doc = iter->get_document().view();
                 EXPECT_EQ(pOffer->MosaicGive.MosaicId.unwrap(), test::GetUint64(doc, "mosaicIdGive"));
                 EXPECT_EQ(pOffer->MosaicGive.Amount.unwrap(), test::GetUint64(doc, "mosaicAmountGive"));
                 EXPECT_EQ(pOffer->MosaicGet.MosaicId.unwrap(), test::GetUint64(doc, "mosaicIdGet"));
                 EXPECT_EQ(pOffer->MosaicGet.Amount.unwrap(), test::GetUint64(doc, "mosaicAmountGet"));
-                Key owner;
-				mongo::mappers::DbBinaryToModelArray(owner, doc["owner"].get_binary());
-                EXPECT_EQ(pOffer->Owner, owner);
                 EXPECT_EQ(pOffer->Duration.unwrap(), test::GetUint64(doc, "duration"));
             }
         }
 
         template<typename TTraits>
-        void AssertCanMapPlaceSdaExchangeOfferTransaction(std::initializer_list<model::SdaOfferWithOwnerAndDuration> offers) {
+        void AssertCanMapPlaceSdaExchangeOfferTransaction(std::initializer_list<model::SdaOfferWithDuration> offers) {
             // Arrange:
-            auto pTransaction = test::CreateSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferWithOwnerAndDuration>(offers);
+            auto pTransaction = test::CreateSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferWithDuration>(offers);
             auto pPlugin = TTraits::CreatePlugin();
 
             // Act:
@@ -51,12 +48,11 @@ namespace catapult { namespace mongo { namespace plugins {
             AssertEqualNonInheritedData(*pTransaction, view);
         }
 
-        model::SdaOfferWithOwnerAndDuration GenerateSdaOffer(Key owner) {
-            return model::SdaOfferWithOwnerAndDuration{
+        model::SdaOfferWithDuration GenerateSdaOffer() {
+            return model::SdaOfferWithDuration{
                 model::UnresolvedMosaic{test::GenerateRandomValue<UnresolvedMosaicId>(), test::GenerateRandomValue<Amount>()},
                 model::UnresolvedMosaic{test::GenerateRandomValue<UnresolvedMosaicId>(), test::GenerateRandomValue<Amount>()},
-                owner,   
-                test::GenerateRandomValue<BlockDuration>()
+                test::GenerateRandomValue<BlockDuration>(),
             };
         }
     }
@@ -69,16 +65,13 @@ namespace catapult { namespace mongo { namespace plugins {
     }
 
     PLUGIN_TEST(CanMapPlaceSdaExchangeOfferTransactionWithOffers) {
-        // Arrange:
-        Key owner = test::GenerateRandomByteArray<Key>();
-
         // Assert:
         AssertCanMapPlaceSdaExchangeOfferTransaction<TTraits>({
-            GenerateSdaOffer(owner),
-            GenerateSdaOffer(owner),
-            GenerateSdaOffer(owner),
-            GenerateSdaOffer(owner),
-            GenerateSdaOffer(owner),
+            GenerateSdaOffer(),
+            GenerateSdaOffer(),
+            GenerateSdaOffer(),
+            GenerateSdaOffer(),
+            GenerateSdaOffer(),
         });
     }
 }}}

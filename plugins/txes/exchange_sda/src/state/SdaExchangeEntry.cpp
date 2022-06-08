@@ -117,7 +117,7 @@ namespace catapult { namespace state {
         return m_sdaOfferBalances.count(mosaicId);
     }
 
-    void SdaExchangeEntry::addOffer(const MosaicId& mosaicIdGive, const MosaicId& mosaicIdGet, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline) {
+    void SdaExchangeEntry::addOffer(const MosaicId& mosaicIdGive, const MosaicId& mosaicIdGet, const model::SdaOfferWithDuration* pOffer, const Height& deadline) {
         state::SdaOfferBalance baseOffer{pOffer->MosaicGive.Amount, pOffer->MosaicGet.Amount, pOffer->MosaicGive.Amount, pOffer->MosaicGet.Amount, deadline};
         std::pair<MosaicId, MosaicId> mosaics;
         mosaics.first = mosaicIdGive;

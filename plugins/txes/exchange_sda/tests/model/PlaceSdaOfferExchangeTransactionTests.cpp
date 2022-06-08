@@ -29,7 +29,7 @@ namespace catapult { namespace model {
 	// region data pointers
 
 	namespace {
-		using PlaceSdaExchangeOfferTransactionTraits = ExchangeTransactionsTraits<PlaceSdaExchangeOfferTransaction, SdaOfferWithOwnerAndDuration>;
+		using PlaceSdaExchangeOfferTransactionTraits = ExchangeTransactionsTraits<PlaceSdaExchangeOfferTransaction, SdaOfferWithDuration>;
 	}
 
 	DEFINE_ATTACHMENT_POINTER_TESTS(TEST_CLASS, PlaceSdaExchangeOfferTransactionTraits)
@@ -39,11 +39,11 @@ namespace catapult { namespace model {
 	// region CalculateRealSize
 
 	TEST(TEST_CLASS, CanCalculateRealSizeWithReasonableValues) {
-		AssertCanCalculateRealSizeWithReasonableValues<TransactionType, SdaOfferWithOwnerAndDuration>();
+		AssertCanCalculateRealSizeWithReasonableValues<TransactionType, SdaOfferWithDuration>();
 	}
 
 	TEST(TEST_CLASS, CalculateRealSizeDoesNotOverflowWithMaxValues) {
-		AssertCalculateRealSizeDoesNotOverflowWithMaxValues<TransactionType, SdaOfferWithOwnerAndDuration>();
+		AssertCalculateRealSizeDoesNotOverflowWithMaxValues<TransactionType, SdaOfferWithDuration>();
 	}
 
 	// endregion

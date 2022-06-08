@@ -31,10 +31,14 @@ namespace catapult { namespace observers {
             explicit CacheValues(
                     std::vector<state::SdaExchangeEntry>&& initialEntries,
                     std::vector<state::SdaExchangeEntry>&& expectedEntries,
+                    std::vector<state::SdaOfferGroupEntry>&& initialGroupEntries,
+                    std::vector<state::SdaOfferGroupEntry>&& expectedGroupEntries,
                     std::vector<state::AccountState>&& initialAccounts,
                     std::vector<state::AccountState>&& expectedAccounts)
                 : InitialEntries(std::move(initialEntries))
                 , ExpectedEntries(std::move(expectedEntries))
+                , InitialGroupEntries(std::move(initialGroupEntries))
+                , ExpectedGroupEntries(std::move(expectedGroupEntries))
                 , InitialAccounts(std::move(initialAccounts))
                 , ExpectedAccounts(std::move(expectedAccounts))
             {}
@@ -42,6 +46,8 @@ namespace catapult { namespace observers {
         public:
             std::vector<state::SdaExchangeEntry> InitialEntries;
             std::vector<state::SdaExchangeEntry> ExpectedEntries;
+            std::vector<state::SdaOfferGroupEntry> InitialGroupEntries;
+            std::vector<state::SdaOfferGroupEntry> ExpectedGroupEntries;
             std::vector<state::AccountState> InitialAccounts;
             std::vector<state::AccountState> ExpectedAccounts;
         };
@@ -63,6 +69,8 @@ namespace catapult { namespace observers {
         void PrepareEntries(
                 std::vector<state::SdaExchangeEntry>& initialEntries,
                 std::vector<state::SdaExchangeEntry>& expectedEntries,
+                std::vector<state::SdaOfferGroupEntry>& initialGroupEntries,
+                std::vector<state::SdaOfferGroupEntry>& expectedGroupEntries,
                 std::vector<state::AccountState>& initialAccounts,
                 std::vector<state::AccountState>& expectedAccounts) {
             constexpr state::MosaicsPair pair1 {MosaicId(1), MosaicId(210)};
@@ -76,10 +84,26 @@ namespace catapult { namespace observers {
             initialEntry1.sdaOfferBalances().emplace(pair1, offer1);
             initialEntry1.sdaOfferBalances().emplace(pair2, offer2);
             initialEntries.push_back(initialEntry1);
+            for (auto offer : initialEntry1.sdaOfferBalances()) {
+                std::string reduced = reducedFraction(offer.second.InitialMosaicGive, offer.second.InitialMosaicGet);
+                auto groupHash = calculateGroupHash(offer.first.first, offer.first.second, reduced);
+                state::SdaOfferBasicInfo info{ initialEntry1.owner(), offer.second.CurrentMosaicGive, offer.second.Deadline };
+                state::SdaOfferGroupEntry initialGroupEntry(groupHash);          
+                initialGroupEntry.sdaOfferGroup().emplace_back(info);
+                initialGroupEntries.push_back(initialGroupEntry);
+            }
 
             state::SdaExchangeEntry expectedEntry1(initialEntry1.owner());
             expectedEntry1.sdaOfferBalances().emplace(pair1, offer1);
             expectedEntries.push_back(expectedEntry1);
+            for (auto offer : expectedEntry1.sdaOfferBalances()) {
+                std::string reduced = reducedFraction(offer.second.InitialMosaicGive, offer.second.InitialMosaicGet);
+                auto groupHash = calculateGroupHash(offer.first.first, offer.first.second, reduced);
+                state::SdaOfferBasicInfo info{ expectedEntry1.owner(), offer.second.CurrentMosaicGive, offer.second.Deadline };
+                state::SdaOfferGroupEntry expectedGroupEntry(groupHash);          
+                expectedGroupEntry.sdaOfferGroup().emplace_back(info);
+                expectedGroupEntries.push_back(expectedGroupEntry);
+            }
 
             initialAccounts.push_back(CreateAccount(initialEntry1.owner()));
             expectedAccounts.push_back(CreateAccount(initialEntry1.owner()));
@@ -91,6 +115,14 @@ namespace catapult { namespace observers {
             initialEntry2.sdaOfferBalances().emplace(pair1, offer1);
             initialEntry2.sdaOfferBalances().emplace(pair2, offer2);
             initialEntries.push_back(initialEntry2);
+            for (auto offer : initialEntry2.sdaOfferBalances()) {
+                std::string reduced = reducedFraction(offer.second.InitialMosaicGive, offer.second.InitialMosaicGet);
+                auto groupHash = calculateGroupHash(offer.first.first, offer.first.second, reduced);
+                state::SdaOfferBasicInfo info{ initialEntry2.owner(), offer.second.CurrentMosaicGive, offer.second.Deadline };
+                state::SdaOfferGroupEntry initialGroupEntry(groupHash);
+                initialGroupEntry.sdaOfferGroup().emplace_back(info);
+                initialGroupEntries.push_back(initialGroupEntry);
+            }
 
             initialAccounts.push_back(CreateAccount(initialEntry2.owner()));
             expectedAccounts.push_back(CreateAccount(initialEntry2.owner()));
@@ -102,6 +134,16 @@ namespace catapult { namespace observers {
             initialEntry3.expiredSdaOfferBalances()[pruneHeight].emplace(pair1, offer1);
             initialEntry3.expiredSdaOfferBalances()[pruneHeight].emplace(pair2, offer2);
             initialEntries.push_back(initialEntry3);
+            for (auto expired : initialEntry3.expiredSdaOfferBalances()) {
+                for (auto offer : expired.second){
+                    std::string reduced = reducedFraction(offer.second.InitialMosaicGive, offer.second.InitialMosaicGet);
+                    auto groupHash = calculateGroupHash(offer.first.first, offer.first.second, reduced);
+                    state::SdaOfferBasicInfo info{ initialEntry3.owner(), offer.second.CurrentMosaicGive, offer.second.Deadline };
+                    state::SdaOfferGroupEntry initialGroupEntry(groupHash);          
+                    initialGroupEntry.sdaOfferGroup().emplace_back(info);
+                    initialGroupEntries.push_back(initialGroupEntry);
+                }
+            }
         }
 
         void RunTest(const CacheValues& values) {
@@ -110,6 +152,7 @@ namespace catapult { namespace observers {
             model::BlockNotification<1> notification = test::CreateBlockNotification();
             auto pObserver = CreateCleanupSdaOffersObserver();
             auto& exchangeCache = context.cache().sub<cache::SdaExchangeCache>();
+            auto& groupCache = context.cache().sub<cache::SdaOfferGroupCache>();
             auto& accountCache = context.cache().sub<cache::AccountStateCache>();
 
             // Populate exchange cache.
@@ -117,6 +160,20 @@ namespace catapult { namespace observers {
                 exchangeCache.insert(initialEntry);
                 exchangeCache.addExpiryHeight(initialEntry.owner(), initialEntry.minExpiryHeight());
                 exchangeCache.addExpiryHeight(initialEntry.owner(), initialEntry.minPruneHeight());
+            }
+
+            // Populate group cache.
+            for (const auto& initialGroupEntry : values.InitialGroupEntries) {
+                if (!groupCache.contains(initialGroupEntry.groupHash())){
+                    groupCache.insert(initialGroupEntry);
+                    continue;
+                }
+     
+                auto groupIter = groupCache.find(initialGroupEntry.groupHash());
+                auto& groupEntry = groupIter.get();
+                for (const auto& group : initialGroupEntry.sdaOfferGroup()) {
+                    groupEntry.sdaOfferGroup().emplace_back(group);
+                }
             }
 
             // Populate account cache.
@@ -136,8 +193,24 @@ namespace catapult { namespace observers {
 
             for (auto i = values.ExpectedEntries.size(); i < values.InitialEntries.size(); ++i) {
                 auto iter = exchangeCache.find(values.InitialEntries[i].owner());
-                const auto& entry = iter.get();
-                test::AssertEqualSdaExchangeData(state::SdaExchangeEntry(entry.owner()), entry);
+                ASSERT_EQ(iter.tryGet(), nullptr);
+            }
+
+            for (const auto& expectedGroupEntry : values.ExpectedGroupEntries) {
+                auto iter = groupCache.find(expectedGroupEntry.groupHash());
+                const auto& actualEntry = iter.get();
+                test::AssertEqualSdaOfferGroupData(actualEntry, expectedGroupEntry);
+            }
+
+            for (auto i = values.ExpectedGroupEntries.size(); i < values.InitialGroupEntries.size(); ++i) {
+                const auto initialEntry = values.InitialGroupEntries[i];
+                auto iter = groupCache.find(initialEntry.groupHash());
+                if (i%2==1){
+                   ASSERT_EQ(iter.tryGet(), nullptr);
+                   continue;
+                }                
+                const auto& groupEntry = iter.get();
+                ASSERT_EQ(groupEntry.sdaOfferGroup().size(), 1);
             }
 
             for (const auto& expectedAccount : values.ExpectedAccounts) {
@@ -152,10 +225,12 @@ namespace catapult { namespace observers {
         // Arrange:
         std::vector<state::SdaExchangeEntry> initialEntries;
         std::vector<state::SdaExchangeEntry> expectedEntries;
+        std::vector<state::SdaOfferGroupEntry> initialGroupEntries;
+        std::vector<state::SdaOfferGroupEntry> expectedGroupEntries;
         std::vector<state::AccountState> initialAccounts;
         std::vector<state::AccountState> expectedAccounts;
-        PrepareEntries(initialEntries, expectedEntries, initialAccounts, expectedAccounts);
-        CacheValues values(std::move(initialEntries), std::move(expectedEntries), std::move(initialAccounts), std::move(expectedAccounts));
+        PrepareEntries(initialEntries, expectedEntries, initialGroupEntries, expectedGroupEntries, initialAccounts, expectedAccounts);
+        CacheValues values(std::move(initialEntries), std::move(expectedEntries), std::move(initialGroupEntries), std::move(expectedGroupEntries), std::move(initialAccounts), std::move(expectedAccounts));
 
         // Assert:
 		RunTest(values);

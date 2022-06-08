@@ -196,18 +196,19 @@ namespace catapult { namespace state {
 
     TEST(TEST_CLASS, AddSdaOfferToGroup) {
         // Arrange:
+        auto offerOwner = test::GenerateRandomByteArray<Key>();
         auto groupHash = test::GenerateRandomByteArray<Hash256>();
         auto entry = SdaOfferGroupEntry(groupHash);
-        model::SdaOfferWithOwnerAndDuration sdaOffer1{ {{ UnresolvedMosaicId(1), Amount(10) }, { UnresolvedMosaicId(2), Amount(100) }}, Key(), BlockDuration(100)};
-        model::SdaOfferWithOwnerAndDuration sdaOffer2{ {{ UnresolvedMosaicId(1), Amount(100) }, { UnresolvedMosaicId(2), Amount(10) }}, Key(), BlockDuration(100)};
+        model::SdaOfferWithDuration sdaOffer1{ {{ UnresolvedMosaicId(1), Amount(10) }, { UnresolvedMosaicId(2), Amount(100) }}, BlockDuration(100)};
+        model::SdaOfferWithDuration sdaOffer2{ {{ UnresolvedMosaicId(1), Amount(100) }, { UnresolvedMosaicId(2), Amount(10) }}, BlockDuration(100)};
 
         auto expectedEntry = SdaOfferGroupEntry(groupHash);
-        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ Key(), Amount(10), Height(1) });
-        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ Key(), Amount(100), Height(2) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ offerOwner, Amount(10), Height(1) });
+        expectedEntry.sdaOfferGroup().emplace_back(SdaOfferBasicInfo{ offerOwner, Amount(100), Height(2) });
 
         // Act:
-        entry.addSdaOfferToGroup(&sdaOffer1, Height(1));
-        entry.addSdaOfferToGroup(&sdaOffer2, Height(2));
+        entry.addSdaOfferToGroup(&sdaOffer1, offerOwner, Height(1));
+        entry.addSdaOfferToGroup(&sdaOffer2, offerOwner, Height(2));
 
         // Assert:
         test::AssertEqualSdaOfferGroupData(expectedEntry, entry);

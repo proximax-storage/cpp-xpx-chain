@@ -32,14 +32,14 @@ namespace catapult { namespace observers {
         public:
             explicit PlaceSdaExchangeOfferValues(
                     Key&& owner,
-                    std::vector<model::SdaOfferWithOwnerAndDuration>&& offers)
+                    std::vector<model::SdaOfferWithDuration>&& offers)
                 : Owner(std::move(owner))
                 , SdaOffers(std::move(offers))
             {}
 
         public:
             Key Owner;
-            std::vector<model::SdaOfferWithOwnerAndDuration> SdaOffers;
+            std::vector<model::SdaOfferWithDuration> SdaOffers;
         };
 
         template<typename Notification>
@@ -101,12 +101,12 @@ namespace catapult { namespace observers {
             }
         }
 
-        PlaceSdaExchangeOfferValues CreatePlaceSdaExchangeOfferValues(Key&& owner) {
-            return  PlaceSdaExchangeOfferValues(std::move(owner), {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(10)}, {UnresolvedMosaicId(2), Amount(100)}}, owner, BlockDuration(1000)},
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(2), Amount(200)}, {UnresolvedMosaicId(1), Amount(20)}}, owner, BlockDuration(2000)},
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(3), Amount(30)}, {UnresolvedMosaicId(4), Amount(300)}}, owner, BlockDuration(3000)},
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(4), Amount(150)}, {UnresolvedMosaicId(3), Amount(15)}}, owner, BlockDuration(std::numeric_limits<Height::ValueType>::max())},
+        PlaceSdaExchangeOfferValues CreatePlaceSdaExchangeOfferValues() {
+            return  PlaceSdaExchangeOfferValues(test::GenerateRandomByteArray<Key>(), {
+                    model::SdaOfferWithDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(10)}, {UnresolvedMosaicId(2), Amount(100)}}, BlockDuration(1000)},
+                    model::SdaOfferWithDuration{model::SdaOffer{{UnresolvedMosaicId(2), Amount(200)}, {UnresolvedMosaicId(1), Amount(20)}}, BlockDuration(2000)},
+                    model::SdaOfferWithDuration{model::SdaOffer{{UnresolvedMosaicId(3), Amount(30)}, {UnresolvedMosaicId(4), Amount(300)}}, BlockDuration(3000)},
+                    model::SdaOfferWithDuration{model::SdaOffer{{UnresolvedMosaicId(4), Amount(150)}, {UnresolvedMosaicId(3), Amount(15)}}, BlockDuration(std::numeric_limits<Height::ValueType>::max())},
                 }
             );
         }
@@ -126,7 +126,7 @@ namespace catapult { namespace observers {
 
     TRAITS_BASED_TEST(PlaceSdaOffer_Commit) {
         // Arrange:
-        auto values = CreatePlaceSdaExchangeOfferValues(std::move(test::GenerateRandomByteArray<Key>()));
+        auto values = CreatePlaceSdaExchangeOfferValues();
 
         // Assert:
         RunTest<TTraits>(values);

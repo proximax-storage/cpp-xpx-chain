@@ -55,8 +55,8 @@ namespace catapult { namespace state {
         return m_sdaOfferGroup;
     }
 
-    void SdaOfferGroupEntry::addSdaOfferToGroup(const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline) {
-        state::SdaOfferBasicInfo offer{ pOffer->Owner, pOffer->MosaicGive.Amount, deadline };
+    void SdaOfferGroupEntry::addSdaOfferToGroup(const model::SdaOfferWithDuration* pOffer, const Key& offerOwner, const Height& deadline) {
+        state::SdaOfferBasicInfo offer{ offerOwner, pOffer->MosaicGive.Amount, deadline };
         m_sdaOfferGroup.emplace_back(offer);
     }
 

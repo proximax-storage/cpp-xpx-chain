@@ -86,7 +86,7 @@ namespace catapult { namespace state {
 			consumer<const SdaOfferBalanceMap::const_iterator&> sdaOfferBalanceAction);
 
 		bool offerExists(const MosaicsPair& mosaicId) const;
-		void addOffer(const MosaicId& mosaicIdGive, const MosaicId& mosaicIdGet, const model::SdaOfferWithOwnerAndDuration* pOffer, const Height& deadline);
+		void addOffer(const MosaicId& mosaicIdGive, const MosaicId& mosaicIdGet, const model::SdaOfferWithDuration* pOffer, const Height& deadline);
 		void removeOffer(const MosaicsPair& mosaicId);
 		state::SdaOfferBalance& getSdaOfferBalance(const MosaicsPair& mosaicId);
 		bool empty() const;

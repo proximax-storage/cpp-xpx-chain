@@ -30,11 +30,11 @@ namespace catapult { namespace plugins {
         constexpr auto Sda_Offer_Count = 2u;
 
         template<typename TTraits, VersionType Version>
-        auto CreateTransaction(const Key& offerOwner1 = test::GenerateRandomByteArray<Key>(), const Key& offerOwner2 = test::GenerateRandomByteArray<Key>()) {
-            return test::CreateSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferWithOwnerAndDuration>(
+        auto CreateTransaction(const Key& offerOwner = test::GenerateRandomByteArray<Key>()) {
+            return test::CreateSdaExchangeOfferTransaction<typename TTraits::TransactionType, model::SdaOfferWithDuration>(
                 {
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(10)}, {UnresolvedMosaicId(2), Amount(100)}}, offerOwner1, BlockDuration(1000)},
-                    model::SdaOfferWithOwnerAndDuration{model::SdaOffer{{UnresolvedMosaicId(2), Amount(200)}, {UnresolvedMosaicId(1), Amount(20)}}, offerOwner2, BlockDuration(1000)},
+                    model::SdaOfferWithDuration{model::SdaOffer{{UnresolvedMosaicId(1), Amount(10)}, {UnresolvedMosaicId(2), Amount(100)}}, BlockDuration(1000)},
+                    model::SdaOfferWithDuration{model::SdaOffer{{UnresolvedMosaicId(2), Amount(200)}, {UnresolvedMosaicId(1), Amount(20)}}, BlockDuration(1000)},
                 },
                 Version
             );
@@ -54,7 +54,7 @@ namespace catapult { namespace plugins {
             auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
             // Assert:
-            EXPECT_EQ(sizeof(typename TTraits::TransactionType) + Sda_Offer_Count * sizeof(model::SdaOfferWithOwnerAndDuration), realSize);
+            EXPECT_EQ(sizeof(typename TTraits::TransactionType) + Sda_Offer_Count * sizeof(model::SdaOfferWithDuration), realSize);
         }
     }
 
@@ -125,7 +125,7 @@ namespace catapult { namespace plugins {
             const auto& notification = sub.matchingNotifications()[0];
             EXPECT_EQ(pTransaction->Signer, notification.Signer);
             EXPECT_EQ(Sda_Offer_Count, notification.SdaOfferCount);
-            EXPECT_EQ_MEMORY(pTransaction->SdaOffersPtr(), notification.SdaOffersPtr, Sda_Offer_Count * sizeof(model::SdaOfferWithOwnerAndDuration));
+            EXPECT_EQ_MEMORY(pTransaction->SdaOffersPtr(), notification.SdaOffersPtr, Sda_Offer_Count * sizeof(model::SdaOfferWithDuration));
         }
     }
 

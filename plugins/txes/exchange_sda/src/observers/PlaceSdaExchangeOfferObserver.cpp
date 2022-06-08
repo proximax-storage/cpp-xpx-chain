@@ -60,7 +60,7 @@ namespace catapult { namespace observers {
             auto groupIter = groupCache.find(groupHash);
             auto& groupEntry = groupIter.get();
 
-            groupEntry.addSdaOfferToGroup(pSdaOffer, deadline);
+            groupEntry.addSdaOfferToGroup(pSdaOffer, notification.Signer, deadline);
         }
 
         /// Exchange offers when a match is found in cache

@@ -20,11 +20,8 @@ namespace catapult { namespace model {
 		UnresolvedMosaic MosaicGet;
 	};
 
-	struct SdaOfferWithOwnerAndDuration : public SdaOffer {
+	struct SdaOfferWithDuration : public SdaOffer {
 	public:
-		/// The owner of the offer.
-		Key Owner;
-
 		/// The duration of the offer.
 		BlockDuration Duration;
 	};
