@@ -32,6 +32,10 @@ namespace catapult { namespace plugins {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
+			case 3:
+				sub.notify(MosaicRequiredNotification<2>(transaction.Signer, transaction.MosaicId));
+				sub.notify(MosaicSupplyChangeNotification<2>(transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));
+				break;
 			case 2:
 				sub.notify(MosaicRequiredNotification<1>(transaction.Signer, transaction.MosaicId));
 				sub.notify(MosaicSupplyChangeNotification<1>(transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));

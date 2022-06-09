@@ -97,6 +97,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_MOSAIC_RESULT(Plugin_Config_Malformed, 171);
 
+	/// Validation failed because plugin configuration data is malformed.
+	DEFINE_MOSAIC_RESULT(Required_Property_Flag_Unset, 172);
+
 	// endregion
 
 #ifndef CUSTOM_RESULT_DEFINITION

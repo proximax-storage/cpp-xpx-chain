@@ -34,7 +34,13 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to mosaic required notifications and validates that:
 	/// - mosaic exists and is active
 	/// - mosaic owner matches requesting signer
-	DECLARE_STATEFUL_VALIDATOR(ProperMosaic, model::MosaicRequiredNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(ProperMosaicV1, model::MosaicRequiredNotification<1>)();
+
+	/// A validator implementation that applies to mosaic required notifications and validates that:
+	/// - mosaic exists and is active
+	/// - mosaic owner matches requesting signer
+	/// - necessary flags are set
+	DECLARE_STATEFUL_VALIDATOR(ProperMosaicV2, model::MosaicRequiredNotification<2>)();
 
 	// endregion
 
@@ -82,7 +88,11 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - the account changing the supply does not exceed the maximum number of mosaics (\a maxMosaics) an account is allowed to own
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChange, model::MosaicSupplyChangeNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChangeV1, model::MosaicSupplyChangeNotification<1>)();
+
+	/// A validator implementation that applies to mosaic supply change notifications and validates that:
+	/// - the account changing the supply does not exceed the maximum number of mosaics (\a maxMosaics) an account is allowed to own
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChangeV2, model::MosaicSupplyChangeNotification<2>)();
 
 	// endregion
 

@@ -67,7 +67,7 @@ namespace catapult {
 	constexpr size_t Address_Decoded_Size = 25;
 	constexpr size_t Address_Encoded_Size = 40;
 
-	struct Address_tag {};
+	struct Address_tag {static constexpr size_t Size = 24;};
 	using Address = utils::ByteArray<Address_Decoded_Size, Address_tag>;
 
 	struct UnresolvedAddress_tag {};

@@ -49,6 +49,13 @@ namespace catapult { namespace model {
 		utils::TimeSpan MaxLifetime;
 	};
 
+	/// Contextual information passed to publish.
+	struct PublishContext {
+		/// Address of the published transaction signer.
+		Address SignerAddress;
+	};
+
+
 	/// A typed transaction plugin.
 	template<typename TTransaction>
 	class TransactionPluginT {

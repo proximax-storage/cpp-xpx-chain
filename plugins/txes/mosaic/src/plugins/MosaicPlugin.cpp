@@ -69,12 +69,14 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([currencyMosaicId](auto& builder) {
 			builder
 				.add(validators::CreateMosaicPropertiesValidator())
-				.add(validators::CreateProperMosaicValidator())
+				.add(validators::CreateProperMosaicV1Validator())
+				.add(validators::CreateProperMosaicV2Validator())
 				.add(validators::CreateMosaicAvailabilityValidator())
 				.add(validators::CreateMosaicDurationValidator())
 				.add(validators::CreateMosaicTransferValidator(currencyMosaicId))
 				.add(validators::CreateMaxMosaicsBalanceTransferValidator())
-				.add(validators::CreateMaxMosaicsSupplyChangeValidator())
+				.add(validators::CreateMaxMosaicsSupplyChangeV1Validator())
+				.add(validators::CreateMaxMosaicsSupplyChangeV2Validator())
 				// note that the following validator depends on MosaicChangeAllowedValidator
 				.add(validators::CreateMosaicSupplyChangeAllowedValidator());
 		});

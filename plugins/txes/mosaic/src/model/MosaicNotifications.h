@@ -43,6 +43,9 @@ namespace catapult { namespace model {
 	/// Mosaic supply was changed.
 	DEFINE_MOSAIC_NOTIFICATION(Supply_Change_v1, 0x0022, All);
 
+	/// Mosaic supply was changed.
+	DEFINE_MOSAIC_NOTIFICATION(Supply_Change_v2, 0x0023, All);
+
 	/// Mosaic rental fee has been sent.
 	DEFINE_MOSAIC_NOTIFICATION(Rental_Fee_v1, 0x0030, Observer);
 
@@ -152,6 +155,36 @@ namespace catapult { namespace model {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Mosaic_Supply_Change_v1_Notification;
+
+	public:
+		/// Creates a notification around \a signer, \a mosaicId, \a direction and \a delta.
+		MosaicSupplyChangeNotification(const Key& signer, UnresolvedMosaicId mosaicId, MosaicSupplyChangeDirection direction, Amount delta)
+				: Notification(Notification_Type, sizeof(MosaicSupplyChangeNotification<1>))
+				, Signer(signer)
+				, MosaicId(mosaicId)
+				, Direction(direction)
+				, Delta(delta)
+		{}
+
+	public:
+		/// Signer.
+		const Key& Signer;
+
+		/// Id of the affected mosaic.
+		UnresolvedMosaicId MosaicId;
+
+		/// Supply change direction.
+		MosaicSupplyChangeDirection Direction;
+
+		/// Amount of the change.
+		Amount Delta;
+	};
+
+	template<>
+	struct MosaicSupplyChangeNotification<2> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Mosaic_Supply_Change_v2_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a mosaicId, \a direction and \a delta.

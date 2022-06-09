@@ -591,6 +591,51 @@ namespace catapult { namespace model {
 		/// Type of mosaic provided and attached to this notification.
 		MosaicType ProvidedMosaicType;
 	};
+	template<>
+	struct MosaicRequiredNotification<2> : public Notification {
+	public:
+		/// Mosaic types.
+		enum class MosaicType { Resolved, Unresolved };
+
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Mosaic_Required_v2_Notification;
+
+	public:
+		/// Creates a notification around \a signer and \a mosaicId.
+		MosaicRequiredNotification(const Key& signer, MosaicId mosaicId, uint8_t propertyFlagMask = 0)
+				: Notification(Notification_Type, sizeof(MosaicRequiredNotification<1>))
+				, Signer(signer)
+				, MosaicId(mosaicId)
+				, ProvidedMosaicType(MosaicType::Resolved)
+				, PropertyFlagMask(propertyFlagMask)
+		{}
+
+		/// Creates a notification around \a signer and \a mosaicId.
+		MosaicRequiredNotification(const Key& signer, UnresolvedMosaicId mosaicId, uint8_t propertyFlagMask = 0)
+				: Notification(Notification_Type, sizeof(MosaicRequiredNotification<1>))
+				, Signer(signer)
+				, UnresolvedMosaicId(mosaicId)
+				, ProvidedMosaicType(MosaicType::Unresolved)
+				, PropertyFlagMask(propertyFlagMask)
+		{}
+
+	public:
+		/// Signer.
+		const Key& Signer;
+
+		/// Mosaic id (resolved).
+		catapult::MosaicId MosaicId;
+
+		/// Mosaic id (unresolved).
+		catapult::UnresolvedMosaicId UnresolvedMosaicId;
+
+		/// Type of mosaic provided and attached to this notification.
+		MosaicType ProvidedMosaicType;
+
+		/// Mask of required property flags that must be set on the mosaic.
+		uint8_t PropertyFlagMask;
+	};
 
 	// endregion
 

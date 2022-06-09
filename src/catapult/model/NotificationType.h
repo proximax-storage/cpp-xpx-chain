@@ -117,6 +117,9 @@ namespace catapult { namespace model {
 	/// Mosaic is required.
 	DEFINE_CORE_NOTIFICATION(Mosaic_Required_v1, 0x000A, Validator);
 
+	/// Mosaic is required V2.
+	DEFINE_CORE_NOTIFICATION(Mosaic_Required_v2, 0x000A, Validator);
+
 	/// Source has changed.
 	DEFINE_CORE_NOTIFICATION(Source_Change_v1, 0x000B, Observer);
 

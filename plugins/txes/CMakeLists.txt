@@ -62,3 +62,6 @@ add_subdirectory(upgrade)
 add_subdirectory(service)
 add_subdirectory(supercontract)
 add_subdirectory(lock_fund)
+add_subdirectory(restriction_account)
+add_subdirectory(restriction_mosaic)
+

@@ -45,6 +45,8 @@ namespace catapult { namespace cache {
 		SuperContract,
 		Operation,
 		LockFund,
+		AccountRestriction,
+		MosaicRestriction,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

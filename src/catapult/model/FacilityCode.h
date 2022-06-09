@@ -69,5 +69,9 @@ namespace catapult { namespace model {
 		SuperContract = 0x60,
 		/// Lock Fund facility code.
 		LockFund = 0x62,
+		/// Account restriction facility code.
+		RestrictionAccount = 0x63,
+		/// Mosaic restriction facility code.
+		RestrictionMosaic = 0x64,
 	};
 }}

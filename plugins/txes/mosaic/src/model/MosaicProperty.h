@@ -46,23 +46,6 @@ namespace catapult { namespace model {
 		Sentinel_Property_Id
 	};
 
-	/// Mosaic property flags.
-	enum class MosaicFlags : uint8_t {
-		/// No flags present.
-		None = 0x00,
-
-		/// Mosaic supply is mutable.
-		Supply_Mutable = 0x01,
-
-		/// Mosaic is transferable.
-		Transferable = 0x02,
-
-		/// All flags.
-		All = 0x03
-	};
-
-	MAKE_BITWISE_ENUM(MosaicFlags)
-
 #pragma pack(push, 1)
 
 	/// Mosaic property composed of an id and a value.

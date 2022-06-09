@@ -26,13 +26,10 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MosaicSupplyChangeNotification<1>;
-
-	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, [](
-				const auto& notification,
-				const ValidatorContext& context) {
-			// notice that MosaicChangeAllowedValidator is required to run first, so both mosaic and owning account must exist
+	namespace {
+		template<typename TNotification>
+		ValidationResult CommonValidate(const TNotification& notification, ValidatorContext context)
+		{
 			auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
 			const auto& cache = context.Cache.sub<cache::MosaicCache>();
 			auto mosaicIter = cache.find(mosaicId);
@@ -42,8 +39,16 @@ namespace catapult { namespace validators {
 			auto accountStateIter = accountStateCache.find(notification.Signer);
 			auto ownerAmount = accountStateIter.get().Balances.get(mosaicId);
 
-			// only allow an "immutable" supply to change if the owner owns full supply
+
 			const auto& properties = entry.definition().properties();
+
+			if constexpr(std::is_same_v<TNotification, model::MosaicSupplyChangeNotification<2>>)
+			{
+				// if supply is forced to be immutable, do not allow change
+				if (!properties.is(model::MosaicFlags::Supply_Force_Immutable))
+					return Failure_Mosaic_Supply_Immutable;
+			}
+			// only allow an "immutable" supply to change if the owner owns full supply
 			if (!properties.is(model::MosaicFlags::Supply_Mutable) && ownerAmount != entry.supply())
 				return Failure_Mosaic_Supply_Immutable;
 
@@ -55,8 +60,12 @@ namespace catapult { namespace validators {
 			auto newSupply = entry.supply() + notification.Delta;
 			const model::NetworkConfiguration& networkConfig = context.Config.Network;
 			return newSupply < initialSupply || newSupply > networkConfig.MaxMosaicAtomicUnits
-					? Failure_Mosaic_Supply_Exceeded
-					: ValidationResult::Success;
-		});
+				   ? Failure_Mosaic_Supply_Exceeded
+				   : ValidationResult::Success;
+		}
 	}
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(MosaicSupplyChangeAllowedV1, model::MosaicSupplyChangeNotification<1>, CommonValidate<model::MosaicSupplyChangeNotification<1>>);
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(MosaicSupplyChangeAllowedV2, model::MosaicSupplyChangeNotification<2>, CommonValidate<model::MosaicSupplyChangeNotification<2>>);
 }}

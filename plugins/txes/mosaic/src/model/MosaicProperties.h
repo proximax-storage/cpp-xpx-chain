@@ -22,6 +22,7 @@
 #include "MosaicProperty.h"
 #include "catapult/utils/Casting.h"
 #include "catapult/types.h"
+#include "MosaicFlags.h"
 #include <array>
 
 namespace catapult { namespace model {
@@ -94,6 +95,11 @@ namespace catapult { namespace model {
 		}
 
 	public:
+
+		MosaicFlags flags() const {
+			return property<MosaicFlags>(MosaicPropertyId::Flags);
+		}
+
 		/// Returns \c true if mosaic flags contain \a testedFlag.
 		bool is(MosaicFlags testedFlag) const {
 			return HasFlag(testedFlag, property<MosaicFlags>(MosaicPropertyId::Flags));

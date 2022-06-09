@@ -49,6 +49,8 @@ namespace catapult { namespace validators {
 		COPY_FACILITY_CODE(Operation),
 		COPY_FACILITY_CODE(SuperContract),
 		COPY_FACILITY_CODE(LockFund),
+		COPY_FACILITY_CODE(RestrictionAccount),
+		COPY_FACILITY_CODE(RestrictionMosaic),
 
 		/// Chain facility code.
 		Chain = 0xFF,
