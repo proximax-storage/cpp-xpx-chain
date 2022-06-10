@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <boost/dynamic_bitset.hpp>
 #include "Observers.h"
 #include "src/utils/StorageUtils.h"
 
@@ -21,85 +22,74 @@ namespace catapult { namespace observers {
 			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveIter.get();
-			driveEntry.verification().reset();
 
-			// !!! HINT !!!
-			// End Drive Verification Transaction contains only the public keys that provided the signatures
-			// And does not contain other replicators
-			// Since each verifier provides opinions in the order in which the provers appear in the shard list,
-			// The shard list from db should be used in order to determine which prover is the opinion about.
+		  	auto& shards = driveEntry.verification()->Shards;
+			auto& shardSet = shards[notification.ShardId];
+			const std::vector<Key> shardVec(shardSet.begin(), shardSet.end());
+		  	const auto opinionByteCount = (notification.JudgingKeyCount * notification.KeyCount + 7) / 8;
+		  	const boost::dynamic_bitset<uint8_t> opinions(notification.OpinionsPtr, notification.OpinionsPtr + opinionByteCount);
+			std::set<Key> offboardingReplicators;
+		  	std::set<Key> offboardingReplicatorsWithRefund;
+		  	auto storageDepositSlashing = 0;
 
+			for (auto i = 0; i < notification.KeyCount; ++i) {
+				uint8_t result = 0;
+				for (auto j = 0; j < notification.JudgingKeyCount; ++j)
+					result += opinions[j * notification.KeyCount + i];
 
-//			auto storageDepositSlashing = 0;
-//			std::set<Key> offboardingReplicators;
-//		  	std::set<Key> offboardingReplicatorsWithRefund;
-//			for (auto i = 0; i < notification.KeyCount; ++i) {
-//				uint8_t result = 0;
-//				for (auto j = 0; j < notification.JudgingKeyCount; ++j)
-//					result += notification.OpinionsPtr[i + j * (notification.KeyCount - 1)];
-//
-//				if (result >= notification.JudgingKeyCount / 2) {
-//					// If the replicator passes validation and\ is queued for offboarding,
-//					// include him into offboardingReplicators and offboardingReplicatorsWithRefund
-//					if (driveEntry.offboardingReplicators().count(notification.PublicKeysPtr[i])) {
-//						offboardingReplicators.insert(notification.PublicKeysPtr[i]);
-//						offboardingReplicatorsWithRefund.insert(notification.PublicKeysPtr[i]);
-//					}
-//				} else {
-//					// Count deposited Storage mosaics and include replicator into offboardingReplicators
-//					storageDepositSlashing += driveEntry.size();
-//					offboardingReplicators.insert(notification.PublicKeysPtr[i]);
-//				}
-//			}
-//
-//			std::seed_seq seed(notification.Seed.begin(), notification.Seed.end());
-//			std::mt19937 rng(seed);
-//
-//		  	utils::RefundDepositsToReplicators(notification.DriveKey, offboardingReplicatorsWithRefund, context);
-//			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
-//			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
-//			utils::AssignReplicatorsToQueuedDrives(offboardingReplicators, context, rng);
-//
-//			const auto& replicatorKey = notification.PublicKeysPtr[0];
-//			auto& shards = driveEntry.verification()->Shards;
-//			for (auto iter = shards.begin(); iter != shards.end(); ++iter) {
-//				const auto& shard = *iter;
-//
-//				bool found = false;
-//				for (const auto& key : shard) {
-//					if (key == replicatorKey) {
-//						found = true;
-//						break;
-//					}
-//				}
-//
-//				if (found) {
-//					shards.erase(iter);
-//					break;
-//				}
-//			}
-//
-//			if (shards.empty())
-//				driveEntry.verification().reset();
-//
-//			if (storageDepositSlashing == 0)
-//				return;
-//
-//			// Split storage deposit slashing between remaining replicators
-//			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-//			auto accountIter = accountStateCache.find(notification.DriveKey);
-//			auto& driveAccountState = accountIter.get();
-//			auto storageDepositSlashingShare = Amount(storageDepositSlashing / driveEntry.replicators().size());
-//			const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
-//
-//			for (const auto& replicatorKey : driveEntry.replicators()) {
-//				accountIter = accountStateCache.find(replicatorKey);
-//				auto& replicatorAccountState = accountIter.get();
-//				driveAccountState.Balances.debit(storageMosaicId, storageDepositSlashingShare, context.Height);
-//				replicatorAccountState.Balances.credit(storageMosaicId, storageDepositSlashingShare, context.Height);
-//			}
-//
-//			// Streaming deposits of failed provers remain on drive's account
+				const auto& replicatorKey = shardVec[i];
+				if (result >= notification.JudgingKeyCount / 2) {
+					// If the replicator passes validation and\ is queued for offboarding,
+					// include him into offboardingReplicators and offboardingReplicatorsWithRefund
+					if (driveEntry.offboardingReplicators().count(replicatorKey)) {
+						offboardingReplicators.insert(replicatorKey);
+						offboardingReplicatorsWithRefund.insert(replicatorKey);
+					}
+				} else {
+					// Count deposited Storage mosaics and include replicator into offboardingReplicators
+					storageDepositSlashing += driveEntry.size();
+					offboardingReplicators.insert(replicatorKey);
+				}
+			}
+
+			std::seed_seq seed(notification.Seed.begin(), notification.Seed.end());
+			std::mt19937 rng(seed);
+
+		  	utils::RefundDepositsToReplicators(notification.DriveKey, offboardingReplicatorsWithRefund, context);
+			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
+			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
+			utils::AssignReplicatorsToQueuedDrives(offboardingReplicators, context, rng);
+
+			shardSet.clear();
+		  	bool verificationCompleted = true;
+		  	for (const auto& shard : shards) {
+			  	if (!shard.empty()) {
+					verificationCompleted = false;
+				  	break;
+			  	}
+		  	}
+
+			if (verificationCompleted)
+				driveEntry.verification().reset();
+
+			if (storageDepositSlashing == 0)
+				return;
+
+			// Split storage deposit slashing between remaining replicators
+			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+			auto accountIter = accountStateCache.find(notification.DriveKey);
+			auto& driveAccountState = accountIter.get();
+			auto storageDepositSlashingShare = Amount(storageDepositSlashing / driveEntry.replicators().size());
+			const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
+
+			for (const auto& replicatorKey : driveEntry.replicators()) {
+				accountIter = accountStateCache.find(replicatorKey);
+				auto& replicatorAccountState = accountIter.get();
+				driveAccountState.Balances.debit(storageMosaicId, storageDepositSlashingShare, context.Height);
+				replicatorAccountState.Balances.credit(storageMosaicId, storageDepositSlashingShare, context.Height);
+			}
+
+			// Streaming deposits of failed provers remain on drive's account
     	}))
 	}
 }}

@@ -135,41 +135,44 @@ namespace catapult { namespace validators {
 	/// Not all Provers were in the Confirmed state at the start of Verification.
 	DEFINE_STORAGE_RESULT(Verification_Invalid_Prover_Count, 40);
 
+	/// Shard ID exceeds the number of verification shards.
+	DEFINE_STORAGE_RESULT(Verification_Invalid_Shard_Id, 41);
+
 	/// Not all Provers were in the Confirmed state at the start of Verification.
-	DEFINE_STORAGE_RESULT(Verification_Invalid_Prover, 41);
+	DEFINE_STORAGE_RESULT(Verification_Invalid_Prover, 42);
 
 	/// Validation failed because the data modification already exists.
-	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 42);
+	DEFINE_STORAGE_RESULT(Stream_Already_Exists, 43);
 
 	/// Validation failed because the stream if not first in the queue.
-	DEFINE_STORAGE_RESULT(Invalid_Stream_Id, 43);
+	DEFINE_STORAGE_RESULT(Invalid_Stream_Id, 44);
 
 	/// Validation failed because the stream has already been finished.
-	DEFINE_STORAGE_RESULT(Stream_Already_Finished, 44);
+	DEFINE_STORAGE_RESULT(Stream_Already_Finished, 45);
 
 	/// Validation failed because declared stream actual size exceeds prepaid expected size
-	DEFINE_STORAGE_RESULT(Expected_Upload_Size_Exceeded, 45);
+	DEFINE_STORAGE_RESULT(Expected_Upload_Size_Exceeded, 46);
 
 	/// Desired drive size is greater than maximal.
-	DEFINE_STORAGE_RESULT(Drive_Size_Excessive, 46);
+	DEFINE_STORAGE_RESULT(Drive_Size_Excessive, 47);
 
 	/// Desired modification size is greater than maximal.
-	DEFINE_STORAGE_RESULT(Upload_Size_Excessive, 47);
+	DEFINE_STORAGE_RESULT(Upload_Size_Excessive, 48);
 
 	/// Desired download size is greater than maximal.
-	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 48);
+	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 49);
 
 	/// Number of signatures in opinion-based multisignature transaction is less than minimal.
-	DEFINE_STORAGE_RESULT(Signature_Count_Insufficient, 49);
+	DEFINE_STORAGE_RESULT(Signature_Count_Insufficient, 50);
 
 	/// The replicator has already applied for offboarding from the drive.
-	DEFINE_STORAGE_RESULT(Already_Applied_For_Offboarding, 50);
+	DEFINE_STORAGE_RESULT(Already_Applied_For_Offboarding, 51);
 
 	/// The replicator has already applied for offboarding from the drive.
-	DEFINE_STORAGE_RESULT(Already_Initiated_Channel_Closure, 51);
+	DEFINE_STORAGE_RESULT(Already_Initiated_Channel_Closure, 52);
 
 	/// Download channels is finished
-	DEFINE_STORAGE_RESULT(Download_Channel_Is_Finished, 52);
+	DEFINE_STORAGE_RESULT(Download_Channel_Is_Finished, 53);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
