@@ -32,7 +32,6 @@ namespace catapult { namespace observers {
 				if (disabledAccounts.end() != disabledAccountsIter) {
 					for (const auto& key : disabledAccountsIter->second)
 						committeeCache.remove(key);
-					disabledAccounts.erase(disabledAccountsIter);
 				}
 			}
 
