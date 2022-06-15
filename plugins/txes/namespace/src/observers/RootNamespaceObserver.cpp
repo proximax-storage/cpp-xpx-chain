@@ -47,6 +47,8 @@ namespace catapult { namespace observers {
 
 		auto lifetimeEnd = LifetimeEnd(context.Height, notification.Duration);
 		auto lifetime = state::NamespaceLifetime(context.Height, lifetimeEnd);
+        state::NamespaceAlias alias;
+
 		if (cache.contains(notification.NamespaceId)) {
 			// if a renewal, duration should add onto current expiry
 			auto namespaceIter = cache.find(notification.NamespaceId);
@@ -54,10 +56,21 @@ namespace catapult { namespace observers {
 			if (IsRenewal(rootEntry.root(), notification, context.Height)) {
 				lifetime = rootEntry.root().lifetime();
 				lifetime.End = LifetimeEnd(lifetime.End, notification.Duration);
+
+                alias = rootEntry.root().alias(notification.NamespaceId);
 			}
 		}
 
 		auto root = state::RootNamespace(notification.NamespaceId, notification.Signer, lifetime);
 		cache.insert(root);
+
+        switch (alias.type()) {
+            case state::AliasType::Address:
+                cache.setAlias(notification.NamespaceId, state::NamespaceAlias(alias.address()));
+                break;
+            case state::AliasType::Mosaic:
+                cache.setAlias(notification.NamespaceId, state::NamespaceAlias(alias.mosaicId()));
+                break;
+        }
 	});
 }}
