@@ -35,8 +35,9 @@ namespace catapult { namespace plugins {
 							transaction.OpinionsPtr()));
 
 						auto totalOpinions = transaction.KeyCount * transaction.JudgingKeyCount;
-						boost::dynamic_bitset<uint8_t> opinionsBitset(transaction.OpinionsPtr(), transaction.OpinionsPtr() + (totalOpinions + 7u) / 8u);
-						auto* const pOpinionsBegin = sub.mempool().malloc<uint8_t>(totalOpinions);
+						auto opinionByteCount = (totalOpinions + 7u) / 8u;
+						boost::dynamic_bitset<uint8_t> opinionsBitset(transaction.OpinionsPtr(), transaction.OpinionsPtr() + opinionByteCount);
+						auto* const pOpinionsBegin = sub.mempool().malloc<uint8_t>(opinionByteCount);
 						auto* pOpinions = pOpinionsBegin;
 						for (uint i = 0; i < totalOpinions; i++) {
 							*pOpinions = opinionsBitset[i];

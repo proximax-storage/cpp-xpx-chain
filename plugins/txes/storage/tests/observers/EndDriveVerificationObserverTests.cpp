@@ -34,7 +34,7 @@ namespace catapult { namespace observers {
 		const auto Replicator_Key_2 = Key({2});
 		const auto Replicator_Key_3 = Key({3});
 		const auto Replicator_Key_4 = Key({4});
-		constexpr auto Keys_Count = 4;	// Number of replicator keys above
+		constexpr auto Key_Count = 4;	// Number of replicator keys above
 
 		constexpr auto Currency_Mosaic_Id = MosaicId(1);
 		constexpr auto Storage_Mosaic_Id = MosaicId(2);
@@ -109,7 +109,7 @@ namespace catapult { namespace observers {
 			// Populate cache.
             state::BcDriveEntry driveEntry(Drive_Key);
 			driveEntry.setSize(Drive_Size);
-			driveEntry.setReplicatorCount(Keys_Count);
+			driveEntry.setReplicatorCount(Key_Count);
             driveEntry.verification() = cacheValues.InitialVerification;
 			for (const auto& key : cacheValues.InitialReplicators)
 				driveEntry.replicators().insert(key);
@@ -137,12 +137,12 @@ namespace catapult { namespace observers {
 			for (auto i = 0u; i < judgingKeyCount; ++i)
 				pPublicKeys[i] = opinionValues.JudgingKeys.at(i);
 
-			boost::dynamic_bitset<uint8_t> opinions(judgingKeyCount * Keys_Count);
-			for (auto i = 0; i < Keys_Count; ++i)
+			boost::dynamic_bitset<uint8_t> opinions(judgingKeyCount * Key_Count);
+			for (auto i = 0; i < Key_Count; ++i)
 				for (auto j = 0; j < judgingKeyCount; ++j)
-					opinions[j * Keys_Count + i] = opinionValues.Opinions.at(j).at(i);
+					opinions[j * Key_Count + i] = opinionValues.Opinions.at(j).at(i);
 
-			const auto opinionByteCount = (judgingKeyCount * Keys_Count + 7u) / 8u;
+			const auto opinionByteCount = (judgingKeyCount * Key_Count + 7u) / 8u;
 			std::vector<uint8_t> buffer(opinionByteCount, 0u);
 			boost::to_block_range(opinions, buffer.data());
 
@@ -151,7 +151,7 @@ namespace catapult { namespace observers {
 					Seed,
 					Verification_Trigger,
 					shardId,
-					Keys_Count,
+					Key_Count,
 					judgingKeyCount,
 					pPublicKeys.get(),
 					nullptr,

@@ -417,7 +417,7 @@ namespace catapult { namespace test {
     /// Creates a end drive verification transaction.
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateEndDriveVerificationTransaction(uint8_t keyCount, uint8_t judgingKeyCount) {
-		size_t additionalSize = keyCount * Key_Size + judgingKeyCount * Signature_Size + (judgingKeyCount * keyCount + 7) / 8;
+		size_t additionalSize = judgingKeyCount * (Key_Size + Signature_Size) + (judgingKeyCount * keyCount + 7) / 8;
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_EndDriveVerification, additionalSize);
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->VerificationTrigger = test::GenerateRandomByteArray<Hash256>();

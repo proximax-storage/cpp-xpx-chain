@@ -56,7 +56,10 @@ namespace catapult { namespace plugins {
         auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
         // Assert:
-        EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 354u, realSize);
+		const auto opinionByteCount = (Judging_Key_Count * Key_Count + 7u) / 8u;
+        EXPECT_EQ(sizeof(typename TTraits::TransactionType)
+	  			+ Judging_Key_Count * (Key_Size + Signature_Size)
+			  	+ opinionByteCount, realSize);
     }
 
     // region publish - basic
@@ -115,7 +118,7 @@ namespace catapult { namespace plugins {
         EXPECT_EQ(pTransaction->ShardId, notification.ShardId);
         EXPECT_EQ(pTransaction->KeyCount, notification.KeyCount);
         EXPECT_EQ(pTransaction->JudgingKeyCount, notification.JudgingKeyCount);
-        EXPECT_EQ_MEMORY(pTransaction->PublicKeysPtr(), notification.PublicKeysPtr, Key_Count * Key_Size);
+        EXPECT_EQ_MEMORY(pTransaction->PublicKeysPtr(), notification.PublicKeysPtr, Judging_Key_Count * Key_Size);
         EXPECT_EQ_MEMORY(pTransaction->SignaturesPtr(), notification.SignaturesPtr, Judging_Key_Count * Signature_Size);
         EXPECT_EQ_MEMORY(pTransaction->OpinionsPtr(), notification.OpinionsPtr, (Key_Count * Judging_Key_Count + 7u) / 8u);
     }
@@ -143,16 +146,20 @@ namespace catapult { namespace plugins {
         EXPECT_EQ(Key_Count - Judging_Key_Count, notification.JudgedKeysCount);
         EXPECT_EQ(sizeof(uint8_t), notification.OpinionElementSize);
         EXPECT_EQ_MEMORY(pTransaction->DriveKey.data(), notification.CommonDataPtr, commonDataSize);
-        EXPECT_EQ_MEMORY(pTransaction->PublicKeysPtr(), notification.PublicKeysPtr, Key_Count * Key_Size);
+        EXPECT_EQ_MEMORY(pTransaction->PublicKeysPtr(), notification.PublicKeysPtr, Judging_Key_Count * Key_Size);
         EXPECT_EQ_MEMORY(pTransaction->SignaturesPtr(), notification.SignaturesPtr, Judging_Key_Count * Signature_Size);
-        EXPECT_EQ_MEMORY(pTransaction->OpinionsPtr(), notification.OpinionsPtr, (Key_Count * Judging_Key_Count + 7u) / 8u);
 
-		boost::dynamic_bitset<uint8_t> presentOpinions(Key_Count * Judging_Key_Count, uint16_t(-1));
-		for (auto i = 0u; i < Judging_Key_Count; ++i)
-			presentOpinions[i * (Key_Count + 1)] = false;
-		std::vector<uint8_t> buffer((Key_Count * Judging_Key_Count + 7u) / 8u, 0u);
-		boost::to_block_range(presentOpinions, buffer.data());
-		//EXPECT_EQ_MEMORY(buffer.data(), notification.PresentOpinionsPtr, buffer.size());
+		auto totalOpinions = Key_Count * Judging_Key_Count;
+		auto opinionByteCount = (totalOpinions + 7u) / 8u;
+		boost::dynamic_bitset<uint8_t> opinionsBitset(pTransaction->OpinionsPtr(), pTransaction->OpinionsPtr() + opinionByteCount);
+		auto* const pOpinionsBegin = sub.mempool().malloc<uint8_t>(opinionByteCount);
+		auto* pOpinions = pOpinionsBegin;
+		for (uint i = 0; i < totalOpinions; i++) {
+			*pOpinions = opinionsBitset[i];
+			pOpinions++;
+		}
+        EXPECT_EQ_MEMORY(pOpinionsBegin, notification.OpinionsPtr, opinionByteCount);
+		EXPECT_EQ(nullptr, notification.PresentOpinionsPtr);
     }
 
     // endregion
