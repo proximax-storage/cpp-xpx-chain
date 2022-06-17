@@ -149,15 +149,14 @@ namespace catapult { namespace plugins {
         EXPECT_EQ_MEMORY(pTransaction->PublicKeysPtr(), notification.PublicKeysPtr, Judging_Key_Count * Key_Size);
         EXPECT_EQ_MEMORY(pTransaction->SignaturesPtr(), notification.SignaturesPtr, Judging_Key_Count * Signature_Size);
 
-		auto totalOpinions = Key_Count * Judging_Key_Count;
-		auto opinionByteCount = (totalOpinions + 7u) / 8u;
+		const size_t totalOpinions = Key_Count * Judging_Key_Count;
+		const auto opinionByteCount = (totalOpinions + 7u) / 8u;
 		boost::dynamic_bitset<uint8_t> opinionsBitset(pTransaction->OpinionsPtr(), pTransaction->OpinionsPtr() + opinionByteCount);
-		auto* const pOpinionsBegin = sub.mempool().malloc<uint8_t>(opinionByteCount);
+		auto* const pOpinionsBegin = sub.mempool().malloc<uint8_t>(totalOpinions);
 		auto* pOpinions = pOpinionsBegin;
-		for (uint i = 0; i < totalOpinions; i++) {
+		for (auto i = 0u; i < totalOpinions; ++i, ++pOpinions)
 			*pOpinions = opinionsBitset[i];
-			pOpinions++;
-		}
+
         EXPECT_EQ_MEMORY(pOpinionsBegin, notification.OpinionsPtr, opinionByteCount);
 		EXPECT_EQ(nullptr, notification.PresentOpinionsPtr);
     }
