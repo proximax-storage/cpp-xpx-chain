@@ -92,12 +92,8 @@ namespace catapult { namespace plugins {
             test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
             // Assert:
-            ASSERT_EQ(1 + Sda_Offer_Count * 2, sub.numNotifications());
+            ASSERT_EQ(1, sub.numNotifications());
             EXPECT_EQ(expectedPlaceSdaExchangeOfferType, sub.notificationTypes()[0]);
-            for (auto i = 0u; i < Sda_Offer_Count; ++i) {
-                EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[2 * i + 1]);
-                EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[2 * i + 2]);
-            }
         }
     }
 
@@ -161,44 +157,6 @@ namespace catapult { namespace plugins {
             EXPECT_EQ(UnresolvedMosaicId(1), notification2.MosaicId);
             EXPECT_EQ(Amount(20), notification2.Amount);
         }
-    }
-
-    PLUGIN_TEST(CanPublishBalanceDebitNotifications_v1) {
-        AssertCanPublishBalanceDebitNotifications<TTraits, 1>();
-    }
-
-    // endregion
-
-    // region publish - balance credit notifications
-
-    namespace {
-        template<typename TTraits, VersionType Version>
-        void AssertCanPublishBalanceCreditNotifications() {
-            // Arrange:
-            mocks::MockTypedNotificationSubscriber<BalanceCreditNotification<1>> sub;
-            auto pPlugin = TTraits::CreatePlugin();
-            auto pTransaction = CreateTransaction<TTraits, Version>();
-
-            // Act:
-            test::PublishTransaction(*pPlugin, *pTransaction, sub);
-
-            // Assert:
-            ASSERT_EQ(2u, sub.numMatchingNotifications());
-
-            const auto& notification1 = sub.matchingNotifications()[0];
-            EXPECT_EQ(pTransaction->Signer, notification1.Sender);
-            EXPECT_EQ(UnresolvedMosaicId(1), notification1.MosaicId);
-            EXPECT_EQ(Amount(10), notification1.Amount);
-
-            const auto& notification2 = sub.matchingNotifications()[1];
-            EXPECT_EQ(pTransaction->Signer, notification2.Sender);
-            EXPECT_EQ(UnresolvedMosaicId(2), notification2.MosaicId);
-            EXPECT_EQ(Amount(200), notification2.Amount);
-        }
-    }
-
-    PLUGIN_TEST(CanPublishBalanceCreditNotifications_v1) {
-        AssertCanPublishBalanceCreditNotifications<TTraits, 1>();
     }
 
     // endregion

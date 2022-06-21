@@ -37,32 +37,6 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, TEST_NAME##_SdaOfferBalance) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SdaOfferBalanceTraits>(); } \
     template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
-	TRAITS_BASED_TEST(CanAddMatchedOffer) {
-		// Act:
-		auto offer = TTraits::CreateSdaOfferBalance({Amount(200), Amount(10), Amount(200), Amount(10), Height(1) });
-		auto matchedOffer = TTraits::CreateSdaOfferBalance({Amount(10), Amount(300), Amount(10), Amount(300), Height(1) });
-
-		// Act:
-		offer += matchedOffer.CurrentMosaicGive;
-
-		// Assert:
-        EXPECT_EQ(Amount(200), offer.CurrentMosaicGive);
-		EXPECT_EQ(Amount(20), offer.CurrentMosaicGet);
-	}
-
-    TRAITS_BASED_TEST(CanSubtractMatchedOffer) {
-		// Act:
-		auto offer = TTraits::CreateSdaOfferBalance({Amount(200), Amount(10), Amount(200), Amount(10), Height(1) });
-		auto matchedOffer = TTraits::CreateSdaOfferBalance({Amount(10), Amount(50), Amount(10), Amount(50), Height(1) });
-
-		// Act:
-		offer -= matchedOffer.CurrentMosaicGet;
-
-		// Assert:
-		EXPECT_EQ(Amount(150), offer.CurrentMosaicGive);
-		EXPECT_EQ(Amount(10), offer.CurrentMosaicGet);
-	}
-
 	TEST(TEST_CLASS, CanCreateSdaExchangeEntry) {
 		// Act:
 		auto owner = test::GenerateRandomByteArray<Key>();
