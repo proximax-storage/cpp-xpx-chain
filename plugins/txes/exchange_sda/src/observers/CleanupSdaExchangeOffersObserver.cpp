@@ -33,6 +33,8 @@ namespace catapult { namespace observers {
                     auto groupHash = calculateGroupHash(expiredPair.first.first, expiredPair.first.second, reduced);
 
                     auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
+                    if (!groupCache.contains(groupHash))
+                        continue;
                     auto groupIter = groupCache.find(groupHash);
                     auto& groupEntry = groupIter.get();
 

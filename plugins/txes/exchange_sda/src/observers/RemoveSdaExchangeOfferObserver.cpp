@@ -28,6 +28,8 @@ namespace catapult { namespace observers {
             auto groupHash = calculateGroupHash(mosaicIdGive, mosaicIdGet, reduced);
 
             auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
+            if (!groupCache.contains(groupHash))
+                continue;
             auto groupIter = groupCache.find(groupHash);
             auto& groupEntry = groupIter.get();
 
