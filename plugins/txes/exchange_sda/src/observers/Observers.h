@@ -31,7 +31,15 @@ namespace catapult { namespace observers {
 
     using BalancePair = std::pair<state::SdaOfferBalance, state::SdaOfferBalance>;
 
+	struct SdaOfferBalanceResult {
+	public:
+		BalancePair OfferPair;
+		catapult::Amount MosaicGiveExchanged;
+		catapult::Amount MosaicGetExchanged;
+	};
+
     void CreditAccount(const Key& owner, const MosaicId& mosaicId, const Amount& amount, const ObserverContext &context);
+	void DebitAccount(const Key& owner, const MosaicId& mosaicId, const Amount& amount, const ObserverContext &context);
 
 	int denominator(int mosaicGive, int mosaicGet);
 	std::string reducedFraction(Amount mosaicGiveAmount, Amount mosaicGetAmount);

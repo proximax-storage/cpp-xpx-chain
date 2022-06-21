@@ -64,6 +64,7 @@ namespace catapult { namespace state {
         SdaOfferGroupVector exactOrClosest(const Amount offerTarget);
 
         void addSdaOfferToGroup(const model::SdaOfferWithDuration* pOffer, const Key& offerOwner, const Height& deadline);
+        void updateSdaOfferGroup(const Key& offerOwner, const Amount& newMosaicGiveAmount);
         void removeSdaOfferFromGroup(const Key& offerOwner);
         bool empty() const;
 

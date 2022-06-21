@@ -20,10 +20,6 @@ namespace catapult { namespace state {
 		catapult::Amount InitialMosaicGive;
 		catapult::Amount InitialMosaicGet;
 		Height Deadline;
-
-	public:
-		SdaOfferBalance& operator+=(const Amount& offerAmount);
-		SdaOfferBalance& operator-=(const Amount& offerAmount);
 	};
 
 	using MosaicsPair = std::pair<MosaicId, MosaicId>;

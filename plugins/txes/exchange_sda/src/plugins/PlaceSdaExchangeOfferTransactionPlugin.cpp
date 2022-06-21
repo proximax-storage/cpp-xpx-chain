@@ -25,11 +25,6 @@ namespace catapult { namespace plugins {
 							transaction.SdaOfferCount,
 							transaction.SdaOffersPtr()));
 
-					auto pOffer = transaction.SdaOffersPtr();
-					for (uint8_t i = 0; i < transaction.SdaOfferCount; ++i, ++pOffer) {
-						sub.notify(BalanceDebitNotification<1>(transaction.Signer, pOffer->MosaicGet.MosaicId, pOffer->MosaicGet.Amount));
-						sub.notify(BalanceCreditNotification<1>(transaction.Signer, pOffer->MosaicGive.MosaicId, pOffer->MosaicGive.Amount));
-					}
 					break;
 				}
 				default:

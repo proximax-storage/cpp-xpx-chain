@@ -60,6 +60,12 @@ namespace catapult { namespace state {
         m_sdaOfferGroup.emplace_back(offer);
     }
 
+    void SdaOfferGroupEntry::updateSdaOfferGroup(const Key& offerOwner, const Amount& newMosaicGiveAmount) {
+        for (auto i = 0; i < m_sdaOfferGroup.size(); ++i) {
+            if (m_sdaOfferGroup[i].Owner==offerOwner) m_sdaOfferGroup[i].MosaicGive = newMosaicGiveAmount;
+        }
+    }
+
     void SdaOfferGroupEntry::removeSdaOfferFromGroup(const Key& offerOwner) {
         for (auto i = 0; i < m_sdaOfferGroup.size(); ++i) {
             if (m_sdaOfferGroup[i].Owner==offerOwner) m_sdaOfferGroup.erase(m_sdaOfferGroup.begin()+i);

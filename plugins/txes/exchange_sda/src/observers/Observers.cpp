@@ -29,6 +29,15 @@ namespace catapult { namespace observers {
         }
     }
 
+    void DebitAccount(const Key& owner, const MosaicId& mosaicId, const Amount& amount, const ObserverContext &context) {
+        if (Amount(0) != amount) {
+            auto &cache = context.Cache.sub<cache::AccountStateCache>();
+            auto iter = cache.find(owner);
+            auto &recipientState = iter.get();
+            recipientState.Balances.debit(mosaicId, amount, context.Height);
+        }
+    }
+
     int denominator(int mosaicGive, int mosaicGet) {
         return (mosaicGet == 0) ? mosaicGive: denominator(mosaicGet, mosaicGive % mosaicGet);
     };

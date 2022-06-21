@@ -12,16 +12,6 @@
 
 namespace catapult { namespace state {
 
-    SdaOfferBalance& SdaOfferBalance::operator+=(const Amount& offerAmount) {
-        CurrentMosaicGet = CurrentMosaicGet + offerAmount;
-        return *this;
-    }
-
-    SdaOfferBalance& SdaOfferBalance::operator-=(const Amount& offerAmount) {
-        CurrentMosaicGive = CurrentMosaicGive - offerAmount;
-        return *this;
-    }
-
     /// Gets the height of the earliest expiring offer.
     Height SdaExchangeEntry::minExpiryHeight() const {
         if (m_sdaOfferBalances.empty())
