@@ -54,26 +54,6 @@ namespace catapult { namespace observers {
 					context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
 
-			auto keyExtractor = [=, &accountStateCache](const Key& key) {
-				return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
-			};
-
-			utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
-					context.Cache.template sub<cache::QueueCache>(),
-					state::ReplicatorsSetTree,
-					keyExtractor,
-					[&replicatorCache](const Key& key) -> state::AVLTreeNode {
-						return replicatorCache.find(key).get().replicatorsSetNode();
-					},
-					[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
-						replicatorCache.find(key).get().replicatorsSetNode() = node;
-					});
-
-			for (const auto& replicatorKey: driveEntry.replicators()) {
-				auto key = keyExtractor(replicatorKey);
-				replicatorTreeAdapter.remove(key);
-			}
-
 			auto timeSinceLastPayment = (context.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
 			for (auto& [replicatorKey, info] : driveEntry.confirmedStorageInfos()) {
 				auto replicatorIter = accountStateCache.find(replicatorKey);
@@ -108,11 +88,6 @@ namespace catapult { namespace observers {
 						driveCache.find(key).get().verificationNode() = node;
 					});
 
-			for (const auto& replicatorKey: driveEntry.replicators()) {
-				auto key = keyExtractor(replicatorKey);
-				replicatorTreeAdapter.remove(key);
-			}
-
 			// Returning the rest to the drive owner
 			const auto refundAmount = driveState.Balances.get(streamingMosaicId);
 			driveState.Balances.debit(streamingMosaicId, refundAmount, context.Height);
@@ -139,13 +114,27 @@ namespace catapult { namespace observers {
 			}
 
 			// Removing the drive from caches
+			auto replicatorKeyExtractor = [=, &accountStateCache](const Key& key) {
+				return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+			};
+
+			utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
+					context.Cache.template sub<cache::QueueCache>(),
+							state::ReplicatorsSetTree,
+							replicatorKeyExtractor,
+							[&replicatorCache](const Key& key) -> state::AVLTreeNode {
+						return replicatorCache.find(key).get().replicatorsSetNode();
+						},
+						[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
+						replicatorCache.find(key).get().replicatorsSetNode() = node;
+					});
+
 			for (const auto& replicatorKey : driveEntry.replicators()) {
 				auto replicatorIter = replicatorCache.find(replicatorKey);
 				auto& replicatorEntry = replicatorIter.get();
 				replicatorEntry.drives().erase(notification.DriveKey);
 
-				replicatorTreeAdapter.remove(keyExtractor(replicatorKey));
-				replicatorTreeAdapter.insert(replicatorKey);
+				replicatorTreeAdapter.remove(replicatorKeyExtractor(replicatorKey));
 			}
 
 			driveCache.remove(notification.DriveKey);

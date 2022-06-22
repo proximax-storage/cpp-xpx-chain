@@ -41,6 +41,7 @@ namespace catapult { namespace test {
 					cache::BcDriveCache::Id,
 					cache::DownloadChannelCache::Id,
 					cache::ReplicatorCache::Id,
+					cache::QueueCache::Id,
 					cache::PriorityQueueCache::Id,
 			};
 			auto maxId = *std::max_element(cacheIds.begin(), cacheIds.end());
@@ -49,6 +50,7 @@ namespace catapult { namespace test {
 			subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 			subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
 			subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
+			subCaches[cache::QueueCache::Id] = MakeSubCachePlugin<cache::QueueCache, cache::QueueCacheStorage>(pConfigHolder);
 			subCaches[cache::PriorityQueueCache::Id] = MakeSubCachePlugin<cache::PriorityQueueCache, cache::PriorityQueueCacheStorage>(pConfigHolder);
 			return subCaches;
 		}
