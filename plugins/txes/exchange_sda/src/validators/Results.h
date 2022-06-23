@@ -17,7 +17,7 @@ namespace catapult { namespace validators {
 	/// Validation failed because there is no offers.
 	DEFINE_CATAPULT_EXCHANGESDA_RESULT(No_Offers, 1);
 
-	/// Validation failed because to exchanging own units is not allowed.
+	/// Validation failed because exchanging own units is not allowed.
 	DEFINE_CATAPULT_EXCHANGESDA_RESULT(Exchanging_Own_Units_Is_Not_Allowed, 2);
 
 	/// Validation failed because the account doesn't have any offer.
@@ -65,6 +65,9 @@ namespace catapult { namespace validators {
 
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_CATAPULT_EXCHANGESDA_RESULT(Plugin_Config_Malformed, 17);
+
+	/// Validation failed because exchanging same units is not allowed.
+	DEFINE_CATAPULT_EXCHANGESDA_RESULT(Exchanging_Same_Units_Is_Not_Allowed, 18);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

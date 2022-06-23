@@ -144,6 +144,21 @@ namespace catapult { namespace validators {
                 Failure_ExchangeSda_No_Offers);
         }
 
+        TRAITS_BASED_TEST(FailureWhenExchangingSameUnits) {
+            // Arrange:
+            auto offerOwner = test::GenerateRandomByteArray<Key>();
+            state::SdaExchangeEntry entry(offerOwner);
+
+            // Assert:
+            AssertValidationResult<TValidatorTraits>(
+                Failure_ExchangeSda_Exchanging_Same_Units_Is_Not_Allowed,
+                {
+                    model::SdaOfferWithDuration{model::SdaOffer{{test::UnresolveXor(MosaicId(1)), Amount(100)}, {test::UnresolveXor(MosaicId(1)), Amount(10)}}, BlockDuration(100)},
+                },
+                offerOwner,
+                &entry);
+        }
+
         TRAITS_BASED_TEST(FailureWhenDuplicatedSdaOffersInRequest) {
             // Arrange:
             auto offerOwner = test::GenerateRandomByteArray<Key>();
@@ -154,7 +169,7 @@ namespace catapult { namespace validators {
                 Failure_ExchangeSda_Duplicated_Offer_In_Request,
                 {
                     model::SdaOfferWithDuration{model::SdaOffer{{test::UnresolveXor(MosaicId(1)), Amount(100)}, {test::UnresolveXor(MosaicId(2)), Amount(10)}}, BlockDuration(100)},
-                    model::SdaOfferWithDuration{model::SdaOffer{{test::UnresolveXor(MosaicId(1)), Amount(100)}, {test::UnresolveXor(MosaicId(2)), Amount(10)}}, BlockDuration(100)},
+                    model::SdaOfferWithDuration{model::SdaOffer{{test::UnresolveXor(MosaicId(1)), Amount(200)}, {test::UnresolveXor(MosaicId(2)), Amount(20)}}, BlockDuration(100)},
                 },
                 offerOwner,
                 &entry);

@@ -39,8 +39,8 @@ namespace catapult { namespace observers {
     }
 
     int denominator(int mosaicGive, int mosaicGet) {
-        return (mosaicGet == 0) ? mosaicGive: denominator(mosaicGet, mosaicGive % mosaicGet);
-    };
+        return (mosaicGet == 0) ? mosaicGive : denominator(mosaicGet, mosaicGive % mosaicGet);
+    }
 
     std::string reducedFraction(Amount mosaicGiveAmount, Amount mosaicGetAmount) {
         int denom = denominator(static_cast<int>(mosaicGiveAmount.unwrap()), static_cast<int>(mosaicGetAmount.unwrap()));

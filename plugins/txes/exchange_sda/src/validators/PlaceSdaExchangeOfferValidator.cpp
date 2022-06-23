@@ -40,6 +40,9 @@ namespace catapult { namespace validators {
             auto mosaicIdGive = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
             auto mosaicIdGet = context.Resolvers.resolve(pSdaOffer->MosaicGet.MosaicId);
 
+            if (mosaicIdGive == mosaicIdGet)
+                return Failure_ExchangeSda_Exchanging_Same_Units_Is_Not_Allowed;
+
             state::MosaicsPair pair(mosaicIdGive, mosaicIdGet);
             if (offers.count(pair))
                 return Failure_ExchangeSda_Duplicated_Offer_In_Request;
