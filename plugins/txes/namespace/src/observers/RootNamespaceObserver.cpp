@@ -25,44 +25,44 @@
 
 namespace catapult { namespace observers {
 
-	namespace {
-		bool IsRenewal(const state::RootNamespace& root, const model::RootNamespaceNotification<1>& notification, Height height) {
-			return root.lifetime().isActiveOrGracePeriod(height) && root.owner() == notification.Signer;
-		}
+    namespace {
+        bool IsRenewal(const state::RootNamespace& root, const model::RootNamespaceNotification<1>& notification, Height height) {
+            return root.lifetime().isActiveOrGracePeriod(height) && root.owner() == notification.Signer;
+        }
 
-		Height LifetimeEnd(const Height& height, const BlockDuration& duration) {
-			return Eternal_Artifact_Duration == duration
-			   ? Height(std::numeric_limits<Height::ValueType>::max())
-			   : height + Height(duration.unwrap());
-		}
-	}
+        Height LifetimeEnd(const Height& height, const BlockDuration& duration) {
+            return Eternal_Artifact_Duration == duration
+                   ? Height(std::numeric_limits<Height::ValueType>::max())
+                   : height + Height(duration.unwrap());
+        }
+    }
 
-	DEFINE_OBSERVER(RootNamespace, model::RootNamespaceNotification<1>, [](const auto& notification, const ObserverContext& context) {
-		auto& cache = context.Cache.sub<cache::NamespaceCache>();
+    DEFINE_OBSERVER(RootNamespace, model::RootNamespaceNotification<1>, [](const auto& notification, const ObserverContext& context) {
+        auto& cache = context.Cache.sub<cache::NamespaceCache>();
 
-		if (NotifyMode::Rollback == context.Mode) {
-			cache.remove(notification.NamespaceId);
-			return;
-		}
+        if (NotifyMode::Rollback == context.Mode) {
+            cache.remove(notification.NamespaceId);
+            return;
+        }
 
-		auto lifetimeEnd = LifetimeEnd(context.Height, notification.Duration);
-		auto lifetime = state::NamespaceLifetime(context.Height, lifetimeEnd);
+        auto lifetimeEnd = LifetimeEnd(context.Height, notification.Duration);
+        auto lifetime = state::NamespaceLifetime(context.Height, lifetimeEnd);
         state::NamespaceAlias alias;
 
-		if (cache.contains(notification.NamespaceId)) {
-			// if a renewal, duration should add onto current expiry
-			auto namespaceIter = cache.find(notification.NamespaceId);
-			const auto& rootEntry = namespaceIter.get();
-			if (IsRenewal(rootEntry.root(), notification, context.Height)) {
-				lifetime = rootEntry.root().lifetime();
-				lifetime.End = LifetimeEnd(lifetime.End, notification.Duration);
+        if (cache.contains(notification.NamespaceId)) {
+            // if a renewal, duration should add onto current expiry
+            auto namespaceIter = cache.find(notification.NamespaceId);
+            const auto& rootEntry = namespaceIter.get();
+            if (IsRenewal(rootEntry.root(), notification, context.Height)) {
+                lifetime = rootEntry.root().lifetime();
+                lifetime.End = LifetimeEnd(lifetime.End, notification.Duration);
 
                 alias = rootEntry.root().alias(notification.NamespaceId);
-			}
-		}
+            }
+        }
 
-		auto root = state::RootNamespace(notification.NamespaceId, notification.Signer, lifetime);
-		cache.insert(root);
+        auto root = state::RootNamespace(notification.NamespaceId, notification.Signer, lifetime);
+        cache.insert(root);
 
         switch (alias.type()) {
             case state::AliasType::Address:
@@ -72,5 +72,5 @@ namespace catapult { namespace observers {
                 cache.setAlias(notification.NamespaceId, state::NamespaceAlias(alias.mosaicId()));
                 break;
         }
-	});
+    });
 }}
