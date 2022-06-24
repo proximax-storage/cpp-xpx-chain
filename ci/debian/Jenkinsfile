@@ -25,9 +25,15 @@ pipeline {
                     steps {
                         echo 'Build and Publish Image'
                         script {
-                            def newImage = docker.build("${IMAGE}","-f ./scripts/catapult-server-docker/DockerfileDebian .")
-                            docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                                newImage.push("${env.GIT_BRANCH}-amd64") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
+                            withCredentials([string(credentialsId: 'git_token', variable: 'GIT_TOKEN')]) {
+                                sh """
+                                    git config --global url."https://${GIT_TOKEN}:@github.com/".insteadOf "https://github.com/"
+                                    git submodule update --init --recursive --remote
+                                """
+                                def newImage = docker.build("${IMAGE}","-f ./scripts/catapult-server-docker/DockerfileDebian .")
+                                docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                                    newImage.push("${env.GIT_BRANCH}-amd64") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
+                                }
                             }
                         }
                     }
@@ -41,9 +47,15 @@ pipeline {
                     steps {
                         echo 'Build and Publish Image'
                         script {
-                            def newImage = docker.build("${IMAGE}","-f ./scripts/catapult-server-docker/DockerfileDebian .")
-                            docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                                newImage.push("${env.GIT_BRANCH}-arm64") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
+                            withCredentials([string(credentialsId: 'git_token', variable: 'GIT_TOKEN')]) {
+                                sh """
+                                    git config --global url."https://${GIT_TOKEN}:@github.com/".insteadOf "https://github.com/"
+                                    git submodule update --init --recursive --remote
+                                """
+                                def newImage = docker.build("${IMAGE}","-f ./scripts/catapult-server-docker/DockerfileDebian .")
+                                docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                                    newImage.push("${env.GIT_BRANCH}-arm64") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
+                                }
                             }
                         }
                     }
