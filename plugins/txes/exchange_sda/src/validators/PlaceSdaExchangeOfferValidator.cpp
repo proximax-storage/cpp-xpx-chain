@@ -32,10 +32,9 @@ namespace catapult { namespace validators {
             return Failure_ExchangeSda_No_Offers;
         
         const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SdaExchangeConfiguration>();
-        const auto& cache = context.Cache.sub<cache::SdaExchangeCache>();
 
         std::set<state::MosaicsPair> offers;
-        const auto* pSdaOffer = notification.SdaOffersPtr;
+        auto* pSdaOffer = notification.SdaOffersPtr;
         for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
             auto mosaicIdGive = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
             auto mosaicIdGet = context.Resolvers.resolve(pSdaOffer->MosaicGet.MosaicId);
@@ -65,16 +64,24 @@ namespace catapult { namespace validators {
 
             if (pSdaOffer->MosaicGet.Amount == Amount(0))
                 return Failure_ExchangeSda_Zero_Price;
+        }
 
-            if (!cache.contains(notification.Signer))
-                return ValidationResult::Success;
+        const auto& cache = context.Cache.sub<cache::SdaExchangeCache>();
 
-            auto iter = cache.find(notification.Signer);
-            const auto& entry = iter.get();
+        if (!cache.contains(notification.Signer))
+            return ValidationResult::Success;
+
+        auto iter = cache.find(notification.Signer);
+        const auto& entry = iter.get();
+        pSdaOffer = notification.SdaOffersPtr;
+        for (uint8_t i = 0; i < notification.SdaOfferCount; ++i, ++pSdaOffer) {
+            auto mosaicIdGive = context.Resolvers.resolve(pSdaOffer->MosaicGive.MosaicId);
+            auto mosaicIdGet = context.Resolvers.resolve(pSdaOffer->MosaicGet.MosaicId);
+            state::MosaicsPair pair(mosaicIdGive, mosaicIdGet);
             if (entry.offerExists(pair))
                 return Failure_ExchangeSda_Offer_Exists;
         }
 
         return ValidationResult::Success;
-    }));
+    }))
 }}

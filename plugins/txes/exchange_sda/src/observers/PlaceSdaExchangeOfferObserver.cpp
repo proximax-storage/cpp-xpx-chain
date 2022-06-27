@@ -136,8 +136,8 @@ namespace catapult { namespace observers {
 
                 // mosaicIdGive of currentOffer is the mosaicIdGet of existingOffer
                 // mosaicIdGet of currentOffer is the mosaicIdGive of existingOffer
-                CreditAccount(existingOffer.owner(), offersBySigner.first.second, result.MosaicGetExchanged, context);
-                DebitAccount(existingOffer.owner(), offersBySigner.first.first, result.MosaicGiveExchanged, context);
+                CreditAccount(existingOffer.owner(), offersBySigner.first.second, result.MosaicGiveExchanged, context);
+                DebitAccount(existingOffer.owner(), offersBySigner.first.first, result.MosaicGetExchanged, context);
                 CreditAccount(entry.owner(), offersBySigner.first.first, result.MosaicGiveExchanged, context);
                 DebitAccount(entry.owner(), offersBySigner.first.second, result.MosaicGetExchanged, context);
 
