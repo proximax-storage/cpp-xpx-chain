@@ -26,13 +26,30 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicSupplyChangeValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChange,)
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeV1,)
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeV2,)
 
 	namespace {
+		struct V1TestTraits
+		{
+			using Notification = model::MosaicSupplyChangeNotification<1>;
+			static stateless::NotificationValidatorPointerT<Notification> Create(){
+				return CreateMosaicSupplyChangeV1Validator();
+			}
+		};
+
+		struct V2TestTraits
+		{
+			using Notification = model::MosaicSupplyChangeNotification<2>;
+			static stateless::NotificationValidatorPointerT<Notification> Create(){
+				return CreateMosaicSupplyChangeV2Validator();
+			}
+		};
+		template<typename TTestTraits>
 		void AssertValidationResult(ValidationResult expectedResult, model::MosaicSupplyChangeDirection direction, Amount delta) {
 			// Arrange:
-			model::MosaicSupplyChangeNotification<1> notification(Key(), UnresolvedMosaicId(), direction, delta);
-			auto pValidator = CreateMosaicSupplyChangeValidator();
+			typename TTestTraits::Notification notification(Key(), UnresolvedMosaicId(), direction, delta);
+			auto pValidator = TTestTraits::Create();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);
@@ -50,32 +67,40 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, SuccessWhenValidatingValidDirection) {
+#define TRAITS_BASED_TEST(TEST_CLASS, TEST_NAME) \
+    template<typename TTestTraits>                                 \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V1TestTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V2TestTraits>(); } \
+    template<typename TTestTraits>                                 \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
+	TRAITS_BASED_TEST(TEST_CLASS, SuccessWhenValidatingValidDirection) {
 		// Assert:
 		for (auto direction : { 0x00, 0x01 })
-			AssertValidationResult(ValidationResult::Success, ToDirection(direction), Amount(123));
+			AssertValidationResult<TTestTraits>(ValidationResult::Success, ToDirection(direction), Amount(123));
 	}
 
-	TEST(TEST_CLASS, FailureWhenValidatingInvalidDirection) {
+	TRAITS_BASED_TEST(TEST_CLASS, FailureWhenValidatingInvalidDirection) {
 		// Assert:
 		for (auto direction : { 0x02, 0xFF })
-			AssertValidationResult(Failure_Mosaic_Invalid_Supply_Change_Direction, ToDirection(direction), Amount(123));
+			AssertValidationResult<TTestTraits>(Failure_Mosaic_Invalid_Supply_Change_Direction, ToDirection(direction), Amount(123));
 	}
 
 	// endregion
 
 	// region amount
 
-	TEST(TEST_CLASS, SuccessWhenDeltaIsNonZero) {
+	TRAITS_BASED_TEST(TEST_CLASS, SuccessWhenDeltaIsNonZero) {
 		// Assert:
 		for (auto direction : { 0x00, 0x01 })
-			AssertValidationResult(ValidationResult::Success, ToDirection(direction), Amount(1));
+			AssertValidationResult<TTestTraits>(ValidationResult::Success, ToDirection(direction), Amount(1));
 	}
 
-	TEST(TEST_CLASS, FailureWhenDeltaIsZero) {
+	TRAITS_BASED_TEST(TEST_CLASS, FailureWhenDeltaIsZero) {
 		// Assert:
 		for (auto direction : { 0x00, 0x01 })
-			AssertValidationResult(Failure_Mosaic_Invalid_Supply_Change_Amount, ToDirection(direction), Amount());
+			AssertValidationResult<TTestTraits>(Failure_Mosaic_Invalid_Supply_Change_Amount, ToDirection(direction), Amount());
 	}
 
 	// endregion

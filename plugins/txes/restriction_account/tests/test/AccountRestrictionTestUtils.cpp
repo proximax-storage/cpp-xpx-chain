@@ -19,6 +19,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "tests/test/other/MutableBlockchainConfiguration.h"
+#include "src/config/AccountRestrictionConfiguration.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "AccountRestrictionTestUtils.h"
 #include "src/state/AccountRestrictions.h"
 #include "tests/TestHarness.h"
@@ -87,5 +90,32 @@ namespace catapult { namespace test {
 			EXPECT_EQ(expectedAccountRestriction.valueSize(), restriction.valueSize());
 			EXPECT_EQ(expectedAccountRestriction.values(), restriction.values());
 		}
+	}
+
+	std::shared_ptr<config::BlockchainConfigurationHolder> CreateAccountRestrictionConfigHolder(model::NetworkIdentifier networkIdentifier) {
+		auto pluginConfig = config::AccountRestrictionConfiguration::Uninitialized();
+		pluginConfig.Enabled = true;
+		pluginConfig.MaxAccountRestrictionValues = 10;
+		auto networkConfig = model::NetworkConfiguration::Uninitialized();
+		networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+		networkConfig.SetPluginConfiguration(pluginConfig);
+		test::MutableBlockchainConfiguration config;
+		config.Network = networkConfig;
+		config.Immutable.NetworkIdentifier = networkIdentifier;
+		return config::CreateMockConfigurationHolder(config.ToConst());
+	}
+	Address ConvertToAddress(const Key& key)
+	{
+		return model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero);
+	}
+
+	std::vector<Address> ConvertToAddress(const std::vector<Key>& keys)
+	{
+		std::vector<Address> result;
+		for(auto& key : keys)
+		{
+			result.push_back(model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero));
+		}
+		return result;
 	}
 }}

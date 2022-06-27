@@ -35,9 +35,9 @@ namespace catapult { namespace plugins {
 	// region TransactionPlugin
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicSupplyChange, 2, 2,)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicSupplyChange, 3, 3,)
 
-		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
+		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 	}
 
 	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , Entity_Type_Mosaic_Supply_Change)
@@ -75,7 +75,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishMosaicRequiredNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<MosaicRequiredNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<MosaicRequiredNotification<2>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
@@ -98,7 +98,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishMosaicSupplyChangeNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<MosaicSupplyChangeNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<MosaicSupplyChangeNotification<2>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;

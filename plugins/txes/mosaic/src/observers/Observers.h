@@ -31,5 +31,6 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by mosaic supply change notifications, including:
 	/// - increase or decrease of supply
-	DECLARE_OBSERVER(MosaicSupplyChange, model::MosaicSupplyChangeNotification<1>)();
+	DECLARE_OBSERVER(MosaicSupplyChangeV1, model::MosaicSupplyChangeNotification<1>)();
+	DECLARE_OBSERVER(MosaicSupplyChangeV2, model::MosaicSupplyChangeNotification<2>)();
 }}

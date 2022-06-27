@@ -37,24 +37,28 @@ namespace catapult { namespace validators {
 	});
 
 	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(ProperMosaicV2, model::MosaicRequiredNotification<2>, [](const auto& notification, const ValidatorContext& context) {
-	  auto view = ActiveMosaicView(context.Cache);
-	  auto mosaicId = notification.MosaicId;
-	  if (model::MosaicRequiredNotification<2>::MosaicType::Unresolved == notification.ProvidedMosaicType)
-		  mosaicId = context.Resolvers.resolve(notification.UnresolvedMosaicId);
+		auto view = ActiveMosaicView(context.Cache);
+		auto mosaicId = notification.MosaicId;
+		if (model::MosaicRequiredNotification<2>::MosaicType::Unresolved == notification.ProvidedMosaicType)
+			mosaicId = context.Resolvers.resolve(notification.UnresolvedMosaicId);
 
-	  ActiveMosaicView::FindIterator mosaicIter;
-	  auto result = view.tryGet(mosaicId, context.Height, notification.Signer, mosaicIter);
-	  if (IsValidationResultFailure(result))
-		  return result;
+		ActiveMosaicView::FindIterator mosaicIter;
+		auto result = view.tryGet(mosaicId, context.Height, notification.Signer, mosaicIter);
+		if (IsValidationResultFailure(result))
+			return result;
 
-	  if (0 != notification.PropertyFlagMask) {
-		  const auto& properties = mosaicIter.get().definition().properties();
-		  for (auto i = 1u; i < utils::to_underlying_type(model::MosaicFlags::All); i <<= 1) {
-			  if (0 != (notification.PropertyFlagMask & i) && !properties.is(static_cast<model::MosaicFlags>(i)))
-				  return Failure_Mosaic_Required_Property_Flag_Unset;
-		  }
-	  }
-
-	  return ValidationResult::Success;
+		if (0 != notification.PropertyFlagMask) {
+			const auto& properties = mosaicIter.get().definition().properties();
+			for (auto i = 1u; i < utils::to_underlying_type(model::MosaicFlags::All); i <<= 1) {
+				if( 0 != (notification.PropertyFlagMask & i))
+				{
+					if(notification.Action == model::MosaicRequirementAction::Set && !properties.is(static_cast<model::MosaicFlags>(i)))
+						return Failure_Mosaic_Required_Property_Flag_Unset;
+					else if(notification.Action == model::MosaicRequirementAction::Unset && properties.is(static_cast<model::MosaicFlags>(i)))
+						return Failure_Mosaic_Required_Property_Flag_Unset;
+				}
+			}
+		}
+		return ValidationResult::Success;
 	});
 }}

@@ -25,14 +25,24 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MosaicPropertiesNotification<1>;
-
 	namespace {
-		constexpr bool IsValidFlags(model::MosaicFlags flags) {
+		template<typename TNotification>
+		constexpr bool IsValidFlags(model::MosaicFlags flags);
+
+		template<>
+		constexpr bool IsValidFlags<model::MosaicPropertiesNotification<1>>(model::MosaicFlags flags) {
+			return flags <= (model::MosaicFlags)0x03;
+		}
+
+		template<>
+		constexpr bool IsValidFlags<model::MosaicPropertiesNotification<2>>(model::MosaicFlags flags) {
 			return flags <= model::MosaicFlags::All;
 		}
 
-		ValidationResult CheckOptionalProperties(const Notification& notification, BlockDuration maxMosaicDuration) {
+
+
+		template<typename TNotification>
+		ValidationResult CheckOptionalProperties(const TNotification& notification, BlockDuration maxMosaicDuration) {
 			if (0 == notification.PropertiesHeader.Count)
 				return ValidationResult::Success;
 
@@ -51,9 +61,11 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(MosaicProperties, ([](const auto& notification, const auto& context) {
-			if (!IsValidFlags(notification.PropertiesHeader.Flags))
+	namespace {
+		template<typename TNotification>
+		ValidationResult CommonValidate(const TNotification& notification, const ValidatorContext& context)
+		{
+			if (!IsValidFlags<TNotification>(notification.PropertiesHeader.Flags))
 				return Failure_Mosaic_Invalid_Flags;
 
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MosaicConfiguration>();
@@ -62,6 +74,10 @@ namespace catapult { namespace validators {
 
 			auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(context.Config.Network.BlockGenerationTargetTime);
 			return CheckOptionalProperties(notification, maxMosaicDuration);
-		}));
+		}
 	}
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(MosaicPropertiesV1, model::MosaicPropertiesNotification<1>, CommonValidate<model::MosaicPropertiesNotification<1>>);
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(MosaicPropertiesV2, model::MosaicPropertiesNotification<2>, CommonValidate<model::MosaicPropertiesNotification<2>>);
 }}

@@ -43,8 +43,10 @@ namespace catapult { namespace model {
 		/// Mosaic does not support supply changes after creation. Overrides Supply_Mutable flag.
 		Supply_Force_Immutable = 0x08,
 
+		Disable_Locking = 0x10,
+
 		/// All flags.
-		All = 0x0F
+		All = 0x1F
 	};
 
 	MAKE_BITWISE_ENUM(MosaicFlags)

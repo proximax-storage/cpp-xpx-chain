@@ -84,20 +84,25 @@ namespace catapult { namespace plugins {
 				return {
 					"MosaicPluginConfigValidator",
 					"MosaicIdValidator",
-					"MosaicSupplyChangeValidator",
+					"MosaicSupplyChangeV1Validator",
+					"MosaicSupplyChangeV2Validator",
 				};
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
-					"ProperMosaicValidator",
-					"MosaicPropertiesValidator",
+					"ProperMosaicV1Validator",
+					"ProperMosaicV2Validator",
+					"MosaicPropertiesV1Validator",
+					"MosaicPropertiesV2Validator",
 					"MosaicTransferValidator",
 					"MaxMosaicsBalanceTransferValidator",
 					"MosaicAvailabilityValidator",
 					"MosaicDurationValidator",
-					"MaxMosaicsSupplyChangeValidator",
-					"MosaicSupplyChangeAllowedValidator"
+					"MaxMosaicsSupplyChangeV1Validator",
+					"MosaicSupplyChangeAllowedV1Validator",
+					"MaxMosaicsSupplyChangeV2Validator",
+					"MosaicSupplyChangeAllowedV2Validator"
 				};
 			}
 
@@ -106,7 +111,8 @@ namespace catapult { namespace plugins {
 					"MosaicRentalFeeObserver",
 					"MosaicTouchObserver",
 					"MosaicDefinitionObserver",
-					"MosaicSupplyChangeObserver",
+					"MosaicSupplyChangeV1Observer",
+					"MosaicSupplyChangeV2Observer"
 				};
 			}
 

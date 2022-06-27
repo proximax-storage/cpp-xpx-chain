@@ -55,13 +55,13 @@ namespace catapult { namespace validators {
 				ValidationResult expectedResult,
 				const Address& accountAddress,
 				const std::vector<uint16_t>& rawValues,
-				const Address& sender,
+				const Key& sender,
 				const model::EntityType& transactionType) {
 			// Arrange:
 			auto cache = test::AccountRestrictionCacheFactory::Create();
 			PopulateCache<TOperationTraits>(cache, accountAddress, rawValues);
 			auto pValidator = CreateOperationRestrictionValidator();
-			auto notification = model::TransactionNotification(sender, Hash256(), transactionType, Timestamp(123));
+			auto notification = model::TransactionNotification<1>(sender, Hash256(), transactionType, Timestamp(123));
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -75,28 +75,30 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenAccountIsKnownAndTransactionTypeIsNotContainedInValues_Allow) {
 		// Arrange:
-		auto sender = test::GenerateRandomByteArray<Address>();
+		auto source = test::GenerateRandomByteArray<Key>();
+		auto address = model::PublicKeyToAddress(source, model::NetworkIdentifier::Zero);
 
 		// Act:
 		AssertValidationResult<test::AllowTraits>(
 				Failure_RestrictionAccount_Operation_Type_Prohibited,
-				sender,
+				address,
 				DefaultRawTransactionTypes(),
-				sender,
+				source,
 				static_cast<model::EntityType>(0x4040));
 	}
 
 	TEST(TEST_CLASS, FailureWhenAccountIsKnownAndTransactionTypeIsContainedInValues_Block) {
 		// Arrange:
-		auto sender = test::GenerateRandomByteArray<Address>();
+		auto source = test::GenerateRandomByteArray<Key>();
+		auto address = model::PublicKeyToAddress(source, model::NetworkIdentifier::Zero);
 		auto values = DefaultRawTransactionTypes();
 
 		// Act:
 		AssertValidationResult<test::BlockTraits>(
 				Failure_RestrictionAccount_Operation_Type_Prohibited,
-				sender,
+				address,
 				values,
-				sender,
+				source,
 				static_cast<model::EntityType>(values[1]));
 	}
 
@@ -112,7 +114,7 @@ namespace catapult { namespace validators {
 
 	TRAITS_BASED_TEST(SuccessWhenAccountIsNotKnown) {
 		// Arrange:
-		auto sender = test::GenerateRandomByteArray<Address>();
+		auto sender = test::GenerateRandomByteArray<Key>();
 		auto other = test::GenerateRandomByteArray<Address>();
 		auto values = DefaultRawTransactionTypes();
 
@@ -122,24 +124,26 @@ namespace catapult { namespace validators {
 
 	TRAITS_BASED_TEST(SuccessWhenAccountIsKnownButAccountRestrictionHasNoValues) {
 		// Arrange:
-		auto sender = test::GenerateRandomByteArray<Address>();
+		auto source = test::GenerateRandomByteArray<Key>();
+		auto address = model::PublicKeyToAddress(source, model::NetworkIdentifier::Zero);
 
 		// Act:
-		AssertValidationResult<TTraits>(ValidationResult::Success, sender, {}, sender, static_cast<model::EntityType>(0x4444));
+		AssertValidationResult<TTraits>(ValidationResult::Success, address, {}, source, static_cast<model::EntityType>(0x4444));
 	}
 
 	namespace {
 		template<typename TOperationTraits>
 		void AssertSuccess(const std::vector<uint16_t>& rawValues, uint16_t rawTransactionType) {
 			// Arrange:
-			auto sender = test::GenerateRandomByteArray<Address>();
+			auto source = test::GenerateRandomByteArray<Key>();
+			auto address = model::PublicKeyToAddress(source, model::NetworkIdentifier::Zero);
 
 			// Act:
 			AssertValidationResult<TOperationTraits>(
 					ValidationResult::Success,
-					sender,
+					address,
 					rawValues,
-					sender,
+					source,
 					static_cast<model::EntityType>(rawTransactionType));
 		}
 	}

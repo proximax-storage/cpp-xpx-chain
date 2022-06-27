@@ -28,6 +28,7 @@
 #include "catapult/utils/TimeSpan.h"
 #include "catapult/types.h"
 #include "AccountLinkAction.h"
+#include "MosaicRequirementAction.h"
 #include <vector>
 
 namespace catapult { namespace model {
@@ -595,7 +596,7 @@ namespace catapult { namespace model {
 	struct MosaicRequiredNotification<2> : public Notification {
 	public:
 		/// Mosaic types.
-		enum class MosaicType { Resolved, Unresolved };
+		using MosaicType = MosaicRequiredNotification<1>::MosaicType;
 
 	public:
 		/// Matching notification type.
@@ -603,21 +604,23 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer and \a mosaicId.
-		MosaicRequiredNotification(const Key& signer, MosaicId mosaicId, uint8_t propertyFlagMask = 0)
-				: Notification(Notification_Type, sizeof(MosaicRequiredNotification<1>))
+		MosaicRequiredNotification(const Key& signer, MosaicId mosaicId, MosaicRequirementAction action, uint8_t propertyFlagMask = 0)
+				: Notification(Notification_Type, sizeof(MosaicRequiredNotification<2>))
 				, Signer(signer)
 				, MosaicId(mosaicId)
 				, ProvidedMosaicType(MosaicType::Resolved)
 				, PropertyFlagMask(propertyFlagMask)
+				, Action(action)
 		{}
 
 		/// Creates a notification around \a signer and \a mosaicId.
-		MosaicRequiredNotification(const Key& signer, UnresolvedMosaicId mosaicId, uint8_t propertyFlagMask = 0)
-				: Notification(Notification_Type, sizeof(MosaicRequiredNotification<1>))
+		MosaicRequiredNotification(const Key& signer, UnresolvedMosaicId mosaicId, MosaicRequirementAction action, uint8_t propertyFlagMask = 0)
+				: Notification(Notification_Type, sizeof(MosaicRequiredNotification<2>))
 				, Signer(signer)
 				, UnresolvedMosaicId(mosaicId)
 				, ProvidedMosaicType(MosaicType::Unresolved)
 				, PropertyFlagMask(propertyFlagMask)
+				, Action(action)
 		{}
 
 	public:
@@ -632,6 +635,9 @@ namespace catapult { namespace model {
 
 		/// Type of mosaic provided and attached to this notification.
 		MosaicType ProvidedMosaicType;
+
+		/// Type of mosaic provided and attached to this notification.
+		MosaicRequirementAction Action;
 
 		/// Mask of required property flags that must be set on the mosaic.
 		uint8_t PropertyFlagMask;
@@ -711,6 +717,32 @@ namespace catapult { namespace model {
 
 		/// Plugin configuration bag.
 		const utils::ConfigurationBag& Bag;
+	};
+
+	// endregion
+
+	// region padding
+
+	template<VersionType version>
+	struct InternalPaddingNotification;
+
+	/// Notification of internal padding.
+	template<>
+	struct InternalPaddingNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Internal_Padding_v1_Notification;
+
+	public:
+		/// Creates a notification around \a padding.
+		explicit InternalPaddingNotification(uint64_t padding)
+				: Notification(Notification_Type, sizeof(InternalPaddingNotification))
+				, Padding(padding)
+		{}
+
+	public:
+		/// Padding data.
+		uint64_t Padding;
 	};
 
 	// endregion

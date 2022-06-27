@@ -32,7 +32,7 @@ namespace catapult { namespace config {
 		restrictionaccountConfigId,
 		restrictionmosaicConfigId,
         First = static_cast<uint32_t>(aggregateConfigId),
-        Latest = static_cast<uint32_t>(operationConfigId),
+        Latest = static_cast<uint32_t>(restrictionmosaicConfigId),
 	};
 
 /// Defines config constants for a config with \a NAME.

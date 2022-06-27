@@ -102,11 +102,11 @@ namespace catapult { namespace validators {
 
 		template<typename TOperationTraits>
 		auto CreateNotification(
-				const Address& address,
+				const Key& key,
 				model::AccountRestrictionModificationAction action,
 				const model::EntityType& restrictionValue) {
 			return test::CreateAccountRestrictionValueNotification<AccountOperationRestrictionTraits, TOperationTraits>(
-					address,
+					key,
 					restrictionValue,
 					action);
 		}
@@ -117,7 +117,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenAccountIsUnknown_Allow_Add_NotRelevantType) {
 		// Arrange:
 		auto seedAddress = test::GenerateRandomByteArray<Address>();
-		auto notificationAddress = test::GenerateRandomByteArray<Address>();
+		auto notificationAddress = test::GenerateRandomByteArray<Key>();
 		auto restrictionValue = RandomValue();
 		auto notification = CreateNotification<test::AllowTraits>(notificationAddress, Add, restrictionValue);
 
@@ -128,7 +128,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenAccountIsUnknown_Block_Add_RelevantType) {
 		// Arrange:
 		auto seedAddress = test::GenerateRandomByteArray<Address>();
-		auto notificationAddress = test::GenerateRandomByteArray<Address>();
+		auto notificationAddress = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateNotification<test::BlockTraits>(notificationAddress, Add, Relevant_Entity_Type);
 
 		// Act + Assert:
@@ -137,8 +137,9 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenAccountIsKnown_Allow_Del_RelevantType) {
 		// Arrange:
-		auto address = test::GenerateRandomByteArray<Address>();
-		auto notification = CreateNotification<test::AllowTraits>(address, Del, Relevant_Entity_Type);
+		auto key = test::GenerateRandomByteArray<Key>();
+		auto address = test::ConvertToAddress(key);
+		auto notification = CreateNotification<test::AllowTraits>(key, Del, Relevant_Entity_Type);
 
 		// Act + Assert:
 		AssertValidationResult<test::AllowTraits>(Failure_Result, CacheSeed::Empty_Restrictions, address, notification);
@@ -146,9 +147,10 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenAccountIsKnown_Allow_Add_NotRelevantType) {
 		// Arrange:
-		auto address = test::GenerateRandomByteArray<Address>();
+		auto key = test::GenerateRandomByteArray<Key>();
+		auto address = test::ConvertToAddress(key);
 		auto restrictionValue = RandomValue();
-		auto notification = CreateNotification<test::AllowTraits>(address, Add, restrictionValue);
+		auto notification = CreateNotification<test::AllowTraits>(key, Add, restrictionValue);
 
 		// Act + Assert:
 		AssertValidationResult<test::AllowTraits>(Failure_Result, CacheSeed::Empty_Restrictions, address, notification);
@@ -156,8 +158,9 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenAccountIsKnown_Block_Add_RelevantType) {
 		// Arrange:
-		auto address = test::GenerateRandomByteArray<Address>();
-		auto notification = CreateNotification<test::BlockTraits>(address, Add, Relevant_Entity_Type);
+		auto key = test::GenerateRandomByteArray<Key>();
+		auto address = test::ConvertToAddress(key);
+		auto notification = CreateNotification<test::BlockTraits>(key, Add, Relevant_Entity_Type);
 
 		// Act + Assert:
 		AssertValidationResult<test::BlockTraits>(Failure_Result, CacheSeed::Random_Value, address, notification);
@@ -170,7 +173,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SuccessWhenAccountIsUnknown_Allow_Add_RelevantType) {
 		// Arrange:
 		auto seedAddress = test::GenerateRandomByteArray<Address>();
-		auto notificationAddress = test::GenerateRandomByteArray<Address>();
+		auto notificationAddress = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateNotification<test::AllowTraits>(notificationAddress, Add, Relevant_Entity_Type);
 
 		// Act + Assert:
@@ -180,7 +183,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SuccessWhenAccountIsUnknown_Block_Add_NotRelevantType) {
 		// Arrange:
 		auto seedAddress = test::GenerateRandomByteArray<Address>();
-		auto notificationAddress = test::GenerateRandomByteArray<Address>();
+		auto notificationAddress = test::GenerateRandomByteArray<Key>();
 		auto restrictionValue = RandomValue();
 		auto notification = CreateNotification<test::BlockTraits>(notificationAddress, Add, restrictionValue);
 
@@ -190,8 +193,9 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenAccountIsKnown_Allow_Add_RelevantType) {
 		// Arrange:
-		auto address = test::GenerateRandomByteArray<Address>();
-		auto notification = CreateNotification<test::AllowTraits>(address, Add, Relevant_Entity_Type);
+		auto key = test::GenerateRandomByteArray<Key>();
+		auto address = test::ConvertToAddress(key);
+		auto notification = CreateNotification<test::AllowTraits>(key, Add, Relevant_Entity_Type);
 
 		// Act + Assert:
 		AssertValidationResult<test::AllowTraits>(ValidationResult::Success, CacheSeed::Empty_Restrictions, address, notification);
@@ -199,9 +203,10 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenAccountIsKnown_Allow_Add_NotRelevantType_SeededRelevantType) {
 		// Arrange:
-		auto address = test::GenerateRandomByteArray<Address>();
+		auto key = test::GenerateRandomByteArray<Key>();
+		auto address = test::ConvertToAddress(key);
 		auto restrictionValue = RandomValue();
-		auto notification = CreateNotification<test::AllowTraits>(address, Add, restrictionValue);
+		auto notification = CreateNotification<test::AllowTraits>(key, Add, restrictionValue);
 
 		// Act + Assert:
 		AssertValidationResult<test::AllowTraits>(ValidationResult::Success, CacheSeed::Relevant_Value, address, notification);
@@ -209,9 +214,10 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenAccountIsKnown_Block_Add_NotRelevantType) {
 		// Arrange:
-		auto address = test::GenerateRandomByteArray<Address>();
+		auto key = test::GenerateRandomByteArray<Key>();
+		auto address = test::ConvertToAddress(key);
 		auto restrictionValue = RandomValue();
-		auto notification = CreateNotification<test::BlockTraits>(address, Add, restrictionValue);
+		auto notification = CreateNotification<test::BlockTraits>(key, Add, restrictionValue);
 
 		// Act + Assert:
 		AssertValidationResult<test::BlockTraits>(ValidationResult::Success, CacheSeed::Random_Value, address, notification);

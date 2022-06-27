@@ -34,6 +34,9 @@ namespace catapult { namespace state {
 		void AssertDefaultRequiredProperties(const model::MosaicProperties& properties) {
 			EXPECT_FALSE(properties.is(model::MosaicFlags::Supply_Mutable));
 			EXPECT_FALSE(properties.is(model::MosaicFlags::Transferable));
+			EXPECT_FALSE(properties.is(model::MosaicFlags::Restrictable));
+			EXPECT_FALSE(properties.is(model::MosaicFlags::Supply_Force_Immutable));
+			EXPECT_FALSE(properties.is(model::MosaicFlags::Disable_Locking));
 			EXPECT_EQ(0u, properties.divisibility());
 		}
 

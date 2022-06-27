@@ -9,4 +9,5 @@ target_link_libraries(${TARGET_NAME}
 	tests.catapult.test.mongo
 	tests.catapult.test.mongo.plugins.restrictionaccount
 	catapult.mongo.plugins.restrictionaccount
+	tests.catapult.test.plugins.restrictionaccount
 	catapult.plugins.restrictionaccount.deps)

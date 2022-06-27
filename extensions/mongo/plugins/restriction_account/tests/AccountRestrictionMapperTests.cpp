@@ -26,7 +26,7 @@
 #include "plugins/txes/restriction_account/src/model/AccountOperationRestrictionTransaction.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "mongo/tests/test/MapperTestUtils.h"
-#include "mongo/tests/test/MongoTransactionPluginTests.h"
+#include "mongo/tests/test/MongoTransactionPluginTestUtils.h"
 #include "tests/test/AccountRestrictionCacheTestUtils.h"
 #include "tests/TestHarness.h"
 

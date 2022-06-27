@@ -18,8 +18,11 @@
 *** You should have received a copy of the GNU Lesser General Public License
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
-
-#include "MosaicRestrictionTestUtils.h"
+#include "src/config/MosaicRestrictionConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/MosaicRestrictionTestUtils.h"
+#include "catapult/model/Address.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -68,5 +71,33 @@ namespace catapult { namespace test {
 			AssertEqual(expected.asAddressRestriction(), actual.asAddressRestriction());
 		else
 			AssertEqual(expected.asGlobalRestriction(), actual.asGlobalRestriction());
+	}
+
+	std::shared_ptr<config::BlockchainConfigurationHolder> CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier networkIdentifier) {
+		auto pluginConfig = config::MosaicRestrictionConfiguration::Uninitialized();
+		pluginConfig.Enabled = true;
+		pluginConfig.MaxMosaicRestrictionValues = 10;
+		auto networkConfig = model::NetworkConfiguration::Uninitialized();
+		networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+		networkConfig.SetPluginConfiguration(pluginConfig);
+		test::MutableBlockchainConfiguration config;
+		config.Network = networkConfig;
+		config.Immutable.NetworkIdentifier = networkIdentifier;
+		return config::CreateMockConfigurationHolder(config.ToConst());
+	}
+
+	Address ConvertToAddress(const Key& key)
+	{
+		return model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero);
+	}
+
+	std::vector<Address> ConvertToAddress(const std::vector<Key>& keys)
+	{
+		std::vector<Address> result;
+		for(auto& key : keys)
+		{
+			result.push_back(model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero));
+		}
+		return result;
 	}
 }}

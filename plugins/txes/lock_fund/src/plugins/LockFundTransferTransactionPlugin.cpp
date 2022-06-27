@@ -14,6 +14,7 @@ using namespace catapult::model;
 namespace catapult { namespace plugins {
 
 	namespace {
+		constexpr uint8_t Mosaic_Flags_Lockable = 0x10;
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
@@ -23,6 +24,7 @@ namespace catapult { namespace plugins {
 				std::vector<UnresolvedMosaic> mosaics;
 				for (auto i = 0u; i < transaction.MosaicsCount; ++i) {
 					mosaics.push_back(pMosaics[i]);
+					sub.notify(MosaicRequiredNotification<2>(transaction.Signer, pMosaics[i].MosaicId, MosaicRequirementAction::Unset,  Mosaic_Flags_Lockable));
 				}
 				sub.notify(LockFundTransferNotification<1>(transaction.Signer, transaction.Duration, mosaics, transaction.Action));
 				break;

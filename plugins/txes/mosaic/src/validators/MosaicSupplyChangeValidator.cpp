@@ -22,20 +22,23 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MosaicSupplyChangeNotification<1>;
-
 	namespace {
 		constexpr bool IsValidDirection(model::MosaicSupplyChangeDirection direction) {
 			return direction <= model::MosaicSupplyChangeDirection::Increase;
 		}
+		template<typename TNotification>
+		ValidationResult CommonValidate(const TNotification& notification)
+		{
+			if (!IsValidDirection(notification.Direction))
+				return Failure_Mosaic_Invalid_Supply_Change_Direction;
+
+			return Amount() == notification.Delta
+				   ? Failure_Mosaic_Invalid_Supply_Change_Amount
+				   : ValidationResult::Success;
+		}
 	}
 
-	DEFINE_STATELESS_VALIDATOR(MosaicSupplyChange, [](const auto& notification) {
-		if (!IsValidDirection(notification.Direction))
-			return Failure_Mosaic_Invalid_Supply_Change_Direction;
+	DEFINE_STATELESS_VALIDATOR_WITH_TYPE(MosaicSupplyChangeV1, model::MosaicSupplyChangeNotification<1>, CommonValidate<model::MosaicSupplyChangeNotification<1>>);
 
-		return Amount() == notification.Delta
-				? Failure_Mosaic_Invalid_Supply_Change_Amount
-				: ValidationResult::Success;
-	});
+	DEFINE_STATELESS_VALIDATOR_WITH_TYPE(MosaicSupplyChangeV2, model::MosaicSupplyChangeNotification<2>, CommonValidate<model::MosaicSupplyChangeNotification<2>>);
 }}

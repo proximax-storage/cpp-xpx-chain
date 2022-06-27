@@ -89,7 +89,8 @@ namespace catapult { namespace plugins {
 		manager.addStatelessValidatorHook([networkIdentifier](auto& builder) {
 			builder
 				.add(validators::CreateNetworkValidator(networkIdentifier))
-				.add(validators::CreateTransactionFeeValidator());
+				.add(validators::CreateTransactionFeeValidator())
+				.add(validators::CreateZeroInternalPaddingValidator());
 		});
 
 		manager.addStatefulValidatorHook([networkIdentifier](auto& builder) {

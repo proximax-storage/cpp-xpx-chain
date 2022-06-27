@@ -57,15 +57,19 @@ namespace catapult { namespace validators {
 		});
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChange, model::MosaicSupplyChangeNotification<1>)() {
-		using ValidatorType = stateful::FunctionalNotificationValidatorT<model::MosaicSupplyChangeNotification<1>>;
-		auto name = "MaxMosaicsSupplyChangeValidator";
-		return std::make_unique<ValidatorType>(name, [](const auto& notification, const auto& context) {
+	namespace {
+		template<typename TNotification>
+		ValidationResult CommonValidate(const TNotification& notification, const ValidatorContext& context)
+		{
 			if (model::MosaicSupplyChangeDirection::Decrease == notification.Direction)
 				return ValidationResult::Success;
 
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MosaicConfiguration>();
 			return CheckAccount(pluginConfig.MaxMosaicsPerAccount, context.Resolvers.resolve(notification.MosaicId), notification.Signer, context);
-		});
+		}
 	}
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(MaxMosaicsSupplyChangeV1, model::MosaicSupplyChangeNotification<1>, CommonValidate<model::MosaicSupplyChangeNotification<1>>);
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(MaxMosaicsSupplyChangeV2, model::MosaicSupplyChangeNotification<2>, CommonValidate<model::MosaicSupplyChangeNotification<2>>);
 }}

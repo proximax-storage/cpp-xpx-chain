@@ -101,14 +101,14 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = RestrictionAccount_Notification_Type;
 
 	public:
-		/// Creates a notification around \a address, \a restrictionFlags, \a restrictionValue and \a action.
+		/// Creates a notification around \a signer, \a restrictionFlags, \a restrictionValue and \a action.
 		ModifyAccountRestrictionValueNotification(
-				const Address& address,
+				const Key& signer,
 				AccountRestrictionFlags restrictionFlags,
 				const TRestrictionValue& restrictionValue,
 				AccountRestrictionModificationAction action)
 				: Notification(Notification_Type, sizeof(ModifyAccountRestrictionValueNotification))
-				, Address(address)
+				, Signer(signer)
 				, AccountRestrictionDescriptor(restrictionFlags)
 				, RestrictionValue(restrictionValue)
 				, Action(action)
@@ -116,7 +116,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Account's address.
-		catapult::Address Address;
+		Key Signer;
 
 		/// Account restriction descriptor.
 		state::AccountRestrictionDescriptor AccountRestrictionDescriptor;
@@ -150,14 +150,14 @@ namespace catapult { namespace model {
 		/// Creates a notification around \a address, \a restrictionFlags, \a restrictionAdditionsCount, \a pRestrictionAdditions,
 		/// \a restrictionDeletionsCount and \a pRestrictionDeletions.
 		ModifyAccountRestrictionsNotification(
-				const Address& address,
+				const Key& signer,
 				AccountRestrictionFlags restrictionFlags,
 				uint8_t restrictionAdditionsCount,
 				const TRestrictionValue* pRestrictionAdditions,
 				uint8_t restrictionDeletionsCount,
 				const TRestrictionValue* pRestrictionDeletions)
 				: Notification(Notification_Type, sizeof(ModifyAccountRestrictionsNotification))
-				, Address(address)
+				, Signer(signer)
 				, AccountRestrictionDescriptor(restrictionFlags)
 				, RestrictionAdditionsCount(restrictionAdditionsCount)
 				, RestrictionAdditionsPtr(pRestrictionAdditions)
@@ -167,7 +167,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Account's address.
-		catapult::Address Address;
+		Key Signer;
 
 		/// Account restriction descriptor.
 		state::AccountRestrictionDescriptor AccountRestrictionDescriptor;

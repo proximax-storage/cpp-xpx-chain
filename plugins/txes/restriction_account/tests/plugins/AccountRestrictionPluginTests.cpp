@@ -19,6 +19,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "src/plugins/AccountRestrictionPlugin.h"
 #include "src/model/AccountRestrictionEntityType.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
@@ -33,15 +34,16 @@ namespace catapult { namespace plugins {
 			template<typename TAction>
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
-				auto config = model::BlockChainConfiguration::Uninitialized();
-				config.Plugins.emplace("catapult.plugins.restrictionaccount", utils::ConfigurationBag({{
+				test::MutableBlockchainConfiguration config;
+				config.Network.Plugins.emplace("catapult.plugins.restrictionaccount", utils::ConfigurationBag({{
 					"",
 					{
+						{"enabled", "false"},
 						{ "maxAccountRestrictionValues", "10" }
 					}
 				}}));
 
-				auto manager = test::CreatePluginManager(config);
+				auto manager = test::CreatePluginManager(config.ToConst().Network);
 				RegisterAccountRestrictionSubsystem(manager);
 
 				// Act:
@@ -82,22 +84,23 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
-				return {
-					"AccountAddressRestrictionRedundantModificationValidator",
-					"AccountAddressRestrictionValueModificationValidator",
-					"MaxAccountAddressRestrictionValuesValidator",
+				return
+				{
 					"AddressInteractionValidator",
-					"AccountAddressRestrictionNoSelfModificationValidator",
-
+					"AccountAddressRestrictionRedundantModificationValidator",
+					"MaxAccountAddressRestrictionValuesValidator",
 					"AccountMosaicRestrictionRedundantModificationValidator",
-					"AccountMosaicRestrictionValueModificationValidator",
 					"MaxAccountMosaicRestrictionValuesValidator",
-					"MosaicRecipientValidator",
 
 					"AccountOperationRestrictionRedundantModificationValidator",
-					"AccountOperationRestrictionValueModificationValidator",
 					"MaxAccountOperationRestrictionValuesValidator",
+					"MosaicRecipientValidator",
 					"OperationRestrictionValidator",
+
+					"AccountAddressRestrictionValueModificationValidator",
+					"AccountAddressRestrictionNoSelfModificationValidator",
+					"AccountMosaicRestrictionValueModificationValidator",
+					"AccountOperationRestrictionValueModificationValidator",
 					"AccountOperationRestrictionNoSelfBlockingValidator"
 				};
 			}

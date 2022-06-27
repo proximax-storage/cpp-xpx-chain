@@ -56,7 +56,7 @@ namespace catapult { namespace validators {
 				return Failure_RestrictionAccount_Redundant_Modification;
 
 			const auto& cache = context.Cache.sub<cache::AccountRestrictionCache>();
-			return modificationsInfo.HasDeleteModification && !cache.contains(notification.Address)
+			return modificationsInfo.HasDeleteModification && !cache.contains(model::PublicKeyToAddress(notification.Signer, context.NetworkIdentifier))
 					? Failure_RestrictionAccount_Invalid_Modification
 					: ValidationResult::Success;
 		}

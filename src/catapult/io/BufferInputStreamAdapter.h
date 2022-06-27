@@ -47,6 +47,15 @@ namespace catapult { namespace io {
 			return m_position == input.Size;
 		}
 
+		void seek(uint64_t position) {
+			if (position > m_input.size()) {
+				std::ostringstream out;
+				out << "BufferInputStreamAdapter invalid seek (seek-position = " << position << ", stream-size = " << m_input.size() << ")";
+				CATAPULT_THROW_FILE_IO_ERROR(out.str().c_str());
+			}
+
+			m_position = position;
+		}
 		void read(const MutableRawBuffer& buffer) override {
 			RawBuffer input(m_input);
 			if (buffer.Size + m_position > input.Size) {

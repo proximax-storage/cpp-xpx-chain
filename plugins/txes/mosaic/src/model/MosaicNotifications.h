@@ -34,6 +34,9 @@ namespace catapult { namespace model {
 	/// Mosaic properties were provided.
 	DEFINE_MOSAIC_NOTIFICATION(Properties_v1, 0x0012, Validator);
 
+	/// Mosaic properties were provided.
+	DEFINE_MOSAIC_NOTIFICATION(Properties_v2, 0x0015, Validator);
+
 	/// Mosaic was defined.
 	DEFINE_MOSAIC_NOTIFICATION(Definition_v1, 0x0013, All);
 
@@ -82,6 +85,28 @@ namespace catapult { namespace model {
 		const MosaicProperty* PropertiesPtr;
 	};
 
+	template<>
+	struct MosaicPropertiesNotification<2> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Mosaic_Properties_v2_Notification;
+
+	public:
+		/// Creates a notification around \a propertiesHeader and \a pProperties.
+		explicit MosaicPropertiesNotification(const MosaicPropertiesHeader& propertiesHeader, const MosaicProperty* pProperties)
+				: Notification(Notification_Type, sizeof(MosaicPropertiesNotification<2>))
+				, PropertiesHeader(propertiesHeader)
+				, PropertiesPtr(pProperties)
+		{}
+
+	public:
+		/// Mosaic properties header.
+		const MosaicPropertiesHeader& PropertiesHeader;
+
+		/// Const pointer to the optional properties.
+		const MosaicProperty* PropertiesPtr;
+	};
+
 	/// Notification of a mosaic definition.
 	template<VersionType version>
 	struct MosaicDefinitionNotification;
@@ -111,6 +136,7 @@ namespace catapult { namespace model {
 		/// Mosaic properties.
 		MosaicProperties Properties;
 	};
+
 
 	/// Notification of a mosaic nonce and id.
 	template<VersionType version>

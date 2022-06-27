@@ -21,6 +21,7 @@
 
 #pragma once
 #include <stdint.h>
+#include "catapult/model/PluginConfiguration.h"
 #include "catapult/config/ConfigConstants.h"
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
@@ -28,7 +29,7 @@ namespace catapult { namespace utils { class ConfigurationBag; } }
 namespace catapult { namespace config {
 
 	/// Mosaic restriction plugin configuration settings.
-	struct MosaicRestrictionConfiguration {
+	struct MosaicRestrictionConfiguration : public model::PluginConfiguration  {
 	public:
 		DEFINE_CONFIG_CONSTANTS(restrictionaccount)
 	public:

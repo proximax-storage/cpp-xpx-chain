@@ -31,11 +31,30 @@ namespace catapult { namespace observers {
 
 	using ObserverTestContext = test::ObserverTestContextT<test::MosaicCacheFactory>;
 
-	DEFINE_COMMON_OBSERVER_TESTS(MosaicSupplyChange,)
+	DEFINE_COMMON_OBSERVER_TESTS(MosaicSupplyChangeV1,)
+	DEFINE_COMMON_OBSERVER_TESTS(MosaicSupplyChangeV2,)
 
 	namespace {
 		constexpr MosaicId Default_Mosaic_Id(345);
 
+		struct V1TestTraits
+		{
+			using Notification = model::MosaicSupplyChangeNotification<1>;
+			static auto Create(){
+				return CreateMosaicSupplyChangeV1Observer();
+			}
+		};
+
+		struct V2TestTraits
+		{
+			using Notification = model::MosaicSupplyChangeNotification<2>;
+			static auto Create(){
+				return CreateMosaicSupplyChangeV2Observer();
+			}
+		};
+
+
+		template<typename TTestTraits>
 		void AssertSupplyChange(
 				model::MosaicSupplyChangeDirection direction,
 				NotifyMode mode,
@@ -45,10 +64,10 @@ namespace catapult { namespace observers {
 				Amount finalSupply,
 				Amount finalOwnerSupply) {
 			// Arrange: create observer and notification
-			auto pObserver = CreateMosaicSupplyChangeObserver();
+			auto pObserver = TTestTraits::Create();
 
 			auto signer = test::GenerateRandomByteArray<Key>();
-			model::MosaicSupplyChangeNotification<1> notification(signer, test::UnresolveXor(Default_Mosaic_Id), direction, delta);
+			typename TTestTraits::Notification notification(signer, test::UnresolveXor(Default_Mosaic_Id), direction, delta);
 
 			// - initialize cache with a mosaic supply
 			ObserverTestContext context(mode, Height(888));
@@ -67,34 +86,43 @@ namespace catapult { namespace observers {
 			EXPECT_EQ(finalOwnerSupply, accountStateCacheDelta.find(signerAddress).get().Balances.get(Default_Mosaic_Id));
 		}
 
+		template<typename TTestTraits>
 		void AssertSupplyIncrease(model::MosaicSupplyChangeDirection direction, NotifyMode mode) {
 			// Assert:
-			AssertSupplyChange(direction, mode, Amount(500), Amount(222), Amount(123), Amount(500 + 123), Amount(222 + 123));
+			AssertSupplyChange<TTestTraits>(direction, mode, Amount(500), Amount(222), Amount(123), Amount(500 + 123), Amount(222 + 123));
 		}
 
+		template<typename TTestTraits>
 		void AssertSupplyDecrease(model::MosaicSupplyChangeDirection direction, NotifyMode mode) {
 			// Assert:
-			AssertSupplyChange(direction, mode, Amount(500), Amount(222), Amount(123), Amount(500 - 123), Amount(222 - 123));
+			AssertSupplyChange<TTestTraits>(direction, mode, Amount(500), Amount(222), Amount(123), Amount(500 - 123), Amount(222 - 123));
 		}
 	}
+#define TRAITS_BASED_TEST(TEST_CLASS, TEST_NAME) \
+    template<typename TTestTraits>                                 \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V1TestTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V2TestTraits>(); } \
+    template<typename TTestTraits>                                 \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
-	TEST(TEST_CLASS, IncreaseCommitIncreasesSupply) {
+	TRAITS_BASED_TEST(TEST_CLASS, IncreaseCommitIncreasesSupply) {
 		// Assert:
-		AssertSupplyIncrease(model::MosaicSupplyChangeDirection::Increase, NotifyMode::Commit);
+		AssertSupplyIncrease<TTestTraits>(model::MosaicSupplyChangeDirection::Increase, NotifyMode::Commit);
 	}
 
-	TEST(TEST_CLASS, DecreaseCommitDecreasesSupply) {
+	TRAITS_BASED_TEST(TEST_CLASS, DecreaseCommitDecreasesSupply) {
 		// Assert:
-		AssertSupplyDecrease(model::MosaicSupplyChangeDirection::Decrease, NotifyMode::Commit);
+		AssertSupplyDecrease<TTestTraits>(model::MosaicSupplyChangeDirection::Decrease, NotifyMode::Commit);
 	}
 
-	TEST(TEST_CLASS, IncreaseRollbackDecreasesSupply) {
+	TRAITS_BASED_TEST(TEST_CLASS, IncreaseRollbackDecreasesSupply) {
 		// Assert:
-		AssertSupplyDecrease(model::MosaicSupplyChangeDirection::Increase, NotifyMode::Rollback);
+		AssertSupplyDecrease<TTestTraits>(model::MosaicSupplyChangeDirection::Increase, NotifyMode::Rollback);
 	}
 
-	TEST(TEST_CLASS, DecreaseRollbackIncreasesSupply) {
+	TRAITS_BASED_TEST(TEST_CLASS, DecreaseRollbackIncreasesSupply) {
 		// Assert:
-		AssertSupplyIncrease(model::MosaicSupplyChangeDirection::Decrease, NotifyMode::Rollback);
+		AssertSupplyIncrease<TTestTraits>(model::MosaicSupplyChangeDirection::Decrease, NotifyMode::Rollback);
 	}
 }}

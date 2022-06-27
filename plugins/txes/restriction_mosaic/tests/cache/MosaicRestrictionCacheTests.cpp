@@ -35,7 +35,7 @@ namespace catapult { namespace cache {
 		struct MosaicRestrictionCacheMixinTraits {
 			class CacheType : public MosaicRestrictionCache {
 			public:
-				CacheType() : MosaicRestrictionCache(CacheConfiguration(), model::NetworkIdentifier::Zero)
+				CacheType() : MosaicRestrictionCache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder())
 				{}
 			};
 
@@ -91,12 +91,12 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheWrappersExposeNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(18);
-		MosaicRestrictionCache cache(CacheConfiguration(), networkIdentifier);
+		MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(networkIdentifier));
 
 		// Act + Assert:
-		EXPECT_EQ(networkIdentifier, cache.createView()->networkIdentifier());
-		EXPECT_EQ(networkIdentifier, cache.createDelta()->networkIdentifier());
-		EXPECT_EQ(networkIdentifier, cache.createDetachedDelta().tryLock()->networkIdentifier());
+		EXPECT_EQ(networkIdentifier, cache.createView(Height())->networkIdentifier());
+		EXPECT_EQ(networkIdentifier, cache.createDelta(Height())->networkIdentifier());
+		EXPECT_EQ(networkIdentifier, cache.createDetachedDelta(Height()).tryLock()->networkIdentifier());
 	}
 
 	// endregion

@@ -60,15 +60,17 @@ namespace catapult { namespace validators {
 		template<typename TRestrictionValueTraits, typename TModificationsFactory>
 		void AssertValidationResult(ValidationResult expectedResult, CacheSeed cacheSeed, TModificationsFactory modificationsFactory) {
 			// Arrange:
+			auto key = test::GenerateRandomByteArray<Key>();
+			auto address = test::ConvertToAddress(key);
 			auto values = test::GenerateUniqueRandomDataVector<typename TRestrictionValueTraits::UnresolvedValueType>(5);
 			auto modifications = modificationsFactory(values);
 			auto notification = test::CreateAccountRestrictionsNotification<TRestrictionValueTraits>(
-					test::GenerateRandomByteArray<Address>(),
+					key,
 					modifications.first,
 					modifications.second);
 			auto cache = test::AccountRestrictionCacheFactory::Create();
 			if (CacheSeed::Yes == cacheSeed) {
-				auto restrictions = state::AccountRestrictions(notification.Address);
+				auto restrictions = state::AccountRestrictions(address);
 				restrictions.restriction(TRestrictionValueTraits::Restriction_Flags).allow({
 					model::AccountRestrictionModificationAction::Add,
 					state::ToVector(values[1])

@@ -108,22 +108,22 @@ namespace catapult { namespace validators {
 	namespace {
 		template<typename TRestrictionValueTraits, typename TOperationTraits>
 		auto CreateNotification(
-				const Address& address,
+				const Key& key,
 				const typename TRestrictionValueTraits::UnresolvedValueType& restrictionValue,
 				model::AccountRestrictionModificationAction action) {
 			return test::CreateAccountRestrictionValueNotification<TRestrictionValueTraits, TOperationTraits>(
-					address,
+					key,
 					restrictionValue,
 					action);
 		}
 
 		template<typename TRestrictionValueTraits, typename TOperationTraits>
 		auto CreateNotificationWithRandomAddress(
-				const Address&,
+				const Key&,
 				const typename TRestrictionValueTraits::UnresolvedValueType& restrictionValue,
 				model::AccountRestrictionModificationAction action) {
 			return CreateNotification<TRestrictionValueTraits, TOperationTraits>(
-					test::GenerateRandomByteArray<Address>(),
+					test::GenerateRandomByteArray<Key>(),
 					restrictionValue,
 					action);
 		}
@@ -136,13 +136,14 @@ namespace catapult { namespace validators {
 				TModificationFactory modificationFactory) {
 			// Arrange:
 			auto cache = test::AccountRestrictionCacheFactory::Create();
-			auto address = test::GenerateRandomByteArray<Address>();
+			auto key = test::GenerateRandomByteArray<Key>();
+			auto address = test::ConvertToAddress(key);
 			auto values = test::GenerateUniqueRandomDataVector<typename TRestrictionValueTraits::ValueType>(numValues);
 			test::PopulateCache<TRestrictionValueTraits, TOperationTraits>(cache, address, values);
 			auto modification = modificationFactory(values);
 
 			// Act:
-			auto notification = createNotification(address, modification.second, modification.first);
+			auto notification = createNotification(key, modification.second, modification.first);
 			RunValidator<TRestrictionValueTraits>(expectedResult, cache, notification);
 		}
 	}
@@ -190,11 +191,11 @@ namespace catapult { namespace validators {
 	namespace {
 		template<typename TRestrictionValueTraits, typename TOperationTraits>
 		auto CreateOppositeOperationAccountRestrictionValueNotification(
-				const Address& address,
+				const Key& key,
 				const typename TRestrictionValueTraits::UnresolvedValueType& restrictionValue,
 				model::AccountRestrictionModificationAction action) {
 			return typename TRestrictionValueTraits::NotificationType(
-					address,
+					key,
 					TOperationTraits::OppositeCompleteAccountRestrictionFlags(TRestrictionValueTraits::Restriction_Flags),
 					restrictionValue,
 					action);

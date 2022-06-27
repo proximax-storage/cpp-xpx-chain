@@ -35,10 +35,6 @@ namespace catapult { namespace validators {
 	/// - mosaic exists and is active
 	/// - mosaic owner matches requesting signer
 	DECLARE_STATEFUL_VALIDATOR(ProperMosaicV1, model::MosaicRequiredNotification<1>)();
-
-	/// A validator implementation that applies to mosaic required notifications and validates that:
-	/// - mosaic exists and is active
-	/// - mosaic owner matches requesting signer
 	/// - necessary flags are set
 	DECLARE_STATEFUL_VALIDATOR(ProperMosaicV2, model::MosaicRequiredNotification<2>)();
 
@@ -51,7 +47,8 @@ namespace catapult { namespace validators {
 	/// - definition has divisibility no greater than \a maxDivisibility
 	/// - mosaic duration has a value not larger than \a maxMosaicDuration
 	/// - optional mosaic properties are sorted, known and not duplicative
-	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, model::MosaicPropertiesNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(MosaicPropertiesV1, model::MosaicPropertiesNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(MosaicPropertiesV2, model::MosaicPropertiesNotification<2>)();
 
 	/// A validator implementation that applies to mosaic nonce notifications and validates that:
 	/// - mosaic id is the expected id generated from signer and nonce
@@ -72,7 +69,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - direction has a valid value
 	/// - delta amount is non-zero
-	DECLARE_STATELESS_VALIDATOR(MosaicSupplyChange, model::MosaicSupplyChangeNotification<1>)();
+	DECLARE_STATELESS_VALIDATOR(MosaicSupplyChangeV1, model::MosaicSupplyChangeNotification<1>)();
+	DECLARE_STATELESS_VALIDATOR(MosaicSupplyChangeV2, model::MosaicSupplyChangeNotification<2>)();
 
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - transferred mosaic is active and is transferable
@@ -84,14 +82,13 @@ namespace catapult { namespace validators {
 	/// - decrease does not cause owner amount to become negative
 	/// - increase does not cause total atomic units to exceed max atomic units
 	/// \note This validator is dependent on MosaicChangeAllowedValidator.
-	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, model::MosaicSupplyChangeNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowedV1, model::MosaicSupplyChangeNotification<1>)();
+	/// - supply forever immutable flag is not set
+	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowedV2, model::MosaicSupplyChangeNotification<2>)();
 
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - the account changing the supply does not exceed the maximum number of mosaics (\a maxMosaics) an account is allowed to own
 	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChangeV1, model::MosaicSupplyChangeNotification<1>)();
-
-	/// A validator implementation that applies to mosaic supply change notifications and validates that:
-	/// - the account changing the supply does not exceed the maximum number of mosaics (\a maxMosaics) an account is allowed to own
 	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChangeV2, model::MosaicSupplyChangeNotification<2>)();
 
 	// endregion

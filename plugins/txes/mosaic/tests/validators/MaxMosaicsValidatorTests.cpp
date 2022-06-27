@@ -31,7 +31,8 @@
 namespace catapult { namespace validators {
 
 	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsBalanceTransfer)
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChange)
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChangeV1)
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChangeV2)
 
 #define BALANCE_TRANSFER_TEST_CLASS BalanceTransferMaxMosaicsValidatorTests
 #define SUPPLY_CHANGE_TEST_CLASS SupplyChangeMaxMosaicsValidatorTests
@@ -80,6 +81,22 @@ namespace catapult { namespace validators {
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "maxMosaics " << maxMosaics << ", mosaicId " << mosaicId << ", amount " << amount;
 		}
+		struct V1TestTraits
+		{
+			using Notification = model::MosaicSupplyChangeNotification<1>;
+			static stateful::NotificationValidatorPointerT<Notification> Create(){
+				return CreateMaxMosaicsSupplyChangeV1Validator();
+			}
+		};
+
+		struct V2TestTraits
+		{
+			using Notification = model::MosaicSupplyChangeNotification<2>;
+			static stateful::NotificationValidatorPointerT<Notification> Create(){
+				return CreateMaxMosaicsSupplyChangeV2Validator();
+			}
+		};
+
 	}
 
 	TEST(BALANCE_TRANSFER_TEST_CLASS, FailureWhenMaximumIsExceeded) {
@@ -106,7 +123,16 @@ namespace catapult { namespace validators {
 		RunBalanceTransferTest(ValidationResult::Success, 123, test::UnresolveXor(MosaicId(6)), Amount(100));
 	}
 
+#define TRAITS_BASED_TEST(TEST_CLASS, TEST_NAME) \
+    template<typename TTestTraits>                                 \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V1TestTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V2TestTraits>(); } \
+    template<typename TTestTraits>                                 \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
 	namespace {
+		template<typename TTestTraits>
 		void RunMosaicSupplyTest(
 				ValidationResult expectedResult,
 				uint16_t maxMosaics,
@@ -118,8 +144,8 @@ namespace catapult { namespace validators {
 
 			auto config = CreateConfig(maxMosaics);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateMaxMosaicsSupplyChangeValidator();
-			auto notification = model::MosaicSupplyChangeNotification<1>(owner, mosaicId, direction, Amount(100));
+			auto pValidator = TTestTraits::Create();
+			auto notification = typename TTestTraits::Notification(owner, mosaicId, direction, Amount(100));
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, pConfigHolder->Config());
@@ -132,31 +158,31 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(SUPPLY_CHANGE_TEST_CLASS, FailureWhenMaximumIsExceeded) {
+	TRAITS_BASED_TEST(SUPPLY_CHANGE_TEST_CLASS, FailureWhenMaximumIsExceeded) {
 		// Act: account in test already owns 5 mosaics with ids 1 to 5
 		auto direction = model::MosaicSupplyChangeDirection::Increase;
-		RunMosaicSupplyTest(Failure_Mosaic_Max_Mosaics_Exceeded, 1, test::UnresolveXor(MosaicId(6)), direction);
-		RunMosaicSupplyTest(Failure_Mosaic_Max_Mosaics_Exceeded, 4, test::UnresolveXor(MosaicId(6)), direction);
-		RunMosaicSupplyTest(Failure_Mosaic_Max_Mosaics_Exceeded, 5, test::UnresolveXor(MosaicId(6)), direction);
+		RunMosaicSupplyTest<TTestTraits>(Failure_Mosaic_Max_Mosaics_Exceeded, 1, test::UnresolveXor(MosaicId(6)), direction);
+		RunMosaicSupplyTest<TTestTraits>(Failure_Mosaic_Max_Mosaics_Exceeded, 4, test::UnresolveXor(MosaicId(6)), direction);
+		RunMosaicSupplyTest<TTestTraits>(Failure_Mosaic_Max_Mosaics_Exceeded, 5, test::UnresolveXor(MosaicId(6)), direction);
 	}
 
-	TEST(SUPPLY_CHANGE_TEST_CLASS, SuccessWhenSupplyIsDecreased) {
+	TRAITS_BASED_TEST(SUPPLY_CHANGE_TEST_CLASS, SuccessWhenSupplyIsDecreased) {
 		// Act: account in test already owns 5 mosaics with ids 1 to 5
 		auto direction = model::MosaicSupplyChangeDirection::Decrease;
-		RunMosaicSupplyTest(ValidationResult::Success, 5, test::UnresolveXor(MosaicId(6)), direction);
+		RunMosaicSupplyTest<TTestTraits>(ValidationResult::Success, 5, test::UnresolveXor(MosaicId(6)), direction);
 	}
 
-	TEST(SUPPLY_CHANGE_TEST_CLASS, SuccessWhenAccountAlreadyOwnsThatMosaic) {
+	TRAITS_BASED_TEST(SUPPLY_CHANGE_TEST_CLASS, SuccessWhenAccountAlreadyOwnsThatMosaic) {
 		// Act: account in test already owns 5 mosaics with ids 1 to 5
 		auto direction = model::MosaicSupplyChangeDirection::Increase;
-		RunMosaicSupplyTest(ValidationResult::Success, 5, test::UnresolveXor(MosaicId(3)), direction);
+		RunMosaicSupplyTest<TTestTraits>(ValidationResult::Success, 5, test::UnresolveXor(MosaicId(3)), direction);
 	}
 
-	TEST(SUPPLY_CHANGE_TEST_CLASS, SuccessWhenMaximumIsNotExceeded) {
+	TRAITS_BASED_TEST(SUPPLY_CHANGE_TEST_CLASS, SuccessWhenMaximumIsNotExceeded) {
 		// Act: account in test already owns 5 mosaics with ids 1 to 5
 		auto direction = model::MosaicSupplyChangeDirection::Increase;
-		RunMosaicSupplyTest(ValidationResult::Success, 6, test::UnresolveXor(MosaicId(6)), direction);
-		RunMosaicSupplyTest(ValidationResult::Success, 10, test::UnresolveXor(MosaicId(6)), direction);
-		RunMosaicSupplyTest(ValidationResult::Success, 123, test::UnresolveXor(MosaicId(6)), direction);
+		RunMosaicSupplyTest<TTestTraits>(ValidationResult::Success, 6, test::UnresolveXor(MosaicId(6)), direction);
+		RunMosaicSupplyTest<TTestTraits>(ValidationResult::Success, 10, test::UnresolveXor(MosaicId(6)), direction);
+		RunMosaicSupplyTest<TTestTraits>(ValidationResult::Success, 123, test::UnresolveXor(MosaicId(6)), direction);
 	}
 }}

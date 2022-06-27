@@ -21,6 +21,7 @@
 
 #include "src/validators/Validators.h"
 #include "tests/test/MosaicRestrictionCacheTestUtils.h"
+#include "tests/test/MosaicRestrictionTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -40,24 +41,24 @@ namespace catapult { namespace validators {
 		struct TransferSenderTraits {
 			static constexpr auto CreateValidator = CreateMosaicRestrictionBalanceTransferValidator;
 
-			static auto CreateNotification(const Address& address1, const Address& address2) {
-				return model::BalanceTransferNotification(address1, test::UnresolveXor(address2), UnresolvedMosaicId(), Amount());
+			static auto CreateNotification(const Key& address1, const Key& address2) {
+				return model::BalanceTransferNotification<1>(address1, test::UnresolveXor(test::ConvertToAddress(address2)), UnresolvedMosaicId(), Amount());
 			}
 		};
 
 		struct TransferRecipientTraits {
 			static constexpr auto CreateValidator = CreateMosaicRestrictionBalanceTransferValidator;
 
-			static auto CreateNotification(const Address& address1, const Address& address2) {
-				return model::BalanceTransferNotification(address2, test::UnresolveXor(address1), UnresolvedMosaicId(), Amount());
+			static auto CreateNotification(const Key& address1, const Key& address2) {
+				return model::BalanceTransferNotification<1>(address2, test::UnresolveXor(test::ConvertToAddress(address1)), UnresolvedMosaicId(), Amount());
 			}
 		};
 
 		struct DebitSenderTraits {
 			static constexpr auto CreateValidator = CreateMosaicRestrictionBalanceDebitValidator;
 
-			static auto CreateNotification(const Address& address1, const Address&) {
-				return model::BalanceDebitNotification(address1, UnresolvedMosaicId(), Amount());
+			static auto CreateNotification(const Key& address1, const Key&) {
+				return model::BalanceDebitNotification<1>(address1, UnresolvedMosaicId(), Amount());
 			}
 		};
 	}
@@ -116,11 +117,11 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto pValidator = TTraits::CreateValidator();
 
-			auto address1 = test::GenerateRandomByteArray<Address>();
-			auto address2 = test::GenerateRandomByteArray<Address>();
+			auto address1 = test::GenerateRandomByteArray<Key>();
+			auto address2 = test::GenerateRandomByteArray<Key>();
 			auto notification = TTraits::CreateNotification(address1, address2);
 			notification.MosaicId = test::UnresolveXor(mosaicId);
-			notification.Amount = Amount(100);
+			notification.Amount = UnresolvedAmount(100);
 
 			auto cache = test::MosaicRestrictionCacheFactory::Create(Network_Identifier);
 			{
@@ -147,28 +148,28 @@ namespace catapult { namespace validators {
 	ACCOUNT_BASED_TEST(FailureWhenInvalidMosaicRulesAreConfigured) {
 		auto expectedResult = Failure_RestrictionMosaic_Invalid_Global_Restriction;
 		RunTest<TTraits>(expectedResult, Mosaic_Id_Invalid_Rule, [](auto& cache, const auto& address1, const auto& address2) {
-			SeedCacheForTests(cache, { address1, address2 }, {});
+			SeedCacheForTests(cache, { test::ConvertToAddress(address1), test::ConvertToAddress(address2) }, {});
 		});
 	}
 
 	ACCOUNT_BASED_TEST(FailureWhenValidMosaicRulesAreConfiguredButOneAccountIsUnauthorizedDueToInvalidValues) {
 		auto expectedResult = Failure_RestrictionMosaic_Account_Unauthorized;
 		RunTest<TTraits>(expectedResult, Mosaic_Id_Valid_Rule, [](auto& cache, const auto& address1, const auto& address2) {
-			SeedCacheForTests(cache, { address2 }, { address1 });
+			SeedCacheForTests(cache, { test::ConvertToAddress(address2) }, { test::ConvertToAddress(address1) });
 		});
 	}
 
 	ACCOUNT_BASED_TEST(FailureWhenValidMosaicRulesAreConfiguredButOneAccountIsUnauthorizedDueToUnsetValues) {
 		auto expectedResult = Failure_RestrictionMosaic_Account_Unauthorized;
 		RunTest<TTraits>(expectedResult, Mosaic_Id_Valid_Rule, [](auto& cache, const auto&, const auto& address2) {
-			SeedCacheForTests(cache, { address2 }, {});
+			SeedCacheForTests(cache, { test::ConvertToAddress(address2) }, {});
 		});
 	}
 
 	ACCOUNT_BASED_TEST(SuccessWhenValidMosaicRulesAreConfiguredAndAllAccountsAreAuthorized) {
 		auto expectedResult = ValidationResult::Success;
 		RunTest<TTraits>(expectedResult, Mosaic_Id_Valid_Rule, [](auto& cache, const auto& address1, const auto& address2) {
-			SeedCacheForTests(cache, { address1, address2 }, {});
+			SeedCacheForTests(cache, { test::ConvertToAddress(address1), test::ConvertToAddress(address2) }, {});
 		});
 	}
 

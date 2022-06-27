@@ -22,7 +22,8 @@
 #pragma once
 #include "src/cache/MosaicRestrictionCache.h"
 #include "src/cache/MosaicRestrictionCacheStorage.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "tests/test/MosaicRestrictionTestUtils.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 
 namespace catapult { namespace test {
@@ -34,14 +35,14 @@ namespace catapult { namespace test {
 		static cache::CatapultCache Create(model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Zero) {
 			auto cacheId = cache::MosaicRestrictionCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			subCaches[cacheId] = MakeSubCachePlugin<cache::MosaicRestrictionCache, cache::MosaicRestrictionCacheStorage>(
-					networkIdentifier);
+			subCaches[cacheId] = MakeSubCachePlugin<cache::MosaicRestrictionCache, cache::MosaicRestrictionCacheStorage>(test::CreateMosaicRestrictionConfigHolder(networkIdentifier)
+					);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::BlockChainConfiguration& config) {
-			return Create(config.Network.Identifier);
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
+			return Create(config.Immutable.NetworkIdentifier);
 		}
 	};
 }}

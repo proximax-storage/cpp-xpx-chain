@@ -20,6 +20,7 @@
 **/
 
 #pragma once
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "src/state/MosaicRestrictionEntry.h"
 
 namespace catapult { namespace test {
@@ -29,4 +30,10 @@ namespace catapult { namespace test {
 
 	/// Asserts that mosaic restriction entry \a actual is equal to \a expected.
 	void AssertEqual(const state::MosaicRestrictionEntry& expected, const state::MosaicRestrictionEntry& actual);
+
+	std::shared_ptr<config::BlockchainConfigurationHolder> CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Zero);
+
+	Address ConvertToAddress(const Key& key);
+
+	std::vector<Address> ConvertToAddress(const std::vector<Key>& keys);
 }}

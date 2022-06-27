@@ -60,6 +60,25 @@ namespace catapult { namespace plugins {
 				auto config = ToMosaicRentalFeeConfiguration(immutableConfig.NetworkIdentifier, blockChainConfig.Network.Info, currencyMosaicId, pluginConfig);
 
 				switch (transaction.EntityVersion()) {
+				case 4:
+					// 1. sink account notification
+					sub.notify(AccountPublicKeyNotification<1>(config.SinkPublicKey));
+
+					// 2. rental fee charge
+					// a. exempt the nemesis account
+					if (config.NemesisPublicKey != transaction.Signer) {
+						sub.notify(BalanceTransferNotification<1>(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee));
+						sub.notify(MosaicRentalFeeNotification<1>(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee));
+					}
+
+					// 3. registration
+					sub.notify(MosaicNonceNotification<1>(transaction.Signer, transaction.MosaicNonce, transaction.MosaicId));
+					sub.notify(MosaicPropertiesNotification<2>(transaction.PropertiesHeader, transaction.PropertiesPtr()));
+					sub.notify(MosaicDefinitionNotification<1>(
+							transaction.Signer,
+							transaction.MosaicId,
+							ExtractAllProperties(transaction.PropertiesHeader, transaction.PropertiesPtr())));
+					break;
 				case 3:
 					// 1. sink account notification
 					sub.notify(AccountPublicKeyNotification<1>(config.SinkPublicKey));

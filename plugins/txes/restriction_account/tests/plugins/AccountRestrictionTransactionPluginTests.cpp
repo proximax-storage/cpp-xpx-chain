@@ -28,6 +28,7 @@
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/model/Address.h"
 
 using namespace catapult::model;
 
@@ -105,7 +106,7 @@ namespace catapult { namespace plugins {
 		static void AddCommonExpectations(
 				typename test::TransactionPluginTestUtils<TTraits>::PublishTestBuilder& builder,
 				const typename TTraits::TransactionType& transaction) {
-			builder.template addExpectation<InternalPaddingNotification>([&transaction](const auto& notification) {
+			builder.template addExpectation<InternalPaddingNotification<1>>([&transaction](const auto& notification) {
 				EXPECT_EQ(transaction.AccountRestrictionTransactionBody_Reserved1, notification.Padding);
 			});
 			builder.template addExpectation<AccountRestrictionModificationNotification>([&transaction](const auto& notification) {
@@ -115,12 +116,15 @@ namespace catapult { namespace plugins {
 			});
 			builder.template addExpectation<typename TTraits::ModifyAccountRestrictionsNotification>([&transaction](
 					const auto& notification) {
-				EXPECT_EQ(GetSignerAddress(transaction), notification.Address);
+				EXPECT_EQ(transaction.Signer, notification.Signer);
 				EXPECT_EQ(transaction.RestrictionFlags, notification.AccountRestrictionDescriptor.raw());
 				EXPECT_EQ(transaction.RestrictionAdditionsCount, notification.RestrictionAdditionsCount);
-				EXPECT_EQ(transaction.RestrictionAdditionsPtr(), notification.RestrictionAdditionsPtr);
+				// Temporary fix for incomplete pointer comparison. If pointers are compared, embedded transactions would fail as they are memcopied when tested due to conversion from embedded to extended embedded to add deadline
+				if(transaction.RestrictionAdditionsCount)
+					EXPECT_EQ(*transaction.RestrictionAdditionsPtr(), *notification.RestrictionAdditionsPtr);
 				EXPECT_EQ(transaction.RestrictionDeletionsCount, notification.RestrictionDeletionsCount);
-				EXPECT_EQ(transaction.RestrictionDeletionsPtr(), notification.RestrictionDeletionsPtr);
+				if(transaction.RestrictionDeletionsCount)
+					EXPECT_EQ(*transaction.RestrictionDeletionsPtr(), *notification.RestrictionDeletionsPtr);
 			});
 		}
 
@@ -135,7 +139,7 @@ namespace catapult { namespace plugins {
 
 			// Act + Assert:
 			test::TransactionPluginTestUtils<TTraits>::AssertNotificationTypes(*pTransaction, {
-				InternalPaddingNotification::Notification_Type,
+				InternalPaddingNotification<1>::Notification_Type,
 				AccountRestrictionModificationNotification::Notification_Type,
 				TTraits::ModifyAccountRestrictionsNotification::Notification_Type
 			});
@@ -162,7 +166,7 @@ namespace catapult { namespace plugins {
 
 			// Act + Assert:
 			test::TransactionPluginTestUtils<TTraits>::AssertNotificationTypes(*pTransaction, {
-				InternalPaddingNotification::Notification_Type,
+				InternalPaddingNotification<1>::Notification_Type,
 				AccountRestrictionModificationNotification::Notification_Type,
 				TTraits::ModifyAccountRestrictionsNotification::Notification_Type,
 				TTraits::ModifyAccountRestrictionValueNotification::Notification_Type,
@@ -183,7 +187,7 @@ namespace catapult { namespace plugins {
 			for (auto i = 0u; i < 3; ++i) {
 				builder.template addExpectation<typename TTraits::ModifyAccountRestrictionValueNotification>(i, [&transaction, i](
 						const auto& notification) {
-					EXPECT_EQ(GetSignerAddress(transaction), notification.Address);
+					EXPECT_EQ(transaction.Signer, notification.Signer);
 					EXPECT_EQ(transaction.RestrictionFlags, notification.AccountRestrictionDescriptor.raw());
 					EXPECT_EQ(transaction.RestrictionAdditionsPtr()[i], notification.RestrictionValue);
 					EXPECT_EQ(AccountRestrictionModificationAction::Add, notification.Action);
@@ -193,7 +197,7 @@ namespace catapult { namespace plugins {
 			for (auto i = 0u; i < 2; ++i) {
 				builder.template addExpectation<typename TTraits::ModifyAccountRestrictionValueNotification>(3 + i, [&transaction, i](
 						const auto& notification) {
-					EXPECT_EQ(GetSignerAddress(transaction), notification.Address);
+					EXPECT_EQ(transaction.Signer, notification.Signer);
 					EXPECT_EQ(transaction.RestrictionFlags, notification.AccountRestrictionDescriptor.raw());
 					EXPECT_EQ(transaction.RestrictionDeletionsPtr()[i], notification.RestrictionValue);
 					EXPECT_EQ(AccountRestrictionModificationAction::Del, notification.Action);

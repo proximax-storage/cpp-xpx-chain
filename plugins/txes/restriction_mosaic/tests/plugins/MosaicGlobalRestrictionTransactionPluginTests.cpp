@@ -53,12 +53,12 @@ namespace catapult { namespace plugins {
 			builder.template addExpectation<MosaicRestrictionTypeNotification>([&transaction](const auto& notification) {
 				EXPECT_EQ(transaction.NewRestrictionType, notification.RestrictionType);
 			});
-			builder.template addExpectation<MosaicRequiredNotification>([&transaction](const auto& notification) {
-				EXPECT_TRUE(notification.Owner.isResolved());
-				EXPECT_FALSE(notification.MosaicId.isResolved());
+			builder.template addExpectation<MosaicRequiredNotification<2>>([&transaction](const auto& notification) {
+			  EXPECT_EQ(notification.MosaicId, MosaicId());
+			  EXPECT_NE(notification.UnresolvedMosaicId, UnresolvedMosaicId());
 
-				EXPECT_EQ(GetSignerAddress(transaction), notification.Owner.resolved());
-				EXPECT_EQ(transaction.MosaicId, notification.MosaicId.unresolved());
+			  EXPECT_EQ(transaction.Signer, notification.Signer);
+				EXPECT_EQ(transaction.MosaicId, notification.UnresolvedMosaicId);
 				EXPECT_EQ(0x04u, notification.PropertyFlagMask);
 			});
 			builder.template addExpectation<MosaicGlobalRestrictionModificationPreviousValueNotification>([&transaction](
@@ -82,14 +82,16 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishAllNotificationsInCorrectOrderWhenReferenceMosaicIdIsProvided) {
 		// Arrange:
-		typename TTraits::TransactionType transaction;
-		test::FillWithRandomData(transaction);
-		transaction.ReferenceMosaicId = UnresolvedMosaicId(test::Random() | 1);
+
+		auto pTransaction = utils::MakeUniqueWithSize<typename TTraits::TransactionType>(sizeof(typename TTraits::TransactionType));
+		test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), sizeof(typename TTraits::TransactionType) });
+		pTransaction->Size = sizeof(typename TTraits::TransactionType);
+		pTransaction->ReferenceMosaicId = UnresolvedMosaicId(test::Random() | 1);
 
 		// Act + Assert:
-		test::TransactionPluginTestUtils<TTraits>::AssertNotificationTypes(transaction, {
+		test::TransactionPluginTestUtils<TTraits>::AssertNotificationTypes(*pTransaction, {
 			MosaicRestrictionTypeNotification::Notification_Type,
-			MosaicRequiredNotification::Notification_Type,
+			MosaicRequiredNotification<2>::Notification_Type,
 			MosaicRestrictionRequiredNotification::Notification_Type,
 			MosaicGlobalRestrictionModificationPreviousValueNotification::Notification_Type,
 			MosaicGlobalRestrictionModificationNewValueNotification::Notification_Type
@@ -98,19 +100,20 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishAllNotificationsWhenReferenceMosaicIdIsProvided) {
 		// Arrange:
-		typename TTraits::TransactionType transaction;
-		test::FillWithRandomData(transaction);
-		transaction.ReferenceMosaicId = UnresolvedMosaicId(test::Random() | 1);
+		auto pTransaction = utils::MakeUniqueWithSize<typename TTraits::TransactionType>(sizeof(typename TTraits::TransactionType));
+		test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), sizeof(typename TTraits::TransactionType) });
+		pTransaction->ReferenceMosaicId = UnresolvedMosaicId(test::Random() | 1);
+		pTransaction->Size = sizeof(typename TTraits::TransactionType);
 
 		typename test::TransactionPluginTestUtils<TTraits>::PublishTestBuilder builder;
-		AddCommonExpectations<TTraits>(builder, transaction);
-		builder.template addExpectation<MosaicRestrictionRequiredNotification>([&transaction](const auto& notification) {
-			EXPECT_EQ(transaction.ReferenceMosaicId, notification.MosaicId);
-			EXPECT_EQ(transaction.RestrictionKey, notification.RestrictionKey);
+		AddCommonExpectations<TTraits>(builder, *pTransaction);
+		builder.template addExpectation<MosaicRestrictionRequiredNotification>([&pTransaction](const auto& notification) {
+			EXPECT_EQ(pTransaction->ReferenceMosaicId, notification.MosaicId);
+			EXPECT_EQ(pTransaction->RestrictionKey, notification.RestrictionKey);
 		});
 
 		// Act + Assert:
-		builder.runTest(transaction);
+		builder.runTest(*pTransaction);
 	}
 
 	// endregion
@@ -119,14 +122,14 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishAllNotificationsInCorrectOrderWhenReferenceMosaicIdIsNotProvided) {
 		// Arrange:
-		typename TTraits::TransactionType transaction;
-		test::FillWithRandomData(transaction);
-		transaction.ReferenceMosaicId = UnresolvedMosaicId();
-
+		auto pTransaction = utils::MakeUniqueWithSize<typename TTraits::TransactionType>(sizeof(typename TTraits::TransactionType));
+		test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), sizeof(typename TTraits::TransactionType) });
+		pTransaction->ReferenceMosaicId = UnresolvedMosaicId();
+		pTransaction->Size = sizeof(typename TTraits::TransactionType);
 		// Act + Assert:
-		test::TransactionPluginTestUtils<TTraits>::AssertNotificationTypes(transaction, {
+		test::TransactionPluginTestUtils<TTraits>::AssertNotificationTypes(*pTransaction, {
 			MosaicRestrictionTypeNotification::Notification_Type,
-			MosaicRequiredNotification::Notification_Type,
+			MosaicRequiredNotification<2>::Notification_Type,
 			MosaicGlobalRestrictionModificationPreviousValueNotification::Notification_Type,
 			MosaicGlobalRestrictionModificationNewValueNotification::Notification_Type
 		});
@@ -134,15 +137,16 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishAllNotificationsWhenReferenceMosaicIdIsNotProvided) {
 		// Arrange:
-		typename TTraits::TransactionType transaction;
-		test::FillWithRandomData(transaction);
-		transaction.ReferenceMosaicId = UnresolvedMosaicId();
+		auto pTransaction = utils::MakeUniqueWithSize<typename TTraits::TransactionType>(sizeof(typename TTraits::TransactionType));
+		test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), sizeof(typename TTraits::TransactionType) });
+		pTransaction->ReferenceMosaicId = UnresolvedMosaicId();
+		pTransaction->Size = sizeof(typename TTraits::TransactionType);
 
 		typename test::TransactionPluginTestUtils<TTraits>::PublishTestBuilder builder;
-		AddCommonExpectations<TTraits>(builder, transaction);
+		AddCommonExpectations<TTraits>(builder, *pTransaction);
 
 		// Act + Assert:
-		builder.runTest(transaction);
+		builder.runTest(*pTransaction);
 	}
 
 	// endregion

@@ -21,6 +21,7 @@
 
 #include "src/cache/ReadOnlyMosaicRestrictionCache.h"
 #include "src/cache/MosaicRestrictionCache.h"
+#include "tests/test/MosaicRestrictionTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -30,10 +31,10 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, NetworkIdentifierIsExposed) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(19);
-		MosaicRestrictionCache originalCache(CacheConfiguration(), networkIdentifier);
+		MosaicRestrictionCache originalCache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(networkIdentifier));
 
 		// Act + Assert:
-		EXPECT_EQ(networkIdentifier, ReadOnlyMosaicRestrictionCache(*originalCache.createView()).networkIdentifier());
-		EXPECT_EQ(networkIdentifier, ReadOnlyMosaicRestrictionCache(*originalCache.createDelta()).networkIdentifier());
+		EXPECT_EQ(networkIdentifier, ReadOnlyMosaicRestrictionCache(*originalCache.createView(Height())).networkIdentifier());
+		EXPECT_EQ(networkIdentifier, ReadOnlyMosaicRestrictionCache(*originalCache.createDelta(Height())).networkIdentifier());
 	}
 }}

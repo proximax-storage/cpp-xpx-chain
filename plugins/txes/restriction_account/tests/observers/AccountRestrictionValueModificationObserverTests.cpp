@@ -99,15 +99,16 @@ namespace catapult { namespace observers {
 				bool shouldContainCacheEntry,
 				TModificationFactory modificationFactory) {
 			// Arrange:
-			ObserverTestContext context(notifyMode);
+			ObserverTestContext context(notifyMode, Height(777));
 			auto values = test::GenerateUniqueRandomDataVector<typename TRestrictionValueTraits::ValueType>(numInitialValues);
-			auto address = test::GenerateRandomByteArray<Address>();
+			auto key = test::GenerateRandomByteArray<Key>();
+			auto address = test::ConvertToAddress(key);
 			test::PopulateCache<TRestrictionValueTraits, TOperationTraits>(context.cache(), address, values);
 
 			auto modification = modificationFactory(values);
 			auto unresolvedRestrictionValue = TRestrictionValueTraits::Unresolve(modification.second);
 			auto notification = test::CreateAccountRestrictionValueNotification<TRestrictionValueTraits, TOperationTraits>(
-					address,
+					key,
 					unresolvedRestrictionValue,
 					modification.first);
 			auto pObserver = TRestrictionValueTraits::CreateObserver();
@@ -135,10 +136,11 @@ namespace catapult { namespace observers {
 		template<typename TOperationTraits>
 		void AssertObserverDoesNotRemoveAccountRestrictionsWithValues(NotifyMode notifyMode) {
 			// Arrange:
-			ObserverTestContext context(notifyMode);
+			ObserverTestContext context(notifyMode, Height(777));
 			auto filteredAddress = test::GenerateRandomByteArray<Address>();
 			auto unresolvedFilteredAddress = AccountAddressRestrictionTraits::Unresolve(filteredAddress);
-			auto address = test::GenerateRandomByteArray<Address>();
+			auto key = test::GenerateRandomByteArray<Key>();
+			auto address = test::ConvertToAddress(key);
 			auto& restrictionCacheDelta = context.cache().sub<cache::AccountRestrictionCache>();
 			restrictionCacheDelta.insert(state::AccountRestrictions(address));
 
@@ -151,7 +153,7 @@ namespace catapult { namespace observers {
 			}
 
 			model::ModifyAccountAddressRestrictionValueNotification notification(
-					address,
+					key,
 					TOperationTraits::CompleteAccountRestrictionFlags(model::AccountRestrictionFlags::Address),
 					unresolvedFilteredAddress,
 					NotifyMode::Commit == notifyMode ? Del : Add);

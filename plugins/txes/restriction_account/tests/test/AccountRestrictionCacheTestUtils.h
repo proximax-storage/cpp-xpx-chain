@@ -25,7 +25,7 @@
 #include "src/cache/AccountRestrictionCacheStorage.h"
 #include "src/state/AccountRestrictionUtils.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "AccountRestrictionTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 
 namespace catapult { namespace test {
@@ -37,19 +37,19 @@ namespace catapult { namespace test {
 			auto cacheId = cache::AccountRestrictionCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 			subCaches[cacheId] = MakeSubCachePlugin<cache::AccountRestrictionCache, cache::AccountRestrictionCacheStorage>(
-					networkIdentifier);
+					CreateAccountRestrictionConfigHolder(networkIdentifier));
 			return subCaches;
 		}
 
 	public:
 		/// Creates an empty catapult cache around default configuration.
 		static cache::CatapultCache Create() {
-			return Create(model::BlockChainConfiguration::Uninitialized());
+			return Create(config::BlockchainConfiguration::Uninitialized());
 		}
 
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::BlockChainConfiguration& config) {
-			auto subCaches = CreateSubCachesWithAccountRestrictionCache(config.Network.Identifier);
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
+			auto subCaches = CreateSubCachesWithAccountRestrictionCache(config.Immutable.NetworkIdentifier);
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));
 		}

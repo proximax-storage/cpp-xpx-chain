@@ -20,8 +20,12 @@
 **/
 
 #pragma once
+
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "src/model/AccountRestrictionFlags.h"
 #include "src/state/AccountRestrictionDescriptor.h"
+#include "src/catapult/model/Address.h"
+
 
 namespace catapult { namespace state { class AccountRestrictions; } }
 
@@ -37,4 +41,11 @@ namespace catapult { namespace test {
 
 	/// Asserts that account restrictions \a actual is equal to \a expected.
 	void AssertEqual(const state::AccountRestrictions& expected, const state::AccountRestrictions& actual);
+
+	std::shared_ptr<config::BlockchainConfigurationHolder> CreateAccountRestrictionConfigHolder(model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Zero);
+
+	Address ConvertToAddress(const Key& key);
+
+	std::vector<Address> ConvertToAddress(const std::vector<Key>& keys);
+
 }}

@@ -38,11 +38,11 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS MosaicDefinitionTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicDefinition, std::shared_ptr<config::BlockchainConfigurationHolder>, 3, 3,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicDefinition, std::shared_ptr<config::BlockchainConfigurationHolder>, 4, 4,)
 
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
-		constexpr auto Transaction_Version = MakeVersion(Network_Identifier, 3);
+		constexpr auto Transaction_Version = MakeVersion(Network_Identifier, 4);
 
 		auto CreateMosaicConfiguration(Amount fee) {
 			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
@@ -244,7 +244,7 @@ namespace catapult { namespace plugins {
 
 		public:
 			mocks::MockTypedNotificationSubscriber<MosaicNonceNotification<1>> NonceIdSub;
-			mocks::MockTypedNotificationSubscriber<MosaicPropertiesNotification<1>> PropertiesSub;
+			mocks::MockTypedNotificationSubscriber<MosaicPropertiesNotification<2>> PropertiesSub;
 			mocks::MockTypedNotificationSubscriber<MosaicDefinitionNotification<1>> DefinitionSub;
 			mocks::MockTypedNotificationSubscriber<MosaicRentalFeeNotification<1>> RentalFeeSub;
 		};

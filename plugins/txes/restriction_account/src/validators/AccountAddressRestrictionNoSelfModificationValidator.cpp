@@ -20,6 +20,7 @@
 **/
 
 #include "Validators.h"
+#include "catapult/model/Address.h"
 
 namespace catapult { namespace validators {
 
@@ -28,7 +29,7 @@ namespace catapult { namespace validators {
 	DEFINE_STATEFUL_VALIDATOR(AccountAddressRestrictionNoSelfModification, [](
 			const Notification& notification,
 			const ValidatorContext& context) {
-		return notification.Address != context.Resolvers.resolve(notification.RestrictionValue)
+		return model::PublicKeyToAddress(notification.Signer, context.NetworkIdentifier) != context.Resolvers.resolve(notification.RestrictionValue)
 				? ValidationResult::Success
 				: Failure_RestrictionAccount_Invalid_Modification_Address;
 	})

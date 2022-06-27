@@ -23,7 +23,7 @@
 #include "mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/restriction_mosaic/src/model/MosaicGlobalRestrictionTransaction.h"
 #include "mongo/tests/test/MapperTestUtils.h"
-#include "mongo/tests/test/MongoTransactionPluginTests.h"
+#include "mongo/tests/test/MongoTransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {

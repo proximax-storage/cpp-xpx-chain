@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 
 	namespace {
 		template<typename TNotification>
-		ValidationResult CommonValidate(const TNotification& notification, ValidatorContext context)
+		ValidationResult CommonValidate(const TNotification& notification, const ValidatorContext& context)
 		{
 			auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
 			const auto& cache = context.Cache.sub<cache::MosaicCache>();
@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 			if constexpr(std::is_same_v<TNotification, model::MosaicSupplyChangeNotification<2>>)
 			{
 				// if supply is forced to be immutable, do not allow change
-				if (!properties.is(model::MosaicFlags::Supply_Force_Immutable))
+				if (properties.is(model::MosaicFlags::Supply_Force_Immutable))
 					return Failure_Mosaic_Supply_Immutable;
 			}
 			// only allow an "immutable" supply to change if the owner owns full supply

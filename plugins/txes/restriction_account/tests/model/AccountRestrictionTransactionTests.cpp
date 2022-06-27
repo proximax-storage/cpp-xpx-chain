@@ -67,7 +67,7 @@ namespace catapult { namespace model {
 
 	namespace {
 		template<typename T>
-		void AssertTransactionHasExpectedSize(size_t baseSize, EntityType) {
+		void AssertEntityHasExpectedSize(size_t baseSize, EntityType) {
 			// Arrange:
 			auto expectedSize = baseSize + sizeof(uint32_t);
 
@@ -80,6 +80,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(baseSize + 4 + 4u, sizeof(T));
 		}
 
+		//unused
 		template<typename T>
 		void AssertTransactionHasProperAlignment() {
 #define FIELD(X) EXPECT_ALIGNED(T, X);

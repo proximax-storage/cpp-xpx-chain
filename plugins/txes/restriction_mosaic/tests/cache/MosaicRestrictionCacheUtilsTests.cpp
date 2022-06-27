@@ -21,6 +21,7 @@
 
 #include "src/cache/MosaicRestrictionCacheUtils.h"
 #include "src/cache/MosaicRestrictionCache.h"
+#include "tests/test/MosaicRestrictionTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -64,8 +65,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, GetMosaicGlobalRestrictionResolvedRules_ResolutionSkippedWhenNoRulesAreSet) {
 		// Arrange:
-		MosaicRestrictionCache cache(CacheConfiguration(), static_cast<model::NetworkIdentifier>(12));
-		auto delta = cache.createDelta();
+		MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier(12)));
+		auto delta = cache.createDelta(Height(0));
 		SeedCacheWithMosaicGlobalRestrictionRules(*delta, 200, MosaicId(), MosaicId());
 
 		// Act:
@@ -83,8 +84,8 @@ namespace catapult { namespace cache {
 				MosaicId secondReferenceMosaicId,
 				const MosaicRestrictionResolvedRule& expectedSecondResolvedRule) {
 			// Arrange:
-			MosaicRestrictionCache cache(CacheConfiguration(), static_cast<model::NetworkIdentifier>(12));
-			auto delta = cache.createDelta();
+			MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier(12)));
+			auto delta = cache.createDelta(Height());
 			SeedCacheWithMosaicGlobalRestrictionRules(*delta, referenceKey, referenceMosaicId, secondReferenceMosaicId);
 
 			// Act:
@@ -140,8 +141,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, GetMosaicGlobalRestrictionResolvedRules_CannotResolveRuleWithExplicitSelfReference) {
 		// Arrange:
-		MosaicRestrictionCache cache(CacheConfiguration(), static_cast<model::NetworkIdentifier>(12));
-		auto delta = cache.createDelta();
+		MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier(12)));
+		auto delta = cache.createDelta(Height());
 		SeedCacheWithMosaicGlobalRestrictionRules(*delta, 200, MosaicId(111), MosaicId());
 
 		// Act:
@@ -174,8 +175,8 @@ namespace catapult { namespace cache {
 				const std::vector<MosaicRestrictionResolvedRule>& resolvedRules) {
 			// Arrange:
 			auto address = test::GenerateRandomByteArray<Address>();
-			MosaicRestrictionCache cache(CacheConfiguration(), static_cast<model::NetworkIdentifier>(12));
-			auto delta = cache.createDelta();
+			MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier(12)));
+			auto delta = cache.createDelta(Height());
 			SeedCacheWithMosaicAddressRestrictionRules(*delta, address);
 
 			// Act:

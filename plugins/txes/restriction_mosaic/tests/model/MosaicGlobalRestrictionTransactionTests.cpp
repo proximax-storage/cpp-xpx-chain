@@ -41,7 +41,7 @@ namespace catapult { namespace model {
 
 	namespace {
 		template<typename T>
-		void AssertTransactionHasExpectedSize(size_t baseSize) {
+		void AssertEntityHasExpectedSize(size_t baseSize) {
 			// Arrange:
 			auto expectedSize = baseSize;
 

@@ -33,7 +33,7 @@ namespace catapult { namespace cache {
 			using StorageType = MosaicRestrictionCacheStorage;
 			class CacheType : public MosaicRestrictionCache {
 			public:
-				CacheType() : MosaicRestrictionCache(CacheConfiguration(), static_cast<model::NetworkIdentifier>(12))
+				CacheType() : MosaicRestrictionCache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier(12)))
 				{}
 			};
 

@@ -121,7 +121,7 @@ namespace catapult { namespace observers {
 	RESTRICTION_TYPE_BASED_TEST(OppositeNotificationModeBypassesChangesWhenCacheDoesNotContainEntry) {
 		// Arrange:
 		TTraits traits;
-		ObserverTestContext context(TTraits::Bypass_Mode);
+		ObserverTestContext context(TTraits::Bypass_Mode, Height(777));
 		const auto& restrictionCache = context.cache().sub<cache::MosaicRestrictionCache>();
 
 		auto pObserver = TTraits::CreateObserver();
@@ -140,7 +140,7 @@ namespace catapult { namespace observers {
 	RESTRICTION_TYPE_BASED_TEST(CanAddNewRestrictionWhenCacheDoesNotContainEntry) {
 		// Arrange:
 		TTraits traits;
-		ObserverTestContext context(TTraits::Execute_Mode);
+		ObserverTestContext context(TTraits::Execute_Mode, Height(777));
 		const auto& restrictionCache = context.cache().sub<cache::MosaicRestrictionCache>();
 
 		auto pObserver = TTraits::CreateObserver();
@@ -167,7 +167,7 @@ namespace catapult { namespace observers {
 	RESTRICTION_TYPE_BASED_TEST(OppositeNotificationModeBypassesChangesWhenCacheContainsEntryButNotRule) {
 		// Arrange:
 		TTraits traits;
-		ObserverTestContext context(TTraits::Bypass_Mode);
+		ObserverTestContext context(TTraits::Bypass_Mode, Height(777));
 		auto& restrictionCache = context.cache().sub<cache::MosaicRestrictionCache>();
 
 		auto pObserver = TTraits::CreateObserver();
@@ -191,7 +191,7 @@ namespace catapult { namespace observers {
 	RESTRICTION_TYPE_BASED_TEST(CanAddNewRestrictionWhenCacheContainsEntryButNotRule) {
 		// Arrange:
 		TTraits traits;
-		ObserverTestContext context(TTraits::Execute_Mode);
+		ObserverTestContext context(TTraits::Execute_Mode, Height(777));
 		auto& restrictionCache = context.cache().sub<cache::MosaicRestrictionCache>();
 
 		auto pObserver = TTraits::CreateObserver();
@@ -219,7 +219,7 @@ namespace catapult { namespace observers {
 	RESTRICTION_TYPE_BASED_TEST(OppositeNotificationModeBypassesChangesWhenCacheContainsEntryAndRule) {
 		// Arrange:
 		TTraits traits;
-		ObserverTestContext context(TTraits::Bypass_Mode);
+		ObserverTestContext context(TTraits::Bypass_Mode, Height(777));
 		auto& restrictionCache = context.cache().sub<cache::MosaicRestrictionCache>();
 
 		auto pObserver = TTraits::CreateObserver();
@@ -243,7 +243,7 @@ namespace catapult { namespace observers {
 	RESTRICTION_TYPE_BASED_TEST(CanModifyExistingRestrictionWhenCacheContainsEntryAndRule) {
 		// Arrange:
 		TTraits traits;
-		ObserverTestContext context(TTraits::Execute_Mode);
+		ObserverTestContext context(TTraits::Execute_Mode, Height(777));
 		auto& restrictionCache = context.cache().sub<cache::MosaicRestrictionCache>();
 
 		auto pObserver = TTraits::CreateObserver();
@@ -267,7 +267,7 @@ namespace catapult { namespace observers {
 	RESTRICTION_TYPE_BASED_TEST(CanDeleteExistingRestrictionWhenCacheContainsEntryAndRule) {
 		// Arrange:
 		TTraits traits;
-		ObserverTestContext context(TTraits::Execute_Mode);
+		ObserverTestContext context(TTraits::Execute_Mode, Height(777));
 		auto& restrictionCache = context.cache().sub<cache::MosaicRestrictionCache>();
 
 		auto pObserver = TTraits::CreateObserver();
@@ -291,7 +291,7 @@ namespace catapult { namespace observers {
 	RESTRICTION_TYPE_BASED_TEST(CanDeleteExistingEntryWhenCacheContainsEntryAndRule) {
 		// Arrange:
 		TTraits traits;
-		ObserverTestContext context(TTraits::Execute_Mode);
+		ObserverTestContext context(TTraits::Execute_Mode, Height(777));
 		auto& restrictionCache = context.cache().sub<cache::MosaicRestrictionCache>();
 
 		auto pObserver = TTraits::CreateObserver();

@@ -67,6 +67,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because account version was not supported.
 	DEFINE_CORE_RESULT(Invalid_AccountVersionUnsupported, 26);
 
+	/// Validation failed because internal padding is nonzero.
+	DEFINE_CORE_RESULT(Nonzero_Internal_Padding, 27);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

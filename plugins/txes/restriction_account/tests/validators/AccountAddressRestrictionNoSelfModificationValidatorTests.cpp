@@ -37,12 +37,12 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(
 				ValidationResult expectedResult,
-				const Address& address,
+				const Key& key,
 				model::AccountRestrictionModificationAction action,
 				UnresolvedAddress restrictionValue) {
 			// Arrange:
 			model::ModifyAccountAddressRestrictionValueNotification notification(
-					address,
+					key,
 					model::AccountRestrictionFlags::Address,
 					restrictionValue,
 					action);
@@ -57,19 +57,20 @@ namespace catapult { namespace validators {
 	}
 
 	TEST(TEST_CLASS, FailureWhenSignerIsValueInModification_Add) {
-		auto address = test::GenerateRandomByteArray<Address>();
-		auto unresolvedAddress = test::UnresolveXor(address);
-		AssertValidationResult(Failure_RestrictionAccount_Invalid_Modification_Address, address, Add, unresolvedAddress);
+		auto key = test::GenerateRandomByteArray<Key>();
+		auto unresolvedAddress = test::UnresolveXor(model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero));
+		AssertValidationResult(Failure_RestrictionAccount_Invalid_Modification_Address, key, Add, unresolvedAddress);
 	}
 
 	TEST(TEST_CLASS, FailureWhenSignerIsValueInModification_Del) {
-		auto address = test::GenerateRandomByteArray<Address>();
-		auto unresolvedAddress = test::UnresolveXor(address);
-		AssertValidationResult(Failure_RestrictionAccount_Invalid_Modification_Address, address, Del, unresolvedAddress);
+		auto key = test::GenerateRandomByteArray<Key>();
+		auto unresolvedAddress = test::UnresolveXor(model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero));
+		AssertValidationResult(Failure_RestrictionAccount_Invalid_Modification_Address, key, Del, unresolvedAddress);
 	}
 
 	TEST(TEST_CLASS, SuccessWhenSignerIsNotValueInModification) {
-		auto address = test::GenerateRandomByteArray<Address>();
-		AssertValidationResult(ValidationResult::Success, address, Add, test::GenerateRandomByteArray<UnresolvedAddress>());
+		auto key = test::GenerateRandomByteArray<Key>();
+		auto unresolvedAddress = test::UnresolveXor(model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero));
+		AssertValidationResult(ValidationResult::Success, key, Add, test::GenerateRandomByteArray<UnresolvedAddress>());
 	}
 }}

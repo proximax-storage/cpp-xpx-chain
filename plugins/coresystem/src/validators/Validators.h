@@ -94,4 +94,12 @@ namespace catapult { namespace validators {
 	DECLARE_STATELESS_VALIDATOR(TransactionFee, model::TransactionFeeNotification<1>)();
 
 	// endregion
+
+	// region Other
+
+	/// Validator that applies to all internal padding notifications and validates that:
+	/// - internal padding is zero
+	DECLARE_STATELESS_VALIDATOR(ZeroInternalPadding, model::InternalPaddingNotification<1>)();
+
+	// endregion
 }}

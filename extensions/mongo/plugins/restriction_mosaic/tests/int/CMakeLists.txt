@@ -8,5 +8,6 @@ target_link_libraries(${TARGET_NAME}
 	tests.catapult.test.cache
 	tests.catapult.test.mongo
 	tests.catapult.test.mongo.plugins.restrictionmosaic
+	tests.catapult.test.plugins.restrictionmosaic
 	catapult.mongo.plugins.restrictionmosaic
 	catapult.plugins.restrictionmosaic.deps)

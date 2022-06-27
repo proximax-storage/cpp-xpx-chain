@@ -29,22 +29,40 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicSupplyChangeAllowedValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed)
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowedV1)
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowedV2)
+
 
 	namespace {
+		struct V1TestTraits
+		{
+			using Notification = model::MosaicSupplyChangeNotification<1>;
+			static stateful::NotificationValidatorPointerT<Notification> Create(){
+				return CreateMosaicSupplyChangeAllowedV1Validator();
+			}
+		};
+
+		struct V2TestTraits
+		{
+			using Notification = model::MosaicSupplyChangeNotification<2>;
+			static stateful::NotificationValidatorPointerT<Notification> Create(){
+				return CreateMosaicSupplyChangeAllowedV2Validator();
+			}
+		};
 		constexpr auto Max_Atomic_Units = Amount(std::numeric_limits<Amount::ValueType>::max());
 
+		template<typename TTestTraits>
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const cache::CatapultCache& cache,
 				Height height,
-				const model::MosaicSupplyChangeNotification<1>& notification,
+				const typename TTestTraits::Notification& notification,
 				Amount maxAtomicUnits = Max_Atomic_Units) {
 			// Arrange:
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
 			networkConfig.MaxMosaicAtomicUnits = maxAtomicUnits;
 			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
-			auto pValidator = CreateMosaicSupplyChangeAllowedValidator();
+			auto pValidator = TTestTraits::Create();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, pConfigHolder->Config(), height);
@@ -80,51 +98,83 @@ namespace catapult { namespace validators {
 	// region immutable supply
 
 	namespace {
+		template<typename TTestTraits>
 		void AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply(model::MosaicSupplyChangeDirection direction) {
 			// Arrange:
 			auto signer = test::GenerateRandomByteArray<Key>();
-			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
+			auto notification = typename TTestTraits::Notification(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
 
 			auto cache = test::MosaicCacheFactory::Create();
 			AddMosaic(cache, MosaicId(123), Amount(500), signer, Amount(500), model::MosaicFlags::None);
 
 			// Assert:
-			AssertValidationResult(ValidationResult::Success, cache, Height(100), notification);
+			AssertValidationResult<TTestTraits>(ValidationResult::Success, cache, Height(100), notification);
+		}
+
+		void AssertCannotChangeImmutableSupplyWhenOwnerHasCompleteSupplyAndImmutableFlagIsSet(model::MosaicSupplyChangeDirection direction) {
+			// Arrange:
+			auto signer = test::GenerateRandomByteArray<Key>();
+			auto notification = model::MosaicSupplyChangeNotification<2>(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
+
+			auto cache = test::MosaicCacheFactory::Create();
+			AddMosaic(cache, MosaicId(123), Amount(500), signer, Amount(500), model::MosaicFlags::Supply_Force_Immutable);
+
+			// Assert:
+			AssertValidationResult<V2TestTraits>(Failure_Mosaic_Supply_Immutable, cache, Height(100), notification);
 		}
 	}
 
-	TEST(TEST_CLASS, CanIncreaseImmutableSupplyWhenOwnerHasCompleteSupply) {
+#define TRAITS_BASED_TEST(TEST_CLASS, TEST_NAME) \
+    template<typename TTestTraits>                                 \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V1TestTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V2TestTraits>(); } \
+    template<typename TTestTraits>                                 \
+	void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
+	TRAITS_BASED_TEST(TEST_CLASS, CanIncreaseImmutableSupplyWhenOwnerHasCompleteSupply) {
 		// Assert:
-		AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply(model::MosaicSupplyChangeDirection::Increase);
+		AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply<TTestTraits>(model::MosaicSupplyChangeDirection::Increase);
 	}
 
-	TEST(TEST_CLASS, CanDecreaseImmutableSupplyWhenOwnerHasCompleteSupply) {
+	TRAITS_BASED_TEST(TEST_CLASS, CanDecreaseImmutableSupplyWhenOwnerHasCompleteSupply) {
 		// Assert:
-		AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply(model::MosaicSupplyChangeDirection::Decrease);
+		AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply<TTestTraits>(model::MosaicSupplyChangeDirection::Decrease);
+	}
+
+	TEST(TEST_CLASS, CannotIncreaseImmutableSupplyWithImmutableFlagSetWhenownerHasCompleteSupply) {
+		// Assert:
+		AssertCannotChangeImmutableSupplyWhenOwnerHasCompleteSupplyAndImmutableFlagIsSet(model::MosaicSupplyChangeDirection::Increase);
+	}
+
+	TEST(TEST_CLASS, CannotDecreaseImmutableSupplyWithImmutableFlagSetWhenownerHasCompleteSupply) {
+		// Assert:
+		AssertCannotChangeImmutableSupplyWhenOwnerHasCompleteSupplyAndImmutableFlagIsSet(model::MosaicSupplyChangeDirection::Decrease);
 	}
 
 	namespace {
+		template<typename TTestTraits>
 		void AssertCannotChangeImmutableSupplyWhenOwnerHasPartialSupply(model::MosaicSupplyChangeDirection direction) {
 			// Arrange:
 			auto signer = test::GenerateRandomByteArray<Key>();
-			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
+			auto notification = typename TTestTraits::Notification(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
 
 			auto cache = test::MosaicCacheFactory::Create();
 			AddMosaic(cache, MosaicId(123), Amount(500), signer, Amount(499), model::MosaicFlags::None);
 
 			// Assert:
-			AssertValidationResult(Failure_Mosaic_Supply_Immutable, cache, Height(100), notification);
+			AssertValidationResult<TTestTraits>(Failure_Mosaic_Supply_Immutable, cache, Height(100), notification);
 		}
 	}
 
-	TEST(TEST_CLASS, CannotIncreaseImmutableSupplyWhenOwnerHasPartialSupply) {
+	TRAITS_BASED_TEST(TEST_CLASS, CannotIncreaseImmutableSupplyWhenOwnerHasPartialSupply) {
 		// Assert:
-		AssertCannotChangeImmutableSupplyWhenOwnerHasPartialSupply(model::MosaicSupplyChangeDirection::Increase);
+		AssertCannotChangeImmutableSupplyWhenOwnerHasPartialSupply<TTestTraits>(model::MosaicSupplyChangeDirection::Increase);
 	}
 
-	TEST(TEST_CLASS, CannotDecreaseImmutableSupplyWhenOwnerHasPartialSupply) {
+	TRAITS_BASED_TEST(TEST_CLASS, CannotDecreaseImmutableSupplyWhenOwnerHasPartialSupply) {
 		// Assert:
-		AssertCannotChangeImmutableSupplyWhenOwnerHasPartialSupply(model::MosaicSupplyChangeDirection::Decrease);
+		AssertCannotChangeImmutableSupplyWhenOwnerHasPartialSupply<TTestTraits>(model::MosaicSupplyChangeDirection::Decrease);
 	}
 
 	// endregion
@@ -132,35 +182,36 @@ namespace catapult { namespace validators {
 	// region decrease supply
 
 	namespace {
+		template<typename TTestTraits>
 		void AssertDecreaseValidationResult(ValidationResult expectedResult, Amount mosaicSupply, Amount ownerSupply, Amount delta) {
 			// Arrange:
 			auto signer = test::GenerateRandomByteArray<Key>();
 			auto direction = model::MosaicSupplyChangeDirection::Decrease;
-			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
+			auto notification = typename TTestTraits::Notification(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
 
 			auto cache = test::MosaicCacheFactory::Create();
 			AddMosaic(cache, MosaicId(123), mosaicSupply, signer, ownerSupply);
 
 			// Assert:
-			AssertValidationResult(expectedResult, cache, Height(100), notification);
+			AssertValidationResult<TTestTraits>(expectedResult, cache, Height(100), notification);
 		}
 	}
 
-	TEST(TEST_CLASS, CanDecreaseMutableSupplyByLessThanOwnerSupply) {
+	TRAITS_BASED_TEST(TEST_CLASS, CanDecreaseMutableSupplyByLessThanOwnerSupply) {
 		// Assert:
-		AssertDecreaseValidationResult(ValidationResult::Success, Amount(500), Amount(400), Amount(300));
-		AssertDecreaseValidationResult(ValidationResult::Success, Amount(500), Amount(400), Amount(399));
+		AssertDecreaseValidationResult<TTestTraits>(ValidationResult::Success, Amount(500), Amount(400), Amount(300));
+		AssertDecreaseValidationResult<TTestTraits>(ValidationResult::Success, Amount(500), Amount(400), Amount(399));
 	}
 
-	TEST(TEST_CLASS, CanDecreaseMutableSupplyByEntireOwnerSupply) {
+	TRAITS_BASED_TEST(TEST_CLASS, CanDecreaseMutableSupplyByEntireOwnerSupply) {
 		// Assert:
-		AssertDecreaseValidationResult(ValidationResult::Success, Amount(500), Amount(400), Amount(400));
+		AssertDecreaseValidationResult<TTestTraits>(ValidationResult::Success, Amount(500), Amount(400), Amount(400));
 	}
 
-	TEST(TEST_CLASS, CannotDecreaseMutableSupplyByGreaterThanOwnerSupply) {
+	TRAITS_BASED_TEST(TEST_CLASS, CannotDecreaseMutableSupplyByGreaterThanOwnerSupply) {
 		// Assert:
-		AssertDecreaseValidationResult(Failure_Mosaic_Supply_Negative, Amount(500), Amount(400), Amount(401));
-		AssertDecreaseValidationResult(Failure_Mosaic_Supply_Negative, Amount(500), Amount(400), Amount(500));
+		AssertDecreaseValidationResult<TTestTraits>(Failure_Mosaic_Supply_Negative, Amount(500), Amount(400), Amount(401));
+		AssertDecreaseValidationResult<TTestTraits>(Failure_Mosaic_Supply_Negative, Amount(500), Amount(400), Amount(500));
 	}
 
 	// endregion
@@ -168,41 +219,42 @@ namespace catapult { namespace validators {
 	// region increase
 
 	namespace {
+		template<typename TTestTraits>
 		void AssertIncreaseValidationResult(ValidationResult expectedResult, Amount maxAtomicUnits, Amount mosaicSupply, Amount delta) {
 			// Arrange:
 			auto signer = test::GenerateRandomByteArray<Key>();
 			auto direction = model::MosaicSupplyChangeDirection::Increase;
-			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
+			auto notification = typename TTestTraits::Notification(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
 
 			auto cache = test::MosaicCacheFactory::Create();
 			AddMosaic(cache, MosaicId(123), mosaicSupply, signer, Amount(111));
 
 			// Assert:
-			AssertValidationResult(expectedResult, cache, Height(100), notification, maxAtomicUnits);
+			AssertValidationResult<TTestTraits>(expectedResult, cache, Height(100), notification, maxAtomicUnits);
 		}
 	}
 
-	TEST(TEST_CLASS, CanIncreaseMutableSupplyToLessThanAtomicUnits) {
+	TRAITS_BASED_TEST(TEST_CLASS, CanIncreaseMutableSupplyToLessThanAtomicUnits) {
 		// Assert:
-		AssertIncreaseValidationResult(ValidationResult::Success, Amount(900), Amount(500), Amount(300));
-		AssertIncreaseValidationResult(ValidationResult::Success, Amount(900), Amount(500), Amount(399));
+		AssertIncreaseValidationResult<TTestTraits>(ValidationResult::Success, Amount(900), Amount(500), Amount(300));
+		AssertIncreaseValidationResult<TTestTraits>(ValidationResult::Success, Amount(900), Amount(500), Amount(399));
 	}
 
-	TEST(TEST_CLASS, CanIncreaseMutableSupplyToExactlyAtomicUnits) {
+	TRAITS_BASED_TEST(TEST_CLASS, CanIncreaseMutableSupplyToExactlyAtomicUnits) {
 		// Assert:
-		AssertIncreaseValidationResult(ValidationResult::Success, Amount(900), Amount(500), Amount(400));
+		AssertIncreaseValidationResult<TTestTraits>(ValidationResult::Success, Amount(900), Amount(500), Amount(400));
 	}
 
-	TEST(TEST_CLASS, CannotIncreaseMutableSupplyToGreaterThanAtomicUnits) {
+	TRAITS_BASED_TEST(TEST_CLASS, CannotIncreaseMutableSupplyToGreaterThanAtomicUnits) {
 		// Assert:
-		AssertIncreaseValidationResult(Failure_Mosaic_Supply_Exceeded, Amount(900), Amount(500), Amount(401));
-		AssertIncreaseValidationResult(Failure_Mosaic_Supply_Exceeded, Amount(900), Amount(500), Amount(500));
+		AssertIncreaseValidationResult<TTestTraits>(Failure_Mosaic_Supply_Exceeded, Amount(900), Amount(500), Amount(401));
+		AssertIncreaseValidationResult<TTestTraits>(Failure_Mosaic_Supply_Exceeded, Amount(900), Amount(500), Amount(500));
 	}
 
-	TEST(TEST_CLASS, CannotIncreaseMutableSupplyWhenOverflowIsDetected) {
+	TRAITS_BASED_TEST(TEST_CLASS, CannotIncreaseMutableSupplyWhenOverflowIsDetected) {
 		// Assert:
-		AssertIncreaseValidationResult(Failure_Mosaic_Supply_Exceeded, Amount(900), Amount(500), Max_Atomic_Units);
+		AssertIncreaseValidationResult<TTestTraits>(Failure_Mosaic_Supply_Exceeded, Amount(900), Amount(500), Max_Atomic_Units);
 	}
-
+	
 	// endregion
 }}

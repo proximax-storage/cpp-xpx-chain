@@ -23,6 +23,7 @@
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/CacheMixinsTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
+#include "tests/test/AccountRestrictionTestUtils.h"
 
 namespace catapult { namespace cache {
 
@@ -34,7 +35,7 @@ namespace catapult { namespace cache {
 		struct AccountRestrictionCacheMixinTraits {
 			class CacheType : public AccountRestrictionCache {
 			public:
-				CacheType() : AccountRestrictionCache(CacheConfiguration(), model::NetworkIdentifier::Zero)
+				CacheType() : AccountRestrictionCache(CacheConfiguration(), test::CreateAccountRestrictionConfigHolder())
 				{}
 			};
 
@@ -90,12 +91,12 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheWrappersExposeNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(18);
-		AccountRestrictionCache cache(CacheConfiguration(), networkIdentifier);
+		AccountRestrictionCache cache(CacheConfiguration(), test::CreateAccountRestrictionConfigHolder(networkIdentifier));
 
 		// Act + Assert:
-		EXPECT_EQ(networkIdentifier, cache.createView()->networkIdentifier());
-		EXPECT_EQ(networkIdentifier, cache.createDelta()->networkIdentifier());
-		EXPECT_EQ(networkIdentifier, cache.createDetachedDelta().tryLock()->networkIdentifier());
+		EXPECT_EQ(networkIdentifier, cache.createView(Height())->networkIdentifier());
+		EXPECT_EQ(networkIdentifier, cache.createDelta(Height())->networkIdentifier());
+		EXPECT_EQ(networkIdentifier, cache.createDetachedDelta(Height()).tryLock()->networkIdentifier());
 	}
 
 	// endregion

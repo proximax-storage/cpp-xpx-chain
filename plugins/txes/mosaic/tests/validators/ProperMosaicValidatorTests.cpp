@@ -29,9 +29,35 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ProperMosaicValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ProperMosaic,)
+	DEFINE_COMMON_VALIDATOR_TESTS(ProperMosaicV1,)
+	DEFINE_COMMON_VALIDATOR_TESTS(ProperMosaicV2,)
 
 	namespace {
+
+		struct V1TestTraits
+		{
+			using Notification = model::MosaicRequiredNotification<1>;
+			static stateful::NotificationValidatorPointerT<Notification> Create(){
+				return CreateProperMosaicV1Validator();
+			}
+			template<typename TMosaicId>
+			static Notification CreateNotification(const Key& key, const TMosaicId& mosaicId, model::MosaicRequirementAction){
+				return Notification(key, mosaicId);
+			}
+		};
+
+		struct V2TestTraits
+		{
+			using Notification = model::MosaicRequiredNotification<2>;
+			static stateful::NotificationValidatorPointerT<Notification> Create(){
+				return CreateProperMosaicV2Validator();
+			}
+			template<typename TMosaicId>
+			static Notification CreateNotification(const Key& key, const TMosaicId& mosaicId, model::MosaicRequirementAction action ){
+				return Notification(key, mosaicId, action);
+			}
+		};
+
 		constexpr auto Mosaic_Expiry_Height = Height(150);
 
 		struct ResolvedMosaicTraits {
@@ -43,7 +69,7 @@ namespace catapult { namespace validators {
 			static constexpr auto Default_Id = UnresolvedMosaicId(55);
 		};
 
-		template<typename TMosaicId>
+		template<typename TTestTraits, typename TMosaicId>
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				TMosaicId affectedMosaicId,
@@ -51,10 +77,10 @@ namespace catapult { namespace validators {
 				const Key& transactionSigner,
 				const Key& artifactOwner) {
 			// Arrange:
-			auto pValidator = CreateProperMosaicValidator();
+			auto pValidator = TTestTraits::Create();
 
 			// - create the notification
-			model::MosaicRequiredNotification<1> notification(transactionSigner, affectedMosaicId);
+			typename TTestTraits::Notification notification = TTestTraits::CreateNotification(transactionSigner, affectedMosaicId, model::MosaicRequirementAction::Set);
 
 			// - create the validator context
 			auto cache = test::MosaicCacheFactory::Create();
@@ -76,39 +102,150 @@ namespace catapult { namespace validators {
 			EXPECT_EQ(expectedResult, result) << "height " << height << ", id " << affectedMosaicId;
 		}
 
-		template<typename TMosaicId>
+		template<typename TTestTraits, typename TMosaicId>
 		void AssertValidationResult(ValidationResult expectedResult, TMosaicId affectedMosaicId, Height height) {
 			auto key = test::GenerateRandomByteArray<Key>();
-			AssertValidationResult(expectedResult, affectedMosaicId, height, key, key);
+			AssertValidationResult<TTestTraits>(expectedResult, affectedMosaicId, height, key, key);
 		}
 	}
 
-#define MOSAIC_ID_TRAITS_BASED_TEST(TEST_NAME) \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_Resolved) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ResolvedMosaicTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Unresolved) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<UnresolvedMosaicTraits>(); } \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+#define MOSAIC_ID_TRAITS_BASED_DUAL_TEST(TEST_NAME) \
+	template<typename TTestTraits, typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_Resolved_V1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V1TestTraits, ResolvedMosaicTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Resolved_V2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V2TestTraits, ResolvedMosaicTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Unresolved_V1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V1TestTraits, UnresolvedMosaicTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Unresolved_V2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<V2TestTraits, UnresolvedMosaicTraits>(); } \
+	template<typename TTestTraits, typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
-	MOSAIC_ID_TRAITS_BASED_TEST(FailureWhenMosaicIsUnknown) {
+
+
+	MOSAIC_ID_TRAITS_BASED_DUAL_TEST(FailureWhenMosaicIsUnknown) {
 		// Assert:
 		auto unknownMosaicId = TTraits::Default_Id + decltype(TTraits::Default_Id)(1);
-		AssertValidationResult(Failure_Mosaic_Expired, unknownMosaicId, Height(100));
+		AssertValidationResult<TTestTraits>(Failure_Mosaic_Expired, unknownMosaicId, Height(100));
 	}
 
-	MOSAIC_ID_TRAITS_BASED_TEST(FailureWhenMosaicExpired) {
+	MOSAIC_ID_TRAITS_BASED_DUAL_TEST(FailureWhenMosaicExpired) {
 		// Assert:
-		AssertValidationResult(Failure_Mosaic_Expired, TTraits::Default_Id, Mosaic_Expiry_Height);
+		AssertValidationResult<TTestTraits>(Failure_Mosaic_Expired, TTraits::Default_Id, Mosaic_Expiry_Height);
 	}
 
-	MOSAIC_ID_TRAITS_BASED_TEST(FailureWhenMosaicOwnerDoesNotMatch) {
+	MOSAIC_ID_TRAITS_BASED_DUAL_TEST(FailureWhenMosaicOwnerDoesNotMatch) {
 		// Assert:
 		auto key1 = test::GenerateRandomByteArray<Key>();
 		auto key2 = test::GenerateRandomByteArray<Key>();
-		AssertValidationResult(Failure_Mosaic_Owner_Conflict, TTraits::Default_Id, Height(100), key1, key2);
+		AssertValidationResult<TTestTraits>(Failure_Mosaic_Owner_Conflict, TTraits::Default_Id, Height(100), key1, key2);
 	}
 
-	MOSAIC_ID_TRAITS_BASED_TEST(SuccessWhenMosaicIsActiveAndOwnerMatches) {
+	MOSAIC_ID_TRAITS_BASED_DUAL_TEST(SuccessWhenMosaicIsActiveAndOwnerMatches) {
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, TTraits::Default_Id, Height(100));
+		AssertValidationResult<TTestTraits>(ValidationResult::Success, TTraits::Default_Id, Height(100));
+	}
+	// region nonzero property mask
+
+	namespace {
+		model::MosaicProperties CreateProperties(
+				model::MosaicFlags flags,
+				uint8_t divisibility,
+				BlockDuration duration) {
+			model::MosaicProperties::PropertyValuesContainer values;
+			for (auto i = 0u; i < values.size(); ++i)
+				values[i] = 0xDEADBEAF;
+
+			values[0] = utils::to_underlying_type(flags);
+			values[1] = divisibility;
+			values[2] = duration.unwrap();
+
+
+			return model::MosaicProperties::FromValues(values);
+		}
+		template<typename TMosaicId>
+		void AssertPropertyFlagMaskValidationResult(
+				ValidationResult expectedResult,
+				TMosaicId affectedMosaicId,
+				uint8_t notificationPropertyFlagMask,
+				uint8_t mosaicPropertyFlagMask,
+				model::MosaicRequirementAction action) {
+			// Arrange:
+			auto pValidator = CreateProperMosaicV2Validator();
+
+			// - create the notification
+			auto owner = test::GenerateRandomByteArray<Key>();
+			model::MosaicRequiredNotification<2> notification(owner, affectedMosaicId, action, notificationPropertyFlagMask);
+
+			// - create the validator context
+			auto height = Height(50);
+			auto config = config::BlockchainConfiguration::Uninitialized();
+			auto cache = test::MosaicCacheFactory::Create(config);
+			auto delta = cache.createDelta();
+
+			{
+				// need to set custom property flags, so can't use regular helpers (e.g. test::AddMosaic)
+				auto& mosaicCacheDelta = delta.sub<cache::MosaicCache>();
+
+				model::MosaicProperties properties = CreateProperties(static_cast<model::MosaicFlags>(mosaicPropertyFlagMask), 0, BlockDuration(100));
+				auto definition = state::MosaicDefinition(height, owner, 1, properties);
+				mosaicCacheDelta.insert(state::MosaicEntry(ResolvedMosaicTraits::Default_Id, definition));
+			}
+
+			auto readOnlyCache = delta.toReadOnly();
+			auto context = test::CreateValidatorContext(config, height, readOnlyCache);
+
+			// - set up a custom mosaic id resolver
+			const_cast<model::ResolverContext&>(context.Resolvers) = test::CreateResolverContextWithCustomDoublingMosaicResolver();
+
+			// Act:
+			auto result = test::ValidateNotification(*pValidator, notification, context);
+
+			// Assert:
+			EXPECT_EQ(expectedResult, result)
+							<< "notificationPropertyFlagMask " << static_cast<uint16_t>(notificationPropertyFlagMask)
+							<< "mosaicPropertyFlagMask " << static_cast<uint16_t>(mosaicPropertyFlagMask);
+		}
+	}
+#define MOSAIC_ID_TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_Resolved_V2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ResolvedMosaicTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Unresolved_V2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<UnresolvedMosaicTraits>(); } \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
+	MOSAIC_ID_TRAITS_BASED_TEST(FailureWhenPropertyFlagMaskDoesNotOverlapSet) {
+		// Assert: 101, 010
+		AssertPropertyFlagMaskValidationResult(Failure_Mosaic_Required_Property_Flag_Unset, TTraits::Default_Id, 0x05, 0x02, model::MosaicRequirementAction::Set);
+	}
+
+	MOSAIC_ID_TRAITS_BASED_TEST(FailureWhenPropertyFlagMaskPartiallyOverlapsSet) {
+		// Assert: 101, 110
+		AssertPropertyFlagMaskValidationResult(Failure_Mosaic_Required_Property_Flag_Unset, TTraits::Default_Id, 0x05, 0x06, model::MosaicRequirementAction::Set);
+	}
+
+	MOSAIC_ID_TRAITS_BASED_TEST(SuccessWhenPropertyFlagMaskIsExactMatchSet) {
+		// Assert: 101, 101
+		AssertPropertyFlagMaskValidationResult(ValidationResult::Success, TTraits::Default_Id, 0x05, 0x05, model::MosaicRequirementAction::Set);
+	}
+
+	MOSAIC_ID_TRAITS_BASED_TEST(SuccessWhenPropertyFlagMaskIsSubsetSet) {
+		// Assert: 101, 111
+		AssertPropertyFlagMaskValidationResult(ValidationResult::Success, TTraits::Default_Id, 0x05, 0x07, model::MosaicRequirementAction::Set);
+	}
+
+	MOSAIC_ID_TRAITS_BASED_TEST(FailureWhenPropertyFlagMaskDoesNotOverlapUnset) {
+		// Assert: 101, 010
+		AssertPropertyFlagMaskValidationResult(Failure_Mosaic_Required_Property_Flag_Unset, TTraits::Default_Id, 0x05, 0x05, model::MosaicRequirementAction::Unset);
+	}
+
+	MOSAIC_ID_TRAITS_BASED_TEST(FailureWhenPropertyFlagMaskPartiallyOverlapsUnset) {
+		// Assert: 101, 110
+		AssertPropertyFlagMaskValidationResult(Failure_Mosaic_Required_Property_Flag_Unset, TTraits::Default_Id, 0x05, 0x01, model::MosaicRequirementAction::Unset);
+	}
+
+	MOSAIC_ID_TRAITS_BASED_TEST(SuccessWhenPropertyFlagMaskIsExactMatchUnset) {
+		// Assert: 101, 101
+		AssertPropertyFlagMaskValidationResult(ValidationResult::Success, TTraits::Default_Id, 0x05, 0x02, model::MosaicRequirementAction::Unset);
+	}
+
+	MOSAIC_ID_TRAITS_BASED_TEST(SuccessWhenPropertyFlagMaskIsSubsetUnset) {
+		// Assert: 101, 111
+		AssertPropertyFlagMaskValidationResult(ValidationResult::Success, TTraits::Default_Id, 0x05, 0x00, model::MosaicRequirementAction::Unset);
 	}
 }}

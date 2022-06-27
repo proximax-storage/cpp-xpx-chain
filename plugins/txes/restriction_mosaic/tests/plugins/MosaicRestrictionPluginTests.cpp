@@ -19,6 +19,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "src/plugins/MosaicRestrictionPlugin.h"
 #include "src/model/MosaicRestrictionEntityType.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
@@ -33,15 +34,16 @@ namespace catapult { namespace plugins {
 			template<typename TAction>
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
-				auto config = model::BlockChainConfiguration::Uninitialized();
-				config.Plugins.emplace("catapult.plugins.restrictionmosaic", utils::ConfigurationBag({{
+				test::MutableBlockchainConfiguration config;
+				config.Network.Plugins.emplace("catapult.plugins.restrictionmosaic", utils::ConfigurationBag({{
 					"",
 					{
+						{"enabled", "false"},
 						{ "maxMosaicRestrictionValues", "10" }
 					}
 				}}));
 
-				auto manager = test::CreatePluginManager(config);
+				auto manager = test::CreatePluginManager(config.ToConst().Network);
 				RegisterMosaicRestrictionSubsystem(manager);
 
 				// Act:
@@ -78,22 +80,25 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
-					"MosaicRestrictionBalanceDebitValidator",
-					"MosaicRestrictionBalanceTransferValidator",
 					"MosaicRestrictionRequiredValidator",
-					"MosaicGlobalRestrictionMaxValuesValidator",
-					"MosaicGlobalRestrictionModificationValidator",
-					"MosaicAddressRestrictionMaxValuesValidator",
-					"MosaicAddressRestrictionModificationValidator"
+					 "MosaicRestrictionBalanceTransferValidator",
+					 "MosaicRestrictionBalanceDebitValidator",
+					 "MosaicGlobalRestrictionModificationValidator",
+					 "MosaicGlobalRestrictionMaxValuesValidator",
+					 "MosaicAddressRestrictionModificationValidator",
+					 "MosaicAddressRestrictionMaxValuesValidator"
 				};
+
+
+
 			}
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
-					"MosaicGlobalRestrictionCommitModificationObserver",
 					"MosaicGlobalRestrictionRollbackModificationObserver",
-					"MosaicAddressRestrictionCommitModificationObserver",
-					"MosaicAddressRestrictionRollbackModificationObserver"
+					"MosaicGlobalRestrictionCommitModificationObserver",
+					"MosaicAddressRestrictionRollbackModificationObserver",
+					"MosaicAddressRestrictionCommitModificationObserver"
 				};
 			}
 

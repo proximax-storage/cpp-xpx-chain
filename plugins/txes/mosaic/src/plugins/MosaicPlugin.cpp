@@ -61,14 +61,16 @@ namespace catapult { namespace plugins {
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateMosaicIdValidator())
-				.add(validators::CreateMosaicSupplyChangeValidator())
+				.add(validators::CreateMosaicSupplyChangeV1Validator())
+				.add(validators::CreateMosaicSupplyChangeV2Validator())
 				.add(validators::CreateMosaicPluginConfigValidator());
 		});
 
 		auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(manager.immutableConfig());
 		manager.addStatefulValidatorHook([currencyMosaicId](auto& builder) {
 			builder
-				.add(validators::CreateMosaicPropertiesValidator())
+				.add(validators::CreateMosaicPropertiesV1Validator())
+				.add(validators::CreateMosaicPropertiesV2Validator())
 				.add(validators::CreateProperMosaicV1Validator())
 				.add(validators::CreateProperMosaicV2Validator())
 				.add(validators::CreateMosaicAvailabilityValidator())
@@ -77,8 +79,9 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateMaxMosaicsBalanceTransferValidator())
 				.add(validators::CreateMaxMosaicsSupplyChangeV1Validator())
 				.add(validators::CreateMaxMosaicsSupplyChangeV2Validator())
-				// note that the following validator depends on MosaicChangeAllowedValidator
-				.add(validators::CreateMosaicSupplyChangeAllowedValidator());
+				// note that the following validators depend on MosaicChangeAllowedValidator
+				.add(validators::CreateMosaicSupplyChangeAllowedV1Validator())
+				.add(validators::CreateMosaicSupplyChangeAllowedV2Validator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
@@ -86,7 +89,8 @@ namespace catapult { namespace plugins {
 			auto expiryReceiptType = model::Receipt_Type_Mosaic_Expired;
 			builder
 				.add(observers::CreateMosaicDefinitionObserver())
-				.add(observers::CreateMosaicSupplyChangeObserver())
+				.add(observers::CreateMosaicSupplyChangeV1Observer())
+				.add(observers::CreateMosaicSupplyChangeV2Observer())
 				.add(observers::CreateRentalFeeObserver<model::MosaicRentalFeeNotification<1>>("Mosaic", rentalFeeReceiptType))
 				.add(observers::CreateCacheBlockTouchObserver<cache::MosaicCache>("Mosaic", expiryReceiptType));
 		});

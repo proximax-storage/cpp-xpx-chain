@@ -34,6 +34,7 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
+							{"enabled" , "true"},
 							{ "maxMosaicRestrictionValues", "234" }
 						}
 					}
@@ -43,15 +44,22 @@ namespace catapult { namespace config {
 			static bool IsSectionOptional(const std::string&) {
 				return false;
 			}
-
+			static bool IsPropertyOptional(const std::string&) {
+				return false;
+			}
+			static bool SupportsUnknownProperties() {
+				return false;
+			}
 			static void AssertZero(const MosaicRestrictionConfiguration& config) {
 				// Assert:
 				EXPECT_EQ(0u, config.MaxMosaicRestrictionValues);
+				EXPECT_EQ(false, config.Enabled);
 			}
 
 			static void AssertCustom(const MosaicRestrictionConfiguration& config) {
 				// Assert:
 				EXPECT_EQ(234u, config.MaxMosaicRestrictionValues);
+				EXPECT_EQ(true, config.Enabled);
 			}
 		};
 	}
