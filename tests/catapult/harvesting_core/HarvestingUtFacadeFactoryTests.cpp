@@ -162,6 +162,20 @@ namespace catapult { namespace harvesting {
 					[](auto) { return false; });
 		}
 
+		void AssertObserverContexts(
+				const test::MockExecutionConfiguration& executionConfig,
+				size_t numObserverCalls,
+				const std::vector<size_t>& expectedNumDifficultyInfos) {
+			// Assert:
+			EXPECT_EQ(numObserverCalls, executionConfig.pObserver->params().size());
+			test::MockExecutionConfiguration::AssertObserverContexts(
+					*executionConfig.pObserver,
+					expectedNumDifficultyInfos,
+					Default_Height + Height(1),
+					model::ImportanceHeight(16),
+					[](auto) { return false; });
+		}
+
 		// endregion
 	}
 
@@ -206,7 +220,7 @@ namespace catapult { namespace harvesting {
 			AssertEntityInfos("observer", executionConfig.pObserver->params(), transactionHashes, expectedIndexIdPairs);
 
 			// - check contexts
-			AssertValidatorContexts(executionConfig, { 0, 0, 2, 2, 4, 4, 6, 6 });
+			AssertValidatorContexts(executionConfig, { 0, 1, 2, 3, 4, 5, 6, 7 });
 			AssertObserverContexts(executionConfig, 8);
 		});
 	}
@@ -278,10 +292,10 @@ namespace catapult { namespace harvesting {
 		}
 	}
 
-	TEST(TEST_CLASS, CanApplyTransactionsToCache_SomeSuccess_FirstNotificationFails) {
+	TEST(TEST_CLASS, CanApplyTransactionsToCache_SomeSuccess) {
 		// Act:
 		AssertCanApplyTransactionsSomeSuccess(1, [](const auto& transactionHashes, const auto& executionConfig) {
-			// Assert: check entity infos (hashes)
+			// Assert: check entity infos (hashes): since first notifications failed, no undos are necessary
 			AssertEntityInfos("validator", executionConfig.pValidator->params(), transactionHashes, {
 				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 2, 1 }, { 2, 2 }, { 3, 1 }
 			});
@@ -289,24 +303,85 @@ namespace catapult { namespace harvesting {
 				{ 0, 1 }, { 0, 2 }, { 2, 1 }, { 2, 2 }
 			});
 
-			AssertValidatorContexts(executionConfig, { 0, 0, 2, 2, 2, 4 });
+			AssertValidatorContexts(executionConfig, { 0, 1, 2, 2, 3, 4 });
 			AssertObserverContexts(executionConfig, 4);
 		});
 	}
 
-	TEST(TEST_CLASS, CanApplyTransactionsToCache_SomeSuccess_SecondNotificationFails) {
+	TEST(TEST_CLASS, CanApplyTransactionsToCache_SomeSuccessSomeUndos) {
 		// Act:
 		AssertCanApplyTransactionsSomeSuccess(2, [](const auto& transactionHashes, const auto& executionConfig) {
-			// Assert: check entity infos (hashes)
+			// Assert: check entity infos (hashes): since second notifications failed, undos are necessary
 			AssertEntityInfos("validator", executionConfig.pValidator->params(), transactionHashes, {
 				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 1, 2 }, { 2, 1 }, { 2, 2 }, { 3, 1 }, { 3, 2 }
 			});
 			AssertEntityInfos("observer", executionConfig.pObserver->params(), transactionHashes, {
-				{ 0, 1 }, { 0, 2 }, { 2, 1 }, { 2, 2 }
+				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 2, 1 }, { 2, 2 }, { 3, 1 }
 			});
 
-			AssertValidatorContexts(executionConfig, { 0, 0, 2, 2, 2, 2, 4, 4 });
-			AssertObserverContexts(executionConfig, 4);
+			AssertValidatorContexts(executionConfig, { 0, 1, 2, 3, 2, 3, 4, 5 });
+			AssertObserverContexts(executionConfig, 6, { 0, 1, 2, 2, 3, 4 });
+		});
+	}
+
+	// endregion
+
+	// region unapply
+
+	// only one test is required because unapply does not perform notification validation
+
+	TEST(TEST_CLASS, CanUnapplyTransactionsFromCache) {
+		// Arrange:
+		RunUtFacadeTest([](auto& facade, const auto& executionConfig) {
+			auto transactionInfos = test::CreateTransactionInfos(4);
+			auto transactionHashes = test::ExtractHashes(transactionInfos);
+
+			// - seed facade with four transactions
+			for (const auto& transactionInfo : transactionInfos)
+				facade.apply(transactionInfo);
+
+			// Act: unapply (last) three transactions
+			for (auto i = 0u; i < 3; ++i)
+				facade.unapply();
+
+			// Assert: only first transaction remains in ut cache
+			EXPECT_EQ(Default_Height + Height(1), facade.height());
+			EXPECT_EQ(1u, facade.size());
+
+			std::vector<model::TransactionInfo> expectedTransactionInfos;
+			expectedTransactionInfos.push_back(transactionInfos[0].copy());
+			test::AssertEquivalent(expectedTransactionInfos, facade.transactionInfos());
+
+			// - check entity infos (hashes): validator should be called for all notifications (2 per transaction),
+			//   observer should be called additionally for last three transactions
+			AssertEntityInfos("validator", executionConfig.pValidator->params(), transactionHashes, {
+				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 1, 2 }, { 2, 1 }, { 2, 2 }, { 3, 1 }, { 3, 2 }
+			});
+			AssertEntityInfos("observer", executionConfig.pObserver->params(), transactionHashes, {
+				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 1, 2 }, { 2, 1 }, { 2, 2 }, { 3, 1 }, { 3, 2 }
+			});
+
+			// - check contexts
+			AssertValidatorContexts(executionConfig, { 0, 1, 2, 3, 4, 5, 6, 7 });
+			AssertObserverContexts(executionConfig, 8);
+		});
+	}
+
+	TEST(TEST_CLASS, CannotUnapplyTransactionsWhenEmpty) {
+		// Arrange:
+		RunUtFacadeTest([](auto& facade, const auto&) {
+			auto transactionInfos = test::CreateTransactionInfos(4);
+
+			// - seed facade with four transactions
+			for (const auto& transactionInfo : transactionInfos)
+				facade.apply(transactionInfo);
+
+			// - unapply all transactions
+			for (auto i = 0u; i < transactionInfos.size(); ++i)
+				facade.unapply();
+
+			// Act + Assert:
+			EXPECT_THROW(facade.unapply(), catapult_out_of_range);
 		});
 	}
 
@@ -374,7 +449,7 @@ namespace catapult { namespace harvesting {
 			});
 
 			// - check contexts
-			AssertValidatorContexts(executionConfig, { 0, 0, 2, 2, 4, 4, 6, 6, 8 });
+			AssertValidatorContexts(executionConfig, { 0, 1, 2, 3, 4, 5, 6, 7, 8 });
 			AssertObserverContexts(executionConfig, 8);
 
 			// - no block was generated
@@ -397,7 +472,7 @@ namespace catapult { namespace harvesting {
 			AssertEntityInfos("observer", executionConfig.pObserver->params(), { Hash256() }, { { 0, 1 }, { 0, 2 } });
 
 			// - check contexts
-			AssertValidatorContexts(executionConfig, { 0, 0 });
+			AssertValidatorContexts(executionConfig, { 0, 1 });
 			AssertObserverContexts(executionConfig, 2);
 
 			// - check block
@@ -436,7 +511,7 @@ namespace catapult { namespace harvesting {
 			AssertEntityInfos("observer", executionConfig.pObserver->params(), transactionHashes, expectedIndexIdPairs);
 
 			// - check contexts
-			AssertValidatorContexts(executionConfig, { 0, 0, 2, 2, 4, 4, 6, 6, 8, 8 });
+			AssertValidatorContexts(executionConfig, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
 			AssertObserverContexts(executionConfig, 10);
 
 			// - check block
@@ -496,7 +571,8 @@ namespace catapult { namespace harvesting {
 		public:
 			model::UniqueEntityPtr<model::Block> generate(
 					const model::Block& blockHeader,
-					const std::vector<model::TransactionInfo>& transactionInfos) const {
+					const std::vector<model::TransactionInfo>& transactionInfos,
+					size_t numUnapplies = 0) const {
 				HarvestingUtFacadeFactory factory(m_cache, m_executionConfig);
 
 				auto pFacade = factory.create(Default_Time);
@@ -505,6 +581,9 @@ namespace catapult { namespace harvesting {
 
 				for (const auto& transactionInfo : transactionInfos)
 					pFacade->apply(transactionInfo);
+
+				for (auto i = 0u; i < numUnapplies; ++i)
+					pFacade->unapply();
 
 				return pFacade->commit(blockHeader);
 			}
@@ -650,7 +729,41 @@ namespace catapult { namespace harvesting {
 
 	// endregion
 
-	// region commit - verifiable state correct after failures
+	// region commit - verifiable state correct after undo
+
+	TEST(TEST_CLASS, NonZeroHashesAreReturnedWhenVerifiableReceiptsAndStateAreEnabledAfterUnapplyOperation) {
+		// Arrange: prepare context
+
+		auto config = CreateConfiguration(StateVerifyOptions::All);
+
+		test::MockExecutionConfiguration executionConfig(config);
+		executionConfig.pObserver->enableReceiptGeneration();
+		executionConfig.pObserver->enableRollbackEmulation();
+		FacadeTestContext context(config, executionConfig.Config);
+
+		auto pBlockHeader = CreateBlockHeaderWithHeight(Default_Height + Height(1));
+		pBlockHeader->FeeMultiplier = BlockFeeMultiplier(1);
+		context.prepareSignerAccount(pBlockHeader->Signer);
+
+		auto transactionInfos = CreateTransactionInfosWithIncreasingMultipliers(5);
+		context.prepareTransactionSignerAccounts(transactionInfos);
+
+		// Act: apply 5 transactions and unapply 2
+		auto pBlock = context.generate(*pBlockHeader, transactionInfos, 2);
+
+		// Assert: check the block execution dependent hashes
+		ASSERT_TRUE(!!pBlock);
+
+		std::vector<model::TransactionInfo> expectedTransactionInfos;
+		for (auto i = 0u; i < 3; ++i)
+			expectedTransactionInfos.push_back(transactionInfos[i].copy());
+
+		auto expectedReceiptsHash = CalculateEnabledTestReceiptsHash(2 * (3 + 1));
+		auto expectedStateHash = CalculateEnabledTestStateHash(context.cache(), expectedTransactionInfos);
+
+		EXPECT_EQ(expectedReceiptsHash, pBlock->BlockReceiptsHash);
+		EXPECT_EQ(expectedStateHash, pBlock->StateHash);
+	}
 
 	TEST(TEST_CLASS, NonzeroHashesAreReturnedWhenVerifiableReceiptsAndStateAreEnabledAfterApplyOperationWithSomeFailures) {
 		// Arrange: prepare context
@@ -674,8 +787,8 @@ namespace catapult { namespace harvesting {
 		executionConfig.pValidator->setResult(validators::ValidationResult::Failure, transactionInfos[1].EntityHash, 2);
 		executionConfig.pValidator->setResult(validators::ValidationResult::Failure, transactionInfos[3].EntityHash, 1);
 
-		// Act: apply 5 transactions with two failures
-		auto pBlock = context.generate(*pBlockHeader, transactionInfos);
+		// Act: apply 5 transactions with two failures (but no undos)
+		auto pBlock = context.generate(*pBlockHeader, transactionInfos, 0);
 
 		// Assert: check the block execution dependent hashes
 		ASSERT_TRUE(!!pBlock);

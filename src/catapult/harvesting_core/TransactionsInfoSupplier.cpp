@@ -97,9 +97,11 @@ namespace catapult { namespace harvesting {
 				return true;
 			});
 
-			// 2. pick the best fee policy and truncate the transactions
+			// 2. pick the best fee policy and truncate the transactions and facade
 			const auto& bestFeePolicy = maximizer.best();
 			candidates.resize(bestFeePolicy.NumTransactions);
+			while (utFacade.size() > bestFeePolicy.NumTransactions)
+				utFacade.unapply();
 
 			return ToTransactionsInfo(std::move(candidates), bestFeePolicy.FeeMultiplier);
 		}

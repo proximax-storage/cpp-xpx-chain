@@ -173,6 +173,20 @@ namespace catapult { namespace cache {
 		}
 	}
 
+	void CatapultCacheDelta::backupChanges(bool replace) {
+		for (auto& pSubView : m_subViews) {
+			if (!!pSubView && pSubView->enabled())
+				pSubView->backupChanges(replace);
+		}
+	}
+
+	void CatapultCacheDelta::restoreChanges() {
+		for (auto& pSubView : m_subViews) {
+			if (!!pSubView && pSubView->enabled())
+				pSubView->restoreChanges();
+		}
+	}
+
 	ReadOnlyCatapultCache CatapultCacheDelta::toReadOnly() const {
 		return ReadOnlyCatapultCache(ExtractReadOnlyViews(m_subViews));
 	}
