@@ -58,7 +58,6 @@ namespace catapult { namespace test {
 			CATAPULT_THROW_RUNTIME_ERROR("trySetMerkleRoot is not supported");
 		}
 
-		[[noreturn]]
 		void updateMerkleRoot(Height) override {
 			CATAPULT_THROW_RUNTIME_ERROR("updateMerkleRoot is not supported");
 		}
@@ -75,6 +74,14 @@ namespace catapult { namespace test {
 
 		void setHeight(const Height&) override {
 			CATAPULT_THROW_RUNTIME_ERROR("setHeight is not supported");
+		}
+
+		void backupChanges(bool replace) override {
+			CATAPULT_THROW_RUNTIME_ERROR("backupChanges is not supported");
+		}
+
+		void restoreChanges() override {
+			CATAPULT_THROW_RUNTIME_ERROR("restoreChanges is not supported");
 		}
 	};
 

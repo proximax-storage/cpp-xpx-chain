@@ -64,6 +64,12 @@ namespace catapult { namespace cache {
 		/// Sets the cache \a height.
 		void setHeight(const Height& height);
 
+		/// Backs up the changes made in the cache delta. Set \c true to \a replace previous backup.
+		void backupChanges(bool replace);
+
+		/// Restores the last backed up changes in the cache delta.
+		void restoreChanges();
+
 	public:
 		/// Creates a read-only view of this delta.
 		ReadOnlyCatapultCache toReadOnly() const;

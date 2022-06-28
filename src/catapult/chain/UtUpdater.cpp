@@ -20,13 +20,11 @@
 
 #include "UtUpdater.h"
 #include "ChainResults.h"
+#include "ProcessingNotificationSubscriber.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/RelockableDetachedCatapultCache.h"
 #include "catapult/cache_tx/UtCache.h"
 #include "catapult/model/FeeUtils.h"
-#include "catapult/observers/ObservingNotificationSubscriber.h"
-#include "catapult/validators/ValidatingNotificationSubscriber.h"
-#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace chain {
 
@@ -199,24 +197,23 @@ namespace catapult { namespace chain {
 
 				// notice that subscriber is created within loop because aggregate result needs to be reset each iteration
 				const auto& validator = *m_executionConfig.pValidator;
-				validators::ValidatingNotificationSubscriber validatingSubscriber(validator, validatorContext);
+				const auto& observer = *m_executionConfig.pObserver;
+				ProcessingNotificationSubscriber sub(validator, validatorContext, observer, observerContext);
 				model::WeakEntityInfo entityInfo(entity, entityHash, effectiveHeight);
-				m_executionConfig.pNotificationPublisher->publish(entityInfo, validatingSubscriber);
-				if (!IsValidationResultSuccess(validatingSubscriber.result())) {
-					CATAPULT_LOG_LEVEL(validators::MapToLogLevel(validatingSubscriber.result()))
-							<< "dropping transaction " << entityHash << ": " << validatingSubscriber.result();
+				cache.backupChanges(true);
+				m_executionConfig.pNotificationPublisher->publish(entityInfo, sub);
+				if (!IsValidationResultSuccess(sub.result())) {
+					CATAPULT_LOG_LEVEL(validators::MapToLogLevel(sub.result()))
+							<< "dropping transaction " << entityHash << ": " << sub.result();
 
 					// only forward failure (not neutral) results
-					if (IsValidationResultFailure(validatingSubscriber.result()))
-						applyState.FailureTransactions.emplace_back(FailureInfo{ entity, entityHash, effectiveHeight, validatingSubscriber.result() });
+					if (IsValidationResultFailure(sub.result()))
+						applyState.FailureTransactions.emplace_back(FailureInfo{ entity, entityHash, effectiveHeight, sub.result() });
 
+					cache.restoreChanges();
 					applyState.Modifier.remove(entityHash);
 					continue;
 				}
-
-				const auto& observer = *m_executionConfig.pObserver;
-				observers::ObservingNotificationSubscriber observingSubscriber(observer, observerContext);
-				m_executionConfig.pNotificationPublisher->publish(entityInfo, observingSubscriber);
 			}
 		}
 

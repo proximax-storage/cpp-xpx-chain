@@ -20,11 +20,9 @@
 
 #include "HarvestingUtFacadeFactory.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/chain/ProcessingNotificationSubscriber.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/FeeUtils.h"
-#include "catapult/observers/ObservingNotificationSubscriber.h"
-#include "catapult/validators/ValidatingNotificationSubscriber.h"
-#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace harvesting {
 
@@ -60,6 +58,11 @@ namespace catapult { namespace harvesting {
 				m_blockStatementBuilder.popSource();
 
 			return false;
+		}
+
+		void unapply() {
+			m_pCacheDelta->restoreChanges();
+			m_blockStatementBuilder.popSource();
 		}
 
 		model::UniqueEntityPtr<model::Block> commit(const model::Block& blockHeader, const model::Transactions& transactions) {
@@ -130,20 +133,16 @@ namespace catapult { namespace harvesting {
 					const auto& validatorContext,
 					const auto& observer,
 					auto& observerContext) {
-				// validate entity
-				validators::ValidatingNotificationSubscriber validatingSubscriber(validator, validatorContext);
-				publisher.publish(weakEntityInfo, validatingSubscriber);
-
-				if (!validators::IsValidationResultSuccess(validatingSubscriber.result())) {
-					CATAPULT_LOG(warning) << "validation of " << weakEntityInfo.type() << " failed with error " << validatingSubscriber.result();
-					return false;
-				}
+				chain::ProcessingNotificationSubscriber sub(validator, validatorContext, observer, observerContext);
+				observerContext.Cache.backupChanges(false);
 
 				// execute entity
-				observers::ObservingNotificationSubscriber observingSubscriber(observer, observerContext);
-				publisher.publish(weakEntityInfo, observingSubscriber);
+				publisher.publish(weakEntityInfo, sub);
+				if (validators::IsValidationResultSuccess(sub.result()))
+					return true;
 
-				return true;
+				observerContext.Cache.restoreChanges();
+				return false;
 			});
 		}
 
@@ -187,6 +186,14 @@ namespace catapult { namespace harvesting {
 
 		m_transactionInfos.push_back(transactionInfo.copy());
 		return true;
+	}
+
+	void HarvestingUtFacade::unapply() {
+		if (m_transactionInfos.empty())
+			CATAPULT_THROW_OUT_OF_RANGE("cannot call unapply when no transactions have been applied");
+
+		m_pImpl->unapply();
+		m_transactionInfos.pop_back();
 	}
 
 	model::UniqueEntityPtr<model::Block> HarvestingUtFacade::commit(const model::Block& blockHeader) {

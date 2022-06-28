@@ -65,6 +65,15 @@ namespace catapult { namespace test {
 			auto deltas() const {
 				return deltaset::DeltaElements<SetType>(Added, Removed, Copied);
 			}
+
+		public:
+			/// Backs up the changes made in the cache delta. Set \c true to \a replace previous backup.
+			void backupChanges(bool replace) {
+			}
+
+			/// Restores the last backed up changes in the cache delta.
+			void restoreChanges() {
+			}
 		};
 
 		/// Mixin that provides generational change emulation.
