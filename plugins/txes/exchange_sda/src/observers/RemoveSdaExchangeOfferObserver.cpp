@@ -33,7 +33,9 @@ namespace catapult { namespace observers {
             auto groupIter = groupCache.find(groupHash);
             auto& groupEntry = groupIter.get();
 
-            CreditAccount(entry.owner(), mosaicIdGive, mosaicAmountGive, context);
+            Amount mosaicAmountGiveBalance = entry.sdaOfferBalances().find(state::MosaicsPair{mosaicIdGive, mosaicIdGet})->second.CurrentMosaicGive;
+            
+            CreditAccount(entry.owner(), mosaicIdGive, mosaicAmountGiveBalance, context);
             entry.expireOffer(state::MosaicsPair{mosaicIdGive,mosaicIdGet}, context.Height);
             groupEntry.removeSdaOfferFromGroup(notification.Owner);
         }
