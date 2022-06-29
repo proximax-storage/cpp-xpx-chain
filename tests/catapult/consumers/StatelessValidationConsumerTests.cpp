@@ -79,7 +79,21 @@ namespace catapult { namespace consumers {
 			}
 
 			[[noreturn]]
+			thread::future<ValidationResult> validateShortCircuitWithThreadSync(
+					const model::WeakEntityInfos&,
+					const ValidationFunctions&) const override {
+				CATAPULT_THROW_RUNTIME_ERROR("validateShortCircuit not implemented");
+			}
+
+			[[noreturn]]
 			thread::future<std::vector<ValidationResult>> validateAll(
+					const model::WeakEntityInfos&,
+					const ValidationFunctions&) const override {
+				CATAPULT_THROW_RUNTIME_ERROR("validateAll not implemented");
+			}
+
+			[[noreturn]]
+			thread::future<std::vector<ValidationResult>> validateAllWithThreadSync(
 					const model::WeakEntityInfos&,
 					const ValidationFunctions&) const override {
 				CATAPULT_THROW_RUNTIME_ERROR("validateAll not implemented");
@@ -122,11 +136,23 @@ namespace catapult { namespace consumers {
 					const ValidationFunctions& validationFunctions) const override {
 				return validateImpl(entityInfos, validationFunctions, ValidationResult::Success);
 			}
+
+			thread::future<ResultType> validateShortCircuitWithThreadSync(
+					const model::WeakEntityInfos& entityInfos,
+					const ValidationFunctions& validationFunctions) const override {
+				return validateImpl(entityInfos, validationFunctions, ValidationResult::Success);
+			}
 		};
 
 		class MockParallelAllValidationPolicy : public BasicMockParallelValidationPolicy<std::vector<ValidationResult>> {
 		public:
 			thread::future<ResultType> validateAll(
+					const model::WeakEntityInfos& entityInfos,
+					const ValidationFunctions& validationFunctions) const override {
+				return validateImpl(entityInfos, validationFunctions, ResultType(entityInfos.size(), ValidationResult::Success));
+			}
+
+			thread::future<ResultType> validateAllWithThreadSync(
 					const model::WeakEntityInfos& entityInfos,
 					const ValidationFunctions& validationFunctions) const override {
 				return validateImpl(entityInfos, validationFunctions, ResultType(entityInfos.size(), ValidationResult::Success));
