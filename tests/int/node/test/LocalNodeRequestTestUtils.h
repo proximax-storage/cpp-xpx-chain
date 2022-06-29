@@ -183,16 +183,22 @@ namespace catapult { namespace test {
 
 		// Act:
 		std::atomic_bool isReadFinished(false);
+		std::condition_variable condVar;
+		std::mutex mtx;
 		ExternalSourceConnection connection;
 		connection.apiCall([&](const auto& pRemoteChainApi) {
 			requestInitator(*pRemoteChainApi).then([&, pRemoteChainApi](auto&& future) {
 				// Act + Assert:
 				EXPECT_THROW(future.get(), catapult_runtime_error);
+				std::lock_guard<std::mutex> guard(mtx);
 				isReadFinished = true;
+				condVar.notify_one();
 			});
 		});
 
-		WAIT_FOR(isReadFinished);
+		std::unique_lock<std::mutex> mlock(mtx);
+		condVar.wait(mlock, [&]{return isReadFinished == true;});
+		// WAIT_FOR(isReadFinished);
 
 		// Assert:
 		handler(context.stats());
