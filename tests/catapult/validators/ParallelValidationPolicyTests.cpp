@@ -528,17 +528,8 @@ namespace catapult { namespace validators {
 			for (auto i = 0u; i < numValidators; ++i) {
 				funcs.push_back([&state = *states[i], &counter, &mtx, &condVar](const auto& entityInfo) {
 					// - increment the counter and wait until every expected thread has incremented it once
-					mtx.lock();
 					++counter;
-					condVar.notify_all();
-					if (counter < Num_Default_Threads){
-						mtx.unlock();
-						std::unique_lock<std::mutex> mlock(mtx);
-						condVar.wait(mlock, [&]{return counter >= Num_Default_Threads;});
-						// WAIT_FOR_EXPR(counter >= Num_Default_Threads);
-					}
-					else
-						mtx.unlock();
+					WAIT_FOR_EXPR(counter >= Num_Default_Threads);
 					state.increment(entityInfo.entity());
 					return ValidationResult::Success;
 				});
