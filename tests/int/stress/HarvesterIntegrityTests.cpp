@@ -199,8 +199,10 @@ namespace catapult { namespace harvesting {
 		// Act:
 		// - simulate tx confirmation (block dispatcher) by confirming one tx at a time
 		boost::thread_group threads;
-		threads.create_thread([&context] {
+		std::mutex mtx;
+		threads.create_thread([&context, &mtx] {
 			for (auto i = 0u; i < GetNumIterations(); ++i) {
+				std::lock_guard<std::mutex> guard(mtx);
 				// 1. get next transaction info from UT cache
 				model::TransactionInfo nextTransactionInfo;
 				{
@@ -226,9 +228,10 @@ namespace catapult { namespace harvesting {
 		auto numHarvests = 0u;
 		auto numHarvestAttempts = 0u;
 		auto previousBlockElement = test::BlockToBlockElement(*pLastBlock);
-		threads.create_thread([&context, &numHarvests, &numHarvestAttempts, &previousBlockElement] {
+		threads.create_thread([&context, &numHarvests, &numHarvestAttempts, &previousBlockElement, &mtx] {
 			auto harvestTimestamp = previousBlockElement.Block.Timestamp + Timestamp(std::numeric_limits<int64_t>::max());
 			for (;;) {
+				std::lock_guard<std::mutex> guard(mtx);
 				auto pHarvestedBlock = context.harvester().harvest(previousBlockElement, harvestTimestamp);
 
 				++numHarvestAttempts;
