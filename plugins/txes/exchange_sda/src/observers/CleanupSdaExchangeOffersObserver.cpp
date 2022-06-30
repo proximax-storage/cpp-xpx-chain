@@ -16,6 +16,11 @@ namespace catapult { namespace observers {
             auto& cache = context.Cache.sub<cache::SdaExchangeCache>();
             auto expiringSdaOfferOwners = cache.expiringOfferOwners(context.Height);
             for (const auto& key : expiringSdaOfferOwners) {
+
+                // Assumes that the offers have been completely removed by the owner before expiry
+                if (!cache.contains(key))
+                    continue;
+
                 auto cacheIter = cache.find(key);
                 auto& entry = cacheIter.get();
                 SdaOfferExpiryUpdater sdaOfferExpiryUpdater(cache, entry);
