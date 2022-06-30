@@ -79,6 +79,7 @@ namespace catapult { namespace cache {
 
 			// Act: set up reader thread(s) that sum up all account balances
 			boost::thread_group threads;
+			std::mutex mtx;
 			for (auto r = 0u; r < numReaders; ++r) {
 				threads.create_thread([&, r] {
 					test::StressThreadLogger logger("reader thread " + std::to_string(r));
@@ -87,6 +88,7 @@ namespace catapult { namespace cache {
 						logger.notifyIteration(i, GetNumIterations());
 
 						while (true) {
+							std::lock_guard<std::mutex> guard(mtx);
 							auto key = GetKeyFromId(i);
 							auto view = cache.createView(Height{0});
 							auto accountStateIter = view->find(key);
@@ -107,6 +109,7 @@ namespace catapult { namespace cache {
 				auto delta = cache.createDelta(Height{0});
 				for (auto i = 0u; i < GetNumIterations(); ++i) {
 					logger.notifyIteration(i, GetNumIterations());
+					std::lock_guard<std::mutex> guard(mtx);
 
 					auto key = GetKeyFromId(i);
 					delta->addAccount(key, Height(456));
