@@ -4,8 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "tests/test/StorageTestUtils.h"
 #include "src/observers/Observers.h"
+#include "tests/test/StorageTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -13,18 +13,15 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PeriodicStoragePaymentObserverTests
 
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
+	const auto Liquidity_Provider = std::make_shared<test::LiquidityProviderExchangeObserverImpl>();
 
-    DEFINE_COMMON_OBSERVER_TESTS(PeriodicStoragePayment, std::make_shared<DriveQueue>())
-
-	const auto Drive_Queue = std::make_shared<DriveQueue>();
+    DEFINE_COMMON_OBSERVER_TESTS(PeriodicStoragePayment, *Liquidity_Provider)
 
 	const auto billingPeriodSeconds = 20000;
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
-        using Notification = model::BlockNotification<2>;
+        using Notification = model::BlockNotification<1>;
 
         constexpr Height Current_Height(20);
 		const auto Owner_Key = test::GenerateRandomByteArray<Key>();
@@ -46,6 +43,7 @@ namespace catapult { namespace observers {
 
 			auto storageConfig = config::StorageConfiguration::Uninitialized();
 			storageConfig.StorageBillingPeriod = utils::TimeSpan::FromMilliseconds(billingPeriodSeconds);
+			storageConfig.Enabled = true;
 
 			config.Network.SetPluginConfiguration(storageConfig);
 
@@ -100,8 +98,8 @@ namespace catapult { namespace observers {
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
-            Notification notification({ { 1 } }, values.NotificationTime);
-            auto pObserver = CreatePeriodicStoragePaymentObserver(Drive_Queue);
+            Notification notification({ { 1 } }, { { 1 } }, values.NotificationTime, Difficulty(0), 0, 0);
+            auto pObserver = CreatePeriodicStoragePaymentObserver(*Liquidity_Provider);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
@@ -112,6 +110,7 @@ namespace catapult { namespace observers {
 				state::QueueEntry queueEntry(state::DrivePaymentQueueKey);
 				queueEntry.setFirst(values.InitialBcDriveEntries[0].key());
 				queueEntry.setLast(values.InitialBcDriveEntries[values.InitialBcDriveEntries.size() - 1].key());
+				queueEntry.setSize(values.InitialBcDriveEntries.size());
 				queueCache.insert(queueEntry);
 			}
 

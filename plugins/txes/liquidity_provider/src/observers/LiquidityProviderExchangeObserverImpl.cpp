@@ -69,7 +69,7 @@ namespace catapult::observers {
 
 		auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
 
-		// In the observer the optional alwasys has the value
+		// In the observer the optional always has the value
 		auto currencyAmount = *utils::computeCreditCurrencyAmount(
 				lpEntry,
 				lpAccount.Balances.get(currencyMosaicId),

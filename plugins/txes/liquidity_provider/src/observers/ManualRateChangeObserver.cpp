@@ -15,6 +15,9 @@ namespace catapult { namespace observers {
 	using Notification = model::ManualRateChangeNotification<1>;
 
 	DEFINE_OBSERVER(ManualRateChange, Notification, ([](const Notification& notification, ObserverContext& context) {
+	  	if (NotifyMode::Rollback == context.Mode)
+		  	CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ManualRateChange)");
+
 		auto& liquidityProviderCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
 		auto entryIter = liquidityProviderCache.find(notification.ProviderMosaicId);

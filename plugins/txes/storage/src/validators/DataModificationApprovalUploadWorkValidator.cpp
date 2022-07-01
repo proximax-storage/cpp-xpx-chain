@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 		// Check if all replicators' keys are present in drive's cumulativeUploadSizes
 		const auto& driveOwnerPublicKey = pDriveEntry->owner();
 		auto pKey = &notification.PublicKeysPtr[notification.JudgingKeysCount];
-		for (auto i = 0; i < totalJudgedKeysCount; ++i, ++pKey)
+		for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pKey)
 			if (*pKey != driveOwnerPublicKey && !pDriveEntry->replicators().count(*pKey))
 				return Failure_Storage_Replicator_Not_Found;
 

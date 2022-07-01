@@ -4,8 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "tests/test/StorageTestUtils.h"
 #include "src/observers/Observers.h"
+#include "tests/test/StorageTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -13,10 +13,9 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS DriveClosureObserverTests
 
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
+	const auto Liquidity_Provider = std::make_shared<test::LiquidityProviderExchangeObserverImpl>();
 
-    DEFINE_COMMON_OBSERVER_TESTS(DriveClosure, std::make_shared<DriveQueue>())
+    DEFINE_COMMON_OBSERVER_TESTS(DriveClosure, *Liquidity_Provider)
 
     const auto billingPeriodSeconds = 20000;
 
@@ -25,7 +24,6 @@ namespace catapult { namespace observers {
         using Notification = model::DriveClosureNotification<1>;
 
         constexpr Height Current_Height(20);
-		const auto Drive_Queue = std::make_shared<DriveQueue>();
 		const auto Owner_Key = test::GenerateRandomByteArray<Key>();
         constexpr auto Drive_Size = 100;
         constexpr auto Num_Replicators = 10;
@@ -90,7 +88,7 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
             Notification notification(Hash256(), driveToRemove, test::GenerateRandomByteArray<Key>());
-            auto pObserver = CreateDriveClosureObserver(Drive_Queue);
+            auto pObserver = CreateDriveClosureObserver(*Liquidity_Provider);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();

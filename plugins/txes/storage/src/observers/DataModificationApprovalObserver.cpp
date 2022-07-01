@@ -22,14 +22,11 @@ namespace catapult { namespace observers {
 		completedDataModifications.emplace_back(*activeDataModifications.begin(), state::DataModificationState::Succeeded);
 		activeDataModifications.erase(activeDataModifications.begin());
 
-		CATAPULT_LOG( error ) << "replicators size " << driveEntry.replicators().size();
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		for (const auto& replicator : driveEntry.replicators()) {
 			auto replicatorIter = replicatorCache.find(replicator);
 			auto& replicatorEntry = replicatorIter.get();
 			auto& driveInfo = replicatorEntry.drives().at(notification.DriveKey);
-			CATAPULT_LOG( error ) << "Actual Upload Size " << completedDataModifications.back().ActualUploadSizeMegabytes
-								<< " " << utils::FileSize::FromMegabytes(completedDataModifications.back().ActualUploadSizeMegabytes).bytes();
 			driveInfo.LastCompletedCumulativeDownloadWorkBytes += utils::FileSize::FromMegabytes(completedDataModifications.back().ActualUploadSizeMegabytes).bytes();
 		}
 
@@ -48,11 +45,12 @@ namespace catapult { namespace observers {
 
 		const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
 		for (auto i = 0u; i < totalJudgingKeysCount; ++i)
-			driveEntry.confirmedUsedSizes().insert({notification.PublicKeysPtr[i], notification.UsedDriveSize});
+			driveEntry.confirmedUsedSizes()[notification.PublicKeysPtr[i]] = notification.UsedDriveSize;
 
 		driveEntry.setRootHash(notification.FileStructureCdi);
-//		driveEntry.setUsedSize(notification.UsedDriveSize);
+		driveEntry.setUsedSizeBytes(notification.UsedDriveSize);
+		driveEntry.setMetaFilesSizeBytes(notification.MetaFilesSize);
 
-		driveEntry.verifications().clear();
+		driveEntry.verification().reset();
 	});
 }}

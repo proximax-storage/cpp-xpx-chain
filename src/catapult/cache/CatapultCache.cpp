@@ -83,6 +83,18 @@ namespace catapult { namespace cache {
 			stateHashInfo.StateHash = CalculateStateHash(stateHashInfo.SubCacheMerkleRoots);
 			return stateHashInfo;
 		}
+
+		template<typename TSubCacheViews>
+		void LogSubCacheNames(const TSubCacheViews& subViews) {
+			for (const auto& pSubView : subViews) {
+				if (!pSubView || !pSubView->supportsMerkleRoot() || !pSubView->enabled())
+					continue;
+
+				SubCacheViewIdentifier id = pSubView->id();
+				std::string cacheName(id.CacheName.begin(), id.CacheName.end());
+				CATAPULT_LOG(debug) << "sub cache " << cacheName << " [" << id.CacheId << "]";
+			}
+		}
 	}
 
 	// region CatapultCacheView
@@ -134,8 +146,13 @@ namespace catapult { namespace cache {
 			if (!pSubView || !pSubView->supportsMerkleRoot() || !pSubView->enabled())
 				continue;
 
-			if (merkleRootIndex == subCacheMerkleRoots.size())
+			if (merkleRootIndex == subCacheMerkleRoots.size()) {
+				LogSubCacheNames(m_subViews);
+				for (const auto& merkleRoot : subCacheMerkleRoots)
+					CATAPULT_LOG(debug) << "sub cache merkle root " << merkleRoot;
+
 				CATAPULT_THROW_INVALID_ARGUMENT_1("too few sub cache merkle roots were passed", subCacheMerkleRoots.size());
+			}
 
 			// this will always succeed because supportsMerkleRoot was checked above
 			pSubView->trySetMerkleRoot(subCacheMerkleRoots[merkleRootIndex++]);

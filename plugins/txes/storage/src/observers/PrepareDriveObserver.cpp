@@ -6,16 +6,15 @@
 
 #include <random>
 #include "Observers.h"
-#include "Queue.h"
+#include "src/utils/Queue.h"
+#include "src/utils/AVLTree.h"
 
 namespace catapult { namespace observers {
 
 	using Notification = model::PrepareDriveNotification<1>;
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-	DECLARE_OBSERVER(PrepareDrive, Notification)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue) {
-		return MAKE_OBSERVER(PrepareDrive, Notification, ([pKeyCollector, pDriveQueue](const Notification& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(PrepareDrive, Notification)() {
+		return MAKE_OBSERVER(PrepareDrive, Notification, ([](const Notification& notification, const ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (PrepareDrive)");
 
@@ -31,12 +30,25 @@ namespace catapult { namespace observers {
 		  	std::seed_seq seed(notification.DriveKey.begin(), notification.DriveKey.end());
 		  	std::mt19937 rng(seed);
 
-		  	PopulateDriveWithReplicators(notification.DriveKey, pKeyCollector, pDriveQueue, context, rng);
+		  	PopulateDriveWithReplicators(notification.DriveKey, context, rng);
 
 		  	// Insert the Drive into the payment Queue
 		  	auto& queueCache = context.Cache.template sub<cache::QueueCache>();
-		  	QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
+		  	utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
 		  	queueAdapter.pushBack(driveEntry.entryKey());
+
+			// Insert the Drive into the Verification Queue
+			utils::AVLTreeAdapter<Key> treeAdapter(
+					queueCache,
+					state::DriveVerificationsTree,
+					[](const Key& key) { return key; },
+					[&driveCache](const Key& key) -> state::AVLTreeNode& {
+						return driveCache.find(key).get().verificationNode();
+					},
+					[&driveCache](const Key& key, const state::AVLTreeNode& node) {
+						return driveCache.find(key).get().verificationNode() = node;
+					});
+			treeAdapter.insert(driveEntry.key());
 		}))
 	}
 }}

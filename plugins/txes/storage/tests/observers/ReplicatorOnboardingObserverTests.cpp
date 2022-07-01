@@ -13,10 +13,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS ReplicatorOnboardingObserverTests
 
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
-
-    DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboarding, std::make_shared<DriveQueue>())
+	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboarding,)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::StorageCacheFactory>;
@@ -61,16 +58,16 @@ namespace catapult { namespace observers {
 			explicit TestValues()
 					: InitialDriveEntries()
 					, ExpectedDriveEntries()
-					, InitialDriveQueue()
-					, ExpectedDriveQueue()
+					, InitialDriveQueueEntry(state::DrivePriorityQueueKey)
+					, ExpectedDriveQueueEntry(state::DrivePriorityQueueKey)
 					, ExpectedReplicatorEntry(Replicator_Key)
 			{}
 
 		public:
 			std::vector<state::BcDriveEntry> InitialDriveEntries;
 			std::vector<state::BcDriveEntry> ExpectedDriveEntries;
-			DriveQueue InitialDriveQueue;
-			DriveQueue ExpectedDriveQueue;
+			state::PriorityQueueEntry InitialDriveQueueEntry;
+			state::PriorityQueueEntry ExpectedDriveQueueEntry;
 			state::ReplicatorEntry ExpectedReplicatorEntry;
 		};
 
@@ -87,9 +84,9 @@ namespace catapult { namespace observers {
 			if (expectingAssignment)
 				expectedEntry.replicators().emplace(Replicator_Key);
 			if (actualReplicatorCount < replicatorCount)
-				values.InitialDriveQueue.emplace(key, utils::CalculateDrivePriority(initialEntry, Min_Replicator_Count));
+				values.InitialDriveQueueEntry.set(key, utils::CalculateDrivePriority(initialEntry, Min_Replicator_Count));
 			if ((!expectingAssignment && actualReplicatorCount < replicatorCount) || actualReplicatorCount + 1 < replicatorCount)
-				values.ExpectedDriveQueue.emplace(key, utils::CalculateDrivePriority(expectedEntry, Min_Replicator_Count));
+				values.ExpectedDriveQueueEntry.set(key, utils::CalculateDrivePriority(expectedEntry, Min_Replicator_Count));
 		}
 
 		void PrepareTestValues(TestValues& values) {
@@ -97,7 +94,6 @@ namespace catapult { namespace observers {
 			AddDriveToTestValues(values, Drive2_Key, Drive2_Size, Drive2_Replicator_Count, Drive2_Actual_Replicator_Count, false);
 			AddDriveToTestValues(values, Drive3_Key, Drive3_Size, Drive3_Replicator_Count, Drive3_Actual_Replicator_Count, false);
 
-			values.ExpectedReplicatorEntry.setCapacity(Capacity);
 			values.ExpectedReplicatorEntry.drives().emplace(Drive1_Key, state::DriveInfo{ Hash256(), false, 0 });
 		}
 
@@ -108,6 +104,7 @@ namespace catapult { namespace observers {
 			auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountCache = context.cache().sub<cache::AccountStateCache>();
 			auto& driveCache = context.cache().sub<cache::BcDriveCache>();
+			auto& priorityQueueCache = context.cache().sub<cache::PriorityQueueCache>();
 
 			//Populate cache
 			test::AddAccountState(accountCache, Replicator_Key, Current_Height,
@@ -116,9 +113,9 @@ namespace catapult { namespace observers {
 				driveCache.insert(driveEntry);
 				test::AddAccountState(accountCache, driveEntry.key(), Current_Height);
 			}
+			priorityQueueCache.insert(values.InitialDriveQueueEntry);
 
-			auto pDriveQueue = std::make_shared<DriveQueue>(values.InitialDriveQueue);
-			auto pObserver = CreateReplicatorOnboardingObserver(pDriveQueue);
+			auto pObserver = CreateReplicatorOnboardingObserver();
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
@@ -133,12 +130,13 @@ namespace catapult { namespace observers {
 				test::AssertEqualBcDriveData(driveEntry, actualDriveEntry);
 			}
 
-			// Check drive queue
-			EXPECT_EQ(pDriveQueue->size(), values.ExpectedDriveQueue.size());
-			while (!pDriveQueue->empty()) {
-				EXPECT_EQ(pDriveQueue->top(), values.ExpectedDriveQueue.top());
-				pDriveQueue->pop();
-				values.ExpectedDriveQueue.pop();
+			auto& expectedDriveQueue = values.ExpectedDriveQueueEntry.priorityQueue();
+			auto& driveQueue = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey).priorityQueue();
+			EXPECT_EQ(driveQueue.size(), expectedDriveQueue.size());
+			while (!driveQueue.empty()) {
+				EXPECT_EQ(driveQueue.top(), expectedDriveQueue.top());
+				driveQueue.pop();
+				expectedDriveQueue.pop();
 			}
         }
     }

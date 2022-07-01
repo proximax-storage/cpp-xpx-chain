@@ -4,9 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "tests/test/StorageTestUtils.h"
 #include "catapult/model/StorageNotifications.h"
 #include "src/observers/Observers.h"
+#include "tests/test/StorageTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -14,18 +14,15 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS DataModificationObserverTests
 
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
+	const auto Liquidity_Provider = std::make_shared<test::LiquidityProviderExchangeObserverImpl>();
 
-	DEFINE_COMMON_OBSERVER_TESTS(DataModification, std::make_shared<cache::ReplicatorKeyCollector>(), std::make_shared<DriveQueue>())
+	DEFINE_COMMON_OBSERVER_TESTS(DataModification, *Liquidity_Provider)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
         using Notification = model::DataModificationNotification<1>;
 
         constexpr auto Current_Height = Height(10);
-		const auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
-		const auto Drive_Queue = std::make_shared<DriveQueue>();
 		const auto Replicator_Key = test::GenerateRandomByteArray<Key>();
 		const auto Offboarding_Replicator_Key = test::GenerateRandomByteArray<Key>();
 		constexpr auto Min_Replicator_Count = 4;
@@ -88,7 +85,7 @@ namespace catapult { namespace observers {
                 values.Active_Data_Modification.begin()->Owner, 
                 values.Active_Data_Modification.begin()->DownloadDataCdi, 
                 values.Active_Data_Modification.begin()->ExpectedUploadSizeMegabytes);
-            auto pObserver = CreateDataModificationObserver(Replicator_Key_Collector, Drive_Queue);
+            auto pObserver = CreateDataModificationObserver(*Liquidity_Provider);
         	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 			auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountCache = context.cache().sub<cache::AccountStateCache>();

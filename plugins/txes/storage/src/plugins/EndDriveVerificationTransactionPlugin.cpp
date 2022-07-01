@@ -34,15 +34,12 @@ namespace catapult { namespace plugins {
 							transaction.SignaturesPtr(),
 							transaction.OpinionsPtr()));
 
-						auto numBits = transaction.KeyCount * transaction.JudgingKeyCount;
-						boost::dynamic_bitset<uint8_t> presentOpinions(numBits);
-						// All opinions are set except about itself.
-						auto multiplier = transaction.KeyCount + 1;
-						for (auto i = 0u; i < numBits; ++i)
-							presentOpinions[i] = (i % multiplier == 0) ? 0 : 1;
-
-						auto* pPresentOpinions = sub.mempool().malloc<uint8_t>((transaction.KeyCount * transaction.JudgingKeyCount + 7u) / 8u);
-						boost::to_block_range(presentOpinions, pPresentOpinions);
+						const size_t totalOpinions = transaction.KeyCount * transaction.JudgingKeyCount;
+						boost::dynamic_bitset<uint8_t> opinionsBitset(transaction.OpinionsPtr(), transaction.OpinionsPtr() + (totalOpinions + 7u) / 8u);
+						auto* const pOpinionsBegin = sub.mempool().malloc<uint8_t>(totalOpinions);
+						auto* pOpinions = pOpinionsBegin;
+						for (auto i = 0u; i < totalOpinions; ++i, ++pOpinions)
+							*pOpinions = opinionsBitset[i];
 
 						const auto commonDataSize = Key_Size + Hash256_Size + sizeof(uint16_t);
 						auto* const pCommonDataBegin = sub.mempool().malloc<uint8_t>(commonDataSize);
@@ -60,8 +57,8 @@ namespace catapult { namespace plugins {
 							pCommonDataBegin,
 							transaction.PublicKeysPtr(),
 							transaction.SignaturesPtr(),
-							pPresentOpinions,
-							transaction.OpinionsPtr()));
+							nullptr,
+							pOpinionsBegin));
 
                         break;
                     }

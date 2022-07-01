@@ -4,9 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "tests/test/StorageTestUtils.h"
 #include "catapult/model/StorageNotifications.h"
 #include "src/observers/Observers.h"
+#include "tests/test/StorageTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -14,7 +14,9 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS DataModificationCancelObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(DataModificationCancel,)
+	const auto Liquidity_Provider = std::make_shared<test::LiquidityProviderExchangeObserverImpl>();
+
+    DEFINE_COMMON_OBSERVER_TESTS(DataModificationCancel, *Liquidity_Provider)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -27,12 +29,12 @@ namespace catapult { namespace observers {
                 explicit BcDriveValues()
                     : Drive_Key(test::GenerateRandomByteArray<Key>())
                     , Active_Data_Modification {
-                        state::ActiveDataModification { 
-                            test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), 
+                        state::ActiveDataModification {
+                            test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(),
                             test::GenerateRandomByteArray<Hash256>(), test::Random()
                     }}
                 {}
-            
+
             public:
                 Key Drive_Key;
                 std::vector<state::ActiveDataModification> Active_Data_Modification;
@@ -43,7 +45,7 @@ namespace catapult { namespace observers {
             for (const auto &activeDataModification : values.Active_Data_Modification) {
                 entry.activeDataModifications().emplace_back(activeDataModification);
             }
-            
+
             return entry;
         }
 
@@ -51,10 +53,10 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, currentHeight);
             Notification notification(
-                values.Drive_Key, 
-                values.Active_Data_Modification.begin()->Owner, 
+                values.Drive_Key,
+                values.Active_Data_Modification.begin()->Owner,
                 values.Active_Data_Modification.begin()->Id);
-            auto pObserver = CreateDataModificationCancelObserver();
+            auto pObserver = CreateDataModificationCancelObserver(*Liquidity_Provider);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 
             // Populate cache.
@@ -69,7 +71,7 @@ namespace catapult { namespace observers {
             test::AssertEqualBcDriveData(CreateEntry(values), actualEntry);
         }
     }
-    
+
 //    TEST(TEST_CLASS, DataModificationCancel_Commit) {
 //        // Arrange:
 //        BcDriveValues values;

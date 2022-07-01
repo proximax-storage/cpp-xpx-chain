@@ -5,10 +5,12 @@
 **/
 
 #include "StoragePlugin.h"
-#include <src/cache/QueueCacheStorage.h>
-#include "src/cache/BcDriveCacheSubCachePlugin.h"
+#include "src/cache/QueueCacheStorage.h"
+#include "src/cache/PriorityQueueCache.h"
+#include "src/cache/PriorityQueueCacheStorage.h"
+#include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
-#include "src/cache/ReplicatorCacheSubCachePlugin.h"
+#include "src/cache/ReplicatorCacheStorage.h"
 #include "src/plugins/PrepareBcDriveTransactionPlugin.h"
 #include "src/plugins/DataModificationTransactionPlugin.h"
 #include "src/plugins/DownloadTransactionPlugin.h"
@@ -114,9 +116,8 @@ namespace catapult { namespace plugins {
 			return false;
 		});
 
-		auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
-		manager.addCacheSupport(std::make_unique<cache::BcDriveCacheSubCachePlugin>(
-			manager.cacheConfig(cache::BcDriveCache::Name), pDriveKeyCollector, pConfigHolder));
+		manager.addCacheSupport<cache::BcDriveCacheStorage>(
+			std::make_unique<cache::BcDriveCache>(manager.cacheConfig(cache::BcDriveCache::Name), pConfigHolder));
 
 		using BcDriveCacheHandlersService = CacheHandlers<cache::BcDriveCacheDescriptor>;
 		BcDriveCacheHandlersService::Register<model::FacilityCode::BcDrive>(manager);
@@ -151,9 +152,20 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		auto pReplicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
-		manager.addCacheSupport(std::make_unique<cache::ReplicatorCacheSubCachePlugin>(
-			manager.cacheConfig(cache::ReplicatorCache::Name), pReplicatorKeyCollector, pConfigHolder));
+		manager.addCacheSupport<cache::PriorityQueueCacheStorage>(
+				std::make_unique<cache::PriorityQueueCache>(manager.cacheConfig(cache::PriorityQueueCache::Name), pConfigHolder));
+
+		using PriorityQueueCacheHandlersService = CacheHandlers<cache::PriorityQueueCacheDescriptor>;
+		PriorityQueueCacheHandlersService::Register<model::FacilityCode::PriorityQueue>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+		 	counters.emplace_back(utils::DiagnosticCounterId("PR QUEUE C"), [&cache]() {
+				return cache.sub<cache::PriorityQueueCache>().createView(cache.height())->size();
+		  	});
+		});
+
+		manager.addCacheSupport<cache::ReplicatorCacheStorage>(
+				std::make_unique<cache::ReplicatorCache>(manager.cacheConfig(cache::ReplicatorCache::Name), pConfigHolder));
 
 		using ReplicatorCacheHandlersService = CacheHandlers<cache::ReplicatorCacheDescriptor>;
 		ReplicatorCacheHandlersService::Register<model::FacilityCode::Replicator>(manager);
@@ -164,7 +176,7 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		auto pStorageState = std::make_shared<state::StorageStateImpl>(pReplicatorKeyCollector);
+		auto pStorageState = std::make_shared<state::StorageStateImpl>();
 		manager.setStorageState(pStorageState);
 
 		const auto& liquidityProviderValidator = manager.liquidityProviderExchangeValidator();
@@ -175,13 +187,9 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateStoragePluginConfigValidator());
 		});
 
-		using DrivePriority = std::pair<Key, double>;
-		using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
-		auto pDriveQueue = std::make_shared<DriveQueue>();
-
-		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig, pReplicatorKeyCollector](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 		  	builder
-				.add(validators::CreatePrepareDriveValidator(pReplicatorKeyCollector))
+				.add(validators::CreatePrepareDriveValidator())
 				.add(validators::CreateDataModificationValidator())
 				.add(validators::CreateDataModificationApprovalValidator())
 				.add(validators::CreateDataModificationApprovalDownloadWorkValidator())
@@ -206,30 +214,31 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateEndDriveVerificationValidator());
 		});
 
-		manager.addObserverHook([pReplicatorKeyCollector, &state = *pStorageState, &driveKeyCollector = *pDriveKeyCollector, pDriveQueue, &liquidityProviderObserver](auto& builder) {
+		manager.addObserverHook([&state = *pStorageState, &liquidityProviderObserver](auto& builder) {
 			builder
-				.add(observers::CreatePrepareDriveObserver(pReplicatorKeyCollector, pDriveQueue))
+				.add(observers::CreatePrepareDriveObserver())
 				.add(observers::CreateDownloadChannelObserver())
-				.add(observers::CreateDataModificationObserver(pReplicatorKeyCollector, pDriveQueue, liquidityProviderObserver))
+				.add(observers::CreateDataModificationObserver(liquidityProviderObserver))
 				.add(observers::CreateDataModificationApprovalObserver())
 				.add(observers::CreateDataModificationApprovalDownloadWorkObserver(liquidityProviderObserver))
 				.add(observers::CreateDataModificationApprovalUploadWorkObserver(liquidityProviderObserver))
 				.add(observers::CreateDataModificationApprovalRefundObserver(liquidityProviderObserver))
 				.add(observers::CreateDataModificationCancelObserver(liquidityProviderObserver))
-				.add(observers::CreateDriveClosureObserver(pDriveQueue, liquidityProviderObserver))
-				.add(observers::CreateReplicatorOnboardingObserver(pDriveQueue))
-				.add(observers::CreateReplicatorOffboardingObserver(pDriveQueue, liquidityProviderObserver))
+				.add(observers::CreateDriveClosureObserver(liquidityProviderObserver))
+				.add(observers::CreateReplicatorOnboardingObserver())
+				.add(observers::CreateReplicatorOffboardingObserver())
 				.add(observers::CreateDownloadPaymentObserver())
 				.add(observers::CreateDataModificationSingleApprovalObserver())
 				.add(observers::CreateDownloadApprovalObserver())
+				.add(observers::CreateFinishDownloadObserver())
 				.add(observers::CreateDownloadApprovalPaymentObserver(liquidityProviderObserver))
 				.add(observers::CreateDownloadChannelRefundObserver(liquidityProviderObserver))
 				.add(observers::CreateStreamStartObserver())
 				.add(observers::CreateStreamFinishObserver())
 				.add(observers::CreateStreamPaymentObserver())
-				.add(observers::CreateStartDriveVerificationObserver(state, driveKeyCollector))
-				.add(observers::CreateEndDriveVerificationObserver(pReplicatorKeyCollector, pDriveQueue, liquidityProviderObserver))
-				.add(observers::CreatePeriodicStoragePaymentObserver(pDriveQueue, liquidityProviderObserver))
+				.add(observers::CreateStartDriveVerificationObserver(state))
+				.add(observers::CreateEndDriveVerificationObserver(liquidityProviderObserver))
+				.add(observers::CreatePeriodicStoragePaymentObserver(liquidityProviderObserver))
 				.add(observers::CreatePeriodicDownloadChannelPaymentObserver());
 		});
 	}

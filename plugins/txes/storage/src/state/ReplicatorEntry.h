@@ -7,6 +7,7 @@
 #pragma once
 #include "catapult/types.h"
 #include "catapult/exceptions.h"
+#include "CommonEntities.h"
 #include "catapult/state/StorageState.h"
 #include "catapult/utils/ArraySet.h"
 
@@ -44,26 +45,6 @@ namespace catapult { namespace state {
 		ReplicatorMixin() = default;
 
 	public:
-		/// Sets the capacity of the replicator.
-		void setCapacity(const Amount& capacity) {
-			m_capacity = capacity;
-		}
-
-		/// Gets the capacity of the replicator.
-		const Amount& capacity() const {
-			return m_capacity;
-		}
-
-		/// Sets BLS public key of the replicator.
-		void setBlsKey(const BLSPublicKey& blsKey) {
-			m_blsKey = blsKey;
-		}
-
-		/// Gets BLS public key of the replicator.
-		const BLSPublicKey& blsKey() const {
-			return m_blsKey;
-		}
-
 		/// Gets infos of drives assigned to the replicator.
 		const DrivesMap& drives() const {
 			return m_drives;
@@ -84,11 +65,18 @@ namespace catapult { namespace state {
 			return m_downloadChannels;
 		}
 
+		const AVLTreeNode& replicatorsSetNode() const {
+			return m_replicatorsSetNode;
+		}
+
+		AVLTreeNode& replicatorsSetNode() {
+			return m_replicatorsSetNode;
+		}
+
 	private:
-		Amount m_capacity;
-		BLSPublicKey m_blsKey;
 		DrivesMap m_drives;
 		std::set<Hash256> m_downloadChannels;
+		state::AVLTreeNode m_replicatorsSetNode;
 	};
 
 	// Replicator entry.

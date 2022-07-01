@@ -19,7 +19,7 @@ namespace catapult { namespace observers {
 		return MAKE_OBSERVER(NAME, NOTIFICATION_TYPE, HANDLER); \
 	}
 
-	DECLARE_OBSERVER(Slashing, model::BlockNotification<2>)(const std::shared_ptr<cache::LiquidityProviderKeyCollector>& pKeyCollector);
+	DECLARE_OBSERVER(Slashing, model::BlockNotification<1>)(const std::shared_ptr<cache::LiquidityProviderKeyCollector>& pKeyCollector);
 
 	DECLARE_OBSERVER(CreateLiquidityProvider, model::CreateLiquidityProviderNotification<1>)();
 

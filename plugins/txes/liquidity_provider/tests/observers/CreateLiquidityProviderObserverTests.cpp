@@ -107,7 +107,7 @@ namespace catapult { namespace observers {
 
 		// Assert
 		EXPECT_THROW(
-				RunTest(NotifyMode::Commit,
+				RunTest(NotifyMode::Rollback,
 						test::GenerateRandomByteArray<Key>(),
 						test::GenerateRandomByteArray<Key>(),
 						test::GenerateRandomValue<UnresolvedMosaicId>(),

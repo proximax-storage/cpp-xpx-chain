@@ -21,7 +21,12 @@ namespace catapult { namespace validators {
 
 	  	// Bitset that represents boolean array of size (totalJudgingKeysCount * totalJudgedKeysCount) of opinion presence.
 	  	const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
-	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
+
+	  	std::optional<boost::dynamic_bitset<uint8_t>> presentOpinionsHolder;
+
+	  	if ( notification.PresentOpinionsPtr ) {
+	  		presentOpinionsHolder = boost::dynamic_bitset<uint8_t>(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
+		}
 
 		// Validating that each provided public key
 	  	// - is unique
@@ -31,7 +36,12 @@ namespace catapult { namespace validators {
 			const auto key = notification.PublicKeysPtr[i];
 			if (!providedKeys.insert(key).second)
 				return Failure_Storage_Opinion_Duplicated_Keys;
-			if (i >= notification.JudgingKeysCount) {
+		}
+
+		if ( presentOpinionsHolder ) {
+			const auto& presentOpinions = *presentOpinionsHolder;
+
+			for (auto i = notification.JudgingKeysCount; i < totalKeysCount; ++i) {
 				bool isUsed = false;
 				for (auto j = 0; !isUsed && j < totalJudgingKeysCount; ++j)
 					isUsed = presentOpinions[j * totalJudgedKeysCount + i - notification.JudgingKeysCount];
@@ -50,23 +60,36 @@ namespace catapult { namespace validators {
 	  	auto pSignature = notification.SignaturesPtr;
 	  	auto pOpinionElement = notification.OpinionsPtr;
 	  	using OpinionElement = std::pair<Key, const uint8_t*>;
-		const auto comparator = [](const OpinionElement& a, const OpinionElement& b){ return a.first < b.first; };
-		using IndividualPart = std::set<OpinionElement, decltype(comparator)>;
-	  	IndividualPart individualPart(comparator);	// Set that represents complete opinion of one of the replicators. Opinion elements are sorted in ascending order of keys.
-		for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pKey, ++pSignature) {
-			individualPart.clear();
-			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
-				if (presentOpinions[i * totalJudgedKeysCount + j]) {
-					individualPart.emplace(notification.PublicKeysPtr[notification.JudgingKeysCount + j], pOpinionElement);
-					pOpinionElement += notification.OpinionElementSize;
-				}
-			}
 
-			const auto dataSize = notification.CommonDataSize + (Key_Size + notification.OpinionElementSize) * individualPart.size();
-			auto* pIndividualData = pIndividualDataBegin;
-			for (const auto& pair : individualPart) {
-				utils::WriteToByteArray(pIndividualData, pair.first);
-				pIndividualData = std::copy(pair.second, pair.second + notification.OpinionElementSize, pIndividualData);
+		for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pKey, ++pSignature) {
+			uint64_t dataSize = 0;
+			if ( presentOpinionsHolder ) {
+				const auto comparator = [](const OpinionElement& a, const OpinionElement& b){ return a.first < b.first; };
+				using IndividualPart = std::set<OpinionElement, decltype(comparator)>;
+				IndividualPart individualPart(comparator);	// Set that represents complete opinion of one of the replicators. Opinion elements are sorted in ascending order of keys.
+
+				const auto& presentOpinions = *presentOpinionsHolder;
+
+				for (auto j = 0; j < totalJudgedKeysCount; ++j) {
+					if (presentOpinions[i * totalJudgedKeysCount + j]) {
+						individualPart.emplace(notification.PublicKeysPtr[notification.JudgingKeysCount + j], pOpinionElement);
+						pOpinionElement += notification.OpinionElementSize;
+					}
+				}
+
+				dataSize = notification.CommonDataSize + (Key_Size + notification.OpinionElementSize) * individualPart.size();
+
+				auto* pIndividualData = pIndividualDataBegin;
+				for (const auto& pair : individualPart) {
+					utils::WriteToByteArray(pIndividualData, pair.first);
+					pIndividualData = std::copy(pair.second, pair.second + notification.OpinionElementSize, pIndividualData);
+				}
+			} else {
+				std::copy(pOpinionElement, pOpinionElement + notification.OpinionElementSize * totalJudgedKeysCount, pIndividualDataBegin);
+				pOpinionElement += notification.OpinionElementSize * totalJudgedKeysCount;
+
+				dataSize = notification.CommonDataSize + notification.OpinionElementSize * totalJudgedKeysCount;
+
 			}
 
 			RawBuffer dataBuffer(buffer.data(), dataSize);

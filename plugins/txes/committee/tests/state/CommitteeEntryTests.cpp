@@ -14,15 +14,18 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, CanCreateCommitteeEntry) {
 		// Act:
 		auto key = test::GenerateRandomByteArray<Key>();
-		auto entry = CommitteeEntry(key, Height(), Importance(), false, 0.0, 0.0);
+		auto owner = test::GenerateRandomByteArray<Key>();
+		auto entry = CommitteeEntry(key, owner, Height(), Importance(), false, 0.0, 0.0, Height(10));
 
 		// Assert:
 		EXPECT_EQ(key, entry.key());
+		EXPECT_EQ(owner, entry.owner());
+		EXPECT_EQ(Height(10), entry.disabledHeight());
 	}
 
 	TEST(TEST_CLASS, CanSetLastSigningBlockHeight) {
 		// Arrange:
-		auto entry = CommitteeEntry(Key(), Height(5), Importance(), false, 0.0, 0.0);
+		auto entry = CommitteeEntry(Key(), Key(), Height(5), Importance(), false, 0.0, 0.0);
 
 		// Sanity check:
 		EXPECT_EQ(Height(5), entry.lastSigningBlockHeight());
@@ -36,7 +39,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSetEffectiveBalance) {
 		// Arrange:
-		auto entry = CommitteeEntry(Key(), Height(), Importance(5), false, 0.0, 0.0);
+		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(5), false, 0.0, 0.0);
 
 		// Sanity check:
 		EXPECT_EQ(Importance(5), entry.effectiveBalance());
@@ -50,7 +53,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSetCanHarvest) {
 		// Arrange:
-		auto entry = CommitteeEntry(Key(), Height(), Importance(), false, 0.0, 0.0);
+		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), false, 0.0, 0.0);
 
 		// Sanity check:
 		EXPECT_EQ(false, entry.canHarvest());
@@ -64,7 +67,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSetActivity) {
 		// Arrange:
-		auto entry = CommitteeEntry(Key(), Height(), Importance(), true, 5.0, 0.0);
+		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), true, 5.0, 0.0);
 
 		// Sanity check:
 		EXPECT_EQ(5.0, entry.activity());
@@ -78,7 +81,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSetGreed) {
 		// Arrange:
-		auto entry = CommitteeEntry(Key(), Height(), Importance(), false, 5.0, 0.5);
+		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), false, 5.0, 0.5);
 
 		// Sanity check:
 		EXPECT_EQ(0.5, entry.greed());

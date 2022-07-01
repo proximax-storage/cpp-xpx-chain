@@ -14,7 +14,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS PrepareDriveValidatorTests
 
-    DEFINE_COMMON_VALIDATOR_TESTS(PrepareDrive, std::make_shared<cache::ReplicatorKeyCollector>())
+    DEFINE_COMMON_VALIDATOR_TESTS(PrepareDrive,)
 
     namespace {
         using Notification = model::PrepareDriveNotification<1>;
@@ -41,8 +41,7 @@ namespace catapult { namespace validators {
                 ValidationResult expectedResult,
 				const state::BcDriveEntry& driveEntry,
                 const state::ReplicatorEntry& replicatorEntry,
-                const Key& driveKey,
-                const std::shared_ptr<cache::ReplicatorKeyCollector>& replicatorKeyCollector) {
+                const Key& driveKey) {
             // Arrange:
             auto cache = test::BcDriveCacheFactory::Create();
             {
@@ -54,7 +53,7 @@ namespace catapult { namespace validators {
                 cache.commit(Current_Height);
             }
             Notification notification(driveEntry.owner(), replicatorEntry.key(), driveEntry.size(), driveEntry.replicatorCount());
-            auto pValidator = CreatePrepareDriveValidator(replicatorKeyCollector);
+            auto pValidator = CreatePrepareDriveValidator();
             
             // Act:
             auto result = test::ValidateNotification(*pValidator, notification, cache, CreateConfig(), Current_Height);
@@ -67,132 +66,82 @@ namespace catapult { namespace validators {
     TEST(TEST_CLASS, FailureWhenDriveSizeInsufficient) {
 		// Arrange:
         auto driveKey = test::GenerateRandomByteArray<Key>();
-        auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
 		state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
         driveEntry.setSize(0);
         state::ReplicatorEntry replicatorEntry(driveKey);
-        Replicator_Key_Collector->addKey(replicatorEntry);
-        replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin(), state::DriveInfo());
+        replicatorEntry.drives().emplace(replicatorEntry.key(), state::DriveInfo());
 
 		// Assert:
 		AssertValidationResult(
             Failure_Storage_Drive_Size_Insufficient,
 			driveEntry,
             replicatorEntry,
-            test::GenerateRandomByteArray<Key>(),
-            Replicator_Key_Collector);
+            test::GenerateRandomByteArray<Key>());
 	}
 
 	TEST(TEST_CLASS, FailureWhenDriveSizeExcessive) {
     	// Arrange:
     	auto driveKey = test::GenerateRandomByteArray<Key>();
-    	auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
     	state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
     	driveEntry.setSize(1e9);
     	state::ReplicatorEntry replicatorEntry(driveKey);
-    	Replicator_Key_Collector->addKey(replicatorEntry);
-    	replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin(), state::DriveInfo());
+    	replicatorEntry.drives().emplace(replicatorEntry.key(), state::DriveInfo());
 
     	// Assert:
     	AssertValidationResult(
     			Failure_Storage_Drive_Size_Excessive,
     			driveEntry,
     			replicatorEntry,
-    			test::GenerateRandomByteArray<Key>(),
-    			Replicator_Key_Collector);
+    			test::GenerateRandomByteArray<Key>());
     }
 
     TEST(TEST_CLASS, FailureWhenReplicatorCountInsufficient) {  
         // Arrange:
-        auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
         state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
         driveEntry.setSize(RandomDriveSize());
         driveEntry.setReplicatorCount(2);
         state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
-        Replicator_Key_Collector->addKey(replicatorEntry);
-        replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin(), state::DriveInfo());
+        replicatorEntry.drives().emplace(replicatorEntry.key(), state::DriveInfo());
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_Replicator_Count_Insufficient,
             driveEntry,
             replicatorEntry,
-            test::GenerateRandomByteArray<Key>(),
-            Replicator_Key_Collector);
+            test::GenerateRandomByteArray<Key>());
     }
 
     TEST(TEST_CLASS, FailureWhenDriveAlreadyExists) {
         // Arrange:
         auto driveKey = test::GenerateRandomByteArray<Key>();
-        auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
         state::BcDriveEntry driveEntry(driveKey);
         driveEntry.setSize(RandomDriveSize());
         driveEntry.setReplicatorCount(Replicator_Count);
         state::ReplicatorEntry replicatorEntry(driveKey);
-        Replicator_Key_Collector->addKey(replicatorEntry);
-        replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin(), state::DriveInfo());
+        replicatorEntry.drives().emplace(replicatorEntry.key(), state::DriveInfo());
 
         // Assert:
         AssertValidationResult(
             Failure_Storage_Drive_Already_Exists,
             driveEntry,
             replicatorEntry,
-            driveKey,
-            Replicator_Key_Collector);
-    }
-
-    TEST(TEST_CLASS, FailureWhenNoReplicator) { 
-        // Arrange:
-        auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
-        state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-        driveEntry.setSize(RandomDriveSize());
-        driveEntry.setReplicatorCount(Replicator_Count);
-        state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
-
-        // Assert:
-        AssertValidationResult(
-            Failure_Storage_No_Replicator,
-            driveEntry,
-            replicatorEntry,
-            test::GenerateRandomByteArray<Key>(),
-            Replicator_Key_Collector);
-    }
-
-    TEST(TEST_CLASS, FailureWhenReplicatorNotFound) { 
-        // Arrange:
-        auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
-        state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-        driveEntry.setSize(RandomDriveSize());
-        driveEntry.setReplicatorCount(Replicator_Count);
-        state::ReplicatorEntry replicatorEntry(test::GenerateRandomByteArray<Key>());
-        Replicator_Key_Collector->addKey(state::ReplicatorEntry(test::GenerateRandomByteArray<Key>()));
-        
-        // Assert:
-        AssertValidationResult(
-            Failure_Storage_Replicator_Not_Found,
-            driveEntry,
-            replicatorEntry,
-            test::GenerateRandomByteArray<Key>(),
-            Replicator_Key_Collector);
+            driveKey);
     }
 
     TEST(TEST_CLASS, Success) {
 		// Arrange:
-        auto Replicator_Key_Collector = std::make_shared<cache::ReplicatorKeyCollector>();
         auto driveKey = test::GenerateRandomByteArray<Key>();
         state::BcDriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
         driveEntry.setSize(RandomDriveSize());
         driveEntry.setReplicatorCount(Replicator_Count);
         state::ReplicatorEntry replicatorEntry(driveKey);
-        Replicator_Key_Collector->addKey(replicatorEntry);
-        replicatorEntry.drives().emplace(*Replicator_Key_Collector->keys().begin(), state::DriveInfo());
+        replicatorEntry.drives().emplace(replicatorEntry.key(), state::DriveInfo());
 
         // Assert:
 		AssertValidationResult(
 			ValidationResult::Success,
 			driveEntry,
             replicatorEntry,
-            test::GenerateRandomByteArray<Key>(),
-            Replicator_Key_Collector);
+            test::GenerateRandomByteArray<Key>());
 	}
 }}

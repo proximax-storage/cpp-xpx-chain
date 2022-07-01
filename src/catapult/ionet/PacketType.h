@@ -193,7 +193,10 @@ namespace catapult { namespace ionet {
 	/* Queue state path has been requested by a client. */ \
 	ENUM_VALUE(Queue_State_Path, FACILITY_BASED_CODE(800, Queue)) \
 	\
-	/* Replicator state path has been requested by a client. */ \
+    /* Priority queue state path has been requested by a client. */ \
+	ENUM_VALUE(PriorityQueue_State_Path, FACILITY_BASED_CODE(800, PriorityQueue)) \
+	\
+	/* Liquidity provider state path has been requested by a client. */ \
 	ENUM_VALUE(LiquidityProvider_State_Path, FACILITY_BASED_CODE(800, LiquidityProvider)) \
 	\
 	/* diagnostic packets have types [1100, 2000) */ \
@@ -274,10 +277,16 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(DownloadChannel_Infos, FACILITY_BASED_CODE(1200, DownloadChannel)) \
 	\
 	/* Replicator infos have been requested by a client. */ \
-	ENUM_VALUE(Replicator_Infos, FACILITY_BASED_CODE(1200, Replicator))\
+	ENUM_VALUE(Replicator_Infos, FACILITY_BASED_CODE(1200, Replicator)) \
 	\
-	/* Replicator infos have been requested by a client. */ \
-	ENUM_VALUE(LiquidityProvider_Infos, FACILITY_BASED_CODE(1200, LiquidityProvider))
+	/* Queue infos have been requested by a client. */ \
+	ENUM_VALUE(Queue_Infos, FACILITY_BASED_CODE(1200, Queue)) \
+	\
+	/* Priority queue infos have been requested by a client. */ \
+	ENUM_VALUE(PriorityQueue_Infos, FACILITY_BASED_CODE(1200, PriorityQueue)) \
+    \
+	/* Liquidity provider infos have been requested by a client. */ \
+	ENUM_VALUE(LiquidityProvider_Infos, FACILITY_BASED_CODE(1200, LiquidityProvider)) \
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

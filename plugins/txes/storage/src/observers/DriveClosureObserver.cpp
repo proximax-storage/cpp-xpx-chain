@@ -5,119 +5,142 @@
 **/
 
 #include "Observers.h"
-#include "Queue.h"
-#include "src/utils/StorageUtils.h"
+#include "src/utils/Queue.h"
+#include "src/utils/AVLTree.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
 namespace catapult { namespace observers {
 
 	using Notification = model::DriveClosureNotification<1>;
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 	using BigUint = boost::multiprecision::uint128_t;
 
-	DECLARE_OBSERVER(DriveClosure, Notification)(const std::shared_ptr<DriveQueue>& pDriveQueue, const LiquidityProviderExchangeObserver& liquidityProvider) {
-		return MAKE_OBSERVER(
-				DriveClosure,
-				Notification,
-				([pDriveQueue, &liquidityProvider](const Notification& notification, ObserverContext& context) {
-					if (NotifyMode::Rollback == context.Mode)
-						CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
+	DECLARE_OBSERVER(DriveClosure, Notification)(const LiquidityProviderExchangeObserver& liquidityProvider) {
+		return MAKE_OBSERVER(DriveClosure, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
 
-					auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-					auto driveIter = driveCache.find(notification.DriveKey);
-					auto& driveEntry = driveIter.get();
+			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+			auto driveIter = driveCache.find(notification.DriveKey);
+			auto& driveEntry = driveIter.get();
 
-					const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
-					const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
-					const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
-					const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-					auto driveStateIter = accountStateCache.find(notification.DriveKey);
-					const auto& driveState = driveStateIter.get();
+			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 
-					// Making payments to replicators, if there is a pending data modification
-					auto& activeDataModifications = driveEntry.activeDataModifications();
-					if (!activeDataModifications.empty()) {
-						const auto& modificationSize = activeDataModifications.front().ExpectedUploadSizeMegabytes;
-						const auto& replicators = driveEntry.replicators();
-						const auto totalReplicatorAmount =
-								Amount(modificationSize + // Download work
-									   modificationSize * (replicators.size() - 1) / replicators.size()); // Upload work
-						for (const auto& replicatorKey : replicators) {
-							liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
-						}
-					}
+			const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+			const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+			const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
+			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+			auto driveStateIter = accountStateCache.find(notification.DriveKey);
+			auto& driveState = driveStateIter.get();
+			auto driveOwnerIter = accountStateCache.find(driveEntry.owner());
+			auto& driveOwnerState = driveOwnerIter.get();
 
-					const auto& pluginConfig =
-							context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
-					auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
+			// Making payments to replicators, if there is a pending data modification
+			auto& activeDataModifications = driveEntry.activeDataModifications();
+			if (!activeDataModifications.empty()) {
+				const auto& modificationSize = activeDataModifications.front().ExpectedUploadSizeMegabytes;
+				const auto& replicators = driveEntry.replicators();
+				const auto totalReplicatorAmount =
+						Amount(modificationSize + // Download work
+							   modificationSize * (replicators.size() - 1) / replicators.size()); // Upload work
+				for (const auto& replicatorKey : replicators) {
+					liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
+				}
+			}
 
-					auto timeSinceLastPayment = (context.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
-					for (auto& [replicatorKey, info] : driveEntry.confirmedStorageInfos()) {
-						auto replicatorIter = accountStateCache.find(replicatorKey);
-						auto& replicatorState = replicatorIter.get();
+			const auto& pluginConfig =
+					context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
 
-						if (info.m_confirmedStorageSince) {
-							info.m_timeInConfirmedStorage =
-									info.m_timeInConfirmedStorage + context.Timestamp - *info.m_confirmedStorageSince;
-							info.m_confirmedStorageSince = context.Timestamp;
-						}
-						BigUint driveSize = driveEntry.size();
-						auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / paymentInterval)
-													  .template convert_to<uint64_t>());
-						liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
-					}
+			auto timeSinceLastPayment = (context.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
+			for (auto& [replicatorKey, info] : driveEntry.confirmedStorageInfos()) {
+				auto replicatorIter = accountStateCache.find(replicatorKey);
+				auto& replicatorState = replicatorIter.get();
 
-					// The Drive is Removed, so we should make removal in linked list
-					auto& queueCache = context.Cache.sub<cache::QueueCache>();
-					QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
-					queueAdapter.remove(driveEntry.entryKey());
+				if (info.m_confirmedStorageSince) {
+					info.m_timeInConfirmedStorage =
+							info.m_timeInConfirmedStorage + context.Timestamp - *info.m_confirmedStorageSince;
+					info.m_confirmedStorageSince = context.Timestamp;
+				}
+				BigUint driveSize = driveEntry.size();
+				auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / paymentInterval)
+											  .template convert_to<uint64_t>());
+				liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
+			}
 
-					// Returning the rest to the drive owner
-					const auto refundStreamingAmount = driveState.Balances.get(streamingMosaicId);
-					liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), refundStreamingAmount);
+			// The Drive is Removed, so we should make removal from payment queue
+			auto& queueCache = context.Cache.sub<cache::QueueCache>();
+			utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
+			queueAdapter.remove(driveEntry.entryKey());
 
-					const auto refundStorageAmount = driveState.Balances.get(storageMosaicId);
-					liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStorageMosaicId(context.Config.Immutable), refundStorageAmount);
+			// The Drive is Removed, so we should make removal from verification tree
+			utils::AVLTreeAdapter<Key> driveTreeAdapter(
+					context.Cache.template sub<cache::QueueCache>(),
+					state::DriveVerificationsTree,
+					[](const Key& key) { return key; },
+					[&driveCache](const Key& key) -> state::AVLTreeNode {
+						return driveCache.find(key).get().verificationNode();
+					},
+					[&driveCache](const Key& key, const state::AVLTreeNode& node) {
+						driveCache.find(key).get().verificationNode() = node;
+					});
 
-					// Removing the drive from queue, if necessary
-					const auto replicators = driveEntry.replicators();
-					if (replicators.size() < driveEntry.replicatorCount()) {
-						DriveQueue originalQueue = *pDriveQueue;
-						DriveQueue newQueue;
-						while (!originalQueue.empty()) {
-							const auto drivePriorityPair = originalQueue.top();
-							const auto& driveKey = drivePriorityPair.first;
-							originalQueue.pop();
+			// Returning the rest to the drive owner
+			const auto refundStreamingAmount = driveState.Balances.get(streamingMosaicId);
+			liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), refundStreamingAmount);
 
-							if (driveKey != notification.DriveKey)
-								newQueue.push(drivePriorityPair);
-						}
-						*pDriveQueue = std::move(newQueue);
-					}
+			const auto refundStorageAmount = driveState.Balances.get(storageMosaicId);
+			liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStorageMosaicId(context.Config.Immutable), refundStorageAmount);
 
-					// Simulate publishing of finish download for all download channels
-					auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
-					for (const auto& key: driveEntry.downloadShards()) {
-						auto downloadIter = downloadCache.find(key);
-						auto& downloadEntry = downloadIter.get();
-						if (!downloadEntry.isCloseInitiated()) {
-							downloadEntry.setFinishPublished(true);
-							downloadEntry.downloadApprovalInitiationEvent() = notification.TransactionHash;
-						}
-					}
+			// Removing the drive from queue, if present
+			const auto replicators = driveEntry.replicators();
+			if (replicators.size() < driveEntry.replicatorCount()) {
+				auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
+				auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
 
-					// Removing the drive from caches
-					auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-					for (const auto& replicatorKey : driveEntry.replicators())
-						replicatorCache.find(replicatorKey).get().drives().erase(notification.DriveKey);
+				driveQueueEntry.remove(notification.DriveKey);
+			}
 
-					driveCache.remove(notification.DriveKey);
+			// Simulate publishing of finish download for all download channels
+			auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+			for (const auto& key: driveEntry.downloadShards()) {
+				auto downloadIter = downloadCache.find(key);
+				auto& downloadEntry = downloadIter.get();
+				if (!downloadEntry.isCloseInitiated()) {
+					downloadEntry.setFinishPublished(true);
+					downloadEntry.downloadApprovalInitiationEvent() = notification.TransactionHash;
+				}
+			}
 
-					// Assigning drive's former replicators to queued drives
-					std::seed_seq seed(notification.TransactionHash.begin(), notification.TransactionHash.end());
-					std::mt19937 rng(seed);
-					utils::AssignReplicatorsToQueuedDrives(replicators, pDriveQueue, context, rng);
-				}))
+			// Removing the drive from caches
+			auto replicatorKeyExtractor = [=, &accountStateCache](const Key& key) {
+				return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+			};
+
+			utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
+					context.Cache.template sub<cache::QueueCache>(),
+							state::ReplicatorsSetTree,
+							replicatorKeyExtractor,
+							[&replicatorCache](const Key& key) -> state::AVLTreeNode {
+						return replicatorCache.find(key).get().replicatorsSetNode();
+						},
+						[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
+						replicatorCache.find(key).get().replicatorsSetNode() = node;
+					});
+
+			for (const auto& replicatorKey : driveEntry.replicators()) {
+				auto replicatorIter = replicatorCache.find(replicatorKey);
+				auto& replicatorEntry = replicatorIter.get();
+				replicatorEntry.drives().erase(notification.DriveKey);
+
+				replicatorTreeAdapter.remove(replicatorKeyExtractor(replicatorKey));
+			}
+
+			driveCache.remove(notification.DriveKey);
+
+			// Assigning drive's former replicators to queued drives
+			std::seed_seq seed(notification.TransactionHash.begin(), notification.TransactionHash.end());
+			std::mt19937 rng(seed);
+			utils::AssignReplicatorsToQueuedDrives(replicators, context, rng);
+		}))
 	}
 }}

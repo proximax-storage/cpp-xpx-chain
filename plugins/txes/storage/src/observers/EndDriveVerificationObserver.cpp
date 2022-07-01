@@ -4,17 +4,16 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <boost/dynamic_bitset.hpp>
 #include "Observers.h"
 #include "src/utils/StorageUtils.h"
 
 namespace catapult { namespace observers {
 
 	using Notification = model::EndDriveVerificationNotification<1>;
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
 
-	DECLARE_OBSERVER(EndDriveVerification, Notification)(const std::shared_ptr<cache::ReplicatorKeyCollector>& pKeyCollector, const std::shared_ptr<DriveQueue>& pDriveQueue, const LiquidityProviderExchangeObserver& liquidityProvider) {
-		return MAKE_OBSERVER(EndDriveVerification, Notification, ([pKeyCollector, pDriveQueue, &liquidityProvider](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(EndDriveVerification, Notification)(const LiquidityProviderExchangeObserver& liquidityProvider) {
+		return MAKE_OBSERVER(EndDriveVerification, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (EndDriveVerification)");
 
@@ -23,25 +22,33 @@ namespace catapult { namespace observers {
 			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveIter.get();
-			auto storageDepositSlashing = 0;
+
+		  	auto& shards = driveEntry.verification()->Shards;
+			auto& shardSet = shards[notification.ShardId];
+			const std::vector<Key> shardVec(shardSet.begin(), shardSet.end());
+		  	const auto opinionByteCount = (notification.JudgingKeyCount * notification.KeyCount + 7) / 8;
+		  	const boost::dynamic_bitset<uint8_t> opinions(notification.OpinionsPtr, notification.OpinionsPtr + opinionByteCount);
 			std::set<Key> offboardingReplicators;
 		  	std::set<Key> offboardingReplicatorsWithRefund;
+		  	auto storageDepositSlashing = 0;
+
 			for (auto i = 0; i < notification.KeyCount; ++i) {
 				uint8_t result = 0;
 				for (auto j = 0; j < notification.JudgingKeyCount; ++j)
-					result += notification.OpinionsPtr[i + j * (notification.KeyCount - 1)];
+					result += opinions[j * notification.KeyCount + i];
 
+				const auto& replicatorKey = shardVec[i];
 				if (result >= notification.JudgingKeyCount / 2) {
-					// If the replicator passes validation and is queued for offboarding,
+					// If the replicator passes validation and\ is queued for offboarding,
 					// include him into offboardingReplicators and offboardingReplicatorsWithRefund
-					if (driveEntry.offboardingReplicators().count(notification.PublicKeysPtr[i])) {
-						offboardingReplicators.insert(notification.PublicKeysPtr[i]);
-						offboardingReplicatorsWithRefund.insert(notification.PublicKeysPtr[i]);
+					if (driveEntry.offboardingReplicators().count(replicatorKey)) {
+						offboardingReplicators.insert(replicatorKey);
+						offboardingReplicatorsWithRefund.insert(replicatorKey);
 					}
 				} else {
 					// Count deposited Storage mosaics and include replicator into offboardingReplicators
 					storageDepositSlashing += driveEntry.size();
-					offboardingReplicators.insert(notification.PublicKeysPtr[i]);
+					offboardingReplicators.insert(replicatorKey);
 				}
 			}
 
@@ -50,30 +57,20 @@ namespace catapult { namespace observers {
 
 			utils::RefundDepositsToReplicators(notification.DriveKey, offboardingReplicatorsWithRefund, context, liquidityProvider);
 			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
-			utils::PopulateDriveWithReplicators(notification.DriveKey, pKeyCollector, pDriveQueue, context, rng);
-			utils::AssignReplicatorsToQueuedDrives(offboardingReplicators, pDriveQueue, context, rng);
+			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
+			utils::AssignReplicatorsToQueuedDrives(offboardingReplicators, context, rng);
 
-			const auto& replicatorKey = notification.PublicKeysPtr[0];
-			auto& shards = driveEntry.verifications()[0].Shards;
-			for (auto iter = shards.begin(); iter != shards.end(); ++iter) {
-				const auto& shard = *iter;
+			shardSet.clear();
+		  	bool verificationCompleted = true;
+		  	for (const auto& shard : shards) {
+			  	if (!shard.empty()) {
+					verificationCompleted = false;
+				  	break;
+			  	}
+		  	}
 
-				bool found = false;
-				for (const auto& key : shard) {
-					if (key == replicatorKey) {
-						found = true;
-						break;
-					}
-				}
-
-				if (found) {
-					shards.erase(iter);
-					break;
-				}
-			}
-
-			if (shards.empty())
-				driveEntry.verifications().clear();
+			if (verificationCompleted)
+				driveEntry.verification().reset();
 
 			if (storageDepositSlashing == 0)
 				return;

@@ -99,7 +99,7 @@ namespace catapult { namespace validators {
 
 		LiquidityProviderInfo info = {state::LiquidityProviderEntry(mosaicId), test::GenerateRandomValue<Amount>(), test::GenerateRandomValue<Amount>()};
 
-        // Assert:sert:
+        // Assert:
 		AssertValidationResult(
 				Failure_LiquidityProvider_Liquidity_Provider_Is_Not_Registered,
 				test::GenerateRandomByteArray<Key>(),
@@ -115,7 +115,7 @@ namespace catapult { namespace validators {
 
 		LiquidityProviderInfo info = {state::LiquidityProviderEntry(mosaicId), Amount{ULLONG_MAX}, test::GenerateRandomValue<Amount>()};
 
-		// Assert:sert:
+		// Assert:
 		AssertValidationResult(
 				Failure_LiquidityProvider_Invalid_Mosaic_Amount,
 				test::GenerateRandomByteArray<Key>(),
@@ -131,7 +131,7 @@ namespace catapult { namespace validators {
 
 		LiquidityProviderInfo info = {state::LiquidityProviderEntry(mosaicId), Amount{ULLONG_MAX}, Amount{1}};
 
-		// Assert:sert:
+		// Assert:
 		AssertValidationResult(
 				Failure_LiquidityProvider_Invalid_Currency_Amount,
 				test::GenerateRandomByteArray<Key>(),
@@ -145,9 +145,9 @@ namespace catapult { namespace validators {
 		// Arrange
 		auto mosaicId = test::GenerateRandomValue<UnresolvedMosaicId>();
 
-		LiquidityProviderInfo info = {state::LiquidityProviderEntry(mosaicId), test::GenerateRandomValue<Amount>(), test::GenerateRandomValue<Amount>()};
+		LiquidityProviderInfo info = {state::LiquidityProviderEntry(mosaicId), Amount(1), Amount(1)};
 
-		// Assert:sert:
+		// Assert:
 		AssertValidationResult(
 				Failure_LiquidityProvider_Insufficient_Currency,
 				test::GenerateRandomByteArray<Key>(),
@@ -163,7 +163,7 @@ namespace catapult { namespace validators {
 
 		LiquidityProviderInfo info = {state::LiquidityProviderEntry(mosaicId), Amount(1),Amount(1)};
 
-		// Assert:sert:
+		// Assert:
 		AssertValidationResult(
 				ValidationResult::Success,
 				test::GenerateRandomByteArray<Key>(),

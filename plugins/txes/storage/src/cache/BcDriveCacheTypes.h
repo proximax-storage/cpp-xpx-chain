@@ -1,5 +1,5 @@
 /**
-*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Copyright 2021 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -7,8 +7,6 @@
 #pragma once
 #include "src/state/BcDriveEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
-#include "catapult/cache/IdentifierSerializer.h"
-#include "catapult/cache/SingleSetCacheTypesAdapter.h"
 #include "catapult/utils/Hashers.h"
 
 namespace catapult {
@@ -55,34 +53,10 @@ namespace catapult { namespace cache {
 		}
 	};
 
-	/// BcDrive cache types.
+	/// Drive cache types.
 	struct BcDriveCacheTypes {
-		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicBcDriveCacheView, BasicBcDriveCacheDelta, const Key&, state::BcDriveEntry>;
-
-		// region secondary descriptors
-
-		struct KeyTypesDescriptor {
-		public:
-			using ValueType = Key;
-			using KeyType = Key;
-
-			// cache types
-			using CacheType = BcDriveCache;
-			using CacheDeltaType = BcDriveCacheDelta;
-			using CacheViewType = BcDriveCacheView;
-
-			using Serializer = UnorderedSetIdentifierSerializer<KeyTypesDescriptor>;
-
-		public:
-			static auto GetKeyFromValue(const ValueType& key) {
-				return key;
-			}
-		};
-
-		// endregion
-
 		using PrimaryTypes = MutableUnorderedMapAdapter<BcDriveCacheDescriptor, utils::ArrayHasher<Key>>;
-		using KeyTypes = MutableUnorderedMemorySetAdapter<KeyTypesDescriptor, utils::ArrayHasher<Key>>;
+		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicBcDriveCacheView, BasicBcDriveCacheDelta, const Key&, state::BcDriveEntry>;
 
 		using BaseSetDeltaPointers = BcDriveBaseSetDeltaPointers;
 		using BaseSets = BcDriveBaseSets;

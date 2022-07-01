@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2022 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -16,11 +16,14 @@ namespace catapult { namespace state {
 
 	static const Key DrivePaymentQueueKey = { { 1 } };
 	static const Key DownloadChannelPaymentQueueKey = { { 2 } };
+	static const Key DriveVerificationsTree = { { 3 } };
+	static const Key ReplicatorsSetTree = { { 4 } };
 
 	// Mixin for storing drive details.
 	class QueueMixin {
 	public:
 		QueueMixin()
+		: m_size(0)
 		{}
 
 	public:
@@ -36,10 +39,17 @@ namespace catapult { namespace state {
 		void setLast(const Key& last) {
 			m_last = last;
 		}
+		uint32_t getSize() const {
+			return m_size;
+		}
+		void setSize(uint32_t size) {
+			m_size = size;
+		}
 
 	private:
 		Key m_first;
 		Key m_last;
+		uint32_t m_size;
 	};
 
 	// Drive entry.

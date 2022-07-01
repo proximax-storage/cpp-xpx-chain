@@ -15,6 +15,9 @@ namespace catapult { namespace observers {
 	using Notification = model::CreateLiquidityProviderNotification<1>;
 
 	DEFINE_OBSERVER(CreateLiquidityProvider, Notification, ([](const Notification& notification, ObserverContext& context) {
+	  	if (NotifyMode::Rollback == context.Mode)
+		  	CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (CreateLiquidityProvider)");
+
 		state::LiquidityProviderEntry entry(notification.ProviderMosaicId);
 		entry.setProviderKey(notification.ProviderKey);
 		entry.setOwner(notification.Owner);

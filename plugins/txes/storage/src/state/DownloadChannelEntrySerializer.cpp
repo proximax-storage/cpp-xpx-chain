@@ -75,6 +75,7 @@ namespace catapult { namespace state {
 		io::Write(output, downloadEntry.getQueuePrevious());
 		io::Write(output, downloadEntry.getQueueNext());
 		io::Write(output, downloadEntry.getLastDownloadApprovalInitiated());
+		io::Write8(output, downloadEntry.isFinishPublished());
 		io::Write8(output, downloadEntry.downloadApprovalInitiationEvent().has_value());
 		if (downloadEntry.downloadApprovalInitiationEvent().has_value()) {
 			io::Write(output, *downloadEntry.downloadApprovalInitiationEvent());
@@ -117,6 +118,7 @@ namespace catapult { namespace state {
 		entry.setQueueNext(queueNext);
 
 		entry.setLastDownloadApprovalInitiated(Timestamp(io::Read64(input)));
+		entry.setFinishPublished(io::Read8(input));
 
 		bool hasApprovalEvent = io::Read8(input);
 		if (hasApprovalEvent) {

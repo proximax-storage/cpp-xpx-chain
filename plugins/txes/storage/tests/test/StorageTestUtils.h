@@ -6,6 +6,7 @@
 
 #pragma once
 #include <random>
+#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheDelta.h"
 #include "boost/dynamic_bitset.hpp"
 #include "boost/iterator/counting_iterator.hpp"
@@ -18,10 +19,13 @@
 #include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
-#include "src/cache/QueueCacheStorage.h"
 #include "src/cache/ReplicatorCache.h"
-#include "src/cache/QueueCache.h"
 #include "src/cache/ReplicatorCacheStorage.h"
+#include "src/cache/QueueCache.h"
+#include "src/cache/QueueCacheStorage.h"
+#include "src/cache/PriorityQueueCache.h"
+#include "src/cache/PriorityQueueCacheStorage.h"
+#include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
 #include "src/model/StorageEntityType.h"
 #include "src/utils/StorageUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
@@ -38,15 +42,18 @@ namespace catapult { namespace test {
 			std::vector<size_t> cacheIds = {
 					cache::BcDriveCache::Id,
 					cache::DownloadChannelCache::Id,
-					cache::ReplicatorCache::Id};
-			auto maxId = std::max_element(cacheIds.begin(), cacheIds.end());
-			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(*maxId + 1);
+					cache::ReplicatorCache::Id,
+					cache::QueueCache::Id,
+					cache::PriorityQueueCache::Id,
+			};
+			auto maxId = *std::max_element(cacheIds.begin(), cacheIds.end());
+			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(maxId + 1);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
-			auto pReplicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
-			subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pDriveKeyCollector, pConfigHolder);
+			subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 			subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
-			subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pReplicatorKeyCollector, pConfigHolder);
+			subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
+			subCaches[cache::QueueCache::Id] = MakeSubCachePlugin<cache::QueueCache, cache::QueueCacheStorage>(pConfigHolder);
+			subCaches[cache::PriorityQueueCache::Id] = MakeSubCachePlugin<cache::PriorityQueueCache, cache::PriorityQueueCacheStorage>(pConfigHolder);
 			return subCaches;
 		}
 
@@ -86,15 +93,21 @@ namespace catapult { namespace test {
     struct BcDriveCacheFactory {
         private:
             static auto CreateSubCacheWithBcDriveCache(const config::BlockchainConfiguration& config) {
-                auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, std::max(cache::ReplicatorCache::Id, cache::QueueCache::Id)));
-                std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
+				std::vector<size_t> cacheIds = {
+						cache::BcDriveCache::Id,
+						cache::DownloadChannelCache::Id,
+						cache::ReplicatorCache::Id,
+						cache::QueueCache::Id,
+						cache::PriorityQueueCache::Id,
+				};
+				auto maxId = *std::max_element(cacheIds.begin(), cacheIds.end());
+                std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(maxId + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-                auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
-                auto pReplicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
-			    subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pDriveKeyCollector, pConfigHolder);
+                subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 			    subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
-                subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pReplicatorKeyCollector, pConfigHolder);
+                subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
                 subCaches[cache::QueueCache::Id] = MakeSubCachePlugin<cache::QueueCache, cache::QueueCacheStorage>(pConfigHolder);
+				subCaches[cache::PriorityQueueCache::Id] = MakeSubCachePlugin<cache::PriorityQueueCache, cache::PriorityQueueCacheStorage>(pConfigHolder);
 				return subCaches;
             }
 
@@ -130,14 +143,17 @@ namespace catapult { namespace test {
     struct DownloadChannelCacheFactory {
         private:
             static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
-                auto id = std::max(cache::BcDriveCache::Id, std::max(cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id));
-                std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
+				std::vector<size_t> cacheIds = {
+						cache::BcDriveCache::Id,
+						cache::DownloadChannelCache::Id,
+						cache::ReplicatorCache::Id,
+				};
+				auto maxId = *std::max_element(cacheIds.begin(), cacheIds.end());
+				std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(maxId + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-				auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
-				auto pReplicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
-				subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pDriveKeyCollector, pConfigHolder);
+				subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 				subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
-				subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pReplicatorKeyCollector, pConfigHolder);
+				subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
                 return subCaches;
             }
 
@@ -169,15 +185,19 @@ namespace catapult { namespace test {
     struct ReplicatorCacheFactory {
         private:
             static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
-				std::vector<uint32_t> cacheIds = {cache::BcDriveCache::Id, cache::DownloadChannelCache::Id, cache::ReplicatorCache::Id};
-				auto id = *std::max_element(cacheIds.begin(), cacheIds.end());
-                std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
+				std::vector<size_t> cacheIds = {
+						cache::BcDriveCache::Id,
+						cache::DownloadChannelCache::Id,
+						cache::ReplicatorCache::Id,
+						cache::PriorityQueueCache::Id,
+				};
+				auto maxId = *std::max_element(cacheIds.begin(), cacheIds.end());
+                std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(maxId + 1);
 			    auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-				auto pDriveKeyCollector = std::make_shared<cache::DriveKeyCollector>();
-				auto pReplicatorKeyCollector = std::make_shared<cache::ReplicatorKeyCollector>();
-				subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pDriveKeyCollector, pConfigHolder);
+				subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 				subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
-				subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pReplicatorKeyCollector, pConfigHolder);
+				subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
+				subCaches[cache::PriorityQueueCache::Id] = MakeSubCachePlugin<cache::PriorityQueueCache, cache::PriorityQueueCacheStorage>(pConfigHolder);
 				return subCaches;
             }
 
@@ -312,6 +332,34 @@ namespace catapult { namespace test {
 		return data;
 	};
 
+	class LiquidityProviderExchangeObserverImpl : public observers::LiquidityProviderExchangeObserver {
+	public:
+		void creditMosaics(
+				observers::ObserverContext& context,
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
+				const UnresolvedMosaicId& unresolvedMosaicId,
+				const UnresolvedAmount& mosaicAmount) const override;
+		void debitMosaics(
+				observers::ObserverContext& context,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
+				const UnresolvedMosaicId& unresolvedMosaicId,
+				const UnresolvedAmount& mosaicAmount) const override;
+		void creditMosaics(
+				observers::ObserverContext& context,
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) const override;
+		void debitMosaics(
+				observers::ObserverContext& context,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) const override;
+	};
+
     /// Creates a transaction.
     template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateTransaction(model::EntityType type, size_t additionalSize = 0) {
@@ -401,7 +449,7 @@ namespace catapult { namespace test {
     /// Creates a end drive verification transaction.
     template<typename TTransaction>
     model::UniqueEntityPtr<TTransaction> CreateEndDriveVerificationTransaction(uint8_t keyCount, uint8_t judgingKeyCount) {
-		size_t additionalSize = keyCount * Key_Size + judgingKeyCount * Signature_Size + (judgingKeyCount * keyCount + 7) / 8;
+		size_t additionalSize = judgingKeyCount * (Key_Size + Signature_Size) + (judgingKeyCount * keyCount + 7) / 8;
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_EndDriveVerification, additionalSize);
         pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
         pTransaction->VerificationTrigger = test::GenerateRandomByteArray<Hash256>();

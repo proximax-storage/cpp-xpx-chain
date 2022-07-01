@@ -21,6 +21,8 @@ namespace catapult { namespace test {
 	
 	state::CommitteeEntry CreateCommitteeEntry(
 		Key key = test::GenerateRandomByteArray<Key>(),
+		Key owner = test::GenerateRandomByteArray<Key>(),
+		const Height& disabledHeight = Height(0),
 		const Height& lastSigningBlockHeight = test::GenerateRandomValue<Height>(),
 		const Importance& effectiveBalance = test::GenerateRandomValue<Importance>(),
 		bool canHarvest = test::RandomByte(),

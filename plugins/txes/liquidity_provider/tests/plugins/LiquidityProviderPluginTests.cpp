@@ -66,8 +66,8 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
 					"CreateLiquidityProviderValidator",
-					"DebitMosaicValidator",
 					"ManualRateChangeValidator",
+					"DebitMosaicValidator",
 					"CreditMosaicValidator"
 				};
 			}
@@ -76,8 +76,8 @@ namespace catapult { namespace plugins {
 				return {
 					"SlashingObserver",
 					"CreateLiquidityProviderObserver",
-					"DebitMosaicObserver",
 					"ManualRateChangeObserver",
+					"DebitMosaicObserver",
 					"CreditMosaicObserver"
 				};
 			}

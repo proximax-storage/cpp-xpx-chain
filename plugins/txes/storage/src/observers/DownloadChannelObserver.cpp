@@ -6,6 +6,7 @@
 
 #include <random>
 #include "Observers.h"
+#include "src/utils/Queue.h"
 
 namespace catapult { namespace observers {
 
@@ -19,6 +20,7 @@ namespace catapult { namespace observers {
 	  	downloadEntry.setDrive(notification.DriveKey);
 		downloadEntry.setDownloadSize(notification.DownloadSizeMegabytes);
 		downloadEntry.setDownloadApprovalCountLeft(1);
+		downloadEntry.setLastDownloadApprovalInitiated(context.Timestamp);
 
 		if (notification.ListOfPublicKeysSize == 0) {
 			downloadEntry.listOfPublicKeys().push_back(notification.Consumer);
@@ -65,5 +67,10 @@ namespace catapult { namespace observers {
 		}
 
 		downloadCache.insert(downloadEntry);
+
+		// Insert the Drive into the payment Queue
+		auto& queueCache = context.Cache.template sub<cache::QueueCache>();
+		utils::QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
+		queueAdapter.pushBack(downloadEntry.entryKey());
 	}));
 }}

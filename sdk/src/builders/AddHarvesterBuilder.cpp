@@ -8,13 +8,16 @@
 
 namespace catapult { namespace builders {
 
-	AddHarvesterBuilder::AddHarvesterBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer)
+	AddHarvesterBuilder::AddHarvesterBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer, const Key& harvesterKey)
 		: TransactionBuilder(networkIdentifier, signer)
+		, m_harvesterKey(harvesterKey)
 	{}
 
 	template<typename TransactionType>
 	model::UniqueEntityPtr<TransactionType> AddHarvesterBuilder::buildImpl() const {
-		return createTransaction<TransactionType>(sizeof(TransactionType));
+		auto pTransaction = createTransaction<TransactionType>(sizeof(TransactionType));
+		pTransaction->HarvesterKey = m_harvesterKey;
+		return pTransaction;
 	}
 
 	model::UniqueEntityPtr<AddHarvesterBuilder::Transaction> AddHarvesterBuilder::build() const {

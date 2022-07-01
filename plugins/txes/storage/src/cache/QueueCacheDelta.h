@@ -5,7 +5,6 @@
 **/
 
 #pragma once
-#include "DriveKeyCollector.h"
 #include "QueueBaseSets.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"

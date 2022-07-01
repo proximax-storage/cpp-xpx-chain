@@ -32,6 +32,7 @@ namespace catapult { namespace state {
 	struct Drive {
 		Key Id;
 		Key Owner;
+		Hash256 RootHash;
 		uint64_t Size;
 		utils::SortedKeySet Replicators;
 		std::vector<DataModification> DataModifications;
@@ -48,10 +49,11 @@ namespace catapult { namespace state {
 
 	struct DriveVerification {
 		Key DriveKey;
+		uint32_t Duration;
 		bool Expired;
 		Hash256 VerificationTrigger;
 		Hash256 RootHash;
-		std::vector<std::vector<Key>> Shards;
+		std::vector<std::set<Key>> Shards;
 	};
 
 	struct ModificationShard {
@@ -110,7 +112,7 @@ namespace catapult { namespace state {
 		virtual bool downloadChannelExists(const Hash256& id) = 0;
 		virtual std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) = 0;
 
-        virtual std::unique_ptr<DriveVerification> getActiveVerification(const Key& driveKey) = 0;
+		virtual std::optional<DriveVerification> getActiveVerification(const Key& driveKey, const Timestamp& blockTimestamp) = 0;
 
 	protected:
 		cache::CatapultCache* m_pCache;

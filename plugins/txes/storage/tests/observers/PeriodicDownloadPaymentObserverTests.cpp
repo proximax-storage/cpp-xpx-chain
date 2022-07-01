@@ -13,17 +13,13 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PeriodicDownloadChannelPaymentObserverTests
 
-	using DrivePriority = std::pair<Key, double>;
-	using DriveQueue = std::priority_queue<DrivePriority, std::vector<DrivePriority>, utils::DriveQueueComparator>;
-
 	DEFINE_COMMON_OBSERVER_TESTS(PeriodicDownloadChannelPayment,)
 
 	const auto billingPeriodSeconds = 20000;
-	const auto Drive_Queue = std::make_shared<DriveQueue>();
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
-        using Notification = model::BlockNotification<2>;
+        using Notification = model::BlockNotification<1>;
 
         constexpr Height Current_Height(20);
 		const auto Owner_Key = test::GenerateRandomByteArray<Key>();
@@ -45,6 +41,7 @@ namespace catapult { namespace observers {
 
 			auto storageConfig = config::StorageConfiguration::Uninitialized();
 			storageConfig.DownloadBillingPeriod = utils::TimeSpan::FromMilliseconds(billingPeriodSeconds);
+			storageConfig.Enabled = true;
 
 			config.Network.SetPluginConfiguration(storageConfig);
 
@@ -99,7 +96,7 @@ namespace catapult { namespace observers {
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
-            Notification notification({ { 1 } }, values.NotificationTime);
+            Notification notification({ { 1 } }, { { 1 } }, values.NotificationTime, Difficulty(0), 0, 0);
             auto pObserver = CreatePeriodicDownloadChannelPaymentObserver();
             auto& downloadCache = context.cache().sub<cache::DownloadChannelCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
@@ -111,6 +108,7 @@ namespace catapult { namespace observers {
 				state::QueueEntry queueEntry(state::DownloadChannelPaymentQueueKey);
 				queueEntry.setFirst(values.InitialEntries[0].id().array());
 				queueEntry.setLast(values.InitialEntries[values.InitialEntries.size() - 1].id().array());
+				queueEntry.setSize(values.InitialEntries.size());
 				queueCache.insert(queueEntry);
 			}
 

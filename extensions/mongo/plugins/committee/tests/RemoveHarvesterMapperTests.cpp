@@ -34,7 +34,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto view = builder.view();
 
 		// Assert:
-		EXPECT_EQ(0u, test::GetFieldCount(view));
+		EXPECT_EQ(1u, test::GetFieldCount(view));
 	}
 
 	// endregion

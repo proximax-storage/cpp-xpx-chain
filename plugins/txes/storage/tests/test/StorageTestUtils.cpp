@@ -41,22 +41,22 @@ namespace catapult { namespace test {
             }
         }
 
-		void AssertEqualVerifications(const state::Verifications& expectedVerifications, const state::Verifications& verifications) {
-			ASSERT_EQ(expectedVerifications.size(), verifications.size());
-			for (auto i = 0u; i < verifications.size(); i++) {
-				const auto &expectedVerification = expectedVerifications[i];
-				const auto &verification = verifications[i];
-				EXPECT_EQ(expectedVerification.VerificationTrigger, verification.VerificationTrigger);
-				EXPECT_EQ(expectedVerification.Expiration, verification.Expiration);
-				EXPECT_EQ(expectedVerification.Expired, verification.Expired);
-				ASSERT_EQ(expectedVerification.Shards.size(), verification.Shards.size());
-				for (auto i = 0u; i < expectedVerification.Shards.size(); ++i) {
-					ASSERT_EQ(expectedVerification.Shards[i].size(), verification.Shards[i].size());
-					for (auto k = 0u; k < expectedVerification.Shards[i].size(); ++k)
-						EXPECT_EQ(expectedVerification.Shards[i][k], verification.Shards[i][k]);
-				}
-			}
-		}
+        //		void AssertEqualVerifications(const state::Verifications& expectedVerifications, const state::Verifications& verifications) {
+//			ASSERT_EQ(expectedVerifications.size(), verifications.size());
+//			for (auto i = 0u; i < verifications.size(); i++) {
+//				const auto &expectedVerification = expectedVerifications[i];
+//				const auto &verification = verifications[i];
+//				EXPECT_EQ(expectedVerification.VerificationTrigger, verification.VerificationTrigger);
+//				EXPECT_EQ(expectedVerification.Expiration, verification.Expiration);
+//				EXPECT_EQ(expectedVerification.Expired, verification.Expired);
+//				ASSERT_EQ(expectedVerification.Shards.size(), verification.Shards.size());
+//				for (auto i = 0u; i < expectedVerification.Shards.size(); ++i) {
+//					ASSERT_EQ(expectedVerification.Shards[i].size(), verification.Shards[i].size());
+//					for (auto k = 0u; k < expectedVerification.Shards[i].size(); ++k)
+//						EXPECT_EQ(expectedVerification.Shards[i][k], verification.Shards[i][k]);
+//				}
+//			}
+//		}
 
 		void AssertEqualDriveInfos(const std::map<Key, state::DriveInfo>& expectedDriveInfos, const std::map<Key, state::DriveInfo>& driveInfos) {
 			ASSERT_EQ(expectedDriveInfos.size(), driveInfos.size());
@@ -125,14 +125,14 @@ namespace catapult { namespace test {
             });
         }
 
-        entry.verifications().reserve(verificationsCount);
-        for (auto i = 0u; i < verificationsCount; ++i) {
-			entry.verifications().emplace_back(state::Verification{test::GenerateRandomByteArray<Hash256>(), Timestamp(test::Random()), bool(test::RandomByte()), {}});
-			entry.verifications().back().Shards.emplace_back();
-			auto& shard = entry.verifications().back().Shards.back();
-			for (uint16_t k = 0u; k < replicatorCount; ++k)
-				shard.emplace_back(test::GenerateRandomByteArray<Key>());
-		}
+//        entry.verifications().reserve(verificationsCount);
+//        for (auto i = 0u; i < verificationsCount; ++i) {
+//			entry.verifications().emplace_back(state::Verification{test::GenerateRandomByteArray<Hash256>(), Timestamp(test::Random()), bool(test::RandomByte()), {}});
+//			entry.verifications().back().Shards.emplace_back();
+//			auto& shard = entry.verifications().back().Shards.back();
+//			for (uint16_t k = 0u; k < replicatorCount; ++k)
+//				shard.emplace_back(test::GenerateRandomByteArray<Key>());
+//		}
 
 		for (int i = 0; i < downloadShardsCount; i++) {
 			auto size = 2;
@@ -183,7 +183,7 @@ namespace catapult { namespace test {
 
         AssertEqualActiveDataModifications(expectedEntry.activeDataModifications(), entry.activeDataModifications());
         AssertEqualCompletedDataModifications(expectedEntry.completedDataModifications(), entry.completedDataModifications());
-		AssertEqualVerifications(expectedEntry.verifications(), entry.verifications());
+//		AssertEqualVerifications(expectedEntry.verifications(), entry.verifications());
     }
 
     state::DownloadChannelEntry CreateDownloadChannelEntry(
@@ -250,7 +250,6 @@ namespace catapult { namespace test {
             uint16_t drivesCount,
 			uint16_t downloadChannelCount) {
         state::ReplicatorEntry entry(key);
-		entry.setCapacity(capacity);
         for (auto dC = 0u; dC < drivesCount; ++dC)
             entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
         for (auto i = 0u; i < downloadChannelCount; ++i)
@@ -261,8 +260,6 @@ namespace catapult { namespace test {
 
     void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry) {
         EXPECT_EQ(expectedEntry.key(), entry.key());
-        EXPECT_EQ(expectedEntry.capacity(), entry.capacity());
-		EXPECT_EQ(expectedEntry.blsKey(), entry.blsKey());
 
 		AssertEqualDriveInfos(expectedEntry.drives(), entry.drives());
     }
@@ -304,6 +301,64 @@ namespace catapult { namespace test {
 		auto& accountState = accountStateIter.get();
 		for (auto& mosaic : mosaics)
 			accountState.Balances.credit(mosaic.MosaicId, mosaic.Amount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::creditMosaics(
+			observers::ObserverContext& context,
+			const Key& currencyDebtor,
+			const Key& mosaicCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		creditMosaics(context, currencyDebtor, mosaicCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::debitMosaics(
+			observers::ObserverContext& context,
+			const Key& mosaicDebtor,
+			const Key& currencyCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		debitMosaics(context, mosaicDebtor, currencyCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::creditMosaics(
+			observers::ObserverContext& context,
+			const Key& currencyDebtor,
+			const Key& mosaicCreditor,
+			const UnresolvedMosaicId& mosaicId,
+			const Amount& mosaicAmount) const {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto debtorAccountIter = accountStateCache.find(currencyDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
+		auto creditorAccountIter = accountStateCache.find(mosaicCreditor);
+		auto& creditorAccount = creditorAccountIter.get();
+
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto resolvedMosaicId = MosaicId(mosaicId.unwrap());
+
+		debtorAccount.Balances.debit(currencyMosaicId, mosaicAmount);
+		creditorAccount.Balances.credit(resolvedMosaicId, mosaicAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::debitMosaics(
+			observers::ObserverContext& context,
+			const Key& mosaicDebtor,
+			const Key& currencyCreditor,
+			const UnresolvedMosaicId& mosaicId,
+			const Amount& mosaicAmount) const {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto debtorAccountIter = accountStateCache.find(mosaicDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
+		auto creditorAccountIter = accountStateCache.find(currencyCreditor);
+		auto& creditorAccount = creditorAccountIter.get();
+
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto resolvedMosaicId = MosaicId(mosaicId.unwrap());
+
+		debtorAccount.Balances.debit(resolvedMosaicId, mosaicAmount);
+		creditorAccount.Balances.credit(currencyMosaicId, mosaicAmount);
 	}
 }}
 

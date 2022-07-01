@@ -19,7 +19,7 @@ namespace catapult { namespace observers {
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::LiquidityProviderCacheFactory>;
-		using Notification = model::BlockNotification<2>;
+		using Notification = model::BlockNotification<1>;
 
 		auto CreateConfig() {
 			test::MutableBlockchainConfiguration config;
@@ -84,7 +84,13 @@ namespace catapult { namespace observers {
 		void RunTest(NotifyMode mode, const CacheValues& values) {
 			// Arrange:
 			ObserverTestContext context(mode, values.BLockHeight, CreateConfig());
-			Notification notification(test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomValue<Timestamp>());
+			Notification notification(
+					test::GenerateRandomByteArray<Key>(),
+					test::GenerateRandomByteArray<Key>(),
+					test::GenerateRandomValue<Timestamp>(),
+					utils::ClampedBaseValue<uint64_t, Difficulty_tag>(test::Random()),
+					test::Random16(),
+					test::Random16());
 
 			auto pKeyCollector = std::make_shared<cache::LiquidityProviderKeyCollector>();
 

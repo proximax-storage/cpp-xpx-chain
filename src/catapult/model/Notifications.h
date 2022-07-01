@@ -287,30 +287,6 @@ namespace catapult { namespace model {
 		uint32_t FeeInterestDenominator;
 	};
 
-	template<>
-	struct BlockNotification<2> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Block_v2_Notification;
-
-	public:
-		/// Creates a block notification around \a signer, \a beneficiary, \a timestamp and \a difficulty.
-		 BlockNotification(
-			const Hash256& hash,
-			Timestamp timestamp)
-				: Notification(Notification_Type, sizeof(BlockNotification<2>))
-				, Hash(hash)
-				, Timestamp(timestamp)
-		{}
-
-	public:
-		/// Block hash.
-		const Hash256& Hash;
-
-		/// Block timestamp.
-		catapult::Timestamp Timestamp;
-	};
-
 	/// Notifies the cosignatures of a block.
 	template<VersionType version>
 	struct BlockCommitteeNotification;

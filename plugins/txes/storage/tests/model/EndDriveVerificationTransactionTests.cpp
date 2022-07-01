@@ -57,7 +57,7 @@ namespace catapult { namespace model {
         auto realSize = EndDriveVerificationTransaction::CalculateRealSize(transaction);
 
         // Assert:
-        EXPECT_EQ(sizeof(EndDriveVerificationTransaction) + 354u, realSize);
+        EXPECT_EQ(sizeof(EndDriveVerificationTransaction) + 290u, realSize);
     }
 
     // endregion

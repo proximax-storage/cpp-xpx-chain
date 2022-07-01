@@ -901,7 +901,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Size of common data of the transaction in bytes.
-		size_t CommonDataSize;
+		uint64_t CommonDataSize;
 
 		/// Number of replicators that provided their opinions, but on which no opinions were provided.
 		uint8_t JudgingKeysCount;

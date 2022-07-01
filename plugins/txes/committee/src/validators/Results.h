@@ -26,6 +26,12 @@ namespace catapult { namespace validators {
 	/// Validation failed because the account does not exist.
 	DEFINE_CATAPULT_COMMITTEE_RESULT(Account_Does_Not_Exist, 4);
 
+	/// Validation failed because the transaction signer is not owner.
+	DEFINE_CATAPULT_COMMITTEE_RESULT(Signer_Is_Not_Owner, 5);
+
+	/// Validation failed because the harvester account is already disabled.
+	DEFINE_CATAPULT_COMMITTEE_RESULT(Harvester_Already_Disabled, 6);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

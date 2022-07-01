@@ -51,31 +51,52 @@ namespace catapult { namespace state {
 		//	\a activity and \a greed.
 		explicit CommitteeEntry(
 				const Key& key,
+				const Key& owner,
 				const Height& lastSigningBlockHeight,
 				const Importance& effectiveBalance,
 				bool canHarvest,
 				double activity,
-				double greed)
+				double greed,
+				const Height& disabledHeight = Height(0))
 			: m_key(key)
+			, m_owner(owner)
+			, m_disabledHeight(disabledHeight)
 			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed)
 		{}
 
 		// Creates a committee entry around \a key and \a data.
-		explicit CommitteeEntry(const Key& key, const AccountData& data)
+		explicit CommitteeEntry(const Key& key, const Key& owner, const AccountData& data, const Height& disabledHeight = Height(0))
 			: m_key(key)
+			, m_owner(owner)
+			, m_disabledHeight(disabledHeight)
 			, m_data(data)
 		{}
 
 		// Creates a committee entry around \a key and \a data.
-		explicit CommitteeEntry(const Key& key, AccountData&& data)
+		explicit CommitteeEntry(const Key& key, const Key& owner, AccountData&& data, const Height& disabledHeight = Height(0))
 			: m_key(key)
+			, m_owner(owner)
+			, m_disabledHeight(disabledHeight)
 			, m_data(std::move(data))
 		{}
 
 	public:
-		/// Gets the account public key.
+		/// Gets the harvester public key.
 		const Key& key() const {
 			return m_key;
+		}
+
+		/// Gets the harvester owner public key.
+		const Key& owner() const {
+			return m_owner;
+		}
+
+		void setDisabledHeight(Height height) {
+			m_disabledHeight = height;
+		}
+
+		Height disabledHeight() const {
+			return m_disabledHeight;
 		}
 
 		/// Gets the account data.
@@ -135,6 +156,8 @@ namespace catapult { namespace state {
 
 	private:
 		Key m_key;
+		Key m_owner;
+		Height m_disabledHeight;
 		AccountData m_data;
 	};
 }}

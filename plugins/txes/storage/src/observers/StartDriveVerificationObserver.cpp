@@ -5,124 +5,136 @@
 **/
 
 #include "Observers.h"
-#include "src/state/StorageStateImpl.h"
-#include <random>
-#include <boost/multiprecision/cpp_int.hpp>
+#include "src/utils/AVLTree.h"
+#include "src/catapult/utils/StorageUtils.h"
 
 namespace catapult { namespace observers {
 
-	using Notification = model::BlockNotification<2>;
-	using BigUint = boost::multiprecision::uint256_t;
+	using Notification = model::BlockNotification<1>;
 
-	DECLARE_OBSERVER(StartDriveVerification, Notification)(state::StorageStateImpl& state, const cache::DriveKeyCollector& driveKeyCollector) {
-		return MAKE_OBSERVER(StartDriveVerification, Notification, ([&state, &driveKeyCollector](const Notification& notification, ObserverContext& context) {
-//			if (NotifyMode::Rollback == context.Mode)
-//				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
-//
-//			CATAPULT_LOG( error ) << "Verification Observer";
-//
-//			if (context.Height < Height(2))
-//				return;
-//
-//			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
-//			auto verificationInterval = pluginConfig.VerificationInterval.seconds();
-//
-//			auto lastBlockTimestamp = state.lastBlockElementSupplier()()->Block.Timestamp;
-//			auto blockGenerationTimeSeconds = (notification.Timestamp - lastBlockTimestamp).unwrap() / 1000;
-//			auto verificationFactor = verificationInterval / blockGenerationTimeSeconds;
-//			auto blockHash = Key(notification.Hash.array());
-//
-//			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
-//
-//			auto totalDrives = driveCache.size();
-//			auto drivesToVerify = totalDrives / verificationFactor + 1; // + 1 instead of ceil
-//			auto verifyEfforts = drivesToVerify * 2; // Some efforts of verification can be unsuccessful because of optimisticLowerOrGreater
-//
-//			std::seed_seq hashSeed(notification.Hash.begin(), notification.Hash.end());
-//
-//			CATAPULT_LOG( error ) << "drivesToVerify: " << drivesToVerify << " verifyEfforts: " << verifyEfforts;
-//
-//			uint successfulEfforts = 0;
-//			for (uint i = 0; i < verifyEfforts && successfulEfforts < drivesToVerify; i++) {
-//				Key randomKey;
-//				hashSeed.generate(randomKey.begin(), randomKey.end());
-//
-//				auto driveIter = driveCache.optimisticFindLowerOrEqual(randomKey);
-//				auto* pDriveEntry = driveIter.tryGet();
-//				CATAPULT_LOG( error ) << "random Key: " << randomKey << " pDrive is null " << (pDriveEntry == nullptr);
-//				if (pDriveEntry) {
-//					successfulEfforts++;
-//					auto& driveEntry = driveIter.get();
-//					auto& verifications = driveEntry.verifications();
-//					CATAPULT_LOG( error ) << "driveKey " << driveEntry.key() << " verifications size " << verifications.size();
-//					if (!verifications.empty() && verifications[0].Expired)
-//						verifications.clear();
-//
-//					if (!verifications.empty()) {
-//						auto& verification = verifications[0];
-//						if (verification.Expiration > lastBlockTimestamp) {
-//							verification.Expired = true;
-//						}
-//						continue;
-//					}
-//
-//					std::vector<Key> replicators;
-//					replicators.reserve(driveEntry.replicators().size());
-//					const auto& confirmedStates = driveEntry.confirmedStates();
-//					const auto& rootHash = driveEntry.rootHash();
-//					for (const auto& key : driveEntry.replicators()) {
-//						auto iter = confirmedStates.find(key);
-//						if (iter != confirmedStates.end() && iter->second == rootHash)
-//							replicators.emplace_back(key);
-//					}
-//
-//					auto timeoutMinutes = pluginConfig.VerificationExpirationCoefficient * driveEntry.usedSizeBytes() + pluginConfig.VerificationExpirationConstant;
-//					auto expiration = lastBlockTimestamp + Timestamp(timeoutMinutes * 60 * 1000);
-//
-//					uint16_t replicatorCount = replicators.size();
-//					if (replicatorCount < 2 * pluginConfig.ShardSize) {
-//						verifications.emplace_back(state::Verification{ notification.Hash, expiration, false, state::Shards{ replicators }});
-//						continue;
-//					}
-//
-//
-//					std::shuffle(replicators.begin(), replicators.end(), std::mt19937_64(hashSeed));
-//
-//					replicatorCount = replicators.size();
-//					auto shardSize = pluginConfig.ShardSize;
-//					auto shardCount = replicatorCount / shardSize;
-//					auto lastShardSize = replicatorCount % shardSize;
-//					std::vector<std::pair<uint16_t, uint8_t>> distribution;
-//					if (lastShardSize == 0) {
-//						distribution.push_back(std::make_pair(shardCount, shardSize));
-//					} else {
-//						auto additionalReplicators = lastShardSize / shardCount;
-//						auto remainder = lastShardSize % shardCount;
-//						if (remainder == 0) {
-//							distribution.push_back(std::make_pair(shardCount, shardSize + additionalReplicators));
-//						} else {
-//							distribution.push_back(std::make_pair(remainder, shardSize + additionalReplicators + 1));
-//							distribution.push_back(std::make_pair(shardCount - remainder, shardSize + additionalReplicators));
-//						}
-//					}
-//
-//					state::Shards shards;
-//					shards.reserve(shardCount);
-//					auto index = 0u;
-//					for (const auto& pair : distribution) {
-//						for (auto i = 0u; i < pair.first; ++i) {
-//							shards.push_back({});
-//							auto& shard = shards.back();
-//							shard.reserve(pair.second);
-//							for (auto k = 0u; k < pair.second; ++k) {
-//								shard.emplace_back(replicators[index++]);
-//							}
-//						}
-//					}
-//
-//					verifications.emplace_back(state::Verification{ notification.Hash, expiration, false, std::move(shards) });
-//				}
-//			}
-        }))
-	};
+	void Observe(const Notification& notification, ObserverContext& context, state::StorageState& state) {
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+		if (!pluginConfig.Enabled || context.Height < Height(2))
+			return;
+
+		if (NotifyMode::Rollback == context.Mode)
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
+
+		auto verificationInterval = pluginConfig.VerificationInterval.seconds();
+
+		auto pLastBlockElement = state.lastBlockElementSupplier()();
+		auto lastBlockTimestamp = pLastBlockElement->Block.Timestamp;
+		auto blockGenerationTimeSeconds = (notification.Timestamp - lastBlockTimestamp).unwrap() / 1000;
+
+		auto verificationFactor = verificationInterval / std::max(blockGenerationTimeSeconds, 1ul);
+
+		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
+
+		utils::AVLTreeAdapter<Key> treeAdapter(
+				context.Cache.template sub<cache::QueueCache>(),
+				state::DriveVerificationsTree,
+				[](const Key& key) { return key; },
+				[&driveCache](const Key& key) -> state::AVLTreeNode {
+					return driveCache.find(key).get().verificationNode();
+				},
+				[&driveCache](const Key& key, const state::AVLTreeNode& node) {
+					driveCache.find(key).get().verificationNode() = node;
+				});
+
+		auto totalDrives = treeAdapter.size();
+
+		if (totalDrives == 0) {
+			return;
+		}
+
+		auto drivesToVerify = totalDrives / std::max(verificationFactor, 1ul) + 1; // + 1 instead of ceil
+
+		// Creating unique eventHash for the observer
+		Hash256 eventHash = utils::getVerificationEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
+
+		std::seed_seq seed(eventHash.begin(), eventHash.end());
+		std::mt19937 rng(seed);
+
+		for (uint i = 0; i < drivesToVerify; i++) {
+
+			uint32_t index = rng() % totalDrives;
+
+			Key driveKey = treeAdapter.orderStatistics(index);
+
+			auto iter = driveCache.find(driveKey);
+			auto& driveEntry = iter.get();
+
+			if (driveEntry.completedDataModifications().empty() ||
+				driveEntry.verification() && !driveEntry.verification()->expired(notification.Timestamp)) {
+				// The Verification Has Not Expired Yet
+				continue;
+			}
+
+			auto& verification = driveEntry.verification();
+			verification = state::Verification();
+
+
+			verification->VerificationTrigger = eventHash;
+
+			auto timeoutMinutes =
+				pluginConfig.VerificationExpirationCoefficient *
+					utils::FileSize::FromBytes(driveEntry.usedSizeBytes()).gigabytesCeil() +
+				pluginConfig.VerificationExpirationConstant;
+			verification->Expiration = notification.Timestamp + Timestamp(timeoutMinutes * 60 * 1000);
+			verification->Duration = uint64_t(timeoutMinutes * 60 * 1000);
+
+			std::vector<Key> replicators;
+			replicators.reserve(driveEntry.replicators().size());
+			const auto& confirmedStates = driveEntry.confirmedStates();
+			const auto& rootHash = driveEntry.rootHash();
+			for (const auto& key : driveEntry.replicators()) {
+				const auto& confirmedStorageInfo = driveEntry.confirmedStorageInfos()[key];
+				if (confirmedStorageInfo.m_confirmedStorageSince) {
+					replicators.emplace_back(key);
+				}
+			}
+
+			uint16_t replicatorCount = replicators.size();
+			auto shardSize = pluginConfig.ShardSize / 2;
+
+			if (replicatorCount < 2 * shardSize) {
+				verification->Shards = state::Shards{
+					std::set<Key>(std::make_move_iterator(replicators.begin()),
+					std::make_move_iterator(replicators.end()))};
+				continue;
+			}
+
+			std::shuffle(replicators.begin(), replicators.end(), rng);
+
+			auto shardCount = replicatorCount / shardSize;
+
+			state::Shards shards;
+			shards.resize(shardCount);
+
+			auto replicatorIt = replicators.begin();
+			for (int i = 0; i < replicatorCount / shardCount; i++) {
+				// We have the possibility to add at least one Replicator to each shard;
+				for (auto& shard : shards) {
+					shard.emplace(*replicatorIt);
+					replicatorIt++;
+				}
+			}
+
+			auto shardIt = shards.begin();
+			while (replicatorIt != replicators.end()) {
+				// The number of replicators left is less than the number of shards
+				shardIt->emplace(*replicatorIt);
+				replicatorIt++;
+				shardIt++;
+			}
+
+			verification->Shards = std::move(shards);
+		}
+	}
+
+	DECLARE_OBSERVER(StartDriveVerification, Notification)(state::StorageState& state) {
+		return MAKE_OBSERVER(StartDriveVerification, Notification, ([&state](const Notification& notification, ObserverContext& context) {
+			Observe(notification, context, state);
+		}))
+	}
 }}

@@ -19,7 +19,7 @@ namespace catapult { namespace builders {
 
 		/// Creates a catapult upgrade builder for building a catapult upgrade transaction from \a signer
 		/// for the network specified by \a networkIdentifier.
-		AddHarvesterBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer);
+		AddHarvesterBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer, const Key& harvesterKey);
 
 	public:
 		/// Builds a new modify multisig account transaction.
@@ -31,5 +31,8 @@ namespace catapult { namespace builders {
 	private:
 		template<typename TTransaction>
 		model::UniqueEntityPtr<TTransaction> buildImpl() const;
+
+	private:
+		Key m_harvesterKey;
 	};
 }}

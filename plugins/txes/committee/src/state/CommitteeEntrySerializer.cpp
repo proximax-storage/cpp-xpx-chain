@@ -15,6 +15,8 @@ namespace catapult { namespace state {
 		io::Write32(output, 1);
 
 		io::Write(output, entry.key());
+		io::Write(output, entry.owner());
+		io::Write64(output, entry.disabledHeight().unwrap());
 		io::Write64(output, entry.lastSigningBlockHeight().unwrap());
 		io::Write64(output, entry.effectiveBalance().unwrap());
 		io::Write8(output, entry.canHarvest());
@@ -30,12 +32,15 @@ namespace catapult { namespace state {
 
 		Key key;
 		input.read(key);
+		Key owner;
+		input.read(owner);
+		auto disabledHeight = Height{io::Read64(input)};
 		auto lastSigningBlockHeight = Height{io::Read64(input)};
 		auto effectiveBalance = Importance{io::Read64(input)};
 		auto canHarvest = io::Read8(input);
 		auto activity = io::ReadDouble(input);
 		auto greed = io::ReadDouble(input);
 
-		return state::CommitteeEntry(key, lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed);
+		return state::CommitteeEntry(key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed, disabledHeight);
 	}
 }}

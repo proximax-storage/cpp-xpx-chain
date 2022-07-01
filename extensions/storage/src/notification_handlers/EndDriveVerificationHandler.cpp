@@ -11,7 +11,7 @@ namespace catapult { namespace notification_handlers {
 	using Notification = model::EndDriveVerificationNotification<1>;
 
 	DECLARE_HANDLER(EndDriveVerification, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(FinishDownload, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
+		return MAKE_HANDLER(EndDriveVerification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
@@ -32,9 +32,17 @@ namespace catapult { namespace notification_handlers {
 					pReplicatorService->updateShardRecipient(notification.DriveKey);
 					pReplicatorService->updateDriveDownloadChannels(notification.DriveKey);
 
-//					pReplicatorService->endDriveVerificationPublished(
-//							notification.DriveKey,
-//							notification.VerificationTrigger);
+					bool found = false;
+					const Key* pKey = reinterpret_cast<const Key*>(notification.PublicKeysPtr);
+					for (uint i = 0; i < notification.KeyCount && !found; i++) {
+						if (*pKey == pReplicatorService->replicatorKey()) {
+							found = true;
+						}
+					}
+					if (found) {
+						pReplicatorService->endDriveVerificationPublished(
+								notification.DriveKey, notification.VerificationTrigger);
+					}
 				}
 				else {
 					// The transaction has already been processed when adding the Drive
