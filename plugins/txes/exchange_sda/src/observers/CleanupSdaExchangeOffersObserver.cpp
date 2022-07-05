@@ -16,7 +16,6 @@ namespace catapult { namespace observers {
             auto& cache = context.Cache.sub<cache::SdaExchangeCache>();
             auto expiringSdaOfferOwners = cache.expiringOfferOwners(context.Height);
             for (const auto& key : expiringSdaOfferOwners) {
-
                 // Assumes that the offers have been completely removed by the owner before expiry
                 if (!cache.contains(key))
                     continue;
@@ -31,30 +30,29 @@ namespace catapult { namespace observers {
 
                 entry.expireOffers(context.Height, onSdaOfferBalancesExpired);
 
-                for (auto& expiredPair : entry.expiredSdaOfferBalances().at(context.Height)) {
-                    Amount mosaicAmountGive = expiredPair.second.InitialMosaicGive;
-                    Amount mosaicAmountGet =  expiredPair.second.InitialMosaicGet;
-                    std::string reduced = reducedFraction(mosaicAmountGive, mosaicAmountGet);
-                    auto groupHash = calculateGroupHash(expiredPair.first.first, expiredPair.first.second, reduced);
+                // Checks whether expired offers exist first before removing the expired offers from the current cache Height
+                if (entry.expiredSdaOfferBalances().count(context.Height)) {
+                    auto expiredSdaOffersAtCurrentHeight = entry.expiredSdaOfferBalances().at(context.Height);
+                    for (auto& expiredPair : expiredSdaOffersAtCurrentHeight) {
+                        Amount mosaicAmountGive = expiredPair.second.InitialMosaicGive;
+                        Amount mosaicAmountGet =  expiredPair.second.InitialMosaicGet;
+                        std::string reduced = reducedFraction(mosaicAmountGive, mosaicAmountGet);
+                        auto groupHash = calculateGroupHash(expiredPair.first.first, expiredPair.first.second, reduced);
 
-                    auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
-                    if (!groupCache.contains(groupHash))
-                        continue;
-                    auto groupIter = groupCache.find(groupHash);
-                    auto& groupEntry = groupIter.get();
+                        auto& groupCache = context.Cache.sub<cache::SdaOfferGroupCache>();
+                        if (!groupCache.contains(groupHash))
+                            continue;
+                        auto groupIter = groupCache.find(groupHash);
+                        auto& groupEntry = groupIter.get();
 
-                    groupEntry.removeSdaOfferFromGroup(key);
+                        groupEntry.removeSdaOfferFromGroup(key);
 
-                    if (groupEntry.empty())
-                        groupCache.remove(groupHash);
-                }
+                        if (groupEntry.empty())
+                            groupCache.remove(groupHash);
+                    }
 
-                // Immediately remove expired offers from the current cache Height
-                auto pruneHeight = context.Height;
-                auto& expiredOffers = entry.expiredSdaOfferBalances();
-                if (expiredOffers.count(pruneHeight)) {
-                    expiredOffers.at(pruneHeight).clear();
-                    expiredOffers.erase(pruneHeight);
+                    expiredSdaOffersAtCurrentHeight.clear();
+                    entry.expiredSdaOfferBalances().erase(context.Height);
                 }
 
                 cache.removeExpiryHeight(key, context.Height);
