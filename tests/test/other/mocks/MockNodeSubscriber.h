@@ -63,6 +63,7 @@ namespace catapult { namespace mocks {
 	public:
 		/// Gets params passed to notifyNode.
 		const auto& nodeParams() const {
+			std::lock_guard<std::mutex> lock(m_mutex);
 			return m_nodeParams;
 		}
 
@@ -83,5 +84,6 @@ namespace catapult { namespace mocks {
 	private:
 		test::ParamsCapture<NodeSubscriberNodeParams> m_nodeParams;
 		test::ParamsCapture<NodeSubscriberIncomingNodeParams> m_incomingNodeParams;
+		mutable std::mutex m_mutex;
 	};
 }}
