@@ -175,6 +175,13 @@ namespace catapult { namespace mongo {
 				m_pBulkWriter.reset();
 			}
 
+			bool isBulkWriterDestroyed() {
+				if (m_pBulkWriter)
+					return false;
+				else
+					return true;
+			}
+
 		private:
 			AccountStates m_accountStates;
 			test::MutableTransactions m_transactions;
@@ -347,12 +354,15 @@ namespace catapult { namespace mongo {
 			}
 
 			static auto Execute(
-					MongoBulkWriter& writer,
+					PerformanceContext& context,
 					const TransactionElements& elements,
-					const std::atomic_bool& blockFlag,
+					const std::atomic_bool& destroyBulkWriter,
 					Capture& capture) {
-				auto createDocument = [&blockFlag, &capture](const auto& transactionElement, auto index) {
-					WAIT_FOR_EXPR(!blockFlag);
+				auto createDocument = [&destroyBulkWriter, &capture, &context](const auto& transactionElement, auto index) {
+					if (destroyBulkWriter){
+						CATAPULT_LOG(debug) << "destroying writer";
+						context.destroyBulkWriter();
+					}
 					++capture.NumCreateDocumentCalls;
 					capture.pCreateDocumentElement = &transactionElement;
 
@@ -361,7 +371,7 @@ namespace catapult { namespace mongo {
 				};
 
 				// Act:
-				return writer.bulkInsert<TransactionElements>(Transactions_Collection_Name, elements, createDocument);
+				return context.bulkWriter().bulkInsert<TransactionElements>(Transactions_Collection_Name, elements, createDocument);
 			}
 
 			static auto ExecuteZero(MongoBulkWriter& writer) {
@@ -394,12 +404,15 @@ namespace catapult { namespace mongo {
 			}
 
 			static auto Execute(
-					MongoBulkWriter& writer,
+					PerformanceContext& context,
 					const TransactionElements& elements,
-					const std::atomic_bool& blockFlag,
+					const std::atomic_bool& destroyBulkWriter,
 					Capture& capture) {
-				auto createDocuments = [&blockFlag, &capture](const auto& transactionElement, auto index) {
-					WAIT_FOR_EXPR(!blockFlag);
+				auto createDocuments = [&destroyBulkWriter, &capture, &context](const auto& transactionElement, auto index) {
+					if (destroyBulkWriter){
+						CATAPULT_LOG(debug) << "destroying writer";
+						context.destroyBulkWriter();
+					}
 					++capture.NumCreateDocumentsCalls;
 					capture.pCreateDocumentsElement = &transactionElement;
 
@@ -409,7 +422,7 @@ namespace catapult { namespace mongo {
 				};
 
 				// Act:
-				return writer.bulkInsert<TransactionElements>(Transactions_Collection_Name, elements, createDocuments);
+				return context.bulkWriter().bulkInsert<TransactionElements>(Transactions_Collection_Name, elements, createDocuments);
 			}
 
 			static auto ExecuteZero(MongoBulkWriter& writer) {
@@ -445,26 +458,32 @@ namespace catapult { namespace mongo {
 			}
 
 			static auto Execute(
-					MongoBulkWriter& writer,
+					PerformanceContext& context,
 					const AccountStates& accountStates,
-					const std::atomic_bool& blockFlag,
+					const std::atomic_bool& destroyBulkWriter,
 					Capture& capture) {
-				auto createDocument = [&blockFlag, &capture](const auto& pAccountState, auto) {
-					WAIT_FOR_EXPR(!blockFlag);
+				auto createDocument = [&destroyBulkWriter, &capture, &context](const auto& pAccountState, auto) {
+					if (destroyBulkWriter){
+						CATAPULT_LOG(debug) << "destroying writer";
+						context.destroyBulkWriter();
+					}
 					++capture.NumCreateDocumentCalls;
 					capture.pCreateDocumentAccountState = pAccountState.get();
 					return mappers::ToDbModel(*pAccountState);
 				};
 
-				auto createFilter = [&blockFlag, &capture](const auto& pAccountState) {
-					WAIT_FOR_EXPR(!blockFlag);
+				auto createFilter = [&destroyBulkWriter, &capture, &context](const auto& pAccountState) {
+					if (destroyBulkWriter){
+						CATAPULT_LOG(debug) << "destroying writer";
+						context.destroyBulkWriter();
+					}
 					++capture.NumCreateFilterCalls;
 					capture.pCreateFilterAccountState = pAccountState.get();
 					return test::CreateFilter(pAccountState);
 				};
 
 				// Act:
-				return writer.bulkUpsert<AccountStates>(Accounts_Collection_Name, accountStates, createDocument, createFilter);
+				return context.bulkWriter().bulkUpsert<AccountStates>(Accounts_Collection_Name, accountStates, createDocument, createFilter);
 			}
 
 			static auto ExecuteZero(MongoBulkWriter& writer) {
@@ -502,19 +521,22 @@ namespace catapult { namespace mongo {
 			}
 
 			static auto Execute(
-					MongoBulkWriter& writer,
+					PerformanceContext& context,
 					const AccountStates& accountStates,
-					const std::atomic_bool& blockFlag,
+					const std::atomic_bool& destroyBulkWriter,
 					Capture& capture) {
-				auto createFilter = [&blockFlag, &capture](const auto& pAccountState) {
-					WAIT_FOR_EXPR(!blockFlag);
+				auto createFilter = [&destroyBulkWriter, &capture, &context](const auto& pAccountState) {
+					if (destroyBulkWriter){
+						CATAPULT_LOG(debug) << "destroying writer";
+						context.destroyBulkWriter();
+					}
 					++capture.NumCreateFilterCalls;
 					capture.pCreateFilterAccountState = pAccountState.get();
 					return test::CreateFilter(pAccountState);
 				};
 
 				// Act:
-				return writer.bulkDelete<AccountStates>(Accounts_Collection_Name, accountStates, createFilter);
+				return context.bulkWriter().bulkDelete<AccountStates>(Accounts_Collection_Name, accountStates, createFilter);
 			}
 
 			static auto ExecuteZero(MongoBulkWriter& writer) {
@@ -551,11 +573,11 @@ namespace catapult { namespace mongo {
 	BULK_OPERATION_TEST(BulkOperationDelegatesToLambdas) {
 		// Arrange:
 		PerformanceContext context(1);
-		std::atomic_bool blockFlag(false);
+		std::atomic_bool destroyBulkWriter(false);
 		typename TTraits::Capture capture;
 
 		// Act:
-		auto results = TTraits::Execute(context.bulkWriter(), TTraits::GetElements(context), blockFlag, capture).get();
+		auto results = TTraits::Execute(context, TTraits::GetElements(context), destroyBulkWriter, capture).get();
 
 		// Assert:
 		auto aggregateResult = BulkWriteResult::Aggregate(thread::get_all(std::move(results)));
@@ -569,22 +591,14 @@ namespace catapult { namespace mongo {
 	BULK_OPERATION_TEST(FutureIsFulfilledEvenWhenWriterIsDestroyed) {
 		// Arrange:
 		PerformanceContext context(1);
-		std::atomic_bool blockFlag(true);
+		std::atomic_bool destroyBulkWriter(true);
 		typename TTraits::Capture capture;
 		thread::future<std::vector<thread::future<BulkWriteResult>>> future;
 		{
 			// Act: execute and destroy the writer
 			CATAPULT_LOG(debug) << "starting async write";
-			future = TTraits::Execute(context.bulkWriter(), TTraits::GetElements(context), blockFlag, capture);
-
-			CATAPULT_LOG(debug) << "destroying writer";
-			context.destroyBulkWriter();
+			future = TTraits::Execute(context, TTraits::GetElements(context), destroyBulkWriter, capture);
 		}
-
-		// Sanity: the write is not complete
-		EXPECT_FALSE(future.is_ready());
-		CATAPULT_LOG(debug) << "unblocking writer";
-		blockFlag = false;
 
 		CATAPULT_LOG(debug) << "waiting for writer";
 		auto aggregateResult = BulkWriteResult::Aggregate(thread::get_all(future.get()));
