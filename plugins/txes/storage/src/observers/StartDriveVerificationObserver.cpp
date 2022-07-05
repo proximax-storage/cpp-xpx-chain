@@ -26,7 +26,7 @@ namespace catapult { namespace observers {
 		auto lastBlockTimestamp = pLastBlockElement->Block.Timestamp;
 		auto blockGenerationTimeSeconds = (notification.Timestamp - lastBlockTimestamp).unwrap() / 1000;
 
-		auto verificationFactor = verificationInterval / std::max(blockGenerationTimeSeconds, 1ul);
+		auto verificationFactor = std::max(verificationInterval / std::max(blockGenerationTimeSeconds, 1ul), 1ul);
 
 		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
 
@@ -47,13 +47,19 @@ namespace catapult { namespace observers {
 			return;
 		}
 
-		auto drivesToVerify = totalDrives / std::max(verificationFactor, 1ul) + 1; // + 1 instead of ceil
+		auto guaranteedVerifications = totalDrives / verificationFactor;
 
 		// Creating unique eventHash for the observer
 		Hash256 eventHash = utils::getVerificationEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
 
 		std::seed_seq seed(eventHash.begin(), eventHash.end());
 		std::mt19937 rng(seed);
+
+		// There can be maximum 1 additional verification. It metters for the case when there are few drives
+		auto r = rng() % verificationFactor;
+		uint32_t additionalVerifications = r < (totalDrives % verificationFactor) ? 1 : 0;
+
+		auto drivesToVerify = guaranteedVerifications + additionalVerifications;
 
 		for (uint i = 0; i < drivesToVerify; i++) {
 
@@ -64,7 +70,7 @@ namespace catapult { namespace observers {
 			auto iter = driveCache.find(driveKey);
 			auto& driveEntry = iter.get();
 
-			if (driveEntry.completedDataModifications().empty() ||
+			if (driveEntry.rootHash() == Hash256() ||
 				driveEntry.verification() && !driveEntry.verification()->expired(notification.Timestamp)) {
 				// The Verification Has Not Expired Yet
 				continue;
@@ -85,7 +91,6 @@ namespace catapult { namespace observers {
 
 			std::vector<Key> replicators;
 			replicators.reserve(driveEntry.replicators().size());
-			const auto& confirmedStates = driveEntry.confirmedStates();
 			const auto& rootHash = driveEntry.rootHash();
 			for (const auto& key : driveEntry.replicators()) {
 				const auto& confirmedStorageInfo = driveEntry.confirmedStorageInfos()[key];
