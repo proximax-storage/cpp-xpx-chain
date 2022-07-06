@@ -1,4 +1,4 @@
-FROM debian:bullseye-20210816
+FROM debian:11.3
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
   software-properties-common \
@@ -76,7 +76,7 @@ RUN cd /catapult \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
     catapult.mongo.plugins.metadata \
-    catapult.mongo.plugins.metadata_nem \
+    catapult.mongo.plugins.metadata_v2 \
     catapult.mongo.plugins.mosaic \
     catapult.mongo.plugins.multisig \
     catapult.mongo.plugins.namespace \
@@ -97,7 +97,7 @@ RUN cd /catapult \
     catapult.plugins.lockhash \
     catapult.plugins.locksecret \
     catapult.plugins.metadata \
-    catapult.plugins.metadata_nem \
+    catapult.plugins.metadata_v2 \
     catapult.plugins.mosaic \
     catapult.plugins.multisig \
     catapult.plugins.namespace \
@@ -105,6 +105,7 @@ RUN cd /catapult \
     catapult.plugins.property \
     catapult.plugins.service \
     catapult.plugins.signature \
+    catapult.plugins.storage \
     catapult.plugins.supercontract \
     catapult.plugins.transfer \
     catapult.plugins.upgrade \    
@@ -121,6 +122,7 @@ RUN cd /catapult \
     extension.packetserver \
     extension.partialtransaction \
     extension.pluginhandlers \
+    extension.storage \
     extension.sync \
     extension.syncsource \
     extension.timesync \
