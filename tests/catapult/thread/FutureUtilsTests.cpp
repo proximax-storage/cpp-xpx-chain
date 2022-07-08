@@ -58,6 +58,20 @@ namespace catapult { namespace thread {
 			return future;
 		}
 
+		future<int> CreateSleepValueFutureWithoutThreadSync(long numMillis, int value) {
+			promise<int> promise;
+			auto future = promise.get_future();
+
+			std::thread([promise = std::move(promise), numMillis, value]() mutable {
+				LogAndSleep(numMillis);
+				CATAPULT_LOG(debug) << "returning " << value << " after sleep";
+
+				promise.set_value(std::move(value));
+			}).detach();
+			
+			return future;
+		}
+
 		future<int> CreateSleepExceptionFuture(long numMillis) {
 			promise<int> promise;
 			auto future = promise.get_future();
@@ -146,8 +160,8 @@ namespace catapult { namespace thread {
 
 	WHEN_ALL_TEST(WhenAllDoesNotBlock) {
 		// Arrange:
-		auto future1 = CreateSleepValueFuture(100, 7);
-		auto future2 = CreateSleepValueFuture(50, 11);
+		auto future1 = CreateSleepValueFutureWithoutThreadSync(100, 7);
+		auto future2 = CreateSleepValueFutureWithoutThreadSync(50, 11);
 
 		// Act:
 		auto aggregateFuture = TTraits::WhenAll(std::move(future1), std::move(future2));
@@ -267,7 +281,7 @@ namespace catapult { namespace thread {
 	TEST(TEST_CLASS, ComposeDoesNotBlock) {
 		// Arrange:
 		auto composedFuture = compose(
-				CreateSleepValueFuture(25, 7),
+				CreateSleepValueFutureWithoutThreadSync(25, 7),
 				[](auto&& future) { return CreateSleepContinuationFuture(25, std::move(future)); });
 
 		// Assert:
