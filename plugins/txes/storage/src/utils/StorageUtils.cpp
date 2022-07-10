@@ -165,6 +165,7 @@ namespace catapult { namespace utils {
 			driveEntry.dataModificationShards().erase(replicatorKey);
 			driveEntry.offboardingReplicators().erase(replicatorKey);
 			driveEntry.confirmedUsedSizes().erase(replicatorKey);
+			driveEntry.confirmedStates().erase(replicatorKey);
 
 			auto replicatorIter = replicatorCache.find(replicatorKey);
 			auto& replicatorEntry = replicatorIter.get();
