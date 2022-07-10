@@ -26,8 +26,6 @@ namespace catapult { namespace plugins {
 					auto hashSeed = CalculateHash(transaction, config.GenerationHash);
 
 					sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
-					sub.notify(ReplicatorOnboardingNotification<1>(transaction.Signer, transaction.Capacity, hashSeed));
-					sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
 
 					const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
 					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
@@ -50,6 +48,8 @@ namespace catapult { namespace plugins {
 						config,
 						utils::SwapOperation::Buy
 					);
+
+					sub.notify(ReplicatorOnboardingNotification<1>(transaction.Signer, transaction.Capacity, hashSeed));
 
 					break;
 				}
