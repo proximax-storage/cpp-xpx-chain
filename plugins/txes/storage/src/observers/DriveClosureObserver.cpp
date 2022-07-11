@@ -87,6 +87,7 @@ namespace catapult { namespace observers {
 					[&driveCache](const Key& key, const state::AVLTreeNode& node) {
 						driveCache.find(key).get().verificationNode() = node;
 					});
+		  	driveTreeAdapter.remove(notification.DriveKey);
 
 			// Returning the rest to the drive owner
 			const auto refundAmount = driveState.Balances.get(streamingMosaicId);
