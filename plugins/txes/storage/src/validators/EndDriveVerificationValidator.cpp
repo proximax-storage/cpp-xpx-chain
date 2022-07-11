@@ -36,6 +36,10 @@ namespace catapult { namespace validators {
 		if (shard.size() != notification.KeyCount)
 			return Failure_Storage_Verification_Invalid_Prover_Count;
 
+		if ( notification.JudgingKeyCount < (shard.size() * 2) / 3 + 1 ) {
+			return Failure_Storage_Signature_Count_Insufficient;
+		}
+
 		auto pPublicKey = notification.PublicKeysPtr;
 		for (auto i = 0u; i < notification.JudgingKeyCount; ++i, ++pPublicKey) {
 			if (!shard.count(*pPublicKey))

@@ -165,6 +165,7 @@ namespace catapult { namespace utils {
 			driveEntry.dataModificationShards().erase(replicatorKey);
 			driveEntry.offboardingReplicators().erase(replicatorKey);
 			driveEntry.confirmedUsedSizes().erase(replicatorKey);
+			driveEntry.confirmedStates().erase(replicatorKey);
 
 			auto replicatorIter = replicatorCache.find(replicatorKey);
 			auto& replicatorEntry = replicatorIter.get();
@@ -540,7 +541,7 @@ namespace catapult { namespace utils {
 					driveEntry.replicators().emplace(replicatorKey);
 
 					state::ConfirmedStorageInfo confirmedStorageInfo;
-					if (driveEntry.completedDataModifications().empty()) {
+					if (driveEntry.rootHash() == Hash256()) {
 						confirmedStorageInfo.m_confirmedStorageSince = context.Timestamp;
 					}
 					driveEntry.confirmedStorageInfos().insert({ replicatorKey, confirmedStorageInfo });
