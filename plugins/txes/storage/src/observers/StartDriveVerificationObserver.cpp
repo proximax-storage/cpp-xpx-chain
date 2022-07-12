@@ -55,7 +55,7 @@ namespace catapult { namespace observers {
 		std::seed_seq seed(eventHash.begin(), eventHash.end());
 		std::mt19937 rng(seed);
 
-		// There can be maximum 1 additional verification. It metters for the case when there are few drives
+		// There can be maximum 1 additional verification. It matters for the case when there are few drives
 		auto r = rng() % verificationFactor;
 		uint32_t additionalVerifications = r < (totalDrives % verificationFactor) ? 1 : 0;
 

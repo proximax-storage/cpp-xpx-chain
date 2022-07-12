@@ -165,6 +165,7 @@ namespace catapult { namespace observers {
 							[&driveCache](const Key& key, const state::AVLTreeNode& node) {
 								driveCache.find(key).get().verificationNode() = node;
 							});
+					treeAdapter.remove(driveEntry.key());
 
 					driveCache.remove(driveEntry.key());
 
