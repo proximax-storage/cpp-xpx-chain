@@ -39,13 +39,11 @@ namespace catapult { namespace validators {
 	  	const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
 	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
 
-//	  	std::vector<uint64_t> initialCumulativeUploadSizes;
-//	  	initialCumulativeUploadSizes.reserve(totalJudgedKeysCount);
-//	  	for (auto i = notification.JudgingKeysCount; i < totalKeysCount; ++i) {
-//		  	const auto key = notification.PublicKeysPtr[i];
-//		  	const auto initialSize = (key != driveOwnerPublicKey) ? pDriveEntry->cumulativeUploadSizesBytes().at(key) : pDriveEntry->ownerCumulativeUploadSizeBytes();
-//		  	initialCumulativeUploadSizes.push_back(initialSize);
-//	  	}
+		uint64_t unaccountedSizeBytes = 0;
+		if (!pDriveEntry->activeDataModifications().empty()
+		&& pDriveEntry->activeDataModifications().front().Id == notification.ModificationId) {
+			unaccountedSizeBytes += utils::FileSize::FromMegabytes(pDriveEntry->activeDataModifications().front().ActualUploadSizeMegabytes).bytes();
+		}
 
 		const auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		auto pOpinion = notification.OpinionsPtr;
@@ -71,22 +69,28 @@ namespace catapult { namespace validators {
 						return Failure_Storage_Opinion_Invalid_Key;
 					}
 
-					const auto increment = *pOpinion - initialCumulativeUploadSize;
-					if (increment < 0)
+					if (*pOpinion < initialCumulativeUploadSize) {
 						return Failure_Storage_Invalid_Opinion;
-					totalCumulativeUpload += *pOpinion++;;
+					}
+					const auto increment = *pOpinion - initialCumulativeUploadSize;
+
+					auto totalCumulativeUploadTemp = totalCumulativeUpload + *pOpinion++;
+
+					if (totalCumulativeUploadTemp < totalCumulativeUpload) {
+						// Overflow detected
+						// TODO Use safemath
+						return Failure_Storage_Invalid_Opinion;
+					}
+
+					totalCumulativeUpload = totalCumulativeUploadTemp;
 				}
 			}
-			const auto replicatorIter = replicatorCache.find(notification.PublicKeysPtr[i]);
-			const auto& pReplicatorEntry = replicatorIter.tryGet();
+			const auto replicatorIter = replicatorCache.find(judgingKey);
+			const auto& pReplicatorEntry = replicatorIter.get();
 
-			uint64_t unaccountedSize = 0;
-			if (!pDriveEntry->activeDataModifications().empty()
-				&& pDriveEntry->activeDataModifications().front().Id == notification.ModificationId) {
-				unaccountedSize += utils::FileSize::FromMegabytes(pDriveEntry->activeDataModifications().front().ActualUploadSizeMegabytes).bytes();
-			}
+			auto expectedTotalCumulativeUpload = pReplicatorEntry.drives().at(notification.DriveKey).LastCompletedCumulativeDownloadWorkBytes + unaccountedSizeBytes;
 
-			if (pReplicatorEntry->drives().at(notification.DriveKey).LastCompletedCumulativeDownloadWorkBytes + unaccountedSize != totalCumulativeUpload) {
+			if (expectedTotalCumulativeUpload != totalCumulativeUpload) {
 				return Failure_Storage_Invalid_Opinions_Sum;
 			}
 		}
