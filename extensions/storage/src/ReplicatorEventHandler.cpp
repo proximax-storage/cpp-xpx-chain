@@ -227,7 +227,14 @@ namespace catapult { namespace storage {
 				  		return;
 				  	}
 
-				  	actualSumBytes += layout.m_uploadedBytes;
+				  	auto actualSumBytesTemp = actualSumBytes + layout.m_uploadedBytes;
+
+				  	if (actualSumBytesTemp < actualSumBytes) {
+				  		CATAPULT_LOG( warning ) << "received modification with overflow increment";
+						return;
+					}
+
+				  	actualSumBytes = actualSumBytesTemp;
 				  }
 
 				  auto modificationIt = std::find_if(
