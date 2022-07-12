@@ -149,6 +149,14 @@ namespace catapult { namespace cache {
 				return m_delta->asReadOnly();
 			}
 
+			void backupChanges(bool replace) {
+				m_delta->backupChanges(replace);
+			}
+
+			void restoreChanges() {
+				m_delta->restoreChanges();
+			}
+
 		private:
 			LockedCacheDelta<AccountStateCacheDelta> m_delta;
 		};

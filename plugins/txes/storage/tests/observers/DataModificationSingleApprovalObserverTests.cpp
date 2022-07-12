@@ -67,7 +67,6 @@ namespace catapult { namespace observers {
 		state::ReplicatorEntry CreateExpectedReplicatorEntry(state::ReplicatorEntry entry, const Hash256& dataModificationId) {
 			auto& driveInfo = entry.drives().begin()->second;
 			driveInfo.LastApprovedDataModificationId = dataModificationId;
-			driveInfo.DataModificationIdIsValid = true;
 			driveInfo.InitialDownloadWorkMegabytes = 0;
 			return entry;
 		}

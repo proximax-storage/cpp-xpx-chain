@@ -99,7 +99,7 @@ namespace catapult { namespace observers {
 			// In fact, if there are more acceptable replicators than it was requested by the drive, then, obviously,
 			// some of them won't be assigned.
 			if (storageMosaics.unwrap() >= Drive_Size && streamingMosaics.unwrap() >= 2*Drive_Size) {
-				entry.drives().emplace(Drive_Key, state::DriveInfo{ Hash256(), false, 0, 0 });
+				entry.drives().emplace(Drive_Key, state::DriveInfo{ Hash256(), 0, 0 });
 				storageMosaics = Amount(storageMosaics.unwrap() - Drive_Size);
 				streamingMosaics = Amount(streamingMosaics.unwrap() - 2*Drive_Size);
 			}

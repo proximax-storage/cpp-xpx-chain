@@ -59,7 +59,7 @@ namespace catapult { namespace test {
 		// stub out view-required functions and expose deltas
 		struct CacheDeltaType : public CacheViewType, public deltaset::DeltaElementsMixin<ByteVectorCacheDeltas> {
 		public:
-			explicit CacheDeltaType(const ByteVectorCacheDeltas& deltas, BasicDeltasAwareCache::Breadcrumbs& breadcrumbs)
+			explicit CacheDeltaType(ByteVectorCacheDeltas& deltas, BasicDeltasAwareCache::Breadcrumbs& breadcrumbs)
 					: deltaset::DeltaElementsMixin<ByteVectorCacheDeltas>::DeltaElementsMixin(deltas)
 					, m_breadcrumbs(breadcrumbs)
 			{}
@@ -79,7 +79,7 @@ namespace catapult { namespace test {
 		using CacheReadOnlyType = CacheViewType;
 
 	public:
-		explicit BasicDeltasAwareCache(const ByteVectorCacheDeltas& deltas, Breadcrumbs& breadcrumbs)
+		explicit BasicDeltasAwareCache(ByteVectorCacheDeltas& deltas, Breadcrumbs& breadcrumbs)
 				: m_deltas(deltas)
 				, m_breadcrumbs(breadcrumbs)
 		{}
@@ -101,7 +101,7 @@ namespace catapult { namespace test {
 		{}
 
 	private:
-		const ByteVectorCacheDeltas& m_deltas;
+		ByteVectorCacheDeltas& m_deltas;
 		Breadcrumbs& m_breadcrumbs;
 	};
 
@@ -113,10 +113,10 @@ namespace catapult { namespace test {
 		static constexpr auto Name = "DeltasAwareCache";
 
 	public:
-		explicit DeltasAwareCache(const ByteVectorCacheDeltas& deltas) : DeltasAwareCache(deltas, m_breadcrumbs)
+		explicit DeltasAwareCache(ByteVectorCacheDeltas& deltas) : DeltasAwareCache(deltas, m_breadcrumbs)
 		{}
 
-		DeltasAwareCache(const ByteVectorCacheDeltas& deltas, BasicDeltasAwareCache::Breadcrumbs& breadcrumbs)
+		DeltasAwareCache(ByteVectorCacheDeltas& deltas, BasicDeltasAwareCache::Breadcrumbs& breadcrumbs)
 				: SynchronizedCache(BasicDeltasAwareCache(deltas, breadcrumbs))
 		{}
 

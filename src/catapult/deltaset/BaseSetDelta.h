@@ -30,6 +30,18 @@
 
 namespace catapult { namespace deltaset {
 
+	namespace {
+		template<typename TElements>
+		void RestoreElements(TElements& elements, std::vector<TElements>& backup) {
+			if (backup.empty()) {
+				elements.clear();
+			} else {
+				elements = backup.back();
+				backup.pop_back();
+			}
+		}
+	}
+
 	/// Possible results of an insert into a base set delta.
 	enum class InsertResult {
 		/// An element pending removal was reverted.
@@ -126,18 +138,6 @@ namespace catapult { namespace deltaset {
 			return iter;
 		}
 
-		FindConstIterator optimisticFindLowerOrEqual(const KeyType& key) const {
-			return OptimisticFindLowerOrEqual<FindConstIterator>(*this, key);
-		}
-
-		FindIterator optimisticFindLowerOrEqual(const KeyType& key) {
-			auto iter = OptimisticFindLowerOrEqual<FindIterator>(*this, key);
-			if (!!iter.get())
-				markFoundElement(key, ElementMutabilityTag());
-
-			return iter;
-		}
-
 	private:
 		template<typename TResultIterator, typename TBaseSetDelta>
 		static TResultIterator Find(TBaseSetDelta& set, const KeyType& key) {
@@ -186,73 +186,7 @@ namespace catapult { namespace deltaset {
 			// find can never modify an immutable element
 		}
 
-//		template<typename TResultIterator, typename TBaseSetDelta>
-//		static TResultIterator LowerBound(TBaseSetDelta& set, const KeyType& key);
-
-	template<typename TResultIterator, typename TBaseSetDelta>
-	static TResultIterator OptimisticFindLowerOrEqual(TBaseSetDelta& set, const KeyType& key) {
-		auto addedIterGreater = set.m_addedElements.upper_bound(key);
-		TResultIterator addedIter = addedIterGreater != set.m_addedElements.cbegin() ? TResultIterator(std::move(--addedIterGreater)) : TResultIterator();
-
-		auto originalIter = set.optimisticFindLowerOrEqual(key, ElementMutabilityTag());
-
-		TResultIterator possibleIter;
-
-		const auto* pAddedKey = addedIter.template getKey<const KeyType*>();
-		const auto* pOriginalKey = originalIter.template getKey<const KeyType*>();
-
-		if (!pOriginalKey) {
-			possibleIter = std::move(addedIter);
-		}
-		else if (!pAddedKey) {
-			possibleIter = std::move(originalIter);
-		}
-		else
-		{
-			// Both iterators point to real object
-			if (*pOriginalKey > *pAddedKey) {
-				possibleIter = std::move(originalIter);
-			}
-			else {
-				possibleIter = std::move(addedIter);
-			}
-		}
-
-		auto * possibleKey = possibleIter.template getKey<const KeyType*>();
-		if (!possibleKey || Contains(set.m_removedElements, *possibleKey)) {
-			return TResultIterator();
-		}
-
-		return TResultIterator(std::move(possibleIter));
-	}
-
-	FindIterator optimisticFindLowerOrEqual(const KeyType& key, MutableTypeTag) {
-		auto copiedIter = m_copiedElements.upper_bound(key);
-		if (m_copiedElements.cbegin() != copiedIter)
-			return FindIterator(std::move(--copiedIter));
-
-		auto originalIter = optimisticFindLowerOrEqual(key, ImmutableTypeTag());
-		if (!originalIter.get())
-			return FindIterator();
-
-		auto copy = TElementTraits::Copy(originalIter.get());
-		auto result = m_copiedElements.insert(SetTraits::ToStorage(copy));
-		return FindIterator(std::move(result.first));
-	}
-
-	FindConstIterator optimisticFindLowerOrEqual(const KeyType& key, MutableTypeTag) const {
-		auto copiedIter = m_copiedElements.upper_bound(key);
-		return m_copiedElements.cbegin() != copiedIter ? FindConstIterator(std::move(--copiedIter))
-												: optimisticFindLowerOrEqual(key, ImmutableTypeTag());
-	}
-
-	FindConstIterator optimisticFindLowerOrEqual(const KeyType& key, ImmutableTypeTag) const {
-		auto originalIter = m_originalElements.findLowerOrEqual2(key);
-		return m_originalElements.cend() != originalIter ? FindConstIterator(std::move(originalIter))
-														 : FindConstIterator();
-	}
-
-public:
+	public:
 		/// Searches for \a key in this set.
 		/// Returns \c true if it is found or \c false if it is not found.
 		bool contains(const KeyType& key) const {
@@ -383,6 +317,27 @@ public:
 			return DeltaElements<MemorySetType>(m_addedElements, m_removedElements, m_copiedElements);
 		}
 
+		void backupChanges(bool replace) {
+			if (replace) {
+				m_addedElementsBackup.clear();
+				m_removedElementsBackup.clear();
+				m_copiedElementsBackup.clear();
+				m_keyGenerationIdMapBackup.clear();
+			}
+
+			m_addedElementsBackup.push_back(m_addedElements);
+			m_removedElementsBackup.push_back(m_removedElements);
+			m_copiedElementsBackup.push_back(m_copiedElements);
+			m_keyGenerationIdMapBackup.push_back(m_keyGenerationIdMap);
+		}
+
+		void restoreChanges() {
+			RestoreElements(m_addedElements, m_addedElementsBackup);
+			RestoreElements(m_removedElements, m_removedElementsBackup);
+			RestoreElements(m_copiedElements, m_copiedElementsBackup);
+			RestoreElements(m_keyGenerationIdMap, m_keyGenerationIdMapBackup);
+		}
+
 		/// Resets all pending modifications.
 		void reset() {
 			m_addedElements.clear();
@@ -391,6 +346,11 @@ public:
 
 			m_generationId = 1;
 			m_keyGenerationIdMap.clear();
+
+			m_addedElementsBackup.clear();
+			m_removedElementsBackup.clear();
+			m_copiedElementsBackup.clear();
+			m_keyGenerationIdMapBackup.clear();
 		}
 
 	public:
@@ -441,6 +401,11 @@ public:
 
 		uint32_t m_generationId;
 		typename KeyGenerationIdMap<SetType>::Type m_keyGenerationIdMap;
+
+		std::vector<MemorySetType> m_addedElementsBackup;
+		std::vector<MemorySetType> m_removedElementsBackup;
+		std::vector<MemorySetType> m_copiedElementsBackup;
+		std::vector<typename KeyGenerationIdMap<SetType>::Type> m_keyGenerationIdMapBackup;
 
 	private:
 		template<typename TElementTraits2, typename TSetTraits2>

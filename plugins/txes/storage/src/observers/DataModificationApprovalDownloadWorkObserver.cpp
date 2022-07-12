@@ -28,19 +28,17 @@ namespace catapult { namespace observers {
 
 			auto& driveInfo = replicatorEntry.drives().at(notification.DriveKey);
 			const auto& lastApprovedDataModificationId = driveInfo.LastApprovedDataModificationId;
-			const auto& dataModificationIdIsValid = driveInfo.DataModificationIdIsValid;
 			const auto& completedDataModifications = driveEntry.completedDataModifications();
 
 			uint64_t approvableDownloadWork = 0;
 
 			// Iterating over completed data modifications in reverse order (from newest to oldest).
 			for (auto it = completedDataModifications.rbegin(); it != completedDataModifications.rend(); ++it) {
-				// Exit the loop as soon as the most recent data modification approved by the replicator is
-				// reached. Don't account its size. dataModificationIdIsValid prevents rare cases of premature
-				// exits when the drive had no approved data modifications when the replicator joined it, but
-				// current data modification id happens to match the stored lastApprovedDataModification (zero
-				// hash by default).
-				if (dataModificationIdIsValid && it->Id == lastApprovedDataModificationId)
+
+				// Exit the loop as soon as the most recent data modification approved by the replicator is reached. Don't account its size.
+				// dataModificationIdIsValid prevents rare cases of premature exits when the drive had no approved data modifications when the replicator
+				// joined it, but current data modification id happens to match the stored lastApprovedDataModification (zero hash by default).
+				if (it->Id == lastApprovedDataModificationId)
 					break;
 
 				// If current data modification was approved (not cancelled), account its size.
@@ -54,7 +52,7 @@ namespace catapult { namespace observers {
 
 			// Updating current replicator's drive info.
 			driveInfo.LastApprovedDataModificationId = notification.DataModificationId;
-			driveInfo.DataModificationIdIsValid = true;
+//			driveInfo.DataModificationIdIsValid = true;
 			driveInfo.InitialDownloadWorkMegabytes = 0;
 		}
 	});

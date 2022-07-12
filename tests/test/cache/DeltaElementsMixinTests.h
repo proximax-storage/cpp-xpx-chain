@@ -121,6 +121,22 @@ namespace catapult { namespace test {
 				AssertMultipleMarkedElementsCanBeTrackedUnordered(*delta);
 		}
 
+		static void AssertElementsCanBeBackedUpAndRestored() {
+			// Arrange:
+			CacheType cache;
+			auto delta = cache.createDelta(Height{0});
+			delta->insert(TTraits::CreateWithId(123));
+
+			// Act:
+			delta->backupChanges(false);
+			delta->remove(TTraits::MakeId(123));
+			AssertMarkedElements(*delta, { TTraits::MakeId(123) }, {}, { TTraits::MakeId(123) });
+			delta->restoreChanges();
+
+			// Assert:
+			AssertMarkedElements(*delta, { TTraits::MakeId(123) }, {}, {});
+		}
+
 	private:
 		template<typename TDelta>
 		static void AssertMultipleMarkedElementsCanBeTrackedOrdered(TDelta& delta) {
@@ -211,7 +227,8 @@ namespace catapult { namespace test {
 	MAKE_DELTA_ELEMENTS_MIXIN_TEST(TRAITS_NAME, POSTFIX, MODIFICATION_POLICY, AddedElementsAreMarkedAsAdded) \
 	MAKE_DELTA_ELEMENTS_MIXIN_TEST(TRAITS_NAME, POSTFIX, MODIFICATION_POLICY, ModifiedElementsAreMarkedAsModified) \
 	MAKE_DELTA_ELEMENTS_MIXIN_TEST(TRAITS_NAME, POSTFIX, MODIFICATION_POLICY, RemovedElementsAreMarkedAsRemoved) \
-	MAKE_DELTA_ELEMENTS_MIXIN_TEST(TRAITS_NAME, POSTFIX, MODIFICATION_POLICY, MultipleMarkedElementsCanBeTracked)
+	MAKE_DELTA_ELEMENTS_MIXIN_TEST(TRAITS_NAME, POSTFIX, MODIFICATION_POLICY, MultipleMarkedElementsCanBeTracked) \
+	MAKE_DELTA_ELEMENTS_MIXIN_TEST(TRAITS_NAME, POSTFIX, MODIFICATION_POLICY, ElementsCanBeBackedUpAndRestored) \
 
 #define DEFINE_DELTA_ELEMENTS_MIXIN_TESTS(TRAITS_NAME, POSTFIX) \
 	DEFINE_DELTA_ELEMENTS_MIXIN_CUSTOM_TESTS(TRAITS_NAME, test::DeltaInsertModificationPolicy, POSTFIX)

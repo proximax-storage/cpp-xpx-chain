@@ -58,7 +58,6 @@ namespace catapult { namespace observers {
 			utils::RefundDepositsToReplicators(notification.DriveKey, offboardingReplicatorsWithRefund, context, liquidityProvider);
 			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
 			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
-			utils::AssignReplicatorsToQueuedDrives(offboardingReplicators, context, rng);
 
 			shardSet.clear();
 		  	bool verificationCompleted = true;

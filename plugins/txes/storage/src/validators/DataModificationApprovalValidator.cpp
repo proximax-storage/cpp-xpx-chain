@@ -34,18 +34,23 @@ namespace catapult { namespace validators {
 	  	if (activeDataModifications.begin()->Id != notification.DataModificationId)
 		  	return Failure_Storage_Invalid_Data_Modification_Id;
 
-		// Check if all public keys are either Replicator keys or Drive Owner key
 		const auto& replicators = pDriveEntry->replicators();
 	  	const auto& driveOwner = pDriveEntry->owner();
 
-		// Check if none of the replicators has provided an opinion on itself
 	  	const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
 	  	const auto totalJudgedKeysCount = notification.OverlappingKeysCount + notification.JudgedKeysCount;
 
+	  	// Check if all cosigners keys are replicators
+		auto pKey = notification.PublicKeysPtr;
+		for (auto i = 0; i < totalJudgingKeysCount; ++i, ++pKey)
+	  		if (!replicators.count(*pKey) && *pKey != driveOwner)
+	  			return Failure_Storage_Opinion_Invalid_Key;
+
 	  	// Check if there are enough cosigners
-	  	if (totalJudgingKeysCount < pDriveEntry->replicators().size() * 2 / 3 + 1)
+	  	if (totalJudgingKeysCount < (pDriveEntry->replicators().size() * 2) / 3 + 1)
 	  		return Failure_Storage_Signature_Count_Insufficient;
 
+	  	// Check if none of the replicators has provided an opinion on itself
 	  	const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
 	  	boost::dynamic_bitset<uint8_t> presentOpinions(notification.PresentOpinionsPtr, notification.PresentOpinionsPtr + presentOpinionByteCount);
 	  	for (auto i = notification.JudgingKeysCount; i < totalJudgingKeysCount; ++i)

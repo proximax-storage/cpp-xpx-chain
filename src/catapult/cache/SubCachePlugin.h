@@ -99,6 +99,12 @@ namespace catapult { namespace cache {
 
 		/// Returns \c true if sub cache is enabled.
 		virtual void setHeight(const Height& height) = 0;
+
+		/// Backs up the changes made in the cache delta. Set \c true to \a replace previous backup.
+		virtual void backupChanges(bool replace) = 0;
+
+		/// Restores the last backed up changes in the cache delta.
+		virtual void restoreChanges() = 0;
 	};
 
 	/// Detached sub cache view.

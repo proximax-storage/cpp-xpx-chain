@@ -45,30 +45,6 @@ namespace catapult { namespace plugins {
 
 			return pCast;
 		}
-
-		const auto calculateApprovableDownloadWork(const state::ReplicatorEntry* pReplicatorEntry, const state::BcDriveEntry* pDriveEntry, const Key& driveKey) {
-			const auto& lastApprovedDataModificationId = pReplicatorEntry->drives().at(driveKey).LastApprovedDataModificationId;
-			const auto& dataModificationIdIsValid = pReplicatorEntry->drives().at(driveKey).DataModificationIdIsValid;
-			const auto& completedDataModifications = pDriveEntry->completedDataModifications();
-
-			uint64_t approvableDownloadWork = 0;
-
-			// Iterating over completed data modifications in reverse order (from newest to oldest).
-			for (auto it = completedDataModifications.rbegin(); it != completedDataModifications.rend(); ++it) {
-
-				// Exit the loop as soon as the most recent data modification approved by the replicator is reached. Don't account its size.
-				// dataModificationIdIsValid prevents rare cases of premature exits when the drive had no approved data modifications when the replicator
-				// joined it, but current data modification id happens to match the stored lastApprovedDataModification (zero hash by default).
-				if (dataModificationIdIsValid && it->Id == lastApprovedDataModificationId)
-					break;
-
-				// If current data modification was approved (not cancelled), account its size.
-				if (it->State == state::DataModificationState::Succeeded)
-					approvableDownloadWork += it->ActualUploadSizeMegabytes;
-			}
-
-			return approvableDownloadWork;
-		}
 	}
 
 	void RegisterStorageSubsystem(PluginManager& manager) {

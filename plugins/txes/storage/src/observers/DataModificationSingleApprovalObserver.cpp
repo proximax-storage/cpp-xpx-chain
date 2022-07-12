@@ -18,7 +18,6 @@ namespace catapult { namespace observers {
 
 	  	auto& info = replicatorEntry.drives().at(notification.DriveKey);
 	  	info.LastApprovedDataModificationId = notification.DataModificationId;
-	  	info.DataModificationIdIsValid = true;
 		info.InitialDownloadWorkMegabytes = 0;
 
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
