@@ -64,7 +64,6 @@ namespace catapult { namespace test {
 				const auto expIter = expectedDriveInfos.find(pair.first);
 				ASSERT_NE(expIter, expectedDriveInfos.end());
 				EXPECT_EQ(expIter->second.LastApprovedDataModificationId, pair.second.LastApprovedDataModificationId);
-				EXPECT_EQ(expIter->second.DataModificationIdIsValid, pair.second.DataModificationIdIsValid);
 				EXPECT_EQ(expIter->second.InitialDownloadWorkMegabytes, pair.second.InitialDownloadWorkMegabytes);
 			}
 		}

@@ -67,8 +67,6 @@ namespace catapult { namespace state {
 				const auto& info = pair.second;
 				EXPECT_EQ_MEMORY(info.LastApprovedDataModificationId.data(), pData, Hash256_Size);
 				pData += Hash256_Size;
-				EXPECT_EQ(info.DataModificationIdIsValid, *reinterpret_cast<const bool*>(pData));
-				pData += sizeof(bool);
 				EXPECT_EQ(info.InitialDownloadWorkMegabytes, *reinterpret_cast<const uint64_t*>(pData));
 				pData += sizeof(uint64_t);
                 EXPECT_EQ(info.LastCompletedCumulativeDownloadWorkBytes, *reinterpret_cast<const uint64_t*>(pData));
@@ -118,7 +116,7 @@ namespace catapult { namespace state {
     }
 
     // region Save
-/*
+
     TEST(TEST_CLASS, CanSaveSingleEntry_v1) {
         AssertCanSaveSingleEntry(1);
     }
@@ -126,7 +124,7 @@ namespace catapult { namespace state {
     TEST(TEST_CLASS, CanSaveMultipleEntries_v1) {
         AssertCanSaveMultipleEntries(1);
     }
-*/
+
     // endregion
 
     // region Load
@@ -150,8 +148,6 @@ namespace catapult { namespace state {
 				const auto& info = pair.second;
 				memcpy(pData, info.LastApprovedDataModificationId.data(), Hash256_Size);
 				pData += Hash256_Size;
-				memcpy(pData, &info.DataModificationIdIsValid, sizeof(bool));
-				pData += sizeof(bool);
 				memcpy(pData, &info.InitialDownloadWorkMegabytes, sizeof(uint64_t));
 				pData += sizeof(uint64_t);
                 memcpy(pData, &info.LastCompletedCumulativeDownloadWorkBytes, sizeof(uint64_t));
@@ -183,11 +179,11 @@ namespace catapult { namespace state {
             test::AssertEqualReplicatorData(originalEntry, result);
         }
     }
-/*
+
     TEST(TEST_CLASS, CanLoadSingleEntry_v1) {
         AssertCanLoadSingleEntry(1);
     }
-*/
+
     // endregion
 
 }}
