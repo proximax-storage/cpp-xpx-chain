@@ -69,6 +69,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because exchanging same units is not allowed.
 	DEFINE_CATAPULT_EXCHANGESDA_RESULT(Exchanging_Same_Units_Is_Not_Allowed, 18);
 
+ 	/// Validation failed because mosaic is not found.
+	DEFINE_CATAPULT_EXCHANGESDA_RESULT(Mosaic_Not_Found, 19);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

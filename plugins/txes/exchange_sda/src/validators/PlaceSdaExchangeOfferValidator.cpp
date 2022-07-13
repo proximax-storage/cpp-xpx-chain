@@ -13,6 +13,10 @@ namespace catapult { namespace validators {
     namespace {
         ValidationResult ValidateMosaicId(const ValidatorContext &context, const MosaicId& mosaicId, const BlockDuration& duration) {
             const auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();
+
+            if (!mosaicCache.contains(mosaicId))
+                return Failure_ExchangeSda_Mosaic_Not_Found;
+
             auto mosaicEntryIter = mosaicCache.find(mosaicId);
             const auto& mosaicEntry = mosaicEntryIter.get();
             auto mosaicBlockDuration = mosaicEntry.definition().properties().duration();
