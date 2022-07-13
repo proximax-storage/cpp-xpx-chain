@@ -256,8 +256,33 @@
 			"supportedVersions": [1]
 		},
 		{
-			"name": "Lock_Fund_Cancel_Unlock",
+			"name": "Lock_Fund_Transfer",
 			"type": "16994",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Account_Address_Restriction",
+			"type": "16739",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Account_Mosaic_Restriction",
+			"type": "16995",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Account_Operation_Restriction",
+			"type": "17251",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Mosaic_Global_Restriction",
+			"type": "16740",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Mosaic_Address_Restriction",
+			"type": "16996",
 			"supportedVersions": [1]
 		}
 	]

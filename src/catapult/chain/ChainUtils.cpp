@@ -45,7 +45,7 @@ namespace catapult { namespace chain {
 			CATAPULT_LOG(warning)
 				<< "Chain Link Failure: Parent timestamp is newer than child: " << parent.Timestamp  << "(parent) vs " << child.Timestamp <<"(child)";
 		}
-#elif
+#else
 		if (parent.Height + Height(1) != child.Height || parentHash != child.PreviousBlockHash)
 			return false;
 #endif
