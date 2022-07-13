@@ -12,7 +12,7 @@ pipeline {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
         IMAGE = "proximax-catapult-server"
-        BUILD_IMAGE = "proximax-catapult-server-dependencies-build-image:v1.0-bionic"
+        BUILD_IMAGE = "proximax-catapult-server-dependencies-build-image:v1.2-focal"
     }
 
 	stages {
@@ -20,20 +20,26 @@ pipeline {
             steps {
                 echo 'Building catapult-server inside a docker'
                 script {
-                    def buildImage = docker.image("${BUILD_IMAGE}")
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                        buildImage.inside {
-                            sh """
-                                echo 'Building catapult-server'
-                                rm -rf _build
-                                mkdir _build 
-                                cd _build
-                                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so .. 
-                                    make -j4 publish
-                                make -j4
-                                cd ..
-                                ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
-                            """    
+                    withCredentials([string(credentialsId: 'git_token', variable: 'GIT_TOKEN')]) {
+                        sh """
+                            git config --global url."https://${GIT_TOKEN}:@github.com/".insteadOf "https://github.com/"
+                            git submodule update --init --recursive --remote
+                        """
+                        def buildImage = docker.image("${BUILD_IMAGE}")
+                        docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                            buildImage.inside() {
+                                sh """
+                                    echo 'Building catapult-server'
+                                    rm -rf _build
+                                    mkdir _build 
+                                    cd _build
+                                    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so .. 
+                                        make -j4 publish
+                                    make -j4
+                                    cd ..
+                                    ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
+                                """    
+                            }
                         }
                     }
                 }
@@ -78,7 +84,7 @@ pipeline {
             steps {
                 echo 'Build and Publish Image'
                 script {
-                    def newImage = docker.build("${IMAGE}")
+                    def newImage = docker.build("${IMAGE}","-f ./ci/Dockerfile .")
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
                         newImage.push("${env.GIT_BRANCH}") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
                     }
@@ -104,7 +110,7 @@ pipeline {
                 echo 'Build and Publish Image'
 
                 script {
-                    def newImage = docker.build("${IMAGE}")
+                    def newImage = docker.build("${IMAGE}","-f ./ci/Dockerfile .")
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
                         if( env.GIT_BRANCH == 'develop'){
                             newImage.push("develop-jenkins-build-${env.BUILD_NUMBER}") // also push using Jenkins build number
