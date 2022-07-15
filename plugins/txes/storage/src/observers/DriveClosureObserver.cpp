@@ -90,9 +90,18 @@ namespace catapult { namespace observers {
 		  	driveTreeAdapter.remove(notification.DriveKey);
 
 			// Returning the rest to the drive owner
-			const auto refundAmount = driveState.Balances.get(streamingMosaicId);
-			driveState.Balances.debit(streamingMosaicId, refundAmount, context.Height);
-			driveOwnerState.Balances.credit(currencyMosaicId, refundAmount, context.Height);
+			const auto currencyRefundAmount = driveState.Balances.get(storageMosaicId);
+		  	const auto storageRefundAmount = driveState.Balances.get(storageMosaicId);
+		  	const auto streamingRefundAmount = driveState.Balances.get(streamingMosaicId);
+
+			driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
+		  	driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
+
+			driveState.Balances.debit(storageMosaicId, storageRefundAmount, context.Height);
+		  	driveOwnerState.Balances.credit(currencyMosaicId, storageRefundAmount, context.Height);
+
+			driveState.Balances.debit(streamingMosaicId, streamingRefundAmount, context.Height);
+			driveOwnerState.Balances.credit(currencyMosaicId, streamingRefundAmount, context.Height);
 
 			// Removing the drive from queue, if present
 			const auto replicators = driveEntry.replicators();
