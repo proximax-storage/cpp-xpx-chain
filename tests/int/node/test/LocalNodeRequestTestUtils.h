@@ -52,6 +52,7 @@ namespace catapult { namespace test {
 				, m_clientKeyPair(crypto::KeyPair::FromPrivate(GenerateRandomPrivateKey()))
 				, m_pConnector(net::CreateServerConnector(m_pPool, m_clientKeyPair, net::ConnectionSettings()))
 				, m_localNode(node)
+				, m_writeAttempts(0)
 		{}
 
 	public:
@@ -78,6 +79,16 @@ namespace catapult { namespace test {
 			});
 		}
 
+		/// increments number of write attempts
+		void incrementWriteAttempts() {
+			m_writeAttempts++;
+		}
+
+		/// return number of write attempts
+		int writeAttempts() {
+			return m_writeAttempts;
+		}
+
 	private:
 		static model::TransactionRegistry CreateTransactionRegistry();
 
@@ -88,6 +99,7 @@ namespace catapult { namespace test {
 		ionet::Node m_localNode;
 
 		std::shared_ptr<ionet::PacketIo> m_pIo;
+		int m_writeAttempts;
 	};
 
 	// endregion
@@ -130,6 +142,9 @@ namespace catapult { namespace test {
 
 	/// Pushes a valid transaction to \a connection.
 	std::shared_ptr<ionet::PacketIo> PushValidTransaction(ExternalSourceConnection& connection);
+
+	/// Pushes an expired transaction to \a connection.
+	std::shared_ptr<ionet::PacketIo> PushExpiredTransaction(ExternalSourceConnection& connection);
 
 	// endregion
 
