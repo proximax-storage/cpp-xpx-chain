@@ -98,6 +98,25 @@ namespace catapult { namespace local {
 		AssertReaderConnection(stats);
 	}
 
+	TEST(TEST_CLASS, ExpiredTransactionNotPushed) {
+		// Arrange:
+		TestContext context;
+		test::WaitForBoot(context);
+
+		// Act:
+		test::ExternalSourceConnection connection;
+		auto pIo = test::PushExpiredTransaction(connection);
+		WAIT_FOR_ONE_EXPR(connection.writeAttempts());
+
+		// Assert: no transaction element was added
+		auto stats = context.stats();
+		EXPECT_EQ(0u, stats.NumAddedBlockElements);
+		EXPECT_EQ(0u, stats.NumAddedTransactionElements);
+
+		// - the connection is still active
+		AssertReaderConnection(stats);
+	}
+
 	// endregion
 
 	// region pull (unsupported)
