@@ -22,6 +22,7 @@ namespace catapult { namespace cache {
 			, SdaExchangeCacheDeltaMixins::ConfigBasedEnable<config::SdaExchangeConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
 			, m_pSdaExchangeEntries(sdaExchangeSets.pPrimary)
 			, m_pHeightGroupingDelta(sdaExchangeSets.pHeightGrouping)
+			, m_pConfigHolder(pConfigHolder)
 	{}
 
 	void BasicSdaExchangeCacheDelta::addExpiryHeight(const SdaExchangeCacheDescriptor::KeyType& owner, const Height& height) {

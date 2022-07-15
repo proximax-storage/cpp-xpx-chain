@@ -10,6 +10,7 @@
 #include "src/cache/SdaOfferGroupCache.h"
 #include "src/cache/SdaExchangeCache.h"
 #include "src/model/SdaExchangeNotifications.h"
+#include "src/model/SdaExchangeReceiptType.h"
 
 namespace catapult { namespace observers {
 

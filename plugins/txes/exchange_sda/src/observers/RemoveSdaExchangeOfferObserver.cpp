@@ -10,7 +10,7 @@
 
 namespace catapult { namespace observers {
 
-    DEFINE_OBSERVER(RemoveSdaExchangeOfferV1, model::RemoveSdaOfferNotification<1>, [](const model::RemoveSdaOfferNotification<1>& notification, const ObserverContext& context) {
+    DEFINE_OBSERVER(RemoveSdaExchangeOfferV1, model::RemoveSdaOfferNotification<1>, [](const model::RemoveSdaOfferNotification<1>& notification, ObserverContext& context) {
         auto& cache = context.Cache.sub<cache::SdaExchangeCache>();
         auto iter = cache.find(notification.Owner);
         auto& entry = iter.get();
@@ -38,6 +38,9 @@ namespace catapult { namespace observers {
             CreditAccount(entry.owner(), mosaicIdGive, mosaicAmountGiveBalance, context);
             entry.expireOffer(state::MosaicsPair{mosaicIdGive,mosaicIdGet}, context.Height);
             groupEntry.removeSdaOfferFromGroup(notification.Owner);
+
+            model::OfferRemovalReceipt removalReceipt(model::Receipt_Type_Sda_Offer_Removed, entry.owner(), state::MosaicsPair(mosaicIdGive, mosaicIdGet), mosaicAmountGiveBalance);
+            context.StatementBuilder().addPublicKeyReceipt(removalReceipt);
         }
 
         if (entry.empty())

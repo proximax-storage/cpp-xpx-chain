@@ -51,10 +51,49 @@ namespace catapult { namespace mongo {
 					<< "driveKey" << mappers::ToBinary(receipt.DriveKey)
 					<< "driveState" << receipt.DriveState;
 		}
+
+		void StreamOfferCreationReceipt(bsoncxx::builder::stream::document& builder, const model::OfferCreationReceipt& receipt) {
+			builder
+					<< "sender" << mappers::ToBinary(receipt.Sender)
+					<< "mosaicIdGive" << mappers::ToInt64(receipt.MosaicsPair.first)
+					<< "mosaicIdGet" << mappers::ToInt64(receipt.MosaicsPair.second)
+					<< "mosaicAmountGive" << mappers::ToInt64(receipt.AmountGive)
+					<< "mosaicAmountGet" << mappers::ToInt64(receipt.AmountGet);
+		}
+
+		void StreamOfferExchangeReceipt(bsoncxx::builder::stream::document& builder, const model::OfferExchangeReceipt& receipt) {
+			builder
+					<< "sender" << mappers::ToBinary(receipt.Sender)
+					<< "mosaicIdGive" << mappers::ToInt64(receipt.MosaicsPair.first)
+					<< "mosaicIdGet" << mappers::ToInt64(receipt.MosaicsPair.second);
+			auto exchangeDetailArray = builder << "exchangeDetails" << mappers::bson_stream::open_array;
+			for (const auto detail : receipt.SdaExchangeDetails) {
+				exchangeDetailArray
+					<< mappers::bson_stream::open_document
+					<< "recipient" << mappers::ToBinary(detail.Recipient)
+					<< "mosaicIdGive" << mappers::ToInt64(detail.MosaicsPair.first)
+					<< "mosaicIdGet" << mappers::ToInt64(detail.MosaicsPair.second)
+					<< "mosaicAmountGive" << mappers::ToInt64(detail.AmountGive)
+					<< "mosaicAmountGet" << mappers::ToInt64(detail.AmountGet)
+					<< mappers::bson_stream::close_document;	
+			}
+			exchangeDetailArray << mappers::bson_stream::close_array;
+		}
+
+		void StreamOfferRemovalReceipt(bsoncxx::builder::stream::document& builder, const model::OfferRemovalReceipt& receipt) {
+			builder
+					<< "sender" << mappers::ToBinary(receipt.Sender)
+					<< "mosaicIdGive" << mappers::ToInt64(receipt.MosaicsPair.first)
+					<< "mosaicIdGet" << mappers::ToInt64(receipt.MosaicsPair.second)
+					<< "mosaicAmountGiveReturned" << mappers::ToInt64(receipt.AmountGiveReturned);
+		}
 	}
 
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(BalanceTransfer, StreamBalanceTransferReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(BalanceChange, StreamBalanceChangeReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(Inflation, StreamInflationReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(DriveState, StreamDriveStateReceipt)
+	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(OfferCreation, StreamOfferCreationReceipt)
+	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(OfferExchange, StreamOfferExchangeReceipt)
+	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(OfferRemoval, StreamOfferRemovalReceipt)
 }}

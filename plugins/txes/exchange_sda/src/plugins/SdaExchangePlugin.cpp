@@ -11,10 +11,12 @@
 #include "src/cache/SdaExchangeCacheStorage.h"
 #include "src/cache/SdaOfferGroupCache.h"
 #include "src/cache/SdaOfferGroupCacheStorage.h"
+#include "src/model/SdaExchangeReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/PlaceSdaExchangeOfferTransactionPlugin.h"
 #include "src/plugins/RemoveSdaExchangeOfferTransactionPlugin.h"
 #include "src/validators/Validators.h"
+#include "catapult/observers/ObserverUtils.h"
 
 namespace catapult { namespace plugins {
 
@@ -67,7 +69,11 @@ namespace catapult { namespace plugins {
 			builder
 				.add(observers::CreatePlaceSdaExchangeOfferV1Observer())
 				.add(observers::CreateRemoveSdaExchangeOfferV1Observer())
-				.add(observers::CreateCleanupSdaOffersObserver());
+				.add(observers::CreateCleanupSdaOffersObserver())
+				.add(observers::CreateCacheBlockTouchObserver<cache::SdaExchangeCache>("ExchangeSda", model::Receipt_Type_Sda_Offer_Created))
+				.add(observers::CreateCacheBlockTouchObserver<cache::SdaExchangeCache>("ExchangeSda", model::Receipt_Type_Sda_Offer_Exchanged))
+				.add(observers::CreateCacheBlockTouchObserver<cache::SdaExchangeCache>("ExchangeSda", model::Receipt_Type_Sda_Offer_Removed));
+
 		});
 	}
 }}

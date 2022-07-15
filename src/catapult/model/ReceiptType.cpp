@@ -53,6 +53,7 @@ namespace catapult { namespace model {
 			#include "plugins/txes/mosaic/src/model/MosaicReceiptType.h"
 			#include "plugins/txes/namespace/src/model/NamespaceReceiptType.h"
 			#include "plugins/txes/service/src/model/ServiceReceiptType.h"
+			#include "plugins/txes/exchange_sda/src/model/SdaExchangeReceiptType.h"
 			}
 
 			return nullptr;

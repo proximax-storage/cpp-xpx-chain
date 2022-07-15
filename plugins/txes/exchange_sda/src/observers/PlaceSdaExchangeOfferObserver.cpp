@@ -5,6 +5,7 @@
 **/
 
 #include "Observers.h"
+#include "catapult/model/Address.h"
 #include <boost/lexical_cast.hpp>
 
 namespace catapult { namespace observers {
@@ -37,7 +38,7 @@ namespace catapult { namespace observers {
 		}
 	}
 
-    DEFINE_OBSERVER(PlaceSdaExchangeOfferV1, model::PlaceSdaOfferNotification<1>, [](const model::PlaceSdaOfferNotification<1>& notification, const ObserverContext& context) {
+    DEFINE_OBSERVER(PlaceSdaExchangeOfferV1, model::PlaceSdaOfferNotification<1>, [](const model::PlaceSdaOfferNotification<1>& notification, ObserverContext& context) {
         auto &cache = context.Cache.sub<cache::SdaExchangeCache>();
         if (!cache.contains(notification.Signer))
             cache.insert(state::SdaExchangeEntry(notification.Signer, 1));
@@ -66,6 +67,9 @@ namespace catapult { namespace observers {
             auto &groupEntry = groupIter.get();
 
             groupEntry.addSdaOfferToGroup(pSdaOffer, notification.Signer, deadline);
+
+            model::OfferCreationReceipt creationReceipt(model::Receipt_Type_Sda_Offer_Created, entry.owner(), state::MosaicsPair(mosaicIdGive, mosaicIdGet), pSdaOffer->MosaicGive.Amount, pSdaOffer->MosaicGet.Amount);
+            context.StatementBuilder().addPublicKeyReceipt(creationReceipt);
         }
 
         /// Exchange offers when a match is found in cache
@@ -121,6 +125,7 @@ namespace catapult { namespace observers {
             }
 
             // Exchange sorted offers not belonging to the signer 
+            std::vector<model::ExchangeDetail> details;
             for (auto &offer: arrangedOffers) {
                 if (offer.Owner == entry.owner()) continue;
 
@@ -139,6 +144,9 @@ namespace catapult { namespace observers {
                 CreditAccount(existingOffer.owner(), offersBySigner.first.first, result.MosaicGiveExchanged, context);
                 CreditAccount(entry.owner(), offersBySigner.first.second, result.MosaicGetExchanged, context);
 
+                auto address = model::PublicKeyToAddress(existingOffer.owner(), cache.networkIdentifier());
+                details.emplace_back((address, state::MosaicsPair(offersBySigner.first.second, offersBySigner.first.first), result.MosaicGetExchanged, result.MosaicGiveExchanged));
+
                 // Check if any existing offer still has balance after the exchange
                 if (Amount(0) == result.OfferPair.first.CurrentMosaicGive &&
                     Amount(0) == result.OfferPair.first.CurrentMosaicGet) {
@@ -155,6 +163,9 @@ namespace catapult { namespace observers {
                     break;
                 }
             }
+
+            model::OfferExchangeReceipt exchangeReceipt(model::Receipt_Type_Sda_Offer_Exchanged, entry.owner(), state::MosaicsPair(offersBySigner.first.first, offersBySigner.first.second), details);
+            context.StatementBuilder().addTransactionReceipt(exchangeReceipt);
         }
     });
 }}

@@ -47,6 +47,12 @@ namespace catapult { namespace cache {
     public:
         using SdaExchangeCacheDeltaMixins::ConstAccessor::find;
         using SdaExchangeCacheDeltaMixins::MutableAccessor::find;
+    
+    public:
+		/// Gets the network identifier.
+		model::NetworkIdentifier networkIdentifier() const {
+			return m_pConfigHolder->Config(height()).Immutable.NetworkIdentifier;
+	    }
 
     public:
         /// Adds offer expiry \a height of \a owner.
@@ -61,6 +67,7 @@ namespace catapult { namespace cache {
     private:
         SdaExchangeCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pSdaExchangeEntries;
         SdaExchangeCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pHeightGroupingDelta;
+        std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
     };
 
     /// Delta on top of the SDA-SDA exchange cache.
