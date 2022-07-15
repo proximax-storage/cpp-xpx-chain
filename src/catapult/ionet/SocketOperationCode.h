@@ -43,7 +43,10 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(Security_Error) \
 	\
 	/* Socket operation completed due to insufficient data. */ \
-	ENUM_VALUE(Insufficient_Data)
+	ENUM_VALUE(Insufficient_Data) \
+	\
+	/* Socket operation incomplete due to expired packet. */ \
+	ENUM_VALUE(Expired_Packet)
 
 #define ENUM_VALUE(LABEL) LABEL,
 	/// Enumeration of socket operation results.

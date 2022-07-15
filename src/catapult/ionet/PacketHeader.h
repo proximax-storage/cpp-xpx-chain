@@ -33,6 +33,9 @@ namespace catapult { namespace ionet {
 
 		/// Type of the packet.
 		PacketType Type;
+
+		/// Packet deadline.
+		Timestamp Deadline;
 	};
 
 #pragma pack(pop)
@@ -40,6 +43,11 @@ namespace catapult { namespace ionet {
 	/// Determines if \a header indicates a valid packet data size no greater than \a maxPacketDataSize.
 	constexpr bool IsPacketDataSizeValid(const PacketHeader& header, size_t maxPacketDataSize) {
 		return header.Size >= sizeof(PacketHeader) && (header.Size - sizeof(PacketHeader)) <= maxPacketDataSize;
+	}
+
+	/// Determines if \a header indicates that a packet's deadline is before the \a current networkTime.
+	constexpr bool IsPacketExpired(const PacketHeader& header, Timestamp networkTime) {
+		return header.Deadline <= networkTime;
 	}
 
 	/// Insertion operator for outputting \a header to \a out.
