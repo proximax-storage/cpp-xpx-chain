@@ -516,9 +516,7 @@ namespace catapult { namespace storage {
                 const Hash256& modificationId,
                 const Hash256& rootHash,
                 std::vector<Key>& replicators) {
-			std::vector<std::array<uint8_t, 32>> replicatorKeys;
-			for (const auto& key : replicators)
-				replicatorKeys.push_back(key.array());
+			auto replicatorKeys = castReplicatorKeys<std::array<uint8_t, 32>>(replicators);
             m_pReplicator->asyncApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationApprovalTransactionInfo{
 				driveKey.array(),
 				modificationId.array(),
