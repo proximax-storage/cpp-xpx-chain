@@ -145,3 +145,13 @@ maxSuperContractsOnDrive = 10
 enabled = false
 minRequestUnlockCooldown = 161280
 maxMosaicsSize = 256
+
+[plugin:catapult.plugins.restrictionaccount]
+
+enabled = false
+maxAccountRestrictionValues = 512
+
+[plugin:catapult.plugins.restrictionmosaic]
+
+enabled = false
+maxMosaicRestrictionValues = 20

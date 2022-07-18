@@ -113,12 +113,12 @@
 		{
 			"name": "Mosaic_Definition",
 			"type": "16717",
-			"supportedVersions": [3]
+			"supportedVersions": [4]
 		},
 		{
 			"name": "Mosaic_Supply_Change",
 			"type": "16973",
-			"supportedVersions": [2]
+			"supportedVersions": [3]
 		},
 		{
 			"name": "Account_Link",
