@@ -36,17 +36,18 @@ namespace catapult { namespace observers {
         if (cancelingDataModificationIter->Id == activeDataModifications.front().Id) {
             // Performing download & upload work transfer for replicators
             const auto& replicators = driveEntry.replicators();
-            const auto totalReplicatorAmount = Amount(
-                    modificationSize +    // Download work
-                    modificationSize * (replicators.size() - 1) / replicators.size());    // Upload work
+			if (!replicators.empty()) {
+				const auto totalReplicatorAmount = Amount(
+						modificationSize +    // Download work
+						modificationSize * (replicators.size() - 1) / replicators.size());    // Upload work
 
-            for (const auto& replicatorKey: replicators) {
-                auto replicatorIter = accountStateCache.find(replicatorKey);
-                auto& replicatorState = replicatorIter.get();
-                driveState.Balances.debit(streamingMosaicId, totalReplicatorAmount, context.Height);
-                replicatorState.Balances.credit(currencyMosaicId, totalReplicatorAmount,
-                                                context.Height);
-            }
+				for (const auto& replicatorKey : replicators) {
+					auto replicatorIter = accountStateCache.find(replicatorKey);
+					auto& replicatorState = replicatorIter.get();
+					driveState.Balances.debit(streamingMosaicId, totalReplicatorAmount, context.Height);
+					replicatorState.Balances.credit(currencyMosaicId, totalReplicatorAmount, context.Height);
+				}
+			}
 
             // Performing upload work transfer & stream refund for the drive owner
             const auto totalDriveOwnerAmount = Amount(

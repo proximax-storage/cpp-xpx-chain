@@ -18,6 +18,10 @@ namespace catapult { namespace validators {
 
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
+		// Check if download channel exists
+		if (!pDownloadChannelEntry)
+			return Failure_Storage_Download_Channel_Not_Found;
+
         // Check if download channel is closing
         if (pDownloadChannelEntry->isCloseInitiated())
 			return Failure_Storage_Download_Channel_Is_Finished;

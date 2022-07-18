@@ -36,12 +36,12 @@ namespace catapult { namespace observers {
 
 			// Making payments to replicators, if there is a pending data modification
 			auto& activeDataModifications = driveEntry.activeDataModifications();
-			if (!activeDataModifications.empty()) {
+			const auto& replicators = driveEntry.replicators();
+			if (!activeDataModifications.empty() && !replicators.empty()) {
 				const auto& modificationSize = activeDataModifications.front().ExpectedUploadSizeMegabytes;
-				const auto& replicators = driveEntry.replicators();
-				const auto totalReplicatorAmount =
-						Amount(modificationSize + // Download work
-							   modificationSize * (replicators.size() - 1) / replicators.size()); // Upload work
+				const auto totalReplicatorAmount = Amount(
+						modificationSize + // Download work
+						modificationSize * (replicators.size() - 1) / replicators.size()); // Upload work
 				for (const auto& replicatorKey : replicators) {
 					auto replicatorIter = accountStateCache.find(replicatorKey);
 					auto& replicatorState = replicatorIter.get();
@@ -90,12 +90,20 @@ namespace catapult { namespace observers {
 		  	driveTreeAdapter.remove(notification.DriveKey);
 
 			// Returning the rest to the drive owner
-			const auto refundAmount = driveState.Balances.get(streamingMosaicId);
-			driveState.Balances.debit(streamingMosaicId, refundAmount, context.Height);
-			driveOwnerState.Balances.credit(currencyMosaicId, refundAmount, context.Height);
+			const auto currencyRefundAmount = driveState.Balances.get(storageMosaicId);
+		  	const auto storageRefundAmount = driveState.Balances.get(storageMosaicId);
+		  	const auto streamingRefundAmount = driveState.Balances.get(streamingMosaicId);
+
+			driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
+		  	driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
+
+			driveState.Balances.debit(storageMosaicId, storageRefundAmount, context.Height);
+		  	driveOwnerState.Balances.credit(currencyMosaicId, storageRefundAmount, context.Height);
+
+			driveState.Balances.debit(streamingMosaicId, streamingRefundAmount, context.Height);
+			driveOwnerState.Balances.credit(currencyMosaicId, streamingRefundAmount, context.Height);
 
 			// Removing the drive from queue, if present
-			const auto replicators = driveEntry.replicators();
 			if (replicators.size() < driveEntry.replicatorCount()) {
 				auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
 				auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
