@@ -169,7 +169,7 @@ namespace catapult { namespace mongo {
 		model::OfferCreationReceipt receipt(
 			model::ReceiptType(), 
 			test::GenerateRandomByteArray<Key>(), 
-			MosaicId(234), MosaicId(345),
+			std::pair<MosaicId, MosaicId>(234, 345),
 			Amount(500), Amount(250));
 
 		// Act:
@@ -187,6 +187,14 @@ namespace catapult { namespace mongo {
 		EXPECT_EQ(receipt.AmountGet, Amount(test::GetUint64(view, "mosaicAmountGet")));
 	}
 
+	TEST(TEST_CLASS, CreateOfferCreationReceiptMongoPluginRespectsSuppliedType) {
+		// Act:
+		auto pPlugin = CreateOfferCreationReceiptMongoPlugin(static_cast<model::ReceiptType>(1234));
+
+		// Assert:
+		EXPECT_EQ(static_cast<model::ReceiptType>(1234), pPlugin->type());
+	}
+
 	TEST(TEST_CLASS, CanStreamOfferExchangeReceipt) {
 		// Arrange:
 		auto pPlugin = CreateOfferExchangeReceiptMongoPlugin(model::ReceiptType());
@@ -195,8 +203,8 @@ namespace catapult { namespace mongo {
 		model::OfferExchangeReceipt receipt(
 			model::ReceiptType(), 
 			test::GenerateRandomByteArray<Key>(), 
-			MosaicId(234), MosaicId(345),
-			model::ExchangeDetail{test::GenerateRandomByteArray<Address>(), std::pair<MosaicId, MosaicId>(345, 234), Amount(350), Amount(700)});
+			std::pair<MosaicId, MosaicId>(234, 345),
+			{model::ExchangeDetail{test::GenerateRandomByteArray<Address>(), std::pair<MosaicId, MosaicId>(345, 234), Amount(350), Amount(700)}});
 
 		// Act:
 		pPlugin->streamReceipt(builder, receipt);
@@ -216,6 +224,47 @@ namespace catapult { namespace mongo {
 			EXPECT_EQ(d.AmountGive, Amount(test::GetUint64(view, "mosaicAmountGive")));
 			EXPECT_EQ(d.AmountGet, Amount(test::GetUint64(view, "mosaicAmountGet")));
 		}
+	}
+
+	TEST(TEST_CLASS, CreateOfferExchangeReceiptMongoPluginRespectsSuppliedType) {
+		// Act:
+		auto pPlugin = CreateOfferExchangeReceiptMongoPlugin(static_cast<model::ReceiptType>(1234));
+
+		// Assert:
+		EXPECT_EQ(static_cast<model::ReceiptType>(1234), pPlugin->type());
+	}
+
+	TEST(TEST_CLASS, CanStreamOfferRemovalReceipt) {
+		// Arrange:
+		auto pPlugin = CreateOfferRemovalReceiptMongoPlugin(model::ReceiptType());
+		bsoncxx::builder::stream::document builder;
+
+		model::OfferRemovalReceipt receipt(
+			model::ReceiptType(), 
+			test::GenerateRandomByteArray<Key>(), 
+			std::pair<MosaicId, MosaicId>(234, 345),
+			Amount(350));
+
+		// Act:
+		pPlugin->streamReceipt(builder, receipt);
+		auto dbReceipt = builder << bsoncxx::builder::stream::finalize;
+
+		// Assert:
+		auto view = dbReceipt.view();
+		EXPECT_EQ(5u, test::GetFieldCount(view));
+
+		EXPECT_EQ(receipt.Sender, test::GetKeyValue(view, "sender"));
+		EXPECT_EQ(receipt.MosaicsPair.first, MosaicId(test::GetUint64(view, "mosaicIdGive")));
+		EXPECT_EQ(receipt.MosaicsPair.second, MosaicId(test::GetUint64(view, "mosaicIdGet")));
+		EXPECT_EQ(receipt.AmountGiveReturned, Amount(test::GetUint64(view, "mosaicAmountGiveReturned")));
+	}
+
+	TEST(TEST_CLASS, CreateOfferRemovalReceiptMongoPluginRespectsSuppliedType) {
+		// Act:
+		auto pPlugin = CreateOfferRemovalReceiptMongoPlugin(static_cast<model::ReceiptType>(1234));
+
+		// Assert:
+		EXPECT_EQ(static_cast<model::ReceiptType>(1234), pPlugin->type());
 	}
 	// endregion
 }}

@@ -69,11 +69,7 @@ namespace catapult { namespace plugins {
 			builder
 				.add(observers::CreatePlaceSdaExchangeOfferV1Observer())
 				.add(observers::CreateRemoveSdaExchangeOfferV1Observer())
-				.add(observers::CreateCleanupSdaOffersObserver())
-				.add(observers::CreateCacheBlockTouchObserver<cache::SdaExchangeCache>("ExchangeSda", model::Receipt_Type_Sda_Offer_Created))
-				.add(observers::CreateCacheBlockTouchObserver<cache::SdaExchangeCache>("ExchangeSda", model::Receipt_Type_Sda_Offer_Exchanged))
-				.add(observers::CreateCacheBlockTouchObserver<cache::SdaExchangeCache>("ExchangeSda", model::Receipt_Type_Sda_Offer_Removed));
-
+				.add(observers::CreateCleanupSdaOffersObserver());
 		});
 	}
 }}

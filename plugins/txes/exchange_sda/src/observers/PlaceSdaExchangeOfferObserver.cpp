@@ -145,7 +145,7 @@ namespace catapult { namespace observers {
                 CreditAccount(entry.owner(), offersBySigner.first.second, result.MosaicGetExchanged, context);
 
                 auto address = model::PublicKeyToAddress(existingOffer.owner(), cache.networkIdentifier());
-                details.emplace_back((address, state::MosaicsPair(offersBySigner.first.second, offersBySigner.first.first), result.MosaicGetExchanged, result.MosaicGiveExchanged));
+                details.emplace_back(model::ExchangeDetail{address, state::MosaicsPair(offersBySigner.first.second, offersBySigner.first.first), result.MosaicGetExchanged, result.MosaicGiveExchanged});
 
                 // Check if any existing offer still has balance after the exchange
                 if (Amount(0) == result.OfferPair.first.CurrentMosaicGive &&
