@@ -7,6 +7,7 @@
 #include "drive/Replicator.h"
 #include <memory>
 #include <catapult/crypto/KeyPair.h>
+#include <catapult/thread/IoThreadPool.h>
 
 namespace catapult {
 	namespace storage {
@@ -31,7 +32,7 @@ namespace catapult { namespace storage {
 	};
 
     std::unique_ptr<ReplicatorEventHandler> CreateReplicatorEventHandler(
-//		boost::asio::io_context& context,
+		std::shared_ptr<thread::IoThreadPool>&& pool,
 		TransactionSender&& transactionSender,
 		state::StorageState& storageState,
 		TransactionStatusHandler& m_transactionStatusHandler,

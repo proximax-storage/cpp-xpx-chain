@@ -13,6 +13,7 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
+#include "catapult/thread/MultiServicePool.h"
 
 #include <map>
 
@@ -97,10 +98,10 @@ namespace catapult { namespace storage {
 				m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local),
 				m_storageState);
 
-//			m_serviceState.pool().pushIsolatedPool().ioContext();
+			auto pool = m_serviceState.pool().pushIsolatedPool("StorageQuery", 1);
 
             m_pReplicatorEventHandler = CreateReplicatorEventHandler(
-//				m_serviceS
+				std::move(pool),
 				std::move(transactionSender),
 				m_storageState,
 				m_transactionStatusHandler,
