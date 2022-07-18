@@ -20,8 +20,9 @@ namespace catapult { namespace validators {
             auto mosaicEntryIter = mosaicCache.find(mosaicId);
             const auto& mosaicEntry = mosaicEntryIter.get();
             auto mosaicBlockDuration = mosaicEntry.definition().properties().duration();
+            auto mosaicCreatedHeight = mosaicEntry.definition().height();
 
-            Height maxMosaicHeight = Height(context.Height.unwrap() + mosaicBlockDuration.unwrap());
+            Height maxMosaicHeight = mosaicCreatedHeight + Height(mosaicBlockDuration.unwrap());
             Height maxOfferHeight = Height(context.Height.unwrap() + duration.unwrap());
 
             if (!mosaicEntry.definition().isEternal() && maxOfferHeight > maxMosaicHeight)
