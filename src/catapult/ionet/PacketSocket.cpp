@@ -25,7 +25,6 @@
 #include "catapult/thread/StrandOwnerLifetimeExtender.h"
 #include "catapult/utils/Casting.h"
 #include "catapult/utils/Logging.h"
-#include "catapult/utils/NetworkTime.h"
 #include <deque>
 #include <memory>
 
@@ -81,14 +80,6 @@ namespace catapult { namespace ionet {
 
 		public:
 			void write(const PacketPayload& payload, const PacketSocket::WriteCallback& callback) {
-
-				if (payload.header().Type == PacketType::Push_Transactions || payload.header().Type == PacketType::Pull_Transactions)
-					if (IsPacketExpired(payload.header(), utils::NetworkTime())) {
-						CATAPULT_LOG(warning) << "bypassing write of expired " << payload.header();
-						callback(SocketOperationCode::Expired_Packet);
-						return;
-					}
-
 				if (!IsPacketDataSizeValid(payload.header(), m_maxPacketDataSize)) {
 					CATAPULT_LOG(warning) << "bypassing write of malformed " << payload.header();
 					callback(SocketOperationCode::Malformed_Data);
