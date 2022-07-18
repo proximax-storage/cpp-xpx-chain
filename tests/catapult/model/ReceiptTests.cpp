@@ -206,13 +206,11 @@ namespace catapult { namespace model {
 				sizeof(Receipt) // base
 				+ Key_Size // sender
 				+ sizeof(MosaicId)*2 // mosaic id pair
-				+ sizeof(int8_t)*(
-					sizeof(Address) + sizeof(MosaicId)*2 + sizeof(Amount)*2
-				); // list of exchanges made
+				+ sizeof(std::vector<ExchangeDetail>); // list of exchanges made
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(OfferExchangeReceipt));
-		EXPECT_EQ(10u + 64, sizeof(OfferExchangeReceipt));
+		EXPECT_EQ(10u + 72, sizeof(OfferExchangeReceipt));
 	}
 
 	TEST(TEST_CLASS, CanCreateOfferExchangeReceipt) {
