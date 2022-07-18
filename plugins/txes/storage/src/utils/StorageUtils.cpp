@@ -162,6 +162,7 @@ namespace catapult { namespace utils {
 
 		for (const auto& replicatorKey : offboardingReplicators) {
 			driveEntry.replicators().erase(replicatorKey);
+			driveEntry.formerReplicators().insert(replicatorKey);
 			driveEntry.dataModificationShards().erase(replicatorKey);
 			driveEntry.offboardingReplicators().erase(replicatorKey);
 			driveEntry.confirmedUsedSizes().erase(replicatorKey);
@@ -395,7 +396,14 @@ namespace catapult { namespace utils {
 					replicatorCache.find(key).get().replicatorsSetNode() = node;
 				});
 
+		// Current Replicators of the Drive MUST NOT be assigned to the Drive one more time
 		for (const auto& replicatorKey: driveEntry.replicators()) {
+			std::pair<Amount, Key> keyToRemove = keyExtractor(replicatorKey);
+			treeAdapter.remove(keyToRemove);
+		}
+
+		// Former Replicators of the Drive are banned for this Drive
+		for (const auto& replicatorKey: driveEntry.formerReplicators()) {
 			std::pair<Amount, Key> keyToRemove = keyExtractor(replicatorKey);
 			treeAdapter.remove(keyToRemove);
 		}
@@ -456,6 +464,10 @@ namespace catapult { namespace utils {
 		}
 
 		for (const auto& replicatorKey: driveEntry.replicators()) {
+			treeAdapter.insert(replicatorKey);
+		}
+
+		for (const auto& replicatorKey: driveEntry.formerReplicators()) {
 			treeAdapter.insert(replicatorKey);
 		}
 
