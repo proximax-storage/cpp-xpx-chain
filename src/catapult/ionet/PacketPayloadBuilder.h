@@ -22,7 +22,6 @@
 #include "PacketPayload.h"
 #include "catapult/model/EntityRange.h"
 #include "catapult/utils/IntegerMath.h"
-#include "catapult/model/Transaction.h"
 
 namespace catapult { namespace ionet {
 
@@ -49,18 +48,6 @@ namespace catapult { namespace ionet {
 
 			m_payload.m_buffers.push_back({ reinterpret_cast<const uint8_t*>(pEntity.get()), pEntity->Size });
 			m_payload.m_entities.push_back(pEntity);
-			return true;
-		}
-
-		template<>
-		bool appendEntity<model::Transaction>(const std::shared_ptr<model::Transaction>& pEntity) {
-			if (!increaseSize(pEntity->Size))
-				return false;
-
-			m_payload.m_buffers.push_back({ reinterpret_cast<const uint8_t*>(pEntity.get()), pEntity->Size });
-			m_payload.m_entities.push_back(pEntity);
-			if (m_payload.m_header.Type == PacketType::Push_Transactions || m_payload.m_header.Type == PacketType::Pull_Transactions)
-				m_payload.m_header.Deadline = pEntity->Deadline;
 			return true;
 		}
 
