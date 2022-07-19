@@ -253,12 +253,12 @@ namespace catapult { namespace state {
 
 		/// Gets former replicators.
 		const utils::SortedKeySet& formerReplicators() const {
-			return m_replicators;
+			return m_formerReplicators;
 		}
 
 		/// Gets former replicators.
 		utils::SortedKeySet& formerReplicators() {
-			return m_replicators;
+			return m_formerReplicators;
 		}
 
 		/// Gets replicators that applied for offboarding.
