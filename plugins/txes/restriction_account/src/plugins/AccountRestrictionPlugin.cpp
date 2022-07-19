@@ -59,6 +59,9 @@ namespace catapult { namespace plugins {
 
 		auto config = model::LoadPluginConfiguration<config::AccountRestrictionConfiguration>(
 				manager.config());
+		manager.addPluginInitializer([config](auto& networkConfig) {
+		  networkConfig.template SetPluginConfiguration<config::AccountRestrictionConfiguration>(config);
+		});
 		manager.addStatefulValidatorHook([maxAccountRestrictionValues = config.MaxAccountRestrictionValues](auto& builder) {
 			builder
 				.add(validators::CreateAccountAddressRestrictionRedundantModificationValidator())

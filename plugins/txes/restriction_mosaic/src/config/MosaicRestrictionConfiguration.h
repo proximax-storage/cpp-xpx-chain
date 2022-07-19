@@ -31,7 +31,7 @@ namespace catapult { namespace config {
 	/// Mosaic restriction plugin configuration settings.
 	struct MosaicRestrictionConfiguration : public model::PluginConfiguration  {
 	public:
-		DEFINE_CONFIG_CONSTANTS(restrictionaccount)
+		DEFINE_CONFIG_CONSTANTS(restrictionmosaic)
 	public:
 		/// Whether the plugin is enabled.
 		bool Enabled;

@@ -56,6 +56,9 @@ namespace catapult { namespace plugins {
 
 		auto config = model::LoadPluginConfiguration<config::MosaicRestrictionConfiguration>(
 				manager.config());
+		manager.addPluginInitializer([config](auto& networkConfig) {
+		  networkConfig.template SetPluginConfiguration<config::MosaicRestrictionConfiguration>(config);
+		});
 		manager.addStatefulValidatorHook([maxMosaicRestrictionValues = config.MaxMosaicRestrictionValues](auto& builder) {
 			builder
 				.add(validators::CreateMosaicRestrictionBalanceDebitValidator())
