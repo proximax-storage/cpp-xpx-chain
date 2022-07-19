@@ -494,9 +494,6 @@ namespace catapult { namespace storage {
 			}
 		}
 
-		void storageBlockPublished(const Hash256& eventHash) {
-		}
-
 		void downloadBlockPublished(const Hash256& blockHash) {
 			for (const auto& [channelId, info]: m_alreadyAddedChannels) {
 				if (info.addedAtHeight != m_storageState.getChainHeight()) {
@@ -721,11 +718,6 @@ namespace catapult { namespace storage {
             m_pImpl->closeDrive(driveKey, transactionHash);
     }
 
-    void ReplicatorService::storageBlockPublished(const Hash256& eventHash) {
-		if (m_pImpl) {
-			m_pImpl->storageBlockPublished(eventHash);
-		}
-	}
 
 	void ReplicatorService::downloadBlockPublished(const Hash256& blockHash) {
     	if (m_pImpl) {
