@@ -33,8 +33,8 @@ namespace catapult { namespace validators {
 	/// Validation failed because offer duration exceeded maximum.
 	DEFINE_CATAPULT_EXCHANGESDA_RESULT(Offer_Duration_Too_Large, 6);
 
-	/// Validation failed because offer duration exceeds mosaic duration
-	DEFINE_CATAPULT_EXCHANGESDA_RESULT(Offer_Duration_Exceeds_Mosaic_Duration, 7);
+ 	/// Validation failed because mosaic is not found.
+	DEFINE_CATAPULT_EXCHANGESDA_RESULT(Mosaic_Not_Found, 7);
 
 	/// Validation failed because unit amount is zero.
 	DEFINE_CATAPULT_EXCHANGESDA_RESULT(Zero_Amount, 8);

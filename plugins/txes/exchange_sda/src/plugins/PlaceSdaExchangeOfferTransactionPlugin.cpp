@@ -17,7 +17,7 @@ namespace catapult { namespace plugins {
 
     namespace {
         template<typename TTransaction>
-        void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+        void Publish(const TTransaction& transaction, const Height& height, NotificationSubscriber& sub) {
                 switch (transaction.EntityVersion()) {
                 case 1: {
                     sub.notify(PlaceSdaOfferNotification<1>(
@@ -30,12 +30,18 @@ namespace catapult { namespace plugins {
                     std::map<UnresolvedMosaicId, Amount> lockAmount = {};
                     auto pSdaOffer = transaction.SdaOffersPtr();
                     for (uint8_t i = 0; i < transaction.SdaOfferCount; ++i, ++pSdaOffer) {
-                        auto mosaicId = pSdaOffer->MosaicGive.MosaicId;
-                        if (!lockAmount.count(mosaicId)) {
-                            lockAmount.emplace(mosaicId, pSdaOffer->MosaicGive.Amount);
+                        auto mosaicIdGive = pSdaOffer->MosaicGive.MosaicId;
+                        auto mosaicIdGet = pSdaOffer->MosaicGet.MosaicId;
+
+                        Height maxOfferDuration = height + Height(pSdaOffer->Duration.unwrap());
+                        sub.notify(MosaicActiveNotification<1>(mosaicIdGive, maxOfferDuration));
+                        sub.notify(MosaicActiveNotification<1>(mosaicIdGet, maxOfferDuration));
+
+                        if (!lockAmount.count(mosaicIdGive)) {
+                            lockAmount.emplace(mosaicIdGive, pSdaOffer->MosaicGive.Amount);
                             continue;
                         }
-                        lockAmount.at(mosaicId) = Amount(lockAmount.find(mosaicId)->second.unwrap() + pSdaOffer->MosaicGive.Amount.unwrap());
+                        lockAmount.at(mosaicIdGive) = Amount(lockAmount.find(mosaicIdGive)->second.unwrap() + pSdaOffer->MosaicGive.Amount.unwrap());
                     }
 
                     for (auto lock : lockAmount) {
