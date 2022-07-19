@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <plugins/txes/mosaic/tests/test/MosaicCacheTestUtils.h>
 #include "src/cache/SdaExchangeCache.h"
 #include "src/config/SdaExchangeConfiguration.h"
 #include "src/validators/Validators.h"
@@ -29,28 +28,6 @@ namespace catapult { namespace validators {
             pluginConfig.LongOfferKey = longOfferKey;
             config.Network.SetPluginConfiguration(pluginConfig);
             return (config.ToConst());
-        }
-
-        model::MosaicProperties CreateMosaicPropertiesWithDuration(BlockDuration duration) {
-            model::MosaicProperties::PropertyValuesContainer values{};
-            values[utils::to_underlying_type(model::MosaicPropertyId::Duration)] = duration.unwrap();
-            return model::MosaicProperties::FromValues(values);
-        }
-
-        void AddMosaic(cache::CatapultCacheDelta& cache, MosaicId id, Height height, BlockDuration duration, Amount supply) {
-            auto& mosaicCacheDelta = cache.sub<cache::MosaicCache>();
-            auto definition = state::MosaicDefinition(height, Key(), 1, CreateMosaicPropertiesWithDuration(duration));
-            auto entry = state::MosaicEntry(id, definition);
-            entry.increaseSupply(supply);
-            mosaicCacheDelta.insert(entry);
-        }
-        
-        void AddMosaicEternal(cache::CatapultCacheDelta& cache, MosaicId id, Amount supply) {
-            auto& mosaicCacheDelta = cache.sub<cache::MosaicCache>();
-            auto definition = state::MosaicDefinition(Height(1), Key(), 1,  model::MosaicProperties::FromValues({}));
-            auto entry = state::MosaicEntry(id, definition);
-            entry.increaseSupply(supply);
-            mosaicCacheDelta.insert(entry);
         }
 
         template<typename TTraits>
@@ -84,38 +61,6 @@ namespace catapult { namespace validators {
 
             // Assert:
             EXPECT_EQ(expectedResult, result);
-        }
-
-        template<typename TTraits>
-        void AssertValidationResult(
-            ValidationResult expectedResult,
-            const std::vector<model::SdaOfferWithDuration> offers = {},
-            const Key& signer = test::GenerateRandomByteArray<Key>(),
-            const state::SdaExchangeEntry* pEntry = nullptr,
-            const Key& longOfferKey = test::GenerateRandomByteArray<Key>()) {
-            
-            AssertValidationResultBase<TTraits>(
-                expectedResult,
-                [](cache::CatapultCacheDelta& delta){
-                    AddMosaicEternal(delta, MosaicId(1), Amount(100));
-                    AddMosaicEternal(delta, MosaicId(2), Amount(100));
-                }, offers, signer, pEntry, longOfferKey);
-        }
-
-        template<typename TTraits>
-        void AssertValidationResultExpiringMosaic(
-            ValidationResult expectedResult,
-            const std::vector<model::SdaOfferWithDuration> offers = {},
-            const Key& signer = test::GenerateRandomByteArray<Key>(),
-            const state::SdaExchangeEntry* pEntry = nullptr,
-            const Key& longOfferKey = test::GenerateRandomByteArray<Key>()) {
-            
-            AssertValidationResultBase<TTraits>(
-                expectedResult,
-                [](cache::CatapultCacheDelta& delta){
-                    AddMosaic(delta, MosaicId(1), Height(1), BlockDuration(50), Amount(100));
-                    AddMosaic(delta, MosaicId(2), Height(1), BlockDuration(50),Amount(100));
-                }, offers, signer, pEntry, longOfferKey);
         }
 
         struct SdaOfferBalanceTraits {
@@ -258,39 +203,6 @@ namespace catapult { namespace validators {
                 },
                 offerOwner,
                 &entry,
-                offerOwner);
-        }
-
-        TRAITS_BASED_TEST(SuccessWhenSdaOfferDurationInsideMosaicDuration) {
-            // Arrange:
-            auto offerOwner = test::GenerateRandomByteArray<Key>();
-            state::SdaExchangeEntry entry(offerOwner);
-
-            // Assert:
-            AssertValidationResultExpiringMosaic<TValidatorTraits>(
-                ValidationResult::Success,
-                {
-                    model::SdaOfferWithDuration{model::SdaOffer{{test::UnresolveXor(MosaicId(1)), Amount(100)}, {test::UnresolveXor(MosaicId(2)), Amount(10)}}, BlockDuration(50)},
-                    model::SdaOfferWithDuration{model::SdaOffer{{test::UnresolveXor(MosaicId(2)), Amount(100)}, {test::UnresolveXor(MosaicId(1)), Amount(10)}}, BlockDuration(50)},
-                },
-                offerOwner,
-                &entry,
-                offerOwner);
-        }
-
-        TRAITS_BASED_TEST(FailureWhenSdaOfferDurationExceedMosaicDuration) {
-            // Arrange:
-            auto offerOwner = test::GenerateRandomByteArray<Key>();
-            
-            // Assert:
-            AssertValidationResultExpiringMosaic<TValidatorTraits>(
-                Failure_ExchangeSda_Offer_Duration_Exceeds_Mosaic_Duration,
-                {
-                    model::SdaOfferWithDuration{model::SdaOffer{{test::UnresolveXor(MosaicId(1)), Amount(100)}, {test::UnresolveXor(MosaicId(2)), Amount(10)}}, BlockDuration(1000)},
-                    model::SdaOfferWithDuration{model::SdaOffer{{test::UnresolveXor(MosaicId(2)), Amount(100)}, {test::UnresolveXor(MosaicId(1)), Amount(10)}}, BlockDuration(2000)},
-                },
-                offerOwner,
-                nullptr,
                 offerOwner);
         }
 }}
