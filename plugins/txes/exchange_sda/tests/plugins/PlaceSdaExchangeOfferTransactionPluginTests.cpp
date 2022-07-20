@@ -28,6 +28,7 @@ namespace catapult { namespace plugins {
         DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(PlaceSdaExchangeOffer, 1, 1,)
 
         constexpr auto Sda_Offer_Count = 2u;
+        constexpr auto Lock_Amount_Count = 2u;
 
         template<typename TTraits, VersionType Version>
         auto CreateTransaction(const Key& offerOwner = test::GenerateRandomByteArray<Key>()) {
@@ -92,10 +93,15 @@ namespace catapult { namespace plugins {
             test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
             // Assert:
-            ASSERT_EQ(1 + Sda_Offer_Count, sub.numNotifications());
+            ASSERT_EQ(1 + 2*Sda_Offer_Count + 1*Lock_Amount_Count, sub.numNotifications());
             EXPECT_EQ(expectedPlaceSdaExchangeOfferType, sub.notificationTypes()[0]);
-            for (auto i = 0u; i < Sda_Offer_Count; ++i) {
-                EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i + 1]);
+            auto i = 0u;
+            for (; i < Sda_Offer_Count; ++i) {
+                EXPECT_EQ(Core_Mosaic_Active_v1_Notification, sub.notificationTypes()[2 * i + 1]);
+                EXPECT_EQ(Core_Mosaic_Active_v1_Notification, sub.notificationTypes()[2 * i + 2]);
+            }
+            for (auto j = 1u; j <= Lock_Amount_Count; ++j) {
+                EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[2 * i + j]);
             }
         }
     }
