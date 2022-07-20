@@ -30,6 +30,14 @@ namespace catapult { namespace validators {
             return (config.ToConst());
         }
 
+        void AddMosaicEternal(cache::CatapultCacheDelta& cache, MosaicId id, Amount supply) {
+            auto& mosaicCacheDelta = cache.sub<cache::MosaicCache>();
+            auto definition = state::MosaicDefinition(Height(1), Key(), 1,  model::MosaicProperties::FromValues({}));
+            auto entry = state::MosaicEntry(id, definition);
+            entry.increaseSupply(supply);
+            mosaicCacheDelta.insert(entry);
+        }
+
         template<typename TTraits>
         void AssertValidationResultBase(
                 ValidationResult expectedResult,
@@ -61,6 +69,22 @@ namespace catapult { namespace validators {
 
             // Assert:
             EXPECT_EQ(expectedResult, result);
+        }
+
+        template<typename TTraits>
+        void AssertValidationResult(
+            ValidationResult expectedResult,
+            const std::vector<model::SdaOfferWithDuration> offers = {},
+            const Key& signer = test::GenerateRandomByteArray<Key>(),
+            const state::SdaExchangeEntry* pEntry = nullptr,
+            const Key& longOfferKey = test::GenerateRandomByteArray<Key>()) {
+
+            AssertValidationResultBase<TTraits>(
+                expectedResult,
+                [](cache::CatapultCacheDelta& delta){
+                    AddMosaicEternal(delta, MosaicId(1), Amount(100));
+                    AddMosaicEternal(delta, MosaicId(2), Amount(100));
+                }, offers, signer, pEntry, longOfferKey);
         }
 
         struct SdaOfferBalanceTraits {

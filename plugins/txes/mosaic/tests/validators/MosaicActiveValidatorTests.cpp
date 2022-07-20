@@ -44,7 +44,7 @@ namespace catapult { namespace validators {
         auto notification = model::MosaicActiveNotification<1>(test::UnresolveXor(MosaicId(123)), Height(200));
 
         // Act:
-		auto result = test::ValidateNotification(*pValidator, notification);
+		auto result = test::ValidateNotification(*pValidator, notification, cache, config::BlockchainConfiguration::Uninitialized());
 
         // Assert:
         EXPECT_EQ(Failure_Mosaic_Offer_Duration_Exceeds_Mosaic_Duration, result);
@@ -54,13 +54,13 @@ namespace catapult { namespace validators {
         // Arrange:
         auto cache = test::MosaicCacheFactory::Create();
 		auto delta = cache.createDelta();
-		test::AddMosaic(delta, MosaicId(123), Height(50), BlockDuration(100), Amount());
+		test::AddMosaic(delta, MosaicId(123), Height(250), BlockDuration(100), Amount());
 		cache.commit(Height());
         auto pValidator = CreateMosaicActiveValidator();
         auto notification = model::MosaicActiveNotification<1>(test::UnresolveXor(MosaicId(123)), Height(100));
 
         // Act:
-		auto result = test::ValidateNotification(*pValidator, notification);
+		auto result = test::ValidateNotification(*pValidator, notification, cache, config::BlockchainConfiguration::Uninitialized());
 
         // Assert:
         EXPECT_EQ(ValidationResult::Success, result);
