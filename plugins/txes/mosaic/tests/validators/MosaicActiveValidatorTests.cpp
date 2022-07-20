@@ -16,29 +16,11 @@ namespace catapult { namespace validators {
 
     DEFINE_COMMON_VALIDATOR_TESTS(MosaicActive, )
 
-    namespace {
-        constexpr MosaicId Default_Mosaic_Id = MosaicId(0x1234);
-
-        model::MosaicProperties CreateMosaicPropertiesWithDuration(BlockDuration duration) {
-            model::MosaicProperties::PropertyValuesContainer values{};
-            values[utils::to_underlying_type(model::MosaicPropertyId::Duration)] = duration.unwrap();
-            return model::MosaicProperties::FromValues(values);
-        }
-
-        void AddMosaic(cache::CatapultCacheDelta& cache, MosaicId id, Height height, BlockDuration duration, Amount supply) {
-            auto& mosaicCacheDelta = cache.sub<cache::MosaicCache>();
-            auto definition = state::MosaicDefinition(height, Key(), 1, CreateMosaicPropertiesWithDuration(duration));
-            auto entry = state::MosaicEntry(id, definition);
-            entry.increaseSupply(supply);
-            mosaicCacheDelta.insert(entry);
-        }
-    }
-
-   TEST(TEST_CLASS, FailureWhenSdaOfferDurationExceedMosaicDuration) {
+    TEST(TEST_CLASS, FailureWhenMosaicHasExpired) {
         // Arrange:
         auto cache = test::MosaicCacheFactory::Create();
-		auto delta = cache.createDelta();
-		test::AddMosaic(delta, MosaicId(123), Height(50), BlockDuration(100), Amount());
+        auto delta = cache.createDelta();
+		test::AddMosaic(delta,  MosaicId(123), Height(50), BlockDuration(100), Amount());
 		cache.commit(Height());
         auto pValidator = CreateMosaicActiveValidator();
         auto notification = model::MosaicActiveNotification<1>(test::UnresolveXor(MosaicId(123)), Height(200));
@@ -47,20 +29,36 @@ namespace catapult { namespace validators {
 		auto result = test::ValidateNotification(*pValidator, notification, cache, config::BlockchainConfiguration::Uninitialized());
 
         // Assert:
+        EXPECT_EQ(Failure_Mosaic_Expired, result);
+    }
+
+   TEST(TEST_CLASS, FailureWhenSdaOfferDurationExceedMosaicDuration) {
+        // Arrange:
+        auto cache = test::MosaicCacheFactory::Create();
+        auto delta = cache.createDelta();
+		test::AddMosaic(delta,  MosaicId(123), Height(50), BlockDuration(100), Amount());
+		cache.commit(Height());
+        auto pValidator = CreateMosaicActiveValidator();
+        auto notification = model::MosaicActiveNotification<1>(test::UnresolveXor(MosaicId(123)), Height(151));
+
+        // Act:
+		auto result = test::ValidateNotification(*pValidator, notification, cache, config::BlockchainConfiguration::Uninitialized(), Height(100));
+
+        // Assert:
         EXPECT_EQ(Failure_Mosaic_Offer_Duration_Exceeds_Mosaic_Duration, result);
     }
 
     TEST(TEST_CLASS, SuccessWhenSdaOfferDurationInsideMosaicDuration) {
         // Arrange:
         auto cache = test::MosaicCacheFactory::Create();
-		auto delta = cache.createDelta();
-		test::AddMosaic(delta, MosaicId(123), Height(250), BlockDuration(100), Amount());
+        auto delta = cache.createDelta();
+		test::AddMosaic(delta,  MosaicId(123), Height(50), BlockDuration(100), Amount());
 		cache.commit(Height());
         auto pValidator = CreateMosaicActiveValidator();
-        auto notification = model::MosaicActiveNotification<1>(test::UnresolveXor(MosaicId(123)), Height(100));
+        auto notification = model::MosaicActiveNotification<1>(test::UnresolveXor(MosaicId(123)), Height(150));
 
         // Act:
-		auto result = test::ValidateNotification(*pValidator, notification, cache, config::BlockchainConfiguration::Uninitialized());
+		auto result = test::ValidateNotification(*pValidator, notification, cache, config::BlockchainConfiguration::Uninitialized(), Height(100));
 
         // Assert:
         EXPECT_EQ(ValidationResult::Success, result);
