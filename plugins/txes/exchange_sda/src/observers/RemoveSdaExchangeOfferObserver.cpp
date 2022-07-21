@@ -40,7 +40,7 @@ namespace catapult { namespace observers {
             groupEntry.removeSdaOfferFromGroup(notification.Owner);
 
             model::OfferRemovalReceipt removalReceipt(model::Receipt_Type_Sda_Offer_Removed, entry.owner(), state::MosaicsPair(mosaicIdGive, mosaicIdGet), mosaicAmountGiveBalance);
-            context.StatementBuilder().addPublicKeyReceipt(removalReceipt);
+            context.StatementBuilder().addTransactionReceipt(removalReceipt);
         }
 
         if (entry.empty())

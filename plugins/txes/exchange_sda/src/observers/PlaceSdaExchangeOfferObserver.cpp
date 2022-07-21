@@ -69,7 +69,7 @@ namespace catapult { namespace observers {
             groupEntry.addSdaOfferToGroup(pSdaOffer, notification.Signer, deadline);
 
             model::OfferCreationReceipt creationReceipt(model::Receipt_Type_Sda_Offer_Created, entry.owner(), state::MosaicsPair(mosaicIdGive, mosaicIdGet), pSdaOffer->MosaicGive.Amount, pSdaOffer->MosaicGet.Amount);
-            context.StatementBuilder().addPublicKeyReceipt(creationReceipt);
+            context.StatementBuilder().addTransactionReceipt(creationReceipt);
         }
 
         /// Exchange offers when a match is found in cache
@@ -164,8 +164,10 @@ namespace catapult { namespace observers {
                 }
             }
 
-            model::OfferExchangeReceipt exchangeReceipt(model::Receipt_Type_Sda_Offer_Exchanged, entry.owner(), state::MosaicsPair(offersBySigner.first.first, offersBySigner.first.second), details);
-            context.StatementBuilder().addTransactionReceipt(exchangeReceipt);
+            if (details.size() != 0) {
+                model::OfferExchangeReceipt exchangeReceipt(model::Receipt_Type_Sda_Offer_Exchanged, entry.owner(), state::MosaicsPair(offersBySigner.first.first, offersBySigner.first.second), details);
+                context.StatementBuilder().addTransactionReceipt(exchangeReceipt);
+            }
         }
     });
 }}
