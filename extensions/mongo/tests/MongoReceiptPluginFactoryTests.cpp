@@ -212,17 +212,21 @@ namespace catapult { namespace mongo {
 
 		// Assert:
 		auto view = dbReceipt.view();
-		EXPECT_EQ(5u, test::GetFieldCount(view));
+		EXPECT_EQ(4u, test::GetFieldCount(view));
 
 		EXPECT_EQ(receipt.Sender, test::GetKeyValue(view, "sender"));
 		EXPECT_EQ(receipt.MosaicsPair.first, MosaicId(test::GetUint64(view, "mosaicIdGive")));
 		EXPECT_EQ(receipt.MosaicsPair.second, MosaicId(test::GetUint64(view, "mosaicIdGet")));
-		for (auto& d : receipt.SdaExchangeDetails) {
-			EXPECT_EQ(d.Recipient, test::GetAddressValue(view, "recipient"));
-			EXPECT_EQ(d.MosaicsPair.first, MosaicId(test::GetUint64(view, "mosaicIdGive")));
-			EXPECT_EQ(d.MosaicsPair.second, MosaicId(test::GetUint64(view, "mosaicIdGet")));
-			EXPECT_EQ(d.AmountGive, Amount(test::GetUint64(view, "mosaicAmountGive")));
-			EXPECT_EQ(d.AmountGet, Amount(test::GetUint64(view, "mosaicAmountGet")));
+		auto details = view["exchangeDetails"].get_array().value;
+		ASSERT_EQ(receipt.SdaExchangeDetails.size(), test::GetFieldCount(details));
+		auto i = 0u;
+		for (auto d : details) {
+			const auto& dt = receipt.SdaExchangeDetails[i++];
+			EXPECT_EQ(dt.Recipient, test::GetAddressValue(d, "recipient"));
+			EXPECT_EQ(dt.MosaicsPair.first, MosaicId(test::GetUint64(d, "mosaicIdGive")));
+			EXPECT_EQ(dt.MosaicsPair.second, MosaicId(test::GetUint64(d, "mosaicIdGet")));
+			EXPECT_EQ(dt.AmountGive, Amount(test::GetUint64(d, "mosaicAmountGive")));
+			EXPECT_EQ(dt.AmountGet, Amount(test::GetUint64(d, "mosaicAmountGet")));
 		}
 	}
 
@@ -251,7 +255,7 @@ namespace catapult { namespace mongo {
 
 		// Assert:
 		auto view = dbReceipt.view();
-		EXPECT_EQ(5u, test::GetFieldCount(view));
+		EXPECT_EQ(4u, test::GetFieldCount(view));
 
 		EXPECT_EQ(receipt.Sender, test::GetKeyValue(view, "sender"));
 		EXPECT_EQ(receipt.MosaicsPair.first, MosaicId(test::GetUint64(view, "mosaicIdGive")));
