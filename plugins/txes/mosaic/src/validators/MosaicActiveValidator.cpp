@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 
         // check if a mosaic is active
         if (!cache.isActive(mosaicId, context.Height))
-            return Failure_Mosaic_Expired;
+            return Failure_Mosaic_Invalid_Id;
         
         auto mosaicIter = cache.find(mosaicId);
         const auto& mosaicEntry = mosaicIter.get();
