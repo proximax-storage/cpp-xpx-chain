@@ -6,7 +6,6 @@
 
 #include "Observers.h"
 #include "src/state/StorageStateImpl.h"
-#include <random>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <catapult/utils/StorageUtils.h>
 #include "src/utils/Queue.h"
