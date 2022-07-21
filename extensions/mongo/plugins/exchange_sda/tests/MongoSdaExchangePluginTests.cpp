@@ -6,6 +6,7 @@
 
 #include "mongo/tests/test/MongoPluginTestUtils.h"
 #include "plugins/txes/exchange_sda/src/model/SdaExchangeEntityType.h"
+#include "plugins/txes/exchange_sda/src/model/SdaExchangeReceiptType.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
@@ -23,7 +24,11 @@ namespace catapult { namespace mongo { namespace plugins {
             }
 
             static std::vector<model::ReceiptType> GetReceiptTypes() {
-                return {};
+                return {
+                    model::Receipt_Type_Sda_Offer_Created,
+                    model::Receipt_Type_Sda_Offer_Exchanged,
+                    model::Receipt_Type_Sda_Offer_Removed
+                };
             }
 
             static std::string GetStorageName() {
