@@ -30,6 +30,7 @@
 #include "plugins/txes/transfer/src/plugins/TransferTransactionPlugin.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/RealTransactionFactory.h"
+#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace test {
 
@@ -65,6 +66,7 @@ namespace catapult { namespace test {
 
 		WAIT_FOR(isWriteFinished);
 		CATAPULT_LOG(debug) << " <<< push finished";
+		connection.incrementWriteAttempts();
 		return connection.io();
 	}
 
@@ -100,6 +102,13 @@ namespace catapult { namespace test {
 	std::shared_ptr<ionet::PacketIo> PushValidTransaction(ExternalSourceConnection& connection) {
 		auto recipient = test::GenerateRandomUnresolvedAddress();
 		auto pTransaction = CreateTransferTransaction(GetNemesisAccountKeyPair(), recipient, Amount(10000));
+		return PushEntity(connection, ionet::PacketType::Push_Transactions, std::shared_ptr<model::Transaction>(std::move(pTransaction)));
+	}
+
+	std::shared_ptr<ionet::PacketIo> PushExpiredTransaction(ExternalSourceConnection& connection) {
+		auto recipient = test::GenerateRandomUnresolvedAddress();
+		auto pTransaction = CreateTransferTransaction(GetNemesisAccountKeyPair(), recipient, Amount(10000));
+		pTransaction->Deadline = Timestamp(utils::NetworkTime().unwrap() - 1000);
 		return PushEntity(connection, ionet::PacketType::Push_Transactions, std::shared_ptr<model::Transaction>(std::move(pTransaction)));
 	}
 
