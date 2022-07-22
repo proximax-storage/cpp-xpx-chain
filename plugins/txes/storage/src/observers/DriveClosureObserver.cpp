@@ -36,7 +36,10 @@ namespace catapult { namespace observers {
 
 			// Making payments to replicators, if there is a pending data modification
 			auto& activeDataModifications = driveEntry.activeDataModifications();
-			const auto& replicators = driveEntry.replicators();
+
+			// The value will be used after removing drive entry. That's why the copy is needed
+			const auto replicators = driveEntry.replicators();
+
 			if (!activeDataModifications.empty() && !replicators.empty()) {
 				const auto& modificationSize = activeDataModifications.front().ExpectedUploadSizeMegabytes;
 				const auto totalReplicatorAmount = Amount(
@@ -138,7 +141,7 @@ namespace catapult { namespace observers {
 						replicatorCache.find(key).get().replicatorsSetNode() = node;
 					});
 
-			for (const auto& replicatorKey : driveEntry.replicators()) {
+			for (const auto& replicatorKey : replicators) {
 				auto replicatorIter = replicatorCache.find(replicatorKey);
 				auto& replicatorEntry = replicatorIter.get();
 				replicatorEntry.drives().erase(notification.DriveKey);
