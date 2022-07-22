@@ -74,6 +74,8 @@ namespace catapult { namespace observers {
 					auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / timeSinceLastPayment).template convert_to<uint64_t>());
 					driveState.Balances.debit(storageMosaicId, payment, context.Height);
 					replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);
+
+					info.m_timeInConfirmedStorage = Timestamp(0);
 				}
 
 				if (driveState.Balances.get(storageMosaicId).unwrap() >= driveEntry.size() * driveEntry.replicatorCount()) {

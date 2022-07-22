@@ -62,7 +62,6 @@ namespace catapult { namespace observers {
 				if (info.m_confirmedStorageSince) {
 					info.m_timeInConfirmedStorage =
 							info.m_timeInConfirmedStorage + context.Timestamp - *info.m_confirmedStorageSince;
-					info.m_confirmedStorageSince = context.Timestamp;
 				}
 				BigUint driveSize = driveEntry.size();
 				auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / paymentInterval)
@@ -90,7 +89,7 @@ namespace catapult { namespace observers {
 		  	driveTreeAdapter.remove(notification.DriveKey);
 
 			// Returning the rest to the drive owner
-			const auto currencyRefundAmount = driveState.Balances.get(storageMosaicId);
+			const auto currencyRefundAmount = driveState.Balances.get(currencyMosaicId);
 		  	const auto storageRefundAmount = driveState.Balances.get(storageMosaicId);
 		  	const auto streamingRefundAmount = driveState.Balances.get(streamingMosaicId);
 
