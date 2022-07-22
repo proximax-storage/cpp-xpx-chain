@@ -162,6 +162,7 @@ namespace catapult { namespace utils {
 
 		for (const auto& replicatorKey : offboardingReplicators) {
 			driveEntry.replicators().erase(replicatorKey);
+			driveEntry.formerReplicators().insert(replicatorKey);
 			driveEntry.dataModificationShards().erase(replicatorKey);
 			driveEntry.offboardingReplicators().erase(replicatorKey);
 			driveEntry.confirmedUsedSizes().erase(replicatorKey);
@@ -395,7 +396,14 @@ namespace catapult { namespace utils {
 					replicatorCache.find(key).get().replicatorsSetNode() = node;
 				});
 
+		// Current Replicators of the Drive MUST NOT be assigned to the Drive one more time
 		for (const auto& replicatorKey: driveEntry.replicators()) {
+			std::pair<Amount, Key> keyToRemove = keyExtractor(replicatorKey);
+			treeAdapter.remove(keyToRemove);
+		}
+
+		// Former Replicators of the Drive are banned for this Drive
+		for (const auto& replicatorKey: driveEntry.formerReplicators()) {
 			std::pair<Amount, Key> keyToRemove = keyExtractor(replicatorKey);
 			treeAdapter.remove(keyToRemove);
 		}
@@ -459,6 +467,10 @@ namespace catapult { namespace utils {
 			treeAdapter.insert(replicatorKey);
 		}
 
+		for (const auto& replicatorKey: driveEntry.formerReplicators()) {
+			treeAdapter.insert(replicatorKey);
+		}
+
 		// If the actual number of assigned replicators is less than ordered,
 		// put the drive in the queue:
 		auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
@@ -513,7 +525,6 @@ namespace catapult { namespace utils {
 			auto& originalQueue = driveQueueEntry.priorityQueue();
 			std::priority_queue<state::PriorityPair> newQueue;
 			const auto storageMosaicAmount = replicatorState.Balances.get(storageMosaicId);
-			const auto streamingMosaicAmount = replicatorState.Balances.get(streamingMosaicId);
 			auto remainingCapacity = storageMosaicAmount.unwrap();
 			while (!originalQueue.empty()) {
 				const auto drivePriorityPair = originalQueue.top();
@@ -523,7 +534,9 @@ namespace catapult { namespace utils {
 				auto driveIter = driveCache.find(driveKey);
 				auto& driveEntry = driveIter.get();
 				const auto& driveSize = driveEntry.size();
-				if (driveSize <= remainingCapacity) {
+				bool replicatorIsBanned =
+						driveEntry.formerReplicators().find(replicatorKey) != driveEntry.formerReplicators().end();
+				if (driveSize <= remainingCapacity && !replicatorIsBanned) {
 					// Updating drives() and replicators()
 					const auto& completedDataModifications = driveEntry.completedDataModifications();
 					const auto lastApprovedDataModificationIter = std::find_if(

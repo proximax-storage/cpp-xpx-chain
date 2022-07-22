@@ -13,6 +13,7 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
+#include "catapult/thread/MultiServicePool.h"
 
 #include <map>
 
@@ -97,10 +98,10 @@ namespace catapult { namespace storage {
 				m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local),
 				m_storageState);
 
-//			m_serviceState.pool().pushIsolatedPool().ioContext();
+			auto pool = m_serviceState.pool().pushIsolatedPool("StorageQuery", 1);
 
             m_pReplicatorEventHandler = CreateReplicatorEventHandler(
-//				m_serviceS
+				std::move(pool),
 				std::move(transactionSender),
 				m_storageState,
 				m_transactionStatusHandler,
@@ -493,9 +494,6 @@ namespace catapult { namespace storage {
 			}
 		}
 
-		void storageBlockPublished(const Hash256& eventHash) {
-		}
-
 		void downloadBlockPublished(const Hash256& blockHash) {
 			for (const auto& [channelId, info]: m_alreadyAddedChannels) {
 				if (info.addedAtHeight != m_storageState.getChainHeight()) {
@@ -515,9 +513,7 @@ namespace catapult { namespace storage {
                 const Hash256& modificationId,
                 const Hash256& rootHash,
                 std::vector<Key>& replicators) {
-			std::vector<std::array<uint8_t, 32>> replicatorKeys;
-			for (const auto& key : replicators)
-				replicatorKeys.push_back(key.array());
+			auto replicatorKeys = castReplicatorKeys<std::array<uint8_t, 32>>(replicators);
             m_pReplicator->asyncApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationApprovalTransactionInfo{
 				driveKey.array(),
 				modificationId.array(),
@@ -722,11 +718,6 @@ namespace catapult { namespace storage {
             m_pImpl->closeDrive(driveKey, transactionHash);
     }
 
-    void ReplicatorService::storageBlockPublished(const Hash256& eventHash) {
-		if (m_pImpl) {
-			m_pImpl->storageBlockPublished(eventHash);
-		}
-	}
 
 	void ReplicatorService::downloadBlockPublished(const Hash256& blockHash) {
     	if (m_pImpl) {

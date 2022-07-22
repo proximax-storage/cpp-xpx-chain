@@ -33,13 +33,13 @@ namespace catapult { namespace notification_handlers {
 					pReplicatorService->updateDriveDownloadChannels(notification.DriveKey);
 
 					bool found = false;
-					const Key* pKey = reinterpret_cast<const Key*>(notification.PublicKeysPtr);
-					for (uint i = 0; i < notification.KeyCount && !found; i++) {
-						if (*pKey == pReplicatorService->replicatorKey()) {
-							found = true;
-						}
-					}
-					if (found) {
+					auto pKeyBegin = reinterpret_cast<const Key* const>(notification.PublicKeysPtr);
+
+					std::vector<Key> publicKeys(pKeyBegin, pKeyBegin + notification.KeyCount);
+					auto replicatorIt =
+							std::find(publicKeys.begin(), publicKeys.end(), pReplicatorService->replicatorKey());
+
+					if (replicatorIt != publicKeys.end()) {
 						pReplicatorService->endDriveVerificationPublished(
 								notification.DriveKey, notification.VerificationTrigger);
 					}

@@ -216,7 +216,7 @@ namespace catapult { namespace state {
 			completedModificationsIter->ExpectedUploadSizeMegabytes,
 			completedModificationsIter->ActualUploadSizeMegabytes,
 			signers,
-										   driveEntry.usedSizeBytes()});
+		    driveEntry.usedSizeBytes()});
     }
 
     uint64_t StorageStateImpl::getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) {
