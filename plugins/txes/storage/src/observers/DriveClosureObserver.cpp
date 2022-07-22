@@ -59,12 +59,12 @@ namespace catapult { namespace observers {
 				auto replicatorIter = accountStateCache.find(replicatorKey);
 				auto& replicatorState = replicatorIter.get();
 
-				if (info.m_confirmedStorageSince) {
-					info.m_timeInConfirmedStorage =
-							info.m_timeInConfirmedStorage + context.Timestamp - *info.m_confirmedStorageSince;
+				if (info.ConfirmedStorageSince) {
+					info.TimeInConfirmedStorage =
+							info.TimeInConfirmedStorage + context.Timestamp - *info.ConfirmedStorageSince;
 				}
 				BigUint driveSize = driveEntry.size();
-				auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / paymentInterval)
+				auto payment = Amount(((driveSize * info.TimeInConfirmedStorage.unwrap()) / paymentInterval)
 											  .template convert_to<uint64_t>());
 				driveState.Balances.debit(storageMosaicId, payment, context.Height);
 				replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);

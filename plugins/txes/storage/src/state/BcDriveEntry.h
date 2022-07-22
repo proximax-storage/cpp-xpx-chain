@@ -96,18 +96,18 @@ namespace catapult { namespace state {
 	};
 
 	struct ConfirmedStorageInfo {
-		Timestamp m_timeInConfirmedStorage = Timestamp(0);
-		std::optional<Timestamp> m_confirmedStorageSince;
+		Timestamp TimeInConfirmedStorage = Timestamp(0);
+		std::optional<Timestamp> ConfirmedStorageSince;
 	};
 
 	struct ModificationShardInfo {
-		std::map<Key, uint64_t> m_actualShardMembers;
-		std::map<Key, uint64_t> m_formerShardMembers;
-		uint64_t m_ownerUpload = 0;
+		std::map<Key, uint64_t> ActualShardMembers;
+		std::map<Key, uint64_t> FormerShardMembers;
+		uint64_t OwnerUpload = 0;
 
 		std::set<Key> getActualShardMembersKeys() {
 			std::set<Key> keys;
-			for (const auto& [key, _]: m_actualShardMembers) {
+			for (const auto& [key, _]: ActualShardMembers) {
 				keys.insert(key);
 			}
 		};

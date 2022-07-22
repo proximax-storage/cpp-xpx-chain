@@ -153,7 +153,7 @@ namespace catapult { namespace state {
     	const auto& driveEntry = driveIter.get();
     	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
     	std::vector<Key> keys;
-		for (const auto& [key, _]: shard.m_actualShardMembers) {
+		for (const auto& [key, _]: shard.ActualShardMembers) {
 			keys.push_back(key);
 		}
 		return keys;
@@ -165,7 +165,7 @@ namespace catapult { namespace state {
     	const auto& driveEntry = driveIter.get();
     	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
 
-    	return {shard.m_actualShardMembers, shard.m_formerShardMembers, shard.m_ownerUpload};
+    	return {shard.ActualShardMembers, shard.FormerShardMembers, shard.OwnerUpload };
     }
 
 	std::vector<Key> StorageStateImpl::getRecipientShard(const Key& driveKey, const Key& replicatorKey) {
@@ -176,7 +176,7 @@ namespace catapult { namespace state {
 		std::vector<Key> donatorShard;
 
 		for (const auto& [key, shard]: driveEntry.dataModificationShards()){
-			const auto& actualShard = shard.m_actualShardMembers;
+			const auto& actualShard = shard.ActualShardMembers;
 			if (actualShard.find(replicatorKey) != actualShard.end())
 			{
 				donatorShard.push_back(key);

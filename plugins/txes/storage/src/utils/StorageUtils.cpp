@@ -179,14 +179,14 @@ namespace catapult { namespace utils {
 		for (auto& pair : driveEntry.dataModificationShards()) {
 			auto& shardInfo = pair.second;
 			for (const auto& key : offboardingReplicators)
-				if (shardInfo.m_actualShardMembers.count(key)) {
-					shardInfo.m_actualShardMembers.erase(key);
-					shardInfo.m_formerShardMembers.insert({key, 0});
+				if (shardInfo.ActualShardMembers.count(key)) {
+					shardInfo.ActualShardMembers.erase(key);
+					shardInfo.FormerShardMembers.insert({key, 0});
 				}
-			const auto shardSizeDifference = shardSize - shardInfo.m_actualShardMembers.size();
+			const auto shardSizeDifference = shardSize - shardInfo.ActualShardMembers.size();
 			if (shardSizeDifference > 0) {
 				std::set<Key> existingKeys;
-				for (const auto& [key, _]: shardInfo.m_actualShardMembers) {
+				for (const auto& [key, _]: shardInfo.ActualShardMembers) {
 					existingKeys.insert(key);
 				}
 
@@ -201,7 +201,7 @@ namespace catapult { namespace utils {
 							std::inserter(target, target.end()), shardSizeDifference, rng);
 
 				for (const auto& key: target) {
-					shardInfo.m_actualShardMembers.insert({key, 0});
+					shardInfo.ActualShardMembers.insert({key, 0});
 				}
 			}
 		}
@@ -319,10 +319,10 @@ namespace catapult { namespace utils {
 			// Adding the new replicator to all existing shards
 			for (auto& pair : shardsMap) {
 				auto& shardsPair = pair.second;
-				shardsPair.m_actualShardMembers.insert({replicatorKey, 0});
+				shardsPair.ActualShardMembers.insert({replicatorKey, 0});
 			}
 			// Creating an entry for the new replicator in shardsMap
-			auto& replicatorKeyShard = shardsMap[replicatorKey].m_actualShardMembers;
+			auto& replicatorKeyShard = shardsMap[replicatorKey].ActualShardMembers;
 			for (const auto& key: replicatorsSampleSource) {
 				 replicatorKeyShard.insert({key, 0});
 			}
@@ -335,14 +335,14 @@ namespace catapult { namespace utils {
 			// Updating selected shards
 			for (auto& sampledKey : sampledShardKeys) {
 				auto& shardsPair = shardsMap[sampledKey];
-				if (shardsPair.m_actualShardMembers.size() == pluginConfig.ShardSize) {	// TODO: Remove size check?
+				if (shardsPair.ActualShardMembers.size() == pluginConfig.ShardSize) {	// TODO: Remove size check?
 					const auto replacedKeyIndex = rng() % pluginConfig.ShardSize;
-					auto replacedKeyIter = shardsPair.m_actualShardMembers.begin();
+					auto replacedKeyIter = shardsPair.ActualShardMembers.begin();
 					std::advance(replacedKeyIter, replacedKeyIndex);
-					shardsPair.m_formerShardMembers.insert(*replacedKeyIter);
-					shardsPair.m_actualShardMembers.erase(replacedKeyIter);
+					shardsPair.FormerShardMembers.insert(*replacedKeyIter);
+					shardsPair.ActualShardMembers.erase(replacedKeyIter);
 				}
-				shardsPair.m_actualShardMembers.insert({replicatorKey, 0});
+				shardsPair.ActualShardMembers.insert({replicatorKey, 0});
 			}
 			// Creating an entry for the new replicator in shardsMap
 
@@ -350,7 +350,7 @@ namespace catapult { namespace utils {
 			std::sample(replicatorsSampleSource.begin(), replicatorsSampleSource.end(),
 						std::inserter(target, target.end()), pluginConfig.ShardSize, rng);
 
-			auto& newShardEntry = shardsMap[replicatorKey].m_actualShardMembers;
+			auto& newShardEntry = shardsMap[replicatorKey].ActualShardMembers;
 			for (const auto& key: target) {
 				newShardEntry.insert({key, 0});
 			}
@@ -437,7 +437,7 @@ namespace catapult { namespace utils {
 
 			state::ConfirmedStorageInfo confirmedStorageInfo;
 			if (driveEntry.completedDataModifications().empty()) {
-				confirmedStorageInfo.m_confirmedStorageSince = context.Timestamp;
+				confirmedStorageInfo.ConfirmedStorageSince = context.Timestamp;
 			}
 			driveEntry.confirmedStorageInfos().insert({ replicatorKey, confirmedStorageInfo });
 
@@ -542,7 +542,7 @@ namespace catapult { namespace utils {
 
 					state::ConfirmedStorageInfo confirmedStorageInfo;
 					if (driveEntry.rootHash() == Hash256()) {
-						confirmedStorageInfo.m_confirmedStorageSince = context.Timestamp;
+						confirmedStorageInfo.ConfirmedStorageSince = context.Timestamp;
 					}
 					driveEntry.confirmedStorageInfos().insert({ replicatorKey, confirmedStorageInfo });
 

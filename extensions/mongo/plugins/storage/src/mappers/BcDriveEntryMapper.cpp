@@ -122,9 +122,9 @@ namespace catapult { namespace mongo { namespace plugins {
 			for (const auto& pair : dataModificationShards) {
 				bson_stream::document shardBuilder;
 				shardBuilder << "replicator" << ToBinary(pair.first);
-				StreamUploadInfo("actualShardReplicators", shardBuilder, pair.second.m_actualShardMembers);
-				StreamUploadInfo("formerShardReplicators", shardBuilder, pair.second.m_formerShardMembers);
-				shardBuilder << "ownerUpload" << static_cast<int64_t>(pair.second.m_ownerUpload);
+				StreamUploadInfo("actualShardReplicators", shardBuilder, pair.second.ActualShardMembers);
+				StreamUploadInfo("formerShardReplicators", shardBuilder, pair.second.FormerShardMembers);
+				shardBuilder << "ownerUpload" << static_cast<int64_t>(pair.second.OwnerUpload);
 				array << shardBuilder;
 			}
 
@@ -274,7 +274,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				auto& shardsPair = dataModificationShards[replicatorKey];
 //				ReadUploadInfo(shardsPair.m_actualShardMembers, doc["actualShardReplicators"].get_array().value);
 //				ReadUploadInfo(shardsPair.m_formerShardMembers, doc["formerShardReplicators"].get_array().value);
-				shardsPair.m_ownerUpload = static_cast<uint64_t>(doc["ownerUpload"].get_int64());
+				shardsPair.OwnerUpload = static_cast<uint64_t>(doc["ownerUpload"].get_int64());
 			}
 		}
 	}

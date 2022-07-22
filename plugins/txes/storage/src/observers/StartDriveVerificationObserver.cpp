@@ -94,7 +94,7 @@ namespace catapult { namespace observers {
 			const auto& rootHash = driveEntry.rootHash();
 			for (const auto& key : driveEntry.replicators()) {
 				const auto& confirmedStorageInfo = driveEntry.confirmedStorageInfos()[key];
-				if (confirmedStorageInfo.m_confirmedStorageSince) {
+				if (confirmedStorageInfo.ConfirmedStorageSince) {
 					replicators.emplace_back(key);
 				}
 			}

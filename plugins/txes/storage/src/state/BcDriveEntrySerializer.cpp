@@ -69,9 +69,9 @@ namespace catapult { namespace state {
 		}
 
 		void SaveModificationShardInfo(io::OutputStream& output, const ModificationShardInfo& shard) {
-			SaveUploadInfo(output, shard.m_actualShardMembers);
-			SaveUploadInfo(output, shard.m_formerShardMembers);
-			io::Write64(output, shard.m_ownerUpload);
+			SaveUploadInfo(output, shard.ActualShardMembers);
+			SaveUploadInfo(output, shard.FormerShardMembers);
+			io::Write64(output, shard.OwnerUpload);
 		}
 
 		void SaveVerification(io::OutputStream& output, const std::optional<Verification>& verification) {
@@ -119,10 +119,10 @@ namespace catapult { namespace state {
 			io::Write16(output, infos.size());
 			for (const auto& [key, info]: infos) {
 				io::Write(output, key);
-				io::Write(output, info.m_timeInConfirmedStorage);
-				io::Write8(output, info.m_confirmedStorageSince.has_value());
-				if (info.m_confirmedStorageSince) {
-					io::Write(output, *info.m_confirmedStorageSince);
+				io::Write(output, info.TimeInConfirmedStorage);
+				io::Write8(output, info.ConfirmedStorageSince.has_value());
+				if (info.ConfirmedStorageSince) {
+					io::Write(output, *info.ConfirmedStorageSince);
 				}
 			}
 		}
@@ -245,9 +245,9 @@ namespace catapult { namespace state {
 		}
 
 		void LoadModificationShardInfo(io::InputStream& input, ModificationShardInfo& info) {
-			LoadUploadInfo(input, info.m_actualShardMembers);
-			LoadUploadInfo(input, info.m_formerShardMembers);
-			info.m_ownerUpload = io::Read64(input);
+			LoadUploadInfo(input, info.ActualShardMembers);
+			LoadUploadInfo(input, info.FormerShardMembers);
+			info.OwnerUpload = io::Read64(input);
 		}
 
 		void LoadModificationShards(io::InputStream& input, ModificationShards& dataModificationShards) {
@@ -267,14 +267,14 @@ namespace catapult { namespace state {
 				io::Read(input, key);
 
 				ConfirmedStorageInfo info;
-				io::Read(input, info.m_timeInConfirmedStorage);
+				io::Read(input, info.TimeInConfirmedStorage);
 
 				bool inConfirmed = io::Read8(input);
 
 				if (inConfirmed) {
 					Timestamp confirmedSince;
 					io::Read(input, confirmedSince);
-					info.m_confirmedStorageSince = confirmedSince;
+					info.ConfirmedStorageSince = confirmedSince;
 				}
 
 				infos[key] = info;

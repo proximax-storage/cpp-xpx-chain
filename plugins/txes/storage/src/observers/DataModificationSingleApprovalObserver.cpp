@@ -25,6 +25,6 @@ namespace catapult { namespace observers {
 	  	auto& driveEntry = driveIter.get();
 
 		driveEntry.confirmedUsedSizes()[notification.PublicKey] = driveEntry.usedSizeBytes();
-		driveEntry.confirmedStorageInfos()[notification.PublicKey].m_confirmedStorageSince = context.Timestamp;
+		driveEntry.confirmedStorageInfos()[notification.PublicKey].ConfirmedStorageSince = context.Timestamp;
 	});
 }}

@@ -65,17 +65,16 @@ namespace catapult { namespace observers {
 					auto replicatorIter = accountStateCache.find(replicatorKey);
 					auto& replicatorState = replicatorIter.get();
 
-					if (info.m_confirmedStorageSince) {
-						info.m_timeInConfirmedStorage = info.m_timeInConfirmedStorage
-								+ notification.Timestamp - *info.m_confirmedStorageSince;
-						info.m_confirmedStorageSince = notification.Timestamp;
+					if (info.ConfirmedStorageSince) {
+						info.TimeInConfirmedStorage = info.TimeInConfirmedStorage + notification.Timestamp - *info.ConfirmedStorageSince;
+						info.ConfirmedStorageSince = notification.Timestamp;
 					}
 					BigUint driveSize = driveEntry.size();
-					auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / timeSinceLastPayment).template convert_to<uint64_t>());
+					auto payment = Amount(((driveSize * info.TimeInConfirmedStorage.unwrap()) / timeSinceLastPayment).template convert_to<uint64_t>());
 					driveState.Balances.debit(storageMosaicId, payment, context.Height);
 					replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);
 
-					info.m_timeInConfirmedStorage = Timestamp(0);
+					info.TimeInConfirmedStorage = Timestamp(0);
 				}
 
 				if (driveState.Balances.get(storageMosaicId).unwrap() >= driveEntry.size() * driveEntry.replicatorCount()) {

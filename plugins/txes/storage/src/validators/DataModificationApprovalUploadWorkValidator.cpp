@@ -56,14 +56,14 @@ namespace catapult { namespace validators {
 					const auto judgedKey = notification.PublicKeysPtr[notification.JudgingKeysCount + j];
 
 					uint64_t initialCumulativeUploadSize;
-					if ( auto it = shardsPair.m_actualShardMembers.find(judgedKey); it != shardsPair.m_actualShardMembers.end() ) {
+					if ( auto it = shardsPair.ActualShardMembers.find(judgedKey); it != shardsPair.ActualShardMembers.end() ) {
 						initialCumulativeUploadSize = it->second;
 					}
-					else if (auto it = shardsPair.m_formerShardMembers.find(judgedKey); it != shardsPair.m_formerShardMembers.end()) {
+					else if (auto it = shardsPair.FormerShardMembers.find(judgedKey); it != shardsPair.FormerShardMembers.end()) {
 						initialCumulativeUploadSize = it->second;
 					}
 					else if (judgedKey == driveOwnerPublicKey) {
-						initialCumulativeUploadSize = shardsPair.m_ownerUpload;
+						initialCumulativeUploadSize = shardsPair.OwnerUpload;
 					}
 					else {
 						return Failure_Storage_Opinion_Invalid_Key;
