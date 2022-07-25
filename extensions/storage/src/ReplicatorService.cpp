@@ -560,7 +560,7 @@ namespace catapult { namespace storage {
 
 		void startVerification( const Key& driveKey, const state::DriveVerification& verification ) {
 			sirius::Hash256 verificationTrigger(verification.VerificationTrigger.array());
-			sirius::drive::InfoHash rootHash(verification.RootHash.array());
+			sirius::Hash256 modificationId(verification.ModificationId.array());
 			bool foundShard = false;
 
 			std::set<sirius::Key> flattenShards;
@@ -581,7 +581,7 @@ namespace catapult { namespace storage {
 							driveKey.array(),
 							sirius::drive::VerificationRequest { verificationTrigger,
 																 i,
-																 rootHash,
+																 modificationId,
 																 castReplicatorKeys<sirius::Key>(shardList),
 																 verification.Duration,
 																 flattenShards});
