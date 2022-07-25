@@ -43,12 +43,24 @@ namespace catapult { namespace state {
 			const auto& driveEntry = driveIter.get();
 
 			if (driveEntry.verification()) {
+
+				auto modificationIdIt = std::find_if(
+						driveEntry.completedDataModifications().rbegin(),
+						driveEntry.completedDataModifications().rend(), [] (const auto& item) {
+							return item.State == state::DataModificationState::Succeeded;
+						});
+
+				if ( modificationIdIt == driveEntry.completedDataModifications().rend() ) {
+					CATAPULT_LOG( error ) << "Verification Without Successful Modification";
+					return {};
+				}
+
 				const auto& verification = *driveEntry.verification();
 				return DriveVerification{driveKey,
 				    verification.Duration,
 					verification.expired(blockTimestamp),
 					verification.VerificationTrigger,
-				   	driveEntry.rootHash(),
+				   	modificationIdIt->Id,
 					verification.Shards};
 			}
 

@@ -52,7 +52,7 @@ namespace catapult { namespace state {
 		uint32_t Duration;
 		bool Expired;
 		Hash256 VerificationTrigger;
-		Hash256 RootHash;
+		Hash256 ModificationId;
 		std::vector<std::set<Key>> Shards;
 	};
 

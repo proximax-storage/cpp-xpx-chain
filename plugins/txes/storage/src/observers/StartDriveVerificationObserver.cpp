@@ -79,7 +79,6 @@ namespace catapult { namespace observers {
 			auto& verification = driveEntry.verification();
 			verification = state::Verification();
 
-
 			verification->VerificationTrigger = eventHash;
 
 			auto timeoutMinutes =
@@ -91,7 +90,7 @@ namespace catapult { namespace observers {
 
 			std::vector<Key> replicators;
 			replicators.reserve(driveEntry.replicators().size());
-			const auto& rootHash = driveEntry.rootHash();
+
 			for (const auto& key : driveEntry.replicators()) {
 				const auto& confirmedStorageInfo = driveEntry.confirmedStorageInfos()[key];
 				if (confirmedStorageInfo.ConfirmedStorageSince) {
