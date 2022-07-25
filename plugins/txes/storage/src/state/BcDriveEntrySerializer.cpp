@@ -99,6 +99,12 @@ namespace catapult { namespace state {
 				io::Write(output, replicatorKey);
 		}
 
+		void SaveOffboardingReplicators(io::OutputStream& output, const std::vector<Key>& replicators) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(replicators.size()));
+			for (const auto& replicatorKey : replicators)
+				io::Write(output, replicatorKey);
+		}
+
 		void SaveDownloadShards(io::OutputStream& output, const DownloadShards& downloadShards) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(downloadShards.size()));
 			for (const auto& shard : downloadShards) {
@@ -187,6 +193,15 @@ namespace catapult { namespace state {
 				Key replicatorKey;
 				io::Read(input, replicatorKey);
 				replicators.insert(replicatorKey);
+			}
+		}
+
+		void LoadOffboardingReplicators(io::InputStream& input, std::vector<Key>& replicators) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Key replicatorKey;
+				io::Read(input, replicatorKey);
+				replicators.emplace_back(replicatorKey);
 			}
 		}
 
@@ -305,7 +320,7 @@ namespace catapult { namespace state {
 		SaveConfirmedUsedSizes(output, driveEntry.confirmedUsedSizes());
 		SaveReplicators(output, driveEntry.replicators());
 		SaveReplicators(output, driveEntry.formerReplicators());
-		SaveReplicators(output, driveEntry.offboardingReplicators());
+		SaveOffboardingReplicators(output, driveEntry.offboardingReplicators());
 		SaveDownloadShards(output, driveEntry.downloadShards());
 		SaveModificationShards(output, driveEntry.dataModificationShards());
 		SaveConfirmedStorageInfos(output, driveEntry.confirmedStorageInfos());
@@ -355,7 +370,7 @@ namespace catapult { namespace state {
 		LoadConfirmedUsedSizes(input, entry.confirmedUsedSizes());
 		LoadReplicators(input, entry.replicators());
 		LoadReplicators(input, entry.formerReplicators());
-		LoadReplicators(input, entry.offboardingReplicators());
+		LoadOffboardingReplicators(input, entry.offboardingReplicators());
 		LoadDownloadShards(input, entry.downloadShards());
 		LoadModificationShards(input, entry.dataModificationShards());
 		LoadConfirmedStorageInfos(input, entry.confirmedStorageInfos());

@@ -107,7 +107,7 @@ namespace catapult { namespace observers {
 		struct CacheValues {
 			state::Verification InitialVerification;
 			std::set<Key> InitialReplicators;
-			std::set<Key> InitialOffboardingReplicators;
+			std::vector<Key> InitialOffboardingReplicators;
 			std::map<Key, Amounts> InitialAmounts;
 			std::optional<state::Verification> ExpectedVerification;
 			std::set<Key> ExpectedReplicators;
@@ -140,7 +140,7 @@ namespace catapult { namespace observers {
 			for (const auto& key : cacheValues.InitialReplicators)
 				driveEntry.replicators().insert(key);
 			for (const auto& key : cacheValues.InitialOffboardingReplicators)
-				driveEntry.offboardingReplicators().insert(key);
+				driveEntry.offboardingReplicators().emplace_back(key);
 			bcDriveCache.insert(driveEntry);
 
 			for (const auto& [key, amounts] : cacheValues.InitialAmounts) {

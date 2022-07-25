@@ -124,7 +124,7 @@ namespace catapult { namespace validators {
 		state::ReplicatorEntry replicatorEntry(replicatorKey);
 		state::BcDriveEntry driveEntry(driveKey);
 		driveEntry.replicators().emplace(replicatorKey);
-		driveEntry.offboardingReplicators().emplace(replicatorKey);
+		driveEntry.offboardingReplicators().emplace_back(replicatorKey);
 
 		// Assert:
 		AssertValidationResult(

@@ -73,7 +73,7 @@ namespace catapult { namespace observers {
 		std::vector<state::BcDriveEntry> CreateExpectedDriveEntries(std::vector<state::BcDriveEntry> initialDriveEntries) {
 			for (auto& entry : initialDriveEntries)
 				if (entry.key() == Target_Drive_Key) {
-					entry.offboardingReplicators().emplace(Replicator_Key);
+					entry.offboardingReplicators().emplace_back(Replicator_Key);
 					break;
 				}
 

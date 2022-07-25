@@ -164,7 +164,6 @@ namespace catapult { namespace utils {
 			driveEntry.replicators().erase(replicatorKey);
 			driveEntry.formerReplicators().insert(replicatorKey);
 			driveEntry.dataModificationShards().erase(replicatorKey);
-			driveEntry.offboardingReplicators().erase(replicatorKey);
 			driveEntry.confirmedUsedSizes().erase(replicatorKey);
 			driveEntry.confirmedStates().erase(replicatorKey);
 
@@ -172,6 +171,12 @@ namespace catapult { namespace utils {
 			auto& replicatorEntry = replicatorIter.get();
 			replicatorEntry.drives().erase(driveKey);
 		}
+
+		std::vector<Key> newOffboardingReplicators;
+		for (const auto& replicatorKey : driveEntry.offboardingReplicators())
+			if (!offboardingReplicators.count(replicatorKey))
+				newOffboardingReplicators.emplace_back(replicatorKey);
+		driveEntry.offboardingReplicators() = std::move(newOffboardingReplicators);
 
 		// Replacing keys in other replicators' data modification shards
 		const auto& replicators = driveEntry.replicators();

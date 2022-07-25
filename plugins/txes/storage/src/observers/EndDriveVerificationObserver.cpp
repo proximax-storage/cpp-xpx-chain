@@ -29,7 +29,7 @@ namespace catapult { namespace observers {
 		  	const auto opinionByteCount = (notification.JudgingKeyCount * notification.KeyCount + 7) / 8;
 		  	const boost::dynamic_bitset<uint8_t> opinions(notification.OpinionsPtr, notification.OpinionsPtr + opinionByteCount);
 			std::set<Key> offboardingReplicators;
-		  	std::set<Key> offboardingReplicatorsWithRefund;
+		  	size_t voluntarilyOffboardingCount = 0;
 		  	auto storageDepositSlashing = 0;
 
 			for (auto i = 0; i < notification.KeyCount; ++i) {
@@ -39,11 +39,11 @@ namespace catapult { namespace observers {
 
 				const auto& replicatorKey = shardVec[i];
 				if (result >= notification.JudgingKeyCount / 2) {
-					// If the replicator passes validation and\ is queued for offboarding,
-					// include him into offboardingReplicators and offboardingReplicatorsWithRefund
-					if (driveEntry.offboardingReplicators().count(replicatorKey)) {
-						offboardingReplicators.insert(replicatorKey);
-						offboardingReplicatorsWithRefund.insert(replicatorKey);
+					// If the replicator passes validation and is queued for offboarding,
+					// increment voluntarilyOffboardingCount
+					const auto& keys = driveEntry.offboardingReplicators();
+					if (std::find(keys.begin(), keys.end(), replicatorKey) != keys.end()) {
+						++voluntarilyOffboardingCount;
 					}
 				} else {
 					// Count deposited Storage mosaics and include replicator into offboardingReplicators
@@ -52,10 +52,23 @@ namespace catapult { namespace observers {
 				}
 			}
 
+		  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			const auto requiredReplicatorsCount = pluginConfig.MinReplicatorCount * 2 / 3 + 1;
+			const auto maxVoluntarilyOffboardingCount = std::max(driveEntry.replicators().size()
+																- offboardingReplicators.size()
+																- requiredReplicatorsCount,
+																0ul);
+			voluntarilyOffboardingCount = std::min(voluntarilyOffboardingCount, maxVoluntarilyOffboardingCount);
+			const auto voluntarilyOffboardingReplicators = std::set<Key>(
+					driveEntry.offboardingReplicators().begin(),
+					driveEntry.offboardingReplicators().begin() + voluntarilyOffboardingCount);
+			offboardingReplicators.insert(voluntarilyOffboardingReplicators.begin(),
+										  voluntarilyOffboardingReplicators.end());
+
 			std::seed_seq seed(notification.Seed.begin(), notification.Seed.end());
 			std::mt19937 rng(seed);
 
-		  	utils::RefundDepositsToReplicators(notification.DriveKey, offboardingReplicatorsWithRefund, context);
+		  	utils::RefundDepositsToReplicators(notification.DriveKey, voluntarilyOffboardingReplicators, context);
 			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
 			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
 
