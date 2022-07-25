@@ -70,11 +70,19 @@ namespace catapult { namespace observers {
 			auto iter = driveCache.find(driveKey);
 			auto& driveEntry = iter.get();
 
-			if (driveEntry.rootHash() == Hash256() ||
-				driveEntry.verification() && !driveEntry.verification()->expired(notification.Timestamp)) {
-				// The Verification Has Not Expired Yet
+
+			// The drive hasn't been modified yet
+			if (driveEntry.rootHash() == Hash256())
 				continue;
-			}
+
+			// The verification has not expired yet
+			if (driveEntry.verification() && !driveEntry.verification()->expired(notification.Timestamp))
+				continue;
+
+			// The drive doesn't have enough replicators to work
+			if (driveEntry.replicators().size() < pluginConfig.MinReplicatorCount)
+				continue;
+
 
 			auto& verification = driveEntry.verification();
 			verification = state::Verification();
