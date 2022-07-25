@@ -352,12 +352,12 @@
 		},
 		{
 			"name": "createLiquidityProvider",
-			"type": "16744",
+			"type": "16745",
 			"supportedVersions": [1]
 		},
 		{
 			"name": "manualRateChange",
-			"type": "17000",
+			"type": "17001",
 			"supportedVersions": [1]
 		}
 	]
