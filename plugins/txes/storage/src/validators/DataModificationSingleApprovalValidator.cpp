@@ -12,6 +12,14 @@ namespace catapult { namespace validators {
 	using Notification = model::DataModificationSingleApprovalNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(DataModificationSingleApproval, [](const Notification& notification, const ValidatorContext& context) {
+		const auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		const auto replicatorIter = replicatorCache.find(notification.PublicKey);
+		const auto& pReplicatorEntry = replicatorIter.tryGet();
+
+		// Check if respective replicator exists
+		if (!pReplicatorEntry)
+			return Failure_Storage_Replicator_Not_Found;
+
 	  	const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 	  	const auto driveIter = driveCache.find(notification.DriveKey);
 	  	const auto& pDriveEntry = driveIter.tryGet();
@@ -54,6 +62,11 @@ namespace catapult { namespace validators {
 	  	// Check if respective data modification is the last (newest) among approved data modifications
 		if (lastApprovedDataModification->Id != notification.DataModificationId)
 			return Failure_Storage_Invalid_Data_Modification_Id;
+
+		// Check if respective data modification hasn't already been approved by the replicator
+	  	const auto& driveInfo = pReplicatorEntry->drives().at(notification.DriveKey);
+	  	if (driveInfo.LastApprovedDataModificationId == notification.DataModificationId)
+		  	return Failure_Storage_Transaction_Already_Approved;
 
 		return ValidationResult::Success;
 	});
