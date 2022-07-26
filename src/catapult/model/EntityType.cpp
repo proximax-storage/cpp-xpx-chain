@@ -47,6 +47,7 @@ namespace catapult { namespace model {
 			#include "plugins/txes/account_link/src/model/AccountLinkEntityType.h"
 			#include "plugins/txes/aggregate/src/model/AggregateEntityType.h"
 			#include "plugins/txes/config/src/model/NetworkConfigEntityType.h"
+			#include "plugins/txes/exchange_sda/src/model/SdaExchangeEntityType.h"
 			#include "plugins/txes/lock_hash/src/model/HashLockEntityType.h"
 			#include "plugins/txes/lock_secret/src/model/SecretLockEntityType.h"
 			#include "plugins/txes/metadata/src/model/MetadataEntityType.h"
