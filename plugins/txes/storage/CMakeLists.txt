@@ -5,4 +5,4 @@ set(PLUGIN_DEPS_FOLDERS config cache handlers observers validators utils)
 
 include_directories(.)
 add_subdirectory(src)
-#add_subdirectory(tests)
+add_subdirectory(tests)
