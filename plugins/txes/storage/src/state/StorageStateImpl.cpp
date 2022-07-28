@@ -231,6 +231,27 @@ namespace catapult { namespace state {
 		    driveEntry.usedSizeBytes()});
     }
 
+    std::vector<CompletedModification> StorageStateImpl::getCompletedModifications(const Key& driveKey) {
+    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+    	auto driveIter = pDriveCacheView->find(driveKey);
+    	const auto& driveEntry = driveIter.get();
+
+		std::vector<CompletedModification> completedModifications;
+
+    	for( const auto& modification: driveEntry.completedDataModifications() ) {
+			CompletedModification completedModification;
+			completedModification.ModificationId = modification.Id;
+			if ( modification.State == DataModificationState::Cancelled ) {
+				completedModification.Status = CompletedModification::CompletionStatus::CANCELLED;
+			}
+			else {
+				completedModification.Status = CompletedModification::CompletionStatus::APPROVED;
+			}
+			completedModifications.push_back(completedModification);
+		}
+		return completedModifications;
+    }
+
     uint64_t StorageStateImpl::getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) {
         auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
         auto replicatorIter = pReplicatorCacheView->find(replicatorKey);

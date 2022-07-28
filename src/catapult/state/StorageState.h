@@ -62,6 +62,16 @@ namespace catapult { namespace state {
 		uint64_t m_ownerUpload = 0;
 	};
 
+	struct CompletedModification {
+
+		enum class CompletionStatus {
+			APPROVED, CANCELLED
+		};
+
+		Hash256 			ModificationId;
+		CompletionStatus    Status;
+	};
+
 	/// Interface for storage state.
 	class StorageState : public utils::NonCopyable {
 	public:
@@ -106,6 +116,8 @@ namespace catapult { namespace state {
 //		virtual SizeMap getCumulativeUploadSizesBytes(const Key& driveKey, const Key& replicatorKey) = 0;
 
         virtual std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) = 0;
+
+		virtual std::vector<CompletedModification> getCompletedModifications(const Key& driveKey) = 0;
 
 		virtual uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) = 0;
 

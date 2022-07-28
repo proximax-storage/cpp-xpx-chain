@@ -55,7 +55,11 @@ namespace catapult { namespace mocks {
             return nullptr;
         }
 
-        uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) override {
+		std::vector<state::CompletedModification> getCompletedModifications(const Key& driveKey) override {
+			return std::vector<state::CompletedModification>();
+		}
+
+		uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) override {
             return 0;
         }
 

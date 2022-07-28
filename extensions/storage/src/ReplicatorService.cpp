@@ -254,9 +254,25 @@ namespace catapult { namespace storage {
 			auto recipientShard = castReplicatorKeys<sirius::Key>(m_storageState.getRecipientShard(driveKey, m_keyPair.publicKey()));
             auto downloadWorkBytes = m_storageState.getDownloadWorkBytes(m_keyPair.publicKey(), driveKey);
 
+            auto completedModifications = m_storageState.getCompletedModifications(driveKey);
+
+			std::vector<sirius::drive::CompletedModification> storageCompletedModifications;
+			for (const auto& modification: completedModifications) {
+				sirius::drive::CompletedModification completedModification;
+				completedModification.m_modificationId = modification.ModificationId.array();
+				if (modification.Status == state::CompletedModification::CompletionStatus::CANCELLED) {
+					completedModification.m_status = sirius::drive::CompletedModification::CompletedModificationStatus::CANCELLED;
+				}
+				else {
+					completedModification.m_status = sirius::drive::CompletedModification::CompletedModificationStatus::APPROVED;
+				}
+				storageCompletedModifications.push_back(completedModification);
+			}
+
 			sirius::drive::AddDriveRequest request {
 				utils::FileSize::FromMegabytes(drive.Size).bytes(),
 				downloadWorkBytes,
+				storageCompletedModifications,
 				replicators,
 				m_storageState.getDrive(driveKey).Owner.array(),
 				donatorShard,
