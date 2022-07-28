@@ -36,7 +36,7 @@ namespace catapult { namespace observers {
 				return;
 			}
 
-			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
+			auto paymentIntervalSeconds = pluginConfig.StorageBillingPeriod.seconds();
 
 			// Creating unique eventHash for the observer
 			auto eventHash = getStoragePaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
@@ -46,8 +46,8 @@ namespace catapult { namespace observers {
 				auto driveIter = driveCache.find(queueAdapter.front());
 				auto& driveEntry = driveIter.get();
 
-				auto timeSinceLastPayment = (notification.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
-				if (timeSinceLastPayment < paymentInterval) {
+				auto timeSinceLastPaymentSeconds = (notification.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
+				if (timeSinceLastPaymentSeconds < paymentIntervalSeconds) {
 					break;
 				}
 
@@ -70,7 +70,10 @@ namespace catapult { namespace observers {
 						info.ConfirmedStorageSince = notification.Timestamp;
 					}
 					BigUint driveSize = driveEntry.size();
-					auto payment = Amount(((driveSize * info.TimeInConfirmedStorage.unwrap()) / timeSinceLastPayment).template convert_to<uint64_t>());
+
+					auto timeInConfirmedStorageSeconds = info.TimeInConfirmedStorage.unwrap() / 1000;
+
+					auto payment = Amount(((driveSize * timeInConfirmedStorageSeconds) / timeSinceLastPaymentSeconds).template convert_to<uint64_t>());
 					driveState.Balances.debit(storageMosaicId, payment, context.Height);
 					replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);
 

@@ -55,7 +55,7 @@ namespace catapult { namespace observers {
 
 			const auto& pluginConfig =
 					context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
-			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
+			auto paymentIntervalSeconds = pluginConfig.StorageBillingPeriod.seconds();
 
 			auto timeSinceLastPayment = (context.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
 			for (auto& [replicatorKey, info] : driveEntry.confirmedStorageInfos()) {
@@ -67,7 +67,16 @@ namespace catapult { namespace observers {
 							info.TimeInConfirmedStorage + context.Timestamp - *info.ConfirmedStorageSince;
 				}
 				BigUint driveSize = driveEntry.size();
-				auto payment = Amount(((driveSize * info.TimeInConfirmedStorage.unwrap()) / paymentInterval)
+
+				auto timeInConfirmedStorageSeconds = info.TimeInConfirmedStorage.unwrap() / 1000;
+
+				if ( timeInConfirmedStorageSeconds > paymentIntervalSeconds ) {
+					// It is possible if Drive Closure is executed in the block in which
+					// the PeriodicStoragePayment would process the Drive
+					timeInConfirmedStorageSeconds = paymentIntervalSeconds;
+				}
+
+				auto payment = Amount(((driveSize * timeInConfirmedStorageSeconds) / paymentIntervalSeconds)
 											  .template convert_to<uint64_t>());
 				driveState.Balances.debit(storageMosaicId, payment, context.Height);
 				replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);

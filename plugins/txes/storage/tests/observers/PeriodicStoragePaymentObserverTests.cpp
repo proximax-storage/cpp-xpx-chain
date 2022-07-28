@@ -15,7 +15,7 @@ namespace catapult { namespace observers {
 
     DEFINE_COMMON_OBSERVER_TESTS(PeriodicStoragePayment,)
 
-	const auto billingPeriodSeconds = 20000;
+	const auto billingPeriodMilliseconds = 20000;
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -40,7 +40,7 @@ namespace catapult { namespace observers {
 			config.Immutable.StreamingMosaicId = Streaming_Mosaic_Id;
 
 			auto storageConfig = config::StorageConfiguration::Uninitialized();
-			storageConfig.StorageBillingPeriod = utils::TimeSpan::FromMilliseconds(billingPeriodSeconds);
+			storageConfig.StorageBillingPeriod = utils::TimeSpan::FromMilliseconds(billingPeriodMilliseconds);
 			storageConfig.Enabled = true;
 
 			config.Network.SetPluginConfiguration(storageConfig);
@@ -151,7 +151,7 @@ namespace catapult { namespace observers {
     	// Arrange:
 
     	Timestamp firstTimestamp(10000);
-    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodSeconds);
+    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodMilliseconds);
     	Timestamp secondTimestamp = firstTimestamp;
     	Timestamp thirdTimestamp = notificationTimestamp;
 
@@ -189,7 +189,7 @@ namespace catapult { namespace observers {
     	// Arrange:
 
     	Timestamp firstTimestamp(10000);
-    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodSeconds);
+    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodMilliseconds);
     	Timestamp secondTimestamp = firstTimestamp;
     	Timestamp thirdTimestamp = notificationTimestamp;
 
@@ -214,7 +214,7 @@ namespace catapult { namespace observers {
     	// Arrange:
 
     	Timestamp firstTimestamp(10000);
-    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodSeconds);
+    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodMilliseconds);
     	Timestamp secondTimestamp = firstTimestamp;
     	Timestamp thirdTimestamp = notificationTimestamp;
 
@@ -249,7 +249,7 @@ namespace catapult { namespace observers {
 
     TEST(TEST_CLASS, PeriodicStoragePayment_NoDrives) {
     	// Arrange:
-    	Timestamp notificationTimestamp = Timestamp(billingPeriodSeconds);
+    	Timestamp notificationTimestamp = Timestamp(billingPeriodMilliseconds);
 
     	std::vector<state::BcDriveEntry> initialEntries = {};
     	std::vector<Key> expectedKeys = {};
