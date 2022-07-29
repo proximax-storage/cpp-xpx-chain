@@ -74,14 +74,15 @@ namespace catapult { namespace test {
 				, m_partnerTempDir("lntc_partner" + tempDirPostfix) {
 			initializeDataDirectory(m_tempDir.name());
 
-			if (HasFlag(NodeFlag::With_Partner, nodeFlag)) {
-				initializeDataDirectory(m_partnerTempDir.name());
+			if (!HasFlag(NodeFlag::Require_Explicit_Partner_Boot, nodeFlag))
+				if (HasFlag(NodeFlag::With_Partner, nodeFlag)) {
+					initializeDataDirectory(m_partnerTempDir.name());
 
-				// need to call configTransform first so that partner node loads all required transaction plugins
-				auto config = CreatePrototypicalBlockchainConfiguration(m_partnerTempDir.name());
-				m_configTransform(config);
-				m_pLocalPartnerNode = BootLocalPartnerNode(std::move(config), m_partnerServerKeyPair, nodeFlag);
-			}
+					// need to call configTransform first so that partner node loads all required transaction plugins
+					auto config = CreatePrototypicalBlockchainConfiguration(m_partnerTempDir.name());
+					m_configTransform(config);
+					m_pLocalPartnerNode = BootLocalPartnerNode(std::move(config), m_partnerServerKeyPair, nodeFlag);
+				}
 
 			if (!HasFlag(NodeFlag::Require_Explicit_Boot, nodeFlag))
 				boot();
@@ -119,6 +120,11 @@ namespace catapult { namespace test {
 			return *m_pLocalNode;
 		}
 
+		/// Gets the local partner node.
+		local::LocalNode& partnerNode() const {
+			return *m_pLocalPartnerNode;
+		}
+
 		/// Gets the node stats.
 		auto stats() const {
 			return TTraits::CountersToLocalNodeStats(m_pLocalNode->counters());
@@ -145,6 +151,15 @@ namespace catapult { namespace test {
 			auto config = CreatePrototypicalBlockchainConfiguration(directory);
 			prepareNetworkConfiguration(config);
 			return config;
+		}
+
+		void bootPartnerNode() {
+			initializeDataDirectory(m_partnerTempDir.name());
+
+			// need to call configTransform first so that partner node loads all required transaction plugins
+			auto config = CreatePrototypicalBlockchainConfiguration(m_partnerTempDir.name());
+			m_configTransform(config);
+			m_pLocalPartnerNode = BootLocalPartnerNode(std::move(config), m_partnerServerKeyPair, NodeFlag::Require_Explicit_Partner_Boot);
 		}
 
 	public:

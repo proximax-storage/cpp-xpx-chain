@@ -23,6 +23,7 @@
 #include "CacheSizeLogger.h"
 #include "catapult/model/EntityInfo.h"
 #include "catapult/model/FeeUtils.h"
+#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace cache {
 
@@ -92,6 +93,8 @@ namespace catapult { namespace cache {
 		uint64_t totalSize = 0;
 		UnknownTransactions transactions;
 		for (const auto& data : m_transactionDataContainer) {
+			if (data.pEntity->Deadline <= utils::NetworkTime())
+				continue;
 			if (data.pEntity->MaxFee < model::CalculateTransactionFee(minFeeMultiplier, *data.pEntity, feeInterest, feeInterestDenominator))
 				continue;
 
@@ -144,8 +147,8 @@ namespace catapult { namespace cache {
 				if (m_maxCacheSize <= m_transactionDataContainer.size())
 					return false;
 
-				if (m_idLookup.cend() != m_idLookup.find(transactionInfo.EntityHash))
-					return false;
+				// if (m_idLookup.cend() != m_idLookup.find(transactionInfo.EntityHash))
+				// 	return false;
 
 				m_idLookup.emplace(transactionInfo.EntityHash, ++m_idSequence);
 				m_transactionDataContainer.emplace(transactionInfo, m_idSequence);

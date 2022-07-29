@@ -48,6 +48,9 @@ namespace catapult { namespace test {
 		/// Gets the primary (first) local node.
 		local::LocalNode& localNode() const;
 
+		/// Gets the local partner node.
+		local::LocalNode& partnerNode() const;
+
 		/// Gets the data directory.
 		std::string dataDirectory() const;
 
@@ -66,6 +69,9 @@ namespace catapult { namespace test {
 
 		/// Prepares a fresh data \a directory and returns corresponding configuration.
 		config::BlockchainConfiguration prepareFreshDataDirectory(const std::string& directory) const;
+
+		// boot partner node explicitly
+		void bootPartnerNode();
 
 	public:
 		/// Asserts that node has a single reader connection.

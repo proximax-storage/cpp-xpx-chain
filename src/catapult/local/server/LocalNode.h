@@ -21,6 +21,9 @@
 #pragma once
 #include "catapult/local/ProcessHost.h"
 #include "catapult/utils/DiagnosticCounter.h"
+#include "catapult/cache_tx/MemoryUtCache.h"
+#include "catapult/extensions/ServiceState.h"
+#include "catapult/extensions/ServiceLocator.h"
 #include <memory>
 #include <vector>
 
@@ -74,6 +77,15 @@ namespace catapult { namespace local {
 	public:
 		/// Gets the current cache.
 		virtual const cache::CatapultCache& cache() const = 0;
+
+		/// Gets the current MemoryUtCacheProxy
+		virtual cache::MemoryUtCacheProxy& utCache() const = 0;
+
+		/// Gets the current service state 
+		virtual extensions::ServiceState& serviceState() const = 0;
+
+		/// Gets the current service locator 
+		virtual const extensions::ServiceLocator& serviceLocator() const = 0;
 
 		/// Gets the current chain score.
 		virtual model::ChainScore score() const = 0;

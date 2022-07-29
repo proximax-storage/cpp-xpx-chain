@@ -31,6 +31,16 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/RealTransactionFactory.h"
 #include "catapult/utils/NetworkTime.h"
+#include "catapult/net/PacketWriters.h"
+#include "catapult/api/LocalChainApi.h"
+#include "catapult/api/RemoteChainApi.h"
+#include "catapult/api/RemoteTransactionApi.h"
+#include "catapult/chain/UtSynchronizer.h"
+#include "catapult/config/BlockchainConfiguration.h"
+#include "catapult/extensions/LocalNodeChainScore.h"
+#include "catapult/extensions/PeersConnectionTasks.h"
+#include "catapult/extensions/SynchronizerTaskCallbacks.h"
+#include "catapult/thread/Task.h"
 
 namespace catapult { namespace test {
 
@@ -99,17 +109,56 @@ namespace catapult { namespace test {
 	}
 
 	std::shared_ptr<ionet::PacketIo> PushValidTransaction(ExternalSourceConnection& connection) {
-		auto recipient = test::GenerateRandomUnresolvedAddress();
-		auto pTransaction = CreateTransferTransaction(GetNemesisAccountKeyPair(), recipient, Amount(10000));
+		auto pTransaction = createValidTransaction();
 		return PushEntity(connection, ionet::PacketType::Push_Transactions, std::shared_ptr<model::Transaction>(std::move(pTransaction)));
 	}
 
 	std::shared_ptr<ionet::PacketIo> PushExpiredTransaction(ExternalSourceConnection& connection) {
-		auto recipient = test::GenerateRandomUnresolvedAddress();
-		auto pTransaction = CreateTransferTransaction(GetNemesisAccountKeyPair(), recipient, Amount(10000));
-		pTransaction->Deadline = Timestamp(utils::NetworkTime().unwrap() - 1000);
+		auto pTransaction = createExpiredTransaction();
 		return PushEntity(connection, ionet::PacketType::Push_Transactions, std::shared_ptr<model::Transaction>(std::move(pTransaction)));
 	}
+
+	model::UniqueEntityPtr<model::Transaction> createValidTransaction() {
+		auto recipient = test::GenerateRandomUnresolvedAddress();
+		auto pTransaction = CreateTransferTransaction(GetNemesisAccountKeyPair(), recipient, Amount(10000));
+		return pTransaction;
+	}
+
+	model::UniqueEntityPtr<model::Transaction> createExpiredTransaction() {
+		auto pTransaction = createValidTransaction();
+		pTransaction->Deadline = Timestamp(utils::NetworkTime().unwrap() - 1000);
+		return pTransaction;
+	}
+
+	std::shared_ptr<net::PacketWriters> GetPacketWriters(const extensions::ServiceLocator& locator) {
+		return locator.service<net::PacketWriters>("writers");
+	}
+
+	thread::Task CreatePullUtTask(const extensions::ServiceState& state, net::PacketWriters& packetWriters) {
+		auto utSynchronizer = chain::CreateUtSynchronizer(
+				[pConfigHolder = state.pluginManager().configHolder()]() {
+					return config::GetMinFeeMultiplier(pConfigHolder->Config());
+				},
+				[&cache = state.utCache()]() { return cache.view().shortHashes(); },
+				state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Remote_Pull));
+
+		thread::Task task;
+		task.Name = "pull unconfirmed transactions task";
+		task.Callback = CreateChainSyncAwareSynchronizerTaskCallback(
+				std::move(utSynchronizer),
+				api::CreateRemoteTransactionApi,
+				packetWriters,
+				state,
+				task.Name);
+		return task;
+	}
+
+	void pullUnconfirmedTransactions(const extensions::ServiceLocator& locator, extensions::ServiceState& state) {
+		auto& packetWriters = *GetPacketWriters(locator);
+		auto task = CreatePullUtTask(state, packetWriters);
+		task.Callback();
+	}
+
 
 	// endregion
 

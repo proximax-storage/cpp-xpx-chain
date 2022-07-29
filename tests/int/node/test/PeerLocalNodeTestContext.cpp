@@ -67,6 +67,10 @@ namespace catapult { namespace test {
 		return m_context.localNode();
 	}
 
+	local::LocalNode& PeerLocalNodeTestContext::partnerNode() const {
+		return m_context.partnerNode();
+	}
+
 	std::string PeerLocalNodeTestContext::dataDirectory() const {
 		return m_context.dataDirectory();
 	}
@@ -91,6 +95,11 @@ namespace catapult { namespace test {
 
 	config::BlockchainConfiguration PeerLocalNodeTestContext::prepareFreshDataDirectory(const std::string& directory) const {
 		return m_context.prepareFreshDataDirectory(directory);
+	}
+
+	
+	void PeerLocalNodeTestContext::bootPartnerNode() {
+		m_context.bootPartnerNode();
 	}
 
 	void PeerLocalNodeTestContext::assertSingleReaderConnection() const {

@@ -70,7 +70,9 @@ namespace catapult { namespace test {
 		Require_Explicit_Boot = 256,
 
 		/// Node supporting auto sync cleanup.
-		Auto_Sync_Cleanup = 512
+		Auto_Sync_Cleanup = 512,
+
+		Require_Explicit_Partner_Boot = 1024
 	};
 
 	MAKE_BITWISE_ENUM(NodeFlag)

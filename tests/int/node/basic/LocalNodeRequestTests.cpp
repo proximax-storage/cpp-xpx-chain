@@ -23,6 +23,8 @@
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
 #include "tests/int/node/test/PeerLocalNodeTestContext.h"
 #include "tests/TestHarness.h"
+#include "catapult/model/EntityInfo.h"
+#include "catapult/utils/MemoryUtils.h"
 
 namespace catapult { namespace local {
 
@@ -158,9 +160,64 @@ namespace catapult { namespace local {
 		context.assertSingleReaderConnection();
 	}
 
+	TEST(TEST_CLASS, ExpiredTransactionNotPushedToLocalNode) {
+		// Arrange:
+		TestContext context;
+		test::WaitForBoot(context);
+
+		// Act:
+		test::ExternalSourceConnection connection;
+		auto pIo = test::PushExpiredTransaction(connection);
+		WAIT_FOR_ONE_EXPR(connection.writeAttempts());
+
+		// Assert: no transaction element was added
+		auto stats = context.stats();
+		EXPECT_EQ(0u, stats.NumAddedBlockElements);
+		EXPECT_EQ(0u, stats.NumAddedTransactionElements);
+
+		// - the connection is still active
+		context.assertSingleReaderConnection();
+	}
 	// endregion
 
 	// region pull
+
+	
+	TEST(TEST_CLASS, ExpiredTransactionNotPulledToLocalNode) {
+		// Arrange:
+		TestContext context;
+		test::Sleep(5000);
+
+		// Act: 
+
+		// // Sanity: 1st local node has zero unconfirmed transaction
+		
+		EXPECT_EQ(0u, context.localNode().serviceState().utCache().modifier().size());
+
+		//add valid transaction to first local node
+		auto pTransaction1 = utils::UniqueToShared(test::createValidTransaction());
+		model::TransactionInfo transactionInfo1(pTransaction1, Height(123));
+		EXPECT_EQ(true, context.localNode().serviceState().utCache().modifier().add(transactionInfo1));
+
+		// // // Sanity: 1st local node has one unconfirmed transaction
+		EXPECT_EQ(1u, context.localNode().serviceState().utCache().modifier().size());
+
+		// // //add expired transaction to first local node
+		auto pTransaction2 = utils::UniqueToShared(test::createExpiredTransaction());
+		model::TransactionInfo transactionInfo2(pTransaction2, Height(123));
+		EXPECT_EQ(true, context.localNode().serviceState().utCache().modifier().add(transactionInfo2));
+
+		// // Sanity: 1st local node has two unconfirmed transactions
+		EXPECT_EQ(2u, context.localNode().serviceState().utCache().modifier().size());
+
+		// Act: reboot local partner node
+		// context.bootPartnerNode();
+		test::pullUnconfirmedTransactions(context.partnerNode().serviceLocator(), context.partnerNode().serviceState());
+		test::Sleep(5000);
+
+		// Assert: only the expired transaction is not pulled
+		EXPECT_EQ(1u, context.partnerNode().serviceState().utCache().modifier().size());
+	}
 
 	CHAIN_API_INT_VALID_TRAITS_BASED_TEST(CanGetResponse) {
 		// Assert: the connection is still active

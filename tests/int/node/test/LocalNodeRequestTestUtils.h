@@ -34,6 +34,9 @@
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/other/RemoteApiFactory.h"
+#include "catapult/extensions/ServiceLocator.h"
+#include "catapult/net/PacketWriters.h"
+#include "catapult/thread/Task.h"
 
 namespace catapult { namespace test {
 
@@ -145,6 +148,22 @@ namespace catapult { namespace test {
 
 	/// Pushes an expired transaction to \a connection.
 	std::shared_ptr<ionet::PacketIo> PushExpiredTransaction(ExternalSourceConnection& connection);
+
+	// creat a valid transaction
+	model::UniqueEntityPtr<model::Transaction> createValidTransaction();
+
+	// create an expired transaction
+	model::UniqueEntityPtr<model::Transaction> createExpiredTransaction();
+
+	std::shared_ptr<net::PacketWriters> GetPacketWriters(const extensions::ServiceLocator& locator);
+
+	thread::Task CreatePullUtTask(const extensions::ServiceState& state, net::PacketWriters& packetWriters);
+
+
+
+	// pull unconfirmed transaction given \a locator and \a state
+	void pullUnconfirmedTransactions(const extensions::ServiceLocator& locator, extensions::ServiceState& state);
+
 
 	// endregion
 

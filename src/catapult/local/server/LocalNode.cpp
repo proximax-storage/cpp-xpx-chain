@@ -213,6 +213,18 @@ namespace catapult { namespace local {
 				return m_cacheHolder.cache();
 			}
 
+			cache::MemoryUtCacheProxy& utCache() const override {
+				return *m_pUtCache;
+			}
+
+			extensions::ServiceState& serviceState() const override {
+				return *m_pServiceState;
+			}
+
+			const extensions::ServiceLocator& serviceLocator() const override {
+				return m_serviceLocator;
+			}
+
 			model::ChainScore score() const override {
 				return m_score.get();
 			}
