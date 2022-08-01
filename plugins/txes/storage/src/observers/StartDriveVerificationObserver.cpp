@@ -57,7 +57,7 @@ namespace catapult { namespace observers {
 
 		// There can be maximum 1 additional verification. It matters for the case when there are few drives
 		auto r = rng() % verificationFactor;
-		uint32_t additionalVerifications = r < (totalDrives % verificationFactor) ? 1 : 0;
+		uint32_t additionalVerifications = 1;//r < (totalDrives % verificationFactor) ? 1 : 0;
 
 		auto drivesToVerify = guaranteedVerifications + additionalVerifications;
 
@@ -90,9 +90,9 @@ namespace catapult { namespace observers {
 			verification->VerificationTrigger = eventHash;
 
 			auto timeoutMinutes =
-				pluginConfig.VerificationExpirationCoefficient *
-					utils::FileSize::FromBytes(driveEntry.usedSizeBytes()).gigabytesCeil() +
-				pluginConfig.VerificationExpirationConstant;
+				static_cast<uint64_t>(pluginConfig.VerificationExpirationCoefficient *
+					static_cast<double>(utils::FileSize::FromBytes(driveEntry.usedSizeBytes()).gigabytesCeil()) +
+				pluginConfig.VerificationExpirationConstant);
 			verification->Expiration = notification.Timestamp + Timestamp(timeoutMinutes * 60 * 1000);
 			verification->Duration = uint64_t(timeoutMinutes * 60 * 1000);
 

@@ -7,6 +7,7 @@
 #pragma GCC diagnostic error "-Wmissing-field-initializers"
 
 #include "ReplicatorService.h"
+#include "drive/RpcReplicator.h"
 #include "ReplicatorEventHandler.h"
 #include "TransactionSender.h"
 #include "TransactionStatusHandler.h"
@@ -114,17 +115,35 @@ namespace catapult { namespace storage {
 				bootstrapReplicators.emplace_back(sirius::drive::ReplicatorInfo{ endpoint, node.identityKey().array() });
 			}
 
-            m_pReplicator = sirius::drive::createDefaultReplicator(
-				reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
-				std::string(storageConfig.Host), // TODO: do not use move semantics.
-				std::string(storageConfig.Port), // TODO: do not use move semantics.
-				std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
-				std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
-				bootstrapReplicators,
-				storageConfig.UseTcpSocket,
-				*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
-				nullptr,
-				Service_Name);
+			if (useRPCReplicator()) {
+				m_pReplicator = sirius::drive::createRpcReplicator(
+						"127.0.0.1",
+						5001, // TODO read from config
+						reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
+						std::string(storageConfig.Host), // TODO: do not use move semantics.
+						std::string(storageConfig.Port), // TODO: do not use move semantics.
+						std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
+						std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
+						bootstrapReplicators,
+						storageConfig.UseTcpSocket,
+						*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
+						nullptr,
+						Service_Name);
+			}
+			else {
+				m_pReplicator = sirius::drive::createDefaultReplicator(
+						reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
+						std::string(storageConfig.Host), // TODO: do not use move semantics.
+						std::string(storageConfig.Port), // TODO: do not use move semantics.
+						std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
+						std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
+						bootstrapReplicators,
+						storageConfig.UseTcpSocket,
+						*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
+						nullptr,
+						Service_Name);
+			}
+
 
 			m_pReplicatorEventHandler->setReplicator(m_pReplicator);
 			m_pReplicator->start();
@@ -568,11 +587,19 @@ namespace catapult { namespace storage {
             m_transactionStatusHandler.handle(hash, status);
         }
 
+		bool isAlive() {
+        	return !m_pReplicator->isConnectionLost();
+		}
+
         void stop() {
 			m_pReplicator.reset();
         }
 
     private:
+
+		bool useRPCReplicator() {
+			return true;
+		}
 
 		void startVerification( const Key& driveKey, const state::DriveVerification& verification ) {
 			sirius::Hash256 verificationTrigger(verification.VerificationTrigger.array());
@@ -663,6 +690,10 @@ namespace catapult { namespace storage {
             m_pImpl.reset();
         }
     }
+//
+//    void ReplicatorService::restart() {
+//
+//	}
 
     const Key& ReplicatorService::replicatorKey() const {
         return m_keyPair.publicKey();
@@ -678,9 +709,15 @@ namespace catapult { namespace storage {
             const Hash256& modificationId,
             const Key& owner,
             uint64_t dataSizeMegabytes) {
-        if (m_pImpl)
-        	m_pImpl->addDriveModification(driveKey, downloadDataCdi, modificationId, owner, dataSizeMegabytes);
-    }
+        if (m_pImpl) {
+			m_pImpl->addDriveModification(driveKey, downloadDataCdi, modificationId, owner, dataSizeMegabytes);
+			if (!m_pImpl->isAlive()) {
+				stop();
+				sleep(2); // TODO
+				start();
+			}
+		}
+	}
 
     void ReplicatorService::removeDriveModification(const Key& driveKey, const Hash256& dataModificationId) {
         if (m_pImpl)
