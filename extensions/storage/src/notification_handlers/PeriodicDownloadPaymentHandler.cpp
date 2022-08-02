@@ -12,8 +12,8 @@ namespace catapult { namespace notification_handlers {
 
 	using Notification = model::BlockNotification<1>;
 
-	DECLARE_HANDLER(DownloadChannelPayment, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(DownloadChannelPayment, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
+	DECLARE_HANDLER(PeriodicDownloadPayment, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
+		return MAKE_HANDLER(PeriodicDownloadPayment, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
