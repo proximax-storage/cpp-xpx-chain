@@ -401,7 +401,15 @@ namespace catapult { namespace storage {
 		void updateDownloadChannelReplicators(const Hash256& channelId) {
         	CATAPULT_LOG(debug) << "update channel replicators" << channelId;
 
-        	auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(channelId.array()));
+        	auto pChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), channelId);
+
+			if (!pChannel) {
+				CATAPULT_LOG( error ) << "Attempt To Update Channel Which Replicator Is Not Asigned To";
+				return;
+			}
+
+        	auto replicators = castReplicatorKeys<sirius::Key>(pChannel->Replicators);
+
 			m_pReplicator->asyncSetChanelShard(channelId.array(), replicators);
 		}
 

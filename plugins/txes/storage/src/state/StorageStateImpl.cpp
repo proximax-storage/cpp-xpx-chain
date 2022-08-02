@@ -270,14 +270,9 @@ namespace catapult { namespace state {
         auto channelIter = pDownloadChannelCacheView->find(id);
         const auto& channelEntry = channelIter.get();
 
-		const auto& cumulativePayments = channelEntry.cumulativePayments();
-		if (cumulativePayments.find(replicatorKey) == cumulativePayments.end())
+        const auto& replicators = channelEntry.shardReplicators();
+        if (replicators.find(replicatorKey) == replicators.end())
 			return nullptr;
-
-		std::vector<Key> replicators;
-		replicators.reserve(cumulativePayments.size());
-		for (const auto& pair : cumulativePayments)
-			replicators.emplace_back(pair.first);
 
         auto consumers = channelEntry.listOfPublicKeys();
         consumers.emplace_back(channelEntry.consumer());
@@ -286,7 +281,7 @@ namespace catapult { namespace state {
 			channelEntry.id(),
 			channelEntry.downloadSize(),
 			consumers,
-			replicators,
+			{replicators.begin(), replicators.end()},
 			channelEntry.drive(),
 			channelEntry.downloadApprovalInitiationEvent(),
 		});
