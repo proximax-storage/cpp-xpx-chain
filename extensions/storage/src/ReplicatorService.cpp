@@ -196,7 +196,6 @@ namespace catapult { namespace storage {
 			}
 
 			m_alreadyAddedChannels[channelId] = {pChannel->DriveKey, m_storageState.getChainHeight()};
-			m_driveChannels[pChannel->DriveKey].insert(channelId);
         }
 
 		void removeDownloadChannel(const Hash256& channelId) {
@@ -207,9 +206,7 @@ namespace catapult { namespace storage {
 				return;
 			}
 
-			auto driveKey = m_alreadyAddedChannels[channelId].driveKey;
 			m_alreadyAddedChannels.erase(channelId);
-			m_driveChannels[driveKey].erase(channelId);
 
 			m_pReplicator->asyncRemoveDownloadChannelInfo(channelId.array());
 		}
@@ -314,7 +311,7 @@ namespace catapult { namespace storage {
 
 		void removeDrive(const Key& driveKey)
 		{
-        	CATAPULT_LOG(debug) << "maybe remove drive " << driveKey;
+        	CATAPULT_LOG(debug) << "remove drive " << driveKey;
 
 			m_pReplicator->asyncRemoveDrive(driveKey.array());
 			m_alreadyAddedDrives.erase(driveKey);
@@ -425,18 +422,23 @@ namespace catapult { namespace storage {
 				}
 			}
 
+			std::set<Hash256> channelsToRemove;
+
 			for (const auto& [channel, _]: m_alreadyAddedChannels) { // Or iterate on only Drive Channels
 				if (m_storageState.downloadChannelExists(channel) && !isAssignedToChannel(channel)) {
 					// The Replicator Has Been Removed From the Channel but the Channel still exists
-					removeDownloadChannel(channel);
+					channelsToRemove.insert(channel);
 				}
+			}
+
+			for (const auto& channelId: channelsToRemove) {
+				removeDownloadChannel(channelId);
 			}
 		}
 
 		void exploreNewReplicatorDrives() {
         	auto drives = m_storageState.getReplicatorDriveKeys(m_keyPair.publicKey());
 
-        	std::set<Key> newlyRemovedDrives;
         	for (const auto& blockchainDriveKey: drives) {
         		if (m_alreadyAddedDrives.find(blockchainDriveKey) == m_alreadyAddedDrives.end()) {
         			// We are assigned to Drive, but it is not added
@@ -455,11 +457,16 @@ namespace catapult { namespace storage {
 
 			exploreNewReplicatorDrives();
 
+			std::set<Key> drivesToClose;
         	for (const auto& [addedDriveKey, _]: m_alreadyAddedDrives) {
         		if (!m_storageState.driveExists(addedDriveKey)) {
-        			closeDrive(addedDriveKey, eventHash);
+					drivesToRemove.insert(addedDriveKey);
         		}
         	}
+
+        	for (const auto& key: drivesToClose) {
+				closeDrive(key, eventHash);
+			}
 		}
 
 		void updateReplicatorDownloadChannels() {
@@ -476,10 +483,16 @@ namespace catapult { namespace storage {
 				}
 			}
 
+			std::set<Hash256> channelsToRemove;
+
 			for (const auto& [channelId, _]: m_alreadyAddedChannels) {
 				if (!m_storageState.isReplicatorAssignedToChannel(m_keyPair.publicKey(), channelId)) {
-					removeDownloadChannel(channelId);
+					channelsToRemove.insert(channelId);
 				}
+			}
+
+			for (const auto& channelId: channelsToRemove) {
+				removeDownloadChannel(channelId);
 			}
 		}
 
@@ -628,7 +641,6 @@ namespace catapult { namespace storage {
 		// The fields are needed to generate correct events
 		std::map<Key, Height> m_alreadyAddedDrives;
 		std::map<Hash256, ShortAddedChannelInfo> m_alreadyAddedChannels;
-		std::map<Key, std::set<Hash256>> m_driveChannels; // Redundancy for performance purposes
     };
 
     // endregion
