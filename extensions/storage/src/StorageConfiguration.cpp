@@ -27,10 +27,13 @@ namespace catapult { namespace storage {
 		LOAD_DB_PROPERTY(StorageDirectory);
 		LOAD_DB_PROPERTY(SandboxDirectory);
 		LOAD_DB_PROPERTY(UseTcpSocket);
+		LOAD_DB_PROPERTY(UseRpcReplicator);
+		LOAD_DB_PROPERTY(RpcHost);
+		LOAD_DB_PROPERTY(RpcPort);
 
 #undef LOAD_DB_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 6);
+		utils::VerifyBagSizeLte(bag, 9);
 		return config;
 	}
 
