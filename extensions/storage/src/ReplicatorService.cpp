@@ -572,7 +572,7 @@ namespace catapult { namespace storage {
         }
 
         void endDriveVerificationPublished(const Key& driveKey, const Hash256& verificationTrigger) {
-			m_pReplicator->asyncVerifyApprovalTransactionHasBeenPublished({driveKey.array(), verificationTrigger.array()});
+        	m_pReplicator->asyncVerifyApprovalTransactionHasBeenPublished({verificationTrigger.array(), driveKey.array()});
 		}
 
 		bool driveExists(const Key& driveKey) {
