@@ -809,19 +809,15 @@ namespace catapult { namespace storage {
 	}
 
     std::optional<Height> ReplicatorService::driveAddedAt(const Key& driveKey) {
-    	std::optional<Height> addedAt;
     	if (m_pImpl)
-    		addedAt = m_pImpl->driveAddedAt(driveKey);
-		maybeRestart();
-		return addedAt;
+    		return m_pImpl->driveAddedAt(driveKey);
+		return {};
 	}
 
 	std::optional<Height> ReplicatorService::channelAddedAt(const Hash256& channelId) {
-		std::optional<Height> addedAt;
     	if (m_pImpl)
-    		addedAt = m_pImpl->channelAddedAt(channelId);
-		maybeRestart();
-    	return addedAt;
+    		return m_pImpl->channelAddedAt(channelId);
+    	return {};
     }
 
     void ReplicatorService::exploreNewReplicatorDrives() {
@@ -914,14 +910,14 @@ namespace catapult { namespace storage {
 
     bool ReplicatorService::driveExists(const Key& driveKey) {
 		if (m_pImpl)
-			m_pImpl->driveExists(driveKey);
-		maybeRestart();
+			return m_pImpl->driveExists(driveKey);
+		return false;
 	}
 
 	bool ReplicatorService::channelExists(const Hash256& channelId) {
     	if (m_pImpl)
-    		m_pImpl->channelExists(channelId);
-    	maybeRestart();
+    		return m_pImpl->channelExists(channelId);
+		return false;
     }
 
     // endregion

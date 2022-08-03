@@ -13,8 +13,9 @@ namespace catapult { namespace notification_handlers {
 	DECLARE_HANDLER(DataModification, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
 		return MAKE_HANDLER(DataModification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
-			if (!pReplicatorService)
+			if (!pReplicatorService) {
 				return;
+			}
 
 			// If we do not perform this check, we will try to read from database non-existing information
 			if (!pReplicatorService->driveExists(notification.DriveKey)) {

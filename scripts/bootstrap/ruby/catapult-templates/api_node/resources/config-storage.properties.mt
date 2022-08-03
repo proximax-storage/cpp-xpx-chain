@@ -6,6 +6,6 @@ transactionTimeout = 1h
 storageDirectory = data/api-node-{{node_index}}/data/drives
 sandboxDirectory = data/api-node-{{node_index}}/data/drive-sandboxes
 useTcpSocket = true
-useRpcReplicator = true
+useRpcReplicator = false
 rpcHost = 127.0.0.1
 rpcPort = 7905
