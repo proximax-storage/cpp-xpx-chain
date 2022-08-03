@@ -24,6 +24,7 @@ namespace catapult { namespace storage {
         void start();
         void stop();
 		void restart();
+		void maybeRestart();
 
         void setServiceState(extensions::ServiceState* pServiceState) {
             m_pServiceState = pServiceState;
@@ -73,9 +74,6 @@ namespace catapult { namespace storage {
 
 	public:
         void notifyTransactionStatus(const Hash256& hash, uint32_t status);
-
-	private:
-		void maybeRestart();
 
     private:
         class Impl;

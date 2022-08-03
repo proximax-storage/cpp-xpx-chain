@@ -33,6 +33,7 @@ namespace catapult { namespace notification_handlers {
 			}
 
 			pReplicatorService->increaseDownloadChannelSize(notification.DownloadChannelId);
+			pReplicatorService->maybeRestart();
 		});
 	}
 }}

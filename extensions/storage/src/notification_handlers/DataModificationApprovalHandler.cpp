@@ -47,6 +47,8 @@ namespace catapult { namespace notification_handlers {
                     notification.FileStructureCdi,
                     replicators
             );
+
+			pReplicatorService->maybeRestart();
         });
     }
 }}

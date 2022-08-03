@@ -22,6 +22,7 @@ namespace catapult { namespace notification_handlers {
 				// During the modification Replicator could be assigned
 				// to some download channels of the already non-existing drive
 				pReplicatorService->updateReplicatorDownloadChannels();
+				pReplicatorService->maybeRestart();
 				return;
 			}
 
@@ -59,6 +60,7 @@ namespace catapult { namespace notification_handlers {
 				pReplicatorService->updateDriveDownloadChannels(notification.DriveKey);
 				// In order to increase efficiency maybe it is needed to remove all channels and not update
 			}
+			pReplicatorService->maybeRestart();
 		});
 	}
 }}
