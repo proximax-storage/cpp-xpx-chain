@@ -118,8 +118,8 @@ namespace catapult { namespace storage {
 
 			if (storageConfig.UseRpcReplicator) {
 				m_pReplicator = sirius::drive::createRpcReplicator(
-						std::string(storageConfig.Host),
-						std::stoi(storageConfig.Port),
+						std::string(storageConfig.RpcHost),
+						std::stoi(storageConfig.RpcPort),
 						reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
 						std::string(storageConfig.Host), // TODO: do not use move semantics.
 						std::string(storageConfig.Port), // TODO: do not use move semantics.
