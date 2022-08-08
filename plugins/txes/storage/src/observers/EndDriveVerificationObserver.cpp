@@ -54,10 +54,10 @@ namespace catapult { namespace observers {
 
 		  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			const auto requiredReplicatorsCount = pluginConfig.MinReplicatorCount * 2 / 3 + 1;
-			const auto maxVoluntarilyOffboardingCount = std::max(driveEntry.replicators().size()
-																- offboardingReplicators.size()
-																- requiredReplicatorsCount,
-																0ul);
+			const auto maxVoluntarilyOffboardingCount =
+					driveEntry.replicators().size() < offboardingReplicators.size() + requiredReplicatorsCount ?
+					0ul :
+					driveEntry.replicators().size() - offboardingReplicators.size() - requiredReplicatorsCount;
 			voluntarilyOffboardingCount = std::min(voluntarilyOffboardingCount, maxVoluntarilyOffboardingCount);
 			const auto voluntarilyOffboardingReplicators = std::set<Key>(
 					driveEntry.offboardingReplicators().begin(),

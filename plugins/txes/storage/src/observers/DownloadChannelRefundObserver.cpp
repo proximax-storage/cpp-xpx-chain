@@ -32,6 +32,11 @@ namespace catapult { namespace observers {
 	  	const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 
+		// Refunding currency mosaics.
+		const auto& currencyRefundAmount = senderState.Balances.get(currencyMosaicId);
+		senderState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
+		recipientState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
+
 		// Refunding streaming mosaics.
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);
 	  	senderState.Balances.debit(streamingMosaicId, streamingRefundAmount, context.Height);
@@ -42,8 +47,7 @@ namespace catapult { namespace observers {
 			auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
 			replicatorEntry.downloadChannels().erase(notification.DownloadChannelId);
 		}
-		downloadChannelCache.remove(notification.DownloadChannelId);
 
-		// TODO: Add currency refunding
+		downloadChannelCache.remove(notification.DownloadChannelId);
 	})
 }}

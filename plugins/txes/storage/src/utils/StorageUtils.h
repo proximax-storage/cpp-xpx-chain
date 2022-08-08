@@ -6,6 +6,7 @@
 
 #pragma once
 #include "SwapOperation.h"
+#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/config/ImmutableConfiguration.h"
 #include "catapult/model/Mosaic.h"
 #include "catapult/model/NotificationSubscriber.h"
@@ -56,6 +57,9 @@ namespace catapult { namespace utils {
 
 	/// Calculates priority value of \a driveEntry. Used for the queue of drives with missing replicators.
 	double CalculateDrivePriority(const state::BcDriveEntry&, const uint16_t&);
+
+	/// Gets void (zero key) account state. If necessary, creates it.
+	state::AccountState& getVoidState(const observers::ObserverContext&);
 
 	/// Calculates amounts of storage and streaming deposit refunds of \a replicators
 	/// with respect to the drive with \a driveKey, and transfers them to replicators' accounts.

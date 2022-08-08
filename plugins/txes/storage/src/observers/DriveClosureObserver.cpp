@@ -7,6 +7,7 @@
 #include "Observers.h"
 #include "src/utils/Queue.h"
 #include "src/utils/AVLTree.h"
+#include "src/utils/StorageUtils.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
 namespace catapult { namespace observers {
@@ -34,11 +35,13 @@ namespace catapult { namespace observers {
 			auto driveOwnerIter = accountStateCache.find(driveEntry.owner());
 			auto& driveOwnerState = driveOwnerIter.get();
 
-			// Making payments to replicators, if there is a pending data modification
-			auto& activeDataModifications = driveEntry.activeDataModifications();
-
 			// The value will be used after removing drive entry. That's why the copy is needed
 			const auto replicators = driveEntry.replicators();
+
+			RefundDepositsToReplicators(driveEntry.key(), replicators, context);
+
+			// Making payments to replicators, if there is a pending data modification
+			auto& activeDataModifications = driveEntry.activeDataModifications();
 
 			if (!activeDataModifications.empty() && !replicators.empty()) {
 				const auto& modificationSize = activeDataModifications.front().ExpectedUploadSizeMegabytes;

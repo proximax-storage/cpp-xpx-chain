@@ -34,9 +34,9 @@ namespace catapult { namespace observers {
 
 		  	const auto offboardingReplicators = driveEntry.offboardingReplicators();
 			const auto requiredReplicatorsCount = pluginConfig.MinReplicatorCount * 2 / 3 + 1;
-			const auto maxOffboardingCount = std::max(driveEntry.replicators().size()
-													  - requiredReplicatorsCount,
-													  0ul);
+			const auto maxOffboardingCount = driveEntry.replicators().size() < requiredReplicatorsCount ?
+											 0ul :
+											 driveEntry.replicators().size() - requiredReplicatorsCount;
 			const auto offboardingCount = std::min(offboardingReplicators.size(), maxOffboardingCount);
 			const auto actualOffboardingReplicators = std::set<Key>(
 					offboardingReplicators.begin(),

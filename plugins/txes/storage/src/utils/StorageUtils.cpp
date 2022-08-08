@@ -6,7 +6,6 @@
 
 #pragma once
 #include "StorageUtils.h"
-#include "catapult/cache_core/AccountStateCache.h"
 #include "src/cache/ReplicatorCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/DownloadChannelCache.h"
@@ -98,6 +97,16 @@ namespace catapult { namespace utils {
 		return R < Rmin ? static_cast<double>(R + 1)/Rmin : static_cast<double>(N - R)/(2*Rmin*(N - Rmin));
 	}
 
+	state::AccountState& getVoidState(const observers::ObserverContext& context) {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		const auto zeroKey = Key();
+
+		if (!accountStateCache.contains(zeroKey))
+			accountStateCache.addAccount(zeroKey, context.Height);
+
+		return accountStateCache.find(zeroKey).get();
+	}
+
 	void RefundDepositsToReplicators(
 			const Key& driveKey,
 			const std::set<Key>& replicators,
@@ -110,6 +119,7 @@ namespace catapult { namespace utils {
 		auto& driveEntry = driveIter.get();
 		auto driveStateIter = accountCache.find(driveKey);
 		auto& driveState = driveStateIter.get();
+		auto& voidState = getVoidState(context);
 
 		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
@@ -142,7 +152,7 @@ namespace catapult { namespace utils {
 			const auto streamingDepositRefundAmount = Amount(streamingDeposit - streamingDepositSlashing);
 
 			// Making mosaic transfers
-			driveState.Balances.debit(storageMosaicId, storageDepositRefundAmount, context.Height);
+			voidState.Balances.debit(storageMosaicId, storageDepositRefundAmount, context.Height);
 			driveState.Balances.debit(streamingMosaicId, streamingDepositRefundAmount, context.Height);
 			replicatorState.Balances.credit(currencyMosaicId, storageDepositRefundAmount, context.Height);
 			replicatorState.Balances.credit(currencyMosaicId, streamingDepositRefundAmount, context.Height);
@@ -437,6 +447,7 @@ namespace catapult { namespace utils {
 		auto& replicators = driveEntry.replicators();
 		auto driveStateIter = accountStateCache.find(driveKey);
 		auto& driveState = driveStateIter.get();
+		auto& voidState = getVoidState(context);
 		for (int i = 0; i < replicatorsToAdd; i++) {
 			uint32_t index = rng() % suitableReplicators;
 			suitableReplicators--;
@@ -464,7 +475,7 @@ namespace catapult { namespace utils {
 			const auto streamingDepositAmount = Amount(2 * driveSize);
 			replicatorState.Balances.debit(storageMosaicId, storageDepositAmount);
 			replicatorState.Balances.debit(streamingMosaicId, streamingDepositAmount);
-			driveState.Balances.credit(storageMosaicId, storageDepositAmount);
+			voidState.Balances.credit(storageMosaicId, storageDepositAmount);
 			driveState.Balances.credit(streamingMosaicId, streamingDepositAmount);
 		}
 
@@ -497,6 +508,8 @@ namespace catapult { namespace utils {
 		auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
 		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto& voidState = getVoidState(context);
+
 		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
@@ -574,7 +587,7 @@ namespace catapult { namespace utils {
 					const auto streamingDepositAmount = Amount(2 * driveSize);
 					replicatorState.Balances.debit(storageMosaicId, storageDepositAmount);
 					replicatorState.Balances.debit(streamingMosaicId, streamingDepositAmount);
-					driveState.Balances.credit(storageMosaicId, storageDepositAmount);
+					voidState.Balances.credit(storageMosaicId, storageDepositAmount);
 					driveState.Balances.credit(streamingMosaicId, streamingDepositAmount);
 
 					// Keeping updated DrivePriority in newQueue if the drive still requires any replicators

@@ -247,6 +247,7 @@ namespace catapult { namespace state {
 			while (count--) {
 				Hash256 downloadChannelId;
 				io::Read(input, downloadChannelId);
+				downloadShards.emplace(downloadChannelId);
 			}
 		}
 
