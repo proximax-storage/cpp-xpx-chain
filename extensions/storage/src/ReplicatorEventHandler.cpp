@@ -230,7 +230,7 @@ namespace catapult { namespace storage {
 				  	auto actualSumBytesTemp = actualSumBytes + layout.m_uploadedBytes;
 
 				  	if (actualSumBytesTemp < actualSumBytes) {
-				  		CATAPULT_LOG( warning ) << "received modification with overflow increment";
+				  		CATAPULT_LOG( warning ) << "received modification with overflow increment " << actualSumBytes << " " << layout.m_uploadedBytes;
 						return;
 					}
 
@@ -252,7 +252,7 @@ namespace catapult { namespace storage {
 				  expectedSumBytes += std::accumulate(
 				  		pDriveEntry.DataModifications.begin(),
 				  		modificationIt,
-				  		0,
+				  		static_cast<uint64_t>(0),
 				  		[](int64_t accumulator, const auto& currentModification) {
 				  			return accumulator + utils::FileSize::FromMegabytes(currentModification.ActualUploadSize).bytes();
 				  		}
