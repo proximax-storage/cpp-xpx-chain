@@ -117,6 +117,8 @@ namespace catapult { namespace storage {
 			}
 
 			if (storageConfig.UseRpcReplicator) {
+				gHandleLostConnection = storageConfig.RpcHandleLostConnection;
+				gDbgRpcChildCrash = storageConfig.RpcDbgChildCrash;
 				m_pReplicator = sirius::drive::createRpcReplicator(
 						std::string(storageConfig.RpcHost),
 						std::stoi(storageConfig.RpcPort),

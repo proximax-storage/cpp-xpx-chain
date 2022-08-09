@@ -9,3 +9,5 @@ useTcpSocket = true
 useRpcReplicator = true
 rpcHost = 127.0.0.1
 rpcPort = {{replicator_rpc_port}}
+rpcHandleLostConnection = false
+rpcDbgChildCrash = true

@@ -30,10 +30,12 @@ namespace catapult { namespace storage {
 		LOAD_DB_PROPERTY(UseRpcReplicator);
 		LOAD_DB_PROPERTY(RpcHost);
 		LOAD_DB_PROPERTY(RpcPort);
+		LOAD_DB_PROPERTY(RpcHandleLostConnection);
+		LOAD_DB_PROPERTY(RpcDbgChildCrash);
 
 #undef LOAD_DB_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 9);
+		utils::VerifyBagSizeLte(bag, 11);
 		return config;
 	}
 
