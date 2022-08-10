@@ -22,6 +22,7 @@
 #include <array>
 #include <cstdint>
 #include <vector>
+#include <stddef.h>
 
 namespace catapult { namespace state {
 

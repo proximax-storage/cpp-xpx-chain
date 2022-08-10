@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 		auto result = test::ValidateNotification(*pValidator, notification, cache, config::BlockchainConfiguration::Uninitialized());
 
         // Assert:
-        EXPECT_EQ(Failure_Mosaic_Expired, result);
+        EXPECT_EQ(Failure_Mosaic_Invalid_Id, result);
     }
 
    TEST(TEST_CLASS, FailureWhenSdaOfferDurationExceedMosaicDuration) {

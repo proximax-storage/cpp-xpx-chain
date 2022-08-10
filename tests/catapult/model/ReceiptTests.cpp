@@ -200,39 +200,27 @@ namespace catapult { namespace model {
 
 	// region OfferExchangeReceipt
 
-	TEST(TEST_CLASS, OfferExchangeReceiptHasExpectedSize) {
-		// Arrange:
-		auto expectedSize =
-				sizeof(Receipt) // base
-				+ Key_Size // sender
-				+ sizeof(MosaicId)*2 // mosaic id pair
-				+ sizeof(std::vector<ExchangeDetail>); // list of exchanges made
-
-		// Assert:
-		EXPECT_EQ(expectedSize, sizeof(OfferExchangeReceipt));
-		EXPECT_EQ(10u + 72, sizeof(OfferExchangeReceipt));
-	}
-
 	TEST(TEST_CLASS, CanCreateOfferExchangeReceipt) {
 		// Arrange:
 		auto sender = test::GenerateRandomByteArray<Key>();
 		auto recipient = test::GenerateRandomByteArray<Address>();
 
 		// Act:
-		OfferExchangeReceipt receipt(static_cast<ReceiptType>(127), sender, std::pair<MosaicId,MosaicId>(88,8080), std::vector<ExchangeDetail>{{recipient, std::pair<MosaicId,MosaicId>(8080,88), Amount(350), Amount(700)}});
+		auto pReceipt = CreateOfferExchangeReceipt(static_cast<ReceiptType>(127), sender, std::pair<MosaicId,MosaicId>(88,8080), std::vector<ExchangeDetail>{{recipient, std::pair<MosaicId,MosaicId>(8080,88), Amount(350), Amount(700)}});
 
 		// Assert:
-		ASSERT_EQ(sizeof(OfferExchangeReceipt), receipt.Size);
-		EXPECT_EQ(1u, receipt.Version);
-		EXPECT_EQ(static_cast<ReceiptType>(127), receipt.Type);
-		EXPECT_EQ(MosaicId(88), receipt.MosaicsPair.first);
-		EXPECT_EQ(MosaicId(8080), receipt.MosaicsPair.second);
-		for (auto detail : receipt.SdaExchangeDetails) {
-			EXPECT_EQ(recipient, detail.Recipient);
-			EXPECT_EQ(MosaicId(8080), detail.MosaicsPair.first);
-			EXPECT_EQ(MosaicId(88), detail.MosaicsPair.second);
-			EXPECT_EQ(Amount(350), detail.AmountGive);
-			EXPECT_EQ(Amount(700), detail.AmountGet);
+		ASSERT_EQ(sizeof(OfferExchangeReceipt) + sizeof(ExchangeDetail), pReceipt->Size);
+		EXPECT_EQ(1u, pReceipt->Version);
+		EXPECT_EQ(static_cast<ReceiptType>(127), pReceipt->Type);
+		EXPECT_EQ(MosaicId(88), pReceipt->MosaicsPair.first);
+		EXPECT_EQ(MosaicId(8080), pReceipt->MosaicsPair.second);
+		auto pDetail = reinterpret_cast<const ExchangeDetail*>(pReceipt.get() + 1);
+		for (auto i = 0u; i < pReceipt->ExchangeDetailCount; ++i, ++pDetail) {
+			EXPECT_EQ(recipient, pDetail->Recipient);
+			EXPECT_EQ(MosaicId(8080), pDetail->MosaicsPair.first);
+			EXPECT_EQ(MosaicId(88), pDetail->MosaicsPair.second);
+			EXPECT_EQ(Amount(350), pDetail->AmountGive);
+			EXPECT_EQ(Amount(700), pDetail->AmountGet);
 		}
 	}
 

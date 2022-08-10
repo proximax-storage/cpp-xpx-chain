@@ -14,7 +14,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS RemoveSdaExchangeOfferValidatorTests
 
-    DEFINE_COMMON_VALIDATOR_TESTS(RemoveSdaExchangeOfferV1, )
+    DEFINE_COMMON_VALIDATOR_TESTS(RemoveSdaExchangeOffer, )
 
     namespace {
         template<typename TTraits>
@@ -46,7 +46,7 @@ namespace catapult { namespace validators {
             struct ValidatorV1Traits {
                 static constexpr VersionType Version = 1;
                 static auto CreateValidator() {
-                    return CreateRemoveSdaExchangeOfferV1Validator();
+                    return CreateRemoveSdaExchangeOfferValidator();
                 }
             };
         }

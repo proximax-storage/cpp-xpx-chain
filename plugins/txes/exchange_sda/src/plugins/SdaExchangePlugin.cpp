@@ -61,14 +61,14 @@ namespace catapult { namespace plugins {
 
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreatePlaceSdaExchangeOfferV1Validator())
-				.add(validators::CreateRemoveSdaExchangeOfferV1Validator());
+				.add(validators::CreatePlaceSdaExchangeOfferValidator())
+				.add(validators::CreateRemoveSdaExchangeOfferValidator());
 		});
 
 		manager.addObserverHook([pConfigHolder](auto& builder) {
 			builder
-				.add(observers::CreatePlaceSdaExchangeOfferV1Observer())
-				.add(observers::CreateRemoveSdaExchangeOfferV1Observer())
+				.add(observers::CreatePlaceSdaExchangeOfferObserver())
+				.add(observers::CreateRemoveSdaExchangeOfferObserver())
 				.add(observers::CreateCleanupSdaOffersObserver());
 		});
 	}

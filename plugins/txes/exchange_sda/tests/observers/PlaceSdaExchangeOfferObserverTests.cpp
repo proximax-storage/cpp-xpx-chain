@@ -14,7 +14,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PlaceSdaExchangeOfferObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(PlaceSdaExchangeOfferV1, )
+    DEFINE_COMMON_OBSERVER_TESTS(PlaceSdaExchangeOffer, )
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::SdaExchangeCacheFactory>;
@@ -114,7 +114,7 @@ namespace catapult { namespace observers {
         struct PlaceSdaExchangeOfferObserverV1Traits {
             static constexpr VersionType Version = 1;
             static auto CreateObserver() {
-                return CreatePlaceSdaExchangeOfferV1Observer();
+                return CreatePlaceSdaExchangeOfferObserver();
             }
         };
     }

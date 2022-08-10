@@ -25,14 +25,14 @@ namespace catapult { namespace validators {
     /// - matched offers have valid mosaic prices.
     /// - matched offers are not expired.
     /// - matched offers have required mosaic amounts.
-    DECLARE_STATEFUL_VALIDATOR(PlaceSdaExchangeOfferV1, model::PlaceSdaOfferNotification<1>)();
+    DECLARE_STATEFUL_VALIDATOR(PlaceSdaExchangeOffer, model::PlaceSdaOfferNotification<1>)();
 
     /// A validator implementation that applies to remove offer notification and validates that:
     /// - at least one offer to remove is present.
     /// - account has offers.
     /// - offers exist.
     /// - transaction signer owns offers.
-    DECLARE_STATEFUL_VALIDATOR(RemoveSdaExchangeOfferV1, model::RemoveSdaOfferNotification<1>)();
+    DECLARE_STATEFUL_VALIDATOR(RemoveSdaExchangeOffer, model::RemoveSdaOfferNotification<1>)();
 
     /// A validator implementation that applies to plugin config notification and validates that:
     /// - plugin configuration is valid

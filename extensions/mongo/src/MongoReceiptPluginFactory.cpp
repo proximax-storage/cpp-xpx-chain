@@ -20,7 +20,6 @@
 
 #include "MongoReceiptPluginFactory.h"
 #include "mappers/MapperUtils.h"
-#include "mappers/ReceiptMapper.h"
 
 namespace catapult { namespace mongo {
 
@@ -67,15 +66,16 @@ namespace catapult { namespace mongo {
 					<< "mosaicIdGive" << mappers::ToInt64(receipt.MosaicsPair.first)
 					<< "mosaicIdGet" << mappers::ToInt64(receipt.MosaicsPair.second);
 			auto exchangeDetailArray = builder << "exchangeDetails" << mappers::bson_stream::open_array;
-			for (const auto detail : receipt.SdaExchangeDetails) {
+			auto pDetail = reinterpret_cast<const model::ExchangeDetail*>(&receipt + 1);
+			for (auto i = 0u; i < receipt.ExchangeDetailCount; ++i, ++pDetail) {
 				exchangeDetailArray
 					<< mappers::bson_stream::open_document
-					<< "recipient" << mappers::ToBinary(detail.Recipient)
-					<< "mosaicIdGive" << mappers::ToInt64(detail.MosaicsPair.first)
-					<< "mosaicIdGet" << mappers::ToInt64(detail.MosaicsPair.second)
-					<< "mosaicAmountGive" << mappers::ToInt64(detail.AmountGive)
-					<< "mosaicAmountGet" << mappers::ToInt64(detail.AmountGet)
-					<< mappers::bson_stream::close_document;	
+					<< "recipient" << mappers::ToBinary(pDetail->Recipient)
+					<< "mosaicIdGive" << mappers::ToInt64(pDetail->MosaicsPair.first)
+					<< "mosaicIdGet" << mappers::ToInt64(pDetail->MosaicsPair.second)
+					<< "mosaicAmountGive" << mappers::ToInt64(pDetail->AmountGive)
+					<< "mosaicAmountGet" << mappers::ToInt64(pDetail->AmountGet)
+					<< mappers::bson_stream::close_document;
 			}
 			exchangeDetailArray << mappers::bson_stream::close_array;
 		}

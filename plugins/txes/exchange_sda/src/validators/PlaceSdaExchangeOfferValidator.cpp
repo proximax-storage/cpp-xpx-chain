@@ -9,7 +9,7 @@
 
 namespace catapult { namespace validators {
 
-    DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(PlaceSdaExchangeOfferV1, model::PlaceSdaOfferNotification<1>, ([](const model::PlaceSdaOfferNotification<1>& notification, const ValidatorContext& context) {
+    DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(PlaceSdaExchangeOffer, model::PlaceSdaOfferNotification<1>, ([](const model::PlaceSdaOfferNotification<1>& notification, const ValidatorContext& context) {
         if (notification.SdaOfferCount == 0)
             return Failure_ExchangeSda_No_Offers;
         

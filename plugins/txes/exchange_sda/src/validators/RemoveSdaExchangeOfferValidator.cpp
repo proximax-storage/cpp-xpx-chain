@@ -9,7 +9,7 @@
 
 namespace catapult { namespace validators {
 
-    DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(RemoveSdaExchangeOfferV1, model::RemoveSdaOfferNotification<1>, ([](const model::RemoveSdaOfferNotification<1>& notification, const ValidatorContext& context) {
+    DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(RemoveSdaExchangeOffer, model::RemoveSdaOfferNotification<1>, ([](const model::RemoveSdaOfferNotification<1>& notification, const ValidatorContext& context) {
         if (notification.SdaOfferCount == 0)
 			return Failure_ExchangeSda_No_Offered_Mosaics_To_Remove;
 

@@ -6,7 +6,6 @@
 
 #include "Observers.h"
 #include "catapult/model/Address.h"
-#include <boost/lexical_cast.hpp>
 
 namespace catapult { namespace observers {
 
@@ -38,7 +37,10 @@ namespace catapult { namespace observers {
 		}
 	}
 
-    DEFINE_OBSERVER(PlaceSdaExchangeOfferV1, model::PlaceSdaOfferNotification<1>, [](const model::PlaceSdaOfferNotification<1>& notification, ObserverContext& context) {
+    DEFINE_OBSERVER(PlaceSdaExchangeOffer, model::PlaceSdaOfferNotification<1>, [](const model::PlaceSdaOfferNotification<1>& notification, ObserverContext& context) {
+		if (NotifyMode::Rollback == context.Mode)
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (PlaceSdaExchangeOffer)");
+
         auto &cache = context.Cache.sub<cache::SdaExchangeCache>();
         if (!cache.contains(notification.Signer))
             cache.insert(state::SdaExchangeEntry(notification.Signer, 1));
@@ -77,10 +79,8 @@ namespace catapult { namespace observers {
         state::SdaOfferBalanceMap currentOffers =  entry.sdaOfferBalances();
         for (auto &offersBySigner: currentOffers) {
             // Get groupEntry of the current offer
-            std::string reducedOfCurrentOffer = reducedFraction(offersBySigner.second.InitialMosaicGive,
-                                                                offersBySigner.second.InitialMosaicGet);
-            auto groupHashOfCurrentOffer = calculateGroupHash(offersBySigner.first.first, offersBySigner.first.second,
-                                                              reducedOfCurrentOffer);
+            std::string reducedOfCurrentOffer = reducedFraction(offersBySigner.second.InitialMosaicGive, offersBySigner.second.InitialMosaicGet);
+            auto groupHashOfCurrentOffer = calculateGroupHash(offersBySigner.first.first, offersBySigner.first.second, reducedOfCurrentOffer);
             auto &groupCacheOfCurrentOffer = context.Cache.sub<cache::SdaOfferGroupCache>();
             auto groupIterOfCurrentOffer = groupCacheOfCurrentOffer.find(groupHashOfCurrentOffer);
             auto &groupEntryOfCurrentOffer = groupIterOfCurrentOffer.get();
@@ -89,10 +89,8 @@ namespace catapult { namespace observers {
             // Current offer's Get is existing offer's Give
 
             // Get groupEntry of the existing offer
-            std::string reducedOfExistingOffer = reducedFraction(offersBySigner.second.InitialMosaicGet,
-                                                                 offersBySigner.second.InitialMosaicGive);
-            auto groupHashOfExistingOffer = calculateGroupHash(offersBySigner.first.second, offersBySigner.first.first,
-                                                               reducedOfExistingOffer);
+            std::string reducedOfExistingOffer = reducedFraction(offersBySigner.second.InitialMosaicGet, offersBySigner.second.InitialMosaicGive);
+            auto groupHashOfExistingOffer = calculateGroupHash(offersBySigner.first.second, offersBySigner.first.first, reducedOfExistingOffer);
             auto &groupCacheOfExistingOffer = context.Cache.sub<cache::SdaOfferGroupCache>();
             if (!groupCacheOfExistingOffer.contains(groupHashOfExistingOffer))
                 continue;
@@ -127,16 +125,17 @@ namespace catapult { namespace observers {
             // Exchange sorted offers not belonging to the signer 
             std::vector<model::ExchangeDetail> details;
             for (auto &offer: arrangedOffers) {
-                if (offer.Owner == entry.owner()) continue;
+                if (offer.Owner == entry.owner())
+					continue;
 
-                auto iter = cache.find(offer.Owner);
-                auto &existingOffer = iter.get();
-                SdaOfferExpiryUpdater sdaOfferExpiryUpdater(cache, existingOffer);
+                auto existingOfferIter = cache.find(offer.Owner);
+                auto &existingOffer = existingOfferIter.get();
+                SdaOfferExpiryUpdater existingSdaOfferExpiryUpdater(cache, existingOffer);
                 auto result = ModifyOffer(existingOffer.sdaOfferBalances(), entry.sdaOfferBalances(),
-                                          state::MosaicsPair{offersBySigner.first.second, offersBySigner.first.first},
-                                          offersBySigner.first);
+					state::MosaicsPair{offersBySigner.first.second, offersBySigner.first.first},
+					offersBySigner.first);
                 groupEntryOfExistingOffer.updateSdaOfferGroup(existingOffer.owner(),
-                                                              result.OfferPair.first.CurrentMosaicGet);
+					result.OfferPair.first.CurrentMosaicGet);
                 groupEntryOfCurrentOffer.updateSdaOfferGroup(entry.owner(), result.OfferPair.second.CurrentMosaicGive);
 
                 // mosaicIdGive of currentOffer is the mosaicIdGet of existingOffer
@@ -149,24 +148,24 @@ namespace catapult { namespace observers {
 
                 // Check if any existing offer still has balance after the exchange
                 if (Amount(0) == result.OfferPair.first.CurrentMosaicGive &&
-                    Amount(0) == result.OfferPair.first.CurrentMosaicGet) {
-                    existingOffer.expireOffer(state::MosaicsPair{offersBySigner.first.second, offersBySigner.first.first},
-                                              context.Height);
+                	Amount(0) == result.OfferPair.first.CurrentMosaicGet) {
+                    existingOffer.expireOffer(state::MosaicsPair{offersBySigner.first.second, offersBySigner.first.first}, context.Height);
                     groupEntryOfExistingOffer.removeSdaOfferFromGroup(existingOffer.owner());
                 }
 
                 // Check if any offer belonging to the signer still has balance after the exchange
                 if (Amount(0) == result.OfferPair.second.CurrentMosaicGive &&
-                    Amount(0) == result.OfferPair.second.CurrentMosaicGet) {
-                    entry.expireOffer(offersBySigner.first, context.Height);
-                    groupEntryOfCurrentOffer.removeSdaOfferFromGroup(entry.owner());
+                	Amount(0) == result.OfferPair.second.CurrentMosaicGet) {
+                	entry.expireOffer(offersBySigner.first, context.Height);
+                	groupEntryOfCurrentOffer.removeSdaOfferFromGroup(entry.owner());
                     break;
                 }
             }
 
-            if (details.size() != 0) {
-                model::OfferExchangeReceipt exchangeReceipt(model::Receipt_Type_Sda_Offer_Exchanged, entry.owner(), state::MosaicsPair(offersBySigner.first.first, offersBySigner.first.second), details);
-                context.StatementBuilder().addTransactionReceipt(exchangeReceipt);
+            if (!details.empty()) {
+				auto pExchangeReceipt = model::CreateOfferExchangeReceipt(
+					model::Receipt_Type_Sda_Offer_Exchanged, entry.owner(), state::MosaicsPair(offersBySigner.first.first, offersBySigner.first.second), details);
+                context.StatementBuilder().addTransactionReceipt(*pExchangeReceipt);
             }
         }
     });

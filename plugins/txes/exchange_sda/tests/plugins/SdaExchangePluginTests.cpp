@@ -69,16 +69,16 @@ namespace catapult { namespace plugins {
 
             static std::vector<std::string> GetStatefulValidatorNames() {
                 return {
-                    "PlaceSdaExchangeOfferV1Validator",
-                    "RemoveSdaExchangeOfferV1Validator",
+                    "PlaceSdaExchangeOfferValidator",
+                    "RemoveSdaExchangeOfferValidator",
                 };
             }
 
             static std::vector<std::string> GetObserverNames() {
                 return {
                     "CleanupSdaOffersObserver",
-                    "PlaceSdaExchangeOfferV1Observer",
-                    "RemoveSdaExchangeOfferV1Observer",
+                    "PlaceSdaExchangeOfferObserver",
+                    "RemoveSdaExchangeOfferObserver",
                 };
             }
 

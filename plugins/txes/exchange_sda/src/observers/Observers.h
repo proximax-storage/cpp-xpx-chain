@@ -46,10 +46,10 @@ namespace catapult { namespace observers {
 	Hash256 calculateGroupHash(const MosaicId& mosaicIdGive, const MosaicId& mosaicIdGet, const std::string& reduced);
 
 	/// Observes changes triggered by place and exchange offer notifications
-	DECLARE_OBSERVER(PlaceSdaExchangeOfferV1, model::PlaceSdaOfferNotification<1>)();
+	DECLARE_OBSERVER(PlaceSdaExchangeOffer, model::PlaceSdaOfferNotification<1>)();
 
 	/// Observes changes triggered by remove offer notifications
-	DECLARE_OBSERVER(RemoveSdaExchangeOfferV1, model::RemoveSdaOfferNotification<1>)();
+	DECLARE_OBSERVER(RemoveSdaExchangeOffer, model::RemoveSdaOfferNotification<1>)();
 
 	/// Observes changes triggered by block notifications
 	DECLARE_OBSERVER(CleanupSdaOffers, model::BlockNotification<1>)();

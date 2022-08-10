@@ -6,7 +6,6 @@
 
 #include "Observers.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/crypto/Hashes.h"
 #include <boost/lexical_cast.hpp>
 
 namespace catapult { namespace observers {

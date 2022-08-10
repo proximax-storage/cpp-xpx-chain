@@ -13,6 +13,9 @@ namespace catapult { namespace observers {
 
     DECLARE_OBSERVER(CleanupSdaOffers, Notification)() {
         return MAKE_OBSERVER(CleanupSdaOffers, Notification, ([](const model::BlockNotification<1>& notification, const ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (CleanupSdaOffers)");
+
             auto& cache = context.Cache.sub<cache::SdaExchangeCache>();
             auto expiringSdaOfferOwners = cache.expiringOfferOwners(context.Height);
             for (const auto& key : expiringSdaOfferOwners) {

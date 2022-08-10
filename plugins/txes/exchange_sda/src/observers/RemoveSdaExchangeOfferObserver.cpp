@@ -10,7 +10,10 @@
 
 namespace catapult { namespace observers {
 
-    DEFINE_OBSERVER(RemoveSdaExchangeOfferV1, model::RemoveSdaOfferNotification<1>, [](const model::RemoveSdaOfferNotification<1>& notification, ObserverContext& context) {
+    DEFINE_OBSERVER(RemoveSdaExchangeOffer, model::RemoveSdaOfferNotification<1>, [](const model::RemoveSdaOfferNotification<1>& notification, ObserverContext& context) {
+		if (NotifyMode::Rollback == context.Mode)
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (RemoveSdaExchangeOffer)");
+
         auto& cache = context.Cache.sub<cache::SdaExchangeCache>();
         auto iter = cache.find(notification.Owner);
         auto& entry = iter.get();

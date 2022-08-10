@@ -200,33 +200,32 @@ namespace catapult { namespace mongo {
 		auto pPlugin = CreateOfferExchangeReceiptMongoPlugin(model::ReceiptType());
 		bsoncxx::builder::stream::document builder;
 
-		model::OfferExchangeReceipt receipt(
+		auto pReceipt = CreateOfferExchangeReceipt(
 			model::ReceiptType(), 
 			test::GenerateRandomByteArray<Key>(), 
 			std::pair<MosaicId, MosaicId>(234, 345),
 			{model::ExchangeDetail{test::GenerateRandomByteArray<Address>(), std::pair<MosaicId, MosaicId>(345, 234), Amount(350), Amount(700)}});
 
 		// Act:
-		pPlugin->streamReceipt(builder, receipt);
+		pPlugin->streamReceipt(builder, *pReceipt);
 		auto dbReceipt = builder << bsoncxx::builder::stream::finalize;
 
 		// Assert:
 		auto view = dbReceipt.view();
 		EXPECT_EQ(4u, test::GetFieldCount(view));
 
-		EXPECT_EQ(receipt.Sender, test::GetKeyValue(view, "sender"));
-		EXPECT_EQ(receipt.MosaicsPair.first, MosaicId(test::GetUint64(view, "mosaicIdGive")));
-		EXPECT_EQ(receipt.MosaicsPair.second, MosaicId(test::GetUint64(view, "mosaicIdGet")));
+		EXPECT_EQ(pReceipt->Sender, test::GetKeyValue(view, "sender"));
+		EXPECT_EQ(pReceipt->MosaicsPair.first, MosaicId(test::GetUint64(view, "mosaicIdGive")));
+		EXPECT_EQ(pReceipt->MosaicsPair.second, MosaicId(test::GetUint64(view, "mosaicIdGet")));
 		auto details = view["exchangeDetails"].get_array().value;
-		ASSERT_EQ(receipt.SdaExchangeDetails.size(), test::GetFieldCount(details));
-		auto i = 0u;
-		for (auto d : details) {
-			const auto& dt = receipt.SdaExchangeDetails[i++];
-			EXPECT_EQ(dt.Recipient, test::GetAddressValue(d, "recipient"));
-			EXPECT_EQ(dt.MosaicsPair.first, MosaicId(test::GetUint64(d, "mosaicIdGive")));
-			EXPECT_EQ(dt.MosaicsPair.second, MosaicId(test::GetUint64(d, "mosaicIdGet")));
-			EXPECT_EQ(dt.AmountGive, Amount(test::GetUint64(d, "mosaicAmountGive")));
-			EXPECT_EQ(dt.AmountGet, Amount(test::GetUint64(d, "mosaicAmountGet")));
+		ASSERT_EQ(pReceipt->ExchangeDetailCount, test::GetFieldCount(details));
+		auto pDetail = reinterpret_cast<const model::ExchangeDetail*>(pReceipt.get() + 1);
+		for (auto i = 0u; i < pReceipt->ExchangeDetailCount; ++i, ++pDetail) {
+			EXPECT_EQ(pDetail->Recipient, test::GetAddressValue(details[i], "recipient"));
+			EXPECT_EQ(pDetail->MosaicsPair.first, MosaicId(test::GetUint64(details[i], "mosaicIdGive")));
+			EXPECT_EQ(pDetail->MosaicsPair.second, MosaicId(test::GetUint64(details[i], "mosaicIdGet")));
+			EXPECT_EQ(pDetail->AmountGive, Amount(test::GetUint64(details[i], "mosaicAmountGive")));
+			EXPECT_EQ(pDetail->AmountGet, Amount(test::GetUint64(details[i], "mosaicAmountGet")));
 		}
 	}
 

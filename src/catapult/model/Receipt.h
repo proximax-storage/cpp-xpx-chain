@@ -21,6 +21,7 @@
 #pragma once
 #include "ReceiptType.h"
 #include "SizePrefixedEntity.h"
+#include "catapult/model/EntityPtr.h"
 #include "catapult/types.h"
 
 namespace catapult { namespace model {
@@ -188,7 +189,7 @@ namespace catapult { namespace model {
 	/// Binary layout for a offer exchange receipt.
 	struct ExchangeDetail{
 		/// Mosaic recipient address.
-		const Address& Recipient;
+		Address Recipient;
 
 		/// Mosaics pair of mosaic id to give and to get of recipient.
 		std::pair<MosaicId, MosaicId> MosaicsPair;
@@ -202,30 +203,21 @@ namespace catapult { namespace model {
 
 	struct OfferExchangeReceipt : public Receipt {
 	public:
-		/// Creates a receipt around \a receiptType, \a sender, \a recipients, \a mosaicsPair, \a amountGive and \a amountGet.
-		OfferExchangeReceipt(
-				ReceiptType receiptType,
-				const Key& sender,
-				std::pair<MosaicId, MosaicId> mosaicsPair,
-				std::vector<ExchangeDetail> exchangeDetails)
-				: Sender(sender)
-				, MosaicsPair(mosaicsPair)
-				, SdaExchangeDetails(exchangeDetails){
-			Size = sizeof(OfferExchangeReceipt);
-			Version = 1;
-			Type = receiptType;
-		}
-
-	public:
 		/// Mosaic sender public key.
 		Key Sender;
 
 		/// Mosaics pair of mosaic id to give and to get of sender.
 		std::pair<MosaicId, MosaicId> MosaicsPair;
 
-		/// Details of the \a mosaicId pairing and its \a amount that have been exchange with \a recipients.
-		std::vector<ExchangeDetail> SdaExchangeDetails; 
+		/// Count of exchange details.
+		uint16_t ExchangeDetailCount;
 	};
+
+	UniqueEntityPtr<OfferExchangeReceipt> CreateOfferExchangeReceipt(
+			ReceiptType receiptType,
+			const Key& sender,
+			const std::pair<MosaicId, MosaicId>& mosaicsPair,
+			const std::vector<ExchangeDetail>& exchangeDetails);
 
 	/// Binary layout for a offer removal receipt.
 	struct OfferRemovalReceipt : public Receipt {

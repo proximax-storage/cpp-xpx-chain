@@ -16,7 +16,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS PlaceSdaExchangeOfferValidatorTests
 
-    DEFINE_COMMON_VALIDATOR_TESTS(PlaceSdaExchangeOfferV1, )
+    DEFINE_COMMON_VALIDATOR_TESTS(PlaceSdaExchangeOffer, )
 
     namespace {
         using MosaicSetup = std::function<void(cache::CatapultCacheDelta&)>;
@@ -97,7 +97,7 @@ namespace catapult { namespace validators {
         struct ValidatorV1Traits {
             static constexpr VersionType Version = 1;
             static auto CreateValidator() {
-                return CreatePlaceSdaExchangeOfferV1Validator();
+                return CreatePlaceSdaExchangeOfferValidator();
             }
         };
     }
