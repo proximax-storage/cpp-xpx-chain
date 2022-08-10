@@ -252,8 +252,8 @@ namespace catapult { namespace storage {
 				  expectedSumBytes += std::accumulate(
 				  		pDriveEntry.DataModifications.begin(),
 				  		modificationIt,
-				  		0,
-				  		[](int64_t accumulator, const auto& currentModification) {
+				  		static_cast<uint64_t>(0),
+				  		[](const auto& accumulator, const auto& currentModification) {
 				  			return accumulator + utils::FileSize::FromMegabytes(currentModification.ActualUploadSize).bytes();
 				  		}
 				  		);
