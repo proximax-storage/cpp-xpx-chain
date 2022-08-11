@@ -586,10 +586,6 @@ namespace catapult { namespace storage {
         }
 
         void downloadApprovalPublished(const Hash256& approvalTrigger, const Hash256& downloadChannelId) {
-			auto pDownloadChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), downloadChannelId);
-			if (!pDownloadChannel)
-				return;
-
 			auto channelClosed = !m_storageState.downloadChannelExists(downloadChannelId);
 			m_pReplicator->asyncDownloadApprovalTransactionHasBeenPublished(approvalTrigger.array(), downloadChannelId.array(), channelClosed);
         }

@@ -5,6 +5,7 @@
 **/
 
 #include "Observers.h"
+#include "src/utils/Queue.h"
 
 namespace catapult { namespace observers {
 
@@ -14,11 +15,11 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadChannelRefund)");
 
-	  	auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
-	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
+		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+		auto downloadChannelIter = downloadCache.find(notification.DownloadChannelId);
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
 
-		if (downloadChannelEntry.downloadApprovalCountLeft() > 0 && !downloadChannelEntry.isFinishPublished()) {
+		if (!downloadChannelEntry.isCloseInitiated()) {
 			// THe download channel continues to work, so no refund is needed
 			return;
 		}
@@ -42,8 +43,12 @@ namespace catapult { namespace observers {
 			auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
 			replicatorEntry.downloadChannels().erase(notification.DownloadChannelId);
 		}
-		downloadChannelCache.remove(notification.DownloadChannelId);
 
+		auto& queueCache = context.Cache.template sub<cache::QueueCache>();
+		utils::QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
+		queueAdapter.remove(downloadChannelEntry.entryKey());
+
+		downloadCache.remove(notification.DownloadChannelId);
 		// TODO: Add currency refunding
 	})
 }}
