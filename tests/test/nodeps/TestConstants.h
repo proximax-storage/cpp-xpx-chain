@@ -43,8 +43,14 @@ namespace catapult { namespace test {
 	/// Default (well known) storage mosaic id used in tests (`storage`).
 	constexpr MosaicId Default_Storage_Mosaic_Id(0x2651'4E2A'1EF3'3824);
 
-	/// Default (well known) storage mosaic id used in tests (`streaming`).
-	constexpr MosaicId Default_Streamin_Mosaic_Id(0x6C5D'6875'08AC'9D75);
+	/// Default (well known) streaming mosaic id used in tests (`streaming`).
+	constexpr MosaicId Default_Streaming_Mosaic_Id(0x6C5D'6875'08AC'9D75);
+
+	/// Default (well known) super contract mosaic id used in tests (`supercontract`).
+	constexpr MosaicId Default_Super_Contract_Mosaic_Id(0x6EE9'5526'8A1C'33D9);
+
+	/// Default (well known) review mosaic id used in tests (`review`).
+	constexpr MosaicId Default_Review_Mosaic_Id(0x19C1'CD86'7406'54DC);
 #endif
 
 	/// Default total chain importance used for scaling block target calculation.

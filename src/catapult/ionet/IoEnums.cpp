@@ -21,10 +21,8 @@
 #include "ConnectionSecurityMode.h"
 #include "ConnectResult.h"
 #include "PacketExtractor.h"
-#include "PacketType.h"
 #include "SocketOperationCode.h"
 #include "catapult/utils/ConfigurationValueParsers.h"
-#include "catapult/utils/MacroBasedEnumIncludes.h"
 
 namespace catapult { namespace ionet {
 

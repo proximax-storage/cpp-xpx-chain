@@ -23,7 +23,6 @@
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
 #include "plugins/txes/lock_hash/tests/test/HashLockInfoCacheTestUtils.h"
 #include "tests/test/HashLockMapperTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

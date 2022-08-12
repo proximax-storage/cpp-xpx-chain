@@ -20,7 +20,6 @@
 
 #include "Validators.h"
 #include "src/config/NamespaceConfiguration.h"
-#include "catapult/utils/Hashers.h"
 
 namespace catapult { namespace validators {
 

@@ -19,11 +19,9 @@
 **/
 
 #include "catapult/chain/BlockDifficultyScorer.h"
-#include "catapult/utils/Logging.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
-#include <cmath>
 
 namespace catapult { namespace chain {
 

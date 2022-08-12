@@ -4,8 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/ExchangeCacheStorage.h"
-#include "src/cache/ExchangeCache.h"
 #include "tests/test/ExchangeTestUtils.h"
 #include "tests/TestHarness.h"
 

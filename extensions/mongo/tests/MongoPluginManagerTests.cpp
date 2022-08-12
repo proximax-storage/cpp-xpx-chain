@@ -19,13 +19,11 @@
 **/
 
 #include "mongo/src/MongoPluginManager.h"
-#include "mongo/src/MongoTransactionPlugin.h"
 #include "mongo/tests/test/MongoTestUtils.h"
 #include "mongo/tests/test/mocks/MockExternalCacheStorage.h"
 #include "mongo/tests/test/mocks/MockReceiptMapper.h"
 #include "mongo/tests/test/mocks/MockTransactionMapper.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
-#include "tests/TestHarness.h"
 #include <mongocxx/instance.hpp>
 
 namespace catapult { namespace mongo {

@@ -5,7 +5,6 @@
 **/
 
 #include "plugins/txes/operation/src/model/OperationIdentifyTransaction.h"
-#include "plugins/txes/operation/tests/test/OperationTestUtils.h"
 #include "src/model/EndExecuteTransaction.h"
 #include "src/model/StartExecuteTransaction.h"
 #include "src/validators/Validators.h"

@@ -20,8 +20,6 @@
 
 #include "Validators.h"
 #include "src/cache/MosaicCache.h"
-#include "catapult/validators/ValidatorContext.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "src/config/MosaicConfiguration.h"
 
 namespace catapult { namespace validators {

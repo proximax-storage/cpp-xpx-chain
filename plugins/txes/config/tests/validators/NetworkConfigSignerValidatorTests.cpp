@@ -5,7 +5,6 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/TestHarness.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"

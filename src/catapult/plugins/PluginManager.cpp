@@ -19,7 +19,6 @@
 **/
 
 #include "PluginManager.h"
-#include <boost/filesystem/path.hpp>
 
 namespace catapult { namespace plugins {
 
@@ -280,8 +279,8 @@ namespace catapult { namespace plugins {
 		return model::ExtractorContext(bindExtractorToCache(addressesExtractors), bindExtractorToCache(publicKeysExtractors));
 	}
 
-	void PluginManager::addPluginInitializer(const PluginInitializer& initializer) {
-		m_pluginInitializers.push_back(initializer);
+	void PluginManager::addPluginInitializer(PluginInitializer&& initializer) {
+		m_pluginInitializers.push_back(std::move(initializer));
 	}
 
 	PluginManager::PluginInitializer PluginManager::createPluginInitializer() const {
@@ -297,6 +296,48 @@ namespace catapult { namespace plugins {
 
 	PluginManager::PublisherPointer PluginManager::createNotificationPublisher(model::PublicationMode mode) const {
 		return model::CreateNotificationPublisher(m_transactionRegistry, config::GetUnresolvedCurrencyMosaicId(immutableConfig()), mode);
+	}
+
+	// endregion
+
+	// region committee
+
+	/// Sets a committee manager.
+	void PluginManager::setCommitteeManager(const std::shared_ptr<chain::CommitteeManager>& pManager) {
+		if (!!m_pCommitteeManager)
+			CATAPULT_THROW_RUNTIME_ERROR("committee manager already set");
+
+		m_pCommitteeManager = pManager;
+	}
+
+	/// Gets committee manager.
+	chain::CommitteeManager& PluginManager::getCommitteeManager() const {
+		if (!m_pCommitteeManager)
+			CATAPULT_THROW_RUNTIME_ERROR("committee manager not set");
+
+		return *m_pCommitteeManager;
+	}
+
+	// endregion
+
+	// region storage
+
+	void PluginManager::setStorageState(const std::shared_ptr<state::StorageState>& pState) {
+		if (!!m_pStorageState)
+			CATAPULT_THROW_RUNTIME_ERROR("storage state already set");
+
+		m_pStorageState = pState;
+	}
+
+	bool PluginManager::isStorageStateSet() {
+		return !!m_pStorageState;
+	}
+
+	state::StorageState& PluginManager::storageState() const {
+		if (!m_pStorageState)
+			CATAPULT_THROW_RUNTIME_ERROR("storage state not set");
+
+		return *m_pStorageState;
 	}
 
 	// endregion

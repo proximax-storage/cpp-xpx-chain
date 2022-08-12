@@ -25,7 +25,6 @@
 #include "storages/MongoNamespaceCacheStorage.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "mongo/src/MongoReceiptPluginFactory.h"
-#include "plugins/txes/namespace/src/constants.h"
 #include "plugins/txes/namespace/src/model/NamespaceReceiptType.h"
 
 extern "C" PLUGIN_API

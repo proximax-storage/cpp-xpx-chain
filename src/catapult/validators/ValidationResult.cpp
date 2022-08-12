@@ -19,8 +19,6 @@
 **/
 
 #include "ValidationResult.h"
-#include "catapult/utils/HexFormatter.h"
-#include <iostream>
 
 namespace catapult { namespace validators {
 
@@ -50,6 +48,8 @@ namespace catapult { namespace validators {
 			#include "plugins/services/signature/src/validators/Results.h"
 			#include "plugins/txes/account_link/src/validators/Results.h"
 			#include "plugins/txes/aggregate/src/validators/Results.h"
+			#include "plugins/txes/committee/src/validators/Results.h"
+			#include "plugins/txes/config/src/validators/Results.h"
 			#include "plugins/txes/exchange/src/validators/Results.h"
 			#include "plugins/txes/exchange_sda/src/validators/Results.h"
 			#include "plugins/txes/config/src/validators/Results.h"
@@ -62,9 +62,11 @@ namespace catapult { namespace validators {
 			#include "plugins/txes/namespace/src/validators/Results.h"
 			#include "plugins/txes/operation/src/validators/Results.h"
 			#include "plugins/txes/property/src/validators/Results.h"
-			#include "plugins/txes/transfer/src/validators/Results.h"
 			#include "plugins/txes/service/src/validators/Results.h"
+			#include "plugins/txes/storage/src/validators/Results.h"
+			#include "plugins/txes/streaming/src/validators/Results.h"
 			#include "plugins/txes/supercontract/src/validators/Results.h"
+			#include "plugins/txes/transfer/src/validators/Results.h"
 			#include "plugins/txes/upgrade/src/validators/Results.h"
 			#include "src/catapult/chain/ChainResults.h"
 			#include "src/catapult/consumers/ConsumerResults.h"

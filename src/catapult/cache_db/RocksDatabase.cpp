@@ -20,11 +20,7 @@
 
 #include "RocksDatabase.h"
 #include "RocksInclude.h"
-#include "RocksPruningFilter.h"
-#include "catapult/utils/HexFormatter.h"
-#include "catapult/utils/PathUtils.h"
 #include "catapult/utils/StackLogger.h"
-#include "catapult/exceptions.h"
 #include <boost/filesystem.hpp>
 
 namespace catapult { namespace cache {

@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/OperationCache.h"
 #include "src/model/OperationIdentifyTransaction.h"
 #include "src/model/StartOperationTransaction.h"
 #include "src/validators/Validators.h"

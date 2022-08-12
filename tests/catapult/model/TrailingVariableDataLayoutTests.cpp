@@ -22,7 +22,6 @@
 #include "catapult/model/Mosaic.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/VariableSizedEntityTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 

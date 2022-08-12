@@ -22,6 +22,7 @@
 #include "NemesisConfiguration.h"
 #include "NemesisExecutionHasher.h"
 #include "TransactionRegistryFactory.h"
+#include "catapult/builders/AddHarvesterBuilder.h"
 #include "catapult/builders/NetworkConfigBuilder.h"
 #include "catapult/builders/BlockchainUpgradeBuilder.h"
 #include "catapult/builders/MosaicAliasBuilder.h"
@@ -37,9 +38,8 @@
 #include "catapult/model/Address.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
-#include "catapult/utils/HexParser.h"
 #include "catapult/version/version.h"
-#include "boost/filesystem.hpp"
+#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace tools { namespace nemgen {
 
@@ -170,6 +170,13 @@ namespace catapult { namespace tools { namespace nemgen {
 				signAndAdd(builder.build());
 			}
 
+			void addHarvester(const std::string& harvesterPrivateKey) {
+				auto signer = crypto::KeyPair::FromString(harvesterPrivateKey);
+				builders::AddHarvesterBuilder builder(m_networkIdentifier, signer.publicKey(), signer.publicKey());
+
+				signAndAdd(builder.build(), signer);
+			}
+
 		public:
 			const model::Transactions& transactions() const {
 				return m_transactions;
@@ -177,8 +184,12 @@ namespace catapult { namespace tools { namespace nemgen {
 
 		private:
 			void signAndAdd(model::UniqueEntityPtr<model::Transaction>&& pTransaction) {
+				signAndAdd(std::move(pTransaction), m_signer);
+			}
+
+			void signAndAdd(model::UniqueEntityPtr<model::Transaction>&& pTransaction, const crypto::KeyPair& signer) {
 				pTransaction->Deadline = Timestamp(1);
-				extensions::TransactionExtensions(m_generationHash).sign(m_signer, *pTransaction);
+				extensions::TransactionExtensions(m_generationHash).sign(signer, *pTransaction);
 				m_transactions.push_back(std::move(pTransaction));
 			}
 
@@ -248,12 +259,17 @@ namespace catapult { namespace tools { namespace nemgen {
 		transactions.addConfig(resourcesPath);
 		transactions.addUpgrade();
 
+		for (const auto& key : config.HarvesterPrivateKeys) {
+			transactions.addHarvester(key);
+		}
+
 		model::PreviousBlockContext context;
 		auto pBlock = model::CreateBlock(context, config.NetworkIdentifier, signer.publicKey(), transactions.transactions());
 		pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
 		pBlock->Type = model::Entity_Type_Nemesis_Block;
 		pBlock->FeeInterest = 1;
 		pBlock->FeeInterestDenominator = 1;
+		pBlock->Timestamp = utils::NetworkTime();
 		extensions::BlockExtensions(config.NemesisGenerationHash).signFullBlock(signer, *pBlock);
 		return pBlock;
 	}

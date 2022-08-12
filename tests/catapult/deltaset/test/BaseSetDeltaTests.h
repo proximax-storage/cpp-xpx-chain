@@ -924,6 +924,54 @@ namespace catapult { namespace test {
 			AssertMultipleModifiedElementHasGenerationId(1);
 		}
 
+		// region generationId / incrementGenerationId
+
+		// endregion
+
+	private:
+		static void AssertCanBackupAndRestoreChanges() {
+			// Arrange:
+			auto pDelta = TTraits::CreateWithElements(3);
+
+			// Act + Assert:
+			AssertDeltaSizes(pDelta, 0, 3, 0, 0);
+			pDelta->backupChanges(false);
+			pDelta->insert(TTraits::CreateElement("MyTestElement", 12));
+			AssertDeltaSizes(pDelta, 0, 4, 0, 0);
+			pDelta->backupChanges(false);
+			pDelta->insert(TTraits::CreateElement("MyTestElement", 34));
+			AssertDeltaSizes(pDelta, 0, 5, 0, 0);
+			pDelta->backupChanges(false);
+			pDelta->insert(TTraits::CreateElement("MyTestElement", 56));
+			AssertDeltaSizes(pDelta, 0, 6, 0, 0);
+			pDelta->backupChanges(false);
+			pDelta->insert(TTraits::CreateElement("MyTestElement", 78));
+			AssertDeltaSizes(pDelta, 0, 7, 0, 0);
+			pDelta->restoreChanges();
+			AssertDeltaSizes(pDelta, 0, 6, 0, 0);
+			pDelta->restoreChanges();
+			AssertDeltaSizes(pDelta, 0, 5, 0, 0);
+			pDelta->backupChanges(true);
+			pDelta->insert(TTraits::CreateElement("MyTestElement", 65));
+			pDelta->insert(TTraits::CreateElement("MyTestElement", 43));
+			AssertDeltaSizes(pDelta, 0, 7, 0, 0);
+			pDelta->restoreChanges();
+			AssertDeltaSizes(pDelta, 0, 5, 0, 0);
+			pDelta->restoreChanges();
+			AssertDeltaSizes(pDelta, 0, 0, 0, 0);
+		}
+
+	public:
+		static void AssertMutableBaseSetCanBackupAndRestoreChanges() {
+			// Assert:
+			AssertCanBackupAndRestoreChanges();
+		}
+
+		static void AssertImmutableBaseSetCanBackupAndRestoreChanges() {
+			// Assert:
+			AssertCanBackupAndRestoreChanges();
+		}
+
 		// endregion
 	};
 
@@ -977,6 +1025,8 @@ namespace catapult { namespace test {
 	MAKE_BASE_SET_DELTA_TEST(TEST_CLASS, TRAITS, MutableBaseSetDeltaCanAddRemoveAndReinsertElement) \
 	\
 	MAKE_BASE_SET_DELTA_TEST(TEST_CLASS, TRAITS, MutableBaseSetModifiedElementHasLastChangeGenerationId) \
+	\
+	MAKE_BASE_SET_DELTA_TEST(TEST_CLASS, TRAITS, MutableBaseSetCanBackupAndRestoreChanges) \
 
 #define DEFINE_IMMUTABLE_BASE_SET_DELTA_TESTS(TEST_CLASS, TRAITS) \
 	DEFINE_BASE_SET_DELTA_TESTS(TEST_CLASS, TRAITS) \
@@ -993,6 +1043,8 @@ namespace catapult { namespace test {
 	MAKE_BASE_SET_DELTA_TEST(TEST_CLASS, TRAITS, ImmutableBaseSetDeltaCanAddRemoveAndReinsertElement) \
 	\
 	MAKE_BASE_SET_DELTA_TEST(TEST_CLASS, TRAITS, ImmutableBaseSetModifiedElementHasFirstChangeGenerationId) \
+	\
+	MAKE_BASE_SET_DELTA_TEST(TEST_CLASS, TRAITS, ImmutableBaseSetCanBackupAndRestoreChanges) \
 
 #define DEFINE_MUTABLE_BASE_SET_DELTA_TESTS_FOR(NAME) \
 	DEFINE_MUTABLE_BASE_SET_DELTA_TESTS(Delta##NAME##Tests, test::DeltaTraits<deltaset::NAME##Traits>)

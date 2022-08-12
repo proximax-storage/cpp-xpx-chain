@@ -27,7 +27,6 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/mocks/MockCapturingNotificationValidator.h"
 #include "tests/test/other/mocks/MockNotification.h"
-#include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
 
 using namespace catapult::validators;

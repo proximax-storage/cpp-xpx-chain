@@ -19,7 +19,6 @@
 **/
 
 #include "HashTestUtils.h"
-#include "catapult/model/EntityRange.h"
 #include "tests/test/nodeps/Random.h"
 
 namespace catapult { namespace test {

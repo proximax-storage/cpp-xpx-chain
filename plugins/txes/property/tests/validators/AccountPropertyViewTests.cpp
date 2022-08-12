@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/validators/Validators.h"
 #include "src/validators/AccountPropertyView.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "tests/test/PropertyCacheTestUtils.h"

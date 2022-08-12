@@ -19,7 +19,6 @@
 **/
 
 #include "Validators.h"
-#include "catapult/model/VerifiableEntity.h"
 
 namespace catapult { namespace validators {
 

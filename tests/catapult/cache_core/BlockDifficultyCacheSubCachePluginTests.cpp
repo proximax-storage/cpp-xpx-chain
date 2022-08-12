@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/cache_core/BlockDifficultyCacheSubCachePlugin.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"

@@ -20,7 +20,6 @@
 
 #include "TimeSynchronizationCacheTestUtils.h"
 #include "catapult/cache_core/AccountStateCacheDelta.h"
-#include "catapult/ionet/NodeContainer.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/TestConstants.h"
 

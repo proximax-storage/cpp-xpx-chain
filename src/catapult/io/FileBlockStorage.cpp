@@ -24,9 +24,6 @@
 #include "BufferedFileStream.h"
 #include "FilesystemUtils.h"
 #include "PodIoUtils.h"
-#include "catapult/utils/MemoryUtils.h"
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem.hpp>
 #include <inttypes.h>
 
 namespace catapult { namespace io {

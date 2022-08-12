@@ -19,9 +19,7 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/MosaicCacheTestUtils.h"
-#include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 

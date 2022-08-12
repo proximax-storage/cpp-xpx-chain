@@ -23,7 +23,6 @@
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace unbondedpruning {
 

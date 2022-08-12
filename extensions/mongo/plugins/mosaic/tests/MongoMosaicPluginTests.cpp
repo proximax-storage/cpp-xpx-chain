@@ -21,7 +21,6 @@
 #include "mongo/tests/test/MongoPluginTestUtils.h"
 #include "plugins/txes/mosaic/src/model/MosaicEntityType.h"
 #include "plugins/txes/mosaic/src/model/MosaicReceiptType.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

@@ -18,16 +18,13 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <plugins/txes/namespace/src/config/NamespaceConfiguration.h>
+#include "src/config/NamespaceConfiguration.h"
 #include "src/plugins/NamespacePlugin.h"
 #include "src/cache/NamespaceCache.h"
 #include "src/model/NamespaceEntityType.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
-#include "catapult/plugins/PluginUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/plugins/PluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace plugins {
 

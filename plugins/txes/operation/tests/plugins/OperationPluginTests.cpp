@@ -4,12 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/OperationPlugin.h"
 #include "src/model/OperationEntityType.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/plugins/PluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace plugins {
 

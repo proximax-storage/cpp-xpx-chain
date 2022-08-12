@@ -22,7 +22,6 @@
 #include "catapult/api/ChainPackets.h"
 #include "catapult/api/RemoteChainApi.h"
 #include "tests/test/net/BriefServerRequestorTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace net {
 

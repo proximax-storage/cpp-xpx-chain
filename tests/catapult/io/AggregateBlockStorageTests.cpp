@@ -23,7 +23,6 @@
 #include "tests/test/core/HashTestUtils.h"
 #include "tests/test/core/mocks/MockBlockStorage.h"
 #include "tests/test/other/mocks/MockBlockChangeSubscriber.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace io {
 

@@ -21,7 +21,6 @@
 #include "ConsumerUtils.h"
 #include "ConsumerResults.h"
 #include "catapult/disruptor/ConsumerInput.h"
-#include "catapult/ionet/NodeInteractionResult.h"
 
 namespace catapult { namespace consumers {
 
@@ -40,5 +39,10 @@ namespace catapult { namespace consumers {
 		}
 
 		return ionet::NodeInteractionResult(sourcePublicKey, code);
+	}
+
+	model::NetworkConfiguration ParseConfig(const uint8_t* pConfig, uint16_t configSize) {
+		std::istringstream inputBlock(std::string(reinterpret_cast<const char*>(pConfig), configSize));
+		return model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
 	}
 }}

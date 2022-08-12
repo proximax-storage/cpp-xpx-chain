@@ -19,14 +19,11 @@
 **/
 
 #include "catapult/extensions/ServiceUtils.h"
-#include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ServerHooks.h"
-#include "catapult/extensions/ServiceLocator.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/net/mocks/MockPacketWriters.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 

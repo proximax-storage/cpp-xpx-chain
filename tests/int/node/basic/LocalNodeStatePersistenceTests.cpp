@@ -20,7 +20,6 @@
 
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
 #include "tests/int/node/test/LocalNodeTestContext.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 

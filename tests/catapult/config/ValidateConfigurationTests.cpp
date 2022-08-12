@@ -19,9 +19,6 @@
 **/
 
 #include "catapult/config/ValidateConfiguration.h"
-#include "catapult/config/BlockchainConfiguration.h"
-#include "catapult/utils/ConfigurationBag.h"
-#include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 

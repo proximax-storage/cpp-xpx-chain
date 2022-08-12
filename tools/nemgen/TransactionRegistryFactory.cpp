@@ -19,13 +19,12 @@
 **/
 
 #include "TransactionRegistryFactory.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
+#include "catapult/plugins/AddHarvesterTransactionPlugin.h"
 #include "catapult/plugins/NetworkConfigTransactionPlugin.h"
 #include "catapult/plugins/BlockchainUpgradeTransactionPlugin.h"
 #include "catapult/plugins/MosaicAliasTransactionPlugin.h"
 #include "catapult/plugins/MosaicDefinitionTransactionPlugin.h"
 #include "catapult/plugins/MosaicSupplyChangeTransactionPlugin.h"
-#include "catapult/plugins/PluginUtils.h"
 #include "catapult/plugins/RegisterNamespaceTransactionPlugin.h"
 #include "catapult/plugins/TransferTransactionPlugin.h"
 #include "mosaic/src/config/MosaicConfiguration.h"
@@ -38,8 +37,8 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto namespaceConfig = config::NamespaceConfiguration::Uninitialized();
 		auto networkConfig = model::NetworkConfiguration::Uninitialized();
 		networkConfig.SetPluginConfiguration(mosaicConfig);
-
 		networkConfig.SetPluginConfiguration(namespaceConfig);
+
 		config::BlockchainConfiguration config{
 			config::ImmutableConfiguration::Uninitialized(),
 			std::move(networkConfig),
@@ -60,6 +59,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		registry.registerPlugin(plugins::CreateNetworkConfigTransactionPlugin());
 		registry.registerPlugin(plugins::CreateBlockchainUpgradeTransactionPlugin());
+		registry.registerPlugin(plugins::CreateAddHarvesterTransactionPlugin());
 		return registry;
 	}
 }}}

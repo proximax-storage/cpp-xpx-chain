@@ -23,9 +23,6 @@
 #include "plugins/txes/transfer/src/model/TransferTransaction.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/Block.h"
-#include "catapult/utils/HexFormatter.h"
-#include "catapult/utils/Logging.h"
-#include <iomanip>
 
 using namespace catapult::model;
 using namespace catapult::crypto;

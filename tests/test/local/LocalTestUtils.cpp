@@ -20,12 +20,9 @@
 
 #include "LocalTestUtils.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
-#include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/plugins/PluginLoader.h"
-#include "plugins/txes/transfer/src/model/TransferTransaction.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
-#include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
@@ -41,7 +38,7 @@ namespace catapult { namespace test {
 			"\t\t{\n"
 			"\t\t\t\"name\": \"Block\",\n"
 			"\t\t\t\"type\": \"33091\",\n"
-			"\t\t\t\"supportedVersions\": [3]\n"
+			"\t\t\t\"supportedVersions\": [4]\n"
 			"\t\t},\n"
 			"\t\t{\n"
 			"\t\t\t\"name\": \"Nemesis_Block\",\n"
@@ -255,6 +252,11 @@ namespace catapult { namespace test {
 		config.MaxTransactionsPerBlock = 200'000;
 
 		config.EnableUnconfirmedTransactionMinFeeValidation = true;
+
+		config.EnableUndoBlock = true;
+		config.EnableBlockSync = true;
+
+		config.EnableWeightedVoting = false;
 
 		config.GreedDelta = 0.5;
 		config.GreedExponent = 2.0;

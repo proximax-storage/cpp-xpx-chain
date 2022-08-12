@@ -19,7 +19,6 @@
 **/
 
 #include "SynchronizationFilters.h"
-#include "catapult/utils/ContainerHelpers.h"
 
 namespace catapult { namespace timesync { namespace filters {
 

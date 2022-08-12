@@ -5,7 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "src/cache/OperationCache.h"
 
 namespace catapult { namespace validators {
 

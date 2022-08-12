@@ -21,7 +21,6 @@
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 

@@ -20,7 +20,6 @@
 
 #include "src/NodeDiscoveryService.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
-#include "catapult/ionet/NetworkNode.h"
 
 namespace catapult { namespace nodediscovery {
 

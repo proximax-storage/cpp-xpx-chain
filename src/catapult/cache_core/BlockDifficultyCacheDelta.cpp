@@ -19,8 +19,6 @@
 **/
 
 #include "BlockDifficultyCacheDelta.h"
-#include "catapult/deltaset/BaseSetDeltaIterationView.h"
-#include "catapult/exceptions.h"
 
 namespace catapult { namespace cache {
 

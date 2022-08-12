@@ -19,7 +19,6 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "src/config/MultisigConfiguration.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/MultisigCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"

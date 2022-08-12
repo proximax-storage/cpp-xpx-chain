@@ -20,7 +20,6 @@
 
 #include "BlockSpan.h"
 #include "IntegerMath.h"
-#include <iostream>
 
 namespace catapult { namespace utils {
 

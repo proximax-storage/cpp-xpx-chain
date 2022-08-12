@@ -4,8 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/cache_core/AccountStateCache.h"
-#include "src/cache/DriveCache.h"
 #include "src/validators/Validators.h"
 #include "tests/test/ServiceTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"

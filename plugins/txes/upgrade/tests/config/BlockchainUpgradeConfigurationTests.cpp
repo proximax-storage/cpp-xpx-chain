@@ -6,7 +6,6 @@
 
 #include "src/config/BlockchainUpgradeConfiguration.h"
 #include "tests/test/nodeps/ConfigurationTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace config {
 

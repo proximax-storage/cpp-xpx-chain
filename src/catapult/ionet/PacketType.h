@@ -66,6 +66,32 @@ namespace catapult { namespace ionet {
 	/* Sub cache merkle roots have been requested. */ \
 	ENUM_VALUE(Sub_Cache_Merkle_Roots, 12) \
 	\
+	/* A block proposed by committee has been pushed by a peer. */ \
+	ENUM_VALUE(Push_Proposed_Block, 13) \
+	\
+	/* A prevote message has been pushed by a peer. */ \
+	ENUM_VALUE(Push_Prevote_Messages, 14) \
+	\
+	/* A precommit message has been pushed by a peer. */ \
+	ENUM_VALUE(Push_Precommit_Messages, 15) \
+	\
+	/* A block confirmed by committee has been pushed by a peer. */ \
+	ENUM_VALUE(Push_Confirmed_Block, 16) \
+	\
+    /* A remote node state has been requested by a peer. */ \
+    ENUM_VALUE(Pull_Remote_Node_State, 17) \
+    \
+	/* A block proposed by committee has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Proposed_Block, 18) \
+	\
+	/* Prevote messages has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Prevote_Messages, 19) \
+	\
+	/* Precommit messages has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Precommit_Messages, 20) \
+	\
+	/* A block confirmed by committee has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Confirmed_Block, 21) \
 	/* api only packets have types [500, 600) */ \
 	\
 	/* Partial aggregate transactions have been pushed by an api-node. */ \
@@ -149,8 +175,27 @@ namespace catapult { namespace ionet {
 	/* Super contract state path has been requested by a client. */ \
 	ENUM_VALUE(SuperContract_State_Path, FACILITY_BASED_CODE(800, SuperContract)) \
 	\
-	/* Super contract state path has been requested by a client. */ \
+	/* Levy state path has been requested by a client. */ \
 	ENUM_VALUE(Levy_State_Path, FACILITY_BASED_CODE(800, Levy)) \
+	\
+	/* Committee state path has been requested by a client. */ \
+	ENUM_VALUE(Committee_State_Path, FACILITY_BASED_CODE(800, Committee)) \
+	\
+	/* BcDrive state path has been requested by a client. */ \
+	ENUM_VALUE(BcDrive_State_Path, FACILITY_BASED_CODE(800, BcDrive)) \
+	\
+	/* DownloadChannel state path has been requested by a client. */ \
+	ENUM_VALUE(DownloadChannel_State_Path, FACILITY_BASED_CODE(800, DownloadChannel)) \
+	\
+	/* Replicator state path has been requested by a client. */ \
+	ENUM_VALUE(Replicator_State_Path, FACILITY_BASED_CODE(800, Replicator)) \
+	\
+	/* Queue state path has been requested by a client. */ \
+	ENUM_VALUE(Queue_State_Path, FACILITY_BASED_CODE(800, Queue)) \
+	\
+    /* Priority queue state path has been requested by a client. */ \
+	ENUM_VALUE(Priority_Queue_State_Path, FACILITY_BASED_CODE(800, PriorityQueue)) \
+	\
 	\
 	/* SDA-SDA Exchange state path has been requested by a client. */ \
 	ENUM_VALUE(SdaExchange_State_Path, FACILITY_BASED_CODE(800, ExchangeSda))     \
@@ -222,7 +267,7 @@ namespace catapult { namespace ionet {
 	/* Super contract infos have been requested by a client. */ \
 	ENUM_VALUE(SuperContract_Infos, FACILITY_BASED_CODE(1200, SuperContract)) \
 	\
-	/* Super contract infos have been requested by a client. */ \
+	/* Levy infos have been requested by a client. */ \
 	ENUM_VALUE(Levy_Infos, FACILITY_BASED_CODE(1200, Levy)) \
 	\
 	/* SDA-SDA Exchange infos have been requested by a client. */ \

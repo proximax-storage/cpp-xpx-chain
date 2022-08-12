@@ -18,10 +18,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "../../../src/catapult/utils/XpxUnit.h"
+#include "src/catapult/utils/XpxUnit.h"
 #include "tests/test/nodeps/Comparison.h"
 #include "tests/test/nodeps/ConfigurationTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace utils {
 

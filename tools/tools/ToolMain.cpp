@@ -24,9 +24,6 @@
 #include "catapult/thread/ThreadInfo.h"
 #include "catapult/utils/ExceptionLogging.h"
 #include "catapult/version/version.h"
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem.hpp>
-#include <iostream>
 
 namespace catapult { namespace tools {
 

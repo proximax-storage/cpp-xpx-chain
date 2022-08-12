@@ -5,12 +5,9 @@
 **/
 
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
-#include <boost/thread.hpp>
 
 namespace catapult { namespace config {
 

@@ -20,13 +20,10 @@
 
 #include "src/validators/Validators.h"
 #include "src/plugins/ModifyMultisigAccountTransactionPlugin.h"
-#include "catapult/model/TransactionPlugin.h"
 #include "tests/test/MultisigCacheTestUtils.h"
 #include "tests/test/MultisigTestUtils.h"
 #include "tests/test/core/mocks/MockTransaction.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {
 

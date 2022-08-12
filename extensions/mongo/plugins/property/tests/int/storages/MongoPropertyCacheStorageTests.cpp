@@ -20,12 +20,9 @@
 
 #include "src/storages/MongoPropertyCacheStorage.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "plugins/txes/property/src/state/AccountProperties.h"
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
-#include "mongo/tests/test/MongoTestUtils.h"
 #include "plugins/txes/property/tests/test/PropertyCacheTestUtils.h"
 #include "tests/test/AccountPropertiesMapperTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace bsoncxx::builder::stream;
 

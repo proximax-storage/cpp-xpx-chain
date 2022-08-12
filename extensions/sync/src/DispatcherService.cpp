@@ -22,22 +22,17 @@
 #include "DispatcherSyncHandlers.h"
 #include "PredicateUtils.h"
 #include "RollbackInfo.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainUtils.h"
-#include "catapult/chain/UtUpdater.h"
 #include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/consumers/AuditConsumer.h"
-#include "catapult/consumers/BlockConsumers.h"
 #include "catapult/consumers/ConsumerUtils.h"
 #include "catapult/consumers/ReclaimMemoryInspector.h"
-#include "catapult/consumers/TransactionConsumers.h"
 #include "catapult/consumers/UndoBlock.h"
-#include "catapult/disruptor/BatchRangeDispatcher.h"
 #include "catapult/extensions/DispatcherUtils.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
@@ -46,13 +41,10 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/NodeContainer.h"
-#include "catapult/model/NetworkConfiguration.h"
-#include "catapult/plugins/PluginManager.h"
 #include "catapult/subscribers/StateChangeSubscriber.h"
 #include "catapult/subscribers/TransactionStatusSubscriber.h"
 #include "catapult/thread/MultiServicePool.h"
 #include "catapult/validators/AggregateEntityValidator.h"
-#include <boost/filesystem.hpp>
 
 using namespace catapult::consumers;
 using namespace catapult::disruptor;
@@ -149,26 +141,27 @@ namespace catapult { namespace sync {
 			const auto& pluginManager = state.pluginManager();
 
 			BlockChainSyncHandlers syncHandlers;
-			syncHandlers.DifficultyChecker = [&rollbackInfo, &state](
+			syncHandlers.DifficultyChecker = [&rollbackInfo, &pluginManager](
 					const auto& blocks,
 					const cache::CatapultCache& cache,
 					const model::NetworkConfigurations& remoteConfigs) {
 				if (!blocks.size())
 					return true;
-				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, state.pluginManager().configHolder(), remoteConfigs);
+				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, pluginManager.configHolder(), remoteConfigs);
 				rollbackInfo.modifier().reset();
 				return blocks.size() == result;
 			};
 
 			auto pUndoObserver = utils::UniqueToShared(extensions::CreateUndoEntityObserver(pluginManager));
 			syncHandlers.UndoBlock = [&rollbackInfo, &pluginManager, pUndoObserver](
+					const model::NetworkConfiguration& config,
 					const auto& blockElement,
 					auto& observerState,
 					auto undoBlockType) {
 				rollbackInfo.modifier().increment();
 				auto readOnlyCache = observerState.Cache.toReadOnly();
 				auto resolverContext = pluginManager.createResolverContext(readOnlyCache);
-				UndoBlock(blockElement, { *pUndoObserver, resolverContext, pluginManager.configHolder(), observerState }, undoBlockType);
+				UndoBlock(config, blockElement, { *pUndoObserver, resolverContext, pluginManager.configHolder(), observerState }, undoBlockType);
 			};
 			syncHandlers.Processor = CreateSyncProcessor(state, extensions::CreateExecutionConfiguration(pluginManager));
 
@@ -187,6 +180,11 @@ namespace catapult { namespace sync {
 			syncHandlers.PreStateWritten = [](const auto&, const auto&, auto) {};
 			syncHandlers.TransactionsChange = state.hooks().transactionsChangeHandler();
 			syncHandlers.CommitStep = CreateCommitStepHandler(dataDirectory);
+			syncHandlers.PostBlockCommit = [&](const std::vector<model::BlockElement>& elements) {
+				for (const auto& element : elements) {
+					state.postBlockCommitSubscriber().notifyBlock(element);
+				}
+			};
 
 			if (state.config().Node.ShouldUseCacheDatabaseStorage)
 				AddSupplementalDataResiliency(syncHandlers, dataDirectory, state.cache(), state.score());
@@ -214,12 +212,13 @@ namespace catapult { namespace sync {
 			std::shared_ptr<ConsumerDispatcher> build(
 					const std::shared_ptr<thread::IoThreadPool>& pValidatorPool,
 					RollbackInfo& rollbackInfo) {
+				const auto& pluginManager = m_state.pluginManager();
 				m_consumers.push_back(CreateBlockChainCheckConsumer(
 						m_nodeConfig.MaxBlocksPerSyncAttempt,
-						m_state.pluginManager().configHolder(),
+						pluginManager.configHolder(),
 						m_state.timeSupplier()));
 				m_consumers.push_back(CreateBlockStatelessValidationConsumer(
-						extensions::CreateStatelessValidator(m_state.pluginManager()),
+						extensions::CreateStatelessValidator(pluginManager),
 						validators::CreateParallelValidationPolicy(pValidatorPool),
 						ToRequiresValidationPredicate(m_state.hooks().knownHashPredicate(m_state.utCache()))));
 
@@ -228,7 +227,7 @@ namespace catapult { namespace sync {
 						m_state.cache(),
 						m_state.state(),
 						m_state.storage(),
-						m_state.pluginManager().configHolder(),
+						pluginManager.configHolder(),
 						CreateBlockChainSyncHandlers(m_state, rollbackInfo)));
 
 				if (m_state.config().Node.ShouldEnableAutoSyncCleanup)

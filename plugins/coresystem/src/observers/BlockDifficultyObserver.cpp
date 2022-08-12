@@ -20,7 +20,6 @@
 
 #include "Observers.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
-#include "catapult/state/BlockDifficultyInfo.h"
 
 namespace catapult { namespace observers {
 

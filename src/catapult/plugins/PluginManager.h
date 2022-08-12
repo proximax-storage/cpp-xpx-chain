@@ -22,6 +22,7 @@
 #include "catapult/cache/CacheConfiguration.h"
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
+#include "catapult/chain/CommitteeManager.h"
 #include "catapult/config/InflationConfiguration.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/ionet/PacketHandlers.h"
@@ -30,6 +31,7 @@
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/observers/DemuxObserverBuilder.h"
 #include "catapult/observers/ObserverTypes.h"
+#include "catapult/state/StorageState.h"
 #include "catapult/utils/DiagnosticCounter.h"
 #include "catapult/validators/DemuxValidatorBuilder.h"
 #include "catapult/validators/ValidatorTypes.h"
@@ -236,7 +238,7 @@ namespace catapult { namespace plugins {
 		model::ExtractorContext createExtractorContext(const cache::CatapultCache& cache) const;
 
 		/// Adds a config \a initializer.
-		void addPluginInitializer(const PluginInitializer& initializer);
+		void addPluginInitializer(PluginInitializer&& initializer);
 
 		/// Creates a config  initializer.
 		PluginInitializer createPluginInitializer() const;
@@ -247,6 +249,29 @@ namespace catapult { namespace plugins {
 
 		/// Creates a notification publisher for the specified \a mode.
 		PublisherPointer createNotificationPublisher(model::PublicationMode mode = model::PublicationMode::All) const;
+
+		// endregion
+
+		// region committee
+
+		/// Sets a committee manager.
+		void setCommitteeManager(const std::shared_ptr<chain::CommitteeManager>& pManager);
+
+		/// Gets committee manager.
+		chain::CommitteeManager& getCommitteeManager() const;
+
+		// endregion
+
+		// region storage
+
+		/// Sets a storage state.
+		void setStorageState(const std::shared_ptr<state::StorageState>& pState);
+
+		/// Returns whether the storage state set or not.
+		bool isStorageStateSet();
+
+		/// Gets storage state.
+		state::StorageState& storageState() const;
 
 		// endregion
 
@@ -273,6 +298,9 @@ namespace catapult { namespace plugins {
 		std::vector<PluginInitializer> m_pluginInitializers;
 
 		bool m_shouldEnableVerifiableState;
+
+		std::shared_ptr<chain::CommitteeManager> m_pCommitteeManager;
+		std::shared_ptr<state::StorageState> m_pStorageState;
 	};
 }}
 

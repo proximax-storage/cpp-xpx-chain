@@ -4,13 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/DriveCache.h"
-#include "src/config/ServiceConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/ServiceTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {

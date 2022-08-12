@@ -23,7 +23,6 @@
 #include "MemoryCounters.h"
 #include "NemesisBlockNotifier.h"
 #include "NodeUtils.h"
-#include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/extensions/ConfigurationUtils.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateFileStorage.h"
@@ -80,6 +79,7 @@ namespace catapult { namespace local {
 							m_pBootstrapper->subscriptionManager(),
 							m_cacheHolder,
 							m_dataDirectory))
+					, m_pPostBlockCommitSubscriber(m_pBootstrapper->subscriptionManager().createPostBlockCommitSubscriber())
 					, m_pNodeSubscriber(CreateNodeSubscriber(m_pBootstrapper->subscriptionManager(), m_nodes))
 					, m_pluginManager(m_pBootstrapper->pluginManager())
 					, m_isBooted(false)
@@ -97,9 +97,11 @@ namespace catapult { namespace local {
 				CATAPULT_LOG(debug) << "initializing cache";
 				m_cacheHolder.cache() = m_pluginManager.createCache();
 				m_pluginManager.configHolder()->SetCache(&m_cacheHolder.cache());
+				if (m_pluginManager.isStorageStateSet())
+					m_pluginManager.storageState().setCache(&m_cacheHolder.cache());
 				auto initializers = m_pluginManager.createPluginInitializer();
 				initializers(const_cast<model::NetworkConfiguration&>(m_pluginManager.configHolder()->Config().Network));
-				m_pluginManager.configHolder()->SetPluginInitializer(initializers);
+				m_pluginManager.configHolder()->SetPluginInitializer(std::move(initializers));
 
 				CATAPULT_LOG(debug) << "registering counters";
 				registerCounters();
@@ -130,6 +132,7 @@ namespace catapult { namespace local {
 						*m_pTransactionStatusSubscriber,
 						*m_pStateChangeSubscriber,
 						*m_pNodeSubscriber,
+						*m_pPostBlockCommitSubscriber,
 						m_counters,
 						m_pluginManager,
 						m_pBootstrapper->pool());
@@ -196,6 +199,7 @@ namespace catapult { namespace local {
 
 				m_pBootstrapper->pool().shutdown();
 				saveStateToDisk();
+				m_pBootstrapper->configHolder()->SetPluginInitializer(nullptr);
 			}
 
 		private:
@@ -257,6 +261,7 @@ namespace catapult { namespace local {
 
 			std::unique_ptr<subscribers::TransactionStatusSubscriber> m_pTransactionStatusSubscriber;
 			std::unique_ptr<subscribers::StateChangeSubscriber> m_pStateChangeSubscriber;
+			std::unique_ptr<io::BlockChangeSubscriber> m_pPostBlockCommitSubscriber;
 			std::unique_ptr<subscribers::NodeSubscriber> m_pNodeSubscriber;
 
 			plugins::PluginManager& m_pluginManager;

@@ -20,22 +20,16 @@
 
 #include "partialtransaction/src/chain/PtUpdater.h"
 #include "partialtransaction/src/chain/PtValidator.h"
-#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include "catapult/cache_tx/MemoryPtCache.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/model/TransactionStatus.h"
 #include "catapult/thread/FutureUtils.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "catapult/utils/SpinLock.h"
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
-#include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
-#include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/other/ValidationResultTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace chain {
 

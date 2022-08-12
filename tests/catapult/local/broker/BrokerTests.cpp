@@ -25,7 +25,6 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/MessageIngestionTestContext.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 

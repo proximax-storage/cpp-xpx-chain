@@ -19,15 +19,10 @@
 **/
 
 #include "MultiBlockLoader.h"
-#include "catapult/cache/CatapultCache.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/extensions/LocalNodeStateRef.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/Block.h"
-#include "catapult/model/NetworkConfiguration.h"
-#include "catapult/model/Elements.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/utils/StackLogger.h"

@@ -19,13 +19,9 @@
 **/
 
 #include "TransactionSpamThrottle.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/ImportanceView.h"
-#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/extensions/ServiceState.h"
-#include "catapult/model/Transaction.h"
-#include <cmath>
 
 namespace catapult { namespace sync {
 

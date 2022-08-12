@@ -20,9 +20,6 @@
 
 #include "Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/state/AccountBalances.h"
-#include "catapult/validators/ValidatorContext.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "src/config/MosaicConfiguration.h"
 
 namespace catapult { namespace validators {
@@ -32,6 +29,9 @@ namespace catapult { namespace validators {
 		ValidationResult CheckAccount(uint16_t maxMosaics, MosaicId mosaicId, const TKey& key, const ValidatorContext& context) {
 			const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 			auto accountStateIter = accountStateCache.find(key);
+			if (!accountStateIter.tryGet())
+				return ValidationResult::Success;
+
 			const auto& balances = accountStateIter.get().Balances;
 			if (balances.get(mosaicId) != Amount())
 				return ValidationResult::Success;

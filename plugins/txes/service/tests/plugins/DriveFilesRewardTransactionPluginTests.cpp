@@ -6,11 +6,9 @@
 
 #include "src/plugins/DriveFilesRewardTransactionPlugin.h"
 #include "src/model/DriveFilesRewardTransaction.h"
-#include "src/model/ServiceNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace catapult::model;
 

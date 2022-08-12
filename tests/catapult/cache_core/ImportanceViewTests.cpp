@@ -18,10 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/cache_core/ImportanceView.h"
-#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/NetworkInfo.h"
 #include "tests/test/cache/ImportanceViewTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"

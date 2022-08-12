@@ -20,12 +20,9 @@
 
 #include "NemesisConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
-#include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/IdGenerator.h"
 #include "catapult/model/MosaicIdGenerator.h"
 #include "catapult/model/NamespaceIdGenerator.h"
-#include "catapult/state/Namespace.h"
-#include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/ConfigurationUtils.h"
 
 namespace catapult { namespace tools { namespace nemgen {
@@ -170,6 +167,17 @@ namespace catapult { namespace tools { namespace nemgen {
 
 			return numMosaicProperties;
 		}
+
+		size_t LoadHarvesters(const utils::ConfigurationBag& bag, NemesisConfiguration& config) {
+			auto harvesters = bag.getAllOrdered<bool>("harvesters");
+
+			for (const auto& pair : harvesters) {
+				if (pair.second)
+					config.HarvesterPrivateKeys.push_back(pair.first);
+			}
+
+			return harvesters.size();
+		}
 	}
 
 #define LOAD_PROPERTY(SECTION, NAME) utils::LoadIniProperty(bag, SECTION, #NAME, config.NAME)
@@ -207,7 +215,9 @@ namespace catapult { namespace tools { namespace nemgen {
 		// load mosaics information
 		auto numMosaicProperties = LoadMosaics(bag, config, owner);
 
-		utils::VerifyBagSizeLte(bag, 6 + numNamespaceProperties + numMosaicProperties);
+		auto numHarvesters = LoadHarvesters(bag, config);
+
+		utils::VerifyBagSizeLte(bag, 6 + numNamespaceProperties + numMosaicProperties + numHarvesters);
 		return config;
 	}
 }}}

@@ -21,7 +21,6 @@
 #include "catapult/io/FileLock.h"
 #include "tests/test/nodeps/BasicLockTests.h"
 #include "tests/test/nodeps/Filesystem.h"
-#include <boost/filesystem/path.hpp>
 #include <boost/filesystem.hpp>
 
 using catapult::test::TempFileGuard;

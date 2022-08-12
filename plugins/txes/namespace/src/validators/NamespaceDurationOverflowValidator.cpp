@@ -21,8 +21,6 @@
 #include "Validators.h"
 #include "src/cache/NamespaceCache.h"
 #include "src/model/NamespaceLifetimeConstraints.h"
-#include "catapult/validators/ValidatorContext.h"
-#include "catapult/constants.h"
 
 namespace catapult { namespace validators {
 

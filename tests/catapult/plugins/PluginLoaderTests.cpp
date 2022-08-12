@@ -21,7 +21,6 @@
 #include "catapult/plugins/PluginLoader.h"
 #include "catapult/plugins/PluginExceptions.h"
 #include "catapult/plugins/PluginManager.h"
-#include "catapult/utils/ExceptionLogging.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"

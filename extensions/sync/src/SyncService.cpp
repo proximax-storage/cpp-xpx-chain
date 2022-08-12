@@ -24,7 +24,6 @@
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/api/RemoteTransactionApi.h"
 #include "catapult/chain/UtSynchronizer.h"
-#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PeersConnectionTasks.h"
 #include "catapult/extensions/SynchronizerTaskCallbacks.h"
@@ -63,12 +62,18 @@ namespace catapult { namespace sync {
 
 			thread::Task task;
 			task.Name = "synchronizer task";
-			task.Callback = CreateSynchronizerTaskCallback(
+			auto synchronizerTaskCallback = CreateSynchronizerTaskCallback(
 					std::move(chainSynchronizer),
 					api::CreateRemoteChainApi,
 					packetWriters,
 					state,
 					task.Name);
+			task.Callback = [&state, synchronizerTaskCallback]() {
+				if (state.config().Network.EnableBlockSync)
+					return synchronizerTaskCallback();
+
+				return thread::make_ready_future(thread::TaskResult::Continue);
+			};
 			return task;
 		}
 

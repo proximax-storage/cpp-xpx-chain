@@ -30,6 +30,18 @@
 
 namespace catapult { namespace deltaset {
 
+	namespace {
+		template<typename TElements>
+		void RestoreElements(TElements& elements, std::vector<TElements>& backup) {
+			if (backup.empty()) {
+				elements.clear();
+			} else {
+				elements = backup.back();
+				backup.pop_back();
+			}
+		}
+	}
+
 	/// Possible results of an insert into a base set delta.
 	enum class InsertResult {
 		/// An element pending removal was reverted.
@@ -305,6 +317,27 @@ namespace catapult { namespace deltaset {
 			return DeltaElements<MemorySetType>(m_addedElements, m_removedElements, m_copiedElements);
 		}
 
+		void backupChanges(bool replace) {
+			if (replace) {
+				m_addedElementsBackup.clear();
+				m_removedElementsBackup.clear();
+				m_copiedElementsBackup.clear();
+				m_keyGenerationIdMapBackup.clear();
+			}
+
+			m_addedElementsBackup.push_back(m_addedElements);
+			m_removedElementsBackup.push_back(m_removedElements);
+			m_copiedElementsBackup.push_back(m_copiedElements);
+			m_keyGenerationIdMapBackup.push_back(m_keyGenerationIdMap);
+		}
+
+		void restoreChanges() {
+			RestoreElements(m_addedElements, m_addedElementsBackup);
+			RestoreElements(m_removedElements, m_removedElementsBackup);
+			RestoreElements(m_copiedElements, m_copiedElementsBackup);
+			RestoreElements(m_keyGenerationIdMap, m_keyGenerationIdMapBackup);
+		}
+
 		/// Resets all pending modifications.
 		void reset() {
 			m_addedElements.clear();
@@ -313,6 +346,11 @@ namespace catapult { namespace deltaset {
 
 			m_generationId = 1;
 			m_keyGenerationIdMap.clear();
+
+			m_addedElementsBackup.clear();
+			m_removedElementsBackup.clear();
+			m_copiedElementsBackup.clear();
+			m_keyGenerationIdMapBackup.clear();
 		}
 
 	public:
@@ -363,6 +401,11 @@ namespace catapult { namespace deltaset {
 
 		uint32_t m_generationId;
 		typename KeyGenerationIdMap<SetType>::Type m_keyGenerationIdMap;
+
+		std::vector<MemorySetType> m_addedElementsBackup;
+		std::vector<MemorySetType> m_removedElementsBackup;
+		std::vector<MemorySetType> m_copiedElementsBackup;
+		std::vector<typename KeyGenerationIdMap<SetType>::Type> m_keyGenerationIdMapBackup;
 
 	private:
 		template<typename TElementTraits2, typename TSetTraits2>

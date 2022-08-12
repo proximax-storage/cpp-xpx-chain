@@ -88,4 +88,15 @@ namespace catapult { namespace consumers {
 	/// Creates a consumer that calls \a newBlockSink with new blocks that have a source in \a sinkSourceMask.
 	/// \note This consumer must be last because it might destroy the input.
 	disruptor::DisruptorConsumer CreateNewBlockConsumer(const NewBlockSink& newBlockSink, disruptor::InputSource sinkSourceMask);
+
+	/// Creates a consumer that validates a block by applying it on the local chain with detached cache, which is composed of
+	/// state (in \a cache and \a state) and the last block (via \a lastBlockElementSupplier).
+	/// \a handlers are used to customize the sync process.
+	/// \note Not all blockchain sync \a handlers are used, only DifficultyChecker and Processor.
+	/// \note This consumer is non-const because it updates the element generation hashes.
+	disruptor::BlockConsumer CreateBlockValidatorConsumer(
+		cache::CatapultCache& cache,
+		state::CatapultState& state,
+		const BlockChainSyncHandlers& handlers,
+		const model::BlockElementSupplier& lastBlockElementSupplier);
 }}

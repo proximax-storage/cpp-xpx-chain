@@ -8,10 +8,8 @@
 #include "mongo/src/mappers/MapperUtils.h"
 #include "catapult/model/Address.h"
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
-#include "mongo/tests/test/MongoTestUtils.h"
 #include "plugins/txes/contract/tests/test/ReputationCacheTestUtils.h"
 #include "tests/test/ReputationMapperTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace bsoncxx::builder::stream;
 

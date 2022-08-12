@@ -19,7 +19,6 @@
 **/
 
 #include "TransactionExtensions.h"
-#include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/Signer.h"
 
 namespace catapult { namespace extensions {

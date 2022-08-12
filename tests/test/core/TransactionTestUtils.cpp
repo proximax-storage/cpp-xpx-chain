@@ -23,11 +23,8 @@
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "mocks/MockTransaction.h"
 #include "catapult/crypto/KeyUtils.h"
-#include "catapult/crypto/Signer.h"
-#include "catapult/model/VerifiableEntity.h"
 #include "catapult/utils/HexParser.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include <memory>
 
 namespace catapult { namespace test {
 

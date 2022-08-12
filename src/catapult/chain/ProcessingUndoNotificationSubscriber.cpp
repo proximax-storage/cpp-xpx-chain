@@ -37,6 +37,7 @@ namespace catapult { namespace chain {
 				{ m_observerContext.Cache, m_observerContext.State },
 				m_observerContext.Config,
 				m_observerContext.Height,
+				m_observerContext.Timestamp,
 				undoMode,
 				m_observerContext.Resolvers);
 		for (auto iter = m_notificationBuffers.crbegin(); m_notificationBuffers.crend() != iter; ++iter) {

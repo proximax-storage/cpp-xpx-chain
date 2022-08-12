@@ -4,8 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/BlockchainUpgradeCache.h"
-#include "src/cache/BlockchainUpgradeCacheStorage.h"
 #include "src/config/BlockchainUpgradeConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/BlockchainUpgradeTestUtils.h"

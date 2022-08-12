@@ -5,7 +5,6 @@
 **/
 
 #include "CommonDrive.h"
-#include "plugins/txes/multisig/src/cache/MultisigCache.h"
 #include "plugins/txes/multisig/src/observers/MultisigAccountFacade.h"
 #include <cmath>
 

@@ -18,10 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/utils/ByteArray.h"
 #include "tests/test/nodeps/Comparison.h"
 #include "tests/test/nodeps/Convertibility.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace utils {
 

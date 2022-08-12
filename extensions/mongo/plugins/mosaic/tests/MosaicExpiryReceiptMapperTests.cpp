@@ -22,7 +22,6 @@
 #include "mongo/src/MongoReceiptPluginFactory.h"
 #include "plugins/txes/mosaic/src/model/MosaicReceiptType.h"
 #include "mongo/tests/test/MapperTestUtils.h"
-#include "tests/test/core/mocks/MockReceipt.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {

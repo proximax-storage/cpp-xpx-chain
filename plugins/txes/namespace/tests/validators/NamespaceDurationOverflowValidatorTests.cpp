@@ -19,8 +19,6 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "src/model/NamespaceConstants.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/NamespaceCacheTestUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"

@@ -4,8 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "plugins/txes/service/src/cache/DriveCache.h"
-#include "src/cache/SuperContractCache.h"
 #include "src/validators/Validators.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"

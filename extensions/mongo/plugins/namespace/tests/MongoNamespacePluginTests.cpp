@@ -21,7 +21,6 @@
 #include "mongo/tests/test/MongoPluginTestUtils.h"
 #include "plugins/txes/namespace/src/model/NamespaceEntityType.h"
 #include "plugins/txes/namespace/src/model/NamespaceReceiptType.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

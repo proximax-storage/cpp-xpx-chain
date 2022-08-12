@@ -26,7 +26,6 @@
 #include "RepairState.h"
 #include "StateChangeRepairingSubscriber.h"
 #include "StorageStart.h"
-#include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateFileStorage.h"
 #include "catapult/extensions/LocalNodeStateRef.h"

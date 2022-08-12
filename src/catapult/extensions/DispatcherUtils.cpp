@@ -20,10 +20,7 @@
 
 #include "DispatcherUtils.h"
 #include "ServiceLocator.h"
-#include "catapult/config/NodeConfiguration.h"
-#include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/subscribers/TransactionStatusSubscriber.h"
-#include "catapult/utils/TimeSpan.h"
 
 namespace catapult { namespace extensions {
 

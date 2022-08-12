@@ -25,7 +25,6 @@
 #include "catapult/api/ChainPackets.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/ionet/PackedNodeInfo.h"
-#include "catapult/ionet/PacketPayloadFactory.h"
 #include "catapult/model/DiagnosticCounterValue.h"
 #include "catapult/utils/DiagnosticCounter.h"
 

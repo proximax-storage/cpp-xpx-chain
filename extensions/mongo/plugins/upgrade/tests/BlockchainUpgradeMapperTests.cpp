@@ -7,10 +7,8 @@
 #include "src/BlockchainUpgradeMapper.h"
 #include "sdk/src/builders/BlockchainUpgradeBuilder.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "catapult/constants.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

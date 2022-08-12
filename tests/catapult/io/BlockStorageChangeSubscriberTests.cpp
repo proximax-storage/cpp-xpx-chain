@@ -19,10 +19,8 @@
 **/
 
 #include "catapult/io/BlockStorageChangeSubscriber.h"
-#include "catapult/io/BlockStorage.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockBlockStorage.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace io {
 

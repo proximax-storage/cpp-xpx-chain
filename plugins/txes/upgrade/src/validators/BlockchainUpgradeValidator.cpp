@@ -5,8 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "catapult/validators/ValidatorContext.h"
-#include "catapult/version/version.h"
 #include "src/cache/BlockchainUpgradeCache.h"
 #include "src/config/BlockchainUpgradeConfiguration.h"
 

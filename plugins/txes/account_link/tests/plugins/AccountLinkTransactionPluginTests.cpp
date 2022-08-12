@@ -23,7 +23,6 @@
 #include "src/model/AccountLinkTransaction.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace catapult::model;
 

@@ -21,7 +21,6 @@
 #include "BlockchainConfiguration.h"
 #include "ConfigurationFileLoader.h"
 #include "catapult/crypto/KeyPair.h"
-#include <boost/filesystem.hpp>
 
 namespace catapult { namespace config {
 

@@ -20,7 +20,6 @@
 
 #include "catapult/cache/CacheHeight.h"
 #include "tests/test/nodeps/LockTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

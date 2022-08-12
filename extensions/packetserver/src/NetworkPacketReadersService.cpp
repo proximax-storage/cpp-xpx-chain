@@ -23,7 +23,6 @@
 #include "catapult/extensions/PeersConnectionTasks.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
-#include "catapult/thread/MultiServicePool.h"
 
 namespace catapult { namespace packetserver {
 

@@ -21,7 +21,6 @@
 #include "filespooling/src/FileTransactionStatusStorage.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace filespooling {
 

@@ -456,7 +456,7 @@ namespace catapult { namespace ionet {
 					return false;
 
 				CATAPULT_LOG(error)
-						<< "failed when " << operation << " '" << m_host << "': " << ec.message()
+						<< "failed when " << operation << " '" << m_host << " [" << m_endpoint << "]" << "': " << ec.message()
 						<< " (cancelled? " << m_isCancelled << ")";
 				return true;
 			}

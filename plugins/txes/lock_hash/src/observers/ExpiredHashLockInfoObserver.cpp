@@ -21,7 +21,6 @@
 #include "Observers.h"
 #include "src/cache/HashLockInfoCache.h"
 #include "plugins/txes/lock_shared/src/observers/ExpiredLockInfoObserver.h"
-#include "catapult/observers/ObserverUtils.h"
 
 namespace catapult { namespace observers {
 

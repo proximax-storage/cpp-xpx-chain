@@ -20,9 +20,7 @@
 
 #include "RemoteDiagnosticApi.h"
 #include "catapult/api/RemoteRequestDispatcher.h"
-#include "catapult/handlers/DiagnosticHandlers.h"
 #include "catapult/ionet/PacketEntityUtils.h"
-#include "catapult/ionet/PacketIo.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
 
 namespace catapult { namespace extensions {

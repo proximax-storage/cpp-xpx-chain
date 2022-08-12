@@ -7,15 +7,10 @@
 #include "catapult/model/Address.h"
 #include "src/plugins/DriveFileSystemTransactionPlugin.h"
 #include "src/model/DriveFileSystemTransaction.h"
-#include "src/model/ServiceNotifications.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
-#include <limits>
 
 using namespace catapult::model;
 

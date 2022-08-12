@@ -21,7 +21,6 @@
 #include "mongo/tests/test/MongoPluginTestUtils.h"
 #include "plugins/txes/lock_secret/src/model/SecretLockEntityType.h"
 #include "plugins/txes/lock_secret/src/model/SecretLockReceiptType.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

@@ -7,9 +7,7 @@
 #include "src/model/OperationIdentifyTransaction.h"
 #include "src/model/StartOperationTransaction.h"
 #include "src/model/EndOperationTransaction.h"
-#include "src/model/OperationReceiptType.h"
 #include "src/observers/Observers.h"
-#include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/OperationTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 

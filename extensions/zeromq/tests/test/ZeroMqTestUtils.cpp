@@ -22,11 +22,8 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "zeromq/src/PublisherUtils.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/Cosignature.h"
 #include "catapult/model/Elements.h"
-#include "catapult/model/Transaction.h"
 #include "catapult/model/TransactionStatus.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 

@@ -23,7 +23,6 @@
 #include "catapult/utils/ContainerHelpers.h"
 #include "tests/test/other/DeltaElementsTestUtils.h"
 #include "tests/TestHarness.h"
-#include <unordered_set>
 
 namespace catapult { namespace deltaset {
 

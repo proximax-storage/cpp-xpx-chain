@@ -22,11 +22,7 @@
 #include "LocalNodeChainScore.h"
 #include "LocalNodeStateRef.h"
 #include "NemesisBlockLoader.h"
-#include "catapult/cache/CacheStorage.h"
-#include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/SupplementalDataStorage.h"
-#include "catapult/config/CatapultDataDirectory.h"
-#include "catapult/config/NodeConfiguration.h"
 #include "catapult/consumers/BlockChainSyncHandlers.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/io/BufferedFileStream.h"
@@ -62,7 +58,12 @@ namespace catapult { namespace extensions {
 
 	namespace {
 		io::BufferedInputFileStream OpenInputStream(const config::CatapultDirectory& directory, const std::string& filename) {
-			return io::BufferedInputFileStream(io::RawFile(directory.file(filename), io::OpenMode::Read_Only));
+			// TODO: remove this temporary workaround after mainnet upgrade to 0.8.0
+			auto filepath = directory.file(filename);
+			if (!boost::filesystem::exists(filepath))
+				return io::BufferedInputFileStream(io::RawFile(filepath, io::OpenMode::Read_Write));
+
+			return io::BufferedInputFileStream(io::RawFile(filepath, io::OpenMode::Read_Only));
 		}
 
 		bool LoadStateFromDirectory(

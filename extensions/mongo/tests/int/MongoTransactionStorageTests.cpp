@@ -20,8 +20,6 @@
 
 #include "mongo/src/MongoTransactionStorage.h"
 #include "mongo/tests/test/MongoTransactionStorageTestUtils.h"
-#include "tests/test/core/TransactionInfoTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo {
 

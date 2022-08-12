@@ -21,15 +21,10 @@
 #include "catapult/cache_core/AccountStateCacheSerializers.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/model/Address.h"
-#include "catapult/state/AccountState.h"
 #include "catapult/utils/HexParser.h"
-#include "catapult/utils/HexParser.h"
-#include "sdk/src/extensions/IdGenerator.h"
 #include "tests/int/stress/test/InputDependentTest.h"
 #include "tools/tools/ToolMain.h"
 #include <boost/property_tree/json_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <random>
 
 // Short alias for this namespace
 namespace pt = boost::property_tree;

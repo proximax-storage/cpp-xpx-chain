@@ -20,7 +20,6 @@
 
 #include "NetworkTime.h"
 #include "Casting.h"
-#include <limits>
 
 namespace catapult { namespace utils {
 
@@ -28,6 +27,12 @@ namespace catapult { namespace utils {
 		auto now = std::chrono::system_clock::now().time_since_epoch();
 		auto nowMillis = std::chrono::duration_cast<std::chrono::milliseconds>(now);
 		return Timestamp(static_cast<uint64_t>((nowMillis - Epoch_Time).count()));
+	}
+
+	Timestamp FromTimePoint(const TimePoint& timePoint) {
+		auto time = timePoint.time_since_epoch();
+		auto timeMillis = std::chrono::duration_cast<std::chrono::milliseconds>(time);
+		return Timestamp(static_cast<uint64_t>((timeMillis - Epoch_Time).count()));
 	}
 
 	Timestamp ToNetworkTime(const Timestamp& timestamp) {
@@ -42,5 +47,11 @@ namespace catapult { namespace utils {
 			CATAPULT_THROW_INVALID_ARGUMENT_1("overflow detected in ToUnixTime", timestamp);
 
 		return Timestamp(static_cast<uint64_t>(Epoch_Time.count() + timestamp.unwrap()));
+	}
+
+	TimePoint ToTimePoint(const Timestamp& timestamp) {
+		auto unixTimestamp = ToUnixTime(timestamp).unwrap();
+
+		return TimePoint(std::chrono::milliseconds(unixTimestamp));
 	}
 }}

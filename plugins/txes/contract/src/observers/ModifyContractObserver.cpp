@@ -5,10 +5,7 @@
 **/
 
 #include "Observers.h"
-#include "catapult/model/NetworkConfiguration.h"
-#include "catapult/plugins/PluginUtils.h"
 #include "src/cache/ContractCache.h"
-#include "src/config/ContractConfiguration.h"
 #include "plugins/txes/multisig/src/cache/MultisigCache.h"
 #include <math.h>
 

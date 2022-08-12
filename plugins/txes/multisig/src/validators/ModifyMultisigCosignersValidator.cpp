@@ -19,8 +19,6 @@
 **/
 
 #include "Validators.h"
-#include "catapult/utils/ArraySet.h"
-#include <unordered_set>
 
 namespace catapult { namespace validators {
 

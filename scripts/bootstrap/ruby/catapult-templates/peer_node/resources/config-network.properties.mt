@@ -4,7 +4,7 @@ publicKey = {{network_public_key}}
 
 [chain]
 
-blockGenerationTargetTime = 5s
+blockGenerationTargetTime = 10s
 blockTimeSmoothingFactor = 1000
 
 greedDelta = 0.5
@@ -28,6 +28,23 @@ maxTransactionsPerBlock = 200'000
 
 enableUnconfirmedTransactionMinFeeValidation = true
 
+enableUndoBlock = false
+enableBlockSync = false
+
+enableWeightedVoting = true
+committeeSize = 3
+committeeApproval = 0.67
+committeePhaseTime = 5s
+minCommitteePhaseTime = 3750ms
+maxCommitteePhaseTime = 1m
+committeeSilenceInterval = 100ms
+committeeRequestInterval = 500ms
+committeeChainHeightRequestInterval = 30s
+committeeTimeAdjustment = 1.1
+committeeEndSyncApproval = 0.45
+committeeBaseTotalImportance = 100
+committeeNotRunningContribution = 0.5
+
 [plugin:catapult.plugins.accountlink]
 dummy = to trigger plugin load
 
@@ -42,6 +59,17 @@ enableBondedAggregateSupport = true
 
 maxBondedTransactionLifetime = 48h
 strictSigner = true
+
+[plugin:catapult.plugins.committee]
+
+enabled = true
+
+minGreed = 0.1
+# log(7/3)
+initialActivity = 0.367976785
+activityDelta = 0.00001
+activityCommitteeCosignedDelta = 0.01
+activityCommitteeNotCosignedDelta = 0.02
 
 [plugin:catapult.plugins.config]
 
@@ -146,6 +174,29 @@ maxSuperContractsOnDrive = 10
 
 enabled = true
 maxValueSize = 1024
+
+[plugin:catapult.plugins.storage]
+
+enabled = true
+minDriveSize = 1MB
+maxDriveSize = 10TB
+minCapacity = 1MB
+maxModificationSize = 10TB
+minReplicatorCount = 1
+maxFreeDownloadSize = 1MB
+maxDownloadSize = 10TB
+# 4 weeks = 28 days = 672 hours
+storageBillingPeriod = 672h
+downloadBillingPeriod = 24h
+verificationInterval = 4h
+shardSize = 20
+verificationExpirationCoefficient = 0.06
+verificationExpirationConstant = 10
+
+[plugin:catapult.plugins.streaming]
+
+enabled = true
+maxFolderNameSize = 512
 
 [plugin:catapult.plugins.exchangesda]
 

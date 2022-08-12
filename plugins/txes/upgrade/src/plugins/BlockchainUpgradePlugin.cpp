@@ -5,7 +5,6 @@
 **/
 
 #include "catapult/plugins/CacheHandlers.h"
-#include "catapult/plugins/PluginManager.h"
 #include "BlockchainUpgradePlugin.h"
 #include "src/cache/BlockchainUpgradeCache.h"
 #include "src/cache/BlockchainUpgradeCacheStorage.h"

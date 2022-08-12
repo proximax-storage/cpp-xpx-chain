@@ -21,8 +21,6 @@
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/crypto/PrivateKey.h"
 #include "tests/TestHarness.h"
-#include <array>
-#include <unordered_map>
 
 namespace catapult { namespace crypto {
 

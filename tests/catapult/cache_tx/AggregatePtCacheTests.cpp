@@ -19,9 +19,7 @@
 **/
 
 #include "catapult/cache_tx/AggregatePtCache.h"
-#include "catapult/model/Cosignature.h"
 #include "tests/test/other/mocks/MockPtChangeSubscriber.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

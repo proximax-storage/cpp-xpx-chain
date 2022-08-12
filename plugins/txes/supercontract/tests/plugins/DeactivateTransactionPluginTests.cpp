@@ -4,12 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/model/EntityHasher.h"
 #include "src/plugins/DeactivateTransactionPlugin.h"
 #include "src/model/DeactivateTransaction.h"
 #include "src/model/SuperContractNotifications.h"
 #include "plugins/txes/multisig/src/model/MultisigNotifications.h"
-#include "plugins/txes/operation/src/model/OperationNotifications.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"

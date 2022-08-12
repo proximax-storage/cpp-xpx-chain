@@ -22,12 +22,10 @@
 #include "sdk/src/extensions/BlockExtensions.h"
 #include "plugins/txes/mosaic/src/model/MosaicEntityType.h"
 #include "catapult/io/FileBlockStorage.h"
-#include "catapult/io/RawFile.h"
 #include "catapult/model/BlockStatementBuilder.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
@@ -67,7 +65,7 @@ namespace catapult { namespace test {
 				++transactionIndex;
 			}
 
-			if (3u != primarySourceIds.size())
+			if (5u != primarySourceIds.size())
 				CATAPULT_THROW_INVALID_ARGUMENT_1("nemesis block has unexpected number of mosaic supply changes", primarySourceIds.size());
 
 			return primarySourceIds;
@@ -94,10 +92,16 @@ namespace catapult { namespace test {
 			blockStatementBuilder.addResolution(UnresolvedMosaicId(0x85BBEA6CC462B244), feeMosaicId);
 
 			blockStatementBuilder.setSource({ aliasFirstUsedPrimarySourceIds[1], 0 });
-			blockStatementBuilder.addResolution(UnresolvedMosaicId(0xFF8918A670A31F3A), Default_Storage_Mosaic_Id);
+			blockStatementBuilder.addResolution(UnresolvedMosaicId(0x87BEC7AE08A01FD1), Default_Storage_Mosaic_Id);
 
 			blockStatementBuilder.setSource({ aliasFirstUsedPrimarySourceIds[2], 0 });
-			blockStatementBuilder.addResolution(UnresolvedMosaicId(0xEF77EF3F741EE7EA), Default_Streamin_Mosaic_Id);
+			blockStatementBuilder.addResolution(UnresolvedMosaicId(0xBF3108FFEDF8ADDB), Default_Streaming_Mosaic_Id);
+
+			blockStatementBuilder.setSource({ aliasFirstUsedPrimarySourceIds[3], 0 });
+			blockStatementBuilder.addResolution(UnresolvedMosaicId(0x9A547F75CBD687F4), Default_Super_Contract_Mosaic_Id);
+
+			blockStatementBuilder.setSource({ aliasFirstUsedPrimarySourceIds[4], 0 });
+			blockStatementBuilder.addResolution(UnresolvedMosaicId(0x9D7ABFFA390FBDE7), Default_Review_Mosaic_Id);
 
 			// 3. calculate the block receipts hash
 			auto pStatement = blockStatementBuilder.build();

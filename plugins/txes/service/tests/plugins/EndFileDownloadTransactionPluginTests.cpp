@@ -4,13 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/model/Address.h"
-#include "plugins/txes/lock_secret/src/model/LockHashAlgorithm.h"
-#include "plugins/txes/lock_secret/src/model/SecretLockNotifications.h"
 #include "src/plugins/EndFileDownloadTransactionPlugin.h"
 #include "src/model/EndFileDownloadTransaction.h"
-#include "src/model/ServiceNotifications.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/ServiceTestUtils.h"

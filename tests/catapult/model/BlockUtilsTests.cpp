@@ -20,10 +20,8 @@
 
 #include "catapult/model/BlockUtils.h"
 #include "sdk/src/extensions/BlockExtensions.h"
-#include "catapult/crypto/Hashes.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 
@@ -422,7 +420,7 @@ namespace catapult { namespace model {
 			auto pBlock = CreateBlock(context, static_cast<NetworkIdentifier>(0x17), signer.publicKey(), transactions);
 
 			// Assert:
-			ASSERT_EQ(sizeof(BlockHeader) + SumTransactionSizes(transactions), pBlock->Size);
+			ASSERT_EQ(sizeof(BlockHeaderV4) + SumTransactionSizes(transactions), pBlock->Size);
 			EXPECT_EQ(Signature(), pBlock->Signature);
 
 			EXPECT_EQ(signer.publicKey(), pBlock->Signer);
@@ -462,11 +460,16 @@ namespace catapult { namespace model {
 		template<typename TContainerTraits>
 		void AssertCanStitchBlock(size_t numTransactions) {
 			// Arrange:
-			BlockHeader blockHeader;
+			Block blockHeader;
 			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(&blockHeader), sizeof(BlockHeader) });
 
 			auto randomTransactions = test::GenerateRandomTransactions(numTransactions);
 			auto transactions = TContainerTraits::MapTransactions(randomTransactions);
+			size_t totalTransactionsSize = 0;
+			for (const auto& pTransaction : transactions)
+				totalTransactionsSize += pTransaction->Size;
+			blockHeader.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
+			blockHeader.Size = sizeof(BlockHeader) + totalTransactionsSize;
 
 			// Act:
 			auto pBlock = StitchBlock(blockHeader, transactions);
@@ -475,9 +478,9 @@ namespace catapult { namespace model {
 			ASSERT_EQ(sizeof(BlockHeader) + SumTransactionSizes(transactions), pBlock->Size);
 
 			EXPECT_EQ_MEMORY(
-					reinterpret_cast<const uint8_t*>(&blockHeader) + sizeof(BlockHeader::Size),
-					reinterpret_cast<const uint8_t*>(pBlock.get()) + sizeof(BlockHeader::Size),
-					sizeof(BlockHeader) - sizeof(BlockHeader::Size));
+					reinterpret_cast<const uint8_t*>(&blockHeader),
+					reinterpret_cast<const uint8_t*>(pBlock.get()),
+					sizeof(BlockHeader));
 
 			AssertTransactionsInBlock(*pBlock, transactions);
 		}

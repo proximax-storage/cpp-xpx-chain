@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 WORKDIR /tmp
 
@@ -107,6 +107,7 @@ RUN cd /catapult \
 # Required extensions
     catapult.mongo.plugins.accountlink \
     catapult.mongo.plugins.aggregate \
+    catapult.mongo.plugins.committee \
     catapult.mongo.plugins.config \
     catapult.mongo.plugins.contract \
     catapult.mongo.plugins.exchange \
@@ -125,6 +126,7 @@ RUN cd /catapult \
     catapult.mongo.plugins.supercontract \
     catapult.plugins.accountlink \
     catapult.plugins.aggregate \
+    catapult.plugins.committee \
     catapult.plugins.config \
     catapult.plugins.contract \
     catapult.plugins.exchange \
@@ -147,6 +149,7 @@ RUN cd /catapult \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \
+    extension.fastfinality \
     extension.filespooling \
     extension.harvesting \
     extension.hashcache \
@@ -184,7 +187,7 @@ RUN /catapult/scripts/release-script/copyDeps.sh /catapult/_build/bin/ /deps
 #------------------------
 # Actual target image which only contains the required binaries
 #------------------------
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 # copy required libs
 COPY --from=0 /deps /

@@ -6,7 +6,6 @@
 
 #include "mongo/tests/test/MongoPluginTestUtils.h"
 #include "plugins/txes/supercontract/src/model/SuperContractEntityType.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

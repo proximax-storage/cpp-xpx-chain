@@ -20,7 +20,6 @@
 
 #include "LoggingTestUtils.h"
 #include "tests/TestHarness.h"
-#include <fstream>
 
 namespace catapult { namespace test {
 

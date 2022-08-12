@@ -19,8 +19,6 @@
 **/
 
 #include "Validators.h"
-#include "catapult/validators/ValidatorContext.h"
-#include "catapult/types.h"
 
 namespace catapult { namespace validators {
 

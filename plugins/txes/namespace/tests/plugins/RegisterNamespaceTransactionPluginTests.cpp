@@ -23,15 +23,11 @@
 #include "src/model/NamespaceNotifications.h"
 #include "src/model/RegisterNamespaceTransaction.h"
 #include "catapult/model/Address.h"
-#include "catapult/plugins/PluginUtils.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "catapult/constants.h"
-#include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace catapult::model;
 

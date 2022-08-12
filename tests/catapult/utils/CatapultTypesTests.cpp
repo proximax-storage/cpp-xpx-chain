@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/types.h"
 #include "tests/TestHarness.h"
 
 namespace catapult {

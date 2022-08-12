@@ -19,7 +19,6 @@
 **/
 
 #include "RootNamespace.h"
-#include "catapult/state/AccountState.h"
 
 namespace catapult { namespace state {
 

@@ -20,12 +20,7 @@
 
 #include "BlockConsumers.h"
 #include "ConsumerResultFactory.h"
-#include "InputUtils.h"
 #include "catapult/chain/ChainUtils.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "catapult/utils/Hashers.h"
-#include "catapult/utils/TimeSpan.h"
-#include <unordered_set>
 
 namespace catapult { namespace consumers {
 

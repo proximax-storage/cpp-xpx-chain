@@ -18,14 +18,11 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <plugins/txes/multisig/src/config/MultisigConfiguration.h>
-#include "src/config/MultisigConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/MultisigCacheTestUtils.h"
 #include "tests/test/MultisigTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {
 

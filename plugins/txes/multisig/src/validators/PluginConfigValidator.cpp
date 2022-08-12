@@ -5,7 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "src/config/MultisigConfiguration.h"
 
 namespace catapult { namespace validators {
 	DEFINE_PLUGIN_CONFIG_VALIDATOR(multisig, Multisig, 1)

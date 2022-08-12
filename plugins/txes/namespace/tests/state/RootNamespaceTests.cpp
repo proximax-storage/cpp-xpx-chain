@@ -18,11 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/state/RootNamespace.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/nodeps/Equality.h"
-#include "tests/TestHarness.h"
-#include <unordered_set>
 
 namespace catapult { namespace state {
 

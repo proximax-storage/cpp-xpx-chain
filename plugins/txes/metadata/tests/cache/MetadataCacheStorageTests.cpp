@@ -4,11 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/MetadataCacheStorage.h"
-#include "src/cache/MetadataCache.h"
-#include "src/model/MetadataTypes.h"
 #include "tests/test/MetadataCacheTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

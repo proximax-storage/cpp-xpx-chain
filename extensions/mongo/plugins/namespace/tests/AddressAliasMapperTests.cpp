@@ -23,7 +23,6 @@
 #include "plugins/txes/namespace/src/model/AddressAliasTransaction.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

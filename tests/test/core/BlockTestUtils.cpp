@@ -25,7 +25,6 @@
 #include "catapult/model/BlockUtils.h"
 #include "catapult/utils/HexParser.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 
@@ -78,9 +77,13 @@ namespace catapult { namespace test {
 			catapult::Timestamp Timestamp;
 		};
 
-		model::UniqueEntityPtr<model::Block> GenerateBlock(const TestBlockTransactions& transactions, const TestBlockOptions& options) {
+		model::UniqueEntityPtr<model::Block> GenerateBlock(
+				const TestBlockTransactions& transactions,
+				const TestBlockOptions& options,
+				size_t numCosignatures = 0,
+				VersionType version = model::Block::Current_Version) {
 			model::PreviousBlockContext context;
-			auto pBlock = model::CreateBlock(context, Network_Identifier, options.Signer.publicKey(), transactions.get());
+			auto pBlock = model::CreateBlock(context, Network_Identifier, options.Signer.publicKey(), transactions.get(), version);
 			RandomizeBlock(*pBlock);
 
 			if (Height() != options.Height)
@@ -92,16 +95,31 @@ namespace catapult { namespace test {
 					transaction.Deadline = options.Timestamp + Timestamp(1);
 			}
 
-			return pBlock;
+			if (!numCosignatures)
+				return pBlock;
+
+			auto blockSize = pBlock->Size + numCosignatures * sizeof(model::Cosignature);
+			auto pBlockWithCosignatures = utils::MakeUniqueWithSize<model::Block>(blockSize);
+			auto* pData = reinterpret_cast<uint8_t*>(pBlockWithCosignatures.get());
+			std::memcpy(pData, pBlock.get(), pBlock->Size);
+			pBlockWithCosignatures->Size = blockSize;
+
+			auto pCosignature = pBlockWithCosignatures->CosignaturesPtr();
+			for (auto i = 0u; i < pBlockWithCosignatures->CosignaturesCount(); ++i, ++pCosignature) {
+				FillWithRandomData(pCosignature->Signer);
+				FillWithRandomData(pCosignature->Signature);
+			}
+
+			return pBlockWithCosignatures;
 		}
 	}
 
-	model::UniqueEntityPtr<model::Block> GenerateEmptyRandomBlock() {
-		return GenerateBlockWithTransactions(0);
+	model::UniqueEntityPtr<model::Block> GenerateEmptyRandomBlock(VersionType version) {
+		return GenerateBlockWithTransactions(0, version);
 	}
 
-	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const TestBlockTransactions& transactions) {
-		return GenerateBlock(transactions, TestBlockOptions(GenerateKeyPair()));
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const TestBlockTransactions& transactions, VersionType version) {
+		return GenerateBlock(transactions, TestBlockOptions(GenerateKeyPair()), 0, version);
 	}
 
 	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const crypto::KeyPair& signer, const TestBlockTransactions& transactions) {
@@ -121,6 +139,17 @@ namespace catapult { namespace test {
 		blockOptions.Height = height;
 		blockOptions.Timestamp = timestamp;
 		return GenerateBlock(numTransactions, blockOptions);
+	}
+
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactionsAndCosignatures(const TestBlockTransactions& transactions, size_t numCosignatures) {
+		return GenerateBlock(transactions, TestBlockOptions(GenerateKeyPair()), numCosignatures);
+	}
+
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactionsAndCosignatures(size_t numTransactions, Height height, size_t numCosignatures) {
+		auto signer = GenerateKeyPair();
+		auto blockOptions = TestBlockOptions(signer);
+		blockOptions.Height = height;
+		return GenerateBlock(numTransactions, blockOptions, numCosignatures);
 	}
 
 	model::UniqueEntityPtr<model::Block> GenerateDeterministicBlock() {

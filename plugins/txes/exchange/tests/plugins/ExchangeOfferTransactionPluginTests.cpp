@@ -4,8 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/model/EntityHasher.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "src/plugins/ExchangeOfferTransactionPlugin.h"
 #include "src/model/ExchangeOfferTransaction.h"
 #include "src/model/ExchangeNotifications.h"

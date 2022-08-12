@@ -20,12 +20,10 @@
 
 #include "src/validators/Validators.h"
 #include "src/plugins/ModifyMultisigAccountTransactionPlugin.h"
-#include "catapult/model/TransactionPlugin.h"
 #include "tests/test/MultisigCacheTestUtils.h"
 #include "tests/test/MultisigTestUtils.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
-#include "tests/TestHarness.h"
 #include "plugins/txes/aggregate/src/config/AggregateConfiguration.h"
 
 namespace catapult { namespace validators {
@@ -53,7 +51,7 @@ namespace catapult { namespace validators {
 				const std::vector<Key>& cosigners,
 				bool newCosignersMustApprove,
 				bool strictSigner) {
-			
+
 			// Arrange: setup transactions
 			std::vector<uint8_t> txBuffer(sizeof(model::EmbeddedTransaction) * embeddedSigners.size());
 			auto* pTransactions = reinterpret_cast<model::EmbeddedTransaction*>(txBuffer.data());
@@ -80,7 +78,7 @@ namespace catapult { namespace validators {
 			auto aggregateConfig = config::AggregateConfiguration::Uninitialized();
 			aggregateConfig.StrictSigner = strictSigner;
 			config.Network.SetPluginConfiguration(aggregateConfig);
-			
+
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, config.ToConst());
 
@@ -182,11 +180,11 @@ namespace catapult { namespace validators {
 		// Assert: invalid because a single cosigner is not an embedded transaction signer
 		AssertValidationResult<TTraits>(Failure_Aggregate_Ineligible_Cosigners, embeddedSigners[0], embeddedSigners, cosigners, newCosignersMustApprove, true);
 	}
-	
+
 	NON_MULTISIG_TRAITS_TEST(AggregateSignerIsIneligibleButAllowInConfig) {
 		auto embeddedSigners = test::GenerateRandomDataVector<Key>(3);
 		auto ineligibleSigner = test::GenerateRandomByteArray<Key>();
-		
+
 		// Assert: success because we allow ineligible signer
 		AssertValidationResult<TTraits>(ValidationResult::Success, ineligibleSigner, embeddedSigners, { embeddedSigners[1] }, newCosignersMustApprove, false);
 	}
@@ -315,11 +313,11 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
 			pluginConfig.NewCosignersMustApprove = newCosignersMustApprove;
 			config.Network.SetPluginConfiguration(pluginConfig);
-			
+
 			auto aggregateConfig = config::AggregateConfiguration::Uninitialized();
 			aggregateConfig.StrictSigner = strictSigner;
 			config.Network.SetPluginConfiguration(aggregateConfig);
-			
+
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, config.ToConst());
 

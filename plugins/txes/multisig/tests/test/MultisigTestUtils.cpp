@@ -21,8 +21,6 @@
 #include "MultisigTestUtils.h"
 #include "src/cache/MultisigCache.h"
 #include "catapult/cache/CatapultCacheDelta.h"
-#include "catapult/utils/MemoryUtils.h"
-#include "tests/test/nodeps/Random.h"
 
 namespace catapult { namespace test {
 

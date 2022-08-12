@@ -22,7 +22,6 @@
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/mocks/MockTransaction.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo {
 

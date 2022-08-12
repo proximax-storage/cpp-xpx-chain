@@ -21,16 +21,11 @@
 #include "NemesisBlockLoader.h"
 #include "LocalNodeStateRef.h"
 #include "NemesisFundingObserver.h"
-#include "catapult/cache/CatapultCache.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/NotificationPublisher.h"
-#include "catapult/model/TransactionPlugin.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "catapult/plugins/PluginManager.h"
-#include "catapult/utils/IntegerMath.h"
 
 namespace catapult { namespace extensions {
 
@@ -218,7 +213,7 @@ namespace catapult { namespace extensions {
 
 		void RequireValidSignature(const model::Block& block) {
 			auto headerSize = model::VerifiableEntity::Header_Size;
-			auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, sizeof(model::BlockHeader) - headerSize };
+			auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, block.GetHeaderSize() - headerSize };
 			if (crypto::Verify(block.Signer, blockData, block.Signature))
 				return;
 

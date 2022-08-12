@@ -20,7 +20,6 @@
 
 #include "TimeSpan.h"
 #include "IntegerMath.h"
-#include "StreamFormatGuard.h"
 
 namespace catapult { namespace utils {
 

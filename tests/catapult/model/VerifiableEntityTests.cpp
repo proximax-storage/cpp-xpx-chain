@@ -18,11 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/model/VerifiableEntity.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/core/mocks/MockTransaction.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 

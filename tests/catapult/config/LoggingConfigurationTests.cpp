@@ -20,7 +20,6 @@
 
 #include "catapult/config/LoggingConfiguration.h"
 #include "tests/test/nodeps/ConfigurationTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace config {
 

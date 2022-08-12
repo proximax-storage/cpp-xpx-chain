@@ -4,10 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "EndDriveMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
-#include "plugins/txes/service/src/model/ServiceTypes.h"
 #include "plugins/txes/service/src/model/DriveFilesRewardTransaction.h"
 
 using namespace catapult::mongo::mappers;

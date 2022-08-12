@@ -19,15 +19,7 @@
 **/
 
 #include "catapult/extensions/ExtensionManager.h"
-#include "catapult/extensions/ServiceLocator.h"
-#include "catapult/thread/MultiServicePool.h"
-#include "catapult/utils/NetworkTime.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
-#include "tests/test/local/LocalNodeTestState.h"
-#include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
-#include "tests/test/other/ConsumerHandlerTests.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 

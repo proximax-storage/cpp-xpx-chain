@@ -5,11 +5,7 @@
 **/
 
 #include "src/state/BlockchainUpgradeEntrySerializer.h"
-#include "catapult/utils/HexFormatter.h"
-#include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/SerializerOrderingTests.h"
 #include "tests/test/core/SerializerTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace state {
 

@@ -20,11 +20,8 @@
 
 #include "BlockUtils.h"
 #include "FeeUtils.h"
-#include "catapult/crypto/Hashes.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/crypto/Signer.h"
-#include "catapult/utils/MemoryUtils.h"
-#include <cstring>
 
 namespace catapult { namespace model {
 
@@ -32,7 +29,7 @@ namespace catapult { namespace model {
 		RawBuffer BlockDataBuffer(const Block& block) {
 			return {
 				reinterpret_cast<const uint8_t*>(&block) + VerifiableEntity::Header_Size,
-				sizeof(BlockHeader) - VerifiableEntity::Header_Size
+				block.GetHeaderSize() - VerifiableEntity::Header_Size
 			};
 		}
 	}
@@ -64,8 +61,16 @@ namespace catapult { namespace model {
 		crypto::Sign(signer, BlockDataBuffer(block), block.Signature);
 	}
 
+	void CosignBlockHeader(const crypto::KeyPair& signer, Block& block, Signature& signature) {
+		crypto::Sign(signer, BlockDataBuffer(block), signature);
+	}
+
 	bool VerifyBlockHeaderSignature(const Block& block) {
 		return crypto::Verify(block.Signer, BlockDataBuffer(block), block.Signature);
+	}
+
+	bool VerifyBlockHeaderCosignature(const Block& block, const model::Cosignature& cosignature) {
+		return crypto::Verify(cosignature.Signer, BlockDataBuffer(block), cosignature.Signature);
 	}
 
 	// endregion
@@ -114,14 +119,18 @@ namespace catapult { namespace model {
 				const PreviousBlockContext& context,
 				NetworkIdentifier networkIdentifier,
 				const Key& signerPublicKey,
-				const TContainer& transactions) {
-			auto size = sizeof(BlockHeader) + CalculateTotalSize(transactions);
+				const TContainer& transactions,
+				VersionType version) {
+			auto transactionPayloadSize = CalculateTotalSize(transactions);
+			auto headerSize = (version > 3) ? sizeof(BlockHeaderV4) : sizeof(BlockHeader);
+			auto size = headerSize + transactionPayloadSize;
 			auto pBlock = utils::MakeUniqueWithSize<Block>(size);
-			std::memset(static_cast<void*>(pBlock.get()), 0, sizeof(BlockHeader));
+			std::memset(static_cast<void*>(pBlock.get()), 0, headerSize);
 			pBlock->Size = static_cast<uint32_t>(size);
+			pBlock->Version = MakeVersion(networkIdentifier, version);
+			pBlock->setTransactionPayloadSize(transactionPayloadSize);
 
 			pBlock->Signer = signerPublicKey;
-			pBlock->Version = MakeVersion(networkIdentifier, Block::Current_Version);
 			pBlock->Type = Entity_Type_Block;
 
 			pBlock->Height = context.BlockHeight + Height(1);
@@ -139,15 +148,19 @@ namespace catapult { namespace model {
 			const PreviousBlockContext& context,
 			NetworkIdentifier networkIdentifier,
 			const Key& signerPublicKey,
-			const Transactions& transactions) {
-		return CreateBlockT(context, networkIdentifier, signerPublicKey, transactions);
+			const Transactions& transactions,
+			VersionType version) {
+		return CreateBlockT(context, networkIdentifier, signerPublicKey, transactions, version);
 	}
 
-	UniqueEntityPtr<Block> StitchBlock(const BlockHeader& blockHeader, const Transactions& transactions) {
-		auto size = sizeof(BlockHeader) + CalculateTotalSize(transactions);
+	UniqueEntityPtr<Block> StitchBlock(const Block& blockHeader, const Transactions& transactions) {
+		auto transactionPayloadSize = CalculateTotalSize(transactions);
+		auto headerSize = blockHeader.GetHeaderSize();
+		auto size = headerSize + transactionPayloadSize;
 		auto pBlock = utils::MakeUniqueWithSize<Block>(size);
-		std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(BlockHeader));
+		std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, headerSize);
 		pBlock->Size = static_cast<uint32_t>(size);
+		pBlock->setTransactionPayloadSize(transactionPayloadSize);
 
 		// append all the transactions
 		auto pDestination = reinterpret_cast<uint8_t*>(pBlock->TransactionsPtr());

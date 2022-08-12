@@ -5,7 +5,6 @@
 **/
 
 #include "OperationTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 

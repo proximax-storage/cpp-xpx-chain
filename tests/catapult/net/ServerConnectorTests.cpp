@@ -19,14 +19,10 @@
 **/
 
 #include "catapult/net/ServerConnector.h"
-#include "catapult/crypto/KeyPair.h"
-#include "catapult/ionet/Node.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/net/VerifyPeer.h"
-#include "catapult/thread/IoThreadPool.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
-#include "tests/test/net/ClientSocket.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/net/SocketTestUtils.h"
 

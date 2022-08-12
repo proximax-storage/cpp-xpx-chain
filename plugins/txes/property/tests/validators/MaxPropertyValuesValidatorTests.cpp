@@ -22,8 +22,6 @@
 #include "src/validators/Validators.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "tests/test/PropertyCacheTestUtils.h"
-#include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 

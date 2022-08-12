@@ -4,14 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/version/version.h"
-#include "src/cache/BlockchainUpgradeCache.h"
-#include "src/cache/BlockchainUpgradeCacheStorage.h"
 #include "src/validators/Validators.h"
 #include "tests/test/BlockchainUpgradeTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
-#include <limits>
 
 namespace catapult { namespace validators {
 

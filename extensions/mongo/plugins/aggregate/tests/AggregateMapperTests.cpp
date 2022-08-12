@@ -21,13 +21,11 @@
 #include "src/AggregateMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "catapult/model/EntityHasher.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTransactionPluginTestUtils.h"
 #include "mongo/tests/test/mocks/MockTransactionMapper.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

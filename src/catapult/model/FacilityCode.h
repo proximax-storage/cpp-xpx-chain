@@ -71,6 +71,22 @@ namespace catapult { namespace model {
 		Levy = 0x4F,
 		/// NEM's Metadata facility code.
 		Metadata_v2 = 0x3F,
+		/// Committee facility code.
+		Committee = 0x61,
+		/// Storage facility code.
+		Storage = 0x62,
+		/// Replicator facility code.
+		Replicator = 0x63,
+		/// Drive facility code.
+		BcDrive = 0x64,
+		/// Download channel facility code.
+		DownloadChannel = 0x65,
+		/// Streaming facility code
+		Streaming = 0x66,
+		/// Queue facility code.
+		Queue = 0x67,
+		/// Priority queue facility code.
+		PriorityQueue = 0x68,
 		/// SDA-SDA Exchange facility code.
 		ExchangeSda = 0x6A,
 		/// SDA-SDA Offer Group facility code.

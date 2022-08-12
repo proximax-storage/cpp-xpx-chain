@@ -20,8 +20,6 @@
 
 #include "src/validators/Validators.h"
 #include "src/validators/ActiveMosaicView.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/TestHarness.h"
 

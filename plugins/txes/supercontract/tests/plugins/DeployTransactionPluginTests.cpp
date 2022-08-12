@@ -8,7 +8,6 @@
 #include "src/model/DeployTransaction.h"
 #include "src/model/SuperContractNotifications.h"
 #include "plugins/txes/multisig/src/model/MultisigNotifications.h"
-#include "plugins/txes/service/src/model/ServiceNotifications.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"

@@ -59,7 +59,7 @@ namespace catapult { namespace deltaset {
 
 	public:
 		/// Creates a mixin around \a setDelta.
-		explicit DeltaElementsMixin(const TSetDelta& setDelta) : m_setDelta(setDelta)
+		explicit DeltaElementsMixin(TSetDelta& setDelta) : m_setDelta(setDelta)
 		{}
 
 	public:
@@ -78,6 +78,17 @@ namespace catapult { namespace deltaset {
 			return CollectAllPointers(m_setDelta.deltas().Removed);
 		}
 
+	public:
+		/// Backs up the changes made in the cache delta. Set \c true to \a replace previous backup.
+		void backupChanges(bool replace) {
+			m_setDelta.backupChanges(replace);
+		}
+
+		/// Restores the last backed up changes in the cache delta.
+		void restoreChanges() {
+			m_setDelta.restoreChanges();
+		}
+
 	private:
 		template<typename TSource>
 		static PointerContainer CollectAllPointers(const TSource& source) {
@@ -89,6 +100,6 @@ namespace catapult { namespace deltaset {
 		}
 
 	private:
-		const TSetDelta& m_setDelta;
+		TSetDelta& m_setDelta;
 	};
 }}

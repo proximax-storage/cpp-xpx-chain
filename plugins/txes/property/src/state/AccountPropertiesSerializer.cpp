@@ -19,7 +19,6 @@
 **/
 
 #include "AccountPropertiesSerializer.h"
-#include "src/state/AccountProperties.h"
 #include "catapult/io/PodIoUtils.h"
 
 namespace catapult { namespace state {

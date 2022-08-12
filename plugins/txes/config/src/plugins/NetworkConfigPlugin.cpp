@@ -5,10 +5,7 @@
 **/
 
 #include "catapult/plugins/CacheHandlers.h"
-#include "catapult/plugins/PluginManager.h"
 #include "NetworkConfigPlugin.h"
-#include "src/cache/NetworkConfigCache.h"
-#include "src/cache/NetworkConfigCacheStorage.h"
 #include "src/cache/NetworkConfigCacheSubCachePlugin.h"
 #include "src/config/NetworkConfigConfiguration.h"
 #include "src/observers/Observers.h"

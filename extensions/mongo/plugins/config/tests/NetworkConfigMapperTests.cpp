@@ -7,10 +7,8 @@
 #include "src/NetworkConfigMapper.h"
 #include "sdk/src/builders/NetworkConfigBuilder.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "catapult/constants.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

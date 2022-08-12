@@ -21,8 +21,6 @@
 #include "BlockElementSerializer.h"
 #include "PodIoUtils.h"
 #include "Stream.h"
-#include "catapult/utils/MemoryUtils.h"
-#include "catapult/model/EntityPtr.h"
 
 namespace catapult { namespace io {
 

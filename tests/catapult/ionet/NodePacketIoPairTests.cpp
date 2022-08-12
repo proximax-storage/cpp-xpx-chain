@@ -20,7 +20,6 @@
 
 #include "catapult/ionet/NodePacketIoPair.h"
 #include "tests/test/core/mocks/MockPacketIo.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace ionet {
 

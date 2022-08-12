@@ -20,6 +20,7 @@
 
 #pragma once
 #include "ContainerTypes.h"
+#include "Cosignature.h"
 #include "EntityType.h"
 #include "NetworkInfo.h"
 #include "NotificationType.h"
@@ -278,6 +279,40 @@ namespace catapult { namespace model {
 
 		/// Number of block transactions.
 		uint32_t NumTransactions;
+
+		/// The part of the transaction fee harvester is willing to get.
+		uint32_t FeeInterest;
+
+		/// Denominator of the transaction fee.
+		uint32_t FeeInterestDenominator;
+	};
+
+	/// Notifies the cosignatures of a block.
+	template<VersionType version>
+	struct BlockCommitteeNotification;
+
+	template<>
+	struct BlockCommitteeNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Committee_v1_Notification;
+
+	public:
+		/// Creates a block notification around \a signer, \a numCosignatures, \a pCosignatures,
+		/// \a feeInterest and \a feeInterestDenominator.
+		 BlockCommitteeNotification(
+			int64_t round,
+			uint32_t feeInterest,
+			uint32_t feeInterestDenominator)
+				: Notification(Notification_Type, sizeof(BlockCommitteeNotification<1>))
+				, Round(round)
+				, FeeInterest(feeInterest)
+				, FeeInterestDenominator(feeInterestDenominator)
+		{}
+
+	public:
+		/// Committee round (number of attempts to generate this block).
+		int64_t Round;
 
 		/// The part of the transaction fee harvester is willing to get.
 		uint32_t FeeInterest;

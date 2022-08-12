@@ -19,11 +19,7 @@
 **/
 
 #include "catapult/ionet/PacketSocket.h"
-#include "catapult/ionet/IoTypes.h"
-#include "catapult/ionet/Node.h"
-#include "catapult/ionet/Packet.h"
 #include "catapult/ionet/WorkingBuffer.h"
-#include "catapult/thread/IoThreadPool.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/net/ClientSocket.h"
 #include "tests/test/net/NodeTestUtils.h"

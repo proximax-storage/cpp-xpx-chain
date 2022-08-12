@@ -20,7 +20,6 @@
 
 #include "Validators.h"
 #include "src/cache/MultisigCache.h"
-#include "src/config/MultisigConfiguration.h"
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/validators/ValidatorContext.h"
 

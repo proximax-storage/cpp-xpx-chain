@@ -20,10 +20,8 @@
 
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "tests/test/cache/CacheBasicTests.h"
-#include "tests/test/cache/CacheMixinsTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
-#include <vector>
 
 namespace catapult { namespace cache {
 

@@ -19,10 +19,6 @@
 **/
 
 #include "NodeInteractionsContainer.h"
-#include "catapult/utils/Functional.h"
-#include "catapult/utils/NetworkTime.h"
-#include "catapult/utils/TimeSpan.h"
-#include <algorithm>
 
 namespace catapult { namespace ionet {
 

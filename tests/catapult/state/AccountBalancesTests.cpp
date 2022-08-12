@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/state/AccountState.h"
-#include "catapult/state/AccountBalances.h"
 #include "tests/test/core/TransactionTestUtils.h"
 
 namespace catapult { namespace state {

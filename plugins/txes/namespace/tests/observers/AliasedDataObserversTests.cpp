@@ -23,7 +23,6 @@
 #include "tests/test/NamespaceCacheTestUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace observers {
 

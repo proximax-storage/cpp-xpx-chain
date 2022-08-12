@@ -21,9 +21,7 @@
 #include "catapult/model/NetworkConfiguration.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/utils/ConfigurationUtils.h"
-#include "catapult/utils/HexParser.h"
 #include "tests/test/nodeps/ConfigurationTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 
@@ -71,6 +69,23 @@ namespace catapult { namespace model {
 							{ "maxTransactionsPerBlock", "120" },
 
 							{ "enableUnconfirmedTransactionMinFeeValidation", "true" },
+
+							{ "enableUndoBlock", "true" },
+							{ "enableBlockSync", "true" },
+
+							{ "enableWeightedVoting", "false" },
+							{ "committeeSize", "21" },
+							{ "committeeApproval", "0.67" },
+							{ "committeePhaseTime", "5s" },
+							{ "minCommitteePhaseTime", "1s" },
+							{ "maxCommitteePhaseTime", "1m" },
+							{ "committeeSilenceInterval", "100ms" },
+							{ "committeeRequestInterval", "500ms" },
+							{ "committeeChainHeightRequestInterval", "30s" },
+							{ "committeeTimeAdjustment", "1.1" },
+							{ "committeeEndSyncApproval", "0.45" },
+							{ "committeeBaseTotalImportance", "100" },
+							{ "committeeNotRunningContribution", "0.5" }
 						}
 					},
 					{
@@ -98,7 +113,24 @@ namespace catapult { namespace model {
 			}
 
 			static bool IsPropertyOptional(const std::string& name) {
-				return "enableUnconfirmedTransactionMinFeeValidation" == name;
+				return std::set<std::string>{
+					"enableUnconfirmedTransactionMinFeeValidation",
+					"enableUndoBlock",
+					"enableBlockSync",
+					"enableWeightedVoting",
+					"committeeSize",
+					"committeeApproval",
+					"committeePhaseTime",
+					"minCommitteePhaseTime",
+					"maxCommitteePhaseTime",
+					"committeeSilenceInterval",
+					"committeeRequestInterval",
+					"committeeChainHeightRequestInterval",
+					"committeeTimeAdjustment",
+					"committeeEndSyncApproval",
+					"committeeBaseTotalImportance",
+					"committeeNotRunningContribution"
+				}.count(name);
 			}
 
 			static void AssertZero(const NetworkConfiguration& config) {
@@ -128,6 +160,16 @@ namespace catapult { namespace model {
 				EXPECT_EQ(0u, config.MaxTransactionsPerBlock);
 
 				EXPECT_EQ(false, config.EnableUnconfirmedTransactionMinFeeValidation);
+
+				EXPECT_EQ(0u, config.CommitteeSize);
+				EXPECT_EQ(0.0, config.CommitteeApproval);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteePhaseTime);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.MinCommitteePhaseTime);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.MaxCommitteePhaseTime);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteeSilenceInterval);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteeRequestInterval);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteeChainHeightRequestInterval);
+				EXPECT_EQ(0.0, config.CommitteeTimeAdjustment);
 
 				EXPECT_TRUE(config.Plugins.empty());
 			}
@@ -159,6 +201,16 @@ namespace catapult { namespace model {
 				EXPECT_EQ(120u, config.MaxTransactionsPerBlock);
 
 				EXPECT_EQ(true, config.EnableUnconfirmedTransactionMinFeeValidation);
+
+				EXPECT_EQ(21u, config.CommitteeSize);
+				EXPECT_EQ(0.67, config.CommitteeApproval);
+				EXPECT_EQ(utils::TimeSpan::FromSeconds(5), config.CommitteePhaseTime);
+				EXPECT_EQ(utils::TimeSpan::FromSeconds(1), config.MinCommitteePhaseTime);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(1), config.MaxCommitteePhaseTime);
+				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(100), config.CommitteeSilenceInterval);
+				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(500), config.CommitteeRequestInterval);
+				EXPECT_EQ(utils::TimeSpan::FromSeconds(30), config.CommitteeChainHeightRequestInterval);
+				EXPECT_EQ(1.1, config.CommitteeTimeAdjustment);
 
 				EXPECT_EQ(2u, config.Plugins.size());
 				const auto& pluginAlphaBag = config.Plugins.find("alpha")->second;

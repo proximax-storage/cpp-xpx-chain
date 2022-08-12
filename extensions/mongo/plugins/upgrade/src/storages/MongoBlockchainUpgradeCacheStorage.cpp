@@ -8,7 +8,6 @@
 #include "src/mappers/BlockchainUpgradeEntryMapper.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
 #include "plugins/txes/upgrade/src/cache/BlockchainUpgradeCache.h"
-#include "catapult/model/Address.h"
 
 using namespace bsoncxx::builder::stream;
 

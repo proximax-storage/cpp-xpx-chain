@@ -23,11 +23,9 @@
 #include "plugins/txes/property/src/model/AddressPropertyTransaction.h"
 #include "plugins/txes/property/src/model/MosaicPropertyTransaction.h"
 #include "plugins/txes/property/src/model/TransactionTypePropertyTransaction.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTransactionPluginTestUtils.h"
 #include "tests/test/PropertyCacheTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

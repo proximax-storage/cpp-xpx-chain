@@ -21,25 +21,22 @@
 #include "sync/src/DispatcherService.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/io/IndexFile.h"
 #include "catapult/model/BlockUtils.h"
-#include "catapult/utils/NetworkTime.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
+#include "tests/test/nodeps/data/NemesisMemoryBlockStorage_data.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/mocks/MockNotificationValidator.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
-#include <boost/filesystem.hpp>
 
 using ValidationResult = catapult::validators::ValidationResult;
 
@@ -86,7 +83,7 @@ namespace catapult { namespace sync {
 			auto delta = cache.createDelta();
 
 			// set a difficulty for the nemesis block
-			delta.sub<cache::BlockDifficultyCache>().insert(Height(1), Timestamp(0), Difficulty(NEMESIS_BLOCK_DIFFICULTY));
+			delta.sub<cache::BlockDifficultyCache>().insert(Height(1), test::Nemesis_Timestamp, Difficulty(NEMESIS_BLOCK_DIFFICULTY));
 
 			// add a balance and importance for the signer
 			auto& accountCache = delta.sub<cache::AccountStateCache>();
@@ -160,6 +157,9 @@ namespace catapult { namespace sync {
 				// override data directory
 				auto& state = testState().state();
 				const_cast<std::string&>(state.config().User.DataDirectory) = m_tempDir.name();
+				const_cast<bool&>(state.config().Network.EnableUndoBlock) = true;
+				const_cast<bool&>(state.config().Network.EnableBlockSync) = true;
+				const_cast<bool&>(state.config().Network.EnableWeightedVoting) = false;
 
 				// initialize the cache
 				InitializeCatapultCacheForDispatcherTests(state.cache(), GetBlockSignerKeyPair());

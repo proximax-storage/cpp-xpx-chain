@@ -24,7 +24,6 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

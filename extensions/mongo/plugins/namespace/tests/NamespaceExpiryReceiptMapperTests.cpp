@@ -23,7 +23,6 @@
 #include "plugins/txes/namespace/src/constants.h"
 #include "plugins/txes/namespace/src/model/NamespaceReceiptType.h"
 #include "mongo/tests/test/MapperTestUtils.h"
-#include "tests/test/core/mocks/MockReceipt.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {

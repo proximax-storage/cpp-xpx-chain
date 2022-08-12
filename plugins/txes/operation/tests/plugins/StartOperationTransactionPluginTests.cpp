@@ -11,7 +11,6 @@
 #include "tests/test/OperationTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "plugins/txes/aggregate/src/plugins/AggregateCommon.h"
 
 using namespace catapult::model;
 

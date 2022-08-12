@@ -23,17 +23,10 @@
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/ChainResults.h"
-#include "catapult/chain/ChainSynchronizer.h"
-#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/consumers/ConsumerResults.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
-#include "catapult/extensions/ServerHooks.h"
-#include "catapult/io/BlockStorageCache.h"
-#include "catapult/ionet/NodeInteractionResult.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
-#include "catapult/plugins/PluginUtils.h"
 #include "extensions/sync/src/DispatcherService.h"
 #include "MockRemoteChainApi.h"
 #include "sdk/src/builders/TransferBuilder.h"
@@ -41,7 +34,6 @@
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/TestConstants.h"
@@ -78,6 +70,9 @@ namespace catapult { namespace sync {
 			config.Network.BlockPruneInterval = 360u;
 			config.Network.GreedDelta = 0.5;
 			config.Network.GreedExponent = 2.0;
+			config.Network.EnableUndoBlock = true;
+			config.Network.EnableBlockSync = true;
+			config.Network.EnableWeightedVoting = false;
 			config.Network.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 
 			config.Node.MaxBlocksPerSyncAttempt = 30u;

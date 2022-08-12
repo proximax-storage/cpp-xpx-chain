@@ -3,7 +3,7 @@
 		{
 			"name": "Block",
 			"type": "33091",
-			"supportedVersions": [3]
+			"supportedVersions": [3, 4]
 		},
 		{
 			"name": "Nemesis_Block",
@@ -93,7 +93,7 @@
 		{
 			"name": "Modify_Contract",
 			"type": "16727",
-			"supportedVersions": [3]
+			"supportedVersions": []
 		},
 		{
 			"name": "Address_Property",
@@ -248,6 +248,106 @@
 		{
 			"name": "Mosaic_Remove_Levy",
 			"type": "17485",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "addHarvester",
+			"type": "16737",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "removeHarvester",
+			"type": "16993",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "dataModificationApproval",
+			"type": "17506",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "dataModificationCancel",
+			"type": "17762",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "dataModificationSingleApproval",
+			"type": "19298",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "dataModification",
+			"type": "16994",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "downloadApproval",
+			"type": "19810",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "downloadPayment",
+			"type": "18786",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "download",
+			"type": "17250",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "driveClosure",
+			"type": "20066",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "endDriveVerification",
+			"type": "20322",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "finishDownload",
+			"type": "18530",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "prepareBcDrive",
+			"type": "16738",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "replicatorOffboarding",
+			"type": "18274",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "replicatorOnboarding",
+			"type": "18018",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "storagePayment",
+			"type": "19042",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "verificationPayment",
+			"type": "19554",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "streamStart",
+			"type": "16743",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "streamFinish",
+			"type": "16999",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "streamPayment",
+			"type": "17255",
 			"supportedVersions": [1]
 		},
 		{

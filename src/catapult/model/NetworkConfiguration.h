@@ -99,12 +99,58 @@ namespace catapult { namespace model {
 		/// Allows validate deadline of transaction. It means that you can send old transactions to blockchain if it is false.
 		bool EnableDeadlineValidation;
 
+		/// Allows block rollback.
+		bool EnableUndoBlock;
+
+		/// Allows block synchronization using block synchronizer.
+		bool EnableBlockSync;
+
+		/// Allows weighted voting consensus.
+		bool EnableWeightedVoting;
+
+		/// Number of nodes in committee.
+		uint32_t CommitteeSize;
+
+		/// Sum of positive vote weights compared to total sum required for committee approval.
+		double CommitteeApproval;
+
+		/// Time per each committee phase.
+		utils::TimeSpan CommitteePhaseTime;
+
+		/// Minimal time per each committee phase.
+		utils::TimeSpan MinCommitteePhaseTime;
+
+		/// Maximum time per each committee phase.
+		utils::TimeSpan MaxCommitteePhaseTime;
+
+		/// Time interval at the end of committee phase without message requests.
+		utils::TimeSpan CommitteeSilenceInterval;
+
+		/// Time interval between committee message requests.
+		utils::TimeSpan CommitteeRequestInterval;
+
+		/// Time interval between committee chain height requests.
+		utils::TimeSpan CommitteeChainHeightRequestInterval;
+
+		/// Time adjustment after each committee round.
+		double CommitteeTimeAdjustment;
+
+		/// Sum of positive vote weights of running nodes compared to total sum of all polled nodes
+		/// required for synchronization approval.
+		double CommitteeEndSyncApproval;
+
+		/// Amount of importance added to the node's importance during the approval stage of node synchronization.
+		uint64_t CommitteeBaseTotalImportance = 100;
+
+		/// Weight of the node in synchronization state during the approval stage of node synchronization.
+		double CommitteeNotRunningContribution;
+
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
 
 	private:
 		/// Map of plugin configurations.
-		mutable std::array<std::shared_ptr<PluginConfiguration>, size_t(config::ConfigId::Latest) + 1> pluginConfigs;
+		mutable std::array<std::shared_ptr<PluginConfiguration>, size_t(config::ConfigId::Latest) + 1> m_pluginConfigs;
 
 	private:
 		NetworkConfiguration() = default;
@@ -131,10 +177,10 @@ namespace catapult { namespace model {
 		/// Sets \a config of plugin.
 		template<typename T>
 		void SetPluginConfiguration(const T& config) {
-			if (T::Id >= pluginConfigs.size())
+			if (T::Id >= m_pluginConfigs.size())
 				CATAPULT_THROW_AND_LOG_1(catapult_invalid_argument, "plugin has wrong Id", std::string(T::Name));
 
-			pluginConfigs[T::Id] = std::make_shared<T>(config);
+			m_pluginConfigs[T::Id] = std::make_shared<T>(config);
 		}
 
 		/// Inits config of plugin with \a pluginNameHash.
@@ -146,10 +192,16 @@ namespace catapult { namespace model {
 		/// Returns plugin configuration for plugin with \a pluginNameHash.
 		template<typename T>
 		const T& GetPluginConfiguration() const {
-			if (T::Id >= pluginConfigs.size() || !pluginConfigs[T::Id])
+			if (T::Id >= m_pluginConfigs.size() || !m_pluginConfigs[T::Id])
 				CATAPULT_THROW_AND_LOG_1(catapult_invalid_argument, "plugin configuration not found", std::string(T::Name));
 
-			return *dynamic_cast<const T*>(pluginConfigs[T::Id].get());
+			return *dynamic_cast<const T*>(m_pluginConfigs[T::Id].get());
+		}
+
+		/// Removes all plugin configs.
+		void ClearPluginConfigurations() const {
+			for (auto i = 0u; i < m_pluginConfigs.size(); ++i)
+				m_pluginConfigs[i] = nullptr;
 		}
 	};
 

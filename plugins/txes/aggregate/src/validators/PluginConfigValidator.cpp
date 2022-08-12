@@ -5,7 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "src/config/AggregateConfiguration.h"
 
 namespace catapult { namespace validators {
 	DEFINE_PLUGIN_CONFIG_VALIDATOR(aggregate, Aggregate, 1)

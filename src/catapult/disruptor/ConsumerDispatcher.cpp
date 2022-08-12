@@ -21,8 +21,6 @@
 #include "ConsumerDispatcher.h"
 #include "ConsumerEntry.h"
 #include "catapult/thread/ThreadInfo.h"
-#include "catapult/utils/Functional.h"
-#include <thread>
 
 namespace catapult { namespace disruptor {
 

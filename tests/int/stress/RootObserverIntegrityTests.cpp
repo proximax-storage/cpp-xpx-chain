@@ -18,19 +18,15 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/chain/BlockExecutor.h"
-#include "catapult/extensions/PluginUtils.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
-#include "catapult/constants.h"
 
 namespace catapult { namespace extensions {
 

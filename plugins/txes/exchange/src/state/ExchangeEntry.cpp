@@ -5,9 +5,6 @@
 **/
 
 #include "ExchangeEntry.h"
-#include "catapult/exceptions.h"
-#include "catapult/utils/Casting.h"
-#include <cmath>
 
 namespace catapult { namespace state {
 

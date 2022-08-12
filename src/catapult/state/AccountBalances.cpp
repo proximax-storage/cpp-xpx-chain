@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "AccountBalances.h"
 #include "AccountState.h"
 
 namespace catapult { namespace state {

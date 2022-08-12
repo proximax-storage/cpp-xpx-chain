@@ -25,7 +25,6 @@
 #include "catapult/utils/ConfigurationValueParsers.h"
 #include <boost/asio.hpp>
 #include <regex>
-#include <unordered_map>
 
 namespace catapult { namespace tools { namespace health {
 

@@ -20,8 +20,6 @@
 
 #include "MockRemoteChainApi.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/types.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
 
 namespace catapult { namespace mocks {

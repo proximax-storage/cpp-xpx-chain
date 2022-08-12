@@ -20,7 +20,6 @@
 
 #include "catapult/local/server/NemesisBlockNotifier.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/plugins/PluginManager.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nemesis/NemesisCompatibleConfiguration.h"
@@ -28,7 +27,6 @@
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/other/mocks/MockBlockChangeSubscriber.h"
 #include "tests/test/other/mocks/MockStateChangeSubscriber.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 
@@ -182,7 +180,7 @@ namespace catapult { namespace local {
 		EXPECT_EQ(Height(1), stateChangeInfo.Height);
 
 		// - check account state changes
-		EXPECT_EQ(3u + CountOf(test::Mijin_Test_Private_Keys), addedAddresses.size());
+		EXPECT_EQ(3u + CountOf(test::Mijin_Test_Private_Keys) + 22u, addedAddresses.size());
 
 		// - check nemesis and rental fee sinks
 		EXPECT_TRUE(ContainsModifiedPrivate(addedAddresses, test::Mijin_Test_Nemesis_Private_Key));

@@ -19,21 +19,15 @@
 **/
 
 #include "catapult/extensions/LocalNodeStateFileStorage.h"
-#include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/SupplementalData.h"
-#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheSubCachePlugin.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/cache_core/BlockDifficultyCacheSubCachePlugin.h"
-#include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/consumers/BlockChainSyncHandlers.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/io/IndexFile.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AccountStateTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/LocalNodeTestState.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nemesis/NemesisCompatibleConfiguration.h"
@@ -41,7 +35,6 @@
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 

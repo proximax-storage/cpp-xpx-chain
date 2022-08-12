@@ -22,7 +22,6 @@
 #include "tests/catapult/chain/test/MockTransactionApi.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/other/EntitiesSynchronizerTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace chain {
 

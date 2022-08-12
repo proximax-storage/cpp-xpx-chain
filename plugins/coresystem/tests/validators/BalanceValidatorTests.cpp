@@ -19,11 +19,9 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
-#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"

@@ -27,7 +27,6 @@
 #include "AggregateUtChangeSubscriber.h"
 #include "catapult/cache_tx/AggregatePtCache.h"
 #include "catapult/cache_tx/AggregateUtCache.h"
-#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/io/AggregateBlockStorage.h"
 
 namespace catapult { namespace subscribers {
@@ -46,6 +45,11 @@ namespace catapult { namespace subscribers {
 	void SubscriptionManager::addBlockChangeSubscriber(std::unique_ptr<io::BlockChangeSubscriber>&& pSubscriber) {
 		requireUnused(SubscriberType::BlockChange);
 		m_blockChangeSubscribers.push_back(std::move(pSubscriber));
+	}
+
+	void SubscriptionManager::addPostBlockCommitSubscriber(std::unique_ptr<io::BlockChangeSubscriber>&& pSubscriber) {
+		requireUnused(SubscriberType::PostBlockCommit);
+		m_postBlockCommitSubscribers.push_back(std::move(pSubscriber));
 	}
 
 	void SubscriptionManager::addUtChangeSubscriber(std::unique_ptr<cache::UtChangeSubscriber>&& pSubscriber) {
@@ -80,6 +84,11 @@ namespace catapult { namespace subscribers {
 	std::unique_ptr<io::BlockChangeSubscriber> SubscriptionManager::createBlockChangeSubscriber() {
 		markUsed(SubscriberType::BlockChange);
 		return std::make_unique<AggregateBlockChangeSubscriber<>>(std::move(m_blockChangeSubscribers));
+	}
+
+	std::unique_ptr<io::BlockChangeSubscriber> SubscriptionManager::createPostBlockCommitSubscriber() {
+		markUsed(SubscriberType::PostBlockCommit);
+		return std::make_unique<AggregateBlockChangeSubscriber<>>(std::move(m_postBlockCommitSubscribers));
 	}
 
 	std::unique_ptr<cache::UtChangeSubscriber> SubscriptionManager::createUtChangeSubscriber() {

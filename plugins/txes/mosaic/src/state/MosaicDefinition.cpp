@@ -19,7 +19,6 @@
 **/
 
 #include "MosaicDefinition.h"
-#include "src/model/MosaicConstants.h"
 #include "catapult/constants.h"
 
 namespace catapult { namespace state {

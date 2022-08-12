@@ -5,9 +5,7 @@
 **/
 
 #include "ExchangeTransactionPlugin.h"
-#include "catapult/config/ImmutableConfiguration.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "src/model/ExchangeTransaction.h"
 #include "src/model/ExchangeNotifications.h"

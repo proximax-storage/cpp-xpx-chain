@@ -4,10 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <plugins/txes/operation/src/model/OperationTypes.h>
 #include "src/state/OperationEntry.h"
 #include "plugins/txes/lock_shared/tests/state/LockInfoTests.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace state {
 

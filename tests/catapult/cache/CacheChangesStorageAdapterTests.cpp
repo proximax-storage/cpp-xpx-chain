@@ -20,8 +20,6 @@
 
 #include "catapult/cache/CacheChangesStorageAdapter.h"
 #include "tests/catapult/cache/test/DeltasAwareCache.h"
-#include "tests/test/core/mocks/MockMemoryStream.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

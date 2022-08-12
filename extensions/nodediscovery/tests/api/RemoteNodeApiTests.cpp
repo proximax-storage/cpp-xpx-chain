@@ -22,7 +22,6 @@
 #include "nodediscovery/tests/test/NodeDiscoveryTestUtils.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/other/RemoteApiTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace api {
 

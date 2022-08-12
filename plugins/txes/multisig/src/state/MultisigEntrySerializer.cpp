@@ -20,7 +20,6 @@
 
 #include "MultisigEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
-#include "catapult/utils/HexFormatter.h"
 #include "catapult/exceptions.h"
 
 namespace catapult { namespace state {

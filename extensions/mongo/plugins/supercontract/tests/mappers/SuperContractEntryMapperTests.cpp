@@ -5,11 +5,9 @@
 **/
 
 #include "mongo/src/mappers/MapperUtils.h"
-#include "mongo/tests/test/MapperTestUtils.h"
 #include "src/mappers/SuperContractEntryMapper.h"
 #include "plugins/txes/supercontract/tests/test/SuperContractTestUtils.h"
 #include "tests/test/SuperContractMapperTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

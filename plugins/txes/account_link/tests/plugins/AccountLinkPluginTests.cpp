@@ -22,7 +22,6 @@
 #include "src/model/AccountLinkEntityType.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/plugins/PluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace plugins {
 

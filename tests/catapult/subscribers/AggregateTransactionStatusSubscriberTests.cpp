@@ -19,11 +19,9 @@
 **/
 
 #include "catapult/subscribers/AggregateTransactionStatusSubscriber.h"
-#include "catapult/model/TransactionStatus.h"
 #include "tests/catapult/subscribers/test/AggregateSubscriberTestContext.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/other/mocks/MockTransactionStatusSubscriber.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace subscribers {
 

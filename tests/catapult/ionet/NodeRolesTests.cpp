@@ -20,7 +20,6 @@
 
 #include "catapult/ionet/NodeRoles.h"
 #include "tests/test/nodeps/ConfigurationTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace ionet {
 

@@ -19,11 +19,7 @@
 **/
 
 #include "Challenge.h"
-#include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/Signer.h"
-#include "catapult/utils/Casting.h"
-#include "catapult/utils/HexFormatter.h"
-#include "catapult/utils/Logging.h"
 #include <boost/random/random_device.hpp>
 
 namespace catapult { namespace net {

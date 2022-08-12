@@ -19,13 +19,9 @@
 **/
 
 #include "src/plugins/ModifyMultisigAccountTransactionPlugin.h"
-#include "src/model/ModifyMultisigAccountTransaction.h"
 #include "src/model/MultisigNotifications.h"
-#include "catapult/model/Address.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
 #include <random>
 
 using namespace catapult::model;

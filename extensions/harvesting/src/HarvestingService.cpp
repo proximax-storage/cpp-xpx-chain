@@ -19,19 +19,14 @@
 **/
 
 #include "HarvestingService.h"
-#include "HarvesterBlockGenerator.h"
-#include "HarvestingUtFacadeFactory.h"
+#include "catapult/harvesting_core/HarvestingUtFacadeFactory.h"
 #include "ScheduledHarvesterTask.h"
-#include "UnlockedAccounts.h"
 #include "catapult/cache_core/ImportanceView.h"
-#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/crypto/KeyUtils.h"
-#include "catapult/extensions/ConfigurationUtils.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace harvesting {
 

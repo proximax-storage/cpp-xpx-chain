@@ -21,7 +21,7 @@
 #pragma once
 #include <set>
 #include <unordered_set>
-#include <stddef.h>
+#include <cstddef>
 
 namespace catapult { namespace utils {
 

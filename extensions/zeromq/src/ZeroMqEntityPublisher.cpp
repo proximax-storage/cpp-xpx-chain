@@ -18,16 +18,13 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ZeroMqEntityPublisher.h"
 #include "PublisherUtils.h"
-#include "catapult/model/Cosignature.h"
 #include "catapult/model/Elements.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionStatus.h"
 #include "catapult/model/TransactionUtils.h"
 #include "catapult/thread/IoThreadPool.h"
 #include <boost/asio.hpp>
-#include <set>
 
 namespace catapult { namespace zeromq {
 

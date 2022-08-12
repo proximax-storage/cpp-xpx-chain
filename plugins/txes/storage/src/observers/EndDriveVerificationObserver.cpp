@@ -1,0 +1,94 @@
+/**
+*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#include <boost/dynamic_bitset.hpp>
+#include "Observers.h"
+#include "src/utils/StorageUtils.h"
+
+namespace catapult { namespace observers {
+
+	using Notification = model::EndDriveVerificationNotification<1>;
+
+	DECLARE_OBSERVER(EndDriveVerification, Notification)() {
+		return MAKE_OBSERVER(EndDriveVerification, Notification, ([](const Notification& notification, const ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (EndDriveVerification)");
+
+			// Find median opinion for every Prover
+			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+			auto driveIter = driveCache.find(notification.DriveKey);
+			auto& driveEntry = driveIter.get();
+
+		  	auto& shards = driveEntry.verification()->Shards;
+			auto& shardSet = shards[notification.ShardId];
+			const std::vector<Key> shardVec(shardSet.begin(), shardSet.end());
+		  	const auto opinionByteCount = (notification.JudgingKeyCount * notification.KeyCount + 7) / 8;
+		  	const boost::dynamic_bitset<uint8_t> opinions(notification.OpinionsPtr, notification.OpinionsPtr + opinionByteCount);
+			std::set<Key> offboardingReplicators;
+		  	std::set<Key> offboardingReplicatorsWithRefund;
+		  	auto storageDepositSlashing = 0;
+
+			for (auto i = 0; i < notification.KeyCount; ++i) {
+				uint8_t result = 0;
+				for (auto j = 0; j < notification.JudgingKeyCount; ++j)
+					result += opinions[j * notification.KeyCount + i];
+
+				const auto& replicatorKey = shardVec[i];
+				if (result >= notification.JudgingKeyCount / 2) {
+					// If the replicator passes validation and\ is queued for offboarding,
+					// include him into offboardingReplicators and offboardingReplicatorsWithRefund
+					if (driveEntry.offboardingReplicators().count(replicatorKey)) {
+						offboardingReplicators.insert(replicatorKey);
+						offboardingReplicatorsWithRefund.insert(replicatorKey);
+					}
+				} else {
+					// Count deposited Storage mosaics and include replicator into offboardingReplicators
+					storageDepositSlashing += driveEntry.size();
+					offboardingReplicators.insert(replicatorKey);
+				}
+			}
+
+			std::seed_seq seed(notification.Seed.begin(), notification.Seed.end());
+			std::mt19937 rng(seed);
+
+		  	utils::RefundDepositsToReplicators(notification.DriveKey, offboardingReplicatorsWithRefund, context);
+			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
+			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
+
+			shardSet.clear();
+		  	bool verificationCompleted = true;
+		  	for (const auto& shard : shards) {
+			  	if (!shard.empty()) {
+					verificationCompleted = false;
+				  	break;
+			  	}
+		  	}
+
+			if (verificationCompleted)
+				driveEntry.verification().reset();
+
+			if (storageDepositSlashing == 0)
+				return;
+
+			// Split storage deposit slashing between remaining replicators
+			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+			auto accountIter = accountStateCache.find(notification.DriveKey);
+			auto& driveAccountState = accountIter.get();
+			auto storageDepositSlashingShare = Amount(storageDepositSlashing / driveEntry.replicators().size());
+			const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
+
+			for (const auto& replicatorKey : driveEntry.replicators()) {
+				accountIter = accountStateCache.find(replicatorKey);
+				auto& replicatorAccountState = accountIter.get();
+				driveAccountState.Balances.debit(storageMosaicId, storageDepositSlashingShare, context.Height);
+				replicatorAccountState.Balances.credit(storageMosaicId, storageDepositSlashingShare, context.Height);
+			}
+
+			// Streaming deposits of failed provers remain on drive's account
+    	}))
+	}
+}}

@@ -6,7 +6,6 @@
 
 #include "src/observers/Observers.h"
 #include "tests/test/SuperContractTestUtils.h"
-#include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 
 namespace catapult { namespace observers {

@@ -19,7 +19,6 @@
 **/
 
 #include "Validators.h"
-#include "src/config/HashLockConfiguration.h"
 #include "plugins/txes/lock_shared/src/validators/LockDurationValidator.h"
 
 namespace catapult { namespace validators {

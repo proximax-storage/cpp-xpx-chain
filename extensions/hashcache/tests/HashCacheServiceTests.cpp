@@ -21,10 +21,8 @@
 #include "hashcache/src/HashCacheService.h"
 #include "plugins/services/hashcache/src/cache/HashCacheStorage.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace hashcache {
 

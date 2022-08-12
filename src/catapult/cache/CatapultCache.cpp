@@ -20,12 +20,9 @@
 
 #include "CatapultCache.h"
 #include "CacheHeight.h"
-#include "CatapultCacheDetachedDelta.h"
 #include "ReadOnlyCatapultCache.h"
 #include "SubCachePluginAdapter.h"
 #include "catapult/crypto/Hashes.h"
-#include "catapult/model/NetworkConfiguration.h"
-#include "catapult/model/NetworkInfo.h"
 #include "catapult/utils/StackLogger.h"
 
 namespace catapult { namespace cache {
@@ -86,6 +83,18 @@ namespace catapult { namespace cache {
 			stateHashInfo.StateHash = CalculateStateHash(stateHashInfo.SubCacheMerkleRoots);
 			return stateHashInfo;
 		}
+
+		template<typename TSubCacheViews>
+		void LogSubCacheNames(const TSubCacheViews& subViews) {
+			for (const auto& pSubView : subViews) {
+				if (!pSubView || !pSubView->supportsMerkleRoot() || !pSubView->enabled())
+					continue;
+
+				SubCacheViewIdentifier id = pSubView->id();
+				std::string cacheName(id.CacheName.begin(), id.CacheName.end());
+				CATAPULT_LOG(debug) << "sub cache " << cacheName << " [" << id.CacheId << "]";
+			}
+		}
 	}
 
 	// region CatapultCacheView
@@ -137,8 +146,13 @@ namespace catapult { namespace cache {
 			if (!pSubView || !pSubView->supportsMerkleRoot() || !pSubView->enabled())
 				continue;
 
-			if (merkleRootIndex == subCacheMerkleRoots.size())
+			if (merkleRootIndex == subCacheMerkleRoots.size()) {
+				LogSubCacheNames(m_subViews);
+				for (const auto& merkleRoot : subCacheMerkleRoots)
+					CATAPULT_LOG(debug) << "sub cache merkle root " << merkleRoot;
+
 				CATAPULT_THROW_INVALID_ARGUMENT_1("too few sub cache merkle roots were passed", subCacheMerkleRoots.size());
+			}
 
 			// this will always succeed because supportsMerkleRoot was checked above
 			pSubView->trySetMerkleRoot(subCacheMerkleRoots[merkleRootIndex++]);
@@ -156,6 +170,20 @@ namespace catapult { namespace cache {
 		for (auto& pSubView : m_subViews) {
 			if (!!pSubView)
 				pSubView->setHeight(height);
+		}
+	}
+
+	void CatapultCacheDelta::backupChanges(bool replace) {
+		for (auto& pSubView : m_subViews) {
+			if (!!pSubView && pSubView->enabled())
+				pSubView->backupChanges(replace);
+		}
+	}
+
+	void CatapultCacheDelta::restoreChanges() {
+		for (auto& pSubView : m_subViews) {
+			if (!!pSubView && pSubView->enabled())
+				pSubView->restoreChanges();
 		}
 	}
 

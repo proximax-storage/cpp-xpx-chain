@@ -10,10 +10,7 @@
 #include "tests/test/SuperContractTestUtils.h"
 #include "src/plugins/StartExecuteTransactionPlugin.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "plugins/txes/aggregate/src/plugins/AggregateCommon.h"
-#include "plugins/txes/operation/src/config/OperationConfiguration.h"
 #include "plugins/txes/operation/src/model/OperationNotifications.h"
 
 using namespace catapult::model;

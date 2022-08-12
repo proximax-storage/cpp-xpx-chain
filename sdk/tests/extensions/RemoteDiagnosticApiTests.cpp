@@ -19,10 +19,7 @@
 **/
 
 #include "src/extensions/RemoteDiagnosticApi.h"
-#include "catapult/handlers/DiagnosticHandlers.h"
-#include "catapult/ionet/Packet.h"
 #include "tests/test/other/RemoteApiTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 

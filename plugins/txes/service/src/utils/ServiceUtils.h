@@ -50,5 +50,4 @@ namespace catapult { namespace utils {
         const auto& driveAccount = accountIter.get();
         return driveAccount.Balances.get(mosaicId);
     }
-
 }}

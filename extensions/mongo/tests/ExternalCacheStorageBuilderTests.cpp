@@ -20,7 +20,6 @@
 
 #include "mongo/src/ExternalCacheStorageBuilder.h"
 #include "mongo/tests/test/mocks/MockExternalCacheStorage.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo {
 

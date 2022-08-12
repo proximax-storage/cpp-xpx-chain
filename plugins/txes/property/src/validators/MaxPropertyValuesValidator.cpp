@@ -22,7 +22,6 @@
 #include "src/cache/PropertyCache.h"
 #include "src/config/PropertyConfiguration.h"
 #include "catapult/model/Address.h"
-#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 

@@ -7,7 +7,6 @@
 #include "OperationMapperTestUtils.h"
 #include "plugins/txes/operation/src/state/OperationEntry.h"
 #include "mongo/plugins/lock_shared/tests/test/LockMapperTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace catapult::mongo::mappers;
 

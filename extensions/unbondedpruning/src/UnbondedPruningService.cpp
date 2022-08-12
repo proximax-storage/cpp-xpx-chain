@@ -21,7 +21,6 @@
 #include "UnbondedPruningService.h"
 #include "HashLockUtils.h"
 #include "catapult/extensions/ServiceState.h"
-#include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace unbondedpruning {
 

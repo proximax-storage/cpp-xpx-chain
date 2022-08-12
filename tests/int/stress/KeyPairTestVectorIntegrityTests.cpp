@@ -18,16 +18,11 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/crypto/KeyGenerator.h"
-#include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
-#include "catapult/crypto/PrivateKey.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/model/Address.h"
-#include "catapult/utils/HexFormatter.h"
 #include "catapult/utils/HexParser.h"
 #include "tests/int/stress/test/InputDependentTest.h"
-#include "tests/TestHarness.h"
 
 namespace catapult {
 

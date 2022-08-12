@@ -46,6 +46,12 @@ namespace catapult { namespace cache {
 		Operation,
 		MosaicLevy,
 		Metadata_v2,
+		Committee,
+		BcDrive,
+		DownloadChannel,
+		Replicator,
+		Queue,
+		PriorityQueue,
 		ExchangeSda,
 		SdaOfferGroup,
 	};

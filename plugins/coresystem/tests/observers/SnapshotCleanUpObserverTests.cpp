@@ -19,10 +19,7 @@
 **/
 
 #include "src/observers/Observers.h"
-#include "tests/test/cache/BalanceTransferTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/plugins/AccountObserverTestContext.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"

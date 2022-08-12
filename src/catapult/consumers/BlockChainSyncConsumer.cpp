@@ -19,15 +19,13 @@
 **/
 
 #include "BlockConsumers.h"
+#include "ConsumerUtils.h"
 #include "ConsumerResultFactory.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/BlockUtils.h"
 #include "catapult/utils/StackLogger.h"
-#include "plugins/txes/config/src/model/NetworkConfigTransaction.h"
-#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 
 namespace catapult { namespace consumers {
 
@@ -36,51 +34,6 @@ namespace catapult { namespace consumers {
 
 		constexpr bool IsAborted(const disruptor::ConsumerResult& result) {
 			return disruptor::CompletionStatus::Aborted == result.CompletionStatus;
-		}
-
-		model::NetworkConfiguration ParseConfig(const uint8_t* pConfig, uint16_t configSize) {
-			std::istringstream inputBlock(std::string(reinterpret_cast<const char*>(pConfig), configSize));
-			return model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
-		}
-
-		template<typename TTransaction>
-		void AddConfig(model::NetworkConfigurations& configs, const Height& blockHeight, const TTransaction& transaction) {
-			configs.emplace(
-				blockHeight +  Height(transaction.ApplyHeightDelta.unwrap()),
-				ParseConfig(transaction.BlockChainConfigPtr(), transaction.BlockChainConfigSize));
-		}
-
-		template<typename TTransaction>
-		void AddConfig(std::set<Height>& configHeights, const Height& blockHeight, const TTransaction& transaction) {
-			configHeights.insert(blockHeight +  Height(transaction.ApplyHeightDelta.unwrap()));
-		}
-
-		template<typename TContainer>
-		bool ExtractConfigs(const BlockElements& elements, TContainer& configs) {
-			try {
-				for (const auto& blockElement : elements) {
-					for (const auto& transactionElement : blockElement.Transactions) {
-						const auto& transaction = transactionElement.Transaction;
-						auto type = transaction.Type;
-						if (model::Entity_Type_Network_Config == type) {
-							AddConfig(configs, blockElement.Block.Height,
-								static_cast<const model::NetworkConfigTransaction&>(transaction));
-						} else if (model::Entity_Type_Aggregate_Complete == type || model::Entity_Type_Aggregate_Bonded == type) {
-							const auto& aggregate = static_cast<const model::AggregateTransaction&>(transaction);
-							for (const auto& subTransaction : aggregate.Transactions()) {
-								if (model::Entity_Type_Network_Config == subTransaction.Type) {
-									AddConfig(configs, blockElement.Block.Height,
-										static_cast<const model::EmbeddedNetworkConfigTransaction&>(subTransaction));
-								}
-							}
-						}
-					}
-				}
-			} catch (...) {
-				return false;
-			}
-
-			return true;
 		}
 
 		struct UnwindResult {
@@ -229,7 +182,7 @@ namespace catapult { namespace consumers {
 				syncState = SyncState(m_cache, m_state);
 				auto commonBlockHeight = peerStartHeight - Height(1);
 				auto observerState = syncState.observerState();
-				auto unwindResult = unwindLocalChain(localChainHeight, commonBlockHeight, storageView, observerState);
+				auto unwindResult = unwindLocalChain(localChainHeight, commonBlockHeight, storageView, observerState, m_pConfigHolder);
 				const auto& localScore = unwindResult.Score;
 
 				// 5. calculate the remote chain score
@@ -273,7 +226,8 @@ namespace catapult { namespace consumers {
 					Height localChainHeight,
 					Height commonBlockHeight,
 					const io::BlockStorageView& storage,
-					observers::ObserverState& observerState) const {
+					observers::ObserverState& observerState,
+					const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) const {
 				UnwindResult result;
 				if (localChainHeight == commonBlockHeight)
 					return result;
@@ -292,11 +246,11 @@ namespace catapult { namespace consumers {
 
 					if (height == commonBlockHeight) {
 						observerState.Cache.setHeight(height);
-						m_handlers.UndoBlock(*pParentBlockElement, observerState, UndoBlockType::Common);
+						m_handlers.UndoBlock(pConfigHolder->Config(height).Network, *pParentBlockElement, observerState, UndoBlockType::Common);
 						break;
 					}
 
-					m_handlers.UndoBlock(*pParentBlockElement, observerState, UndoBlockType::Rollback);
+					m_handlers.UndoBlock(pConfigHolder->Config(height).Network, *pParentBlockElement, observerState, UndoBlockType::Rollback);
 					pChildBlockElement = std::move(pParentBlockElement);
 					height = height - Height(1);
 				}
@@ -345,6 +299,9 @@ namespace catapult { namespace consumers {
 						peerTransactionHashes,
 						syncState.detachRemovedTransactionInfos());
 				m_handlers.TransactionsChange(TransactionsChangeInfo{ peerTransactionHashes, revertedTransactionInfos });
+
+				// 5. notify observers about commited blocks
+				m_handlers.PostBlockCommit(elements);
 			}
 
 		private:

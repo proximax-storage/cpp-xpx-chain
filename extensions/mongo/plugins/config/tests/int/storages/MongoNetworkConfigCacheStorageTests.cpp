@@ -9,7 +9,6 @@
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
 #include "plugins/txes/config/tests/test/NetworkConfigTestUtils.h"
 #include "tests/test/NetworkConfigMapperTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace bsoncxx::builder::stream;
 

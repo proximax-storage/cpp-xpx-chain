@@ -19,7 +19,6 @@
 **/
 
 #pragma once
-
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/model/Block.h"

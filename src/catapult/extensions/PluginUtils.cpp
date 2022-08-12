@@ -19,8 +19,6 @@
 **/
 
 #include "PluginUtils.h"
-#include "catapult/config/BlockchainConfiguration.h"
-#include "catapult/observers/NotificationObserverAdapter.h"
 #include "catapult/observers/ReverseNotificationObserverAdapter.h"
 #include "catapult/validators/AggregateEntityValidator.h"
 #include "catapult/validators/NotificationValidatorAdapter.h"

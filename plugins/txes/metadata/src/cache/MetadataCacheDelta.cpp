@@ -5,9 +5,6 @@
 **/
 
 #include "MetadataCacheDelta.h"
-#include "catapult/utils/Casting.h"
-#include <numeric>
-#include <unordered_set>
 
 namespace catapult { namespace cache {
 

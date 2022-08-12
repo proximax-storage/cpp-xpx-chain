@@ -21,7 +21,6 @@
 #include "catapult/chain/BatchEntityProcessor.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
-#include "tests/TestHarness.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 

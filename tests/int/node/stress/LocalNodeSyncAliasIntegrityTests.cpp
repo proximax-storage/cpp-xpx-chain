@@ -21,7 +21,6 @@
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 

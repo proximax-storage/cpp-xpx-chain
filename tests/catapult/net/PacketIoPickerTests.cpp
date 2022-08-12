@@ -18,11 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/net/PacketIoPicker.h"
-#include "catapult/utils/TimeSpan.h"
-#include "tests/test/core/mocks/MockPacketIo.h"
 #include "tests/test/core/mocks/MockPacketIoPicker.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace net {
 

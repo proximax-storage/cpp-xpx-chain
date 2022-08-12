@@ -19,7 +19,6 @@
 **/
 
 #include "Nemesis.h"
-#include "Conversions.h"
 #ifndef SIGNATURE_SCHEME_NIS1
 #include "data/NemesisMemoryBlockStorage_data.h"
 #else

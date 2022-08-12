@@ -6,7 +6,6 @@
 
 #include "ExchangeConfiguration.h"
 #include "catapult/utils/ConfigurationUtils.h"
-#include "catapult/utils/ConfigurationBag.h"
 
 namespace catapult { namespace config {
 

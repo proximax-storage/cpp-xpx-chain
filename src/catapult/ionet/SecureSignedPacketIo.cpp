@@ -20,10 +20,8 @@
 
 #include "SecureSignedPacketIo.h"
 #include "BatchPacketReader.h"
-#include "PacketIo.h"
 #include "catapult/crypto/Hashes.h"
 #include "catapult/crypto/Signer.h"
-#include "catapult/utils/HexFormatter.h"
 
 namespace catapult { namespace ionet {
 

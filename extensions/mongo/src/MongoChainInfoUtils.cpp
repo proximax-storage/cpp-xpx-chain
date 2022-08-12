@@ -20,7 +20,6 @@
 
 #include "MongoChainInfoUtils.h"
 #include "MongoBulkWriter.h"
-#include "catapult/exceptions.h"
 
 using namespace bsoncxx::builder::stream;
 

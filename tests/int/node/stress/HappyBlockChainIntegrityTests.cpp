@@ -18,23 +18,15 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/config/ValidateConfiguration.h"
-#include "catapult/model/BlockUtils.h"
-#include "catapult/model/ChainScore.h"
 #include "tests/int/node/stress/test/BlockChainBuilder.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
 #include "tests/int/node/test/LocalNodeTestContext.h"
 #include "tests/test/nodeps/Logging.h"
-#include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/TestHarness.h"
-#include <boost/filesystem.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/thread.hpp>
 
 namespace catapult { namespace local {
 

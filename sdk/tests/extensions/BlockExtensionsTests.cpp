@@ -19,7 +19,6 @@
 **/
 
 #include "src/extensions/BlockExtensions.h"
-#include "src/extensions/TransactionExtensions.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
@@ -27,7 +26,6 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockTransactionPluginWithCustomBuffers.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 

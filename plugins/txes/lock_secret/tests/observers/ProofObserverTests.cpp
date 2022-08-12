@@ -22,7 +22,6 @@
 #include "src/model/SecretLockReceiptType.h"
 #include "plugins/txes/lock_shared/tests/observers/LockStatusAndBalanceObserverTests.h"
 #include "tests/test/SecretLockNotificationsTestUtils.h"
-#include "tests/test/plugins/ObserverTestUtils.h"
 
 namespace catapult { namespace observers {
 

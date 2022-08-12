@@ -21,7 +21,6 @@
 #include "IoThreadPool.h"
 #include "ThreadInfo.h"
 #include "catapult/utils/AtomicIncrementDecrementGuard.h"
-#include "catapult/utils/Logging.h"
 #include "catapult/exceptions.h"
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>

@@ -20,7 +20,6 @@
 
 #include "catapult/utils/ContainerHelpers.h"
 #include "tests/TestHarness.h"
-#include <unordered_map>
 
 namespace catapult { namespace utils {
 

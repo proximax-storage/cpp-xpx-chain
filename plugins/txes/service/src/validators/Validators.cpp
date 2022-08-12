@@ -7,7 +7,6 @@
 #include "Validators.h"
 #include "catapult/model/Address.h"
 #include "plugins/txes/lock_secret/src/cache/SecretLockInfoCache.h"
-#include "plugins/txes/lock_secret/src/model/LockHashUtils.h"
 
 namespace catapult { namespace validators {
 

@@ -19,11 +19,9 @@
 **/
 
 #include "catapult/cache/BasicCache.h"
-#include "catapult/deltaset/BaseSet.h"
 #include "catapult/deltaset/BaseSetDelta.h"
 #include "catapult/deltaset/OrderedSet.h"
 #include "tests/TestHarness.h"
-#include <unordered_map>
 
 namespace catapult { namespace cache {
 

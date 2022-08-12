@@ -20,9 +20,6 @@
 
 #include "Validators.h"
 #include "AccountPropertyView.h"
-#include "src/cache/PropertyCache.h"
-#include "catapult/model/Address.h"
-#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 

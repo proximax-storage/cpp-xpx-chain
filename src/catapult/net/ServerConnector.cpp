@@ -26,7 +26,6 @@
 #include "catapult/ionet/SecurePacketSocketDecorator.h"
 #include "catapult/thread/IoThreadPool.h"
 #include "catapult/thread/TimedCallback.h"
-#include "catapult/utils/Logging.h"
 #include "catapult/utils/WeakContainer.h"
 
 namespace catapult { namespace net {

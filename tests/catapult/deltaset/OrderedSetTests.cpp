@@ -18,8 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/deltaset/OrderedSet.h"
-#include "tests/catapult/deltaset/test/BaseSetDeltaTests.h"
 #include "tests/catapult/deltaset/test/BaseSetTests.h"
 
 namespace catapult { namespace deltaset {

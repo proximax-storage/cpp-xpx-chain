@@ -25,8 +25,6 @@
 #include "catapult/api/RemoteNodeApi.h"
 #include "catapult/extensions/RemoteDiagnosticApi.h"
 #include "catapult/utils/Functional.h"
-#include <algorithm>
-#include <cctype>
 
 namespace catapult { namespace tools { namespace network {
 

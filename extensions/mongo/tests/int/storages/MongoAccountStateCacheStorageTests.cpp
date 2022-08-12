@@ -22,13 +22,9 @@
 #include "mongo/src/mappers/MapperUtils.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/AccountStateTestUtils.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
 
 using namespace bsoncxx::builder::stream;
 

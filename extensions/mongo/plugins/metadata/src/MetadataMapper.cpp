@@ -10,7 +10,6 @@
 #include "plugins/txes/metadata/src/model/AddressMetadataTransaction.h"
 #include "plugins/txes/metadata/src/model/MosaicMetadataTransaction.h"
 #include "plugins/txes/metadata/src/model/NamespaceMetadataTransaction.h"
-#include "plugins/txes/metadata/src/model/MetadataTypes.h"
 #include "plugins/txes/metadata/src/state/MetadataUtils.h"
 
 using namespace catapult::mongo::mappers;

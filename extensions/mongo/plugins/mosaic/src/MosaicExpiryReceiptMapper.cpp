@@ -22,7 +22,6 @@
 #include "mongo/src/MongoReceiptPluginFactory.h"
 #include "mongo/src/mappers/ReceiptMapper.h"
 #include "plugins/txes/mosaic/src/model/MosaicReceiptType.h"
-#include "catapult/model/Receipt.h"
 
 using namespace catapult::mongo::mappers;
 

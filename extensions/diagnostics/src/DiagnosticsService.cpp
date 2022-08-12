@@ -22,7 +22,6 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/handlers/DiagnosticHandlers.h"
-#include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace diagnostics {
 

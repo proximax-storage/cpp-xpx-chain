@@ -20,7 +20,6 @@
 
 #include "catapult/ionet/PacketHeader.h"
 #include "tests/TestHarness.h"
-#include <limits>
 
 namespace catapult { namespace ionet {
 

@@ -25,7 +25,6 @@
 #include "catapult/handlers/HandlerFactory.h"
 #include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
-#include "catapult/utils/HexFormatter.h"
 
 namespace catapult { namespace handlers {
 

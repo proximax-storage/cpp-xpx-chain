@@ -19,10 +19,8 @@
 **/
 
 #include "Filesystem.h"
-#include "catapult/utils/Logging.h"
 #include "catapult/exceptions.h"
 #include <boost/dll.hpp>
-#include <boost/filesystem.hpp>
 
 #ifdef CATAPULT_DOCKER_TESTS
 extern int global_argc;

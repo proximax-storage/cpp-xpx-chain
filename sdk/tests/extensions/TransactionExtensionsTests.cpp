@@ -22,7 +22,6 @@
 #include "catapult/utils/HexParser.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 

@@ -23,7 +23,6 @@
 #include "ClientConnector.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/ionet/SocketReader.h"
-#include "catapult/utils/HexFormatter.h"
 #include "catapult/utils/SpinLock.h"
 
 namespace catapult { namespace net {

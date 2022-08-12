@@ -99,6 +99,10 @@ namespace catapult { namespace mocks {
 			CATAPULT_THROW_RUNTIME_ERROR("not implemented in mock");
 		}
 
+		ionet::NodePacketIoPair pickOne(const utils::TimeSpan&, const Key&) override {
+			CATAPULT_THROW_RUNTIME_ERROR("not implemented in mock");
+		}
+
 		void accept(const std::shared_ptr<ionet::PacketSocket>&, const ConnectCallback&) override {
 			CATAPULT_THROW_RUNTIME_ERROR("not implemented in mock");
 		}
@@ -166,6 +170,17 @@ namespace catapult { namespace mocks {
 		ionet::NodePacketIoPair pickOne(const utils::TimeSpan& ioDuration) override {
 			m_ioDurations.push_back(ioDuration);
 			auto pair = ionet::NodePacketIoPair(ionet::Node(m_nodeIdentity, ionet::NodeEndpoint(), ionet::NodeMetadata()), m_pPacketIo);
+
+			// if the io should only be used once, destroy the reference in writers before returning
+			if (SetPacketIoBehavior::Use_Once == m_setPacketIoBehavior)
+				m_pPacketIo.reset();
+
+			return pair;
+		}
+
+		ionet::NodePacketIoPair pickOne(const utils::TimeSpan& ioDuration, const Key& identityKey) override {
+			m_ioDurations.push_back(ioDuration);
+			auto pair = ionet::NodePacketIoPair(ionet::Node(identityKey, ionet::NodeEndpoint(), ionet::NodeMetadata()), m_pPacketIo);
 
 			// if the io should only be used once, destroy the reference in writers before returning
 			if (SetPacketIoBehavior::Use_Once == m_setPacketIoBehavior)

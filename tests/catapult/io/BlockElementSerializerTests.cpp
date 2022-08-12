@@ -21,7 +21,6 @@
 #include "catapult/io/BlockElementSerializer.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace io {
 

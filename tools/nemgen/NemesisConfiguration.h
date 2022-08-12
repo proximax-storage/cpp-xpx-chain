@@ -85,6 +85,9 @@ namespace catapult { namespace tools { namespace nemgen {
 		/// Map of nemesis account addresses to mosaic seeds.
 		AddressToMosaicSeedsMap NemesisAddressToMosaicSeeds;
 
+		/// Private keys of initial harvesters.
+		std::vector<std::string> HarvesterPrivateKeys;
+
 	public:
 		/// Loads a nemesis configuration from \a bag.
 		static NemesisConfiguration LoadFromBag(const utils::ConfigurationBag& bag);

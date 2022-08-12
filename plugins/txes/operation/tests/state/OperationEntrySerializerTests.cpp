@@ -4,10 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/state/OperationEntrySerializer.h"
 #include "plugins/txes/lock_shared/tests/state/LockInfoSerializerTests.h"
 #include "tests/test/OperationTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace state {
 

@@ -20,8 +20,6 @@
 
 #include "src/config/MosaicConfiguration.h"
 #include "src/validators/Validators.h"
-#include "src/cache/MosaicCache.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"

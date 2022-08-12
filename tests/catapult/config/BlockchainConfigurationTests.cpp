@@ -18,14 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/utils/HexParser.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
-#include <boost/filesystem.hpp>
 
 namespace catapult { namespace config {
 
@@ -209,7 +207,7 @@ namespace catapult { namespace config {
 
 		void AssertDefaultSupportedEntityVersions(const SupportedEntityVersions& config) {
 			// Assert:
-			EXPECT_EQ(51u, config.size());
+			EXPECT_EQ(71u, config.size());
 		}
 	}
 

@@ -30,8 +30,13 @@ namespace catapult { namespace utils {
 	/// Represents the number of milliseconds between 1970-01-01 00:00:00 UTC and 2016-04-01 00:00:00 UTC.
 	constexpr auto Epoch_Time = std::chrono::duration<int64_t, std::milli>(1459468800000);
 
+	using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
+
 	/// Returns the network time, i.e. the number of milliseconds since Epoch_Time.
 	Timestamp NetworkTime();
+
+	/// Given a time point, returns the network time that time point represents.
+	Timestamp FromTimePoint(const TimePoint& timePoint);
 
 	/// Given a unix \a timestamp, returns the corresponding network timestamp
 	/// that the unix timestamp represents.
@@ -40,4 +45,8 @@ namespace catapult { namespace utils {
 	/// Given a network \a timestamp, returns the corresponding unix timestamp
 	/// that the network timestamp represents.
 	Timestamp ToUnixTime(const Timestamp& timestamp);
+
+	/// Given a network \a timestamp, returns the corresponding time point
+	/// that the network timestamp represents.
+	TimePoint ToTimePoint(const Timestamp& timestamp);
 }}

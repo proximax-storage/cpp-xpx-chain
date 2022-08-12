@@ -19,15 +19,12 @@
 **/
 
 #include "timesync/src/TimeSynchronizer.h"
-#include "timesync/src/constants.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
 #include "timesync/tests/test/TimeSynchronizationTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
-#include <cmath>
 
 namespace catapult { namespace timesync {
 

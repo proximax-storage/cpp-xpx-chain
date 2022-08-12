@@ -6,7 +6,6 @@
 
 #include "DriveEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
-#include "catapult/exceptions.h"
 #include "catapult/utils/Casting.h"
 
 namespace catapult { namespace state {

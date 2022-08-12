@@ -5,7 +5,6 @@
 **/
 
 #include "catapult/cache/IdentifierSerializer.h"
-#include "catapult/utils/Hashers.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {

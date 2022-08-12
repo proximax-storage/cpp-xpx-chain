@@ -6,8 +6,6 @@
 
 #include "MetadataEntryMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "catapult/utils/Casting.h"
-#include <bsoncxx/stdx/string_view.hpp>
 
 using namespace catapult::mongo::mappers;
 

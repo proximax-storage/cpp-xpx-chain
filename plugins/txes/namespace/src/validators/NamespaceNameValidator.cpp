@@ -22,7 +22,6 @@
 #include "src/config/NamespaceConfiguration.h"
 #include "src/model/NameChecker.h"
 #include "src/model/NamespaceIdGenerator.h"
-#include "catapult/utils/Hashers.h"
 
 namespace catapult { namespace validators {
 
@@ -32,6 +31,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(NamespaceName, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(NamespaceName, ([](const auto& notification, const auto& context) {
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::NamespaceConfiguration>();
+			const auto& networkConfig = context.Config.Network;
 			std::unordered_set<NamespaceId, utils::BaseValueHasher<NamespaceId>> reservedRootIds;
 			for (const auto& name : pluginConfig.ReservedRootNamespaceNames)
 				reservedRootIds.emplace(model::GenerateNamespaceId(Namespace_Base_Id, name));
@@ -44,7 +44,7 @@ namespace catapult { namespace validators {
 				return Failure_Namespace_Name_Id_Mismatch;
 
 			auto namespaceId = Namespace_Base_Id == notification.ParentId ? notification.NamespaceId : notification.ParentId;
-			if (reservedRootIds.cend() != reservedRootIds.find(namespaceId))
+			if (reservedRootIds.cend() != reservedRootIds.find(namespaceId) && notification.Signer != networkConfig.Info.PublicKey)
 				return Failure_Namespace_Root_Name_Reserved;
 
 			return ValidationResult::Success;

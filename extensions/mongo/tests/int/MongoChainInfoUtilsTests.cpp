@@ -22,7 +22,6 @@
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace bsoncxx::builder::stream;
 

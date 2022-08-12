@@ -19,7 +19,6 @@
 **/
 
 #include "MemoryDataSource.h"
-#include "catapult/utils/HexFormatter.h"
 #include "catapult/utils/Logging.h"
 
 namespace catapult { namespace tree {

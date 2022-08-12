@@ -37,7 +37,7 @@ pipeline {
                     agent {
                         label 'docker-c6g-xlarge'
                     }
-                    
+
                     steps {
                         echo 'Build and Publish Image'
                         script {

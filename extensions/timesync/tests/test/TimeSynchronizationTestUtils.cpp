@@ -19,9 +19,7 @@
 **/
 
 #include "TimeSynchronizationTestUtils.h"
-#include "timesync/src/filters/filter_constants.h"
 #include "tests/test/net/NodeTestUtils.h"
-#include "tests/test/nodeps/Random.h"
 
 namespace catapult { namespace test {
 

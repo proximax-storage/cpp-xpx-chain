@@ -23,9 +23,7 @@
 #include "src/PtDispatcherService.h"
 #include "src/PtService.h"
 #include "src/PtSyncSourceService.h"
-#include "catapult/config/ConfigurationFileLoader.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
-#include <boost/filesystem/path.hpp>
 
 namespace catapult { namespace partialtransaction {
 

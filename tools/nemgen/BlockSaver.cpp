@@ -20,12 +20,7 @@
 
 #include "BlockSaver.h"
 #include "NemesisConfiguration.h"
-#include "catapult/extensions/BlockExtensions.h"
 #include "catapult/io/FileBlockStorage.h"
-#include "catapult/io/IndexFile.h"
-#include "catapult/utils/HexFormatter.h"
-#include "catapult/utils/HexParser.h"
-#include <boost/filesystem.hpp>
 
 namespace catapult { namespace tools { namespace nemgen {
 
@@ -44,6 +39,15 @@ namespace catapult { namespace tools { namespace nemgen {
 				"#pragma once\n"
 				"#include <stdint.h>\n\n"
 				"namespace catapult { namespace test {\n\n"
+				"\tconstexpr inline Timestamp Nemesis_Timestamp = Timestamp(";
+			cppRawFile.write(RawBuffer(reinterpret_cast<const uint8_t*>(header), strlen(header)));
+
+			std::stringstream timestamp;
+			timestamp << block.Timestamp;
+			cppRawFile.write(RawBuffer(reinterpret_cast<const uint8_t*>(timestamp.str().c_str()), timestamp.str().size()));
+
+			header =
+				");\n\n"
 				"\tconstexpr inline uint8_t MemoryBlockStorage_NemesisBlockData[] = {\n";
 			cppRawFile.write(RawBuffer(reinterpret_cast<const uint8_t*>(header), strlen(header)));
 

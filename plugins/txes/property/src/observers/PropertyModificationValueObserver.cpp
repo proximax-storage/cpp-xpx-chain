@@ -20,7 +20,6 @@
 
 #include "Observers.h"
 #include "src/cache/PropertyCache.h"
-#include "src/state/PropertyUtils.h"
 #include "catapult/model/Address.h"
 
 namespace catapult { namespace observers {

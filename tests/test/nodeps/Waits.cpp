@@ -19,8 +19,6 @@
 **/
 
 #include "Waits.h"
-#include "tests/TestHarness.h"
-#include <chrono>
 #include <thread>
 
 namespace catapult { namespace test {

@@ -19,7 +19,6 @@
 **/
 
 #include "NetworkConfiguration.h"
-#include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/ConfigurationUtils.h"
 
 namespace catapult { namespace model {
@@ -78,6 +77,38 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(EnableUnconfirmedTransactionMinFeeValidation);
 		config.EnableDeadlineValidation = true;
 		TRY_LOAD_CHAIN_PROPERTY(EnableDeadlineValidation);
+
+		config.EnableUndoBlock = true;
+		TRY_LOAD_CHAIN_PROPERTY(EnableUndoBlock);
+		config.EnableBlockSync = true;
+		TRY_LOAD_CHAIN_PROPERTY(EnableBlockSync);
+
+		config.EnableWeightedVoting = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableWeightedVoting);
+		config.CommitteeSize = 21;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeSize);
+		config.CommitteeApproval = 0.67;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeApproval);
+		config.CommitteePhaseTime = utils::TimeSpan::FromSeconds(5);
+		TRY_LOAD_CHAIN_PROPERTY(CommitteePhaseTime);
+		config.MinCommitteePhaseTime = utils::TimeSpan::FromSeconds(1);
+		TRY_LOAD_CHAIN_PROPERTY(MinCommitteePhaseTime);
+		config.MaxCommitteePhaseTime = utils::TimeSpan::FromMinutes(1);;
+		TRY_LOAD_CHAIN_PROPERTY(MaxCommitteePhaseTime);
+		config.CommitteeSilenceInterval = utils::TimeSpan::FromMilliseconds(100);
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeSilenceInterval);
+		config.CommitteeRequestInterval = utils::TimeSpan::FromMilliseconds(500);
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeRequestInterval);
+		config.CommitteeChainHeightRequestInterval = utils::TimeSpan::FromSeconds(30);
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeChainHeightRequestInterval);
+		config.CommitteeTimeAdjustment = 1.1;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeTimeAdjustment);
+		config.CommitteeEndSyncApproval = 0.45;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeEndSyncApproval);
+		config.CommitteeBaseTotalImportance = 100;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeBaseTotalImportance);
+		config.CommitteeNotRunningContribution = 0.5;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeNotRunningContribution);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

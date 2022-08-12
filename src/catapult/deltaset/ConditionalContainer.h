@@ -154,13 +154,14 @@ namespace catapult { namespace deltaset {
 					: ConditionalIterator(m_pContainer2->find(key), MemoryFlag());
 		}
 
-		/// Searches for \a key or previous key in this set.
+		/// Searches for \a key or previous key in this set or map.
 		ConditionalIterator findLowerOrEqual(const typename TKeyTraits::KeyType& key) const {
 			if (m_pContainer1) {
 				return ConditionalIterator(m_pContainer1->findLowerOrEqual(key), StorageFlag());
 			} else {
 				auto iter = m_pContainer2->lower_bound(key);
-
+				// This allows supporting both, sets and maps
+//				const auto& iterKey = reinterpret_cast<const typename TKeyTraits::KeyType&>(*iter);
 				if (iter != m_pContainer2->end() && *iter != key) {
 					iter = (iter == m_pContainer2->begin()) ? m_pContainer2->end() : --iter;
 				} else if (iter == m_pContainer2->end()) {
@@ -173,6 +174,25 @@ namespace catapult { namespace deltaset {
 			}
 		}
 
+		/// Searches for \a key or previous key in this set or map.
+		ConditionalIterator findLowerOrEqual2(const typename TKeyTraits::KeyType& key) const {
+			if (m_pContainer1) {
+				return ConditionalIterator(m_pContainer1->findLowerOrEqual(key), StorageFlag());
+			} else {
+				auto iter = m_pContainer2->lower_bound(key);
+				// This allows supporting both, sets and maps
+				//				const auto& iterKey = reinterpret_cast<const typename TKeyTraits::KeyType&>(*iter);
+				if (iter != m_pContainer2->end() && iter->first != key) {
+					iter = (iter == m_pContainer2->begin()) ? m_pContainer2->end() : --iter;
+				} else if (iter == m_pContainer2->end()) {
+					if (!m_pContainer2->empty()) {
+						--iter;
+					}
+				}
+
+				return ConditionalIterator(std::move(iter), MemoryFlag());
+			}
+		}
 	public:
 		/// Applies all changes in \a deltas to the underlying container.
 		void update(const DeltaElements<MemorySetType>& deltas) {

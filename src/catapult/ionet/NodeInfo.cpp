@@ -20,7 +20,6 @@
 
 #include "NodeInfo.h"
 #include "catapult/utils/MacroBasedEnumIncludes.h"
-#include <algorithm>
 
 namespace catapult { namespace ionet {
 

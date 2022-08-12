@@ -21,10 +21,8 @@
 #include "PluginLoader.h"
 #include "PluginExceptions.h"
 #include "plugins/coresystem/src/CoreSystem.h"
-#include "catapult/utils/Logging.h"
 #include "catapult/functions.h"
 #include <boost/exception_ptr.hpp>
-#include <unordered_map>
 
 namespace catapult { namespace plugins {
 

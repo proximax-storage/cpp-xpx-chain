@@ -100,7 +100,7 @@ namespace catapult { namespace test {
 
 		void AssertNemesisState(const cache::AccountStateCacheView& view) {
 			// Assert:
-			EXPECT_EQ(3u + CountOf(test::Mijin_Test_Private_Keys), view.size());
+			EXPECT_EQ(3u + CountOf(test::Mijin_Test_Private_Keys) + 22u, view.size());
 
 			// - check nemesis account
 			AssertNemesisAccount(view);
@@ -122,7 +122,7 @@ namespace catapult { namespace test {
 	namespace {
 		void AssertNemesisState(const cache::MosaicCacheView& view) {
 			// Assert:
-			EXPECT_EQ(3u, view.size());
+			EXPECT_EQ(5u, view.size());
 
 			// - check for known mosaics
 			ASSERT_TRUE(view.contains(Default_Currency_Mosaic_Id));
@@ -134,8 +134,14 @@ namespace catapult { namespace test {
 			ASSERT_TRUE(view.contains(Default_Storage_Mosaic_Id));
 			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Storage_Mosaic_Id).get().supply());
 
-			ASSERT_TRUE(view.contains(Default_Streamin_Mosaic_Id));
-			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Streamin_Mosaic_Id).get().supply());
+			ASSERT_TRUE(view.contains(Default_Streaming_Mosaic_Id));
+			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Streaming_Mosaic_Id).get().supply());
+
+			ASSERT_TRUE(view.contains(Default_Super_Contract_Mosaic_Id));
+			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Super_Contract_Mosaic_Id).get().supply());
+
+			ASSERT_TRUE(view.contains(Default_Review_Mosaic_Id));
+			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Review_Mosaic_Id).get().supply());
 		}
 	}
 

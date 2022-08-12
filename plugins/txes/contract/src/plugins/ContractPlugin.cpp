@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/plugins/PluginManager.h"
 #include "ContractPlugin.h"
 #include "src/cache/ContractCache.h"
 #include "src/cache/ContractCacheStorage.h"

@@ -20,10 +20,6 @@
 
 #include "catapult/chain/CompareChains.h"
 #include "tests/catapult/chain/test/MockChainApi.h"
-#include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/HashTestUtils.h"
-#include "tests/TestHarness.h"
-#include <map>
 
 using catapult::model::ChainScore;
 using catapult::mocks::MockChainApi;

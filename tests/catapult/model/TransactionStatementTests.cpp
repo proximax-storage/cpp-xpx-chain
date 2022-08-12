@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/model/Statement.h"
-#include "catapult/crypto/Hashes.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace model {

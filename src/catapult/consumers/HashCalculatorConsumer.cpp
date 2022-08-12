@@ -21,7 +21,6 @@
 #include "BlockConsumers.h"
 #include "ConsumerResultFactory.h"
 #include "TransactionConsumers.h"
-#include "catapult/crypto/Hashes.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/model/EntityHasher.h"
 

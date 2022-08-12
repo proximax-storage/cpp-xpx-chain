@@ -19,14 +19,12 @@
 **/
 
 #include "catapult/consumers/BlockConsumers.h"
-#include "catapult/consumers/InputUtils.h"
 #include "catapult/consumers/TransactionConsumers.h"
 #include "catapult/model/TransactionStatus.h"
 #include "catapult/validators/AggregateEntityValidator.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/nodeps/ParamsCapture.h"
-#include "tests/TestHarness.h"
 
 using namespace catapult::validators;
 

@@ -30,7 +30,6 @@
 #include "tests/catapult/local/recovery/test/FilechainTestUtils.h"
 #include "tests/test/core/BlockStorageTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/StorageTestUtils.h"
 #include "tests/test/core/TransactionStatusTestUtils.h"
 #include "tests/test/local/LocalNodeTestState.h"
@@ -39,7 +38,6 @@
 #include "tests/test/nemesis/NemesisCompatibleConfiguration.h"
 #include "tests/test/other/mocks/MockBlockChangeSubscriber.h"
 #include "tests/test/other/mocks/MockBlockHeightCapturingNotificationObserver.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 

@@ -19,7 +19,6 @@
 **/
 
 #include "src/model/NamespaceIdGenerator.h"
-#include "catapult/crypto/Hashes.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 
