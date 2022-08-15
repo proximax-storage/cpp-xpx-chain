@@ -18,6 +18,7 @@ namespace catapult { namespace notification_handlers {
 
 			if (!pReplicatorService->driveExists(notification.DriveKey)) {
 				pReplicatorService->updateReplicatorDownloadChannels();
+				pReplicatorService->maybeRestart();
 				return;
 			}
 
@@ -59,6 +60,7 @@ namespace catapult { namespace notification_handlers {
 				pReplicatorService->updateDriveDownloadChannels(notification.DriveKey);
 				// In order to increase efficiency maybe it is needed to removed all channels and not update
 			}
+			pReplicatorService->maybeRestart();
 		});
 	}
 }}

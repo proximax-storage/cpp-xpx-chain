@@ -36,6 +36,7 @@ namespace catapult { namespace notification_handlers {
             pReplicatorService->dataModificationSingleApprovalPublished(
 				notification.DriveKey,
 				notification.DataModificationId);
+			pReplicatorService->maybeRestart();
         });
     }
 }}

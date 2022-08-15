@@ -144,7 +144,8 @@ namespace catapult { namespace state {
 			out
 					<< "debit amount (" << amount << ") is greater than current balance (" << currentBalance
 					<< ") for mosaic " << utils::HexFormat(mosaicId);
-			CATAPULT_THROW_RUNTIME_ERROR(out.str().c_str());
+			CATAPULT_LOG(error) << out.str().c_str();
+			return *this;
 		}
 
 		iter->second = iter->second - amount;

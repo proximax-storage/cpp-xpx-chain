@@ -35,6 +35,15 @@ namespace catapult { namespace storage {
 		/// Use TCP socket.
 		bool UseTcpSocket;
 
+		// Use RPC to connect to Replicator
+		bool UseRpcReplicator;
+
+		/// Replicator host.
+		std::string RpcHost;
+
+		/// Replicator port.
+		std::string RpcPort;
+
 	private:
 		StorageConfiguration() = default;
 

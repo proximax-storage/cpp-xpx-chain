@@ -23,6 +23,8 @@ namespace catapult { namespace storage {
     public:
         void start();
         void stop();
+		void restart();
+		void maybeRestart();
 
         void setServiceState(extensions::ServiceState* pServiceState) {
             m_pServiceState = pServiceState;
