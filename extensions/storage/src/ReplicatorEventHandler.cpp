@@ -230,7 +230,7 @@ namespace catapult { namespace storage {
 				  	auto actualSumBytesTemp = actualSumBytes + layout.m_uploadedBytes;
 
 				  	if (actualSumBytesTemp < actualSumBytes) {
-				  		CATAPULT_LOG( warning ) << "received modification with overflow increment";
+				  		CATAPULT_LOG( warning ) << "received modification with overflow increment " << actualSumBytes << " " << layout.m_uploadedBytes;
 						return;
 					}
 

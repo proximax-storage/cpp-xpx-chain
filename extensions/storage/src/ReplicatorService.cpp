@@ -117,9 +117,11 @@ namespace catapult { namespace storage {
 			}
 
 			if (storageConfig.UseRpcReplicator) {
+				gHandleLostConnection = storageConfig.RpcHandleLostConnection;
+				gDbgRpcChildCrash = storageConfig.RpcDbgChildCrash;
 				m_pReplicator = sirius::drive::createRpcReplicator(
-						std::string(storageConfig.Host),
-						std::stoi(storageConfig.Port),
+						std::string(storageConfig.RpcHost),
+						std::stoi(storageConfig.RpcPort),
 						reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
 						std::string(storageConfig.Host), // TODO: do not use move semantics.
 						std::string(storageConfig.Port), // TODO: do not use move semantics.
@@ -584,10 +586,6 @@ namespace catapult { namespace storage {
         }
 
         void downloadApprovalPublished(const Hash256& approvalTrigger, const Hash256& downloadChannelId) {
-			auto pDownloadChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), downloadChannelId);
-			if (!pDownloadChannel)
-				return;
-
 			auto channelClosed = !m_storageState.downloadChannelExists(downloadChannelId);
 			m_pReplicator->asyncDownloadApprovalTransactionHasBeenPublished(approvalTrigger.array(), downloadChannelId.array(), channelClosed);
         }

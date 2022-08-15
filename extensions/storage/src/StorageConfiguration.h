@@ -44,6 +44,12 @@ namespace catapult { namespace storage {
 		/// Replicator port.
 		std::string RpcPort;
 
+		// Whether node does not mind the replicator crash
+		bool RpcHandleLostConnection;
+
+		// Whether the replicator can be crashed by the outside command
+		bool RpcDbgChildCrash;
+
 	private:
 		StorageConfiguration() = default;
 
