@@ -138,12 +138,15 @@ namespace catapult { namespace observers {
 
 					// Simulate publishing of finish download for all download channels
 
+					CATAPULT_LOG( error ) << "Finished Billing Period " << eventHash;
+
 					auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 					for (const auto& key: driveEntry.downloadShards()) {
 						auto downloadIter = downloadCache.find(key);
 						auto& downloadEntry = downloadIter.get();
 						if (!downloadEntry.isCloseInitiated()) {
 							downloadEntry.setFinishPublished(true);
+							CATAPULT_LOG( error ) << "Should CLose Channel " << eventHash;
 							downloadEntry.downloadApprovalInitiationEvent() = eventHash;
 						}
 					}

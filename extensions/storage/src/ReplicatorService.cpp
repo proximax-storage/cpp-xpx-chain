@@ -489,6 +489,7 @@ namespace catapult { namespace storage {
 			std::set<Key> drivesToClose;
         	for (const auto& [addedDriveKey, _]: m_alreadyAddedDrives) {
         		if (!m_storageState.driveExists(addedDriveKey)) {
+        			CATAPULT_LOG( error ) << "Should Close Drive " << eventHash;
         			drivesToClose.insert(addedDriveKey);
         		}
         	}

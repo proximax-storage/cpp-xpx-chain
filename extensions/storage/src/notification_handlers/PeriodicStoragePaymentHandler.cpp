@@ -20,6 +20,8 @@ namespace catapult { namespace notification_handlers {
 
 			Hash256 eventHash = utils::getStoragePaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
 
+			CATAPULT_LOG( error ) << "Periodic Storage Handler Hash " << eventHash;
+
 			pReplicatorService->updateReplicatorDrives(eventHash);
 			pReplicatorService->updateReplicatorDownloadChannels();
 			pReplicatorService->maybeRestart();
