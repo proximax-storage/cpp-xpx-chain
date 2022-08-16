@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 			auto& restrictions = restrictionCacheDelta.find(accountAddress).get();
 			auto& restriction = restrictions.restriction(model::AccountRestrictionFlags::MosaicId);
 			for (auto mosaicId : mosaicIds)
-				TOperationTraits::Add(restriction, state::ToVector(mosaicId));
+				TOperationTraits::Add(restriction, utils::ToVector(mosaicId));
 
 			cache.commit(Height(1));
 		}

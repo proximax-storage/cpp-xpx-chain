@@ -76,7 +76,7 @@ namespace catapult { namespace validators {
 				auto& restrictions = restrictionCacheDelta.find(source).get();
 				auto& restriction = restrictions.restriction(restrictionFlags);
 				for (const auto& value : pair.second)
-					TOperationTraits::Add(restriction, state::ToVector(value));
+					TOperationTraits::Add(restriction, utils::ToVector(value));
 			}
 
 			cache.commit(Height(1));

@@ -43,7 +43,7 @@ namespace catapult { namespace validators {
 			auto& accountProperties = propertyCacheDelta.find(accountAddress).get();
 			auto& accountProperty = accountProperties.property(model::PropertyType::TransactionType);
 			for (auto rawValue : rawValues)
-				TOperationTraits::Add(accountProperty, state::ToVector(rawValue));
+				TOperationTraits::Add(accountProperty, utils::ToVector(rawValue));
 
 			cache.commit(Height(1));
 		}
@@ -77,7 +77,7 @@ namespace catapult { namespace validators {
 		auto signerAddress = model::PublicKeyToAddress(signer, model::NetworkIdentifier::Zero);
 
 		// Act:
-		AssertValidationResult<test::AllowTraits>(
+		AssertValidationResult<test::PropertyAllowTraits>(
 				Failure_Property_Transaction_Type_Not_Allowed,
 				signerAddress,
 				DefaultRawTransactionTypes(),
@@ -92,7 +92,7 @@ namespace catapult { namespace validators {
 		auto values = DefaultRawTransactionTypes();
 
 		// Act:
-		AssertValidationResult<test::BlockTraits>(
+		AssertValidationResult<test::PropertyBlockTraits>(
 				Failure_Property_Transaction_Type_Not_Allowed,
 				signerAddress,
 				values,
@@ -106,8 +106,8 @@ namespace catapult { namespace validators {
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_Allow) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::AllowTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::BlockTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Allow) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::PropertyAllowTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::PropertyBlockTraits>(); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	TRAITS_BASED_TEST(SuccessWhenAccountIsNotKnown) {
@@ -151,12 +151,12 @@ namespace catapult { namespace validators {
 		auto values = DefaultRawTransactionTypes();
 
 		// Act:
-		AssertSuccess<test::AllowTraits>(values, values[1]);
+		AssertSuccess<test::PropertyAllowTraits>(values, values[1]);
 	}
 
 	TEST(TEST_CLASS, SuccessWhenAccountIsKnownAndEntityTypeIsNotContainedInValues_Block) {
 		// Act:
-		AssertSuccess<test::BlockTraits>(DefaultRawTransactionTypes(), 0x4444);
+		AssertSuccess<test::PropertyBlockTraits>(DefaultRawTransactionTypes(), 0x4444);
 	}
 
 	// endregion

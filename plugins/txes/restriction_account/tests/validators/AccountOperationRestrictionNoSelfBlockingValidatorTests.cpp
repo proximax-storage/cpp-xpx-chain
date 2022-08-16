@@ -55,7 +55,7 @@ namespace catapult { namespace validators {
 			auto restrictions = state::AccountRestrictions(address);
 			auto& restriction = restrictions.restriction(Restriction_Flags);
 			for (auto value : values)
-				TOperationTraits::Add(restriction, state::ToVector(value));
+				TOperationTraits::Add(restriction, utils::ToVector(value));
 
 			restrictionCacheDelta.insert(restrictions);
 			cache.commit(Height(1));

@@ -80,7 +80,7 @@ namespace catapult { namespace validators {
 			auto cache = test::AccountRestrictionCacheFactory::Create();
 			auto source = test::GenerateRandomByteArray<Key>();
 			auto address = model::PublicKeyToAddress(source, model::NetworkIdentifier::Zero);
-			test::PopulateCache<TRestrictionValueTraits>(cache, address, initialValues);
+			test::PopulateAccountRestrictionCache<TRestrictionValueTraits>(cache, address, initialValues);
 
 			std::vector<typename TRestrictionValueTraits::UnresolvedValueType> restrictionAdditions;
 			for (auto i = 0u; i < numAdditions; ++i)

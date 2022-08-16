@@ -63,7 +63,7 @@ namespace catapult { namespace deltaset {
 		Removed
 	};
 
-	template<typename TSetTraits>
+	template<typename TSetTraits, typename TSetType>
 	class BaseSetDeltaIterationView;
 
 	/// A delta on top of a base set that offers methods to insert/remove/update elements.
@@ -366,6 +366,10 @@ namespace catapult { namespace deltaset {
 
 	private:
 		template<typename TElementTraits2, typename TSetTraits2>
-		friend BaseSetDeltaIterationView<TSetTraits2> MakeIterableView(const BaseSetDelta<TElementTraits2, TSetTraits2>& set);
+		friend BaseSetDeltaIterationView<TSetTraits2,typename TSetTraits2::MemorySetType> MakeIterableView(const BaseSetDelta<TElementTraits2, TSetTraits2>& set);
+		template<typename TElementTraits2, typename TSetTraits2>
+		friend auto MakeBroadIterableView(const BaseSetDelta<TElementTraits2, TSetTraits2>& set) -> BaseSetDeltaIterationView<TSetTraits2, std::remove_reference_t<decltype(SelectBroadIterableSet(set.m_originalElements))>>;
+		template<typename TElementTraits2, typename TSetTraits2>
+		friend bool IsBaseSetBroadIterable(const BaseSetDelta<TElementTraits2, TSetTraits2>& set);
 	};
 }}

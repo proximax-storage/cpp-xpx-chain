@@ -19,8 +19,8 @@
 **/
 
 #pragma once
-#include "src/model/PropertyTypes.h"
-#include "src/state/PropertyDescriptor.h"
+#include "plugins/txes/property/src/model/PropertyTypes.h"
+#include "plugins/txes/property/src/state/PropertyDescriptor.h"
 
 namespace catapult { namespace state { class AccountProperties; } }
 

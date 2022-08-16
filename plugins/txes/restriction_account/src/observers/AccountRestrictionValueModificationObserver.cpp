@@ -21,7 +21,6 @@
 
 #include "Observers.h"
 #include "src/cache/AccountRestrictionCache.h"
-#include "src/state/AccountRestrictionUtils.h"
 #include "catapult/model/Address.h"
 
 namespace catapult { namespace observers {
@@ -59,7 +58,7 @@ namespace catapult { namespace observers {
 			auto modificationAction = NotifyMode::Commit == context.Mode
 					? notification.Action
 					: InvertModificationAction(notification.Action);
-			auto resolvedRawValue = state::ToVector(Resolve(context.Resolvers, notification.RestrictionValue));
+			auto resolvedRawValue = utils::ToVector(Resolve(context.Resolvers, notification.RestrictionValue));
 			model::AccountRestrictionModification rawModification{ modificationAction, resolvedRawValue };
 
 			if (state::AccountRestrictionOperationType::Allow == notification.AccountRestrictionDescriptor.operationType())

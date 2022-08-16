@@ -69,7 +69,7 @@ namespace catapult { namespace validators {
 				auto& accountProperties = propertyCacheDelta.find(sourceAddress).get();
 				auto& accountProperty = accountProperties.property(model::PropertyType::Address);
 				for (const auto& value : pair.second)
-					TOperationTraits::Add(accountProperty, state::ToVector(model::PublicKeyToAddress(value, Default_Network)));
+					TOperationTraits::Add(accountProperty, utils::ToVector(model::PublicKeyToAddress(value, Default_Network)));
 			}
 
 			cache.commit(Height(1));
@@ -112,7 +112,7 @@ namespace catapult { namespace validators {
 		CacheContents cacheContents{ { sourceKey, values } };
 
 		// Act:
-		AssertValidationResult<test::AllowTraits>(
+		AssertValidationResult<test::PropertyAllowTraits>(
 				Failure_Property_Signer_Address_Interaction_Not_Allowed,
 				cacheContents,
 				test::GenerateRandomByteArray<Key>(),
@@ -127,7 +127,7 @@ namespace catapult { namespace validators {
 		CacheContents cacheContents{ { sourceKey, values } };
 
 		// Act:
-		AssertValidationResult<test::BlockTraits>(
+		AssertValidationResult<test::PropertyBlockTraits>(
 				Failure_Property_Signer_Address_Interaction_Not_Allowed,
 				cacheContents,
 				values[1],
@@ -159,12 +159,12 @@ namespace catapult { namespace validators {
 
 	TRAITS_BASED_TEST(SuccessWhenDestinationAddressIsNotKnown_Allow) {
 		// Assert: note that this situation will not occur during normal operation
-		AssertSuccessWhenDestinationAddressIsNotKnown<test::AllowTraits, TTraits>();
+		AssertSuccessWhenDestinationAddressIsNotKnown<test::PropertyAllowTraits, TTraits>();
 	}
 
 	TRAITS_BASED_TEST(SuccessWhenDestinationAddressIsNotKnown_Block) {
 		// Assert:
-		AssertSuccessWhenDestinationAddressIsNotKnown<test::BlockTraits, TTraits>();
+		AssertSuccessWhenDestinationAddressIsNotKnown<test::PropertyBlockTraits, TTraits>();
 	}
 
 	namespace {
@@ -186,12 +186,12 @@ namespace catapult { namespace validators {
 
 	TRAITS_BASED_TEST(SuccessWhenDestinationAddressIsKnownAndValuesAreEmpty_Allow) {
 		// Assert:
-		AssertSuccessWhenValuesAreEmpty<test::AllowTraits, TTraits>();
+		AssertSuccessWhenValuesAreEmpty<test::PropertyAllowTraits, TTraits>();
 	}
 
 	TRAITS_BASED_TEST(SuccessWhenDestinationAddressIsKnownAndValuesAreEmpty_Block) {
 		// Assert:
-		AssertSuccessWhenValuesAreEmpty<test::BlockTraits, TTraits>();
+		AssertSuccessWhenValuesAreEmpty<test::PropertyBlockTraits, TTraits>();
 	}
 
 	TRAITS_BASED_TEST(SuccessWhenSourceEqualsDestination_Allow) {
@@ -200,7 +200,7 @@ namespace catapult { namespace validators {
 		CacheContents cacheContents{ { sourceKey, {} } };
 
 		// Act:
-		AssertValidationResult<test::AllowTraits>(
+		AssertValidationResult<test::PropertyAllowTraits>(
 				ValidationResult::Success,
 				cacheContents,
 				sourceKey,
@@ -214,7 +214,7 @@ namespace catapult { namespace validators {
 		CacheContents cacheContents{ { sourceKey, { sourceKey } } };
 
 		// Act:
-		AssertValidationResult<test::BlockTraits>(
+		AssertValidationResult<test::PropertyBlockTraits>(
 				ValidationResult::Success,
 				cacheContents,
 				sourceKey,
@@ -229,7 +229,7 @@ namespace catapult { namespace validators {
 		CacheContents cacheContents{ { sourceKey, values } };
 
 		// Act: destination address is known and source address is an allowed value
-		AssertValidationResult<test::AllowTraits>(
+		AssertValidationResult<test::PropertyAllowTraits>(
 				ValidationResult::Success,
 				cacheContents,
 				values[1],
@@ -244,7 +244,7 @@ namespace catapult { namespace validators {
 		CacheContents cacheContents{ { sourceKey, values } };
 
 		// Act: destination address is known and source address is not a blocked value
-		AssertValidationResult<test::BlockTraits>(
+		AssertValidationResult<test::PropertyBlockTraits>(
 				ValidationResult::Success,
 				cacheContents,
 				test::GenerateRandomByteArray<Key>(),

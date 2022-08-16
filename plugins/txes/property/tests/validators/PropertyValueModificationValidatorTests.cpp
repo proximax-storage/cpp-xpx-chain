@@ -84,15 +84,15 @@ namespace catapult { namespace validators {
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
 	template<typename TPropertyValueTraits, typename TOperationTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_Address_Allow) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<AddressPropertyTraits, test::AllowTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Address_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<AddressPropertyTraits, test::BlockTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Mosaic_Allow) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<MosaicPropertyTraits, test::AllowTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Mosaic_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<MosaicPropertyTraits, test::BlockTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Address_Allow) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<AddressPropertyTraits, test::PropertyAllowTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Address_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<AddressPropertyTraits, test::PropertyBlockTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Mosaic_Allow) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<MosaicPropertyTraits, test::PropertyAllowTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Mosaic_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<MosaicPropertyTraits, test::PropertyBlockTraits>(); } \
 	TEST(TEST_CLASS, TEST_NAME##_TransactionType_Allow) { \
-		TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<TransactionTypePropertyTraits, test::AllowTraits>(); \
+		TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<TransactionTypePropertyTraits, test::PropertyAllowTraits>(); \
 	} \
 	TEST(TEST_CLASS, TEST_NAME##_TransactionType_Block) { \
-		TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<TransactionTypePropertyTraits, test::BlockTraits>(); \
+		TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<TransactionTypePropertyTraits, test::PropertyBlockTraits>(); \
 	} \
 	template<typename TPropertyValueTraits, typename TOperationTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 

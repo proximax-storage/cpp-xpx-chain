@@ -82,9 +82,9 @@ namespace catapult { namespace observers {
 			const auto& restrictions = iter.get();
 			const auto& restriction = restrictions.restriction(TRestrictionValueTraits::Restriction_Flags);
 			if (IsInsert(notifyMode, action))
-				EXPECT_TRUE(restriction.contains(state::ToVector(restrictionValue)));
+				EXPECT_TRUE(restriction.contains(utils::ToVector(restrictionValue)));
 			else
-				EXPECT_FALSE(restriction.contains(state::ToVector(restrictionValue)));
+				EXPECT_FALSE(restriction.contains(utils::ToVector(restrictionValue)));
 
 			EXPECT_EQ(expectedSize, restriction.values().size());
 		}
@@ -103,7 +103,7 @@ namespace catapult { namespace observers {
 			auto values = test::GenerateUniqueRandomDataVector<typename TRestrictionValueTraits::ValueType>(numInitialValues);
 			auto key = test::GenerateRandomByteArray<Key>();
 			auto address = test::ConvertToAddress(key);
-			test::PopulateCache<TRestrictionValueTraits, TOperationTraits>(context.cache(), address, values);
+			test::PopulateAccountRestrictionCache<TRestrictionValueTraits, TOperationTraits>(context.cache(), address, values);
 
 			auto modification = modificationFactory(values);
 			auto unresolvedRestrictionValue = TRestrictionValueTraits::Unresolve(modification.second);
@@ -146,7 +146,7 @@ namespace catapult { namespace observers {
 
 			{
 				auto& restrictions = restrictionCacheDelta.find(address).get();
-				TOperationTraits::Add(restrictions.restriction(model::AccountRestrictionFlags::Address), state::ToVector(filteredAddress));
+				TOperationTraits::Add(restrictions.restriction(model::AccountRestrictionFlags::Address), utils::ToVector(filteredAddress));
 				TOperationTraits::Add(
 						restrictions.restriction(model::AccountRestrictionFlags::MosaicId),
 						test::GenerateRandomVector(sizeof(MosaicId)));

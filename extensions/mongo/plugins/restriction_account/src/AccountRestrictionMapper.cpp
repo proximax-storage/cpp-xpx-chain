@@ -26,7 +26,6 @@
 #include "plugins/txes/restriction_account/src/model/AccountMosaicRestrictionTransaction.h"
 #include "plugins/txes/restriction_account/src/model/AccountOperationRestrictionTransaction.h"
 #include "plugins/txes/restriction_account/src/model/AccountRestrictionFlags.h"
-#include "plugins/txes/restriction_account/src/state/AccountRestrictionUtils.h"
 
 using namespace catapult::mongo::mappers;
 
@@ -37,7 +36,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		void StreamValues(bson_stream::document& builder, const std::string& name, const TRestrictionValue* pValues, uint8_t numValues) {
 			auto valuesArray = builder << name << bson_stream::open_array;
 			for (auto i = 0u; i < numValues; ++i) {
-				auto valueBuffer = state::ToVector(pValues[i]);
+				auto valueBuffer = utils::ToVector(pValues[i]);
 				valuesArray << ToBinary(valueBuffer.data(), valueBuffer.size());
 			}
 

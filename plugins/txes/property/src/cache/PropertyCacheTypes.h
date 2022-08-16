@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "src/state/AccountProperties.h"
+#include "../state/AccountProperties.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"
 #include "catapult/utils/Hashers.h"

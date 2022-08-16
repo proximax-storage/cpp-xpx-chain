@@ -21,7 +21,6 @@
 
 #pragma once
 #include "src/cache/AccountRestrictionCache.h"
-#include "src/state/AccountRestrictionUtils.h"
 #include "catapult/validators/ValidationResult.h"
 #include "catapult/types.h"
 
@@ -55,9 +54,9 @@ namespace catapult { namespace validators {
 
 			const auto& descriptor = restriction.descriptor();
 			if (state::AccountRestrictionOperationType::Allow == descriptor.operationType())
-				return restriction.contains(state::ToVector(value));
+				return restriction.contains(utils::ToVector(value));
 			else
-				return !restriction.contains(state::ToVector(value));
+				return !restriction.contains(utils::ToVector(value));
 		}
 
 	private:

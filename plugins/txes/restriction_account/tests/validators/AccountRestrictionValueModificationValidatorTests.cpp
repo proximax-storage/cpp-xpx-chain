@@ -139,7 +139,7 @@ namespace catapult { namespace validators {
 			auto key = test::GenerateRandomByteArray<Key>();
 			auto address = test::ConvertToAddress(key);
 			auto values = test::GenerateUniqueRandomDataVector<typename TRestrictionValueTraits::ValueType>(numValues);
-			test::PopulateCache<TRestrictionValueTraits, TOperationTraits>(cache, address, values);
+			test::PopulateAccountRestrictionCache<TRestrictionValueTraits, TOperationTraits>(cache, address, values);
 			auto modification = modificationFactory(values);
 
 			// Act:

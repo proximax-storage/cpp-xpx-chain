@@ -71,7 +71,7 @@ namespace catapult { namespace cache {
 		const TSet& m_set;
 	};
 
-	/// A mixin for adding iteration support to a cache.
+	/// A mixin for adding iteration support to a memory based cache.
 	template<typename TSet>
 	class IterationMixin {
 	public:
@@ -108,6 +108,49 @@ namespace catapult { namespace cache {
 		auto tryMakeIterableView() const {
 			// use argument dependent lookup to resolve IsBaseSetIterable
 			return IsBaseSetIterable(m_set) ? std::make_unique<IterableView>(m_set) : nullptr;
+		}
+
+	private:
+		const TSet& m_set;
+	};
+
+	/// A mixin for adding iteration support to a cache supporting both in memory and storage.
+	template<typename TSet>
+	class BroadIterationMixin {
+	public:
+		/// An iterable view of the cache.
+		struct IterableView {
+		public:
+			/// Creates a view around \a set.
+			explicit IterableView(const TSet& set) : m_set(set)
+			{}
+
+		public:
+			/// Returns a const iterator to the first element of the underlying set.
+			auto begin() const {
+				return MakeBroadIterableView(m_set).begin();
+			}
+
+			/// Returns a const iterator to the element following the last element of the underlying set.
+			auto end() const {
+				return MakeBroadIterableView(m_set).end();
+			}
+
+		private:
+			const TSet& m_set;
+		};
+
+	public:
+		/// Creates a mixin around \a set.
+		explicit BroadIterationMixin(const TSet& set) : m_set(set)
+		{}
+
+	public:
+		/// Creates an iterable view of the cache.
+		/// \note \c nullptr will be returned if the cache does not support iteration.
+		auto tryMakeBroadIterableView() const {
+			// use argument dependent lookup to resolve IsBaseSetIterable
+			return IsBaseSetBroadIterable(m_set) ? std::make_unique<IterableView>(m_set) : nullptr;
 		}
 
 	private:

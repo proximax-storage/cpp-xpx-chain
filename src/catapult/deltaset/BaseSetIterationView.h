@@ -24,15 +24,14 @@
 namespace catapult { namespace deltaset {
 
 	/// A view that provides iteration support to a base set.
-	template<typename TSetTraits>
+	template<typename TSetTraits, typename TSetType>
 	class BaseSetIterationView {
 	private:
-		using SetType = typename TSetTraits::MemorySetType;
 		using KeyType = typename TSetTraits::KeyType;
 
 	public:
 		/// Creates a view around \a set.
-		explicit BaseSetIterationView(const SetType& set) : m_set(set)
+		explicit BaseSetIterationView(const TSetType& set) : m_set(set)
 		{}
 
 	public:
@@ -53,13 +52,18 @@ namespace catapult { namespace deltaset {
 		}
 
 	private:
-		const SetType& m_set;
+		const TSetType& m_set;
 	};
 
 	/// Returns \c true if \a set is iterable.
 	template<typename TSet>
 	bool IsSetIterable(const TSet&) {
 		return true;
+	}
+	/// Returns \c true if \a set is iterable.
+	template<typename TSet>
+	bool IsSetBroadIterable(const TSet&) {
+		return false;
 	}
 
 	/// Selects the iterable set from \a set.
@@ -68,16 +72,37 @@ namespace catapult { namespace deltaset {
 		return set;
 	}
 
+	/// Selects the broad iterable set from \a set.
+	/// Linker error if attempting to select a non supported set type.
+	template<typename TSet>
+	const TSet& SelectBroadIterableSet(const TSet& set);
+
+
 	/// Returns \c true if \a set is iterable.
 	template<typename TElementTraits, typename TSetTraits, typename TCommitPolicy>
 	bool IsBaseSetIterable(const BaseSet<TElementTraits, TSetTraits, TCommitPolicy>& set) {
 		return IsSetIterable(set.m_elements);
 	}
 
-	/// Makes a base \a set iterable.
+	/// Returns \c true if \a set is iterable.
+	template<typename TElementTraits, typename TSetTraits, typename TCommitPolicy>
+	bool IsBaseSetBroadIterable(const BaseSet<TElementTraits, TSetTraits, TCommitPolicy>& set) {
+		return IsSetBroadIterable(set.m_elements);
+	}
+
+	/// Makes a base memory based \a set iterable.
 	/// \note This should only be supported for in memory views.
 	template<typename TElementTraits, typename TSetTraits, typename TCommitPolicy>
 	BaseSetIterationView<TSetTraits> MakeIterableView(const BaseSet<TElementTraits, TSetTraits, TCommitPolicy>& set) {
 		return BaseSetIterationView<TSetTraits>(SelectIterableSet(set.m_elements));
 	}
+
+
+	/// Makes a base conditional container \a set iterable.
+	/// \note This only currently supports conditional containers.
+	template<typename TElementTraits, typename TSetTraits, typename TCommitPolicy>
+	auto MakeBroadIterableView(const BaseSet<TElementTraits, TSetTraits, TCommitPolicy>& set) -> BaseSetIterationView<TSetTraits, decltype(SelectBroadIterableSet(set.m_elements))>{
+		return BaseSetIterationView<TSetTraits, decltype(SelectBroadIterableSet(set.m_elements))>(SelectBroadIterableSet(set.m_elements));
+	}
+
 }}

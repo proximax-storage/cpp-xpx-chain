@@ -87,6 +87,9 @@ namespace catapult { namespace cache {
 		/// Removes element with \a key.
 		void remove(const RawBuffer& key);
 
+		/// Finds first element in container.
+		void getIteratorAtStart(RdbDataIterator& iterator) const;
+
 		/// Prunes elements below \a pruningBoundary. Returns number of pruned elements.
 		size_t prune(uint64_t pruningBoundary);
 

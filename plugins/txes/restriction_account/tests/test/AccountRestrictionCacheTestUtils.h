@@ -20,10 +20,10 @@
 **/
 
 #pragma once
+#include "plugins/txes/property/tests/test/PropertyCacheTestUtils.h"
 #include "AccountRestrictionTestTraits.h"
 #include "src/cache/AccountRestrictionCache.h"
 #include "src/cache/AccountRestrictionCacheStorage.h"
-#include "src/state/AccountRestrictionUtils.h"
 #include "catapult/model/Address.h"
 #include "AccountRestrictionTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
@@ -34,10 +34,12 @@ namespace catapult { namespace test {
 	struct AccountRestrictionCacheFactory {
 	private:
 		static auto CreateSubCachesWithAccountRestrictionCache(model::NetworkIdentifier networkIdentifier) {
-			auto cacheId = cache::AccountRestrictionCache::Id;
+			auto cacheId = cache::AccountRestrictionCache::Id > cache::PropertyCache::Id ? cache::AccountRestrictionCache::Id : cache::PropertyCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			subCaches[cacheId] = MakeSubCachePlugin<cache::AccountRestrictionCache, cache::AccountRestrictionCacheStorage>(
-					CreateAccountRestrictionConfigHolder(networkIdentifier));
+			auto holder = CreateAccountRestrictionConfigHolder(networkIdentifier);
+			subCaches[cache::AccountRestrictionCache::Id] = MakeSubCachePlugin<cache::AccountRestrictionCache, cache::AccountRestrictionCacheStorage>(
+					holder);
+			subCaches[cache::PropertyCache::Id] = MakeSubCachePlugin<cache::PropertyCache, cache::PropertyCacheStorage>(holder);
 			return subCaches;
 		}
 
@@ -59,7 +61,7 @@ namespace catapult { namespace test {
 
 	/// Populates \a delta with \a address and \a values.
 	template<typename TRestrictionValueTraits, typename TOperationTraits = AllowTraits>
-	void PopulateCache(
+	void PopulateAccountRestrictionCache(
 			cache::CatapultCacheDelta& delta,
 			const Address& address,
 			const std::vector<typename TRestrictionValueTraits::ValueType>& values) {
@@ -68,17 +70,17 @@ namespace catapult { namespace test {
 		auto& restrictions = restrictionCacheDelta.find(address).get();
 		auto& restriction = restrictions.restriction(TRestrictionValueTraits::Restriction_Flags);
 		for (const auto& value : values)
-			TOperationTraits::Add(restriction, state::ToVector(value));
+			TOperationTraits::Add(restriction, utils::ToVector(value));
 	}
 
 	/// Populates \a cache with \a address and \a values.
 	template<typename TRestrictionValueTraits, typename TOperationTraits = AllowTraits>
-	void PopulateCache(
+	void PopulateAccountRestrictionCache(
 			cache::CatapultCache& cache,
 			const Address& address,
 			const std::vector<typename TRestrictionValueTraits::ValueType>& values) {
 		auto delta = cache.createDelta();
-		PopulateCache<TRestrictionValueTraits, TOperationTraits>(delta, address, values);
+		PopulateAccountRestrictionCache<TRestrictionValueTraits, TOperationTraits>(delta, address, values);
 		cache.commit(Height(1));
 	}
 

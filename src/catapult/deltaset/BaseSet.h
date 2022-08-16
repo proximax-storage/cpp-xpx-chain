@@ -29,7 +29,7 @@ namespace catapult {
 		template<typename TElementTraits, typename TSetTraits>
 		class BaseSetDelta;
 
-		template<typename TSetTraits>
+		template<typename TSetTraits, typename TSetType = typename TSetTraits::MemorySetType>
 		class BaseSetIterationView;
 	}
 }
@@ -138,5 +138,11 @@ namespace catapult { namespace deltaset {
 
 		template<typename TElementTraits2, typename TSetTraits2, typename TCommitPolicy2>
 		friend BaseSetIterationView<TSetTraits2> MakeIterableView(const BaseSet<TElementTraits2, TSetTraits2, TCommitPolicy2>& set);
+
+		template<typename TElementTraits2, typename TSetTraits2, typename TCommitPolicy2>
+		friend bool IsBaseSetBroadIterable(const BaseSet<TElementTraits2, TSetTraits2, TCommitPolicy2>& set);
+
+		template<typename TElementTraits2, typename TSetTraits2, typename TCommitPolicy2>
+		friend auto MakeBroadIterableView(const BaseSet<TElementTraits2, TSetTraits2, TCommitPolicy2>& set) -> BaseSetIterationView<TSetTraits2, decltype(SelectBroadIterableSet(set.m_elements))>;
 	};
 }}

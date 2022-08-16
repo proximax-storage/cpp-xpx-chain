@@ -20,8 +20,8 @@
 
 #pragma once
 #include "PropertyTestUtils.h"
-#include "src/cache/PropertyCache.h"
-#include "src/cache/PropertyCacheStorage.h"
+#include "plugins/txes/property/src/cache/PropertyCache.h"
+#include "plugins/txes/property/src/cache/PropertyCacheStorage.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
@@ -58,7 +58,7 @@ namespace catapult { namespace test {
 	// region PopulateCache
 
 	/// Populates \a delta with \a key and \a values.
-	template<typename TPropertyValueTraits, typename TOperationTraits = AllowTraits>
+	template<typename TPropertyValueTraits, typename TOperationTraits = PropertyAllowTraits>
 	void PopulateCache(
 			cache::CatapultCacheDelta& delta,
 			const Key& key,
@@ -69,11 +69,11 @@ namespace catapult { namespace test {
 		auto& accountProperties = propertyCacheDelta.find(address).get();
 		auto& accountProperty = accountProperties.property(TPropertyValueTraits::Property_Type);
 		for (const auto& value : values)
-			TOperationTraits::Add(accountProperty, state::ToVector(value));
+			TOperationTraits::Add(accountProperty, utils::ToVector(value));
 	}
 
 	/// Populates \a cache with \a key and \a values.
-	template<typename TPropertyValueTraits, typename TOperationTraits = AllowTraits>
+	template<typename TPropertyValueTraits, typename TOperationTraits = PropertyAllowTraits>
 	void PopulateCache(cache::CatapultCache& cache, const Key& key, const std::vector<typename TPropertyValueTraits::ValueType>& values) {
 		auto delta = cache.createDelta();
 		PopulateCache<TPropertyValueTraits, TOperationTraits>(delta, key, values);

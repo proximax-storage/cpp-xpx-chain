@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 			auto& accountProperties = propertyCacheDelta.find(accountAddress).get();
 			auto& accountProperty = accountProperties.property(model::PropertyType::MosaicId);
 			for (auto mosaicId : mosaicIds)
-				TOperationTraits::Add(accountProperty, state::ToVector(mosaicId));
+				TOperationTraits::Add(accountProperty, utils::ToVector(mosaicId));
 
 			cache.commit(Height(1));
 		}
@@ -72,7 +72,7 @@ namespace catapult { namespace validators {
 		auto accountAddress = test::GenerateRandomByteArray<Address>();
 
 		// Act:
-		AssertValidationResult<test::AllowTraits>(
+		AssertValidationResult<test::PropertyAllowTraits>(
 				Failure_Property_Mosaic_Transfer_Not_Allowed,
 				accountAddress,
 				test::GenerateRandomDataVector<MosaicId>(3),
@@ -86,7 +86,7 @@ namespace catapult { namespace validators {
 		auto values = test::GenerateRandomDataVector<MosaicId>(3);
 
 		// Act:
-		AssertValidationResult<test::BlockTraits>(
+		AssertValidationResult<test::PropertyBlockTraits>(
 				Failure_Property_Mosaic_Transfer_Not_Allowed,
 				accountAddress,
 				values,
@@ -100,8 +100,8 @@ namespace catapult { namespace validators {
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_Allow) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::AllowTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::BlockTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Allow) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::PropertyAllowTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::PropertyBlockTraits>(); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	TRAITS_BASED_TEST(SuccessWhenRecipientIsNotKnown) {
@@ -151,12 +151,12 @@ namespace catapult { namespace validators {
 		auto mosaicIds = test::GenerateRandomDataVector<MosaicId>(3);
 
 		// Act:
-		AssertSuccess<test::AllowTraits>(mosaicIds, test::UnresolveXor(mosaicIds[1]));
+		AssertSuccess<test::PropertyAllowTraits>(mosaicIds, test::UnresolveXor(mosaicIds[1]));
 	}
 
 	TEST(TEST_CLASS, SuccessWhenAllConditionsAreMet_Block) {
 		// Act:
-		AssertSuccess<test::BlockTraits>(test::GenerateRandomDataVector<MosaicId>(3), test::GenerateRandomValue<UnresolvedMosaicId>());
+		AssertSuccess<test::PropertyBlockTraits>(test::GenerateRandomDataVector<MosaicId>(3), test::GenerateRandomValue<UnresolvedMosaicId>());
 	}
 
 	// endregion

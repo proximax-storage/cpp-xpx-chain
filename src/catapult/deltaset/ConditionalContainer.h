@@ -93,6 +93,43 @@ namespace catapult { namespace deltaset {
 			}
 
 		public:
+			ConditionalIterator& operator++()
+			{
+				if(ConditionalContainerMode::Storage == m_mode)
+				{
+					m_storageIter++;
+					return *this;
+				}
+				m_memoryIter++;
+				return *this;
+			}
+
+			ConditionalIterator operator++(int)
+			{
+				ConditionalIterator iter = *this;
+				++(*this);
+				return *this;
+			}
+
+			ConditionalIterator& operator--()
+			{
+				if(ConditionalContainerMode::Storage == m_mode)
+				{
+					m_storageIter--;
+					return *this;
+				}
+				m_memoryIter--;
+				return *this;
+			}
+
+			ConditionalIterator operator--(int)
+			{
+				ConditionalIterator iter = *this;
+				--(*this);
+				return iter;
+			}
+
+		public:
 			/// Returns a const pointer to the current element.
 			const auto* operator->() const {
 				return &operator*();
@@ -145,6 +182,22 @@ namespace catapult { namespace deltaset {
 			return m_pContainer1
 					? ConditionalIterator(m_pContainer1->cend(), StorageFlag())
 					: ConditionalIterator(m_pContainer2->cend(), MemoryFlag());
+		}
+
+		/// Returns a const iterator to the first element of the underlying set.
+		ConditionalIterator cbegin() const {
+			return m_pContainer1
+				   ? ConditionalIterator(m_pContainer1->cbegin(), StorageFlag())
+				   : ConditionalIterator(m_pContainer2->cbegin(), MemoryFlag());
+		}
+
+		ConditionalIterator end() const {
+			return cend();
+		}
+
+		/// Returns a const iterator to the first element of the underlying set.
+		ConditionalIterator begin() const {
+			return cbegin();
 		}
 
 		/// Searches for \a key in this set.
@@ -204,15 +257,22 @@ namespace catapult { namespace deltaset {
 	};
 
 	/// Returns \c true if \a set is iterable.
-	/// \note Specialization for ConditionalContainer.
+	/// \note Overload for ConditionalContainer.
 	template<typename TKeyTraits, typename TStorageSet, typename TMemorySet>
 	bool IsSetIterable(const ConditionalContainer<TKeyTraits, TStorageSet, TMemorySet>& set) {
 		return !!set.m_pContainer2;
 	}
 
-	/// Selects the iterable set from \a set.
+	/// Returns \c true if \a set is iterable.
+	/// \note Overload for ConditionalContainer.
+	template<typename TKeyTraits, typename TStorageSet, typename TMemorySet>
+	bool IsSetBroadIterable(const ConditionalContainer<TKeyTraits, TStorageSet, TMemorySet>& set) {
+		return true;
+	}
+
+	/// Selects the memory set from \a set.
 	/// \throws catapult_invalid_argument if the set is not memory-based.
-	/// \note Specialization for ConditionalContainer.
+	/// \note Overload for ConditionalContainer.
 	template<typename TKeyTraits, typename TStorageSet, typename TMemorySet>
 	const TMemorySet& SelectIterableSet(const ConditionalContainer<TKeyTraits, TStorageSet, TMemorySet>& set) {
 		if (!IsSetIterable(set))
@@ -220,18 +280,39 @@ namespace catapult { namespace deltaset {
 
 		return *set.m_pContainer2;
 	}
+	/// Selects the memory set from \a set.
+	/// \throws catapult_invalid_argument if the set is not memory-based.
+	/// \note Overload for ConditionalContainer.
+	template<typename TKeyTraits, typename TStorageSet, typename TMemorySet>
+	const ConditionalContainer<TKeyTraits, TStorageSet, TMemorySet>& SelectBroadIterableSet(const ConditionalContainer<TKeyTraits, TStorageSet, TMemorySet>& set) {
+		return set;
+	}
 
 	/// Applies all changes in \a deltas to \a container.
-	/// \note Specialization for ConditionalContainer.
+	/// \note Overload for ConditionalContainer.
 	template<typename TKeyTraits, typename TStorageSet, typename TMemorySet>
 	void UpdateSet(ConditionalContainer<TKeyTraits, TStorageSet, TMemorySet>& container, const DeltaElements<TMemorySet>& deltas) {
 		container.update(deltas);
 	}
 
 	/// Optionally prunes \a elements using \a pruningBoundary, which indicates the upper bound of elements to remove.
-	/// \note Specialization for ConditionalContainer.
+	/// \note Overload for ConditionalContainer.
 	template<typename TKeyTraits, typename TStorageSet, typename TMemorySet, typename TPruningBoundary>
 	void PruneBaseSet(ConditionalContainer<TKeyTraits, TStorageSet, TMemorySet>& container, const TPruningBoundary& pruningBoundary) {
 		container.prune(pruningBoundary);
 	}
+	template<typename TSet>
+	struct BroadIterabilityEvaluator : public std::false_type {
+		static constexpr bool IsSetIterable()
+		{
+			return false;
+		}
+	};
+	template<typename TKeyTraits, typename TStorageSet, typename TMemorySet>
+	struct BroadIterabilityEvaluator<ConditionalContainer<TKeyTraits, TStorageSet, TMemorySet>> : public std::true_type {
+		static constexpr bool IsSetIterable()
+		{
+			return true;
+		}
+	};
 }}

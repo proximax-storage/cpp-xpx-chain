@@ -21,7 +21,6 @@
 
 #include "Validators.h"
 #include "src/cache/AccountRestrictionCache.h"
-#include "src/state/AccountRestrictionUtils.h"
 #include "catapult/model/Address.h"
 #include "catapult/validators/ValidatorContext.h"
 
@@ -52,7 +51,7 @@ namespace catapult { namespace validators {
 
 			auto modification = model::AccountRestrictionModification{
 				notification.Action,
-				state::ToVector(Resolve(context.Resolvers, notification.RestrictionValue))
+				utils::ToVector(Resolve(context.Resolvers, notification.RestrictionValue))
 			};
 
 			using OperationType = state::AccountRestrictionOperationType;

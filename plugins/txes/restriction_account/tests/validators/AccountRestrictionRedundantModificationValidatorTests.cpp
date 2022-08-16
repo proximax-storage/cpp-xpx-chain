@@ -73,7 +73,7 @@ namespace catapult { namespace validators {
 				auto restrictions = state::AccountRestrictions(address);
 				restrictions.restriction(TRestrictionValueTraits::Restriction_Flags).allow({
 					model::AccountRestrictionModificationAction::Add,
-					state::ToVector(values[1])
+					utils::ToVector(values[1])
 				});
 				auto delta = cache.createDelta();
 				auto& restrictionCacheDelta = delta.template sub<cache::AccountRestrictionCache>();

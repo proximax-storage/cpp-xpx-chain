@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "src/state/AccountProperty.h"
+#include "plugins/txes/property/src/state/AccountProperty.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/nodeps/Random.h"
@@ -107,7 +107,7 @@ namespace catapult { namespace test {
 	// region allow/block traits
 
 	/// Traits for operation type 'Allow'.
-	struct AllowTraits {
+	struct PropertyAllowTraits {
 		/// Given \a propertyType gets the property type including the operation type.
 		static model::PropertyType CompletePropertyType(model::PropertyType propertyType) {
 			return propertyType;
@@ -125,7 +125,7 @@ namespace catapult { namespace test {
 	};
 
 	/// Traits for operation type 'Block'.
-	struct BlockTraits {
+	struct PropertyBlockTraits {
 		/// Given \a propertyType gets the property type including the operation type.
 		static model::PropertyType CompletePropertyType(model::PropertyType propertyType) {
 			return propertyType | model::PropertyType::Block;
@@ -147,7 +147,7 @@ namespace catapult { namespace test {
 	// region CreateNotification
 
 	/// Creates a notification around \a key and \a modification.
-	template<typename TPropertyValueTraits, typename TOperationTraits = AllowTraits>
+	template<typename TPropertyValueTraits, typename TOperationTraits = PropertyAllowTraits>
 	auto CreateNotification(
 			const Key& key,
 			const model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>& modification) {
@@ -159,7 +159,7 @@ namespace catapult { namespace test {
 	}
 
 	/// Creates a notification with opposite operation type around \a key and \a modification.
-	template<typename TPropertyValueTraits, typename TOperationTraits = AllowTraits>
+	template<typename TPropertyValueTraits, typename TOperationTraits = PropertyAllowTraits>
 	auto CreateNotificationWithOppositeOperation(
 			const Key& key,
 			const model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>& modification) {
@@ -171,7 +171,7 @@ namespace catapult { namespace test {
 	}
 
 	/// Creates a notification around \a key and \a modifications.
-	template<typename TPropertyValueTraits, typename TValueType, typename TOperationTraits = AllowTraits>
+	template<typename TPropertyValueTraits, typename TValueType, typename TOperationTraits = PropertyAllowTraits>
 	auto CreateNotification(const Key& key, const std::vector<model::PropertyModification<TValueType>>& modifications) {
 		return typename TPropertyValueTraits::NotificationType{
 			key,

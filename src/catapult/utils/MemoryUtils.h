@@ -26,6 +26,20 @@
 
 namespace catapult { namespace utils {
 
+	/// Converts \a value to a vector.
+	template<typename T>
+	auto ToVector(T value) {
+		std::vector<uint8_t> vec(sizeof(T));
+		reinterpret_cast<T&>(vec[0]) = value;
+		return vec;
+	}
+
+	/// Converts an array (\a value) to a vector.
+	template<size_t N>
+	auto ToVector(const std::array<uint8_t, N>& value) {
+		return std::vector<uint8_t>(value.cbegin(), value.cend());
+	}
+
 	/// Creates a unique pointer of the specified type with custom \a size.
 	template<typename T>
 	model::UniqueEntityPtr<T> MakeUniqueWithSize(size_t size) {

@@ -93,7 +93,16 @@ namespace catapult { namespace test {
 
 	void AssertIteratorValue(const std::string& value, const cache::RdbDataIterator& iter) {
 		ASSERT_NE(cache::RdbDataIterator::End(), iter);
-		EXPECT_EQ(value.size(), iter.storage().size());
-		EXPECT_EQ(value, std::string(iter.storage().data(), iter.storage().size()));
+		if(iter.iterable())
+		{
+			auto buffer = iter.buffer();
+			EXPECT_EQ(value.size(), buffer.Size);
+			EXPECT_EQ(value, std::string(reinterpret_cast<const char*>(buffer.pData), buffer.Size));
+		}
+		else
+		{
+			EXPECT_EQ(value.size(), iter.storage().size());
+			EXPECT_EQ(value, std::string(iter.storage().data(), iter.storage().size()));
+		}
 	}
 }}

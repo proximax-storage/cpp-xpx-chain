@@ -52,9 +52,9 @@ namespace catapult { namespace state {
 				const CustomPropertyModifications& modifications) {
 			for (const auto& modification : modifications) {
 				if (OperationType::Allow == operationType)
-					property.allow({ modification.ModificationType, ToVector(modification.Value) });
+					property.allow({ modification.ModificationType, utils::ToVector(modification.Value) });
 				else
-					property.block({ modification.ModificationType, ToVector(modification.Value) });
+					property.block({ modification.ModificationType, utils::ToVector(modification.Value) });
 			}
 
 			return TypedAccountProperty<CustomProperty>(property);

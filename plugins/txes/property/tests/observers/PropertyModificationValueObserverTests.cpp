@@ -146,7 +146,7 @@ namespace catapult { namespace observers {
 			propertyCacheDelta.insert(state::AccountProperties(accountAddress));
 
 			auto& accountProperties = propertyCacheDelta.find(accountAddress).get();
-			TOperationTraits::Add(accountProperties.property(model::PropertyType::Address), state::ToVector(filteredAddress));
+			TOperationTraits::Add(accountProperties.property(model::PropertyType::Address), utils::ToVector(filteredAddress));
 			TOperationTraits::Add(accountProperties.property(model::PropertyType::MosaicId), test::GenerateRandomVector(sizeof(MosaicId)));
 
 			auto modificationType = NotifyMode::Commit == notifyMode ? Del : Add;
@@ -211,15 +211,15 @@ namespace catapult { namespace observers {
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
 	template<typename TOperationTraits, typename TPropertyValueTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_Address_Allow) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::AllowTraits, AddressPropertyTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Address_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::BlockTraits, AddressPropertyTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Mosaic_Allow) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::AllowTraits, MosaicPropertyTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Mosaic_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::BlockTraits, MosaicPropertyTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Address_Allow) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::PropertyAllowTraits, AddressPropertyTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Address_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::PropertyBlockTraits, AddressPropertyTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Mosaic_Allow) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::PropertyAllowTraits, MosaicPropertyTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Mosaic_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::PropertyBlockTraits, MosaicPropertyTraits>(); } \
 	TEST(TEST_CLASS, TEST_NAME##_TransactionType_Allow) { \
-		TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::AllowTraits, TransactionTypePropertyTraits>(); \
+		TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::PropertyAllowTraits, TransactionTypePropertyTraits>(); \
 	} \
 	TEST(TEST_CLASS, TEST_NAME##_TransactionType_Block) { \
-		TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::BlockTraits, TransactionTypePropertyTraits>(); \
+		TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::PropertyBlockTraits, TransactionTypePropertyTraits>(); \
 	} \
 	template<typename TOperationTraits, typename TPropertyValueTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 

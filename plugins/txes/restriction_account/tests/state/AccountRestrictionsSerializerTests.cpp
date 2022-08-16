@@ -20,7 +20,6 @@
 **/
 
 #include "src/state/AccountRestrictionsSerializer.h"
-#include "src/state/AccountRestrictionUtils.h"
 #include "catapult/model/EntityType.h"
 #include "tests/test/AccountRestrictionTestUtils.h"
 #include "tests/test/core/SerializerOrderingTests.h"
@@ -130,7 +129,7 @@ namespace catapult { namespace state {
 			static void AddKeys(AccountRestrictions& restrictions, const std::vector<Address>& addresses) {
 				auto& restriction = restrictions.restriction(model::AccountRestrictionFlags::Address);
 				for (const auto& address : addresses)
-					restriction.allow({ model::AccountRestrictionModificationAction::Add, ToVector(address) });
+					restriction.allow({ model::AccountRestrictionModificationAction::Add, utils::ToVector(address) });
 			}
 
 			static constexpr size_t GetKeyStartBufferOffset() {

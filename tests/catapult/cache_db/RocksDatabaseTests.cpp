@@ -703,4 +703,34 @@ namespace catapult { namespace cache {
 	}
 
 	// endregion
+
+
+	// region iteration
+
+	TEST(TEST_CLASS, CanIterateFromDb_DefaultColumn) {
+		// Arrange:
+		test::RdbTestContext context(DefaultSettings(), [](auto& db, const auto& columns) {
+		  db.Put(rocksdb::WriteOptions(), columns[0], "hello1", "amazing1");
+		  db.Put(rocksdb::WriteOptions(), columns[0], "hello2", "amazing2");
+		  db.Put(rocksdb::WriteOptions(), columns[0], "hello3", "amazing3");
+		  db.Put(rocksdb::WriteOptions(), columns[0], "hello4", "amazing4");
+		  db.Put(rocksdb::WriteOptions(), columns[0], "hello5", "amazing5");
+		  db.Put(rocksdb::WriteOptions(), columns[0], "hello6", "amazing6");
+		  db.Put(rocksdb::WriteOptions(), columns[0], "hello7", "amazing7");
+		});
+		auto& database = context.database();
+
+		// Act:
+		RdbDataIterator iter;
+		database.getIteratorAtStart(0, iter);
+
+		// Assert:
+		for(auto i = 1; i < 8; i++)
+		{
+			test::AssertIteratorValue("amazing" + std::to_string(i), iter);
+			iter.next();
+		}
+	}
+
+	// endregion
 }}

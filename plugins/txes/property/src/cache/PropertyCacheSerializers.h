@@ -20,7 +20,7 @@
 
 #pragma once
 #include "PropertyCacheTypes.h"
-#include "src/state/AccountPropertiesSerializer.h"
+#include "../state/AccountPropertiesSerializer.h"
 #include "catapult/cache/CacheSerializerAdapter.h"
 
 namespace catapult { namespace cache {

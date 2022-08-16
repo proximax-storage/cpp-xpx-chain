@@ -31,6 +31,7 @@ namespace catapult { namespace cache {
 		using Size = SizeMixin<TSet>;
 		using Contains = ContainsMixin<TSet, TCacheDescriptor>;
 		using Iteration = IterationMixin<TSet>;
+		using BroadIteration = BroadIterationMixin<TSet>;
 
 		using ConstAccessor = ConstAccessorMixin<TSet, TCacheDescriptor>;
 		using MutableAccessor = MutableAccessorMixin<TSet, TCacheDescriptor>;

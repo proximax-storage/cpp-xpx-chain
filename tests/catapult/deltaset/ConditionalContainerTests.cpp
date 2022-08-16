@@ -383,4 +383,80 @@ namespace catapult { namespace deltaset {
 	}
 
 	// endregion
+
+
+	// region broad iteration
+
+	TEST(TEST_CLASS, StorageBasedCacheIsBroadIterable) {
+		// Act:
+		MapTraits::DiffUnderlying::ContainerType container(ConditionalContainerMode::Storage);
+
+		// Assert:
+		EXPECT_TRUE(IsSetBroadIterable(container));
+		EXPECT_NO_THROW(SelectBroadIterableSet(container));
+	}
+
+	TEST(TEST_CLASS, MemoryBasedCacheIsBroadIterable) {
+		// Act:
+		MapTraits::DiffUnderlying::ContainerType container(ConditionalContainerMode::Memory);
+
+		// Assert:
+		EXPECT_TRUE(IsSetBroadIterable(container));
+		EXPECT_NO_THROW(SelectBroadIterableSet(container));
+	}
+
+	TEST(TEST_CLASS, MemoryBasedCacheIsBroadIterableCanIterate) {
+		// Act:
+		MapTraits::DiffUnderlying::ContainerType container(ConditionalContainerMode::Memory);
+		std::map<std::pair<std::string, int>, std::string> values;
+		values.insert(std::make_pair(std::make_pair("alpha", 5), "alpha"));
+		values.insert(std::make_pair(std::make_pair("gamma", 5), "gamma"));
+		values.insert(std::make_pair(std::make_pair("beta", 5), "beta"));
+		values.insert(std::make_pair(std::make_pair("delta", 5), "delta"));
+		values.insert(std::make_pair(std::make_pair("epsilon", 5), "epsilon"));
+
+
+		MapTraits::DiffUnderlying::DeltaElementsWrapper wrapper;
+		for(auto& value : values)
+			MapTraits::DiffUnderlying::AddElement(wrapper.Added, value.first.first, value.first.second);
+		container.update(wrapper.deltas());
+
+		// Assert:
+
+		for(auto& record : container)
+		{
+			EXPECT_EQ(values[record.first], record.second.Name);
+			auto iter = container.find(record.first);
+			EXPECT_EQ(iter->first, record.first);
+			EXPECT_EQ(record.second, iter->second);
+		}
+	}
+
+	TEST(TEST_CLASS, StorageBasedCacheIsBroadIterableCanIterate) {
+		// Act:
+		MapTraits::DiffUnderlying::ContainerType container(ConditionalContainerMode::Storage);
+		std::map<std::pair<std::string, int>, std::string> values;
+		values.insert(std::make_pair(std::make_pair("alpha", 5), "alpha"));
+		values.insert(std::make_pair(std::make_pair("gamma", 5), "gamma"));
+		values.insert(std::make_pair(std::make_pair("beta", 5), "beta"));
+		values.insert(std::make_pair(std::make_pair("delta", 5), "delta"));
+		values.insert(std::make_pair(std::make_pair("epsilon", 5), "epsilon"));
+
+
+		MapTraits::DiffUnderlying::DeltaElementsWrapper wrapper;
+		for(auto& value : values)
+			MapTraits::DiffUnderlying::AddElement(wrapper.Added, value.first.first, value.first.second);
+		container.update(wrapper.deltas());
+
+		// Assert:
+
+		for(auto& record : container)
+		{
+			EXPECT_EQ(values[record.first], record.second.Name);
+			auto iter = container.find(record.first);
+			EXPECT_EQ(iter->first, record.first);
+			EXPECT_EQ(record.second, iter->second);
+		}
+	}
+	// endregion
 }}

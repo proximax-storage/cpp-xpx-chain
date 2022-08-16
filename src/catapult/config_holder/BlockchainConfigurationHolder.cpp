@@ -98,7 +98,9 @@ namespace catapult { namespace config {
 					baseConfig.User,
 					baseConfig.Extensions,
 					baseConfig.Inflation,
-					supportedEntityVersions
+					supportedEntityVersions,
+					height,
+					&m_configs.end()->second
 			);
 
 			m_configs.erase(height);

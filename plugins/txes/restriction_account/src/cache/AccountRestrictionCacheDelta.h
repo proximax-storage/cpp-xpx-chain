@@ -47,6 +47,7 @@ namespace catapult { namespace cache {
 			, public AccountRestrictionCacheDeltaMixins::PrimaryMixins::PatriciaTreeDelta
 			, public AccountRestrictionCacheDeltaMixins::PrimaryMixins::BasicInsertRemove
 			, public AccountRestrictionCacheDeltaMixins::PrimaryMixins::DeltaElements
+			, public AccountRestrictionCacheDeltaMixins::PrimaryMixins::BroadIteration
 			, public AccountRestrictionCacheDeltaMixins::ConfigBasedEnable{
 	public:
 		using ReadOnlyView = AccountRestrictionCacheTypes::CacheReadOnlyType;
@@ -63,6 +64,7 @@ namespace catapult { namespace cache {
 				, AccountRestrictionCacheDeltaMixins::PrimaryMixins::PatriciaTreeDelta(*restrictionSets.pPrimary, restrictionSets.pPatriciaTree)
 				, AccountRestrictionCacheDeltaMixins::PrimaryMixins::BasicInsertRemove(*restrictionSets.pPrimary)
 				, AccountRestrictionCacheDeltaMixins::PrimaryMixins::DeltaElements(*restrictionSets.pPrimary)
+				, AccountRestrictionCacheDeltaMixins::PrimaryMixins::BroadIteration (*restrictionSets.pPrimary)
 				, AccountRestrictionCacheDeltaMixins::ConfigBasedEnable(pConfigHolder, [](const auto& config) { return config.Enabled; })
 				, m_pAccountRestrictionEntries(restrictionSets.pPrimary)
 				, m_networkIdentifier(pConfigHolder->Config().Immutable.NetworkIdentifier)

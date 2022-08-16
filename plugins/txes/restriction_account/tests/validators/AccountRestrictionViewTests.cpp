@@ -51,7 +51,7 @@ namespace catapult { namespace validators {
 			for (auto i = 0u; i < options.NumRestrictions; ++i) {
 				auto modification = model::AccountRestrictionModification{
 					model::AccountRestrictionModificationAction::Add,
-					state::ToVector(MosaicId(i))
+					utils::ToVector(MosaicId(i))
 				};
 				if (options.ShouldBlock)
 					restriction.block(modification);
@@ -111,7 +111,7 @@ namespace catapult { namespace validators {
 			// Assert:
 			EXPECT_EQ(5u, restriction.values().size());
 			for (auto i = 0u; i < 5; ++i)
-				EXPECT_TRUE(restriction.contains(state::ToVector(MosaicId(i))));
+				EXPECT_TRUE(restriction.contains(utils::ToVector(MosaicId(i))));
 		});
 	}
 

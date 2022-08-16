@@ -18,11 +18,16 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <catapult/io/StringOutputStream.h>
+#include "catapult/io/BufferInputStreamAdapter.h"
+#include "tests/catapult/cache_db/test/RdbTestUtils.h"
 #include "catapult/cache_db/RdbTypedColumnContainer.h"
 #include "tests/catapult/cache_db/test/BasicMapDescriptor.h"
 #include "tests/catapult/cache_db/test/StringKey.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 #include "tests/TestHarness.h"
+#include "catapult/cache_db/RocksInclude.h"
+#include "catapult/io/PodIoUtils.h"
 
 namespace catapult { namespace cache {
 
@@ -166,6 +171,8 @@ namespace catapult { namespace cache {
 		auto CreateContainer(MockDb& db) {
 			return RdbTypedColumnContainer<ColumnDescriptor, MockContainer>(db, 0);
 		}
+
+
 	}
 
 	// region adapter tests
@@ -346,4 +353,150 @@ namespace catapult { namespace cache {
 	}
 
 	// endregion
+
+	// region test real container iteration
+	namespace {
+		struct RealTestValue {
+		public:
+			std::string KeyCopy; //10
+			int Integer; //4
+			std::string RandomData; //20
+		};
+		struct RealColumnDescriptor : public test::BasicMapDescriptor<test::StringKey, RealTestValue> {
+		public:
+			struct Serializer {
+			public:
+
+				static std::string SerializeValue(const ValueType& value) {
+					io::StringOutputStream output(34);
+					std::array<uint8_t, 10> key;
+					std::array<uint8_t, 20> randomValue;
+					std::copy(value.KeyCopy.begin(), value.KeyCopy.end(), key.data());
+					std::copy(value.RandomData.begin(), value.RandomData.end(), randomValue.data());
+					io::Write(output, key);
+					io::Write32(output, value.Integer);
+					io::Write(output, randomValue);
+					return output.str();
+				}
+
+				static ValueType DeserializeValue(const RawBuffer& buffer) {
+					io::BufferInputStreamAdapter<RawBuffer> input(buffer);
+					RealTestValue returnValue;
+					std::array<uint8_t, 10> key;
+					std::array<uint8_t, 20> randomValue;
+					io::Read(input, key);
+					returnValue.Integer = io::Read32(input);
+					io::Read(input, randomValue);
+					returnValue.KeyCopy = std::string(key.begin(), key.end());
+					returnValue.RandomData = std::string(randomValue.begin(), randomValue.end());
+					return returnValue;
+				}
+
+				static uint64_t KeyToBoundary(const KeyType& key) {
+					return key.size();
+				}
+			};
+		};
+
+		auto CreateRealTestValues(int count)
+		{
+			std::map<std::string, RealTestValue> values;
+			for(auto i = 0; i < count; i++)
+			{
+				auto key = std::string(reinterpret_cast<const char*>(test::GenerateRandomArray<10>().data()), 10);
+				values[key] = {key, rand(), std::string(reinterpret_cast<const char*>(test::GenerateRandomArray<20>().data()), 20)};
+			}
+
+			return values;
+		}
+		auto CreateSettings(size_t numKilobytes, FilterPruningMode pruningMode = FilterPruningMode::Disabled) {
+			return RocksDatabaseSettings(
+					test::TempDirectoryGuard::DefaultName(),
+					{ "default" },
+					utils::FileSize::FromKilobytes(numKilobytes),
+					pruningMode);
+		}
+
+		auto DefaultSettings() {
+			return CreateSettings(0);
+		}
+
+		auto CreateRealContainer(RocksDatabase& db) {
+			return RdbTypedColumnContainer<RealColumnDescriptor, RdbColumnContainer>(db, 0);
+		}
+
+		template<typename TContainer>
+		auto ToSlice(const TContainer& container) {
+			return rocksdb::Slice(reinterpret_cast<const char*>(container.data()), container.size());
+		}
+
+	}
+	TEST(TEST_CLASS, CanIterateOverExistingCacheValues) {
+		// Arrange:
+		auto values = CreateRealTestValues(10);
+		test::RdbTestContext context(DefaultSettings(), [&values](auto& db, const auto& columns) {
+			for(auto& val : values)
+			{
+				db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(val.second.KeyCopy), RealColumnDescriptor::Serializer::SerializeValue(val.second));
+			}
+
+		});
+		auto container = CreateRealContainer(context.database());
+
+		// Assert:
+		for(auto val : std::as_const(container))
+		{
+			EXPECT_NE(values.find(val.first.str()), values.cend());
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.first.str());
+			EXPECT_EQ(values[val.first.str()].Integer, val.second.Integer);
+			EXPECT_EQ(values[val.first.str()].RandomData, val.second.RandomData);
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.second.KeyCopy);
+		}
+	}
+
+	TEST(TEST_CLASS, CanIterateOverExistingCacheValuesManual) {
+		// Arrange:
+		auto values = CreateRealTestValues(10);
+		test::RdbTestContext context(DefaultSettings(), [&values](auto& db, const auto& columns) {
+		  for(auto& val : values)
+		  {
+			  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(val.second.KeyCopy), RealColumnDescriptor::Serializer::SerializeValue(val.second));
+		  }
+
+		});
+		auto container = CreateRealContainer(context.database());
+
+		// Assert:
+		auto iter = container.cbegin();
+		for(auto i = 0; i < 10; i++)
+		{
+			auto val = *iter;
+			EXPECT_NE(values.find(val.first.str()), values.cend());
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.first.str());
+			EXPECT_EQ(values[val.first.str()].Integer, val.second.Integer);
+			EXPECT_EQ(values[val.first.str()].RandomData, val.second.RandomData);
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.second.KeyCopy);
+			iter++;
+		}
+
+		EXPECT_EQ(iter, container.cend());
+
+	}
+
+
+	TEST(TEST_CLASS, IterateOverEmptyColumn) {
+		// Arrange:
+		test::RdbTestContext context(DefaultSettings(), [](auto& db, const auto& columns) {
+
+		});
+		auto container = CreateRealContainer(context.database());
+
+		// Assert:
+		auto iter = container.cbegin();
+		EXPECT_EQ(iter, container.cend());
+
+	}
+
+
+		// endregion
 }}

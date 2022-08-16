@@ -49,7 +49,9 @@ namespace catapult { namespace config {
 			UserConfiguration userConfig,
 			ExtensionsConfiguration extensionsConfig,
 			InflationConfiguration inflationConfig,
-			config::SupportedEntityVersions supportedEntityVersions)
+			config::SupportedEntityVersions supportedEntityVersions,
+			Height activationHeight,
+			const BlockchainConfiguration* previousConfig)
 			: Immutable(std::move(immutableConfig))
 			, Network(std::move(networkConfig))
 			, Node(std::move(nodeConfig))
@@ -58,6 +60,8 @@ namespace catapult { namespace config {
 			, Extensions(std::move(extensionsConfig))
 			, Inflation(std::move(inflationConfig))
 			, SupportedEntityVersions(std::move(supportedEntityVersions))
+			, ActivationHeight(activationHeight)
+			, PreviousConfiguration(previousConfig)
 	{}
 
 	BlockchainConfiguration BlockchainConfiguration::LoadFromPath(

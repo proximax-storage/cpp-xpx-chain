@@ -20,7 +20,6 @@
 **/
 
 #include "src/state/AccountRestriction.h"
-#include "src/state/AccountRestrictionUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace state {

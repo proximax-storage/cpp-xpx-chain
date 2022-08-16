@@ -41,6 +41,10 @@ namespace catapult { namespace cache {
 				RdbColumnContainer::findLowerOrEqual(key, iterator);
 			}
 
+			void getIteratorAtStart(RdbDataIterator& iterator) const {
+				RdbColumnContainer::getIteratorAtStart(iterator);
+			}
+
 			void insert(const RawBuffer& key, const std::string& value) {
 				RdbColumnContainer::insert(key, value);
 			}
@@ -397,6 +401,40 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(100u, numRemoved);
 		AssertKeys(container, 0, 200, AssertNoKey);
 		AssertKeys(container, 200, 238, AssertValidKey);
+	}
+
+	// endregion
+
+	// region iteration
+
+	TEST(TEST_CLASS, CanIterateRecords) {
+		// Arrange:
+		std::vector<std::string> keys;
+		for(auto i = 0; i < 8; i++)
+			keys.push_back(std::to_string(i));
+		test::RdbTestContext context(DefaultSettings(), [&keys](auto& db, const auto& columns) {
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[0]), "world1");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[1]), "world2");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[2]), "world3");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[3]), "world4");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[4]), "world5");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[5]), "world6");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[6]), "world7");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[7]), "world8");
+		});
+		TestColumnContainer container(context.database(), 0);
+
+		// Act:
+		RdbDataIterator iter;
+		container.getIteratorAtStart(iter);
+
+		// Assert:
+		for(auto i = 1; i < 9; i++)
+		{
+			test::AssertIteratorValue("world" + std::to_string(i), iter);
+			iter = iter.next();
+		}
+
 	}
 
 	// endregion

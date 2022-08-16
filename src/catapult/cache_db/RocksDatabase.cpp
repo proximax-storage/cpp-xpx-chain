@@ -33,6 +33,15 @@ namespace catapult { namespace cache {
 
 	struct RdbDataIterator::Impl {
 		rocksdb::PinnableSlice Result;
+		rocksdb::Iterator* Iterator;
+
+		~Impl(){
+			if(Iterator)
+			{
+				Iterator->Reset();
+				delete Iterator;
+			}
+		}
 	};
 
 	RdbDataIterator::RdbDataIterator(StorageStrategy storageStrategy)
@@ -47,6 +56,8 @@ namespace catapult { namespace cache {
 
 	RdbDataIterator::RdbDataIterator(RdbDataIterator&&) = default;
 
+	RdbDataIterator::RdbDataIterator(const RdbDataIterator&) noexcept = default;
+
 	RdbDataIterator& RdbDataIterator::operator=(RdbDataIterator&&) = default;
 
 	RdbDataIterator RdbDataIterator::End() {
@@ -54,7 +65,51 @@ namespace catapult { namespace cache {
 	}
 
 	bool RdbDataIterator::operator==(const RdbDataIterator& rhs) const {
-		return m_isFound == rhs.m_isFound;
+		if(!m_isFound)
+		{
+			return rhs.m_isFound == false;
+		}
+		if(m_pImpl->Iterator)
+			return m_pImpl == rhs.m_pImpl;
+		return true;
+	}
+
+	RdbDataIterator RdbDataIterator::next() const {
+		if(iterable())
+		{
+			//m_pImpl->Result.Reset();
+			m_pImpl->Iterator->Next();
+			auto status = m_pImpl->Iterator->status();
+			if (status.ok()) {
+				if (m_pImpl->Iterator->Valid()) {
+					return *this;
+				} else {
+					return End();
+				}
+			}
+		}
+		return End();
+	}
+
+	bool RdbDataIterator::iterable() const{
+		return m_isFound && m_pImpl->Iterator;
+	}
+
+	RdbDataIterator RdbDataIterator::prev() const {
+		if(iterable())
+		{
+			//m_pImpl->Result.Reset();
+			m_pImpl->Iterator->Prev();
+			auto status = m_pImpl->Iterator->status();
+			if (status.ok()) {
+				if (m_pImpl->Iterator->Valid()) {
+					return *this;
+				} else {
+					return End();
+				}
+			}
+		}
+		return End();
 	}
 
 	bool RdbDataIterator::operator!=(const RdbDataIterator& rhs) const {
@@ -69,7 +124,17 @@ namespace catapult { namespace cache {
 		m_isFound = found;
 	}
 
+	void RdbDataIterator::setIterator(rocksdb::Iterator * iterator)
+	{
+		setFound(true);
+		m_pImpl->Iterator = iterator;
+	}
+
 	RawBuffer RdbDataIterator::buffer() const {
+		if(m_pImpl->Iterator != nullptr) {
+			m_pImpl->Result.Reset();
+			m_pImpl->Result.PinSelf(m_pImpl->Iterator->value());
+		}
 		return { reinterpret_cast<const uint8_t*>(storage().data()), storage().size() };
 	}
 
@@ -163,6 +228,29 @@ namespace catapult { namespace cache {
 
 		if (!status.IsNotFound())
 			CATAPULT_THROW_DB_KEY_ERROR("could not retrieve value for get");
+	}
+
+	void RocksDatabase::getIteratorAtStart(size_t columnId, RdbDataIterator& result) {
+		if (!m_pDb)
+			CATAPULT_THROW_INVALID_ARGUMENT("RocksDatabase has not been initialized");
+
+		auto iterator = m_pDb->NewIterator(rocksdb::ReadOptions(), m_handles[columnId]);
+
+		iterator->SeekToFirst();
+
+		auto status = iterator->status();
+		if (status.ok()) {
+			if (iterator->Valid()) {
+				result.setIterator(iterator);
+			} else {
+				result.setFound(false);
+				iterator->Reset();
+				delete iterator;
+			}
+		}
+
+		if (status.ok())
+			return;
 	}
 
 	void RocksDatabase::getLowerOrEqual(size_t columnId, const rocksdb::Slice& key, RdbDataIterator& result) {

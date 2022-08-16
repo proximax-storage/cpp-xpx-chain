@@ -19,7 +19,7 @@
 **/
 
 #include "src/state/AccountProperty.h"
-#include "src/state/PropertyUtils.h"
+#include "catapult/utils/MemoryUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace state {
@@ -53,7 +53,7 @@ namespace catapult { namespace state {
 		RawPropertyValues ExtractRawPropertyValues(const CustomPropertyModifications& modifications) {
 			RawPropertyValues values;
 			for (const auto& modification : modifications)
-				values.push_back(ToVector(modification.Value));
+				values.push_back(utils::ToVector(modification.Value));
 
 			return values;
 		}
@@ -65,9 +65,9 @@ namespace catapult { namespace state {
 			AccountProperty property(propertyType, Custom_Property_Size);
 			for (const auto& modification : modifications) {
 				if (OperationType::Allow == operationType)
-					property.allow({ modification.ModificationType, ToVector(modification.Value) });
+					property.allow({ modification.ModificationType, utils::ToVector(modification.Value) });
 				else
-					property.block({ modification.ModificationType, ToVector(modification.Value) });
+					property.block({ modification.ModificationType, utils::ToVector(modification.Value) });
 			}
 
 			return property;
@@ -234,7 +234,7 @@ namespace catapult { namespace state {
 		auto property = TTraits::Create(context.Modifications);
 
 		// Act + Assert:
-		EXPECT_FALSE(TTraits::CanAdd(property, ToVector(context.Values[1])));
+		EXPECT_FALSE(TTraits::CanAdd(property, utils::ToVector(context.Values[1])));
 	}
 
 	TRAITS_BASED_TEST(CanAddValueWhenOperationTypeConflictsPropertyTypeButValuesAreEmpty) {
@@ -261,7 +261,7 @@ namespace catapult { namespace state {
 		auto property = TTraits::Create(context.Modifications);
 
 		// Act + Assert:
-		EXPECT_TRUE(TTraits::CanRemove(property, ToVector(context.Values[1])));
+		EXPECT_TRUE(TTraits::CanRemove(property, utils::ToVector(context.Values[1])));
 	}
 
 	TRAITS_BASED_TEST(CannotRemoveValueWhenValueSizeIsInvalid) {
@@ -289,7 +289,7 @@ namespace catapult { namespace state {
 		auto property = TTraits::CreateWithOppositeOperationType(context.Modifications);
 
 		// Act + Assert:
-		EXPECT_FALSE(TTraits::CanRemove(property, ToVector(context.Values[1])));
+		EXPECT_FALSE(TTraits::CanRemove(property, utils::ToVector(context.Values[1])));
 	}
 
 	TRAITS_BASED_TEST(AddAddsValueToSet) {
@@ -311,7 +311,7 @@ namespace catapult { namespace state {
 		// Arrange:
 		TestContext context({ Add, Add, Add });
 		auto property = TTraits::Create(context.Modifications);
-		auto value = ToVector(context.Values[1]);
+		auto value = utils::ToVector(context.Values[1]);
 		TTraits::Remove(property, value);
 
 		// Sanity:
@@ -340,7 +340,7 @@ namespace catapult { namespace state {
 		// Arrange:
 		TestContext context({ Add, Add, Add });
 		auto property = TTraits::Create(context.Modifications);
-		auto value = ToVector(context.Values[1]);
+		auto value = utils::ToVector(context.Values[1]);
 
 		// Act:
 		TTraits::Remove(property, value);
@@ -380,7 +380,7 @@ namespace catapult { namespace state {
 		// Arrange:
 		TestContext context({ Add });
 		auto property = AllowTraits::Create(context.Modifications);
-		auto value = ToVector(context.Values[0]);
+		auto value = utils::ToVector(context.Values[0]);
 
 		// Sanity:
 		EXPECT_EQ(OperationType::Allow, property.descriptor().operationType());

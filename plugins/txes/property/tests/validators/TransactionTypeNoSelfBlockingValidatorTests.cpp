@@ -54,7 +54,7 @@ namespace catapult { namespace validators {
 			auto accountProperties = state::AccountProperties(address);
 			auto& accountProperty = accountProperties.property(model::PropertyType::TransactionType);
 			for (auto value : values)
-				TOperationTraits::Add(accountProperty, state::ToVector(value));
+				TOperationTraits::Add(accountProperty, utils::ToVector(value));
 
 			propertyCacheDelta.insert(accountProperties);
 			cache.commit(Height(1));
@@ -107,10 +107,10 @@ namespace catapult { namespace validators {
 		auto seedKey = test::GenerateRandomByteArray<Key>();
 		auto notificationKey = test::GenerateRandomByteArray<Key>();
 		auto modification = model::PropertyModification<model::EntityType>{ Add, RandomValue() };
-		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::AllowTraits>(notificationKey, modification);
+		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::PropertyAllowTraits>(notificationKey, modification);
 
 		// Act + Assert:
-		AssertValidationResult<test::AllowTraits>(Failure_Result, CacheSeed::No, seedKey, notification);
+		AssertValidationResult<test::PropertyAllowTraits>(Failure_Result, CacheSeed::No, seedKey, notification);
 	}
 
 	TEST(TEST_CLASS, FailureWhenAccountIsUnknown_Block_Add_RelevantType) {
@@ -118,40 +118,40 @@ namespace catapult { namespace validators {
 		auto seedKey = test::GenerateRandomByteArray<Key>();
 		auto notificationKey = test::GenerateRandomByteArray<Key>();
 		auto modification = model::PropertyModification<model::EntityType>{ Add, Relevant_Entity_Type };
-		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::BlockTraits>(notificationKey, modification);
+		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::PropertyBlockTraits>(notificationKey, modification);
 
 		// Act + Assert:
-		AssertValidationResult<test::BlockTraits>(Failure_Result, CacheSeed::No, seedKey, notification);
+		AssertValidationResult<test::PropertyBlockTraits>(Failure_Result, CacheSeed::No, seedKey, notification);
 	}
 
 	TEST(TEST_CLASS, FailureWhenAccountIsKnown_Allow_Del_RelevantType) {
 		// Arrange:
 		auto key = test::GenerateRandomByteArray<Key>();
 		auto modification = model::PropertyModification<model::EntityType>{ Del, Relevant_Entity_Type };
-		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::AllowTraits>(key, modification);
+		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::PropertyAllowTraits>(key, modification);
 
 		// Act + Assert:
-		AssertValidationResult<test::AllowTraits>(Failure_Result, CacheSeed::EmptyProperties, key, notification);
+		AssertValidationResult<test::PropertyAllowTraits>(Failure_Result, CacheSeed::EmptyProperties, key, notification);
 	}
 
 	TEST(TEST_CLASS, FailureWhenAccountIsKnown_Allow_Add_NotRelevantType) {
 		// Arrange:
 		auto key = test::GenerateRandomByteArray<Key>();
 		auto modification = model::PropertyModification<model::EntityType>{ Add, RandomValue() };
-		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::AllowTraits>(key, modification);
+		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::PropertyAllowTraits>(key, modification);
 
 		// Act + Assert:
-		AssertValidationResult<test::AllowTraits>(Failure_Result, CacheSeed::EmptyProperties, key, notification);
+		AssertValidationResult<test::PropertyAllowTraits>(Failure_Result, CacheSeed::EmptyProperties, key, notification);
 	}
 
 	TEST(TEST_CLASS, FailureWhenAccountIsKnown_Block_Add_RelevantType) {
 		// Arrange:
 		auto key = test::GenerateRandomByteArray<Key>();
 		auto modification = model::PropertyModification<model::EntityType>{ Add, Relevant_Entity_Type };
-		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::BlockTraits>(key, modification);
+		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::PropertyBlockTraits>(key, modification);
 
 		// Act + Assert:
-		AssertValidationResult<test::BlockTraits>(Failure_Result, CacheSeed::RandomValue, key, notification);
+		AssertValidationResult<test::PropertyBlockTraits>(Failure_Result, CacheSeed::RandomValue, key, notification);
 	}
 
 	// endregion
@@ -163,10 +163,10 @@ namespace catapult { namespace validators {
 		auto seedKey = test::GenerateRandomByteArray<Key>();
 		auto notificationKey = test::GenerateRandomByteArray<Key>();
 		auto modification = model::PropertyModification<model::EntityType>{ Add, Relevant_Entity_Type };
-		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::AllowTraits>(notificationKey, modification);
+		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::PropertyAllowTraits>(notificationKey, modification);
 
 		// Act + Assert:
-		AssertValidationResult<test::AllowTraits>(ValidationResult::Success, CacheSeed::No, seedKey, notification);
+		AssertValidationResult<test::PropertyAllowTraits>(ValidationResult::Success, CacheSeed::No, seedKey, notification);
 	}
 
 	TEST(TEST_CLASS, SuccessWhenAccountIsUnknown_Block_Add_NotRelevantType) {
@@ -174,40 +174,40 @@ namespace catapult { namespace validators {
 		auto seedKey = test::GenerateRandomByteArray<Key>();
 		auto notificationKey = test::GenerateRandomByteArray<Key>();
 		auto modification = model::PropertyModification<model::EntityType>{ Add, RandomValue() };
-		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::BlockTraits>(notificationKey, modification);
+		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::PropertyBlockTraits>(notificationKey, modification);
 
 		// Act + Assert:
-		AssertValidationResult<test::BlockTraits>(ValidationResult::Success, CacheSeed::No, seedKey, notification);
+		AssertValidationResult<test::PropertyBlockTraits>(ValidationResult::Success, CacheSeed::No, seedKey, notification);
 	}
 
 	TEST(TEST_CLASS, SuccessWhenAccountIsKnown_Allow_Add_RelevantType) {
 		// Arrange:
 		auto key = test::GenerateRandomByteArray<Key>();
 		auto modification = model::PropertyModification<model::EntityType>{ Add, Relevant_Entity_Type };
-		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::AllowTraits>(key, modification);
+		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::PropertyAllowTraits>(key, modification);
 
 		// Act + Assert:
-		AssertValidationResult<test::AllowTraits>(ValidationResult::Success, CacheSeed::EmptyProperties, key, notification);
+		AssertValidationResult<test::PropertyAllowTraits>(ValidationResult::Success, CacheSeed::EmptyProperties, key, notification);
 	}
 
 	TEST(TEST_CLASS, SuccessWhenAccountIsKnown_Allow_Add_NotRelevantType_SeededRelevantType) {
 		// Arrange:
 		auto key = test::GenerateRandomByteArray<Key>();
 		auto modification = model::PropertyModification<model::EntityType>{ Add, RandomValue() };
-		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::AllowTraits>(key, modification);
+		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::PropertyAllowTraits>(key, modification);
 
 		// Act + Assert:
-		AssertValidationResult<test::AllowTraits>(ValidationResult::Success, CacheSeed::RelevantValue, key, notification);
+		AssertValidationResult<test::PropertyAllowTraits>(ValidationResult::Success, CacheSeed::RelevantValue, key, notification);
 	}
 
 	TEST(TEST_CLASS, SuccessWhenAccountIsKnown_Block_Add_NotRelevantType) {
 		// Arrange:
 		auto key = test::GenerateRandomByteArray<Key>();
 		auto modification = model::PropertyModification<model::EntityType>{ Add, RandomValue() };
-		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::BlockTraits>(key, modification);
+		auto notification = test::CreateNotification<TransactionTypePropertyTraits, test::PropertyBlockTraits>(key, modification);
 
 		// Act + Assert:
-		AssertValidationResult<test::BlockTraits>(ValidationResult::Success, CacheSeed::RandomValue, key, notification);
+		AssertValidationResult<test::PropertyBlockTraits>(ValidationResult::Success, CacheSeed::RandomValue, key, notification);
 	}
 
 	// endregion

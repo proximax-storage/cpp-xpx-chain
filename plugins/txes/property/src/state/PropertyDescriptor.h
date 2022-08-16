@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "src/model/PropertyTypes.h"
+#include "../model/PropertyTypes.h"
 #include "catapult/utils/Casting.h"
 
 namespace catapult { namespace state {

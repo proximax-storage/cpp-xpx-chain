@@ -49,6 +49,32 @@ namespace catapult { namespace cache {
 				return m_iterator == rhs.m_iterator;
 			}
 
+			const_iterator& operator++()
+			{
+				m_iterator = m_iterator.next();
+				return *this;
+			}
+
+			const_iterator operator++(int)
+			{
+				const_iterator iter = *this;
+				++(*this);
+				return iter;
+			}
+
+			const_iterator& operator--()
+			{
+				m_iterator = m_iterator.prev();
+				return *this;
+			}
+
+			const_iterator operator--(int)
+			{
+				const_iterator iter = *this;
+				--(*this);
+				return iter;
+			}
+
 			/// Returns \c true if this iterator and \a rhs are not equal.
 			bool operator!=(const const_iterator& rhs) const {
 				return !(*this == rhs);
@@ -118,6 +144,20 @@ namespace catapult { namespace cache {
 #if !defined(NDEBUG) && defined(_MSC_VER)
 #pragma warning(pop)
 #endif
+
+		const_iterator cbegin() const{
+			const_iterator iter;
+			TContainer::getIteratorAtStart(iter.dbIterator());
+			return iter;
+		}
+
+		const_iterator begin() const {
+			return cbegin();
+		}
+
+		const_iterator end() const{
+			return cend();
+		}
 
 		/// Finds element with \a key. Returns cend() if \a key has not been found.
 		const_iterator find(const KeyType& key) const {
