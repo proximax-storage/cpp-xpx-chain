@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 			if constexpr(std::is_same_v<TNotification, model::MosaicSupplyChangeNotification<2>>)
 			{
 				// if supply is forced to be immutable, do not allow change
-				if (properties.is(model::MosaicFlags::Supply_Force_Immutable))
+				if (properties.is(model::MosaicFlags::Supply_Force_Immutable) && entry.supply() != Amount())
 					return Failure_Mosaic_Supply_Immutable;
 			}
 			// only allow an "immutable" supply to change if the owner owns full supply
