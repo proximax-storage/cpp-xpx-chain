@@ -71,11 +71,6 @@ namespace catapult { namespace observers {
 		}
 
         struct CacheValues {
-		public:
-			CacheValues()
-			{}
-
-		public:
 			std::vector<state::BcDriveEntry> InitialBcDriveEntries;
 			std::vector<state::BcDriveEntry> ExpectedBcDriveEntries;
 			std::vector<state::ReplicatorEntry> InitialReplicatorEntries;
