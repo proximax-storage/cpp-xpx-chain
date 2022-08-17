@@ -12,6 +12,7 @@
 #include "catapult/utils/IntegerMath.h"
 #include "CommonEntities.h"
 #include <vector>
+#include <optional>
 
 namespace catapult { namespace state {
 

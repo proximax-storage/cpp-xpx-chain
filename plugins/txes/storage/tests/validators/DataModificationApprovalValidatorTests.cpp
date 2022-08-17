@@ -28,6 +28,14 @@ namespace catapult { namespace validators {
 		constexpr auto Meta_Files_Size = 50;
         constexpr auto Used_Drive_Size = 50;
 
+		auto CreateConfig() {
+			test::MutableBlockchainConfiguration config;
+			auto pluginConfig = config::StorageConfiguration::Uninitialized();
+			pluginConfig.MinReplicatorCount = Replicator_Count;
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return config.ToConst();
+		}
+
 		void PrepareDriveEntry(state::BcDriveEntry& driveEntry, const std::vector<crypto::KeyPair>& replicatorKeyPairs) {
 			for (const auto& pair : replicatorKeyPairs)
 				driveEntry.replicators().insert(pair.publicKey());
@@ -74,7 +82,7 @@ namespace catapult { namespace validators {
             auto pValidator = CreateDataModificationApprovalValidator();
             
             // Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, CreateConfig());
 
             // Assert:
             EXPECT_EQ(expectedResult, result);

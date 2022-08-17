@@ -10,6 +10,7 @@
 #include "catapult/utils/ArraySet.h"
 #include "catapult/utils/NonCopyable.h"
 #include <vector>
+#include <optional>
 
 namespace catapult { namespace cache { class CatapultCache; } }
 

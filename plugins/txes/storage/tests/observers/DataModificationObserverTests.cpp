@@ -23,7 +23,7 @@ namespace catapult { namespace observers {
         constexpr auto Current_Height = Height(10);
 		const auto Replicator_Key = test::GenerateRandomByteArray<Key>();
 		const auto Offboarding_Replicator_Key = test::GenerateRandomByteArray<Key>();
-		constexpr auto Min_Replicator_Count = 4;
+		constexpr auto Min_Replicator_Count = 1;
 		constexpr auto Shard_Size = 3;
 
 		auto CreateConfig() {
