@@ -21,7 +21,9 @@ namespace catapult { namespace observers {
         using Notification = model::DataModificationNotification<1>;
 
         constexpr auto Current_Height = Height(10);
-		const auto Replicator_Key = test::GenerateRandomByteArray<Key>();
+		const auto Replicator_Key_1 = test::GenerateRandomByteArray<Key>();
+		const auto Replicator_Key_2 = test::GenerateRandomByteArray<Key>();
+		const auto Replicator_Key_3 = test::GenerateRandomByteArray<Key>();
 		const auto Offboarding_Replicator_Key = test::GenerateRandomByteArray<Key>();
 		constexpr auto Min_Replicator_Count = 1;
 		constexpr auto Shard_Size = 3;
@@ -41,6 +43,8 @@ namespace catapult { namespace observers {
             public:
                 explicit BcDriveValues()
                     : Drive_Key(test::GenerateRandomByteArray<Key>())
+					, Replicators { Replicator_Key_1, Replicator_Key_2, Replicator_Key_3, Offboarding_Replicator_Key }
+					, Offboarding_Replicators { Offboarding_Replicator_Key }
                     , Active_Data_Modification {
                         state::ActiveDataModification(
                             test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(), 
@@ -50,14 +54,16 @@ namespace catapult { namespace observers {
             
             public:
                 Key Drive_Key;
+				utils::SortedKeySet Replicators;
+				std::vector<Key> Offboarding_Replicators;
                 std::vector<state::ActiveDataModification> Active_Data_Modification;
         };
 
         state::BcDriveEntry CreateInitialEntry(const BcDriveValues& values) {
             state::BcDriveEntry entry(values.Drive_Key);
 
-			entry.replicators() = { Replicator_Key, Offboarding_Replicator_Key };
-			entry.offboardingReplicators() = { Offboarding_Replicator_Key };
+			entry.replicators() = values.Replicators;
+			entry.offboardingReplicators() = values.Offboarding_Replicators;
 
             return entry;
         }
@@ -68,7 +74,11 @@ namespace catapult { namespace observers {
 			for (const auto &activeDataModification : values.Active_Data_Modification) {
 				entry.activeDataModifications().emplace_back(activeDataModification);
 			}
-			entry.replicators() = { Replicator_Key };
+			std::vector<Key> replicators(values.Replicators.size() - values.Offboarding_Replicators.size());
+			std::set_difference(values.Replicators.begin(), values.Replicators.end(),
+								values.Offboarding_Replicators.begin(), values.Offboarding_Replicators.end(),	// Must be sorted
+								replicators.begin());
+			entry.replicators() = std::set(replicators.begin(), replicators.end());
 			entry.offboardingReplicators() = {};
 
 			return entry;
@@ -91,7 +101,7 @@ namespace catapult { namespace observers {
             // Populate cache.
             bcDriveCache.insert(CreateInitialEntry(values));
 			accountCache.addAccount(values.Drive_Key, Current_Height);
-			for (const auto& replicatorKey : { Replicator_Key, Offboarding_Replicator_Key }) {
+			for (const auto& replicatorKey : values.Replicators) {
 				replicatorCache.insert(test::CreateReplicatorEntry(replicatorKey));
 				accountCache.addAccount(replicatorKey, Current_Height);
 			}

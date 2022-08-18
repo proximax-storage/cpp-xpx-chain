@@ -21,8 +21,17 @@ namespace catapult { namespace validators {
 
 		constexpr auto Current_Height = Height(10);
 		constexpr auto Shard_Size = 5;
+		constexpr auto Min_Replicator_Count = 4;
 		constexpr auto Required_Signatures_Count = Shard_Size * 2 / 3 + 1;
 		constexpr auto Common_Data_Size_Download_Approval = sizeof(Hash256) + sizeof(Hash256) + sizeof(uint16_t) + sizeof(bool);
+
+		auto CreateConfig() {
+			test::MutableBlockchainConfiguration config;
+			auto pluginConfig = config::StorageConfiguration::Uninitialized();
+			pluginConfig.MinReplicatorCount = Min_Replicator_Count;
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return (config.ToConst());
+		}
 
 		std::vector<crypto::KeyPair> CreateReplicatorKeyPairs(const uint16_t& replicatorCount = Shard_Size) {
 			std::vector<crypto::KeyPair> replicatorKeyPairs;
@@ -88,7 +97,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateDownloadApprovalValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, CreateConfig(), Current_Height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
