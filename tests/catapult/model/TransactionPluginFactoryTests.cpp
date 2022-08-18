@@ -32,7 +32,7 @@ namespace catapult { namespace model {
 		constexpr auto Mock_Transaction_Type = static_cast<EntityType>(0x4FFF);
 
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+		void Publish(const TTransaction& transaction, const PublishContext&, NotificationSubscriber& sub) {
 			// raise a notification dependent on the transaction data
 			sub.notify(test::CreateBlockNotification(transaction.Signer));
 		}
@@ -99,7 +99,7 @@ namespace catapult { namespace model {
 		mocks::MockTypedNotificationSubscriber<BlockNotification<1>> sub;
 
 		// Act:
-		pPlugin->publish(WeakEntityInfoT<typename TTraits::PluginTransactionType>(transaction, Height{0}), sub);
+		pPlugin->publish(WeakEntityInfoT<typename TTraits::PluginTransactionType>(transaction, Height{0}), test::detail::CreatePublishContext(transaction, Height(0)),  sub);
 
 		// Assert:
 		EXPECT_EQ(1u, sub.numNotifications());

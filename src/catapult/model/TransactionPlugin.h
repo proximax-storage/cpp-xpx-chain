@@ -53,6 +53,7 @@ namespace catapult { namespace model {
 	struct PublishContext {
 		/// Address of the published transaction signer.
 		Address SignerAddress;
+		Height AssociatedHeight;
 	};
 
 
@@ -80,14 +81,14 @@ namespace catapult { namespace model {
 		virtual utils::KeySet additionalRequiredCosigners(const EmbeddedTransaction& transaction, const config::BlockchainConfiguration& config) const = 0;
 
 		/// Sends all notifications from \a transaction to \a sub.
-		virtual void publish(const WeakEntityInfoT<EmbeddedTransaction>& transactionInfo, NotificationSubscriber& sub) const = 0;
+		virtual void publish(const WeakEntityInfoT<EmbeddedTransaction>& transactionInfo, const PublishContext& context, NotificationSubscriber& sub) const = 0;
 	};
 
 	/// A transaction plugin.
 	class TransactionPlugin : public TransactionPluginT<Transaction> {
 	public:
 		/// Sends all notifications from \a transactionInfo to \a sub.
-		virtual void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const = 0;
+		virtual void publish(const WeakEntityInfoT<Transaction>& transactionInfo, const PublishContext& context, NotificationSubscriber& sub) const = 0;
 
 		/// Extracts the primary data buffer from \a transaction that is used for signing and basic hashing.
 		virtual RawBuffer dataBuffer(const Transaction& transaction) const = 0;

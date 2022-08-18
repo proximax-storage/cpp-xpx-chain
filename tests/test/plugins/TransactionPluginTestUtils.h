@@ -19,7 +19,8 @@
 **/
 
 #pragma once
-#include <tests/test/core/mocks/MockNotificationSubscriber.h>
+#include "catapult/model/Address.h"
+#include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "plugins/txes/aggregate/src/plugins/AggregateCommon.h"
@@ -29,6 +30,15 @@ namespace catapult { namespace test {
 
 	// region utils
 
+	namespace detail {
+		template<typename TTransaction>
+		model::PublishContext CreatePublishContext(const TTransaction& transaction, Height height) {
+			model::PublishContext context;
+			context.SignerAddress = model::PublicKeyToAddress(transaction.Signer, transaction.Network());
+			context.AssociatedHeight = height;
+			return context;
+		}
+	}
 	/// Extracts an embedded transaction plugin from a transaction plugin (\a pPlugin).
 	template<typename TTransactionPlugin>
 	auto ExtractEmbeddedPlugin(std::unique_ptr<TTransactionPlugin>&& pPlugin) {
@@ -44,20 +54,20 @@ namespace catapult { namespace test {
 	/// Publishes \a transaction notifications to \a sub using \a plugin.
 	template<typename TTransactionPlugin>
 	void PublishTransaction(const TTransactionPlugin& plugin, const model::Transaction& transaction, model::NotificationSubscriber& sub) {
-		plugin.publish(model::WeakEntityInfoT<model::Transaction>(transaction, Height{0}), sub);
+		plugin.publish(model::WeakEntityInfoT<model::Transaction>(transaction, Height{0}), detail::CreatePublishContext(transaction, Height(0)), sub);
 	}
 
 	/// Publishes embedded \a transaction notifications to \a sub using \a plugin.
 	template<typename TTransactionPlugin>
 	void PublishTransaction(const TTransactionPlugin& plugin, const model::EmbeddedTransaction& transaction, model::NotificationSubscriber& sub) {
 		Timestamp deadline;
-		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(plugins::ConvertEmbeddedTransaction(transaction, deadline, sub.mempool()), Height{0}), sub);
+		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(plugins::ConvertEmbeddedTransaction(transaction, deadline, sub.mempool()), Height{0}), detail::CreatePublishContext(transaction, Height(0)),  sub);
 	}
 
 	/// Publishes \a transactionInfo to \a sub using \a plugin.
 	template<typename TTransactionPlugin>
 	void PublishTransaction(const TTransactionPlugin& plugin, const model::WeakEntityInfoT<model::Transaction>& transactionInfo, model::NotificationSubscriber& sub) {
-		plugin.publish(transactionInfo, sub);
+		plugin.publish(transactionInfo, detail::CreatePublishContext(transactionInfo.entity(), transactionInfo.associatedHeight()), sub);
 	}
 
 	/// Publishes \a transactionInfo to \a sub using \a plugin.
@@ -65,7 +75,7 @@ namespace catapult { namespace test {
 	void PublishTransaction(const TTransactionPlugin& plugin, const model::WeakEntityInfoT<model::EmbeddedTransaction>& transactionInfo, model::NotificationSubscriber& sub) {
 		Timestamp deadline;
 		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(
-				plugins::ConvertEmbeddedTransaction(transactionInfo.entity(), deadline, sub.mempool()), transactionInfo.associatedHeight()), sub);
+				plugins::ConvertEmbeddedTransaction(transactionInfo.entity(), deadline, sub.mempool()), transactionInfo.associatedHeight()), detail::CreatePublishContext(transactionInfo.entity(), transactionInfo.associatedHeight()), sub);
 	}
 
 	// endregion
@@ -326,6 +336,13 @@ namespace catapult { namespace test {
 		}
 
 	public:
+		template<typename TTransaction>
+		static model::PublishContext CreatePublishContext(const TTransaction& transaction, Height height) {
+			model::PublishContext context;
+			context.SignerAddress = model::PublicKeyToAddress(transaction.Signer, transaction.Network());
+			context.AssociatedHeight = height;
+			return context;
+		}
 		class PublishTestBuilder {
 		public:
 			template<typename TNotification>
@@ -373,19 +390,18 @@ namespace catapult { namespace test {
 
 	private:
 
-
 		static void PublishTransaction(
 				const model::TransactionPlugin& plugin,
 				const TransactionType& transaction,
 				model::NotificationSubscriber& sub) {
-			plugin.publish(catapult::model::WeakEntityInfoT<catapult::model::Transaction>( transaction, Hash256(), Height(1) ), sub);
+			plugin.publish(catapult::model::WeakEntityInfoT<catapult::model::Transaction>( transaction, Hash256(), Height(1) ), detail::CreatePublishContext(transaction, Height(1)),sub);
 		}
 
 		static void PublishTransaction(
 				const model::TransactionPlugin& plugin,
 				const model::WeakEntityInfoT<model::Transaction>& transactionInfo,
 				model::NotificationSubscriber& sub) {
-			plugin.publish(transactionInfo, sub);
+			plugin.publish(transactionInfo, detail::CreatePublishContext(transactionInfo.entity(), transactionInfo.associatedHeight()), sub);
 		}
 
 		static void PublishTransaction(
@@ -394,7 +410,7 @@ namespace catapult { namespace test {
 				model::NotificationSubscriber& sub) {
 			Timestamp deadline;
 			plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(
-					plugins::ConvertEmbeddedTransaction(transaction, deadline, sub.mempool()), Height(1)), sub);
+					plugins::ConvertEmbeddedTransaction(transaction, deadline, sub.mempool()), Height(1)), detail::CreatePublishContext(transaction, Height(1)), sub);
 		}
 	};
 }}

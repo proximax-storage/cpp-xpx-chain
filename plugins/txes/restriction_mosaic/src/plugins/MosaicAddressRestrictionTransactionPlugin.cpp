@@ -33,7 +33,7 @@ namespace catapult { namespace plugins {
 		constexpr uint8_t Mosaic_Flags_Restrictable = 0x04;
 
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const Height& context, NotificationSubscriber& sub) {
+		void Publish(const TTransaction& transaction, const PublishContext& context, NotificationSubscriber& sub) {
 			// conceptually, mosaic restrictions are mosaic, not account, settings
 			// don't raise AddressInteractionNotification between Signer and TargetAddress because mosaic owner always needs to
 			// be able to restrict or allow mosaic usage by *any* account

@@ -116,7 +116,7 @@ namespace catapult { namespace plugins {
 			});
 			builder.template addExpectation<typename TTraits::ModifyAccountRestrictionsNotification>([&transaction](
 					const auto& notification) {
-				EXPECT_EQ(transaction.Signer, notification.Signer);
+				EXPECT_EQ(model::PublicKeyToAddress(transaction.Signer, transaction.Network()), notification.SignerAddress);
 				EXPECT_EQ(transaction.RestrictionFlags, notification.AccountRestrictionDescriptor.raw());
 				EXPECT_EQ(transaction.RestrictionAdditionsCount, notification.RestrictionAdditionsCount);
 				// Temporary fix for incomplete pointer comparison. If pointers are compared, embedded transactions would fail as they are memcopied when tested due to conversion from embedded to extended embedded to add deadline
@@ -187,7 +187,7 @@ namespace catapult { namespace plugins {
 			for (auto i = 0u; i < 3; ++i) {
 				builder.template addExpectation<typename TTraits::ModifyAccountRestrictionValueNotification>(i, [&transaction, i](
 						const auto& notification) {
-					EXPECT_EQ(transaction.Signer, notification.Signer);
+				 	EXPECT_EQ(model::PublicKeyToAddress(transaction.Signer, transaction.Network()), notification.SignerAddress);
 					EXPECT_EQ(transaction.RestrictionFlags, notification.AccountRestrictionDescriptor.raw());
 					EXPECT_EQ(transaction.RestrictionAdditionsPtr()[i], notification.RestrictionValue);
 					EXPECT_EQ(AccountRestrictionModificationAction::Add, notification.Action);
@@ -197,7 +197,7 @@ namespace catapult { namespace plugins {
 			for (auto i = 0u; i < 2; ++i) {
 				builder.template addExpectation<typename TTraits::ModifyAccountRestrictionValueNotification>(3 + i, [&transaction, i](
 						const auto& notification) {
-					EXPECT_EQ(transaction.Signer, notification.Signer);
+				  	EXPECT_EQ(model::PublicKeyToAddress(transaction.Signer, transaction.Network()), notification.SignerAddress);
 					EXPECT_EQ(transaction.RestrictionFlags, notification.AccountRestrictionDescriptor.raw());
 					EXPECT_EQ(transaction.RestrictionDeletionsPtr()[i], notification.RestrictionValue);
 					EXPECT_EQ(AccountRestrictionModificationAction::Del, notification.Action);

@@ -21,6 +21,7 @@
 #include "AggregateTransactionPlugin.h"
 #include "src/config/AggregateConfiguration.h"
 #include "src/model/AggregateNotifications.h"
+#include "catapult/model/Address.h"
 #include "src/model/AggregateTransaction.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/model/NotificationSubscriber.h"
@@ -68,7 +69,7 @@ namespace catapult { namespace plugins {
 						: std::numeric_limits<uint64_t>::max();
 			}
 
-			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override;
+			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, const PublishContext& context, NotificationSubscriber& sub) const override;
 
 			RawBuffer dataBuffer(const Transaction& transaction) const override {
 				const auto& aggregate = CastToDerivedType<TDescriptor>(transaction);
@@ -116,6 +117,7 @@ namespace catapult { namespace plugins {
 	template<>
 	void AggregateTransactionPlugin<AggregateTransactionRawDescriptor>::publish(
 			const WeakEntityInfoT<Transaction>& transactionInfo,
+			const PublishContext& context,
 			NotificationSubscriber& sub) const {
 		const auto& aggregate = CastToDerivedType<AggregateTransactionRawDescriptor>(transactionInfo.entity());
 		auto numTransactions = static_cast<uint32_t>(
@@ -173,7 +175,11 @@ namespace catapult { namespace plugins {
 					ConvertEmbeddedTransaction(subTransaction, aggregate.Deadline, sub.mempool()),
 					transactionInfo.associatedHeight()
 				};
-				plugin.publish(subTransactionInfo, sub);
+
+				PublishContext subContext;
+				subContext.SignerAddress =  model::PublicKeyToAddress(subTransaction.Signer, subTransaction.Network());
+				subContext.AssociatedHeight = subTransactionInfo.associatedHeight();
+				plugin.publish(subTransactionInfo, subContext, sub);
 			}
 
 			// publish all cosigner information (as an optimization these are published with the source of the last
@@ -200,6 +206,7 @@ namespace catapult { namespace plugins {
 	template<>
 	void AggregateTransactionPlugin<AggregateTransactionExtendedDescriptor>::publish(
 			const WeakEntityInfoT<Transaction>& transactionInfo,
+			const PublishContext& context,
 			NotificationSubscriber& sub) const {
 		const auto& aggregate = CastToDerivedType<AggregateTransactionExtendedDescriptor>(transactionInfo.entity());
 		auto numTransactions = static_cast<uint32_t>(
@@ -244,7 +251,11 @@ namespace catapult { namespace plugins {
 						ConvertEmbeddedTransaction(subTransaction, aggregate.Deadline, sub.mempool()),
 						transactionInfo.associatedHeight()
 				};
-				plugin.publish(subTransactionInfo, sub);
+
+				PublishContext subContext;
+				subContext.SignerAddress =  model::PublicKeyToAddress(subTransaction.Signer, subTransaction.Network());
+				subContext.AssociatedHeight = subTransactionInfo.associatedHeight();
+				plugin.publish(subTransactionInfo, subContext, sub);
 			}
 
 			// publish all cosigner information (as an optimization these are published with the source of the last

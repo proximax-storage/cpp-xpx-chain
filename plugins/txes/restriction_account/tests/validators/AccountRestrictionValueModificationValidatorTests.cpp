@@ -112,7 +112,7 @@ namespace catapult { namespace validators {
 				const typename TRestrictionValueTraits::UnresolvedValueType& restrictionValue,
 				model::AccountRestrictionModificationAction action) {
 			return test::CreateAccountRestrictionValueNotification<TRestrictionValueTraits, TOperationTraits>(
-					key,
+					model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero),
 					restrictionValue,
 					action);
 		}
@@ -195,7 +195,7 @@ namespace catapult { namespace validators {
 				const typename TRestrictionValueTraits::UnresolvedValueType& restrictionValue,
 				model::AccountRestrictionModificationAction action) {
 			return typename TRestrictionValueTraits::NotificationType(
-					key,
+					model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero),
 					TOperationTraits::OppositeCompleteAccountRestrictionFlags(TRestrictionValueTraits::Restriction_Flags),
 					restrictionValue,
 					action);

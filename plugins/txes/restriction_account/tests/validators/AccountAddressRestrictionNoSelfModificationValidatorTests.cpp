@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
 				UnresolvedAddress restrictionValue) {
 			// Arrange:
 			model::ModifyAccountAddressRestrictionValueNotification notification(
-					key,
+					model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero),
 					model::AccountRestrictionFlags::Address,
 					restrictionValue,
 					action);

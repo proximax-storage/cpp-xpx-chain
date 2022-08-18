@@ -14,7 +14,7 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber&) {
+		void Publish(const TTransaction& transaction, const PublishContext&, NotificationSubscriber&) {
 			switch (transaction.EntityVersion()) {
 				case 1: {
 					// Noop

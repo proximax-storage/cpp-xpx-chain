@@ -21,7 +21,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		auto CreatePublisher(const config::ImmutableConfiguration& config) {
-			return [config](const TTransaction &transaction, const Height&, NotificationSubscriber &sub) {
+			return [config](const TTransaction &transaction, const PublishContext&, NotificationSubscriber &sub) {
 				switch (transaction.EntityVersion()) {
 					case 1: {
 						sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));

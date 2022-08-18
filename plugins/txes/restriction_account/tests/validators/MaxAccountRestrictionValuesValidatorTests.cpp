@@ -92,7 +92,7 @@ namespace catapult { namespace validators {
 
 			auto pValidator = TRestrictionValueTraits::CreateValidator(maxAccountRestrictionValues);
 			auto notification = test::CreateAccountRestrictionsNotification<TRestrictionValueTraits>(
-					source,
+					model::PublicKeyToAddress(source, model::NetworkIdentifier::Zero),
 					restrictionAdditions,
 					restrictionDeletions);
 

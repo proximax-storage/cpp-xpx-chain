@@ -13,7 +13,7 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+		void Publish(const TTransaction& transaction, const PublishContext&, NotificationSubscriber& sub) {
 			EndOperationPublisher(transaction, sub, "EndOperationTransaction");
 
 			switch (transaction.EntityVersion()) {

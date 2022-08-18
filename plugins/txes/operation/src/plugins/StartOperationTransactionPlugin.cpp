@@ -14,7 +14,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		auto CreatePublisher(const config::ImmutableConfiguration& config) {
-			return [config](const TTransaction &transaction, const Height&, NotificationSubscriber &sub) {
+			return [config](const TTransaction &transaction, const PublishContext&, NotificationSubscriber &sub) {
 				StartOperationPublisher(transaction, sub, config.GenerationHash, "StartOperationTransaction",
 					transaction.ExecutorsPtr(), transaction.ExecutorCount, transaction.Duration);
 

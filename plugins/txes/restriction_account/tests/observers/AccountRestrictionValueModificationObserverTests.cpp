@@ -108,7 +108,7 @@ namespace catapult { namespace observers {
 			auto modification = modificationFactory(values);
 			auto unresolvedRestrictionValue = TRestrictionValueTraits::Unresolve(modification.second);
 			auto notification = test::CreateAccountRestrictionValueNotification<TRestrictionValueTraits, TOperationTraits>(
-					key,
+					model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero),
 					unresolvedRestrictionValue,
 					modification.first);
 			auto pObserver = TRestrictionValueTraits::CreateObserver();
@@ -153,7 +153,7 @@ namespace catapult { namespace observers {
 			}
 
 			model::ModifyAccountAddressRestrictionValueNotification notification(
-					key,
+					model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero),
 					TOperationTraits::CompleteAccountRestrictionFlags(model::AccountRestrictionFlags::Address),
 					unresolvedFilteredAddress,
 					NotifyMode::Commit == notifyMode ? Del : Add);

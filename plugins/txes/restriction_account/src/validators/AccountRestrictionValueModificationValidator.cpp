@@ -38,12 +38,11 @@ namespace catapult { namespace validators {
 
 		template<typename TRestrictionValue, typename TNotification>
 		ValidationResult Validate(const TNotification& notification, const ValidatorContext& context) {
-			const auto& address = model::PublicKeyToAddress(notification.Signer, context.NetworkIdentifier);
 			const auto& cache = context.Cache.sub<cache::AccountRestrictionCache>();
-			if (!cache.contains(address))
+			if (!cache.contains(notification.SignerAddress))
 				return ValidationResult::Success;
 
-			auto restrictionsIter = cache.find(address);
+			auto restrictionsIter = cache.find(notification.SignerAddress);
 			const auto& restrictions = restrictionsIter.get();
 			auto restrictionFlags = notification.AccountRestrictionDescriptor.directionalRestrictionFlags();
 			const auto& restriction = restrictions.restriction(restrictionFlags);

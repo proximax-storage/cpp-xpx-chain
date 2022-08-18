@@ -147,7 +147,7 @@ namespace catapult { namespace mocks {
 			{}
 
 		public:
-			void publish(const WeakEntityInfoT<EmbeddedTransaction>& transaction, NotificationSubscriber& sub) const override {
+			void publish(const WeakEntityInfoT<EmbeddedTransaction>& transaction, const PublishContext& context, NotificationSubscriber& sub) const override {
 				Publish(static_cast<const ExtendedEmbeddedMockTransaction&>(transaction.entity()), m_options, sub);
 			}
 
@@ -171,7 +171,7 @@ namespace catapult { namespace mocks {
 			}
 
 		public:
-			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override {
+			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, const PublishContext& context,NotificationSubscriber& sub) const override {
 				Publish(static_cast<const MockTransaction&>(transactionInfo.entity()), m_options, sub);
 
 				// raise a custom notification that includes the provided hash

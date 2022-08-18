@@ -106,7 +106,7 @@ namespace catapult { namespace validators {
 				model::AccountRestrictionModificationAction action,
 				const model::EntityType& restrictionValue) {
 			return test::CreateAccountRestrictionValueNotification<AccountOperationRestrictionTraits, TOperationTraits>(
-					key,
+					model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero),
 					restrictionValue,
 					action);
 		}

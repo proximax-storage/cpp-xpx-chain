@@ -19,8 +19,8 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder> &pConfigHolder) {
-			return [pConfigHolder](const TTransaction &transaction, const Height &associatedHeight, NotificationSubscriber &sub) {
-				auto &blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
+			return [pConfigHolder](const TTransaction &transaction, const PublishContext &context, NotificationSubscriber &sub) {
+				auto &blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(context.AssociatedHeight);
 				switch (transaction.EntityVersion()) {
 					case 1: {
 					    sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));

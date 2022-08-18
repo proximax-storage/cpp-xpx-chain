@@ -65,7 +65,7 @@ namespace catapult { namespace validators {
 			auto values = test::GenerateUniqueRandomDataVector<typename TRestrictionValueTraits::UnresolvedValueType>(5);
 			auto modifications = modificationsFactory(values);
 			auto notification = test::CreateAccountRestrictionsNotification<TRestrictionValueTraits>(
-					key,
+					model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero),
 					modifications.first,
 					modifications.second);
 			auto cache = test::AccountRestrictionCacheFactory::Create();

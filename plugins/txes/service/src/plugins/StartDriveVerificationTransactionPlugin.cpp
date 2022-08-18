@@ -22,7 +22,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-			return [pConfigHolder](const TTransaction &transaction, const Height& associatedHeight, NotificationSubscriber &sub) {
+			return [pConfigHolder](const TTransaction &transaction, const PublishContext& context, NotificationSubscriber &sub) {
 				switch (transaction.EntityVersion()) {
 					case 1: {
 						sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
@@ -32,7 +32,7 @@ namespace catapult { namespace plugins {
 							transaction.Signer
 						));
 
-						const auto& config = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
+						const auto& config = pConfigHolder->ConfigAtHeightOrLatest(context.AssociatedHeight);
 						const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ServiceConfiguration>();
 
 						UnresolvedMosaic storageMosaic{config::GetUnresolvedStorageMosaicId(config.Immutable), pluginConfig.VerificationFee};

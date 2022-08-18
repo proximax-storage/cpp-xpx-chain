@@ -44,7 +44,7 @@ namespace catapult { namespace validators {
 				return !(isAllow && isRelevantEntityType);
 
 			size_t numRestrictionValues = 0;
-			if (view.initialize(model::PublicKeyToAddress(notification.Signer, context.NetworkIdentifier))) {
+			if (view.initialize(notification.SignerAddress)) {
 				const auto& restriction = view.get(Restriction_Flags);
 				numRestrictionValues = restriction.values().size();
 			}

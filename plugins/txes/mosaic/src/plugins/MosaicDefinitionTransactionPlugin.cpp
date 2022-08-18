@@ -52,8 +52,8 @@ namespace catapult { namespace plugins {
 
 		template<typename TTransaction>
 		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-			return [pConfigHolder](const TTransaction& transaction, const Height& associatedHeight, NotificationSubscriber& sub) {
-				const auto& blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
+			return [pConfigHolder](const TTransaction& transaction, const PublishContext& context, NotificationSubscriber& sub) {
+				const auto& blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(context.AssociatedHeight);
 				const auto& pluginConfig = blockChainConfig.Network.GetPluginConfiguration<config::MosaicConfiguration>();
 				const auto& immutableConfig = blockChainConfig.Immutable;
 				auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(immutableConfig);

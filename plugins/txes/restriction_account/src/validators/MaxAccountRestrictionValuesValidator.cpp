@@ -34,13 +34,11 @@ namespace catapult { namespace validators {
 				const ValidatorContext& context) {
 			if (maxAccountRestrictionValues < notification.RestrictionAdditionsCount + notification.RestrictionDeletionsCount)
 				return Failure_RestrictionAccount_Modification_Count_Exceeded;
-
-			const auto& address = model::PublicKeyToAddress(notification.Signer, context.NetworkIdentifier);
 			const auto& cache = context.Cache.sub<cache::AccountRestrictionCache>();
-			if (!cache.contains(address))
+			if (!cache.contains(notification.SignerAddress))
 				return ValidationResult::Success;
 
-			auto restrictionsIter = cache.find(address);
+			auto restrictionsIter = cache.find(notification.SignerAddress);
 			const auto& restrictions = restrictionsIter.get();
 			auto restrictionFlags = notification.AccountRestrictionDescriptor.directionalRestrictionFlags();
 			const auto& restriction = restrictions.restriction(restrictionFlags);

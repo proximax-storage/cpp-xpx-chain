@@ -18,7 +18,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder) {
-			return [configHolder](const TTransaction &transaction, const Height& associatedHeight, NotificationSubscriber &sub) {
+			return [configHolder](const TTransaction &transaction, const PublishContext& context, NotificationSubscriber &sub) {
 				switch (transaction.EntityVersion()) {
 					case 1: {
 						sub.notify(AccountPublicKeyNotification<1>(transaction.SuperContract));
@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 						CATAPULT_LOG(debug) << "invalid version of StartExecuteTransaction: " << transaction.EntityVersion();
 				}
 
-				const auto& config = configHolder->Config(associatedHeight);
+				const auto& config = configHolder->Config(context.AssociatedHeight);
 				auto operationDuration = config.Network.GetPluginConfiguration<config::OperationConfiguration>().MaxOperationDuration;
 				StartOperationPublisher(transaction, sub, config.Immutable.GenerationHash, "StartExecuteTransaction", &transaction.SuperContract, 1,
 					operationDuration.blocks(config.Network.BlockGenerationTargetTime));

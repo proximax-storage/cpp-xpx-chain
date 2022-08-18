@@ -22,7 +22,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		auto CreatePublisher(const NetworkIdentifier& networkIdentifier) {
-			return [networkIdentifier](const TTransaction &transaction, const Height&, NotificationSubscriber &sub) {
+			return [networkIdentifier](const TTransaction &transaction, const PublishContext&, NotificationSubscriber &sub) {
 				switch (transaction.EntityVersion()) {
 					case 1: {
 						sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));

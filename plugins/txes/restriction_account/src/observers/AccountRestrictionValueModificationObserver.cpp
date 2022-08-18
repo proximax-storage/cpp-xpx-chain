@@ -45,12 +45,11 @@ namespace catapult { namespace observers {
 		template<typename TNotification>
 		void ObserveNotification(const TNotification& notification, const ObserverContext& context) {
 			auto& restrictionCache = context.Cache.sub<cache::AccountRestrictionCache>();
-			const auto& address = model::PublicKeyToAddress(notification.Signer, context.Config.Immutable.NetworkIdentifier);
 
-			auto restrictionsIter = restrictionCache.find(address);
+			auto restrictionsIter = restrictionCache.find(notification.SignerAddress);
 			if (!restrictionsIter.tryGet()) {
-				restrictionCache.insert(state::AccountRestrictions(address));
-				restrictionsIter = restrictionCache.find(address);
+				restrictionCache.insert(state::AccountRestrictions(notification.SignerAddress));
+				restrictionsIter = restrictionCache.find(notification.SignerAddress);
 			}
 
 			auto& restrictions = restrictionsIter.get();
@@ -67,7 +66,7 @@ namespace catapult { namespace observers {
 				restriction.block(rawModification);
 
 			if (restrictions.isEmpty())
-				restrictionCache.remove(address);
+				restrictionCache.remove(notification.SignerAddress);
 		}
 	}
 

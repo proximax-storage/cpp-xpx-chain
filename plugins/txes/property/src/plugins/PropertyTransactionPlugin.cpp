@@ -56,7 +56,7 @@ namespace catapult { namespace plugins {
 		class Publisher {
 		public:
 			template<typename TTransaction>
-			static void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+			static void Publish(const TTransaction& transaction, const PublishContext&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
 					sub.notify(PropertyTypeNotification<1>(transaction.PropertyType));

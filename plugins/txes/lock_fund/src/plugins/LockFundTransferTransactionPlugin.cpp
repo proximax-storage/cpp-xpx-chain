@@ -16,7 +16,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		constexpr uint8_t Mosaic_Flags_Lockable = 0x10;
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+		void Publish(const TTransaction& transaction, const PublishContext&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1: {
 				sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));

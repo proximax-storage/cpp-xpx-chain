@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 	DEFINE_STATEFUL_VALIDATOR(AccountAddressRestrictionNoSelfModification, [](
 			const Notification& notification,
 			const ValidatorContext& context) {
-		return model::PublicKeyToAddress(notification.Signer, context.NetworkIdentifier) != context.Resolvers.resolve(notification.RestrictionValue)
+		return notification.SignerAddress != context.Resolvers.resolve(notification.RestrictionValue)
 				? ValidationResult::Success
 				: Failure_RestrictionAccount_Invalid_Modification_Address;
 	})

@@ -103,12 +103,12 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer, \a restrictionFlags, \a restrictionValue and \a action.
 		ModifyAccountRestrictionValueNotification(
-				const Key& signer,
+				const Address& address,
 				AccountRestrictionFlags restrictionFlags,
 				const TRestrictionValue& restrictionValue,
 				AccountRestrictionModificationAction action)
 				: Notification(Notification_Type, sizeof(ModifyAccountRestrictionValueNotification))
-				, Signer(signer)
+				, SignerAddress(address)
 				, AccountRestrictionDescriptor(restrictionFlags)
 				, RestrictionValue(restrictionValue)
 				, Action(action)
@@ -116,7 +116,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Account's address.
-		Key Signer;
+		Address SignerAddress;
 
 		/// Account restriction descriptor.
 		state::AccountRestrictionDescriptor AccountRestrictionDescriptor;
@@ -150,14 +150,14 @@ namespace catapult { namespace model {
 		/// Creates a notification around \a address, \a restrictionFlags, \a restrictionAdditionsCount, \a pRestrictionAdditions,
 		/// \a restrictionDeletionsCount and \a pRestrictionDeletions.
 		ModifyAccountRestrictionsNotification(
-				const Key& signer,
+				const Address& address,
 				AccountRestrictionFlags restrictionFlags,
 				uint8_t restrictionAdditionsCount,
 				const TRestrictionValue* pRestrictionAdditions,
 				uint8_t restrictionDeletionsCount,
 				const TRestrictionValue* pRestrictionDeletions)
 				: Notification(Notification_Type, sizeof(ModifyAccountRestrictionsNotification))
-				, Signer(signer)
+				, SignerAddress(address)
 				, AccountRestrictionDescriptor(restrictionFlags)
 				, RestrictionAdditionsCount(restrictionAdditionsCount)
 				, RestrictionAdditionsPtr(pRestrictionAdditions)
@@ -167,7 +167,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Account's address.
-		Key Signer;
+		Address SignerAddress;
 
 		/// Account restriction descriptor.
 		state::AccountRestrictionDescriptor AccountRestrictionDescriptor;
