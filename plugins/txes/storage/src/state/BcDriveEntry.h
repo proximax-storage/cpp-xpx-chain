@@ -96,18 +96,18 @@ namespace catapult { namespace state {
 	};
 
 	struct ConfirmedStorageInfo {
-		Timestamp m_timeInConfirmedStorage = Timestamp(0);
-		std::optional<Timestamp> m_confirmedStorageSince;
+		Timestamp TimeInConfirmedStorage = Timestamp(0);
+		std::optional<Timestamp> ConfirmedStorageSince;
 	};
 
 	struct ModificationShardInfo {
-		std::map<Key, uint64_t> m_actualShardMembers;
-		std::map<Key, uint64_t> m_formerShardMembers;
-		uint64_t m_ownerUpload = 0;
+		std::map<Key, uint64_t> ActualShardMembers;
+		std::map<Key, uint64_t> FormerShardMembers;
+		uint64_t OwnerUpload = 0;
 
 		std::set<Key> getActualShardMembersKeys() {
 			std::set<Key> keys;
-			for (const auto& [key, _]: m_actualShardMembers) {
+			for (const auto& [key, _]: ActualShardMembers) {
 				keys.insert(key);
 			}
 		};
@@ -251,15 +251,25 @@ namespace catapult { namespace state {
 			return m_replicators;
 		}
 
+		/// Gets former replicators.
+		const utils::SortedKeySet& formerReplicators() const {
+			return m_formerReplicators;
+		}
+
+		/// Gets former replicators.
+		utils::SortedKeySet& formerReplicators() {
+			return m_formerReplicators;
+		}
+
 		/// Gets replicators that applied for offboarding.
 		/// Must be a subset of \a m_replicators.
-		const utils::SortedKeySet& offboardingReplicators() const {
+		const std::vector<Key>& offboardingReplicators() const {
 			return m_offboardingReplicators;
 		}
 
 		/// Gets replicators that applied for offboarding.
 		/// Must be a subset of \a m_replicators.
-		utils::SortedKeySet& offboardingReplicators() {
+		std::vector<Key>& offboardingReplicators() {
 			return m_offboardingReplicators;
 		}
 
@@ -358,7 +368,8 @@ namespace catapult { namespace state {
 		CompletedDataModifications m_completedDataModifications;
 		SizeMap m_confirmedUsedSizeMap;
 		utils::SortedKeySet m_replicators;
-		utils::SortedKeySet m_offboardingReplicators;
+		utils::SortedKeySet m_formerReplicators;
+		std::vector<Key> m_offboardingReplicators;
 		std::optional<Verification> m_verification;
 		ConfirmedStates m_confirmedStates;
 		ConfirmedStorageInfos m_confirmedStoragePeriods;

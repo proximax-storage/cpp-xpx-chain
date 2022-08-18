@@ -31,16 +31,15 @@ namespace catapult { namespace observers {
 		}
 
 		for (auto& [key, info]: driveEntry.confirmedStorageInfos()) {
-			if (info.m_confirmedStorageSince) {
-				info.m_timeInConfirmedStorage = info.m_timeInConfirmedStorage
-												+ context.Timestamp - *info.m_confirmedStorageSince;
+			if (info.ConfirmedStorageSince) {
+				info.TimeInConfirmedStorage = info.TimeInConfirmedStorage + context.Timestamp - *info.ConfirmedStorageSince;
 			}
-			info.m_confirmedStorageSince.reset();
+			info.ConfirmedStorageSince.reset();
 		}
 
 		for(int i = 0; i < notification.JudgingKeysCount + notification.OverlappingKeysCount; i++) {
 			const auto& key = notification.PublicKeysPtr[i];
-			driveEntry.confirmedStorageInfos()[key].m_confirmedStorageSince = context.Timestamp;
+			driveEntry.confirmedStorageInfos()[key].ConfirmedStorageSince = context.Timestamp;
 		}
 
 		const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;

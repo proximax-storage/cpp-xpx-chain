@@ -23,6 +23,7 @@ namespace catapult { namespace notification_handlers {
 			else {
 				// Replicator could be assigned to some of our Drives, Download Channels, Shards
 				pReplicatorService->anotherReplicatorOnboarded(notification.PublicKey);
+				pReplicatorService->maybeRestart();
 			}
 		});
 	}

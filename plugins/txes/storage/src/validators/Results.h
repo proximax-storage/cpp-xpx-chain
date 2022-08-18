@@ -162,17 +162,20 @@ namespace catapult { namespace validators {
 	/// Desired download size is greater than maximal.
 	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 49);
 
+	/// Desired download size is less than minimal.
+	DEFINE_STORAGE_RESULT(Download_Size_Insufficient, 50);
+
 	/// Number of signatures in opinion-based multisignature transaction is less than minimal.
-	DEFINE_STORAGE_RESULT(Signature_Count_Insufficient, 50);
+	DEFINE_STORAGE_RESULT(Signature_Count_Insufficient, 51);
 
 	/// The replicator has already applied for offboarding from the drive.
-	DEFINE_STORAGE_RESULT(Already_Applied_For_Offboarding, 51);
+	DEFINE_STORAGE_RESULT(Already_Applied_For_Offboarding, 52);
 
 	/// The replicator has already applied for offboarding from the drive.
-	DEFINE_STORAGE_RESULT(Already_Initiated_Channel_Closure, 52);
+	DEFINE_STORAGE_RESULT(Already_Initiated_Channel_Closure, 53);
 
 	/// Download channels is finished
-	DEFINE_STORAGE_RESULT(Download_Channel_Is_Finished, 53);
+	DEFINE_STORAGE_RESULT(Download_Channel_Is_Finished, 54);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

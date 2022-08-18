@@ -43,12 +43,24 @@ namespace catapult { namespace state {
 			const auto& driveEntry = driveIter.get();
 
 			if (driveEntry.verification()) {
+
+				auto modificationIdIt = std::find_if(
+						driveEntry.completedDataModifications().rbegin(),
+						driveEntry.completedDataModifications().rend(), [] (const auto& item) {
+							return item.State == state::DataModificationState::Succeeded;
+						});
+
+				if ( modificationIdIt == driveEntry.completedDataModifications().rend() ) {
+					CATAPULT_LOG( error ) << "Verification Without Successful Modification";
+					return {};
+				}
+
 				const auto& verification = *driveEntry.verification();
 				return DriveVerification{driveKey,
 				    verification.Duration,
 					verification.expired(blockTimestamp),
 					verification.VerificationTrigger,
-				   	driveEntry.rootHash(),
+				   	modificationIdIt->Id,
 					verification.Shards};
 			}
 
@@ -153,7 +165,7 @@ namespace catapult { namespace state {
     	const auto& driveEntry = driveIter.get();
     	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
     	std::vector<Key> keys;
-		for (const auto& [key, _]: shard.m_actualShardMembers) {
+		for (const auto& [key, _]: shard.ActualShardMembers) {
 			keys.push_back(key);
 		}
 		return keys;
@@ -165,7 +177,7 @@ namespace catapult { namespace state {
     	const auto& driveEntry = driveIter.get();
     	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
 
-    	return {shard.m_actualShardMembers, shard.m_formerShardMembers, shard.m_ownerUpload};
+    	return {shard.ActualShardMembers, shard.FormerShardMembers, shard.OwnerUpload };
     }
 
 	std::vector<Key> StorageStateImpl::getRecipientShard(const Key& driveKey, const Key& replicatorKey) {
@@ -176,7 +188,7 @@ namespace catapult { namespace state {
 		std::vector<Key> donatorShard;
 
 		for (const auto& [key, shard]: driveEntry.dataModificationShards()){
-			const auto& actualShard = shard.m_actualShardMembers;
+			const auto& actualShard = shard.ActualShardMembers;
 			if (actualShard.find(replicatorKey) != actualShard.end())
 			{
 				donatorShard.push_back(key);
@@ -216,7 +228,28 @@ namespace catapult { namespace state {
 			completedModificationsIter->ExpectedUploadSizeMegabytes,
 			completedModificationsIter->ActualUploadSizeMegabytes,
 			signers,
-										   driveEntry.usedSizeBytes()});
+		    driveEntry.usedSizeBytes()});
+    }
+
+    std::vector<CompletedModification> StorageStateImpl::getCompletedModifications(const Key& driveKey) {
+    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+    	auto driveIter = pDriveCacheView->find(driveKey);
+    	const auto& driveEntry = driveIter.get();
+
+		std::vector<CompletedModification> completedModifications;
+
+    	for( const auto& modification: driveEntry.completedDataModifications() ) {
+			CompletedModification completedModification;
+			completedModification.ModificationId = modification.Id;
+			if ( modification.State == DataModificationState::Cancelled ) {
+				completedModification.Status = CompletedModification::CompletionStatus::CANCELLED;
+			}
+			else {
+				completedModification.Status = CompletedModification::CompletionStatus::APPROVED;
+			}
+			completedModifications.push_back(completedModification);
+		}
+		return completedModifications;
     }
 
     uint64_t StorageStateImpl::getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) {
@@ -237,14 +270,9 @@ namespace catapult { namespace state {
         auto channelIter = pDownloadChannelCacheView->find(id);
         const auto& channelEntry = channelIter.get();
 
-		const auto& cumulativePayments = channelEntry.cumulativePayments();
-		if (cumulativePayments.find(replicatorKey) == cumulativePayments.end())
+        const auto& replicators = channelEntry.shardReplicators();
+        if (replicators.find(replicatorKey) == replicators.end())
 			return nullptr;
-
-		std::vector<Key> replicators;
-		replicators.reserve(cumulativePayments.size());
-		for (const auto& pair : cumulativePayments)
-			replicators.emplace_back(pair.first);
 
         auto consumers = channelEntry.listOfPublicKeys();
         consumers.emplace_back(channelEntry.consumer());
@@ -253,7 +281,7 @@ namespace catapult { namespace state {
 			channelEntry.id(),
 			channelEntry.downloadSize(),
 			consumers,
-			replicators,
+			{replicators.begin(), replicators.end()},
 			channelEntry.drive(),
 			channelEntry.downloadApprovalInitiationEvent(),
 		});

@@ -18,10 +18,11 @@ namespace catapult { namespace state {
 
         constexpr auto Entry_Size =
             sizeof(VersionType) + // version
-            Key_Size + // drive key
-            sizeof(Amount) + // capacity
+            Key_Size + // replicator key
+		   	Key_Size + Key_Size + sizeof(uint16_t) + sizeof(uint32_t) + // replicator set node
             sizeof(uint16_t) + // drive count
-            Drives_Count * (Key_Size + Hash256_Size + sizeof(bool) + sizeof(uint64_t) + sizeof(uint64_t)) + // drives
+            Drives_Count * (Key_Size + Hash256_Size + sizeof(uint64_t) + sizeof(uint64_t)) + // drives
+		 	sizeof(uint16_t) + // download channel count
 			DownloadChannels_Count * Hash256_Size; // download channels
 
         class TestContext {
@@ -58,6 +59,15 @@ namespace catapult { namespace state {
             pData += sizeof(VersionType);
             EXPECT_EQ_MEMORY(entry.key().data(), pData, Key_Size);
             pData += Key_Size;
+
+			EXPECT_EQ_MEMORY(entry.replicatorsSetNode().Left.data(), pData, Key_Size);
+			pData += Key_Size;
+			EXPECT_EQ_MEMORY(entry.replicatorsSetNode().Right.data(), pData, Key_Size);
+			pData += Key_Size;
+			EXPECT_EQ(entry.replicatorsSetNode().Height, *reinterpret_cast<const uint16_t*>(pData));
+			pData += sizeof(uint16_t);
+			EXPECT_EQ(entry.replicatorsSetNode().Size, *reinterpret_cast<const uint32_t*>(pData));
+			pData += sizeof(uint32_t);
 
             EXPECT_EQ(entry.drives().size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
@@ -138,6 +148,15 @@ namespace catapult { namespace state {
             pData += sizeof(VersionType);
             memcpy(pData, entry.key().data(), Key_Size);
             pData += Key_Size;
+
+			memcpy(pData, entry.replicatorsSetNode().Left.data(), Key_Size);
+			pData += Key_Size;
+			memcpy(pData, entry.replicatorsSetNode().Right.data(), Key_Size);
+			pData += Key_Size;
+			memcpy(pData, &entry.replicatorsSetNode().Height, sizeof(uint16_t));
+			pData += sizeof(uint16_t);
+			memcpy(pData, &entry.replicatorsSetNode().Size, sizeof(uint32_t));
+			pData += sizeof(uint32_t);
 
             uint16_t drivesCount = utils::checked_cast<size_t, uint16_t>(entry.drives().size());
             memcpy(pData, &drivesCount, sizeof(uint16_t));

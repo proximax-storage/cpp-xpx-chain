@@ -51,14 +51,14 @@ namespace catapult { namespace observers {
 					const auto judgedKey = notification.PublicKeysPtr[notification.JudgingKeysCount + j];
 
 					uint64_t* initialCumulativeUploadSize = nullptr;
-					if (auto it = shardsInfo.m_actualShardMembers.find(judgedKey);
-						it != shardsInfo.m_actualShardMembers.end()) {
+					if ( auto it = shardsInfo.ActualShardMembers.find(judgedKey); it != shardsInfo.ActualShardMembers.end() ) {
 						initialCumulativeUploadSize = &it->second;
-					} else if (auto it = shardsInfo.m_formerShardMembers.find(judgedKey);
-							   it != shardsInfo.m_formerShardMembers.end()) {
+					}
+					else if (auto it = shardsInfo.FormerShardMembers.find(judgedKey); it != shardsInfo.FormerShardMembers.end()) {
 						initialCumulativeUploadSize = &it->second;
-					} else {
-						initialCumulativeUploadSize = &shardsInfo.m_ownerUpload;
+					}
+					else {
+						initialCumulativeUploadSize = &shardsInfo.OwnerUpload;
 					}
 
 					uploadSizesIncrements.at(j) += *pOpinion - *initialCumulativeUploadSize;

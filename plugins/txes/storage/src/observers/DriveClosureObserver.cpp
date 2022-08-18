@@ -7,6 +7,7 @@
 #include "Observers.h"
 #include "src/utils/Queue.h"
 #include "src/utils/AVLTree.h"
+#include "src/utils/StorageUtils.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
 namespace catapult { namespace observers {
@@ -34,14 +35,19 @@ namespace catapult { namespace observers {
 			auto driveOwnerIter = accountStateCache.find(driveEntry.owner());
 			auto& driveOwnerState = driveOwnerIter.get();
 
+			// The value will be used after removing drive entry. That's why the copy is needed
+			const auto replicators = driveEntry.replicators();
+
+			RefundDepositsToReplicators(driveEntry.key(), replicators, context);
+
 			// Making payments to replicators, if there is a pending data modification
 			auto& activeDataModifications = driveEntry.activeDataModifications();
-			if (!activeDataModifications.empty()) {
+
+			if (!activeDataModifications.empty() && !replicators.empty()) {
 				const auto& modificationSize = activeDataModifications.front().ExpectedUploadSizeMegabytes;
-				const auto& replicators = driveEntry.replicators();
-				const auto totalReplicatorAmount =
-						Amount(modificationSize + // Download work
-							   modificationSize * (replicators.size() - 1) / replicators.size()); // Upload work
+				const auto totalReplicatorAmount = Amount(
+						modificationSize + // Download work
+						modificationSize * (replicators.size() - 1) / replicators.size()); // Upload work
 				for (const auto& replicatorKey : replicators) {
 					liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
 				}
@@ -49,20 +55,28 @@ namespace catapult { namespace observers {
 
 			const auto& pluginConfig =
 					context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
-			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
+			auto paymentIntervalSeconds = pluginConfig.StorageBillingPeriod.seconds();
 
 			auto timeSinceLastPayment = (context.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
 			for (auto& [replicatorKey, info] : driveEntry.confirmedStorageInfos()) {
 				auto replicatorIter = accountStateCache.find(replicatorKey);
 				auto& replicatorState = replicatorIter.get();
 
-				if (info.m_confirmedStorageSince) {
-					info.m_timeInConfirmedStorage =
-							info.m_timeInConfirmedStorage + context.Timestamp - *info.m_confirmedStorageSince;
-					info.m_confirmedStorageSince = context.Timestamp;
+				if (info.ConfirmedStorageSince) {
+					info.TimeInConfirmedStorage =
+							info.TimeInConfirmedStorage + context.Timestamp - *info.ConfirmedStorageSince;
 				}
 				BigUint driveSize = driveEntry.size();
-				auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / paymentInterval)
+
+				auto timeInConfirmedStorageSeconds = info.TimeInConfirmedStorage.unwrap() / 1000;
+
+				if ( timeInConfirmedStorageSeconds > paymentIntervalSeconds ) {
+					// It is possible if Drive Closure is executed in the block in which
+					// the PeriodicStoragePayment would process the Drive
+					timeInConfirmedStorageSeconds = paymentIntervalSeconds;
+				}
+
+				auto payment = Amount(((driveSize * timeInConfirmedStorageSeconds) / paymentIntervalSeconds)
 											  .template convert_to<uint64_t>());
 				liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
 			}
@@ -86,14 +100,18 @@ namespace catapult { namespace observers {
 		  	driveTreeAdapter.remove(notification.DriveKey);
 
 			// Returning the rest to the drive owner
-			const auto refundStreamingAmount = driveState.Balances.get(streamingMosaicId);
-			liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), refundStreamingAmount);
+			const auto currencyRefundAmount = driveState.Balances.get(currencyMosaicId);
+		  	const auto storageRefundAmount = driveState.Balances.get(storageMosaicId);
+		  	const auto streamingRefundAmount = driveState.Balances.get(streamingMosaicId);
 
-			const auto refundStorageAmount = driveState.Balances.get(storageMosaicId);
-			liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStorageMosaicId(context.Config.Immutable), refundStorageAmount);
+			driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
+		  	driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
+
+		  	liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStorageMosaicId(context.Config.Immutable), storageRefundAmount);
+
+		  	liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), streamingRefundAmount);
 
 			// Removing the drive from queue, if present
-			const auto replicators = driveEntry.replicators();
 			if (replicators.size() < driveEntry.replicatorCount()) {
 				auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
 				auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
@@ -128,7 +146,7 @@ namespace catapult { namespace observers {
 						replicatorCache.find(key).get().replicatorsSetNode() = node;
 					});
 
-			for (const auto& replicatorKey : driveEntry.replicators()) {
+			for (const auto& replicatorKey : replicators) {
 				auto replicatorIter = replicatorCache.find(replicatorKey);
 				auto& replicatorEntry = replicatorIter.get();
 				replicatorEntry.drives().erase(notification.DriveKey);

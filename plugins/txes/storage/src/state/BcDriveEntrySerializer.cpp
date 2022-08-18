@@ -69,9 +69,9 @@ namespace catapult { namespace state {
 		}
 
 		void SaveModificationShardInfo(io::OutputStream& output, const ModificationShardInfo& shard) {
-			SaveUploadInfo(output, shard.m_actualShardMembers);
-			SaveUploadInfo(output, shard.m_formerShardMembers);
-			io::Write64(output, shard.m_ownerUpload);
+			SaveUploadInfo(output, shard.ActualShardMembers);
+			SaveUploadInfo(output, shard.FormerShardMembers);
+			io::Write64(output, shard.OwnerUpload);
 		}
 
 		void SaveVerification(io::OutputStream& output, const std::optional<Verification>& verification) {
@@ -99,6 +99,12 @@ namespace catapult { namespace state {
 				io::Write(output, replicatorKey);
 		}
 
+		void SaveOffboardingReplicators(io::OutputStream& output, const std::vector<Key>& replicators) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(replicators.size()));
+			for (const auto& replicatorKey : replicators)
+				io::Write(output, replicatorKey);
+		}
+
 		void SaveDownloadShards(io::OutputStream& output, const DownloadShards& downloadShards) {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(downloadShards.size()));
 			for (const auto& shard : downloadShards) {
@@ -119,10 +125,10 @@ namespace catapult { namespace state {
 			io::Write16(output, infos.size());
 			for (const auto& [key, info]: infos) {
 				io::Write(output, key);
-				io::Write(output, info.m_timeInConfirmedStorage);
-				io::Write8(output, info.m_confirmedStorageSince.has_value());
-				if (info.m_confirmedStorageSince) {
-					io::Write(output, *info.m_confirmedStorageSince);
+				io::Write(output, info.TimeInConfirmedStorage);
+				io::Write8(output, info.ConfirmedStorageSince.has_value());
+				if (info.ConfirmedStorageSince) {
+					io::Write(output, *info.ConfirmedStorageSince);
 				}
 			}
 		}
@@ -190,6 +196,15 @@ namespace catapult { namespace state {
 			}
 		}
 
+		void LoadOffboardingReplicators(io::InputStream& input, std::vector<Key>& replicators) {
+			auto count = io::Read16(input);
+			while (count--) {
+				Key replicatorKey;
+				io::Read(input, replicatorKey);
+				replicators.emplace_back(replicatorKey);
+			}
+		}
+
 		void LoadShard(io::InputStream& input, std::vector<Key>& shard) {
 			auto count = io::Read8(input);
 			while (count--) {
@@ -232,6 +247,7 @@ namespace catapult { namespace state {
 			while (count--) {
 				Hash256 downloadChannelId;
 				io::Read(input, downloadChannelId);
+				downloadShards.emplace(downloadChannelId);
 			}
 		}
 
@@ -245,9 +261,9 @@ namespace catapult { namespace state {
 		}
 
 		void LoadModificationShardInfo(io::InputStream& input, ModificationShardInfo& info) {
-			LoadUploadInfo(input, info.m_actualShardMembers);
-			LoadUploadInfo(input, info.m_formerShardMembers);
-			info.m_ownerUpload = io::Read64(input);
+			LoadUploadInfo(input, info.ActualShardMembers);
+			LoadUploadInfo(input, info.FormerShardMembers);
+			info.OwnerUpload = io::Read64(input);
 		}
 
 		void LoadModificationShards(io::InputStream& input, ModificationShards& dataModificationShards) {
@@ -267,14 +283,14 @@ namespace catapult { namespace state {
 				io::Read(input, key);
 
 				ConfirmedStorageInfo info;
-				io::Read(input, info.m_timeInConfirmedStorage);
+				io::Read(input, info.TimeInConfirmedStorage);
 
 				bool inConfirmed = io::Read8(input);
 
 				if (inConfirmed) {
 					Timestamp confirmedSince;
 					io::Read(input, confirmedSince);
-					info.m_confirmedStorageSince = confirmedSince;
+					info.ConfirmedStorageSince = confirmedSince;
 				}
 
 				infos[key] = info;
@@ -304,7 +320,8 @@ namespace catapult { namespace state {
 		SaveCompletedDataModifications(output, driveEntry.completedDataModifications());
 		SaveConfirmedUsedSizes(output, driveEntry.confirmedUsedSizes());
 		SaveReplicators(output, driveEntry.replicators());
-		SaveReplicators(output, driveEntry.offboardingReplicators());
+		SaveReplicators(output, driveEntry.formerReplicators());
+		SaveOffboardingReplicators(output, driveEntry.offboardingReplicators());
 		SaveDownloadShards(output, driveEntry.downloadShards());
 		SaveModificationShards(output, driveEntry.dataModificationShards());
 		SaveConfirmedStorageInfos(output, driveEntry.confirmedStorageInfos());
@@ -353,7 +370,8 @@ namespace catapult { namespace state {
 		LoadCompletedDataModifications(input, entry.completedDataModifications());
 		LoadConfirmedUsedSizes(input, entry.confirmedUsedSizes());
 		LoadReplicators(input, entry.replicators());
-		LoadReplicators(input, entry.offboardingReplicators());
+		LoadReplicators(input, entry.formerReplicators());
+		LoadOffboardingReplicators(input, entry.offboardingReplicators());
 		LoadDownloadShards(input, entry.downloadShards());
 		LoadModificationShards(input, entry.dataModificationShards());
 		LoadConfirmedStorageInfos(input, entry.confirmedStorageInfos());

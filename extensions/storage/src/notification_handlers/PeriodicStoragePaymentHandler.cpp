@@ -22,6 +22,7 @@ namespace catapult { namespace notification_handlers {
 
 			pReplicatorService->updateReplicatorDrives(eventHash);
 			pReplicatorService->updateReplicatorDownloadChannels();
+			pReplicatorService->maybeRestart();
 		});
 	}
 }}

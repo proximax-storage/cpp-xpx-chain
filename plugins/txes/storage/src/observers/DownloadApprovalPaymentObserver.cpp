@@ -5,11 +5,14 @@
 **/
 
 #include <boost/dynamic_bitset.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 #include "Observers.h"
 
 namespace catapult { namespace observers {
 
 	using Notification = model::DownloadApprovalPaymentNotification<1>;
+
+	using BigUint = boost::multiprecision::uint128_t;
 
 	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DownloadApprovalPayment, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
@@ -55,7 +58,10 @@ namespace catapult { namespace observers {
 			const auto medianOpinion = opinionVector.size() % 2 ?
 									   opinionVector.at(medianIndex) :
 									   (opinionVector.at(medianIndex-1) + opinionVector.at(medianIndex)) / 2;
-			const auto fullPayment = std::max(medianOpinion - downloadChannelEntry.cumulativePayments().at(pair.first).unwrap(), 0ul);
+			uint64_t fullPayment = 0;
+			if (medianOpinion > downloadChannelEntry.cumulativePayments().at(pair.first).unwrap()) {
+				fullPayment = medianOpinion - downloadChannelEntry.cumulativePayments().at(pair.first).unwrap();
+			}
 			payments[pair.first] = fullPayment;
 			totalPayment += fullPayment;
 		}
@@ -63,9 +69,10 @@ namespace catapult { namespace observers {
 		// Scaling down payments if there's not enough mosaics on the download channel for full payments to all of the replicators.
 		const auto& downloadChannelBalance = senderState.Balances.get(streamingMosaicId).unwrap();
 		if (downloadChannelBalance < totalPayment) {
-			const double scalingFactor = static_cast<double>(downloadChannelBalance) / totalPayment;
-			for (auto& pair: payments)
-				pair.second *= scalingFactor;	// Decimal part is truncated, so the new total payment is guaranteed to fit in download channel balance
+			for (auto& [_, payment]: payments) {
+				auto paymentLong = BigUint(payment);
+				payment = ((paymentLong * downloadChannelBalance) / totalPayment).convert_to<uint64_t>();
+			}
 		}
 
 		// Making mosaic transfers and updating cumulative payments.

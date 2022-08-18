@@ -5,6 +5,7 @@
 **/
 
 #include "Observers.h"
+#include "src/utils/Queue.h"
 
 namespace catapult { namespace observers {
 
@@ -14,11 +15,11 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadChannelRefund)");
 
-	  	auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
-	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
+		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+		auto downloadChannelIter = downloadCache.find(notification.DownloadChannelId);
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
 
-		if (downloadChannelEntry.downloadApprovalCountLeft() > 0 && !downloadChannelEntry.isFinishPublished()) {
+		if (!downloadChannelEntry.isCloseInitiated()) {
 			// The download channel continues to work, so no refund is needed
 			return;
 		}
@@ -32,11 +33,13 @@ namespace catapult { namespace observers {
 		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 	  	const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 
-		// Refunding currency and streaming mosaics.
+	  	// Refunding currency mosaics.
 	  	const auto& currencyRefundAmount = senderState.Balances.get(currencyMosaicId);
+	  	senderState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
+	  	recipientState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
+
+		// Refunding streaming mosaics.
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);
-	  	recipientState.Balances.credit(currencyMosaicId, currencyRefundAmount);
-		senderState.Balances.debit(currencyMosaicId, currencyRefundAmount);
 		liquidityProvider.debitMosaics(context, downloadChannelEntry.id().array(), downloadChannelEntry.consumer(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), streamingRefundAmount);
 
 	  	// Removing associations with the download channel in respective drive and replicator entries.
@@ -50,7 +53,11 @@ namespace catapult { namespace observers {
 			replicatorEntry.downloadChannels().erase(notification.DownloadChannelId);
 		}
 
-	  	// Removing download channel entry from the cache.
-		downloadChannelCache.remove(notification.DownloadChannelId);
+		auto& queueCache = context.Cache.template sub<cache::QueueCache>();
+		utils::QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
+		queueAdapter.remove(downloadChannelEntry.entryKey());
+
+		downloadCache.remove(notification.DownloadChannelId);
+		// TODO: Add currency refunding
 	})
 }}

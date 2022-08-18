@@ -10,6 +10,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include "src/utils/Queue.h"
 #include "src/utils/AVLTree.h"
+#include "src/utils/StorageUtils.h"
 #include "src/catapult/utils/StorageUtils.h"
 
 namespace catapult { namespace observers {
@@ -36,7 +37,7 @@ namespace catapult { namespace observers {
 				return;
 			}
 
-			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
+			auto paymentIntervalSeconds = pluginConfig.StorageBillingPeriod.seconds();
 
 			// Creating unique eventHash for the observer
 			auto eventHash = getStoragePaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
@@ -46,8 +47,8 @@ namespace catapult { namespace observers {
 				auto driveIter = driveCache.find(queueAdapter.front());
 				auto& driveEntry = driveIter.get();
 
-				auto timeSinceLastPayment = (notification.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
-				if (timeSinceLastPayment < paymentInterval) {
+				auto timeSinceLastPaymentSeconds = (notification.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
+				if (timeSinceLastPaymentSeconds < paymentIntervalSeconds) {
 					break;
 				}
 
@@ -62,14 +63,19 @@ namespace catapult { namespace observers {
 				auto& driveState = driveStateIter.get();
 
 				for (auto& [replicatorKey, info]: driveEntry.confirmedStorageInfos()) {
-					if (info.m_confirmedStorageSince) {
-						info.m_timeInConfirmedStorage = info.m_timeInConfirmedStorage
-								+ notification.Timestamp - *info.m_confirmedStorageSince;
-						info.m_confirmedStorageSince = notification.Timestamp;
+					if (info.ConfirmedStorageSince) {
+						info.TimeInConfirmedStorage = info.TimeInConfirmedStorage + notification.Timestamp - *info.ConfirmedStorageSince;
+						info.ConfirmedStorageSince = notification.Timestamp;
 					}
 					BigUint driveSize = driveEntry.size();
-					auto payment = Amount(((driveSize * info.m_timeInConfirmedStorage.unwrap()) / timeSinceLastPayment).template convert_to<uint64_t>());
+
+					auto timeInConfirmedStorageSeconds = info.TimeInConfirmedStorage.unwrap() / 1000;
+
+					auto payment = Amount(((driveSize * timeInConfirmedStorageSeconds) / timeSinceLastPaymentSeconds).template convert_to<uint64_t>());
+					driveState.Balances.debit(storageMosaicId, payment, context.Height);
 					liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
+
+					info.TimeInConfirmedStorage = Timestamp(0);
 				}
 
 				if (driveState.Balances.get(storageMosaicId).unwrap() >= driveEntry.size() * driveEntry.replicatorCount()) {
@@ -81,11 +87,16 @@ namespace catapult { namespace observers {
 				else {
 					// Drive is Closed
 
+					// The value will be used after removing drive entry. That's why the copy is needed
+					const auto replicators = driveEntry.replicators();
+
+					RefundDepositsToReplicators(driveEntry.key(), replicators, context, liquidityProvider);
+
 					// Making payments to replicators, if there is a pending data modification
 					auto& activeDataModifications = driveEntry.activeDataModifications();
-					if (!activeDataModifications.empty()) {
+
+					if (!activeDataModifications.empty() && !replicators.empty()) {
 						const auto& modificationSize = activeDataModifications.front().ExpectedUploadSizeMegabytes;
-						const auto& replicators = driveEntry.replicators();
 						const auto totalReplicatorAmount = Amount(
 								modificationSize +	// Download work
 								modificationSize * (replicators.size() - 1) / replicators.size());	// Upload work
@@ -111,7 +122,7 @@ namespace catapult { namespace observers {
 								replicatorCache.find(key).get().replicatorsSetNode() = node;
 							});
 
-					for (const auto& replicatorKey: driveEntry.replicators()) {
+					for (const auto& replicatorKey: replicators) {
 						auto key = keyExtractor(replicatorKey);
 						replicatorTreeAdapter.remove(key);
 					}
@@ -136,7 +147,6 @@ namespace catapult { namespace observers {
 					}
 
 					// Removing the drive from queue, if present
-					const auto replicators = driveEntry.replicators();
 					if (replicators.size() < driveEntry.replicatorCount()) {
 						auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
 						auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);

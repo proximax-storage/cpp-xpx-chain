@@ -23,6 +23,8 @@ namespace catapult { namespace storage {
     public:
         void start();
         void stop();
+		void restart();
+		void maybeRestart();
 
         void setServiceState(extensions::ServiceState* pServiceState) {
             m_pServiceState = pServiceState;
@@ -59,7 +61,6 @@ namespace catapult { namespace storage {
 
     public:
     	void anotherReplicatorOnboarded(const Key& replicatorKey);
-    	void storageBlockPublished(const Hash256& eventHash);
     	void downloadBlockPublished(const Hash256& eventHash);
     	void addDriveModification(const Key& driveKey, const Hash256& downloadDataCdi, const Hash256& modificationId, const Key& owner, uint64_t dataSizeMegabytes);
 		void dataModificationApprovalPublished(const Key& driveKey, const Hash256& modificationId, const Hash256& rootHash, std::vector<Key>& replicators);

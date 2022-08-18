@@ -30,13 +30,20 @@ namespace catapult { namespace observers {
         if (cancelingDataModificationIter->Id == activeDataModifications.front().Id) {
             // Performing download & upload work transfer for replicators
             const auto& replicators = driveEntry.replicators();
-            const auto totalReplicatorAmount = Amount(
-                    modificationSize +    // Download work
-                    modificationSize * (replicators.size() - 1) / replicators.size());    // Upload work
+			if (!replicators.empty()) {
+				const auto totalReplicatorAmount = Amount(
+						modificationSize +    // Download work
+						modificationSize * (replicators.size() - 1) / replicators.size());    // Upload work
 
-            for (const auto& replicatorKey: replicators) {
-				liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
-            }
+				for (const auto& replicatorKey : replicators) {
+					liquidityProvider.debitMosaics(
+							context,
+							driveEntry.key(),
+							replicatorKey,
+							config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+							totalReplicatorAmount);
+				}
+			}
 
             // Performing upload work transfer & stream refund for the drive owner
             const auto totalDriveOwnerAmount = Amount(

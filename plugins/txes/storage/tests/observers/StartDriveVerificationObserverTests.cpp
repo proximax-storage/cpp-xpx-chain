@@ -25,7 +25,7 @@ namespace catapult { namespace observers {
 			test::MutableBlockchainConfiguration config;
 
 			auto storageConfig = config::StorageConfiguration::Uninitialized();
-			storageConfig.VerificationExpirationCoefficient = 0.06;
+			storageConfig.VerificationExpirationCoefficient = 0.24;
 			storageConfig.VerificationExpirationConstant = 10;
 			storageConfig.VerificationInterval = utils::TimeSpan::FromHours(4);
 			storageConfig.ShardSize = 20;

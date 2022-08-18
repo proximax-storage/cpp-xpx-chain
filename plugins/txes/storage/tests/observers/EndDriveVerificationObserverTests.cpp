@@ -6,6 +6,7 @@
 
 #include "catapult/model/StorageNotifications.h"
 #include "src/observers/Observers.h"
+#include "src/utils/AVLTree.h"
 #include "tests/test/StorageTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
@@ -56,6 +57,30 @@ namespace catapult { namespace observers {
 			return config.ToConst();
 		}
 
+		utils::AVLTreeAdapter<std::pair<Amount, Key>> CreateAvlTreeAdapter(const observers::ObserverContext& context) {
+			auto& queueCache = context.Cache.sub<cache::QueueCache>();
+			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+
+			auto keyExtractor = [=, &accountStateCache](const Key& key) {
+			  return std::make_pair(accountStateCache.find(key).get().Balances.get(Storage_Mosaic_Id), key);
+			};
+			auto nodeExtractor = [&replicatorCache](const Key& key) -> state::AVLTreeNode {
+			  return replicatorCache.find(key).get().replicatorsSetNode();
+			};
+			auto nodeSaver = [&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
+			  replicatorCache.find(key).get().replicatorsSetNode() = node;
+			};
+
+			return utils::AVLTreeAdapter<std::pair<Amount, Key>> (
+					queueCache,
+					state::ReplicatorsSetTree,
+					keyExtractor,
+					nodeExtractor,
+					nodeSaver
+			);
+		}
+
 		state::Verification CreateVerificationWithEmptyShards(const uint16_t& shardsCount) {
 			return state::Verification{ Verification_Trigger, Expiration, Duration, state::Shards(shardsCount) };
 		}
@@ -84,7 +109,7 @@ namespace catapult { namespace observers {
 		struct CacheValues {
 			state::Verification InitialVerification;
 			std::set<Key> InitialReplicators;
-			std::set<Key> InitialOffboardingReplicators;
+			std::vector<Key> InitialOffboardingReplicators;
 			std::map<Key, Amounts> InitialAmounts;
 			std::optional<state::Verification> ExpectedVerification;
 			std::set<Key> ExpectedReplicators;
@@ -107,6 +132,7 @@ namespace catapult { namespace observers {
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
             auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
+			auto treeAdapter = CreateAvlTreeAdapter(context.observerContext());
 
 			// Populate cache.
             state::BcDriveEntry driveEntry(Drive_Key);
@@ -116,13 +142,8 @@ namespace catapult { namespace observers {
 			for (const auto& key : cacheValues.InitialReplicators)
 				driveEntry.replicators().insert(key);
 			for (const auto& key : cacheValues.InitialOffboardingReplicators)
-				driveEntry.offboardingReplicators().insert(key);
+				driveEntry.offboardingReplicators().emplace_back(key);
 			bcDriveCache.insert(driveEntry);
-
-			for (const auto& key : cacheValues.InitialReplicators) {
-				state::ReplicatorEntry replicatorEntry(key);
-				replicatorCache.insert(replicatorEntry);
-			}
 
 			for (const auto& [key, amounts] : cacheValues.InitialAmounts) {
 				std::vector<model::Mosaic> mosaics = {
@@ -131,6 +152,12 @@ namespace catapult { namespace observers {
 						{Streaming_Mosaic_Id, Amount(std::get<2>(amounts))}
 				};
 				test::AddAccountState(accountStateCache, key, Current_Height, mosaics);
+			}
+
+			for (const auto& key : cacheValues.InitialReplicators) {
+				state::ReplicatorEntry replicatorEntry(key);
+				replicatorCache.insert(replicatorEntry);
+				treeAdapter.insert(key);
 			}
 
 			// Prepare pointers for notification.
