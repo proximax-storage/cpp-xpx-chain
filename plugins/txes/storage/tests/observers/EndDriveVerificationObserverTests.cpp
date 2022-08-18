@@ -30,6 +30,7 @@ namespace catapult { namespace observers {
 		const auto Duration = test::Random16();
 		const auto Seed = test::GenerateRandomByteArray<Hash256>();
 
+		const auto Zero_Key = Key();
 		const auto Drive_Key = test::GenerateRandomByteArray<Key>();
 		const auto Replicator_Key_1 = Key({1});
 		const auto Replicator_Key_2 = Key({2});
@@ -229,6 +230,7 @@ namespace catapult { namespace observers {
 		cacheValues.InitialReplicators = {Replicator_Key_1, Replicator_Key_2, Replicator_Key_3, Replicator_Key_4};
 		cacheValues.InitialOffboardingReplicators = {Replicator_Key_3};
 		cacheValues.InitialAmounts = {
+				{Zero_Key, {0, 80, 0}},
 				{Drive_Key, {100, 100, 100}},
 				{Replicator_Key_1, {100, 100, 100}},
 				{Replicator_Key_2, {100, 100, 100}},
@@ -244,15 +246,16 @@ namespace catapult { namespace observers {
 		};
 
 		cacheValues.ExpectedVerification = CreateExpectedVerification(cacheValues.InitialVerification, shardId);
-		cacheValues.ExpectedReplicators = {Replicator_Key_1, Replicator_Key_2, Replicator_Key_4};
+		cacheValues.ExpectedReplicators = {Replicator_Key_1, Replicator_Key_2};
 		cacheValues.ExpectedAmounts = {
-				{Drive_Key, {100, 82, 100}},	// (0, -20, -40) for refunds to RK3,
+				{Zero_Key, {0, 60, 0}},
+				{Drive_Key, {100, 80, 60}},	// (0, -20, -40) for refunds to RK3,
 												// (0, -6*3, 0) for deposit slashing after RK4 offboarding,
 												// (0, +20, +40) for RK4 repeated onboarding
-				{Replicator_Key_1, {100, 106, 100}},	// (0, +6, 0) for deposit slashing after RK4 offboarding
-				{Replicator_Key_2, {100, 106, 100}},	// (0, +6, 0) for deposit slashing after RK4 offboarding
+				{Replicator_Key_1, {100, 110, 100}},	// (0, +6, 0) for deposit slashing after RK4 offboarding
+				{Replicator_Key_2, {100, 110, 100}},	// (0, +6, 0) for deposit slashing after RK4 offboarding
 				{Replicator_Key_3, {160, 10, 10}},	// (+20+40, 0, 0) for refunds from the drive
-				{Replicator_Key_4, {100, 86, 60}},	// (0, -20, -40) for repeated onboarding,
+				{Replicator_Key_4, {100, 100, 100}},	// (0, -20, -40) for repeated onboarding,
 													 	// (0, +6, 0) for deposit slashing after RK4 offboarding
 		};
 
@@ -276,6 +279,7 @@ namespace catapult { namespace observers {
 		cacheValues.InitialReplicators = {Replicator_Key_1, Replicator_Key_2, Replicator_Key_3, Replicator_Key_4};
 		cacheValues.InitialOffboardingReplicators = {Replicator_Key_3};
 		cacheValues.InitialAmounts = {
+				{Zero_Key, {0, 80, 0}},
 				{Drive_Key, {100, 100, 100}},
 				{Replicator_Key_1, {100, 100, 100}},
 				{Replicator_Key_2, {100, 100, 100}},
@@ -291,15 +295,16 @@ namespace catapult { namespace observers {
 		};
 
 		cacheValues.ExpectedVerification = CreateExpectedVerification(cacheValues.InitialVerification, shardId);
-		cacheValues.ExpectedReplicators = {Replicator_Key_1, Replicator_Key_2, Replicator_Key_4};
+		cacheValues.ExpectedReplicators = {Replicator_Key_1, Replicator_Key_2};
 		cacheValues.ExpectedAmounts = {
-				{Drive_Key, {100, 82, 100}},	// (0, -20, -40) for refunds to RK3,
+				{Zero_Key, {0, 60, 0}},
+				{Drive_Key, {100, 80, 60}},	// (0, -20, -40) for refunds to RK3,
 												// (0, -6*3, 0) for deposit slashing after RK4 offboarding,
 												// (0, +20, +40) for RK4 repeated onboarding
-				{Replicator_Key_1, {100, 106, 100}},	// (0, +6, 0) for deposit slashing after RK4 offboarding
-				{Replicator_Key_2, {100, 106, 100}},	// (0, +6, 0) for deposit slashing after RK4 offboarding
+				{Replicator_Key_1, {100, 110, 100}},	// (0, +6, 0) for deposit slashing after RK4 offboarding
+				{Replicator_Key_2, {100, 110, 100}},	// (0, +6, 0) for deposit slashing after RK4 offboarding
 				{Replicator_Key_3, {160, 10, 10}},	// (+20+40, 0, 0) for refunds from the drive
-				{Replicator_Key_4, {100, 86, 60}},	// (0, -20, -40) for repeated onboarding,
+				{Replicator_Key_4, {100, 100, 100}},	// (0, -20, -40) for repeated onboarding,
 														// (0, +6, 0) for deposit slashing after RK4 offboarding
 		};
 
