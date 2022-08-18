@@ -227,4 +227,22 @@ namespace catapult { namespace validators {
 			return std::make_pair(Add, TRestrictionValueTraits::RandomUnresolvedValue());
 		});
 	}
+
+	TEST(TEST_CLASS, FailureWhenTransactionTypeDiffersFromAppliedNotification) {
+
+		auto createNotification = AccountMosaicRestrictionTraits::NotificationType(
+					test::GenerateRandomByteArray<Address>(),
+					test::AllowTraits::CompleteAccountRestrictionFlags(model::AccountRestrictionFlags::Address),
+					UnresolvedMosaicId(),
+					model::AccountRestrictionModificationAction::Add);
+		auto cache = test::AccountRestrictionCacheFactory::Create();
+		// Arrange:
+		auto pValidator = CreateAccountMosaicRestrictionValueModificationValidator();
+
+		// Act:
+		auto result = test::ValidateNotification<AccountMosaicRestrictionTraits::NotificationType>(*pValidator, createNotification, cache);
+
+		// Assert:
+		EXPECT_EQ(result, Failure_RestrictionAccount_Invalid_Restriction_Flags);
+	}
 }}

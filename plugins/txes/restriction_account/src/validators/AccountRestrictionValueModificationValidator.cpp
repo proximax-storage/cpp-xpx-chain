@@ -36,8 +36,10 @@ namespace catapult { namespace validators {
 			return unresolvedValue;
 		}
 
-		template<typename TRestrictionValue, typename TNotification>
+		template<typename TRestrictionValue, typename TNotification, model::AccountRestrictionFlags VFlags>
 		ValidationResult Validate(const TNotification& notification, const ValidatorContext& context) {
+			if(VFlags != notification.AccountRestrictionDescriptor.restrictionFlags())
+				return Failure_RestrictionAccount_Invalid_Restriction_Flags;
 			const auto& cache = context.Cache.sub<cache::AccountRestrictionCache>();
 			if (!cache.contains(notification.SignerAddress))
 				return ValidationResult::Success;
@@ -62,23 +64,26 @@ namespace catapult { namespace validators {
 		}
 	}
 
-#define DEFINE_ACCOUNT_RESTRICTION_MODIFICATION_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE, RESTRICTION_VALUE_TYPE) \
+#define DEFINE_ACCOUNT_RESTRICTION_MODIFICATION_VALIDATOR(VALIDATOR_NAME, FLAGS, NOTIFICATION_TYPE, RESTRICTION_VALUE_TYPE) \
 	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(VALIDATOR_NAME, NOTIFICATION_TYPE, ([]( \
 			const NOTIFICATION_TYPE& notification, \
 			const ValidatorContext& context) { \
-		return Validate<RESTRICTION_VALUE_TYPE, NOTIFICATION_TYPE>(notification, context); \
+		return Validate<RESTRICTION_VALUE_TYPE, NOTIFICATION_TYPE, FLAGS>(notification, context); \
 	}))
 
 	DEFINE_ACCOUNT_RESTRICTION_MODIFICATION_VALIDATOR(
 			AccountAddressRestrictionValueModification,
+			model::AccountRestrictionFlags::Address,
 			model::ModifyAccountAddressRestrictionValueNotification,
 			Address)
 	DEFINE_ACCOUNT_RESTRICTION_MODIFICATION_VALIDATOR(
 			AccountMosaicRestrictionValueModification,
+			model::AccountRestrictionFlags::MosaicId,
 			model::ModifyAccountMosaicRestrictionValueNotification,
 			MosaicId)
 	DEFINE_ACCOUNT_RESTRICTION_MODIFICATION_VALIDATOR(
 			AccountOperationRestrictionValueModification,
+			model::AccountRestrictionFlags::TransactionType,
 			model::ModifyAccountOperationRestrictionValueNotification,
 			model::EntityType)
 }}
