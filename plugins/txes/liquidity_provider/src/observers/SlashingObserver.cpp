@@ -32,8 +32,8 @@ namespace catapult { namespace observers {
 				if ((context.Height - entry.creationHeight()).unwrap() % entry.slashingPeriod() == 0) {
 					auto& turnoverHistory = entry.turnoverHistory();
 					turnoverHistory.push_back(entry.recentTurnover());
-					if (turnoverHistory.size() > 5) {
-						turnoverHistory.pop_back();
+					if (turnoverHistory.size() > entry.windowSize()) {
+						turnoverHistory.pop_front();
 					}
 
 					auto it = std::max_element(
