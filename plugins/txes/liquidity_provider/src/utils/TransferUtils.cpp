@@ -60,7 +60,7 @@ namespace catapult::utils {
 									  const Amount& mosaicAmount,
 									  uint8_t percentsDigitAfterDot) {
 		auto rate = state::ExchangeRate{currencyBalance, mosaicBalance + lpEntry.additionallyMinted()};
-		BigUint numerator = BigUint(mosaicAmount.unwrap()) * rate.m_currencyAmount.unwrap() * (100 * pow(10, percentsDigitAfterDot) - lpEntry.alpha());
+		BigUint numerator = BigUint(mosaicAmount.unwrap()) * rate.m_currencyAmount.unwrap() * (100 * pow(10, percentsDigitAfterDot) - lpEntry.beta());
 		BigUint denominator = BigUint(100 * pow(10, percentsDigitAfterDot)) * rate.m_mosaicAmount.unwrap();
 
 		// In order to avoid the problems with rounding, LP looses a little less (due to floor)

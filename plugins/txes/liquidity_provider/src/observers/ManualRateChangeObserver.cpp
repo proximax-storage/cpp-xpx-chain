@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <random>
 #include <src/cache/LiquidityProviderCache.h>
 #include "Observers.h"
 #include "src/model/InternalLiquidityProviderNotifications.h"
@@ -54,7 +53,7 @@ namespace catapult { namespace observers {
 		entry.turnoverHistory().clear();
 		entry.recentTurnover() =
 				state::HistoryObservation { { lpStateEntry.Balances.get(currencyMosaicId),
-											  lpStateEntry.Balances.get(resolvedMosaicId) },
+											  lpStateEntry.Balances.get(resolvedMosaicId) + entry.additionallyMinted() },
 											Amount { 0 } };
 	}));
 }} // namespace catapult::observers

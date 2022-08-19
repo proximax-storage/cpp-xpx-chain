@@ -35,8 +35,15 @@ namespace catapult { namespace observers {
 
 	  	// Refunding currency mosaics.
 	  	const auto& currencyRefundAmount = senderState.Balances.get(currencyMosaicId);
-	  	senderState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
-	  	recipientState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
+
+	  	if (senderState.Balances.get(currencyMosaicId) >= currencyRefundAmount) {
+	  		senderState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
+	  		recipientState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
+		}
+		else {
+			CATAPULT_LOG( error ) << "Not Enough Currency To Refund " << notification.DownloadChannelId << " "
+								<< senderState.Balances.get(currencyMosaicId) << " " << currencyRefundAmount;
+		}
 
 		// Refunding streaming mosaics.
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);

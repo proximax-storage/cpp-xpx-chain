@@ -38,7 +38,7 @@ namespace catapult { namespace observers {
 			// The value will be used after removing drive entry. That's why the copy is needed
 			const auto replicators = driveEntry.replicators();
 
-			RefundDepositsToReplicators(driveEntry.key(), replicators, context);
+			RefundDepositsToReplicators(driveEntry.key(), replicators, context, liquidityProvider);
 
 			// Making payments to replicators, if there is a pending data modification
 			auto& activeDataModifications = driveEntry.activeDataModifications();
@@ -104,8 +104,14 @@ namespace catapult { namespace observers {
 		  	const auto storageRefundAmount = driveState.Balances.get(storageMosaicId);
 		  	const auto streamingRefundAmount = driveState.Balances.get(streamingMosaicId);
 
-			driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
-		  	driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
+		  	if ( driveState.Balances.get(currencyMosaicId) >= currencyRefundAmount ) {
+				driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
+				driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
+			}
+			else {
+		  		CATAPULT_LOG( error ) << "Not Enough Currency To Refund " << notification.DriveKey << " "
+		  							  << driveState.Balances.get(currencyMosaicId) << " " << currencyRefundAmount;
+		  	}
 
 		  	liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStorageMosaicId(context.Config.Immutable), storageRefundAmount);
 

@@ -131,12 +131,12 @@ namespace catapult { namespace observers {
 			auto lpCurrencyBalance = lpAccountState.Balances.get(currencyId);
 			auto lpMosaicBalance = lpAccountState.Balances.get(mosaicId);
 
-			auto ownerCurrencyBalance = accountCache.find(actualEntry.providerKey()).get().Balances.get(currencyId);
+			auto ownerCurrencyBalance = accountCache.find(actualEntry.owner()).get().Balances.get(currencyId);
 			auto slashingAccountCurrencyBalance = accountCache.find(actualEntry.slashingAccount()).get().Balances.get(currencyId);
 
 			if (notification.CurrencyBalanceIncrease) {
 				ASSERT_EQ(lpCurrencyBalance, values.CurrencyBalance + currencyBalanceChange);
-				ASSERT_EQ(ownerCurrencyBalance, fromInitialCurrencyBalance - currencyBalanceChange);
+ 				ASSERT_EQ(ownerCurrencyBalance, fromInitialCurrencyBalance - currencyBalanceChange);
 			}
 			else {
 				ASSERT_EQ(lpCurrencyBalance, values.CurrencyBalance - currencyBalanceChange);
@@ -163,8 +163,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, DebitMosaicObserver_Success) {
 		// Arrange:
-
-		CacheValues values(CreateInitialLInfo(), Amount {test::Random() / 4}, Amount {test::Random() / 4});
+		CacheValues values(CreateInitialLInfo(), Amount {test::Random() / 16}, Amount {test::Random() / 16});
 
 		// Assert
 		for (int i = 0; i < 10000; i++) {

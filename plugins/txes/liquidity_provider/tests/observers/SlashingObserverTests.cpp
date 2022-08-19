@@ -151,10 +151,6 @@ namespace catapult { namespace observers {
 
 				state::ExchangeRate initialRate = {info.currencyAmount, info.mosaicAmount + initialEntry.additionallyMinted()};
 
-				if (expectedMaxHistoryObservationIt->m_rate < initialRate) {
-					ASSERT_TRUE(expectedMaxHistoryObservationIt->m_rate < actualRate);
-				}
-
 				auto currencySlashed = info.currencyAmount - actualRate.m_currencyAmount;
 
 				auto slashingAccountBalance = accountCache.find(initialEntry.slashingAccount()).get().Balances.get(currencyId);

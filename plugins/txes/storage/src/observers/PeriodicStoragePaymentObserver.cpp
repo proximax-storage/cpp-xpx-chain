@@ -72,7 +72,6 @@ namespace catapult { namespace observers {
 					auto timeInConfirmedStorageSeconds = info.TimeInConfirmedStorage.unwrap() / 1000;
 
 					auto payment = Amount(((driveSize * timeInConfirmedStorageSeconds) / timeSinceLastPaymentSeconds).template convert_to<uint64_t>());
-					driveState.Balances.debit(storageMosaicId, payment, context.Height);
 					liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
 
 					info.TimeInConfirmedStorage = Timestamp(0);

@@ -79,6 +79,14 @@ namespace catapult::observers {
 
 		auto debtorAccountIter = accountStateCache.find(currencyDebtor);
 		auto& debtorAccount = debtorAccountIter.get();
+
+		if ( debtorAccount.Balances.get(currencyMosaicId) < currencyAmount ) {
+			CATAPULT_LOG( error ) << "Debtor Not Enough Currency "
+				<< debtorAccount.Balances.get(currencyMosaicId) << " "
+				<< currencyAmount;
+			return;
+		}
+
 		debtorAccount.Balances.debit(currencyMosaicId, currencyAmount);
 
 		lpAccount.Balances.credit(currencyMosaicId, currencyAmount);
@@ -120,16 +128,31 @@ namespace catapult::observers {
 				mosaicAmount,
 				pluginConfig.PercentsDigitsAfterDot);
 
+		if ( lpAccount.Balances.get(currencyMosaicId) < currencyAmount ) {
+			CATAPULT_LOG( error ) << "LP Not Enough Currency "
+								<< lpAccount.Balances.get(currencyMosaicId) << " "
+								<< currencyAmount;
+			return;
+		}
+
+		auto debtorAccountIter = accountStateCache.find(mosaicDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
+
+		if ( debtorAccount.Balances.get(resolvedMosaicId) < mosaicAmount ) {
+			CATAPULT_LOG( error ) << "Debtor Not Enough Mosaics "
+								<< mosaicDebtor << " "
+								<< resolvedMosaicId << ""
+								<< debtorAccount.Balances.get(resolvedMosaicId) << " "
+								<< mosaicAmount;
+			return;
+		}
+
 		auto creditorAccountIter = accountStateCache.find(currencyCreditor);
 		auto& creditorAccount = creditorAccountIter.get();
 		creditorAccount.Balances.credit(currencyMosaicId, currencyAmount);
 
-		auto a = lpAccount.Balances.get(currencyMosaicId);
 		lpAccount.Balances.debit(currencyMosaicId, currencyAmount);
-		auto b = lpAccount.Balances.get(currencyMosaicId);
 
-		auto debtorAccountIter = accountStateCache.find(mosaicDebtor);
-		auto& debtorAccount = debtorAccountIter.get();
 		debtorAccount.Balances.debit(resolvedMosaicId, mosaicAmount);
 
 		lpEntry.setAdditionallyMinted(lpEntry.additionallyMinted() - mosaicAmount);
