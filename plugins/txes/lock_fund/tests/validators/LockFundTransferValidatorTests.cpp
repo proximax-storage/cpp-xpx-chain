@@ -409,6 +409,29 @@ TEST(TEST_CLASS, FailureWhenValidatingNotificationLockingMultipleOutOfOrderMosai
 		   });
 	}
 
+		TEST(TEST_CLASS, FailureWhenValidatingNotificationUnlockingMosaicWhenTooManyRequestsAlreadyExist) {
+			// Assert:
+			auto keyPair = test::GenerateKeyPair(DerivationScheme::Ed25519_Sha2);
+			AssertValidationResult(Failure_LockFund_Maximum_Unlock_Records,
+			   BlockDuration(16),
+			   {{ UnresolvedMosaicId(71), Amount(2) }},
+			   model::LockFundAction::Unlock,
+			   BlockDuration(15),
+			   256,
+			   keyPair,
+			   [](state::AccountState& accountState){
+				 accountState.Balances.credit(MosaicId(71), Amount(15));
+				 accountState.Balances.lock(MosaicId(71), Amount(15));
+			   },
+			   [&keyPair](cache::LockFundCacheDelta& lockFundCache){
+				 lockFundCache.insert(keyPair.publicKey(), Height(127), {{MosaicId(71), Amount(3)}});
+				 lockFundCache.insert(keyPair.publicKey(), Height(128), {{MosaicId(71), Amount(1)}});
+				 lockFundCache.insert(keyPair.publicKey(), Height(129), {{MosaicId(71), Amount(3)}});
+				 lockFundCache.insert(keyPair.publicKey(), Height(130), {{MosaicId(71), Amount(1)}});
+				 lockFundCache.insert(keyPair.publicKey(), Height(131), {{MosaicId(71), Amount(3)}});
+		   });
+		}
+
 	TEST(TEST_CLASS, FailureWhenValidatingNotificationUnlockingMosaicWithDuplicateRecord) {
 		// Assert:
 		auto keyPair = test::GenerateKeyPair(DerivationScheme::Ed25519_Sha2);

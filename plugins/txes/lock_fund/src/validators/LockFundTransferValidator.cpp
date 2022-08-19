@@ -47,6 +47,8 @@ namespace catapult { namespace validators {
 					auto unlockingFundsRecord = unlockingFundsRecordIt.tryGet();
 					if(unlockingFundsRecord)
 					{
+						if(unlockingFundsRecord->LockFundRecords.size() >= pluginConfig.MaxUnlockRequests)
+							return Failure_LockFund_Maximum_Unlock_Records;
 						for(auto record : unlockingFundsRecord->LockFundRecords)
 						{
 							if(Height(context.Height.unwrap() + notification.Duration.unwrap()) == record.first && record.second.Active())
@@ -66,6 +68,8 @@ namespace catapult { namespace validators {
 				auto unlockingFundsRecord = unlockingFundsRecordIt.tryGet();
 				if(unlockingFundsRecord)
 				{
+					if(unlockingFundsRecord->LockFundRecords.size() >= pluginConfig.MaxUnlockRequests)
+						return Failure_LockFund_Maximum_Unlock_Records;
 					for(auto record : unlockingFundsRecord->LockFundRecords)
 					{
 						if(record.second.Active())

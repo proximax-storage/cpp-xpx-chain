@@ -25,6 +25,10 @@ namespace catapult { namespace config {
 		/// Blocks after which a request to unlock can be fulfilled
 		BlockDuration MinRequestUnlockCooldown;
 
+		/// Maximum unlock requests each account can submit.
+
+		uint MaxUnlockRequests;
+
 		/// Maximum transaction mosaics size.
 		uint16_t MaxMosaicsSize;
 

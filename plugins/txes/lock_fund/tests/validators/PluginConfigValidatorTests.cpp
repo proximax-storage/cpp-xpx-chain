@@ -26,6 +26,7 @@ namespace catapult { namespace validators {
 					{
 						{ "minRequestUnlockCooldown", "200000" },
 						{ "maxMosaicsSize", "256" },
+						{ "maxUnlockRequests", "10" },
 						{ "enabled", "true" },
 					}
 				}});

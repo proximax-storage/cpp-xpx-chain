@@ -19,9 +19,10 @@ namespace catapult { namespace config {
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
 			LOAD_PROPERTY(Enabled);
 			LOAD_PROPERTY(MaxMosaicsSize);
+			LOAD_PROPERTY(MaxUnlockRequests);
 			LOAD_PROPERTY(MinRequestUnlockCooldown);
 #undef LOAD_PROPERTY
-			utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 3);
+			utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 4);
 		return config;
 	}
 }}

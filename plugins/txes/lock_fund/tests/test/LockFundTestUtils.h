@@ -32,6 +32,7 @@ namespace catapult { namespace test {
 		auto pluginConfig = config::LockFundConfiguration::Uninitialized();
 		pluginConfig.MaxMosaicsSize = maxMosaicsSize;
 		pluginConfig.MinRequestUnlockCooldown = unlockCooldown;
+		pluginConfig.MaxUnlockRequests = 5;
 		test::MutableBlockchainConfiguration mutableConfig;
 		mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 		auto config = mutableConfig.ToConst();

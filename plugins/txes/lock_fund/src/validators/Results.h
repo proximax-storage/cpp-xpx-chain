@@ -41,6 +41,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because mosaic amount is zero.
 	DEFINE_LockFund_RESULT(Zero_Amount, 9);
 
+	/// Validation failed because this account already has the maximum amount of unlock requests set.
+	DEFINE_LockFund_RESULT(Maximum_Unlock_Records, 10);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif
