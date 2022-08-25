@@ -36,7 +36,7 @@ namespace catapult { namespace observers {
 				const auto& config = pConfigHolder->Config();
 				auto balances = accountStateOpt->Balances.getCompoundEffectiveBalance(context.Height, config.Network.ImportanceGrouping);
 				auto receipt = model::SignerBalanceReceipt(model::Receipt_Type_Block_Signer_Importance, balances.first, balances.second);
-				context.StatementBuilder().addSignerImportanceReceipt(receipt);
+				context.StatementBuilder().addPublicKeyReceipt(receipt);
 			}
 		}
 	}

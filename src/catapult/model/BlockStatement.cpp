@@ -38,7 +38,6 @@ namespace catapult { namespace model {
 			AddAll(builder, statement.AddressResolutionStatements);
 			AddAll(builder, statement.MosaicResolutionStatements);
 			AddAll(builder, statement.PublicKeyStatements);
-			AddAll(builder, statement.SignerImportanceStatements);
 
 			builder.final(output);
 		}
@@ -99,8 +98,7 @@ namespace catapult { namespace model {
 		return statement.TransactionStatements.size()
 				+ statement.AddressResolutionStatements.size()
 				+ statement.MosaicResolutionStatements.size()
-				+ statement.PublicKeyStatements.size()
-				+ statement.SignerImportanceStatements.size();
+				+ statement.PublicKeyStatements.size();
 	}
 
 	void DeepCopyTo(BlockStatement& destination, const BlockStatement& source) {
@@ -112,6 +110,5 @@ namespace catapult { namespace model {
 		CopyResolutionStatements(destination.AddressResolutionStatements, source.AddressResolutionStatements, maxSourcePrimaryId);
 		CopyResolutionStatements(destination.MosaicResolutionStatements, source.MosaicResolutionStatements, maxSourcePrimaryId);
 		CopyStatements(destination.PublicKeyStatements, source.PublicKeyStatements, maxSourcePrimaryId);
-		CopyStatements(destination.SignerImportanceStatements, source.SignerImportanceStatements, maxSourcePrimaryId);
 	}
 }}

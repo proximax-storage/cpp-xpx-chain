@@ -39,8 +39,6 @@ namespace catapult { namespace model {
 		/// Transaction statements.
 		std::map<ReceiptSource, PublicKeyStatement> PublicKeyStatements;
 
-		/// Signer Importance statements.
-		std::map<ReceiptSource, PublicKeyStatement> SignerImportanceStatements;
 	};
 
 	/// Calculates the merkle hash for \a statement.

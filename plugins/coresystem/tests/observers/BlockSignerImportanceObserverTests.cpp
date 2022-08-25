@@ -101,8 +101,8 @@ namespace catapult { namespace observers {
 
 			  // - check receipt
 			  auto pStatement = context.statementBuilder().build();
-			  ASSERT_EQ(1u, pStatement->SignerImportanceStatements.size());
-			  const auto& receiptPair = *pStatement->SignerImportanceStatements.find(model::ReceiptSource());
+			  ASSERT_EQ(1u, pStatement->PublicKeyStatements.size());
+			  const auto& receiptPair = *pStatement->PublicKeyStatements.find(model::ReceiptSource());
 			  ASSERT_EQ(1u, receiptPair.second.size());
 
 			  const auto& receipt = static_cast<const model::SignerBalanceReceipt&>(receiptPair.second.receiptAt(0));
