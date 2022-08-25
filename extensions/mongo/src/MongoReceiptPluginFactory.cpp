@@ -40,6 +40,12 @@ namespace catapult { namespace mongo {
 					<< "amount" << mappers::ToInt64(receipt.Amount);
 		}
 
+		void StreamSignerImportanceReceipt(bsoncxx::builder::stream::document& builder, const model::SignerBalanceReceipt& receipt) {
+			builder
+					<< "amount" << mappers::ToInt64(receipt.Amount)
+					<< "lockedAmount" << mappers::ToInt64(receipt.LockedAmount);
+		}
+
 		void StreamInflationReceipt(bsoncxx::builder::stream::document& builder, const model::InflationReceipt& receipt) {
 			builder
 					<< "mosaicId" << mappers::ToInt64(receipt.MosaicId)
@@ -55,6 +61,7 @@ namespace catapult { namespace mongo {
 
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(BalanceTransfer, StreamBalanceTransferReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(BalanceChange, StreamBalanceChangeReceipt)
+	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(SignerBalance, StreamSignerImportanceReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(Inflation, StreamInflationReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(DriveState, StreamDriveStateReceipt)
 }}

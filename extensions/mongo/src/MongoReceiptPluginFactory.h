@@ -79,6 +79,9 @@ namespace catapult { namespace mongo {
 	/// Creates a mongo inflation receipt plugin around \a type.
 	std::unique_ptr<MongoReceiptPlugin> CreateInflationReceiptMongoPlugin(model::ReceiptType type);
 
+		/// Creates a mongo inflation receipt plugin around \a type.
+	std::unique_ptr<MongoReceiptPlugin> CreateSignerBalanceReceiptMongoPlugin(model::ReceiptType type);
+
 	/// Creates a mongo drive state receipt plugin around \a type.
 	std::unique_ptr<MongoReceiptPlugin> CreateDriveStateReceiptMongoPlugin(model::ReceiptType type);
 }}
