@@ -44,6 +44,7 @@ namespace catapult { namespace extensions {
 		std::vector<std::string> expectedObserverNames{
 			"AccountPublicKeyObserver",
 			"SourceChangeObserver",
+			"BlockSignerImportanceObserver",
 			"AccountAddressObserver",
 			"BalanceTransferObserver",
 			"HarvestFeeObserver",

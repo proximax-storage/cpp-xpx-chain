@@ -80,6 +80,7 @@ namespace catapult { namespace plugins {
 				return {
 					"AccountPublicKeyObserver",
 					"SourceChangeObserver",
+					"BlockSignerImportanceObserver",
 					"AccountAddressObserver",
 					"BalanceTransferObserver",
 					"HarvestFeeObserver",
@@ -96,6 +97,7 @@ namespace catapult { namespace plugins {
 				return {
 					"AccountPublicKeyObserver",
 					"SourceChangeObserver",
+					"BlockSignerImportanceObserver",
 					"AccountAddressObserver",
 					"BalanceTransferObserver",
 					"HarvestFeeObserver",
