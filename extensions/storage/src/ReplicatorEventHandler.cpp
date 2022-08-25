@@ -323,7 +323,12 @@ namespace catapult { namespace storage {
 				});
 			}
 
-        private:
+			void onLibtorrentSessionError(const std::string& message) override {
+            	std::string error = "Libtorrent Session Error: " + message;
+				CATAPULT_THROW_RUNTIME_ERROR( error.c_str() );
+			}
+
+		private:
         	std::shared_ptr<thread::IoThreadPool> m_pool;
             TransactionSender m_transactionSender;
             state::StorageState& m_storageState;
