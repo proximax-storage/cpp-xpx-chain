@@ -42,7 +42,7 @@ namespace catapult { namespace observers {
 					offboardingReplicators.begin(),
 					offboardingReplicators.begin() + offboardingCount);
 
-		  	utils::RefundDepositsToReplicators(notification.DriveKey, actualOffboardingReplicators, context);
+		  	utils::RefundDepositsOnOffboarding(notification.DriveKey, actualOffboardingReplicators, context);
 			utils::OffboardReplicatorsFromDrive(notification.DriveKey, actualOffboardingReplicators, context, rng);
 		  	utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
 		}))

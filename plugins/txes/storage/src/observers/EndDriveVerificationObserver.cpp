@@ -68,7 +68,7 @@ namespace catapult { namespace observers {
 			std::seed_seq seed(notification.Seed.begin(), notification.Seed.end());
 			std::mt19937 rng(seed);
 
-		  	utils::RefundDepositsToReplicators(notification.DriveKey, voluntarilyOffboardingReplicators, context);
+		  	utils::RefundDepositsOnOffboarding(notification.DriveKey, voluntarilyOffboardingReplicators, context);
 			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
 			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
 

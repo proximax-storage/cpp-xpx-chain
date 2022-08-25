@@ -93,7 +93,7 @@ namespace catapult { namespace observers {
 					// The value will be used after removing drive entry. That's why the copy is needed
 					const auto replicators = driveEntry.replicators();
 
-					RefundDepositsToReplicators(driveEntry.key(), replicators, context);
+					RefundDepositsOnDriveClosure(driveEntry.key(), replicators, context);
 
 					// Making payments to replicators, if there is a pending data modification
 					auto& activeDataModifications = driveEntry.activeDataModifications();
