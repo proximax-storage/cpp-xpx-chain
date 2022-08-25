@@ -248,15 +248,14 @@ namespace catapult { namespace observers {
 		cacheValues.ExpectedVerification = CreateExpectedVerification(cacheValues.InitialVerification, shardId);
 		cacheValues.ExpectedReplicators = {Replicator_Key_1, Replicator_Key_2};
 		cacheValues.ExpectedAmounts = {
-				{Zero_Key, {0, 60, 0}},
-				{Drive_Key, {100, 80, 60}},	// (0, -20, -40) for refunds to RK3,
-												// (0, -6*3, 0) for deposit slashing after RK4 offboarding,
-												// (0, +20, +40) for RK4 repeated onboarding
-				{Replicator_Key_1, {100, 110, 100}},	// (0, +6, 0) for deposit slashing after RK4 offboarding
-				{Replicator_Key_2, {100, 110, 100}},	// (0, +6, 0) for deposit slashing after RK4 offboarding
-				{Replicator_Key_3, {160, 10, 10}},	// (+20+40, 0, 0) for refunds from the drive
-				{Replicator_Key_4, {100, 100, 100}},	// (0, -20, -40) for repeated onboarding,
-													 	// (0, +6, 0) for deposit slashing after RK4 offboarding
+				{Zero_Key, {0, 40, 0}},				// (0, -10*2, 0) for deposit slashing after RK4 offboarding,
+													 	// (0, -20, 0) for SO refunds to RK3,
+				{Drive_Key, {100, 100, 60}},			// (0, 0, -40) for SM refunds to RK3,
+				{Replicator_Key_1, {110, 100, 100}},	// (+10, 0, 0) for deposit slashing after RK4 offboarding,
+				{Replicator_Key_2, {110, 100, 100}},	// (+10, 0, 0) for deposit slashing after RK4 offboarding,
+				{Replicator_Key_3, {160, 10, 10}},	// (+20, 0, 0) for SO refunds from the void account,
+													 	// (+40, 0, 0) for SM refunds from the drive,
+				{Replicator_Key_4, {100, 100, 100}},	// Failed verification, gets nothing in return
 		};
 
         // Assert
@@ -297,15 +296,14 @@ namespace catapult { namespace observers {
 		cacheValues.ExpectedVerification = CreateExpectedVerification(cacheValues.InitialVerification, shardId);
 		cacheValues.ExpectedReplicators = {Replicator_Key_1, Replicator_Key_2};
 		cacheValues.ExpectedAmounts = {
-				{Zero_Key, {0, 60, 0}},
-				{Drive_Key, {100, 80, 60}},	// (0, -20, -40) for refunds to RK3,
-												// (0, -6*3, 0) for deposit slashing after RK4 offboarding,
-												// (0, +20, +40) for RK4 repeated onboarding
-				{Replicator_Key_1, {100, 110, 100}},	// (0, +6, 0) for deposit slashing after RK4 offboarding
-				{Replicator_Key_2, {100, 110, 100}},	// (0, +6, 0) for deposit slashing after RK4 offboarding
-				{Replicator_Key_3, {160, 10, 10}},	// (+20+40, 0, 0) for refunds from the drive
-				{Replicator_Key_4, {100, 100, 100}},	// (0, -20, -40) for repeated onboarding,
-														// (0, +6, 0) for deposit slashing after RK4 offboarding
+				{Zero_Key, {0, 40, 0}},				// (0, -10*2, 0) for deposit slashing after RK4 offboarding,
+													 	// (0, -20, 0) for SO refunds to RK3,
+				{Drive_Key, {100, 100, 60}},			// (0, 0, -40) for SM refunds to RK3,
+				{Replicator_Key_1, {110, 100, 100}},	// (+10, 0, 0) for deposit slashing after RK4 offboarding,
+				{Replicator_Key_2, {110, 100, 100}},	// (+10, 0, 0) for deposit slashing after RK4 offboarding,
+				{Replicator_Key_3, {160, 10, 10}},	// (+20, 0, 0) for SO refunds from the void account,
+													 	// (+40, 0, 0) for SM refunds from the drive,
+				{Replicator_Key_4, {100, 100, 100}},	// Failed verification, gets nothing in return
 		};
 
 		// Assert

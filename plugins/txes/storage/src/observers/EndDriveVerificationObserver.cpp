@@ -70,7 +70,6 @@ namespace catapult { namespace observers {
 
 		  	utils::RefundDepositsOnOffboarding(notification.DriveKey, voluntarilyOffboardingReplicators, context);
 			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
-			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
 
 			shardSet.clear();
 		  	bool verificationCompleted = true;
@@ -89,19 +88,23 @@ namespace catapult { namespace observers {
 
 			// Split storage deposit slashing between remaining replicators
 			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-			auto accountIter = accountStateCache.find(notification.DriveKey);
-			auto& driveAccountState = accountIter.get();
+			auto& voidState = utils::getVoidState(context);
+
 			auto storageDepositSlashingShare = Amount(storageDepositSlashing / driveEntry.replicators().size());
+			const auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 			const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 
 			for (const auto& replicatorKey : driveEntry.replicators()) {
-				accountIter = accountStateCache.find(replicatorKey);
+				auto accountIter = accountStateCache.find(replicatorKey);
 				auto& replicatorAccountState = accountIter.get();
-				driveAccountState.Balances.debit(storageMosaicId, storageDepositSlashingShare, context.Height);
-				replicatorAccountState.Balances.credit(storageMosaicId, storageDepositSlashingShare, context.Height);
+				voidState.Balances.debit(storageMosaicId, storageDepositSlashingShare, context.Height);
+				replicatorAccountState.Balances.credit(currencyMosaicId, storageDepositSlashingShare, context.Height);
 			}
 
 			// Streaming deposits of failed provers remain on drive's account
+
+		  	// Populate the drive AFTER storage deposit slashing is made
+			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
     	}))
 	}
 }}
