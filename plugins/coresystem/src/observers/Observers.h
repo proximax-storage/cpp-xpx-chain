@@ -73,5 +73,8 @@ namespace catapult { namespace observers {
 	/// Observes source changes and changes observer source.
 	DECLARE_OBSERVER(SourceChange, model::SourceChangeNotification<1>)();
 
+	/// Observes a new block signer to generate the balance receipt.
+	DECLARE_OBSERVER(BlockSignerImportance, model::BlockSignerImportanceNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pHolder);
+
 	// endregion
 }}

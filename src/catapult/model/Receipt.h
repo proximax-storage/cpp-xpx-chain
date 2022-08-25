@@ -69,6 +69,29 @@ namespace catapult { namespace model {
 		catapult::Amount Amount;
 	};
 
+	/// Binary layout for a signer balance receipt to record the importance of the signer account
+	struct SignerBalanceReceipt : public Receipt {
+	public:
+		/// Creates a receipt around \a amount and \a lockedAmount.
+		SignerBalanceReceipt(
+				ReceiptType receiptType,
+				catapult::Amount amount,
+				catapult::Amount lockedAmount)
+				: Amount(amount)
+				, LockedAmount(lockedAmount){
+			Size = sizeof(SignerBalanceReceipt);
+			Version = 1;
+			Type = receiptType;
+		}
+
+	public:
+		/// Amount of mosaic.
+		catapult::Amount Amount;
+
+		/// Amount of locked mosaic.
+		catapult::Amount LockedAmount;
+	};
+
 	/// Binary layout for a balance change receipt.
 	struct BalanceChangeReceipt : public Receipt {
 	public:

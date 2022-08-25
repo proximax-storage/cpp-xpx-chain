@@ -111,7 +111,7 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pBlock, [&block = *pBlock](const auto& sub) {
 			// Assert:
-			EXPECT_EQ(6u, sub.numNotifications());
+			EXPECT_EQ(7u, sub.numNotifications());
 			EXPECT_EQ(0u, sub.numAddresses());
 			EXPECT_EQ(2u, sub.numKeys());
 
@@ -129,7 +129,7 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pBlock, [&block = *pBlock](const auto& sub) {
 			// Assert:
-			EXPECT_EQ(5u, sub.numNotifications());
+			EXPECT_EQ(6u, sub.numNotifications());
 			EXPECT_EQ(0u, sub.numAddresses());
 			EXPECT_EQ(1u, sub.numKeys());
 
@@ -238,13 +238,14 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pBlock, PublicationMode::Basic, [](const auto& sub) {
 			// Assert: no notifications were suppressed (blocks do not have custom notifications)
-			ASSERT_EQ(6u, sub.numNotifications());
+			ASSERT_EQ(7u, sub.numNotifications());
 			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[0]);
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
-			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[2]);
-			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[3]);
-			EXPECT_EQ(Core_Block_v1_Notification, sub.notificationTypes()[4]);
-			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[5]);
+		    EXPECT_EQ(Core_Block_Signer_Importance_v1_Notification, sub.notificationTypes()[2]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[3]);
+			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[4]);
+			EXPECT_EQ(Core_Block_v1_Notification, sub.notificationTypes()[5]);
+			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[6]);
 		});
 	}
 

@@ -138,6 +138,10 @@ namespace catapult { namespace model {
 	/// Mosaic was credited to account.
 	DEFINE_CORE_NOTIFICATION(Internal_Padding_v1, 0x0011, All);
 
+	/// Signer importance information.
+	DEFINE_CORE_NOTIFICATION(Block_Signer_Importance_v1, 0x0012, Observer);
+
+
 
 
 #undef DEFINE_CORE_NOTIFICATION

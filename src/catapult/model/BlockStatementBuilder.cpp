@@ -64,6 +64,10 @@ namespace catapult { namespace model {
 		addReceipt(m_pStatement->TransactionStatements, m_activeSource, receipt);
 	}
 
+	void BlockStatementBuilder::addSignerImportanceReceipt(const Receipt& receipt) {
+		addReceipt(m_pStatement->SignerImportanceStatements, m_activeSource, receipt);
+	}
+
 	void BlockStatementBuilder::addPublicKeyReceipt(const Receipt& receipt) {
 		addReceipt(m_pStatement->PublicKeyStatements, m_activeSource, receipt);
 	}

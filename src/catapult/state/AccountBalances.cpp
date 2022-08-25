@@ -452,6 +452,26 @@ namespace catapult { namespace state {
 		}
 	}
 
+	std::pair<Amount, Amount> AccountBalances::getCompoundEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const {
+		if (m_localSnapshots.empty() && m_remoteSnapshots.empty()) {
+			auto iter = m_balances.find(m_trackedMosaicId);
+			auto lockedIter = m_lockedBalances.find(m_trackedMosaicId);
+			auto lockedAmount = m_lockedBalances.end() == lockedIter ? Amount(0) : lockedIter->second;
+			return m_balances.end() == iter ? std::make_pair(Amount(), lockedAmount) : std::make_pair(iter->second, lockedAmount);
+		}
+
+		if (m_remoteSnapshots.empty()) {
+			return minSnapshot(m_localSnapshots, height, importanceGrouping)->GetCompoundEffectiveAmount();
+		} else if (m_localSnapshots.empty()) {
+			return minSnapshot(m_remoteSnapshots, height, importanceGrouping)->GetCompoundEffectiveAmount();
+		} else {
+			return std::min(
+					minSnapshot(m_localSnapshots, height, importanceGrouping)->GetCompoundEffectiveAmount(),
+					minSnapshot(m_remoteSnapshots, height, importanceGrouping)->GetCompoundEffectiveAmount()
+			);
+		}
+	}
+
 	void AccountBalances::maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Amount& lockedAmount, const Height& height) {
 		if (mosaicId != m_trackedMosaicId || height == Height(0) || height == Height(-1)) {
 			return;

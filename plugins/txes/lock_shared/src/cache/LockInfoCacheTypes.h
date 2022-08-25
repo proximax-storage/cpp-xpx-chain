@@ -43,7 +43,7 @@ namespace catapult { namespace cache {
 			using Serializer = IdentifierGroupSerializer<HeightGroupingTypesDescriptor>;
 
 		public:
-			static auto GetKeyFromValue(const ValueType& heightHashes) {
+			static auto GetKeyFromValue(const ValueType& heightHashes) -> decltype(heightHashes.key()){
 				return heightHashes.key();
 			}
 		};

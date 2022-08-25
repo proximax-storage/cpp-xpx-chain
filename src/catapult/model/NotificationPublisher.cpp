@@ -94,6 +94,7 @@ namespace catapult { namespace model {
 				auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, block.GetHeaderSize() - headerSize };
 				switch (block.EntityVersion()) {
 				case 4: {
+					sub.notify(BlockSignerImportanceNotification<1>(block.Signer));
 					[[fallthrough]];
 				}
 				case 3: {

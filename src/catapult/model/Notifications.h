@@ -314,6 +314,28 @@ namespace catapult { namespace model {
 		uint32_t FeeInterestDenominator;
 	};
 
+	/// Notifies the arrival of a signer importance notification.
+	template<VersionType version>
+	struct BlockSignerImportanceNotification;
+
+	template<>
+	struct BlockSignerImportanceNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Signer_Importance_v1_Notification;
+
+	public:
+		/// Creates a block notification around \a signer, \a beneficiary, \a timestamp and \a difficulty.
+		BlockSignerImportanceNotification(
+				const Key& signer)
+				: Notification(Notification_Type, sizeof(BlockSignerImportanceNotification<1>))
+				, Signer(signer)
+		{}
+
+	public:
+		/// Block signer.
+		const Key& Signer;
+	};
 	// endregion
 
 	// region transaction

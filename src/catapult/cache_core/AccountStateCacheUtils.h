@@ -23,6 +23,7 @@
 #include "catapult/functions.h"
 #include "catapult/types.h"
 #include <optional>
+#include <memory>
 namespace catapult {
 	namespace cache {
 		class AccountStateCacheDelta;

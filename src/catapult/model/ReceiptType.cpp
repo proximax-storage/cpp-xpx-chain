@@ -46,7 +46,7 @@ namespace catapult { namespace model {
 			CASE_WELL_KNOWN_RECEIPT_TYPE(Public_Key_Group);
 			CASE_WELL_KNOWN_RECEIPT_TYPE(Address_Alias_Resolution);
 			CASE_WELL_KNOWN_RECEIPT_TYPE(Mosaic_Alias_Resolution);
-
+			CASE_WELL_KNOWN_RECEIPT_TYPE(Block_Signer_Importance);
 			// plugin receipt types
 			#include "plugins/txes/lock_hash/src/model/HashLockReceiptType.h"
 			#include "plugins/txes/lock_secret/src/model/SecretLockReceiptType.h"

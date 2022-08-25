@@ -40,6 +40,11 @@ namespace catapult { namespace model {
 		{
 			return LockedAmount + Amount;
 		}
+
+		std::pair<catapult::Amount, catapult::Amount> GetCompoundEffectiveAmount() const
+		{
+			return std::make_pair(Amount, LockedAmount);
+		}
 	};
 
 #pragma pack(pop)

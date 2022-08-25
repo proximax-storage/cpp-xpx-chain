@@ -154,6 +154,9 @@ namespace catapult { namespace state {
 		/// Get effective balance of account at \a height with \a importanceGrouping
 		Amount getEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const;
 
+		/// Get effective balance of account at \a height with \a importanceGrouping
+		std::pair<Amount, Amount> getCompoundEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const;
+
 	private:
 		/// Maybe push snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
 		void maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Amount& lockedAmount, const Height& height);

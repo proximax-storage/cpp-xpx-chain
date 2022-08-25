@@ -58,6 +58,9 @@ namespace catapult { namespace model {
 
 		/// Operation receipt.
 		Operation = 0x7,
+
+		/// Operation receipt.
+		SignerImportance = 0x8,
 	};
 
 	/// Enumeration of receipt types.
@@ -95,6 +98,9 @@ namespace catapult { namespace model {
 
 	/// Mosaic alias resolution.
 	DEFINE_RECEIPT_TYPE(AliasResolution, Core, Mosaic_Alias_Resolution, 2);
+
+	/// Harvest fee credit.
+	DEFINE_RECEIPT_TYPE(SignerImportance, Core, Block_Signer_Importance, 1);
 
 	/// Insertion operator for outputting \a receiptType to \a out.
 	std::ostream& operator<<(std::ostream& out, ReceiptType receiptType);

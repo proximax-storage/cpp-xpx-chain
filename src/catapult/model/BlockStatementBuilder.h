@@ -46,6 +46,9 @@ namespace catapult { namespace model {
 		/// Adds a public key \a receipt to this builder.
 		void addPublicKeyReceipt(const Receipt& receipt);
 
+		/// Adds a signer importance \a receipt to this builder.
+		void addSignerImportanceReceipt(const Receipt& receipt);
+
 		/// Adds a resolution entry for resolving \a unresolved value to \a resolved value.
 		void addResolution(const UnresolvedAddress& unresolved, const Address& resolved);
 
