@@ -20,7 +20,7 @@ namespace catapult { namespace observers {
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
 
 		if (!downloadChannelEntry.isCloseInitiated()) {
-			// THe download channel continues to work, so no refund is needed
+			// The download channel continues to work, so no refund is needed
 			return;
 		}
 
@@ -42,6 +42,10 @@ namespace catapult { namespace observers {
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);
 	  	senderState.Balances.debit(streamingMosaicId, streamingRefundAmount, context.Height);
 	  	recipientState.Balances.credit(currencyMosaicId, streamingRefundAmount, context.Height);
+
+		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+		auto& driveEntry = driveCache.find(downloadChannelEntry.drive()).get();
+		driveEntry.downloadShards().erase(notification.DownloadChannelId);
 
 	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		for (const auto& replicatorKey: downloadChannelEntry.shardReplicators()) {
