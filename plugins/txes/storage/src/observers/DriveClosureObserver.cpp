@@ -38,6 +38,26 @@ namespace catapult { namespace observers {
 			// The value will be used after removing drive entry. That's why the copy is needed
 			const auto replicators = driveEntry.replicators();
 
+			// Removing replicators from tree before must be performed before refunding
+			auto replicatorKeyExtractor = [=, &accountStateCache](const Key& key) {
+				return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+			};
+
+			utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
+					context.Cache.template sub<cache::QueueCache>(),
+							state::ReplicatorsSetTree,
+							replicatorKeyExtractor,
+							[&replicatorCache](const Key& key) -> state::AVLTreeNode {
+						return replicatorCache.find(key).get().replicatorsSetNode();
+						},
+						[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
+						replicatorCache.find(key).get().replicatorsSetNode() = node;
+					});
+
+			for (const auto& replicatorKey : replicators) {
+				replicatorTreeAdapter.remove(replicatorKeyExtractor(replicatorKey));
+			}
+
 			RefundDepositsOnDriveClosure(driveEntry.key(), replicators, context);
 
 			// Making payments to replicators, if there is a pending data modification
@@ -137,27 +157,10 @@ namespace catapult { namespace observers {
 			}
 
 			// Removing the drive from caches
-			auto replicatorKeyExtractor = [=, &accountStateCache](const Key& key) {
-				return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
-			};
-
-			utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
-					context.Cache.template sub<cache::QueueCache>(),
-							state::ReplicatorsSetTree,
-							replicatorKeyExtractor,
-							[&replicatorCache](const Key& key) -> state::AVLTreeNode {
-						return replicatorCache.find(key).get().replicatorsSetNode();
-						},
-						[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
-						replicatorCache.find(key).get().replicatorsSetNode() = node;
-					});
-
 			for (const auto& replicatorKey : replicators) {
 				auto replicatorIter = replicatorCache.find(replicatorKey);
 				auto& replicatorEntry = replicatorIter.get();
 				replicatorEntry.drives().erase(notification.DriveKey);
-
-				replicatorTreeAdapter.remove(replicatorKeyExtractor(replicatorKey));
 			}
 
 			driveCache.remove(notification.DriveKey);
