@@ -35,19 +35,14 @@ namespace catapult { namespace observers {
 
 	  	// Refunding currency mosaics.
 	  	const auto& currencyRefundAmount = senderState.Balances.get(currencyMosaicId);
-
-	  	if (senderState.Balances.get(currencyMosaicId) >= currencyRefundAmount) {
-	  		senderState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
-	  		recipientState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
-		}
-		else {
-			CATAPULT_LOG( error ) << "Not Enough Currency To Refund " << notification.DownloadChannelId << " "
-								<< senderState.Balances.get(currencyMosaicId) << " " << currencyRefundAmount;
-		}
+		senderState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
+		recipientState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
 
 		// Refunding streaming mosaics.
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);
-		liquidityProvider.debitMosaics(context, downloadChannelEntry.id().array(), downloadChannelEntry.consumer(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), streamingRefundAmount);
+		liquidityProvider.debitMosaics(context, downloadChannelEntry.id().array(), downloadChannelEntry.consumer(),
+									   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+									   streamingRefundAmount);
 
 	  	// Removing associations with the download channel in respective drive and replicator entries.
 	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();

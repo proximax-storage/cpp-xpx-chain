@@ -20,7 +20,8 @@
 
 #pragma once
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
+#include <cstddef>
 
 namespace catapult {
 	namespace io {

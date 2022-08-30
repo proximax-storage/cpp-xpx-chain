@@ -62,9 +62,16 @@ namespace catapult { namespace utils {
 	/// Gets void (zero key) account state. If necessary, creates it.
 	state::AccountState& getVoidState(const observers::ObserverContext&);
 
-	/// Calculates amounts of storage and streaming deposit refunds of \a replicators
+	/// Calculates amounts of deposit refunds of \a replicators in case of drive closure
 	/// with respect to the drive with \a driveKey, and transfers them to replicators' accounts.
-	void RefundDepositsToReplicators(
+	void RefundDepositsOnDriveClosure(
+			const Key&,
+			const std::set<Key>&,
+			const observers::ObserverContext&);
+
+	/// Calculates amounts of deposit refunds of \a replicators in case of replicator offboarding
+	/// with respect to the drive with \a driveKey, and transfers them to replicators' accounts.
+	void RefundDepositsOnOffboarding(
 			const Key&,
 			const std::set<Key>&,
 			observers::ObserverContext&,

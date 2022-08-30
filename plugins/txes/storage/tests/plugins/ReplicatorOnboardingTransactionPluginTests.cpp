@@ -140,10 +140,9 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(2u, sub.numMatchingNotifications());
-		auto i = 0u;
-		EXPECT_EQ(pTransaction->Signer, sub.matchingNotifications()[i++].PublicKey);
-		EXPECT_EQ(pTransaction->Signer, sub.matchingNotifications()[i++].PublicKey);
+		ASSERT_EQ(1u, sub.numMatchingNotifications());
+		const auto& notification = sub.matchingNotifications()[0];
+		EXPECT_EQ(pTransaction->Signer, notification.PublicKey);
 	}
 
 	// endregion

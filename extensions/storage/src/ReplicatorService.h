@@ -10,6 +10,7 @@
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ServiceRegistrar.h"
 #include "catapult/ionet/Node.h"
+#include <optional>
 
 namespace catapult { namespace model { class Transaction; } }
 

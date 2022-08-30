@@ -16,14 +16,15 @@ namespace catapult { namespace observers {
 		auto driveIter = driveCache.find(notification.DriveKey);
 		auto& driveEntry = driveIter.get();
 
-		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
-
 		const auto replicatorDifference = driveEntry.replicatorCount() - driveEntry.replicators().size();
-		const auto usedSizeDifference = driveEntry.activeDataModifications().begin()->ActualUploadSizeMegabytes +
-										driveEntry.usedSizeBytes()
-			- (notification.UsedDriveSize - notification.MetaFilesSizeBytes);
+	  	const auto usedSizeDifference =
+				driveEntry.activeDataModifications().begin()->ExpectedUploadSizeMegabytes
+				+ utils::FileSize::FromBytes(driveEntry.usedSizeBytes() - driveEntry.metaFilesSizeBytes()).megabytes()
+				- utils::FileSize::FromBytes(notification.UsedDriveSize - notification.MetaFilesSizeBytes).megabytes();
 		const auto transferAmount = Amount(replicatorDifference * usedSizeDifference);
 
-		liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), transferAmount);
+		liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+									   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+									   transferAmount);
 	});
 }}

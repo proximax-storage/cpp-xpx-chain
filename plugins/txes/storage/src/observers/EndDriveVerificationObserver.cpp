@@ -68,9 +68,8 @@ namespace catapult { namespace observers {
 			std::seed_seq seed(notification.Seed.begin(), notification.Seed.end());
 			std::mt19937 rng(seed);
 
-			utils::RefundDepositsToReplicators(notification.DriveKey, voluntarilyOffboardingReplicators, context, liquidityProvider);
+			utils::RefundDepositsOnOffboarding(notification.DriveKey, voluntarilyOffboardingReplicators, context, liquidityProvider);
 			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
-			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
 
 			shardSet.clear();
 		  	bool verificationCompleted = true;
@@ -91,10 +90,15 @@ namespace catapult { namespace observers {
 			auto storageDepositSlashingShare = Amount(storageDepositSlashing / driveEntry.replicators().size());
 
 			for (const auto& replicatorKey : driveEntry.replicators()) {
-				liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), storageDepositSlashingShare);
+				liquidityProvider.debitMosaics(context, Key(), replicatorKey,
+											   config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
+											   storageDepositSlashingShare);
 			}
 
 			// Streaming deposits of failed provers remain on drive's account
+
+		  	// Populate the drive AFTER storage deposit slashing is made
+			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
     	}))
 	}
 }}

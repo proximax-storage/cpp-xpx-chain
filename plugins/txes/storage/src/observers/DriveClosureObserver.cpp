@@ -38,7 +38,7 @@ namespace catapult { namespace observers {
 			// The value will be used after removing drive entry. That's why the copy is needed
 			const auto replicators = driveEntry.replicators();
 
-			RefundDepositsToReplicators(driveEntry.key(), replicators, context, liquidityProvider);
+			RefundDepositsOnDriveClosure(driveEntry.key(), replicators, context);
 
 			// Making payments to replicators, if there is a pending data modification
 			auto& activeDataModifications = driveEntry.activeDataModifications();
@@ -104,18 +104,16 @@ namespace catapult { namespace observers {
 		  	const auto storageRefundAmount = driveState.Balances.get(storageMosaicId);
 		  	const auto streamingRefundAmount = driveState.Balances.get(streamingMosaicId);
 
-		  	if ( driveState.Balances.get(currencyMosaicId) >= currencyRefundAmount ) {
-				driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
-				driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
-			}
-			else {
-		  		CATAPULT_LOG( error ) << "Not Enough Currency To Refund " << notification.DriveKey << " "
-		  							  << driveState.Balances.get(currencyMosaicId) << " " << currencyRefundAmount;
-		  	}
+			driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
+		  	driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
 
-		  	liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStorageMosaicId(context.Config.Immutable), storageRefundAmount);
+		  	liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+										   config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
+										   storageRefundAmount);
 
-		  	liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), streamingRefundAmount);
+		  	liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+										   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+										   streamingRefundAmount);
 
 			// Removing the drive from queue, if present
 			if (replicators.size() < driveEntry.replicatorCount()) {
