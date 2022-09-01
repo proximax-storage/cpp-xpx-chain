@@ -89,6 +89,27 @@ namespace catapult { namespace observers {
 					// The value will be used after removing drive entry. That's why the copy is needed
 					const auto replicators = driveEntry.replicators();
 
+					auto keyExtractor = [=, &accountStateCache](const Key& key) {
+						return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+					};
+
+					// Removing replicators from tree before must be performed before refunding
+					utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
+							context.Cache.template sub<cache::QueueCache>(),
+									state::ReplicatorsSetTree,
+									keyExtractor,
+									[&replicatorCache](const Key& key) -> state::AVLTreeNode {
+								return replicatorCache.find(key).get().replicatorsSetNode();
+								},
+								[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
+								replicatorCache.find(key).get().replicatorsSetNode() = node;
+							});
+
+					for (const auto& replicatorKey: replicators) {
+						auto key = keyExtractor(replicatorKey);
+						replicatorTreeAdapter.remove(key);
+					}
+
 					RefundDepositsOnDriveClosure(driveEntry.key(), replicators, context);
 
 					// Making payments to replicators, if there is a pending data modification
@@ -104,26 +125,6 @@ namespace catapult { namespace observers {
 							auto& replicatorState = replicatorIter.get();
 							liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
 						}
-					}
-
-					auto keyExtractor = [=, &accountStateCache](const Key& key) {
-						return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
-					};
-
-					utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
-							context.Cache.template sub<cache::QueueCache>(),
-							state::ReplicatorsSetTree,
-							keyExtractor,
-							[&replicatorCache](const Key& key) -> state::AVLTreeNode {
-								return replicatorCache.find(key).get().replicatorsSetNode();
-							},
-							[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
-								replicatorCache.find(key).get().replicatorsSetNode() = node;
-							});
-
-					for (const auto& replicatorKey: replicators) {
-						auto key = keyExtractor(replicatorKey);
-						replicatorTreeAdapter.remove(key);
 					}
 
 					// Returning the rest to the drive owner
