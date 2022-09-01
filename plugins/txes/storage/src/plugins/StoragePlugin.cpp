@@ -197,7 +197,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateStreamStartValidator())
 				.add(validators::CreateStreamFinishValidator())
 				.add(validators::CreateStreamPaymentValidator())
-				.add(validators::CreateEndDriveVerificationValidator());
+				.add(validators::CreateEndDriveVerificationValidator())
+				.add(validators::CreateServiceUnitTransferValidator());
 		});
 
 		manager.addObserverHook([&state = *pStorageState](auto& builder) {
