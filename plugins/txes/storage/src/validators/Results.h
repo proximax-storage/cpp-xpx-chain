@@ -177,6 +177,9 @@ namespace catapult { namespace validators {
 	/// Download channels is finished
 	DEFINE_STORAGE_RESULT(Download_Channel_Is_Finished, 54);
 
+	/// Attempting to transfer a service unit.
+	DEFINE_STORAGE_RESULT(Service_Unit_Transfer, 55);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

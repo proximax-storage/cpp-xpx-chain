@@ -82,6 +82,7 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
+						"ServiceUnitTransferValidator",
 						"DataModificationValidator",
 						"DownloadChannelValidator",
 						"PrepareDriveValidator",
@@ -104,7 +105,7 @@ namespace catapult { namespace plugins {
 						"StreamStartValidator",
 						"StreamFinishValidator",
 						"StreamPaymentValidator",
-						"EndDriveVerificationValidator"
+						"EndDriveVerificationValidator",
 				};
 			}
 
