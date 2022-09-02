@@ -33,11 +33,6 @@ namespace catapult { namespace plugins {
 							PublicKeyToAddress(providerKey, config.NetworkIdentifier));
 					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 
-					sub.notify(BalanceTransferNotification<1>(
-							transaction.Signer, providerAddress, currencyMosaicId, transaction.CurrencyDeposit));
-
-					sub.notify(BalanceCreditNotification<1>(providerKey, transaction.ProviderMosaicId, transaction.InitialMosaicsMinting));
-
 					sub.notify(CreateLiquidityProviderNotification<1>(
 							providerKey,
 							transaction.Signer,
@@ -49,6 +44,11 @@ namespace catapult { namespace plugins {
 							transaction.SlashingAccount,
 							transaction.Alpha,
 							transaction.Beta));
+
+					sub.notify(BalanceTransferNotification<1>(
+							transaction.Signer, providerAddress, currencyMosaicId, transaction.CurrencyDeposit));
+
+					sub.notify(BalanceCreditNotification<1>(providerKey, transaction.ProviderMosaicId, transaction.InitialMosaicsMinting));
 
 					break;
 				}

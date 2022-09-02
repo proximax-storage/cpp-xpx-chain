@@ -99,9 +99,9 @@ namespace catapult { namespace plugins {
         auto i = 0u;
         EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
         EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
+        EXPECT_EQ(LiquidityProvider_Create_Liquidity_Provider_v1_Notification, sub.notificationTypes()[i++]);
         EXPECT_EQ(Core_Balance_Transfer_v1_Notification, sub.notificationTypes()[i++]);
         EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[i++]);
-        EXPECT_EQ(LiquidityProvider_Create_Liquidity_Provider_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
 	PLUGIN_TEST(CanPublishAccountPublicKeyNotification) {

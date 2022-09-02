@@ -13,6 +13,14 @@ namespace catapult { namespace validators {
     DEFINE_STATEFUL_VALIDATOR(CreateLiquidityProvider, [](const Notification& notification, const ValidatorContext& context) {
         const auto& liquidityProviderCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
+		if(notification.ProviderMosaicId == UnresolvedMosaicId()) {
+			return Failure_LiquidityProvider_Reserved_Mosaic_Id;
+		}
+
+		if(notification.ProviderMosaicId == config::GetUnresolvedCurrencyMosaicId(context.Config.Immutable)) {
+			return Failure_LiquidityProvider_Reserved_Mosaic_Id;
+		}
+
 		if (liquidityProviderCache.contains(notification.ProviderMosaicId)) {
 			return Failure_LiquidityProvider_Liquidity_Provider_Already_Exists;
 		}

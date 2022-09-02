@@ -47,6 +47,9 @@ namespace catapult { namespace validators {
 	/// An attempt to emit to much currency (overflow attack)
 	DEFINE_LIQUIDITY_PROVIDER_RESULT(Invalid_Currency_Amount, 11);
 
+	/// An attempt to create liquidity provider with reserved mosaic id
+	DEFINE_LIQUIDITY_PROVIDER_RESULT(Reserved_Mosaic_Id, 11);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

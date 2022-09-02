@@ -168,6 +168,21 @@ namespace catapult { namespace validators {
     			{});
     }
 
+    TEST(TEST_CLASS, FailureWhenReservedMosaicId) {
+    	// Arrange
+
+    	// Assert:
+    	AssertValidationResult(
+    			Failure_LiquidityProvider_Reserved_Mosaic_Id,
+    			UnresolvedMosaicId(),
+    			test::GenerateRandomByteArray<Key>(),
+    			test::GenerateRandomValue<Amount>(),
+    			Amount(0),
+    			5,
+    			5,
+    			{});
+    }
+
 	TEST(TEST_CLASS, Success) {
 		// Arrange
 
