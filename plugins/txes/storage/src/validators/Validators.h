@@ -158,4 +158,8 @@ namespace catapult { namespace validators {
 	/// - respective drive exists
     /// - All signers are in the Confirmed Storage State
     DECLARE_STATEFUL_VALIDATOR(EndDriveVerification, model::EndDriveVerificationNotification<1>)();
+
+	/// A validator implementation that applies to balance transfer notifications and validates that:
+	/// - transferred mosaic is not one of the service units
+	DECLARE_STATEFUL_VALIDATOR(ServiceUnitTransfer, model::BalanceTransferNotification<1>)();
 }}
