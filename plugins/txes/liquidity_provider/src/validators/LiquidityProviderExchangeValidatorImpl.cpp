@@ -53,7 +53,8 @@ namespace catapult::validators {
 			const Amount& mosaicAmount) const {
 		const auto& lpCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
-		const auto* pLpEntry = lpCache.find(mosaicId).tryGet();
+		auto lpEntryIter = lpCache.find(mosaicId);
+		const auto* pLpEntry = lpEntryIter.tryGet();
 
 		if (!pLpEntry) {
 			return Failure_LiquidityProvider_Liquidity_Provider_Is_Not_Registered;
@@ -93,7 +94,8 @@ namespace catapult::validators {
 
 		auto currencyAmount = *optionalCurrencyAmount;
 
-		const auto* pDebtorAccount = accountStateCache.find(currencyDebtor).tryGet();
+		auto debtorAccountIter = accountStateCache.find(currencyDebtor);
+		const auto* pDebtorAccount = debtorAccountIter.tryGet();
 
 		// Unlikely
 		if (!pDebtorAccount) {
@@ -116,14 +118,17 @@ namespace catapult::validators {
 			const Amount& mosaicAmount) const {
 		const auto& lpCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
-		const auto* pLpEntry = lpCache.find(mosaicId).tryGet();
+		auto lpEntryIter = lpCache.find(mosaicId);
+		const auto* pLpEntry = lpEntryIter.tryGet();
 
 		if (!pLpEntry) {
 			return Failure_LiquidityProvider_Liquidity_Provider_Is_Not_Registered;
 		}
 
 		const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-		const auto* pDebtorAccount = accountStateCache.find(mosaicCreditor).tryGet();
+
+		auto debtorAccountIter = accountStateCache.find(mosaicCreditor);
+		const auto* pDebtorAccount = debtorAccountIter.tryGet();
 
 		// Unlikely
 		if (!pDebtorAccount) {

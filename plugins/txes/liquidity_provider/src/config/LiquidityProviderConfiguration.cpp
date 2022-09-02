@@ -24,7 +24,7 @@ namespace catapult { namespace config {
 #define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
 
 		Key managerKey;
-		utils::ParseHexStringIntoContainer("E8D4B7BEB2A531ECA8CC7FD93F79A4C828C24BE33F99CF7C5609FF5CE14605F4", 64, managerKey);
+		utils::ParseHexStringIntoContainer("E92978122F00698856910664C480E8F3C2FDF0A733F42970FBD58A5145BD6F21", 64, managerKey);
 		config.ManagerPublicKeys = { managerKey };
 		TRY_LOAD_CHAIN_PROPERTY(ManagerPublicKeys);
 

@@ -62,6 +62,7 @@ namespace catapult { namespace validators {
 			#include "plugins/txes/property/src/validators/Results.h"
 			#include "plugins/txes/service/src/validators/Results.h"
 			#include "plugins/txes/storage/src/validators/Results.h"
+			#include "plugins/txes/liquidity_provider/src/validators/Results.h"
 			#include "plugins/txes/streaming/src/validators/Results.h"
 			#include "plugins/txes/supercontract/src/validators/Results.h"
 			#include "plugins/txes/transfer/src/validators/Results.h"
