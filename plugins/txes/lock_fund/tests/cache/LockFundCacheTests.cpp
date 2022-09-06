@@ -126,8 +126,7 @@ namespace catapult { namespace cache {
 			cache.commit();
 
 			// Act:
-			auto &record = delta->find(LockFundCacheMixinTraits::MakeId(123)).get();
-			auto &record2 = delta->find(insertRecord.LockFundRecords.cbegin()->first).get();
+			delta->disable(LockFundCacheMixinTraits::MakeId(123));
 
 			// Assert: if elements are immutable, no modifications are possible
 			AssertMarkedElements(*delta, LF_EMPTY_SET, LF_SET(LockFundCacheMixinTraits::MakeId(123), insertRecord.LockFundRecords.cbegin()->first), LF_EMPTY_SET);
@@ -172,13 +171,9 @@ namespace catapult { namespace cache {
 			}
 
 			// - modify three
-			delta->find(LockFundCacheMixinTraits::MakeId(105)).get();
-			delta->find(LockFundCacheMixinTraits::MakeId(107)).get();
-			delta->find(LockFundCacheMixinTraits::MakeId(108)).get();
-
-			delta->find(associatedKeys[105]).get();
-			delta->find(associatedKeys[107]).get();
-			delta->find(associatedKeys[108]).get();
+			delta->disable(LockFundCacheMixinTraits::MakeId(105));
+			delta->disable(LockFundCacheMixinTraits::MakeId(107));
+			delta->disable(LockFundCacheMixinTraits::MakeId(108));
 
 			// - remove four
 			delta->remove(LockFundCacheMixinTraits::MakeId(100));

@@ -29,10 +29,7 @@
 namespace catapult { namespace cache {
 
 	/// Mixins used by the account restriction cache view.
-	using AccountRestrictionCacheViewMixins =
-
-
-	struct LockFundCacheViewMixins {
+	struct AccountRestrictionCacheViewMixins {
 	public:
 		using PrimaryMixins = PatriciaTreeCacheMixins<AccountRestrictionCacheTypes::PrimaryTypes::BaseSetType, AccountRestrictionCacheDescriptor>;
 		using ConfigBasedEnable = PrimaryMixins::ConfigBasedEnable<config::AccountRestrictionConfiguration>;

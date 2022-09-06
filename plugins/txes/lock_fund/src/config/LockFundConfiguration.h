@@ -8,10 +8,16 @@
 #include "catapult/model/PluginConfiguration.h"
 #include <stdint.h>
 #include <catapult/types.h>
+#include "plugins/services/globalstore/src/state/GlobalKeyGenerator.h"
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
 
 namespace catapult { namespace config {
+
+	/// Cache constants
+
+	constexpr auto TotalStaked_GlobalKey = state::GenerateNewGlobalKeyFromLiteral("HarvestingMosaicTotalStakedValue");
+	constexpr auto LockFundPluginInstalled_GlobalKey = state::GenerateNewGlobalKeyFromLiteral("LockFundPlugin_Installed");
 
 	/// Lock fund plugin configuration settings.
 	struct LockFundConfiguration : public model::PluginConfiguration {

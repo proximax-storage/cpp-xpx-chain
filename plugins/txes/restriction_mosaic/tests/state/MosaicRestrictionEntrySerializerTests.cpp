@@ -34,6 +34,7 @@ namespace catapult { namespace state {
 #pragma pack(push, 1)
 
 		struct MosaicAddressRestrictionHeader {
+			uint32_t Version;
 			MosaicRestrictionEntry::EntryType EntryType;
 			catapult::MosaicId MosaicId;
 			catapult::Address Address;
@@ -41,6 +42,7 @@ namespace catapult { namespace state {
 		};
 
 		struct MosaicGlobalRestrictionHeader {
+			uint32_t Version;
 			MosaicRestrictionEntry::EntryType EntryType;
 			catapult::MosaicId MosaicId;
 			uint8_t NumValues;

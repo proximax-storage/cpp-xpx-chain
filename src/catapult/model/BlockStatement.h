@@ -36,8 +36,11 @@ namespace catapult { namespace model {
 		/// Mosaic resolution statements.
 		std::map<UnresolvedMosaicId, MosaicResolutionStatement> MosaicResolutionStatements;
 
-		/// Transaction statements.
+		/// Public key statements.
 		std::map<ReceiptSource, PublicKeyStatement> PublicKeyStatements;
+
+		/// Blockchain state statements.
+		std::map<ReceiptSource, BlockchainStateStatement> BlockchainStateStatements;
 
 	};
 

@@ -5,7 +5,7 @@
 **/
 
 #include "plugins/txes/lock_fund/tests/test/LockFundTestUtils.h"
-#include "src/mappers/LockFundRecordMapper.h"
+#include "mongo/plugins/lock_fund/src/LockFundRecordMapper.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "tests/TestHarness.h"
 #include <bsoncxx/builder/stream/document.hpp>

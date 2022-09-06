@@ -6,7 +6,7 @@
 
 #include "src/cache/LockFundCache.h"
 #include "MongoLockFundCacheStorage.h"
-#include "src/mappers/LockFundRecordMapper.h"
+#include "mongo/plugins/lock_fund/src/LockFundRecordMapper.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
 #include "plugins/txes/lock_fund/src/cache/LockFundCache.h"
 #include "plugins/txes/lock_fund/src/state/LockFundRecordGroup.h"

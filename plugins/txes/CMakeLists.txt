@@ -4,7 +4,7 @@ function(catapult_tx_plugin_src PLUGIN_BASE_NAME)
 	# create an sdk lib
 	if (DEFINED PLUGIN_SDK_FOLDERS)
 		catapult_library_target(${PLUGIN_BASE_NAME}.sdk ${PLUGIN_SDK_FOLDERS})
-		target_link_libraries(${PLUGIN_BASE_NAME}.sdk catapult.model)
+		target_link_libraries(${PLUGIN_BASE_NAME}.sdk catapult.model ${ARGN})
 	endif()
 
 	# create a deps lib

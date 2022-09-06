@@ -21,7 +21,8 @@ namespace catapult { namespace cache {
 		public:
 			using PrimaryMixins = PatriciaTreeCacheMixins<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheDescriptor>;
 			using KeyedMixins = BasicCacheMixins<LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypesDescriptor>;
-			using LookupMixin = LockFundMutableLookupMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
+			//Delta helper functions must be used in order to keep multi-set stability.
+			//using LookupMixin = LockFundMutableLookupMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
 			using ReadOnlyLookupMixin = LockFundConstLookupMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
 			using Size = LockFundSizeMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
 			using DeltaElements = deltaset::DeltaElementsMultiSetMixin<LockFundCacheTypes::PrimaryTypes::BaseSetDeltaType, LockFundCacheTypes::KeyedLockFundTypes::BaseSetDeltaType>;
@@ -37,7 +38,6 @@ namespace catapult { namespace cache {
 						, public LockFundCacheDeltaMixins::PrimaryMixins::Contains
 						, public LockFundCacheDeltaMixins::PrimaryMixins::PatriciaTreeDelta
 						, public LockFundCacheDeltaMixins::DeltaElements
-						, public LockFundCacheDeltaMixins::LookupMixin
 						, public LockFundCacheDeltaMixins::ReadOnlyLookupMixin
 						, public LockFundCacheDeltaMixins::KeyedMixins::Contains
 						, public LockFundCacheDeltaMixins::ConfigBasedEnable{
@@ -45,7 +45,6 @@ namespace catapult { namespace cache {
 			using ReadOnlyView = LockFundCacheTypes::CacheReadOnlyType;
 			using LockFundCacheDeltaMixins::KeyedMixins::Contains::contains;
 			using LockFundCacheDeltaMixins::PrimaryMixins::Contains::contains;
-			using LockFundCacheDeltaMixins::LookupMixin::find;
 			using LockFundCacheDeltaMixins::ReadOnlyLookupMixin::find;
 		public:
 			/// Creates a delta around \a lockFundSets.

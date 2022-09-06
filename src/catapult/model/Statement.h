@@ -85,4 +85,7 @@ namespace catapult { namespace model {
 
 	/// Collection of receipts scoped to a public key.
 	using PublicKeyStatement = Statement<Receipt_Type_Public_Key_Group>;
+
+	/// Collection of receipts scoped to a block.
+	using BlockchainStateStatement = Statement<Receipt_Type_Blockchain_State_Group>;
 }}

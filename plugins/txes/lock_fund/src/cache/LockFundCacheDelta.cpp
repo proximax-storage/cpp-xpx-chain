@@ -14,7 +14,6 @@ namespace catapult { namespace cache {
 			const LockFundCacheTypes::BaseSetDeltaPointers& LockFundSets,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 			: LockFundCacheDeltaMixins::Size(*LockFundSets.pPrimary, *LockFundSets.pKeyedInverseMap)
-		, LockFundCacheDeltaMixins::LookupMixin(*LockFundSets.pPrimary, *LockFundSets.pKeyedInverseMap)
 		, LockFundCacheDeltaMixins::ReadOnlyLookupMixin(*LockFundSets.pPrimary, *LockFundSets.pKeyedInverseMap)
 		, LockFundCacheDeltaMixins::PrimaryMixins::Contains(*LockFundSets.pPrimary)
 		, LockFundCacheDeltaMixins::PrimaryMixins::PatriciaTreeDelta(*LockFundSets.pPrimary, LockFundSets.pPatriciaTree)

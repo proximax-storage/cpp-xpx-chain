@@ -68,6 +68,9 @@ namespace catapult { namespace model {
 		addReceipt(m_pStatement->PublicKeyStatements, m_activeSource, receipt);
 	}
 
+	void BlockStatementBuilder::addBlockchainStateReceipt(const Receipt& receipt) {
+		addReceipt(m_pStatement->BlockchainStateStatements, m_activeSource, receipt);
+	}
 	namespace {
 		template<typename TResolutionStatements, typename TUnresolved, typename TResolved>
 		void AddResolution(

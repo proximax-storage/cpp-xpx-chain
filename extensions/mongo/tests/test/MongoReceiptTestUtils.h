@@ -55,6 +55,14 @@ namespace catapult { namespace test {
 			const bsoncxx::document::view& statementView,
 			size_t expectedFieldCount,
 			size_t index);
+	/// Verifies that model blockchain state \a statement at \a height is equal to db entity (\a statementView) and that the db entity has
+	/// \a expectedFieldCount fields; \a index is used to output additional information.
+	void AssertEqualBlockchainStateStatement(
+			const model::BlockchainStateStatement& statement,
+			Height height,
+			const bsoncxx::document::view& statementView,
+			size_t expectedFieldCount,
+			size_t index);
 
 	/// Verifies that model address resolution \a statement at \a height is equal to db entity (\a statementView)
 	/// and that the db entity has \a expectedFieldCount fields; \a index is used to output additional information.

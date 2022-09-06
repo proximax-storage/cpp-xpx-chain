@@ -6,8 +6,8 @@
 
 #pragma once
 #include "catapult/model/Mosaic.h"
-#include "mongo/src/mappers/MapperInclude.h"
-#include "mongo/src/mappers/MapperUtils.h"
+#include "extensions/mongo/src/mappers/MapperInclude.h"
+#include "extensions/mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/lock_fund/src/state/LockFundRecordGroup.h"
 
 namespace catapult { namespace mongo { namespace plugins {

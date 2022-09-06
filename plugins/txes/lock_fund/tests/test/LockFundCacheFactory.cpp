@@ -4,6 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "plugins/services/globalstore/src/cache/GlobalStoreCacheStorage.h"
+#include "plugins/services/globalstore/src/cache/GlobalStoreCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "src/cache/LockFundCache.h"
 #include "src/cache/LockFundCacheStorage.h"
@@ -34,7 +36,7 @@ namespace catapult { namespace test {
 	}
 
 	cache::CatapultCache LockFundCacheFactory::Create(const config::BlockchainConfiguration& config) {
-		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(20);
+		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(23);
 		CreateSubCaches(config, cache::CacheConfiguration(), subCaches);
 		return cache::CatapultCache(std::move(subCaches));
 	}
@@ -57,6 +59,8 @@ namespace catapult { namespace test {
 		subCaches[BlockDifficultyCache::Id] = MakeConfigurationFreeSubCachePlugin<BlockDifficultyCache, BlockDifficultyCacheStorage>(pConfigHolder);
 
 		subCaches[LockFundCache::Id] = MakeSubCachePluginWithCacheConfiguration<LockFundCache, LockFundCacheStorage>(cacheConfig, pConfigHolder);
+
+		subCaches[GlobalStoreCache::Id] = MakeSubCachePluginWithCacheConfiguration<GlobalStoreCache, GlobalStoreCacheStorage>(cacheConfig, pConfigHolder);
 	}
 
 }}

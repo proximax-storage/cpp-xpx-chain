@@ -47,6 +47,7 @@ namespace catapult { namespace cache {
 		LockFund,
 		AccountRestriction,
 		MosaicRestriction,
+		GlobalStore,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

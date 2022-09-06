@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 project(catapult_server)
 include(CMakeGlobalSettings.cmake)
+include (TestBigEndian)
 option(ENABLE_CODE_COVERAGE "Enable code coverage" OFF)
 option(SANITIZE_ADDRESS "Enable address sanitizer" OFF)
 option(SANITIZE_THREAD "Enable thread sanitizer" OFF)
@@ -70,6 +71,16 @@ function(catapult_add_rocksdb_dependencies TARGET_NAME)
 	endif()
 endfunction()
 
+TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
+
+if(IS_BIG_ENDIAN)
+	message(STATUS "System is BIG_ENDIAN")
+else()
+	message(STATUS "System is LITTLE_ENDIAN")
+endif()
+
+add_compile_definitions($<${IS_BIG_ENDIAN}:COMPILE_SYSTEM_BIG_ENDIAN>$<$<NOT:${IS_BIG_ENDIAN}>:COMPILE_SYSTEM_LITTLE_ENDIAN>)
+
 ### add source directories
 add_subdirectory(external)
 
@@ -95,3 +106,5 @@ add_subdirectory(tools)
 add_subdirectory(spammer)
 
 add_compile_options("$<$<CONFIG:DEBUG>:-DDEBUG>")
+
+

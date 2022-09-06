@@ -4,19 +4,25 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "src/model/LockFundTotalStakedReceipt.h"
+#include "plugins/services/globalstore/src/state/BaseConverters.h"
+#include "plugins/services/globalstore/src/cache/GlobalStoreCache.h"
 #include "src/cache/LockFundCache.h"
 #include "Observers.h"
 #include "catapult/cache_core/AccountStateCache.h"
-
+#include "src/model/LockFundReceiptType.h"
 
 namespace catapult { namespace observers {
 
 	namespace {
-		void ProcessLockfundUpdate(const model::BlockNotification<1>& notification, const ObserverContext& context)
+		void ProcessLockfundUpdate(const model::BlockNotification<1>& notification, ObserverContext& context)
 		{
 			const model::NetworkConfiguration& config = context.Config.Network;
 			auto& lockFundCache = context.Cache.sub<cache::LockFundCache>();
 			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+			auto& globalStore = context.Cache.sub<cache::GlobalStoreCache>();
+			auto& totalStakedRecord = globalStore.find(config::TotalStaked_GlobalKey).get();
+			auto& totalStakedRefData = totalStakedRecord.GetRef<state::Uint64Converter>();
 			if (context.Mode == NotifyMode::Commit)
 			{
 				auto activeHeightRecord = lockFundCache.find(context.Height);
@@ -31,6 +37,10 @@ namespace catapult { namespace observers {
 							auto &account = accountStateCache.find(irecord.first).get();
 							for(auto& mosaic : irecord.second.Get())
 							{
+								if(mosaic.first == context.Config.Immutable.HarvestingMosaicId)
+								{
+									totalStakedRefData -= mosaic.second.unwrap();
+								}
 								account.Balances.unlock(mosaic.first, mosaic.second, context.Height);
 							}
 						}
@@ -38,6 +48,9 @@ namespace catapult { namespace observers {
 					// Disable records
 					lockFundCache.disable(context.Height);
 				}
+
+				model::TotalStakedReceipt totalStakedReceipt(model::Receipt_Type_Total_Staked, Amount(totalStakedRefData));
+				context.StatementBuilder().addBlockchainStateReceipt(totalStakedReceipt);
 				//Clear aged records
 				if (context.Height.unwrap() - config.MaxRollbackBlocks <= 0)
 					return;
@@ -61,11 +74,15 @@ namespace catapult { namespace observers {
 					// Unlock amounts
 					for(auto& irecord : record->LockFundRecords)
 					{
-						auto account = accountStateCache.find(irecord.first).get();
+						auto& account = accountStateCache.find(irecord.first).get();
 						if(irecord.second.Active()) //Redundant
 						{
 							for(auto& mosaic : irecord.second.Get())
 							{
+								if(mosaic.first == context.Config.Immutable.HarvestingMosaicId)
+								{
+									totalStakedRefData += mosaic.second.unwrap();
+								}
 								account.Balances.lock(mosaic.first, mosaic.second);
 							}
 						}

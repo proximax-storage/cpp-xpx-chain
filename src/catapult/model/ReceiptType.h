@@ -61,6 +61,9 @@ namespace catapult { namespace model {
 
 		/// Operation receipt.
 		SignerImportance = 0x8,
+
+		/// Total Staked
+		TotalStaked = 0x9
 	};
 
 	/// Enumeration of receipt types.
@@ -93,6 +96,9 @@ namespace catapult { namespace model {
 	/// Public key group.
 	DEFINE_RECEIPT_TYPE(Aggregate, Core, Public_Key_Group, 2);
 
+	/// Blockchain state group.
+	DEFINE_RECEIPT_TYPE(Aggregate, Core, Blockchain_State_Group, 3);
+
 	/// Address alias resolution.
 	DEFINE_RECEIPT_TYPE(AliasResolution, Core, Address_Alias_Resolution, 1);
 
@@ -101,6 +107,7 @@ namespace catapult { namespace model {
 
 	/// Harvest fee credit.
 	DEFINE_RECEIPT_TYPE(SignerImportance, Core, Block_Signer_Importance, 1);
+
 
 	/// Insertion operator for outputting \a receiptType to \a out.
 	std::ostream& operator<<(std::ostream& out, ReceiptType receiptType);

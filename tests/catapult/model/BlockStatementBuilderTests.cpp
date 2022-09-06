@@ -116,6 +116,7 @@ namespace catapult { namespace model {
 		EXPECT_EQ(0u, pStatement->TransactionStatements.size());
 		EXPECT_EQ(0u, pStatement->AddressResolutionStatements.size());
 		EXPECT_EQ(0u, pStatement->MosaicResolutionStatements.size());
+		EXPECT_EQ(0u, pStatement->BlockchainStateStatements.size());
 	}
 
 	// endregion
@@ -159,6 +160,7 @@ namespace catapult { namespace model {
 
 		EXPECT_EQ(0u, pStatement->AddressResolutionStatements.size());
 		EXPECT_EQ(0u, pStatement->MosaicResolutionStatements.size());
+		EXPECT_EQ(0u, pStatement->BlockchainStateStatements.size());
 	}
 
 	TEST(TEST_CLASS, CanCreateBlockStatementWithMultipleTransactionStatements) {

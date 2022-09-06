@@ -6,6 +6,7 @@
 
 #include "mongo/tests/test/MongoPluginTestUtils.h"
 #include "plugins/txes/lock_fund/src/model/LockFundEntityType.h"
+#include "plugins/txes/lock_fund/src/model/LockFundReceiptType.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
@@ -23,7 +24,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			static std::vector<model::ReceiptType> GetReceiptTypes() {
-				return {};
+				return {model::Receipt_Type_Total_Staked};
 			}
 
 			static std::string GetStorageName() {

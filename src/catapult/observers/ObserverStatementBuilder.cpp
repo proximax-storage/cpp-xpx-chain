@@ -54,6 +54,13 @@ namespace catapult { namespace observers {
 		m_pStatementBuilder->addPublicKeyReceipt(receipt);
 	}
 
+	void ObserverStatementBuilder::addBlockchainStateReceipt(const model::Receipt& receipt) {
+		if (!m_pStatementBuilder)
+			return;
+
+		m_pStatementBuilder->addBlockchainStateReceipt(receipt);
+	}
+
 	model::ResolverContext Bind(const model::ResolverContext& resolverContext, model::BlockStatementBuilder& statementBuilder) {
 		auto resolveAndCapture = [resolverContext, &statementBuilder](const auto& unresolved) {
 			auto resolved = resolverContext.resolve(unresolved);

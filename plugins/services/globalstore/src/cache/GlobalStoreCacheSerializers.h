@@ -1,0 +1,19 @@
+/**
+*** Copyright 2022 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+
+#pragma once
+#include "GlobalStoreCacheTypes.h"
+#include "../state/GlobalEntrySerializer.h"
+#include "catapult/cache/CacheSerializerAdapter.h"
+
+namespace catapult { namespace cache {
+
+	/// Primary serializer for global store cache.
+	struct GlobalStorePrimarySerializer
+			: public CacheSerializerAdapter<state::GlobalEntrySerializer, GlobalStoreCacheDescriptor>
+	{};
+}}

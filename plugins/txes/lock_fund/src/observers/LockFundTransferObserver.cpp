@@ -4,27 +4,45 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "plugins/services/globalstore/src/state/BaseConverters.h"
 #include "src/cache/LockFundCache.h"
+#include "plugins/services/globalstore/src/cache/GlobalStoreCache.h"
 #include "Observers.h"
 #include "src/config/LockFundConfiguration.h"
 #include "catapult/cache_core/AccountStateCache.h"
 
 namespace catapult { namespace observers {
 
+
 	namespace {
 		template<NotifyMode TLockAction>
-		void Lock(state::AccountState& accountState, cache::LockFundCacheDelta& lockFundCache, const std::map<MosaicId, Amount>& mosaics, Height height, BlockDuration duration) {
+		void Lock(state::AccountState& accountState, cache::LockFundCacheDelta& lockFundCache, cache::GlobalStoreCacheDelta& globalStore, MosaicId harvestingMosaicId, const std::map<MosaicId, Amount>& mosaics, Height height, BlockDuration duration) {
 			if constexpr(TLockAction == NotifyMode::Commit)
 			{
 				for(auto mosaic : mosaics)
+				{
 					accountState.Balances.lock(mosaic.first, mosaic.second, height);
+					if(mosaic.first == harvestingMosaicId){
+						auto& record = globalStore.find(config::TotalStaked_GlobalKey).get();
+						auto& refData = record.GetRef<state::Uint64Converter>();
+						refData += mosaic.second.unwrap();
+					}
+				}
 				if(duration != BlockDuration(0))
 					lockFundCache.insert(accountState.PublicKey, Height(height.unwrap()+duration.unwrap()), mosaics);
 			}
 			else
 			{
 				for(auto mosaic : mosaics)
+				{
 					accountState.Balances.unlock(mosaic.first, mosaic.second, height);
+					if(mosaic.first == harvestingMosaicId){
+						auto& record = globalStore.find(config::TotalStaked_GlobalKey).get();
+						auto& refData = record.GetRef<state::Uint64Converter>();
+						refData -= mosaic.second.unwrap();
+					}
+				}
+
 				if(duration != BlockDuration(0))
 					lockFundCache.remove(accountState.PublicKey, Height(height.unwrap()+duration.unwrap()));
 			}
@@ -49,10 +67,11 @@ namespace catapult { namespace observers {
 
 			if(notification.Action == model::LockFundAction::Lock)
 			{
+				auto& globalStore = context.Cache.sub<cache::GlobalStoreCache>();
 				if (NotifyMode::Commit == context.Mode)
-					Lock<NotifyMode::Commit>(senderState, lockFundCache, mosaics, context.Height, notification.Duration);
+					Lock<NotifyMode::Commit>(senderState, lockFundCache, globalStore, context.Config.Immutable.HarvestingMosaicId, mosaics, context.Height, notification.Duration);
 				else
-					Lock<NotifyMode::Rollback>(senderState, lockFundCache, mosaics, context.Height, notification.Duration);
+					Lock<NotifyMode::Rollback>(senderState, lockFundCache, globalStore, context.Config.Immutable.HarvestingMosaicId, mosaics, context.Height, notification.Duration);
 			}
 			else
 			{

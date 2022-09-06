@@ -29,6 +29,7 @@
 #include "mappers/TransactionMapper.h"
 #include "mappers/TransactionStatementMapper.h"
 #include "mappers/PublicKeyStatementMapper.h"
+#include "mappers/BlockchainStateStatementMapper.h"
 
 using namespace bsoncxx::builder::stream;
 
@@ -119,9 +120,17 @@ namespace catapult { namespace mongo {
 			  return mappers::ToDbModel(height, pair.second);
 			}));
 
-			// mosaic resolution statements
+			// public key statements
 			numExpectedInserts.emplace_back(blockStatement.PublicKeyStatements.size());
 			futures.emplace_back(bulkWriter.bulkInsert("publicKeyStatements", blockStatement.PublicKeyStatements, [height, &registry](
+					const auto& pair,
+					auto) {
+			  return mappers::ToDbModel(height, pair.second, registry);
+			}));
+
+			// blockchain state statements
+			numExpectedInserts.emplace_back(blockStatement.BlockchainStateStatements.size());
+			futures.emplace_back(bulkWriter.bulkInsert("blockchainStateStatements", blockStatement.BlockchainStateStatements, [height, &registry](
 					const auto& pair,
 					auto) {
 			  return mappers::ToDbModel(height, pair.second, registry);
@@ -243,6 +252,7 @@ namespace catapult { namespace mongo {
 				DropDocuments(m_database, "addressResolutionStatements", "height", height);
 				DropDocuments(m_database, "mosaicResolutionStatements", "height", height);
 				DropDocuments(m_database, "publicKeyStatements", "height", height);
+				DropDocuments(m_database, "blockchainStateSStatements", "height", height);
 			}
 
 		private:

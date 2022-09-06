@@ -21,12 +21,15 @@
 
 #pragma once
 #include <stdint.h>
+#include "plugins/services/globalstore/src/state/GlobalKeyGenerator.h"
 #include "catapult/model/PluginConfiguration.h"
 #include "catapult/config/ConfigConstants.h"
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
 
 namespace catapult { namespace config {
+
+	constexpr auto AccountRestrictionPluginInstalled_GlobalKey = state::GenerateNewGlobalKeyFromLiteral("AccountRestrictionPlugin_Installed");
 
 	/// Account restriction plugin configuration settings.
 	struct AccountRestrictionConfiguration : public model::PluginConfiguration  {

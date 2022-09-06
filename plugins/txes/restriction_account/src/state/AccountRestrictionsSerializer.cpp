@@ -26,6 +26,7 @@
 namespace catapult { namespace state {
 
 	void AccountRestrictionsSerializer::Save(const AccountRestrictions& restrictions, io::OutputStream& output) {
+		io::Write32(output, 1);
 		output.write(restrictions.address());
 
 		auto numRestrictions = static_cast<uint64_t>(std::count_if(restrictions.begin(), restrictions.end(), [](const auto& pair) {
@@ -46,6 +47,9 @@ namespace catapult { namespace state {
 	}
 
 	AccountRestrictions AccountRestrictionsSerializer::Load(io::InputStream& input) {
+		VersionType version = io::Read32(input);
+		if (version > 1)
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountRestrictions", version);
 		Address address;
 		input.read(address);
 

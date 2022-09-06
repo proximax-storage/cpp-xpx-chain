@@ -20,4 +20,7 @@ namespace catapult { namespace observers {
 
 	/// Observes LockFund Cancel unlock notifications and removes the given unlock request.
 	DECLARE_OBSERVER(LockFundCancelUnlock, model::LockFundCancelUnlockNotification<1>)();
+
+	/// Observes LockFund Cancel unlock notifications and removes the given unlock request.
+	DECLARE_OBSERVER(LockFundInstall, model::BlockNotification<1>)();
 }}

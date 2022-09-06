@@ -3,13 +3,11 @@
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
+#include "plugins/services/globalstore/src/state/BaseConverters.h"
+#include "plugins/services/globalstore/src/cache/GlobalStoreCache.h"
 #include "src/cache/AccountRestrictionCache.h"
 #include "plugins/txes/property/src/cache/PropertyCache.h"
 #include "Observers.h"
-
-#include "catapult/model/Address.h"
-
-
 
 namespace catapult { namespace observers {
 
@@ -135,23 +133,35 @@ namespace catapult { namespace observers {
 			if(newConfig.Enabled && !oldConfig.Enabled) {
 				auto& accountRestrictionCache = context.Cache.sub<cache::AccountRestrictionCache>();
 				auto& propertyCache = context.Cache.sub<cache::PropertyCache>();
-
+				auto& globalStore = context.Cache.sub<cache::GlobalStoreCache>();
+				auto recordIter = globalStore.find(config::AccountRestrictionPluginInstalled_GlobalKey);
 				if (NotifyMode::Commit == context.Mode) {
-					auto view = propertyCache.tryMakeBroadIterableView();
-					for(const auto& val : *view) {
-						state::AccountRestrictions restrictions(val.first);
-						MoveRestrictions(val.second, restrictions);
-						accountRestrictionCache.insert(restrictions);
-						propertyCache.remove(val.first);
+					if(!recordIter.tryGet())
+					{
+						state::GlobalEntry installedRecord(config::AccountRestrictionPluginInstalled_GlobalKey, context.Height.unwrap(), state::PluginInstallConverter());
+						globalStore.insert(installedRecord);
+						auto view = propertyCache.tryMakeBroadIterableView();
+						for(const auto& val : *view) {
+							state::AccountRestrictions restrictions(val.first);
+							MoveRestrictions(val.second, restrictions);
+							accountRestrictionCache.insert(restrictions);
+							propertyCache.remove(val.first);
+						}
+
 					}
 				} else {
-					auto view = accountRestrictionCache.tryMakeBroadIterableView();
-					for(const auto& val : *view) {
-						state::AccountProperties restrictions(val.first);
-						MoveRestrictions(val.second, restrictions);
-						propertyCache.insert(restrictions);
-						accountRestrictionCache.remove(val.first);
+					if(recordIter.tryGet() && recordIter.get().Get<state::PluginInstallConverter>() == context.Height.unwrap())
+					{
+						globalStore.remove(config::AccountRestrictionPluginInstalled_GlobalKey);
+						auto view = accountRestrictionCache.tryMakeBroadIterableView();
+						for(const auto& val : *view) {
+							state::AccountProperties restrictions(val.first);
+							MoveRestrictions(val.second, restrictions);
+							propertyCache.insert(restrictions);
+							accountRestrictionCache.remove(val.first);
+						}
 					}
+
 				}
 			}
 		});

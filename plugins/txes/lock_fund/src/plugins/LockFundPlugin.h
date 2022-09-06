@@ -6,6 +6,7 @@
 
 #pragma once
 #include "catapult/plugins.h"
+#include "plugins/services/globalstore/src/state/GlobalKeyGenerator.h"
 
 namespace catapult { namespace plugins { class PluginManager; } }
 

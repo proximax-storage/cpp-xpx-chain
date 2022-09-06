@@ -133,6 +133,32 @@ namespace catapult { namespace test {
 		}
 	}
 
+	void AssertEqualBlockchainStateStatement(
+			const model::BlockchainStateStatement& statement,
+			Height height,
+			const bsoncxx::document::view& statementView,
+			size_t expectedFieldCount,
+			size_t index) {
+		auto message = "at index " + std::to_string(index);
+		EXPECT_EQ(expectedFieldCount, test::GetFieldCount(statementView)) << message;
+
+		EXPECT_EQ(height, Height(test::GetUint64(statementView, "height"))) << message;
+
+		AssertEqualSource(statement.source(), statementView["source"].get_document().view(), message);
+
+		auto dbReceipts = statementView["receipts"].get_array().value;
+		ASSERT_EQ(statement.size(), test::GetFieldCount(dbReceipts)) << message;
+
+		uint8_t receiptIndex = 0;
+		for (const auto& dbReceipt : dbReceipts) {
+			auto message2 = message + ", receipt index " + std::to_string(receiptIndex);
+			auto receiptView = dbReceipt.get_document().view();
+			const auto& receipt = static_cast<const mocks::MockReceipt&>(statement.receiptAt(receiptIndex));
+			test::AssertEqualReceipt(receipt, receiptView, message2);
+			++receiptIndex;
+		}
+	}
+
 	void AssertEqualAddressResolutionStatement(
 			const model::AddressResolutionStatement& statement,
 			Height height,

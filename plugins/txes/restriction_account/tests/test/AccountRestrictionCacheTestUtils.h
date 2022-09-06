@@ -20,6 +20,8 @@
 **/
 
 #pragma once
+#include "plugins/services/globalstore/src/cache/GlobalStoreCacheStorage.h"
+#include "plugins/services/globalstore/src/cache/GlobalStoreCache.h"
 #include "plugins/txes/property/tests/test/PropertyCacheTestUtils.h"
 #include "AccountRestrictionTestTraits.h"
 #include "src/cache/AccountRestrictionCache.h"
@@ -34,12 +36,14 @@ namespace catapult { namespace test {
 	struct AccountRestrictionCacheFactory {
 	private:
 		static auto CreateSubCachesWithAccountRestrictionCache(model::NetworkIdentifier networkIdentifier) {
-			auto cacheId = cache::AccountRestrictionCache::Id > cache::PropertyCache::Id ? cache::AccountRestrictionCache::Id : cache::PropertyCache::Id;
+			auto cacheId_Temp = (cache::AccountRestrictionCache::Id > cache::PropertyCache::Id ? cache::AccountRestrictionCache::Id : cache::PropertyCache::Id);
+			auto cacheId = cacheId_Temp > cache::GlobalStoreCache::Id ? cacheId_Temp : cache::GlobalStoreCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 			auto holder = CreateAccountRestrictionConfigHolder(networkIdentifier);
 			subCaches[cache::AccountRestrictionCache::Id] = MakeSubCachePlugin<cache::AccountRestrictionCache, cache::AccountRestrictionCacheStorage>(
 					holder);
 			subCaches[cache::PropertyCache::Id] = MakeSubCachePlugin<cache::PropertyCache, cache::PropertyCacheStorage>(holder);
+			subCaches[cache::GlobalStoreCache::Id] = MakeSubCachePlugin<cache::GlobalStoreCache, cache::GlobalStoreCacheStorage>(holder);
 			return subCaches;
 		}
 

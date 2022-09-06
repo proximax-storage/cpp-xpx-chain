@@ -19,6 +19,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "plugins/services/globalstore/src/state/BaseConverters.h"
+#include "plugins/services/globalstore/src/cache/GlobalStoreCache.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "plugins/txes/property/src/cache/PropertyCache.h"
 #include "src/observers/Observers.h"
@@ -127,6 +129,7 @@ namespace catapult { namespace observers {
 		template<typename TOperationTraitsProperty, typename TOperationTraitsAccountRestriction, typename TPropertyValueTraits, typename TAccountRestrictionValueTraits>
 		void RunTest(
 				size_t expectedSize,
+				bool isInstalled,
 				NotifyMode notifyMode,
 				size_t numInitialValues,
 				size_t numEntries) {
@@ -151,6 +154,18 @@ namespace catapult { namespace observers {
 			modifiedConfiguration.ActivationHeight = Height(777);
 
 			ObserverTestContext context(notifyMode, Height(777), modifiedConfiguration.ToConst());
+			auto& globalStore = context.cache().template sub<cache::GlobalStoreCache>();
+
+			if(isInstalled)
+			{
+				state::GlobalEntry installedRecord(config::AccountRestrictionPluginInstalled_GlobalKey, 5, state::PluginInstallConverter());
+				globalStore.insert(installedRecord);
+			}
+			else if(notifyMode == NotifyMode::Rollback)
+			{
+				state::GlobalEntry installedRecord(config::AccountRestrictionPluginInstalled_GlobalKey, 777, state::PluginInstallConverter());
+				globalStore.insert(installedRecord);
+			}
 
 
 			auto entries = GenerateEntries<TPropertyValueTraits>(numEntries,numInitialValues);
@@ -171,24 +186,48 @@ namespace catapult { namespace observers {
 
 
 			// Assert:
-			if(notifyMode == NotifyMode::Commit)
-				AssertCacheEntries<cache::PropertyCacheDelta, cache::AccountRestrictionCacheDelta, TPropertyValueTraits>(
-					expectedSize,
-					context.cache().sub<cache::PropertyCache>(),
-					context.cache().sub<cache::AccountRestrictionCache>(),
-					entries);
+			if(!isInstalled)
+			{
+				if(notifyMode == NotifyMode::Commit)
+				{
+					AssertCacheEntries<cache::PropertyCacheDelta, cache::AccountRestrictionCacheDelta, TPropertyValueTraits>(
+							expectedSize,
+							context.cache().sub<cache::PropertyCache>(),
+							context.cache().sub<cache::AccountRestrictionCache>(),
+							entries);
+					auto installationKey = globalStore.find(config::AccountRestrictionPluginInstalled_GlobalKey).get();
+					auto value = installationKey.template Get<state::PluginInstallConverter>();
+					EXPECT_EQ(value, 777);
+				}
+
+				else
+				{
+					AssertCacheEntries<cache::AccountRestrictionCacheDelta, cache::PropertyCacheDelta, TPropertyValueTraits>(
+							expectedSize,
+							context.cache().sub<cache::AccountRestrictionCache>(),
+							context.cache().sub<cache::PropertyCache>(),
+							entries);
+					EXPECT_FALSE(globalStore.find(config::AccountRestrictionPluginInstalled_GlobalKey).tryGet());
+				}
+			}
 			else
+			{
 				AssertCacheEntries<cache::AccountRestrictionCacheDelta, cache::PropertyCacheDelta, TPropertyValueTraits>(
 						expectedSize,
 						context.cache().sub<cache::AccountRestrictionCache>(),
 						context.cache().sub<cache::PropertyCache>(),
 						entries);
+				auto installationKey = globalStore.find(config::AccountRestrictionPluginInstalled_GlobalKey).get();
+				auto value = installationKey.template Get<state::PluginInstallConverter>();
+				EXPECT_EQ(value, 5);
+			}
+
 		}
 
 		template<typename TOperationTraitsIn, typename TOperationTraitsOut, typename TTraitsIn, typename TTraitsOut>
-		void RunTest(size_t expectedSize, NotifyMode notifyMode) {
+		void RunTest(bool isInstalled, size_t expectedSize, NotifyMode notifyMode) {
 			// Act:
-			RunTest<TOperationTraitsIn, TOperationTraitsOut, TTraitsIn, TTraitsOut>(expectedSize, notifyMode, Num_Default_Entries, Num_Default_Entries);
+			RunTest<TOperationTraitsIn, TOperationTraitsOut, TTraitsIn, TTraitsOut>(expectedSize, isInstalled, notifyMode, Num_Default_Entries, Num_Default_Entries);
 		}
 	}
 
@@ -202,9 +241,21 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, TEST_NAME##_TransactionType_Block) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<test::PropertyBlockTraits,test::BlockTraits,  test::BaseTransactionTypePropertyTraits, test::BaseAccountOperationRestrictionTraits>(); } \
 	template<typename TOperationTraitsProperty, typename TOperationTraitsAccountRestriction, typename TTraitsProperty, typename TTraitsAccountRestriction> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
-	TRAITS_BASED_TEST(CanVerifyMigrationOnPluginActivation)
+	TRAITS_BASED_TEST(CanVerifyMigrationOnPluginActivation_NotInstalled_Commit)
 	{
-		RunTest<TOperationTraitsProperty, TOperationTraitsAccountRestriction, TTraitsProperty, TTraitsAccountRestriction>(Num_Default_Entries, NotifyMode::Commit);
+		RunTest<TOperationTraitsProperty, TOperationTraitsAccountRestriction, TTraitsProperty, TTraitsAccountRestriction>(false, Num_Default_Entries, NotifyMode::Commit);
+	}
+	TRAITS_BASED_TEST(CanVerifyMigrationOnPluginActivation_NotInstalled_Rollback)
+	{
+		RunTest<TOperationTraitsProperty, TOperationTraitsAccountRestriction, TTraitsProperty, TTraitsAccountRestriction>(false, Num_Default_Entries, NotifyMode::Rollback);
+	}
+	TRAITS_BASED_TEST(CanVerifyMigrationOnPluginActivation_AlreadyInstalled_Commit)
+	{
+		RunTest<TOperationTraitsProperty, TOperationTraitsAccountRestriction, TTraitsProperty, TTraitsAccountRestriction>(false, Num_Default_Entries, NotifyMode::Commit);
+	}
+	TRAITS_BASED_TEST(CanVerifyMigrationOnPluginActivation_AlreadyInstalled_Rollback)
+	{
+		RunTest<TOperationTraitsProperty, TOperationTraitsAccountRestriction, TTraitsProperty, TTraitsAccountRestriction>(false, Num_Default_Entries, NotifyMode::Rollback);
 	}
 	// endregion
 }}

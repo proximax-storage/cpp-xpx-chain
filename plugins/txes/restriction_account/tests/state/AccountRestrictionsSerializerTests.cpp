@@ -38,7 +38,7 @@ namespace catapult { namespace state {
 		}
 
 		auto CalculateExpectedSize(const AccountRestrictions& restrictions) {
-			auto size = Address::Size + sizeof(uint64_t);
+			auto size = sizeof(uint32_t) + Address::Size + sizeof(uint64_t);
 			for (const auto& pair : restrictions) {
 				if (pair.second.values().empty())
 					continue;
@@ -57,6 +57,7 @@ namespace catapult { namespace state {
 			ASSERT_EQ(expectedSize, buffer.size());
 
 			test::BufferReader reader(buffer);
+			EXPECT_EQ(1, reader.read<uint32_t>());
 			EXPECT_EQ(restrictions.address(), reader.read<Address>());
 			EXPECT_EQ(CountRestrictions(restrictions), reader.read<uint64_t>());
 
@@ -133,7 +134,7 @@ namespace catapult { namespace state {
 			}
 
 			static constexpr size_t GetKeyStartBufferOffset() {
-				return Address::Size + sizeof(uint64_t) + sizeof(model::AccountRestrictionFlags);
+				return sizeof(uint32_t)+Address::Size + sizeof(uint64_t) + sizeof(model::AccountRestrictionFlags);
 			}
 		};
 	}
@@ -204,7 +205,7 @@ namespace catapult { namespace state {
 			AccountRestrictionsSerializer::Save(restrictions, stream);
 
 			// Assert:
-			AssertAccountRestrictionFlags(allFlags, buffer, Address::Size);
+			AssertAccountRestrictionFlags(allFlags, buffer, Address::Size+sizeof(uint32_t));
 		}
 	}
 

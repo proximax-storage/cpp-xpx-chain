@@ -4,6 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "plugins/services/globalstore/src/cache/GlobalStoreCache.h"
+#include "plugins/services/globalstore/src/state/BaseConverters.h"
 
 #include "tests/test/LockFundCacheFactory.h"
 #include "catapult/cache_core/AccountStateCache.h"
@@ -38,6 +40,12 @@ namespace catapult { namespace observers {
 			auto pObserver = CreateLockFundTransferObserver();
 
 			// - seed the cache
+			auto& globalStore = context.cache().sub<cache::GlobalStoreCache>();
+			if(context.observerContext().Mode == NotifyMode::Commit)
+			{
+				state::GlobalEntry stakingRecord(config::TotalStaked_GlobalKey, 1000, state::Uint64Converter());
+				globalStore.insert(stakingRecord);
+			}
 			auto& lockFundCacheDelta = context.cache().sub<cache::LockFundCache>();
 			auto& accountStateCacheDelta = context.cache().sub<cache::AccountStateCache>();
 			seedCache(lockFundCacheDelta, accountStateCacheDelta);
@@ -46,7 +54,8 @@ namespace catapult { namespace observers {
 			test::ObserveNotification(*pObserver, notification, context);
 
 			// Assert: check the cache
-			checkCache(lockFundCacheDelta, accountStateCacheDelta);
+			auto& stakingCacheRecord = globalStore.find(config::TotalStaked_GlobalKey).get();
+			checkCache(lockFundCacheDelta, accountStateCacheDelta, stakingCacheRecord.Get<state::Uint64Converter>());
 		}
 
 		auto PrepareDefaultAccount(const Key& signer, std::map<MosaicId, Amount> mosaics = {{MosaicId(72), Amount(200)}})
@@ -64,8 +73,10 @@ namespace catapult { namespace observers {
 		{
 			auto pluginConfig = config::LockFundConfiguration::Uninitialized();
 			pluginConfig.MaxMosaicsSize = maxMosaicsSize;
+			pluginConfig.MaxUnlockRequests = 100;
 			pluginConfig.MinRequestUnlockCooldown = unlockCooldown;
 			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Immutable.HarvestingMosaicId = MosaicId(72);
 			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			return mutableConfig.ToConst();
 		}
@@ -81,7 +92,7 @@ namespace catapult { namespace observers {
 			notification,
 			context,
 			[](auto&, auto&){},
-			[&signer, &mosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
+			[&signer, &mosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 			  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 			  auto account = accountStateCacheDelta.find(signer).get();
 			  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
@@ -96,6 +107,7 @@ namespace catapult { namespace observers {
 				  EXPECT_EQ(mosaic.second, account.Balances.get(mosaic.first));
 				  EXPECT_EQ(0, account.Balances.getLocked(mosaic.first).unwrap());
 			  }
+			  EXPECT_EQ(totalStaked, 1000);
 			});
 		}
 	}
@@ -113,7 +125,7 @@ namespace catapult { namespace observers {
 				notification,
 				context,
 				PrepareDefaultAccount(signer),
-				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
+				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 				  auto account = accountStateCacheDelta.find(signer).get();
 				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
@@ -123,6 +135,7 @@ namespace catapult { namespace observers {
 				  EXPECT_EQ(1u, account.Balances.balances().size());
 				  EXPECT_EQ(100, account.Balances.get(MosaicId(72)).unwrap());
 				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(72)).unwrap());
+				  EXPECT_EQ(totalStaked, 1100);
 				});
 
 		auto newContext = context.alterMode(NotifyMode::Rollback);
@@ -148,7 +161,7 @@ namespace catapult { namespace observers {
 				notification,
 				context,
 				PrepareDefaultAccount(signer, initialMosaics),
-				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
+				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 				  auto account = accountStateCacheDelta.find(signer).get();
 				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
@@ -162,6 +175,7 @@ namespace catapult { namespace observers {
 				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(172)).unwrap());
 				  EXPECT_EQ(100, account.Balances.get(MosaicId(200)).unwrap());
 				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(200)).unwrap());
+				  EXPECT_EQ(totalStaked, 1100);
 				});
 
 		auto newContext = context.alterMode(NotifyMode::Rollback);
@@ -180,7 +194,7 @@ namespace catapult { namespace observers {
 				notification,
 				context,
 				PrepareDefaultAccount(signer),
-				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
+				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.All funds are no locked so regular balance is empty.
 				  auto account = accountStateCacheDelta.find(signer).get();
 				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
@@ -190,6 +204,7 @@ namespace catapult { namespace observers {
 				  EXPECT_EQ(0u, account.Balances.balances().size());
 				  EXPECT_EQ(0, account.Balances.get(MosaicId(72)).unwrap());
 				  EXPECT_EQ(200, account.Balances.getLocked(MosaicId(72)).unwrap());
+				  EXPECT_EQ(totalStaked, 1200);
 				});
 
 		auto newContext = context.alterMode(NotifyMode::Rollback);
@@ -214,7 +229,7 @@ namespace catapult { namespace observers {
 				notification,
 				context,
 				PrepareDefaultAccount(signer, initialMosaics),
-				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
+				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 				  auto account = accountStateCacheDelta.find(signer).get();
 				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
@@ -228,6 +243,7 @@ namespace catapult { namespace observers {
 				  EXPECT_EQ(100, account.Balances.getLocked(MosaicId(172)).unwrap());
 				  EXPECT_EQ(0, account.Balances.get(MosaicId(200)).unwrap());
 				  EXPECT_EQ(200, account.Balances.getLocked(MosaicId(200)).unwrap());
+				  EXPECT_EQ(totalStaked, 1200);
 				});
 
 		auto newContext = context.alterMode(NotifyMode::Rollback);
@@ -247,7 +263,7 @@ namespace catapult { namespace observers {
 		notification,
 		context,
 		PrepareDefaultAccount(signer),
-		[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
+		[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 		  // Assert: balances was locked but no unlocking record was added.All funds are no locked so regular balance is empty.
 		  auto account = accountStateCacheDelta.find(signer).get();
 		  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
@@ -280,6 +296,7 @@ namespace catapult { namespace observers {
 		  EXPECT_EQ(0u, account.Balances.balances().size());
 		  EXPECT_EQ(0, account.Balances.get(MosaicId(72)).unwrap());
 		  EXPECT_EQ(200, account.Balances.getLocked(MosaicId(72)).unwrap());
+		  EXPECT_EQ(totalStaked, 1200);
 		});
 		// Act: rollback and verify
 		auto newContext = context.alterMode(NotifyMode::Rollback);
@@ -303,7 +320,7 @@ namespace catapult { namespace observers {
 				notification,
 				context,
 				PrepareDefaultAccount(signer, initialMosaics),
-				[&signer, &initialMosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
+				[&signer, &initialMosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.All funds are no locked so regular balance is empty.
 				  auto account = accountStateCacheDelta.find(signer).get();
 				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
@@ -343,6 +360,7 @@ namespace catapult { namespace observers {
 					  EXPECT_EQ(0, account.Balances.get(mosaic.first).unwrap());
 					  EXPECT_EQ(mosaic.second, account.Balances.getLocked(mosaic.first));
 				  }
+				  EXPECT_EQ(totalStaked, 1200);
 
 				});
 		// Act: rollback and verify
@@ -370,7 +388,7 @@ namespace catapult { namespace observers {
 				notification,
 				context,
 				PrepareDefaultAccount(signer, initialMosaics), //To be able to use the test rollback function
-				[&signer, &initialMosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta) {
+				[&signer, &initialMosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.All funds are no locked so regular balance is empty.
 				  auto account = accountStateCacheDelta.find(signer).get();
 				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();

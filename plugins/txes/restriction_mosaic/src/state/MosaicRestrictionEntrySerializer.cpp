@@ -64,6 +64,7 @@ namespace catapult { namespace state {
 	}
 
 	void MosaicRestrictionEntrySerializer::Save(const MosaicRestrictionEntry& entry, io::OutputStream& output) {
+		io::Write32(output, 1);
 		io::Write8(output, utils::to_underlying_type(entry.entryType()));
 		if (MosaicRestrictionEntry::EntryType::Address == entry.entryType())
 			SaveRestriction(entry.asAddressRestriction(), output);
@@ -119,6 +120,9 @@ namespace catapult { namespace state {
 	}
 
 	MosaicRestrictionEntry MosaicRestrictionEntrySerializer::Load(io::InputStream& input) {
+		VersionType version = io::Read32(input);
+		if (version > 1)
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MosaicRestrictions", version);
 		auto entryType = static_cast<MosaicRestrictionEntry::EntryType>(io::Read8(input));
 		switch (entryType) {
 		case MosaicRestrictionEntry::EntryType::Address:

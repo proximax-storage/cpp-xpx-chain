@@ -6,6 +6,7 @@
 
 #include "LockFundMapper.h"
 #include "storages/MongoLockFundCacheStorage.h"
+#include "LockFundReceiptMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 
 
@@ -19,4 +20,6 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoLockFundCacheStorage(
 			manager.mongoContext(),
 			manager.configHolder()));
+
+	manager.addReceiptSupport(catapult::mongo::plugins::CreateLockFundReceiptMongoPlugin());
 }
