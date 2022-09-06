@@ -49,7 +49,7 @@ namespace catapult { namespace model {
 			#include "plugins/txes/config/src/model/NetworkConfigEntityType.h"
 			#include "plugins/txes/contract/src/model/ContractEntityType.h"
 			#include "plugins/txes/exchange/src/model/ExchangeEntityType.h"
-			#include "plugins/txes/liquidity_provider/src/model/LiquidityProviderEntityType.h"
+			#include "plugins/txes/liquidityprovider/src/model/LiquidityProviderEntityType.h"
 			#include "plugins/txes/lock_hash/src/model/HashLockEntityType.h"
 			#include "plugins/txes/lock_secret/src/model/SecretLockEntityType.h"
 			#include "plugins/txes/metadata/src/model/MetadataEntityType.h"

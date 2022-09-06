@@ -6,7 +6,7 @@
 
 #pragma once
 #include "mongo/src/mappers/MapperInclude.h"
-#include "plugins/txes/liquidity_provider/src/state/LiquidityProviderEntry.h"
+#include "plugins/txes/liquidityprovider/src/state/LiquidityProviderEntry.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

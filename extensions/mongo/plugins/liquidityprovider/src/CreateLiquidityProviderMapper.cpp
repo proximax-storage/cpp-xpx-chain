@@ -7,7 +7,7 @@
 #include "CreateLiquidityProviderMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
-#include "plugins/txes/liquidity_provider//src/model/CreateLiquidityProviderTransaction.h"
+#include "plugins/txes/liquidityprovider//src/model/CreateLiquidityProviderTransaction.h"
 
 using namespace catapult::mongo::mappers;
 

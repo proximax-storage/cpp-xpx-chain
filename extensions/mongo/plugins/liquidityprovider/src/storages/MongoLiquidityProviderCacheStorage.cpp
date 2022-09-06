@@ -7,7 +7,7 @@
 #include "MongoLiquidityProviderCacheStorage.h"
 #include "src/mappers/LiquidityProviderEntryMapper.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
-#include "plugins/txes/liquidity_provider/src/cache/LiquidityProviderCache.h"
+#include "plugins/txes/liquidityprovider/src/cache/LiquidityProviderCache.h"
 #include "catapult/model/Address.h"
 
 using namespace bsoncxx::builder::stream;

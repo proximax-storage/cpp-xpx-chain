@@ -7,7 +7,7 @@
 #include "ManualRateChangeMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
-#include "plugins/txes/liquidity_provider//src/model/ManualRateChangeTransaction.h"
+#include "plugins/txes/liquidityprovider//src/model/ManualRateChangeTransaction.h"
 
 using namespace catapult::mongo::mappers;
 

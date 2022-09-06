@@ -8,5 +8,5 @@
 #include "src/config/LiquidityProviderConfiguration.h"
 
 namespace catapult { namespace validators {
-	DEFINE_PLUGIN_CONFIG_VALIDATOR(liquidity_provider, LiquidityProvider, 1)
+	DEFINE_PLUGIN_CONFIG_VALIDATOR(liquidityprovider, LiquidityProvider, 1)
 }}
