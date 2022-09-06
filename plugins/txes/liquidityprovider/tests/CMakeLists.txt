@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
 
-set(TARGET_NAME tests.catapult.plugins.liquidity_provider)
+set(TARGET_NAME tests.catapult.plugins.liquidityprovider)
 
 catapult_tx_plugin_tests(${TARGET_NAME})
