@@ -60,8 +60,6 @@ namespace catapult { namespace plugins {
 
 		const auto& liquidityProviderObserver = manager.liquidityProviderExchangeObserver();
 		manager.addObserverHook([pKeyCollector, &liquidityProviderObserver] (auto& builder) {
-			CATAPULT_LOG(error) << "liquidityProvider address " << &liquidityProviderObserver;
-
 			builder
 			.add(observers::CreateSlashingObserver(pKeyCollector))
 			.add(observers::CreateCreateLiquidityProviderObserver())

@@ -175,7 +175,7 @@ maxSuperContractsOnDrive = 10
 enabled = true
 maxValueSize = 1024
 
-[plugin:catapult.plugins.liquidity_provider]
+[plugin:catapult.plugins.liquidityprovider]
 enabled = true
 managerPublicKeys = E92978122F00698856910664C480E8F3C2FDF0A733F42970FBD58A5145BD6F21
 maxWindowSize = 10

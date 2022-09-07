@@ -10,7 +10,7 @@ namespace catapult { namespace observers {
 
 	using Notification = model::DataModificationCancelNotification<1>;
 
-	void DataModificationCancelHandler(const LiquidityProviderExchangeObserver& liquidityProvider, const Notification& notification, ObserverContext& context) {
+	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DataModificationCancel, model::DataModificationCancelNotification<1>, [&liquidityProvider](const Notification& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModificationCancel)");
 
@@ -64,9 +64,5 @@ namespace catapult { namespace observers {
 				state::DataModificationState::Cancelled
 		});
 		activeDataModifications.erase(cancelingDataModificationIter);
-	}
-
-	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DataModificationCancel, model::DataModificationCancelNotification<1>, [&liquidityProvider](const Notification& notification, ObserverContext& context) {
-		DataModificationCancelHandler(liquidityProvider, notification, context);
     });
 }}

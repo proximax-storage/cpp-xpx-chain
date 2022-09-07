@@ -355,11 +355,9 @@ namespace catapult { namespace plugins {
 	void PluginManager::setLiquidityProviderExchangeObserver(
 			const std::shared_ptr<observers::LiquidityProviderExchangeObserver>& observer) {
 		m_pLiquidityProviderExchangeObserver = observer;
-		CATAPULT_LOG(error) << "liquidityProvider address " << &m_pLiquidityProviderExchangeObserver;
 	}
 
 	const observers::LiquidityProviderExchangeObserver& PluginManager::liquidityProviderExchangeObserver() const {
-		CATAPULT_LOG(error) << "liquidityProvider address " << m_pLiquidityProviderExchangeObserver;
 		return *m_pLiquidityProviderExchangeObserver;
 	}
 

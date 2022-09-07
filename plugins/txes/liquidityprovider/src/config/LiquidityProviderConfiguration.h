@@ -20,7 +20,7 @@ namespace catapult { namespace config {
 	/// Storage plugin configuration settings.
 	struct LiquidityProviderConfiguration : public model::PluginConfiguration {
 	public:
-		DEFINE_CONFIG_CONSTANTS(liquidity_provider)
+		DEFINE_CONFIG_CONSTANTS(liquidityprovider)
 
 		/// Whether the plugin is enabled.
 		bool Enabled;

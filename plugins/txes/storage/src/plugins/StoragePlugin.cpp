@@ -157,8 +157,6 @@ namespace catapult { namespace plugins {
 
 		const auto& liquidityProviderValidator = manager.liquidityProviderExchangeValidator();
 		const auto& liquidityProviderObserver = manager.liquidityProviderExchangeObserver();
-		CATAPULT_LOG(error) << "liquidityProvider address " << &liquidityProviderObserver;
-		CATAPULT_LOG(error) << "liquidityProviderValidator address " << &liquidityProviderValidator;
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
@@ -194,8 +192,6 @@ namespace catapult { namespace plugins {
 		});
 
 		manager.addObserverHook([&state = *pStorageState, &liquidityProviderObserver](auto& builder) {
-
-			CATAPULT_LOG(error) << "liquidityProvider address " << &liquidityProviderObserver;
 			builder
 				.add(observers::CreatePrepareDriveObserver())
 				.add(observers::CreateDownloadChannelObserver())
