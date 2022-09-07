@@ -465,6 +465,9 @@ namespace catapult { namespace utils {
 			treeAdapter.remove(keyToRemove);
 		}
 
+		// Drive Owner cannot be assigned to his own Drive
+		treeAdapter.remove( keyExtractor(driveEntry.owner()) );
+
 		auto notSuitableReplicators = treeAdapter.numberOfLess({Amount(driveSize), Key()});
 		auto suitableReplicators = treeAdapter.size() - notSuitableReplicators;
 
@@ -596,7 +599,8 @@ namespace catapult { namespace utils {
 				const auto& driveSize = driveEntry.size();
 				bool replicatorIsBanned =
 						driveEntry.formerReplicators().find(replicatorKey) != driveEntry.formerReplicators().end();
-				if (driveSize <= remainingCapacity && !replicatorIsBanned) {
+				bool replicatorIsOwner = driveEntry.owner() == replicatorKey;
+				if (driveSize <= remainingCapacity && !replicatorIsBanned && !replicatorIsOwner) {
 					// Updating drives() and replicators()
 					const auto& completedDataModifications = driveEntry.completedDataModifications();
 					const auto lastApprovedDataModificationIter = std::find_if(
