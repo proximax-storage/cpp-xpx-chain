@@ -118,14 +118,14 @@ namespace catapult { namespace observers {
         }
     }
 
-    TEST(TEST_CLASS, DataModification_Commit) {
-        // Arrange:
-        BcDriveValues values;
-        values.Drive_Key = test::GenerateRandomByteArray<Key>();
-        
-        // Assert:
-        RunTest(NotifyMode::Commit, values, Current_Height);
-    }
+//    TEST(TEST_CLASS, DataModification_Commit) {
+//        // Arrange:
+//        BcDriveValues values;
+//        values.Drive_Key = test::GenerateRandomByteArray<Key>();
+//
+//        // Assert:
+//        RunTest(NotifyMode::Commit, values, Current_Height);
+//    }
 
     TEST(TEST_CLASS, DataModification_Rollback) {
         // Arrange:
