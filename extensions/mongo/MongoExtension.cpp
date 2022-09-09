@@ -88,6 +88,17 @@ namespace catapult { namespace mongo {
 			auto dbUri = mongocxx::uri(dbConfig.DatabaseUri);
 			const auto& dbName = dbConfig.DatabaseName;
 
+			const auto& networkConfigMap = bootstrapper.config().Network.Plugins;
+			const auto& dbConfigSet = dbConfig.Plugins;
+			const std::string networkPrefix = "catapult.plugins.";
+			const std::string dbPrefix = "catapult.mongo.plugins.";
+			for (const auto& [networkPluginName, _] : networkConfigMap) {
+				const auto pluginName = networkPluginName.substr(networkPrefix.length());
+				const auto dbPluginName = dbPrefix + pluginName;
+				if (!dbConfigSet.count(dbPluginName))
+					CATAPULT_THROW_RUNTIME_ERROR_1("plugin not found in db configuration", pluginName);
+			}
+
 			// create mongo writer
 			// keep the minimum high enough in order to avoid deadlock while waiting for mongo operations due to blocking io threads
 			auto numWriterThreads = std::max(4u, std::min(std::thread::hardware_concurrency(), dbConfig.MaxWriterThreads));
