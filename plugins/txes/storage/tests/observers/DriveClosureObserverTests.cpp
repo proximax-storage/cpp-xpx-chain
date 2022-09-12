@@ -144,46 +144,46 @@ namespace catapult { namespace observers {
 		}
     }
 
-    TEST(TEST_CLASS, DriveClosure_RemoveFirstDrive) {
-    	// Arrange:
-    	CacheValues values;
-
-    	std::vector<Key> driveKeys;
-    	for (int i = 0; i < 3; i++) {
-    		driveKeys.push_back(test::GenerateRandomByteArray<Key>());
-    	}
-
-		auto keyToRemove = driveKeys[0];
-    	std::vector<Key> expectedDriveKeys = driveKeys;
-    	expectedDriveKeys.erase(expectedDriveKeys.begin());
-
-    	utils::SortedKeySet replicatorKeys;
-    	for (auto i = 0u; i < Num_Replicators; ++i) {
-    		auto replicatorKey = test::GenerateRandomByteArray<Key>();
-    		replicatorKeys.emplace(replicatorKey);
-    		values.InitialReplicatorEntries.push_back(CreateInitialReplicatorEntry(driveKeys, replicatorKey));
-    		values.ExpectedReplicatorEntries.push_back(CreateInitialReplicatorEntry(expectedDriveKeys, replicatorKey));
-    	}
-
-    	for (const auto& driveKey: driveKeys) {
-    		values.InitialBcDriveEntries.push_back(CreateInitialBcDriveEntry(driveKey, replicatorKeys));
-    	}
-
-    	for (int i = 0; i < values.InitialBcDriveEntries.size() - 1; i++) {
-			values.InitialBcDriveEntries[i].setQueueNext(values.InitialBcDriveEntries[i + 1].key());
-    	}
-
-    	for (int i = 1; i < values.InitialBcDriveEntries.size(); i++) {
-			values.InitialBcDriveEntries[i].setQueuePrevious(values.InitialBcDriveEntries[i - 1].key());
-    	}
-
-    	for (const auto& driveKey: expectedDriveKeys) {
-    		values.ExpectedBcDriveEntries.push_back(CreateInitialBcDriveEntry(driveKey, replicatorKeys));
-    	}
-
-    	// Assert
-    	RunTest(NotifyMode::Commit, values, Current_Height, keyToRemove);
-    }
+//    TEST(TEST_CLASS, DriveClosure_RemoveFirstDrive) {
+//    	// Arrange:
+//    	CacheValues values;
+//
+//    	std::vector<Key> driveKeys;
+//    	for (int i = 0; i < 3; i++) {
+//    		driveKeys.push_back(test::GenerateRandomByteArray<Key>());
+//    	}
+//
+//		auto keyToRemove = driveKeys[0];
+//    	std::vector<Key> expectedDriveKeys = driveKeys;
+//    	expectedDriveKeys.erase(expectedDriveKeys.begin());
+//
+//    	utils::SortedKeySet replicatorKeys;
+//    	for (auto i = 0u; i < Num_Replicators; ++i) {
+//    		auto replicatorKey = test::GenerateRandomByteArray<Key>();
+//    		replicatorKeys.emplace(replicatorKey);
+//    		values.InitialReplicatorEntries.push_back(CreateInitialReplicatorEntry(driveKeys, replicatorKey));
+//    		values.ExpectedReplicatorEntries.push_back(CreateInitialReplicatorEntry(expectedDriveKeys, replicatorKey));
+//    	}
+//
+//    	for (const auto& driveKey: driveKeys) {
+//    		values.InitialBcDriveEntries.push_back(CreateInitialBcDriveEntry(driveKey, replicatorKeys));
+//    	}
+//
+//    	for (int i = 0; i < values.InitialBcDriveEntries.size() - 1; i++) {
+//			values.InitialBcDriveEntries[i].setQueueNext(values.InitialBcDriveEntries[i + 1].key());
+//    	}
+//
+//    	for (int i = 1; i < values.InitialBcDriveEntries.size(); i++) {
+//			values.InitialBcDriveEntries[i].setQueuePrevious(values.InitialBcDriveEntries[i - 1].key());
+//    	}
+//
+//    	for (const auto& driveKey: expectedDriveKeys) {
+//    		values.ExpectedBcDriveEntries.push_back(CreateInitialBcDriveEntry(driveKey, replicatorKeys));
+//    	}
+//
+//    	// Assert
+//    	RunTest(NotifyMode::Commit, values, Current_Height, keyToRemove);
+//    }
 
     TEST(TEST_CLASS, DriveClosure_RemoveMiddleDrive) {
         // Arrange:
