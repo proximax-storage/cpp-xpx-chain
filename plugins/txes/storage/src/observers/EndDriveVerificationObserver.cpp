@@ -32,6 +32,21 @@ namespace catapult { namespace observers {
 		  	size_t voluntarilyOffboardingCount = 0;
 		  	auto storageDepositSlashing = 0;
 
+
+			std::ostringstream s;
+
+			s << "Verification Opinion: " << notification.KeyCount << " " << notification.JudgingKeyCount << "\n";
+			for (auto i = 0; i < notification.KeyCount; ++i) {
+				uint8_t result = 0;
+				for (auto j = 0; j < notification.JudgingKeyCount; ++j) {
+					s << opinions[j * notification.KeyCount + i] << " ";
+					result += opinions[j * notification.KeyCount + i];
+				}
+				s << "| " << result << "\n";
+			}
+
+			CATAPULT_LOG(error) << s.str();
+
 			for (auto i = 0; i < notification.KeyCount; ++i) {
 				uint8_t result = 0;
 				for (auto j = 0; j < notification.JudgingKeyCount; ++j)

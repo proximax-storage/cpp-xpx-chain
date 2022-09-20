@@ -234,6 +234,21 @@ namespace catapult { namespace storage {
 		signatures.reserve(judgingKeyCount);
 		boost::dynamic_bitset<uint8_t> opinionsBitset(judgingKeyCount * keyCount);
 
+		std::ostringstream s;
+
+		s << "Verification Transaction Sender: " << keyCount << " " << judgingKeyCount << "\n";
+		for (auto i = 0; i < keyCount; ++i) {
+			uint8_t result = 0;
+			for (auto j = 0; j < judgingKeyCount; ++j) {
+				auto& opinion = transactionInfo.m_opinions[j].m_opinions[i];
+				s << opinion << " ";
+				result += opinion;
+			}
+			s << "| " << result << "\n";
+		}
+
+		CATAPULT_LOG(error) << s.str();
+
 		for (auto i = 0u; i < transactionInfo.m_opinions.size(); ++i) {
 			const auto& opinion = transactionInfo.m_opinions[i];
 			publicKeys.emplace_back(opinion.m_publicKey);
