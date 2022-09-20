@@ -30,6 +30,7 @@ namespace catapult { namespace test {
 	/// Base class that provides shared utils for mongo cache storage test suites.
 	template<typename TTraits>
 	class MongoCacheStorageTestUtils {
+		friend TTraits;
 	private:
 		using CacheType = typename TTraits::CacheType;
 		using ElementType = typename TTraits::ModelType;
@@ -37,9 +38,9 @@ namespace catapult { namespace test {
 	protected:
 		class CacheStorageWrapper : public PrepareDatabaseMixin {
 		public:
-			CacheStorageWrapper()
+			CacheStorageWrapper(const MosaicId& currencyMosaicId = MosaicId())
 					: m_pMongoContext(CreateDefaultMongoStorageContext(DatabaseName()))
-					, m_pCacheStorage(TTraits::CreateCacheStorage(*m_pMongoContext, CreateConfigHolder(TTraits::Network_Id)))
+					, m_pCacheStorage(TTraits::CreateCacheStorage(*m_pMongoContext, CreateConfigHolder(TTraits::Network_Id, currencyMosaicId)))
 			{}
 
 		public:
@@ -48,9 +49,10 @@ namespace catapult { namespace test {
 			}
 
 		private:
-			auto CreateConfigHolder(model::NetworkIdentifier networkIdentifier) {
+			auto CreateConfigHolder(model::NetworkIdentifier networkIdentifier, const MosaicId& harvestingMosaicId) {
 				test::MutableBlockchainConfiguration config;
 				config.Immutable.NetworkIdentifier = networkIdentifier;
+				config.Immutable.HarvestingMosaicId = harvestingMosaicId;
 				return config::CreateMockConfigurationHolder(config.ToConst());
 			}
 
@@ -70,22 +72,35 @@ namespace catapult { namespace test {
 			return static_cast<size_t>(collection.count_documents({}));
 		}
 
-		static void AssertDbContents(const std::vector<ElementType>& elements, size_t numHiddenElements = 0) {
+		template<template<class, class> typename TVectorType, typename TElement, typename TAllocator, typename TFilter>
+		static void AssertDbContents(const std::string collection, const TVectorType<TElement, TAllocator>& elements, TFilter filter, size_t numHiddenElements = 0) {
 			auto connection = CreateDbConnection();
 			auto database = connection[DatabaseName()];
 
-			AssertCollectionSize(TTraits::Collection_Name, elements.size() + numHiddenElements);
+			AssertCollectionSize(collection, elements.size() + numHiddenElements);
 			for (const auto& element : elements)
-				AssertDbContains(database, element);
+				AssertDbContains(collection, database, element, filter);
 		}
 
+		static void AssertDbContents(const std::vector<ElementType>& elements, size_t numHiddenElements = 0) {
+			AssertDbContents(TTraits::Collection_Name, elements, TTraits::GetFindFilter, numHiddenElements);
+		}
+
+
+
 	private:
-		static void AssertDbContains(mongocxx::database& database, const ElementType& element) {
-			auto filter = TTraits::GetFindFilter(element);
-			auto matchedDocument = database[TTraits::Collection_Name].find_one(filter.view());
+
+		template<typename TElementType, typename TFilter>
+		static void AssertDbContains(const std::string collection, mongocxx::database& database, const TElementType& element, TFilter filter) {
+			auto filterResult = filter(element);
+			auto matchedDocument = database[collection].find_one(filterResult.view());
 			ASSERT_TRUE(matchedDocument.has_value());
 
 			TTraits::AssertEqual(element, matchedDocument.value().view());
+		}
+
+		static void AssertDbContains(mongocxx::database& database, const ElementType& element) {
+			AssertDbContains(TTraits::Collection_Name, database, element, TTraits::GetFindFilter);
 		}
 	};
 }}

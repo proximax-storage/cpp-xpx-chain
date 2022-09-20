@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/state/StakingRecord.h"
 #include "mongo/src/storages/MongoAccountStateCacheStorage.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "catapult/cache_core/AccountStateCache.h"
@@ -37,19 +38,22 @@ namespace catapult { namespace mongo { namespace storages {
 #define TEST_CLASS MongoAccountStateCacheStorageTests
 
 	namespace {
-		constexpr auto Currency_Mosaic_Id = MosaicId(1234);
+
 
 		struct AccountStateCacheTraits {
 			using CacheType = cache::AccountStateCache;
 			using ModelType = state::AccountState;
-
+			constexpr static auto Currency_Mosaic_Id = MosaicId(1234);
 			static constexpr auto Collection_Name = "accounts";
 			static constexpr auto Network_Id = static_cast<model::NetworkIdentifier>(0x5A);
 			static constexpr auto CreateCacheStorage = CreateMongoAccountStateCacheStorage;
+			static constexpr auto Additional_Collection_Name = "staking_accounts";
+			static constexpr auto Id_Additional_Property_Name = "stakingAccount.address";
 
 			static cache::CatapultCache CreateCache() {
 				test::MutableBlockchainConfiguration config;
 				config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+				config.Immutable.HarvestingMosaicId = Currency_Mosaic_Id;
 				return test::CreateEmptyCatapultCache(config.ToConst());
 			}
 
@@ -57,11 +61,12 @@ namespace catapult { namespace mongo { namespace storages {
 				auto height = Height(id);
 				auto publicKey = test::GenerateRandomByteArray<Key>();
 				auto address = model::PublicKeyToAddress(publicKey, model::NetworkIdentifier::Mijin_Test);
-				auto accountState = state::AccountState(address, Height(1234567) + height);
+				auto accountState = state::AccountState(address, Height(1234567) + height, 2);
 				accountState.PublicKey = publicKey;
 				accountState.PublicKeyHeight = Height(1234567) + height;
 				accountState.SupplementalPublicKeys.linked().set(test::GenerateRandomByteArray<Key>());
 				auto randomAmount = Amount((test::Random() % 1'000'000 + 1'000) * 1'000'000);
+				accountState.Balances.track(Currency_Mosaic_Id);
 				accountState.Balances.credit(Currency_Mosaic_Id, randomAmount, accountState.PublicKeyHeight);
 				accountState.Balances.commitSnapshots();
 				return accountState;
@@ -69,7 +74,7 @@ namespace catapult { namespace mongo { namespace storages {
 
 			static void Add(cache::CatapultCacheDelta& delta, const ModelType& accountState) {
 				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
-				accountStateCacheDelta.addAccount(accountState.PublicKey, accountState.PublicKeyHeight);
+				accountStateCacheDelta.addAccount(accountState.PublicKey, accountState.PublicKeyHeight, 2);
 
 				auto& accountStateFromCache = accountStateCacheDelta.find(accountState.PublicKey).get();
 				accountStateFromCache.SupplementalPublicKeys.linked().set(accountState.SupplementalPublicKeys.linked().get());
@@ -93,15 +98,69 @@ namespace catapult { namespace mongo { namespace storages {
 				accountStateFromCache.Balances.credit(Currency_Mosaic_Id, Amount(12'345'000'000), accountState.AddressHeight + Height(1));
 			}
 
+			static void AddCb(cache::CatapultCacheDelta& delta, ModelType& accountState) {
+				Add(delta, accountState);
+				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
+				auto& accountStateFromCache = accountStateCacheDelta.find(accountState.PublicKey).get();
+				accountState.Balances.lock(Currency_Mosaic_Id, Amount(1000), accountState.AddressHeight+ Height(1));
+				accountStateFromCache.Balances.lock(Currency_Mosaic_Id, Amount(1000), accountState.AddressHeight+ Height(1));
+				accountState.Balances.commitSnapshots();
+				accountStateFromCache.Balances.commitSnapshots();
+			}
+
+			static void RemoveCb(cache::CatapultCacheDelta& delta, const ModelType& accountState) {
+				Remove(delta, accountState);
+			}
+
+			static void MutateCb(cache::CatapultCacheDelta& delta, ModelType& accountState) {
+				Mutate(delta, accountState);
+				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
+				auto& accountStateFromCache = accountStateCacheDelta.find(accountState.PublicKey).get();
+				accountStateFromCache.Balances.lock(Currency_Mosaic_Id, Amount(1000), accountState.AddressHeight+ Height(1));
+				accountStateFromCache.Balances.commitSnapshots();
+
+				accountState.Balances.lock(Currency_Mosaic_Id, Amount(1000), accountState.AddressHeight+ Height(1));
+				accountState.Balances.commitSnapshots();
+			}
+
 			static auto GetFindFilter(const ModelType& accountState) {
 				return document() << "account.address" << mappers::ToBinary(accountState.Address) << finalize;
+			}
+
+			static auto GetAdditionalFindFilter(const state::StakingRecord& stakingRecord) {
+				return document() << std::string(Id_Additional_Property_Name) << mappers::ToBinary(stakingRecord.Address) << finalize;
 			}
 
 			static void AssertEqual(const ModelType& accountState, const bsoncxx::document::view& view) {
 				test::AssertEqualAccountState(accountState, view["account"].get_document().view());
 			}
+
+			static void AssertEqual(const state::StakingRecord& stakingRecord, const bsoncxx::document::view& view) {
+				test::AssertEqualStakingRecord(stakingRecord, view["stakingAccount"].get_document().view());
+			}
+
+			static void AssertAddedCallbackExecution(std::vector<ModelType> modifiedRecords, std::vector<ModelType> expectedRecords)
+			{
+				std::vector<state::StakingRecord> records;
+				for(const auto& record : expectedRecords)
+				{
+					records.emplace_back(record, Currency_Mosaic_Id);
+				}
+				test::MongoCacheStorageTestUtils<AccountStateCacheTraits>::AssertDbContents(Additional_Collection_Name, records, GetAdditionalFindFilter);
+			}
+
+			static void AssertRemovedCallbackExecution(std::vector<ModelType> modifiedRecords, std::vector<ModelType> expectedRecords)
+			{
+				std::vector<state::StakingRecord> records;
+				for(const auto& record : expectedRecords)
+				{
+					records.emplace_back(record, Currency_Mosaic_Id);
+				}
+				test::MongoCacheStorageTestUtils<AccountStateCacheTraits>::AssertDbContents(Additional_Collection_Name, records, GetAdditionalFindFilter);
+			}
 		};
 	}
 
-	DEFINE_FLAT_CACHE_STORAGE_TESTS(AccountStateCacheTraits,)
+	DEFINE_FLAT_CACHE_STORAGE_TESTS_WITH_CALLBACKS(AccountStateCacheTraits,)
+
 }}}

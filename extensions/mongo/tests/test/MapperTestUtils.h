@@ -25,6 +25,7 @@
 #include "tests/test/nodeps/Conversions.h"
 #include <cstring>
 #include <vector>
+#include "catapult/state/StakingRecord.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 
 namespace catapult {
@@ -207,6 +208,9 @@ namespace catapult { namespace test {
 
 	/// Verifies that model \a accountState and db account (\a dbAccount) are equivalent.
 	void AssertEqualAccountState(const state::AccountState& accountState, const bsoncxx::document::view& dbAccount);
+
+	/// Verifies that model \a stakingRecord and db staking record (\a dbStakingRecord) are equivalent.
+	void AssertEqualStakingRecord(const state::StakingRecord& stakingRecord, const bsoncxx::document::view& dbStakingRecord);
 
 	/// Verifies that mock \a transaction and db transaction (\a dbTransaction) are equivalent.
 	void AssertEqualMockTransactionData(const mocks::MockTransaction& transaction, const bsoncxx::document::view& dbTransaction);

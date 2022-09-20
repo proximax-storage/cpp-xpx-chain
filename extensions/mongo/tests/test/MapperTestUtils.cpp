@@ -150,6 +150,12 @@ namespace catapult { namespace test {
 		EXPECT_EQ(expectedPublicKeyAccessor.get(), GetKeyValue(dbPublicKeyDocument.view(), "publicKey"));
 	}
 
+	void AssertEqualStakingRecord(const state::StakingRecord& stakingRecord, const bsoncxx::document::view& dbAccount) {
+		EXPECT_EQ(stakingRecord.Address, GetAddressValue(dbAccount, "address"));
+		EXPECT_EQ(stakingRecord.TotalStaked, Amount(GetUint64(dbAccount, "totalStaked")));
+		EXPECT_EQ(stakingRecord.PublicKey, GetKeyValue(dbAccount, "publicKey"));
+	}
+
 	void AssertEqualAccountState(const state::AccountState& accountState, const bsoncxx::document::view& dbAccount) {
 		EXPECT_EQ(accountState.Address, GetAddressValue(dbAccount, "address"));
 		EXPECT_EQ(accountState.AddressHeight, Height(GetUint64(dbAccount, "addressHeight")));
@@ -160,11 +166,14 @@ namespace catapult { namespace test {
 
 		auto supplementalKeysDocument = dbAccount["supplementalPublicKeys"].get_document();
 
-		AssertPublicKeySubDocument(supplementalKeysDocument, "linked", accountState.SupplementalPublicKeys.linked());
+		if(accountState.SupplementalPublicKeys.linked())
+			AssertPublicKeySubDocument(supplementalKeysDocument, "linked", accountState.SupplementalPublicKeys.linked());
 		if(accountState.GetVersion() > 1)
 		{
-			AssertPublicKeySubDocument(supplementalKeysDocument, "node", accountState.SupplementalPublicKeys.node());
-			AssertPublicKeySubDocument(supplementalKeysDocument, "vrf", accountState.SupplementalPublicKeys.vrf());
+			if(accountState.SupplementalPublicKeys.node())
+				AssertPublicKeySubDocument(supplementalKeysDocument, "node", accountState.SupplementalPublicKeys.node());
+			if(accountState.SupplementalPublicKeys.vrf())
+				AssertPublicKeySubDocument(supplementalKeysDocument, "vrf", accountState.SupplementalPublicKeys.vrf());
 		}
 		auto dbMosaics = dbAccount["mosaics"].get_array().value;
 		size_t numMosaics = 0;

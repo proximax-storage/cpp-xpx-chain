@@ -76,4 +76,20 @@ namespace catapult { namespace utils {
 
 	template<typename T>
 	static constexpr bool is_tuple_v = is_tuple<T>::value;
+
+#define DEFINE_EXISTS_DECLARATION(NAME) \
+	template<typename T, typename Enable = void> \
+	struct ExistsDeclaration##NAME {      \
+	static constexpr bool Value = false;         \
+	};   \
+                                 \
+	template<typename T>\
+	struct ExistsDeclaration##NAME<T, std::void_t<decltype(T::NAME)>> {\
+		using Type = decltype(T::NAME);           \
+		static constexpr bool Value = true;         \
+	};
+#define EXISTS_DECLARATION(NAME) ExistsDeclaration##NAME
+
+
+
 }}

@@ -21,13 +21,27 @@
 #pragma once
 #include "MongoCacheStorageTestUtils.h"
 #include "catapult/cache/CatapultCache.h"
+#include "catapult/utils/Functional.h"
 
 namespace catapult { namespace test {
 
+	namespace detail {
+		DEFINE_EXISTS_DECLARATION(Currency_Mosaic_Id)
+		template<typename TTraits>
+		constexpr MosaicId SelectMosaicId()
+		{
+			if constexpr(EXISTS_DECLARATION(Currency_Mosaic_Id)<TTraits>::Value)
+			{
+				return TTraits::Currency_Mosaic_Id;
+			}
+			return MosaicId();
+		}
+	}
 	/// Mongo flat cache storage test suite.
 	template<typename TTraits>
-	class MongoFlatCacheStorageTests : private MongoCacheStorageTestUtils<TTraits> {
-	private:
+	class MongoFlatCacheStorageTestsBase : private MongoCacheStorageTestUtils<TTraits> {
+		friend TTraits;
+	protected:
 		using CacheType = typename TTraits::CacheType;
 		using ElementType = typename TTraits::ModelType;
 
@@ -37,10 +51,11 @@ namespace catapult { namespace test {
 		using BaseType::AssertDbContents;
 		using CacheStorageWrapper = typename BaseType::CacheStorageWrapper;
 
+		static constexpr MosaicId Currency_Mosaic_Id = detail::SelectMosaicId<TTraits>();
 	public:
 		static void AssertSaveHasNoEffectWhenThereAreNoPendingChanges() {
 			// Arrange:
-			CacheStorageWrapper storage;
+			CacheStorageWrapper storage(Currency_Mosaic_Id);
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 			cache.commit(Height());
@@ -54,7 +69,7 @@ namespace catapult { namespace test {
 
 		static void AssertAddedElementIsSavedToStorage() {
 			// Arrange:
-			CacheStorageWrapper storage;
+			CacheStorageWrapper storage(Currency_Mosaic_Id);
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
@@ -83,7 +98,7 @@ namespace catapult { namespace test {
 
 		static void AssertModifiedElementIsSavedToStorage() {
 			// Arrange:
-			CacheStorageWrapper storage;
+			CacheStorageWrapper storage(Currency_Mosaic_Id);
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
@@ -111,7 +126,7 @@ namespace catapult { namespace test {
 
 		static void AssertDeletedElementIsRemovedFromStorage() {
 			// Arrange:
-			CacheStorageWrapper storage;
+			CacheStorageWrapper storage(Currency_Mosaic_Id);
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
@@ -141,7 +156,7 @@ namespace catapult { namespace test {
 
 		static void AssertCanSaveMultipleElements() {
 			// Arrange:
-			CacheStorageWrapper storage;
+			CacheStorageWrapper storage(Currency_Mosaic_Id);
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
@@ -162,7 +177,7 @@ namespace catapult { namespace test {
 
 		static void AssertCanAddAndModifyAndDeleteMultipleElements() {
 			// Arrange:
-			CacheStorageWrapper storage;
+			CacheStorageWrapper storage(Currency_Mosaic_Id);
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
@@ -213,7 +228,7 @@ namespace catapult { namespace test {
 
 		static void AssertElementsBothAddedAndRemovedAreIgnored() {
 			// Arrange:
-			CacheStorageWrapper storage;
+			CacheStorageWrapper storage(Currency_Mosaic_Id);
 			auto cache = TTraits::CreateCache();
 			std::vector<ElementType> elements;
 
@@ -257,6 +272,116 @@ namespace catapult { namespace test {
 		}
 	};
 
+	template<typename TTraits>
+	struct MongoFlatCacheStorageTestsWithCallback : public MongoFlatCacheStorageTestsBase<TTraits> {
+
+		using CacheStorageWrapper = typename MongoFlatCacheStorageTestsBase<TTraits>::CacheStorageWrapper;
+		using BaseType = MongoFlatCacheStorageTestsBase<TTraits>;
+		using BaseType::GetCollectionSize;
+		using BaseType::GetDelta;
+		using BaseType::AssertDbContents;
+
+		static void AssertAddedElementResolvesCallback() {
+			// Arrange:
+			CacheStorageWrapper storage(BaseType::Currency_Mosaic_Id);
+			auto cache = TTraits::CreateCache();
+			auto delta = cache.createDelta();
+
+			// - prepare the cache with a single element
+			auto originalElement = TTraits::GenerateRandomElement(11);
+			TTraits::AddCb(delta, originalElement);
+			storage.get().saveDelta(cache::CacheChanges(delta));
+			cache.commit(Height());
+
+			// Sanity:
+			EXPECT_EQ(1u, GetCollectionSize());
+			AssertDbContents({ originalElement });
+			TTraits::AssertAddedCallbackExecution({ originalElement },  { originalElement });
+			// Act:
+			auto newElement = TTraits::GenerateRandomElement(54321);
+			TTraits::AddCb(delta, newElement);
+			storage.get().saveDelta(cache::CacheChanges(delta));
+
+			// Sanity:
+			EXPECT_EQ(1u, GetDelta(delta).addedElements().size());
+
+			// Assert:
+			EXPECT_EQ(2u, GetCollectionSize());
+			AssertDbContents({ originalElement, newElement });
+			TTraits::AssertAddedCallbackExecution({ newElement }, { originalElement, newElement });
+		}
+
+		static void AssertModifiedElementResolvesCallback(){
+			// Arrange:
+			CacheStorageWrapper storage(BaseType::Currency_Mosaic_Id);
+			auto cache = TTraits::CreateCache();
+			auto delta = cache.createDelta();
+
+			// - prepare the cache with a single element
+			auto element = TTraits::GenerateRandomElement(11);
+			TTraits::AddCb(delta, element);
+			storage.get().saveDelta(cache::CacheChanges(delta));
+			cache.commit(Height());
+
+			// Sanity:
+			EXPECT_EQ(1u, GetCollectionSize());
+			AssertDbContents({ element });
+			TTraits::AssertAddedCallbackExecution({ element }, {element});
+
+			// Act:
+			TTraits::MutateCb(delta, element);
+			storage.get().saveDelta(cache::CacheChanges(delta));
+
+			// Sanity:
+			EXPECT_EQ(1u, GetDelta(delta).modifiedElements().size());
+
+			// Assert:
+			EXPECT_EQ(1u, GetCollectionSize());
+			AssertDbContents({ element });
+			TTraits::AssertAddedCallbackExecution({ element }, {element});
+		}
+
+		static void AssertDeletedElementResolvesCallback(){
+			// Arrange:
+			CacheStorageWrapper storage(BaseType::Currency_Mosaic_Id);
+			auto cache = TTraits::CreateCache();
+			auto delta = cache.createDelta();
+
+			// - prepare the cache with two elements
+			auto element1 = TTraits::GenerateRandomElement(11);
+			auto element2 = TTraits::GenerateRandomElement(12);
+			TTraits::AddCb(delta, element1);
+			TTraits::AddCb(delta, element2);
+			storage.get().saveDelta(cache::CacheChanges(delta));
+			cache.commit(Height());
+
+			// Sanity:
+			EXPECT_EQ(2u, GetCollectionSize());
+			AssertDbContents({ element1, element2 });
+			TTraits::AssertAddedCallbackExecution({ element1, element2 }, { element1, element2 });
+
+			// Act:
+			TTraits::RemoveCb(delta, element2);
+			storage.get().saveDelta(cache::CacheChanges(delta));
+
+			// Sanity:
+			EXPECT_EQ(1u, GetDelta(delta).removedElements().size());
+
+			// Assert:
+			EXPECT_EQ(1u, GetCollectionSize());
+			AssertDbContents({ element1 });
+			TTraits::AssertRemovedCallbackExecution({ element2 }, { element1 });
+
+		}
+	};
+
+	template<typename TTraits, typename Enable = void>
+	struct MongoFlatCacheStorageTests : public MongoFlatCacheStorageTestsBase<TTraits> {};
+
+	template<typename TTraits>
+	struct MongoFlatCacheStorageTests<TTraits, std::void_t<decltype(&TTraits::AssertAddedCallbackExecution)>> : public MongoFlatCacheStorageTestsWithCallback<TTraits> {};
+
+
 #define MAKE_FLAT_CACHE_STORAGE_TEST(TRAITS_NAME, POSTFIX, TEST_NAME) \
 	TEST(TEST_CLASS, TEST_NAME##POSTFIX) { test::MongoFlatCacheStorageTests<TRAITS_NAME>::Assert##TEST_NAME(); }
 
@@ -269,4 +394,10 @@ namespace catapult { namespace test {
 	MAKE_FLAT_CACHE_STORAGE_TEST(TRAITS_NAME, POSTFIX, CanSaveMultipleElements) \
 	MAKE_FLAT_CACHE_STORAGE_TEST(TRAITS_NAME, POSTFIX, CanAddAndModifyAndDeleteMultipleElements) \
 	MAKE_FLAT_CACHE_STORAGE_TEST(TRAITS_NAME, POSTFIX, ElementsBothAddedAndRemovedAreIgnored)
+
+#define DEFINE_FLAT_CACHE_STORAGE_TESTS_WITH_CALLBACKS(TRAITS_NAME, POSTFIX) \
+	DEFINE_FLAT_CACHE_STORAGE_TESTS(TRAITS_NAME, POSTFIX)                        \
+	MAKE_FLAT_CACHE_STORAGE_TEST(TRAITS_NAME, POSTFIX, AddedElementResolvesCallback) \
+	MAKE_FLAT_CACHE_STORAGE_TEST(TRAITS_NAME, POSTFIX, ModifiedElementResolvesCallback) \
+	MAKE_FLAT_CACHE_STORAGE_TEST(TRAITS_NAME, POSTFIX, DeletedElementResolvesCallback)
 }}

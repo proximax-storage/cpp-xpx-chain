@@ -146,8 +146,62 @@ namespace catapult { namespace mongo { namespace storages {
 		static constexpr auto GetId = TDescriptor::GetKeyFromValue;
 	};
 
+	struct StorageCallbackContext {
+		StorageCallbackContext(MongoErrorPolicy& policy, MongoBulkWriter& writer, Height height, const config::BlockchainConfigurationHolder& holder)
+				: ErrorPolicy(policy),
+				BulkWriter(writer),
+				CurrentHeight(height),
+				ConfigHolder(holder) {}
 
-	namespace detail{
+		MongoErrorPolicy& ErrorPolicy;
+		MongoBulkWriter& BulkWriter;
+		const Height CurrentHeight;
+		const config::BlockchainConfigurationHolder& ConfigHolder;
+	};
+
+	namespace detail {
+		namespace CallbackTag {
+			struct None {};
+			struct Supported {};
+		};
+
+
+		/// Callback static method is needed because contexpr still evaluates even if condition is never true
+#define SUPPORTS_CALLBACK_DEF(CALLBACK_NAME) \
+		template<typename TCacheTraits, typename T = void, typename = void> \
+		struct SupportsCallback##CALLBACK_NAME { \
+			typedef CallbackTag::None Type;           \
+			template<typename TElements>              \
+			static void Callback(StorageCallbackContext& context,  const TElements& elements, const config::BlockchainConfigurationHolder& configHolder) {\
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid execution!"); \
+			}                                       \
+		};                                          \
+		template <typename TCacheTraits, typename T> \
+		struct SupportsCallback##CALLBACK_NAME<TCacheTraits, T, typename std::enable_if<!std::is_member_pointer<decltype(&TCacheTraits::template CALLBACK_NAME<T>)>::value>::type> \
+		{ \
+			typedef CallbackTag::Supported Type;      \
+			template<typename TElements>              \
+			static void Callback(StorageCallbackContext& context,  const TElements& elements)\
+			{\
+				TCacheTraits::CALLBACK_NAME(context, elements);\
+			} \
+		}; \
+		template <typename TCacheTraits> \
+		struct SupportsCallback##CALLBACK_NAME<TCacheTraits, void, typename std::enable_if<!std::is_member_pointer<decltype(&TCacheTraits::template CALLBACK_NAME)>::value>::type> \
+		{ \
+			typedef CallbackTag::Supported Type;      \
+            template<typename TElements>     \
+			static void Callback(StorageCallbackContext& context,  const TElements& elements)\
+			{\
+				TCacheTraits::CALLBACK_NAME(context, elements);\
+			} \
+		};
+
+		SUPPORTS_CALLBACK_DEF(RemoveCallback)
+		SUPPORTS_CALLBACK_DEF(InsertCallback)
+
+#define SUPPORTS_CALLBACK(CALLBACK_NAME) SupportsCallback##CALLBACK_NAME
+
 		template<typename TCache, template<typename...> class TStorageType, typename ...TArgs>
 		struct UnpackStorageTerms;
 
@@ -205,11 +259,18 @@ namespace catapult { namespace mongo { namespace storages {
 							  << finalize;
 		}
 	private:
+
+
 		void removeAll(const ElementContainerType& elements) {
 			utils::for_sequence(std::make_index_sequence<TypesSize>{}, [&](auto i){
 				auto &elementsSet = std::get<i>(elements);
+				typedef std::remove_const_t<std::remove_reference_t<decltype(elementsSet)>> ElementBaseType;
 				if (!elementsSet.empty())
 				{
+					if constexpr(std::is_same_v<typename detail::SUPPORTS_CALLBACK(RemoveCallback)<TCacheTraits, ElementBaseType>::Type, detail::CallbackTag::Supported>) {
+						StorageCallbackContext context(m_errorPolicy, m_bulkWriter, Height(), *m_pConfigHolder);
+						detail::SUPPORTS_CALLBACK(RemoveCallback)<TCacheTraits, ElementBaseType>::Callback(context, elements);
+					}
 					auto deleteResults = m_bulkWriter.bulkDelete(std::string(TCacheTraits::Collection_Names[i]).c_str(), elementsSet, CreateFilter<i, std::tuple_element_t<i, typename TCacheTraits::CacheType::CacheValueTypes>>).get();
 					auto aggregateResult = BulkWriteResult::Aggregate(thread::get_all(std::move(deleteResults)));
 					m_errorPolicy.checkDeleted(elementsSet.size(), aggregateResult, "removed elements");
@@ -222,8 +283,13 @@ namespace catapult { namespace mongo { namespace storages {
 			auto networkIdentifier = m_pConfigHolder->Config(height).Immutable.NetworkIdentifier;
 			utils::for_sequence(std::make_index_sequence<TypesSize>{}, [&](auto i){
 			  auto& currentSet = std::get<i>(elements);
+			  typedef std::remove_const_t<std::remove_reference_t<decltype(currentSet)>> ElementBaseType;
 			  if (!currentSet.empty())
 			  {
+				  if constexpr(std::is_same_v<typename detail::SUPPORTS_CALLBACK(InsertCallback)<TCacheTraits, ElementBaseType>::Type, detail::CallbackTag::Supported>) {
+					  StorageCallbackContext context(m_errorPolicy, m_bulkWriter, height, *m_pConfigHolder);
+					  detail::SUPPORTS_CALLBACK(InsertCallback)<TCacheTraits, ElementBaseType>::Callback(context, elements);
+				  }
 				  auto createDocument = [&i, networkIdentifier = m_pConfigHolder->Config(height).Immutable.NetworkIdentifier](const auto* pModel, auto) {
 					return TCacheTraits::template MapToMongoDocument<i, std::tuple_element_t<i, typename TCacheTraits::CacheType::CacheValueTypes>>(*pModel, networkIdentifier);
 				  };
@@ -281,12 +347,21 @@ namespace catapult { namespace mongo { namespace storages {
 			// 2. remove all modified and removed elements from db
 			auto modifiedIds = GetIds(modifiedElements);
 			auto removedIds = GetIds(removedElements);
+
 			modifiedIds.insert(removedIds.cbegin(), removedIds.cend());
 			removeAll(modifiedIds);
 
 			// 3. insert new elements and modified elements into db
 			modifiedElements.insert(addedElements.cbegin(), addedElements.cend());
 			insertAll(modifiedElements, changes.height());
+			if constexpr(std::is_same_v<typename detail::SUPPORTS_CALLBACK(RemoveCallback)<TCacheTraits>::Type, detail::CallbackTag::Supported>) {
+				StorageCallbackContext context(m_errorPolicy, m_bulkWriter, changes.height(), *m_pConfigHolder);
+				detail::SUPPORTS_CALLBACK(RemoveCallback)<TCacheTraits>::Callback(context, removedElements);
+			}
+			if constexpr(std::is_same_v<typename detail::SUPPORTS_CALLBACK(InsertCallback)<TCacheTraits>::Type, detail::CallbackTag::Supported>) {
+				StorageCallbackContext context(m_errorPolicy, m_bulkWriter, changes.height(), *m_pConfigHolder);
+				detail::SUPPORTS_CALLBACK(InsertCallback)<TCacheTraits>::Callback(context, modifiedElements);
+			}
 		}
 
 	private:
@@ -393,11 +468,19 @@ namespace catapult { namespace mongo { namespace storages {
 		}
 
 	private:
+
+
 		void removeAll(const ElementContainerType& elements) {
 			if (elements.empty())
 				return;
 
 			auto deleteResults = m_bulkWriter.bulkDelete(TCacheTraits::Collection_Name, elements, CreateFilter).get();
+			if constexpr(std::is_same_v<typename detail::SUPPORTS_CALLBACK(RemoveCallback)<TCacheTraits>::Type, detail::CallbackTag::Supported>) {
+				StorageCallbackContext context(m_errorPolicy, m_bulkWriter, Height(), *m_pConfigHolder);
+				detail::SUPPORTS_CALLBACK(RemoveCallback)<TCacheTraits>::Callback(context, elements);
+			}
+
+
 			auto aggregateResult = BulkWriteResult::Aggregate(thread::get_all(std::move(deleteResults)));
 			m_errorPolicy.checkDeleted(elements.size(), aggregateResult, "removed elements");
 		}
@@ -410,6 +493,10 @@ namespace catapult { namespace mongo { namespace storages {
 				return TCacheTraits::MapToMongoDocument(*pModel, networkIdentifier);
 			};
 			auto upsertResults = m_bulkWriter.bulkUpsert(TCacheTraits::Collection_Name, elements, createDocument, CreateFilter).get();
+			if constexpr(std::is_same_v<typename detail::SUPPORTS_CALLBACK(InsertCallback)<TCacheTraits>::Type, detail::CallbackTag::Supported>) {
+				StorageCallbackContext context(m_errorPolicy, m_bulkWriter, height, *m_pConfigHolder);
+				detail::SUPPORTS_CALLBACK(InsertCallback)<TCacheTraits>::Callback(context, elements);
+			}
 			auto aggregateResult = BulkWriteResult::Aggregate(thread::get_all(std::move(upsertResults)));
 			m_errorPolicy.checkUpserted(elements.size(), aggregateResult, "modified and added elements");
 		}
@@ -431,5 +518,7 @@ namespace catapult { namespace mongo { namespace storages {
 		MongoBulkWriter& m_bulkWriter;
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
+#undef SUPPORTS_CALLBACK
+#undef SUPPORTS_CALLBACK_DEF
 
 }}}

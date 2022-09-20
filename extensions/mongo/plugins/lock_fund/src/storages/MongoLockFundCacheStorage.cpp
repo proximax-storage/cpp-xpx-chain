@@ -68,6 +68,9 @@ namespace catapult { namespace mongo { namespace plugins {
 				return MapToMongoDocumentImpl<TIndex, TParam>(model, networkIdentifier, cnt);
 			}
 
+			//template<typename TElements, typename = std::enable_if<std::is_same_v<TElements, std::unordered_set<std::tuple_element_t<1, ModelTypes>*>>>>
+			//static void RemoveCallback(MongoBulkWriter& writer, const TElements& elements, const config::BlockchainConfigurationHolder& configHolder);
+
 		};
 	}
 	// SELF: MULTISET ONLY WORKS FOR OUTPUT, NOT INPUT

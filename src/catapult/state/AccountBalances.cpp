@@ -411,7 +411,8 @@ namespace catapult { namespace state {
 		}
 
 		while (!m_localSnapshots.empty() && !m_remoteSnapshots.empty()
-				&& m_localSnapshots.back().Amount == m_remoteSnapshots.front().Amount) {
+				&& m_localSnapshots.back().Amount == m_remoteSnapshots.front().Amount
+			    && m_localSnapshots.back().LockedAmount == m_remoteSnapshots.front().LockedAmount) {
 			m_remoteSnapshots.pop_front();
 		}
 
