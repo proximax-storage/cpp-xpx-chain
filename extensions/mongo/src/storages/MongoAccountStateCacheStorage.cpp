@@ -53,18 +53,19 @@ namespace catapult { namespace mongo { namespace storages {
 				return mappers::ToDbModel(accountState);
 			}
 
-			static auto MapAdditionalToMongoDocument(const state::AccountState& accountState, MosaicId harvestingMosaicId) {
-				return mappers::ToDbModel(state::StakingRecord(accountState, harvestingMosaicId));
+			static auto MapAdditionalToMongoDocument(const state::AccountState& accountState, const MosaicId& harvestingMosaicId, const Height& height) {
+				return mappers::ToDbModel(state::StakingRecord(accountState, harvestingMosaicId, height));
 			}
 
 			static void RemoveCallback(StorageCallbackContext& context, const std::unordered_set<const ModelType*>& elements){
+				// Accounts never get removed!
 				auto deleteResults = context.BulkWriter.bulkDelete(Additional_Collection_Name, elements, CreateFilterByKey).get();
 			}
 
 			static void InsertCallback(StorageCallbackContext& context, const std::unordered_set<const ModelType*>& elements){
 				const auto harvestingMosaicId = context.ConfigHolder.Config(context.CurrentHeight).Immutable.HarvestingMosaicId;
-				auto createDocument = [harvestingMosaicId](const auto* pModel, auto) {
-				  return MapAdditionalToMongoDocument(*pModel, harvestingMosaicId);
+				auto createDocument = [harvestingMosaicId, currentHeight = context.CurrentHeight](const auto* pModel, auto) {
+				  return MapAdditionalToMongoDocument(*pModel, harvestingMosaicId, currentHeight);
 				};
 				std::unordered_set<const ModelType*> filteredInsertSet;
 				std::unordered_set<const ModelType*> filteredRemoveSet;

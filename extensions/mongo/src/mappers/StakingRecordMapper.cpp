@@ -17,6 +17,7 @@ namespace catapult { namespace mongo { namespace mappers {
 		bson_stream::document builder;
 		builder << "stakingAccount" << bson_stream::open_document << "address" << ToBinary(stakingRecord.Address)
 				<< "publicKey" << ToBinary(stakingRecord.PublicKey)
+				<< "registryHeight" << ToInt64(stakingRecord.RegistryHeight)
 				<< "totalStaked" << ToInt64(stakingRecord.TotalStaked);
 		builder << bson_stream::close_document;
 		return builder << bson_stream::finalize;

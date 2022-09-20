@@ -144,7 +144,7 @@ namespace catapult { namespace mongo { namespace storages {
 				std::vector<state::StakingRecord> records;
 				for(const auto& record : expectedRecords)
 				{
-					records.emplace_back(record, Currency_Mosaic_Id);
+					records.emplace_back(record, Currency_Mosaic_Id, Height());
 				}
 				test::MongoCacheStorageTestUtils<AccountStateCacheTraits>::AssertDbContents(Additional_Collection_Name, records, GetAdditionalFindFilter);
 			}
@@ -154,7 +154,7 @@ namespace catapult { namespace mongo { namespace storages {
 				std::vector<state::StakingRecord> records;
 				for(const auto& record : expectedRecords)
 				{
-					records.emplace_back(record, Currency_Mosaic_Id);
+					records.emplace_back(record, Currency_Mosaic_Id, Height());
 				}
 				test::MongoCacheStorageTestUtils<AccountStateCacheTraits>::AssertDbContents(Additional_Collection_Name, records, GetAdditionalFindFilter);
 			}

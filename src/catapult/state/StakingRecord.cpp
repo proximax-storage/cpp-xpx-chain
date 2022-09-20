@@ -23,7 +23,7 @@
 
 namespace catapult { namespace state {
 
-	StakingRecord::StakingRecord(const state::AccountState& state, MosaicId harvestingMosaicId) : Address(state.Address), PublicKey(state.PublicKey) {
+	StakingRecord::StakingRecord(const state::AccountState& state, const MosaicId& harvestingMosaicId, const Height& height) : Address(state.Address), PublicKey(state.PublicKey), RegistryHeight(height) {
 		TotalStaked = state.Balances.getLocked(harvestingMosaicId);
 	}
 }}

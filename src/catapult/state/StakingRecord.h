@@ -30,7 +30,7 @@ namespace catapult { namespace state {
 	struct StakingRecord {
 
 	public:
-		StakingRecord(const state::AccountState& state, MosaicId harvestingMosaicId);
+		StakingRecord(const state::AccountState& state, const MosaicId& harvestingMosaicId, const Height& height);
 	public:
 		/// Address of an account.
 		catapult::Address Address;
@@ -40,6 +40,9 @@ namespace catapult { namespace state {
 
 		/// Total amount staked
 		Amount TotalStaked;
+
+		/// Height at which registry was created/modified
+		Height RegistryHeight;
 
 	};
 }}
