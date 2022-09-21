@@ -54,7 +54,7 @@ pipeline {
                             set +e
                             cd _build
                             # pipe to true to prevent exit failure
-                            ctest -T Test --no-compress-output --verbose || true
+                            ctest -T Test --no-compress-output || true
                         """
                     }
                 }

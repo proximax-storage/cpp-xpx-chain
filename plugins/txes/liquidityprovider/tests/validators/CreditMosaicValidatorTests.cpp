@@ -113,7 +113,7 @@ namespace catapult { namespace validators {
 		// Arrange
 		auto mosaicId = test::GenerateRandomValue<UnresolvedMosaicId>();
 
-		LiquidityProviderInfo info = {state::LiquidityProviderEntry(mosaicId), Amount{ULLONG_MAX}, test::GenerateRandomValue<Amount>()};
+		LiquidityProviderInfo info = {state::LiquidityProviderEntry(mosaicId), Amount{1}, Amount{ULLONG_MAX}};
 
 		// Assert:
 		AssertValidationResult(
