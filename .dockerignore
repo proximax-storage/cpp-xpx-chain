@@ -3,3 +3,4 @@
 .git
 .cache
 cmake-build-*
+_build

@@ -94,7 +94,7 @@ private:
 		return std::max(leftHeight, rightHeight) + 1;
 	}
 
-	Key setRoot(const Key& root) {
+	void setRoot(const Key& root) {
 		if (!m_queueCache.contains(m_queueKey)) {
 			state::QueueEntry entry(m_queueKey);
 			m_queueCache.insert(entry);
