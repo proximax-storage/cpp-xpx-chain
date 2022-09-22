@@ -78,12 +78,14 @@ namespace catapult { namespace utils {
 		return SwapMosaics(account, account, mosaics, sub, immutableCfg, operation);
 	}
 
-	state::PriorityQueueEntry& getPriorityQueueEntry(cache::PriorityQueueCache::CacheDeltaType& priorityQueueCache, const Key& queueKey) {
+	auto getPriorityQueueIter(cache::PriorityQueueCacheDelta& priorityQueueCache, const Key& queueKey)
+	-> decltype(priorityQueueCache.find(queueKey)) {
 		if (!priorityQueueCache.contains(queueKey)) {
 			state::PriorityQueueEntry entry(queueKey);
 			priorityQueueCache.insert(entry);
 		}
-		return priorityQueueCache.find(queueKey).get();
+
+		return priorityQueueCache.find(queueKey);
 	}
 
 	double CalculateDrivePriority(const state::BcDriveEntry& driveEntry, const uint16_t& Rmin) {
@@ -93,14 +95,15 @@ namespace catapult { namespace utils {
 		return R < Rmin ? static_cast<double>(R + 1)/Rmin : static_cast<double>(N - R)/(2*Rmin*(N - Rmin));
 	}
 
-	state::AccountState& getVoidState(const observers::ObserverContext& context) {
+	auto getVoidState(const observers::ObserverContext& context)
+			-> decltype(context.Cache.sub<cache::AccountStateCache>().find(Key())) {
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		const auto zeroKey = Key();
 
 		if (!accountStateCache.contains(zeroKey))
 			accountStateCache.addAccount(zeroKey, context.Height);
 
-		return accountStateCache.find(zeroKey).get();
+		return accountStateCache.find(zeroKey);
 	}
 
 	void RefundDepositsOnDriveClosure(
@@ -115,7 +118,9 @@ namespace catapult { namespace utils {
 		auto& driveEntry = driveIter.get();
 		auto driveStateIter = accountCache.find(driveKey);
 		auto& driveState = driveStateIter.get();
-		auto& voidState = getVoidState(context);
+
+		auto voidStateIter = getVoidState(context);
+		auto& voidState = voidStateIter.get();
 
 		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
@@ -154,7 +159,9 @@ namespace catapult { namespace utils {
 		auto& driveEntry = driveIter.get();
 		auto driveStateIter = accountCache.find(driveKey);
 		auto& driveState = driveStateIter.get();
-		auto& voidState = getVoidState(context);
+
+		auto voidStateIter = getVoidState(context);
+		auto& voidState = voidStateIter.get();
 
 		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
@@ -279,7 +286,8 @@ namespace catapult { namespace utils {
 				// Offboarded replicators' cumulative payments remain in cumulativePayments
 				downloadEntry.shardReplicators() = replicators;
 				for (const auto& replicatorKey: downloadEntry.shardReplicators()) {
-					auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+					auto replicatorIt = replicatorCache.find(replicatorKey);
+					auto& replicatorEntry = replicatorIt.get();
 					replicatorEntry.downloadChannels().insert(id);
 				}
 			}
@@ -298,7 +306,8 @@ namespace catapult { namespace utils {
 						cumulativePayments.emplace(*keyIter, Amount(0));
 				downloadEntry.shardReplicators() = std::set<Key>(sampleSource.begin(), keyIter);	// keyIter now points to the element past the (ShardSize)th
 				for (const auto& replicatorKey: downloadEntry.shardReplicators()) {
-					auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+					auto replicatorIt = replicatorCache.find(replicatorKey);
+					auto& replicatorEntry = replicatorIt.get();
 					replicatorEntry.downloadChannels().insert(id);
 				}
 			}
@@ -324,7 +333,8 @@ namespace catapult { namespace utils {
 				auto& downloadEntry = downloadIter.get();
 				downloadEntry.shardReplicators().insert(replicatorKey);
 				downloadEntry.cumulativePayments().emplace(replicatorKey, Amount(0));
-				auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+				auto replicatorIt = replicatorCache.find(replicatorKey);
+				auto& replicatorEntry = replicatorIt.get();
 				replicatorEntry.downloadChannels().insert(id);
 			}
 		} else {
@@ -350,11 +360,12 @@ namespace catapult { namespace utils {
 				if ((replicatorKey ^ downloadChannelKey) < greatestDistance) {
 					downloadEntry.shardReplicators().erase(*mostDistantKeyIter);
 					downloadEntry.shardReplicators().insert(replicatorKey);
-
-					auto& removedReplicatorEntry = replicatorCache.find(*mostDistantKeyIter).get();
+					auto removedReplicatorIt = replicatorCache.find(*mostDistantKeyIter);
+					auto& removedReplicatorEntry = removedReplicatorIt.get();
 					removedReplicatorEntry.downloadChannels().erase(id);
 
-					auto& addedReplicatorEntry = replicatorCache.find(replicatorKey).get();
+					auto addedReplicatorIt = replicatorCache.find(replicatorKey);
+					auto& addedReplicatorEntry = addedReplicatorIt.get();
 					addedReplicatorEntry.downloadChannels().insert(id);
 
 					downloadEntry.cumulativePayments().emplace(replicatorKey, Amount(0));
@@ -427,7 +438,8 @@ namespace catapult { namespace utils {
 		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 
-		auto& driveEntry = driveCache.find(driveKey).get();
+		auto driveIt = driveCache.find(driveKey);
+		auto& driveEntry = driveIt.get();
 		const auto driveSize = driveEntry.size();
 		const auto requiredReplicatorCount = driveEntry.replicatorCount() - driveEntry.replicators().size();
 
@@ -492,7 +504,9 @@ namespace catapult { namespace utils {
 		auto& replicators = driveEntry.replicators();
 		auto driveStateIter = accountStateCache.find(driveKey);
 		auto& driveState = driveStateIter.get();
-		auto& voidState = getVoidState(context);
+
+		auto voidStateIter = getVoidState(context);
+		auto& voidState = voidStateIter.get();
 		for (int i = 0; i < replicatorsToAdd; i++) {
 			uint32_t index = rng() % suitableReplicators;
 			suitableReplicators--;
@@ -534,7 +548,8 @@ namespace catapult { namespace utils {
 
 		// If the actual number of assigned replicators is less than ordered,
 		// put the drive in the queue:
-		auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+		auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+		auto& driveQueueEntry = driveQueueIter.get();
 		if (replicators.size() < driveEntry.replicatorCount()) {
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			const auto drivePriority = utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount);
@@ -553,7 +568,9 @@ namespace catapult { namespace utils {
 		auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
 		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-		auto& voidState = getVoidState(context);
+
+		auto voidStateIter = getVoidState(context);
+		auto& voidState = voidStateIter.get();
 
 		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
@@ -584,7 +601,8 @@ namespace catapult { namespace utils {
 
 			// Assign queued drives to the replicator, as long as there is enough capacity,
 			// and update drive's shards:
-			auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto& driveQueueEntry = driveQueueIter.get();
 			auto& originalQueue = driveQueueEntry.priorityQueue();
 			std::priority_queue<state::PriorityPair> newQueue;
 			const auto storageMosaicAmount = replicatorState.Balances.get(storageMosaicId);

@@ -149,7 +149,8 @@ namespace catapult { namespace observers {
 					// Removing the drive from queue, if present
 					if (replicators.size() < driveEntry.replicatorCount()) {
 						auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
-						auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+						auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+						auto& driveQueueEntry = driveQueueIter.get();
 
 						driveQueueEntry.remove(driveEntry.key());
 					}
