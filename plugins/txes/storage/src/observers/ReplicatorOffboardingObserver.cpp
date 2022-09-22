@@ -24,7 +24,8 @@ namespace catapult { namespace observers {
 
 			if (driveEntry.replicators().size() < driveEntry.replicatorCount()) {
 				auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
-				auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+				auto driveQueueIt = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+				auto& driveQueueEntry = driveQueueIt.get();
 				const auto newPriority = utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount);
 
 				driveQueueEntry.set(notification.DriveKey, newPriority);

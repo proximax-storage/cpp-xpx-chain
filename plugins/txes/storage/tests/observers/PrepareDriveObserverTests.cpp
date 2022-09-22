@@ -180,7 +180,8 @@ namespace catapult { namespace observers {
 			}
 
 			// EXPECT_NE(expectedDriveQueueSize, paymentQueueSize);
-			auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto& driveQueueEntry = driveQueueIter.get();
 			EXPECT_EQ(expectedDriveQueueSize, driveQueueEntry.priorityQueue().size());
         }
     }
