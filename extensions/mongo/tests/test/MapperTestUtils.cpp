@@ -154,6 +154,8 @@ namespace catapult { namespace test {
 		EXPECT_EQ(stakingRecord.Address, GetAddressValue(dbAccount, "address"));
 		EXPECT_EQ(stakingRecord.TotalStaked, Amount(GetUint64(dbAccount, "totalStaked")));
 		EXPECT_EQ(stakingRecord.PublicKey, GetKeyValue(dbAccount, "publicKey"));
+		EXPECT_EQ(stakingRecord.RefHeight, Height(GetUint64(dbAccount, "refHeight")));
+		EXPECT_EQ(stakingRecord.RegistryHeight, Height(GetUint64(dbAccount, "registryHeight")));
 	}
 
 	void AssertEqualAccountState(const state::AccountState& accountState, const bsoncxx::document::view& dbAccount) {

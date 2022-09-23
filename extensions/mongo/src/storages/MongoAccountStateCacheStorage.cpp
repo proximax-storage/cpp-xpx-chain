@@ -25,6 +25,7 @@
 #include "mongo/src/storages/MongoCacheStorage.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/thread/FutureUtils.h"
+#include "plugins/txes/lock_fund/src/config/LockFundConfiguration.h"
 using namespace bsoncxx::builder::stream;
 
 namespace catapult { namespace mongo { namespace storages {
@@ -53,19 +54,64 @@ namespace catapult { namespace mongo { namespace storages {
 				return mappers::ToDbModel(accountState);
 			}
 
-			static auto MapAdditionalToMongoDocument(const state::AccountState& accountState, const MosaicId& harvestingMosaicId, const Height& height) {
-				return mappers::ToDbModel(state::StakingRecord(accountState, harvestingMosaicId, height));
+			static auto MapAdditionalToMongoDocument(const state::AccountState& accountState, const MosaicId& harvestingMosaicId, const Height& height, const Height& refHeight) {
+				return mappers::ToDbModel(state::StakingRecord(accountState, harvestingMosaicId, height, refHeight));
 			}
 
-			static void RemoveCallback(StorageCallbackContext& context, const std::unordered_set<const ModelType*>& elements){
+			static Height GetClosestHeight(uint64_t height, uint64_t interval) {
+				if(height <= interval)
+					return Height(interval);
+				return Height((height-1)/interval*interval+interval);
+			}
+			static void PrepareStorage(MongoDatabase& mongoDatabase){
+
+				if(mongoDatabase.HasCollection(Additional_Collection_Name))
+					return;
+
+				bool success = true;
+				try {
+					auto address_index = document{} << "stakingAccount.address" << 1 << finalize;
+					auto height_index = document{} << "stakingAccount.refHeight" << 1 << finalize;
+					mongocxx::options::index address_index_options {};
+					address_index_options.name("Address");
+					mongocxx::options::index height_index_options {};
+					height_index_options.name("RefHeight");
+					auto collection = mongoDatabase.CreateCollection(Additional_Collection_Name);
+
+					// Ensure collection exists
+					auto result = collection.create_index(std::move(address_index), address_index_options);
+					auto view = result.view();
+					if (view.empty() || view.find("name") == view.end()) {
+						CATAPULT_THROW_RUNTIME_ERROR("Unable to create address index for staking records collection.");
+					}
+					result = collection.create_index(std::move(height_index), height_index_options);
+					view = result.view();
+					if (view.empty() || view.find("name") == view.end()) {
+						CATAPULT_THROW_RUNTIME_ERROR("Unable to create refHeight index for staking records collection.");
+					}
+				}
+				catch (mongocxx::exception e) {
+					CATAPULT_THROW_RUNTIME_ERROR_1("Unable to prepare collection for staking records", std::string(e.what()));
+				}
+				if(!success)
+					CATAPULT_THROW_RUNTIME_ERROR("Unable to prepare collection for staking records.");
+			}
+
+			static void OnRemove(StorageCallbackContext& context, const std::unordered_set<const ModelType*>& elements){
 				// Accounts never get removed!
-				auto deleteResults = context.BulkWriter.bulkDelete(Additional_Collection_Name, elements, CreateFilterByKey).get();
+				auto interval = context.ConfigHolder.Config(context.CurrentHeight).Network.GetPluginConfiguration<config::LockFundConfiguration>().DockStakeRewardInterval.unwrap();
+				auto deleteResults = context.BulkWriter.bulkDelete(Additional_Collection_Name, elements,
+				   [refHeight = GetClosestHeight(context.CurrentHeight.unwrap(), interval)](const ModelType* model){
+					   return CreateAdditionalFilterByKey(model, refHeight);
+				   }).get();
 			}
 
-			static void InsertCallback(StorageCallbackContext& context, const std::unordered_set<const ModelType*>& elements){
+			static void OnUpsert(StorageCallbackContext& context, const std::unordered_set<const ModelType*>& elements){
+				auto interval = context.ConfigHolder.Config(context.CurrentHeight).Network.GetPluginConfiguration<config::LockFundConfiguration>().DockStakeRewardInterval.unwrap();
+				auto lastCalculatedHeight = GetClosestHeight(context.CurrentHeight.unwrap(), interval);
 				const auto harvestingMosaicId = context.ConfigHolder.Config(context.CurrentHeight).Immutable.HarvestingMosaicId;
-				auto createDocument = [harvestingMosaicId, currentHeight = context.CurrentHeight](const auto* pModel, auto) {
-				  return MapAdditionalToMongoDocument(*pModel, harvestingMosaicId, currentHeight);
+				auto createDocument = [harvestingMosaicId, currentHeight = context.CurrentHeight, refHeight = lastCalculatedHeight](const auto* pModel, auto) {
+				  return MapAdditionalToMongoDocument(*pModel, harvestingMosaicId, currentHeight, refHeight);
 				};
 				std::unordered_set<const ModelType*> filteredInsertSet;
 				std::unordered_set<const ModelType*> filteredRemoveSet;
@@ -79,15 +125,20 @@ namespace catapult { namespace mongo { namespace storages {
 					else
 						filteredRemoveSet.insert(element);
 				}
-				auto upsertResults = context.BulkWriter.bulkUpsert(Additional_Collection_Name, filteredInsertSet, createDocument, CreateFilterByKey).get();
+				auto upsertResults = context.BulkWriter.bulkUpsert(Additional_Collection_Name, filteredInsertSet, createDocument, [refHeight = lastCalculatedHeight](const ModelType* model){
+					   return CreateAdditionalFilterByKey(model, refHeight);
+				   }).get();
 				auto aggregateResult = BulkWriteResult::Aggregate(thread::get_all(std::move(upsertResults)));
 				context.ErrorPolicy.checkUpserted(filteredInsertSet.size(), aggregateResult, "modified and added elements to secondary channel");
-				auto deleteResults = context.BulkWriter.bulkDelete(Additional_Collection_Name, filteredRemoveSet, CreateFilterByKey).get();
+				auto deleteResults = context.BulkWriter.bulkDelete(Additional_Collection_Name, filteredRemoveSet, [refHeight = lastCalculatedHeight](const ModelType* model){
+					   return CreateAdditionalFilterByKey(model, refHeight);
+				   }).get();
 			}
 
-			static bsoncxx::document::value CreateFilterByKey(const ModelType* model) {
+			static bsoncxx::document::value CreateAdditionalFilterByKey(const ModelType* model, Height refHeight) {
 				using namespace bsoncxx::builder::stream;
-				return document() << std::string(Id_Additional_Property_Name) << mappers::ToBinary(model->Address) << finalize;
+				return document() << std::string(Id_Additional_Property_Name) << mappers::ToBinary(model->Address)
+								  << "stakingAccount.refHeight" << mappers::ToInt64(refHeight)<< finalize;
 			}
 
 		};

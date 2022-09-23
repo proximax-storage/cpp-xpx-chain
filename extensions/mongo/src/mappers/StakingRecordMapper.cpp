@@ -15,9 +15,11 @@ namespace catapult { namespace mongo { namespace mappers {
 	bsoncxx::document::value ToDbModel(const state::StakingRecord& stakingRecord) {
 		// account metadata
 		bson_stream::document builder;
-		builder << "stakingAccount" << bson_stream::open_document << "address" << ToBinary(stakingRecord.Address)
+		builder << "stakingAccount" << bson_stream::open_document
+				<< "address" << ToBinary(stakingRecord.Address)
 				<< "publicKey" << ToBinary(stakingRecord.PublicKey)
 				<< "registryHeight" << ToInt64(stakingRecord.RegistryHeight)
+				<< "refHeight" << ToInt64(stakingRecord.RefHeight)
 				<< "totalStaked" << ToInt64(stakingRecord.TotalStaked);
 		builder << bson_stream::close_document;
 		return builder << bson_stream::finalize;

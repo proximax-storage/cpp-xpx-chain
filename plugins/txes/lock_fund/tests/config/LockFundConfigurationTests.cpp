@@ -23,6 +23,7 @@ namespace catapult { namespace config {
 							{ "minRequestUnlockCooldown", "161280" },
 							{"maxUnlockRequests", "10"},
 							{ "maxMosaicsSize", "256" },
+							{"dockStakeRewardInterval", "100"},
 						}
 					}
 				};
@@ -46,6 +47,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(0u, config.MinRequestUnlockCooldown.unwrap());
 				EXPECT_EQ(0u, config.MaxMosaicsSize);
 				EXPECT_EQ(0u, config.MaxUnlockRequests);
+				EXPECT_EQ(BlockDuration(0), config.DockStakeRewardInterval);
 			}
 
 			static void AssertCustom(const LockFundConfiguration& config) {
@@ -54,6 +56,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(161280u, config.MinRequestUnlockCooldown.unwrap());
 				EXPECT_EQ(256u, config.MaxMosaicsSize);
 				EXPECT_EQ(10u, config.MaxUnlockRequests);
+				EXPECT_EQ(BlockDuration(100), config.DockStakeRewardInterval);
 			}
 		};
 	}

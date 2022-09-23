@@ -26,15 +26,15 @@
 namespace catapult { namespace test {
 
 	namespace detail {
-		DEFINE_EXISTS_DECLARATION(Currency_Mosaic_Id)
-		template<typename TTraits>
-		constexpr MosaicId SelectMosaicId()
+		SUPPORTS_STATIC_DEF(CreateConfigHolder)
+		template<typename TWrapper, typename TTraits>
+		TWrapper CreateStorageWrapper()
 		{
-			if constexpr(EXISTS_DECLARATION(Currency_Mosaic_Id)<TTraits>::Value)
+			if constexpr(IS_STATIC_SUPPORTED(CreateConfigHolder, TTraits))
 			{
-				return TTraits::Currency_Mosaic_Id;
+				return TWrapper(TTraits::CreateConfigHolder);
 			}
-			return MosaicId();
+			return TWrapper();
 		}
 	}
 	/// Mongo flat cache storage test suite.
@@ -51,11 +51,10 @@ namespace catapult { namespace test {
 		using BaseType::AssertDbContents;
 		using CacheStorageWrapper = typename BaseType::CacheStorageWrapper;
 
-		static constexpr MosaicId Currency_Mosaic_Id = detail::SelectMosaicId<TTraits>();
 	public:
 		static void AssertSaveHasNoEffectWhenThereAreNoPendingChanges() {
 			// Arrange:
-			CacheStorageWrapper storage(Currency_Mosaic_Id);
+			CacheStorageWrapper storage = detail::CreateStorageWrapper<CacheStorageWrapper, TTraits>();
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 			cache.commit(Height());
@@ -69,7 +68,7 @@ namespace catapult { namespace test {
 
 		static void AssertAddedElementIsSavedToStorage() {
 			// Arrange:
-			CacheStorageWrapper storage(Currency_Mosaic_Id);
+			CacheStorageWrapper storage = detail::CreateStorageWrapper<CacheStorageWrapper, TTraits>();
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
@@ -98,7 +97,7 @@ namespace catapult { namespace test {
 
 		static void AssertModifiedElementIsSavedToStorage() {
 			// Arrange:
-			CacheStorageWrapper storage(Currency_Mosaic_Id);
+			CacheStorageWrapper storage = detail::CreateStorageWrapper<CacheStorageWrapper, TTraits>();
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
@@ -126,7 +125,7 @@ namespace catapult { namespace test {
 
 		static void AssertDeletedElementIsRemovedFromStorage() {
 			// Arrange:
-			CacheStorageWrapper storage(Currency_Mosaic_Id);
+			CacheStorageWrapper storage = detail::CreateStorageWrapper<CacheStorageWrapper, TTraits>();
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
@@ -156,7 +155,7 @@ namespace catapult { namespace test {
 
 		static void AssertCanSaveMultipleElements() {
 			// Arrange:
-			CacheStorageWrapper storage(Currency_Mosaic_Id);
+			CacheStorageWrapper storage = detail::CreateStorageWrapper<CacheStorageWrapper, TTraits>();
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
@@ -177,7 +176,7 @@ namespace catapult { namespace test {
 
 		static void AssertCanAddAndModifyAndDeleteMultipleElements() {
 			// Arrange:
-			CacheStorageWrapper storage(Currency_Mosaic_Id);
+			CacheStorageWrapper storage = detail::CreateStorageWrapper<CacheStorageWrapper, TTraits>();
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
@@ -228,7 +227,7 @@ namespace catapult { namespace test {
 
 		static void AssertElementsBothAddedAndRemovedAreIgnored() {
 			// Arrange:
-			CacheStorageWrapper storage(Currency_Mosaic_Id);
+			CacheStorageWrapper storage = detail::CreateStorageWrapper<CacheStorageWrapper, TTraits>();
 			auto cache = TTraits::CreateCache();
 			std::vector<ElementType> elements;
 
@@ -283,7 +282,7 @@ namespace catapult { namespace test {
 
 		static void AssertAddedElementResolvesCallback() {
 			// Arrange:
-			CacheStorageWrapper storage(BaseType::Currency_Mosaic_Id);
+			CacheStorageWrapper storage = detail::CreateStorageWrapper<CacheStorageWrapper, TTraits>();
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
@@ -313,7 +312,7 @@ namespace catapult { namespace test {
 
 		static void AssertModifiedElementResolvesCallback(){
 			// Arrange:
-			CacheStorageWrapper storage(BaseType::Currency_Mosaic_Id);
+			CacheStorageWrapper storage = detail::CreateStorageWrapper<CacheStorageWrapper, TTraits>();
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
@@ -343,7 +342,7 @@ namespace catapult { namespace test {
 
 		static void AssertDeletedElementResolvesCallback(){
 			// Arrange:
-			CacheStorageWrapper storage(BaseType::Currency_Mosaic_Id);
+			CacheStorageWrapper storage = detail::CreateStorageWrapper<CacheStorageWrapper, TTraits>();
 			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 

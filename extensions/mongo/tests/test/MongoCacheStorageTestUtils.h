@@ -38,9 +38,14 @@ namespace catapult { namespace test {
 	protected:
 		class CacheStorageWrapper : public PrepareDatabaseMixin {
 		public:
-			CacheStorageWrapper(const MosaicId& currencyMosaicId = MosaicId())
+			CacheStorageWrapper()
 					: m_pMongoContext(CreateDefaultMongoStorageContext(DatabaseName()))
-					, m_pCacheStorage(TTraits::CreateCacheStorage(*m_pMongoContext, CreateConfigHolder(TTraits::Network_Id, currencyMosaicId)))
+					, m_pCacheStorage(TTraits::CreateCacheStorage(*m_pMongoContext, CreateConfigHolder(TTraits::Network_Id)))
+			{}
+			template<typename TConfigHolderGenerator>
+			CacheStorageWrapper(TConfigHolderGenerator ConfigHolderGenerator)
+				: m_pMongoContext(CreateDefaultMongoStorageContext(DatabaseName()))
+				, m_pCacheStorage(TTraits::CreateCacheStorage(*m_pMongoContext, ConfigHolderGenerator()))
 			{}
 
 		public:
@@ -49,10 +54,9 @@ namespace catapult { namespace test {
 			}
 
 		private:
-			auto CreateConfigHolder(model::NetworkIdentifier networkIdentifier, const MosaicId& harvestingMosaicId) {
+			auto CreateConfigHolder(model::NetworkIdentifier networkIdentifier) {
 				test::MutableBlockchainConfiguration config;
 				config.Immutable.NetworkIdentifier = networkIdentifier;
-				config.Immutable.HarvestingMosaicId = harvestingMosaicId;
 				return config::CreateMockConfigurationHolder(config.ToConst());
 			}
 

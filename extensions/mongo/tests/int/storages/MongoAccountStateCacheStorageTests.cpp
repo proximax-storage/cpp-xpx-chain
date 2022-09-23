@@ -30,7 +30,7 @@
 #include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
-
+#include "plugins/txes/lock_fund/src/config/LockFundConfiguration.h"
 using namespace bsoncxx::builder::stream;
 
 namespace catapult { namespace mongo { namespace storages {
@@ -50,6 +50,16 @@ namespace catapult { namespace mongo { namespace storages {
 			static constexpr auto Additional_Collection_Name = "staking_accounts";
 			static constexpr auto Id_Additional_Property_Name = "stakingAccount.address";
 
+			static auto CreateConfigHolder()
+			{
+				test::MutableBlockchainConfiguration config;
+				config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+				config.Immutable.HarvestingMosaicId = Currency_Mosaic_Id;
+				auto lockFundConfiguration = config::LockFundConfiguration::Uninitialized();
+				lockFundConfiguration.DockStakeRewardInterval = BlockDuration(100);
+				config.Network.SetPluginConfiguration<config::LockFundConfiguration>(lockFundConfiguration);
+				return config::CreateMockConfigurationHolder(config.ToConst());
+			}
 			static cache::CatapultCache CreateCache() {
 				test::MutableBlockchainConfiguration config;
 				config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
@@ -128,7 +138,8 @@ namespace catapult { namespace mongo { namespace storages {
 			}
 
 			static auto GetAdditionalFindFilter(const state::StakingRecord& stakingRecord) {
-				return document() << std::string(Id_Additional_Property_Name) << mappers::ToBinary(stakingRecord.Address) << finalize;
+				return document() << std::string(Id_Additional_Property_Name) << mappers::ToBinary(stakingRecord.Address)
+									 << "stakingAccount.refHeight" << mappers::ToInt64(stakingRecord.RefHeight) << finalize;
 			}
 
 			static void AssertEqual(const ModelType& accountState, const bsoncxx::document::view& view) {
@@ -144,7 +155,7 @@ namespace catapult { namespace mongo { namespace storages {
 				std::vector<state::StakingRecord> records;
 				for(const auto& record : expectedRecords)
 				{
-					records.emplace_back(record, Currency_Mosaic_Id, Height());
+					records.emplace_back(record, Currency_Mosaic_Id, Height(), Height(100));
 				}
 				test::MongoCacheStorageTestUtils<AccountStateCacheTraits>::AssertDbContents(Additional_Collection_Name, records, GetAdditionalFindFilter);
 			}
@@ -154,7 +165,7 @@ namespace catapult { namespace mongo { namespace storages {
 				std::vector<state::StakingRecord> records;
 				for(const auto& record : expectedRecords)
 				{
-					records.emplace_back(record, Currency_Mosaic_Id, Height());
+					records.emplace_back(record, Currency_Mosaic_Id, Height(), Height(100));
 				}
 				test::MongoCacheStorageTestUtils<AccountStateCacheTraits>::AssertDbContents(Additional_Collection_Name, records, GetAdditionalFindFilter);
 			}

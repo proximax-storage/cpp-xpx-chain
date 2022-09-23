@@ -21,6 +21,7 @@
 #pragma once
 #include <type_traits>
 #include <tuple>
+#include "catapult/exceptions.h"
 
 namespace catapult { namespace utils {
 
@@ -91,5 +92,41 @@ namespace catapult { namespace utils {
 #define EXISTS_DECLARATION(NAME) ExistsDeclaration##NAME
 
 
+/// Default tatic method is needed because contexpr still evaluates even if condition is never true
+#define SUPPORTS_STATIC_DEF(METHOD_NAME) \
+	template<typename TClass, typename T = void, typename Enable = void> \
+	struct SupportsStaticMethod_##METHOD_NAME { \
+	static constexpr bool Value = false;           \
+	template<typename... TParams>              \
+	static void Call(TParams&&... params) {\
+		CATAPULT_THROW_RUNTIME_ERROR("Invalid execution!"); \
+	}                                       \
+	};                                          \
+	template <typename TClass, typename T> \
+	struct SupportsStaticMethod_##METHOD_NAME<TClass, T, typename std::enable_if<!std::is_member_pointer<decltype(&TClass::template METHOD_NAME<T>)>::value>::type> \
+	{ \
+	static constexpr bool Value = true;         \
+	template<typename... TParams>              \
+	static void Call(TParams&&... params)\
+	{\
+		TClass::METHOD_NAME(std::forward(params)...);\
+	} \
+	}; \
+	template <typename TClass> \
+	struct SupportsStaticMethod_##METHOD_NAME<TClass, void, typename std::enable_if<!std::is_member_pointer<decltype(&TClass::template METHOD_NAME)>::value>::type> \
+	{ \
+	static constexpr bool Value = true;       \
+	template<typename... TParams>     \
+	static void Call(TParams&&... params)\
+	{\
+		TClass::METHOD_NAME(std::forward<TParams>(params)...);\
+	} \
+	};
+
+#define SUPPORTS_STATIC(METHOD_NAME) SupportsStaticMethod_##METHOD_NAME
+#define IS_STATIC_SUPPORTED(METHOD_NAME, ...)SUPPORTS_STATIC(METHOD_NAME)<__VA_ARGS__>::Value
+#define CALL_IF_STATIC_SUPPORTED(METHOD_NAME, ...) \
+if constexpr(IS_STATIC_SUPPORTED(METHOD_NAME, __VA_ARGS__))                     \
+	SUPPORTS_STATIC(METHOD_NAME)<__VA_ARGS__>::Call
 
 }}

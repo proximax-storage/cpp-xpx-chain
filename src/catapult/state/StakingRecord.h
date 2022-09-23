@@ -20,6 +20,7 @@
 
 #pragma once
 #include "AccountState.h"
+#include "catapult/crypto/Hashes.h"
 #include <optional>
 #include <bitset>
 
@@ -30,13 +31,14 @@ namespace catapult { namespace state {
 	struct StakingRecord {
 
 	public:
-		StakingRecord(const state::AccountState& state, const MosaicId& harvestingMosaicId, const Height& height);
+		StakingRecord(const state::AccountState& state, const MosaicId& harvestingMosaicId, const Height& height, const Height& RefHeight);
 	public:
+
 		/// Address of an account.
 		catapult::Address Address;
 
 		/// Public key of an account. Present if PublicKeyHeight > 0.
-		Key PublicKey;
+		catapult::Key PublicKey;
 
 		/// Total amount staked
 		Amount TotalStaked;
@@ -44,5 +46,7 @@ namespace catapult { namespace state {
 		/// Height at which registry was created/modified
 		Height RegistryHeight;
 
+		/// Height at which registry was created/modified
+		Height RefHeight;
 	};
 }}

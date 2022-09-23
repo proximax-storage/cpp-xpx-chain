@@ -47,6 +47,16 @@ namespace catapult { namespace mongo {
 			return m_database;
 		}
 
+		/// Checks if given collection already exists
+		bool HasCollection(const std::string& collectionName) const {
+			return m_database.has_collection(collectionName);
+		}
+
+		/// Checks if given collection already exists
+		auto CreateCollection(const std::string& collectionName, bsoncxx::document::view_or_value options = {}) {
+			return m_database.create_collection(collectionName, options);
+		}
+
 		/// Gets the const mongocxx collection with name \a collectionName.
 		const mongocxx::collection operator[](const std::string& collectionName) const {
 			return m_database[collectionName];
