@@ -351,7 +351,7 @@ namespace catapult { namespace fastfinality {
 			const auto& config = pConfigHolder->Config().Network;
 			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
 
-			auto roundStart = block.Timestamp + Timestamp(CommitteePhaseCount * phaseTimeMillis);
+			auto roundStart = block.Timestamp;
 			auto currentTime = timeSupplier();
 			if (roundStart > currentTime)
 				CATAPULT_THROW_RUNTIME_ERROR_2("invalid current time", currentTime, roundStart);
@@ -736,7 +736,10 @@ namespace catapult { namespace fastfinality {
 			for (const auto& pair : votes)
 				sum += committeeManager.weight(pair.first);
 
-			return sum >= committeeApproval * totalSumOfVotes;
+			bool sumOfVotesSufficient = sum >= committeeApproval * totalSumOfVotes;
+			if (!sumOfVotesSufficient)
+				CATAPULT_LOG(debug) << "sum of votes insufficient: " << sum << " < " << committeeApproval << " * " << totalSumOfVotes << ", vote count " << votes.size();
+			return sumOfVotesSufficient;
 		}
 
 		action CreateRequestVotesAction(
@@ -799,6 +802,7 @@ namespace catapult { namespace fastfinality {
 					}
 
 					auto voteCount = utils::checked_cast<size_t, uint32_t>(voteSupplier(committeeData).size());
+					CATAPULT_LOG(debug) << "collected " << voteCount << " " << committeePhase << " votes out of " << config.CommitteeSize;
 					if (voteCount == config.CommitteeSize) {
 						DelayAction(pFsmShared, pFsmShared->timer(), GetPhaseEndTimeMillis(stage),
 							[pFsmWeak, committeeApproval = config.CommitteeApproval, &committeeManager, voteSupplier, onVoteResult] {
@@ -912,26 +916,23 @@ namespace catapult { namespace fastfinality {
 	}
 
 	namespace {
-		template<typename TPacket>
+		template<typename TPacket, CommitteeMessageType MessageType, CommitteePhase Phase>
 		action CreateAddVoteAction(
 				std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-				CommitteePhase phase,
-				CommitteeMessageType messageType,
 				const extensions::PacketPayloadSink& packetPayloadSink) {
-			return [pFsmWeak, phase, messageType, packetPayloadSink]() {
+			return [pFsmWeak, packetPayloadSink]() {
 				TRY_GET_FSM()
 
-				SetPhase(pFsmShared, phase);
+				SetPhase(pFsmShared, Phase);
 
 				auto& committeeData = pFsmShared->committeeData();
-
 				auto pProposedBlock = committeeData.proposedBlock();
 				if (!pProposedBlock)
-					CATAPULT_THROW_RUNTIME_ERROR_1("add vote failed, no proposed block", phase);
+					CATAPULT_THROW_RUNTIME_ERROR_1("add vote failed, no proposed block", Phase);
 
 				for (const auto* pKeyPair : committeeData.localCommittee()) {
 					CommitteeMessage message;
-					message.Type = messageType;
+					message.Type = MessageType;
 					message.BlockHash = committeeData.proposedBlockHash();
 					auto& cosignature = message.BlockCosignature;
 					cosignature.Signer = pKeyPair->publicKey();
@@ -940,7 +941,8 @@ namespace catapult { namespace fastfinality {
 					committeeData.addVote(message);
 				}
 
-				auto votes = committeeData.votes(messageType);
+				auto votes = committeeData.votes(MessageType);
+				CATAPULT_LOG(debug) << "added " << votes.size() << " " << Phase << " votes";
 				if (votes.size() == 0)
 					return;
 
@@ -958,11 +960,11 @@ namespace catapult { namespace fastfinality {
 	}
 
 	action CreateDefaultAddPrevoteAction(std::weak_ptr<WeightedVotingFsm> pFsmWeak, const extensions::PacketPayloadSink& packetPayloadSink) {
-		return CreateAddVoteAction<PushPrevoteMessagesRequest>(pFsmWeak, CommitteePhase::Prevote, CommitteeMessageType::Prevote, packetPayloadSink);
+		return CreateAddVoteAction<PushPrevoteMessagesRequest, CommitteeMessageType::Prevote, CommitteePhase::Prevote>(pFsmWeak, packetPayloadSink);
 	}
 
 	action CreateDefaultAddPrecommitAction(std::weak_ptr<WeightedVotingFsm> pFsmWeak, const extensions::PacketPayloadSink& packetPayloadSink) {
-		return CreateAddVoteAction<PushPrecommitMessagesRequest>(pFsmWeak, CommitteePhase::Precommit, CommitteeMessageType::Precommit, packetPayloadSink);
+		return CreateAddVoteAction<PushPrecommitMessagesRequest, CommitteeMessageType::Precommit, CommitteePhase::Precommit>(pFsmWeak, packetPayloadSink);
 	}
 
 	action CreateDefaultWaitForPrecommitPhaseEndAction(
