@@ -593,6 +593,7 @@ namespace catapult { namespace utils {
 
 		// Tree Adapter does NOT contain the Replicators
 
+		CATAPULT_LOG(error) << "Replicators size" << replicatorKeys.size();
 		for (const auto& replicatorKey : replicatorKeys) {
 			auto replicatorIter = replicatorCache.find(replicatorKey);
 			auto& replicatorEntry = replicatorIter.get();
@@ -607,6 +608,8 @@ namespace catapult { namespace utils {
 			std::priority_queue<state::PriorityPair> newQueue;
 			const auto storageMosaicAmount = replicatorState.Balances.get(storageMosaicId);
 			auto remainingCapacity = storageMosaicAmount.unwrap();
+			CATAPULT_LOG( error ) << "initial capacity " << remainingCapacity;
+			CATAPULT_LOG( error ) << "Original Queue Size " << originalQueue.size();
 			while (!originalQueue.empty()) {
 				const auto drivePriorityPair = originalQueue.top();
 				const auto& driveKey = drivePriorityPair.Key;
@@ -618,6 +621,7 @@ namespace catapult { namespace utils {
 				bool replicatorIsBanned =
 						driveEntry.formerReplicators().find(replicatorKey) != driveEntry.formerReplicators().end();
 				bool replicatorIsOwner = driveEntry.owner() == replicatorKey;
+				CATAPULT_LOG( error ) << "sizes " << driveSize << " " << remainingCapacity;
 				if (driveSize <= remainingCapacity && !replicatorIsBanned && !replicatorIsOwner) {
 					// Updating drives() and replicators()
 					const auto& completedDataModifications = driveEntry.completedDataModifications();

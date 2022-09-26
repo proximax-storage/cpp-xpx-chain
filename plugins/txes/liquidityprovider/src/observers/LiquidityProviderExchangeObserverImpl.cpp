@@ -34,6 +34,7 @@ namespace catapult::observers {
 			const UnresolvedAmount& unresolvedMosaicAmount) const {
 		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
 		creditMosaics(context, currencyDebtor, mosaicCreditor, unresolvedMosaicId, resolvedAmount);
+		CATAPULT_LOG(error) << "transfered mosaics to " << mosaicCreditor;
 	}
 
 	void LiquidityProviderExchangeObserverImpl::debitMosaics(
@@ -98,6 +99,8 @@ namespace catapult::observers {
 		lpEntry.setAdditionallyMinted(lpEntry.additionallyMinted() + mosaicAmount);
 
 		lpEntry.recentTurnover().m_turnover = lpEntry.recentTurnover().m_turnover + currencyAmount;
+
+		CATAPULT_LOG(error) << "balance: " << context.Cache.sub<cache::AccountStateCache>().find(mosaicCreditor).get().Balances.get(resolvedMosaicId);
 	}
 
 	void LiquidityProviderExchangeObserverImpl::debitMosaics(
