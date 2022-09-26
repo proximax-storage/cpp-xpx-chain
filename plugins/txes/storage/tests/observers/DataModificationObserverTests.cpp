@@ -122,7 +122,7 @@ namespace catapult { namespace observers {
         // Arrange:
         BcDriveValues values;
         values.Drive_Key = test::GenerateRandomByteArray<Key>();
-        
+
         // Assert:
         RunTest(NotifyMode::Commit, values, Current_Height);
     }

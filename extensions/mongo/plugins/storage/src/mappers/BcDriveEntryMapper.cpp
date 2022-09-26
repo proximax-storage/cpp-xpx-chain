@@ -91,7 +91,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				builder << "verification" << bson_stream::open_document
 					<< "verificationTrigger" << ToBinary(verification->VerificationTrigger)
 					<< "expiration" << ToInt64(verification->Expiration)
-					<< "duration" << static_cast<int64_t>(verification->Duration);
+					<< "duration" << static_cast<int32_t>(verification->Duration);
 					StreamShards(builder, verification->Shards);
 					builder << bson_stream::close_document;
 			}
@@ -245,7 +245,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			verification = state::Verification();
 			DbBinaryToModelArray(verification->VerificationTrigger, dbVerification["verificationTrigger"].get_binary());
 			verification->Expiration = Timestamp(static_cast<uint64_t>(dbVerification["expiration"].get_int64()));
-			verification->Duration = dbVerification["duration"].get_bool();
+			verification->Duration = dbVerification["duration"].get_int32();
 			ReadShards(verification->Shards, dbVerification["shards"].get_array().value);
 		}
 
