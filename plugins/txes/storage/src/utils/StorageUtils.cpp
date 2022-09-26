@@ -622,6 +622,8 @@ namespace catapult { namespace utils {
 						driveEntry.formerReplicators().find(replicatorKey) != driveEntry.formerReplicators().end();
 				bool replicatorIsOwner = driveEntry.owner() == replicatorKey;
 				CATAPULT_LOG( error ) << "sizes " << driveSize << " " << remainingCapacity;
+				CATAPULT_LOG( error ) << "is Owner " << replicatorIsOwner;
+				CATAPULT_LOG(error) << "isBanned " << replicatorIsBanned;
 				if (driveSize <= remainingCapacity && !replicatorIsBanned && !replicatorIsOwner) {
 					// Updating drives() and replicators()
 					const auto& completedDataModifications = driveEntry.completedDataModifications();
@@ -637,6 +639,7 @@ namespace catapult { namespace utils {
 					replicatorEntry.drives().emplace(driveKey, state::DriveInfo{
 						lastApprovedDataModificationId, initialDownloadWork, initialDownloadWork
 					});
+					CATAPULT_LOG(error) << "Assigned " << replicatorKey << "to " << driveEntry.key();
 					driveEntry.replicators().emplace(replicatorKey);
 
 					state::ConfirmedStorageInfo confirmedStorageInfo;
@@ -669,6 +672,7 @@ namespace catapult { namespace utils {
 				} else {
 					newQueue.push(drivePriorityPair);
 				}
+				CATAPULT_LOG(error) << "assigned replicators num: " << driveEntry.replicators().size();
 			}
 			originalQueue = std::move(newQueue);
 		}
