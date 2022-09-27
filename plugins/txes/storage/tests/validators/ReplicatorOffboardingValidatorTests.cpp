@@ -124,30 +124,11 @@ namespace catapult { namespace validators {
 		state::ReplicatorEntry replicatorEntry(replicatorKey);
 		state::BcDriveEntry driveEntry(driveKey);
 		driveEntry.replicators().emplace(replicatorKey);
-		driveEntry.offboardingReplicators().emplace(replicatorKey);
+		driveEntry.offboardingReplicators().emplace_back(replicatorKey);
 
 		// Assert:
 		AssertValidationResult(
 				Failure_Storage_Already_Applied_For_Offboarding,
-				replicatorEntry,
-				driveEntry,
-				replicatorKey,
-				driveKey);
-	}
-
-	TEST(TEST_CLASS, FailureWhenReplicatorCountInsufficient) {
-		// Arrange:
-		Key replicatorKey = test::GenerateRandomByteArray<Key>();
-		Key driveKey = test::GenerateRandomByteArray<Key>();
-		state::ReplicatorEntry replicatorEntry(replicatorKey);
-		state::BcDriveEntry driveEntry(driveKey);
-		driveEntry.replicators().emplace(replicatorKey);
-		for (auto i = 1u; i < Min_Replicator_Count*2 / 3 + 1; ++i)
-			driveEntry.replicators().emplace(test::GenerateRandomByteArray<Key>());
-
-		// Assert:
-		AssertValidationResult(
-				Failure_Storage_Replicator_Count_Insufficient,
 				replicatorEntry,
 				driveEntry,
 				replicatorKey,

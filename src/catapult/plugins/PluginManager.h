@@ -19,6 +19,8 @@
 **/
 
 #pragma once
+#include <catapult/validators/LiquidityProviderExchangeValidator.h>
+#include <catapult/observers/LiquidityProviderExchangeObserver.h>
 #include "catapult/cache/CacheConfiguration.h"
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
@@ -275,6 +277,16 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
+		// region storage
+
+		void setLiquidityProviderExchangeValidator(const std::shared_ptr<validators::LiquidityProviderExchangeValidator>&);
+		const validators::LiquidityProviderExchangeValidator& liquidityProviderExchangeValidator() const;
+
+		void setLiquidityProviderExchangeObserver(const std::shared_ptr<observers::LiquidityProviderExchangeObserver>&);
+		const observers::LiquidityProviderExchangeObserver& liquidityProviderExchangeObserver() const;
+
+		// endregion
+
 	private:
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		StorageConfiguration m_storageConfig;
@@ -301,6 +313,9 @@ namespace catapult { namespace plugins {
 
 		std::shared_ptr<chain::CommitteeManager> m_pCommitteeManager;
 		std::shared_ptr<state::StorageState> m_pStorageState;
+
+		std::shared_ptr<validators::LiquidityProviderExchangeValidator> m_pLiquidityProviderExchangeValidator;
+		std::shared_ptr<observers::LiquidityProviderExchangeObserver> m_pLiquidityProviderExchangeObserver;
 	};
 }}
 

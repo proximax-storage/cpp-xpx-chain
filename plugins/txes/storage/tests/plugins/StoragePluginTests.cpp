@@ -61,13 +61,13 @@ namespace catapult { namespace plugins {
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
 				return { ionet::PacketType::BcDrive_Infos, ionet::PacketType::DownloadChannel_Infos,
 						 ionet::PacketType::Replicator_Infos, ionet::PacketType::Queue_Infos,
-						 ionet::PacketType::Priority_Queue_Infos };
+						 ionet::PacketType::PriorityQueue_Infos };
 			}
 
 			static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
 				return { ionet::PacketType::BcDrive_State_Path, ionet::PacketType::DownloadChannel_State_Path,
 						 ionet::PacketType::Replicator_State_Path, ionet::PacketType::Queue_State_Path,
-						 ionet::PacketType::Priority_Queue_State_Path };
+						 ionet::PacketType::PriorityQueue_State_Path };
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {
@@ -82,6 +82,7 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
+						"ServiceUnitTransferValidator",
 						"DataModificationValidator",
 						"DownloadChannelValidator",
 						"PrepareDriveValidator",
@@ -104,7 +105,7 @@ namespace catapult { namespace plugins {
 						"StreamStartValidator",
 						"StreamFinishValidator",
 						"StreamPaymentValidator",
-						"EndDriveVerificationValidator"
+						"EndDriveVerificationValidator",
 				};
 			}
 

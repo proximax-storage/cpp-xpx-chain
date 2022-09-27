@@ -175,6 +175,12 @@ maxSuperContractsOnDrive = 10
 enabled = true
 maxValueSize = 1024
 
+[plugin:catapult.plugins.liquidityprovider]
+enabled = true
+managerPublicKeys = E92978122F00698856910664C480E8F3C2FDF0A733F42970FBD58A5145BD6F21
+maxWindowSize = 10
+percentsDigitsAfterDot = 2
+
 [plugin:catapult.plugins.storage]
 
 enabled = true
@@ -190,7 +196,7 @@ storageBillingPeriod = 672h
 downloadBillingPeriod = 24h
 verificationInterval = 4h
 shardSize = 20
-verificationExpirationCoefficient = 0.06
+verificationExpirationCoefficient = 0.24
 verificationExpirationConstant = 10
 
 [plugin:catapult.plugins.streaming]

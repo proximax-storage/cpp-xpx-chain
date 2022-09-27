@@ -20,6 +20,7 @@ namespace catapult { namespace notification_handlers {
 				return;
 
 			pReplicatorService->addDrive(notification.DriveKey);
+			pReplicatorService->maybeRestart();
 		});
 	}
 }}

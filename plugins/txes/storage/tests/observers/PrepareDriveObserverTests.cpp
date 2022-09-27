@@ -140,6 +140,7 @@ namespace catapult { namespace observers {
 
             // Populate cache.
 			test::AddAccountState(accountStateCache, values.ExpectedBcDriveEntry.key(), Current_Height);
+			test::AddAccountState(accountStateCache, values.ExpectedBcDriveEntry.owner(), Current_Height);
 			for (const auto& tuple : values.InitialReplicatorsWithAmounts) {
 				const auto& entry = std::get<0>(tuple);
 				replicatorCache.insert(entry);
@@ -179,7 +180,8 @@ namespace catapult { namespace observers {
 			}
 
 			// EXPECT_NE(expectedDriveQueueSize, paymentQueueSize);
-			auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto& driveQueueEntry = driveQueueIter.get();
 			EXPECT_EQ(expectedDriveQueueSize, driveQueueEntry.priorityQueue().size());
         }
     }

@@ -24,6 +24,7 @@
 #include "catapult/cache/IdentifierGroupSerializer.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/IdentifierGroup.h"
+#include <utility>
 
 namespace catapult { namespace cache {
 
@@ -43,7 +44,7 @@ namespace catapult { namespace cache {
 			using Serializer = IdentifierGroupSerializer<HeightGroupingTypesDescriptor>;
 
 		public:
-			static auto GetKeyFromValue(const ValueType& heightHashes) {
+			static auto GetKeyFromValue(const ValueType& heightHashes) -> decltype(heightHashes.key()){
 				return heightHashes.key();
 			}
 		};

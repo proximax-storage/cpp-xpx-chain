@@ -230,7 +230,7 @@ namespace catapult { namespace storage {
 				  	auto actualSumBytesTemp = actualSumBytes + layout.m_uploadedBytes;
 
 				  	if (actualSumBytesTemp < actualSumBytes) {
-				  		CATAPULT_LOG( warning ) << "received modification with overflow increment";
+				  		CATAPULT_LOG( warning ) << "received modification with overflow increment " << actualSumBytes << " " << layout.m_uploadedBytes;
 						return;
 					}
 
@@ -252,8 +252,8 @@ namespace catapult { namespace storage {
 				  expectedSumBytes += std::accumulate(
 				  		pDriveEntry.DataModifications.begin(),
 				  		modificationIt,
-				  		0,
-				  		[](int64_t accumulator, const auto& currentModification) {
+				  		static_cast<uint64_t>(0),
+				  		[](const auto& accumulator, const auto& currentModification) {
 				  			return accumulator + utils::FileSize::FromMegabytes(currentModification.ActualUploadSize).bytes();
 				  		}
 				  		);
@@ -323,7 +323,12 @@ namespace catapult { namespace storage {
 				});
 			}
 
-        private:
+			void onLibtorrentSessionError(const std::string& message) override {
+            	std::string error = "Libtorrent Session Error: " + message;
+				CATAPULT_THROW_RUNTIME_ERROR( error.c_str() );
+			}
+
+		private:
         	std::shared_ptr<thread::IoThreadPool> m_pool;
             TransactionSender m_transactionSender;
             state::StorageState& m_storageState;

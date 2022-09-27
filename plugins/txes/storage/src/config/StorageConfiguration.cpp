@@ -36,7 +36,7 @@ namespace catapult { namespace config {
 		TRY_LOAD_CHAIN_PROPERTY(MaxFreeDownloadSize);
 		config.MaxDownloadSize = utils::FileSize::FromTerabytes(10);
 		TRY_LOAD_CHAIN_PROPERTY(MaxDownloadSize);
-		config.StorageBillingPeriod = utils::TimeSpan::FromHours(24 * 7);
+		config.StorageBillingPeriod = utils::TimeSpan::FromHours(4 * 7 * 24);
 		TRY_LOAD_CHAIN_PROPERTY(StorageBillingPeriod);
 		config.DownloadBillingPeriod = utils::TimeSpan::FromHours(24);
 		TRY_LOAD_CHAIN_PROPERTY(DownloadBillingPeriod);
@@ -44,7 +44,7 @@ namespace catapult { namespace config {
 		TRY_LOAD_CHAIN_PROPERTY(VerificationInterval);
 		config.ShardSize = 20;
 		TRY_LOAD_CHAIN_PROPERTY(ShardSize);
-		config.VerificationExpirationCoefficient = 0.06;
+		config.VerificationExpirationCoefficient = 0.24;
 		TRY_LOAD_CHAIN_PROPERTY(VerificationExpirationCoefficient);
 		config.VerificationExpirationConstant = 10;
 		TRY_LOAD_CHAIN_PROPERTY(VerificationExpirationConstant);

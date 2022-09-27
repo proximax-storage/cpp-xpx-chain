@@ -52,6 +52,7 @@ namespace catapult { namespace cache {
 		Replicator,
 		Queue,
 		PriorityQueue,
+		LiquidityProvider,
 		ExchangeSda,
 		SdaOfferGroup,
 	};

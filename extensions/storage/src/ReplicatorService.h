@@ -10,6 +10,7 @@
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ServiceRegistrar.h"
 #include "catapult/ionet/Node.h"
+#include <optional>
 
 namespace catapult { namespace model { class Transaction; } }
 
@@ -23,6 +24,8 @@ namespace catapult { namespace storage {
     public:
         void start();
         void stop();
+		void restart();
+		void maybeRestart();
 
         void setServiceState(extensions::ServiceState* pServiceState) {
             m_pServiceState = pServiceState;

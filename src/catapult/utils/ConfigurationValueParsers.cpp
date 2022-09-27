@@ -22,6 +22,7 @@
 #include "BlockSpan.h"
 #include "FileSize.h"
 #include "HexParser.h"
+#include "ArraySet.h"
 #include <boost/lexical_cast.hpp>
 
 namespace catapult { namespace utils {
@@ -422,5 +423,10 @@ namespace catapult { namespace utils {
 		});
 	}
 
+	bool TryParseValue(const std::string& str, utils::KeySet& parsedSet) {
+		return TryParseSetValue<Key>(str, parsedSet, [](const std::string& value, Key& parsedValue) {
+			return TryParseValue(value, parsedValue);
+		});
+	}
 	// endregion
 }}

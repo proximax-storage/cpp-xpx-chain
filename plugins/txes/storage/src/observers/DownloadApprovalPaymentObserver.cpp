@@ -14,7 +14,7 @@ namespace catapult { namespace observers {
 
 	using BigUint = boost::multiprecision::uint128_t;
 
-	DEFINE_OBSERVER(DownloadApprovalPayment, Notification, ([](const Notification& notification, ObserverContext& context) {
+	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DownloadApprovalPayment, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadApprovalPayment)");
 
@@ -22,12 +22,11 @@ namespace catapult { namespace observers {
 	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
 
-		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		auto senderIter = accountStateCache.find(Key(notification.DownloadChannelId.array()));
-	  	auto& senderState = senderIter.get();
+	  	const auto& senderState = senderIter.get();
 
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
-	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 
 		// Maps each replicator key to a vector of opinions about that replicator.
 		std::map<Key, std::vector<uint64_t>> opinions;
@@ -77,13 +76,13 @@ namespace catapult { namespace observers {
 		}
 
 		// Making mosaic transfers and updating cumulative payments.
-		for (const auto& pair: payments) {
-			auto recipientIter = accountStateCache.find(pair.first);
+		for (const auto& [replicatorKey, bytesPayment]: payments) {
+			auto recipientIter = accountStateCache.find(replicatorKey);
 			auto& recipientState = recipientIter.get();
-			senderState.Balances.debit(streamingMosaicId, Amount(pair.second), context.Height);
-			recipientState.Balances.credit(currencyMosaicId, Amount(pair.second), context.Height);
-			auto& cumulativePayment = downloadChannelEntry.cumulativePayments().at(pair.first);
-			cumulativePayment = cumulativePayment + Amount(pair.second);
+			const auto megabytesPayment = utils::FileSize::FromBytes(bytesPayment).megabytes();
+			liquidityProvider.debitMosaics(context, downloadChannelEntry.id().array(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), Amount(megabytesPayment));
+			auto& cumulativePayment = downloadChannelEntry.cumulativePayments().at(replicatorKey);
+			cumulativePayment = cumulativePayment + Amount(bytesPayment);
 		}
 	}))
 }}

@@ -7,6 +7,7 @@
 #include "Observers.h"
 #include "src/utils/Queue.h"
 #include "src/utils/AVLTree.h"
+#include "src/utils/StorageUtils.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
 namespace catapult { namespace observers {
@@ -14,8 +15,8 @@ namespace catapult { namespace observers {
 	using Notification = model::DriveClosureNotification<1>;
 	using BigUint = boost::multiprecision::uint128_t;
 
-	DECLARE_OBSERVER(DriveClosure, Notification)() {
-		return MAKE_OBSERVER(DriveClosure, Notification, ([](const Notification& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(DriveClosure, Notification)(const LiquidityProviderExchangeObserver& liquidityProvider) {
+		return MAKE_OBSERVER(DriveClosure, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
 
@@ -34,11 +35,33 @@ namespace catapult { namespace observers {
 			auto driveOwnerIter = accountStateCache.find(driveEntry.owner());
 			auto& driveOwnerState = driveOwnerIter.get();
 
-			// Making payments to replicators, if there is a pending data modification
-			auto& activeDataModifications = driveEntry.activeDataModifications();
-
 			// The value will be used after removing drive entry. That's why the copy is needed
 			const auto replicators = driveEntry.replicators();
+
+			// Removing replicators from tree before must be performed before refunding
+			auto replicatorKeyExtractor = [=, &accountStateCache](const Key& key) {
+				return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+			};
+
+			utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
+					context.Cache.template sub<cache::QueueCache>(),
+							state::ReplicatorsSetTree,
+							replicatorKeyExtractor,
+							[&replicatorCache](const Key& key) -> state::AVLTreeNode {
+						return replicatorCache.find(key).get().replicatorsSetNode();
+						},
+						[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
+						replicatorCache.find(key).get().replicatorsSetNode() = node;
+					});
+
+			for (const auto& replicatorKey : replicators) {
+				replicatorTreeAdapter.remove(replicatorKeyExtractor(replicatorKey));
+			}
+
+			RefundDepositsOnDriveClosure(driveEntry.key(), replicators, context);
+
+			// Making payments to replicators, if there is a pending data modification
+			auto& activeDataModifications = driveEntry.activeDataModifications();
 
 			if (!activeDataModifications.empty() && !replicators.empty()) {
 				const auto& modificationSize = activeDataModifications.front().ExpectedUploadSizeMegabytes;
@@ -46,16 +69,13 @@ namespace catapult { namespace observers {
 						modificationSize + // Download work
 						modificationSize * (replicators.size() - 1) / replicators.size()); // Upload work
 				for (const auto& replicatorKey : replicators) {
-					auto replicatorIter = accountStateCache.find(replicatorKey);
-					auto& replicatorState = replicatorIter.get();
-					driveState.Balances.debit(streamingMosaicId, totalReplicatorAmount, context.Height);
-					replicatorState.Balances.credit(currencyMosaicId, totalReplicatorAmount, context.Height);
+					liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
 				}
 			}
 
 			const auto& pluginConfig =
 					context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
-			auto paymentInterval = pluginConfig.StorageBillingPeriod.seconds();
+			auto paymentIntervalSeconds = pluginConfig.StorageBillingPeriod.seconds();
 
 			auto timeSinceLastPayment = (context.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
 			for (auto& [replicatorKey, info] : driveEntry.confirmedStorageInfos()) {
@@ -67,10 +87,18 @@ namespace catapult { namespace observers {
 							info.TimeInConfirmedStorage + context.Timestamp - *info.ConfirmedStorageSince;
 				}
 				BigUint driveSize = driveEntry.size();
-				auto payment = Amount(((driveSize * info.TimeInConfirmedStorage.unwrap()) / paymentInterval)
+
+				auto timeInConfirmedStorageSeconds = info.TimeInConfirmedStorage.unwrap() / 1000;
+
+				if ( timeInConfirmedStorageSeconds > paymentIntervalSeconds ) {
+					// It is possible if Drive Closure is executed in the block in which
+					// the PeriodicStoragePayment would process the Drive
+					timeInConfirmedStorageSeconds = paymentIntervalSeconds;
+				}
+
+				auto payment = Amount(((driveSize * timeInConfirmedStorageSeconds) / paymentIntervalSeconds)
 											  .template convert_to<uint64_t>());
-				driveState.Balances.debit(storageMosaicId, payment, context.Height);
-				replicatorState.Balances.credit(currencyMosaicId, payment, context.Height);
+				liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
 			}
 
 			// The Drive is Removed, so we should make removal from payment queue
@@ -99,16 +127,19 @@ namespace catapult { namespace observers {
 			driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
 		  	driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
 
-			driveState.Balances.debit(storageMosaicId, storageRefundAmount, context.Height);
-		  	driveOwnerState.Balances.credit(currencyMosaicId, storageRefundAmount, context.Height);
+		  	liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+										   config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
+										   storageRefundAmount);
 
-			driveState.Balances.debit(streamingMosaicId, streamingRefundAmount, context.Height);
-			driveOwnerState.Balances.credit(currencyMosaicId, streamingRefundAmount, context.Height);
+		  	liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+										   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+										   streamingRefundAmount);
 
 			// Removing the drive from queue, if present
 			if (replicators.size() < driveEntry.replicatorCount()) {
 				auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
-				auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+				auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+				auto& driveQueueEntry = driveQueueIter.get();
 
 				driveQueueEntry.remove(notification.DriveKey);
 			}
@@ -125,27 +156,10 @@ namespace catapult { namespace observers {
 			}
 
 			// Removing the drive from caches
-			auto replicatorKeyExtractor = [=, &accountStateCache](const Key& key) {
-				return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
-			};
-
-			utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
-					context.Cache.template sub<cache::QueueCache>(),
-							state::ReplicatorsSetTree,
-							replicatorKeyExtractor,
-							[&replicatorCache](const Key& key) -> state::AVLTreeNode {
-						return replicatorCache.find(key).get().replicatorsSetNode();
-						},
-						[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
-						replicatorCache.find(key).get().replicatorsSetNode() = node;
-					});
-
 			for (const auto& replicatorKey : replicators) {
 				auto replicatorIter = replicatorCache.find(replicatorKey);
 				auto& replicatorEntry = replicatorIter.get();
 				replicatorEntry.drives().erase(notification.DriveKey);
-
-				replicatorTreeAdapter.remove(replicatorKeyExtractor(replicatorKey));
 			}
 
 			driveCache.remove(notification.DriveKey);

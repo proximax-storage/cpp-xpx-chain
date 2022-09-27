@@ -22,6 +22,7 @@ namespace catapult { namespace notification_handlers {
 			// so it is not possible to check whether the Replicator has been assigned to the Channel
 			if (channelAddedHeight) {
 				pReplicatorService->downloadApprovalPublished(notification.ApprovalTrigger, notification.DownloadChannelId);
+				pReplicatorService->maybeRestart();
 			}
         });
     }

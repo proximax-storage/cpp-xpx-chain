@@ -6,11 +6,11 @@
 
 #pragma once
 #include "StorageUtils.h"
-#include "catapult/cache_core/AccountStateCache.h"
 #include "src/cache/ReplicatorCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/QueueCache.h"
+#include "src/catapult/model/LiquidityProviderNotifications.h"
 #include "src/utils/AVLTree.h"
 
 namespace catapult { namespace utils {
@@ -24,16 +24,13 @@ namespace catapult { namespace utils {
 			model::NotificationSubscriber& sub,
 			const config::ImmutableConfiguration& immutableCfg,
 			SwapOperation operation) {
-		auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(immutableCfg);
 		for (auto& mosaic : mosaics) {
 			switch (operation) {
 			case SwapOperation::Buy:
-				sub.notify(model::BalanceDebitNotification<1>(sender, currencyMosaicId, mosaic.Amount));
-				sub.notify(model::BalanceCreditNotification<1>(receiver, mosaic.MosaicId, mosaic.Amount));
+				sub.notify(model::CreditMosaicNotification<1>(sender, receiver, mosaic.MosaicId, mosaic.Amount));
 				break;
 			case SwapOperation::Sell:
-				sub.notify(model::BalanceDebitNotification<1>(sender, mosaic.MosaicId, mosaic.Amount));
-				sub.notify(model::BalanceCreditNotification<1>(receiver, currencyMosaicId, mosaic.Amount));
+				sub.notify(model::DebitMosaicNotification<1>(sender, receiver, mosaic.MosaicId, mosaic.Amount));
 				break;
 			default:
 				CATAPULT_THROW_INVALID_ARGUMENT_1("unsupported operation", operation);
@@ -52,12 +49,10 @@ namespace catapult { namespace utils {
 		for (auto& mosaic : mosaics) {
 			switch (operation) {
 			case SwapOperation::Buy:
-				sub.notify(model::BalanceDebitNotification<1>(sender, currencyMosaicId, mosaic.second));
-				sub.notify(model::BalanceCreditNotification<1>(receiver, mosaic.first, mosaic.second));
+				sub.notify(model::CreditMosaicNotification<1>(sender, receiver, mosaic.first, mosaic.second));
 				break;
 			case SwapOperation::Sell:
-				sub.notify(model::BalanceDebitNotification<1>(sender, mosaic.first, mosaic.second));
-				sub.notify(model::BalanceCreditNotification<1>(receiver, currencyMosaicId, mosaic.second));
+				sub.notify(model::DebitMosaicNotification<1>(sender, receiver, mosaic.first, mosaic.second));
 				break;
 			default:
 				CATAPULT_THROW_INVALID_ARGUMENT_1("unsupported operation", operation);
@@ -83,12 +78,14 @@ namespace catapult { namespace utils {
 		return SwapMosaics(account, account, mosaics, sub, immutableCfg, operation);
 	}
 
-	state::PriorityQueueEntry& getPriorityQueueEntry(cache::PriorityQueueCache::CacheDeltaType& priorityQueueCache, const Key& queueKey) {
+	auto getPriorityQueueIter(cache::PriorityQueueCacheDelta& priorityQueueCache, const Key& queueKey)
+	-> decltype(priorityQueueCache.find(queueKey)) {
 		if (!priorityQueueCache.contains(queueKey)) {
 			state::PriorityQueueEntry entry(queueKey);
 			priorityQueueCache.insert(entry);
 		}
-		return priorityQueueCache.find(queueKey).get();
+
+		return priorityQueueCache.find(queueKey);
 	}
 
 	double CalculateDrivePriority(const state::BcDriveEntry& driveEntry, const uint16_t& Rmin) {
@@ -98,7 +95,18 @@ namespace catapult { namespace utils {
 		return R < Rmin ? static_cast<double>(R + 1)/Rmin : static_cast<double>(N - R)/(2*Rmin*(N - Rmin));
 	}
 
-	void RefundDepositsToReplicators(
+	auto getVoidState(const observers::ObserverContext& context)
+			-> decltype(context.Cache.sub<cache::AccountStateCache>().find(Key())) {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		const auto zeroKey = Key();
+
+		if (!accountStateCache.contains(zeroKey))
+			accountStateCache.addAccount(zeroKey, context.Height);
+
+		return accountStateCache.find(zeroKey);
+	}
+
+	void RefundDepositsOnDriveClosure(
 			const Key& driveKey,
 			const std::set<Key>& replicators,
 			const observers::ObserverContext& context) {
@@ -111,9 +119,17 @@ namespace catapult { namespace utils {
 		auto driveStateIter = accountCache.find(driveKey);
 		auto& driveState = driveStateIter.get();
 
+		auto voidStateIter = getVoidState(context);
+		auto& voidState = voidStateIter.get();
+
 		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
-		const auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+
+		// Storage deposit equals to the drive size.
+		const auto storageDepositRefundAmount = Amount(driveEntry.size());
+
+		// Streaming deposit equals to the drive size doubled.
+		const auto streamingDepositRefundAmount = Amount(2 * driveEntry.size());
 
 		for (const auto& replicatorKey : replicators) {
 			auto replicatorIter = replicatorCache.find(replicatorKey);
@@ -121,31 +137,75 @@ namespace catapult { namespace utils {
 			auto replicatorStateIter = accountCache.find(replicatorKey);
 			auto& replicatorState = replicatorStateIter.get();
 
-			// Storage deposit equals to the drive size.
-			const auto storageDepositRefundAmount = Amount(driveEntry.size());
+			// Refund amounts are returned as respective service units.
+			voidState.Balances.debit(storageMosaicId, storageDepositRefundAmount, context.Height);
+			replicatorState.Balances.credit(storageMosaicId, storageDepositRefundAmount, context.Height);
+
+			driveState.Balances.debit(streamingMosaicId, streamingDepositRefundAmount, context.Height);
+			replicatorState.Balances.credit(streamingMosaicId, streamingDepositRefundAmount, context.Height);
+		}
+	}
+
+	void RefundDepositsOnOffboarding(
+			const Key& driveKey,
+			const std::set<Key>& replicators,
+			observers::ObserverContext& context,
+			const observers::LiquidityProviderExchangeObserver& liquidityProvider) {
+		auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
+		auto& accountCache = context.Cache.template sub<cache::AccountStateCache>();
+		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
+
+		auto driveIter = driveCache.find(driveKey);
+		auto& driveEntry = driveIter.get();
+		auto driveStateIter = accountCache.find(driveKey);
+		auto& driveState = driveStateIter.get();
+
+		auto voidStateIter = getVoidState(context);
+		auto& voidState = voidStateIter.get();
+
+		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
+		const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		const auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+
+		// Storage deposit equals to the drive size.
+		const auto storageDepositRefundAmount = Amount(driveEntry.size());
+
+		// Unslashed streaming deposit equals to the drive size doubled.
+		const auto unslashedStreamingDeposit = 2 * driveEntry.size();
+
+		for (const auto& replicatorKey : replicators) {
+			auto replicatorIter = replicatorCache.find(replicatorKey);
+			auto& replicatorEntry = replicatorIter.get();
+			auto replicatorStateIter = accountCache.find(replicatorKey);
+			auto& replicatorState = replicatorStateIter.get();
 
 			// Streaming Deposit Slashing equals 2 * min(u1, u2) where
 			// u1 - the UsedDriveSize according to the last approved by the Replicator modification
 			// u2 - the UsedDriveSize according to the last approved modification on the Drive.
 			const auto& confirmedUsedSizes = driveEntry.confirmedUsedSizes();
 			auto sizeIter = confirmedUsedSizes.find(replicatorKey);
-            const auto streamingDepositSlashing = utils::FileSize::FromBytes(
+			const auto streamingDepositSlashing = utils::FileSize::FromBytes(
 					(confirmedUsedSizes.end() != sizeIter) ?
 					2 * std::min(sizeIter->second, driveEntry.usedSizeBytes()) :
 					2 * driveEntry.usedSizeBytes()
 			).megabytes();
 
-			// Streaming deposit refund = streaming deposit - streaming deposit slashing
-			const auto streamingDeposit = 2 * driveEntry.size();
-			if (streamingDeposit < streamingDepositSlashing)
-				CATAPULT_THROW_RUNTIME_ERROR_2("streaming deposit slashing exceeds streaming deposit", streamingDeposit, streamingDepositSlashing);
-			const auto streamingDepositRefundAmount = Amount(streamingDeposit - streamingDepositSlashing);
+			if (unslashedStreamingDeposit < streamingDepositSlashing) {
+				CATAPULT_THROW_RUNTIME_ERROR_2(
+						"streaming deposit slashing exceeds streaming deposit",
+						unslashedStreamingDeposit,
+						streamingDepositSlashing);
+			}
 
-			// Making mosaic transfers
-			driveState.Balances.debit(storageMosaicId, storageDepositRefundAmount, context.Height);
-			driveState.Balances.debit(streamingMosaicId, streamingDepositRefundAmount, context.Height);
-			replicatorState.Balances.credit(currencyMosaicId, storageDepositRefundAmount, context.Height);
-			replicatorState.Balances.credit(currencyMosaicId, streamingDepositRefundAmount, context.Height);
+			const auto streamingDepositRefundAmount = Amount(unslashedStreamingDeposit - streamingDepositSlashing);
+
+			// Refund amounts are returned as XPX.
+			liquidityProvider.debitMosaics(context, Key(), replicatorKey,
+										   config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
+										   storageDepositRefundAmount);
+			liquidityProvider.debitMosaics(context, driveKey, replicatorKey,
+										   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+										   streamingDepositRefundAmount);
 		}
 	}
 
@@ -158,13 +218,11 @@ namespace catapult { namespace utils {
 		auto driveIter = driveCache.find(driveKey);
 		auto& driveEntry = driveIter.get();
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 
 		for (const auto& replicatorKey : offboardingReplicators) {
 			driveEntry.replicators().erase(replicatorKey);
 			driveEntry.formerReplicators().insert(replicatorKey);
 			driveEntry.dataModificationShards().erase(replicatorKey);
-			driveEntry.offboardingReplicators().erase(replicatorKey);
 			driveEntry.confirmedUsedSizes().erase(replicatorKey);
 			driveEntry.confirmedStates().erase(replicatorKey);
 
@@ -172,6 +230,12 @@ namespace catapult { namespace utils {
 			auto& replicatorEntry = replicatorIter.get();
 			replicatorEntry.drives().erase(driveKey);
 		}
+
+		std::vector<Key> newOffboardingReplicators;
+		for (const auto& replicatorKey : driveEntry.offboardingReplicators())
+			if (!offboardingReplicators.count(replicatorKey))
+				newOffboardingReplicators.emplace_back(replicatorKey);
+		driveEntry.offboardingReplicators() = std::move(newOffboardingReplicators);
 
 		// Replacing keys in other replicators' data modification shards
 		const auto& replicators = driveEntry.replicators();
@@ -222,7 +286,8 @@ namespace catapult { namespace utils {
 				// Offboarded replicators' cumulative payments remain in cumulativePayments
 				downloadEntry.shardReplicators() = replicators;
 				for (const auto& replicatorKey: downloadEntry.shardReplicators()) {
-					auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+					auto replicatorIt = replicatorCache.find(replicatorKey);
+					auto& replicatorEntry = replicatorIt.get();
 					replicatorEntry.downloadChannels().insert(id);
 				}
 			}
@@ -241,7 +306,8 @@ namespace catapult { namespace utils {
 						cumulativePayments.emplace(*keyIter, Amount(0));
 				downloadEntry.shardReplicators() = std::set<Key>(sampleSource.begin(), keyIter);	// keyIter now points to the element past the (ShardSize)th
 				for (const auto& replicatorKey: downloadEntry.shardReplicators()) {
-					auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+					auto replicatorIt = replicatorCache.find(replicatorKey);
+					auto& replicatorEntry = replicatorIt.get();
 					replicatorEntry.downloadChannels().insert(id);
 				}
 			}
@@ -267,7 +333,8 @@ namespace catapult { namespace utils {
 				auto& downloadEntry = downloadIter.get();
 				downloadEntry.shardReplicators().insert(replicatorKey);
 				downloadEntry.cumulativePayments().emplace(replicatorKey, Amount(0));
-				auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+				auto replicatorIt = replicatorCache.find(replicatorKey);
+				auto& replicatorEntry = replicatorIt.get();
 				replicatorEntry.downloadChannels().insert(id);
 			}
 		} else {
@@ -293,11 +360,12 @@ namespace catapult { namespace utils {
 				if ((replicatorKey ^ downloadChannelKey) < greatestDistance) {
 					downloadEntry.shardReplicators().erase(*mostDistantKeyIter);
 					downloadEntry.shardReplicators().insert(replicatorKey);
-
-					auto& removedReplicatorEntry = replicatorCache.find(*mostDistantKeyIter).get();
+					auto removedReplicatorIt = replicatorCache.find(*mostDistantKeyIter);
+					auto& removedReplicatorEntry = removedReplicatorIt.get();
 					removedReplicatorEntry.downloadChannels().erase(id);
 
-					auto& addedReplicatorEntry = replicatorCache.find(replicatorKey).get();
+					auto addedReplicatorIt = replicatorCache.find(replicatorKey);
+					auto& addedReplicatorEntry = addedReplicatorIt.get();
 					addedReplicatorEntry.downloadChannels().insert(id);
 
 					downloadEntry.cumulativePayments().emplace(replicatorKey, Amount(0));
@@ -370,7 +438,8 @@ namespace catapult { namespace utils {
 		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 
-		auto& driveEntry = driveCache.find(driveKey).get();
+		auto driveIt = driveCache.find(driveKey);
+		auto& driveEntry = driveIt.get();
 		const auto driveSize = driveEntry.size();
 		const auto requiredReplicatorCount = driveEntry.replicatorCount() - driveEntry.replicators().size();
 
@@ -408,6 +477,9 @@ namespace catapult { namespace utils {
 			treeAdapter.remove(keyToRemove);
 		}
 
+		// Drive Owner cannot be assigned to his own Drive
+		treeAdapter.remove( keyExtractor(driveEntry.owner()) );
+
 		auto notSuitableReplicators = treeAdapter.numberOfLess({Amount(driveSize), Key()});
 		auto suitableReplicators = treeAdapter.size() - notSuitableReplicators;
 
@@ -432,6 +504,9 @@ namespace catapult { namespace utils {
 		auto& replicators = driveEntry.replicators();
 		auto driveStateIter = accountStateCache.find(driveKey);
 		auto& driveState = driveStateIter.get();
+
+		auto voidStateIter = getVoidState(context);
+		auto& voidState = voidStateIter.get();
 		for (int i = 0; i < replicatorsToAdd; i++) {
 			uint32_t index = rng() % suitableReplicators;
 			suitableReplicators--;
@@ -459,7 +534,7 @@ namespace catapult { namespace utils {
 			const auto streamingDepositAmount = Amount(2 * driveSize);
 			replicatorState.Balances.debit(storageMosaicId, storageDepositAmount);
 			replicatorState.Balances.debit(streamingMosaicId, streamingDepositAmount);
-			driveState.Balances.credit(storageMosaicId, storageDepositAmount);
+			voidState.Balances.credit(storageMosaicId, storageDepositAmount);
 			driveState.Balances.credit(streamingMosaicId, streamingDepositAmount);
 		}
 
@@ -473,7 +548,8 @@ namespace catapult { namespace utils {
 
 		// If the actual number of assigned replicators is less than ordered,
 		// put the drive in the queue:
-		auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+		auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+		auto& driveQueueEntry = driveQueueIter.get();
 		if (replicators.size() < driveEntry.replicatorCount()) {
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			const auto drivePriority = utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount);
@@ -492,6 +568,10 @@ namespace catapult { namespace utils {
 		auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
 		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+
+		auto voidStateIter = getVoidState(context);
+		auto& voidState = voidStateIter.get();
+
 		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
@@ -521,7 +601,8 @@ namespace catapult { namespace utils {
 
 			// Assign queued drives to the replicator, as long as there is enough capacity,
 			// and update drive's shards:
-			auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto& driveQueueEntry = driveQueueIter.get();
 			auto& originalQueue = driveQueueEntry.priorityQueue();
 			std::priority_queue<state::PriorityPair> newQueue;
 			const auto storageMosaicAmount = replicatorState.Balances.get(storageMosaicId);
@@ -536,7 +617,8 @@ namespace catapult { namespace utils {
 				const auto& driveSize = driveEntry.size();
 				bool replicatorIsBanned =
 						driveEntry.formerReplicators().find(replicatorKey) != driveEntry.formerReplicators().end();
-				if (driveSize <= remainingCapacity && !replicatorIsBanned) {
+				bool replicatorIsOwner = driveEntry.owner() == replicatorKey;
+				if (driveSize <= remainingCapacity && !replicatorIsBanned && !replicatorIsOwner) {
 					// Updating drives() and replicators()
 					const auto& completedDataModifications = driveEntry.completedDataModifications();
 					const auto lastApprovedDataModificationIter = std::find_if(
@@ -569,7 +651,7 @@ namespace catapult { namespace utils {
 					const auto streamingDepositAmount = Amount(2 * driveSize);
 					replicatorState.Balances.debit(storageMosaicId, storageDepositAmount);
 					replicatorState.Balances.debit(streamingMosaicId, streamingDepositAmount);
-					driveState.Balances.credit(storageMosaicId, storageDepositAmount);
+					voidState.Balances.credit(storageMosaicId, storageDepositAmount);
 					driveState.Balances.credit(streamingMosaicId, streamingDepositAmount);
 
 					// Keeping updated DrivePriority in newQueue if the drive still requires any replicators

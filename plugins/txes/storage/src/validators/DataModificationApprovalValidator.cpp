@@ -47,7 +47,8 @@ namespace catapult { namespace validators {
 	  			return Failure_Storage_Opinion_Invalid_Key;
 
 	  	// Check if there are enough cosigners
-	  	if (totalJudgingKeysCount < (pDriveEntry->replicators().size() * 2) / 3 + 1)
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+		if (totalJudgingKeysCount < (std::max<size_t>(pDriveEntry->replicators().size(), pluginConfig.MinReplicatorCount) * 2) / 3 + 1)
 	  		return Failure_Storage_Signature_Count_Insufficient;
 
 	  	// Check if none of the replicators has provided an opinion on itself

@@ -73,7 +73,7 @@ namespace catapult { namespace observers {
 		std::vector<state::BcDriveEntry> CreateExpectedDriveEntries(std::vector<state::BcDriveEntry> initialDriveEntries) {
 			for (auto& entry : initialDriveEntries)
 				if (entry.key() == Target_Drive_Key) {
-					entry.offboardingReplicators().emplace(Replicator_Key);
+					entry.offboardingReplicators().emplace_back(Replicator_Key);
 					break;
 				}
 
@@ -127,7 +127,9 @@ namespace catapult { namespace observers {
 			}
 
 			auto expectedDriveQueue = CreateDriveQueueEntry(expectedDriveEntries).priorityQueue();
-			auto& driveQueue = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey).priorityQueue();
+			auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto& driveQueueEntry = driveQueueIter.get();
+			auto& driveQueue = driveQueueEntry.priorityQueue();
 			EXPECT_EQ(driveQueue.size(), expectedDriveQueue.size());
 			while (!driveQueue.empty()) {
 				EXPECT_EQ(driveQueue.top(), expectedDriveQueue.top());

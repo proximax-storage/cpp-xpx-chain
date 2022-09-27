@@ -5,45 +5,65 @@
 **/
 
 #include "Observers.h"
+#include "src/utils/Queue.h"
 
 namespace catapult { namespace observers {
 
 	using Notification = model::DownloadChannelRefundNotification<1>;
 
-	DEFINE_OBSERVER(DownloadChannelRefund, Notification, [](const Notification& notification, ObserverContext& context) {
+	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DownloadChannelRefund, Notification, [&liquidityProvider](const Notification& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadChannelRefund)");
 
-	  	auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
-	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
+		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+		auto downloadChannelIter = downloadCache.find(notification.DownloadChannelId);
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
 
-		if (downloadChannelEntry.downloadApprovalCountLeft() > 0 && !downloadChannelEntry.isFinishPublished()) {
-			// THe download channel continues to work, so no refund is needed
+		if (!downloadChannelEntry.isCloseInitiated()) {
+			// The download channel continues to work, so no refund is needed
 			return;
 		}
 
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		auto senderIter = accountStateCache.find(Key(notification.DownloadChannelId.array()));
 	  	auto& senderState = senderIter.get();
-	  	auto recipientIter = accountStateCache.find(downloadChannelEntry.consumer());
+		auto recipientIter = accountStateCache.find(downloadChannelEntry.consumer());
 	  	auto& recipientState = recipientIter.get();
 
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 	  	const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
-	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+
+	  	// Refunding currency mosaics.
+	  	const auto& currencyRefundAmount = senderState.Balances.get(currencyMosaicId);
+		senderState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
+		recipientState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
 
 		// Refunding streaming mosaics.
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);
-	  	senderState.Balances.debit(streamingMosaicId, streamingRefundAmount, context.Height);
-	  	recipientState.Balances.credit(currencyMosaicId, streamingRefundAmount, context.Height);
+		liquidityProvider.debitMosaics(context, downloadChannelEntry.id().array(), downloadChannelEntry.consumer(),
+									   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+									   streamingRefundAmount);
 
-	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+	  	// Removing associations with the download channel in respective drive and replicator entries.
+	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
+	  	auto driveIt = driveCache.find(downloadChannelEntry.drive());
+	  	auto* pDriveEntry = driveIt.tryGet();
+		if (pDriveEntry) {
+			pDriveEntry->downloadShards().erase(notification.DownloadChannelId);
+		}
+
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		for (const auto& replicatorKey: downloadChannelEntry.shardReplicators()) {
-			auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+			auto replicatorIt = replicatorCache.find(replicatorKey);
+			auto& replicatorEntry = replicatorIt.get();
 			replicatorEntry.downloadChannels().erase(notification.DownloadChannelId);
 		}
-		downloadChannelCache.remove(notification.DownloadChannelId);
 
+		auto& queueCache = context.Cache.template sub<cache::QueueCache>();
+		utils::QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
+		queueAdapter.remove(downloadChannelEntry.entryKey());
+
+		downloadCache.remove(notification.DownloadChannelId);
 		// TODO: Add currency refunding
 	})
 }}

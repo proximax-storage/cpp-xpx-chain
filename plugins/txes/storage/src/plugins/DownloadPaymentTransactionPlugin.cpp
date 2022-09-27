@@ -31,14 +31,14 @@ namespace catapult { namespace plugins {
 					const auto downloadChannelAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(downloadChannelKey, config.NetworkIdentifier));
 					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+					const auto streamingAmount = Amount(transaction.DownloadSizeMegabytes);
 
 					sub.notify(BalanceTransferNotification<1>(
 							transaction.Signer, downloadChannelAddress, currencyMosaicId, transaction.FeedbackFeeAmount));
-					const auto pDownloadPayment = sub.mempool().malloc(model::DownloadPayment(transaction.DownloadChannelId, transaction.DownloadSizeMegabytes));
 					utils::SwapMosaics(
 							transaction.Signer,
 							downloadChannelKey,
-							{ std::make_pair(streamingMosaicId, UnresolvedAmount(0, UnresolvedAmountType::DownloadPayment, pDownloadPayment)) },
+							{ {streamingMosaicId, streamingAmount} },
 							sub,
 							config,
 							utils::SwapOperation::Buy);

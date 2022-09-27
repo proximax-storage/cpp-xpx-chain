@@ -4,8 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "tests/test/StorageTestUtils.h"
 #include "src/observers/Observers.h"
+#include "tests/test/StorageTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -13,9 +13,11 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PeriodicStoragePaymentObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(PeriodicStoragePayment,)
+	const auto Liquidity_Provider = std::make_shared<test::LiquidityProviderExchangeObserverImpl>();
 
-	const auto billingPeriodSeconds = 20000;
+    DEFINE_COMMON_OBSERVER_TESTS(PeriodicStoragePayment, *Liquidity_Provider)
+
+	const auto billingPeriodMilliseconds = 20000;
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -40,7 +42,7 @@ namespace catapult { namespace observers {
 			config.Immutable.StreamingMosaicId = Streaming_Mosaic_Id;
 
 			auto storageConfig = config::StorageConfiguration::Uninitialized();
-			storageConfig.StorageBillingPeriod = utils::TimeSpan::FromMilliseconds(billingPeriodSeconds);
+			storageConfig.StorageBillingPeriod = utils::TimeSpan::FromMilliseconds(billingPeriodMilliseconds);
 			storageConfig.Enabled = true;
 
 			config.Network.SetPluginConfiguration(storageConfig);
@@ -97,7 +99,7 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
             Notification notification({ { 1 } }, { { 1 } }, values.NotificationTime, Difficulty(0), 0, 0);
-            auto pObserver = CreatePeriodicStoragePaymentObserver();
+            auto pObserver = CreatePeriodicStoragePaymentObserver(*Liquidity_Provider);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
@@ -151,7 +153,7 @@ namespace catapult { namespace observers {
     	// Arrange:
 
     	Timestamp firstTimestamp(10000);
-    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodSeconds);
+    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodMilliseconds);
     	Timestamp secondTimestamp = firstTimestamp;
     	Timestamp thirdTimestamp = notificationTimestamp;
 
@@ -189,7 +191,7 @@ namespace catapult { namespace observers {
     	// Arrange:
 
     	Timestamp firstTimestamp(10000);
-    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodSeconds);
+    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodMilliseconds);
     	Timestamp secondTimestamp = firstTimestamp;
     	Timestamp thirdTimestamp = notificationTimestamp;
 
@@ -214,7 +216,7 @@ namespace catapult { namespace observers {
     	// Arrange:
 
     	Timestamp firstTimestamp(10000);
-    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodSeconds);
+    	Timestamp notificationTimestamp = Timestamp(firstTimestamp.unwrap() + billingPeriodMilliseconds);
     	Timestamp secondTimestamp = firstTimestamp;
     	Timestamp thirdTimestamp = notificationTimestamp;
 
@@ -249,7 +251,7 @@ namespace catapult { namespace observers {
 
     TEST(TEST_CLASS, PeriodicStoragePayment_NoDrives) {
     	// Arrange:
-    	Timestamp notificationTimestamp = Timestamp(billingPeriodSeconds);
+    	Timestamp notificationTimestamp = Timestamp(billingPeriodMilliseconds);
 
     	std::vector<state::BcDriveEntry> initialEntries = {};
     	std::vector<Key> expectedKeys = {};

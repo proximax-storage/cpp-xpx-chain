@@ -6,6 +6,7 @@
 
 #pragma once
 #include <random>
+#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheDelta.h"
 #include "boost/dynamic_bitset.hpp"
 #include "boost/iterator/counting_iterator.hpp"
@@ -24,6 +25,7 @@
 #include "src/cache/QueueCacheStorage.h"
 #include "src/cache/PriorityQueueCache.h"
 #include "src/cache/PriorityQueueCacheStorage.h"
+#include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
 #include "src/model/StorageEntityType.h"
 #include "src/utils/StorageUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
@@ -328,6 +330,34 @@ namespace catapult { namespace test {
 		}
 
 		return data;
+	};
+
+	class LiquidityProviderExchangeObserverImpl : public observers::LiquidityProviderExchangeObserver {
+	public:
+		void creditMosaics(
+				observers::ObserverContext& context,
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
+				const UnresolvedMosaicId& unresolvedMosaicId,
+				const UnresolvedAmount& mosaicAmount) const override;
+		void debitMosaics(
+				observers::ObserverContext& context,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
+				const UnresolvedMosaicId& unresolvedMosaicId,
+				const UnresolvedAmount& mosaicAmount) const override;
+		void creditMosaics(
+				observers::ObserverContext& context,
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) const override;
+		void debitMosaics(
+				observers::ObserverContext& context,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) const override;
 	};
 
     /// Creates a transaction.

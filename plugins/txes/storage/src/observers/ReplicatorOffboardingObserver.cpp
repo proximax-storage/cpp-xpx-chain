@@ -20,11 +20,12 @@ namespace catapult { namespace observers {
 		  	auto driveIter = driveCache.find(notification.DriveKey);
 		  	auto& driveEntry = driveIter.get();
 
-		  	driveEntry.offboardingReplicators().emplace(notification.PublicKey);
+		  	driveEntry.offboardingReplicators().emplace_back(notification.PublicKey);
 
 			if (driveEntry.replicators().size() < driveEntry.replicatorCount()) {
 				auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
-				auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+				auto driveQueueIt = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+				auto& driveQueueEntry = driveQueueIt.get();
 				const auto newPriority = utils::CalculateDrivePriority(driveEntry, pluginConfig.MinReplicatorCount);
 
 				driveQueueEntry.set(notification.DriveKey, newPriority);

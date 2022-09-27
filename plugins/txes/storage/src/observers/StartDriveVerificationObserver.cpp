@@ -57,7 +57,7 @@ namespace catapult { namespace observers {
 
 		// There can be maximum 1 additional verification. It matters for the case when there are few drives
 		auto r = rng() % verificationFactor;
-		uint32_t additionalVerifications = r < (totalDrives % verificationFactor) ? 1 : 0;
+		uint32_t additionalVerifications = 1;//r < (totalDrives % verificationFactor) ? 1 : 0;
 
 		auto drivesToVerify = guaranteedVerifications + additionalVerifications;
 
@@ -70,28 +70,35 @@ namespace catapult { namespace observers {
 			auto iter = driveCache.find(driveKey);
 			auto& driveEntry = iter.get();
 
-			if (driveEntry.rootHash() == Hash256() ||
-				driveEntry.verification() && !driveEntry.verification()->expired(notification.Timestamp)) {
-				// The Verification Has Not Expired Yet
+
+			// The drive hasn't been modified yet
+			if (driveEntry.rootHash() == Hash256())
 				continue;
-			}
+
+			// The verification has not expired yet
+			if (driveEntry.verification() && !driveEntry.verification()->expired(notification.Timestamp))
+				continue;
+
+			// The drive doesn't have enough replicators to work
+			if (driveEntry.replicators().size() < pluginConfig.MinReplicatorCount)
+				continue;
+
 
 			auto& verification = driveEntry.verification();
 			verification = state::Verification();
 
-
 			verification->VerificationTrigger = eventHash;
 
 			auto timeoutMinutes =
-				pluginConfig.VerificationExpirationCoefficient *
-					utils::FileSize::FromBytes(driveEntry.usedSizeBytes()).gigabytesCeil() +
-				pluginConfig.VerificationExpirationConstant;
+				static_cast<uint64_t>(pluginConfig.VerificationExpirationCoefficient *
+					static_cast<double>(utils::FileSize::FromBytes(driveEntry.usedSizeBytes()).gigabytesCeil()) +
+				pluginConfig.VerificationExpirationConstant);
 			verification->Expiration = notification.Timestamp + Timestamp(timeoutMinutes * 60 * 1000);
 			verification->Duration = uint64_t(timeoutMinutes * 60 * 1000);
 
 			std::vector<Key> replicators;
 			replicators.reserve(driveEntry.replicators().size());
-			const auto& rootHash = driveEntry.rootHash();
+
 			for (const auto& key : driveEntry.replicators()) {
 				const auto& confirmedStorageInfo = driveEntry.confirmedStorageInfos()[key];
 				if (confirmedStorageInfo.ConfirmedStorageSince) {

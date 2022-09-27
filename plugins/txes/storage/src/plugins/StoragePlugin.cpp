@@ -72,19 +72,6 @@ namespace catapult { namespace plugins {
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 			switch (unresolved.Type) {
-			case UnresolvedAmountType::DownloadPayment: {
-				const auto& pDownloadPayment = castToUnresolvedData<model::DownloadPayment>(unresolved.DataPtr);
-
-				const auto& downloadChannelCache = cache.template sub<cache::DownloadChannelCache>();
-				const auto downloadChannelIter = downloadChannelCache.find(pDownloadPayment->DownloadChannelId);
-				const auto& pDownloadChannelEntry = downloadChannelIter.tryGet();
-
-				if (!pDownloadChannelEntry)
-					break;
-
-				resolved = Amount(pDownloadPayment->DownloadSize * pDownloadChannelEntry->listOfPublicKeys().size());
-				return true;
-			}
 			case UnresolvedAmountType::StreamingWork: {
 				const auto& pStreamingWork = castToUnresolvedData<model::StreamingWork>(unresolved.DataPtr);
 
@@ -168,6 +155,9 @@ namespace catapult { namespace plugins {
 		auto pStorageState = std::make_shared<state::StorageStateImpl>();
 		manager.setStorageState(pStorageState);
 
+		const auto& liquidityProviderValidator = manager.liquidityProviderExchangeValidator();
+		const auto& liquidityProviderObserver = manager.liquidityProviderExchangeObserver();
+
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateStoragePluginConfigValidator());
@@ -197,34 +187,35 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateStreamStartValidator())
 				.add(validators::CreateStreamFinishValidator())
 				.add(validators::CreateStreamPaymentValidator())
-				.add(validators::CreateEndDriveVerificationValidator());
+				.add(validators::CreateEndDriveVerificationValidator())
+				.add(validators::CreateServiceUnitTransferValidator());
 		});
 
-		manager.addObserverHook([&state = *pStorageState](auto& builder) {
+		manager.addObserverHook([&state = *pStorageState, &liquidityProviderObserver](auto& builder) {
 			builder
 				.add(observers::CreatePrepareDriveObserver())
 				.add(observers::CreateDownloadChannelObserver())
-				.add(observers::CreateDataModificationObserver())
+				.add(observers::CreateDataModificationObserver(liquidityProviderObserver))
 				.add(observers::CreateDataModificationApprovalObserver())
-				.add(observers::CreateDataModificationApprovalDownloadWorkObserver())
-				.add(observers::CreateDataModificationApprovalUploadWorkObserver())
-				.add(observers::CreateDataModificationApprovalRefundObserver())
-				.add(observers::CreateDataModificationCancelObserver())
-				.add(observers::CreateDriveClosureObserver())
+				.add(observers::CreateDataModificationApprovalDownloadWorkObserver(liquidityProviderObserver))
+				.add(observers::CreateDataModificationApprovalUploadWorkObserver(liquidityProviderObserver))
+				.add(observers::CreateDataModificationApprovalRefundObserver(liquidityProviderObserver))
+				.add(observers::CreateDataModificationCancelObserver(liquidityProviderObserver))
+				.add(observers::CreateDriveClosureObserver(liquidityProviderObserver))
 				.add(observers::CreateReplicatorOnboardingObserver())
 				.add(observers::CreateReplicatorOffboardingObserver())
 				.add(observers::CreateDownloadPaymentObserver())
 				.add(observers::CreateDataModificationSingleApprovalObserver())
 				.add(observers::CreateDownloadApprovalObserver())
 				.add(observers::CreateFinishDownloadObserver())
-				.add(observers::CreateDownloadApprovalPaymentObserver())
-				.add(observers::CreateDownloadChannelRefundObserver())
+				.add(observers::CreateDownloadApprovalPaymentObserver(liquidityProviderObserver))
+				.add(observers::CreateDownloadChannelRefundObserver(liquidityProviderObserver))
 				.add(observers::CreateStreamStartObserver())
 				.add(observers::CreateStreamFinishObserver())
 				.add(observers::CreateStreamPaymentObserver())
 				.add(observers::CreateStartDriveVerificationObserver(state))
-				.add(observers::CreateEndDriveVerificationObserver())
-				.add(observers::CreatePeriodicStoragePaymentObserver())
+				.add(observers::CreateEndDriveVerificationObserver(liquidityProviderObserver))
+				.add(observers::CreatePeriodicStoragePaymentObserver(liquidityProviderObserver))
 				.add(observers::CreatePeriodicDownloadChannelPaymentObserver());
 		});
 	}

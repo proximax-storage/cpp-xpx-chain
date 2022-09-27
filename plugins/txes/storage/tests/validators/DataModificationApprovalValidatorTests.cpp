@@ -20,6 +20,7 @@ namespace catapult { namespace validators {
         using Notification = model::DataModificationApprovalNotification<1>;
 
         constexpr auto Current_Height = Height(10);
+		constexpr auto Min_Replicator_Count = 4;
 		constexpr auto Replicator_Count = 5;
 		constexpr auto Required_Signatures_Count = Replicator_Count * 2 / 3 + 1;
 		constexpr auto Common_Data_Size = sizeof(Key) + 2 * sizeof(Hash256) + 3 * sizeof(uint64_t);
@@ -27,6 +28,14 @@ namespace catapult { namespace validators {
         constexpr auto File_Structure_Size = 50;
 		constexpr auto Meta_Files_Size = 50;
         constexpr auto Used_Drive_Size = 50;
+
+		auto CreateConfig() {
+			test::MutableBlockchainConfiguration config;
+			auto pluginConfig = config::StorageConfiguration::Uninitialized();
+			pluginConfig.MinReplicatorCount = Min_Replicator_Count;
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return (config.ToConst());
+		}
 
 		void PrepareDriveEntry(state::BcDriveEntry& driveEntry, const std::vector<crypto::KeyPair>& replicatorKeyPairs) {
 			for (const auto& pair : replicatorKeyPairs)
@@ -74,7 +83,7 @@ namespace catapult { namespace validators {
             auto pValidator = CreateDataModificationApprovalValidator();
             
             // Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, CreateConfig(), Current_Height);
 
             // Assert:
             EXPECT_EQ(expectedResult, result);

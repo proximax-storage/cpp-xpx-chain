@@ -301,6 +301,64 @@ namespace catapult { namespace test {
 		for (auto& mosaic : mosaics)
 			accountState.Balances.credit(mosaic.MosaicId, mosaic.Amount);
 	}
+
+	void LiquidityProviderExchangeObserverImpl::creditMosaics(
+			observers::ObserverContext& context,
+			const Key& currencyDebtor,
+			const Key& mosaicCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		creditMosaics(context, currencyDebtor, mosaicCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::debitMosaics(
+			observers::ObserverContext& context,
+			const Key& mosaicDebtor,
+			const Key& currencyCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		debitMosaics(context, mosaicDebtor, currencyCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::creditMosaics(
+			observers::ObserverContext& context,
+			const Key& currencyDebtor,
+			const Key& mosaicCreditor,
+			const UnresolvedMosaicId& mosaicId,
+			const Amount& mosaicAmount) const {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto debtorAccountIter = accountStateCache.find(currencyDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
+		auto creditorAccountIter = accountStateCache.find(mosaicCreditor);
+		auto& creditorAccount = creditorAccountIter.get();
+
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto resolvedMosaicId = MosaicId(mosaicId.unwrap());
+
+		debtorAccount.Balances.debit(currencyMosaicId, mosaicAmount);
+		creditorAccount.Balances.credit(resolvedMosaicId, mosaicAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::debitMosaics(
+			observers::ObserverContext& context,
+			const Key& mosaicDebtor,
+			const Key& currencyCreditor,
+			const UnresolvedMosaicId& mosaicId,
+			const Amount& mosaicAmount) const {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto debtorAccountIter = accountStateCache.find(mosaicDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
+		auto creditorAccountIter = accountStateCache.find(currencyCreditor);
+		auto& creditorAccount = creditorAccountIter.get();
+
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto resolvedMosaicId = MosaicId(mosaicId.unwrap());
+
+		debtorAccount.Balances.debit(resolvedMosaicId, mosaicAmount);
+		creditorAccount.Balances.credit(currencyMosaicId, mosaicAmount);
+	}
 }}
 
 

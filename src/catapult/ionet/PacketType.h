@@ -196,12 +196,15 @@ namespace catapult { namespace ionet {
     /* Priority queue state path has been requested by a client. */ \
 	ENUM_VALUE(Priority_Queue_State_Path, FACILITY_BASED_CODE(800, PriorityQueue)) \
 	\
+	/* Liquidity provider state path has been requested by a client. */ \
+	ENUM_VALUE(LiquidityProvider_State_Path, FACILITY_BASED_CODE(800, LiquidityProvider)) \
 	\
 	/* SDA-SDA Exchange state path has been requested by a client. */ \
-	ENUM_VALUE(SdaExchange_State_Path, FACILITY_BASED_CODE(800, ExchangeSda))     \
+	ENUM_VALUE(SdaExchange_State_Path, FACILITY_BASED_CODE(800, ExchangeSda)) \
 	\
     /* SDA-SDA Offer Group state path has been requested by a client. */ \
     ENUM_VALUE(SdaOfferGroup_State_Path, FACILITY_BASED_CODE(800, SdaOfferGroup)) \
+	\
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
 	/* Request for the current diagnostic counter values. */ \
@@ -270,10 +273,31 @@ namespace catapult { namespace ionet {
 	/* Levy infos have been requested by a client. */ \
 	ENUM_VALUE(Levy_Infos, FACILITY_BASED_CODE(1200, Levy)) \
 	\
+	/* Committee infos have been requested by a client. */ \
+	ENUM_VALUE(Committee_Infos, FACILITY_BASED_CODE(1200, Committee)) \
+	\
+	/* BcDrive infos have been requested by a client. */ \
+	ENUM_VALUE(BcDrive_Infos, FACILITY_BASED_CODE(1200, BcDrive)) \
+	\
+	/* DownloadChannel infos have been requested by a client. */ \
+	ENUM_VALUE(DownloadChannel_Infos, FACILITY_BASED_CODE(1200, DownloadChannel)) \
+	\
+	/* Replicator infos have been requested by a client. */ \
+	ENUM_VALUE(Replicator_Infos, FACILITY_BASED_CODE(1200, Replicator)) \
+	\
+	/* Queue infos have been requested by a client. */ \
+	ENUM_VALUE(Queue_Infos, FACILITY_BASED_CODE(1200, Queue)) \
+	\
+	/* Priority queue infos have been requested by a client. */ \
+	ENUM_VALUE(PriorityQueue_Infos, FACILITY_BASED_CODE(1200, PriorityQueue)) \
+    \
+	/* Liquidity provider infos have been requested by a client. */ \
+	ENUM_VALUE(LiquidityProvider_Infos, FACILITY_BASED_CODE(1200, LiquidityProvider)) \
+	\
 	/* SDA-SDA Exchange infos have been requested by a client. */ \
 	ENUM_VALUE(SdaExchange_Infos, FACILITY_BASED_CODE(1200, ExchangeSda)) \
 	\
-	/* SDA-SDA Offer Group  infos have been requested by a client. */ \
+	/* SDA-SDA Offer Group infos have been requested by a client. */ \
 	ENUM_VALUE(SdaOfferGroup_Infos, FACILITY_BASED_CODE(1200, SdaOfferGroup))  \
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,

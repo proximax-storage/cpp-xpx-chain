@@ -28,7 +28,13 @@ namespace catapult { namespace notification_handlers {
 
 	DECLARE_HANDLER(DriveClosure, model::DriveClosureNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
+	DECLARE_HANDLER(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
 	DECLARE_HANDLER(FinishDownload, model::FinishDownloadNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
+	DECLARE_HANDLER(PeriodicDownloadPayment, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
+	DECLARE_HANDLER(PeriodicStoragePayment, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
@@ -37,9 +43,4 @@ namespace catapult { namespace notification_handlers {
 	DECLARE_HANDLER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(Verification, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
-
-	DECLARE_HANDLER(PeriodicStoragePayment, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
-
-	DECLARE_HANDLER(DownloadStoragePayment, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
-
 }}
