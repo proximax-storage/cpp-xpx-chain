@@ -194,7 +194,7 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(Queue_State_Path, FACILITY_BASED_CODE(800, Queue)) \
 	\
     /* Priority queue state path has been requested by a client. */ \
-	ENUM_VALUE(Priority_Queue_State_Path, FACILITY_BASED_CODE(800, PriorityQueue)) \
+	ENUM_VALUE(PriorityQueue_State_Path, FACILITY_BASED_CODE(800, PriorityQueue)) \
 	\
 	/* Liquidity provider state path has been requested by a client. */ \
 	ENUM_VALUE(LiquidityProvider_State_Path, FACILITY_BASED_CODE(800, LiquidityProvider)) \
