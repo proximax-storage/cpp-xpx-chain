@@ -29,6 +29,11 @@ namespace catapult { namespace state {
 			memcpy(result.data(), &value, sizeof(TBaseValue));
 			return result;
 		}
+		static std::vector<uint8_t> Convert(TBaseValue&& value) {
+			std::vector<uint8_t> result(sizeof(TBaseValue));
+			memcpy(result.data(), &value, sizeof(TBaseValue));
+			return result;
+		}
 	};
 
 	using Uint64Converter = BaseTypeConverter<uint64_t>;

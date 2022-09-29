@@ -29,10 +29,16 @@
 #include "MosaicUnlockRequest.h"
 #include <boost/iterator/zip_iterator.hpp>
 #include <list>
+#include "catapult/utils/SimpleMutationTracker.h"
 
 namespace catapult { namespace state {
 	struct AccountState;
 
+	enum class AccountBalancesTrackables:size_t {
+		Unlocked = 0,
+		Locked,
+		Max
+	};
 	/// Container holding information about account.
 	class AccountBalances {
 	public:
@@ -157,9 +163,35 @@ namespace catapult { namespace state {
 		/// Get effective balance of account at \a height with \a importanceGrouping
 		std::pair<Amount, Amount> getCompoundEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const;
 
+		/// Clears all changes
+		void clearChanges();
+
+		/// Returns a const reference to the changes tracker of this balances.
+		const utils::SimpleMutationTracker<AccountBalancesTrackables>& changes() const;
+
 	private:
-		/// Maybe push snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
-		void maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Amount& lockedAmount, const Height& height);
+		/// Maybe push snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height. Template argument defaults to unlocked balance in order to preserve unit tests, for backwards compatibility.
+		template<AccountBalancesTrackables TChangedValue = AccountBalancesTrackables::Unlocked>
+		void maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Amount& lockedAmount, const Height& height){
+			if (mosaicId != m_trackedMosaicId || height == Height(0) || height == Height(-1)) {
+				return;
+			}
+			m_changesTracker.template mark<TChangedValue>();
+			if (m_remoteSnapshots.empty()) {
+				pushSnapshot(model::BalanceSnapshot{amount, lockedAmount, height});
+				return;
+			}
+
+			if (height <= m_remoteSnapshots.back().BalanceHeight) {
+				while(!m_remoteSnapshots.empty() &&  m_remoteSnapshots.back().BalanceHeight >= height) {
+					m_remoteSnapshots.pop_back();
+				}
+				pushSnapshot(model::BalanceSnapshot{amount, lockedAmount, height});
+			} else if (height > m_remoteSnapshots.back().BalanceHeight) {
+				pushSnapshot(model::BalanceSnapshot{amount, lockedAmount, height});
+			}
+		}
+
 
 		/// Push snapshot to deque
 		void pushSnapshot(const model::BalanceSnapshot& snapshot, bool committed = false);
@@ -184,6 +216,7 @@ namespace catapult { namespace state {
 		CompactMosaicMap m_lockedBalances;
 		MosaicId m_optimizedMosaicId;
 		MosaicId m_trackedMosaicId;
+		utils::SimpleMutationTracker<AccountBalancesTrackables> m_changesTracker;
 
 	};
 }}

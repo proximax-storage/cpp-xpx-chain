@@ -15,12 +15,10 @@ namespace catapult { namespace observers {
 	/// Observes LockFund notifications and moves mosaics to the respective balance.
 	DECLARE_OBSERVER(LockFundTransfer, model::LockFundTransferNotification<1>)();
 
-	/// Observes Block notifications and processes existing requests for the given block height.
+	/// Observes Block notifications and processes existing requests for the given block height. Installs and setups the plugin
 	DECLARE_OBSERVER(LockFundBlock, model::BlockNotification<1>)();
 
 	/// Observes LockFund Cancel unlock notifications and removes the given unlock request.
 	DECLARE_OBSERVER(LockFundCancelUnlock, model::LockFundCancelUnlockNotification<1>)();
 
-	/// Observes LockFund Cancel unlock notifications and removes the given unlock request.
-	DECLARE_OBSERVER(LockFundInstall, model::BlockNotification<1>)();
 }}

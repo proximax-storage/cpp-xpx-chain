@@ -37,7 +37,7 @@ namespace catapult { namespace plugins {
 		});
 		manager.addObserverHook([](auto& builder) {
 		  builder.add(observers::CreateLockFundTransferObserver())
-				 .add(observers::CreateLockFundBlockObserver())
+				.add(observers::CreateLockFundBlockObserver())
 				.add(observers::CreateLockFundCancelUnlockObserver());
 		});
 	}

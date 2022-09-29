@@ -49,6 +49,10 @@ namespace catapult { namespace config {
 		void InsertConfig(const Height& height, const std::string& strConfig, const std::string& supportedVersion);
 		void RemoveConfig(const Height& height);
 
+	private:
+		/// Must be used with a locked m_mutex
+		const BlockchainConfiguration* LastConfigOrNull(const Height& height) const;
+
 	protected:
 		std::map<Height, BlockchainConfiguration> m_configs;
 		cache::CatapultCache* m_pCache;

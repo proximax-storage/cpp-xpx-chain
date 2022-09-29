@@ -27,6 +27,8 @@
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "catapult/crypto/KeyUtils.h"
+#include "plugins/txes/lock_fund/src/config/LockFundConfiguration.h"
+#include "plugins/services/globalstore/src/config/GlobalStoreConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -65,6 +67,16 @@ namespace catapult { namespace test {
 			{ "maxBlockChainConfigSize", "1MB" },
 			{ "maxSupportedEntityVersionsSize", "1MB" },
 		} } }));
+		config.Plugins.emplace(PLUGIN_NAME(lockfund), utils::ConfigurationBag({ { "", {
+				{ "enabled", "true" },
+				{ "minRequestUnlockCooldown", "161280" },
+				{ "maxMosaicsSize", "256" },
+				{ "maxUnlockRequests", "10" },
+				{ "dockStakeRewardInterval", "100" },
+		} } }));
+		config.Plugins.emplace(PLUGIN_NAME(globalstore), utils::ConfigurationBag({ { "", {
+			{ "enabled", "true" },
+		} } }));
 		config.Plugins.emplace(PLUGIN_NAME(upgrade), utils::ConfigurationBag({ { "", {
 			{ "minUpgradePeriod", "360" },
 		} } }));
@@ -73,6 +85,8 @@ namespace catapult { namespace test {
 		config.template InitPluginConfiguration<config::MosaicConfiguration>();
 		config.template InitPluginConfiguration<config::NamespaceConfiguration>();
 		config.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
+		config.template InitPluginConfiguration<config::LockFundConfiguration>();
+		config.template InitPluginConfiguration<config::GlobalStoreConfiguration>();
 		config.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
 	}
 

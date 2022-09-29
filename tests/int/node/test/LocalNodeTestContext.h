@@ -71,7 +71,6 @@ namespace catapult { namespace test {
 				, m_configTransform(configTransform)
 				, m_serverKeyPair(loadServerKeyPair())
 				, m_partnerServerKeyPair(LoadPartnerServerKeyPair())
-				//UPDATE THIS TO ALLOW V2 ACCOUNTS IN NEMESIS BLOCK
 				, m_localNodeHarvestingKeys(std::make_tuple(crypto::KeyPair::FromString("819F72066B17FFD71B8B4142C5AEAE4B997B0882ABDF2C263B02869382BD93A0", 1), test::GenerateVrfKeyPair()))
 				, m_tempDir("lntc" + tempDirPostfix)
 				, m_partnerTempDir("lntc_partner" + tempDirPostfix) {

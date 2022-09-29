@@ -31,6 +31,8 @@
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "plugins/txes/lock_fund/src/model/LockFundTotalStakedReceipt.h"
+#include "plugins/txes/lock_fund/src/model/LockFundReceiptType.h"
 
 namespace catapult { namespace test {
 
@@ -87,6 +89,12 @@ namespace catapult { namespace test {
 			auto feeMosaicId = Default_Currency_Mosaic_Id;
 			model::BalanceChangeReceipt receipt(model::Receipt_Type_Harvest_Fee, nemesisBlock.Signer, feeMosaicId, totalFee);
 			blockStatementBuilder.addTransactionReceipt(receipt);
+
+			model::SignerBalanceReceipt signerBalanceReceipt(model::Receipt_Type_Block_Signer_Importance, Amount(0), Amount(0));
+			blockStatementBuilder.addPublicKeyReceipt(signerBalanceReceipt);
+
+			model::TotalStakedReceipt totalStakedReceipt(model::Receipt_Type_Total_Staked, Amount(0));
+			blockStatementBuilder.addBlockchainStateReceipt(totalStakedReceipt);
 
 			// 2. add mosaic aliases (supply tx first uses alias, block mosaic order is deterministic)
 			auto aliasFirstUsedPrimarySourceIds = GetMosaicSupplyChangePrimarySourceIds(nemesisBlock);

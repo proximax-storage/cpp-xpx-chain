@@ -17,7 +17,7 @@ namespace catapult { namespace config {
 	/// Account restriction plugin configuration settings.
 	struct GlobalStoreConfiguration : public model::PluginConfiguration  {
 	public:
-		DEFINE_CONFIG_CONSTANTS(restrictionaccount)
+		DEFINE_CONFIG_CONSTANTS(globalstore)
 	public:
 		/// Whether the plugin is enabled.
 		bool Enabled;

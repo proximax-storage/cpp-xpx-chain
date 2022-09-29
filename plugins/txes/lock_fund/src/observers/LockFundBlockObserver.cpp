@@ -90,7 +90,40 @@ namespace catapult { namespace observers {
 				}
 			}
 		}
+		void PluginSetup(const ObserverContext& context) {
+			auto& globalStore = context.Cache.sub<cache::GlobalStoreCache>();
+			auto recordIter = globalStore.find(config::LockFundPluginInstalled_GlobalKey);
+			if (NotifyMode::Commit == context.Mode) {
+				if(!recordIter.tryGet())
+				{
+					state::GlobalEntry installedRecord(config::LockFundPluginInstalled_GlobalKey, context.Height.unwrap(), state::PluginInstallConverter());
+					state::GlobalEntry totalStaked(config::TotalStaked_GlobalKey, 0, state::Uint64Converter());
+					globalStore.insert(installedRecord);
+					globalStore.insert(totalStaked);
+
+				}
+			} else {
+				if(recordIter.tryGet() && recordIter.get().Get<state::PluginInstallConverter>() == context.Height.unwrap())
+				{
+					globalStore.remove(config::LockFundPluginInstalled_GlobalKey);
+					globalStore.remove(config::TotalStaked_GlobalKey);
+				}
+			}
+		}
+		void ObserveNotification(const model::BlockNotification<1>& notification, ObserverContext& context) {
+			auto newConfig = context.Config.Network.GetPluginConfiguration<config::LockFundConfiguration>();
+			if(!newConfig.Enabled) return;
+
+			// This is the initial blockchain configuration and the plugin is enabled
+			// or this is the activation height for a new configuration in which the plugin has just now become enabled
+			if(context.Config.PreviousConfiguration == nullptr || (context.Height == context.Config.ActivationHeight && !context.Config.PreviousConfiguration->Network.GetPluginConfiguration<config::LockFundConfiguration>().Enabled))
+			{
+				PluginSetup(context);
+			}
+
+			ProcessLockfundUpdate(notification, context);
+		}
 	}
 	/// Note: Consider removing records in batches instead
-	DEFINE_OBSERVER(LockFundBlock, model::BlockNotification<1>, ProcessLockfundUpdate);
+	DEFINE_OBSERVER(LockFundBlock, model::BlockNotification<1>, ObserveNotification);
 }}

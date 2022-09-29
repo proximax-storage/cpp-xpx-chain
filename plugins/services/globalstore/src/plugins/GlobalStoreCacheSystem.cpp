@@ -12,6 +12,9 @@
 namespace catapult { namespace plugins {
 
 	void RegisterGlobalStoreCacheSystem(PluginManager& manager) {
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::GlobalStoreConfiguration>();
+		});
 		const auto& pConfigHolder = manager.configHolder();
 		manager.addCacheSupport<cache::GlobalStoreCacheStorage>(std::make_unique<cache::GlobalStoreCache>(
 				manager.cacheConfig(cache::GlobalStoreCache::Name), pConfigHolder));

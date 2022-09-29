@@ -121,16 +121,7 @@ namespace catapult { namespace observers {
 					}
 				}
 			}
-		}
-		using Notification = model::BlockNotification<1>;
-		DEFINE_OBSERVER(PropertyMigration, Notification, [](const Notification& notification, const ObserverContext& context) {
-			if(context.Height != context.Config.ActivationHeight || context.Config.PreviousConfiguration == nullptr)
-				return;
-
-			// Check if plugin is enabled in new configuration and disabled in old configuration
-			auto newConfig = context.Config.Network.GetPluginConfiguration<config::AccountRestrictionConfiguration>();
-			auto oldConfig = context.Config.PreviousConfiguration->Network.GetPluginConfiguration<config::AccountRestrictionConfiguration>();
-			if(newConfig.Enabled && !oldConfig.Enabled) {
+			void PluginSetup(const ObserverContext& context){
 				auto& accountRestrictionCache = context.Cache.sub<cache::AccountRestrictionCache>();
 				auto& propertyCache = context.Cache.sub<cache::PropertyCache>();
 				auto& globalStore = context.Cache.sub<cache::GlobalStoreCache>();
@@ -163,6 +154,18 @@ namespace catapult { namespace observers {
 					}
 
 				}
+			}
+		}
+		using Notification = model::BlockNotification<1>;
+		DEFINE_OBSERVER(PropertyMigration, Notification, [](const Notification& notification, const ObserverContext& context) {
+			auto newConfig = context.Config.Network.GetPluginConfiguration<config::AccountRestrictionConfiguration>();
+			if(!newConfig.Enabled) return;
+
+			// This is the initial blockchain configuration and the plugin is enabled
+			// or this is the activation height for a new configuration in which the plugin has just now become enabled
+			if(context.Config.PreviousConfiguration == nullptr || (context.Height == context.Config.ActivationHeight && !context.Config.PreviousConfiguration->Network.GetPluginConfiguration<config::AccountRestrictionConfiguration>().Enabled))
+			{
+				PluginSetup(context);
 			}
 		});
 }}

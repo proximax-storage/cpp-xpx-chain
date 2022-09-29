@@ -174,7 +174,7 @@ namespace catapult { namespace state {
 						auto amount = io::Read<Amount>(input);
 						accountState.Balances.credit(mosaicId, amount);
 					}
-
+					accountState.Balances.clearChanges();
 					return accountState;
 				}
 				case 2:
@@ -223,7 +223,7 @@ namespace catapult { namespace state {
 						auto amount = io::Read<Amount>(input);
 						accountState.Balances.credit(mosaicId, amount);
 					}
-
+					accountState.Balances.clearChanges();
 					return accountState;
 				}
 			}

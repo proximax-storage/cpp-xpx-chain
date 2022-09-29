@@ -29,6 +29,7 @@ namespace catapult { namespace config {
 		upgradeConfigId,
         exchangeConfigId,
         operationConfigId,
+		globalstoreConfigId,
 		restrictionaccountConfigId,
 		restrictionmosaicConfigId,
         First = static_cast<uint32_t>(aggregateConfigId),

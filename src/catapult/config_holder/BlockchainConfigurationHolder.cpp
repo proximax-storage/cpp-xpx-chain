@@ -77,6 +77,23 @@ namespace catapult { namespace config {
 		return Config(height);
 	}
 
+	const BlockchainConfiguration* BlockchainConfigurationHolder::LastConfigOrNull(const Height& height) const {
+		auto iter = m_configs.lower_bound(height);
+
+		if (iter != m_configs.end() && iter->first != height) {
+			iter = (iter == m_configs.begin()) ? m_configs.end() : --iter;
+		} else if (iter == m_configs.end()) {
+			if (!m_configs.empty()) {
+				--iter;
+			}
+		}
+
+		if (iter == m_configs.end())
+			return nullptr;
+
+		return &iter->second;
+
+	}
 	void BlockchainConfigurationHolder::InsertConfig(const Height& height, const std::string& strConfig, const std::string& supportedVersion) {
 		std::unique_lock lock(m_mutex);
 
@@ -90,6 +107,7 @@ namespace catapult { namespace config {
 			supportedEntityVersions = LoadSupportedEntityVersions(inputVersions);
 
 			const auto& baseConfig = m_configs.at(Height(0));
+			auto p_PreviousConfig = m_configs.end();
 			auto config = BlockchainConfiguration(
 					baseConfig.Immutable,
 					networkConfig,
@@ -100,7 +118,7 @@ namespace catapult { namespace config {
 					baseConfig.Inflation,
 					supportedEntityVersions,
 					height,
-					&m_configs.end()->second
+					LastConfigOrNull(height-Height(1))
 			);
 
 			m_configs.erase(height);

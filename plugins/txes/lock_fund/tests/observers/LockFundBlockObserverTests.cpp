@@ -75,6 +75,9 @@ namespace catapult { namespace observers {
 			state::GlobalEntry stakingRecord(config::TotalStaked_GlobalKey, 1000, state::Uint64Converter());
 			globalStore.insert(stakingRecord);
 
+			state::GlobalEntry installed(config::LockFundPluginInstalled_GlobalKey, 1000, state::Uint64Converter());
+			globalStore.insert(installed);
+
 
 			auto notification = test::CreateBlockNotification();
 			auto pObserver = CreateLockFundBlockObserver();
@@ -179,5 +182,97 @@ namespace catapult { namespace observers {
 				});
 	}
 
+	// endregion
+
+	// install region
+
+	void RunTest(
+			bool isInstalled,
+			NotifyMode notifyMode) {
+		// Arrange:
+		// Prepare Configurations
+		auto initialConfiguration = test::MutableBlockchainConfiguration();
+		auto modifiedConfiguration = test::MutableBlockchainConfiguration();
+
+		auto pluginConfig = config::LockFundConfiguration::Uninitialized();
+		pluginConfig.Enabled = false;
+
+		auto pluginConfigNew = config::LockFundConfiguration::Uninitialized();
+		pluginConfigNew.Enabled = true;
+
+		initialConfiguration.Network.SetPluginConfiguration(pluginConfig);
+		modifiedConfiguration.Network.SetPluginConfiguration(pluginConfigNew);
+
+		auto oldConfiguration = initialConfiguration.ToConst();
+		modifiedConfiguration.PreviousConfiguration = &oldConfiguration;
+		modifiedConfiguration.ActivationHeight = Height(777);
+
+		ObserverTestContext context(notifyMode, Height(777), modifiedConfiguration.ToConst());
+		auto& globalStore = context.cache().template sub<cache::GlobalStoreCache>();
+		if(isInstalled)
+		{
+			state::GlobalEntry stakingRecord(config::TotalStaked_GlobalKey, 1000, state::Uint64Converter());
+			globalStore.insert(stakingRecord);
+			state::GlobalEntry installedRecord(config::LockFundPluginInstalled_GlobalKey, 5, state::PluginInstallConverter());
+			globalStore.insert(installedRecord);
+		}
+		else if(notifyMode == NotifyMode::Rollback)
+		{
+			state::GlobalEntry installedRecord(config::LockFundPluginInstalled_GlobalKey, 777, state::PluginInstallConverter());
+			globalStore.insert(installedRecord);
+		}
+
+
+		auto notification = test::CreateBlockNotification();
+		auto pObserver = CreateLockFundBlockObserver();
+
+		// Act:
+		test::ObserveNotification(*pObserver, notification, context);
+
+
+
+		// Assert:
+		if(!isInstalled)
+		{
+			if(notifyMode == NotifyMode::Commit)
+			{
+				auto installationKey = globalStore.find(config::LockFundPluginInstalled_GlobalKey).get();
+				auto value = installationKey.template Get<state::PluginInstallConverter>();
+				EXPECT_EQ(value, 777);
+			}
+
+			else
+			{
+				EXPECT_FALSE(globalStore.find(config::LockFundPluginInstalled_GlobalKey).tryGet());
+			}
+		}
+		else
+		{
+			auto installationKey = globalStore.find(config::LockFundPluginInstalled_GlobalKey).get();
+			auto value = installationKey.template Get<state::PluginInstallConverter>();
+			EXPECT_EQ(value, 5);
+		}
+
+	}
+
+	TEST(TEST_CLASS, ObserverCanInstallPlugin_NotInstalled_Commit) {
+		// Arrange
+		RunTest(false, NotifyMode::Commit);
+	}
+
+	TEST(TEST_CLASS, ObserverCanInstallPlugin_NotInstalled_Rollback) {
+		// Arrange
+		RunTest(false, NotifyMode::Commit);
+	}
+
+	TEST(TEST_CLASS, ObserverCanInstallPlugin_Installed_Commit) {
+		// Arrange
+		RunTest(true, NotifyMode::Rollback);
+	}
+
+	TEST(TEST_CLASS, ObserverCanInstallPlugin_Installed_Rollback) {
+		// Arrange
+		RunTest(true, NotifyMode::Rollback);
+	}
 	// endregion
 }}

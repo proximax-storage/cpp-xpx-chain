@@ -33,6 +33,8 @@
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
+#include "plugins/txes/lock_fund/src/model/LockFundTotalStakedReceipt.h"
+#include "plugins/txes/lock_fund/src/model/LockFundReceiptType.h"
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -243,7 +245,7 @@ namespace catapult { namespace local {
 		class BlockReceiptsEnabledTraits {
 		public:
 			Hash256 calculateReceiptsHash(const model::Block& block) const {
-				// happy block chain tests send transfers, so only harvest fee receipt needs to be added
+
 				auto totalFee = model::CalculateBlockTransactionsInfo(block).TotalFee;
 
 				model::BlockStatementBuilder blockStatementBuilder;
@@ -251,6 +253,11 @@ namespace catapult { namespace local {
 				model::BalanceChangeReceipt receipt(model::Receipt_Type_Harvest_Fee, block.Signer, currencyMosaicId, totalFee);
 				blockStatementBuilder.addTransactionReceipt(receipt);
 
+				model::SignerBalanceReceipt signerBalanceReceipt(model::Receipt_Type_Block_Signer_Importance, Amount(409090909000000), Amount(0));
+				blockStatementBuilder.addPublicKeyReceipt(signerBalanceReceipt);
+
+				model::TotalStakedReceipt totalStakedReceipt(model::Receipt_Type_Total_Staked, Amount(0));
+				blockStatementBuilder.addBlockchainStateReceipt(totalStakedReceipt);
 				auto pStatement = blockStatementBuilder.build();
 				return model::CalculateMerkleHash(*pStatement);
 			}

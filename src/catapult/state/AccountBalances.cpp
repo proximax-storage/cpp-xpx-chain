@@ -113,6 +113,7 @@ namespace catapult { namespace state {
 		for (const auto& snapshot : accountBalances.m_remoteSnapshots)
 			pushSnapshot(snapshot, false /* committed */);
 
+		m_changesTracker = accountBalances.m_changesTracker;
 		return *this;
 	}
 
@@ -206,18 +207,17 @@ namespace catapult { namespace state {
 
 		if (m_balances.end() == iter) {
 			if (m_remoteSnapshots.empty() && m_localSnapshots.empty()) {
-				maybePushSnapshot(mosaicId, Amount(0), lockedBalance, height - Height(1));
+				maybePushSnapshot<AccountBalancesTrackables::Unlocked>(mosaicId, Amount(0), lockedBalance, height - Height(1));
 			}
 			m_balances.insert(std::make_pair(mosaicId, amount));
-			maybePushSnapshot(mosaicId, amount, lockedBalance, height);
+			maybePushSnapshot<AccountBalancesTrackables::Unlocked>(mosaicId, amount, lockedBalance, height);
 		} else {
 			if (m_remoteSnapshots.empty() && m_localSnapshots.empty()) {
-				maybePushSnapshot(mosaicId, iter->second, lockedBalance, height - Height(1));
+				maybePushSnapshot<AccountBalancesTrackables::Unlocked>(mosaicId, iter->second, lockedBalance, height - Height(1));
 			}
 			iter->second = iter->second + amount;
-			maybePushSnapshot(mosaicId, iter->second, lockedBalance, height);
+			maybePushSnapshot<AccountBalancesTrackables::Unlocked>(mosaicId, iter->second, lockedBalance, height);
 		}
-
 		return *this;
 	}
 
@@ -242,7 +242,7 @@ namespace catapult { namespace state {
 
 		iter->second = iter->second - amount;
 
-		maybePushSnapshot(mosaicId, iter->second, lockedBalance,  height);
+		maybePushSnapshot<AccountBalancesTrackables::Unlocked>(mosaicId, iter->second, lockedBalance,  height);
 
 		if (IsZero(iter->second))
 			m_balances.erase(mosaicId);
@@ -276,17 +276,17 @@ namespace catapult { namespace state {
 
 		if (m_lockedBalances.end() == lockedIter) {
 			if (m_remoteSnapshots.empty() && m_localSnapshots.empty()) {
-				maybePushSnapshot(mosaicId, originalBalance, Amount(0), height - Height(1));
+				maybePushSnapshot<AccountBalancesTrackables::Locked>(mosaicId, originalBalance, Amount(0), height - Height(1));
 			}
 			m_lockedBalances.insert(std::make_pair(mosaicId, amount));
-			maybePushSnapshot(mosaicId, iter->second, amount, height);
+			maybePushSnapshot<AccountBalancesTrackables::Locked>(mosaicId, iter->second, amount, height);
 
 		} else {
 			if (m_remoteSnapshots.empty() && m_localSnapshots.empty()) {
-				maybePushSnapshot(mosaicId, originalBalance, Amount(0), height - Height(1));
+				maybePushSnapshot<AccountBalancesTrackables::Locked>(mosaicId, originalBalance, Amount(0), height - Height(1));
 			}
 			lockedIter->second = lockedIter->second + amount;
-			maybePushSnapshot(mosaicId, iter->second, lockedIter->second, height);
+			maybePushSnapshot<AccountBalancesTrackables::Locked>(mosaicId, iter->second, lockedIter->second, height);
 		}
 
 
@@ -322,63 +322,17 @@ namespace catapult { namespace state {
 
 		if (m_balances.end() == iter) {
 			if (m_remoteSnapshots.empty() && m_localSnapshots.empty()) {
-				maybePushSnapshot(mosaicId, Amount(0), originalBalance, height - Height(1));
+				maybePushSnapshot<AccountBalancesTrackables::Locked>(mosaicId, Amount(0), originalBalance, height - Height(1));
 			}
 			m_balances.insert(std::make_pair(mosaicId, amount));
-			maybePushSnapshot(mosaicId, amount, lockedIter->second, height);
+			maybePushSnapshot<AccountBalancesTrackables::Locked>(mosaicId, amount, lockedIter->second, height);
 
 		} else {
 			if (m_remoteSnapshots.empty() && m_localSnapshots.empty()) {
-				maybePushSnapshot(mosaicId, Amount(0), originalBalance, height - Height(1));
+				maybePushSnapshot<AccountBalancesTrackables::Locked>(mosaicId, Amount(0), originalBalance, height - Height(1));
 			}
 			iter->second = iter->second + amount;
-			maybePushSnapshot(mosaicId, iter->second, lockedIter->second, height);
-		}
-
-
-		if (IsZero(lockedIter->second))
-			m_lockedBalances.erase(mosaicId);
-
-		return *this;
-	}
-
-	AccountBalances& AccountBalances::requestUnlock(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
-		if(m_accountState && m_accountState->IsLocked())
-		CATAPULT_THROW_RUNTIME_ERROR("Locked accounts cannot be modified!");
-		if (IsZero(amount))
-			return *this;
-
-		auto iter = m_balances.find(mosaicId);
-
-		auto lockedIter = m_lockedBalances.find(mosaicId);
-		auto hasZeroBalance = m_lockedBalances.end() == lockedIter;
-
-		if (hasZeroBalance || amount > lockedIter->second) {
-			auto currentBalance = hasZeroBalance ? Amount(0) : lockedIter->second;
-			std::ostringstream out;
-			out
-					<< "unlock amount (" << amount << ") is greater than current balance (" << currentBalance
-					<< ") for mosaic " << utils::HexFormat(mosaicId);
-			CATAPULT_THROW_RUNTIME_ERROR(out.str().c_str());
-		}
-
-		auto originalBalance = lockedIter->second;
-
-		lockedIter->second = lockedIter->second - amount;
-
-		if (m_balances.end() == iter) {
-			if (m_remoteSnapshots.empty() && m_localSnapshots.empty()) {
-				maybePushSnapshot(mosaicId, Amount(0), originalBalance, height - Height(1));
-			}
-			m_balances.insert(std::make_pair(mosaicId, amount));
-			maybePushSnapshot(mosaicId, amount, lockedIter->second, height);
-
-		} else {
-			if (m_remoteSnapshots.empty() && m_localSnapshots.empty()) {
-				maybePushSnapshot(mosaicId, Amount(0), originalBalance, height - Height(1));
-			}
-			iter->second = iter->second + amount;
-			maybePushSnapshot(mosaicId, iter->second, lockedIter->second, height);
+			maybePushSnapshot<AccountBalancesTrackables::Locked>(mosaicId, iter->second, lockedIter->second, height);
 		}
 
 
@@ -473,26 +427,6 @@ namespace catapult { namespace state {
 		}
 	}
 
-	void AccountBalances::maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Amount& lockedAmount, const Height& height) {
-		if (mosaicId != m_trackedMosaicId || height == Height(0) || height == Height(-1)) {
-			return;
-		}
-
-		if (m_remoteSnapshots.empty()) {
-			pushSnapshot(model::BalanceSnapshot{amount, lockedAmount, height});
-			return;
-		}
-
-		if (height <= m_remoteSnapshots.back().BalanceHeight) {
-			while(!m_remoteSnapshots.empty() &&  m_remoteSnapshots.back().BalanceHeight >= height) {
-				m_remoteSnapshots.pop_back();
-			}
-			pushSnapshot(model::BalanceSnapshot{amount, lockedAmount, height});
-		} else if (height > m_remoteSnapshots.back().BalanceHeight) {
-			pushSnapshot(model::BalanceSnapshot{amount, lockedAmount, height});
-		}
-	}
-
 	void AccountBalances::pushSnapshot(const model::BalanceSnapshot& snapshot, bool committed) {
 		if (!m_accountState)
 			CATAPULT_THROW_RUNTIME_ERROR("each balance must have own account");
@@ -506,5 +440,13 @@ namespace catapult { namespace state {
 		} else {
 			m_remoteSnapshots.push_back(snapshot);
 		}
+	}
+
+	const utils::SimpleMutationTracker<AccountBalancesTrackables>& AccountBalances::changes() const{
+		return m_changesTracker;
+	}
+
+	void AccountBalances::clearChanges() {
+		m_changesTracker.clear();
 	}
 }}

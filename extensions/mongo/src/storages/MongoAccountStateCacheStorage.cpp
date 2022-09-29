@@ -64,7 +64,6 @@ namespace catapult { namespace mongo { namespace storages {
 				return Height((height-1)/interval*interval+interval);
 			}
 			static void PrepareStorage(MongoDatabase& mongoDatabase){
-
 				if(mongoDatabase.HasCollection(Additional_Collection_Name))
 					return;
 
@@ -114,25 +113,18 @@ namespace catapult { namespace mongo { namespace storages {
 				  return MapAdditionalToMongoDocument(*pModel, harvestingMosaicId, currentHeight, refHeight);
 				};
 				std::unordered_set<const ModelType*> filteredInsertSet;
-				std::unordered_set<const ModelType*> filteredRemoveSet;
 				for(auto element : elements)
 				{
-					if(element->GetVersion() < 2 || element->IsLocked())
+					if(element->GetVersion() < 2 || element->IsLocked() || !element->Balances.changes().hasChange<state::AccountBalancesTrackables::Locked>())
 						continue;
 					auto balance = element->Balances.getLocked(harvestingMosaicId);
-					if(balance > Amount(0))
-						filteredInsertSet.insert(element);
-					else
-						filteredRemoveSet.insert(element);
+					filteredInsertSet.insert(element);
 				}
 				auto upsertResults = context.BulkWriter.bulkUpsert(Additional_Collection_Name, filteredInsertSet, createDocument, [refHeight = lastCalculatedHeight](const ModelType* model){
 					   return CreateAdditionalFilterByKey(model, refHeight);
 				   }).get();
 				auto aggregateResult = BulkWriteResult::Aggregate(thread::get_all(std::move(upsertResults)));
 				context.ErrorPolicy.checkUpserted(filteredInsertSet.size(), aggregateResult, "modified and added elements to secondary channel");
-				auto deleteResults = context.BulkWriter.bulkDelete(Additional_Collection_Name, filteredRemoveSet, [refHeight = lastCalculatedHeight](const ModelType* model){
-					   return CreateAdditionalFilterByKey(model, refHeight);
-				   }).get();
 			}
 
 			static bsoncxx::document::value CreateAdditionalFilterByKey(const ModelType* model, Height refHeight) {

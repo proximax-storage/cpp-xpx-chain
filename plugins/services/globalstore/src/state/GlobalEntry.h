@@ -43,7 +43,7 @@ namespace catapult { namespace state {
 		template<typename TConverter>
 		void Set(const typename TConverter::ValueType& value)
 		{
-			Data = TConverter::Convert(Data);
+			Data = TConverter::Convert(value);
 		}
 
 		template<typename TConverter, typename TEnable = std::enable_if_t<TConverter::SupportRef>>
