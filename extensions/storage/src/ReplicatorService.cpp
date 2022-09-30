@@ -753,6 +753,7 @@ namespace catapult { namespace storage {
     bool ReplicatorService::isAssignedToChannel(const Hash256& channelId) {
     	if (m_pImpl)
     		m_pImpl->isAssignedToChannel(channelId);
+		return false;
     }
 
     void ReplicatorService::initiateDownloadApproval(const Hash256& channelId, const Hash256& eventHash) {
