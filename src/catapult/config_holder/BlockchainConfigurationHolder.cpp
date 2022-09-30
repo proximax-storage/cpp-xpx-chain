@@ -107,7 +107,6 @@ namespace catapult { namespace config {
 			supportedEntityVersions = LoadSupportedEntityVersions(inputVersions);
 
 			const auto& baseConfig = m_configs.at(Height(0));
-			auto p_PreviousConfig = m_configs.end();
 			auto config = BlockchainConfiguration(
 					baseConfig.Immutable,
 					networkConfig,
