@@ -104,6 +104,8 @@ namespace catapult::validators {
 
 		auto currencyBalance = pDebtorAccount->Balances.get(currencyMosaicId);
 
+		CATAPULT_LOG( error ) << "Validate Credit Mosaics " << currencyBalance << " " << currencyAmount;
+
 		if (currencyBalance < currencyAmount) {
 			return Failure_LiquidityProvider_Insufficient_Currency;
 		}

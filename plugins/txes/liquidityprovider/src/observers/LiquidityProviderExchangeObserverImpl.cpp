@@ -52,12 +52,18 @@ namespace catapult::observers {
 			const Key& mosaicCreditor,
 			const UnresolvedMosaicId& mosaicId,
 			const Amount& mosaicAmount) const {
+
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto balanceBefore = accountStateCache.find(currencyDebtor).get().Balances.get(context.Config.Immutable.CurrencyMosaicId);
+
+		CATAPULT_LOG(error) << "Credit Mosaics Before " << balanceBefore;
+
 		auto& lpCache = context.Cache.sub<cache::LiquidityProviderCache>();
 
 		auto lpEntryIter = lpCache.find(mosaicId);
 		auto& lpEntry = lpEntryIter.get();
 
-		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+
 
 		auto lpAccountIter = accountStateCache.find(lpEntry.providerKey());
 		auto& lpAccount = lpAccountIter.get();
@@ -98,6 +104,10 @@ namespace catapult::observers {
 		lpEntry.setAdditionallyMinted(lpEntry.additionallyMinted() + mosaicAmount);
 
 		lpEntry.recentTurnover().m_turnover = lpEntry.recentTurnover().m_turnover + currencyAmount;
+
+		auto balanceAfter = accountStateCache.find(currencyDebtor).get().Balances.get(context.Config.Immutable.CurrencyMosaicId);
+
+		CATAPULT_LOG(error) << "Credit Mosaics After " << balanceAfter;
 	}
 
 	void LiquidityProviderExchangeObserverImpl::debitMosaics(
