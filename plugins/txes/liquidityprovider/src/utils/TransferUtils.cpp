@@ -41,8 +41,8 @@ namespace catapult::utils {
 			const Amount& mosaicAmount,
 			uint8_t percentsDigitAfterDot) {
 		auto rate = state::ExchangeRate{currencyBalance, mosaicBalance + lpEntry.additionallyMinted()};
-		BigUint numerator = BigUint(mosaicAmount.unwrap()) * rate.m_currencyAmount.unwrap() * (100 * pow(10, percentsDigitAfterDot) + lpEntry.alpha());
-		BigUint denominator = BigUint(100 * pow(10, percentsDigitAfterDot)) * rate.m_mosaicAmount.unwrap();
+		BigUint numerator = (BigUint(mosaicAmount.unwrap()) * rate.m_currencyAmount.unwrap()) * (static_cast<uint64_t>(100) * pow(10, percentsDigitAfterDot) + lpEntry.alpha());
+		BigUint denominator = BigUint(static_cast<uint64_t>(100) * pow(10, percentsDigitAfterDot)) * rate.m_mosaicAmount.unwrap();
 
 		// In order to avoid the problems with rounding, LP receives a little more (due to ceil)
 		BigUint amount = ceilDivision(numerator, denominator);
@@ -60,8 +60,8 @@ namespace catapult::utils {
 									  const Amount& mosaicAmount,
 									  uint8_t percentsDigitAfterDot) {
 		auto rate = state::ExchangeRate{currencyBalance, mosaicBalance + lpEntry.additionallyMinted()};
-		BigUint numerator = BigUint(mosaicAmount.unwrap()) * rate.m_currencyAmount.unwrap() * (100 * pow(10, percentsDigitAfterDot) - lpEntry.beta());
-		BigUint denominator = BigUint(100 * pow(10, percentsDigitAfterDot)) * rate.m_mosaicAmount.unwrap();
+		BigUint numerator = (BigUint(mosaicAmount.unwrap()) * rate.m_currencyAmount.unwrap()) * (static_cast<uint64_t>(100) * pow(10, percentsDigitAfterDot) - lpEntry.beta());
+		BigUint denominator = BigUint(static_cast<uint64_t>(100) * pow(10, percentsDigitAfterDot)) * rate.m_mosaicAmount.unwrap();
 
 		// In order to avoid the problems with rounding, LP looses a little less (due to floor)
 		BigUint amount = floorDivision(numerator, denominator);
