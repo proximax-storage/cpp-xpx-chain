@@ -21,6 +21,7 @@
 #pragma once
 #include "ReceiptType.h"
 #include "SizePrefixedEntity.h"
+#include "catapult/model/EntityPtr.h"
 #include "catapult/types.h"
 
 namespace catapult { namespace model {
@@ -150,6 +151,100 @@ namespace catapult { namespace model {
 
 		/// Drive state.
 		uint8_t DriveState;
+	};
+
+	/// Binary layout for a offer creation receipt.
+	struct OfferCreationReceipt : public Receipt {
+	public:
+		/// Creates a receipt around \a receiptType, \a sender, \a mosaicsPair, \a amountGive and \a amountGet.
+		OfferCreationReceipt(
+				ReceiptType receiptType,
+				const Key& sender,
+				std::pair<MosaicId, MosaicId> mosaicsPair,
+				catapult::Amount amountGive,
+				catapult::Amount amountGet)
+				: Sender(sender)
+				, MosaicsPair(mosaicsPair)
+				, AmountGive(amountGive)
+				, AmountGet(amountGet) {
+			Size = sizeof(OfferCreationReceipt);
+			Version = 1;
+			Type = receiptType;
+		}
+
+	public:
+		/// Mosaic sender public key.
+		Key Sender;
+
+		/// Mosaics pair of mosaic id to give and to get.
+		std::pair<MosaicId, MosaicId> MosaicsPair;
+
+		/// Amount to give.
+		catapult::Amount AmountGive;
+
+		/// Amount to get.
+		catapult::Amount AmountGet;
+	};
+
+	/// Binary layout for a offer exchange receipt.
+	struct ExchangeDetail{
+		/// Mosaic recipient address.
+		Address Recipient;
+
+		/// Mosaics pair of mosaic id to give and to get of recipient.
+		std::pair<MosaicId, MosaicId> MosaicsPair;
+
+		/// Amount given by recipient.
+		catapult::Amount AmountGive;
+
+		/// Amount gotten by recipient.
+		catapult::Amount AmountGet;
+	};
+
+	struct OfferExchangeReceipt : public Receipt {
+	public:
+		/// Mosaic sender public key.
+		Key Sender;
+
+		/// Mosaics pair of mosaic id to give and to get of sender.
+		std::pair<MosaicId, MosaicId> MosaicsPair;
+
+		/// Count of exchange details.
+		uint16_t ExchangeDetailCount;
+	};
+
+	UniqueEntityPtr<OfferExchangeReceipt> CreateOfferExchangeReceipt(
+			ReceiptType receiptType,
+			const Key& sender,
+			const std::pair<MosaicId, MosaicId>& mosaicsPair,
+			const std::vector<ExchangeDetail>& exchangeDetails);
+
+	/// Binary layout for a offer removal receipt.
+	struct OfferRemovalReceipt : public Receipt {
+	public:
+		/// Creates a receipt around \a receiptType, \a sender, \a mosaicsPair and \a amountGiveReturned.
+		OfferRemovalReceipt(
+				ReceiptType receiptType,
+				const Key& sender,
+				std::pair<MosaicId, MosaicId> mosaicsPair,
+				catapult::Amount amountGiveReturned)
+				: Sender(sender)
+				, MosaicsPair(mosaicsPair)
+				, AmountGiveReturned(amountGiveReturned) {
+			Size = sizeof(OfferRemovalReceipt);
+			Version = 1;
+			Type = receiptType;
+		}
+
+	public:
+		/// Mosaic sender public key.
+		Key Sender;
+
+		/// Mosaics pair of mosaic id to give and to get.
+		std::pair<MosaicId, MosaicId> MosaicsPair;
+
+		/// Amount to give that has been returned to sender.
+		catapult::Amount AmountGiveReturned;
 	};
 
 #pragma pack(pop)
