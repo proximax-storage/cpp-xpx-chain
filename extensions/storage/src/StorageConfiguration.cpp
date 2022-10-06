@@ -21,6 +21,7 @@ namespace catapult { namespace storage {
 
 #define LOAD_DB_PROPERTY(NAME) LOAD_PROPERTY("replicator", NAME)
 
+		LOAD_DB_PROPERTY(Key);
 		LOAD_DB_PROPERTY(Host);
 		LOAD_DB_PROPERTY(Port);
 		LOAD_DB_PROPERTY(TransactionTimeout);

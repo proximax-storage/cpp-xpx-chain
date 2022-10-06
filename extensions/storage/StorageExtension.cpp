@@ -15,12 +15,10 @@ namespace catapult { namespace storage {
 	namespace {
 		void RegisterExtension(extensions::ProcessBootstrapper& bootstrapper) {
 			const auto& config = bootstrapper.config();
-			auto keyPair = crypto::KeyPair::FromString(config.User.BootKey); // TODO: get the key from the storage config.
 			auto storageConfig = StorageConfiguration::LoadFromPath(bootstrapper.resourcesPath());
 			auto replicatorsFile = boost::filesystem::path(bootstrapper.resourcesPath()) / "replicators.json";
 			auto bootstrapReplicators = config::LoadPeersFromPath(replicatorsFile.generic_string(), bootstrapper.config().Immutable.NetworkIdentifier);
 			auto pReplicatorService = std::make_shared<ReplicatorService>(
-				std::move(keyPair),
 				std::move(storageConfig),
 				std::move(bootstrapReplicators));
 
