@@ -46,12 +46,16 @@ namespace catapult { namespace observers {
 
 	  	// Removing associations with the download channel in respective drive and replicator entries.
 	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-	  	auto& driveEntry = driveCache.find(downloadChannelEntry.drive()).get();
-	  	driveEntry.downloadShards().erase(notification.DownloadChannelId);
+	  	auto driveIt = driveCache.find(downloadChannelEntry.drive());
+	  	auto* pDriveEntry = driveIt.tryGet();
+		if (pDriveEntry) {
+			pDriveEntry->downloadShards().erase(notification.DownloadChannelId);
+		}
 
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		for (const auto& replicatorKey: downloadChannelEntry.shardReplicators()) {
-			auto& replicatorEntry = replicatorCache.find(replicatorKey).get();
+			auto replicatorIt = replicatorCache.find(replicatorKey);
+			auto& replicatorEntry = replicatorIt.get();
 			replicatorEntry.downloadChannels().erase(notification.DownloadChannelId);
 		}
 

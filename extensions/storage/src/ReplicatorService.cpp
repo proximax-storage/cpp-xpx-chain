@@ -752,7 +752,8 @@ namespace catapult { namespace storage {
 
     bool ReplicatorService::isAssignedToChannel(const Hash256& channelId) {
     	if (m_pImpl)
-    		m_pImpl->isAssignedToChannel(channelId);
+    		return m_pImpl->isAssignedToChannel(channelId);
+		return false;
     }
 
     void ReplicatorService::initiateDownloadApproval(const Hash256& channelId, const Hash256& eventHash) {
@@ -808,7 +809,7 @@ namespace catapult { namespace storage {
 
     void ReplicatorService::exploreNewReplicatorDrives() {
     	if (m_pImpl)
-    		return m_pImpl->exploreNewReplicatorDrives();
+    		m_pImpl->exploreNewReplicatorDrives();
 	}
 
 	void ReplicatorService::processVerifications(const Hash256& eventHash, const Timestamp& timestamp) {

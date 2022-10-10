@@ -54,13 +54,13 @@ namespace catapult { namespace utils {
 
 	/// Gets priority queue entry with given \a queueKey from \a priorityQueueCache.
 	/// If no entry was found, first creates one with an empty underlying priority queue.
-	state::PriorityQueueEntry& getPriorityQueueEntry(cache::PriorityQueueCache::CacheDeltaType&, const Key&);
+	auto getPriorityQueueIter(cache::PriorityQueueCache::CacheDeltaType& cache, const Key& key) -> decltype(cache.find(key));
 
 	/// Calculates priority value of \a driveEntry. Used for the queue of drives with missing replicators.
 	double CalculateDrivePriority(const state::BcDriveEntry&, const uint16_t&);
 
 	/// Gets void (zero key) account state. If necessary, creates it.
-	state::AccountState& getVoidState(const observers::ObserverContext&);
+	auto getVoidState(const observers::ObserverContext& context) -> decltype(context.Cache.sub<cache::AccountStateCache>().find(Key()));
 
 	/// Calculates amounts of deposit refunds of \a replicators in case of drive closure
 	/// with respect to the drive with \a driveKey, and transfers them to replicators' accounts.

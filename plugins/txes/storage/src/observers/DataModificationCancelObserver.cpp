@@ -15,7 +15,8 @@ namespace catapult { namespace observers {
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModificationCancel)");
 
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-		auto& driveEntry = driveCache.find(notification.DriveKey).get();
+		auto driveIt = driveCache.find(notification.DriveKey);
+		auto& driveEntry = driveIt.get();
 
 		auto& activeDataModifications = driveEntry.activeDataModifications();
 		auto cancelingDataModificationIter = std::find_if(

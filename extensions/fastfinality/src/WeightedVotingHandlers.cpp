@@ -145,6 +145,8 @@ namespace catapult { namespace fastfinality {
 					}
 
 					committeeData.addVote(*pMessage);
+
+					CATAPULT_LOG(debug) << "collected " << committeeData.votes(pMessage->Type).size() << " " << name << "(s)";
 				}
 			});
 		}
@@ -163,23 +165,15 @@ namespace catapult { namespace fastfinality {
 	}
 
 	namespace {
-		template<typename TPacket, CommitteeMessageType MessageType, CommitteePhase expectedPhase>
+		template<typename TPacket, CommitteeMessageType MessageType, CommitteePhase Phase>
 		void RegisterPullVoteMessagesHandler(
 				std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 				ionet::ServerPacketHandlers& handlers) {
 			handlers.registerHandler(TPacket::Packet_Type, [pFsmWeak](const auto& packet, auto& context) {
 				TRY_GET_FSM()
 
-				auto& committeeData = pFsmShared->committeeData();
-				auto phase = committeeData.committeeStage().Phase;
-				if (phase != expectedPhase) {
-					auto pResponsePacket = ionet::CreateSharedPacket<TPacket>();
-					pResponsePacket->MessageCount = 0;
-					context.response(ionet::PacketPayload(pResponsePacket));
-					return;
-				}
-
-				auto votes = committeeData.votes(MessageType);
+				auto votes = pFsmShared->committeeData().votes(MessageType);
+				CATAPULT_LOG(debug) << "returning " << votes.size() << " " << Phase << " votes";
 				auto pResponsePacket = ionet::CreateSharedPacket<TPacket>(utils::checked_cast<size_t, uint32_t>(sizeof(CommitteeMessage) * votes.size()));
 				pResponsePacket->MessageCount = utils::checked_cast<size_t, uint8_t>(votes.size());
 

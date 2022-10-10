@@ -131,7 +131,9 @@ namespace catapult { namespace observers {
 			}
 
 			auto& expectedDriveQueue = values.ExpectedDriveQueueEntry.priorityQueue();
-			auto& driveQueue = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey).priorityQueue();
+			auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto& driveQueueEntry = driveQueueIter.get();
+			auto& driveQueue = driveQueueEntry.priorityQueue();
 			EXPECT_EQ(driveQueue.size(), expectedDriveQueue.size());
 			while (!driveQueue.empty()) {
 				EXPECT_EQ(driveQueue.top(), expectedDriveQueue.top());
