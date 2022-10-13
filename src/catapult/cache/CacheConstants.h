@@ -53,6 +53,7 @@ namespace catapult { namespace cache {
 		Queue,
 		PriorityQueue,
 		LiquidityProvider,
+		Contract_v2,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

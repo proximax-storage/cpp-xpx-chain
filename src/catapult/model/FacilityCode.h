@@ -88,6 +88,8 @@ namespace catapult { namespace model {
 		/// Priority queue facility code.
 		PriorityQueue = 0x68,
 		/// Liquidity Provider facility code
-		LiquidityProvider = 0x69
+		LiquidityProvider = 0x69,
+		/// SuperContract V2 facility code.
+		Contract_v2 = 0x6C,
 	};
 }}
