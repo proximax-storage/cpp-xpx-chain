@@ -349,6 +349,11 @@
 			"name": "streamPayment",
 			"type": "17255",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "deploy",
+			"type": "16748",
+			"supportedVersions": [1]
 		}
 	]
 }

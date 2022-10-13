@@ -359,6 +359,11 @@
 			"name": "manualRateChange",
 			"type": "17001",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "deploy",
+			"type": "16748",
+			"supportedVersions": [1]
 		}
 	]
 }
