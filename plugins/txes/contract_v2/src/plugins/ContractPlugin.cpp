@@ -5,13 +5,15 @@
 **/
 
 #include "ContractPlugin.h"
-#include "src/plugins/DeployTransactionPlugin.h"
+#include "DeployTransactionPlugin.h"
 #include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace plugins {
 
     void RegisterContractSubsystem(PluginManager& manager) {
-		    manager.addTransactionSupport(CreateDeployTransactionPlugin());
+
+        const auto& immutableConfig = manager.immutableConfig();
+	    manager.addTransactionSupport(CreateDeployTransactionPlugin(immutableConfig));
     }
 }}
 

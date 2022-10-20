@@ -6,6 +6,7 @@
 
 #pragma once
 #include "catapult/plugins.h"
+#include <catapult/config/ImmutableConfiguration.h>
 
 namespace catapult { namespace model { class TransactionPlugin; } }
 
@@ -13,5 +14,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates a deploy transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateDeployTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateDeployTransactionPlugin(const config::ImmutableConfiguration&);
 }}
