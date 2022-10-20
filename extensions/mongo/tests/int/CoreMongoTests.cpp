@@ -34,7 +34,7 @@ namespace catapult { namespace mongo {
 			}
 
 			static std::vector<model::ReceiptType> GetReceiptTypes() {
-				return { model::Receipt_Type_Harvest_Fee, model::Receipt_Type_Inflation, model::Receipt_Type_Block_Signer_Importance };
+				return { model::Receipt_Type_Harvest_Fee, model::Receipt_Type_Inflation, model::Receipt_Type_Block_Signer_Importance, model::Receipt_Type_Blockchain_State_Tracking };
 			}
 
 			static std::string GetStorageName() {

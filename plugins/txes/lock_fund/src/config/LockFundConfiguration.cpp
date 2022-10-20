@@ -21,9 +21,8 @@ namespace catapult { namespace config {
 			LOAD_PROPERTY(MaxMosaicsSize);
 			LOAD_PROPERTY(MaxUnlockRequests);
 			LOAD_PROPERTY(MinRequestUnlockCooldown);
-			LOAD_PROPERTY(DockStakeRewardInterval);
 #undef LOAD_PROPERTY
-			utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 5);
+			utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 4);
 		return config;
 	}
 }}

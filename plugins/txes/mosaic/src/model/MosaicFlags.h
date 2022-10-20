@@ -49,5 +49,7 @@ namespace catapult { namespace model {
 		All = 0x1F
 	};
 
+
 	MAKE_BITWISE_ENUM(MosaicFlags)
+
 }}

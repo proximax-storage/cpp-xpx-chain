@@ -21,6 +21,7 @@ namespace catapult { namespace validators {
 #define TEST_CLASS NetworkConfigValidatorTests
 
 	DEFINE_COMMON_VALIDATOR_TESTS(NetworkConfig, plugins::PluginManager(config::CreateMockConfigurationHolder(), plugins::StorageConfiguration()))
+	DEFINE_COMMON_VALIDATOR_TESTS(NetworkConfigV2, plugins::PluginManager(config::CreateMockConfigurationHolder(), plugins::StorageConfiguration()))
 
 	namespace {
 		std::string commonBlockChainProperties{
@@ -112,171 +113,233 @@ namespace catapult { namespace validators {
 			EXPECT_EQ(expectedResult, result);
 		}
 
+		void AssertValidationResult(
+				ValidationResult expectedResult,
+				const std::string& networkConfig,
+				const std::string& supportedEntityVersions,
+				std::shared_ptr<plugins::PluginManager> pPluginManager,
+				cache::CatapultCache& cache,
+				model::NetworkUpdateType Type,
+				uint64_t applyHeightDelta = 10) {
+			// Arrange:
+			model::NetworkConfigNotification<2> notification(
+					Type,
+					applyHeightDelta,
+					networkConfig.size(),
+					reinterpret_cast<const uint8_t*>(networkConfig.data()),
+					supportedEntityVersions.size(),
+					reinterpret_cast<const uint8_t*>(supportedEntityVersions.data()));
+			auto pValidator = CreateNetworkConfigV2Validator(*pPluginManager);
+
+			// Act:
+			auto result = test::ValidateNotification(*pValidator, notification, cache, pPluginManager->configHolder()->Config(), Height(1));
+
+			// Assert:
+			EXPECT_EQ(expectedResult, result);
+		}
+
+		template<uint32_t TVersion>
 		void RunTest(
 				ValidationResult expectedResult,
 				const std::string& networkConfig,
 				const std::string& supportedEntityVersions,
+				model::NetworkUpdateType type,
 				uint64_t maxBlockChainConfigSizeMb = 1,
 				uint64_t maxSupportedEntityVersionsSizeMb = 1,
 				bool seedConfigCache = false,
-				BlockDuration applyHeightDelta = BlockDuration(10)) {
+				uint64_t applyHeightDelta = 10) {
 			auto pPluginManager = CreatePluginManager(maxBlockChainConfigSizeMb, maxSupportedEntityVersionsSizeMb);
 			auto cache = test::CreateEmptyCatapultCache<test::NetworkConfigCacheFactory>();
 			if (seedConfigCache) {
 				auto delta = cache.createDelta();
 				auto& configCacheDelta = delta.sub<cache::NetworkConfigCache>();
-				configCacheDelta.insert(state::NetworkConfigEntry(Height(1 + applyHeightDelta.unwrap()), networkConfig, supportedEntityVersions));
+				if constexpr(TVersion == 1)
+					configCacheDelta.insert(state::NetworkConfigEntry(Height(1 + applyHeightDelta), networkConfig, supportedEntityVersions));
+				else {
+					if(type == model::NetworkUpdateType::Delta)
+						configCacheDelta.insert(state::NetworkConfigEntry(Height(1 + applyHeightDelta), networkConfig, supportedEntityVersions));
+					else
+						configCacheDelta.insert(state::NetworkConfigEntry(Height(applyHeightDelta), networkConfig, supportedEntityVersions));
+				}
 				cache.commit(Height(1));
 			}
-			AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache, applyHeightDelta);
-		}
+			if constexpr(TVersion == 1)
+				AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache, BlockDuration(applyHeightDelta));
+			else
+				AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache, type, applyHeightDelta);
 
+
+		}
+		template<uint32_t TVersion>
 		void RunTestWithRealPlugins(
 				ValidationResult expectedResult,
 				const std::string& networkConfig,
 				const std::string& supportedEntityVersions,
+				model::NetworkUpdateType type,
 				uint64_t maxBlockChainConfigSizeMb = 1,
 				uint64_t maxSupportedEntityVersionsSizeMb = 1) {
 			auto pPluginManager = CreatePluginManagerWithRealPlugins(maxBlockChainConfigSizeMb, maxSupportedEntityVersionsSizeMb);
 			auto cache = pPluginManager->createCache();
-			AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache);
+			if constexpr(TVersion == 1)
+				AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache);
+			else
+				AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache, type);
 		}
 	}
+#define TRAITS_BASED_TEST(TEST_NAME) \
+	template<uint32_t TVersion, model::NetworkUpdateType TType = model::NetworkUpdateType::Delta> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_V1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<1>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_V2_Delta) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<2>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_V2_Absolute) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<2, model::NetworkUpdateType::Absolute>(); } \
+	template<uint32_t TVersion, model::NetworkUpdateType TType> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
-	TEST(TEST_CLASS, FailureWhenApplyHeightDeltaIsZero) {
+	TRAITS_BASED_TEST(FailureWhenApplyHeightDeltaIsZero) {
 		// Assert:
-		RunTest(
-			Failure_NetworkConfig_ApplyHeightDelta_Zero,
+		RunTest<TVersion>(
+			TType == model::NetworkUpdateType::Delta ? Failure_NetworkConfig_ApplyHeightDelta_Zero : Failure_NetworkConfig_ApplyHeight_In_The_Past,
 			networkConfigWithPlugin,
 			test::GetSupportedEntityVersionsString(),
+			TType,
 			1,
 			1,
 			false,
-			BlockDuration(0));
+			0);
 	}
 
-	TEST(TEST_CLASS, FailureWhenBlockChainConfigTooBig) {
+	TRAITS_BASED_TEST(FailureWhenBlockChainConfigTooBig) {
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 			Failure_NetworkConfig_BlockChain_Config_Too_Large,
 			networkConfigWithPlugin,
 			test::GetSupportedEntityVersionsString(),
+			TType,
 			0,
 			1);
 	}
 
-	TEST(TEST_CLASS, FailureWhenSupportedEntityVersionsConfigTooBig) {
+	TRAITS_BASED_TEST(FailureWhenSupportedEntityVersionsConfigTooBig) {
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 			Failure_NetworkConfig_SupportedEntityVersions_Config_Too_Large,
 			networkConfigWithPlugin,
 			test::GetSupportedEntityVersionsString(),
+			TType,
 			1,
 			0);
 	}
 
-	TEST(TEST_CLASS, FailureWhenNetworkConfigExistsAtHeight) {
+	TRAITS_BASED_TEST(FailureWhenNetworkConfigExistsAtHeight) {
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 			Failure_NetworkConfig_Config_Redundant,
 			networkConfigWithPlugin,
 			test::GetSupportedEntityVersionsString(),
+			TType,
 			1,
 			1,
 			true);
 	}
 
-	TEST(TEST_CLASS, FailureWhenImportanceGroupingInvalid) {
+	TRAITS_BASED_TEST(FailureWhenImportanceGroupingInvalid) {
 		auto networkConfig = networkConfigWithPlugin;
 		boost::algorithm::replace_first(networkConfig, "importanceGrouping = 5760", "importanceGrouping = 100");
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 			Failure_NetworkConfig_ImportanceGrouping_Less_Or_Equal_Half_MaxRollbackBlocks,
 			networkConfig,
-			test::GetSupportedEntityVersionsString());
+			test::GetSupportedEntityVersionsString(),
+			TType);
 	}
 
-	TEST(TEST_CLASS, FailureWhenAccountVersionIsLowerThanCurrentVersion) {
+	TRAITS_BASED_TEST(FailureWhenAccountVersionIsLowerThanCurrentVersion) {
 		auto networkConfig = networkConfigWithPlugin;
 		boost::algorithm::replace_first(networkConfig, "accountVersion = 1", "accountVersion = 0");
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 				Failure_NetworkConfig_AccountVersion_Less_Than_Current,
 				networkConfig,
-				test::GetSupportedEntityVersionsString());
+				test::GetSupportedEntityVersionsString(),
+				TType);
 	}
 
-	TEST(TEST_CLASS, FailureWhenMinimumAccountVersionIsLowerThanCurrentVersion) {
+	TRAITS_BASED_TEST(FailureWhenMinimumAccountVersionIsLowerThanCurrentVersion) {
 		auto networkConfig = networkConfigWithPlugin;
 		boost::algorithm::replace_first(networkConfig, "minimumAccountVersion = 1", "minimumAccountVersion = 0");
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 				Failure_NetworkConfig_MinimumAccountVersion_Less_Than_Current,
 				networkConfig,
-				test::GetSupportedEntityVersionsString());
+				test::GetSupportedEntityVersionsString(),
+				TType);
 	}
 
-	TEST(TEST_CLASS, FailureWhenAccountVersionIsLowerThanMinimum) {
+	TRAITS_BASED_TEST(FailureWhenAccountVersionIsLowerThanMinimum) {
 		auto networkConfig = networkConfigWithPlugin;
 		boost::algorithm::replace_first(networkConfig, "accountVersion = 1", "accountVersion = 1");
 		boost::algorithm::replace_first(networkConfig, "minimumAccountVersion = 1", "minimumAccountVersion = 2");
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 				Failure_NetworkConfig_AccountVersion_Less_Than_Minimum,
 				networkConfig,
-				test::GetSupportedEntityVersionsString());
+				test::GetSupportedEntityVersionsString(),
+				TType);
 	}
 
-	TEST(TEST_CLASS, FailureWhenHarvestBeneficiaryPercentageInvalid) {
+	TRAITS_BASED_TEST(FailureWhenHarvestBeneficiaryPercentageInvalid) {
 		auto networkConfig = networkConfigWithPlugin;
 		boost::algorithm::replace_first(networkConfig, "harvestBeneficiaryPercentage = 10", "harvestBeneficiaryPercentage = 150");
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 			Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hundred,
 			networkConfig,
-			test::GetSupportedEntityVersionsString());
+			test::GetSupportedEntityVersionsString(),
+			TType);
 	}
 
-	TEST(TEST_CLASS, FailureWhenMaxMosaicAtomicUnitsInvalid) {
+	TRAITS_BASED_TEST(FailureWhenMaxMosaicAtomicUnitsInvalid) {
 		auto networkConfig = networkConfigWithPlugin;
 		boost::algorithm::replace_first(networkConfig, "maxMosaicAtomicUnits = 9'000'000'000'000'000", "maxMosaicAtomicUnits = 10");
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 			Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid,
 			networkConfig,
-			test::GetSupportedEntityVersionsString());
+			test::GetSupportedEntityVersionsString(),
+			TType);
 	}
 
-	TEST(TEST_CLASS, FailureWhenBlockChainConfigInvalid) {
+	TRAITS_BASED_TEST(FailureWhenBlockChainConfigInvalid) {
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 			Failure_NetworkConfig_BlockChain_Config_Malformed,
 			"invalidConfig",
-			test::GetSupportedEntityVersionsString());
+			test::GetSupportedEntityVersionsString(),
+			TType);
 	}
 
-	TEST(TEST_CLASS, FailureWhenPluginConfigMissing) {
+	TRAITS_BASED_TEST(FailureWhenPluginConfigMissing) {
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 			Failure_NetworkConfig_Plugin_Config_Missing,
 			commonBlockChainProperties,
-			test::GetSupportedEntityVersionsString());
+			test::GetSupportedEntityVersionsString(),
+			TType);
 	}
 
-	TEST(TEST_CLASS, FailureWhenPluginConfigInvalid) {
+	TRAITS_BASED_TEST(FailureWhenPluginConfigInvalid) {
 		// Assert:
 		auto networkConfig = commonBlockChainProperties +
 			"[plugin:catapult.plugins.config]\n\n"
 			"qwerty = 12";
-		RunTestWithRealPlugins(
+		RunTestWithRealPlugins<TVersion>(
 			Failure_NetworkConfig_Plugin_Config_Malformed,
 			networkConfig,
-			test::GetSupportedEntityVersionsString());
+			test::GetSupportedEntityVersionsString(),
+			TType);
 	}
 
-	TEST(TEST_CLASS, FailureWhenNetworkConfigTransactionHasNoSupportedVersions) {
+	TRAITS_BASED_TEST(FailureWhenNetworkConfigTransactionHasNoSupportedVersions) {
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 			Failure_NetworkConfig_Network_Config_Trx_Cannot_Be_Unsupported,
 			networkConfigWithPlugin,
 			"{\n"
@@ -297,22 +360,25 @@ namespace catapult { namespace validators {
 			"\t\t\t\"supportedVersions\": [2]\n"
 			"\t\t}\n"
 			"\t]\n"
-			"}");
+			"}",
+			TType);
 	}
 
-	TEST(TEST_CLASS, FailureWhenSupportedEntityVersionsConfigInvalid) {
+	TRAITS_BASED_TEST(FailureWhenSupportedEntityVersionsConfigInvalid) {
 		// Assert:
-		RunTest(
+		RunTest<TVersion>(
 			Failure_NetworkConfig_SupportedEntityVersions_Config_Malformed,
 			networkConfigWithPlugin,
-			"invalidConfig");
+			"invalidConfig",
+			TType);
 	}
 
-	TEST(TEST_CLASS, Success) {
+	TRAITS_BASED_TEST(Success) {
 		// Assert:
-		RunTestWithRealPlugins(
+		RunTestWithRealPlugins<TVersion>(
 			ValidationResult::Success,
 			networkConfigWithPlugin,
-			test::GetSupportedEntityVersionsString());
+			test::GetSupportedEntityVersionsString(),
+			TType);
 	}
 }}

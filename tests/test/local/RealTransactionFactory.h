@@ -59,6 +59,13 @@ namespace catapult { namespace test {
 			const std::string& supportedVersions,
 			const BlockDuration& blocksBeforeActive);
 
+	/// Creates basic signed blockchain upgrade transaction with \a signer, \a config, \a supportedVersions and \a activationHeight.
+	model::UniqueEntityPtr<model::Transaction> CreateNetworkConfigAbsoluteHeightTransaction(
+			const crypto::KeyPair& signer,
+			const std::string& config,
+			const std::string& supportedVersions,
+			const Height& activationHeight);
+
 	/// Creates signed root register namespace transaction with \a signer, \a name and \a duration.
 	model::UniqueEntityPtr<model::Transaction> CreateRegisterRootNamespaceTransaction(
 			const crypto::KeyPair& signer,

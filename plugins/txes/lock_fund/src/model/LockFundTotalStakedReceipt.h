@@ -8,22 +8,24 @@
 
 #include "catapult/model/Receipt.h"
 namespace catapult { namespace model {
-		/// Binary layout for an amount receipt to record the total locked harvesting mosaic
-		struct TotalStakedReceipt : public Receipt {
-		public:
-			/// Creates a receipt around \a amount and \a lockedAmount.
-			TotalStakedReceipt(
-					ReceiptType receiptType,
-					catapult::Amount amount)
-					: Amount(amount){
-				Size = sizeof(TotalStakedReceipt);
-				Version = 1;
-				Type = receiptType;
-			}
+#pragma pack(push, 1)
+	/// Binary layout for an amount receipt to record the total locked harvesting mosaic
+	struct TotalStakedReceipt : public Receipt {
+	public:
+		/// Creates a receipt around \a amount and \a lockedAmount.
+		TotalStakedReceipt(
+				ReceiptType receiptType,
+				catapult::Amount amount)
+				: Amount(amount){
+			Size = sizeof(TotalStakedReceipt);
+			Version = 1;
+			Type = receiptType;
+		}
 
-		public:
-			/// Amount of mosaic.
-			catapult::Amount Amount;
-		};
+	public:
+		/// Amount of mosaic.
+		catapult::Amount Amount;
+	};
+#pragma pack(pop)
 }}
 

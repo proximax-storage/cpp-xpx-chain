@@ -30,7 +30,6 @@
 #include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
-#include "plugins/txes/lock_fund/src/config/LockFundConfiguration.h"
 using namespace bsoncxx::builder::stream;
 
 namespace catapult { namespace mongo { namespace storages {
@@ -55,9 +54,7 @@ namespace catapult { namespace mongo { namespace storages {
 				test::MutableBlockchainConfiguration config;
 				config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
 				config.Immutable.HarvestingMosaicId = Currency_Mosaic_Id;
-				auto lockFundConfiguration = config::LockFundConfiguration::Uninitialized();
-				lockFundConfiguration.DockStakeRewardInterval = BlockDuration(100);
-				config.Network.SetPluginConfiguration<config::LockFundConfiguration>(lockFundConfiguration);
+				config.Network.DockStakeRewardInterval = BlockDuration(100);
 				return config::CreateMockConfigurationHolder(config.ToConst());
 			}
 			static cache::CatapultCache CreateCache() {

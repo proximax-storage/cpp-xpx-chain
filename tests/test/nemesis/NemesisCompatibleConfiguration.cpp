@@ -71,8 +71,7 @@ namespace catapult { namespace test {
 				{ "enabled", "true" },
 				{ "minRequestUnlockCooldown", "161280" },
 				{ "maxMosaicsSize", "256" },
-				{ "maxUnlockRequests", "10" },
-				{ "dockStakeRewardInterval", "100" },
+				{ "maxUnlockRequests", "10" }
 		} } }));
 		config.Plugins.emplace(PLUGIN_NAME(globalstore), utils::ConfigurationBag({ { "", {
 			{ "enabled", "true" },

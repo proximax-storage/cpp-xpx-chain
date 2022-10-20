@@ -16,12 +16,12 @@ using namespace catapult::model;
 
 namespace catapult { namespace plugins {
 
-#define TEST_CLASS NetworkConfigTransactionPluginTests
+#define TEST_CLASS NetworkConfigAbsoluteHeightTransactionPluginTests
 
 	namespace {
-		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 2);
+		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 1);
 
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(NetworkConfig, 2, 2,)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(NetworkConfigAbsoluteHeight, 1, 1,)
 
 		template<typename TTraits>
 		auto CreateTransactionWithAttachments(uint16_t networkConfigSize, uint16_t supportedEntityVersionsSize) {
@@ -33,12 +33,12 @@ namespace catapult { namespace plugins {
 			pTransaction->BlockChainConfigSize = networkConfigSize;
 			pTransaction->SupportedEntityVersionsSize = supportedEntityVersionsSize;
 			test::FillWithRandomData(pTransaction->Signer);
-			pTransaction->Type = static_cast<model::EntityType>(0x4159);
+			pTransaction->Type = static_cast<model::EntityType>(0x4259);
 			return pTransaction;
 		}
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_Network_Config)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_Network_Config_Absolute_Height)
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
@@ -135,7 +135,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithAttachments<TTraits>(10, 20);
-		pTransaction->ApplyHeightDelta = BlockDuration{100};
+		pTransaction->ApplyHeight = Height{100};
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);

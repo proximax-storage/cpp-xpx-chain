@@ -50,6 +50,7 @@ namespace catapult { namespace extensions {
 			"HarvestFeeObserver",
 			"TotalTransactionsObserver",
 			"SnapshotCleanUpObserver",
+			"BlockchainStateTrackingObserver",
 			"BlockDifficultyObserver",
 			"BlockDifficultyPruningObserver",
 			"TransactionHashPruningObserver",

@@ -128,10 +128,26 @@ namespace catapult { namespace test {
 			const std::string& supportedVersions,
 			const BlockDuration& blocksBeforeActive)
 	{
-		builders::NetworkConfigBuilder builder(Network_Identifier, signer.publicKey());
+		builders::NetworkConfigBuilder<model::NetworkConfigTransaction> builder(Network_Identifier, signer.publicKey());
 		builder.setBlockChainConfig(RawBuffer(reinterpret_cast<const unsigned char*>(config.data()), config.size()));
 		builder.setSupportedVersionsConfig(RawBuffer(reinterpret_cast<const unsigned char*>(supportedVersions.data()), supportedVersions.size()));
 		builder.setApplyHeightDelta(blocksBeforeActive);
+		auto pTransaction = builder.build();
+
+		extensions::TransactionExtensions(GetNemesisGenerationHash()).sign(signer, *pTransaction);
+		return std::move(pTransaction);
+	}
+
+	model::UniqueEntityPtr<model::Transaction> CreateNetworkConfigAbsoluteHeightTransaction(
+			const crypto::KeyPair& signer,
+			const std::string& config,
+			const std::string& supportedVersions,
+			const Height& activationHeight)
+	{
+		builders::NetworkConfigBuilder<model::NetworkConfigAbsoluteHeightTransaction> builder(Network_Identifier, signer.publicKey());
+		builder.setBlockChainConfig(RawBuffer(reinterpret_cast<const unsigned char*>(config.data()), config.size()));
+		builder.setSupportedVersionsConfig(RawBuffer(reinterpret_cast<const unsigned char*>(supportedVersions.data()), supportedVersions.size()));
+		builder.setApplyHeight(activationHeight);
 		auto pTransaction = builder.build();
 
 		extensions::TransactionExtensions(GetNemesisGenerationHash()).sign(signer, *pTransaction);

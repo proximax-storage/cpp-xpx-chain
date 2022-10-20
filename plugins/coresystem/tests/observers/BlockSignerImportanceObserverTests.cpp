@@ -31,7 +31,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS BlockSignerImportanceObserverTests
 
-		DEFINE_COMMON_OBSERVER_TESTS(BlockSignerImportance, config::CreateMockConfigurationHolder())
+		DEFINE_COMMON_OBSERVER_TESTS(BlockSignerImportance,)
 
 		namespace {
 			constexpr MosaicId Currency_Mosaic_Id(1234);
@@ -68,7 +68,7 @@ namespace catapult { namespace observers {
 					std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder,
 					TAction action) {
 				test::AccountObserverTestContext context(notifyMode, Height{444}, pConfigHolder->Config());
-				auto pObserver = CreateBlockSignerImportanceObserver(pConfigHolder);
+				auto pObserver = CreateBlockSignerImportanceObserver();
 
 				// Act + Assert:
 				action(context, *pObserver);

@@ -12,4 +12,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	/// Creates a mongo network config transaction plugin.
 	PLUGIN_API
 	std::unique_ptr<MongoTransactionPlugin> CreateNetworkConfigTransactionMongoPlugin();
+	/// Creates a mongo network config transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<MongoTransactionPlugin> CreateNetworkConfigAbsoluteHeightTransactionMongoPlugin();
 }}}

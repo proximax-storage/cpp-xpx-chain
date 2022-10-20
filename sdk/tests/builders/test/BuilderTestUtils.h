@@ -25,6 +25,7 @@ namespace catapult { namespace test {
 
 	template<typename TTransaction>
 	struct RegularTransactionTraits {
+		using Transaction = TTransaction;
 	public:
 		template<typename TBuilder>
 		static auto InvokeBuilder(TBuilder& builder) {
@@ -46,6 +47,7 @@ namespace catapult { namespace test {
 
 	template<typename TTransaction>
 	struct EmbeddedTransactionTraits {
+		using Transaction = TTransaction;
 	public:
 		template<typename TBuilder>
 		static auto InvokeBuilder(TBuilder& builder) {

@@ -53,6 +53,13 @@ namespace catapult { namespace utils {
 		return ConfigurationBag(std::move(values));
 	}
 
+	Height GetClosestHeight(uint64_t height, uint64_t interval)
+	{
+		if(height <= interval)
+			return Height(interval);
+		return Height((height-1)/interval*interval+interval);
+	}
+
 	std::pair<std::unordered_set<std::string>, size_t> ExtractSectionAsUnorderedSet(const ConfigurationBag& bag, const char* section) {
 		auto pair = ExtractSectionAsOrderedVector(bag, section);
 		return std::make_pair(std::unordered_set<std::string>(pair.first.cbegin(), pair.first.cend()), pair.second);

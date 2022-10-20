@@ -38,9 +38,6 @@ namespace catapult { namespace config {
 		/// Maximum transaction mosaics size.
 		uint16_t MaxMosaicsSize;
 
-		/// Interval between each dock staking reward cycle.
-		BlockDuration DockStakeRewardInterval;
-
 	private:
 		LockFundConfiguration() = default;
 

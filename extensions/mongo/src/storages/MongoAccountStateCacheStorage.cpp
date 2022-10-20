@@ -25,7 +25,7 @@
 #include "mongo/src/storages/MongoCacheStorage.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/thread/FutureUtils.h"
-#include "plugins/txes/lock_fund/src/config/LockFundConfiguration.h"
+#include "catapult/utils/ConfigurationUtils.h"
 using namespace bsoncxx::builder::stream;
 
 namespace catapult { namespace mongo { namespace storages {
@@ -58,11 +58,6 @@ namespace catapult { namespace mongo { namespace storages {
 				return mappers::ToDbModel(state::StakingRecord(accountState, harvestingMosaicId, height, refHeight));
 			}
 
-			static Height GetClosestHeight(uint64_t height, uint64_t interval) {
-				if(height <= interval)
-					return Height(interval);
-				return Height((height-1)/interval*interval+interval);
-			}
 			static void PrepareStorage(MongoDatabase& mongoDatabase){
 				if(mongoDatabase.HasCollection(Additional_Collection_Name))
 					return;
@@ -98,16 +93,18 @@ namespace catapult { namespace mongo { namespace storages {
 
 			static void OnRemove(StorageCallbackContext& context, const std::unordered_set<const ModelType*>& elements){
 				// Accounts never get removed!
-				auto interval = context.ConfigHolder.Config(context.CurrentHeight).Network.GetPluginConfiguration<config::LockFundConfiguration>().DockStakeRewardInterval.unwrap();
+				auto interval = context.ConfigHolder.Config(context.CurrentHeight).Network.DockStakeRewardInterval.unwrap();
+				if(interval == 0) return;
 				auto deleteResults = context.BulkWriter.bulkDelete(Additional_Collection_Name, elements,
-				   [refHeight = GetClosestHeight(context.CurrentHeight.unwrap(), interval)](const ModelType* model){
+				   [refHeight = utils::GetClosestHeight(context.CurrentHeight.unwrap(), interval)](const ModelType* model){
 					   return CreateAdditionalFilterByKey(model, refHeight);
 				   }).get();
 			}
 
 			static void OnUpsert(StorageCallbackContext& context, const std::unordered_set<const ModelType*>& elements){
-				auto interval = context.ConfigHolder.Config(context.CurrentHeight).Network.GetPluginConfiguration<config::LockFundConfiguration>().DockStakeRewardInterval.unwrap();
-				auto lastCalculatedHeight = GetClosestHeight(context.CurrentHeight.unwrap(), interval);
+				auto interval = context.ConfigHolder.Config(context.CurrentHeight).Network.DockStakeRewardInterval.unwrap();
+				if(interval == 0) return;
+				auto lastCalculatedHeight = utils::GetClosestHeight(context.CurrentHeight.unwrap(), interval);
 				const auto harvestingMosaicId = context.ConfigHolder.Config(context.CurrentHeight).Immutable.HarvestingMosaicId;
 				auto createDocument = [harvestingMosaicId, currentHeight = context.CurrentHeight, refHeight = lastCalculatedHeight](const auto* pModel, auto) {
 				  return MapAdditionalToMongoDocument(*pModel, harvestingMosaicId, currentHeight, refHeight);

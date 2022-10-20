@@ -17,16 +17,21 @@ namespace catapult { namespace builders {
 		using RegularTraits = test::RegularTransactionTraits<model::NetworkConfigTransaction>;
 		using EmbeddedTraits = test::EmbeddedTransactionTraits<model::EmbeddedNetworkConfigTransaction>;
 
+		using RegularAbsoluteTraits = test::RegularTransactionTraits<model::NetworkConfigAbsoluteHeightTransaction>;
+		using EmbeddedAbsoluteTraits = test::EmbeddedTransactionTraits<model::EmbeddedNetworkConfigAbsoluteHeightTransaction>;
+
 		struct TransactionProperties {
-			BlockDuration ApplyHeightDelta;
+			uint64_t ApplyHeight = 0;
 			std::string BlockChainConfig;
 			std::string SupportedEntityVersions;
 		};
 
 		template<typename TTransaction>
 		void AssertTransactionProperties(const TransactionProperties& expectedProperties, const TTransaction& transaction) {
-			EXPECT_EQ(expectedProperties.ApplyHeightDelta, transaction.ApplyHeightDelta);
-
+			if constexpr(std::is_same_v<model::transaction_base_type_t<TTransaction>, model::NetworkConfigTransaction>)
+				EXPECT_EQ(BlockDuration(expectedProperties.ApplyHeight), transaction.ApplyHeightDelta);
+			else
+				EXPECT_EQ(Height(expectedProperties.ApplyHeight), transaction.ApplyHeight);
 			ASSERT_EQ(expectedProperties.BlockChainConfig.size(), transaction.BlockChainConfigSize);
 			EXPECT_EQ_MEMORY(expectedProperties.BlockChainConfig.data(), transaction.BlockChainConfigPtr(), expectedProperties.BlockChainConfig.size());
 
@@ -37,21 +42,21 @@ namespace catapult { namespace builders {
 		template<typename TTraits>
 		void AssertCanBuildTransaction(
 			const TransactionProperties& expectedProperties,
-			const consumer<NetworkConfigBuilder&>& buildTransaction) {
+			const consumer<NetworkConfigBuilder<model::transaction_base_type_t<typename TTraits::Transaction>>&>& buildTransaction) {
 			// Arrange:
 			auto networkId = static_cast<model::NetworkIdentifier>(0x62);
 			auto signer = test::GenerateRandomByteArray<Key>();
 
 			// Act:
-			NetworkConfigBuilder builder(networkId, signer);
+			NetworkConfigBuilder<model::transaction_base_type_t<typename TTraits::Transaction>> builder(networkId, signer);
 			buildTransaction(builder);
 			auto pTransaction = TTraits::InvokeBuilder(builder);
 
 			// Assert:
 			TTraits::CheckFields(expectedProperties.BlockChainConfig.size() + expectedProperties.SupportedEntityVersions.size(), *pTransaction);
 			EXPECT_EQ(signer, pTransaction->Signer);
-			EXPECT_EQ(0x62000001, pTransaction->Version);
-			EXPECT_EQ(model::Entity_Type_Network_Config, pTransaction->Type);
+			EXPECT_EQ(0x62000002, pTransaction->Version);
+			EXPECT_EQ(model::transaction_base_type_t<typename TTraits::Transaction>::Entity_Type, pTransaction->Type);
 
 			AssertTransactionProperties(expectedProperties, *pTransaction);
 		}
@@ -65,8 +70,10 @@ namespace catapult { namespace builders {
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_Regular) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RegularTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Embedded) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<EmbeddedTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Regular_Delta) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RegularTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Embedded_Delta) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<EmbeddedTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Regular_Absolute) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RegularTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Embedded_Absolute) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<EmbeddedTraits>(); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	// region constructor
@@ -83,12 +90,17 @@ namespace catapult { namespace builders {
 	TRAITS_BASED_TEST(CanSetApplyHeightDelta) {
 		// Arrange:
 		auto expectedProperties = TransactionProperties();
-		expectedProperties.ApplyHeightDelta = BlockDuration{10};
+		expectedProperties.ApplyHeight = 10;
 
 		// Assert:
-		AssertCanBuildTransaction<TTraits>(expectedProperties, [](auto& builder) {
-			builder.setApplyHeightDelta(BlockDuration{10});
-		});
+		if constexpr(std::is_same_v<model::transaction_base_type_t<typename TTraits::Transaction>, model::NetworkConfigTransaction>)
+			AssertCanBuildTransaction<TTraits>(expectedProperties, [](auto& builder) {
+					builder.setApplyHeightDelta(BlockDuration{10});
+			});
+		else
+			AssertCanBuildTransaction<TTraits>(expectedProperties, [](auto& builder) {
+				builder.setApplyHeight(Height{10});
+			});
 	}
 
 	TRAITS_BASED_TEST(CanSetRawBlockChainConfig) {

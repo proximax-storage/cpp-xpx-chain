@@ -163,7 +163,7 @@ namespace catapult { namespace observers {
 
 			// This is the initial blockchain configuration and the plugin is enabled
 			// or this is the activation height for a new configuration in which the plugin has just now become enabled
-			if(context.Config.PreviousConfiguration == nullptr || (context.Height == context.Config.ActivationHeight && !context.Config.PreviousConfiguration->Network.GetPluginConfiguration<config::AccountRestrictionConfiguration>().Enabled))
+			if(context.HasChange(model::StateChangeFlags::Blockchain_Init) || (context.HasChange(model::StateChangeFlags::Network_Config_Upgraded) && !context.Config.PreviousConfiguration->Network.GetPluginConfiguration<config::AccountRestrictionConfiguration>().Enabled))
 			{
 				PluginSetup(context);
 			}

@@ -81,6 +81,11 @@ namespace catapult { namespace test {
 			"\t\t{\n"
 			"\t\t\t\"name\": \"Network_Config\",\n"
 			"\t\t\t\"type\": \"16729\",\n"
+			"\t\t\t\"supportedVersions\": [2]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Network_Config_Absoiute_Height\",\n"
+			"\t\t\t\"type\": \"16985\",\n"
 			"\t\t\t\"supportedVersions\": [1]\n"
 			"\t\t},\n"
 			"\t\t{\n"
@@ -270,6 +275,10 @@ namespace catapult { namespace test {
 		config.GreedExponent = 2.0;
 
 		config.AccountVersion = 1;
+
+		config.EnableStateTracking = true;
+
+		config.DockStakeRewardInterval = BlockDuration(100);
 
 		SetNetwork(config.Info, config.AccountVersion);
 

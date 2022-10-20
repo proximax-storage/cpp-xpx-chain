@@ -21,5 +21,14 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "supportedEntityVersions" << std::string((const char*)transaction.SupportedEntityVersionsPtr(), transaction.SupportedEntityVersionsSize);
 	}
 
+	template<typename TTransaction>
+	void StreamNetworkConfigAbsoluteHeightTransaction(bson_stream::document& builder, const TTransaction& transaction) {
+		builder
+				<< "applyHeight" << ToInt64(transaction.ApplyHeight)
+				<< "networkConfig" << std::string((const char*)transaction.BlockChainConfigPtr(), transaction.BlockChainConfigSize)
+				<< "supportedEntityVersions" << std::string((const char*)transaction.SupportedEntityVersionsPtr(), transaction.SupportedEntityVersionsSize);
+	}
+
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(NetworkConfig, StreamNetworkConfigTransaction)
+	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(NetworkConfigAbsoluteHeight, StreamNetworkConfigAbsoluteHeightTransaction)
 }}}

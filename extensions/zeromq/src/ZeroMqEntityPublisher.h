@@ -53,7 +53,10 @@ namespace catapult { namespace zeromq {
 		Transaction_Marker = 0x61, // 'a'
 
 		/// A receipt.
-		Receipt_Marker = 0x62, // 'b'
+		Public_Key_Statements_Marker = 0x62, // 'b'
+
+		/// A receipt.
+	  	Blockchain_State_Statements_Marker = 0x63, // 'c'
 
 		/// An added unconfirmed transaction.
 		Unconfirmed_Transaction_Add_Marker = 0x75, // 'u'
@@ -116,6 +119,7 @@ namespace catapult { namespace zeromq {
 
 		void publishTransaction(TransactionMarker topicMarker, const WeakTransactionInfo& transactionInfo);
 		void publishStatement(const model::PublicKeyStatement& statement, const Height& height);
+		void publishStatement(const model::BlockchainStateStatement& statement, const Height& height);
 		void publish(
 				const std::string& topicName,
 				TransactionMarker topicMarker,

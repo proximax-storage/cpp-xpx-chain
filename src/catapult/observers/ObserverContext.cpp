@@ -77,12 +77,21 @@ namespace catapult { namespace observers {
 			, State(state.State)
 			, Height(height)
 			, Mode(mode)
+			, StateChangeFlags(model::StateChangeFlags::None)
 			, Resolvers(BindConditional(resolvers, state.pBlockStatementBuilder))
 			, m_statementBuilder(CreateObserverStatementBuilder(state.pBlockStatementBuilder))
-	{}
+	{
+		if(Height == catapult::Height(1))
+			StateChangeFlags |= model::StateChangeFlags ::Blockchain_Init;
+		if(Config.PreviousConfiguration && Height == Config.ActivationHeight)
+			StateChangeFlags |= model::StateChangeFlags::Network_Config_Upgraded;
+	}
 
 	ObserverStatementBuilder& ObserverContext::StatementBuilder() {
 		return m_statementBuilder;
+	}
+	bool ObserverContext::HasChange(model::StateChangeFlags flag) const{
+		return HasFlag(flag, StateChangeFlags);
 	}
 
 	// endregion

@@ -136,7 +136,7 @@ namespace catapult { namespace tools { namespace upgrade {
 			}
 
 			std::shared_ptr<model::Transaction> generateConfigTransaction(model::NetworkIdentifier networkIdentifier, crypto::KeyPair& signer) {
-				builders::NetworkConfigBuilder builder(networkIdentifier, signer.publicKey());
+				builders::NetworkConfigBuilder<model::NetworkConfigTransaction> builder(networkIdentifier, signer.publicKey());
 				builder.setApplyHeightDelta(BlockDuration{m_configApplyHeightDelta});
 				auto resourcesPath = boost::filesystem::path(m_resourcesPath);
 				builder.setBlockChainConfig((resourcesPath / "config-network.properties").generic_string());

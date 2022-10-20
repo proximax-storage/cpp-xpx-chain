@@ -14,4 +14,8 @@ namespace catapult { namespace plugins {
 	/// Creates a network config transaction plugin.
 	PLUGIN_API
 	std::unique_ptr<model::TransactionPlugin> CreateNetworkConfigTransactionPlugin();
+
+	/// Creates a network config absolute height transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<model::TransactionPlugin> CreateNetworkConfigAbsoluteHeightTransactionPlugin();
 }}

@@ -27,12 +27,42 @@ namespace catapult { namespace plugins {
 					transaction.SupportedEntityVersionsSize,
 					transaction.SupportedEntityVersionsPtr()));
 				break;
+			case 2:
+				sub.notify(model::NetworkConfigSignerNotification<1>(transaction.Signer));
+				sub.notify(model::NetworkConfigNotification<2>(
+						NetworkUpdateType::Delta,
+						transaction.ApplyHeightDelta.unwrap(),
+						transaction.BlockChainConfigSize,
+						transaction.BlockChainConfigPtr(),
+						transaction.SupportedEntityVersionsSize,
+						transaction.SupportedEntityVersionsPtr()));
+				break;
 
 			default:
 				CATAPULT_LOG(debug) << "invalid version of NetworkConfigTransaction: " << transaction.EntityVersion();
 			}
 		}
+		template<typename TTransaction>
+		void PublishAbsoluteHeight(const TTransaction& transaction, const PublishContext&, NotificationSubscriber& sub) {
+			switch (transaction.EntityVersion()) {
+			case 1:
+				sub.notify(model::NetworkConfigSignerNotification<1>(transaction.Signer));
+				sub.notify(model::NetworkConfigNotification<2>(
+						NetworkUpdateType::Absolute,
+						transaction.ApplyHeight.unwrap(),
+						transaction.BlockChainConfigSize,
+						transaction.BlockChainConfigPtr(),
+						transaction.SupportedEntityVersionsSize,
+						transaction.SupportedEntityVersionsPtr()));
+				break;
+
+			default:
+				CATAPULT_LOG(debug) << "invalid version of NetworkConfigTransaction: " << transaction.EntityVersion();
+			}
+		}
+
 	}
 
 	DEFINE_TRANSACTION_PLUGIN_FACTORY(NetworkConfig, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(NetworkConfigAbsoluteHeight, Default, PublishAbsoluteHeight)
 }}

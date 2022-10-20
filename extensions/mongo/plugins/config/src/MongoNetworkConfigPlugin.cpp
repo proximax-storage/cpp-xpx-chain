@@ -12,6 +12,7 @@ extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	// transaction support
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateNetworkConfigTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateNetworkConfigAbsoluteHeightTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoNetworkConfigCacheStorage(

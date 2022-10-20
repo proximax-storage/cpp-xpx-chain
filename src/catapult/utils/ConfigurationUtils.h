@@ -48,6 +48,9 @@ namespace catapult { namespace utils {
 	/// Verifies that the number of properties in \a bag is exactly equal to \a expectedSize.
 	void VerifyBagSizeExact(const ConfigurationBag& bag, size_t expectedSize);
 
+	/// Calculates the reward tier associated with given \a height according to the configured \a interval.
+	Height GetClosestHeight(uint64_t height, uint64_t interval);
+
 	/// Extracts all \a section properties from \a bag into a new bag with a single section with a default (empty string) name.
 	ConfigurationBag ExtractSectionAsBag(const ConfigurationBag& bag, const char* section);
 

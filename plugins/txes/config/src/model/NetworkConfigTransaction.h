@@ -19,7 +19,7 @@ namespace catapult { namespace model {
 		using TransactionType = NetworkConfigTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Network_Config, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Network_Config, 2)
 
 	public:
 		/// Number of blocks before applying config.
@@ -56,6 +56,51 @@ namespace catapult { namespace model {
 	};
 
 	DEFINE_EMBEDDABLE_TRANSACTION(NetworkConfig)
+
+	/// Binary layout for a network config transaction body.
+	template<typename THeader>
+	struct NetworkConfigAbsoluteHeightTransactionBody : public THeader {
+	private:
+		using TransactionType = NetworkConfigAbsoluteHeightTransactionBody<THeader>;
+
+	public:
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Network_Config_Absolute_Height, 1)
+
+	public:
+		/// Height at which to enforce transaction.
+		Height ApplyHeight;
+
+		/// Blockchain configuration size in bytes.
+		uint16_t BlockChainConfigSize;
+
+		/// Supported entity versions configuration size in bytes.
+		uint16_t SupportedEntityVersionsSize;
+
+		// followed by blockchain configuration data if BlockChainConfigSize != 0
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(BlockChainConfig, uint8_t)
+
+		// followed by blockchain configuration data if SupportedEntityVersionsSize != 0
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(SupportedEntityVersions, uint8_t)
+
+	public:
+		template<typename T>
+		static auto* BlockChainConfigPtrT(T& transaction) {
+			return transaction.BlockChainConfigSize ? THeader::PayloadStart(transaction) : nullptr;
+		}
+
+		template<typename T>
+		static auto* SupportedEntityVersionsPtrT(T& transaction) {
+			auto* pPayloadStart = THeader::PayloadStart(transaction);
+			return transaction.SupportedEntityVersionsSize && pPayloadStart ? pPayloadStart + transaction.BlockChainConfigSize : nullptr;
+		}
+
+		// Calculates the real size of a network config \a transaction.
+		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
+			return sizeof(TransactionType) + transaction.BlockChainConfigSize + transaction.SupportedEntityVersionsSize;
+		}
+	};
+
+	DEFINE_EMBEDDABLE_TRANSACTION(NetworkConfigAbsoluteHeight)
 
 #pragma pack(pop)
 }}

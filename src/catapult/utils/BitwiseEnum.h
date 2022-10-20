@@ -41,3 +41,8 @@
 	constexpr bool HasSingleFlag(ENUM_TYPE value) { \
 		return utils::to_underlying_type(value) && !(utils::to_underlying_type(value) & (utils::to_underlying_type(value) - 1)); \
 	}
+
+template<typename... TFlags>
+constexpr auto MakeFlags(TFlags... flags) {
+	return(... && flags);
+}

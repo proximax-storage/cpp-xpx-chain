@@ -27,23 +27,20 @@ namespace catapult { namespace observers {
 
 	namespace {
 		using Notification = model::BlockSignerImportanceNotification<1>;
-		void ObserveNotification(const Notification& notification, ObserverContext& context, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
+		void ObserveNotification(const Notification& notification, ObserverContext& context)
 		{
 			auto& cache = context.Cache.sub<cache::AccountStateCache>();
 			if (NotifyMode::Commit == context.Mode)
 			{
 				auto accountStateOpt = cache::FindAccountStateByPublicKeyOrAddress(cache.asReadOnly(), notification.Signer);
-				const auto& config = pConfigHolder->Config();
+				const auto& config = context.Config;
 				auto balances = accountStateOpt->Balances.getCompoundEffectiveBalance(context.Height, config.Network.ImportanceGrouping);
 				auto receipt = model::SignerBalanceReceipt(model::Receipt_Type_Block_Signer_Importance, balances.first, balances.second);
 				context.StatementBuilder().addPublicKeyReceipt(receipt);
 			}
 		}
 	}
-	DECLARE_OBSERVER(BlockSignerImportance, Notification)(
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(BlockSignerImportance, Notification, ([pConfigHolder](const auto& notification, auto& context) {
-		  ObserveNotification(notification, context, pConfigHolder);
-		}));
+	DECLARE_OBSERVER(BlockSignerImportance, Notification)() {
+		return MAKE_OBSERVER(BlockSignerImportance, Notification, ObserveNotification);
 	}
 }}

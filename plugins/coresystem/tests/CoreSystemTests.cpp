@@ -86,6 +86,7 @@ namespace catapult { namespace plugins {
 					"HarvestFeeObserver",
 					"TotalTransactionsObserver",
 					"SnapshotCleanUpObserver",
+					"BlockchainStateTrackingObserver",
 					"BlockDifficultyObserver",
 					"BlockDifficultyPruningObserver",
 					"BalanceDebitObserver",
@@ -103,6 +104,7 @@ namespace catapult { namespace plugins {
 					"HarvestFeeObserver",
 					"TotalTransactionsObserver",
 					"SnapshotCleanUpObserver",
+					"BlockchainStateTrackingObserver",
 					"BalanceDebitObserver",
 					"BalanceCreditObserver",
 				};

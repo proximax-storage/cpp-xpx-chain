@@ -33,5 +33,6 @@ namespace catapult { namespace mongo {
 		manager.addReceiptSupport(CreateBalanceChangeReceiptMongoPlugin(model::Receipt_Type_Harvest_Fee));
 		manager.addReceiptSupport(CreateInflationReceiptMongoPlugin(model::Receipt_Type_Inflation));
 		manager.addReceiptSupport(CreateSignerBalanceReceiptMongoPlugin(model::Receipt_Type_Block_Signer_Importance));
+		manager.addReceiptSupport(CreateGlobalStateChangeReceiptMongoPlugin(model::Receipt_Type_Blockchain_State_Tracking));
 	}
 }}

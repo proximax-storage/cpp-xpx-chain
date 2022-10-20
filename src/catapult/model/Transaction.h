@@ -44,6 +44,16 @@ namespace catapult { namespace model {
 	/// \a registry contains all known transaction types.
 	bool IsSizeValid(const Transaction& transaction, const TransactionRegistry& registry);
 
+	template<typename TTransaction, typename TBaseType = void>
+	struct transaction_base_type {
+		using Type = TTransaction;
+	};
+	template<typename TTransaction>
+	struct transaction_base_type<TTransaction, std::void_t<typename TTransaction::BaseTransaction>>{
+		using Type = typename TTransaction::BaseTransaction;
+	};
+	template<typename TTransaction>
+	using transaction_base_type_t = typename transaction_base_type<TTransaction>::Type;
 	// region macros
 
 /// Defines constants for a transaction with \a TYPE and \a VERSION.
@@ -67,8 +77,13 @@ namespace catapult { namespace model {
 
 /// Defines a transaction with \a NAME that supports embedding.
 #define DEFINE_EMBEDDABLE_TRANSACTION(NAME) \
-	struct Embedded##NAME##Transaction : public NAME##TransactionBody<model::EmbeddedTransaction> {}; \
-	struct ExtendedEmbedded##NAME##Transaction : public NAME##TransactionBody<model::ExtendedEmbeddedTransaction> {}; \
+	struct NAME##Transaction;                  \
+	struct Embedded##NAME##Transaction : public NAME##TransactionBody<model::EmbeddedTransaction> { \
+    	using BaseTransaction = NAME##Transaction;                                        \
+	}; \
+	struct ExtendedEmbedded##NAME##Transaction : public NAME##TransactionBody<model::ExtendedEmbeddedTransaction> { \
+		using BaseTransaction = NAME##Transaction; \
+	}; \
 	struct NAME##Transaction : public NAME##TransactionBody<model::Transaction> {};
 
 	// endregion

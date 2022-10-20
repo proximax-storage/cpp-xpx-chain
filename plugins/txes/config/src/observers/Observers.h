@@ -12,4 +12,5 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by network config notifications
 	DECLARE_OBSERVER(NetworkConfig, model::NetworkConfigNotification<1>)();
+	DECLARE_OBSERVER(NetworkConfigV2, model::NetworkConfigNotification<2>)();
 }}

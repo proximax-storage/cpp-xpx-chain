@@ -1211,7 +1211,7 @@ namespace catapult { namespace consumers {
 	}
 	namespace {
 		auto CreateConfigTransactionBuilder(const BlockDuration& applyHeightDelta) {
-			builders::NetworkConfigBuilder builder(model::NetworkIdentifier::Zero, Key());
+			builders::NetworkConfigBuilder<model::NetworkConfigTransaction> builder(model::NetworkIdentifier::Zero, Key());
 			builder.setApplyHeightDelta(BlockDuration{applyHeightDelta});
 			auto resourcesPath = boost::filesystem::path("../resources");
 			builder.setBlockChainConfig((resourcesPath / "config-network.properties").generic_string());

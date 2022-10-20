@@ -258,6 +258,7 @@ namespace catapult { namespace local {
 
 				model::TotalStakedReceipt totalStakedReceipt(model::Receipt_Type_Total_Staked, Amount(0));
 				blockStatementBuilder.addBlockchainStateReceipt(totalStakedReceipt);
+
 				auto pStatement = blockStatementBuilder.build();
 				return model::CalculateMerkleHash(*pStatement);
 			}

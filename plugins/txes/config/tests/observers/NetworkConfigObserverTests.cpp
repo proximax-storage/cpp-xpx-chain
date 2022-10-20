@@ -77,4 +77,93 @@ namespace catapult { namespace observers {
 		// Assert:
 		RunTest(NotifyMode::Rollback, *notification, false, values);
 	}
+
+	// region V2
+	DEFINE_COMMON_OBSERVER_TESTS(NetworkConfigV2, )
+	namespace {
+		using NotificationV2 = model::NetworkConfigNotification<2>;
+
+		struct NetworkConfigValuesV2 {
+		public:
+			catapult::Height Height;
+			uint64_t ApplyHeight;
+			model::NetworkUpdateType Type;
+			std::string BlockChainConfig;
+			std::string SupportedEntityVersions;
+		};
+
+		std::unique_ptr<NotificationV2> CreateNotification(const NetworkConfigValuesV2& values) {
+			return std::make_unique<NotificationV2>(
+					values.Type,
+					values.ApplyHeight,
+					values.BlockChainConfig.size(),
+					reinterpret_cast<const uint8_t*>(values.BlockChainConfig.data()),
+					values.SupportedEntityVersions.size(),
+					reinterpret_cast<const uint8_t*>(values.SupportedEntityVersions.data()));
+		}
+
+		void RunTest(
+				NotifyMode mode,
+				const NotificationV2& notification,
+				bool entryExists,
+				const NetworkConfigValuesV2& expectedValues) {
+			// Arrange:
+			ObserverTestContext context(mode, expectedValues.Height);
+			auto pObserver = CreateNetworkConfigV2Observer();
+
+			// Act:
+			test::ObserveNotification(*pObserver, notification, context);
+
+			// Assert: check the cache
+			auto& networkConfigCacheDelta = context.cache().sub<cache::NetworkConfigCache>();
+			Height height;
+			if (notification.UpdateType == model::NetworkUpdateType::Delta)
+				height = Height { expectedValues.Height.unwrap() + expectedValues.ApplyHeight};
+			else {
+				height = Height(expectedValues.ApplyHeight);
+			}
+			EXPECT_EQ(entryExists, networkConfigCacheDelta.contains(height));
+			if (entryExists) {
+				const auto& entry = networkConfigCacheDelta.find(height).get();
+				EXPECT_EQ(expectedValues.BlockChainConfig, entry.networkConfig());
+				EXPECT_EQ(expectedValues.SupportedEntityVersions, entry.supportedEntityVersions());
+			}
+		}
+	}
+
+	TEST(TEST_CLASS, NetworkConfigV2_Commit_Delta) {
+		// Arrange:
+		auto values = NetworkConfigValuesV2{Height{1}, 2, model::NetworkUpdateType::Delta, test::networkConfig(), test::supportedVersions() };
+		auto notification = CreateNotification(values);
+
+		// Assert:
+		RunTest(NotifyMode::Commit, *notification, true, values);
+	}
+
+	TEST(TEST_CLASS, NetworkConfigV2_Rollback_Delta) {
+		// Arrange:
+		auto values = NetworkConfigValuesV2{Height{1}, 2, model::NetworkUpdateType::Delta, test::networkConfig(), test::supportedVersions() };
+		auto notification = CreateNotification(values);
+
+		// Assert:
+		RunTest(NotifyMode::Rollback, *notification, false, values);
+	}
+
+	TEST(TEST_CLASS, NetworkConfigV2_Commit_Abs) {
+		// Arrange:
+		auto values = NetworkConfigValuesV2{Height{1}, 3, model::NetworkUpdateType::Absolute, test::networkConfig(), test::supportedVersions() };
+		auto notification = CreateNotification(values);
+
+		// Assert:
+		RunTest(NotifyMode::Commit, *notification, true, values);
+	}
+
+	TEST(TEST_CLASS, NetworkConfigV2_Rollback_Abs) {
+		// Arrange:
+		auto values = NetworkConfigValuesV2{Height{1}, 3, model::NetworkUpdateType::Absolute, test::networkConfig(), test::supportedVersions() };
+		auto notification = CreateNotification(values);
+
+		// Assert:
+		RunTest(NotifyMode::Rollback, *notification, false, values);
+	}
 }}

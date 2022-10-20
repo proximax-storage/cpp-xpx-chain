@@ -158,6 +158,13 @@ namespace catapult { namespace validators {
 		return MAKE_STATEFUL_VALIDATOR(NAME, HANDLER); \
 	}
 
+/// Defines a functional stateful validator with \a NAME around \a HANDLER.
+/// \note This macro requires a validators::Notification alias.
+#define DEFINE_STATEFUL_VALIDATOR(NAME, HANDLER) \
+	DECLARE_STATEFUL_VALIDATOR(NAME, validators::Notification)() { \
+		return MAKE_STATEFUL_VALIDATOR(NAME, HANDLER); \
+	}
+
 /// Defines a functional stateful validator with \a NAME around \a HANDLER for notifications of type \a NOTIFICATION_TYPE.
 #define DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(NAME, NOTIFICATION_TYPE, HANDLER) \
 	DECLARE_STATEFUL_VALIDATOR(NAME, NOTIFICATION_TYPE)() { \

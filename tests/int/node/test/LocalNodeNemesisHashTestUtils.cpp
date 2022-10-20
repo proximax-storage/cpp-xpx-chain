@@ -96,6 +96,9 @@ namespace catapult { namespace test {
 			model::TotalStakedReceipt totalStakedReceipt(model::Receipt_Type_Total_Staked, Amount(0));
 			blockStatementBuilder.addBlockchainStateReceipt(totalStakedReceipt);
 
+			model::GlobalStateChangeReceipt stateChangeReceipt(model::Receipt_Type_Blockchain_State_Tracking, MakeFlags(model::StateChangeFlags::Blockchain_Init));
+			blockStatementBuilder.addBlockchainStateReceipt(stateChangeReceipt);
+
 			// 2. add mosaic aliases (supply tx first uses alias, block mosaic order is deterministic)
 			auto aliasFirstUsedPrimarySourceIds = GetMosaicSupplyChangePrimarySourceIds(nemesisBlock);
 			blockStatementBuilder.setSource({ aliasFirstUsedPrimarySourceIds[0], 0 });

@@ -64,6 +64,12 @@ namespace catapult { namespace validators {
 	/// Validation failed because AccountVersion is less than current AccountVersion.
 	DEFINE_CATAPULT_CONFIG_RESULT(AccountVersion_Less_Than_Current, 17);
 
+	/// Validation failed because AccountVersion is less than minimumAccountVersion.
+	DEFINE_CATAPULT_CONFIG_RESULT(Interval_Must_Change_After_Reward_Tier, 18);
+
+	/// Validation failed because ApplyHeightDelta is zero.
+	DEFINE_CATAPULT_CONFIG_RESULT(ApplyHeight_In_The_Past, 19);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

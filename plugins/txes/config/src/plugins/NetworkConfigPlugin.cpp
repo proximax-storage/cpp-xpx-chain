@@ -22,7 +22,7 @@ namespace catapult { namespace plugins {
 			config.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
 		});
 		manager.addTransactionSupport(CreateNetworkConfigTransactionPlugin());
-
+		manager.addTransactionSupport(CreateNetworkConfigAbsoluteHeightTransactionPlugin());
 		const auto& pConfigHolder = manager.configHolder();
 		manager.addCacheSupport(std::make_unique<cache::NetworkConfigCacheSubCachePlugin>(manager.cacheConfig(cache::NetworkConfigCache::Name), pConfigHolder));
 
@@ -42,12 +42,14 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([&manager](auto& builder) {
 			builder
 				.add(validators::CreateNetworkConfigSignerValidator())
-				.add(validators::CreateNetworkConfigValidator(manager));
+				.add(validators::CreateNetworkConfigValidator(manager))
+				.add(validators::CreateNetworkConfigV2Validator(manager));
 		});
 
 		manager.addObserverHook([](auto& builder) {
 			builder
-				.add(observers::CreateNetworkConfigObserver());
+				.add(observers::CreateNetworkConfigObserver())
+				.add(observers::CreateNetworkConfigV2Observer());
 		});
 	}
 }}

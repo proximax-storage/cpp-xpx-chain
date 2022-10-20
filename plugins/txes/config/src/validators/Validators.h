@@ -17,11 +17,12 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to network config notification and validates that:
 	/// - blockchain configuration data size does not exceed the limit
-	/// - no other config is declared at the same height
+	/// - no other config is declared at the same height and height is valid
 	/// - blockchain configuration data is valid
 	/// - supported entity versions configuration data size does not exceed the limit
 	/// - supported entity versions configuration data is valid
 	DECLARE_STATEFUL_VALIDATOR(NetworkConfig, model::NetworkConfigNotification<1>)(const plugins::PluginManager& manager);
+	DECLARE_STATEFUL_VALIDATOR(NetworkConfigV2, model::NetworkConfigNotification<2>)(const plugins::PluginManager& manager);
 
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid

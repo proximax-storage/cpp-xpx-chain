@@ -22,6 +22,7 @@
 #include "ReceiptType.h"
 #include "SizePrefixedEntity.h"
 #include "catapult/types.h"
+#include "StateChangeTracking.h"
 
 namespace catapult { namespace model {
 
@@ -67,6 +68,24 @@ namespace catapult { namespace model {
 
 		/// Amount.
 		catapult::Amount Amount;
+	};
+
+	/// Binary layout for an amount receipt to record the total locked harvesting mosaic
+	struct GlobalStateChangeReceipt : public Receipt {
+	public:
+		/// Creates a receipt around \a amount and \a lockedAmount.
+		GlobalStateChangeReceipt(
+				ReceiptType receiptType,
+				model::StateChangeFlags flags)
+			: Flags(flags){
+			Size = sizeof(GlobalStateChangeReceipt);
+			Version = 1;
+			Type = receiptType;
+		}
+
+	public:
+		/// Amount of mosaic.
+		model::StateChangeFlags Flags;
 	};
 
 	/// Binary layout for a signer balance receipt to record the importance of the signer account

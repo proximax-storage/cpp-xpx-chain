@@ -35,7 +35,6 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto& pluginManager = pluginLoader.manager();
 		auto initializers = pluginManager.createPluginInitializer();
 		initializers(const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network));
-		pConfigHolder->SetPluginInitializer(initializers);
 
 		// 2. prepare observer
 		observers::NotificationObserverAdapter entityObserver(pluginManager.createObserver(), pluginManager.createNotificationPublisher());
@@ -60,6 +59,9 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto blockReceiptsHash = pluginManager.immutableConfig().ShouldEnableVerifiableReceipts
 				? model::CalculateMerkleHash(*blockStatementBuilder.build())
 				: Hash256();
+
+		// 6. Clear plugin configs before unloading modules.
+		pConfigHolder->Config().Network.ClearPluginConfigurations();
 
 		return { blockReceiptsHash, cacheStateHashInfo.StateHash, cacheStateHashInfo.SubCacheMerkleRoots };
 	}

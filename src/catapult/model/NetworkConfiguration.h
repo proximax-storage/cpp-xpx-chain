@@ -99,8 +99,10 @@ namespace catapult { namespace model {
 		/// Allows validate deadline of transaction. It means that you can send old transactions to blockchain if it is false.
 		bool EnableDeadlineValidation;
 
-		/// Enable lock fund plugin
-		bool EnableMosaicLocking;
+		/// Enable generation of state tracking receipts
+		bool EnableStateTracking;
+
+
 
 		/// Minimum Version of the Account State that is currently allowed to be created. OPTIONAL DEFAULTS TO 1
 		uint32_t MinimumAccountVersion = 1;
@@ -110,6 +112,9 @@ namespace catapult { namespace model {
 
 		/// Maximum number of harvesting mosaic atomic units needed for an account to be eligible for harvesting. OPTIONAL DEFAULTS TO MAX
 		Amount MaxHarvesterBalance;
+
+		/// Interval between each dock staking reward cycle.
+		BlockDuration DockStakeRewardInterval;
 
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
@@ -163,6 +168,12 @@ namespace catapult { namespace model {
 
 			return *dynamic_cast<const T*>(pluginConfigs[T::Id].get());
 		}
+
+		/// Removes all plugin configs.
+		void ClearPluginConfigurations() const {
+			for (auto i = 0u; i < pluginConfigs.size(); ++i)
+				pluginConfigs[i] = nullptr;
+		}
 	};
 
 	/// Calculates the duration of a full rollback for the block chain described by \a config.
@@ -182,4 +193,5 @@ namespace catapult { namespace model {
 	T LoadPluginConfiguration(const NetworkConfiguration& config) {
 		return config.LoadPluginConfiguration<T>();
 	}
+
 }}

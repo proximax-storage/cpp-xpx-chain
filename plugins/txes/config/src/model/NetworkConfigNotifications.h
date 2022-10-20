@@ -20,6 +20,9 @@ namespace catapult { namespace model {
 	/// Blockchain config.
 	DEFINE_NETWORK_CONFIG_NOTIFICATION(Network_Config_v1, 0x002, All);
 
+	/// Blockchain config.
+	DEFINE_NETWORK_CONFIG_NOTIFICATION(Network_Config_v2, 0x003, All);
+
 #undef DEFINE_NETWORK_CONFIG_NOTIFICATION
 
 	// endregion
@@ -45,6 +48,12 @@ namespace catapult { namespace model {
 		/// Network config signer.
 		const Key& Signer;
 	};
+
+	enum class NetworkUpdateType:uint8_t {
+		Absolute,
+		Delta
+	};
+
 
 	/// Notification of a blockchain config.
 	template<VersionType version>
@@ -84,5 +93,44 @@ namespace catapult { namespace model {
 
 		/// Supported entity versions configuration data pointer.
 		const uint8_t* SupportedEntityVersionsPtr;
+	};
+
+	template<>
+	struct NetworkConfigNotification<2> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = NetworkConfig_Network_Config_v2_Notification;
+
+	public:
+		/// Creates a notification around \a applyHeightDelta, \a networkConfigSize, \a networkConfigPtr,
+		/// \a supportedEntityVersionsSize and \a supportedEntityVersionsPtr
+		NetworkConfigNotification(NetworkUpdateType type, const uint64_t& applyHeight, uint16_t networkConfigSize, const uint8_t* networkConfigPtr,
+								  uint16_t supportedEntityVersionsSize, const uint8_t* supportedEntityVersionsPtr)
+			: Notification(Notification_Type, sizeof(NetworkConfigNotification<2>))
+			, ApplyHeight(applyHeight)
+			, BlockChainConfigSize(networkConfigSize)
+			, BlockChainConfigPtr(networkConfigPtr)
+			, SupportedEntityVersionsSize(supportedEntityVersionsSize)
+			, SupportedEntityVersionsPtr(supportedEntityVersionsPtr)
+			, UpdateType(type)
+		{}
+
+	public:
+		/// Height to apply config at.
+		uint64_t ApplyHeight;
+
+		/// Blockchain configuration size in bytes.
+		uint16_t BlockChainConfigSize;
+
+		/// Blockchain configuration data pointer.
+		const uint8_t* BlockChainConfigPtr;
+
+		/// Supported entity versions configuration size in bytes.
+		uint16_t SupportedEntityVersionsSize;
+
+		/// Supported entity versions configuration data pointer.
+		const uint8_t* SupportedEntityVersionsPtr;
+
+		NetworkUpdateType UpdateType;
 	};
 }}

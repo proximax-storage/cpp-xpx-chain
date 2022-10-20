@@ -59,11 +59,8 @@ namespace catapult { namespace model {
 		/// Operation receipt.
 		Operation = 0x7,
 
-		/// Operation receipt.
-		SignerImportance = 0x8,
-
-		/// Total Staked
-		TotalStaked = 0x9
+		/// State receipt.
+		StateTracking = 0x8
 	};
 
 	/// Enumeration of receipt types.
@@ -106,7 +103,10 @@ namespace catapult { namespace model {
 	DEFINE_RECEIPT_TYPE(AliasResolution, Core, Mosaic_Alias_Resolution, 2);
 
 	/// Harvest fee credit.
-	DEFINE_RECEIPT_TYPE(SignerImportance, Core, Block_Signer_Importance, 1);
+	DEFINE_RECEIPT_TYPE(StateTracking, Core, Block_Signer_Importance, 1);
+
+	/// Harvest fee credit.
+	DEFINE_RECEIPT_TYPE(StateTracking, Core, Blockchain_State_Tracking, 2);
 
 
 	/// Insertion operator for outputting \a receiptType to \a out.

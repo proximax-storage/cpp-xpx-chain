@@ -18,17 +18,17 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#pragma once
-#ifndef CUSTOM_RECEIPT_TYPE_DEFINITION
-#include "catapult/model/ReceiptType.h"
+#include "Observers.h"
 
-namespace catapult { namespace model {
+namespace catapult { namespace observers {
 
-#endif
-
-	/// Total amount of locked harvesting mosaic.
-	DEFINE_RECEIPT_TYPE(StateTracking, LockFund, Total_Staked, 1);
-
-#ifndef CUSTOM_RECEIPT_TYPE_DEFINITION
+	namespace {
+		void ObserveNotification(const model::BlockNotification<1>& notification, ObserverContext& context) {
+			if(!context.Config.Network.EnableStateTracking || NotifyMode::Commit != context.Mode || context.StateChangeFlags == model::StateChangeFlags::None)
+				return;
+			model::GlobalStateChangeReceipt receipt(model::Receipt_Type_Blockchain_State_Tracking, context.StateChangeFlags);
+			context.StatementBuilder().addBlockchainStateReceipt(receipt);
+		}
+	}
+	DEFINE_OBSERVER(BlockchainStateTracking, model::BlockNotification<1>, ObserveNotification);
 }}
-#endif

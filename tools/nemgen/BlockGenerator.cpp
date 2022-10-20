@@ -153,7 +153,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			}
 
 			void addConfig(const std::string& resourcesPath) {
-				builders::NetworkConfigBuilder builder(m_networkIdentifier, m_signer.publicKey());
+				builders::NetworkConfigBuilder<model::NetworkConfigTransaction> builder(m_networkIdentifier, m_signer.publicKey());
 				builder.setApplyHeightDelta(BlockDuration{0});
 				auto resPath = boost::filesystem::path(resourcesPath);
 				builder.setBlockChainConfig((resPath / "resources/config-network.properties").generic_string());

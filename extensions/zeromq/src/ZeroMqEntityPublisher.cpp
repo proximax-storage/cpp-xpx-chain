@@ -162,6 +162,9 @@ namespace catapult { namespace zeromq {
 			for (const auto& pair : statements) {
 				publishStatement(pair.second, blockElement.Block.Height);
 			}
+			for (const auto& pair : blockElement.OptionalStatement->BlockchainStateStatements) {
+				publishStatement(pair.second, blockElement.Block.Height);
+			}
 		}
 	}
 
@@ -250,7 +253,20 @@ namespace catapult { namespace zeromq {
 	}
 
 	void ZeroMqEntityPublisher::publishStatement(const model::PublicKeyStatement& statement, const Height& height) {
-		TransactionMarker topic = TransactionMarker::Receipt_Marker;
+		TransactionMarker topic = TransactionMarker::Public_Key_Statements_Marker;
+		for (auto i = 0u; i < statement.size(); ++i){
+			auto pMessageGroup = std::make_unique<MessageGroup>(CreateHeightMessageGenerator("publish statement", height));
+			const auto& receipt = statement.receiptAt(i);
+			zmq::multipart_t multipart;
+			multipart.addmem(&topic, sizeof(TransactionMarker));
+			multipart.addmem(&receipt, receipt.Size);
+			pMessageGroup->add(std::move(multipart));
+			m_pSynchronizedPublisher->queue(std::move(pMessageGroup));
+		}
+	}
+
+	void ZeroMqEntityPublisher::publishStatement(const model::BlockchainStateStatement & statement, const Height& height) {
+		TransactionMarker topic = TransactionMarker::Blockchain_State_Statements_Marker;
 		for (auto i = 0u; i < statement.size(); ++i){
 			auto pMessageGroup = std::make_unique<MessageGroup>(CreateHeightMessageGenerator("publish statement", height));
 			const auto& receipt = statement.receiptAt(i);

@@ -13,6 +13,7 @@ namespace catapult { namespace model {
 #endif
 	/// Network config transaction.
 	DEFINE_TRANSACTION_TYPE(NetworkConfig, Network_Config, 0x1);
+	DEFINE_TRANSACTION_TYPE(NetworkConfig, Network_Config_Absolute_Height, 0x2);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

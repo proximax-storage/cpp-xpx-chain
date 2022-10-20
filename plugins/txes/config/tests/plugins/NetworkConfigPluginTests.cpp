@@ -37,7 +37,7 @@ namespace catapult { namespace plugins {
 
 		public:
 			static std::vector<model::EntityType> GetTransactionTypes() {
-				return { model::Entity_Type_Network_Config };
+				return { model::Entity_Type_Network_Config, model::Entity_Type_Network_Config_Absolute_Height };
 			}
 
 			static std::vector<std::string> GetCacheNames() {
@@ -66,12 +66,14 @@ namespace catapult { namespace plugins {
 				return {
 					"NetworkConfigSignerValidator",
 					"NetworkConfigValidator",
+					"NetworkConfigV2Validator",
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
 					"NetworkConfigObserver",
+					"NetworkConfigV2Observer"
 				};
 			}
 

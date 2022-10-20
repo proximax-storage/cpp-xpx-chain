@@ -84,9 +84,10 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(MinimumAccountVersion);
 		config.MaxHarvesterBalance = Amount(UINT64_MAX);
 		TRY_LOAD_CHAIN_PROPERTY(MaxHarvesterBalance);
-
-		config.EnableMosaicLocking = false;
-		TRY_LOAD_CHAIN_PROPERTY(EnableMosaicLocking);
+		config.DockStakeRewardInterval = BlockDuration(0);
+		TRY_LOAD_CHAIN_PROPERTY(DockStakeRewardInterval);
+		config.EnableStateTracking = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableStateTracking);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

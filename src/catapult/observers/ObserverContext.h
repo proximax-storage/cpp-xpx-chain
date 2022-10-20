@@ -24,6 +24,7 @@
 #include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/model/ResolverContext.h"
 #include "catapult/state/CatapultState.h"
+#include "catapult/model/StateChangeTracking.h"
 #include <iosfwd>
 
 namespace catapult { namespace observers {
@@ -101,7 +102,10 @@ namespace catapult { namespace observers {
 		/// Alias resolvers.
 		const model::ResolverContext Resolvers;
 
+		model::StateChangeFlags StateChangeFlags;
+
 	public:
+		bool HasChange(model::StateChangeFlags flag) const;
 		/// Statement builder.
 		ObserverStatementBuilder& StatementBuilder();
 

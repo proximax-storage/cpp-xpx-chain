@@ -11,18 +11,34 @@ namespace catapult { namespace observers {
 
 	using Notification = model::NetworkConfigNotification<1>;
 
-	DECLARE_OBSERVER(NetworkConfig, Notification)() {
-		return MAKE_OBSERVER(NetworkConfig, Notification, [](const auto& notification, const ObserverContext& context) {
+	namespace {
+		template<typename TNotification>
+		void ObserveNetworkConfigNotification(const TNotification& notification, const ObserverContext& context) {
 			auto& cache = context.Cache.sub<cache::NetworkConfigCache>();
-			auto height = Height{context.Height.unwrap() + notification.ApplyHeightDelta.unwrap()};
+			Height height;
+			if constexpr(std::is_same_v<TNotification, model::NetworkConfigNotification<1>>)
+				height = Height{context.Height.unwrap() + notification.ApplyHeightDelta.unwrap()};
+			else {
+				if (notification.UpdateType == model::NetworkUpdateType::Delta)
+					height = Height { context.Height.unwrap() + notification.ApplyHeight };
+				else {
+					height = Height(notification.ApplyHeight);
+				}
+			}
 			if (NotifyMode::Commit == context.Mode) {
 				cache.insert(state::NetworkConfigEntry(height,
-					std::string((const char*)notification.BlockChainConfigPtr, notification.BlockChainConfigSize),
-					std::string((const char*)notification.SupportedEntityVersionsPtr, notification.SupportedEntityVersionsSize)));
+													   std::string((const char*)notification.BlockChainConfigPtr, notification.BlockChainConfigSize),
+													   std::string((const char*)notification.SupportedEntityVersionsPtr, notification.SupportedEntityVersionsSize)));
 			} else {
 				if (cache.contains(height))
 					cache.remove(height);
 			}
-		});
+		}
+	}
+	DECLARE_OBSERVER(NetworkConfig, model::NetworkConfigNotification<1>)() {
+		return MAKE_OBSERVER(NetworkConfig, model::NetworkConfigNotification<1>, ObserveNetworkConfigNotification<model::NetworkConfigNotification<1>>);
+	}
+	DECLARE_OBSERVER(NetworkConfigV2, model::NetworkConfigNotification<2>)() {
+		return MAKE_OBSERVER(NetworkConfigV2, model::NetworkConfigNotification<2>, ObserveNetworkConfigNotification<model::NetworkConfigNotification<2>>);
 	}
 }}
