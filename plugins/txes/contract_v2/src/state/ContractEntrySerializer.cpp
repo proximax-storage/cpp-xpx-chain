@@ -18,8 +18,8 @@ namespace catapult { namespace state {
         io::Write(output, entry.owner());
         io::Write16(output, (uint16_t) entry.automatedExecutionFileName().size());
         io::Write16(output, (uint16_t) entry.automatedExecutionFunctionName().size());
-        io::Write64(output, entry.automatedExecutionCallPayment());
-        io::Write64(output, entry.automatedDownloadCallPayment());
+        io::Write(output, entry.automatedExecutionCallPayment());
+        io::Write(output, entry.automatedDownloadCallPayment());
         io::Write32(output, entry.automatedExecutionsNumber());
         io::Write(output, entry.assignee());
     }

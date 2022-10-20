@@ -31,6 +31,7 @@ namespace catapult { namespace model {
         public:
 		/// Creates a notification around \a driveKey, \a startExecuteTransactionParams and \a pModifications.
 		explicit DeployNotification(
+            const Key& owner,
 			const Key& driveKey,
 			const std::string& fileName,
             const std::string& functionName,
@@ -47,6 +48,7 @@ namespace catapult { namespace model {
 			const uint32_t& automatedExecutionsNumber,
 			const Key& assignee)
             : Notification(Notification_Type, sizeof(DeployNotification<1>))
+            , Owner(owner)
             , DriveKey(driveKey)
             , FileName(fileName)
             , FunctionName(functionName)
@@ -65,6 +67,9 @@ namespace catapult { namespace model {
         {}
 
         public:
+            /// Public key of owner.
+            Key Owner;
+
             /// Drive public key on which the SC is considered to be deployed
             Key DriveKey;
 
