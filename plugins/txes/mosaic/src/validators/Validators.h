@@ -116,4 +116,7 @@ namespace catapult { namespace validators {
 	//  - check if transfered mosaic has levy
 	/// - check if sender has enough balance for levy
 	DECLARE_STATEFUL_VALIDATOR(LevyTransfer, model::BalanceTransferNotification<1>)();
+
+	/// A validator implementation that checks that an offer's lifetime does not exceed a mosaic's lifetime
+	DECLARE_STATEFUL_VALIDATOR(MosaicActive, model::MosaicActiveNotification<1>)();
 }}

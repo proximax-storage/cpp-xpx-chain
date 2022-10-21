@@ -359,6 +359,16 @@
 			"name": "manualRateChange",
 			"type": "17001",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "placeSdaExchangeOffer",
+			"type": "16746",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "removeSdaExchangeOffer",
+			"type": "17002",
+			"supportedVersions": [1]
 		}
 	]
 }

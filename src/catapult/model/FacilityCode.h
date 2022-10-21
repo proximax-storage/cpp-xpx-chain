@@ -88,6 +88,10 @@ namespace catapult { namespace model {
 		/// Priority queue facility code.
 		PriorityQueue = 0x68,
 		/// Liquidity Provider facility code
-		LiquidityProvider = 0x69
+		LiquidityProvider = 0x69,
+		/// SDA-SDA Exchange facility code.
+		ExchangeSda = 0x6A,
+		/// SDA-SDA Offer Group facility code.
+		SdaOfferGroup = 0x6B,
 	};
 }}

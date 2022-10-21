@@ -21,6 +21,7 @@ namespace catapult { namespace storage {
 
 #define LOAD_DB_PROPERTY(NAME) LOAD_PROPERTY("replicator", NAME)
 
+		LOAD_DB_PROPERTY(Key);
 		LOAD_DB_PROPERTY(Host);
 		LOAD_DB_PROPERTY(Port);
 		LOAD_DB_PROPERTY(TransactionTimeout);
@@ -35,7 +36,7 @@ namespace catapult { namespace storage {
 
 #undef LOAD_DB_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 11);
+		utils::VerifyBagSizeLte(bag, 12);
 		return config;
 	}
 

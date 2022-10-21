@@ -51,6 +51,8 @@ namespace catapult { namespace validators {
 			#include "plugins/txes/committee/src/validators/Results.h"
 			#include "plugins/txes/config/src/validators/Results.h"
 			#include "plugins/txes/exchange/src/validators/Results.h"
+			#include "plugins/txes/exchange_sda/src/validators/Results.h"
+			#include "plugins/txes/config/src/validators/Results.h"
 			#include "plugins/txes/lock_hash/src/validators/Results.h"
 			#include "plugins/txes/lock_secret/src/validators/Results.h"
 			#include "plugins/txes/metadata/src/validators/Results.h"

@@ -48,6 +48,9 @@ namespace catapult { namespace utils {
 	/// Tries to parse \a str into a boolean (\a parsedValue).
 	bool TryParseValue(const std::string& str, bool& parsedValue);
 
+	/// Tries to parse \a str into a sort policy (\a parsedValue).
+	bool TryParseValue(const std::string& str, SortPolicy& parsedValue);
+
 	/// Tries to parse \a str into a uint8_t (\a parsedValue).
 	bool TryParseValue(const std::string& str, uint8_t& parsedValue);
 

@@ -58,6 +58,15 @@ namespace catapult { namespace model {
 
 		/// Operation receipt.
 		Operation = 0x7,
+
+		/// Offer creation.
+		OfferCreation = 0xA,
+
+		/// Offer exchange.
+		OfferExchange = 0xB,
+
+		/// Offer removal.
+		OfferRemoval = 0xC,
 	};
 
 	/// Enumeration of receipt types.

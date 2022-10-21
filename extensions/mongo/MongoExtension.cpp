@@ -92,11 +92,19 @@ namespace catapult { namespace mongo {
 			const auto& dbConfigSet = dbConfig.Plugins;
 			const std::string networkPrefix = "catapult.plugins.";
 			const std::string dbPrefix = "catapult.mongo.plugins.";
-			for (const auto& [networkPluginName, _] : networkConfigMap) {
+			for (const auto& [networkPluginName, bag] : networkConfigMap) {
+				bool enabled = true;
+				bag.tryGet<bool>(utils::ConfigurationKey("", "enabled"), enabled);
+
 				const auto pluginName = networkPluginName.substr(networkPrefix.length());
 				const auto dbPluginName = dbPrefix + pluginName;
-				if (!dbConfigSet.count(dbPluginName))
-					CATAPULT_THROW_RUNTIME_ERROR_1("plugin not found in db configuration", pluginName);
+				auto iter = dbConfigSet.find(dbPluginName);
+
+				if (enabled && iter == dbConfigSet.end())
+					CATAPULT_THROW_RUNTIME_ERROR_1("mongo plugin must be enabled", pluginName);
+
+				if (!enabled && iter != dbConfigSet.end())
+					CATAPULT_THROW_RUNTIME_ERROR_1("mongo plugin must not be enabled", pluginName);
 			}
 
 			// create mongo writer
