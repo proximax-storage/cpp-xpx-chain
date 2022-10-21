@@ -17,12 +17,12 @@ namespace catapult { namespace observers {
     DEFINE_COMMON_OBSERVER_TESTS(DownloadChannel,)
 
     namespace {
-        using ObserverTestContext = test::ObserverTestContextT<test::DownloadChannelCacheFactory>;
+        using ObserverTestContext = test::ObserverTestContextT<test::StorageCacheFactory>;
         using Notification = model::DownloadNotification<1>;
 
         const Key Consumer = test::GenerateRandomByteArray<Key>();
         constexpr Amount Transaction_Fee(100);
-		constexpr auto Replicator_Count = 1;
+		constexpr auto Replicator_Count = 5;
         constexpr auto Download_Size = 100;
         constexpr Amount Storage_Units(Download_Size);
         constexpr Height Current_Height(15);
@@ -39,11 +39,13 @@ namespace catapult { namespace observers {
             public:
                 explicit CacheValues()
                     : BcDriveEntry(Key())
+					, ReplicatorEntries()
                     , ExpectedDownloadChannelEntry(Hash256())
                 {}
             
             public:
 				state::BcDriveEntry BcDriveEntry;
+				std::vector<state::ReplicatorEntry> ReplicatorEntries;
 				state::DownloadChannelEntry ExpectedDownloadChannelEntry;
         };
 
@@ -52,7 +54,9 @@ namespace catapult { namespace observers {
             entry.setConsumer(Consumer);
 			entry.setDrive(driveEntry.key());
 			entry.setDownloadSize(Download_Size);
+			entry.setDownloadApprovalCountLeft(1);
 			for (const auto& key : driveEntry.replicators()) {
+				entry.shardReplicators().insert(key);
 				entry.cumulativePayments().emplace(key, 0);
 			}
 			entry.listOfPublicKeys().push_back(Consumer);
@@ -60,12 +64,23 @@ namespace catapult { namespace observers {
 			return entry;
         }
 
-        state::BcDriveEntry CreateBcDriveEntry(const Key& driveKey, const uint16_t& replicatorCount) {
-            state::BcDriveEntry entry(driveKey);
-			for (auto i = 0u; i < replicatorCount; ++i)
-				entry.replicators().emplace(test::GenerateRandomByteArray<Key>());
+		std::vector<state::ReplicatorEntry> CreateReplicatorEntries(const uint16_t& count) {
+			std::vector<state::ReplicatorEntry> entries;
+			entries.reserve(count);
+			for (auto i = 0u; i < count; ++i)
+				entries.push_back(test::CreateReplicatorEntry(test::GenerateRandomByteArray<Key>()));
 
-            return entry;
+			return entries;
+		}
+
+        state::BcDriveEntry CreateBcDriveEntry(
+				const Key& driveKey,
+				const std::vector<state::ReplicatorEntry>& replicatorEntries) {
+            state::BcDriveEntry driveEntry(driveKey);
+			for (const auto& replicatorEntry : replicatorEntries)
+				driveEntry.replicators().emplace(replicatorEntry.key());
+
+            return driveEntry;
         }
 
         void RunTest(NotifyMode mode, const CacheValues& values, const Height& currentHeight) {
@@ -79,10 +94,13 @@ namespace catapult { namespace observers {
 				0u,
 				nullptr);
             auto pObserver = CreateDownloadChannelObserver();
-            auto& downloadChannelCache = context.cache().sub<cache::DownloadChannelCache>();
-            auto& driveCache = context.cache().sub<cache::BcDriveCache>(); 
+			auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
+			auto& driveCache = context.cache().sub<cache::BcDriveCache>();
+			auto& downloadChannelCache = context.cache().sub<cache::DownloadChannelCache>();
 
             // Populate cache.
+			for (auto& entry : values.ReplicatorEntries)
+				replicatorCache.insert(entry);
             driveCache.insert(values.BcDriveEntry);
 
             // Act:
@@ -99,17 +117,18 @@ namespace catapult { namespace observers {
         }
     }
 
-//    TEST(TEST_CLASS, DownloadChannel_Commit) {
-//        // Arrange:
-//        CacheValues values;
-//        auto driveKey = test::GenerateRandomByteArray<Key>();
-//        auto activeDownloadId = test::GenerateRandomByteArray<Hash256>();
-//        values.BcDriveEntry = CreateBcDriveEntry(driveKey, Replicator_Count);
-//        values.ExpectedDownloadChannelEntry = CreateExpectedDownloadChannelEntry(activeDownloadId, values.BcDriveEntry);
-//
-//        // Assert:
-//        RunTest(NotifyMode::Commit, values, Current_Height);
-//    }
+    TEST(TEST_CLASS, DownloadChannel_Commit) {
+        // Arrange:
+        CacheValues values;
+        auto driveKey = test::GenerateRandomByteArray<Key>();
+        auto activeDownloadId = test::GenerateRandomByteArray<Hash256>();
+		values.ReplicatorEntries = CreateReplicatorEntries(Replicator_Count);
+        values.BcDriveEntry = CreateBcDriveEntry(driveKey, values.ReplicatorEntries);
+        values.ExpectedDownloadChannelEntry = CreateExpectedDownloadChannelEntry(activeDownloadId, values.BcDriveEntry);
+
+        // Assert:
+        RunTest(NotifyMode::Commit, values, Current_Height);
+    }
 
     TEST(TEST_CLASS, DownloadChannel_Rollback) {
         // Arrange:

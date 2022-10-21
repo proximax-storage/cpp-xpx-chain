@@ -229,6 +229,8 @@ namespace catapult { namespace utils {
 			auto replicatorIter = replicatorCache.find(replicatorKey);
 			auto& replicatorEntry = replicatorIter.get();
 			replicatorEntry.drives().erase(driveKey);
+			for (const auto& id : driveEntry.downloadShards())
+				replicatorEntry.downloadChannels().erase(id);
 		}
 
 		std::vector<Key> newOffboardingReplicators;

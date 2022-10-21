@@ -218,12 +218,21 @@ namespace catapult { namespace test {
 		}
 	}
 
+	void AssertEqualShardReplicators(const utils::SortedKeySet& expected, const utils::SortedKeySet& actual) {
+		EXPECT_EQ(expected.size(), actual.size());
+		auto itExpected = expected.begin();
+		auto itActual = actual.begin();
+		for(; itExpected != expected.end(); itExpected++, itActual++) {
+			EXPECT_EQ(*itExpected, *itActual);
+		}
+	}
+
 	void AssertEqualCumulativePayments(const std::map<Key, Amount>& expected,
 									   const std::map<Key, Amount>& actual) {
 		EXPECT_EQ(expected.size(), actual.size());
 		auto itExpected = expected.begin();
 		auto itActual = actual.begin();
-		for(; itExpected != expected.end(); itExpected++) {
+		for(; itExpected != expected.end(); itExpected++, itActual++) {
 			EXPECT_EQ(itExpected->first, itActual->first);
 			EXPECT_EQ(itExpected->second, itActual->second);
 		}
@@ -240,6 +249,7 @@ namespace catapult { namespace test {
 		EXPECT_EQ(expectedEntry.getLastDownloadApprovalInitiated(), entry.getLastDownloadApprovalInitiated());
 
 		AssertEqualListOfPublicKeys(expectedEntry.listOfPublicKeys(), entry.listOfPublicKeys());
+		AssertEqualShardReplicators(expectedEntry.shardReplicators(), entry.shardReplicators());
 		AssertEqualCumulativePayments(expectedEntry.cumulativePayments(), entry.cumulativePayments());
     }
 
