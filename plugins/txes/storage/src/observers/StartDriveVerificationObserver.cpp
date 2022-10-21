@@ -57,7 +57,7 @@ namespace catapult { namespace observers {
 
 		// There can be maximum 1 additional verification. It matters for the case when there are few drives
 		auto r = rng() % verificationFactor;
-		uint32_t additionalVerifications = 1;//r < (totalDrives % verificationFactor) ? 1 : 0;
+		uint32_t additionalVerifications = r < (totalDrives % verificationFactor) ? 1 : 0;
 
 		auto drivesToVerify = guaranteedVerifications + additionalVerifications;
 
