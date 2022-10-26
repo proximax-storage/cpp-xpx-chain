@@ -28,8 +28,8 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateCreateLiquidityProviderTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateManualRateChangeTransactionPlugin());
 
-		manager.setLiquidityProviderExchangeValidator(std::make_shared<validators::LiquidityProviderExchangeValidatorImpl>());
-		manager.setLiquidityProviderExchangeObserver(std::make_shared<observers::LiquidityProviderExchangeObserverImpl>());
+		manager.setLiquidityProviderExchangeValidator(std::make_unique<validators::LiquidityProviderExchangeValidatorImpl>());
+		manager.setLiquidityProviderExchangeObserver(std::make_unique<observers::LiquidityProviderExchangeObserverImpl>());
 
 		auto pKeyCollector = std::make_shared<cache::LiquidityProviderKeyCollector>();
 		manager.addCacheSupport(std::make_unique<cache::LiquidityProviderCacheSubCachePlugin>(

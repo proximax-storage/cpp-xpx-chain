@@ -40,7 +40,7 @@ namespace catapult { namespace observers {
 
 		// Refunding streaming mosaics.
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);
-		liquidityProvider.debitMosaics(context, downloadChannelEntry.id().array(), downloadChannelEntry.consumer(),
+		liquidityProvider->debitMosaics(context, downloadChannelEntry.id().array(), downloadChannelEntry.consumer(),
 									   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 									   streamingRefundAmount);
 

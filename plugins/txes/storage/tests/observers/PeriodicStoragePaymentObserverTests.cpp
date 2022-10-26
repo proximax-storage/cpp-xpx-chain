@@ -13,9 +13,9 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PeriodicStoragePaymentObserverTests
 
-	const auto Liquidity_Provider = std::make_shared<test::LiquidityProviderExchangeObserverImpl>();
+	const std::unique_ptr<observers::LiquidityProviderExchangeObserver>  Liquidity_Provider = std::make_unique<test::LiquidityProviderExchangeObserverImpl>();
 
-    DEFINE_COMMON_OBSERVER_TESTS(PeriodicStoragePayment, *Liquidity_Provider)
+    DEFINE_COMMON_OBSERVER_TESTS(PeriodicStoragePayment, Liquidity_Provider)
 
 	const auto billingPeriodMilliseconds = 20000;
 
@@ -99,7 +99,7 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
             Notification notification({ { 1 } }, { { 1 } }, values.NotificationTime, Difficulty(0), 0, 0);
-            auto pObserver = CreatePeriodicStoragePaymentObserver(*Liquidity_Provider);
+            auto pObserver = CreatePeriodicStoragePaymentObserver(Liquidity_Provider);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
