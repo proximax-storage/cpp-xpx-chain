@@ -90,6 +90,6 @@ namespace catapult { namespace model {
 		/// Liquidity Provider facility code
 		LiquidityProvider = 0x69,
 		/// SuperContract V2 facility code.
-		Contract_v2 = 0x6C,
+		SuperContract_v2 = 0x6C,
 	};
 }}

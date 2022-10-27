@@ -203,3 +203,8 @@ verificationExpirationConstant = 10
 
 enabled = true
 maxFolderNameSize = 512
+
+[plugin:catapult.plugins.supercontract_v2]
+
+enabled = false
+minExecutorCount = 10

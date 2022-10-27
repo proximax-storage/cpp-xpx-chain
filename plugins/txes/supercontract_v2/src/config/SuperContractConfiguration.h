@@ -13,21 +13,24 @@ namespace catapult { namespace utils { class ConfigurationBag; } }
 namespace catapult { namespace config {
 
 	/// Super contract plugin configuration settings.
-	struct ContractConfiguration : public model::PluginConfiguration {
+	struct SuperContractConfiguration : public model::PluginConfiguration {
 	public:
-		DEFINE_CONFIG_CONSTANTS(supercontract)
+		DEFINE_CONFIG_CONSTANTS(supercontract_v2)
 
 		/// Whether the plugin is enabled.
 		bool Enabled;
 
+		/// Minimal number of executors.
+		uint16_t MinExecutorCount;
+
 	private:
-		ContractConfiguration() = default;
+		SuperContractConfiguration() = default;
 
 	public:
 		/// Creates an uninitialized Super contract configuration.
-		static ContractConfiguration Uninitialized();
+		static SuperContractConfiguration Uninitialized();
 
 		/// Loads an Super contract configuration from \a bag.
-		static ContractConfiguration LoadFromBag(const utils::ConfigurationBag& bag);
+		static SuperContractConfiguration LoadFromBag(const utils::ConfigurationBag& bag);
 	};
 }}

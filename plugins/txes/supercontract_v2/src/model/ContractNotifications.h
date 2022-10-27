@@ -14,23 +14,23 @@ namespace catapult { namespace model {
     // region contract notification types
 
     /// Defines a contract notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Contract_v2, Deploy_v1, 0x0001);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Deploy_v1, 0x0001);
 
 	// endregion
 
-    struct BaseContractNotification : public Notification {
+    struct BaseSuperContractNotification : public Notification {
 	public:
-		explicit BaseContractNotification(
+		explicit BaseSuperContractNotification(
 			NotificationType type,
 			size_t size,
-			const Key& contract)
+			const Key& supercontract)
 			: Notification(type, size)
-			, Contract(contract)
+			, SuperContract(supercontract)
 		{}
 
 	public:
 		/// Public key of the super contract multisig account.
-		Key Contract;
+		Key SuperContract;
 	};
 
     /// Deploy super contract notification.
@@ -38,10 +38,10 @@ namespace catapult { namespace model {
     struct DeployNotification;
 
     template<>
-	struct DeployNotification<1> : public BaseContractNotification {
+	struct DeployNotification<1> : public BaseSuperContractNotification {
         public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Contract_v2_Deploy_v1_Notification;
+		static constexpr auto Notification_Type = SuperContract_v2_Deploy_v1_Notification;
 
         public:
 		explicit DeployNotification(
@@ -62,7 +62,7 @@ namespace catapult { namespace model {
 			const Amount& automatedDownloadCallPayment,
 			const uint32_t& automatedExecutionsNumber,
 			const Key& assignee)
-            : BaseContractNotification(Notification_Type, sizeof(DeployNotification<1>), contract)
+            : BaseSuperContractNotification(Notification_Type, sizeof(DeployNotification<1>), contract)
             , Owner(owner)
             , DriveKey(driveKey)
             , FileName(fileName)

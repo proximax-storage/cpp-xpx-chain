@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "ContractEntityType.h"
+#include "SuperContractEntityType.h"
 #include "catapult/model/Mosaic.h"
 #include "catapult/model/Transaction.h"
 

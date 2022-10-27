@@ -199,8 +199,8 @@ namespace catapult { namespace ionet {
 	/* Liquidity provider state path has been requested by a client. */ \
 	ENUM_VALUE(LiquidityProvider_State_Path, FACILITY_BASED_CODE(800, LiquidityProvider)) \
 	\
-	/* Contract_v2 state path has been requested by a client. */ \
-	ENUM_VALUE(Contract_v2_State_Path, FACILITY_BASED_CODE(800, Contract_v2)) \
+	/* SuperContract_v2 state path has been requested by a client. */ \
+	ENUM_VALUE(SuperContract_v2_State_Path, FACILITY_BASED_CODE(800, SuperContract_v2)) \
 	\
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
@@ -291,8 +291,8 @@ namespace catapult { namespace ionet {
 	/* Liquidity provider infos have been requested by a client. */ \
 	ENUM_VALUE(LiquidityProvider_Infos, FACILITY_BASED_CODE(1200, LiquidityProvider)) \
 	\
-	/* Contract_v2 infos have been requested by a client. */ \
-	ENUM_VALUE(Contract_v2_Infos, FACILITY_BASED_CODE(1200, Contract_v2)) \
+	/* SuperContract_v2 infos have been requested by a client. */ \
+	ENUM_VALUE(SuperContract_v2_Infos, FACILITY_BASED_CODE(1200, SuperContract_v2)) \
 	\
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,

@@ -13,7 +13,7 @@ namespace catapult { namespace model {
 #endif
 
 	/// Deploy contract transaction.
-	DEFINE_TRANSACTION_TYPE(Contract_v2, Deploy, 0x1);
+	DEFINE_TRANSACTION_TYPE(SuperContract_v2, Deploy, 0x1);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
