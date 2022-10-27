@@ -13,6 +13,6 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (CreditMosaic)");
 
-		liquidityProvider.creditMosaics(context, notification.CurrencyDebtor, notification.MosaicCreditor, notification.MosaicId, notification.MosaicAmount);
+		liquidityProvider->creditMosaics(context, notification.CurrencyDebtor, notification.MosaicCreditor, notification.MosaicId, notification.MosaicAmount);
 	});
 }} // namespace catapult::observers

@@ -14,7 +14,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS CreditMosaicValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(CreditMosaic, LiquidityProviderExchangeValidatorImpl())
+	DEFINE_COMMON_VALIDATOR_TESTS(CreditMosaic, std::make_unique<LiquidityProviderExchangeValidatorImpl>())
 
     namespace {
         using Notification = model::CreditMosaicNotification<1>;
@@ -76,7 +76,7 @@ namespace catapult { namespace validators {
 
             Notification notification(signer, test::GenerateRandomByteArray<Key>(), mosaicId, amount);
 
-			LiquidityProviderExchangeValidatorImpl liquidityProvider;
+			std::unique_ptr<LiquidityProviderExchangeValidator> liquidityProvider = std::make_unique<LiquidityProviderExchangeValidatorImpl>();
 			auto pValidator = CreateCreditMosaicValidator(liquidityProvider);
 
             // Act:

@@ -344,21 +344,20 @@ namespace catapult { namespace plugins {
 
 	// region liquidity provider
 	void PluginManager::setLiquidityProviderExchangeValidator(
-			const std::shared_ptr<validators::LiquidityProviderExchangeValidator>& validator) {
-		m_pLiquidityProviderExchangeValidator = validator;
+			std::unique_ptr<validators::LiquidityProviderExchangeValidator>&& validator) {
+		m_pLiquidityProviderExchangeValidator = std::move(validator);
 	}
 
-	const validators::LiquidityProviderExchangeValidator& PluginManager::liquidityProviderExchangeValidator() const {
-		return *m_pLiquidityProviderExchangeValidator;
+	const std::unique_ptr<validators::LiquidityProviderExchangeValidator>& PluginManager::liquidityProviderExchangeValidator() const {
+		return m_pLiquidityProviderExchangeValidator;
 	}
 
-	void PluginManager::setLiquidityProviderExchangeObserver(
-			const std::shared_ptr<observers::LiquidityProviderExchangeObserver>& observer) {
-		m_pLiquidityProviderExchangeObserver = observer;
+	void PluginManager::setLiquidityProviderExchangeObserver(std::unique_ptr<observers::LiquidityProviderExchangeObserver>&& observer) {
+		m_pLiquidityProviderExchangeObserver = std::move(observer);
 	}
 
-	const observers::LiquidityProviderExchangeObserver& PluginManager::liquidityProviderExchangeObserver() const {
-		return *m_pLiquidityProviderExchangeObserver;
+	const std::unique_ptr<observers::LiquidityProviderExchangeObserver>& PluginManager::liquidityProviderExchangeObserver() const {
+		return m_pLiquidityProviderExchangeObserver;
 	}
 
 	// endregion

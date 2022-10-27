@@ -150,7 +150,7 @@ namespace catapult { namespace utils {
 			const Key& driveKey,
 			const std::set<Key>& replicators,
 			observers::ObserverContext& context,
-			const observers::LiquidityProviderExchangeObserver& liquidityProvider) {
+			const std::unique_ptr<observers::LiquidityProviderExchangeObserver>& liquidityProvider) {
 		auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
 		auto& accountCache = context.Cache.template sub<cache::AccountStateCache>();
 		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
@@ -200,10 +200,10 @@ namespace catapult { namespace utils {
 			const auto streamingDepositRefundAmount = Amount(unslashedStreamingDeposit - streamingDepositSlashing);
 
 			// Refund amounts are returned as XPX.
-			liquidityProvider.debitMosaics(context, Key(), replicatorKey,
+			liquidityProvider->debitMosaics(context, Key(), replicatorKey,
 										   config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
 										   storageDepositRefundAmount);
-			liquidityProvider.debitMosaics(context, driveKey, replicatorKey,
+			liquidityProvider->debitMosaics(context, driveKey, replicatorKey,
 										   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 										   streamingDepositRefundAmount);
 		}

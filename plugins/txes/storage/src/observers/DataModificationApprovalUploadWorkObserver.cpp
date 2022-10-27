@@ -67,7 +67,7 @@ namespace catapult { namespace observers {
 
 					const auto mosaicAmount =
 							Amount(utils::FileSize::FromBytes(uploadSizesIncrements.at(i)).megabytes());
-					liquidityProvider.debitMosaics(context, driveEntry.key(), judgedKey,
+					liquidityProvider->debitMosaics(context, driveEntry.key(), judgedKey,
 												   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), mosaicAmount);
 				}
 			}

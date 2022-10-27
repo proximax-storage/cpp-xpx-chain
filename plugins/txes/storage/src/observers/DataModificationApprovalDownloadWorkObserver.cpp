@@ -48,7 +48,7 @@ namespace catapult { namespace observers {
 
 			// Making mosaic transfers.
 			const auto mosaicAmount = Amount(approvableDownloadWork + driveInfo.InitialDownloadWorkMegabytes);
-			liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorEntry.key(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), mosaicAmount);
+			liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorEntry.key(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), mosaicAmount);
 
 			// Updating current replicator's drive info.
 			driveInfo.LastApprovedDataModificationId = notification.DataModificationId;
