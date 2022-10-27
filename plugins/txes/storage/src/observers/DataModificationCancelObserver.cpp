@@ -37,7 +37,7 @@ namespace catapult { namespace observers {
 						modificationSize * (replicators.size() - 1) / replicators.size());    // Upload work
 
 				for (const auto& replicatorKey : replicators) {
-					liquidityProvider.debitMosaics(
+					liquidityProvider->debitMosaics(
 							context,
 							driveEntry.key(),
 							replicatorKey,
@@ -52,11 +52,11 @@ namespace catapult { namespace observers {
 					2 * modificationSize *
 							(driveEntry.replicatorCount() - replicators.size()));    // Stream refund
 
-			liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalDriveOwnerAmount);
+			liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalDriveOwnerAmount);
 		} else {
 			// Performing refund for the drive owner
 			const auto refundAmount = Amount(2 * modificationSize * driveEntry.replicatorCount());
-			liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), refundAmount);
+			liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), refundAmount);
 		}
 
 		// Updating data modification lists in the drive entry:

@@ -13,9 +13,9 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS DriveClosureObserverTests
 
-	const auto Liquidity_Provider = std::make_shared<test::LiquidityProviderExchangeObserverImpl>();
+	const std::unique_ptr<observers::LiquidityProviderExchangeObserver>  Liquidity_Provider = std::make_unique<test::LiquidityProviderExchangeObserverImpl>();
 
-    DEFINE_COMMON_OBSERVER_TESTS(DriveClosure, *Liquidity_Provider)
+    DEFINE_COMMON_OBSERVER_TESTS(DriveClosure, Liquidity_Provider)
 
     const auto billingPeriodSeconds = 20000;
 
@@ -88,7 +88,7 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
             Notification notification(Hash256(), driveToRemove, test::GenerateRandomByteArray<Key>());
-            auto pObserver = CreateDriveClosureObserver(*Liquidity_Provider);
+            auto pObserver = CreateDriveClosureObserver(Liquidity_Provider);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();

@@ -80,7 +80,7 @@ namespace catapult { namespace observers {
 			auto recipientIter = accountStateCache.find(replicatorKey);
 			auto& recipientState = recipientIter.get();
 			const auto megabytesPayment = utils::FileSize::FromBytes(bytesPayment).megabytes();
-			liquidityProvider.debitMosaics(context, downloadChannelEntry.id().array(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), Amount(megabytesPayment));
+			liquidityProvider->debitMosaics(context, downloadChannelEntry.id().array(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), Amount(megabytesPayment));
 			auto& cumulativePayment = downloadChannelEntry.cumulativePayments().at(replicatorKey);
 			cumulativePayment = cumulativePayment + Amount(bytesPayment);
 		}
