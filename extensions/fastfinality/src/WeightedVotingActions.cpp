@@ -474,7 +474,7 @@ namespace catapult { namespace fastfinality {
 			auto& committeeData = pFsmShared->committeeData();
 			committeeData.setProposedBlock(nullptr);
 			auto committeeStage = committeeData.committeeStage();
-			NextBlockContext context(*lastBlockElementSupplier(), utils::FromTimePoint(committeeStage.RoundStart));
+			NextBlockContext context(*lastBlockElementSupplier(), utils::FromTimePoint(committeeStage.RoundStart) + Timestamp(CommitteePhaseCount * committeeStage.PhaseTimeMillis));
 			const auto& config = pConfigHolder->Config(context.Height);
 			if (!context.tryCalculateDifficulty(cache.sub<cache::BlockDifficultyCache>(), config.Network)) {
 				CATAPULT_LOG(debug) << "skipping block propose attempt due to error calculating difficulty";
