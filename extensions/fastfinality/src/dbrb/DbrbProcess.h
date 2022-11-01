@@ -12,7 +12,7 @@ namespace catapult { namespace fastfinality {
 			bool ViewDiscoveryActive = false;
 
 			/// Maps views to numbers of received confirmations for those views.
-			std::map<View, unsigned> ViewConfirmations;
+			std::map<View, uint32_t> ViewConfirmations;
 
 			/// Increments (or initializes) a counter of received confirms for a given \c view.
 			/// Returns whether the view discovery is active after the counter is updated.
@@ -46,6 +46,12 @@ namespace catapult { namespace fastfinality {
 
 			/// Map that maps views to proposed sequences to replace those views.
 			std::map<View, Sequence> m_proposedSequences;
+
+			/// Maps view-sequence pair to numbers of received Proposed messages for those pairs.
+			std::map<std::pair<View, Sequence>, uint32_t> m_convergedCandidateSequences;
+
+			/// Maps view-sequence pair to numbers of received Converged messages for those pairs.
+			std::map<std::pair<View, Sequence>, uint32_t> m_installCandidateSequences;
 
 			/// Map that maps views to the last converged sequence to replace those views.
 			std::map<View, Sequence> m_lastConvergedSequences;

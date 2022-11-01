@@ -41,14 +41,24 @@ namespace catapult { namespace fastfinality {
 		};
 
 		struct ConvergedMessage : Message {
-			Sequence ProposedSequence;
+			/// Sequence that is converged on to replace the view.
+			Sequence ConvergedSequence;
+
+			/// View that is replaced with the converged sequence.
 			View ReplacedView;
 		};
 
 		struct InstallMessage : Message {
-			/// Least recent view
-			View OldestView;
-			View ReplacedView;
+			/// Least recent view.
+			View LeastRecentView;
+
+			/// Sequence to be installed.
+			Sequence InstalledSequence;
+
+			/// View to be installed.
+			View InstalledView;
+
+			// TODO: Include a quorum of signed Converged messages which ensures its authenticity
 		};
 
 

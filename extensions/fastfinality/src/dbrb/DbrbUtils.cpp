@@ -16,12 +16,9 @@ namespace catapult { namespace fastfinality {
 					left.insert(processId);
 			}
 
-			std::set_difference(
-					joined.begin(),
-					joined.end(),
-					left.begin(),
-					left.end(),
-					std::inserter(current, current.begin()));
+			std::set_difference(joined.begin(), joined.end(),
+								left.begin(), left.end(),
+								current.begin());
 
 			return current;
 		};
@@ -77,15 +74,19 @@ namespace catapult { namespace fastfinality {
 			return (*this > other) || (*this == other);
 		}
 
+		const std::vector<View>& Sequence::data() const {
+			return m_data;
+		};
+
 		std::optional<View> Sequence::maybeLeastRecent() const {
-			if (!Data.empty())
-				return Data.front();
+			if (!m_data.empty())
+				return m_data.front();
 			return {};
 		}
 
 		std::optional<View> Sequence::maybeMostRecent() const {
-			if (!Data.empty())
-				return Data.back();
+			if (!m_data.empty())
+				return m_data.back();
 			return {};
 		}
 
@@ -102,9 +103,9 @@ namespace catapult { namespace fastfinality {
 			// Since at this point we know that testedView is comparable with every view in Data,
 			// we can now use comparison by size for faster processing.
 			const auto testedViewSize = testedView.Data.size();
-			auto pView = Data.begin();
+			auto pView = m_data.begin();
 			size_t pos = 0;
-			for (; pView != Data.end(); ++pos, ++pView) {
+			for (; pView != m_data.end(); ++pos, ++pView) {
 				if (testedViewSize == pView->Data.size())
 					return SIZE_MAX;	// Duplicate means non-strictly ascending order.
 				if (testedViewSize < pView->Data.size())
@@ -133,32 +134,32 @@ namespace catapult { namespace fastfinality {
 			return *pThisMostRecent < *pOtherLeastRecent;
 		}
 
-		std::optional<Sequence> Sequence::tryInsert(const View& newView) const {
+		std::vector<View>::iterator Sequence::tryInsert(const View& newView) {
 			const size_t pos = canInsert(newView);
-			if (pos != SIZE_MAX) {
-				auto sequenceData = Data;
-				sequenceData.insert(sequenceData.begin() + pos, newView);
-				return Sequence { sequenceData };
-			}
-			return {};
+			if (pos != SIZE_MAX)
+				return m_data.insert(m_data.begin() + pos, newView);
+			else
+				return m_data.end();
 		}
 
-		std::optional<Sequence> Sequence::tryAppend(const View& newView) const {
-			if (canAppend(newView)) {
-				auto sequenceData = Data;
-				sequenceData.push_back(newView);
-				return Sequence { sequenceData };
-			}
-			return {};
+		bool Sequence::tryAppend(const View& newView) {
+			bool appendable = canAppend(newView);
+			if (appendable)
+				m_data.push_back(newView);
+
+			return appendable;
 		}
 
-		std::optional<Sequence> Sequence::tryAppend(const Sequence& newSequence) const {
-			if (canAppend(newSequence)) {
-				auto sequenceData = Data;
-				sequenceData.insert(sequenceData.end(), newSequence.Data.begin(), newSequence.Data.end());
-				return Sequence { sequenceData };
-			}
-			return {};
+		bool Sequence::tryAppend(const Sequence& newSequence) {
+			bool appendable = canAppend(newSequence);
+			if (appendable)
+				m_data.insert(m_data.end(), newSequence.data().begin(), newSequence.data().end());
+
+			return appendable;
+		}
+
+		Sequence::Sequence(const std::vector<View>& sequenceData) {
+			m_data = sequenceData;
 		}
 
 }}

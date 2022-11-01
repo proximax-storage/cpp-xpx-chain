@@ -88,18 +88,58 @@ namespace catapult { namespace fastfinality {
 				// We don't know which one of the views is more recent, so we first append one of them, which will
 				// always succeed, and then we insert the other one. It is possible to use insert for both,
 				// but it is better to use append whenever possible, as it is faster.
-				auto newSequence = *(*localSequence.tryAppend(*pLocalMostRecent)).tryInsert(*pProposedMostRecent);
-
-				currentSequence = std::move(newSequence);
+				currentSequence.tryAppend(*pLocalMostRecent);
+				currentSequence.tryInsert(*pProposedMostRecent);
 			} else {
-				currentSequence = *currentSequence.tryAppend(message.ProposedSequence);
+				currentSequence.tryAppend(message.ProposedSequence);
 			}
 
 			ProposeMessage responseMessage { m_id, currentSequence, message.ReplacedView };
 			disseminate(responseMessage, message.ReplacedView.members());
+
+			// Updating counters for received Propose messages.
+			const auto pair = std::make_pair(message.ReplacedView, message.ProposedSequence);
+			if (std::find(m_convergedCandidateSequences.begin(),
+						  m_convergedCandidateSequences.end(),
+						  pair) == m_convergedCandidateSequences.end()) {
+				m_convergedCandidateSequences.emplace(pair, 1u);
+			} else {
+				m_convergedCandidateSequences.at(pair) += 1u;
+			}
+
+			// Disseminating Converged message only once, when counter just hits the required quorum.
+			if (m_convergedCandidateSequences.at(pair) == message.ReplacedView.quorumSize()) {
+				m_lastConvergedSequences[message.ReplacedView] = message.ProposedSequence;
+
+				ConvergedMessage convergedMessage { m_id, message.ProposedSequence, message.ReplacedView };
+				disseminate(convergedMessage, message.ReplacedView.members());
+			}
 		};
 
-		void DbrbProcess::onConvergedMessageReceived(ConvergedMessage message) {};
+		void DbrbProcess::onConvergedMessageReceived(ConvergedMessage message) {
+			// Updating counters for received Converged messages.
+			const auto pair = std::make_pair(message.ReplacedView, message.ConvergedSequence);
+			if (std::find(m_installCandidateSequences.begin(),
+						  m_installCandidateSequences.end(),
+						  pair) == m_installCandidateSequences.end()) {
+				m_installCandidateSequences.emplace(pair, 1u);
+			} else {
+				m_installCandidateSequences.at(pair) += 1u;
+			}
+
+			// Disseminating Install message only once, when counter just hits the required quorum.
+			if (m_installCandidateSequences.at(pair) == message.ReplacedView.quorumSize()) {
+				const auto& leastRecentView = *message.ConvergedSequence.maybeLeastRecent();	// Will always exist.
+				InstallMessage responseMessage { m_id, leastRecentView, message.ConvergedSequence, message.ReplacedView };
+
+				std::set<ProcessId> recipients;
+				std::set_union(message.ReplacedView.Data.begin(), message.ReplacedView.Data.end(),
+							   leastRecentView.Data.begin(), leastRecentView.Data.end(),
+							   recipients.begin());
+
+				disseminate(responseMessage, recipients);
+			}
+		};
 
 		void DbrbProcess::onInstallMessageReceived(InstallMessage message) {};
 
