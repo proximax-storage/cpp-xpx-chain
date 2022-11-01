@@ -5,27 +5,44 @@
 
 namespace catapult { namespace fastfinality {
 
-		/// Struct with all necessary fields needed for joining procedure.
-		struct JoinState {
-			/// Whether the view discovery is active. View discovery halts once a quorum of
-			/// confirmation messages has been collected for any of the views.
-			bool ViewDiscoveryActive = false;
+		/// Struct that encapsulates all necessary quorum counters and their update methods.
+		struct QuorumCounters {
+		public:
+			/// Maps views to numbers of received ReconfigConfirm messages for those views.
+			std::map<View, uint32_t> ReconfigConfirmCounters;
 
-			/// Maps views to numbers of received confirmations for those views.
-			std::map<View, uint32_t> ViewConfirmations;
+			/// Maps view-sequence pairs to numbers of received Proposed messages for those pairs.
+			std::map<std::pair<View, Sequence>, uint32_t> ProposedCounters;
 
-			/// Increments (or initializes) a counter of received confirms for a given \c view.
-			/// Returns whether the view discovery is active after the counter is updated.
-			bool addConfirm(View view) {
-				if (std::find(ViewConfirmations.begin(), ViewConfirmations.end(), view) == ViewConfirmations.end())
-					ViewConfirmations.emplace(view, 1u);
+			/// Maps view-sequence pairs to numbers of received Converged messages for those pairs.
+			std::map<std::pair<View, Sequence>, uint32_t> ConvergedCounters;
+
+			/// Overloaded methods for updating respective counters.
+			/// Returns whether the quorum has just been collected on this update.
+			bool update(ReconfigConfirmMessage message) {
+				return update(ReconfigConfirmCounters, message.View, message.View);
+			};
+			bool update(ProposeMessage message) {
+				const auto keyPair = std::make_pair(message.ReplacedView, message.ProposedSequence);
+				return update(ProposedCounters, keyPair, message.ReplacedView);
+			};
+			bool update(ConvergedMessage message) {
+				const auto keyPair = std::make_pair(message.ReplacedView, message.ConvergedSequence);
+				return update(ConvergedCounters, keyPair, message.ReplacedView);
+			};
+
+		private:
+			/// Updates a counter in \a map at \a key.
+			/// Returns whether the quorum for \a referenceView has just been collected on this update.
+			template<typename Key>
+			bool update(std::map<Key, uint32_t>& map, const Key& key, const View& referenceView) {
+				if (map.count(key))
+					map.at(key) += 1u;
 				else
-					ViewConfirmations.at(view) += 1u;
+					map[key] = 1u;
 
-				if (ViewConfirmations.at(view) >= view.quorumSize())
-					ViewDiscoveryActive = false;
-
-				return ViewDiscoveryActive;
+				// Quorum collection is triggered only once, when the counter EXACTLY hits the quorum size.
+				return map.at(key) == referenceView.quorumSize();
 			};
 		};
 
@@ -35,8 +52,12 @@ namespace catapult { namespace fastfinality {
 			/// Process identifier.
 			ProcessId m_id;
 
-			/// Information about joining procedure.
-			JoinState m_joinState;
+			/// Quorum counters for Reconfig, .
+			QuorumCounters m_quorumCounters;
+
+			/// Whether the view discovery is active. View discovery halts once a quorum of
+			/// confirmation messages has been collected for any of the views.
+			bool m_viewDiscoveryActive;
 
 			/// Most recent view known to the process.
 			View m_currentView;
@@ -46,12 +67,6 @@ namespace catapult { namespace fastfinality {
 
 			/// Map that maps views to proposed sequences to replace those views.
 			std::map<View, Sequence> m_proposedSequences;
-
-			/// Maps view-sequence pair to numbers of received Proposed messages for those pairs.
-			std::map<std::pair<View, Sequence>, uint32_t> m_convergedCandidateSequences;
-
-			/// Maps view-sequence pair to numbers of received Converged messages for those pairs.
-			std::map<std::pair<View, Sequence>, uint32_t> m_installCandidateSequences;
 
 			/// Map that maps views to the last converged sequence to replace those views.
 			std::map<View, Sequence> m_lastConvergedSequences;
@@ -99,8 +114,11 @@ namespace catapult { namespace fastfinality {
 
 			void onReconfigMessageReceived(ReconfigMessage);
 			void onReconfigConfirmMessageReceived(ReconfigConfirmMessage);
+			void onReconfigConfirmQuorumCollected();
 			void onProposeMessageReceived(ProposeMessage);
+			void onProposeQuorumCollected(ProposeMessage);
 			void onConvergedMessageReceived(ConvergedMessage);
+			void onConvergedQuorumCollected(ConvergedMessage);
 			void onInstallMessageReceived(InstallMessage);
 
 			void onPrepareMessageReceived(PrepareMessage message);
