@@ -143,7 +143,7 @@ namespace catapult { namespace fastfinality {
 		}
 
 		bool Sequence::tryAppend(const View& newView) {
-			bool appendable = canAppend(newView);
+			const bool appendable = canAppend(newView);
 			if (appendable)
 				m_data.push_back(newView);
 
@@ -151,11 +151,20 @@ namespace catapult { namespace fastfinality {
 		}
 
 		bool Sequence::tryAppend(const Sequence& newSequence) {
-			bool appendable = canAppend(newSequence);
+			const bool appendable = canAppend(newSequence);
 			if (appendable)
 				m_data.insert(m_data.end(), newSequence.data().begin(), newSequence.data().end());
 
 			return appendable;
+		}
+
+		bool Sequence::tryErase(const View& view) {
+			const auto iter = std::find(m_data.begin(), m_data.end(), view);
+			const bool found = (iter != m_data.end());
+			if (found)
+				m_data.erase(iter);
+
+			return found;
 		}
 
 		Sequence::Sequence(const std::vector<View>& sequenceData) {

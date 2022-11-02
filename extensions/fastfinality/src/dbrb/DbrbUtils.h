@@ -17,14 +17,8 @@ namespace catapult { namespace fastfinality {
 			Leave,
 		};
 
-		/// State of the process' life cycle.
-		enum ProcessState {
-			NotJoined,
-			Joining,
-			Joined,
-			Leaving,
-			Left,
-		};
+		/// State of the process. Consists of Acknowledged, Conflicting and Stored fields.
+		struct ProcessState {};	// TODO: Stub
 
 		/// Message certificate.
 		struct Certificate {};	// TODO: Stub
@@ -94,6 +88,10 @@ namespace catapult { namespace fastfinality {
 			/// Try to append \a newSequence to \a m_data.
 			/// Returns \c true is appended successfully, \c false otherwise.
 			bool tryAppend(const Sequence& newSequence);
+
+			/// Try to erase \a view from \a m_data.
+			/// Returns whether the view was found and erased.
+			bool tryErase(const View& view);
 
 			/// Check whether all views in \a sequenceData are mutually comparable and sorted in strictly ascending order.
 			static bool isValidSequence(const std::vector<View>& sequenceData) {

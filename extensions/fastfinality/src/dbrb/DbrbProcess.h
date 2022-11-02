@@ -6,7 +6,7 @@
 namespace catapult { namespace fastfinality {
 
 		/// Struct that encapsulates all necessary quorum counters and their update methods.
-		struct QuorumCounters {
+		struct QuorumManager {
 		public:
 			/// Maps views to numbers of received ReconfigConfirm messages for those views.
 			std::map<View, uint32_t> ReconfigConfirmCounters;
@@ -16,6 +16,9 @@ namespace catapult { namespace fastfinality {
 
 			/// Maps view-sequence pairs to numbers of received Converged messages for those pairs.
 			std::map<std::pair<View, Sequence>, uint32_t> ConvergedCounters;
+
+			/// Maps views to received StateUpdate messages for those views.
+			std::map<View, std::set<StateUpdateMessage>> StateUpdateMessages;
 
 			/// Overloaded methods for updating respective counters.
 			/// Returns whether the quorum has just been collected on this update.
@@ -29,6 +32,17 @@ namespace catapult { namespace fastfinality {
 			bool update(ConvergedMessage message) {
 				const auto keyPair = std::make_pair(message.ReplacedView, message.ConvergedSequence);
 				return update(ConvergedCounters, keyPair, message.ReplacedView);
+			};
+			std::set<View> update(StateUpdateMessage message) {
+				std::set<View> triggeredViews;
+				for (auto& [view, messages] : StateUpdateMessages) {
+					if (view.isMember(message.Sender)) {
+						messages.insert(message);
+						if (messages.size() == view.quorumSize())
+							triggeredViews.insert(view);
+					}
+				}
+				return triggeredViews;
 			};
 
 		private:
@@ -52,12 +66,21 @@ namespace catapult { namespace fastfinality {
 			/// Process identifier.
 			ProcessId m_id;
 
-			/// Quorum counters for Reconfig, .
-			QuorumCounters m_quorumCounters;
+			/// Quorum manager.
+			QuorumManager m_quorumManager;
 
 			/// Whether the view discovery is active. View discovery halts once a quorum of
 			/// confirmation messages has been collected for any of the views.
 			bool m_viewDiscoveryActive;
+
+			/// While set to true, no Prepare, Commit or Reconfig messages are processed.
+			bool m_limitedProcessing;
+
+			/// Needs to be set in order for \a onStateUpdateQuorumCollected to be triggered.
+			std::optional<InstallMessage> m_currentInstallMessage;
+
+			/// Views installed by the process.
+			std::set<View> m_installedViews;	// TODO: Can be only one at a time?
 
 			/// Most recent view known to the process.
 			View m_currentView;
@@ -95,6 +118,9 @@ namespace catapult { namespace fastfinality {
 			/// Whether process is allowed to leave the system.
 			bool m_canLeave;
 
+			/// Map that maps views to respective states.
+			std::map<View, ProcessState> m_states;
+
 		public:
 			/// Request to join the system.
 			void join();
@@ -110,7 +136,10 @@ namespace catapult { namespace fastfinality {
 		private:
 			void disseminate(Message, std::set<ProcessId>);	// TODO: With this signature messages are getting upcasted,
 															// and all important fields from messages get cut off
+			void reliablyDisseminate(Message, std::set<ProcessId>);	// R-multicast in terms of BRB.
 			void send(Message, ProcessId);
+			void prepareForStateUpdates(InstallMessage);
+			void transferState(std::set<StateUpdateMessage>);
 
 			void onReconfigMessageReceived(ReconfigMessage);
 			void onReconfigConfirmMessageReceived(ReconfigConfirmMessage);
@@ -123,6 +152,7 @@ namespace catapult { namespace fastfinality {
 
 			void onPrepareMessageReceived(PrepareMessage message);
 			void onStateUpdateMessageReceived(StateUpdateMessage);
+			void onStateUpdateQuorumCollected();
 			void onAcknowledgedMessageReceived(AcknowledgedMessage);
 			void onCommitMessageReceived(CommitMessage);
 			void onDeliverMessageReceived(DeliverMessage);
@@ -132,6 +162,7 @@ namespace catapult { namespace fastfinality {
 
 			void onJoinComplete();
 			void onLeaveComplete();
+			void onNewViewInstalled();
 		};
 
 }}
