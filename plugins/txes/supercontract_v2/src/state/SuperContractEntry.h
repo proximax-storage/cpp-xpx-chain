@@ -5,49 +5,11 @@
 **/
 
 #include "catapult/model/Mosaic.h"
+#include "src/model/StartExecuteTransactionParams.h"
 #include <map>
 #include <optional>
 
 namespace catapult { namespace state {
-
-    struct ServicePayment {
-        MosaicId Token;
-        Amount Amount;
-    };
-
-    using ServicePayments = std::vector<ServicePayment>;
-
-    struct StartExecutionInformation {
-        /// FileName to save stream in
-        std::string FileName;
-
-        /// FunctionName to save stream in
-        std::string FunctionName;
-
-        // ActualArguments to save stream in
-        std::string ActualArguments;
-
-        // Number of SC units provided to run the contract for all Executors on the Drive
-        Amount ExecutionCallPayment;
-
-        // Number of SM units provided to download data from the Internet for all Executors on the Drive
-        Amount DownloadCallPayment;
-
-        // Number of SM units provided to synchronize data for new Replicators
-        Amount SynchronizeCallPayment;
-
-        /// Number of necessary additional tokens to support specific Supercontract
-        uint8_t ServicePaymentCount;
-
-        /// Additional tokens to support specific Supercontract.
-        std::optional<ServicePayments> ServicePayments;
-
-        /// For a single approvement if it is allowed 
-        bool SingleApprovement;
-    };
-
-    /// The map where key is the supercontract key and value is the StartExecuteTransaction parameters.
-    using StartExecutionInformationMap = std::map<Key, StartExecutionInformation>;
 
     // Mixin for storing supercontract details.
 	class SuperContractMixin {
@@ -146,14 +108,14 @@ namespace catapult { namespace state {
                 return m_executorCount;
             }
 
-            /// Gets map of start execution paramters that belongs to respective supercontract key.
-            const StartExecutionInformation& startExecutionInformation() const {
-                return m_startExecutionInformation;
+            /// Gets map of start execution parameters that belongs to respective supercontract key.
+            const model::StartExecuteParams& startExecuteParams() const {
+                return m_startExecuteParams;
             }
 
             /// Gets map of start execution paramters that belongs to respective supercontract key.
-            StartExecutionInformation& startExecutionInformation() {
-                return m_startExecutionInformation;
+            model::StartExecuteParams& startExecuteParams() {
+                return m_startExecuteParams;
             }
 
             /// Gets (date? time?) of when automatic executions is enabled
@@ -176,7 +138,7 @@ namespace catapult { namespace state {
             uint32_t m_automatedExecutionsNumber;
             Key m_assignee;
             uint16_t m_executorCount;
-            StartExecutionInformation m_startExecutionInformation;
+            model::StartExecuteParams m_startExecuteParams;
             std::optional<uint64_t> m_automaticExecutionsEnabledSince;
     };
 

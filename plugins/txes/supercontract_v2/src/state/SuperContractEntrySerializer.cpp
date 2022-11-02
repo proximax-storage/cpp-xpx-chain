@@ -11,7 +11,7 @@
 namespace catapult { namespace state {
 
     namespace {
-        void SaveServicePayments(io::OutputStream& output, const std::optional<ServicePayments>& servicePayments) {
+        void SaveServicePayments(io::OutputStream& output, const std::optional<model::ServicePayments>& servicePayments) {
             bool hasServicePayments = servicePayments.has_value();
             io::Write8(output, hasServicePayments);
             if (hasServicePayments) {
@@ -24,7 +24,7 @@ namespace catapult { namespace state {
            
         }
 
-        void SaveStartExecutionInformation(io::OutputStream& output, const StartExecutionInformation& startExecutionInformation) {
+        void SaveStartExecutionInformation(io::OutputStream& output, const model::StartExecuteParams& startExecutionInformation) {
             auto pFileName = (const uint8_t*) (startExecutionInformation.FileName.c_str());
 			io::Write(output, utils::RawBuffer(pFileName, startExecutionInformation.FileName.size()));
             auto pFunctionName = (const uint8_t*) (startExecutionInformation.FunctionName.c_str());
@@ -39,13 +39,13 @@ namespace catapult { namespace state {
             io::Write8(output, startExecutionInformation.SingleApprovement);
         }
 
-        void LoadServicePayments(io::InputStream& input, std::optional<ServicePayments>& servicePayments) {
+        void LoadServicePayments(io::InputStream& input, std::optional<model::ServicePayments>& servicePayments) {
             bool hasServicePayments = io::Read8(input);
             if (hasServicePayments) {
-                servicePayments = ServicePayments();
+                servicePayments = model::ServicePayments();
                 auto numServicePayments = io::Read16(input);
                 while (numServicePayments--) {
-                    ServicePayment servicePayment;
+                    model::ServicePayment servicePayment;
                     io::Read(input, servicePayment.Token);
                     io::Read(input, servicePayment.Amount);
 
@@ -54,7 +54,7 @@ namespace catapult { namespace state {
             }      
         }
 
-        void LoadStartExecutionInformation(io::InputStream& input, StartExecutionInformation& startExecutionInformation) {
+        void LoadStartExecutionInformation(io::InputStream& input, model::StartExecuteParams& startExecutionInformation) {
             auto fileNameSize = io::Read16(input);
             std::vector<uint8_t> fileNameBytes(fileNameSize);
             io::Read(input, fileNameBytes);
@@ -100,7 +100,7 @@ namespace catapult { namespace state {
         io::Write32(output, entry.automatedExecutionsNumber());
         io::Write(output, entry.assignee());
         io::Write16(output, entry.executorCount());
-        SaveStartExecutionInformation(output, entry.startExecutionInformation());
+        SaveStartExecutionInformation(output, entry.startExecuteParams());
 
         bool hasAutomaticExecutionsEnabledSince = entry.automaticExecutionsEnabledSince().has_value();
         io::Write8(output, hasAutomaticExecutionsEnabledSince);
@@ -144,7 +144,7 @@ namespace catapult { namespace state {
 		entry.setAssignee(assignee);
 
         entry.setExecutorCount(io::Read16(input));
-        LoadStartExecutionInformation(input, entry.startExecutionInformation());
+        LoadStartExecutionInformation(input, entry.startExecuteParams());
 
         bool hasAutomaticExecutionsEnabledSince = io::Read8(input);
         if (hasAutomaticExecutionsEnabledSince) {
