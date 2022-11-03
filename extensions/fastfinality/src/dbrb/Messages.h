@@ -56,14 +56,23 @@ namespace catapult { namespace fastfinality {
 	};
 
 	struct ConvergedMessage : Message {
-		Sequence ProposedSequence;
+		/// Sequence that is converged on to replace the view.
+		Sequence ConvergedSequence;
+
+		/// View that is replaced with the converged sequence.
 		View ReplacedView;
 	};
 
 	struct InstallMessage : Message {
-		/// Least recent view
-		View OldestView;
+		/// Least recent view.
+		View LeastRecentView;	// TODO: Unnecessary, it's just *InstalledSequence.maybeLeastRecent()
+
+		/// Sequence that is converged on to replace the view.
+		Sequence ConvergedSequence;
+
+		/// View to be replaced.
 		View ReplacedView;
+		// TODO: Include a quorum of signed Converged messages which ensures its authenticity
 	};
 
 
@@ -74,7 +83,13 @@ namespace catapult { namespace fastfinality {
 		fastfinality::View View;
 	};
 
-	struct StateUpdateMessage : Message {};
+	struct StateUpdateMessage : Message {
+		/// State of the process. Consists of Acknowledged, Conflicting and Stored fields.
+		ProcessState State;
+
+		/// List of pending changes (i.e., join or leave).
+		std::vector<std::pair<ProcessId, MembershipChanges>> PendingChanges;
+	};
 
 	struct AcknowledgedMessage : Message {};
 

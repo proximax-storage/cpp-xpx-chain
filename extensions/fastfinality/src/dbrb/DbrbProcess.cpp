@@ -44,7 +44,7 @@ namespace catapult { namespace fastfinality {
 	void DbrbProcess::join() {
 		// Somehow, while this flag is true, a view discovery protocol should be working
 		// that would call onViewDiscovered() whenever it gets a new view of the system.
-		m_joinState.ViewDiscoveryActive = true;
+		m_viewDiscoveryActive = true;
 	};
 
 	void DbrbProcess::leave() {};
@@ -74,6 +74,10 @@ namespace catapult { namespace fastfinality {
 		}
 	};
 
+	void DbrbProcess::reliablyDisseminate(
+		Message message,
+		std::set<ProcessId> recipients) { /* Reliably sends message to all processes in recipients. */ };
+
 	void DbrbProcess::send(const Message& message, const ionet::Node& recipient, const ionet::PacketIo::WriteCallback& callback) {
 		auto nodePacketIoPair = GetNodePacketIoPair(*m_pWriters, recipient);
 		if (!nodePacketIoPair.io()) {
@@ -88,10 +92,20 @@ namespace catapult { namespace fastfinality {
 	void DbrbProcess::forceLeave(const ionet::Node& node) {
 	}
 
+	void DbrbProcess::prepareForStateUpdates(InstallMessage message) {
+		m_currentInstallMessage = message;
+		m_quorumManager.StateUpdateMessages[message.ReplacedView] = {};	// TODO: May be redundant
+	};
+
+	void DbrbProcess::transferState(std::set<StateUpdateMessage>) {};
+
 
 	// Message callbacks:
 
 	void DbrbProcess::onReconfigMessageReceived(const ReconfigMessage& message, const ionet::Node& sender) {
+		if (m_limitedProcessing)
+				return;
+
 		if (message.View != m_currentView)
 			return;
 
@@ -112,7 +126,13 @@ namespace catapult { namespace fastfinality {
 	};
 
 	void DbrbProcess::onReconfigConfirmMessageReceived(const ReconfigConfirmMessage& message) {
-		m_joinState.addConfirm(message.View);
+		bool quorumCollected = m_quorumManager.update(message);
+			if (quorumCollected)
+				onReconfigConfirmQuorumCollected();
+		};
+
+		void DbrbProcess::onReconfigConfirmQuorumCollected() {
+			m_viewDiscoveryActive = false;
 	};
 
 	void DbrbProcess::onProposeMessageReceived(const ProposeMessage& message) {
@@ -144,11 +164,10 @@ namespace catapult { namespace fastfinality {
 			// We don't know which one of the views is more recent, so we first append one of them, which will
 			// always succeed, and then we insert the other one. It is possible to use insert for both,
 			// but it is better to use append whenever possible, as it is faster.
-			auto newSequence = *(*localSequence.tryAppend(*pLocalMostRecent)).tryInsert(*pProposedMostRecent);
-
-			currentSequence = std::move(newSequence);
+			currentSequence.tryAppend(*pLocalMostRecent);
+			currentSequence.tryInsert(*pProposedMostRecent);
 		} else {
-			currentSequence = *currentSequence.tryAppend(message.ProposedSequence);
+			currentSequence.tryAppend(message.ProposedSequence);
 		}
 
 		ProposeMessage responseMessage;
@@ -156,19 +175,132 @@ namespace catapult { namespace fastfinality {
 		responseMessage.ProposedSequence = currentSequence;
 		responseMessage.ReplacedView = message.ReplacedView;
 		disseminate(responseMessage, [](ionet::SocketOperationCode, const ionet::Packet*) {});
+// Updating quorum counter for received Propose message.
+		bool quorumCollected = m_quorumManager.update(message);
+		if (quorumCollected)
+			onProposeQuorumCollected(message);
 	};
 
-	void DbrbProcess::onConvergedMessageReceived(const ConvergedMessage& message) {};
+	void DbrbProcess::onProposeQuorumCollected(ProposeMessage message) {
+		m_lastConvergedSequences[message.ReplacedView] = message.ProposedSequence;
 
-	void DbrbProcess::onInstallMessageReceived(const InstallMessage& message) {};
+		ConvergedMessage responseMessage { m_id, message.ProposedSequence, message.ReplacedView };
+		disseminate(responseMessage, message.ReplacedView.members());
+	}
 
-	void DbrbProcess::onPrepareMessageReceived(const PrepareMessage& message) {};
+	void DbrbProcess::onConvergedMessageReceived(ConvergedMessage message) {
+		bool quorumCollected = m_quorumManager.update(message);
+		if (quorumCollected)
+			onConvergedQuorumCollected(message);
+	};
 
-	void DbrbProcess::onStateUpdateMessageReceived(const StateUpdateMessage& message) {};
+	void DbrbProcess::onConvergedQuorumCollected(const ConvergedMessage& message) {
+		const auto& leastRecentView = *message.ConvergedSequence.maybeLeastRecent();	// Will always exist.
+		InstallMessage responseMessage { m_id, leastRecentView, message.ConvergedSequence, message.ReplacedView };
+
+		std::set<ProcessId> recipientsUnion;
+		std::set_union(message.ReplacedView.Data.begin(), message.ReplacedView.Data.end(),
+					   leastRecentView.Data.begin(), leastRecentView.Data.end(),
+					   recipientsUnion.begin());
+
+		reliablyDisseminate(responseMessage, recipientsUnion);
+	};
+
+	void DbrbProcess::onInstallMessageReceived(const InstallMessage& message) {
+		// Update Format sequences.
+		auto& format = m_formatSequences[message.LeastRecentView];
+		auto sequenceWithoutLeastRecent = message.ConvergedSequence;
+		sequenceWithoutLeastRecent.tryErase(message.LeastRecentView);
+		format.insert(sequenceWithoutLeastRecent);
+
+		if (message.ReplacedView.isMember(m_id)) {
+			if (m_currentView < message.LeastRecentView)
+				m_limitedProcessing = true;	// Stop processing Prepare, Commit and Reconfig messages.
+
+			auto& state = m_states[message.ReplacedView];	// TODO: Check if this always exists
+			StateUpdateMessage stateUpdateMessage { m_id, state, m_pendingChanges };
+
+			std::set<ProcessId> recipientsUnion;
+			std::set_union(message.ReplacedView.Data.begin(), message.ReplacedView.Data.end(),
+				message.LeastRecentView.Data.begin(), message.LeastRecentView.Data.end(),
+				recipientsUnion.begin());
+
+			reliablyDisseminate(stateUpdateMessage, recipientsUnion);
+		}
+
+		if (m_currentView < message.LeastRecentView) {
+			// Wait until a quorum of StateUpdate messages is collected for (message.ReplacedView).
+			prepareForStateUpdates(message);
+		}
+	};
+
+	void DbrbProcess::onPrepareMessageReceived(PrepareMessage message) {
+		if (m_limitedProcessing)
+			return;
+	};
+
+	void DbrbProcess::onStateUpdateMessageReceived(const StateUpdateMessage& message) {
+		const auto triggeredViews = m_quorumManager.update(message);
+		const bool quorumCollected =
+				m_currentInstallMessage.has_value() && triggeredViews.count(m_currentInstallMessage->ReplacedView);
+		if (quorumCollected)
+			onStateUpdateQuorumCollected();
+	};
+
+	void DbrbProcess::onStateUpdateQuorumCollected() {
+		const auto& stateUpdateMessages = m_quorumManager.StateUpdateMessages.at(m_currentInstallMessage->ReplacedView);
+		const auto& leastRecentView = m_currentInstallMessage->LeastRecentView;
+		const auto& convergedSequence = m_currentInstallMessage->ConvergedSequence;
+
+		// Updating pending changes.
+		// TODO: Change View.Data to set to be able to safely merge two lists of changes
+
+		m_installedViews.erase(leastRecentView);
+
+		transferState(stateUpdateMessages);
+
+		if (leastRecentView.isMember(m_id)) {
+			m_currentView = leastRecentView;
+
+			if (!m_currentInstallMessage->ReplacedView.isMember(m_id))
+				onJoinComplete();
+
+			// Check if there are more recent views in the sequence of the install message.
+			Sequence moreRecentSequence;
+			for (auto iter = convergedSequence.data().rend(); m_currentView < *iter; ++iter)
+				moreRecentSequence.tryInsert(*iter);
+
+			if (!moreRecentSequence.data().empty()
+					&& m_proposedSequences.count(m_currentView) == 0
+					&& m_currentView < *moreRecentSequence.maybeLeastRecent()) {
+				m_proposedSequences[m_currentView] = moreRecentSequence;
+
+				ProposeMessage proposeMessage { m_id, moreRecentSequence, m_currentView };
+				disseminate(proposeMessage, m_currentView.members());
+			} else {
+				m_installedViews.insert(m_currentView);
+				m_limitedProcessing = false;	// Resume processing Prepare, Commit and Reconfig messages.
+				onNewViewInstalled();
+			}
+
+		} else {
+			if (m_payloadIsStored) {
+				// TODO: Perform view discovery and disseminate Propose messages until is allowed to leave
+			}
+
+			onLeaveComplete();
+		}
+
+		// Installation is finished, resetting stored install message.
+		m_currentInstallMessage.reset();
+	};
 
 	void DbrbProcess::onAcknowledgedMessageReceived(const AcknowledgedMessage& message) {};
 
-	void DbrbProcess::onCommitMessageReceived(const CommitMessage& message) {};
+	void DbrbProcess::onCommitMessageReceived(const CommitMessage& message) {
+		if (m_limitedProcessing)
+			return;
+	};
 
 	void DbrbProcess::onDeliverMessageReceived(const DeliverMessage& message) {};
 
@@ -176,7 +308,7 @@ namespace catapult { namespace fastfinality {
 	// Other callbacks:
 
 	void DbrbProcess::onViewDiscovered(View&& newView) {
-		if (!m_joinState.ViewDiscoveryActive)
+		if (!m_viewDiscoveryActive)
 			return;
 
 		m_currentView = std::move(newView);
@@ -190,5 +322,5 @@ namespace catapult { namespace fastfinality {
 
 	void DbrbProcess::onJoinComplete() {};
 
-	void DbrbProcess::onLeaveComplete() {};
+	void DbrbProcess::onLeaveComplete() {};void DbrbProcess::onNewViewInstalled() {};
 }}
