@@ -1,14 +1,25 @@
+/**
+*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
 #pragma  once
+#include "catapult/ionet/Node.h"
+#include "catapult/ionet/Packet.h"
+#include "catapult/types.h"
 #include <algorithm>
 #include <map>
 #include <set>
 #include <vector>
+#include <optional>
+#include <cstdint>
 
 
 namespace catapult { namespace fastfinality {
 
-		using ProcessId = uint64_t; // Any kind of process identifier; can be Key
-		using Payload = std::vector<uint8_t>;
+		using ProcessId = Key;
+		using Payload = std::shared_ptr<ionet::Packet>;
 
 
 		/// Changes of processes' membership in a view.
@@ -33,10 +44,13 @@ namespace catapult { namespace fastfinality {
 		/// View of the system.
 		struct View {
 			/// History of processes' membership changes in the system.
-			std::vector<std::pair<ProcessId, MembershipChanges>> Data;
+			std::vector<std::pair<ionet::Node, MembershipChanges>> Data;
 
 			/// Get IDs of current members of the view.
-			std::set<ProcessId> members() const;
+			std::set<ionet::Node> members() const;
+
+			/// Check if \a processId is a member of this view.
+			bool hasChange(const ProcessId& processId, MembershipChanges change) const;
 
 			/// Check if \a processId is a member of this view.
 			bool isMember(const ProcessId& processId) const;

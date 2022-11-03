@@ -1,7 +1,14 @@
+/**
+*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
 #pragma  once
 #include "DbrbUtils.h"
 #include "Messages.h"
-
+#include "catapult/functions.h"
+#include "catapult/net/PacketWriters.h"
 
 namespace catapult { namespace fastfinality {
 
@@ -17,10 +24,10 @@ namespace catapult { namespace fastfinality {
 			/// Increments (or initializes) a counter of received confirms for a given \c view.
 			/// Returns whether the view discovery is active after the counter is updated.
 			bool addConfirm(View view) {
-				if (std::find(ViewConfirmations.begin(), ViewConfirmations.end(), view) == ViewConfirmations.end())
-					ViewConfirmations.emplace(view, 1u);
-				else
-					ViewConfirmations.at(view) += 1u;
+//				if (std::find(ViewConfirmations.begin(), ViewConfirmations.end(), view) == ViewConfirmations.end())
+//					ViewConfirmations.emplace(view, 1u);
+//				else
+//					ViewConfirmations.at(view) += 1u;
 
 				if (ViewConfirmations.at(view) >= view.quorumSize())
 					ViewDiscoveryActive = false;
@@ -32,6 +39,7 @@ namespace catapult { namespace fastfinality {
 
 		/// Class representing DBRB process.
 		class DbrbProcess {
+		private:
 			/// Process identifier.
 			ProcessId m_id;
 
@@ -74,6 +82,8 @@ namespace catapult { namespace fastfinality {
 			/// Whether process is allowed to leave the system.
 			bool m_canLeave;
 
+			std::shared_ptr<net::PacketWriters> m_pWriters;
+
 		public:
 			/// Request to join the system.
 			void join();
@@ -82,29 +92,33 @@ namespace catapult { namespace fastfinality {
 			void leave();
 
 			/// Broadcast arbitrary \c payload into the system.
-			void broadcast(Payload);
+			void broadcast(const Message&);
 
-			void processMessage(Message);
+			void processMessage(const ionet::Packet&);
 
 		private:
-			void disseminate(Message, std::set<ProcessId>);	// TODO: With this signature messages are getting upcasted,
-															// and all important fields from messages get cut off
-			void send(Message, ProcessId);
+			using DisseminateCallback = consumer<ionet::SocketOperationCode, const ionet::Packet*>;
 
-			void onReconfigMessageReceived(ReconfigMessage);
-			void onReconfigConfirmMessageReceived(ReconfigConfirmMessage);
-			void onProposeMessageReceived(ProposeMessage);
-			void onConvergedMessageReceived(ConvergedMessage);
-			void onInstallMessageReceived(InstallMessage);
+			void disseminate(const Message& message, const DisseminateCallback& callback);
+			void send(const Message& message, const ionet::Node& recipient, const ionet::PacketIo::WriteCallback& callback);
 
-			void onPrepareMessageReceived(PrepareMessage message);
-			void onStateUpdateMessageReceived(StateUpdateMessage);
-			void onAcknowledgedMessageReceived(AcknowledgedMessage);
-			void onCommitMessageReceived(CommitMessage);
-			void onDeliverMessageReceived(DeliverMessage);
+			// Request members of the current view forcibly remove failing participant.
+			void forceLeave(const ionet::Node& node);
+
+			void onReconfigMessageReceived(const ReconfigMessage&, const ionet::Node& sender);
+			void onReconfigConfirmMessageReceived(const ReconfigConfirmMessage&);
+			void onProposeMessageReceived(const ProposeMessage&);
+			void onConvergedMessageReceived(const ConvergedMessage&);
+			void onInstallMessageReceived(const InstallMessage&);
+
+			void onPrepareMessageReceived(const PrepareMessage& message);
+			void onStateUpdateMessageReceived(const StateUpdateMessage&);
+			void onAcknowledgedMessageReceived(const AcknowledgedMessage&);
+			void onCommitMessageReceived(const CommitMessage&);
+			void onDeliverMessageReceived(const DeliverMessage&);
 
 			/// Called when a new (most recent) view of the system is discovered.
-			void onViewDiscovered(View);
+			void onViewDiscovered(View&&);
 
 			void onJoinComplete();
 			void onLeaveComplete();

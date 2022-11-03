@@ -76,6 +76,10 @@ namespace catapult { namespace ionet {
 		return !(*this == rhs);
 	}
 
+	bool Node::operator<(const Node& rhs) const {
+		return m_metadata.NetworkIdentifier < rhs.m_metadata.NetworkIdentifier || m_identityKey < rhs.m_identityKey;
+	}
+
 	std::ostream& operator<<(std::ostream& out, const Node& node) {
 		out << node.m_printableName;
 		return out;

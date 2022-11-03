@@ -4,67 +4,81 @@
 
 namespace catapult { namespace fastfinality {
 
-		/// Base class for all messages send via DBRB protocol.
-		struct Message {
-			/// Sender of the message.
-			ProcessId Sender;
+	/// Base class for all messages send via DBRB protocol.
+	struct Message {
+	public:
+		virtual std::shared_ptr<const ionet::Packet> packet() const = 0;
 
-			// TODO: Include fields to enable signature/certificate verification
-		};
+	public:
+		/// Sender of the message.
+		ProcessId Sender;
+
+		// TODO: Include fields to enable signature/certificate verification
+	};
+
+	// Messages related to JOIN and LEAVE operations
+
+	struct ReconfigMessage : Message {
+		/// Process ID that is a part of change.
+		fastfinality::ProcessId ProcessId; // TODO: Check if necessary (perhaps Sender is enough?)
+
+		/// Type of ProcessId's membership change.
+		MembershipChanges MembershipChange;
+
+		/// Current view of the system from the perspective of ProcessID.
+		/// It shouldn't include the change from this message.
+		fastfinality::View View;
+
+		std::shared_ptr<const ionet::Packet> packet() const override {
+			return std::make_shared<ionet::Packet>();
+		}
+	};
+
+	struct ReconfigConfirmMessage : Message {
+		/// View that receives the confirmation.
+		fastfinality::View View;
+
+		std::shared_ptr<const ionet::Packet> packet() const override {
+			return std::make_shared<ionet::Packet>();
+		}
+	};
+
+	struct ProposeMessage : Message {
+		/// Proposed sequence to replace the view.
+		Sequence ProposedSequence;
+
+		/// View to be replaced with the proposed sequence.
+		View ReplacedView;
+
+		std::shared_ptr<const ionet::Packet> packet() const override {
+			return std::make_shared<ionet::Packet>();
+		}
+	};
+
+	struct ConvergedMessage : Message {
+		Sequence ProposedSequence;
+		View ReplacedView;
+	};
+
+	struct InstallMessage : Message {
+		/// Least recent view
+		View OldestView;
+		View ReplacedView;
+	};
 
 
-		// Messages related to JOIN and LEAVE operations
+	// Messages related to BROADCAST operation
 
-		struct ReconfigMessage : Message {
-			/// Process ID that is a part of change.
-			ProcessId ProcessId; // TODO: Check if necessary (perhaps Sender is enough?)
+	struct PrepareMessage : Message {
+		fastfinality::Payload Payload;
+		fastfinality::View View;
+	};
 
-			/// Type of ProcessId's membership change.
-			MembershipChanges MembershipChange;
+	struct StateUpdateMessage : Message {};
 
-			/// Current view of the system from the perspective of ProcessID.
-			/// It shouldn't include the change from this message.
-			View View;
-		};
+	struct AcknowledgedMessage : Message {};
 
-		struct ReconfigConfirmMessage : Message {
-			/// View that receives the confirmation.
-			View View;
-		};
+	struct CommitMessage : Message {};
 
-		struct ProposeMessage : Message {
-			/// Proposed sequence to replace the view.
-			Sequence ProposedSequence;
-
-			/// View to be replaced with the proposed sequence.
-			View ReplacedView;
-		};
-
-		struct ConvergedMessage : Message {
-			Sequence ProposedSequence;
-			View ReplacedView;
-		};
-
-		struct InstallMessage : Message {
-			/// Least recent view
-			View OldestView;
-			View ReplacedView;
-		};
-
-
-		// Messages related to BROADCAST operation
-
-		struct PrepareMessage : Message {
-			Payload Payload;
-			View View;
-		};
-
-		struct StateUpdateMessage : Message {};
-
-		struct AcknowledgedMessage : Message {};
-
-		struct CommitMessage : Message {};
-
-		struct DeliverMessage : Message {};
-
+	struct DeliverMessage : Message {};
 }}

@@ -1,19 +1,24 @@
-#pragma  once
+/**
+*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
 #include "DbrbUtils.h"
 
 
 namespace catapult { namespace fastfinality {
 
-		std::set<ProcessId> View::members() const {
-			std::set<ProcessId> joined;
-			std::set<ProcessId> left;
-			std::set<ProcessId> current;
+		std::set<ionet::Node> View::members() const {
+			std::set<ionet::Node> joined;
+			std::set<ionet::Node> left;
+			std::set<ionet::Node> current;
 
-			for (const auto& [processId, changeType] : Data) {
+			for (const auto& [node, changeType] : Data) {
 				if (changeType == MembershipChanges::Join)
-					joined.insert(processId);
+					joined.insert(node);
 				else // MembershipChanges::Leave
-					left.insert(processId);
+					left.insert(node);
 			}
 
 			std::set_difference(
@@ -26,8 +31,12 @@ namespace catapult { namespace fastfinality {
 			return current;
 		};
 
+		bool View::hasChange(const ProcessId& processId, MembershipChanges change) const {
+			return std::find_if(Data.cbegin(), Data.cend(), [&processId, change](const auto& pair) { return pair.first.identityKey() == processId && pair.second == change; }) != Data.cend();
+		};
+
 		bool View::isMember(const ProcessId& processId) const {
-			return (bool)(members().count(processId));
+			return std::find_if(Data.cbegin(), Data.cend(), [&processId](const auto& pair) { return pair.first.identityKey() == processId && pair.second == MembershipChanges::Join; }) != Data.cend();
 		};
 
 		size_t View::quorumSize() const {
@@ -48,9 +57,7 @@ namespace catapult { namespace fastfinality {
 			if (other.Data.size() <= Data.size())
 				return false;
 
-			const std::vector<std::pair<ProcessId, MembershipChanges>> commonPart {
-					other.Data.begin(), other.Data.begin() + Data.size()
-			};
+			const std::vector<std::pair<ionet::Node, MembershipChanges>> commonPart{ other.Data.cbegin(), other.Data.cend() };
 
 			// If other is longer, but common part differs, the views are not comparable.
 			return Data == commonPart;
@@ -61,9 +68,7 @@ namespace catapult { namespace fastfinality {
 			if (Data.size() <= other.Data.size())
 				return false;
 
-			const std::vector<std::pair<ProcessId, MembershipChanges>> commonPart {
-					Data.begin(), Data.begin() + other.Data.size()
-			};
+			const std::vector<std::pair<ionet::Node, MembershipChanges>> commonPart{ Data.cbegin(), Data.cend() };
 
 			// If *this is longer, but common part differs, the views are not comparable.
 			return other.Data == commonPart;
