@@ -365,7 +365,7 @@ namespace catapult { namespace state {
 		}
 
 		/// Sets whether the supercontract is deployed.
-		void supercontractIsDeployed(bool supercontractIsDeployed) {
+		void setSupercontractIsDeployed(bool supercontractIsDeployed) {
 			m_supercontractIsDeployed = supercontractIsDeployed;
 		}
 

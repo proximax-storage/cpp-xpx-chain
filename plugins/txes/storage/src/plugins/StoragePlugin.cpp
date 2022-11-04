@@ -188,7 +188,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateStreamFinishValidator())
 				.add(validators::CreateStreamPaymentValidator())
 				.add(validators::CreateEndDriveVerificationValidator())
-				.add(validators::CreateServiceUnitTransferValidator());
+				.add(validators::CreateServiceUnitTransferValidator())
+				.add(validators::CreateDeploySupercontractValidator());
 		});
 
 		manager.addObserverHook([&state = *pStorageState, &liquidityProviderObserver](auto& builder) {
@@ -216,7 +217,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateStartDriveVerificationObserver(state))
 				.add(observers::CreateEndDriveVerificationObserver(liquidityProviderObserver))
 				.add(observers::CreatePeriodicStoragePaymentObserver(liquidityProviderObserver))
-				.add(observers::CreatePeriodicDownloadChannelPaymentObserver());
+				.add(observers::CreatePeriodicDownloadChannelPaymentObserver())
+				.add(observers::CreateDeploySupercontractObserver());
 		});
 	}
 }}

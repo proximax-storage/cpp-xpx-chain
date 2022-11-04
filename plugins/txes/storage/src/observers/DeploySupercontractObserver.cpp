@@ -17,7 +17,7 @@ namespace catapult { namespace observers {
 
 			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 			state::BcDriveEntry driveEntry(notification.DriveKey);
-			driveEntry.supercontractIsDeployed(true);
+			driveEntry.setSupercontractIsDeployed(true);
 			driveCache.insert(driveEntry);
 		}))
 	}
