@@ -40,6 +40,10 @@ namespace catapult { namespace validators {
 				return Failure_Storage_Data_Modification_Already_Exists;
 	  	}
 
+		if (pDriveEntry->supercontractIsDeployed()) {
+            return Failure_Storage_Supercontract_Is_Already_Deployed;
+        }
+
 		return ValidationResult::Success;
 	});
 

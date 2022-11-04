@@ -149,6 +149,7 @@ namespace catapult { namespace state {
 			, m_usedSizeBytes(0)
 			, m_metaFilesSizeBytes(0)
 			, m_replicatorCount(0)
+			, m_supercontractIsDeployed(false)
 		{}
 
 	public:
@@ -358,6 +359,16 @@ namespace catapult { namespace state {
 			return m_verificationNode;
 		}
 
+		/// Gets whether the supercontract is deployed.
+		bool supercontractIsDeployed() const {
+			return m_supercontractIsDeployed;
+		}
+
+		/// Sets whether the supercontract is deployed.
+		void supercontractIsDeployed(bool supercontractIsDeployed) {
+			m_supercontractIsDeployed = supercontractIsDeployed;
+		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
@@ -381,6 +392,7 @@ namespace catapult { namespace state {
 		Timestamp m_lastPayment;
 
 		AVLTreeNode m_verificationNode;
+		bool m_supercontractIsDeployed; 
 	};
 
 	// Drive entry.

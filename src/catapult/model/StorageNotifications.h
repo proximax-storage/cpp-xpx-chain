@@ -88,6 +88,9 @@ namespace catapult { namespace model {
 	/// Defines an start drive verification notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Start_Drive_Verification_v1, 0x001A);
 
+	/// Defines an deploy supercontract notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Deploy_Supercontract_v1, 0x001B);
+
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
 		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)
@@ -1120,5 +1123,31 @@ namespace catapult { namespace model {
 
 		/// Array or signatures.
 		const uint8_t* OpinionsPtr;
+	};
+
+	/// Notification of deploy supercontract.
+	template<VersionType version>
+	struct DeploySupercontractNotification;
+
+	template<>
+	struct DeploySupercontractNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Deploy_Supercontract_v1_Notification;
+	
+	public:
+		explicit DeploySupercontractNotification(
+			const Key& signer, 
+			const Key& driveKey)
+			: Notification(Notification_Type, sizeof(DeploySupercontractNotification<1>))
+			, DriveKey(driveKey)
+		{}
+	
+	public:
+		/// Signer of the Deploy Transaction of Supercontract.
+		Key Signer;
+
+		/// Key of the drive.
+		Key DriveKey;
 	};
 }}
