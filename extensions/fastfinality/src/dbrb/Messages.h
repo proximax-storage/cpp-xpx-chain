@@ -65,22 +65,52 @@ namespace catapult { namespace fastfinality {
 		// Messages related to BROADCAST operation
 
 		struct PrepareMessage : Message {
+			/// Message to be broadcasted.
 			Payload Payload;
+
+			/// Current view of the system from the perspective of Sender.
 			View View;
 		};
 
 		struct StateUpdateMessage : Message {
-			/// State of the process. Consists of Acknowledged, Conflicting and Stored fields.
+			/// State of the process.
 			ProcessState State;
 
 			/// List of pending changes (i.e., join or leave).
 			std::vector<std::pair<ProcessId, MembershipChanges>> PendingChanges;
 		};
 
-		struct AcknowledgedMessage : Message {};
+		struct AcknowledgedMessage : Message {
+			/// Acknowledged payload.
+			Payload Payload;
 
-		struct CommitMessage : Message {};
+			/// Current view of the system from the perspective of Sender.
+			View View;
 
-		struct DeliverMessage : Message {};
+			/// Signature formed by Sender.
+			catapult::Signature Signature;
+		};
+
+		struct CommitMessage : Message {
+			/// Payload for which Acknowledged quorum was collected.
+			Payload Payload;
+
+			/// Message certificate for supplied payload.
+			std::set<Signature> Certificate;
+
+			/// View associated with supplied certificate.
+			View CertificateView;
+
+			/// Current view of the system from the perspective of Sender.
+			View CurrentView;
+		};
+
+		struct DeliverMessage : Message {
+			/// Payload to deliver.
+			Payload Payload;
+
+			/// Current view of the system from the perspective of Sender.
+			View View;
+		};
 
 }}

@@ -18,7 +18,14 @@ namespace catapult { namespace fastfinality {
 
 		void DbrbProcess::leave() {};
 
-		void DbrbProcess::broadcast(Payload payload) {};
+		void DbrbProcess::broadcast(Payload payload) {
+			if (!m_installedViews.count(m_currentView))
+				return;	// The process waits to install some view and then disseminates the prepare message.
+						// TODO: Can notify user the reason why broadcast failed
+
+			PrepareMessage message = { m_id, payload, m_currentView };
+			disseminate(message, message.View.members());
+		};
 
 		void DbrbProcess::processMessage(Message message) { /* Identifies message type and calls respective private method. */ };
 
@@ -43,6 +50,33 @@ namespace catapult { namespace fastfinality {
 		};
 
 		void DbrbProcess::transferState(std::set<StateUpdateMessage>) {};
+
+		bool DbrbProcess::isAcknowledgeable(const Payload& payload) {
+			// If m_acknowledgeAllowed == false, no payload is allowed to be acknowledged.
+			if (!m_acknowledgeAllowed)
+				return false;
+
+			// If m_acknowledgeAllowed == true and m_acknowledgeablePayload is unset,
+			// any payload can be acknowledged.
+			if (!m_acknowledgeablePayload.has_value())
+				return true;
+
+			// If m_acknowledgeAllowed == true and m_acknowledgeablePayload is set,
+			// only m_acknowledgeablePayload can be acknowledged.
+			return *m_acknowledgeablePayload == payload;
+		}
+
+		Signature DbrbProcess::sign(const ProcessId& sender, const Payload& payload) {
+			// Signed message must contain information about:
+			// - sender process S from which Prepare message was received;
+			// - payload of the message;
+			// - recipient process Q (current process) that received Prepare message from S;
+			// - Q's view at the moment of forming a signature;
+		};
+
+		bool DbrbProcess::verify(const ProcessId& signer, const Payload& payload, const View& view, const Signature& signature) {
+			// Forms message body as described in DbrbProcess::sign and checks whether the signature is valid.
+		};
 
 
 		// Message callbacks:
@@ -159,7 +193,7 @@ namespace catapult { namespace fastfinality {
 				if (m_currentView < message.LeastRecentView)
 					m_limitedProcessing = true;	// Stop processing Prepare, Commit and Reconfig messages.
 
-				auto& state = m_states[message.ReplacedView];	// TODO: Check if this always exists
+				auto& state = m_state;	// TODO: Check if this always exists
 				StateUpdateMessage stateUpdateMessage { m_id, state, m_pendingChanges };
 
 				std::set<ProcessId> recipientsUnion;
@@ -179,6 +213,27 @@ namespace catapult { namespace fastfinality {
 		void DbrbProcess::onPrepareMessageReceived(PrepareMessage message) {
 			if (m_limitedProcessing)
 				return;
+
+			// Message sender must be a member of the view specified in the message.
+			if (!message.View.isMember(message.Sender))
+				return;
+
+			// View specified in the message must be equal to the current view of the process.
+			if (message.View != m_currentView)
+				return;
+
+			// Payload from the message must be acknowledgeable.
+			if (!isAcknowledgeable(message.Payload))
+				return;
+
+			if (!m_acknowledgeablePayload.has_value()) {
+				m_acknowledgeablePayload = message.Payload;
+				// TODO: Update State.ack to be <Prepare, m, v>
+			}
+
+			Signature signature = sign(message.Sender, message.Payload);
+			AcknowledgedMessage responseMessage = { m_id, message.Payload, m_currentView, signature };
+			send(responseMessage, message.Sender);
 		};
 
 		void DbrbProcess::onStateUpdateMessageReceived(StateUpdateMessage message) {
@@ -195,7 +250,7 @@ namespace catapult { namespace fastfinality {
 			const auto& convergedSequence = m_currentInstallMessage->ConvergedSequence;
 
 			// Updating pending changes.
-			// TODO: Change View.Data to set to be able to safely merge two lists of changes
+			// TODO: Merge two lists of changes
 
 			m_installedViews.erase(leastRecentView);
 
@@ -237,7 +292,45 @@ namespace catapult { namespace fastfinality {
 			m_currentInstallMessage.reset();
 		};
 
-		void DbrbProcess::onAcknowledgedMessageReceived(AcknowledgedMessage message) {};
+		void DbrbProcess::onAcknowledgedMessageReceived(AcknowledgedMessage message) {
+			// Message sender must be a member of the view specified in the message.
+			if (!message.View.isMember(message.Sender))
+				return;
+
+			// There must not be an existing acknowledged entry from Sender for corresponding View.
+			auto& acknowledgedSet = m_quorumManager.AcknowledgedPayloads[message.View];
+			if (std::find_if(acknowledgedSet.begin(), acknowledgedSet.end(),
+					[&message](const std::pair<ProcessId, Payload>& pair){ return pair.first == message.Sender; }) != acknowledgedSet.end())
+				return;
+
+			// Signature must be valid.
+			if (!verify(message.Sender, message.Payload, message.View, message.Signature))
+				return;
+
+			m_signatures[std::make_pair(message.View, message.Sender)] = message.Signature;
+			bool quorumCollected = m_quorumManager.update(message);
+			if (quorumCollected && m_certificate.empty())
+				onAcknowledgedQuorumCollected(message);
+		};
+
+		void DbrbProcess::onAcknowledgedQuorumCollected(AcknowledgedMessage message) {
+			// Replacing certificate.
+			m_certificate.clear();
+			const auto& acknowledgedSet = m_quorumManager.AcknowledgedPayloads[message.View];
+			for (const auto& [processId, payload] : acknowledgedSet) {
+				if (payload == message.Payload)
+					m_certificate.insert(m_signatures.at(std::make_pair(message.View, processId)));
+			}
+
+			// Replacing view associated with the certificate.
+			m_certificateView = message.View;
+
+			// Disseminating Commit message, if process' current view is installed.
+			if (m_installedViews.count(m_currentView)) {
+				CommitMessage responseMessage = { m_id, message.Payload, m_certificate, m_certificateView, m_currentView };
+				disseminate(responseMessage, m_currentView.members());
+			}
+		};
 
 		void DbrbProcess::onCommitMessageReceived(CommitMessage message) {
 			if (m_limitedProcessing)
@@ -245,6 +338,8 @@ namespace catapult { namespace fastfinality {
 		};
 
 		void DbrbProcess::onDeliverMessageReceived(DeliverMessage message) {};
+
+		void DbrbProcess::onDeliverQuorumCollected(DeliverMessage message) {};
 
 
 		// Other callbacks:

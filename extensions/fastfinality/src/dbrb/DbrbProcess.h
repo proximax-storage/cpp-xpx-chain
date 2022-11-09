@@ -1,4 +1,5 @@
 #pragma  once
+#include "catapult/types.h"
 #include "DbrbUtils.h"
 #include "Messages.h"
 
@@ -19,6 +20,9 @@ namespace catapult { namespace fastfinality {
 
 			/// Maps views to received StateUpdate messages for those views.
 			std::map<View, std::set<StateUpdateMessage>> StateUpdateMessages;
+
+			/// Maps views to sets of pairs of respective process IDs and payloads received from Acknowledged messages.
+			std::map<View, std::set< std::pair<ProcessId, Payload> >> AcknowledgedPayloads;
 
 			/// Overloaded methods for updating respective counters.
 			/// Returns whether the quorum has just been collected on this update.
@@ -43,6 +47,19 @@ namespace catapult { namespace fastfinality {
 					}
 				}
 				return triggeredViews;
+			};
+			bool update(AcknowledgedMessage message) {
+				auto& set = AcknowledgedPayloads[message.View];
+				auto iter = std::find_if(set.begin(), set.end(),
+						[&message](const std::pair<ProcessId, Payload>& pair){ return pair.first == message.Sender; });
+				if (iter != set.end())
+					set.erase(iter);
+				set.emplace(message.Sender, message.Payload);
+
+				const auto acknowledgedCount = std::count_if(set.begin(), set.end(),
+						[&message](const std::pair<ProcessId, Payload>& pair){ return pair.second == message.Payload; });
+
+				return acknowledgedCount == message.View.quorumSize();
 			};
 
 		private:
@@ -97,17 +114,23 @@ namespace catapult { namespace fastfinality {
 			/// Map that maps views to the sets of sequences that can be proposed.
 			std::map<View, std::set<Sequence>> m_formatSequences;
 
-			/// Message certificate for current payload.
-			Certificate m_certificate;
+			/// Message certificate for current payload. Empty when process starts.
+			std::set<Signature> m_certificate = {};
 
 			/// View in which message certificate was collected.
 			View m_certificateView;
 
-			/// List of payloads allowed to be acknowledged. If empty, any payload can be acknowledged.
-			std::vector<Payload> m_acknowledgeAllowed;
+			/// Map that maps views and process IDs to signatures received from respective Acknowledged messages.
+			std::map<std::pair<View, ProcessId>, Signature> m_signatures;
 
-			/// Value of the payload.
-			Payload m_payload;
+			/// Whether there is any payload allowed to be acknowledged.
+			bool m_acknowledgeAllowed = true;
+
+			/// Payload allowed to be acknowledged. If empty, any payload can be acknowledged.
+			std::optional<Payload> m_acknowledgeablePayload = {};
+
+			/// Value of the stored payload.
+			Payload m_storedPayload;
 
 			/// Whether value of the payload is relevant.
 			bool m_payloadIsStored;
@@ -118,8 +141,8 @@ namespace catapult { namespace fastfinality {
 			/// Whether process is allowed to leave the system.
 			bool m_canLeave;
 
-			/// Map that maps views to respective states.
-			std::map<View, ProcessState> m_states;
+			/// State of the process.
+			ProcessState m_state;
 
 		public:
 			/// Request to join the system.
@@ -140,6 +163,9 @@ namespace catapult { namespace fastfinality {
 			void send(Message, ProcessId);
 			void prepareForStateUpdates(InstallMessage);
 			void transferState(std::set<StateUpdateMessage>);
+			bool isAcknowledgeable(const Payload&);
+			Signature sign(const ProcessId&, const Payload&);
+			bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
 
 			void onReconfigMessageReceived(ReconfigMessage);
 			void onReconfigConfirmMessageReceived(ReconfigConfirmMessage);
@@ -154,8 +180,10 @@ namespace catapult { namespace fastfinality {
 			void onStateUpdateMessageReceived(StateUpdateMessage);
 			void onStateUpdateQuorumCollected();
 			void onAcknowledgedMessageReceived(AcknowledgedMessage);
+			void onAcknowledgedQuorumCollected(AcknowledgedMessage);
 			void onCommitMessageReceived(CommitMessage);
 			void onDeliverMessageReceived(DeliverMessage);
+			void onDeliverQuorumCollected(DeliverMessage);
 
 			/// Called when a new (most recent) view of the system is discovered.
 			void onViewDiscovered(View);
