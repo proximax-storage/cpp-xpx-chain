@@ -259,6 +259,7 @@ namespace catapult { namespace zeromq {
 			const auto& receipt = statement.receiptAt(i);
 			zmq::multipart_t multipart;
 			multipart.addmem(&topic, sizeof(TransactionMarker));
+			multipart.addmem(&height, sizeof(Height));
 			multipart.addmem(&receipt, receipt.Size);
 			pMessageGroup->add(std::move(multipart));
 			m_pSynchronizedPublisher->queue(std::move(pMessageGroup));
@@ -272,6 +273,7 @@ namespace catapult { namespace zeromq {
 			const auto& receipt = statement.receiptAt(i);
 			zmq::multipart_t multipart;
 			multipart.addmem(&topic, sizeof(TransactionMarker));
+			multipart.addmem(&height, sizeof(Height));
 			multipart.addmem(&receipt, receipt.Size);
 			pMessageGroup->add(std::move(multipart));
 			m_pSynchronizedPublisher->queue(std::move(pMessageGroup));
