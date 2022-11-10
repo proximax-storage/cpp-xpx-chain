@@ -28,11 +28,17 @@ namespace catapult { namespace dbrb {
 		Leave,
 	};
 
-	/// State of the process. Consists of Acknowledged, Conflicting and Stored fields.
-	struct ProcessState {};	// TODO: Stub
+	/// State of the process.
+	struct ProcessState {
+		/// Payload that is allowed to be acknowledged.
+		Payload AcknowledgeablePayload;
 
-	/// Message certificate.
-	struct Certificate {};	// TODO: Stub
+		/// Stored Commit message, if any.
+		//std::optional<CommitMessage> Stored;
+
+		/// A pair of conflicting Prepare messages, if any.
+		//std::optional<std::pair<PrepareMessage, PrepareMessage>> Conflicting;
+	};
 
 
 	/// View of the system.

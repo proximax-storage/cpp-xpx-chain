@@ -177,7 +177,10 @@ namespace catapult { namespace dbrb {
 		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
 
 	public:
+		/// Message to be broadcasted.
 		dbrb::Payload Payload;
+
+		/// Current view of the system from the perspective of Sender.
 		dbrb::View View;
 	};
 
@@ -194,7 +197,7 @@ namespace catapult { namespace dbrb {
 		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
 
 	public:
-		/// State of the process. Consists of Acknowledged, Conflicting and Stored fields.
+		/// State of the process.
 		ProcessState State;
 
 		/// List of pending changes (i.e., join or leave).
@@ -204,33 +207,72 @@ namespace catapult { namespace dbrb {
 	struct AcknowledgedMessage : Message {
 	public:
 		AcknowledgedMessage() = delete;
-		explicit AcknowledgedMessage(const ProcessId& sender)
+		explicit AcknowledgedMessage(const ProcessId& sender, Payload payload, View view, Signature signature)
 			: Message(sender, ionet::PacketType::Dbrb_Acknowledged_Message)
+			, Payload(std::move(payload))
+			, View(std::move(view))
+			, Signature(std::move(signature))
 		{}
 
 	public:
 		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+
+	public:
+		/// Acknowledged payload.
+		dbrb::Payload Payload;
+
+		/// Current view of the system from the perspective of Sender.
+		dbrb::View View;
+
+		/// Signature formed by Sender.
+		catapult::Signature Signature;
 	};
 
 	struct CommitMessage : Message {
 	public:
 		CommitMessage() = delete;
-		explicit CommitMessage(const ProcessId& sender)
+		explicit CommitMessage(const ProcessId& sender, Payload payload, std::set<Signature> certificate, View certificateView, View currentView)
 			: Message(sender, ionet::PacketType::Dbrb_Commit_Message)
+			, Payload(std::move(payload))
+			, Certificate(std::move(certificate))
+			, CertificateView(std::move(certificateView))
+			, CurrentView(std::move(currentView))
 		{}
 
 	public:
 		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+
+	public:
+		/// Payload for which Acknowledged quorum was collected.
+		dbrb::Payload Payload;
+
+		/// Message certificate for supplied payload.
+		std::set<Signature> Certificate;
+
+		/// View associated with supplied certificate.
+		View CertificateView;
+
+		/// Current view of the system from the perspective of Sender.
+		View CurrentView;
 	};
 
 	struct DeliverMessage : Message {
 	public:
 		DeliverMessage() = delete;
-		explicit DeliverMessage(const ProcessId& sender)
+		explicit DeliverMessage(const ProcessId& sender, Payload payload, View view)
 			: Message(sender, ionet::PacketType::Dbrb_Deliver_Message)
+			, Payload(std::move(payload))
+			, View(std::move(view))
 		{}
 
 	public:
 		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+
+	public:
+		/// Payload to deliver.
+		dbrb::Payload Payload;
+
+		/// Current view of the system from the perspective of Sender.
+		dbrb::View View;
 	};
 }}
