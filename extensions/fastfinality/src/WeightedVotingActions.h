@@ -71,8 +71,7 @@ namespace catapult { namespace fastfinality {
 		const cache::CatapultCache& cache,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const harvesting::BlockGenerator& blockGenerator,
-		const model::BlockElementSupplier& lastBlockElementSupplier,
-		const extensions::PacketPayloadSink& packetPayloadSink);
+		const model::BlockElementSupplier& lastBlockElementSupplier);
 
 	action CreateDefaultRequestProposalAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
@@ -85,8 +84,7 @@ namespace catapult { namespace fastfinality {
 		const std::shared_ptr<thread::IoThreadPool>& pValidatorPool);
 
 	action CreateDefaultAddPrevoteAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const extensions::PacketPayloadSink& packetPayloadSink);
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
 
 	action CreateDefaultWaitForProposalPhaseEndAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
@@ -97,8 +95,7 @@ namespace catapult { namespace fastfinality {
 		const plugins::PluginManager& pluginManager);
 
 	action CreateDefaultAddPrecommitAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const extensions::PacketPayloadSink& packetPayloadSink);
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
 
 	action CreateDefaultRequestPrecommitsAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,

@@ -1,5 +1,5 @@
 /**
-*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Copyright 2022 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -7,12 +7,12 @@
 #include "DbrbUtils.h"
 
 
-namespace catapult { namespace fastfinality {
+namespace catapult { namespace dbrb {
 
-	std::set<ionet::Node> View::members() const {
-		std::set<ionet::Node> joined;
-		std::set<ionet::Node> left;
-		std::set<ionet::Node> current;
+	std::set<ProcessId> View::members() const {
+		std::set<ProcessId> joined;
+		std::set<ProcessId> left;
+		std::set<ProcessId> current;
 
 		for (const auto& [node, changeType] : Data) {
 			if (changeType == MembershipChanges::Join)
@@ -23,18 +23,18 @@ namespace catapult { namespace fastfinality {
 
 		std::set_difference(joined.begin(), joined.end(),
 							left.begin(), left.end(),
-							current.begin());
+							std::inserter(current, current.begin()));
 
 		return current;
-	};
+	}
 
 	bool View::hasChange(const ProcessId& processId, MembershipChanges change) const {
-		return std::find_if(Data.cbegin(), Data.cend(), [&processId, change](const auto& pair) { return pair.first.identityKey() == processId && pair.second == change; }) != Data.cend();
-	};
+		return std::find_if(Data.cbegin(), Data.cend(), [&processId, change](const auto& pair) { return pair.first == processId && pair.second == change; }) != Data.cend();
+	}
 
 	bool View::isMember(const ProcessId& processId) const {
-		return std::find_if(Data.cbegin(), Data.cend(), [&processId](const auto& pair) { return pair.first.identityKey() == processId && pair.second == MembershipChanges::Join; }) != Data.cend();
-	};
+		return std::find_if(Data.cbegin(), Data.cend(), [&processId](const auto& pair) { return pair.first == processId && pair.second == MembershipChanges::Join; }) != Data.cend();
+	}
 
 	size_t View::quorumSize() const {
 		unsigned size = members().size();
@@ -54,7 +54,7 @@ namespace catapult { namespace fastfinality {
 		if (other.Data.size() <= Data.size())
 			return false;
 
-		const std::vector<std::pair<ionet::Node, MembershipChanges>> commonPart{ other.Data.cbegin(), other.Data.cend() };
+		const std::vector<std::pair<ProcessId, MembershipChanges>> commonPart{ other.Data.cbegin(), other.Data.cend() };
 
 		// If other is longer, but common part differs, the views are not comparable.
 		return Data == commonPart;
@@ -65,7 +65,7 @@ namespace catapult { namespace fastfinality {
 		if (Data.size() <= other.Data.size())
 			return false;
 
-		const std::vector<std::pair<ionet::Node, MembershipChanges>> commonPart{ Data.cbegin(), Data.cend() };
+		const std::vector<std::pair<ProcessId, MembershipChanges>> commonPart{ Data.cbegin(), Data.cend() };
 
 		// If *this is longer, but common part differs, the views are not comparable.
 		return other.Data == commonPart;
@@ -81,7 +81,7 @@ namespace catapult { namespace fastfinality {
 
 	const std::vector<View>& Sequence::data() const {
 		return m_data;
-	};
+	}
 
 	std::optional<View> Sequence::maybeLeastRecent() const {
 		if (!m_data.empty())
@@ -95,7 +95,7 @@ namespace catapult { namespace fastfinality {
 		return {};
 	}
 
-	size_t Sequence::canInsert(const View& testedView) const {
+	int64_t Sequence::canInsert(const View& testedView) const {
 		const auto pMostRecent = maybeMostRecent();
 		if (!pMostRecent)
 			return 0;	// Sequence is empty; any view can be inserted and will appear at index 0.
@@ -109,7 +109,7 @@ namespace catapult { namespace fastfinality {
 		// we can now use comparison by size for faster processing.
 		const auto testedViewSize = testedView.Data.size();
 		auto pView = m_data.begin();
-		size_t pos = 0;
+		int64_t pos = 0;
 		for (; pView != m_data.end(); ++pos, ++pView) {
 			if (testedViewSize == pView->Data.size())
 				return SIZE_MAX;	// Duplicate means non-strictly ascending order.
@@ -140,7 +140,7 @@ namespace catapult { namespace fastfinality {
 	}
 
 	std::vector<View>::iterator Sequence::tryInsert(const View& newView) {
-		const size_t pos = canInsert(newView);
+		const int64_t pos = canInsert(newView);
 		if (pos != SIZE_MAX)
 			return m_data.insert(m_data.begin() + pos, newView);
 		else
@@ -170,6 +170,10 @@ namespace catapult { namespace fastfinality {
 			m_data.erase(iter);
 
 		return found;
+	}
+
+	bool Sequence::operator<(const Sequence& rhs) const {
+		return m_data.size() < rhs.m_data.size();
 	}
 
 	Sequence::Sequence(const std::vector<View>& sequenceData) {

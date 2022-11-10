@@ -161,7 +161,6 @@ namespace catapult { namespace fastfinality {
 				auto connectionSettings = extensions::GetConnectionSettings(config);
 				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
 				locator.registerService(Writers_Service_Name, pWriters);
-				const auto& packetPayloadSink = [&writers = *pWriters](const auto& payload) { writers.broadcast(payload); };
 				auto identityKey = crypto::KeyPair::FromString(config.User.BootKey).publicKey();
 				state.tasks().push_back(CreateConnectPeersTask(state.nodes(), *pWriters, identityKey));
 
@@ -246,8 +245,7 @@ namespace catapult { namespace fastfinality {
 					state.cache(),
 					pConfigHolder,
 					CreateHarvesterBlockGenerator(state),
-					lastBlockElementSupplier,
-					packetPayloadSink);
+					lastBlockElementSupplier);
 				actions.RequestProposal = CreateDefaultRequestProposalAction(pFsmShared, state);
 				actions.ValidateProposal = CreateDefaultValidateProposalAction(
 					pFsmShared,
@@ -257,8 +255,8 @@ namespace catapult { namespace fastfinality {
 				actions.WaitForProposalPhaseEnd = CreateDefaultWaitForProposalPhaseEndAction(pFsmShared, pConfigHolder);
 				actions.RequestPrevotes = CreateDefaultRequestPrevotesAction(pFsmShared, pluginManager);
 				actions.RequestPrecommits = CreateDefaultRequestPrecommitsAction(pFsmShared, pluginManager);
-				actions.AddPrevote = CreateDefaultAddPrevoteAction(pFsmShared, packetPayloadSink);
-				actions.AddPrecommit = CreateDefaultAddPrecommitAction(pFsmShared, packetPayloadSink);
+				actions.AddPrevote = CreateDefaultAddPrevoteAction(pFsmShared);
+				actions.AddPrecommit = CreateDefaultAddPrecommitAction(pFsmShared);
 				actions.WaitForPrecommitPhaseEnd = CreateDefaultWaitForPrecommitPhaseEndAction(pFsmShared, pConfigHolder);
 				actions.UpdateConfirmedBlock = CreateDefaultUpdateConfirmedBlockAction(pFsmShared, pluginManager.getCommitteeManager());
 				actions.CommitConfirmedBlock = CreateDefaultCommitConfirmedBlockAction(

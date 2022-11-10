@@ -7,6 +7,7 @@
 #pragma once
 #include "CommitteeData.h"
 #include "WeightedVotingTransitionTable.h"
+#include "dbrb/DbrbProcess.h"
 #include "catapult/thread/IoThreadPool.h"
 
 namespace catapult { namespace ionet { class NodePacketIoPair; } }
@@ -34,6 +35,7 @@ namespace catapult { namespace fastfinality {
 			, m_nodeWorkState(NodeWorkState::None)
 			, m_stopped(false)
 			, m_packetHandlers(config.Node.MaxPacketDataSize.bytes32())
+			, m_dbrbProcess(m_packetHandlers)
 		{}
 
 	public:
@@ -120,6 +122,10 @@ namespace catapult { namespace fastfinality {
 			return m_mutex;
 		}
 
+		auto& dbrbProcess() {
+			return m_dbrbProcess;
+		}
+
 	private:
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
 		boost::asio::system_timer m_timer;
@@ -133,5 +139,6 @@ namespace catapult { namespace fastfinality {
 		ionet::ServerPacketHandlers m_packetHandlers;
 		net::PacketIoPickerContainer m_packetIoPickers;
 		mutable std::mutex m_mutex;
+		dbrb::DbrbProcess m_dbrbProcess;
 	};
 }}

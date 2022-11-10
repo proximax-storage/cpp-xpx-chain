@@ -1,5 +1,5 @@
 /**
-*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Copyright 2022 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -9,8 +9,9 @@
 #include "Messages.h"
 #include "catapult/functions.h"
 #include "catapult/net/PacketWriters.h"
+#include "catapult/ionet/PacketHandlers.h"
 
-namespace catapult { namespace fastfinality {
+namespace catapult { namespace dbrb {
 
 	/// Struct that encapsulates all necessary quorum counters and their update methods.
 	struct QuorumManager {
@@ -69,7 +70,10 @@ namespace catapult { namespace fastfinality {
 
 
 	/// Class representing DBRB process.
-	class DbrbProcess {
+	class DbrbProcess : public std::enable_shared_from_this<DbrbProcess> {
+	public:
+		explicit DbrbProcess(ionet::ServerPacketHandlers& handlers);
+
 	private:
 		/// Process identifier.
 		ProcessId m_id;
@@ -94,7 +98,7 @@ namespace catapult { namespace fastfinality {
 		View m_currentView;
 
 		/// List of pending changes (i.e., join or leave).
-		std::vector<std::pair<ProcessId, MembershipChanges>> m_pendingChanges;
+		View m_pendingChanges;
 
 		/// Map that maps views to proposed sequences to replace those views.
 		std::map<View, Sequence> m_proposedSequences;
@@ -131,6 +135,8 @@ namespace catapult { namespace fastfinality {
 		/// Map that maps views to respective states.
 		std::map<View, ProcessState> m_states;
 
+		NetworkPacketConverter m_converter;
+
 	public:
 		/// Request to join the system.
 		void join();
@@ -139,32 +145,26 @@ namespace catapult { namespace fastfinality {
 		void leave();
 
 		/// Broadcast arbitrary \c payload into the system.
-		void broadcast(const Message&);
+		void broadcast(const Payload&);
 
-		void processMessage(const ionet::Packet&);
+		void processMessage(const Message&);
 
 	private:
-		using DisseminateCallback = consumer<ionet::SocketOperationCode, const ionet::Packet*>;
+		void disseminate(const Message& message, const std::set<ProcessId>& recipients);
+		void reliablyDisseminate(const Message&, std::set<ProcessId>);	// R-multicast in terms of BRB.
+		void send(const Message& message, const ProcessId& recipient);
 
-		void disseminate(const Message& message, const DisseminateCallback& callback);
-		void reliablyDisseminate(Message, std::set<ProcessId>);	// R-multicast in terms of BRB.
-		void send(const Message& message, const ionet::Node& recipient, const ionet::PacketIo::WriteCallback& callback);
-		void prepareForStateUpdates(InstallMessage);
-		void transferState(std::set<StateUpdateMessage>);
+		void prepareForStateUpdates(const InstallMessage&);
+		void transferState(const std::set<StateUpdateMessage>&);
 
 		// Request members of the current view forcibly remove failing participant.
-		void forceLeave(const ionet::Node& node);
+		void forceLeave(const ProcessId& node);
 
-		void onReconfigMessageReceived(ReconfigMessage);
-		void onReconfigConfirmMessageReceived(ReconfigConfirmMessage);
 		void onReconfigConfirmQuorumCollected();
-		void onProposeMessageReceived(ProposeMessage);
-		void onProposeQuorumCollected(ProposeMessage);
-		void onConvergedMessageReceived(ConvergedMessage);
-		void onConvergedQuorumCollected(ConvergedMessage);
-		void onInstallMessageReceived(InstallMessage);
+		void onProposeQuorumCollected(const ProposeMessage&);
+		void onConvergedQuorumCollected(const ConvergedMessage&);
 
-		void onReconfigMessageReceived(const ReconfigMessage&, const ionet::Node& sender);
+		void onReconfigMessageReceived(const ReconfigMessage&, const ProcessId& sender);
 		void onReconfigConfirmMessageReceived(const ReconfigConfirmMessage&);
 		void onProposeMessageReceived(const ProposeMessage&);
 		void onConvergedMessageReceived(const ConvergedMessage&);

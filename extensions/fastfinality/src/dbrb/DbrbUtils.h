@@ -1,5 +1,5 @@
 /**
-*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Copyright 2022 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -16,14 +16,14 @@
 #include <cstdint>
 
 
-namespace catapult { namespace fastfinality {
+namespace catapult { namespace dbrb {
 
-	using ProcessId = Key;
+	using ProcessId = ionet::Node;
 	using Payload = std::shared_ptr<ionet::Packet>;
 
 
 	/// Changes of processes' membership in a view.
-	enum MembershipChanges {
+	enum class MembershipChanges : uint8_t {
 		Join,
 		Leave,
 	};
@@ -38,10 +38,10 @@ namespace catapult { namespace fastfinality {
 	/// View of the system.
 	struct View {
 		/// History of processes' membership changes in the system.
-		std::vector<std::pair<ionet::Node, MembershipChanges>> Data;
+		std::vector<std::pair<ProcessId, MembershipChanges>> Data;
 
 		/// Get IDs of current members of the view.
-		std::set<ionet::Node> members() const;
+		std::set<ProcessId> members() const;
 
 		/// Check if \a processId is a member of this view.
 		bool hasChange(const ProcessId& processId, MembershipChanges change) const;
@@ -83,7 +83,7 @@ namespace catapult { namespace fastfinality {
 
 		/// Get \a testedView's potential index on insertion into \a m_data, if it is comparable with every view in \a m_data.
 		/// If not comparable with at least one view from \a m_data, returns SIZE_MAX.
-		size_t canInsert(const View& testedView) const;
+		int64_t canInsert(const View& testedView) const;
 
 		/// Check whether \a testedView is the most recent among views in \a m_data, and therefore can be appended.
 		bool canAppend(const View& testedView) const;
@@ -106,6 +106,8 @@ namespace catapult { namespace fastfinality {
 		/// Try to erase \a view from \a m_data.
 		/// Returns whether the view was found and erased.
 		bool tryErase(const View& view);
+
+		bool operator<(const Sequence& rhs) const;
 
 		/// Check whether all views in \a sequenceData are mutually comparable and sorted in strictly ascending order.
 		static bool isValidSequence(const std::vector<View>& sequenceData) {

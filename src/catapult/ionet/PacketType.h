@@ -92,6 +92,28 @@ namespace catapult { namespace ionet {
 	\
 	/* A block confirmed by committee has been requested by a peer. */ \
 	ENUM_VALUE(Pull_Confirmed_Block, 21) \
+	/* DBRB only packets have types [550, 600) */ \
+	\
+	ENUM_VALUE(Dbrb_Reconfig_Message, 550) \
+	\
+	ENUM_VALUE(Dbrb_Reconfig_Confirm_Message, 551) \
+	\
+	ENUM_VALUE(Dbrb_Propose_Message, 552) \
+	\
+	ENUM_VALUE(Dbrb_Converged_Message, 553) \
+	\
+	ENUM_VALUE(Dbrb_Install_Message, 554) \
+	\
+	ENUM_VALUE(Dbrb_Prepare_Message, 555) \
+	\
+	ENUM_VALUE(Dbrb_State_Update_Message, 556) \
+	\
+	ENUM_VALUE(Dbrb_Acknowledged_Message, 557) \
+	\
+	ENUM_VALUE(Dbrb_Commit_Message, 558) \
+	\
+	ENUM_VALUE(Dbrb_Deliver_Message, 559) \
+	\
 	/* api only packets have types [500, 600) */ \
 	\
 	/* Partial aggregate transactions have been pushed by an api-node. */ \

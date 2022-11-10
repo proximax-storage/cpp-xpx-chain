@@ -466,9 +466,8 @@ namespace catapult { namespace fastfinality {
 			const cache::CatapultCache& cache,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const harvesting::BlockGenerator& blockGenerator,
-			const model::BlockElementSupplier& lastBlockElementSupplier,
-			const extensions::PacketPayloadSink& packetPayloadSink) {
-		return [pFsmWeak, &cache, pConfigHolder, blockGenerator, lastBlockElementSupplier, packetPayloadSink]() {
+			const model::BlockElementSupplier& lastBlockElementSupplier) {
+		return [pFsmWeak, &cache, pConfigHolder, blockGenerator, lastBlockElementSupplier]() {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
@@ -493,7 +492,9 @@ namespace catapult { namespace fastfinality {
 			if (pBlock) {
 				model::SignBlockHeader(*committeeData.blockProposer(), *pBlock);
 				committeeData.setProposedBlock(pBlock);
-				packetPayloadSink(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Push_Proposed_Block, pBlock));
+				auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(pBlock->Size);
+				pPacket->Type = ionet::PacketType::Push_Proposed_Block;
+				pFsmShared->dbrbProcess().broadcast(pPacket);
 
 				pFsmShared->processEvent(BlockProposingSucceeded{});
 			} else {
@@ -918,9 +919,8 @@ namespace catapult { namespace fastfinality {
 	namespace {
 		template<typename TPacket, CommitteeMessageType MessageType, CommitteePhase Phase>
 		action CreateAddVoteAction(
-				std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-				const extensions::PacketPayloadSink& packetPayloadSink) {
-			return [pFsmWeak, packetPayloadSink]() {
+				std::weak_ptr<WeightedVotingFsm> pFsmWeak) {
+			return [pFsmWeak]() {
 				TRY_GET_FSM()
 
 				SetPhase(pFsmShared, Phase);
@@ -954,17 +954,17 @@ namespace catapult { namespace fastfinality {
 				for (const auto& pair : votes)
 					pMessage[index++] = pair.second;
 
-				packetPayloadSink(ionet::PacketPayload(pPacket));
+				pFsmShared->dbrbProcess().broadcast(pPacket);
 			};
 		}
 	}
 
-	action CreateDefaultAddPrevoteAction(std::weak_ptr<WeightedVotingFsm> pFsmWeak, const extensions::PacketPayloadSink& packetPayloadSink) {
-		return CreateAddVoteAction<PushPrevoteMessagesRequest, CommitteeMessageType::Prevote, CommitteePhase::Prevote>(pFsmWeak, packetPayloadSink);
+	action CreateDefaultAddPrevoteAction(std::weak_ptr<WeightedVotingFsm> pFsmWeak) {
+		return CreateAddVoteAction<PushPrevoteMessagesRequest, CommitteeMessageType::Prevote, CommitteePhase::Prevote>(pFsmWeak);
 	}
 
-	action CreateDefaultAddPrecommitAction(std::weak_ptr<WeightedVotingFsm> pFsmWeak, const extensions::PacketPayloadSink& packetPayloadSink) {
-		return CreateAddVoteAction<PushPrecommitMessagesRequest, CommitteeMessageType::Precommit, CommitteePhase::Precommit>(pFsmWeak, packetPayloadSink);
+	action CreateDefaultAddPrecommitAction(std::weak_ptr<WeightedVotingFsm> pFsmWeak) {
+		return CreateAddVoteAction<PushPrecommitMessagesRequest, CommitteeMessageType::Precommit, CommitteePhase::Precommit>(pFsmWeak);
 	}
 
 	action CreateDefaultWaitForPrecommitPhaseEndAction(
