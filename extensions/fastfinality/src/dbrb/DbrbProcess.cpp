@@ -27,7 +27,7 @@ namespace catapult { namespace fastfinality {
 			disseminate(message, message.View.members());
 		};
 
-		void DbrbProcess::processMessage(Message message) { /* Identifies message type and calls respective private method. */ };
+		void DbrbProcess::deliver() { /* Delivers m_storedPayloadData->Payload to the underlying process. */ };
 
 
 		// Basic private methods:
@@ -281,7 +281,7 @@ namespace catapult { namespace fastfinality {
 				}
 
 			} else {
-				if (m_payloadIsStored) {
+				if (m_storedPayloadData.has_value()) {
 					// TODO: Perform view discovery and disseminate Propose messages until is allowed to leave
 				}
 
@@ -314,16 +314,16 @@ namespace catapult { namespace fastfinality {
 		};
 
 		void DbrbProcess::onAcknowledgedQuorumCollected(AcknowledgedMessage message) {
+			// Replacing view associated with the certificate.
+			m_certificateView = message.View;
+
 			// Replacing certificate.
 			m_certificate.clear();
 			const auto& acknowledgedSet = m_quorumManager.AcknowledgedPayloads[message.View];
 			for (const auto& [processId, payload] : acknowledgedSet) {
 				if (payload == message.Payload)
-					m_certificate.insert(m_signatures.at(std::make_pair(message.View, processId)));
+					m_certificate[processId] = m_signatures.at(std::make_pair(message.View, processId));
 			}
-
-			// Replacing view associated with the certificate.
-			m_certificateView = message.View;
 
 			// Disseminating Commit message, if process' current view is installed.
 			if (m_installedViews.count(m_currentView)) {
@@ -335,11 +335,48 @@ namespace catapult { namespace fastfinality {
 		void DbrbProcess::onCommitMessageReceived(CommitMessage message) {
 			if (m_limitedProcessing)
 				return;
+
+			// View specified in the message must be equal to the current view of the process.
+			if (message.CurrentView != m_currentView)
+				return;
+
+			// Message certificate must be valid, i.e. all signatures in it must be valid.
+			for (const auto& [signer, signature] : message.Certificate) {
+				if (!verify(signer, message.Payload, message.CertificateView, signature))
+					return;
+			}
+
+			// Update stored PayloadData and ProcessState, if necessary,
+			// and disseminate Commit message with updated view.
+			if (!m_storedPayloadData.has_value()) {
+				m_storedPayloadData = { message.Payload, message.Certificate, message.CertificateView };
+				// TODO: Update ProcessState
+
+				CommitMessage responseMessage = { m_id, message.Payload, message.Certificate,
+												  message.CertificateView, m_currentView };
+				disseminate(responseMessage, m_currentView.members());
+			}
+
+			// Allow delivery for sender process.
+			DeliverMessage deliverMessage = { m_id, message.Payload, m_currentView };
+			send(deliverMessage, message.Sender);
 		};
 
-		void DbrbProcess::onDeliverMessageReceived(DeliverMessage message) {};
+		void DbrbProcess::onDeliverMessageReceived(DeliverMessage message) {
+			// Message sender must be a member of the view specified in the message.
+			if (!message.View.isMember(message.Sender))
+				return;
 
-		void DbrbProcess::onDeliverQuorumCollected(DeliverMessage message) {};
+			bool quorumCollected = m_quorumManager.update(message);
+			if (quorumCollected)
+				onDeliverQuorumCollected();
+		};
+
+		void DbrbProcess::onDeliverQuorumCollected() {
+			m_payloadIsDelivered = true;
+			deliver();
+			m_canLeave = true;
+		};
 
 
 		// Other callbacks:

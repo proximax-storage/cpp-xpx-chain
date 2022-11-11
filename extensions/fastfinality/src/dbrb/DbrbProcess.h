@@ -24,6 +24,9 @@ namespace catapult { namespace fastfinality {
 			/// Maps views to sets of pairs of respective process IDs and payloads received from Acknowledged messages.
 			std::map<View, std::set< std::pair<ProcessId, Payload> >> AcknowledgedPayloads;
 
+			/// Maps views to sets of process IDs ready for delivery.
+			std::map<View, std::set<ProcessId>> DeliveredProcesses;
+
 			/// Overloaded methods for updating respective counters.
 			/// Returns whether the quorum has just been collected on this update.
 			bool update(ReconfigConfirmMessage message) {
@@ -61,6 +64,15 @@ namespace catapult { namespace fastfinality {
 
 				return acknowledgedCount == message.View.quorumSize();
 			};
+			bool update(DeliverMessage message) {
+				auto& set = DeliveredProcesses[message.View];
+				if (set.count(message.Sender)) {
+					// Sender already was ready for delivery; set size is not updated, so quorum collection is not triggered.
+					return false;
+				}
+				set.emplace(message.Sender);
+				return set.size() == message.View.quorumSize();
+			};
 
 		private:
 			/// Updates a counter in \a map at \a key.
@@ -75,6 +87,19 @@ namespace catapult { namespace fastfinality {
 				// Quorum collection is triggered only once, when the counter EXACTLY hits the quorum size.
 				return map.at(key) == referenceView.quorumSize();
 			};
+		};
+
+
+		/// Struct that encapsulates payload, its certificate and certificate view.
+		struct PayloadData {
+			/// Stored payload.
+			Payload Payload;
+
+			/// Message certificate for the stored payload.
+			std::map<ProcessId, Signature> Certificate;
+
+			/// View associated with the certificate.
+			View CertificateView;
 		};
 
 
@@ -114,8 +139,9 @@ namespace catapult { namespace fastfinality {
 			/// Map that maps views to the sets of sequences that can be proposed.
 			std::map<View, std::set<Sequence>> m_formatSequences;
 
-			/// Message certificate for current payload. Empty when process starts.
-			std::set<Signature> m_certificate = {};
+			/// Message certificate; map that maps process IDs to signatures received from them.
+			/// Empty when the process starts working.
+			std::map<ProcessId, Signature> m_certificate = {};
 
 			/// View in which message certificate was collected.
 			View m_certificateView;
@@ -129,17 +155,15 @@ namespace catapult { namespace fastfinality {
 			/// Payload allowed to be acknowledged. If empty, any payload can be acknowledged.
 			std::optional<Payload> m_acknowledgeablePayload = {};
 
-			/// Value of the stored payload.
-			Payload m_storedPayload;
-
-			/// Whether value of the payload is relevant.
-			bool m_payloadIsStored;
+			/// Stored payload, along with respective certificate and certificate view.
+			/// Unset when the process starts working.
+			std::optional<PayloadData> m_storedPayloadData = {};
 
 			/// Whether value of the payload is delivered.
-			bool m_payloadIsDelivered;
+			bool m_payloadIsDelivered = false;
 
 			/// Whether process is allowed to leave the system.
-			bool m_canLeave;
+			bool m_canLeave = false;
 
 			/// State of the process.
 			ProcessState m_state;
@@ -154,7 +178,8 @@ namespace catapult { namespace fastfinality {
 			/// Broadcast arbitrary \c payload into the system.
 			void broadcast(Payload);
 
-			void processMessage(Message);
+			/// Deliver stored payload.
+			void deliver();
 
 		private:
 			void disseminate(Message, std::set<ProcessId>);	// TODO: With this signature messages are getting upcasted,
@@ -183,7 +208,7 @@ namespace catapult { namespace fastfinality {
 			void onAcknowledgedQuorumCollected(AcknowledgedMessage);
 			void onCommitMessageReceived(CommitMessage);
 			void onDeliverMessageReceived(DeliverMessage);
-			void onDeliverQuorumCollected(DeliverMessage);
+			void onDeliverQuorumCollected();
 
 			/// Called when a new (most recent) view of the system is discovered.
 			void onViewDiscovered(View);

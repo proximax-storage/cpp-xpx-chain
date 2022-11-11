@@ -96,7 +96,7 @@ namespace catapult { namespace fastfinality {
 			Payload Payload;
 
 			/// Message certificate for supplied payload.
-			std::set<Signature> Certificate;
+			std::map<ProcessId, Signature> Certificate;
 
 			/// View associated with supplied certificate.
 			View CertificateView;
