@@ -22,19 +22,16 @@ namespace catapult { namespace fastfinality {
 		action DetectStage = [] {};
 		action SelectCommittee = [] {};
 		action ProposeBlock = [] {};
-		action RequestProposal = [] {};
 		action ValidateProposal = [] {};
 		action AddPrevote = [] {};
-		action RequestPrevotes = [] {};
 		action WaitForProposalPhaseEnd = [] {};
+		action WaitForPrevotePhaseEnd = [] {};
 		action AddPrecommit = [] {};
-		action RequestPrecommits = [] {};
 		action WaitForPrecommitPhaseEnd = [] {};
 		action UpdateConfirmedBlock = [] {};
 		action CommitConfirmedBlock = [] {};
 		action IncrementRound = [] {};						
 		action ResetRound = [] {};
-		action RequestConfirmedBlock = [] {};
 	};
 
 	action CreateDefaultCheckLocalChainAction(
@@ -73,10 +70,6 @@ namespace catapult { namespace fastfinality {
 		const harvesting::BlockGenerator& blockGenerator,
 		const model::BlockElementSupplier& lastBlockElementSupplier);
 
-	action CreateDefaultRequestProposalAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		extensions::ServiceState& state);
-
 	action CreateDefaultValidateProposalAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		extensions::ServiceState& state,
@@ -87,22 +80,19 @@ namespace catapult { namespace fastfinality {
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
 
 	action CreateDefaultWaitForProposalPhaseEndAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
 
-	action CreateDefaultRequestPrevotesAction(
+	action CreateDefaultWaitForPrevotePhaseEndAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const plugins::PluginManager& pluginManager);
+		chain::CommitteeManager& committeeManager,
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	action CreateDefaultAddPrecommitAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
 
-	action CreateDefaultRequestPrecommitsAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const plugins::PluginManager& pluginManager);
-
 	action CreateDefaultWaitForPrecommitPhaseEndAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		chain::CommitteeManager& committeeManager,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	action CreateDefaultUpdateConfirmedBlockAction(
@@ -112,6 +102,7 @@ namespace catapult { namespace fastfinality {
 	action CreateDefaultCommitConfirmedBlockAction(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&> rangeConsumer,
+		const model::BlockElementSupplier& lastBlockElementSupplier,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		chain::CommitteeManager& committeeManager);
 
@@ -123,9 +114,4 @@ namespace catapult { namespace fastfinality {
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		chain::CommitteeManager& committeeManager);
-
-	action CreateDefaultRequestConfirmedBlockAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		extensions::ServiceState& state,
-		const model::BlockElementSupplier& lastBlockElementSupplier);
 }}

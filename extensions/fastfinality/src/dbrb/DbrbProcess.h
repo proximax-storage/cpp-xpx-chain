@@ -11,6 +11,7 @@
 #include "catapult/functions.h"
 #include "catapult/net/PacketWriters.h"
 #include "catapult/ionet/PacketHandlers.h"
+#include "catapult/subscribers/NodeSubscriber.h"
 
 namespace catapult { namespace dbrb {
 
@@ -85,11 +86,28 @@ namespace catapult { namespace dbrb {
 		};
 	};
 
+	class NoopNodeSubscriber : public subscribers::NodeSubscriber {
+	public:
+		void notifyNode(const ionet::Node&) {
+		}
+
+		void notifyIncomingNode(const Key&, ionet::ServiceIdentifier) {
+		}
+	};
+
 
 	/// Class representing DBRB process.
 	class DbrbProcess : public std::enable_shared_from_this<DbrbProcess> {
 	public:
-		explicit DbrbProcess(ionet::ServerPacketHandlers& handlers);
+		using DeliverCallback = consumer<const Payload&>;
+
+	public:
+		explicit DbrbProcess(
+			std::shared_ptr<net::PacketWriters> pDbrbWriters,
+			std::shared_ptr<net::PacketWriters> pClientWriters,
+			std::shared_ptr<ionet::ServerPacketHandlers> pPacketHandlers,
+			const std::vector<ionet::Node>& bootstrapNodes,
+			ionet::Node thisNode);
 
 	private:
 		/// Process identifier.
@@ -155,10 +173,18 @@ namespace catapult { namespace dbrb {
 
 		std::shared_ptr<net::PacketWriters> m_pWriters;
 
+		std::shared_ptr<net::PacketWriters> m_pClientWriters;
+
+		std::shared_ptr<ionet::ServerPacketHandlers> m_pPacketHandlers;
+
 		/// State of the process.
 		ProcessState m_state;
 
 		NetworkPacketConverter m_converter;
+
+		DeliverCallback m_deliverCallback;
+
+		NoopNodeSubscriber m_nodeSubscriber;
 
 	public:
 		/// Request to join the system.
@@ -171,6 +197,13 @@ namespace catapult { namespace dbrb {
 		void broadcast(const Payload&);
 
 		void processMessage(const Message&);
+
+	public:
+		void setDeliverCallback(const DeliverCallback& callbacke);
+
+		subscribers::NodeSubscriber& getNodeSubscriber();
+
+		std::vector<ionet::NodePacketIoPair> getNodePacketIoPairs();
 
 	private:
 		void disseminate(const Message& message, const std::set<ProcessId>& recipients);

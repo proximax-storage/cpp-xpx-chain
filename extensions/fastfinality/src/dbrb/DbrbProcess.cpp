@@ -17,9 +17,19 @@ namespace catapult { namespace dbrb {
 	namespace {
 		constexpr auto Default_Timeout = utils::TimeSpan::FromMinutes(1);
 
+		constexpr utils::LogLevel MapToLogLevel(net::PeerConnectCode connectCode) {
+			if (connectCode == net::PeerConnectCode::Accepted)
+				return utils::LogLevel::Info;
+			else
+				return utils::LogLevel::Warning;
+		}
+
 		bool Connect(net::PacketWriters& writers, const ProcessId& node) {
 			auto pPromise = std::make_shared<thread::promise<bool>>();
-			writers.connect(node, [pPromise](const net::PeerConnectResult& result) {
+			writers.connect(node, [pPromise, node](const net::PeerConnectResult& result) {
+				const auto& endPoint = node.endpoint();
+				CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code))
+						<< "connection attempt to " << node << " @ " << endPoint.Host << " : " << endPoint.Port << " completed with " << result.Code;
 				pPromise->set_value(result.Code == net::PeerConnectCode::Accepted);
 			});
 
@@ -39,21 +49,55 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	DbrbProcess::DbrbProcess(ionet::ServerPacketHandlers& handlers) {
+	DbrbProcess::DbrbProcess(
+		std::shared_ptr<net::PacketWriters> pDbrbWriters,
+		std::shared_ptr<net::PacketWriters> pClientWriters,
+		std::shared_ptr<ionet::ServerPacketHandlers> pPacketHandlers,
+		const std::vector<ionet::Node>& bootstrapNodes,
+		ionet::Node thisNode)
+			: m_pWriters(std::move(pDbrbWriters))
+			, m_pClientWriters(std::move(pClientWriters))
+			, m_pPacketHandlers(std::move(pPacketHandlers))
+			, m_id(std::move(thisNode)) {
 		auto handler = [pThis = shared_from_this(), &converter = m_converter](const auto& packet, auto& context) {
 			auto pMessage = converter.toMessage(packet);
 			pThis->processMessage(*pMessage);
 		};
-		handlers.registerHandler(ionet::PacketType::Dbrb_Reconfig_Message, handler);
-		handlers.registerHandler(ionet::PacketType::Dbrb_Reconfig_Confirm_Message, handler);
-		handlers.registerHandler(ionet::PacketType::Dbrb_Propose_Message, handler);
-		handlers.registerHandler(ionet::PacketType::Dbrb_Converged_Message, handler);
-		handlers.registerHandler(ionet::PacketType::Dbrb_Install_Message, handler);
-		handlers.registerHandler(ionet::PacketType::Dbrb_Prepare_Message, handler);
-		handlers.registerHandler(ionet::PacketType::Dbrb_State_Update_Message, handler);
-		handlers.registerHandler(ionet::PacketType::Dbrb_Acknowledged_Message, handler);
-		handlers.registerHandler(ionet::PacketType::Dbrb_Commit_Message, handler);
-		handlers.registerHandler(ionet::PacketType::Dbrb_Deliver_Message, handler);
+		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_Reconfig_Message, handler);
+		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_Reconfig_Confirm_Message, handler);
+		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_Propose_Message, handler);
+		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_Converged_Message, handler);
+		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_Install_Message, handler);
+		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_Prepare_Message, handler);
+		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_State_Update_Message, handler);
+		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_Acknowledged_Message, handler);
+		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_Commit_Message, handler);
+		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_Deliver_Message, handler);
+
+		m_currentView.Data.emplace_back(m_id, MembershipChanges::Join);
+		for (const auto& node : bootstrapNodes) {
+			m_currentView.Data.emplace_back(node, MembershipChanges::Join);
+		}
+	}
+
+	void DbrbProcess::setDeliverCallback(const DeliverCallback& callback) {
+		m_deliverCallback = callback;
+	}
+
+	subscribers::NodeSubscriber& DbrbProcess::getNodeSubscriber() {
+		return m_nodeSubscriber;
+	}
+
+	std::vector<ionet::NodePacketIoPair> DbrbProcess::getNodePacketIoPairs() {
+		std::vector<ionet::NodePacketIoPair> nodePacketIoPairs;
+		nodePacketIoPairs.reserve(m_currentView.Data.size());
+		for (const auto& node : m_currentView.members()) {
+			auto nodePacketIoPair = GetNodePacketIoPair(*m_pClientWriters, node);
+			if (nodePacketIoPair.io())
+				nodePacketIoPairs.emplace_back(nodePacketIoPair);
+		}
+
+		return nodePacketIoPairs;
 	}
 
 	// Basic operations:
@@ -91,7 +135,7 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::send(const Message& message, const ProcessId& recipient) {
 		auto nodePacketIoPair = GetNodePacketIoPair(*m_pWriters, recipient);
-		if (!!nodePacketIoPair.io())
+		if (nodePacketIoPair.io())
 			nodePacketIoPair.io()->write(ionet::PacketPayload(message.toNetworkPacket()), [](ionet::SocketOperationCode){});
 	}
 
@@ -392,7 +436,9 @@ namespace catapult { namespace dbrb {
 			return;
 	}
 
-	void DbrbProcess::onDeliverMessageReceived(const DeliverMessage& message) {}
+	void DbrbProcess::onDeliverMessageReceived(const DeliverMessage& message) {
+		m_deliverCallback(message.Payload);
+	}
 
 	void DbrbProcess::onDeliverQuorumCollected(DeliverMessage message) {};
 

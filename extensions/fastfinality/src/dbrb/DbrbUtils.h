@@ -21,7 +21,6 @@ namespace catapult { namespace dbrb {
 	using ProcessId = ionet::Node;
 	using Payload = std::shared_ptr<ionet::Packet>;
 
-
 	/// Changes of processes' membership in a view.
 	enum class MembershipChanges : uint8_t {
 		Join,
