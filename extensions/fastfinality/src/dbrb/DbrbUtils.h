@@ -1,131 +1,145 @@
+/**
+*** Copyright 2022 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
 #pragma  once
+#include "catapult/ionet/Node.h"
+#include "catapult/ionet/Packet.h"
+#include "catapult/types.h"
 #include <algorithm>
 #include <map>
 #include <set>
 #include <vector>
+#include <optional>
+#include <cstdint>
 
 
-namespace catapult { namespace fastfinality {
+namespace catapult { namespace dbrb {
 
-		using ProcessId = uint64_t; // Any kind of process identifier; can be Key
-		using Payload = std::vector<uint8_t>;
+	using ProcessId = ionet::Node;
+	using Payload = std::shared_ptr<ionet::Packet>;
+
+	/// Changes of processes' membership in a view.
+	enum class MembershipChanges : uint8_t {
+		Join,
+		Leave,
+	};
+
+	/// State of the process.
+	struct ProcessState {
+		/// Payload that is allowed to be acknowledged.
+		Payload AcknowledgeablePayload;
+
+		/// Stored Commit message, if any.
+		//std::optional<CommitMessage> Stored;
+
+		/// A pair of conflicting Prepare messages, if any.
+		//std::optional<std::pair<PrepareMessage, PrepareMessage>> Conflicting;
+	};
 
 
-		/// Changes of processes' membership in a view.
-		enum MembershipChanges {
-			Join,
-			Leave,
-		};
+	/// View of the system.
+	struct View {
+		/// History of processes' membership changes in the system.
+		std::vector<std::pair<ProcessId, MembershipChanges>> Data;
 
-		/// State of the process.
-		struct ProcessState {
-			/// Payload that is allowed to be acknowledged.
-			Payload AcknowledgeablePayload;
+		/// Get IDs of current members of the view.
+		std::set<ProcessId> members() const;
 
-			/// Stored Commit message, if any.
-			//std::optional<CommitMessage> Stored;
+		/// Check if \a processId is a member of this view.
+		bool hasChange(const ProcessId& processId, MembershipChanges change) const;
 
-			/// A pair of conflicting Prepare messages, if any.
-			//std::optional<std::pair<PrepareMessage, PrepareMessage>> Conflicting;
-		};
+		/// Check if \a processId is a member of this view.
+		bool isMember(const ProcessId& processId) const;
 
+		/// Calculate quorum size of this view.
+		size_t quorumSize() const;
 
-		/// View of the system.
-		struct View {
-			/// History of processes' membership changes in the system.
-			std::vector<std::pair<ProcessId, MembershipChanges>> Data;
+		/// Comparison operators; if view A is less recent than view B, then A < B.
+		bool operator==(const View& other) const;
+		bool operator!=(const View& other) const;
+		bool operator<(const View& other) const;
+		bool operator>(const View& other) const;
+		bool operator<=(const View& other) const;
+		bool operator>=(const View& other) const;
 
-			/// Get IDs of current members of the view.
-			std::set<ProcessId> members() const;
+		/// Check if two views are comparable.
+		static bool areComparable(const View& a, const View& b) {
+			return (a == b || a < b || a > b);
+		}
+	};
 
-			/// Check if \a processId is a member of this view.
-			bool isMember(const ProcessId& processId) const;
+	/// Sequence of views of the system.
+	class Sequence {
+	public:
+		/// Construct an empty \c Sequence.
+		Sequence() = default;
 
-			/// Calculate quorum size of this view.
-			size_t quorumSize() const;
+		/// Get underlying sequence of views.
+		const std::vector<View>& data() const;
 
-			/// Comparison operators; if view A is less recent than view B, then A < B.
-			bool operator==(const View& other) const;
-			bool operator!=(const View& other) const;
-			bool operator<(const View& other) const;
-			bool operator>(const View& other) const;
-			bool operator<=(const View& other) const;
-			bool operator>=(const View& other) const;
+		/// Try to get the least recent view from the \a m_data, if \a m_data is not empty.
+		std::optional<View> maybeLeastRecent() const;
 
-			/// Check if two views are comparable.
-			static bool areComparable(const View& a, const View& b) {
-				return (a == b || a < b || a > b);
-			}
-		};
+		/// Try to get the most recent view from the \a m_data, if \a m_data is not empty.
+		std::optional<View> maybeMostRecent() const;
 
-		/// Sequence of views of the system.
-		class Sequence {
-		public:
-			/// Construct an empty \c Sequence.
-			Sequence() = default;
+		/// Get \a testedView's potential index on insertion into \a m_data, if it is comparable with every view in \a m_data.
+		/// If not comparable with at least one view from \a m_data, returns SIZE_MAX.
+		int64_t canInsert(const View& testedView) const;
 
-			/// Get underlying sequence of views.
-			const std::vector<View>& data() const;
+		/// Check whether \a testedView is the most recent among views in \a m_data, and therefore can be appended.
+		bool canAppend(const View& testedView) const;
 
-			/// Try to get the least recent view from the \a m_data, if \a m_data is not empty.
-			std::optional<View> maybeLeastRecent() const;
+		/// Check whether all views in \a testedSequence are more recent than ones in \a m_data, and therefore can be appended.
+		bool canAppend(const Sequence& testedSequence) const;
 
-			/// Try to get the most recent view from the \a m_data, if \a m_data is not empty.
-			std::optional<View> maybeMostRecent() const;
+		/// Try to insert \a newView into \a m_data.
+		/// Returns iterator to the inserted view on success, or iterator to the end of \a m_data otherwise.
+		std::vector<View>::iterator tryInsert(const View& newView);
 
-			/// Get \a testedView's potential index on insertion into \a m_data, if it is comparable with every view in \a m_data.
-			/// If not comparable with at least one view from \a m_data, returns SIZE_MAX.
-			size_t canInsert(const View& testedView) const;
+		/// Try to append \a newView to \a m_data.
+		/// Returns \c true is appended successfully, \c false otherwise.
+		bool tryAppend(const View& newView);
 
-			/// Check whether \a testedView is the most recent among views in \a m_data, and therefore can be appended.
-			bool canAppend(const View& testedView) const;
+		/// Try to append \a newSequence to \a m_data.
+		/// Returns \c true is appended successfully, \c false otherwise.
+		bool tryAppend(const Sequence& newSequence);
 
-			/// Check whether all views in \a testedSequence are more recent than ones in \a m_data, and therefore can be appended.
-			bool canAppend(const Sequence& testedSequence) const;
+		/// Try to erase \a view from \a m_data.
+		/// Returns whether the view was found and erased.
+		bool tryErase(const View& view);
 
-			/// Try to insert \a newView into \a m_data.
-			/// Returns iterator to the inserted view on success, or iterator to the end of \a m_data otherwise.
-			std::vector<View>::iterator tryInsert(const View& newView);
+		bool operator<(const Sequence& rhs) const;
 
-			/// Try to append \a newView to \a m_data.
-			/// Returns \c true is appended successfully, \c false otherwise.
-			bool tryAppend(const View& newView);
-
-			/// Try to append \a newSequence to \a m_data.
-			/// Returns \c true is appended successfully, \c false otherwise.
-			bool tryAppend(const Sequence& newSequence);
-
-			/// Try to erase \a view from \a m_data.
-			/// Returns whether the view was found and erased.
-			bool tryErase(const View& view);
-
-			/// Check whether all views in \a sequenceData are mutually comparable and sorted in strictly ascending order.
-			static bool isValidSequence(const std::vector<View>& sequenceData) {
-				if (sequenceData.size() <= 1)
-					return true;
-
-				auto ptrA = sequenceData.begin();
-				auto ptrB = sequenceData.begin() + 1;
-				for (; ptrB != sequenceData.end(); ++ptrA, ++ptrB)
-					if (!(*ptrA < *ptrB))
-						return false;
-
+		/// Check whether all views in \a sequenceData are mutually comparable and sorted in strictly ascending order.
+		static bool isValidSequence(const std::vector<View>& sequenceData) {
+			if (sequenceData.size() <= 1)
 				return true;
-			}
 
-			/// Create \c Sequence object from \a sequenceData, if \a sequenceData is a valid sequence.
-			static std::optional<Sequence> fromViews(const std::vector<View>& sequenceData) {
-				if (Sequence::isValidSequence(sequenceData))
-					return Sequence { sequenceData };
-				return {};
-			}
+			auto ptrA = sequenceData.begin();
+			auto ptrB = sequenceData.begin() + 1;
+			for (; ptrB != sequenceData.end(); ++ptrA, ++ptrB)
+				if (!(*ptrA < *ptrB))
+					return false;
 
-		private:
-			/// Construct a \c Sequence object using valid \a sequenceData.
-			explicit Sequence(const std::vector<View>& sequenceData);
+			return true;
+		}
 
-			/// Sequence of mutually comparable views. Greater index means more recent view.
-			std::vector<View> m_data;
-		};
+		/// Create \c Sequence object from \a sequenceData, if \a sequenceData is a valid sequence.
+		static std::optional<Sequence> fromViews(const std::vector<View>& sequenceData) {
+			if (Sequence::isValidSequence(sequenceData))
+				return Sequence { sequenceData };
+			return {};
+		}
 
+	private:
+		/// Construct a \c Sequence object using valid \a sequenceData.
+		explicit Sequence(const std::vector<View>& sequenceData);
+
+		/// Sequence of mutually comparable views. Greater index means more recent view.
+		std::vector<View> m_data;
+	};
 }}

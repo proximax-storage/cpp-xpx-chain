@@ -92,8 +92,6 @@ namespace catapult { namespace fastfinality {
 
 	using PushPrevoteMessagesRequest = CommitteeMessagesPacket<ionet::PacketType::Push_Prevote_Messages>;
 	using PushPrecommitMessagesRequest = CommitteeMessagesPacket<ionet::PacketType::Push_Precommit_Messages>;
-	using PullPrevoteMessagesRequest = CommitteeMessagesPacket<ionet::PacketType::Pull_Prevote_Messages>;
-	using PullPrecommitMessagesRequest = CommitteeMessagesPacket<ionet::PacketType::Pull_Precommit_Messages>;
 
 #pragma pack(pop)
 }}

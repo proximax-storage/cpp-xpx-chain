@@ -7,6 +7,7 @@
 #pragma once
 #include "CommitteeData.h"
 #include "WeightedVotingTransitionTable.h"
+#include "dbrb/DbrbProcess.h"
 #include "catapult/thread/IoThreadPool.h"
 
 namespace catapult { namespace ionet { class NodePacketIoPair; } }
@@ -26,14 +27,17 @@ namespace catapult { namespace fastfinality {
 
 	class WeightedVotingFsm {
 	public:
-		explicit WeightedVotingFsm(std::shared_ptr<thread::IoThreadPool> pPool, const config::BlockchainConfiguration& config)
+		explicit WeightedVotingFsm(
+				std::shared_ptr<thread::IoThreadPool> pPool,
+				const config::BlockchainConfiguration& config,
+				std::shared_ptr<dbrb::DbrbProcess> pDbrbProcess)
 			: m_pPool(std::move(pPool))
 			, m_timer(m_pPool->ioContext())
 			, m_sm(boost::sml::sm<WeightedVotingTransitionTable>(m_actions))
 			, m_strand(m_pPool->ioContext())
 			, m_nodeWorkState(NodeWorkState::None)
 			, m_stopped(false)
-			, m_packetHandlers(config.Node.MaxPacketDataSize.bytes32())
+			, m_pDbrbProcess(std::move(pDbrbProcess))
 		{}
 
 	public:
@@ -56,6 +60,7 @@ namespace catapult { namespace fastfinality {
 			processEvent(Stop{});
 			m_actions = WeightedVotingActions{};
 			m_pPool = nullptr;
+			m_pDbrbProcess = nullptr;
 		}
 
 		auto& ioContext() {
@@ -108,16 +113,16 @@ namespace catapult { namespace fastfinality {
 			m_nodeWorkState = state;
 		}
 
-		auto& packetHandlers() {
-			return m_packetHandlers;
-		}
-
 		auto& packetIoPickers() {
 			return m_packetIoPickers;
 		}
 
 		auto& mutex() {
 			return m_mutex;
+		}
+
+		auto& dbrbProcess() {
+			return *m_pDbrbProcess;
 		}
 
 	private:
@@ -130,8 +135,8 @@ namespace catapult { namespace fastfinality {
 		boost::asio::io_context::strand m_strand;
 		NodeWorkState m_nodeWorkState;
 		bool m_stopped;
-		ionet::ServerPacketHandlers m_packetHandlers;
 		net::PacketIoPickerContainer m_packetIoPickers;
 		mutable std::mutex m_mutex;
+		std::shared_ptr<dbrb::DbrbProcess> m_pDbrbProcess;
 	};
 }}

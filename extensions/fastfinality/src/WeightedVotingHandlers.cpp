@@ -14,12 +14,10 @@
 
 namespace catapult { namespace fastfinality {
 
-	void RegisterPushProposedBlockHandler(
+	consumer<const ionet::Packet&> PushProposedBlock(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			ionet::ServerPacketHandlers& handlers,
 			const plugins::PluginManager& pluginManager) {
-		handlers.registerHandler(ionet::PacketType::Push_Proposed_Block, [pFsmWeak, &pluginManager](
-				const auto& packet, const auto&) {
+		return [pFsmWeak, &pluginManager](const auto& packet) {
 			TRY_GET_FSM()
 
 			const auto& registry = pluginManager.transactionRegistry();
@@ -40,27 +38,13 @@ namespace catapult { namespace fastfinality {
 			}
 
 			committeeData.setProposedBlock(pBlock);
-		});
+		};
 	}
 
-	void RegisterPullProposedBlockHandler(std::weak_ptr<WeightedVotingFsm> pFsmWeak, ionet::ServerPacketHandlers& handlers) {
-		handlers.registerHandler(ionet::PacketType::Pull_Proposed_Block, [pFsmWeak](const auto& packet, auto& context) {
-			TRY_GET_FSM()
-
-			std::vector<std::shared_ptr<model::Block>> response;
-			auto pProposedBlock = pFsmShared->committeeData().proposedBlock();
-			if (pProposedBlock)
-				response.push_back(pProposedBlock);
-			context.response(ionet::PacketPayloadFactory::FromEntities(ionet::PacketType::Pull_Proposed_Block, response));
-		});
-	}
-
-	void RegisterPushConfirmedBlockHandler(
+	consumer<const ionet::Packet&> PushConfirmedBlock(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			ionet::ServerPacketHandlers& handlers,
 			const plugins::PluginManager& pluginManager) {
-		handlers.registerHandler(ionet::PacketType::Push_Confirmed_Block, [pFsmWeak, &pluginManager](
-				const auto& packet, const auto&) {
+		return [pFsmWeak, &pluginManager](const auto& packet) {
 			TRY_GET_FSM()
 
 			const auto& registry = pluginManager.transactionRegistry();
@@ -81,29 +65,13 @@ namespace catapult { namespace fastfinality {
 			}
 
 			committeeData.setConfirmedBlock(pBlock);
-		});
-	}
-
-	void RegisterPullConfirmedBlockHandler(std::weak_ptr<WeightedVotingFsm> pFsmWeak, ionet::ServerPacketHandlers& handlers) {
-		handlers.registerHandler(ionet::PacketType::Pull_Confirmed_Block, [pFsmWeak](
-				const auto& packet, auto& context) {
-			TRY_GET_FSM()
-
-			std::vector<std::shared_ptr<model::Block>> response;
-			auto pConfirmedBlock = pFsmShared->committeeData().confirmedBlock();
-			if (pConfirmedBlock)
-				response.push_back(pConfirmedBlock);
-			context.response(ionet::PacketPayloadFactory::FromEntities(ionet::PacketType::Pull_Confirmed_Block, response));
-		});
+		};
 	}
 
 	namespace {
 		template<typename TPacket>
-		void RegisterPushVoteMessageHandler(
-				std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-				ionet::ServerPacketHandlers& handlers,
-				const std::string& name) {
-			handlers.registerHandler(TPacket::Packet_Type, [pFsmWeak, name](const auto& packet, auto&) {
+		consumer<const ionet::Packet&> PushVoteMessages(std::weak_ptr<WeightedVotingFsm> pFsmWeak, const std::string& name) {
+			return [pFsmWeak, name](const auto& packet) {
 				TRY_GET_FSM()
 
 				const auto* pPacket = static_cast<const TPacket*>(&packet);
@@ -148,55 +116,16 @@ namespace catapult { namespace fastfinality {
 
 					CATAPULT_LOG(debug) << "collected " << committeeData.votes(pMessage->Type).size() << " " << name << "(s)";
 				}
-			});
+			};
 		}
 	}
 
-	void RegisterPushPrevoteMessagesHandler(
-			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			ionet::ServerPacketHandlers& handlers) {
-		RegisterPushVoteMessageHandler<PushPrevoteMessagesRequest>(pFsmWeak, handlers, "prevote message");
+	consumer<const ionet::Packet&> PushPrevoteMessages(std::weak_ptr<WeightedVotingFsm> pFsmWeak) {
+		return PushVoteMessages<PushPrevoteMessagesRequest>(pFsmWeak, "prevote message");
 	}
 
-	void RegisterPushPrecommitMessagesHandler(
-			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			ionet::ServerPacketHandlers& handlers) {
-		RegisterPushVoteMessageHandler<PushPrecommitMessagesRequest>(pFsmWeak, handlers, "precommit message");
-	}
-
-	namespace {
-		template<typename TPacket, CommitteeMessageType MessageType, CommitteePhase Phase>
-		void RegisterPullVoteMessagesHandler(
-				std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-				ionet::ServerPacketHandlers& handlers) {
-			handlers.registerHandler(TPacket::Packet_Type, [pFsmWeak](const auto& packet, auto& context) {
-				TRY_GET_FSM()
-
-				auto votes = pFsmShared->committeeData().votes(MessageType);
-				CATAPULT_LOG(debug) << "returning " << votes.size() << " " << Phase << " votes";
-				auto pResponsePacket = ionet::CreateSharedPacket<TPacket>(utils::checked_cast<size_t, uint32_t>(sizeof(CommitteeMessage) * votes.size()));
-				pResponsePacket->MessageCount = utils::checked_cast<size_t, uint8_t>(votes.size());
-
-				auto* pMessage = reinterpret_cast<CommitteeMessage*>(pResponsePacket.get() + 1);
-				auto index = 0u;
-				for (const auto& pair : votes)
-					pMessage[index++] = pair.second;
-
-				context.response(ionet::PacketPayload(pResponsePacket));
-			});
-		}
-	}
-
-	void RegisterPullPrevoteMessagesHandler(
-			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			ionet::ServerPacketHandlers& handlers) {
-		RegisterPullVoteMessagesHandler<PullPrevoteMessagesRequest, CommitteeMessageType::Prevote, CommitteePhase::Prevote>(pFsmWeak, handlers);
-	}
-
-	void RegisterPullPrecommitMessagesHandler(
-			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			ionet::ServerPacketHandlers& handlers) {
-		RegisterPullVoteMessagesHandler<PullPrecommitMessagesRequest, CommitteeMessageType::Precommit, CommitteePhase::Precommit>(pFsmWeak, handlers);
+	consumer<const ionet::Packet&> PushPrecommitMessages(std::weak_ptr<WeightedVotingFsm> pFsmWeak) {
+		return PushVoteMessages<PushPrecommitMessagesRequest>(pFsmWeak, "precommit message");
 	}
 
 	void RegisterPullRemoteNodeStateHandler(

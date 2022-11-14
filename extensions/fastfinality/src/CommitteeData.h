@@ -157,7 +157,7 @@ namespace catapult { namespace fastfinality {
 			m_sumOfPrevotesSufficient = value;
 		}
 
-		bool sumOfPrevotesSufficient() {
+		bool sumOfPrevotesSufficient() const {
 			return m_sumOfPrevotesSufficient;
 		}
 

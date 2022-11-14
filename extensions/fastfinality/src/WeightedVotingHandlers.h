@@ -27,47 +27,23 @@ namespace catapult { namespace fastfinality {
 	/// A retriever that returns remote node states from all available peers.
 	using RemoteNodeStateRetriever = std::function<thread::future<std::vector<RemoteNodeState>> ()>;
 
-	/// Registers a push proposed block handler in \a handlers verifying data with \a pFsmWeak and \a pluginManager.
-	void RegisterPushProposedBlockHandler(
+	/// Handles a push proposed block message.
+	consumer<const ionet::Packet&> PushProposedBlock(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		ionet::ServerPacketHandlers& handlers,
 		const plugins::PluginManager& pluginManager);
 
-	/// Registers a pull proposed block handler in \a handlers constructing response from \a pFsmWeak.
-	void RegisterPullProposedBlockHandler(
+	/// Handles a push confirmed block message.
+	consumer<const ionet::Packet&> PushConfirmedBlock(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		ionet::ServerPacketHandlers& handlers);
-
-	/// Registers a push confirmed block handler in \a handlers verifying data with \a pFsmWeak and \a pluginManager.
-	void RegisterPushConfirmedBlockHandler(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		ionet::ServerPacketHandlers& handlers,
 		const plugins::PluginManager& pluginManager);
 
-	/// Registers a pull confirmed block handler in \a handlers constructing response from \a pFsmWeak.
-	void RegisterPullConfirmedBlockHandler(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		ionet::ServerPacketHandlers& handlers);
+	/// Handles a push prevote message.
+	consumer<const ionet::Packet&> PushPrevoteMessages(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
 
-	/// Registers a push prevote message handler in \a handlers constructing response from \a pFsmWeak.
-	void RegisterPushPrevoteMessagesHandler(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		ionet::ServerPacketHandlers& handlers);
-
-	/// Registers a push precommit message handler in \a handlers that adds the message to \a pFsmWeak.
-	void RegisterPushPrecommitMessagesHandler(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		ionet::ServerPacketHandlers& handlers);
-
-	/// Registers a pull prevote message handler in \a handlers constructing response from \a pFsmWeak.
-	void RegisterPullPrevoteMessagesHandler(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		ionet::ServerPacketHandlers& handlers);
-
-	/// Registers a pull precommit message handler in \a handlers constructing response from \a pFsmWeak.
-	void RegisterPullPrecommitMessagesHandler(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		ionet::ServerPacketHandlers& handlers);
+	/// Handles a push precommit message.
+	consumer<const ionet::Packet&> PushPrecommitMessages(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
 
 	/// Registers a pull remote node state handler in \a handlers constructing response from \a pFsmWeak
 	/// using \a pConfigHolder, \a blockElementGetter and \a lastBlockElementSupplier.
