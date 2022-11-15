@@ -146,11 +146,13 @@ namespace catapult { namespace observers {
 
 			// Simulate publishing of finish download for all download channels
 			auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+			utils::QueueAdapter<cache::DownloadChannelCache> downloadQueueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
 			for (const auto& key: driveEntry.downloadShards()) {
 				auto downloadIter = downloadCache.find(key);
 				auto& downloadEntry = downloadIter.get();
 				if (!downloadEntry.isCloseInitiated()) {
 					downloadEntry.setFinishPublished(true);
+					downloadQueueAdapter.remove(key.array());
 					downloadEntry.downloadApprovalInitiationEvent() = notification.TransactionHash;
 				}
 			}

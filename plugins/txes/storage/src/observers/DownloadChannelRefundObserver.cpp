@@ -59,10 +59,6 @@ namespace catapult { namespace observers {
 			replicatorEntry.downloadChannels().erase(notification.DownloadChannelId);
 		}
 
-		auto& queueCache = context.Cache.template sub<cache::QueueCache>();
-		utils::QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
-		queueAdapter.remove(downloadChannelEntry.entryKey());
-
 		downloadCache.remove(notification.DownloadChannelId);
 		// TODO: Add currency refunding
 	})

@@ -559,8 +559,7 @@ namespace catapult { namespace storage {
 					auto pDownloadChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), channelId);
 					if (pDownloadChannel && pDownloadChannel->ApprovalTrigger &&
 						pDownloadChannel->ApprovalTrigger == blockHash) {
-						m_pReplicator->asyncInitiateDownloadApprovalTransactionInfo(
-								pDownloadChannel->DriveKey.array(), channelId.array());
+						m_pReplicator->asyncInitiateDownloadApprovalTransactionInfo(blockHash.array(), channelId.array());
 					}
 				}
 			}
