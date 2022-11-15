@@ -232,7 +232,7 @@ namespace catapult { namespace dbrb {
 	struct CommitMessage : Message {
 	public:
 		CommitMessage() = delete;
-		explicit CommitMessage(const ProcessId& sender, Payload payload, std::set<Signature> certificate, View certificateView, View currentView)
+		explicit CommitMessage(const ProcessId& sender, Payload payload, std::map<ProcessId, Signature> certificate, View certificateView, View currentView)
 			: Message(sender, ionet::PacketType::Dbrb_Commit_Message)
 			, Payload(std::move(payload))
 			, Certificate(std::move(certificate))

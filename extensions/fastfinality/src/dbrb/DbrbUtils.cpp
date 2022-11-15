@@ -37,7 +37,7 @@ namespace catapult { namespace dbrb {
 	}
 
 	size_t View::quorumSize() const {
-		unsigned size = members().size();
+		const size_t size = members().size();
 		return size - (size - 1) / 3;
 	}
 
@@ -170,6 +170,10 @@ namespace catapult { namespace dbrb {
 			m_data.erase(iter);
 
 		return found;
+	}
+
+	bool Sequence::operator==(const Sequence& rhs) const {
+		return m_data == rhs.m_data;
 	}
 
 	bool Sequence::operator<(const Sequence& rhs) const {

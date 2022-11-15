@@ -141,18 +141,25 @@ namespace catapult { namespace dbrb {
 		/// Quorum manager.
 		QuorumManager m_quorumManager;
 
+		/// State of the process membership.
+		MembershipStates m_membershipState = MembershipStates::NotJoined;
+
 		/// Whether the view discovery is active. View discovery halts once a quorum of
 		/// confirmation messages has been collected for any of the views.
-		bool m_viewDiscoveryActive;
+		bool m_viewDiscoveryActive = false;
+
+		/// Whether the process should keep disseminating Reconfig messages on updating or installing new views.
+		/// Set to true only when joining or leaving the system.
+		bool m_disseminateReconfig = false;
 
 		/// While set to true, no Prepare, Commit or Reconfig messages are processed.
-		bool m_limitedProcessing;
+		bool m_limitedProcessing = false;
 
 		/// Needs to be set in order for \a onStateUpdateQuorumCollected to be triggered.
 		std::optional<InstallMessage> m_currentInstallMessage;
 
 		/// Views installed by the process.
-		std::set<View> m_installedViews;	// TODO: Can be only one at a time?
+		std::set<View> m_installedViews;
 
 		/// Most recent view known to the process.
 		View m_currentView;
@@ -222,9 +229,6 @@ namespace catapult { namespace dbrb {
 
 		void processMessage(const Message&);
 
-		/// Deliver stored payload.
-		void deliver();
-
 	public:
 		void setDeliverCallback(const DeliverCallback& callbacke);
 
@@ -234,7 +238,6 @@ namespace catapult { namespace dbrb {
 
 	private:
 		void disseminate(const Message& message, const std::set<ProcessId>& recipients);
-		void reliablyDisseminate(const Message&, std::set<ProcessId>);	// R-multicast in terms of BRB.
 		void send(const Message& message, const ProcessId& recipient);
 
 		void prepareForStateUpdates(const InstallMessage&);
@@ -252,7 +255,7 @@ namespace catapult { namespace dbrb {
 		void onConvergedMessageReceived(const ConvergedMessage&);
 		void onInstallMessageReceived(const InstallMessage&);
 
-		void onPrepareMessageReceived(const PrepareMessage& message);
+		void onPrepareMessageReceived(const PrepareMessage&);
 		void onStateUpdateMessageReceived(const StateUpdateMessage&);
 		void onAcknowledgedMessageReceived(const AcknowledgedMessage&);
 		void onCommitMessageReceived(const CommitMessage&);
@@ -262,14 +265,13 @@ namespace catapult { namespace dbrb {
 		void onProposeQuorumCollected(const ProposeMessage&);
 		void onConvergedQuorumCollected(const ConvergedMessage&);
 		void onStateUpdateQuorumCollected();
-		void onAcknowledgedQuorumCollected(AcknowledgedMessage);
-		void onDeliverQuorumCollected(DeliverMessage);
+		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&);
+		void onDeliverQuorumCollected();
 
-		/// Called when a new (most recent) view of the system is discovered.
 		void onViewDiscovered(View&&);
+		void onViewInstalled(const View&);
 
 		void onJoinComplete();
 		void onLeaveComplete();
-		void onNewViewInstalled();
 	};
 }}

@@ -103,25 +103,54 @@ namespace catapult { namespace dbrb {
 	// Basic operations:
 
 	void DbrbProcess::join() {
+		// Can only request to join from the initial membership state of the process.
+		if (m_membershipState != MembershipStates::NotJoined)
+			return;
+
+		m_membershipState = MembershipStates::Joining;
+
+		// Resetting counters for ReconfigConfirm messages to get a proper quorum collection event later.
+		m_quorumManager.ReconfigConfirmCounters.clear();
+
 		// Somehow, while this flag is true, a view discovery protocol should be working
 		// that would call onViewDiscovered() whenever it gets a new view of the system.
 		m_viewDiscoveryActive = true;
+
+		// Keep disseminating new Reconfig messages whenever a new view is discovered.
+		m_disseminateReconfig = true;
 	}
 
-	void DbrbProcess::leave() {}
+	void DbrbProcess::leave() {
+		// Can only request to leave when the process is participating in the system.
+		if (m_membershipState != MembershipStates::Participating)
+			return;
+
+		bool needsPermissionToLeave = m_payloadIsDelivered;	// TODO: Or if the process is the sender of m_storedPayloadData
+		if (needsPermissionToLeave && !m_canLeave)
+			return;	// TODO: Can notify user about the reason why leave failed
+
+		m_membershipState = MembershipStates::Leaving;
+
+		// Disseminate a Reconfig message for every currently installed view...
+		for (const auto& view : m_installedViews) {
+			ReconfigMessage message(m_id, m_id, MembershipChanges::Leave, view);
+			disseminate(message, view.members());
+		}
+
+		// ...and keep disseminating new Reconfig messages whenever a new view is installed.
+		m_disseminateReconfig = true;
+	}
 
 	void DbrbProcess::broadcast(const Payload& payload) {
 		if (!m_installedViews.count(m_currentView))
 			return;	// The process waits to install some view and then disseminates the prepare message.
-					// TODO: Can notify user the reason why broadcast failed
+					// TODO: Can notify user about the reason why broadcast failed
 
 		PrepareMessage message(m_id, payload, m_currentView);
 		disseminate(message, message.View.members());
 	}
 
 	void DbrbProcess::processMessage(const Message&) { /* Identifies message type and calls respective private method. */ }
-
-	void DbrbProcess::deliver() { /* Delivers m_storedPayloadData->Payload to the underlying process. */ };
 
 
 	// Basic private methods:
@@ -130,10 +159,6 @@ namespace catapult { namespace dbrb {
 		for (const auto& recipient : recipients)
 			send(message, recipient);
 	}
-
-	void DbrbProcess::reliablyDisseminate(
-		const Message& message,
-		std::set<ProcessId> recipients) { /* Reliably sends message to all processes in recipients. */ }
 
 	void DbrbProcess::send(const Message& message, const ProcessId& recipient) {
 		auto nodePacketIoPair = GetNodePacketIoPair(*m_pWriters, recipient);
@@ -172,10 +197,12 @@ namespace catapult { namespace dbrb {
 		// - payload of the message;
 		// - recipient process Q (current process) that received Prepare message from S;
 		// - Q's view at the moment of forming a signature;
+		return {};	// TODO
 	};
 
 	bool DbrbProcess::verify(const ProcessId& signer, const Payload& payload, const View& view, const Signature& signature) {
 		// Forms message body as described in DbrbProcess::sign and checks whether the signature is valid.
+		return true;	// TODO
 	};
 
 
@@ -183,7 +210,7 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::onReconfigMessageReceived(const ReconfigMessage& message, const ProcessId& sender) {
 		if (m_limitedProcessing)
-				return;
+			return;
 
 		if (message.View != m_currentView)
 			return;
@@ -193,9 +220,11 @@ namespace catapult { namespace dbrb {
 			return;
 
 		// When trying to leave, a corresponding join change must be present in the view of the message.
-		const auto joinChange = std::make_pair(message.ProcessId, MembershipChanges::Join);
-		if (!message.View.hasChange(message.ProcessId, MembershipChanges::Join))
-			return;
+		if (message.MembershipChange == MembershipChanges::Leave) {
+			const auto joinChange = std::make_pair(message.ProcessId, MembershipChanges::Join);
+			if (!message.View.hasChange(message.ProcessId, MembershipChanges::Join))
+				return;
+		}
 
 		m_pendingChanges.Data.emplace_back(message.ProcessId, message.MembershipChange);
 		ReconfigConfirmMessage responseMessage(m_id, message.View);
@@ -209,20 +238,23 @@ namespace catapult { namespace dbrb {
 	}
 
 	void DbrbProcess::onReconfigConfirmQuorumCollected() {
-		m_viewDiscoveryActive = false;
+		if (m_membershipState == MembershipStates::Joining || m_membershipState == MembershipStates::Leaving)
+			m_disseminateReconfig = false;
+
+//		// TODO: Not clear if view discovery should remain active or not
+//		if (m_membershipState == MembershipStates::Joining)
+//			m_viewDiscoveryActive = false;
 	}
 
 	void DbrbProcess::onProposeMessageReceived(const ProposeMessage& message) {
 		// Must be sent from a member of replaced view.
-		auto replacedViewMembers = message.ReplacedView.members();
 		if (!message.ReplacedView.isMember(message.Sender))
 			return;
 
 		// Filtering incorrect proposals.
-//		const auto& format = m_formatSequences.at(message.ReplacedView);
-//		// TODO: format must contain empty sequence, or be empty?
-//		if ( !(format.count(message.ProposedSequence) || format.count(Sequence{})) )
-//			return;
+		const auto& format = m_formatSequences[message.ReplacedView];
+		if ( !(format.count(message.ProposedSequence) || format.count(Sequence{})) )	// TODO: format must contain empty sequence, or be empty?
+			return;
 
 		// Every view in ProposedSequence must be more recent than the current view of the process.
 		const auto pLeastRecentView = message.ProposedSequence.maybeLeastRecent();
@@ -231,24 +263,23 @@ namespace catapult { namespace dbrb {
 
 		// TODO: Check that there is at least one view in ProposedSequence that the process is not aware of
 
-		auto& currentSequence = m_proposedSequences.at(message.ReplacedView);
-		bool conflicting = !currentSequence.canAppend(message.ProposedSequence);	// TODO: Double-check
+		auto& currentSequence = m_proposedSequences[message.ReplacedView];
+		bool conflicting = !currentSequence.canAppend(message.ProposedSequence);
 		if (conflicting) {
-			auto& localSequence = m_lastConvergedSequences.at(message.ReplacedView);
-			const auto pLocalMostRecent = localSequence.maybeMostRecent();
-			const auto pProposedMostRecent = message.ProposedSequence.maybeMostRecent();
+			const auto localMostRecent = currentSequence.maybeMostRecent().value_or(View{});
+			const auto proposedMostRecent = message.ProposedSequence.maybeMostRecent().value_or(View{});
+			const auto mergedView = View::merge(localMostRecent, proposedMostRecent);
 
-			// We don't know which one of the views is more recent, so we first append one of them, which will
-			// always succeed, and then we insert the other one. It is possible to use insert for both,
-			// but it is better to use append whenever possible, as it is faster.
-			currentSequence.tryAppend(*pLocalMostRecent);
-			currentSequence.tryInsert(*pProposedMostRecent);
+			auto lastConverged = m_lastConvergedSequences[message.ReplacedView];
+			lastConverged.tryAppend(mergedView);
+
+			currentSequence = lastConverged;
 		} else {
-			currentSequence.tryAppend(message.ProposedSequence);
+			currentSequence.tryAppend(message.ProposedSequence);	// Will always succeed.
 		}
 
 		ProposeMessage responseMessage(m_id, currentSequence, message.ReplacedView);
-		disseminate(responseMessage, m_currentView.members() );
+		disseminate(responseMessage, message.ReplacedView.members());
 
 		// Updating quorum counter for received Propose message.
 		bool quorumCollected = m_quorumManager.update(message);
@@ -260,7 +291,7 @@ namespace catapult { namespace dbrb {
 		m_lastConvergedSequences[message.ReplacedView] = message.ProposedSequence;
 
 		ConvergedMessage responseMessage(m_id, message.ProposedSequence, message.ReplacedView);
-		disseminate(responseMessage, message.ReplacedView.members() );
+		disseminate(responseMessage, message.ReplacedView.members());
 	}
 
 	void DbrbProcess::onConvergedMessageReceived(const ConvergedMessage& message) {
@@ -270,7 +301,7 @@ namespace catapult { namespace dbrb {
 	}
 
 	void DbrbProcess::onConvergedQuorumCollected(const ConvergedMessage& message) {
-		const auto& leastRecentView = *message.ConvergedSequence.maybeLeastRecent();	// Will always exist.
+		const auto& leastRecentView = message.ConvergedSequence.maybeLeastRecent().value_or(View{});
 		InstallMessage responseMessage(m_id, leastRecentView, message.ConvergedSequence, message.ReplacedView);
 
 		std::set<ProcessId> replacedViewMembers = message.ReplacedView.members();
@@ -280,14 +311,14 @@ namespace catapult { namespace dbrb {
 			leastRecentViewMembers.begin(), leastRecentViewMembers.end(),
 			std::inserter(recipientsUnion, recipientsUnion.begin()));
 
-		reliablyDisseminate(responseMessage, recipientsUnion);
+		disseminate(responseMessage, recipientsUnion);
 	}
 
 	void DbrbProcess::onInstallMessageReceived(const InstallMessage& message) {
 		// Update Format sequences.
 		auto& format = m_formatSequences[message.LeastRecentView];
 		auto sequenceWithoutLeastRecent = message.ConvergedSequence;
-		sequenceWithoutLeastRecent.tryErase(message.LeastRecentView);
+		sequenceWithoutLeastRecent.tryErase(message.LeastRecentView);	// Will always succeed.
 		format.insert(sequenceWithoutLeastRecent);
 
 		if (message.ReplacedView.isMember(m_id)) {
@@ -304,7 +335,7 @@ namespace catapult { namespace dbrb {
 				leastRecentViewMembers.begin(), leastRecentViewMembers.end(),
 				std::inserter(recipientsUnion, recipientsUnion.begin()));
 
-			reliablyDisseminate(stateUpdateMessage, recipientsUnion);
+			disseminate(stateUpdateMessage, recipientsUnion);
 		}
 
 		if (m_currentView < message.LeastRecentView) {
@@ -376,11 +407,10 @@ namespace catapult { namespace dbrb {
 				m_proposedSequences[m_currentView] = moreRecentSequence;
 
 				ProposeMessage proposeMessage(m_id, moreRecentSequence, m_currentView);
-				disseminate(proposeMessage, m_currentView.members() );
+				disseminate(proposeMessage, m_currentView.members());
 			} else {
 				m_installedViews.insert(m_currentView);
-				m_limitedProcessing = false;	// Resume processing Prepare, Commit and Reconfig messages.
-				onNewViewInstalled();
+				onViewInstalled(m_currentView);
 			}
 
 		} else {
@@ -455,17 +485,16 @@ namespace catapult { namespace dbrb {
 			m_storedPayloadData = { message.Payload, message.Certificate, message.CertificateView };
 			// TODO: Update ProcessState
 
-			CommitMessage responseMessage = { m_id, message.Payload, message.Certificate,
-											  message.CertificateView, m_currentView };
+			CommitMessage responseMessage(m_id, message.Payload, message.Certificate, message.CertificateView, m_currentView);
 			disseminate(responseMessage, m_currentView.members());
 		}
 
 		// Allow delivery for sender process.
-		DeliverMessage deliverMessage = { m_id, message.Payload, m_currentView };
+		DeliverMessage deliverMessage(m_id, message.Payload, m_currentView);
 		send(deliverMessage, message.Sender);
 	}
 
-	void DbrbProcess::onDeliverMessageReceived(DeliverMessage message) {
+	void DbrbProcess::onDeliverMessageReceived(const DeliverMessage& message) {
 		// Message sender must be a member of the view specified in the message.
 		if (!message.View.isMember(message.Sender))
 			return;
@@ -477,8 +506,10 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::onDeliverQuorumCollected() {
 		m_payloadIsDelivered = true;
-		m_deliverCallback(message.Payload);	// TODO: Must be stored payload
 		m_canLeave = true;
+
+		if (m_storedPayloadData.has_value())	// Should always be set.
+			m_deliverCallback(m_storedPayloadData->Payload);
 	}
 
 
@@ -489,13 +520,39 @@ namespace catapult { namespace dbrb {
 			return;
 
 		m_currentView = std::move(newView);
-		ReconfigMessage message(m_id, m_id, MembershipChanges::Join, m_currentView);
-		disseminate(message, m_currentView.members() );
+
+		if (m_membershipState == MembershipStates::Joining && m_disseminateReconfig) {
+			ReconfigMessage message(m_id, m_id, MembershipChanges::Join, m_currentView);
+			disseminate(message, m_currentView.members());
+		}
 	}
 
-	void DbrbProcess::onJoinComplete() {}
+	void DbrbProcess::onViewInstalled(const View& newView) {
+		// Resume processing Prepare, Commit and Reconfig messages.
+		m_limitedProcessing = false;
 
-	void DbrbProcess::onLeaveComplete() {}
+		if (!m_pendingChanges.Data.empty() && !m_proposedSequences.count(newView)) {
+			const auto mergedView = View::merge(newView, m_pendingChanges);
+			const auto sequence = Sequence::fromViews({ mergedView });	// Single view is always a valid sequence.
+			m_proposedSequences[newView] = *sequence;
+		}
 
-	void DbrbProcess::onNewViewInstalled() {}
+		// TODO: new-view()
+
+		// Disseminate Reconfig message using the installed view.
+		ReconfigMessage message(m_id, m_id, MembershipChanges::Leave, newView);
+		disseminate(message, newView.members());
+	}
+
+	void DbrbProcess::onJoinComplete() {
+		m_disseminateReconfig = false;
+//		m_viewDiscoveryActive = false;	// TODO: Not clear if view discovery should remain active or not
+		m_membershipState = MembershipStates::Participating;
+	}
+
+	void DbrbProcess::onLeaveComplete() {
+		m_disseminateReconfig = false;
+		m_viewDiscoveryActive = false;
+		m_membershipState = MembershipStates::Left;
+	}
 }}

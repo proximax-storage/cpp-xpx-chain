@@ -27,6 +27,15 @@ namespace catapult { namespace dbrb {
 		Leave,
 	};
 
+	/// State of the process membership.
+	enum class MembershipStates : uint8_t {
+		NotJoined,
+		Joining,
+		Participating,
+		Leaving,
+		Left,
+	};
+
 	/// State of the process.
 	struct ProcessState {
 		/// Payload that is allowed to be acknowledged.
@@ -64,6 +73,16 @@ namespace catapult { namespace dbrb {
 		bool operator>(const View& other) const;
 		bool operator<=(const View& other) const;
 		bool operator>=(const View& other) const;
+
+		/// Merge two views into one.
+		static View merge(const View& a, const View& b) {
+			std::set<std::pair<ProcessId, MembershipChanges>> set;
+			for (const auto& change : a.Data)
+				set.insert(change);
+			for (const auto& change : b.Data)
+				set.insert(change);
+			return View { { set.begin(), set.end() } };
+		}
 
 		/// Check if two views are comparable.
 		static bool areComparable(const View& a, const View& b) {
@@ -112,6 +131,7 @@ namespace catapult { namespace dbrb {
 		/// Returns whether the view was found and erased.
 		bool tryErase(const View& view);
 
+		bool operator==(const Sequence& rhs) const;
 		bool operator<(const Sequence& rhs) const;
 
 		/// Check whether all views in \a sequenceData are mutually comparable and sorted in strictly ascending order.
