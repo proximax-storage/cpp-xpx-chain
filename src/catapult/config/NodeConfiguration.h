@@ -38,6 +38,9 @@ namespace catapult { namespace config {
 		/// Server api port.
 		unsigned short ApiPort;
 
+		/// DBRB server port.
+		unsigned short DbrbPort;
+
 		/// \c true if the server should reuse ports already in use.
 		bool ShouldAllowAddressReuse;
 

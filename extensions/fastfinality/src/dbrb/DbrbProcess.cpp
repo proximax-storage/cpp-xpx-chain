@@ -50,15 +50,20 @@ namespace catapult { namespace dbrb {
 	}
 
 	DbrbProcess::DbrbProcess(
-		std::shared_ptr<net::PacketWriters> pDbrbWriters,
-		std::shared_ptr<net::PacketWriters> pClientWriters,
+		std::shared_ptr<net::PacketWriters> pWriters,
 		std::shared_ptr<ionet::ServerPacketHandlers> pPacketHandlers,
 		const std::vector<ionet::Node>& bootstrapNodes,
 		ionet::Node thisNode)
-			: m_pWriters(std::move(pDbrbWriters))
-			, m_pClientWriters(std::move(pClientWriters))
+			: m_pWriters(std::move(pWriters))
 			, m_pPacketHandlers(std::move(pPacketHandlers))
 			, m_id(std::move(thisNode)) {
+		m_currentView.Data.emplace_back(m_id, MembershipChanges::Join);
+		for (const auto& node : bootstrapNodes) {
+			m_currentView.Data.emplace_back(node, MembershipChanges::Join);
+		}
+	}
+
+	void DbrbProcess::registerPacketHandlers() {
 		auto handler = [pThis = shared_from_this(), &converter = m_converter](const auto& packet, auto& context) {
 			auto pMessage = converter.toMessage(packet);
 			pThis->processMessage(*pMessage);
@@ -73,11 +78,6 @@ namespace catapult { namespace dbrb {
 		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_Acknowledged_Message, handler);
 		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_Commit_Message, handler);
 		m_pPacketHandlers->registerHandler(ionet::PacketType::Dbrb_Deliver_Message, handler);
-
-		m_currentView.Data.emplace_back(m_id, MembershipChanges::Join);
-		for (const auto& node : bootstrapNodes) {
-			m_currentView.Data.emplace_back(node, MembershipChanges::Join);
-		}
 	}
 
 	void DbrbProcess::setDeliverCallback(const DeliverCallback& callback) {
@@ -86,18 +86,6 @@ namespace catapult { namespace dbrb {
 
 	subscribers::NodeSubscriber& DbrbProcess::getNodeSubscriber() {
 		return m_nodeSubscriber;
-	}
-
-	std::vector<ionet::NodePacketIoPair> DbrbProcess::getNodePacketIoPairs() {
-		std::vector<ionet::NodePacketIoPair> nodePacketIoPairs;
-		nodePacketIoPairs.reserve(m_currentView.Data.size());
-		for (const auto& node : m_currentView.members()) {
-			auto nodePacketIoPair = GetNodePacketIoPair(*m_pClientWriters, node);
-			if (nodePacketIoPair.io())
-				nodePacketIoPairs.emplace_back(nodePacketIoPair);
-		}
-
-		return nodePacketIoPairs;
 	}
 
 	// Basic operations:
