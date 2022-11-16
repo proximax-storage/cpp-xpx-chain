@@ -148,9 +148,13 @@ namespace catapult { namespace dbrb {
 		/// confirmation messages has been collected for any of the views.
 		bool m_viewDiscoveryActive = false;
 
-		/// Whether the process should keep disseminating Reconfig messages on updating or installing new views.
+		/// Whether the process should keep disseminating Reconfig messages on discovery of new views.
 		/// Set to true only when joining or leaving the system.
 		bool m_disseminateReconfig = false;
+
+		/// Whether the process should keep disseminating Commit messages on installing new views.
+		/// Set to true only when leaving the system after an Install message.
+		bool m_disseminateCommit = false;
 
 		/// While set to true, no Prepare, Commit or Reconfig messages are processed.
 		bool m_limitedProcessing = false;
@@ -241,7 +245,7 @@ namespace catapult { namespace dbrb {
 		void send(const Message& message, const ProcessId& recipient);
 
 		void prepareForStateUpdates(const InstallMessage&);
-		void transferState(const std::set<StateUpdateMessage>&);
+		void updateState(const std::set<StateUpdateMessage>&);
 		bool isAcknowledgeable(const Payload&);
 		Signature sign(const ProcessId&, const Payload&);
 		bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
@@ -270,7 +274,7 @@ namespace catapult { namespace dbrb {
 
 		void onViewDiscovered(View&&);
 		void onViewInstalled(const View&);
-
+		void onLeaveAllowed();
 		void onJoinComplete();
 		void onLeaveComplete();
 	};

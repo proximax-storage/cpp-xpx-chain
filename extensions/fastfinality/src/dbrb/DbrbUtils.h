@@ -36,23 +36,10 @@ namespace catapult { namespace dbrb {
 		Left,
 	};
 
-	/// State of the process.
-	struct ProcessState {
-		/// Payload that is allowed to be acknowledged.
-		Payload AcknowledgeablePayload;
-
-		/// Stored Commit message, if any.
-		//std::optional<CommitMessage> Stored;
-
-		/// A pair of conflicting Prepare messages, if any.
-		//std::optional<std::pair<PrepareMessage, PrepareMessage>> Conflicting;
-	};
-
-
 	/// View of the system.
 	struct View {
-		/// History of processes' membership changes in the system.
-		std::vector<std::pair<ProcessId, MembershipChanges>> Data;
+		/// Set of processes' membership changes in the system.
+		std::set<std::pair<ProcessId, MembershipChanges>> Data;
 
 		/// Get IDs of current members of the view.
 		std::set<ProcessId> members() const;
@@ -74,14 +61,20 @@ namespace catapult { namespace dbrb {
 		bool operator<=(const View& other) const;
 		bool operator>=(const View& other) const;
 
+		/// Merge other view into this view.
+		View& merge(const View& other);
+
+		/// Remove from this view's \a Data all changes that appear in the other view.
+		View& difference(const View& other);
+
 		/// Merge two views into one.
 		static View merge(const View& a, const View& b) {
-			std::set<std::pair<ProcessId, MembershipChanges>> set;
+			std::set<std::pair<ProcessId, MembershipChanges>> newData;
 			for (const auto& change : a.Data)
-				set.insert(change);
+				newData.insert(change);
 			for (const auto& change : b.Data)
-				set.insert(change);
-			return View { { set.begin(), set.end() } };
+				newData.insert(change);
+			return View{ std::move(newData) };
 		}
 
 		/// Check if two views are comparable.

@@ -50,25 +50,15 @@ namespace catapult { namespace dbrb {
 	}
 
 	bool View::operator<(const View& other) const {
-		// If other is not longer, it cannot be more recent.
-		if (other.Data.size() <= Data.size())
-			return false;
-
-		const std::vector<std::pair<ProcessId, MembershipChanges>> commonPart{ other.Data.cbegin(), other.Data.cend() };
-
-		// If other is longer, but common part differs, the views are not comparable.
-		return Data == commonPart;
+		const auto& otherData = other.Data;
+		const bool notEqual = (*this != other);
+		return notEqual && std::includes(otherData.begin(), otherData.end(), Data.begin(), Data.end());
 	}
 
 	bool View::operator>(const View& other) const {
-		// If *this is not longer, it cannot be more recent.
-		if (Data.size() <= other.Data.size())
-			return false;
-
-		const std::vector<std::pair<ProcessId, MembershipChanges>> commonPart{ Data.cbegin(), Data.cend() };
-
-		// If *this is longer, but common part differs, the views are not comparable.
-		return other.Data == commonPart;
+		const auto& otherData = other.Data;
+		const bool notEqual = (*this != other);
+		return notEqual && std::includes(Data.begin(), Data.end(), otherData.begin(), otherData.end());
 	}
 
 	bool View::operator<=(const View& other) const {
@@ -77,6 +67,20 @@ namespace catapult { namespace dbrb {
 
 	bool View::operator>=(const View& other) const {
 		return (*this > other) || (*this == other);
+	}
+
+	View& View::merge(const View& other) {
+		Data.insert(other.Data.begin(), other.Data.end());
+		return *this;
+	}
+
+	View& View::difference(const View& other) {
+		const auto& otherData = other.Data;
+		std::set<std::pair<ProcessId, MembershipChanges>> newData;
+		std::set_difference(Data.begin(), Data.end(), otherData.begin(), otherData.end(),
+							std::inserter(newData, newData.begin()));
+		Data = std::move(newData);
+		return *this;
 	}
 
 	const std::vector<View>& Sequence::data() const {

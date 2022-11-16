@@ -93,12 +93,6 @@ namespace catapult { namespace dbrb {
 			uint32_t PayloadSize;
 		};
 
-		struct StateUpdateMessagePacket : public MessagePacket {
-			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_State_Update_Message;
-
-			uint32_t StateAcknowledgeablePayloadSize;
-		};
-
 		struct AcknowledgedMessagePacket : public MessagePacket {
 			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Acknowledged_Message;
 
@@ -111,6 +105,12 @@ namespace catapult { namespace dbrb {
 
 			uint32_t PayloadSize;
 			uint32_t CertificateSize;
+		};
+
+		struct StateUpdateMessagePacket : public MessagePacket {
+			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_State_Update_Message;
+
+			uint32_t StateAcknowledgeablePayloadSize;
 		};
 
 		struct DeliverMessagePacket : public MessagePacket {
@@ -212,16 +212,6 @@ namespace catapult { namespace dbrb {
 			return std::make_unique<PrepareMessage>(pMessagePacket->Sender, payload, UnpackView(pData));
 		});
 
-		registerConverter(ionet::PacketType::Dbrb_State_Update_Message, [](const ionet::Packet& packet) {
-			const auto pMessagePacket = ionet::CoercePacket<StateUpdateMessagePacket>(&packet);
-			auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
-			auto payload = ionet::CreateSharedPacket<ionet::Packet>(pMessagePacket->StateAcknowledgeablePayloadSize);
-			memcpy(payload.get(), pData, pMessagePacket->StateAcknowledgeablePayloadSize);
-			pData += pMessagePacket->StateAcknowledgeablePayloadSize;
-
-			return std::make_unique<StateUpdateMessage>(pMessagePacket->Sender, ProcessState{ payload }, UnpackView(pData));
-		});
-
 		registerConverter(ionet::PacketType::Dbrb_Acknowledged_Message, [](const ionet::Packet& packet) {
 			const auto pMessagePacket = ionet::CoercePacket<AcknowledgedMessagePacket>(&packet);
 			auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
@@ -248,6 +238,16 @@ namespace catapult { namespace dbrb {
 			}
 
 			return std::make_unique<CommitMessage>(pMessagePacket->Sender, payload, certificate, UnpackView(pData), UnpackView(pData));
+		});
+
+		registerConverter(ionet::PacketType::Dbrb_State_Update_Message, [](const ionet::Packet& packet) {
+		  const auto pMessagePacket = ionet::CoercePacket<StateUpdateMessagePacket>(&packet);
+		  auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
+		  auto payload = ionet::CreateSharedPacket<ionet::Packet>(pMessagePacket->StateAcknowledgeablePayloadSize);
+		  memcpy(payload.get(), pData, pMessagePacket->StateAcknowledgeablePayloadSize);
+		  pData += pMessagePacket->StateAcknowledgeablePayloadSize;
+
+		  return std::make_unique<StateUpdateMessage>(pMessagePacket->Sender, ProcessState{ payload }, UnpackView(pData));
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Deliver_Message, [](const ionet::Packet& packet) {
@@ -386,21 +386,6 @@ namespace catapult { namespace dbrb {
 		return pPacket;
 	}
 
-	std::shared_ptr<ionet::Packet> StateUpdateMessage::toNetworkPacket() const {
-		uint32_t payloadSize = State.AcknowledgeablePayload->Size;
-		auto packedView = PackView(PendingChanges, payloadSize);
-		auto pPacket = ionet::CreateSharedPacket<StateUpdateMessagePacket>(payloadSize);
-		pPacket->Sender = Sender;
-		pPacket->StateAcknowledgeablePayloadSize = State.AcknowledgeablePayload->Size;
-
-		auto pData = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
-		memcpy(pData, State.AcknowledgeablePayload.get(), State.AcknowledgeablePayload->Size);
-
-		CopyView(pData, PendingChanges, packedView);
-
-		return pPacket;
-	}
-
 	std::shared_ptr<ionet::Packet> AcknowledgedMessage::toNetworkPacket() const {
 		uint32_t payloadSize = Payload->Size;
 		auto packedView = PackView(View, payloadSize);
@@ -437,6 +422,21 @@ namespace catapult { namespace dbrb {
 
 		CopyView(pData, CertificateView, packedCertificateView);
 		CopyView(pData, CurrentView, packedCurrentView);
+
+		return pPacket;
+	}
+
+	std::shared_ptr<ionet::Packet> StateUpdateMessage::toNetworkPacket() const {
+		uint32_t payloadSize = State.AcknowledgeablePayload->Size;
+		auto packedView = PackView(PendingChanges, payloadSize);
+		auto pPacket = ionet::CreateSharedPacket<StateUpdateMessagePacket>(payloadSize);
+		pPacket->Sender = Sender;
+		pPacket->StateAcknowledgeablePayloadSize = State.AcknowledgeablePayload->Size;
+
+		auto pData = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
+		memcpy(pData, State.AcknowledgeablePayload.get(), State.AcknowledgeablePayload->Size);
+
+		CopyView(pData, PendingChanges, packedView);
 
 		return pPacket;
 	}

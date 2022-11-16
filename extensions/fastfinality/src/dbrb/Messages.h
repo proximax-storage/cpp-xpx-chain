@@ -185,26 +185,6 @@ namespace catapult { namespace dbrb {
 		dbrb::View View;
 	};
 
-	struct StateUpdateMessage : Message {
-	public:
-		StateUpdateMessage() = delete;
-		StateUpdateMessage(const ProcessId& sender, ProcessState state, View pendingChanges)
-			: Message(sender, ionet::PacketType::Dbrb_State_Update_Message)
-			, State(std::move(state))
-			, PendingChanges(std::move(pendingChanges))
-		{}
-
-	public:
-		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
-
-	public:
-		/// State of the process.
-		ProcessState State;
-
-		/// List of pending changes (i.e., join or leave).
-		View PendingChanges;
-	};
-
 	struct AcknowledgedMessage : Message {
 	public:
 		AcknowledgedMessage() = delete;
@@ -255,6 +235,41 @@ namespace catapult { namespace dbrb {
 
 		/// Current view of the system from the perspective of Sender.
 		View CurrentView;
+	};
+
+	struct ProcessState {
+		/// Prepare message with a payload that is allowed to be acknowledged, if any.
+		std::optional<PrepareMessage> Acknowledgeable;
+
+		/// A pair of conflicting Prepare messages, if any.
+		std::optional<std::pair<PrepareMessage, PrepareMessage>> Conflicting;
+
+		/// Stored Commit message, if any.
+		std::optional<CommitMessage> Stored;
+	};
+
+	struct StateUpdateMessage : Message {
+	public:
+		StateUpdateMessage() = delete;
+		StateUpdateMessage(const ProcessId& sender, ProcessState state, View view, View pendingChanges)
+				: Message(sender, ionet::PacketType::Dbrb_State_Update_Message)
+				, State(std::move(state))
+				, View(std::move(view))
+				, PendingChanges(std::move(pendingChanges))
+		{}
+
+	public:
+		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+
+	public:
+		/// State of the process.
+		ProcessState State;
+
+		/// View associated with the supplied state.
+		dbrb::View View;
+
+		/// List of pending changes (i.e., join or leave).
+		dbrb::View PendingChanges;
 	};
 
 	struct DeliverMessage : Message {
