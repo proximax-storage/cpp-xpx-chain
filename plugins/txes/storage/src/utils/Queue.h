@@ -61,6 +61,9 @@ public:
 			queueEntry.setFirst(Key());
 			queueEntry.setLast(Key());
 		}
+
+		entry.setQueuePrevious(Key());
+		entry.setQueueNext(Key());
 		queueEntry.setSize(queueEntry.getSize() - 1);
 	}
 
@@ -122,6 +125,9 @@ public:
 				previousDriveEntry.setQueueNext(Key());
 			}
 		}
+
+		entry.setQueuePrevious(Key());
+		entry.setQueueNext(Key());
 		queueEntry.setSize(queueEntry.getSize() - 1);
 	}
 
