@@ -214,10 +214,27 @@ namespace catapult { namespace utils {
 			const std::set<Key>& offboardingReplicators,
 			const observers::ObserverContext& context,
 			std::mt19937& rng) {
+
+		if (offboardingReplicators.empty()) {
+			return;
+		}
+
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		auto driveIter = driveCache.find(driveKey);
 		auto& driveEntry = driveIter.get();
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+
+		for (const auto& replicatorKey: offboardingReplicators) {
+			auto replicatorIter = replicatorCache.find(replicatorKey);
+			auto& replicatorEntry = replicatorIter.get();
+			std::ostringstream sBefore;
+			sBefore << "Before offboard " << replicatorKey << " from " << driveKey << ", its channels: ";
+			for (const auto& channelId: replicatorEntry.downloadChannels()) {
+				sBefore << channelId << ", ";
+			}
+
+			CATAPULT_LOG( warning ) << sBefore.str();
+		}
 
 		for (const auto& replicatorKey : offboardingReplicators) {
 			driveEntry.replicators().erase(replicatorKey);
@@ -229,8 +246,10 @@ namespace catapult { namespace utils {
 			auto replicatorIter = replicatorCache.find(replicatorKey);
 			auto& replicatorEntry = replicatorIter.get();
 			replicatorEntry.drives().erase(driveKey);
-			for (const auto& id : driveEntry.downloadShards())
+			for (const auto& id : driveEntry.downloadShards()) {
+				CATAPULT_LOG( warning ) << "remove " << replicatorKey << " from " << id;
 				replicatorEntry.downloadChannels().erase(id);
+			}
 		}
 
 		std::vector<Key> newOffboardingReplicators;
@@ -292,7 +311,15 @@ namespace catapult { namespace utils {
 					auto& replicatorEntry = replicatorIt.get();
 					replicatorEntry.downloadChannels().insert(id);
 				}
+
+				std::ostringstream sChannel;
+				sChannel << "update " << id << " during offboard, its replicators :";
+				for (const auto& replicatorKey: downloadEntry.shardReplicators()) {
+					sChannel << replicatorKey << " ";
+				}
+				CATAPULT_LOG( warning ) << sChannel.str();
 			}
+
 		} else {
 			std::vector<Key> sampleSource(replicators.begin(), replicators.end());
 			for (const auto& id : driveEntry.downloadShards()) {
@@ -313,6 +340,18 @@ namespace catapult { namespace utils {
 					replicatorEntry.downloadChannels().insert(id);
 				}
 			}
+		}
+
+		for (const auto& replicatorKey: offboardingReplicators) {
+			auto replicatorIter = replicatorCache.find(replicatorKey);
+			auto& replicatorEntry = replicatorIter.get();
+			std::ostringstream sAfter;
+			sAfter << "After offboard " << replicatorKey << " from " << driveKey << ", its channels: ";
+			for (const auto& channelId: replicatorEntry.downloadChannels()) {
+				sAfter << channelId << ", ";
+			}
+
+			CATAPULT_LOG( warning ) << sAfter.str();
 		}
 	}
 
@@ -338,6 +377,20 @@ namespace catapult { namespace utils {
 				auto replicatorIt = replicatorCache.find(replicatorKey);
 				auto& replicatorEntry = replicatorIt.get();
 				replicatorEntry.downloadChannels().insert(id);
+
+				std::ostringstream sChannel;
+				sChannel << "update " << id << " during update shards, its replicators :";
+				for (const auto& replicatorKey: downloadEntry.shardReplicators()) {
+					sChannel << replicatorKey << " ";
+				}
+				CATAPULT_LOG( warning ) << sChannel.str();
+
+				std::ostringstream sReplicator;
+				sReplicator << "replicator " << replicatorKey << " channels during update shards: ";
+				for (const auto& channelId: replicatorEntry.downloadChannels()) {
+					sReplicator << channelId << ", ";
+				}
+				CATAPULT_LOG( warning ) << sReplicator.str();
 			}
 		} else {
 			for (const auto& id : driveEntry.downloadShards()) {
