@@ -22,7 +22,6 @@
 namespace catapult { namespace fastfinality {
 
 	namespace {
-		constexpr auto Dbrb_Writers_Service_Name = "dbrb.writers";
 		constexpr auto Writers_Service_Name = "weightedvoting.writers";
 		constexpr auto Readers_Service_Name = "weightedvoting.readers";
 		constexpr auto Service_Id = ionet::ServiceIdentifier(0x54654144);
@@ -46,12 +45,12 @@ namespace catapult { namespace fastfinality {
 		auto CreateRemoteNodeStateRetriever(
 				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				const model::BlockElementSupplier& lastBlockElementSupplier,
-				const std::shared_ptr<dbrb::DbrbProcess>& pDbrbProcess) {
-			return [pConfigHolder, lastBlockElementSupplier, &pDbrbProcess]() {
+				const net::PacketIoPickerContainer& packetIoPickers) {
+			return [pConfigHolder, lastBlockElementSupplier, &packetIoPickers]() {
 				std::vector<thread::future<RemoteNodeState>> remoteNodeStateFutures;
 				auto timeout = utils::TimeSpan::FromSeconds(5);
 
-				auto packetIoPairs = pDbrbProcess->getNodePacketIoPairs();
+				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
 				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling remote node states";
 				if (packetIoPairs.empty())
 					return thread::make_ready_future(std::vector<RemoteNodeState>());
@@ -85,7 +84,9 @@ namespace catapult { namespace fastfinality {
 
 		class WeightedVotingServiceRegistrar : public extensions::ServiceRegistrar {
 		public:
-			explicit WeightedVotingServiceRegistrar(const harvesting::HarvestingConfiguration& config) : m_harvestingConfig(config)
+			explicit WeightedVotingServiceRegistrar(harvesting::HarvestingConfiguration config, std::string resourcesPath)
+				: m_harvestingConfig(std::move(config))
+				, m_resourcesPath(std::move(resourcesPath))
 			{}
 
 			extensions::ServiceRegistrarInfo info() const override {
@@ -94,9 +95,6 @@ namespace catapult { namespace fastfinality {
 
 			void registerServiceCounters(extensions::ServiceLocator& locator) override {
 				locator.registerServiceCounter<net::PacketWriters>(Writers_Service_Name, "WV WRITERS", [](const auto& writers) {
-					return writers.numActiveWriters();
-				});
-				locator.registerServiceCounter<net::PacketWriters>(Dbrb_Writers_Service_Name, "DBRB WRITERS", [](const auto& writers) {
 					return writers.numActiveWriters();
 				});
 				locator.registerServiceCounter<net::PacketReaders>(Readers_Service_Name, "WV READERS", [](const auto& readers) {
@@ -115,29 +113,25 @@ namespace catapult { namespace fastfinality {
 				auto pServiceGroup = state.pool().pushServiceGroup("weighted voting");
 
 				auto connectionSettings = extensions::GetConnectionSettings(config);
-				auto pDbrbWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
-				locator.registerService(Writers_Service_Name, pDbrbWriters);
 				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
-				locator.registerService(Dbrb_Writers_Service_Name, pWriters);
+				locator.registerService(Writers_Service_Name, pWriters);
 
-				auto nodeContainerView = state.nodes().view();
-				std::vector<ionet::Node> bootstrapNodes;
-				ionet::Node thisNode;
-				bootstrapNodes.reserve(nodeContainerView.size());
-				auto count = 0u;
-				nodeContainerView.forEach([&bootstrapNodes, &thisNode, &count](const ionet::Node& node, const ionet::NodeInfo& info) {
-					auto endPoint = node.endpoint();
-					// TODO: get rid of hardcoded port value.
-					endPoint.Port += Port_Diff;
-					if (info.source() == ionet::NodeSource::Local) {
-						thisNode = ionet::Node(node.identityKey(), endPoint, node.metadata());
-					} else {
-						bootstrapNodes.emplace_back(node.identityKey(), endPoint, node.metadata());
-					}
-				});
+				auto peersFile = boost::filesystem::path(m_resourcesPath) / "peers-dbrb.json";
+				auto bootstrapNodes = config::LoadPeersFromPath(peersFile.generic_string(), config.Immutable.NetworkIdentifier);
+				auto thisNode = config::ToLocalNode(config);
+				std::map<Key, ionet::Node> nodeMap;
+				for (const auto& node : bootstrapNodes) {
+					nodeMap[node.identityKey()] = node;
+				}
+				bootstrapNodes.clear();
+				for (const auto& pair : nodeMap) {
+					if (pair.first != thisNode.identityKey())
+						bootstrapNodes.emplace_back(pair.second);
+				}
 
 				auto pPacketHandlers = std::make_shared<ionet::ServerPacketHandlers>(config.Node.MaxPacketDataSize.bytes32());
-				auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pDbrbWriters, pWriters, pPacketHandlers, bootstrapNodes, thisNode);
+				auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, pPacketHandlers, bootstrapNodes, thisNode);
+				pDbrbProcess->registerPacketHandlers();
 
 				auto pFsmShared = pServiceGroup->pushService([&state, &config, pDbrbProcess](const std::shared_ptr<thread::IoThreadPool>& pPool) {
 					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess);
@@ -174,7 +168,7 @@ namespace catapult { namespace fastfinality {
 					return storageView.loadBlockElement(storageView.chainHeight());
 				};
 				auto blockElementGetter = [&storage](const Height& height) {
-				  return storage.view().loadBlockElement(height);
+					return storage.view().loadBlockElement(height);
 				};
 				auto importanceGetter = [&state](const Key& identityKey) {
 					auto height = state.cache().height();
@@ -185,7 +179,7 @@ namespace catapult { namespace fastfinality {
 				};
 				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
 
-				RegisterPullRemoteNodeStateHandler(pFsmShared, *pPacketHandlers, pConfigHolder, blockElementGetter, lastBlockElementSupplier);
+				RegisterPullRemoteNodeStateHandler(pFsmShared, state.packetHandlers(), pConfigHolder, blockElementGetter, lastBlockElementSupplier);
 
 				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, *pPacketHandlers, locator.keyPair(), connectionSettings, 2u);
 				extensions::BootServer(*pServiceGroup, config.Node.Port + Port_Diff, Service_Id, config, pDbrbProcess->getNodeSubscriber(), [&acceptor = *pReaders](
@@ -202,7 +196,7 @@ namespace catapult { namespace fastfinality {
 
 				actions.CheckLocalChain = CreateDefaultCheckLocalChainAction(
 					pFsmShared,
-					CreateRemoteNodeStateRetriever(pConfigHolder, lastBlockElementSupplier, pDbrbProcess),
+					CreateRemoteNodeStateRetriever(pConfigHolder, lastBlockElementSupplier, state.packetIoPickers()),
 					pConfigHolder,
 					lastBlockElementSupplier,
 					importanceGetter,
@@ -255,10 +249,11 @@ namespace catapult { namespace fastfinality {
 
 		private:
 			harvesting::HarvestingConfiguration m_harvestingConfig;
+			std::string m_resourcesPath;
 		};
 	}
 
-	DECLARE_SERVICE_REGISTRAR(WeightedVoting)(const harvesting::HarvestingConfiguration& config) {
-		return std::make_unique<WeightedVotingServiceRegistrar>(config);
+	DECLARE_SERVICE_REGISTRAR(WeightedVoting)(const harvesting::HarvestingConfiguration& config, std::string resourcesPath) {
+		return std::make_unique<WeightedVotingServiceRegistrar>(config, std::move(resourcesPath));
 	}
 }}

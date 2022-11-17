@@ -15,7 +15,7 @@ namespace catapult { namespace fastfinality {
 			auto config = harvesting::HarvestingConfiguration::LoadFromPath(bootstrapper.resourcesPath());
 			ValidateHarvestingConfiguration(config);
 
-			bootstrapper.extensionManager().addServiceRegistrar(CreateWeightedVotingServiceRegistrar(config));
+			bootstrapper.extensionManager().addServiceRegistrar(CreateWeightedVotingServiceRegistrar(config, bootstrapper.resourcesPath()));
 		}
 	}
 }}

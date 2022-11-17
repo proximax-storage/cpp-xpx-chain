@@ -128,8 +128,7 @@ namespace catapult { namespace dbrb {
 
 	public:
 		explicit DbrbProcess(
-			std::shared_ptr<net::PacketWriters> pDbrbWriters,
-			std::shared_ptr<net::PacketWriters> pClientWriters,
+			std::shared_ptr<net::PacketWriters> pWriters,
 			std::shared_ptr<ionet::ServerPacketHandlers> pPacketHandlers,
 			const std::vector<ionet::Node>& bootstrapNodes,
 			ionet::Node thisNode);
@@ -211,8 +210,6 @@ namespace catapult { namespace dbrb {
 
 		std::shared_ptr<net::PacketWriters> m_pWriters;
 
-		std::shared_ptr<net::PacketWriters> m_pClientWriters;
-
 		std::shared_ptr<ionet::ServerPacketHandlers> m_pPacketHandlers;
 
 		NetworkPacketConverter m_converter;
@@ -234,11 +231,10 @@ namespace catapult { namespace dbrb {
 		void processMessage(const Message&);
 
 	public:
-		void setDeliverCallback(const DeliverCallback& callbacke);
+		void registerPacketHandlers();
+		void setDeliverCallback(const DeliverCallback& callback);
 
 		subscribers::NodeSubscriber& getNodeSubscriber();
-
-		std::vector<ionet::NodePacketIoPair> getNodePacketIoPairs();
 
 	private:
 		void disseminate(const Message& message, const std::set<ProcessId>& recipients);
