@@ -7,6 +7,7 @@
 #include "DbrbProcess.h"
 #include "DbrbUtils.h"
 #include "Messages.h"
+#include "catapult/crypto/Signer.h"
 #include "catapult/ionet/PacketPayload.h"
 #include "catapult/thread/Future.h"
 #include <utility>
@@ -53,10 +54,12 @@ namespace catapult { namespace dbrb {
 		std::shared_ptr<net::PacketWriters> pWriters,
 		std::shared_ptr<ionet::ServerPacketHandlers> pPacketHandlers,
 		const std::vector<ionet::Node>& bootstrapNodes,
-		ionet::Node thisNode)
+		ionet::Node thisNode,
+		const crypto::KeyPair& keyPair)
 			: m_pWriters(std::move(pWriters))
 			, m_pPacketHandlers(std::move(pPacketHandlers))
-			, m_id(std::move(thisNode)) {
+			, m_id(std::move(thisNode))
+			, m_keyPair(keyPair){
 		m_currentView.Data.emplace(m_id, MembershipChanges::Join);
 		for (const auto& node : bootstrapNodes) {
 			m_currentView.Data.emplace(node, MembershipChanges::Join);
@@ -65,6 +68,13 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::registerPacketHandlers() {
 		auto handler = [pThis = shared_from_this(), &converter = m_converter](const auto& packet, auto& context) {
+			const auto& messagePacket = static_cast<const MessagePacket&>(packet);
+			auto pData = messagePacket.payload();
+			auto sender = UnpackProcessId(pData);
+			auto hash = CalculateHash(messagePacket.buffers());
+			if (!crypto::Verify(sender.identityKey(), hash, messagePacket.Signature))
+				return;
+
 			auto pMessage = converter.toMessage(packet);
 			pThis->processMessage(*pMessage);
 		};
@@ -124,7 +134,7 @@ namespace catapult { namespace dbrb {
 		// Disseminate a Reconfig message for every currently installed view...
 		for (const auto& view : m_installedViews) {
 			ReconfigMessage message(m_id, m_id, MembershipChanges::Leave, view);
-			disseminate(message, view.members());
+			disseminate(message.toNetworkPacket(&m_keyPair), view.members());
 		}
 
 		// ...and keep disseminating new Reconfig messages whenever a new view is installed.
@@ -137,26 +147,67 @@ namespace catapult { namespace dbrb {
 					// TODO: Can notify user about the reason why broadcast failed
 
 		PrepareMessage message(m_id, payload, m_currentView);
-		disseminate(message, message.View.members());
+		disseminate(message.toNetworkPacket(&m_keyPair), message.View.members());
 	}
 
-	void DbrbProcess::processMessage(const Message&) { /* Identifies message type and calls respective private method. */ }
-
+	void DbrbProcess::processMessage(const Message& message) {
+		switch (message.Type) {
+			case ionet::PacketType::Dbrb_Reconfig_Message: {
+				onReconfigMessageReceived(dynamic_cast<const ReconfigMessage&>(message));
+				break;
+			}
+			case ionet::PacketType::Dbrb_Reconfig_Confirm_Message: {
+				onReconfigConfirmMessageReceived(dynamic_cast<const ReconfigConfirmMessage&>(message));
+				break;
+			}
+			case ionet::PacketType::Dbrb_Propose_Message: {
+				onProposeMessageReceived(dynamic_cast<const ProposeMessage&>(message));
+				break;
+			}
+			case ionet::PacketType::Dbrb_Converged_Message: {
+				onConvergedMessageReceived(dynamic_cast<const ConvergedMessage&>(message));
+				break;
+			}
+			case ionet::PacketType::Dbrb_Install_Message: {
+				onInstallMessageReceived(dynamic_cast<const InstallMessage&>(message));
+				break;
+			}
+			case ionet::PacketType::Dbrb_Prepare_Message: {
+				onPrepareMessageReceived(dynamic_cast<const PrepareMessage&>(message));
+				break;
+			}
+			case ionet::PacketType::Dbrb_State_Update_Message: {
+				onStateUpdateMessageReceived(dynamic_cast<const StateUpdateMessage&>(message));
+				break;
+			}
+			case ionet::PacketType::Dbrb_Acknowledged_Message: {
+				onAcknowledgedMessageReceived(dynamic_cast<const AcknowledgedMessage&>(message));
+				break;
+			}
+			case ionet::PacketType::Dbrb_Commit_Message: {
+				onCommitMessageReceived(dynamic_cast<const CommitMessage&>(message));
+				break;
+			}
+			case ionet::PacketType::Dbrb_Deliver_Message: {
+				onDeliverMessageReceived(dynamic_cast<const DeliverMessage&>(message));
+				break;
+			}
+			default:
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid DBRB message type", message.Type)
+		}
+	}
 
 	// Basic private methods:
 
-	void DbrbProcess::disseminate(const Message& message, const std::set<ProcessId>& recipients) {
+	void DbrbProcess::disseminate(const std::shared_ptr<MessagePacket>& pPacket, const std::set<ProcessId>& recipients) {
 		for (const auto& recipient : recipients)
-			send(message, recipient);
+			send(pPacket, recipient);
 	}
 
-	void DbrbProcess::send(const Message& message, const ProcessId& recipient) {
+	void DbrbProcess::send(const std::shared_ptr<MessagePacket>& pPacket, const ProcessId& recipient) {
 		auto nodePacketIoPair = GetNodePacketIoPair(*m_pWriters, recipient);
 		if (nodePacketIoPair.io())
-			nodePacketIoPair.io()->write(ionet::PacketPayload(message.toNetworkPacket()), [](ionet::SocketOperationCode){});
-	}
-
-	void DbrbProcess::forceLeave(const ProcessId& node) {
+			nodePacketIoPair.io()->write(ionet::PacketPayload(pPacket), [](ionet::SocketOperationCode){});
 	}
 
 	void DbrbProcess::prepareForStateUpdates(const InstallMessage& message) {
@@ -263,24 +314,44 @@ namespace catapult { namespace dbrb {
 		return *m_acknowledgeablePayload == payload;
 	}
 
-	Signature DbrbProcess::sign(const ProcessId& sender, const Payload& payload) {
+	Signature DbrbProcess::sign(const Payload& payload) {
 		// Signed message must contain information about:
-		// - sender process S from which Prepare message was received;
 		// - payload of the message;
 		// - recipient process Q (current process) that received Prepare message from S;
 		// - Q's view at the moment of forming a signature;
-		return {};	// TODO
-	};
+		// Hash calculated from concatenated information is signed.
+
+		uint32_t payloadSize = 0u;
+		auto packedView = PackView(m_currentView, payloadSize);
+		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(payloadSize);
+		auto pData = pPacket->Data();
+		CopyView(pData, packedView);
+
+		auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(payload.get()), payload->Size }, { pPacket->Data(), payloadSize } });
+		Signature signature;
+		crypto::Sign(m_keyPair, hash, signature);
+
+		return signature;
+	}
 
 	bool DbrbProcess::verify(const ProcessId& signer, const Payload& payload, const View& view, const Signature& signature) {
-		// Forms message body as described in DbrbProcess::sign and checks whether the signature is valid.
-		return true;	// TODO
-	};
+		// Forms hash as described in DbrbProcess::sign and checks whether the signature is valid.
+
+		uint32_t payloadSize = 0u;
+		auto packedView = PackView(view, payloadSize);
+		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(payloadSize);
+		auto pData = pPacket->Data();
+		CopyView(pData, packedView);
+
+		auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(payload.get()), payload->Size }, { pPacket->Data(), payloadSize } });
+
+		return crypto::Verify(signer.identityKey(), hash, signature);
+	}
 
 
 	// Message callbacks:
 
-	void DbrbProcess::onReconfigMessageReceived(const ReconfigMessage& message, const ProcessId& sender) {
+	void DbrbProcess::onReconfigMessageReceived(const ReconfigMessage& message) {
 		if (m_limitedProcessing)
 			return;
 
@@ -300,7 +371,7 @@ namespace catapult { namespace dbrb {
 
 		m_pendingChanges.Data.emplace(message.ProcessId, message.MembershipChange);
 		ReconfigConfirmMessage responseMessage(m_id, message.View);
-		send(responseMessage, sender);
+		send(responseMessage.toNetworkPacket(&m_keyPair), message.Sender);
 	}
 
 	void DbrbProcess::onReconfigConfirmMessageReceived(const ReconfigConfirmMessage& message) {
@@ -351,7 +422,7 @@ namespace catapult { namespace dbrb {
 		}
 
 		ProposeMessage responseMessage(m_id, currentSequence, message.ReplacedView);
-		disseminate(responseMessage, message.ReplacedView.members());
+		disseminate(responseMessage.toNetworkPacket(&m_keyPair), message.ReplacedView.members());
 
 		// Updating quorum counter for received Propose message.
 		bool quorumCollected = m_quorumManager.update(message);
@@ -363,7 +434,7 @@ namespace catapult { namespace dbrb {
 		m_lastConvergedSequences[message.ReplacedView] = message.ProposedSequence;
 
 		ConvergedMessage responseMessage(m_id, message.ProposedSequence, message.ReplacedView);
-		disseminate(responseMessage, message.ReplacedView.members());
+		disseminate(responseMessage.toNetworkPacket(&m_keyPair), message.ReplacedView.members());
 	}
 
 	void DbrbProcess::onConvergedMessageReceived(const ConvergedMessage& message) {
@@ -383,7 +454,7 @@ namespace catapult { namespace dbrb {
 			leastRecentViewMembers.begin(), leastRecentViewMembers.end(),
 			std::inserter(recipientsUnion, recipientsUnion.begin()));
 
-		disseminate(responseMessage, recipientsUnion);
+		disseminate(responseMessage.toNetworkPacket(&m_keyPair), recipientsUnion);
 	}
 
 	void DbrbProcess::onInstallMessageReceived(const InstallMessage& message) {
@@ -407,7 +478,7 @@ namespace catapult { namespace dbrb {
 				leastRecentViewMembers.begin(), leastRecentViewMembers.end(),
 				std::inserter(recipientsUnion, recipientsUnion.begin()));
 
-			disseminate(stateUpdateMessage, recipientsUnion);
+			disseminate(stateUpdateMessage.toNetworkPacket(&m_keyPair), recipientsUnion);
 		}
 
 		if (m_currentView < message.LeastRecentView) {
@@ -439,9 +510,9 @@ namespace catapult { namespace dbrb {
 				pAcknowledgeable = message;
 		}
 
-		Signature signature = sign(message.Sender, message.Payload);
+		Signature signature = sign(message.Payload);
 		AcknowledgedMessage responseMessage(m_id, message.Payload, m_currentView, signature);
-		send(responseMessage, message.Sender);
+		send(responseMessage.toNetworkPacket(&m_keyPair), message.Sender);
 	}
 
 	void DbrbProcess::onStateUpdateMessageReceived(const StateUpdateMessage& message) {
@@ -488,7 +559,7 @@ namespace catapult { namespace dbrb {
 				m_proposedSequences[m_currentView] = moreRecentSequence;
 
 				ProposeMessage proposeMessage(m_id, moreRecentSequence, m_currentView);
-				disseminate(proposeMessage, m_currentView.members());
+				disseminate(proposeMessage.toNetworkPacket(&m_keyPair), m_currentView.members());
 			} else {
 				m_installedViews.insert(m_currentView);
 				onViewInstalled(m_currentView);
@@ -500,7 +571,7 @@ namespace catapult { namespace dbrb {
 				m_disseminateCommit = true;
 				CommitMessage responseMessage(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate,
 											  m_storedPayloadData->CertificateView, m_currentView);
-				disseminate(responseMessage, m_currentView.members());
+				disseminate(responseMessage.toNetworkPacket(&m_keyPair), m_currentView.members());
 			} else {
 				// Otherwise, can leave immediately.
 				onLeaveComplete();
@@ -530,7 +601,7 @@ namespace catapult { namespace dbrb {
 		bool quorumCollected = m_quorumManager.update(message);
 		if (quorumCollected && m_certificate.empty())
 			onAcknowledgedQuorumCollected(message);
-	};
+	}
 
 	void DbrbProcess::onAcknowledgedQuorumCollected(const AcknowledgedMessage& message) {
 		// Replacing view associated with the certificate.
@@ -547,7 +618,7 @@ namespace catapult { namespace dbrb {
 		// Disseminating Commit message, if process' current view is installed.
 		if (m_installedViews.count(m_currentView)) {
 			CommitMessage responseMessage(m_id, message.Payload, m_certificate, m_certificateView, m_currentView);
-			disseminate(responseMessage, m_currentView.members());
+			disseminate(responseMessage.toNetworkPacket(&m_keyPair), m_currentView.members());
 		}
 	}
 
@@ -575,12 +646,12 @@ namespace catapult { namespace dbrb {
 			}
 
 			CommitMessage responseMessage(m_id, message.Payload, message.Certificate, message.CertificateView, m_currentView);
-			disseminate(responseMessage, m_currentView.members());
+			disseminate(responseMessage.toNetworkPacket(&m_keyPair), m_currentView.members());
 		}
 
 		// Allow delivery for sender process.
 		DeliverMessage deliverMessage(m_id, message.Payload, m_currentView);
-		send(deliverMessage, message.Sender);
+		send(deliverMessage.toNetworkPacket(&m_keyPair), message.Sender);
 	}
 
 	void DbrbProcess::onDeliverMessageReceived(const DeliverMessage& message) {
@@ -613,15 +684,14 @@ namespace catapult { namespace dbrb {
 
 		if (m_membershipState == MembershipStates::Joining && m_disseminateReconfig) {
 			ReconfigMessage message(m_id, m_id, MembershipChanges::Join, m_currentView);
-			disseminate(message, m_currentView.members());
+			disseminate(message.toNetworkPacket(&m_keyPair), m_currentView.members());
 		}
 
 		// If the process is leaving after an Install message.
 		if (m_disseminateCommit) {
 			// All fields in m_storedPayloadData are guaranteed to exist.
-			CommitMessage responseMessage(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate,
-										  m_storedPayloadData->CertificateView, m_currentView);
-			disseminate(responseMessage, m_currentView.members());
+			CommitMessage responseMessage(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate, m_storedPayloadData->CertificateView, m_currentView);
+			disseminate(responseMessage.toNetworkPacket(&m_keyPair), m_currentView.members());
 		}
 	}
 
@@ -635,7 +705,7 @@ namespace catapult { namespace dbrb {
 			m_proposedSequences[newView] = *sequence;
 
 			ProposeMessage message(m_id, *sequence, newView);
-			disseminate(message, newView.members());
+			disseminate(message.toNetworkPacket(&m_keyPair), newView.members());
 		}
 
 		const auto& pAcknowledgeable = m_state.Acknowledgeable;
@@ -644,24 +714,24 @@ namespace catapult { namespace dbrb {
 
 		if (processIsSender && !certificateExists) {
 			PrepareMessage message(m_id, pAcknowledgeable->Payload, newView);
-			disseminate(message, newView.members());
+			disseminate(message.toNetworkPacket(&m_keyPair), newView.members());
 		}
 		if (processIsSender && certificateExists && !m_canLeave) {
 			// If m_certificate exists, then m_certificateView also exists.
 			// TODO: Double-check which payload should be used.
 			CommitMessage responseMessage(m_id, m_storedPayloadData->Payload, m_certificate, m_certificateView, newView);
-			disseminate(responseMessage, newView.members());
+			disseminate(responseMessage.toNetworkPacket(&m_keyPair), newView.members());
 		}
 		if (!processIsSender && m_storedPayloadData.has_value() && !m_canLeave) {
 			CommitMessage responseMessage(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate,
 										  m_storedPayloadData->CertificateView, newView);
-			disseminate(responseMessage, newView.members());
+			disseminate(responseMessage.toNetworkPacket(&m_keyPair), newView.members());
 		}
 
 		// Disseminate Reconfig message using the installed view, if the process is leaving.
 		if (m_membershipState == MembershipStates::Leaving) {
 			ReconfigMessage message(m_id, m_id, MembershipChanges::Leave, newView);
-			disseminate(message, newView.members());
+			disseminate(message.toNetworkPacket(&m_keyPair), newView.members());
 		}
 	}
 

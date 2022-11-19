@@ -1,23 +1,56 @@
+/**
+*** Copyright 2022 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
 #pragma once
 #include <utility>
 
 #include "DbrbUtils.h"
 
+namespace catapult { namespace crypto { class KeyPair; }}
 
 namespace catapult { namespace dbrb {
 
-	/// Base class for all messages send via DBRB protocol.
+#pragma pack(push, 1)
+
+	struct MessagePacket : public ionet::Packet {
+		catapult::Signature Signature;
+
+		/// Returns a non-const pointer to data contained in this packet.
+		uint8_t* payload() {
+			return Size <= sizeof(Packet) ? nullptr : reinterpret_cast<uint8_t*>(this) + sizeof(Packet) + Signature_Size;
+		}
+
+		/// Returns a const pointer to data contained in this packet.
+		constexpr const uint8_t* payload() const {
+			return Size <= sizeof(Packet) ? nullptr : reinterpret_cast<const uint8_t*>(this) + sizeof(Packet) + Signature_Size;
+		}
+
+		/// Returns buffers for signing this packet.
+		std::vector<RawBuffer> buffers() const {
+			auto pBegin = reinterpret_cast<const uint8_t*>(this);
+			return Size <= sizeof(MessagePacket) ?
+				std::vector<RawBuffer>{} :
+				std::vector<RawBuffer>{ { pBegin, sizeof(ionet::Packet) }, { pBegin + sizeof(ionet::Packet) + Signature_Size, Size - sizeof(ionet::Packet) - Signature_Size } };
+		}
+	};
+
+#pragma pack(pop)
+
+	/// Base class for all messages sent via DBRB protocol.
 	struct Message {
 	public:
 		Message() = delete;
-		Message(const ProcessId& sender, ionet::PacketType type): Sender(sender), Type(type) {}
+		Message(ProcessId sender, ionet::PacketType type): Sender(std::move(sender)), Type(type) {}
 		virtual ~Message() = default;
 
 	public:
 		/// Creates a network packet representing this message.
-		virtual std::shared_ptr<ionet::Packet> toNetworkPacket() const = 0;
+		virtual std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) = 0;
 
-		/// Compares this node with \a rhs.
+		/// Compares this message with \a rhs.
 		bool operator<(const Message& rhs) const {
 			return Sender < rhs.Sender;
 		}
@@ -30,6 +63,7 @@ namespace catapult { namespace dbrb {
 		ionet::PacketType Type;
 
 		// TODO: Include fields to enable signature/certificate verification
+		catapult::Signature Signature;
 	};
 
 	class NetworkPacketConverter {
@@ -58,15 +92,15 @@ namespace catapult { namespace dbrb {
 	struct ReconfigMessage : Message {
 	public:
 		ReconfigMessage() = delete;
-		ReconfigMessage(const ProcessId& sender, const ProcessId& processId, const MembershipChanges& membershipChange, View view)
+		ReconfigMessage(const ProcessId& sender, ProcessId  processId, const MembershipChanges& membershipChange, View view)
 			: Message(sender, ionet::PacketType::Dbrb_Reconfig_Message)
-			, ProcessId(processId)
+			, ProcessId(std::move(processId))
 			, MembershipChange(membershipChange)
 			, View(std::move(view))
 		{}
 
 	public:
-		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
 		/// Process ID that is a part of change.
@@ -89,7 +123,7 @@ namespace catapult { namespace dbrb {
 		{}
 
 	public:
-		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
 		/// View that receives the confirmation.
@@ -106,7 +140,7 @@ namespace catapult { namespace dbrb {
 		{}
 
 	public:
-		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
 		/// Proposed sequence to replace the view.
@@ -126,7 +160,7 @@ namespace catapult { namespace dbrb {
 		{}
 
 	public:
-		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
 		/// Sequence that is converged on to replace the view.
@@ -147,7 +181,7 @@ namespace catapult { namespace dbrb {
 		{}
 
 	public:
-		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
 		/// Least recent view.
@@ -175,7 +209,7 @@ namespace catapult { namespace dbrb {
 		{}
 
 	public:
-		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
 		/// Message to be broadcasted.
@@ -188,7 +222,7 @@ namespace catapult { namespace dbrb {
 	struct AcknowledgedMessage : Message {
 	public:
 		AcknowledgedMessage() = delete;
-		explicit AcknowledgedMessage(const ProcessId& sender, Payload payload, View view, Signature signature)
+		explicit AcknowledgedMessage(const ProcessId& sender, Payload payload, View view, catapult::Signature signature)
 			: Message(sender, ionet::PacketType::Dbrb_Acknowledged_Message)
 			, Payload(std::move(payload))
 			, View(std::move(view))
@@ -196,7 +230,7 @@ namespace catapult { namespace dbrb {
 		{}
 
 	public:
-		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
 		/// Acknowledged payload.
@@ -212,7 +246,7 @@ namespace catapult { namespace dbrb {
 	struct CommitMessage : Message {
 	public:
 		CommitMessage() = delete;
-		explicit CommitMessage(const ProcessId& sender, Payload payload, std::map<ProcessId, Signature> certificate, View certificateView, View currentView)
+		explicit CommitMessage(const ProcessId& sender, Payload payload, std::map<ProcessId, catapult::Signature> certificate, View certificateView, View currentView)
 			: Message(sender, ionet::PacketType::Dbrb_Commit_Message)
 			, Payload(std::move(payload))
 			, Certificate(std::move(certificate))
@@ -221,14 +255,14 @@ namespace catapult { namespace dbrb {
 		{}
 
 	public:
-		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
 		/// Payload for which Acknowledged quorum was collected.
 		dbrb::Payload Payload;
 
 		/// Message certificate for supplied payload.
-		std::map<ProcessId, Signature> Certificate;
+		std::map<ProcessId, catapult::Signature> Certificate;
 
 		/// View associated with supplied certificate.
 		View CertificateView;
@@ -259,7 +293,7 @@ namespace catapult { namespace dbrb {
 		{}
 
 	public:
-		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
 		/// State of the process.
@@ -282,7 +316,7 @@ namespace catapult { namespace dbrb {
 		{}
 
 	public:
-		std::shared_ptr<ionet::Packet> toNetworkPacket() const override;
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
 		/// Payload to deliver.

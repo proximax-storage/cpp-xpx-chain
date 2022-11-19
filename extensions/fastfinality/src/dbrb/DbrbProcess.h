@@ -38,18 +38,18 @@ namespace catapult { namespace dbrb {
 
 		/// Overloaded methods for updating respective counters.
 		/// Returns whether the quorum has just been collected on this update.
-		bool update(ReconfigConfirmMessage message) {
+		bool update(const ReconfigConfirmMessage& message) {
 			return update(ReconfigConfirmCounters, message.View, message.View);
 		};
-		bool update(ProposeMessage message) {
+		bool update(const ProposeMessage& message) {
 			const auto keyPair = std::make_pair(message.ReplacedView, message.ProposedSequence);
 			return update(ProposedCounters, keyPair, message.ReplacedView);
 		};
-		bool update(ConvergedMessage message) {
+		bool update(const ConvergedMessage& message) {
 			const auto keyPair = std::make_pair(message.ReplacedView, message.ConvergedSequence);
 			return update(ConvergedCounters, keyPair, message.ReplacedView);
 		};
-		std::set<View> update(StateUpdateMessage message) {
+		std::set<View> update(const StateUpdateMessage& message) {
 			std::set<View> triggeredViews;
 			for (auto& [view, messages] : StateUpdateMessages) {
 				if (view.isMember(message.Sender)) {
@@ -73,7 +73,7 @@ namespace catapult { namespace dbrb {
 
 			return acknowledgedCount == message.View.quorumSize();
 		};
-		bool update(DeliverMessage message) {
+		bool update(const DeliverMessage& message) {
 			auto& set = DeliveredProcesses[message.View];
 			if (set.count(message.Sender)) {
 				// Sender already was ready for delivery; set size is not updated, so quorum collection is not triggered.
@@ -100,10 +100,10 @@ namespace catapult { namespace dbrb {
 
 	class NoopNodeSubscriber : public subscribers::NodeSubscriber {
 	public:
-		void notifyNode(const ionet::Node&) {
+		void notifyNode(const ionet::Node&) override {
 		}
 
-		void notifyIncomingNode(const Key&, ionet::ServiceIdentifier) {
+		void notifyIncomingNode(const Key&, ionet::ServiceIdentifier) override {
 		}
 	};
 
@@ -111,7 +111,7 @@ namespace catapult { namespace dbrb {
 	/// Struct that encapsulates payload, its certificate and certificate view.
 	struct PayloadData {
 		/// Stored payload.
-		Payload Payload;
+		dbrb::Payload Payload;
 
 		/// Message certificate for the stored payload.
 		std::map<ProcessId, Signature> Certificate;
@@ -131,7 +131,8 @@ namespace catapult { namespace dbrb {
 			std::shared_ptr<net::PacketWriters> pWriters,
 			std::shared_ptr<ionet::ServerPacketHandlers> pPacketHandlers,
 			const std::vector<ionet::Node>& bootstrapNodes,
-			ionet::Node thisNode);
+			ionet::Node thisNode,
+			const crypto::KeyPair& keyPair);
 
 	private:
 		/// Process identifier.
@@ -218,6 +219,8 @@ namespace catapult { namespace dbrb {
 
 		NoopNodeSubscriber m_nodeSubscriber;
 
+		const crypto::KeyPair& m_keyPair;
+
 	public:
 		/// Request to join the system.
 		void join();
@@ -228,7 +231,7 @@ namespace catapult { namespace dbrb {
 		/// Broadcast arbitrary \c payload into the system.
 		void broadcast(const Payload&);
 
-		void processMessage(const Message&);
+		void processMessage(const Message& message);
 
 	public:
 		void registerPacketHandlers();
@@ -237,19 +240,16 @@ namespace catapult { namespace dbrb {
 		subscribers::NodeSubscriber& getNodeSubscriber();
 
 	private:
-		void disseminate(const Message& message, const std::set<ProcessId>& recipients);
-		void send(const Message& message, const ProcessId& recipient);
+		void disseminate(const std::shared_ptr<MessagePacket>& pPacket, const std::set<ProcessId>& recipients);
+		void send(const std::shared_ptr<MessagePacket>& pPacket, const ProcessId& recipient);
 
 		void prepareForStateUpdates(const InstallMessage&);
 		void updateState(const std::set<StateUpdateMessage>&);
 		bool isAcknowledgeable(const Payload&);
-		Signature sign(const ProcessId&, const Payload&);
-		bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
+		Signature sign(const Payload&);
+		static bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
 
-		// Request members of the current view forcibly remove failing participant.
-		void forceLeave(const ProcessId& node);
-
-		void onReconfigMessageReceived(const ReconfigMessage&, const ProcessId& sender);
+		void onReconfigMessageReceived(const ReconfigMessage&);
 		void onReconfigConfirmMessageReceived(const ReconfigConfirmMessage&);
 		void onProposeMessageReceived(const ProposeMessage&);
 		void onConvergedMessageReceived(const ConvergedMessage&);

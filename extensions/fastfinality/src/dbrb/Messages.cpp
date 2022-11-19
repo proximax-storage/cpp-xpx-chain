@@ -5,63 +5,17 @@
 **/
 
 #include "Messages.h"
-#include "catapult/ionet/NetworkNode.h"
+#include "catapult/crypto/Signer.h"
 
 namespace catapult { namespace dbrb {
 
 	namespace {
-		auto PackView(const View& view, uint32_t& payloadSize) {
-			payloadSize += sizeof(uint32_t) + utils::checked_cast<size_t, uint32_t>(sizeof(MembershipChanges) * view.Data.size());
-			std::vector<model::UniqueEntityPtr<ionet::NetworkNode>> nodes;
-			nodes.reserve(view.Data.size());
-			for (const auto& pair : view.Data) {
-				auto pNode = ionet::PackNode(pair.first);
-				payloadSize += pNode->Size;
-				nodes.push_back(std::move(pNode));
-			}
-
-			return nodes;
-		}
-
-		void CopyView(uint8_t*& pData, const View& view, const std::vector<model::UniqueEntityPtr<ionet::NetworkNode>>& nodes) {
-			uint32_t count = utils::checked_cast<size_t, uint32_t>(view.Data.size());
-			memcpy(pData, &count, sizeof(uint32_t));
-			pData += sizeof(uint32_t);
-			for (auto i = 0u; i < count; ++i) {
-				const auto* pNode = nodes[i].get();
-				memcpy(pData, pNode, pNode->Size);
-				pData += pNode->Size;
-				pData[0] = utils::to_underlying_type(view.Data[i].second);
-				pData++;
-			}
-		}
-
-		auto UnpackView(const uint8_t*& pData) {
-			View view;
-			auto count = *reinterpret_cast<const uint32_t*>(pData);
-			pData += sizeof(uint32_t);
-			for (auto i = 0u; i < count; ++i) {
-				const auto& networkNode = *reinterpret_cast<const ionet::NetworkNode*>(pData);
-				auto node = ionet::UnpackNode(networkNode);
-				pData += networkNode.Size;
-				auto change = static_cast<MembershipChanges>(pData[0]);
-				pData++;
-				view.Data.emplace_back(std::make_pair(node, change));
-			}
-
-			return view;
-		}
 
 #pragma pack(push, 1)
-
-		struct MessagePacket : public ionet::Packet {
-			ProcessId Sender;
-		};
 
 		struct ReconfigMessagePacket : public MessagePacket {
 			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Reconfig_Message;
 
-			dbrb::ProcessId ProcessId;
 			MembershipChanges MembershipChange;
 		};
 
@@ -110,7 +64,9 @@ namespace catapult { namespace dbrb {
 		struct StateUpdateMessagePacket : public MessagePacket {
 			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_State_Update_Message;
 
-			uint32_t StateAcknowledgeablePayloadSize;
+			bool HasAcknowledgeable;
+			bool HasConflicting;
+			bool HasStored;
 		};
 
 		struct DeliverMessagePacket : public MessagePacket {
@@ -120,6 +76,53 @@ namespace catapult { namespace dbrb {
 		};
 
 #pragma pack(pop)
+
+		void MaybeSignMessage(const crypto::KeyPair* pKeyPair, MessagePacket* pPacket, Message* pMessage) {
+			if (pKeyPair) {
+				auto hash = CalculateHash(pPacket->buffers());
+				crypto::Sign(*pKeyPair, hash, pMessage->Signature);
+			}
+			pPacket->Signature = pMessage->Signature;
+		}
+
+		auto ToPrepareMessage(const ionet::Packet& packet) {
+			const auto pMessagePacket = ionet::CoercePacket<PrepareMessagePacket>(&packet);
+			auto pData = pMessagePacket->payload();
+			auto sender = UnpackProcessId(pData);
+			auto payload = ionet::CreateSharedPacket<ionet::Packet>(pMessagePacket->PayloadSize);
+			memcpy(payload.get(), pData, pMessagePacket->PayloadSize);
+			pData += pMessagePacket->PayloadSize;
+
+			auto pMessage = std::make_unique<PrepareMessage>(sender, payload, UnpackView(pData));
+			pMessage->Signature = pMessagePacket->Signature;
+
+			return pMessage;
+		}
+
+		auto ToCommitMessage(const ionet::Packet& packet) {
+			const auto pMessagePacket = ionet::CoercePacket<CommitMessagePacket>(&packet);
+			auto pData = pMessagePacket->payload();
+			auto sender = UnpackProcessId(pData);
+			auto payload = ionet::CreateSharedPacket<ionet::Packet>(pMessagePacket->PayloadSize);
+			memcpy(payload.get(), pData, pMessagePacket->PayloadSize);
+			pData += pMessagePacket->PayloadSize;
+
+			std::map<ProcessId, Signature> certificate;
+			for (auto i = 0u; i < pMessagePacket->CertificateSize; ++i) {
+				const auto& networkNode = *reinterpret_cast<const ionet::NetworkNode*>(pData);
+				auto node = ionet::UnpackNode(networkNode);
+				pData += networkNode.Size;
+				Signature signature;
+				memcpy(signature.data(), pData, Signature_Size);
+				pData += Signature_Size;
+				certificate.emplace(node, signature);
+			}
+
+			auto pMessage = std::make_unique<CommitMessage>(sender, payload, certificate, UnpackView(pData), UnpackView(pData));
+			pMessage->Signature = pMessagePacket->Signature;
+
+			return pMessage;
+		}
 	}
 
 	std::unique_ptr<Message> NetworkPacketConverter::toMessage(const ionet::Packet& packet) const {
@@ -156,142 +159,174 @@ namespace catapult { namespace dbrb {
 	NetworkPacketConverter::NetworkPacketConverter() {
 		registerConverter(ionet::PacketType::Dbrb_Reconfig_Message, [](const ionet::Packet& packet) {
 			const auto pMessagePacket = ionet::CoercePacket<ReconfigMessagePacket>(&packet);
-			auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
+			auto pData = pMessagePacket->payload();
 
-			return std::make_unique<ReconfigMessage>(pMessagePacket->Sender, pMessagePacket->ProcessId, pMessagePacket->MembershipChange, UnpackView(pData));
+			auto pMessage = std::make_unique<ReconfigMessage>(UnpackProcessId(pData), UnpackProcessId(pData), pMessagePacket->MembershipChange, UnpackView(pData));
+			pMessage->Signature = pMessagePacket->Signature;
+
+			return pMessage;
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Reconfig_Confirm_Message, [](const ionet::Packet& packet) {
 			const auto pMessagePacket = ionet::CoercePacket<ReconfigConfirmMessagePacket>(&packet);
-			auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
+			auto pData = pMessagePacket->payload();
 
-			return std::make_unique<ReconfigConfirmMessage>(pMessagePacket->Sender, UnpackView(pData));
+			auto pMessage = std::make_unique<ReconfigConfirmMessage>(UnpackProcessId(pData), UnpackView(pData));
+			pMessage->Signature = pMessagePacket->Signature;
+
+			return pMessage;
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Propose_Message, [](const ionet::Packet& packet) {
 			const auto pMessagePacket = ionet::CoercePacket<ProposeMessagePacket>(&packet);
-			auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
+			auto pData = pMessagePacket->payload();
+			auto sender = UnpackProcessId(pData);
 			View replacedView = UnpackView(pData);
 			Sequence proposedSequence;
 			for (auto i = 0u; i < pMessagePacket->ProposedSequenceSize; ++i)
 				proposedSequence.tryAppend(UnpackView(pData));
 
-			return std::make_unique<ProposeMessage>(pMessagePacket->Sender, proposedSequence, replacedView);
+			auto pMessage = std::make_unique<ProposeMessage>(sender, proposedSequence, replacedView);
+			pMessage->Signature = pMessagePacket->Signature;
+
+			return pMessage;
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Converged_Message, [](const ionet::Packet& packet) {
 			const auto pMessagePacket = ionet::CoercePacket<ConvergedMessagePacket>(&packet);
-			auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
+			auto pData = pMessagePacket->payload();
+			auto sender = UnpackProcessId(pData);
 			View replacedView = UnpackView(pData);
 			Sequence convergedSequence;
 			for (auto i = 0u; i < pMessagePacket->ConvergedSequenceSize; ++i)
 				convergedSequence.tryAppend(UnpackView(pData));
 
-			return std::make_unique<ConvergedMessage>(pMessagePacket->Sender, convergedSequence, replacedView);
+			auto pMessage = std::make_unique<ConvergedMessage>(sender, convergedSequence, replacedView);
+			pMessage->Signature = pMessagePacket->Signature;
+
+			return pMessage;
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Install_Message, [](const ionet::Packet& packet) {
 			const auto pMessagePacket = ionet::CoercePacket<InstallMessagePacket>(&packet);
-			auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
+			auto pData = pMessagePacket->payload();
+			auto sender = UnpackProcessId(pData);
 			View leastRecentView = UnpackView(pData);
 			View replacedView = UnpackView(pData);
 			Sequence convergedSequence;
 			for (auto i = 0u; i < pMessagePacket->ConvergedSequenceSize; ++i)
 				convergedSequence.tryAppend(UnpackView(pData));
 
-			return std::make_unique<InstallMessage>(pMessagePacket->Sender, leastRecentView, convergedSequence, replacedView);
+			auto pMessage = std::make_unique<InstallMessage>(sender, leastRecentView, convergedSequence, replacedView);
+			pMessage->Signature = pMessagePacket->Signature;
+
+			return pMessage;
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Prepare_Message, [](const ionet::Packet& packet) {
-			const auto pMessagePacket = ionet::CoercePacket<PrepareMessagePacket>(&packet);
-			auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
-			auto payload = ionet::CreateSharedPacket<ionet::Packet>(pMessagePacket->PayloadSize);
-			memcpy(payload.get(), pData, pMessagePacket->PayloadSize);
-			pData += pMessagePacket->PayloadSize;
-
-			return std::make_unique<PrepareMessage>(pMessagePacket->Sender, payload, UnpackView(pData));
+			return ToPrepareMessage(packet);
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Acknowledged_Message, [](const ionet::Packet& packet) {
 			const auto pMessagePacket = ionet::CoercePacket<AcknowledgedMessagePacket>(&packet);
-			auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
+			auto pData = pMessagePacket->payload();
+			auto sender = UnpackProcessId(pData);
 			auto payload = ionet::CreateSharedPacket<ionet::Packet>(pMessagePacket->PayloadSize);
 			memcpy(payload.get(), pData, pMessagePacket->PayloadSize);
 			pData += pMessagePacket->PayloadSize;
 
-			return std::make_unique<AcknowledgedMessage>(pMessagePacket->Sender, payload, UnpackView(pData), pMessagePacket->Signature);
+			auto pMessage = std::make_unique<AcknowledgedMessage>(sender, payload, UnpackView(pData), pMessagePacket->Signature);
+			pMessage->Signature = pMessagePacket->Signature;
+
+			return pMessage;
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Commit_Message, [](const ionet::Packet& packet) {
-			const auto pMessagePacket = ionet::CoercePacket<CommitMessagePacket>(&packet);
-			auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
-			auto payload = ionet::CreateSharedPacket<ionet::Packet>(pMessagePacket->PayloadSize);
-			memcpy(payload.get(), pData, pMessagePacket->PayloadSize);
-			pData += pMessagePacket->PayloadSize;
-
-			std::set<Signature> certificate;
-			for (auto i = 0u; i < pMessagePacket->CertificateSize; ++i) {
-				Signature signature;
-				memcpy(signature.data(), pData, Signature_Size);
-				pData += Signature_Size;
-				certificate.emplace(signature);
-			}
-
-			return std::make_unique<CommitMessage>(pMessagePacket->Sender, payload, certificate, UnpackView(pData), UnpackView(pData));
+			return ToCommitMessage(packet);
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_State_Update_Message, [](const ionet::Packet& packet) {
-		  const auto pMessagePacket = ionet::CoercePacket<StateUpdateMessagePacket>(&packet);
-		  auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
-		  auto payload = ionet::CreateSharedPacket<ionet::Packet>(pMessagePacket->StateAcknowledgeablePayloadSize);
-		  memcpy(payload.get(), pData, pMessagePacket->StateAcknowledgeablePayloadSize);
-		  pData += pMessagePacket->StateAcknowledgeablePayloadSize;
+			const auto pMessagePacket = ionet::CoercePacket<StateUpdateMessagePacket>(&packet);
+			auto pData = pMessagePacket->payload();
+			auto sender = UnpackProcessId(pData);
 
-		  return std::make_unique<StateUpdateMessage>(pMessagePacket->Sender, ProcessState{ payload }, UnpackView(pData));
+			ProcessState state;
+			if (pMessagePacket->HasAcknowledgeable) {
+				const auto* pPrepareMessagePacket = ionet::CoercePacket<PrepareMessagePacket>(reinterpret_cast<const ionet::Packet*>(pData));
+				state.Acknowledgeable = *ToPrepareMessage(*pPrepareMessagePacket);
+				pData += pPrepareMessagePacket->Size;
+			}
+
+			if (pMessagePacket->HasConflicting) {
+				const auto* pPrepareMessagePacket1 = ionet::CoercePacket<PrepareMessagePacket>(reinterpret_cast<const ionet::Packet*>(pData));
+				pData += pPrepareMessagePacket1->Size;
+				const auto* pPrepareMessagePacket2 = ionet::CoercePacket<PrepareMessagePacket>(reinterpret_cast<const ionet::Packet*>(pData));
+				pData += pPrepareMessagePacket2->Size;
+				state.Conflicting = std::make_pair(*ToPrepareMessage(*pPrepareMessagePacket1), *ToPrepareMessage(*pPrepareMessagePacket2));
+			}
+
+			if (pMessagePacket->HasStored) {
+				const auto* pCommitMessagePacket = ionet::CoercePacket<CommitMessagePacket>(reinterpret_cast<const ionet::Packet*>(pData));
+				state.Stored = *ToCommitMessage(*pCommitMessagePacket);
+				pData += pCommitMessagePacket->Size;
+			}
+
+			auto pMessage = std::make_unique<StateUpdateMessage>(sender, state, UnpackView(pData), UnpackView(pData));
+			pMessage->Signature = pMessagePacket->Signature;
+
+			return pMessage;
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Deliver_Message, [](const ionet::Packet& packet) {
 			const auto pMessagePacket = ionet::CoercePacket<DeliverMessagePacket>(&packet);
-			auto pData = reinterpret_cast<const uint8_t*>(pMessagePacket + 1);
+			auto pData = pMessagePacket->payload();
+			auto sender = UnpackProcessId(pData);
 			auto payload = ionet::CreateSharedPacket<ionet::Packet>(pMessagePacket->PayloadSize);
 			memcpy(payload.get(), pData, pMessagePacket->PayloadSize);
 			pData += pMessagePacket->PayloadSize;
 
-			return std::make_unique<DeliverMessage>(pMessagePacket->Sender, payload, UnpackView(pData));
+			auto pMessage = std::make_unique<DeliverMessage>(sender, payload, UnpackView(pData));
+			pMessage->Signature = pMessagePacket->Signature;
+
+			return pMessage;
 		});
 	}
 
-	std::shared_ptr<ionet::Packet> ReconfigMessage::toNetworkPacket() const {
+	std::shared_ptr<MessagePacket> ReconfigMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
 		uint32_t payloadSize = 0u;
 		auto packedView = PackView(View, payloadSize);
 
 		auto pPacket = ionet::CreateSharedPacket<ReconfigMessagePacket>(payloadSize);
-		pPacket->Sender = Sender;
-		pPacket->ProcessId = ProcessId;
 		pPacket->MembershipChange = MembershipChange;
 
-		auto pData = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
-		CopyView(pData, View, packedView);
+		auto pData = pPacket->payload();
+		PackProcessId(pData, Sender);
+		PackProcessId(pData, ProcessId);
+		CopyView(pData, packedView);
+
+		MaybeSignMessage(pKeyPair, pPacket.get(), this);
 
 		return pPacket;
 	}
 
-	std::shared_ptr<ionet::Packet> ReconfigConfirmMessage::toNetworkPacket() const {
+	std::shared_ptr<MessagePacket> ReconfigConfirmMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
 		uint32_t payloadSize = 0u;
 		auto packedView = PackView(View, payloadSize);
 		auto pPacket = ionet::CreateSharedPacket<ReconfigConfirmMessagePacket>(payloadSize);
-		pPacket->Sender = Sender;
 
-		auto pData = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
-		CopyView(pData, View, packedView);
+		auto pData = pPacket->payload();
+		PackProcessId(pData, Sender);
+		CopyView(pData, packedView);
+
+		MaybeSignMessage(pKeyPair, pPacket.get(), this);
 
 		return pPacket;
 	}
 
-	std::shared_ptr<ionet::Packet> ProposeMessage::toNetworkPacket() const {
+	std::shared_ptr<MessagePacket> ProposeMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
 		uint32_t payloadSize = 0u;
 		std::vector<const View*> views;
-		std::vector<std::vector<model::UniqueEntityPtr<ionet::NetworkNode>>> packedViews;
+		std::vector<PackedView> packedViews;
 
 		views.reserve(ProposedSequence.data().size() + 1u);
 		packedViews.reserve(views.size());
@@ -305,20 +340,22 @@ namespace catapult { namespace dbrb {
 		}
 
 		auto pPacket = ionet::CreateSharedPacket<ProposeMessagePacket>(payloadSize);
-		pPacket->Sender = Sender;
 		pPacket->ProposedSequenceSize = utils::checked_cast<size_t, uint32_t>(ProposedSequence.data().size());
 
-		auto pData = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
-		for (auto i = 0u; i < views.size(); ++i)
-			CopyView(pData, *views[i], packedViews[i]);
+		auto pData = pPacket->payload();
+		PackProcessId(pData, Sender);
+		for (const auto& packedView : packedViews)
+			CopyView(pData, packedView);
+
+		MaybeSignMessage(pKeyPair, pPacket.get(), this);
 
 		return pPacket;
 	}
 
-	std::shared_ptr<ionet::Packet> ConvergedMessage::toNetworkPacket() const {
+	std::shared_ptr<MessagePacket> ConvergedMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
 		uint32_t payloadSize = 0u;
 		std::vector<const View*> views;
-		std::vector<std::vector<model::UniqueEntityPtr<ionet::NetworkNode>>> packedViews;
+		std::vector<PackedView> packedViews;
 
 		views.reserve(ConvergedSequence.data().size() + 1u);
 		packedViews.reserve(views.size());
@@ -332,20 +369,22 @@ namespace catapult { namespace dbrb {
 		}
 
 		auto pPacket = ionet::CreateSharedPacket<ConvergedMessagePacket>(payloadSize);
-		pPacket->Sender = Sender;
 		pPacket->ConvergedSequenceSize = utils::checked_cast<size_t, uint32_t>(ConvergedSequence.data().size());
 
-		auto pData = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
-		for (auto i = 0u; i < views.size(); ++i)
-			CopyView(pData, *views[i], packedViews[i]);
+		auto pData = pPacket->payload();
+		PackProcessId(pData, Sender);
+		for (const auto& packedView : packedViews)
+			CopyView(pData, packedView);
+
+		MaybeSignMessage(pKeyPair, pPacket.get(), this);
 
 		return pPacket;
 	}
 
-	std::shared_ptr<ionet::Packet> InstallMessage::toNetworkPacket() const {
+	std::shared_ptr<MessagePacket> InstallMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
 		uint32_t payloadSize = 0u;
 		std::vector<const View*> views;
-		std::vector<std::vector<model::UniqueEntityPtr<ionet::NetworkNode>>> packedViews;
+		std::vector<PackedView> packedViews;
 
 		views.reserve(ConvergedSequence.data().size() + 2u);
 		packedViews.reserve(views.size());
@@ -362,96 +401,158 @@ namespace catapult { namespace dbrb {
 		}
 
 		auto pPacket = ionet::CreateSharedPacket<InstallMessagePacket>(payloadSize);
-		pPacket->Sender = Sender;
 
-		auto pData = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
-		for (auto i = 0u; i < views.size(); ++i)
-			CopyView(pData, *views[i], packedViews[i]);
+		auto pData = pPacket->payload();
+		PackProcessId(pData, Sender);
+		for (const auto& packedView : packedViews)
+			CopyView(pData, packedView);
+
+		MaybeSignMessage(pKeyPair, pPacket.get(), this);
 
 		return pPacket;
 	}
 
-	std::shared_ptr<ionet::Packet> PrepareMessage::toNetworkPacket() const {
+	std::shared_ptr<MessagePacket> PrepareMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
 		uint32_t payloadSize = Payload->Size;
 		auto packedView = PackView(View, payloadSize);
 		auto pPacket = ionet::CreateSharedPacket<PrepareMessagePacket>(payloadSize);
-		pPacket->Sender = Sender;
 		pPacket->PayloadSize = Payload->Size;
 
-		auto pData = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
+		auto pData = pPacket->payload();
+		PackProcessId(pData, Sender);
 		memcpy(pData, Payload.get(), Payload->Size);
+		pData += Payload->Size;
 
-		CopyView(pData, View, packedView);
+		CopyView(pData, packedView);
+
+		MaybeSignMessage(pKeyPair, pPacket.get(), this);
 
 		return pPacket;
 	}
 
-	std::shared_ptr<ionet::Packet> AcknowledgedMessage::toNetworkPacket() const {
+	std::shared_ptr<MessagePacket> AcknowledgedMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
 		uint32_t payloadSize = Payload->Size;
 		auto packedView = PackView(View, payloadSize);
 		auto pPacket = ionet::CreateSharedPacket<AcknowledgedMessagePacket>(payloadSize);
-		pPacket->Sender = Sender;
 		pPacket->Signature = Signature;
 		pPacket->PayloadSize = Payload->Size;
 
-		auto pData = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
+		auto pData = pPacket->payload();
+		PackProcessId(pData, Sender);
 		memcpy(pData, Payload.get(), Payload->Size);
+		pData += Payload->Size;
 
-		CopyView(pData, View, packedView);
+		CopyView(pData, packedView);
+
+		MaybeSignMessage(pKeyPair, pPacket.get(), this);
 
 		return pPacket;
 	}
 
-	std::shared_ptr<ionet::Packet> CommitMessage::toNetworkPacket() const {
+	std::shared_ptr<MessagePacket> CommitMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
 		uint32_t certificateSize = utils::checked_cast<size_t, uint32_t>(Certificate.size());
 		uint32_t payloadSize = Payload->Size + utils::checked_cast<size_t, uint32_t>(Signature_Size * certificateSize);
 		auto packedCertificateView = PackView(CertificateView, payloadSize);
 		auto packedCurrentView = PackView(CurrentView, payloadSize);
 		auto pPacket = ionet::CreateSharedPacket<CommitMessagePacket>(payloadSize);
-		pPacket->Sender = Sender;
 		pPacket->PayloadSize = Payload->Size;
 		pPacket->CertificateSize = certificateSize;
 
-		auto pData = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
+		auto pData = pPacket->payload();
+		PackProcessId(pData, Sender);
 		memcpy(pData, Payload.get(), Payload->Size);
+		pData += Payload->Size;
 
-		for (const auto& signature : Certificate) {
-			memcpy(pData, signature.data(), Signature_Size);
+		for (const auto& pair : Certificate) {
+			auto pNode = ionet::PackNode(pair.first);
+			memcpy(pData, static_cast<const void*>(pNode.get()), pNode->Size);
+			pData += pNode->Size;
+			memcpy(pData, pair.second.data(), Signature_Size);
 			pData += Signature_Size;
 		}
 
-		CopyView(pData, CertificateView, packedCertificateView);
-		CopyView(pData, CurrentView, packedCurrentView);
+		CopyView(pData, packedCertificateView);
+		CopyView(pData, packedCurrentView);
+
+		MaybeSignMessage(pKeyPair, pPacket.get(), this);
 
 		return pPacket;
 	}
 
-	std::shared_ptr<ionet::Packet> StateUpdateMessage::toNetworkPacket() const {
-		uint32_t payloadSize = State.AcknowledgeablePayload->Size;
-		auto packedView = PackView(PendingChanges, payloadSize);
+	std::shared_ptr<MessagePacket> StateUpdateMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
+		uint32_t payloadSize = 0u;
+
+		std::shared_ptr<ionet::Packet> pAcknowledgeable;
+		if (State.Acknowledgeable) {
+			pAcknowledgeable = State.Acknowledgeable.value().toNetworkPacket(nullptr);
+			payloadSize += pAcknowledgeable->Size;
+		}
+
+		std::shared_ptr<ionet::Packet> pConflicting1;
+		std::shared_ptr<ionet::Packet> pConflicting2;
+		if (State.Conflicting) {
+			pConflicting1 = State.Conflicting.value().first.toNetworkPacket(nullptr);
+			payloadSize += pConflicting1->Size;
+			pConflicting2 = State.Conflicting.value().second.toNetworkPacket(nullptr);
+			payloadSize += pConflicting2->Size;
+		}
+
+		std::shared_ptr<ionet::Packet> pStored;
+		if (State.Stored) {
+			pStored = State.Stored.value().toNetworkPacket(nullptr);
+			payloadSize += pStored->Size;
+		}
+
+		auto view = PackView(View, payloadSize);
+		auto pendingChanges = PackView(PendingChanges, payloadSize);
+
 		auto pPacket = ionet::CreateSharedPacket<StateUpdateMessagePacket>(payloadSize);
-		pPacket->Sender = Sender;
-		pPacket->StateAcknowledgeablePayloadSize = State.AcknowledgeablePayload->Size;
+		pPacket->HasAcknowledgeable = State.Acknowledgeable.has_value();
+		pPacket->HasConflicting = State.Conflicting.has_value();
+		pPacket->HasStored = State.Stored.has_value();
 
-		auto pData = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
-		memcpy(pData, State.AcknowledgeablePayload.get(), State.AcknowledgeablePayload->Size);
+		auto pData = pPacket->payload();
+		PackProcessId(pData, Sender);
 
-		CopyView(pData, PendingChanges, packedView);
+		if (pPacket->HasAcknowledgeable) {
+			memcpy(pData, pAcknowledgeable.get(), pAcknowledgeable->Size);
+			pData += pAcknowledgeable->Size;
+		}
+
+		if (pPacket->HasConflicting) {
+			memcpy(pData, pConflicting1.get(), pConflicting1->Size);
+			pData += pConflicting1->Size;
+			memcpy(pData, pConflicting2.get(), pConflicting2->Size);
+			pData += pConflicting2->Size;
+		}
+
+		if (pPacket->HasStored) {
+			memcpy(pData, pStored.get(), pStored->Size);
+			pData += pStored->Size;
+		}
+
+		CopyView(pData, view);
+		CopyView(pData, pendingChanges);
+
+		MaybeSignMessage(pKeyPair, pPacket.get(), this);
 
 		return pPacket;
 	}
 
-	std::shared_ptr<ionet::Packet> DeliverMessage::toNetworkPacket() const {
+	std::shared_ptr<MessagePacket> DeliverMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
 		uint32_t payloadSize = Payload->Size;
 		auto packedView = PackView(View, payloadSize);
 		auto pPacket = ionet::CreateSharedPacket<DeliverMessagePacket>(payloadSize);
-		pPacket->Sender = Sender;
 		pPacket->PayloadSize = Payload->Size;
 
-		auto pData = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
+		auto pData = pPacket->payload();
+		PackProcessId(pData, Sender);
 		memcpy(pData, Payload.get(), Payload->Size);
+		pData += Payload->Size;
 
-		CopyView(pData, View, packedView);
+		CopyView(pData, packedView);
+
+		MaybeSignMessage(pKeyPair, pPacket.get(), this);
 
 		return pPacket;
 	}

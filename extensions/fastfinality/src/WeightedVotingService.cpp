@@ -130,7 +130,7 @@ namespace catapult { namespace fastfinality {
 				}
 
 				auto pPacketHandlers = std::make_shared<ionet::ServerPacketHandlers>(config.Node.MaxPacketDataSize.bytes32());
-				auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, pPacketHandlers, bootstrapNodes, thisNode);
+				auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, pPacketHandlers, bootstrapNodes, thisNode, locator.keyPair());
 				pDbrbProcess->registerPacketHandlers();
 
 				auto pFsmShared = pServiceGroup->pushService([&state, &config, pDbrbProcess](const std::shared_ptr<thread::IoThreadPool>& pPool) {

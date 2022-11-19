@@ -5,9 +5,75 @@
 **/
 
 #include "DbrbUtils.h"
-
+#include "catapult/crypto/Hashes.h"
 
 namespace catapult { namespace dbrb {
+
+	PackedView PackView(const View& view, uint32_t& payloadSize) {
+		payloadSize += sizeof(uint32_t) + utils::checked_cast<size_t, uint32_t>(sizeof(MembershipChanges) * view.Data.size());
+		PackedView nodes;
+		nodes.reserve(view.Data.size());
+		for (const auto& pair : view.Data) {
+			auto pNode = ionet::PackNode(pair.first);
+			payloadSize += pNode->Size;
+			nodes.emplace_back(std::move(pNode), utils::to_underlying_type(pair.second));
+		}
+
+		return nodes;
+	}
+
+	void CopyView(uint8_t*& pData, const PackedView& nodes) {
+		uint32_t count = utils::checked_cast<size_t, uint32_t>(nodes.size());
+		memcpy(pData, &count, sizeof(uint32_t));
+		pData += sizeof(uint32_t);
+		for (auto i = 0u; i < count; ++i) {
+			const auto* pNode = nodes[i].first.get();
+			memcpy(pData, static_cast<const void*>(pNode), pNode->Size);
+			pData += pNode->Size;
+			pData[0] = nodes[i].second;
+			pData++;
+		}
+	}
+
+	View UnpackView(const uint8_t*& pData) {
+		View view;
+		auto count = *reinterpret_cast<const uint32_t*>(pData);
+		pData += sizeof(uint32_t);
+		for (auto i = 0u; i < count; ++i) {
+			const auto& networkNode = *reinterpret_cast<const ionet::NetworkNode*>(pData);
+			auto node = ionet::UnpackNode(networkNode);
+			pData += networkNode.Size;
+			auto change = static_cast<MembershipChanges>(pData[0]);
+			pData++;
+			view.Data.emplace(std::make_pair(node, change));
+		}
+
+		return view;
+	}
+
+	void PackProcessId(uint8_t*& pData, const ProcessId& processId) {
+		auto pPackedProcessId = ionet::PackNode(processId);
+		memcpy(pData, static_cast<const void*>(pPackedProcessId.get()), pPackedProcessId->Size);
+		pData += pPackedProcessId->Size;
+	}
+
+	ProcessId UnpackProcessId(const uint8_t*& pData) {
+		const auto& packedProcessId = *reinterpret_cast<const ionet::NetworkNode*>(pData);
+		auto processId = ionet::UnpackNode(packedProcessId);
+		pData += packedProcessId.Size;
+
+		return processId;
+	}
+
+	Hash256 CalculateHash(const std::vector<RawBuffer>& buffers) {
+		crypto::Sha3_256_Builder hashBuilder;
+		for (const auto& buffer : buffers)
+			hashBuilder.update(buffer);
+
+		Hash256 hash;
+		hashBuilder.final(hash);
+		return hash;
+	}
 
 	std::set<ProcessId> View::members() const {
 		std::set<ProcessId> joined;
