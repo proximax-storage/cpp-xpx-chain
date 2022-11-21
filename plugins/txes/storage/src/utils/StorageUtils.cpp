@@ -548,6 +548,10 @@ namespace catapult { namespace utils {
 			treeAdapter.insert(replicatorKey);
 		}
 
+		if (replicatorCache.contains(driveEntry.owner())) {
+			treeAdapter.insert(driveEntry.owner());
+		}
+
 		// If the actual number of assigned replicators is less than ordered,
 		// put the drive in the queue:
 		auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
@@ -617,10 +621,13 @@ namespace catapult { namespace utils {
 				auto driveIter = driveCache.find(driveKey);
 				auto& driveEntry = driveIter.get();
 				const auto& driveSize = driveEntry.size();
+				bool replicatorIsAssigned =
+						driveEntry.replicators().find(replicatorKey) != driveEntry.replicators().end();
 				bool replicatorIsBanned =
 						driveEntry.formerReplicators().find(replicatorKey) != driveEntry.formerReplicators().end();
 				bool replicatorIsOwner = driveEntry.owner() == replicatorKey;
-				if (driveSize <= remainingCapacity && !replicatorIsBanned && !replicatorIsOwner) {
+				if (driveSize <= remainingCapacity && !replicatorIsAssigned && !replicatorIsBanned &&
+					!replicatorIsOwner) {
 					// Updating drives() and replicators()
 					const auto& completedDataModifications = driveEntry.completedDataModifications();
 					const auto lastApprovedDataModificationIter = std::find_if(
