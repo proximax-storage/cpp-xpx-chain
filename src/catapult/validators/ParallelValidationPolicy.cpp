@@ -165,6 +165,21 @@ namespace catapult { namespace validators {
 						});
 			}
 
+			template<typename TTraits>
+			auto validateTWithThreadSync(const model::WeakEntityInfos& entityInfos, const ValidationFunctions& validationFunctions) const {
+				auto pWork = std::make_shared<ValidationWork<TTraits>>(shared_from_this(), validationFunctions, entityInfos);
+				return thread::compose(
+						thread::ParallelForWithThreadSync(m_ioContext, pWork->entityInfos(), m_pPool->numWorkerThreads(), [pWork](
+								const auto& entityInfo,
+								auto index) {
+							return pWork->validateEntity(entityInfo, index);
+						}),
+						[pWork](const auto&) {
+							pWork->complete();
+							return pWork->future();
+						});
+			}
+
 		public:
 			thread::future<ValidationResult> validateShortCircuit(
 					const model::WeakEntityInfos& entityInfos,
@@ -172,10 +187,22 @@ namespace catapult { namespace validators {
 				return validateT<ShortCircuitTraits>(entityInfos, validationFunctions);
 			}
 
+			thread::future<ValidationResult> validateShortCircuitWithThreadSync(
+					const model::WeakEntityInfos& entityInfos,
+					const ValidationFunctions& validationFunctions) const override {
+				return validateTWithThreadSync<ShortCircuitTraits>(entityInfos, validationFunctions);
+			}
+
 			thread::future<std::vector<ValidationResult>> validateAll(
 					const model::WeakEntityInfos& entityInfos,
 					const ValidationFunctions& validationFunctions) const override {
 				return validateT<AllTraits>(entityInfos, validationFunctions);
+			}
+
+			thread::future<std::vector<ValidationResult>> validateAllWithThreadSync(
+					const model::WeakEntityInfos& entityInfos,
+					const ValidationFunctions& validationFunctions) const override {
+				return validateTWithThreadSync<AllTraits>(entityInfos, validationFunctions);
 			}
 
 		private:

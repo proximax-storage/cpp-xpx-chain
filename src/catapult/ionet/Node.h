@@ -23,6 +23,7 @@
 #include "catapult/model/NetworkInfo.h"
 #include "catapult/utils/Hashers.h"
 #include <unordered_set>
+#include <mutex>
 
 namespace catapult { namespace ionet {
 
@@ -87,6 +88,15 @@ namespace catapult { namespace ionet {
 		/// Creates a node around a unique identifier (\a identityKey) with \a endpoint and \a metadata.
 		Node(const Key& identityKey, const NodeEndpoint& endpoint, const NodeMetadata& metadata);
 
+		// copy constructor
+		Node(Node const& node) {
+			std::unique_lock<std::mutex> lock(node.m_mutex);
+			m_identityKey = node.m_identityKey;
+			m_endpoint = node.m_endpoint;
+			m_metadata = node.m_metadata;
+			m_printableName = node.m_printableName;
+		}
+
 	public:
 		/// Gets the unique identifier (a public key).
 		const Key& identityKey() const;
@@ -104,6 +114,26 @@ namespace catapult { namespace ionet {
 		/// Returns \c true if this node is not equal to \a rhs.
 		bool operator!=(const Node& rhs) const;
 
+		Node& operator=(Node const& node){
+        if(&node != this)
+        {
+            // lock both objects
+            std::unique_lock<std::mutex> lock_this(m_mutex, std::defer_lock);
+            std::unique_lock<std::mutex> lock_other(node.m_mutex, std::defer_lock);
+
+            // ensure no deadlock
+            std::lock(lock_this, lock_other);
+
+            // safely copy the data
+            m_identityKey = node.m_identityKey;
+			m_endpoint = node.m_endpoint;
+			m_metadata = node.m_metadata;
+			m_printableName = node.m_printableName;
+        }
+
+        return *this;
+    }
+
 	public:
 		/// Insertion operator for outputting \a node to \a out.
 		friend std::ostream& operator<<(std::ostream& out, const Node& node);
@@ -114,6 +144,7 @@ namespace catapult { namespace ionet {
 		NodeMetadata m_metadata;
 
 		std::string m_printableName;
+		mutable std::mutex m_mutex;
 	};
 
 	/// Hasher object for a node.

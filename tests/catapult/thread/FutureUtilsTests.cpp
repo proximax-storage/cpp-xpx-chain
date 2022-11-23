@@ -36,39 +36,91 @@ namespace catapult { namespace thread {
 		future<int> CreateSleepValueFuture(long numMillis, int value) {
 			promise<int> promise;
 			auto future = promise.get_future();
+
+			std::condition_variable condVar;
+			std::mutex mtx;
+			std::atomic<int> flag = 0;
+
+			std::thread([promise = std::move(promise), numMillis, value, &flag, &mtx, &condVar]() mutable {
+				std::lock_guard<std::mutex> guard(mtx);
+				LogAndSleep(numMillis);
+				CATAPULT_LOG(debug) << "returning " << value << " after sleep";
+
+				promise.set_value(std::move(value));
+
+				flag++;
+				condVar.notify_one();
+			}).detach();
+
+			std::unique_lock<std::mutex> mlock(mtx);
+			condVar.wait(mlock, [&flag]{return flag != 0;});
+			
+			return future;
+		}
+
+		future<int> CreateSleepValueFutureWithoutThreadSync(long numMillis, int value) {
+			promise<int> promise;
+			auto future = promise.get_future();
+
 			std::thread([promise = std::move(promise), numMillis, value]() mutable {
 				LogAndSleep(numMillis);
 				CATAPULT_LOG(debug) << "returning " << value << " after sleep";
 
 				promise.set_value(std::move(value));
 			}).detach();
+			
 			return future;
 		}
 
 		future<int> CreateSleepExceptionFuture(long numMillis) {
 			promise<int> promise;
 			auto future = promise.get_future();
-			std::thread([promise = std::move(promise), numMillis]() mutable {
+
+			std::condition_variable condVar;
+			std::mutex mtx;
+			std::atomic<int> flag = 0;
+
+			std::thread([promise = std::move(promise), numMillis, &flag, &mtx, &condVar]() mutable {
+				std::lock_guard<std::mutex> guard(mtx);
 				LogAndSleep(numMillis);
 				CATAPULT_LOG(debug) << "throwing exception after sleep";
 
 				auto pException = std::make_exception_ptr(catapult_runtime_error("throwing exception after sleep"));
 				promise.set_exception(pException);
+
+				flag++;
+				condVar.notify_one();
 			}).detach();
+
+			std::unique_lock<std::mutex> mlock(mtx);
+			condVar.wait(mlock, [&flag]{return flag != 0;});
+
 			return future;
 		}
 
 		future<std::string> CreateSleepContinuationFuture(long numMillis, future<int>&& valueFuture) {
 			auto value = valueFuture.get();
 
+			std::condition_variable condVar;
+			std::mutex mtx;
+			std::atomic<int> flag = 0;
+
 			promise<std::string> promise;
 			auto future = promise.get_future();
-			std::thread([promise = std::move(promise), numMillis, value]() mutable {
+			std::thread([promise = std::move(promise), numMillis, value, &flag, &mtx, &condVar]() mutable {
+				std::lock_guard<std::mutex> guard(mtx);
 				LogAndSleep(numMillis);
 				CATAPULT_LOG(debug) << "returning " << value << " after sleep (continuation)";
 
 				promise.set_value(std::to_string(2 * value));
+
+				flag++;
+				condVar.notify_one();
 			}).detach();
+
+			std::unique_lock<std::mutex> mlock(mtx);
+			condVar.wait(mlock, [&flag]{return flag != 0;});
+
 			return future;
 		}
 
@@ -108,8 +160,8 @@ namespace catapult { namespace thread {
 
 	WHEN_ALL_TEST(WhenAllDoesNotBlock) {
 		// Arrange:
-		auto future1 = CreateSleepValueFuture(100, 7);
-		auto future2 = CreateSleepValueFuture(50, 11);
+		auto future1 = CreateSleepValueFutureWithoutThreadSync(100, 7);
+		auto future2 = CreateSleepValueFutureWithoutThreadSync(50, 11);
 
 		// Act:
 		auto aggregateFuture = TTraits::WhenAll(std::move(future1), std::move(future2));
@@ -229,7 +281,7 @@ namespace catapult { namespace thread {
 	TEST(TEST_CLASS, ComposeDoesNotBlock) {
 		// Arrange:
 		auto composedFuture = compose(
-				CreateSleepValueFuture(25, 7),
+				CreateSleepValueFutureWithoutThreadSync(25, 7),
 				[](auto&& future) { return CreateSleepContinuationFuture(25, std::move(future)); });
 
 		// Assert:

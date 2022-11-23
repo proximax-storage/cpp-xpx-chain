@@ -130,6 +130,7 @@ namespace catapult { namespace test {
 
 		/// Gets the node subscriber.
 		const auto& nodeSubscriber() const {
+			std::lock_guard<std::mutex> lock(m_mutex);
 			return m_nodeSubscriber;
 		}
 
@@ -179,6 +180,7 @@ namespace catapult { namespace test {
 		thread::MultiServicePool m_pool;
 
 		extensions::ServiceState m_state;
+		mutable std::mutex m_mutex;
 	};
 
 	/// A test context for extension service tests.

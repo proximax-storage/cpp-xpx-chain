@@ -126,7 +126,10 @@ namespace catapult { namespace sync {
 				size_t numConnections,
 				boost::asio::io_context& ioContext,
 				const TestContext& context,
-				PacketSockets& serverSockets) {
+				PacketSockets& serverSockets,
+				std::mutex& mtx,
+				std::condition_variable& condVar,
+				std::atomic<int>& flag) {
 			// Arrange:
 			auto pWriters = GetPacketWriters(context.locator());
 
@@ -140,21 +143,31 @@ namespace catapult { namespace sync {
 				std::atomic<size_t> numCallbacks(0);
 				test::SpawnPacketServerWork(acceptor, [&](const auto& pSocket) {
 					serverSockets.push_back(pSocket);
-					net::VerifyClient(pSocket, peerKeyPair, ionet::ConnectionSecurityMode::None, [&numCallbacks](auto, const auto&) {
+					net::VerifyClient(pSocket, peerKeyPair, ionet::ConnectionSecurityMode::None, [&numCallbacks, &mtx, &condVar](auto, const auto&) {
+						std::lock_guard<std::mutex> guard(mtx);
 						++numCallbacks;
+						condVar.notify_all();
 					});
 				});
 
 				pWriters->connect(node, [&](auto) {
+					std::lock_guard<std::mutex> guard(mtx);
 					++numCallbacks;
+					condVar.notify_all();
 				});
 
 				// - wait for both verifications to complete
-				WAIT_FOR_VALUE(2u, numCallbacks);
+				std::unique_lock<std::mutex> mlock1(mtx);
+				condVar.wait(mlock1, [&]{return numCallbacks == 2u;});
 			}
 
 			// - wait for all connections
 			EXPECT_EQ(numConnections, context.counter(NetworkPacketWritersServiceTraits::Counter_Name));
+
+			std::lock_guard<std::mutex> guard(mtx);
+			flag = 1;
+			condVar.notify_all();
+
 		}
 
 		void AssertReturnedHeights(size_t numHeightPeers, size_t numConnections, const std::vector<Height>& expectedHeights) {
@@ -167,7 +180,15 @@ namespace catapult { namespace sync {
 			// - connect to the desired number of peers
 			auto pPool = test::CreateStartedIoThreadPool();
 			PacketSockets serverSockets;
-			EstablishConnections(numConnections, pPool->ioContext(), context, serverSockets);
+
+			std::mutex mtx;
+			std::condition_variable condVar;
+			std::atomic<int> flag = 0;
+
+			EstablishConnections(numConnections, pPool->ioContext(), context, serverSockets, mtx, condVar, flag);
+			
+			std::unique_lock<std::mutex> mlock(mtx);
+			condVar.wait(mlock, [&flag]{return flag == 1;});
 			CATAPULT_LOG(debug) << "established " << numConnections << " connection(s)";
 
 			// - write the heights to the server sockets

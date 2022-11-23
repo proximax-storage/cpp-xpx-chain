@@ -83,6 +83,13 @@ namespace catapult { namespace validators {
 				return policy.validateShortCircuit(entityInfos, validationFunctions);
 			}
 
+			static auto ValidateWithThreadSync(
+					const ParallelValidationPolicy& policy,
+					const model::WeakEntityInfos& entityInfos,
+					const ValidationFunctions& validationFunctions) {
+				return policy.validateShortCircuitWithThreadSync(entityInfos, validationFunctions);
+			}
+
 			static bool IsSuccess(ValidationResult result) {
 				return IsValidationResultSuccess(result);
 			}
@@ -98,6 +105,13 @@ namespace catapult { namespace validators {
 					const model::WeakEntityInfos& entityInfos,
 					const ValidationFunctions& validationFunctions) {
 				return policy.validateAll(entityInfos, validationFunctions);
+			}
+
+			static auto ValidateWithThreadSync(
+					const ParallelValidationPolicy& policy,
+					const model::WeakEntityInfos& entityInfos,
+					const ValidationFunctions& validationFunctions) {
+				return policy.validateAllWithThreadSync(entityInfos, validationFunctions);
 			}
 
 			static bool IsSuccess(const std::vector<ValidationResult>& results) {
@@ -203,7 +217,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		auto entityInfos = test::CreateEntityInfos(1);
-		TTraits::Validate(*pPolicy, entityInfos.toVector(), funcs).get();
+		TTraits::ValidateWithThreadSync(*pPolicy, entityInfos.toVector(), funcs).get();
 
 		// Assert:
 		EXPECT_EQ(std::vector<size_t>({ 1, 1 }), counters.toVector());
@@ -217,7 +231,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		auto entityInfos = test::CreateEntityInfos(3);
-		TTraits::Validate(*pPolicy, entityInfos.toVector(), funcs).get();
+		TTraits::ValidateWithThreadSync(*pPolicy, entityInfos.toVector(), funcs).get();
 
 		// Assert:
 		EXPECT_EQ(std::vector<size_t>({ 3 }), counters.toVector());
@@ -231,7 +245,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		for (const auto& entityInfos : { test::CreateEntityInfos(1), test::CreateEntityInfos(2), test::CreateEntityInfos(4) })
-			TTraits::Validate(*pPolicy, entityInfos.toVector(), funcs).get();
+			TTraits::ValidateWithThreadSync(*pPolicy, entityInfos.toVector(), funcs).get();
 
 		// Assert:
 		EXPECT_EQ(std::vector<size_t>({ 7, 7 }), counters.toVector());
@@ -249,7 +263,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		auto entityInfos = test::CreateEntityInfos(1);
-		auto result = TTraits::GetFirstResult(TTraits::Validate(*pPolicy, entityInfos.toVector(), funcs).get());
+		auto result = TTraits::GetFirstResult(TTraits::ValidateWithThreadSync(*pPolicy, entityInfos.toVector(), funcs).get());
 
 		// Assert:
 		EXPECT_EQ(std::vector<size_t>({ 1, 1, 1 }), counters.toVector());
@@ -264,7 +278,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		auto entityInfos = test::CreateEntityInfos(1);
-		auto result = TTraits::GetFirstResult(TTraits::Validate(*pPolicy, entityInfos.toVector(), funcs).get());
+		auto result = TTraits::GetFirstResult(TTraits::ValidateWithThreadSync(*pPolicy, entityInfos.toVector(), funcs).get());
 
 		// Assert:
 		EXPECT_EQ(std::vector<size_t>({ 1, 1, 1 }), counters.toVector());
@@ -283,7 +297,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		auto entityInfos = test::CreateEntityInfos(1);
-		auto result = TTraits::GetFirstResult(TTraits::Validate(*pPolicy, entityInfos.toVector(), funcs).get());
+		auto result = TTraits::GetFirstResult(TTraits::ValidateWithThreadSync(*pPolicy, entityInfos.toVector(), funcs).get());
 
 		// Assert:
 		EXPECT_EQ(std::vector<size_t>({ 1, 0, 0 }), counters.toVector());
@@ -302,7 +316,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		auto entityInfos = test::CreateEntityInfos(5);
-		auto result = ShortCircuitTraits::Validate(*pPolicy, entityInfos.toVector(), funcs).get();
+		auto result = ShortCircuitTraits::ValidateWithThreadSync(*pPolicy, entityInfos.toVector(), funcs).get();
 
 		// Assert: notice that the first entity that fails validation short circuits validation of all subsequent entities
 		// - note also that we cannot have an exact assert on the first counter since all threads might already have called
@@ -321,7 +335,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		auto entityInfos = test::CreateEntityInfos(5);
-		auto results = AllTraits::Validate(*pPolicy, entityInfos.toVector(), funcs).get();
+		auto results = AllTraits::ValidateWithThreadSync(*pPolicy, entityInfos.toVector(), funcs).get();
 
 		// Assert: notice that an independent result for each entity is returned
 		EXPECT_EQ(std::vector<size_t>({ 5, 5, 0 }), counters.toVector());
@@ -336,7 +350,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		auto entityInfos = test::CreateEntityInfos(5);
-		auto results = AllTraits::Validate(*pPolicy, entityInfos.toVector(), funcs).get();
+		auto results = AllTraits::ValidateWithThreadSync(*pPolicy, entityInfos.toVector(), funcs).get();
 
 		// Assert: notice that an independent result for each entity is returned
 		EXPECT_EQ(std::vector<size_t>({ 5, 5, 0 }), counters.toVector());
@@ -407,7 +421,7 @@ namespace catapult { namespace validators {
 		auto pPolicy = CreatePolicy();
 
 		// Act:
-		TTraits::Validate(*pPolicy, sourceEntityInfos.toVector(), funcs).get();
+		TTraits::ValidateWithThreadSync(*pPolicy, sourceEntityInfos.toVector(), funcs).get();
 
 		// Assert:
 		auto i = 0u;
@@ -460,7 +474,7 @@ namespace catapult { namespace validators {
 		// Act: compose futures to bool so that they are the same type in all template instantiations
 		std::vector<thread::future<bool>> futures;
 		for (const auto& entityInfos : { test::CreateEntityInfos(1), test::CreateEntityInfos(2), test::CreateEntityInfos(4) })
-			futures.push_back(TTraits::Validate(*pPolicy, entityInfos.toVector(), funcs).then([](const auto&) { return true; }));
+			futures.push_back(TTraits::ValidateWithThreadSync(*pPolicy, entityInfos.toVector(), funcs).then([](const auto&) { return true; }));
 
 		// - wait for all futures
 		std::for_each(futures.rbegin(), futures.rend(), [](auto& future) { future.get(); });
@@ -509,8 +523,10 @@ namespace catapult { namespace validators {
 			// - create an aggregate of MockStatefulBlockingValidator
 			std::atomic<size_t> counter(0);
 			auto funcs = ValidationFunctions();
+			std::mutex mtx;
+			std::condition_variable condVar;
 			for (auto i = 0u; i < numValidators; ++i) {
-				funcs.push_back([&state = *states[i], &counter](const auto& entityInfo) {
+				funcs.push_back([&state = *states[i], &counter, &mtx, &condVar](const auto& entityInfo) {
 					// - increment the counter and wait until every expected thread has incremented it once
 					++counter;
 					WAIT_FOR_EXPR(counter >= Num_Default_Threads);

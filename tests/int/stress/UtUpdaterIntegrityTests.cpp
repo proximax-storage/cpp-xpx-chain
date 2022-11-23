@@ -121,9 +121,11 @@ namespace catapult { namespace chain {
 		// Act:
 		// - simulate tx dispatcher processing N elements of 1 tx transfering 1 unit each
 		boost::thread_group threads;
-		threads.create_thread([&senderKeyPair, &updater = context.updater()] {
+		std::mutex mtx;
+		threads.create_thread([&senderKeyPair, &updater = context.updater(), &mtx] {
 			auto recipient = test::GenerateRandomByteArray<Key>();
 			for (auto i = 0u; i < GetNumIterations(); ++i) {
+				std::lock_guard<std::mutex> guard(mtx);
 				auto pTransaction = test::CreateTransferTransaction(senderKeyPair, recipient, Amount(1));
 				pTransaction->MaxFee = Amount(0);
 				pTransaction->Deadline = Default_Time + Timestamp(1);
@@ -136,10 +138,12 @@ namespace catapult { namespace chain {
 		});
 
 		// - simulate block dispatcher processing N block elements with single confirmed tx
-		threads.create_thread([&updater = context.updater()] {
+		threads.create_thread([&updater = context.updater(), &mtx] {
 			auto hash = test::GenerateRandomByteArray<Hash256>();
-			for (auto i = 0u; i < GetNumIterations(); ++i)
+			for (auto i = 0u; i < GetNumIterations(); ++i){
+				std::lock_guard<std::mutex> guard(mtx);
 				updater.update({ &hash }, {});
+			}
 		});
 
 		// - wait for all threads

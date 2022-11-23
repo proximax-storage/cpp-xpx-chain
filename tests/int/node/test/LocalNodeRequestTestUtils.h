@@ -146,8 +146,13 @@ namespace catapult { namespace test {
 		bool isExceptionRaised = false;
 		typename TApiTraits::ResultType result;
 		ExternalSourceConnection connection;
+
+		std::condition_variable condVar;
+		std::mutex mtx;
+
 		connection.apiCall([&](const auto& pRemoteChainApi) {
 			TApiTraits::InitiateValidRequest(*pRemoteChainApi).then([&, pRemoteChainApi](auto&& future) {
+				std::lock_guard<std::mutex> guard(mtx);
 				try {
 					result = std::move(future.get());
 				} catch (const catapult_runtime_error& ex) {
@@ -156,10 +161,12 @@ namespace catapult { namespace test {
 				}
 
 				isReadFinished = true;
+				condVar.notify_one();
 			});
 		});
 
-		WAIT_FOR(isReadFinished);
+		std::unique_lock<std::mutex> mlock(mtx);
+		condVar.wait(mlock, [&]{return isReadFinished == true;});
 
 		// Assert:
 		EXPECT_FALSE(isExceptionRaised);
@@ -176,16 +183,22 @@ namespace catapult { namespace test {
 
 		// Act:
 		std::atomic_bool isReadFinished(false);
+		std::condition_variable condVar;
+		std::mutex mtx;
 		ExternalSourceConnection connection;
 		connection.apiCall([&](const auto& pRemoteChainApi) {
 			requestInitator(*pRemoteChainApi).then([&, pRemoteChainApi](auto&& future) {
 				// Act + Assert:
 				EXPECT_THROW(future.get(), catapult_runtime_error);
+				std::lock_guard<std::mutex> guard(mtx);
 				isReadFinished = true;
+				condVar.notify_one();
 			});
 		});
 
-		WAIT_FOR(isReadFinished);
+		std::unique_lock<std::mutex> mlock(mtx);
+		condVar.wait(mlock, [&]{return isReadFinished == true;});
+		// WAIT_FOR(isReadFinished);
 
 		// Assert:
 		handler(context.stats());

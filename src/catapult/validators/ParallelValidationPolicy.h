@@ -37,8 +37,16 @@ namespace catapult { namespace validators {
 				const model::WeakEntityInfos& entityInfos,
 				const ValidationFunctions& validationFunctions) const = 0;
 
+		virtual thread::future<ValidationResult> validateShortCircuitWithThreadSync(
+				const model::WeakEntityInfos& entityInfos,
+				const ValidationFunctions& validationFunctions) const = 0;
+
 		/// Validates all \a entityInfos using \a validationFunctions and does \em NOT short circuit on failures.
 		virtual thread::future<std::vector<ValidationResult>> validateAll(
+				const model::WeakEntityInfos& entityInfos,
+				const ValidationFunctions& validationFunctions) const = 0;
+
+		virtual thread::future<std::vector<ValidationResult>> validateAllWithThreadSync(
 				const model::WeakEntityInfos& entityInfos,
 				const ValidationFunctions& validationFunctions) const = 0;
 	};

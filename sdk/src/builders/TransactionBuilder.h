@@ -90,7 +90,7 @@ namespace catapult { namespace builders {
 
 	private:
 		const model::NetworkIdentifier m_networkIdentifier;
-		const Key& m_signer;
+		const Key m_signer;
 
 		Timestamp m_deadline;
 		Amount m_maxFee;

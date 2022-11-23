@@ -57,6 +57,7 @@ namespace catapult { namespace ionet {
 	}
 
 	const Key& Node::identityKey() const {
+		std::lock_guard<std::mutex> lock(m_mutex);
 		return m_identityKey;
 	}
 
@@ -65,6 +66,7 @@ namespace catapult { namespace ionet {
 	}
 
 	const NodeMetadata& Node::metadata() const {
+		std::lock_guard<std::mutex> lock(m_mutex);
 		return m_metadata;
 	}
 

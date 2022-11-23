@@ -112,6 +112,99 @@ namespace catapult { namespace thread {
 		return pParallelContext->future();
 	}
 
+	template<typename TItems, typename TWorkCallback>
+	thread::future<bool> ParallelForPartitionWithThreadSync(
+			boost::asio::io_context& ioContext,
+			TItems& items,
+			size_t numPartitions,
+			TWorkCallback callback) {
+		// region ParallelContext
+		class ParallelContext {
+		public:
+			ParallelContext() : m_numOutstandingOperations(1) // note that the work partitioning is the initial operation
+			{}
+
+		public:
+			auto future() {
+				return m_promise.get_future();
+			}
+
+		public:
+			void incrementOutstandingOperations() {
+				++m_numOutstandingOperations;
+			}
+
+			void decrementOutstandingOperations() {
+				if (0 != --m_numOutstandingOperations)
+					return;
+
+				m_promise.set_value(true);
+			}
+
+		private:
+			std::atomic<size_t> m_numOutstandingOperations;
+			thread::promise<bool> m_promise;
+		};
+
+		// endregion
+
+		// region DecrementGuard
+
+		class DecrementGuard {
+		public:
+			explicit DecrementGuard(ParallelContext& context) : m_context(context)
+			{}
+
+			~DecrementGuard() {
+				m_context.decrementOutstandingOperations();
+			}
+
+		private:
+			ParallelContext& m_context;
+		};
+
+		// endregion
+
+		auto pParallelContext = std::make_shared<ParallelContext>();
+		DecrementGuard mainOperationGuard(*pParallelContext);
+
+		auto numRemainingPartitions = numPartitions;
+		auto numTotalItems = items.size();
+		auto numRemainingItems = numTotalItems;
+		auto itBegin = items.begin();
+		while (numRemainingItems > 0) {
+			// note: in the case that numRemainingItems is not divisible by numRemainingPartitions,
+			//       give the current partition one more item in order to ensure that
+			//       the partitions cover all items
+			auto isDivisible = 0 == numRemainingItems % numRemainingPartitions;
+			auto size = numRemainingItems / numRemainingPartitions + (isDivisible ? 0 : 1);
+			auto itEnd = itBegin;
+			std::advance(itEnd, static_cast<typename decltype(itEnd)::difference_type>(size));
+
+			std::atomic<int> mainFlag = 0;
+			std::condition_variable mainCondVar;
+			std::mutex mainMtx;
+
+			// each thread captures pParallelContext by value, which keeps that object alive
+			pParallelContext->incrementOutstandingOperations();
+			auto startIndex = numTotalItems - numRemainingItems;
+			auto batchIndex = numPartitions - numRemainingPartitions;
+			boost::asio::post(ioContext, [callback, pParallelContext, itBegin, itEnd, startIndex, batchIndex, &mainFlag, &mainCondVar, &mainMtx]() {
+				DecrementGuard threadOperationGuard(*pParallelContext);
+				callback(itBegin, itEnd, startIndex, batchIndex, mainFlag, mainCondVar, mainMtx);
+			});
+
+			std::unique_lock<std::mutex> mlock(mainMtx);
+			mainCondVar.wait(mlock, [&]{return mainFlag == 1;});
+
+			numRemainingItems -= size;
+			--numRemainingPartitions;
+			itBegin = itEnd;
+		}
+
+		return pParallelContext->future();
+	}
+
 	/// Uses \a ioContext to process \a items in \a numPartitions batches and calls \a callback for each item.
 	/// A future is returned that is resolved when all items have been processed.
 	template<typename TItems, typename TWorkCallback>
@@ -122,6 +215,21 @@ namespace catapult { namespace thread {
 				if (!callback(*iter, startIndex + i))
 					break;
 			}
+		});
+	}
+
+	template<typename TItems, typename TWorkCallback>
+	thread::future<bool> ParallelForWithThreadSync(boost::asio::io_context& ioContext, TItems& items, size_t numPartitions, TWorkCallback callback) {
+		return ParallelForPartitionWithThreadSync(ioContext, items, numPartitions, [callback](auto itBegin, auto itEnd, auto startIndex, auto, std::atomic<int>& mainFlag, std::condition_variable& mainCondVar, std::mutex& mainMtx) {
+			auto i = 0u;
+			for (auto iter = itBegin; itEnd != iter; ++iter, ++i) {
+				if (!callback(*iter, startIndex + i))
+					break;
+			}
+
+			std::lock_guard<std::mutex> guard(mainMtx);
+			mainFlag = 1;
+			mainCondVar.notify_one();
 		});
 	}
 }}

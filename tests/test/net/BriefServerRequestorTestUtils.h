@@ -104,16 +104,23 @@ namespace catapult { namespace test {
 		});
 
 		// Act: initiate a request
+		std::condition_variable condVar;
+		std::mutex mtx;
 		std::atomic<size_t> numCallbacks(0);
 		std::vector<std::pair<net::NodeRequestResult, ResponseType>> resultPairs;
 		auto requestNode = CreateLocalHostNode(context.ServerPublicKey);
-		TBeginRequestPolicy::BeginRequest(*context.pRequestor, requestNode, [&numCallbacks, &resultPairs](
+		TBeginRequestPolicy::BeginRequest(*context.pRequestor, requestNode, [&numCallbacks, &resultPairs, &condVar, &mtx](
 				auto result,
 				const auto& response) {
+			std::lock_guard<std::mutex> guard(mtx);
 			resultPairs.emplace_back(result, response);
 			++numCallbacks;
+			condVar.notify_one();
 		});
-		WAIT_FOR_ONE(numCallbacks);
+
+		// wait for one
+		std::unique_lock<std::mutex> mlock(mtx);
+		condVar.wait(mlock, [&numCallbacks]{return numCallbacks == 1u;});
 
 		// Assert:
 		ASSERT_EQ(1u, resultPairs.size());

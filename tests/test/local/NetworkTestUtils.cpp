@@ -33,6 +33,9 @@ namespace catapult { namespace test {
 			unsigned short port,
 			const Key& serverPublicKey) {
 		// Act: connect to the server
+		std::condition_variable condVar;
+		std::mutex mtx;
+
 		std::atomic_bool isConnected(false);
 		auto options = CreatePacketSocketOptions();
 		auto endpoint = CreateLocalHostNodeEndpoint(port);
@@ -41,17 +44,24 @@ namespace catapult { namespace test {
 		ionet::Connect(ioContext, options, endpoint, [&](auto connectCode, const auto& pConnectedSocket) {
 			CATAPULT_LOG(debug) << "node is connected with code " << connectCode;
 			pIo = pConnectedSocket;
-			if (!pIo)
+			if (!pIo) {
 				return;
+			}
 
 			auto serverPeerInfo = net::VerifiedPeerInfo{ serverPublicKey, ionet::ConnectionSecurityMode::None };
-			net::VerifyServer(pIo, serverPeerInfo, clientKeyPair, [&isConnected](auto verifyResult, const auto&) {
+			net::VerifyServer(pIo, serverPeerInfo, clientKeyPair, [&isConnected, &mtx, &condVar](auto verifyResult, const auto&) {
+				std::lock_guard<std::mutex> guard(mtx);
 				CATAPULT_LOG(debug) << "node verified with result " << verifyResult;
-				if (net::VerifyResult::Success == verifyResult)
+				if (net::VerifyResult::Success == verifyResult){
 					isConnected = true;
+					condVar.notify_one();
+				}
 			});
 		});
-		WAIT_FOR(isConnected);
+		
+		std::unique_lock<std::mutex> mlock(mtx);
+		condVar.wait(mlock, [&]{return isConnected == true;});
+
 		return pIo;
 	}
 
@@ -59,11 +69,17 @@ namespace catapult { namespace test {
 		// Act: connect to the server
 		net::PeerConnectCode connectCode;
 		std::atomic<size_t> numConnects(0);
+		std::condition_variable condVar;
+		std::mutex mtx;
 		packetWriters.connect(CreateLocalHostNode(serverPublicKey), [&](const auto& connectResult) {
+			std::lock_guard<std::mutex> guard(mtx);
 			connectCode = connectResult.Code;
 			++numConnects;
+			condVar.notify_one();
 		});
-		WAIT_FOR_ONE(numConnects);
+
+		std::unique_lock<std::mutex> mlock(mtx);
+		condVar.wait(mlock, [&]{return numConnects == 1u;});
 
 		// Assert: a single connection was accepted
 		EXPECT_EQ(net::PeerConnectCode::Accepted, connectCode);

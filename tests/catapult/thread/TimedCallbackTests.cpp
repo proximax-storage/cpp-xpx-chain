@@ -85,10 +85,18 @@ namespace catapult { namespace thread {
 			}
 
 			void postCallbackWithDelay(uint32_t numMillis) {
-				boost::asio::post(m_pPool->ioContext(), [numMillis, pTimedCallback = m_pTimedCallback]() {
+				std::condition_variable condVar;
+				std::mutex mtx;
+				std::atomic<int> flag = 0;
+				boost::asio::post(m_pPool->ioContext(), [numMillis, pTimedCallback = m_pTimedCallback, &flag, &mtx, &condVar]() {
+					std::lock_guard<std::mutex> guard(mtx);
 					test::Sleep(numMillis);
 					pTimedCallback->callback(TimedCallbackResultCode::Completed);
+					flag++;
+					condVar.notify_one();
 				});
+				std::unique_lock<std::mutex> mlock(mtx);
+				condVar.wait(mlock, [&flag]{return flag != 0;});
 			}
 
 			TimedCallbackResult& wait() {

@@ -206,17 +206,23 @@ namespace catapult { namespace net {
 			});
 
 			// - initiate a request
+			std::condition_variable condVar;
+			std::mutex mtx;
 			std::atomic<size_t> numCallbacks(0);
 			std::vector<NodeRequestResult> callbackResults;
 			auto requestNode = test::CreateLocalHostNode(context.ServerPublicKey);
-			context.pRequestor->beginRequest(requestNode, [&numCallbacks, &callbackResults](auto result, const auto&) {
+			context.pRequestor->beginRequest(requestNode, [&numCallbacks, &callbackResults, &condVar, &mtx](auto result, const auto&) {
+				std::lock_guard<std::mutex> guard(mtx);
 				callbackResults.push_back(result);
 				++numCallbacks;
+				condVar.notify_one();
 			});
 
 			// Act: shutdown the requestor
 			shutdown(context);
-			WAIT_FOR_ONE(numCallbacks);
+			//wait for one
+			std::unique_lock<std::mutex> mlock(mtx);
+			condVar.wait(mlock, [&numCallbacks]{return numCallbacks == 1u;});
 
 			// Assert:
 			EXPECT_EQ(1u, callbackResults.size());
