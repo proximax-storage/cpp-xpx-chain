@@ -349,13 +349,13 @@ namespace catapult { namespace fastfinality {
 			auto pLastBlockElement = lastBlockElementSupplier();
 			const auto& block = pLastBlockElement->Block;
 			const auto& config = pConfigHolder->Config().Network;
-			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
 
-			auto roundStart = block.Timestamp;
+			auto roundStart = block.Timestamp + Timestamp(CommitteePhaseCount * block.committeePhaseTime());
 			auto currentTime = timeSupplier();
-			if (roundStart > currentTime)
-				CATAPULT_THROW_RUNTIME_ERROR_2("invalid current time", currentTime, roundStart);
+			if (block.Timestamp > currentTime)
+				CATAPULT_THROW_RUNTIME_ERROR_2("invalid current time", currentTime, block.Timestamp);
 
+			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
 			DecreasePhaseTime(phaseTimeMillis, config);
 			auto nextRoundStart = roundStart + Timestamp(CommitteePhaseCount * phaseTimeMillis);
 			committeeManager.selectCommittee(config);
