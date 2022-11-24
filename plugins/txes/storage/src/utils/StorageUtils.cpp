@@ -551,7 +551,8 @@ namespace catapult { namespace utils {
 		const bool succeededVerifications = lastApprovedDataModificationIter != completedDataModifications.rend();
 		const auto lastApprovedDataModificationId = succeededVerifications ? lastApprovedDataModificationIter->Id : Hash256();
 		const auto initialDownloadWork = driveEntry.usedSizeBytes() - driveEntry.metaFilesSizeBytes();
-		const state::DriveInfo driveInfo{ lastApprovedDataModificationId, initialDownloadWork, initialDownloadWork };
+		const auto initialDownloadWorkMegabytes = utils::FileSize::FromBytes(initialDownloadWork).megabytes();
+		const state::DriveInfo driveInfo{ lastApprovedDataModificationId, initialDownloadWorkMegabytes, initialDownloadWork };
 
 		// Pick the first (requiredReplicatorCount) replicators from acceptableReplicators
 		// and assign them to the drive. If (acceptableReplicators.size() < requiredReplicatorCount),
@@ -685,8 +686,9 @@ namespace catapult { namespace utils {
 					const bool succeededVerifications = lastApprovedDataModificationIter != completedDataModifications.rend();
 					const auto lastApprovedDataModificationId = succeededVerifications ? lastApprovedDataModificationIter->Id : Hash256();
 					const auto initialDownloadWork = driveEntry.usedSizeBytes() - driveEntry.metaFilesSizeBytes();
+					const auto initialDownloadWorkMegabytes = utils::FileSize::FromBytes(initialDownloadWork).megabytes();
 					replicatorEntry.drives().emplace(driveKey, state::DriveInfo{
-						lastApprovedDataModificationId, initialDownloadWork, initialDownloadWork
+						lastApprovedDataModificationId, initialDownloadWorkMegabytes, initialDownloadWork
 					});
 					driveEntry.replicators().emplace(replicatorKey);
 
