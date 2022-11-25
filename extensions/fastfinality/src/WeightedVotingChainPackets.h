@@ -6,11 +6,8 @@
 
 #pragma once
 #include "CommitteePhase.h"
-#include "catapult/api/RemoteApiUtils.h"
 #include "catapult/ionet/Packet.h"
-#include "catapult/ionet/PacketEntityUtils.h"
 #include "catapult/ionet/PacketPayload.h"
-#include <catapult/ionet/PacketPayloadFactory.h>
 
 #include <utility>
 #include "catapult/model/Cosignature.h"

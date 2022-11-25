@@ -12,21 +12,11 @@ namespace catapult { namespace fastfinality {
 
 #pragma pack(push, 1)
 
-	struct CommitteeStage {
+	struct CommitteeRound {
 		int64_t Round = -1;
-		CommitteePhase Phase = CommitteePhase::None;
+		CommitteePhase StartPhase = CommitteePhase::None;
 		utils::TimePoint RoundStart = utils::ToTimePoint(utils::NetworkTime());
 		uint64_t PhaseTimeMillis = 0u;
-
-		constexpr bool operator<(const CommitteeStage& rhs) const {
-			if (Round > rhs.Round) {
-				return false;
-			} else if (Round < rhs.Round) {
-				return true;
-			} else {
-				return Phase < rhs.Phase;
-			}
-		}
 	};
 
 #pragma pack(pop)

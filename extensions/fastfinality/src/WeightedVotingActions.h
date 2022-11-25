@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "CommitteeStage.h"
+#include "CommitteeRound.h"
 #include "WeightedVotingHandlers.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/functions.h"
@@ -24,18 +24,19 @@ namespace catapult { namespace fastfinality {
 		action ProposeBlock = [] {};
 		action ValidateProposal = [] {};
 		action AddPrevote = [] {};
-		action WaitForProposalPhaseEnd = [] {};
+		action WaitForProposal = [] {};
 		action WaitForPrevotePhaseEnd = [] {};
 		action AddPrecommit = [] {};
 		action WaitForPrecommitPhaseEnd = [] {};
 		action UpdateConfirmedBlock = [] {};
+		action RequestConfirmedBlock = [] {};
 		action CommitConfirmedBlock = [] {};
 		action IncrementRound = [] {};						
 		action ResetRound = [] {};
 	};
 
 	action CreateDefaultCheckLocalChainAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		const RemoteNodeStateRetriever& retriever,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const model::BlockElementSupplier& lastBlockElementSupplier,
@@ -45,73 +46,77 @@ namespace catapult { namespace fastfinality {
 	action CreateDefaultResetLocalChainAction();
 
 	action CreateDefaultDownloadBlocksAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		extensions::ServiceState& state,
-		consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&> rangeConsumer,
+		const consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&>& rangeConsumer,
 		chain::CommitteeManager& committeeManager);
 
 	action CreateDefaultDetectStageAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const chain::TimeSupplier& timeSupplier,
 		const model::BlockElementSupplier& lastBlockElementSupplier,
 		chain::CommitteeManager& committeeManager);
 
 	action CreateDefaultSelectCommitteeAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		chain::CommitteeManager& committeeManager,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const chain::TimeSupplier& timeSupplier);
 
 	action CreateDefaultProposeBlockAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		const cache::CatapultCache& cache,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const harvesting::BlockGenerator& blockGenerator,
 		const model::BlockElementSupplier& lastBlockElementSupplier);
 
 	action CreateDefaultValidateProposalAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		extensions::ServiceState& state,
 		const model::BlockElementSupplier& lastBlockElementSupplier,
 		const std::shared_ptr<thread::IoThreadPool>& pValidatorPool);
 
 	action CreateDefaultAddPrevoteAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak);
 
-	action CreateDefaultWaitForProposalPhaseEndAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
+	action CreateDefaultWaitForProposalAction(
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak);
 
 	action CreateDefaultWaitForPrevotePhaseEndAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		chain::CommitteeManager& committeeManager,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	action CreateDefaultAddPrecommitAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak);
 
 	action CreateDefaultWaitForPrecommitPhaseEndAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		chain::CommitteeManager& committeeManager,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	action CreateDefaultUpdateConfirmedBlockAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		chain::CommitteeManager& committeeManager);
 
+	action CreateDefaultRequestConfirmedBlockAction(
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
+		extensions::ServiceState& state,
+		const model::BlockElementSupplier& lastBlockElementSupplier);
+
 	action CreateDefaultCommitConfirmedBlockAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&> rangeConsumer,
-		const model::BlockElementSupplier& lastBlockElementSupplier,
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
+		const consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&>& rangeConsumer,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		chain::CommitteeManager& committeeManager);
 
 	action CreateDefaultIncrementRoundAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	action CreateDefaultResetRoundAction(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		chain::CommitteeManager& committeeManager);
 }}

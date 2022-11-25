@@ -118,7 +118,7 @@ namespace catapult { namespace fastfinality {
 
 				auto peersFile = boost::filesystem::path(m_resourcesPath) / "peers-dbrb.json";
 				auto bootstrapNodes = config::LoadPeersFromPath(peersFile.generic_string(), config.Immutable.NetworkIdentifier);
-				auto thisNode = config::ToLocalNode(config);
+				auto thisNode = config::ToLocalDbrbNode(config);
 				std::map<Key, ionet::Node> nodeMap;
 				for (const auto& node : bootstrapNodes) {
 					nodeMap[node.identityKey()] = node;
@@ -129,23 +129,21 @@ namespace catapult { namespace fastfinality {
 						bootstrapNodes.emplace_back(pair.second);
 				}
 
-				auto pPacketHandlers = std::make_shared<ionet::ServerPacketHandlers>(config.Node.MaxPacketDataSize.bytes32());
-				auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, pPacketHandlers, bootstrapNodes, thisNode, locator.keyPair());
-				pDbrbProcess->registerPacketHandlers();
-
-				auto pFsmShared = pServiceGroup->pushService([&state, &config, pDbrbProcess](const std::shared_ptr<thread::IoThreadPool>& pPool) {
+				auto pFsmShared = pServiceGroup->pushService([pWriters, &config, bootstrapNodes, thisNode, &keyPair = locator.keyPair()](const std::shared_ptr<thread::IoThreadPool>& pPool) {
+					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, bootstrapNodes, thisNode, keyPair);
 					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess);
 				});
 
 				const auto& pluginManager = state.pluginManager();
-				pDbrbProcess->setDeliverCallback([pFsmShared, &pluginManager](const std::shared_ptr<ionet::Packet>& pPacket) {
+				auto pPacketHandlers = std::make_shared<ionet::ServerPacketHandlers>(config.Node.MaxPacketDataSize.bytes32());
+				pFsmShared->dbrbProcess().registerPacketHandlers(*pPacketHandlers);
+				std::weak_ptr<WeightedVotingFsm> pFsmWeak = pFsmShared;
+				pFsmShared->dbrbProcess().setDeliverCallback([pFsmWeak, &pluginManager](const std::shared_ptr<ionet::Packet>& pPacket) {
+					TRY_GET_FSM()
+
 					switch (pPacket->Type) {
 						case ionet::PacketType::Push_Proposed_Block: {
 							PushProposedBlock(pFsmShared, pluginManager);
-							break;
-						}
-						case ionet::PacketType::Push_Confirmed_Block: {
-							PushConfirmedBlock(pFsmShared, pluginManager);
 							break;
 						}
 						case ionet::PacketType::Push_Prevote_Messages: {
@@ -179,10 +177,11 @@ namespace catapult { namespace fastfinality {
 				};
 				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
 
+				RegisterPullConfirmedBlockHandler(pFsmShared, state.packetHandlers());
 				RegisterPullRemoteNodeStateHandler(pFsmShared, state.packetHandlers(), pConfigHolder, blockElementGetter, lastBlockElementSupplier);
 
 				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, *pPacketHandlers, locator.keyPair(), connectionSettings, 2u);
-				extensions::BootServer(*pServiceGroup, config.Node.Port + Port_Diff, Service_Id, config, pDbrbProcess->getNodeSubscriber(), [&acceptor = *pReaders](
+				extensions::BootServer(*pServiceGroup, config.Node.Port + Port_Diff, Service_Id, config, [&acceptor = *pReaders](
 					const auto& socketInfo,
 					const auto& callback) {
 					acceptor.accept(socketInfo, callback);
@@ -229,16 +228,16 @@ namespace catapult { namespace fastfinality {
 					state,
 					lastBlockElementSupplier,
 					pValidatorPool);
-				actions.WaitForProposalPhaseEnd = CreateDefaultWaitForProposalPhaseEndAction(pFsmShared);
+				actions.WaitForProposal = CreateDefaultWaitForProposalAction(pFsmShared);
 				actions.WaitForPrevotePhaseEnd = CreateDefaultWaitForPrevotePhaseEndAction(pFsmShared, pluginManager.getCommitteeManager(), pConfigHolder);
 				actions.AddPrevote = CreateDefaultAddPrevoteAction(pFsmShared);
 				actions.AddPrecommit = CreateDefaultAddPrecommitAction(pFsmShared);
 				actions.WaitForPrecommitPhaseEnd = CreateDefaultWaitForPrecommitPhaseEndAction(pFsmShared, pluginManager.getCommitteeManager(), pConfigHolder);
 				actions.UpdateConfirmedBlock = CreateDefaultUpdateConfirmedBlockAction(pFsmShared, pluginManager.getCommitteeManager());
+				actions.RequestConfirmedBlock = CreateDefaultRequestConfirmedBlockAction(pFsmShared, state, lastBlockElementSupplier);
 				actions.CommitConfirmedBlock = CreateDefaultCommitConfirmedBlockAction(
 					pFsmShared,
 					blockRangeConsumer,
-					lastBlockElementSupplier,
 					pConfigHolder,
 					pluginManager.getCommitteeManager());
 				actions.IncrementRound = CreateDefaultIncrementRoundAction(pFsmShared, pConfigHolder);

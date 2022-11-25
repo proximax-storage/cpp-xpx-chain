@@ -91,7 +91,7 @@ namespace catapult { namespace fastfinality {
 		}
 
 		void resetCommitteeData() {
-			m_committeeData.setCommitteeStage(CommitteeStage{});
+			m_committeeData.setCommitteeRound(CommitteeRound{});
 			m_committeeData.setBlockProposer(nullptr);
 			m_committeeData.localCommittee().clear();
 			m_committeeData.setTotalSumOfVotes(0.0);
@@ -99,6 +99,7 @@ namespace catapult { namespace fastfinality {
 			m_committeeData.setConfirmedBlock(nullptr);
 			m_committeeData.clearVotes();
 			m_committeeData.setSumOfPrevotesSufficient(false);
+			m_committeeData.stopWaitForProposedBlock();
 		}
 
 		bool stopped() const {

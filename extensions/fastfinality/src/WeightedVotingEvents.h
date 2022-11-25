@@ -45,7 +45,9 @@ namespace catapult { namespace fastfinality {
 	struct SumOfPrecommitsInsufficient{};
 	struct SumOfPrecommitsSufficient{};
 
-	struct WaitForBlock{};
+	struct ConfirmedBlockNotReceived{};
+	struct ConfirmedBlockReceived{};
+
 	struct CommitBlockFailed{};
 	struct CommitBlockSucceeded{};
 

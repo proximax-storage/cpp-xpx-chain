@@ -75,8 +75,8 @@ namespace catapult { namespace ionet {
 	/* A precommit message has been pushed by a peer. */ \
 	ENUM_VALUE(Push_Precommit_Messages, 15) \
 	\
-	/* A block confirmed by committee has been pushed by a peer. */ \
-	ENUM_VALUE(Push_Confirmed_Block, 16) \
+	/* A block confirmed by committee has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Confirmed_Block, 16) \
 	\
     /* A remote node state has been requested by a peer. */ \
     ENUM_VALUE(Pull_Remote_Node_State, 17) \

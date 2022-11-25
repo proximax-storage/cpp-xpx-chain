@@ -105,6 +105,23 @@ namespace catapult { namespace config {
 		return ionet::Node(identityKey, endpoint, metadata);
 	}
 
+	ionet::Node ToLocalDbrbNode(const BlockchainConfiguration& config) {
+		const auto& localNodeConfig = config.Node.Local;
+
+		auto identityKey = crypto::KeyPair::FromString(config.User.BootKey).publicKey();
+
+		auto endpoint = ionet::NodeEndpoint();
+		endpoint.Host = localNodeConfig.Host;
+		endpoint.Port = config.Node.DbrbPort;
+
+		auto metadata = ionet::NodeMetadata(config.Immutable.NetworkIdentifier);
+		metadata.Name = localNodeConfig.FriendlyName;
+		metadata.Version = ionet::NodeVersion(localNodeConfig.Version);
+		metadata.Roles = localNodeConfig.Roles;
+
+		return ionet::Node(identityKey, endpoint, metadata);
+	}
+
 	BlockFeeMultiplier GetMinFeeMultiplier(const BlockchainConfiguration& config) {
 		return config.Network.EnableUnconfirmedTransactionMinFeeValidation ? config.Node.MinFeeMultiplier : BlockFeeMultiplier{0};
 	}

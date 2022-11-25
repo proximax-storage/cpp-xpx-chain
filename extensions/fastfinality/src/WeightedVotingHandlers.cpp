@@ -10,6 +10,8 @@
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/harvesting_core/UnlockedAccounts.h"
+#include "catapult/ionet/PacketEntityUtils.h"
+#include "catapult/ionet/PacketPayloadFactory.h"
 #include "catapult/model/BlockUtils.h"
 
 namespace catapult { namespace fastfinality {
@@ -37,34 +39,23 @@ namespace catapult { namespace fastfinality {
 				return;
 			}
 
+			const auto& committee = pluginManager.getCommitteeManager().committee();
+			if (pBlock->Signer != committee.BlockProposer) {
+				CATAPULT_LOG(warning) << "rejecting proposal, signer " << pBlock->Signer << " invalid, expected " << committee.BlockProposer;
+				return;
+			}
+
+			if (pBlock->round() != committee.Round) {
+				CATAPULT_LOG(warning) << "rejecting proposal, round " << pBlock->round() << " invalid, expected " << committee.Round;
+				return;
+			}
+
+			if (!model::VerifyBlockHeaderSignature(*pBlock)) {
+				CATAPULT_LOG(warning) << "rejecting proposal, signature invalid";
+				return;
+			}
+
 			committeeData.setProposedBlock(pBlock);
-		};
-	}
-
-	consumer<const ionet::Packet&> PushConfirmedBlock(
-			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			const plugins::PluginManager& pluginManager) {
-		return [pFsmWeak, &pluginManager](const auto& packet) {
-			TRY_GET_FSM()
-
-			const auto& registry = pluginManager.transactionRegistry();
-			auto pBlock = utils::UniqueToShared(ionet::ExtractEntityFromPacket<model::Block>(packet, [&registry](const auto& entity) {
-				return IsSizeValid(entity, registry);
-			}));
-			if (!pBlock) {
-				CATAPULT_LOG(warning) << "rejecting invalid packet: " << packet;
-				return;
-			}
-
-			CATAPULT_LOG(trace) << "received valid " << packet;
-
-			auto& committeeData = pFsmShared->committeeData();
-			if (committeeData.confirmedBlock()) {
-				CATAPULT_LOG(trace) << "rejecting confirmed block, there is one already";
-				return;
-			}
-
-			committeeData.setConfirmedBlock(pBlock);
 		};
 	}
 
@@ -126,6 +117,19 @@ namespace catapult { namespace fastfinality {
 
 	consumer<const ionet::Packet&> PushPrecommitMessages(std::weak_ptr<WeightedVotingFsm> pFsmWeak) {
 		return PushVoteMessages<PushPrecommitMessagesRequest>(pFsmWeak, "precommit message");
+	}
+
+	void RegisterPullConfirmedBlockHandler(std::weak_ptr<WeightedVotingFsm> pFsmWeak, ionet::ServerPacketHandlers& handlers) {
+		handlers.registerHandler(ionet::PacketType::Pull_Confirmed_Block, [pFsmWeak](
+				const auto& packet, auto& context) {
+			TRY_GET_FSM()
+
+			std::vector<std::shared_ptr<model::Block>> response;
+			auto pConfirmedBlock = pFsmShared->committeeData().confirmedBlock();
+			if (pConfirmedBlock)
+				response.push_back(pConfirmedBlock);
+			context.response(ionet::PacketPayloadFactory::FromEntities(ionet::PacketType::Pull_Confirmed_Block, response));
+		});
 	}
 
 	void RegisterPullRemoteNodeStateHandler(

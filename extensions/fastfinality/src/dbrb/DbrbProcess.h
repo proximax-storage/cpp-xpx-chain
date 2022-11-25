@@ -11,7 +11,6 @@
 #include "catapult/functions.h"
 #include "catapult/net/PacketWriters.h"
 #include "catapult/ionet/PacketHandlers.h"
-#include "catapult/subscribers/NodeSubscriber.h"
 
 namespace catapult { namespace dbrb {
 
@@ -98,15 +97,6 @@ namespace catapult { namespace dbrb {
 		};
 	};
 
-	class NoopNodeSubscriber : public subscribers::NodeSubscriber {
-	public:
-		void notifyNode(const ionet::Node&) override {
-		}
-
-		void notifyIncomingNode(const Key&, ionet::ServiceIdentifier) override {
-		}
-	};
-
 
 	/// Struct that encapsulates payload, its certificate and certificate view.
 	struct PayloadData {
@@ -129,7 +119,6 @@ namespace catapult { namespace dbrb {
 	public:
 		explicit DbrbProcess(
 			std::shared_ptr<net::PacketWriters> pWriters,
-			std::shared_ptr<ionet::ServerPacketHandlers> pPacketHandlers,
 			const std::vector<ionet::Node>& bootstrapNodes,
 			ionet::Node thisNode,
 			const crypto::KeyPair& keyPair);
@@ -211,13 +200,9 @@ namespace catapult { namespace dbrb {
 
 		std::shared_ptr<net::PacketWriters> m_pWriters;
 
-		std::shared_ptr<ionet::ServerPacketHandlers> m_pPacketHandlers;
-
 		NetworkPacketConverter m_converter;
 
 		DeliverCallback m_deliverCallback;
-
-		NoopNodeSubscriber m_nodeSubscriber;
 
 		const crypto::KeyPair& m_keyPair;
 
@@ -234,10 +219,8 @@ namespace catapult { namespace dbrb {
 		void processMessage(const Message& message);
 
 	public:
-		void registerPacketHandlers();
+		void registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers);
 		void setDeliverCallback(const DeliverCallback& callback);
-
-		subscribers::NodeSubscriber& getNodeSubscriber();
 
 	private:
 		void disseminate(const std::shared_ptr<MessagePacket>& pPacket, const std::set<ProcessId>& recipients);

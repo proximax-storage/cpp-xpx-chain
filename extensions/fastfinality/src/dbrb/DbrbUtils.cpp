@@ -51,8 +51,7 @@ namespace catapult { namespace dbrb {
 		return view;
 	}
 
-	void PackProcessId(uint8_t*& pData, const ProcessId& processId) {
-		auto pPackedProcessId = ionet::PackNode(processId);
+	void CopyProcessId(uint8_t*& pData, const model::UniqueEntityPtr<ionet::NetworkNode>& pPackedProcessId) {
 		memcpy(pData, static_cast<const void*>(pPackedProcessId.get()), pPackedProcessId->Size);
 		pData += pPackedProcessId->Size;
 	}

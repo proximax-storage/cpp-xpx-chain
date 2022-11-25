@@ -27,7 +27,7 @@ namespace catapult { namespace dbrb {
 	PackedView PackView(const View& view, uint32_t& payloadSize);
 	void CopyView(uint8_t*& pData, const PackedView& nodes);
 	View UnpackView(const uint8_t*& pData);
-	void PackProcessId(uint8_t*& pData, const ProcessId& processId);
+	void CopyProcessId(uint8_t*& pData, const model::UniqueEntityPtr<ionet::NetworkNode>& processId);
 	ProcessId UnpackProcessId(const uint8_t*& pData);
 
 	Hash256 CalculateHash(const std::vector<RawBuffer>& buffers);

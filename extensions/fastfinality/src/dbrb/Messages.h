@@ -92,7 +92,7 @@ namespace catapult { namespace dbrb {
 	struct ReconfigMessage : Message {
 	public:
 		ReconfigMessage() = delete;
-		ReconfigMessage(const ProcessId& sender, ProcessId  processId, const MembershipChanges& membershipChange, View view)
+		ReconfigMessage(const ProcessId& sender, ProcessId processId, const MembershipChanges& membershipChange, View view)
 			: Message(sender, ionet::PacketType::Dbrb_Reconfig_Message)
 			, ProcessId(std::move(processId))
 			, MembershipChange(membershipChange)
@@ -222,11 +222,11 @@ namespace catapult { namespace dbrb {
 	struct AcknowledgedMessage : Message {
 	public:
 		AcknowledgedMessage() = delete;
-		explicit AcknowledgedMessage(const ProcessId& sender, Payload payload, View view, catapult::Signature signature)
+		explicit AcknowledgedMessage(const ProcessId& sender, Payload payload, View view, catapult::Signature payloadSignature)
 			: Message(sender, ionet::PacketType::Dbrb_Acknowledged_Message)
 			, Payload(std::move(payload))
 			, View(std::move(view))
-			, Signature(std::move(signature))
+			, PayloadSignature(std::move(payloadSignature))
 		{}
 
 	public:
@@ -240,7 +240,7 @@ namespace catapult { namespace dbrb {
 		dbrb::View View;
 
 		/// Signature formed by Sender.
-		catapult::Signature Signature;
+		catapult::Signature PayloadSignature;
 	};
 
 	struct CommitMessage : Message {
