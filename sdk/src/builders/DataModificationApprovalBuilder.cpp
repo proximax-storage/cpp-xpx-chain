@@ -30,6 +30,10 @@ namespace catapult { namespace builders {
         m_fileStructureCdi = fileStructureCdi;
     }
 
+    void DataModificationApprovalBuilder::setModificationStatus(uint8_t status) {
+    	m_modificationStatus = status;
+	}
+
     void DataModificationApprovalBuilder::setFileStructureSize(uint64_t fileStructureSize) {
         m_fileStructureSize = fileStructureSize;
     }
@@ -84,6 +88,7 @@ namespace catapult { namespace builders {
         pTransaction->DriveKey = m_driveKey;
         pTransaction->DataModificationId = m_dataModificationId;
         pTransaction->FileStructureCdi = m_fileStructureCdi;
+        pTransaction->ModificationStatus = m_modificationStatus;
         pTransaction->FileStructureSizeBytes = m_fileStructureSize;
         pTransaction->MetaFilesSizeBytes = m_metaFilesSize;
         pTransaction->UsedDriveSizeBytes = m_usedDriveSize;

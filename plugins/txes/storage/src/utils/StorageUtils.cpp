@@ -493,7 +493,7 @@ namespace catapult { namespace utils {
 				completedDataModifications.rbegin(),
 				completedDataModifications.rend(),
 				[](const state::CompletedDataModification& modification){
-					return modification.State == state::DataModificationState::Succeeded;
+					return modification.ApprovalState == state::DataModificationApprovalState::Approved;
 				});
 		const bool succeededVerifications = lastApprovedDataModificationIter != completedDataModifications.rend();
 		const auto lastApprovedDataModificationId = succeededVerifications ? lastApprovedDataModificationIter->Id : Hash256();
@@ -634,7 +634,7 @@ namespace catapult { namespace utils {
 							completedDataModifications.rbegin(),
 							completedDataModifications.rend(),
 							[](const state::CompletedDataModification& modification){
-							  	return modification.State == state::DataModificationState::Succeeded;
+							  	return modification.ApprovalState == state::DataModificationApprovalState::Approved;
 							});
 					const bool succeededVerifications = lastApprovedDataModificationIter != completedDataModifications.rend();
 					const auto lastApprovedDataModificationId = succeededVerifications ? lastApprovedDataModificationIter->Id : Hash256();

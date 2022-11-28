@@ -24,6 +24,7 @@ namespace catapult { namespace model {
 					+ Key_Size // drive key
 					+ Hash256_Size // data modification id
 					+ Hash256_Size // file structure CDI
+					+ sizeof(uint8_t) // modifications status
 					+ sizeof(uint64_t) // file structure size
 					+ sizeof(uint64_t) // metafiles size
 					+ sizeof(uint64_t) // used drive size
@@ -33,7 +34,7 @@ namespace catapult { namespace model {
 					+ sizeof(uint16_t); // opinion element count
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 125u, sizeof(T));
+			EXPECT_EQ(baseSize + 126u, sizeof(T));
 		}
 
 		template<typename T>

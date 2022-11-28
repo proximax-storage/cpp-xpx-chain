@@ -42,7 +42,7 @@ namespace catapult { namespace observers {
 					break;
 
 				// If current data modification was approved (not cancelled), account its size.
-				if (it->State == state::DataModificationState::Succeeded)
+				if (it->ApprovalState == state::DataModificationApprovalState::Approved)
 					approvableDownloadWork += it->ActualUploadSizeMegabytes;
 			}
 
