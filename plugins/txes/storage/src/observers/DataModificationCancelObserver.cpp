@@ -62,7 +62,8 @@ namespace catapult { namespace observers {
 		// Updating data modification lists in the drive entry:
 		driveEntry.completedDataModifications().emplace_back(state::CompletedDataModification{
 				*cancelingDataModificationIter,
-				state::DataModificationState::Cancelled
+				state::DataModificationApprovalState::Cancelled,
+				0U
 		});
 		activeDataModifications.erase(cancelingDataModificationIter);
     });

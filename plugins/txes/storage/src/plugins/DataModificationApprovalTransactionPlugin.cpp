@@ -30,6 +30,7 @@ namespace catapult { namespace plugins {
 				utils::WriteToByteArray(pCommonData, transaction.DriveKey);
 				utils::WriteToByteArray(pCommonData, transaction.DataModificationId);
 				utils::WriteToByteArray(pCommonData, transaction.FileStructureCdi);
+				utils::WriteToByteArray(pCommonData, transaction.ModificationStatus);
 				utils::WriteToByteArray(pCommonData, transaction.FileStructureSizeBytes);
 				utils::WriteToByteArray(pCommonData, transaction.MetaFilesSizeBytes);
 				utils::WriteToByteArray(pCommonData, transaction.UsedDriveSizeBytes);
@@ -59,6 +60,7 @@ namespace catapult { namespace plugins {
 						transaction.DriveKey,
 						transaction.DataModificationId,
 						transaction.FileStructureCdi,
+						transaction.ModificationStatus,
 						transaction.FileStructureSizeBytes,
 						transaction.MetaFilesSizeBytes,
 						transaction.UsedDriveSizeBytes,

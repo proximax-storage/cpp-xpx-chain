@@ -24,7 +24,8 @@ namespace catapult { namespace validators {
 		constexpr auto Replicator_Count = 5;
 		constexpr auto Required_Signatures_Count = Replicator_Count * 2 / 3 + 1;
 		constexpr auto Common_Data_Size = sizeof(Key) + 2 * sizeof(Hash256) + 3 * sizeof(uint64_t);
-        const auto File_Structure_Cdi =  test::GenerateRandomByteArray<Hash256>();
+		const uint8_t Modification_Status = 0;
+		const auto File_Structure_Cdi =  test::GenerateRandomByteArray<Hash256>();
         constexpr auto File_Structure_Size = 50;
 		constexpr auto Meta_Files_Size = 50;
         constexpr auto Used_Drive_Size = 50;
@@ -71,6 +72,7 @@ namespace catapult { namespace validators {
 					driveKey,
 					dataModificationId,
 					File_Structure_Cdi,
+					Modification_Status,
 					File_Structure_Size,
 					Meta_Files_Size,
 					Used_Drive_Size,

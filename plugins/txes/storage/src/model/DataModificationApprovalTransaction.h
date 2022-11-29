@@ -36,6 +36,9 @@ namespace catapult { namespace model {
 		/// Content Download Information for the File Structure.
 		Hash256 FileStructureCdi;
 
+		/// Status of the modification
+		uint8_t ModificationStatus;
+
 		/// Size of the File Structure.
 		uint64_t FileStructureSizeBytes;
 

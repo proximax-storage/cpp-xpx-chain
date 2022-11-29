@@ -29,6 +29,8 @@ namespace catapult { namespace builders {
 
         void setFileStructureCdi(const Hash256& fileStructureCdi);
 
+		void setModificationStatus(uint8_t status);
+
         void setFileStructureSize(uint64_t fileStructureSize);
 
         void setMetaFilesSize(uint64_t metaFilesSize);
@@ -64,6 +66,7 @@ namespace catapult { namespace builders {
         Key m_driveKey;
         Hash256 m_dataModificationId;
         Hash256 m_fileStructureCdi;
+		uint8_t m_modificationStatus;
         uint64_t m_fileStructureSize;
         uint64_t m_metaFilesSize;
         uint64_t m_usedDriveSize;

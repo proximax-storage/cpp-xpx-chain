@@ -55,7 +55,7 @@ namespace catapult { namespace validators {
 		const auto& lastApprovedDataModification = std::find_if(
 				completedDataModifications.rbegin(),
 				completedDataModifications.rend(),
-				[](const state::CompletedDataModification& dataModification) {return dataModification.State == state::DataModificationState::Succeeded;});
+				[](const state::CompletedDataModification& dataModification) {return dataModification.ApprovalState == state::DataModificationApprovalState::Approved;});
 	  	if (lastApprovedDataModification == completedDataModifications.rend())
 		  	return Failure_Storage_No_Approved_Data_Modifications;
 
