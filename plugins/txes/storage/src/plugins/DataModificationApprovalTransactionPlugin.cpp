@@ -22,6 +22,7 @@ namespace catapult { namespace plugins {
 				const auto commonDataSize = sizeof(transaction.DriveKey)
 											+ sizeof(transaction.DataModificationId)
 											+ sizeof(transaction.FileStructureCdi)
+											+ sizeof(transaction.ModificationStatus)
 											+ sizeof(transaction.FileStructureSizeBytes)
 											+ sizeof(transaction.MetaFilesSizeBytes)
 											+ sizeof(transaction.UsedDriveSizeBytes);
