@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 
 			auto& lastCompletedModification = driveEntry.completedDataModifications().back();
 			lastCompletedModification.Id = dataModificationId;
-			lastCompletedModification.State = state::DataModificationState::Succeeded;
+			lastCompletedModification.ApprovalState = state::DataModificationApprovalState::Approved;
 
 			if (ownerIndex != -1) {
 				driveEntry.setOwner(publicKeys.at(ownerIndex));

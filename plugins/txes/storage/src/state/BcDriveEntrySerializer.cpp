@@ -41,7 +41,8 @@ namespace catapult { namespace state {
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(completedDataModifications.size()));
 			for (const auto& modification : completedDataModifications) {
 				SaveActiveDataModification(output,modification);
-				io::Write8(output, utils::to_underlying_type(modification.State));
+				io::Write8(output, utils::to_underlying_type(modification.ApprovalState));
+				io::Write8(output, modification.SuccessState);
 			}
 		}
 
@@ -172,8 +173,9 @@ namespace catapult { namespace state {
 			auto count = io::Read16(input);
 			while (count--) {
 				auto activeModification = LoadActiveDataModification(input);
-				auto state = static_cast<DataModificationState>(io::Read8(input));
-				completedDataModifications.emplace_back(activeModification, state);
+				auto state = static_cast<DataModificationApprovalState>(io::Read8(input));
+				auto success = io::Read8(input);
+				completedDataModifications.emplace_back(activeModification, state, success);
 			}
 		}
 

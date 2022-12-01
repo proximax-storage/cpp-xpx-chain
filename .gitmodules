@@ -2,5 +2,3 @@
 	path = cpp-xpx-storage-sdk
 	url = https://github.com/proximax-storage/cpp-xpx-storage-sdk
 	branch = develop
-[submodule]
-	cpp-xpx-storage-sdk = develop

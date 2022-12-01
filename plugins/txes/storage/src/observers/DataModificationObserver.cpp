@@ -11,7 +11,7 @@ namespace catapult { namespace observers {
 
 	using Notification = model::DataModificationNotification<1>;
 
-	DECLARE_OBSERVER(DataModification, Notification)(const LiquidityProviderExchangeObserver& liquidityProvider) {
+	DECLARE_OBSERVER(DataModification, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider) {
 		return MAKE_OBSERVER(DataModification, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModification)");

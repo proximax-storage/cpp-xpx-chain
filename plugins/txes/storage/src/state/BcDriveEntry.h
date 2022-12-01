@@ -17,9 +17,9 @@
 namespace catapult { namespace state {
 
 	/// Data modification state.
-	enum class DataModificationState : uint8_t {
+	enum class DataModificationApprovalState : uint8_t {
 		/// Data modification has been approved.
-		Succeeded,
+		Approved,
 
 		/// Data modification has been cancelled.
 		Cancelled
@@ -87,13 +87,19 @@ namespace catapult { namespace state {
 	};
 
 	struct CompletedDataModification : ActiveDataModification {
-		CompletedDataModification(const ActiveDataModification& modification, DataModificationState state)
+		CompletedDataModification(const ActiveDataModification& modification,
+								  DataModificationApprovalState state,
+								  uint8_t successState)
 			: ActiveDataModification(modification)
-			, State(state)
+			, ApprovalState(state)
+			, SuccessState(successState)
 		{}
 
 		/// Completion state.
-		DataModificationState State;
+		DataModificationApprovalState ApprovalState;
+
+		// Success state, has sense only for approved modifications
+		uint8_t SuccessState;
 	};
 
 	struct ConfirmedStorageInfo {

@@ -18,7 +18,7 @@ namespace catapult { namespace storage {
 
     class ReplicatorService {
     public:
-        ReplicatorService(crypto::KeyPair&& keyPair, StorageConfiguration&& storageConfig, std::vector<ionet::Node>&& bootstrapReplicators);
+        ReplicatorService(StorageConfiguration&& storageConfig, std::vector<ionet::Node>&& bootstrapReplicators);
 		~ReplicatorService();
 
     public:

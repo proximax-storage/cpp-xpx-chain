@@ -15,7 +15,7 @@
 namespace catapult { namespace observers {
 
 #define DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(NAME, NOTIFICATION_TYPE, HANDLER) \
-	DECLARE_OBSERVER(NAME, NOTIFICATION_TYPE)(const LiquidityProviderExchangeObserver& liquidityProvider) { \
+	DECLARE_OBSERVER(NAME, NOTIFICATION_TYPE)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider) { \
 		return MAKE_OBSERVER(NAME, NOTIFICATION_TYPE, HANDLER); \
 	}
 
@@ -23,9 +23,9 @@ namespace catapult { namespace observers {
 
 	DECLARE_OBSERVER(CreateLiquidityProvider, model::CreateLiquidityProviderNotification<1>)();
 
-	DECLARE_OBSERVER(DebitMosaic, model::DebitMosaicNotification<1>)(const LiquidityProviderExchangeObserver&);
+	DECLARE_OBSERVER(DebitMosaic, model::DebitMosaicNotification<1>)(const std::unique_ptr<LiquidityProviderExchangeObserver>&);
 
-	DECLARE_OBSERVER(CreditMosaic, model::CreditMosaicNotification<1>)(const LiquidityProviderExchangeObserver&);
+	DECLARE_OBSERVER(CreditMosaic, model::CreditMosaicNotification<1>)(const std::unique_ptr<LiquidityProviderExchangeObserver>&);
 
 	DECLARE_OBSERVER(ManualRateChange, model::ManualRateChangeNotification<1>)();
 

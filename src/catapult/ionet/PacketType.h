@@ -199,6 +199,12 @@ namespace catapult { namespace ionet {
 	/* Liquidity provider state path has been requested by a client. */ \
 	ENUM_VALUE(LiquidityProvider_State_Path, FACILITY_BASED_CODE(800, LiquidityProvider)) \
 	\
+	/* SDA-SDA Exchange state path has been requested by a client. */ \
+	ENUM_VALUE(SdaExchange_State_Path, FACILITY_BASED_CODE(800, ExchangeSda)) \
+	\
+    /* SDA-SDA Offer Group state path has been requested by a client. */ \
+    ENUM_VALUE(SdaOfferGroup_State_Path, FACILITY_BASED_CODE(800, SdaOfferGroup)) \
+	\
 	/* SuperContract_v2 state path has been requested by a client. */ \
 	ENUM_VALUE(SuperContract_v2_State_Path, FACILITY_BASED_CODE(800, SuperContract_v2)) \
 	\
@@ -291,6 +297,11 @@ namespace catapult { namespace ionet {
 	/* Liquidity provider infos have been requested by a client. */ \
 	ENUM_VALUE(LiquidityProvider_Infos, FACILITY_BASED_CODE(1200, LiquidityProvider)) \
 	\
+	/* SDA-SDA Exchange infos have been requested by a client. */ \
+	ENUM_VALUE(SdaExchange_Infos, FACILITY_BASED_CODE(1200, ExchangeSda)) \
+	\
+	/* SDA-SDA Offer Group infos have been requested by a client. */ \
+	ENUM_VALUE(SdaOfferGroup_Infos, FACILITY_BASED_CODE(1200, SdaOfferGroup))  \
 	/* SuperContract_v2 infos have been requested by a client. */ \
 	ENUM_VALUE(SuperContract_v2_Infos, FACILITY_BASED_CODE(1200, SuperContract_v2)) \
 	\

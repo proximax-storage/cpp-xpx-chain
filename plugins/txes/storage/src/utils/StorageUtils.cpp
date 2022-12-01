@@ -150,7 +150,7 @@ namespace catapult { namespace utils {
 			const Key& driveKey,
 			const std::set<Key>& replicators,
 			observers::ObserverContext& context,
-			const observers::LiquidityProviderExchangeObserver& liquidityProvider) {
+			const std::unique_ptr<observers::LiquidityProviderExchangeObserver>& liquidityProvider) {
 		auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
 		auto& accountCache = context.Cache.template sub<cache::AccountStateCache>();
 		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
@@ -200,10 +200,10 @@ namespace catapult { namespace utils {
 			const auto streamingDepositRefundAmount = Amount(unslashedStreamingDeposit - streamingDepositSlashing);
 
 			// Refund amounts are returned as XPX.
-			liquidityProvider.debitMosaics(context, Key(), replicatorKey,
+			liquidityProvider->debitMosaics(context, Key(), replicatorKey,
 										   config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
 										   storageDepositRefundAmount);
-			liquidityProvider.debitMosaics(context, driveKey, replicatorKey,
+			liquidityProvider->debitMosaics(context, driveKey, replicatorKey,
 										   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 										   streamingDepositRefundAmount);
 		}
@@ -214,6 +214,11 @@ namespace catapult { namespace utils {
 			const std::set<Key>& offboardingReplicators,
 			const observers::ObserverContext& context,
 			std::mt19937& rng) {
+
+		if (offboardingReplicators.empty()) {
+			return;
+		}
+
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		auto driveIter = driveCache.find(driveKey);
 		auto& driveEntry = driveIter.get();
@@ -229,6 +234,8 @@ namespace catapult { namespace utils {
 			auto replicatorIter = replicatorCache.find(replicatorKey);
 			auto& replicatorEntry = replicatorIter.get();
 			replicatorEntry.drives().erase(driveKey);
+			for (const auto& id : driveEntry.downloadShards())
+				replicatorEntry.downloadChannels().erase(id);
 		}
 
 		std::vector<Key> newOffboardingReplicators;
@@ -491,12 +498,13 @@ namespace catapult { namespace utils {
 				completedDataModifications.rbegin(),
 				completedDataModifications.rend(),
 				[](const state::CompletedDataModification& modification){
-					return modification.State == state::DataModificationState::Succeeded;
+					return modification.ApprovalState == state::DataModificationApprovalState::Approved;
 				});
 		const bool succeededVerifications = lastApprovedDataModificationIter != completedDataModifications.rend();
 		const auto lastApprovedDataModificationId = succeededVerifications ? lastApprovedDataModificationIter->Id : Hash256();
 		const auto initialDownloadWork = driveEntry.usedSizeBytes() - driveEntry.metaFilesSizeBytes();
-		const state::DriveInfo driveInfo{ lastApprovedDataModificationId, initialDownloadWork, initialDownloadWork };
+		const auto initialDownloadWorkMegabytes = utils::FileSize::FromBytes(initialDownloadWork).megabytes();
+		const state::DriveInfo driveInfo{ lastApprovedDataModificationId, initialDownloadWorkMegabytes, initialDownloadWork };
 
 		// Pick the first (requiredReplicatorCount) replicators from acceptableReplicators
 		// and assign them to the drive. If (acceptableReplicators.size() < requiredReplicatorCount),
@@ -544,6 +552,10 @@ namespace catapult { namespace utils {
 
 		for (const auto& replicatorKey: driveEntry.formerReplicators()) {
 			treeAdapter.insert(replicatorKey);
+		}
+
+		if (replicatorCache.contains(driveEntry.owner())) {
+			treeAdapter.insert(driveEntry.owner());
 		}
 
 		// If the actual number of assigned replicators is less than ordered,
@@ -615,23 +627,27 @@ namespace catapult { namespace utils {
 				auto driveIter = driveCache.find(driveKey);
 				auto& driveEntry = driveIter.get();
 				const auto& driveSize = driveEntry.size();
+				bool replicatorIsAssigned =
+						driveEntry.replicators().find(replicatorKey) != driveEntry.replicators().end();
 				bool replicatorIsBanned =
 						driveEntry.formerReplicators().find(replicatorKey) != driveEntry.formerReplicators().end();
 				bool replicatorIsOwner = driveEntry.owner() == replicatorKey;
-				if (driveSize <= remainingCapacity && !replicatorIsBanned && !replicatorIsOwner) {
+				if (driveSize <= remainingCapacity && !replicatorIsAssigned && !replicatorIsBanned &&
+					!replicatorIsOwner) {
 					// Updating drives() and replicators()
 					const auto& completedDataModifications = driveEntry.completedDataModifications();
 					const auto lastApprovedDataModificationIter = std::find_if(
 							completedDataModifications.rbegin(),
 							completedDataModifications.rend(),
 							[](const state::CompletedDataModification& modification){
-							  	return modification.State == state::DataModificationState::Succeeded;
+							  	return modification.ApprovalState == state::DataModificationApprovalState::Approved;
 							});
 					const bool succeededVerifications = lastApprovedDataModificationIter != completedDataModifications.rend();
 					const auto lastApprovedDataModificationId = succeededVerifications ? lastApprovedDataModificationIter->Id : Hash256();
 					const auto initialDownloadWork = driveEntry.usedSizeBytes() - driveEntry.metaFilesSizeBytes();
+					const auto initialDownloadWorkMegabytes = utils::FileSize::FromBytes(initialDownloadWork).megabytes();
 					replicatorEntry.drives().emplace(driveKey, state::DriveInfo{
-						lastApprovedDataModificationId, initialDownloadWork, initialDownloadWork
+						lastApprovedDataModificationId, initialDownloadWorkMegabytes, initialDownloadWork
 					});
 					driveEntry.replicators().emplace(replicatorKey);
 

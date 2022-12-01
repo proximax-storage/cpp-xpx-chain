@@ -129,6 +129,9 @@ namespace catapult { namespace model {
 	/// Mosaic was credited to account.
 	DEFINE_CORE_NOTIFICATION(Balance_Credit_v1, 0x000E, All);
 
+	/// Mosaic is active.
+	DEFINE_CORE_NOTIFICATION(Mosaic_Active_v1, 0x0010, All);
+
 	/// Block cosignatures.
 	DEFINE_CORE_NOTIFICATION(Block_Committee_v1, 0x0011, All);
 

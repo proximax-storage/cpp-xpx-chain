@@ -42,13 +42,13 @@ namespace catapult { namespace observers {
 					break;
 
 				// If current data modification was approved (not cancelled), account its size.
-				if (it->State == state::DataModificationState::Succeeded)
+				if (it->ApprovalState == state::DataModificationApprovalState::Approved)
 					approvableDownloadWork += it->ActualUploadSizeMegabytes;
 			}
 
 			// Making mosaic transfers.
 			const auto mosaicAmount = Amount(approvableDownloadWork + driveInfo.InitialDownloadWorkMegabytes);
-			liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorEntry.key(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), mosaicAmount);
+			liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorEntry.key(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), mosaicAmount);
 
 			// Updating current replicator's drive info.
 			driveInfo.LastApprovedDataModificationId = notification.DataModificationId;

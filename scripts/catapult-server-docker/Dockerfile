@@ -117,6 +117,7 @@ RUN cd /catapult \
     catapult.mongo.plugins.config \
     catapult.mongo.plugins.contract \
     catapult.mongo.plugins.exchange \
+    catapult.mongo.plugins.exchangesda \
     catapult.mongo.plugins.liquidityprovider \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
@@ -139,6 +140,7 @@ RUN cd /catapult \
     catapult.plugins.config \
     catapult.plugins.contract \
     catapult.plugins.exchange \
+    catapult.plugins.exchangesda \
     catapult.plugins.liquidityprovider \
     catapult.plugins.hashcache \
     catapult.plugins.hashcache.cache \

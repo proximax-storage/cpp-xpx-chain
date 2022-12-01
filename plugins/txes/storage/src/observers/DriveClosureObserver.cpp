@@ -15,7 +15,7 @@ namespace catapult { namespace observers {
 	using Notification = model::DriveClosureNotification<1>;
 	using BigUint = boost::multiprecision::uint128_t;
 
-	DECLARE_OBSERVER(DriveClosure, Notification)(const LiquidityProviderExchangeObserver& liquidityProvider) {
+	DECLARE_OBSERVER(DriveClosure, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider) {
 		return MAKE_OBSERVER(DriveClosure, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
@@ -69,7 +69,7 @@ namespace catapult { namespace observers {
 						modificationSize + // Download work
 						modificationSize * (replicators.size() - 1) / replicators.size()); // Upload work
 				for (const auto& replicatorKey : replicators) {
-					liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
+					liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
 				}
 			}
 
@@ -98,7 +98,7 @@ namespace catapult { namespace observers {
 
 				auto payment = Amount(((driveSize * timeInConfirmedStorageSeconds) / paymentIntervalSeconds)
 											  .template convert_to<uint64_t>());
-				liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
+				liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
 			}
 
 			// The Drive is Removed, so we should make removal from payment queue
@@ -127,11 +127,11 @@ namespace catapult { namespace observers {
 			driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
 		  	driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
 
-		  	liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+		  	liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
 										   config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
 										   storageRefundAmount);
 
-		  	liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+		  	liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
 										   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 										   streamingRefundAmount);
 
@@ -146,11 +146,13 @@ namespace catapult { namespace observers {
 
 			// Simulate publishing of finish download for all download channels
 			auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+			utils::QueueAdapter<cache::DownloadChannelCache> downloadQueueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
 			for (const auto& key: driveEntry.downloadShards()) {
 				auto downloadIter = downloadCache.find(key);
 				auto& downloadEntry = downloadIter.get();
 				if (!downloadEntry.isCloseInitiated()) {
 					downloadEntry.setFinishPublished(true);
+					downloadQueueAdapter.remove(key.array());
 					downloadEntry.downloadApprovalInitiationEvent() = notification.TransactionHash;
 				}
 			}

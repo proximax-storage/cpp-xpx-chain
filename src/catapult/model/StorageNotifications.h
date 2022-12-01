@@ -397,6 +397,7 @@ namespace catapult { namespace model {
 				const Key& driveKey,
 				const Hash256& dataModificationId,
 				const Hash256& fileStructureCdi,
+				const uint8_t modificationStatus,
 				const uint64_t fileStructureSize,
 				const uint64_t metaFilesSize,
 				const uint64_t usedDriveSize,
@@ -409,6 +410,7 @@ namespace catapult { namespace model {
 			, DriveKey(driveKey)
 			, DataModificationId(dataModificationId)
 			, FileStructureCdi(fileStructureCdi)
+			, ModificationStatus(modificationStatus)
 			, FileStructureSize(fileStructureSize)
 			, MetaFilesSize(metaFilesSize)
 			, UsedDriveSize(usedDriveSize)
@@ -428,6 +430,9 @@ namespace catapult { namespace model {
 
 		/// Content Download Information for the File Structure.
 		Hash256 FileStructureCdi;
+
+		// Status of the modification
+		uint8_t ModificationStatus;
 
 		/// Size of the File Structure.
 		uint64_t FileStructureSize;

@@ -559,8 +559,7 @@ namespace catapult { namespace storage {
 					auto pDownloadChannel = m_storageState.getDownloadChannel(m_keyPair.publicKey(), channelId);
 					if (pDownloadChannel && pDownloadChannel->ApprovalTrigger &&
 						pDownloadChannel->ApprovalTrigger == blockHash) {
-						m_pReplicator->asyncInitiateDownloadApprovalTransactionInfo(
-								pDownloadChannel->DriveKey.array(), channelId.array());
+						m_pReplicator->asyncInitiateDownloadApprovalTransactionInfo(blockHash.array(), channelId.array());
 					}
 				}
 			}
@@ -676,8 +675,8 @@ namespace catapult { namespace storage {
 
     // region - replicator service
 
-    ReplicatorService::ReplicatorService(crypto::KeyPair&& keyPair, StorageConfiguration&& storageConfig, std::vector<ionet::Node>&& bootstrapReplicators)
-		: m_keyPair(std::move(keyPair))
+    ReplicatorService::ReplicatorService(StorageConfiguration&& storageConfig, std::vector<ionet::Node>&& bootstrapReplicators)
+		: m_keyPair(crypto::KeyPair::FromString(storageConfig.Key))
 		, m_storageConfig(std::move(storageConfig))
 		, m_bootstrapReplicators(std::move(bootstrapReplicators))
 	{}

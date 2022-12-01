@@ -33,8 +33,9 @@ namespace catapult { namespace config {
 		storageConfigId,
 		streamingConfigId,
 		liquidityproviderConfigId,
+		exchangesdaConfigId,
 		supercontract_v2ConfigId,
-        First = static_cast<uint32_t>(aggregateConfigId),
+		First = static_cast<uint32_t>(aggregateConfigId),
         Latest = static_cast<uint32_t>(supercontract_v2ConfigId),
 	};
 

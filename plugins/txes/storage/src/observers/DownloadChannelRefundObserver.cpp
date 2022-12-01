@@ -40,7 +40,7 @@ namespace catapult { namespace observers {
 
 		// Refunding streaming mosaics.
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);
-		liquidityProvider.debitMosaics(context, downloadChannelEntry.id().array(), downloadChannelEntry.consumer(),
+		liquidityProvider->debitMosaics(context, downloadChannelEntry.id().array(), downloadChannelEntry.consumer(),
 									   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 									   streamingRefundAmount);
 
@@ -58,10 +58,6 @@ namespace catapult { namespace observers {
 			auto& replicatorEntry = replicatorIt.get();
 			replicatorEntry.downloadChannels().erase(notification.DownloadChannelId);
 		}
-
-		auto& queueCache = context.Cache.template sub<cache::QueueCache>();
-		utils::QueueAdapter<cache::DownloadChannelCache> queueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
-		queueAdapter.remove(downloadChannelEntry.entryKey());
 
 		downloadCache.remove(notification.DownloadChannelId);
 		// TODO: Add currency refunding

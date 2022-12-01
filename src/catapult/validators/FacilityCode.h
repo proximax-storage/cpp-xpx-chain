@@ -59,6 +59,8 @@ namespace catapult { namespace validators {
 		COPY_FACILITY_CODE(Queue),
 		COPY_FACILITY_CODE(PriorityQueue),
 		COPY_FACILITY_CODE(LiquidityProvider),
+		COPY_FACILITY_CODE(ExchangeSda),
+		COPY_FACILITY_CODE(SdaOfferGroup),
 		COPY_FACILITY_CODE(SuperContract_v2),
 
 		/// Chain facility code.

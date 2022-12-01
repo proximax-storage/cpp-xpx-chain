@@ -1,5 +1,6 @@
 [replicator]
 
+key = {{bootkey}}
 host = {{replicator_host}}
 port = {{replicator_port}}
 transactionTimeout = 1h

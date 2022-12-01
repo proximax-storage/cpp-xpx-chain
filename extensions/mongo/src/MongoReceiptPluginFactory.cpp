@@ -20,7 +20,6 @@
 
 #include "MongoReceiptPluginFactory.h"
 #include "mappers/MapperUtils.h"
-#include "mappers/ReceiptMapper.h"
 
 namespace catapult { namespace mongo {
 
@@ -51,10 +50,50 @@ namespace catapult { namespace mongo {
 					<< "driveKey" << mappers::ToBinary(receipt.DriveKey)
 					<< "driveState" << receipt.DriveState;
 		}
+
+		void StreamOfferCreationReceipt(bsoncxx::builder::stream::document& builder, const model::OfferCreationReceipt& receipt) {
+			builder
+					<< "sender" << mappers::ToBinary(receipt.Sender)
+					<< "mosaicIdGive" << mappers::ToInt64(receipt.MosaicsPair.first)
+					<< "mosaicIdGet" << mappers::ToInt64(receipt.MosaicsPair.second)
+					<< "mosaicAmountGive" << mappers::ToInt64(receipt.AmountGive)
+					<< "mosaicAmountGet" << mappers::ToInt64(receipt.AmountGet);
+		}
+
+		void StreamOfferExchangeReceipt(bsoncxx::builder::stream::document& builder, const model::OfferExchangeReceipt& receipt) {
+			builder
+					<< "sender" << mappers::ToBinary(receipt.Sender)
+					<< "mosaicIdGive" << mappers::ToInt64(receipt.MosaicsPair.first)
+					<< "mosaicIdGet" << mappers::ToInt64(receipt.MosaicsPair.second);
+			auto exchangeDetailArray = builder << "exchangeDetails" << mappers::bson_stream::open_array;
+			auto pDetail = reinterpret_cast<const model::ExchangeDetail*>(&receipt + 1);
+			for (auto i = 0u; i < receipt.ExchangeDetailCount; ++i, ++pDetail) {
+				exchangeDetailArray
+					<< mappers::bson_stream::open_document
+					<< "recipient" << mappers::ToBinary(pDetail->Recipient)
+					<< "mosaicIdGive" << mappers::ToInt64(pDetail->MosaicsPair.first)
+					<< "mosaicIdGet" << mappers::ToInt64(pDetail->MosaicsPair.second)
+					<< "mosaicAmountGive" << mappers::ToInt64(pDetail->AmountGive)
+					<< "mosaicAmountGet" << mappers::ToInt64(pDetail->AmountGet)
+					<< mappers::bson_stream::close_document;
+			}
+			exchangeDetailArray << mappers::bson_stream::close_array;
+		}
+
+		void StreamOfferRemovalReceipt(bsoncxx::builder::stream::document& builder, const model::OfferRemovalReceipt& receipt) {
+			builder
+					<< "sender" << mappers::ToBinary(receipt.Sender)
+					<< "mosaicIdGive" << mappers::ToInt64(receipt.MosaicsPair.first)
+					<< "mosaicIdGet" << mappers::ToInt64(receipt.MosaicsPair.second)
+					<< "mosaicAmountGiveReturned" << mappers::ToInt64(receipt.AmountGiveReturned);
+		}
 	}
 
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(BalanceTransfer, StreamBalanceTransferReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(BalanceChange, StreamBalanceChangeReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(Inflation, StreamInflationReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(DriveState, StreamDriveStateReceipt)
+	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(OfferCreation, StreamOfferCreationReceipt)
+	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(OfferExchange, StreamOfferExchangeReceipt)
+	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(OfferRemoval, StreamOfferRemovalReceipt)
 }}

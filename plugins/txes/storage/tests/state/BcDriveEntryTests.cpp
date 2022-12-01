@@ -124,8 +124,7 @@ namespace catapult { namespace state {
 			true
 		);
         CompletedDataModification completedDataModification {
-            activeDataModification, DataModificationState::Succeeded
-        };
+            activeDataModification, DataModificationApprovalState::Approved, 0U };
         auto entry = BcDriveEntry(Key());
 
         // Sanity:
@@ -142,7 +141,7 @@ namespace catapult { namespace state {
 		EXPECT_EQ(completedDataModification.ExpectedUploadSizeMegabytes, entry.completedDataModifications().back().ExpectedUploadSizeMegabytes);
 		EXPECT_EQ(completedDataModification.ActualUploadSizeMegabytes, entry.completedDataModifications().back().ActualUploadSizeMegabytes);
 		EXPECT_EQ(completedDataModification.FolderName, entry.completedDataModifications().back().FolderName);
-        EXPECT_EQ(completedDataModification.State, entry.completedDataModifications().back().State);
+        EXPECT_EQ(completedDataModification.ApprovalState, entry.completedDataModifications().back().ApprovalState);
     }
 
     TEST(TEST_CLASS, CanAccessReplicators) {

@@ -636,4 +636,33 @@ namespace catapult { namespace model {
 	};
 
 	// endregion
+
+	// region active
+
+	/// Notification of whether a mosaic is active.
+	template<VersionType version>
+	struct MosaicActiveNotification;
+	template<>
+	struct MosaicActiveNotification<1> :  public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Mosaic_Active_v1_Notification;
+	
+	public:
+		explicit MosaicActiveNotification(UnresolvedMosaicId mosaicId, const Height expirationHeight)
+			: Notification(Notification_Type, sizeof(MosaicActiveNotification<1>))
+			, MosaicId(mosaicId)
+			, OfferExpirationHeight(expirationHeight)
+		{}
+	
+	public:
+		
+		/// Id of the mosaic.
+		UnresolvedMosaicId MosaicId;
+		
+		/// Offer expiration height
+		Height OfferExpirationHeight;
+	};
+
+	// endregion
 }}
