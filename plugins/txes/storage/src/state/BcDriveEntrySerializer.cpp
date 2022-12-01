@@ -378,7 +378,7 @@ namespace catapult { namespace state {
 		LoadModificationShards(input, entry.dataModificationShards());
 		LoadConfirmedStorageInfos(input, entry.confirmedStorageInfos());
 
-		entry.supercontractIsDeployed(io::Read8(input));
+		entry.setSupercontractIsDeployed(io::Read8(input));
 
 		return entry;
 	}

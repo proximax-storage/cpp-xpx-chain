@@ -100,5 +100,5 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, model::BlockNotification<1>)();
 
 	/// Observes changes triggered by deploy supercontract notifications.
-	DECLARE_OBSERVER(DeploySupercontract, model::DeploySupercontractNotification<1>)();
+	DECLARE_OBSERVER(DeploySupercontract, model::DeploySupercontractDriveNotification<1>)();
 }}

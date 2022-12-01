@@ -178,6 +178,7 @@ namespace catapult { namespace storage {
 				  		info.m_driveKey,
 				  		info.m_modifyTransactionHash,
 				  		info.m_rootHash,
+						info.m_status,
 				  		info.m_fsTreeFileSize,
 				  		info.m_metaFilesSize,
 				  		info.m_driveSize);

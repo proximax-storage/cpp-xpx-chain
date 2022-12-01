@@ -165,5 +165,5 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to deploy supercontract notifications and validates that:
 	/// - supercontract is deployed to the drive
-	DECLARE_STATEFUL_VALIDATOR(DeploySupercontract, model::DeploySupercontractNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(DeploySupercontract, model::DeploySupercontractDriveNotification<1>)();
 }}

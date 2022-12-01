@@ -8,7 +8,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::DeploySupercontractNotification<1>;
+	using Notification = model::DeploySupercontractDriveNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(DeploySupercontract, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(DeploySupercontract, [](const Notification& notification, const ValidatorContext& context) {

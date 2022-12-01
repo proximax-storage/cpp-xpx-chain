@@ -1,0 +1,23 @@
+/**
+*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#pragma once
+#ifndef CUSTOM_RESULT_DEFINITION
+#include "catapult/validators/ValidationResult.h"
+
+namespace catapult { namespace validators {
+
+#endif
+/// Defines a storage validation result with \a DESCRIPTION and \a CODE.
+#define DEFINE_CONTRACT_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, SuperContract_v2, DESCRIPTION, CODE, None)
+
+	DEFINE_CONTRACT_RESULT(Contract_Does_Not_Exist, 1);
+
+	DEFINE_CONTRACT_RESULT(Deployment_In_Progress, 2);
+
+#ifndef CUSTOM_RESULT_DEFINITION
+}}
+#endif

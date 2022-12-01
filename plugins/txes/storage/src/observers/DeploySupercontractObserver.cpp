@@ -8,7 +8,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::DeploySupercontractNotification<1>;
+	using Notification = model::DeploySupercontractDriveNotification<1>;
 
 	DECLARE_OBSERVER(DeploySupercontract, Notification)() {
 		return MAKE_OBSERVER(DeploySupercontract, Notification, ([](const Notification& notification, const ObserverContext& context) {

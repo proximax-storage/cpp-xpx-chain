@@ -4,158 +4,101 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/model/Mosaic.h"
-#include "src/model/StartExecuteTransactionParams.h"
+#pragma once
+#include <catapult/model/Mosaic.h>
 #include <map>
 #include <optional>
+#include <queue>
 
-namespace catapult { namespace state {
+namespace catapult::state {
 
-    // Mixin for storing supercontract details.
-	class SuperContractMixin {
-        public:
-            SuperContractMixin()
-                : m_executorCount(0)
-            {}
+struct ContractCall {
+	Hash256 CallId;
+	Key Caller;
+	std::string FileName;
+	std::string FunctionName;
+	std::string ActualArguments;
+	Amount ExecutionCallPayment;
+	Amount DownloadCallPayment;
+	std::vector<model::UnresolvedMosaic> ServicePayments;
+};
 
-            /// Sets owner of super contract.
-            void setOwner(const Key& owner) {
-                m_owner = owner;
-            }
+struct AutomaticExecutionsInfo {
+	Amount m_automatedExecutionCallPayment;
+	Amount m_automatedDownloadCallPayment;
+	uint32_t m_automatedExecutionsNumber = 0U;
+	std::optional<Height> m_automaticExecutionsEnabledSince;
+};
 
-            /// Gets owner of super contract.
-            const Key& owner() const {
-                return m_owner;
-            }
+enum class DeploymentStatus {
+	NOT_STARTED,
+	IN_PROGRESS,
+	COMPLETED
+};
 
-            /// Sets name of the called .wasm file for automated executions.
-            void setAutomatedExecutionFileName(const std::string& automatedExecutionFileName) {
-                m_automatedExecutionFileName = automatedExecutionFileName;
-            }
+// Mixin for storing supercontract details.
+class SuperContractMixin {
+	public:
+		SuperContractMixin()
+		{}
 
-            /// Gets name of the called .wasm file for automated executions.
-            const std::string& automatedExecutionFileName() const {
-                return m_automatedExecutionFileName;
-            }
+		const Key& driveKey() const {
+			return m_driveKey;
+		}
 
-            /// Sets name of the called function for automated executions.
-            void setAutomatedExecutionFunctionName(const std::string& automatedExecutionFunctionName) {
-                m_automatedExecutionFunctionName = automatedExecutionFunctionName;
-            }   
+		void setDriveKey(const Key& driveKey) {
+			m_driveKey = driveKey;
+		}
 
-            /// Gets name of the called function for automated executions.
-            const std::string& automatedExecutionFunctionName() const {
-                return m_automatedExecutionFunctionName;
-            }
+		const Key& assignee() const {
+			return m_assignee;
+		}
 
-            /// Sets limit of the SC units for one automated Supercontract Execution.
-            void setAutomatedExecutionCallPayment(const Amount& automatedExecutionCallPayment) {
-                m_automatedExecutionCallPayment = automatedExecutionCallPayment;
-            }
+		void setAssignee(const Key& assignee) {
+			m_assignee = assignee;
+		}
 
-            /// Gets limit of the SC units for one automated Supercontract Execution.
-            const Amount& automatedExecutionCallPayment() const {
-                return m_automatedExecutionCallPayment;
-            }
+		AutomaticExecutionsInfo& automaticExecutionsInfo() {
+			return m_automaticExecutionsInfo;
+		}
 
-            /// Sets limit of the SM units for one automated Supercontract Execution.
-            void setAutomatedDownloadCallPayment(const Amount& automatedDownloadCallPayment) {
-                m_automatedDownloadCallPayment = automatedDownloadCallPayment;
-            }
+		const AutomaticExecutionsInfo& automaticExecutionsInfo() const {
+			return m_automaticExecutionsInfo;
+		}
 
-            /// Gets limit of the SM units for one automated Supercontract Execution.
-            const Amount& automatedDownloadCallPayment() const {
-                return m_automatedDownloadCallPayment;
-            }
-            
-            // Sets limit of the SM units for one SM Synchronization.
-            void setAutomatedSynchronizeCallPayment(const Amount& automatedSynchronizeCallPayment) {
-                m_automatedSynchronizeCallPayment = automatedSynchronizeCallPayment;
-            }
+		std::queue<ContractCall>& requestedCalls() {
+			return m_requestedCalls;
+		}
 
-            // Gets limit of the SM units for one SM Synchronization.
-            const Amount& automatedSynchronizeCallPayment() const {
-                return m_automatedSynchronizeCallPayment;
-            }
-            
-            /// Sets the number of prepaid automated executions.
-            void setAutomatedExecutionsNumber(const uint32_t& automatedExecutionsNumber) {
-                m_automatedExecutionsNumber = automatedExecutionsNumber;
-            }
+		const std::queue<ContractCall>& requestedCalls() const {
+			return m_requestedCalls;
+		}
 
-            /// Gets the number of prepaid automated executions.
-            const uint32_t& automatedExecutionsNumber() const {
-                return m_automatedExecutionsNumber;
-            }
+		DeploymentStatus deploymentStatus() const {
+			return DeploymentStatus::NOT_STARTED;
+		}
 
-            /// Sets the Public Key to which the money is transferred in case of the Supercontract Closure.
-            void setAssignee(const Key& assignee) {
-                m_assignee = assignee;
-            }
+	private:
+		Key m_driveKey;
+		Key m_assignee;
+		AutomaticExecutionsInfo m_automaticExecutionsInfo;
+		std::queue<ContractCall> m_requestedCalls;
+};
 
-            /// Gets the Public Key to which the money is transferred in case of the Supercontract Closure.
-            const Key& assignee() const {
-                return m_assignee;
-            }
+// Supercontract entry.
+class SuperContractEntry : public SuperContractMixin {
+	public:
+		// Creates a super contract entry around \a key.
+		explicit SuperContractEntry(const Key& key) : m_key(key)
+		{}
 
-            /// Sets the number of the supercontract \a executors.
-    		void setExecutorCount(uint16_t executorCount) {
-                m_executorCount = executorCount;
-            }
+	public:
+		// Gets the super contract public key.
+		const Key& key() const {
+			return m_key;
+		}
 
-            /// Gets the number of the supercontract executors.
-            const uint16_t& executorCount() const {
-                return m_executorCount;
-            }
-
-            /// Gets map of start execution parameters that belongs to respective supercontract key.
-            const model::StartExecuteParams& startExecuteParams() const {
-                return m_startExecuteParams;
-            }
-
-            /// Gets map of start execution paramters that belongs to respective supercontract key.
-            model::StartExecuteParams& startExecuteParams() {
-                return m_startExecuteParams;
-            }
-
-            /// Gets (date? time?) of when automatic executions is enabled
-            const std::optional<uint64_t>& automaticExecutionsEnabledSince() const {
-                return m_automaticExecutionsEnabledSince;
-            } 
-
-            /// Gets (date? time?) of when automatic executions is enabled
-            std::optional<uint64_t>& automaticExecutionsEnabledSince() {
-                return m_automaticExecutionsEnabledSince;
-            }
-
-        private:
-            Key m_owner;
-    		std::string m_automatedExecutionFileName;
-            std::string m_automatedExecutionFunctionName;
-            Amount m_automatedExecutionCallPayment;
-            Amount m_automatedDownloadCallPayment;
-            Amount m_automatedSynchronizeCallPayment;
-            uint32_t m_automatedExecutionsNumber;
-            Key m_assignee;
-            uint16_t m_executorCount;
-            model::StartExecuteParams m_startExecuteParams;
-            std::optional<uint64_t> m_automaticExecutionsEnabledSince;
-    };
-
-    // Supercontract entry.
-	class SuperContractEntry : public SuperContractMixin {
-	    public:
-            // Creates a super contract entry around \a key.
-		    explicit SuperContractEntry(const Key& key) : m_key(key)
-		    {}
-        
-        public:
-            // Gets the super contract public key.
-            const Key& key() const {
-                return m_key;
-            }
-
-        private:
-            Key m_key;
-	};
-}}
+	private:
+		Key m_key;
+};
+}

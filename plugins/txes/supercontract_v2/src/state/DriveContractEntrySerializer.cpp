@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "SuperContractEntrySerializer.h"
+#include "DriveContractEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
 #include "catapult/exceptions.h"
 
@@ -13,21 +13,21 @@ namespace catapult { namespace state {
     namespace {
     }
 
-    void SuperContractEntrySerializer::Save(const SuperContractEntry& entry, io::OutputStream& output) {
+    void DriveContractEntrySerializer::Save(const DriveContractEntry& entry, io::OutputStream& output) {
         // write version
 		io::Write32(output, 1);
 
         io::Write(output, entry.key());
     }
 
-    SuperContractEntry SuperContractEntrySerializer::Load(io::InputStream& input) {
+    DriveContractEntry DriveContractEntrySerializer::Load(io::InputStream& input) {
         // read version
 		VersionType version = io::Read32(input);
 		if (version > 1)
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of SuperContractEntry", version);
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of DriveContractEntry", version);
 
         Key key;
 		input.read(key);
-		state::SuperContractEntry entry(key);
+		state::DriveContractEntry entry(key);
     }
 }}
