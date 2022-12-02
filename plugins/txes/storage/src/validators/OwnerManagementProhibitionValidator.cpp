@@ -8,9 +8,9 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::DeploySupercontractDriveNotification<1>;
+	using Notification = model::OwnerManagementProhibition<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(DeploySupercontract, Notification)() {
+	DECLARE_STATEFUL_VALIDATOR(OwnerManagementProhibition, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(DeploySupercontract, [](const Notification& notification, const ValidatorContext& context) {
 			const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
             auto driveIter = driveCache.find(notification.DriveKey);
@@ -23,10 +23,6 @@ namespace catapult { namespace validators {
             auto owner = pDriveEntry->owner();
             if (owner != notification.Signer) {
                 return Failure_Storage_Is_Not_Owner;
-            }
-
-            if (pDriveEntry->supercontractIsDeployed()) {
-                return Failure_Storage_Supercontract_Is_Already_Deployed;
             }
 
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();

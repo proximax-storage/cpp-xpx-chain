@@ -8,6 +8,7 @@
 #include "catapult/observers/ObserverTypes.h"
 #include "catapult/model/SupercontractNotifications.h"
 #include "src/cache/SuperContractCache.h"
+#include "src/cache/DriveContractCache.h"
 #include <queue>
 
 namespace catapult::observers {

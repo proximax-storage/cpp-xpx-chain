@@ -8,17 +8,18 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::DeploySupercontractDriveNotification<1>;
+	using Notification = model::OwnerManagementProhibition<1>;
 
-	DECLARE_OBSERVER(DeploySupercontract, Notification)() {
+	DECLARE_OBSERVER(OwnerManagementProhibition, Notification)() {
 		return MAKE_OBSERVER(DeploySupercontract, Notification, ([](const Notification& notification, const ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DeploySupercontract)");
 
 			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-			state::BcDriveEntry driveEntry(notification.DriveKey);
-			driveEntry.setSupercontractIsDeployed(true);
-			driveCache.insert(driveEntry);
+			auto driveEntryIt = driveCache.find(notification.DriveKey);
+			auto& driveEntry = driveEntryIt.get();
+
+			driveEntry.setDriveOwnerManagementForbidden(true);
 		}))
 	}
 }}

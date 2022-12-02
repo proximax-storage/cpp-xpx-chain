@@ -25,6 +25,13 @@ namespace catapult::observers {
 		automaticExecutionsInfo.m_automatedDownloadCallPayment = notification.AutomaticDownloadCallPayment;
 
 		contractCache.insert(entry);
+
+		auto& driveCache = context.Cache.sub<cache::DriveContractCache>();
+
+		state::DriveContractEntry driveContractEntry(notification.DriveKey);
+		driveContractEntry.setContractKey(notification.ContractKey);
+
+		driveCache.insert(driveContractEntry);
 	})
 
 }

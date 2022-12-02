@@ -17,13 +17,18 @@ namespace catapult { namespace validators {
         // Check if the drive exists
         auto driveIter = driveCache.find(notification.DriveKey);
         const auto& pDriveEntry = driveIter.tryGet();
-        if (!pDriveEntry)
-        	return Failure_Storage_Drive_Not_Found;
+        if (!pDriveEntry) {
+			return Failure_Storage_Drive_Not_Found;
+		}
 
 		// Check of the signer is the owner
         const auto& owner = pDriveEntry->owner();
         if (owner != notification.DriveOwner) {
         	return Failure_Storage_Is_Not_Owner;
+        }
+
+        if (pDriveEntry->driveOwnerManagementForbidden()) {
+        	return Failure_Storage_Owner_Management_Is_Forbidden;
         }
 
         return ValidationResult::Success;

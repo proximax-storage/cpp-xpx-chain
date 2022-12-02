@@ -1132,19 +1132,19 @@ namespace catapult { namespace model {
 
 	/// Notification of deploy supercontract.
 	template<VersionType version>
-	struct DeploySupercontractDriveNotification;
+	struct OwnerManagementProhibition;
 
 	template<>
-	struct DeploySupercontractDriveNotification<1> : public Notification {
+	struct OwnerManagementProhibition<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Storage_Deploy_Supercontract_Drive_v1_Notification;
 	
 	public:
-		explicit DeploySupercontractDriveNotification(
+		explicit OwnerManagementProhibition(
 			const Key& signer, 
 			const Key& driveKey)
-			: Notification(Notification_Type, sizeof(DeploySupercontractDriveNotification<1>))
+			: Notification(Notification_Type, sizeof(OwnerManagementProhibition<1>))
 			, DriveKey(driveKey)
 		{}
 	

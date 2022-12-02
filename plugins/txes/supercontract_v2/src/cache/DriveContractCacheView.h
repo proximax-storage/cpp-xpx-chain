@@ -25,7 +25,7 @@ namespace catapult { namespace cache {
 			, public DriveContractCacheViewMixins::Iteration
 			, public DriveContractCacheViewMixins::ConstAccessor
 			, public DriveContractCacheViewMixins::PatriciaTreeView
-			, public DriveContractCacheViewMixins::ConfigBasedEnable<config::DriveContractConfiguration> {
+			, public DriveContractCacheViewMixins::ConfigBasedEnable<config::SuperContractConfiguration> {
 	public:
 		using ReadOnlyView = DriveContractCacheTypes::CacheReadOnlyType;
 
@@ -37,7 +37,7 @@ namespace catapult { namespace cache {
 				, DriveContractCacheViewMixins::Iteration(driveContractSets.Primary)
 				, DriveContractCacheViewMixins::ConstAccessor(driveContractSets.Primary)
 				, DriveContractCacheViewMixins::PatriciaTreeView(driveContractSets.PatriciaTree.get())
-				, DriveContractCacheViewMixins::ConfigBasedEnable<config::DriveContractConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
+				, DriveContractCacheViewMixins::ConfigBasedEnable<config::SuperContractConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
 		{}
 	};
 

@@ -40,8 +40,8 @@ namespace catapult { namespace validators {
 				return Failure_Storage_Data_Modification_Already_Exists;
 	  	}
 
-		if (pDriveEntry->supercontractIsDeployed()) {
-            return Failure_Storage_Supercontract_Is_Already_Deployed;
+	  	if (pDriveEntry->driveOwnerManagementForbidden()) {
+	  		return Failure_Storage_Owner_Management_Is_Forbidden;
         }
 
 		return ValidationResult::Success;

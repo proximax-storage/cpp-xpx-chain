@@ -10,10 +10,14 @@
 #include "catapult/validators/ValidatorTypes.h"
 #include "catapult/model/SupercontractNotifications.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "src/cache/SuperContractCache.h"
+#include "src/cache/DriveContractCache.h"
 
 namespace catapult { namespace validators {
 
 	DECLARE_STATEFUL_VALIDATOR(ManualCall, model::ManualCallNotification<1>)();
 
 	DECLARE_STATEFUL_VALIDATOR(AutomaticExecutionsReplenishement, model::AutomaticExecutionsReplenishmentNotification<1>)();
+
+	DECLARE_STATEFUL_VALIDATOR(DeployContract, model::DeploySupercontractNotification<1>)();
 }}

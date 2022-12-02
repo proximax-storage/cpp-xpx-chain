@@ -29,7 +29,7 @@ namespace catapult { namespace plugins {
 
 					auto contractKey = Key(txHash.array());
 					sub.notify(AccountPublicKeyNotification<1>(contractKey));
-					sub.notify(DeploySupercontractDriveNotification<1>(
+					sub.notify(OwnerManagementProhibition<1>(
 							transaction.Signer,
 							transaction.DriveKey
 					));

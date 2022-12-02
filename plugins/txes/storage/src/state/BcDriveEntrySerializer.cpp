@@ -328,7 +328,7 @@ namespace catapult { namespace state {
 		SaveModificationShards(output, driveEntry.dataModificationShards());
 		SaveConfirmedStorageInfos(output, driveEntry.confirmedStorageInfos());
 
-		io::Write8(output, driveEntry.supercontractIsDeployed());
+		io::Write8(output, driveEntry.driveOwnerManagementForbidden());
 	}
 
 	BcDriveEntry BcDriveEntrySerializer::Load(io::InputStream& input) {
@@ -380,7 +380,7 @@ namespace catapult { namespace state {
 		LoadModificationShards(input, entry.dataModificationShards());
 		LoadConfirmedStorageInfos(input, entry.confirmedStorageInfos());
 
-		entry.setSupercontractIsDeployed(io::Read8(input));
+		entry.setDriveOwnerManagementForbidden(io::Read8(input));
 
 		return entry;
 	}

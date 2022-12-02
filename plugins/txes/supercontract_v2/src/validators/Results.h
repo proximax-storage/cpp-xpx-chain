@@ -18,6 +18,8 @@ namespace catapult { namespace validators {
 
 	DEFINE_CONTRACT_RESULT(Deployment_In_Progress, 2);
 
+	DEFINE_CONTRACT_RESULT(Contract_Already_Deployed_On_Drive, 2);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

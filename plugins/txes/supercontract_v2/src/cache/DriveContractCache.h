@@ -18,7 +18,7 @@ namespace catapult { namespace cache {
 	/// Synchronized cache composed of drive contract information.
 	class DriveContractCache : public SynchronizedCache<BasicDriveContractCache> {
 	public:
-		DEFINE_CACHE_CONSTANTS(DriveContract_v2)
+		DEFINE_CACHE_CONSTANTS(SuperContract_v2)
 
 	public:
 		/// Creates a cache around \a config.
