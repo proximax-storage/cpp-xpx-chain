@@ -15,6 +15,7 @@ namespace catapult::model {
 
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Deploy_Supercontract_v1, 0x0001);
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Manual_Call_v1, 0x0002);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Automatic_Executions_Replenishment_v1, 0x0003);
 
 	template<VersionType version>
 	struct DeploySupercontractNotification;
@@ -72,7 +73,7 @@ namespace catapult::model {
 				Amount executionCallPayment,
 				Amount downloadCallPayment,
 				std::vector<UnresolvedMosaic> servicePayments)
-				: Notification(Notification_Type, sizeof(DeploySupercontractNotification<1>))
+				: Notification(Notification_Type, sizeof(ManualCallNotification<1>))
 				, CallId(callId)
 				, ContractKey(contractKey)
 				, Caller(caller)
@@ -102,13 +103,13 @@ namespace catapult::model {
 	template<>
 	struct AutomaticExecutionsReplenishmentNotification<1> : public Notification {
 	public:
-		static constexpr auto Notification_Type = SuperContract_v2_Manual_Call_v1_Notification;
+		static constexpr auto Notification_Type = SuperContract_v2_Automatic_Executions_Replenishment_v1_Notification;
 
 	public:
 		explicit AutomaticExecutionsReplenishmentNotification(
 				const Key& contractKey,
 				uint32_t number)
-				: Notification(Notification_Type, sizeof(DeploySupercontractNotification<1>))
+				: Notification(Notification_Type, sizeof(AutomaticExecutionsReplenishmentNotification<1>))
 				, ContractKey(contractKey)
 				, Number(number)
 				{}
@@ -116,5 +117,29 @@ namespace catapult::model {
 	public:
 		Key ContractKey;
 		uint32_t Number;
+	};
+
+	struct ExecutorWork : public UnresolvedAmountData {
+	public:
+		ExecutorWork(const Key& contractKey, Amount amountPerExecutor)
+		: ContractKey(contractKey)
+		, AmountPerExecutor(amountPerExecutor)
+		{}
+
+	public:
+		Key ContractKey;
+		Amount AmountPerExecutor;
+	};
+
+	struct AutomaticExecutorWork : public UnresolvedAmountData {
+	public:
+		AutomaticExecutorWork(const Key& contractKey, uint64_t numberOfExecutions)
+		: ContractKey(contractKey)
+		, NumberOfExecutions(numberOfExecutions)
+		{}
+
+	public:
+		Key ContractKey;
+		uint64_t NumberOfExecutions;
 	};
 }

@@ -13,6 +13,7 @@
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/EntityHasher.h"
+#include "src/utils/SwapUtils.h"
 
 using namespace catapult::model;
 
@@ -71,33 +72,49 @@ namespace catapult { namespace plugins {
 							transaction.DownloadCallPayment,
 							servicePayments));
 
-					//					const auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(driveKey, config.NetworkIdentifier));
-//					const auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
-//					const auto storageMosaicId = config::GetUnresolvedStorageMosaicId(config);
-//					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
+					const auto scMosaicId = config::GetUnresolvedSuperContractMosaicId(config);
 
-//					sub.notify(BalanceTransferNotification<1>(
-//							transaction.Signer, driveAddress, currencyMosaicId, transaction.VerificationFeeAmount));
-//					utils::SwapMosaics(
-//					 		transaction.Signer,
-//					 		driveKey,
-//					 		{ {storageMosaicId, Amount(transaction.DriveSize * transaction.ReplicatorCount)} },
-//					 		sub,
-//					 		config,
-//					 		utils::SwapOperation::Buy);
-//					utils::SwapMosaics(
-//					 		transaction.Signer,
-//					 		driveKey,
-//					 		{ {streamingMosaicId, Amount(2 * transaction.DriveSize * transaction.ReplicatorCount)} },
-//					 		sub,
-//					 		config,
-//					 		utils::SwapOperation::Buy);
+					const auto pAutomaticExecutionWork = sub.mempool().malloc(model::AutomaticExecutorWork(contractKey, transaction.AutomaticExecutionsNumber));
+					utils::SwapMosaics(
+							transaction.Signer,
+							transaction.DriveKey,
+							{ std::make_pair(scMosaicId, UnresolvedAmount(0, UnresolvedAmountType::AutomaticExecutionWork, pAutomaticExecutionWork)) },
+							sub,
+							config,
+							utils::SwapOperation::Buy);
 
+					const auto pAutomaticDownloadWork = sub.mempool().malloc(model::AutomaticExecutorWork(contractKey, transaction.AutomaticExecutionsNumber));
+					utils::SwapMosaics(
+							transaction.Signer,
+							transaction.DriveKey,
+							{ std::make_pair(streamingMosaicId, UnresolvedAmount(0, UnresolvedAmountType::AutomaticExecutionWork, pAutomaticDownloadWork)) },
+							sub,
+							config,
+							utils::SwapOperation::Buy);
+
+					const auto pInitializerExecutionWork = sub.mempool().malloc(model::ExecutorWork(contractKey, transaction.ExecutionCallPayment));
+					utils::SwapMosaics(
+							transaction.Signer,
+							transaction.DriveKey,
+							{ std::make_pair(scMosaicId, UnresolvedAmount(0, UnresolvedAmountType::ExecutorWork, pInitializerExecutionWork)) },
+							sub,
+							config,
+							utils::SwapOperation::Buy);
+
+					const auto pInitializerDownloadWork = sub.mempool().malloc(model::ExecutorWork(contractKey, transaction.ExecutionCallPayment));
+					utils::SwapMosaics(
+							transaction.Signer,
+							transaction.DriveKey,
+							{ std::make_pair(streamingMosaicId, UnresolvedAmount(0, UnresolvedAmountType::ExecutorWork, pInitializerDownloadWork)) },
+							sub,
+							config,
+							utils::SwapOperation::Buy);
 					break;
 				}
 
 				default:
-					CATAPULT_LOG(debug) << "invalid version of PrepareBcDriveTransaction: " << transaction.EntityVersion();
+					CATAPULT_LOG(debug) << "invalid version of DeployContractTransaction: " << transaction.EntityVersion();
 				}
 			};
 		}

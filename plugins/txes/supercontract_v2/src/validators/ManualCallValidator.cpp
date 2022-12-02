@@ -18,11 +18,11 @@ namespace catapult { namespace validators {
 		auto* pContractEntry = contractIt.tryGet();
 
 		if (!pContractEntry) {
-			return Failure_SuperContract_v2_Contract_Does_Not_Exist;
+			return Failure_SuperContract_Contract_Does_Not_Exist;
 		}
 
 		if (pContractEntry->deploymentStatus() == state::DeploymentStatus::IN_PROGRESS) {
-			return Failure_SuperContract_v2_Deployment_In_Progress;
+			return Failure_SuperContract_Deployment_In_Progress;
 		}
 
 		return ValidationResult::Success;

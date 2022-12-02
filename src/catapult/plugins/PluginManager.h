@@ -34,6 +34,7 @@
 #include "catapult/observers/DemuxObserverBuilder.h"
 #include "catapult/observers/ObserverTypes.h"
 #include "catapult/state/StorageState.h"
+#include "catapult/state/DriveStateBrowser.h"
 #include "catapult/utils/DiagnosticCounter.h"
 #include "catapult/validators/DemuxValidatorBuilder.h"
 #include "catapult/validators/ValidatorTypes.h"
@@ -277,13 +278,20 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
-		// region storage
+		// region liquidityProvider
 
 		void setLiquidityProviderExchangeValidator(std::unique_ptr<validators::LiquidityProviderExchangeValidator>&&);
 		const std::unique_ptr<validators::LiquidityProviderExchangeValidator>& liquidityProviderExchangeValidator() const;
 
 		void setLiquidityProviderExchangeObserver(std::unique_ptr<observers::LiquidityProviderExchangeObserver>&&);
 		const std::unique_ptr<observers::LiquidityProviderExchangeObserver>& liquidityProviderExchangeObserver() const;
+
+		// endregion
+
+		// region storage browser
+
+		void setDriveStateBrowser(std::unique_ptr<state::DriveStateBrowser>&& browser);
+		const std::unique_ptr<state::DriveStateBrowser>& driveStateBrowser() const;
 
 		// endregion
 
@@ -316,6 +324,8 @@ namespace catapult { namespace plugins {
 
 		std::unique_ptr<validators::LiquidityProviderExchangeValidator> m_pLiquidityProviderExchangeValidator;
 		std::unique_ptr<observers::LiquidityProviderExchangeObserver> m_pLiquidityProviderExchangeObserver;
+
+		std::unique_ptr<state::DriveStateBrowser> m_pStorageStateBrowser;
 	};
 }}
 

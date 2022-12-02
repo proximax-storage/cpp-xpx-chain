@@ -95,5 +95,9 @@ namespace catapult { namespace model {
 		SdaOfferGroup = 0x6B,
 		/// SuperContract V2 facility code.
 		SuperContract_v2 = 0x6C,
+		/// SuperContractCache facility code.
+		SuperContractCache = 0x6D,
+		/// DriveContractCache facility code.
+		DriveContractCache = 0x6E,
 	};
 }}

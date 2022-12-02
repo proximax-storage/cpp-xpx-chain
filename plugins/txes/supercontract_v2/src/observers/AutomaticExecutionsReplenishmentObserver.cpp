@@ -11,7 +11,7 @@ namespace catapult::observers {
 
 	using Notification = model::AutomaticExecutionsReplenishmentNotification<1>;
 
-	DEFINE_OBSERVER(ManualCall, Notification, [](const Notification & notification, ObserverContext& context) {
+	DEFINE_OBSERVER(AutomaticExecutionsReplenishment, Notification, [](const Notification & notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
 

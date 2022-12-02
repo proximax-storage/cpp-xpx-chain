@@ -15,7 +15,7 @@ namespace catapult { namespace validators {
 		const auto& driveCache = context.Cache.sub<cache::DriveContractCache>();
 
 		if (driveCache.contains(notification.DriveKey)) {
-			return Failure_SuperContract_v2_Contract_Already_Deployed_On_Drive;
+			return Failure_SuperContract_Contract_Already_Deployed_On_Drive;
 		}
 
 		return ValidationResult::Success;

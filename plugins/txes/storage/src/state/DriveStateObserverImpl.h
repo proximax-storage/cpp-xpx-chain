@@ -1,0 +1,19 @@
+/**
+*** Copyright 2022 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#pragma once
+
+#include "catapult/cache/CatapultCache.h"
+#include "catapult/state/DriveStateBrowser.h"
+
+namespace catapult::state {
+
+class DriveStateBrowserImpl : public DriveStateBrowser {
+public:
+	uint16_t getOrderedReplicatorsCount(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) override;
+};
+
+} // namespace catapult::state

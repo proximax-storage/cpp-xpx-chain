@@ -27,6 +27,7 @@
 #include "src/plugins/DownloadApprovalTransactionPlugin.h"
 #include "src/plugins/EndDriveVerificationTransactionPlugin.h"
 #include "src/state/StorageStateImpl.h"
+#include "src/state/DriveStateObserverImpl.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -154,6 +155,9 @@ namespace catapult { namespace plugins {
 
 		auto pStorageState = std::make_shared<state::StorageStateImpl>();
 		manager.setStorageState(pStorageState);
+
+		auto pDriveStateBrowser = std::make_unique<state::DriveStateBrowserImpl>();
+		manager.setDriveStateBrowser(std::move(pDriveStateBrowser));
 
 		const auto& liquidityProviderValidator = manager.liquidityProviderExchangeValidator();
 		const auto& liquidityProviderObserver = manager.liquidityProviderExchangeObserver();

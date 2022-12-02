@@ -18,6 +18,9 @@ namespace catapult::observers {
 		return MAKE_OBSERVER(NAME, NOTIFICATION_TYPE, HANDLER); \
 	}
 
-	/// Observes changes triggered by prepare drive notifications.
 	DECLARE_OBSERVER(DeployContract, model::DeploySupercontractNotification<1>)();
+
+	DECLARE_OBSERVER(AutomaticExecutionsReplenishment, model::AutomaticExecutionsReplenishmentNotification<1>)();
+
+	DECLARE_OBSERVER(ManualCall, model::ManualCallNotification<1>)();
 }

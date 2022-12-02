@@ -361,4 +361,16 @@ namespace catapult { namespace plugins {
 	}
 
 	// endregion
+
+	// region drive state
+
+	void PluginManager::setDriveStateBrowser(std::unique_ptr<state::DriveStateBrowser>&& browser) {
+		m_pStorageStateBrowser = std::move(browser);
+	}
+
+	const std::unique_ptr<state::DriveStateBrowser>& PluginManager::driveStateBrowser() const {
+		return m_pStorageStateBrowser;
+	}
+
+	// endregion
 }}

@@ -12,13 +12,15 @@ namespace catapult { namespace validators {
 
 #endif
 /// Defines a storage validation result with \a DESCRIPTION and \a CODE.
-#define DEFINE_CONTRACT_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, SuperContract_v2, DESCRIPTION, CODE, None)
+#define DEFINE_CONTRACT_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, SuperContract, DESCRIPTION, CODE, None)
 
 	DEFINE_CONTRACT_RESULT(Contract_Does_Not_Exist, 1);
 
 	DEFINE_CONTRACT_RESULT(Deployment_In_Progress, 2);
 
-	DEFINE_CONTRACT_RESULT(Contract_Already_Deployed_On_Drive, 2);
+	DEFINE_CONTRACT_RESULT(Contract_Already_Deployed_On_Drive, 3);
+
+	DEFINE_CONTRACT_RESULT(Plugin_Config_Malformed, 4);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
