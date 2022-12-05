@@ -445,6 +445,8 @@ namespace catapult { namespace fastfinality {
 				totalSumOfVotes += committeeManager.weight(cosigner);
 			committeeData.setTotalSumOfVotes(totalSumOfVotes);
 
+			CATAPULT_LOG(debug) << "committee selection result: is block proposer = " << isBlockProposer << ", start phase = " << round.StartPhase;
+
 			pFsmShared->processEvent(CommitteeSelectionResult{ isBlockProposer, round.StartPhase });
 		};
 	}

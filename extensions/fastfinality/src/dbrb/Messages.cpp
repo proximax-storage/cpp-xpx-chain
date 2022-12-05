@@ -83,6 +83,7 @@ namespace catapult { namespace dbrb {
 			const auto* pMessagePacket = reinterpret_cast<const CommitMessagePacket*>(&packet);
 			auto pData = pMessagePacket->payload();
 			auto sender = UnpackProcessId(pData);
+			auto initiator = UnpackProcessId(pData);
 			auto payloadSize = *reinterpret_cast<const uint32_t*>(pData);
 			auto payload = ionet::CreateSharedPacket<ionet::Packet>(payloadSize);
 			memcpy(payload.get(), pData, payloadSize);
@@ -103,7 +104,7 @@ namespace catapult { namespace dbrb {
 			auto certificateView = UnpackView(pData);
 			auto currentView = UnpackView(pData);
 
-			auto pMessage = std::make_unique<CommitMessage>(sender, payload, certificate, certificateView, currentView);
+			auto pMessage = std::make_unique<CommitMessage>(sender, initiator, payload, certificate, certificateView, currentView);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -228,6 +229,7 @@ namespace catapult { namespace dbrb {
 			const auto* pMessagePacket = reinterpret_cast<const AcknowledgedMessagePacket*>(&packet);
 			auto pData = pMessagePacket->payload();
 			auto sender = UnpackProcessId(pData);
+			auto initiator = UnpackProcessId(pData);
 			auto payloadSignature = *reinterpret_cast<const Signature*>(pData);
 			pData += Signature_Size;
 			auto payloadSize = *reinterpret_cast<const uint32_t*>(pData);
@@ -236,7 +238,7 @@ namespace catapult { namespace dbrb {
 			pData += payloadSize;
 			auto view = UnpackView(pData);
 
-			auto pMessage = std::make_unique<AcknowledgedMessage>(sender, payload, view, payloadSignature);
+			auto pMessage = std::make_unique<AcknowledgedMessage>(sender, initiator, payload, view, payloadSignature);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -259,11 +261,9 @@ namespace catapult { namespace dbrb {
 			}
 
 			if (*pData++) {
-				const auto* pPrepareMessagePacket1 = reinterpret_cast<const PrepareMessagePacket*>(pData);
-				pData += pPrepareMessagePacket1->Size;
-				const auto* pPrepareMessagePacket2 = reinterpret_cast<const PrepareMessagePacket*>(pData);
-				pData += pPrepareMessagePacket2->Size;
-				state.Conflicting = std::make_pair(*ToPrepareMessage(*pPrepareMessagePacket1), *ToPrepareMessage(*pPrepareMessagePacket2));
+				const auto* pPrepareMessagePacket = reinterpret_cast<const PrepareMessagePacket*>(pData);
+				pData += pPrepareMessagePacket->Size;
+				state.Conflicting = *ToPrepareMessage(*pPrepareMessagePacket);
 			}
 
 			if (*pData++) {
@@ -284,13 +284,14 @@ namespace catapult { namespace dbrb {
 			const auto* pMessagePacket = reinterpret_cast<const DeliverMessagePacket*>(&packet);
 			auto pData = pMessagePacket->payload();
 			auto sender = UnpackProcessId(pData);
+			auto initiator = UnpackProcessId(pData);
 			auto payloadSize = *reinterpret_cast<const uint32_t*>(pData);
 			auto payload = ionet::CreateSharedPacket<ionet::Packet>(payloadSize);
 			memcpy(payload.get(), pData, payloadSize);
 			pData += payloadSize;
 			View view = UnpackView(pData);
 
-			auto pMessage = std::make_unique<DeliverMessage>(sender, payload, view);
+			auto pMessage = std::make_unique<DeliverMessage>(sender, initiator, payload, view);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -442,11 +443,14 @@ namespace catapult { namespace dbrb {
 		uint32_t payloadSize = Payload->Size + Signature_Size;
 		auto pPackedSender = ionet::PackNode(Sender);
 		payloadSize += pPackedSender->Size;
+		auto pPackedInitiator = ionet::PackNode(Initiator);
+		payloadSize += pPackedInitiator->Size;
 		auto packedView = PackView(View, payloadSize);
 		auto pPacket = ionet::CreateSharedPacket<AcknowledgedMessagePacket>(payloadSize);
 
 		auto pData = pPacket->payload();
 		CopyProcessId(pData, pPackedSender);
+		CopyProcessId(pData, pPackedInitiator);
 		memcpy(pData, PayloadSignature.data(), Signature_Size);
 		pData += Signature_Size;
 		memcpy(pData, Payload.get(), Payload->Size);
@@ -463,6 +467,8 @@ namespace catapult { namespace dbrb {
 		uint32_t certificateSize = utils::checked_cast<size_t, uint32_t>(Certificate.size());
 		auto pPackedSender = ionet::PackNode(Sender);
 		uint32_t payloadSize = pPackedSender->Size;
+		auto pPackedInitiator = ionet::PackNode(Initiator);
+		payloadSize += pPackedInitiator->Size;
 		payloadSize += Payload->Size;
 
 		payloadSize += sizeof(uint32_t);
@@ -478,6 +484,7 @@ namespace catapult { namespace dbrb {
 
 		auto pData = pPacket->payload();
 		CopyProcessId(pData, pPackedSender);
+		CopyProcessId(pData, pPackedInitiator);
 		memcpy(pData, Payload.get(), Payload->Size);
 		pData += Payload->Size;
 
@@ -510,14 +517,11 @@ namespace catapult { namespace dbrb {
 			payloadSize += pAcknowledgeable->Size;
 		}
 
-		std::shared_ptr<ionet::Packet> pConflicting1;
-		std::shared_ptr<ionet::Packet> pConflicting2;
+		std::shared_ptr<ionet::Packet> pConflicting;
 		payloadSize++;
 		if (State.Conflicting) {
-			pConflicting1 = State.Conflicting.value().first.toNetworkPacket(nullptr);
-			payloadSize += pConflicting1->Size;
-			pConflicting2 = State.Conflicting.value().second.toNetworkPacket(nullptr);
-			payloadSize += pConflicting2->Size;
+			pConflicting = State.Conflicting.value().toNetworkPacket(nullptr);
+			payloadSize += pConflicting->Size;
 		}
 
 		std::shared_ptr<ionet::Packet> pStored;
@@ -536,21 +540,19 @@ namespace catapult { namespace dbrb {
 		CopyProcessId(pData, pPackedSender);
 
 		*pData++ = State.Acknowledgeable.has_value();
-		if (State.Acknowledgeable.has_value()) {
+		if (State.Acknowledgeable) {
 			memcpy(pData, pAcknowledgeable.get(), pAcknowledgeable->Size);
 			pData += pAcknowledgeable->Size;
 		}
 
 		*pData++ = State.Conflicting.has_value();
-		if (State.Conflicting.has_value()) {
-			memcpy(pData, pConflicting1.get(), pConflicting1->Size);
-			pData += pConflicting1->Size;
-			memcpy(pData, pConflicting2.get(), pConflicting2->Size);
-			pData += pConflicting2->Size;
+		if (State.Conflicting) {
+			memcpy(pData, pConflicting.get(), pConflicting->Size);
+			pData += pConflicting->Size;
 		}
 
 		*pData++ = State.Stored.has_value();
-		if (State.Stored.has_value()) {
+		if (State.Stored) {
 			memcpy(pData, pStored.get(), pStored->Size);
 			pData += pStored->Size;
 		}
@@ -566,6 +568,8 @@ namespace catapult { namespace dbrb {
 	std::shared_ptr<MessagePacket> DeliverMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
 		auto pPackedSender = ionet::PackNode(Sender);
 		uint32_t payloadSize = pPackedSender->Size;
+		auto pPackedInitiator = ionet::PackNode(Initiator);
+		payloadSize += pPackedInitiator->Size;
 		payloadSize += Payload->Size;
 		auto packedView = PackView(View, payloadSize);
 
@@ -573,6 +577,7 @@ namespace catapult { namespace dbrb {
 
 		auto pData = pPacket->payload();
 		CopyProcessId(pData, pPackedSender);
+		CopyProcessId(pData, pPackedInitiator);
 		memcpy(pData, Payload.get(), Payload->Size);
 		pData += Payload->Size;
 

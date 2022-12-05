@@ -222,8 +222,9 @@ namespace catapult { namespace dbrb {
 	struct AcknowledgedMessage : Message {
 	public:
 		AcknowledgedMessage() = delete;
-		explicit AcknowledgedMessage(const ProcessId& sender, Payload payload, View view, catapult::Signature payloadSignature)
+		explicit AcknowledgedMessage(const ProcessId& sender, ProcessId  initiator, Payload payload, View view, catapult::Signature payloadSignature)
 			: Message(sender, ionet::PacketType::Dbrb_Acknowledged_Message)
+			, Initiator(std::move(initiator))
 			, Payload(std::move(payload))
 			, View(std::move(view))
 			, PayloadSignature(std::move(payloadSignature))
@@ -233,6 +234,9 @@ namespace catapult { namespace dbrb {
 		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
+		/// Broadcast initiator.
+		ProcessId Initiator;
+
 		/// Acknowledged payload.
 		dbrb::Payload Payload;
 
@@ -246,8 +250,9 @@ namespace catapult { namespace dbrb {
 	struct CommitMessage : Message {
 	public:
 		CommitMessage() = delete;
-		explicit CommitMessage(const ProcessId& sender, Payload payload, std::map<ProcessId, catapult::Signature> certificate, View certificateView, View currentView)
+		explicit CommitMessage(const ProcessId& sender, ProcessId  initiator, Payload payload, std::map<ProcessId, catapult::Signature> certificate, View certificateView, View currentView)
 			: Message(sender, ionet::PacketType::Dbrb_Commit_Message)
+			, Initiator(std::move(initiator))
 			, Payload(std::move(payload))
 			, Certificate(std::move(certificate))
 			, CertificateView(std::move(certificateView))
@@ -258,6 +263,9 @@ namespace catapult { namespace dbrb {
 		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
+		/// Broadcast initiator.
+		ProcessId Initiator;
+
 		/// Payload for which Acknowledged quorum was collected.
 		dbrb::Payload Payload;
 
@@ -275,8 +283,8 @@ namespace catapult { namespace dbrb {
 		/// Prepare message with a payload that is allowed to be acknowledged, if any.
 		std::optional<PrepareMessage> Acknowledgeable;
 
-		/// A pair of conflicting Prepare messages, if any.
-		std::optional<std::pair<PrepareMessage, PrepareMessage>> Conflicting;
+		/// A conflicting Prepare message, if any.
+		std::optional<PrepareMessage> Conflicting;
 
 		/// Stored Commit message, if any.
 		std::optional<CommitMessage> Stored;
@@ -309,8 +317,9 @@ namespace catapult { namespace dbrb {
 	struct DeliverMessage : Message {
 	public:
 		DeliverMessage() = delete;
-		explicit DeliverMessage(const ProcessId& sender, Payload payload, View view)
+		explicit DeliverMessage(const ProcessId& sender, ProcessId  initiator, Payload payload, View view)
 			: Message(sender, ionet::PacketType::Dbrb_Deliver_Message)
+			, Initiator(std::move(initiator))
 			, Payload(std::move(payload))
 			, View(std::move(view))
 		{}
@@ -319,6 +328,9 @@ namespace catapult { namespace dbrb {
 		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
+		/// Broadcast initiator.
+		ProcessId Initiator;
+
 		/// Payload to deliver.
 		dbrb::Payload Payload;
 

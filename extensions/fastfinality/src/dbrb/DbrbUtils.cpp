@@ -74,6 +74,10 @@ namespace catapult { namespace dbrb {
 		return hash;
 	}
 
+	Hash256 CalculatePayloadHash(const Payload& payload) {
+		return CalculateHash({{ reinterpret_cast<const uint8_t*>(payload.get()), payload->Size }});
+	}
+
 	std::set<ProcessId> View::members() const {
 		std::set<ProcessId> joined;
 		std::set<ProcessId> left;

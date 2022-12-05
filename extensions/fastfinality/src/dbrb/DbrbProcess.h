@@ -8,6 +8,7 @@
 #include "catapult/types.h"
 #include "DbrbUtils.h"
 #include "Messages.h"
+#include "MessageSender.h"
 #include "catapult/functions.h"
 #include "catapult/net/PacketWriters.h"
 #include "catapult/ionet/PacketHandlers.h"
@@ -29,25 +30,30 @@ namespace catapult { namespace dbrb {
 		/// Maps views to received StateUpdate messages for those views.
 		std::map<View, std::set<StateUpdateMessage>> StateUpdateMessages;
 
-		/// Maps views to sets of pairs of respective process IDs and payloads received from Acknowledged messages.
-		std::map<View, std::set< std::pair<ProcessId, Payload> >> AcknowledgedPayloads;
+		/// Maps views to sets of pairs of respective process IDs and payload hashes received from Acknowledged messages.
+		std::map<View, std::set<std::pair<ProcessId, Hash256>>> AcknowledgedPayloads;
 
 		/// Maps views to sets of process IDs ready for delivery.
 		std::map<View, std::set<ProcessId>> DeliveredProcesses;
 
 		/// Overloaded methods for updating respective counters.
 		/// Returns whether the quorum has just been collected on this update.
+
 		bool update(const ReconfigConfirmMessage& message) {
+			CATAPULT_LOG(warning) << "[DBRB] QUORUM: Received RECONFIG CONFIRM message in view " << message.View << ".";
 			return update(ReconfigConfirmCounters, message.View, message.View);
 		};
+
 		bool update(const ProposeMessage& message) {
 			const auto keyPair = std::make_pair(message.ReplacedView, message.ProposedSequence);
 			return update(ProposedCounters, keyPair, message.ReplacedView);
 		};
+
 		bool update(const ConvergedMessage& message) {
 			const auto keyPair = std::make_pair(message.ReplacedView, message.ConvergedSequence);
 			return update(ConvergedCounters, keyPair, message.ReplacedView);
 		};
+
 		std::set<View> update(const StateUpdateMessage& message) {
 			std::set<View> triggeredViews;
 			for (auto& [view, messages] : StateUpdateMessages) {
@@ -59,27 +65,30 @@ namespace catapult { namespace dbrb {
 			}
 			return triggeredViews;
 		};
+
 		bool update(AcknowledgedMessage message) {
+			CATAPULT_LOG(warning) << "[DBRB] QUORUM: Received ACKNOWLEDGED message in view " << message.View << ".";
 			auto& set = AcknowledgedPayloads[message.View];
-			auto iter = std::find_if(set.begin(), set.end(),
-					[&message](const std::pair<ProcessId, Payload>& pair){ return pair.first == message.Sender; });
-			if (iter != set.end())
-				set.erase(iter);
-			set.emplace(message.Sender, message.Payload);
+			auto payloadHash = CalculateHash({ { reinterpret_cast<const uint8_t*>(message.Payload.get()), message.Payload->Size } });
+			set.emplace(message.Sender, payloadHash);
 
-			const auto acknowledgedCount = std::count_if(set.begin(), set.end(),
-					[&message](const std::pair<ProcessId, Payload>& pair){ return pair.second == message.Payload; });
+			const auto acknowledgedCount = std::count_if(set.begin(), set.end(), [&payloadHash](const auto& pair){ return pair.second == payloadHash; });
 
-			return acknowledgedCount == message.View.quorumSize();
+			const auto triggered = (acknowledgedCount == message.View.quorumSize());
+			CATAPULT_LOG(error) << "[DBRB] QUORUM: ACK quorum status is " << acknowledgedCount << "/" << message.View.quorumSize() << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
+
+			return triggered;
 		};
+
 		bool update(const DeliverMessage& message) {
 			auto& set = DeliveredProcesses[message.View];
-			if (set.count(message.Sender)) {
-				// Sender already was ready for delivery; set size is not updated, so quorum collection is not triggered.
+			if (set.emplace(message.Sender).second) {
+				bool triggered = set.size() == message.View.quorumSize();
+				CATAPULT_LOG(error) << "[DBRB] QUORUM: DELIVER quorum status is " << set.size() << "/" << message.View.quorumSize() << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
+				return triggered;
+			} else {
 				return false;
 			}
-			set.emplace(message.Sender);
-			return set.size() == message.View.quorumSize();
 		};
 
 	private:
@@ -87,13 +96,13 @@ namespace catapult { namespace dbrb {
 		/// Returns whether the quorum for \a referenceView has just been collected on this update.
 		template<typename Key>
 		bool update(std::map<Key, uint32_t>& map, const Key& key, const View& referenceView) {
-			if (map.count(key))
-				map.at(key) += 1u;
-			else
-				map[key] = 1u;
+			auto count = ++map[key];
 
 			// Quorum collection is triggered only once, when the counter EXACTLY hits the quorum size.
-			return map.at(key) == referenceView.quorumSize();
+			const auto triggered = (count == referenceView.quorumSize());
+			CATAPULT_LOG(warning) << "[DBRB] QUORUM: Quorum status is " << count << "/" << referenceView.quorumSize() << (triggered ? " (TRIGGERED)." : "(NOT triggered).");
+
+			return triggered;
 		};
 	};
 
@@ -112,7 +121,7 @@ namespace catapult { namespace dbrb {
 
 
 	/// Class representing DBRB process.
-	class DbrbProcess : public std::enable_shared_from_this<DbrbProcess> {
+	class DbrbProcess : public std::enable_shared_from_this<DbrbProcess>, public utils::NonCopyable {
 	public:
 		using DeliverCallback = consumer<const Payload&>;
 
@@ -169,28 +178,35 @@ namespace catapult { namespace dbrb {
 		/// Map that maps views to the sets of sequences that can be proposed.
 		std::map<View, std::set<Sequence>> m_formatSequences;
 
-		/// Message certificate; map that maps process IDs to signatures received from them.
-		/// Empty when the process starts working.
-		std::map<ProcessId, Signature> m_certificate = {};
+		struct BroadcastData {
+			/// Payload allowed to be acknowledged. If empty, any payload can be acknowledged.
+			std::optional<Payload> AcknowledgeablePayload;
 
-		/// View in which message certificate was collected.
-		View m_certificateView;
+			/// Map that maps views and process IDs to signatures received from respective Acknowledged messages.
+			std::map<std::pair<View, ProcessId>, Signature> Signatures;
 
-		/// Map that maps views and process IDs to signatures received from respective Acknowledged messages.
-		std::map<std::pair<View, ProcessId>, Signature> m_signatures;
+			/// Message certificate; map that maps process IDs to signatures received from them.
+			/// Empty when the process starts working.
+			std::map<ProcessId, Signature> Certificate;
+
+			/// View in which message certificate was collected.
+			View CertificateView;
+
+			/// Quorum manager.
+			dbrb::QuorumManager QuorumManager;
+
+			/// Stored payload, along with respective certificate and certificate view.
+			/// Unset when the process starts working.
+			std::optional<PayloadData> StoredPayloadData;
+
+			/// Whether value of the payload is delivered.
+			bool PayloadIsDelivered = false;
+		};
+
+		std::map<ProcessId, BroadcastData> m_broadcastData;
 
 		/// Whether there is any payload allowed to be acknowledged.
 		bool m_acknowledgeAllowed = true;
-
-		/// Payload allowed to be acknowledged. If empty, any payload can be acknowledged.
-		std::optional<Payload> m_acknowledgeablePayload = {};
-
-		/// Stored payload, along with respective certificate and certificate view.
-		/// Unset when the process starts working.
-		std::optional<PayloadData> m_storedPayloadData = {};
-
-		/// Whether value of the payload is delivered.
-		bool m_payloadIsDelivered = false;
 
 		/// Whether process is allowed to leave the system.
 		bool m_canLeave = false;
@@ -198,13 +214,15 @@ namespace catapult { namespace dbrb {
 		/// State of the process.
 		ProcessState m_state;
 
-		std::shared_ptr<net::PacketWriters> m_pWriters;
-
 		NetworkPacketConverter m_converter;
 
 		DeliverCallback m_deliverCallback;
 
 		const crypto::KeyPair& m_keyPair;
+
+		mutable std::mutex m_mutex;
+
+		MessageSender m_messageSender;
 
 	public:
 		/// Request to join the system.
@@ -228,10 +246,10 @@ namespace catapult { namespace dbrb {
 
 		void prepareForStateUpdates(const InstallMessage&);
 		void updateState(const std::set<StateUpdateMessage>&);
-		bool isAcknowledgeable(const Payload&);
+		bool isAcknowledgeable(const PrepareMessage&);
 		Signature sign(const Payload&);
 		static bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
-
+		
 		void onReconfigMessageReceived(const ReconfigMessage&);
 		void onReconfigConfirmMessageReceived(const ReconfigConfirmMessage&);
 		void onProposeMessageReceived(const ProposeMessage&);
@@ -249,7 +267,7 @@ namespace catapult { namespace dbrb {
 		void onConvergedQuorumCollected(const ConvergedMessage&);
 		void onStateUpdateQuorumCollected();
 		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&);
-		void onDeliverQuorumCollected();
+		void onDeliverQuorumCollected(const std::optional<PayloadData>&);
 
 		void onViewDiscovered(View&&);
 		void onViewInstalled(const View&);

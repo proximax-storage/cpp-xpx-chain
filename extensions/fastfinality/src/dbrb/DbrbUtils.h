@@ -31,6 +31,7 @@ namespace catapult { namespace dbrb {
 	ProcessId UnpackProcessId(const uint8_t*& pData);
 
 	Hash256 CalculateHash(const std::vector<RawBuffer>& buffers);
+	Hash256 CalculatePayloadHash(const Payload& payload);
 
 	/// Changes of processes' membership in a view.
 	enum class MembershipChanges : uint8_t {
@@ -71,6 +72,31 @@ namespace catapult { namespace dbrb {
 		bool operator>(const View& other) const;
 		bool operator<=(const View& other) const;
 		bool operator>=(const View& other) const;
+
+		/// Insertion operator for outputting \a view to \a out.
+		friend std::ostream& operator<<(std::ostream& out, const View& view) {
+			bool leadingSpace = false;
+
+			out << "[";
+			for (const auto& [processId, change] : view.Data) {
+				if (leadingSpace)
+					out << " ";
+
+				out << (change == MembershipChanges::Join ? "+" : "-");
+
+				std::ostringstream processIdStringStream;
+				processIdStringStream << processId;
+				const std::string processIdString = processIdStringStream.str();
+
+				const auto firstDigitPos = processIdStringStream.str().find_first_of("0123456789");
+				out << processIdString.substr(0, 1) + processIdString.at(firstDigitPos);
+
+				leadingSpace = true;
+			}
+			out << "]";
+
+			return out;
+		}
 
 		/// Merge other view into this view.
 		View& merge(const View& other);
@@ -157,6 +183,20 @@ namespace catapult { namespace dbrb {
 			if (Sequence::isValidSequence(sequenceData))
 				return Sequence { sequenceData };
 			return {};
+		}
+
+		/// Insertion operator for outputting \a view to \a out.
+		friend std::ostream& operator<<(std::ostream& out, const Sequence& sequence) {
+			bool leadingComma = false;
+			for (const auto& view : sequence.m_data) {
+				if (leadingComma)
+					out << ", ";
+
+				out << view;
+				leadingComma = true;
+			}
+
+			return out;
 		}
 
 	private:

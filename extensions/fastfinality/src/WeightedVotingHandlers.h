@@ -28,17 +28,20 @@ namespace catapult { namespace fastfinality {
 	using RemoteNodeStateRetriever = std::function<thread::future<std::vector<RemoteNodeState>> ()>;
 
 	/// Handles a push proposed block message.
-	consumer<const ionet::Packet&> PushProposedBlock(
+	void PushProposedBlock(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-		const plugins::PluginManager& pluginManager);
+		const plugins::PluginManager& pluginManager,
+		const ionet::Packet& packet);
 
 	/// Handles a push prevote message.
-	consumer<const ionet::Packet&> PushPrevoteMessages(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
+	void PushPrevoteMessages(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const ionet::Packet& packet);
 
 	/// Handles a push precommit message.
-	consumer<const ionet::Packet&> PushPrecommitMessages(
-		std::weak_ptr<WeightedVotingFsm> pFsmWeak);
+	void PushPrecommitMessages(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		const ionet::Packet& packet);
 
 	/// Registers a pull confirmed block handler in \a handlers constructing response from \a pFsmWeak.
 	void RegisterPullConfirmedBlockHandler(

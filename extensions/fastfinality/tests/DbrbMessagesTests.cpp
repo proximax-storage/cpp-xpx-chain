@@ -30,7 +30,7 @@ namespace catapult { namespace fastfinality {
 				{ nodes[2], test::GenerateRandomArray<Signature_Size>() },
 				{ nodes[3], test::GenerateRandomArray<Signature_Size>() },
 			};
-			return dbrb::CommitMessage(nodes[0], payload, certificate, certificateView, currentView);
+			return dbrb::CommitMessage(nodes[0], nodes[1], payload, certificate, certificateView, currentView);
 		}
 
 		template<typename TMessage>
@@ -162,9 +162,10 @@ namespace catapult { namespace fastfinality {
 				for (const auto& node : nodes)
 					view.Data.emplace(node, dbrb::MembershipChanges::Join);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
-				return dbrb::AcknowledgedMessage(nodes[0], payload, view, test::GenerateRandomArray<Signature_Size>());
+				return dbrb::AcknowledgedMessage(nodes[0], nodes[1], payload, view, test::GenerateRandomArray<Signature_Size>());
 			},
 			[](const dbrb::AcknowledgedMessage& originalMessage, const dbrb::AcknowledgedMessage& unpackedMessage) {
+				EXPECT_EQ(originalMessage.Initiator, unpackedMessage.Initiator);
 				EXPECT_EQ(originalMessage.View, unpackedMessage.View);
 				EXPECT_EQ(originalMessage.Payload->Size, unpackedMessage.Payload->Size);
 				EXPECT_EQ_MEMORY(originalMessage.Payload.get(), unpackedMessage.Payload.get(), originalMessage.Payload->Size);
@@ -176,6 +177,7 @@ namespace catapult { namespace fastfinality {
 				return CreateCommitMessage(nodes);
 			},
 			[](const dbrb::CommitMessage& originalMessage, const dbrb::CommitMessage& unpackedMessage) {
+				EXPECT_EQ(originalMessage.Initiator, unpackedMessage.Initiator);
 				EXPECT_EQ(originalMessage.Payload->Size, unpackedMessage.Payload->Size);
 				EXPECT_EQ_MEMORY(originalMessage.Payload.get(), unpackedMessage.Payload.get(), originalMessage.Payload->Size);
 				EXPECT_EQ(originalMessage.CertificateView, unpackedMessage.CertificateView);
@@ -192,7 +194,7 @@ namespace catapult { namespace fastfinality {
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 				dbrb::PrepareMessage prepareMessage(nodes[0], payload, view);
 				state.Acknowledgeable = prepareMessage;
-				state.Conflicting = std::make_pair(prepareMessage, prepareMessage);
+				state.Conflicting = prepareMessage;
 				state.Stored = CreateCommitMessage(nodes);
 				dbrb::View pendingChanges;
 				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
@@ -214,19 +216,12 @@ namespace catapult { namespace fastfinality {
 				EXPECT_EQ(originalMessage.State.Acknowledgeable->Payload->Size, unpackedMessage.State.Acknowledgeable->Payload->Size);
 				EXPECT_EQ_MEMORY(originalMessage.State.Acknowledgeable->Payload.get(), unpackedMessage.State.Acknowledgeable->Payload.get(), originalMessage.State.Acknowledgeable->Payload->Size);
 
-				EXPECT_EQ(originalMessage.State.Conflicting->first.Sender, unpackedMessage.State.Conflicting->first.Sender);
-				EXPECT_EQ(originalMessage.State.Conflicting->first.Type, unpackedMessage.State.Conflicting->first.Type);
-				EXPECT_EQ(originalMessage.State.Conflicting->first.Signature, unpackedMessage.State.Conflicting->first.Signature);
-				EXPECT_EQ(originalMessage.State.Conflicting->first.View, unpackedMessage.State.Conflicting->first.View);
-				EXPECT_EQ(originalMessage.State.Conflicting->first.Payload->Size, unpackedMessage.State.Conflicting->first.Payload->Size);
-				EXPECT_EQ_MEMORY(originalMessage.State.Conflicting->first.Payload.get(), unpackedMessage.State.Conflicting->first.Payload.get(), originalMessage.State.Conflicting->first.Payload->Size);
-
-				EXPECT_EQ(originalMessage.State.Conflicting->second.Sender, unpackedMessage.State.Conflicting->second.Sender);
-				EXPECT_EQ(originalMessage.State.Conflicting->second.Type, unpackedMessage.State.Conflicting->second.Type);
-				EXPECT_EQ(originalMessage.State.Conflicting->second.Signature, unpackedMessage.State.Conflicting->second.Signature);
-				EXPECT_EQ(originalMessage.State.Conflicting->second.View, unpackedMessage.State.Conflicting->second.View);
-				EXPECT_EQ(originalMessage.State.Conflicting->second.Payload->Size, unpackedMessage.State.Conflicting->second.Payload->Size);
-				EXPECT_EQ_MEMORY(originalMessage.State.Conflicting->second.Payload.get(), unpackedMessage.State.Conflicting->second.Payload.get(), originalMessage.State.Conflicting->second.Payload->Size);
+				EXPECT_EQ(originalMessage.State.Conflicting->Sender, unpackedMessage.State.Conflicting->Sender);
+				EXPECT_EQ(originalMessage.State.Conflicting->Type, unpackedMessage.State.Conflicting->Type);
+				EXPECT_EQ(originalMessage.State.Conflicting->Signature, unpackedMessage.State.Conflicting->Signature);
+				EXPECT_EQ(originalMessage.State.Conflicting->View, unpackedMessage.State.Conflicting->View);
+				EXPECT_EQ(originalMessage.State.Conflicting->Payload->Size, unpackedMessage.State.Conflicting->Payload->Size);
+				EXPECT_EQ_MEMORY(originalMessage.State.Conflicting->Payload.get(), unpackedMessage.State.Conflicting->Payload.get(), originalMessage.State.Conflicting->Payload->Size);
 
 				EXPECT_EQ(originalMessage.State.Stored->Sender, unpackedMessage.State.Stored->Sender);
 				EXPECT_EQ(originalMessage.State.Stored->Type, unpackedMessage.State.Stored->Type);
@@ -249,7 +244,7 @@ namespace catapult { namespace fastfinality {
 					view.Data.emplace(node, dbrb::MembershipChanges::Join);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 				dbrb::PrepareMessage prepareMessage(nodes[0], payload, view);
-				state.Conflicting = std::make_pair(prepareMessage, prepareMessage);
+				state.Conflicting = prepareMessage;
 				state.Stored = CreateCommitMessage(nodes);
 				dbrb::View pendingChanges;
 				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
@@ -266,19 +261,12 @@ namespace catapult { namespace fastfinality {
 			[](const dbrb::StateUpdateMessage& originalMessage, const dbrb::StateUpdateMessage& unpackedMessage) {
 				EXPECT_EQ(false, unpackedMessage.State.Acknowledgeable.has_value());
 
-				EXPECT_EQ(originalMessage.State.Conflicting->first.Sender, unpackedMessage.State.Conflicting->first.Sender);
-				EXPECT_EQ(originalMessage.State.Conflicting->first.Type, unpackedMessage.State.Conflicting->first.Type);
-				EXPECT_EQ(originalMessage.State.Conflicting->first.Signature, unpackedMessage.State.Conflicting->first.Signature);
-				EXPECT_EQ(originalMessage.State.Conflicting->first.View, unpackedMessage.State.Conflicting->first.View);
-				EXPECT_EQ(originalMessage.State.Conflicting->first.Payload->Size, unpackedMessage.State.Conflicting->first.Payload->Size);
-				EXPECT_EQ_MEMORY(originalMessage.State.Conflicting->first.Payload.get(), unpackedMessage.State.Conflicting->first.Payload.get(), originalMessage.State.Conflicting->first.Payload->Size);
-
-				EXPECT_EQ(originalMessage.State.Conflicting->second.Sender, unpackedMessage.State.Conflicting->second.Sender);
-				EXPECT_EQ(originalMessage.State.Conflicting->second.Type, unpackedMessage.State.Conflicting->second.Type);
-				EXPECT_EQ(originalMessage.State.Conflicting->second.Signature, unpackedMessage.State.Conflicting->second.Signature);
-				EXPECT_EQ(originalMessage.State.Conflicting->second.View, unpackedMessage.State.Conflicting->second.View);
-				EXPECT_EQ(originalMessage.State.Conflicting->second.Payload->Size, unpackedMessage.State.Conflicting->second.Payload->Size);
-				EXPECT_EQ_MEMORY(originalMessage.State.Conflicting->second.Payload.get(), unpackedMessage.State.Conflicting->second.Payload.get(), originalMessage.State.Conflicting->second.Payload->Size);
+				EXPECT_EQ(originalMessage.State.Conflicting->Sender, unpackedMessage.State.Conflicting->Sender);
+				EXPECT_EQ(originalMessage.State.Conflicting->Type, unpackedMessage.State.Conflicting->Type);
+				EXPECT_EQ(originalMessage.State.Conflicting->Signature, unpackedMessage.State.Conflicting->Signature);
+				EXPECT_EQ(originalMessage.State.Conflicting->View, unpackedMessage.State.Conflicting->View);
+				EXPECT_EQ(originalMessage.State.Conflicting->Payload->Size, unpackedMessage.State.Conflicting->Payload->Size);
+				EXPECT_EQ_MEMORY(originalMessage.State.Conflicting->Payload.get(), unpackedMessage.State.Conflicting->Payload.get(), originalMessage.State.Conflicting->Payload->Size);
 
 				EXPECT_EQ(originalMessage.State.Stored->Sender, unpackedMessage.State.Stored->Sender);
 				EXPECT_EQ(originalMessage.State.Stored->Type, unpackedMessage.State.Stored->Type);
@@ -347,7 +335,7 @@ namespace catapult { namespace fastfinality {
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 				dbrb::PrepareMessage prepareMessage(nodes[0], payload, view);
 				state.Acknowledgeable = prepareMessage;
-				state.Conflicting = std::make_pair(prepareMessage, prepareMessage);
+				state.Conflicting = prepareMessage;
 				dbrb::View pendingChanges;
 				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
 					{ nodes[1], dbrb::MembershipChanges::Join },
@@ -368,19 +356,12 @@ namespace catapult { namespace fastfinality {
 				EXPECT_EQ(originalMessage.State.Acknowledgeable->Payload->Size, unpackedMessage.State.Acknowledgeable->Payload->Size);
 				EXPECT_EQ_MEMORY(originalMessage.State.Acknowledgeable->Payload.get(), unpackedMessage.State.Acknowledgeable->Payload.get(), originalMessage.State.Acknowledgeable->Payload->Size);
 
-				EXPECT_EQ(originalMessage.State.Conflicting->first.Sender, unpackedMessage.State.Conflicting->first.Sender);
-				EXPECT_EQ(originalMessage.State.Conflicting->first.Type, unpackedMessage.State.Conflicting->first.Type);
-				EXPECT_EQ(originalMessage.State.Conflicting->first.Signature, unpackedMessage.State.Conflicting->first.Signature);
-				EXPECT_EQ(originalMessage.State.Conflicting->first.View, unpackedMessage.State.Conflicting->first.View);
-				EXPECT_EQ(originalMessage.State.Conflicting->first.Payload->Size, unpackedMessage.State.Conflicting->first.Payload->Size);
-				EXPECT_EQ_MEMORY(originalMessage.State.Conflicting->first.Payload.get(), unpackedMessage.State.Conflicting->first.Payload.get(), originalMessage.State.Conflicting->first.Payload->Size);
-
-				EXPECT_EQ(originalMessage.State.Conflicting->second.Sender, unpackedMessage.State.Conflicting->second.Sender);
-				EXPECT_EQ(originalMessage.State.Conflicting->second.Type, unpackedMessage.State.Conflicting->second.Type);
-				EXPECT_EQ(originalMessage.State.Conflicting->second.Signature, unpackedMessage.State.Conflicting->second.Signature);
-				EXPECT_EQ(originalMessage.State.Conflicting->second.View, unpackedMessage.State.Conflicting->second.View);
-				EXPECT_EQ(originalMessage.State.Conflicting->second.Payload->Size, unpackedMessage.State.Conflicting->second.Payload->Size);
-				EXPECT_EQ_MEMORY(originalMessage.State.Conflicting->second.Payload.get(), unpackedMessage.State.Conflicting->second.Payload.get(), originalMessage.State.Conflicting->second.Payload->Size);
+				EXPECT_EQ(originalMessage.State.Conflicting->Sender, unpackedMessage.State.Conflicting->Sender);
+				EXPECT_EQ(originalMessage.State.Conflicting->Type, unpackedMessage.State.Conflicting->Type);
+				EXPECT_EQ(originalMessage.State.Conflicting->Signature, unpackedMessage.State.Conflicting->Signature);
+				EXPECT_EQ(originalMessage.State.Conflicting->View, unpackedMessage.State.Conflicting->View);
+				EXPECT_EQ(originalMessage.State.Conflicting->Payload->Size, unpackedMessage.State.Conflicting->Payload->Size);
+				EXPECT_EQ_MEMORY(originalMessage.State.Conflicting->Payload.get(), unpackedMessage.State.Conflicting->Payload.get(), originalMessage.State.Conflicting->Payload->Size);
 
 				EXPECT_EQ(false, unpackedMessage.State.Stored.has_value());
 
@@ -423,9 +404,10 @@ namespace catapult { namespace fastfinality {
 				for (const auto& node : nodes)
 					view.Data.emplace(node, dbrb::MembershipChanges::Join);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
-				return dbrb::DeliverMessage(nodes[0], payload, view);
+				return dbrb::DeliverMessage(nodes[0], nodes[1], payload, view);
 			},
 			[](const dbrb::DeliverMessage& originalMessage, const dbrb::DeliverMessage& unpackedMessage) {
+				EXPECT_EQ(originalMessage.Initiator, unpackedMessage.Initiator);
 				EXPECT_EQ(originalMessage.View, unpackedMessage.View);
 				EXPECT_EQ(originalMessage.Payload->Size, unpackedMessage.Payload->Size);
 				EXPECT_EQ_MEMORY(originalMessage.Payload.get(), unpackedMessage.Payload.get(), originalMessage.Payload->Size);

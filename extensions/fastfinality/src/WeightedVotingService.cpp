@@ -143,15 +143,15 @@ namespace catapult { namespace fastfinality {
 
 					switch (pPacket->Type) {
 						case ionet::PacketType::Push_Proposed_Block: {
-							PushProposedBlock(pFsmShared, pluginManager);
+							PushProposedBlock(pFsmShared, pluginManager, *pPacket);
 							break;
 						}
 						case ionet::PacketType::Push_Prevote_Messages: {
-							PushPrevoteMessages(pFsmShared);
+							PushPrevoteMessages(pFsmShared, *pPacket);
 							break;
 						}
 						case ionet::PacketType::Push_Precommit_Messages: {
-							PushPrecommitMessages(pFsmShared);
+							PushPrecommitMessages(pFsmShared, *pPacket);
 							break;
 						}
 					}

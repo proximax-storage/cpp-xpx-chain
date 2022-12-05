@@ -16,107 +16,104 @@
 
 namespace catapult { namespace fastfinality {
 
-	consumer<const ionet::Packet&> PushProposedBlock(
+	void PushProposedBlock(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
-			const plugins::PluginManager& pluginManager) {
-		return [pFsmWeak, &pluginManager](const auto& packet) {
-			TRY_GET_FSM()
+			const plugins::PluginManager& pluginManager,
+			const ionet::Packet& packet) {
+		TRY_GET_FSM()
 
-			const auto& registry = pluginManager.transactionRegistry();
-			auto pBlock = utils::UniqueToShared(ionet::ExtractEntityFromPacket<model::Block>(packet, [&registry](const auto& entity) {
-				return IsSizeValid(entity, registry);
-			}));
-			if (!pBlock) {
-				CATAPULT_LOG(warning) << "rejecting invalid packet: " << packet;
-				return;
-			}
+		const auto& registry = pluginManager.transactionRegistry();
+		auto pBlock = utils::UniqueToShared(ionet::ExtractEntityFromPacket<model::Block>(packet, [&registry](const auto& entity) {
+			return IsSizeValid(entity, registry);
+		}));
+		if (!pBlock) {
+			CATAPULT_LOG(warning) << "rejecting invalid packet: " << packet;
+			return;
+		}
 
-			CATAPULT_LOG(trace) << "received valid " << packet;
+		CATAPULT_LOG(trace) << "received valid " << packet;
 
-			auto& committeeData = pFsmShared->committeeData();
-			if (committeeData.proposedBlock()) {
-				CATAPULT_LOG(trace) << "rejecting proposal, there is one already";
-				return;
-			}
+		auto& committeeData = pFsmShared->committeeData();
+		if (committeeData.proposedBlock()) {
+			CATAPULT_LOG(trace) << "rejecting proposal, there is one already";
+			return;
+		}
 
-			const auto& committee = pluginManager.getCommitteeManager().committee();
-			if (pBlock->Signer != committee.BlockProposer) {
-				CATAPULT_LOG(warning) << "rejecting proposal, signer " << pBlock->Signer << " invalid, expected " << committee.BlockProposer;
-				return;
-			}
+		const auto& committee = pluginManager.getCommitteeManager().committee();
+		if (pBlock->Signer != committee.BlockProposer) {
+			CATAPULT_LOG(warning) << "rejecting proposal, signer " << pBlock->Signer << " invalid, expected " << committee.BlockProposer;
+			return;
+		}
 
-			if (pBlock->round() != committee.Round) {
-				CATAPULT_LOG(warning) << "rejecting proposal, round " << pBlock->round() << " invalid, expected " << committee.Round;
-				return;
-			}
+		if (pBlock->round() != committee.Round) {
+			CATAPULT_LOG(warning) << "rejecting proposal, round " << pBlock->round() << " invalid, expected " << committee.Round;
+			return;
+		}
 
-			if (!model::VerifyBlockHeaderSignature(*pBlock)) {
-				CATAPULT_LOG(warning) << "rejecting proposal, signature invalid";
-				return;
-			}
+		if (!model::VerifyBlockHeaderSignature(*pBlock)) {
+			CATAPULT_LOG(warning) << "rejecting proposal, signature invalid";
+			return;
+		}
 
-			committeeData.setProposedBlock(pBlock);
-		};
+		committeeData.setProposedBlock(pBlock);
 	}
 
 	namespace {
 		template<typename TPacket>
-		consumer<const ionet::Packet&> PushVoteMessages(std::weak_ptr<WeightedVotingFsm> pFsmWeak, const std::string& name) {
-			return [pFsmWeak, name](const auto& packet) {
-				TRY_GET_FSM()
+		void PushVoteMessages(std::weak_ptr<WeightedVotingFsm> pFsmWeak, const ionet::Packet& packet, const std::string& name) {
+			TRY_GET_FSM()
 
-				const auto* pPacket = static_cast<const TPacket*>(&packet);
-				if (!pPacket) {
-					CATAPULT_LOG(warning) << "rejecting invalid packet: " << packet;
-					return;
+			const auto* pPacket = static_cast<const TPacket*>(&packet);
+			if (!pPacket) {
+				CATAPULT_LOG(warning) << "rejecting invalid packet: " << packet;
+				return;
+			}
+
+			auto& committeeData = pFsmShared->committeeData();
+			const auto* pMessage = reinterpret_cast<const CommitteeMessage*>(pPacket + 1);
+			for (uint8_t i = 0u; i < pPacket->MessageCount; ++i, ++pMessage) {
+				const auto& signer = pMessage->BlockCosignature.Signer;
+				if (committeeData.hasVote(signer, pMessage->Type)) {
+					CATAPULT_LOG(trace) << "already has vote " << signer << " (" << name << ")";
+					continue;
 				}
 
-				auto& committeeData = pFsmShared->committeeData();
-				const auto* pMessage = reinterpret_cast<const CommitteeMessage*>(pPacket + 1);
-				for (uint8_t i = 0u; i < pPacket->MessageCount; ++i, ++pMessage) {
-					const auto& signer = pMessage->BlockCosignature.Signer;
-					if (committeeData.hasVote(signer, pMessage->Type)) {
-						CATAPULT_LOG(trace) << "already has vote " << signer << " (" << name << ")";
-						continue;
-					}
-
-					auto pProposedBlock = committeeData.proposedBlock();
-					if (!pProposedBlock) {
-						CATAPULT_LOG(warning) << "rejecting " << name << ", no proposed block";
-						continue;
-					}
-
-					CATAPULT_LOG(trace) << "received valid " << packet;
-					if (pMessage->BlockHash != committeeData.proposedBlockHash()) {
-						CATAPULT_LOG(warning) << "rejecting " << name << ", block hash invalid";
-						continue;
-					}
-
-					const auto& cosignature = pMessage->BlockCosignature;
-					if (!crypto::Verify(cosignature.Signer, CommitteeMessageDataBuffer(*pMessage), pMessage->MessageSignature)) {
-						CATAPULT_LOG(warning) << "rejecting " << name << ", message signature invalid";
-						continue;
-					}
-
-					if (!model::VerifyBlockHeaderCosignature(*pProposedBlock, cosignature)) {
-						CATAPULT_LOG(warning) << "rejecting " << name << ", block signature invalid";
-						continue;
-					}
-
-					committeeData.addVote(*pMessage);
-
-					CATAPULT_LOG(debug) << "collected " << committeeData.votes(pMessage->Type).size() << " " << name << "(s)";
+				auto pProposedBlock = committeeData.proposedBlock();
+				if (!pProposedBlock) {
+					CATAPULT_LOG(warning) << "rejecting " << name << ", no proposed block";
+					continue;
 				}
-			};
+
+				CATAPULT_LOG(trace) << "received valid " << packet;
+				if (pMessage->BlockHash != committeeData.proposedBlockHash()) {
+					CATAPULT_LOG(warning) << "rejecting " << name << ", block hash invalid";
+					continue;
+				}
+
+				const auto& cosignature = pMessage->BlockCosignature;
+				if (!crypto::Verify(cosignature.Signer, CommitteeMessageDataBuffer(*pMessage), pMessage->MessageSignature)) {
+					CATAPULT_LOG(warning) << "rejecting " << name << ", message signature invalid";
+					continue;
+				}
+
+				if (!model::VerifyBlockHeaderCosignature(*pProposedBlock, cosignature)) {
+					CATAPULT_LOG(warning) << "rejecting " << name << ", block signature invalid";
+					continue;
+				}
+
+				committeeData.addVote(*pMessage);
+
+				CATAPULT_LOG(debug) << "collected " << committeeData.votes(pMessage->Type).size() << " " << name << "(s)";
+			}
 		}
 	}
 
-	consumer<const ionet::Packet&> PushPrevoteMessages(std::weak_ptr<WeightedVotingFsm> pFsmWeak) {
-		return PushVoteMessages<PushPrevoteMessagesRequest>(pFsmWeak, "prevote message");
+	void PushPrevoteMessages(std::weak_ptr<WeightedVotingFsm> pFsmWeak, const ionet::Packet& packet) {
+		PushVoteMessages<PushPrevoteMessagesRequest>(pFsmWeak, packet, "prevote message");
 	}
 
-	consumer<const ionet::Packet&> PushPrecommitMessages(std::weak_ptr<WeightedVotingFsm> pFsmWeak) {
-		return PushVoteMessages<PushPrecommitMessagesRequest>(pFsmWeak, "precommit message");
+	void PushPrecommitMessages(std::weak_ptr<WeightedVotingFsm> pFsmWeak, const ionet::Packet& packet) {
+		PushVoteMessages<PushPrecommitMessagesRequest>(pFsmWeak, packet, "precommit message");
 	}
 
 	void RegisterPullConfirmedBlockHandler(std::weak_ptr<WeightedVotingFsm> pFsmWeak, ionet::ServerPacketHandlers& handlers) {
