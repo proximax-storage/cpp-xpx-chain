@@ -40,7 +40,7 @@ namespace catapult { namespace dbrb {
 		/// Returns whether the quorum has just been collected on this update.
 
 		bool update(const ReconfigConfirmMessage& message) {
-			CATAPULT_LOG(warning) << "[DBRB] QUORUM: Received RECONFIG CONFIRM message in view " << message.View << ".";
+			CATAPULT_LOG(debug) << "[DBRB] QUORUM: Received RECONFIG CONFIRM message in view " << message.View << ".";
 			return update(ReconfigConfirmCounters, message.View, message.View);
 		};
 
@@ -67,7 +67,7 @@ namespace catapult { namespace dbrb {
 		};
 
 		bool update(AcknowledgedMessage message) {
-			CATAPULT_LOG(warning) << "[DBRB] QUORUM: Received ACKNOWLEDGED message in view " << message.View << ".";
+			CATAPULT_LOG(debug) << "[DBRB] QUORUM: Received ACKNOWLEDGED message in view " << message.View << ".";
 			auto& set = AcknowledgedPayloads[message.View];
 			auto payloadHash = CalculateHash({ { reinterpret_cast<const uint8_t*>(message.Payload.get()), message.Payload->Size } });
 			set.emplace(message.Sender, payloadHash);
@@ -75,7 +75,7 @@ namespace catapult { namespace dbrb {
 			const auto acknowledgedCount = std::count_if(set.begin(), set.end(), [&payloadHash](const auto& pair){ return pair.second == payloadHash; });
 
 			const auto triggered = (acknowledgedCount == message.View.quorumSize());
-			CATAPULT_LOG(error) << "[DBRB] QUORUM: ACK quorum status is " << acknowledgedCount << "/" << message.View.quorumSize() << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
+			CATAPULT_LOG(debug) << "[DBRB] QUORUM: ACK quorum status is " << acknowledgedCount << "/" << message.View.quorumSize() << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
 
 			return triggered;
 		};
@@ -84,7 +84,7 @@ namespace catapult { namespace dbrb {
 			auto& set = DeliveredProcesses[message.View];
 			if (set.emplace(message.Sender).second) {
 				bool triggered = set.size() == message.View.quorumSize();
-				CATAPULT_LOG(error) << "[DBRB] QUORUM: DELIVER quorum status is " << set.size() << "/" << message.View.quorumSize() << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
+				CATAPULT_LOG(debug) << "[DBRB] QUORUM: DELIVER quorum status is " << set.size() << "/" << message.View.quorumSize() << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
 				return triggered;
 			} else {
 				return false;
@@ -100,7 +100,7 @@ namespace catapult { namespace dbrb {
 
 			// Quorum collection is triggered only once, when the counter EXACTLY hits the quorum size.
 			const auto triggered = (count == referenceView.quorumSize());
-			CATAPULT_LOG(warning) << "[DBRB] QUORUM: Quorum status is " << count << "/" << referenceView.quorumSize() << (triggered ? " (TRIGGERED)." : "(NOT triggered).");
+			CATAPULT_LOG(debug) << "[DBRB] QUORUM: Quorum status is " << count << "/" << referenceView.quorumSize() << (triggered ? " (TRIGGERED)." : "(NOT triggered).");
 
 			return triggered;
 		};
