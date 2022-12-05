@@ -29,6 +29,7 @@ namespace catapult::model {
 		explicit DeploySupercontractNotification(
 				const Key& contractKey,
 				const Key& driveKey,
+				const Key& executionPaymentKey,
 				const Key& assignee,
 				std::string automaticExecutionFileName,
 				std::string automaticExecutionsFunctionName,
@@ -37,6 +38,7 @@ namespace catapult::model {
 				: Notification(Notification_Type, sizeof(DeploySupercontractNotification<1>))
 				, ContractKey(contractKey)
 				, DriveKey(driveKey)
+			    , ExecutionPaymentKey(executionPaymentKey)
 				, Assignee(assignee)
 				, AutomaticExecutionFileName(std::move(automaticExecutionFileName))
 				, AutomaticExecutionsFunctionName(std::move(automaticExecutionsFunctionName))
@@ -47,6 +49,7 @@ namespace catapult::model {
 	public:
 		Key ContractKey;
 		Key DriveKey;
+		Key ExecutionPaymentKey;
 		Key Assignee;
 		std::string AutomaticExecutionFileName;
 		std::string AutomaticExecutionsFunctionName;

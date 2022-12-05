@@ -50,6 +50,14 @@ class SuperContractMixin {
 			m_driveKey = driveKey;
 		}
 
+		const Key& executionPaymentKey() const {
+			return m_executionPaymentKey;
+		}
+
+		void setExecutionPaymentKey(const Key& executionPaymentKey) {
+			m_executionPaymentKey = executionPaymentKey;
+		}
+
 		const Key& assignee() const {
 			return m_assignee;
 		}
@@ -80,6 +88,7 @@ class SuperContractMixin {
 
 	private:
 		Key m_driveKey;
+		Key m_executionPaymentKey;
 		Key m_assignee;
 		AutomaticExecutionsInfo m_automaticExecutionsInfo;
 		std::queue<ContractCall> m_requestedCalls;

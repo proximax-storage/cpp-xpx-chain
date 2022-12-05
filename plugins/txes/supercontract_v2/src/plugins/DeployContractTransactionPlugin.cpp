@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <catapult/crypto/Hashes.h>
 #include "tools/tools/ToolKeys.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "DeployContractTransactionPlugin.h"
@@ -30,6 +31,14 @@ namespace catapult { namespace plugins {
 
 					auto contractKey = Key(txHash.array());
 					sub.notify(AccountPublicKeyNotification<1>(contractKey));
+
+					Hash256 paymentHash;
+					crypto::Sha3_256_Builder sha3;
+					sha3.update({contractKey, config.GenerationHash});
+					sha3.final(paymentHash);
+					auto contractExecutionPaymentKey = Key(paymentHash.array());
+					sub.notify(AccountPublicKeyNotification<1>(contractExecutionPaymentKey));
+
 					sub.notify(OwnerManagementProhibition<1>(
 							transaction.Signer,
 							transaction.DriveKey
@@ -41,6 +50,7 @@ namespace catapult { namespace plugins {
 					sub.notify(DeploySupercontractNotification<1>(
 							contractKey,
 							transaction.DriveKey,
+							contractExecutionPaymentKey,
 							transaction.Assignee,
 							automaticExecutionsFileName,
 							automaticExecutionsFunctionName,
@@ -56,6 +66,13 @@ namespace catapult { namespace plugins {
 					servicePayments.reserve(transaction.ServicePaymentsCount);
 					for (auto i = 0U; i < transaction.ServicePaymentsCount; i++) {
 						servicePayments.push_back(pServicePayment[i]);
+					}
+
+					const auto contractAddress = extensions::CopyToUnresolvedAddress(
+							PublicKeyToAddress(contractKey, config.NetworkIdentifier));
+					for (const auto& servicePayment : servicePayments) {
+						sub.notify(BalanceTransferNotification<1>(
+								transaction.Signer, contractAddress, servicePayment.MosaicId, servicePayment.Amount));
 					}
 
 					sub.notify(AutomaticExecutionsReplenishmentNotification<1>(
@@ -75,38 +92,56 @@ namespace catapult { namespace plugins {
 					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
 					const auto scMosaicId = config::GetUnresolvedSuperContractMosaicId(config);
 
-					const auto pAutomaticExecutionWork = sub.mempool().malloc(model::AutomaticExecutorWork(contractKey, transaction.AutomaticExecutionsNumber));
+					const auto pAutomaticExecutionWork = sub.mempool().malloc(
+							model::AutomaticExecutorWork(contractKey, transaction.AutomaticExecutionsNumber));
 					utils::SwapMosaics(
 							transaction.Signer,
-							transaction.DriveKey,
-							{ std::make_pair(scMosaicId, UnresolvedAmount(0, UnresolvedAmountType::AutomaticExecutionWork, pAutomaticExecutionWork)) },
+							contractExecutionPaymentKey,
+							{ std::make_pair(
+									scMosaicId,
+									UnresolvedAmount(
+											0,
+											UnresolvedAmountType::AutomaticExecutionWork,
+											pAutomaticExecutionWork)) },
 							sub,
 							config,
 							utils::SwapOperation::Buy);
 
-					const auto pAutomaticDownloadWork = sub.mempool().malloc(model::AutomaticExecutorWork(contractKey, transaction.AutomaticExecutionsNumber));
+					const auto pAutomaticDownloadWork = sub.mempool().malloc(
+							model::AutomaticExecutorWork(contractKey, transaction.AutomaticExecutionsNumber));
 					utils::SwapMosaics(
 							transaction.Signer,
-							transaction.DriveKey,
-							{ std::make_pair(streamingMosaicId, UnresolvedAmount(0, UnresolvedAmountType::AutomaticExecutionWork, pAutomaticDownloadWork)) },
+							contractExecutionPaymentKey,
+							{ std::make_pair(
+									streamingMosaicId,
+									UnresolvedAmount(
+											0, UnresolvedAmountType::AutomaticExecutionWork, pAutomaticDownloadWork)) },
 							sub,
 							config,
 							utils::SwapOperation::Buy);
 
-					const auto pInitializerExecutionWork = sub.mempool().malloc(model::ExecutorWork(contractKey, transaction.ExecutionCallPayment));
+					const auto pInitializerExecutionWork =
+							sub.mempool().malloc(model::ExecutorWork(contractKey, transaction.ExecutionCallPayment));
 					utils::SwapMosaics(
 							transaction.Signer,
-							transaction.DriveKey,
-							{ std::make_pair(scMosaicId, UnresolvedAmount(0, UnresolvedAmountType::ExecutorWork, pInitializerExecutionWork)) },
+							contractExecutionPaymentKey,
+							{ std::make_pair(
+									scMosaicId,
+									UnresolvedAmount(
+											0, UnresolvedAmountType::ExecutorWork, pInitializerExecutionWork)) },
 							sub,
 							config,
 							utils::SwapOperation::Buy);
 
-					const auto pInitializerDownloadWork = sub.mempool().malloc(model::ExecutorWork(contractKey, transaction.ExecutionCallPayment));
+					const auto pInitializerDownloadWork =
+							sub.mempool().malloc(model::ExecutorWork(contractKey, transaction.ExecutionCallPayment));
 					utils::SwapMosaics(
 							transaction.Signer,
-							transaction.DriveKey,
-							{ std::make_pair(streamingMosaicId, UnresolvedAmount(0, UnresolvedAmountType::ExecutorWork, pInitializerDownloadWork)) },
+							contractExecutionPaymentKey,
+							{ std::make_pair(
+									streamingMosaicId,
+									UnresolvedAmount(
+											0, UnresolvedAmountType::ExecutorWork, pInitializerDownloadWork)) },
 							sub,
 							config,
 							utils::SwapOperation::Buy);

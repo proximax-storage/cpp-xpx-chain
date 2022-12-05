@@ -19,6 +19,7 @@ namespace catapult::observers {
 
 		state::SuperContractEntry entry(notification.ContractKey);
 		entry.setDriveKey(notification.DriveKey);
+		entry.setExecutionPaymentKey(notification.ExecutionPaymentKey);
 		entry.setAssignee(notification.Assignee);
 		auto& automaticExecutionsInfo = entry.automaticExecutionsInfo();
 		automaticExecutionsInfo.m_automatedExecutionCallPayment = notification.AutomaticExecutionCallPayment;
