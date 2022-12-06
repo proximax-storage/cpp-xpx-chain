@@ -14,5 +14,5 @@ namespace catapult { namespace model { class TransactionPlugin; } }
 namespace catapult { namespace plugins {
 
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateDeployContractTransactionPlugin(const config::ImmutableConfiguration&);
+	std::unique_ptr<model::TransactionPlugin> CreateSuccessfulEndBatchExecutionTransactionPlugin(const config::ImmutableConfiguration&);
 }}

@@ -29,7 +29,7 @@ namespace catapult::model {
             uint32_t AutomaticExecutionsNumber;
 
         public:
-            // Calculates the real size of a deploy \a transaction.
+            // Calculates the real size of an automatic executions payment \a transaction.
             static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
 			    return sizeof(TransactionType);
 		    }

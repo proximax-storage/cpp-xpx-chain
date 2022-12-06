@@ -13,7 +13,6 @@ namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates a data modification transaction plugin.
 	PLUGIN_API
 	std::unique_ptr<model::TransactionPlugin> CreateAutomaticExecutionsPaymentTransactionPlugin(const config::ImmutableConfiguration&);
 }}

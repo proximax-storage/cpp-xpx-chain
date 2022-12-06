@@ -96,7 +96,7 @@ namespace catapult::model {
 		}
 
 	public:
-		// Calculates the real size of a deploy \a transaction.
+		// Calculates the real size of a manual call \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
 			return sizeof(TransactionType) + transaction.FileNameSize + transaction.FunctionNameSize + transaction.ActualArgumentsSize + transaction.ServicePaymentsCount * sizeof(UnresolvedMosaic);
 		}

@@ -12,14 +12,14 @@ namespace catapult { namespace model {
 
 #endif
 
-	/// Deploy contract transaction.
 	DEFINE_TRANSACTION_TYPE(SuperContract_v2, DeployContractTransaction, 0x1);
 
-	/// Manual call transaction.
 	DEFINE_TRANSACTION_TYPE(SuperContract_v2, ManualCallTransaction, 0x2);
 
-	/// Automatic Executions Payment transaction.
 	DEFINE_TRANSACTION_TYPE(SuperContract_v2, AutomaticExecutionsPaymentTransaction, 0x3);
+
+	DEFINE_TRANSACTION_TYPE(SuperContract_v2, SuccessfulEndBatchExecutionTransaction, 0x4);
+
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
