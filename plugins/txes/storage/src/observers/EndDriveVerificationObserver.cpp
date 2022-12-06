@@ -12,7 +12,7 @@ namespace catapult { namespace observers {
 
 	using Notification = model::EndDriveVerificationNotification<1>;
 
-	DECLARE_OBSERVER(EndDriveVerification, Notification)(const LiquidityProviderExchangeObserver& liquidityProvider) {
+	DECLARE_OBSERVER(EndDriveVerification, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider) {
 		return MAKE_OBSERVER(EndDriveVerification, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (EndDriveVerification)");
@@ -90,7 +90,7 @@ namespace catapult { namespace observers {
 			auto storageDepositSlashingShare = Amount(storageDepositSlashing / driveEntry.replicators().size());
 
 			for (const auto& replicatorKey : driveEntry.replicators()) {
-				liquidityProvider.debitMosaics(context, Key(), replicatorKey,
+				liquidityProvider->debitMosaics(context, Key(), replicatorKey,
 											   config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
 											   storageDepositSlashingShare);
 			}

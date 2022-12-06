@@ -47,7 +47,7 @@ namespace catapult { namespace state {
 				auto modificationIdIt = std::find_if(
 						driveEntry.completedDataModifications().rbegin(),
 						driveEntry.completedDataModifications().rend(), [] (const auto& item) {
-							return item.State == state::DataModificationState::Succeeded;
+							return item.ApprovalState == state::DataModificationApprovalState::Approved;
 						});
 
 				if ( modificationIdIt == driveEntry.completedDataModifications().rend() ) {
@@ -205,7 +205,7 @@ namespace catapult { namespace state {
 
         auto completedModificationsIter = driveEntry.completedDataModifications().rbegin();
         while (completedModificationsIter != driveEntry.completedDataModifications().rend()) {
-            if (completedModificationsIter->State == state::DataModificationState::Succeeded)
+            if (completedModificationsIter->ApprovalState == state::DataModificationApprovalState::Approved)
                 break;
 
             ++completedModificationsIter;
@@ -241,7 +241,7 @@ namespace catapult { namespace state {
     	for( const auto& modification: driveEntry.completedDataModifications() ) {
 			CompletedModification completedModification;
 			completedModification.ModificationId = modification.Id;
-			if ( modification.State == DataModificationState::Cancelled ) {
+			if ( modification.ApprovalState == DataModificationApprovalState::Cancelled ) {
 				completedModification.Status = CompletedModification::CompletionStatus::CANCELLED;
 			}
 			else {

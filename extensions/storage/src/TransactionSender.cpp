@@ -91,6 +91,7 @@ namespace catapult { namespace storage {
         builder.setDriveKey(transactionInfo.m_driveKey);
         builder.setDataModificationId(transactionInfo.m_modifyTransactionHash);
         builder.setFileStructureCdi(transactionInfo.m_rootHash);
+		builder.setModificationStatus(static_cast<uint8_t>(transactionInfo.m_status));
         builder.setFileStructureSize(transactionInfo.m_fsTreeFileSize);
         builder.setMetaFilesSize(transactionInfo.m_metaFilesSize);
         builder.setUsedDriveSize(transactionInfo.m_driveSize);

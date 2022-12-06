@@ -36,7 +36,7 @@ namespace catapult { namespace test {
                 EXPECT_EQ(expectedCompletedDataModification.ExpectedUploadSizeMegabytes, completedDataModification.ExpectedUploadSizeMegabytes);
 				EXPECT_EQ(expectedCompletedDataModification.ActualUploadSizeMegabytes, completedDataModification.ActualUploadSizeMegabytes);
 				EXPECT_EQ(expectedCompletedDataModification.FolderName, completedDataModification.FolderName);
-                EXPECT_EQ(expectedCompletedDataModification.State, completedDataModification.State);
+                EXPECT_EQ(expectedCompletedDataModification.ApprovalState, completedDataModification.ApprovalState);
                 EXPECT_EQ(expectedCompletedDataModification.ReadyForApproval, expectedCompletedDataModification.ReadyForApproval);
             }
         }
@@ -120,7 +120,7 @@ namespace catapult { namespace test {
         entry.completedDataModifications().reserve(completedDataModificationsCount);
         for (auto cDMC = 0u; cDMC < completedDataModificationsCount; ++cDMC){
             entry.completedDataModifications().emplace_back(state::CompletedDataModification{
-                entry.activeDataModifications()[cDMC], static_cast<state::DataModificationState>(test::RandomByte())
+            	entry.activeDataModifications()[cDMC], static_cast<state::DataModificationApprovalState>(test::RandomByte()), test::RandomByte()
             });
         }
 

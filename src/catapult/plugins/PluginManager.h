@@ -279,11 +279,11 @@ namespace catapult { namespace plugins {
 
 		// region storage
 
-		void setLiquidityProviderExchangeValidator(const std::shared_ptr<validators::LiquidityProviderExchangeValidator>&);
-		const validators::LiquidityProviderExchangeValidator& liquidityProviderExchangeValidator() const;
+		void setLiquidityProviderExchangeValidator(std::unique_ptr<validators::LiquidityProviderExchangeValidator>&&);
+		const std::unique_ptr<validators::LiquidityProviderExchangeValidator>& liquidityProviderExchangeValidator() const;
 
-		void setLiquidityProviderExchangeObserver(const std::shared_ptr<observers::LiquidityProviderExchangeObserver>&);
-		const observers::LiquidityProviderExchangeObserver& liquidityProviderExchangeObserver() const;
+		void setLiquidityProviderExchangeObserver(std::unique_ptr<observers::LiquidityProviderExchangeObserver>&&);
+		const std::unique_ptr<observers::LiquidityProviderExchangeObserver>& liquidityProviderExchangeObserver() const;
 
 		// endregion
 
@@ -314,8 +314,8 @@ namespace catapult { namespace plugins {
 		std::shared_ptr<chain::CommitteeManager> m_pCommitteeManager;
 		std::shared_ptr<state::StorageState> m_pStorageState;
 
-		std::shared_ptr<validators::LiquidityProviderExchangeValidator> m_pLiquidityProviderExchangeValidator;
-		std::shared_ptr<observers::LiquidityProviderExchangeObserver> m_pLiquidityProviderExchangeObserver;
+		std::unique_ptr<validators::LiquidityProviderExchangeValidator> m_pLiquidityProviderExchangeValidator;
+		std::unique_ptr<observers::LiquidityProviderExchangeObserver> m_pLiquidityProviderExchangeObserver;
 	};
 }}
 

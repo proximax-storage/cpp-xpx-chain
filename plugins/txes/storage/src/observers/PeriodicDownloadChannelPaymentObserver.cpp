@@ -52,6 +52,7 @@ namespace catapult { namespace observers {
 				queueAdapter.popFront();
 
 				if (downloadEntry.isCloseInitiated()) {
+					CATAPULT_LOG(error) << "Close initiated channel in payment queue";
 					continue;
 				}
 				downloadEntry.decrementDownloadApprovalCount();

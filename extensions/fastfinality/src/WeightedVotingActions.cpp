@@ -363,13 +363,13 @@ namespace catapult { namespace fastfinality {
 			auto pLastBlockElement = lastBlockElementSupplier();
 			const auto& block = pLastBlockElement->Block;
 			const auto& config = pConfigHolder->Config().Network;
-			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
 
-			auto roundStart = block.Timestamp;
+			auto roundStart = block.Timestamp + Timestamp(CommitteePhaseCount * block.committeePhaseTime());
 			auto currentTime = timeSupplier();
-			if (roundStart > currentTime)
-				CATAPULT_THROW_RUNTIME_ERROR_2("invalid current time", currentTime, roundStart)
+			if (block.Timestamp > currentTime)
+				CATAPULT_THROW_RUNTIME_ERROR_2("invalid current time", currentTime, block.Timestamp)
 
+			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
 			DecreasePhaseTime(phaseTimeMillis, config);
 			auto nextRoundStart = roundStart + Timestamp(CommitteePhaseCount * phaseTimeMillis);
 			committeeManager.selectCommittee(config);
@@ -639,7 +639,29 @@ namespace catapult { namespace fastfinality {
 				return;
 			}
 
-			if (ValidateProposedBlock(pProposedBlock, state, lastBlockElementSupplier, pValidatorPool)) {
+			const auto& committee = state.pluginManager().getCommitteeManager().committee();
+			if (pProposedBlock->Signer != committee.BlockProposer) {
+				CATAPULT_LOG(warning) << "rejecting proposal, signer " << pProposedBlock->Signer
+					<< " invalid, expected " << committee.BlockProposer;
+				committeeData.setProposedBlock(nullptr);
+				pFsmShared->processEvent(ProposalInvalid{});
+				return;
+			}
+
+			if (pProposedBlock->round() != committee.Round) {
+				CATAPULT_LOG(warning) << "rejecting proposal, round " << pProposedBlock->round()
+					<< " invalid, expected " << committee.Round;
+				committeeData.setProposedBlock(nullptr);
+				pFsmShared->processEvent(ProposalInvalid{});
+				return;
+			}
+
+			bool isProposedBlockValid = false;
+			try {
+				isProposedBlockValid = ValidateProposedBlock(pProposedBlock, state, lastBlockElementSupplier, pValidatorPool);
+			} catch (...) {} // empty catch block is intentional
+
+			if (isProposedBlockValid) {
 				auto phaseEndTimeMillis = GetPhaseEndTimeMillis(CommitteePhase::Propose, committeeData.committeeRound().PhaseTimeMillis);
 				DelayAction(pFsmShared, pFsmShared->timer(), phaseEndTimeMillis, [pFsmWeak] {
 					TRY_GET_FSM()

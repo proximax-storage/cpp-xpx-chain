@@ -21,6 +21,7 @@ namespace catapult { namespace observers {
         using Notification = model::DataModificationApprovalNotification<1>;
 
         constexpr auto Current_Height = Height(10);
+		constexpr uint8_t Modification_Status = 0;
         constexpr auto File_Structure_Size = 50;
 		constexpr auto Meta_Files_Size = 50;
         constexpr auto Used_Drive_Size = 50;
@@ -41,7 +42,7 @@ namespace catapult { namespace observers {
         state::BcDriveEntry CreateExpectedEntry(const Key& driveKey, const state::ActiveDataModifications& activeDataModifications) {
             state::BcDriveEntry entry(driveKey);
             for (const auto &activeDataModification: activeDataModifications)
-                entry.completedDataModifications().emplace_back(activeDataModification, state::DataModificationState::Succeeded);
+                entry.completedDataModifications().emplace_back(activeDataModification, state::DataModificationApprovalState::Approved, 0U);
 
 			const auto totalJudgingKeysCount = Judging_Keys_Count + Overlapping_Keys_Count;
 			for (auto i = 0u; i < totalJudgingKeysCount; ++i)
@@ -78,6 +79,7 @@ namespace catapult { namespace observers {
             	values.InitialBcDriveEntry.key(),
                 values.InitialBcDriveEntry.activeDataModifications().begin()->Id, 
                 values.InitialBcDriveEntry.activeDataModifications().begin()->DownloadDataCdi,
+                Modification_Status,
                 File_Structure_Size,
 				Meta_Files_Size,
 				Used_Drive_Size,

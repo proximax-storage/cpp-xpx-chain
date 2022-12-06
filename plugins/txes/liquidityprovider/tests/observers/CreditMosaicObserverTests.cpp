@@ -16,7 +16,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS CreditMosaicObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(CreditMosaic, LiquidityProviderExchangeObserverImpl())
+	DEFINE_COMMON_OBSERVER_TESTS(CreditMosaic, std::make_unique<LiquidityProviderExchangeObserverImpl>())
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::LiquidityProviderCacheFactory>;
@@ -73,9 +73,9 @@ namespace catapult { namespace observers {
 			ObserverTestContext context(mode, values.BlockHeight, CreateConfig());
 			Notification notification(from, to, values.InitialEntry.entry.mosaicId(), mosaicAmount);
 
-			auto liquidityProvider = std::make_shared<observers::LiquidityProviderExchangeObserverImpl>();
+			std::unique_ptr<observers::LiquidityProviderExchangeObserver> liquidityProvider = std::make_unique<observers::LiquidityProviderExchangeObserverImpl>();
 
-			auto pObserver = CreateCreditMosaicObserver(*liquidityProvider);
+			auto pObserver = CreateCreditMosaicObserver(liquidityProvider);
 			auto& lpCache = context.cache().sub<cache::LiquidityProviderCache>();
 			auto& accountCache = context.cache().sub<cache::AccountStateCache>();
 

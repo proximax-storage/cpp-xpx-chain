@@ -47,7 +47,8 @@ namespace catapult { namespace mongo { namespace plugins {
 						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSizeMegabytes)
 						<< "folderName" << ToBinary(pFolderName, modification.FolderName.size())
 						<< "readyForApproval" << modification.ReadyForApproval
-						<< "state" << utils::to_underlying_type(modification.State)
+						<< "state" << utils::to_underlying_type(modification.ApprovalState)
+						<< "success" << static_cast<int32_t>(modification.SuccessState)
 						<< bson_stream::close_document;
 			}
 
@@ -198,9 +199,9 @@ namespace catapult { namespace mongo { namespace plugins {
 				auto binaryFolderName = doc["folderName"].get_binary();
 				std::string folderName((const char*) binaryFolderName.bytes, binaryFolderName.size);
 				bool readyForApproval = doc["readyForApproval"].get_bool();
-				auto state = static_cast<state::DataModificationState>(static_cast<uint8_t>(doc["state"].get_int32()));
-
-				completedDataModifications.emplace_back(state::CompletedDataModification{ state::ActiveDataModification(id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folderName, readyForApproval), state });
+				auto state = static_cast<state::DataModificationApprovalState>(static_cast<uint8_t>(doc["state"].get_int32()));
+				auto success = static_cast<uint8_t>(doc["success"].get_int32());
+				completedDataModifications.emplace_back(state::CompletedDataModification{ state::ActiveDataModification(id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folderName, readyForApproval), state, success });
 			}
 		}
 

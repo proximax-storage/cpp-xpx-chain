@@ -111,6 +111,10 @@ private:
 			return insertedNodePointer;
 		}
 
+		if (nodePointer == insertedNodePointer) {
+			return nodePointer;
+		}
+
 		state::AVLTreeNode node = m_nodeExtractor(nodePointer);
 
 		auto nodeKey = m_keyExtractor(nodePointer);
