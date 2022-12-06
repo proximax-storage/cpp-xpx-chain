@@ -23,4 +23,6 @@ namespace catapult::observers {
 	DECLARE_OBSERVER(AutomaticExecutionsReplenishment, model::AutomaticExecutionsReplenishmentNotification<1>)();
 
 	DECLARE_OBSERVER(ManualCall, model::ManualCallNotification<1>)();
+
+	DECLARE_OBSERVER(SuccessfulBatchExecution, model::SuccessfulBatchExecutionNotification<1>)();
 }

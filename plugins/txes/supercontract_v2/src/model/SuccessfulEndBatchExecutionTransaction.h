@@ -7,46 +7,7 @@
 #pragma once
 #include "SuperContractEntityType.h"
 #include "catapult/model/Mosaic.h"
-#include "catapult/model/Transaction.h"
-
-namespace catapult::model {
-
-#pragma pack(push, 1)
-
-	/// Binary layout for a deploy transaction body.
-	template<typename THeader>
-	struct AutomaticExecutionsPaymentTransactionBody : public THeader {
-	private:
-		using TransactionType = AutomaticExecutionsPaymentTransactionBody<THeader>;
-
-	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_AutomaticExecutionsPaymentTransaction, 1)
-
-		/// Contract public key
-		Key ContractKey;
-
-		/// The number of prepaid automatic executions. Can be increased via special transaction.
-		uint32_t AutomaticExecutionsNumber;
-
-	public:
-		// Calculates the real size of a deploy \a transaction.
-		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType);
-		}
-	};
-
-	DEFINE_EMBEDDABLE_TRANSACTION(AutomaticExecutionsPayment)
-
-#pragma pack(pop)
-}/**
-*** Copyright 2022 ProximaX Limited. All rights reserved.
-*** Use of this source code is governed by the Apache 2.0
-*** license that can be found in the LICENSE file.
-**/
-
-#pragma once
-#include "SuperContractEntityType.h"
-#include "catapult/model/Mosaic.h"
+#include "catapult/model/SupercontractModel.h"
 #include "catapult/model/Transaction.h"
 #include <array>
 
@@ -54,18 +15,18 @@ namespace catapult::model {
 
 #pragma pack(push, 1)
 
-	struct CallDigest {
-		Hash256 CallId;
-		bool Success;
-		Hash256 ReleasedTransactionHash;
-	};
-
 	struct CallPayment {
-		Amount ExecutionPayment;
-		Amount DownloadPayment;
+		uint64_t ExecutionPayment;
+		uint64_t DownloadPayment;
 	};
 
-	using ProofOfExecutionPlaceHolder = std::array<uint8_t, 64>;
+	struct RawProofOfExecution {
+		uint64_t FirstBatchId;
+		std::array<uint8_t, 32> T;
+		std::array<uint8_t, 32> R;
+		std::array<uint8_t, 32> F;
+		std::array<uint8_t, 32> K;
+	};
 
 	/// Binary layout for a deploy transaction body.
 	template<typename THeader>
@@ -93,7 +54,7 @@ namespace catapult::model {
 
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Signatures, Signature)
 
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(ProofsOfExecution, ProofOfExecutionPlaceHolder)
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(ProofsOfExecution, RawProofOfExecution)
 
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(CallDigests, CallDigest)
 
@@ -134,7 +95,7 @@ namespace catapult::model {
 						   ? pPayloadStart
 									 + transaction.CosignersNumber * sizeof(Key)
 									 + transaction.CosignersNumber * sizeof(Signature)
-									 + transaction.CosignersNumber * sizeof(ProofOfExecutionPlaceHolder)
+									 + transaction.CosignersNumber * sizeof(RawProofOfExecution)
 						   : nullptr;
 		}
 
@@ -145,7 +106,7 @@ namespace catapult::model {
 						   ? pPayloadStart
 									 + transaction.CosignersNumber * sizeof(Key)
 									 + transaction.CosignersNumber * sizeof(Signature)
-									 + transaction.CosignersNumber * sizeof(ProofOfExecutionPlaceHolder)
+									 + transaction.CosignersNumber * sizeof(RawProofOfExecution)
 						   			 + transaction.CallsNumber * sizeof(CallDigest)
 						   : nullptr;
 		}
@@ -156,7 +117,7 @@ namespace catapult::model {
 			return sizeof(TransactionType) +
 				   transaction.CosignersNumber * sizeof(Key) +
 				   transaction.CosignersNumber * sizeof(Signature) +
-				   transaction.CosignersNumber * sizeof(ProofOfExecutionPlaceHolder) +
+				   transaction.CosignersNumber * sizeof(RawProofOfExecution) +
 				   transaction.CallsNumber * sizeof(CallDigest) +
 				   static_cast<uint64_t>(transaction.CosignersNumber) * static_cast<uint64_t>(transaction.CallsNumber) * sizeof(CallPayment);
 		}

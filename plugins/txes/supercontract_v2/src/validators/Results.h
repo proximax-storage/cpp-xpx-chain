@@ -22,6 +22,8 @@ namespace catapult { namespace validators {
 
 	DEFINE_CONTRACT_RESULT(Plugin_Config_Malformed, 4);
 
+	DEFINE_CONTRACT_RESULT(Invalid_Batch_Id, 5);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

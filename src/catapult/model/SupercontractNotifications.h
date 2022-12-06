@@ -7,6 +7,8 @@
 #pragma once
 
 #include "catapult/model/Notifications.h"
+#include "catapult/crypto/CurvePoint.h"
+#include "catapult/model/SupercontractModel.h"
 #include "Mosaic.h"
 
 #include <utility>
@@ -16,6 +18,7 @@ namespace catapult::model {
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Deploy_Supercontract_v1, 0x0001);
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Manual_Call_v1, 0x0002);
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Automatic_Executions_Replenishment_v1, 0x0003);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Successful_Batch_Execution_v1, 0x0005);
 
 	template<VersionType version>
 	struct DeploySupercontractNotification;
@@ -144,5 +147,84 @@ namespace catapult::model {
 	public:
 		Key ContractKey;
 		uint64_t NumberOfExecutions;
+	};
+
+	struct ProofOfExecution {
+		uint64_t FirstBatch;
+		crypto::CurvePoint T;
+		crypto::Scalar R;
+		crypto::CurvePoint F;
+		crypto::Scalar K;
+	};
+
+//	struct ProofOfExecution
+
+	struct CallOpinion {
+		Key PublicKey;
+		ProofOfExecution PoEx;
+		std::vector<uint64_t> ExecutionWork;
+		std::vector<uint64_t> DownloadWork;
+	};
+
+	template<VersionType version>
+	struct SuccessfulBatchExecutionNotification;
+
+	template<>
+	struct SuccessfulBatchExecutionNotification<1> : public Notification {
+	public:
+		static constexpr auto Notification_Type = SuperContract_v2_Successful_Batch_Execution_v1_Notification;
+
+	public:
+		explicit SuccessfulBatchExecutionNotification(
+				const Key& contractKey,
+				uint64_t batchId,
+				const Hash256& storageHash,
+				const crypto::CurvePoint& verificationInformation)
+			: Notification(Notification_Type, sizeof(AutomaticExecutionsReplenishmentNotification<1>))
+			, ContractKey(contractKey)
+			, BatchId(batchId)
+			, StorageHash(storageHash)
+			, VerificationInformation(verificationInformation)
+		{}
+
+	public:
+		Key ContractKey;
+		uint64_t BatchId;
+		Hash256 StorageHash;
+		crypto::CurvePoint VerificationInformation;
+	};
+
+	template<VersionType version>
+	struct SuccessfulBatchExecutionNotification;
+
+	template<>
+	struct SuccessfulBatchExecutionNotification<1> : public Notification {
+	public:
+		static constexpr auto Notification_Type = SuperContract_v2_Successful_Batch_Execution_v1_Notification;
+
+	public:
+		explicit SuccessfulBatchExecutionNotification(
+				const Key& contractKey,
+				uint64_t batchId,
+				const Hash256& storageHash,
+				const crypto::CurvePoint& verificationInformation,
+				const std::vector<CallOpinion>& callOpinions,
+				const std::vector<CallDigest>& callDigests)
+				: Notification(Notification_Type, sizeof(AutomaticExecutionsReplenishmentNotification<1>))
+				, ContractKey(contractKey)
+				, BatchId(batchId)
+				, StorageHash(storageHash)
+				, VerificationInformation(verificationInformation)
+				, CallOpinions(callOpinions)
+				, CallDigests(callDigests)
+				{}
+
+	public:
+		Key ContractKey;
+		uint64_t BatchId;
+		Hash256 StorageHash;
+		crypto::CurvePoint VerificationInformation;
+		std::vector<CallOpinion> CallOpinions;
+		std::vector<CallDigest> CallDigests;
 	};
 }

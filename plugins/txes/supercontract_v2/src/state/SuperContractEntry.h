@@ -36,6 +36,16 @@ enum class DeploymentStatus {
 	COMPLETED
 };
 
+struct ProofOfExecution {
+	uint64_t BatchId;
+	crypto::CurvePoint T;
+	crypto::Scalar R;
+};
+
+struct Batch{
+	crypto::CurvePoint PoExVerificationInformation;
+};
+
 // Mixin for storing supercontract details.
 class SuperContractMixin {
 	public:
@@ -83,7 +93,33 @@ class SuperContractMixin {
 		}
 
 		DeploymentStatus deploymentStatus() const {
-			return DeploymentStatus::NOT_STARTED;
+			if (m_batches.empty() && m_requestedCalls.empty()) {
+				return DeploymentStatus::NOT_STARTED;
+			}
+			if (m_batches.empty()) {
+				return DeploymentStatus::IN_PROGRESS;
+			}
+			return DeploymentStatus::COMPLETED;
+		}
+
+		std::map<Key, ProofOfExecution>& proofs() {
+			return m_proofs;
+		}
+
+		const std::map<Key, ProofOfExecution>& proofs() const {
+			return m_proofs;
+		}
+
+		uint64_t nextBatchId() const {
+			return m_batches.size();
+		}
+
+		std::vector<Batch>& batches() {
+			return m_batches;
+		}
+
+		const std::vector<Batch>& batches() const {
+			return m_batches;
 		}
 
 	private:
@@ -92,6 +128,8 @@ class SuperContractMixin {
 		Key m_assignee;
 		AutomaticExecutionsInfo m_automaticExecutionsInfo;
 		std::queue<ContractCall> m_requestedCalls;
+		std::map<Key, ProofOfExecution> m_proofs;
+		std::vector<Batch> m_batches;
 };
 
 // Supercontract entry.

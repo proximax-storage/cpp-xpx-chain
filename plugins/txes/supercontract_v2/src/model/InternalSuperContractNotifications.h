@@ -7,19 +7,20 @@
 #pragma once
 
 #include "catapult/model/Notifications.h"
-#include "Mosaic.h"
-
 #include <utility>
 
 namespace catapult::model {
+
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Opinion_Signature_v1, 0x0004);
 
 	struct Opinion {
 		Key PublicKey;
 		Signature Sign;
 		std::vector<uint8_t> Data;
-	};
 
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Opinion_Signature_v1, 0x0006);
+		Opinion(const Key& publicKey, const Signature& sign, std::vector<uint8_t>&& data)
+			: PublicKey(publicKey), Sign(sign), Data(std::move(data)) {}
+	};
 
 	template<VersionType version>
 	struct OpinionSignatureNotification;

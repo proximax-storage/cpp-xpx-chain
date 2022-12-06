@@ -10,6 +10,7 @@
 #include "src/model/SuccessfulEndBatchExecutionTransaction.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/NotificationSubscriber.h"
+#include "src/model/InternalSuperContractNotifications.h"
 #include "src/utils/SwapUtils.h"
 
 using namespace catapult::model;
@@ -20,7 +21,7 @@ namespace catapult { namespace plugins {
 
 		template<class T>
 		void pushBytes(std::vector<uint8_t>& buffer, const T& data) {
-			const auto* pBegin = reinterpret_cast<const uint8_t*>(data);
+			const auto* pBegin = reinterpret_cast<const uint8_t*>(&data);
 			buffer.insert(buffer.end(), pBegin, pBegin + sizeof(data));
 		}
 
@@ -29,20 +30,67 @@ namespace catapult { namespace plugins {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
-
-					Key ContractKey;
-
-					uint64_t BatchId;
-
-					Hash256 StorageHash;
-
-					std::array<uint8_t, 32> ProofOfExecutionVerificationInformation;
-
 					std::vector<uint8_t> commonData;
-					commonData.insert(
-							commonData.end(),
-							reinterpret_cast<const uint8_t*>(&transaction.ContractKey),
-							sizeof(transaction.ContractKey));
+					pushBytes(commonData, transaction.ContractKey);
+					pushBytes(commonData, transaction.BatchId);
+					pushBytes(commonData, transaction.StorageHash);
+					pushBytes(commonData, transaction.ProofOfExecutionVerificationInformation);
+					for (uint j = 0; j < transaction.CallsNumber; j++) {
+						pushBytes(commonData, transaction.CallDigestsPtr()[j]);
+					}
+
+					std::vector<model::Opinion> opinions;
+					opinions.reserve(transaction.CosignersNumber);
+					for (uint i = 0; i < transaction.CosignersNumber; i++) {
+						std::vector<uint8_t> data;
+						const model::RawProofOfExecution& proofOfExecution = transaction.ProofsOfExecutionPtr()[i];
+						pushBytes(data, proofOfExecution);
+						for (uint j = 0; j < transaction.CallsNumber; j++) {
+							pushBytes(data, transaction.CallPaymentsPtr()[i * transaction.CallsNumber + j]);
+						}
+						opinions.emplace_back(transaction.PublicKeysPtr()[i], transaction.SignaturesPtr()[i], std::move(data));
+					}
+
+					sub.notify(model::OpinionSignatureNotification<1>(commonData, opinions));
+
+					crypto::CurvePoint poExVerificationInformation;
+					poExVerificationInformation.fromBytes(transaction.ProofOfExecutionVerificationInformation);
+
+					std::vector<model::CallOpinion> callOpinions;
+					callOpinions.reserve(transaction.CosignersNumber);
+					for (uint i = 0; i < transaction.CosignersNumber; i++) {
+
+						const model::RawProofOfExecution& proofOfExecution = transaction.ProofsOfExecutionPtr()[i];
+
+						crypto::CurvePoint T;
+						T.fromBytes(proofOfExecution.T);
+						crypto::Scalar r(proofOfExecution.R);
+
+						crypto::CurvePoint F;
+						F.fromBytes(proofOfExecution.F);
+						crypto::Scalar k(proofOfExecution.K);
+
+						model::ProofOfExecution poEx{proofOfExecution.FirstBatchId, T, r, F, k};
+
+						std::vector<uint64_t> executionWork;
+						for (uint j = 0; j < transaction.CallsNumber; j++) {
+							executionWork.push_back(transaction.CallPaymentsPtr()[i * transaction.CallsNumber + j].ExecutionPayment);
+						}
+						std::vector<uint64_t> downloadWork;
+						for (uint j = 0; j < transaction.CallsNumber; j++) {
+							downloadWork.push_back(transaction.CallPaymentsPtr()[i * transaction.CallsNumber + j].DownloadPayment);
+						}
+
+						callOpinions.push_back(model::CallOpinion{transaction.PublicKeysPtr()[i], poEx, executionWork, downloadWork});
+					}
+
+					std::vector<CallDigest> callDigests;
+					callDigests.reserve(transaction.CallsNumber);
+					for (uint j = 0; j < transaction.CallsNumber; j++) {
+						callDigests.push_back(transaction.CallDigestsPtr()[j]);
+					}
+
+					sub.notify(SuccessfulBatchExecutionNotification<1>(transaction.ContractKey, transaction.BatchId, transaction.StorageHash, poExVerificationInformation, callOpinions, callDigests));
 
 					break;
 				}

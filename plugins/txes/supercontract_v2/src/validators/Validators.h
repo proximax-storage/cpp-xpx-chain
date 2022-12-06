@@ -22,4 +22,6 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(AutomaticExecutionsReplenishement, model::AutomaticExecutionsReplenishmentNotification<1>)();
 
 	DECLARE_STATEFUL_VALIDATOR(DeployContract, model::DeploySupercontractNotification<1>)();
+
+	DECLARE_STATEFUL_VALIDATOR(SuccessfulBatchExecution, model::SuccessfulBatchExecutionNotification<1>)();
 }}
