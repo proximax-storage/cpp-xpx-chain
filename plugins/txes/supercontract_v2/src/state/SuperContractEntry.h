@@ -24,8 +24,10 @@ struct ContractCall {
 
 struct CompletedCall {
 	Hash256 CallId;
-	bool Manual = false;
-	bool Success = false;
+	// Zero means that it's an automatic execution
+	Key Caller;
+	// Zero Status Means Success
+	uint16_t Status = 0;
 	Amount ExecutionWork;
 	Amount DownloadWork;
 };

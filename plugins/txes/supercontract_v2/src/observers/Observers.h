@@ -14,10 +14,10 @@
 
 namespace catapult::observers {
 
-#define DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(NAME, NOTIFICATION_TYPE, HANDLER) \
-	DECLARE_OBSERVER(NAME, NOTIFICATION_TYPE)(const LiquidityProviderExchangeObserver& liquidityProvider) { \
-		return MAKE_OBSERVER(NAME, NOTIFICATION_TYPE, HANDLER); \
-	}
+//#define DEFINE_OBSERVER_WITH_HOOKS(NAME, NOTIFICATION_TYPE, HANDLER, ...) \
+//DECLARE_OBSERVER(NAME, NOTIFICATION_TYPE)(##__VA_ARGS__) { \
+//		return MAKE_OBSERVER(NAME, NOTIFICATION_TYPE, HANDLER); \
+//	}
 
 	DECLARE_OBSERVER(DeployContract, model::DeploySupercontractNotification<1>)();
 

@@ -25,7 +25,8 @@ public:
 
 	virtual ~DriveStateBrowser() = default;
 
-	virtual uint16_t getOrderedReplicatorsCount(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) = 0;
+	virtual uint16_t getOrderedReplicatorsCount(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const = 0;
 
+	virtual Key getDriveOwner(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const = 0;
 };
 }

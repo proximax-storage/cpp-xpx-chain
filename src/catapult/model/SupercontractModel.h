@@ -9,7 +9,7 @@ namespace catapult::model {
 	struct CallDigest {
 		Hash256 CallId;
 		bool Manual;
-		bool Success;
+		uint16_t Status;
 		Hash256 ReleasedTransactionHash;
 	};
 
