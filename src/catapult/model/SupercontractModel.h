@@ -13,4 +13,9 @@ namespace catapult::model {
 		Hash256 ReleasedTransactionHash;
 	};
 
+	struct CallPaymentOpinion {
+		std::vector<Amount> ExecutionWork;
+		std::vector<Amount> DownloadWork;
+	};
+
 }

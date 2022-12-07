@@ -8,6 +8,7 @@
 #include "Results.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
+#include "src/model/InternalSuperContractNotifications.h"
 #include "catapult/model/SupercontractNotifications.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "src/cache/SuperContractCache.h"

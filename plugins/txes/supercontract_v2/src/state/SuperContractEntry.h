@@ -5,7 +5,6 @@
 **/
 
 #pragma once
-#include <catapult/model/Mosaic.h>
 #include <map>
 #include <optional>
 #include <queue>
@@ -23,6 +22,19 @@ struct ContractCall {
 	std::vector<model::UnresolvedMosaic> ServicePayments;
 };
 
+struct CompletedCall {
+	Hash256 CallId;
+	bool Manual = false;
+	bool Success = false;
+	Amount ExecutionWork;
+	Amount DownloadWork;
+};
+
+struct ServicePayment {
+	UnresolvedMosaicId MosaicId;
+	catapult::Amount Amount;
+};
+
 struct AutomaticExecutionsInfo {
 	Amount m_automatedExecutionCallPayment;
 	Amount m_automatedDownloadCallPayment;
@@ -37,13 +49,19 @@ enum class DeploymentStatus {
 };
 
 struct ProofOfExecution {
-	uint64_t BatchId;
+	uint64_t StartBatchId = 0;
 	crypto::CurvePoint T;
 	crypto::Scalar R;
 };
 
+struct ExecutorInfo {
+	ProofOfExecution PoEx;
+	uint64_t NextBatchToApprove = 0;
+};
+
 struct Batch{
 	crypto::CurvePoint PoExVerificationInformation;
+	std::vector<CompletedCall> CompletedCalls;
 };
 
 // Mixin for storing supercontract details.
@@ -84,11 +102,11 @@ class SuperContractMixin {
 			return m_automaticExecutionsInfo;
 		}
 
-		std::queue<ContractCall>& requestedCalls() {
+		std::deque<ContractCall>& requestedCalls() {
 			return m_requestedCalls;
 		}
 
-		const std::queue<ContractCall>& requestedCalls() const {
+		const std::deque<ContractCall>& requestedCalls() const {
 			return m_requestedCalls;
 		}
 
@@ -102,12 +120,12 @@ class SuperContractMixin {
 			return DeploymentStatus::COMPLETED;
 		}
 
-		std::map<Key, ProofOfExecution>& proofs() {
-			return m_proofs;
+		std::map<Key, ExecutorInfo>& executorsInfo() {
+			return m_executorsInfo;
 		}
 
-		const std::map<Key, ProofOfExecution>& proofs() const {
-			return m_proofs;
+		const std::map<Key, ExecutorInfo>& executorsInfo() const {
+			return m_executorsInfo;
 		}
 
 		uint64_t nextBatchId() const {
@@ -127,8 +145,8 @@ class SuperContractMixin {
 		Key m_executionPaymentKey;
 		Key m_assignee;
 		AutomaticExecutionsInfo m_automaticExecutionsInfo;
-		std::queue<ContractCall> m_requestedCalls;
-		std::map<Key, ProofOfExecution> m_proofs;
+		std::deque<ContractCall> m_requestedCalls;
+		std::map<Key, ExecutorInfo> m_executorsInfo;
 		std::vector<Batch> m_batches;
 };
 

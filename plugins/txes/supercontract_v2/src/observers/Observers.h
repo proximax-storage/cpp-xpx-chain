@@ -9,6 +9,7 @@
 #include "catapult/model/SupercontractNotifications.h"
 #include "src/cache/SuperContractCache.h"
 #include "src/cache/DriveContractCache.h"
+#include "src/model/InternalSuperContractNotifications.h"
 #include <queue>
 
 namespace catapult::observers {
@@ -25,4 +26,7 @@ namespace catapult::observers {
 	DECLARE_OBSERVER(ManualCall, model::ManualCallNotification<1>)();
 
 	DECLARE_OBSERVER(SuccessfulBatchExecution, model::SuccessfulBatchExecutionNotification<1>)();
+
+	DECLARE_OBSERVER(ProofOfExecution, model::ProofOfExecutionNotification<1>)();
+
 }

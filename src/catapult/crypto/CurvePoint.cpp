@@ -24,7 +24,7 @@ namespace catapult::crypto {
 		return temp;
 	}
 
-	CurvePoint CurvePoint::operator+(CurvePoint& a) const {
+	CurvePoint CurvePoint::operator+(const CurvePoint& a) const {
 		CurvePoint temp;
 		ge_cached cache;
 		ge_p3_to_cached(&cache, &a.m_ge_p3);
@@ -35,7 +35,7 @@ namespace catapult::crypto {
 		return temp;
 	}
 
-	CurvePoint CurvePoint::operator-(CurvePoint& a) const {
+	CurvePoint CurvePoint::operator-(const CurvePoint& a) const {
 		CurvePoint temp;
 		ge_cached cache;
 		ge_p3_to_cached(&cache, &a.m_ge_p3);
@@ -54,7 +54,7 @@ namespace catapult::crypto {
 		return temp;
 	}
 
-	CurvePoint CurvePoint::operator*(Scalar& a) const {
+	CurvePoint CurvePoint::operator*(const Scalar& a) const {
 		CurvePoint ret;
 		Scalar zero;
 		ge_p2 ans;
@@ -66,7 +66,7 @@ namespace catapult::crypto {
 		return -ret;
 	}
 
-	CurvePoint operator*(Scalar& a, CurvePoint& b) {
+	CurvePoint operator*(const Scalar& a, const CurvePoint& b) {
 		CurvePoint ret;
 		Scalar zero;
 		ge_p2 ans;
@@ -78,17 +78,17 @@ namespace catapult::crypto {
 		return -ret;
 	}
 
-	CurvePoint& CurvePoint::operator+=(CurvePoint& a) {
+	CurvePoint& CurvePoint::operator+=(const CurvePoint& a) {
 		*this = *this + a;
 		return *this;
 	}
 
-	CurvePoint& CurvePoint::operator-=(CurvePoint& a) {
+	CurvePoint& CurvePoint::operator-=(const CurvePoint& a) {
 		*this = *this - a;
 		return *this;
 	}
 
-	CurvePoint& CurvePoint::operator*=(Scalar& a) {
+	CurvePoint& CurvePoint::operator*=(const Scalar& a) {
 		*this = *this * a;
 		return *this;
 	}

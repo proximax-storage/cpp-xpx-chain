@@ -20,6 +20,7 @@ namespace catapult::model {
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Automatic_Executions_Replenishment_v1, 0x0003);
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Successful_Batch_Execution_v1, 0x0005);
 
+
 	template<VersionType version>
 	struct DeploySupercontractNotification;
 
@@ -149,22 +150,7 @@ namespace catapult::model {
 		uint64_t NumberOfExecutions;
 	};
 
-	struct ProofOfExecution {
-		uint64_t FirstBatch;
-		crypto::CurvePoint T;
-		crypto::Scalar R;
-		crypto::CurvePoint F;
-		crypto::Scalar K;
-	};
-
 //	struct ProofOfExecution
-
-	struct CallOpinion {
-		Key PublicKey;
-		ProofOfExecution PoEx;
-		std::vector<uint64_t> ExecutionWork;
-		std::vector<uint64_t> DownloadWork;
-	};
 
 	template<VersionType version>
 	struct SuccessfulBatchExecutionNotification;

@@ -22,21 +22,21 @@ public:
 
     static CurvePoint BasePoint();
 
-    CurvePoint operator+(CurvePoint& a) const;
+    CurvePoint operator+(const CurvePoint& a) const;
 
-    CurvePoint operator-(CurvePoint& a) const;
+    CurvePoint operator-(const CurvePoint& a) const;
 
     CurvePoint operator-() const;
 
-    CurvePoint operator*(Scalar& a) const;
+    CurvePoint operator*(const Scalar& a) const;
 
-    friend CurvePoint operator*(Scalar& a, CurvePoint& b);
+    friend CurvePoint operator*(const Scalar& a, const CurvePoint& b);
 
-    CurvePoint& operator+=(CurvePoint& a);
+    CurvePoint& operator+=(const CurvePoint& a);
 
-    CurvePoint& operator-=(CurvePoint& a);
+    CurvePoint& operator-=(const CurvePoint& a);
 
-    CurvePoint& operator*=(Scalar& a);
+    CurvePoint& operator*=(const Scalar& a);
 
     bool operator==(const CurvePoint& a) const;
 
