@@ -75,34 +75,23 @@ namespace catapult { namespace ionet {
 	/* A precommit message has been pushed by a peer. */ \
 	ENUM_VALUE(Push_Precommit_Messages, 15) \
 	\
-	/* A block confirmed by committee has been requested by a peer. */ \
-	ENUM_VALUE(Pull_Confirmed_Block, 16) \
+	/* A block confirmed by committee has been pushed by a peer. */ \
+	ENUM_VALUE(Push_Confirmed_Block, 16) \
 	\
     /* A remote node state has been requested by a peer. */ \
     ENUM_VALUE(Pull_Remote_Node_State, 17) \
+    \
+	/* A block proposed by committee has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Proposed_Block, 18) \
 	\
-	/* DBRB only packets have types [550, 600) */ \
+	/* Prevote messages has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Prevote_Messages, 19) \
 	\
-	ENUM_VALUE(Dbrb_Reconfig_Message, 550) \
+	/* Precommit messages has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Precommit_Messages, 20) \
 	\
-	ENUM_VALUE(Dbrb_Reconfig_Confirm_Message, 551) \
-	\
-	ENUM_VALUE(Dbrb_Propose_Message, 552) \
-	\
-	ENUM_VALUE(Dbrb_Converged_Message, 553) \
-	\
-	ENUM_VALUE(Dbrb_Install_Message, 554) \
-	\
-	ENUM_VALUE(Dbrb_Prepare_Message, 555) \
-	\
-	ENUM_VALUE(Dbrb_State_Update_Message, 556) \
-	\
-	ENUM_VALUE(Dbrb_Acknowledged_Message, 557) \
-	\
-	ENUM_VALUE(Dbrb_Commit_Message, 558) \
-	\
-	ENUM_VALUE(Dbrb_Deliver_Message, 559) \
-	\
+	/* A block confirmed by committee has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Confirmed_Block, 21) \
 	/* api only packets have types [500, 600) */ \
 	\
 	/* Partial aggregate transactions have been pushed by an api-node. */ \

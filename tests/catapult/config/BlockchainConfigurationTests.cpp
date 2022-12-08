@@ -99,7 +99,6 @@ namespace catapult { namespace config {
 			// Assert:
 			EXPECT_EQ(7900u, config.Port);
 			EXPECT_EQ(7901u, config.ApiPort);
-			EXPECT_EQ(7903u, config.DbrbPort);
 			EXPECT_FALSE(config.ShouldAllowAddressReuse);
 			EXPECT_FALSE(config.ShouldUseSingleThreadPool);
 			EXPECT_TRUE(config.ShouldUseCacheDatabaseStorage);

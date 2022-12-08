@@ -104,9 +104,6 @@ namespace catapult { namespace ionet {
 		/// Returns \c true if this node is not equal to \a rhs.
 		bool operator!=(const Node& rhs) const;
 
-		/// Compares this node with \a rhs.
-		bool operator<(const Node& rhs) const;
-
 	public:
 		/// Insertion operator for outputting \a node to \a out.
 		friend std::ostream& operator<<(std::ostream& out, const Node& node);

@@ -32,7 +32,6 @@ module Catapult
             bootkey: self.private_key,
             replicator_rpc_port: Peer.port(self.type, self.index) + 5,
             replicator_port: Peer.port(self.type, self.index) + 4,
-            dbrb_port: Peer.port(self.type, self.index) + 3,
             subscriberPort: Peer.port(self.type, self.index) + 2,
             api_port: Peer.port(self.type, self.index) + 1,
             port: Peer.port(self.type, self.index),

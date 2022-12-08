@@ -6,8 +6,11 @@
 
 #pragma once
 #include "CommitteePhase.h"
+#include "catapult/api/RemoteApiUtils.h"
 #include "catapult/ionet/Packet.h"
+#include "catapult/ionet/PacketEntityUtils.h"
 #include "catapult/ionet/PacketPayload.h"
+#include <catapult/ionet/PacketPayloadFactory.h>
 
 #include <utility>
 #include "catapult/model/Cosignature.h"
@@ -89,6 +92,8 @@ namespace catapult { namespace fastfinality {
 
 	using PushPrevoteMessagesRequest = CommitteeMessagesPacket<ionet::PacketType::Push_Prevote_Messages>;
 	using PushPrecommitMessagesRequest = CommitteeMessagesPacket<ionet::PacketType::Push_Precommit_Messages>;
+	using PullPrevoteMessagesRequest = CommitteeMessagesPacket<ionet::PacketType::Pull_Prevote_Messages>;
+	using PullPrecommitMessagesRequest = CommitteeMessagesPacket<ionet::PacketType::Pull_Precommit_Messages>;
 
 #pragma pack(pop)
 }}

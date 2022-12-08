@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "fastfinality/src/WeightedVotingChainPackets.h"
 #include "catapult/types.h"
 #include "catapult/thread/Future.h"
 
@@ -24,8 +25,17 @@ namespace catapult { namespace fastfinality {
 		virtual ~RemoteNodeApi() = default;
 
 	public:
+		/// Gets a block proposed by current block producer.
+		virtual thread::future<std::shared_ptr<model::Block>> proposedBlock() const = 0;
+
 		/// Gets a block confirmed by current committee.
 		virtual thread::future<std::shared_ptr<model::Block>> confirmedBlock() const = 0;
+
+		/// Gets prevote messages.
+		virtual thread::future<std::vector<CommitteeMessage>> prevotes() const = 0;
+
+		/// Gets precommit messages.
+		virtual thread::future<std::vector<CommitteeMessage>> precommits() const = 0;
 	};
 
 	/// Creates a node api for interacting with a remote node with the specified \a io

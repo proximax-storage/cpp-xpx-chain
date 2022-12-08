@@ -34,7 +34,6 @@ namespace catapult { namespace config {
 						{
 							{ "port", "1234" },
 							{ "apiPort", "8888" },
-							{ "dbrbPort", "4321" },
 							{ "shouldAllowAddressReuse", "true" },
 							{ "shouldUseSingleThreadPool", "true" },
 							{ "shouldUseCacheDatabaseStorage", "true" },
@@ -128,7 +127,6 @@ namespace catapult { namespace config {
 				// Assert:
 				EXPECT_EQ(0u, config.Port);
 				EXPECT_EQ(0u, config.ApiPort);
-				EXPECT_EQ(0u, config.DbrbPort);
 				EXPECT_FALSE(config.ShouldAllowAddressReuse);
 				EXPECT_FALSE(config.ShouldUseSingleThreadPool);
 				EXPECT_FALSE(config.ShouldUseCacheDatabaseStorage);
@@ -195,7 +193,6 @@ namespace catapult { namespace config {
 				// Assert:
 				EXPECT_EQ(1234u, config.Port);
 				EXPECT_EQ(8888u, config.ApiPort);
-				EXPECT_EQ(4321u, config.DbrbPort);
 				EXPECT_TRUE(config.ShouldAllowAddressReuse);
 				EXPECT_TRUE(config.ShouldUseSingleThreadPool);
 				EXPECT_TRUE(config.ShouldUseCacheDatabaseStorage);

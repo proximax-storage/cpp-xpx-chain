@@ -2,7 +2,6 @@
 
 port = {{port}}
 apiPort = {{api_port}}
-dbrbPort = {{dbrb_port}}
 shouldAllowAddressReuse = false
 shouldUseSingleThreadPool = false
 shouldUseCacheDatabaseStorage = true

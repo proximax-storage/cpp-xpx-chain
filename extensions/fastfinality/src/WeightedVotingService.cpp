@@ -82,11 +82,57 @@ namespace catapult { namespace fastfinality {
 			return harvesting::CreateHarvesterBlockGenerator(strategy, utFacadeFactory, state.utCache());
 		}
 
+		constexpr utils::LogLevel MapToLogLevel(net::PeerConnectCode connectCode) {
+			if (connectCode == net::PeerConnectCode::Accepted)
+				return utils::LogLevel::Info;
+			else
+				return utils::LogLevel::Warning;
+		}
+
+		thread::Task CreateConnectPeersTask(ionet::NodeContainer& nodes, net::PacketWriters& packetWriters, const Key& identityKey) {
+			return thread::CreateNamedTask("connect peers task for service WeightedVoting", [&nodes, &packetWriters, identityKey]() {
+				using ConnectResult = std::pair<ionet::Node, net::PeerConnectCode>;
+
+				auto connectedNodes = packetWriters.identities();
+				ionet::NodeSet addCandidates;
+				nodes.view().forEach([&connectedNodes, &addCandidates, identityKey](const auto& node, const auto& nodeInfo) {
+					const auto& endpoint = node.endpoint();
+					if (endpoint.Port != 0 && identityKey != node.identityKey() && connectedNodes.find(node.identityKey()) == connectedNodes.end()) {
+						unsigned short port = endpoint.Port + Port_Diff;
+						addCandidates.insert(ionet::Node(node.identityKey(), ionet::NodeEndpoint{ endpoint.Host, port }, node.metadata()));
+					}
+				});
+
+				if (addCandidates.size() == 0)
+					return thread::make_ready_future(thread::TaskResult::Continue);
+
+				auto i = 0u;
+				std::vector<thread::future<ConnectResult>> futures(addCandidates.size());
+				for (const auto& node : addCandidates) {
+					auto pPromise = std::make_shared<thread::promise<ConnectResult>>();
+					futures[i++] = pPromise->get_future();
+
+					packetWriters.connect(node, [node, pPromise](const auto& connectResult) {
+						pPromise->set_value(std::make_pair(node, connectResult.Code));
+					});
+				}
+
+				thread::when_all(std::move(futures)).then([](auto&& connectResultsFuture) {
+					for (auto& resultFuture : connectResultsFuture.get()) {
+						auto connectResult = resultFuture.get();
+						const auto& endpoint = connectResult.first.endpoint();
+						CATAPULT_LOG_LEVEL(MapToLogLevel(connectResult.second))
+							<< "connection attempt to " << connectResult.first << " @ " << endpoint.Host << " : " << endpoint.Port << " completed with " << connectResult.second;
+					}
+				});
+
+				return thread::make_ready_future(thread::TaskResult::Continue);
+			});
+		}
+
 		class WeightedVotingServiceRegistrar : public extensions::ServiceRegistrar {
 		public:
-			explicit WeightedVotingServiceRegistrar(harvesting::HarvestingConfiguration config, std::string resourcesPath)
-				: m_harvestingConfig(std::move(config))
-				, m_resourcesPath(std::move(resourcesPath))
+			explicit WeightedVotingServiceRegistrar(const harvesting::HarvestingConfiguration& config) : m_harvestingConfig(config)
 			{}
 
 			extensions::ServiceRegistrarInfo info() const override {
@@ -107,7 +153,7 @@ namespace catapult { namespace fastfinality {
 				const auto& nextConfig = state.config(state.storage().view().chainHeight() + Height(1));
 				bool weightedVotingEnabled = config.Network.EnableWeightedVoting || nextConfig.Network.EnableWeightedVoting;
 				if (!weightedVotingEnabled)
-					CATAPULT_THROW_RUNTIME_ERROR("weighted voting is not enabled")
+					CATAPULT_THROW_RUNTIME_ERROR("weighted voting is not enabled");
 
 				auto pValidatorPool = state.pool().pushIsolatedPool("proposal validator");
 				auto pServiceGroup = state.pool().pushServiceGroup("weighted voting");
@@ -115,48 +161,17 @@ namespace catapult { namespace fastfinality {
 				auto connectionSettings = extensions::GetConnectionSettings(config);
 				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
 				locator.registerService(Writers_Service_Name, pWriters);
+				const auto& packetPayloadSink = [&writers = *pWriters](const auto& payload) { writers.broadcast(payload); };
+				auto identityKey = crypto::KeyPair::FromString(config.User.BootKey).publicKey();
+				state.tasks().push_back(CreateConnectPeersTask(state.nodes(), *pWriters, identityKey));
 
-				auto peersFile = boost::filesystem::path(m_resourcesPath) / "peers-dbrb.json";
-				auto bootstrapNodes = config::LoadPeersFromPath(peersFile.generic_string(), config.Immutable.NetworkIdentifier);
-				auto thisNode = config::ToLocalDbrbNode(config);
-				std::map<Key, ionet::Node> nodeMap;
-				for (const auto& node : bootstrapNodes) {
-					nodeMap[node.identityKey()] = node;
-				}
-				bootstrapNodes.clear();
-				for (const auto& pair : nodeMap) {
-					if (pair.first != thisNode.identityKey())
-						bootstrapNodes.emplace_back(pair.second);
-				}
-
-				auto pFsmShared = pServiceGroup->pushService([pWriters, &config, bootstrapNodes, thisNode, &keyPair = locator.keyPair()](const std::shared_ptr<thread::IoThreadPool>& pPool) {
-					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, bootstrapNodes, thisNode, keyPair);
-					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess);
+				auto pFsmShared = pServiceGroup->pushService([&state, &config](std::shared_ptr<thread::IoThreadPool> pPool) {
+					return std::make_shared<WeightedVotingFsm>(pPool, config);
 				});
 
+				auto& packetIoPickers = pFsmShared->packetIoPickers();
+				packetIoPickers.insert(*pWriters, ionet::NodeRoles::Peer);
 				const auto& pluginManager = state.pluginManager();
-				auto pPacketHandlers = std::make_shared<ionet::ServerPacketHandlers>(config.Node.MaxPacketDataSize.bytes32());
-				pFsmShared->dbrbProcess().registerPacketHandlers(*pPacketHandlers);
-				std::weak_ptr<WeightedVotingFsm> pFsmWeak = pFsmShared;
-				pFsmShared->dbrbProcess().setDeliverCallback([pFsmWeak, &pluginManager](const std::shared_ptr<ionet::Packet>& pPacket) {
-					TRY_GET_FSM()
-
-					switch (pPacket->Type) {
-						case ionet::PacketType::Push_Proposed_Block: {
-							PushProposedBlock(pFsmShared, pluginManager, *pPacket);
-							break;
-						}
-						case ionet::PacketType::Push_Prevote_Messages: {
-							PushPrevoteMessages(pFsmShared, *pPacket);
-							break;
-						}
-						case ionet::PacketType::Push_Precommit_Messages: {
-							PushPrecommitMessages(pFsmShared, *pPacket);
-							break;
-						}
-					}
-				});
-
 				const auto& pConfigHolder = pluginManager.configHolder();
 				const auto& storage = state.storage();
 				auto timeSupplier = state.timeSupplier();
@@ -166,7 +181,7 @@ namespace catapult { namespace fastfinality {
 					return storageView.loadBlockElement(storageView.chainHeight());
 				};
 				auto blockElementGetter = [&storage](const Height& height) {
-					return storage.view().loadBlockElement(height);
+				  return storage.view().loadBlockElement(height);
 				};
 				auto importanceGetter = [&state](const Key& identityKey) {
 					auto height = state.cache().height();
@@ -177,11 +192,20 @@ namespace catapult { namespace fastfinality {
 				};
 				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
 
-				RegisterPullConfirmedBlockHandler(pFsmShared, state.packetHandlers());
-				RegisterPullRemoteNodeStateHandler(pFsmShared, state.packetHandlers(), pConfigHolder, blockElementGetter, lastBlockElementSupplier);
+				auto& packetHandlers = pFsmShared->packetHandlers();
+				RegisterPushProposedBlockHandler(pFsmShared, packetHandlers, pluginManager);
+				RegisterPushConfirmedBlockHandler(pFsmShared, packetHandlers, pluginManager);
+				RegisterPushPrevoteMessagesHandler(pFsmShared, packetHandlers);
+				RegisterPushPrecommitMessagesHandler(pFsmShared, packetHandlers);
+				RegisterPullProposedBlockHandler(pFsmShared, packetHandlers);
+				RegisterPullConfirmedBlockHandler(pFsmShared, packetHandlers);
+				RegisterPullPrevoteMessagesHandler(pFsmShared, packetHandlers);
+				RegisterPullPrecommitMessagesHandler(pFsmShared, packetHandlers);
+				// TODO: Consider rewriting to (pFsmShared, packetHandlers, pluginManager, storage)
+				RegisterPullRemoteNodeStateHandler(pFsmShared, packetHandlers, pConfigHolder, blockElementGetter, lastBlockElementSupplier);
 
-				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, *pPacketHandlers, locator.keyPair(), connectionSettings, 2u);
-				extensions::BootServer(*pServiceGroup, config.Node.Port + Port_Diff, Service_Id, config, [&acceptor = *pReaders](
+				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, packetHandlers, locator.keyPair(), connectionSettings, 2u);
+				extensions::BootServer(*pServiceGroup, config.Node.Port + Port_Diff, Service_Id, config, state.nodeSubscriber(), [&acceptor = *pReaders](
 					const auto& socketInfo,
 					const auto& callback) {
 					acceptor.accept(socketInfo, callback);
@@ -195,7 +219,7 @@ namespace catapult { namespace fastfinality {
 
 				actions.CheckLocalChain = CreateDefaultCheckLocalChainAction(
 					pFsmShared,
-					CreateRemoteNodeStateRetriever(pConfigHolder, lastBlockElementSupplier, state.packetIoPickers()),
+					CreateRemoteNodeStateRetriever(pConfigHolder, lastBlockElementSupplier, packetIoPickers),
 					pConfigHolder,
 					lastBlockElementSupplier,
 					importanceGetter,
@@ -222,19 +246,21 @@ namespace catapult { namespace fastfinality {
 					state.cache(),
 					pConfigHolder,
 					CreateHarvesterBlockGenerator(state),
-					lastBlockElementSupplier);
+					lastBlockElementSupplier,
+					packetPayloadSink);
+				actions.RequestProposal = CreateDefaultRequestProposalAction(pFsmShared, state);
 				actions.ValidateProposal = CreateDefaultValidateProposalAction(
 					pFsmShared,
 					state,
 					lastBlockElementSupplier,
 					pValidatorPool);
-				actions.WaitForProposal = CreateDefaultWaitForProposalAction(pFsmShared);
-				actions.WaitForPrevotePhaseEnd = CreateDefaultWaitForPrevotePhaseEndAction(pFsmShared, pluginManager.getCommitteeManager(), pConfigHolder);
-				actions.AddPrevote = CreateDefaultAddPrevoteAction(pFsmShared);
-				actions.AddPrecommit = CreateDefaultAddPrecommitAction(pFsmShared);
-				actions.WaitForPrecommitPhaseEnd = CreateDefaultWaitForPrecommitPhaseEndAction(pFsmShared, pluginManager.getCommitteeManager(), pConfigHolder);
+				actions.WaitForProposalPhaseEnd = CreateDefaultWaitForProposalPhaseEndAction(pFsmShared, pConfigHolder);
+				actions.RequestPrevotes = CreateDefaultRequestPrevotesAction(pFsmShared, pluginManager);
+				actions.RequestPrecommits = CreateDefaultRequestPrecommitsAction(pFsmShared, pluginManager);
+				actions.AddPrevote = CreateDefaultAddPrevoteAction(pFsmShared, packetPayloadSink);
+				actions.AddPrecommit = CreateDefaultAddPrecommitAction(pFsmShared, packetPayloadSink);
+				actions.WaitForPrecommitPhaseEnd = CreateDefaultWaitForPrecommitPhaseEndAction(pFsmShared, pConfigHolder);
 				actions.UpdateConfirmedBlock = CreateDefaultUpdateConfirmedBlockAction(pFsmShared, pluginManager.getCommitteeManager());
-				actions.RequestConfirmedBlock = CreateDefaultRequestConfirmedBlockAction(pFsmShared, state, lastBlockElementSupplier);
 				actions.CommitConfirmedBlock = CreateDefaultCommitConfirmedBlockAction(
 					pFsmShared,
 					blockRangeConsumer,
@@ -242,17 +268,17 @@ namespace catapult { namespace fastfinality {
 					pluginManager.getCommitteeManager());
 				actions.IncrementRound = CreateDefaultIncrementRoundAction(pFsmShared, pConfigHolder);
 				actions.ResetRound = CreateDefaultResetRoundAction(pFsmShared, pConfigHolder, pluginManager.getCommitteeManager());
+				actions.RequestConfirmedBlock = CreateDefaultRequestConfirmedBlockAction(pFsmShared, state, lastBlockElementSupplier);
 
 				pFsmShared->start();
 			}
 
 		private:
 			harvesting::HarvestingConfiguration m_harvestingConfig;
-			std::string m_resourcesPath;
 		};
 	}
 
-	DECLARE_SERVICE_REGISTRAR(WeightedVoting)(const harvesting::HarvestingConfiguration& config, std::string resourcesPath) {
-		return std::make_unique<WeightedVotingServiceRegistrar>(config, std::move(resourcesPath));
+	DECLARE_SERVICE_REGISTRAR(WeightedVoting)(const harvesting::HarvestingConfiguration& config) {
+		return std::make_unique<WeightedVotingServiceRegistrar>(config);
 	}
 }}

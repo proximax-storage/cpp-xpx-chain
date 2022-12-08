@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "CommitteeRound.h"
+#include "CommitteeStage.h"
 #include "WeightedVotingChainPackets.h"
 #include "catapult/model/EntityHasher.h"
 #include <atomic>
@@ -13,7 +13,6 @@
 #include <memory>
 #include <mutex>
 #include <set>
-#include <future>
 
 namespace catapult {
 	namespace crypto { class KeyPair; }
@@ -28,7 +27,7 @@ namespace catapult { namespace fastfinality {
 	class CommitteeData {
 	public:
 		CommitteeData()
-			: m_round(CommitteeRound{})
+			: m_stage(CommitteeStage{})
 			, m_pBlockProposer(nullptr)
 			, m_totalSumOfVotes(0.0)
 			, m_sumOfPrevotesSufficient(false)
@@ -51,12 +50,12 @@ namespace catapult { namespace fastfinality {
 			return m_pUnlockedAccounts;
 		}
 
-		void setCommitteeRound(const CommitteeRound& round) {
-			m_round = round;
+		void setCommitteeStage(const CommitteeStage& stage) {
+			m_stage = stage;
 		}
 
-		auto committeeRound() const {
-			return m_round.load();
+		auto committeeStage() const {
+			return m_stage.load();
 		}
 
 		void setBlockProposer(const crypto::KeyPair* pBlockProposer) {
@@ -65,6 +64,10 @@ namespace catapult { namespace fastfinality {
 
 		const auto* blockProposer() const {
 			return m_pBlockProposer;
+		}
+
+		const auto& localCommittee() const {
+			return m_localCommittee;
 		}
 
 		auto& localCommittee() {
@@ -79,44 +82,29 @@ namespace catapult { namespace fastfinality {
 			return m_totalSumOfVotes;
 		}
 
-		std::future<bool> startWaitForProposedBlock() {
-			std::lock_guard<std::mutex> guard(m_mutex);
-			m_pProposedBlockPromise = std::make_shared<std::promise<bool>>();
-			return m_pProposedBlockPromise->get_future();
-		}
-
-		void stopWaitForProposedBlock() {
-			std::lock_guard<std::mutex> guard(m_mutex);
-			m_pProposedBlockPromise = nullptr;
-		}
-
-		void setProposedBlock(const std::shared_ptr<model::Block>& pBlock) {
-			std::atomic_store(&m_pProposedBlock, pBlock);
+		void setProposedBlock(std::shared_ptr<model::Block> pBlock) {
 			{
 				std::lock_guard<std::mutex> guard(m_mutex);
 				m_proposedBlockHash = pBlock ? model::CalculateHash(*pBlock) : Hash256{};
-				if (m_pProposedBlockPromise) {
-					m_pProposedBlockPromise->set_value(true);
-					m_pProposedBlockPromise = nullptr; // TODO: test behaviour
-				}
 			}
+			std::atomic_store(&m_pProposedBlock, pBlock);
 		}
 
 		auto proposedBlock() const {
 			return std::atomic_load(&m_pProposedBlock);
 		}
 
-		auto proposedBlockHash() const {
-			std::lock_guard<std::mutex> guard(m_mutex);
-			return m_proposedBlockHash;
-		}
-
 		void setConfirmedBlock(std::shared_ptr<model::Block> pBlock) {
-			std::atomic_store(&m_pConfirmedBlock, std::move(pBlock));
+			std::atomic_store(&m_pConfirmedBlock, pBlock);
 		}
 
 		auto confirmedBlock() const {
 			return std::atomic_load(&m_pConfirmedBlock);
+		}
+
+		auto proposedBlockHash() const {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			return m_proposedBlockHash;
 		}
 
 		auto prevotes() const {
@@ -169,7 +157,7 @@ namespace catapult { namespace fastfinality {
 			m_sumOfPrevotesSufficient = value;
 		}
 
-		bool sumOfPrevotesSufficient() const {
+		bool sumOfPrevotesSufficient() {
 			return m_sumOfPrevotesSufficient;
 		}
 
@@ -177,13 +165,12 @@ namespace catapult { namespace fastfinality {
 		Key m_beneficiary;
 		std::shared_ptr<harvesting::UnlockedAccounts> m_pUnlockedAccounts;
 
-		std::atomic<CommitteeRound> m_round;
+		std::atomic<CommitteeStage> m_stage;
 
 		const crypto::KeyPair* m_pBlockProposer;
 		std::set<const crypto::KeyPair*> m_localCommittee;
 		double m_totalSumOfVotes;
 
-		std::shared_ptr<std::promise<bool>> m_pProposedBlockPromise;
 		std::shared_ptr<model::Block> m_pProposedBlock;
 		Hash256 m_proposedBlockHash;
 		std::shared_ptr<model::Block> m_pConfirmedBlock;
