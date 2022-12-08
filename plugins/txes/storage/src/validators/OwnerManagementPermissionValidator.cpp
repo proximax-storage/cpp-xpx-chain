@@ -20,17 +20,9 @@ namespace catapult { namespace validators {
                 return Failure_Storage_Drive_Not_Found;
             }
 
-            auto owner = pDriveEntry->owner();
-            if (owner != notification.Signer) {
-                return Failure_Storage_Is_Not_Owner;
-            }
-
-			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
-
-            auto replicatorSize = pDriveEntry->replicators().size(); 
-            if (replicatorSize < 2 * pluginConfig.MinReplicatorCount / 3 + 1) {
-                return Failure_Storage_Replicator_Count_Insufficient;
-            }
+			if (pDriveEntry->ownerManagement() != state::OwnerManagement::TEMPORARY_FORBIDDEN) {
+				return Failure_Storage_Owner_Management_Can_Not_Be_Allowed;
+			}
 
 			return ValidationResult::Success;
 		})

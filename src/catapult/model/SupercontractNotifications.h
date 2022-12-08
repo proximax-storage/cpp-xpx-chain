@@ -150,36 +150,6 @@ namespace catapult::model {
 		uint64_t NumberOfExecutions;
 	};
 
-//	struct ProofOfExecution
-
-	template<VersionType version>
-	struct SuccessfulBatchExecutionNotification;
-
-	template<>
-	struct SuccessfulBatchExecutionNotification<1> : public Notification {
-	public:
-		static constexpr auto Notification_Type = SuperContract_v2_Successful_Batch_Execution_v1_Notification;
-
-	public:
-		explicit SuccessfulBatchExecutionNotification(
-				const Key& contractKey,
-				uint64_t batchId,
-				const Hash256& storageHash,
-				const crypto::CurvePoint& verificationInformation)
-			: Notification(Notification_Type, sizeof(AutomaticExecutionsReplenishmentNotification<1>))
-			, ContractKey(contractKey)
-			, BatchId(batchId)
-			, StorageHash(storageHash)
-			, VerificationInformation(verificationInformation)
-		{}
-
-	public:
-		Key ContractKey;
-		uint64_t BatchId;
-		Hash256 StorageHash;
-		crypto::CurvePoint VerificationInformation;
-	};
-
 	template<VersionType version>
 	struct SuccessfulBatchExecutionNotification;
 
@@ -194,23 +164,20 @@ namespace catapult::model {
 				uint64_t batchId,
 				const Hash256& storageHash,
 				const crypto::CurvePoint& verificationInformation,
-				const std::vector<CallOpinion>& callOpinions,
-				const std::vector<CallDigest>& callDigests)
-				: Notification(Notification_Type, sizeof(AutomaticExecutionsReplenishmentNotification<1>))
-				, ContractKey(contractKey)
-				, BatchId(batchId)
-				, StorageHash(storageHash)
-				, VerificationInformation(verificationInformation)
-				, CallOpinions(callOpinions)
-				, CallDigests(callDigests)
-				{}
+				const std::set<Key>& cosigners)
+			: Notification(Notification_Type, sizeof(AutomaticExecutionsReplenishmentNotification<1>))
+			, ContractKey(contractKey)
+			, BatchId(batchId)
+			, StorageHash(storageHash)
+			, VerificationInformation(verificationInformation)
+			, Cosigners(cosigners)
+		{}
 
 	public:
 		Key ContractKey;
 		uint64_t BatchId;
 		Hash256 StorageHash;
 		crypto::CurvePoint VerificationInformation;
-		std::vector<CallOpinion> CallOpinions;
-		std::vector<CallDigest> CallDigests;
+		std::set<Key> Cosigners;
 	};
 }

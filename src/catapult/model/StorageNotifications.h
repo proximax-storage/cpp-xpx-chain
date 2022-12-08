@@ -88,8 +88,9 @@ namespace catapult { namespace model {
 	/// Defines an start drive verification notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Start_Drive_Verification_v1, 0x001A);
 
-	/// Defines an deploy supercontract notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Deploy_Supercontract_Drive_v1, 0x001B);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Owner_Management_Prohibition_v1, 0x001B);
+
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Owner_Management_Permission_v1, 0x001C);
 
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
@@ -1130,7 +1131,6 @@ namespace catapult { namespace model {
 		const uint8_t* OpinionsPtr;
 	};
 
-	/// Notification of deploy supercontract.
 	template<VersionType version>
 	struct OwnerManagementProhibition;
 
@@ -1138,20 +1138,43 @@ namespace catapult { namespace model {
 	struct OwnerManagementProhibition<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Storage_Deploy_Supercontract_Drive_v1_Notification;
-	
+		static constexpr auto Notification_Type = Storage_Owner_Management_Prohibition_v1_Notification;
+
 	public:
 		explicit OwnerManagementProhibition(
-			const Key& signer, 
-			const Key& driveKey)
-			: Notification(Notification_Type, sizeof(OwnerManagementProhibition<1>))
-			, DriveKey(driveKey)
-		{}
-	
+				const Key& signer,
+				const Key& driveKey)
+				: Notification(Notification_Type, sizeof(OwnerManagementProhibition<1>))
+				, DriveKey(driveKey)
+				, Signer(signer)
+				{}
+
 	public:
 		/// Signer of the Deploy Transaction of Supercontract.
 		Key Signer;
 
+		/// Key of the drive.
+		Key DriveKey;
+	};
+
+	template<VersionType version>
+	struct OwnerManagementPermission;
+
+	template<>
+	struct OwnerManagementPermission<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Owner_Management_Permission_v1_Notification;
+	
+	public:
+		explicit OwnerManagementPermission(
+			const Key& signer, 
+			const Key& driveKey)
+			: Notification(Notification_Type, sizeof(OwnerManagementPermission<1>))
+			, DriveKey(driveKey)
+		{}
+	
+	public:
 		/// Key of the drive.
 		Key DriveKey;
 	};

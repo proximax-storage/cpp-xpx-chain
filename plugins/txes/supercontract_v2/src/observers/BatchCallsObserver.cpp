@@ -25,8 +25,7 @@ namespace catapult::observers {
 			auto contractIt = contractCache.find(notification.ContractKey);
 			auto& contractEntry = contractIt.get();
 
-			state::Batch batch;
-			batch.PoExVerificationInformation = notification.ProofOfExecutionVerificationInfo;
+			auto& batch = contractEntry.batches().back();
 
 			auto requestedCallIt = contractEntry.requestedCalls().begin();
 
@@ -50,7 +49,7 @@ namespace catapult::observers {
 				batch.CompletedCalls.push_back(call);
 			}
 
-			const auto& readOnlyCache = context.Cache.toReadOnly();
+			auto readOnlyCache = context.Cache.toReadOnly();
 			auto executorsNumber = driveBrowser->getOrderedReplicatorsCount(readOnlyCache, contractEntry.driveKey());
 			auto driveOwner = driveBrowser->getDriveOwner(readOnlyCache, contractEntry.driveKey());
 

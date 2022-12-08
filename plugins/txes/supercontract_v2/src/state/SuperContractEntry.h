@@ -57,8 +57,8 @@ struct ProofOfExecution {
 };
 
 struct ExecutorInfo {
-	ProofOfExecution PoEx;
 	uint64_t NextBatchToApprove = 0;
+	ProofOfExecution PoEx;
 };
 
 struct Batch{

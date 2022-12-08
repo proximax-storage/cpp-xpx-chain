@@ -17,11 +17,8 @@ namespace catapult::observers {
 
 		auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 		auto contractIt = contractCache.find(notification.ContractKey);
-		auto& contractKey = contractIt.get();
-
-		state::Batch batch;
-		batch.PoExVerificationInformation = notification.VerificationInformation;
-		contractKey.batches().push_back(batch);
+		auto& contractEntry = contractIt.get();
+		contractEntry.batches().back().PoExVerificationInformation = notification.VerificationInformation;
 	})
 
 }

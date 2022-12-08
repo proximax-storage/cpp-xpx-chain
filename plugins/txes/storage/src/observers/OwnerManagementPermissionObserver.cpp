@@ -8,10 +8,10 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::OwnerManagementProhibition<1>;
+	using Notification = model::OwnerManagementPermission<1>;
 
-	DECLARE_OBSERVER(OwnerManagementProhibition, Notification)() {
-		return MAKE_OBSERVER(OwnerManagementProhibition, Notification, ([](const Notification& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(OwnerManagementPermission, Notification)() {
+		return MAKE_OBSERVER(OwnerManagementPermission, Notification, ([](const Notification& notification, const ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DeploySupercontract)");
 
@@ -19,7 +19,7 @@ namespace catapult { namespace observers {
 			auto driveEntryIt = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveEntryIt.get();
 
-			driveEntry.setOwnerManagement(state::OwnerManagement::TEMPORARY_FORBIDDEN);
+			driveEntry.setOwnerManagement(state::OwnerManagement::ALLOWED);
 		}))
 	}
 }}

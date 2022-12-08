@@ -8,9 +8,9 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::SuccessfulBatchExecutionNotification<1>;
+	using Notification = model::EndBatchExecutionNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(SuccessfulBatchExecution, [](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(EndBatchExecution, [](const Notification& notification, const ValidatorContext& context) {
 
 		const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 

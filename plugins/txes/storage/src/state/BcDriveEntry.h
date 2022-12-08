@@ -25,6 +25,12 @@ namespace catapult { namespace state {
 		Cancelled
 	};
 
+	enum class OwnerManagement: uint8_t {
+		ALLOWED,
+		TEMPORARY_FORBIDDEN,
+		PERMANENTLY_FORBIDDEN
+	};
+
 	struct ActiveDataModification {
 
 		/// Constructor For Data Modification
@@ -155,7 +161,7 @@ namespace catapult { namespace state {
 			, m_usedSizeBytes(0)
 			, m_metaFilesSizeBytes(0)
 			, m_replicatorCount(0)
-			, m_driveOwnerManagementForbidden(false)
+			, m_ownerManagement(OwnerManagement::ALLOWED)
 		{}
 
 	public:
@@ -365,12 +371,12 @@ namespace catapult { namespace state {
 			return m_verificationNode;
 		}
 
-		bool driveOwnerManagementForbidden() const {
-			return m_driveOwnerManagementForbidden;
+		OwnerManagement ownerManagement() const {
+			return m_ownerManagement;
 		}
 
-		void setDriveOwnerManagementForbidden(bool driveOwnerManagementForbidden) {
-			m_driveOwnerManagementForbidden = driveOwnerManagementForbidden;
+		void setOwnerManagement(OwnerManagement ownerManagement) {
+			m_ownerManagement = ownerManagement;
 		}
 
 	private:
@@ -396,7 +402,7 @@ namespace catapult { namespace state {
 		Timestamp m_lastPayment;
 
 		AVLTreeNode m_verificationNode;
-		bool m_driveOwnerManagementForbidden;
+		OwnerManagement m_ownerManagement;
 	};
 
 	// Drive entry.

@@ -11,20 +11,43 @@ namespace catapult::observers {
 
 	using Notification = model::ProofOfExecutionNotification<1>;
 
-	DEFINE_OBSERVER(ProofOfExecution, Notification , [](const Notification & notification, ObserverContext& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
+	DECLARE_OBSERVER(BatchCalls, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider) {
+		return MAKE_OBSERVER(BatchCalls, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
 
-		auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
-		auto contractIt = contractCache.find(notification.ContractKey);
-		auto& contractEntry = contractIt.get();
+			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
+			auto contractIt = contractCache.find(notification.ContractKey);
+			auto& contractEntry = contractIt.get();
 
-		for (const auto& [key, proof]: notification.Proofs) {
-			auto& executor = contractEntry.executorsInfo()[key];
-			executor.PoEx.StartBatchId = proof.StartBatchId;
-			executor.PoEx.T = proof.T;
-			executor.PoEx.R = proof.R;
-		}
-	})
+			for (const auto& [key, proof] : notification.Proofs) {
+				auto& executor = contractEntry.executorsInfo()[key];
+				executor.PoEx.StartBatchId = proof.StartBatchId;
+				executor.PoEx.T = proof.T;
+				executor.PoEx.R = proof.R;
+			}
 
+			const auto& scMosaicId = config::GetUnresolvedSuperContractMosaicId(context.Config.Immutable);
+			const auto& streamingMosaicId = config::GetUnresolvedStreamingMosaicId(context.Config.Immutable);
+
+			Amount scPayment(0);
+			Amount streamingPayment(0);
+			for (const auto& [key, _] : notification.Proofs) {
+				auto& executor = contractEntry.executorsInfo()[key];
+				auto startBatch = std::max(executor.PoEx.StartBatchId, executor.NextBatchToApprove);
+				for (auto batchId = startBatch; batchId < contractEntry.nextBatchId(); batchId++) {
+					const auto& batch = contractEntry.batches()[batchId];
+					for (const auto& call : batch.CompletedCalls) {
+						scPayment = scPayment + call.ExecutionWork;
+						streamingPayment = streamingPayment + call.DownloadWork;
+					}
+				}
+				liquidityProvider->debitMosaics(
+						context, contractEntry.executionPaymentKey(), key, scMosaicId, scPayment);
+				liquidityProvider->debitMosaics(
+						context, contractEntry.executionPaymentKey(), key, streamingMosaicId, streamingPayment);
+				executor.NextBatchToApprove = contractEntry.nextBatchId();
+			}
+		}))
+	}
 }

@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
         	return Failure_Storage_Is_Not_Owner;
         }
 
-        if (pDriveEntry->driveOwnerManagementForbidden()) {
+        if (pDriveEntry->ownerManagement() != state::OwnerManagement::ALLOWED) {
         	return Failure_Storage_Owner_Management_Is_Forbidden;
         }
 

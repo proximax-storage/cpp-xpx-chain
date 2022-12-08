@@ -18,5 +18,11 @@ uint16_t catapult::state::DriveStateBrowserImpl::getOrderedReplicatorsCount(
 	const auto& driveEntry = driveIter.get();
 	return driveEntry.replicatorCount();
 }
+Key DriveStateBrowserImpl::getDriveOwner(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
+	const auto& driveCache = cache.template sub<cache::BcDriveCache>();
+	auto driveIter = driveCache.find(driveKey);
+	const auto& driveEntry = driveIter.get();
+	return driveEntry.owner();
+}
 
 }

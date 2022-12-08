@@ -16,12 +16,12 @@ namespace catapult::model {
 #pragma pack(push, 1)
 
 	struct CallPayment {
-		uint64_t ExecutionPayment;
-		uint64_t DownloadPayment;
+		Amount ExecutionPayment;
+		Amount DownloadPayment;
 	};
 
 	struct RawProofOfExecution {
-		uint64_t FirstBatchId;
+		uint64_t StartBatchId;
 		std::array<uint8_t, 32> T;
 		std::array<uint8_t, 32> R;
 		std::array<uint8_t, 32> F;

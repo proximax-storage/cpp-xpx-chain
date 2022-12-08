@@ -10,14 +10,10 @@
 #include "src/cache/SuperContractCache.h"
 #include "src/cache/DriveContractCache.h"
 #include "src/model/InternalSuperContractNotifications.h"
+#include <catapult/observers/LiquidityProviderExchangeObserver.h>
 #include <queue>
 
 namespace catapult::observers {
-
-//#define DEFINE_OBSERVER_WITH_HOOKS(NAME, NOTIFICATION_TYPE, HANDLER, ...) \
-//DECLARE_OBSERVER(NAME, NOTIFICATION_TYPE)(##__VA_ARGS__) { \
-//		return MAKE_OBSERVER(NAME, NOTIFICATION_TYPE, HANDLER); \
-//	}
 
 	DECLARE_OBSERVER(DeployContract, model::DeploySupercontractNotification<1>)();
 
