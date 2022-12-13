@@ -164,7 +164,4 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(ServiceUnitTransfer, model::BalanceTransferNotification<1>)();
 
 	DECLARE_STATEFUL_VALIDATOR(OwnerManagementProhibition, model::OwnerManagementProhibitionNotification<1>)();
-
-	DECLARE_STATEFUL_VALIDATOR(OwnerManagementPermission, model::OwnerManagementPermissionNotification<1>)();
-
 }}
