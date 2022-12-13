@@ -8,8 +8,15 @@
 #include <map>
 #include <optional>
 #include <queue>
+#include <catapult/types.h>
+#include <catapult/crypto/CurvePoint.h>
 
 namespace catapult::state {
+
+struct ServicePayment {
+	UnresolvedMosaicId MosaicId;
+	catapult::Amount Amount;
+};
 
 struct ContractCall {
 	Hash256 CallId;
@@ -19,7 +26,7 @@ struct ContractCall {
 	std::string ActualArguments;
 	Amount ExecutionCallPayment;
 	Amount DownloadCallPayment;
-	std::vector<model::UnresolvedMosaic> ServicePayments;
+	std::vector<ServicePayment> ServicePayments;
 };
 
 struct CompletedCall {
@@ -30,11 +37,6 @@ struct CompletedCall {
 	uint16_t Status = 0;
 	Amount ExecutionWork;
 	Amount DownloadWork;
-};
-
-struct ServicePayment {
-	UnresolvedMosaicId MosaicId;
-	catapult::Amount Amount;
 };
 
 struct AutomaticExecutionsInfo {

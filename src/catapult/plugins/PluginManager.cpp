@@ -385,4 +385,17 @@ namespace catapult { namespace plugins {
 	}
 
 	// endregion
+
+	// region storage external management observer
+
+	const std::unique_ptr<observers::StorageExternalManagementObserver>&
+	PluginManager::storageExternalManagement() const {
+		return m_storageExternalManagement;
+	}
+	void PluginManager::setStorageExternalManagement(
+			std::unique_ptr<observers::StorageExternalManagementObserver>&& storageExternalManagement) {
+		m_storageExternalManagement = std::move(storageExternalManagement);
+	}
+
+	// endregion
 }}

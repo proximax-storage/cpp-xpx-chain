@@ -13,9 +13,11 @@ namespace catapult::state {
 
 class DriveStateBrowserImpl : public DriveStateBrowser {
 public:
-	uint16_t getOrderedReplicatorsCount(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) override;
+	uint16_t getOrderedReplicatorsCount(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
 
 	Key getDriveOwner(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
+
+	std::set<Key> getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
 };
 
 } // namespace catapult::state

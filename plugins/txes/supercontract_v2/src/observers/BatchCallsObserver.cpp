@@ -97,7 +97,11 @@ namespace catapult::observers {
 				automaticExecutionsInfo.m_automaticExecutionsEnabledSince.reset();
 			}
 
-			contractEntry.batches().push_back(batch);
+			if (contractEntry.batches().size() == 1) {
+				if (automaticExecutionsInfo.m_automatedExecutionsNumber > 0) {
+					automaticExecutionsInfo.m_automaticExecutionsEnabledSince = context.Height;
+				}
+			}
 		}))
 	}
 }

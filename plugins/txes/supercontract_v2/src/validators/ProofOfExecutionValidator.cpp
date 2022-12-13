@@ -19,6 +19,14 @@ namespace catapult { namespace validators {
 		const auto& contractEntry = contractIt.get();
 
 		for (const auto& [publicKey, proofToVerify]: notification.Proofs) {
+
+			const auto& executorsInfo = contractEntry.executorsInfo();
+			auto executorIt = executorsInfo.find(publicKey);
+
+			if (executorIt == executorsInfo.end()) {
+
+			}
+
 			Hash512 dHash;
 			crypto::Sha3_512_Builder dHasher;
 			dHasher.update({ proofToVerify.F.toBytes(), proofToVerify.T.toBytes(), publicKey });
@@ -31,14 +39,9 @@ namespace catapult { namespace validators {
 				return Failure_SuperContract_Invalid_T_Proof;
 			}
 
-			const auto& executorsInfo = contractEntry.executorsInfo();
-
 			crypto::CurvePoint previousT;
 			crypto::Scalar previousR;
 			uint64_t verifyStartBatchId = 0;
-
-			// For this moment it is checked that the executor is in the map
-			auto executorIt = executorsInfo.find(publicKey);
 
 			const auto& executorInfo = executorIt->second;
 			const state::ProofOfExecution& executorInfoPoEx = executorIt->second.PoEx;

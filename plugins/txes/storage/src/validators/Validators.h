@@ -163,8 +163,8 @@ namespace catapult { namespace validators {
 	/// - transferred mosaic is not one of the service units
 	DECLARE_STATEFUL_VALIDATOR(ServiceUnitTransfer, model::BalanceTransferNotification<1>)();
 
-	DECLARE_STATEFUL_VALIDATOR(OwnerManagementProhibition, model::OwnerManagementProhibition<1>)();
+	DECLARE_STATEFUL_VALIDATOR(OwnerManagementProhibition, model::OwnerManagementProhibitionNotification<1>)();
 
-	DECLARE_STATEFUL_VALIDATOR(OwnerManagementPermission, model::OwnerManagementPermission<1>)();
+	DECLARE_STATEFUL_VALIDATOR(OwnerManagementPermission, model::OwnerManagementPermissionNotification<1>)();
 
 }}

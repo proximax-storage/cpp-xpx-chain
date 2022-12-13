@@ -8,7 +8,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::OwnerManagementProhibition<1>;
+	using Notification = model::OwnerManagementProhibitionNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(OwnerManagementProhibition, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(OwnerManagementProhibition, [](const Notification& notification, const ValidatorContext& context) {
@@ -24,6 +24,10 @@ namespace catapult { namespace validators {
             if (owner != notification.Signer) {
                 return Failure_Storage_Is_Not_Owner;
             }
+
+			if (pDriveEntry->ownerManagement() != state::OwnerManagement::ALLOWED) {
+				return Failure_Storage_Owner_Management_Is_Forbidden;
+			}
 
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 

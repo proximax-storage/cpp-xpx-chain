@@ -31,6 +31,7 @@
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
+#include "src/observers/StorageExternalManagementObserverImpl.h"
 
 namespace catapult { namespace plugins {
 
@@ -158,6 +159,9 @@ namespace catapult { namespace plugins {
 
 		auto pDriveStateBrowser = std::make_unique<state::DriveStateBrowserImpl>();
 		manager.setDriveStateBrowser(std::move(pDriveStateBrowser));
+
+		auto pStorageExternalManagementObserver = std::make_unique<observers::StorageExternalManagementObserverImpl>();
+		manager.setStorageExternalManagement(std::move(pStorageExternalManagementObserver));
 
 		const auto& liquidityProviderValidator = manager.liquidityProviderExchangeValidator();
 		const auto& liquidityProviderObserver = manager.liquidityProviderExchangeObserver();

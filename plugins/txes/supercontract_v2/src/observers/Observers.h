@@ -11,6 +11,7 @@
 #include "src/cache/DriveContractCache.h"
 #include "src/model/InternalSuperContractNotifications.h"
 #include <catapult/observers/LiquidityProviderExchangeObserver.h>
+#include <catapult/observers/StorageExternalManagementObserver.h>
 #include <queue>
 
 namespace catapult::observers {

@@ -24,7 +24,28 @@ namespace catapult::observers {
 			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 			auto contractIt = contractCache.find(notification.ContractKey);
 			auto& contractEntry = contractIt.get();
-			contractEntry.batches().emplace_back();
-		 }))
+
+			auto readOnlyCache = context.Cache.toReadOnly();
+			auto replicators = driveBrowser->getReplicators(readOnlyCache, contractEntry.driveKey());
+
+			auto& executorsInfo = contractEntry.executorsInfo();
+
+			for (auto it = executorsInfo.begin(); it != executorsInfo.end();) {
+				if (replicators.find(it->first) == replicators.end()) {
+					it = executorsInfo.erase(it);
+				}
+				else {
+					it++;
+				}
+			}
+
+			for (const auto& key: replicators) {
+				if (executorsInfo.find(key) == executorsInfo.end()) {
+					state::ProofOfExecution poEx;
+					poEx.StartBatchId = contractEntry.nextBatchId();
+					executorsInfo[key] = state::ExecutorInfo{contractEntry.nextBatchId(), poEx};
+				}
+			}
+		}))
 	}
 }

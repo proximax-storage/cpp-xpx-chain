@@ -11,8 +11,10 @@ namespace catapult::observers {
 
 	using Notification = model::ProofOfExecutionNotification<1>;
 
-	DECLARE_OBSERVER(BatchCalls, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider) {
-		return MAKE_OBSERVER(BatchCalls, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(ProofOfExecution, Notification)(
+			const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider,
+			const std::unique_ptr<StorageExternalManagementObserver>& storageExternalManager) {
+		return MAKE_OBSERVER(ProofOfExecution, Notification, ([&liquidityProvider, &storageExternalManager](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
 
@@ -48,6 +50,12 @@ namespace catapult::observers {
 						context, contractEntry.executionPaymentKey(), key, streamingMosaicId, streamingPayment);
 				executor.NextBatchToApprove = contractEntry.nextBatchId();
 			}
+
+			std::set<Key> executors;
+			for (const auto& [key, _]: notification.Proofs) {
+				executors.insert(key);
+			}
+			storageExternalManager->addToConfirmedStorage(context, contractEntry.driveKey(), executors);
 		}))
 	}
 }

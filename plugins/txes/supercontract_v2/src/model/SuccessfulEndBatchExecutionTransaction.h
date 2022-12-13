@@ -44,6 +44,10 @@ namespace catapult::model {
 
 		Hash256 StorageHash;
 
+		uint64_t UsedSizeBytes;
+
+		uint64_t MetaFilesSizeBytes;
+
 		std::array<uint8_t, 32> ProofOfExecutionVerificationInformation;
 
 		uint16_t CosignersNumber;

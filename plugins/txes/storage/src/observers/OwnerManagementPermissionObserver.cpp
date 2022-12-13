@@ -8,7 +8,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::OwnerManagementPermission<1>;
+	using Notification = model::OwnerManagementPermissionNotification<1>;
 
 	DECLARE_OBSERVER(OwnerManagementPermission, Notification)() {
 		return MAKE_OBSERVER(OwnerManagementPermission, Notification, ([](const Notification& notification, const ObserverContext& context) {

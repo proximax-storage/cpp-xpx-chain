@@ -12,6 +12,10 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(BatchCalls, [](const Notification& notification, const ValidatorContext& context) {
 
+		if (notification.Digests.empty()) {
+			return Failure_SuperContract_Empty_Batch;;
+		}
+
 		const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 		auto contractIt = contractCache.find(notification.ContractKey);
 
@@ -36,12 +40,12 @@ namespace catapult { namespace validators {
 				}
 				for (const auto& payment: payments.ExecutionWork) {
 					if (payment > requestedCallIt->ExecutionCallPayment) {
-						return Failure_SuperContract_ExecutionWorkIsTooLarge;
+						return Failure_SuperContract_Execution_Work_Is_Too_Large;
 					}
 				}
 				for (const auto& payment: payments.DownloadWork) {
 					if (payment > requestedCallIt->DownloadCallPayment) {
-						return Failure_SuperContract_DownloadWorkIsTooLarge;
+						return Failure_SuperContract_Download_Work_Is_Too_Large;
 					}
 				}
 				requestedCallIt++;
@@ -52,12 +56,12 @@ namespace catapult { namespace validators {
 				}
 				for (const auto& payment: payments.ExecutionWork) {
 					if (payment > automaticExecutionsInfo.m_automatedExecutionCallPayment) {
-						return Failure_SuperContract_ExecutionWorkIsTooLarge;
+						return Failure_SuperContract_Execution_Work_Is_Too_Large;
 					}
 				}
 				for (const auto& payment: payments.DownloadWork) {
 					if (payment > automaticExecutionsInfo.m_automatedDownloadCallPayment) {
-						return Failure_SuperContract_DownloadWorkIsTooLarge;
+						return Failure_SuperContract_Download_Work_Is_Too_Large;
 					}
 				}
 				automaticExecutionsLeft--;

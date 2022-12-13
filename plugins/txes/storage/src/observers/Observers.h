@@ -115,7 +115,7 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by block
 	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, model::BlockNotification<1>)();
 
-	DECLARE_OBSERVER(OwnerManagementProhibition, model::OwnerManagementProhibition<1>)();
+	DECLARE_OBSERVER(OwnerManagementProhibition, model::OwnerManagementProhibitionNotification<1>)();
 
-	DECLARE_OBSERVER(OwnerManagementPermission, model::OwnerManagementPermission<1>)();
+	DECLARE_OBSERVER(OwnerManagementPermission, model::OwnerManagementPermissionNotification<1>)();
 }} // namespace catapult::observers

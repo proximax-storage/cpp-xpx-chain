@@ -4,6 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#pragma once
+
 extern "C" {
 #include <external/ref10/ge.h>
 }

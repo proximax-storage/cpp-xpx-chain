@@ -11,14 +11,23 @@ namespace catapult::observers {
 
 	using Notification = model::SuccessfulBatchExecutionNotification<1>;
 
-	DEFINE_OBSERVER(SuccessfulBatchExecution, Notification, [](const Notification& notification, ObserverContext& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
+	DECLARE_OBSERVER(SuccessfulBatchExecution, Notification)(const std::unique_ptr<StorageExternalManagementObserver>& storageExternalManager) {
+		return MAKE_OBSERVER(SuccessfulBatchExecution, Notification, ([&storageExternalManager](const Notification& notification, ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
 
-		auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
-		auto contractIt = contractCache.find(notification.ContractKey);
-		auto& contractEntry = contractIt.get();
-		contractEntry.batches().back().PoExVerificationInformation = notification.VerificationInformation;
-	})
+			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
+			auto contractIt = contractCache.find(notification.ContractKey);
+			auto& contractEntry = contractIt.get();
+			contractEntry.batches().back().PoExVerificationInformation = notification.VerificationInformation;
 
+			if (notification.UpdateStorageState) {
+				storageExternalManager->updateStorageState(context,
+														   contractEntry.driveKey(),
+														   notification.StorageHash,
+														   notification.UsedSizeBytes,
+														   notification.MetaFilesSizeBytes);
+			}
+		}))
+	}
 }

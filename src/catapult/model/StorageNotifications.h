@@ -90,8 +90,6 @@ namespace catapult { namespace model {
 
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Owner_Management_Prohibition_v1, 0x001B);
 
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Owner_Management_Permission_v1, 0x001C);
-
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
 		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)
@@ -1132,19 +1130,19 @@ namespace catapult { namespace model {
 	};
 
 	template<VersionType version>
-	struct OwnerManagementProhibition;
+	struct OwnerManagementProhibitionNotification;
 
 	template<>
-	struct OwnerManagementProhibition<1> : public Notification {
+	struct OwnerManagementProhibitionNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Storage_Owner_Management_Prohibition_v1_Notification;
 
 	public:
-		explicit OwnerManagementProhibition(
+		explicit OwnerManagementProhibitionNotification(
 				const Key& signer,
 				const Key& driveKey)
-				: Notification(Notification_Type, sizeof(OwnerManagementProhibition<1>))
+				: Notification(Notification_Type, sizeof(OwnerManagementProhibitionNotification<1>))
 				, DriveKey(driveKey)
 				, Signer(signer)
 				{}
@@ -1153,28 +1151,6 @@ namespace catapult { namespace model {
 		/// Signer of the Deploy Transaction of Supercontract.
 		Key Signer;
 
-		/// Key of the drive.
-		Key DriveKey;
-	};
-
-	template<VersionType version>
-	struct OwnerManagementPermission;
-
-	template<>
-	struct OwnerManagementPermission<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Storage_Owner_Management_Permission_v1_Notification;
-	
-	public:
-		explicit OwnerManagementPermission(
-			const Key& signer, 
-			const Key& driveKey)
-			: Notification(Notification_Type, sizeof(OwnerManagementPermission<1>))
-			, DriveKey(driveKey)
-		{}
-	
-	public:
 		/// Key of the drive.
 		Key DriveKey;
 	};

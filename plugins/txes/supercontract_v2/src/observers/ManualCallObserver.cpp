@@ -29,7 +29,7 @@ namespace catapult::observers {
 		contractCall.DownloadCallPayment = contractCall.DownloadCallPayment;
 		contractCall.ServicePayments = contractCall.ServicePayments;
 
-		contractEntry.requestedCalls().push(std::move(contractCall));
+		contractEntry.requestedCalls().push_back(std::move(contractCall));
 	})
 
 }

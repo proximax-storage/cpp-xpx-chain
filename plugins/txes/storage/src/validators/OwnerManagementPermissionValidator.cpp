@@ -8,10 +8,10 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::OwnerManagementProhibition<1>;
+	using Notification = model::OwnerManagementPermissionNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(OwnerManagementProhibition, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(OwnerManagementProhibition, [](const Notification& notification, const ValidatorContext& context) {
+	DECLARE_STATEFUL_VALIDATOR(OwnerManagementPermission, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(OwnerManagementPermission, [](const Notification& notification, const ValidatorContext& context) {
 			const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
             auto driveIter = driveCache.find(notification.DriveKey);
             auto* pDriveEntry = driveIter.tryGet();

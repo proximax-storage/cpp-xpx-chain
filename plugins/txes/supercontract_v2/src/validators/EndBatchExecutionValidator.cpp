@@ -15,14 +15,23 @@ namespace catapult { namespace validators {
 		const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 
 		auto contractIt = contractCache.find(notification.ContractKey);
-		auto* pContractEntry = contractIt.tryGet();
+		const auto& contractEntry = contractIt.get();
 
-		if (!pContractEntry) {
-			return Failure_SuperContract_Contract_Does_Not_Exist;
+		if (notification.BatchId != contractEntry.nextBatchId()) {
+			return Failure_SuperContract_Invalid_Batch_Id;
 		}
 
-		if (notification.BatchId != pContractEntry->nextBatchId()) {
-			return Failure_SuperContract_Invalid_Batch_Id;
+		std::set<Key> cosigners;
+		for (const auto& key: notification.Cosigners) {
+			cosigners.insert(key);
+		}
+
+		if (cosigners.size() < notification.Cosigners.size()) {
+			return Failure_SuperContract_Duplicate_Cosigner;
+		}
+
+		if (cosigners.size() <= 2 * contractEntry.executorsInfo().size() / 3) {
+			return Failure_SuperContract_Not_Enough_Signatures;
 		}
 
 		return ValidationResult::Success;

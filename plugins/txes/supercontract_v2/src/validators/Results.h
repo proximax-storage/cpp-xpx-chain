@@ -36,9 +36,17 @@ namespace catapult { namespace validators {
 
 	DEFINE_CONTRACT_RESULT(Invalid_Call_Id, 11);
 
-	DEFINE_CONTRACT_RESULT(ExecutionWorkIsTooLarge, 12);
+	DEFINE_CONTRACT_RESULT(Execution_Work_Is_Too_Large, 12);
 
-	DEFINE_CONTRACT_RESULT(DownloadWorkIsTooLarge, 13);
+	DEFINE_CONTRACT_RESULT(Download_Work_Is_Too_Large, 13);
+
+	DEFINE_CONTRACT_RESULT(Empty_Batch, 14);
+
+	DEFINE_CONTRACT_RESULT(Duplicate_Cosigner, 15);
+
+	DEFINE_CONTRACT_RESULT(Not_Enough_Signatures, 16);
+
+	DEFINE_CONTRACT_RESULT(Invalid_Signature, 17);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

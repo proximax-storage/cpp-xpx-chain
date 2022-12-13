@@ -162,13 +162,19 @@ namespace catapult::model {
 		explicit SuccessfulBatchExecutionNotification(
 				const Key& contractKey,
 				uint64_t batchId,
+				bool updateStorageState,
 				const Hash256& storageHash,
+				uint64_t usedSizeBytes,
+				uint64_t metaFilesSizeBytes,
 				const crypto::CurvePoint& verificationInformation,
 				const std::set<Key>& cosigners)
 			: Notification(Notification_Type, sizeof(AutomaticExecutionsReplenishmentNotification<1>))
 			, ContractKey(contractKey)
 			, BatchId(batchId)
+			, UpdateStorageState(updateStorageState)
 			, StorageHash(storageHash)
+			, UsedSizeBytes(usedSizeBytes)
+			, MetaFilesSizeBytes(metaFilesSizeBytes)
 			, VerificationInformation(verificationInformation)
 			, Cosigners(cosigners)
 		{}
@@ -176,7 +182,10 @@ namespace catapult::model {
 	public:
 		Key ContractKey;
 		uint64_t BatchId;
+		bool UpdateStorageState;
 		Hash256 StorageHash;
+		uint64_t UsedSizeBytes;
+		uint64_t MetaFilesSizeBytes;
 		crypto::CurvePoint VerificationInformation;
 		std::set<Key> Cosigners;
 	};

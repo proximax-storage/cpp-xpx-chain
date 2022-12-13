@@ -35,6 +35,7 @@
 #include "catapult/observers/DemuxObserverBuilder.h"
 #include "catapult/observers/ObserverTypes.h"
 #include "catapult/state/StorageState.h"
+#include "catapult/observers/StorageExternalManagementObserver.h"
 #include "catapult/state/DriveStateBrowser.h"
 #include "catapult/utils/DiagnosticCounter.h"
 #include "catapult/validators/DemuxValidatorBuilder.h"
@@ -303,6 +304,14 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
+		// region storage external management observer
+
+		const std::unique_ptr<observers::StorageExternalManagementObserver>& storageExternalManagement() const;
+		void setStorageExternalManagement(
+				std::unique_ptr<observers::StorageExternalManagementObserver>&& storageExternalManagement);
+
+		// endregion
+
 	private:
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		StorageConfiguration m_storageConfig;
@@ -336,6 +345,8 @@ namespace catapult { namespace plugins {
 		std::unique_ptr<state::DriveStateBrowser> m_pStorageStateBrowser;
 
 		std::vector<std::unique_ptr<observers::StorageUpdatesListener>> m_storageUpdatesListeners;
+
+		std::unique_ptr<observers::StorageExternalManagementObserver> m_storageExternalManagement;
 	};
 }}
 

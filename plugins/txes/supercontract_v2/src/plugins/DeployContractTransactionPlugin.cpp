@@ -39,7 +39,7 @@ namespace catapult { namespace plugins {
 					auto contractExecutionPaymentKey = Key(paymentHash.array());
 					sub.notify(AccountPublicKeyNotification<1>(contractExecutionPaymentKey));
 
-					sub.notify(OwnerManagementProhibition<1>(
+					sub.notify(OwnerManagementProhibitionNotification<1>(
 							transaction.Signer,
 							transaction.DriveKey
 					));

@@ -16,7 +16,11 @@ namespace catapult::model {
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Opinion_Signature_v1, 0x0004);
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Proof_Of_Execution_v1, 0x0006);
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Batch_Calls_Notification_v1, 0x0007);
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, End_Batch_Execution_Notification_v1, 0x0007);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, End_Batch_Execution_v1, 0x0007);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Contract_State_Update_v1, 0x0007);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Contract_Destroy_v1, 0x0007);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Storage_Update_v1, 0x0007);
+
 
 	struct Opinion {
 		Key PublicKey;
@@ -104,16 +108,54 @@ namespace catapult::model {
 	template<>
 	struct EndBatchExecutionNotification<1> : public Notification {
 	public:
-		static constexpr auto Notification_Type = SuperContract_v2_End_Batch_Execution_Notification_v1_Notification;
+		static constexpr auto Notification_Type = SuperContract_v2_End_Batch_Execution_v1_Notification;
 
 	public:
 		explicit EndBatchExecutionNotification(const Key& contractKey,
-											   uint64_t batchId)
+											   uint64_t batchId,
+											   std::vector<Key> cosigners)
 										: Notification(Notification_Type, sizeof(EndBatchExecutionNotification<1>))
-										, ContractKey(contractKey) {}
+										, ContractKey(contractKey)
+										, BatchId(batchId)
+										, Cosigners(cosigners) {}
 
 	public:
 		Key ContractKey;
 		uint64_t BatchId;
+		std::vector<Key> Cosigners;
+	};
+
+	template<VersionType version>
+	struct ContractStateUpdateNotification;
+
+	template<>
+	struct ContractStateUpdateNotification<1> : public Notification {
+	public:
+		static constexpr auto Notification_Type = SuperContract_v2_Contract_State_Update_v1_Notification;
+
+	public:
+		explicit ContractStateUpdateNotification(const Key& contractKey)
+											   : Notification(Notification_Type, sizeof(ContractStateUpdateNotification<1>))
+											   , ContractKey(contractKey) {}
+
+	public:
+		Key ContractKey;
+	};
+
+	template<VersionType version>
+	struct ContractDestroyNotification;
+
+	template<>
+	struct ContractDestroyNotification<1> : public Notification {
+	public:
+		static constexpr auto Notification_Type = SuperContract_v2_Contract_Destroy_v1_Notification;
+
+	public:
+		explicit ContractDestroyNotification(const Key& contractKey)
+		: Notification(Notification_Type, sizeof(ContractDestroyNotification<1>))
+		, ContractKey(contractKey) {}
+
+	public:
+		Key ContractKey;
 	};
 }
