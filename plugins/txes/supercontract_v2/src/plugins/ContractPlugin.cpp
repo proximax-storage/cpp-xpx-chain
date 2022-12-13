@@ -8,6 +8,11 @@
 #include "src/cache/SuperContractCacheStorage.h"
 #include "src/cache/DriveContractCacheStorage.h"
 #include "src/plugins/DeployContractTransactionPlugin.h"
+#include "src/plugins/AutomaticExecutionsPaymentTransactionPlugin.h"
+#include "src/plugins/ManualCallTransactionPlugin.h"
+#include "src/plugins/SuccessfulEndBatchExecutionTransactionPlugin.h"
+#include "src/plugins/UnsuccessfulEndBatchExecutionTransactionPlugin.h"
+#include "src/plugins/EndBatchExecutionSingleTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -37,6 +42,11 @@ namespace catapult { namespace plugins {
 		const auto& pConfigHolder = manager.configHolder();
 		const auto& immutableConfig = manager.immutableConfig();
 		manager.addTransactionSupport(CreateDeployContractTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateAutomaticExecutionsPaymentTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateManualCallTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateSuccessfulEndBatchExecutionTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateUnsuccessfulEndBatchExecutionTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateEndBatchExecutionSingleTransactionPlugin(immutableConfig));
 
 		auto& pBrowser = manager.driveStateBrowser();
 
@@ -122,16 +132,33 @@ namespace catapult { namespace plugins {
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 		  	builder
+		  		.add(validators::CreateManualCallValidator())
+		  		.add(validators::CreateAutomaticExecutionsReplenishementValidator())
 				.add(validators::CreateDeployContractValidator())
-				.add(validators::CreateAutomaticExecutionsReplenishementValidator())
-				.add(validators::CreateManualCallValidator());
+				.add(validators::CreateEndBatchExecutionValidator())
+				.add(validators::CreateBatchCallsValidator())
+				.add(validators::CreateContractStateUpdateValidator())
+				.add(validators::CreateOpinionSignatureValidator())
+				.add(validators::CreateProofOfExecutionValidator())
+				.add(validators::CreateEndBatchExecutionSingleValidator());
 		});
 
-		manager.addObserverHook([&liquidityProviderObserver](auto& builder) {
+		const auto& storageExternalManagement = manager.storageExternalManagement();
+		const auto& driveStateBrowser = manager.driveStateBrowser();
+
+		manager.addObserverHook([&](auto& builder) {
 			builder
 				.add(observers::CreateDeployContractObserver())
 				.add(observers::CreateAutomaticExecutionsReplenishmentObserver())
-				.add(observers::CreateManualCallObserver());
+				.add(observers::CreateManualCallObserver())
+				.add(observers::CreateProofOfExecutionObserver(
+							liquidityProviderObserver, storageExternalManagement))
+				.add(observers::CreateBatchCallsObserver(liquidityProviderObserver, driveStateBrowser))
+				.add(observers::CreateContractStateUpdateObserver(driveStateBrowser))
+				.add(observers::CreateContractDestroyObserver(storageExternalManagement))
+				.add(observers::CreateEndBatchObserver(driveStateBrowser))
+				.add(observers::CreateSuccesfulEndBatchObserver(storageExternalManagement))
+				.add(observers::CreateUnsuccesfulEndBatchObserver());
 		});
 	}
 }}

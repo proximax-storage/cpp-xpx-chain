@@ -48,6 +48,10 @@ namespace catapult { namespace validators {
 
 	DEFINE_CONTRACT_RESULT(Invalid_Signature, 17);
 
+	DEFINE_CONTRACT_RESULT(Is_Not_Executor, 18);
+
+	DEFINE_CONTRACT_RESULT(Batch_Already_Proven, 18);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

@@ -22,6 +22,7 @@ namespace catapult { namespace model {
 
 	DEFINE_TRANSACTION_TYPE(SuperContract_v2, UnsuccessfulEndBatchExecutionTransaction, 0x5);
 
+	DEFINE_TRANSACTION_TYPE(SuperContract_v2, EndBatchExecutionSingleTransaction, 0x6);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

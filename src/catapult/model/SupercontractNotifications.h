@@ -20,6 +20,8 @@ namespace catapult::model {
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Automatic_Executions_Replenishment_v1, 0x0003);
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Successful_Batch_Execution_v1, 0x0005);
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Unsuccessful_Batch_Execution_v1, 0x0006);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Batch_Execution_Single_v1, 0x0007);
+
 
 	template<VersionType version>
 	struct DeploySupercontractNotification;
@@ -213,5 +215,27 @@ namespace catapult::model {
 		Key ContractKey;
 		uint64_t BatchId;
 		std::set<Key> Cosigners;
+	};
+
+	template<VersionType version>
+	struct BatchExecutionSingleNotification;
+
+	template<>
+	struct BatchExecutionSingleNotification<1> : public Notification {
+	public:
+		static constexpr auto Notification_Type = SuperContract_v2_Unsuccessful_Batch_Execution_v1_Notification;
+
+	public:
+		explicit BatchExecutionSingleNotification(
+				const Key& contractKey,
+				uint64_t batchId)
+				: Notification(Notification_Type, sizeof(BatchExecutionSingleNotification<1>))
+				, ContractKey(contractKey)
+				, BatchId(batchId)
+				{}
+
+	public:
+		Key ContractKey;
+		uint64_t BatchId;
 	};
 }

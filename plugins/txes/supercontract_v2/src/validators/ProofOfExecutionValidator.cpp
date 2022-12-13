@@ -24,7 +24,11 @@ namespace catapult { namespace validators {
 			auto executorIt = executorsInfo.find(publicKey);
 
 			if (executorIt == executorsInfo.end()) {
+				return Failure_SuperContract_Is_Not_Executor;
+			}
 
+			if (executorIt->second.NextBatchToApprove == contractEntry.nextBatchId()) {
+				return Failure_SuperContract_Batch_Already_Proven;
 			}
 
 			Hash512 dHash;
