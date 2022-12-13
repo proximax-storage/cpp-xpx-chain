@@ -18,25 +18,17 @@ namespace catapult::model {
 
 	/// Binary layout for a deploy transaction body.
 	template<typename THeader>
-	struct SuccessfulEndBatchExecutionTransactionBody : public THeader {
+	struct UnsuccessfulEndBatchExecutionTransactionBody : public THeader {
 	private:
-		using TransactionType = SuccessfulEndBatchExecutionTransactionBody<THeader>;
+		using TransactionType = UnsuccessfulEndBatchExecutionTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_SuccessfulEndBatchExecutionTransaction, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_UnsuccessfulEndBatchExecutionTransaction, 1)
 
 		/// Contract public key
 		Key ContractKey;
 
 		uint64_t BatchId;
-
-		Hash256 StorageHash;
-
-		uint64_t UsedSizeBytes;
-
-		uint64_t MetaFilesSizeBytes;
-
-		std::array<uint8_t, 32> ProofOfExecutionVerificationInformation;
 
 		uint16_t CosignersNumber;
 
@@ -48,7 +40,7 @@ namespace catapult::model {
 
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(ProofsOfExecution, RawProofOfExecution)
 
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(CallDigests, ExtendedCallDigest)
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(CallDigests, ShortCallDigest)
 
 		// Matrix of call payments. Rows - executors, columns - calls
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(CallPayments, CallPayment)
@@ -99,7 +91,7 @@ namespace catapult::model {
 									 + transaction.CosignersNumber * sizeof(Key)
 									 + transaction.CosignersNumber * sizeof(Signature)
 									 + transaction.CosignersNumber * sizeof(RawProofOfExecution)
-						   			 + transaction.CallsNumber * sizeof(ExtendedCallDigest)
+						   			 + transaction.CallsNumber * sizeof(ShortCallDigest)
 						   : nullptr;
 		}
 
@@ -110,12 +102,12 @@ namespace catapult::model {
 				   transaction.CosignersNumber * sizeof(Key) +
 				   transaction.CosignersNumber * sizeof(Signature) +
 				   transaction.CosignersNumber * sizeof(RawProofOfExecution) +
-				   transaction.CallsNumber * sizeof(ExtendedCallDigest) +
+				   transaction.CallsNumber * sizeof(ShortCallDigest) +
 				   static_cast<uint64_t>(transaction.CosignersNumber) * static_cast<uint64_t>(transaction.CallsNumber) * sizeof(CallPayment);
 		}
 	};
 
-	DEFINE_EMBEDDABLE_TRANSACTION(SuccessfulEndBatchExecution)
+	DEFINE_EMBEDDABLE_TRANSACTION(UnsuccessfulEndBatchExecution)
 
 #pragma pack(pop)
 }

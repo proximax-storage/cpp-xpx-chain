@@ -8,11 +8,16 @@
 
 namespace catapult::model {
 
-	struct CallDigest {
+	struct ExtendedCallDigest {
 		Hash256 CallId;
 		bool Manual;
-		uint16_t Status;
+		int16_t Status;
 		Hash256 ReleasedTransactionHash;
+	};
+
+	struct ShortCallDigest {
+		Hash256 CallId;
+		bool Manual;
 	};
 
 	struct CallPaymentOpinion {

@@ -33,6 +33,8 @@ namespace catapult { namespace plugins {
 					pushBytes(commonData, transaction.ContractKey);
 					pushBytes(commonData, transaction.BatchId);
 					pushBytes(commonData, transaction.StorageHash);
+					pushBytes(commonData, transaction.UsedSizeBytes);
+					pushBytes(commonData, transaction.MetaFilesSizeBytes);
 					pushBytes(commonData, transaction.ProofOfExecutionVerificationInformation);
 					for (uint j = 0; j < transaction.CallsNumber; j++) {
 						pushBytes(commonData, transaction.CallDigestsPtr()[j]);
@@ -65,7 +67,7 @@ namespace catapult { namespace plugins {
 						cosigners.insert(transaction.PublicKeysPtr()[i]);
 					}
 
-					std::vector<CallDigest> callDigests;
+					std::vector<ExtendedCallDigest> callDigests;
 					callDigests.reserve(transaction.CallsNumber);
 					for (uint j = 0; j < transaction.CallsNumber; j++) {
 						callDigests.push_back(transaction.CallDigestsPtr()[j]);
@@ -86,7 +88,7 @@ namespace catapult { namespace plugins {
 							!contractShouldBeDestroyed,
 							transaction.StorageHash,
 							transaction.UsedSizeBytes,
-							transaction.MetaFilesSizeBytes.
+							transaction.MetaFilesSizeBytes,
 							poExVerificationInformation,
 							cosigners));
 

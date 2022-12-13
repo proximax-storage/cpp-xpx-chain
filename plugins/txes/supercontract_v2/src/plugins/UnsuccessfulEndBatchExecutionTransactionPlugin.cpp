@@ -5,9 +5,9 @@
 **/
 
 #include <catapult/crypto/Hashes.h>
-#include "SuccessfulEndBatchExecutionTransactionPlugin.h"
+#include "UnsuccessfulEndBatchExecutionTransactionPlugin.h"
 #include "catapult/model/SupercontractNotifications.h"
-#include "src/model/SuccessfulEndBatchExecutionTransaction.h"
+#include "src/model/UnsuccessfulEndBatchExecutionTransaction.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "src/model/InternalSuperContractNotifications.h"
@@ -32,8 +32,6 @@ namespace catapult { namespace plugins {
 					std::vector<uint8_t> commonData;
 					pushBytes(commonData, transaction.ContractKey);
 					pushBytes(commonData, transaction.BatchId);
-					pushBytes(commonData, transaction.StorageHash);
-					pushBytes(commonData, transaction.ProofOfExecutionVerificationInformation);
 					for (uint j = 0; j < transaction.CallsNumber; j++) {
 						pushBytes(commonData, transaction.CallDigestsPtr()[j]);
 					}
@@ -65,29 +63,25 @@ namespace catapult { namespace plugins {
 						cosigners.insert(transaction.PublicKeysPtr()[i]);
 					}
 
-					std::vector<CallDigest> callDigests;
+					std::vector<ExtendedCallDigest> callDigests;
 					callDigests.reserve(transaction.CallsNumber);
 					for (uint j = 0; j < transaction.CallsNumber; j++) {
-						callDigests.push_back(transaction.CallDigestsPtr()[j]);
+						ExtendedCallDigest extendedDigest;
+						const auto& shortDigest = transaction.CallDigestsPtr()[j];
+						extendedDigest.CallId = shortDigest.CallId;
+						extendedDigest.Manual = shortDigest.Manual;
+						extendedDigest.Status = -1;
+						callDigests.push_back(extendedDigest);
 					}
 
 					bool contractShouldBeDestroyed = false;
 					if (transaction.BatchId == 0) {
-						if (!callDigests.empty() && callDigests.front().Status != 0) {
-							contractShouldBeDestroyed = true;
-						}
+						contractShouldBeDestroyed = true;
 					}
 
-					crypto::CurvePoint poExVerificationInformation;
-					poExVerificationInformation.fromBytes(transaction.ProofOfExecutionVerificationInformation);
-					sub.notify(model::SuccessfulBatchExecutionNotification<1>(
+					sub.notify(model::UnsuccessfulBatchExecutionNotification<1>(
 							transaction.ContractKey,
 							transaction.BatchId,
-							!contractShouldBeDestroyed,
-							transaction.StorageHash,
-							transaction.UsedSizeBytes,
-							transaction.MetaFilesSizeBytes.
-							poExVerificationInformation,
 							cosigners));
 
 					std::map<Key, ProofOfExecution> proofs;
@@ -129,11 +123,11 @@ namespace catapult { namespace plugins {
 				}
 
 				default:
-					CATAPULT_LOG(debug) << "invalid version of SuccessfulEndBatchExecutionTransaction: " << transaction.EntityVersion();
+					CATAPULT_LOG(debug) << "invalid version of UnsuccessfulEndBatchExecutionTransaction: " << transaction.EntityVersion();
 				}
 			};
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(SuccessfulEndBatchExecution, Default, CreatePublisher, config::ImmutableConfiguration)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(UnsuccessfulEndBatchExecution, Default, CreatePublisher, config::ImmutableConfiguration)
 }}

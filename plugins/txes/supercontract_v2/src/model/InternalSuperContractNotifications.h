@@ -89,7 +89,7 @@ namespace catapult::model {
 
 	public:
 		explicit BatchCallsNotification(const Key& contractKey,
-										const std::vector<CallDigest>& digests,
+										const std::vector<ExtendedCallDigest>& digests,
 										const std::vector<CallPaymentOpinion>& paymentOpinions)
 				: Notification(Notification_Type, sizeof(BatchCallsNotification<1>))
 				, ContractKey(contractKey)
@@ -98,7 +98,7 @@ namespace catapult::model {
 
 	public:
 		Key ContractKey;
-		std::vector<CallDigest> Digests;
+		std::vector<ExtendedCallDigest> Digests;
 		std::vector<CallPaymentOpinion> PaymentOpinions;
 	};
 

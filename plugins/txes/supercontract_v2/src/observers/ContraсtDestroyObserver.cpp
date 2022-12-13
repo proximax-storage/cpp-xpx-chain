@@ -5,11 +5,8 @@
 **/
 
 #include <random>
-#include <map>
 #include "Observers.h"
-#include "src/utils/MathUtils.h"
 #include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
-#include "src/catapult/state/DriveStateBrowser.h"
 #include "src/catapult/cache/ReadOnlyCatapultCache.h"
 
 namespace catapult::observers {

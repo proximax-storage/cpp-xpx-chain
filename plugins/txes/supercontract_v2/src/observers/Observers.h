@@ -13,6 +13,7 @@
 #include <catapult/observers/LiquidityProviderExchangeObserver.h>
 #include <catapult/observers/StorageExternalManagementObserver.h>
 #include <queue>
+#include <catapult/state/DriveStateBrowser.h>
 
 namespace catapult::observers {
 
@@ -22,8 +23,25 @@ namespace catapult::observers {
 
 	DECLARE_OBSERVER(ManualCall, model::ManualCallNotification<1>)();
 
-	DECLARE_OBSERVER(SuccessfulBatchExecution, model::SuccessfulBatchExecutionNotification<1>)();
+	DECLARE_OBSERVER(ProofOfExecution, model::ProofOfExecutionNotification<1>)(
+			const std::unique_ptr<LiquidityProviderExchangeObserver>&,
+			const std::unique_ptr<StorageExternalManagementObserver>&);
 
-	DECLARE_OBSERVER(ProofOfExecution, model::ProofOfExecutionNotification<1>)();
+	DECLARE_OBSERVER(BatchCalls, model::BatchCallsNotification<1>)(
+			const std::unique_ptr<LiquidityProviderExchangeObserver>&,
+			const std::unique_ptr<state::DriveStateBrowser>&);
 
+	DECLARE_OBSERVER(ContractStateUpdate, model::ContractStateUpdateNotification<1>)(
+			const std::unique_ptr<state::DriveStateBrowser>&);
+
+	DECLARE_OBSERVER(ContractDestroy, model::ContractDestroyNotification<1>)(
+			const std::unique_ptr<observers::StorageExternalManagementObserver>&);
+
+	DECLARE_OBSERVER(EndBatch, model::EndBatchExecutionNotification<1>)(
+			const std::unique_ptr<state::DriveStateBrowser>&);
+
+	DECLARE_OBSERVER(SuccesfulEndBatch, model::SuccessfulBatchExecutionNotification<1>)(
+			const std::unique_ptr<StorageExternalManagementObserver>&);
+
+	DECLARE_OBSERVER(UnsuccesfulEndBatch, model::UnsuccessfulBatchExecutionNotification<1>)();
 }
