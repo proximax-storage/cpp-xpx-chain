@@ -145,11 +145,11 @@ class SuperContractMixin {
 			return m_batches;
 		}
 
-		std::set<Hash256>& releasedTransactions() {
+		std::multiset<Hash256>& releasedTransactions() {
 			return m_releasedTransactions;
 		}
 
-		const std::set<Hash256>& releasedTransactions() const {
+		const std::multiset<Hash256>& releasedTransactions() const {
 			return m_releasedTransactions;
 		}
 
@@ -161,7 +161,7 @@ class SuperContractMixin {
 		std::deque<ContractCall> m_requestedCalls;
 		std::map<Key, ExecutorInfo> m_executorsInfo;
 		std::vector<Batch> m_batches;
-		std::set<Hash256> m_releasedTransactions;
+		std::multiset<Hash256> m_releasedTransactions;
 };
 
 // Supercontract entry.

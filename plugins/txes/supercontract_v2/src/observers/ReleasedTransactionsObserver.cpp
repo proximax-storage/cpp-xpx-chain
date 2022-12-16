@@ -20,7 +20,8 @@ namespace catapult::observers {
 		auto contractIt = contractCache.find(contractKey);
 		auto& contractEntry = contractIt.get();
 
-		contractEntry.releasedTransactions().erase(notification.PayloadHash);
+		auto& releasedTransactions = contractEntry.releasedTransactions();
+		auto it = releasedTransactions.find(notification.PayloadHash);
+		releasedTransactions.erase(it);
 	})
-
 }
