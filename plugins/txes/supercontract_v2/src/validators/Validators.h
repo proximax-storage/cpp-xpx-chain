@@ -35,4 +35,6 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(ProofOfExecution, model::ProofOfExecutionNotification<1>)();
 
 	DECLARE_STATEFUL_VALIDATOR(EndBatchExecutionSingle, model::BatchExecutionSingleNotification<1>)();
+
+	DECLARE_STATEFUL_VALIDATOR(SynchronizationSingle, model::SynchronizationSingleNotification<1>)();
 }}

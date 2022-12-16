@@ -5,10 +5,12 @@
 **/
 
 #include <catapult/crypto/Hashes.h>
-#include "src/model/EndBatchExecutionSingleTransaction.h"
+#include "SynchronizationSingleTransactionPlugin.h"
+#include "src/model/SynchronizationSingleTransaction.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "src/model/InternalSuperContractNotifications.h"
+#include "catapult/model/SupercontractNotifications.h"
 
 using namespace catapult::model;
 
@@ -28,28 +30,18 @@ namespace catapult { namespace plugins {
 				switch (transaction.EntityVersion()) {
 				case 1: {
 					sub.notify(model::ContractStateUpdateNotification<1>(transaction.ContractKey));
-
-					std::map<Key, ProofOfExecution> proofs;
-					const auto& rawProof = transaction.ProofOfExecution;
-					model::ProofOfExecution proof;
-					proof.StartBatchId = rawProof.StartBatchId;
-
-					proof.T.fromBytes(rawProof.T);
-					proof.R = crypto::Scalar(rawProof.R);
-					proof.F.fromBytes(rawProof.F);
-					proof.K = crypto::Scalar(rawProof.K);
-					proofs[transaction.Signer] = proof;
-					sub.notify(model::ProofOfExecutionNotification<1>(transaction.ContractKey, proofs));
+					sub.notify(model::SynchronizationSingleNotification<1>(
+							transaction.ContractKey, transaction.BatchId, transaction.Signer));
 
 					break;
 				}
 
 				default:
-					CATAPULT_LOG(debug) << "invalid version of EndBatchExecutionSingleTransaction: " << transaction.EntityVersion();
+					CATAPULT_LOG(debug) << "invalid version of SynchronizationSingleTransaction: " << transaction.EntityVersion();
 				}
 			};
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(EndBatchExecutionSingle, Default, CreatePublisher, config::ImmutableConfiguration)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(SynchronizationSingle, Default, CreatePublisher, config::ImmutableConfiguration)
 }}

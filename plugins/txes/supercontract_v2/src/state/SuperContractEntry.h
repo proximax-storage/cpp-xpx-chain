@@ -35,7 +35,7 @@ struct CompletedCall {
 	// Zero means that it's an automatic execution
 	Key Caller;
 	// Zero Status Means Success
-	uint16_t Status = 0;
+	int16_t Status = 0;
 	Amount ExecutionWork;
 	Amount DownloadWork;
 };

@@ -140,7 +140,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateContractStateUpdateValidator())
 				.add(validators::CreateOpinionSignatureValidator())
 				.add(validators::CreateProofOfExecutionValidator())
-				.add(validators::CreateEndBatchExecutionSingleValidator());
+				.add(validators::CreateEndBatchExecutionSingleValidator())
+				.add(validators::CreateSynchronizationSingleValidator());
 		});
 
 		const auto& storageExternalManagement = manager.storageExternalManagement();
@@ -158,7 +159,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateContractDestroyObserver(storageExternalManagement))
 				.add(observers::CreateEndBatchObserver(driveStateBrowser))
 				.add(observers::CreateSuccesfulEndBatchObserver(storageExternalManagement))
-				.add(observers::CreateUnsuccesfulEndBatchObserver());
+				.add(observers::CreateUnsuccesfulEndBatchObserver())
+				.add(observers::CreateSynchronizationSingleObserver(storageExternalManagement));
 		});
 	}
 }}

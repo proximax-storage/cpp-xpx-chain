@@ -44,4 +44,7 @@ namespace catapult::observers {
 			const std::unique_ptr<StorageExternalManagementObserver>&);
 
 	DECLARE_OBSERVER(UnsuccesfulEndBatch, model::UnsuccessfulBatchExecutionNotification<1>)();
+
+	DECLARE_OBSERVER(SynchronizationSingle, model::SynchronizationSingleNotification<1>)(
+			const std::unique_ptr<StorageExternalManagementObserver>&);
 }
