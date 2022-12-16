@@ -46,7 +46,8 @@ namespace catapult { namespace plugins {
 			builder
 				.add(validators::CreateBasicAggregateCosignaturesValidator())
 				.add(validators::CreateStrictAggregateCosignaturesValidator())
-				.add(validators::CreateAggregateTransactionTypeValidator());
+				.add(validators::CreateAggregateTransactionTypeValidator())
+				.add(validators::CreateStrictAggregateTransactionTypeValidator());
 		});
 	}
 }}

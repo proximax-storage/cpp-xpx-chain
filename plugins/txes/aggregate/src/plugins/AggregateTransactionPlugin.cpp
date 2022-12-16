@@ -18,10 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <catapult/crypto/Hashes.h>
 #include "AggregateTransactionPlugin.h"
 #include "src/config/AggregateConfiguration.h"
 #include "src/model/AggregateNotifications.h"
 #include "src/model/AggregateTransaction.h"
+#include "catapult/model/SupercontractNotifications.h"
 #include "catapult/model/TransactionPlugin.h"
 #include "AggregateCommon.h"
 
@@ -70,6 +72,48 @@ namespace catapult { namespace plugins {
 				auto numCosignatures = aggregate.CosignaturesCount();
 
 				switch (aggregate.EntityVersion()) {
+				case 4: {
+
+					sub.notify(AggregateTransactionTypeNotification<2>(m_transactionType));
+
+					std::set<Key> signers;
+					for (const auto& subTransaction : aggregate.Transactions()) {
+						signers.insert(subTransaction.Signer);
+					}
+
+					Hash256 payloadHash;
+					crypto::Sha3_256_Builder hasher;
+					hasher.update(utils::RawBuffer{reinterpret_cast<const uint8_t*>(aggregate.TransactionsPtr()),
+													 GetTransactionPayloadSize(aggregate)});
+					hasher.final(payloadHash);
+
+					sub.notify(ReleasedTransactionsNotification<1>(signers, payloadHash));
+
+					// publish all sub-transaction information
+					for (const auto& subTransaction : aggregate.Transactions()) {
+						// - change source
+						constexpr auto Relative = SourceChangeNotification<1>::SourceChangeType::Relative;
+						sub.notify(SourceChangeNotification<1>(Relative, 0, Relative, 1));
+
+						const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
+
+						sub.notify(EntityNotification<1>(
+								subTransaction.Network(),
+								subTransaction.Type,
+								subTransaction.EntityVersion()));
+
+						// - specific sub-transaction notifications
+						//   (calculateRealSize would have failed if plugin is unknown or not embeddable)
+						WeakEntityInfoT<EmbeddedTransaction> subTransactionInfo{
+							ConvertEmbeddedTransaction(subTransaction, aggregate.Deadline, sub.mempool()),
+							transactionInfo.associatedHeight()
+						};
+						plugin.publish(subTransactionInfo, sub);
+					}
+
+					break;
+				}
+
 				case 3: {
 					sub.notify(AggregateTransactionHashNotification<1>(
 						transactionInfo.hash(),

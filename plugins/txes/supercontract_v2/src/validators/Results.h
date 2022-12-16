@@ -50,7 +50,11 @@ namespace catapult { namespace validators {
 
 	DEFINE_CONTRACT_RESULT(Is_Not_Executor, 18);
 
-	DEFINE_CONTRACT_RESULT(Batch_Already_Proven, 18);
+	DEFINE_CONTRACT_RESULT(Batch_Already_Proven, 19);
+
+	DEFINE_CONTRACT_RESULT(Invalid_Released_Transactions_Hash, 20);
+
+	DEFINE_CONTRACT_RESULT(Invalid_Number_Of_Subtransactions_Cosigners, 21);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

@@ -55,7 +55,7 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
-				return { "BasicAggregateCosignaturesValidator", "StrictAggregateCosignaturesValidator", "AggregateTransactionTypeValidator" };
+				return { "BasicAggregateCosignaturesValidator", "StrictAggregateCosignaturesValidator", "AggregateTransactionTypeValidator", "StrictAggregateTransactionTypeValidator" };
 			}
 
 			static std::vector<model::EntityType> GetTransactionTypes() {

@@ -46,6 +46,9 @@ namespace catapult::observers {
 				else {
 					call.Caller = Key();
 				}
+				if (digest.Status == 0 && digest.ReleasedTransactionHash != Hash256()) {
+					contractEntry.releasedTransactions().insert(digest.ReleasedTransactionHash);
+				}
 				batch.CompletedCalls.push_back(call);
 			}
 

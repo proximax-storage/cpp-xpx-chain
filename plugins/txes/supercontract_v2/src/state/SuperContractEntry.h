@@ -6,6 +6,7 @@
 
 #pragma once
 #include <map>
+#include <set>
 #include <optional>
 #include <queue>
 #include <catapult/types.h>
@@ -144,6 +145,14 @@ class SuperContractMixin {
 			return m_batches;
 		}
 
+		std::set<Hash256>& releasedTransactions() {
+			return m_releasedTransactions;
+		}
+
+		const std::set<Hash256>& releasedTransactions() const {
+			return m_releasedTransactions;
+		}
+
 	private:
 		Key m_driveKey;
 		Key m_executionPaymentKey;
@@ -152,6 +161,7 @@ class SuperContractMixin {
 		std::deque<ContractCall> m_requestedCalls;
 		std::map<Key, ExecutorInfo> m_executorsInfo;
 		std::vector<Batch> m_batches;
+		std::set<Hash256> m_releasedTransactions;
 };
 
 // Supercontract entry.
