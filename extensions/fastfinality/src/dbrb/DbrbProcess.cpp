@@ -9,6 +9,7 @@
 #include "Messages.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/ionet/PacketPayload.h"
+#include "catapult/thread/IoThreadPool.h"
 #include "catapult/thread/Future.h"
 #include <utility>
 
@@ -19,10 +20,12 @@ namespace catapult { namespace dbrb {
 		std::shared_ptr<net::PacketWriters> pWriters,
 		const std::vector<ionet::Node>& bootstrapNodes,
 		ionet::Node thisNode,
-		const crypto::KeyPair& keyPair)
+		const crypto::KeyPair& keyPair,
+		std::shared_ptr<thread::IoThreadPool> pPool)
 			: m_id(std::move(thisNode))
 			, m_keyPair(keyPair)
-			, m_messageSender(std::move(pWriters)) {
+			, m_messageSender(std::move(pWriters))
+			, m_pPool(pPool) {
 		m_currentView.Data.emplace(m_id, MembershipChanges::Join);
 		for (const auto& node : bootstrapNodes)
 			m_currentView.Data.emplace(node, MembershipChanges::Join);
@@ -102,8 +105,8 @@ namespace catapult { namespace dbrb {
 
 		// Disseminate a Reconfig message for every currently installed view...
 		for (const auto& view : m_installedViews) {
-			ReconfigMessage message(m_id, m_id, MembershipChanges::Leave, view);
-			disseminate(message.toNetworkPacket(&m_keyPair), view.members());
+			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChanges::Leave, view);
+			disseminate(pMessage, view.members());
 		}
 
 		// ...and keep disseminating new Reconfig messages whenever a new view is installed.
@@ -120,8 +123,8 @@ namespace catapult { namespace dbrb {
 					// TODO: Can notify user about the reason why broadcast failed
 		}
 
-		PrepareMessage message(m_id, payload, m_currentView);
-		disseminate(message.toNetworkPacket(&m_keyPair), message.View.members());
+		auto pMessage = std::make_shared<PrepareMessage>(m_id, payload, m_currentView);
+		disseminate(pMessage, pMessage->View.members());
 	}
 
 	void DbrbProcess::processMessage(const Message& message) {
@@ -183,14 +186,35 @@ namespace catapult { namespace dbrb {
 		}			
 	}
 
-	// Basic private methods:
-
-	void DbrbProcess::disseminate(const std::shared_ptr<MessagePacket>& pPacket, const std::set<ProcessId>& recipients) {
-		m_messageSender.enqueue(pPacket, recipients);
+	void DbrbProcess::clearBroadcastData() {
+		m_broadcastData.clear();
+		m_messageSender.clearQueue();
 	}
 
-	void DbrbProcess::send(const std::shared_ptr<MessagePacket>& pPacket, const ProcessId& recipient) {
-		m_messageSender.enqueue(pPacket, { recipient });
+	// Basic private methods:
+
+	void DbrbProcess::disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients) {
+		for (auto iter = recipients.begin(); iter != recipients.end(); ++iter) {
+			if (m_id == *iter) {
+				boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), pMessage]() {
+					pThis->processMessage(*pMessage);
+				});
+				recipients.erase(iter);
+				break;
+			}
+		}
+
+		m_messageSender.enqueue(pMessage->toNetworkPacket(&m_keyPair), recipients);
+	}
+
+	void DbrbProcess::send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient) {
+		if (m_id == recipient) {
+			boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), pMessage]() {
+				pThis->processMessage(*pMessage);
+			});
+		} else {
+			m_messageSender.enqueue(pMessage->toNetworkPacket(&m_keyPair), { recipient });
+		}
 	}
 
 	void DbrbProcess::prepareForStateUpdates(const InstallMessage& message) {
@@ -278,11 +302,13 @@ namespace catapult { namespace dbrb {
 	bool DbrbProcess::isAcknowledgeable(const PrepareMessage& message) {
 		// If m_acknowledgeAllowed == false, no payload is allowed to be acknowledged.
 		if (!m_acknowledgeAllowed) {
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Not acknowledged (no payload is allowed).";
 			return false;
 		}
 
 		// If m_acknowledgeAllowed == true and AcknowledgeablePayload is unset, any payload can be acknowledged.
 		if (!m_broadcastData[message.Sender].AcknowledgeablePayload.has_value()) {
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Acknowledged (any payload is allowed).";
 			return true;
 		}
 
@@ -355,8 +381,8 @@ namespace catapult { namespace dbrb {
 		}
 
 		m_pendingChanges.Data.emplace(message.ProcessId, message.MembershipChange);
-		ReconfigConfirmMessage responseMessage(m_id, message.View);
-		send(responseMessage.toNetworkPacket(&m_keyPair), message.Sender);
+		auto pMessage = std::make_shared<ReconfigConfirmMessage>(m_id, message.View);
+		send(pMessage, message.Sender);
 	}
 
 	void DbrbProcess::onReconfigConfirmMessageReceived(const ReconfigConfirmMessage& message) {
@@ -410,8 +436,9 @@ namespace catapult { namespace dbrb {
 			currentSequence.tryAppend(message.ProposedSequence);	// Will always succeed.
 		}
 
-		ProposeMessage responseMessage(m_id, currentSequence, message.ReplacedView);
-		disseminate(responseMessage.toNetworkPacket(&m_keyPair), message.ReplacedView.members());
+		CATAPULT_LOG(debug) << "[DBRB] PROPOSE: Disseminating Propose message.";
+		auto pMessage = std::make_shared<ProposeMessage>(m_id, currentSequence, message.ReplacedView);
+		disseminate(pMessage, message.ReplacedView.members());
 
 		// Updating quorum counter for received Propose message.
 		bool quorumCollected = m_quorumManager.update(message);
@@ -424,8 +451,8 @@ namespace catapult { namespace dbrb {
 		m_lastConvergedSequences[message.ReplacedView] = message.ProposedSequence;
 
 		CATAPULT_LOG(debug) << "[DBRB] PROPOSE: Disseminating Converged message.";
-		ConvergedMessage responseMessage(m_id, message.ProposedSequence, message.ReplacedView);
-		disseminate(responseMessage.toNetworkPacket(&m_keyPair), message.ReplacedView.members());
+		auto pMessage = std::make_shared<ConvergedMessage>(m_id, message.ProposedSequence, message.ReplacedView);
+		disseminate(pMessage, message.ReplacedView.members());
 	}
 
 	void DbrbProcess::onConvergedMessageReceived(const ConvergedMessage& message) {
@@ -437,7 +464,7 @@ namespace catapult { namespace dbrb {
 	void DbrbProcess::onConvergedQuorumCollected(const ConvergedMessage& message) {
 		CATAPULT_LOG(debug) << "[DBRB] CONVERGED: Quorum collected in view " << message.ReplacedView << ".";
 		const auto& leastRecentView = message.ConvergedSequence.maybeLeastRecent().value_or(View{});
-		InstallMessage responseMessage(m_id, leastRecentView, message.ConvergedSequence, message.ReplacedView);
+		auto pMessage = std::make_shared<InstallMessage>(m_id, leastRecentView, message.ConvergedSequence, message.ReplacedView);
 
 		std::set<ProcessId> replacedViewMembers = message.ReplacedView.members();
 		std::set<ProcessId> leastRecentViewMembers = leastRecentView.members();
@@ -447,7 +474,7 @@ namespace catapult { namespace dbrb {
 			std::inserter(recipientsUnion, recipientsUnion.begin()));
 
 		CATAPULT_LOG(debug) << "[DBRB] CONVERGED: Disseminating Install message.";
-		disseminate(responseMessage.toNetworkPacket(&m_keyPair), recipientsUnion);
+		disseminate(pMessage, recipientsUnion);
 	}
 
 	void DbrbProcess::onInstallMessageReceived(const InstallMessage& message) {
@@ -462,7 +489,7 @@ namespace catapult { namespace dbrb {
 				m_limitedProcessing = true;	// Stop processing Prepare, Commit and Reconfig messages.
 
 			// TODO: Double-check; not clear what was meant by state(v)
-			StateUpdateMessage stateUpdateMessage(m_id, m_state, message.ReplacedView, m_pendingChanges);
+			auto pMessage = std::make_shared<StateUpdateMessage>(m_id, m_state, message.ReplacedView, m_pendingChanges);
 
 			std::set<ProcessId> replacedViewMembers = message.ReplacedView.members();
 			std::set<ProcessId> leastRecentViewMembers = message.LeastRecentView.members();
@@ -471,7 +498,7 @@ namespace catapult { namespace dbrb {
 				leastRecentViewMembers.begin(), leastRecentViewMembers.end(),
 				std::inserter(recipientsUnion, recipientsUnion.begin()));
 
-			disseminate(stateUpdateMessage.toNetworkPacket(&m_keyPair), recipientsUnion);
+			disseminate(pMessage, recipientsUnion);
 		}
 
 		if (m_currentView < message.LeastRecentView) {
@@ -486,20 +513,28 @@ namespace catapult { namespace dbrb {
 		if (iter != m_broadcastData.end() && iter->second.PayloadIsDelivered)
 			m_broadcastData.erase(message.Sender);
 
-		if (m_limitedProcessing)
+		if (m_limitedProcessing) {
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (limited processing is enabled).";
 			return;
+		}
 
 		// Message sender must be a member of the view specified in the message.
-		if (!message.View.isMember(message.Sender))
+		if (!message.View.isMember(message.Sender)) {
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (sender is not in supplied view).";
 			return;
+		}
 
 		// View specified in the message must be equal to the current view of the process.
-		if (message.View != m_currentView)
+		if (message.View != m_currentView) {
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (supplied view is not a current view).";
 			return;
+		}
 
 		// Payload from the message must be acknowledgeable.
-		if (!isAcknowledgeable(message))
+		if (!isAcknowledgeable(message)) {
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (payload is not acknowledgeable).";
 			return;
+		}
 
 		auto& data = m_broadcastData[message.Sender];
 		if (!data.AcknowledgeablePayload.has_value()) {
@@ -513,8 +548,8 @@ namespace catapult { namespace dbrb {
 
 		CATAPULT_LOG(debug) << "[DBRB] PREPARE: Sending Acknowledged message to " << message.Sender << ".";
 		Signature payloadSignature = sign(message.Payload);
-		AcknowledgedMessage responseMessage(m_id, message.Sender, message.Payload, m_currentView, payloadSignature);
-		send(responseMessage.toNetworkPacket(&m_keyPair), message.Sender);
+		auto pMessage = std::make_shared<AcknowledgedMessage>(m_id, message.Sender, message.Payload, m_currentView, payloadSignature);
+		send(pMessage, message.Sender);
 	}
 
 	void DbrbProcess::onStateUpdateMessageReceived(const StateUpdateMessage& message) {
@@ -525,6 +560,8 @@ namespace catapult { namespace dbrb {
 	}
 
 	void DbrbProcess::onStateUpdateQuorumCollected() {
+		CATAPULT_LOG(debug) << "[DBRB] STATE-UPDATE: Quorum collected in view " << m_currentInstallMessage->ReplacedView << ".";
+
 		const auto& stateUpdateMessages = m_quorumManager.StateUpdateMessages.at(m_currentInstallMessage->ReplacedView);
 		const auto& leastRecentView = m_currentInstallMessage->LeastRecentView;
 		const auto& convergedSequence = m_currentInstallMessage->ConvergedSequence;
@@ -559,8 +596,8 @@ namespace catapult { namespace dbrb {
 					&& m_currentView < moreRecentSequence.maybeLeastRecent().value_or(View{})) {
 				m_proposedSequences[m_currentView] = moreRecentSequence;
 
-				ProposeMessage proposeMessage(m_id, moreRecentSequence, m_currentView);
-				disseminate(proposeMessage.toNetworkPacket(&m_keyPair), m_currentView.members());
+				auto pMessage = std::make_shared<ProposeMessage>(m_id, moreRecentSequence, m_currentView);
+				disseminate(pMessage, m_currentView.members());
 			} else {
 				m_installedViews.insert(m_currentView);
 				onViewInstalled(m_currentView);
@@ -570,8 +607,8 @@ namespace catapult { namespace dbrb {
 //			if (m_storedPayloadData.has_value()) {
 //				// Start disseminating Commit messages until allowed to leave.
 //				m_disseminateCommit = true;
-//				CommitMessage responseMessage(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate, m_storedPayloadData->CertificateView, m_currentView);
-//				disseminate(responseMessage.toNetworkPacket(&m_keyPair), m_currentView.members());
+//				auto pMessage = std::make_shared<CommitMessage>(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate, m_storedPayloadData->CertificateView, m_currentView);
+//				disseminate(pMessage, m_currentView.members());
 //			} else {
 //				// Otherwise, can leave immediately.
 //				onLeaveComplete();
@@ -621,8 +658,8 @@ namespace catapult { namespace dbrb {
 		// Disseminating Commit message, if process' current view is installed.
 		if (m_installedViews.count(m_currentView)) {
 			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Disseminating Commit message.";
-			CommitMessage responseMessage(m_id, message.Initiator, message.Payload, data.Certificate, data.CertificateView, m_currentView);
-			disseminate(responseMessage.toNetworkPacket(&m_keyPair), m_currentView.members());
+			auto pMessage = std::make_shared<CommitMessage>(m_id, message.Initiator, message.Payload, data.Certificate, data.CertificateView, m_currentView);
+			disseminate(pMessage, m_currentView.members());
 		} else {
 			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Current view is not installed, Commit message is not disseminated.";
 		}
@@ -635,8 +672,10 @@ namespace catapult { namespace dbrb {
 		}
 
 		// View specified in the message must be equal to the current view of the process.
-		if (message.CurrentView != m_currentView)
+		if (message.CurrentView != m_currentView) {
+			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Aborting message processing (supplied view is not a current view).";
 			return;
+		}
 
 		// Message certificate must be valid, i.e. all signatures in it must be valid.
 		for (const auto& [signer, signature] : message.Certificate) {
@@ -656,20 +695,22 @@ namespace catapult { namespace dbrb {
 				pStored = message;
 
 			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Disseminating Commit message.";
-			CommitMessage responseMessage(m_id, message.Initiator, message.Payload, message.Certificate, message.CertificateView, m_currentView);
-			disseminate(responseMessage.toNetworkPacket(&m_keyPair), m_currentView.members());
+			auto pMessage = std::make_shared<CommitMessage>(m_id, message.Initiator, message.Payload, message.Certificate, message.CertificateView, m_currentView);
+			disseminate(pMessage, m_currentView.members());
 		}
 
 		// Allow delivery for sender process.
 		CATAPULT_LOG(debug) << "[DBRB] COMMIT: Sending Deliver message to " << message.Sender << ".";
-		DeliverMessage deliverMessage(m_id, message.Initiator, message.Payload, m_currentView);
-		send(deliverMessage.toNetworkPacket(&m_keyPair), message.Sender);
+		auto pMessage = std::make_shared<DeliverMessage>(m_id, message.Initiator, message.Payload, m_currentView);
+		send(pMessage, message.Sender);
 	}
 
 	void DbrbProcess::onDeliverMessageReceived(const DeliverMessage& message) {
 		// Message sender must be a member of the view specified in the message.
-		if (!message.View.isMember(message.Sender))
+		if (!message.View.isMember(message.Sender)) {
+			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Aborting message processing (sender is not in supplied view).";
 			return;
+		}
 
 		auto& data = m_broadcastData[message.Initiator];
 		bool quorumCollected = data.QuorumManager.update(message);
@@ -700,15 +741,15 @@ namespace catapult { namespace dbrb {
 		m_currentView = std::move(newView);
 
 		if (m_membershipState == MembershipStates::Joining && m_disseminateReconfig) {
-			ReconfigMessage message(m_id, m_id, MembershipChanges::Join, m_currentView);
-			disseminate(message.toNetworkPacket(&m_keyPair), m_currentView.members());
+			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChanges::Join, m_currentView);
+			disseminate(pMessage, m_currentView.members());
 		}
 
 		// If the process is leaving after an Install message.
 		if (m_disseminateCommit) {
 			// All fields in m_storedPayloadData are guaranteed to exist.
-//			CommitMessage responseMessage(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate, m_storedPayloadData->CertificateView, m_currentView);
-//			disseminate(responseMessage.toNetworkPacket(&m_keyPair), m_currentView.members());
+//			auto pMessage = std::make_shared<CommitMessage>(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate, m_storedPayloadData->CertificateView, m_currentView);
+//			disseminate(pMessage, m_currentView.members());
 		}
 	}
 
@@ -723,8 +764,8 @@ namespace catapult { namespace dbrb {
 			const auto sequence = Sequence::fromViews({ mergedView });	// Single view is always a valid sequence.
 			m_proposedSequences[newView] = *sequence;
 
-			ProposeMessage message(m_id, *sequence, newView);
-			disseminate(message.toNetworkPacket(&m_keyPair), newView.members());
+			auto pMessage = std::make_shared<ProposeMessage>(m_id, *sequence, newView);
+			disseminate(pMessage, newView.members());
 		}
 
 //		const auto& pAcknowledgeable = m_state.Acknowledgeable;
@@ -733,29 +774,29 @@ namespace catapult { namespace dbrb {
 //
 //		if (processIsSender && !certificateExists) {
 //			CATAPULT_LOG(debug) << "[DBRB] VIEW INSTALLED: Node is a payload sender, but certificate does not exist.";
-//			PrepareMessage message(m_id, pAcknowledgeable->Payload, newView);
-//			disseminate(message.toNetworkPacket(&m_keyPair), newView.members());
+//			auto pMessage = std::make_shared<PrepareMessage>(m_id, pAcknowledgeable->Payload, newView);
+//			disseminate(pMessage, newView.members());
 //		}
 //
 //		if (processIsSender && certificateExists && !m_canLeave) {
 //			CATAPULT_LOG(debug) << "[DBRB] VIEW INSTALLED: Node is a payload sender with a valid certificate AND leave is not allowed.";
 //			// If m_certificate exists, then m_certificateView also exists.
 //			// TODO: Double-check which payload should be used.
-//			CommitMessage responseMessage(m_id, m_storedPayloadData->Payload, m_certificate, m_certificateView, newView);
-//			disseminate(responseMessage.toNetworkPacket(&m_keyPair), newView.members());
+//			auto pMessage = std::make_shared<CommitMessage>(m_id, m_storedPayloadData->Payload, m_certificate, m_certificateView, newView);
+//			disseminate(pMessage, newView.members());
 //		}
 //
 //		if (!processIsSender && m_storedPayloadData.has_value() && !m_canLeave) {
 //			CATAPULT_LOG(debug) << "[DBRB] VIEW INSTALLED: Node is not a payload sender AND stored payload exists AND leave is not allowed.";
-//			CommitMessage responseMessage(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate, m_storedPayloadData->CertificateView, newView);
-//			disseminate(responseMessage.toNetworkPacket(&m_keyPair), newView.members());
+//			auto pMessage = std::make_shared<CommitMessage>(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate, m_storedPayloadData->CertificateView, newView);
+//			disseminate(pMessage, newView.members());
 //		}
 //
 //		// Disseminate Reconfig message using the installed view, if the process is leaving.
 //		if (m_membershipState == MembershipStates::Leaving) {
 //			CATAPULT_LOG(debug) << "[DBRB] VIEW INSTALLED: Node is leaving.";
-//			ReconfigMessage message(m_id, m_id, MembershipChanges::Leave, newView);
-//			disseminate(message.toNetworkPacket(&m_keyPair), newView.members());
+//			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChanges::Leave, newView);
+//			disseminate(pMessage, newView.members());
 //		}
 	}
 

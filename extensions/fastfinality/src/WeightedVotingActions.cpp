@@ -278,6 +278,7 @@ namespace catapult { namespace fastfinality {
 					committeeManager.reset();
 					while (committeeManager.committee().Round < pBlock->round())
 						committeeManager.selectCommittee(config.Network);
+					CATAPULT_LOG(debug) << "selected committee for round " << pBlock->round();
 
 					if (ValidateBlockCosignatures(pBlock, committeeManager, committeeApproval)) {
 						std::lock_guard<std::mutex> guard(pFsmShared->mutex());
@@ -416,6 +417,7 @@ namespace catapult { namespace fastfinality {
 			const auto& config = pConfigHolder->Config().Network;
 			while (committeeManager.committee().Round < round.Round)
 				committeeManager.selectCommittee(config);
+			CATAPULT_LOG(debug) << "selected committee for round " << round.Round;
 
 			const auto& committee = committeeManager.committee();
 			auto accounts = committeeData.unlockedAccounts()->view();
@@ -446,6 +448,8 @@ namespace catapult { namespace fastfinality {
 			committeeData.setTotalSumOfVotes(totalSumOfVotes);
 
 			CATAPULT_LOG(debug) << "committee selection result: is block proposer = " << isBlockProposer << ", start phase = " << round.StartPhase;
+
+			pFsmShared->dbrbProcess().clearBroadcastData();
 
 			pFsmShared->processEvent(CommitteeSelectionResult{ isBlockProposer, round.StartPhase });
 		};

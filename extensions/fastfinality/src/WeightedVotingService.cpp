@@ -130,7 +130,7 @@ namespace catapult { namespace fastfinality {
 				}
 
 				auto pFsmShared = pServiceGroup->pushService([pWriters, &config, bootstrapNodes, thisNode, &keyPair = locator.keyPair()](const std::shared_ptr<thread::IoThreadPool>& pPool) {
-					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, bootstrapNodes, thisNode, keyPair);
+					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, bootstrapNodes, thisNode, keyPair, pPool);
 					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess);
 				});
 

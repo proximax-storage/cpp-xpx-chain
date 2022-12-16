@@ -21,6 +21,7 @@ namespace catapult { namespace dbrb {
 
 	public:
 		void enqueue(const std::shared_ptr<MessagePacket>& pPacket, const std::set<ProcessId>& recipients);
+		void clearQueue();
 
 	private:
 		void workerThreadFunc();
