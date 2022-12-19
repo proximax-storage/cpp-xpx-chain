@@ -9,6 +9,7 @@
 #include "catapult/model/SupercontractNotifications.h"
 #include "src/cache/SuperContractCache.h"
 #include "src/cache/DriveContractCache.h"
+#include "catapult/cache_core/AccountStateCache.h"
 #include "src/model/InternalSuperContractNotifications.h"
 #include <catapult/observers/LiquidityProviderExchangeObserver.h>
 #include <catapult/observers/StorageExternalManagementObserver.h>

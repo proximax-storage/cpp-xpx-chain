@@ -25,6 +25,10 @@ namespace catapult::observers {
 			auto contractIt = contractCache.find(notification.ContractKey);
 			auto& contractEntry = contractIt.get();
 
+			auto& accountCache = context.Cache.sub<cache::AccountStateCache>();
+			auto contractAccountIt = accountCache.find(contractEntry.key());
+			auto& contractAccountEntry = contractAccountIt.get();
+
 			auto& batch = contractEntry.batches().back();
 
 			auto requestedCallIt = contractEntry.requestedCalls().begin();
@@ -74,6 +78,16 @@ namespace catapult::observers {
 					scRefund = Amount((requestedCall.ExecutionCallPayment - call.ExecutionWork).unwrap() * executorsNumber);
 					streamingRefund = Amount((requestedCall.DownloadCallPayment - call.DownloadWork).unwrap() * executorsNumber);
 					refundReceiver = call.Caller;
+					if (call.Status != 0) {
+						auto callerAccountIt = accountCache.find(call.Caller);
+						auto& callerAccountEntry = callerAccountIt.get();
+						for (const auto& [mosaicId, amount]: requestedCallIt->ServicePayments)
+						{
+							auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
+							contractAccountEntry.Balances.debit(resolvedMosaicId, amount);
+							callerAccountEntry.Balances.credit(resolvedMosaicId, amount);
+						}
+					}
 				}
 				else {
 					scRefund = Amount((automaticExecutionsInfo.m_automatedExecutionCallPayment - call.ExecutionWork).unwrap() * executorsNumber);

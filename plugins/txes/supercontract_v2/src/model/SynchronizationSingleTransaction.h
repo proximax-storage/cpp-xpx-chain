@@ -15,7 +15,7 @@ namespace catapult::model {
 
 #pragma pack(push, 1)
 
-	/// Binary layout for a deploy transaction body.
+	/// Binary layout for a synchronizationSingle transaction body.
 	template<typename THeader>
 	struct SynchronizationSingleTransactionBody : public THeader {
 	private:
