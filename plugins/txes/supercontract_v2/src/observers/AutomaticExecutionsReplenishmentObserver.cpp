@@ -13,7 +13,7 @@ namespace catapult::observers {
 
 	DEFINE_OBSERVER(AutomaticExecutionsReplenishment, Notification, [](const Notification & notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (AutomaticExecutionsReplenishment)");
 
 		if (notification.Number > 0U) {
 			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();

@@ -19,7 +19,7 @@ namespace catapult::observers {
 	DECLARE_OBSERVER(EndBatchExecution, Notification)(const std::unique_ptr<state::DriveStateBrowser>& driveBrowser) {
 		return MAKE_OBSERVER(EndBatchExecution, Notification, ([&driveBrowser](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
-				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (EndBatchExecution)");
 
 			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 			auto contractIt = contractCache.find(notification.ContractKey);

@@ -13,7 +13,7 @@ namespace catapult::observers {
 
 	DEFINE_OBSERVER(ReleasedTransactions, Notification , [](const Notification& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReleasedTransactions)");
 
 		auto contractKey = *notification.SubTransactionsSigners.begin();
 		auto& contractCache = context.Cache.sub<cache::SuperContractCache>();

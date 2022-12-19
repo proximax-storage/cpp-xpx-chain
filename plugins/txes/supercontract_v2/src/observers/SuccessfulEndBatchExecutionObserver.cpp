@@ -14,7 +14,7 @@ namespace catapult::observers {
 	DECLARE_OBSERVER(SuccessfulBatchExecution, Notification)(const std::unique_ptr<StorageExternalManagementObserver>& storageExternalManager) {
 		return MAKE_OBSERVER(SuccessfulBatchExecution, Notification, ([&storageExternalManager](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
-				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (SuccessfulBatchExecution)");
 
 			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 			auto contractIt = contractCache.find(notification.ContractKey);

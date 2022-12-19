@@ -12,6 +12,7 @@
 #include "src/plugins/ManualCallTransactionPlugin.h"
 #include "src/plugins/SuccessfulEndBatchExecutionTransactionPlugin.h"
 #include "src/plugins/UnsuccessfulEndBatchExecutionTransactionPlugin.h"
+#include "src/observers/SuperContractStorageUpdatesListener.h"
 #include "src/plugins/EndBatchExecutionSingleTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
@@ -146,6 +147,10 @@ namespace catapult { namespace plugins {
 
 		const auto& storageExternalManagement = manager.storageExternalManagement();
 		const auto& driveStateBrowser = manager.driveStateBrowser();
+
+		auto pStorageUpdatesListener = std::make_unique<observers::SuperContractStorageUpdatesListener>(
+				driveStateBrowser, liquidityProviderObserver);
+		manager.addStorageUpdateListener(std::move(pStorageUpdatesListener));
 
 		manager.addObserverHook([&](auto& builder) {
 			builder

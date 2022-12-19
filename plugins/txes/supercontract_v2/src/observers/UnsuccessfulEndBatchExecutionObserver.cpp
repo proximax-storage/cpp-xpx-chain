@@ -14,7 +14,7 @@ namespace catapult::observers {
 	DECLARE_OBSERVER(UnsuccessfulBatchExecution, Notification)() {
 		return MAKE_OBSERVER(UnsuccessfulBatchExecution, Notification, ([](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
-				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (UnsuccessfulBatchExecution)");
 
 			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 			auto contractIt = contractCache.find(notification.ContractKey);

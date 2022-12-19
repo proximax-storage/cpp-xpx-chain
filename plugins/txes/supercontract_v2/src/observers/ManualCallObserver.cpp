@@ -13,7 +13,7 @@ namespace catapult::observers {
 
 	DEFINE_OBSERVER(ManualCall, model::ManualCallNotification<1>, [](const model::ManualCallNotification<1>& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
+			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ManualCall)");
 
 		auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 		auto contractIt = contractCache.find(notification.ContractKey);

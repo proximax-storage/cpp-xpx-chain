@@ -19,7 +19,7 @@ namespace catapult::observers {
 	 											const std::unique_ptr<state::DriveStateBrowser>& driveBrowser) {
 		return MAKE_OBSERVER(BatchCalls, Notification, ([&liquidityProvider, &driveBrowser](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
-				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (BatchCalls)");
 
 			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 			auto contractIt = contractCache.find(notification.ContractKey);
@@ -60,8 +60,8 @@ namespace catapult::observers {
 			auto executorsNumber = driveBrowser->getOrderedReplicatorsCount(readOnlyCache, contractEntry.driveKey());
 			auto driveOwner = driveBrowser->getDriveOwner(readOnlyCache, contractEntry.driveKey());
 
-			const auto& scMosaicId = config::GetUnresolvedSuperContractMosaicId(context.Config.Immutable);
-			const auto& streamingMosaicId = config::GetUnresolvedStreamingMosaicId(context.Config.Immutable);
+			auto scMosaicId = config::GetUnresolvedSuperContractMosaicId(context.Config.Immutable);
+			auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(context.Config.Immutable);
 
 			auto& automaticExecutionsInfo = contractEntry.automaticExecutionsInfo();
 
@@ -84,8 +84,11 @@ namespace catapult::observers {
 						for (const auto& [mosaicId, amount]: requestedCallIt->ServicePayments)
 						{
 							auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
-							contractAccountEntry.Balances.debit(resolvedMosaicId, amount);
-							callerAccountEntry.Balances.credit(resolvedMosaicId, amount);
+							auto balance = contractAccountEntry.Balances.get(resolvedMosaicId);
+							if (balance >= amount) {
+								contractAccountEntry.Balances.debit(resolvedMosaicId, amount);
+								callerAccountEntry.Balances.credit(resolvedMosaicId, amount);
+							}
 						}
 					}
 				}
