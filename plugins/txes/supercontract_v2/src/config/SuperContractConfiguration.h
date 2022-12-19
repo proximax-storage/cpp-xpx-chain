@@ -20,8 +20,14 @@ namespace catapult { namespace config {
 		/// Whether the plugin is enabled.
 		bool Enabled;
 
-		/// Minimal number of executors.
-		uint16_t MinExecutorCount;
+		/// Maximum size of rows in transactions
+		uint16_t MaxRowSize;
+
+		/// Maximum execution payment per call
+		uint64_t MaxExecutionPayment;
+
+		/// Maximum auto executions to be prepaid
+		uint64_t MaxAutoExecutions;
 
 	private:
 		SuperContractConfiguration() = default;

@@ -12,6 +12,22 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(DeployContract, [](const Notification& notification, const ValidatorContext& context) {
 
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
+
+		if (notification.AutomaticExecutionFileName.size() > pluginConfig.MaxRowSize) {
+			return Failure_SuperContract_Max_Row_Size_Exceeded;
+		}
+		if (notification.AutomaticExecutionsFunctionName.size() > pluginConfig.MaxRowSize) {
+			return Failure_SuperContract_Max_Row_Size_Exceeded;
+		}
+
+		if (notification.AutomaticExecutionCallPayment.unwrap() > pluginConfig.MaxExecutionPayment) {
+			return Failure_SuperContract_Max_Execution_Payment_Exceeded;
+		}
+		if (notification.AutomaticDownloadCallPayment.unwrap() > pluginConfig.MaxExecutionPayment) {
+			return Failure_SuperContract_Max_Execution_Payment_Exceeded;
+		}
+
 		const auto& driveCache = context.Cache.sub<cache::DriveContractCache>();
 
 		if (driveCache.contains(notification.DriveKey)) {

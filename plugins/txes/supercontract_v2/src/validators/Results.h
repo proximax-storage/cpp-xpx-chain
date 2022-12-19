@@ -56,6 +56,12 @@ namespace catapult { namespace validators {
 
 	DEFINE_CONTRACT_RESULT(Invalid_Number_Of_Subtransactions_Cosigners, 21);
 
+	DEFINE_CONTRACT_RESULT(Max_Row_Size_Exceeded, 22);
+
+	DEFINE_CONTRACT_RESULT(Max_Execution_Payment_Exceeded, 23);
+
+	DEFINE_CONTRACT_RESULT(Max_Auto_Executions_Number_Exceeded, 24);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

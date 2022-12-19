@@ -22,8 +22,14 @@ namespace catapult { namespace config {
 
 #define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
 
-		config.MinExecutorCount = 10;
-		TRY_LOAD_CHAIN_PROPERTY(MinExecutorCount);
+		config.MaxRowSize = 4096U;
+		TRY_LOAD_CHAIN_PROPERTY(MaxRowSize);
+
+		config.MaxExecutionPayment = 1000000U;
+		TRY_LOAD_CHAIN_PROPERTY(MaxRowSize);
+
+		config.MaxRowSize = 100000U;
+		TRY_LOAD_CHAIN_PROPERTY(MaxRowSize);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 		return config;

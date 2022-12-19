@@ -37,9 +37,9 @@ namespace catapult { namespace plugins {
 					sha3.final(paymentHash);
 					auto contractExecutionPaymentKey = Key(paymentHash.array());
 
-					const std::string initializerFileName(reinterpret_cast<const char*>(transaction.FileNamePtr()), transaction.FileNameSize);
-					const std::string initializerFunctionName(reinterpret_cast<const char*>(transaction.FunctionNamePtr()), transaction.FunctionNameSize);
-					const std::string initializerActualArguments(reinterpret_cast<const char*>(transaction.ActualArgumentsPtr()), transaction.ActualArgumentsSize);
+					const std::string fileName(reinterpret_cast<const char*>(transaction.FileNamePtr()), transaction.FileNameSize);
+					const std::string functionName(reinterpret_cast<const char*>(transaction.FunctionNamePtr()), transaction.FunctionNameSize);
+					const std::string actualArguments(reinterpret_cast<const char*>(transaction.ActualArgumentsPtr()), transaction.ActualArgumentsSize);
 
 					const auto* const pServicePayment = transaction.ServicePaymentsPtr();
 					std::vector<UnresolvedMosaic> servicePayments;
@@ -59,9 +59,9 @@ namespace catapult { namespace plugins {
 							contractKey,
 							txHash,
 							transaction.Signer,
-							initializerFileName,
-							initializerFunctionName,
-							initializerActualArguments,
+							fileName,
+							functionName,
+							actualArguments,
 							transaction.ExecutionCallPayment,
 							transaction.DownloadCallPayment,
 							servicePayments));
