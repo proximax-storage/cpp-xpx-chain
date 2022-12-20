@@ -38,14 +38,16 @@ namespace catapult::observers {
 	DECLARE_OBSERVER(ContractDestroy, model::ContractDestroyNotification<1>)(
 			const std::unique_ptr<observers::StorageExternalManagementObserver>&);
 
-	DECLARE_OBSERVER(EndBatch, model::EndBatchExecutionNotification<1>)(
+	DECLARE_OBSERVER(EndBatchExecution, model::EndBatchExecutionNotification<1>)(
 			const std::unique_ptr<state::DriveStateBrowser>&);
 
-	DECLARE_OBSERVER(SuccesfulEndBatch, model::SuccessfulBatchExecutionNotification<1>)(
+	DECLARE_OBSERVER(SuccessfulEndBatchExecution, model::SuccessfulBatchExecutionNotification<1>)(
 			const std::unique_ptr<StorageExternalManagementObserver>&);
 
-	DECLARE_OBSERVER(UnsuccesfulEndBatch, model::UnsuccessfulBatchExecutionNotification<1>)();
+	DECLARE_OBSERVER(UnsuccessfulEndBatchExecution, model::UnsuccessfulBatchExecutionNotification<1>)();
 
 	DECLARE_OBSERVER(SynchronizationSingle, model::SynchronizationSingleNotification<1>)(
 			const std::unique_ptr<StorageExternalManagementObserver>&);
+
+	DECLARE_OBSERVER(ReleasedTransactions, model::ReleasedTransactionsNotification<1>)();
 }

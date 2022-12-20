@@ -18,10 +18,10 @@ namespace catapult::model {
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Deploy_Supercontract_v1, 0x0001);
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Manual_Call_v1, 0x0002);
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Automatic_Executions_Replenishment_v1, 0x0003);
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Successful_Batch_Execution_v1, 0x0005);
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Unsuccessful_Batch_Execution_v1, 0x0006);
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Batch_Execution_Single_v1, 0x0007);
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Released_Transactions_v1, 0x0008);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Successful_Batch_Execution_v1, 0x0004);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Unsuccessful_Batch_Execution_v1, 0x0005);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Batch_Execution_Single_v1, 0x0006);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Released_Transactions_v1, 0x0007);
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Synchronization_Single_v1, 0x0008);
 
 

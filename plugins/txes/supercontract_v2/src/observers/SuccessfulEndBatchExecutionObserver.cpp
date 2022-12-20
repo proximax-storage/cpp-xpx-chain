@@ -11,8 +11,8 @@ namespace catapult::observers {
 
 	using Notification = model::SuccessfulBatchExecutionNotification<1>;
 
-	DECLARE_OBSERVER(SuccessfulBatchExecution, Notification)(const std::unique_ptr<StorageExternalManagementObserver>& storageExternalManager) {
-		return MAKE_OBSERVER(SuccessfulBatchExecution, Notification, ([&storageExternalManager](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(SuccessfulEndBatchExecution, Notification)(const std::unique_ptr<StorageExternalManagementObserver>& storageExternalManager) {
+		return MAKE_OBSERVER(SuccessfulEndBatchExecution, Notification, ([&storageExternalManager](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (SuccessfulBatchExecution)");
 

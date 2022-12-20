@@ -13,9 +13,9 @@ namespace catapult::observers {
 
 	using Notification = model::ContractDestroyNotification<1>;
 
-	DECLARE_OBSERVER(ContractDestruction, Notification)(
+	DECLARE_OBSERVER(ContractDestroy, Notification)(
 			const std::unique_ptr<observers::StorageExternalManagementObserver>& storageExternalManager) {
-		return MAKE_OBSERVER(ContractDestruction, Notification, ([&storageExternalManager](const Notification& notification, ObserverContext& context) {
+		return MAKE_OBSERVER(ContractDestroy, Notification, ([&storageExternalManager](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ContractDestroy)");
 

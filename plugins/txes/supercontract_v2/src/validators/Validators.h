@@ -20,7 +20,7 @@ namespace catapult { namespace validators {
 
 	DECLARE_STATEFUL_VALIDATOR(ManualCall, model::ManualCallNotification<1>)();
 
-	DECLARE_STATEFUL_VALIDATOR(AutomaticExecutionsReplenishement, model::AutomaticExecutionsReplenishmentNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(AutomaticExecutionsReplenishment, model::AutomaticExecutionsReplenishmentNotification<1>)();
 
 	DECLARE_STATEFUL_VALIDATOR(DeployContract, model::DeploySupercontractNotification<1>)();
 
@@ -37,4 +37,6 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(EndBatchExecutionSingle, model::BatchExecutionSingleNotification<1>)();
 
 	DECLARE_STATEFUL_VALIDATOR(SynchronizationSingle, model::SynchronizationSingleNotification<1>)();
+
+	DECLARE_STATEFUL_VALIDATOR(ReleasedTransactions, model::ReleasedTransactionsNotification<1>)();
 }}

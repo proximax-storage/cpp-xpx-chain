@@ -10,7 +10,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::ContractStateUpdateNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(ContractStateUpdateNotification, [](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(ContractStateUpdate, [](const Notification& notification, const ValidatorContext& context) {
 
 		const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 

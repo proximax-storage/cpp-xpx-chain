@@ -14,6 +14,7 @@
 #include "src/plugins/UnsuccessfulEndBatchExecutionTransactionPlugin.h"
 #include "src/observers/SuperContractStorageUpdatesListener.h"
 #include "src/plugins/EndBatchExecutionSingleTransactionPlugin.h"
+#include "src/plugins/SynchronizationSingleTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -48,6 +49,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateSuccessfulEndBatchExecutionTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateUnsuccessfulEndBatchExecutionTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateEndBatchExecutionSingleTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateSynchronizationSingleTransactionPlugin(immutableConfig));
 
 		auto& pBrowser = manager.driveStateBrowser();
 
@@ -134,7 +136,7 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 		  	builder
 		  		.add(validators::CreateManualCallValidator())
-		  		.add(validators::CreateAutomaticExecutionsReplenishementValidator())
+		  		.add(validators::CreateAutomaticExecutionsReplenishmentValidator())
 				.add(validators::CreateDeployContractValidator())
 				.add(validators::CreateEndBatchExecutionValidator())
 				.add(validators::CreateBatchCallsValidator())
@@ -142,7 +144,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateOpinionSignatureValidator())
 				.add(validators::CreateProofOfExecutionValidator())
 				.add(validators::CreateEndBatchExecutionSingleValidator())
-				.add(validators::CreateSynchronizationSingleValidator());
+				.add(validators::CreateSynchronizationSingleValidator())
+				.add(validators::CreateReleasedTransactionsValidator());
 		});
 
 		const auto& storageExternalManagement = manager.storageExternalManagement();
@@ -162,10 +165,11 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateBatchCallsObserver(liquidityProviderObserver, driveStateBrowser))
 				.add(observers::CreateContractStateUpdateObserver(driveStateBrowser))
 				.add(observers::CreateContractDestroyObserver(storageExternalManagement))
-				.add(observers::CreateEndBatchObserver(driveStateBrowser))
-				.add(observers::CreateSuccesfulEndBatchObserver(storageExternalManagement))
-				.add(observers::CreateUnsuccesfulEndBatchObserver())
-				.add(observers::CreateSynchronizationSingleObserver(storageExternalManagement));
+				.add(observers::CreateEndBatchExecutionObserver(driveStateBrowser))
+				.add(observers::CreateSuccessfulEndBatchExecutionObserver(storageExternalManagement))
+				.add(observers::CreateUnsuccessfulEndBatchExecutionObserver())
+				.add(observers::CreateSynchronizationSingleObserver(storageExternalManagement))
+				.add(observers::CreateReleasedTransactionsObserver());
 		});
 	}
 }}

@@ -11,8 +11,8 @@ namespace catapult::observers {
 
 	using Notification = model::UnsuccessfulBatchExecutionNotification<1>;
 
-	DECLARE_OBSERVER(UnsuccessfulBatchExecution, Notification)() {
-		return MAKE_OBSERVER(UnsuccessfulBatchExecution, Notification, ([](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(UnsuccessfulEndBatchExecution, Notification)() {
+		return MAKE_OBSERVER(UnsuccessfulEndBatchExecution, Notification, ([](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (UnsuccessfulBatchExecution)");
 

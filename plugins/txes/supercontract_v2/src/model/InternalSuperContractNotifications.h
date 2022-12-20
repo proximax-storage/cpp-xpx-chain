@@ -13,13 +13,13 @@
 
 namespace catapult::model {
 
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Opinion_Signature_v1, 0x0004);
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Proof_Of_Execution_v1, 0x0006);
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Batch_Calls_Notification_v1, 0x0007);
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, End_Batch_Execution_v1, 0x0007);
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Contract_State_Update_v1, 0x0007);
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Contract_Destroy_v1, 0x0007);
-	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Storage_Update_v1, 0x0007);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Opinion_Signature_v1, 0x0009);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Proof_Of_Execution_v1, 0x000A);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Batch_Calls_Notification_v1, 0x000B);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, End_Batch_Execution_v1, 0x000C);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Contract_State_Update_v1, 0x000D);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Contract_Destroy_v1, 0x000E);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract_v2, Storage_Update_v1, 0x000F);
 
 
 	struct Opinion {
