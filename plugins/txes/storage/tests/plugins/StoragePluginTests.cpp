@@ -106,6 +106,7 @@ namespace catapult { namespace plugins {
 						"StreamFinishValidator",
 						"StreamPaymentValidator",
 						"EndDriveVerificationValidator",
+						"OwnerManagementProhibitionValidator"
 				};
 			}
 
@@ -135,6 +136,7 @@ namespace catapult { namespace plugins {
 					"StreamFinishObserver",
 					"StreamPaymentObserver",
 					"EndDriveVerificationObserver",
+					"OwnerManagementProhibitionObserver"
 				};
 			}
 
