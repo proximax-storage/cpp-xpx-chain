@@ -702,12 +702,7 @@ namespace catapult { namespace fastfinality {
 				return;
 			}
 
-			bool isProposedBlockValid = false;
-			try {
-				isProposedBlockValid = ValidateProposedBlock(pProposedBlock, state, lastBlockElementSupplier, pValidatorPool);
-			} catch (...) {} // empty catch block is intentional
-
-			if (isProposedBlockValid) {
+			if (ValidateProposedBlock(pProposedBlock, state, lastBlockElementSupplier, pValidatorPool)) {
 				pFsmShared->processEvent(ProposalValid{});
 			} else {
 				committeeData.setProposedBlock(nullptr);
