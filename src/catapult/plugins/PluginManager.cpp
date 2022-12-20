@@ -361,4 +361,16 @@ namespace catapult { namespace plugins {
 	}
 
 	// endregion
+
+	// region storage updates listeners
+
+	const std::vector<std::unique_ptr<observers::StorageUpdatesListener>>&
+	PluginManager::storageUpdatesListeners() const {
+		return m_storageUpdatesListeners;
+	}
+	void PluginManager::addStorageUpdateListener(std::unique_ptr<observers::StorageUpdatesListener>&& storageUpdatesListener) {
+		m_storageUpdatesListeners.emplace_back(std::move(storageUpdatesListener));
+	}
+
+	// endregion
 }}

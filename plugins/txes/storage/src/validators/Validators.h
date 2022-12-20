@@ -162,4 +162,6 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to balance transfer notifications and validates that:
 	/// - transferred mosaic is not one of the service units
 	DECLARE_STATEFUL_VALIDATOR(ServiceUnitTransfer, model::BalanceTransferNotification<1>)();
+
+	DECLARE_STATEFUL_VALIDATOR(OwnerManagementProhibition, model::OwnerManagementProhibitionNotification<1>)();
 }}

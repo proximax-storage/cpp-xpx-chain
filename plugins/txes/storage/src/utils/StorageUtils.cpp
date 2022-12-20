@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#pragma once
 #include "StorageUtils.h"
 #include "src/cache/ReplicatorCache.h"
 #include "src/cache/BcDriveCache.h"

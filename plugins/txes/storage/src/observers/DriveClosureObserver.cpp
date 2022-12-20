@@ -15,8 +15,9 @@ namespace catapult { namespace observers {
 	using Notification = model::DriveClosureNotification<1>;
 	using BigUint = boost::multiprecision::uint128_t;
 
-	DECLARE_OBSERVER(DriveClosure, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider) {
-		return MAKE_OBSERVER(DriveClosure, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(DriveClosure, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider,
+	 											 const std::vector<std::unique_ptr<StorageUpdatesListener>>& updatesListeners) {
+		return MAKE_OBSERVER(DriveClosure, Notification, ([&](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
 
@@ -155,6 +156,10 @@ namespace catapult { namespace observers {
 					downloadQueueAdapter.remove(key.array());
 					downloadEntry.downloadApprovalInitiationEvent() = notification.TransactionHash;
 				}
+			}
+
+			for (const auto& updateListener: updatesListeners) {
+				updateListener->onDriveClosed(context, notification.DriveKey);
 			}
 
 			// Removing the drive from caches

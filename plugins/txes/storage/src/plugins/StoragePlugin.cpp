@@ -188,10 +188,13 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateStreamFinishValidator())
 				.add(validators::CreateStreamPaymentValidator())
 				.add(validators::CreateEndDriveVerificationValidator())
-				.add(validators::CreateServiceUnitTransferValidator());
+				.add(validators::CreateServiceUnitTransferValidator())
+				.add(validators::CreateOwnerManagementProhibitionValidator());
 		});
 
-		manager.addObserverHook([&state = *pStorageState, &liquidityProviderObserver](auto& builder) {
+		const auto& storageUpdatesListeners = manager.storageUpdatesListeners();
+
+		manager.addObserverHook([&state = *pStorageState, &liquidityProviderObserver, &storageUpdatesListeners](auto& builder) {
 			builder
 				.add(observers::CreatePrepareDriveObserver())
 				.add(observers::CreateDownloadChannelObserver())
@@ -201,7 +204,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDataModificationApprovalUploadWorkObserver(liquidityProviderObserver))
 				.add(observers::CreateDataModificationApprovalRefundObserver(liquidityProviderObserver))
 				.add(observers::CreateDataModificationCancelObserver(liquidityProviderObserver))
-				.add(observers::CreateDriveClosureObserver(liquidityProviderObserver))
+				.add(observers::CreateDriveClosureObserver(liquidityProviderObserver, storageUpdatesListeners))
 				.add(observers::CreateReplicatorOnboardingObserver())
 				.add(observers::CreateReplicatorOffboardingObserver())
 				.add(observers::CreateDownloadPaymentObserver())
@@ -215,8 +218,9 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateStreamPaymentObserver())
 				.add(observers::CreateStartDriveVerificationObserver(state))
 				.add(observers::CreateEndDriveVerificationObserver(liquidityProviderObserver))
-				.add(observers::CreatePeriodicStoragePaymentObserver(liquidityProviderObserver))
-				.add(observers::CreatePeriodicDownloadChannelPaymentObserver());
+				.add(observers::CreatePeriodicStoragePaymentObserver(liquidityProviderObserver, storageUpdatesListeners))
+				.add(observers::CreatePeriodicDownloadChannelPaymentObserver())
+				.add(observers::CreateOwnerManagementProhibitionObserver());
 		});
 	}
 }}
