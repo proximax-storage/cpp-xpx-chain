@@ -20,6 +20,9 @@ namespace catapult { namespace config {
 		/// Whether the plugin is enabled.
 		bool Enabled;
 
+		/// Maximum transaction mosaics size.
+		uint16_t MaxServicePaymentsSize;
+
 		/// Maximum size of rows in transactions
 		uint16_t MaxRowSize;
 

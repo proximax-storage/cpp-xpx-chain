@@ -18,12 +18,6 @@ namespace catapult { namespace plugins {
 
 	namespace {
 
-		template<class T>
-		void pushBytes(std::vector<uint8_t>& buffer, const T& data) {
-			const auto* pBegin = reinterpret_cast<const uint8_t*>(&data);
-			buffer.insert(buffer.end(), pBegin, pBegin + sizeof(data));
-		}
-
 		template<typename TTransaction>
 		auto CreatePublisher(const config::ImmutableConfiguration& config) {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {

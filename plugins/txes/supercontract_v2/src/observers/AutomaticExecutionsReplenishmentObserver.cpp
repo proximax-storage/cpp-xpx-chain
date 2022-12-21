@@ -22,8 +22,7 @@ namespace catapult::observers {
 
 			auto& automaticExecutionInfo = contractEntry.automaticExecutionsInfo();
 
-			// TODO Prevent overflow
-			automaticExecutionInfo.m_automatedExecutionsNumber += notification.Number;
+			automaticExecutionInfo.AutomatedExecutionsNumber += notification.Number;
 
 			if (!automaticExecutionInfo.m_automaticExecutionsEnabledSince) {
 				if (contractEntry.deploymentStatus() == state::DeploymentStatus::COMPLETED) {

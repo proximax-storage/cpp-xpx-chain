@@ -41,9 +41,11 @@ struct CompletedCall {
 };
 
 struct AutomaticExecutionsInfo {
-	Amount m_automatedExecutionCallPayment;
-	Amount m_automatedDownloadCallPayment;
-	uint32_t m_automatedExecutionsNumber = 0U;
+	std::string AutomaticExecutionFileName;
+	std::string AutomaticExecutionsFunctionName;
+	Amount AutomatedExecutionCallPayment;
+	Amount AutomatedDownloadCallPayment;
+	uint32_t AutomatedExecutionsNumber = 0U;
 	std::optional<Height> m_automaticExecutionsEnabledSince;
 };
 

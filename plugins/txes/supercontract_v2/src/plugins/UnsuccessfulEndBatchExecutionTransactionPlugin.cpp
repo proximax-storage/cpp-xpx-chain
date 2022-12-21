@@ -84,20 +84,6 @@ namespace catapult { namespace plugins {
 							transaction.BatchId,
 							cosigners));
 
-					std::map<Key, ProofOfExecution> proofs;
-					for (uint i = 0; i < transaction.CosignersNumber; i++) {
-						const auto& rawProof = transaction.ProofsOfExecutionPtr()[i];
-						model::ProofOfExecution proof;
-						proof.StartBatchId = rawProof.StartBatchId;
-
-						proof.T.fromBytes(rawProof.T);
-						proof.R = crypto::Scalar(rawProof.R);
-						proof.F.fromBytes(rawProof.F);
-						proof.K = crypto::Scalar(rawProof.K);
-						proofs[transaction.PublicKeysPtr()[i]] = proof;
-					}
-					sub.notify(model::ProofOfExecutionNotification<1>(transaction.ContractKey, proofs));
-
 					std::vector<model::CallPaymentOpinion> callPaymentOpinions;
 					callPaymentOpinions.reserve(transaction.CosignersNumber);
 
@@ -114,6 +100,20 @@ namespace catapult { namespace plugins {
 					}
 
 					sub.notify(model::BatchCallsNotification<1>(transaction.ContractKey, callDigests, callPaymentOpinions));
+
+					std::map<Key, ProofOfExecution> proofs;
+					for (uint i = 0; i < transaction.CosignersNumber; i++) {
+						const auto& rawProof = transaction.ProofsOfExecutionPtr()[i];
+						model::ProofOfExecution proof;
+						proof.StartBatchId = rawProof.StartBatchId;
+
+						proof.T.fromBytes(rawProof.T);
+						proof.R = crypto::Scalar(rawProof.R);
+						proof.F.fromBytes(rawProof.F);
+						proof.K = crypto::Scalar(rawProof.K);
+						proofs[transaction.PublicKeysPtr()[i]] = proof;
+					}
+					sub.notify(model::ProofOfExecutionNotification<1>(transaction.ContractKey, proofs));
 
 					if (contractShouldBeDestroyed) {
 						sub.notify(ContractDestroyNotification<1>(transaction.ContractKey));

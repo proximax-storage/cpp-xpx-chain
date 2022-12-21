@@ -6,6 +6,7 @@
 
 #include <catapult/crypto/Hashes.h>
 #include "src/model/EndBatchExecutionSingleTransaction.h"
+#include "catapult/model/SupercontractNotifications.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "src/model/InternalSuperContractNotifications.h"
@@ -16,18 +17,15 @@ namespace catapult { namespace plugins {
 
 	namespace {
 
-		template<class T>
-		void pushBytes(std::vector<uint8_t>& buffer, const T& data) {
-			const auto* pBegin = reinterpret_cast<const uint8_t*>(&data);
-			buffer.insert(buffer.end(), pBegin, pBegin + sizeof(data));
-		}
-
 		template<typename TTransaction>
 		auto CreatePublisher(const config::ImmutableConfiguration& config) {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
 					sub.notify(model::ContractStateUpdateNotification<1>(transaction.ContractKey));
+
+					sub.notify(
+							model::BatchExecutionSingleNotification<1>(transaction.ContractKey, transaction.BatchId));
 
 					std::map<Key, ProofOfExecution> proofs;
 					const auto& rawProof = transaction.ProofOfExecution;

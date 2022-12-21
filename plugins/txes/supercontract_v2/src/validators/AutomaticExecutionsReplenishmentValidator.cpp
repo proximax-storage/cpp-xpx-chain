@@ -26,7 +26,7 @@ namespace catapult { namespace validators {
 		}
 
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
-		if (static_cast<uint64_t>(pContractEntry->automaticExecutionsInfo().m_automatedExecutionsNumber) +
+		if (static_cast<uint64_t>(pContractEntry->automaticExecutionsInfo().AutomatedExecutionsNumber) +
 					notification.Number >
 			pluginConfig.MaxAutoExecutions) {
 			return Failure_SuperContract_Max_Auto_Executions_Number_Exceeded;

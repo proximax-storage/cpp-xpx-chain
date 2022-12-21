@@ -93,32 +93,31 @@ namespace catapult::observers {
 					}
 				}
 				else {
-					scRefund = Amount((automaticExecutionsInfo.m_automatedExecutionCallPayment - call.ExecutionWork).unwrap() * executorsNumber);
-					scRefund = Amount((automaticExecutionsInfo.m_automatedDownloadCallPayment - call.DownloadWork).unwrap() * executorsNumber);
-					refundReceiver = call.Caller;
-					automaticExecutionsInfo.m_automatedExecutionsNumber--;
+					scRefund = Amount((automaticExecutionsInfo.AutomatedExecutionCallPayment - call.ExecutionWork).unwrap() * executorsNumber);
+					scRefund = Amount((automaticExecutionsInfo.AutomatedDownloadCallPayment - call.DownloadWork).unwrap() * executorsNumber);
+					refundReceiver = driveOwner;
+					automaticExecutionsInfo.AutomatedExecutionsNumber--;
 				}
 				liquidityProvider->debitMosaics(
 						context,
 						contractEntry.executionPaymentKey(),
-						call.Caller,
+						refundReceiver,
 						scMosaicId,
 						scRefund);
 				liquidityProvider->debitMosaics(
 						context,
 						contractEntry.executionPaymentKey(),
-						call.Caller,
+						refundReceiver,
 						streamingMosaicId,
 						streamingRefund);
 			}
 
-			// TODO Consider this
-			if (automaticExecutionsInfo.m_automatedExecutionsNumber == 0) {
+			if (automaticExecutionsInfo.AutomatedExecutionsNumber == 0) {
 				automaticExecutionsInfo.m_automaticExecutionsEnabledSince.reset();
 			}
 
 			if (contractEntry.batches().size() == 1) {
-				if (automaticExecutionsInfo.m_automatedExecutionsNumber > 0) {
+				if (automaticExecutionsInfo.AutomatedExecutionsNumber > 0) {
 					automaticExecutionsInfo.m_automaticExecutionsEnabledSince = context.Height;
 				}
 			}

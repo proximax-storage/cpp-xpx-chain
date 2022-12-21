@@ -24,6 +24,10 @@ namespace catapult { namespace validators {
 			return Failure_SuperContract_Max_Row_Size_Exceeded;
 		}
 
+		if (notification.ServicePayments.size() > pluginConfig.MaxServicePaymentsSize) {
+			return Failure_SuperContract_Max_Service_Payments_Size_Exceeded;
+		}
+
 		const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 
 		auto contractIt = contractCache.find(notification.ContractKey);

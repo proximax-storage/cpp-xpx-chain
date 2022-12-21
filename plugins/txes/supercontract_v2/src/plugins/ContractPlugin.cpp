@@ -78,7 +78,7 @@ namespace catapult { namespace plugins {
 
 				resolved =
 						Amount(pWork->NumberOfExecutions *
-							   contractEntry.automaticExecutionsInfo().m_automatedExecutionCallPayment.unwrap() *
+							   contractEntry.automaticExecutionsInfo().AutomatedExecutionCallPayment.unwrap() *
 							   executorsNumber);
 				return true;
 			}
@@ -93,7 +93,7 @@ namespace catapult { namespace plugins {
 
 				resolved =
 						Amount(pWork->NumberOfExecutions *
-						contractEntry.automaticExecutionsInfo().m_automatedDownloadCallPayment.unwrap() *
+						contractEntry.automaticExecutionsInfo().AutomatedDownloadCallPayment.unwrap() *
 						executorsNumber);
 				return true;
 			}

@@ -22,8 +22,10 @@ namespace catapult::observers {
 		entry.setExecutionPaymentKey(notification.ExecutionPaymentKey);
 		entry.setAssignee(notification.Assignee);
 		auto& automaticExecutionsInfo = entry.automaticExecutionsInfo();
-		automaticExecutionsInfo.m_automatedExecutionCallPayment = notification.AutomaticExecutionCallPayment;
-		automaticExecutionsInfo.m_automatedDownloadCallPayment = notification.AutomaticDownloadCallPayment;
+		automaticExecutionsInfo.AutomaticExecutionFileName = notification.AutomaticExecutionFileName;
+		automaticExecutionsInfo.AutomaticExecutionsFunctionName = notification.AutomaticExecutionsFunctionName;
+		automaticExecutionsInfo.AutomatedExecutionCallPayment = notification.AutomaticExecutionCallPayment;
+		automaticExecutionsInfo.AutomatedDownloadCallPayment = notification.AutomaticDownloadCallPayment;
 
 		contractCache.insert(entry);
 
