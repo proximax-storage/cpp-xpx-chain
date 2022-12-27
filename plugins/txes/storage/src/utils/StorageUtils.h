@@ -75,7 +75,7 @@ namespace catapult { namespace utils {
 			const Key&,
 			const std::set<Key>&,
 			observers::ObserverContext&,
-			const observers::LiquidityProviderExchangeObserver&);
+			const std::unique_ptr<observers::LiquidityProviderExchangeObserver>&);
 
 	/// Performs actual offboarding of \a offboardingReplicators from the drive with \a driveKey;
 	/// updates drive's data modification and download shards to keep them valid.

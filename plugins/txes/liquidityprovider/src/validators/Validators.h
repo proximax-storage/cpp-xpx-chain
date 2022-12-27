@@ -17,7 +17,7 @@
 namespace catapult { namespace validators {
 
 #define DEFINE_STATEFUL_VALIDATOR_WITH_LIQUIDITY_PROVIDER(NAME, HANDLER) \
-DECLARE_STATEFUL_VALIDATOR(NAME, validators::Notification)(const LiquidityProviderExchangeValidator& liquidityProvider) { \
+DECLARE_STATEFUL_VALIDATOR(NAME, validators::Notification)(const std::unique_ptr<LiquidityProviderExchangeValidator>& liquidityProvider) { \
 		return MAKE_STATEFUL_VALIDATOR(NAME, HANDLER); \
 	}
 
@@ -27,9 +27,9 @@ DECLARE_STATEFUL_VALIDATOR(NAME, validators::Notification)(const LiquidityProvid
 
 	DECLARE_STATEFUL_VALIDATOR(CreateLiquidityProvider, model::CreateLiquidityProviderNotification<1>)();
 
-	DECLARE_STATEFUL_VALIDATOR(CreditMosaic, model::CreditMosaicNotification<1>)(const LiquidityProviderExchangeValidator&);
+	DECLARE_STATEFUL_VALIDATOR(CreditMosaic, model::CreditMosaicNotification<1>)(const std::unique_ptr<LiquidityProviderExchangeValidator>&);
 
-	DECLARE_STATEFUL_VALIDATOR(DebitMosaic, model::DebitMosaicNotification<1>)(const LiquidityProviderExchangeValidator&);
+	DECLARE_STATEFUL_VALIDATOR(DebitMosaic, model::DebitMosaicNotification<1>)(const std::unique_ptr<LiquidityProviderExchangeValidator>&);
 
 	DECLARE_STATEFUL_VALIDATOR(ManualRateChange, model::ManualRateChangeNotification<1>)();
 

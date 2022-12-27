@@ -15,9 +15,9 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS EndDriveVerificationObserverTests
 
-	const auto Liquidity_Provider = std::make_shared<test::LiquidityProviderExchangeObserverImpl>();
+	const std::unique_ptr<observers::LiquidityProviderExchangeObserver>  Liquidity_Provider = std::make_unique<test::LiquidityProviderExchangeObserverImpl>();
 
-    DEFINE_COMMON_OBSERVER_TESTS(EndDriveVerification, *Liquidity_Provider)
+    DEFINE_COMMON_OBSERVER_TESTS(EndDriveVerification, Liquidity_Provider)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -188,7 +188,7 @@ namespace catapult { namespace observers {
 					buffer.data()
 			);
 
-            auto pObserver = CreateEndDriveVerificationObserver(*Liquidity_Provider);
+            auto pObserver = CreateEndDriveVerificationObserver(Liquidity_Provider);
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);

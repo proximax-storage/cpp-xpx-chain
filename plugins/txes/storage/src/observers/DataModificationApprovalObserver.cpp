@@ -19,7 +19,7 @@ namespace catapult { namespace observers {
 		auto& completedDataModifications = driveEntry.completedDataModifications();
 		auto& activeDataModifications = driveEntry.activeDataModifications();
 
-		completedDataModifications.emplace_back(*activeDataModifications.begin(), state::DataModificationState::Succeeded);
+		completedDataModifications.emplace_back(*activeDataModifications.begin(), state::DataModificationApprovalState::Approved, notification.ModificationStatus);
 		activeDataModifications.erase(activeDataModifications.begin());
 
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();

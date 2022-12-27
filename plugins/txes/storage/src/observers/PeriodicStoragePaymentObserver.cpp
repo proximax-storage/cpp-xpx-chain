@@ -18,7 +18,7 @@ namespace catapult { namespace observers {
 	using Notification = model::BlockNotification<1>;
 	using BigUint = boost::multiprecision::uint256_t;
 
-	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)(const LiquidityProviderExchangeObserver& liquidityProvider) {
+	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider) {
 		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			if (!pluginConfig.Enabled || context.Height < Height(2))
@@ -32,6 +32,9 @@ namespace catapult { namespace observers {
 			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 
 			utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
+
+			auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
+			utils::QueueAdapter<cache::DownloadChannelCache> downloadQueueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
 
 			if (queueAdapter.isEmpty()) {
 				return;
@@ -72,7 +75,7 @@ namespace catapult { namespace observers {
 					auto timeInConfirmedStorageSeconds = info.TimeInConfirmedStorage.unwrap() / 1000;
 
 					auto payment = Amount(((driveSize * timeInConfirmedStorageSeconds) / timeSinceLastPaymentSeconds).template convert_to<uint64_t>());
-					liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
+					liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
 
 					info.TimeInConfirmedStorage = Timestamp(0);
 				}
@@ -123,25 +126,25 @@ namespace catapult { namespace observers {
 						for (const auto& replicatorKey : replicators) {
 							auto replicatorIter = accountStateCache.find(replicatorKey);
 							auto& replicatorState = replicatorIter.get();
-							liquidityProvider.debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
+							liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
 						}
 					}
 
 					// Returning the rest to the drive owner
 					const auto refundStreamingAmount = driveState.Balances.get(streamingMosaicId);
-					liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), refundStreamingAmount);
+					liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), refundStreamingAmount);
 
 					const auto refundStorageAmount = driveState.Balances.get(storageMosaicId);
-					liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStorageMosaicId(context.Config.Immutable), refundStorageAmount);
+					liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStorageMosaicId(context.Config.Immutable), refundStorageAmount);
 
 					// Simulate publishing of finish download for all download channels
 
-					auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 					for (const auto& key: driveEntry.downloadShards()) {
 						auto downloadIter = downloadCache.find(key);
 						auto& downloadEntry = downloadIter.get();
 						if (!downloadEntry.isCloseInitiated()) {
 							downloadEntry.setFinishPublished(true);
+							downloadQueueAdapter.remove(key.array());
 							downloadEntry.downloadApprovalInitiationEvent() = eventHash;
 						}
 					}

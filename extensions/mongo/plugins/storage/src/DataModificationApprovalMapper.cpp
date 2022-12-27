@@ -18,6 +18,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		builder << "driveKey" << ToBinary(transaction.DriveKey);
 		builder << "dataModificationId" << ToBinary(transaction.DataModificationId);
 		builder << "fileStructureCdi" << ToBinary(transaction.FileStructureCdi);
+		builder << "modificationStatus" << static_cast<int8_t>(transaction.ModificationStatus);
 		builder << "fileStructureSizeBytes" << static_cast<int64_t>(transaction.FileStructureSizeBytes);
 		builder << "metaFilesSizeBytes" << static_cast<int64_t>(transaction.MetaFilesSizeBytes);
 		builder << "usedDriveSizeBytes" << static_cast<int64_t>(transaction.UsedDriveSizeBytes);

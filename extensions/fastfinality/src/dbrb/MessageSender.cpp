@@ -23,9 +23,7 @@ namespace catapult { namespace dbrb {
 		net::PeerConnectResult Connect(net::PacketWriters& writers, const ProcessId& node) {
 			auto pPromise = std::make_shared<std::promise<net::PeerConnectResult>>();
 			writers.connect(node, [pPromise, node](const net::PeerConnectResult& result) {
-				const auto& endPoint = node.endpoint();
-				CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code))
-					<< "[DBRB] connection attempt to " << node << " @ " << endPoint.Host << " : " << endPoint.Port << " completed with " << result.Code;
+				CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[DBRB] connection attempt to " << node << " completed with " << result.Code;
 				pPromise->set_value(result);
 			});
 
@@ -37,9 +35,15 @@ namespace catapult { namespace dbrb {
 			if (nodePacketIoPair.io())
 				return nodePacketIoPair;
 
-			result = Connect(writers, node);
-			if (result.Code == net::PeerConnectCode::Accepted)
-				return writers.pickOne(Default_Timeout, node.identityKey());
+			auto identities = writers.identities();
+			auto iter = identities.find(node.identityKey());
+			if (iter == identities.end()) {
+				result = Connect(writers, node);
+				if (result.Code == net::PeerConnectCode::Accepted)
+					return writers.pickOne(Default_Timeout, node.identityKey());
+			} else {
+				result = net::PeerConnectResult(net::PeerConnectCode::Already_Connected);
+			}
 
 			return {};
 		}
@@ -68,6 +72,11 @@ namespace catapult { namespace dbrb {
 		m_condVar.notify_one();
 	}
 
+	void MessageSender::clearQueue() {
+		std::lock_guard<std::mutex> guard(m_mutex);
+		m_buffer.clear();
+	}
+
 	void MessageSender::workerThreadFunc() {
 		BufferType buffer;
 		while (m_running) {
@@ -92,6 +101,7 @@ namespace catapult { namespace dbrb {
 				for (const auto& recipient : recipients) {
 					auto nodePacketIoPair = GetNodePacketIoPair(*m_pWriters, recipient, peerConnectResult);
 					if (nodePacketIoPair.io()) {
+						CATAPULT_LOG(debug) << "[DBRB] sending " << *pPacket << " to " << recipient;
 						auto pPromise = std::make_shared<std::promise<ionet::SocketOperationCode>>();
 						nodePacketIoPair.io()->write(ionet::PacketPayload(pPacket), [pPacket, recipient, pPromise](ionet::SocketOperationCode code) {
 							pPromise->set_value(code);

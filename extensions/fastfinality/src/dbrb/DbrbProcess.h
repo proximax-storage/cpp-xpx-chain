@@ -13,6 +13,8 @@
 #include "catapult/net/PacketWriters.h"
 #include "catapult/ionet/PacketHandlers.h"
 
+namespace catapult { namespace thread { class IoThreadPool; }}
+
 namespace catapult { namespace dbrb {
 
 	/// Struct that encapsulates all necessary quorum counters and their update methods.
@@ -135,7 +137,8 @@ namespace catapult { namespace dbrb {
 			std::shared_ptr<net::PacketWriters> pWriters,
 			const std::vector<ionet::Node>& bootstrapNodes,
 			ionet::Node thisNode,
-			const crypto::KeyPair& keyPair);
+			const crypto::KeyPair& keyPair,
+			std::shared_ptr<thread::IoThreadPool> pPool);
 
 	private:
 		/// Process identifier.
@@ -229,6 +232,8 @@ namespace catapult { namespace dbrb {
 
 		MessageSender m_messageSender;
 
+		std::shared_ptr<thread::IoThreadPool> m_pPool;
+
 	public:
 		/// Request to join the system.
 		void join();
@@ -241,13 +246,15 @@ namespace catapult { namespace dbrb {
 
 		void processMessage(const Message& message);
 
+		void clearBroadcastData();
+
 	public:
 		void registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers);
 		void setDeliverCallback(const DeliverCallback& callback);
 
 	private:
-		void disseminate(const std::shared_ptr<MessagePacket>& pPacket, const std::set<ProcessId>& recipients);
-		void send(const std::shared_ptr<MessagePacket>& pPacket, const ProcessId& recipient);
+		void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients);
+		void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient);
 
 		void prepareForStateUpdates(const InstallMessageData&);
 		void updateState(const std::set<StateUpdateMessage>&);

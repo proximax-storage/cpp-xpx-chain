@@ -5,6 +5,7 @@
 **/
 
 #include "Observers.h"
+#include <src/utils/Queue.h>
 
 namespace catapult { namespace observers {
 
@@ -17,6 +18,11 @@ namespace catapult { namespace observers {
         auto& downloadChannelEntry = downloadChannelIter.get();
 
 		downloadChannelEntry.setFinishPublished(true);
+
+		auto& queueCache = context.Cache.template sub<cache::QueueCache>();
+		utils::QueueAdapter<cache::DownloadChannelCache> downloadQueueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadChannelCache);
+		downloadQueueAdapter.remove(downloadChannelEntry.entryKey());
+
 		downloadChannelEntry.downloadApprovalInitiationEvent() = notification.TransactionHash;
 	});
 }}

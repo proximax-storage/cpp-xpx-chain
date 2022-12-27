@@ -23,7 +23,7 @@ namespace catapult { namespace observers {
 				- utils::FileSize::FromBytes(notification.UsedDriveSize - notification.MetaFilesSizeBytes).megabytes();
 		const auto transferAmount = Amount(replicatorDifference * usedSizeDifference);
 
-		liquidityProvider.debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+		liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
 									   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 									   transferAmount);
 	});
