@@ -420,6 +420,20 @@ namespace catapult { namespace dbrb {
 		return pPacket;
 	}
 
+	std::optional<InstallMessageData> InstallMessage::tryGetMessageData() const {
+		const auto& sequenceData = Sequence.data();
+		if (sequenceData.size() < 2u)
+			return {};
+
+		const std::vector<View> convergedSequenceData(sequenceData.begin() + 1u, sequenceData.end());
+
+		const auto& replacedView = *Sequence.maybeLeastRecent();
+		const auto convergedSequence = *Sequence::fromViews(convergedSequenceData);
+		const auto& leastRecentView = *convergedSequence.maybeLeastRecent();
+
+		return InstallMessageData{ leastRecentView, convergedSequence, replacedView };
+	}
+
 	std::shared_ptr<MessagePacket> PrepareMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
 		uint32_t payloadSize = Payload->Size;
 		auto pPackedSender = ionet::PackNode(Sender);

@@ -66,6 +66,7 @@ namespace catapult { namespace dbrb {
 	// Basic operations:
 
 	void DbrbProcess::join() {
+		CATAPULT_LOG(debug) << "[DBRB] JOIN initiated.";
 		std::lock_guard<std::mutex> guard(m_mutex);
 
 		// Can only request to join from the initial membership state of the process.
@@ -180,7 +181,7 @@ namespace catapult { namespace dbrb {
 			}
 			default:
 				CATAPULT_THROW_RUNTIME_ERROR_1("invalid DBRB message type", message.Type)
-		}			
+		}
 	}
 
 	// Basic private methods:
@@ -193,9 +194,9 @@ namespace catapult { namespace dbrb {
 		m_messageSender.enqueue(pPacket, { recipient });
 	}
 
-	void DbrbProcess::prepareForStateUpdates(const InstallMessage& message) {
-		m_currentInstallMessage = message;
-		m_quorumManager.StateUpdateMessages[message.ReplacedView] = {};	// TODO: May be redundant
+	void DbrbProcess::prepareForStateUpdates(const InstallMessageData& installMessageData) {
+		m_currentInstallMessage = installMessageData;
+		m_quorumManager.StateUpdateMessages[installMessageData.ReplacedView] = {};	// TODO: May be redundant
 	}
 
 	void DbrbProcess::updateState(const std::set<StateUpdateMessage>& messages) {
@@ -436,9 +437,16 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::onConvergedQuorumCollected(const ConvergedMessage& message) {
 		CATAPULT_LOG(debug) << "[DBRB] CONVERGED: Quorum collected in view " << message.ReplacedView << ".";
-		const auto& leastRecentView = message.ConvergedSequence.maybeLeastRecent().value_or(View{});
-		InstallMessage responseMessage(m_id, leastRecentView, message.ConvergedSequence, message.ReplacedView);
+		Sequence sequence;
+		sequence.tryAppend(message.ReplacedView);
+		sequence.tryAppend(message.ConvergedSequence);
 
+		const auto keyPair = std::make_pair(message.ReplacedView, message.ConvergedSequence);
+		const auto& convergedSignatures = m_quorumManager.ConvergedSignatures.at(keyPair);
+
+		InstallMessage responseMessage(m_id, sequence, convergedSignatures);
+
+		const auto& leastRecentView = message.ConvergedSequence.maybeLeastRecent().value_or(View{});
 		std::set<ProcessId> replacedViewMembers = message.ReplacedView.members();
 		std::set<ProcessId> leastRecentViewMembers = leastRecentView.members();
 		std::set<ProcessId> recipientsUnion;
@@ -451,21 +459,29 @@ namespace catapult { namespace dbrb {
 	}
 
 	void DbrbProcess::onInstallMessageReceived(const InstallMessage& message) {
+		const auto pInstallMessageData = message.tryGetMessageData();
+		if (!pInstallMessageData.has_value())
+			return;	// TODO: Can inform client about ill-formed Install message
+
+		const auto& replacedView = pInstallMessageData->ReplacedView;
+		const auto& convergedSequence = pInstallMessageData->ConvergedSequence;
+		const auto& leastRecentView = pInstallMessageData->LeastRecentView;
+
 		// Update Format sequences.
-		auto& format = m_formatSequences[message.LeastRecentView];
-		auto sequenceWithoutLeastRecent = message.ConvergedSequence;
-		sequenceWithoutLeastRecent.tryErase(message.LeastRecentView);	// Will always succeed.
+		auto& format = m_formatSequences[leastRecentView];
+		auto sequenceWithoutLeastRecent = convergedSequence;
+		sequenceWithoutLeastRecent.tryErase(leastRecentView);	// Will always succeed.
 		format.insert(sequenceWithoutLeastRecent);
 
-		if (message.ReplacedView.isMember(m_id)) {
-			if (m_currentView < message.LeastRecentView)
+		if (replacedView.isMember(m_id)) {
+			if (m_currentView < leastRecentView)
 				m_limitedProcessing = true;	// Stop processing Prepare, Commit and Reconfig messages.
 
 			// TODO: Double-check; not clear what was meant by state(v)
-			StateUpdateMessage stateUpdateMessage(m_id, m_state, message.ReplacedView, m_pendingChanges);
+			StateUpdateMessage stateUpdateMessage(m_id, m_state, replacedView, m_pendingChanges);
 
-			std::set<ProcessId> replacedViewMembers = message.ReplacedView.members();
-			std::set<ProcessId> leastRecentViewMembers = message.LeastRecentView.members();
+			std::set<ProcessId> replacedViewMembers = replacedView.members();
+			std::set<ProcessId> leastRecentViewMembers = leastRecentView.members();
 			std::set<ProcessId> recipientsUnion;
 			std::set_union(replacedViewMembers.begin(), replacedViewMembers.end(),
 				leastRecentViewMembers.begin(), leastRecentViewMembers.end(),
@@ -474,10 +490,10 @@ namespace catapult { namespace dbrb {
 			disseminate(stateUpdateMessage.toNetworkPacket(&m_keyPair), recipientsUnion);
 		}
 
-		if (m_currentView < message.LeastRecentView) {
+		if (m_currentView < leastRecentView) {
 			// Wait until a quorum of StateUpdate messages is collected for (message.ReplacedView).
 			CATAPULT_LOG(debug) << "[DBRB] INSTALL: Preparing for state updates.";
-			prepareForStateUpdates(message);
+			prepareForStateUpdates(*pInstallMessageData);
 		}
 	}
 

@@ -206,4 +206,19 @@ namespace catapult { namespace dbrb {
 		/// Sequence of mutually comparable views. Greater index means more recent view.
 		std::vector<View> m_data;
 	};
+
+	/// Struct that stores Install message data in unwrapped form.
+	struct InstallMessageData {
+		/// Least recent view.
+		View LeastRecentView;
+
+		/// Sequence that is converged on to replace the view.
+		Sequence ConvergedSequence;
+
+		/// View to be replaced.
+		View ReplacedView;
+
+		// ConvergedSignatures need no additional processing
+		// and can be accessed directly from the Install message.
+	};
 }}

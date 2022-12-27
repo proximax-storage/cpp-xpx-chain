@@ -24,8 +24,8 @@ namespace catapult { namespace dbrb {
 		/// Maps view-sequence pairs to numbers of received Proposed messages for those pairs.
 		std::map<std::pair<View, Sequence>, uint32_t> ProposedCounters;
 
-		/// Maps view-sequence pairs to numbers of received Converged messages for those pairs.
-		std::map<std::pair<View, Sequence>, uint32_t> ConvergedCounters;
+		/// Maps view-sequence pairs to processes with their signatures that received Converged messages for those pairs.
+		std::map<std::pair<View, Sequence>, std::map<ProcessId, Signature>> ConvergedSignatures;
 
 		/// Maps views to received StateUpdate messages for those views.
 		std::map<View, std::set<StateUpdateMessage>> StateUpdateMessages;
@@ -51,7 +51,12 @@ namespace catapult { namespace dbrb {
 
 		bool update(const ConvergedMessage& message) {
 			const auto keyPair = std::make_pair(message.ReplacedView, message.ConvergedSequence);
-			return update(ConvergedCounters, keyPair, message.ReplacedView);
+			auto& map = ConvergedSignatures[keyPair];
+			if (map.count(message.Sender)) {
+				return false; // This process has already sent a Converged message; do nothing, quorum is NOT triggered on this message.
+			}
+			map[message.Sender] = message.Signature;
+			return map.size() == message.ReplacedView.quorumSize();
 		};
 
 		std::set<View> update(const StateUpdateMessage& message) {
@@ -158,7 +163,7 @@ namespace catapult { namespace dbrb {
 		bool m_limitedProcessing = false;
 
 		/// Needs to be set in order for \a onStateUpdateQuorumCollected to be triggered.
-		std::optional<InstallMessage> m_currentInstallMessage;
+		std::optional<InstallMessageData> m_currentInstallMessage;
 
 		/// Views installed by the process.
 		std::set<View> m_installedViews;
@@ -244,7 +249,7 @@ namespace catapult { namespace dbrb {
 		void disseminate(const std::shared_ptr<MessagePacket>& pPacket, const std::set<ProcessId>& recipients);
 		void send(const std::shared_ptr<MessagePacket>& pPacket, const ProcessId& recipient);
 
-		void prepareForStateUpdates(const InstallMessage&);
+		void prepareForStateUpdates(const InstallMessageData&);
 		void updateState(const std::set<StateUpdateMessage>&);
 		bool isAcknowledgeable(const PrepareMessage&);
 		Signature sign(const Payload&);

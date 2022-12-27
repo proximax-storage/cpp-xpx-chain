@@ -167,33 +167,30 @@ namespace catapult { namespace dbrb {
 		Sequence ConvergedSequence;
 
 		/// View that is replaced with the converged sequence.
+		// TODO: This can be prepended to ConvergedSequence, similarly to how it's done in InstallMessage
 		View ReplacedView;
 	};
 
 	struct InstallMessage : Message {
 	public:
 		InstallMessage() = delete;
-		InstallMessage(const ProcessId& sender, View leastRecentView, Sequence convergedSequence, View replacedView)
+		InstallMessage(const ProcessId& sender, Sequence sequence, std::map<ProcessId, catapult::Signature> signatures)
 			: Message(sender, ionet::PacketType::Dbrb_Install_Message)
-			, LeastRecentView(std::move(leastRecentView))
-			, ConvergedSequence(std::move(convergedSequence))
-			, ReplacedView(std::move(replacedView))
+			, Sequence(std::move(sequence))
+			, ConvergedSignatures(std::move(signatures))
 		{}
 
 	public:
 		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
+		std::optional<InstallMessageData> tryGetMessageData() const;
 
 	public:
-		/// Least recent view.
-		View LeastRecentView;	// TODO: Unnecessary, it's just *InstalledSequence.maybeLeastRecent()
+		/// Sequence that is converged on to replace the view, with a single replaced view prepended to it.
+		/// Must contain at least 2 elements to be valid.
+		dbrb::Sequence Sequence;
 
-		/// Sequence that is converged on to replace the view.
-		Sequence ConvergedSequence;
-
-		/// View to be replaced.
-		View ReplacedView;
-
-		// TODO: Include a quorum of signed Converged messages which ensures its authenticity
+		/// Map of processes and their signatures for appropriate Converged messages for Sequence.
+		std::map<ProcessId, catapult::Signature> ConvergedSignatures;
 	};
 
 
