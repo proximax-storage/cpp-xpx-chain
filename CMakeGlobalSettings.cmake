@@ -72,9 +72,6 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
 	# -Wstrict-aliasing=1 perform most paranoid strict aliasing checks
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wstrict-aliasing=1 -Wnon-virtual-dtor -Wno-error=uninitialized -Werror=missing-field-initializers")
 
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-
 	# - Wno-maybe-uninitialized: false positives where gcc isn't sure if an uninitialized variable is used or not
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wno-maybe-uninitialized -g1 -fno-omit-frame-pointer")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-maybe-uninitialized")
@@ -98,9 +95,6 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 		-Wno-switch-enum \
 		-Wno-weak-vtables")
 
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g1")
 endif()
 
@@ -111,7 +105,7 @@ if(("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU") OR ("${CMAKE_CXX_COMPILER_ID}" MAT
 
 	# $origin - to load plugins when running the server
 	# $origin/boost - same, use our boost libs
-	set(CMAKE_INSTALL_RPATH "$ORIGIN:$ORIGIN/deps${CMAKE_INSTALL_RPATH}")
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:$ORIGIN:$ORIGIN/deps")
 	set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
