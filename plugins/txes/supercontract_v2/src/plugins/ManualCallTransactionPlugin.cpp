@@ -10,6 +10,7 @@
 #include "ManualCallTransactionPlugin.h"
 #include "catapult/model/SupercontractNotifications.h"
 #include "src/model/ManualCallTransaction.h"
+#include "src/model/InternalSuperContractNotifications.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/EntityHasher.h"
@@ -29,7 +30,8 @@ namespace catapult { namespace plugins {
 					auto txHash = CalculateHash(transaction, config.GenerationHash);
 
 					auto contractKey = Key(transaction.ContractKey);
-					sub.notify(AccountPublicKeyNotification<1>(contractKey));
+
+					sub.notify(model::ContractStateUpdateNotification<1>(contractKey));
 
 					Hash256 paymentHash;
 					crypto::Sha3_256_Builder sha3;

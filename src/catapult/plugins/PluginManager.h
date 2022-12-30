@@ -35,6 +35,7 @@
 #include "catapult/observers/DemuxObserverBuilder.h"
 #include "catapult/observers/ObserverTypes.h"
 #include "catapult/state/StorageState.h"
+#include "catapult/state/ContractState.h"
 #include "catapult/observers/StorageExternalManagementObserver.h"
 #include "catapult/state/DriveStateBrowser.h"
 #include "catapult/utils/DiagnosticCounter.h"
@@ -280,6 +281,19 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
+		// region contract
+
+		/// Sets a contract state.
+		void setContractState(const std::shared_ptr<state::ContractState>& pState);
+
+		/// Returns whether the contract state set or not.
+		bool isContractStateSet();
+
+		/// Gets contract state.
+		state::ContractState& contractState() const;
+
+		// endregion
+
 		// region liquidityProvider
 
 		void setLiquidityProviderExchangeValidator(std::unique_ptr<validators::LiquidityProviderExchangeValidator>&&);
@@ -338,6 +352,7 @@ namespace catapult { namespace plugins {
 
 		std::shared_ptr<chain::CommitteeManager> m_pCommitteeManager;
 		std::shared_ptr<state::StorageState> m_pStorageState;
+		std::shared_ptr<state::ContractState> m_pContractState;
 
 		std::unique_ptr<validators::LiquidityProviderExchangeValidator> m_pLiquidityProviderExchangeValidator;
 		std::unique_ptr<observers::LiquidityProviderExchangeObserver> m_pLiquidityProviderExchangeObserver;

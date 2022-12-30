@@ -342,6 +342,28 @@ namespace catapult { namespace plugins {
 
 	// endregion
 
+	// region contract
+
+	/// Sets a contract state.
+	void PluginManager::setContractState(const std::shared_ptr<state::ContractState>& pState) {
+		if (!!m_pContractState)
+			CATAPULT_THROW_RUNTIME_ERROR("contract state already set");
+
+		m_pContractState = pState;
+	}
+
+	/// Returns whether the contract state set or not.
+	bool PluginManager::isContractStateSet() {
+		return !!m_pContractState;
+	}
+
+	/// Gets contract state.
+	state::ContractState& PluginManager::contractState() const {
+		return *m_pContractState;
+	}
+
+	// endregion
+
 	// region liquidity provider
 	void PluginManager::setLiquidityProviderExchangeValidator(
 			std::unique_ptr<validators::LiquidityProviderExchangeValidator>&& validator) {

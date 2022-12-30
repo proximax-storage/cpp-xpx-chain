@@ -7,6 +7,7 @@
 #include <catapult/crypto/Hashes.h>
 #include "AutomaticExecutionsPaymentTransactionPlugin.h"
 #include "catapult/model/SupercontractNotifications.h"
+#include "src/model/InternalSuperContractNotifications.h"
 #include "src/model/AutomaticExecutionsPaymentTransaction.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/NotificationSubscriber.h"
@@ -23,14 +24,14 @@ namespace catapult { namespace plugins {
 				switch (transaction.EntityVersion()) {
 				case 1: {
 					auto contractKey = transaction.ContractKey;
-					sub.notify(AccountPublicKeyNotification<1>(contractKey));
+
+					sub.notify(model::ContractStateUpdateNotification<1>(contractKey));
 
 					Hash256 paymentHash;
 					crypto::Sha3_256_Builder sha3;
 					sha3.update({contractKey, config.GenerationHash});
 					sha3.final(paymentHash);
 					auto contractExecutionPaymentKey = Key(paymentHash.array());
-					sub.notify(AccountPublicKeyNotification<1>(contractExecutionPaymentKey));
 
 					sub.notify(AutomaticExecutionsReplenishmentNotification<1>(
 							contractKey, transaction.AutomaticExecutionsNumber));
