@@ -25,6 +25,7 @@ namespace catapult::observers {
 			auto contractIt = contractCache.find(notification.ContractKey);
 			auto& contractEntry = contractIt.get();
 			contractEntry.batches().emplace_back();
+			contractEntry.automaticExecutionsInfo().AutomaticExecutionsNextBlockToCheck = notification.AutomaticExecutionsNextBlockToCheck;
 		 }))
 	}
 }

@@ -113,15 +113,18 @@ namespace catapult::model {
 	public:
 		explicit EndBatchExecutionNotification(const Key& contractKey,
 											   uint64_t batchId,
+											   Height AutomaticExecutionsNextBlockToCheck,
 											   std::vector<Key> cosigners)
 										: Notification(Notification_Type, sizeof(EndBatchExecutionNotification<1>))
 										, ContractKey(contractKey)
 										, BatchId(batchId)
+										, AutomaticExecutionsNextBlockToCheck(AutomaticExecutionsNextBlockToCheck)
 										, Cosigners(cosigners) {}
 
 	public:
 		Key ContractKey;
 		uint64_t BatchId;
+		Height AutomaticExecutionsNextBlockToCheck;
 		std::vector<Key> Cosigners;
 	};
 

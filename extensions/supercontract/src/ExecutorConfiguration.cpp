@@ -19,7 +19,7 @@ namespace catapult { namespace contract {
 	ExecutorConfiguration ExecutorConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
 		ExecutorConfiguration config;
 
-#define LOAD_DB_PROPERTY(NAME) LOAD_PROPERTY("exxecutor", NAME)
+#define LOAD_DB_PROPERTY(NAME) LOAD_PROPERTY("executor", NAME)
 
 		LOAD_DB_PROPERTY(Key);
 

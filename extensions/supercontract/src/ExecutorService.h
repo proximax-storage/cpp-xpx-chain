@@ -10,6 +10,8 @@
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ServiceRegistrar.h"
 #include "catapult/ionet/Node.h"
+#include <catapult/crypto/CurvePoint.h>
+#include <set>
 #include <optional>
 
 namespace catapult { namespace model { class Transaction; } }
@@ -31,7 +33,44 @@ namespace catapult { namespace contract {
 
     	const Key& executorKey() const;
 
-    	bool isExecutorRegistered(const Key& key);
+    	bool contractExists(const Key& contractKey);
+
+		std::optional<Height> contractAddedAt(const Key& contractKey);
+
+	public:
+
+		void addContract(const Key& contractKey);
+
+		void addManualCall(const Key& contractKey,
+						   const Hash256& callId,
+						   const std::string& fileName,
+						   const std::string& functionName,
+						   const std::string& parameters,
+						   Amount executionPayment,
+						   Amount downloadPayment,
+						   const Key& caller,
+						   Height height);
+
+		void successfulBatchExecutionPublished(const Key& contractKey,
+											   uint64_t batchIndex,
+											   const Hash256& driveState,
+											   const crypto::CurvePoint& poExVerificationInfo,
+											   const std::set<Key>& cosigners);
+
+		void unsuccessfulBatchExecutionPublished(const Key& contractKey,
+											   uint64_t batchIndex,
+											   const std::set<Key>& cosigners);
+
+		void automaticExecutionBlockPublished(Height height);
+
+		void updateContracts(Height height);
+
+		void batchExecutionSinglePublished(const Key& contractKey, uint64_t batchIndex);
+
+		void synchronizeSinglePublished(const Key& contractKey, uint64_t batchIndex);
+
+		void activateAutomaticExecutions(const Key& contractKey,
+										 Height height);
 
     private:
         class Impl;

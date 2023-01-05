@@ -24,9 +24,9 @@ namespace catapult::observers {
 
 			automaticExecutionInfo.AutomatedExecutionsNumber += notification.Number;
 
-			if (!automaticExecutionInfo.m_automaticExecutionsEnabledSince) {
+			if (!automaticExecutionInfo.AutomaticExecutionsEnabledSince) {
 				if (contractEntry.deploymentStatus() == state::DeploymentStatus::COMPLETED) {
-					automaticExecutionInfo.m_automaticExecutionsEnabledSince = context.Height;
+					automaticExecutionInfo.AutomaticExecutionsEnabledSince = context.Height;
 				}
 			}
 		}

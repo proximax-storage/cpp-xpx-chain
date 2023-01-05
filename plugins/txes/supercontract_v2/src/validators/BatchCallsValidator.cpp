@@ -25,7 +25,7 @@ namespace catapult { namespace validators {
 		auto requestedCallIt = contractEntry.requestedCalls().begin();
 
 		const auto& automaticExecutionsInfo = contractEntry.automaticExecutionsInfo();
-		auto automaticExecutionsLeft = automaticExecutionsInfo.m_automaticExecutionsEnabledSince
+		auto automaticExecutionsLeft = automaticExecutionsInfo.AutomaticExecutionsEnabledSince
 											   ? 1
 											   : 0;
 		for (uint i = 0; i < notification.Digests.size(); i++) {

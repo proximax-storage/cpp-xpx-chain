@@ -28,6 +28,7 @@ struct ContractCall {
 	Amount ExecutionCallPayment;
 	Amount DownloadCallPayment;
 	std::vector<ServicePayment> ServicePayments;
+	Height BlockHeight;
 };
 
 struct CompletedCall {
@@ -43,10 +44,11 @@ struct CompletedCall {
 struct AutomaticExecutionsInfo {
 	std::string AutomaticExecutionFileName;
 	std::string AutomaticExecutionsFunctionName;
+	Height AutomaticExecutionsNextBlockToCheck;
 	Amount AutomatedExecutionCallPayment;
 	Amount AutomatedDownloadCallPayment;
 	uint32_t AutomatedExecutionsNumber = 0U;
-	std::optional<Height> m_automaticExecutionsEnabledSince;
+	std::optional<Height> AutomaticExecutionsEnabledSince;
 };
 
 enum class DeploymentStatus {

@@ -230,15 +230,18 @@ namespace catapult::model {
 	public:
 		explicit BatchExecutionSingleNotification(
 				const Key& contractKey,
-				uint64_t batchId)
+				uint64_t batchId,
+				const Key& signer)
 				: Notification(Notification_Type, sizeof(BatchExecutionSingleNotification<1>))
 				, ContractKey(contractKey)
 				, BatchId(batchId)
+				, Signer(signer)
 				{}
 
 	public:
 		Key ContractKey;
 		uint64_t BatchId;
+		Key Signer;
 	};
 
 	template<VersionType version>

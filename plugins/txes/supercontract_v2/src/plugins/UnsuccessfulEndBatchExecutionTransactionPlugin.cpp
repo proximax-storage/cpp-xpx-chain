@@ -32,6 +32,7 @@ namespace catapult { namespace plugins {
 					std::vector<uint8_t> commonData;
 					pushBytes(commonData, transaction.ContractKey);
 					pushBytes(commonData, transaction.BatchId);
+					pushBytes(commonData, transaction.AutomaticExecutionsNextBlockToCheck);
 					for (uint j = 0; j < transaction.CallsNumber; j++) {
 						pushBytes(commonData, transaction.CallDigestsPtr()[j]);
 					}
@@ -56,7 +57,10 @@ namespace catapult { namespace plugins {
 					for (uint i = 0; i < transaction.CosignersNumber; i++) {
 						cosignersList.push_back(transaction.PublicKeysPtr()[i]);
 					}
-					sub.notify(model::EndBatchExecutionNotification<1>(transaction.ContractKey, transaction.BatchId, cosignersList));
+					sub.notify(model::EndBatchExecutionNotification<1>(transaction.ContractKey,
+																	   transaction.BatchId,
+																	   transaction.AutomaticExecutionsNextBlockToCheck,
+																	   cosignersList));
 
 					std::set<Key> cosigners;
 					for (uint i = 0; i < transaction.CosignersNumber; i++) {

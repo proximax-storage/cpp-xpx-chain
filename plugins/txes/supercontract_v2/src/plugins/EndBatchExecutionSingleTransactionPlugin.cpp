@@ -24,8 +24,8 @@ namespace catapult { namespace plugins {
 				case 1: {
 					sub.notify(model::ContractStateUpdateNotification<1>(transaction.ContractKey));
 
-					sub.notify(
-							model::BatchExecutionSingleNotification<1>(transaction.ContractKey, transaction.BatchId));
+					sub.notify(model::BatchExecutionSingleNotification<1>(
+							transaction.ContractKey, transaction.BatchId, transaction.Signer));
 
 					std::map<Key, ProofOfExecution> proofs;
 					const auto& rawProof = transaction.ProofOfExecution;

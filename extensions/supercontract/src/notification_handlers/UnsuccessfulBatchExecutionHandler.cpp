@@ -1,0 +1,40 @@
+/**
+*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#include "NotificationHandlers.h"
+
+namespace catapult { namespace notification_handlers {
+
+	using Notification = model::UnsuccessfulBatchExecutionNotification<1>;
+
+	DECLARE_HANDLER(UnsuccessfulBatchExecution, Notification)(const std::weak_ptr<contract::ExecutorService>& pExecutorServiceWeak) {
+		return MAKE_HANDLER(UnsuccessfulBatchExecution, [pExecutorServiceWeak](const Notification& notification, const HandlerContext& context) {
+			auto pExecutorService = pExecutorServiceWeak.lock();
+			if (!pExecutorService) {
+				return;
+			}
+
+			try {
+				if (!pExecutorService->contractExists(notification.ContractKey)) {
+					return;
+				}
+
+				auto contractAddedAt = pExecutorService->contractAddedAt(notification.ContractKey);
+				if (!contractAddedAt || contractAddedAt >= context.Height) {
+					return;
+				}
+
+				pExecutorService->unsuccessfulBatchExecutionPublished(
+						notification.ContractKey,
+						notification.BatchId,
+						notification.Cosigners);
+			}
+			catch (...) {
+
+			}
+		});
+	}
+}}

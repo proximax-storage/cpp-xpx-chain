@@ -28,6 +28,7 @@ namespace catapult::observers {
 		contractCall.ExecutionCallPayment = contractCall.ExecutionCallPayment;
 		contractCall.DownloadCallPayment = contractCall.DownloadCallPayment;
 		contractCall.ServicePayments = contractCall.ServicePayments;
+		contractCall.BlockHeight = context.Height;
 
 		contractEntry.requestedCalls().push_back(std::move(contractCall));
 	})

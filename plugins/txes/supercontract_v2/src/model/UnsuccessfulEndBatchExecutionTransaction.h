@@ -30,6 +30,8 @@ namespace catapult::model {
 
 		uint64_t BatchId;
 
+		Height AutomaticExecutionsNextBlockToCheck;
+
 		uint16_t CosignersNumber;
 
 		uint16_t CallsNumber;

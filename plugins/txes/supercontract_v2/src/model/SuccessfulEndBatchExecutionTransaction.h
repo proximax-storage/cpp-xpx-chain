@@ -38,6 +38,8 @@ namespace catapult::model {
 
 		std::array<uint8_t, 32> ProofOfExecutionVerificationInformation;
 
+		Height AutomaticExecutionsNextBlockToCheck;
+
 		uint16_t CosignersNumber;
 
 		uint16_t CallsNumber;
