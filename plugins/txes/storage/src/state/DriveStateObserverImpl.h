@@ -18,6 +18,10 @@ public:
 	Key getDriveOwner(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
 
 	std::set<Key> getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
+
+	std::set<Key> getDrives(const cache::ReadOnlyCatapultCache &cache, const Key& replicatorKey) const override;
+
+	Hash256 getDriveState(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
 };
 
 } // namespace catapult::state

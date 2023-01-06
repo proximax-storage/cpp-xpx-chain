@@ -45,8 +45,8 @@ struct AutomaticExecutionsInfo {
 	std::string AutomaticExecutionFileName;
 	std::string AutomaticExecutionsFunctionName;
 	Height AutomaticExecutionsNextBlockToCheck;
-	Amount AutomatedExecutionCallPayment;
-	Amount AutomatedDownloadCallPayment;
+	Amount AutomaticExecutionCallPayment;
+	Amount AutomaticDownloadCallPayment;
 	uint32_t AutomatedExecutionsNumber = 0U;
 	std::optional<Height> AutomaticExecutionsEnabledSince;
 };
@@ -69,6 +69,7 @@ struct ExecutorInfo {
 };
 
 struct Batch{
+	bool Success = false;
 	crypto::CurvePoint PoExVerificationInformation;
 	std::vector<CompletedCall> CompletedCalls;
 };

@@ -55,12 +55,12 @@ namespace catapult { namespace validators {
 					return Failure_SuperContract_Automatic_Calls_Are_Not_Requested;
 				}
 				for (const auto& payment: payments.ExecutionWork) {
-					if (payment > automaticExecutionsInfo.AutomatedExecutionCallPayment) {
+					if (payment > automaticExecutionsInfo.AutomaticExecutionCallPayment) {
 						return Failure_SuperContract_Execution_Work_Is_Too_Large;
 					}
 				}
 				for (const auto& payment: payments.DownloadWork) {
-					if (payment > automaticExecutionsInfo.AutomatedDownloadCallPayment) {
+					if (payment > automaticExecutionsInfo.AutomaticDownloadCallPayment) {
 						return Failure_SuperContract_Download_Work_Is_Too_Large;
 					}
 				}

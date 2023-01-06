@@ -93,8 +93,8 @@ namespace catapult::observers {
 					}
 				}
 				else {
-					scRefund = Amount((automaticExecutionsInfo.AutomatedExecutionCallPayment - call.ExecutionWork).unwrap() * executorsNumber);
-					scRefund = Amount((automaticExecutionsInfo.AutomatedDownloadCallPayment - call.DownloadWork).unwrap() * executorsNumber);
+					scRefund = Amount((automaticExecutionsInfo.AutomaticExecutionCallPayment - call.ExecutionWork).unwrap() * executorsNumber);
+					scRefund = Amount((automaticExecutionsInfo.AutomaticDownloadCallPayment - call.DownloadWork).unwrap() * executorsNumber);
 					refundReceiver = driveOwner;
 					automaticExecutionsInfo.AutomatedExecutionsNumber--;
 				}

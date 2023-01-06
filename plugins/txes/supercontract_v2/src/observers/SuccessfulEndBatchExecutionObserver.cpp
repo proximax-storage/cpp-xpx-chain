@@ -19,7 +19,9 @@ namespace catapult::observers {
 			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 			auto contractIt = contractCache.find(notification.ContractKey);
 			auto& contractEntry = contractIt.get();
-			contractEntry.batches().back().PoExVerificationInformation = notification.VerificationInformation;
+			auto& batch = contractEntry.batches().back();
+			batch.Success = true;
+			batch.PoExVerificationInformation = notification.VerificationInformation;
 
 			if (notification.UpdateStorageState) {
 				storageExternalManager->updateStorageState(context,

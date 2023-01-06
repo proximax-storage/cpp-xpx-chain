@@ -42,8 +42,8 @@ namespace catapult { namespace state {
 		uint64_t BatchesExecuted = 0U;
 		std::string AutomaticExecutionsFileName;
 		std::string AutomaticExecutionsFunctionName;
-		uint64_t AutomaticExecutionsSCLimit = 0U;
-		uint64_t AutomaticExecutionsSMLimit = 0U;
+		Amount AutomaticExecutionCallPayment;
+		Amount AutomaticDownloadCallPayment;
 		std::optional<Height> AutomaticExecutionsEnabledSince;
 		Height AutomaticExecutionsNextBlockToCheck;
 		std::optional<PublishedBatchInfo> LastPublishedBatch;
@@ -56,8 +56,17 @@ namespace catapult { namespace state {
 		virtual ~ContractState() = default;
 
 	public:
+
 		void setCache(cache::CatapultCache* pCache) {
 			m_pCache = pCache;
+		}
+
+		void setBlockProvider(std::function<std::shared_ptr<const model::BlockElement> (Height height)>&& blockProvider) {
+			if (m_blockProvider) {
+				CATAPULT_THROW_RUNTIME_ERROR("block provider already set");
+			}
+
+			m_blockProvider = std::move(blockProvider);
 		}
 
 	public:
@@ -65,23 +74,27 @@ namespace catapult { namespace state {
 		virtual bool isExecutorRegistered(const Key& key) const = 0;
 
 	public:
-		virtual Height getChainHeight() = 0;
+		virtual Height getChainHeight() const = 0;
 
-		virtual bool contractExists(const Key& contractKey) = 0;
+		virtual bool contractExists(const Key& contractKey) const = 0;
 
-		virtual std::shared_ptr<const model::BlockElement> getBlock(Height height) = 0;
+		virtual std::shared_ptr<const model::BlockElement> getBlock(Height height) const = 0;
 
-		virtual std::optional<Height> getAutomaticExecutionsEnabledSince(const Key& contractKey) = 0;
+		virtual std::optional<Height> getAutomaticExecutionsEnabledSince(const Key& contractKey) const = 0;
 
-		virtual Hash256 getDriveState(const Key& contractKey) = 0;
+		virtual Hash256 getDriveState(const Key& contractKey) const = 0;
 
-		virtual std::set<Key> getContracts(const Key& executorKey) = 0;
+		virtual std::set<Key> getContracts(const Key& executorKey) const = 0;
 
-		virtual std::set<Key> getExecutors(const Key& contractKey) = 0;
+		virtual std::set<Key> getExecutors(const Key& contractKey) const = 0;
 
-		virtual ContractInfo getContractInfo(const Key& contractKey) = 0;
+		virtual ContractInfo getContractInfo(const Key& contractKey) const = 0;
 
 	protected:
-		cache::CatapultCache* m_pCache;
+
+		cache::CatapultCache* m_pCache = nullptr;
+
+		std::function<std::shared_ptr<const model::BlockElement> (Height height)> m_blockProvider;
+
 	};
 }}

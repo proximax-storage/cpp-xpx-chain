@@ -12,10 +12,11 @@
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/thread/MultiServicePool.h"
 #include <executor/Executor.h>
+#include <executor/DefaultExecutorBuilder.h>
 
 #include <map>
 
-namespace catapult { namespace contract {
+namespace catapult::contract {
 
     // region - executor service registrar
 
@@ -39,15 +40,7 @@ namespace catapult { namespace contract {
                 locator.registerRootedService(Service_Name, m_pExecutorService);
 
                 m_pExecutorService->setServiceState(&state);
-
-                auto& contractState = state.pluginManager().contractState();
-
-                if (contractState.isExecutorRegistered(m_pExecutorService->executorKey())) {
-                    CATAPULT_LOG(debug) << "starting executor service";
-                    m_pReplicatorService->start();
-                }
-
-                m_pReplicatorService.reset();
+                m_pExecutorService.reset();
             }
 
         private:
@@ -67,88 +60,21 @@ namespace catapult { namespace contract {
     public:
         Impl(const crypto::KeyPair& keyPair,
              extensions::ServiceState& serviceState,
-             state::ContractState& contractState)
+             const state::ContractState& contractState,
+             const ExecutorConfiguration& config)
              : m_keyPair(keyPair)
              , m_serviceState(serviceState)
              , m_contractState(contractState)
+			 , m_config(config)
 		 {}
 
     public:
-        void start(const ExecutorConfiguration& config) {
-//			const auto& config = m_serviceState.config();
-//            TransactionSender transactionSender(
-//				m_keyPair,
-//				config.Immutable,
-//				storageConfig,
-//				m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local),
-//				m_storageState);
-//
-//			auto pool = m_serviceState.pool().pushIsolatedPool("StorageQuery", 1);
-//
-//            m_pReplicatorEventHandler = CreateReplicatorEventHandler(
-//				std::move(pool),
-//				std::move(transactionSender),
-//				m_storageState,
-//				m_transactionStatusHandler,
-//				m_keyPair);
-//
-//			std::vector<sirius::drive::ReplicatorInfo> bootstrapReplicators;
-//			bootstrapReplicators.reserve(m_bootstrapReplicators.size());
-//			for (const auto& node : m_bootstrapReplicators) {
-//				boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(node.endpoint().Host), node.endpoint().Port);
-//				bootstrapReplicators.emplace_back(sirius::drive::ReplicatorInfo{ endpoint, node.identityKey().array() });
-//			}
-//
-//			if (storageConfig.UseRpcReplicator) {
-//				gHandleLostConnection = storageConfig.RpcHandleLostConnection;
-//				gDbgRpcChildCrash = storageConfig.RpcDbgChildCrash;
-//				m_pReplicator = sirius::drive::createRpcReplicator(
-//						std::string(storageConfig.RpcHost),
-//						std::stoi(storageConfig.RpcPort),
-//						reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
-//						std::string(storageConfig.Host), // TODO: do not use move semantics.
-//						std::string(storageConfig.Port), // TODO: do not use move semantics.
-//						std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
-//						std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
-//						bootstrapReplicators,
-//						storageConfig.UseTcpSocket,
-//						*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
-//						nullptr,
-//						Service_Name);
-//			}
-//			else {
-//				m_pReplicator = sirius::drive::createDefaultReplicator(
-//						reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
-//						std::string(storageConfig.Host), // TODO: do not use move semantics.
-//						std::string(storageConfig.Port), // TODO: do not use move semantics.
-//						std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
-//						std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
-//						bootstrapReplicators,
-//						storageConfig.UseTcpSocket,
-//						*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
-//						nullptr,
-//						Service_Name);
-//			}
-//
-//			m_pReplicatorEventHandler->setReplicator(m_pReplicator);
-//			m_pReplicator->start();
-//
-//            auto drives = m_storageState.getReplicatorDrives(m_keyPair.publicKey());
-//            for (const auto& drive: drives) {
-//                addDrive(drive.Id);
-//            }
-//
-//			updateReplicatorDownloadChannels();
-//
-//			m_pReplicator->asyncInitializationFinished();
-        }
-
-        void stop() {
-			m_pReplicator.reset();
-        }
-
-        bool isAlive() {
-        	return !m_pReplicator->isConnectionLost();
+        void start() {
+			auto pool = m_serviceState.pool().pushIsolatedPool("ContractQuery", 1);
+			std::vector<uint8_t> privateKeyBuffer = {m_keyPair.privateKey().begin(), m_keyPair.privateKey().end()};
+			auto privateKey = std::move(*reinterpret_cast<sirius::crypto::PrivateKey*>(privateKeyBuffer.data()));
+//			auto keyPair = sirius::crypto::KeyPair::FromPrivate(std::move(privateKey));
+//			m_pExecutor = sirius::contract::DefaultExecutorBuilder().build(std::move(keyPair), );
         }
 
 		std::optional<Height> contractAddedAt(const Key& contractKey) const {
@@ -170,7 +96,7 @@ namespace catapult { namespace contract {
 			callRequestParameters.m_smLimit = manualCall.DownloadPayment.unwrap();
 
 			sirius::contract::CallReferenceInfo callReferenceInfo;
-			callReferenceInfo.m_blockHeight = manualCall.Height.unwrap();callReferenceInfo.m_callerKey = sirius::contract::CallerKey(manualCall.Caller.array());
+			callReferenceInfo.m_blockHeight = manualCall.BlockHeight.unwrap();callReferenceInfo.m_callerKey = sirius::contract::CallerKey(manualCall.Caller.array());
 			callRequestParameters.m_referenceInfo = callReferenceInfo;
 
 			m_pExecutor->addManualCall(contractKey.array(), std::move(callRequestParameters));
@@ -229,6 +155,10 @@ namespace catapult { namespace contract {
 
 		void updateContracts(Height height) {
 			auto actualContracts = m_contractState.getContracts(m_keyPair.publicKey());
+			if (!m_pExecutor && !actualContracts.empty()) {
+				// lazy start of the executor
+				start();
+			}
 			for (const auto& [contractKey, _]: m_alreadyAddedContracts) {
 				if (actualContracts.find(contractKey) == actualContracts.end()) {
 					removeContract(contractKey);
@@ -257,8 +187,8 @@ namespace catapult { namespace contract {
         	sirius::contract::AddContractRequest addRequest;
         	addRequest.m_driveKey = contractInfo.DriveKey.array();
         	addRequest.m_executors = castInternalType<sirius::contract::ExecutorKey>(contractInfo.Executors);
-        	addRequest.m_automaticExecutionsSCLimit = contractInfo.AutomaticExecutionsSCLimit;
-        	addRequest.m_automaticExecutionsSMLimit = contractInfo.AutomaticExecutionsSMLimit;
+        	addRequest.m_automaticExecutionsSCLimit = contractInfo.AutomaticExecutionCallPayment.unwrap();
+        	addRequest.m_automaticExecutionsSMLimit = contractInfo.AutomaticDownloadCallPayment.unwrap();
         	addRequest.m_batchesExecuted = contractInfo.BatchesExecuted;
         	m_pExecutor->addContract(contractKey.array(), std::move(addRequest));
         	if (contractInfo.LastPublishedBatch) {
@@ -288,12 +218,12 @@ namespace catapult { namespace contract {
         	}
         	const auto& manualCalls = contractInfo.ManualCalls;
         	if (!manualCalls.empty()) {
-        		currentBlock = std::min(currentBlock, manualCalls.front().Height);
+        		currentBlock = std::min(currentBlock, manualCalls.front().BlockHeight);
         	}
         	auto manualCallsIt = manualCalls.begin();
         	while (currentBlock <= height) {
         		// heights in manual call always do not exceed @height
-        		while (manualCallsIt != manualCalls.end() && manualCallsIt->Height == currentBlock) {
+        		while (manualCallsIt != manualCalls.end() && manualCallsIt->BlockHeight == currentBlock) {
         			addManualCall(contractKey, *manualCallsIt);
         		}
         		sirius::contract::Block block;
@@ -343,7 +273,8 @@ namespace catapult { namespace contract {
     private:
         const crypto::KeyPair& m_keyPair;
         extensions::ServiceState& m_serviceState;
-        state::ContractState& m_contractState;
+        const state::ContractState& m_contractState;
+        const ExecutorConfiguration& m_config;
 
         std::unique_ptr<sirius::contract::Executor> m_pExecutor;
 //        TransactionStatusHandler m_transactionStatusHandler;
@@ -358,41 +289,33 @@ namespace catapult { namespace contract {
 
 	ExecutorService::ExecutorService(ExecutorConfiguration&& executorConfig)
 		: m_keyPair(crypto::KeyPair::FromString(executorConfig.Key))
-		, m_config(std::move(executorConfig)) {}
+		, m_config(std::move(executorConfig))
+	{}
 
 	ExecutorService::~ExecutorService() {
 		stop();
 	}
 
 	void ExecutorService::start() {
-        if (m_pImpl)
-			CATAPULT_THROW_RUNTIME_ERROR("replicator service already started");
-
-        m_pImpl = std::make_unique<ReplicatorService::Impl>(
-			m_keyPair,
-			*m_pServiceState,
-			m_pServiceState->pluginManager().storageState(),
-			m_bootstrapReplicators);
-        m_pImpl->start(m_storageConfig);
-    }
-
-    void ReplicatorService::stop() {
         if (m_pImpl) {
-            m_pImpl->stop();
-            m_pImpl.reset();
-        }
+			CATAPULT_THROW_RUNTIME_ERROR("executor service already started");
+		}
+
+		m_pImpl = std::make_unique<ExecutorService::Impl>(
+				m_keyPair,
+				*m_pServiceState,
+				m_pServiceState->pluginManager().contractState(),
+				m_config);
     }
 
-	void ReplicatorService::restart() {
+    void ExecutorService::stop() {
+		m_pImpl.reset();
+    }
+
+    void ExecutorService::restart() {
 		stop();
 		sleep(10);
 		start();
-	}
-
-	void ReplicatorService::maybeRestart() {
-		if (m_pImpl && !m_pImpl->isAlive()) {
-			restart();
-		}
 	}
 
 	void ExecutorService::setServiceState(extensions::ServiceState* pServiceState) {
@@ -403,22 +326,11 @@ namespace catapult { namespace contract {
         return m_keyPair.publicKey();
     }
 
-    bool ExecutorService::isExecutorRegistered(const Key& key) {
-		// TODO
-        return false;
-    }
-
 	std::optional<Height> ExecutorService::contractAddedAt(const Key& contractKey) {
 		if (!m_pImpl) {
 			return {};
 		}
 		return m_pImpl->contractAddedAt(contractKey);
-	}
-
-	void ExecutorService::addContract(const Key& contractKey) {
-		if (!m_pImpl) {
-			return;
-		}
 	}
 
 	void ExecutorService::addManualCall(
@@ -479,8 +391,9 @@ namespace catapult { namespace contract {
 		if (!m_pImpl) {
 			return false;
 		}
-
+		return m_pImpl->contractExists(contractKey);
 	}
+
 	void ExecutorService::automaticExecutionBlockPublished(Height height) {
 		if (!m_pImpl) {
 			return;
@@ -510,4 +423,4 @@ namespace catapult { namespace contract {
 	}
 
 	// endregion
-}}
+}

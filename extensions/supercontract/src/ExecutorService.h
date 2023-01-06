@@ -24,8 +24,14 @@ namespace catapult { namespace contract {
     	~ExecutorService();
 
     public:
+
         void start();
-        void stop();
+
+		void restart();
+
+	private:
+
+    	void stop();
 
 	public:
 
@@ -38,8 +44,6 @@ namespace catapult { namespace contract {
 		std::optional<Height> contractAddedAt(const Key& contractKey);
 
 	public:
-
-		void addContract(const Key& contractKey);
 
 		void addManualCall(const Key& contractKey,
 						   const Hash256& callId,
