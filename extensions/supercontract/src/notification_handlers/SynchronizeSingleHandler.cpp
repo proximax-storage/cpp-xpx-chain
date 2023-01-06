@@ -34,7 +34,8 @@ namespace catapult { namespace notification_handlers {
 				pExecutorService->synchronizeSinglePublished(notification.ContractKey, notification.BatchId);
 			}
 			catch (...) {
-
+				CATAPULT_LOG(warning) << "An exception has occurred in the executor";
+				pExecutorService->restart();
 			}
 		});
 	}

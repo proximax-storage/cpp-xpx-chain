@@ -38,7 +38,8 @@ namespace catapult { namespace notification_handlers {
 												context.Height);
 			}
 			catch (...) {
-
+				CATAPULT_LOG(warning) << "An exception has occurred in the executor";
+				pExecutorService->restart();
 			}
 		});
 	}

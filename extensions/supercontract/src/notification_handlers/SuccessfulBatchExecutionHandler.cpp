@@ -35,7 +35,8 @@ namespace catapult { namespace notification_handlers {
 						notification.Cosigners);
 			}
 			catch (...) {
-
+				CATAPULT_LOG(warning) << "An exception has occurred in the executor";
+				pExecutorService->restart();
 			}
 		});
 	}
