@@ -7,6 +7,7 @@
 #pragma GCC diagnostic error "-Wmissing-field-initializers"
 
 #include "ExecutorService.h"
+#include "DefaultExecutorEventHandler.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
@@ -73,9 +74,11 @@ namespace catapult::contract {
 			auto pool = m_serviceState.pool().pushIsolatedPool("ContractQuery", 1);
 			std::vector<uint8_t> privateKeyBuffer = {m_keyPair.privateKey().begin(), m_keyPair.privateKey().end()};
 			auto privateKey = std::move(*reinterpret_cast<sirius::crypto::PrivateKey*>(privateKeyBuffer.data()));
-//			auto keyPair = sirius::crypto::KeyPair::FromPrivate(std::move(privateKey));
-//			m_pExecutor = sirius::contract::DefaultExecutorBuilder().build(std::move(keyPair), );
-        }
+			auto keyPair = sirius::crypto::KeyPair::FromPrivate(std::move(privateKey));
+			sirius::contract::ExecutorConfig config;
+			std::unique_ptr< sirius::contract::ExecutorEventHandler> pExecutorEventHandler = std::make_unique<DefaultExecutorEventHandler>();
+			m_pExecutor = sirius::contract::DefaultExecutorBuilder().build(std::move(keyPair), config, std::move(pExecutorEventHandler), "executor");
+		}
 
 		std::optional<Height> contractAddedAt(const Key& contractKey) const {
 			auto it = m_alreadyAddedContracts.find(contractKey);
