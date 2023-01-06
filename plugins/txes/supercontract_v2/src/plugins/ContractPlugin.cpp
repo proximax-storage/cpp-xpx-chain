@@ -19,6 +19,7 @@
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
 #include <catapult/model/SupercontractNotifications.h>
+#include <src/state/ContractStateImpl.h>
 
 namespace catapult { namespace plugins {
 
@@ -154,6 +155,9 @@ namespace catapult { namespace plugins {
 		auto pStorageUpdatesListener = std::make_unique<observers::SuperContractStorageUpdatesListener>(
 				driveStateBrowser, liquidityProviderObserver);
 		manager.addStorageUpdateListener(std::move(pStorageUpdatesListener));
+
+		auto pContractState = std::make_shared<state::ContractStateImpl>(driveStateBrowser);
+		manager.setContractState(pContractState);
 
 		manager.addObserverHook([&](auto& builder) {
 			builder

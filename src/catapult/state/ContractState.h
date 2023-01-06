@@ -71,11 +71,6 @@ namespace catapult { namespace state {
 
 	public:
 
-		virtual bool isExecutorRegistered(const Key& key) const = 0;
-
-	public:
-		virtual Height getChainHeight() const = 0;
-
 		virtual bool contractExists(const Key& contractKey) const = 0;
 
 		virtual std::shared_ptr<const model::BlockElement> getBlock(Height height) const = 0;

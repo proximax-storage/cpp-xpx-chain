@@ -11,13 +11,8 @@
 
 namespace catapult { namespace state {
 
-	bool ContractStateImpl::isExecutorRegistered(const Key& key) const {
-		return false;
-	}
-
-	Height ContractStateImpl::getChainHeight() const {
-		return m_pCache->height();
-	}
+	ContractStateImpl::ContractStateImpl(const std::unique_ptr<DriveStateBrowser>& driveStateBrowser)
+		: m_pDriveStateBrowser(driveStateBrowser) {}
 
 	bool ContractStateImpl::contractExists(const Key& contractKey) const {
 		auto pSuperContractCacheView = getCacheView<cache::SuperContractCache>();

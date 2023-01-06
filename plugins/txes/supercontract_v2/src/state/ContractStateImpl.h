@@ -14,11 +14,11 @@ namespace catapult { namespace state {
 
 class ContractStateImpl : public ContractState {
 public:
-	explicit ContractStateImpl() = default;
+
+	explicit ContractStateImpl(const std::unique_ptr<DriveStateBrowser>& driveStateBrowser);
 
 public:
-	bool isExecutorRegistered(const Key& key) const override;
-	Height getChainHeight() const override;
+
 	bool contractExists(const Key& contractKey) const override;
 	std::shared_ptr<const model::BlockElement> getBlock(Height height) const override;
 	std::optional<Height> getAutomaticExecutionsEnabledSince(const Key& contractKey) const override;
