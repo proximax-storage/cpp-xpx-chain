@@ -24,6 +24,8 @@ namespace catapult { namespace storage {
 		uint16_t opinionCount = 0u;
 		std::map<Key, Signature> signatureMap;
 
+		auto start = std::chrono::high_resolution_clock::now();
+
         // collect judging and judged keys, opinions and signatures.
         for (const auto& opinion : transactionInfo.m_opinions) {
 			if (opinion.m_uploadLayout.empty() )
@@ -40,6 +42,9 @@ namespace catapult { namespace storage {
 			}
         }
 
+		auto stop1 = std::chrono::high_resolution_clock::now();
+		CATAPULT_LOG(debug) << "TransactionSender::sendDataModificationApprovalTransaction. step1:  " << std::chrono::duration_cast<std::chrono::microseconds>(stop1 - start).count();
+
 		// separate overlapping keys
 		auto& set1 = judgedKeys.size() < judgingKeys.size() ? judgedKeys : judgingKeys;
 		auto& set2 = judgedKeys.size() >= judgingKeys.size() ? judgedKeys : judgingKeys;
@@ -54,6 +59,9 @@ namespace catapult { namespace storage {
 			}
 		}
 
+		auto stop2 = std::chrono::high_resolution_clock::now();
+		CATAPULT_LOG(debug) << "TransactionSender::sendDataModificationApprovalTransaction. step2:  " << std::chrono::duration_cast<std::chrono::microseconds>(stop2 - stop1).count();
+
         // merge all keys
         std::vector<Key> publicKeys;
 		auto totalKeyCount = judgingKeys.size() + overlappingKeys.size() + judgedKeys.size();
@@ -63,6 +71,9 @@ namespace catapult { namespace storage {
         publicKeys.insert(publicKeys.end(), judgedKeys.begin(), judgedKeys.end());
 		auto totalJudgingKeysCount = judgingKeys.size() + overlappingKeys.size();
 		auto totalJudgedKeysCount = overlappingKeys.size() + judgedKeys.size();
+
+		auto stop3 = std::chrono::high_resolution_clock::now();
+		CATAPULT_LOG(debug) << "TransactionSender::sendDataModificationApprovalTransaction. step3:  " << std::chrono::duration_cast<std::chrono::microseconds>(stop3 - stop2).count();
 
 		// prepare opinions
         boost::dynamic_bitset<uint8_t> presentOpinionsBitset(totalJudgingKeysCount * totalJudgedKeysCount, 0u);
@@ -82,6 +93,10 @@ namespace catapult { namespace storage {
 				}
 			}
 		}
+
+		auto stop4 = std::chrono::high_resolution_clock::now();
+		CATAPULT_LOG(debug) << "TransactionSender::sendDataModificationApprovalTransaction. step4:  " << std::chrono::duration_cast<std::chrono::microseconds>(stop4 - stop3).count();
+
 		std::vector<uint8_t> presentOpinions;
 		presentOpinions.reserve((totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8);
 		boost::to_block_range(presentOpinionsBitset, std::back_inserter(presentOpinions));
@@ -106,7 +121,15 @@ namespace catapult { namespace storage {
         pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
         send(pTransaction);
 
-        return model::CalculateHash(*pTransaction, m_generationHash);
+		auto stop5 = std::chrono::high_resolution_clock::now();
+		CATAPULT_LOG(debug) << "TransactionSender::sendDataModificationApprovalTransaction. step5:  " << std::chrono::duration_cast<std::chrono::microseconds>(stop5 - stop4).count();
+
+		auto hash = model::CalculateHash(*pTransaction, m_generationHash);
+
+		auto stop6 = std::chrono::high_resolution_clock::now();
+		CATAPULT_LOG(debug) << "TransactionSender::sendDataModificationApprovalTransaction. step6:  " << std::chrono::duration_cast<std::chrono::microseconds>(stop6 - stop5).count();
+
+        return hash;
     }
 
     Hash256 TransactionSender::sendDataModificationSingleApprovalTransaction(const sirius::drive::ApprovalTransactionInfo& transactionInfo) {
