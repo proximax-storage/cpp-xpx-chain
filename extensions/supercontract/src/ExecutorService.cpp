@@ -7,6 +7,7 @@
 #pragma GCC diagnostic error "-Wmissing-field-initializers"
 
 #include "ExecutorService.h"
+#include "TransactionStatusHandler.h"
 #include "DefaultExecutorEventHandler.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
@@ -182,6 +183,10 @@ namespace catapult::contract {
 			return m_contractState.contractExists(contractKey);
 		}
 
+		void notifyTransactionStatus(const Hash256& hash, uint32_t status) {
+        	m_transactionStatusHandler.handle(hash, status);
+        }
+
 	private:
 
     	void addContract(const Key& contractKey, const Height& height) {
@@ -280,7 +285,7 @@ namespace catapult::contract {
         const ExecutorConfiguration& m_config;
 
         std::unique_ptr<sirius::contract::Executor> m_pExecutor;
-//        TransactionStatusHandler m_transactionStatusHandler;
+        TransactionStatusHandler m_transactionStatusHandler;
 
 		// The fields are needed to generate correct events
 		std::map<Key, Height> m_alreadyAddedContracts;
@@ -423,6 +428,13 @@ namespace catapult::contract {
 			return;
 		}
 		m_pImpl->synchronizeSinglePublished(contractKey, batchIndex);
+	}
+
+	void ExecutorService::notifyTransactionStatus(const Hash256& hash, uint32_t status) {
+		if (!m_pImpl) {
+			return;
+		}
+		m_pImpl->notifyTransactionStatus(hash, status);
 	}
 
 	// endregion

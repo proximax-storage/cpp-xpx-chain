@@ -14,6 +14,10 @@ class DefaultExecutorEventHandler: public sirius::contract::ExecutorEventHandler
 	void endBatchTransactionIsReady(const sirius::contract::EndBatchExecutionTransactionInfo& info) override;
 	void endBatchSingleTransactionIsReady(
 			const sirius::contract::EndBatchExecutionSingleTransactionInfo& info) override;
+
+public:
+	void synchronizationSingleTransactionIsReady(
+			const sirius::contract::SynchronizationSingleTransactionInfo& info) override;
 };
 
 }

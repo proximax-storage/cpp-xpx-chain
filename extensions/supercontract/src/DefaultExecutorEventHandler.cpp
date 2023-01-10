@@ -12,5 +12,7 @@ void DefaultExecutorEventHandler::endBatchTransactionIsReady(
 		const sirius::contract::EndBatchExecutionTransactionInfo& info) {}
 void DefaultExecutorEventHandler::endBatchSingleTransactionIsReady(
 		const sirius::contract::EndBatchExecutionSingleTransactionInfo& info) {}
+void DefaultExecutorEventHandler::synchronizationSingleTransactionIsReady(
+		const sirius::contract::SynchronizationSingleTransactionInfo& info) {}
 
 }

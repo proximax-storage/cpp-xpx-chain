@@ -29,6 +29,9 @@ namespace catapult { namespace contract {
 
 		void restart();
 
+	public:
+		void notifyTransactionStatus(const Hash256& hash, uint32_t status);
+
 	private:
 
     	void stop();
