@@ -42,6 +42,18 @@ namespace catapult::contract {
                 locator.registerRootedService(Service_Name, m_pExecutorService);
 
                 m_pExecutorService->setServiceState(&state);
+
+                const auto& storage = state.storage();
+                auto blockProvider = [&storage](Height height) {
+                	auto storageView = storage.view();
+                	return storageView.loadBlockElement(height);
+                };
+
+				auto& contractState = state.pluginManager().contractState();
+				contractState.setBlockProvider(blockProvider);
+
+				m_pExecutorService->start();
+
                 m_pExecutorService.reset();
             }
 
