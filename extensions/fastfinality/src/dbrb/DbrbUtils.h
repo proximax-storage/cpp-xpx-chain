@@ -5,8 +5,7 @@
 **/
 
 #pragma  once
-#include "catapult/ionet/NetworkNode.h"
-#include "catapult/ionet/Node.h"
+#include "catapult/dbrb/DbrbViewFetcher.h"
 #include "catapult/ionet/Packet.h"
 #include "catapult/types.h"
 #include <algorithm>
@@ -16,31 +15,13 @@
 #include <optional>
 #include <cstdint>
 
-
 namespace catapult { namespace dbrb {
 
-	using ProcessId = ionet::Node;
 	using Payload = std::shared_ptr<ionet::Packet>;
-	using PackedView = std::vector<std::pair<model::UniqueEntityPtr<ionet::NetworkNode>, uint8_t>>;
-
-	struct View;
-	PackedView PackView(const View& view, uint32_t& payloadSize);
-	void CopyView(uint8_t*& pData, const PackedView& nodes);
-	View UnpackView(const uint8_t*& pData);
-	void CopyProcessId(uint8_t*& pData, const model::UniqueEntityPtr<ionet::NetworkNode>& processId);
-	ProcessId UnpackProcessId(const uint8_t*& pData);
-
-	Hash256 CalculateHash(const std::vector<RawBuffer>& buffers);
-	Hash256 CalculatePayloadHash(const Payload& payload);
-
-	/// Changes of processes' membership in a view.
-	enum class MembershipChanges : uint8_t {
-		Join,
-		Leave,
-	};
+	using CertificateType = std::map<ProcessId, Signature>;
 
 	/// State of the process membership.
-	enum class MembershipStates : uint8_t {
+	enum class MembershipState : uint8_t {
 		NotJoined,
 		Joining,
 		Participating,
@@ -48,22 +29,54 @@ namespace catapult { namespace dbrb {
 		Left,
 	};
 
+	void Write(uint8_t*& pBuffer, const utils::RawBuffer& data);
+	void Write(uint8_t*& pBuffer, uint8_t byte);
+	struct View;
+	void Write(uint8_t*& pBuffer, const View& view);
+	struct Sequence;
+	void Write(uint8_t*& pBuffer, const Sequence& sequence);
+	void Write(uint8_t*& pBuffer, const Payload& payload);
+	void Write(uint8_t*& pBuffer, const CertificateType& certificate);
+
+	template<typename T>
+	T Read(const uint8_t*& pBuffer);
+	template<>
+	ProcessId Read(const uint8_t*& pBuffer);
+	template<>
+	Signature Read(const uint8_t*& pBuffer);
+	template<>
+	MembershipChange Read(const uint8_t*& pBuffer);
+	template<>
+	View Read(const uint8_t*& pBuffer);
+	template<>
+	Sequence Read(const uint8_t*& pBuffer);
+	template<>
+	Payload Read(const uint8_t*& pBuffer);
+	template<>
+	CertificateType Read(const uint8_t*& pBuffer);
+
+	Hash256 CalculateHash(const std::vector<RawBuffer>& buffers);
+	Hash256 CalculatePayloadHash(const Payload& payload);
+
 	/// View of the system.
 	struct View {
 		/// Set of processes' membership changes in the system.
-		std::set<std::pair<ProcessId, MembershipChanges>> Data;
+		ViewData Data;
 
 		/// Get IDs of current members of the view.
 		std::set<ProcessId> members() const;
 
 		/// Check if \a processId is a member of this view.
-		bool hasChange(const ProcessId& processId, MembershipChanges change) const;
+		bool hasChange(const ProcessId& processId, MembershipChange change) const;
 
 		/// Check if \a processId is a member of this view.
 		bool isMember(const ProcessId& processId) const;
 
 		/// Calculate quorum size of this view.
 		size_t quorumSize() const;
+
+		/// Calculate the size in bytes required to serialize this view.
+		size_t packedSize() const;
 
 		/// Comparison operators; if view A is less recent than view B, then A < B.
 		bool operator==(const View& other) const;
@@ -82,7 +95,7 @@ namespace catapult { namespace dbrb {
 				if (leadingSpace)
 					out << " ";
 
-				out << (change == MembershipChanges::Join ? "+" : "-");
+				out << (change == MembershipChange::Join ? "+" : "-");
 
 				std::ostringstream processIdStringStream;
 				processIdStringStream << processId;
@@ -106,7 +119,7 @@ namespace catapult { namespace dbrb {
 
 		/// Merge two views into one.
 		static View merge(const View& a, const View& b) {
-			std::set<std::pair<ProcessId, MembershipChanges>> newData;
+			ViewData newData;
 			for (const auto& change : a.Data)
 				newData.insert(change);
 			for (const auto& change : b.Data)
@@ -128,6 +141,9 @@ namespace catapult { namespace dbrb {
 
 		/// Get underlying sequence of views.
 		const std::vector<View>& data() const;
+
+		/// Calculate the size in bytes required to serialize this view.
+		size_t packedSize() const;
 
 		/// Try to get the least recent view from the \a m_data, if \a m_data is not empty.
 		std::optional<View> maybeLeastRecent() const;

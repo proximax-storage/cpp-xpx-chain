@@ -113,19 +113,17 @@ namespace catapult { namespace dbrb {
 		};
 	};
 
-
 	/// Struct that encapsulates payload, its certificate and certificate view.
 	struct PayloadData {
 		/// Stored payload.
 		dbrb::Payload Payload;
 
 		/// Message certificate for the stored payload.
-		std::map<ProcessId, Signature> Certificate;
+		CertificateType Certificate;
 
 		/// View associated with the certificate.
 		View CertificateView;
 	};
-
 
 	/// Class representing DBRB process.
 	class DbrbProcess : public std::enable_shared_from_this<DbrbProcess>, public utils::NonCopyable {
@@ -135,7 +133,7 @@ namespace catapult { namespace dbrb {
 	public:
 		explicit DbrbProcess(
 			std::shared_ptr<net::PacketWriters> pWriters,
-			const std::vector<ionet::Node>& bootstrapNodes,
+			const net::PacketIoPickerContainer& packetIoPickers,
 			ionet::Node thisNode,
 			const crypto::KeyPair& keyPair,
 			std::shared_ptr<thread::IoThreadPool> pPool);
@@ -144,11 +142,14 @@ namespace catapult { namespace dbrb {
 		/// Process identifier.
 		ProcessId m_id;
 
+		/// This node.
+		SignedNode m_node;
+
 		/// Quorum manager.
 		QuorumManager m_quorumManager;
 
 		/// State of the process membership.
-		MembershipStates m_membershipState = MembershipStates::NotJoined;
+		MembershipState m_membershipState = MembershipState::NotJoined;
 
 		/// Whether the view discovery is active. View discovery halts once a quorum of
 		/// confirmation messages has been collected for any of the views.
@@ -195,7 +196,7 @@ namespace catapult { namespace dbrb {
 
 			/// Message certificate; map that maps process IDs to signatures received from them.
 			/// Empty when the process starts working.
-			std::map<ProcessId, Signature> Certificate;
+			CertificateType Certificate;
 
 			/// View in which message certificate was collected.
 			View CertificateView;
@@ -230,6 +231,8 @@ namespace catapult { namespace dbrb {
 
 		mutable std::mutex m_mutex;
 
+		NodeRetreiver m_nodeRetreiver;
+
 		MessageSender m_messageSender;
 
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
@@ -251,6 +254,10 @@ namespace catapult { namespace dbrb {
 	public:
 		void registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers);
 		void setDeliverCallback(const DeliverCallback& callback);
+		void setCurrentView(const ViewData& viewData);
+
+		const SignedNode& node();
+		NodeRetreiver& nodeRetreiver();
 
 	private:
 		void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients);

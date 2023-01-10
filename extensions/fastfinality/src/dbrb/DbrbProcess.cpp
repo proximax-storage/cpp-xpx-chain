@@ -8,6 +8,7 @@
 #include "DbrbUtils.h"
 #include "Messages.h"
 #include "catapult/crypto/Signer.h"
+#include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/PacketPayload.h"
 #include "catapult/thread/IoThreadPool.h"
 #include "catapult/thread/Future.h"
@@ -18,19 +19,19 @@ namespace catapult { namespace dbrb {
 
 	DbrbProcess::DbrbProcess(
 		std::shared_ptr<net::PacketWriters> pWriters,
-		const std::vector<ionet::Node>& bootstrapNodes,
+		const net::PacketIoPickerContainer& packetIoPickers,
 		ionet::Node thisNode,
 		const crypto::KeyPair& keyPair,
 		std::shared_ptr<thread::IoThreadPool> pPool)
-			: m_id(std::move(thisNode))
+			: m_id(thisNode.identityKey())
 			, m_keyPair(keyPair)
-			, m_messageSender(std::move(pWriters))
+			, m_nodeRetreiver(packetIoPickers, thisNode.metadata().NetworkIdentifier)
+			, m_messageSender(std::move(pWriters), m_nodeRetreiver)
 			, m_pPool(pPool) {
-		m_currentView.Data.emplace(m_id, MembershipChanges::Join);
-		for (const auto& node : bootstrapNodes)
-			m_currentView.Data.emplace(node, MembershipChanges::Join);
-
-		m_installedViews.emplace(m_currentView);
+		m_node.Node = thisNode;
+		auto pPackedNode = ionet::PackNode(thisNode);
+		auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(pPackedNode.get()), pPackedNode->Size } });
+		crypto::Sign(m_keyPair, hash, m_node.Signature);
 	}
 
 	void DbrbProcess::registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers) {
@@ -41,10 +42,9 @@ namespace catapult { namespace dbrb {
 				return;
 
 			const auto& messagePacket = static_cast<const MessagePacket&>(packet);
-			auto pData = messagePacket.payload();
-			auto sender = UnpackProcessId(pData);
+			auto pBuffer = messagePacket.payload();
 			auto hash = CalculateHash(messagePacket.buffers());
-			if (!crypto::Verify(sender.identityKey(), hash, messagePacket.Signature))
+			if (!crypto::Verify(messagePacket.Sender, hash, messagePacket.Signature))
 				return;
 
 			auto pMessage = converter.toMessage(packet);
@@ -66,6 +66,32 @@ namespace catapult { namespace dbrb {
 		m_deliverCallback = callback;
 	}
 
+	void DbrbProcess::setCurrentView(const ViewData& viewData) {
+		m_currentView = View{ viewData };
+		m_installedViews.emplace(m_currentView);
+
+		std::set<ProcessId> ids;
+		bool notJoined = true;
+		for (const auto& [id, _] : viewData) {
+			ids.emplace(id);
+
+			if (m_id == id)
+				notJoined = false;
+		}
+		m_nodeRetreiver.enqueue(ids);
+
+		if (notJoined)
+			join();
+	}
+
+	const SignedNode& DbrbProcess::node() {
+		return m_node;
+	}
+
+	NodeRetreiver& DbrbProcess::nodeRetreiver() {
+		return m_nodeRetreiver;
+	}
+
 	// Basic operations:
 
 	void DbrbProcess::join() {
@@ -73,10 +99,10 @@ namespace catapult { namespace dbrb {
 		std::lock_guard<std::mutex> guard(m_mutex);
 
 		// Can only request to join from the initial membership state of the process.
-		if (m_membershipState != MembershipStates::NotJoined)
+		if (m_membershipState != MembershipState::NotJoined)
 			return;
 
-		m_membershipState = MembershipStates::Joining;
+		m_membershipState = MembershipState::Joining;
 
 		// Resetting counters for ReconfigConfirm messages to get a proper quorum collection event later.
 		m_quorumManager.ReconfigConfirmCounters.clear();
@@ -93,7 +119,7 @@ namespace catapult { namespace dbrb {
 		std::lock_guard<std::mutex> guard(m_mutex);
 
 		// Can only request to leave when the process is participating in the system.
-		if (m_membershipState != MembershipStates::Participating)
+		if (m_membershipState != MembershipState::Participating)
 			return;
 
 //		const auto& pAcknowledgeable = m_state.Acknowledgeable;
@@ -102,11 +128,11 @@ namespace catapult { namespace dbrb {
 //		if (needsPermissionToLeave && !m_canLeave)
 //			return;	// TODO: Can notify user about the reason why leave failed
 
-		m_membershipState = MembershipStates::Leaving;
+		m_membershipState = MembershipState::Leaving;
 
 		// Disseminate a Reconfig message for every currently installed view...
 		for (const auto& view : m_installedViews) {
-			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChanges::Leave, view);
+			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChange::Leave, view);
 			disseminate(pMessage, view.members());
 		}
 
@@ -214,7 +240,7 @@ namespace catapult { namespace dbrb {
 				pThis->processMessage(*pMessage);
 			});
 		} else {
-			m_messageSender.enqueue(pMessage->toNetworkPacket(&m_keyPair), { recipient });
+			m_messageSender.enqueue(pMessage->toNetworkPacket(&m_keyPair), std::set<ProcessId>{ recipient });
 		}
 	}
 
@@ -328,11 +354,10 @@ namespace catapult { namespace dbrb {
 		// - Q's view at the moment of forming a signature;
 		// Hash calculated from concatenated information is signed.
 
-		uint32_t payloadSize = 0u;
-		auto packedView = PackView(m_currentView, payloadSize);
+		uint32_t payloadSize = m_currentView.packedSize();
 		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(payloadSize);
-		auto pData = pPacket->Data();
-		CopyView(pData, packedView);
+		auto pBuffer = pPacket->Data();
+		Write(pBuffer, m_currentView);
 
 		auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(payload.get()), payload->Size }, { pPacket->Data(), payloadSize } });
 		Signature signature;
@@ -344,15 +369,14 @@ namespace catapult { namespace dbrb {
 	bool DbrbProcess::verify(const ProcessId& signer, const Payload& payload, const View& view, const Signature& signature) {
 		// Forms hash as described in DbrbProcess::sign and checks whether the signature is valid.
 
-		uint32_t payloadSize = 0u;
-		auto packedView = PackView(view, payloadSize);
+		uint32_t payloadSize = view.packedSize();
 		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(payloadSize);
-		auto pData = pPacket->Data();
-		CopyView(pData, packedView);
+		auto pBuffer = pPacket->Data();
+		Write(pBuffer, view);
 
 		auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(payload.get()), payload->Size }, { pPacket->Data(), payloadSize } });
 
-		bool res = crypto::Verify(signer.identityKey(), hash, signature);
+		bool res = crypto::Verify(signer, hash, signature);
 		return res;
 	}
 
@@ -375,9 +399,9 @@ namespace catapult { namespace dbrb {
 			return;
 
 		// When trying to leave, a corresponding join change must be present in the view of the message.
-		if (message.MembershipChange == MembershipChanges::Leave) {
-			const auto joinChange = std::make_pair(message.ProcessId, MembershipChanges::Join);
-			if (!message.View.hasChange(message.ProcessId, MembershipChanges::Join))
+		if (message.MembershipChange == MembershipChange::Leave) {
+			const auto joinChange = std::make_pair(message.ProcessId, MembershipChange::Join);
+			if (!message.View.hasChange(message.ProcessId, MembershipChange::Join))
 				return;
 		}
 
@@ -394,14 +418,14 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::onReconfigConfirmQuorumCollected() {
 		CATAPULT_LOG(debug) << "[DBRB] RECONFIG-CONFIRM: Quorum collected.";
-		if (m_membershipState == MembershipStates::Joining || m_membershipState == MembershipStates::Leaving) {
-			CATAPULT_LOG(debug) << "[DBRB] RECONFIG-CONFIRM: Disabling Reconfig message dissemination (node is " << (m_membershipState == MembershipStates::Joining ? "Joining" : "Leaving") << ").";
+		if (m_membershipState == MembershipState::Joining || m_membershipState == MembershipState::Leaving) {
+			CATAPULT_LOG(debug) << "[DBRB] RECONFIG-CONFIRM: Disabling Reconfig message dissemination (node is " << (m_membershipState == MembershipState::Joining ? "Joining" : "Leaving") << ").";
 			m_disseminateReconfig = false;
 		}
 
 
 //		// TODO: Not clear if view discovery should remain active or not
-//		if (m_membershipState == MembershipStates::Joining)
+//		if (m_membershipState == MembershipState::Joining)
 //			m_viewDiscoveryActive = false;
 	}
 
@@ -756,8 +780,8 @@ namespace catapult { namespace dbrb {
 
 		m_currentView = std::move(newView);
 
-		if (m_membershipState == MembershipStates::Joining && m_disseminateReconfig) {
-			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChanges::Join, m_currentView);
+		if (m_membershipState == MembershipState::Joining && m_disseminateReconfig) {
+			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChange::Join, m_currentView);
 			disseminate(pMessage, m_currentView.members());
 		}
 
@@ -809,9 +833,9 @@ namespace catapult { namespace dbrb {
 //		}
 //
 //		// Disseminate Reconfig message using the installed view, if the process is leaving.
-//		if (m_membershipState == MembershipStates::Leaving) {
+//		if (m_membershipState == MembershipState::Leaving) {
 //			CATAPULT_LOG(debug) << "[DBRB] VIEW INSTALLED: Node is leaving.";
-//			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChanges::Leave, newView);
+//			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChange::Leave, newView);
 //			disseminate(pMessage, newView.members());
 //		}
 	}
@@ -827,7 +851,7 @@ namespace catapult { namespace dbrb {
 		CATAPULT_LOG(debug) << "[DBRB] JOIN: Completed, node is now Participating.";
 		m_disseminateReconfig = false;
 //		m_viewDiscoveryActive = false;	// TODO: Not clear if view discovery should remain active or not
-		m_membershipState = MembershipStates::Participating;
+		m_membershipState = MembershipState::Participating;
 	}
 
 	void DbrbProcess::onLeaveComplete() {
@@ -835,6 +859,6 @@ namespace catapult { namespace dbrb {
 		m_disseminateReconfig = false;
 		m_disseminateCommit = false;
 		m_viewDiscoveryActive = false;
-		m_membershipState = MembershipStates::Left;
+		m_membershipState = MembershipState::Left;
 	}
 }}

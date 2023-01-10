@@ -6,10 +6,7 @@
 
 #pragma once
 #include "CommitteePhase.h"
-#include "catapult/ionet/Packet.h"
 #include "catapult/ionet/PacketPayload.h"
-
-#include <utility>
 #include "catapult/model/Cosignature.h"
 
 namespace catapult { namespace fastfinality {

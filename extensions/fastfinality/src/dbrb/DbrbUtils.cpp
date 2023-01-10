@@ -6,62 +6,124 @@
 
 #include "DbrbUtils.h"
 #include "catapult/crypto/Hashes.h"
+#include "catapult/utils/Casting.h"
 
 namespace catapult { namespace dbrb {
 
-	PackedView PackView(const View& view, uint32_t& payloadSize) {
-		payloadSize += sizeof(uint32_t) + utils::checked_cast<size_t, uint32_t>(sizeof(MembershipChanges) * view.Data.size());
-		PackedView nodes;
-		nodes.reserve(view.Data.size());
-		for (const auto& pair : view.Data) {
-			auto pNode = ionet::PackNode(pair.first);
-			payloadSize += pNode->Size;
-			nodes.emplace_back(std::move(pNode), utils::to_underlying_type(pair.second));
-		}
-
-		return nodes;
+	void Write(uint8_t*& pBuffer, const utils::RawBuffer& data) {
+		memcpy(pBuffer, data.pData, data.Size);
+		pBuffer += data.Size;
 	}
 
-	void CopyView(uint8_t*& pData, const PackedView& nodes) {
-		uint32_t count = utils::checked_cast<size_t, uint32_t>(nodes.size());
-		memcpy(pData, &count, sizeof(uint32_t));
-		pData += sizeof(uint32_t);
-		for (auto i = 0u; i < count; ++i) {
-			const auto* pNode = nodes[i].first.get();
-			memcpy(pData, static_cast<const void*>(pNode), pNode->Size);
-			pData += pNode->Size;
-			pData[0] = nodes[i].second;
-			pData++;
+	void Write(uint8_t*& pBuffer, uint8_t byte) {
+		memcpy(pBuffer, &byte, 1u);
+		pBuffer++;
+	}
+
+	void Write(uint8_t*& pBuffer, const View& view) {
+		auto size = utils::checked_cast<size_t, uint32_t>(view.Data.size());
+		*reinterpret_cast<uint32_t*>(pBuffer) = size;
+		pBuffer += sizeof(uint32_t);
+		for (const auto& [id, change] : view.Data) {
+			Write(pBuffer, id);
+			Write(pBuffer, utils::to_underlying_type(change));
 		}
 	}
 
-	View UnpackView(const uint8_t*& pData) {
+	void Write(uint8_t*& pBuffer, const Sequence& sequence) {
+		auto size = utils::checked_cast<size_t, uint32_t>(sequence.data().size());
+		*reinterpret_cast<uint32_t*>(pBuffer) = size;
+		pBuffer += sizeof(uint32_t);
+		for (const auto& view : sequence.data())
+			Write(pBuffer, view);
+	}
+
+	void Write(uint8_t*& pBuffer, const Payload& payload) {
+		memcpy(pBuffer, payload.get(), payload->Size);
+		pBuffer += payload->Size;
+	}
+
+	void Write(uint8_t*& pBuffer, const CertificateType& certificate) {
+		*reinterpret_cast<uint32_t*>(pBuffer) = utils::checked_cast<size_t, uint32_t>(certificate.size());
+		pBuffer += sizeof(uint32_t);
+		for (const auto& [id, signature] : certificate) {
+			Write(pBuffer, id);
+			Write(pBuffer, signature);
+		}
+	}
+
+	template<>
+	ProcessId Read(const uint8_t*& pBuffer) {
+		ProcessId id;
+		std::memcpy(id.data(), pBuffer, ProcessId_Size);
+		pBuffer += ProcessId_Size;
+
+		return id;
+	}
+
+	template<>
+	Signature Read(const uint8_t*& pBuffer) {
+		Signature signature;
+		std::memcpy(signature.data(), pBuffer, Signature_Size);
+		pBuffer += Signature_Size;
+
+		return signature;
+	}
+
+	template<>
+	MembershipChange Read(const uint8_t*& pBuffer) {
+		return static_cast<MembershipChange>(*pBuffer++);
+	}
+
+	template<>
+	View Read(const uint8_t*& pBuffer) {
 		View view;
-		auto count = *reinterpret_cast<const uint32_t*>(pData);
-		pData += sizeof(uint32_t);
+		auto count = *reinterpret_cast<const uint32_t*>(pBuffer);
+		pBuffer += sizeof(uint32_t);
 		for (auto i = 0u; i < count; ++i) {
-			const auto& networkNode = *reinterpret_cast<const ionet::NetworkNode*>(pData);
-			auto node = ionet::UnpackNode(networkNode);
-			pData += networkNode.Size;
-			auto change = static_cast<MembershipChanges>(pData[0]);
-			pData++;
-			view.Data.emplace(std::make_pair(node, change));
+			auto id = Read<ProcessId>(pBuffer);
+			auto change = Read<MembershipChange>(pBuffer);
+			view.Data.emplace(id, change);
 		}
 
 		return view;
 	}
 
-	void CopyProcessId(uint8_t*& pData, const model::UniqueEntityPtr<ionet::NetworkNode>& pPackedProcessId) {
-		memcpy(pData, static_cast<const void*>(pPackedProcessId.get()), pPackedProcessId->Size);
-		pData += pPackedProcessId->Size;
+	template<>
+	Sequence Read(const uint8_t*& pBuffer) {
+		Sequence sequence;
+		auto count = *reinterpret_cast<const uint32_t*>(pBuffer);
+		pBuffer += sizeof(uint32_t);
+		for (auto i = 0u; i < count; ++i) {
+			auto view = Read<View>(pBuffer);
+			sequence.tryAppend(view);
+		}
+
+		return sequence;
 	}
 
-	ProcessId UnpackProcessId(const uint8_t*& pData) {
-		const auto& packedProcessId = *reinterpret_cast<const ionet::NetworkNode*>(pData);
-		auto processId = ionet::UnpackNode(packedProcessId);
-		pData += packedProcessId.Size;
+	template<>
+	Payload Read(const uint8_t*& pBuffer) {
+		auto packetSize = *reinterpret_cast<const uint32_t*>(pBuffer);
+		auto payload = ionet::CreateSharedPacket<ionet::Packet>(packetSize - sizeof(ionet::Packet));
+		memcpy(payload.get(), pBuffer, packetSize);
+		pBuffer += packetSize;
 
-		return processId;
+		return payload;
+	}
+
+	template<>
+	CertificateType Read(const uint8_t*& pBuffer) {
+		CertificateType certificate;
+		auto count = *reinterpret_cast<const uint32_t*>(pBuffer);
+		pBuffer += sizeof(uint32_t);
+		for (auto i = 0u; i < count; ++i) {
+			auto id = Read<ProcessId>(pBuffer);
+			auto signature = Read<Signature>(pBuffer);
+			certificate[id] = signature;
+		}
+
+		return certificate;
 	}
 
 	Hash256 CalculateHash(const std::vector<RawBuffer>& buffers) {
@@ -84,9 +146,9 @@ namespace catapult { namespace dbrb {
 		std::set<ProcessId> current;
 
 		for (const auto& [node, changeType] : Data) {
-			if (changeType == MembershipChanges::Join)
+			if (changeType == MembershipChange::Join)
 				joined.insert(node);
-			else // MembershipChanges::Leave
+			else // MembershipChange::Leave
 				left.insert(node);
 		}
 
@@ -97,17 +159,21 @@ namespace catapult { namespace dbrb {
 		return current;
 	}
 
-	bool View::hasChange(const ProcessId& processId, MembershipChanges change) const {
+	bool View::hasChange(const ProcessId& processId, MembershipChange change) const {
 		return std::find_if(Data.cbegin(), Data.cend(), [&processId, change](const auto& pair) { return pair.first == processId && pair.second == change; }) != Data.cend();
 	}
 
 	bool View::isMember(const ProcessId& processId) const {
-		return std::find_if(Data.cbegin(), Data.cend(), [&processId](const auto& pair) { return pair.first == processId && pair.second == MembershipChanges::Join; }) != Data.cend();
+		return std::find_if(Data.cbegin(), Data.cend(), [&processId](const auto& pair) { return pair.first == processId && pair.second == MembershipChange::Join; }) != Data.cend();
 	}
 
 	size_t View::quorumSize() const {
 		const size_t size = members().size();
 		return size - (size - 1) / 3;
+	}
+
+	size_t View::packedSize() const {
+		return sizeof(uint32_t) + Data.size() * (ProcessId_Size + 1u);
 	}
 
 	bool View::operator==(const View& other) const {
@@ -145,15 +211,21 @@ namespace catapult { namespace dbrb {
 
 	View& View::difference(const View& other) {
 		const auto& otherData = other.Data;
-		std::set<std::pair<ProcessId, MembershipChanges>> newData;
-		std::set_difference(Data.begin(), Data.end(), otherData.begin(), otherData.end(),
-							std::inserter(newData, newData.begin()));
+		ViewData newData;
+		std::set_difference(Data.begin(), Data.end(), otherData.begin(), otherData.end(), std::inserter(newData, newData.begin()));
 		Data = std::move(newData);
 		return *this;
 	}
 
 	const std::vector<View>& Sequence::data() const {
 		return m_data;
+	}
+
+	size_t Sequence::packedSize() const {
+		size_t packedSize = sizeof(uint32_t);
+		for (const auto& view : m_data)
+			packedSize += view.packedSize();
+		return packedSize;
 	}
 
 	std::optional<View> Sequence::maybeLeastRecent() const {

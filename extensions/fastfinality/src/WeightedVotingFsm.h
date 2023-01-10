@@ -30,7 +30,8 @@ namespace catapult { namespace fastfinality {
 		explicit WeightedVotingFsm(
 				std::shared_ptr<thread::IoThreadPool> pPool,
 				const config::BlockchainConfiguration& config,
-				std::shared_ptr<dbrb::DbrbProcess> pDbrbProcess)
+				std::shared_ptr<dbrb::DbrbProcess> pDbrbProcess,
+				dbrb::DbrbViewFetcher& dbrbViewFetcher)
 			: m_pPool(std::move(pPool))
 			, m_timer(m_pPool->ioContext())
 			, m_sm(boost::sml::sm<WeightedVotingTransitionTable>(m_actions))
@@ -38,6 +39,7 @@ namespace catapult { namespace fastfinality {
 			, m_nodeWorkState(NodeWorkState::None)
 			, m_stopped(false)
 			, m_pDbrbProcess(std::move(pDbrbProcess))
+			, m_dbrbViewFetcher(dbrbViewFetcher)
 		{}
 
 	public:
@@ -122,8 +124,12 @@ namespace catapult { namespace fastfinality {
 			return m_mutex;
 		}
 
-		auto& dbrbProcess() {
-			return *m_pDbrbProcess;
+		const auto& dbrbProcess() {
+			return m_pDbrbProcess;
+		}
+
+		auto& dbrbViewFetcher() {
+			return m_dbrbViewFetcher;
 		}
 
 	private:
@@ -139,5 +145,6 @@ namespace catapult { namespace fastfinality {
 		net::PacketIoPickerContainer m_packetIoPickers;
 		mutable std::mutex m_mutex;
 		std::shared_ptr<dbrb::DbrbProcess> m_pDbrbProcess;
+		dbrb::DbrbViewFetcher& m_dbrbViewFetcher;
 	};
 }}

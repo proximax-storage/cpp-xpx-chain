@@ -8,12 +8,12 @@
 #include "api/RemoteNodeApi.h"
 #include "utils/WeightedVotingUtils.h"
 #include "catapult/api/RemoteChainApi.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
-#include "catapult/extensions/PluginUtils.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/crypto/Signer.h"
+#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
+#include "catapult/extensions/PluginUtils.h"
 #include "catapult/harvesting_core/UnlockedAccounts.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/utils/StackLogger.h"
@@ -357,6 +357,9 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, pConfigHolder, timeSupplier, lastBlockElementSupplier, &committeeManager]() {
 			TRY_GET_FSM()
 
+			const auto& pDbrbProcess = pFsmShared->dbrbProcess();
+			pDbrbProcess->nodeRetreiver().addNodes({ pDbrbProcess->node() });
+
 		  	pFsmShared->resetChainSyncData();
 			pFsmShared->setNodeWorkState(NodeWorkState::Running);
 			committeeManager.reset();
@@ -406,6 +409,8 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, &committeeManager, pConfigHolder, timeSupplier]() {
 			TRY_GET_FSM()
 
+			pFsmShared->dbrbProcess()->setCurrentView(pFsmShared->dbrbViewFetcher().getLatestView());
+
 			auto& committeeData = pFsmShared->committeeData();
 			auto round = committeeData.committeeRound();
 			if (CommitteePhase::None == round.StartPhase)
@@ -449,7 +454,7 @@ namespace catapult { namespace fastfinality {
 
 			CATAPULT_LOG(debug) << "committee selection result: is block proposer = " << isBlockProposer << ", start phase = " << round.StartPhase;
 
-			pFsmShared->dbrbProcess().clearBroadcastData();
+			pFsmShared->dbrbProcess()->clearBroadcastData();
 
 			pFsmShared->processEvent(CommitteeSelectionResult{ isBlockProposer, round.StartPhase });
 		};
@@ -531,7 +536,7 @@ namespace catapult { namespace fastfinality {
 				auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(pBlock->Size);
 				pPacket->Type = ionet::PacketType::Push_Proposed_Block;
 				std::memcpy(static_cast<void*>(pPacket->Data()), pBlock.get(), pBlock->Size);
-				pFsmShared->dbrbProcess().broadcast(pPacket);
+				pFsmShared->dbrbProcess()->broadcast(pPacket);
 
 				auto phaseEndTimeMillis = GetPhaseEndTimeMillis(CommitteePhase::Propose, committeeRound.PhaseTimeMillis);
 				DelayAction(pFsmShared, pFsmShared->timer(), phaseEndTimeMillis, [pFsmWeak] {
@@ -785,7 +790,7 @@ namespace catapult { namespace fastfinality {
 				for (const auto& pair : votes)
 					pMessage[index++] = pair.second;
 
-				pFsmShared->dbrbProcess().broadcast(pPacket);
+				pFsmShared->dbrbProcess()->broadcast(pPacket);
 			};
 		}
 	}

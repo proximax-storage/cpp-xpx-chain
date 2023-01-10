@@ -5,34 +5,24 @@
 **/
 
 #pragma once
-#include "Messages.h"
-#include <condition_variable>
-#include <future>
-#include <thread>
+#include "NodeRetreiver.h"
 
-namespace catapult { namespace net { class PacketWriters; }}
+namespace catapult {
+	namespace net { class PacketWriters; }
+	namespace dbrb { class MessagePacket; }
+}
 
 namespace catapult { namespace dbrb {
 
-	class MessageSender : public utils::NonCopyable {
+	class MessageSender : public AsyncMessageQueue<std::pair<std::shared_ptr<MessagePacket>, std::set<ProcessId>>> {
 	public:
-		explicit MessageSender(std::shared_ptr<net::PacketWriters> pWriters);
-		~MessageSender();
-
-	public:
-		void enqueue(const std::shared_ptr<MessagePacket>& pPacket, const std::set<ProcessId>& recipients);
-		void clearQueue();
+		explicit MessageSender(std::shared_ptr<net::PacketWriters> pWriters, NodeRetreiver& nodeRetreiver);
 
 	private:
-		void workerThreadFunc();
+		void processBuffer(BufferType& buffer) override;
 
 	private:
-		using BufferType = std::vector<std::pair<std::shared_ptr<MessagePacket>, std::set<ProcessId>>>;
-		BufferType m_buffer;
 		std::shared_ptr<net::PacketWriters> m_pWriters;
-		std::mutex m_mutex;
-		std::condition_variable m_condVar;
-		bool m_running;
-		std::thread m_workerThread;
+		NodeRetreiver& m_nodeRetreiver;
 	};
 }}

@@ -11,17 +11,17 @@
 namespace catapult { namespace fastfinality {
 
 	namespace {
-		dbrb::CommitMessage CreateCommitMessage(const std::vector<ionet::Node>& nodes) {
+		dbrb::CommitMessage CreateCommitMessage(const std::vector<dbrb::ProcessId>& nodes) {
 			dbrb::View certificateView;
 			dbrb::View currentView;
-			certificateView.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-				{ nodes[1], dbrb::MembershipChanges::Join },
-				{ nodes[3], dbrb::MembershipChanges::Join },
+			certificateView.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+				{ nodes[1], dbrb::MembershipChange::Join },
+				{ nodes[3], dbrb::MembershipChange::Join },
 			};
-			currentView.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-				{ nodes[0], dbrb::MembershipChanges::Leave },
-				{ nodes[2], dbrb::MembershipChanges::Leave },
-				{ nodes[4], dbrb::MembershipChanges::Leave },
+			currentView.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+				{ nodes[0], dbrb::MembershipChange::Leave },
+				{ nodes[2], dbrb::MembershipChange::Leave },
+				{ nodes[4], dbrb::MembershipChange::Leave },
 			};
 			auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 			std::map<dbrb::ProcessId, catapult::Signature> certificate{
@@ -34,9 +34,15 @@ namespace catapult { namespace fastfinality {
 		}
 
 		template<typename TMessage>
-		void RunMessageSerializationTest(std::function<TMessage (const std::vector<ionet::Node>& nodes)> createMessage, consumer<const TMessage&, const TMessage&> callback) {
-			auto nodes = config::LoadPeersFromPath("../resources/peers-dbrb.json", model::NetworkIdentifier::Private_Test);
-			EXPECT_EQ(6u, nodes.size());
+		void RunMessageSerializationTest(std::function<TMessage (const std::vector<dbrb::ProcessId>& nodes)> createMessage, consumer<const TMessage&, const TMessage&> callback) {
+			std::vector<dbrb::ProcessId> nodes = {
+				test::GenerateRandomByteArray<Key>(),
+				test::GenerateRandomByteArray<Key>(),
+				test::GenerateRandomByteArray<Key>(),
+				test::GenerateRandomByteArray<Key>(),
+				test::GenerateRandomByteArray<Key>(),
+				test::GenerateRandomByteArray<Key>(),
+			};
 
 			auto originalMessage = createMessage(nodes);
 			auto keyPair = crypto::KeyPair::FromString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98534");
@@ -55,8 +61,8 @@ namespace catapult { namespace fastfinality {
 		RunMessageSerializationTest<dbrb::ReconfigMessage>([](const auto& nodes) {
 				dbrb::View view;
 				for (const auto& node : nodes)
-					view.Data.emplace(node, dbrb::MembershipChanges::Join);
-				return dbrb::ReconfigMessage(nodes[0], nodes[1], dbrb::MembershipChanges::Leave, view);
+					view.Data.emplace(node, dbrb::MembershipChange::Join);
+				return dbrb::ReconfigMessage(nodes[0], nodes[1], dbrb::MembershipChange::Leave, view);
 			},
 			[](const dbrb::ReconfigMessage& originalMessage, const dbrb::ReconfigMessage& unpackedMessage) {
 				EXPECT_EQ(originalMessage.ProcessId, unpackedMessage.ProcessId);
@@ -69,7 +75,7 @@ namespace catapult { namespace fastfinality {
 		RunMessageSerializationTest<dbrb::ReconfigConfirmMessage>([](const auto& nodes) {
 				dbrb::View view;
 				for (const auto& node : nodes)
-					view.Data.emplace(node, dbrb::MembershipChanges::Join);
+					view.Data.emplace(node, dbrb::MembershipChange::Join);
 				return dbrb::ReconfigConfirmMessage(nodes[0], view);
 			},
 			[](const dbrb::ReconfigConfirmMessage& originalMessage, const dbrb::ReconfigConfirmMessage& unpackedMessage) {
@@ -82,8 +88,8 @@ namespace catapult { namespace fastfinality {
 				dbrb::View view1;
 				dbrb::View view2;
 				for (const auto& node : nodes) {
-					view1.Data.emplace(node, dbrb::MembershipChanges::Join);
-					view2.Data.emplace(node, dbrb::MembershipChanges::Leave);
+					view1.Data.emplace(node, dbrb::MembershipChange::Join);
+					view2.Data.emplace(node, dbrb::MembershipChange::Leave);
 				}
 				dbrb::Sequence sequence;
 				sequence.tryAppend(view1);
@@ -102,13 +108,13 @@ namespace catapult { namespace fastfinality {
 				dbrb::View view2;
 				dbrb::View view3;
 				for (const auto& node : nodes) {
-					view1.Data.emplace(node, dbrb::MembershipChanges::Join);
-					view2.Data.emplace(node, dbrb::MembershipChanges::Leave);
+					view1.Data.emplace(node, dbrb::MembershipChange::Join);
+					view2.Data.emplace(node, dbrb::MembershipChange::Leave);
 				}
-				view3.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-					{ nodes[0], dbrb::MembershipChanges::Join },
-					{ nodes[2], dbrb::MembershipChanges::Join },
-					{ nodes[4], dbrb::MembershipChanges::Join },
+				view3.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+					{ nodes[0], dbrb::MembershipChange::Join },
+					{ nodes[2], dbrb::MembershipChange::Join },
+					{ nodes[4], dbrb::MembershipChange::Join },
 				};
 				dbrb::Sequence sequence;
 				sequence.tryAppend(view1);
@@ -126,18 +132,22 @@ namespace catapult { namespace fastfinality {
 				dbrb::View view1;
 				dbrb::View view2;
 				for (const auto& node : nodes) {
-					view1.Data.emplace(node, dbrb::MembershipChanges::Join);
-					view2.Data.emplace(node, dbrb::MembershipChanges::Leave);
+					view1.Data.emplace(node, dbrb::MembershipChange::Join);
+					view2.Data.emplace(node, dbrb::MembershipChange::Leave);
 				}
 				dbrb::Sequence sequence;
 				sequence.tryAppend(view1);
 				sequence.tryAppend(view2);
-				return dbrb::InstallMessage(nodes[0], view1, sequence, view2);
+				std::map<dbrb::ProcessId, catapult::Signature> signatures = {
+					{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() },
+					{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() },
+					{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() },
+				};
+				return dbrb::InstallMessage(nodes[0], sequence, signatures);
 			},
 			[](const dbrb::InstallMessage& originalMessage, const dbrb::InstallMessage& unpackedMessage) {
-				EXPECT_EQ(originalMessage.LeastRecentView, unpackedMessage.LeastRecentView);
-				EXPECT_EQ(originalMessage.ConvergedSequence, unpackedMessage.ConvergedSequence);
-				EXPECT_EQ(originalMessage.ReplacedView, unpackedMessage.ReplacedView);
+				EXPECT_EQ(originalMessage.Sequence, unpackedMessage.Sequence);
+				EXPECT_EQ(originalMessage.ConvergedSignatures, unpackedMessage.ConvergedSignatures);
 			});
 	}
 
@@ -145,7 +155,7 @@ namespace catapult { namespace fastfinality {
 		RunMessageSerializationTest<dbrb::PrepareMessage>([](const auto& nodes) {
 				dbrb::View view;
 				for (const auto& node : nodes)
-					view.Data.emplace(node, dbrb::MembershipChanges::Join);
+					view.Data.emplace(node, dbrb::MembershipChange::Join);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 				return dbrb::PrepareMessage(nodes[0], payload, view);
 			},
@@ -160,7 +170,7 @@ namespace catapult { namespace fastfinality {
 		RunMessageSerializationTest<dbrb::AcknowledgedMessage>([](const auto& nodes) {
 				dbrb::View view;
 				for (const auto& node : nodes)
-					view.Data.emplace(node, dbrb::MembershipChanges::Join);
+					view.Data.emplace(node, dbrb::MembershipChange::Join);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 				return dbrb::AcknowledgedMessage(nodes[0], nodes[1], payload, view, test::GenerateRandomArray<Signature_Size>());
 			},
@@ -190,21 +200,21 @@ namespace catapult { namespace fastfinality {
 				dbrb::ProcessState state;
 				dbrb::View view;
 				for (const auto& node : nodes)
-					view.Data.emplace(node, dbrb::MembershipChanges::Join);
+					view.Data.emplace(node, dbrb::MembershipChange::Join);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 				dbrb::PrepareMessage prepareMessage(nodes[0], payload, view);
 				state.Acknowledgeable = prepareMessage;
 				state.Conflicting = prepareMessage;
 				state.Stored = CreateCommitMessage(nodes);
 				dbrb::View pendingChanges;
-				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-					{ nodes[1], dbrb::MembershipChanges::Join },
-					{ nodes[3], dbrb::MembershipChanges::Join },
+				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+					{ nodes[1], dbrb::MembershipChange::Join },
+					{ nodes[3], dbrb::MembershipChange::Join },
 				};
-				pendingChanges.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-					{ nodes[0], dbrb::MembershipChanges::Leave },
-					{ nodes[2], dbrb::MembershipChanges::Leave },
-					{ nodes[4], dbrb::MembershipChanges::Leave },
+				pendingChanges.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+					{ nodes[0], dbrb::MembershipChange::Leave },
+					{ nodes[2], dbrb::MembershipChange::Leave },
+					{ nodes[4], dbrb::MembershipChange::Leave },
 				};
 				return dbrb::StateUpdateMessage(nodes[0], state, view, pendingChanges);
 			},
@@ -241,20 +251,20 @@ namespace catapult { namespace fastfinality {
 				dbrb::ProcessState state;
 				dbrb::View view;
 				for (const auto& node : nodes)
-					view.Data.emplace(node, dbrb::MembershipChanges::Join);
+					view.Data.emplace(node, dbrb::MembershipChange::Join);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 				dbrb::PrepareMessage prepareMessage(nodes[0], payload, view);
 				state.Conflicting = prepareMessage;
 				state.Stored = CreateCommitMessage(nodes);
 				dbrb::View pendingChanges;
-				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-					{ nodes[1], dbrb::MembershipChanges::Join },
-					{ nodes[3], dbrb::MembershipChanges::Join },
+				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+					{ nodes[1], dbrb::MembershipChange::Join },
+					{ nodes[3], dbrb::MembershipChange::Join },
 				};
-				pendingChanges.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-					{ nodes[0], dbrb::MembershipChanges::Leave },
-					{ nodes[2], dbrb::MembershipChanges::Leave },
-					{ nodes[4], dbrb::MembershipChanges::Leave },
+				pendingChanges.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+					{ nodes[0], dbrb::MembershipChange::Leave },
+					{ nodes[2], dbrb::MembershipChange::Leave },
+					{ nodes[4], dbrb::MembershipChange::Leave },
 				};
 				return dbrb::StateUpdateMessage(nodes[0], state, view, pendingChanges);
 			},
@@ -286,20 +296,20 @@ namespace catapult { namespace fastfinality {
 				dbrb::ProcessState state;
 				dbrb::View view;
 				for (const auto& node : nodes)
-					view.Data.emplace(node, dbrb::MembershipChanges::Join);
+					view.Data.emplace(node, dbrb::MembershipChange::Join);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 				dbrb::PrepareMessage prepareMessage(nodes[0], payload, view);
 				state.Acknowledgeable = prepareMessage;
 				state.Stored = CreateCommitMessage(nodes);
 				dbrb::View pendingChanges;
-				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-					{ nodes[1], dbrb::MembershipChanges::Join },
-					{ nodes[3], dbrb::MembershipChanges::Join },
+				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+					{ nodes[1], dbrb::MembershipChange::Join },
+					{ nodes[3], dbrb::MembershipChange::Join },
 				};
-				pendingChanges.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-					{ nodes[0], dbrb::MembershipChanges::Leave },
-					{ nodes[2], dbrb::MembershipChanges::Leave },
-					{ nodes[4], dbrb::MembershipChanges::Leave },
+				pendingChanges.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+					{ nodes[0], dbrb::MembershipChange::Leave },
+					{ nodes[2], dbrb::MembershipChange::Leave },
+					{ nodes[4], dbrb::MembershipChange::Leave },
 				};
 				return dbrb::StateUpdateMessage(nodes[0], state, view, pendingChanges);
 			},
@@ -331,20 +341,20 @@ namespace catapult { namespace fastfinality {
 				dbrb::ProcessState state;
 				dbrb::View view;
 				for (const auto& node : nodes)
-					view.Data.emplace(node, dbrb::MembershipChanges::Join);
+					view.Data.emplace(node, dbrb::MembershipChange::Join);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 				dbrb::PrepareMessage prepareMessage(nodes[0], payload, view);
 				state.Acknowledgeable = prepareMessage;
 				state.Conflicting = prepareMessage;
 				dbrb::View pendingChanges;
-				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-					{ nodes[1], dbrb::MembershipChanges::Join },
-					{ nodes[3], dbrb::MembershipChanges::Join },
+				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+					{ nodes[1], dbrb::MembershipChange::Join },
+					{ nodes[3], dbrb::MembershipChange::Join },
 				};
-				pendingChanges.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-					{ nodes[0], dbrb::MembershipChanges::Leave },
-					{ nodes[2], dbrb::MembershipChanges::Leave },
-					{ nodes[4], dbrb::MembershipChanges::Leave },
+				pendingChanges.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+					{ nodes[0], dbrb::MembershipChange::Leave },
+					{ nodes[2], dbrb::MembershipChange::Leave },
+					{ nodes[4], dbrb::MembershipChange::Leave },
 				};
 				return dbrb::StateUpdateMessage(nodes[0], state, view, pendingChanges);
 			},
@@ -375,16 +385,16 @@ namespace catapult { namespace fastfinality {
 				dbrb::ProcessState state;
 				dbrb::View view;
 				for (const auto& node : nodes)
-					view.Data.emplace(node, dbrb::MembershipChanges::Join);
+					view.Data.emplace(node, dbrb::MembershipChange::Join);
 				dbrb::View pendingChanges;
-				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-					{ nodes[1], dbrb::MembershipChanges::Join },
-					{ nodes[3], dbrb::MembershipChanges::Join },
+				view.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+					{ nodes[1], dbrb::MembershipChange::Join },
+					{ nodes[3], dbrb::MembershipChange::Join },
 				};
-				pendingChanges.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChanges>>{
-					{ nodes[0], dbrb::MembershipChanges::Leave },
-					{ nodes[2], dbrb::MembershipChanges::Leave },
-					{ nodes[4], dbrb::MembershipChanges::Leave },
+				pendingChanges.Data = std::set<std::pair<dbrb::ProcessId, dbrb::MembershipChange>>{
+					{ nodes[0], dbrb::MembershipChange::Leave },
+					{ nodes[2], dbrb::MembershipChange::Leave },
+					{ nodes[4], dbrb::MembershipChange::Leave },
 				};
 				return dbrb::StateUpdateMessage(nodes[0], state, view, pendingChanges);
 			},
@@ -402,7 +412,7 @@ namespace catapult { namespace fastfinality {
 		RunMessageSerializationTest<dbrb::DeliverMessage>([](const auto& nodes) {
 				dbrb::View view;
 				for (const auto& node : nodes)
-					view.Data.emplace(node, dbrb::MembershipChanges::Join);
+					view.Data.emplace(node, dbrb::MembershipChange::Join);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 				return dbrb::DeliverMessage(nodes[0], nodes[1], payload, view);
 			},

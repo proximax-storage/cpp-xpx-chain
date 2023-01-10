@@ -103,6 +103,10 @@ namespace catapult { namespace ionet {
 	\
 	ENUM_VALUE(Dbrb_Deliver_Message, 559) \
 	\
+	ENUM_VALUE(Dbrb_Push_Nodes, 560) \
+	\
+	ENUM_VALUE(Dbrb_Pull_Nodes, 561) \
+	\
 	/* api only packets have types [500, 600) */ \
 	\
 	/* Partial aggregate transactions have been pushed by an api-node. */ \

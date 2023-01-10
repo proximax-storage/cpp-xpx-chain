@@ -6,6 +6,7 @@
 
 #include "WeightedVotingService.h"
 #include "WeightedVotingFsm.h"
+#include "dbrb/DbrbPacketHandlers.h"
 #include "catapult/api/RemoteRequestDispatcher.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/crypto/KeyUtils.h"
@@ -25,7 +26,6 @@ namespace catapult { namespace fastfinality {
 		constexpr auto Writers_Service_Name = "weightedvoting.writers";
 		constexpr auto Readers_Service_Name = "weightedvoting.readers";
 		constexpr auto Service_Id = ionet::ServiceIdentifier(0x54654144);
-		constexpr unsigned int Port_Diff = 3u;
 
 		std::shared_ptr<harvesting::UnlockedAccounts> CreateUnlockedAccounts(const harvesting::HarvestingConfiguration& config) {
 			auto pUnlockedAccounts = std::make_shared<harvesting::UnlockedAccounts>(config.MaxUnlockedAccounts);
@@ -116,29 +116,16 @@ namespace catapult { namespace fastfinality {
 				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
 				locator.registerService(Writers_Service_Name, pWriters);
 
-				auto peersFile = boost::filesystem::path(m_resourcesPath) / "peers-dbrb.json";
-				auto bootstrapNodes = config::LoadPeersFromPath(peersFile.generic_string(), config.Immutable.NetworkIdentifier);
-				auto thisNode = config::ToLocalDbrbNode(config);
-				std::map<Key, ionet::Node> nodeMap;
-				for (const auto& node : bootstrapNodes) {
-					nodeMap[node.identityKey()] = node;
-				}
-				bootstrapNodes.clear();
-				for (const auto& pair : nodeMap) {
-					if (pair.first != thisNode.identityKey())
-						bootstrapNodes.emplace_back(pair.second);
-				}
-
-				auto pFsmShared = pServiceGroup->pushService([pWriters, &config, bootstrapNodes, thisNode, &keyPair = locator.keyPair()](const std::shared_ptr<thread::IoThreadPool>& pPool) {
-					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, bootstrapNodes, thisNode, keyPair, pPool);
-					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess);
+				auto pFsmShared = pServiceGroup->pushService([pWriters, &config, &keyPair = locator.keyPair(), &state](const std::shared_ptr<thread::IoThreadPool>& pPool) {
+					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, state.packetIoPickers(), config::ToLocalDbrbNode(config), keyPair, pPool);
+					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess, state.pluginManager().getDbrbViewFetcher());
 				});
 
 				const auto& pluginManager = state.pluginManager();
 				auto pPacketHandlers = std::make_shared<ionet::ServerPacketHandlers>(config.Node.MaxPacketDataSize.bytes32());
-				pFsmShared->dbrbProcess().registerPacketHandlers(*pPacketHandlers);
+				pFsmShared->dbrbProcess()->registerPacketHandlers(*pPacketHandlers);
 				std::weak_ptr<WeightedVotingFsm> pFsmWeak = pFsmShared;
-				pFsmShared->dbrbProcess().setDeliverCallback([pFsmWeak, &pluginManager](const std::shared_ptr<ionet::Packet>& pPacket) {
+				pFsmShared->dbrbProcess()->setDeliverCallback([pFsmWeak, &pluginManager](const std::shared_ptr<ionet::Packet>& pPacket) {
 					TRY_GET_FSM()
 
 					switch (pPacket->Type) {
@@ -179,9 +166,11 @@ namespace catapult { namespace fastfinality {
 
 				RegisterPullConfirmedBlockHandler(pFsmShared, state.packetHandlers());
 				RegisterPullRemoteNodeStateHandler(pFsmShared, state.packetHandlers(), pConfigHolder, blockElementGetter, lastBlockElementSupplier);
+				dbrb::RegisterPushNodesHandler(pFsmShared->dbrbProcess(), config.Immutable.NetworkIdentifier, state.packetHandlers());
+				dbrb::RegisterPullNodesHandler(pFsmShared->dbrbProcess(), state.packetHandlers());
 
 				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, *pPacketHandlers, locator.keyPair(), connectionSettings, 2u);
-				extensions::BootServer(*pServiceGroup, config.Node.Port + Port_Diff, Service_Id, config, [&acceptor = *pReaders](
+				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, [&acceptor = *pReaders](
 					const auto& socketInfo,
 					const auto& callback) {
 					acceptor.accept(socketInfo, callback);

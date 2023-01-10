@@ -320,6 +320,26 @@ namespace catapult { namespace plugins {
 
 	// endregion
 
+	// region dbrb
+
+	/// Sets a DBRB view fetcher.
+	void PluginManager::setDbrbViewFetcher(const std::shared_ptr<dbrb::DbrbViewFetcher>& pFetcher) {
+		if (!!m_pDbrbViewFetcher)
+			CATAPULT_THROW_RUNTIME_ERROR("DBRB view fetcher already set");
+
+		m_pDbrbViewFetcher = pFetcher;
+	}
+
+	/// Gets DBRB view fetcher.
+	dbrb::DbrbViewFetcher& PluginManager::getDbrbViewFetcher() const {
+		if (!m_pDbrbViewFetcher)
+			CATAPULT_THROW_RUNTIME_ERROR("DBRB view fetcher not set");
+
+		return *m_pDbrbViewFetcher;
+	}
+
+	// endregion
+
 	// region storage
 
 	void PluginManager::setStorageState(const std::shared_ptr<state::StorageState>& pState) {

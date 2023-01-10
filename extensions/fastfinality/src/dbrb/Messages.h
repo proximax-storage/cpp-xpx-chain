@@ -5,8 +5,6 @@
 **/
 
 #pragma once
-#include <utility>
-
 #include "DbrbUtils.h"
 
 namespace catapult { namespace crypto { class KeyPair; }}
@@ -16,16 +14,17 @@ namespace catapult { namespace dbrb {
 #pragma pack(push, 1)
 
 	struct MessagePacket : public ionet::Packet {
+		ProcessId Sender;
 		catapult::Signature Signature;
 
 		/// Returns a non-const pointer to data contained in this packet.
 		uint8_t* payload() {
-			return Size <= sizeof(Packet) ? nullptr : reinterpret_cast<uint8_t*>(this) + sizeof(Packet) + Signature_Size;
+			return Size <= sizeof(Packet) ? nullptr : reinterpret_cast<uint8_t*>(this) + sizeof(Packet) + ProcessId_Size + Signature_Size;
 		}
 
 		/// Returns a const pointer to data contained in this packet.
 		constexpr const uint8_t* payload() const {
-			return Size <= sizeof(Packet) ? nullptr : reinterpret_cast<const uint8_t*>(this) + sizeof(Packet) + Signature_Size;
+			return Size <= sizeof(Packet) ? nullptr : reinterpret_cast<const uint8_t*>(this) + sizeof(Packet) + ProcessId_Size + Signature_Size;
 		}
 
 		/// Returns buffers for signing this packet.
@@ -62,7 +61,7 @@ namespace catapult { namespace dbrb {
 		/// Type of the packet.
 		ionet::PacketType Type;
 
-		// TODO: Include fields to enable signature/certificate verification
+		/// This message signed by sender.
 		catapult::Signature Signature;
 	};
 
@@ -92,7 +91,7 @@ namespace catapult { namespace dbrb {
 	struct ReconfigMessage : Message {
 	public:
 		ReconfigMessage() = delete;
-		ReconfigMessage(const ProcessId& sender, ProcessId processId, const MembershipChanges& membershipChange, View view)
+		ReconfigMessage(const ProcessId& sender, ProcessId processId, const MembershipChange& membershipChange, View view)
 			: Message(sender, ionet::PacketType::Dbrb_Reconfig_Message)
 			, ProcessId(std::move(processId))
 			, MembershipChange(membershipChange)
@@ -107,7 +106,7 @@ namespace catapult { namespace dbrb {
 		dbrb::ProcessId ProcessId; // TODO: Check if necessary (perhaps Sender is enough?)
 
 		/// Type of ProcessId's membership change.
-		MembershipChanges MembershipChange;
+		dbrb::MembershipChange MembershipChange;
 
 		/// Current view of the system from the perspective of ProcessID.
 		/// It shouldn't include the change from this message.
@@ -174,7 +173,7 @@ namespace catapult { namespace dbrb {
 	struct InstallMessage : Message {
 	public:
 		InstallMessage() = delete;
-		InstallMessage(const ProcessId& sender, Sequence sequence, std::map<ProcessId, catapult::Signature> signatures)
+		InstallMessage(const ProcessId& sender, Sequence sequence, CertificateType signatures)
 			: Message(sender, ionet::PacketType::Dbrb_Install_Message)
 			, Sequence(std::move(sequence))
 			, ConvergedSignatures(std::move(signatures))
@@ -190,7 +189,7 @@ namespace catapult { namespace dbrb {
 		dbrb::Sequence Sequence;
 
 		/// Map of processes and their signatures for appropriate Converged messages for Sequence.
-		std::map<ProcessId, catapult::Signature> ConvergedSignatures;
+		CertificateType ConvergedSignatures;
 	};
 
 
@@ -247,7 +246,7 @@ namespace catapult { namespace dbrb {
 	struct CommitMessage : Message {
 	public:
 		CommitMessage() = delete;
-		explicit CommitMessage(const ProcessId& sender, ProcessId  initiator, Payload payload, std::map<ProcessId, catapult::Signature> certificate, View certificateView, View currentView)
+		explicit CommitMessage(const ProcessId& sender, ProcessId  initiator, Payload payload, CertificateType certificate, View certificateView, View currentView)
 			: Message(sender, ionet::PacketType::Dbrb_Commit_Message)
 			, Initiator(std::move(initiator))
 			, Payload(std::move(payload))
@@ -267,7 +266,7 @@ namespace catapult { namespace dbrb {
 		dbrb::Payload Payload;
 
 		/// Message certificate for supplied payload.
-		std::map<ProcessId, catapult::Signature> Certificate;
+		CertificateType Certificate;
 
 		/// View associated with supplied certificate.
 		View CertificateView;
