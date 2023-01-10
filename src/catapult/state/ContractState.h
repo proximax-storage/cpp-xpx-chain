@@ -36,9 +36,20 @@ namespace catapult { namespace state {
 		Height BlockHeight;
 	};
 
+	struct ExecutorProofOfExecutionInfo {
+		uint64_t StartBatchId = 0;
+		crypto::CurvePoint T;
+		crypto::Scalar R;
+	};
+
+	struct ExecutorDigest {
+		uint64_t NextBatchToApprove = 0;
+		ExecutorProofOfExecutionInfo PoEx;
+	};
+
 	struct ContractInfo {
 		Key DriveKey;
-		std::set<Key> Executors;
+		std::map<Key, ExecutorDigest> Executors;
 		uint64_t BatchesExecuted = 0U;
 		std::string AutomaticExecutionsFileName;
 		std::string AutomaticExecutionsFunctionName;
@@ -81,7 +92,7 @@ namespace catapult { namespace state {
 
 		virtual std::set<Key> getContracts(const Key& executorKey) const = 0;
 
-		virtual std::set<Key> getExecutors(const Key& contractKey) const = 0;
+		virtual std::map<Key, ExecutorDigest> getExecutors(const Key& contractKey) const = 0;
 
 		virtual ContractInfo getContractInfo(const Key& contractKey) const = 0;
 

@@ -93,6 +93,23 @@ namespace catapult::contract {
 			m_pExecutor = sirius::contract::DefaultExecutorBuilder().build(std::move(keyPair), config, std::move(pExecutorEventHandler), "executor");
 		}
 
+	private:
+
+    	auto castExecutors(const std::map<Key, state::ExecutorDigest>& executors) {
+        	std::map<sirius::contract::ExecutorKey, sirius::contract::ExecutorInfo> castedExecutors;
+        	for (const auto& [key, digest]: executors) {
+        		sirius::contract::ExecutorInfo info;
+        		info.m_nextBatchToApprove = digest.NextBatchToApprove;
+        		info.m_batchProof.m_T.fromBytes(digest.PoEx.T.toBytes());
+        		info.m_batchProof.m_r = digest.PoEx.R.array();
+        		info.m_initialBatch = digest.PoEx.StartBatchId;
+        		castedExecutors[key.array()] = info;
+        	}
+        	return castedExecutors;
+        }
+
+	public:
+
 		std::optional<Height> contractAddedAt(const Key& contractKey) const {
 			auto it = m_alreadyAddedContracts.find(contractKey);
 			if (it == m_alreadyAddedContracts.end()) {
@@ -186,7 +203,8 @@ namespace catapult::contract {
 				}
 				else {
 					auto executors = m_contractState.getExecutors(contractKey);
-					m_pExecutor->setExecutors(contractKey.array(), castInternalType<sirius::contract::ExecutorKey>(executors));
+
+					m_pExecutor->setExecutors(contractKey.array(), castExecutors(executors));
 				}
 			}
 		}
@@ -206,7 +224,7 @@ namespace catapult::contract {
         	auto contractInfo = m_contractState.getContractInfo(contractKey);
         	sirius::contract::AddContractRequest addRequest;
         	addRequest.m_driveKey = contractInfo.DriveKey.array();
-        	addRequest.m_executors = castInternalType<sirius::contract::ExecutorKey>(contractInfo.Executors);
+        	addRequest.m_executors = castExecutors(contractInfo.Executors);
         	addRequest.m_automaticExecutionsSCLimit = contractInfo.AutomaticExecutionCallPayment.unwrap();
         	addRequest.m_automaticExecutionsSMLimit = contractInfo.AutomaticDownloadCallPayment.unwrap();
         	addRequest.m_batchesExecuted = contractInfo.BatchesExecuted;

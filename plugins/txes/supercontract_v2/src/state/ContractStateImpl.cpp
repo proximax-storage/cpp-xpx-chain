@@ -61,14 +61,35 @@ namespace catapult { namespace state {
 		return contracts;
 	}
 
-	std::set<Key> ContractStateImpl::getExecutors(const Key& contractKey) const {
+	std::map<Key, ExecutorDigest> ContractStateImpl::getExecutors(const Key& contractKey) const {
 		auto pSuperContractCacheView = getCacheView<cache::SuperContractCache>();
 		auto contractIt = pSuperContractCacheView->find(contractKey);
 
 		// The caller must be sure that the contract exists
 		const auto& contractEntry = contractIt.get();
 
-		return m_pDriveStateBrowser->getReplicators(m_pCache->createView().toReadOnly(), contractEntry.driveKey());
+		auto executorKeys = m_pDriveStateBrowser->getReplicators(m_pCache->createView().toReadOnly(), contractEntry.driveKey());
+
+		std::map<Key, ExecutorDigest> executors;
+
+		const auto& executorsInfo = contractEntry.executorsInfo();
+		for (const auto& key: executorKeys) {
+			ExecutorDigest digest;
+			auto it = executorsInfo.find(key);
+			if (it != executorsInfo.end()) {
+				const auto& info = it->second;
+				digest.NextBatchToApprove = info.NextBatchToApprove;
+				digest.PoEx.StartBatchId = info.PoEx.StartBatchId;
+				digest.PoEx.T = info.PoEx.T;
+				digest.PoEx.R = info.PoEx.R;
+			}
+			else {
+				digest.NextBatchToApprove = contractEntry.nextBatchId();
+				digest.PoEx.StartBatchId = contractEntry.nextBatchId();
+			}
+			executors[key] = digest;
+		}
+		return executors;
 	}
 
 	ContractInfo ContractStateImpl::getContractInfo(const Key& contractKey) const {
