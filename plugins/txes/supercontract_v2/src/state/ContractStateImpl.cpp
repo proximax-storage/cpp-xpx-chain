@@ -61,7 +61,7 @@ namespace catapult { namespace state {
 		return contracts;
 	}
 
-	std::map<Key, ExecutorDigest> ContractStateImpl::getExecutors(const Key& contractKey) const {
+	std::map<Key, ExecutorStateInfo> ContractStateImpl::getExecutors(const Key& contractKey) const {
 		auto pSuperContractCacheView = getCacheView<cache::SuperContractCache>();
 		auto contractIt = pSuperContractCacheView->find(contractKey);
 
@@ -70,11 +70,11 @@ namespace catapult { namespace state {
 
 		auto executorKeys = m_pDriveStateBrowser->getReplicators(m_pCache->createView().toReadOnly(), contractEntry.driveKey());
 
-		std::map<Key, ExecutorDigest> executors;
+		std::map<Key, ExecutorStateInfo> executors;
 
 		const auto& executorsInfo = contractEntry.executorsInfo();
 		for (const auto& key: executorKeys) {
-			ExecutorDigest digest;
+			ExecutorStateInfo digest;
 			auto it = executorsInfo.find(key);
 			if (it != executorsInfo.end()) {
 				const auto& info = it->second;
@@ -102,7 +102,10 @@ namespace catapult { namespace state {
 		ContractInfo contractInfo;
 		contractInfo.DriveKey = contractEntry.driveKey();
 		contractInfo.Executors = getExecutors(contractKey);
-		contractInfo.BatchesExecuted = contractEntry.nextBatchId();
+
+		for (uint i = 0; i < contractEntry.batches().size(); i++) {
+			contractInfo.RecentBatches[i] = contractEntry.batches()[i].PoExVerificationInformation;
+		}
 
 		const auto& automaticExecutionInfo = contractEntry.automaticExecutionsInfo();
 		contractInfo.AutomaticExecutionsFileName = automaticExecutionInfo.AutomaticExecutionFileName;

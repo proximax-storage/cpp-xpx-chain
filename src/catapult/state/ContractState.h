@@ -42,15 +42,15 @@ namespace catapult { namespace state {
 		crypto::Scalar R;
 	};
 
-	struct ExecutorDigest {
+	struct ExecutorStateInfo {
 		uint64_t NextBatchToApprove = 0;
 		ExecutorProofOfExecutionInfo PoEx;
 	};
 
 	struct ContractInfo {
 		Key DriveKey;
-		std::map<Key, ExecutorDigest> Executors;
-		uint64_t BatchesExecuted = 0U;
+		std::map<Key, ExecutorStateInfo> Executors;
+		std::map<uint64_t, crypto::CurvePoint> RecentBatches;
 		std::string AutomaticExecutionsFileName;
 		std::string AutomaticExecutionsFunctionName;
 		Amount AutomaticExecutionCallPayment;
@@ -92,7 +92,7 @@ namespace catapult { namespace state {
 
 		virtual std::set<Key> getContracts(const Key& executorKey) const = 0;
 
-		virtual std::map<Key, ExecutorDigest> getExecutors(const Key& contractKey) const = 0;
+		virtual std::map<Key, ExecutorStateInfo> getExecutors(const Key& contractKey) const = 0;
 
 		virtual ContractInfo getContractInfo(const Key& contractKey) const = 0;
 

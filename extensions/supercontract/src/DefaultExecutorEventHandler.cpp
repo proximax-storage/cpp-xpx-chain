@@ -8,11 +8,12 @@
 
 namespace catapult::contract {
 
-void DefaultExecutorEventHandler::endBatchTransactionIsReady(
-		const sirius::contract::EndBatchExecutionTransactionInfo& info) {}
-void DefaultExecutorEventHandler::endBatchSingleTransactionIsReady(
-		const sirius::contract::EndBatchExecutionSingleTransactionInfo& info) {}
-void DefaultExecutorEventHandler::synchronizationSingleTransactionIsReady(
-		const sirius::contract::SynchronizationSingleTransactionInfo& info) {}
-
+	void DefaultExecutorEventHandler::endBatchTransactionIsReady(
+			const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& info) {}
+	void DefaultExecutorEventHandler::endBatchTransactionIsReady(
+			const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& info) {}
+	void DefaultExecutorEventHandler::endBatchSingleTransactionIsReady(
+			const sirius::contract::EndBatchExecutionSingleTransactionInfo& info) {}
+	void DefaultExecutorEventHandler::synchronizationSingleTransactionIsReady(
+			const sirius::contract::SynchronizationSingleTransactionInfo& info) {}
 }

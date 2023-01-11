@@ -95,7 +95,7 @@ namespace catapult::contract {
 
 	private:
 
-    	auto castExecutors(const std::map<Key, state::ExecutorDigest>& executors) {
+    	auto castExecutors(const std::map<Key, state::ExecutorStateInfo>& executors) {
         	std::map<sirius::contract::ExecutorKey, sirius::contract::ExecutorInfo> castedExecutors;
         	for (const auto& [key, digest]: executors) {
         		sirius::contract::ExecutorInfo info;
@@ -227,7 +227,14 @@ namespace catapult::contract {
         	addRequest.m_executors = castExecutors(contractInfo.Executors);
         	addRequest.m_automaticExecutionsSCLimit = contractInfo.AutomaticExecutionCallPayment.unwrap();
         	addRequest.m_automaticExecutionsSMLimit = contractInfo.AutomaticDownloadCallPayment.unwrap();
-        	addRequest.m_batchesExecuted = contractInfo.BatchesExecuted;
+
+			// TODO We can provide only some recent batches
+			for (const auto& [batchId, verificationInfo]: contractInfo.RecentBatches) {
+				sirius::crypto::CurvePoint point;
+				point.fromBytes(verificationInfo.toBytes());
+				addRequest.m_recentBatchesInformation[batchId] = point;
+			}
+
         	m_pExecutor->addContract(contractKey.array(), std::move(addRequest));
         	if (contractInfo.LastPublishedBatch) {
         		const auto& lastBatch = *contractInfo.LastPublishedBatch;

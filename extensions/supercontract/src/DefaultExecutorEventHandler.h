@@ -10,14 +10,16 @@
 
 namespace catapult::contract {
 
-class DefaultExecutorEventHandler: public sirius::contract::ExecutorEventHandler {
-	void endBatchTransactionIsReady(const sirius::contract::EndBatchExecutionTransactionInfo& info) override;
-	void endBatchSingleTransactionIsReady(
-			const sirius::contract::EndBatchExecutionSingleTransactionInfo& info) override;
-
-public:
-	void synchronizationSingleTransactionIsReady(
-			const sirius::contract::SynchronizationSingleTransactionInfo& info) override;
-};
+	class DefaultExecutorEventHandler : public sirius::contract::ExecutorEventHandler {
+	public:
+		void endBatchTransactionIsReady(
+				const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& info) override;
+		void endBatchTransactionIsReady(
+				const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& info) override;
+		void endBatchSingleTransactionIsReady(
+				const sirius::contract::EndBatchExecutionSingleTransactionInfo& info) override;
+		void synchronizationSingleTransactionIsReady(
+				const sirius::contract::SynchronizationSingleTransactionInfo& info) override;
+	};
 
 }

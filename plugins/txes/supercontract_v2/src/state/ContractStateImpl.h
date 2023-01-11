@@ -24,7 +24,7 @@ public:
 	std::optional<Height> getAutomaticExecutionsEnabledSince(const Key& contractKey) const override;
 	Hash256 getDriveState(const Key& contractKey) const override;
 	std::set<Key> getContracts(const Key& executorKey) const override;
-	std::map<Key, ExecutorDigest> getExecutors(const Key& contractKey) const override;
+	std::map<Key, ExecutorStateInfo> getExecutors(const Key& contractKey) const override;
 	ContractInfo getContractInfo(const Key& contractKey) const override;
 
 private:
