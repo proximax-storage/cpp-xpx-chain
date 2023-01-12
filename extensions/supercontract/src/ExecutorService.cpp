@@ -129,7 +129,12 @@ namespace catapult::contract {
 			callRequestParameters.m_smLimit = manualCall.DownloadPayment.unwrap();
 
 			sirius::contract::CallReferenceInfo callReferenceInfo;
-			callReferenceInfo.m_blockHeight = manualCall.BlockHeight.unwrap();callReferenceInfo.m_callerKey = sirius::contract::CallerKey(manualCall.Caller.array());
+			callReferenceInfo.m_callerKey = sirius::contract::CallerKey(manualCall.Caller.array());
+			callReferenceInfo.m_blockHeight = manualCall.BlockHeight.unwrap();
+			for (const auto& payment: manualCall.Payments) {
+				callReferenceInfo.m_servicePayments.push_back({payment.PaymentUnresolvedMosaicId.unwrap(),
+																payment.PaymentAmount.unwrap()});
+			}
 			callRequestParameters.m_referenceInfo = callReferenceInfo;
 
 			m_pExecutor->addManualCall(contractKey.array(), std::move(callRequestParameters));

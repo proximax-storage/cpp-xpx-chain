@@ -138,6 +138,9 @@ namespace catapult { namespace state {
 			callInfo.DownloadPayment = call.DownloadCallPayment;
 			callInfo.Caller = call.Caller;
 			callInfo.BlockHeight = call.BlockHeight;
+			for (const auto& payment: call.ServicePayments) {
+				callInfo.Payments.push_back({payment.MosaicId, payment.Amount});
+			}
 			contractInfo.ManualCalls.push_back(std::move(callInfo));
 		}
 	}

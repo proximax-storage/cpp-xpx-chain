@@ -25,6 +25,11 @@ namespace catapult { namespace state {
 		std::set<Key> Cosigners;
 	};
 
+	struct Payment {
+		UnresolvedMosaicId PaymentUnresolvedMosaicId;
+		Amount PaymentAmount;
+	};
+
 	struct ManualCallInfo {
 		Hash256 CallId;
 		std::string FileName;
@@ -34,6 +39,7 @@ namespace catapult { namespace state {
 		Amount DownloadPayment;
 		Key Caller;
 		Height BlockHeight;
+		std::vector<Payment> Payments;
 	};
 
 	struct ExecutorProofOfExecutionInfo {
