@@ -93,5 +93,9 @@ namespace catapult { namespace model {
 		ExchangeSda = 0x6A,
 		/// SDA-SDA Offer Group facility code.
 		SdaOfferGroup = 0x6B,
+		/// DBRB facility code.
+		Dbrb = 0x6C,
+		/// View sequence facility code.
+		ViewSequence = 0x6D,
 	};
 }}

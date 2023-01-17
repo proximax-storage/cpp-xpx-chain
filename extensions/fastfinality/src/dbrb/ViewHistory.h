@@ -20,6 +20,13 @@ namespace catapult { namespace dbrb {
 		/// List of Install messages data that link adjacent views from Sequence.
 		std::vector<InstallMessage> InstallMessages;
 
+		// TODO: Can be optimized by replacing InstallMessages with these fields:
+//		/// Lengths of subsequences of Sequence that make up respective Converged messages.
+//		std::vector<uint8_t> SequenceLengths;
+//
+//		/// Map of processes and their signatures for appropriate Converged messages for Sequence.
+//		std::map<ProcessId, catapult::Signature> ConvergedSignatures;
+
 		/// Check whether given \a viewHistory is a valid view history, given an \a initialView.
 		static bool isValidViewHistory(const ViewHistory& viewHistory, const View& initialView) {
 			auto& views = viewHistory.Sequence.data();
@@ -65,7 +72,7 @@ namespace catapult { namespace dbrb {
 					const auto pConvergedPacket = convergedMessage.toNetworkPacket(nullptr);
 					const auto hash = CalculateHash(pConvergedPacket->buffers());
 
-					const bool isValid = crypto::Verify(processId.identityKey(), hash, signature);
+					const bool isValid = crypto::Verify(processId, hash, signature);
 					if (!isValid)
 						return false;
 				}

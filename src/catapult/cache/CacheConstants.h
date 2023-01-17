@@ -55,6 +55,7 @@ namespace catapult { namespace cache {
 		LiquidityProvider,
 		ExchangeSda,
 		SdaOfferGroup,
+		ViewSequence,
 	};
 
 /// Defines cache constants for a cache with \a NAME.
