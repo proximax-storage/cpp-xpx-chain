@@ -15,7 +15,7 @@ namespace catapult { namespace builders {
 	class UnsuccessfulEndBatchExecutionBuilder : public TransactionBuilder {
 	public:
 		using Transaction = model::UnsuccessfulEndBatchExecutionTransaction;
-		using EmbeddedTransaction = model::UnsuccessfulEndBatchExecutionTransaction;
+		using EmbeddedTransaction = model::EmbeddedUnsuccessfulEndBatchExecutionTransaction;
 
 		/// Creates a catapult upgrade builder for building a catapult upgrade transaction from \a signer
 		/// for the network specified by \a networkIdentifier.
