@@ -60,21 +60,20 @@ namespace catapult { namespace builders {
 	}
 
 	void SuccessfulEndBatchExecutionBuilder::setProofsOfExecution(std::vector<model::RawProofOfExecution>&& proofsOfExecution) {
-		m_signatures = std::move(proofsOfExecution);
+		m_proofsOfExecution = std::move(proofsOfExecution);
 	}
 
 	void SuccessfulEndBatchExecutionBuilder::setCallDigests(std::vector<model::ExtendedCallDigest>&& callDigests) {
-		m_signatures = std::move(callDigests);
+		m_callDigests = std::move(callDigests);
 	}
 
 	void SuccessfulEndBatchExecutionBuilder::setCallPayments(std::vector<model::CallPayment>&& callPayments) {
-		m_signatures = std::move(callPayments);
+		m_callPayments = std::move(callPayments);
 	}
 
 	template<typename TransactionType>
 	model::UniqueEntityPtr<TransactionType> SuccessfulEndBatchExecutionBuilder::buildImpl() const {
 		// 1. allocate
-		// todo confirm poex size
 		auto size = sizeof(TransactionType)
 		        + m_publicKeys.size() * Key_Size
 				+ m_signatures.size() * Signature_Size
