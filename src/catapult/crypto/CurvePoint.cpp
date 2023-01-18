@@ -119,6 +119,7 @@ namespace catapult::crypto {
 
 	void CurvePoint::fromBytes(const std::array<uint8_t, 32>& buffer) {
 		ge_p3 tmp;
+		ge_frombytes_negate_vartime(&tmp, buffer.data());
 		CurvePoint tmpPoint;
 		tmpPoint.m_ge_p3 = tmp;
 		*this = -tmpPoint;
