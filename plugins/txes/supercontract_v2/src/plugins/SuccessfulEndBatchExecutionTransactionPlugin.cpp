@@ -32,11 +32,11 @@ namespace catapult { namespace plugins {
 					std::vector<uint8_t> commonData;
 					pushBytes(commonData, transaction.ContractKey);
 					pushBytes(commonData, transaction.BatchId);
+					pushBytes(commonData, transaction.AutomaticExecutionsNextBlockToCheck);
 					pushBytes(commonData, transaction.StorageHash);
 					pushBytes(commonData, transaction.UsedSizeBytes);
 					pushBytes(commonData, transaction.MetaFilesSizeBytes);
 					pushBytes(commonData, transaction.ProofOfExecutionVerificationInformation);
-					pushBytes(commonData, transaction.AutomaticExecutionsNextBlockToCheck);
 					for (uint j = 0; j < transaction.CallsNumber; j++) {
 						pushBytes(commonData, transaction.CallDigestsPtr()[j]);
 					}

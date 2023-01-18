@@ -166,13 +166,17 @@ namespace catapult::contract {
         }
 
 		void automaticExecutionBlockPublished(Height height) {
-			auto blockHash = m_contractState.getBlock(height)->EntityHash;
+			auto storageBlock = m_contractState.getBlock(height);
+
+			sirius::contract::blockchain::Block block;
+			block.m_blockHash = storageBlock->EntityHash.array();
+			block.m_blockTime = storageBlock->Block.Timestamp.unwrap();
+
+			m_pExecutor->addBlockInfo(height.unwrap(), std::move(block));
+
 			for (const auto& [contractKey, addedAt]: m_alreadyAddedContracts) {
 				if (addedAt < height) {
-					sirius::contract::Block block;
-					block.m_height = height.unwrap();
-					block.m_blockHash = blockHash.array();
-					m_pExecutor->addBlockInfo(contractKey.array(), std::move(block));
+					m_pExecutor->addBlock(contractKey.array(), height.unwrap());
 				}
 			}
 		}
@@ -256,8 +260,14 @@ namespace catapult::contract {
         			contractInfo.AutomaticExecutionsEnabledSince
         			? contractInfo.AutomaticExecutionsEnabledSince->unwrap()
         			: std::optional<uint64_t>();
-        	m_pExecutor->setAutomaticExecutionsEnabledSince(contractKey.array(), automaticExecutionsEnabledSince);
-        	std::optional<Height> nextBlockToCheck =
+
+			// TODO modify logic
+			if (contractInfo.AutomaticExecutionsEnabledSince) {
+				m_pExecutor->setAutomaticExecutionsEnabledSince(
+						contractKey.array(), contractInfo.AutomaticExecutionsEnabledSince->unwrap());
+			}
+
+			std::optional<Height> nextBlockToCheck =
         			contractInfo.AutomaticExecutionsEnabledSince
         			? std::max(*contractInfo.AutomaticExecutionsEnabledSince,
 							   contractInfo.AutomaticExecutionsNextBlockToCheck)
@@ -276,10 +286,7 @@ namespace catapult::contract {
         		while (manualCallsIt != manualCalls.end() && manualCallsIt->BlockHeight == currentBlock) {
         			addManualCall(contractKey, *manualCallsIt);
         		}
-        		sirius::contract::Block block;
-        		block.m_height = currentBlock.unwrap();
-        		block.m_blockHash = m_contractState.getBlock(currentBlock)->EntityHash.array();
-        		m_pExecutor->addBlockInfo(contractKey.array(), std::move(block));
+        		m_pExecutor->addBlock(contractKey.array(), currentBlock.unwrap());
         		currentBlock = currentBlock + Height(1);
         	}
         }
