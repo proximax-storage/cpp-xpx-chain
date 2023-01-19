@@ -10,6 +10,7 @@
 #include "catapult/utils/ArraySet.h"
 #include "catapult/utils/NonCopyable.h"
 #include <catapult/crypto/CurvePoint.h>
+#include <catapult/config/BlockchainConfiguration.h>
 #include <vector>
 #include <optional>
 
@@ -92,7 +93,12 @@ namespace catapult { namespace state {
 
 		virtual std::shared_ptr<const model::BlockElement> getBlock(Height height) const = 0;
 
-		virtual std::optional<Height> getAutomaticExecutionsEnabledSince(const Key& contractKey) const = 0;
+		virtual std::optional<Height> getAutomaticExecutionsEnabledSince(
+				const Key& contractKey,
+				const Height& actualHeight,
+				const config::BlockchainConfiguration config) const = 0;
+
+		virtual Height getAutomaticExecutionsNextBlockToCheck(const Key& contractKey) const = 0;
 
 		virtual Hash256 getDriveState(const Key& contractKey) const = 0;
 
@@ -100,9 +106,12 @@ namespace catapult { namespace state {
 
 		virtual std::map<Key, ExecutorStateInfo> getExecutors(const Key& contractKey) const = 0;
 
-		virtual ContractInfo getContractInfo(const Key& contractKey) const = 0;
+		virtual ContractInfo getContractInfo(
+				const Key& contractKey,
+				const Height& actualHeight,
+				const config::BlockchainConfiguration config) const = 0;
 
-	protected:
+		protected:
 
 		cache::CatapultCache* m_pCache = nullptr;
 

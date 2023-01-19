@@ -5,6 +5,7 @@
 **/
 
 #include "Validators.h"
+#include "src/utils/ContractUtils.h"
 
 namespace catapult { namespace validators {
 
@@ -25,7 +26,7 @@ namespace catapult { namespace validators {
 		auto requestedCallIt = contractEntry.requestedCalls().begin();
 
 		const auto& automaticExecutionsInfo = contractEntry.automaticExecutionsInfo();
-		auto automaticExecutionsLeft = automaticExecutionsInfo.AutomaticExecutionsEnabledSince
+		auto automaticExecutionsLeft = automaticExecutionsInfo.AutomaticExecutionsPrepaidSince
 											   ? 1
 											   : 0;
 		for (uint i = 0; i < notification.Digests.size(); i++) {
@@ -35,7 +36,7 @@ namespace catapult { namespace validators {
 				if (requestedCallIt == contractEntry.requestedCalls().end()) {
 					return Failure_SuperContract_Manual_Calls_Are_Not_Requested;
 				}
-				else if (digest.CallId != requestedCallIt->CallId) {
+				if (digest.CallId != requestedCallIt->CallId) {
 					return Failure_SuperContract_Invalid_Call_Id;
 				}
 				for (const auto& payment: payments.ExecutionWork) {
@@ -54,6 +55,13 @@ namespace catapult { namespace validators {
 				if (automaticExecutionsLeft == 0) {
 					return Failure_SuperContract_Automatic_Calls_Are_Not_Requested;
 				}
+				auto enabledSince =
+						utils::automaticExecutionsEnabledSince(contractEntry, context.Height, context.Config);
+
+				if (digest.Block < enabledSince) {
+					return Failure_SuperContract_Outdated_Automatic_Execution;
+				}
+				
 				for (const auto& payment: payments.ExecutionWork) {
 					if (payment > automaticExecutionsInfo.AutomaticExecutionCallPayment) {
 						return Failure_SuperContract_Execution_Work_Is_Too_Large;

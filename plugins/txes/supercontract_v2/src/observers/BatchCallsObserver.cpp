@@ -113,12 +113,12 @@ namespace catapult::observers {
 			}
 
 			if (automaticExecutionsInfo.AutomatedExecutionsNumber == 0) {
-				automaticExecutionsInfo.AutomaticExecutionsEnabledSince.reset();
+				automaticExecutionsInfo.AutomaticExecutionsPrepaidSince.reset();
 			}
 
 			if (contractEntry.batches().size() == 1) {
 				if (automaticExecutionsInfo.AutomatedExecutionsNumber > 0) {
-					automaticExecutionsInfo.AutomaticExecutionsEnabledSince = context.Height;
+					automaticExecutionsInfo.AutomaticExecutionsPrepaidSince = context.Height;
 				}
 			}
 		}))

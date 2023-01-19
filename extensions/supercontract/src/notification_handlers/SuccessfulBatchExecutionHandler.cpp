@@ -32,7 +32,8 @@ namespace catapult { namespace notification_handlers {
 						notification.BatchId,
 						notification.StorageHash,
 						notification.VerificationInformation,
-						notification.Cosigners);
+						notification.Cosigners,
+						context.Height);
 			}
 			catch (...) {
 				CATAPULT_LOG(warning) << "An exception has occurred in the executor";
