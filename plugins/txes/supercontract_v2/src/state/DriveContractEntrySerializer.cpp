@@ -10,14 +10,12 @@
 
 namespace catapult { namespace state {
 
-    namespace {
-    }
-
     void DriveContractEntrySerializer::Save(const DriveContractEntry& entry, io::OutputStream& output) {
         // write version
 		io::Write32(output, 1);
 
         io::Write(output, entry.key());
+        io::Write(output, entry.contractKey());
     }
 
     DriveContractEntry DriveContractEntrySerializer::Load(io::InputStream& input) {
@@ -29,5 +27,9 @@ namespace catapult { namespace state {
         Key key;
 		input.read(key);
 		state::DriveContractEntry entry(key);
+
+        Key contractKey;
+		input.read(contractKey);
+        entry.setContractKey(contractKey);
     }
 }}
