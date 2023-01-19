@@ -6,11 +6,91 @@
 
 #include "SuperContractEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
-#include "catapult/exceptions.h"
+#include "catapult/utils/Casting.h"
 
 namespace catapult { namespace state {
 
     namespace {
+        void SaveAutomaticExecutionsInfo(const AutomaticExecutionsInfo& automaticExecutionsInfo, io::OutputStream& output) {
+            io::Write16(output, (uint16_t) automaticExecutionsInfo.AutomaticExecutionFileName.size());
+            io::Write16(output, (uint16_t) automaticExecutionsInfo.AutomaticExecutionsFunctionName.size());
+            io::Write(output, automaticExecutionsInfo.AutomaticExecutionsNextBlockToCheck);
+            io::Write(output, automaticExecutionsInfo.AutomaticExecutionCallPayment);
+            io::Write(output, automaticExecutionsInfo.AutomaticDownloadCallPayment);
+            io::Write16(output, automaticExecutionsInfo.AutomatedExecutionsNumber);
+            io::Write8(output, automaticExecutionsInfo.AutomaticExecutionsEnabledSince.has_value());
+            if (automaticExecutionsInfo.AutomaticExecutionsEnabledSince.has_value()) {
+                io::Write(output, *automaticExecutionsInfo.AutomaticExecutionsEnabledSince);
+            }
+            auto pAutomaticExecutionFileName = (const uint8_t*) (automaticExecutionsInfo.AutomaticExecutionFileName.c_str());
+            io::Write(output, utils::RawBuffer(pAutomaticExecutionFileName, automaticExecutionsInfo.AutomaticExecutionFileName.size()));
+            auto pAutomaticExecutionsFunctionName = (const uint8_t*) (automaticExecutionsInfo.AutomaticExecutionsFunctionName.c_str());
+            io::Write(output, utils::RawBuffer(pAutomaticExecutionsFunctionName, automaticExecutionsInfo.AutomaticExecutionsFunctionName.size()));
+        }
+
+        void SaveServicePayments(const std::vector<ServicePayment> servicePayments, io::OutputStream& output) {
+            io::Write16(output, utils::checked_cast<size_t, uint16_t>(servicePayments.size()));
+            for (const auto& servicePayment : servicePayments) {
+                io::Write(output, servicePayment.MosaicId);
+                io::Write(output, servicePayment.Amount);
+            }
+        }
+
+        void SaveContractCalls(const std::deque<ContractCall>& contractCalls, io::OutputStream& output) {
+            io::Write16(output, utils::checked_cast<size_t, uint16_t>(contractCalls.size()));
+            for (const auto& contractCall : contractCalls) {
+                io::Write(output, contractCall.CallId);
+                io::Write(output, contractCall.Caller);
+                io::Write16(output, (uint16_t) contractCall.FileName.size());
+                io::Write16(output, (uint16_t) contractCall.FunctionName.size());
+                io::Write16(output, (uint16_t) contractCall.ActualArguments.size());
+                io::Write(output, contractCall.ExecutionCallPayment);
+                io::Write(output, contractCall.DownloadCallPayment);
+                SaveServicePayments(contractCall.ServicePayments, output);
+                io::Write(output, contractCall.BlockHeight);
+                auto pFileName = (const uint8_t*) (contractCall.FileName.c_str());
+                io::Write(output, utils::RawBuffer(pFileName, contractCall.FileName.size()));
+                auto pFunctionName = (const uint8_t*) (contractCall.FunctionName.c_str());
+                io::Write(output, utils::RawBuffer(pFunctionName, contractCall.FunctionName.size()));
+                auto pActualArguments = (const uint8_t*) (contractCall.ActualArguments.c_str());
+                io::Write(output, utils::RawBuffer(pActualArguments, contractCall.ActualArguments.size()));
+            }
+        }
+
+        void SaveProofOfExecution(const ProofOfExecution poEx, io::OutputStream& output) {
+            io::Write64(output, poEx.StartBatchId);
+            io::Write(output, poEx.T.toBytes());
+            io::Write(output, poEx.R);
+        }
+
+        void SaveExecutorsInfo(const std::map<Key, ExecutorInfo>& executorsInfo, io::OutputStream& output) {
+            io::Write16(output, utils::checked_cast<size_t, uint16_t>(executorsInfo.size()));
+            for (const auto& info : executorsInfo) {
+				io::Write(output, info.first);
+				io::Write64(output, info.second.NextBatchToApprove);
+				SaveProofOfExecution(info.second.PoEx, output);
+			}
+        }
+
+        void SaveCompletedCalls(const std::vector<CompletedCall>& completedCalls, io::OutputStream& output) {
+            io::Write16(output, utils::checked_cast<size_t, uint16_t>(completedCalls.size()));
+            for (const auto& completed : completedCalls) {
+                io::Write(output, completed.CallId);
+                io::Write(output, completed.Caller);
+                io::Write16(output, completed.Status);
+                io::Write(output, completed.ExecutionWork);
+                io::Write(output, completed.DownloadWork);
+            }
+        }
+
+        void SaveBatches(const std::vector<Batch>& batches, io::OutputStream& output) {
+            io::Write16(output, utils::checked_cast<size_t, uint16_t>(batches.size()));
+            for (const auto& batch : batches) {
+                io::Write8(output, batch.Success);
+                io::Write(output, batch.PoExVerificationInformation.toBytes());
+                SaveCompletedCalls(batch.CompletedCalls, output);
+            }
+        }
     }
 
     void SuperContractEntrySerializer::Save(const SuperContractEntry& entry, io::OutputStream& output) {
@@ -18,6 +98,130 @@ namespace catapult { namespace state {
 		io::Write32(output, 1);
 
         io::Write(output, entry.key());
+        io::Write(output, entry.driveKey());
+        io::Write(output, entry.executionPaymentKey());
+        io::Write(output, entry.assignee());
+        SaveAutomaticExecutionsInfo(entry.automaticExecutionsInfo(), output);
+        SaveContractCalls(entry.requestedCalls(), output);
+        SaveExecutorsInfo(entry.executorsInfo(), output);
+        SaveBatches(entry.batches(), output);
+
+        io::Write16(output, entry.releasedTransactions().size());
+        for (const auto& releasedTransaction : entry.releasedTransactions()) {
+            io::Write(output, releasedTransaction);
+        }
+    }
+
+    namespace {
+        void LoadAutomaticExecutionsInfo(AutomaticExecutionsInfo& automaticExecutionsInfo, io::InputStream& input) {
+            auto automaticExecutionFileNameSize = io::Read16(input);
+            std::vector<uint8_t> automaticExecutionFileNameBytes(automaticExecutionFileNameSize);
+            io::Read(input, automaticExecutionFileNameBytes);
+            std::string automaticExecutionFileName(automaticExecutionFileNameBytes.begin(), automaticExecutionFileNameBytes.end());           
+            auto automaticExecutionsFunctionNameSize = io::Read16(input);
+            std::vector<uint8_t> automaticExecutionsFunctionNameBytes(automaticExecutionsFunctionNameSize);
+            io::Read(input, automaticExecutionsFunctionNameBytes);
+            std::string automaticExecutionsFunctionName(automaticExecutionsFunctionNameBytes.begin(), automaticExecutionsFunctionNameBytes.end());
+
+            automaticExecutionsInfo.AutomaticExecutionFileName = automaticExecutionFileName;
+            automaticExecutionsInfo.AutomaticExecutionsFunctionName = automaticExecutionsFunctionName;
+            automaticExecutionsInfo.AutomaticExecutionsNextBlockToCheck = io::Read<Height>(input);
+            automaticExecutionsInfo.AutomaticExecutionCallPayment = io::Read<Amount>(input);
+            automaticExecutionsInfo.AutomaticDownloadCallPayment = io::Read<Amount>(input);
+            automaticExecutionsInfo.AutomatedExecutionsNumber = io::Read16(input);
+
+            bool hasAutomaticExecutionsEnabledSince = io::Read8(input);
+            if (hasAutomaticExecutionsEnabledSince) {
+                automaticExecutionsInfo.AutomaticExecutionsEnabledSince = io::Read<Height>(input);
+            }
+        }
+
+        void LoadServicePayments(std::vector<ServicePayment> servicePayments, io::InputStream& input) {
+            auto servicePaymentsCount = io::Read16(input);
+            while (servicePaymentsCount--) {
+                ServicePayment servicePayment;
+                io::Read(input, servicePayment.MosaicId);
+                io::Read(input, servicePayment.Amount);
+            }
+        }
+
+        void LoadContractCalls(std::deque<ContractCall>& contractCalls, io::InputStream& input) {
+            auto contractCallsCount = io::Read16(input);
+            while (contractCallsCount--) {
+                ContractCall contractCall;
+                io::Read(input, contractCall.CallId);
+                io::Read(input, contractCall.Caller);
+
+                auto fileNameSize = io::Read16(input);
+                std::vector<uint8_t> fileNameBytes(fileNameSize);
+                io::Read(input, fileNameBytes);
+                std::string fileName(fileNameBytes.begin(), fileNameBytes.end());
+                auto functionNameSize = io::Read16(input);
+                std::vector<uint8_t> functionNameBytes(functionNameSize);
+                io::Read(input, functionNameBytes);
+                std::string functionName(functionNameBytes.begin(), functionNameBytes.end());
+                auto actualArgumentsSize = io::Read16(input);
+                std::vector<uint8_t> actualArgumentsBytes(actualArgumentsSize);
+                io::Read(input, actualArgumentsBytes);
+                std::string actualArguments(actualArgumentsBytes.begin(), actualArgumentsBytes.end());
+
+                contractCall.FileName = fileName;
+                contractCall.FunctionName = functionName;
+                contractCall.ActualArguments = actualArguments;
+
+                io::Read(input, contractCall.ExecutionCallPayment);
+                io::Read(input, contractCall.DownloadCallPayment);
+                LoadServicePayments(contractCall.ServicePayments, input);
+                io::Read(input, contractCall.BlockHeight);
+
+                contractCalls.push_back(contractCall);
+			}
+        }
+
+        void LoadProofOfExecution(ProofOfExecution poEx, io::InputStream& input) {
+            poEx.StartBatchId = io::Read64(input);
+            std::array<uint8_t, 32> tBuffer;
+            poEx.T.fromBytes(tBuffer);
+            input.read(tBuffer);
+            input.read(poEx.R);
+        }
+
+        void LoadExecutorsInfo(std::map<Key, ExecutorInfo> executorsInfo, io::InputStream& input) {
+            auto executorsInfoCount = io::Read16(input);
+            while (executorsInfoCount--) {
+                Key key;
+                input.read(key);
+                ExecutorInfo info;
+                info.NextBatchToApprove = io::Read64(input);
+                LoadProofOfExecution(info.PoEx, input);
+                executorsInfo.emplace(key, info);
+            }
+        }
+
+        void LoadCompletedCalls(const std::vector<CompletedCall>& completedCalls, io::InputStream& input) {
+            auto completedCallsCount = io::Read16(input);
+            while (completedCallsCount--) {
+                CompletedCall completedCall;
+                io::Read(input, completedCall.CallId);
+                io::Read(input, completedCall.Caller);
+                completedCall.Status = io::Read16(input);
+                io::Read(input, completedCall.ExecutionWork);
+                io::Read(input, completedCall.DownloadWork);
+            }
+        }
+
+        void LoadBatches(std::vector<Batch>& batches, io::InputStream& input) {
+            auto batchesCount = io::Read16(input);
+            while (batchesCount--) {
+                Batch batch;
+                batch.Success = io::Read8(input);
+                std::array<uint8_t, 32> tBuffer;
+                batch.PoExVerificationInformation.fromBytes(tBuffer);
+                io::Read(input, tBuffer);
+                LoadCompletedCalls(batch.CompletedCalls, input);
+                batches.emplace_back(batch);
+            }
+        }
     }
 
     SuperContractEntry SuperContractEntrySerializer::Load(io::InputStream& input) {
@@ -29,5 +233,29 @@ namespace catapult { namespace state {
         Key key;
 		input.read(key);
 		state::SuperContractEntry entry(key);
+
+        Key driveKey;
+        input.read(driveKey);
+        entry.setDriveKey(driveKey);
+
+        Key executionPaymentKey;
+		input.read(executionPaymentKey);
+        entry.setExecutionPaymentKey(executionPaymentKey);
+
+        Key assignee;
+		input.read(assignee);
+        entry.setAssignee(assignee);
+
+        LoadAutomaticExecutionsInfo(entry.automaticExecutionsInfo(), input);
+        LoadContractCalls(entry.requestedCalls(), input);
+        LoadExecutorsInfo(entry.executorsInfo(), input);
+        LoadBatches(entry.batches(), input);
+
+        auto count = io::Read16(input);
+        while (count--) {
+            Hash256 releasedTransaction;
+            io::Read(input, releasedTransaction);
+            entry.releasedTransactions().emplace(releasedTransaction);
+        }
     }
 }}
