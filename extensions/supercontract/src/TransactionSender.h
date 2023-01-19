@@ -9,8 +9,9 @@
 #include <executor/Transactions.h>
 #include "src/catapult/crypto/KeyPair.h"
 #include "catapult/config/ImmutableConfiguration.h"
+#include "catapult/model/Transaction.h"
 
-namespace catapult::contract {
+namespace catapult { namespace contract {
 	class TransactionSender {
 
 	public:
@@ -19,6 +20,7 @@ namespace catapult::contract {
 				const config::ImmutableConfiguration& immutableConfig)
 			: m_keyPair(keyPair)
 			, m_networkIdentifier(immutableConfig.NetworkIdentifier)
+			, m_generationHash(immutableConfig.GenerationHash)
 		{}
 
 	public:
@@ -27,9 +29,11 @@ namespace catapult::contract {
 		Hash256 sendEndBatchExecutionSingleTransaction(const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo);
 
 	private:
+		void send(std::shared_ptr<model::Transaction> pTransaction);
 
 	private:
 		const crypto::KeyPair& m_keyPair;
 		model::NetworkIdentifier m_networkIdentifier;
+		GenerationHash m_generationHash;
 	};
-}
+}}

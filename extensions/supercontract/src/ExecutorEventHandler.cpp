@@ -4,17 +4,17 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "TransactionSender.h"
+#include "ExecutorEventHandler.h"
 #include "sdk/src/builders/SuccessfulEndBatchExecutionBuilder.h"
 #include "sdk/src/builders/UnsuccessfulEndBatchExecutionBuilder.h"
 #include "sdk/src/builders/EndBatchExecutionSingleBuilder.h"
+#include "sdk/src/builders/SynchronizationSingleBuilder.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
-#include "catapult/model/EntityHasher.h"
 #include "catapult/model/EntityRange.h"
 
 namespace catapult { namespace contract {
 
-	Hash256 TransactionSender::sendSuccessfulEndBatchExecutionTransaction(const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
+	void ExecutorEventHandler::endBatchTransactionIsReady(const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
 		CATAPULT_LOG(debug) << "sending successful end batch execution transaction initiated by " << Hash256(transactionInfo.m_contractKey.array());
 		std::vector<Key> publicKeys;
 		std::vector<Signature> signatures;
@@ -42,10 +42,10 @@ namespace catapult { namespace contract {
 
 		for(const auto& call:transactionInfo.m_callsExecutionInfo){
 			callDigests.push_back(model::ExtendedCallDigest{
-				call.m_callId.array(),
-				call.m_manual,
-				( int16_t ) call.m_callExecutionStatus,
-				call.m_releasedTransaction.array()
+					call.m_callId.array(),
+					call.m_manual,
+					( int16_t ) call.m_callExecutionStatus,
+					call.m_releasedTransaction.array()
 			});
 
 			for(const auto& participation:call.m_executorsParticipation){
@@ -72,14 +72,9 @@ namespace catapult { namespace contract {
 		builder.setProofsOfExecution(std::move(proofs));
 		builder.setCallDigests(std::move(callDigests));
 		builder.setCallPayments(std::move(callPayments));
-//		auto pTransaction = utils::UniqueToShared(builder.build());
-//		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_storageConfig.TransactionTimeout.millis());
-//		send(pTransaction);
-//
-//		return model::CalculateHash(*pTransaction, m_generationHash);
 	}
 
-	Hash256 TransactionSender::sendUnsuccessfulEndBatchExecutionTransaction(const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
+	void ExecutorEventHandler::endBatchTransactionIsReady(const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
 		CATAPULT_LOG(debug) << "sending unsuccessful end batch execution transaction initiated by " << Hash256(transactionInfo.m_contractKey.array());
 		std::vector<Key> publicKeys;
 		std::vector<Signature> signatures;
@@ -107,8 +102,8 @@ namespace catapult { namespace contract {
 
 		for(const auto& call:transactionInfo.m_callsExecutionInfo){
 			callDigests.push_back(model::ShortCallDigest{
-				call.m_callId.array(),
-				call.m_manual
+					call.m_callId.array(),
+					call.m_manual
 			});
 
 			for(const auto& participation:call.m_executorsParticipation){
@@ -131,7 +126,8 @@ namespace catapult { namespace contract {
 		builder.setCallDigests(std::move(callDigests));
 		builder.setCallPayments(std::move(callPayments));
 	}
-	Hash256 TransactionSender::sendEndBatchExecutionSingleTransaction(const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo) {
+
+	void ExecutorEventHandler::endBatchSingleTransactionIsReady(const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo) {
 		CATAPULT_LOG(debug) << "sending end batch execution single transaction initiated by " << Hash256(transactionInfo.m_contractKey.array());
 
 		model::RawProofOfExecution proof{
@@ -147,9 +143,24 @@ namespace catapult { namespace contract {
 		builder.setProofOfExecution(proof);
 	}
 
-	void TransactionSender::send(std::shared_ptr<model::Transaction> pTransaction) {
-		extensions::TransactionExtensions(m_generationHash).sign(m_keyPair, *pTransaction);
-		auto range = model::TransactionRange::FromEntity(pTransaction);
-		m_transactionRangeHandler({std::move(range), m_keyPair.publicKey()});
+	void ExecutorEventHandler::synchronizationSingleTransactionIsReady(const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo) {
+		CATAPULT_LOG(debug) << "sending unsuccessful end batch execution transaction initiated by " << Hash256(transactionInfo.m_contractKey.array());
+
+		builders::SynchronizationSingleBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
+		builder.setContractKey(transactionInfo.m_contractKey.array());
+		builder.setBatchId(transactionInfo.m_batchIndex);
+//		auto pTransaction = utils::UniqueToShared(builder.build());
+//		pTransaction->Deadline = utils::NetworkTime();
+//
+//		send(pTransaction);
+//
+//		return model::CalculateHash(*pTransaction, m_generationHash);
 	}
+
+//	void ExecutorEventHandler::send(std::shared_ptr<model::Transaction> pTransaction) {
+//		extensions::TransactionExtensions(m_generationHash).sign(m_keyPair, *pTransaction);
+//		auto range = model::TransactionRange::FromEntity(pTransaction);
+//		m_transactionRangeHandler({std::move(range), m_keyPair.publicKey()});
+//	}
+
 }}
