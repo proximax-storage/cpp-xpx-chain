@@ -11,6 +11,7 @@
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/model/EntityRange.h"
+#include "catapult/model/RangeTypes.h"
 
 namespace catapult { namespace contract {
 
