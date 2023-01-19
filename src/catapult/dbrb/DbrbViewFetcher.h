@@ -8,7 +8,10 @@
 #include "DbrbDefinitions.h"
 #include "catapult/utils/NonCopyable.h"
 
-namespace catapult { namespace ionet { class Node; }}
+namespace catapult {
+	namespace cache { class CatapultCache; }
+	namespace ionet { class Node; }
+}
 
 namespace catapult { namespace dbrb {
 
@@ -17,7 +20,15 @@ namespace catapult { namespace dbrb {
 		virtual ~DbrbViewFetcher() = default;
 
 	public:
+		void setCache(cache::CatapultCache* pCache) {
+			m_pCache = pCache;
+		}
+
+	public:
 		/// Returns the latest registered view.
 		virtual ViewData getLatestView() = 0;
+
+	protected:
+		cache::CatapultCache* m_pCache;
 	};
 }}

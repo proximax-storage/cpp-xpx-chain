@@ -330,8 +330,12 @@ namespace catapult { namespace plugins {
 		m_pDbrbViewFetcher = pFetcher;
 	}
 
+	bool PluginManager::isDbrbViewFetcherSet() {
+		return !!m_pDbrbViewFetcher;
+	}
+
 	/// Gets DBRB view fetcher.
-	dbrb::DbrbViewFetcher& PluginManager::getDbrbViewFetcher() const {
+	dbrb::DbrbViewFetcher& PluginManager::dbrbViewFetcher() const {
 		if (!m_pDbrbViewFetcher)
 			CATAPULT_THROW_RUNTIME_ERROR("DBRB view fetcher not set");
 

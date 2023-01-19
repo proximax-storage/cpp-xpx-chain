@@ -118,7 +118,7 @@ namespace catapult { namespace fastfinality {
 
 				auto pFsmShared = pServiceGroup->pushService([pWriters, &config, &keyPair = locator.keyPair(), &state](const std::shared_ptr<thread::IoThreadPool>& pPool) {
 					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, state.packetIoPickers(), config::ToLocalDbrbNode(config), keyPair, pPool);
-					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess, state.pluginManager().getDbrbViewFetcher());
+					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess, state.pluginManager().dbrbViewFetcher());
 				});
 
 				const auto& pluginManager = state.pluginManager();

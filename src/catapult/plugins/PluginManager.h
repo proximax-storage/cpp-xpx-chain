@@ -270,8 +270,11 @@ namespace catapult { namespace plugins {
 		/// Sets a DBRB view fetcher.
 		void setDbrbViewFetcher(const std::shared_ptr<dbrb::DbrbViewFetcher>& pFetcher);
 
+		/// Returns whether DBRB view fetcher set or not.
+		bool isDbrbViewFetcherSet();
+
 		/// Gets DBRB view fetcher.
-		dbrb::DbrbViewFetcher& getDbrbViewFetcher() const;
+		dbrb::DbrbViewFetcher& dbrbViewFetcher() const;
 
 		// endregion
 

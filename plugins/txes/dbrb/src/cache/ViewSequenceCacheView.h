@@ -39,7 +39,22 @@ namespace catapult { namespace cache {
 				, ViewSequenceCacheViewMixins::ConstAccessor(viewSequenceSets.Primary)
 				, ViewSequenceCacheViewMixins::PatriciaTreeView(viewSequenceSets.PatriciaTree.get())
 				, ViewSequenceCacheViewMixins::ConfigBasedEnable<config::DbrbConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
+				, ViewSequenceEntries(viewSequenceSets.Primary)
+				, MessageHash(viewSequenceSets.MessageHash)
 		{}
+
+		dbrb::View getLatestView() {
+			if (MessageHash.contains(0u)) {
+				auto hash = MessageHash.find(0u).get()->hash();
+				return ViewSequenceEntries.find(hash).get()->mostRecentView();
+			}
+
+			return {};
+		}
+
+	private:
+		const ViewSequenceCacheTypes::PrimaryTypes::BaseSetType& ViewSequenceEntries;
+		const ViewSequenceCacheTypes::MessageHashTypes::BaseSetType& MessageHash;
 	};
 
 	/// View on top of the view sequence cache.

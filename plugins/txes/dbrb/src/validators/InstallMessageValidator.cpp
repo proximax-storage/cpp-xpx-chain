@@ -16,11 +16,9 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(InstallMessage, ([](const Notification& notification, const ValidatorContext& context) {
 		const auto& viewSequenceCache = context.Cache.sub<cache::ViewSequenceCache>();
-		const auto viewSequenceIter = viewSequenceCache.find(notification.MessageHash);
-		const auto& pViewSequenceEntry = viewSequenceIter.tryGet();
 
 		// Check if respective view sequence exists
-		if (pViewSequenceEntry)
+		if (viewSequenceCache.contains(notification.MessageHash))
 			return Failure_Dbrb_View_Sequence_Already_Exists;
 
 	  	// Check if there are at least two views in a sequence

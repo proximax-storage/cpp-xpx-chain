@@ -51,7 +51,7 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Gets the hash corresponding to \a entry.
-		static const auto& GetHashFromValue(const ValueType& entry) {
+		static const auto& GetKeyFromValue(const ValueType& entry) {
 			return entry.hash();
 		}
 	};
@@ -63,12 +63,17 @@ namespace catapult { namespace cache {
 			using KeyType = uint8_t;
 			using ValueType = state::MessageHashEntry;
 			using Serializer = MessageHashEntrySerializer;
+
+		public:
+			static const auto& GetKeyFromValue(const ValueType& entry) {
+				return entry.key();
+			}
 		};
 
 		using PrimaryTypes = MutableUnorderedMapAdapter<ViewSequenceCacheDescriptor, utils::ArrayHasher<Hash256>>;
-		using MessageHashTypes = MutableUnorderedMapAdapter<MessageHashTypesDescriptor>;	// TODO: Can use MutableOrderedMemorySetAdapter
+		using MessageHashTypes = MutableUnorderedMapAdapter<MessageHashTypesDescriptor>;
 
-		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicViewSequenceCacheView, ViewSequenceCacheDelta, const Hash256&, state::ViewSequenceEntry>;
+		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicViewSequenceCacheView, BasicViewSequenceCacheDelta, const Hash256&, state::ViewSequenceEntry>;
 
 		using BaseSetDeltaPointers = ViewSequenceBaseSetDeltaPointers;
 		using BaseSets = ViewSequenceBaseSets;

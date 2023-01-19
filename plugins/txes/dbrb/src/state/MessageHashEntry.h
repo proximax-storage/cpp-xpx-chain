@@ -10,38 +10,28 @@
 
 namespace catapult { namespace state {
 
-	// Mixin for storing DBRB message hash.
-	class MessageHashMixin {
-	public:
-		MessageHashMixin()
-				: m_hash()
-		{}
-
-	public:
-		/// Sets stored message \a hash.
-		void setHash(const Hash256& hash) {
-			m_hash = hash;
-		}
-
-		/// Gets stored message hash.
-		const Hash256& hash() const {
-			return m_hash;
-		}
-
-	private:
-		Hash256 m_hash;
-	};
-
 	// Message hash entry.
-	class MessageHashEntry : public MessageHashMixin {
+	class MessageHashEntry {
 	public:
 		// Creates a message hash entry around \a key.
-		explicit MessageHashEntry(const uint8_t& key) : m_key(key), m_version(1)
+		explicit MessageHashEntry(const uint8_t& key) : m_version(1), m_key(key), m_hash()
+		{}
+
+		// Creates a message hash entry around \a key and \a hash.
+		explicit MessageHashEntry(const uint8_t& key, const Hash256& hash) : m_version(1), m_key(key), m_hash(hash)
 		{}
 
 	public:
 		const uint8_t& key() const {
 			return m_key;
+		}
+
+		void setHash(const Hash256& hash) {
+			m_hash = hash;
+		}
+
+		const Hash256& hash() const {
+			return m_hash;
 		}
 
 		void setVersion(VersionType version) {
@@ -53,7 +43,8 @@ namespace catapult { namespace state {
 		}
 
 	private:
-		uint8_t m_key;
 		VersionType m_version;
+		uint8_t m_key;
+		Hash256 m_hash;
 	};
 }}

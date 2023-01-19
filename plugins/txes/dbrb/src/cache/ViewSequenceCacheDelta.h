@@ -16,21 +16,7 @@
 namespace catapult { namespace cache {
 
 	/// Mixins used by the view sequence delta view.
-	struct ViewSequenceCacheDeltaMixins {
-	private:
-		using PrimaryMixins = PatriciaTreeCacheMixins<
-				ViewSequenceCacheTypes::PrimaryTypes::BaseSetDeltaType, ViewSequenceCacheDescriptor>;
-
-	public:
-		using Size = PrimaryMixins::Size;
-		using Contains = PrimaryMixins::Contains;
-		using PatriciaTreeDelta = PrimaryMixins::PatriciaTreeDelta;
-		using MutableAccessor = PrimaryMixins::ConstAccessor;
-		using ConstAccessor = PrimaryMixins::MutableAccessor;
-		using DeltaElements = PrimaryMixins::DeltaElements;
-		using BasicInsertRemove = PrimaryMixins::BasicInsertRemove;
-		using ConfigBasedEnable = PrimaryMixins::ConfigBasedEnable<config::DbrbConfiguration>;
-	};
+	using ViewSequenceCacheDeltaMixins = PatriciaTreeCacheMixins<ViewSequenceCacheTypes::PrimaryTypes::BaseSetDeltaType, ViewSequenceCacheDescriptor>;
 
 	/// Basic delta on top of the view sequence cache.
 	class BasicViewSequenceCacheDelta
@@ -42,7 +28,7 @@ namespace catapult { namespace cache {
 			, public ViewSequenceCacheDeltaMixins::PatriciaTreeDelta
 			, public ViewSequenceCacheDeltaMixins::BasicInsertRemove
 			, public ViewSequenceCacheDeltaMixins::DeltaElements
-			, public ViewSequenceCacheDeltaMixins::ConfigBasedEnable {
+			, public ViewSequenceCacheDeltaMixins::ConfigBasedEnable<config::DbrbConfiguration> {
 	public:
 		using ReadOnlyView = ViewSequenceCacheTypes::CacheReadOnlyType;
 
@@ -58,7 +44,7 @@ namespace catapult { namespace cache {
 				, ViewSequenceCacheDeltaMixins::PatriciaTreeDelta(*viewSequenceSets.pPrimary, viewSequenceSets.pPatriciaTree)
 				, ViewSequenceCacheDeltaMixins::BasicInsertRemove(*viewSequenceSets.pPrimary)
 				, ViewSequenceCacheDeltaMixins::DeltaElements(*viewSequenceSets.pPrimary)
-				, ViewSequenceCacheDeltaMixins::ConfigBasedEnable(pConfigHolder, [](const auto& config) { return config.Enabled; })
+				, ViewSequenceCacheDeltaMixins::ConfigBasedEnable<config::DbrbConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
 				, m_pViewSequenceEntries(viewSequenceSets.pPrimary)
 				, m_pMessageHash(viewSequenceSets.pMessageHash)
 		{}
@@ -67,36 +53,19 @@ namespace catapult { namespace cache {
 		using ViewSequenceCacheDeltaMixins::ConstAccessor::find;
 		using ViewSequenceCacheDeltaMixins::MutableAccessor::find;
 
-		void addBillingViewSequence(const ViewSequenceCacheDescriptor::KeyType& key, const Height& height) {
-			AddIdentifierWithGroup(*m_pBillingAtHeight, height, key);
+	public:
+		/// Inserts the committee \a entry into the cache.
+		void insert(const state::ViewSequenceEntry& entry) {
+			ViewSequenceCacheDeltaMixins::BasicInsertRemove::insert(entry);
+
+			auto iter = m_pMessageHash->find(0u);
+			auto pEntry = iter.get();
+			if (pEntry) {
+				pEntry->setHash(entry.hash());
+			} else {
+				m_pMessageHash->insert(state::MessageHashEntry(0u, entry.hash()));
+			}
 		}
-
-		void removeBillingViewSequence(const ViewSequenceCacheDescriptor::KeyType& key, const Height& height) {
-			RemoveIdentifierWithGroup(*m_pBillingAtHeight, height, key);
-		}
-
-        /// Processes all marked view sequences
-        void processBillingViewSequences(Height height, const consumer<ViewSequenceCacheDescriptor::ValueType&>& consumer) {
-            ForEachIdentifierWithGroup(*m_pViewSequenceEntries, *m_pBillingAtHeight, height, consumer);
-        }
-
-		void markRemoveViewSequence(const ViewSequenceCacheDescriptor::KeyType& key, const Height& height) {
-			AddIdentifierWithGroup(*m_pRemoveAtHeight, height, key);
-		}
-
-		void unmarkRemoveViewSequence(const ViewSequenceCacheDescriptor::KeyType& key, const Height& height) {
-			RemoveIdentifierWithGroup(*m_pRemoveAtHeight, height, key);
-		}
-
-        void prune(Height height, observers::ObserverContext&) {
-            ForEachIdentifierWithGroup(*m_pViewSequenceEntries, *m_pRemoveAtHeight, height, [&](state::ViewSequenceEntry& viewSequenceEntry) {
-                if (viewSequenceEntry.end() == height && viewSequenceEntry.version() < 3) {
-					m_pViewSequenceEntries->remove(viewSequenceEntry.key());
-                }
-            });
-			m_pBillingAtHeight->remove(height);
-			m_pRemoveAtHeight->remove(height);
-        }
 
 	private:
 		ViewSequenceCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pViewSequenceEntries;

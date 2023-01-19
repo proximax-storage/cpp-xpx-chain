@@ -7,9 +7,10 @@
 #include "DbrbPlugin.h"
 #include "src/cache/ViewSequenceCache.h"
 #include "src/cache/ViewSequenceCacheStorage.h"
-#include "src/plugins/InstallMessageTransactionPlugin.h"
-#include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
+#include "src/plugins/InstallMessageTransactionPlugin.h"
+#include "src/state/DbrbViewFetcherImpl.h"
+#include "src/validators/Validators.h"
 #include "catapult/plugins/CacheHandlers.h"
 
 namespace catapult { namespace plugins {
@@ -23,7 +24,7 @@ namespace catapult { namespace plugins {
 		const auto& immutableConfig = manager.immutableConfig();
 		manager.addTransactionSupport(CreateInstallMessageTransactionPlugin());
 
-		manager.addCacheSupport<cache::ViewSequenceCache>(
+		manager.addCacheSupport<cache::ViewSequenceCacheStorage>(
 			std::make_unique<cache::ViewSequenceCache>(manager.cacheConfig(cache::ViewSequenceCache::Name), pConfigHolder));
 
 		using ViewSequenceCacheHandlersService = CacheHandlers<cache::ViewSequenceCacheDescriptor>;
@@ -34,6 +35,8 @@ namespace catapult { namespace plugins {
 				return cache.sub<cache::ViewSequenceCache>().createView(cache.height())->size();
 			});
 		});
+
+		manager.setDbrbViewFetcher(std::make_shared<state::DbrbViewFetcherImpl>());
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 		  	builder
