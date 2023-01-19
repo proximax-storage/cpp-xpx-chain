@@ -7,6 +7,7 @@
 #include "InstallMessageTransactionPlugin.h"
 #include "src/model/DbrbNotifications.h"
 #include "src/model/InstallMessageTransaction.h"
+#include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 
 using namespace catapult::model;
