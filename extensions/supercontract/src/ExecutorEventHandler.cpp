@@ -11,6 +11,8 @@
 #include "sdk/src/builders/SynchronizationSingleBuilder.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/model/EntityRange.h"
+#include "catapult/model/RangeTypes.h"
+#include "catapult/model/EntityHasher.h"
 
 namespace catapult { namespace contract {
 
@@ -72,6 +74,9 @@ namespace catapult { namespace contract {
 		builder.setProofsOfExecution(std::move(proofs));
 		builder.setCallDigests(std::move(callDigests));
 		builder.setCallPayments(std::move(callPayments));
+		auto pTransaction = utils::UniqueToShared(builder.build());
+		pTransaction->Deadline = utils::NetworkTime();
+		send(pTransaction);
 	}
 
 	void ExecutorEventHandler::endBatchTransactionIsReady(const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
@@ -125,6 +130,9 @@ namespace catapult { namespace contract {
 		builder.setProofsOfExecution(std::move(proofs));
 		builder.setCallDigests(std::move(callDigests));
 		builder.setCallPayments(std::move(callPayments));
+		auto pTransaction = utils::UniqueToShared(builder.build());
+		pTransaction->Deadline = utils::NetworkTime();
+		send(pTransaction);
 	}
 
 	void ExecutorEventHandler::endBatchSingleTransactionIsReady(const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo) {
@@ -141,6 +149,9 @@ namespace catapult { namespace contract {
 		builder.setContractKey(transactionInfo.m_contractKey.array());
 		builder.setBatchId(transactionInfo.m_batchIndex);
 		builder.setProofOfExecution(proof);
+		auto pTransaction = utils::UniqueToShared(builder.build());
+		pTransaction->Deadline = utils::NetworkTime();
+		send(pTransaction);
 	}
 
 	void ExecutorEventHandler::synchronizationSingleTransactionIsReady(const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo) {
@@ -149,18 +160,16 @@ namespace catapult { namespace contract {
 		builders::SynchronizationSingleBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
 		builder.setContractKey(transactionInfo.m_contractKey.array());
 		builder.setBatchId(transactionInfo.m_batchIndex);
-//		auto pTransaction = utils::UniqueToShared(builder.build());
-//		pTransaction->Deadline = utils::NetworkTime();
-//
-//		send(pTransaction);
-//
-//		return model::CalculateHash(*pTransaction, m_generationHash);
+		auto pTransaction = utils::UniqueToShared(builder.build());
+		pTransaction->Deadline = utils::NetworkTime();
+
+		send(pTransaction);
 	}
 
-//	void ExecutorEventHandler::send(std::shared_ptr<model::Transaction> pTransaction) {
-//		extensions::TransactionExtensions(m_generationHash).sign(m_keyPair, *pTransaction);
-//		auto range = model::TransactionRange::FromEntity(pTransaction);
-//		m_transactionRangeHandler({std::move(range), m_keyPair.publicKey()});
-//	}
+	void ExecutorEventHandler::send(std::shared_ptr<model::Transaction> pTransaction) {
+		extensions::TransactionExtensions(m_generationHash).sign(m_keyPair, *pTransaction);
+		auto range = model::TransactionRange::FromEntity(pTransaction);
+		m_transactionRangeHandler({std::move(range), m_keyPair.publicKey()});
+	}
 
 }}

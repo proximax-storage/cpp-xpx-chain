@@ -7,7 +7,8 @@
 #include "executor/ExecutorEventHandler.h"
 #include "src/catapult/crypto/KeyPair.h"
 #include "catapult/config/ImmutableConfiguration.h"
-//#include "catapult/model/Transaction.h"
+#include "catapult/handlers/HandlerTypes.h"
+#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace contract {
 	class ExecutorEventHandler : public sirius::contract::ExecutorEventHandler {
@@ -28,11 +29,12 @@ namespace catapult { namespace contract {
 		void synchronizationSingleTransactionIsReady(const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo);
 
 	private:
-//		void send(std::shared_ptr<model::Transaction> pTransaction);
+		void send(std::shared_ptr<model::Transaction> pTransaction);
 
 	private:
 		const crypto::KeyPair& m_keyPair;
 		model::NetworkIdentifier m_networkIdentifier;
 		GenerationHash m_generationHash;
+		handlers::TransactionRangeHandler m_transactionRangeHandler;
 	};
 }}

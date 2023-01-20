@@ -9,7 +9,6 @@
 #include "sdk/src/builders/UnsuccessfulEndBatchExecutionBuilder.h"
 #include "sdk/src/builders/EndBatchExecutionSingleBuilder.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
-#include "catapult/model/EntityHasher.h"
 #include "catapult/model/EntityRange.h"
 #include "catapult/model/RangeTypes.h"
 

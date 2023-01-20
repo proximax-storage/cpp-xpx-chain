@@ -9,7 +9,8 @@
 #include <executor/Transactions.h>
 #include "src/catapult/crypto/KeyPair.h"
 #include "catapult/config/ImmutableConfiguration.h"
-#include "catapult/model/Transaction.h"
+#include "catapult/handlers/HandlerTypes.h"
+#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace contract {
 	class TransactionSender {
@@ -17,10 +18,12 @@ namespace catapult { namespace contract {
 	public:
 		TransactionSender(
 				const crypto::KeyPair& keyPair,
-				const config::ImmutableConfiguration& immutableConfig)
+				const config::ImmutableConfiguration& immutableConfig,
+				handlers::TransactionRangeHandler transactionRangeHandler)
 			: m_keyPair(keyPair)
 			, m_networkIdentifier(immutableConfig.NetworkIdentifier)
 			, m_generationHash(immutableConfig.GenerationHash)
+			, m_transactionRangeHandler(std::move(transactionRangeHandler))
 		{}
 
 	public:
@@ -35,5 +38,6 @@ namespace catapult { namespace contract {
 		const crypto::KeyPair& m_keyPair;
 		model::NetworkIdentifier m_networkIdentifier;
 		GenerationHash m_generationHash;
+		handlers::TransactionRangeHandler m_transactionRangeHandler;
 	};
 }}
