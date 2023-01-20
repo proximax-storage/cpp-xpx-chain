@@ -115,24 +115,25 @@ namespace catapult::contract {
 		}
 
 		void addManualCall(const Key& contractKey, const state::ManualCallInfo& manualCall) {
-			sirius::contract::CallRequestParameters callRequestParameters;
-			callRequestParameters.m_callId = manualCall.CallId.array();
-			callRequestParameters.m_file = manualCall.FileName;
-			callRequestParameters.m_function = manualCall.FunctionName;
-			callRequestParameters.m_params = { manualCall.Arguments.begin(), manualCall.Arguments.end() };
-			callRequestParameters.m_scLimit = manualCall.ExecutionPayment.unwrap();
-			callRequestParameters.m_smLimit = manualCall.DownloadPayment.unwrap();
 
-			sirius::contract::CallReferenceInfo callReferenceInfo;
-			callReferenceInfo.m_callerKey = sirius::contract::CallerKey(manualCall.Caller.array());
-			callReferenceInfo.m_blockHeight = manualCall.BlockHeight.unwrap();
+			std::vector<sirius::contract::ServicePayment> servicePayments;
 			for (const auto& payment : manualCall.Payments) {
-				callReferenceInfo.m_servicePayments.push_back(
+				servicePayments.push_back(
 						{ payment.PaymentUnresolvedMosaicId.unwrap(), payment.PaymentAmount.unwrap() });
 			}
-			callRequestParameters.m_referenceInfo = callReferenceInfo;
 
-			m_pExecutor->addManualCall(contractKey.array(), std::move(callRequestParameters));
+			sirius::contract::ManualCallRequest manualCallRequest(
+					manualCall.CallId.array(),
+					manualCall.FileName,
+					manualCall.FunctionName,
+					manualCall.ExecutionPayment.unwrap(),
+					manualCall.DownloadPayment.unwrap(),
+					sirius::contract::CallerKey(manualCall.Caller.array()),
+					manualCall.BlockHeight.unwrap(),
+					{ manualCall.Arguments.begin(), manualCall.Arguments.end() },
+					servicePayments);
+
+			m_pExecutor->addManualCall(contractKey.array(), std::move(manualCallRequest));
 		}
 
 		void activateAutomaticExecutions(const Key& contractKey, Height height) {
