@@ -12,7 +12,6 @@
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/model/EntityRange.h"
 #include "catapult/model/RangeTypes.h"
-#include "catapult/model/EntityHasher.h"
 
 namespace catapult { namespace contract {
 
@@ -66,7 +65,7 @@ namespace catapult { namespace contract {
 		builder.setUsedSizeBytes(transactionInfo.m_successfulBatchInfo.m_usedStorageSize);
 		builder.setMetaFilesSizeBytes(transactionInfo.m_successfulBatchInfo.m_metaFilesSize);
 		builder.setProofOfExecutionVerificationInformation(transactionInfo.m_successfulBatchInfo.m_PoExVerificationInfo.toBytes());
-		builder.setAutomaticExecutionsNextBlockToCheck(Height(0));
+		builder.setAutomaticExecutionsNextBlockToCheck(Height(transactionInfo.m_automaticExecutionsCheckedUpTo));
 		builder.setCosignersNumber(transactionInfo.m_executorKeys.size());
 		builder.setCallsNumber(transactionInfo.m_callsExecutionInfo.size());
 		builder.setPublicKeys(std::move(publicKeys));
@@ -122,7 +121,7 @@ namespace catapult { namespace contract {
 		builders::UnsuccessfulEndBatchExecutionBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
 		builder.setContractKey(transactionInfo.m_contractKey.array());
 		builder.setBatchId(transactionInfo.m_batchIndex);
-		builder.setAutomaticExecutionsNextBlockToCheck(Height(0));
+		builder.setAutomaticExecutionsNextBlockToCheck(Height(transactionInfo.m_automaticExecutionsCheckedUpTo));
 		builder.setCosignersNumber(transactionInfo.m_executorKeys.size());
 		builder.setCallsNumber(transactionInfo.m_callsExecutionInfo.size());
 		builder.setPublicKeys(std::move(publicKeys));
