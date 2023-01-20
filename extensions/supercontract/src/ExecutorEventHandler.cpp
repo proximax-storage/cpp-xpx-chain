@@ -74,7 +74,7 @@ namespace catapult { namespace contract {
 		builder.setCallDigests(std::move(callDigests));
 		builder.setCallPayments(std::move(callPayments));
 		auto pTransaction = utils::UniqueToShared(builder.build());
-		pTransaction->Deadline = utils::NetworkTime();
+		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_executorConfig.TransactionTimeout.millis());
 		send(pTransaction);
 	}
 
@@ -130,7 +130,7 @@ namespace catapult { namespace contract {
 		builder.setCallDigests(std::move(callDigests));
 		builder.setCallPayments(std::move(callPayments));
 		auto pTransaction = utils::UniqueToShared(builder.build());
-		pTransaction->Deadline = utils::NetworkTime();
+		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_executorConfig.TransactionTimeout.millis());
 		send(pTransaction);
 	}
 
@@ -149,7 +149,7 @@ namespace catapult { namespace contract {
 		builder.setBatchId(transactionInfo.m_batchIndex);
 		builder.setProofOfExecution(proof);
 		auto pTransaction = utils::UniqueToShared(builder.build());
-		pTransaction->Deadline = utils::NetworkTime();
+		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_executorConfig.TransactionTimeout.millis());
 		send(pTransaction);
 	}
 
@@ -160,7 +160,7 @@ namespace catapult { namespace contract {
 		builder.setContractKey(transactionInfo.m_contractKey.array());
 		builder.setBatchId(transactionInfo.m_batchIndex);
 		auto pTransaction = utils::UniqueToShared(builder.build());
-		pTransaction->Deadline = utils::NetworkTime();
+		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_executorConfig.TransactionTimeout.millis());
 
 		send(pTransaction);
 	}
