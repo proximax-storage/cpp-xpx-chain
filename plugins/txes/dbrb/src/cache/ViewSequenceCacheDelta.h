@@ -6,6 +6,7 @@
 
 #pragma once
 #include "ViewSequenceBaseSets.h"
+#include "ReadOnlyViewSequenceCache.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
@@ -65,6 +66,15 @@ namespace catapult { namespace cache {
 			} else {
 				m_pMessageHash->insert(state::MessageHashEntry(0u, entry.hash()));
 			}
+		}
+
+		dbrb::View getLatestView() const {
+			if (m_pMessageHash->contains(0u)) {
+				auto hash = m_pMessageHash->find(0u).get()->hash();
+				return m_pViewSequenceEntries->find(hash).get()->mostRecentView();
+			}
+
+			return {};
 		}
 
 	private:

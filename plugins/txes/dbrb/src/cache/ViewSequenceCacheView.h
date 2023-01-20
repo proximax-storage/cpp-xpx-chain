@@ -7,6 +7,7 @@
 #pragma once
 #include "ViewSequenceBaseSets.h"
 #include "ViewSequenceCacheSerializers.h"
+#include "ReadOnlyViewSequenceCache.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
@@ -43,7 +44,7 @@ namespace catapult { namespace cache {
 				, MessageHash(viewSequenceSets.MessageHash)
 		{}
 
-		dbrb::View getLatestView() {
+		dbrb::View getLatestView() const {
 			if (MessageHash.contains(0u)) {
 				auto hash = MessageHash.find(0u).get()->hash();
 				return ViewSequenceEntries.find(hash).get()->mostRecentView();

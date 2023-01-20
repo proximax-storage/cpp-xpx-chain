@@ -23,6 +23,7 @@ namespace catapult {
 		struct ViewSequenceEntryPrimarySerializer;
 		class ViewSequencePatriciaTree;
 		struct MessageHashEntrySerializer;
+		struct ReadOnlyViewSequenceCache;
 
 		template<typename TCache, typename TCacheDelta, typename TKey, typename TGetResult>
 		class ReadOnlyArtifactCache;
@@ -73,7 +74,7 @@ namespace catapult { namespace cache {
 		using PrimaryTypes = MutableUnorderedMapAdapter<ViewSequenceCacheDescriptor, utils::ArrayHasher<Hash256>>;
 		using MessageHashTypes = MutableUnorderedMapAdapter<MessageHashTypesDescriptor>;
 
-		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicViewSequenceCacheView, BasicViewSequenceCacheDelta, const Hash256&, state::ViewSequenceEntry>;
+		using CacheReadOnlyType = ReadOnlyViewSequenceCache;
 
 		using BaseSetDeltaPointers = ViewSequenceBaseSetDeltaPointers;
 		using BaseSets = ViewSequenceBaseSets;
