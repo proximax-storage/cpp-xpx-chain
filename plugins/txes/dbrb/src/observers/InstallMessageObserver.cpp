@@ -40,8 +40,6 @@ namespace catapult { namespace observers {
 
 		  	viewSequenceEntry.sequence() = convergedSequence;
 		  	viewSequenceCache.insert(viewSequenceEntry);
-
-		  	// TODO: Update MessageHash entry to have value of notification.MessageHash
 		}))
 	}
 }}
