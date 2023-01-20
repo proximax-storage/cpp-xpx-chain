@@ -31,7 +31,7 @@ namespace catapult { namespace cache {
 		explicit ReadOnlyViewSequenceCache(const BasicViewSequenceCacheDelta& cache);
 
 	public:
-		/// Gets the network identifier.
+		/// Gets the most recent view.
 		dbrb::View getLatestView() const;
 
 	public:

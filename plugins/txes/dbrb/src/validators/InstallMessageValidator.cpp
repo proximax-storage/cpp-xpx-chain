@@ -55,16 +55,8 @@ namespace catapult { namespace validators {
 		}
 
 		// Check if the replaced view is the most recent view stored in the cache
-	  	const auto mostRecentMessageHash = Hash256(); // TODO: Get from the cache
-	  	const auto mostRecentViewSequenceIter = viewSequenceCache.find(mostRecentMessageHash);
-	  	const auto& pMostRecentViewSequenceEntry = mostRecentViewSequenceIter.tryGet();
-
-		if (!pMostRecentViewSequenceEntry)
-			return Failure_Dbrb_View_Sequence_Not_Found;
-
-		if (pMostRecentViewSequenceEntry->mostRecentView() != replacedView)
+		if (viewSequenceCache.getLatestView() != replacedView)
 			return Failure_Dbrb_Invalid_Replaced_View;
-
 
 		// Check if there are enough signatures
 		if (notification.SignaturesCount < convergedSequence.maybeMostRecent()->quorumSize())
