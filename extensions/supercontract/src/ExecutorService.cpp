@@ -8,6 +8,7 @@
 
 #include "ExecutorService.h"
 #include "TransactionStatusHandler.h"
+#include "StorageBlockchainBuilder.h"
 #include "DefaultExecutorEventHandler.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
@@ -15,8 +16,13 @@
 #include "catapult/thread/MultiServicePool.h"
 #include <executor/Executor.h>
 #include <executor/DefaultExecutorBuilder.h>
+#include <storage/RPCStorageBuilder.h>
+#include <messenger/RPCMessengerBuilder.h>
+#include <virtualMachine/RPCVirtualMachineBuilder.h>
 
 #include <map>
+
+using namespace sirius::contract;
 
 namespace catapult::contract {
 
@@ -87,8 +93,28 @@ namespace catapult::contract {
 			sirius::contract::ExecutorConfig config;
 			std::unique_ptr<sirius::contract::ExecutorEventHandler> pExecutorEventHandler =
 					std::make_unique<DefaultExecutorEventHandler>();
+
+			std::unique_ptr<ServiceBuilder<blockchain::Blockchain>> blockchainBuilder =
+					std::make_unique<StorageBlockchainBuilder>(m_contractState);
+
+			std::unique_ptr<ServiceBuilder<storage::Storage>> storageBuilder =
+					std::make_unique<storage::RPCStorageBuilder>(m_config.StorageRPCAddress);
+
+			std::unique_ptr<messenger::MessengerBuilder> messengerBuilder =
+					std::make_unique<messenger::RPCMessengerBuilder>(m_config.MessengerRPCAddress);
+
+			std::unique_ptr<vm::VirtualMachineBuilder> vmBuilder =
+					std::make_unique<vm::RPCVirtualMachineBuilder>(m_config.VirtualMachineRPCAddress);
+
 			m_pExecutor = sirius::contract::DefaultExecutorBuilder().build(
-					std::move(keyPair), config, std::move(pExecutorEventHandler), "executor");
+					std::move(keyPair),
+					config,
+					std::move(pExecutorEventHandler),
+					std::move(vmBuilder),
+					std::move(storageBuilder),
+					std::move(blockchainBuilder),
+					std::move(messengerBuilder),
+					"executor");
 		}
 
 	private:
@@ -115,7 +141,6 @@ namespace catapult::contract {
 		}
 
 		void addManualCall(const Key& contractKey, const state::ManualCallInfo& manualCall) {
-
 			std::vector<sirius::contract::ServicePayment> servicePayments;
 			for (const auto& payment : manualCall.Payments) {
 				servicePayments.push_back(
@@ -255,7 +280,8 @@ namespace catapult::contract {
 						contractInfo.AutomaticExecutionsEnabledSince
 								? contractInfo.AutomaticExecutionsEnabledSince->unwrap()
 								: std::optional<uint64_t>();
-				publishedBatchInfo.m_automaticExecutionsCheckedUpTo = contractInfo.AutomaticExecutionsNextBlockToCheck.unwrap();
+				publishedBatchInfo.m_automaticExecutionsCheckedUpTo =
+						contractInfo.AutomaticExecutionsNextBlockToCheck.unwrap();
 				m_pExecutor->onEndBatchExecutionPublished(std::move(publishedBatchInfo));
 			}
 
@@ -265,10 +291,10 @@ namespace catapult::contract {
 			}
 
 			std::optional<Height> nextBlockToCheck = contractInfo.AutomaticExecutionsEnabledSince
-												 ? std::max(
-														   *contractInfo.AutomaticExecutionsEnabledSince,
-														   contractInfo.AutomaticExecutionsNextBlockToCheck)
-												 : std::optional<Height>();
+															 ? std::max(
+																	   *contractInfo.AutomaticExecutionsEnabledSince,
+																	   contractInfo.AutomaticExecutionsNextBlockToCheck)
+															 : std::optional<Height>();
 			Height currentBlock(UINT64_MAX);
 			if (nextBlockToCheck) {
 				currentBlock = *nextBlockToCheck;
@@ -334,7 +360,7 @@ namespace catapult::contract {
 		const state::ContractState& m_contractState;
 		const ExecutorConfiguration& m_config;
 
-		std::unique_ptr<sirius::contract::Executor> m_pExecutor;
+		std::shared_ptr<sirius::contract::Executor> m_pExecutor;
 		TransactionStatusHandler m_transactionStatusHandler;
 
 		// The fields are needed to generate correct events

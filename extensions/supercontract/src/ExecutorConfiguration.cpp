@@ -22,6 +22,9 @@ namespace catapult { namespace contract {
 #define LOAD_DB_PROPERTY(NAME) LOAD_PROPERTY("executor", NAME)
 
 		LOAD_DB_PROPERTY(Key);
+		LOAD_DB_PROPERTY(StorageRPCAddress);
+		LOAD_DB_PROPERTY(MessengerRPCAddress);
+		LOAD_DB_PROPERTY(VirtualMachineRPCAddress);
 
 #undef LOAD_DB_PROPERTY
 

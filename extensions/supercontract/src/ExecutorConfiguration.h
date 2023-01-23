@@ -20,6 +20,12 @@ namespace catapult { namespace contract {
 		/// Replicator key.
 		std::string Key;
 
+		std::string StorageRPCAddress;
+
+		std::string MessengerRPCAddress;
+
+		std::string VirtualMachineRPCAddress;
+
 	private:
 		ExecutorConfiguration() = default;
 
