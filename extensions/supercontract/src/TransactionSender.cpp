@@ -8,6 +8,7 @@
 #include "sdk/src/builders/SuccessfulEndBatchExecutionBuilder.h"
 #include "sdk/src/builders/UnsuccessfulEndBatchExecutionBuilder.h"
 #include "sdk/src/builders/EndBatchExecutionSingleBuilder.h"
+#include "sdk/src/builders/ReleasedTransactionsBuilder.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/model/EntityRange.h"
 #include "catapult/model/RangeTypes.h"
@@ -153,6 +154,18 @@ namespace catapult { namespace contract {
 		builder.setContractKey(transactionInfo.m_contractKey.array());
 		builder.setBatchId(transactionInfo.m_batchIndex);
 		builder.setProofOfExecution(proof);
+		auto pTransaction = utils::UniqueToShared(builder.build());
+		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_executorConfig.TransactionTimeout.millis());
+		send(pTransaction);
+
+		return model::CalculateHash(*pTransaction, m_generationHash);
+	}
+
+	Hash256 TransactionSender::sendReleasedTransactions(const std::vector<std::vector<uint8_t>>& payloads) {
+		builders::ReleasedTransactionsBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
+		for (const auto& payload: payloads) {
+			builder.addTransaction(payload);
+		}
 		auto pTransaction = utils::UniqueToShared(builder.build());
 		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_executorConfig.TransactionTimeout.millis());
 		send(pTransaction);

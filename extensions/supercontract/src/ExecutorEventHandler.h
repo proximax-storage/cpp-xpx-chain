@@ -10,6 +10,8 @@
 #include "catapult/handlers/HandlerTypes.h"
 #include "catapult/utils/NetworkTime.h"
 #include "ExecutorConfiguration.h"
+#include "TransactionSender.h"
+#include "TransactionStatusHandler.h"
 
 namespace catapult { namespace contract {
 	class ExecutorEventHandler : public sirius::contract::ExecutorEventHandler {
@@ -17,29 +19,20 @@ namespace catapult { namespace contract {
 	public:
 		ExecutorEventHandler(
 				const crypto::KeyPair& keyPair,
-				const config::ImmutableConfiguration& immutableConfig,
-				ExecutorConfiguration executorConfig,
-				handlers::TransactionRangeHandler transactionRangeHandler)
-			: m_keyPair(keyPair)
-			, m_networkIdentifier(immutableConfig.NetworkIdentifier)
-			, m_executorConfig(std::move(executorConfig))
-			, m_generationHash(immutableConfig.GenerationHash)
-		{}
+				TransactionSender&& transactionSender,
+				TransactionStatusHandler& transactionHandler);
 
 	public:
 		void endBatchTransactionIsReady(const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
 		void endBatchTransactionIsReady(const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
 		void endBatchSingleTransactionIsReady(const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo);
 		void synchronizationSingleTransactionIsReady(const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo);
+		void releasedTransactionsAreReady(const std::vector<std::vector<uint8_t>>& payloads) override;
 
 	private:
-		void send(std::shared_ptr<model::Transaction> pTransaction);
 
-	private:
 		const crypto::KeyPair& m_keyPair;
-		model::NetworkIdentifier m_networkIdentifier;
-		GenerationHash m_generationHash;
-		ExecutorConfiguration m_executorConfig;
-		handlers::TransactionRangeHandler m_transactionRangeHandler;
+		TransactionSender m_transactionSender;
+		TransactionStatusHandler& m_transactionStatusHandler;
 	};
 }}
