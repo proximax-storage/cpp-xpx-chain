@@ -4,6 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#pragma once
+
 #include <utility>
 
 #include <executor/Transactions.h>
@@ -21,13 +23,7 @@ namespace catapult { namespace contract {
 				const crypto::KeyPair& keyPair,
 				const config::ImmutableConfiguration& immutableConfig,
 				ExecutorConfiguration executorConfig,
-				handlers::TransactionRangeHandler transactionRangeHandler)
-			: m_keyPair(keyPair)
-			, m_networkIdentifier(immutableConfig.NetworkIdentifier)
-			, m_executorConfig(std::move(executorConfig))
-			, m_generationHash(immutableConfig.GenerationHash)
-			, m_transactionRangeHandler(std::move(transactionRangeHandler))
-		{}
+				handlers::TransactionRangeHandler transactionRangeHandler);
 
 	public:
 		Hash256 sendSuccessfulEndBatchExecutionTransaction(const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo);

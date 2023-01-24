@@ -91,7 +91,6 @@ namespace catapult::contract {
 			std::vector<uint8_t> privateKeyBuffer = { m_keyPair.privateKey().begin(), m_keyPair.privateKey().end() };
 			auto privateKey = std::move(*reinterpret_cast<sirius::crypto::PrivateKey*>(privateKeyBuffer.data()));
 			auto keyPair = sirius::crypto::KeyPair::FromPrivate(std::move(privateKey));
-			sirius::contract::ExecutorConfig config;
 
 			TransactionSender transactionSender(
 					m_keyPair,
@@ -114,6 +113,9 @@ namespace catapult::contract {
 
 			std::unique_ptr<vm::VirtualMachineBuilder> vmBuilder =
 					std::make_unique<vm::RPCVirtualMachineBuilder>(m_config.VirtualMachineRPCAddress);
+
+			sirius::contract::ExecutorConfig config;
+			config.setNetworkIdentifier(static_cast<uint8_t>(m_serviceState.config().Immutable.NetworkIdentifier));
 
 			m_pExecutor = sirius::contract::DefaultExecutorBuilder().build(
 					std::move(keyPair),
