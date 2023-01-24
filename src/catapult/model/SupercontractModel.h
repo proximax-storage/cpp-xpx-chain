@@ -11,8 +11,8 @@ namespace catapult::model {
 	struct ExtendedCallDigest {
 		Hash256 CallId;
 		bool Manual;
-		int16_t Status;
 		Height Block;
+		int16_t Status;
 		Hash256 ReleasedTransactionHash;
 	};
 

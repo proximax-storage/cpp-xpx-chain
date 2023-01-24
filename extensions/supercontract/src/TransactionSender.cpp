@@ -45,7 +45,8 @@ namespace catapult { namespace contract {
 			callDigests.push_back(model::ExtendedCallDigest{
 				call.m_callId.array(),
 				call.m_manual,
-				( int16_t ) call.m_callExecutionStatus,
+				Height(call.m_block),
+				static_cast<int16_t>(call.m_callExecutionStatus),
 				call.m_releasedTransaction.array()
 			});
 
@@ -109,7 +110,8 @@ namespace catapult { namespace contract {
 		for(const auto& call:transactionInfo.m_callsExecutionInfo){
 			callDigests.push_back(model::ShortCallDigest{
 				call.m_callId.array(),
-				call.m_manual
+				call.m_manual,
+				Height(call.m_block)
 			});
 
 			for(const auto& participation:call.m_executorsParticipation){
