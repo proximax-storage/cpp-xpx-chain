@@ -7,6 +7,7 @@
 #include "ContractStateImpl.h"
 #include "src/cache/SuperContractCache.h"
 #include "src/cache/DriveContractCache.h"
+#include "src/utils/ContractUtils.h"
 #include <catapult/cache/ReadOnlyCatapultCache.h>
 
 namespace catapult { namespace state {
@@ -27,13 +28,16 @@ namespace catapult { namespace state {
 		return m_blockProvider(height);
 	}
 
-	std::optional<Height> ContractStateImpl::getAutomaticExecutionsEnabledSince(const Key& contractKey) const {
+	std::optional<Height> ContractStateImpl::getAutomaticExecutionsEnabledSince(
+			const Key& contractKey,
+			const Height& actualHeight,
+			const config::BlockchainConfiguration config) const {
 		auto pSuperContractCacheView = getCacheView<cache::SuperContractCache>();
 		auto contractIt = pSuperContractCacheView->find(contractKey);
 
 		// The caller must be sure that the contract exists
 		const state::SuperContractEntry& contractEntry = contractIt.get();
-		return contractEntry.automaticExecutionsInfo().AutomaticExecutionsEnabledSince;
+		return utils::automaticExecutionsEnabledSince(contractEntry, actualHeight, config);
 	}
 
 	Hash256 ContractStateImpl::getDriveState(const Key& contractKey) const {
@@ -43,7 +47,7 @@ namespace catapult { namespace state {
 		// The caller must be sure that the contract exists
 		const auto& contractEntry = contractIt.get();
 
-		m_pDriveStateBrowser->getDriveState(m_pCache->createView().toReadOnly(), contractEntry.driveKey());
+		return m_pDriveStateBrowser->getDriveState(m_pCache->createView().toReadOnly(), contractEntry.driveKey());
 	}
 
 	std::set<Key> ContractStateImpl::getContracts(const Key& executorKey) const {
@@ -51,7 +55,7 @@ namespace catapult { namespace state {
 		auto drives = m_pDriveStateBrowser->getDrives(readOnlyCache, executorKey);
 		auto pDriveContractCacheView = getCacheView<cache::DriveContractCache>();
 		std::set<Key> contracts;
-		for (const auto& drive: drives) {
+		for (const auto& drive : drives) {
 			auto driveContractIt = pDriveContractCacheView->find(drive);
 			const auto& pDriveContractEntry = driveContractIt.tryGet();
 			if (pDriveContractEntry) {
@@ -68,12 +72,13 @@ namespace catapult { namespace state {
 		// The caller must be sure that the contract exists
 		const auto& contractEntry = contractIt.get();
 
-		auto executorKeys = m_pDriveStateBrowser->getReplicators(m_pCache->createView().toReadOnly(), contractEntry.driveKey());
+		auto executorKeys =
+				m_pDriveStateBrowser->getReplicators(m_pCache->createView().toReadOnly(), contractEntry.driveKey());
 
 		std::map<Key, ExecutorStateInfo> executors;
 
 		const auto& executorsInfo = contractEntry.executorsInfo();
-		for (const auto& key: executorKeys) {
+		for (const auto& key : executorKeys) {
 			ExecutorStateInfo digest;
 			auto it = executorsInfo.find(key);
 			if (it != executorsInfo.end()) {
@@ -82,8 +87,7 @@ namespace catapult { namespace state {
 				digest.PoEx.StartBatchId = info.PoEx.StartBatchId;
 				digest.PoEx.T = info.PoEx.T;
 				digest.PoEx.R = info.PoEx.R;
-			}
-			else {
+			} else {
 				digest.NextBatchToApprove = contractEntry.nextBatchId();
 				digest.PoEx.StartBatchId = contractEntry.nextBatchId();
 			}
@@ -92,7 +96,10 @@ namespace catapult { namespace state {
 		return executors;
 	}
 
-	ContractInfo ContractStateImpl::getContractInfo(const Key& contractKey) const {
+	ContractInfo ContractStateImpl::getContractInfo(
+			const Key& contractKey,
+			const Height& actualHeight,
+			const config::BlockchainConfiguration config) const {
 		auto pSuperContractCacheView = getCacheView<cache::SuperContractCache>();
 		auto contractIt = pSuperContractCacheView->find(contractKey);
 
@@ -112,7 +119,7 @@ namespace catapult { namespace state {
 		contractInfo.AutomaticExecutionsFunctionName = automaticExecutionInfo.AutomaticExecutionsFunctionName;
 		contractInfo.AutomaticExecutionCallPayment = automaticExecutionInfo.AutomaticExecutionCallPayment;
 		contractInfo.AutomaticDownloadCallPayment = automaticExecutionInfo.AutomaticDownloadCallPayment;
-		contractInfo.AutomaticExecutionsEnabledSince = automaticExecutionInfo.AutomaticExecutionsEnabledSince;
+		contractInfo.AutomaticExecutionsEnabledSince = utils::automaticExecutionsEnabledSince(contractEntry, actualHeight, config);
 		contractInfo.AutomaticExecutionsNextBlockToCheck = automaticExecutionInfo.AutomaticExecutionsNextBlockToCheck;
 		if (!contractEntry.batches().empty()) {
 			const auto& batch = contractEntry.batches().back();
@@ -121,14 +128,14 @@ namespace catapult { namespace state {
 			lastBatch.BatchSuccess = batch.Success;
 			lastBatch.DriveState = getDriveState(contractKey);
 			lastBatch.PoExVerificationInfo = lastBatch.PoExVerificationInfo;
-			for (const auto& [key, executor]: contractEntry.executorsInfo()) {
+			for (const auto& [key, executor] : contractEntry.executorsInfo()) {
 				if (executor.NextBatchToApprove == contractEntry.nextBatchId()) {
 					lastBatch.Cosigners.insert(key);
 				}
 			}
 			contractInfo.LastPublishedBatch = std::move(lastBatch);
 		}
-		for (const auto& call: contractEntry.requestedCalls()) {
+		for (const auto& call : contractEntry.requestedCalls()) {
 			ManualCallInfo callInfo;
 			callInfo.CallId = call.CallId;
 			callInfo.FileName = call.FileName;
@@ -138,10 +145,19 @@ namespace catapult { namespace state {
 			callInfo.DownloadPayment = call.DownloadCallPayment;
 			callInfo.Caller = call.Caller;
 			callInfo.BlockHeight = call.BlockHeight;
-			for (const auto& payment: call.ServicePayments) {
-				callInfo.Payments.push_back({payment.MosaicId, payment.Amount});
+			for (const auto& payment : call.ServicePayments) {
+				callInfo.Payments.push_back({ payment.MosaicId, payment.Amount });
 			}
 			contractInfo.ManualCalls.push_back(std::move(callInfo));
 		}
 	}
-}}
+	Height ContractStateImpl::getAutomaticExecutionsNextBlockToCheck(const Key& contractKey) const {
+		auto pSuperContractCacheView = getCacheView<cache::SuperContractCache>();
+		auto contractIt = pSuperContractCacheView->find(contractKey);
+
+		// The caller must be sure that the contract exists
+		const state::SuperContractEntry& contractEntry = contractIt.get();
+
+		return contractEntry.automaticExecutionsInfo().AutomaticExecutionsNextBlockToCheck;
+	}
+}} // namespace catapult::state

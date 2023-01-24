@@ -32,6 +32,9 @@ namespace catapult { namespace config {
 		/// Maximum auto executions to be prepaid
 		uint64_t MaxAutoExecutions;
 
+		/// Automatic Executions deadline
+		Height AutomaticExecutionsDeadline;
+
 	private:
 		SuperContractConfiguration() = default;
 

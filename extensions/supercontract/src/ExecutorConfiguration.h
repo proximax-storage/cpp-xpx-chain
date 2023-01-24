@@ -23,6 +23,12 @@ namespace catapult { namespace contract {
 		/// Timeout for the transactions sent by the replicator.
 		utils::TimeSpan TransactionTimeout;
 
+		std::string StorageRPCAddress;
+
+		std::string MessengerRPCAddress;
+
+		std::string VirtualMachineRPCAddress;
+
 	private:
 		ExecutorConfiguration() = default;
 

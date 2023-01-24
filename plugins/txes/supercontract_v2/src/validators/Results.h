@@ -64,6 +64,8 @@ namespace catapult { namespace validators {
 
 	DEFINE_CONTRACT_RESULT(Max_Service_Payments_Size_Exceeded, 25);
 
+	DEFINE_CONTRACT_RESULT(Outdated_Automatic_Execution, 26);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

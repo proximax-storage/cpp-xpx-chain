@@ -23,6 +23,9 @@ namespace catapult { namespace contract {
 
 		LOAD_DB_PROPERTY(Key);
 		LOAD_DB_PROPERTY(TransactionTimeout);
+		LOAD_DB_PROPERTY(StorageRPCAddress);
+		LOAD_DB_PROPERTY(MessengerRPCAddress);
+		LOAD_DB_PROPERTY(VirtualMachineRPCAddress);
 
 #undef LOAD_DB_PROPERTY
 

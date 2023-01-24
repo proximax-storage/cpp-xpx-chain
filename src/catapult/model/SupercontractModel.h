@@ -12,12 +12,14 @@ namespace catapult::model {
 		Hash256 CallId;
 		bool Manual;
 		int16_t Status;
+		Height Block;
 		Hash256 ReleasedTransactionHash;
 	};
 
 	struct ShortCallDigest {
 		Hash256 CallId;
 		bool Manual;
+		Height Block;
 	};
 
 	struct CallPaymentOpinion {

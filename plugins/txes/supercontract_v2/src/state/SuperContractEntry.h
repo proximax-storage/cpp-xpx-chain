@@ -48,7 +48,7 @@ struct AutomaticExecutionsInfo {
 	Amount AutomaticExecutionCallPayment;
 	Amount AutomaticDownloadCallPayment;
 	uint32_t AutomatedExecutionsNumber = 0U;
-	std::optional<Height> AutomaticExecutionsEnabledSince;
+	std::optional<Height> AutomaticExecutionsPrepaidSince;
 };
 
 enum class DeploymentStatus {
