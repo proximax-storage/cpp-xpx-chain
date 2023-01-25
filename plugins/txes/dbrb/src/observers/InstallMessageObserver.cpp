@@ -17,28 +17,7 @@ namespace catapult { namespace observers {
 
 		  	auto& viewSequenceCache = context.Cache.sub<cache::ViewSequenceCache>();
 		  	state::ViewSequenceEntry viewSequenceEntry(notification.MessageHash);
-
-			// Forming the converged sequence
-			dbrb::Sequence convergedSequence;
-
-		  	auto pProcessId = notification.ViewProcessIdsPtr;
-		  	auto pMembershipChange = notification.MembershipChangesPtr;
-		  	auto pViewSize = notification.ViewSizesPtr + 1;	// Skipping the size of the replaced view
-
-		  	dbrb::View view;
-		  	auto& viewData = view.Data;
-		  	for (auto i = 0u; i < notification.MostRecentViewSize; ++i, ++pProcessId, ++pMembershipChange) {
-			  	dbrb::ProcessId processId = *pProcessId;
-			  	const auto membershipChange = static_cast<const dbrb::MembershipChange>(*pMembershipChange);
-			  	viewData.emplace(processId, membershipChange);
-
-			  	if (viewData.size() >= *pViewSize) {
-					convergedSequence.tryAppend(view);
-				  	++pViewSize;
-				}
-		  	}
-
-		  	viewSequenceEntry.sequence() = convergedSequence;
+		  	viewSequenceEntry.sequence() = notification.Sequence;
 		  	viewSequenceCache.insert(viewSequenceEntry);
 		}))
 	}

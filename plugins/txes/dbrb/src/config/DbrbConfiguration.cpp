@@ -20,17 +20,7 @@ namespace catapult { namespace config {
 		LOAD_PROPERTY(Enabled);
 #undef LOAD_PROPERTY
 
-#define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
-
-		// Initial values of properties will go here.
-
-//		config.ExampleProperty = true;
-//		TRY_LOAD_CHAIN_PROPERTY(ExampleProperty);
-//		config.AnotherExampleProperty = 100;
-//		TRY_LOAD_CHAIN_PROPERTY(AnotherExampleProperty);
-//		...
-
-#undef TRY_LOAD_CHAIN_PROPERTY
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 1);
 
 		return config;
 	}

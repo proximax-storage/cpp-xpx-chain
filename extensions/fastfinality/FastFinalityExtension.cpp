@@ -12,10 +12,11 @@ namespace catapult { namespace fastfinality {
 
 	namespace {
 		void RegisterExtension(extensions::ProcessBootstrapper& bootstrapper) {
-			auto config = harvesting::HarvestingConfiguration::LoadFromPath(bootstrapper.resourcesPath());
-			ValidateHarvestingConfiguration(config);
+			auto harvestingConfig = harvesting::HarvestingConfiguration::LoadFromPath(bootstrapper.resourcesPath());
+			ValidateHarvestingConfiguration(harvestingConfig);
+			auto dbrbConfig = dbrb::DbrbConfiguration::LoadFromPath(bootstrapper.resourcesPath());
 
-			bootstrapper.extensionManager().addServiceRegistrar(CreateWeightedVotingServiceRegistrar(config, bootstrapper.resourcesPath()));
+			bootstrapper.extensionManager().addServiceRegistrar(CreateWeightedVotingServiceRegistrar(harvestingConfig, dbrbConfig, bootstrapper.resourcesPath()));
 		}
 	}
 }}

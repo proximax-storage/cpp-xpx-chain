@@ -5,8 +5,8 @@
 **/
 
 #pragma once
-
 #include "catapult/model/Notifications.h"
+#include "extensions/fastfinality/src/dbrb/DbrbUtils.h"
 
 namespace catapult { namespace model {
 
@@ -24,58 +24,20 @@ namespace catapult { namespace model {
 			static constexpr auto Notification_Type = Dbrb_Install_Message_v1_Notification;
 
 		public:
-			explicit InstallMessageNotification(
-					const Hash256& messageHash,
-					const uint32_t viewsCount,
-					const uint32_t mostRecentViewSize,
-					const uint32_t signaturesCount,
-					const uint16_t* viewSizesPtr,
-					const Key* viewProcessIdsPtr,
-					const bool* membershipChangesPtr,
-					const Key* signaturesProcessIdsPtr,
-					const Signature* signaturesPtr)
+			explicit InstallMessageNotification(const Hash256& messageHash, const uint8_t* pPayload)
 				: Notification(Notification_Type, sizeof(InstallMessageNotification<1>))
 				, MessageHash(messageHash)
-				, ViewsCount(viewsCount)
-				, MostRecentViewSize(mostRecentViewSize)
-				, SignaturesCount(signaturesCount)
-				, ViewSizesPtr(viewSizesPtr)
-				, ViewProcessIdsPtr(viewProcessIdsPtr)
-				, MembershipChangesPtr(membershipChangesPtr)
-				, SignaturesProcessIdsPtr(signaturesProcessIdsPtr)
-				, SignaturesPtr(signaturesPtr) {}
+				, Sequence(dbrb::Read<dbrb::Sequence>(pPayload))
+				, Certificate(dbrb::Read<dbrb::CertificateType>(pPayload)) {}
 
 		public:
-			/// Hash of the Install message.
+			/// Install message hash.
 			Hash256 MessageHash;
 
-			/// Number of views that compose a sequence.
-			uint32_t ViewsCount;
+			/// Converged sequence.
+			dbrb::Sequence Sequence;
 
-			/// Number of membership change pairs in the most recent (longest) view.
-			uint32_t MostRecentViewSize;
-
-			/// Number of pairs of process IDs and their signatures.
-			uint32_t SignaturesCount;
-
-			/// Numbers of membership change pairs in corresponding views.
-			/// Has the length of ViewsCount.
-			const uint16_t* ViewSizesPtr;
-
-			/// Keys of the processes mentioned in the most recent (longest) view.
-			/// Has the length of MostRecentViewSize.
-			const Key* ViewProcessIdsPtr;
-
-			/// Changes of process membership in the system. True = joined, false = left.
-			/// Has the length of MostRecentViewSize.
-			const bool* MembershipChangesPtr;
-
-			/// Keys of the processes mentioned in the signatures map.
-			/// Has the length of SignaturesCount.
-			const Key* SignaturesProcessIdsPtr;
-
-			/// Signatures of processes.
-			/// Has the length of SignaturesCount.
-			const Signature* SignaturesPtr;
+						/// Install message certificate.
+			dbrb::CertificateType Certificate;
 		};
 }}
