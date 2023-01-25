@@ -50,11 +50,9 @@ namespace catapult { namespace plugins {
 						servicePayments.push_back(pServicePayment[i]);
 					}
 
-					const auto contractAddress = extensions::CopyToUnresolvedAddress(
-							PublicKeyToAddress(contractKey, config.NetworkIdentifier));
 					for (const auto& servicePayment : servicePayments) {
-						sub.notify(BalanceTransferNotification<1>(
-								transaction.Signer, contractAddress, servicePayment.MosaicId, servicePayment.Amount));
+						sub.notify(BalanceDebitNotification<1>(
+								transaction.Signer, servicePayment.MosaicId, servicePayment.Amount));
 					}
 
 					sub.notify(ManualCallNotification<1>(
