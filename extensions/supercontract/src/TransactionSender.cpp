@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <sdk/src/builders/SynchronizationSingleBuilder.h>
 #include "TransactionSender.h"
 #include "sdk/src/builders/SuccessfulEndBatchExecutionBuilder.h"
 #include "sdk/src/builders/UnsuccessfulEndBatchExecutionBuilder.h"
@@ -29,8 +30,6 @@ namespace catapult { namespace contract {
 
 	Hash256 TransactionSender::sendSuccessfulEndBatchExecutionTransaction(
 			const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
-		CATAPULT_LOG(debug) << "sending successful end batch execution transaction initiated by "
-							<< Hash256(transactionInfo.m_contractKey.array());
 		std::vector<Key> publicKeys;
 		std::vector<Signature> signatures;
 		std::vector<model::RawProofOfExecution> proofs;
@@ -59,10 +58,22 @@ namespace catapult { namespace contract {
 															  Height(call.m_block),
 															  static_cast<int16_t>(call.m_callExecutionStatus),
 															  call.m_releasedTransaction.array() });
+		}
 
-			for (const auto& participation : call.m_executorsParticipation) {
-				callPayments.push_back(
-						model::CallPayment { Amount(participation.m_scConsumed), Amount(participation.m_smConsumed) });
+		std::vector<std::vector<model::CallPayment>> callPaymentsMatrix(
+				publicKeys.size(), std::vector<model::CallPayment>(callDigests.size()));
+
+		for (uint j = 0; j < transactionInfo.m_callsExecutionInfo.size(); j++) {
+			const auto& participation = transactionInfo.m_callsExecutionInfo[j].m_executorsParticipation;
+			for (uint i = 0; i < participation.size(); i++) {
+				callPaymentsMatrix[i][j] = model::CallPayment { Amount(participation[i].m_scConsumed),
+																Amount(participation[i].m_smConsumed) };
+			}
+		}
+
+		for (const auto& executorPayment: callPaymentsMatrix) {
+			for (const auto& callPayment: executorPayment) {
+				callPayments.push_back(callPayment);
 			}
 		}
 
@@ -92,8 +103,6 @@ namespace catapult { namespace contract {
 
 	Hash256 TransactionSender::sendUnsuccessfulEndBatchExecutionTransaction(
 			const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
-		CATAPULT_LOG(debug) << "sending unsuccessful end batch execution transaction initiated by "
-							<< Hash256(transactionInfo.m_contractKey.array());
 		std::vector<Key> publicKeys;
 		std::vector<Signature> signatures;
 		std::vector<model::RawProofOfExecution> proofs;
@@ -119,10 +128,22 @@ namespace catapult { namespace contract {
 		for (const auto& call : transactionInfo.m_callsExecutionInfo) {
 			callDigests.push_back(
 					model::ShortCallDigest { call.m_callId.array(), call.m_manual, Height(call.m_block) });
+		}
 
-			for (const auto& participation : call.m_executorsParticipation) {
-				callPayments.push_back(
-						model::CallPayment { Amount(participation.m_scConsumed), Amount(participation.m_smConsumed) });
+		std::vector<std::vector<model::CallPayment>> callPaymentsMatrix(
+				publicKeys.size(), std::vector<model::CallPayment>(callDigests.size()));
+
+		for (uint j = 0; j < transactionInfo.m_callsExecutionInfo.size(); j++) {
+			const auto& participation = transactionInfo.m_callsExecutionInfo[j].m_executorsParticipation;
+			for (uint i = 0; i < participation.size(); i++) {
+				callPaymentsMatrix[i][j] = model::CallPayment { Amount(participation[i].m_scConsumed),
+																Amount(participation[i].m_smConsumed) };
+			}
+		}
+
+		for (const auto& executorPayment: callPaymentsMatrix) {
+			for (const auto& callPayment: executorPayment) {
+				callPayments.push_back(callPayment);
 			}
 		}
 
@@ -145,9 +166,6 @@ namespace catapult { namespace contract {
 	}
 	Hash256 TransactionSender::sendEndBatchExecutionSingleTransaction(
 			const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo) {
-		CATAPULT_LOG(debug) << "sending end batch execution single transaction initiated by "
-							<< Hash256(transactionInfo.m_contractKey.array());
-
 		model::RawProofOfExecution proof { transactionInfo.m_proofOfExecution.m_initialBatch,
 										   transactionInfo.m_proofOfExecution.m_batchProof.m_T.toBytes(),
 										   transactionInfo.m_proofOfExecution.m_batchProof.m_r.array(),
@@ -157,6 +175,20 @@ namespace catapult { namespace contract {
 		builder.setContractKey(transactionInfo.m_contractKey.array());
 		builder.setBatchId(transactionInfo.m_batchIndex);
 		builder.setProofOfExecution(proof);
+		auto pTransaction = utils::UniqueToShared(builder.build());
+		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_executorConfig.TransactionTimeout.millis());
+		send(pTransaction);
+
+		return model::CalculateHash(*pTransaction, m_generationHash);
+	}
+
+	Hash256 TransactionSender::sendSynchronizationSingleTransaction(
+			const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo) {
+		Hash256(transactionInfo.m_contractKey.array());
+
+		builders::SynchronizationSingleBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
+		builder.setContractKey(transactionInfo.m_contractKey.array());
+		builder.setBatchId(transactionInfo.m_batchIndex);
 		auto pTransaction = utils::UniqueToShared(builder.build());
 		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_executorConfig.TransactionTimeout.millis());
 		send(pTransaction);

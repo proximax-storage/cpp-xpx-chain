@@ -29,6 +29,7 @@ namespace catapult { namespace contract {
 		Hash256 sendSuccessfulEndBatchExecutionTransaction(const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
 		Hash256 sendUnsuccessfulEndBatchExecutionTransaction(const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
 		Hash256 sendEndBatchExecutionSingleTransaction(const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo);
+		Hash256 sendSynchronizationSingleTransaction(const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo);
 		Hash256 sendReleasedTransactions(const std::vector<std::vector<uint8_t>>& payloads);
 
 	private:
