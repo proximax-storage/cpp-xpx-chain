@@ -20,6 +20,9 @@ namespace catapult { namespace contract {
 		/// Replicator key.
 		std::string Key;
 
+		/// Timeout for the transactions sent by the replicator.
+		utils::TimeSpan TransactionTimeout;
+
 		std::string StorageRPCAddress;
 
 		std::string MessengerRPCAddress;

@@ -9,7 +9,7 @@
 #include "ExecutorService.h"
 #include "TransactionStatusHandler.h"
 #include "StorageBlockchainBuilder.h"
-#include "DefaultExecutorEventHandler.h"
+#include "ExecutorEventHandler.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
@@ -19,6 +19,7 @@
 #include <storage/RPCStorageBuilder.h>
 #include <messenger/RPCMessengerBuilder.h>
 #include <virtualMachine/RPCVirtualMachineBuilder.h>
+#include "TransactionSender.h"
 
 #include <map>
 
@@ -90,9 +91,16 @@ namespace catapult::contract {
 			std::vector<uint8_t> privateKeyBuffer = { m_keyPair.privateKey().begin(), m_keyPair.privateKey().end() };
 			auto privateKey = std::move(*reinterpret_cast<sirius::crypto::PrivateKey*>(privateKeyBuffer.data()));
 			auto keyPair = sirius::crypto::KeyPair::FromPrivate(std::move(privateKey));
-			sirius::contract::ExecutorConfig config;
+
+			TransactionSender transactionSender(
+					m_keyPair,
+					m_serviceState.config().Immutable,
+					m_config,
+					m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local));
+
 			std::unique_ptr<sirius::contract::ExecutorEventHandler> pExecutorEventHandler =
-					std::make_unique<DefaultExecutorEventHandler>();
+					std::make_unique<ExecutorEventHandler>(
+							m_keyPair, std::move(transactionSender), m_transactionStatusHandler);
 
 			std::unique_ptr<ServiceBuilder<blockchain::Blockchain>> blockchainBuilder =
 					std::make_unique<StorageBlockchainBuilder>(m_contractState);
@@ -105,6 +113,9 @@ namespace catapult::contract {
 
 			std::unique_ptr<vm::VirtualMachineBuilder> vmBuilder =
 					std::make_unique<vm::RPCVirtualMachineBuilder>(m_config.VirtualMachineRPCAddress);
+
+			sirius::contract::ExecutorConfig config;
+			config.setNetworkIdentifier(static_cast<uint8_t>(m_serviceState.config().Immutable.NetworkIdentifier));
 
 			m_pExecutor = sirius::contract::DefaultExecutorBuilder().build(
 					std::move(keyPair),
@@ -360,11 +371,12 @@ namespace catapult::contract {
 		const state::ContractState& m_contractState;
 		const ExecutorConfiguration& m_config;
 
-		std::shared_ptr<sirius::contract::Executor> m_pExecutor;
 		TransactionStatusHandler m_transactionStatusHandler;
 
 		// The fields are needed to generate correct events
 		std::map<Key, Height> m_alreadyAddedContracts;
+
+		std::shared_ptr<sirius::contract::Executor> m_pExecutor;
 	};
 
 	// endregion
