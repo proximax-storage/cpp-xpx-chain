@@ -4,8 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <utility>
-
+#pragma once
 #include "StorageConfiguration.h"
 #include "src/catapult/crypto/KeyPair.h"
 #include "catapult/utils/NetworkTime.h"

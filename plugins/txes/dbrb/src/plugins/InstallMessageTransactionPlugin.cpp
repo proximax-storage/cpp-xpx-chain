@@ -19,17 +19,7 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1: {
-				sub.notify(InstallMessageNotification<1>(
-						transaction.MessageHash,
-						transaction.ViewsCount,
-						transaction.MostRecentViewSize,
-						transaction.SignaturesCount,
-						transaction.ViewSizesPtr(),
-						transaction.ViewProcessIdsPtr(),
-						transaction.MembershipChangesPtr(),
-						transaction.SignaturesProcessIdsPtr(),
-						transaction.SignaturesPtr()
-				));
+				sub.notify(InstallMessageNotification<1>(transaction.MessageHash, transaction.PayloadPtr()));
 				break;
 			}
 

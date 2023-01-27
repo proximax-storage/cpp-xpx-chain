@@ -17,20 +17,17 @@ namespace catapult { namespace validators {
 		/// View sequence is already in the cache.
 		DEFINE_DBRB_RESULT(View_Sequence_Already_Exists, 1);
 
-		/// View sequence with the given hash is not in the cache.
-		DEFINE_DBRB_RESULT(View_Sequence_Not_Found, 2);
-
 		/// Supplied sequence is too short.
-		DEFINE_DBRB_RESULT(View_Sequence_Size_Insufficient, 3);
+		DEFINE_DBRB_RESULT(View_Sequence_Size_Insufficient, 2);
 
 		/// Supplied replaced view is not the same as the most recent view stored in the cache.
-		DEFINE_DBRB_RESULT(Invalid_Replaced_View, 4);
+		DEFINE_DBRB_RESULT(Invalid_Replaced_View, 3);
 
 		/// There are not enough signatures to form a quorum.
-		DEFINE_DBRB_RESULT(Signatures_Count_Insufficient, 5);
+		DEFINE_DBRB_RESULT(Signatures_Count_Insufficient, 4);
 
 		/// Supplied signature is invalid.
-		DEFINE_DBRB_RESULT(Invalid_Signature, 6);
+		DEFINE_DBRB_RESULT(Invalid_Signature, 5);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 	}}

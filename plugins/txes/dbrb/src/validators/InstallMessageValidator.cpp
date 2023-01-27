@@ -22,63 +22,30 @@ namespace catapult { namespace validators {
 			return Failure_Dbrb_View_Sequence_Already_Exists;
 
 	  	// Check if there are at least two views in a sequence
-	  	if (notification.ViewsCount < 2)
+	  	if (notification.Sequence.data().size() < 2u)
 		  	return Failure_Dbrb_View_Sequence_Size_Insufficient;
 
-
-		// Forming the replaced view and the converged sequence
-	  	dbrb::View replacedView;
-	  	dbrb::Sequence convergedSequence;
-	  	{
-			auto pProcessId = notification.ViewProcessIdsPtr;
-			auto pMembershipChange = notification.MembershipChangesPtr;
-			auto pViewSize = notification.ViewSizesPtr;
-
-			dbrb::View view;
-			auto& viewData = view.Data;
-			for (auto i = 0u; i < notification.MostRecentViewSize; ++i, ++pProcessId, ++pMembershipChange) {
-				dbrb::ProcessId processId = *pProcessId;
-				const auto membershipChange = static_cast<const dbrb::MembershipChange>(*pMembershipChange);
-				viewData.emplace(processId, membershipChange);
-
-				if (viewData.size() >= *pViewSize) {
-					if (replacedView.Data.empty()) {
-						// Forming the replaced view
-						replacedView = view;
-					} else {
-						// Forming the converged sequence
-						convergedSequence.tryAppend(view);
-					}
-					++pViewSize;
-				}
-			}
-		}
+		const auto& replacedView = *notification.Sequence.maybeLeastRecent();
+		const std::vector<dbrb::View> convergedSequenceData(notification.Sequence.data().begin() + 1u, notification.Sequence.data().end());
+		const auto& convergedSequence = *dbrb::Sequence::fromViews(convergedSequenceData);
 
 		// Check if the replaced view is the most recent view stored in the cache
 		if (viewSequenceCache.getLatestView() != replacedView)
 			return Failure_Dbrb_Invalid_Replaced_View;
 
 		// Check if there are enough signatures
-		if (notification.SignaturesCount < convergedSequence.maybeMostRecent()->quorumSize())
+		if (notification.Certificate.size() < notification.Sequence.maybeMostRecent()->quorumSize())
 			return Failure_Dbrb_Signatures_Count_Insufficient;
 
 	  	// Check if all signatures are valid
 	  	dbrb::ConvergedMessage convergedMessage(dbrb::ProcessId(), convergedSequence, replacedView);
-	  	{
-			auto pProcessId = notification.SignaturesProcessIdsPtr;
-			auto pSignature = notification.SignaturesPtr;
+		for (const auto& [processId, signature] : notification.Certificate) {
+			convergedMessage.Sender = processId;
+			const auto hash = dbrb::CalculateHash(convergedMessage.toNetworkPacket(nullptr)->buffers());
 
-			for (auto i = 0u; i < notification.SignaturesCount; ++i, ++pProcessId, ++pSignature) {
-				convergedMessage.Sender = *pProcessId;
-
-				// Packet signature doesn't matter here, all we need is buffers() to generate a hash
-				const auto pConvergedPacket = convergedMessage.toNetworkPacket(nullptr);
-				const auto hash = dbrb::CalculateHash(pConvergedPacket->buffers());
-
-				if (!crypto::Verify(*pProcessId, hash, *pSignature))
-					return Failure_Dbrb_Invalid_Signature;
-			}
-	  	}
+			if (!crypto::Verify(processId, hash, signature))
+				return Failure_Dbrb_Invalid_Signature;
+		}
 
 		return ValidationResult::Success;
 	}));

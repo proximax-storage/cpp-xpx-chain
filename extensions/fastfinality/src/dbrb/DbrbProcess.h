@@ -9,6 +9,7 @@
 #include "DbrbUtils.h"
 #include "Messages.h"
 #include "MessageSender.h"
+#include "TransactionSender.h"
 #include "catapult/functions.h"
 #include "catapult/net/PacketWriters.h"
 #include "catapult/ionet/PacketHandlers.h"
@@ -136,7 +137,8 @@ namespace catapult { namespace dbrb {
 			const net::PacketIoPickerContainer& packetIoPickers,
 			ionet::Node thisNode,
 			const crypto::KeyPair& keyPair,
-			std::shared_ptr<thread::IoThreadPool> pPool);
+			std::shared_ptr<thread::IoThreadPool> pPool,
+			TransactionSender&& transactionSender);
 
 	private:
 		/// Process identifier.
@@ -236,6 +238,8 @@ namespace catapult { namespace dbrb {
 		MessageSender m_messageSender;
 
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
+
+		TransactionSender m_transactionSender;
 
 	public:
 		/// Request to join the system.

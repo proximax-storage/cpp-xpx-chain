@@ -16,44 +16,32 @@ namespace catapult { namespace mongo { namespace plugins {
 	template<typename TTransaction>
 	void StreamInstallMessageTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "messageHash" << ToBinary(transaction.MessageHash);
-		builder << "viewsCount" << static_cast<int32_t>(transaction.ViewsCount);
-		builder << "mostRecentViewSize" << static_cast<int32_t>(transaction.MostRecentViewSize);
-		builder << "signaturesCount" << static_cast<int32_t>(transaction.SignaturesCount);
 
-		// Streaming ViewSizes
-		auto viewSizesArray = builder << "viewSizes" << bson_stream::open_array;
-		auto pSize = transaction.ViewSizesPtr();
-		for (auto i = 0; i < transaction.ViewsCount; ++i, ++pSize)
-			viewSizesArray << static_cast<int32_t>(*pSize);
-		viewSizesArray << bson_stream::close_array;
+		auto pBuffer = transaction.PayloadPtr();
+		auto sequence = dbrb::Read<dbrb::Sequence>(pBuffer);
+		auto certificate = dbrb::Read<dbrb::CertificateType>(pBuffer);
 
-		// Streaming ViewProcessIds
-		auto viewProcessIdsArray = builder << "viewProcessIds" << bson_stream::open_array;
-		auto pViewProcessId = transaction.ViewProcessIdsPtr();
-		for (auto i = 0; i < transaction.MostRecentViewSize; ++i, ++pViewProcessId)
-			viewProcessIdsArray << ToBinary(*pViewProcessId);
-		viewProcessIdsArray << bson_stream::close_array;
+		auto sequenceArray = builder << "sequence" << bson_stream::open_array;
+		for (const auto& view : sequence.data()) {
+			auto viewArray = builder << "view" << bson_stream::open_array;
+			for (const auto& [processId, change] : view.Data) {
+				viewArray << bson_stream::open_document
+					<< "processId" << ToBinary(processId)
+					<< "membershipChange" << static_cast<int32_t>(change)
+					<< bson_stream::close_document;
+			}
+			viewArray << bson_stream::close_array;
+		}
+		sequenceArray << bson_stream::close_array;
 
-		// Streaming MembershipChanges
-		auto membershipChangesArray = builder << "membershipChanges" << bson_stream::open_array;
-		auto pChange = transaction.MembershipChangesPtr();
-		for (auto i = 0; i < transaction.MostRecentViewSize; ++i, ++pChange)
-			membershipChangesArray << *pChange;
-		membershipChangesArray << bson_stream::close_array;
-
-		// Streaming SignaturesProcessIds
-		auto signatureProcessIdsArray = builder << "signatureProcessIds" << bson_stream::open_array;
-		auto pSigProcessId = transaction.SignaturesProcessIdsPtr();
-		for (auto i = 0; i < transaction.SignaturesCount; ++i, ++pSigProcessId)
-			signatureProcessIdsArray << ToBinary(*pSigProcessId);
-		signatureProcessIdsArray << bson_stream::close_array;
-
-		// Streaming Signatures
-		auto signaturesArray = builder << "signatures" << bson_stream::open_array;
-		auto pSignature = transaction.SignaturesPtr();
-		for (auto i = 0; i < transaction.SignaturesCount; ++i, ++pSignature)
-			signaturesArray << ToBinary(*pSignature);
-		signaturesArray << bson_stream::close_array;
+		auto certificateArray = builder << "certificate" << bson_stream::open_array;
+		for (const auto& [processId, signature] : certificate) {
+			certificateArray << bson_stream::open_document
+					  << "processId" << ToBinary(processId)
+					  << "signature" << ToBinary(signature)
+					  << bson_stream::close_document;
+		}
+		certificateArray << bson_stream::close_array;
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(InstallMessage, StreamInstallMessageTransaction)

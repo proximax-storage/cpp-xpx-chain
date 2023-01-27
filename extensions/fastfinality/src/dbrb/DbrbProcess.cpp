@@ -22,12 +22,14 @@ namespace catapult { namespace dbrb {
 		const net::PacketIoPickerContainer& packetIoPickers,
 		ionet::Node thisNode,
 		const crypto::KeyPair& keyPair,
-		std::shared_ptr<thread::IoThreadPool> pPool)
+		std::shared_ptr<thread::IoThreadPool> pPool,
+		TransactionSender&& transactionSender)
 			: m_id(thisNode.identityKey())
 			, m_keyPair(keyPair)
 			, m_nodeRetreiver(packetIoPickers, thisNode.metadata().NetworkIdentifier)
 			, m_messageSender(std::move(pWriters), m_nodeRetreiver)
-			, m_pPool(pPool) {
+			, m_pPool(pPool)
+			, m_transactionSender(std::move(transactionSender)) {
 		m_node.Node = thisNode;
 		auto pPackedNode = ionet::PackNode(thisNode);
 		auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(pPackedNode.get()), pPackedNode->Size } });

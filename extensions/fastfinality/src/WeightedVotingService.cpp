@@ -84,8 +84,9 @@ namespace catapult { namespace fastfinality {
 
 		class WeightedVotingServiceRegistrar : public extensions::ServiceRegistrar {
 		public:
-			explicit WeightedVotingServiceRegistrar(harvesting::HarvestingConfiguration config, std::string resourcesPath)
-				: m_harvestingConfig(std::move(config))
+			explicit WeightedVotingServiceRegistrar(const harvesting::HarvestingConfiguration& harvestingConfig, const dbrb::DbrbConfiguration& dbrbConfig, std::string resourcesPath)
+				: m_harvestingConfig(std::move(harvestingConfig))
+				, m_dbrbConfig(std::move(dbrbConfig))
 				, m_resourcesPath(std::move(resourcesPath))
 			{}
 
@@ -116,8 +117,10 @@ namespace catapult { namespace fastfinality {
 				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
 				locator.registerService(Writers_Service_Name, pWriters);
 
-				auto pFsmShared = pServiceGroup->pushService([pWriters, &config, &keyPair = locator.keyPair(), &state](const std::shared_ptr<thread::IoThreadPool>& pPool) {
-					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, state.packetIoPickers(), config::ToLocalDbrbNode(config), keyPair, pPool);
+
+				auto pFsmShared = pServiceGroup->pushService([pWriters, &config, &keyPair = locator.keyPair(), &state, &dbrbConfig = m_dbrbConfig](const std::shared_ptr<thread::IoThreadPool>& pPool) {
+					dbrb::TransactionSender transactionSender(keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local));
+					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, state.packetIoPickers(), config::ToLocalDbrbNode(config), keyPair, pPool, std::move(transactionSender));
 					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess, state.pluginManager().dbrbViewFetcher());
 				});
 
@@ -237,11 +240,12 @@ namespace catapult { namespace fastfinality {
 
 		private:
 			harvesting::HarvestingConfiguration m_harvestingConfig;
+			dbrb::DbrbConfiguration m_dbrbConfig;
 			std::string m_resourcesPath;
 		};
 	}
 
-	DECLARE_SERVICE_REGISTRAR(WeightedVoting)(const harvesting::HarvestingConfiguration& config, std::string resourcesPath) {
-		return std::make_unique<WeightedVotingServiceRegistrar>(config, std::move(resourcesPath));
+	DECLARE_SERVICE_REGISTRAR(WeightedVoting)(const harvesting::HarvestingConfiguration& harvestingConfig, const dbrb::DbrbConfiguration& dbrbConfig, std::string resourcesPath) {
+		return std::make_unique<WeightedVotingServiceRegistrar>(harvestingConfig, dbrbConfig, std::move(resourcesPath));
 	}
 }}
