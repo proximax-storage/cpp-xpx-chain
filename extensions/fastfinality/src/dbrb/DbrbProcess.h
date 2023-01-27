@@ -265,6 +265,7 @@ namespace catapult { namespace dbrb {
 
 		void prepareForStateUpdates(const InstallMessageData&);
 		void updateState(const std::set<StateUpdateMessage>&);
+		void extendPendingChanges(const View&);
 		bool isAcknowledgeable(const PrepareMessage&);
 		Signature sign(const Payload&);
 		static bool verify(const ProcessId&, const Payload&, const View&, const Signature&);

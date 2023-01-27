@@ -326,6 +326,25 @@ namespace catapult { namespace dbrb {
 //		}
 	}
 
+	void DbrbProcess::extendPendingChanges(const View& appendedChanges) {
+		m_pendingChanges.merge(appendedChanges);
+
+		if (m_installedViews.count(m_currentView)) {
+			// If there is no proposed sequence to replace current view, create one.
+			if (!m_proposedSequences.count(m_currentView)) {
+				auto newView = m_currentView;
+				newView.merge(m_pendingChanges);
+				const std::vector<View> sequenceData{ newView };
+
+				m_proposedSequences[m_currentView] = Sequence::fromViews(sequenceData).value();
+
+				CATAPULT_LOG(debug) << "[DBRB] Disseminating Propose message (pending changes have been extended).";
+				auto pMessage = std::make_shared<ProposeMessage>(m_id, m_proposedSequences.at(m_currentView), m_currentView);
+				disseminate(pMessage, m_currentView.members());
+			}
+		}
+	}
+
 	bool DbrbProcess::isAcknowledgeable(const PrepareMessage& message) {
 		// If m_acknowledgeAllowed == false, no payload is allowed to be acknowledged.
 		if (!m_acknowledgeAllowed) {
@@ -390,22 +409,30 @@ namespace catapult { namespace dbrb {
 		}
 
 		if (message.View != m_currentView) {
-			CATAPULT_LOG(debug) << "[DBRB] RECONFIG: Aborting message processing (supplied view \"" << message.View << "\" doesn't match current view \"" << m_currentView << "\").";
+			CATAPULT_LOG(debug) << "[DBRB] RECONFIG: Aborting message processing (supplied view " << message.View << " doesn't match current view " << m_currentView << ").";
 			return;
 		}
 
 		// Requested change must not be present in the view of the message.
-		if (message.View.hasChange(message.ProcessId, message.MembershipChange))
+		if (message.View.hasChange(message.ProcessId, message.MembershipChange)) {
+			const auto changeStr = MembershipChangeToString(message.ProcessId, message.MembershipChange);
+			CATAPULT_LOG(debug) << "[DBRB] RECONFIG: Aborting message processing (proposed change " << changeStr << " is already in current view " << m_currentView << ").";
 			return;
-
-		// When trying to leave, a corresponding join change must be present in the view of the message.
-		if (message.MembershipChange == MembershipChange::Leave) {
-			const auto joinChange = std::make_pair(message.ProcessId, MembershipChange::Join);
-			if (!message.View.hasChange(message.ProcessId, MembershipChange::Join))
-				return;
 		}
 
-		m_pendingChanges.Data.emplace(message.ProcessId, message.MembershipChange);
+		// When trying to leave, a corresponding Join change must be present in the view of the message.
+		if (message.MembershipChange == MembershipChange::Leave) {
+			if (!message.View.hasChange(message.ProcessId, MembershipChange::Join)) {
+				const auto changeStr = MembershipChangeToString(message.ProcessId, MembershipChange::Join);
+				CATAPULT_LOG(debug) << "[DBRB] RECONFIG: Aborting message processing (no corresponding " << changeStr << " change in current view " << m_currentView << ").";
+				return;
+			}
+		}
+
+		View appendedView;
+		appendedView.Data.emplace(message.ProcessId, message.MembershipChange);
+		extendPendingChanges(appendedView);
+
 		auto pMessage = std::make_shared<ReconfigConfirmMessage>(m_id, message.View);
 		send(pMessage, message.Sender);
 	}
@@ -436,7 +463,7 @@ namespace catapult { namespace dbrb {
 
 		// Filtering incorrect proposals.
 		const auto& format = m_formatSequences[message.ReplacedView];
-		if ( !(format.count(message.ProposedSequence) || format.count(Sequence{})) )	// TODO: format must contain empty sequence, or be empty?
+		if ( !format.count(message.ProposedSequence) && !format.empty() )	// TODO: format must contain empty sequence, or be empty?
 			return;
 
 		// Every view in ProposedSequence must be more recent than the current view of the process.
@@ -612,7 +639,7 @@ namespace catapult { namespace dbrb {
 			reconfigRequests.merge(message.PendingChanges);
 		}
 		reconfigRequests.difference(leastRecentView);
-		m_pendingChanges.merge(reconfigRequests);
+		extendPendingChanges(reconfigRequests);
 
 		// Uninstalling the least recent view mentioned in the current Install message.
 		m_installedViews.erase(leastRecentView);
@@ -644,6 +671,7 @@ namespace catapult { namespace dbrb {
 			}
 
 		} else {
+			onLeaveComplete();
 //			if (m_storedPayloadData.has_value()) {
 //				// Start disseminating Commit messages until allowed to leave.
 //				m_disseminateCommit = true;
@@ -831,13 +859,13 @@ namespace catapult { namespace dbrb {
 //			auto pMessage = std::make_shared<CommitMessage>(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate, m_storedPayloadData->CertificateView, newView);
 //			disseminate(pMessage, newView.members());
 //		}
-//
-//		// Disseminate Reconfig message using the installed view, if the process is leaving.
-//		if (m_membershipState == MembershipState::Leaving) {
-//			CATAPULT_LOG(debug) << "[DBRB] VIEW INSTALLED: Node is leaving.";
-//			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChange::Leave, newView);
-//			disseminate(pMessage, newView.members());
-//		}
+
+		// Disseminate Reconfig message using the installed view, if the process is leaving.
+		if (m_membershipState == MembershipState::Leaving) {
+			CATAPULT_LOG(debug) << "[DBRB] VIEW INSTALLED: Node is leaving.";
+			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChange::Leave, newView);
+			disseminate(pMessage, newView.members());
+		}
 	}
 
 	void DbrbProcess::onLeaveAllowed() {

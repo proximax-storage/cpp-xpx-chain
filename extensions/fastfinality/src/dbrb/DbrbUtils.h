@@ -58,6 +58,8 @@ namespace catapult { namespace dbrb {
 	Hash256 CalculateHash(const std::vector<RawBuffer>& buffers);
 	Hash256 CalculatePayloadHash(const Payload& payload);
 
+	std::string MembershipChangeToString(const ProcessId& processId, const MembershipChange& change);
+
 	/// View of the system.
 	struct View {
 		/// Set of processes' membership changes in the system.
@@ -95,15 +97,7 @@ namespace catapult { namespace dbrb {
 				if (leadingSpace)
 					out << " ";
 
-				out << (change == MembershipChange::Join ? "+" : "-");
-
-				std::ostringstream processIdStringStream;
-				processIdStringStream << processId;
-				const std::string processIdString = processIdStringStream.str();
-
-				const auto firstDigitPos = processIdStringStream.str().find_first_of("0123456789");
-				out << processIdString.substr(0, 1) + processIdString.at(firstDigitPos);
-
+				out << MembershipChangeToString(processId, change);
 				leadingSpace = true;
 			}
 			out << "]";
@@ -201,7 +195,7 @@ namespace catapult { namespace dbrb {
 			return {};
 		}
 
-		/// Insertion operator for outputting \a view to \a out.
+		/// Insertion operator for outputting \a sequence to \a out.
 		friend std::ostream& operator<<(std::ostream& out, const Sequence& sequence) {
 			bool leadingComma = false;
 			for (const auto& view : sequence.m_data) {

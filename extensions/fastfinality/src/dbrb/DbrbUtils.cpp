@@ -140,6 +140,20 @@ namespace catapult { namespace dbrb {
 		return CalculateHash({{ reinterpret_cast<const uint8_t*>(payload.get()), payload->Size }});
 	}
 
+	std::string MembershipChangeToString(const ProcessId& processId, const MembershipChange& change) {
+		std::ostringstream out;
+		out << (change == MembershipChange::Join ? "+" : "-");
+
+		std::ostringstream processIdStringStream;
+		processIdStringStream << processId;
+		const std::string processIdString = processIdStringStream.str();
+
+		const auto firstDigitPos = processIdStringStream.str().find_first_of("0123456789");
+		out << processIdString.substr(0, 1) + processIdString.at(firstDigitPos);
+
+		return out.str();
+	}
+
 	std::set<ProcessId> View::members() const {
 		std::set<ProcessId> joined;
 		std::set<ProcessId> left;
