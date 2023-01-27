@@ -31,9 +31,13 @@ namespace catapult::contract {
 				validators::Failure_SuperContract_Is_Not_Executor
 			};
 
-			if (handledResults.find(validationResult) != handledResults.end())
-				pExecutor->onEndBatchExecutionFailed(sirius::contract::FailedEndBatchExecutionTransactionInfo {
-						contractKey, batchId, batchSuccess });
+			if (handledResults.find(validationResult) != handledResults.end()) {
+				try {
+					pExecutor->onEndBatchExecutionFailed(sirius::contract::FailedEndBatchExecutionTransactionInfo {
+							contractKey, batchId, batchSuccess });
+				}
+				catch (...) {}
+			}
 		}
 
 	} // namespace
