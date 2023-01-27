@@ -6,48 +6,69 @@
 
 #include "ExecutorEventHandler.h"
 #include "catapult/model/EntityRange.h"
+#include "plugins/txes/supercontract_v2/src/validators/Results.h"
 
 namespace catapult::contract {
 
-		ExecutorEventHandler::ExecutorEventHandler(
-				const crypto::KeyPair& keyPair,
-				TransactionSender&& transactionSender,
-				std::shared_ptr<TransactionStatusHandler> pTransactionHandler)
-			: m_keyPair(keyPair)
-			, m_transactionSender(std::move(transactionSender))
-			, m_pTransactionStatusHandler(std::move(pTransactionHandler)) {}
+	namespace {
 
-		void ExecutorEventHandler::endBatchTransactionIsReady(
-				const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
-			auto transactionHash = m_transactionSender.sendSuccessfulEndBatchExecutionTransaction(transactionInfo);
+		void handleFailedEndBatchExecution(
+				uint32_t status,
+				const std::weak_ptr<sirius::contract::Executor> pExecutorWeak,
+				const sirius::contract::ContractKey& contractKey,
+				uint64_t batchId,
+				bool batchSuccess) {
+			auto pExecutor = pExecutorWeak.lock();
+			if (!pExecutor)
+				return;
 
-//			m_transactionStatusHandler.addHandler(
-//					transactionHash,
-//					[blockHash = info.m_blockHash,
-//					 downloadChannelId = info.m_downloadChannelId,
-//					 pReplicatorWeak = m_pReplicator](uint32_t status) {
-//						auto pReplicator = pReplicatorWeak.lock();
-//						if (!pReplicator)
-//							return;
-//
-//						auto validationResult = validators::ValidationResult(status);
-//						CATAPULT_LOG(debug) << "download approval transaction completed with " << validationResult;
-//
-//						std::set<validators::ValidationResult> handledResults = {
-//							validators::Failure_Storage_Signature_Count_Insufficient,
-//							validators::Failure_Storage_Opinion_Invalid_Key
-//						};
-//
-//						if (handledResults.find(validationResult) != handledResults.end())
-//							pReplicator->asyncDownloadApprovalTransactionHasFailedInvalidOpinions(
-//									blockHash, downloadChannelId);
-//					});
-//		}
+			auto validationResult = validators::ValidationResult(status);
+
+			std::set<validators::ValidationResult> handledResults = {
+				validators::Failure_SuperContract_Invalid_Start_Batch_Id,
+				validators::Failure_SuperContract_Invalid_Batch_Proof,
+				validators::Failure_SuperContract_Not_Enough_Signatures,
+				validators::Failure_SuperContract_Is_Not_Executor
+			};
+
+			if (handledResults.find(validationResult) != handledResults.end())
+				pExecutor->onEndBatchExecutionFailed(sirius::contract::FailedEndBatchExecutionTransactionInfo {
+						contractKey, batchId, batchSuccess });
+		}
+
+	} // namespace
+
+	ExecutorEventHandler::ExecutorEventHandler(
+			const crypto::KeyPair& keyPair,
+			TransactionSender&& transactionSender,
+			std::shared_ptr<TransactionStatusHandler> pTransactionHandler)
+		: m_keyPair(keyPair)
+		, m_transactionSender(std::move(transactionSender))
+		, m_pTransactionStatusHandler(std::move(pTransactionHandler)) {}
+
+	void ExecutorEventHandler::endBatchTransactionIsReady(
+			const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
+		auto transactionHash = m_transactionSender.sendSuccessfulEndBatchExecutionTransaction(transactionInfo);
+
+		m_pTransactionStatusHandler->addHandler(
+				transactionHash,
+				[contractKey = transactionInfo.m_contractKey,
+				 batchId = transactionInfo.m_batchIndex,
+				 pExecutorWeak = m_pExecutor](uint32_t status) {
+					handleFailedEndBatchExecution(status, pExecutorWeak, contractKey, batchId, true);
+				});
 	}
 
 	void ExecutorEventHandler::endBatchTransactionIsReady(
 			const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
 		auto transactionHash = m_transactionSender.sendUnsuccessfulEndBatchExecutionTransaction(transactionInfo);
+		m_pTransactionStatusHandler->addHandler(
+				transactionHash,
+				[contractKey = transactionInfo.m_contractKey,
+				 batchId = transactionInfo.m_batchIndex,
+				 pExecutorWeak = m_pExecutor](uint32_t status) {
+					handleFailedEndBatchExecution(status, pExecutorWeak, contractKey, batchId, false);
+				});
 	}
 
 	void ExecutorEventHandler::endBatchSingleTransactionIsReady(
@@ -67,5 +88,4 @@ namespace catapult::contract {
 	void ExecutorEventHandler::setExecutor(std::weak_ptr<sirius::contract::Executor> pExecutor) {
 		m_pExecutor = std::move(pExecutor);
 	}
-
-}
+} // namespace catapult::contract
