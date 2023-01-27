@@ -7,19 +7,42 @@
 #include "ExecutorEventHandler.h"
 #include "catapult/model/EntityRange.h"
 
-namespace catapult { namespace contract {
+namespace catapult::contract {
 
-	ExecutorEventHandler::ExecutorEventHandler(
-			const crypto::KeyPair& keyPair,
-			TransactionSender&& transactionSender,
-			TransactionStatusHandler& transactionHandler)
-		: m_keyPair(keyPair)
-		, m_transactionSender(std::move(transactionSender))
-		, m_transactionStatusHandler(transactionHandler) {}
+		ExecutorEventHandler::ExecutorEventHandler(
+				const crypto::KeyPair& keyPair,
+				TransactionSender&& transactionSender,
+				std::shared_ptr<TransactionStatusHandler> pTransactionHandler)
+			: m_keyPair(keyPair)
+			, m_transactionSender(std::move(transactionSender))
+			, m_pTransactionStatusHandler(std::move(pTransactionHandler)) {}
 
-	void ExecutorEventHandler::endBatchTransactionIsReady(
-			const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
-		auto transactionHash = m_transactionSender.sendSuccessfulEndBatchExecutionTransaction(transactionInfo);
+		void ExecutorEventHandler::endBatchTransactionIsReady(
+				const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
+			auto transactionHash = m_transactionSender.sendSuccessfulEndBatchExecutionTransaction(transactionInfo);
+
+//			m_transactionStatusHandler.addHandler(
+//					transactionHash,
+//					[blockHash = info.m_blockHash,
+//					 downloadChannelId = info.m_downloadChannelId,
+//					 pReplicatorWeak = m_pReplicator](uint32_t status) {
+//						auto pReplicator = pReplicatorWeak.lock();
+//						if (!pReplicator)
+//							return;
+//
+//						auto validationResult = validators::ValidationResult(status);
+//						CATAPULT_LOG(debug) << "download approval transaction completed with " << validationResult;
+//
+//						std::set<validators::ValidationResult> handledResults = {
+//							validators::Failure_Storage_Signature_Count_Insufficient,
+//							validators::Failure_Storage_Opinion_Invalid_Key
+//						};
+//
+//						if (handledResults.find(validationResult) != handledResults.end())
+//							pReplicator->asyncDownloadApprovalTransactionHasFailedInvalidOpinions(
+//									blockHash, downloadChannelId);
+//					});
+//		}
 	}
 
 	void ExecutorEventHandler::endBatchTransactionIsReady(
@@ -41,4 +64,8 @@ namespace catapult { namespace contract {
 		auto transactionHash = m_transactionSender.sendReleasedTransactions(payloads);
 	}
 
-}} // namespace catapult::contract
+	void ExecutorEventHandler::setExecutor(std::weak_ptr<sirius::contract::Executor> pExecutor) {
+		m_pExecutor = std::move(pExecutor);
+	}
+
+}

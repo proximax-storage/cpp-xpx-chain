@@ -6,6 +6,7 @@
 
 #pragma once
 #include "ExecutorConfiguration.h"
+#include "TransactionStatusHandler.h"
 #include "catapult/types.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ServiceRegistrar.h"
@@ -22,16 +23,14 @@ namespace catapult { namespace contract {
 
 	class ExecutorService {
 	public:
-		ExecutorService(ExecutorConfiguration&& executorConfig);
+		ExecutorService(ExecutorConfiguration&& executorConfig,
+						std::shared_ptr<TransactionStatusHandler> pTransactionStatusHandler);
 		~ExecutorService();
 
 	public:
 		void start();
 
 		void restart();
-
-	public:
-		void notifyTransactionStatus(const Hash256& hash, uint32_t status);
 
 	private:
 		void stop();
@@ -91,6 +90,7 @@ namespace catapult { namespace contract {
 		crypto::KeyPair m_keyPair;
 		ExecutorConfiguration m_config;
 		extensions::ServiceState* m_pServiceState;
+		std::shared_ptr<TransactionStatusHandler> m_pTransactionStatusHandler;
 	};
 
 	/// Creates a registrar for the executor service.

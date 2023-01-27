@@ -12,6 +12,7 @@
 #include "ExecutorConfiguration.h"
 #include "TransactionSender.h"
 #include "TransactionStatusHandler.h"
+#include <executor/Executor.h>
 
 namespace catapult { namespace contract {
 	class ExecutorEventHandler : public sirius::contract::ExecutorEventHandler {
@@ -20,7 +21,7 @@ namespace catapult { namespace contract {
 		ExecutorEventHandler(
 				const crypto::KeyPair& keyPair,
 				TransactionSender&& transactionSender,
-				TransactionStatusHandler& transactionHandler);
+				std::shared_ptr<TransactionStatusHandler> pTransactionHandler);
 
 	public:
 		void endBatchTransactionIsReady(const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
@@ -29,10 +30,13 @@ namespace catapult { namespace contract {
 		void synchronizationSingleTransactionIsReady(const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo);
 		void releasedTransactionsAreReady(const std::vector<std::vector<uint8_t>>& payloads) override;
 
+		void setExecutor(std::weak_ptr<sirius::contract::Executor> pExecutor);
+
 	private:
 
 		const crypto::KeyPair& m_keyPair;
 		TransactionSender m_transactionSender;
-		TransactionStatusHandler& m_transactionStatusHandler;
+		std::shared_ptr<TransactionStatusHandler> m_pTransactionStatusHandler;
+		std::weak_ptr<sirius::contract::Executor> m_pExecutor;
 	};
 }}
