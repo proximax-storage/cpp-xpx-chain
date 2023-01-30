@@ -9,6 +9,12 @@
 
 namespace catapult::utils {
 
+#define DEFINE_ENUM SwapOperation
+#define ENUM_LIST SWAP_OPERATION_LIST
+#include "catapult/utils/MacroBasedEnum.h"
+#undef ENUM_LIST
+#undef DEFINE_ENUM
+
 void SwapMosaics(
 		const Key& sender,
 		const Key& receiver,
