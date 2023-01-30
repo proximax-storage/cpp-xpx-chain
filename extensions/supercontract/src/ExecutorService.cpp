@@ -111,13 +111,15 @@ namespace catapult::contract {
 					std::make_unique<StorageBlockchainBuilder>(m_contractState);
 
 			std::unique_ptr<ServiceBuilder<storage::Storage>> storageBuilder =
-					std::make_unique<storage::RPCStorageBuilder>(m_config.StorageRPCAddress);
+					std::make_unique<storage::RPCStorageBuilder>(
+							m_config.StorageRPCHost + ":" + m_config.StorageRPCPort);
 
 			std::unique_ptr<messenger::MessengerBuilder> messengerBuilder =
-					std::make_unique<messenger::RPCMessengerBuilder>(m_config.MessengerRPCAddress);
+					std::make_unique<messenger::RPCMessengerBuilder>(
+							m_config.MessengerRPCHost + ":" + m_config.MessengerRPCPort);
 
-			std::unique_ptr<vm::VirtualMachineBuilder> vmBuilder =
-					std::make_unique<vm::RPCVirtualMachineBuilder>(m_config.VirtualMachineRPCAddress);
+			std::unique_ptr<vm::VirtualMachineBuilder> vmBuilder = std::make_unique<vm::RPCVirtualMachineBuilder>(
+					m_config.VirtualMachineRPCHost + ":" + m_config.VirtualMachineRPCPort);
 
 			sirius::contract::ExecutorConfig config;
 			config.setNetworkIdentifier(static_cast<uint8_t>(m_serviceState.config().Immutable.NetworkIdentifier));
