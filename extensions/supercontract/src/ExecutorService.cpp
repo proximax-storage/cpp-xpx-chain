@@ -20,6 +20,7 @@
 #include <messenger/RPCMessengerBuilder.h>
 #include <virtualMachine/RPCVirtualMachineBuilder.h>
 #include "TransactionSender.h"
+#include "ContractLogger.h"
 
 #include <map>
 
@@ -132,7 +133,7 @@ namespace catapult::contract {
 					std::move(storageBuilder),
 					std::move(blockchainBuilder),
 					std::move(messengerBuilder),
-					"executor");
+					sirius::logging::Logger(std::make_unique<ContractLogger>(), "executor"));
 
 			pExecutorEventHandler->setExecutor(m_pExecutor);
 		}
