@@ -47,6 +47,7 @@ namespace catapult { namespace observers {
 			driveEntry.confirmedUsedSizes()[notification.PublicKeysPtr[i]] = notification.UsedDriveSize;
 
 		driveEntry.setRootHash(notification.FileStructureCdi);
+		driveEntry.setLastModificationId(completedDataModifications.back().Id);
 		driveEntry.setUsedSizeBytes(notification.UsedDriveSize);
 		driveEntry.setMetaFilesSizeBytes(notification.MetaFilesSize);
 
