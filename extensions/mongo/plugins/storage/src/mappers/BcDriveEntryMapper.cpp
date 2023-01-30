@@ -141,6 +141,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				           << "multisigAddress" << ToBinary(accountAddress)
 				           << "owner" << ToBinary(entry.owner())
 				           << "rootHash" << ToBinary(entry.rootHash())
+						   << "lastModificationId" << ToBinary(entry.lastModificationId())
 						   << "size" << static_cast<int64_t>(entry.size())
 				           << "usedSizeBytes" << static_cast<int64_t>(entry.usedSizeBytes())
 				           << "metaFilesSizeBytes" << static_cast<int64_t>(entry.metaFilesSizeBytes())
@@ -298,6 +299,10 @@ namespace catapult { namespace mongo { namespace plugins {
 		Hash256 rootHash;
 		DbBinaryToModelArray(rootHash, dbDriveEntry["rootHash"].get_binary());
 		entry.setRootHash(rootHash);
+
+		Hash256 lastModificationId;
+		DbBinaryToModelArray(lastModificationId, dbDriveEntry["lastModificationId"].get_binary());
+		entry.setLastModificationId(lastModificationId);
 
 		entry.setSize(static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
 		entry.setUsedSizeBytes(static_cast<uint64_t>(dbDriveEntry["usedSizeBytes"].get_int64()));
