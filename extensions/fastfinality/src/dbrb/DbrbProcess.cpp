@@ -669,6 +669,13 @@ namespace catapult { namespace dbrb {
 				disseminate(pMessage, m_currentView.members());
 			} else {
 				m_installedViews.insert(m_currentView);
+
+				Sequence sequence;
+				sequence.tryAppend(m_currentInstallMessage->ReplacedView);
+				sequence.tryAppend(m_currentInstallMessage->ConvergedSequence);
+				InstallMessage installMessage(ProcessId(), std::move(sequence), m_currentInstallMessage->ConvergedSignatures);
+				m_transactionSender.sendInstallMessageTransaction(installMessage);
+
 				onViewInstalled(m_currentView);
 			}
 

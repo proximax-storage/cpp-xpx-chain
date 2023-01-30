@@ -228,7 +228,7 @@ namespace catapult { namespace dbrb {
 		/// View to be replaced.
 		View ReplacedView;
 
-		// ConvergedSignatures need no additional processing
-		// and can be accessed directly from the Install message.
+		/// Map of processes and their signatures for appropriate Converged messages for Sequence.
+		CertificateType ConvergedSignatures;
 	};
 }}
