@@ -33,6 +33,7 @@ public:
 			const ObserverContext& context,
 			const Key& driveKey,
 			const Hash256& storageHash,
+			const Hash256& modificationId,
 			uint64_t usedSize,
 			uint64_t metaFilesSize) = 0;
 

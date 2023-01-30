@@ -23,10 +23,17 @@ namespace catapult::observers {
 			batch.Success = true;
 			batch.PoExVerificationInformation = notification.VerificationInformation;
 
+			crypto::Sha3_256_Builder hashBuilder;
+			hashBuilder.update(notification.ContractKey);
+			hashBuilder.update(utils::RawBuffer{reinterpret_cast<const uint8_t*>(notification.BatchId), sizeof(notification.BatchId)});
+			Hash256 modificationId;
+			hashBuilder.final(modificationId);
+
 			if (notification.UpdateStorageState) {
 				storageExternalManager->updateStorageState(context,
 														   contractEntry.driveKey(),
 														   notification.StorageHash,
+														   modificationId,
 														   notification.UsedSizeBytes,
 														   notification.MetaFilesSizeBytes);
 			}
