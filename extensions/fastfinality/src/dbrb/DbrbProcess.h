@@ -6,8 +6,7 @@
 
 #pragma  once
 #include "catapult/types.h"
-#include "DbrbUtils.h"
-#include "Messages.h"
+#include "catapult/dbrb/Messages.h"
 #include "MessageSender.h"
 #include "TransactionSender.h"
 #include "catapult/functions.h"

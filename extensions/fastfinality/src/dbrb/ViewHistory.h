@@ -6,7 +6,7 @@
 
 #pragma  once
 #include "DbrbProcess.h"
-#include "Messages.h"
+#include "catapult/dbrb/Messages.h"
 #include "catapult/crypto/Signer.h"
 
 

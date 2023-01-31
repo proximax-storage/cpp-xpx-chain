@@ -5,7 +5,7 @@
 **/
 
 #pragma  once
-#include "catapult/dbrb/DbrbViewFetcher.h"
+#include "DbrbViewFetcher.h"
 #include "catapult/ionet/Packet.h"
 #include "catapult/types.h"
 #include <algorithm>

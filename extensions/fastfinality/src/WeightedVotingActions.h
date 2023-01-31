@@ -11,7 +11,10 @@
 #include "catapult/functions.h"
 #include "catapult/harvesting_core/HarvesterBlockGenerator.h"
 
-namespace catapult { namespace fastfinality { class WeightedVotingFsm; } }
+namespace catapult {
+	namespace dbrb { struct DbrbConfiguration; }
+	namespace fastfinality { class WeightedVotingFsm; }
+}
 
 namespace catapult { namespace fastfinality {
 
@@ -62,7 +65,8 @@ namespace catapult { namespace fastfinality {
 		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		chain::CommitteeManager& committeeManager,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-		const chain::TimeSupplier& timeSupplier);
+		const chain::TimeSupplier& timeSupplier,
+		const dbrb::DbrbConfiguration& dbrbConfig);
 
 	action CreateDefaultProposeBlockAction(
 		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,

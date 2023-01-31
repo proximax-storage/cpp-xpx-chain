@@ -6,7 +6,7 @@
 
 #include "Validators.h"
 #include "catapult/crypto/Signer.h"
-#include "extensions/fastfinality/src/dbrb/Messages.h"
+#include "catapult/dbrb/Messages.h"
 #include "src/cache/ViewSequenceCache.h"
 
 

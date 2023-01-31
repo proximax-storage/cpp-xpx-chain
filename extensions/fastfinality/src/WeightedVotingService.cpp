@@ -87,7 +87,6 @@ namespace catapult { namespace fastfinality {
 			explicit WeightedVotingServiceRegistrar(const harvesting::HarvestingConfiguration& harvestingConfig, const dbrb::DbrbConfiguration& dbrbConfig, std::string resourcesPath)
 				: m_harvestingConfig(std::move(harvestingConfig))
 				, m_dbrbConfig(std::move(dbrbConfig))
-				, m_resourcesPath(std::move(resourcesPath))
 			{}
 
 			extensions::ServiceRegistrarInfo info() const override {
@@ -208,7 +207,8 @@ namespace catapult { namespace fastfinality {
 					pFsmShared,
 					pluginManager.getCommitteeManager(),
 					pConfigHolder,
-					timeSupplier);
+					timeSupplier,
+					m_dbrbConfig);
 				actions.ProposeBlock = CreateDefaultProposeBlockAction(
 					pFsmShared,
 					state.cache(),
@@ -241,7 +241,6 @@ namespace catapult { namespace fastfinality {
 		private:
 			harvesting::HarvestingConfiguration m_harvestingConfig;
 			dbrb::DbrbConfiguration m_dbrbConfig;
-			std::string m_resourcesPath;
 		};
 	}
 

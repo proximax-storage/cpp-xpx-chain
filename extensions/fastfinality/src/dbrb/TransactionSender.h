@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "Messages.h"
+#include "catapult/dbrb/Messages.h"
 #include "DbrbConfiguration.h"
 #include "src/catapult/crypto/KeyPair.h"
 #include "catapult/utils/NetworkTime.h"

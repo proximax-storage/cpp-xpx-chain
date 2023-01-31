@@ -6,7 +6,7 @@
 
 #pragma once
 #include "SignedNode.h"
-#include "DbrbUtils.h"
+#include "catapult/dbrb/DbrbUtils.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/dbrb/DbrbDefinitions.h"
 #include "catapult/ionet/NetworkNode.h"

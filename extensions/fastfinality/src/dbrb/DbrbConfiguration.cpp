@@ -6,6 +6,7 @@
 
 #include "DbrbConfiguration.h"
 #include "catapult/config/ConfigurationFileLoader.h"
+#include "catapult/crypto/KeyUtils.h"
 #include "catapult/utils/ConfigurationUtils.h"
 
 namespace catapult { namespace dbrb {
@@ -25,7 +26,14 @@ namespace catapult { namespace dbrb {
 
 #undef LOAD_DB_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 1);
+		auto bootstrapProcesses = bag.getAllOrdered<bool>("bootstrap.processes");
+
+		for (const auto& [key, enabled] : bootstrapProcesses) {
+			if (enabled)
+				config.BootstrapProcesses.emplace(crypto::ParseKey(key), MembershipChange::Join);
+		}
+
+		utils::VerifyBagSizeLte(bag, 1 + bootstrapProcesses.size());
 		return config;
 	}
 

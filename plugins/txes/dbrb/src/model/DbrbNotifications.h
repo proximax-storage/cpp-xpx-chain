@@ -6,7 +6,7 @@
 
 #pragma once
 #include "catapult/model/Notifications.h"
-#include "extensions/fastfinality/src/dbrb/DbrbUtils.h"
+#include "catapult/dbrb/DbrbUtils.h"
 
 namespace catapult { namespace model {
 

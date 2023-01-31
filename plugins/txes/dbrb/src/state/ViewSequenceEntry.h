@@ -7,7 +7,7 @@
 #pragma once
 #include "catapult/types.h"
 #include "catapult/exceptions.h"
-#include "extensions/fastfinality/src/dbrb/DbrbUtils.h"
+#include "catapult/dbrb/DbrbUtils.h"
 
 namespace catapult { namespace state {
 

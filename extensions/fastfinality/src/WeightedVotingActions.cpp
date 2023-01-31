@@ -405,11 +405,15 @@ namespace catapult { namespace fastfinality {
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 			chain::CommitteeManager& committeeManager,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			const chain::TimeSupplier& timeSupplier) {
-		return [pFsmWeak, &committeeManager, pConfigHolder, timeSupplier]() {
+			const chain::TimeSupplier& timeSupplier,
+			const dbrb::DbrbConfiguration& dbrbConfig) {
+		return [pFsmWeak, &committeeManager, pConfigHolder, timeSupplier, &dbrbConfig]() {
 			TRY_GET_FSM()
 
-			pFsmShared->dbrbProcess()->setCurrentView(pFsmShared->dbrbViewFetcher().getLatestView());
+			auto viewData = pFsmShared->dbrbViewFetcher().getLatestView();
+			if (viewData.empty())
+				viewData = dbrbConfig.BootstrapProcesses;
+			pFsmShared->dbrbProcess()->setCurrentView(viewData);
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto round = committeeData.committeeRound();

@@ -5,8 +5,7 @@
 **/
 
 #include "DbrbProcess.h"
-#include "DbrbUtils.h"
-#include "Messages.h"
+#include "catapult/dbrb/Messages.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/PacketPayload.h"
@@ -69,7 +68,19 @@ namespace catapult { namespace dbrb {
 	}
 
 	void DbrbProcess::setCurrentView(const ViewData& viewData) {
-		m_currentView = View{ viewData };
+		if (viewData.empty()) {
+			CATAPULT_LOG(debug) << "[DBRB] skipping set current view, data is empty";
+			return;
+		}
+
+		auto newView = View{ viewData };
+		if (newView == m_currentView) {
+			CATAPULT_LOG(debug) << "[DBRB] skipping set current view, same data";
+			return;
+		}
+
+		m_currentView = newView;
+		CATAPULT_LOG(debug) << "[DBRB] set current view " << m_currentView;
 		m_installedViews.emplace(m_currentView);
 
 		std::set<ProcessId> ids;

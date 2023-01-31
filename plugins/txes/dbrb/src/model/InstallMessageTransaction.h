@@ -6,7 +6,7 @@
 
 #pragma once
 #include "DbrbEntityType.h"
-#include "extensions/fastfinality/src/dbrb/DbrbUtils.h"
+#include "catapult/dbrb/DbrbUtils.h"
 #include "catapult/model/Cosignature.h"
 #include "catapult/model/Transaction.h"
 

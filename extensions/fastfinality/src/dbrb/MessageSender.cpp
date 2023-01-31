@@ -5,7 +5,7 @@
 **/
 
 #include "MessageSender.h"
-#include "Messages.h"
+#include "catapult/dbrb/Messages.h"
 #include "catapult/net/PacketWriters.h"
 
 namespace catapult { namespace dbrb {

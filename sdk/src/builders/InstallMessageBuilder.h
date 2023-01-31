@@ -7,7 +7,7 @@
 #pragma once
 #include "TransactionBuilder.h"
 #include "plugins/txes/dbrb/src/model/InstallMessageTransaction.h"
-#include "extensions/fastfinality/src/dbrb/Messages.h"
+#include "catapult/dbrb/Messages.h"
 #include <vector>
 
 namespace catapult { namespace builders {

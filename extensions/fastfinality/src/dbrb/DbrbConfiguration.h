@@ -5,8 +5,10 @@
 **/
 
 #pragma once
+#include "catapult/dbrb/DbrbDefinitions.h"
 #include "catapult/utils/TimeSpan.h"
 #include <boost/filesystem/path.hpp>
+#include <set>
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
 
@@ -17,6 +19,9 @@ namespace catapult { namespace dbrb {
 	public:
 		/// Timeout for the transactions sent by the DBRB process.
 		utils::TimeSpan TransactionTimeout;
+
+		/// Public keys of the bootstrap processes.
+		ViewData BootstrapProcesses;
 
 	private:
 		DbrbConfiguration() = default;
