@@ -306,6 +306,7 @@ namespace catapult { namespace state {
 
 		io::Write(output, driveEntry.owner());
 		io::Write(output, driveEntry.rootHash());
+		io::Write(output, driveEntry.lastModificationId());
 		io::Write64(output, driveEntry.size());
 		io::Write64(output, driveEntry.usedSizeBytes());
 		io::Write64(output, driveEntry.metaFilesSizeBytes());
@@ -349,6 +350,10 @@ namespace catapult { namespace state {
 		Hash256 rootHash;
 		input.read(rootHash);
 		entry.setRootHash(rootHash);
+
+		Hash256 lastModificationId;
+		input.read(lastModificationId);
+		entry.setLastModificationId(lastModificationId);
 
 		entry.setSize(io::Read64(input));
 		entry.setUsedSizeBytes(io::Read64(input));
