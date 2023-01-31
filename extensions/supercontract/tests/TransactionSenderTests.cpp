@@ -109,6 +109,7 @@ namespace catapult { namespace contract {
 	}
 
 	TEST(TEST_CLASS, SendSuccessfulEndBatchExecutionTransaction) {
+		// Arrange:
 		std::shared_ptr<model::Transaction> pTransaction;
 		auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
 			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
@@ -167,7 +168,7 @@ namespace catapult { namespace contract {
 
 		testee.sendSuccessfulEndBatchExecutionTransaction(CreateSuccessfulEndBatchExecutionTransaction());
 
-		//Assert
+		// Assert
 		auto& transaction = static_cast<const model::SuccessfulEndBatchExecutionTransaction&>(*pTransaction);
 		EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);
 		EXPECT_EQ_MEMORY(expectedSignatures.data(), transaction.SignaturesPtr(), expectedSignatures.size() * Key_Size);
@@ -176,5 +177,147 @@ namespace catapult { namespace contract {
 		EXPECT_EQ_MEMORY(expectedCallPayments.data(), transaction.CallPaymentsPtr(), expectedCallPayments.size() * sizeof(model::CallPayment));
 	}
 
+	namespace {
+		auto CreateUnsuccessfulEndBatchExecutionTransaction(){
+			sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo transactionInfo;
 
+			const Key contractKey({11});
+			const auto batchIndex = 1;
+			const auto automaticExecutionsCheckedUpTo = 1;
+			std::vector<sirius::contract::UnsuccessfulCallExecutionInfo> callsExecutionInfos;
+			std::vector<sirius::contract::Proofs> proofs;
+			std::vector<sirius::contract::ExecutorKey> executorKeys;
+			std::vector<sirius::Signature> signatures;
+
+			//callsExecutionInfos
+			std::vector<sirius::contract::CallExecutorParticipation> callExecutorParticipants;
+			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{10, 10});
+			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{20, 20});
+
+			callsExecutionInfos.emplace_back(
+				sirius::contract::UnsuccessfulCallExecutionInfo{
+					sirius::contract::CallId("b"),
+					true,
+					1,
+					callExecutorParticipants
+				}
+			);
+			callsExecutionInfos.emplace_back(
+				sirius::contract::UnsuccessfulCallExecutionInfo{
+					sirius::contract::CallId("d"),
+					true,
+					1,
+					callExecutorParticipants
+				}
+			);
+
+			//proofs
+			sirius::contract::BatchProof batchProof;
+			sirius::contract::TProof tProof;
+			proofs.emplace_back(
+				sirius::contract::Proofs{
+					0,
+					tProof,
+					batchProof
+				}
+			);
+			proofs.emplace_back(
+				sirius::contract::Proofs{
+					0,
+					tProof,
+					batchProof
+				}
+			);
+
+			//executorKeys
+			auto executorKey1 = sirius::contract::ExecutorKey({ 1 });
+			auto executorKey2 = sirius::contract::ExecutorKey({ 2 });
+			executorKeys.emplace_back(executorKey1);
+			executorKeys.emplace_back(executorKey2);
+
+			//signatures
+			auto signature1 = sirius::Signature({ 3 });
+			auto signature2 = sirius::Signature({ 4 });
+			signatures.emplace_back(signature1);
+			signatures.emplace_back(signature2);
+
+			transactionInfo.m_contractKey = contractKey.array();
+			transactionInfo.m_batchIndex = batchIndex;
+			transactionInfo.m_automaticExecutionsCheckedUpTo = automaticExecutionsCheckedUpTo;
+			transactionInfo.m_callsExecutionInfo = callsExecutionInfos;
+			transactionInfo.m_proofs = proofs;
+			transactionInfo.m_executorKeys = executorKeys;
+			transactionInfo.m_signatures = signatures;
+
+			return transactionInfo;
+		}
+		TEST(TEST_CLASS, SendSuccessfulEndBatchExecutionTransaction) {
+			// Arrange:
+			std::shared_ptr<model::Transaction> pTransaction;
+			auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
+				pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
+			};
+			auto testee = CreateTransactionSender(transactionRangeHandler);
+			std::vector<Key> expectedPublicKeys{ Key({ 1 }), Key({ 2 }) };
+			std::vector<Signature> expectedSignatures{ Signature({ 3 }), Signature({ 4 }) };
+			std::vector<model::RawProofOfExecution> expectedProofs;
+			std::vector<model::ExtendedCallDigest> expectedCallDigests;
+			std::vector<model::CallPayment> expectedCallPayments;
+
+			//expectedProofs
+			sirius::contract::Proofs proof;
+			expectedProofs.emplace_back(
+				model::RawProofOfExecution{
+					0,
+					proof.m_batchProof.m_T.toBytes(),
+					proof.m_batchProof.m_r.array(),
+					proof.m_tProof.m_F.toBytes(),
+					proof.m_tProof.m_k.array()
+				}
+			);
+			expectedProofs.emplace_back(
+				model::RawProofOfExecution{
+					0,
+					proof.m_batchProof.m_T.toBytes(),
+					proof.m_batchProof.m_r.array(),
+					proof.m_tProof.m_F.toBytes(),
+					proof.m_tProof.m_k.array()
+				}
+			);
+
+			//expectedCallDigest
+			expectedCallDigests.emplace_back(
+				model::ExtendedCallDigest{
+					sirius::contract::CallId("b").array(),
+					true,
+					Height(1),
+					1,
+					sirius::contract::TransactionHash("c").array()
+				}
+			);
+			expectedCallDigests.emplace_back(
+				model::ExtendedCallDigest{
+					sirius::contract::CallId("d").array(),
+					true,
+					Height(1),
+					1,
+					sirius::contract::TransactionHash("e").array()
+				}
+			);
+
+			//expectedPayment
+			expectedCallPayments.emplace_back(model::CallPayment{Amount(10), Amount(10)});
+			expectedCallPayments.emplace_back(model::CallPayment{Amount(20), Amount(20)});
+
+			testee.sendSuccessfulEndBatchExecutionTransaction(CreateSuccessfulEndBatchExecutionTransaction());
+
+			// Assert
+			auto& transaction = static_cast<const model::SuccessfulEndBatchExecutionTransaction&>(*pTransaction);
+			EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);
+			EXPECT_EQ_MEMORY(expectedSignatures.data(), transaction.SignaturesPtr(), expectedSignatures.size() * Key_Size);
+			EXPECT_EQ_MEMORY(expectedProofs.data(), transaction.ProofsOfExecutionPtr(), expectedProofs.size()  * sizeof(model::RawProofOfExecution));
+			EXPECT_EQ_MEMORY(expectedCallDigests.data(), transaction.CallDigestsPtr(), expectedCallDigests.size() * sizeof(model::ExtendedCallDigest));
+			EXPECT_EQ_MEMORY(expectedCallPayments.data(), transaction.CallPaymentsPtr(), expectedCallPayments.size() * sizeof(model::CallPayment));
+		}
+	}
 }}
