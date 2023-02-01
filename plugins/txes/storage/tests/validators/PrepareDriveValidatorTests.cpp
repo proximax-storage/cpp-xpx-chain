@@ -28,6 +28,7 @@ namespace catapult { namespace validators {
             pluginConfig.MinDriveSize = utils::FileSize::FromMegabytes(30);
             pluginConfig.MaxDriveSize = utils::FileSize::FromTerabytes(30);
             pluginConfig.MinReplicatorCount = 5;
+			pluginConfig.MaxReplicatorCount = 20;
             config.Network.SetPluginConfiguration(pluginConfig);
             return (config.ToConst());
         }
