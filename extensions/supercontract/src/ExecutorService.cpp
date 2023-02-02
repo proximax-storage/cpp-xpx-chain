@@ -20,6 +20,7 @@
 #include <messenger/RPCMessengerBuilder.h>
 #include <virtualMachine/RPCVirtualMachineBuilder.h>
 #include "TransactionSender.h"
+#include "ContractLogger.h"
 
 #include <map>
 
@@ -82,8 +83,13 @@ namespace catapult::contract {
 		Impl(const crypto::KeyPair& keyPair,
 			 extensions::ServiceState& serviceState,
 			 const state::ContractState& contractState,
-			 const ExecutorConfiguration& config)
-			: m_keyPair(keyPair), m_serviceState(serviceState), m_contractState(contractState), m_config(config) {}
+			 const ExecutorConfiguration& config,
+			 std::shared_ptr<TransactionStatusHandler> pTransactionStatusHandler)
+			: m_keyPair(keyPair)
+			, m_serviceState(serviceState)
+			, m_contractState(contractState)
+			, m_config(config)
+			, m_pTransactionStatusHandler(std::move(pTransactionStatusHandler)) {}
 
 	public:
 		void start() {
@@ -98,21 +104,23 @@ namespace catapult::contract {
 					m_config,
 					m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local));
 
-			std::unique_ptr<sirius::contract::ExecutorEventHandler> pExecutorEventHandler =
-					std::make_unique<ExecutorEventHandler>(
-							m_keyPair, std::move(transactionSender), m_transactionStatusHandler);
+			auto pExecutorEventHandler =
+					std::make_shared<ExecutorEventHandler>(
+							m_keyPair, std::move(transactionSender), m_pTransactionStatusHandler);
 
 			std::unique_ptr<ServiceBuilder<blockchain::Blockchain>> blockchainBuilder =
 					std::make_unique<StorageBlockchainBuilder>(m_contractState);
 
 			std::unique_ptr<ServiceBuilder<storage::Storage>> storageBuilder =
-					std::make_unique<storage::RPCStorageBuilder>(m_config.StorageRPCAddress);
+					std::make_unique<storage::RPCStorageBuilder>(
+							m_config.StorageRPCHost + ":" + m_config.StorageRPCPort);
 
 			std::unique_ptr<messenger::MessengerBuilder> messengerBuilder =
-					std::make_unique<messenger::RPCMessengerBuilder>(m_config.MessengerRPCAddress);
+					std::make_unique<messenger::RPCMessengerBuilder>(
+							m_config.MessengerRPCHost + ":" + m_config.MessengerRPCPort);
 
-			std::unique_ptr<vm::VirtualMachineBuilder> vmBuilder =
-					std::make_unique<vm::RPCVirtualMachineBuilder>(m_config.VirtualMachineRPCAddress);
+			std::unique_ptr<vm::VirtualMachineBuilder> vmBuilder = std::make_unique<vm::RPCVirtualMachineBuilder>(
+					m_config.VirtualMachineRPCHost + ":" + m_config.VirtualMachineRPCPort);
 
 			sirius::contract::ExecutorConfig config;
 			config.setNetworkIdentifier(static_cast<uint8_t>(m_serviceState.config().Immutable.NetworkIdentifier));
@@ -120,12 +128,14 @@ namespace catapult::contract {
 			m_pExecutor = sirius::contract::DefaultExecutorBuilder().build(
 					std::move(keyPair),
 					config,
-					std::move(pExecutorEventHandler),
+					pExecutorEventHandler,
 					std::move(vmBuilder),
 					std::move(storageBuilder),
 					std::move(blockchainBuilder),
 					std::move(messengerBuilder),
-					"executor");
+					sirius::logging::Logger(std::make_unique<ContractLogger>(), "executor"));
+
+			pExecutorEventHandler->setExecutor(m_pExecutor);
 		}
 
 	private:
@@ -256,10 +266,6 @@ namespace catapult::contract {
 			return m_contractState.contractExists(contractKey);
 		}
 
-		void notifyTransactionStatus(const Hash256& hash, uint32_t status) {
-			m_transactionStatusHandler.handle(hash, status);
-		}
-
 	private:
 		void addContract(const Key& contractKey, const Height& height) {
 			m_alreadyAddedContracts[contractKey] = height;
@@ -371,7 +377,7 @@ namespace catapult::contract {
 		const state::ContractState& m_contractState;
 		const ExecutorConfiguration& m_config;
 
-		TransactionStatusHandler m_transactionStatusHandler;
+		std::shared_ptr<TransactionStatusHandler> m_pTransactionStatusHandler;
 
 		// The fields are needed to generate correct events
 		std::map<Key, Height> m_alreadyAddedContracts;
@@ -383,8 +389,11 @@ namespace catapult::contract {
 
 	// region - replicator service
 
-	ExecutorService::ExecutorService(ExecutorConfiguration&& executorConfig)
-		: m_keyPair(crypto::KeyPair::FromString(executorConfig.Key)), m_config(std::move(executorConfig)) {}
+	ExecutorService::ExecutorService(ExecutorConfiguration&& executorConfig,
+									 std::shared_ptr<TransactionStatusHandler> pTransactionStatusHandler)
+		: m_keyPair(crypto::KeyPair::FromString(executorConfig.Key))
+		, m_config(std::move(executorConfig))
+		, m_pTransactionStatusHandler(std::move(pTransactionStatusHandler)){}
 
 	ExecutorService::~ExecutorService() {
 		stop();
@@ -396,7 +405,11 @@ namespace catapult::contract {
 		}
 
 		m_pImpl = std::make_unique<ExecutorService::Impl>(
-				m_keyPair, *m_pServiceState, m_pServiceState->pluginManager().contractState(), m_config);
+				m_keyPair,
+				*m_pServiceState,
+				m_pServiceState->pluginManager().contractState(),
+				m_config,
+				m_pTransactionStatusHandler);
 	}
 
 	void ExecutorService::stop() {
@@ -514,13 +527,6 @@ namespace catapult::contract {
 			return;
 		}
 		m_pImpl->synchronizeSinglePublished(contractKey, batchIndex);
-	}
-
-	void ExecutorService::notifyTransactionStatus(const Hash256& hash, uint32_t status) {
-		if (!m_pImpl) {
-			return;
-		}
-		m_pImpl->notifyTransactionStatus(hash, status);
 	}
 
 	// endregion

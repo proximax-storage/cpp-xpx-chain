@@ -174,6 +174,7 @@ RUN cd /catapult \
     extension.partialtransaction \
     extension.pluginhandlers \
     extension.storage \
+    extension.supercontract \
     extension.sync \
     extension.syncsource \
     extension.timesync \

@@ -44,23 +44,12 @@ namespace catapult { namespace state {
 
 			if (driveEntry.verification()) {
 
-				auto modificationIdIt = std::find_if(
-						driveEntry.completedDataModifications().rbegin(),
-						driveEntry.completedDataModifications().rend(), [] (const auto& item) {
-							return item.ApprovalState == state::DataModificationApprovalState::Approved;
-						});
-
-				if ( modificationIdIt == driveEntry.completedDataModifications().rend() ) {
-					CATAPULT_LOG( error ) << "Verification Without Successful Modification";
-					return {};
-				}
-
 				const auto& verification = *driveEntry.verification();
 				return DriveVerification{driveKey,
 				    verification.Duration,
 					verification.expired(blockTimestamp),
 					verification.VerificationTrigger,
-				   	modificationIdIt->Id,
+				   	driveEntry.lastModificationId(),
 					verification.Shards};
 			}
 
@@ -202,6 +191,10 @@ namespace catapult { namespace state {
         auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
         auto driveIter = pDriveCacheView->find(driveKey);
 		const auto& driveEntry = driveIter.get();
+
+		if (driveEntry.ownerManagement() == OwnerManagement::PERMANENTLY_FORBIDDEN) {
+			return {};
+		}
 
         auto completedModificationsIter = driveEntry.completedDataModifications().rbegin();
         while (completedModificationsIter != driveEntry.completedDataModifications().rend()) {

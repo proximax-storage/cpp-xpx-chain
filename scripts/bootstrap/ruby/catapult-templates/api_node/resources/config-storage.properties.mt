@@ -12,3 +12,5 @@ rpcHost = 127.0.0.1
 rpcPort = {{replicator_rpc_port}}
 rpcHandleLostConnection = false
 rpcDbgChildCrash = true
+rpcServicesServerHost = 127.0.0.1
+rpcServicesServerPort = {{replicator_services_port}}

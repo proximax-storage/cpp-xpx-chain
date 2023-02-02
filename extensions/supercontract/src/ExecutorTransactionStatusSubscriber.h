@@ -7,12 +7,11 @@
 #pragma once
 #include "catapult/subscribers/TransactionStatusSubscriber.h"
 #include <memory>
-
-namespace catapult { namespace contract { class ExecutorService; } }
+#include "TransactionStatusHandler.h"
 
 namespace catapult { namespace contract {
 
 	/// Creates a storage transaction status subscriber around \a pExecutorServiceWeak.
 	std::unique_ptr<subscribers::TransactionStatusSubscriber> CreateExecutorTransactionStatusSubscriber(
-	const std::weak_ptr<contract::ExecutorService>& pExecutorServiceWeak);
-}}
+			std::weak_ptr<TransactionStatusHandler> pTransactionStatusHandlerWeak);
+}} // namespace catapult::contract
