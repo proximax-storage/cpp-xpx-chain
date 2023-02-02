@@ -7,6 +7,9 @@
 #include "src/TransactionSender.h"
 #include "tests/TestHarness.h"
 #include "plugins/txes/supercontract_v2/src/model/SuccessfulEndBatchExecutionTransaction.h"
+#include "plugins/txes/supercontract_v2/src/model/UnsuccessfulEndBatchExecutionTransaction.h"
+#include "plugins/txes/supercontract_v2/src/model/EndBatchExecutionSingleTransaction.h"
+#include "plugins/txes/supercontract_v2/src/model/SynchronizationSingleTransaction.h"
 
 namespace catapult { namespace contract {
 
@@ -24,9 +27,9 @@ namespace catapult { namespace contract {
 		auto CreateSuccessfulEndBatchExecutionTransaction(){
 			sirius::contract::SuccessfulEndBatchExecutionTransactionInfo transactionInfo;
 
-			const Key contractKey({11});
-			const auto batchIndex = 1;
-			const auto automaticExecutionsCheckedUpTo = 1;
+			Key contractKey({ 11 });
+			uint64_t batchIndex = 1;
+			uint64_t automaticExecutionsCheckedUpTo = 1;
 			sirius::contract::SuccessfulBatchInfo successfulBatchInfo;
 			std::vector<sirius::contract::SuccessfulCallExecutionInfo> callsExecutionInfos;
 			std::vector<sirius::contract::Proofs> proofs;
@@ -115,6 +118,15 @@ namespace catapult { namespace contract {
 			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
 		};
 		auto testee = CreateTransactionSender(transactionRangeHandler);
+		Key expectedContractKey({ 11 });
+		uint64_t expectedBatchIndex = 1;
+		Hash256 expectedStorageHash = sirius::contract::StorageHash("a").array();
+		uint64_t expectedUsedSizeBytes = 50;
+		uint64_t expectedMetaDilesSizeBytes = 50;
+		sirius::crypto::CurvePoint expectedProofOfExecutionVerificationInformation = sirius::crypto::CurvePoint();
+		auto expectedAutomaticExecutionCheckedUpTo = Height(1);
+		auto expectedCosignersNumber = 2;
+		auto expectedCallsNumber = 2;
 		std::vector<Key> expectedPublicKeys{ Key({ 1 }), Key({ 2 }) };
 		std::vector<Signature> expectedSignatures{ Signature({ 3 }), Signature({ 4 }) };
 		std::vector<model::RawProofOfExecution> expectedProofs;
@@ -170,6 +182,15 @@ namespace catapult { namespace contract {
 
 		// Assert
 		auto& transaction = static_cast<const model::SuccessfulEndBatchExecutionTransaction&>(*pTransaction);
+		EXPECT_EQ(expectedContractKey, transaction.ContractKey);
+		EXPECT_EQ(expectedBatchIndex, transaction.BatchId);
+		EXPECT_EQ(expectedStorageHash.data(), transaction.StorageHash.data());
+		EXPECT_EQ(expectedUsedSizeBytes, transaction.UsedSizeBytes);
+		EXPECT_EQ(expectedMetaDilesSizeBytes, transaction.MetaFilesSizeBytes);
+//		EXPECT_EQ(expectedProofOfExecutionVerificationInformation, transaction.ProofOfExecutionVerificationInformation);
+		EXPECT_EQ(expectedAutomaticExecutionCheckedUpTo, Height(transaction.AutomaticExecutionsNextBlockToCheck));
+		EXPECT_EQ(expectedCosignersNumber, transaction.CosignersNumber);
+		EXPECT_EQ(expectedCallsNumber, transaction.CallsNumber);
 		EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);
 		EXPECT_EQ_MEMORY(expectedSignatures.data(), transaction.SignaturesPtr(), expectedSignatures.size() * Key_Size);
 		EXPECT_EQ_MEMORY(expectedProofs.data(), transaction.ProofsOfExecutionPtr(), expectedProofs.size()  * sizeof(model::RawProofOfExecution));
@@ -181,9 +202,9 @@ namespace catapult { namespace contract {
 		auto CreateUnsuccessfulEndBatchExecutionTransaction(){
 			sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo transactionInfo;
 
-			const Key contractKey({11});
-			const auto batchIndex = 1;
-			const auto automaticExecutionsCheckedUpTo = 1;
+			Key contractKey({ 11 });
+			auto batchIndex = 1;
+			auto automaticExecutionsCheckedUpTo = 1;
 			std::vector<sirius::contract::UnsuccessfulCallExecutionInfo> callsExecutionInfos;
 			std::vector<sirius::contract::Proofs> proofs;
 			std::vector<sirius::contract::ExecutorKey> executorKeys;
@@ -251,13 +272,19 @@ namespace catapult { namespace contract {
 
 			return transactionInfo;
 		}
-		TEST(TEST_CLASS, SendSuccessfulEndBatchExecutionTransaction) {
+
+		TEST(TEST_CLASS, SendUnsuccessfulEndBatchExecutionTransaction) {
 			// Arrange:
 			std::shared_ptr<model::Transaction> pTransaction;
 			auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
 				pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
 			};
 			auto testee = CreateTransactionSender(transactionRangeHandler);
+			Key expectedContractKey({ 11 });
+			uint64_t expectedBatchIndex = 1;
+			auto expectedAutomaticExecutionCheckedUpTo = Height(1);
+			auto expectedCosignersNumber = 2;
+			auto expectedCallsNumber = 2;
 			std::vector<Key> expectedPublicKeys{ Key({ 1 }), Key({ 2 }) };
 			std::vector<Signature> expectedSignatures{ Signature({ 3 }), Signature({ 4 }) };
 			std::vector<model::RawProofOfExecution> expectedProofs;
@@ -309,15 +336,89 @@ namespace catapult { namespace contract {
 			expectedCallPayments.emplace_back(model::CallPayment{Amount(10), Amount(10)});
 			expectedCallPayments.emplace_back(model::CallPayment{Amount(20), Amount(20)});
 
-			testee.sendSuccessfulEndBatchExecutionTransaction(CreateSuccessfulEndBatchExecutionTransaction());
+			testee.sendUnsuccessfulEndBatchExecutionTransaction(CreateUnsuccessfulEndBatchExecutionTransaction());
 
 			// Assert
-			auto& transaction = static_cast<const model::SuccessfulEndBatchExecutionTransaction&>(*pTransaction);
+			auto& transaction = static_cast<const model::UnsuccessfulEndBatchExecutionTransaction&>(*pTransaction);
+			EXPECT_EQ(expectedContractKey, transaction.ContractKey);
+			EXPECT_EQ(expectedBatchIndex, transaction.BatchId);
+			//EXPECT_EQ(expectedProofOfExecutionVerificationInformation, transaction.ProofOfExecutionVerificationInformation);
+			EXPECT_EQ(expectedAutomaticExecutionCheckedUpTo, Height(transaction.AutomaticExecutionsNextBlockToCheck));
+			EXPECT_EQ(expectedCosignersNumber, transaction.CosignersNumber);
+			EXPECT_EQ(expectedCallsNumber, transaction.CallsNumber);
 			EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);
 			EXPECT_EQ_MEMORY(expectedSignatures.data(), transaction.SignaturesPtr(), expectedSignatures.size() * Key_Size);
 			EXPECT_EQ_MEMORY(expectedProofs.data(), transaction.ProofsOfExecutionPtr(), expectedProofs.size()  * sizeof(model::RawProofOfExecution));
 			EXPECT_EQ_MEMORY(expectedCallDigests.data(), transaction.CallDigestsPtr(), expectedCallDigests.size() * sizeof(model::ExtendedCallDigest));
 			EXPECT_EQ_MEMORY(expectedCallPayments.data(), transaction.CallPaymentsPtr(), expectedCallPayments.size() * sizeof(model::CallPayment));
 		}
+	}
+
+	namespace{
+		auto CreateEndBatchExecutionSingleTransaction(){
+			sirius::contract::EndBatchExecutionSingleTransactionInfo transactionInfo;
+
+			Key contractKey({ 11 });
+			auto batchIndex = 1;
+			sirius::contract::Proofs proof;
+
+			transactionInfo.m_contractKey = contractKey.array();
+			transactionInfo.m_batchIndex = batchIndex;
+			transactionInfo.m_proofOfExecution = proof;
+
+			return transactionInfo;
+		}
+	}
+
+	TEST(TEST_CLASS, SendEndBatchExecutionSingleTransaction) {
+		// Arrange:
+		std::shared_ptr<model::Transaction> pTransaction;
+		auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
+			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
+		};
+		auto testee = CreateTransactionSender(transactionRangeHandler);
+		Key expectedContractKey({ 11 });
+		uint64_t expectedBatchIndex = 1;
+		model::RawProofOfExecution expectedProof;
+
+		testee.sendEndBatchExecutionSingleTransaction(CreateEndBatchExecutionSingleTransaction());
+
+		// Assert
+		auto& transaction = static_cast<const model::EndBatchExecutionSingleTransaction&>(*pTransaction);
+		EXPECT_EQ(expectedContractKey, transaction.ContractKey);
+		EXPECT_EQ(expectedBatchIndex, transaction.BatchId);
+//		EXPECT_EQ(expectedProof, transaction.ProofOfExecution);
+	}
+
+	namespace{
+		auto CreateSynchronizationSingleTransaction(){
+			sirius::contract::SynchronizationSingleTransactionInfo transactionInfo;
+
+			Key contractKey({ 11 });
+			auto batchIndex = 1;
+
+			transactionInfo.m_contractKey = contractKey.array();
+			transactionInfo.m_batchIndex = batchIndex;
+
+			return transactionInfo;
+		}
+	}
+
+	TEST(TEST_CLASS, SendSynchronizationSingleTransaction) {
+		// Arrange:
+		std::shared_ptr<model::Transaction> pTransaction;
+		auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
+			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
+		};
+		auto testee = CreateTransactionSender(transactionRangeHandler);
+		Key expectedContractKey({ 11 });
+		uint64_t expectedBatchIndex = 1;
+
+		testee.sendEndBatchExecutionSingleTransaction(CreateEndBatchExecutionSingleTransaction());
+
+		// Assert
+		auto& transaction = static_cast<const model::SynchronizationSingleTransaction&>(*pTransaction);
+		EXPECT_EQ(expectedContractKey, transaction.ContractKey);
+		EXPECT_EQ(expectedBatchIndex, transaction.BatchId);
 	}
 }}
