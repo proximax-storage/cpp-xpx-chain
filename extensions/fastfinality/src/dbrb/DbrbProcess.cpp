@@ -33,6 +33,7 @@ namespace catapult { namespace dbrb {
 		auto pPackedNode = ionet::PackNode(thisNode);
 		auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(pPackedNode.get()), pPackedNode->Size } });
 		crypto::Sign(m_keyPair, hash, m_node.Signature);
+		m_nodeRetreiver.addNodes({ m_node });
 	}
 
 	void DbrbProcess::registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers) {
@@ -65,10 +66,6 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::setDeliverCallback(const DeliverCallback& callback) {
 		m_deliverCallback = callback;
-	}
-
-	const SignedNode& DbrbProcess::node() {
-		return m_node;
 	}
 
 	NodeRetreiver& DbrbProcess::nodeRetreiver() {
@@ -458,7 +455,11 @@ namespace catapult { namespace dbrb {
 
 		CATAPULT_LOG(debug) << "[DBRB] PROPOSE: Disseminating Propose message.";
 		auto pMessage = std::make_shared<ProposeMessage>(m_id, currentSequence, message.ReplacedView);
-		disseminate(pMessage, message.ReplacedView.members());
+		auto recipients = message.ReplacedView.members();
+		auto quorumIds = m_quorumManager.ProposedCounters[std::make_pair(message.ReplacedView, message.ProposedSequence)];
+		for (const auto& id : quorumIds)
+			recipients.erase(id);
+		disseminate(pMessage, recipients);
 
 		// Updating quorum counter for received Propose message.
 		bool quorumCollected = m_quorumManager.update(message);

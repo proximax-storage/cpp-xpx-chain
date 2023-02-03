@@ -76,7 +76,7 @@ namespace catapult { namespace fastfinality {
 			const std::function<uint64_t (const Key&)>& importanceGetter,
 			const chain::CommitteeManager& committeeManager,
 			const dbrb::DbrbConfiguration& dbrbConfig) {
-		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager, &dbrbConfig]() {
+		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager, dbrbConfig]() {
 			TRY_GET_FSM()
 
 			auto viewData = pFsmShared->dbrbViewFetcher().getLatestView();
@@ -362,9 +362,6 @@ namespace catapult { namespace fastfinality {
 			chain::CommitteeManager& committeeManager) {
 		return [pFsmWeak, pConfigHolder, timeSupplier, lastBlockElementSupplier, &committeeManager]() {
 			TRY_GET_FSM()
-
-			const auto& pDbrbProcess = pFsmShared->dbrbProcess();
-			pDbrbProcess->nodeRetreiver().addNodes({ pDbrbProcess->node() });
 
 		  	pFsmShared->resetChainSyncData();
 			pFsmShared->setNodeWorkState(NodeWorkState::Running);

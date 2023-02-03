@@ -76,9 +76,8 @@ namespace catapult { namespace dbrb {
 			for (const auto& node : nodes) {
 				const ProcessId& id = node.Node.identityKey();
 				auto iter = m_nodes.find(id);
-				if (iter != m_nodes.end() && iter->second.Signature == node.Signature) {
+				if (iter != m_nodes.end() && iter->second.Signature == node.Signature)
 					continue;
-				}
 
 				newNodes.emplace_back(node);
 				m_nodes[id] = node;
@@ -122,7 +121,13 @@ namespace catapult { namespace dbrb {
 		std::vector<SignedNode> newNodes;
 		for (const auto& packetIoPair : packetIoPairs) {
 			api::RemoteRequestDispatcher dispatcher(*packetIoPair.io());
-			auto nodes = dispatcher.dispatch(DbrbPullNodesTraits(m_networkIdentifier), ids).get();
+			std::vector<SignedNode> nodes;
+			try {
+				nodes = dispatcher.dispatch(DbrbPullNodesTraits(m_networkIdentifier), ids).get();
+			} catch (const std::exception& error) {
+				CATAPULT_LOG(error) << error.what();
+			}
+
 			for (const auto& node : nodes) {
 				newNodes.emplace_back(node);
 				ids.erase(node.Node.identityKey());
