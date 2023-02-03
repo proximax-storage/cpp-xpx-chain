@@ -67,36 +67,6 @@ namespace catapult { namespace dbrb {
 		m_deliverCallback = callback;
 	}
 
-	void DbrbProcess::setCurrentView(const ViewData& viewData) {
-		if (viewData.empty()) {
-			CATAPULT_LOG(debug) << "[DBRB] skipping set current view, data is empty";
-			return;
-		}
-
-		auto newView = View{ viewData };
-		if (newView == m_currentView) {
-			CATAPULT_LOG(debug) << "[DBRB] skipping set current view, same data";
-			return;
-		}
-
-		m_currentView = newView;
-		CATAPULT_LOG(debug) << "[DBRB] set current view " << m_currentView;
-		m_installedViews.emplace(m_currentView);
-
-		std::set<ProcessId> ids;
-		bool notJoined = true;
-		for (const auto& [id, _] : viewData) {
-			ids.emplace(id);
-
-			if (m_id == id)
-				notJoined = false;
-		}
-		m_nodeRetreiver.enqueue(ids);
-
-		if (notJoined)
-			join();
-	}
-
 	const SignedNode& DbrbProcess::node() {
 		return m_node;
 	}
@@ -106,27 +76,6 @@ namespace catapult { namespace dbrb {
 	}
 
 	// Basic operations:
-
-	void DbrbProcess::join() {
-		CATAPULT_LOG(debug) << "[DBRB] JOIN initiated.";
-		std::lock_guard<std::mutex> guard(m_mutex);
-
-		// Can only request to join from the initial membership state of the process.
-		if (m_membershipState != MembershipState::NotJoined)
-			return;
-
-		m_membershipState = MembershipState::Joining;
-
-		// Resetting counters for ReconfigConfirm messages to get a proper quorum collection event later.
-		m_quorumManager.ReconfigConfirmCounters.clear();
-
-		// Somehow, while this flag is true, a view discovery protocol should be working
-		// that would call onViewDiscovered() whenever it gets a new view of the system.
-		m_viewDiscoveryActive = true;
-
-		// Keep disseminating new Reconfig messages whenever a new view is discovered.
-		m_disseminateReconfig = true;
-	}
 
 	void DbrbProcess::leave() {
 		std::lock_guard<std::mutex> guard(m_mutex);
@@ -155,6 +104,11 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::broadcast(const Payload& payload) {
 		std::lock_guard<std::mutex> guard(m_mutex);
+
+		if (!m_currentView.isMember(m_id)) {
+			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: not a member of the current view, aborting broadcast.";
+			return;
+		}
 
 		// TODO: fix view search in set.
 		if (!m_installedViews.count(m_currentView)) {
@@ -462,27 +416,28 @@ namespace catapult { namespace dbrb {
 			CATAPULT_LOG(debug) << "[DBRB] RECONFIG-CONFIRM: Disabling Reconfig message dissemination (node is " << (m_membershipState == MembershipState::Joining ? "Joining" : "Leaving") << ").";
 			m_disseminateReconfig = false;
 		}
-
-
-//		// TODO: Not clear if view discovery should remain active or not
-//		if (m_membershipState == MembershipState::Joining)
-//			m_viewDiscoveryActive = false;
 	}
 
 	void DbrbProcess::onProposeMessageReceived(const ProposeMessage& message) {
 		// Must be sent from a member of replaced view.
-		if (!message.ReplacedView.isMember(message.Sender))
+		if (!message.ReplacedView.isMember(message.Sender)) {
+			CATAPULT_LOG(debug) << "[DBRB] PROPOSE: sender is not a member of replaced view.";
 			return;
+		}
 
 		// Filtering incorrect proposals.
 		const auto& format = m_formatSequences[message.ReplacedView];
-		if ( !format.count(message.ProposedSequence) && !format.empty() )	// TODO: format must contain empty sequence, or be empty?
+		if ( !format.count(message.ProposedSequence) && !format.empty() ) {	// TODO: format must contain empty sequence, or be empty?
+			CATAPULT_LOG(debug) << "[DBRB] PROPOSE: proposal is invalid.";
 			return;
+		}
 
 		// Every view in ProposedSequence must be more recent than the current view of the process.
 		const auto pLeastRecentView = message.ProposedSequence.maybeLeastRecent();
-		if ( !pLeastRecentView || !(m_currentView < *pLeastRecentView) )
+		if ( !pLeastRecentView || m_currentView >= *pLeastRecentView ) {
+			CATAPULT_LOG(debug) << "[DBRB] PROPOSE: proposed sequence is not well-formed.";
 			return;
+		}
 
 		// TODO: Check that there is at least one view in ProposedSequence that the process is not aware of
 
@@ -551,8 +506,10 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::onInstallMessageReceived(const InstallMessage& message) {
 		const auto pInstallMessageData = message.tryGetMessageData();
-		if (!pInstallMessageData.has_value())
-			return;	// TODO: Can inform client about ill-formed Install message
+		if (!pInstallMessageData.has_value()) {
+			CATAPULT_LOG(warning) << "[DBRB] INSTALL: message is ill-formed.";
+			return;
+		}
 
 		const auto& replacedView = pInstallMessageData->ReplacedView;
 		const auto& convergedSequence = pInstallMessageData->ConvergedSequence;
@@ -662,6 +619,7 @@ namespace catapult { namespace dbrb {
 
 		if (leastRecentView.isMember(m_id)) {
 			m_currentView = leastRecentView;
+			CATAPULT_LOG(error) << "[DBRB] STATE UPDATE: updated current view";
 
 			if (!m_currentInstallMessage->ReplacedView.isMember(m_id))
 				onJoinComplete();
@@ -686,6 +644,7 @@ namespace catapult { namespace dbrb {
 				sequence.tryAppend(m_currentInstallMessage->ConvergedSequence);
 				InstallMessage installMessage(ProcessId(), std::move(sequence), m_currentInstallMessage->ConvergedSignatures);
 				m_transactionSender.sendInstallMessageTransaction(installMessage);
+				CATAPULT_LOG(error) << "[DBRB] STATE UPDATE: sent install message transaction";
 
 				onViewInstalled(m_currentView);
 			}
@@ -819,18 +778,44 @@ namespace catapult { namespace dbrb {
 		onLeaveAllowed();
 	}
 
-
 	// Other callbacks:
 
-	void DbrbProcess::onViewDiscovered(View&& newView) {
-		if (!m_viewDiscoveryActive)
+	void DbrbProcess::onViewDiscovered(const ViewData& viewData) {
+		if (viewData.empty()) {
+			CATAPULT_LOG(error) << "[DBRB] discovered view is empty";
 			return;
+		}
 
-		m_currentView = std::move(newView);
+		std::lock_guard<std::mutex> guard(m_mutex);
 
-		if (m_membershipState == MembershipState::Joining && m_disseminateReconfig) {
-			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChange::Join, m_currentView);
-			disseminate(pMessage, m_currentView.members());
+		std::set<ProcessId> ids;
+		for (const auto& [id, _] : viewData)
+			ids.emplace(id);
+		m_nodeRetreiver.enqueue(ids);
+
+		m_currentView = View{ viewData };
+		if (m_currentView.isMember(m_id)) {
+			m_membershipState = MembershipState::Participating;
+			m_installedViews.insert(m_currentView);
+		} else if (m_currentView.hasChange(m_id, MembershipChange::Leave)) {
+			m_membershipState = MembershipState::Left;
+		}
+
+		if (m_membershipState == MembershipState::NotJoined) {
+			m_membershipState = MembershipState::Joining;
+			m_disseminateReconfig = true;
+		}
+
+		if (m_disseminateReconfig) {
+			if (m_membershipState == MembershipState::Joining) {
+				auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChange::Join, m_currentView);
+				disseminate(pMessage, m_currentView.members());
+			} else if (m_membershipState == MembershipState::Leaving) {
+				for (const auto& view : m_installedViews) {
+					auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChange::Leave, view);
+					disseminate(pMessage, view.members());
+				}
+			}
 		}
 
 		// If the process is leaving after an Install message.
@@ -898,15 +883,17 @@ namespace catapult { namespace dbrb {
 	void DbrbProcess::onJoinComplete() {
 		CATAPULT_LOG(debug) << "[DBRB] JOIN: Completed, node is now Participating.";
 		m_disseminateReconfig = false;
-//		m_viewDiscoveryActive = false;	// TODO: Not clear if view discovery should remain active or not
 		m_membershipState = MembershipState::Participating;
+		m_quorumManager.ReconfigConfirmCounters.clear();
+		m_pendingChanges.Data.clear();
 	}
 
 	void DbrbProcess::onLeaveComplete() {
 		CATAPULT_LOG(debug) << "[DBRB] LEAVE: Completed, node is now Left.";
 		m_disseminateReconfig = false;
 		m_disseminateCommit = false;
-		m_viewDiscoveryActive = false;
 		m_membershipState = MembershipState::Left;
+		m_quorumManager.ReconfigConfirmCounters.clear();
+		m_pendingChanges.Data.clear();
 	}
 }}

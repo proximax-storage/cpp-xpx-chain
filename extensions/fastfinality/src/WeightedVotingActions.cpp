@@ -74,9 +74,15 @@ namespace catapult { namespace fastfinality {
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
 			const std::function<uint64_t (const Key&)>& importanceGetter,
-			const chain::CommitteeManager& committeeManager) {
-		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager]() {
+			const chain::CommitteeManager& committeeManager,
+			const dbrb::DbrbConfiguration& dbrbConfig) {
+		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager, &dbrbConfig]() {
 			TRY_GET_FSM()
+
+			auto viewData = pFsmShared->dbrbViewFetcher().getLatestView();
+			if (viewData.empty())
+				viewData = dbrbConfig.BootstrapProcesses;
+			pFsmShared->dbrbProcess()->onViewDiscovered(viewData);
 			
 			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
 			pFsmShared->resetChainSyncData();
@@ -405,15 +411,9 @@ namespace catapult { namespace fastfinality {
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 			chain::CommitteeManager& committeeManager,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			const chain::TimeSupplier& timeSupplier,
-			const dbrb::DbrbConfiguration& dbrbConfig) {
-		return [pFsmWeak, &committeeManager, pConfigHolder, timeSupplier, &dbrbConfig]() {
+			const chain::TimeSupplier& timeSupplier) {
+		return [pFsmWeak, &committeeManager, pConfigHolder, timeSupplier]() {
 			TRY_GET_FSM()
-
-			auto viewData = pFsmShared->dbrbViewFetcher().getLatestView();
-			if (viewData.empty())
-				viewData = dbrbConfig.BootstrapProcesses;
-			pFsmShared->dbrbProcess()->setCurrentView(viewData);
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto round = committeeData.committeeRound();
@@ -953,6 +953,9 @@ namespace catapult { namespace fastfinality {
 
 				success = pPromise->get_future().get();
 			}
+
+			if (success)
+				pFsmShared->dbrbProcess()->onViewDiscovered(pFsmShared->dbrbViewFetcher().getLatestView());
 
 			DelayAction(pFsmShared, pFsmShared->timer(), GetPhaseEndTimeMillis(CommitteePhase::Commit, committeeData.committeeRound().PhaseTimeMillis), [pFsmWeak, success] {
 				TRY_GET_FSM()

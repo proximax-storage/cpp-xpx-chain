@@ -152,10 +152,6 @@ namespace catapult { namespace dbrb {
 		/// State of the process membership.
 		MembershipState m_membershipState = MembershipState::NotJoined;
 
-		/// Whether the view discovery is active. View discovery halts once a quorum of
-		/// confirmation messages has been collected for any of the views.
-		bool m_viewDiscoveryActive = false;
-
 		/// Whether the process should keep disseminating Reconfig messages on discovery of new views.
 		/// Set to true only when joining or leaving the system.
 		bool m_disseminateReconfig = false;
@@ -241,9 +237,6 @@ namespace catapult { namespace dbrb {
 		TransactionSender m_transactionSender;
 
 	public:
-		/// Request to join the system.
-		void join();
-
 		/// Request to leave the system.
 		void leave();
 
@@ -257,7 +250,7 @@ namespace catapult { namespace dbrb {
 	public:
 		void registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers);
 		void setDeliverCallback(const DeliverCallback& callback);
-		void setCurrentView(const ViewData& viewData);
+		void onViewDiscovered(const ViewData&);
 
 		const SignedNode& node();
 		NodeRetreiver& nodeRetreiver();
@@ -292,7 +285,6 @@ namespace catapult { namespace dbrb {
 		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&);
 		void onDeliverQuorumCollected(const std::optional<PayloadData>&);
 
-		void onViewDiscovered(View&&);
 		void onViewInstalled(const View&);
 		void onLeaveAllowed();
 		void onJoinComplete();

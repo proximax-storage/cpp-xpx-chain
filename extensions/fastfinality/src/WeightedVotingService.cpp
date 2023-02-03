@@ -190,7 +190,8 @@ namespace catapult { namespace fastfinality {
 					pConfigHolder,
 					lastBlockElementSupplier,
 					importanceGetter,
-					pluginManager.getCommitteeManager());
+					pluginManager.getCommitteeManager(),
+					m_dbrbConfig);
 				actions.ResetLocalChain = CreateDefaultResetLocalChainAction();
 				actions.DownloadBlocks = CreateDefaultDownloadBlocksAction(
 					pFsmShared,
@@ -207,8 +208,7 @@ namespace catapult { namespace fastfinality {
 					pFsmShared,
 					pluginManager.getCommitteeManager(),
 					pConfigHolder,
-					timeSupplier,
-					m_dbrbConfig);
+					timeSupplier);
 				actions.ProposeBlock = CreateDefaultProposeBlockAction(
 					pFsmShared,
 					state.cache(),

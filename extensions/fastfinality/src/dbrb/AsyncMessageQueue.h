@@ -60,10 +60,10 @@ namespace catapult { namespace dbrb {
 				{
 					std::unique_lock<std::mutex> lock(m_mutex);
 					m_condVar.wait(lock, [this] { return !m_buffer.empty() || !m_running; });
-					std::swap(buffer, m_buffer);
-
 					if (!m_running)
 						return;
+
+					std::swap(buffer, m_buffer);
 				}
 
 				this->processBuffer(buffer);

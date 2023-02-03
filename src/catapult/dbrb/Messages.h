@@ -14,17 +14,17 @@ namespace catapult { namespace dbrb {
 #pragma pack(push, 1)
 
 	struct MessagePacket : public ionet::Packet {
-		ProcessId Sender;
 		catapult::Signature Signature;
+		ProcessId Sender;
 
 		/// Returns a non-const pointer to data contained in this packet.
 		uint8_t* payload() {
-			return Size <= sizeof(Packet) ? nullptr : reinterpret_cast<uint8_t*>(this) + sizeof(Packet) + ProcessId_Size + Signature_Size;
+			return Size <= sizeof(Packet) ? nullptr : reinterpret_cast<uint8_t*>(this) + sizeof(Packet) + Signature_Size + ProcessId_Size;
 		}
 
 		/// Returns a const pointer to data contained in this packet.
 		constexpr const uint8_t* payload() const {
-			return Size <= sizeof(Packet) ? nullptr : reinterpret_cast<const uint8_t*>(this) + sizeof(Packet) + ProcessId_Size + Signature_Size;
+			return Size <= sizeof(Packet) ? nullptr : reinterpret_cast<const uint8_t*>(this) + sizeof(Packet) + Signature_Size + ProcessId_Size;
 		}
 
 		/// Returns buffers for signing this packet.

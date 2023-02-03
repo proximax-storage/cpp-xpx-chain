@@ -79,7 +79,8 @@ namespace catapult { namespace fastfinality {
 							pThis->m_pConfigHolder,
 								[pThis] { return pThis->m_pLastBlockElement; },
 								[pThis](const Key& key) -> uint64_t { return pThis->m_importances[key]; },
-							pThis->m_committeeManager);
+							pThis->m_committeeManager,
+							dbrb::DbrbConfiguration::Uninitialized());
 
 						defaultCheckLocalChainAction();
 					} else {

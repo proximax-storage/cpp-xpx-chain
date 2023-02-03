@@ -178,7 +178,7 @@ namespace catapult { namespace dbrb {
 	}
 
 	bool View::isMember(const ProcessId& processId) const {
-		return std::find_if(Data.cbegin(), Data.cend(), [&processId](const auto& pair) { return pair.first == processId && pair.second == MembershipChange::Join; }) != Data.cend();
+		return hasChange(processId, MembershipChange::Join);
 	}
 
 	size_t View::quorumSize() const {

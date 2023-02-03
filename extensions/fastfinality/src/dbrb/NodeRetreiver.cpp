@@ -24,16 +24,18 @@ namespace catapult { namespace dbrb {
 			if (packetIoPairs.empty())
 				return;
 
+			auto nodeCount = utils::checked_cast<size_t, uint16_t>(nodes.size());
+
 			std::vector<std::pair<model::UniqueEntityPtr<ionet::NetworkNode>, Signature>> networkNodes;
-			networkNodes.reserve(nodes.size());
-			uint32_t payloadSize = 0u;
+			networkNodes.reserve(nodeCount);
+			auto payloadSize = utils::checked_cast<size_t, uint32_t>(nodeCount * Signature_Size);
 			for (const auto& node : nodes) {
 				networkNodes.emplace_back(ionet::PackNode(node.Node), node.Signature);
 				payloadSize += networkNodes.back().first->Size;
 			}
 
 			auto pPacket = ionet::CreateSharedPacket<DbrbPushNodesPacket>(payloadSize);
-			pPacket->NodeCount = utils::checked_cast<size_t, uint16_t>(nodes.size());
+			pPacket->NodeCount = nodeCount;
 			auto* pBuffer = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
 			for (const auto& [pNetworkNode, signature] : networkNodes) {
 				memcpy(pBuffer, pNetworkNode.get(), pNetworkNode->Size);
@@ -43,13 +45,11 @@ namespace catapult { namespace dbrb {
 			}
 
 			for (const auto& packetIoPair : packetIoPairs) {
-				auto pPromise = std::make_shared<std::promise<ionet::SocketOperationCode>>();
-				packetIoPair.io()->write(ionet::PacketPayload(pPacket), [pPromise](ionet::SocketOperationCode code) {
-					pPromise->set_value(code);
+				auto pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(packetIoPair);
+				pPacketIoPair->io()->write(ionet::PacketPayload(pPacket), [pPacket, pPacketIoPair](ionet::SocketOperationCode code) {
+					if (code != ionet::SocketOperationCode::Success)
+						CATAPULT_LOG(warning) << "[DBRB] sending " << *pPacket << " to " << pPacketIoPair->node() << " completed with " << code;
 				});
-				auto code = pPromise->get_future().get();
-				if (code != ionet::SocketOperationCode::Success)
-					CATAPULT_LOG(warning) << "[DBRB] sending " << *pPacket << " to " << packetIoPair.node() << " completed with " << code;
 			}
 		}
 	}
@@ -100,10 +100,13 @@ namespace catapult { namespace dbrb {
 
 	void NodeRetreiver::processBuffer(BufferType& buffer) {
 		std::set<ProcessId> ids;
-		for (const auto& id : buffer) {
-			auto iter = m_nodes.find(id);
-			if (iter == m_nodes.end())
-				ids.emplace(id);
+		{
+			std::lock_guard<std::mutex> guard(m_mutex);
+			for (const auto& id : buffer) {
+				auto iter = m_nodes.find(id);
+				if (iter == m_nodes.end())
+					ids.emplace(id);
+			}
 		}
 
 		if (ids.empty())

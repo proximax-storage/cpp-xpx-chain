@@ -16,14 +16,6 @@ namespace catapult { namespace dbrb {
 			model::NetworkIdentifier networkIdentifier,
 			ionet::ServerPacketHandlers& handlers) {
 		handlers.registerHandler(ionet::PacketType::Dbrb_Push_Nodes, [pDbrbProcessWeak, networkIdentifier](const auto& packet, auto&) {
-			const auto pPacket = ionet::CoercePacket<DbrbPushNodesPacket>(&packet);
-			if (!pPacket) {
-				CATAPULT_LOG(warning) << "rejecting empty request: " << packet;
-				return;
-			}
-
-			CATAPULT_LOG(trace) << "received valid " << packet;
-
 			auto pDbrbProcessShared = pDbrbProcessWeak.lock();
 			if (!pDbrbProcessShared)
 				return;
@@ -37,18 +29,11 @@ namespace catapult { namespace dbrb {
 			const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
 			ionet::ServerPacketHandlers& handlers) {
 		handlers.registerHandler(ionet::PacketType::Dbrb_Pull_Nodes, [pDbrbProcessWeak](const auto& packet, auto& context) {
-			const auto pRequest = ionet::CoercePacket<DbrbPullNodesPacket>(&packet);
-			if (!pRequest) {
-				CATAPULT_LOG(warning) << "rejecting empty request: " << packet;
-				return;
-			}
-
-			CATAPULT_LOG(trace) << "received valid " << packet;
-
 			auto pDbrbProcessShared = pDbrbProcessWeak.lock();
 			if (!pDbrbProcessShared)
 				return;
 
+			const auto* pRequest = static_cast<const DbrbPullNodesPacket*>(&packet);
 			const auto& nodeRetreiver = pDbrbProcessShared->nodeRetreiver();
 			std::vector<std::pair<model::UniqueEntityPtr<ionet::NetworkNode>, Signature>> networkNodes;
 			networkNodes.reserve(pRequest->ProcessIdCount);
@@ -62,7 +47,7 @@ namespace catapult { namespace dbrb {
 				auto node = nodeRetreiver.getNode(id);
 				if (node) {
 					networkNodes.emplace_back(ionet::PackNode(node.value().Node), node.value().Signature);
-					payloadSize += networkNodes.back().first->Size;
+					payloadSize += networkNodes.back().first->Size + Signature_Size;
 				}
 			}
 
