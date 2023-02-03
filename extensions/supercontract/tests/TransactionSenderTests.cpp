@@ -37,33 +37,33 @@ namespace catapult { namespace contract {
 			std::vector<sirius::Signature> signatures;
 
 			//successfulBatchInfo
-			successfulBatchInfo.m_storageHash = sirius::contract::StorageHash("a");
+			successfulBatchInfo.m_storageHash = sirius::contract::StorageHash("0123456789ABCDEF0123456789ABCDEF");
 			successfulBatchInfo.m_metaFilesSize = 50;
 			successfulBatchInfo.m_usedStorageSize = 50;
 			successfulBatchInfo.m_PoExVerificationInfo = sirius::crypto::CurvePoint();
 
 			//callsExecutionInfo
 			std::vector<sirius::contract::CallExecutorParticipation> callExecutorParticipants;
-			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{10, 10});
-			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{20, 20});
+			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{10, 20});
+			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{10, 20});
 
 			callsExecutionInfos.emplace_back(
 				sirius::contract::SuccessfulCallExecutionInfo{
-					sirius::contract::CallId("b"),
+					sirius::contract::CallId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
 					true,
 					1,
 					1,
-					sirius::contract::TransactionHash("c"),
+					sirius::contract::TransactionHash("1123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
 					callExecutorParticipants
 				}
  			);
 			callsExecutionInfos.emplace_back(
 				sirius::contract::SuccessfulCallExecutionInfo{
-					sirius::contract::CallId("d"),
+					sirius::contract::CallId("2123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
 					true,
 					1,
 					1,
-					sirius::contract::TransactionHash("e"),
+					sirius::contract::TransactionHash("3123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
 					callExecutorParticipants
 				}
 			);
@@ -120,10 +120,10 @@ namespace catapult { namespace contract {
 		auto testee = CreateTransactionSender(transactionRangeHandler);
 		Key expectedContractKey({ 11 });
 		uint64_t expectedBatchIndex = 1;
-		Hash256 expectedStorageHash = sirius::contract::StorageHash("a").array();
+		Hash256 expectedStorageHash = sirius::contract::StorageHash("0123456789ABCDEF0123456789ABCDEF").array();
 		uint64_t expectedUsedSizeBytes = 50;
 		uint64_t expectedMetaDilesSizeBytes = 50;
-		sirius::crypto::CurvePoint expectedProofOfExecutionVerificationInformation = sirius::crypto::CurvePoint();
+		std::array<uint8_t, 32>&& expectedProofOfExecutionVerificationInformation = sirius::crypto::CurvePoint().toBytes();
 		auto expectedAutomaticExecutionCheckedUpTo = Height(1);
 		auto expectedCosignersNumber = 2;
 		auto expectedCallsNumber = 2;
@@ -157,26 +157,26 @@ namespace catapult { namespace contract {
 		//expectedCallDigest
 		expectedCallDigests.emplace_back(
 			model::ExtendedCallDigest{
-				sirius::contract::CallId("b").array(),
+				sirius::contract::CallId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").array(),
 				true,
 				Height(1),
 				1,
-				sirius::contract::TransactionHash("c").array()
+				sirius::contract::TransactionHash("1123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").array()
 			}
  		);
 		expectedCallDigests.emplace_back(
 			model::ExtendedCallDigest{
-				sirius::contract::CallId("d").array(),
+				sirius::contract::CallId("2123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").array(),
 				true,
 				Height(1),
 				1,
-				sirius::contract::TransactionHash("e").array()
+				sirius::contract::TransactionHash("3123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").array()
 			}
 		);
 
 		//expectedPayment
-		expectedCallPayments.emplace_back(model::CallPayment{Amount(10), Amount(10)});
-		expectedCallPayments.emplace_back(model::CallPayment{Amount(20), Amount(20)});
+		expectedCallPayments.emplace_back(model::CallPayment{Amount(10), Amount(20)});
+		expectedCallPayments.emplace_back(model::CallPayment{Amount(10), Amount(20)});
 
 		testee.sendSuccessfulEndBatchExecutionTransaction(CreateSuccessfulEndBatchExecutionTransaction());
 
@@ -184,11 +184,11 @@ namespace catapult { namespace contract {
 		auto& transaction = static_cast<const model::SuccessfulEndBatchExecutionTransaction&>(*pTransaction);
 		EXPECT_EQ(expectedContractKey, transaction.ContractKey);
 		EXPECT_EQ(expectedBatchIndex, transaction.BatchId);
-		EXPECT_EQ(expectedStorageHash.data(), transaction.StorageHash.data());
+		EXPECT_EQ(expectedStorageHash, transaction.StorageHash);
 		EXPECT_EQ(expectedUsedSizeBytes, transaction.UsedSizeBytes);
 		EXPECT_EQ(expectedMetaDilesSizeBytes, transaction.MetaFilesSizeBytes);
-//		EXPECT_EQ(expectedProofOfExecutionVerificationInformation, transaction.ProofOfExecutionVerificationInformation);
-		EXPECT_EQ(expectedAutomaticExecutionCheckedUpTo, Height(transaction.AutomaticExecutionsNextBlockToCheck));
+		EXPECT_EQ(expectedProofOfExecutionVerificationInformation, transaction.ProofOfExecutionVerificationInformation);
+		EXPECT_EQ(expectedAutomaticExecutionCheckedUpTo, transaction.AutomaticExecutionsNextBlockToCheck);
 		EXPECT_EQ(expectedCosignersNumber, transaction.CosignersNumber);
 		EXPECT_EQ(expectedCallsNumber, transaction.CallsNumber);
 		EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);
@@ -212,12 +212,12 @@ namespace catapult { namespace contract {
 
 			//callsExecutionInfos
 			std::vector<sirius::contract::CallExecutorParticipation> callExecutorParticipants;
-			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{10, 10});
-			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{20, 20});
+			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{10, 20});
+			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{10, 20});
 
 			callsExecutionInfos.emplace_back(
 				sirius::contract::UnsuccessfulCallExecutionInfo{
-					sirius::contract::CallId("b"),
+					sirius::contract::CallId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
 					true,
 					1,
 					callExecutorParticipants
@@ -225,7 +225,7 @@ namespace catapult { namespace contract {
 			);
 			callsExecutionInfos.emplace_back(
 				sirius::contract::UnsuccessfulCallExecutionInfo{
-					sirius::contract::CallId("d"),
+					sirius::contract::CallId("1123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
 					true,
 					1,
 					callExecutorParticipants
@@ -288,7 +288,7 @@ namespace catapult { namespace contract {
 			std::vector<Key> expectedPublicKeys{ Key({ 1 }), Key({ 2 }) };
 			std::vector<Signature> expectedSignatures{ Signature({ 3 }), Signature({ 4 }) };
 			std::vector<model::RawProofOfExecution> expectedProofs;
-			std::vector<model::ExtendedCallDigest> expectedCallDigests;
+			std::vector<model::ShortCallDigest> expectedCallDigests;
 			std::vector<model::CallPayment> expectedCallPayments;
 
 			//expectedProofs
@@ -314,27 +314,23 @@ namespace catapult { namespace contract {
 
 			//expectedCallDigest
 			expectedCallDigests.emplace_back(
-				model::ExtendedCallDigest{
-					sirius::contract::CallId("b").array(),
+				model::ShortCallDigest{
+					sirius::contract::CallId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").array(),
 					true,
 					Height(1),
-					1,
-					sirius::contract::TransactionHash("c").array()
 				}
 			);
 			expectedCallDigests.emplace_back(
-				model::ExtendedCallDigest{
-					sirius::contract::CallId("d").array(),
+				model::ShortCallDigest{
+					sirius::contract::CallId("1123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").array(),
 					true,
 					Height(1),
-					1,
-					sirius::contract::TransactionHash("e").array()
 				}
 			);
 
 			//expectedPayment
-			expectedCallPayments.emplace_back(model::CallPayment{Amount(10), Amount(10)});
-			expectedCallPayments.emplace_back(model::CallPayment{Amount(20), Amount(20)});
+			expectedCallPayments.emplace_back(model::CallPayment{Amount(10), Amount(20)});
+			expectedCallPayments.emplace_back(model::CallPayment{Amount(10), Amount(20)});
 
 			testee.sendUnsuccessfulEndBatchExecutionTransaction(CreateUnsuccessfulEndBatchExecutionTransaction());
 
@@ -342,14 +338,13 @@ namespace catapult { namespace contract {
 			auto& transaction = static_cast<const model::UnsuccessfulEndBatchExecutionTransaction&>(*pTransaction);
 			EXPECT_EQ(expectedContractKey, transaction.ContractKey);
 			EXPECT_EQ(expectedBatchIndex, transaction.BatchId);
-			//EXPECT_EQ(expectedProofOfExecutionVerificationInformation, transaction.ProofOfExecutionVerificationInformation);
-			EXPECT_EQ(expectedAutomaticExecutionCheckedUpTo, Height(transaction.AutomaticExecutionsNextBlockToCheck));
+			EXPECT_EQ(expectedAutomaticExecutionCheckedUpTo, transaction.AutomaticExecutionsNextBlockToCheck);
 			EXPECT_EQ(expectedCosignersNumber, transaction.CosignersNumber);
 			EXPECT_EQ(expectedCallsNumber, transaction.CallsNumber);
 			EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);
 			EXPECT_EQ_MEMORY(expectedSignatures.data(), transaction.SignaturesPtr(), expectedSignatures.size() * Key_Size);
 			EXPECT_EQ_MEMORY(expectedProofs.data(), transaction.ProofsOfExecutionPtr(), expectedProofs.size()  * sizeof(model::RawProofOfExecution));
-			EXPECT_EQ_MEMORY(expectedCallDigests.data(), transaction.CallDigestsPtr(), expectedCallDigests.size() * sizeof(model::ExtendedCallDigest));
+			EXPECT_EQ_MEMORY(expectedCallDigests.data(), transaction.CallDigestsPtr(), expectedCallDigests.size() * sizeof(model::ShortCallDigest));
 			EXPECT_EQ_MEMORY(expectedCallPayments.data(), transaction.CallPaymentsPtr(), expectedCallPayments.size() * sizeof(model::CallPayment));
 		}
 	}
