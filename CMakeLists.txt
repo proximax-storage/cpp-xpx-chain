@@ -35,7 +35,7 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 ### setup openssl
 message("--- locating openssl dependencies ---")
 
-find_package(OpenSSL 1.1.1 EXACT REQUIRED)
+find_package(OpenSSL 1.1.1 REQUIRED)
 message("OpenSSL   ver: ${OPENSSL_VERSION}")
 message("OpenSSL  root: ${OPENSSL_ROOT_DIR}")
 message("OpenSSL   inc: ${OPENSSL_INCLUDE_DIR}")
