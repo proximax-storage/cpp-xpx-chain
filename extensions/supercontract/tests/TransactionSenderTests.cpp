@@ -49,21 +49,21 @@ namespace catapult { namespace contract {
 
 			callsExecutionInfos.emplace_back(
 				sirius::contract::SuccessfulCallExecutionInfo{
-					sirius::contract::CallId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+					sirius::contract::CallId("0123456789ABCDEFGHIJKLMNOPQRSTUV"),
 					true,
 					1,
 					1,
-					sirius::contract::TransactionHash("1123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+					sirius::contract::TransactionHash("1123456789ABCDEFGHIJKLMNOPQRSTUV"),
 					callExecutorParticipants
 				}
  			);
 			callsExecutionInfos.emplace_back(
 				sirius::contract::SuccessfulCallExecutionInfo{
-					sirius::contract::CallId("2123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+					sirius::contract::CallId("2123456789ABCDEFGHIJKLMNOPQRSTUV"),
 					true,
 					1,
 					1,
-					sirius::contract::TransactionHash("3123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+					sirius::contract::TransactionHash("3123456789ABCDEFGHIJKLMNOPQRSTUV"),
 					callExecutorParticipants
 				}
 			);
@@ -152,20 +152,20 @@ namespace catapult { namespace contract {
 		//expectedCallDigest
 		expectedCallDigests.emplace_back(
 			model::ExtendedCallDigest{
-				sirius::contract::CallId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").array(),
+				sirius::contract::CallId("0123456789ABCDEFGHIJKLMNOPQRSTUV").array(),
 				true,
 				Height(1),
 				1,
-				sirius::contract::TransactionHash("1123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").array()
+				sirius::contract::TransactionHash("1123456789ABCDEFGHIJKLMNOPQRSTUV").array()
 			}
  		);
 		expectedCallDigests.emplace_back(
 			model::ExtendedCallDigest{
-				sirius::contract::CallId("2123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").array(),
+				sirius::contract::CallId("2123456789ABCDEFGHIJKLMNOPQRSTUV").array(),
 				true,
 				Height(1),
 				1,
-				sirius::contract::TransactionHash("3123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").array()
+				sirius::contract::TransactionHash("3123456789ABCDEFGHIJKLMNOPQRSTUV").array()
 			}
 		);
 
