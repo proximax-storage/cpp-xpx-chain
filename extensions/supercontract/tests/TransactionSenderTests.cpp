@@ -70,8 +70,7 @@ namespace catapult { namespace contract {
 
 			//proofs
 			sirius::crypto::Scalar scalar(std::array<uint8_t ,32>{5});
-			sirius::crypto::CurvePoint curvePoint;
-			curvePoint = curvePoint.BasePoint() * scalar;
+			sirius::crypto::CurvePoint curvePoint = sirius::crypto::CurvePoint::BasePoint() * scalar;
 			sirius::contract::TProof tProof = {curvePoint, scalar};
 			sirius::contract::BatchProof batchProof = {curvePoint, scalar};
 			sirius::contract::Proofs proof = {0, tProof, batchProof};
@@ -127,8 +126,7 @@ namespace catapult { namespace contract {
 
 		//expectedProofs
 		sirius::crypto::Scalar scalar(std::array<uint8_t ,32>{5});
-		sirius::crypto::CurvePoint curvePoint;
-		curvePoint = curvePoint.BasePoint() * scalar;
+		sirius::crypto::CurvePoint curvePoint = sirius::crypto::CurvePoint::BasePoint() * scalar;
 		sirius::contract::TProof tProof = {curvePoint, scalar};
 		sirius::contract::BatchProof batchProof = {curvePoint, scalar};
 		sirius::contract::Proofs proof = {0, tProof, batchProof};
