@@ -228,22 +228,13 @@ namespace catapult { namespace contract {
 			);
 
 			//proofs
-			sirius::contract::BatchProof batchProof;
-			sirius::contract::TProof tProof;
-			proofs.emplace_back(
-				sirius::contract::Proofs{
-					0,
-					tProof,
-					batchProof
-				}
-			);
-			proofs.emplace_back(
-				sirius::contract::Proofs{
-					0,
-					tProof,
-					batchProof
-				}
-			);
+			sirius::crypto::Scalar scalar(std::array<uint8_t ,32>{5});
+			sirius::crypto::CurvePoint curvePoint = sirius::crypto::CurvePoint::BasePoint() * scalar;
+			sirius::contract::TProof tProof = {curvePoint, scalar};
+			sirius::contract::BatchProof batchProof = {curvePoint, scalar};
+			sirius::contract::Proofs proof = {0, tProof, batchProof};
+			proofs.emplace_back(proof);
+			proofs.emplace_back(proof);
 
 			//executorKeys
 			auto executorKey1 = sirius::contract::ExecutorKey({ 1 });
@@ -287,7 +278,11 @@ namespace catapult { namespace contract {
 			std::vector<model::CallPayment> expectedCallPayments;
 
 			//expectedProofs
-			sirius::contract::Proofs proof;
+			sirius::crypto::Scalar scalar(std::array<uint8_t ,32>{5});
+			sirius::crypto::CurvePoint curvePoint = sirius::crypto::CurvePoint::BasePoint() * scalar;
+			sirius::contract::TProof tProof = {curvePoint, scalar};
+			sirius::contract::BatchProof batchProof = {curvePoint, scalar};
+			sirius::contract::Proofs proof = {0, tProof, batchProof};
 			expectedProofs.emplace_back(
 				model::RawProofOfExecution{
 					0,
