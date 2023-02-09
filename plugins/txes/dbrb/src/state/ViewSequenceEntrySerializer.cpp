@@ -11,21 +11,12 @@
 namespace catapult { namespace state {
 
 	namespace {
-
-		void SaveProcessId(io::OutputStream& output, const dbrb::ProcessId& processId) {
-			io::Write(output, processId);
-		}
-
-		void LoadProcessId(io::InputStream& input, dbrb::ProcessId& processId) {
-			io::Read(input, processId);
-		}
-
 		void SaveView(io::OutputStream& output, const dbrb::View& view) {
 			const auto& data = view.Data;
 
 			io::Write16(output, utils::checked_cast<size_t, uint16_t>(data.size()));
 			for (const auto& [processId, membershipChange] : data) {
-				SaveProcessId(output, processId);
+				io::Write(output, processId);
 				io::Write8(output, utils::to_underlying_type(membershipChange));
 			}
 		}
@@ -33,10 +24,10 @@ namespace catapult { namespace state {
 		void LoadView(io::InputStream& input, dbrb::View& view) {
 			auto& data = view.Data;
 
-			auto numPairs = io::Read16(input);
-			while (numPairs--) {
+			auto count = io::Read16(input);
+			for (auto i = 0; i < count; ++i) {
 				dbrb::ProcessId processId;
-				LoadProcessId(input, processId);
+				io::Read(input, processId);
 				const auto membershipChange = static_cast<dbrb::MembershipChange>(io::Read8(input));
 
 				data.emplace(processId, membershipChange);
@@ -50,9 +41,8 @@ namespace catapult { namespace state {
 
 		const auto& sequenceData = entry.sequence().data();
 		io::Write16(output, utils::checked_cast<size_t, uint16_t>(sequenceData.size()));
-		for (const auto& view : sequenceData) {
+		for (const auto& view : sequenceData)
 			SaveView(output, view);
-		}
 	}
 
 	ViewSequenceEntry ViewSequenceEntrySerializer::Load(io::InputStream& input) {
@@ -66,14 +56,14 @@ namespace catapult { namespace state {
 		entry.setVersion(version);
 
 		std::vector<dbrb::View> sequenceData;
-		auto numViews = io::Read16(input);
-		while (numViews--) {
+		auto count = io::Read16(input);
+		for (auto i = 0; i < count; ++i) {
 			dbrb::View view;
 			LoadView(input, view);
 			sequenceData.emplace_back(std::move(view));
 		}
 
-		const auto pSequence = dbrb::Sequence::fromViews(sequenceData);
+		auto pSequence = dbrb::Sequence::fromViews(sequenceData);
 		if (!pSequence.has_value())
 			CATAPULT_THROW_RUNTIME_ERROR("invalid sequence data");
 		entry.sequence() = *pSequence;

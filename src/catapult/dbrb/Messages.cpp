@@ -228,6 +228,7 @@ namespace catapult { namespace dbrb {
 				state.Stored = *ToCommitMessage(*pCommitMessagePacket);
 				pBuffer += pCommitMessagePacket->Size;
 			}
+
 			auto view = Read<View>(pBuffer);
 			auto pendingChanges = Read<View>(pBuffer);
 
@@ -323,9 +324,9 @@ namespace catapult { namespace dbrb {
 
 		const std::vector<View> convergedSequenceData(sequenceData.begin() + 1u, sequenceData.end());
 
-		const auto& replacedView = *Sequence.maybeLeastRecent();
-		const auto convergedSequence = *Sequence::fromViews(convergedSequenceData);
-		const auto& leastRecentView = *convergedSequence.maybeLeastRecent();
+		auto replacedView = *Sequence.maybeLeastRecent();
+		auto convergedSequence = *Sequence::fromViews(convergedSequenceData);
+		auto leastRecentView = *convergedSequence.maybeLeastRecent();
 
 		return InstallMessageData{ leastRecentView, convergedSequence, replacedView, ConvergedSignatures };
 	}

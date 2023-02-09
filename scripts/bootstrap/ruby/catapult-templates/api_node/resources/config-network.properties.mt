@@ -33,7 +33,7 @@ enableBlockSync = false
 
 enableWeightedVoting = true
 committeeSize = 3
-committeeApproval = 0.67
+committeeApproval = 1
 committeePhaseTime = 5s
 minCommitteePhaseTime = 3750ms
 maxCommitteePhaseTime = 1m

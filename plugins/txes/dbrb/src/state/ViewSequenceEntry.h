@@ -31,8 +31,8 @@ namespace catapult { namespace state {
 
 		/// Gets the most recent view in the underlying sequence, if it exists.
 		/// Returns an empty view otherwise.
-		const dbrb::View& mostRecentView() const {
-			const auto pView = m_sequence.maybeMostRecent();
+		dbrb::View mostRecentView() const {
+			auto pView = m_sequence.maybeMostRecent();
 			return pView.value_or(dbrb::View());
 		}
 

@@ -14,34 +14,27 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	// region ToDbModel
 
-	namespace {
-		void StreamView(bson_stream::document& builder, const dbrb::View& view) {
-			auto array = builder << "view" << bson_stream::open_array;
-			for (const auto& [processId, membershipChange] : view.Data) {
-				bson_stream::document changeBuilder;
-				changeBuilder
-						<< "process" << ToBinary(processId)
-						<< "membershipChange" << utils::to_underlying_type(membershipChange);
-				array << changeBuilder;
-			}
-			array << bson_stream::close_array;
-		}
-	}
-
 	bsoncxx::document::value ToDbModel(const state::ViewSequenceEntry& entry) {
 		bson_stream::document builder;
 		auto doc = builder << "viewSequence" << bson_stream::open_document
-						   << "hash" << ToBinary(entry.hash());
+			<< "hash" << ToBinary(entry.hash());
 
-		auto array = builder << "sequence" << bson_stream::open_array;
+		auto sequenceArray = builder << "sequence" << bson_stream::open_array;
 		for (const auto& view : entry.sequence().data()) {
-			StreamView(builder, view);
+			auto viewArray = sequenceArray << bson_stream::open_array;
+			for (const auto& [processId, change] : view.Data) {
+				viewArray << bson_stream::open_document
+							  << "processId" << ToBinary(processId)
+							  << "membershipChange" << static_cast<int32_t>(change)
+							  << bson_stream::close_document;
+			}
+			viewArray << bson_stream::close_array;
 		}
-		array << bson_stream::close_array;
+		sequenceArray << bson_stream::close_array;
 
 		return doc
-				<< bson_stream::close_document
-				<< bson_stream::finalize;
+			<< bson_stream::close_document
+			<< bson_stream::finalize;
 	}
 
 	// endregion
@@ -50,8 +43,6 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
 		void ReadView(dbrb::View& view, const bsoncxx::array::view& dbChangesMap) {
-			auto& viewData = view.Data;
-			viewData.clear();
 			for (const auto& dbChange : dbChangesMap) {
 				auto doc = dbChange.get_document().view();
 
@@ -59,7 +50,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				DbBinaryToModelArray(processId, doc["process"].get_binary());
 				const auto membershipChange = static_cast<dbrb::MembershipChange>(static_cast<uint8_t>(doc["membershipChange"].get_int32()));
 
-				viewData.emplace(std::move(processId), membershipChange);
+				view.Data.emplace(std::move(processId), membershipChange);
 			}
 		}
 	}
@@ -72,7 +63,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		for (const auto& dbView : dbViewSequenceEntry["sequence"].get_array().value) {
 			dbrb::View view;
-			ReadView(view, dbView["view"].get_array().value);
+			ReadView(view, dbView.get_array().value);
 			entry.sequence().tryAppend(view);
 		}
 

@@ -23,7 +23,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		auto sequenceArray = builder << "sequence" << bson_stream::open_array;
 		for (const auto& view : sequence.data()) {
-			auto viewArray = builder << "view" << bson_stream::open_array;
+			auto viewArray = sequenceArray << bson_stream::open_array;
 			for (const auto& [processId, change] : view.Data) {
 				viewArray << bson_stream::open_document
 					<< "processId" << ToBinary(processId)
@@ -37,9 +37,9 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto certificateArray = builder << "certificate" << bson_stream::open_array;
 		for (const auto& [processId, signature] : certificate) {
 			certificateArray << bson_stream::open_document
-					  << "processId" << ToBinary(processId)
-					  << "signature" << ToBinary(signature)
-					  << bson_stream::close_document;
+				  << "processId" << ToBinary(processId)
+				  << "signature" << ToBinary(signature)
+				  << bson_stream::close_document;
 		}
 		certificateArray << bson_stream::close_array;
 	}

@@ -53,11 +53,16 @@ namespace catapult { namespace dbrb {
 		bool update(const ConvergedMessage& message) {
 			const auto keyPair = std::make_pair(message.ReplacedView, message.ConvergedSequence);
 			auto& map = ConvergedSignatures[keyPair];
-			if (map.count(message.Sender)) {
+			if (map.count(message.Sender))
 				return false; // This process has already sent a Converged message; do nothing, quorum is NOT triggered on this message.
-			}
 			map[message.Sender] = message.Signature;
-			return map.size() == message.ReplacedView.quorumSize();
+
+			auto mapSize = map.size();
+			auto quorumSize = message.ReplacedView.quorumSize();
+			bool triggered = (mapSize == quorumSize);
+			CATAPULT_LOG(debug) << "[DBRB] CONVERGED: Quorum status is " << mapSize << "/" << quorumSize << (triggered ? " (TRIGGERED)" : " (NOT triggered)");
+
+			return triggered;
 		};
 
 		std::set<View> update(const StateUpdateMessage& message) {
@@ -65,7 +70,13 @@ namespace catapult { namespace dbrb {
 			for (auto& [view, messages] : StateUpdateMessages) {
 				if (view.isMember(message.Sender)) {
 					messages.insert(message);
-					if (messages.size() == view.quorumSize())
+
+					auto messagesCount = messages.size();
+					auto quorumSize = view.quorumSize();
+					bool triggered = (messagesCount == view.quorumSize());
+					CATAPULT_LOG(debug) << "[DBRB] STATE-UPDATE: Quorum status is " << messagesCount << "/" << quorumSize << (triggered ? " (TRIGGERED)" : " (NOT triggered)");
+
+					if (triggered)
 						triggeredViews.insert(view);
 				}
 			}
@@ -102,12 +113,14 @@ namespace catapult { namespace dbrb {
 		/// Returns whether the quorum for \a referenceView has just been collected on this update.
 		template<typename TKey>
 		bool update(std::map<TKey, std::set<ProcessId>>& map, const TKey& key, const ProcessId& id, size_t quorumSize, const std::string& name) {
-			map[key].insert(id);
+			if (!map[key].insert(id).second)
+				return false;
+
 			auto count = map.at(key).size();
 
 			// Quorum collection is triggered only once, when the counter EXACTLY hits the quorum size.
 			const auto triggered = (count == quorumSize);
-			CATAPULT_LOG(debug) << "[DBRB] " << name<< " QUORUM: Quorum status is " << count << "/" << quorumSize << (triggered ? " (TRIGGERED)." : "(NOT triggered).");
+			CATAPULT_LOG(debug) << "[DBRB] " << name << " QUORUM: Quorum status is " << count << "/" << quorumSize << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
 
 			return triggered;
 		};

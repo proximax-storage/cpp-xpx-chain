@@ -9,6 +9,7 @@
 #include "catapult/api/RemoteRequestDispatcher.h"
 #include "catapult/net/PacketIoPickerContainer.h"
 #include "catapult/utils/TimeSpan.h"
+#include <thread>
 
 namespace catapult { namespace dbrb {
 
@@ -17,9 +18,7 @@ namespace catapult { namespace dbrb {
 			if (nodes.empty())
 				return;
 
-			auto timeout = utils::TimeSpan::FromSeconds(60);
-
-			auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
+			auto packetIoPairs = packetIoPickers.pickMultiple(utils::TimeSpan::FromSeconds(60));
 			CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pushing DBRB nodes";
 			if (packetIoPairs.empty())
 				return;
@@ -111,32 +110,32 @@ namespace catapult { namespace dbrb {
 		if (ids.empty())
 			return;
 
-		auto timeout = utils::TimeSpan::FromSeconds(60);
-
-		auto packetIoPairs = m_packetIoPickers.pickMultiple(timeout);
+		auto packetIoPairs = m_packetIoPickers.pickMultiple(utils::TimeSpan::FromSeconds(60));
 		CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling DBRB nodes";
-		if (packetIoPairs.empty())
-			return;
+		if (!packetIoPairs.empty()) {
+			std::vector<SignedNode> newNodes;
+			for (const auto& packetIoPair : packetIoPairs) {
+				api::RemoteRequestDispatcher dispatcher(*packetIoPair.io());
+				std::vector<SignedNode> nodes;
+				try {
+					nodes = dispatcher.dispatch(DbrbPullNodesTraits(m_networkIdentifier), ids).get();
+				} catch (const std::exception& error) {
+					CATAPULT_LOG(error) << error.what();
+				}
 
-		std::vector<SignedNode> newNodes;
-		for (const auto& packetIoPair : packetIoPairs) {
-			api::RemoteRequestDispatcher dispatcher(*packetIoPair.io());
-			std::vector<SignedNode> nodes;
-			try {
-				nodes = dispatcher.dispatch(DbrbPullNodesTraits(m_networkIdentifier), ids).get();
-			} catch (const std::exception& error) {
-				CATAPULT_LOG(error) << error.what();
+				for (const auto& node : nodes) {
+					newNodes.emplace_back(node);
+					ids.erase(node.Node.identityKey());
+				}
+
+				if (ids.empty())
+					break;
 			}
 
-			for (const auto& node : nodes) {
-				newNodes.emplace_back(node);
-				ids.erase(node.Node.identityKey());
-			}
-
-			if (ids.empty())
-				break;
+			addNodes(newNodes);
 		}
 
-		addNodes(newNodes);
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(2000ms);
 	}
 }}

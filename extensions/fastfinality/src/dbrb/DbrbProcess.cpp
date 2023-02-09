@@ -188,6 +188,8 @@ namespace catapult { namespace dbrb {
 		for (auto iter = recipients.begin(); iter != recipients.end(); ++iter) {
 			if (m_id == *iter) {
 				boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), pMessage]() {
+					// Use the side effect of message serialization - signing the message.
+					(void)pMessage->toNetworkPacket(&pThis->m_keyPair);
 					pThis->processMessage(*pMessage);
 				});
 				recipients.erase(iter);
@@ -195,22 +197,27 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
-		m_messageSender.enqueue(pMessage->toNetworkPacket(&m_keyPair), recipients);
+		boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), pMessage, recipients]() {
+			pThis->m_messageSender.enqueue(pMessage->toNetworkPacket(&pThis->m_keyPair), recipients);
+		});
 	}
 
 	void DbrbProcess::send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient) {
-		if (m_id == recipient) {
-			boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), pMessage]() {
+		boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), pMessage, recipient]() {
+			if (pThis->m_id == recipient) {
+				// Use the side effect of message serialization - signing the message.
+				(void)pMessage->toNetworkPacket(&pThis->m_keyPair);
 				pThis->processMessage(*pMessage);
-			});
-		} else {
-			m_messageSender.enqueue(pMessage->toNetworkPacket(&m_keyPair), std::set<ProcessId>{ recipient });
-		}
+			} else {
+				pThis->m_messageSender.enqueue(pMessage->toNetworkPacket(&pThis->m_keyPair), std::set<ProcessId>{ recipient });
+			}
+		});
 	}
 
 	void DbrbProcess::prepareForStateUpdates(const InstallMessageData& installMessageData) {
 		m_currentInstallMessage = installMessageData;
-		m_quorumManager.StateUpdateMessages[installMessageData.ReplacedView] = {};	// TODO: May be redundant
+		if (m_quorumManager.StateUpdateMessages.find(installMessageData.ReplacedView) == m_quorumManager.StateUpdateMessages.end())
+			m_quorumManager.StateUpdateMessages[installMessageData.ReplacedView] = {};
 	}
 
 	void DbrbProcess::updateState(const std::set<StateUpdateMessage>& messages) {
@@ -627,7 +634,7 @@ namespace catapult { namespace dbrb {
 
 			// Check if there are more recent views in the sequence of the install message.
 			Sequence moreRecentSequence;
-			for (auto iter = convergedSequence.data().rend(); m_currentView < *iter; ++iter)
+			for (auto iter = convergedSequence.data().rbegin(); iter != convergedSequence.data().rend() && m_currentView < *iter; ++iter)
 				moreRecentSequence.tryInsert(*iter);
 
 			if (!moreRecentSequence.data().empty()

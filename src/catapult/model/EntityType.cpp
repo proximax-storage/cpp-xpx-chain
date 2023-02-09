@@ -48,6 +48,7 @@ namespace catapult { namespace model {
 			#include "plugins/txes/committee/src/model/CommitteeEntityType.h"
 			#include "plugins/txes/config/src/model/NetworkConfigEntityType.h"
 			#include "plugins/txes/contract/src/model/ContractEntityType.h"
+			#include "plugins/txes/dbrb/src/model/DbrbEntityType.h"
 			#include "plugins/txes/exchange/src/model/ExchangeEntityType.h"
 			#include "plugins/txes/exchange_sda/src/model/SdaExchangeEntityType.h"
 			#include "plugins/txes/liquidityprovider/src/model/LiquidityProviderEntityType.h"

@@ -50,6 +50,7 @@ namespace catapult { namespace validators {
 			#include "plugins/txes/aggregate/src/validators/Results.h"
 			#include "plugins/txes/committee/src/validators/Results.h"
 			#include "plugins/txes/config/src/validators/Results.h"
+			#include "plugins/txes/dbrb//src/validators/Results.h"
 			#include "plugins/txes/exchange/src/validators/Results.h"
 			#include "plugins/txes/exchange_sda/src/validators/Results.h"
 			#include "plugins/txes/config/src/validators/Results.h"

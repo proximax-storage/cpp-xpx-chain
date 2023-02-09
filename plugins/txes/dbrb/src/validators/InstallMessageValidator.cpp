@@ -25,16 +25,16 @@ namespace catapult { namespace validators {
 	  	if (notification.Sequence.data().size() < 2u)
 		  	return Failure_Dbrb_View_Sequence_Size_Insufficient;
 
-		const auto& replacedView = *notification.Sequence.maybeLeastRecent();
-		const std::vector<dbrb::View> convergedSequenceData(notification.Sequence.data().begin() + 1u, notification.Sequence.data().end());
-		const auto& convergedSequence = *dbrb::Sequence::fromViews(convergedSequenceData);
+		auto replacedView = *notification.Sequence.maybeLeastRecent();
+		std::vector<dbrb::View> convergedSequenceData(notification.Sequence.data().begin() + 1u, notification.Sequence.data().end());
+		auto convergedSequence = *dbrb::Sequence::fromViews(convergedSequenceData);
 
 		// Check if the replaced view is the most recent view stored in the cache
-		if (viewSequenceCache.getLatestView() != replacedView)
+		if (viewSequenceCache.size() > 0 && viewSequenceCache.getLatestView() != replacedView)
 			return Failure_Dbrb_Invalid_Replaced_View;
 
 		// Check if there are enough signatures
-		if (notification.Certificate.size() < notification.Sequence.maybeMostRecent()->quorumSize())
+		if (notification.Certificate.size() < replacedView.quorumSize())
 			return Failure_Dbrb_Signatures_Count_Insufficient;
 
 	  	// Check if all signatures are valid

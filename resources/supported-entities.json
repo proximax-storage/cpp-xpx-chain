@@ -359,6 +359,11 @@
 			"name": "removeSdaExchangeOffer",
 			"type": "17002",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "dbrbViewInstall",
+			"type": "16748",
+			"supportedVersions": [1]
 		}
 	]
 }
