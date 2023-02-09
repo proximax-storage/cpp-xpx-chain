@@ -345,7 +345,11 @@ namespace catapult { namespace contract {
 
 			Key contractKey({ 11 });
 			auto batchIndex = 1;
-			sirius::contract::Proofs proof;
+			sirius::crypto::Scalar scalar(std::array<uint8_t ,32>{5});
+			sirius::crypto::CurvePoint curvePoint = sirius::crypto::CurvePoint::BasePoint() * scalar;
+			sirius::contract::TProof tProof = {curvePoint, scalar};
+			sirius::contract::BatchProof batchProof = {curvePoint, scalar};
+			sirius::contract::Proofs proof = {0, tProof, batchProof};
 
 			transactionInfo.m_contractKey = contractKey.array();
 			transactionInfo.m_batchIndex = batchIndex;
@@ -364,7 +368,11 @@ namespace catapult { namespace contract {
 		auto testee = CreateTransactionSender(transactionRangeHandler);
 		Key expectedContractKey({ 11 });
 		uint64_t expectedBatchIndex = 1;
-		model::RawProofOfExecution expectedProof;
+		sirius::crypto::Scalar scalar(std::array<uint8_t ,32>{5});
+		sirius::crypto::CurvePoint curvePoint = sirius::crypto::CurvePoint::BasePoint() * scalar;
+		sirius::contract::TProof tProof = {curvePoint, scalar};
+		sirius::contract::BatchProof batchProof = {curvePoint, scalar};
+		sirius::contract::Proofs expectedProof = {0, tProof, batchProof};
 
 		testee.sendEndBatchExecutionSingleTransaction(CreateEndBatchExecutionSingleTransaction());
 
@@ -372,7 +380,11 @@ namespace catapult { namespace contract {
 		auto& transaction = static_cast<const model::EndBatchExecutionSingleTransaction&>(*pTransaction);
 		EXPECT_EQ(expectedContractKey, transaction.ContractKey);
 		EXPECT_EQ(expectedBatchIndex, transaction.BatchId);
-//		EXPECT_EQ(expectedProof, transaction.ProofOfExecution);
+		EXPECT_EQ(expectedProof.m_initialBatch, transaction.ProofOfExecution.StartBatchId);
+		EXPECT_EQ(expectedProof.m_tProof.m_k.array(), transaction.ProofOfExecution.K);
+		EXPECT_EQ(expectedProof.m_tProof.m_F.toBytes(), transaction.ProofOfExecution.F);
+		EXPECT_EQ(expectedProof.m_batchProof.m_r.array(), transaction.ProofOfExecution.R);
+		EXPECT_EQ(expectedProof.m_batchProof.m_T.toBytes(), transaction.ProofOfExecution.T);
 	}
 
 	namespace{
