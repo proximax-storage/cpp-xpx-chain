@@ -22,7 +22,7 @@ namespace catapult { namespace model {
             auto expectedSize = 
                     baseSize // base
                     + Key_Size // drive key
-                    + sizeof(uint32_t) // automaticExecutions number
+                    + sizeof(uint32_t); // automaticExecutions number
             
             // Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));

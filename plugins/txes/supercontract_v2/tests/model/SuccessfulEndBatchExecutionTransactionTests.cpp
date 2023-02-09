@@ -29,7 +29,7 @@ namespace catapult { namespace model {
                     + 32 // proofOfExecutionVerification information
                     + sizeof(uint64_t) // check next block for automatic executions
                     + sizeof(uint16_t) // number of cosigners
-                    + sizeof(uint16_t) // number of calls
+                    + sizeof(uint16_t); // number of calls
             
             // Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
