@@ -187,6 +187,9 @@ namespace catapult { namespace validators {
 	// Validation failed because supercontract is already deployed.
 	DEFINE_STORAGE_RESULT(Owner_Management_Can_Not_Be_Allowed, 57);
 
+	// Validation failed because too many replicators have been ordered
+	DEFINE_STORAGE_RESULT(Replicator_Count_Exceeded, 58);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif
