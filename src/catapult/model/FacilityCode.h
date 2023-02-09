@@ -67,6 +67,10 @@ namespace catapult { namespace model {
 		Operation = 0x5F,
 		/// SuperContract facility code.
 		SuperContract = 0x60,
+		/// Levy facility code.
+		Levy = 0x4F,
+		/// NEM's Metadata facility code.
+		Metadata_v2 = 0x3F,
 		/// Lock Fund facility code.
 		LockFund = 0x62,
 		/// Account restriction facility code.

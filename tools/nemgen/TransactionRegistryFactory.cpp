@@ -53,9 +53,9 @@ namespace catapult { namespace tools { namespace nemgen {
 
 		auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
 		model::TransactionRegistry registry;
-		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin());
+		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin(pConfigHolder));
 		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
-		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin());
+		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin(pConfigHolder));
 		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(pConfigHolder));
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		registry.registerPlugin(plugins::CreateNetworkConfigTransactionPlugin());

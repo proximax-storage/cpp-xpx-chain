@@ -121,7 +121,6 @@ namespace catapult { namespace local {
 		}
 
 		void PrepareAndSaveState(
-				const config::BlockchainConfiguration& config,
 				const config::CatapultDirectory& directory,
 				plugins::PluginManager& pluginManager,
 				bool shouldUseCacheDatabase,
@@ -133,7 +132,7 @@ namespace catapult { namespace local {
 			auto supplementalData = CreateDeterministicSupplementalData();
 
 			// - seed with nemesis block, so that nemesis accounts have proper balances
-			test::LocalNodeTestState state(config, pluginManager.createCache());
+			test::LocalNodeTestState state(pluginManager.configHolder()->Config(), pluginManager.createCache());
 			SeedCacheWithNemesis(state.ref(), pluginManager);
 			RandomSeedCache(state.ref().Cache, cacheHeight);
 
@@ -275,8 +274,9 @@ namespace catapult { namespace local {
 			void prepareSavedStorage(const config::BlockchainConfiguration& config) {
 				m_blockScores = PrepareRandomBlocks(dataDirectory().rootDir(), m_storageHeight.unwrap() - 1);
 				CATAPULT_LOG(debug) << "storage prepared";
+
 				auto pPluginManager = test::CreatePluginManagerWithRealPlugins(config);
-				PrepareAndSaveState(config, dataDirectory().dir("state"), *pPluginManager, m_useCacheDatabaseStorage, m_cacheHeight);
+				PrepareAndSaveState(dataDirectory().dir("state"), *pPluginManager, m_useCacheDatabaseStorage, m_cacheHeight);
 				CATAPULT_LOG(debug) << "state prepared";
 			}
 

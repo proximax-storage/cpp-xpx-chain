@@ -44,10 +44,13 @@ namespace catapult { namespace cache {
 		Download,
 		SuperContract,
 		Operation,
+		MosaicLevy,
+		Metadata_v2,
 		LockFund,
 		AccountRestriction,
 		MosaicRestriction,
 		GlobalStore,
+		Last
 	};
 
 /// Defines cache constants for a cache with \a NAME.

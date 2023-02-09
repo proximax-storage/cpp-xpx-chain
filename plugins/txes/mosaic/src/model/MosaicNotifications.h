@@ -22,6 +22,7 @@
 #include "MosaicConstants.h"
 #include "MosaicProperties.h"
 #include "MosaicTypes.h"
+#include "MosaicLevy.h"
 #include "catapult/model/Notifications.h"
 
 namespace catapult { namespace model {
@@ -51,7 +52,13 @@ namespace catapult { namespace model {
 
 	/// Mosaic rental fee has been sent.
 	DEFINE_MOSAIC_NOTIFICATION(Rental_Fee_v1, 0x0030, Observer);
-
+		
+	/// levy information has been modified
+	DEFINE_MOSAIC_NOTIFICATION(Modify_Levy_v1, 0x0040, All);
+		
+	/// levy remove transaction has been sent
+	DEFINE_MOSAIC_NOTIFICATION(Remove_Levy_v1, 0x0042, All);
+	
 #undef DEFINE_MOSAIC_NOTIFICATION
 
 	// endregion
@@ -267,4 +274,60 @@ namespace catapult { namespace model {
 	};
 
 	// endregion
+		
+	// region mosaic modify levy
+	template<VersionType version>
+	struct MosaicModifyLevyNotification;
+	
+	template<>
+	struct MosaicModifyLevyNotification<1> :  public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Mosaic_Modify_Levy_v1_Notification;
+	
+	public:
+		explicit MosaicModifyLevyNotification(const UnresolvedMosaicId & mosaicId, const MosaicLevyRaw& levy, const Key& signer)
+			: Notification(Notification_Type, sizeof(MosaicModifyLevyNotification<1>))
+			, MosaicId(mosaicId)
+			, Levy(levy)
+			, Signer(signer)
+		{}
+	
+	public:
+		
+		/// Id of the mosaic.
+		UnresolvedMosaicId MosaicId;
+		
+		/// levy container
+		MosaicLevyRaw Levy;
+		
+		/// Signer of the transaction
+		Key Signer;
+	};
+	
+	// endregion
+	
+	template<VersionType version>
+	struct MosaicRemoveLevyNotification;
+	template<>
+	struct MosaicRemoveLevyNotification<1> :  public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Mosaic_Remove_Levy_v1_Notification;
+	
+	public:
+		explicit MosaicRemoveLevyNotification(UnresolvedMosaicId mosaicId, const Key& signer)
+			: Notification(Notification_Type, sizeof(MosaicRemoveLevyNotification<1>))
+			, MosaicId(mosaicId)
+			, Signer(signer)
+		{}
+	
+	public:
+		
+		/// Id of the mosaic.
+		UnresolvedMosaicId MosaicId;
+		
+		/// Signer of the transaction
+		Key Signer;
+	};
 }}

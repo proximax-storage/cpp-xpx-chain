@@ -30,22 +30,29 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const PublishContext&, NotificationSubscriber& sub) {
-			switch (transaction.EntityVersion()) {
-			case 3:
-				sub.notify(MosaicRequiredNotification<2>(transaction.Signer, transaction.MosaicId, MosaicRequirementAction::Set));
-				sub.notify(MosaicSupplyChangeNotification<2>(transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));
-				break;
-			case 2:
-				sub.notify(MosaicRequiredNotification<1>(transaction.Signer, transaction.MosaicId));
-				sub.notify(MosaicSupplyChangeNotification<1>(transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));
-				break;
+		static auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder> &pConfigHolder) {
+			return [pConfigHolder](
+						   const TTransaction& transaction,
+						   const PublishContext& associatedHeight,
+						   NotificationSubscriber& sub) {
+				switch (transaction.EntityVersion()) {
+				case 3:
+					sub.notify(MosaicRequiredNotification<2>(transaction.Signer, transaction.MosaicId, MosaicRequirementAction::Set));
+					sub.notify(MosaicSupplyChangeNotification<2>(transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));
+					break;
+				case 2:
+					sub.notify(MosaicRequiredNotification<1>(transaction.Signer, transaction.MosaicId));
+					sub.notify(MosaicSupplyChangeNotification<1>(
+							transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));
+					break;
 
-			default:
-					CATAPULT_LOG(debug) << "invalid version of MosaicSupplyChangeTransaction: " << transaction.EntityVersion();
-			}
+				default:
+					CATAPULT_LOG(debug) << "invalid version of MosaicSupplyChangeTransaction: "
+										<< transaction.EntityVersion();
+				}
+			};
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(MosaicSupplyChange, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicSupplyChange, Default, CreatePublisher, std::shared_ptr<config::BlockchainConfigurationHolder>)
 }}

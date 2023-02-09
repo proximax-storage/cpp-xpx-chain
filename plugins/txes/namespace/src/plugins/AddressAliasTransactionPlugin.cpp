@@ -30,18 +30,26 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const PublishContext&, NotificationSubscriber& sub) {
-			switch (transaction.EntityVersion()) {
-			case 1:
-				sub.notify(AliasOwnerNotification<1>(transaction.Signer, transaction.NamespaceId, transaction.AliasAction));
-				sub.notify(AliasedAddressNotification_v1(transaction.NamespaceId, transaction.AliasAction, transaction.Address));
-				break;
+		static auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder> &pConfigHolder) {
+			return [pConfigHolder](
+						   const TTransaction& transaction,
+						   const PublishContext& associatedHeight,
+						   NotificationSubscriber& sub) {
+				switch (transaction.EntityVersion()) {
+				case 1:
+					sub.notify(AliasOwnerNotification<1>(
+							transaction.Signer, transaction.NamespaceId, transaction.AliasAction));
+					sub.notify(AliasedAddressNotification_v1(
+							transaction.NamespaceId, transaction.AliasAction, transaction.Address));
+					break;
 
-			default:
-				CATAPULT_LOG(debug) << "invalid version of AddressAliasTransaction: " << transaction.EntityVersion();
-			}
+				default:
+					CATAPULT_LOG(debug) << "invalid version of AddressAliasTransaction: "
+										<< transaction.EntityVersion();
+				}
+			};
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(AddressAlias, Default, Publish)
+		DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(AddressAlias, Default, CreatePublisher, std::shared_ptr<config::BlockchainConfigurationHolder>)
 }}

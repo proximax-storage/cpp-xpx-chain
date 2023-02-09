@@ -33,4 +33,16 @@ namespace catapult { namespace observers {
 	/// - increase or decrease of supply
 	DECLARE_OBSERVER(MosaicSupplyChangeV1, model::MosaicSupplyChangeNotification<1>)();
 	DECLARE_OBSERVER(MosaicSupplyChangeV2, model::MosaicSupplyChangeNotification<2>)();
+
+	/// Observer triggered during addition of levy
+	DECLARE_OBSERVER(ModifyLevy, model::MosaicModifyLevyNotification<1>)();
+
+	/// Observes removal of levy
+	DECLARE_OBSERVER(RemoveLevy, model::MosaicRemoveLevyNotification<1>)();
+
+	/// Observes changes triggered by block notifications
+	DECLARE_OBSERVER(PruneLevyHistory, model::BlockNotification<1>)();
+
+	/// Observes balance changes triggered by balance transfer notifications.
+	DECLARE_OBSERVER(LevyBalanceTransfer, model::BalanceTransferNotification<1>)();
 }}

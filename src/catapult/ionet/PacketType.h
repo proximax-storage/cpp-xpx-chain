@@ -155,6 +155,8 @@ namespace catapult { namespace ionet {
 	/* Mosaic restrictions state path has been requested by a client. */ \
 	ENUM_VALUE(Mosaic_Restrictions_State_Path, FACILITY_BASED_CODE(800, RestrictionMosaic)) \
 	\
+	/* Super contract state path has been requested by a client. */ \
+	ENUM_VALUE(Levy_State_Path, FACILITY_BASED_CODE(800, Levy)) \
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
 	/* Request for the current diagnostic counter values. */ \
@@ -224,8 +226,10 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(Account_Restrictions_Infos, FACILITY_BASED_CODE(1200, RestrictionAccount)) \
 	\
 	/* Mosaic restrictions infos have been requested by a client. */ \
-	ENUM_VALUE(Mosaic_Restrictions_Infos, FACILITY_BASED_CODE(1200, RestrictionMosaic))
-
+	ENUM_VALUE(Mosaic_Restrictions_Infos, FACILITY_BASED_CODE(1200, RestrictionMosaic)) \
+	\
+	/* Super contract infos have been requested by a client. */ \
+	ENUM_VALUE(Levy_Infos, FACILITY_BASED_CODE(1200, Levy)) \
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

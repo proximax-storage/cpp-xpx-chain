@@ -190,7 +190,7 @@ namespace catapult { namespace config {
 			// Assert:
 			EXPECT_EQ("0000000000000000000000000000000000000000000000000000000000000000", config.BootKey);
 
-			//EXPECT_EQ("../data", config.DataDirectory);
+			EXPECT_EQ("../data", config.DataDirectory);
 			EXPECT_EQ(".", config.PluginsDirectory);
 		}
 
@@ -209,7 +209,7 @@ namespace catapult { namespace config {
 
 		void AssertDefaultSupportedEntityVersions(const SupportedEntityVersions& config) {
 			// Assert:
-			EXPECT_EQ(57u, config.size());
+			EXPECT_EQ(62u, config.size());
 		}
 	}
 

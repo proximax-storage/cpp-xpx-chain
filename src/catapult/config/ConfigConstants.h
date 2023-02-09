@@ -29,6 +29,7 @@ namespace catapult { namespace config {
 		upgradeConfigId,
         exchangeConfigId,
         operationConfigId,
+		metadata_v2ConfigId,
 		globalstoreConfigId,
 		restrictionaccountConfigId,
 		restrictionmosaicConfigId,

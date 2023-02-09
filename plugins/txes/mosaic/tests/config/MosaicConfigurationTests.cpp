@@ -48,11 +48,12 @@ namespace catapult { namespace config {
 			}
 
 			static bool SupportsUnknownProperties() {
-				return false;
+				return true;
 			}
 
-			static bool IsPropertyOptional(const std::string&) {
-				return false;
+			static bool IsPropertyOptional(const std::string& name) {
+				return std::set<std::string>{
+					"levyEnable"}.count(name);
 			}
 
 			static bool IsSectionOptional(const std::string&) {

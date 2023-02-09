@@ -39,8 +39,8 @@ namespace catapult { namespace test {
 	model::TransactionRegistry ExternalSourceConnection::CreateTransactionRegistry() {
 		auto registry = model::TransactionRegistry();
 		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(config::CreateMockConfigurationHolder()));
-		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin());
-		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin());
+		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin(config::CreateMockConfigurationHolder()));
+		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin(config::CreateMockConfigurationHolder()));
 		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(config::CreateMockConfigurationHolder()));
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		registry.registerPlugin(plugins::CreateNetworkConfigTransactionPlugin());

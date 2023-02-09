@@ -19,8 +19,8 @@
 **/
 
 #pragma once
-#include "src/model/NamespaceConstants.h"
-#include "src/model/NamespaceTypes.h"
+#include "plugins/txes/namespace/src/model/NamespaceConstants.h"
+#include "plugins/txes/namespace/src/model/NamespaceTypes.h"
 #include "catapult/model/Notifications.h"
 
 namespace catapult { namespace model {
@@ -44,6 +44,9 @@ namespace catapult { namespace model {
 
 	/// Namespace rental fee has been sent.
 	DEFINE_NAMESPACE_NOTIFICATION(Rental_Fee_v1, 0x0030, Observer);
+
+	/// Namespace is required.
+	DEFINE_NAMESPACE_NOTIFICATION(Required_v1, 0x0006, Validator);
 
 #undef DEFINE_NAMESPACE_NOTIFICATION
 
@@ -195,6 +198,36 @@ namespace catapult { namespace model {
 	public:
 		/// Recipient.
 		UnresolvedAddress Recipient;
+	};
+
+	// endregion
+
+	// region namespace required
+
+	/// Notification of a required namespace.
+	template<VersionType version>
+	struct NamespaceRequiredNotification;
+
+	template<>
+	struct NamespaceRequiredNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Namespace_Required_v1_Notification;
+
+	public:
+		/// Creates a notification around \a owner and \a namespaceId.
+		NamespaceRequiredNotification(const Key& owner, NamespaceId namespaceId)
+				: Notification(Notification_Type, sizeof(NamespaceRequiredNotification))
+				, Owner(owner)
+				, NamespaceId(namespaceId)
+		{}
+
+	public:
+		/// Namespace owner.
+		Key Owner;
+
+		/// Namespace id.
+		catapult::NamespaceId NamespaceId;
 	};
 
 	// endregion

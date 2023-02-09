@@ -37,7 +37,7 @@ namespace catapult { namespace test {
 
 	namespace detail {
 		/// Default timeout used by WaitFor.
-		constexpr size_t Default_Wait_Timeout = 5;
+		constexpr size_t Default_Wait_Timeout = 10;
 
 		/// Waits for the specified function (\a func) to return the desired value (\a desired)
 		/// with a configurable timeout (\a timeoutSeconds).

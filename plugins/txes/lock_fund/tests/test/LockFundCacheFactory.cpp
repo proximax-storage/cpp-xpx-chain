@@ -36,7 +36,7 @@ namespace catapult { namespace test {
 	}
 
 	cache::CatapultCache LockFundCacheFactory::Create(const config::BlockchainConfiguration& config) {
-		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(23);
+		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches((int)cache::CacheId::Last);
 		CreateSubCaches(config, cache::CacheConfiguration(), subCaches);
 		return cache::CatapultCache(std::move(subCaches));
 	}
