@@ -231,7 +231,8 @@ namespace catapult { namespace fastfinality {
 					pFsmShared,
 					blockRangeConsumer,
 					pConfigHolder,
-					pluginManager.getCommitteeManager());
+					pluginManager.getCommitteeManager(),
+					m_dbrbConfig);
 				actions.IncrementRound = CreateDefaultIncrementRoundAction(pFsmShared, pConfigHolder);
 				actions.ResetRound = CreateDefaultResetRoundAction(pFsmShared, pConfigHolder, pluginManager.getCommitteeManager());
 

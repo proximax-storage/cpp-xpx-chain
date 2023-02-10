@@ -924,8 +924,9 @@ namespace catapult { namespace fastfinality {
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 			const consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&>& rangeConsumer,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			chain::CommitteeManager& committeeManager) {
-		return [pFsmWeak, rangeConsumer, pConfigHolder, &committeeManager]() {
+			chain::CommitteeManager& committeeManager,
+			const dbrb::DbrbConfiguration& dbrbConfig) {
+		return [pFsmWeak, rangeConsumer, pConfigHolder, &committeeManager, dbrbConfig]() {
 			TRY_GET_FSM()
 
 			bool success = false;
@@ -951,8 +952,12 @@ namespace catapult { namespace fastfinality {
 				success = pPromise->get_future().get();
 			}
 
-			if (success)
-				pFsmShared->dbrbProcess()->onViewDiscovered(pFsmShared->dbrbViewFetcher().getLatestView());
+			if (success) {
+				auto viewData = pFsmShared->dbrbViewFetcher().getLatestView();
+				if (viewData.empty())
+					viewData = dbrbConfig.BootstrapProcesses;
+				pFsmShared->dbrbProcess()->onViewDiscovered(viewData);
+			}
 
 			DelayAction(pFsmShared, pFsmShared->timer(), GetPhaseEndTimeMillis(CommitteePhase::Commit, committeeData.committeeRound().PhaseTimeMillis), [pFsmWeak, success] {
 				TRY_GET_FSM()
