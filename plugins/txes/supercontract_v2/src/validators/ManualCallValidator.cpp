@@ -31,9 +31,13 @@ namespace catapult { namespace validators {
 		const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 
 		auto contractIt = contractCache.find(notification.ContractKey);
-		const auto& pContractEntry = contractIt.get();
+		auto* pContractEntry = contractIt.tryGet();
 
-		if (pContractEntry.deploymentStatus() == state::DeploymentStatus::IN_PROGRESS) {
+		if (!pContractEntry) {
+			return Failure_SuperContract_Contract_Does_Not_Exist;
+		}
+
+		if (pContractEntry->deploymentStatus() == state::DeploymentStatus::IN_PROGRESS) {
 			return Failure_SuperContract_Deployment_In_Progress;
 		}
 
