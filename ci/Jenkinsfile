@@ -16,30 +16,24 @@ pipeline {
     }
 
 	stages {
-	  stage ('Build') {
+      stage ('Build') {
             steps {
                 echo 'Building catapult-server inside a docker'
                 script {
-                    withCredentials([string(credentialsId: 'git_token', variable: 'GIT_TOKEN')]) {
-                        sh """
-                            git config --global url."https://${GIT_TOKEN}:@github.com/".insteadOf "https://github.com/"
-                            git submodule update --init --recursive --remote
-                        """
-                        def buildImage = docker.image("${BUILD_IMAGE}")
-                        docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                            buildImage.inside() {
-                                sh """
-                                    echo 'Building catapult-server'
-                                    rm -rf _build
-                                    mkdir _build
-                                    cd _build
-                                    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so ..
-                                        make -j4 publish
-                                    make -j4
-                                    cd ..
-                                    ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
-                                """
-                            }
+                    def buildImage = docker.image("${BUILD_IMAGE}")
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                        buildImage.inside() {
+                            sh """
+                                echo 'Building catapult-server'
+                                rm -rf _build
+                                mkdir _build
+                                cd _build
+                                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so ..
+                                    make -j4 publish
+                                make -j4
+                                cd ..
+                                ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
+                            """
                         }
                     }
                 }
