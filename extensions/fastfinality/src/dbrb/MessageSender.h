@@ -17,6 +17,7 @@ namespace catapult { namespace dbrb {
 	class MessageSender : public AsyncMessageQueue<std::pair<std::shared_ptr<MessagePacket>, std::set<ProcessId>>> {
 	public:
 		explicit MessageSender(std::shared_ptr<net::PacketWriters> pWriters, NodeRetreiver& nodeRetreiver);
+		~MessageSender() override;
 
 	private:
 		void processBuffer(BufferType& buffer) override;

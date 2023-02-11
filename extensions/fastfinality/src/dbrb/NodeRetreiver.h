@@ -16,6 +16,7 @@ namespace catapult { namespace dbrb {
 	class NodeRetreiver : public AsyncMessageQueue<ProcessId> {
 	public:
 		explicit NodeRetreiver(const net::PacketIoPickerContainer& packetIoPickers, model::NetworkIdentifier networkIdentifier);
+		~NodeRetreiver() override;
 
 	public:
 		void enqueue(std::set<ProcessId> ids);

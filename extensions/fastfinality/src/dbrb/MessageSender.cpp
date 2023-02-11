@@ -54,48 +54,53 @@ namespace catapult { namespace dbrb {
 		, m_nodeRetreiver(nodeRetreiver)
 	{}
 
+	MessageSender::~MessageSender() {
+		stop();
+	}
+
 	void MessageSender::processBuffer(BufferType& buffer) {
-		BufferType unsentMessages;
-		std::set<ProcessId> notFoundNodes;
 		net::PeerConnectResult peerConnectResult;
-		for (const auto& [pPacket, recipients] : buffer) {
-			std::set<ProcessId> unprocessedNodes;
-			for (const auto& recipient : recipients) {
+		while (!buffer.empty()) {
+			std::map<ProcessId, std::set<std::shared_ptr<MessagePacket>>> messages;
+			for (const auto& [pPacket, recipients] : buffer) {
+				for (const auto& recipient : recipients)
+					messages[recipient].emplace(pPacket);
+			}
+			buffer.clear();
+
+			std::set<ProcessId> notFoundNodes;
+			for (const auto& [recipient, packets] : messages) {
 				auto signedNode = m_nodeRetreiver.getNode(recipient);
 				if (signedNode) {
 					const auto& node = signedNode.value().Node;
 					auto nodePacketIoPair = GetNodePacketIoPair(*m_pWriters, node, peerConnectResult);
 					if (nodePacketIoPair.io()) {
-						CATAPULT_LOG(debug) << "[DBRB] sending " << *pPacket << " to " << node;
-						auto pPromise = std::make_shared<std::promise<ionet::SocketOperationCode>>();
-						nodePacketIoPair.io()->write(ionet::PacketPayload(pPacket), [pPromise](ionet::SocketOperationCode code) {
-							pPromise->set_value(code);
-						});
-						auto code = pPromise->get_future().get();
-						if (code != ionet::SocketOperationCode::Success)
-							CATAPULT_LOG(error) << "[DBRB] sending " << *pPacket << " to " << node << " completed with " << code;
+						for (const auto& pPacket : packets) {
+							CATAPULT_LOG(debug) << "[DBRB] sending " << *pPacket << " to " << node;
+							auto pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(nodePacketIoPair);
+							pPacketIoPair->io()->write(ionet::PacketPayload(pPacket), [pPacketIoPair, pPacket](ionet::SocketOperationCode code) {
+								if (code != ionet::SocketOperationCode::Success)
+									CATAPULT_LOG(error) << "[DBRB] sending " << *pPacket << " to " << pPacketIoPair->node() << " completed with " << code;
+							});
+						}
 					} else {
-						if (peerConnectResult.Code == net::PeerConnectCode::Already_Connected)
-							unprocessedNodes.emplace(recipient);
+						if (peerConnectResult.Code == net::PeerConnectCode::Already_Connected) {
+							for (const auto& pPacket : packets)
+								buffer.emplace_back(pPacket, std::set{ recipient });
+						}
 					}
 				} else {
 					notFoundNodes.emplace(recipient);
 				}
 			}
 
-			if (!unprocessedNodes.empty())
-				unsentMessages.emplace_back(pPacket, unprocessedNodes);
+			{
+				std::lock_guard<std::mutex> guard(m_mutex);
+				buffer.insert(buffer.end(), std::make_move_iterator(m_buffer.begin()), std::make_move_iterator(m_buffer.end()));
+				m_buffer.clear();
+			}
+
+			m_nodeRetreiver.enqueue(notFoundNodes);
 		}
-
-		buffer.clear();
-
-		{
-			std::lock_guard<std::mutex> guard(m_mutex);
-			unsentMessages.insert(unsentMessages.end(), std::make_move_iterator(m_buffer.begin()), std::make_move_iterator(m_buffer.end()));
-			m_buffer.clear();
-			std::swap(unsentMessages, m_buffer);
-		}
-
-		m_nodeRetreiver.enqueue(notFoundNodes);
 	}
 }}

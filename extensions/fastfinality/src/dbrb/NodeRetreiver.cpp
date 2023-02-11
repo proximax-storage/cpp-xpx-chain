@@ -58,6 +58,10 @@ namespace catapult { namespace dbrb {
 		, m_networkIdentifier(networkIdentifier)
 	{}
 
+	NodeRetreiver::~NodeRetreiver() {
+		stop();
+	}
+
 	void NodeRetreiver::enqueue(std::set<ProcessId> ids) {
 		{
 			std::lock_guard<std::mutex> guard(m_mutex);

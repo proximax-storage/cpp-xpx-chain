@@ -623,7 +623,7 @@ namespace catapult { namespace dbrb {
 
 		if (leastRecentView.isMember(m_id)) {
 			m_currentView = leastRecentView;
-			CATAPULT_LOG(error) << "[DBRB] STATE UPDATE: updated current view";
+			CATAPULT_LOG(debug) << "[DBRB] STATE UPDATE: updated current view";
 
 			if (!m_currentInstallMessage->ReplacedView.isMember(m_id))
 				onJoinComplete();
@@ -648,7 +648,7 @@ namespace catapult { namespace dbrb {
 				sequence.tryAppend(m_currentInstallMessage->ConvergedSequence);
 				InstallMessage installMessage(ProcessId(), std::move(sequence), m_currentInstallMessage->ConvergedSignatures);
 				m_transactionSender.sendInstallMessageTransaction(installMessage);
-				CATAPULT_LOG(error) << "[DBRB] STATE UPDATE: sent install message transaction";
+				CATAPULT_LOG(debug) << "[DBRB] STATE UPDATE: sent install message transaction";
 
 				onViewInstalled(m_currentView);
 			}
@@ -786,7 +786,7 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::onViewDiscovered(const ViewData& viewData) {
 		if (viewData.empty()) {
-			CATAPULT_LOG(error) << "[DBRB] discovered view is empty";
+			CATAPULT_LOG(debug) << "[DBRB] discovered view is empty";
 			return;
 		}
 

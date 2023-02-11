@@ -26,14 +26,7 @@ namespace catapult { namespace dbrb {
 			, m_workerThread(&AsyncMessageQueue::workerThreadFunc, this)
 		{}
 
-		virtual ~AsyncMessageQueue() {
-			{
-				std::lock_guard<std::mutex> guard(m_mutex);
-				m_running = false;
-			}
-			m_condVar.notify_one();
-			m_workerThread.join();
-		}
+		virtual ~AsyncMessageQueue() = default;
 
 	public:
 		template<typename... TArgs>
@@ -48,6 +41,15 @@ namespace catapult { namespace dbrb {
 		void clearQueue() {
 			std::lock_guard<std::mutex> guard(m_mutex);
 			m_buffer.clear();
+		}
+
+		void stop() {
+			{
+				std::lock_guard<std::mutex> guard(m_mutex);
+				m_running = false;
+			}
+			m_condVar.notify_one();
+			m_workerThread.join();
 		}
 
 	protected:
