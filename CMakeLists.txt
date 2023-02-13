@@ -86,5 +86,6 @@ add_subdirectory(tools)
 # Help programs
 add_subdirectory(spammer)
 
+set(SIRIUS_GRPC_VERSION v1.49.1)
 add_subdirectory(cpp-xpx-storage-sdk)
 add_subdirectory(cpp-xpx-supercontract-sdk)

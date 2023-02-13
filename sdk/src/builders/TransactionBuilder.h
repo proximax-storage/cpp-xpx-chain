@@ -88,7 +88,7 @@ namespace catapult { namespace builders {
 			vector.insert(iter, element);
 		}
 
-	private:
+	protected:
 		const model::NetworkIdentifier m_networkIdentifier;
 		const Key& m_signer;
 

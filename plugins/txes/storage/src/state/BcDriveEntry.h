@@ -185,6 +185,14 @@ namespace catapult { namespace state {
 			return m_rootHash;
 		}
 
+		void setLastModificationId(const Hash256& modificationId) {
+			m_lastModificationId = modificationId;
+		}
+
+		const Hash256& lastModificationId() const {
+			return m_lastModificationId;
+		}
+
 		/// Sets total size of the drive.
 		void setSize(const uint64_t& size) {
 			m_size = size;
@@ -382,6 +390,7 @@ namespace catapult { namespace state {
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
+		Hash256 m_lastModificationId;
 		uint64_t m_size;
 		uint64_t m_usedSizeBytes;
 		uint64_t m_metaFilesSizeBytes;

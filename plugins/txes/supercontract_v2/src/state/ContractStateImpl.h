@@ -12,32 +12,34 @@
 
 namespace catapult { namespace state {
 
-class ContractStateImpl : public ContractState {
-public:
+	class ContractStateImpl : public ContractState {
+	public:
+		explicit ContractStateImpl(const std::unique_ptr<DriveStateBrowser>& driveStateBrowser);
 
-	explicit ContractStateImpl(const std::unique_ptr<DriveStateBrowser>& driveStateBrowser);
+	public:
+		bool contractExists(const Key& contractKey) const override;
+		std::shared_ptr<const model::BlockElement> getBlock(Height height) const override;
+		std::optional<Height> getAutomaticExecutionsEnabledSince(
+				const Key& contractKey,
+				const Height& actualHeight,
+				const config::BlockchainConfiguration config) const override;
+		Hash256 getDriveState(const Key& contractKey) const override;
+		std::set<Key> getContracts(const Key& executorKey) const override;
+		std::map<Key, ExecutorStateInfo> getExecutors(const Key& contractKey) const override;
+		ContractInfo getContractInfo(
+				const Key& contractKey,
+				const Height& actualHeight,
+				const config::BlockchainConfiguration config) const override;
+		Height getAutomaticExecutionsNextBlockToCheck(const Key& contractKey) const override;
 
-public:
+	private:
+		template<class T>
+		auto getCacheView() const {
+			return m_pCache->sub<T>().createView(m_pCache->height());
+		}
 
-	bool contractExists(const Key& contractKey) const override;
-	std::shared_ptr<const model::BlockElement> getBlock(Height height) const override;
-	std::optional<Height> getAutomaticExecutionsEnabledSince(const Key& contractKey) const override;
-	Hash256 getDriveState(const Key& contractKey) const override;
-	std::set<Key> getContracts(const Key& executorKey) const override;
-	std::map<Key, ExecutorStateInfo> getExecutors(const Key& contractKey) const override;
-	ContractInfo getContractInfo(const Key& contractKey) const override;
+	private:
+		const std::unique_ptr<DriveStateBrowser>& m_pDriveStateBrowser;
+	};
 
-private:
-
-	template<class T>
-	auto getCacheView() const {
-		return m_pCache->sub<T>().createView(m_pCache->height());
-	}
-
-private:
-
-	const std::unique_ptr<DriveStateBrowser>& m_pDriveStateBrowser;
-
-};
-
-}}
+}} // namespace catapult::state

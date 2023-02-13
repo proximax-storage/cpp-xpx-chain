@@ -16,8 +16,9 @@ namespace catapult { namespace contract {
 		void RegisterExtension(extensions::ProcessBootstrapper& bootstrapper) {
 			const auto& config = bootstrapper.config();
 			auto storageConfig = ExecutorConfiguration::LoadFromPath(bootstrapper.resourcesPath());
+			auto pTransactionStatusHandler = std::make_shared<TransactionStatusHandler>();
 			auto pExecutorService = std::make_shared<ExecutorService>(
-				std::move(storageConfig));
+					std::move(storageConfig), pTransactionStatusHandler);
 
 			notification_handlers::DemuxHandlerBuilder builder;
 			builder
@@ -35,7 +36,7 @@ namespace catapult { namespace contract {
 				CreateBlockStorageSubscription(bootstrapper, builder.build()));
 
 			bootstrapper.extensionManager().addServiceRegistrar(CreateExecutorServiceRegistrar(pExecutorService));
-			bootstrapper.subscriptionManager().addTransactionStatusSubscriber(CreateExecutorTransactionStatusSubscriber(pExecutorService));
+			bootstrapper.subscriptionManager().addTransactionStatusSubscriber(CreateExecutorTransactionStatusSubscriber(pTransactionStatusHandler));
 		}
 	}
 }}

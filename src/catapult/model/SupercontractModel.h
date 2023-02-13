@@ -8,9 +8,12 @@
 
 namespace catapult::model {
 
+#pragma pack(push, 1)
+
 	struct ExtendedCallDigest {
 		Hash256 CallId;
 		bool Manual;
+		Height Block;
 		int16_t Status;
 		Hash256 ReleasedTransactionHash;
 	};
@@ -18,6 +21,7 @@ namespace catapult::model {
 	struct ShortCallDigest {
 		Hash256 CallId;
 		bool Manual;
+		Height Block;
 	};
 
 	struct CallPaymentOpinion {
@@ -25,4 +29,5 @@ namespace catapult::model {
 		std::vector<Amount> DownloadWork;
 	};
 
+#pragma pack(pop)
 }

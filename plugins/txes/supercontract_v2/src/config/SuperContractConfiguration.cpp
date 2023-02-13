@@ -34,6 +34,9 @@ namespace catapult { namespace config {
 		config.MaxRowSize = 100000U;
 		TRY_LOAD_CHAIN_PROPERTY(MaxRowSize);
 
+		config.AutomaticExecutionsDeadline = Height(5760U);
+		TRY_LOAD_CHAIN_PROPERTY(AutomaticExecutionsDeadline);
+
 #undef TRY_LOAD_CHAIN_PROPERTY
 		return config;
 	}

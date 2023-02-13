@@ -78,18 +78,15 @@ namespace catapult::observers {
 					scRefund = Amount((requestedCall.ExecutionCallPayment - call.ExecutionWork).unwrap() * executorsNumber);
 					streamingRefund = Amount((requestedCall.DownloadCallPayment - call.DownloadWork).unwrap() * executorsNumber);
 					refundReceiver = call.Caller;
-					if (call.Status != 0) {
-						auto callerAccountIt = accountCache.find(call.Caller);
-						auto& callerAccountEntry = callerAccountIt.get();
-						for (const auto& [mosaicId, amount]: requestedCallIt->ServicePayments)
-						{
-							auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
-							auto balance = contractAccountEntry.Balances.get(resolvedMosaicId);
-							if (balance >= amount) {
-								contractAccountEntry.Balances.debit(resolvedMosaicId, amount);
-								callerAccountEntry.Balances.credit(resolvedMosaicId, amount);
-							}
-						}
+
+					auto servicePaymentsReceiverKey = call.Status == 0 ? notification.ContractKey : call.Caller;
+					auto servicePaymentsReceiverAccountIt = accountCache.find(call.Caller);
+					auto& servicePaymentsReceiverAccountEntry = servicePaymentsReceiverAccountIt.get();
+
+					for (const auto& [mosaicId, amount]: requestedCallIt->ServicePayments)
+					{
+						auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
+						servicePaymentsReceiverAccountEntry.Balances.credit(resolvedMosaicId, amount);
 					}
 				}
 				else {
@@ -113,12 +110,12 @@ namespace catapult::observers {
 			}
 
 			if (automaticExecutionsInfo.AutomatedExecutionsNumber == 0) {
-				automaticExecutionsInfo.AutomaticExecutionsEnabledSince.reset();
+				automaticExecutionsInfo.AutomaticExecutionsPrepaidSince.reset();
 			}
 
 			if (contractEntry.batches().size() == 1) {
 				if (automaticExecutionsInfo.AutomatedExecutionsNumber > 0) {
-					automaticExecutionsInfo.AutomaticExecutionsEnabledSince = context.Height;
+					automaticExecutionsInfo.AutomaticExecutionsPrepaidSince = context.Height;
 				}
 			}
 		}))

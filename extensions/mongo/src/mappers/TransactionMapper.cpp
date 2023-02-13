@@ -54,6 +54,7 @@ namespace catapult { namespace mongo { namespace mappers {
 			// transaction data
 			builder << "transaction" << bson_stream::open_document;
 			StreamVerifiableEntity(builder, transaction)
+					<< "size" << static_cast<int32_t>(transaction.Size)
 					<< "maxFee" << ToInt64(transaction.MaxFee)
 					<< "deadline" << ToInt64(transaction.Deadline);
 

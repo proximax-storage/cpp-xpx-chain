@@ -22,7 +22,7 @@ namespace catapult { namespace model {
             auto expectedSize = 
                     baseSize // base
                     + Key_Size // contract key
-                    + sizeof(uint64_t) // batch id
+                    + sizeof(uint64_t); // batch id
             
             // Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));

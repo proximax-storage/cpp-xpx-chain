@@ -33,7 +33,7 @@ namespace catapult { namespace model {
                     + sizeof(Amount) // automaticExecutionCall payment
                     + sizeof(Amount) // automaticDownloadCall payment
                     + sizeof(uint32_t) // automaticExecutions number
-                    + Key_Size // assignee
+                    + Key_Size; // assignee
             
             // Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));

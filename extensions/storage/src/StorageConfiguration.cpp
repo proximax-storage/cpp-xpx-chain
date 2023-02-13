@@ -33,6 +33,8 @@ namespace catapult { namespace storage {
 		LOAD_DB_PROPERTY(RpcPort);
 		LOAD_DB_PROPERTY(RpcHandleLostConnection);
 		LOAD_DB_PROPERTY(RpcDbgChildCrash);
+		LOAD_DB_PROPERTY(RpcServicesServerHost);
+		LOAD_DB_PROPERTY(RpcServicesServerPort);
 
 #undef LOAD_DB_PROPERTY
 

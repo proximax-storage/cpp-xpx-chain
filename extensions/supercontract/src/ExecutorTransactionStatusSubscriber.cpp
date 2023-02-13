@@ -12,29 +12,28 @@ namespace catapult { namespace contract {
 	namespace {
 		class ExecutorTransactionStatusSubscriber : public subscribers::TransactionStatusSubscriber {
 		public:
-			explicit ExecutorTransactionStatusSubscriber(std::weak_ptr<contract::ExecutorService> pExecutorServiceWeak)
-			: m_pExecutorServiceWeak(std::move(pExecutorServiceWeak))
-			{}
+			explicit ExecutorTransactionStatusSubscriber(
+					std::weak_ptr<TransactionStatusHandler>&& pTransactionStatusHandlerWeak)
+				: m_pTransactionStatusHandlerWeak(std::move(pTransactionStatusHandlerWeak)) {}
 
 		public:
 			void notifyStatus(const model::Transaction&, const Height&, const Hash256& hash, uint32_t status) override {
-				auto pExecutorService = m_pExecutorServiceWeak.lock();
-				if (!pExecutorService)
+				auto pTransactionStatusHandler = m_pTransactionStatusHandlerWeak.lock();
+				if (!pTransactionStatusHandler)
 					return;
 
-				pExecutorService->notifyTransactionStatus(hash, status);
+				pTransactionStatusHandler->handle(hash, status);
 			}
 
-			void flush() override {
-			}
+			void flush() override {}
 
 		private:
-			std::weak_ptr<contract::ExecutorService> m_pExecutorServiceWeak;
+			std::weak_ptr<TransactionStatusHandler> m_pTransactionStatusHandlerWeak;
 		};
-	}
+	} // namespace
 
 	std::unique_ptr<subscribers::TransactionStatusSubscriber> CreateExecutorTransactionStatusSubscriber(
-			const std::weak_ptr<contract::ExecutorService>& pExecutorServiceWeak) {
-		return std::make_unique<ExecutorTransactionStatusSubscriber>(pExecutorServiceWeak);
+			std::weak_ptr<TransactionStatusHandler> pTransactionStatusHandlerWeak) {
+		return std::make_unique<ExecutorTransactionStatusSubscriber>(std::move(pTransactionStatusHandlerWeak));
 	}
-}}
+}} // namespace catapult::contract

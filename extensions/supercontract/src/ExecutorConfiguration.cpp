@@ -22,6 +22,13 @@ namespace catapult { namespace contract {
 #define LOAD_DB_PROPERTY(NAME) LOAD_PROPERTY("executor", NAME)
 
 		LOAD_DB_PROPERTY(Key);
+		LOAD_DB_PROPERTY(TransactionTimeout);
+		LOAD_DB_PROPERTY(StorageRPCHost);
+		LOAD_DB_PROPERTY(StorageRPCPort);
+		LOAD_DB_PROPERTY(MessengerRPCHost);
+		LOAD_DB_PROPERTY(MessengerRPCPort);
+		LOAD_DB_PROPERTY(VirtualMachineRPCHost);
+		LOAD_DB_PROPERTY(VirtualMachineRPCPort);
 
 #undef LOAD_DB_PROPERTY
 
@@ -32,6 +39,6 @@ namespace catapult { namespace contract {
 #undef LOAD_PROPERTY
 
 	ExecutorConfiguration ExecutorConfiguration::LoadFromPath(const boost::filesystem::path& resourcesPath) {
-		return config::LoadIniConfiguration<ExecutorConfiguration>(resourcesPath / "config-storage.properties");
+		return config::LoadIniConfiguration<ExecutorConfiguration>(resourcesPath / "config-contract.properties");
 	}
 }}

@@ -12,6 +12,7 @@ void catapult::observers::StorageExternalManagementObserverImpl::updateStorageSt
 		const ObserverContext& context,
 		const Key& driveKey,
 		const Hash256& storageHash,
+		const Hash256& modificationId,
 		uint64_t usedSize,
 		uint64_t metaFilesSize) {
 	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
@@ -28,6 +29,7 @@ void catapult::observers::StorageExternalManagementObserverImpl::updateStorageSt
 	}
 
 	driveEntry.setRootHash(storageHash);
+	driveEntry.setLastModificationId(modificationId);
 	driveEntry.setUsedSizeBytes(usedSize);
 	driveEntry.setMetaFilesSizeBytes(metaFilesSize);
 

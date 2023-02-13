@@ -148,6 +148,9 @@ namespace catapult { namespace storage {
 			}
 
 			m_pReplicatorEventHandler->setReplicator(m_pReplicator);
+			m_pReplicator->setServiceAddress(storageConfig.RpcServicesServerHost + ":" + storageConfig.RpcServicesServerPort);
+			m_pReplicator->enableSupercontractServer();
+			m_pReplicator->enableMessengerServer();
 			m_pReplicator->start();
 
             auto drives = m_storageState.getReplicatorDrives(m_keyPair.publicKey());

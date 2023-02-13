@@ -25,8 +25,6 @@ namespace catapult { namespace plugins {
 				case 1: {
 					auto contractKey = transaction.ContractKey;
 
-					sub.notify(model::ContractStateUpdateNotification<1>(contractKey));
-
 					Hash256 paymentHash;
 					crypto::Sha3_256_Builder sha3;
 					sha3.update({contractKey, config.GenerationHash});
