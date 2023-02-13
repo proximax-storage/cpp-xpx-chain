@@ -13,22 +13,22 @@ namespace catapult { namespace state {
     namespace {
         void SaveAutomaticExecutionsInfo(const AutomaticExecutionsInfo& automaticExecutionsInfo, io::OutputStream& output) {
             io::Write16(output, (uint16_t) automaticExecutionsInfo.AutomaticExecutionFileName.size());
+            auto pAutomaticExecutionFileName = (const uint8_t*) (automaticExecutionsInfo.AutomaticExecutionFileName.c_str());
+            io::Write(output, utils::RawBuffer(pAutomaticExecutionFileName, automaticExecutionsInfo.AutomaticExecutionFileName.size()));
             io::Write16(output, (uint16_t) automaticExecutionsInfo.AutomaticExecutionsFunctionName.size());
+            auto pAutomaticExecutionsFunctionName = (const uint8_t*) (automaticExecutionsInfo.AutomaticExecutionsFunctionName.c_str());
+            io::Write(output, utils::RawBuffer(pAutomaticExecutionsFunctionName, automaticExecutionsInfo.AutomaticExecutionsFunctionName.size()));
             io::Write(output, automaticExecutionsInfo.AutomaticExecutionsNextBlockToCheck);
             io::Write(output, automaticExecutionsInfo.AutomaticExecutionCallPayment);
             io::Write(output, automaticExecutionsInfo.AutomaticDownloadCallPayment);
-            io::Write16(output, automaticExecutionsInfo.AutomatedExecutionsNumber);
-            io::Write8(output, automaticExecutionsInfo.AutomaticExecutionsEnabledSince.has_value());
-            if (automaticExecutionsInfo.AutomaticExecutionsEnabledSince.has_value()) {
-                io::Write(output, *automaticExecutionsInfo.AutomaticExecutionsEnabledSince);
+            io::Write32(output, automaticExecutionsInfo.AutomatedExecutionsNumber);
+            io::Write8(output, automaticExecutionsInfo.AutomaticExecutionsPrepaidSince.has_value());
+            if (automaticExecutionsInfo.AutomaticExecutionsPrepaidSince.has_value()) {
+                io::Write(output, *automaticExecutionsInfo.AutomaticExecutionsPrepaidSince);
             }
-            auto pAutomaticExecutionFileName = (const uint8_t*) (automaticExecutionsInfo.AutomaticExecutionFileName.c_str());
-            io::Write(output, utils::RawBuffer(pAutomaticExecutionFileName, automaticExecutionsInfo.AutomaticExecutionFileName.size()));
-            auto pAutomaticExecutionsFunctionName = (const uint8_t*) (automaticExecutionsInfo.AutomaticExecutionsFunctionName.c_str());
-            io::Write(output, utils::RawBuffer(pAutomaticExecutionsFunctionName, automaticExecutionsInfo.AutomaticExecutionsFunctionName.size()));
         }
 
-        void SaveServicePayments(const std::vector<ServicePayment> servicePayments, io::OutputStream& output) {
+        void SaveServicePayments(const std::vector<ServicePayment>& servicePayments, io::OutputStream& output) {
             io::Write16(output, utils::checked_cast<size_t, uint16_t>(servicePayments.size()));
             for (const auto& servicePayment : servicePayments) {
                 io::Write(output, servicePayment.MosaicId);
@@ -42,22 +42,22 @@ namespace catapult { namespace state {
                 io::Write(output, contractCall.CallId);
                 io::Write(output, contractCall.Caller);
                 io::Write16(output, (uint16_t) contractCall.FileName.size());
+                auto pFileName = (const uint8_t*) (contractCall.FileName.c_str());
+                io::Write(output, utils::RawBuffer(pFileName, contractCall.FileName.size()));
                 io::Write16(output, (uint16_t) contractCall.FunctionName.size());
+                auto pFunctionName = (const uint8_t*) (contractCall.FunctionName.c_str());
+                io::Write(output, utils::RawBuffer(pFunctionName, contractCall.FunctionName.size()));
                 io::Write16(output, (uint16_t) contractCall.ActualArguments.size());
+                auto pActualArguments = (const uint8_t*) (contractCall.ActualArguments.c_str());
+                io::Write(output, utils::RawBuffer(pActualArguments, contractCall.ActualArguments.size()));
                 io::Write(output, contractCall.ExecutionCallPayment);
                 io::Write(output, contractCall.DownloadCallPayment);
                 SaveServicePayments(contractCall.ServicePayments, output);
-                io::Write(output, contractCall.BlockHeight);
-                auto pFileName = (const uint8_t*) (contractCall.FileName.c_str());
-                io::Write(output, utils::RawBuffer(pFileName, contractCall.FileName.size()));
-                auto pFunctionName = (const uint8_t*) (contractCall.FunctionName.c_str());
-                io::Write(output, utils::RawBuffer(pFunctionName, contractCall.FunctionName.size()));
-                auto pActualArguments = (const uint8_t*) (contractCall.ActualArguments.c_str());
-                io::Write(output, utils::RawBuffer(pActualArguments, contractCall.ActualArguments.size()));
+                io::Write(output, contractCall.BlockHeight);  
             }
         }
 
-        void SaveProofOfExecution(const ProofOfExecution poEx, io::OutputStream& output) {
+        void SaveProofOfExecution(const ProofOfExecution& poEx, io::OutputStream& output) {
             io::Write64(output, poEx.StartBatchId);
             io::Write(output, poEx.T.toBytes());
             io::Write(output, poEx.R);
@@ -74,12 +74,13 @@ namespace catapult { namespace state {
 
         void SaveCompletedCalls(const std::vector<CompletedCall>& completedCalls, io::OutputStream& output) {
             io::Write16(output, utils::checked_cast<size_t, uint16_t>(completedCalls.size()));
-            for (const auto& completed : completedCalls) {
-                io::Write(output, completed.CallId);
-                io::Write(output, completed.Caller);
-                io::Write16(output, completed.Status);
-                io::Write(output, completed.ExecutionWork);
-                io::Write(output, completed.DownloadWork);
+            for (const auto& completedCall : completedCalls) {
+                io::Write(output, completedCall.CallId);
+                io::Write(output, completedCall.Caller);
+                io::Write16(output, completedCall.Status);
+                std::memcpy(&output, &completedCall.Status, sizeof(int16_t));
+                io::Write(output, completedCall.ExecutionWork);
+                io::Write(output, completedCall.DownloadWork);
             }
         }
 
@@ -128,20 +129,22 @@ namespace catapult { namespace state {
             automaticExecutionsInfo.AutomaticExecutionsNextBlockToCheck = io::Read<Height>(input);
             automaticExecutionsInfo.AutomaticExecutionCallPayment = io::Read<Amount>(input);
             automaticExecutionsInfo.AutomaticDownloadCallPayment = io::Read<Amount>(input);
-            automaticExecutionsInfo.AutomatedExecutionsNumber = io::Read16(input);
+            automaticExecutionsInfo.AutomatedExecutionsNumber = io::Read32(input);
 
-            bool hasAutomaticExecutionsEnabledSince = io::Read8(input);
-            if (hasAutomaticExecutionsEnabledSince) {
-                automaticExecutionsInfo.AutomaticExecutionsEnabledSince = io::Read<Height>(input);
+            bool hasAutomaticExecutionsPrepaidSince = io::Read8(input);
+            if (hasAutomaticExecutionsPrepaidSince) {
+                automaticExecutionsInfo.AutomaticExecutionsPrepaidSince = io::Read<Height>(input);
             }
         }
 
-        void LoadServicePayments(std::vector<ServicePayment> servicePayments, io::InputStream& input) {
+        void LoadServicePayments(std::vector<ServicePayment>& servicePayments, io::InputStream& input) {
             auto servicePaymentsCount = io::Read16(input);
             while (servicePaymentsCount--) {
                 ServicePayment servicePayment;
                 io::Read(input, servicePayment.MosaicId);
                 io::Read(input, servicePayment.Amount);
+
+                servicePayments.emplace_back(servicePayment);
             }
         }
 
@@ -174,11 +177,11 @@ namespace catapult { namespace state {
                 LoadServicePayments(contractCall.ServicePayments, input);
                 io::Read(input, contractCall.BlockHeight);
 
-                contractCalls.push_back(contractCall);
+                contractCalls.emplace_back(contractCall);
 			}
         }
 
-        void LoadProofOfExecution(ProofOfExecution poEx, io::InputStream& input) {
+        void LoadProofOfExecution(ProofOfExecution& poEx, io::InputStream& input) {
             poEx.StartBatchId = io::Read64(input);
             std::array<uint8_t, 32> tBuffer;
             poEx.T.fromBytes(tBuffer);
@@ -186,7 +189,7 @@ namespace catapult { namespace state {
             input.read(poEx.R);
         }
 
-        void LoadExecutorsInfo(std::map<Key, ExecutorInfo> executorsInfo, io::InputStream& input) {
+        void LoadExecutorsInfo(std::map<Key, ExecutorInfo>& executorsInfo, io::InputStream& input) {
             auto executorsInfoCount = io::Read16(input);
             while (executorsInfoCount--) {
                 Key key;
@@ -198,15 +201,17 @@ namespace catapult { namespace state {
             }
         }
 
-        void LoadCompletedCalls(const std::vector<CompletedCall>& completedCalls, io::InputStream& input) {
+        void LoadCompletedCalls(std::vector<CompletedCall>& completedCalls, io::InputStream& input) {
             auto completedCallsCount = io::Read16(input);
             while (completedCallsCount--) {
                 CompletedCall completedCall;
                 io::Read(input, completedCall.CallId);
                 io::Read(input, completedCall.Caller);
-                completedCall.Status = io::Read16(input);
+                std::memcpy(&input, &completedCall.Status, sizeof(int16_t));
                 io::Read(input, completedCall.ExecutionWork);
                 io::Read(input, completedCall.DownloadWork);
+
+                completedCalls.emplace_back(completedCall);
             }
         }
 
