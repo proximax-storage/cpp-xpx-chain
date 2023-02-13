@@ -161,7 +161,7 @@ namespace catapult { namespace plugins {
 
 		manager.addObserverHook([&](auto& builder) {
 			builder
-				.add(observers::CreateDeployContractObserver())
+				.add(observers::CreateDeployContractObserver(driveStateBrowser))
 				.add(observers::CreateAutomaticExecutionsReplenishmentObserver())
 				.add(observers::CreateManualCallObserver())
 				.add(observers::CreateProofOfExecutionObserver(

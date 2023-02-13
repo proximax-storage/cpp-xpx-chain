@@ -58,6 +58,7 @@ namespace catapult { namespace state {
 		Key DriveKey;
 		std::map<Key, ExecutorStateInfo> Executors;
 		std::map<uint64_t, crypto::CurvePoint> RecentBatches;
+		Hash256 DeploymentBaseModificationId;
 		std::string AutomaticExecutionsFileName;
 		std::string AutomaticExecutionsFunctionName;
 		Amount AutomaticExecutionCallPayment;

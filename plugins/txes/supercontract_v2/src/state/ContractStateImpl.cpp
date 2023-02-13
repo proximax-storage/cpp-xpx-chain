@@ -109,6 +109,7 @@ namespace catapult { namespace state {
 		ContractInfo contractInfo;
 		contractInfo.DriveKey = contractEntry.driveKey();
 		contractInfo.Executors = getExecutors(contractKey);
+		contractInfo.DeploymentBaseModificationId = contractEntry.deploymentBaseModificationId();
 
 		for (uint i = 0; i < contractEntry.batches().size(); i++) {
 			contractInfo.RecentBatches[i] = contractEntry.batches()[i].PoExVerificationInformation;

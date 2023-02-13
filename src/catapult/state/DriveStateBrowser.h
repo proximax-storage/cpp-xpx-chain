@@ -34,5 +34,7 @@ public:
 	virtual std::set<Key> getDrives(const cache::ReadOnlyCatapultCache& cache, const Key& replicatorKey) const = 0;
 
 	virtual Hash256 getDriveState(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const = 0;
+
+	virtual Hash256 getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const = 0;
 };
 }
