@@ -58,6 +58,12 @@ namespace catapult { namespace model {
 		// Arrange:
 		DeployContractTransaction transaction;
 		transaction.Size = 0;
+		transaction.FileNameSize = 0;
+		transaction.FunctionNameSize = 0;
+		transaction.ActualArgumentsSize = 0;
+		transaction.ServicePaymentsCount = 0;
+		transaction.AutomaticExecutionFileNameSize = 0;
+		transaction.AutomaticExecutionFunctionNameSize = 0;
 
 		// Act:
 		auto realSize = DeployContractTransaction::CalculateRealSize(transaction);
