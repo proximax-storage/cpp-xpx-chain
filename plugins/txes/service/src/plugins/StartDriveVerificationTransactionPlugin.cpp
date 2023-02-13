@@ -35,6 +35,7 @@ namespace catapult { namespace plugins {
 						const auto& config = pConfigHolder->ConfigAtHeightOrLatest(context.AssociatedHeight);
 						const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ServiceConfiguration>();
 
+						// This will result in errors down the line because this will expire before the SecretLockNotification which references it will.
 						UnresolvedMosaic storageMosaic{config::GetUnresolvedStorageMosaicId(config.Immutable), pluginConfig.VerificationFee};
 						sub.notify(BalanceDebitNotification<1>(transaction.Signer, storageMosaic.MosaicId, storageMosaic.Amount));
 						sub.notify(SecretLockNotification<1>(
