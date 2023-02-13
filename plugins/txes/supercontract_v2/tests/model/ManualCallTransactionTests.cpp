@@ -27,7 +27,7 @@ namespace catapult { namespace model {
                     + sizeof(uint16_t) // actualArguments size
                     + sizeof(Amount) // executionCall payment
                     + sizeof(Amount) // downloadCall payment
-                    + 1 // servicePayments count
+                    + 1; // servicePayments count
             
             // Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));

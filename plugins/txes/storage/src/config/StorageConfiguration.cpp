@@ -32,6 +32,8 @@ namespace catapult { namespace config {
 		TRY_LOAD_CHAIN_PROPERTY(MaxModificationSize);
 		config.MinReplicatorCount = 1;
 		TRY_LOAD_CHAIN_PROPERTY(MinReplicatorCount);
+		config.MaxReplicatorCount = 20;
+		TRY_LOAD_CHAIN_PROPERTY(MaxReplicatorCount);
 		config.MaxFreeDownloadSize = utils::FileSize::FromMegabytes(1);
 		TRY_LOAD_CHAIN_PROPERTY(MaxFreeDownloadSize);
 		config.MaxDownloadSize = utils::FileSize::FromTerabytes(10);

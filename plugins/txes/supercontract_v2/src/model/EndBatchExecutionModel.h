@@ -8,6 +8,8 @@
 
 namespace catapult::model {
 
+#pragma pack(push, 1)
+
 struct CallPayment {
 	Amount ExecutionPayment;
 	Amount DownloadPayment;
@@ -20,5 +22,7 @@ struct RawProofOfExecution {
 	std::array<uint8_t, 32> F;
 	std::array<uint8_t, 32> K;
 };
+
+#pragma pack(pop)
 
 }
