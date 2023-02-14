@@ -5,4 +5,5 @@ set(PLUGIN_DEPS_FOLDERS config cache handlers observers validators)
 
 include_directories(.)
 add_subdirectory(src)
-add_subdirectory(tests)
+# DO NOT COMPILE TESTS AS PLUGIN IS OBSOLETE AND NO LONGER SUPPORTED
+#add_subdirectory(tests)
