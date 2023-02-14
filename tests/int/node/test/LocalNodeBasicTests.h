@@ -32,6 +32,24 @@ namespace catapult { namespace test {
 	private:
 		using TestContext = typename TTraits::LocalNodeTestContext;
 
+	private:
+		struct CapturedSubscribers {
+			const mocks::MockBlockChangeSubscriber* pBlockChangeSubscriber = nullptr;
+			const mocks::MockStateChangeSubscriber* pStateChangeSubscriber = nullptr;
+		};
+
+		static consumer<extensions::ProcessBootstrapper&> CreateRegisterAndCaptureSubscribersBootCallback(
+				CapturedSubscribers& subscribers) {
+			return [&subscribers](auto& bootstrapper) {
+				auto pBlockChangeSubscriber = std::make_unique<mocks::MockBlockChangeSubscriber>();
+				subscribers.pBlockChangeSubscriber = pBlockChangeSubscriber.get();
+				bootstrapper.subscriptionManager().addBlockChangeSubscriber(std::move(pBlockChangeSubscriber));
+
+				auto pStateChangeSubscriber = std::make_unique<mocks::MockStateChangeSubscriber>();
+				subscribers.pStateChangeSubscriber = pStateChangeSubscriber.get();
+				bootstrapper.subscriptionManager().addStateChangeSubscriber(std::move(pStateChangeSubscriber));
+			};
+		}
 	public:
 		// region basic tests - boot / shutdown
 
@@ -139,24 +157,16 @@ namespace catapult { namespace test {
 			TestContext context(NodeFlag::Require_Explicit_Boot);
 
 			// Act:
-			const mocks::MockBlockChangeSubscriber* pBlockChangeSubscriberRaw = nullptr;
-			const mocks::MockStateChangeSubscriber* pStateChangeSubscriberRaw = nullptr;
-			auto pLocalNode = context.boot([&](auto& bootstrapper) {
-				auto pBlockChangeSubscriber = std::make_unique<mocks::MockBlockChangeSubscriber>();
-				pBlockChangeSubscriberRaw = pBlockChangeSubscriber.get();
-				bootstrapper.subscriptionManager().addBlockChangeSubscriber(std::move(pBlockChangeSubscriber));
-
-				auto pStateChangeSubscriber = std::make_unique<mocks::MockStateChangeSubscriber>();
-				pStateChangeSubscriberRaw = pStateChangeSubscriber.get();
-				bootstrapper.subscriptionManager().addStateChangeSubscriber(std::move(pStateChangeSubscriber));
-			});
+			CapturedSubscribers subscribers;
+			auto pLocalNode = context.boot(CreateRegisterAndCaptureSubscribersBootCallback(subscribers));
 
 			// Assert:
-			EXPECT_EQ(1u, pBlockChangeSubscriberRaw->blockElements().size());
-			EXPECT_EQ(0u, pBlockChangeSubscriberRaw->dropBlocksAfterHeights().size());
+			EXPECT_EQ(1u, subscribers.pBlockChangeSubscriber->blockElements().size());
+			EXPECT_EQ(0u, subscribers.pBlockChangeSubscriber->dropBlocksAfterHeights().size());
 
-			EXPECT_EQ(1u, pStateChangeSubscriberRaw->numScoreChanges());
-			EXPECT_EQ(1u, pStateChangeSubscriberRaw->numStateChanges());
+			EXPECT_EQ(1u, subscribers.pStateChangeSubscriber->numScoreChanges());
+			EXPECT_EQ(1u, subscribers.pStateChangeSubscriber->numStateChanges());
+
 		}
 
 		static void AssertLocalNodeDoesNotTriggerNemesisSubscribersAtHeightTwo() {
@@ -166,27 +176,18 @@ namespace catapult { namespace test {
 			context.reset();
 
 			// Act: reboot it
-			const mocks::MockBlockChangeSubscriber* pBlockChangeSubscriberRaw = nullptr;
-			const mocks::MockStateChangeSubscriber* pStateChangeSubscriberRaw = nullptr;
-			auto pLocalNode = context.boot([&](auto& bootstrapper) {
-				auto pBlockChangeSubscriber = std::make_unique<mocks::MockBlockChangeSubscriber>();
-				pBlockChangeSubscriberRaw = pBlockChangeSubscriber.get();
-				bootstrapper.subscriptionManager().addBlockChangeSubscriber(std::move(pBlockChangeSubscriber));
-
-				auto pStateChangeSubscriber = std::make_unique<mocks::MockStateChangeSubscriber>();
-				pStateChangeSubscriberRaw = pStateChangeSubscriber.get();
-				bootstrapper.subscriptionManager().addStateChangeSubscriber(std::move(pStateChangeSubscriber));
-			});
+			CapturedSubscribers subscribers;
+			auto pLocalNode = context.boot(CreateRegisterAndCaptureSubscribersBootCallback(subscribers));
 
 			// Sanity:
 			EXPECT_EQ(Height(1), pLocalNode->cache().createView().height());
 
 			// Assert:
-			EXPECT_EQ(0u, pBlockChangeSubscriberRaw->blockElements().size());
-			EXPECT_EQ(0u, pBlockChangeSubscriberRaw->dropBlocksAfterHeights().size());
+			EXPECT_EQ(0u, subscribers.pBlockChangeSubscriber->blockElements().size());
+			EXPECT_EQ(0u, subscribers.pBlockChangeSubscriber->dropBlocksAfterHeights().size());
 
-			EXPECT_EQ(0u, pStateChangeSubscriberRaw->numScoreChanges());
-			EXPECT_EQ(0u, pStateChangeSubscriberRaw->numStateChanges());
+			EXPECT_EQ(0u, subscribers.pStateChangeSubscriber->numScoreChanges());
+			EXPECT_EQ(0u, subscribers.pStateChangeSubscriber->numStateChanges());
 		}
 
 		static void AssertLocalNodeCannotBootWhenCacheAndStorageHeightsAreInconsistent() {
