@@ -39,6 +39,9 @@ namespace catapult { namespace test {
 	/// Verifies that \a entry1 is equivalent to \a entry2.
 	void AssertEqualSuperContractData(const state::SuperContractEntry& entry1, const state::SuperContractEntry& entry2);
 
+	/// Verifies that \a entry1 is equivalent to \a entry2.
+	void AssertEqualDriveData(const state::DriveEntry& entry1, const state::DriveEntry& entry2);
+
 	/// Cache factory for creating a catapult cache composed of operation cache and core caches.
 	struct SuperContractCacheFactory {
 	private:
