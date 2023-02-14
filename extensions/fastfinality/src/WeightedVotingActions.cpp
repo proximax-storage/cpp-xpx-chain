@@ -183,6 +183,14 @@ namespace catapult { namespace fastfinality {
 	}
 
 	namespace {
+		constexpr auto UNITS_IN_THE_LAST_PLACE = 2;
+
+		bool IsSumOfVotesSufficient(double actual, double min) {
+			return actual >= min
+				|| std::abs(actual - min) <= std::numeric_limits<double>::epsilon() * std::abs(actual + min) * UNITS_IN_THE_LAST_PLACE
+				|| std::abs(actual - min) <= std::numeric_limits<double>::min();
+		}
+
 		bool ValidateBlockCosignatures(
 				const std::shared_ptr<model::Block>& pBlock,
 				const chain::CommitteeManager& committeeManager,
@@ -229,8 +237,9 @@ namespace catapult { namespace fastfinality {
 					totalSumOfVotes += committeeManager.weight(cosigner);
 			}
 
-			if (actualSumOfVotes < committeeApproval * totalSumOfVotes) {
-				CATAPULT_LOG(warning) << "rejecting block, sum of votes insufficient";
+			auto minSumOfVotes = committeeApproval * totalSumOfVotes;
+			if (!IsSumOfVotesSufficient(actualSumOfVotes, minSumOfVotes)) {
+				CATAPULT_LOG(warning) << "rejecting block, sum of votes insufficient: " << std::fixed << std::setprecision(30) << actualSumOfVotes << " < " << minSumOfVotes;
 				return false;
 			}
 
@@ -408,9 +417,15 @@ namespace catapult { namespace fastfinality {
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 			chain::CommitteeManager& committeeManager,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			const chain::TimeSupplier& timeSupplier) {
-		return [pFsmWeak, &committeeManager, pConfigHolder, timeSupplier]() {
+			const chain::TimeSupplier& timeSupplier,
+			const dbrb::DbrbConfiguration& dbrbConfig) {
+		return [pFsmWeak, &committeeManager, pConfigHolder, timeSupplier, dbrbConfig]() {
 			TRY_GET_FSM()
+
+			auto viewData = pFsmShared->dbrbViewFetcher().getLatestView();
+			if (viewData.empty())
+				viewData = dbrbConfig.BootstrapProcesses;
+			pFsmShared->dbrbProcess()->onViewDiscovered(viewData);
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto round = committeeData.committeeRound();
@@ -715,13 +730,14 @@ namespace catapult { namespace fastfinality {
 				double committeeApproval,
 				double totalSumOfVotes,
 				const chain::CommitteeManager& committeeManager) {
-			double sum = 0.0;
+			double actualSumOfVotes = 0.0;
 			for (const auto& pair : votes)
-				sum += committeeManager.weight(pair.first);
+				actualSumOfVotes += committeeManager.weight(pair.first);
 
-			bool sumOfVotesSufficient = sum >= committeeApproval * totalSumOfVotes;
+			auto minSumOfVotes = committeeApproval * totalSumOfVotes;
+			auto sumOfVotesSufficient = IsSumOfVotesSufficient(actualSumOfVotes, minSumOfVotes);
 			if (!sumOfVotesSufficient)
-				CATAPULT_LOG(debug) << "sum of votes insufficient: " << sum << " < " << committeeApproval << " * " << totalSumOfVotes << ", vote count " << votes.size();
+				CATAPULT_LOG(debug) << "sum of votes insufficient: " << std::fixed << std::setprecision(30) << actualSumOfVotes << " < " << minSumOfVotes << ", vote count " << votes.size();
 			return sumOfVotesSufficient;
 		}
 	}
@@ -924,9 +940,8 @@ namespace catapult { namespace fastfinality {
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 			const consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&>& rangeConsumer,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			chain::CommitteeManager& committeeManager,
-			const dbrb::DbrbConfiguration& dbrbConfig) {
-		return [pFsmWeak, rangeConsumer, pConfigHolder, &committeeManager, dbrbConfig]() {
+			chain::CommitteeManager& committeeManager) {
+		return [pFsmWeak, rangeConsumer, pConfigHolder, &committeeManager]() {
 			TRY_GET_FSM()
 
 			bool success = false;
@@ -950,13 +965,6 @@ namespace catapult { namespace fastfinality {
 				});
 
 				success = pPromise->get_future().get();
-			}
-
-			if (success) {
-				auto viewData = pFsmShared->dbrbViewFetcher().getLatestView();
-				if (viewData.empty())
-					viewData = dbrbConfig.BootstrapProcesses;
-				pFsmShared->dbrbProcess()->onViewDiscovered(viewData);
 			}
 
 			DelayAction(pFsmShared, pFsmShared->timer(), GetPhaseEndTimeMillis(CommitteePhase::Commit, committeeData.committeeRound().PhaseTimeMillis), [pFsmWeak, success] {

@@ -208,7 +208,8 @@ namespace catapult { namespace fastfinality {
 					pFsmShared,
 					pluginManager.getCommitteeManager(),
 					pConfigHolder,
-					timeSupplier);
+					timeSupplier,
+					m_dbrbConfig);
 				actions.ProposeBlock = CreateDefaultProposeBlockAction(
 					pFsmShared,
 					state.cache(),
@@ -231,8 +232,7 @@ namespace catapult { namespace fastfinality {
 					pFsmShared,
 					blockRangeConsumer,
 					pConfigHolder,
-					pluginManager.getCommitteeManager(),
-					m_dbrbConfig);
+					pluginManager.getCommitteeManager());
 				actions.IncrementRound = CreateDefaultIncrementRoundAction(pFsmShared, pConfigHolder);
 				actions.ResetRound = CreateDefaultResetRoundAction(pFsmShared, pConfigHolder, pluginManager.getCommitteeManager());
 
