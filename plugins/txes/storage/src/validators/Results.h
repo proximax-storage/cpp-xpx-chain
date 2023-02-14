@@ -190,6 +190,9 @@ namespace catapult { namespace validators {
 	// Validation failed because too many replicators have been ordered
 	DEFINE_STORAGE_RESULT(Replicator_Count_Exceeded, 58);
 
+	// Validation failed because there are modifications in progress
+	DEFINE_STORAGE_RESULT(Modification_In_Progress, 59);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

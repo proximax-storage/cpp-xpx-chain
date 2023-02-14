@@ -19,13 +19,13 @@ public:
 			const Hash256& storageHash,
 			const Hash256& modificationId,
 			uint64_t usedSize,
-			uint64_t metaFilesSize) override;
+			uint64_t metaFilesSize) const override;
 
 	void addToConfirmedStorage(const ObserverContext& context,
 							   const Key& driveKey,
-							   const std::set<Key>& replicators) override;
+							   const std::set<Key>& replicators) const override;
 
-	void allowOwnerManagement(const ObserverContext& context, const Key& driveKey) override;
+	void allowOwnerManagement(const ObserverContext& context, const Key& driveKey) const override;
 };
 
 }

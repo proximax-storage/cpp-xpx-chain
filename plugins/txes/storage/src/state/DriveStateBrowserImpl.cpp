@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "DriveStateObserverImpl.h"
+#include "DriveStateBrowserImpl.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/ReplicatorCache.h"
 #include <catapult/cache/ReadOnlyCatapultCache.h>
@@ -53,6 +53,13 @@ Hash256 DriveStateBrowserImpl::getDriveState(const cache::ReadOnlyCatapultCache&
 	auto driveIter = driveCache.find(driveKey);
 	const auto& driveEntry = driveIter.get();
 	return driveEntry.rootHash();
+}
+Hash256 DriveStateBrowserImpl::getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey)
+		const {
+	const auto& driveCache = cache.template sub<cache::BcDriveCache>();
+	auto driveIter = driveCache.find(driveKey);
+	const auto& driveEntry = driveIter.get();
+	return driveEntry.lastModificationId();
 }
 
 }
