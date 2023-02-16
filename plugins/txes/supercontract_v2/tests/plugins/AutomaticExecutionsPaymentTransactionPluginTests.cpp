@@ -13,7 +13,6 @@
 #include <tests/test/nodeps/TestConstants.h>
 #include "catapult/utils/HexParser.h"
 #include "catapult/model/LiquidityProviderNotifications.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 
 using namespace catapult::model;
 
@@ -31,7 +30,6 @@ namespace catapult { namespace plugins {
 			auto config = config::ImmutableConfiguration::Uninitialized();
 			config.GenerationHash = Generation_Hash;
 			config.NetworkIdentifier = Network_Identifier;
-			config.CurrencyMosaicId = test::Default_Currency_Mosaic_Id;
 			config.StreamingMosaicId = test::Default_Streaming_Mosaic_Id;
 			config.SuperContractMosaicId = test::Default_Super_Contract_Mosaic_Id;
 			return config;
