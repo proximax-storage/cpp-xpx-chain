@@ -81,6 +81,11 @@ endif()
 
 add_compile_definitions($<${IS_BIG_ENDIAN}:COMPILE_SYSTEM_BIG_ENDIAN>$<$<NOT:${IS_BIG_ENDIAN}>:COMPILE_SYSTEM_LITTLE_ENDIAN>)
 
+if(DEFINED CLEANUP_LOGGING)
+	add_compile_definitions(CLEANUP_LOGGING_ENABLED)
+	message(STATUS "Cleanup Logging is enabled.")
+endif()
+
 ### add source directories
 add_subdirectory(external)
 

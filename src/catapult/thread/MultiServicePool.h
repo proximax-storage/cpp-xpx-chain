@@ -20,6 +20,7 @@
 
 #pragma once
 #include "IoThreadPool.h"
+#include <atomic>
 #include "catapult/utils/Logging.h"
 #include "catapult/functions.h"
 #include <memory>
@@ -78,6 +79,7 @@ namespace catapult { namespace thread {
 					// shutdown the service
 					CATAPULT_LOG(info) << "shutting down " << serviceName;
 					pService->shutdown();
+					CATAPULT_CLEANUP_LOG(info, "Service was shutdown: " + serviceName);
 				});
 
 				CATAPULT_LOG(debug) << "registered " << serviceName;
@@ -95,14 +97,17 @@ namespace catapult { namespace thread {
 			/// Safely shuts down the service group.
 			void shutdown() {
 				// 1. shutdown the services
+				CATAPULT_CLEANUP_LOG(info, "Shutting down service group: " + m_name);
 				for (auto iter = m_shutdownFunctions.rbegin(); m_shutdownFunctions.rend() != iter; ++iter)
 					(*iter)();
-
+				CATAPULT_CLEANUP_LOG(info, "Service group shut down, clearing: " + m_name);
 				m_shutdownFunctions.clear();
 
 				// 2. wait for all service references to be released
+				CATAPULT_CLEANUP_LOG(info, "Waiting for clearing of this group's services references: " + m_name);
 				for (const auto& pService : m_services)
 					WaitForLastReference(pService);
+				CATAPULT_CLEANUP_LOG(info, "Completed shutdown for: " + m_name);
 			}
 
 		private:
@@ -159,8 +164,9 @@ namespace catapult { namespace thread {
 			m_shutdownFunctions.push_back([pService, serviceName]() {
 				CATAPULT_LOG(info) << "shutting down " << serviceName;
 
-				// shutdown the service and wait for all callbacks to complete
+				// shutdown the service group and wait for all callbacks to complete
 				pService->shutdown();
+				CATAPULT_CLEANUP_LOG(info, "Service was shutdown: " + serviceName);
 				WaitForLastReference(pService);
 			});
 
@@ -216,21 +222,25 @@ namespace catapult { namespace thread {
 			// if the pool has already been destroyed, don't do anything
 			if (!m_pPool)
 				return;
-
+			CATAPULT_CLEANUP_LOG(info, "Pool exists, clearing dependent entities.");
 			// 1. clear the dependent entities
 			m_serviceGroups.clear();
 
+			CATAPULT_CLEANUP_LOG(info, "Dependent entities clelared, shutting down services.");
 			// 2. shutdown the services
 			for (auto iter = m_shutdownFunctions.rbegin(); m_shutdownFunctions.rend() != iter; ++iter)
 				(*iter)();
-
+			CATAPULT_CLEANUP_LOG(info, "Services shutdown. Clearing functions");
 			m_shutdownFunctions.clear();
+			CATAPULT_CLEANUP_LOG(info, "Cleared functions. Waiting for references to be cleaned to shutdown pool.");
 			m_numTotalIsolatedPoolThreads = 0;
 			m_numServiceGroups = 0;
 
 			// 3. after the services are destroyed, the thread pool can be safely destroyed
 			WaitForLastReference(m_pPool);
+			CATAPULT_CLEANUP_LOG(info, "All services are destroyed. Destroying pool");
 			m_pPool.reset();
+			CATAPULT_CLEANUP_LOG(info, "Pool destroyed.");
 		}
 
 	private:

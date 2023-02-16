@@ -320,6 +320,8 @@ namespace catapult { namespace utils {
 	// endregion
 }}
 
+
+
 #define CATAPULT_LOG_WITH_LOGGER_LEVEL_TAG(LOGGER, LEVEL, TAG) \
 	BOOST_LOG_STREAM_WITH_PARAMS( \
 		(LOGGER), \
@@ -341,3 +343,10 @@ namespace catapult { namespace utils {
 	CATAPULT_LOG_WITH_LOGGER_LEVEL( \
 			::catapult::utils::log::global_logger::get(), \
 			(static_cast<::catapult::utils::LogLevel>(boost::log::trivial::SEV)))
+
+#ifdef CLEANUP_LOGGING_ENABLED
+#define CATAPULT_CLEANUP_LOG(SEV, TEXT) \
+	CATAPULT_LOG(SEV) << TEXT
+#else
+#define CATAPULT_CLEANUP_LOG(SEV, TEXT) ;
+#endif

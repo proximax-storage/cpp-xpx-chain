@@ -131,19 +131,26 @@ namespace catapult { namespace extensions {
 				Height height,
 				const consumer<const cache::CacheStorage&, io::OutputStream&>& save) {
 			// 1. create directory if required
+			CATAPULT_CLEANUP_LOG(info, "Saving state to directory. Verify if directory exists.");
 			if (!boost::filesystem::exists(directory.path()))
+				CATAPULT_CLEANUP_LOG(info, "Creating Directory..");
 				boost::filesystem::create_directory(directory.path());
 
 			// 2. save cache data
+			CATAPULT_CLEANUP_LOG(info, "Saving cache data for storages.");
 			for (const auto& pStorage : cacheStorages) {
+				CATAPULT_CLEANUP_LOG(info, "Saving cache data for storage: "+pStorage.get()->name());
 				auto outputStream = OpenOutputStream(directory, GetStorageFilename(*pStorage));
 				save(*pStorage, outputStream);
+				CATAPULT_CLEANUP_LOG(info, "Saved cache data for storage: "+pStorage.get()->name());
 			}
 
 			// 3. save supplemental data
 			cache::SupplementalData supplementalData{ state, score };
+			CATAPULT_CLEANUP_LOG(info, "Saving supplemental data.");
 			auto outputStream = OpenOutputStream(directory, Supplemental_Data_Filename);
 			cache::SaveSupplementalData(supplementalData, height, outputStream);
+			CATAPULT_CLEANUP_LOG(info, "Saved supplemental data.");
 		}
 	}
 

@@ -196,7 +196,9 @@ namespace catapult { namespace local {
 				utils::StackLogger stackLogger("shutting down local node", utils::LogLevel::Info);
 
 				m_pBootstrapper->pool().shutdown();
+				CATAPULT_CLEANUP_LOG(info, "Pool was shutdown, proceeding to save state");
 				saveStateToDisk();
+				CATAPULT_CLEANUP_LOG(info, "Saved state to disk");
 			}
 
 		private:

@@ -166,7 +166,7 @@ namespace catapult { namespace test {
 
 			EXPECT_EQ(1u, subscribers.pStateChangeSubscriber->numScoreChanges());
 			EXPECT_EQ(1u, subscribers.pStateChangeSubscriber->numStateChanges());
-
+			CATAPULT_CLEANUP_LOG(debug, "TEST FINISHED, CLEANING UP");
 		}
 
 		static void AssertLocalNodeDoesNotTriggerNemesisSubscribersAtHeightTwo() {

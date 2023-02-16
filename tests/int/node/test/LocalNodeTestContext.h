@@ -190,7 +190,7 @@ namespace catapult { namespace test {
 
 		std::unique_ptr<local::LocalNode> boot(
 				config::BlockchainConfiguration&& config,
-				const consumer<extensions::ProcessBootstrapper&>& configure) {
+				const consumer<extensions::ProcessBootstrapper&> configure) {
 			prepareNetworkConfiguration(config);
 
 			m_pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
