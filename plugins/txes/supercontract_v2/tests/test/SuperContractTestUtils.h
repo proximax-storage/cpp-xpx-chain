@@ -8,6 +8,7 @@
 #include "src/state/SuperContractEntry.h"
 #include "src/state/DriveContractEntry.h"
 #include "src/model/SuperContractEntityType.h"
+#include "src/model/EndBatchExecutionModel.h"
 #include "tests/test/nodeps/Random.h"
 #include "catapult/model/EntityPtr.h"
 #include "catapult/utils/MemoryUtils.h"
@@ -37,6 +38,33 @@ namespace catapult { namespace test {
 		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_AutomaticExecutionsPaymentTransaction);
 		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
 		pTransaction->AutomaticExecutionsNumber = test::Random32();
+		return pTransaction;
+	}
+	/// Creates a deploy contract transaction.
+	template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateDeployContractTransaction() {
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DeployContractTransaction);
+		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+		pTransaction->FileNameSize = test::Random16();
+		pTransaction->FunctionNameSize = test::Random16();
+		pTransaction->ActualArgumentsSize = test::Random16();
+		pTransaction->ExecutionCallPayment = Amount(test::Random());
+		pTransaction->DownloadCallPayment = Amount(test::Random());
+		pTransaction->AutomaticExecutionFileNameSize = test::Random16();
+		pTransaction->AutomaticExecutionFunctionNameSize = test::Random16();
+		pTransaction->AutomaticExecutionCallPayment = Amount(test::Random());
+		pTransaction->AutomaticDownloadCallPayment = Amount(test::Random());
+		pTransaction->AutomaticExecutionsNumber = test::Random32();
+		pTransaction->Assignee = test::GenerateRandomByteArray<Key>();
+		return pTransaction;
+	}
+	/// Creates a end batch execution single transaction.
+	template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateEndBatchExecutionSingleTransaction() {
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_EndBatchExecutionSingleTransaction);
+		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
+		pTransaction->BatchId = test::Random();
+		pTransaction->ProofOfExecution = model::RawProofOfExecution();
 		return pTransaction;
 	}
 }}
