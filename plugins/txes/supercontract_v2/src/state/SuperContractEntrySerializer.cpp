@@ -12,11 +12,11 @@ namespace catapult { namespace state {
 
     namespace {
         void SaveAutomaticExecutionsInfo(const AutomaticExecutionsInfo& automaticExecutionsInfo, io::OutputStream& output) {
-            io::Write16(output, (uint16_t) automaticExecutionsInfo.AutomaticExecutionFileName.size());
-            auto pAutomaticExecutionFileName = (const uint8_t*) (automaticExecutionsInfo.AutomaticExecutionFileName.c_str());
+            io::Write16(output, utils::checked_cast<size_t, uint16_t>(automaticExecutionsInfo.AutomaticExecutionFileName.size()));
+            auto pAutomaticExecutionFileName = reinterpret_cast<const uint8_t*>(automaticExecutionsInfo.AutomaticExecutionFileName.c_str());
             io::Write(output, utils::RawBuffer(pAutomaticExecutionFileName, automaticExecutionsInfo.AutomaticExecutionFileName.size()));
-            io::Write16(output, (uint16_t) automaticExecutionsInfo.AutomaticExecutionsFunctionName.size());
-            auto pAutomaticExecutionsFunctionName = (const uint8_t*) (automaticExecutionsInfo.AutomaticExecutionsFunctionName.c_str());
+            io::Write16(output, utils::checked_cast<size_t, uint16_t>(automaticExecutionsInfo.AutomaticExecutionsFunctionName.size()));
+            auto pAutomaticExecutionsFunctionName = reinterpret_cast<const uint8_t*>(automaticExecutionsInfo.AutomaticExecutionsFunctionName.c_str());
             io::Write(output, utils::RawBuffer(pAutomaticExecutionsFunctionName, automaticExecutionsInfo.AutomaticExecutionsFunctionName.size()));
             io::Write(output, automaticExecutionsInfo.AutomaticExecutionsNextBlockToCheck);
             io::Write(output, automaticExecutionsInfo.AutomaticExecutionCallPayment);
@@ -41,14 +41,14 @@ namespace catapult { namespace state {
             for (const auto& contractCall : contractCalls) {
                 io::Write(output, contractCall.CallId);
                 io::Write(output, contractCall.Caller);
-                io::Write16(output, (uint16_t) contractCall.FileName.size());
-                auto pFileName = (const uint8_t*) (contractCall.FileName.c_str());
+                io::Write16(output, utils::checked_cast<size_t, uint16_t>(contractCall.FileName.size()));
+                auto pFileName = reinterpret_cast<const uint8_t*>(contractCall.FileName.c_str());
                 io::Write(output, utils::RawBuffer(pFileName, contractCall.FileName.size()));
-                io::Write16(output, (uint16_t) contractCall.FunctionName.size());
-                auto pFunctionName = (const uint8_t*) (contractCall.FunctionName.c_str());
+                io::Write16(output, utils::checked_cast<size_t, uint16_t>(contractCall.FunctionName.size()));
+                auto pFunctionName = reinterpret_cast<const uint8_t*>(contractCall.FunctionName.c_str());
                 io::Write(output, utils::RawBuffer(pFunctionName, contractCall.FunctionName.size()));
-                io::Write16(output, (uint16_t) contractCall.ActualArguments.size());
-                auto pActualArguments = (const uint8_t*) (contractCall.ActualArguments.c_str());
+                io::Write16(output, utils::checked_cast<size_t, uint16_t>(contractCall.ActualArguments.size()));
+                auto pActualArguments = reinterpret_cast<const uint8_t*>(contractCall.ActualArguments.c_str());
                 io::Write(output, utils::RawBuffer(pActualArguments, contractCall.ActualArguments.size()));
                 io::Write(output, contractCall.ExecutionCallPayment);
                 io::Write(output, contractCall.DownloadCallPayment);
@@ -183,9 +183,9 @@ namespace catapult { namespace state {
         void LoadProofOfExecution(ProofOfExecution& poEx, io::InputStream& input) {
             poEx.StartBatchId = io::Read64(input);
             std::array<uint8_t, 32> tBuffer;
+            io::Read(input, tBuffer);
             poEx.T.fromBytes(tBuffer);
-            input.read(tBuffer);
-            input.read(poEx.R);
+            io::Read(input, poEx.R);
         }
 
         void LoadExecutorsInfo(std::map<Key, ExecutorInfo>& executorsInfo, io::InputStream& input) {
@@ -220,8 +220,8 @@ namespace catapult { namespace state {
                 Batch batch;
                 batch.Success = io::Read8(input);
                 std::array<uint8_t, 32> tBuffer;
-                batch.PoExVerificationInformation.fromBytes(tBuffer);
                 io::Read(input, tBuffer);
+                batch.PoExVerificationInformation.fromBytes(tBuffer);
                 LoadCompletedCalls(batch.CompletedCalls, input);
                 batches.emplace_back(batch);
             }
