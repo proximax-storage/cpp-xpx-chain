@@ -29,6 +29,10 @@ namespace catapult { namespace validators {
 				return Failure_Storage_Owner_Management_Is_Forbidden;
 			}
 
+			if (!pDriveEntry->activeDataModifications().empty()) {
+				return Failure_Storage_Modification_In_Progress;
+			}
+
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
             auto replicatorSize = pDriveEntry->replicators().size(); 

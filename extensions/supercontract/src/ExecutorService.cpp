@@ -273,6 +273,9 @@ namespace catapult::contract {
 			sirius::contract::AddContractRequest addRequest;
 			addRequest.m_driveKey = contractInfo.DriveKey.array();
 			addRequest.m_executors = castExecutors(contractInfo.Executors);
+			addRequest.m_contractDeploymentBaseModificationId = contractInfo.DeploymentBaseModificationId.array();
+			addRequest.m_automaticExecutionsFileName = contractInfo.AutomaticExecutionsFileName;
+			addRequest.m_automaticExecutionsFunctionName = contractInfo.AutomaticExecutionsFunctionName;
 			addRequest.m_automaticExecutionsSCLimit = contractInfo.AutomaticExecutionCallPayment.unwrap();
 			addRequest.m_automaticExecutionsSMLimit = contractInfo.AutomaticDownloadCallPayment.unwrap();
 

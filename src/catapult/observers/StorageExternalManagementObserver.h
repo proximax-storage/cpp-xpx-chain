@@ -35,16 +35,15 @@ public:
 			const Hash256& storageHash,
 			const Hash256& modificationId,
 			uint64_t usedSize,
-			uint64_t metaFilesSize) = 0;
+			uint64_t metaFilesSize) const = 0;
 
 	virtual void addToConfirmedStorage(
 			const ObserverContext& context,
 			const Key& driveKey,
-			const std::set<Key>& replicators) = 0;
+			const std::set<Key>& replicators) const = 0;
 
 	virtual void allowOwnerManagement(const ObserverContext& context,
-									  const Key& driveKey) = 0;
-
+									  const Key& driveKey) const = 0;
 };
 
 }

@@ -27,7 +27,7 @@
 #include "src/plugins/DownloadApprovalTransactionPlugin.h"
 #include "src/plugins/EndDriveVerificationTransactionPlugin.h"
 #include "src/state/StorageStateImpl.h"
-#include "src/state/DriveStateObserverImpl.h"
+#include "src/state/DriveStateBrowserImpl.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"

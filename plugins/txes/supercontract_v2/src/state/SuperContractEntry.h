@@ -104,6 +104,14 @@ class SuperContractMixin {
 			m_assignee = assignee;
 		}
 
+		const Hash256& deploymentBaseModificationId() const {
+			return m_deploymentBaseModificationId;
+		}
+
+		void setDeploymentBaseModificationId(const Hash256& deploymentBaseModificationId) {
+			m_deploymentBaseModificationId = deploymentBaseModificationId;
+		}
+
 		AutomaticExecutionsInfo& automaticExecutionsInfo() {
 			return m_automaticExecutionsInfo;
 		}
@@ -142,11 +150,11 @@ class SuperContractMixin {
 			return m_batches.size();
 		}
 
-		std::vector<Batch>& batches() {
+		std::map<uint64_t, Batch>& batches() {
 			return m_batches;
 		}
 
-		const std::vector<Batch>& batches() const {
+		const std::map<uint64_t, Batch>& batches() const {
 			return m_batches;
 		}
 
@@ -162,10 +170,11 @@ class SuperContractMixin {
 		Key m_driveKey;
 		Key m_executionPaymentKey;
 		Key m_assignee;
+		Hash256 m_deploymentBaseModificationId;
 		AutomaticExecutionsInfo m_automaticExecutionsInfo;
 		std::deque<ContractCall> m_requestedCalls;
 		std::map<Key, ExecutorInfo> m_executorsInfo;
-		std::vector<Batch> m_batches;
+		std::map<uint64_t, Batch> m_batches;
 		std::multiset<Hash256> m_releasedTransactions;
 };
 

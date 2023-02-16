@@ -109,9 +109,10 @@ namespace catapult { namespace state {
 		ContractInfo contractInfo;
 		contractInfo.DriveKey = contractEntry.driveKey();
 		contractInfo.Executors = getExecutors(contractKey);
+		contractInfo.DeploymentBaseModificationId = contractEntry.deploymentBaseModificationId();
 
 		for (uint i = 0; i < contractEntry.batches().size(); i++) {
-			contractInfo.RecentBatches[i] = contractEntry.batches()[i].PoExVerificationInformation;
+			contractInfo.RecentBatches[i] = contractEntry.batches().at(i).PoExVerificationInformation;
 		}
 
 		const auto& automaticExecutionInfo = contractEntry.automaticExecutionsInfo();
@@ -122,7 +123,7 @@ namespace catapult { namespace state {
 		contractInfo.AutomaticExecutionsEnabledSince = utils::automaticExecutionsEnabledSince(contractEntry, actualHeight, config);
 		contractInfo.AutomaticExecutionsNextBlockToCheck = automaticExecutionInfo.AutomaticExecutionsNextBlockToCheck;
 		if (!contractEntry.batches().empty()) {
-			const auto& batch = contractEntry.batches().back();
+			const auto& batch = (--contractEntry.batches().end())->second;
 			PublishedBatchInfo lastBatch;
 			lastBatch.BatchIndex = contractEntry.batches().size();
 			lastBatch.BatchSuccess = batch.Success;
