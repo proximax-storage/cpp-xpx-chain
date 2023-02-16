@@ -8,6 +8,7 @@
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
 #include "src/model/EndBatchExecutionSingleTransaction.h"
+#include "CommonSupercontractStreams.h"
 
 using namespace catapult::mongo::mappers;
 
@@ -16,7 +17,7 @@ namespace catapult { namespace mongo { namespace plugins {
     template<typename TTransaction>
     void StreamEndBatchExecutionSingleTransaction(bson_stream::document& builder, const TTransaction& transaction) {
         builder << "contractKey" << ToBinary(transaction.ContractKey)
-                << "batchId" << ToInt64(transaction.BatchId)
+                << "batchId" << static_cast<int64_t>(transaction.BatchId)
                 << "signer" << ToBinary(transaction.Signer);
         StreamProofOfExecution(builder, transaction.ProofOfExecution);
     }

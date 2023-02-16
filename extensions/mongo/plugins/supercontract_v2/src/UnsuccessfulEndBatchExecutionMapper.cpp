@@ -16,7 +16,7 @@ namespace catapult { namespace mongo { namespace plugins {
     template<typename TTransaction>
     void StreamUnsuccessfulEndBatchExecutionTransaction(bson_stream::document& builder, const TTransaction& transaction) {
         builder << "contractKey" << ToBinary(transaction.ContractKey)
-                << "batchId" << ToInt64(transaction.BatchId)
+                << "batchId" << static_cast<int64_t>(transaction.BatchId)
                 << "automaticExecutionsNextBlockToCheck" << ToInt64(transaction.AutomaticExecutionsNextBlockToCheck);
         StreamCallDigests(builder, transaction.CallDigestsPtr(), transaction.CallsNumber);
         StreamOpinions(builder, transaction.ProofsOfExecutionPtr(), transaction.CallPaymentsPtr(), transaction.CosignersNumber, transaction.CallsNumber);

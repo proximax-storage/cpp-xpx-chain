@@ -16,11 +16,11 @@ namespace catapult { namespace mongo { namespace plugins {
     template<typename TTransaction>
     void StreamSuccessfulEndBatchExecutionTransaction(bson_stream::document& builder, const TTransaction& transaction) {
         builder << "contractKey" << ToBinary(transaction.ContractKey)
-                << "batchId" << ToInt64(transaction.BatchId)
+                << "batchId" << static_cast<int64_t>(transaction.BatchId)
                 << "automaticExecutionsNextBlockToCheck" << ToInt64(transaction.AutomaticExecutionsNextBlockToCheck)
                 << "storageHash" << ToBinary(transaction.StorageHash)
-                << "usedSizeBytes" << ToInt64(transaction.UsedSizeBytes)
-                << "metaFilesSizeBytes" << ToInt64(transaction.MetaFilesSizeBytes)
+                << "usedSizeBytes" << static_cast<int64_t>(transaction.UsedSizeBytes)
+                << "metaFilesSizeBytes" << static_cast<int64_t>(transaction.MetaFilesSizeBytes)
                 << "proofOfExecutionVerificationInformation" << ToBinary(transaction.ProofOfExecutionVerificationInformation.data(), transaction.ProofOfExecutionVerificationInformation.size());
         StreamCallDigests(builder, transaction.CallDigestsPtr(), transaction.CallsNumber);
         StreamOpinions(builder, transaction.ProofsOfExecutionPtr(), transaction.CallPaymentsPtr(), transaction.CosignersNumber, transaction.CallsNumber);

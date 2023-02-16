@@ -16,7 +16,7 @@ namespace catapult { namespace mongo { namespace plugins {
     template<typename TTransaction>
     void StreamSynchronizationSingleTransaction(bson_stream::document& builder, const TTransaction& transaction) {
         builder << "contractKey" << ToBinary(transaction.ContractKey)
-                << "batchId" << ToInt64(transaction.BatchId)
+                << "batchId" << static_cast<int64_t>(transaction.BatchId)
                 << "signer" << ToBinary(transaction.Signer);
     }
 

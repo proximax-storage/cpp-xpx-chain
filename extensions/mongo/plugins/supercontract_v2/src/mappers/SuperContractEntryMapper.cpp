@@ -25,9 +25,9 @@ namespace catapult { namespace mongo { namespace plugins {
                 << "automaticExecutionCallPayment" << ToInt64(automaticExecutionsInfo.AutomaticExecutionCallPayment)
                 << "automaticDownloadCallPayment" << ToInt64(automaticExecutionsInfo.AutomaticDownloadCallPayment)
                 << "automatedExecutionsNumber" << static_cast<int32_t>(automaticExecutionsInfo.AutomatedExecutionsNumber)
-                << "automaticExecutionsEnabledSinceHasValue" << automaticExecutionsInfo.AutomaticExecutionsEnabledSince.has_value();
-                if (automaticExecutionsInfo.AutomaticExecutionsEnabledSince.has_value()) {
-                    builder << "automaticExecutionsEnabledSince" << static_cast<int64_t>(automaticExecutionsInfo.AutomaticExecutionsEnabledSince->unwrap());
+                << "automaticExecutionsPrepaidSinceHasValue" << automaticExecutionsInfo.AutomaticExecutionsPrepaidSince.has_value();
+                if (automaticExecutionsInfo.AutomaticExecutionsPrepaidSince.has_value()) {
+                    builder << "automaticExecutionsPrepaidSince" << static_cast<int64_t>(automaticExecutionsInfo.AutomaticExecutionsPrepaidSince->unwrap());
                 }
             builder << bson_stream::close_document;
         }
@@ -50,19 +50,19 @@ namespace catapult { namespace mongo { namespace plugins {
                 auto pFileName = reinterpret_cast<const uint8_t*>(request.FileName.c_str());
                 auto pFunctionName = reinterpret_cast<const uint8_t*>(request.FunctionName.c_str());
                 auto pActualArguments = reinterpret_cast<const uint8_t*>(request.ActualArguments.c_str());
-                array
-                    << bson_stream::open_document
+                bson_stream::document requestedCallsBuilder;
+                requestedCallsBuilder
                     << "callId" << ToBinary(request.CallId)
                     << "caller" << ToBinary(request.Caller)
                     << "fileName" << ToBinary(pFileName, request.FileName.size())
                     << "functionName" << ToBinary(pFunctionName, request.FunctionName.size())
                     << "actualArguments" << ToBinary(pActualArguments, request.ActualArguments.size())
                     << "executionCallPayment" << ToInt64(request.ExecutionCallPayment)
-                    << "downloadCallPayment" <<  ToInt64(request.DownloadCallPayment);
-                    StreamServicePayments(builder, request.ServicePayments);
-                array
-                    << "blockHeight" <<  ToInt64(request.BlockHeight)
-                    << bson_stream::close_document;
+                    << "downloadCallPayment" << ToInt64(request.DownloadCallPayment);
+                StreamServicePayments(requestedCallsBuilder, request.ServicePayments);
+                requestedCallsBuilder
+                    << "blockHeight" << ToInt64(request.BlockHeight);
+                array << requestedCallsBuilder;
             }
             array << bson_stream::close_array;
         }
@@ -92,22 +92,23 @@ namespace catapult { namespace mongo { namespace plugins {
             auto array = builder << "completedCalls" << bson_stream::open_array;
             for (const auto& completed : completedCalls) {
                 array << "callId" << ToBinary(completed.CallId)
-                        << "caller" << ToBinary(completed.Caller)
-                        << "status" << static_cast<int16_t>(completed.Status)
-                        << "executionWork" << ToInt64(completed.ExecutionWork)
-                        << "downloadWork" << ToInt64(completed.DownloadWork);
+                      << "caller" << ToBinary(completed.Caller)
+                      << "status" << static_cast<int16_t>(completed.Status)
+                      << "executionWork" << ToInt64(completed.ExecutionWork)
+                      << "downloadWork" << ToInt64(completed.DownloadWork);
             }
             array << bson_stream::close_array;
         }
 
-        void StreamBatches(bson_stream::document& builder, const std::vector<state::Batch>& batches) {
+        void StreamBatches(bson_stream::document& builder, const std::map<uint64_t, state::Batch>& batches) {
             auto array = builder << "batches" << bson_stream::open_array;
             for (const auto& batch : batches) {
                 bson_stream::document batchBuilder;
-                batchBuilder << "success" << batch.Success;
-                auto poExVerificationInformation = batch.PoExVerificationInformation.toBytes();
+                batchBuilder << "batchId" << static_cast<int64_t>(batch.first)
+                             << "success" << batch.second.Success;
+                auto poExVerificationInformation = batch.second.PoExVerificationInformation.toBytes();
                 batchBuilder << "poExVerificationInformation" << ToBinary(poExVerificationInformation.data(), poExVerificationInformation.size());
-                StreamCompletedCalls(batchBuilder, batch.CompletedCalls);
+                StreamCompletedCalls(batchBuilder, batch.second.CompletedCalls);
             }
             array << bson_stream::close_array;
         }
@@ -160,9 +161,9 @@ namespace catapult { namespace mongo { namespace plugins {
             automaticExecutionsInfo.AutomaticDownloadCallPayment = Amount(static_cast<uint64_t>(dbAutomaticExecutionsInfo["automaticDownloadCallPayment"].get_int64()));
             automaticExecutionsInfo.AutomatedExecutionsNumber = dbAutomaticExecutionsInfo["automatedExecutionsNumber"].get_int32();
             
-            auto automaticExecutionsEnabledSinceHasValue = dbAutomaticExecutionsInfo["automaticExecutionsEnabledSince"];
-            if (automaticExecutionsEnabledSinceHasValue) {
-                automaticExecutionsInfo.AutomaticExecutionsEnabledSince = Height(automaticExecutionsEnabledSinceHasValue.get_int64());
+            auto AutomaticExecutionsPrepaidSinceHasValue = dbAutomaticExecutionsInfo["AutomaticExecutionsPrepaidSince"];
+            if (AutomaticExecutionsPrepaidSinceHasValue) {
+                automaticExecutionsInfo.AutomaticExecutionsPrepaidSince = Height(AutomaticExecutionsPrepaidSinceHasValue.get_int64());
             }
         }
 
@@ -232,9 +233,10 @@ namespace catapult { namespace mongo { namespace plugins {
             }
         }
 
-        void ReadBatches(std::vector<state::Batch>& batches, const bsoncxx::array::view& dbBatches) {
+        void ReadBatches(std::map<uint64_t, state::Batch>& batches, const bsoncxx::array::view& dbBatches) {
             for (const auto& batch : dbBatches) {
                 auto doc = batch.get_document().view();
+                auto batchId = doc["batchId"].get_int64();
                 auto success = doc["success"].get_bool();
                 Key buffer; 
                 DbBinaryToModelArray(buffer, doc["poExVerificationInformation"].get_binary());
@@ -242,7 +244,7 @@ namespace catapult { namespace mongo { namespace plugins {
                 poExVerificationInformation.fromBytes(buffer.array());      
                 std::vector<state::CompletedCall> completedCalls;
                 ReadCompletedCalls(completedCalls, doc["completedCalls"].get_array().value);
-                batches.emplace_back(state::Batch{success, poExVerificationInformation, completedCalls});
+                batches.emplace(batchId, state::Batch{success, poExVerificationInformation, completedCalls});
             }
         }
 

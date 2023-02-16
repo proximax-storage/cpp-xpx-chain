@@ -8,6 +8,7 @@
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
 #include "src/model/DeployContractTransaction.h"
+#include "CommonSupercontractStreams.h"
 
 using namespace catapult::mongo::mappers;
 
@@ -17,14 +18,14 @@ namespace catapult { namespace mongo { namespace plugins {
     void StreamDeployContractTransaction(bson_stream::document& builder, const TTransaction& transaction) {
         builder << "signer" << ToBinary(transaction.Signer)
                 << "driveKey" << ToBinary(transaction.DriveKey)
-                << "assignee" << ToBinary(transaction.Assignee);
+                << "assignee" << ToBinary(transaction.Assignee)
                 << "automaticExecutionFileName" << ToBinary(transaction.AutomaticExecutionFileNamePtr(), transaction.AutomaticExecutionFileNameSize)
                 << "automaticExecutionsFunctionName" << ToBinary(transaction.AutomaticExecutionFunctionNamePtr(), transaction.AutomaticExecutionFunctionNameSize)
                 << "automaticExecutionCallPayment" << ToInt64(transaction.AutomaticExecutionCallPayment)
                 << "automaticDownloadCallPayment" << ToInt64(transaction.AutomaticDownloadCallPayment)
                 << "actualArguments" << ToBinary(transaction.ActualArgumentsPtr(), transaction.ActualArgumentsSize);
         StreamServicePayments(builder, transaction.ServicePaymentsPtr(), transaction.ServicePaymentsCount);
-        builder << "automaticExecutionsNumber" << ToInt64(transaction.AutomaticExecutionsNumber)
+        builder << "automaticExecutionsNumber" << static_cast<int32_t>(transaction.AutomaticExecutionsNumber)
                 << "executionCallPayment" << ToInt64(transaction.ExecutionCallPayment)
                 << "downloadCallPayment" << ToInt64(transaction.DownloadCallPayment);
     }
