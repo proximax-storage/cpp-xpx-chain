@@ -77,7 +77,9 @@ namespace catapult { namespace state {
             for (const auto& completedCall : completedCalls) {
                 io::Write(output, completedCall.CallId);
                 io::Write(output, completedCall.Caller);
-                std::memcpy(&output, &completedCall.Status, sizeof(int16_t));
+                uint16_t callStatus;
+                std::memcpy(&callStatus, &completedCall.Status, sizeof(callStatus));
+                io::Write16(output, callStatus);
                 io::Write(output, completedCall.ExecutionWork);
                 io::Write(output, completedCall.DownloadWork);
             }
@@ -206,7 +208,8 @@ namespace catapult { namespace state {
                 CompletedCall completedCall;
                 io::Read(input, completedCall.CallId);
                 io::Read(input, completedCall.Caller);
-                std::memcpy(&input, &completedCall.Status, sizeof(int16_t));
+                uint16_t callStatus = io::Read16(input);
+                std::memcpy(&completedCall.Status, &callStatus, sizeof(callStatus));
                 io::Read(input, completedCall.ExecutionWork);
                 io::Read(input, completedCall.DownloadWork);
 
