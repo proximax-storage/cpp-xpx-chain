@@ -85,12 +85,13 @@ namespace catapult { namespace state {
             }
         }
 
-        void SaveBatches(const std::vector<Batch>& batches, io::OutputStream& output) {
+        void SaveBatches(const std::map<uint64_t, Batch>& batches, io::OutputStream& output) {
             io::Write16(output, utils::checked_cast<size_t, uint16_t>(batches.size()));
             for (const auto& batch : batches) {
-                io::Write8(output, batch.Success);
-                io::Write(output, batch.PoExVerificationInformation.toBytes());
-                SaveCompletedCalls(batch.CompletedCalls, output);
+                io::Write64(output, batch.first);
+                io::Write8(output, batch.second.Success);
+                io::Write(output, batch.second.PoExVerificationInformation.toBytes());
+                SaveCompletedCalls(batch.second.CompletedCalls, output);
             }
         }
     }
@@ -217,16 +218,17 @@ namespace catapult { namespace state {
             }
         }
 
-        void LoadBatches(std::vector<Batch>& batches, io::InputStream& input) {
+        void LoadBatches(std::map<uint64_t, Batch>& batches, io::InputStream& input) {
             auto batchesCount = io::Read16(input);
             while (batchesCount--) {
+                auto batchId = io::Read64(input);
                 Batch batch;
                 batch.Success = io::Read8(input);
                 std::array<uint8_t, 32> tBuffer;
                 io::Read(input, tBuffer);
                 batch.PoExVerificationInformation.fromBytes(tBuffer);
                 LoadCompletedCalls(batch.CompletedCalls, input);
-                batches.emplace_back(batch);
+                batches.emplace(batchId, batch);
             }
         }
     }

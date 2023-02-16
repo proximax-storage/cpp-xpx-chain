@@ -13,17 +13,6 @@ using namespace catapult::mongo::mappers;
 
 namespace catapult { namespace mongo { namespace plugins {
 
-    namespace {
-        void StreamServicePayments(bson_stream::document& builder, const model::UnresolvedMosaic* pServicePayments, size_t numServicePayments) {
-            auto servicePaymentsArray = builder << "servicePayments" << bson_stream::open_array;
-            for (auto i = 0u; i < numServicePayments; ++i) {
-                StreamMosaic(servicePaymentsArray, pServicePayments->MosaicId, pServicePayments->Amount);
-                ++pServicePayments;
-            }
-            servicePaymentsArray << bson_stream::close_array;
-        }
-    }
-
     template<typename TTransaction>
     void StreamDeployContractTransaction(bson_stream::document& builder, const TTransaction& transaction) {
         builder << "signer" << ToBinary(transaction.Signer)

@@ -13,18 +13,6 @@ using namespace catapult::mongo::mappers;
 
 namespace catapult { namespace mongo { namespace plugins {
 
-    namespace {
-        void StreamProofOfExecution(bson_stream::document& builder, const model::RawProofOfExecution& rawPoEx) {
-            builder << "poEx" << bson_stream::open_document
-                    << "startBatchId" << static_cast<int64_t>(rawPoEx.StartBatchId)
-                    << "T" << ToBinary(rawPoEx.T.data(), rawPoEx.T.size())
-                    << "R" << ToBinary(rawPoEx.R.data(), rawPoEx.R.size())
-                    << "F" << ToBinary(rawPoEx.F.data(), rawPoEx.F.size())
-                    << "K" << ToBinary(rawPoEx.K.data(), rawPoEx.K.size()) 
-                    << bson_stream::close_document;
-        }
-    }
-
     template<typename TTransaction>
     void StreamEndBatchExecutionSingleTransaction(bson_stream::document& builder, const TTransaction& transaction) {
         builder << "contractKey" << ToBinary(transaction.ContractKey)
