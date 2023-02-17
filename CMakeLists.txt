@@ -10,13 +10,14 @@ option(SANITIZE_UNDEFINED "Enable undefined behavior sanitizer" OFF)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -DDEADLOCK_THRESHOLD_MILLISECONDS=600000 -w")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 ${CMAKE_CXX_FLAGS_RELEASE}")
 
 message(STATUS "CATAPULT_VERSION_DESCRIPTION: ${CATAPULT_VERSION_DESCRIPTION}")
 message(STATUS "CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 message(STATUS "BOOST_ROOT: $ENV{BOOST_ROOT}")
+message(STATUS "BUILD TYPE: ${CMAKE_BUILD_TYPE}")
 
 set(CORE_CATAPULT_LIBS catapult.io catapult.ionet catapult.model catapult.thread catapult.utils)
 
@@ -31,6 +32,14 @@ else()
 endif()
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
+
+string(TOLOWER "${CMAKE_BUILD_TYPE}" build_type_lowercase)
+
+if(build_type_lowercase STREQUAL "debug")
+	message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
+else()
+	message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
+endif()
 
 ### setup openssl
 message("--- locating openssl dependencies ---")
