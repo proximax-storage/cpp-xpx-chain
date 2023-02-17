@@ -20,6 +20,7 @@
 
 #include "KeyValueOutputBuilder.h"
 #include <algorithm>
+#include <iomanip>
 
 namespace catapult { namespace tools {
 
