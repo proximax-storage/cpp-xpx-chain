@@ -35,6 +35,7 @@
 #include "catapult/validators/ValidatorTypes.h"
 #include "catapult/plugins.h"
 #include "catapult/types.h"
+#include "catapult/utils/Logging.h"
 #include <bitset>
 #include "PluginUtils.h"
 
@@ -92,8 +93,13 @@ namespace catapult { namespace plugins {
 		PluginManager(
 				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				const StorageConfiguration& storageConfig);
-
-	public:
+		DECLARE_CATAPULT_DESTRUCTOR_DEFINITION_CLEANUP_LOG(PluginManager)
+#ifdef CLEANUP_LOGGING_ENABLED
+		PluginManager(const PluginManager& pluginManager) = default;
+		PluginManager(PluginManager&& pluginManager) = default;
+		PluginManager& operator=(const PluginManager& other) = default;
+#endif
+		public:
 		// region config
 
 		/// Gets the block chain configuration at \a height.

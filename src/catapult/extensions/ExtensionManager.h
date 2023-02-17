@@ -22,6 +22,7 @@
 #include "ServiceRegistrar.h"
 #include "catapult/functions.h"
 #include "catapult/types.h"
+#include "catapult/utils/Logging.h"
 #include <memory>
 #include <vector>
 
@@ -38,6 +39,8 @@ namespace catapult { namespace extensions {
 	public:
 		/// Creates a manager.
 		ExtensionManager();
+
+		DECLARE_CATAPULT_DESTRUCTOR_DEFINITION_CLEANUP_LOG(ExtensionManager)
 
 	public:
 		/// Registers a system plugin with \a name.

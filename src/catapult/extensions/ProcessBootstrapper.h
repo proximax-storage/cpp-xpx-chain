@@ -49,6 +49,9 @@ namespace catapult { namespace extensions {
 				ProcessDisposition disposition,
 				const std::string& servicePoolName);
 
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, ProcessBootstrapper, "Destroying process boostrapper")
+
+
 	public:
 		/// Gets the configuration.
 		const config::BlockchainConfiguration& config(const Height& height) const;

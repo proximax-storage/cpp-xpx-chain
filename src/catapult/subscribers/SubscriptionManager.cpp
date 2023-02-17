@@ -36,7 +36,7 @@ namespace catapult { namespace subscribers {
 			: m_pStorage(std::make_unique<io::FileBlockStorage>(config.User.DataDirectory)) {
 		m_subscriberUsedFlags.fill(false);
 	}
-
+	DEFINE_CATAPULT_DESTRUCTOR_DEFINITION_CLEANUP_LOG(info, SubscriptionManager, "Destroying subscription manager")
 	io::BlockStorage& SubscriptionManager::fileStorage() {
 		return *m_pStorage;
 	}

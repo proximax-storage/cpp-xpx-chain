@@ -31,6 +31,8 @@ namespace catapult { namespace plugins {
 			, m_shouldEnableVerifiableState(immutableConfig().ShouldEnableVerifiableState)
 	{}
 
+	DEFINE_CATAPULT_DESTRUCTOR_DEFINITION_CLEANUP_LOG(info, PluginManager, "Destroying plugin manager")
+
 	// region config
 
 	const model::NetworkConfiguration& PluginManager::config(const Height& height) const {

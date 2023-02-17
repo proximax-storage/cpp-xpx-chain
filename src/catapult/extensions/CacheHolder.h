@@ -6,6 +6,7 @@
 
 #pragma once
 #include "catapult/cache/CatapultCache.h"
+#include "catapult/utils/Logging.h"
 
 namespace catapult { namespace extensions {
 	/// Holder used to hold the cache.
@@ -13,7 +14,7 @@ namespace catapult { namespace extensions {
 	public:
 		/// Creates a default holder.
 		CacheHolder() : m_catapultCache({}) {};
-
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, CacheHolder, "Destroying cache holder.")
 	public:
 		/// Gets const cache.
 		const cache::CatapultCache& cache() const {

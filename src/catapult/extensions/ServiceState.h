@@ -81,6 +81,7 @@ namespace catapult { namespace extensions {
 				, m_packetHandlers(m_pluginManager.configHolder()->Config().Node.MaxPacketDataSize.bytes32())
 		{}
 
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, ServiceState, "Destroying service state")
 	public:
 		/// Gets the config.
 		const auto& config(const Height& height) const {

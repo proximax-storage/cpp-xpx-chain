@@ -170,8 +170,11 @@ namespace catapult { namespace io {
 			, m_pCachedData(std::make_unique<CachedData>()) {
 		m_pCachedData->update(m_pStorage->loadBlockElement(m_pStorage->chainHeight()));
 	}
-
+#ifdef CLEANUP_LOGGING_ENABLED
+	DEFINE_CATAPULT_DESTRUCTOR_DEFINITION_CLEANUP_LOG(info, BlockStorageCache, "Destroying block storage cache")
+#else
 	BlockStorageCache::~BlockStorageCache() = default;
+#endif
 
 	BlockStorageView BlockStorageCache::view() const {
 		return BlockStorageView(*m_pStorage, m_lock.acquireReader(), *m_pCachedData);

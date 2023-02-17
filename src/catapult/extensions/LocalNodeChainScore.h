@@ -35,6 +35,8 @@ namespace catapult { namespace extensions {
 		explicit LocalNodeChainScore(const model::ChainScore& score) : m_score (score)
 		{}
 
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, LocalNodeChainScore, "Destroying LocalNodeChainScore")
+
 	public:
 		/// Gets the current chain score.
 		model::ChainScore get() const {

@@ -87,6 +87,8 @@ namespace catapult { namespace ionet {
 		/// Creates a node around a unique identifier (\a identityKey) with \a endpoint and \a metadata.
 		Node(const Key& identityKey, const NodeEndpoint& endpoint, const NodeMetadata& metadata);
 
+		DECLARE_CATAPULT_DESTRUCTOR_DEFINITION_CLEANUP_LOG(Node)
+
 	public:
 		/// Gets the unique identifier (a public key).
 		const Key& identityKey() const;

@@ -133,7 +133,9 @@ namespace catapult { namespace thread {
 
 		/// Destroys the pool.
 		~MultiServicePool() {
+			CATAPULT_CLEANUP_LOG(info, "Shutting down multi service pool");
 			shutdown();
+			CATAPULT_CLEANUP_LOG(info, "Multi service pool shut down, cleaning");
 		}
 
 	public:

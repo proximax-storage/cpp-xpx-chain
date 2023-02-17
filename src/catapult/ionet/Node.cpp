@@ -57,6 +57,8 @@ namespace catapult { namespace ionet {
 		m_printableName = GetPrintableName(m_identityKey, m_endpoint, m_metadata);
 	}
 
+	DEFINE_CATAPULT_DESTRUCTOR_DEFINITION_CLEANUP_LOG(info, Node, "Node is being destroyed.")
+
 	const Key& Node::identityKey() const {
 		return m_identityKey;
 	}

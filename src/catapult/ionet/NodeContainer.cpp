@@ -244,7 +244,9 @@ namespace catapult { namespace ionet {
 			: m_pImpl(std::make_unique<NodeContainerData>(maxNodes, timeSupplier))
 	{}
 
-	NodeContainer::~NodeContainer() = default;
+	NodeContainer::~NodeContainer() {
+		CATAPULT_CLEANUP_LOG(info, "Destroying node container.");
+	};
 
 	NodeContainerView NodeContainer::view() const {
 		auto readLock = m_lock.acquireReader();

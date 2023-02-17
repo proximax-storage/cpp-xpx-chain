@@ -25,6 +25,8 @@
 
 namespace catapult { namespace extensions {
 
+	DEFINE_CATAPULT_DESTRUCTOR_DEFINITION_CLEANUP_LOG(info, ExtensionManager, "Destroying extension manager")
+
 	ExtensionManager::ExtensionManager() {
 		std::string prefix = "catapult.";
 		for (const auto& name : { "coresystem", "plugins.signature" })

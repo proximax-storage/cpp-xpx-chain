@@ -39,6 +39,7 @@ namespace catapult { namespace subscribers {
 	public:
 		/// Creates a new subscription manager around \a config.
 		explicit SubscriptionManager(const config::BlockchainConfiguration& config);
+		DECLARE_CATAPULT_DESTRUCTOR_DEFINITION_CLEANUP_LOG(SubscriptionManager)
 
 	public:
 		/// Gets the underlying file storage.
