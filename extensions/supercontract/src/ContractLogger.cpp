@@ -32,4 +32,6 @@ namespace catapult::contract {
 	void ContractLogger::critical(const std::string& msg) {
 		CATAPULT_LOG(fatal) << msg;
 	}
+
+	void ContractLogger::stop() {}
 }
