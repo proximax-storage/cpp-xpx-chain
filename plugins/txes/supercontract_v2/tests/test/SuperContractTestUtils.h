@@ -56,6 +56,7 @@ namespace catapult { namespace test {
 		pTransaction->AutomaticDownloadCallPayment = Amount(test::Random());
 		pTransaction->AutomaticExecutionsNumber = test::Random32();
 		pTransaction->Assignee = test::GenerateRandomByteArray<Key>();
+		pTransaction->FileNamePtr();
 		return pTransaction;
 	}
 	/// Creates a end batch execution single transaction.
@@ -65,6 +66,14 @@ namespace catapult { namespace test {
 		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
 		pTransaction->BatchId = test::Random();
 		pTransaction->ProofOfExecution = model::RawProofOfExecution();
+		return pTransaction;
+	}
+	/// Creates a synchronization single transaction.
+	template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateSynchronizationSingleTransaction() {
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_SynchronizationSingleTransaction);
+		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
+		pTransaction->BatchId = test::Random();
 		return pTransaction;
 	}
 }}
