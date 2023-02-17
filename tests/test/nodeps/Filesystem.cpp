@@ -70,7 +70,7 @@ namespace catapult { namespace test {
 	{}
 
 	TempDirectoryGuard::~TempDirectoryGuard() {
-		CATAPULT_CLEANUP_LOG(info, "Removing temporary directories.")
+		CATAPULT_CLEANUP_LOG(info, "Removing temporary directories.");
 		auto numRemovedFiles = boost::filesystem::remove_all(m_directoryPath);
 		CATAPULT_LOG(debug)
 				<< "deleted directory " << m_directoryPath << " and removed " << numRemovedFiles

@@ -58,6 +58,10 @@ namespace catapult { namespace test {
 		LocalNodeTestContext(NodeFlag nodeFlag, const std::vector<ionet::Node>& nodes)
 				: LocalNodeTestContext(nodeFlag, nodes, [](const auto&) {}, "")
 		{}
+		~LocalNodeTestContext()
+		{
+			CATAPULT_CLEANUP_LOG(info, "Destroying local node test context");
+		}
 
 		/// Creates a context around \a nodeFlag with custom \a nodes, config transform (\a configTransform)
 		/// and temp directory postfix (\a tempDirPostfix).
