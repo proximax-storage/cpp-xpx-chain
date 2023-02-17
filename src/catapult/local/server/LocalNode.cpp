@@ -86,7 +86,9 @@ namespace catapult { namespace local {
 			{}
 
 			~DefaultLocalNode() override {
+				CATAPULT_CLEANUP_LOG(info, "Local Node is beginning shutdown procedure.");
 				shutdown();
+				CATAPULT_CLEANUP_LOG(info, "Local Node has shutdown, cleaning members.");
 			}
 
 		public:
