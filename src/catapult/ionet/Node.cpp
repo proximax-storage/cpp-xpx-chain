@@ -20,6 +20,7 @@
 
 #include "Node.h"
 #include "catapult/model/Address.h"
+#include "catapult/utils/ThrottleLogger.h"
 #include "catapult/model/NetworkInfo.h"
 #include <cctype>
 
@@ -57,7 +58,7 @@ namespace catapult { namespace ionet {
 		m_printableName = GetPrintableName(m_identityKey, m_endpoint, m_metadata);
 	}
 
-	DEFINE_CATAPULT_DESTRUCTOR_DEFINITION_CLEANUP_LOG(info, Node, "Node is being destroyed.")
+	DEFINE_CATAPULT_DESTRUCTOR_THROTTLE_CLEANUP_LOG(info, 100, Node, "Node is being destroyed.")
 
 	const Key& Node::identityKey() const {
 		return m_identityKey;
