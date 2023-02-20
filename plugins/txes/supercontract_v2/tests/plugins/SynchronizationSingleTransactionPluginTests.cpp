@@ -19,119 +19,113 @@ namespace catapult { namespace plugins {
 
 #define TEST_CLASS SynchronizationSingleTransactionPluginTests
 
-		namespace {
-			DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(
-					SynchronizationSingle,
-					config::ImmutableConfiguration,
-					1,
-					1, )
+	namespace {
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(SynchronizationSingle, config::ImmutableConfiguration, 1, 1, )
 
-			const auto Generation_Hash = utils::ParseByteArray<GenerationHash>(
-					"CE076EF4ABFBC65B046987429E274EC31506D173E91BF102F16BEB7FB8176230");
-			constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
+		const auto Generation_Hash = utils::ParseByteArray<GenerationHash>(
+				"CE076EF4ABFBC65B046987429E274EC31506D173E91BF102F16BEB7FB8176230");
+		constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
 
-			auto CreateConfiguration() {
-				auto config = config::ImmutableConfiguration::Uninitialized();
-				config.GenerationHash = Generation_Hash;
-				config.NetworkIdentifier = Network_Identifier;
-				config.StreamingMosaicId = test::Default_Streaming_Mosaic_Id;
-				config.SuperContractMosaicId = test::Default_Super_Contract_Mosaic_Id;
-				return config;
-			}
-
-			template<typename TTraits>
-			auto CreateTransaction() {
-				return test::CreateSynchronizationSingleTransaction<typename TTraits::TransactionType>();
-			}
+		auto CreateConfiguration() {
+			auto config = config::ImmutableConfiguration::Uninitialized();
+			config.GenerationHash = Generation_Hash;
+			config.NetworkIdentifier = Network_Identifier;
+			return config;
 		}
 
-		DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_SynchronizationSingleTransaction, CreateConfiguration())
-
-		PLUGIN_TEST(CanCalculateSize) {
-			// Arrange:
-			auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
-			auto pTransaction = CreateTransaction<TTraits>();
-
-			// Act:
-			auto realSize = pPlugin->calculateRealSize(*pTransaction);
-
-			// Assert:
-			EXPECT_EQ(sizeof(typename TTraits::TransactionType), realSize);
+		template<typename TTraits>
+		auto CreateTransaction() {
+			return test::CreateSynchronizationSingleTransaction<typename TTraits::TransactionType>();
 		}
+	}
 
-		//	 region publish - basic
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_SynchronizationSingleTransaction, CreateConfiguration())
 
-		PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
-			// Arrange:
-			mocks::MockNotificationSubscriber sub;
-			auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+	PLUGIN_TEST(CanCalculateSize) {
+		// Arrange:
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		auto pTransaction = CreateTransaction<TTraits>();
 
-			typename TTraits::TransactionType transaction;
-			transaction.Size = sizeof(transaction);
-			transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
+		// Act:
+		auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
-			// Act:
-			test::PublishTransaction(*pPlugin, transaction, sub);
+		// Assert:
+		EXPECT_EQ(sizeof(typename TTraits::TransactionType), realSize);
+	}
 
-			// Assert:
-			ASSERT_EQ(0, sub.numNotifications());
-		}
+	//	 region publish - basic
 
-		PLUGIN_TEST(CanPublishCorrectNumberOfNotifications) {
-			// Arrange:
-			auto pTransaction = CreateTransaction<TTraits>();
-			mocks::MockNotificationSubscriber sub;
-			auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+	PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
+		// Arrange:
+		mocks::MockNotificationSubscriber sub;
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
-			// Act:
-			test::PublishTransaction(*pPlugin, *pTransaction, sub);
+		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
+		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
 
-			// Assert:
-			ASSERT_EQ(2u, sub.numNotifications());
-			auto i = 0u;
-			EXPECT_EQ(SuperContract_v2_Contract_State_Update_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(SuperContract_v2_Synchronization_Single_v1_Notification, sub.notificationTypes()[i++]);
-		}
+		// Act:
+		test::PublishTransaction(*pPlugin, transaction, sub);
 
-		// endregion
+		// Assert:
+		ASSERT_EQ(0, sub.numNotifications());
+	}
 
-		// region publish - synchronization single notification
+	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications) {
+		// Arrange:
+		auto pTransaction = CreateTransaction<TTraits>();
+		mocks::MockNotificationSubscriber sub;
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
-		PLUGIN_TEST(CanPublishSynchronizationSingleNotification) {
-			// Arrange:
-			mocks::MockTypedNotificationSubscriber<SynchronizationSingleNotification<1>> sub;
-			auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
-			auto pTransaction = CreateTransaction<TTraits>();
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
-			// Act:
-			test::PublishTransaction(*pPlugin, *pTransaction, sub);
+		// Assert:
+		ASSERT_EQ(2u, sub.numNotifications());
+		auto i = 0u;
+		EXPECT_EQ(SuperContract_v2_Contract_State_Update_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(SuperContract_v2_Synchronization_Single_v1_Notification, sub.notificationTypes()[i++]);
+	}
 
-			// Assert:
-			ASSERT_EQ(1u, sub.numMatchingNotifications());
-			const auto& notification = sub.matchingNotifications()[0];
-			EXPECT_EQ(pTransaction->ContractKey, notification.ContractKey);
-			EXPECT_EQ(pTransaction->BatchId, notification.BatchId);
-			EXPECT_EQ(pTransaction->Signer, notification.Executor);
-		}
+	// endregion
 
-		// endregion
+	// region publish - synchronization single notification
 
-		// region publish - contract state update notification
+	PLUGIN_TEST(CanPublishSynchronizationSingleNotification) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<SynchronizationSingleNotification<1>> sub;
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		auto pTransaction = CreateTransaction<TTraits>();
 
-		PLUGIN_TEST(CanPublishContractStateUpdateNotification) {
-			// Arrange:
-			mocks::MockTypedNotificationSubscriber<ContractStateUpdateNotification<1>> sub;
-			auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
-			auto pTransaction = CreateTransaction<TTraits>();
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
-			// Act:
-			test::PublishTransaction(*pPlugin, *pTransaction, sub);
+		// Assert:
+		ASSERT_EQ(1u, sub.numMatchingNotifications());
+		const auto& notification = sub.matchingNotifications()[0];
+		EXPECT_EQ(pTransaction->ContractKey, notification.ContractKey);
+		EXPECT_EQ(pTransaction->BatchId, notification.BatchId);
+		EXPECT_EQ(pTransaction->Signer, notification.Executor);
+	}
 
-			// Assert:
-			ASSERT_EQ(1u, sub.numMatchingNotifications());
-			const auto& notification = sub.matchingNotifications()[0];
-			EXPECT_EQ(pTransaction->ContractKey, notification.ContractKey);
-		}
+	// endregion
 
-		// endregion
+	// region publish - contract state update notification
+
+	PLUGIN_TEST(CanPublishContractStateUpdateNotification) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<ContractStateUpdateNotification<1>> sub;
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		auto pTransaction = CreateTransaction<TTraits>();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+
+		// Assert:
+		ASSERT_EQ(1u, sub.numMatchingNotifications());
+		const auto& notification = sub.matchingNotifications()[0];
+		EXPECT_EQ(pTransaction->ContractKey, notification.ContractKey);
+	}
+
+	// endregion
 }}

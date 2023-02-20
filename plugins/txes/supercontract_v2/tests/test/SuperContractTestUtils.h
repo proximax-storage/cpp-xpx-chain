@@ -43,15 +43,36 @@ namespace catapult { namespace test {
 	/// Creates a deploy contract transaction.
 	template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateDeployContractTransaction() {
-		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DeployContractTransaction);
+		// dynamic data size
+//		uint16_t fileNamePtrSize = test::Random16();
+//		uint16_t functionNamePtrSize = test::Random16();
+//		uint16_t actualArgumentsPtrSize = test::Random16();
+//		uint8_t servicePaymentsPtrSize = test::RandomByte();
+//		uint16_t automaticExecutionFileNamePtrSize = test::Random16();
+//		uint16_t automaticExecutionFunctionNamePtrSize = test::Random16();
+		uint16_t fileNamePtrSize = 100;
+		uint16_t functionNamePtrSize = 100;
+		uint16_t actualArgumentsPtrSize = 100;
+		uint8_t servicePaymentsPtrSize = 10;
+		uint16_t automaticExecutionFileNamePtrSize = 100;
+		uint16_t automaticExecutionFunctionNamePtrSize = 100;
+		uint64_t additionalSize = fileNamePtrSize +
+							  functionNamePtrSize +
+							  actualArgumentsPtrSize +
+							  servicePaymentsPtrSize +
+							  automaticExecutionFileNamePtrSize +
+							  automaticExecutionFunctionNamePtrSize;
+
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DeployContractTransaction, additionalSize);
 		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
-		pTransaction->FileNameSize = test::Random16();
-		pTransaction->FunctionNameSize = test::Random16();
-		pTransaction->ActualArgumentsSize = test::Random16();
+		pTransaction->FileNameSize = fileNamePtrSize;
+		pTransaction->FunctionNameSize = functionNamePtrSize;
+		pTransaction->ActualArgumentsSize = actualArgumentsPtrSize;
+		pTransaction->ServicePaymentsCount = servicePaymentsPtrSize;
 		pTransaction->ExecutionCallPayment = Amount(test::Random());
 		pTransaction->DownloadCallPayment = Amount(test::Random());
-		pTransaction->AutomaticExecutionFileNameSize = test::Random16();
-		pTransaction->AutomaticExecutionFunctionNameSize = test::Random16();
+		pTransaction->AutomaticExecutionFileNameSize = automaticExecutionFileNamePtrSize;
+		pTransaction->AutomaticExecutionFunctionNameSize = automaticExecutionFunctionNamePtrSize;
 		pTransaction->AutomaticExecutionCallPayment = Amount(test::Random());
 		pTransaction->AutomaticDownloadCallPayment = Amount(test::Random());
 		pTransaction->AutomaticExecutionsNumber = test::Random32();
@@ -74,6 +95,44 @@ namespace catapult { namespace test {
 		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_SynchronizationSingleTransaction);
 		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
 		pTransaction->BatchId = test::Random();
+		return pTransaction;
+	}
+	/// Creates a successful end batch execution transaction.
+	template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateSuccessfulEndBatchExecutionTransaction() {
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_SuccessfulEndBatchExecutionTransaction);
+		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
+		pTransaction->BatchId = test::Random();
+		pTransaction->StorageHash = test::GenerateRandomByteArray<Hash256>();
+		pTransaction->UsedSizeBytes = test::Random();
+		pTransaction->MetaFilesSizeBytes = test::Random();
+		pTransaction->ProofOfExecutionVerificationInformation = test::GenerateRandomByteArray<std::array<uint8_t, 32>>();
+		pTransaction->AutomaticExecutionsNextBlockToCheck = Height(test::Random());
+		pTransaction->CosignersNumber = test::Random();
+		pTransaction->CallsNumber = test::Random16();
+		return pTransaction;
+	}
+	/// Creates a unsuccessful end batch execution transaction.
+	template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateUnsuccessfulEndBatchExecutionTransaction() {
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_UnsuccessfulEndBatchExecutionTransaction);
+		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
+		pTransaction->BatchId = test::Random();
+		pTransaction->AutomaticExecutionsNextBlockToCheck = Height(test::Random());
+		pTransaction->CosignersNumber = test::Random();
+		pTransaction->CallsNumber = test::Random16();
+		return pTransaction;
+	}
+	/// Creates a manual call transaction.
+	template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateManualCallTransaction() {
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ManualCallTransaction);
+		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
+		pTransaction->FileNameSize = test::Random16();
+		pTransaction->FunctionNameSize = test::Random16();
+		pTransaction->ActualArgumentsSize = test::Random16();
+		pTransaction->ExecutionCallPayment = Amount(test::Random());
+		pTransaction->DownloadCallPayment = Amount(test::Random());
 		return pTransaction;
 	}
 }}

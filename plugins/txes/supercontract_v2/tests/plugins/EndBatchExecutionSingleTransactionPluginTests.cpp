@@ -12,7 +12,6 @@
 #include "tests/test/SuperContractTestUtils.h"
 #include <tests/test/nodeps/TestConstants.h>
 #include "catapult/utils/HexParser.h"
-#include "catapult/model/LiquidityProviderNotifications.h"
 #include "src/model/InternalSuperContractNotifications.h"
 
 using namespace catapult::model;
