@@ -13,6 +13,7 @@
 #include "catapult/model/EntityPtr.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "catapult/model/EntityBody.h"
+#include "catapult/model/Mosaic.h"
 
 namespace catapult { namespace test {
 
@@ -53,13 +54,13 @@ namespace catapult { namespace test {
 		uint16_t fileNamePtrSize = 100;
 		uint16_t functionNamePtrSize = 100;
 		uint16_t actualArgumentsPtrSize = 100;
-		uint8_t servicePaymentsPtrSize = 10;
+		uint16_t servicePaymentsPtrSize = 10;
 		uint16_t automaticExecutionFileNamePtrSize = 100;
 		uint16_t automaticExecutionFunctionNamePtrSize = 100;
 		uint64_t additionalSize = fileNamePtrSize +
 							  functionNamePtrSize +
 							  actualArgumentsPtrSize +
-							  servicePaymentsPtrSize +
+							  servicePaymentsPtrSize * sizeof(model::UnresolvedMosaic) +
 							  automaticExecutionFileNamePtrSize +
 							  automaticExecutionFunctionNamePtrSize;
 
