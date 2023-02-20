@@ -251,6 +251,7 @@ namespace catapult { namespace test {
 	private:
 		struct CapturedServiceState {
 			subscribers::NodeSubscriber* pNodeSubscriber;
+			CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, CapturedServiceState, "Destroying captured service state")
 		};
 
 		// service registrar for capturing ServiceState values

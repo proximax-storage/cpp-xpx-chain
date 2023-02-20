@@ -22,8 +22,11 @@ namespace catapult { namespace config {
 		explicit BlockchainConfigurationHolder(cache::CatapultCache* pCache =  nullptr);
 		explicit BlockchainConfigurationHolder(const BlockchainConfiguration& config);
 		explicit BlockchainConfigurationHolder(const BlockchainConfiguration& config, cache::CatapultCache* pCache, const Height& height);
+#ifdef CLEANUP_LOGGING_ENABLED
+		virtual CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, BlockchainConfigurationHolder, "Destroying blockchain configuration holder.")
+#else
 		virtual ~BlockchainConfigurationHolder() = default;
-
+#endif
 	public:
 		/// Extracts the resources path from the command line arguments.
 		/// \a argc commmand line arguments are accessible via \a argv.
