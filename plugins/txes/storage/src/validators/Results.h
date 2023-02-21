@@ -18,7 +18,8 @@ namespace catapult { namespace validators {
 	DEFINE_STORAGE_RESULT(Drive_Size_Insufficient, 1);
 
 	/// Desired number of replicators is less than minimal,
-	/// or offboarding of the replicator is not possible as drive's actual replicator count will become less than minimal.
+	/// or offboarding of the replicator is not possible as drive's actual replicator count will become less than minimal,
+	/// or there are not enough replicators on the drive.
 	DEFINE_STORAGE_RESULT(Replicator_Count_Insufficient, 2);
 
 	/// Desired replicator capacity is less than minimal.
@@ -179,6 +180,15 @@ namespace catapult { namespace validators {
 
 	/// Attempting to transfer a service unit.
 	DEFINE_STORAGE_RESULT(Service_Unit_Transfer, 55);
+
+	// Validation failed because supercontract is already deployed.
+	DEFINE_STORAGE_RESULT(Owner_Management_Is_Forbidden, 56);
+
+	// Validation failed because supercontract is already deployed.
+	DEFINE_STORAGE_RESULT(Owner_Management_Can_Not_Be_Allowed, 57);
+
+	// Validation failed because too many replicators have been ordered
+	DEFINE_STORAGE_RESULT(Replicator_Count_Exceeded, 58);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

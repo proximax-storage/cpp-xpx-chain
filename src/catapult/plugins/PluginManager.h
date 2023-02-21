@@ -21,6 +21,7 @@
 #pragma once
 #include <catapult/validators/LiquidityProviderExchangeValidator.h>
 #include <catapult/observers/LiquidityProviderExchangeObserver.h>
+#include <catapult/observers/StorageUpdatesListener.h>
 #include "catapult/cache/CacheConfiguration.h"
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
@@ -301,6 +302,13 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
+		// region storage updates listeners
+
+		const std::vector<std::unique_ptr<observers::StorageUpdatesListener>>& storageUpdatesListeners() const;
+		void addStorageUpdateListener(std::unique_ptr<observers::StorageUpdatesListener>&& storageUpdatesListener);
+
+		// endregion
+
 	private:
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		StorageConfiguration m_storageConfig;
@@ -331,6 +339,8 @@ namespace catapult { namespace plugins {
 
 		std::unique_ptr<validators::LiquidityProviderExchangeValidator> m_pLiquidityProviderExchangeValidator;
 		std::unique_ptr<observers::LiquidityProviderExchangeObserver> m_pLiquidityProviderExchangeObserver;
+
+		std::vector<std::unique_ptr<observers::StorageUpdatesListener>> m_storageUpdatesListeners;
 	};
 }}
 

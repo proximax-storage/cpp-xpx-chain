@@ -25,6 +25,12 @@ namespace catapult { namespace state {
 		Cancelled
 	};
 
+	enum class OwnerManagement: uint8_t {
+		ALLOWED,
+		TEMPORARY_FORBIDDEN,
+		PERMANENTLY_FORBIDDEN
+	};
+
 	struct ActiveDataModification {
 
 		/// Constructor For Data Modification
@@ -155,6 +161,7 @@ namespace catapult { namespace state {
 			, m_usedSizeBytes(0)
 			, m_metaFilesSizeBytes(0)
 			, m_replicatorCount(0)
+			, m_ownerManagement(OwnerManagement::ALLOWED)
 		{}
 
 	public:
@@ -176,6 +183,14 @@ namespace catapult { namespace state {
 		/// Gets root hash of drive.
 		const Hash256& rootHash() const {
 			return m_rootHash;
+		}
+
+		void setLastModificationId(const Hash256& modificationId) {
+			m_lastModificationId = modificationId;
+		}
+
+		const Hash256& lastModificationId() const {
+			return m_lastModificationId;
 		}
 
 		/// Sets total size of the drive.
@@ -364,9 +379,18 @@ namespace catapult { namespace state {
 			return m_verificationNode;
 		}
 
+		OwnerManagement ownerManagement() const {
+			return m_ownerManagement;
+		}
+
+		void setOwnerManagement(OwnerManagement ownerManagement) {
+			m_ownerManagement = ownerManagement;
+		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
+		Hash256 m_lastModificationId;
 		uint64_t m_size;
 		uint64_t m_usedSizeBytes;
 		uint64_t m_metaFilesSizeBytes;
@@ -387,6 +411,7 @@ namespace catapult { namespace state {
 		Timestamp m_lastPayment;
 
 		AVLTreeNode m_verificationNode;
+		OwnerManagement m_ownerManagement;
 	};
 
 	// Drive entry.

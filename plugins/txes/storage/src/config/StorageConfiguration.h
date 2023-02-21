@@ -34,6 +34,9 @@ namespace catapult { namespace config {
 		/// Minimal number of replicators.
 		uint16_t MinReplicatorCount;
 
+		/// Maximal number of replicators
+		uint16_t MaxReplicatorCount;
+
 		/// Max size to download files for free
 		utils::FileSize MaxFreeDownloadSize;
 

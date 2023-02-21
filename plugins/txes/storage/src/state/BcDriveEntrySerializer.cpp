@@ -32,13 +32,13 @@ namespace catapult { namespace state {
 		}
 
 		void SaveActiveDataModifications(io::OutputStream& output, const ActiveDataModifications& activeDataModifications) {
-			io::Write16(output, utils::checked_cast<size_t, uint16_t>(activeDataModifications.size()));
+			io::Write32(output, utils::checked_cast<size_t, uint32_t>(activeDataModifications.size()));
 			for (const auto& modification : activeDataModifications)
 				SaveActiveDataModification(output, modification);
 		}
 
 		void SaveCompletedDataModifications(io::OutputStream& output, const CompletedDataModifications& completedDataModifications) {
-			io::Write16(output, utils::checked_cast<size_t, uint16_t>(completedDataModifications.size()));
+			io::Write32(output, utils::checked_cast<size_t, uint32_t>(completedDataModifications.size()));
 			for (const auto& modification : completedDataModifications) {
 				SaveActiveDataModification(output,modification);
 				io::Write8(output, utils::to_underlying_type(modification.ApprovalState));
@@ -55,14 +55,14 @@ namespace catapult { namespace state {
 		}
 
 		void SaveShards(io::OutputStream& output, const Shards& shards) {
-			io::Write16(output, utils::checked_cast<size_t, uint16_t>(shards.size()));
+			io::Write32(output, utils::checked_cast<size_t, uint32_t>(shards.size()));
 			for (const auto& shard : shards) {
 				SaveShard(output, shard);
 			}
 		}
 
 		void SaveUploadInfo(io::OutputStream& output, const std::map<Key, uint64_t>& info) {
-			io::Write16(output, info.size());
+			io::Write32(output, info.size());
 			for (const auto& [key, uploadValue]: info) {
 				io::Write(output, key);
 				io::Write64(output, uploadValue);
@@ -87,7 +87,7 @@ namespace catapult { namespace state {
 		}
 
 		void SaveConfirmedUsedSizes(io::OutputStream& output, const SizeMap& confirmedUsedSizes) {
-			io::Write16(output, utils::checked_cast<size_t, uint16_t>(confirmedUsedSizes.size()));
+			io::Write32(output, utils::checked_cast<size_t, uint32_t>(confirmedUsedSizes.size()));
 			for (const auto& pair : confirmedUsedSizes) {
 				io::Write(output, pair.first);
 				io::Write64(output, pair.second);
@@ -95,26 +95,26 @@ namespace catapult { namespace state {
 		}
 
 		void SaveReplicators(io::OutputStream& output, const utils::SortedKeySet& replicators) {
-			io::Write16(output, utils::checked_cast<size_t, uint16_t>(replicators.size()));
+			io::Write32(output, utils::checked_cast<size_t, uint32_t>(replicators.size()));
 			for (const auto& replicatorKey : replicators)
 				io::Write(output, replicatorKey);
 		}
 
 		void SaveOffboardingReplicators(io::OutputStream& output, const std::vector<Key>& replicators) {
-			io::Write16(output, utils::checked_cast<size_t, uint16_t>(replicators.size()));
+			io::Write32(output, utils::checked_cast<size_t, uint32_t>(replicators.size()));
 			for (const auto& replicatorKey : replicators)
 				io::Write(output, replicatorKey);
 		}
 
 		void SaveDownloadShards(io::OutputStream& output, const DownloadShards& downloadShards) {
-			io::Write16(output, utils::checked_cast<size_t, uint16_t>(downloadShards.size()));
+			io::Write32(output, utils::checked_cast<size_t, uint32_t>(downloadShards.size()));
 			for (const auto& shard : downloadShards) {
 				io::Write(output, shard);
 			}
 		}
 
 		void SaveModificationShards(io::OutputStream& output, const ModificationShards& dataModificationShards) {
-			io::Write16(output, utils::checked_cast<size_t, uint16_t>(dataModificationShards.size()));
+			io::Write32(output, utils::checked_cast<size_t, uint32_t>(dataModificationShards.size()));
 			for (const auto& item : dataModificationShards) {
 				auto& mainKey = item.first;
 				io::Write(output, mainKey);
@@ -123,7 +123,7 @@ namespace catapult { namespace state {
 		}
 
 		void SaveConfirmedStorageInfos(io::OutputStream& output, const ConfirmedStorageInfos& infos) {
-			io::Write16(output, infos.size());
+			io::Write32(output, infos.size());
 			for (const auto& [key, info]: infos) {
 				io::Write(output, key);
 				io::Write(output, info.TimeInConfirmedStorage);
@@ -162,7 +162,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadActiveDataModifications(io::InputStream& input, ActiveDataModifications& activeDataModifications) {
-			auto count = io::Read16(input);
+			auto count = io::Read32(input);
 			while (count--) {
 				auto modification = LoadActiveDataModification(input);
 				activeDataModifications.emplace_back(modification);
@@ -170,7 +170,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadCompletedDataModifications(io::InputStream& input, CompletedDataModifications& completedDataModifications) {
-			auto count = io::Read16(input);
+			auto count = io::Read32(input);
 			while (count--) {
 				auto activeModification = LoadActiveDataModification(input);
 				auto state = static_cast<DataModificationApprovalState>(io::Read8(input));
@@ -180,7 +180,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadConfirmedUsedSizes(io::InputStream& input, SizeMap& confirmedUsedSizes) {
-			auto count = io::Read16(input);
+			auto count = io::Read32(input);
 			while (count--) {
 				Key replicatorKey;
 				io::Read(input, replicatorKey);
@@ -190,7 +190,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadReplicators(io::InputStream& input, utils::SortedKeySet& replicators) {
-			auto count = io::Read16(input);
+			auto count = io::Read32(input);
 			while (count--) {
 				Key replicatorKey;
 				io::Read(input, replicatorKey);
@@ -199,7 +199,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadOffboardingReplicators(io::InputStream& input, std::vector<Key>& replicators) {
-			auto count = io::Read16(input);
+			auto count = io::Read32(input);
 			while (count--) {
 				Key replicatorKey;
 				io::Read(input, replicatorKey);
@@ -226,7 +226,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadShards(io::InputStream& input, Shards& shards) {
-			auto count = io::Read16(input);
+			auto count = io::Read32(input);
 			while (count--) {
 				shards.emplace_back();
 				LoadShard(input, shards.back());
@@ -245,7 +245,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadDownloadShards(io::InputStream& input, DownloadShards& downloadShards) {
-			auto count = io::Read16(input);
+			auto count = io::Read32(input);
 			while (count--) {
 				Hash256 downloadChannelId;
 				io::Read(input, downloadChannelId);
@@ -254,7 +254,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadUploadInfo(io::InputStream& input, std::map<Key, uint64_t>& info) {
-			auto activeSize = io::Read16(input);
+			auto activeSize = io::Read32(input);
 			while (activeSize--) {
 				Key key;
 				input.read(key);
@@ -269,7 +269,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadModificationShards(io::InputStream& input, ModificationShards& dataModificationShards) {
-			auto count = io::Read16(input);
+			auto count = io::Read32(input);
 			while (count--) {
 				Key mainKey;
 				io::Read(input, mainKey);
@@ -279,7 +279,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadConfirmedStorageInfos(io::InputStream& input, ConfirmedStorageInfos& infos) {
-			auto size = io::Read16(input);
+			auto size = io::Read32(input);
 			while (size--) {
 				Key key;
 				io::Read(input, key);
@@ -306,6 +306,7 @@ namespace catapult { namespace state {
 
 		io::Write(output, driveEntry.owner());
 		io::Write(output, driveEntry.rootHash());
+		io::Write(output, driveEntry.lastModificationId());
 		io::Write64(output, driveEntry.size());
 		io::Write64(output, driveEntry.usedSizeBytes());
 		io::Write64(output, driveEntry.metaFilesSizeBytes());
@@ -327,6 +328,8 @@ namespace catapult { namespace state {
 		SaveDownloadShards(output, driveEntry.downloadShards());
 		SaveModificationShards(output, driveEntry.dataModificationShards());
 		SaveConfirmedStorageInfos(output, driveEntry.confirmedStorageInfos());
+
+		io::Write8(output, static_cast<uint8_t>(driveEntry.ownerManagement()));
 	}
 
 	BcDriveEntry BcDriveEntrySerializer::Load(io::InputStream& input) {
@@ -347,6 +350,10 @@ namespace catapult { namespace state {
 		Hash256 rootHash;
 		input.read(rootHash);
 		entry.setRootHash(rootHash);
+
+		Hash256 lastModificationId;
+		input.read(lastModificationId);
+		entry.setLastModificationId(lastModificationId);
 
 		entry.setSize(io::Read64(input));
 		entry.setUsedSizeBytes(io::Read64(input));
@@ -377,6 +384,8 @@ namespace catapult { namespace state {
 		LoadDownloadShards(input, entry.downloadShards());
 		LoadModificationShards(input, entry.dataModificationShards());
 		LoadConfirmedStorageInfos(input, entry.confirmedStorageInfos());
+
+		entry.setOwnerManagement(static_cast<OwnerManagement>(io::Read8(input)));
 
 		return entry;
 	}
