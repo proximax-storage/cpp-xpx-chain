@@ -72,7 +72,6 @@ namespace catapult { namespace test {
 		pTransaction->AutomaticDownloadCallPayment = Amount(test::Random());
 		pTransaction->AutomaticExecutionsNumber = test::Random32();
 		pTransaction->Assignee = test::GenerateRandomByteArray<Key>();
-		pTransaction->FileNamePtr();
 		return pTransaction;
 	}
 	/// Creates a end batch execution single transaction.
@@ -121,11 +120,21 @@ namespace catapult { namespace test {
 	/// Creates a manual call transaction.
 	template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateManualCallTransaction() {
-		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ManualCallTransaction);
+		// dynamic data size
+		uint16_t fileNamePtrSize = test::Random16();
+		uint16_t functionNamePtrSize = test::Random16();
+		uint16_t actualArgumentsPtrSize = test::Random16();
+		uint8_t servicePaymentsPtrSize = 3;
+		uint64_t additionalSize = fileNamePtrSize +
+								  functionNamePtrSize +
+								  actualArgumentsPtrSize +
+								  servicePaymentsPtrSize * sizeof(model::UnresolvedMosaic);
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ManualCallTransaction, additionalSize);
 		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
-		pTransaction->FileNameSize = test::Random16();
-		pTransaction->FunctionNameSize = test::Random16();
-		pTransaction->ActualArgumentsSize = test::Random16();
+		pTransaction->FileNameSize = fileNamePtrSize;
+		pTransaction->FunctionNameSize = functionNamePtrSize;
+		pTransaction->ActualArgumentsSize = actualArgumentsPtrSize;
+		pTransaction->ServicePaymentsCount = servicePaymentsPtrSize;
 		pTransaction->ExecutionCallPayment = Amount(test::Random());
 		pTransaction->DownloadCallPayment = Amount(test::Random());
 		return pTransaction;

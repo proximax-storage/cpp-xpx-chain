@@ -262,6 +262,12 @@ namespace catapult { namespace plugins {
 		const std::string initializerFileName(reinterpret_cast<const char*>(pTransaction->FileNamePtr()), pTransaction->FileNameSize);
 		const std::string initializerFunctionName(reinterpret_cast<const char*>(pTransaction->FunctionNamePtr()), pTransaction->FunctionNameSize);
 		const std::string initializerActualArguments(reinterpret_cast<const char*>(pTransaction->ActualArgumentsPtr()), pTransaction->ActualArgumentsSize);
+		const auto* const pServicePayment = pTransaction->ServicePaymentsPtr();
+		std::vector<UnresolvedMosaic> servicePayments;
+		servicePayments.reserve(pTransaction->ServicePaymentsCount);
+		for (auto i = 0U; i < pTransaction->ServicePaymentsCount; i++) {
+			servicePayments.push_back(pServicePayment[i]);
+		}
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
@@ -277,6 +283,10 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(initializerActualArguments, notification.ActualArguments);
 		EXPECT_EQ(pTransaction->ExecutionCallPayment, notification.ExecutionCallPayment);
 		EXPECT_EQ(pTransaction->DownloadCallPayment, notification.DownloadCallPayment);
+		for (auto i = 0U; i < pTransaction->ServicePaymentsCount; i++) {
+			EXPECT_EQ(servicePayments[i].MosaicId, notification.ServicePayments[i].MosaicId);
+			EXPECT_EQ(servicePayments[i].Amount, notification.ServicePayments[i].Amount);
+		}
 	}
 
 	// endregion
