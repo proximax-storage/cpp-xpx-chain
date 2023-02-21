@@ -100,8 +100,10 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(6u, sub.numNotifications());
+		ASSERT_EQ(8u, sub.numNotifications());
 		auto i = 0u;
+		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i++]);
@@ -173,7 +175,7 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(3u, sub.numMatchingNotifications());
+		ASSERT_EQ(5u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 
 		EXPECT_EQ(pTransaction->Signer, notification.Sender);

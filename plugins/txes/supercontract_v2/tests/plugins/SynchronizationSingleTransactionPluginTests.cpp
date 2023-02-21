@@ -6,13 +6,13 @@
 
 #include "src/plugins/SynchronizationSingleTransactionPlugin.h"
 #include "src/model/SynchronizationSingleTransaction.h"
+#include "src/model/InternalSuperContractNotifications.h"
 #include "src/catapult/model/SupercontractNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include <tests/test/nodeps/TestConstants.h>
 #include "catapult/utils/HexParser.h"
-#include "src/model/InternalSuperContractNotifications.h"
 
 using namespace catapult::model;
 namespace catapult { namespace plugins {

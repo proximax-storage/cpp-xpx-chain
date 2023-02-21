@@ -14,6 +14,7 @@
 #include "catapult/utils/MemoryUtils.h"
 #include "catapult/model/EntityBody.h"
 #include "catapult/model/Mosaic.h"
+#include "catapult/model/SupercontractModel.h"
 
 namespace catapult { namespace test {
 
@@ -94,7 +95,16 @@ namespace catapult { namespace test {
 	/// Creates a successful end batch execution transaction.
 	template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateSuccessfulEndBatchExecutionTransaction() {
-		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_SuccessfulEndBatchExecutionTransaction);
+		// dynamic data size
+		uint16_t CosignersNumber = 5;
+		uint16_t CallsNumber = 5;
+		uint64_t additionalSize = CosignersNumber * Key_Size +
+								  CosignersNumber * Signature_Size +
+								  CosignersNumber * sizeof(model::RawProofOfExecution) +
+								  CallsNumber * sizeof(model::ExtendedCallDigest) +
+								  static_cast<uint64_t>(CosignersNumber) * static_cast<uint64_t>(CallsNumber) * sizeof(model::CallPayment);
+
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_SuccessfulEndBatchExecutionTransaction, additionalSize);
 		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
 		pTransaction->BatchId = test::Random();
 		pTransaction->StorageHash = test::GenerateRandomByteArray<Hash256>();
@@ -102,19 +112,28 @@ namespace catapult { namespace test {
 		pTransaction->MetaFilesSizeBytes = test::Random();
 		pTransaction->ProofOfExecutionVerificationInformation = test::GenerateRandomByteArray<std::array<uint8_t, 32>>();
 		pTransaction->AutomaticExecutionsNextBlockToCheck = Height(test::Random());
-		pTransaction->CosignersNumber = test::Random();
-		pTransaction->CallsNumber = test::Random16();
+		pTransaction->CosignersNumber = CosignersNumber;
+		pTransaction->CallsNumber = CallsNumber;
 		return pTransaction;
 	}
 	/// Creates a unsuccessful end batch execution transaction.
 	template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateUnsuccessfulEndBatchExecutionTransaction() {
-		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_UnsuccessfulEndBatchExecutionTransaction);
+		// dynamic data size
+		uint16_t CosignersNumber = test::Random16();
+		uint16_t CallsNumber = test::Random16();
+		uint64_t additionalSize = CosignersNumber * Key_Size +
+								  CosignersNumber * Signature_Size +
+								  CosignersNumber * sizeof(model::RawProofOfExecution) +
+								  CallsNumber * sizeof(model::ShortCallDigest) +
+								  CosignersNumber * CallsNumber * sizeof(model::CallPayment);
+
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_UnsuccessfulEndBatchExecutionTransaction, additionalSize);
 		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
 		pTransaction->BatchId = test::Random();
 		pTransaction->AutomaticExecutionsNextBlockToCheck = Height(test::Random());
-		pTransaction->CosignersNumber = test::Random();
-		pTransaction->CallsNumber = test::Random16();
+		pTransaction->CosignersNumber = CosignersNumber;
+		pTransaction->CallsNumber = CallsNumber;
 		return pTransaction;
 	}
 	/// Creates a manual call transaction.
@@ -124,11 +143,12 @@ namespace catapult { namespace test {
 		uint16_t fileNamePtrSize = test::Random16();
 		uint16_t functionNamePtrSize = test::Random16();
 		uint16_t actualArgumentsPtrSize = test::Random16();
-		uint8_t servicePaymentsPtrSize = 3;
+		uint8_t servicePaymentsPtrSize = 5;
 		uint64_t additionalSize = fileNamePtrSize +
 								  functionNamePtrSize +
 								  actualArgumentsPtrSize +
 								  servicePaymentsPtrSize * sizeof(model::UnresolvedMosaic);
+
 		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ManualCallTransaction, additionalSize);
 		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
 		pTransaction->FileNameSize = fileNamePtrSize;
