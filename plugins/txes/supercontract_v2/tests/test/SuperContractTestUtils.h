@@ -45,18 +45,12 @@ namespace catapult { namespace test {
 	template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateDeployContractTransaction() {
 		// dynamic data size
-//		uint16_t fileNamePtrSize = test::Random16();
-//		uint16_t functionNamePtrSize = test::Random16();
-//		uint16_t actualArgumentsPtrSize = test::Random16();
-//		uint8_t servicePaymentsPtrSize = test::RandomByte();
-//		uint16_t automaticExecutionFileNamePtrSize = test::Random16();
-//		uint16_t automaticExecutionFunctionNamePtrSize = test::Random16();
-		uint16_t fileNamePtrSize = 100;
-		uint16_t functionNamePtrSize = 100;
-		uint16_t actualArgumentsPtrSize = 100;
-		uint16_t servicePaymentsPtrSize = 10;
-		uint16_t automaticExecutionFileNamePtrSize = 100;
-		uint16_t automaticExecutionFunctionNamePtrSize = 100;
+		uint16_t fileNamePtrSize = test::Random16();
+		uint16_t functionNamePtrSize = test::Random16();
+		uint16_t actualArgumentsPtrSize = test::Random16();
+		uint8_t servicePaymentsPtrSize = 3;
+		uint16_t automaticExecutionFileNamePtrSize = test::Random16();
+		uint16_t automaticExecutionFunctionNamePtrSize = test::Random16();
 		uint64_t additionalSize = fileNamePtrSize +
 							  functionNamePtrSize +
 							  actualArgumentsPtrSize +
