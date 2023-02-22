@@ -6,7 +6,7 @@
 
 #include "CurvePoint.h"
 
-namespace catapult::crypto {
+namespace catapult { namespace crypto {
 
 	CurvePoint::CurvePoint() {
 		ge_p3 a;
@@ -14,14 +14,19 @@ namespace catapult::crypto {
 		m_ge_p3 = a;
 	}
 
-	CurvePoint CurvePoint::BasePoint() {
-		CurvePoint temp;
+	CurvePoint CurvePoint::ConstructBasePoint() {
+		CurvePoint point;
 		ge_p3 a;
 		Scalar one;
 		one[0] = 1;
 		ge_scalarmult_base(&a, one.data());
-		temp.m_ge_p3 = a;
-		return temp;
+		point.m_ge_p3 = a;
+		return point;
+	}
+
+	CurvePoint CurvePoint::BasePoint() {
+		static CurvePoint basePoint(ConstructBasePoint());
+		return basePoint;
 	}
 
 	CurvePoint CurvePoint::operator+(const CurvePoint& a) const {
@@ -119,10 +124,14 @@ namespace catapult::crypto {
 
 	void CurvePoint::fromBytes(const std::array<uint8_t, 32>& buffer) {
 		ge_p3 tmp;
-		ge_frombytes_negate_vartime(&tmp, buffer.data());
+		int valid_point = ge_frombytes_negate_vartime(&tmp, buffer.data());
+		if (valid_point == -1) {
+			*this = CurvePoint();
+			return;
+		}
 		CurvePoint tmpPoint;
 		tmpPoint.m_ge_p3 = tmp;
 		*this = -tmpPoint;
 	}
 
-} // namespace catapult::crypto
+}}
