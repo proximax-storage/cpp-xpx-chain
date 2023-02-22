@@ -24,7 +24,7 @@ using namespace std::chrono_literals;
 		explicit BlockchainConfigurationHolder(const BlockchainConfiguration& config);
 		explicit BlockchainConfigurationHolder(const BlockchainConfiguration& config, cache::CatapultCache* pCache, const Height& height);
 #ifdef CLEANUP_LOGGING_ENABLED
-		virtual CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, BlockchainConfigurationHolder, ("Destroying blockchain configuration holder."); std::this_thread::sleep_for(2000ms);)
+		virtual CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, BlockchainConfigurationHolder, "Destroying blockchain configuration holder.")
 #else
 		virtual ~BlockchainConfigurationHolder() = default;
 #endif
