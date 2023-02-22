@@ -57,7 +57,11 @@ pipeline {
                             ctest -T Test --no-compress-output --extra-verbose || true
                         """
                     }
+                    sh "docker-compose logs >integration-test.log"
+                    sh "docker-compose down --rmi local --volumes --remove-orphans"
+                    archive 'integration-test.log'
                 }
+
               }
             }
             post {
