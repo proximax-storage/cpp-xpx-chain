@@ -18,6 +18,7 @@ namespace catapult { namespace config {
 	struct GlobalStoreConfiguration : public model::PluginConfiguration  {
 	public:
 		DEFINE_CONFIG_CONSTANTS(globalstore)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, GlobalStoreConfiguration, ("Destroying GlobalStoreConfiguration"))
 	public:
 		/// Whether the plugin is enabled.
 		bool Enabled;

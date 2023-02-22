@@ -16,6 +16,7 @@ namespace catapult { namespace config {
 	struct SuperContractConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(supercontract)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, SuperContractConfiguration, ("Destroying SuperContractConfiguration"))
 
 		/// Whether the plugin is enabled.
 		bool Enabled;

@@ -32,6 +32,7 @@ namespace catapult { namespace config {
 	struct HashLockConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(lockhash)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, HashLockConfiguration, ("Destroying HashLockConfiguration"))
 
 	public:
 		/// Amount that has to be locked per aggregate in partial cache.

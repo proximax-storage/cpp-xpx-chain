@@ -17,6 +17,7 @@ namespace catapult { namespace config {
 	struct BlockchainUpgradeConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(upgrade)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, BlockchainUpgradeConfiguration, ("Destroying BlockchainUpgradeConfiguration"))
 
 	public:
 		/// Minimum duration in blocks before forcing update.

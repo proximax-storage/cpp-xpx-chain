@@ -127,6 +127,8 @@ namespace catapult { namespace model {
 		NetworkConfiguration() = default;
 
 	public:
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, NetworkConfiguration, "Destroying network configuration")
+	public:
 		/// Creates an uninitialized block chain configuration.
 		static NetworkConfiguration Uninitialized();
 

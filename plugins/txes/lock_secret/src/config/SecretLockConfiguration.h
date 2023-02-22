@@ -34,6 +34,7 @@ namespace catapult { namespace config {
 	struct SecretLockConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(locksecret)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, SecretLockConfiguration, ("Destroying SecretLockConfiguration"))
 
 	public:
 		/// Maximum number of blocks for which a secret lock can exist.

@@ -35,6 +35,7 @@ namespace catapult { namespace config {
 	struct AccountRestrictionConfiguration : public model::PluginConfiguration  {
 	public:
 		DEFINE_CONFIG_CONSTANTS(restrictionaccount)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, AccountRestrictionConfiguration, ("Destroying AccountRestrictionConfiguration"))
 	public:
 		/// Whether the plugin is enabled.
 		bool Enabled;

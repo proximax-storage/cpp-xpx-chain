@@ -30,6 +30,7 @@ namespace catapult { namespace config {
 	struct PropertyConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(property)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, PropertyConfiguration, ("Destroying PropertyConfiguration"))
 
 	public:
 		/// Maximum number of property values.

@@ -17,6 +17,7 @@ namespace catapult { namespace config {
 	struct MetadataConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(metadata)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, MetadataConfiguration, ("Destroying MetadataConfiguration"))
 
 	public:
 		/// Maximum fields in metadata.

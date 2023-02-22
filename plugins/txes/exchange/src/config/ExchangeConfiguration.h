@@ -17,6 +17,7 @@ namespace catapult { namespace config {
 	struct ExchangeConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(exchange)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, ExchangeConfiguration, ("Destroying ExchangeConfiguration"))
 
 	public:
 		/// Whether the plugin is enabled.

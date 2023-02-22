@@ -31,6 +31,7 @@ namespace catapult { namespace config {
 	struct MosaicConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(mosaic)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, MosaicConfiguration, ("Destroying MosaicConfiguration"))
 
 	public:
 		/// Maximum number of mosaics that an account can own.

@@ -32,6 +32,7 @@ namespace catapult { namespace config {
 	struct MosaicRestrictionConfiguration : public model::PluginConfiguration  {
 	public:
 		DEFINE_CONFIG_CONSTANTS(restrictionmosaic)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, MosaicRestrictionConfiguration, ("Destroying MosaicRestrictionConfiguration"))
 	public:
 		/// Whether the plugin is enabled.
 		bool Enabled;

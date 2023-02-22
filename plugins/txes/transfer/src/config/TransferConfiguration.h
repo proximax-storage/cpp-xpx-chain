@@ -30,6 +30,7 @@ namespace catapult { namespace config {
 	struct TransferConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(transfer)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, TransferConfiguration, ("Destroying TransferConfiguration"))
 
 	public:
 		/// Maximum transaction message size.

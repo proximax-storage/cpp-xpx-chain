@@ -17,6 +17,7 @@ namespace catapult { namespace config {
 	struct NetworkConfigConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(config)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, NetworkConfigConfiguration, ("Destroying NetworkConfigConfiguration"))
 
 	public:
 		/// Maximum blockchain config data size.

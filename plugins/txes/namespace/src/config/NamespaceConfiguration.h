@@ -31,6 +31,7 @@ namespace catapult { namespace config {
 	struct NamespaceConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(namespace)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, NamespaceConfiguration, ("Destroying NamespaceConfiguration"))
 
 	public:
 		/// Maximum namespace and mosaic name size.

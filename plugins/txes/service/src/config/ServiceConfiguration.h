@@ -19,6 +19,7 @@ namespace catapult { namespace config {
 		uint16_t MaxFilesOnDrive;
 
 		DEFINE_CONFIG_CONSTANTS(service)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, ServiceConfiguration, ("Destroying ServiceConfiguration"))
 
 		/// Verification fee in streaming units.
 		Amount VerificationFee;

@@ -30,6 +30,7 @@ namespace catapult { namespace config {
 	struct AggregateConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(aggregate)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, AggregateConfiguration, ("Destroying AggregateConfiguration"))
 
 	public:
 		/// Maximum number of transactions per aggregate.

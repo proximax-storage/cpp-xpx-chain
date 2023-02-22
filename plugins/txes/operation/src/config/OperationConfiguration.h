@@ -20,6 +20,7 @@ namespace catapult { namespace config {
 	struct OperationConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(operation)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, OperationConfiguration, ("Destroying OperationConfiguration"))
 
 	public:
 		/// Whether the plugin is enabled.

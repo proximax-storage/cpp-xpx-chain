@@ -8,13 +8,14 @@
 #include "catapult/config/BlockchainConfiguration.h"
 #include <mutex>  // For std::unique_lock
 #include <shared_mutex>
+#include <thread>
 
 namespace catapult { namespace cache { class CatapultCache; } }
 
 namespace catapult { namespace config {
 
 	constexpr Height HEIGHT_OF_LATEST_CONFIG = Height(-1);
-
+using namespace std::chrono_literals;
 	class BlockchainConfigurationHolder {
 	public:
 		using PluginInitializer = std::function<void(model::NetworkConfiguration&)>;
@@ -23,7 +24,7 @@ namespace catapult { namespace config {
 		explicit BlockchainConfigurationHolder(const BlockchainConfiguration& config);
 		explicit BlockchainConfigurationHolder(const BlockchainConfiguration& config, cache::CatapultCache* pCache, const Height& height);
 #ifdef CLEANUP_LOGGING_ENABLED
-		virtual CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, BlockchainConfigurationHolder, "Destroying blockchain configuration holder.")
+		virtual CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, BlockchainConfigurationHolder, ("Destroying blockchain configuration holder."); std::this_thread::sleep_for(2000ms);)
 #else
 		virtual ~BlockchainConfigurationHolder() = default;
 #endif

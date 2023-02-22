@@ -31,6 +31,7 @@ namespace catapult { namespace config {
 	struct MetadataConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(metadata_v2)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, MetadataConfiguration, ("Destroying MetadataConfiguration"))
 
 	public:
 		/// Whether the plugin is enabled.

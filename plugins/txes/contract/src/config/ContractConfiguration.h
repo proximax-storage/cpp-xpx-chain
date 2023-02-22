@@ -16,6 +16,7 @@ namespace catapult { namespace config {
 	struct ContractConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(contract)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, ContractConfiguration, ("Destroying ContractConfiguration"))
 
 	public:
 		/// Minimum percentage of approval.

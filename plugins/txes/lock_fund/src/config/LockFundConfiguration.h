@@ -23,6 +23,7 @@ namespace catapult { namespace config {
 	struct LockFundConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(lockfund)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, LockFundConfiguration, ("Destroying LockFundConfiguration"))
 
 	public:
 		/// Whether the plugin is enabled.

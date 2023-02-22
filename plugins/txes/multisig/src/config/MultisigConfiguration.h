@@ -30,6 +30,7 @@ namespace catapult { namespace config {
 	struct MultisigConfiguration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(multisig)
+		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, MultisigConfiguration, ("Destroying MultisigConfiguration"))
 
 	public:
 		/// Maximum number of multisig levels.
