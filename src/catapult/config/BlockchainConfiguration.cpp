@@ -63,7 +63,7 @@ namespace catapult { namespace config {
 			, ActivationHeight(activationHeight)
 			, PreviousConfiguration(previousConfig)
 	{}
-
+	DEFINE_CATAPULT_DESTRUCTOR_DEFINITION_CLEANUP_LOG(info, BlockchainConfiguration, ("Destroying blockchain configuration for height " + std::to_string(ActivationHeight.unwrap())))
 	BlockchainConfiguration BlockchainConfiguration::LoadFromPath(
 			const boost::filesystem::path& resourcesPath,
 			const std::string& extensionsHost) {

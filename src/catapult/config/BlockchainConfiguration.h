@@ -49,7 +49,8 @@ namespace catapult { namespace config {
 				Height activationHeight = Height(),
 				const BlockchainConfiguration* previousConfig = nullptr );
 
-
+		DECLARE_CATAPULT_DESTRUCTOR_DEFINITION_CLEANUP_LOG(BlockchainConfiguration)
+		DEFINE_CATAPULT_CLEANUP_LOG_FOUR_DEFAULTS(BlockchainConfiguration)
 	public:
 		/// Immutable network configuration.
 		const ImmutableConfiguration Immutable;

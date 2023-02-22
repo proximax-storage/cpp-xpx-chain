@@ -36,12 +36,7 @@ namespace catapult { namespace crypto {
 	protected:
 		KeyPair(PrivateKey&& privateKey) : m_privateKey(std::move(privateKey)) {}
 	public:
-#ifdef CLEANUP_LOGGING_ENABLED
-		KeyPair(const KeyPair& keyPair) = default;
-		KeyPair(KeyPair&& keyPair) = default;
-		KeyPair& operator=(const KeyPair& other) = default;
-		KeyPair& operator=(KeyPair&& other) = default;
-#endif
+		DEFINE_CATAPULT_CLEANUP_LOG_FOUR_DEFAULTS(KeyPair)
 		CATAPULT_DESTRUCTOR_CLEANUP_LOG(info, KeyPair, "Destroying keypair.")
 		/// Creates a key pair of given type from \a privateKey.
 		template<class T>
