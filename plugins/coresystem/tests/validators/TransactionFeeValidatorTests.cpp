@@ -29,20 +29,20 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(TransactionFee,)
 
 	namespace {
-		void AssertValidationResult(ValidationResult expectedResult, uint32_t transactionSize, Amount fee, Amount maxFee) {
+		void AssertValidationResult(ValidationResult expectedResult, const model::Transaction& transaction, Amount fee, Amount maxFee) {
 			// Arrange:
-			model::TransactionFeeNotification<1> notification(transactionSize, fee, maxFee);
+			model::TransactionFeeNotification<1> notification(transaction, UnresolvedMosaicId(0), fee, maxFee);
 			auto pValidator = CreateTransactionFeeValidator();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);
 
 			// Assert:
-			EXPECT_EQ(expectedResult, result) << "size = " << transactionSize << ", fee = " << fee << ", max fee = " << maxFee;
+			EXPECT_EQ(expectedResult, result) << "size = " << transaction.Size << ", fee = " << fee << ", max fee = " << maxFee;
 		}
 
-		void AssertValidationResult(ValidationResult expectedResult, uint32_t transactionSize, Amount maxFee) {
-			AssertValidationResult(expectedResult, transactionSize, maxFee, maxFee);
+		void AssertValidationResult(ValidationResult expectedResult, model::Transaction& transaction, Amount maxFee) {
+			AssertValidationResult(expectedResult, transaction, maxFee, maxFee);
 		}
 	}
 
@@ -50,20 +50,44 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenFeeIsLessThanMaxFee) {
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, 200, Amount(0), Amount(234));
-		AssertValidationResult(ValidationResult::Success, 300, Amount(123), Amount(234));
-		AssertValidationResult(ValidationResult::Success, 400, Amount(233), Amount(234));
+		{
+			model::Transaction tx;
+			tx.Size = 200;
+			AssertValidationResult(ValidationResult::Success, tx, Amount(0), Amount(234));
+		}
+		{
+			model::Transaction tx;
+			tx.Size = 300;
+			AssertValidationResult(ValidationResult::Success, tx, Amount(123), Amount(234));
+		}
+		{
+			model::Transaction tx;
+			tx.Size = 400;
+			AssertValidationResult(ValidationResult::Success, tx, Amount(233), Amount(234));
+		}
 	}
 
 	TEST(TEST_CLASS, SuccessWhenFeeIsEqualToMaxFee) {
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, 200, Amount(234), Amount(234));
+		{
+			model::Transaction tx;
+			tx.Size = 200;
+			AssertValidationResult(ValidationResult::Success, tx, Amount(234), Amount(234));
+		}
 	}
 
 	TEST(TEST_CLASS, FailureWhenFeeIsGreaterThanMaxFee) {
 		// Assert:
-		AssertValidationResult(Failure_Core_Invalid_Transaction_Fee, 300, Amount(235), Amount(234));
-		AssertValidationResult(Failure_Core_Invalid_Transaction_Fee, 400, Amount(1000), Amount(234));
+		{
+			model::Transaction tx;
+			tx.Size = 300;
+			AssertValidationResult(Failure_Core_Invalid_Transaction_Fee, tx, Amount(235), Amount(234));
+		}
+		{
+			model::Transaction tx;
+			tx.Size = 400;
+			AssertValidationResult(Failure_Core_Invalid_Transaction_Fee, tx, Amount(1000), Amount(234));
+		}
 	}
 
 	// endregion
@@ -72,23 +96,59 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenMaxFeeMultiplierIsLessThanMax) {
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, 200, Amount(200ull * 0xFFFF'FFFE));
-		AssertValidationResult(ValidationResult::Success, 300, Amount(300ull * 0xFFFF'FF00));
-		AssertValidationResult(ValidationResult::Success, 400, Amount(400ull * 0xFFFF'FFFE));
+		{
+			model::Transaction tx;
+			tx.Size = 200;
+			AssertValidationResult(ValidationResult::Success, tx, Amount(200ull * 0xFFFF'FFFE));
+		}
+		{
+			model::Transaction tx;
+			tx.Size = 300;
+			AssertValidationResult(ValidationResult::Success, tx, Amount(300ull * 0xFFFF'FF00));
+		}
+		{
+			model::Transaction tx;
+			tx.Size = 400;
+			AssertValidationResult(ValidationResult::Success, tx, Amount(400ull * 0xFFFF'FFFE));
+		}
 	}
 
 	TEST(TEST_CLASS, SuccessWhenMaxFeeMultiplierIsEqualToMax) {
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, 200, Amount(200ull * 0xFFFF'FFFF));
-		AssertValidationResult(ValidationResult::Success, 300, Amount(300ull * 0xFFFF'FFFF));
-		AssertValidationResult(ValidationResult::Success, 400, Amount(400ull * 0xFFFF'FFFF));
+		{
+			model::Transaction tx;
+			tx.Size = 200;
+			AssertValidationResult(ValidationResult::Success, tx, Amount(200ull * 0xFFFF'FFFF));
+		}
+		{
+			model::Transaction tx;
+			tx.Size = 300;
+			AssertValidationResult(ValidationResult::Success, tx, Amount(300ull * 0xFFFF'FFFF));
+		}
+		{
+			model::Transaction tx;
+			tx.Size = 400;
+			AssertValidationResult(ValidationResult::Success, tx, Amount(400ull * 0xFFFF'FFFF));
+		}
 	}
 
 	TEST(TEST_CLASS, FailureWhenMaxFeeMultiplierIsGreaterThanMax) {
 		// Assert:
-		AssertValidationResult(Failure_Core_Invalid_Transaction_Fee, 200, Amount(200ull * 0xFFFF'FFFF + 1));
-		AssertValidationResult(Failure_Core_Invalid_Transaction_Fee, 300, Amount(300ull * 0x1'0000'FFFF));
-		AssertValidationResult(Failure_Core_Invalid_Transaction_Fee, 400, Amount(400ull * 0x1'0000'0000));
+		{
+			model::Transaction tx;
+			tx.Size = 200;
+			AssertValidationResult(Failure_Core_Invalid_Transaction_Fee, tx, Amount(200ull * 0xFFFF'FFFF + 1));
+		}
+		{
+			model::Transaction tx;
+			tx.Size = 300;
+			AssertValidationResult(Failure_Core_Invalid_Transaction_Fee, tx, Amount(300ull * 0x1'0000'FFFF));
+		}
+		{
+			model::Transaction tx;
+			tx.Size = 400;
+			AssertValidationResult(Failure_Core_Invalid_Transaction_Fee, tx, Amount(400ull * 0x1'0000'0000));
+		}
 	}
 
 	// endregion

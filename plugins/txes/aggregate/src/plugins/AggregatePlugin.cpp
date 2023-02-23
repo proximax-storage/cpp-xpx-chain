@@ -22,6 +22,7 @@
 #include "AggregateTransactionPlugin.h"
 #include "src/model/AggregateEntityType.h"
 #include "src/validators/Validators.h"
+#include "src/observers/Observers.h"
 #include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace plugins {
@@ -47,7 +48,12 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateBasicAggregateCosignaturesValidator())
 				.add(validators::CreateStrictAggregateCosignaturesValidator())
 				.add(validators::CreateAggregateTransactionTypeValidator())
-				.add(validators::CreateStrictAggregateTransactionTypeValidator());
+				.add(validators::CreateStrictAggregateTransactionTypeValidator())
+				.add(validators::CreateTransactionFeeCompensationValidator());
+		});
+
+		manager.addObserverHook([] (auto& builder) {
+			builder.add(observers::CreateTransactionFeeCompensationObserver());
 		});
 	}
 }}
