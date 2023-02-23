@@ -35,11 +35,7 @@ namespace catapult { namespace mongo { namespace plugins {
         void StreamServicePayments(bson_stream::document& builder, const std::vector<state::ServicePayment>& servicePayments) {
             auto array = builder << "servicePayments" << bson_stream::open_array;
             for (const auto& payment : servicePayments) {
-                array
-                    << bson_stream::open_document
-                    << "mosaicId" << ToInt64(payment.MosaicId)
-                    << "amount" << ToInt64(payment.Amount)
-                    << bson_stream::close_document;
+                StreamMosaic(array, payment.MosaicId, payment.Amount);
             }
             array << bson_stream::close_array;
         }
