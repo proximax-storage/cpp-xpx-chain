@@ -47,18 +47,21 @@ pipeline {
                 docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
                     def containerId = docker.image("mongo:4.4").run("-p 27017:27017") // mongo is required for unit test
                     // to use buildImage with host's network stack
-                    buildImage.inside("--net host") {
-                        sh """
-                            echo 'Running unit tests'
-                            # Disable exit on non 0
-                            set +e
-                            cd _build
-                            # pipe to true to prevent exit failure
-                            ctest -T Test --no-compress-output --extra-verbose || true
-                        """
+                    docker.image("mongo:4.4").withRun("-p 27017:27017") { c ->
+                        docker.image('mongo:4.4').inside("--net host") {
+                             sh """
+                                echo 'Running unit tests'
+                                # Disable exit on non 0
+                                set +e
+                                cd _build
+                                # pipe to true to prevent exit failure
+                                ctest -T Test --no-compress-output --extra-verbose || true
+                            """
+                        }
+                        sh "docker logs ${c.id} > integration-test.log"
+                        archive 'integration-test.log'
                     }
-                    sh "docker logs ${containerId} > integration-test.log"
-                    archive 'integration-test.log'
+
                 }
 
               }
