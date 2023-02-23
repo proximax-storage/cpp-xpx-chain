@@ -281,4 +281,6 @@ namespace catapult { namespace mongo { namespace plugins {
         ReadBatches(entry.batches(), dbSuperContractEntry["batches"].get_array().value);
         ReadReleasedTransactions(entry.releasedTransactions(), dbSuperContractEntry["releasedTransactions"].get_array().value);        
     }
+
+    // endregion
 }}}

@@ -4,10 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "MongoSuperContractCacheStorage.h"
-#include "src/mappers/SuperContractEntryMapper.h"
+#include "MongoDriveContractCacheStorage.h"
+#include "src/mappers/DriveContractEntryMapper.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
-#include "src/cache/SuperContractCache.h"
+#include "src/cache/DriveContractCache.h"
 #include "catapult/model/Address.h"
 
 using namespace bsoncxx::builder::stream;
@@ -15,9 +15,9 @@ using namespace bsoncxx::builder::stream;
 namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
-		struct SuperContractCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::SuperContractCacheDescriptor> {
-			static constexpr const char* Collection_Name = "supercontracts";
-			static constexpr const char* Id_Property_Name = "supercontract.multisig";
+		struct DriveContractCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::DriveContractCacheDescriptor> {
+			static constexpr const char* Collection_Name = "drivecontracts";
+			static constexpr const char* Id_Property_Name = "drivecontract.multisig";
 
 			static auto MapToMongoId(const KeyType& key) {
 				return mappers::ToBinary(key);
@@ -28,10 +28,10 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			static void Insert(CacheDeltaType& cache, const bsoncxx::document::view& document) {
-				cache.insert(ToSuperContractEntry(document));
+				cache.insert(ToDriveContractEntry(document));
 			}
 		};
 	}
 
-	DEFINE_MONGO_FLAT_CACHE_STORAGE(SuperContract_v2, SuperContractCacheTraits)
+	DEFINE_MONGO_FLAT_CACHE_STORAGE(DriveContract, DriveContractCacheTraits)
 }}}
