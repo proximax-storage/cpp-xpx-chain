@@ -64,7 +64,7 @@ namespace catapult { namespace state {
         }
 
         void SaveExecutorsInfo(const std::map<Key, ExecutorInfo>& executorsInfo, io::OutputStream& output) {
-            io::Write16(output, utils::checked_cast<size_t, uint16_t>(executorsInfo.size()));
+            io::Write32(output, utils::checked_cast<size_t, uint32_t>(executorsInfo.size()));
             for (const auto& info : executorsInfo) {
 				io::Write(output, info.first);
 				io::Write64(output, info.second.NextBatchToApprove);
@@ -86,7 +86,7 @@ namespace catapult { namespace state {
         }
 
         void SaveBatches(const std::map<uint64_t, Batch>& batches, io::OutputStream& output) {
-            io::Write16(output, utils::checked_cast<size_t, uint16_t>(batches.size()));
+            io::Write32(output, utils::checked_cast<size_t, uint16_t>(batches.size()));
             for (const auto& batch : batches) {
                 io::Write64(output, batch.first);
                 io::Write8(output, batch.second.Success);
@@ -104,12 +104,13 @@ namespace catapult { namespace state {
         io::Write(output, entry.driveKey());
         io::Write(output, entry.executionPaymentKey());
         io::Write(output, entry.assignee());
+		io::Write(output, entry.deploymentBaseModificationId());
         SaveAutomaticExecutionsInfo(entry.automaticExecutionsInfo(), output);
         SaveContractCalls(entry.requestedCalls(), output);
         SaveExecutorsInfo(entry.executorsInfo(), output);
         SaveBatches(entry.batches(), output);
 
-        io::Write16(output, entry.releasedTransactions().size());
+        io::Write32(output, entry.releasedTransactions().size());
         for (const auto& releasedTransaction : entry.releasedTransactions()) {
             io::Write(output, releasedTransaction);
         }
@@ -192,7 +193,7 @@ namespace catapult { namespace state {
         }
 
         void LoadExecutorsInfo(std::map<Key, ExecutorInfo>& executorsInfo, io::InputStream& input) {
-            auto executorsInfoCount = io::Read16(input);
+            auto executorsInfoCount = io::Read32(input);
             while (executorsInfoCount--) {
                 Key key;
                 input.read(key);
@@ -219,7 +220,7 @@ namespace catapult { namespace state {
         }
 
         void LoadBatches(std::map<uint64_t, Batch>& batches, io::InputStream& input) {
-            auto batchesCount = io::Read16(input);
+            auto batchesCount = io::Read32(input);
             while (batchesCount--) {
                 auto batchId = io::Read64(input);
                 Batch batch;
@@ -255,12 +256,16 @@ namespace catapult { namespace state {
 		input.read(assignee);
         entry.setAssignee(assignee);
 
+        Hash256 deploymentBaseModificationId;
+        input.read(deploymentBaseModificationId);
+		entry.setDeploymentBaseModificationId(deploymentBaseModificationId);
+
         LoadAutomaticExecutionsInfo(entry.automaticExecutionsInfo(), input);
         LoadContractCalls(entry.requestedCalls(), input);
         LoadExecutorsInfo(entry.executorsInfo(), input);
         LoadBatches(entry.batches(), input);
 
-        auto count = io::Read16(input);
+        auto count = io::Read32(input);
         while (count--) {
             Hash256 releasedTransaction;
             io::Read(input, releasedTransaction);
