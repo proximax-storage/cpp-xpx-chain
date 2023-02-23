@@ -142,7 +142,6 @@ namespace catapult { namespace mongo { namespace plugins {
     // endregion
 
     // region ToModel
-
     namespace {
         void ReadAutomaticExecutionsInfo(state::AutomaticExecutionsInfo& automaticExecutionsInfo, const bsoncxx::document::view& dbAutomaticExecutionsInfo) {
             auto binaryAutomaticExecutionFileName = dbAutomaticExecutionsInfo["automaticExecutionFileName"].get_binary();
