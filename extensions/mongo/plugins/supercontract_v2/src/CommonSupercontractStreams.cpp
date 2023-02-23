@@ -67,7 +67,7 @@ namespace catapult { namespace mongo { namespace plugins {
                 << bson_stream::close_document;
     }
 
-    void StreamOpinions(bson_stream::document& builder, const model::RawProofOfExecution* pRawPoEx, const model::CallPayment* pCallPayments, size_t numCosigners, size_t numCalls, const Key* pKeys, const Signature* pSignatures) {
+    void StreamOpinions(bson_stream::document& builder, size_t numCosigners, size_t numCalls, const model::RawProofOfExecution* pRawPoEx, const model::CallPayment* pCallPayments, const Key* pKeys, const Signature* pSignatures) {
         auto opinionsArray = builder << "opinions" << bson_stream::open_array;
         for (auto i = 0u; i < numCosigners; ++i) {
             bson_stream::document poExBuilder;
