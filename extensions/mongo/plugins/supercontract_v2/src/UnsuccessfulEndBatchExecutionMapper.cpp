@@ -19,7 +19,7 @@ namespace catapult { namespace mongo { namespace plugins {
                 << "batchId" << static_cast<int64_t>(transaction.BatchId)
                 << "automaticExecutionsNextBlockToCheck" << ToInt64(transaction.AutomaticExecutionsNextBlockToCheck);
         StreamCallDigests(builder, transaction.CallDigestsPtr(), transaction.CallsNumber);
-        StreamOpinions(builder, transaction.ProofsOfExecutionPtr(), transaction.CallPaymentsPtr(), transaction.CosignersNumber, transaction.CallsNumber);
+        StreamOpinions(builder, transaction.ProofsOfExecutionPtr(), transaction.CallPaymentsPtr(), transaction.CosignersNumber, transaction.CallsNumber, transaction.PublicKeysPtr(), transaction.SignaturesPtr());
     }
 
     DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(UnsuccessfulEndBatchExecution, StreamUnsuccessfulEndBatchExecutionTransaction)

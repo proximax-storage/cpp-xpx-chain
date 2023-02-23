@@ -57,25 +57,35 @@ namespace catapult { namespace mongo { namespace plugins {
         callPaymentsArray << bson_stream::close_array;
     }
 
-    void StreamProofOfExecution(bson_stream::document& builder, const model::RawProofOfExecution* rawPoEx) {
+    void StreamProofOfExecution(bson_stream::document& builder, const model::RawProofOfExecution* pRawPoEx) {
         builder << "poEx" << bson_stream::open_document
-                << "startBatchId" << static_cast<int64_t>(rawPoEx->StartBatchId)
-                << "T" << ToBinary(rawPoEx->T.data(), rawPoEx->T.size())
-                << "R" << ToBinary(rawPoEx->R.data(), rawPoEx->R.size())
-                << "F" << ToBinary(rawPoEx->F.data(), rawPoEx->F.size())
-                << "K" << ToBinary(rawPoEx->K.data(), rawPoEx->K.size())
+                << "startBatchId" << static_cast<int64_t>(pRawPoEx->StartBatchId)
+                << "T" << ToBinary(pRawPoEx->T.data(), pRawPoEx->T.size())
+                << "R" << ToBinary(pRawPoEx->R.data(), pRawPoEx->R.size())
+                << "F" << ToBinary(pRawPoEx->F.data(), pRawPoEx->F.size())
+                << "K" << ToBinary(pRawPoEx->K.data(), pRawPoEx->K.size())
                 << bson_stream::close_document;
     }
 
-    void StreamOpinions(bson_stream::document& builder, const model::RawProofOfExecution* rawPoEx, const model::CallPayment* callPayments, size_t numCosigners, size_t numCalls) {
+    void StreamOpinions(bson_stream::document& builder, const model::RawProofOfExecution* pRawPoEx, const model::CallPayment* pCallPayments, size_t numCosigners, size_t numCalls, const Key* pKeys, const Signature* pSignatures) {
         auto opinionsArray = builder << "opinions" << bson_stream::open_array;
         for (auto i = 0u; i < numCosigners; ++i) {
             bson_stream::document poExBuilder;
-            StreamProofOfExecution(poExBuilder, rawPoEx);
+            StreamProofOfExecution(poExBuilder, pRawPoEx);
             opinionsArray << poExBuilder;
             bson_stream::document callPaymentsBuilder;
-            StreamCallPayments(callPaymentsBuilder, callPayments, numCalls);
+            StreamCallPayments(callPaymentsBuilder, pCallPayments, numCalls);
             opinionsArray << callPaymentsBuilder;
+
+            auto publicKeysArray = builder << "publicKeys" << bson_stream::open_array;
+            for (auto i = 0; i < numCosigners; ++i, ++pKeys)
+                publicKeysArray << ToBinary(*pKeys);
+            publicKeysArray << bson_stream::close_array;
+
+            auto signaturesArray = builder << "signatures" << bson_stream::open_array;
+            for (auto i = 0; i < numCosigners; ++i, ++pSignatures)
+                signaturesArray << ToBinary(*pSignatures);
+            signaturesArray << bson_stream::close_array;
         }
         opinionsArray << bson_stream::close_array;
     }
