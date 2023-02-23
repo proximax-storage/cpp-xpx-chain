@@ -92,10 +92,10 @@ namespace catapult { namespace mongo { namespace plugins {
             auto array = builder << "completedCalls" << bson_stream::open_array;
             for (const auto& completed : completedCalls) {
                 array << "callId" << ToBinary(completed.CallId)
-                      << "caller" << ToBinary(completed.Caller)
-                      << "status" << static_cast<int16_t>(completed.Status)
-                      << "executionWork" << ToInt64(completed.ExecutionWork)
-                      << "downloadWork" << ToInt64(completed.DownloadWork);
+                    << "caller" << ToBinary(completed.Caller)
+                    << "status" << static_cast<int16_t>(completed.Status)
+                    << "executionWork" << ToInt64(completed.ExecutionWork)
+                    << "downloadWork" << ToInt64(completed.DownloadWork);
             }
             array << bson_stream::close_array;
         }
@@ -105,7 +105,7 @@ namespace catapult { namespace mongo { namespace plugins {
             for (const auto& batch : batches) {
                 bson_stream::document batchBuilder;
                 batchBuilder << "batchId" << static_cast<int64_t>(batch.first)
-                             << "success" << batch.second.Success;
+                            << "success" << batch.second.Success;
                 auto poExVerificationInformation = batch.second.PoExVerificationInformation.toBytes();
                 batchBuilder << "poExVerificationInformation" << ToBinary(poExVerificationInformation.data(), poExVerificationInformation.size());
                 StreamCompletedCalls(batchBuilder, batch.second.CompletedCalls);
@@ -123,11 +123,11 @@ namespace catapult { namespace mongo { namespace plugins {
     }
 
     bsoncxx::document::value ToDbModel(const state::SuperContractEntry& entry, const Address& accountAddress) {
-		bson_stream::document builder;
-		auto doc = builder
-			<< "supercontract" << bson_stream::open_document
-			<< "multisig" << ToBinary(entry.key())
-			<< "multisigAddress" << ToBinary(accountAddress)
+        bson_stream::document builder;
+        auto doc = builder
+            << "supercontract" << bson_stream::open_document
+            << "multisig" << ToBinary(entry.key())
+            << "multisigAddress" << ToBinary(accountAddress)
             << "driveKey" << ToBinary(entry.driveKey())
             << "executionPaymentKey" << ToBinary(entry.executionPaymentKey())
             << "assignee" << ToBinary(entry.assignee());
@@ -138,10 +138,10 @@ namespace catapult { namespace mongo { namespace plugins {
         StreamBatches(builder, entry.batches());
         StreamReleasedTransactions(builder, entry.releasedTransactions());
 
-		return doc
-			<< bson_stream::close_document
-			<< bson_stream::finalize;
-	}
+        return doc
+            << bson_stream::close_document
+            << bson_stream::finalize;
+    }
 
     // endregion
 
@@ -150,10 +150,10 @@ namespace catapult { namespace mongo { namespace plugins {
     namespace {
         void ReadAutomaticExecutionsInfo(state::AutomaticExecutionsInfo& automaticExecutionsInfo, const bsoncxx::document::view& dbAutomaticExecutionsInfo) {
             auto binaryAutomaticExecutionFileName = dbAutomaticExecutionsInfo["automaticExecutionFileName"].get_binary();
-            std::string automaticExecutionFileName((const char*) binaryAutomaticExecutionFileName.bytes, binaryAutomaticExecutionFileName.size);
+            std::string automaticExecutionFileName(reinterpret_cast<const char*>(binaryAutomaticExecutionFileName.bytes, binaryAutomaticExecutionFileName.size));
             auto binaryAutomaticExecutionsFunctionName = dbAutomaticExecutionsInfo["automaticExecutionsFunctionName"].get_binary();
-            std::string automaticExecutionsFunctionName((const char*) binaryAutomaticExecutionsFunctionName.bytes, binaryAutomaticExecutionsFunctionName.size);
-            
+            std::string automaticExecutionsFunctionName(reinterpret_cast<const char*>(binaryAutomaticExecutionsFunctionName.bytes, binaryAutomaticExecutionsFunctionName.size));
+
             automaticExecutionsInfo.AutomaticExecutionFileName = automaticExecutionFileName;
             automaticExecutionsInfo.AutomaticExecutionsFunctionName = automaticExecutionsFunctionName;
             automaticExecutionsInfo.AutomaticExecutionsNextBlockToCheck =  Height(dbAutomaticExecutionsInfo["automaticExecutionsNextBlockToCheck"].get_int64());
@@ -183,11 +183,11 @@ namespace catapult { namespace mongo { namespace plugins {
                 Key caller;
                 DbBinaryToModelArray(caller, doc["caller"].get_binary());
                 auto binaryFileName = doc["fileName"].get_binary();
-                std::string fileName((const char*) binaryFileName.bytes, binaryFileName.size);
+                std::string fileName(reinterpret_cast<const char*>(binaryFileName.bytes, binaryFileName.size));
                 auto binaryFunctionName = doc["functionName"].get_binary();
-                std::string functionName((const char*) binaryFunctionName.bytes, binaryFunctionName.size);
+                std::string functionName(reinterpret_cast<const char*>(binaryFunctionName.bytes, binaryFunctionName.size));
                 auto binaryActualArguments = doc["actualArguments"].get_binary();
-                std::string actualArguments((const char*) binaryActualArguments.bytes, binaryActualArguments.size);
+                std::string actualArguments(reinterpret_cast<const char*>(binaryActualArguments.bytes, binaryActualArguments.size));
                 auto executionCallPayment = Amount(static_cast<uint64_t>(doc["executionCallPayment"].get_int64()));
                 auto downloadCallPayment = Amount(static_cast<uint64_t>(doc["downloadCallPayment"].get_int64()));
                 std::vector<state::ServicePayment> servicePayments;
