@@ -17,8 +17,7 @@ namespace catapult { namespace mongo { namespace plugins {
     template<typename TTransaction>
     void StreamEndBatchExecutionSingleTransaction(bson_stream::document& builder, const TTransaction& transaction) {
         builder << "contractKey" << ToBinary(transaction.ContractKey)
-                << "batchId" << static_cast<int64_t>(transaction.BatchId)
-                << "signer" << ToBinary(transaction.Signer);
+                << "batchId" << static_cast<int64_t>(transaction.BatchId);
         StreamProofOfExecution(builder, transaction.ProofOfExecution);
     }
 

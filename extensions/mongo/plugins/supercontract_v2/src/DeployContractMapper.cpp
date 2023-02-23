@@ -16,8 +16,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
     template<typename TTransaction>
     void StreamDeployContractTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-        builder << "signer" << ToBinary(transaction.Signer)
-                << "driveKey" << ToBinary(transaction.DriveKey)
+        builder << "driveKey" << ToBinary(transaction.DriveKey)
                 << "assignee" << ToBinary(transaction.Assignee)
                 << "automaticExecutionFileName" << ToBinary(transaction.AutomaticExecutionFileNamePtr(), transaction.AutomaticExecutionFileNameSize)
                 << "automaticExecutionsFunctionName" << ToBinary(transaction.AutomaticExecutionFunctionNamePtr(), transaction.AutomaticExecutionFunctionNameSize)

@@ -16,8 +16,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
     template<typename TTransaction>
     void StreamManualCallTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-        builder << "signer" << ToBinary(transaction.Signer) 
-                << "contractKey" << ToBinary(transaction.ContractKey)
+        builder << "contractKey" << ToBinary(transaction.ContractKey)
                 << "fileName" << ToBinary(transaction.FileNamePtr(), transaction.FileNameSize)
                 << "functionName" << ToBinary(transaction.FunctionNamePtr(), transaction.FunctionNameSize)
                 << "actualArguments" << ToBinary(transaction.ActualArgumentsPtr(), transaction.ActualArgumentsSize);
