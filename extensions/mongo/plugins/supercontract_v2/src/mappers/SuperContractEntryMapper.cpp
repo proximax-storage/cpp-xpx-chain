@@ -259,9 +259,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
     state::SuperContractEntry ToSuperContractEntry(const bsoncxx::document::view& document) {
         auto dbSuperContractEntry = document["supercontract"];
-        Key superContractKey;
-        DbBinaryToModelArray(superContractKey, dbSuperContractEntry["superContractKey"].get_binary());
-        state::SuperContractEntry entry(superContractKey);
+        Key multisig;
+        DbBinaryToModelArray(multisig, dbSuperContractEntry["multisig"].get_binary());
+        state::SuperContractEntry entry(multisig);
 
         Key driveKey;
         DbBinaryToModelArray(driveKey, dbSuperContractEntry["driveKey"].get_binary());
