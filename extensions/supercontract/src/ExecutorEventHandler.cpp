@@ -85,8 +85,8 @@ namespace catapult::contract {
 		auto transactionHash = m_transactionSender.sendSynchronizationSingleTransaction(transactionInfo);
 	}
 
-	void ExecutorEventHandler::releasedTransactionsAreReady(const std::vector<std::vector<uint8_t>>& payloads) {
-		auto transactionHash = m_transactionSender.sendReleasedTransactions(payloads);
+	void ExecutorEventHandler::releasedTransactionsAreReady(const sirius::contract::blockchain::SerializedAggregatedTransaction& transaction) {
+		auto transactionHash = m_transactionSender.sendReleasedTransactions(transaction);
 	}
 
 	void ExecutorEventHandler::setExecutor(std::weak_ptr<sirius::contract::Executor> pExecutor) {
