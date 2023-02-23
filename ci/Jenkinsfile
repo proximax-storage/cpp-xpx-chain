@@ -45,7 +45,7 @@ pipeline {
               script {
                 def buildImage = docker.image("${BUILD_IMAGE}")
                 docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                    docker.image("mongo:4.4").run("-p 27017:27017") // mongo is required for unit test
+                    def containerId = docker.image("mongo:4.4").run("-p 27017:27017") // mongo is required for unit test
                     // to use buildImage with host's network stack
                     buildImage.inside("--net host") {
                         sh """
@@ -57,8 +57,7 @@ pipeline {
                             ctest -T Test --no-compress-output --extra-verbose || true
                         """
                     }
-                    sh "docker-compose logs >integration-test.log"
-                    sh "docker-compose down --rmi local --volumes --remove-orphans"
+                    sh "docker logs ${containerId} > integration-test.log"
                     archive 'integration-test.log'
                 }
 
