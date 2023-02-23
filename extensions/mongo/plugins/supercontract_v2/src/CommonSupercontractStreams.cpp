@@ -25,6 +25,7 @@ namespace catapult { namespace mongo { namespace plugins {
                 << "manual" << pShortCallDigest->Manual
                 << "block" << ToInt64(pShortCallDigest->Block)
                 << bson_stream::close_document;
+            ++pShortCallDigest;
         }
         callDigestsArray << bson_stream::close_array;
     }
@@ -39,6 +40,7 @@ namespace catapult { namespace mongo { namespace plugins {
                 << "status" << static_cast<int16_t>(pExtendedCallDigest->Status)
                 << "releasedTransactionHash" << ToBinary(pExtendedCallDigest->ReleasedTransactionHash)
                 << bson_stream::close_document;
+            ++pExtendedCallDigest;
         }
         callDigestsArray << bson_stream::close_array;
     }
@@ -50,20 +52,10 @@ namespace catapult { namespace mongo { namespace plugins {
                 << "executionPayment" << ToInt64(pCallPayments->ExecutionPayment)
                 << "downloadPayment" << ToInt64(pCallPayments->DownloadPayment)
                 << bson_stream::close_document;
+            ++pCallPayments;
         }
         callPaymentsArray << bson_stream::close_array;
     }
-
-    void StreamProofOfExecution(bson_stream::document& builder, const model::RawProofOfExecution& rawPoEx) {
-        builder << "poEx" << bson_stream::open_document
-                << "startBatchId" << static_cast<int64_t>(rawPoEx.StartBatchId)
-                << "T" << ToBinary(rawPoEx.T.data(), rawPoEx.T.size())
-                << "R" << ToBinary(rawPoEx.R.data(), rawPoEx.R.size())
-                << "F" << ToBinary(rawPoEx.F.data(), rawPoEx.F.size())
-                << "K" << ToBinary(rawPoEx.K.data(), rawPoEx.K.size())
-                << bson_stream::close_document;
-    }
-
 
     void StreamProofOfExecution(bson_stream::document& builder, const model::RawProofOfExecution* rawPoEx) {
         builder << "poEx" << bson_stream::open_document
