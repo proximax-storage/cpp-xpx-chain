@@ -83,8 +83,10 @@ namespace catapult { namespace plugins {
 
 					Hash256 payloadHash;
 					crypto::Sha3_256_Builder hasher;
-					hasher.update(utils::RawBuffer{reinterpret_cast<const uint8_t*>(aggregate.TransactionsPtr()),
-													 GetTransactionPayloadSize(aggregate)});
+					hasher.update(utils::RawBuffer { reinterpret_cast<const uint8_t*>(&aggregate.MaxFee),
+													 sizeof(aggregate.MaxFee) });
+					hasher.update(utils::RawBuffer { reinterpret_cast<const uint8_t*>(aggregate.TransactionsPtr()),
+													 GetTransactionPayloadSize(aggregate) });
 					hasher.final(payloadHash);
 
 					sub.notify(ReleasedTransactionsNotification<1>(signers, payloadHash));
