@@ -159,6 +159,6 @@ namespace catapult { namespace state {
 		entry.releasedTransactions().emplace(hash);
 
 		// Assert:
-		EXPECT_EQ(releasedTransactions.begin(), entry.releasedTransactions().begin());
+		EXPECT_EQ(*releasedTransactions.begin(), *entry.releasedTransactions().begin());
 	}
 }}

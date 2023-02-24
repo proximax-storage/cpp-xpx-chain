@@ -120,8 +120,8 @@ namespace catapult { namespace test {
 	template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateUnsuccessfulEndBatchExecutionTransaction() {
 		// dynamic data size
-		uint16_t CosignersNumber = test::Random16();
-		uint16_t CallsNumber = test::Random16();
+		uint16_t CosignersNumber = 5;
+		uint16_t CallsNumber = 5;
 		uint64_t additionalSize = CosignersNumber * Key_Size +
 								  CosignersNumber * Signature_Size +
 								  CosignersNumber * sizeof(model::RawProofOfExecution) +

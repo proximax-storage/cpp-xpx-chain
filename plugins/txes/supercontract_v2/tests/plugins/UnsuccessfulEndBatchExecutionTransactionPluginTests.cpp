@@ -35,7 +35,7 @@ namespace catapult { namespace plugins {
 
 		template<typename TTraits>
 		auto CreateTransaction() {
-			return test::CreateSynchronizationSingleTransaction<typename TTraits::TransactionType>();
+			return test::CreateUnsuccessfulEndBatchExecutionTransaction<typename TTraits::TransactionType>();
 		}
 
 		template<class T>
