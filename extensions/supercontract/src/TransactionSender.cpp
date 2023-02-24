@@ -196,13 +196,14 @@ namespace catapult { namespace contract {
 		return model::CalculateHash(*pTransaction, m_generationHash);
 	}
 
-	Hash256 TransactionSender::sendReleasedTransactions(const std::vector<std::vector<uint8_t>>& payloads) {
+	Hash256 TransactionSender::sendReleasedTransactions(const sirius::contract::blockchain::SerializedAggregatedTransaction& transaction) {
 		builders::ReleasedTransactionsBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
-		for (const auto& payload : payloads) {
+		for (const auto& payload: transaction.m_transactions) {
 			builder.addTransaction(payload);
 		}
 		auto pTransaction = utils::UniqueToShared(builder.build());
 		pTransaction->Deadline = utils::NetworkTime() + Timestamp(m_executorConfig.TransactionTimeout.millis());
+		pTransaction->MaxFee = Amount(transaction.m_maxFee);
 		send(pTransaction);
 
 		return model::CalculateHash(*pTransaction, m_generationHash);

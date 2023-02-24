@@ -13,15 +13,26 @@ using namespace catapult::mongo::mappers;
 
 namespace catapult { namespace mongo { namespace plugins {
 
-    template<typename TTransaction>
-    void StreamUnsuccessfulEndBatchExecutionTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-        builder << "contractKey" << ToBinary(transaction.ContractKey)
-                << "batchId" << static_cast<int64_t>(transaction.BatchId)
-                << "automaticExecutionsNextBlockToCheck" << ToInt64(transaction.AutomaticExecutionsNextBlockToCheck);
-        StreamCallDigests(builder, transaction.CallDigestsPtr(), transaction.CallsNumber);
-        StreamOpinions(builder, transaction.ProofsOfExecutionPtr(), transaction.CallPaymentsPtr(), transaction.CosignersNumber, transaction.CallsNumber, transaction.PublicKeysPtr(), transaction.SignaturesPtr());
-    }
+	template<typename TTransaction>
+	void StreamUnsuccessfulEndBatchExecutionTransaction(
+			bson_stream::document& builder,
+			const TTransaction& transaction) {
+		builder << "contractKey" << ToBinary(transaction.ContractKey) << "batchId"
+				<< static_cast<int64_t>(transaction.BatchId) << "automaticExecutionsNextBlockToCheck"
+				<< ToInt64(transaction.AutomaticExecutionsNextBlockToCheck);
+		StreamCallDigests(builder, transaction.CallDigestsPtr(), transaction.CallsNumber);
+		StreamOpinions(
+				builder,
+				transaction.CosignersNumber,
+				transaction.CallsNumber,
+				transaction.ProofsOfExecutionPtr(),
+				transaction.CallPaymentsPtr(),
+				transaction.PublicKeysPtr(),
+				transaction.SignaturesPtr());
+	}
 
-    DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(UnsuccessfulEndBatchExecution, StreamUnsuccessfulEndBatchExecutionTransaction)
+	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(
+			UnsuccessfulEndBatchExecution,
+			StreamUnsuccessfulEndBatchExecutionTransaction)
 
-}}}
+}}} // namespace catapult::mongo::plugins

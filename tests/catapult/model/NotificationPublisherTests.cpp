@@ -463,7 +463,7 @@ namespace catapult { namespace model {
 		// Act:
 		PublishOne<TransactionFeeNotification<1>>(*pTransaction, [transactionSize = pTransaction->Size](const auto& notification) {
 			// Assert: max fee is used when there is no associated block
-			EXPECT_EQ(transactionSize, notification.TransactionSize);
+			EXPECT_EQ(transactionSize, notification.TransactionEntity.Size);
 			EXPECT_EQ(Amount(765), notification.Fee);
 			EXPECT_EQ(Amount(765), notification.MaxFee);
 		});
@@ -484,7 +484,7 @@ namespace catapult { namespace model {
 		PublishOne<TransactionFeeNotification<1>>(WeakEntityInfo(*pTransaction, hash, blockHeader), [transactionSize = pTransaction->Size](
 				const auto& notification) {
 			// Assert: calculated fee is used when there is associated block
-			EXPECT_EQ(transactionSize, notification.TransactionSize);
+			EXPECT_EQ(transactionSize, notification.TransactionEntity.Size);
 			EXPECT_EQ(Amount(4 * 234), notification.Fee);
 			EXPECT_EQ(Amount(765), notification.MaxFee);
 		});

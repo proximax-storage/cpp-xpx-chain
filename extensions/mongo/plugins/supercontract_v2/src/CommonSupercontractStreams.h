@@ -25,6 +25,6 @@ namespace catapult { namespace mongo { namespace plugins {
 
     void StreamProofOfExecution(bson_stream::document& builder, const model::RawProofOfExecution* rawPoEx);
 
-    void StreamOpinions(bson_stream::document& builder, const model::RawProofOfExecution* rawPoEx, const model::CallPayment* callPayments, size_t numCosigners, size_t numCalls);
+    void StreamOpinions(bson_stream::document& builder, size_t numCosigners, size_t numCalls, const model::RawProofOfExecution* pRawPoEx, const model::CallPayment* pCallPayments, const Key* pKeys, const Signature* pSignatures);
 
 }}}

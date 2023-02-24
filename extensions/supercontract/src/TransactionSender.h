@@ -9,6 +9,7 @@
 #include <utility>
 
 #include <executor/Transactions.h>
+#include <blockchain/EmbeddedTransaction.h>
 #include "src/catapult/crypto/KeyPair.h"
 #include "catapult/config/ImmutableConfiguration.h"
 #include "catapult/handlers/HandlerTypes.h"
@@ -30,7 +31,7 @@ namespace catapult { namespace contract {
 		Hash256 sendUnsuccessfulEndBatchExecutionTransaction(const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
 		Hash256 sendEndBatchExecutionSingleTransaction(const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo);
 		Hash256 sendSynchronizationSingleTransaction(const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo);
-		Hash256 sendReleasedTransactions(const std::vector<std::vector<uint8_t>>& payloads);
+		Hash256 sendReleasedTransactions(const sirius::contract::blockchain::SerializedAggregatedTransaction& transaction);
 
 	private:
 		void send(std::shared_ptr<model::Transaction> pTransaction);

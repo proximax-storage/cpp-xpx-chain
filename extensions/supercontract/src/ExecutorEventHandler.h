@@ -28,7 +28,7 @@ namespace catapult { namespace contract {
 		void endBatchTransactionIsReady(const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
 		void endBatchSingleTransactionIsReady(const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo);
 		void synchronizationSingleTransactionIsReady(const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo);
-		void releasedTransactionsAreReady(const std::vector<std::vector<uint8_t>>& payloads) override;
+		void releasedTransactionsAreReady(const sirius::contract::blockchain::SerializedAggregatedTransaction& transaction) override;
 
 		void setExecutor(std::weak_ptr<sirius::contract::Executor> pExecutor);
 

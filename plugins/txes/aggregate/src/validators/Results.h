@@ -52,6 +52,12 @@ namespace catapult { namespace validators {
 	/// Validation failed because aggregate bonded transaction is not enabled.
 	DEFINE_AGGREGATE_RESULT(Bonded_Not_Enabled, 0x0006);
 
+	/// Validation failed because balance for fee compensation is insufficient.
+	DEFINE_AGGREGATE_RESULT(Insufficient_Fee_Compensation_Balance, 0x0007);
+
+	/// Validation failed because the cosigner is invalid
+	DEFINE_AGGREGATE_RESULT(Invalid_Cosigner, 0x0008);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif
