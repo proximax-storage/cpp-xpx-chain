@@ -24,7 +24,7 @@ namespace catapult::observers {
 			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 			auto contractIt = contractCache.find(notification.ContractKey);
 			auto& contractEntry = contractIt.get();
-			contractEntry.batches().emplace_back();
+			contractEntry.batches().emplace(contractEntry.nextBatchId(), state::Batch{});
 			contractEntry.automaticExecutionsInfo().AutomaticExecutionsNextBlockToCheck = notification.AutomaticExecutionsNextBlockToCheck;
 		 }))
 	}

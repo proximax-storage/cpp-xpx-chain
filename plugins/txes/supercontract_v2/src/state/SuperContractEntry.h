@@ -150,11 +150,11 @@ class SuperContractMixin {
 			return m_batches.size();
 		}
 
-		std::vector<Batch>& batches() {
+		std::map<uint64_t, Batch>& batches() {
 			return m_batches;
 		}
 
-		const std::vector<Batch>& batches() const {
+		const std::map<uint64_t, Batch>& batches() const {
 			return m_batches;
 		}
 
@@ -174,7 +174,7 @@ class SuperContractMixin {
 		AutomaticExecutionsInfo m_automaticExecutionsInfo;
 		std::deque<ContractCall> m_requestedCalls;
 		std::map<Key, ExecutorInfo> m_executorsInfo;
-		std::vector<Batch> m_batches;
+		std::map<uint64_t, Batch> m_batches;
 		std::multiset<Hash256> m_releasedTransactions;
 };
 

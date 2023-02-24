@@ -29,7 +29,7 @@ namespace catapult::observers {
 			auto contractAccountIt = accountCache.find(contractEntry.key());
 			auto& contractAccountEntry = contractAccountIt.get();
 
-			auto& batch = contractEntry.batches().back();
+			auto& batch = (--contractEntry.batches().end())->second;
 
 			auto requestedCallIt = contractEntry.requestedCalls().begin();
 

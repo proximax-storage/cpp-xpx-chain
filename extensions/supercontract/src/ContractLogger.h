@@ -18,6 +18,8 @@ public:
 	void warn(const std::string& msg) override;
 	void err(const std::string& msg) override;
 	void critical(const std::string& msg) override;
+
+	void stop() override;
 };
 
 }

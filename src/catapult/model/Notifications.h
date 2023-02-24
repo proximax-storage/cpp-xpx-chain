@@ -398,16 +398,23 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a transaction fee notification around \a transactionSize, \a fee and \a maxFee.
-		TransactionFeeNotification(uint32_t transactionSize, Amount fee, Amount maxFee)
+		TransactionFeeNotification(const Transaction& transaction,
+								   UnresolvedMosaicId mosaicId,
+								   Amount fee,
+								   Amount maxFee)
 				: Notification(Notification_Type, sizeof(TransactionFeeNotification<1>))
-				, TransactionSize(transactionSize)
+				, TransactionEntity(transaction)
+				, MosaicId(mosaicId)
 				, Fee(fee)
 				, MaxFee(maxFee)
 		{}
 
 	public:
-		/// Transaction size.
-		uint32_t TransactionSize;
+		/// Transaction
+		const Transaction& TransactionEntity;
+
+		// Transaction fee mosaic id.
+		UnresolvedMosaicId MosaicId;
 
 		/// Transaction fee.
 		Amount Fee;

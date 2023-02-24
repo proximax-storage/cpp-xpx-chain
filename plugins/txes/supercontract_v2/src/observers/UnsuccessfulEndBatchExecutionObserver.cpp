@@ -19,7 +19,7 @@ namespace catapult::observers {
 			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 			auto contractIt = contractCache.find(notification.ContractKey);
 			auto& contractEntry = contractIt.get();
-			auto& batch = contractEntry.batches().back();
+			auto& batch = (--contractEntry.batches().end())->second;
 			batch.Success = false;
 			batch.PoExVerificationInformation = crypto::CurvePoint();
 		}))
