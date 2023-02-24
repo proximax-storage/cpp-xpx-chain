@@ -22,6 +22,8 @@ namespace catapult { namespace mongo { namespace plugins {
                 << "automaticExecutionsFunctionName" << ToBinary(transaction.AutomaticExecutionFunctionNamePtr(), transaction.AutomaticExecutionFunctionNameSize)
                 << "automaticExecutionCallPayment" << ToInt64(transaction.AutomaticExecutionCallPayment)
                 << "automaticDownloadCallPayment" << ToInt64(transaction.AutomaticDownloadCallPayment)
+                << "fileName" << ToBinary(transaction.FileNamePtr(), transaction.FileNameSize)
+                << "functionName" << ToBinary(transaction.FunctionNamePtr(), transaction.FunctionNameSize)
                 << "actualArguments" << ToBinary(transaction.ActualArgumentsPtr(), transaction.ActualArgumentsSize);
         StreamServicePayments(builder, transaction.ServicePaymentsPtr(), transaction.ServicePaymentsCount);
         builder << "automaticExecutionsNumber" << static_cast<int32_t>(transaction.AutomaticExecutionsNumber)
