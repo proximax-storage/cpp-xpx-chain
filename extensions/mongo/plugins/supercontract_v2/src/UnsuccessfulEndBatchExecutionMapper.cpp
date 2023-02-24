@@ -13,13 +13,26 @@ using namespace catapult::mongo::mappers;
 
 namespace catapult { namespace mongo { namespace plugins {
 
+	void StreamCallDigests(bson_stream::document& builder, const model::ShortCallDigest* pShortCallDigest, size_t numShortCallDigests) {
+		auto callDigestsArray = builder << "callDigests" << bson_stream::open_array;
+		for (auto i = 0u; i < numShortCallDigests; ++i) {
+			callDigestsArray << bson_stream::open_document
+			<< "callId" << ToBinary(pShortCallDigest->CallId)
+			<< "manual" << pShortCallDigest->Manual
+			<< "block" << ToInt64(pShortCallDigest->Block)
+			<< bson_stream::close_document;
+			++pShortCallDigest;
+		}
+		callDigestsArray << bson_stream::close_array;
+	}
+
 	template<typename TTransaction>
 	void StreamUnsuccessfulEndBatchExecutionTransaction(
 			bson_stream::document& builder,
 			const TTransaction& transaction) {
-		builder << "contractKey" << ToBinary(transaction.ContractKey) << "batchId"
-				<< static_cast<int64_t>(transaction.BatchId) << "automaticExecutionsNextBlockToCheck"
-				<< ToInt64(transaction.AutomaticExecutionsNextBlockToCheck);
+		builder << "contractKey" << ToBinary(transaction.ContractKey)
+				<< "batchId" << static_cast<int64_t>(transaction.BatchId)
+				<< "automaticExecutionsNextBlockToCheck" << ToInt64(transaction.AutomaticExecutionsNextBlockToCheck);
 		StreamCallDigests(builder, transaction.CallDigestsPtr(), transaction.CallsNumber);
 		StreamOpinions(
 				builder,

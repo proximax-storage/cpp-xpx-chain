@@ -5,7 +5,6 @@
 **/
 
 #include "DriveContractEntryMapper.h"
-#include "catapult/utils/Casting.h"
 #include "mongo/src/mappers/MapperUtils.h"
 
 using namespace catapult::mongo::mappers;
@@ -14,12 +13,11 @@ namespace catapult { namespace mongo { namespace plugins {
 
     // region ToDbModel
 
-    bsoncxx::document::value ToDbModel(const state::DriveContractEntry& entry, const Address& accountAddress) {
+    bsoncxx::document::value ToDbModel(const state::DriveContractEntry& entry) {
         bson_stream::document builder;
         auto doc = builder
             << "drivecontract" << bson_stream::open_document
-            << "multisig" << ToBinary(entry.key())
-            << "multisigAddress" << ToBinary(accountAddress)
+            << "driveKey" << ToBinary(entry.key())
             << "contractKey" << ToBinary(entry.contractKey());
         
         return doc
@@ -31,15 +29,17 @@ namespace catapult { namespace mongo { namespace plugins {
 
     // region ToModel
 
-    state::DriveContractEntry ToDriveContractEntry(const    bsoncxx::document::view& document) {
+    state::DriveContractEntry ToDriveContractEntry(const bsoncxx::document::view& document) {
         auto dbDriveContractEntry = document["drivecontract"];
-        Key multisig;
-        DbBinaryToModelArray(multisig, dbDriveContractEntry["multisig"].get_binary());
-        state::DriveContractEntry entry(multisig);
+        Key driveKey;
+        DbBinaryToModelArray(driveKey, dbDriveContractEntry["driveKey"].get_binary());
+        state::DriveContractEntry entry(driveKey);
 
         Key contractKey;
         DbBinaryToModelArray(contractKey, dbDriveContractEntry["contractKey"].get_binary());
         entry.setContractKey(contractKey);
+
+		return entry;
     }
 
     // endregion

@@ -17,7 +17,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	namespace {
 		struct SuperContractCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::SuperContractCacheDescriptor> {
 			static constexpr const char* Collection_Name = "supercontracts";
-			static constexpr const char* Id_Property_Name = "supercontract.multisig";
+			static constexpr const char* Id_Property_Name = "supercontract.contractKey";
 
 			static auto MapToMongoId(const KeyType& key) {
 				return mappers::ToBinary(key);
