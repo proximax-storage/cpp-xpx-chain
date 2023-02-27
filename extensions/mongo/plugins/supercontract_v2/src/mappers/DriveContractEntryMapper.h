@@ -11,7 +11,7 @@
 namespace catapult { namespace mongo { namespace plugins {
 
 	/// Maps a drive contract \a entry and \a accountAddress to the corresponding db model value.
-	bsoncxx::document::value ToDbModel(const state::DriveContractEntry& entry, const Address& accountAddress);
+	bsoncxx::document::value ToDbModel(const state::DriveContractEntry& entry);
 
 	/// Maps a database \a document to the corresponding model value.
 	state::DriveContractEntry ToDriveContractEntry(const bsoncxx::document::view& document);

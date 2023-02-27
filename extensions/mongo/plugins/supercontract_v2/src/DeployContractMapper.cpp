@@ -22,11 +22,18 @@ namespace catapult { namespace mongo { namespace plugins {
                 << "automaticExecutionsFunctionName" << ToBinary(transaction.AutomaticExecutionFunctionNamePtr(), transaction.AutomaticExecutionFunctionNameSize)
                 << "automaticExecutionCallPayment" << ToInt64(transaction.AutomaticExecutionCallPayment)
                 << "automaticDownloadCallPayment" << ToInt64(transaction.AutomaticDownloadCallPayment)
-                << "actualArguments" << ToBinary(transaction.ActualArgumentsPtr(), transaction.ActualArgumentsSize);
-        StreamServicePayments(builder, transaction.ServicePaymentsPtr(), transaction.ServicePaymentsCount);
-        builder << "automaticExecutionsNumber" << static_cast<int32_t>(transaction.AutomaticExecutionsNumber)
-                << "executionCallPayment" << ToInt64(transaction.ExecutionCallPayment)
-                << "downloadCallPayment" << ToInt64(transaction.DownloadCallPayment);
+				<< "automaticExecutionsNumber" << static_cast<int32_t>(transaction.AutomaticExecutionsNumber);
+        StreamManualCall(builder,
+						 transaction.FileNamePtr(),
+						 transaction.FileNameSize,
+						 transaction.FunctionNamePtr(),
+						 transaction.FunctionNameSize,
+						 transaction.ActualArgumentsPtr(),
+						 transaction.ActualArgumentsSize,
+						 transaction.ServicePaymentsPtr(),
+						 transaction.ServicePaymentsCount,
+						 transaction.ExecutionCallPayment,
+						 transaction.DownloadCallPayment);
     }
 
     DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(DeployContract, StreamDeployContractTransaction)

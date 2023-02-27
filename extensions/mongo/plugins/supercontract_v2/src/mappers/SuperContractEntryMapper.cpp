@@ -5,7 +5,6 @@
 **/
 
 #include "SuperContractEntryMapper.h"
-#include "catapult/utils/Casting.h"
 #include "mongo/src/mappers/MapperUtils.h"
 
 using namespace catapult::mongo::mappers;
@@ -122,11 +121,12 @@ namespace catapult { namespace mongo { namespace plugins {
         bson_stream::document builder;
         auto doc = builder
             << "supercontract" << bson_stream::open_document
-            << "multisig" << ToBinary(entry.key())
-            << "multisigAddress" << ToBinary(accountAddress)
+            << "contractKey" << ToBinary(entry.key())
+            << "contractAddress" << ToBinary(accountAddress)
             << "driveKey" << ToBinary(entry.driveKey())
             << "executionPaymentKey" << ToBinary(entry.executionPaymentKey())
-            << "assignee" << ToBinary(entry.assignee());
+            << "assignee" << ToBinary(entry.assignee())
+            << "deploymentBaseModificationId" << ToBinary(entry.deploymentBaseModificationId());
 
         StreamAutomaticExecutionsInfo(builder, entry.automaticExecutionsInfo());
         StreamContractCalls(builder, entry.requestedCalls());
@@ -221,7 +221,7 @@ namespace catapult { namespace mongo { namespace plugins {
                 DbBinaryToModelArray(callId, doc["callId"].get_binary());
                 Key caller;
                 DbBinaryToModelArray(caller, doc["caller"].get_binary());
-                auto status = doc["status"].get_int32();
+                auto status = static_cast<int16_t>(doc["status"].get_int32());
                 auto executionWork = Amount(static_cast<uint64_t>(doc["executionWork"].get_int64()));
                 auto downloadWork = Amount(static_cast<uint64_t>(doc["downloadWork"].get_int64()));
                 completedCalls.emplace_back(state::CompletedCall{callId, caller, status, executionWork, downloadWork});
@@ -254,9 +254,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
     state::SuperContractEntry ToSuperContractEntry(const bsoncxx::document::view& document) {
         auto dbSuperContractEntry = document["supercontract"];
-        Key multisig;
-        DbBinaryToModelArray(multisig, dbSuperContractEntry["multisig"].get_binary());
-        state::SuperContractEntry entry(multisig);
+        Key contractKey;
+        DbBinaryToModelArray(contractKey, dbSuperContractEntry["contractKey"].get_binary());
+        state::SuperContractEntry entry(contractKey);
 
         Key driveKey;
         DbBinaryToModelArray(driveKey, dbSuperContractEntry["driveKey"].get_binary());
@@ -270,12 +270,18 @@ namespace catapult { namespace mongo { namespace plugins {
         DbBinaryToModelArray(assignee, dbSuperContractEntry["assignee"].get_binary());
         entry.setAssignee(assignee);
 
+        Hash256 deploymentBaseModificationId;
+        DbBinaryToModelArray(deploymentBaseModificationId, dbSuperContractEntry["deploymentBaseModificationId"].get_binary());
+		entry.setDeploymentBaseModificationId(deploymentBaseModificationId);
+
         ReadAutomaticExecutionsInfo(entry.automaticExecutionsInfo(), dbSuperContractEntry["automaticExecutionsInfo"].get_value().get_document());
         ReadContractCalls(entry.requestedCalls(), dbSuperContractEntry["requestedCalls"].get_array().value);
         ReadExecutorsInfo(entry.executorsInfo(), dbSuperContractEntry["executorsInfo"].get_array().value);
         ReadBatches(entry.batches(), dbSuperContractEntry["batches"].get_array().value);
         ReadReleasedTransactions(entry.releasedTransactions(), dbSuperContractEntry["releasedTransactions"].get_array().value);        
-    }
+
+		return entry;
+	}
 
     // endregion
 }}}

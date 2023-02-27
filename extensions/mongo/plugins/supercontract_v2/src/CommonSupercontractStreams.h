@@ -13,17 +13,23 @@ using namespace catapult::mongo::mappers;
 
 namespace catapult { namespace mongo { namespace plugins {
 
-    void StreamServicePayments(bson_stream::document& builder, const model::UnresolvedMosaic* pServicePayments, size_t numServicePayments);
+    void StreamServicePayments(bson_stream::document& builder, const model::UnresolvedMosaic* pServicePayments, uint16_t numServicePayments);
 
-    void StreamCallDigests(bson_stream::document& builder, const model::ShortCallDigest* pShortCallDigest, size_t numShortCallDigests);
-
-    void StreamCallDigests(bson_stream::document& builder, const model::ExtendedCallDigest* pExtendedCallDigest, size_t numExtendedCallDigests);
+    void StreamManualCall(bson_stream::document& builder,
+						  const uint8_t* pFileName,
+						  uint16_t fileNameSize,
+						  const uint8_t* pFunctionName,
+						  uint16_t functionNameSize,
+						  const uint8_t* pActualArguments,
+						  uint16_t actualArgumentsSize,
+						  const model::UnresolvedMosaic* pServicePayments,
+						  uint16_t numServicePayments,
+						  Amount executionCallPayment,
+						  Amount downloadCallPayment);
 
     void StreamCallPayments(bson_stream::document& builder, const model::CallPayment* pCallPayments, size_t numCallPayments);
 
     void StreamProofOfExecution(bson_stream::document& builder, const model::RawProofOfExecution& rawPoEx);
-
-    void StreamProofOfExecution(bson_stream::document& builder, const model::RawProofOfExecution* rawPoEx);
 
     void StreamOpinions(bson_stream::document& builder, size_t numCosigners, size_t numCalls, const model::RawProofOfExecution* pRawPoEx, const model::CallPayment* pCallPayments, const Key* pKeys, const Signature* pSignatures);
 
