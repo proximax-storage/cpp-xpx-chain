@@ -61,7 +61,7 @@ namespace catapult { namespace tools { namespace nemgen {
 				: Hash256();
 
 		// 6. Clear plugin configs before unloading modules.
-		pConfigHolder->Config().Network.ClearPluginConfigurations();
+		pConfigHolder->ClearPluginConfigurations();
 
 		return { blockReceiptsHash, cacheStateHashInfo.StateHash, cacheStateHashInfo.SubCacheMerkleRoots };
 	}

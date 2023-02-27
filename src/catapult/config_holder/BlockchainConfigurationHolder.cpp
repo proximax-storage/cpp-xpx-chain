@@ -94,6 +94,12 @@ namespace catapult { namespace config {
 		return &iter->second;
 
 	}
+
+	void BlockchainConfigurationHolder::ClearPluginConfigurations() const {
+		for (const auto& [_, config] : m_configs)
+			config.Network.ClearPluginConfigurations();
+	}
+
 	void BlockchainConfigurationHolder::InsertConfig(const Height& height, const std::string& strConfig, const std::string& supportedVersion) {
 		std::unique_lock lock(m_mutex);
 

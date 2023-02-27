@@ -200,6 +200,8 @@ namespace catapult { namespace local {
 				m_pBootstrapper->pool().shutdown();
 				CATAPULT_CLEANUP_LOG(info, "Pool was shutdown, proceeding to save state");
 				saveStateToDisk();
+				m_pBootstrapper->configHolder()->SetPluginInitializer(nullptr);
+				m_pBootstrapper->configHolder()->ClearPluginConfigurations();
 				CATAPULT_CLEANUP_LOG(info, "Saved state to disk");
 			}
 

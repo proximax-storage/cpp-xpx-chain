@@ -39,6 +39,9 @@ using namespace std::chrono_literals;
 		/// Get latest available config
 		virtual const BlockchainConfiguration& Config() const;
 
+		/// Removes all plugin configs in all network configs.
+		void ClearPluginConfigurations() const;
+
 		/// Get config at \a height or latest available config
 		virtual const BlockchainConfiguration& ConfigAtHeightOrLatest(const Height& height) const;
 
