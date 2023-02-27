@@ -43,6 +43,7 @@ pipeline {
         stage('Unit Test') {
             steps {
               script {
+                sh "docker kill \$(docker ps -q)"
                 def buildImage = docker.image("${BUILD_IMAGE}")
                 docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
                     docker.image("mongo:4.4").run("-p 27017:27017") // mongo is required for unit test
