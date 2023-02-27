@@ -271,5 +271,7 @@ namespace catapult { namespace state {
             io::Read(input, releasedTransaction);
             entry.releasedTransactions().emplace(releasedTransaction);
         }
+
+		return entry;
     }
 }}
