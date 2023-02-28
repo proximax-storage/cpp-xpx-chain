@@ -24,6 +24,20 @@ namespace catapult::observers {
 			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 			auto contractIt = contractCache.find(notification.ContractKey);
 			auto& contractEntry = contractIt.get();
+
+//			auto& executorsInfo = contractEntry.executorsInfo();
+//			auto minIt = std::min_element(
+//					executorsInfo.cbegin(),
+//					executorsInfo.cend(),
+//					[](const auto& left, const auto& right) {
+//						return left.second.NextBatchToApprove < right.second.NextBatchToApprove;
+//					});
+//
+//			auto minNextBatchToApprove =
+//					minIt != executorsInfo.end() ? minIt->second.NextBatchToApprove : 0;
+//
+//			while (!executorsInfo.empty() && exe
+
 			contractEntry.batches().emplace(contractEntry.nextBatchId(), state::Batch{});
 			contractEntry.automaticExecutionsInfo().AutomaticExecutionsNextBlockToCheck = notification.AutomaticExecutionsNextBlockToCheck;
 		 }))

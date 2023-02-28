@@ -14,13 +14,14 @@ namespace catapult::contract {
 
 		void handleFailedEndBatchExecution(
 				uint32_t status,
-				const std::weak_ptr<sirius::contract::Executor> pExecutorWeak,
+				const std::weak_ptr<sirius::contract::Executor>& pExecutorWeak,
 				const sirius::contract::ContractKey& contractKey,
 				uint64_t batchId,
 				bool batchSuccess) {
 			auto pExecutor = pExecutorWeak.lock();
-			if (!pExecutor)
+			if (!pExecutor) {
 				return;
+			}
 
 			auto validationResult = validators::ValidationResult(status);
 
@@ -33,7 +34,7 @@ namespace catapult::contract {
 
 			if (handledResults.find(validationResult) != handledResults.end()) {
 				try {
-					pExecutor->onEndBatchExecutionFailed(sirius::contract::FailedEndBatchExecutionTransactionInfo {
+					pExecutor->onEndBatchExecutionFailed(FailedEndBatchExecutionTransactionInfo {
 							contractKey, batchId, batchSuccess });
 				}
 				catch (...) {}
@@ -51,7 +52,7 @@ namespace catapult::contract {
 		, m_pTransactionStatusHandler(std::move(pTransactionHandler)) {}
 
 	void ExecutorEventHandler::endBatchTransactionIsReady(
-			const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
+			const SuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
 		auto transactionHash = m_transactionSender.sendSuccessfulEndBatchExecutionTransaction(transactionInfo);
 
 		m_pTransactionStatusHandler->addHandler(
@@ -64,7 +65,7 @@ namespace catapult::contract {
 	}
 
 	void ExecutorEventHandler::endBatchTransactionIsReady(
-			const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
+			const UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
 		auto transactionHash = m_transactionSender.sendUnsuccessfulEndBatchExecutionTransaction(transactionInfo);
 		m_pTransactionStatusHandler->addHandler(
 				transactionHash,
@@ -76,12 +77,12 @@ namespace catapult::contract {
 	}
 
 	void ExecutorEventHandler::endBatchSingleTransactionIsReady(
-			const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo) {
+			const EndBatchExecutionSingleTransactionInfo& transactionInfo) {
 		auto transactionHash = m_transactionSender.sendEndBatchExecutionSingleTransaction(transactionInfo);
 	}
 
 	void ExecutorEventHandler::synchronizationSingleTransactionIsReady(
-			const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo) {
+			const SynchronizationSingleTransactionInfo& transactionInfo) {
 		auto transactionHash = m_transactionSender.sendSynchronizationSingleTransaction(transactionInfo);
 	}
 

@@ -25,14 +25,14 @@ namespace catapult { namespace contract {
 		}
 
 		auto CreateSuccessfulEndBatchExecutionTransaction(){
-			sirius::contract::SuccessfulEndBatchExecutionTransactionInfo transactionInfo;
+			SuccessfulEndBatchExecutionTransactionInfo transactionInfo;
 
 			Key contractKey({ 11 });
 			uint64_t batchIndex = 1;
 			uint64_t automaticExecutionsCheckedUpTo = 1;
-			sirius::contract::SuccessfulBatchInfo successfulBatchInfo;
-			std::vector<sirius::contract::SuccessfulCallExecutionInfo> callsExecutionInfos;
-			std::vector<sirius::contract::Proofs> proofs;
+			SuccessfulBatchInfo successfulBatchInfo;
+			std::vector<SuccessfulCallExecutionInfo> callsExecutionInfos;
+			std::vector<Proofs> proofs;
 			std::vector<sirius::contract::ExecutorKey> executorKeys;
 			std::vector<sirius::Signature> signatures;
 
@@ -43,12 +43,12 @@ namespace catapult { namespace contract {
 			successfulBatchInfo.m_PoExVerificationInfo = sirius::crypto::CurvePoint();
 
 			//callsExecutionInfo
-			std::vector<sirius::contract::CallExecutorParticipation> callExecutorParticipants;
-			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{10, 20});
-			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{10, 20});
+			std::vector<CallExecutorParticipation> callExecutorParticipants;
+			callExecutorParticipants.emplace_back(CallExecutorParticipation{10, 20});
+			callExecutorParticipants.emplace_back(CallExecutorParticipation{10, 20});
 
 			callsExecutionInfos.emplace_back(
-				sirius::contract::SuccessfulCallExecutionInfo{
+				SuccessfulCallExecutionInfo{
 					sirius::contract::CallId("0123456789ABCDEFGHIJKLMNOPQRSTUV"),
 					true,
 					1,
@@ -58,7 +58,7 @@ namespace catapult { namespace contract {
 				}
  			);
 			callsExecutionInfos.emplace_back(
-				sirius::contract::SuccessfulCallExecutionInfo{
+				SuccessfulCallExecutionInfo{
 					sirius::contract::CallId("2123456789ABCDEFGHIJKLMNOPQRSTUV"),
 					true,
 					1,
@@ -71,9 +71,9 @@ namespace catapult { namespace contract {
 			//proofs
 			sirius::crypto::Scalar scalar(std::array<uint8_t ,32>{5});
 			sirius::crypto::CurvePoint curvePoint = sirius::crypto::CurvePoint::BasePoint() * scalar;
-			sirius::contract::TProof tProof = {curvePoint, scalar};
-			sirius::contract::BatchProof batchProof = {curvePoint, scalar};
-			sirius::contract::Proofs proof = {0, tProof, batchProof};
+			TProof tProof = {curvePoint, scalar};
+			BatchProof batchProof = {curvePoint, scalar};
+			Proofs proof = {0, tProof, batchProof};
 			proofs.emplace_back(proof);
 			proofs.emplace_back(proof);
 
@@ -127,9 +127,9 @@ namespace catapult { namespace contract {
 		//expectedProofs
 		sirius::crypto::Scalar scalar(std::array<uint8_t ,32>{5});
 		sirius::crypto::CurvePoint curvePoint = sirius::crypto::CurvePoint::BasePoint() * scalar;
-		sirius::contract::TProof tProof = {curvePoint, scalar};
-		sirius::contract::BatchProof batchProof = {curvePoint, scalar};
-		sirius::contract::Proofs proof = {0, tProof, batchProof};
+		TProof tProof = {curvePoint, scalar};
+		BatchProof batchProof = {curvePoint, scalar};
+		Proofs proof = {0, tProof, batchProof};
 		expectedProofs.emplace_back(
 			model::RawProofOfExecution{
 				0,
@@ -195,23 +195,23 @@ namespace catapult { namespace contract {
 
 	namespace {
 		auto CreateUnsuccessfulEndBatchExecutionTransaction(){
-			sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo transactionInfo;
+			UnsuccessfulEndBatchExecutionTransactionInfo transactionInfo;
 
 			Key contractKey({ 11 });
 			auto batchIndex = 1;
 			auto automaticExecutionsCheckedUpTo = 1;
-			std::vector<sirius::contract::UnsuccessfulCallExecutionInfo> callsExecutionInfos;
-			std::vector<sirius::contract::Proofs> proofs;
+			std::vector<UnsuccessfulCallExecutionInfo> callsExecutionInfos;
+			std::vector<Proofs> proofs;
 			std::vector<sirius::contract::ExecutorKey> executorKeys;
 			std::vector<sirius::Signature> signatures;
 
 			//callsExecutionInfos
-			std::vector<sirius::contract::CallExecutorParticipation> callExecutorParticipants;
-			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{10, 20});
-			callExecutorParticipants.emplace_back(sirius::contract::CallExecutorParticipation{10, 20});
+			std::vector<CallExecutorParticipation> callExecutorParticipants;
+			callExecutorParticipants.emplace_back(CallExecutorParticipation{10, 20});
+			callExecutorParticipants.emplace_back(CallExecutorParticipation{10, 20});
 
 			callsExecutionInfos.emplace_back(
-				sirius::contract::UnsuccessfulCallExecutionInfo{
+				UnsuccessfulCallExecutionInfo{
 					sirius::contract::CallId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
 					true,
 					1,
@@ -219,7 +219,7 @@ namespace catapult { namespace contract {
 				}
 			);
 			callsExecutionInfos.emplace_back(
-				sirius::contract::UnsuccessfulCallExecutionInfo{
+				UnsuccessfulCallExecutionInfo{
 					sirius::contract::CallId("1123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
 					true,
 					1,
@@ -230,9 +230,9 @@ namespace catapult { namespace contract {
 			//proofs
 			sirius::crypto::Scalar scalar(std::array<uint8_t ,32>{5});
 			sirius::crypto::CurvePoint curvePoint = sirius::crypto::CurvePoint::BasePoint() * scalar;
-			sirius::contract::TProof tProof = {curvePoint, scalar};
-			sirius::contract::BatchProof batchProof = {curvePoint, scalar};
-			sirius::contract::Proofs proof = {0, tProof, batchProof};
+			TProof tProof = {curvePoint, scalar};
+			BatchProof batchProof = {curvePoint, scalar};
+			Proofs proof = {0, tProof, batchProof};
 			proofs.emplace_back(proof);
 			proofs.emplace_back(proof);
 
@@ -280,9 +280,9 @@ namespace catapult { namespace contract {
 			//expectedProofs
 			sirius::crypto::Scalar scalar(std::array<uint8_t ,32>{5});
 			sirius::crypto::CurvePoint curvePoint = sirius::crypto::CurvePoint::BasePoint() * scalar;
-			sirius::contract::TProof tProof = {curvePoint, scalar};
-			sirius::contract::BatchProof batchProof = {curvePoint, scalar};
-			sirius::contract::Proofs proof = {0, tProof, batchProof};
+			TProof tProof = {curvePoint, scalar};
+			BatchProof batchProof = {curvePoint, scalar};
+			Proofs proof = {0, tProof, batchProof};
 			expectedProofs.emplace_back(
 				model::RawProofOfExecution{
 					0,
@@ -341,15 +341,15 @@ namespace catapult { namespace contract {
 
 	namespace{
 		auto CreateEndBatchExecutionSingleTransaction(){
-			sirius::contract::EndBatchExecutionSingleTransactionInfo transactionInfo;
+			EndBatchExecutionSingleTransactionInfo transactionInfo;
 
 			Key contractKey({ 11 });
 			auto batchIndex = 1;
 			sirius::crypto::Scalar scalar(std::array<uint8_t ,32>{5});
 			sirius::crypto::CurvePoint curvePoint = sirius::crypto::CurvePoint::BasePoint() * scalar;
-			sirius::contract::TProof tProof = {curvePoint, scalar};
-			sirius::contract::BatchProof batchProof = {curvePoint, scalar};
-			sirius::contract::Proofs proof = {0, tProof, batchProof};
+			TProof tProof = {curvePoint, scalar};
+			BatchProof batchProof = {curvePoint, scalar};
+			Proofs proof = {0, tProof, batchProof};
 
 			transactionInfo.m_contractKey = contractKey.array();
 			transactionInfo.m_batchIndex = batchIndex;
@@ -370,9 +370,9 @@ namespace catapult { namespace contract {
 		uint64_t expectedBatchIndex = 1;
 		sirius::crypto::Scalar scalar(std::array<uint8_t ,32>{5});
 		sirius::crypto::CurvePoint curvePoint = sirius::crypto::CurvePoint::BasePoint() * scalar;
-		sirius::contract::TProof tProof = {curvePoint, scalar};
-		sirius::contract::BatchProof batchProof = {curvePoint, scalar};
-		sirius::contract::Proofs expectedProof = {0, tProof, batchProof};
+		TProof tProof = {curvePoint, scalar};
+		BatchProof batchProof = {curvePoint, scalar};
+		Proofs expectedProof = {0, tProof, batchProof};
 
 		testee.sendEndBatchExecutionSingleTransaction(CreateEndBatchExecutionSingleTransaction());
 
@@ -389,7 +389,7 @@ namespace catapult { namespace contract {
 
 	namespace{
 		auto CreateSynchronizationSingleTransaction(){
-			sirius::contract::SynchronizationSingleTransactionInfo transactionInfo;
+			SynchronizationSingleTransactionInfo transactionInfo;
 
 			Key contractKey({ 11 });
 			auto batchIndex = 1;
