@@ -14,6 +14,7 @@
 #include "src/model/SuperContractEntityType.h"
 #include "src/model/DeployContractTransaction.h"
 #include "src/state/SuperContractEntry.h"
+#include "plugins/txes/storage/src/state/DriveStateBrowserImpl.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/nodeps/Random.h"
 #include "tests/TestHarness.h"
@@ -73,5 +74,22 @@ namespace catapult { namespace test {
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));
 		}
+	};
+
+	class DriveStateBrowserImpl : public state::DriveStateBrowser {
+	public:
+		uint16_t getOrderedReplicatorsCount(
+				const cache::ReadOnlyCatapultCache& cache,
+				const Key& driveKey) const override;
+
+		Key getDriveOwner(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
+
+		std::set<Key> getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
+
+		std::set<Key> getDrives(const cache::ReadOnlyCatapultCache& cache, const Key& replicatorKey) const override;
+
+		Hash256 getDriveState(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
+
+		Hash256 getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
 	};
 }}

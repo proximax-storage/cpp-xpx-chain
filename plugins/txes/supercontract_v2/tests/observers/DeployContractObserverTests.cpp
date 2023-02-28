@@ -7,14 +7,14 @@
 #include "src/observers/Observers.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
-#include "plugins/txes/storage/src/state/DriveStateBrowserImpl.h"
-#include "plugins/txes/supercontract/src/observers/Observers.h"
 
 namespace catapult { namespace observers {
 
 #define TEST_CLASS DeployContractObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(DeployContract, std::make_unique<state::DriveStateBrowserImpl>())
+	const std::unique_ptr<state::DriveStateBrowser> Drive_Browser = std::make_unique<test::DriveStateBrowserImpl>();
+
+	DEFINE_COMMON_OBSERVER_TESTS(DeployContract, Drive_Browser)
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::SuperContractCacheFactory>;
@@ -28,7 +28,7 @@ namespace catapult { namespace observers {
 		const auto Function_Name = test::GenerateRandomString(10);
 		const auto Execution_Call_Payment = Amount(10);
 		const auto Download_Call_Payment = Amount(10);
-		const auto Base_Modification_Id = test::GenerateRandomByteArray<Hash256>();
+		const auto Base_Modification_Id = Hash256();
 
 		auto CreateDriveContractEntry() {
 			auto driveEntry = test::CreateDriveContractEntry(Drive_Key, Super_Contract_Key);
@@ -42,6 +42,12 @@ namespace catapult { namespace observers {
 			entry.setAssignee(Super_Contract_Owner_Key);
 			entry.setExecutionPaymentKey(Super_Contract_Owner_Key);
 			entry.setDeploymentBaseModificationId(Base_Modification_Id);
+
+            auto& automaticExecutionsInfo = entry.automaticExecutionsInfo();
+            automaticExecutionsInfo.AutomaticExecutionFileName = File_Name;
+            automaticExecutionsInfo.AutomaticExecutionsFunctionName = Function_Name;
+            automaticExecutionsInfo.AutomaticExecutionCallPayment = Execution_Call_Payment;
+            automaticExecutionsInfo.AutomaticDownloadCallPayment = Download_Call_Payment;
 
 			return entry;
 		}
@@ -61,10 +67,9 @@ namespace catapult { namespace observers {
 
 	void RunTest(NotifyMode mode, const Height& currentHeight) {
 		// Arrange:
-		std::unique_ptr<state::DriveStateBrowser> browser = std::make_unique<state::DriveStateBrowserImpl>();
 		ObserverTestContext context(mode, Current_Height);
 		auto notification = CreateNotification();
-		auto pObserver = CreateDeployContractObserver(browser);
+		auto pObserver = CreateDeployContractObserver(Drive_Browser);
 		auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
 		auto& driveCache = context.cache().sub<cache::DriveContractCache>();
 
@@ -81,11 +86,12 @@ namespace catapult { namespace observers {
 
 		// Assert: check the cache
 		auto superContractCacheIter = superContractCache.find(scEntry.key());
-		EXPECT_EQ(nullptr, superContractCacheIter.tryGet());
+		const auto& actualScEntry = superContractCacheIter.get();
+		test::AssertEqualSuperContractData(scEntry, actualScEntry);
 
 		auto driveCacheIter = driveCache.find(scEntry.driveKey());
-		const auto& actualDriveEntry = driveCacheIter.get();
-		test::AssertEqualDriveContract(driveContractEntry, actualDriveEntry);
+		const auto& actualDriveContractEntry = driveCacheIter.get();
+		test::AssertEqualDriveContract(driveContractEntry, actualDriveContractEntry);
 	}
 
 	TEST(TEST_CLASS, Deploy_Commit) {
