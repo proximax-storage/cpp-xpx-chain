@@ -14,7 +14,7 @@ namespace catapult::observers {
 
 	DECLARE_OBSERVER(DeployContract, Notification)(const std::unique_ptr<state::DriveStateBrowser>& driveBrowser) {
 		return MAKE_OBSERVER(
-				EndBatchExecution,
+				DeployContract,
 				Notification,
 				([&driveBrowser](const Notification& notification, ObserverContext& context) {
 					if (NotifyMode::Rollback == context.Mode)
