@@ -104,6 +104,7 @@ namespace catapult { namespace state {
         io::Write(output, entry.driveKey());
         io::Write(output, entry.executionPaymentKey());
         io::Write(output, entry.assignee());
+		io::Write(output, entry.creator());
 		io::Write(output, entry.deploymentBaseModificationId());
         SaveAutomaticExecutionsInfo(entry.automaticExecutionsInfo(), output);
         SaveContractCalls(entry.requestedCalls(), output);
@@ -255,6 +256,10 @@ namespace catapult { namespace state {
         Key assignee;
 		input.read(assignee);
         entry.setAssignee(assignee);
+
+		Key creator;
+		input.read(creator);
+		entry.setCreator(creator);
 
         Hash256 deploymentBaseModificationId;
         input.read(deploymentBaseModificationId);

@@ -58,7 +58,7 @@ namespace catapult::observers {
 
 			auto readOnlyCache = context.Cache.toReadOnly();
 			auto executorsNumber = driveBrowser->getOrderedReplicatorsCount(readOnlyCache, contractEntry.driveKey());
-			auto driveOwner = driveBrowser->getDriveOwner(readOnlyCache, contractEntry.driveKey());
+			auto contractCreator = contractEntry.creator();
 
 			auto scMosaicId = config::GetUnresolvedSuperContractMosaicId(context.Config.Immutable);
 			auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(context.Config.Immutable);
@@ -92,7 +92,7 @@ namespace catapult::observers {
 				else {
 					scRefund = Amount((automaticExecutionsInfo.AutomaticExecutionCallPayment - call.ExecutionWork).unwrap() * executorsNumber);
 					scRefund = Amount((automaticExecutionsInfo.AutomaticDownloadCallPayment - call.DownloadWork).unwrap() * executorsNumber);
-					refundReceiver = driveOwner;
+					refundReceiver = contractCreator;
 					automaticExecutionsInfo.AutomatedExecutionsNumber--;
 				}
 				liquidityProvider->debitMosaics(

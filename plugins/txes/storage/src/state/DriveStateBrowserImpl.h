@@ -15,8 +15,6 @@ class DriveStateBrowserImpl : public DriveStateBrowser {
 public:
 	uint16_t getOrderedReplicatorsCount(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
 
-	Key getDriveOwner(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
-
 	std::set<Key> getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
 
 	std::set<Key> getDrives(const cache::ReadOnlyCatapultCache &cache, const Key& replicatorKey) const override;
