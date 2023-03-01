@@ -103,6 +103,10 @@ namespace catapult { namespace mocks {
 			CATAPULT_THROW_RUNTIME_ERROR("not implemented in mock");
 		}
 
+		ionet::NodePacketIoPair pickOne(const Key&) override {
+			CATAPULT_THROW_RUNTIME_ERROR("not implemented in mock");
+		}
+
 		void accept(const std::shared_ptr<ionet::PacketSocket>&, const ConnectCallback&) override {
 			CATAPULT_THROW_RUNTIME_ERROR("not implemented in mock");
 		}

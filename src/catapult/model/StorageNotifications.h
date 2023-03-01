@@ -88,6 +88,8 @@ namespace catapult { namespace model {
 	/// Defines an start drive verification notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Start_Drive_Verification_v1, 0x001A);
 
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Owner_Management_Prohibition_v1, 0x001B);
+
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
 		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)
@@ -1125,5 +1127,31 @@ namespace catapult { namespace model {
 
 		/// Array or signatures.
 		const uint8_t* OpinionsPtr;
+	};
+
+	template<VersionType version>
+	struct OwnerManagementProhibitionNotification;
+
+	template<>
+	struct OwnerManagementProhibitionNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Owner_Management_Prohibition_v1_Notification;
+
+	public:
+		explicit OwnerManagementProhibitionNotification(
+				const Key& signer,
+				const Key& driveKey)
+				: Notification(Notification_Type, sizeof(OwnerManagementProhibitionNotification<1>))
+				, DriveKey(driveKey)
+				, Signer(signer)
+				{}
+
+	public:
+		/// Signer of the Deploy Transaction of Supercontract.
+		Key Signer;
+
+		/// Key of the drive.
+		Key DriveKey;
 	};
 }}

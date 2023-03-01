@@ -40,6 +40,10 @@ namespace catapult { namespace validators {
 				return Failure_Storage_Data_Modification_Already_Exists;
 	  	}
 
+	  	if (pDriveEntry->ownerManagement() != state::OwnerManagement::ALLOWED) {
+	  		return Failure_Storage_Owner_Management_Is_Forbidden;
+        }
+
 		return ValidationResult::Success;
 	});
 

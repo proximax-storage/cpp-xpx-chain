@@ -65,6 +65,10 @@ namespace catapult { namespace mocks {
 			return ionet::NodePacketIoPair(node, m_packetIos[m_nextIndex - 1]);
 		}
 
+		ionet::NodePacketIoPair pickOne(const Key& identityKey) override {
+			CATAPULT_THROW_RUNTIME_ERROR("not implemented in mock");
+		}
+
 	private:
 		size_t m_nextIndex;
 		std::vector<std::shared_ptr<mocks::MockPacketIo>> m_packetIos;

@@ -141,10 +141,12 @@ namespace catapult { namespace mongo { namespace plugins {
 				           << "multisigAddress" << ToBinary(accountAddress)
 				           << "owner" << ToBinary(entry.owner())
 				           << "rootHash" << ToBinary(entry.rootHash())
+						   << "lastModificationId" << ToBinary(entry.lastModificationId())
 						   << "size" << static_cast<int64_t>(entry.size())
 				           << "usedSizeBytes" << static_cast<int64_t>(entry.usedSizeBytes())
 				           << "metaFilesSizeBytes" << static_cast<int64_t>(entry.metaFilesSizeBytes())
-				           << "replicatorCount" << static_cast<int32_t>(entry.replicatorCount());
+				           << "replicatorCount" << static_cast<int32_t>(entry.replicatorCount())
+						   << "ownerManagement" << static_cast<int32_t>(entry.ownerManagement());
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
 		StreamCompletedDataModifications(builder, entry.completedDataModifications());
@@ -298,10 +300,15 @@ namespace catapult { namespace mongo { namespace plugins {
 		DbBinaryToModelArray(rootHash, dbDriveEntry["rootHash"].get_binary());
 		entry.setRootHash(rootHash);
 
+		Hash256 lastModificationId;
+		DbBinaryToModelArray(lastModificationId, dbDriveEntry["lastModificationId"].get_binary());
+		entry.setLastModificationId(lastModificationId);
+
 		entry.setSize(static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
 		entry.setUsedSizeBytes(static_cast<uint64_t>(dbDriveEntry["usedSizeBytes"].get_int64()));
 		entry.setMetaFilesSizeBytes(static_cast<uint64_t>(dbDriveEntry["metaFilesSizeBytes"].get_int64()));
 		entry.setReplicatorCount(static_cast<uint16_t>(dbDriveEntry["replicatorCount"].get_int32()));
+		entry.setOwnerManagement(static_cast<state::OwnerManagement>(static_cast<uint8_t>(dbDriveEntry["ownerManagement"].get_int32())));
 
 		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);
 		ReadCompletedDataModifications(entry.completedDataModifications(), dbDriveEntry["completedDataModifications"].get_array().value);

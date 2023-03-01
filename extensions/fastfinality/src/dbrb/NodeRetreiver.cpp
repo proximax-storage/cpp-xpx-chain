@@ -90,6 +90,19 @@ namespace catapult { namespace dbrb {
 		BroadcastNodes(newNodes, m_packetIoPickers);
 	}
 
+	void NodeRetreiver::broadcastNodes() {
+		std::vector<SignedNode> nodes;
+
+		{
+			std::lock_guard<std::mutex> guard(m_mutex);
+			nodes.reserve(m_nodes.size());
+			for (const auto& [_, node] : m_nodes)
+				nodes.emplace_back(node);
+		}
+
+		BroadcastNodes(nodes, m_packetIoPickers);
+	}
+
 	std::optional<SignedNode> NodeRetreiver::getNode(const ProcessId& id) const {
 		std::lock_guard<std::mutex> guard(m_mutex);
 		std::optional<SignedNode> node;
@@ -115,7 +128,7 @@ namespace catapult { namespace dbrb {
 			return;
 
 		auto packetIoPairs = m_packetIoPickers.pickMultiple(utils::TimeSpan::FromSeconds(60));
-		CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling DBRB nodes";
+		CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling " << ids.size() << " DBRB node(s)";
 		if (!packetIoPairs.empty()) {
 			std::vector<SignedNode> newNodes;
 			for (const auto& packetIoPair : packetIoPairs) {

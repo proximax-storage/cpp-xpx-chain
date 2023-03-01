@@ -26,7 +26,7 @@ namespace catapult { namespace dbrb {
 			: m_id(thisNode.identityKey())
 			, m_keyPair(keyPair)
 			, m_nodeRetreiver(packetIoPickers, thisNode.metadata().NetworkIdentifier)
-			, m_messageSender(std::move(pWriters), m_nodeRetreiver)
+			, m_pMessageSender(std::make_shared<MessageSender>(std::move(pWriters), m_nodeRetreiver))
 			, m_pPool(pPool)
 			, m_transactionSender(std::move(transactionSender)) {
 		m_node.Node = thisNode;
@@ -178,8 +178,9 @@ namespace catapult { namespace dbrb {
 	}
 
 	void DbrbProcess::clearBroadcastData() {
+		std::lock_guard<std::mutex> guard(m_mutex);
 		m_broadcastData.clear();
-		m_messageSender.clearQueue();
+		m_pMessageSender->clearQueue();
 	}
 
 	// Basic private methods:
@@ -196,7 +197,7 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
-		m_messageSender.enqueue(pPacket, recipients);
+		m_pMessageSender->enqueue(pPacket, recipients);
 	}
 
 	void DbrbProcess::send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient) {
@@ -206,7 +207,7 @@ namespace catapult { namespace dbrb {
 				pThis->processMessage(*pMessage);
 			});
 		} else {
-			m_messageSender.enqueue(pPacket, std::set<ProcessId>{ recipient });
+			m_pMessageSender->enqueue(pPacket, std::set<ProcessId>{ recipient });
 		}
 	}
 
@@ -326,13 +327,13 @@ namespace catapult { namespace dbrb {
 		}
 
 		// If m_acknowledgeAllowed == true and AcknowledgeablePayload is unset, any payload can be acknowledged.
-		if (!m_broadcastData[message.Sender].AcknowledgeablePayload.has_value()) {
+		if (!m_broadcastData[message.Sender].AcknowledgeablePayload) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Acknowledged (any payload is allowed).";
 			return true;
 		}
 
 		// If m_acknowledgeAllowed == true and AcknowledgeablePayload is set, only AcknowledgeablePayload can be acknowledged.
-		const bool acknowledgeable = (CalculatePayloadHash(*m_broadcastData[message.Sender].AcknowledgeablePayload) == CalculatePayloadHash(message.Payload));
+		const bool acknowledgeable = (CalculatePayloadHash(m_broadcastData[message.Sender].AcknowledgeablePayload) == CalculatePayloadHash(message.Payload));
 		if (acknowledgeable)
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Acknowledged (matches stored acknowledgeable payload).";
 
@@ -605,7 +606,7 @@ namespace catapult { namespace dbrb {
 		}
 
 		auto& data = m_broadcastData[message.Sender];
-		if (!data.AcknowledgeablePayload.has_value()) {
+		if (!data.AcknowledgeablePayload) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: No acknowledgeable payload is stored.";
 			data.AcknowledgeablePayload = message.Payload;
 			if (!m_state.Acknowledgeable.has_value()) {
@@ -835,6 +836,7 @@ namespace catapult { namespace dbrb {
 		if (m_currentView.isMember(m_id)) {
 			m_membershipState = MembershipState::Participating;
 			m_installedViews.insert(m_currentView);
+			CATAPULT_LOG(debug) << "[DBRB] number of installed views is " << m_installedViews.size();
 		} else if (m_currentView.hasChange(m_id, MembershipChange::Leave)) {
 			m_membershipState = MembershipState::Left;
 		}

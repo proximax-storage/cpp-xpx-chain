@@ -280,7 +280,7 @@ namespace catapult { namespace dbrb {
 
 		struct BroadcastData {
 			/// Payload allowed to be acknowledged. If empty, any payload can be acknowledged.
-			std::optional<Payload> AcknowledgeablePayload;
+			Payload AcknowledgeablePayload;
 
 			/// Map that maps views and process IDs to signatures received from respective Acknowledged messages.
 			std::map<std::pair<View, ProcessId>, Signature> Signatures;
@@ -324,7 +324,7 @@ namespace catapult { namespace dbrb {
 
 		NodeRetreiver m_nodeRetreiver;
 
-		MessageSender m_messageSender;
+		std::shared_ptr<MessageSender> m_pMessageSender;
 
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
 

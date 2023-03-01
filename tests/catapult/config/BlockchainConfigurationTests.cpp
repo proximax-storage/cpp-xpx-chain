@@ -208,7 +208,7 @@ namespace catapult { namespace config {
 
 		void AssertDefaultSupportedEntityVersions(const SupportedEntityVersions& config) {
 			// Assert:
-			EXPECT_EQ(71u, config.size());
+			EXPECT_EQ(72u, config.size());
 		}
 	}
 

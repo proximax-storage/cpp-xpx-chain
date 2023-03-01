@@ -18,8 +18,10 @@ namespace catapult { namespace observers {
 	using Notification = model::BlockNotification<1>;
 	using BigUint = boost::multiprecision::uint256_t;
 
-	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider) {
-		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)
+	(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider,
+	 const std::vector<std::unique_ptr<StorageUpdatesListener>>& updatesListeners) {
+		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([&](const Notification& notification, ObserverContext& context) {
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			if (!pluginConfig.Enabled || context.Height < Height(2))
 				return;
@@ -147,6 +149,10 @@ namespace catapult { namespace observers {
 							downloadQueueAdapter.remove(key.array());
 							downloadEntry.downloadApprovalInitiationEvent() = eventHash;
 						}
+					}
+
+					for (const auto& updateListener: updatesListeners) {
+						updateListener->onDriveClosed(context, driveEntry.key());
 					}
 
 					// Removing the drive from queue, if present

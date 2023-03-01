@@ -8,13 +8,16 @@
 #include "NodeRetreiver.h"
 
 namespace catapult {
+	namespace ionet { class NodePacketIoPair; }
 	namespace net { class PacketWriters; }
 	namespace dbrb { class MessagePacket; }
 }
 
 namespace catapult { namespace dbrb {
 
-	class MessageSender : public AsyncMessageQueue<std::pair<std::shared_ptr<MessagePacket>, std::set<ProcessId>>> {
+	class MessageSender
+			: public AsyncMessageQueue<std::pair<std::shared_ptr<MessagePacket>, std::set<ProcessId>>>
+			, public std::enable_shared_from_this<MessageSender> {
 	public:
 		explicit MessageSender(std::shared_ptr<net::PacketWriters> pWriters, NodeRetreiver& nodeRetreiver);
 		~MessageSender() override;
@@ -25,5 +28,6 @@ namespace catapult { namespace dbrb {
 	private:
 		std::shared_ptr<net::PacketWriters> m_pWriters;
 		NodeRetreiver& m_nodeRetreiver;
+		std::map<ProcessId, std::shared_ptr<ionet::NodePacketIoPair>> m_packetIoPairs;
 	};
 }}

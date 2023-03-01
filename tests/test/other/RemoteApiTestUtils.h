@@ -191,7 +191,7 @@ namespace catapult { namespace test {
 				action();
 				FAIL() << "Expected catapult_api_error but no exception was thrown";
 			} catch (const api::catapult_api_error& ex) {
-				EXPECT_STREQ(expectedMessage, ex.what());
+				EXPECT_EQ_MEMORY(expectedMessage, ex.what(), strlen(expectedMessage));
 			} catch (...) {
 				FAIL() << "Expected catapult_api_error but different exception was thrown";
 			}
