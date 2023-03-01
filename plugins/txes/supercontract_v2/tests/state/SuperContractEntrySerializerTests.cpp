@@ -16,7 +16,7 @@ namespace catapult { namespace state {
 
 	namespace {
 
-		constexpr auto  Request_Count = 3;
+		constexpr auto  ContractCall_Count = 3;
 		constexpr auto  ServicePayment_Count = 3;
 		constexpr auto  Executor_Count = 3;
 		constexpr auto  Batch_Count = 3;
@@ -34,21 +34,53 @@ namespace catapult { namespace state {
 			Key_Size + // execution payment key
 			Key_Size + // assignee key
 			Hash256_Size + // deployment base modification id
-			sizeof(uint16_t) + //filename size
+			sizeof(uint16_t) + // filename size ( AUTOMATIC EXECUTIONS INFO )
+			FileName_Size + // automatic executions filename
 			sizeof(uint16_t) + //function name size
-			FileName_Size + FunctionName_Size + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(uint8_t) + // automatic executions info
-			sizeof(uint16_t) + // contract call size
-			Request_Count * ( Hash256_Size + Key_Size + sizeof(uint16_t) + FileName_Size + sizeof(uint16_t) + FunctionName_Size + sizeof(uint16_t) + ArgumentName_Size + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint64_t) + // contract call
+			FunctionName_Size + // function name
+			sizeof(uint64_t) + // next block to check
+			sizeof(uint64_t) + // execution call payment
+			sizeof(uint64_t) + // download call payment
+			sizeof(uint32_t) + // executions number
+			sizeof(uint8_t) + // executions prepaid since hasValue()
+			sizeof(uint16_t) + // contract call size ( CONTRACT CALL )
+			ContractCall_Count * (
+		 	Hash256_Size + // call id
+			Key_Size + // caller
+		  	sizeof(uint16_t) + // filename size
+		  	FileName_Size + // filename
+		  	sizeof(uint16_t) + // function name size
+		  	FunctionName_Size + //function
+		 	sizeof(uint16_t) + // argument name size
+		  	ArgumentName_Size + // argument
+		  	sizeof(uint64_t) + // execution call payment
+		  	sizeof(uint64_t) + // download call payment
+		  	sizeof(uint64_t) + // block height
 			sizeof(uint16_t) + // service payment size
-		 	ServicePayment_Count * (sizeof(uint64_t) + sizeof(uint64_t) ) ) + // service payment inside contract call
-			sizeof(uint32_t) + // executor size
-			Executor_Count * (Key_Size * sizeof(uint64_t) + sizeof(crypto::Scalar) + sizeof(curvePoint.toBytes())) + // executor info
-			sizeof(uint32_t) + // batches size
-			Batch_Count * ( sizeof(uint64_t)  + sizeof(bool) + sizeof(curvePoint.toBytes()) + // batches
+		 	ServicePayment_Count * (
+			sizeof(uint64_t) + // mosaic id
+		  	sizeof(uint64_t) ) ) + // amount
+			sizeof(uint32_t) + // executor size ( EXECUTORS INFO )
+			Executor_Count * (
+		 	Key_Size + // key
+		  	sizeof(uint64_t) + // next batch to approve
+		 	sizeof(uint64_t) + // poex start batch id
+			sizeof(crypto::Scalar) + // poex R
+		 	sizeof(curvePoint.toBytes())) + // poex T
+			sizeof(uint32_t) + // batches size ( BATCHES )
+			Batch_Count * (
+		  	sizeof(uint64_t) + // batch.first
+		  	sizeof(uint8_t) +  // success
+		  	sizeof(curvePoint.toBytes()) + // poex verification information
 			sizeof(uint16_t) + // completed call size
-		   	CompletedCall_Count * ( Hash256_Size + Key_Size + sizeof(uint16_t) + sizeof(uint64_t) + sizeof(uint64_t) ) ) + // completed call inside batches
-			sizeof(uint32_t) + // release transaction size
-			ReleaseTransaction_Count * Hash256_Size; // released transaction
+		   	CompletedCall_Count * (
+			Hash256_Size + // call id
+			Key_Size + // key
+			sizeof(uint16_t) + // call status
+			sizeof(uint64_t) + // execution work
+			sizeof(uint64_t)) ) + // download work
+			sizeof(uint32_t) + // release transaction size ( RELEASED TRANSACTION )
+			ReleaseTransaction_Count * Hash256_Size; // hash
 
 		class TestContext {
 		public:
@@ -105,12 +137,12 @@ namespace catapult { namespace state {
 			pData += sizeof(uint64_t);
 			EXPECT_EQ(entry.automaticExecutionsInfo().AutomaticDownloadCallPayment.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
-			EXPECT_EQ(entry.automaticExecutionsInfo().AutomaticDownloadCallPayment.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
-			pData += sizeof(uint64_t);
 			EXPECT_EQ(entry.automaticExecutionsInfo().AutomatedExecutionsNumber, *reinterpret_cast<const uint32_t*>(pData));
 			pData += sizeof(uint32_t);
+			EXPECT_EQ(entry.automaticExecutionsInfo().AutomaticExecutionsPrepaidSince.has_value(), *reinterpret_cast<const uint8_t*>(pData));
+			pData += sizeof(uint8_t);
 
-			// requested calls
+			// contract calls
 			EXPECT_EQ(entry.requestedCalls().size(),  *reinterpret_cast<const uint16_t*>(pData));
 			pData += sizeof(uint16_t);
 			for (const auto& it : entry.requestedCalls()){
@@ -134,8 +166,6 @@ namespace catapult { namespace state {
 				pData += sizeof(uint64_t);
 				EXPECT_EQ(it.DownloadCallPayment.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
 				pData += sizeof(uint64_t);
-				EXPECT_EQ(it.BlockHeight.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
-				pData += sizeof(uint64_t);
 				// service payments
 				EXPECT_EQ(it.ServicePayments.size(), *reinterpret_cast<const uint16_t*>(pData));
 				pData += sizeof(uint16_t);
@@ -145,11 +175,13 @@ namespace catapult { namespace state {
 					EXPECT_EQ(iter.Amount.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
 					pData += sizeof(uint64_t);
 				}
+				EXPECT_EQ(it.BlockHeight.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+				pData += sizeof(uint64_t);
 			}
 
 			//executors info
-			EXPECT_EQ(entry.executorsInfo().size(),  *reinterpret_cast<const uint16_t*>(pData));
-			pData += sizeof(uint16_t);
+			EXPECT_EQ(entry.executorsInfo().size(),  *reinterpret_cast<const uint32_t*>(pData));
+			pData += sizeof(uint32_t);
 			for (const auto& pair : entry.executorsInfo()){
 				EXPECT_EQ_MEMORY(pair.first.data(), pData, Key_Size);
 				pData += Key_Size;
@@ -157,6 +189,7 @@ namespace catapult { namespace state {
 				EXPECT_EQ(info.NextBatchToApprove, *reinterpret_cast<const uint64_t*>(pData));
 				pData += sizeof(uint64_t);
 				EXPECT_EQ(info.PoEx.StartBatchId, *reinterpret_cast<const uint64_t*>(pData));
+				pData += sizeof(uint64_t);
 				auto curvePoint = info.PoEx.T.toBytes();
 				EXPECT_EQ_MEMORY(&curvePoint, pData, sizeof(curvePoint));
 				pData += sizeof(curvePoint);
@@ -165,13 +198,13 @@ namespace catapult { namespace state {
 			}
 
 			// batches
-			EXPECT_EQ(entry.batches().size(),  *reinterpret_cast<const uint16_t*>(pData));
-			pData += sizeof(uint16_t);
+			EXPECT_EQ(entry.batches().size(),  *reinterpret_cast<const uint32_t*>(pData));
+			pData += sizeof(uint32_t);
 			for (const auto& pair : entry.batches()){
 				EXPECT_EQ(pair.first,  *reinterpret_cast<const uint64_t*>(pData));
 				pData += sizeof(uint64_t);
-				EXPECT_EQ(pair.second.Success, *reinterpret_cast<const bool*>(pData));
-				pData += sizeof(bool);
+				EXPECT_EQ(pair.second.Success, *reinterpret_cast<const uint8_t *>(pData));
+				pData += sizeof(uint8_t);
 				auto curvePoint = pair.second.PoExVerificationInformation.toBytes();
 				EXPECT_EQ_MEMORY(&curvePoint, pData, sizeof(curvePoint));
 				pData += sizeof(curvePoint);
@@ -192,6 +225,14 @@ namespace catapult { namespace state {
 				}
 			}
 
+			// released transaction
+			EXPECT_EQ(entry.releasedTransactions().size(),  *reinterpret_cast<const uint32_t*>(pData));
+			pData += sizeof(uint32_t);
+			for (const auto& it : entry.releasedTransactions()){
+				EXPECT_EQ_MEMORY(it.data(), pData, Hash256_Size);
+				pData += Hash256_Size;
+			}
+
 			EXPECT_EQ(pExpectedEnd, pData);
 		}
 
@@ -208,23 +249,23 @@ namespace catapult { namespace state {
 			AssertEntryBuffer(entry, context.buffer().data(), Entry_Size, version);
 		}
 
-//		void AssertCanSaveMultipleEntries(VersionType version) {
-//			// Arrange:
-//			TestContext context;
-//			auto entry1 = CreateSuperContractEntry();
-//			auto entry2 = CreateSuperContractEntry();
-//
-//			// Act:
-//			SuperContractEntrySerializer::Save(entry1, context.outputStream());
-//			SuperContractEntrySerializer::Save(entry2, context.outputStream());
-//
-//			// Assert:
-//			ASSERT_EQ(2 * Entry_Size, context.buffer().size());
-//			const auto* pBuffer1 = context.buffer().data();
-//			const auto* pBuffer2 = pBuffer1 + Entry_Size;
-//			AssertEntryBuffer(entry1, pBuffer1, Entry_Size, version);
-//			AssertEntryBuffer(entry2, pBuffer2, Entry_Size, version);
-//		}
+		void AssertCanSaveMultipleEntries(VersionType version) {
+			// Arrange:
+			TestContext context;
+			auto entry1 = CreateSuperContractEntry();
+			auto entry2 = CreateSuperContractEntry();
+
+			// Act:
+			SuperContractEntrySerializer::Save(entry1, context.outputStream());
+			SuperContractEntrySerializer::Save(entry2, context.outputStream());
+
+			// Assert:
+			ASSERT_EQ(2 * Entry_Size, context.buffer().size());
+			const auto* pBuffer1 = context.buffer().data();
+			const auto* pBuffer2 = pBuffer1 + Entry_Size;
+			AssertEntryBuffer(entry1, pBuffer1, Entry_Size, version);
+			AssertEntryBuffer(entry2, pBuffer2, Entry_Size, version);
+		}
 	}
 
 	// region Save
