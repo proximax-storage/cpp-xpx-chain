@@ -155,6 +155,9 @@ namespace catapult { namespace dbrb {
 		/// Check whether all views in \a testedSequence are more recent than ones in \a m_data, and therefore can be appended.
 		bool canAppend(const Sequence& testedSequence) const;
 
+		/// Check whether every view in \a testedSequence can be inserted into current sequence without conflicts.
+		bool canMerge(const Sequence& testedSequence) const;
+
 		/// Try to insert \a newView into \a m_data.
 		/// Returns iterator to the inserted view on success, or iterator to the end of \a m_data otherwise.
 		std::vector<View>::iterator tryInsert(const View& newView);
@@ -166,6 +169,10 @@ namespace catapult { namespace dbrb {
 		/// Try to append \a newSequence to \a m_data.
 		/// Returns \c true is appended successfully, \c false otherwise.
 		bool tryAppend(const Sequence& newSequence);
+
+		/// Try to merge \a newSequence with \a m_data.
+		/// Returns \c true is merged successfully, \c false otherwise.
+		bool tryMerge(const Sequence& newSequence);
 
 		/// Try to erase \a view from \a m_data.
 		/// Returns whether the view was found and erased.

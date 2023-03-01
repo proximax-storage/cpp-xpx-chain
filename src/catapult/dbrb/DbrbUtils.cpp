@@ -148,8 +148,8 @@ namespace catapult { namespace dbrb {
 		processIdStringStream << processId;
 		const std::string processIdString = processIdStringStream.str();
 
-		const auto firstDigitPos = processIdStringStream.str().find_first_of("0123456789");
-		out << processIdString.substr(0, 1) + processIdString.at(firstDigitPos);
+		//const auto firstDigitPos = processIdStringStream.str().find_first_of("0123456789");
+		out << processIdString.substr(0, 3);
 
 		return out.str();
 	}
@@ -298,6 +298,18 @@ namespace catapult { namespace dbrb {
 		return *pThisMostRecent < *pOtherLeastRecent;
 	}
 
+	bool Sequence::canMerge(const Sequence& testedSequence) const {
+		const auto& sequenceData = testedSequence.data();
+		bool mergeable;
+		for (const auto& view : sequenceData) {
+			mergeable = (canInsert(view) != SIZE_MAX)
+						|| (std::find(sequenceData.begin(), sequenceData.end(), view) != sequenceData.end());
+			if (!mergeable)
+				break;
+		}
+		return mergeable;
+	}
+
 	std::vector<View>::iterator Sequence::tryInsert(const View& newView) {
 		const int64_t pos = canInsert(newView);
 		if (pos != SIZE_MAX)
@@ -320,6 +332,16 @@ namespace catapult { namespace dbrb {
 			m_data.insert(m_data.end(), newSequence.data().begin(), newSequence.data().end());
 
 		return appendable;
+	}
+
+	bool Sequence::tryMerge(const Sequence& newSequence) {
+		const bool mergeable = canMerge(newSequence);
+		if (mergeable) {
+			for (const auto& view : newSequence.data()) {
+				tryInsert(view);
+			}
+		}
+		return mergeable;
 	}
 
 	bool Sequence::tryErase(const View& view) {

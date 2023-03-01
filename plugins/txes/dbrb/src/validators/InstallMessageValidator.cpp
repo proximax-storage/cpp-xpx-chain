@@ -41,10 +41,17 @@ namespace catapult { namespace validators {
 	  	dbrb::ConvergedMessage convergedMessage(dbrb::ProcessId(), convergedSequence, replacedView);
 		for (const auto& [processId, signature] : notification.Certificate) {
 			convergedMessage.Sender = processId;
+			CATAPULT_LOG(error) << "[DBRB] INSTALL TX: Formed Converged message from " << convergedMessage.Sender;
+			CATAPULT_LOG(debug) << "[DBRB] INSTALL TX: Signature = " << signature;
+			CATAPULT_LOG(debug) << "[DBRB] INSTALL TX: Replaced view = " << convergedMessage.ReplacedView;
+			CATAPULT_LOG(debug) << "[DBRB] INSTALL TX: Converged sequence = " << convergedMessage.ConvergedSequence;
 			const auto hash = dbrb::CalculateHash(convergedMessage.toNetworkPacket(nullptr)->buffers());
+			CATAPULT_LOG(debug) << "[DBRB] INSTALL TX: Hash = " << hash;
 
 			if (!crypto::Verify(processId, hash, signature))
 				return Failure_Dbrb_Invalid_Signature;
+
+			CATAPULT_LOG(warning) << "[DBRB] INSTALL TX: Verification passed.";
 		}
 
 		return ValidationResult::Success;

@@ -19,24 +19,79 @@ namespace catapult { namespace dbrb {
 
 	/// Struct that encapsulates all necessary quorum counters and their update methods.
 	struct QuorumManager {
+
+		struct QuorumKey {
+		public:
+			dbrb::Sequence Sequence;
+
+			QuorumKey(const dbrb::Sequence& sequence) {
+				Sequence = sequence;
+			};
+
+			QuorumKey(const dbrb::View& view) {
+				Sequence = dbrb::Sequence::fromViews({ view }).value();
+			};
+
+			QuorumKey(const std::pair<dbrb::View, dbrb::Sequence>& pair) {
+				Sequence = dbrb::Sequence::fromViews({ pair.first }).value();
+				bool appended = Sequence.tryAppend(pair.second);
+				if (!appended)
+					CATAPULT_LOG(warning) << "[DBRB] QUORUM: Quorum key was not formed correctly (failed to append " << pair.second << " to " << pair.first << ")";
+			};
+
+			bool operator<(const QuorumKey& other) const {
+				const auto& thisData = Sequence.data();
+				const auto& otherData = other.Sequence.data();
+
+				return std::lexicographical_compare(
+						thisData.begin(), thisData.end(),
+						otherData.begin(), otherData.end(),
+						[](const dbrb::View& a, const dbrb::View& b){
+							return std::lexicographical_compare(
+									a.Data.begin(), a.Data.end(),
+									b.Data.begin(), b.Data.end());
+						});
+			}
+
+			bool operator==(const QuorumKey& other) const {
+				return Sequence == other.Sequence;
+			}
+			bool operator==(const dbrb::Sequence& sequence) const {
+				return Sequence == sequence;
+			}
+			bool operator==(const dbrb::View& view) const {
+				return Sequence == dbrb::Sequence::fromViews({ view }).value();
+			}
+			bool operator==(const std::pair<dbrb::View, dbrb::Sequence>& pair) const {
+				auto sequence = dbrb::Sequence::fromViews({ pair.first }).value();
+				sequence.tryAppend(pair.second);
+				return Sequence == sequence;
+			}
+
+			friend std::ostream& operator<<(std::ostream& out, const QuorumKey& quorumKey) {
+				out << quorumKey.Sequence;
+				return out;
+			}
+		};
+
 	public:
 		/// Maps views to numbers of received ReconfigConfirm messages for those views.
-		std::map<View, std::set<ProcessId>> ReconfigConfirmCounters;
+		std::map<QuorumKey, std::set<ProcessId>> ReconfigConfirmCounters;
 
 		/// Maps view-sequence pairs to numbers of received Proposed messages for those pairs.
-		std::map<std::pair<View, Sequence>, std::set<ProcessId>> ProposedCounters;
+		std::map<QuorumKey, std::set<ProcessId>> ProposedCounters;
 
 		/// Maps view-sequence pairs to processes with their signatures that received Converged messages for those pairs.
-		std::map<std::pair<View, Sequence>, std::map<ProcessId, Signature>> ConvergedSignatures;
+		std::map<QuorumKey, std::map<ProcessId, Signature>> ConvergedSignatures;
 
 		/// Maps views to received StateUpdate messages for those views.
-		std::map<View, std::set<StateUpdateMessage>> StateUpdateMessages;
+		std::map<QuorumKey, std::set<StateUpdateMessage>> StateUpdateMessages;
 
 		/// Maps views to sets of pairs of respective process IDs and payload hashes received from Acknowledged messages.
-		std::map<View, std::set<std::pair<ProcessId, Hash256>>> AcknowledgedPayloads;
+		std::map<QuorumKey, std::set<std::pair<ProcessId, Hash256>>> AcknowledgedPayloads;
 
 		/// Maps views to sets of process IDs ready for delivery.
-		std::map<View, std::set<ProcessId>> DeliveredProcesses;
+		std::map<QuorumKey, std::set<ProcessId>> DeliveredProcesses;
 
 		/// Overloaded methods for updating respective counters.
 		/// Returns whether the quorum has just been collected on this update.
@@ -51,11 +106,32 @@ namespace catapult { namespace dbrb {
 		};
 
 		bool update(const ConvergedMessage& message) {
-			const auto keyPair = std::make_pair(message.ReplacedView, message.ConvergedSequence);
-			auto& map = ConvergedSignatures[keyPair];
+			auto sequence = Sequence::fromViews({message.ReplacedView}).value();
+			sequence.tryAppend(message.ConvergedSequence);
+			const auto quorumKey = QuorumKey(sequence);
+
+			CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: Comparing " << quorumKey << " to every existing key in map:";
+			for (const auto& [key, _] : ConvergedSignatures)
+				CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: == " << key << " : " << (key == quorumKey);
+
+			auto& map = ConvergedSignatures[quorumKey];
+
+			CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: Map at (" << quorumKey << ") is:";
+			for (const auto& [sender, signature] : map)
+				CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: " << sender << " : " << signature;
+
 			if (map.count(message.Sender))
 				return false; // This process has already sent a Converged message; do nothing, quorum is NOT triggered on this message.
+
 			map[message.Sender] = message.Signature;
+			CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: Inserted " << message.Sender << " : " << map.at(message.Sender);
+
+			CATAPULT_LOG(warning) << "[DBRB] CONVERGED UPDATE: Current ConvergedSignatures map is:";
+			for (const auto& [sequence, value] : ConvergedSignatures) {
+				CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: (" << sequence << ") :";
+				for (const auto& [key, signature] : value)
+					CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: - " << key << " : " << signature;
+			}
 
 			auto mapSize = map.size();
 			auto quorumSize = message.ReplacedView.quorumSize();
@@ -67,7 +143,8 @@ namespace catapult { namespace dbrb {
 
 		std::set<View> update(const StateUpdateMessage& message) {
 			std::set<View> triggeredViews;
-			for (auto& [view, messages] : StateUpdateMessages) {
+			for (auto& [quorumKey, messages] : StateUpdateMessages) {
+				const auto& view = quorumKey.Sequence.data().front();
 				if (view.isMember(message.Sender)) {
 					messages.insert(message);
 
@@ -112,15 +189,19 @@ namespace catapult { namespace dbrb {
 		/// Updates a counter in \a map at \a key.
 		/// Returns whether the quorum for \a referenceView has just been collected on this update.
 		template<typename TKey>
-		bool update(std::map<TKey, std::set<ProcessId>>& map, const TKey& key, const ProcessId& id, size_t quorumSize, const std::string& name) {
-			if (!map[key].insert(id).second)
-				return false;
+		bool update(std::map<QuorumKey, std::set<ProcessId>>& map, const TKey& key, const ProcessId& id, size_t quorumSize, const std::string& name) {
+			const auto quorumKey = QuorumKey(key);
 
-			auto count = map.at(key).size();
+			if (!map[quorumKey].insert(id).second) {
+				CATAPULT_LOG(warning) << "[DBRB] " << name << " QUORUM: Not updated (process ID already exists). Quorum status is " << map.at(key).size() << "/" << quorumSize << ".";
+				return false;
+			}
+
+			auto count = map.at(quorumKey).size();
 
 			// Quorum collection is triggered only once, when the counter EXACTLY hits the quorum size.
 			const auto triggered = (count == quorumSize);
-			CATAPULT_LOG(debug) << "[DBRB] " << name << " QUORUM: Quorum status is " << count << "/" << quorumSize << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
+			CATAPULT_LOG(warning) << "[DBRB] " << name << " QUORUM: Quorum status is " << count << "/" << quorumSize << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
 
 			return triggered;
 		};
