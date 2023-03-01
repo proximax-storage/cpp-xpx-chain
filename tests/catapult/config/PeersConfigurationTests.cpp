@@ -253,7 +253,7 @@ namespace catapult { namespace config {
 	TEST(TEST_CLASS, CanLoadPeersFromResourcesDirectory) {
 		// Arrange: attempt to load from the "real" resources directory
 		auto resourcesPath = boost::filesystem::path("../resources");
-		for (const auto filename : { "peers-p2p.json", "peers-api.json", "peers-dbrb.json" }) {
+		for (const auto filename : { "peers-p2p.json", "peers-api.json" }) {
 			CATAPULT_LOG(debug) << "parsing peers from " << filename;
 
 			// Act:

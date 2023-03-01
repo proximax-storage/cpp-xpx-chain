@@ -327,6 +327,34 @@ namespace catapult { namespace net {
 				return ionet::NodePacketIoPair(state.Node, pPacketIo);
 			}
 
+			ionet::NodePacketIoPair pickOne(const Key& identityKey) override {
+				WriterState state;
+				if (!m_writers.pickOne(state, identityKey)) {
+					CATAPULT_LOG_THROTTLE(warning, 60'000) << "no packet io available for checkout";
+					return ionet::NodePacketIoPair();
+				}
+
+				// important - capture pSocket by value in order to prevent it from being removed out from under the
+				// error handling packet io, also capture this for the same reason
+				auto errorHandler = [pThis = shared_from_this(), pSocket = state.pSocket, node = state.Node]() {
+					CATAPULT_LOG(warning) << "error handler triggered for " << node;
+					pThis->removeWriter(pSocket);
+				};
+
+				ErrorHandlingPacketIo::CompletionCallback completionHandler = [pThis = shared_from_this(), pSocket = state.pSocket](auto isCompleted) {
+					CATAPULT_LOG(trace) << "completed pickOne operation, success? " << isCompleted;
+					pThis->makeWriterAvailable(pSocket);
+				};
+
+				auto pPacketIo = std::make_shared<ErrorHandlingPacketIo>(
+						state.pBufferedIo,
+						errorHandler,
+						completionHandler);
+
+				CATAPULT_LOG(trace) << "checked out an io";
+				return ionet::NodePacketIoPair(state.Node, pPacketIo);
+			}
+
 		private:
 			ErrorHandlingPacketIo::CompletionCallback createTimedCompletionHandler(
 					const SocketPointer& pSocket,

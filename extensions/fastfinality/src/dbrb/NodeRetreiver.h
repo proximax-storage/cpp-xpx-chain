@@ -21,6 +21,7 @@ namespace catapult { namespace dbrb {
 	public:
 		void enqueue(std::set<ProcessId> ids);
 		void addNodes(const std::vector<SignedNode>& nodes);
+		void broadcastNodes();
 		std::optional<SignedNode> getNode(const ProcessId& id) const;
 
 	private:

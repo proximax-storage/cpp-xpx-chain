@@ -16,7 +16,7 @@ namespace catapult { namespace fastfinality {
 
 #define TRY_GET_FSM() \
 		auto pFsmShared = pFsmWeak.lock(); \
-		if (!pFsmShared) \
+		if (!pFsmShared || pFsmShared->stopped()) \
             return;
 
 	struct ChainSyncData {

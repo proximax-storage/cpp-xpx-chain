@@ -11,8 +11,6 @@
 namespace catapult { namespace dbrb {
 
 	namespace {
-		constexpr auto Default_Timeout = utils::TimeSpan::FromMinutes(1);
-
 		constexpr utils::LogLevel MapToLogLevel(net::PeerConnectCode connectCode) {
 			if (connectCode == net::PeerConnectCode::Accepted)
 				return utils::LogLevel::Info;
@@ -31,7 +29,7 @@ namespace catapult { namespace dbrb {
 		}
 
 		ionet::NodePacketIoPair GetNodePacketIoPair(net::PacketWriters& writers, const ionet::Node& node, net::PeerConnectResult& result) {
-			auto nodePacketIoPair = writers.pickOne(Default_Timeout, node.identityKey());
+			auto nodePacketIoPair = writers.pickOne(node.identityKey());
 			if (nodePacketIoPair.io())
 				return nodePacketIoPair;
 
@@ -40,7 +38,7 @@ namespace catapult { namespace dbrb {
 			if (iter == identities.end()) {
 				result = Connect(writers, node);
 				if (result.Code == net::PeerConnectCode::Accepted)
-					return writers.pickOne(Default_Timeout, node.identityKey());
+					return writers.pickOne(node.identityKey());
 			} else {
 				result = net::PeerConnectResult(net::PeerConnectCode::Already_Connected);
 			}
@@ -62,37 +60,65 @@ namespace catapult { namespace dbrb {
 		net::PeerConnectResult peerConnectResult;
 		while (!buffer.empty()) {
 			std::map<ProcessId, std::set<std::shared_ptr<MessagePacket>>> messages;
+			auto packetCount = 0u;
 			for (const auto& [pPacket, recipients] : buffer) {
-				for (const auto& recipient : recipients)
+				for (const auto& recipient : recipients) {
 					messages[recipient].emplace(pPacket);
+					packetCount++;
+				}
 			}
 			buffer.clear();
 
+			CATAPULT_LOG(debug) << "[DBRB] disseminating " << packetCount << " packet(s) to " << messages.size() << " node(s)";
+
 			std::set<ProcessId> notFoundNodes;
+			auto packetCountNotSentConnectionBusy = 0u;
+			auto packetCountNotSentNoConnection = 0u;
 			for (const auto& [recipient, packets] : messages) {
 				auto signedNode = m_nodeRetreiver.getNode(recipient);
 				if (signedNode) {
 					const auto& node = signedNode.value().Node;
-					auto nodePacketIoPair = GetNodePacketIoPair(*m_pWriters, node, peerConnectResult);
-					if (nodePacketIoPair.io()) {
+					std::shared_ptr<ionet::NodePacketIoPair> pPacketIoPair;
+					auto iter = m_packetIoPairs.find(node.identityKey());
+					if (iter != m_packetIoPairs.end()) {
+						pPacketIoPair = iter->second;
+					} else {
+						auto nodePacketIoPair = GetNodePacketIoPair(*m_pWriters, node, peerConnectResult);
+						if (nodePacketIoPair.io()) {
+							pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(nodePacketIoPair);
+							m_packetIoPairs.emplace(node.identityKey(), pPacketIoPair);
+						}
+					}
+
+					if (pPacketIoPair) {
 						for (const auto& pPacket : packets) {
 							CATAPULT_LOG(debug) << "[DBRB] sending " << *pPacket << " to " << node;
-							auto pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(nodePacketIoPair);
-							pPacketIoPair->io()->write(ionet::PacketPayload(pPacket), [pPacketIoPair, pPacket](ionet::SocketOperationCode code) {
-								if (code != ionet::SocketOperationCode::Success)
-									CATAPULT_LOG(error) << "[DBRB] sending " << *pPacket << " to " << pPacketIoPair->node() << " completed with " << code;
+							pPacketIoPair->io()->write(ionet::PacketPayload(pPacket), [pThisWeak = weak_from_this(), node, pPacket](ionet::SocketOperationCode code) {
+								if (code != ionet::SocketOperationCode::Success) {
+									CATAPULT_LOG(error) << "[DBRB] sending " << *pPacket << " to " << node << " completed with " << code;
+									auto pThis = pThisWeak.lock();
+									if (pThis)
+										pThis->m_packetIoPairs.erase(node.identityKey());
+								}
 							});
 						}
-					} else {
-						if (peerConnectResult.Code == net::PeerConnectCode::Already_Connected) {
-							for (const auto& pPacket : packets)
-								buffer.emplace_back(pPacket, std::set{ recipient });
+					} else if (peerConnectResult.Code == net::PeerConnectCode::Already_Connected) {
+						for (const auto& pPacket : packets) {
+							buffer.emplace_back(pPacket, std::set { recipient });
+							packetCountNotSentConnectionBusy++;
 						}
 					}
 				} else {
 					notFoundNodes.emplace(recipient);
+					packetCountNotSentNoConnection += packets.size();
 				}
 			}
+
+			if (packetCountNotSentConnectionBusy > 0)
+				CATAPULT_LOG(debug) << "[DBRB] not disseminated " << packetCountNotSentConnectionBusy << " packet(s) because connection is busy";
+
+			if (packetCountNotSentNoConnection > 0)
+				CATAPULT_LOG(debug) << "[DBRB] rejected " << packetCountNotSentNoConnection << " packet(s) because there is no connection";
 
 			{
 				std::lock_guard<std::mutex> guard(m_mutex);

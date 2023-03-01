@@ -39,6 +39,9 @@ namespace catapult { namespace net {
 		/// Retrieves a packet io pair around an active connection to a node with \a identityKey or an empty pair if no connections are available.
 		/// After \a ioDuration elapses, the connection will timeout.
 		virtual ionet::NodePacketIoPair pickOne(const utils::TimeSpan& ioDuration, const Key& identityKey) = 0;
+
+		/// Retrieves a packet io pair around an active connection to a node with \a identityKey or an empty pair if no connections are available.
+		virtual ionet::NodePacketIoPair pickOne(const Key& identityKey) = 0;
 	};
 
 	/// Retrieves io interfaces to at most \a numRequested connections from \a picker.

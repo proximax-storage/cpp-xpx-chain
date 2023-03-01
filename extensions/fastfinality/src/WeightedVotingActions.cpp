@@ -78,11 +78,6 @@ namespace catapult { namespace fastfinality {
 			const dbrb::DbrbConfiguration& dbrbConfig) {
 		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager, dbrbConfig]() {
 			TRY_GET_FSM()
-
-			auto viewData = pFsmShared->dbrbViewFetcher().getLatestView();
-			if (viewData.empty())
-				viewData = dbrbConfig.BootstrapProcesses;
-			pFsmShared->dbrbProcess()->onViewDiscovered(viewData);
 			
 			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
 			pFsmShared->resetChainSyncData();
@@ -426,6 +421,8 @@ namespace catapult { namespace fastfinality {
 			if (viewData.empty())
 				viewData = dbrbConfig.BootstrapProcesses;
 			pFsmShared->dbrbProcess()->onViewDiscovered(viewData);
+			pFsmShared->dbrbProcess()->clearBroadcastData();
+			pFsmShared->dbrbProcess()->nodeRetreiver().broadcastNodes();
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto round = committeeData.committeeRound();
@@ -468,9 +465,7 @@ namespace catapult { namespace fastfinality {
 				totalSumOfVotes += committeeManager.weight(cosigner);
 			committeeData.setTotalSumOfVotes(totalSumOfVotes);
 
-			CATAPULT_LOG(debug) << "committee selection result: is block proposer = " << isBlockProposer << ", start phase = " << round.StartPhase;
-
-			pFsmShared->dbrbProcess()->clearBroadcastData();
+			CATAPULT_LOG(debug) << "committee selection result: is block proposer = " << isBlockProposer << ", start phase = " << round.StartPhase << ", phase time = " << round.PhaseTimeMillis << "ms";
 
 			pFsmShared->processEvent(CommitteeSelectionResult{ isBlockProposer, round.StartPhase });
 		};
