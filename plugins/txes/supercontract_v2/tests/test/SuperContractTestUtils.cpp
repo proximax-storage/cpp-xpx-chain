@@ -87,98 +87,18 @@ namespace catapult { namespace test {
 		return entry;
 	}
 
-	state::DriveContractEntry CreateDriveContractEntry(Key key) {
-		state::DriveContractEntry entry(key);
-		return entry;
-	}
-
-	void AssertEqualExecutorsInfo(const std::map<Key, state::ExecutorInfo>& expectedExecutorInfo, const std::map<Key, state::ExecutorInfo>& executorInfo){
-		ASSERT_EQ(expectedExecutorInfo.size(), executorInfo.size());
-		for (const auto& pair : executorInfo) {
-			const auto expIter = expectedExecutorInfo.find(pair.first);
-			ASSERT_NE(expIter, expectedExecutorInfo.end());
-			EXPECT_EQ(expIter->second.NextBatchToApprove, pair.second.NextBatchToApprove);
-			EXPECT_EQ(expIter->second.PoEx.StartBatchId, pair.second.PoEx.StartBatchId);
-			EXPECT_EQ(expIter->second.PoEx.T, pair.second.PoEx.T);
-			EXPECT_EQ(expIter->second.PoEx.R, pair.second.PoEx.R);
-		}
-	}
-
-	void AssertEqualBatches(const std::map<uint64_t , state::Batch>& expectedBatch, const std::map<uint64_t , state::Batch>& batch) {
-		ASSERT_EQ(expectedBatch.size(), batch.size());
-		for (const auto& pair : batch) {
-			const auto expIter = expectedBatch.find(pair.first);
-			ASSERT_NE(expIter, expectedBatch.end());
-			EXPECT_EQ(expIter->second.Success, pair.second.Success);
-			EXPECT_EQ(expIter->second.PoExVerificationInformation, pair.second.PoExVerificationInformation);
-			for (int i = 0; i < expIter->second.CompletedCalls.size(); i++) {
-				EXPECT_EQ(expIter->second.CompletedCalls.at(i).CallId, pair.second.CompletedCalls.at(i).CallId);
-				EXPECT_EQ(expIter->second.CompletedCalls.at(i).Caller, pair.second.CompletedCalls.at(i).Caller);
-				EXPECT_EQ(expIter->second.CompletedCalls.at(i).Status, pair.second.CompletedCalls.at(i).Status);
-				EXPECT_EQ(
-						expIter->second.CompletedCalls.at(i).ExecutionWork,
-						pair.second.CompletedCalls.at(i).ExecutionWork);
-				EXPECT_EQ(
-						expIter->second.CompletedCalls.at(i).DownloadWork,
-						pair.second.CompletedCalls.at(i).DownloadWork);
-			}
-		}
-	}
-
-	void AssertEqualSupercontractData(const state::SuperContractEntry& expectedEntry, const state::SuperContractEntry& entry){
-		EXPECT_EQ(expectedEntry.key(), entry.key());
-		EXPECT_EQ(expectedEntry.driveKey(), entry.driveKey());
-		EXPECT_EQ(expectedEntry.executionPaymentKey(), entry.executionPaymentKey());
-		EXPECT_EQ(expectedEntry.assignee(), entry.assignee());
-		EXPECT_EQ(expectedEntry.deploymentBaseModificationId(), entry.deploymentBaseModificationId());
-		// automatic executions info
-		EXPECT_EQ(expectedEntry.automaticExecutionsInfo().AutomaticExecutionFileName, entry.automaticExecutionsInfo().AutomaticExecutionFileName);
-		EXPECT_EQ(expectedEntry.automaticExecutionsInfo().AutomaticExecutionsFunctionName, entry.automaticExecutionsInfo().AutomaticExecutionsFunctionName);
-		EXPECT_EQ(expectedEntry.automaticExecutionsInfo().AutomaticExecutionsNextBlockToCheck, entry.automaticExecutionsInfo().AutomaticExecutionsNextBlockToCheck);
-		EXPECT_EQ(expectedEntry.automaticExecutionsInfo().AutomaticExecutionCallPayment, entry.automaticExecutionsInfo().AutomaticExecutionCallPayment);
-		EXPECT_EQ(expectedEntry.automaticExecutionsInfo().AutomaticDownloadCallPayment, entry.automaticExecutionsInfo().AutomaticDownloadCallPayment);
-		EXPECT_EQ(expectedEntry.automaticExecutionsInfo().AutomatedExecutionsNumber, entry.automaticExecutionsInfo().AutomatedExecutionsNumber);
-		EXPECT_EQ(expectedEntry.automaticExecutionsInfo().AutomaticExecutionsPrepaidSince, entry.automaticExecutionsInfo().AutomaticExecutionsPrepaidSince);
-		// contract call
-		for (int i=0; i<expectedEntry.requestedCalls().size(); i++){
-			EXPECT_EQ(expectedEntry.requestedCalls().at(i).CallId, entry.requestedCalls().at(i).CallId);
-			EXPECT_EQ(expectedEntry.requestedCalls().at(i).Caller, entry.requestedCalls().at(i).Caller);
-			EXPECT_EQ(expectedEntry.requestedCalls().at(i).FileName, entry.requestedCalls().at(i).FileName);
-			EXPECT_EQ(expectedEntry.requestedCalls().at(i).FunctionName, entry.requestedCalls().at(i).FunctionName);
-			EXPECT_EQ(expectedEntry.requestedCalls().at(i).ActualArguments, entry.requestedCalls().at(i).ActualArguments);
-			EXPECT_EQ(expectedEntry.requestedCalls().at(i).ExecutionCallPayment, entry.requestedCalls().at(i).ExecutionCallPayment);
-			EXPECT_EQ(expectedEntry.requestedCalls().at(i).DownloadCallPayment, entry.requestedCalls().at(i).DownloadCallPayment);
-			EXPECT_EQ(expectedEntry.requestedCalls().at(i).BlockHeight, entry.requestedCalls().at(i).BlockHeight);
-			// service payment
-			for (int j=0; j<expectedEntry.requestedCalls().at(i).ServicePayments.size(); j++){
-				EXPECT_EQ(expectedEntry.requestedCalls().at(i).ServicePayments.at(j).MosaicId, entry.requestedCalls().at(i).ServicePayments.at(j).MosaicId);
-				EXPECT_EQ(expectedEntry.requestedCalls().at(i).ServicePayments.at(j).Amount, entry.requestedCalls().at(i).ServicePayments.at(j).Amount);
-			}
-		}
-		// executors info
-		EXPECT_EQ(expectedEntry.executorsInfo().size(), entry.executorsInfo().size());
-		AssertEqualExecutorsInfo(expectedEntry.executorsInfo(), entry.executorsInfo());
-		// batches
-		EXPECT_EQ(expectedEntry.batches().size(), entry.batches().size());
-		AssertEqualBatches(expectedEntry.batches(), entry.batches());
-		// released transaction
-		EXPECT_EQ(expectedEntry.releasedTransactions().size(), entry.releasedTransactions().size());
-		for (const auto& it : entry.releasedTransactions()) {
-			const auto expIter = expectedEntry.releasedTransactions().find(it);
-			ASSERT_NE(expIter, expectedEntry.releasedTransactions().end());
-		}
-	}
-
-		state::SuperContractEntry CreateSuperContractEntry(
-			Key superContractKey,
-			Key driveKey,
-			Key superContractOwnerKey,
-			Key executionPaymentKey,
-			Hash256 deploymentBaseModificationId) {
+	state::SuperContractEntry CreateSuperContractEntry(
+		Key superContractKey,
+		Key driveKey,
+		Key superContractOwnerKey,
+		Key executionPaymentKey,
+		Key creatorKey,
+		Hash256 deploymentBaseModificationId) {
 		state::SuperContractEntry entry(superContractKey);
 		entry.setDriveKey(driveKey);
 		entry.setAssignee(superContractOwnerKey);
 		entry.setExecutionPaymentKey(executionPaymentKey);
+		entry.setCreator(creatorKey);
 		entry.setDeploymentBaseModificationId(deploymentBaseModificationId);
 
 		return entry;
@@ -290,15 +210,6 @@ namespace catapult { namespace test {
 //		auto driveIter = driveCache.find(driveKey);
 //		const auto& driveEntry = driveIter.get();
 //		return driveEntry.replicatorCount();
-
-		return {};
-	}
-
-	Key DriveStateBrowserImpl::getDriveOwner(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
-//		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-//		auto driveIter = driveCache.find(driveKey);
-//		const auto& driveEntry = driveIter.get();
-//		return driveEntry.owner();
 
 		return {};
 	}

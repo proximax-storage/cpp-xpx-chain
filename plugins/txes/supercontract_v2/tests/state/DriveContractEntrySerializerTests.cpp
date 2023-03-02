@@ -40,7 +40,7 @@ namespace catapult { namespace state {
 		};
 
 		auto CreateDriveContractEntry() {
-			return test::CreateDriveContractEntry(test::GenerateRandomByteArray<Key>());
+			return test::CreateDriveContractEntry();
 		}
 
 		void AssertEntryBuffer(const state::DriveContractEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {
