@@ -179,7 +179,7 @@ namespace catapult { namespace state {
 				pData += sizeof(uint64_t);
 			}
 
-			//executors info
+			// executors info
 			EXPECT_EQ(entry.executorsInfo().size(),  *reinterpret_cast<const uint32_t*>(pData));
 			pData += sizeof(uint32_t);
 			for (const auto& pair : entry.executorsInfo()){
@@ -274,11 +274,178 @@ namespace catapult { namespace state {
 		AssertCanSaveSingleEntry(1);
 	}
 
-//	TEST(TEST_CLASS, CanSaveMultipleEntries_v1) {
-//		AssertCanSaveMultipleEntries(1);
-//	}
+	TEST(TEST_CLASS, CanSaveMultipleEntries_v1) {
+		AssertCanSaveMultipleEntries(1);
+	}
 
 	// endregion
 
 	// region Load
+
+	namespace {
+		std::vector<uint8_t> CreateEntryBuffer(const state::SuperContractEntry& entry, VersionType version) {
+			std::vector<uint8_t> buffer(Entry_Size);
+
+			auto* pData = buffer.data();
+			memcpy(pData, &version, sizeof(VersionType));
+			pData += sizeof(VersionType);
+			memcpy(pData, &entry.key(), Key_Size);
+			pData += Key_Size;
+
+			memcpy(pData, &entry.driveKey(), Key_Size);
+			pData += Key_Size;
+			memcpy(pData, &entry.executionPaymentKey(), Key_Size);
+			pData += Key_Size;
+			memcpy(pData, &entry.assignee(), Key_Size);
+			pData += Key_Size;
+			memcpy(pData, &entry.deploymentBaseModificationId(), Hash256_Size);
+			pData += Hash256_Size;
+
+			// automatic executions info
+			uint16_t filenameSize = entry.automaticExecutionsInfo().AutomaticExecutionFileName.size();
+			uint16_t functionSize = entry.automaticExecutionsInfo().AutomaticExecutionFileName.size();
+			bool hasValue = entry.automaticExecutionsInfo().AutomaticExecutionsPrepaidSince.has_value();
+
+			memcpy(pData, &filenameSize, sizeof(uint16_t));
+			pData += sizeof(uint16_t);
+			memcpy(pData, entry.automaticExecutionsInfo().AutomaticExecutionFileName.data(), filenameSize);
+			pData += filenameSize;
+			memcpy(pData, &functionSize, sizeof(uint16_t));
+			pData += sizeof(uint16_t);
+			memcpy(pData, entry.automaticExecutionsInfo().AutomaticExecutionsFunctionName.data(), functionSize);
+			pData += functionSize;
+			memcpy(pData, &entry.automaticExecutionsInfo().AutomaticExecutionsNextBlockToCheck, sizeof(uint64_t));
+			pData += sizeof(uint64_t);
+			memcpy(pData, &entry.automaticExecutionsInfo().AutomaticExecutionCallPayment, sizeof(uint64_t));
+			pData += sizeof(uint64_t);
+			memcpy(pData, &entry.automaticExecutionsInfo().AutomaticDownloadCallPayment, sizeof(uint64_t));
+			pData += sizeof(uint64_t);
+			memcpy(pData, &entry.automaticExecutionsInfo().AutomatedExecutionsNumber, sizeof(uint32_t));
+			pData += sizeof(uint32_t);
+			memcpy(pData, &hasValue, sizeof(uint8_t));
+			pData += sizeof(uint8_t);
+
+			// contract calls
+			uint16_t contractCallsCount = utils::checked_cast<size_t, uint16_t>(entry.requestedCalls().size());
+			memcpy(pData, &contractCallsCount, sizeof(uint16_t));
+			pData += sizeof(uint16_t);
+			for (const auto& it : entry.requestedCalls()){
+				uint16_t filenameSize = it.FileName.size();
+				uint16_t functionSize = it.FunctionName.size();
+				uint16_t argumentsSize = it.ActualArguments.size();
+
+				memcpy(pData, &it.CallId, Hash256_Size);
+				pData += Hash256_Size;
+				memcpy(pData, &it.Caller, Key_Size);
+				pData += Key_Size;
+				memcpy(pData, &filenameSize, sizeof(uint16_t));
+				pData += sizeof(uint16_t);
+				memcpy(pData, it.FileName.data(), filenameSize);
+				pData += filenameSize;
+				memcpy(pData, &functionSize, sizeof(uint16_t));
+				pData += sizeof(uint16_t);
+				memcpy(pData, it.FunctionName.data(), functionSize);
+				pData += functionSize;
+				memcpy(pData, &argumentsSize, sizeof(uint16_t));
+				pData += sizeof(uint16_t);
+				memcpy(pData, it.ActualArguments.data(), argumentsSize);
+				pData += argumentsSize;
+				memcpy(pData, &it.ExecutionCallPayment, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
+				memcpy(pData, &it.DownloadCallPayment, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
+				// service payments
+				uint16_t servicePaymentSize = it.ServicePayments.size();
+				memcpy(pData, &servicePaymentSize, sizeof(uint16_t));
+				pData += sizeof(uint16_t);
+				for (const auto& iter : it.ServicePayments){
+					memcpy(pData, &iter.MosaicId, sizeof(uint64_t));
+					pData += sizeof(uint64_t);
+					memcpy(pData, &iter.Amount, sizeof(uint64_t));
+					pData += sizeof(uint64_t);
+				}
+				memcpy(pData, &it.BlockHeight, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
+			}
+
+			// executors info
+			uint32_t executorsInfoSize = entry.executorsInfo().size();
+			memcpy(pData, &executorsInfoSize, sizeof(uint32_t));
+			pData += sizeof(uint32_t);
+			for (const auto& pair : entry.executorsInfo()){
+				memcpy(pData, &pair.first, Key_Size);
+				pData += Key_Size;
+				memcpy(pData, &pair.second.NextBatchToApprove, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
+				memcpy(pData, &pair.second.PoEx.StartBatchId, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
+				auto curvePoint = pair.second.PoEx.T.toBytes();
+				memcpy(pData, &curvePoint, sizeof(curvePoint));
+				pData += sizeof(curvePoint);
+				memcpy(pData, &pair.second.PoEx.R, sizeof(crypto::Scalar));
+				pData += crypto::Scalar_Size;
+			}
+
+			// batches
+			uint32_t batchesSize = entry.batches().size();
+			memcpy(pData, &batchesSize, sizeof(uint32_t));
+			pData += sizeof(uint32_t);
+			for (const auto& pair : entry.batches()){
+				memcpy(pData, &pair.first, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
+				memcpy(pData, &pair.second.Success, sizeof(uint8_t));
+				pData += sizeof(uint8_t);
+				auto curvePoint = pair.second.PoExVerificationInformation.toBytes();
+				memcpy(pData, &curvePoint, sizeof(curvePoint));
+				pData += sizeof(curvePoint);
+				// completed call
+				uint16_t completedCallSize = pair.second.CompletedCalls.size();
+				memcpy(pData, &completedCallSize, sizeof(uint16_t));
+				pData += sizeof(uint16_t);
+				for (const auto& it : pair.second.CompletedCalls){
+					memcpy(pData, &it.CallId, Hash256_Size);
+					pData += Hash256_Size;
+					memcpy(pData, &it.Caller, Key_Size);
+					pData += Key_Size;
+					memcpy(pData, &it.Status, sizeof(uint16_t));
+					pData += sizeof(uint16_t);
+					memcpy(pData, &it.ExecutionWork, sizeof(uint64_t));
+					pData += sizeof(uint64_t);
+					memcpy(pData, &it.DownloadWork, sizeof(uint64_t));
+					pData += sizeof(uint64_t);
+				}
+			}
+
+			// released transaction
+			uint32_t releasedTransactionSize = entry.releasedTransactions().size();
+			memcpy(pData, &releasedTransactionSize, sizeof(uint32_t));
+			pData += sizeof(uint32_t);
+			for (const auto& it : entry.releasedTransactions()){
+				memcpy(pData, &it, Hash256_Size);
+				pData += Hash256_Size;
+			}
+
+			return buffer;
+		}
+
+		void AssertCanLoadSingleEntry(VersionType version) {
+			// Arrange:
+			TestContext context;
+			auto originalEntry = CreateSuperContractEntry();
+			auto buffer = CreateEntryBuffer(originalEntry, version);
+
+			// Act:
+			state::SuperContractEntry result(test::GenerateRandomByteArray<Key>());
+			test::RunLoadValueTest<SuperContractEntrySerializer>(buffer, result);
+
+			// Assert:
+			test::AssertEqualSupercontractData(originalEntry, result);
+		}
+	}
+
+	TEST(TEST_CLASS, CanLoadSingleEntry_v1) {
+		AssertCanLoadSingleEntry(1);
+	}
+
+	// endregion
 }}

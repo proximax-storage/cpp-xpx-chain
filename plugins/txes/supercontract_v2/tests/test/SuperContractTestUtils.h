@@ -22,6 +22,11 @@ namespace catapult { namespace test {
 
 	state::DriveContractEntry CreateDriveContractEntry(Key key = test::GenerateRandomByteArray<Key>());
 
+	/// Verifies that \a entry1 is equivalent to \a entry2.
+	void AssertEqualExecutorsInfo(const std::map<uint64_t , state::Batch>& expectedBatch, const std::map<uint64_t , state::Batch>& batch);
+	void AssertEqualBatches(const std::map<uint64_t , state::Batch>& expectedBatch, const std::map<uint64_t , state::Batch>& batch);
+	void AssertEqualSupercontractData(const state::SuperContractEntry& expectedEntry, const state::SuperContractEntry& entry);
+
 	/// Creates a transaction.
 	template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateTransaction(model::EntityType type, size_t additionalSize = 0) {
