@@ -104,6 +104,13 @@ class SuperContractMixin {
 			m_assignee = assignee;
 		}
 
+		const Key& creator() const {
+			return m_creator;
+		}
+		void setCreator(const Key& creator) {
+			m_creator = creator;
+		}
+
 		const Hash256& deploymentBaseModificationId() const {
 			return m_deploymentBaseModificationId;
 		}
@@ -170,6 +177,7 @@ class SuperContractMixin {
 		Key m_driveKey;
 		Key m_executionPaymentKey;
 		Key m_assignee;
+		Key m_creator;
 		Hash256 m_deploymentBaseModificationId;
 		AutomaticExecutionsInfo m_automaticExecutionsInfo;
 		std::deque<ContractCall> m_requestedCalls;

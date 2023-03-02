@@ -14,6 +14,8 @@
 #include "TransactionStatusHandler.h"
 #include <executor/Executor.h>
 
+using namespace sirius::contract::blockchain;
+
 namespace catapult { namespace contract {
 	class ExecutorEventHandler : public sirius::contract::ExecutorEventHandler {
 
@@ -24,11 +26,11 @@ namespace catapult { namespace contract {
 				std::shared_ptr<TransactionStatusHandler> pTransactionHandler);
 
 	public:
-		void endBatchTransactionIsReady(const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
-		void endBatchTransactionIsReady(const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
-		void endBatchSingleTransactionIsReady(const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo);
-		void synchronizationSingleTransactionIsReady(const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo);
-		void releasedTransactionsAreReady(const sirius::contract::blockchain::SerializedAggregatedTransaction& transaction) override;
+		void endBatchTransactionIsReady(const SuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
+		void endBatchTransactionIsReady(const UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
+		void endBatchSingleTransactionIsReady(const EndBatchExecutionSingleTransactionInfo& transactionInfo);
+		void synchronizationSingleTransactionIsReady(const SynchronizationSingleTransactionInfo& transactionInfo);
+		void releasedTransactionsAreReady(const SerializedAggregatedTransaction& transaction) override;
 
 		void setExecutor(std::weak_ptr<sirius::contract::Executor> pExecutor);
 

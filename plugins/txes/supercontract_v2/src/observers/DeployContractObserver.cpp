@@ -14,7 +14,7 @@ namespace catapult::observers {
 
 	DECLARE_OBSERVER(DeployContract, Notification)(const std::unique_ptr<state::DriveStateBrowser>& driveBrowser) {
 		return MAKE_OBSERVER(
-				EndBatchExecution,
+				DeployContract,
 				Notification,
 				([&driveBrowser](const Notification& notification, ObserverContext& context) {
 					if (NotifyMode::Rollback == context.Mode)
@@ -26,6 +26,7 @@ namespace catapult::observers {
 					entry.setDriveKey(notification.DriveKey);
 					entry.setExecutionPaymentKey(notification.ExecutionPaymentKey);
 					entry.setAssignee(notification.Assignee);
+					entry.setCreator(notification.Signer);
 
 					auto readOnlyCache = context.Cache.toReadOnly();
 					entry.setDeploymentBaseModificationId(driveBrowser->getLastModificationId(readOnlyCache, notification.DriveKey));

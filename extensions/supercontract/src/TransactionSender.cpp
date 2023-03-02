@@ -29,7 +29,7 @@ namespace catapult { namespace contract {
 		, m_transactionRangeHandler(std::move(transactionRangeHandler)) {}
 
 	Hash256 TransactionSender::sendSuccessfulEndBatchExecutionTransaction(
-			const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
+			const SuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
 		std::vector<Key> publicKeys;
 		std::vector<Signature> signatures;
 		std::vector<model::RawProofOfExecution> proofs;
@@ -102,7 +102,7 @@ namespace catapult { namespace contract {
 	}
 
 	Hash256 TransactionSender::sendUnsuccessfulEndBatchExecutionTransaction(
-			const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
+			const UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo) {
 		std::vector<Key> publicKeys;
 		std::vector<Signature> signatures;
 		std::vector<model::RawProofOfExecution> proofs;
@@ -165,7 +165,7 @@ namespace catapult { namespace contract {
 		return model::CalculateHash(*pTransaction, m_generationHash);
 	}
 	Hash256 TransactionSender::sendEndBatchExecutionSingleTransaction(
-			const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo) {
+			const EndBatchExecutionSingleTransactionInfo& transactionInfo) {
 		model::RawProofOfExecution proof { transactionInfo.m_proofOfExecution.m_initialBatch,
 										   transactionInfo.m_proofOfExecution.m_batchProof.m_T.toBytes(),
 										   transactionInfo.m_proofOfExecution.m_batchProof.m_r.array(),
@@ -183,7 +183,7 @@ namespace catapult { namespace contract {
 	}
 
 	Hash256 TransactionSender::sendSynchronizationSingleTransaction(
-			const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo) {
+			const SynchronizationSingleTransactionInfo& transactionInfo) {
 		Hash256(transactionInfo.m_contractKey.array());
 
 		builders::SynchronizationSingleBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
@@ -196,7 +196,7 @@ namespace catapult { namespace contract {
 		return model::CalculateHash(*pTransaction, m_generationHash);
 	}
 
-	Hash256 TransactionSender::sendReleasedTransactions(const sirius::contract::blockchain::SerializedAggregatedTransaction& transaction) {
+	Hash256 TransactionSender::sendReleasedTransactions(const SerializedAggregatedTransaction& transaction) {
 		builders::ReleasedTransactionsBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
 		for (const auto& payload: transaction.m_transactions) {
 			builder.addTransaction(payload);

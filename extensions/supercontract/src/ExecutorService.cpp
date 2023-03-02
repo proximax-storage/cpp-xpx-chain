@@ -227,14 +227,14 @@ namespace catapult::contract {
 		}
 
 		void batchExecutionSinglePublished(const Key& contractKey, uint64_t batchIndex) {
-			sirius::contract::PublishedEndBatchExecutionSingleTransactionInfo publishedTransaction;
+			PublishedEndBatchExecutionSingleTransactionInfo publishedTransaction;
 			publishedTransaction.m_contractKey = contractKey.array();
 			publishedTransaction.m_batchIndex = batchIndex;
 			m_pExecutor->onEndBatchExecutionSingleTransactionPublished(std::move(publishedTransaction));
 		}
 
 		void synchronizeSinglePublished(const Key& contractKey, uint64_t batchIndex) {
-			sirius::contract::PublishedSynchronizeSingleTransactionInfo publishedTransaction;
+			PublishedSynchronizeSingleTransactionInfo publishedTransaction;
 			publishedTransaction.m_contractKey = contractKey.array();
 			publishedTransaction.m_batchIndex = batchIndex;
 			m_pExecutor->onStorageSynchronizedPublished(std::move(publishedTransaction));
@@ -289,7 +289,7 @@ namespace catapult::contract {
 			m_pExecutor->addContract(contractKey.array(), std::move(addRequest));
 			if (contractInfo.LastPublishedBatch) {
 				const auto& lastBatch = *contractInfo.LastPublishedBatch;
-				sirius::contract::PublishedEndBatchExecutionTransactionInfo publishedBatchInfo;
+				PublishedEndBatchExecutionTransactionInfo publishedBatchInfo;
 				publishedBatchInfo.m_contractKey = contractKey.array();
 				publishedBatchInfo.m_batchIndex = lastBatch.BatchIndex;
 				publishedBatchInfo.m_batchSuccess = lastBatch.BatchSuccess;
@@ -347,7 +347,7 @@ namespace catapult::contract {
 				const crypto::CurvePoint& poExVerificationInfo,
 				const std::set<Key>& cosigners,
 				Height height) {
-			sirius::contract::PublishedEndBatchExecutionTransactionInfo publishedTransaction;
+			PublishedEndBatchExecutionTransactionInfo publishedTransaction;
 			publishedTransaction.m_contractKey = contractKey.array();
 			publishedTransaction.m_batchIndex = batchIndex;
 			publishedTransaction.m_batchSuccess = success;

@@ -48,6 +48,7 @@ namespace catapult { namespace plugins {
 					const std::string automaticExecutionsFunctionName(reinterpret_cast<const char*>(transaction.AutomaticExecutionFunctionNamePtr()), transaction.AutomaticExecutionFunctionNameSize);
 
 					sub.notify(DeploySupercontractNotification<1>(
+							transaction.Signer,
 							contractKey,
 							transaction.DriveKey,
 							contractExecutionPaymentKey,

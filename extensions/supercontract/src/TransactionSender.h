@@ -8,13 +8,18 @@
 
 #include <utility>
 
-#include <executor/Transactions.h>
-#include <blockchain/EmbeddedTransaction.h>
+#include <blockchain/SuccessfulEndBatchExecutionTransaction.h>
+#include <blockchain/UnsuccessfulEndBatchExecutionTransaction.h>
+#include <blockchain/EndBatchExecutionSingleTransaction.h>
+#include <blockchain/SynchronizationSingleTransaction.h>
+#include <blockchain/AggregatedTransaction.h>
 #include "src/catapult/crypto/KeyPair.h"
 #include "catapult/config/ImmutableConfiguration.h"
 #include "catapult/handlers/HandlerTypes.h"
 #include "catapult/utils/NetworkTime.h"
 #include "ExecutorConfiguration.h"
+
+using namespace sirius::contract::blockchain;
 
 namespace catapult { namespace contract {
 	class TransactionSender {
@@ -27,11 +32,11 @@ namespace catapult { namespace contract {
 				handlers::TransactionRangeHandler transactionRangeHandler);
 
 	public:
-		Hash256 sendSuccessfulEndBatchExecutionTransaction(const sirius::contract::SuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
-		Hash256 sendUnsuccessfulEndBatchExecutionTransaction(const sirius::contract::UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
-		Hash256 sendEndBatchExecutionSingleTransaction(const sirius::contract::EndBatchExecutionSingleTransactionInfo& transactionInfo);
-		Hash256 sendSynchronizationSingleTransaction(const sirius::contract::SynchronizationSingleTransactionInfo& transactionInfo);
-		Hash256 sendReleasedTransactions(const sirius::contract::blockchain::SerializedAggregatedTransaction& transaction);
+		Hash256 sendSuccessfulEndBatchExecutionTransaction(const SuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
+		Hash256 sendUnsuccessfulEndBatchExecutionTransaction(const UnsuccessfulEndBatchExecutionTransactionInfo& transactionInfo);
+		Hash256 sendEndBatchExecutionSingleTransaction(const EndBatchExecutionSingleTransactionInfo& transactionInfo);
+		Hash256 sendSynchronizationSingleTransaction(const SynchronizationSingleTransactionInfo& transactionInfo);
+		Hash256 sendReleasedTransactions(const SerializedAggregatedTransaction& transaction);
 
 	private:
 		void send(std::shared_ptr<model::Transaction> pTransaction);
