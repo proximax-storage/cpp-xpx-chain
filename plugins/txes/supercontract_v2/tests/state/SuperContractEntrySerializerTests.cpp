@@ -33,6 +33,7 @@ namespace catapult { namespace state {
 			Key_Size + // drive key
 			Key_Size + // execution payment key
 			Key_Size + // assignee key
+			Key_Size + // creator key
 			Hash256_Size + // deployment base modification id
 			sizeof(uint16_t) + // filename size ( AUTOMATIC EXECUTIONS INFO )
 			FileName_Size + // automatic executions filename
@@ -103,7 +104,7 @@ namespace catapult { namespace state {
 		};
 
 		auto CreateSuperContractEntry() {
-			return test::CreateSuperContractEntry(test::GenerateRandomByteArray<Key>());
+			return test::CreateSuperContractEntrySerializer(test::GenerateRandomByteArray<Key>());
 		}
 
 		void AssertEntryBuffer(const state::SuperContractEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {
@@ -118,6 +119,8 @@ namespace catapult { namespace state {
 			EXPECT_EQ_MEMORY(entry.executionPaymentKey().data(), pData, Key_Size);
 			pData += Key_Size;
 			EXPECT_EQ_MEMORY(entry.assignee().data(), pData, Key_Size);
+			pData += Key_Size;
+			EXPECT_EQ_MEMORY(entry.creator().data(), pData, Key_Size);
 			pData += Key_Size;
 			EXPECT_EQ_MEMORY(entry.deploymentBaseModificationId().data(), pData, Hash256_Size);
 			pData += Hash256_Size;
@@ -298,6 +301,8 @@ namespace catapult { namespace state {
 			pData += Key_Size;
 			memcpy(pData, &entry.assignee(), Key_Size);
 			pData += Key_Size;
+			memcpy(pData, &entry.creator(), Key_Size);
+			pData += Key_Size;
 			memcpy(pData, &entry.deploymentBaseModificationId(), Hash256_Size);
 			pData += Hash256_Size;
 
@@ -439,7 +444,7 @@ namespace catapult { namespace state {
 			test::RunLoadValueTest<SuperContractEntrySerializer>(buffer, result);
 
 			// Assert:
-			test::AssertEqualSupercontractData(originalEntry, result);
+			test::AssertEqualSuperContractData(originalEntry, result);
 		}
 	}
 

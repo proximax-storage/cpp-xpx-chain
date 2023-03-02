@@ -10,8 +10,9 @@
 
 namespace catapult { namespace test {
 
-	state::SuperContractEntry CreateSuperContractEntry(Key key) {
+	state::SuperContractEntry CreateSuperContractEntrySerializer(Key key) {
 		state::SuperContractEntry entry(key);
+		entry.setCreator( test::GenerateRandomByteArray<Key>() );
 		entry.setDriveKey( test::GenerateRandomByteArray<Key>() );
 		entry.setExecutionPaymentKey( test::GenerateRandomByteArray<Key>() );
 		entry.setAssignee( test::GenerateRandomByteArray<Key>() );

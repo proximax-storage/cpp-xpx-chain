@@ -27,14 +27,8 @@
 
 namespace catapult { namespace test {
 
-	state::SuperContractEntry CreateSuperContractEntry(Key key = test::GenerateRandomByteArray<Key>());
-
-	state::DriveContractEntry CreateDriveContractEntry(Key key = test::GenerateRandomByteArray<Key>());
-
-	/// Verifies that \a entry1 is equivalent to \a entry2.
-	void AssertEqualExecutorsInfo(const std::map<uint64_t , state::Batch>& expectedBatch, const std::map<uint64_t , state::Batch>& batch);
-	void AssertEqualBatches(const std::map<uint64_t , state::Batch>& expectedBatch, const std::map<uint64_t , state::Batch>& batch);
-	void AssertEqualSupercontractData(const state::SuperContractEntry& expectedEntry, const state::SuperContractEntry& entry);
+	// Create serializer supercontract entry
+	state::SuperContractEntry CreateSuperContractEntrySerializer(Key key = test::GenerateRandomByteArray<Key>());
 
 	/// Creates a transaction.
 	template<typename TTransaction>
@@ -187,6 +181,7 @@ namespace catapult { namespace test {
 		Key driveKey = test::GenerateRandomByteArray<Key>(),
 		Key superContractOwnerKey = test::GenerateRandomByteArray<Key>(),
 		Key executionPaymentKey = test::GenerateRandomByteArray<Key>(),
+		Key creatorKey = test::GenerateRandomByteArray<Key>(),
 		Hash256 deploymentBaseModificationId  = test::GenerateRandomByteArray<Hash256>());
 
 	state::DriveContractEntry CreateDriveContractEntry(
