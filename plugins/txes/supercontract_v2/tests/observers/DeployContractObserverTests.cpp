@@ -54,6 +54,7 @@ namespace catapult { namespace observers {
 
 		auto CreateNotification() {
 			return Notification(
+					Super_Contract_Owner_Key,
 					Super_Contract_Key,
 					Drive_Key,
 					Super_Contract_Owner_Key,
