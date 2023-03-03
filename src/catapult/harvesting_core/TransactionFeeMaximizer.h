@@ -22,6 +22,7 @@
 #include "catapult/model/EntityInfo.h"
 #include "catapult/functions.h"
 #include "catapult/types.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace harvesting {
 
@@ -45,7 +46,8 @@ namespace catapult { namespace harvesting {
 
 	public:
 		/// Applies \a transactionInfo to the maximizer to include in the best fee policy calculation.
-		void apply(const model::TransactionInfo& transactionInfo);
+		void apply(const model::TransactionInfo& transactionInfo,
+				   const model::TransactionFeeCalculator& transactionFeeCalculator);
 
 	private:
 		FeePolicy m_current;

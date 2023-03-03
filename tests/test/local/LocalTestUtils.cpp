@@ -22,6 +22,7 @@
 #include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/plugins/PluginLoader.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
@@ -294,11 +295,14 @@ namespace catapult { namespace test {
 	}
 
 	std::unique_ptr<cache::MemoryUtCache> CreateUtCache() {
-		return std::make_unique<cache::MemoryUtCache>(cache::MemoryCacheOptions(1024, 1000));
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		return std::make_unique<cache::MemoryUtCache>(cache::MemoryCacheOptions(1024, 1000), pTransactionFeeCalculator);
 	}
 
 	std::unique_ptr<cache::MemoryUtCacheProxy> CreateUtCacheProxy() {
-		return std::make_unique<cache::MemoryUtCacheProxy>(cache::MemoryCacheOptions(1024, 1000));
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		return std::make_unique<cache::MemoryUtCacheProxy>(cache::MemoryCacheOptions(1024, 1000),
+														   std::move(pTransactionFeeCalculator));
 	}
 
 	std::shared_ptr<plugins::PluginManager> CreateDefaultPluginManagerWithRealPlugins() {

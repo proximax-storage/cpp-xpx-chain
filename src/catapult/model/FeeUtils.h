@@ -25,14 +25,6 @@ namespace catapult { namespace model { struct Transaction; } }
 
 namespace catapult { namespace model {
 
-	/// Calculates the fee for \a transaction contained in block with \a feeMultiplier
-	/// given \a feeInterest with \a feeInterestDenominator.
-	Amount CalculateTransactionFee(
-		BlockFeeMultiplier feeMultiplier,
-		const Transaction& transaction,
-		uint32_t feeInterest,
-		uint32_t feeInterestDenominator);
-
 	/// Calculates the maximum fee multiplier for \a transaction.
 	BlockFeeMultiplier CalculateTransactionMaxFeeMultiplier(const Transaction& transaction);
 }}

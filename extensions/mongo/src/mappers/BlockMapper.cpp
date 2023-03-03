@@ -68,9 +68,10 @@ namespace catapult { namespace mongo { namespace mappers {
 		}
 	}
 
-	bsoncxx::document::value ToDbModel(const model::BlockElement& blockElement) {
+	bsoncxx::document::value ToDbModel(const model::BlockElement& blockElement,
+									   const model::TransactionFeeCalculator& transactionFeeCalculator) {
 		const auto& block = blockElement.Block;
-		auto blockTransactionsInfo = model::CalculateBlockTransactionsInfo(block);
+		auto blockTransactionsInfo = model::CalculateBlockTransactionsInfo(block, transactionFeeCalculator);
 		auto transactionMerkleTree = model::CalculateMerkleTree(blockElement.Transactions);
 
 		// block metadata

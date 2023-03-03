@@ -20,6 +20,7 @@
 
 #include "catapult/harvesting_core/TransactionFeeMaximizer.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace harvesting {
 
@@ -31,8 +32,9 @@ namespace catapult { namespace harvesting {
 		constexpr auto CreateTransactionInfos = test::CreateTransactionInfosFromSizeMultiplierPairs;
 
 		void ApplyAll(TransactionFeeMaximizer& maximizer, const std::vector<model::TransactionInfo>& transactionInfos) {
+			model::TransactionFeeCalculator transactionFeeCalculator;
 			for (const auto& transactionInfo : transactionInfos)
-				maximizer.apply(transactionInfo);
+				maximizer.apply(transactionInfo, transactionFeeCalculator);
 		}
 
 		void AssertFeePolicy(const FeePolicy& policy, uint32_t numTransactions, BlockFeeMultiplier feeMultiplier, Amount baseFee) {
@@ -165,10 +167,11 @@ namespace catapult { namespace harvesting {
 
 		// Act:
 		auto transactionInfos = CreateTransactionInfos({ { 200, 500 }, { 200, 510 }, { 600, 480 } });
-		maximizer.apply(transactionInfos[0]);
+		model::TransactionFeeCalculator transactionFeeCalculator;
+		maximizer.apply(transactionInfos[0], transactionFeeCalculator);
 
 		// Assert: cannot increase multipliers (50 to 51)
-		EXPECT_THROW(maximizer.apply(transactionInfos[1]), catapult_invalid_argument);
+		EXPECT_THROW(maximizer.apply(transactionInfos[1], transactionFeeCalculator), catapult_invalid_argument);
 	}
 
 	TEST(TEST_CLASS, CanFindBestMultiplier_MultipleTransactions_FractionalMultipliersCanIncrease) {

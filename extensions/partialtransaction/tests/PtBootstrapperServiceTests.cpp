@@ -21,6 +21,7 @@
 #include "partialtransaction/src/PtBootstrapperService.h"
 #include "catapult/cache_tx/MemoryPtCache.h"
 #include "catapult/extensions/Results.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
@@ -127,7 +128,8 @@ namespace catapult { namespace partialtransaction {
 		struct PtBootstrapperServiceTraits {
 			static auto CreateRegistrar() {
 				return CreatePtBootstrapperServiceRegistrar([]() {
-					return std::make_unique<cache::MemoryPtCacheProxy>(cache::MemoryCacheOptions(100, 100));
+					return std::make_unique<cache::MemoryPtCacheProxy>(cache::MemoryCacheOptions(100, 100),
+																	   std::make_shared<model::TransactionFeeCalculator>());
 				});
 			}
 		};
