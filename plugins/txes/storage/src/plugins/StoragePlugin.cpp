@@ -30,6 +30,10 @@
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
+#include "src/model/DataModificationApprovalTransaction.h"
+#include "src/model/DataModificationSingleApprovalTransaction.h"
+#include "src/model/DownloadApprovalTransaction.h"
+#include "src/model/EndDriveVerificationTransaction.h"
 
 namespace catapult { namespace plugins {
 
@@ -44,6 +48,13 @@ namespace catapult { namespace plugins {
 				CATAPULT_THROW_RUNTIME_ERROR("unresolved amount data pointer is of unexpected type")
 
 			return pCast;
+		}
+
+		template<class TTransactionBody>
+		void setUnlimitedTransactionFee(model::TransactionFeeCalculator& feeCalculator) {
+			for (VersionType i = 1; i <= TTransactionBody::Current_Version; i++) {
+				feeCalculator.addUnlimitedFeeTransaction(TTransactionBody::Entity_Type, i);
+			}
 		}
 	}
 
@@ -69,6 +80,12 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateVerificationPaymentTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDownloadApprovalTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig));
+
+		auto transactionFeeCalculator = manager.transactionFeeCalculator();
+		setUnlimitedTransactionFee<model::DataModificationApprovalTransaction>(*transactionFeeCalculator);
+		setUnlimitedTransactionFee<model::DataModificationSingleApprovalTransaction>(*transactionFeeCalculator);
+		setUnlimitedTransactionFee<model::DownloadApprovalTransaction>(*transactionFeeCalculator);
+		setUnlimitedTransactionFee<model::EndDriveVerificationTransaction>(*transactionFeeCalculator);
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 			switch (unresolved.Type) {
