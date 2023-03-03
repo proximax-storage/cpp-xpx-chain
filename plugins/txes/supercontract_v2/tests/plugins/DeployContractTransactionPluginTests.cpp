@@ -144,6 +144,7 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(pTransaction->Assignee, notification.Assignee);
+		EXPECT_EQ(pTransaction->Signer, notification.Signer);
 		EXPECT_EQ(automaticExecutionsFileName, notification.AutomaticExecutionFileName);
 		EXPECT_EQ(automaticExecutionsFunctionName, notification.AutomaticExecutionsFunctionName);
 		EXPECT_EQ(pTransaction->AutomaticExecutionCallPayment, notification.AutomaticExecutionCallPayment);
