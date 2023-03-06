@@ -268,8 +268,10 @@ namespace catapult { namespace cache {
 		std::set<state::TimestampedHash> TimestampedHashes;
 	};
 
-	MemoryPtCache::MemoryPtCache(const MemoryCacheOptions& options)
+	MemoryPtCache::MemoryPtCache(const MemoryCacheOptions& options,
+								 std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator)
 			: m_options(options)
+			, m_pTransactionFeeCalculator(std::move(pTransactionFeeCalculator))
 			, m_pImpl(std::make_unique<Impl>())
 	{}
 

@@ -24,6 +24,7 @@
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/nodeps/LockTestUtils.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace cache {
 
@@ -33,7 +34,9 @@ namespace catapult { namespace cache {
 		constexpr auto Default_Options = MemoryCacheOptions(1'000'000, 1'000);
 		using UnknownTransactions = std::vector<std::shared_ptr<const model::Transaction>>;
 
-		void AssertDeadlines(const UnknownTransactions& transactions, const std::vector<Timestamp::ValueType>& expectedDeadlines) {
+		void AssertDeadlines(
+				const UnknownTransactions& transactions,
+				const std::vector<Timestamp::ValueType>& expectedDeadlines) {
 			// Arrange:
 			std::vector<Timestamp::ValueType> rawDeadlines;
 			for (const auto& pTransaction : transactions)
@@ -74,13 +77,14 @@ namespace catapult { namespace cache {
 			EXPECT_EQ(cache.view().size(), expectedSize);
 			EXPECT_EQ(cache.modifier().size(), expectedSize);
 		}
-	}
+	} // namespace
 
 	// region constructor
 
 	TEST(TEST_CLASS, InitiallyCacheIsEmpty) {
 		// Act:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 
 		// Assert:
 		AssertCacheSize(cache, 0);
@@ -92,7 +96,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, ModifierSizeIsDynamic) {
 		// Arrange:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 
 		// Act: modify cache and check sizes
 		{
@@ -127,7 +132,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanAddSingleTransactionInfo) {
 		// Arrange:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto originalInfo = test::CreateRandomTransactionInfo();
 
 		// Act:
@@ -145,7 +151,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanAddMultipleTransactionInfos) {
 		// Arrange:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto originalTransactionInfos = test::CreateTransactionInfos(5);
 
 		// Act:
@@ -166,7 +173,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, AddingSameTransactionInfosTwiceHasNoEffect) {
 		// Arrange:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto originalTransactionInfo = test::CreateRandomTransactionInfo();
 		EXPECT_TRUE(cache.modifier().add(originalTransactionInfo));
 
@@ -188,7 +196,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, AddedTransactionInfosHaveIncreasingIdsStartingWithOne) {
 		// Arrange:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto transactionInfos = test::CreateTransactionInfos(5);
 
 		// Act:
@@ -318,17 +327,19 @@ namespace catapult { namespace cache {
 		CacheInitializationResult DefaultInitializeCache(MemoryUtCache& cache) {
 			CacheInitializationResult initializationResult;
 			initializationResult.SameSigner = test::GenerateRandomByteArray<Key>();
-			initializationResult.TransactionInfosWithSameSigner = CreateTransactionInfos(initializationResult.SameSigner, 5);
+			initializationResult.TransactionInfosWithSameSigner =
+					CreateTransactionInfos(initializationResult.SameSigner, 5);
 			initializationResult.TransactionInfos = test::CreateTransactionInfos(8);
 			test::AddAll(cache, initializationResult.TransactionInfosWithSameSigner);
 			test::AddAll(cache, initializationResult.TransactionInfos);
 			return initializationResult;
 		}
-	}
+	} // namespace
 
 	TEST(TEST_CLASS, CountReturnsNumberOfTransactionsInCacheSignedByAccount) {
 		// Arrange:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 
 		// - add some transactions with same signer and some transactions with random signers
 		auto initializationResult = DefaultInitializeCache(cache);
@@ -342,7 +353,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, AddUpdatesCounters) {
 		// Arrange:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 
 		// - add some transactions with same signer and some transactions with random signers
 		auto key = test::GenerateRandomByteArray<Key>();
@@ -363,7 +375,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, RemoveUpdatesCounters) {
 		// Arrange:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 
 		// - add some transactions with same signer and some transactions with random signers
 		auto initializationResult = DefaultInitializeCache(cache);
@@ -386,7 +399,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, RemoveAllUpdatesCounters) {
 		// Arrange:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto initializationResult = DefaultInitializeCache(cache);
 		auto modifier = cache.modifier();
 
@@ -410,7 +424,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanRemoveAllTransactionsFromCache) {
 		// Arrange:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto transactionInfos = test::CreateTransactionInfos(5);
 		test::AddAll(cache, transactionInfos);
 
@@ -437,7 +452,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, ContainsReturnsTrueWhenTransactionInfoIsContainedInCache) {
 		// Arrange:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto transactionInfos = test::CreateTransactionInfos(10);
 
 		// Sanity:
@@ -487,7 +503,7 @@ namespace catapult { namespace cache {
 			for (auto i = 0u; i < expectedCount; ++i)
 				EXPECT_EQ(*expectedTransactions[i], *transactions[i]) << "transaction at " << i;
 		}
-	}
+	} // namespace
 
 	TEST(TEST_CLASS, ForEachForwardsNoTransactionInfosWhenCacheIsEmpty) {
 		// Assert:
@@ -510,7 +526,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, ShortHashesReturnsAllShortHashes) {
 		// Arrange:
-		MemoryUtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto transactionInfos = test::CreateTransactionInfos(10);
 		std::vector<utils::ShortHash> expectedShortHashes;
 		for (const auto& transactionInfo : transactionInfos)
@@ -549,7 +566,8 @@ namespace catapult { namespace cache {
 				return view.unknownTransactions(BlockFeeMultiplier(10), knownShortHashes, 1, 1);
 			}
 
-			static void AddAllToCache(cache::UtCache& cache, const std::vector<model::TransactionInfo>& transactionInfos) {
+			static void
+					AddAllToCache(cache::UtCache& cache, const std::vector<model::TransactionInfo>& transactionInfos) {
 				test::AddAll(cache, transactionInfos);
 			}
 
@@ -567,14 +585,15 @@ namespace catapult { namespace cache {
 				return utils::ToShortHash(transactionInfo.EntityHash);
 			}
 		};
-	}
+	} // namespace
 
 	DEFINE_BASIC_UNKNOWN_TRANSACTIONS_TESTS(MemoryUtCacheTests, MemoryUtCacheUnknownTransactionsTraits)
 
 	namespace {
 		void AssertMaxResponseSizeIsRespected(uint32_t numExpectedTransactions, uint32_t maxResponseSize) {
 			// Arrange:
-			MemoryUtCache cache(MemoryCacheOptions(maxResponseSize, 1000));
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			MemoryUtCache cache(MemoryCacheOptions(maxResponseSize, 1000), pTransactionFeeCalculator);
 			test::AddAll(cache, test::CreateTransactionInfos(5));
 
 			// Act:
@@ -591,7 +610,7 @@ namespace catapult { namespace cache {
 
 			AssertDeadlines(transactions, expectedRawDealines);
 		}
-	}
+	} // namespace
 
 	TEST(TEST_CLASS, UnknownTransactionsReturnsTransactionsWithTotalSizeOfAtMostMaxResponseSize) {
 		// Arrange: determine transaction size from a generated transaction
@@ -607,19 +626,24 @@ namespace catapult { namespace cache {
 	}
 
 	namespace {
-		void AssertFeeMultiplierIsRespected(BlockFeeMultiplier feeMultiplier, const std::vector<Timestamp::ValueType>& expectedDeadlines) {
+		void AssertFeeMultiplierIsRespected(
+				BlockFeeMultiplier feeMultiplier,
+				const std::vector<Timestamp::ValueType>& expectedDeadlines) {
 			// Arrange: determine transaction size from a generated transaction
 			auto transactionSize = test::CreateTransactionInfos(1)[0].pEntity->Size;
 
-			// - generate transactions with (deadline, fee multiples) { (1, 0x), (2, 20x), (3, 0x), (4, 60x) ... (10, 180x) }
+			// - generate transactions with (deadline, fee multiples) { (1, 0x), (2, 20x), (3, 0x), (4, 60x) ... (10,
+			// 180x) }
 			auto i = 0u;
 			auto transactionInfos = test::CreateTransactionInfos(10);
 			for (auto& transactionInfo : transactionInfos) {
-				const_cast<Amount&>(transactionInfo.pEntity->MaxFee) = Amount(transactionSize * (0 == i % 2 ? 0 : i * 20));
+				const_cast<Amount&>(transactionInfo.pEntity->MaxFee) =
+						Amount(transactionSize * (0 == i % 2 ? 0 : i * 20));
 				++i;
 			}
 
-			MemoryUtCache cache(Default_Options);
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			MemoryUtCache cache(Default_Options, pTransactionFeeCalculator);
 			test::AddAll(cache, transactionInfos);
 
 			// Act:
@@ -628,7 +652,7 @@ namespace catapult { namespace cache {
 			// Assert:
 			AssertDeadlines(transactions, expectedDeadlines);
 		}
-	}
+	} // namespace
 
 	TEST(TEST_CLASS, UnknownTransactionsFiltersTransactionsByFeeMultiplier) {
 		// Assert:
@@ -650,11 +674,12 @@ namespace catapult { namespace cache {
 		auto CreateTransactionInfoWithDeadline(Timestamp deadline) {
 			return test::CreateTransactionInfoWithDeadline(deadline.unwrap());
 		}
-	}
+	} // namespace
 
 	TEST(TEST_CLASS, CacheCanContainMaxTransactions) {
 		// Arrange: fill the cache with one less than max transactions
-		MemoryUtCache cache(MemoryCacheOptions(1024, 5));
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(MemoryCacheOptions(1024, 5), pTransactionFeeCalculator);
 		test::AddAll(cache, test::CreateTransactionInfos(4));
 		auto transactionInfo = CreateTransactionInfoWithDeadline(Timestamp(1234));
 
@@ -669,7 +694,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CacheCannotContainMoreThanMaxTransactions) {
 		// Arrange: fill the cache with max transactions
-		MemoryUtCache cache(MemoryCacheOptions(1024, 5));
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(MemoryCacheOptions(1024, 5), pTransactionFeeCalculator);
 		test::AddAll(cache, test::CreateTransactionInfos(5));
 		auto transactionInfo = CreateTransactionInfoWithDeadline(Timestamp(1234));
 
@@ -684,7 +710,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CacheCanAcceptNewTransactionsAfterMaxTransactionsAreReduced) {
 		// Arrange:
-		MemoryUtCache cache(MemoryCacheOptions(1024, 5));
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryUtCache cache(MemoryCacheOptions(1024, 5), pTransactionFeeCalculator);
 		auto transactionInfo = CreateTransactionInfoWithDeadline(Timestamp(1234));
 
 		// - fill the cache with max transactions
@@ -712,11 +739,12 @@ namespace catapult { namespace cache {
 
 	namespace {
 		auto CreateLockProvider() {
-			return std::make_unique<MemoryUtCache>(Default_Options);
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			return std::make_unique<MemoryUtCache>(Default_Options, pTransactionFeeCalculator);
 		}
-	}
+	} // namespace
 
 	DEFINE_LOCK_PROVIDER_TESTS(MemoryUtCacheTests)
 
 	// endregion
-}}
+}} // namespace catapult::cache

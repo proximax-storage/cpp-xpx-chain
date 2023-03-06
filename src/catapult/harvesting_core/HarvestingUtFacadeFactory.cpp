@@ -75,10 +75,16 @@ namespace catapult { namespace harvesting {
 			// 2. add back fee surpluses to accounts (skip cache lookup if no surplus)
 			auto& accountStateCache = m_pCacheDelta->sub<cache::AccountStateCache>();
 			for (const auto& transaction : pBlock->Transactions()) {
-				auto surplus = transaction.MaxFee - model::CalculateTransactionFee(
-					blockHeader.FeeMultiplier, transaction, pBlock->FeeInterest, pBlock->FeeInterestDenominator);
+				auto surplus =
+						transaction.MaxFee - m_executionConfig.pTransactionFeeCalculator->calculateTransactionFee(
+													 blockHeader.FeeMultiplier,
+													 transaction,
+													 pBlock->FeeInterest,
+													 pBlock->FeeInterestDenominator);
 				if (Amount(0) != surplus)
-					accountStateCache.find(transaction.Signer).get().Balances.credit(config.Immutable.CurrencyMosaicId, surplus, blockHeader.Height);
+					accountStateCache.find(transaction.Signer)
+							.get()
+							.Balances.credit(config.Immutable.CurrencyMosaicId, surplus, blockHeader.Height);
 			}
 
 			// 3. execute block (using zero hash)

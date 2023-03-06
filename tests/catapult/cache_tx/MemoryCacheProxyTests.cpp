@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/cache_tx/MemoryUtCache.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 
 namespace catapult { namespace cache {
@@ -33,7 +34,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanCreateProxyAroundMemoryCache) {
 		// Arrange:
-		CacheProxy cache(MemoryCacheOptions(1'000'000, 1'000));
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		CacheProxy cache(MemoryCacheOptions(1'000'000, 1'000), std::move(pTransactionFeeCalculator));
 
 		// Act: add some infos
 		for (const auto& info : test::CreateTransactionInfos(5))
@@ -71,7 +73,8 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CanCreateProxyAroundMemoryCacheAggregate) {
 		// Arrange:
 		size_t numModifierCalls = 0;
-		CacheProxy cache(MemoryCacheOptions(1'000'000, 1'000), CreateMockMutableCache, numModifierCalls);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		CacheProxy cache(MemoryCacheOptions(1'000'000, 1'000), std::move(pTransactionFeeCalculator), CreateMockMutableCache, numModifierCalls);
 
 		// Act: add some infos
 		for (const auto& info : test::CreateTransactionInfos(5))

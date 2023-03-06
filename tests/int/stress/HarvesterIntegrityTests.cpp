@@ -23,6 +23,7 @@
 #include "plugins/services/hashcache/src/cache/HashCacheStorage.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
@@ -78,7 +79,8 @@ namespace catapult { namespace harvesting {
 		public:
 			HarvesterTestContext()
 					: m_pPluginManager(test::CreatePluginManagerWithRealPlugins(CreateConfiguration()))
-					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
+					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2),
+									  std::make_shared<model::TransactionFeeCalculator>())
 					, m_cache(CreateCatapultCache(m_dbDirGuard.name(), m_pPluginManager->configHolder()))
 					, m_unlockedAccounts(100) {
 				// create the harvester

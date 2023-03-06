@@ -37,6 +37,7 @@ namespace catapult { namespace extensions {
 		executionConfig.ResolverContextFactory = [&pluginManager](const auto& cache) {
 			return pluginManager.createResolverContext(cache);
 		};
+		executionConfig.pTransactionFeeCalculator = pluginManager.transactionFeeCalculator();
 		return executionConfig;
 	}
 }}

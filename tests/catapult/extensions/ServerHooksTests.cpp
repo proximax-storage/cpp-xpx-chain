@@ -22,6 +22,7 @@
 #include "tests/test/cache/UtTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/other/ConsumerHandlerTests.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace extensions {
 
@@ -298,7 +299,8 @@ namespace catapult { namespace extensions {
 		class KnownHashPredicateTestContext {
 		public:
 			KnownHashPredicateTestContext()
-					: m_utCache(cache::MemoryCacheOptions(Num_Infos_Per_Group, Num_Infos_Per_Group))
+					: m_utCache(cache::MemoryCacheOptions(Num_Infos_Per_Group, Num_Infos_Per_Group),
+													  std::make_shared<model::TransactionFeeCalculator>())
 					, m_transactionInfos(test::CreateTransactionInfos(Num_Infos_Per_Group)) {
 				test::AddAll(m_utCache, m_transactionInfos);
 			}
