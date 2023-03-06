@@ -24,6 +24,7 @@
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace sync {
 
@@ -125,7 +126,8 @@ namespace catapult { namespace sync {
 			auto readOnlyCatapultCache = catapultCacheView.toReadOnly();
 
 			// - create a ut cache with some transactions
-			cache::MemoryUtCache utCache(cache::MemoryCacheOptions(1024, 1024));
+			cache::MemoryUtCache utCache(cache::MemoryCacheOptions(1024, 1024),
+										 std::make_shared<model::TransactionFeeCalculator>());
 			auto utCacheModifier = utCache.modifier();
 			for (const auto& transactionInfo : test::CreateTransactionInfos(cacheSize))
 				utCacheModifier.add(transactionInfo);

@@ -68,6 +68,13 @@ namespace catapult { namespace validators {
 	  	if (driveInfo.LastApprovedDataModificationId == notification.DataModificationId)
 		  	return Failure_Storage_Transaction_Already_Approved;
 
+		// This is a workaround to prevent single approvals after drive is deployed
+		// Note that rarely a situation can occur when a replicator does not receive payment
+		// for downloading drive data because contract is deployed earlier
+		if (pDriveEntry->ownerManagement() == state::OwnerManagement::PERMANENTLY_FORBIDDEN) {
+			return Failure_Storage_Owner_Management_Is_Forbidden;
+		}
+
 		return ValidationResult::Success;
 	});
 

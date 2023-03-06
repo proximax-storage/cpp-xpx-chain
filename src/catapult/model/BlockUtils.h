@@ -25,6 +25,8 @@
 
 namespace catapult { namespace crypto { class KeyPair; } }
 
+namespace catapult::model { class TransactionFeeCalculator; }
+
 namespace catapult { namespace model {
 
 	// region hashes
@@ -68,7 +70,8 @@ namespace catapult { namespace model {
 	};
 
 	/// Calculates information about transactions stored in \a block.
-	BlockTransactionsInfo CalculateBlockTransactionsInfo(const Block& block);
+	BlockTransactionsInfo CalculateBlockTransactionsInfo(const Block& block,
+														 const TransactionFeeCalculator& transactionFeeCalculator);
 
 	// endregion
 

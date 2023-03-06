@@ -146,20 +146,30 @@ namespace catapult { namespace subscribers {
 		return std::move(m_pStorage);
 	}
 
-	std::unique_ptr<cache::MemoryUtCacheProxy> SubscriptionManager::createUtCache(const cache::MemoryCacheOptions& options) {
+	std::unique_ptr<cache::MemoryUtCacheProxy> SubscriptionManager::createUtCache(
+			const cache::MemoryCacheOptions& options,
+			std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator) {
 		if (!m_utChangeSubscribers.empty())
-			return std::make_unique<cache::MemoryUtCacheProxy>(options, cache::CreateAggregateUtCache, createUtChangeSubscriber());
+			return std::make_unique<cache::MemoryUtCacheProxy>(options,
+															   std::move(pTransactionFeeCalculator),
+															   cache::CreateAggregateUtCache,
+															   createUtChangeSubscriber());
 
 		markUsed(SubscriberType::UtChange);
-		return std::make_unique<cache::MemoryUtCacheProxy>(options);
+		return std::make_unique<cache::MemoryUtCacheProxy>(options,
+														   std::move(pTransactionFeeCalculator));
 	}
 
-	std::unique_ptr<cache::MemoryPtCacheProxy> SubscriptionManager::createPtCache(const cache::MemoryCacheOptions& options) {
+	std::unique_ptr<cache::MemoryPtCacheProxy> SubscriptionManager::createPtCache(
+			const cache::MemoryCacheOptions& options,
+			std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator) {
 		if (!m_ptChangeSubscribers.empty())
-			return std::make_unique<cache::MemoryPtCacheProxy>(options, cache::CreateAggregatePtCache, createPtChangeSubscriber());
+			return std::make_unique<cache::MemoryPtCacheProxy>(options,
+															   std::move(pTransactionFeeCalculator),
+															   cache::CreateAggregatePtCache, createPtChangeSubscriber());
 
 		markUsed(SubscriberType::PtChange);
-		return std::make_unique<cache::MemoryPtCacheProxy>(options);
+		return std::make_unique<cache::MemoryPtCacheProxy>(options, std::move(pTransactionFeeCalculator));
 	}
 
 	// endregion

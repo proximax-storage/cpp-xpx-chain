@@ -32,6 +32,8 @@
 
 namespace catapult { namespace config { class BlockchainConfiguration; } }
 
+namespace catapult::model { class TransactionFeeCalculator; };
+
 namespace catapult { namespace subscribers {
 
 	/// A manager for subscribing to notifications.
@@ -95,11 +97,15 @@ namespace catapult { namespace subscribers {
 
 		/// Creates the unconfirmed transactions cache with the specified cache \a options.
 		/// \note createUtChangeSubscriber cannot be called if this function is called.
-		std::unique_ptr<cache::MemoryUtCacheProxy> createUtCache(const cache::MemoryCacheOptions& options);
+		std::unique_ptr<cache::MemoryUtCacheProxy> createUtCache(
+				const cache::MemoryCacheOptions& options,
+				std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator);
 
 		/// Creates the partial transactions cache with the specified cache \a options.
 		/// \note createPtChangeSubscriber cannot be called if this function is called.
-		std::unique_ptr<cache::MemoryPtCacheProxy> createPtCache(const cache::MemoryCacheOptions& options);
+		std::unique_ptr<cache::MemoryPtCacheProxy> createPtCache(
+				const cache::MemoryCacheOptions& options,
+				std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator);
 
 	private:
 		enum class SubscriberType : uint32_t { BlockChange, UtChange, PtChange, TransactionStatus, StateChange, Node, PostBlockCommit, Count };

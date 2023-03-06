@@ -20,6 +20,7 @@
 
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/config/ValidateConfiguration.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/int/node/stress/test/BlockChainBuilder.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
@@ -230,7 +231,8 @@ namespace catapult { namespace local {
 		public:
 			Hash256 calculateReceiptsHash(const model::Block& block) const {
 				// happy block chain tests send transfers, so only harvest fee receipt needs to be added
-				auto totalFee = model::CalculateBlockTransactionsInfo(block).TotalFee;
+				model::TransactionFeeCalculator transactionFeeCalculator;
+				auto totalFee = model::CalculateBlockTransactionsInfo(block, transactionFeeCalculator).TotalFee;
 
 				model::BlockStatementBuilder blockStatementBuilder;
 				auto currencyMosaicId = test::Default_Currency_Mosaic_Id;

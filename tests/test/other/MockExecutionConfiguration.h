@@ -271,6 +271,8 @@ namespace catapult { namespace test {
 						[](const auto& unresolved) { return model::ResolverContext().resolve(unresolved); },
 						[](const auto& unresolved) { return model::ResolverContext().resolve(unresolved); });
 			};
+
+			Config.pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
 		}
 
 		MockExecutionConfiguration() :

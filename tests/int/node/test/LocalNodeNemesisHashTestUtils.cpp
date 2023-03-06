@@ -24,6 +24,7 @@
 #include "catapult/io/FileBlockStorage.h"
 #include "catapult/model/BlockStatementBuilder.h"
 #include "catapult/model/BlockUtils.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "catapult/model/EntityHasher.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
@@ -80,7 +81,8 @@ namespace catapult { namespace test {
 			// 1. add harvest fee receipt
 			nemesisBlock.FeeInterest = 1;
 			nemesisBlock.FeeInterestDenominator = 1;
-			auto totalFee = model::CalculateBlockTransactionsInfo(nemesisBlock).TotalFee;
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto totalFee = model::CalculateBlockTransactionsInfo(nemesisBlock, transactionFeeCalculator).TotalFee;
 
 			auto feeMosaicId = Default_Currency_Mosaic_Id;
 			model::BalanceChangeReceipt receipt(model::Receipt_Type_Harvest_Fee, nemesisBlock.Signer, feeMosaicId, totalFee);

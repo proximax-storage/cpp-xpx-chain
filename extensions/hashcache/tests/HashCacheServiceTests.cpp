@@ -20,6 +20,7 @@
 
 #include "hashcache/src/HashCacheService.h"
 #include "plugins/services/hashcache/src/cache/HashCacheStorage.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
@@ -86,7 +87,7 @@ namespace catapult { namespace hashcache {
 		// Act:
 		RunHashCacheTest([](const auto& hooks, const auto& hash) {
 			// Assert:
-			cache::MemoryUtCache utCache({});
+			cache::MemoryUtCache utCache({}, std::make_shared<model::TransactionFeeCalculator>());
 			EXPECT_TRUE(hooks.knownHashPredicate(utCache)(Timestamp(5), hash));
 		});
 	}
@@ -95,7 +96,7 @@ namespace catapult { namespace hashcache {
 		// Act:
 		RunHashCacheTest([](const auto& hooks, const auto& hash) {
 			// Assert:
-			cache::MemoryUtCache utCache({});
+			cache::MemoryUtCache utCache({}, std::make_shared<model::TransactionFeeCalculator>());
 			EXPECT_FALSE(hooks.knownHashPredicate(utCache)(Timestamp(6), hash));
 			EXPECT_FALSE(hooks.knownHashPredicate(utCache)(Timestamp(5), test::GenerateRandomByteArray<Hash256>()));
 		});

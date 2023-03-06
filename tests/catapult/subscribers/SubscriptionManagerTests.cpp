@@ -20,6 +20,7 @@
 
 #include "catapult/subscribers/SubscriptionManager.h"
 #include "catapult/model/ChainScore.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/catapult/subscribers/test/UnsupportedSubscribers.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
@@ -151,13 +152,15 @@ namespace catapult { namespace subscribers {
 
 		struct UtCacheTraits : public UtChangeTraits {
 			static auto CreateAggregate(SubscriptionManager& manager) {
-				return manager.createUtCache(cache::MemoryCacheOptions(100, 100));
+				auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+				return manager.createUtCache(cache::MemoryCacheOptions(100, 100), pTransactionFeeCalculator);
 			}
 		};
 
 		struct PtCacheTraits : public PtChangeTraits {
 			static auto CreateAggregate(SubscriptionManager& manager) {
-				return manager.createPtCache(cache::MemoryCacheOptions(100, 100));
+				auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+				return manager.createPtCache(cache::MemoryCacheOptions(100, 100), pTransactionFeeCalculator);
 			}
 		};
 	}
@@ -320,7 +323,8 @@ namespace catapult { namespace subscribers {
 	namespace {
 		struct UtTraits {
 			static auto CreateCache(SubscriptionManager& manager) {
-				return manager.createUtCache(cache::MemoryCacheOptions(100, 100));
+				auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+				return manager.createUtCache(cache::MemoryCacheOptions(100, 100), pTransactionFeeCalculator);
 			}
 
 			static void AddSubscriberWithAddCounter(SubscriptionManager& manager, size_t& counter) {
@@ -344,7 +348,8 @@ namespace catapult { namespace subscribers {
 
 		struct PtTraits {
 			static auto CreateCache(SubscriptionManager& manager) {
-				return manager.createPtCache(cache::MemoryCacheOptions(100, 100));
+				auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+				return manager.createPtCache(cache::MemoryCacheOptions(100, 100), pTransactionFeeCalculator);
 			}
 
 			static void AddSubscriberWithAddCounter(SubscriptionManager& manager, size_t& counter) {

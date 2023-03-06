@@ -23,6 +23,7 @@
 #include "catapult/model/ContainerTypes.h"
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/model/TransactionRegistry.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/TimeSpan.h"
 #include "catapult/types.h"
@@ -122,7 +123,7 @@ namespace catapult { namespace test {
 				: m_registry(mocks::CreateDefaultTransactionRegistry())
 				, m_pZeroMqEntityPublisher(std::make_shared<zeromq::ZeroMqEntityPublisher>(
 						GetDefaultLocalHostZmqPort(),
-						model::CreateNotificationPublisher(m_registry, UnresolvedMosaicId()),
+						model::CreateNotificationPublisher(m_registry, UnresolvedMosaicId(), m_transactionFeeCalculator),
 						[](){ return model::ExtractorContext(); }))
 				, m_zmqSocket(m_zmqContext, ZMQ_SUB) {
 			m_zmqSocket.setsockopt(ZMQ_RCVTIMEO, 10);
@@ -194,6 +195,10 @@ namespace catapult { namespace test {
 			return m_registry;
 		}
 
+		const model::TransactionFeeCalculator& transactionFeeCalculator() const {
+			return m_transactionFeeCalculator;
+		}
+
 	private:
 		static unsigned short GetDefaultLocalHostZmqPort() {
 			return GetLocalHostPort() + 2;
@@ -201,6 +206,7 @@ namespace catapult { namespace test {
 
 	private:
 		model::TransactionRegistry m_registry;
+		model::TransactionFeeCalculator m_transactionFeeCalculator;
 		std::shared_ptr<zeromq::ZeroMqEntityPublisher> m_pZeroMqEntityPublisher;
 		zmq::context_t m_zmqContext;
 		zmq::socket_t m_zmqSocket;
@@ -215,7 +221,9 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a message queue context using the supplied subscriber creator (\a subscriberCreator).
 		explicit MqContextT(const SubscriberCreator& subscriberCreator)
-				: m_pNotificationPublisher(model::CreateNotificationPublisher(registry(), UnresolvedMosaicId()))
+				: m_pNotificationPublisher(model::CreateNotificationPublisher(registry(),
+																		  UnresolvedMosaicId(),
+																		  transactionFeeCalculator()))
 				, m_pZeroMqSubscriber(subscriberCreator(publisher()))
 		{}
 
