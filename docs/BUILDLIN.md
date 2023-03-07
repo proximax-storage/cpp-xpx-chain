@@ -161,3 +161,7 @@ make publish && make -j $(expr (nproc) - 2)
 ### FAQ
 Boost fails to build. Check:
 https://github.com/boostorg/thread/commit/1623ca9e05999f0628b246638b6de28752a14761
+
+Benchmark fails to build: Check
+
+src/benchmark_register.h should include the header #include <limits.h>
