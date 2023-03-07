@@ -28,7 +28,13 @@
 namespace catapult { namespace test {
 
 	// Create serializer supercontract entry
-	state::SuperContractEntry CreateSuperContractEntrySerializer(Key key = test::GenerateRandomByteArray<Key>());
+	state::SuperContractEntry CreateSuperContractEntrySerializer(Key key,
+																 int contractCallCount,
+																 int servicePaymentCount,
+																 int executorCount,
+																 int batchCount,
+																 int completedCallCount,
+																 int releaseTransactionCount);
 
 	/// Creates a transaction.
 	template<typename TTransaction>

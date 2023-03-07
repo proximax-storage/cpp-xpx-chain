@@ -104,7 +104,14 @@ namespace catapult { namespace state {
 		};
 
 		auto CreateSuperContractEntry() {
-			return test::CreateSuperContractEntrySerializer(test::GenerateRandomByteArray<Key>());
+			return test::CreateSuperContractEntrySerializer(
+					test::GenerateRandomByteArray<Key>(),
+			        ContractCall_Count,
+					ServicePayment_Count,
+					Executor_Count,
+					Batch_Count,
+					CompletedCall_Count,
+					ReleaseTransaction_Count);
 		}
 
 		void AssertEntryBuffer(const state::SuperContractEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {

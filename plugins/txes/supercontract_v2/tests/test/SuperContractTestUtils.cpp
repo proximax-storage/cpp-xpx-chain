@@ -10,7 +10,13 @@
 
 namespace catapult { namespace test {
 
-	state::SuperContractEntry CreateSuperContractEntrySerializer(Key key) {
+	state::SuperContractEntry CreateSuperContractEntrySerializer(Key key,
+																 int contractCallCount,
+																 int servicePaymentCount,
+																 int executorCount,
+																 int batchCount,
+																 int completedCallCount,
+																 int releaseTransactionCount) {
 		state::SuperContractEntry entry(key);
 		entry.setCreator( test::GenerateRandomByteArray<Key>() );
 		entry.setDriveKey( test::GenerateRandomByteArray<Key>() );
@@ -43,23 +49,21 @@ namespace catapult { namespace test {
 		contractCall.ExecutionCallPayment = Amount(10);
 		contractCall.DownloadCallPayment = Amount(10);
 		contractCall.BlockHeight = Height(10);
-		contractCall.ServicePayments.push_back(servicePayment);  // service payment x3
-		contractCall.ServicePayments.push_back(servicePayment);
-		contractCall.ServicePayments.push_back(servicePayment);
-		entry.requestedCalls().push_back(contractCall);  // contract call x3
-		entry.requestedCalls().push_back(contractCall);
-		entry.requestedCalls().push_back(contractCall);
+		for(int i=0; i<servicePaymentCount; i++){
+			contractCall.ServicePayments.push_back(servicePayment);  // service payment x3
+		}
+		for(int i=0; i<contractCallCount; i++){
+			entry.requestedCalls().push_back(contractCall);  // contract call x3
+		}
 
 		// executors info
-		Key executor1 = test::GenerateRandomByteArray<Key>();
-		Key executor2 = test::GenerateRandomByteArray<Key>();
-		Key executor3 = test::GenerateRandomByteArray<Key>();
 		state::ExecutorInfo executorInfo;
 		executorInfo.PoEx.R = scalar;
 		executorInfo.PoEx.T = curvePoint;
-		entry.executorsInfo()[executor1] = executorInfo;  // executors info x3
-		entry.executorsInfo()[executor2] = executorInfo;
-		entry.executorsInfo()[executor3] = executorInfo;
+		for(int i=0; i<executorCount; i++){
+			Key executor = test::GenerateRandomByteArray<Key>();
+			entry.executorsInfo()[executor] = executorInfo;  // executors info x3
+		}
 
 		// batches
 		state::CompletedCall completedCall;
@@ -71,20 +75,18 @@ namespace catapult { namespace test {
 		state::Batch batch;
 		batch.Success = false;
 		batch.PoExVerificationInformation = curvePoint;
-		batch.CompletedCalls.push_back(completedCall);  // completed call x3
-		batch.CompletedCalls.push_back(completedCall);
-		batch.CompletedCalls.push_back(completedCall);
-		entry.batches()[1] = batch;  // batch x3
-		entry.batches()[2] = batch;
-		entry.batches()[3] = batch;
+		for(int i=0; i<completedCallCount; i++){
+			batch.CompletedCalls.push_back(completedCall);  // completed call x3
+		}
+		for(int i=0; i<batchCount; i++){
+			entry.batches()[i] = batch;  // batch x3
+		}
 
 		// released transactions
-		Hash256 hash1 = test::GenerateRandomByteArray<Hash256>();
-		Hash256 hash2 = test::GenerateRandomByteArray<Hash256>();
-		Hash256 hash3 = test::GenerateRandomByteArray<Hash256>();
-		entry.releasedTransactions().emplace(hash1);  // released transaction x3
-		entry.releasedTransactions().emplace(hash2);
-		entry.releasedTransactions().emplace(hash3);
+		for(int i=0; i<releaseTransactionCount; i++){
+			Hash256 hash = test::GenerateRandomByteArray<Hash256>();
+			entry.releasedTransactions().emplace(hash);  // released transaction x3
+		}
 		return entry;
 	}
 
