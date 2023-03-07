@@ -20,7 +20,7 @@ namespace catapult::model {
 			uint32_t feeInterest,
 			uint32_t feeInterestDenominator) const {
 		auto fee = Amount(feeMultiplier.unwrap() * transaction.Size * feeInterest / feeInterestDenominator);
-		if (isTransactionFeeUnlimited(transaction.Type, transaction.Version)) {
+		if (isTransactionFeeUnlimited(transaction.Type, transaction.EntityVersion())) {
 			return std::min(transaction.MaxFee, fee);
 		}
 		return fee;
