@@ -165,3 +165,7 @@ https://github.com/boostorg/thread/commit/1623ca9e05999f0628b246638b6de28752a147
 Benchmark fails to build: Check
 
 src/benchmark_register.h should include the header #include <limits.h>
+
+Missing librt in mongo-c builds on systems with new glibc:
+Make sure to create a symbolic link to librt.so.1 
+sudo ln -s /usr/lib/librt.so.1 /usr/lib/librt.so
