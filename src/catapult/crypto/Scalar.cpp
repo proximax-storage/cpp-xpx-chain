@@ -7,7 +7,7 @@
 #include "Scalar.h"
 #include <cstdio>
 extern "C" {
-#include <external/ref10/sc.h>
+#include <ref10/sc.h>
 }
 
 namespace catapult::crypto {

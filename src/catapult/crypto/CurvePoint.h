@@ -7,7 +7,7 @@
 #pragma once
 
 extern "C" {
-#include <external/ref10/ge.h>
+#include <ref10/ge.h>
 }
 
 #include "Scalar.h"

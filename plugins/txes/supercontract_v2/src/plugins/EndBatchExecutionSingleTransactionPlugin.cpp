@@ -5,18 +5,18 @@
 **/
 
 #include <catapult/crypto/Hashes.h>
-#include "src/model/EndBatchExecutionSingleTransaction.h"
+#include "EndBatchExecutionSingleTransactionPlugin.h"
 #include "catapult/model/SupercontractNotifications.h"
+#include "src/model/EndBatchExecutionSingleTransaction.h"
+#include "src/model/InternalSuperContractNotifications.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/NotificationSubscriber.h"
-#include "src/model/InternalSuperContractNotifications.h"
 
 using namespace catapult::model;
 
 namespace catapult { namespace plugins {
 
 	namespace {
-
 		template<typename TTransaction>
 		auto CreatePublisher(const config::ImmutableConfiguration& config) {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
@@ -43,11 +43,16 @@ namespace catapult { namespace plugins {
 				}
 
 				default:
-					CATAPULT_LOG(debug) << "invalid version of EndBatchExecutionSingleTransaction: " << transaction.EntityVersion();
+					CATAPULT_LOG(debug) << "invalid version of EndBatchExecutionSingleTransaction: "
+										<< transaction.EntityVersion();
 				}
 			};
 		}
-	}
+	} // namespace
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(EndBatchExecutionSingle, Default, CreatePublisher, config::ImmutableConfiguration)
-}}
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(
+			EndBatchExecutionSingle,
+			Default,
+			CreatePublisher,
+			config::ImmutableConfiguration)
+}} // namespace catapult::plugins
