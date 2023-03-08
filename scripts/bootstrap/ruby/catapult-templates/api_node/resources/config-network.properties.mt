@@ -161,3 +161,7 @@ maxAccountRestrictionValues = 512
 
 enabled = false
 maxMosaicRestrictionValues = 20
+
+[plugin:catapult.plugins.globalstore]
+
+enabled = false
