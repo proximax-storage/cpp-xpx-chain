@@ -86,7 +86,7 @@ namespace catapult { namespace state {
         }
 
         void SaveBatches(const std::map<uint64_t, Batch>& batches, io::OutputStream& output) {
-            io::Write32(output, utils::checked_cast<size_t, uint16_t>(batches.size()));
+            io::Write32(output, utils::checked_cast<size_t, uint32_t>(batches.size()));
             for (const auto& batch : batches) {
                 io::Write64(output, batch.first);
                 io::Write8(output, batch.second.Success);
@@ -276,5 +276,7 @@ namespace catapult { namespace state {
             io::Read(input, releasedTransaction);
             entry.releasedTransactions().emplace(releasedTransaction);
         }
+
+		return entry;
     }
 }}

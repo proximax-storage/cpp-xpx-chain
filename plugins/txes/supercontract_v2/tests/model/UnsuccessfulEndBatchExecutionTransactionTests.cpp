@@ -96,6 +96,8 @@ namespace catapult { namespace model {
 		// Arrange:
 		UnsuccessfulEndBatchExecutionTransaction transaction;
 		transaction.Size = 0;
+		transaction.CosignersNumber = 0;
+		transaction.CallsNumber = 0;
 
 		// Act:
 		auto realSize = UnsuccessfulEndBatchExecutionTransaction::CalculateRealSize(transaction);
