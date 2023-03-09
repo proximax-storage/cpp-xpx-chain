@@ -15,7 +15,7 @@ namespace catapult { namespace validators {
 		const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 		auto contractIt = contractCache.find(notification.ContractKey);
 
-		// For the moment we should have already been checked that the contract exists
+		// For the moment we have already checked that the contract exists
 		const auto& contractEntry = contractIt.get();
 
 		for (const auto& [publicKey, proofToVerify]: notification.Proofs) {

@@ -25,18 +25,25 @@ namespace catapult::observers {
 			auto contractIt = contractCache.find(notification.ContractKey);
 			auto& contractEntry = contractIt.get();
 
-//			auto& executorsInfo = contractEntry.executorsInfo();
-//			auto minIt = std::min_element(
-//					executorsInfo.cbegin(),
-//					executorsInfo.cend(),
-//					[](const auto& left, const auto& right) {
-//						return left.second.NextBatchToApprove < right.second.NextBatchToApprove;
-//					});
-//
-//			auto minNextBatchToApprove =
-//					minIt != executorsInfo.end() ? minIt->second.NextBatchToApprove : 0;
-//
-//			while (!executorsInfo.empty() && exe
+			auto& executorsInfo = contractEntry.executorsInfo();
+			auto minIt = std::min_element(
+					executorsInfo.cbegin(), executorsInfo.cend(), [](const auto& left, const auto& right) {
+						return left.second.NextBatchToApprove < right.second.NextBatchToApprove;
+					});
+
+			auto minNextBatchToApprove =
+					minIt != executorsInfo.end() ? minIt->second.NextBatchToApprove : 0;
+
+			// For the poex validation we need only batches <= minNextBatchToApprove - 1
+			// So we use such a heuristic for clearing batches history
+			// Note that is there are fault executors s.t. minNextBatchToApprove << contractEntry.nextBatchId
+			// The heuristic will not provide good performance
+			// That's why for good performance it is necessary to remove fault replicators from drive
+			// If they are not in  confirmed storage for a long time
+			auto& batches = contractEntry.batches();
+			while (!batches.empty() && batches.begin()->first + 1 < minNextBatchToApprove) {
+				batches.erase(batches.end());
+			}
 
 			contractEntry.batches().emplace(contractEntry.nextBatchId(), state::Batch{});
 			contractEntry.automaticExecutionsInfo().AutomaticExecutionsNextBlockToCheck = notification.AutomaticExecutionsNextBlockToCheck;
