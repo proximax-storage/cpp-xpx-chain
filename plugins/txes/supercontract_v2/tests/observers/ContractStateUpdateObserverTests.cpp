@@ -7,18 +7,19 @@
 #include "src/observers/Observers.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
+#include "src/cache/ReplicatorCache.h"
 
 namespace catapult { namespace observers {
 
-#define TEST_CLASS DeployContractObserverTests
+#define TEST_CLASS ContractStateUpdateObserverTests
 
 	const std::unique_ptr<state::DriveStateBrowser> Drive_Browser = std::make_unique<test::DriveStateBrowserImpl>();
 
-	DEFINE_COMMON_OBSERVER_TESTS(DeployContract, Drive_Browser)
+	DEFINE_COMMON_OBSERVER_TESTS(ContractStateUpdate, Drive_Browser)
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::SuperContractCacheFactory>;
-		using Notification = model::DeploySupercontractNotification<1>;
+		using Notification = model::ContractStateUpdateNotification<1>;
 
 		const auto Current_Height = test::GenerateRandomValue<Height>();
 		const auto Drive_Key = test::GenerateRandomByteArray<Key>();
@@ -29,6 +30,11 @@ namespace catapult { namespace observers {
 		const auto Execution_Call_Payment = Amount(10);
 		const auto Download_Call_Payment = Amount(10);
 		const auto Base_Modification_Id = Hash256();
+        const auto Executors = std::vector<Key>{
+                test::GenerateRandomByteArray<Key>(),
+                test::GenerateRandomByteArray<Key>(),
+                test::GenerateRandomByteArray<Key>(),
+        };
 
 		auto CreateDriveContractEntry() {
 			auto driveEntry = test::CreateDriveContractEntry(Drive_Key, Super_Contract_Key);
@@ -49,19 +55,16 @@ namespace catapult { namespace observers {
             automaticExecutionsInfo.AutomaticExecutionCallPayment = Execution_Call_Payment;
             automaticExecutionsInfo.AutomaticDownloadCallPayment = Download_Call_Payment;
 
+            auto& executorsInfo = entry.executorsInfo();
+            for (const auto &item: Executors) {
+                executorsInfo[item] = state::ExecutorInfo();
+            }
+
 			return entry;
 		}
 
 		auto CreateNotification() {
-			return Notification(
-					Super_Contract_Key,
-					Drive_Key,
-					Super_Contract_Owner_Key,
-					Super_Contract_Owner_Key,
-					File_Name,
-					Function_Name,
-					Execution_Call_Payment,
-					Download_Call_Payment);
+			return Notification(Super_Contract_Key);
 		}
 
         struct CacheValues {
@@ -77,14 +80,19 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, Current_Height);
             auto notification = CreateNotification();
-            auto pObserver = CreateDeployContractObserver(Drive_Browser);
+            auto pObserver = CreateContractStateUpdateObserver(Drive_Browser);
             auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
-            auto& driveCache = context.cache().sub<cache::DriveContractCache>();
+            auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 
             // Populate cache.
+            superContractCache.insert(values.ScEntry);
+            for (const auto &item: values.ScEntry.executorsInfo()) {
+                state::ReplicatorEntry replicatorEntry(item.first);
+                replicatorCache.insert(replicatorEntry);
+            }
+
             if (mode == NotifyMode::Rollback) {
-                superContractCache.insert(values.ScEntry);
-                driveCache.insert(values.DriveContractEntry);
+
             }
 
             // Act:
@@ -94,10 +102,6 @@ namespace catapult { namespace observers {
             auto superContractCacheIter = superContractCache.find(values.ScEntry.key());
             const auto& actualScEntry = superContractCacheIter.get();
             test::AssertEqualSuperContractData(values.ScEntry, actualScEntry);
-
-            auto driveCacheIter = driveCache.find(values.ScEntry.driveKey());
-            const auto& actualDriveContractEntry = driveCacheIter.get();
-            test::AssertEqualDriveContract(values.DriveContractEntry, actualDriveContractEntry);
         }
 	}
 

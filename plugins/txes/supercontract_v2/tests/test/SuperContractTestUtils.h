@@ -40,6 +40,21 @@ namespace catapult { namespace test {
 	void AssertEqualSuperContractData(const state::SuperContractEntry& entry1, const state::SuperContractEntry& entry2);
 	void AssertEqualDriveContract(const state::DriveContractEntry& entry1, const state::DriveContractEntry& entry2);
 
+    class DriveStateBrowserImpl : public state::DriveStateBrowser {
+    public:
+        uint16_t getOrderedReplicatorsCount(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
+
+        Key getDriveOwner(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
+
+        std::set<Key> getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
+
+        std::set<Key> getDrives(const cache::ReadOnlyCatapultCache& cache, const Key& replicatorKey) const override;
+
+        Hash256 getDriveState(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
+
+        Hash256 getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
+    };
+
 	/// Cache factory for creating a catapult cache composed of operation cache and core caches.
 	struct SuperContractCacheFactory {
 	private:
@@ -74,22 +89,5 @@ namespace catapult { namespace test {
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));
 		}
-	};
-
-	class DriveStateBrowserImpl : public state::DriveStateBrowser {
-	public:
-		uint16_t getOrderedReplicatorsCount(
-				const cache::ReadOnlyCatapultCache& cache,
-				const Key& driveKey) const override;
-
-		Key getDriveOwner(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
-
-		std::set<Key> getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
-
-		std::set<Key> getDrives(const cache::ReadOnlyCatapultCache& cache, const Key& replicatorKey) const override;
-
-		Hash256 getDriveState(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
-
-		Hash256 getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
 	};
 }}

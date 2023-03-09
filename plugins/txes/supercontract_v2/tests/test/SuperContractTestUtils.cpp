@@ -5,6 +5,7 @@
 **/
 
 #include "SuperContractTestUtils.h"
+#include "src/cache/BcDriveCache.h"
 #include <catapult/cache/ReadOnlyCatapultCache.h>
 
 namespace catapult { namespace test {
@@ -144,12 +145,11 @@ namespace catapult { namespace test {
 	}
 
 	std::set<Key> DriveStateBrowserImpl::getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
-//		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-//		auto driveIter = driveCache.find(driveKey);
-//		const auto& driveEntry = driveIter.get();
-//		return driveEntry.replicators();
+		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
+		auto driveIter = driveCache.find(driveKey);
+		const auto& driveEntry = driveIter.get();
 
-		return {};
+        return driveEntry.replicators();
 	}
 
 	std::set<Key> DriveStateBrowserImpl::getDrives(const cache::ReadOnlyCatapultCache &cache, const Key &replicatorKey) const {
@@ -179,11 +179,10 @@ namespace catapult { namespace test {
 
 	Hash256 DriveStateBrowserImpl::getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey)
 	const {
-//		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-//		auto driveIter = driveCache.find(driveKey);
-//		const auto& driveEntry = driveIter.get();
-//		return driveEntry.lastModificationId();
+		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
+		auto driveIter = driveCache.find(driveKey);
+		const auto& driveEntry = driveIter.get();
 
-		return {};
+        return driveEntry.lastModificationId();
 	}
 }}
