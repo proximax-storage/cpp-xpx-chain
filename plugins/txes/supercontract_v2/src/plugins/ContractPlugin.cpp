@@ -20,6 +20,11 @@
 #include "catapult/plugins/CacheHandlers.h"
 #include <catapult/model/SupercontractNotifications.h>
 #include <src/state/ContractStateImpl.h>
+#include "src/model/EndBatchExecutionSingleTransaction.h"
+#include "src/model/SuccessfulEndBatchExecutionTransaction.h"
+#include "src/model/UnsuccessfulEndBatchExecutionTransaction.h"
+#include "src/model/SynchronizationSingleTransaction.h"
+
 
 namespace catapult { namespace plugins {
 
@@ -34,6 +39,13 @@ namespace catapult { namespace plugins {
 				CATAPULT_THROW_RUNTIME_ERROR("unresolved amount data pointer is of unexpected type")
 
 			return pCast;
+		}
+
+		template<class TTransactionBody>
+		void setUnlimitedTransactionFee(model::TransactionFeeCalculator& feeCalculator) {
+			for (VersionType i = 1; i <= TTransactionBody::Current_Version; i++) {
+				feeCalculator.addUnlimitedFeeTransaction(TTransactionBody::Entity_Type, i);
+			}
 		}
 	}
 
@@ -51,6 +63,12 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateUnsuccessfulEndBatchExecutionTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateEndBatchExecutionSingleTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateSynchronizationSingleTransactionPlugin(immutableConfig));
+
+		auto& transactionFeeCalculator = *manager.transactionFeeCalculator();
+		setUnlimitedTransactionFee<model::EndBatchExecutionSingleTransaction>(transactionFeeCalculator);
+		setUnlimitedTransactionFee<model::SuccessfulEndBatchExecutionTransaction>(transactionFeeCalculator);
+		setUnlimitedTransactionFee<model::UnsuccessfulEndBatchExecutionTransaction>(transactionFeeCalculator);
+		setUnlimitedTransactionFee<model::SynchronizationSingleTransaction>(transactionFeeCalculator);
 
 		auto& pBrowser = manager.driveStateBrowser();
 
