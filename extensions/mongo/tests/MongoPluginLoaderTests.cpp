@@ -21,6 +21,7 @@
 #include "mongo/src/MongoPluginLoader.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "catapult/plugins/PluginExceptions.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "mongo/tests/test/MongoTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
@@ -41,7 +42,9 @@ namespace catapult { namespace mongo {
 			mongocxx::instance::current();
 			MongoStorageContext mongoContext(test::DefaultDbUri(), "", nullptr, MongoErrorPolicy::Mode::Strict);
 
-			MongoPluginManager manager(mongoContext, config::CreateMockConfigurationHolder());
+			MongoPluginManager manager(mongoContext,
+									   config::CreateMockConfigurationHolder(),
+									   std::make_shared<model::TransactionFeeCalculator>());
 
 			// Act + Assert:
 			action(manager);

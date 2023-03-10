@@ -55,6 +55,10 @@ namespace catapult::observers {
 			for (const auto& [key, _]: notification.Proofs) {
 				executors.insert(key);
 			}
+
+			// Note, that this line is executed event in the c when contract is destroyed
+			// with the transaction that published the notification (for the 0th batchId)
+			// It is correct since in order to execute the contract executor must first sync up to the last storage state
 			storageExternalManager->addToConfirmedStorage(context, contractEntry.driveKey(), executors);
 		}))
 	}

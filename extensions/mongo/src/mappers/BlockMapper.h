@@ -24,10 +24,13 @@
 
 namespace catapult { namespace model { struct BlockElement; } }
 
+namespace catapult::model{ class TransactionFeeCalculator; };
+
 namespace catapult { namespace mongo { namespace mappers {
 
 	/// Maps a \a blockElement to the corresponding db model entity.
-	bsoncxx::document::value ToDbModel(const model::BlockElement& blockElement);
+	bsoncxx::document::value ToDbModel(const model::BlockElement& blockElement,
+									   const model::TransactionFeeCalculator& transactionFeeCalculator);
 
 	/// Maps \a document to a block difficulty info.
 	state::BlockDifficultyInfo ToDifficultyInfo(const bsoncxx::document::view& document);

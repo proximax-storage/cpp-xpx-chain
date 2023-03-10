@@ -126,6 +126,7 @@ namespace catapult { namespace mongo { namespace plugins {
             << "driveKey" << ToBinary(entry.driveKey())
             << "executionPaymentKey" << ToBinary(entry.executionPaymentKey())
             << "assignee" << ToBinary(entry.assignee())
+		   	<< "creator" << ToBinary(entry.creator())
             << "deploymentBaseModificationId" << ToBinary(entry.deploymentBaseModificationId());
 
         StreamAutomaticExecutionsInfo(builder, entry.automaticExecutionsInfo());
@@ -269,6 +270,10 @@ namespace catapult { namespace mongo { namespace plugins {
         Key assignee;
         DbBinaryToModelArray(assignee, dbSuperContractEntry["assignee"].get_binary());
         entry.setAssignee(assignee);
+
+		Key creator;
+		DbBinaryToModelArray(creator, dbSuperContractEntry["creator"].get_binary());
+		entry.setCreator(creator);
 
         Hash256 deploymentBaseModificationId;
         DbBinaryToModelArray(deploymentBaseModificationId, dbSuperContractEntry["deploymentBaseModificationId"].get_binary());

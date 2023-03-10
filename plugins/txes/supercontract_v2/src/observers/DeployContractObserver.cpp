@@ -26,6 +26,7 @@ namespace catapult::observers {
 					entry.setDriveKey(notification.DriveKey);
 					entry.setExecutionPaymentKey(notification.ExecutionPaymentKey);
 					entry.setAssignee(notification.Assignee);
+					entry.setCreator(notification.Signer);
 
 					auto readOnlyCache = context.Cache.toReadOnly();
 					entry.setDeploymentBaseModificationId(driveBrowser->getLastModificationId(readOnlyCache, notification.DriveKey));

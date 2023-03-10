@@ -22,6 +22,7 @@
 #include "FeeUtils.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/crypto/Signer.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace model {
 
@@ -77,10 +78,11 @@ namespace catapult { namespace model {
 
 	// region fees
 
-	BlockTransactionsInfo CalculateBlockTransactionsInfo(const Block& block) {
+	BlockTransactionsInfo CalculateBlockTransactionsInfo(const Block& block,
+														 const TransactionFeeCalculator& transactionFeeCalculator) {
 		BlockTransactionsInfo blockTransactionsInfo;
 		for (const auto& transaction : block.Transactions()) {
-			auto transactionFee = CalculateTransactionFee(block.FeeMultiplier, transaction, block.FeeInterest, block.FeeInterestDenominator);
+			auto transactionFee = transactionFeeCalculator.calculateTransactionFee(block.FeeMultiplier, transaction, block.FeeInterest, block.FeeInterestDenominator);
 			blockTransactionsInfo.TotalFee = blockTransactionsInfo.TotalFee + transactionFee;
 			++blockTransactionsInfo.Count;
 		}

@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/cache_tx/MemoryCacheOptions.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -35,7 +36,8 @@ namespace catapult { namespace test {
 		/// Asserts that unknownTransactions returns nothing when cache is empty.
 		static void AssertUnknownTransactionsReturnsNoTransactionsWhenCacheIsEmpty() {
 			// Arrange:
-			CacheType cache(CreateDefaultOptions());
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			CacheType cache(CreateDefaultOptions(), pTransactionFeeCalculator);
 
 			// Act:
 			auto unknownInfos = TTraits::GetUnknownTransactions(cache.view(), {});
@@ -47,7 +49,8 @@ namespace catapult { namespace test {
 		/// Asserts that unknownTransactions returns all transactions when filter is empty.
 		static void AssertUnknownTransactionsReturnsAllTransactionsWhenFilterIsEmpty() {
 			// Arrange:
-			CacheType cache(CreateDefaultOptions());
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			CacheType cache(CreateDefaultOptions(), pTransactionFeeCalculator);
 			auto transactionInfos = CreateTransactionInfos(5);
 			TTraits::AddAllToCache(cache, transactionInfos);
 
@@ -62,7 +65,8 @@ namespace catapult { namespace test {
 		/// Asserts that unknownTransactions returns all transactions not in filter.
 		static void AssertUnknownTransactionsReturnsAllTransactionsNotInFilter() {
 			// Arrange:
-			CacheType cache(CreateDefaultOptions());
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			CacheType cache(CreateDefaultOptions(), pTransactionFeeCalculator);
 			auto transactionInfos = CreateTransactionInfos(5);
 			TTraits::AddAllToCache(cache, transactionInfos);
 
@@ -84,7 +88,8 @@ namespace catapult { namespace test {
 		/// Asserts that unknownTransactions returns nothing when all transactions in cache are known.
 		static void AssertUnknownTransactionsReturnsNoTransactionsWhenAllTransactionsAreKnown() {
 			// Arrange:
-			CacheType cache(CreateDefaultOptions());
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			CacheType cache(CreateDefaultOptions(), pTransactionFeeCalculator);
 			auto transactionInfos = CreateTransactionInfos(5);
 			TTraits::AddAllToCache(cache, transactionInfos);
 

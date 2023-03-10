@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/model/NotificationPublisher.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
@@ -40,7 +41,8 @@ namespace catapult { namespace model {
 			mocks::MockNotificationSubscriber sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, mode);
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, transactionFeeCalculator, mode);
 
 			// Act:
 			auto hash = test::GenerateRandomByteArray<Hash256>();
@@ -61,7 +63,8 @@ namespace catapult { namespace model {
 			mocks::MockTypedNotificationSubscriber<TNotification> sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id);
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, transactionFeeCalculator);
 
 			// Act:
 			auto hash = test::GenerateRandomByteArray<Hash256>();
@@ -77,7 +80,8 @@ namespace catapult { namespace model {
 			mocks::MockTypedNotificationSubscriber<TNotification> sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id);
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, transactionFeeCalculator);
 
 			// Act:
 			pPub->publish(entityInfo, sub);

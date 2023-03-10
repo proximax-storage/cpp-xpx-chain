@@ -31,5 +31,7 @@ namespace catapult { namespace state {
         Key contractKey;
 		input.read(contractKey);
         entry.setContractKey(contractKey);
+
+		return entry;
     }
 }}

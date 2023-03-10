@@ -29,6 +29,7 @@
 #include <plugins/txes/transfer/src/config/TransferConfiguration.h>
 #include "plugins/txes/mosaic/src/config/MosaicConfiguration.h"
 #include "tests/test/nodeps/MijinConstants.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace chain {
 
@@ -69,7 +70,8 @@ namespace catapult { namespace chain {
 		public:
 			UpdaterTestContext()
 					: m_pPluginManager(CreatePluginManager())
-					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
+					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2),
+									  std::make_shared<model::TransactionFeeCalculator>())
 					, m_cache(m_pPluginManager->createCache())
 					, m_updater(
 							m_transactionsCache,

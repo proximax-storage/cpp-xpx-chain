@@ -4,22 +4,105 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <gtest/gtest.h>
 #include "SuperContractTestUtils.h"
 #include "src/cache/BcDriveCache.h"
 #include <catapult/cache/ReadOnlyCatapultCache.h>
 
 namespace catapult { namespace test {
 
+	state::SuperContractEntry CreateSuperContractEntrySerializer(Key key,
+																 int contractCallCount,
+																 int servicePaymentCount,
+																 int executorCount,
+																 int batchCount,
+																 int completedCallCount,
+																 int releaseTransactionCount) {
+		state::SuperContractEntry entry(key);
+		entry.setCreator( test::GenerateRandomByteArray<Key>() );
+		entry.setDriveKey( test::GenerateRandomByteArray<Key>() );
+		entry.setExecutionPaymentKey( test::GenerateRandomByteArray<Key>() );
+		entry.setAssignee( test::GenerateRandomByteArray<Key>() );
+		entry.setDeploymentBaseModificationId( test::GenerateRandomByteArray<Hash256>() );
+
+		// poex
+		crypto::Scalar scalar(std::array<uint8_t ,32>{5});
+		crypto::CurvePoint curvePoint = crypto::CurvePoint::BasePoint() * scalar;
+
+		// automatic executions info
+		entry.automaticExecutionsInfo().AutomaticExecutionFileName = "aaa";
+		entry.automaticExecutionsInfo().AutomaticExecutionsFunctionName = "aaa";
+		entry.automaticExecutionsInfo().AutomaticExecutionsNextBlockToCheck = Height(1);
+		entry.automaticExecutionsInfo().AutomaticExecutionCallPayment = Amount(1);
+		entry.automaticExecutionsInfo().AutomaticDownloadCallPayment = Amount(1);
+		entry.automaticExecutionsInfo().AutomatedExecutionsNumber = 0U;
+
+		// contract call
+		state::ServicePayment servicePayment;
+		servicePayment.Amount = Amount(10);
+		servicePayment.MosaicId = UnresolvedMosaicId(1);
+		state::ContractCall contractCall;
+		contractCall.CallId = test::GenerateRandomByteArray<Hash256>();
+		contractCall.Caller = test::GenerateRandomByteArray<Key>();
+		contractCall.FileName = "aaa";
+		contractCall.FunctionName = "aaa";
+		contractCall.ActualArguments = "aaa";
+		contractCall.ExecutionCallPayment = Amount(10);
+		contractCall.DownloadCallPayment = Amount(10);
+		contractCall.BlockHeight = Height(10);
+		for(int i=0; i<servicePaymentCount; i++){
+			contractCall.ServicePayments.push_back(servicePayment);  // service payment x3
+		}
+		for(int i=0; i<contractCallCount; i++){
+			entry.requestedCalls().push_back(contractCall);  // contract call x3
+		}
+
+		// executors info
+		state::ExecutorInfo executorInfo;
+		executorInfo.PoEx.R = scalar;
+		executorInfo.PoEx.T = curvePoint;
+		for(int i=0; i<executorCount; i++){
+			Key executor = test::GenerateRandomByteArray<Key>();
+			entry.executorsInfo()[executor] = executorInfo;  // executors info x3
+		}
+
+		// batches
+		state::CompletedCall completedCall;
+		completedCall.CallId = test::GenerateRandomByteArray<Hash256>();
+		completedCall.Caller = test::GenerateRandomByteArray<Key>();
+		completedCall.Status = 0;
+		completedCall.DownloadWork = Amount(10);
+		completedCall.ExecutionWork = Amount(10);
+		state::Batch batch;
+		batch.Success = false;
+		batch.PoExVerificationInformation = curvePoint;
+		for(int i=0; i<completedCallCount; i++){
+			batch.CompletedCalls.push_back(completedCall);  // completed call x3
+		}
+		for(int i=0; i<batchCount; i++){
+			entry.batches()[i] = batch;  // batch x3
+		}
+
+		// released transactions
+		for(int i=0; i<releaseTransactionCount; i++){
+			Hash256 hash = test::GenerateRandomByteArray<Hash256>();
+			entry.releasedTransactions().emplace(hash);  // released transaction x3
+		}
+		return entry;
+	}
+
 	state::SuperContractEntry CreateSuperContractEntry(
-			Key superContractKey,
-			Key driveKey,
-			Key superContractOwnerKey,
-			Key executionPaymentKey,
-			Hash256 deploymentBaseModificationId) {
+		Key superContractKey,
+		Key driveKey,
+		Key superContractOwnerKey,
+		Key executionPaymentKey,
+		Key creatorKey,
+		Hash256 deploymentBaseModificationId) {
 		state::SuperContractEntry entry(superContractKey);
 		entry.setDriveKey(driveKey);
 		entry.setAssignee(superContractOwnerKey);
 		entry.setExecutionPaymentKey(executionPaymentKey);
+		entry.setCreator(creatorKey);
 		entry.setDeploymentBaseModificationId(deploymentBaseModificationId);
 
 		return entry;
@@ -131,15 +214,6 @@ namespace catapult { namespace test {
 //		auto driveIter = driveCache.find(driveKey);
 //		const auto& driveEntry = driveIter.get();
 //		return driveEntry.replicatorCount();
-
-		return {};
-	}
-
-	Key DriveStateBrowserImpl::getDriveOwner(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
-//		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-//		auto driveIter = driveCache.find(driveKey);
-//		const auto& driveEntry = driveIter.get();
-//		return driveEntry.owner();
 
 		return {};
 	}

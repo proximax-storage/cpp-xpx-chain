@@ -21,6 +21,7 @@
 #include "catapult/harvesting_core/HarvestingUtFacadeFactory.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/BlockUtils.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
@@ -477,7 +478,7 @@ namespace catapult { namespace harvesting {
 
 			// - check block
 			EXPECT_EQ_MEMORY(pBlockHeader.get(), pBlock.get(), sizeof(model::BlockHeader));
-			EXPECT_EQ(0u, model::CalculateBlockTransactionsInfo(*pBlock).Count);
+			EXPECT_EQ(0u, model::CalculateBlockTransactionsInfo(*pBlock, model::TransactionFeeCalculator()).Count);
 		});
 	}
 
@@ -516,7 +517,7 @@ namespace catapult { namespace harvesting {
 
 			// - check block
 			EXPECT_EQ_MEMORY(pBlockHeader.get(), pBlock.get(), sizeof(model::BlockHeader));
-			EXPECT_EQ(4u, model::CalculateBlockTransactionsInfo(*pBlock).Count);
+			EXPECT_EQ(4u, model::CalculateBlockTransactionsInfo(*pBlock, model::TransactionFeeCalculator()).Count);
 
 			auto i = 0u;
 			for (const auto& transaction : pBlock->Transactions()) {

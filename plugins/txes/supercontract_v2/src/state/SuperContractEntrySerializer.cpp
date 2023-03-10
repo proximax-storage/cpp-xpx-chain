@@ -86,7 +86,7 @@ namespace catapult { namespace state {
         }
 
         void SaveBatches(const std::map<uint64_t, Batch>& batches, io::OutputStream& output) {
-            io::Write32(output, utils::checked_cast<size_t, uint16_t>(batches.size()));
+            io::Write32(output, utils::checked_cast<size_t, uint32_t>(batches.size()));
             for (const auto& batch : batches) {
                 io::Write64(output, batch.first);
                 io::Write8(output, batch.second.Success);
@@ -104,6 +104,7 @@ namespace catapult { namespace state {
         io::Write(output, entry.driveKey());
         io::Write(output, entry.executionPaymentKey());
         io::Write(output, entry.assignee());
+		io::Write(output, entry.creator());
 		io::Write(output, entry.deploymentBaseModificationId());
         SaveAutomaticExecutionsInfo(entry.automaticExecutionsInfo(), output);
         SaveContractCalls(entry.requestedCalls(), output);
@@ -256,6 +257,10 @@ namespace catapult { namespace state {
 		input.read(assignee);
         entry.setAssignee(assignee);
 
+		Key creator;
+		input.read(creator);
+		entry.setCreator(creator);
+
         Hash256 deploymentBaseModificationId;
         input.read(deploymentBaseModificationId);
 		entry.setDeploymentBaseModificationId(deploymentBaseModificationId);
@@ -271,5 +276,7 @@ namespace catapult { namespace state {
             io::Read(input, releasedTransaction);
             entry.releasedTransactions().emplace(releasedTransaction);
         }
+
+		return entry;
     }
 }}

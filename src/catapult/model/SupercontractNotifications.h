@@ -35,6 +35,7 @@ namespace catapult::model {
 
 	public:
 		explicit DeploySupercontractNotification(
+				const Key& signer,
 				const Key& contractKey,
 				const Key& driveKey,
 				const Key& executionPaymentKey,
@@ -44,6 +45,7 @@ namespace catapult::model {
 				Amount automaticExecutionCallPayment,
 				Amount automaticDownloadCallPayment)
 				: Notification(Notification_Type, sizeof(DeploySupercontractNotification<1>))
+				, Signer(signer)
 				, ContractKey(contractKey)
 				, DriveKey(driveKey)
 			    , ExecutionPaymentKey(executionPaymentKey)
@@ -55,6 +57,7 @@ namespace catapult::model {
 				{}
 
 	public:
+		Key Signer;
 		Key ContractKey;
 		Key DriveKey;
 		Key ExecutionPaymentKey;

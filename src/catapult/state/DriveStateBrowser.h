@@ -27,8 +27,6 @@ public:
 
 	virtual uint16_t getOrderedReplicatorsCount(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const = 0;
 
-	virtual Key getDriveOwner(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const = 0;
-
 	virtual std::set<Key> getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const = 0;
 
 	virtual std::set<Key> getDrives(const cache::ReadOnlyCatapultCache& cache, const Key& replicatorKey) const = 0;

@@ -13,7 +13,6 @@
 #include "UnsuccessfulEndBatchExecutionMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "storages/MongoSuperContractCacheStorage.h"
-#include "storages/MongoDriveContractCacheStorage.h"
 
 extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
@@ -28,10 +27,6 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoSuperContract_v2CacheStorage(
-		manager.mongoContext(),
-		manager.configHolder()
-	));
-	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDriveContractCacheStorage(
 		manager.mongoContext(),
 		manager.configHolder()
 	));
