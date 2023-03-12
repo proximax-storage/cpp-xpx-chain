@@ -1,5 +1,5 @@
 /**
-*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Copyright 2023 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -7,16 +7,15 @@
 #include "src/observers/Observers.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
-#include "plugins/txes/storage/tests/test/StorageTestUtils.h"
 
 namespace catapult { namespace observers {
 
 #define TEST_CLASS BatchCallsObserverTests
 
-    const std::unique_ptr<observers::LiquidityProviderExchangeObserver> Liquidity_Provider = std::make_unique<test::LiquidityProviderExchangeObserverImpl>();
+//    const std::unique_ptr<observers::LiquidityProviderExchangeObserver> Liquidity_Provider = std::make_unique<test::LiquidityProviderExchangeObserverImpl>();
 	const std::unique_ptr<state::DriveStateBrowser> Drive_Browser = std::make_unique<test::DriveStateBrowserImpl>();
 
-	DEFINE_COMMON_OBSERVER_TESTS(BatchCalls, Liquidity_Provider, Drive_Browser)
+	DEFINE_COMMON_OBSERVER_TESTS(BatchCalls, {}, Drive_Browser)
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::SuperContractCacheFactory>;
@@ -42,21 +41,22 @@ namespace catapult { namespace observers {
 
         struct CacheValues {
         public:
-            CacheValues() : InitialScEntry(Key()), ScEntry(Key()) {}
+            CacheValues() : InitialScEntry(Key()), ExpectedScEntry(Key()) {}
 
         public:
             state::SuperContractEntry InitialScEntry;
-            state::SuperContractEntry ScEntry;
+            state::SuperContractEntry ExpectedScEntry;
         };
 
         void RunTest(NotifyMode mode, const CacheValues& values) {
             // Arrange:
             ObserverTestContext context(mode, Current_Height);
             auto notification = Notification(
-                    values.ScEntry.key(),
+                    values.ExpectedScEntry.key(),
                     Digests,
                     PaymentOpinions);
-            auto pObserver = CreateBatchCallsObserver(Liquidity_Provider, Drive_Browser);
+//            auto pObserver = CreateBatchCallsObserver(Liquidity_Provider, Drive_Browser);
+            auto pObserver = CreateBatchCallsObserver({}, Drive_Browser);
             auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
 
             // Populate cache.
@@ -68,7 +68,7 @@ namespace catapult { namespace observers {
             // Assert: check the cache
             auto superContractCacheIter = superContractCache.find(values.InitialScEntry.key());
             const auto& actualScEntry = superContractCacheIter.get();
-            test::AssertEqualSuperContractData(values.ScEntry, actualScEntry);
+            test::AssertEqualSuperContractData(values.ExpectedScEntry, actualScEntry);
         }
 	}
 
@@ -76,7 +76,7 @@ namespace catapult { namespace observers {
         // Arrange
         CacheValues values;
         values.InitialScEntry = CreateSuperContractEntry();
-        values.ScEntry = values.InitialScEntry;
+        values.ExpectedScEntry = values.InitialScEntry;
 
         // Assert
         RunTest(NotifyMode::Commit, values);

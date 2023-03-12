@@ -1,5 +1,5 @@
 /**
-*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Copyright 2023 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -7,7 +7,6 @@
 #include "src/observers/Observers.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
-#include "src/cache/ReplicatorCache.h"
 
 namespace catapult { namespace observers {
 
@@ -15,7 +14,7 @@ namespace catapult { namespace observers {
 
 	const std::unique_ptr<state::DriveStateBrowser> Drive_Browser = std::make_unique<test::DriveStateBrowserImpl>();
 
-	DEFINE_COMMON_OBSERVER_TESTS(ContractStateUpdate, Drive_Browser)
+	DEFINE_COMMON_OBSERVER_TESTS(ContractStateUpdate, Drive_Browser);
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::SuperContractCacheFactory>;
@@ -69,11 +68,10 @@ namespace catapult { namespace observers {
 
         struct CacheValues {
         public:
-            CacheValues() : ScEntry(Key()), DriveContractEntry(Key()) {}
+            CacheValues() : ExpectedScEntry(Key()) {}
 
         public:
-            state::SuperContractEntry ScEntry;
-            state::DriveContractEntry DriveContractEntry;
+            state::SuperContractEntry ExpectedScEntry;
         };
 
         void RunTest(NotifyMode mode, const CacheValues& values) {
@@ -81,14 +79,15 @@ namespace catapult { namespace observers {
             ObserverTestContext context(mode, Current_Height);
             auto notification = CreateNotification();
             auto pObserver = CreateContractStateUpdateObserver(Drive_Browser);
+
             auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
-            auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
+//            auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 
             // Populate cache.
-            superContractCache.insert(values.ScEntry);
-            for (const auto &item: values.ScEntry.executorsInfo()) {
-                state::ReplicatorEntry replicatorEntry(item.first);
-                replicatorCache.insert(replicatorEntry);
+            superContractCache.insert(values.ExpectedScEntry);
+            for (const auto &item: values.ExpectedScEntry.executorsInfo()) {
+//                state::ReplicatorEntry replicatorEntry(item.first);
+//                replicatorCache.insert(replicatorEntry);
             }
 
             if (mode == NotifyMode::Rollback) {
@@ -99,27 +98,25 @@ namespace catapult { namespace observers {
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
-            auto superContractCacheIter = superContractCache.find(values.ScEntry.key());
+            auto superContractCacheIter = superContractCache.find(values.ExpectedScEntry.key());
             const auto& actualScEntry = superContractCacheIter.get();
-            test::AssertEqualSuperContractData(values.ScEntry, actualScEntry);
+            test::AssertEqualSuperContractData(values.ExpectedScEntry, actualScEntry);
         }
 	}
 
-	TEST(TEST_CLASS, Deploy_Commit) {
+	TEST(TEST_CLASS, ContractStateUpdate_Commit) {
         // Arrange
         CacheValues values;
-        values.ScEntry = CreateSuperContractEntry();
-        values.DriveContractEntry = CreateDriveContractEntry();
+        values.ExpectedScEntry = CreateSuperContractEntry();
 
 		// Assert
 		RunTest(NotifyMode::Commit, values);
 	}
 
-	TEST(TEST_CLASS, Deploy_Rollback) {
+	TEST(TEST_CLASS, ContractStateUpdate_Rollback) {
         // Arrange
         CacheValues values;
-        values.ScEntry = CreateSuperContractEntry();
-        values.DriveContractEntry = CreateDriveContractEntry();
+        values.ExpectedScEntry = CreateSuperContractEntry();
 
 		// Assert
 		EXPECT_THROW(RunTest(NotifyMode::Rollback, values), catapult_runtime_error);

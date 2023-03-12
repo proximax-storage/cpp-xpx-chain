@@ -4,10 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <gtest/gtest.h>
 #include "SuperContractTestUtils.h"
-#include "src/cache/BcDriveCache.h"
-#include <catapult/cache/ReadOnlyCatapultCache.h>
+#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 
@@ -127,6 +125,9 @@ namespace catapult { namespace test {
 
 	void AssertEqualServicePayments(const std::vector<state::ServicePayment>& entry1, const std::vector<state::ServicePayment>& entry2) {
 		ASSERT_EQ(entry1.size(), entry2.size());
+		if (entry1.empty())
+			return;
+
 		for (auto i = 0u; i < entry1.size(); i++) {
 			const auto& expectedPayment = entry1[i];
 			const auto& actualPayment = entry2[i];
@@ -137,6 +138,9 @@ namespace catapult { namespace test {
 
 	void AssertEqualExecutorsInfo(const std::map<Key, state::ExecutorInfo>& entry1, const std::map<Key, state::ExecutorInfo>& entry2) {
 		ASSERT_EQ(entry1.size(), entry2.size());
+		if (entry1.empty())
+			return;
+
 		for (const auto& it : entry1){
 			auto actualEntry = entry2.find(it.first);
 			ASSERT_TRUE(actualEntry != entry2.end());
@@ -150,6 +154,9 @@ namespace catapult { namespace test {
 
 	void AssertEqualBatches(const std::map<uint64_t, state::Batch>& entry1, const std::map<uint64_t, state::Batch>& entry2) {
 		ASSERT_EQ(entry1.size(), entry2.size());
+		if (entry1.empty())
+			return;
+
 		for (const auto& it : entry1) {
 			auto actualEntry = entry2.find(it.first);
 			ASSERT_TRUE(actualEntry != entry2.end());
@@ -158,6 +165,9 @@ namespace catapult { namespace test {
 			EXPECT_EQ(it.second.PoExVerificationInformation, actualEntry->second.PoExVerificationInformation);
 
 			ASSERT_EQ(it.second.CompletedCalls.size(), actualEntry->second.CompletedCalls.size());
+			if (it.second.CompletedCalls.empty())
+				continue;
+
 			for (auto i = 0u; i < entry1.size(); i++) {
 				const auto& expectedCall = it.second.CompletedCalls[i];
 				const auto& actualCall = actualEntry->second.CompletedCalls[i];
@@ -172,6 +182,9 @@ namespace catapult { namespace test {
 
 	void AssertEqualRequestedCalls(const std::deque<state::ContractCall>& entry1, const std::deque<state::ContractCall>& entry2) {
 		ASSERT_EQ(entry1.size(), entry2.size());
+		if (entry1.empty())
+			return;
+
 		for (auto i = 0u; i < entry1.size(); i++) {
 			const auto& expectedContractCall = entry1[i];
 			const auto& actualContractCall = entry2[i];
@@ -207,9 +220,7 @@ namespace catapult { namespace test {
 		EXPECT_EQ(entry1.contractKey(), entry2.contractKey());
 	}
 
-	uint16_t DriveStateBrowserImpl::getOrderedReplicatorsCount(
-			const catapult::cache::ReadOnlyCatapultCache& cache,
-			const catapult::Key& driveKey) const {
+	uint16_t DriveStateBrowserImpl::getOrderedReplicatorsCount(const catapult::cache::ReadOnlyCatapultCache& cache, const catapult::Key& driveKey) const {
 //		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
 //		auto driveIter = driveCache.find(driveKey);
 //		const auto& driveEntry = driveIter.get();
@@ -218,13 +229,12 @@ namespace catapult { namespace test {
 		return {};
 	}
 
-	std::set<Key> DriveStateBrowserImpl::getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
-		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-		auto driveIter = driveCache.find(driveKey);
-		const auto& driveEntry = driveIter.get();
-
-        return driveEntry.replicators();
-	}
+    std::set<Key> DriveStateBrowserImpl::getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
+//        const auto& driveCache = cache.template sub<cache::BcDriveCache>();
+//        auto driveIter = driveCache.find(driveKey);
+//        const auto& driveEntry = driveIter.get();
+        return {};
+    }
 
 	std::set<Key> DriveStateBrowserImpl::getDrives(const cache::ReadOnlyCatapultCache &cache, const Key &replicatorKey) const {
 //		const auto& replicatorCache = cache.template sub<cache::ReplicatorCache>();
@@ -251,12 +261,12 @@ namespace catapult { namespace test {
 		return {};
 	}
 
-	Hash256 DriveStateBrowserImpl::getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey)
-	const {
-		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-		auto driveIter = driveCache.find(driveKey);
-		const auto& driveEntry = driveIter.get();
-
-        return driveEntry.lastModificationId();
+	Hash256 DriveStateBrowserImpl::getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
+//		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
+//		auto driveIter = driveCache.find(driveKey);
+//		const auto& driveEntry = driveIter.get();
+//
+//        return driveEntry.lastModificationId();
+		return {};
 	}
 }}

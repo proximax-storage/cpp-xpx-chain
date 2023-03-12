@@ -1,5 +1,5 @@
 /**
-*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Copyright 2023 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -67,10 +67,10 @@ namespace catapult { namespace observers {
 
         struct CacheValues {
         public:
-            CacheValues() : ScEntry(Key()), DriveContractEntry(Key()) {}
+            CacheValues() : ExpectedScEntry(Key()), DriveContractEntry(Key()) {}
 
         public:
-            state::SuperContractEntry ScEntry;
+            state::SuperContractEntry ExpectedScEntry;
             state::DriveContractEntry DriveContractEntry;
         };
 
@@ -84,7 +84,7 @@ namespace catapult { namespace observers {
 
             // Populate cache.
             if (mode == NotifyMode::Rollback) {
-                superContractCache.insert(values.ScEntry);
+                superContractCache.insert(values.ExpectedScEntry);
                 driveCache.insert(values.DriveContractEntry);
             }
 
@@ -92,11 +92,11 @@ namespace catapult { namespace observers {
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
-            auto superContractCacheIter = superContractCache.find(values.ScEntry.key());
+            auto superContractCacheIter = superContractCache.find(values.ExpectedScEntry.key());
             const auto& actualScEntry = superContractCacheIter.get();
-            test::AssertEqualSuperContractData(values.ScEntry, actualScEntry);
+            test::AssertEqualSuperContractData(values.ExpectedScEntry, actualScEntry);
 
-            auto driveCacheIter = driveCache.find(values.ScEntry.driveKey());
+            auto driveCacheIter = driveCache.find(values.ExpectedScEntry.driveKey());
             const auto& actualDriveContractEntry = driveCacheIter.get();
             test::AssertEqualDriveContract(values.DriveContractEntry, actualDriveContractEntry);
         }
@@ -105,7 +105,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, Deploy_Commit) {
         // Arrange
         CacheValues values;
-        values.ScEntry = CreateSuperContractEntry();
+        values.ExpectedScEntry = CreateSuperContractEntry();
         values.DriveContractEntry = CreateDriveContractEntry();
 
 		// Assert
@@ -115,7 +115,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, Deploy_Rollback) {
         // Arrange
         CacheValues values;
-        values.ScEntry = CreateSuperContractEntry();
+        values.ExpectedScEntry = CreateSuperContractEntry();
         values.DriveContractEntry = CreateDriveContractEntry();
 
 		// Assert

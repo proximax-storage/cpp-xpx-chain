@@ -5,25 +5,30 @@
 **/
 
 #pragma once
+
 #include "src/cache/SuperContractCache.h"
 #include "src/cache/SuperContractCacheStorage.h"
 #include "src/cache/DriveContractCache.h"
 #include "src/cache/DriveContractCacheStorage.h"
+#include "src/state/SuperContractEntry.h"
 #include "src/model/SuperContractEntityType.h"
 #include "src/model/EndBatchExecutionModel.h"
 #include "src/model/DeployContractTransaction.h"
 #include "src/state/DriveContractEntry.h"
 #include "src/state/SuperContractEntry.h"
-#include "catapult/model/EntityPtr.h"
-#include "catapult/model/EntityBody.h"
-#include "catapult/model/Mosaic.h"
 #include "catapult/model/SupercontractModel.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "plugins/txes/storage/src/state/DriveStateBrowserImpl.h"
-#include "tests/test/cache/CacheTestUtils.h"
+#include "plugins/txes/storage/src/cache/ReplicatorCache.h"
+#include "plugins/txes/storage/src/cache/ReplicatorCacheStorage.h"
+#include "plugins/txes/storage/src/cache/BcDriveCache.h"
+#include "plugins/txes/storage/src/cache/BcDriveCacheStorage.h"
+#include "plugins/txes/storage/tests/test/StorageTestUtils.h"
 #include "tests/test/nodeps/Random.h"
-#include "tests/TestHarness.h"
+#include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 
@@ -36,23 +41,10 @@ namespace catapult { namespace test {
 																 int completedCallCount,
 																 int releaseTransactionCount);
 
-	/// Creates a transaction.
-	template<typename TTransaction>
-	model::UniqueEntityPtr<TTransaction> CreateTransaction(model::EntityType type, size_t additionalSize = 0) {
-		uint32_t entitySize = sizeof(TTransaction) + additionalSize;
-		auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(entitySize);
-		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
-		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
-		pTransaction->Type = type;
-		pTransaction->Size = entitySize;
-
-		return pTransaction;
-	}
-
 	/// Creates a automatic executions payment transaction.
 	template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateAutomaticExecutionsPaymentTransaction() {
-		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_AutomaticExecutionsPaymentTransaction);
+		auto pTransaction = test::CreateTransaction<TTransaction>(model::Entity_Type_AutomaticExecutionsPaymentTransaction);
 		pTransaction->ContractKey = test::GenerateRandomByteArray<Key>();
 		pTransaction->AutomaticExecutionsNumber = test::Random32();
 		return pTransaction;
@@ -200,35 +192,36 @@ namespace catapult { namespace test {
 	void AssertEqualSuperContractData(const state::SuperContractEntry& entry1, const state::SuperContractEntry& entry2);
 	void AssertEqualDriveContract(const state::DriveContractEntry& entry1, const state::DriveContractEntry& entry2);
 
-    class DriveStateBrowserImpl : public state::DriveStateBrowser {
-    public:
-        uint16_t getOrderedReplicatorsCount(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
-
-        Key getDriveOwner(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
-
-        std::set<Key> getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
-
-        std::set<Key> getDrives(const cache::ReadOnlyCatapultCache& cache, const Key& replicatorKey) const override;
-
-        Hash256 getDriveState(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
-
-        Hash256 getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
-    };
-
 	/// Cache factory for creating a catapult cache composed of operation cache and core caches.
 	struct SuperContractCacheFactory {
 	private:
-		static auto CreateSubCachesWithSuperContractCache(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder) {
-			std::vector<size_t> cacheIds = {
-				cache::SuperContractCache::Id,
-				cache::DriveContractCache::Id,
-			};
+		static auto CreateSubCachesWithSuperContractV2Cache(const config::BlockchainConfiguration& config) {
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
-			auto maxId = *std::max_element(cacheIds.begin(), cacheIds.end());
-			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(maxId + 1);
+			std::vector<size_t> cacheIds = {
+					cache::SuperContractCache::Id,
+					cache::DriveContractCache::Id,
+					cache::ReplicatorCache::Id};
+			auto maxId = std::max_element(cacheIds.begin(), cacheIds.end());
+			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(*maxId + 1);
 
 			subCaches[cache::SuperContractCache::Id] = MakeSubCachePlugin<cache::SuperContractCache, cache::SuperContractCacheStorage>(pConfigHolder);
 			subCaches[cache::DriveContractCache::Id] = MakeSubCachePlugin<cache::DriveContractCache, cache::DriveContractCacheStorage>(pConfigHolder);
+            subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
+
+//			std::vector<size_t> cacheIds = {
+//					cache::BcDriveCache::Id,
+//					cache::DownloadChannelCache::Id,
+//					cache::ReplicatorCache::Id,
+//					cache::PriorityQueueCache::Id,
+//			};
+//			auto maxId = *std::max_element(cacheIds.begin(), cacheIds.end());
+//			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(maxId + 1);
+//			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+//			subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
+//			subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
+//			subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
+//			subCaches[cache::PriorityQueueCache::Id] = MakeSubCachePlugin<cache::PriorityQueueCache, cache::PriorityQueueCacheStorage>(pConfigHolder);
 
 			return subCaches;
 		}
@@ -236,16 +229,12 @@ namespace catapult { namespace test {
 	public:
 		/// Creates an empty catapult cache around default configuration.
 		static cache::CatapultCache Create() {
-			auto pConfigHolder = config::CreateMockConfigurationHolder();
-			auto subCaches = CreateSubCachesWithSuperContractCache(pConfigHolder);
-			CoreSystemCacheFactory::CreateSubCaches(pConfigHolder->Config(), subCaches);
-			return cache::CatapultCache(std::move(subCaches));
+			return Create(test::MutableBlockchainConfiguration().ToConst());
 		}
 
 		/// Creates an empty catapult cache around \a config.
 		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto subCaches = CreateSubCachesWithSuperContractCache(pConfigHolder);
+			auto subCaches = CreateSubCachesWithSuperContractV2Cache(config);
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));
 		}
