@@ -1,5 +1,5 @@
 /**
-*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Copyright 2023 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -30,19 +30,19 @@ namespace catapult { namespace observers {
 
         struct CacheValues {
         public:
-            CacheValues() : InitialScEntry(Key()), ScEntry(Key()) {}
+            CacheValues() : InitialScEntry(Key()), ExpectedScEntry(Key()) {}
 
         public:
             state::SuperContractEntry InitialScEntry;
-            state::SuperContractEntry ScEntry;
+            state::SuperContractEntry ExpectedScEntry;
         };
 
         void RunTest(NotifyMode mode, const CacheValues& values) {
             // Arrange:
             ObserverTestContext context(mode, Current_Height);
             auto notification = Notification(
-                    values.ScEntry.key(),
-                    values.ScEntry.automaticExecutionsInfo().AutomatedExecutionsNumber);
+                    values.ExpectedScEntry.key(),
+                    values.ExpectedScEntry.automaticExecutionsInfo().AutomatedExecutionsNumber);
             auto pObserver = CreateAutomaticExecutionsReplenishmentObserver();
             auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
 
@@ -55,7 +55,7 @@ namespace catapult { namespace observers {
             // Assert: check the cache
             auto superContractCacheIter = superContractCache.find(values.InitialScEntry.key());
             const auto& actualScEntry = superContractCacheIter.get();
-            test::AssertEqualSuperContractData(values.ScEntry, actualScEntry);
+            test::AssertEqualSuperContractData(values.ExpectedScEntry, actualScEntry);
         }
 	}
 
@@ -64,8 +64,8 @@ namespace catapult { namespace observers {
         CacheValues values;
         values.InitialScEntry = CreateSuperContractEntry();
         values.InitialScEntry.automaticExecutionsInfo().AutomatedExecutionsNumber = 0;
-        values.ScEntry = values.InitialScEntry;
-        values.ScEntry.automaticExecutionsInfo().AutomatedExecutionsNumber = Number;
+        values.ExpectedScEntry = values.InitialScEntry;
+        values.ExpectedScEntry.automaticExecutionsInfo().AutomatedExecutionsNumber = Number;
 
         // Assert
         RunTest(NotifyMode::Commit, values);
@@ -76,7 +76,33 @@ namespace catapult { namespace observers {
         CacheValues values;
         values.InitialScEntry = CreateSuperContractEntry();
         values.InitialScEntry.automaticExecutionsInfo().AutomatedExecutionsNumber = 0;
-        values.ScEntry = values.InitialScEntry;
+        values.ExpectedScEntry = values.InitialScEntry;
+
+        // Assert
+        RunTest(NotifyMode::Commit, values);
+    }
+
+    TEST(TEST_CLASS, AutomaticExecutionsReplenishment_Commit_DeploymentStatusIsCompleted) {
+        // Arrange
+        CacheValues values;
+        values.InitialScEntry = CreateSuperContractEntry();
+        values.InitialScEntry.batches()[0] = {};
+        values.ExpectedScEntry = values.InitialScEntry;
+        values.ExpectedScEntry.automaticExecutionsInfo().AutomatedExecutionsNumber = Number;
+        values.ExpectedScEntry.automaticExecutionsInfo().AutomaticExecutionsPrepaidSince = Current_Height;
+
+        // Assert
+        RunTest(NotifyMode::Commit, values);
+    }
+
+    TEST(TEST_CLASS, AutomaticExecutionsReplenishment_Commit_AutomaticExecutionsPrepaidSinceIsSet) {
+        // Arrange
+        CacheValues values;
+        values.InitialScEntry = CreateSuperContractEntry();
+        values.InitialScEntry.batches()[0] = {};
+        values.InitialScEntry.automaticExecutionsInfo().AutomaticExecutionsPrepaidSince = Height(1);
+        values.ExpectedScEntry = values.InitialScEntry;
+        values.ExpectedScEntry.automaticExecutionsInfo().AutomatedExecutionsNumber = Number;
 
         // Assert
         RunTest(NotifyMode::Commit, values);
