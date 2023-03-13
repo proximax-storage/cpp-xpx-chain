@@ -23,6 +23,7 @@
 #include "catapult/cache_tx/MemoryPtCache.h"
 #include "catapult/model/TransactionStatus.h"
 #include "catapult/thread/FutureUtils.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "catapult/utils/SpinLock.h"
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
@@ -316,7 +317,8 @@ namespace catapult { namespace chain {
 		class UpdaterTestContext {
 		public:
 			UpdaterTestContext()
-					: m_transactionsCache(cache::MemoryCacheOptions(1024, 1000))
+					: m_transactionsCache(cache::MemoryCacheOptions(1024, 1000),
+									  std::make_shared<model::TransactionFeeCalculator>())
 					, m_pUniqueValidator(std::make_unique<MockPtValidator>())
 					, m_pValidator(m_pUniqueValidator.get())
 					, m_pPool(test::CreateStartedIoThreadPool())

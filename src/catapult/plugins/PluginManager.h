@@ -39,6 +39,7 @@
 #include "catapult/utils/DiagnosticCounter.h"
 #include "catapult/validators/DemuxValidatorBuilder.h"
 #include "catapult/validators/ValidatorTypes.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "catapult/plugins.h"
 #include "catapult/types.h"
 #include "PluginUtils.h"
@@ -309,6 +310,12 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
+		// region transaction fee limiter
+
+		std::shared_ptr<model::TransactionFeeCalculator> transactionFeeCalculator() const;
+
+		// endregion
+
 	private:
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		StorageConfiguration m_storageConfig;
@@ -341,6 +348,8 @@ namespace catapult { namespace plugins {
 		std::unique_ptr<observers::LiquidityProviderExchangeObserver> m_pLiquidityProviderExchangeObserver;
 
 		std::vector<std::unique_ptr<observers::StorageUpdatesListener>> m_storageUpdatesListeners;
+
+		std::shared_ptr<model::TransactionFeeCalculator> m_pTransactionFeeCalculator;
 	};
 }}
 

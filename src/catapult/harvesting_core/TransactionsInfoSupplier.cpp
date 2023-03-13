@@ -88,12 +88,17 @@ namespace catapult { namespace harvesting {
 			// 1. get all transactions from the ut cache
 			auto comparer = MaxFeeMultiplierComparer<SortDirection::Descending>();
 			auto maximizer = TransactionFeeMaximizer();
-			auto candidates = cache::GetFirstTransactionInfoPointers(utCacheView, count, comparer, [&utFacade, &maximizer](
+			auto candidates = cache::GetFirstTransactionInfoPointers(utCacheView,
+																	 count,
+																	 comparer,
+																	 [&utFacade,
+																	  &maximizer,
+																	  &transactionFeeCalculator=utCacheView.transactionFeeCalculator()](
 					const auto& transactionInfo) {
 				if (!utFacade.apply(transactionInfo))
 					return false;
 
-				maximizer.apply(transactionInfo);
+				maximizer.apply(transactionInfo, transactionFeeCalculator);
 				return true;
 			});
 

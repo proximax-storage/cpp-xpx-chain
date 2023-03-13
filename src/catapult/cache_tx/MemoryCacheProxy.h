@@ -22,6 +22,8 @@
 #include "MemoryCacheOptions.h"
 #include <memory>
 
+namespace catapult::model{ class TransactionFeeCalculator; }
+
 namespace catapult { namespace cache {
 
 	/// A delegating proxy around a memory-based cache.
@@ -29,16 +31,19 @@ namespace catapult { namespace cache {
 	class MemoryCacheProxy : public TCache {
 	public:
 		/// Creates a proxy around \a options.
-		explicit MemoryCacheProxy(const MemoryCacheOptions& options)
-				: m_memoryCache(options)
+		explicit MemoryCacheProxy(const MemoryCacheOptions& options,
+								  std::shared_ptr<model::TransactionFeeCalculator>&& pTransactionFeeCalculator)
+			    : m_memoryCache(options, std::move(pTransactionFeeCalculator))
 				, m_pCache(&m_memoryCache)
 		{}
 
 		/// Creates a proxy around \a options and the write-only cache created by
 		/// \a factory with \a args arguments.
 		template<typename TMutableCacheFactory, typename... TArgs>
-		explicit MemoryCacheProxy(const MemoryCacheOptions& options, TMutableCacheFactory factory, TArgs&&... args)
-				: m_memoryCache(options)
+		explicit MemoryCacheProxy(const MemoryCacheOptions& options,
+								  std::shared_ptr<model::TransactionFeeCalculator>&& pTransactionFeeCalculator,
+								  TMutableCacheFactory factory, TArgs&&... args)
+								  : m_memoryCache(options, std::move(pTransactionFeeCalculator))
 				, m_pMutableCache(factory(m_memoryCache, std::forward<TArgs>(args)...))
 				, m_pCache(m_pMutableCache.get())
 		{}

@@ -52,10 +52,12 @@ namespace catapult { namespace cache {
 			uint64_t maxResponseSize,
 			const TransactionDataContainer& transactionDataContainer,
 			const IdLookup& idLookup,
+			std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator,
 			utils::SpinReaderWriterLock::ReaderLockGuard&& readLock)
 			: m_maxResponseSize(maxResponseSize)
 			, m_transactionDataContainer(transactionDataContainer)
 			, m_idLookup(idLookup)
+			, m_pTransactionFeeCalculator(std::move(pTransactionFeeCalculator))
 			, m_readLock(std::move(readLock))
 	{}
 
@@ -91,7 +93,11 @@ namespace catapult { namespace cache {
 		uint64_t totalSize = 0;
 		UnknownTransactions transactions;
 		for (const auto& data : m_transactionDataContainer) {
-			if (data.pEntity->MaxFee < model::CalculateTransactionFee(minFeeMultiplier, *data.pEntity, feeInterest, feeInterestDenominator))
+			if (data.pEntity->MaxFee < m_pTransactionFeeCalculator->calculateTransactionFee(
+											   minFeeMultiplier,
+											   *data.pEntity,
+											   feeInterest,
+											   feeInterestDenominator))
 				continue;
 
 			auto shortHash = utils::ToShortHash(data.EntityHash);
@@ -107,6 +113,10 @@ namespace catapult { namespace cache {
 		}
 
 		return transactions;
+	}
+
+	const model::TransactionFeeCalculator& MemoryUtCacheView::transactionFeeCalculator() const {
+		return *m_pTransactionFeeCalculator;
 	}
 
 	// endregion
@@ -211,9 +221,11 @@ namespace catapult { namespace cache {
 		AccountCounters Counters;
 	};
 
-	MemoryUtCache::MemoryUtCache(const MemoryCacheOptions& options)
+	MemoryUtCache::MemoryUtCache(const MemoryCacheOptions& options,
+								 std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator)
 			: m_options(options)
 			, m_idSequence(0)
+			, m_pTransactionFeeCalculator(std::move(pTransactionFeeCalculator))
 			, m_pImpl(std::make_unique<Impl>())
 	{}
 
@@ -221,7 +233,11 @@ namespace catapult { namespace cache {
 
 	MemoryUtCacheView MemoryUtCache::view() const {
 		auto readLock = m_lock.acquireReader();
-		return MemoryUtCacheView(m_options.MaxResponseSize, m_pImpl->TransactionDataContainer, m_pImpl->IdLookup, std::move(readLock));
+		return MemoryUtCacheView(m_options.MaxResponseSize,
+								 m_pImpl->TransactionDataContainer,
+								 m_pImpl->IdLookup,
+								 m_pTransactionFeeCalculator,
+								 std::move(readLock));
 	}
 
 	UtCacheModifierProxy MemoryUtCache::modifier() {

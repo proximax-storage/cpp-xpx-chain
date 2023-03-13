@@ -22,6 +22,7 @@
 #include "mongo/src/MongoChainInfoUtils.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "mongo/tests/test/MongoReceiptTestUtils.h"
 #include "mongo/tests/test/MongoTestUtils.h"
 #include "mongo/tests/test/mocks/MockReceiptMapper.h"
@@ -66,15 +67,17 @@ namespace catapult { namespace mongo {
 			auto mockReceiptType = utils::to_underlying_type(mocks::MockReceipt::Receipt_Type);
 			pMongoReceiptRegistry->registerPlugin(mocks::CreateMockReceiptMongoPlugin(mockReceiptType));
 			const auto& receiptRegistry = *pMongoReceiptRegistry;
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			const auto& transactionFeeCalculator = *pTransactionFeeCalculator;
 			auto pBlockStorage = test::CreateMongoStorage<io::LightBlockStorage>(
 					std::move(pTransactionPlugin),
 					test::DbInitializationType::None,
 					errorPolicyMode,
-					[&receiptRegistry](auto& context, const auto& transactionRegistry) {
-						return mongo::CreateMongoBlockStorage(context, transactionRegistry, receiptRegistry);
+					[&receiptRegistry, &transactionFeeCalculator](auto& context, const auto& transactionRegistry) {
+						return mongo::CreateMongoBlockStorage(context, transactionRegistry, receiptRegistry, transactionFeeCalculator);
 					});
 
-			return decltype(pBlockStorage)(pBlockStorage.get(), [pMongoReceiptRegistry, pBlockStorage](const auto*) {});
+			return decltype(pBlockStorage)(pBlockStorage.get(), [pMongoReceiptRegistry, pBlockStorage, pTransactionFeeCalculator](const auto*) {});
 		}
 
 		size_t GetNumEntitiesAtHeight(
@@ -191,7 +194,8 @@ namespace catapult { namespace mongo {
 			auto database = connection[test::DatabaseName()];
 
 			const auto& block = expectedElement.Block;
-			auto totalFee = model::CalculateBlockTransactionsInfo(block).TotalFee;
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto totalFee = model::CalculateBlockTransactionsInfo(block, transactionFeeCalculator).TotalFee;
 
 			auto filter = document() << "block.height" << static_cast<int64_t>(block.Height.unwrap()) << finalize;
 			auto result = database["blocks"].find_one(filter.view()).value();

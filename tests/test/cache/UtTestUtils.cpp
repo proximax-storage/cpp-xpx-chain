@@ -21,11 +21,14 @@
 #include "UtTestUtils.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
 #include "tests/test/core/EntityTestUtils.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace test {
 
 	std::unique_ptr<cache::MemoryUtCache> CreateSeededMemoryUtCache(uint32_t count) {
-		auto pCache = std::make_unique<cache::MemoryUtCache>(cache::MemoryCacheOptions(1000, 1000));
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		auto pCache = std::make_unique<cache::MemoryUtCache>(
+				cache::MemoryCacheOptions(1000, 1000), pTransactionFeeCalculator);
 		auto transactionInfos = CreateTransactionInfos(count);
 		AddAll(*pCache, transactionInfos);
 		return pCache;

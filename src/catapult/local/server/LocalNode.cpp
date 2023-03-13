@@ -73,7 +73,9 @@ namespace catapult { namespace local {
 					, m_storage(
 							m_pBootstrapper->subscriptionManager().createBlockStorage(m_pBlockChangeSubscriber),
 							CreateStagingBlockStorage(m_dataDirectory))
-					, m_pUtCache(m_pBootstrapper->subscriptionManager().createUtCache(extensions::GetUtCacheOptions(m_pBootstrapper->config().Node)))
+					, m_pUtCache(m_pBootstrapper->subscriptionManager().createUtCache(
+							extensions::GetUtCacheOptions(m_pBootstrapper->config().Node),
+						    m_pBootstrapper->pluginManager().transactionFeeCalculator()))
 					, m_pTransactionStatusSubscriber(m_pBootstrapper->subscriptionManager().createTransactionStatusSubscriber())
 					, m_pStateChangeSubscriber(CreateStateChangeSubscriber(
 							m_pBootstrapper->subscriptionManager(),

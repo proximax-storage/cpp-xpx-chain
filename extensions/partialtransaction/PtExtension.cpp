@@ -36,8 +36,10 @@ namespace catapult { namespace partialtransaction {
 			// create and register the pt cache (it is optional, so not in server state)
 			auto& extensionManager = bootstrapper.extensionManager();
 			auto& subscriptionManager = bootstrapper.subscriptionManager();
-			extensionManager.addServiceRegistrar(CreatePtBootstrapperServiceRegistrar([&subscriptionManager, ptCacheOptions]() {
-				return subscriptionManager.createPtCache(ptCacheOptions);
+			extensionManager.addServiceRegistrar(CreatePtBootstrapperServiceRegistrar([&subscriptionManager,
+																					   ptCacheOptions,
+																					   feeCalculator=bootstrapper.pluginManager().transactionFeeCalculator()]() {
+				return subscriptionManager.createPtCache(ptCacheOptions, feeCalculator);
 			}));
 
 			// register other services

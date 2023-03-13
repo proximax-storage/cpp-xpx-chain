@@ -21,6 +21,7 @@
 #include "partialtransaction/src/PtService.h"
 #include "partialtransaction/src/PtBootstrapperService.h"
 #include "catapult/cache_tx/MemoryPtCache.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/local/PacketWritersServiceTestUtils.h"
 #include "tests/test/local/ServiceTestUtils.h"
 #include "tests/test/net/mocks/MockPacketWriters.h"
@@ -50,7 +51,9 @@ namespace catapult { namespace partialtransaction {
 			TestContext() {
 				// Arrange: register service dependencies
 				auto pBootstrapperRegistrar = CreatePtBootstrapperServiceRegistrar([]() {
-					return std::make_unique<cache::MemoryPtCacheProxy>(cache::MemoryCacheOptions(100, 100));
+					return std::make_unique<cache::MemoryPtCacheProxy>(
+							cache::MemoryCacheOptions(100, 100),
+							std::make_shared<model::TransactionFeeCalculator>());
 				});
 				pBootstrapperRegistrar->registerServices(locator(), testState().state());
 

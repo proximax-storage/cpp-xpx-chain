@@ -53,9 +53,11 @@ namespace catapult { namespace mongo {
 			return mappers::ToModel(cursor, numHashes);
 		}
 
-		void SaveBlockHeader(const mongocxx::database& database, const model::BlockElement& blockElement) {
+		void SaveBlockHeader(const mongocxx::database& database,
+							 const model::BlockElement& blockElement,
+							 const model::TransactionFeeCalculator& transactionFeeCalculator) {
 			auto blocks = database["blocks"];
-			auto dbBlock = mappers::ToDbModel(blockElement);
+			auto dbBlock = mappers::ToDbModel(blockElement, transactionFeeCalculator);
 
 			// in idempotent mode, if blockElement is already in the database, this call will be bypassed
 			// so nonzero inserted_count check is proper
@@ -160,9 +162,11 @@ namespace catapult { namespace mongo {
 			MongoBlockStorage(
 					MongoStorageContext& context,
 					const MongoTransactionRegistry& transactionRegistry,
-					const MongoReceiptRegistry& receiptRegistry)
+					const MongoReceiptRegistry& receiptRegistry,
+					const model::TransactionFeeCalculator& transactionFeeCalculator)
 					: m_context(context)
 					, m_transactionRegistry(transactionRegistry)
+					, m_transactionFeeCalculator(transactionFeeCalculator)
 					, m_receiptRegistry(receiptRegistry)
 					, m_database(m_context.createDatabaseConnection())
 					, m_errorPolicy(m_context.createCollectionErrorPolicy(""))
@@ -206,7 +210,7 @@ namespace catapult { namespace mongo {
 					CATAPULT_THROW_INVALID_ARGUMENT(out.str().c_str());
 				}
 
-				SaveBlockHeader(m_database, blockElement);
+				SaveBlockHeader(m_database, blockElement, m_transactionFeeCalculator);
 				SaveTransactions(m_context.bulkWriter(), height, blockElement.Transactions, m_transactionRegistry, m_errorPolicy);
 				if (blockElement.OptionalStatement)
 					SaveBlockStatement(m_context.bulkWriter(), height, *blockElement.OptionalStatement, m_receiptRegistry, m_errorPolicy);
@@ -249,6 +253,7 @@ namespace catapult { namespace mongo {
 			MongoStorageContext& m_context;
 			const MongoTransactionRegistry& m_transactionRegistry;
 			const MongoReceiptRegistry& m_receiptRegistry;
+			const model::TransactionFeeCalculator& m_transactionFeeCalculator;
 			MongoDatabase m_database;
 			MongoErrorPolicy m_errorPolicy;
 		};
@@ -257,7 +262,8 @@ namespace catapult { namespace mongo {
 	std::unique_ptr<io::LightBlockStorage> CreateMongoBlockStorage(
 			MongoStorageContext& context,
 			const MongoTransactionRegistry& transactionRegistry,
-			const MongoReceiptRegistry& receiptRegistry) {
-		return std::make_unique<MongoBlockStorage>(context, transactionRegistry, receiptRegistry);
+			const MongoReceiptRegistry& receiptRegistry,
+			const model::TransactionFeeCalculator& transactionFeeCalculator) {
+		return std::make_unique<MongoBlockStorage>(context, transactionRegistry, receiptRegistry, transactionFeeCalculator);
 	}
 }}

@@ -123,7 +123,9 @@ namespace catapult { namespace mongo {
 					? MongoErrorPolicy::Mode::Idempotent
 					: MongoErrorPolicy::Mode::Strict;
 			auto pMongoContext = std::make_shared<MongoStorageContext>(dbUri, dbName, pMongoBulkWriter, mongoErrorPolicyMode);
-			auto pPluginManager = std::make_shared<MongoPluginManager>(*pMongoContext, bootstrapper.configHolder());
+			auto pPluginManager = std::make_shared<MongoPluginManager>(*pMongoContext,
+																	   bootstrapper.configHolder(),
+																	   bootstrapper.pluginManager().transactionFeeCalculator());
 			auto pTransactionRegistry = CreateTransactionRegistry(pPluginManager, config.User.PluginsDirectory, dbConfig.Plugins);
 
 			// create mongo chain score provider and mongo (cache) storage
@@ -138,7 +140,10 @@ namespace catapult { namespace mongo {
 
 			// add a pre load handler for initializing (nemesis) storage
 			// (pPluginManager is kept alive by pTransactionRegistry)
-			auto pMongoBlockStorage = CreateMongoBlockStorage(*pMongoContext, *pTransactionRegistry, pPluginManager->receiptRegistry());
+			auto pMongoBlockStorage = CreateMongoBlockStorage(*pMongoContext,
+															  *pTransactionRegistry,
+															  pPluginManager->receiptRegistry(),
+															  pPluginManager->transactionFeeCalculator());
 
 			// empty unconfirmed and partial transactions collections
 			EmptyCollection(*pMongoContext, Ut_Collection_Name);
