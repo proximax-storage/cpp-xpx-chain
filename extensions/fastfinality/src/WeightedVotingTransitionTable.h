@@ -78,7 +78,8 @@ namespace catapult { namespace fastfinality {
 				sml::state<Precommit> + sml::event<SumOfPrecommitsSufficient> / ACTION(UpdateConfirmedBlock) = sml::state<Commit>,
 
 				sml::state<ConfirmedBlockRequest> + sml::on_entry<sml::_> / ACTION(RequestConfirmedBlock),
-				sml::state<ConfirmedBlockRequest> + sml::event<ConfirmedBlockNotReceived> = sml::state<LocalChainCheck>,
+				sml::state<ConfirmedBlockRequest> + sml::event<UnexpectedBlockHeight> = sml::state<LocalChainCheck>,
+				sml::state<ConfirmedBlockRequest> + sml::event<ConfirmedBlockNotReceived> / ACTION(IncrementRound) = sml::state<CommitteeSelection>,
 				sml::state<ConfirmedBlockRequest> + sml::event<ConfirmedBlockReceived> = sml::state<Commit>,
 
 				sml::state<Commit> + sml::on_entry<sml::_> / ACTION(CommitConfirmedBlock),

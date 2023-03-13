@@ -71,6 +71,15 @@ namespace catapult { namespace dbrb {
 	}
 
 	template<>
+	Hash256 Read(const uint8_t*& pBuffer) {
+		Hash256 hash;
+		std::memcpy(hash.data(), pBuffer, Hash256_Size);
+		pBuffer += Hash256_Size;
+
+		return hash;
+	}
+
+	template<>
 	MembershipChange Read(const uint8_t*& pBuffer) {
 		return static_cast<MembershipChange>(*pBuffer++);
 	}

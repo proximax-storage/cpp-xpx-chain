@@ -417,11 +417,11 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, &committeeManager, pConfigHolder, timeSupplier, dbrbConfig]() {
 			TRY_GET_FSM()
 
+			pFsmShared->dbrbProcess()->clearBroadcastData();
 			auto viewData = pFsmShared->dbrbViewFetcher().getLatestView();
 			if (viewData.empty())
 				viewData = dbrbConfig.BootstrapProcesses;
 			pFsmShared->dbrbProcess()->onViewDiscovered(viewData);
-			pFsmShared->dbrbProcess()->clearBroadcastData();
 			pFsmShared->dbrbProcess()->nodeRetreiver().broadcastNodes();
 
 			auto& committeeData = pFsmShared->committeeData();
@@ -904,7 +904,8 @@ namespace catapult { namespace fastfinality {
 					if (pBlock) {
 						if (pBlock->Height != expectedHeight) {
 							CATAPULT_LOG(debug) << "got block at unexpected height " << pBlock->Height << ", expected at " << expectedHeight;
-							continue;
+							pFsmShared->processEvent(UnexpectedBlockHeight{});
+							return;
 						}
 
 						const auto& committee = getCommitteeManager.committee();

@@ -24,13 +24,14 @@ namespace catapult { namespace fastfinality {
 				{ nodes[4], dbrb::MembershipChange::Leave },
 			};
 			auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
+			auto payloadHash = dbrb::CalculatePayloadHash(payload);
 			std::map<dbrb::ProcessId, catapult::Signature> certificate{
 				{ nodes[0], test::GenerateRandomArray<Signature_Size>() },
 				{ nodes[1], test::GenerateRandomArray<Signature_Size>() },
 				{ nodes[2], test::GenerateRandomArray<Signature_Size>() },
 				{ nodes[3], test::GenerateRandomArray<Signature_Size>() },
 			};
-			return dbrb::CommitMessage(nodes[0], nodes[1], payload, certificate, certificateView, currentView);
+			return dbrb::CommitMessage(nodes[0], payloadHash, certificate, certificateView, currentView);
 		}
 
 		template<typename TMessage>
@@ -172,13 +173,12 @@ namespace catapult { namespace fastfinality {
 				for (const auto& node : nodes)
 					view.Data.emplace(node, dbrb::MembershipChange::Join);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
-				return dbrb::AcknowledgedMessage(nodes[0], nodes[1], payload, view, test::GenerateRandomArray<Signature_Size>());
+				auto payloadHash = dbrb::CalculatePayloadHash(payload);
+				return dbrb::AcknowledgedMessage(nodes[0], payloadHash, view, test::GenerateRandomArray<Signature_Size>());
 			},
 			[](const dbrb::AcknowledgedMessage& originalMessage, const dbrb::AcknowledgedMessage& unpackedMessage) {
-				EXPECT_EQ(originalMessage.Initiator, unpackedMessage.Initiator);
 				EXPECT_EQ(originalMessage.View, unpackedMessage.View);
-				EXPECT_EQ(originalMessage.Payload->Size, unpackedMessage.Payload->Size);
-				EXPECT_EQ_MEMORY(originalMessage.Payload.get(), unpackedMessage.Payload.get(), originalMessage.Payload->Size);
+				EXPECT_EQ(originalMessage.PayloadHash, unpackedMessage.PayloadHash);
 			});
 	}
 
@@ -187,9 +187,7 @@ namespace catapult { namespace fastfinality {
 				return CreateCommitMessage(nodes);
 			},
 			[](const dbrb::CommitMessage& originalMessage, const dbrb::CommitMessage& unpackedMessage) {
-				EXPECT_EQ(originalMessage.Initiator, unpackedMessage.Initiator);
-				EXPECT_EQ(originalMessage.Payload->Size, unpackedMessage.Payload->Size);
-				EXPECT_EQ_MEMORY(originalMessage.Payload.get(), unpackedMessage.Payload.get(), originalMessage.Payload->Size);
+			 	EXPECT_EQ(originalMessage.PayloadHash, unpackedMessage.PayloadHash);
 				EXPECT_EQ(originalMessage.CertificateView, unpackedMessage.CertificateView);
 				EXPECT_EQ(originalMessage.CurrentView, unpackedMessage.CurrentView);
 			});
@@ -236,8 +234,7 @@ namespace catapult { namespace fastfinality {
 				EXPECT_EQ(originalMessage.State.Stored->Sender, unpackedMessage.State.Stored->Sender);
 				EXPECT_EQ(originalMessage.State.Stored->Type, unpackedMessage.State.Stored->Type);
 				EXPECT_EQ(originalMessage.State.Stored->Signature, unpackedMessage.State.Stored->Signature);
-				EXPECT_EQ(originalMessage.State.Stored->Payload->Size, unpackedMessage.State.Stored->Payload->Size);
-				EXPECT_EQ_MEMORY(originalMessage.State.Stored->Payload.get(), unpackedMessage.State.Stored->Payload.get(), originalMessage.State.Stored->Payload->Size);
+				EXPECT_EQ(originalMessage.State.Stored->PayloadHash, unpackedMessage.State.Stored->PayloadHash);
 				EXPECT_EQ(originalMessage.State.Stored->CertificateView, unpackedMessage.State.Stored->CertificateView);
 				EXPECT_EQ(originalMessage.State.Stored->CurrentView, unpackedMessage.State.Stored->CurrentView);
 
@@ -281,8 +278,7 @@ namespace catapult { namespace fastfinality {
 				EXPECT_EQ(originalMessage.State.Stored->Sender, unpackedMessage.State.Stored->Sender);
 				EXPECT_EQ(originalMessage.State.Stored->Type, unpackedMessage.State.Stored->Type);
 				EXPECT_EQ(originalMessage.State.Stored->Signature, unpackedMessage.State.Stored->Signature);
-				EXPECT_EQ(originalMessage.State.Stored->Payload->Size, unpackedMessage.State.Stored->Payload->Size);
-				EXPECT_EQ_MEMORY(originalMessage.State.Stored->Payload.get(), unpackedMessage.State.Stored->Payload.get(), originalMessage.State.Stored->Payload->Size);
+				EXPECT_EQ(originalMessage.State.Stored->PayloadHash, unpackedMessage.State.Stored->PayloadHash);
 				EXPECT_EQ(originalMessage.State.Stored->CertificateView, unpackedMessage.State.Stored->CertificateView);
 				EXPECT_EQ(originalMessage.State.Stored->CurrentView, unpackedMessage.State.Stored->CurrentView);
 
@@ -326,8 +322,7 @@ namespace catapult { namespace fastfinality {
 				EXPECT_EQ(originalMessage.State.Stored->Sender, unpackedMessage.State.Stored->Sender);
 				EXPECT_EQ(originalMessage.State.Stored->Type, unpackedMessage.State.Stored->Type);
 				EXPECT_EQ(originalMessage.State.Stored->Signature, unpackedMessage.State.Stored->Signature);
-				EXPECT_EQ(originalMessage.State.Stored->Payload->Size, unpackedMessage.State.Stored->Payload->Size);
-				EXPECT_EQ_MEMORY(originalMessage.State.Stored->Payload.get(), unpackedMessage.State.Stored->Payload.get(), originalMessage.State.Stored->Payload->Size);
+				EXPECT_EQ(originalMessage.State.Stored->PayloadHash, unpackedMessage.State.Stored->PayloadHash);
 				EXPECT_EQ(originalMessage.State.Stored->CertificateView, unpackedMessage.State.Stored->CertificateView);
 				EXPECT_EQ(originalMessage.State.Stored->CurrentView, unpackedMessage.State.Stored->CurrentView);
 
@@ -414,13 +409,12 @@ namespace catapult { namespace fastfinality {
 				for (const auto& node : nodes)
 					view.Data.emplace(node, dbrb::MembershipChange::Join);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
-				return dbrb::DeliverMessage(nodes[0], nodes[1], payload, view);
+				auto payloadHash = dbrb::CalculatePayloadHash(payload);
+				return dbrb::DeliverMessage(nodes[0], payloadHash, view);
 			},
 			[](const dbrb::DeliverMessage& originalMessage, const dbrb::DeliverMessage& unpackedMessage) {
-				EXPECT_EQ(originalMessage.Initiator, unpackedMessage.Initiator);
 				EXPECT_EQ(originalMessage.View, unpackedMessage.View);
-				EXPECT_EQ(originalMessage.Payload->Size, unpackedMessage.Payload->Size);
-				EXPECT_EQ_MEMORY(originalMessage.Payload.get(), unpackedMessage.Payload.get(), originalMessage.Payload->Size);
+				EXPECT_EQ(originalMessage.PayloadHash, unpackedMessage.PayloadHash);
 			});
 	}
 }}

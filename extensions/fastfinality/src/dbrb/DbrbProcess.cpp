@@ -10,7 +10,6 @@
 #include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/PacketPayload.h"
 #include "catapult/thread/IoThreadPool.h"
-#include "catapult/thread/Future.h"
 #include <utility>
 
 
@@ -27,7 +26,7 @@ namespace catapult { namespace dbrb {
 			, m_keyPair(keyPair)
 			, m_nodeRetreiver(packetIoPickers, thisNode.metadata().NetworkIdentifier)
 			, m_pMessageSender(std::make_shared<MessageSender>(std::move(pWriters), m_nodeRetreiver))
-			, m_pPool(pPool)
+			, m_strand(pPool->ioContext())
 			, m_transactionSender(std::move(transactionSender)) {
 		m_node.Node = thisNode;
 		auto pPackedNode = ionet::PackNode(thisNode);
@@ -37,20 +36,22 @@ namespace catapult { namespace dbrb {
 	}
 
 	void DbrbProcess::registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers) {
-		std::weak_ptr<DbrbProcess> pThisWeak = shared_from_this();
-		auto handler = [pThisWeak, &converter = m_converter](const auto& packet, auto& context) {
+		auto handler = [pThisWeak = weak_from_this(), &converter = m_converter, &strand = m_strand](const auto& packet, auto& context) {
 			auto pThis = pThisWeak.lock();
 			if (!pThis)
 				return;
 
 			const auto& messagePacket = static_cast<const MessagePacket&>(packet);
-			auto pBuffer = messagePacket.payload();
 			auto hash = CalculateHash(messagePacket.buffers());
 			if (!crypto::Verify(messagePacket.Sender, hash, messagePacket.Signature))
 				return;
 
 			auto pMessage = converter.toMessage(packet);
-			pThis->processMessage(*pMessage);
+			boost::asio::post(strand, [pThisWeak, pMessage]() {
+				auto pThis = pThisWeak.lock();
+				if (pThis)
+					pThis->processMessage(*pMessage);
+			});
 		};
 		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Reconfig_Message, handler);
 		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Reconfig_Confirm_Message, handler);
@@ -75,52 +76,58 @@ namespace catapult { namespace dbrb {
 	// Basic operations:
 
 	void DbrbProcess::leave() {
-		std::lock_guard<std::mutex> guard(m_mutex);
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this()]() {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
+				return;
 
-		// Can only request to leave when the process is participating in the system.
-		if (m_membershipState != MembershipState::Participating)
-			return;
+			// Can only request to leave when the process is participating in the system.
+			if (pThis->m_membershipState != MembershipState::Participating)
+				return;
 
-//		const auto& pAcknowledgeable = m_state.Acknowledgeable;
-//		const bool processIsSender = pAcknowledgeable.has_value() && pAcknowledgeable->Sender == m_id;
-//		bool needsPermissionToLeave = m_payloadIsDelivered || processIsSender;
-//		if (needsPermissionToLeave && !m_canLeave)
-//			return;	// TODO: Can notify user about the reason why leave failed
+//			const auto& pAcknowledgeable = m_state.Acknowledgeable;
+//			const bool processIsSender = pAcknowledgeable.has_value() && pAcknowledgeable->Sender == m_id;
+//			bool needsPermissionToLeave = m_payloadIsDelivered || processIsSender;
+//			if (needsPermissionToLeave && !m_canLeave)
+//				return;	// TODO: Can notify user about the reason why leave failed
 
-		m_membershipState = MembershipState::Leaving;
+			pThis->m_membershipState = MembershipState::Leaving;
 
-		// Disseminate a Reconfig message for every currently installed view...
-		for (const auto& view : m_installedViews) {
-			auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChange::Leave, view);
-			disseminate(pMessage, view.members());
-		}
+			// Disseminate a Reconfig message for every currently installed view...
+			for (const auto& view : pThis->m_installedViews) {
+				auto pMessage = std::make_shared<ReconfigMessage>(pThis->m_id, pThis->m_id, MembershipChange::Leave, view);
+				pThis->disseminate(pMessage, view.members());
+			}
 
-		// ...and keep disseminating new Reconfig messages whenever a new view is installed.
-		m_disseminateReconfig = true;
+			// ...and keep disseminating new Reconfig messages whenever a new view is installed.
+			pThis->m_disseminateReconfig = true;
+		});
 	}
 
 	void DbrbProcess::broadcast(const Payload& payload) {
-		std::lock_guard<std::mutex> guard(m_mutex);
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), payload]() {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
+				return;
 
-		if (!m_currentView.isMember(m_id)) {
-			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: not a member of the current view " << m_currentView << ", aborting broadcast.";
-			return;
-		}
+			if (!pThis->m_currentView.isMember(pThis->m_id)) {
+				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: not a member of the current view " << pThis->m_currentView << ", aborting broadcast.";
+				return;
+			}
 
-		// TODO: fix view search in set.
-		if (!m_installedViews.count(m_currentView)) {
-			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: Current view is not installed, aborting broadcast.";
-			return; // The process waits to install some view and then disseminates the prepare message.
-					// TODO: Can notify user about the reason why broadcast failed
-		}
+			// TODO: fix view search in set.
+			if (!pThis->m_installedViews.count(pThis->m_currentView)) {
+				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: Current view is not installed, aborting broadcast.";
+				return; // The process waits to install some view and then disseminates the prepare message.
+						// TODO: Can notify user about the reason why broadcast failed
+			}
 
-		auto pMessage = std::make_shared<PrepareMessage>(m_id, payload, m_currentView);
-		disseminate(pMessage, pMessage->View.members());
+			auto pMessage = std::make_shared<PrepareMessage>(pThis->m_id, payload, pThis->m_currentView);
+			pThis->disseminate(pMessage, pMessage->View.members());
+		});
 	}
 
 	void DbrbProcess::processMessage(const Message& message) {
-		std::lock_guard<std::mutex> guard(m_mutex);
-
 		switch (message.Type) {
 			case ionet::PacketType::Dbrb_Reconfig_Message: {
 				CATAPULT_LOG(error) << "[DBRB] Received RECONFIG message from " << message.Sender << ".";
@@ -178,9 +185,11 @@ namespace catapult { namespace dbrb {
 	}
 
 	void DbrbProcess::clearBroadcastData() {
-		std::lock_guard<std::mutex> guard(m_mutex);
-		m_broadcastData.clear();
-		m_pMessageSender->clearQueue();
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this()]() {
+			auto pThis = pThisWeak.lock();
+			if (pThis)
+				pThis->m_broadcastData.clear();
+		});
 	}
 
 	// Basic private methods:
@@ -189,26 +198,21 @@ namespace catapult { namespace dbrb {
 		auto pPacket = pMessage->toNetworkPacket(&m_keyPair);
 		for (auto iter = recipients.begin(); iter != recipients.end(); ++iter) {
 			if (m_id == *iter) {
-				boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), pMessage]() {
-					pThis->processMessage(*pMessage);
+				boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pMessage]() {
+					auto pThis = pThisWeak.lock();
+					if (pThis)
+						pThis->processMessage(*pMessage);
 				});
 				recipients.erase(iter);
 				break;
 			}
 		}
 
-		m_pMessageSender->enqueue(pPacket, recipients);
+		m_pMessageSender->send(pPacket, recipients);
 	}
 
 	void DbrbProcess::send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient) {
-		auto pPacket = pMessage->toNetworkPacket(&m_keyPair);
-		if (m_id == recipient) {
-			boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), pMessage]() {
-				pThis->processMessage(*pMessage);
-			});
-		} else {
-			m_pMessageSender->enqueue(pPacket, std::set<ProcessId>{ recipient });
-		}
+		disseminate(pMessage, std::set<ProcessId>{ recipient });
 	}
 
 	void DbrbProcess::prepareForStateUpdates(const InstallMessageData& installMessageData) {
@@ -247,21 +251,25 @@ namespace catapult { namespace dbrb {
 			// Updating storedCommits.
 			const auto& pStored = message.State.Stored;
 			if(pStored.has_value()) {
-				const auto& certificate = pStored->Certificate;
-				const auto& certificateView = pStored->CertificateView;
-				const auto& payload = pStored->Payload;
+				auto iter = m_broadcastData.find(pStored->PayloadHash);
+				if(iter != m_broadcastData.end()) {
+					const auto& certificate = pStored->Certificate;
+					const auto& certificateView = pStored->CertificateView;
+					const auto& payload = iter->second.Payload;
+					if (payload) {
+						bool certificateValid = true;
+						for (const auto& [sender, signature] : certificate) {
+							const bool signatureValid = verify(sender, payload, certificateView, signature);
+							if (!signatureValid) {
+								certificateValid = false;
+								break;
+							}
+						}
 
-				bool certificateValid = true;
-				for (const auto& [sender, signature] : certificate) {
-					const bool signatureValid = verify(sender, payload, certificateView, signature);
-					if (!signatureValid) {
-						certificateValid = false;
-						break;
+						if (certificateValid)
+							storedCommits.emplace(*pStored);
 					}
 				}
-
-				if (certificateValid)
-					storedCommits.emplace(*pStored);
 			}
 		}
 
@@ -317,27 +325,6 @@ namespace catapult { namespace dbrb {
 //				CATAPULT_LOG(debug) << "[DBRB] RECONFIG: Proposed sequence to replace " << m_currentView << " already exists (" << proposedSequence << ")";
 //			}
 		}
-	}
-
-	bool DbrbProcess::isAcknowledgeable(const PrepareMessage& message) {
-		// If m_acknowledgeAllowed == false, no payload is allowed to be acknowledged.
-		if (!m_acknowledgeAllowed) {
-			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Not acknowledged (no payload is allowed).";
-			return false;
-		}
-
-		// If m_acknowledgeAllowed == true and AcknowledgeablePayload is unset, any payload can be acknowledged.
-		if (!m_broadcastData[message.Sender].AcknowledgeablePayload) {
-			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Acknowledged (any payload is allowed).";
-			return true;
-		}
-
-		// If m_acknowledgeAllowed == true and AcknowledgeablePayload is set, only AcknowledgeablePayload can be acknowledged.
-		const bool acknowledgeable = (CalculatePayloadHash(m_broadcastData[message.Sender].AcknowledgeablePayload) == CalculatePayloadHash(message.Payload));
-		if (acknowledgeable)
-			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Acknowledged (matches stored acknowledgeable payload).";
-
-		return acknowledgeable;
 	}
 
 	Signature DbrbProcess::sign(const Payload& payload) {
@@ -578,10 +565,6 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
-		auto iter = m_broadcastData.find(message.Sender);
-		if (iter != m_broadcastData.end() && iter->second.PayloadIsDelivered)
-			m_broadcastData.erase(message.Sender);
-
 		if (m_limitedProcessing) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (limited processing is enabled).";
 			return;
@@ -599,16 +582,14 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
-		// Payload from the message must be acknowledgeable.
-		if (!isAcknowledgeable(message)) {
-			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (payload is not acknowledgeable).";
-			return;
-		}
+		auto payloadHash = CalculatePayloadHash(message.Payload);
+		auto& data = m_broadcastData[payloadHash];
+		if (data.Begin == Timestamp())
+			data.Begin = utils::NetworkTime();
 
-		auto& data = m_broadcastData[message.Sender];
-		if (!data.AcknowledgeablePayload) {
+		if (!data.Payload) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: No acknowledgeable payload is stored.";
-			data.AcknowledgeablePayload = message.Payload;
+			data.Payload = message.Payload;
 			if (!m_state.Acknowledgeable.has_value()) {
 				CATAPULT_LOG(debug) << "[DBRB] PREPARE: Setting acknowledgeable payload to one from the message.";
 				m_state.Acknowledgeable = message;
@@ -617,7 +598,7 @@ namespace catapult { namespace dbrb {
 
 		CATAPULT_LOG(debug) << "[DBRB] PREPARE: Sending Acknowledged message to " << message.Sender << ".";
 		Signature payloadSignature = sign(message.Payload);
-		auto pMessage = std::make_shared<AcknowledgedMessage>(m_id, message.Sender, message.Payload, m_currentView, payloadSignature);
+		auto pMessage = std::make_shared<AcknowledgedMessage>(m_id, payloadHash, m_currentView, payloadSignature);
 		send(pMessage, message.Sender);
 	}
 
@@ -706,13 +687,18 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
+		auto& data = m_broadcastData[message.PayloadHash];
+		if (!data.Payload) {
+			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Aborting message processing (no payload).";
+			return;
+		}
+
 		// Signature must be valid.
-		if (!verify(message.Sender, message.Payload, message.View, message.PayloadSignature)) {
+		if (!verify(message.Sender, data.Payload, message.View, message.PayloadSignature)) {
 			CATAPULT_LOG(warning) << "[DBRB] ACKNOWLEDGED: message REJECTED: signature is not valid";
 			return;
 		}
 
-		auto& data = m_broadcastData[message.Initiator];
 		data.Signatures[std::make_pair(message.View, message.Sender)] = message.PayloadSignature;
 		bool quorumCollected = data.QuorumManager.update(message);
 		if (quorumCollected && data.Certificate.empty())
@@ -723,22 +709,21 @@ namespace catapult { namespace dbrb {
 		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Quorum collected in view " << message.View << ".";
 		// Replacing view associated with the certificate.
 		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Setting CertificateView to " << message.View << ".";
-		auto payloadHash = CalculatePayloadHash(message.Payload);
 
 		// Replacing certificate.
-		auto& data = m_broadcastData[message.Initiator];
+		auto& data = m_broadcastData[message.PayloadHash];
 		data.CertificateView = message.View;
 		data.Certificate.clear();
 		const auto& acknowledgedSet = data.QuorumManager.AcknowledgedPayloads[message.View];
 		for (const auto& [processId, hash] : acknowledgedSet) {
-			if (hash == payloadHash)
+			if (hash == message.PayloadHash)
 				data.Certificate[processId] = data.Signatures.at(std::make_pair(message.View, processId));
 		}
 
 		// Disseminating Commit message, if process' current view is installed.
 		if (m_installedViews.count(m_currentView)) {
 			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Disseminating Commit message.";
-			auto pMessage = std::make_shared<CommitMessage>(m_id, message.Initiator, message.Payload, data.Certificate, data.CertificateView, m_currentView);
+			auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, data.Certificate, data.CertificateView, m_currentView);
 			disseminate(pMessage, m_currentView.members());
 		} else {
 			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Current view is not installed, Commit message is not disseminated.";
@@ -757,9 +742,15 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
+		auto& data = m_broadcastData[message.PayloadHash];
+		if (!data.Payload) {
+			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Aborting message processing (no payload).";
+			return;
+		}
+
 		// Message certificate must be valid, i.e. all signatures in it must be valid.
 		for (const auto& [signer, signature] : message.Certificate) {
-			if (!verify(signer, message.Payload, message.CertificateView, signature)) {
+			if (!verify(signer, data.Payload, message.CertificateView, signature)) {
 				CATAPULT_LOG(warning) << "[DBRB] COMMIT: message REJECTED: signature is not valid";
 				return;
 			}
@@ -767,21 +758,18 @@ namespace catapult { namespace dbrb {
 
 		// Update stored PayloadData and ProcessState, if necessary,
 		// and disseminate Commit message with updated view.
-		auto& data = m_broadcastData[message.Initiator];
-		if (!data.StoredPayloadData.has_value()) {
-			data.StoredPayloadData = { message.Payload, message.Certificate, message.CertificateView };
-			auto& pStored = m_state.Stored;
-			if (!pStored.has_value())
-				pStored = message;
+		if (!data.CommitMessageReceived) {
+			data.CommitMessageReceived = true;
+			m_state.Stored = message;
 
 			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Disseminating Commit message.";
-			auto pMessage = std::make_shared<CommitMessage>(m_id, message.Initiator, message.Payload, message.Certificate, message.CertificateView, m_currentView);
+			auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, message.Certificate, message.CertificateView, m_currentView);
 			disseminate(pMessage, m_currentView.members());
 		}
 
 		// Allow delivery for sender process.
 		CATAPULT_LOG(debug) << "[DBRB] COMMIT: Sending Deliver message to " << message.Sender << ".";
-		auto pMessage = std::make_shared<DeliverMessage>(m_id, message.Initiator, message.Payload, m_currentView);
+		auto pMessage = std::make_shared<DeliverMessage>(m_id, message.PayloadHash, m_currentView);
 		send(pMessage, message.Sender);
 	}
 
@@ -797,18 +785,24 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
-		auto& data = m_broadcastData[message.Initiator];
+		auto& data = m_broadcastData[message.PayloadHash];
+		if (!data.Payload) {
+			CATAPULT_LOG(debug) << "[DBRB] DELIVER: Aborting message processing (no payload).";
+			return;
+		}
+
 		bool quorumCollected = data.QuorumManager.update(message);
 		if (quorumCollected) {
-			onDeliverQuorumCollected(data.StoredPayloadData);
-			data.PayloadIsDelivered = true;
+			onDeliverQuorumCollected(data.Payload);
+
+			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: operation took " << (utils::NetworkTime().unwrap() - data.Begin.unwrap()) << " ms";
 		}
 	}
 
-	void DbrbProcess::onDeliverQuorumCollected(const std::optional<PayloadData>& storedPayloadData) {
-		if (storedPayloadData.has_value()) { // Should always be set.
+	void DbrbProcess::onDeliverQuorumCollected(const Payload& payload) {
+		if (payload) { // Should always be set.
 			CATAPULT_LOG(debug) << "[DBRB] DELIVER: delivering payload";
-			m_deliverCallback(storedPayloadData->Payload);
+			m_deliverCallback(payload);
 		} else {
 			CATAPULT_LOG(error) << "[DBRB] DELIVER: NO PAYLOAD!!!";
 		}
@@ -824,46 +818,51 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
-		std::lock_guard<std::mutex> guard(m_mutex);
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), viewData]() {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
+				return;
 
-		std::set<ProcessId> ids;
-		for (const auto& [id, _] : viewData)
-			ids.emplace(id);
-		m_nodeRetreiver.enqueue(ids);
 
-		m_currentView = View{ viewData };
-		CATAPULT_LOG(debug) << "[DBRB] Current view is now set to " << m_currentView;
-		if (m_currentView.isMember(m_id)) {
-			m_membershipState = MembershipState::Participating;
-			m_installedViews.insert(m_currentView);
-			CATAPULT_LOG(debug) << "[DBRB] number of installed views is " << m_installedViews.size();
-		} else if (m_currentView.hasChange(m_id, MembershipChange::Leave)) {
-			m_membershipState = MembershipState::Left;
-		}
+			std::set<ProcessId> ids;
+			for (const auto& [id, _] : viewData)
+				ids.emplace(id);
+			pThis->m_nodeRetreiver.requestNodes(ids);
 
-		if (m_membershipState == MembershipState::NotJoined) {
-			m_membershipState = MembershipState::Joining;
-			m_disseminateReconfig = true;
-		}
+			pThis->m_currentView = View{ viewData };
+			CATAPULT_LOG(debug) << "[DBRB] Current view is now set to " << pThis->m_currentView;
+			if (pThis->m_currentView.isMember(pThis->m_id)) {
+				pThis->m_membershipState = MembershipState::Participating;
+				pThis->m_installedViews.insert(pThis->m_currentView);
+				CATAPULT_LOG(debug) << "[DBRB] number of installed views is " << pThis->m_installedViews.size();
+			} else if (pThis->m_currentView.hasChange(pThis->m_id, MembershipChange::Leave)) {
+				pThis->m_membershipState = MembershipState::Left;
+			}
 
-		if (m_disseminateReconfig) {
-			if (m_membershipState == MembershipState::Joining) {
-				auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChange::Join, m_currentView);
-				disseminate(pMessage, m_currentView.members());
-			} else if (m_membershipState == MembershipState::Leaving) {
-				for (const auto& view : m_installedViews) {
-					auto pMessage = std::make_shared<ReconfigMessage>(m_id, m_id, MembershipChange::Leave, view);
-					disseminate(pMessage, view.members());
+			if (pThis->m_membershipState == MembershipState::NotJoined) {
+				pThis->m_membershipState = MembershipState::Joining;
+				pThis->m_disseminateReconfig = true;
+			}
+
+			if (pThis->m_disseminateReconfig) {
+				if (pThis->m_membershipState == MembershipState::Joining) {
+					auto pMessage = std::make_shared<ReconfigMessage>(pThis->m_id, pThis->m_id, MembershipChange::Join, pThis->m_currentView);
+					pThis->disseminate(pMessage, pThis->m_currentView.members());
+				} else if (pThis->m_membershipState == MembershipState::Leaving) {
+					for (const auto& view : pThis->m_installedViews) {
+						auto pMessage = std::make_shared<ReconfigMessage>(pThis->m_id, pThis->m_id, MembershipChange::Leave, view);
+						pThis->disseminate(pMessage, view.members());
+					}
 				}
 			}
-		}
 
-		// If the process is leaving after an Install message.
-		if (m_disseminateCommit) {
-			// All fields in m_storedPayloadData are guaranteed to exist.
-//			auto pMessage = std::make_shared<CommitMessage>(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate, m_storedPayloadData->CertificateView, m_currentView);
-//			disseminate(pMessage, m_currentView.members());
-		}
+			// If the process is leaving after an Install message.
+			if (pThis->m_disseminateCommit) {
+				// All fields in m_storedPayloadData are guaranteed to exist.
+//				auto pMessage = std::make_shared<CommitMessage>(m_id, m_storedPayloadData->Payload, m_storedPayloadData->Certificate, m_storedPayloadData->CertificateView, m_currentView);
+//				disseminate(pMessage, m_currentView.members());
+			}
+		});
 	}
 
 	void DbrbProcess::onViewInstalled(const View& newView) {

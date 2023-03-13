@@ -5,31 +5,29 @@
 **/
 
 #pragma once
-#include "AsyncMessageQueue.h"
 #include "SignedNode.h"
 #include "catapult/dbrb/DbrbDefinitions.h"
+#include <optional>
+#include <mutex>
 
 namespace catapult { namespace net { class PacketIoPickerContainer; }}
 
 namespace catapult { namespace dbrb {
 
-	class NodeRetreiver : public AsyncMessageQueue<ProcessId> {
+	class NodeRetreiver {
 	public:
 		explicit NodeRetreiver(const net::PacketIoPickerContainer& packetIoPickers, model::NetworkIdentifier networkIdentifier);
-		~NodeRetreiver() override;
 
 	public:
-		void enqueue(std::set<ProcessId> ids);
+		void requestNodes(const std::set<ProcessId>& requestedIds);
 		void addNodes(const std::vector<SignedNode>& nodes);
-		void broadcastNodes();
+		void broadcastNodes() const;
 		std::optional<SignedNode> getNode(const ProcessId& id) const;
-
-	private:
-		void processBuffer(BufferType& buffer) override;
 
 	private:
 		const net::PacketIoPickerContainer& m_packetIoPickers;
 		std::map<ProcessId, SignedNode> m_nodes;
 		model::NetworkIdentifier m_networkIdentifier;
+		mutable std::mutex m_mutex;
 	};
 }}
