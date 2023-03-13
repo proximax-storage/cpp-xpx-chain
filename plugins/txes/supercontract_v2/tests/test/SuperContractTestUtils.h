@@ -209,20 +209,6 @@ namespace catapult { namespace test {
 			subCaches[cache::DriveContractCache::Id] = MakeSubCachePlugin<cache::DriveContractCache, cache::DriveContractCacheStorage>(pConfigHolder);
             subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
 
-//			std::vector<size_t> cacheIds = {
-//					cache::BcDriveCache::Id,
-//					cache::DownloadChannelCache::Id,
-//					cache::ReplicatorCache::Id,
-//					cache::PriorityQueueCache::Id,
-//			};
-//			auto maxId = *std::max_element(cacheIds.begin(), cacheIds.end());
-//			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(maxId + 1);
-//			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-//			subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
-//			subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
-//			subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
-//			subCaches[cache::PriorityQueueCache::Id] = MakeSubCachePlugin<cache::PriorityQueueCache, cache::PriorityQueueCacheStorage>(pConfigHolder);
-
 			return subCaches;
 		}
 
@@ -242,9 +228,7 @@ namespace catapult { namespace test {
 
 	class DriveStateBrowserImpl : public state::DriveStateBrowser {
 	public:
-		uint16_t getOrderedReplicatorsCount(
-				const cache::ReadOnlyCatapultCache& cache,
-				const Key& driveKey) const override;
+		uint16_t getOrderedReplicatorsCount(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
 
 		std::set<Key> getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
 
