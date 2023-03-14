@@ -72,6 +72,7 @@ namespace catapult { namespace validators {
 			#include "src/catapult/chain/ChainResults.h"
 			#include "src/catapult/consumers/ConsumerResults.h"
 			#include "src/catapult/extensions/Results.h"
+			#include "plugins/txes/supercontract_v2/src/validators/Results.h"
 			}
 
 			return nullptr;

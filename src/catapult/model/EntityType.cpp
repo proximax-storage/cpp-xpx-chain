@@ -64,9 +64,10 @@ namespace catapult { namespace model {
 			#include "plugins/txes/storage/src/model/StorageEntityType.h"
 			#include "plugins/txes/streaming/src/model/StreamingEntityType.h"
 			#include "plugins/txes/supercontract/src/model/SuperContractEntityType.h"
-			#include "plugins/txes/transfer/src/model/TransferEntityType.h"
 			#include "plugins/txes/upgrade/src/model/BlockchainUpgradeEntityType.h"
-			}
+            #include "plugins/txes/transfer/src/model/TransferEntityType.h"
+            #include "plugins/txes/supercontract_v2/src/model/SuperContractEntityType.h"
+            }
 
 			return nullptr;
 		}
