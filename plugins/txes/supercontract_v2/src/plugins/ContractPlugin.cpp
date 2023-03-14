@@ -127,7 +127,7 @@ namespace catapult { namespace plugins {
 				std::make_unique<cache::SuperContractCache>(manager.cacheConfig(cache::SuperContractCache::Name), pConfigHolder));
 
 		using SuperContractCacheHandlersService = CacheHandlers<cache::SuperContractCacheDescriptor>;
-		SuperContractCacheHandlersService::Register<model::FacilityCode::SuperContractCache>(manager);
+		SuperContractCacheHandlersService::Register<model::FacilityCode::SuperContract_v2>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("SUPER CONTRACT C"), [&cache]() {
@@ -136,7 +136,7 @@ namespace catapult { namespace plugins {
 		});
 
 		using DriveContractCacheHandlersService = CacheHandlers<cache::DriveContractCacheDescriptor>;
-		DriveContractCacheHandlersService::Register<model::FacilityCode::DriveContractCache>(manager);
+		DriveContractCacheHandlersService::Register<model::FacilityCode::DriveContract>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("DRIVE CONTRACT C"), [&cache]() {
