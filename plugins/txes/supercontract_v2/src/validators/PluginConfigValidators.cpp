@@ -8,5 +8,5 @@
 #include "src/config/SuperContractConfiguration.h"
 
 namespace catapult { namespace validators {
-	DEFINE_PLUGIN_CONFIG_VALIDATOR(superContract, SuperContract, 1)
+    DEFINE_PLUGIN_CONFIG_VALIDATOR_WITH_FAILURE(supercontract_v2, SuperContract, Failure_SuperContract_v2_Plugin_Config_Malformed, 1)
 }}

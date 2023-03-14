@@ -24,11 +24,11 @@ namespace catapult { namespace validators {
 			auto executorIt = executorsInfo.find(publicKey);
 
 			if (executorIt == executorsInfo.end()) {
-				return Failure_SuperContract_Is_Not_Executor;
+				return Failure_SuperContract_v2_Is_Not_Executor;
 			}
 
 			if (executorIt->second.NextBatchToApprove == contractEntry.nextBatchId()) {
-				return Failure_SuperContract_Batch_Already_Proven;
+				return Failure_SuperContract_v2_Batch_Already_Proven;
 			}
 
 			Hash512 dHash;
@@ -40,7 +40,7 @@ namespace catapult { namespace validators {
 			const auto base = crypto::CurvePoint::BasePoint();
 
 			if (proofToVerify.F != proofToVerify.K * base + d * proofToVerify.T) {
-				return Failure_SuperContract_Invalid_T_Proof;
+				return Failure_SuperContract_v2_Invalid_T_Proof;
 			}
 
 			crypto::CurvePoint previousT;
@@ -58,7 +58,7 @@ namespace catapult { namespace validators {
 				// But due to possible executor's restart the situation with "<=" can occur
 				verifyStartBatchId = proofToVerify.StartBatchId;
 			} else {
-				return Failure_SuperContract_Invalid_Start_Batch_Id;
+				return Failure_SuperContract_v2_Invalid_Start_Batch_Id;
 			}
 
 			crypto::CurvePoint left = proofToVerify.T - previousT;
@@ -74,7 +74,7 @@ namespace catapult { namespace validators {
 			}
 
 			if (left != right) {
-				return Failure_SuperContract_Invalid_Batch_Proof;
+				return Failure_SuperContract_v2_Invalid_Batch_Proof;
 			}
 		}
 

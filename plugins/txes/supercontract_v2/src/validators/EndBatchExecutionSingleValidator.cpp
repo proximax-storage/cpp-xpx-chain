@@ -12,16 +12,19 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(EndBatchExecutionSingle, [](const Notification& notification, const ValidatorContext& context) {
 
-		const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
+        const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 
-		auto contractIt = contractCache.find(notification.ContractKey);
-		const auto& contractEntry = contractIt.get();
+        auto contractIt = contractCache.find(notification.ContractKey);
+        const auto& pContractEntry = contractIt.tryGet();
 
-		if (notification.BatchId + 1 != contractEntry.nextBatchId()) {
-			return Failure_SuperContract_Invalid_Batch_Id;
-		}
+        if (!pContractEntry)
+            return Failure_SuperContract_v2_Contract_Does_Not_Exist;
 
-		return ValidationResult::Success;
+        if (notification.BatchId + 1 != pContractEntry->nextBatchId()) {
+            return Failure_SuperContract_v2_Invalid_Batch_Id;
+        }
+
+        return ValidationResult::Success;
 	})
 
 }}

@@ -12,7 +12,7 @@ namespace catapult { namespace validators {
 
 #endif
 /// Defines a storage validation result with \a DESCRIPTION and \a CODE.
-#define DEFINE_CONTRACT_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, SuperContract, DESCRIPTION, CODE, None)
+#define DEFINE_CONTRACT_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, SuperContract_v2, DESCRIPTION, CODE, None)
 
 	DEFINE_CONTRACT_RESULT(Contract_Does_Not_Exist, 1);
 

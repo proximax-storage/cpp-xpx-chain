@@ -18,7 +18,7 @@ namespace catapult { namespace validators {
 		const auto* contractEntry = contractIt.tryGet();
 
 		if (!contractEntry) {
-			return Failure_SuperContract_Contract_Does_Not_Exist;
+			return Failure_SuperContract_v2_Contract_Does_Not_Exist;
 		}
 
 		return ValidationResult::Success;

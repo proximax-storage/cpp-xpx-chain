@@ -19,18 +19,18 @@ namespace catapult { namespace validators {
 		const auto& contractEntry = contractIt.get();
 
 		if (notification.BatchId + 1 != contractEntry.nextBatchId()) {
-			return Failure_SuperContract_Invalid_Batch_Id;
+			return Failure_SuperContract_v2_Invalid_Batch_Id;
 		}
 
 		const auto& executorsInfo = contractEntry.executorsInfo();
 		auto executorIt = executorsInfo.find(notification.Executor);
 
 		if (executorIt == executorsInfo.end()) {
-			return Failure_SuperContract_Is_Not_Executor;
+			return Failure_SuperContract_v2_Is_Not_Executor;
 		}
 
 		if (executorIt->second.NextBatchToApprove > notification.BatchId) {
-			return Failure_SuperContract_Batch_Already_Proven;
+			return Failure_SuperContract_v2_Batch_Already_Proven;
 		}
 
 		return ValidationResult::Success;

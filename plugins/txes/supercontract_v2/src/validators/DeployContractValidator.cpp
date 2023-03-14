@@ -15,23 +15,23 @@ namespace catapult { namespace validators {
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
 
 		if (notification.AutomaticExecutionFileName.size() > pluginConfig.MaxRowSize) {
-			return Failure_SuperContract_Max_Row_Size_Exceeded;
+			return Failure_SuperContract_v2_Max_Row_Size_Exceeded;
 		}
 		if (notification.AutomaticExecutionsFunctionName.size() > pluginConfig.MaxRowSize) {
-			return Failure_SuperContract_Max_Row_Size_Exceeded;
+			return Failure_SuperContract_v2_Max_Row_Size_Exceeded;
 		}
 
 		if (notification.AutomaticExecutionCallPayment.unwrap() > pluginConfig.MaxExecutionPayment) {
-			return Failure_SuperContract_Max_Execution_Payment_Exceeded;
+			return Failure_SuperContract_v2_Max_Execution_Payment_Exceeded;
 		}
 		if (notification.AutomaticDownloadCallPayment.unwrap() > pluginConfig.MaxExecutionPayment) {
-			return Failure_SuperContract_Max_Execution_Payment_Exceeded;
+			return Failure_SuperContract_v2_Max_Execution_Payment_Exceeded;
 		}
 
 		const auto& driveCache = context.Cache.sub<cache::DriveContractCache>();
 
 		if (driveCache.contains(notification.DriveKey)) {
-			return Failure_SuperContract_Contract_Already_Deployed_On_Drive;
+			return Failure_SuperContract_v2_Contract_Already_Deployed_On_Drive;
 		}
 
 		return ValidationResult::Success;

@@ -5,7 +5,6 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "catapult/model/SupercontractNotifications.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 
@@ -48,13 +47,13 @@ namespace catapult { namespace validators {
 
             Notification notification(scKey, number);
             auto pValidator = CreateAutomaticExecutionsReplenishmentValidator();
-            
+
             // Act:
             auto result = test::ValidateNotification(
-                *pValidator,
-                notification,
-                cache,
-                Config);
+                    *pValidator,
+                    notification,
+                    cache,
+                    Config);
 
             // Assert:
             EXPECT_EQ(expectedResult, result);
@@ -67,10 +66,10 @@ namespace catapult { namespace validators {
 
         // Assert:
         AssertValidationResult(
-            Failure_SuperContract_Contract_Does_Not_Exist,
-            entry,
-            test::GenerateRandomByteArray<Key>(),
-            Number);
+                Failure_SuperContract_v2_Contract_Does_Not_Exist,
+                entry,
+                test::GenerateRandomByteArray<Key>(),
+                Number);
     }
 
     TEST(TEST_CLASS, FailureWhenDeploymentInProgress) {
@@ -81,10 +80,10 @@ namespace catapult { namespace validators {
 
         // Assert:
         AssertValidationResult(
-            Failure_SuperContract_Deployment_In_Progress,
-            entry,
-            entry.key(),
-            Number);
+                Failure_SuperContract_v2_Deployment_In_Progress,
+                entry,
+                entry.key(),
+                Number);
     }
 
     TEST(TEST_CLASS, FailureWhenAutomatedExecutionsNumberExceeds) {
@@ -93,10 +92,10 @@ namespace catapult { namespace validators {
 
         // Assert:
         AssertValidationResult(
-            Failure_SuperContract_Max_Auto_Executions_Number_Exceeded,
-            entry,
-            entry.key(),
-            Number*2);
+                Failure_SuperContract_v2_Max_Auto_Executions_Number_Exceeded,
+                entry,
+                entry.key(),
+                Number*2);
     }
 
     TEST(TEST_CLASS, Success) {
@@ -105,9 +104,9 @@ namespace catapult { namespace validators {
 
         // Assert:
         AssertValidationResult(
-            ValidationResult::Success,
-            entry,
-            entry.key(),
-            Number);
+                ValidationResult::Success,
+                entry,
+                entry.key(),
+                Number);
     }
 }}

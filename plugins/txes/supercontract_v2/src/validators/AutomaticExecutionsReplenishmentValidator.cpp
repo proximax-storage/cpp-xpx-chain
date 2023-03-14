@@ -10,29 +10,33 @@ namespace catapult { namespace validators {
 
 	using Notification = model::AutomaticExecutionsReplenishmentNotification<1>;
 
+    ValidationResult func(const Notification& notification, const ValidatorContext& context){
+        const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
+
+        auto contractIt = contractCache.find(notification.ContractKey);
+        auto* pContractEntry = contractIt.tryGet();
+
+        if (!pContractEntry) {
+            return Failure_SuperContract_v2_Contract_Does_Not_Exist;
+        }
+
+        if (pContractEntry->deploymentStatus() == state::DeploymentStatus::IN_PROGRESS) {
+            return Failure_SuperContract_v2_Deployment_In_Progress;
+        }
+
+        const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
+        if (static_cast<uint64_t>(pContractEntry->automaticExecutionsInfo().AutomatedExecutionsNumber) +
+            notification.Number >
+            pluginConfig.MaxAutoExecutions) {
+            return Failure_SuperContract_v2_Max_Auto_Executions_Number_Exceeded;
+        }
+
+        return ValidationResult::Success;
+    }
+
 	DEFINE_STATEFUL_VALIDATOR(AutomaticExecutionsReplenishment, [](const Notification& notification, const ValidatorContext& context) {
 
-		const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
-
-		auto contractIt = contractCache.find(notification.ContractKey);
-		auto* pContractEntry = contractIt.tryGet();
-
-		if (!pContractEntry) {
-			return Failure_SuperContract_Contract_Does_Not_Exist;
-		}
-
-		if (pContractEntry->deploymentStatus() == state::DeploymentStatus::IN_PROGRESS) {
-			return Failure_SuperContract_Deployment_In_Progress;
-		}
-
-		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
-		if (static_cast<uint64_t>(pContractEntry->automaticExecutionsInfo().AutomatedExecutionsNumber) +
-					notification.Number >
-			pluginConfig.MaxAutoExecutions) {
-			return Failure_SuperContract_Max_Auto_Executions_Number_Exceeded;
-		}
-
-		return ValidationResult::Success;
+		return func(notification, context);
 	})
 
 }}

@@ -89,7 +89,7 @@ namespace catapult { namespace validators {
 
         // Assert:
         AssertValidationResult(
-            Failure_SuperContract_Max_Row_Size_Exceeded,
+            Failure_SuperContract_v2_Max_Row_Size_Exceeded,
             entry,
             Drive_Key,
             fileName,
@@ -106,7 +106,7 @@ namespace catapult { namespace validators {
         auto functionName = test::GenerateRandomString(pluginConfig.MaxRowSize+1);
         // Assert:
         AssertValidationResult(
-                Failure_SuperContract_Max_Row_Size_Exceeded,
+                Failure_SuperContract_v2_Max_Row_Size_Exceeded,
                 entry,
                 Drive_Key,
                 File_Name,
@@ -123,7 +123,7 @@ namespace catapult { namespace validators {
         auto executionPayment = Amount(pluginConfig.MaxExecutionPayment+1);
         // Assert:
         AssertValidationResult(
-                Failure_SuperContract_Max_Execution_Payment_Exceeded,
+                Failure_SuperContract_v2_Max_Execution_Payment_Exceeded,
                 entry,
                 Drive_Key,
                 File_Name,
@@ -140,7 +140,7 @@ namespace catapult { namespace validators {
 //        auto downloadPayment = Amount(pluginConfig.MaxDownloadPayment+1);
 //        // Assert:
 //        AssertValidationResult(
-//                Failure_SuperContract_Max_Download_Payment_Exceeded,
+//                Failure_SuperContract_v2_Max_Download_Payment_Exceeded,
 //                entry,
 //                Drive_Key,
 //                File_Name,
@@ -155,7 +155,7 @@ namespace catapult { namespace validators {
 
         // Assert:
         AssertValidationResult(
-                Failure_SuperContract_Contract_Already_Deployed_On_Drive,
+                Failure_SuperContract_v2_Contract_Already_Deployed_On_Drive,
                 entry,
                 entry.key(),
                 File_Name,
