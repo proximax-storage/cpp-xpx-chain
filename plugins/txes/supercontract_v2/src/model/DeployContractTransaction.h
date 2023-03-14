@@ -48,10 +48,10 @@ namespace catapult::model {
             // endregion
 
             /// Name of the called .wasm file for automatic executions in bytes
-            uint16_t AutomaticExecutionFileNameSize;
+            uint16_t AutomaticExecutionsFileNameSize;
 
             /// Name of the called function for automatic executions in bytes
-            uint16_t AutomaticExecutionFunctionNameSize;
+            uint16_t AutomaticExecutionsFunctionNameSize;
 
             /// Limit of the SC units for one automatic Supercontract Execution
             Amount AutomaticExecutionCallPayment;
@@ -77,11 +77,11 @@ namespace catapult::model {
             // followed by ServicePayments data if ServicePaymentsCount != 0
 		    DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(ServicePayments, UnresolvedMosaic)
 
-            /// AutomaticExecutionFileName to save stream in.
-    		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(AutomaticExecutionFileName, uint8_t)
+            /// AutomaticExecutionsFileName to save stream in.
+    		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(AutomaticExecutionsFileName, uint8_t)
 
-            /// AutomaticExecutionFileName to save stream in.
-    		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(AutomaticExecutionFunctionName, uint8_t)
+            /// AutomaticExecutionsFileName to save stream in.
+    		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(AutomaticExecutionsFunctionName, uint8_t)
 
         private:
             template<typename T>
@@ -120,9 +120,9 @@ namespace catapult::model {
 			}
 
             template<typename T>
-            static auto* AutomaticExecutionFileNamePtrT(T& transaction) {
+            static auto* AutomaticExecutionsFileNamePtrT(T& transaction) {
 				auto* pPayloadStart = THeader::PayloadStart(transaction);
-				return transaction.AutomaticExecutionFileNameSize && pPayloadStart
+				return transaction.AutomaticExecutionsFileNameSize && pPayloadStart
 							   ? pPayloadStart
 										 + transaction.FileNameSize
 										 + transaction.FunctionNameSize
@@ -132,22 +132,22 @@ namespace catapult::model {
 			}
             
             template<typename T>
-            static auto* AutomaticExecutionFunctionNamePtrT(T& transaction) {
+            static auto* AutomaticExecutionsFunctionNamePtrT(T& transaction) {
 				auto* pPayloadStart = THeader::PayloadStart(transaction);
-				return transaction.AutomaticExecutionFunctionNameSize && pPayloadStart
+				return transaction.AutomaticExecutionsFunctionNameSize && pPayloadStart
 							   ? pPayloadStart
 										 + transaction.FileNameSize
 										 + transaction.FunctionNameSize
 										 + transaction.ActualArgumentsSize
 										 + transaction.ServicePaymentsCount * sizeof(UnresolvedMosaic)
-										 + transaction.AutomaticExecutionFileNameSize
+										 + transaction.AutomaticExecutionsFileNameSize
 							   : nullptr;
 			}
 
         public:
             // Calculates the real size of a deploy \a transaction.
             static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			    return sizeof(TransactionType) + transaction.FileNameSize + transaction.FunctionNameSize + transaction.ActualArgumentsSize + transaction.ServicePaymentsCount * sizeof(UnresolvedMosaic) + transaction.AutomaticExecutionFileNameSize + transaction.AutomaticExecutionFunctionNameSize;
+			    return sizeof(TransactionType) + transaction.FileNameSize + transaction.FunctionNameSize + transaction.ActualArgumentsSize + transaction.ServicePaymentsCount * sizeof(UnresolvedMosaic) + transaction.AutomaticExecutionsFileNameSize + transaction.AutomaticExecutionsFunctionNameSize;
 		    }
     };
 

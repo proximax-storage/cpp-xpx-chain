@@ -44,7 +44,7 @@ namespace catapult { namespace observers {
 			entry.setDeploymentBaseModificationId(Base_Modification_Id);
 
             auto& automaticExecutionsInfo = entry.automaticExecutionsInfo();
-            automaticExecutionsInfo.AutomaticExecutionFileName = File_Name;
+            automaticExecutionsInfo.AutomaticExecutionsFileName = File_Name;
             automaticExecutionsInfo.AutomaticExecutionsFunctionName = Function_Name;
             automaticExecutionsInfo.AutomaticExecutionCallPayment = Execution_Call_Payment;
             automaticExecutionsInfo.AutomaticDownloadCallPayment = Download_Call_Payment;

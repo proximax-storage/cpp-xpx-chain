@@ -70,7 +70,7 @@ namespace catapult { namespace contract {
 				const std::set<Key>& cosigners,
 				Height height);
 
-		void automaticExecutionBlockPublished(Height height);
+		void automaticExecutionsBlockPublished(Height height);
 
 		void updateContracts(Height height);
 

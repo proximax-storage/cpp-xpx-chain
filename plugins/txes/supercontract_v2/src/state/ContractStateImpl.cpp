@@ -115,13 +115,13 @@ namespace catapult { namespace state {
 			contractInfo.RecentBatches[i] = contractEntry.batches().at(i).PoExVerificationInformation;
 		}
 
-		const auto& automaticExecutionInfo = contractEntry.automaticExecutionsInfo();
-		contractInfo.AutomaticExecutionsFileName = automaticExecutionInfo.AutomaticExecutionFileName;
-		contractInfo.AutomaticExecutionsFunctionName = automaticExecutionInfo.AutomaticExecutionsFunctionName;
-		contractInfo.AutomaticExecutionCallPayment = automaticExecutionInfo.AutomaticExecutionCallPayment;
-		contractInfo.AutomaticDownloadCallPayment = automaticExecutionInfo.AutomaticDownloadCallPayment;
+		const auto& automaticExecutionsInfo = contractEntry.automaticExecutionsInfo();
+		contractInfo.AutomaticExecutionsFileName = automaticExecutionsInfo.AutomaticExecutionsFileName;
+		contractInfo.AutomaticExecutionsFunctionName = automaticExecutionsInfo.AutomaticExecutionsFunctionName;
+		contractInfo.AutomaticExecutionCallPayment = automaticExecutionsInfo.AutomaticExecutionCallPayment;
+		contractInfo.AutomaticDownloadCallPayment = automaticExecutionsInfo.AutomaticDownloadCallPayment;
 		contractInfo.AutomaticExecutionsEnabledSince = utils::automaticExecutionsEnabledSince(contractEntry, actualHeight, config);
-		contractInfo.AutomaticExecutionsNextBlockToCheck = automaticExecutionInfo.AutomaticExecutionsNextBlockToCheck;
+		contractInfo.AutomaticExecutionsNextBlockToCheck = automaticExecutionsInfo.AutomaticExecutionsNextBlockToCheck;
 		if (!contractEntry.batches().empty()) {
 			const auto& batch = (--contractEntry.batches().end())->second;
 			PublishedBatchInfo lastBatch;

@@ -28,7 +28,7 @@ namespace catapult { namespace contract {
 			.add(notification_handlers::CreateUnsuccessfulBatchExecutionHandler(pExecutorService))
 			.add(notification_handlers::CreateBatchExecutionSingleHandler(pExecutorService))
 			.add(notification_handlers::CreateSynchronizeSingleHandler(pExecutorService))
-			.add(notification_handlers::CreateAutomaticExecutionBlockHandler(pExecutorService))
+			.add(notification_handlers::CreateAutomaticExecutionsBlockHandler(pExecutorService))
 			.add(notification_handlers::CreateContractsUpdateHandler(pExecutorService));
 
 

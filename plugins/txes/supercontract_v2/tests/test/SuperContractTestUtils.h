@@ -66,14 +66,14 @@ namespace catapult { namespace test {
 		uint16_t functionNamePtrSize = test::Random16();
 		uint16_t actualArgumentsPtrSize = test::Random16();
 		uint8_t servicePaymentsPtrSize = 3;
-		uint16_t automaticExecutionFileNamePtrSize = test::Random16();
-		uint16_t automaticExecutionFunctionNamePtrSize = test::Random16();
+		uint16_t automaticExecutionsFileNamePtrSize = test::Random16();
+		uint16_t automaticExecutionsFunctionNamePtrSize = test::Random16();
 		uint64_t additionalSize = fileNamePtrSize +
 							  functionNamePtrSize +
 							  actualArgumentsPtrSize +
 							  servicePaymentsPtrSize * sizeof(model::UnresolvedMosaic) +
-							  automaticExecutionFileNamePtrSize +
-							  automaticExecutionFunctionNamePtrSize;
+							  automaticExecutionsFileNamePtrSize +
+							  automaticExecutionsFunctionNamePtrSize;
 
 		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_DeployContractTransaction, additionalSize);
 		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
@@ -83,8 +83,8 @@ namespace catapult { namespace test {
 		pTransaction->ServicePaymentsCount = servicePaymentsPtrSize;
 		pTransaction->ExecutionCallPayment = Amount(test::Random());
 		pTransaction->DownloadCallPayment = Amount(test::Random());
-		pTransaction->AutomaticExecutionFileNameSize = automaticExecutionFileNamePtrSize;
-		pTransaction->AutomaticExecutionFunctionNameSize = automaticExecutionFunctionNamePtrSize;
+		pTransaction->AutomaticExecutionsFileNameSize = automaticExecutionsFileNamePtrSize;
+		pTransaction->AutomaticExecutionsFunctionNameSize = automaticExecutionsFunctionNamePtrSize;
 		pTransaction->AutomaticExecutionCallPayment = Amount(test::Random());
 		pTransaction->AutomaticDownloadCallPayment = Amount(test::Random());
 		pTransaction->AutomaticExecutionsNumber = test::Random32();

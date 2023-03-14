@@ -20,13 +20,13 @@ namespace catapult::observers {
 			auto contractIt = contractCache.find(notification.ContractKey);
 			auto& contractEntry = contractIt.get();
 
-			auto& automaticExecutionInfo = contractEntry.automaticExecutionsInfo();
+			auto& automaticExecutionsInfo = contractEntry.automaticExecutionsInfo();
 
-			automaticExecutionInfo.AutomatedExecutionsNumber += notification.Number;
+			automaticExecutionsInfo.AutomatedExecutionsNumber += notification.Number;
 
-			if (!automaticExecutionInfo.AutomaticExecutionsPrepaidSince) {
+			if (!automaticExecutionsInfo.AutomaticExecutionsPrepaidSince) {
 				if (contractEntry.deploymentStatus() == state::DeploymentStatus::COMPLETED) {
-					automaticExecutionInfo.AutomaticExecutionsPrepaidSince = context.Height;
+					automaticExecutionsInfo.AutomaticExecutionsPrepaidSince = context.Height;
 				}
 			}
 		}

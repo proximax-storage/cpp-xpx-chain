@@ -44,8 +44,8 @@ namespace catapult { namespace plugins {
 							transaction.DriveKey
 					));
 
-					const std::string automaticExecutionsFileName(reinterpret_cast<const char*>(transaction.AutomaticExecutionFileNamePtr()), transaction.AutomaticExecutionFileNameSize);
-					const std::string automaticExecutionsFunctionName(reinterpret_cast<const char*>(transaction.AutomaticExecutionFunctionNamePtr()), transaction.AutomaticExecutionFunctionNameSize);
+					const std::string automaticExecutionsFileName(reinterpret_cast<const char*>(transaction.AutomaticExecutionsFileNamePtr()), transaction.AutomaticExecutionsFileNameSize);
+					const std::string automaticExecutionsFunctionName(reinterpret_cast<const char*>(transaction.AutomaticExecutionsFunctionNamePtr()), transaction.AutomaticExecutionsFunctionNameSize);
 
 					sub.notify(DeploySupercontractNotification<1>(
 							transaction.Signer,
@@ -91,7 +91,7 @@ namespace catapult { namespace plugins {
 					const auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config);
 					const auto scMosaicId = config::GetUnresolvedSuperContractMosaicId(config);
 
-					const auto pAutomaticExecutionWork = sub.mempool().malloc(
+					const auto pAutomaticExecutionsWork = sub.mempool().malloc(
 							model::AutomaticExecutorWork(contractKey, transaction.AutomaticExecutionsNumber));
 					utils::SwapMosaics(
 							transaction.Signer,
@@ -100,8 +100,8 @@ namespace catapult { namespace plugins {
 									scMosaicId,
 									UnresolvedAmount(
 											0,
-											UnresolvedAmountType::AutomaticExecutionWork,
-											pAutomaticExecutionWork)) },
+											UnresolvedAmountType::AutomaticExecutionsWork,
+											pAutomaticExecutionsWork)) },
 							sub,
 							config,
 							utils::SwapOperation::Buy);
@@ -114,7 +114,7 @@ namespace catapult { namespace plugins {
 							{ std::make_pair(
 									streamingMosaicId,
 									UnresolvedAmount(
-											0, UnresolvedAmountType::AutomaticExecutionWork, pAutomaticDownloadWork)) },
+											0, UnresolvedAmountType::AutomaticExecutionsWork, pAutomaticDownloadWork)) },
 							sub,
 							config,
 							utils::SwapOperation::Buy);

@@ -28,9 +28,9 @@ namespace catapult { namespace model {
                     + sizeof(Amount) // executionCall payment
                     + sizeof(Amount) // downloadCall payment
                     + 1 // servicePayments count
-                    + sizeof(uint16_t) // automaticExecutionFileName size
-                    + sizeof(uint16_t) // automaticExecutionFunctionName size
-                    + sizeof(Amount) // automaticExecutionCall payment
+                    + sizeof(uint16_t) // automaticExecutionsFileName size
+                    + sizeof(uint16_t) // automaticExecutionsFunctionName size
+                    + sizeof(Amount) // automaticExecutionsCall payment
                     + sizeof(Amount) // automaticDownloadCall payment
                     + sizeof(uint32_t) // automaticExecutions number
                     + Key_Size; // assignee
@@ -62,8 +62,8 @@ namespace catapult { namespace model {
 		transaction.FunctionNameSize = 0;
 		transaction.ActualArgumentsSize = 0;
 		transaction.ServicePaymentsCount = 0;
-		transaction.AutomaticExecutionFileNameSize = 0;
-		transaction.AutomaticExecutionFunctionNameSize = 0;
+		transaction.AutomaticExecutionsFileNameSize = 0;
+		transaction.AutomaticExecutionsFunctionNameSize = 0;
 
 		// Act:
 		auto realSize = DeployContractTransaction::CalculateRealSize(transaction);

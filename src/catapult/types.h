@@ -90,7 +90,7 @@ namespace catapult {
 	    FileUpload,
 		StreamingWork,
 		ExecutorWork,
-		AutomaticExecutionWork,
+		AutomaticExecutionsWork,
 		AutomaticDownloadWork
 	};
 

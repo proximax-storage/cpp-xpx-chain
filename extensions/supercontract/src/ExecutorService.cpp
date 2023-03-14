@@ -210,7 +210,7 @@ namespace catapult::contract {
 					contractKey, batchIndex, false, driveState, crypto::CurvePoint(), cosigners, height);
 		}
 
-		void automaticExecutionBlockPublished(Height height) {
+		void automaticExecutionsBlockPublished(Height height) {
 			auto storageBlock = m_contractState.getBlock(height);
 
 			sirius::contract::blockchain::Block block;
@@ -504,11 +504,11 @@ namespace catapult::contract {
 		return m_pImpl->contractExists(contractKey);
 	}
 
-	void ExecutorService::automaticExecutionBlockPublished(Height height) {
+	void ExecutorService::automaticExecutionsBlockPublished(Height height) {
 		if (!m_pImpl) {
 			return;
 		}
-		m_pImpl->automaticExecutionBlockPublished(height);
+		m_pImpl->automaticExecutionsBlockPublished(height);
 	}
 
 	void ExecutorService::updateContracts(Height height) {

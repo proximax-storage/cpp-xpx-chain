@@ -42,7 +42,7 @@ struct CompletedCall {
 };
 
 struct AutomaticExecutionsInfo {
-	std::string AutomaticExecutionFileName;
+	std::string AutomaticExecutionsFileName;
 	std::string AutomaticExecutionsFunctionName;
 	Height AutomaticExecutionsNextBlockToCheck;
 	Amount AutomaticExecutionCallPayment;

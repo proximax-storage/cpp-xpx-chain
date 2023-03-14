@@ -40,7 +40,7 @@ namespace catapult::model {
 				const Key& driveKey,
 				const Key& executionPaymentKey,
 				const Key& assignee,
-				std::string automaticExecutionFileName,
+				std::string automaticExecutionsFileName,
 				std::string automaticExecutionsFunctionName,
 				Amount automaticExecutionCallPayment,
 				Amount automaticDownloadCallPayment)
@@ -50,7 +50,7 @@ namespace catapult::model {
 				, DriveKey(driveKey)
 			    , ExecutionPaymentKey(executionPaymentKey)
 				, Assignee(assignee)
-				, AutomaticExecutionFileName(std::move(automaticExecutionFileName))
+				, AutomaticExecutionsFileName(std::move(automaticExecutionsFileName))
 				, AutomaticExecutionsFunctionName(std::move(automaticExecutionsFunctionName))
 				, AutomaticExecutionCallPayment(automaticExecutionCallPayment)
 				, AutomaticDownloadCallPayment(automaticDownloadCallPayment)
@@ -62,7 +62,7 @@ namespace catapult::model {
 		Key DriveKey;
 		Key ExecutionPaymentKey;
 		Key Assignee;
-		std::string AutomaticExecutionFileName;
+		std::string AutomaticExecutionsFileName;
 		std::string AutomaticExecutionsFunctionName;
 		Amount AutomaticExecutionCallPayment;
 		Amount AutomaticDownloadCallPayment;

@@ -14,7 +14,7 @@ namespace catapult { namespace validators {
 
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
 
-		if (notification.AutomaticExecutionFileName.size() > pluginConfig.MaxRowSize) {
+		if (notification.AutomaticExecutionsFileName.size() > pluginConfig.MaxRowSize) {
 			return Failure_SuperContract_Max_Row_Size_Exceeded;
 		}
 		if (notification.AutomaticExecutionsFunctionName.size() > pluginConfig.MaxRowSize) {
