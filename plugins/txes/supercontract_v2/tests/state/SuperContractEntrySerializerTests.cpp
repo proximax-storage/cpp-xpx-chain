@@ -133,10 +133,10 @@ namespace catapult { namespace state {
 			pData += Hash256_Size;
 
 			// automatic executions info
-			EXPECT_EQ(entry.automaticExecutionsInfo().AutomaticExecutionFileName.size(), *reinterpret_cast<const uint16_t*>(pData));
+			EXPECT_EQ(entry.automaticExecutionsInfo().AutomaticExecutionsFileName.size(), *reinterpret_cast<const uint16_t*>(pData));
 			pData += sizeof(uint16_t);
-			EXPECT_EQ_MEMORY(entry.automaticExecutionsInfo().AutomaticExecutionFileName.data(), pData, entry.automaticExecutionsInfo().AutomaticExecutionFileName.size());
-			pData += entry.automaticExecutionsInfo().AutomaticExecutionFileName.size();
+			EXPECT_EQ_MEMORY(entry.automaticExecutionsInfo().AutomaticExecutionsFileName.data(), pData, entry.automaticExecutionsInfo().AutomaticExecutionsFileName.size());
+			pData += entry.automaticExecutionsInfo().AutomaticExecutionsFileName.size();
 			EXPECT_EQ(entry.automaticExecutionsInfo().AutomaticExecutionsFunctionName.size(), *reinterpret_cast<const uint16_t*>(pData));
 			pData += sizeof(uint16_t);
 			EXPECT_EQ_MEMORY(entry.automaticExecutionsInfo().AutomaticExecutionsFunctionName.data(), pData, entry.automaticExecutionsInfo().AutomaticExecutionsFunctionName.size());
@@ -314,13 +314,13 @@ namespace catapult { namespace state {
 			pData += Hash256_Size;
 
 			// automatic executions info
-			uint16_t filenameSize = entry.automaticExecutionsInfo().AutomaticExecutionFileName.size();
-			uint16_t functionSize = entry.automaticExecutionsInfo().AutomaticExecutionFileName.size();
+			uint16_t filenameSize = entry.automaticExecutionsInfo().AutomaticExecutionsFileName.size();
+			uint16_t functionSize = entry.automaticExecutionsInfo().AutomaticExecutionsFileName.size();
 			bool hasValue = entry.automaticExecutionsInfo().AutomaticExecutionsPrepaidSince.has_value();
 
 			memcpy(pData, &filenameSize, sizeof(uint16_t));
 			pData += sizeof(uint16_t);
-			memcpy(pData, entry.automaticExecutionsInfo().AutomaticExecutionFileName.data(), filenameSize);
+			memcpy(pData, entry.automaticExecutionsInfo().AutomaticExecutionsFileName.data(), filenameSize);
 			pData += filenameSize;
 			memcpy(pData, &functionSize, sizeof(uint16_t));
 			pData += sizeof(uint16_t);

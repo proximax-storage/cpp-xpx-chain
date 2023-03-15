@@ -18,8 +18,8 @@ namespace catapult { namespace mongo { namespace plugins {
     void StreamDeployContractTransaction(bson_stream::document& builder, const TTransaction& transaction) {
         builder << "driveKey" << ToBinary(transaction.DriveKey)
                 << "assignee" << ToBinary(transaction.Assignee)
-                << "automaticExecutionFileName" << ToBinary(transaction.AutomaticExecutionFileNamePtr(), transaction.AutomaticExecutionFileNameSize)
-                << "automaticExecutionsFunctionName" << ToBinary(transaction.AutomaticExecutionFunctionNamePtr(), transaction.AutomaticExecutionFunctionNameSize)
+                << "automaticExecutionsFileName" << ToBinary(transaction.AutomaticExecutionsFileNamePtr(), transaction.AutomaticExecutionsFileNameSize)
+                << "automaticExecutionsFunctionName" << ToBinary(transaction.AutomaticExecutionsFunctionNamePtr(), transaction.AutomaticExecutionsFunctionNameSize)
                 << "automaticExecutionCallPayment" << ToInt64(transaction.AutomaticExecutionCallPayment)
                 << "automaticDownloadCallPayment" << ToInt64(transaction.AutomaticDownloadCallPayment)
 				<< "automaticExecutionsNumber" << static_cast<int32_t>(transaction.AutomaticExecutionsNumber);

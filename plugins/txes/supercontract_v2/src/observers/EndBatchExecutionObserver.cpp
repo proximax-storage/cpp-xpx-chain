@@ -34,15 +34,15 @@ namespace catapult::observers {
 			auto minNextBatchToApprove =
 					minIt != executorsInfo.end() ? minIt->second.NextBatchToApprove : 0;
 
-			// For the poex validation we need only batches <= minNextBatchToApprove - 1
+			// For the poex validation we need only batches >= minNextBatchToApprove - 1
 			// So we use such a heuristic for clearing batches history
-			// Note that is there are fault executors s.t. minNextBatchToApprove << contractEntry.nextBatchId
+			// Note that if there are fault executors s.t. minNextBatchToApprove << contractEntry.nextBatchId
 			// The heuristic will not provide good performance
 			// That's why for good performance it is necessary to remove fault replicators from drive
 			// If they are not in  confirmed storage for a long time
 			auto& batches = contractEntry.batches();
 			while (!batches.empty() && batches.begin()->first + 1 < minNextBatchToApprove) {
-				batches.erase(batches.end());
+				batches.erase(batches.begin());
 			}
 
 			contractEntry.batches().emplace(contractEntry.nextBatchId(), state::Batch{});

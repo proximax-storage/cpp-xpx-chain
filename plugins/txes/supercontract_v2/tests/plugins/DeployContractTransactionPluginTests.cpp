@@ -69,8 +69,8 @@ namespace catapult { namespace plugins {
 						  pTransaction->FileNameSize +
 						  pTransaction->FunctionNameSize +
 						  pTransaction->ActualArgumentsSize +
-						  pTransaction->AutomaticExecutionFileNameSize +
-						  pTransaction->AutomaticExecutionFunctionNameSize;
+						  pTransaction->AutomaticExecutionsFileNameSize +
+						  pTransaction->AutomaticExecutionsFunctionNameSize;
 
 		// Act:
 		auto realSize = pPlugin->calculateRealSize(*pTransaction);
@@ -133,8 +133,8 @@ namespace catapult { namespace plugins {
 		mocks::MockTypedNotificationSubscriber<DeploySupercontractNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 		auto pTransaction = CreateTransaction<TTraits>();
-		const std::string automaticExecutionsFileName(reinterpret_cast<const char*>(pTransaction->AutomaticExecutionFileNamePtr()), pTransaction->AutomaticExecutionFileNameSize);
-		const std::string automaticExecutionsFunctionName(reinterpret_cast<const char*>(pTransaction->AutomaticExecutionFunctionNamePtr()), pTransaction->AutomaticExecutionFunctionNameSize);
+		const std::string automaticExecutionsFileName(reinterpret_cast<const char*>(pTransaction->AutomaticExecutionsFileNamePtr()), pTransaction->AutomaticExecutionsFileNameSize);
+		const std::string automaticExecutionsFunctionName(reinterpret_cast<const char*>(pTransaction->AutomaticExecutionsFunctionNamePtr()), pTransaction->AutomaticExecutionsFunctionNameSize);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
@@ -145,7 +145,7 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(pTransaction->Assignee, notification.Assignee);
 		EXPECT_EQ(pTransaction->Signer, notification.Signer);
-		EXPECT_EQ(automaticExecutionsFileName, notification.AutomaticExecutionFileName);
+		EXPECT_EQ(automaticExecutionsFileName, notification.AutomaticExecutionsFileName);
 		EXPECT_EQ(automaticExecutionsFunctionName, notification.AutomaticExecutionsFunctionName);
 		EXPECT_EQ(pTransaction->AutomaticExecutionCallPayment, notification.AutomaticExecutionCallPayment);
 		EXPECT_EQ(pTransaction->AutomaticDownloadCallPayment, notification.AutomaticDownloadCallPayment);

@@ -12,9 +12,9 @@ namespace catapult { namespace state {
 
     namespace {
         void SaveAutomaticExecutionsInfo(const AutomaticExecutionsInfo& automaticExecutionsInfo, io::OutputStream& output) {
-            io::Write16(output, utils::checked_cast<size_t, uint16_t>(automaticExecutionsInfo.AutomaticExecutionFileName.size()));
-            auto pAutomaticExecutionFileName = reinterpret_cast<const uint8_t*>(automaticExecutionsInfo.AutomaticExecutionFileName.c_str());
-            io::Write(output, utils::RawBuffer(pAutomaticExecutionFileName, automaticExecutionsInfo.AutomaticExecutionFileName.size()));
+            io::Write16(output, utils::checked_cast<size_t, uint16_t>(automaticExecutionsInfo.AutomaticExecutionsFileName.size()));
+            auto pAutomaticExecutionsFileName = reinterpret_cast<const uint8_t*>(automaticExecutionsInfo.AutomaticExecutionsFileName.c_str());
+            io::Write(output, utils::RawBuffer(pAutomaticExecutionsFileName, automaticExecutionsInfo.AutomaticExecutionsFileName.size()));
             io::Write16(output, utils::checked_cast<size_t, uint16_t>(automaticExecutionsInfo.AutomaticExecutionsFunctionName.size()));
             auto pAutomaticExecutionsFunctionName = reinterpret_cast<const uint8_t*>(automaticExecutionsInfo.AutomaticExecutionsFunctionName.c_str());
             io::Write(output, utils::RawBuffer(pAutomaticExecutionsFunctionName, automaticExecutionsInfo.AutomaticExecutionsFunctionName.size()));
@@ -119,16 +119,16 @@ namespace catapult { namespace state {
 
     namespace {
         void LoadAutomaticExecutionsInfo(AutomaticExecutionsInfo& automaticExecutionsInfo, io::InputStream& input) {
-            auto automaticExecutionFileNameSize = io::Read16(input);
-            std::vector<uint8_t> automaticExecutionFileNameBytes(automaticExecutionFileNameSize);
-            io::Read(input, automaticExecutionFileNameBytes);
-            std::string automaticExecutionFileName(automaticExecutionFileNameBytes.begin(), automaticExecutionFileNameBytes.end());           
+            auto automaticExecutionsFileNameSize = io::Read16(input);
+            std::vector<uint8_t> automaticExecutionsFileNameBytes(automaticExecutionsFileNameSize);
+            io::Read(input, automaticExecutionsFileNameBytes);
+            std::string automaticExecutionsFileName(automaticExecutionsFileNameBytes.begin(), automaticExecutionsFileNameBytes.end());
             auto automaticExecutionsFunctionNameSize = io::Read16(input);
             std::vector<uint8_t> automaticExecutionsFunctionNameBytes(automaticExecutionsFunctionNameSize);
             io::Read(input, automaticExecutionsFunctionNameBytes);
             std::string automaticExecutionsFunctionName(automaticExecutionsFunctionNameBytes.begin(), automaticExecutionsFunctionNameBytes.end());
 
-            automaticExecutionsInfo.AutomaticExecutionFileName = automaticExecutionFileName;
+            automaticExecutionsInfo.AutomaticExecutionsFileName = automaticExecutionsFileName;
             automaticExecutionsInfo.AutomaticExecutionsFunctionName = automaticExecutionsFunctionName;
             automaticExecutionsInfo.AutomaticExecutionsNextBlockToCheck = io::Read<Height>(input);
             automaticExecutionsInfo.AutomaticExecutionCallPayment = io::Read<Amount>(input);

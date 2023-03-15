@@ -15,10 +15,10 @@ namespace catapult { namespace mongo { namespace plugins {
 
     namespace {
         void StreamAutomaticExecutionsInfo(bson_stream::document& builder, const state::AutomaticExecutionsInfo& automaticExecutionsInfo) {
-            auto pAutomaticExecutionFileName = reinterpret_cast<const uint8_t*>(automaticExecutionsInfo.AutomaticExecutionFileName.c_str());
+            auto pAutomaticExecutionsFileName = reinterpret_cast<const uint8_t*>(automaticExecutionsInfo.AutomaticExecutionsFileName.c_str());
             auto pAutomaticExecutionsFunctionName = reinterpret_cast<const uint8_t*>(automaticExecutionsInfo.AutomaticExecutionsFunctionName.c_str());
             builder << "automaticExecutionsInfo" << bson_stream::open_document
-                << "automaticExecutionFileName" << ToBinary(pAutomaticExecutionFileName, automaticExecutionsInfo.AutomaticExecutionFileName.size())
+                << "automaticExecutionsFileName" << ToBinary(pAutomaticExecutionsFileName, automaticExecutionsInfo.AutomaticExecutionsFileName.size())
                 << "automaticExecutionsFunctionName" << ToBinary(pAutomaticExecutionsFunctionName, automaticExecutionsInfo.AutomaticExecutionsFunctionName.size())
                 << "automaticExecutionsNextBlockToCheck" << ToInt64(automaticExecutionsInfo.AutomaticExecutionsNextBlockToCheck)
                 << "automaticExecutionCallPayment" << ToInt64(automaticExecutionsInfo.AutomaticExecutionCallPayment)
@@ -145,12 +145,12 @@ namespace catapult { namespace mongo { namespace plugins {
     // region ToModel
     namespace {
         void ReadAutomaticExecutionsInfo(state::AutomaticExecutionsInfo& automaticExecutionsInfo, const bsoncxx::document::view& dbAutomaticExecutionsInfo) {
-            auto binaryAutomaticExecutionFileName = dbAutomaticExecutionsInfo["automaticExecutionFileName"].get_binary();
-            std::string automaticExecutionFileName(reinterpret_cast<const char*>(binaryAutomaticExecutionFileName.bytes, binaryAutomaticExecutionFileName.size));
+            auto binaryAutomaticExecutionsFileName = dbAutomaticExecutionsInfo["automaticExecutionsFileName"].get_binary();
+            std::string automaticExecutionsFileName(reinterpret_cast<const char*>(binaryAutomaticExecutionsFileName.bytes, binaryAutomaticExecutionsFileName.size));
             auto binaryAutomaticExecutionsFunctionName = dbAutomaticExecutionsInfo["automaticExecutionsFunctionName"].get_binary();
             std::string automaticExecutionsFunctionName(reinterpret_cast<const char*>(binaryAutomaticExecutionsFunctionName.bytes, binaryAutomaticExecutionsFunctionName.size));
 
-            automaticExecutionsInfo.AutomaticExecutionFileName = automaticExecutionFileName;
+            automaticExecutionsInfo.AutomaticExecutionsFileName = automaticExecutionsFileName;
             automaticExecutionsInfo.AutomaticExecutionsFunctionName = automaticExecutionsFunctionName;
             automaticExecutionsInfo.AutomaticExecutionsNextBlockToCheck =  Height(dbAutomaticExecutionsInfo["automaticExecutionsNextBlockToCheck"].get_int64());
             automaticExecutionsInfo.AutomaticExecutionCallPayment = Amount(static_cast<uint64_t>(dbAutomaticExecutionsInfo["automaticExecutionCallPayment"].get_int64()));

@@ -115,7 +115,7 @@ namespace catapult { namespace contract {
 		uint64_t expectedUsedSizeBytes = 50;
 		uint64_t expectedMetaDilesSizeBytes = 50;
 		std::array<uint8_t, 32>&& expectedProofOfExecutionVerificationInformation = sirius::crypto::CurvePoint().toBytes();
-		auto expectedAutomaticExecutionCheckedUpTo = Height(1);
+		auto expectedAutomaticExecutionsCheckedUpTo = Height(1);
 		auto expectedCosignersNumber = 2;
 		auto expectedCallsNumber = 2;
 		std::vector<Key> expectedPublicKeys{ Key({ 1 }), Key({ 2 }) };
@@ -183,7 +183,7 @@ namespace catapult { namespace contract {
 		EXPECT_EQ(expectedUsedSizeBytes, transaction.UsedSizeBytes);
 		EXPECT_EQ(expectedMetaDilesSizeBytes, transaction.MetaFilesSizeBytes);
 		EXPECT_EQ(expectedProofOfExecutionVerificationInformation, transaction.ProofOfExecutionVerificationInformation);
-		EXPECT_EQ(expectedAutomaticExecutionCheckedUpTo, transaction.AutomaticExecutionsNextBlockToCheck);
+		EXPECT_EQ(expectedAutomaticExecutionsCheckedUpTo, transaction.AutomaticExecutionsNextBlockToCheck);
 		EXPECT_EQ(expectedCosignersNumber, transaction.CosignersNumber);
 		EXPECT_EQ(expectedCallsNumber, transaction.CallsNumber);
 		EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);
@@ -268,7 +268,7 @@ namespace catapult { namespace contract {
 			auto testee = CreateTransactionSender(transactionRangeHandler);
 			Key expectedContractKey({ 11 });
 			uint64_t expectedBatchIndex = 1;
-			auto expectedAutomaticExecutionCheckedUpTo = Height(1);
+			auto expectedAutomaticExecutionsCheckedUpTo = Height(1);
 			auto expectedCosignersNumber = 2;
 			auto expectedCallsNumber = 2;
 			std::vector<Key> expectedPublicKeys{ Key({ 1 }), Key({ 2 }) };
@@ -328,7 +328,7 @@ namespace catapult { namespace contract {
 			auto& transaction = static_cast<const model::UnsuccessfulEndBatchExecutionTransaction&>(*pTransaction);
 			EXPECT_EQ(expectedContractKey, transaction.ContractKey);
 			EXPECT_EQ(expectedBatchIndex, transaction.BatchId);
-			EXPECT_EQ(expectedAutomaticExecutionCheckedUpTo, transaction.AutomaticExecutionsNextBlockToCheck);
+			EXPECT_EQ(expectedAutomaticExecutionsCheckedUpTo, transaction.AutomaticExecutionsNextBlockToCheck);
 			EXPECT_EQ(expectedCosignersNumber, transaction.CosignersNumber);
 			EXPECT_EQ(expectedCallsNumber, transaction.CallsNumber);
 			EXPECT_EQ_MEMORY(expectedPublicKeys.data(), transaction.PublicKeysPtr(), expectedPublicKeys.size() * Key_Size);

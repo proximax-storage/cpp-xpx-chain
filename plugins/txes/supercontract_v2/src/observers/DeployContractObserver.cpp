@@ -32,7 +32,7 @@ namespace catapult::observers {
 					entry.setDeploymentBaseModificationId(driveBrowser->getLastModificationId(readOnlyCache, notification.DriveKey));
 
 					auto& automaticExecutionsInfo = entry.automaticExecutionsInfo();
-					automaticExecutionsInfo.AutomaticExecutionFileName = notification.AutomaticExecutionFileName;
+					automaticExecutionsInfo.AutomaticExecutionsFileName = notification.AutomaticExecutionsFileName;
 					automaticExecutionsInfo.AutomaticExecutionsFunctionName =
 							notification.AutomaticExecutionsFunctionName;
 					automaticExecutionsInfo.AutomaticExecutionCallPayment = notification.AutomaticExecutionCallPayment;

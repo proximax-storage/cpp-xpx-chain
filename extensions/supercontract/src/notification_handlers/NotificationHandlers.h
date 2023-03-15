@@ -24,7 +24,7 @@ namespace catapult { namespace notification_handlers {
 
 	DECLARE_HANDLER(SynchronizeSingle, model::SynchronizationSingleNotification<1>)(const std::weak_ptr<contract::ExecutorService>& pExecutorService);
 
-	DECLARE_HANDLER(AutomaticExecutionBlock, model::BlockNotification<1>)(const std::weak_ptr<contract::ExecutorService>& pExecutorService);
+	DECLARE_HANDLER(AutomaticExecutionsBlock, model::BlockNotification<1>)(const std::weak_ptr<contract::ExecutorService>& pExecutorService);
 
 	DECLARE_HANDLER(ContractsUpdate, model::BlockNotification<1>)(const std::weak_ptr<contract::ExecutorService>& pExecutorService);
 }}

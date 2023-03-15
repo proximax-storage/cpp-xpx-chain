@@ -86,7 +86,7 @@ namespace catapult { namespace plugins {
 				resolved = Amount(pWork->AmountPerExecutor.unwrap() * executorsNumber);
 				return true;
 			}
-			case UnresolvedAmountType::AutomaticExecutionWork: {
+			case UnresolvedAmountType::AutomaticExecutionsWork: {
 				const auto* pWork = castToUnresolvedData<model::AutomaticExecutorWork>(unresolved.DataPtr);
 
 				const auto& contractCache = cache.template sub<cache::SuperContractCache>();

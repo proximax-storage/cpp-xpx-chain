@@ -10,14 +10,14 @@ namespace catapult { namespace notification_handlers {
 
 	using Notification = model::BlockNotification<1>;
 
-	DECLARE_HANDLER(AutomaticExecutionBlock, Notification)(const std::weak_ptr<contract::ExecutorService>& pExecutorServiceWeak) {
-		return MAKE_HANDLER(AutomaticExecutionBlock, [pExecutorServiceWeak](const Notification& notification, const HandlerContext& context) {
+	DECLARE_HANDLER(AutomaticExecutionsBlock, Notification)(const std::weak_ptr<contract::ExecutorService>& pExecutorServiceWeak) {
+		return MAKE_HANDLER(AutomaticExecutionsBlock, [pExecutorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pExecutorService = pExecutorServiceWeak.lock();
 			if (!pExecutorService) {
 				return;
 			}
 			try {
-				pExecutorService->automaticExecutionBlockPublished(context.Height);
+				pExecutorService->automaticExecutionsBlockPublished(context.Height);
 			}
 			catch (...) {
 				CATAPULT_LOG(warning) << "An exception has occurred in the executor";

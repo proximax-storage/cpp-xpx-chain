@@ -29,7 +29,7 @@ namespace catapult { namespace test {
 		crypto::CurvePoint curvePoint = crypto::CurvePoint::BasePoint() * scalar;
 
 		// automatic executions info
-		entry.automaticExecutionsInfo().AutomaticExecutionFileName = "aaa";
+		entry.automaticExecutionsInfo().AutomaticExecutionsFileName = "aaa";
 		entry.automaticExecutionsInfo().AutomaticExecutionsFunctionName = "aaa";
 		entry.automaticExecutionsInfo().AutomaticExecutionsNextBlockToCheck = Height(1);
 		entry.automaticExecutionsInfo().AutomaticExecutionCallPayment = Amount(1);
@@ -118,7 +118,7 @@ namespace catapult { namespace test {
 		EXPECT_EQ(entry1.AutomatedExecutionsNumber, entry2.AutomatedExecutionsNumber);
 		EXPECT_EQ(entry1.AutomaticDownloadCallPayment, entry2.AutomaticDownloadCallPayment);
 		EXPECT_EQ(entry1.AutomaticExecutionCallPayment, entry2.AutomaticExecutionCallPayment);
-		EXPECT_EQ(entry1.AutomaticExecutionFileName, entry2.AutomaticExecutionFileName);
+		EXPECT_EQ(entry1.AutomaticExecutionsFileName, entry2.AutomaticExecutionsFileName);
 		EXPECT_EQ(entry1.AutomaticExecutionsFunctionName, entry2.AutomaticExecutionsFunctionName);
 		EXPECT_EQ(entry1.AutomaticExecutionsNextBlockToCheck, entry2.AutomaticExecutionsNextBlockToCheck);
 		EXPECT_EQ(entry1.AutomaticExecutionsPrepaidSince, entry2.AutomaticExecutionsPrepaidSince);
