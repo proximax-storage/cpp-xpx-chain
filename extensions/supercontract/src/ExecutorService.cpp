@@ -279,7 +279,6 @@ namespace catapult::contract {
 			addRequest.m_automaticExecutionsSCLimit = contractInfo.AutomaticExecutionCallPayment.unwrap();
 			addRequest.m_automaticExecutionsSMLimit = contractInfo.AutomaticDownloadCallPayment.unwrap();
 
-			// TODO We can provide only some recent batches
 			for (const auto& [batchId, verificationInfo] : contractInfo.RecentBatches) {
 				sirius::crypto::CurvePoint point;
 				point.fromBytes(verificationInfo.toBytes());

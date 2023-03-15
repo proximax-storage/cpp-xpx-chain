@@ -154,7 +154,10 @@ class SuperContractMixin {
 		}
 
 		uint64_t nextBatchId() const {
-			return m_batches.size();
+			if (m_batches.empty()) {
+				return 0;
+			}
+			return (--m_batches.end())->first + 1;
 		}
 
 		std::map<uint64_t, Batch>& batches() {
