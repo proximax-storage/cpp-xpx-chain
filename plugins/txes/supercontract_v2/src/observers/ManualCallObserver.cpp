@@ -23,11 +23,16 @@ namespace catapult::observers {
 		contractCall.CallId = notification.CallId;
 		contractCall.Caller = notification.Caller;
 		contractCall.FileName = notification.FileName;
-		contractCall.FunctionName = contractCall.FunctionName;
-		contractCall.ActualArguments = contractCall.ActualArguments;
-		contractCall.ExecutionCallPayment = contractCall.ExecutionCallPayment;
-		contractCall.DownloadCallPayment = contractCall.DownloadCallPayment;
-		contractCall.ServicePayments = contractCall.ServicePayments;
+		contractCall.FunctionName = notification.FunctionName;
+		contractCall.ActualArguments = notification.ActualArguments;
+		contractCall.ExecutionCallPayment = notification.ExecutionCallPayment;
+		contractCall.DownloadCallPayment = notification.DownloadCallPayment;
+
+		contractCall.ServicePayments.reserve(notification.ServicePayments.size());
+		for (const auto& [mosaicId, amount]: notification.ServicePayments) {
+			contractCall.ServicePayments.push_back(state::ServicePayment{mosaicId, amount});
+		}
+
 		contractCall.BlockHeight = context.Height;
 
 		contractEntry.requestedCalls().push_back(std::move(contractCall));
