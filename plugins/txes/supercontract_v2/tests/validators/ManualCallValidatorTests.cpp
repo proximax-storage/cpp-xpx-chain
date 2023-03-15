@@ -25,7 +25,7 @@ namespace catapult {
         const auto Actual_Arguments = test::GenerateRandomString(10);
         const auto Execution_Call_Payment = Amount(10);
         const auto Download_Call_Payment = Amount(10);
-        std::vector<model::UnresolvedMosaic> Service_Payments = {model::UnresolvedMosaic()};
+        const auto Service_Payments = std::vector<model::UnresolvedMosaic>{model::UnresolvedMosaic()};
 
         const auto Max_Row = 20;
         const auto Max_Service_Payments = 1;

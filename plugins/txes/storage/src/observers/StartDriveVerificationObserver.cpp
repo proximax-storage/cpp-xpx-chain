@@ -26,7 +26,7 @@ namespace catapult { namespace observers {
 		auto lastBlockTimestamp = pLastBlockElement->Block.Timestamp;
 		auto blockGenerationTimeSeconds = (notification.Timestamp - lastBlockTimestamp).unwrap() / 1000;
 
-		auto verificationFactor = std::max(verificationInterval / std::max(blockGenerationTimeSeconds, 1ul), 1ul);
+		auto verificationFactor = std::max(static_cast<size_t>(verificationInterval) / std::max(static_cast<size_t>(blockGenerationTimeSeconds), 1ul), 1ul);
 
 		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
 

@@ -68,57 +68,105 @@ namespace catapult { namespace observers {
 
         struct CacheValues {
         public:
-            CacheValues() : ExpectedScEntry(Key()) {}
+            CacheValues() : InitialScEntry(Key()), ExpectedScEntry(Key()) {}
 
         public:
+            state::SuperContractEntry InitialScEntry;
             state::SuperContractEntry ExpectedScEntry;
         };
 
-        void RunTest(NotifyMode mode, const CacheValues& values) {
+        void RunTest(NotifyMode mode, const CacheValues& values, std::vector<Key> replicators) {
             // Arrange:
             ObserverTestContext context(mode, Current_Height);
             auto notification = CreateNotification();
             auto pObserver = CreateContractStateUpdateObserver(Drive_Browser);
-
             auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
-//            auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
+            auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 
             // Populate cache.
-            superContractCache.insert(values.ExpectedScEntry);
-            for (const auto &item: values.ExpectedScEntry.executorsInfo()) {
-//                state::ReplicatorEntry replicatorEntry(item.first);
-//                replicatorCache.insert(replicatorEntry);
+            state::BcDriveEntry bcDrive(values.InitialScEntry.driveKey());
+            auto& replicatorSet = bcDrive.replicators();
+            bcDrive.setReplicatorCount(replicators.size());
+            for (const auto &item: replicators){
+                replicatorSet.insert(item);
             }
 
-            if (mode == NotifyMode::Rollback) {
-
-            }
+            bcDriveCache.insert(bcDrive);
+            superContractCache.insert(values.InitialScEntry);
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
-            auto superContractCacheIter = superContractCache.find(values.ExpectedScEntry.key());
+            auto superContractCacheIter = superContractCache.find(values.InitialScEntry.key());
             const auto& actualScEntry = superContractCacheIter.get();
-            test::AssertEqualSuperContractData(values.ExpectedScEntry, actualScEntry);
+            test::AssertEqualSuperContractData( actualScEntry, values.ExpectedScEntry);
         }
 	}
 
-	TEST(TEST_CLASS, ContractStateUpdate_Commit) {
+	TEST(TEST_CLASS, ContractStateUpdate_Commit_AllExecutorsExist) {
         // Arrange
         CacheValues values;
-        values.ExpectedScEntry = CreateSuperContractEntry();
+        values.InitialScEntry = CreateSuperContractEntry();
+        values.ExpectedScEntry = values.InitialScEntry;
+
+        std::vector<Key> executors;
+        for (const auto & Executor : Executors) {
+            executors.push_back(Executor);
+        }
 
 		// Assert
-		RunTest(NotifyMode::Commit, values);
+		RunTest(NotifyMode::Commit, values, executors);
 	}
+
+    TEST(TEST_CLASS, ContractStateUpdate_Commit_NewExecutors) {
+        // Arrange
+        CacheValues values;
+        values.InitialScEntry = CreateSuperContractEntry();
+        values.ExpectedScEntry = values.InitialScEntry;
+        values.ExpectedScEntry.executorsInfo().erase(Executors.at(Executors.size() - 1));
+
+        std::vector<Key> replicators;
+        for (auto i = 0; i < Executors.size() - 1; i++) {
+            replicators.push_back(Executors.at(i));
+        }
+
+        // Assert
+        RunTest(NotifyMode::Commit, values, replicators);
+    }
+
+    TEST(TEST_CLASS, ContractStateUpdate_Commit_EraseOldExecutors) {
+        // Arrange
+        CacheValues values;
+        auto newExecutor = test::GenerateRandomByteArray<Key>();
+        values.InitialScEntry = CreateSuperContractEntry();
+        values.InitialScEntry.batches()[0] = {};
+
+        state::ProofOfExecution poEx;
+        poEx.StartBatchId = values.InitialScEntry.nextBatchId();
+        values.ExpectedScEntry = values.InitialScEntry;
+        values.ExpectedScEntry.executorsInfo().insert({newExecutor, {
+            values.ExpectedScEntry.nextBatchId(),
+            poEx
+        }});
+
+        std::vector<Key> replicators;
+        for (const auto & Executor : Executors) {
+            replicators.push_back(Executor);
+        }
+        replicators.push_back(newExecutor);
+
+        // Assert
+        RunTest(NotifyMode::Commit, values, replicators);
+    }
 
 	TEST(TEST_CLASS, ContractStateUpdate_Rollback) {
         // Arrange
         CacheValues values;
-        values.ExpectedScEntry = CreateSuperContractEntry();
+        values.InitialScEntry = CreateSuperContractEntry();
+        values.ExpectedScEntry = values.InitialScEntry;
 
 		// Assert
-		EXPECT_THROW(RunTest(NotifyMode::Rollback, values), catapult_runtime_error);
+		EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Executors), catapult_runtime_error);
 	}
 }}

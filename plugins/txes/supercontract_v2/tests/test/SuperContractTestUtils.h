@@ -201,13 +201,15 @@ namespace catapult { namespace test {
 			std::vector<size_t> cacheIds = {
 					cache::SuperContractCache::Id,
 					cache::DriveContractCache::Id,
-					cache::ReplicatorCache::Id};
+//					cache::ReplicatorCache::Id,
+                    cache::BcDriveCache::Id};
 			auto maxId = std::max_element(cacheIds.begin(), cacheIds.end());
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(*maxId + 1);
 
 			subCaches[cache::SuperContractCache::Id] = MakeSubCachePlugin<cache::SuperContractCache, cache::SuperContractCacheStorage>(pConfigHolder);
 			subCaches[cache::DriveContractCache::Id] = MakeSubCachePlugin<cache::DriveContractCache, cache::DriveContractCacheStorage>(pConfigHolder);
-            subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
+//            subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
+            subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 
 			return subCaches;
 		}

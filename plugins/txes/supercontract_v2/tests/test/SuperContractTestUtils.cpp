@@ -4,8 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "SuperContractTestUtils.h"
 #include "tests/TestHarness.h"
+#include "SuperContractTestUtils.h"
+#include <catapult/cache/ReadOnlyCatapultCache.h>
 
 namespace catapult { namespace test {
 
@@ -230,10 +231,10 @@ namespace catapult { namespace test {
 	}
 
     std::set<Key> DriveStateBrowserImpl::getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
-//        const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-//        auto driveIter = driveCache.find(driveKey);
-//        const auto& driveEntry = driveIter.get();
-        return {};
+        const auto& driveCache = cache.template sub<cache::BcDriveCache>();
+        auto driveIter = driveCache.find(driveKey);
+        const auto& driveEntry = driveIter.get();
+        return driveEntry.replicators();
     }
 
 	std::set<Key> DriveStateBrowserImpl::getDrives(const cache::ReadOnlyCatapultCache &cache, const Key &replicatorKey) const {
