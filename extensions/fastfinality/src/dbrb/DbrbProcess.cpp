@@ -516,12 +516,12 @@ namespace catapult { namespace dbrb {
 
 		auto pMessage = std::make_shared<InstallMessage>(m_id, sequence, convergedSignatures);
 
-		const auto& leastRecentView = message.ConvergedSequence.maybeLeastRecent().value_or(View{});
+		const auto& mostRecentView = message.ConvergedSequence.maybeMostRecent().value_or(View{});
 		std::set<ProcessId> replacedViewMembers = message.ReplacedView.members();
-		std::set<ProcessId> leastRecentViewMembers = leastRecentView.members();
+		std::set<ProcessId> mostRecentViewMembers = mostRecentView.members();
 		std::set<ProcessId> recipientsUnion;
 		std::set_union(replacedViewMembers.begin(), replacedViewMembers.end(),
-			leastRecentViewMembers.begin(), leastRecentViewMembers.end(),
+			mostRecentViewMembers.begin(), mostRecentViewMembers.end(),
 			std::inserter(recipientsUnion, recipientsUnion.begin()));
 
 		View recipientsView;
@@ -540,32 +540,27 @@ namespace catapult { namespace dbrb {
 
 		const auto& replacedView = pInstallMessageData->ReplacedView;
 		const auto& convergedSequence = pInstallMessageData->ConvergedSequence;
-		const auto& leastRecentView = pInstallMessageData->LeastRecentView;
-
-		// Update Format sequences.
-		auto& format = m_formatSequences[leastRecentView];
-		auto sequenceWithoutLeastRecent = convergedSequence;
-		sequenceWithoutLeastRecent.tryErase(leastRecentView);	// Will always succeed.
-		format.insert(sequenceWithoutLeastRecent);
+		const auto& pMostRecentView = convergedSequence.maybeMostRecent();
+		const auto& mostRecentView = pMostRecentView.value();
 
 		if (replacedView.isMember(m_id)) {
-			if (m_currentView < leastRecentView)
+			if (m_currentView < mostRecentView)
 				m_limitedProcessing = true;	// Stop processing Prepare, Commit and Reconfig messages.
 
 			// TODO: Double-check; not clear what was meant by state(v)
 			auto pMessage = std::make_shared<StateUpdateMessage>(m_id, m_state, replacedView, m_pendingChanges);
 
 			std::set<ProcessId> replacedViewMembers = replacedView.members();
-			std::set<ProcessId> leastRecentViewMembers = leastRecentView.members();
+			std::set<ProcessId> mostRecentViewMembers = mostRecentView.members();
 			std::set<ProcessId> recipientsUnion;
 			std::set_union(replacedViewMembers.begin(), replacedViewMembers.end(),
-				leastRecentViewMembers.begin(), leastRecentViewMembers.end(),
+				mostRecentViewMembers.begin(), mostRecentViewMembers.end(),
 				std::inserter(recipientsUnion, recipientsUnion.begin()));
 
 			disseminate(pMessage, recipientsUnion);
 		}
 
-		if (m_currentView < leastRecentView) {
+		if (m_currentView < mostRecentView) {
 			// Wait until a quorum of StateUpdate messages is collected for (message.ReplacedView).
 			CATAPULT_LOG(debug) << "[DBRB] INSTALL: Preparing for state updates.";
 			prepareForStateUpdates(*pInstallMessageData);
@@ -632,27 +627,28 @@ namespace catapult { namespace dbrb {
 		CATAPULT_LOG(debug) << "[DBRB] STATE-UPDATE: Quorum collected in view " << m_currentInstallMessage->ReplacedView << ".";
 
 		const auto& stateUpdateMessages = m_quorumManager.StateUpdateMessages.at(m_currentInstallMessage->ReplacedView);
-		const auto& leastRecentView = m_currentInstallMessage->LeastRecentView;
 		const auto& convergedSequence = m_currentInstallMessage->ConvergedSequence;
+		const auto& pMostRecentView = convergedSequence.maybeMostRecent();
+		const auto& mostRecentView = pMostRecentView.value();
 
 		// Updating pending changes.
 		View reconfigRequests;
 		for (const auto& message : stateUpdateMessages) {
 			reconfigRequests.merge(message.PendingChanges);
 		}
-		reconfigRequests.difference(leastRecentView);
+		reconfigRequests.difference(mostRecentView);
 		extendPendingChanges(reconfigRequests);
 
-		// Uninstalling the least recent view mentioned in the current Install message.
-		m_installedViews.erase(leastRecentView);
+		// Uninstalling the most recent view mentioned in the current Install message.
+		m_installedViews.erase(mostRecentView);
 
 		// Updating state and payload-related fields of the process.
 		updateState(stateUpdateMessages);
 
-		CATAPULT_LOG(debug) << "[DBRB] STATE UPDATE: Least recent view is " << leastRecentView;
-		if (leastRecentView.isMember(m_id)) {
-			m_currentView = leastRecentView;
-			CATAPULT_LOG(debug) << "[DBRB] STATE UPDATE: Node is in the least recent view updated current view to " << leastRecentView;
+		CATAPULT_LOG(debug) << "[DBRB] STATE UPDATE: Most recent view is " << mostRecentView;
+		if (mostRecentView.isMember(m_id)) {
+			m_currentView = mostRecentView;
+			CATAPULT_LOG(debug) << "[DBRB] STATE UPDATE: Node is in the least recent view. Updated current view to " << mostRecentView;
 
 			if (!m_currentInstallMessage->ReplacedView.isMember(m_id))
 				onJoinComplete();
