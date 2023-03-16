@@ -18,7 +18,7 @@ namespace catapult { namespace observers {
 
 		const auto replicatorDifference = driveEntry.replicatorCount() - driveEntry.replicators().size();
 		const auto usedSizeDifference =
-				driveEntry.activeDataModifications().begin()->ExpectedUploadSizeMegabytes
+				driveEntry.activeDataModifications().begin()->ActualUploadSizeMegabytes
 				+ utils::FileSize::FromBytes(driveEntry.usedSizeBytes() - driveEntry.metaFilesSizeBytes()).megabytes()
 				- utils::FileSize::FromBytes(notification.UsedDriveSize - notification.MetaFilesSizeBytes).megabytes();
 		const auto transferAmount = Amount(replicatorDifference * usedSizeDifference);
@@ -26,5 +26,12 @@ namespace catapult { namespace observers {
 		liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
 									   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 									   transferAmount);
+
+		const auto& modification = *driveEntry.activeDataModifications().begin();
+		const auto expectedActualDifference =
+				modification.ExpectedUploadSizeMegabytes - modification.ActualUploadSizeMegabytes;
+		liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+										config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+										Amount(driveEntry.replicatorCount() * expectedActualDifference));
 	});
 }}

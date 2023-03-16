@@ -25,6 +25,9 @@ namespace catapult { namespace validators {
 	  	if (activeDataModifications.empty())
 			return Failure_Storage_No_Active_Data_Modifications;
 
+	  	if (!activeDataModifications.begin()->ReadyForApproval)
+	  		return Failure_Storage_Modification_Not_Ready_For_Approval;
+
 	  	// Check if respective data modification is the first (oldest) element in activeDataModifications
 	  	if (activeDataModifications.begin()->Id != notification.DataModificationId)
 		  	return Failure_Storage_Invalid_Data_Modification_Id;

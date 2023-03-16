@@ -23,6 +23,9 @@ namespace catapult { namespace state {
 		Hash256 DownloadDataCdi;
 		uint64_t ExpectedUploadSize;
 		uint64_t ActualUploadSize;
+		std::string FolderName;
+		bool ReadyForApproval;
+		bool IsStream;
 	};
 
 	struct ApprovedDataModification : DataModification {

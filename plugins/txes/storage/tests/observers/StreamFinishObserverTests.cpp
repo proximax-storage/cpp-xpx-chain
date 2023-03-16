@@ -52,7 +52,7 @@ namespace catapult { namespace observers {
 			auto folderNameBytes = test::GenerateRandomVector(512);
 			auto modification = state::ActiveDataModification (
 				test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Key>(),
-				test::GenerateRandomByteArray<Hash256>(), expectedUploadSize, expectedUploadSize / 2, std::string(folderNameBytes.begin(), folderNameBytes.end()), true);
+				test::GenerateRandomByteArray<Hash256>(), expectedUploadSize, expectedUploadSize / 2, std::string(folderNameBytes.begin(), folderNameBytes.end()), true, true);
 
 			return BcDriveValues(key, modification);
 		}

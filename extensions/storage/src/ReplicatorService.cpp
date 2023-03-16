@@ -177,6 +177,60 @@ namespace catapult { namespace storage {
 					replicators});
         }
 
+		void startStream(
+				const Key& driveKey,
+				const Hash256& streamId,
+				const Key& streamerKey,
+				const std::string& folder,
+				uint64_t expectedSizeMegabytes) {
+			CATAPULT_LOG(debug) << "new stream request " << streamId << " for drive " << driveKey;
+
+			auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(driveKey));
+			m_pReplicator->asyncStartStream(
+					driveKey.array(),
+					sirius::drive::StreamRequest { streamId.array(),
+												   streamerKey.array(),
+												   folder,
+												   utils::FileSize::FromMegabytes(expectedSizeMegabytes).bytes(),
+												   replicators });
+		}
+
+		void streamPaymentPublished(const Key& driveKey,
+									const Hash256& streamId) {
+        	CATAPULT_LOG(debug) << "stream payment published " << streamId << " for drive " << driveKey;
+
+        	auto drive = m_storageState.getDrive(driveKey);
+			auto modificationIt =
+					std::find_if(drive.DataModifications.begin(), drive.DataModifications.end(), [&](const auto& modification) {
+						return modification.Id == streamId;
+					});
+
+			if (modificationIt == drive.DataModifications.end()) {
+				CATAPULT_LOG( error ) << "Stream for payment increasing not found " << streamId;
+				return;
+			}
+
+			m_pReplicator->asyncIncreaseStream(
+					driveKey.array(),
+					sirius::drive::StreamIncreaseRequest { streamId.array(), modificationIt->ExpectedUploadSize });
+		}
+
+		void finishStream(
+				const Key& driveKey,
+				const Hash256& streamId,
+				const Hash256& finishDownloadDataCdi,
+				uint64_t actualSizeMegabytes) {
+        	CATAPULT_LOG(debug) << "finish stream request " << streamId << " for drive " << driveKey;
+
+			m_pReplicator->asyncFinishStreamTxPublished(
+					driveKey.array(),
+					sirius::drive::StreamFinishRequest {
+							streamId.array(),
+							finishDownloadDataCdi.array(),
+							utils::FileSize::FromMegabytes(actualSizeMegabytes).bytes(),
+					});
+		}
+
 		void removeDriveModification(const Key& driveKey, const Hash256& transactionHash) {
             CATAPULT_LOG(debug) << "remove modify request " << transactionHash.data() << " for drive " << driveKey;
 
@@ -319,12 +373,29 @@ namespace catapult { namespace storage {
 			}
 
 			for (const auto& dataModification: drive.DataModifications) {
-				addDriveModification(
-						drive.Id,
-						dataModification.DownloadDataCdi,
-						dataModification.Id,
-						dataModification.Owner,
-						dataModification.ExpectedUploadSize);
+				if (dataModification.IsStream) {
+					startStream(
+							drive.Id,
+							dataModification.Id,
+							dataModification.Owner,
+							dataModification.FolderName,
+							dataModification.ExpectedUploadSize);
+					if (dataModification.ReadyForApproval) {
+						finishStream(
+								drive.Id,
+								dataModification.Id,
+								dataModification.DownloadDataCdi,
+								dataModification.ActualUploadSize);
+					}
+				}
+				else {
+					addDriveModification(
+							drive.Id,
+							dataModification.DownloadDataCdi,
+							dataModification.Id,
+							dataModification.Owner,
+							dataModification.ExpectedUploadSize);
+				}
 			}
 
 			m_alreadyAddedDrives[driveKey] = m_storageState.getChainHeight();
@@ -734,7 +805,31 @@ namespace catapult { namespace storage {
         	m_pImpl->addDriveModification(driveKey, downloadDataCdi, modificationId, owner, dataSizeMegabytes);
     }
 
-    void ReplicatorService::removeDriveModification(const Key& driveKey, const Hash256& dataModificationId) {
+	void ReplicatorService::startStream(
+			const Key& driveKey,
+			const Hash256& streamId,
+			const Key& streamerKey,
+			const std::string& folder,
+			uint64_t expectedSizeMegabytes) {
+		if (m_pImpl)
+			m_pImpl->startStream(driveKey, streamId, streamerKey, folder, expectedSizeMegabytes);
+	}
+
+	void ReplicatorService::streamPaymentPublished(const Key& driveKey, const Hash256& streamId) {
+		if (m_pImpl)
+			m_pImpl->streamPaymentPublished(driveKey, streamId);
+	}
+
+	void ReplicatorService::finishStream(
+			const Key& driveKey,
+			const Hash256& streamId,
+			const Hash256& finishDownloadDataCdi,
+			uint64_t actualSizeMegabytes) {
+    	if (m_pImpl)
+    		m_pImpl->finishStream(driveKey, streamId, finishDownloadDataCdi, actualSizeMegabytes);
+	}
+
+	void ReplicatorService::removeDriveModification(const Key& driveKey, const Hash256& dataModificationId) {
         if (m_pImpl)
             m_pImpl->removeDriveModification(driveKey, dataModificationId);
     }

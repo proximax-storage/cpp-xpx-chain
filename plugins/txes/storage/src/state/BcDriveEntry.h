@@ -39,8 +39,15 @@ namespace catapult { namespace state {
 				const Key& owner,
 				const Hash256& downloadDataCdi,
 				const uint64_t& uploadSizeMegabytes)
-				: ActiveDataModification(id, owner, downloadDataCdi, uploadSizeMegabytes, uploadSizeMegabytes, "", true)
-		{}
+			: ActiveDataModification(
+					  id,
+					  owner,
+					  downloadDataCdi,
+					  uploadSizeMegabytes,
+					  uploadSizeMegabytes,
+					  "",
+					  true,
+					  false) {}
 
 		/// Constructor For Stream Start
 		ActiveDataModification(
@@ -50,17 +57,18 @@ namespace catapult { namespace state {
 				const std::string& folderName)
 			: ActiveDataModification(id, owner, Hash256(),
 					  expectedUploadSizeMegabytes,
-					  expectedUploadSizeMegabytes, folderName, false)
+					  expectedUploadSizeMegabytes, folderName, false, true)
 		{}
 
 		ActiveDataModification(
 				const Hash256& id,
 				const Key& owner,
 				const Hash256& downloadDataCdi,
-				const uint64_t& expectedUploadSizeMegabytes,
-				const uint64_t& actualUploadSizeMegabytes,
+				uint64_t expectedUploadSizeMegabytes,
+				uint64_t actualUploadSizeMegabytes,
 				const std::string& folderName,
-				const bool& readyForApproval)
+				bool readyForApproval,
+				bool isStream)
 			: Id(id)
 			, Owner(owner)
 			, DownloadDataCdi(downloadDataCdi)
@@ -68,6 +76,7 @@ namespace catapult { namespace state {
 			, ActualUploadSizeMegabytes(actualUploadSizeMegabytes)
 			, FolderName(folderName)
 			, ReadyForApproval(readyForApproval)
+			, IsStream(isStream)
 		{}
 
 		/// Id of data modification.
@@ -76,7 +85,7 @@ namespace catapult { namespace state {
 		/// Public key of the drive owner.
 		Key Owner;
 
-		/// CDI of download data. Zero for Stream
+		/// CDI of download data
 		Hash256 DownloadDataCdi;
 
 		/// Expected Upload size of data.
@@ -90,6 +99,8 @@ namespace catapult { namespace state {
 
 		/// Whether DataModification can be approved by Replicators
 		bool ReadyForApproval;
+
+		bool IsStream;
 	};
 
 	struct CompletedDataModification : ActiveDataModification {
