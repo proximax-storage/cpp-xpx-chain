@@ -15,15 +15,11 @@ namespace catapult {
 
 namespace catapult { namespace dbrb {
 
-	class MessageSender
-			: public AsyncMessageQueue<std::pair<std::shared_ptr<MessagePacket>, std::set<ProcessId>>>
-			, public std::enable_shared_from_this<MessageSender> {
+	class MessageSender : public std::enable_shared_from_this<MessageSender> {
 	public:
 		explicit MessageSender(std::shared_ptr<net::PacketWriters> pWriters, NodeRetreiver& nodeRetreiver);
-		~MessageSender() override;
 
-	private:
-		void processBuffer(BufferType& buffer) override;
+		void send(const std::shared_ptr<MessagePacket>& pPacket, const std::set<ProcessId>& recipients);
 
 	private:
 		std::shared_ptr<net::PacketWriters> m_pWriters;

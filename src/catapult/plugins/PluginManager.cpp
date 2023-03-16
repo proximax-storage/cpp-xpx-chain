@@ -28,6 +28,7 @@ namespace catapult { namespace plugins {
 			: m_pConfigHolder(pConfigHolder)
 			, m_storageConfig(storageConfig)
 			, m_shouldEnableVerifiableState(immutableConfig().ShouldEnableVerifiableState)
+			, m_pTransactionFeeCalculator(std::make_shared<model::TransactionFeeCalculator>())
 	{}
 
 	// region config
@@ -295,7 +296,10 @@ namespace catapult { namespace plugins {
 	// region publisher
 
 	PluginManager::PublisherPointer PluginManager::createNotificationPublisher(model::PublicationMode mode) const {
-		return model::CreateNotificationPublisher(m_transactionRegistry, config::GetUnresolvedCurrencyMosaicId(immutableConfig()), mode);
+		return model::CreateNotificationPublisher(m_transactionRegistry,
+												  config::GetUnresolvedCurrencyMosaicId(immutableConfig()),
+												  *m_pTransactionFeeCalculator,
+												  mode);
 	}
 
 	// endregion
@@ -394,6 +398,14 @@ namespace catapult { namespace plugins {
 	}
 	void PluginManager::addStorageUpdateListener(std::unique_ptr<observers::StorageUpdatesListener>&& storageUpdatesListener) {
 		m_storageUpdatesListeners.emplace_back(std::move(storageUpdatesListener));
+	}
+
+	// endregion
+
+	// region transaction fee limiter
+
+	std::shared_ptr<model::TransactionFeeCalculator> PluginManager::transactionFeeCalculator() const {
+		return m_pTransactionFeeCalculator;
 	}
 
 	// endregion

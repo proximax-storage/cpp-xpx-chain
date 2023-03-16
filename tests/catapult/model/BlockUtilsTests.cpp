@@ -21,6 +21,7 @@
 #include "catapult/model/BlockUtils.h"
 #include "sdk/src/extensions/BlockExtensions.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/core/BlockTestUtils.h"
 
 namespace catapult { namespace model {
@@ -286,7 +287,8 @@ namespace catapult { namespace model {
 		pBlock->FeeInterestDenominator = 1;
 
 		// Act:
-		auto blockTransactionsInfo = CalculateBlockTransactionsInfo(*pBlock);
+		model::TransactionFeeCalculator transactionFeeCalculator;
+		auto blockTransactionsInfo = CalculateBlockTransactionsInfo(*pBlock, transactionFeeCalculator);
 
 		// Assert:
 		EXPECT_EQ(0u, blockTransactionsInfo.Count);
@@ -301,7 +303,8 @@ namespace catapult { namespace model {
 		pBlock->FeeInterestDenominator = 1;
 
 		// Act:
-		auto blockTransactionsInfo = CalculateBlockTransactionsInfo(*pBlock);
+		model::TransactionFeeCalculator transactionFeeCalculator;
+		auto blockTransactionsInfo = CalculateBlockTransactionsInfo(*pBlock, transactionFeeCalculator);
 
 		// Assert:
 		EXPECT_EQ(1u, blockTransactionsInfo.Count);
@@ -320,7 +323,8 @@ namespace catapult { namespace model {
 		pBlock->FeeInterestDenominator = 1;
 
 		// Act:
-		auto blockTransactionsInfo = CalculateBlockTransactionsInfo(*pBlock);
+		model::TransactionFeeCalculator transactionFeeCalculator;
+		auto blockTransactionsInfo = CalculateBlockTransactionsInfo(*pBlock, transactionFeeCalculator);
 
 		// Assert:
 		EXPECT_EQ(3u, blockTransactionsInfo.Count);

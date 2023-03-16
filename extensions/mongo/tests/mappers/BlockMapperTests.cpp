@@ -20,6 +20,7 @@
 
 #include "mongo/src/mappers/BlockMapper.h"
 #include "catapult/model/BlockUtils.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "mongo/tests/test/MongoReceiptTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 
@@ -52,7 +53,8 @@ namespace catapult { namespace mongo { namespace mappers {
 					: std::vector<Hash256>();
 
 			// Act:
-			auto dbBlock = ToDbModel(blockElement);
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto dbBlock = ToDbModel(blockElement, transactionFeeCalculator);
 
 			// Assert:
 			auto view = dbBlock.view();
@@ -92,7 +94,9 @@ namespace catapult { namespace mongo { namespace mappers {
 		auto pBlock = test::GenerateBlockWithTransactionsAndCosignatures(5, Height(123), 10);
 		pBlock->FeeInterest = 1;
 		pBlock->FeeInterestDenominator = 1;
-		auto totalFee = model::CalculateBlockTransactionsInfo(*pBlock).TotalFee;
+
+		model::TransactionFeeCalculator transactionFeeCalculator;
+		auto totalFee = model::CalculateBlockTransactionsInfo(*pBlock, transactionFeeCalculator).TotalFee;
 
 		// Assert:
 		AssertCanMapBlock(*pBlock, totalFee, 5, Num_Statements);

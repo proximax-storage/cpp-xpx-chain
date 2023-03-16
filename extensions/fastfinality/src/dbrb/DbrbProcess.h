@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#pragma  once
+#pragma once
 #include "catapult/types.h"
 #include "catapult/dbrb/Messages.h"
 #include "MessageSender.h"
@@ -163,7 +163,7 @@ namespace catapult { namespace dbrb {
 		bool update(AcknowledgedMessage message) {
 			CATAPULT_LOG(debug) << "[DBRB] QUORUM: Received ACKNOWLEDGED message in view " << message.View << ".";
 			auto& set = AcknowledgedPayloads[message.View];
-			auto payloadHash = CalculateHash({ { reinterpret_cast<const uint8_t*>(message.Payload.get()), message.Payload->Size } });
+			const auto& payloadHash = message.PayloadHash;
 			set.emplace(message.Sender, payloadHash);
 
 			const auto acknowledgedCount = std::count_if(set.begin(), set.end(), [&payloadHash](const auto& pair){ return pair.second == payloadHash; });
@@ -205,18 +205,6 @@ namespace catapult { namespace dbrb {
 
 			return triggered;
 		};
-	};
-
-	/// Struct that encapsulates payload, its certificate and certificate view.
-	struct PayloadData {
-		/// Stored payload.
-		dbrb::Payload Payload;
-
-		/// Message certificate for the stored payload.
-		CertificateType Certificate;
-
-		/// View associated with the certificate.
-		View CertificateView;
 	};
 
 	/// Class representing DBRB process.
@@ -280,7 +268,7 @@ namespace catapult { namespace dbrb {
 
 		struct BroadcastData {
 			/// Payload allowed to be acknowledged. If empty, any payload can be acknowledged.
-			Payload AcknowledgeablePayload;
+			dbrb::Payload Payload;
 
 			/// Map that maps views and process IDs to signatures received from respective Acknowledged messages.
 			std::map<std::pair<View, ProcessId>, Signature> Signatures;
@@ -295,15 +283,13 @@ namespace catapult { namespace dbrb {
 			/// Quorum manager.
 			dbrb::QuorumManager QuorumManager;
 
-			/// Stored payload, along with respective certificate and certificate view.
-			/// Unset when the process starts working.
-			std::optional<PayloadData> StoredPayloadData;
+			/// Whether any commit message received.
+			bool CommitMessageReceived = false;
 
-			/// Whether value of the payload is delivered.
-			bool PayloadIsDelivered = false;
+			Timestamp Begin;
 		};
 
-		std::map<ProcessId, BroadcastData> m_broadcastData;
+		std::map<Hash256, BroadcastData> m_broadcastData;
 
 		/// Whether there is any payload allowed to be acknowledged.
 		bool m_acknowledgeAllowed = true;
@@ -320,13 +306,11 @@ namespace catapult { namespace dbrb {
 
 		const crypto::KeyPair& m_keyPair;
 
-		mutable std::mutex m_mutex;
-
 		NodeRetreiver m_nodeRetreiver;
 
 		std::shared_ptr<MessageSender> m_pMessageSender;
 
-		std::shared_ptr<thread::IoThreadPool> m_pPool;
+		boost::asio::io_context::strand m_strand;
 
 		TransactionSender m_transactionSender;
 
@@ -355,7 +339,6 @@ namespace catapult { namespace dbrb {
 		void prepareForStateUpdates(const InstallMessageData&);
 		void updateState(const std::set<StateUpdateMessage>&);
 		void extendPendingChanges(const View&);
-		bool isAcknowledgeable(const PrepareMessage&);
 		Signature sign(const Payload&);
 		static bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
 		
@@ -376,7 +359,7 @@ namespace catapult { namespace dbrb {
 		void onConvergedQuorumCollected(const ConvergedMessage&);
 		void onStateUpdateQuorumCollected();
 		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&);
-		void onDeliverQuorumCollected(const std::optional<PayloadData>&);
+		void onDeliverQuorumCollected(const Payload&);
 
 		void onViewInstalled(const View&);
 		void onLeaveAllowed();

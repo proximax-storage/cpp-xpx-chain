@@ -45,6 +45,8 @@ namespace catapult { namespace dbrb {
 	template<>
 	Signature Read(const uint8_t*& pBuffer);
 	template<>
+	Hash256 Read(const uint8_t*& pBuffer);
+	template<>
 	MembershipChange Read(const uint8_t*& pBuffer);
 	template<>
 	View Read(const uint8_t*& pBuffer);

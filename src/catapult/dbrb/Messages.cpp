@@ -70,7 +70,7 @@ namespace catapult { namespace dbrb {
 			auto payload = Read<Payload>(pBuffer);
 			auto view = Read<View>(pBuffer);
 
-			auto pMessage = std::make_unique<PrepareMessage>(pMessagePacket->Sender, payload, view);
+			auto pMessage = std::make_shared<PrepareMessage>(pMessagePacket->Sender, payload, view);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -79,20 +79,19 @@ namespace catapult { namespace dbrb {
 		auto ToCommitMessage(const ionet::Packet& packet) {
 			const auto* pMessagePacket = reinterpret_cast<const CommitMessagePacket*>(&packet);
 			auto pBuffer = pMessagePacket->payload();
-			auto initiator = Read<ProcessId>(pBuffer);
-			auto payload = Read<Payload>(pBuffer);
+			auto payloadHash = Read<Hash256>(pBuffer);
 			auto certificate = Read<CertificateType>(pBuffer);
 			auto certificateView = Read<View>(pBuffer);
 			auto currentView = Read<View>(pBuffer);
 
-			auto pMessage = std::make_unique<CommitMessage>(pMessagePacket->Sender, initiator, payload, certificate, certificateView, currentView);
+			auto pMessage = std::make_shared<CommitMessage>(pMessagePacket->Sender, payloadHash, certificate, certificateView, currentView);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
 		}
 	}
 
-	std::unique_ptr<Message> NetworkPacketConverter::toMessage(const ionet::Packet& packet) const {
+	std::shared_ptr<Message> NetworkPacketConverter::toMessage(const ionet::Packet& packet) const {
 		const auto* pHandler = findConverter(packet);
 		if (!pHandler)
 			CATAPULT_THROW_RUNTIME_ERROR_1("packet converter not registered", packet.Type)
@@ -131,7 +130,7 @@ namespace catapult { namespace dbrb {
 			auto change = Read<MembershipChange>(pBuffer);
 			auto view = Read<View>(pBuffer);
 
-			auto pMessage = std::make_unique<ReconfigMessage>(pMessagePacket->Sender, processId, change, view);
+			auto pMessage = std::make_shared<ReconfigMessage>(pMessagePacket->Sender, processId, change, view);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -142,7 +141,7 @@ namespace catapult { namespace dbrb {
 			auto pBuffer = pMessagePacket->payload();
 			auto view = Read<View>(pBuffer);
 
-			auto pMessage = std::make_unique<ReconfigConfirmMessage>(pMessagePacket->Sender, view);
+			auto pMessage = std::make_shared<ReconfigConfirmMessage>(pMessagePacket->Sender, view);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -154,7 +153,7 @@ namespace catapult { namespace dbrb {
 			auto proposedSequence = Read<Sequence>(pBuffer);
 			auto replacedView = Read<View>(pBuffer);
 
-			auto pMessage = std::make_unique<ProposeMessage>(pMessagePacket->Sender, proposedSequence, replacedView);
+			auto pMessage = std::make_shared<ProposeMessage>(pMessagePacket->Sender, proposedSequence, replacedView);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -166,7 +165,7 @@ namespace catapult { namespace dbrb {
 			auto convergedSequence = Read<Sequence>(pBuffer);
 			auto replacedView = Read<View>(pBuffer);
 
-			auto pMessage = std::make_unique<ConvergedMessage>(pMessagePacket->Sender, convergedSequence, replacedView);
+			auto pMessage = std::make_shared<ConvergedMessage>(pMessagePacket->Sender, convergedSequence, replacedView);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -178,7 +177,7 @@ namespace catapult { namespace dbrb {
 			auto sequence = Read<Sequence>(pBuffer);
 			auto signatures = Read<CertificateType>(pBuffer);
 
-			auto pMessage = std::make_unique<InstallMessage>(pMessagePacket->Sender, sequence, signatures);
+			auto pMessage = std::make_shared<InstallMessage>(pMessagePacket->Sender, sequence, signatures);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -191,12 +190,11 @@ namespace catapult { namespace dbrb {
 		registerConverter(ionet::PacketType::Dbrb_Acknowledged_Message, [](const ionet::Packet& packet) {
 			const auto* pMessagePacket = reinterpret_cast<const AcknowledgedMessagePacket*>(&packet);
 			auto pBuffer = pMessagePacket->payload();
-			auto initiator = Read<ProcessId>(pBuffer);
-			auto payload = Read<Payload>(pBuffer);
+			auto payloadHash = Read<Hash256>(pBuffer);
 			auto view = Read<View>(pBuffer);
 			auto payloadSignature = Read<Signature>(pBuffer);
 
-			auto pMessage = std::make_unique<AcknowledgedMessage>(pMessagePacket->Sender, initiator, payload, view, payloadSignature);
+			auto pMessage = std::make_shared<AcknowledgedMessage>(pMessagePacket->Sender, payloadHash, view, payloadSignature);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -232,7 +230,7 @@ namespace catapult { namespace dbrb {
 			auto view = Read<View>(pBuffer);
 			auto pendingChanges = Read<View>(pBuffer);
 
-			auto pMessage = std::make_unique<StateUpdateMessage>(pMessagePacket->Sender, state, view, pendingChanges);
+			auto pMessage = std::make_shared<StateUpdateMessage>(pMessagePacket->Sender, state, view, pendingChanges);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -241,11 +239,10 @@ namespace catapult { namespace dbrb {
 		registerConverter(ionet::PacketType::Dbrb_Deliver_Message, [](const ionet::Packet& packet) {
 			const auto* pMessagePacket = reinterpret_cast<const DeliverMessagePacket*>(&packet);
 			auto pBuffer = pMessagePacket->payload();
-			auto initiator = Read<ProcessId>(pBuffer);
-			auto payload = Read<Payload>(pBuffer);
+			auto payloadHash = Read<Hash256>(pBuffer);
 			auto view = Read<View>(pBuffer);
 
-			auto pMessage = std::make_unique<DeliverMessage>(pMessagePacket->Sender, initiator, payload, view);
+			auto pMessage = std::make_shared<DeliverMessage>(pMessagePacket->Sender, payloadHash, view);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -345,12 +342,11 @@ namespace catapult { namespace dbrb {
 	}
 
 	std::shared_ptr<MessagePacket> AcknowledgedMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
-		auto pPacket = ionet::CreateSharedPacket<AcknowledgedMessagePacket>(ProcessId_Size + Payload->Size + View.packedSize() + Signature_Size);
+		auto pPacket = ionet::CreateSharedPacket<AcknowledgedMessagePacket>(Hash256_Size + View.packedSize() + Signature_Size);
 		pPacket->Sender = Sender;
 
 		auto pBuffer = pPacket->payload();
-		Write(pBuffer, Initiator);
-		Write(pBuffer, Payload);
+		Write(pBuffer, PayloadHash);
 		Write(pBuffer, View);
 		Write(pBuffer, PayloadSignature);
 
@@ -360,13 +356,12 @@ namespace catapult { namespace dbrb {
 	}
 
 	std::shared_ptr<MessagePacket> CommitMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
-		auto payloadSize = ProcessId_Size + Payload->Size + sizeof(uint32_t) + Certificate.size() * (ProcessId_Size + Signature_Size) + CertificateView.packedSize() + CurrentView.packedSize();
+		auto payloadSize = Hash256_Size + sizeof(uint32_t) + Certificate.size() * (ProcessId_Size + Signature_Size) + CertificateView.packedSize() + CurrentView.packedSize();
 		auto pPacket = ionet::CreateSharedPacket<CommitMessagePacket>(payloadSize);
 		pPacket->Sender = Sender;
 
 		auto pBuffer = pPacket->payload();
-		Write(pBuffer, Initiator);
-		Write(pBuffer, Payload);
+		Write(pBuffer, PayloadHash);
 		Write(pBuffer, Certificate);
 		Write(pBuffer, CertificateView);
 		Write(pBuffer, CurrentView);
@@ -432,12 +427,11 @@ namespace catapult { namespace dbrb {
 	}
 
 	std::shared_ptr<MessagePacket> DeliverMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
-		auto pPacket = ionet::CreateSharedPacket<DeliverMessagePacket>(ProcessId_Size + Payload->Size + View.packedSize());
+		auto pPacket = ionet::CreateSharedPacket<DeliverMessagePacket>(Hash256_Size + View.packedSize());
 		pPacket->Sender = Sender;
 
 		auto pBuffer = pPacket->payload();
-		Write(pBuffer, Initiator);
-		Write(pBuffer, Payload);
+		Write(pBuffer, PayloadHash);
 		Write(pBuffer, View);
 
 		MaybeSignMessage(pKeyPair, pPacket.get(), this);

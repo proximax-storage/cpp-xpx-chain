@@ -25,6 +25,7 @@
 #include "MongoTransactionPlugin.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/plugins.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace mongo {
 
@@ -32,9 +33,12 @@ namespace catapult { namespace mongo {
 	class MongoPluginManager {
 	public:
 		/// Creates a new plugin manager around \a mongoContext and \a pConfigHolder.
-		explicit MongoPluginManager(MongoStorageContext& mongoContext, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
+		explicit MongoPluginManager(MongoStorageContext& mongoContext,
+									const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+									std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator)
 				: m_mongoContext(mongoContext)
 				, m_pConfigHolder(pConfigHolder)
+				, m_pTransactionFeeCalculator(std::move(pTransactionFeeCalculator))
 		{}
 
 	public:
@@ -76,6 +80,10 @@ namespace catapult { namespace mongo {
 			return m_receiptRegistry;
 		}
 
+		const model::TransactionFeeCalculator& transactionFeeCalculator() const {
+			return *m_pTransactionFeeCalculator;
+		}
+
 		/// Creates an external cache storage.
 		std::unique_ptr<ExternalCacheStorage> createStorage() {
 			return m_storageBuilder.build();
@@ -86,6 +94,7 @@ namespace catapult { namespace mongo {
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		MongoTransactionRegistry m_transactionRegistry;
 		MongoReceiptRegistry m_receiptRegistry;
+		std::shared_ptr<model::TransactionFeeCalculator> m_pTransactionFeeCalculator;
 		ExternalCacheStorageBuilder m_storageBuilder;
 	};
 }}

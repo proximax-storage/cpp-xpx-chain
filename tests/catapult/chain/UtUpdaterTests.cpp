@@ -23,6 +23,7 @@
 #include "catapult/chain/ChainResults.h"
 #include "catapult/model/FeeUtils.h"
 #include "catapult/model/TransactionStatus.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/cache/UtTestUtils.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
@@ -125,7 +126,8 @@ namespace catapult { namespace chain {
 					BlockFeeMultiplier minFeeMultiplier = BlockFeeMultiplier())
 					: m_executionConfig(CreateConfiguration(minFeeMultiplier))
 					, m_cache(CreateCacheWithDefaultHeight())
-					, m_transactionsCache(cache::MemoryCacheOptions(1024, 1000))
+					, m_transactionsCache(cache::MemoryCacheOptions(1024, 1000),
+									  std::make_shared<model::TransactionFeeCalculator>())
 					, m_updater(
 							m_transactionsCache,
 							m_cache,
@@ -562,9 +564,10 @@ namespace catapult { namespace chain {
 		// - set fee multiples
 		auto i = 0u;
 		std::array<uint32_t, 10> feeMultiples{ 10, 20, 19, 30, 21, 40, 30, 10, 10, 20 };
+		model::TransactionFeeCalculator transactionFeeCalculator;
 		for (auto& utInfo : transactionData.UtInfos) {
 			auto multiplier = BlockFeeMultiplier(feeMultiples[i++]);
-			const_cast<Amount&>(utInfo.pEntity->MaxFee) = model::CalculateTransactionFee(multiplier, *utInfo.pEntity, 1, 1);
+			const_cast<Amount&>(utInfo.pEntity->MaxFee) = transactionFeeCalculator.calculateTransactionFee(multiplier, *utInfo.pEntity, 1, 1);
 		}
 
 		// Sanity:

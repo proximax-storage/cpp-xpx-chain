@@ -24,6 +24,7 @@
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/observers/ObserverTypes.h"
 #include "catapult/validators/ValidatorTypes.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace chain {
 
@@ -37,6 +38,7 @@ namespace catapult { namespace chain {
 		using ValidatorPointer = std::shared_ptr<const validators::stateful::AggregateNotificationValidator>;
 		using PublisherPointer = std::shared_ptr<const model::NotificationPublisher>;
 		using ResolverContextFactoryFunc = std::function<model::ResolverContext (const cache::ReadOnlyCatapultCache&)>;
+		using TransactionFeeCalculatorPointer = std::shared_ptr<model::TransactionFeeCalculator>;
 
 	public:
 		/// Network identifier.
@@ -59,5 +61,8 @@ namespace catapult { namespace chain {
 
 		/// Resolver context factory.
 		ResolverContextFactoryFunc ResolverContextFactory;
+
+		/// Transaction fee limiter
+		TransactionFeeCalculatorPointer pTransactionFeeCalculator;
 	};
 }}

@@ -19,7 +19,7 @@ namespace catapult { namespace dbrb {
 				return;
 
 			auto packetIoPairs = packetIoPickers.pickMultiple(utils::TimeSpan::FromSeconds(60));
-			CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pushing DBRB nodes";
+			CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pushing " << nodes.size() << " DBRB node(s)";
 			if (packetIoPairs.empty())
 				return;
 
@@ -58,68 +58,13 @@ namespace catapult { namespace dbrb {
 		, m_networkIdentifier(networkIdentifier)
 	{}
 
-	NodeRetreiver::~NodeRetreiver() {
-		stop();
-	}
-
-	void NodeRetreiver::enqueue(std::set<ProcessId> ids) {
-		{
-			std::lock_guard<std::mutex> guard(m_mutex);
-			for (const auto& id : ids)
-				m_buffer.emplace_back(id);
-		}
-		m_condVar.notify_one();
-	}
-
-	void NodeRetreiver::addNodes(const std::vector<SignedNode>& nodes) {
-		std::vector<SignedNode> newNodes;
-
-		{
-			std::lock_guard<std::mutex> guard(m_mutex);
-			for (const auto& node : nodes) {
-				const ProcessId& id = node.Node.identityKey();
-				auto iter = m_nodes.find(id);
-				if (iter != m_nodes.end() && iter->second.Signature == node.Signature)
-					continue;
-
-				newNodes.emplace_back(node);
-				m_nodes[id] = node;
-			}
-		}
-
-		BroadcastNodes(newNodes, m_packetIoPickers);
-	}
-
-	void NodeRetreiver::broadcastNodes() {
-		std::vector<SignedNode> nodes;
-
-		{
-			std::lock_guard<std::mutex> guard(m_mutex);
-			nodes.reserve(m_nodes.size());
-			for (const auto& [_, node] : m_nodes)
-				nodes.emplace_back(node);
-		}
-
-		BroadcastNodes(nodes, m_packetIoPickers);
-	}
-
-	std::optional<SignedNode> NodeRetreiver::getNode(const ProcessId& id) const {
-		std::lock_guard<std::mutex> guard(m_mutex);
-		std::optional<SignedNode> node;
-		auto iter = m_nodes.find(id);
-		if (iter != m_nodes.end())
-			node = iter->second;
-
-		return node;
-	}
-
-	void NodeRetreiver::processBuffer(BufferType& buffer) {
+	void NodeRetreiver::requestNodes(const std::set<ProcessId>& requestedIds) {
 		std::set<ProcessId> ids;
+
 		{
 			std::lock_guard<std::mutex> guard(m_mutex);
-			for (const auto& id : buffer) {
-				auto iter = m_nodes.find(id);
-				if (iter == m_nodes.end())
+			for (const auto& id : requestedIds) {
+				if (m_nodes.find(id) == m_nodes.end())
 					ids.emplace(id);
 			}
 		}
@@ -151,8 +96,43 @@ namespace catapult { namespace dbrb {
 
 			addNodes(newNodes);
 		}
+	}
 
-		using namespace std::chrono_literals;
-		std::this_thread::sleep_for(2000ms);
+	void NodeRetreiver::addNodes(const std::vector<SignedNode>& nodes) {
+		std::lock_guard<std::mutex> guard(m_mutex);
+		for (const auto& node : nodes) {
+			const auto& id = node.Node.identityKey();
+			auto iter = m_nodes.find(id);
+			if (iter != m_nodes.end() && iter->second.Signature == node.Signature)
+				continue;
+
+			m_nodes[id] = node;
+		}
+	}
+
+	void NodeRetreiver::broadcastNodes() const {
+		std::vector<SignedNode> nodes;
+
+		{
+			std::lock_guard<std::mutex> guard(m_mutex);
+			nodes.reserve(m_nodes.size());
+			for (const auto& [_, node] : m_nodes)
+				nodes.emplace_back(node);
+		}
+
+		BroadcastNodes(nodes, m_packetIoPickers);
+	}
+
+	std::optional<SignedNode> NodeRetreiver::getNode(const ProcessId& id) const {
+		std::optional<SignedNode> node;
+
+		{
+			std::lock_guard<std::mutex> guard(m_mutex);
+			auto iter = m_nodes.find(id);
+			if (iter != m_nodes.end())
+				node = iter->second;
+		}
+
+		return node;
 	}
 }}
