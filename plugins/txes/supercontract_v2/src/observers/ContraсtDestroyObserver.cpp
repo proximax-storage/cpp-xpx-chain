@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <random>
 #include "Observers.h"
 #include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
 #include "src/catapult/cache/ReadOnlyCatapultCache.h"

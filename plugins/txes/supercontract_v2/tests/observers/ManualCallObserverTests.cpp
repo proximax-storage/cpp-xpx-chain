@@ -28,7 +28,10 @@ namespace catapult { namespace observers {
         const auto Actual_Arguments = test::GenerateRandomString(10);
         const auto Execution_Call_Payment = Amount(10);
         const auto Download_Call_Payment = Amount(10);
-        const auto Service_Payments = std::vector<model::UnresolvedMosaic>{model::UnresolvedMosaic()};
+        const auto Service_Payments = std::vector<model::UnresolvedMosaic>{
+                model::UnresolvedMosaic{test::GenerateRandomValue<UnresolvedMosaicId>(), test::GenerateRandomValue<Amount>()},
+                model::UnresolvedMosaic{test::GenerateRandomValue<UnresolvedMosaicId>(), test::GenerateRandomValue<Amount>()},
+        };
 
         struct CacheValues {
         public:
@@ -76,6 +79,11 @@ namespace catapult { namespace observers {
         values.InitialScEntry = state::SuperContractEntry(Super_Contract_Key);
         values.ExpectedScEntry = values.InitialScEntry;
 
+        std::vector<state::ServicePayment> servicePayment;
+        for (const auto &item: Service_Payments) {
+            servicePayment.push_back({item.MosaicId, item.Amount});
+        }
+
         state::ContractCall contractCall{
             Call_Id,
             Caller,
@@ -84,7 +92,7 @@ namespace catapult { namespace observers {
             Actual_Arguments,
             Execution_Call_Payment,
             Download_Call_Payment,
-            Service_Payments,
+            servicePayment,
             Current_Height,
         };
         values.ExpectedScEntry.requestedCalls().emplace_back(contractCall);

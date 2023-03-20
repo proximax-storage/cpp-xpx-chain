@@ -21,7 +21,7 @@ namespace catapult { namespace observers {
 		using ObserverTestContext = test::ObserverTestContextT<test::SuperContractCacheFactory>;
 		using Notification = model::ContractDestroyNotification<1>;
 
-        constexpr auto Storage_Mosaic_Id = MosaicId(1324);
+        const auto Storage_Mosaic_Id = MosaicId(1324);
 		const auto Current_Height = test::GenerateRandomValue<Height>();
         const auto Super_Contract_Key = test::GenerateRandomByteArray<Key>();
         const auto Drive_Key = test::GenerateRandomByteArray<Key>();
@@ -82,10 +82,7 @@ namespace catapult { namespace observers {
             accountCache.addAccount(values.InitialScEntry.executionPaymentKey(), Height(1));
 
             auto contractExecutionAccountEntry = accountCache.find(values.InitialScEntry.executionPaymentKey()).get();
-            contractExecutionAccountEntry.Balances.credit(
-                    Storage_Mosaic_Id,
-                    values.InitialContractExecutionBalances,
-                    Height(1));
+            contractExecutionAccountEntry.Balances.credit(Storage_Mosaic_Id,values.InitialContractExecutionBalances);
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
@@ -105,11 +102,6 @@ namespace catapult { namespace observers {
 
             const auto executionPaymentAccountEntry = accountCache.find(values.InitialScEntry.executionPaymentKey()).get();
             EXPECT_EQ(values.ExpectedContractExecutionBalances, executionPaymentAccountEntry.Balances.get(Storage_Mosaic_Id));
-
-            for (const auto& [mosaicId, amount] : executionPaymentAccountEntry.Balances) {
-                auto m =  mosaicId;
-                auto a = amount;
-            }
 
             const auto assigneeAccountEntry = accountCache.find(values.InitialScEntry.assignee()).get();
             EXPECT_EQ(values.ExpectedAssignee, assigneeAccountEntry.Balances.get(Storage_Mosaic_Id));

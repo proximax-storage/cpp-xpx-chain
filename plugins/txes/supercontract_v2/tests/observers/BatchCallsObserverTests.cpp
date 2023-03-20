@@ -12,7 +12,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS BatchCallsObserverTests
 
-//    const std::unique_ptr<observers::LiquidityProviderExchangeObserver> Liquidity_Provider = std::make_unique<test::LiquidityProviderExchangeObserverImpl>();
+    const std::unique_ptr<observers::LiquidityProviderExchangeObserver> Liquidity_Provider = std::make_unique<test::LiquidityProviderExchangeObserverImpl>();
 	const std::unique_ptr<state::DriveStateBrowser> Drive_Browser = std::make_unique<test::DriveStateBrowserImpl>();
 
 	DEFINE_COMMON_OBSERVER_TESTS(BatchCalls, {}, Drive_Browser)
@@ -52,11 +52,10 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, Current_Height);
             auto notification = Notification(
-                    values.ExpectedScEntry.key(),
+                    values.InitialScEntry.key(),
                     Digests,
                     PaymentOpinions);
-//            auto pObserver = CreateBatchCallsObserver(Liquidity_Provider, Drive_Browser);
-            auto pObserver = CreateBatchCallsObserver({}, Drive_Browser);
+            auto pObserver = CreateBatchCallsObserver(Liquidity_Provider, Drive_Browser);
             auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
 
             // Populate cache.
@@ -68,7 +67,7 @@ namespace catapult { namespace observers {
             // Assert: check the cache
             auto superContractCacheIter = superContractCache.find(values.InitialScEntry.key());
             const auto& actualScEntry = superContractCacheIter.get();
-            test::AssertEqualSuperContractData(values.ExpectedScEntry, actualScEntry);
+            test::AssertEqualSuperContractData(values.InitialScEntry, actualScEntry);
         }
 	}
 

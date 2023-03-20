@@ -153,25 +153,27 @@ namespace catapult { namespace test {
 		}
 	}
 
-	void AssertEqualBatches(const std::map<uint64_t, state::Batch>& entry1, const std::map<uint64_t, state::Batch>& entry2) {
-		ASSERT_EQ(entry1.size(), entry2.size());
-		if (entry1.empty())
+	void AssertEqualBatches(const std::map<uint64_t, state::Batch>& expectedBatches, const std::map<uint64_t, state::Batch>& actualBatches) {
+		ASSERT_EQ(expectedBatches.size(), actualBatches.size());
+		if (expectedBatches.empty())
 			return;
 
-		for (const auto& it : entry1) {
-			auto actualEntry = entry2.find(it.first);
-			ASSERT_TRUE(actualEntry != entry2.end());
+		for (const auto& it : expectedBatches) {
+			auto actualEntry = actualBatches.find(it.first);
+			ASSERT_TRUE(actualEntry != actualBatches.end());
 
 			EXPECT_EQ(it.second.Success, actualEntry->second.Success);
 			EXPECT_EQ(it.second.PoExVerificationInformation, actualEntry->second.PoExVerificationInformation);
 
-			ASSERT_EQ(it.second.CompletedCalls.size(), actualEntry->second.CompletedCalls.size());
-			if (it.second.CompletedCalls.empty())
+            auto& expectedCompletedCalls = it.second.CompletedCalls;
+            auto& actualCompletedCalls = actualEntry->second.CompletedCalls;
+			ASSERT_EQ(expectedCompletedCalls.size(), actualCompletedCalls.size());
+			if (expectedCompletedCalls.empty())
 				continue;
 
-			for (auto i = 0u; i < entry1.size(); i++) {
-				const auto& expectedCall = it.second.CompletedCalls[i];
-				const auto& actualCall = actualEntry->second.CompletedCalls[i];
+			for (auto i = 0u; i < expectedCompletedCalls.size(); i++) {
+				const auto& expectedCall = expectedCompletedCalls[i];
+				const auto& actualCall = actualCompletedCalls[i];
 				EXPECT_EQ(expectedCall.CallId, actualCall.CallId);
 				EXPECT_EQ(expectedCall.Caller, actualCall.Caller);
 				EXPECT_EQ(expectedCall.DownloadWork, actualCall.DownloadWork);
@@ -222,11 +224,6 @@ namespace catapult { namespace test {
 	}
 
 	uint16_t DriveStateBrowserImpl::getOrderedReplicatorsCount(const catapult::cache::ReadOnlyCatapultCache& cache, const catapult::Key& driveKey) const {
-//		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-//		auto driveIter = driveCache.find(driveKey);
-//		const auto& driveEntry = driveIter.get();
-//		return driveEntry.replicatorCount();
-
 		return {};
 	}
 
@@ -238,36 +235,14 @@ namespace catapult { namespace test {
     }
 
 	std::set<Key> DriveStateBrowserImpl::getDrives(const cache::ReadOnlyCatapultCache &cache, const Key &replicatorKey) const {
-//		const auto& replicatorCache = cache.template sub<cache::ReplicatorCache>();
-//		auto replicatorIt = replicatorCache.find(replicatorKey);
-//		auto* pReplicatorEntry = replicatorIt.tryGet();
-//		if (!pReplicatorEntry) {
-//			return {};
-//		}
-//		std::set<Key> drives;
-//		for (const auto& [key, _]: pReplicatorEntry->drives()) {
-//			drives.insert(key);
-//		}
-//		return drives;
-
 		return {};
 	}
 
 	Hash256 DriveStateBrowserImpl::getDriveState(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
-//		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-//		auto driveIter = driveCache.find(driveKey);
-//		const auto& driveEntry = driveIter.get();
-//		return driveEntry.rootHash();
-
 		return {};
 	}
 
 	Hash256 DriveStateBrowserImpl::getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
-//		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-//		auto driveIter = driveCache.find(driveKey);
-//		const auto& driveEntry = driveIter.get();
-//
-//        return driveEntry.lastModificationId();
 		return {};
 	}
 }}

@@ -78,24 +78,25 @@ namespace catapult { namespace observers {
 		RunTest(NotifyMode::Commit, values);
 	}
 
-//    TEST(TEST_CLASS, Commit_BadBatches) {
-//        // Arrange
-//        CacheValues values;
-//        values.InitialScEntry = state::SuperContractEntry(Super_Contract_Key);
-//        values.InitialScEntry.batches().emplace(0, state::Batch{});
-//
-//        for (uint64_t i = 0; i < Cosigners.size(); i++) {
-//            values.InitialScEntry.executorsInfo()[Cosigners[i]] = {i+values.InitialScEntry.nextBatchId()};
-//        }
-//
-//        values.ExpectedScEntry = values.InitialScEntry;
-//        values.ExpectedScEntry.batches().emplace(values.InitialScEntry.nextBatchId(), state::Batch{});
-//        values.ExpectedScEntry.automaticExecutionsInfo().AutomaticExecutionsNextBlockToCheck = AutomaticExecutionsNextBlockToCheck;
-//        values.ExpectedScEntry.batches().erase(0);
-//
-//        // Assert
-//        RunTest(NotifyMode::Commit, values);
-//    }
+    TEST(TEST_CLASS, Commit_BadBatches) {
+        // Arrange
+        CacheValues values;
+        values.InitialScEntry = state::SuperContractEntry(Super_Contract_Key);
+        values.InitialScEntry.batches().emplace(0, state::Batch{}); // bad batch
+        values.InitialScEntry.batches().emplace(1, state::Batch{});
+
+        for (uint64_t i = 0; i < Cosigners.size(); i++) {
+            values.InitialScEntry.executorsInfo()[Cosigners[i]] = {i+values.InitialScEntry.nextBatchId()};
+        }
+
+        values.ExpectedScEntry = values.InitialScEntry;
+        values.ExpectedScEntry.batches().emplace(values.InitialScEntry.nextBatchId(), state::Batch{});
+        values.ExpectedScEntry.automaticExecutionsInfo().AutomaticExecutionsNextBlockToCheck = AutomaticExecutionsNextBlockToCheck;
+        values.ExpectedScEntry.batches().erase(0);
+
+        // Assert
+        RunTest(NotifyMode::Commit, values);
+    }
 
 	TEST(TEST_CLASS, Rollback) {
         // Arrange
