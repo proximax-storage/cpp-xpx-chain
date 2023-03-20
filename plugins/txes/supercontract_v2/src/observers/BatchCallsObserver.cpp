@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <random>
 #include "Observers.h"
 #include "src/utils/MathUtils.h"
 #include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
@@ -21,13 +20,10 @@ namespace catapult::observers {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (BatchCalls)");
 
+            auto& accountCache = context.Cache.sub<cache::AccountStateCache>();
 			auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 			auto contractIt = contractCache.find(notification.ContractKey);
 			auto& contractEntry = contractIt.get();
-
-			auto& accountCache = context.Cache.sub<cache::AccountStateCache>();
-			auto contractAccountIt = accountCache.find(contractEntry.key());
-			auto& contractAccountEntry = contractAccountIt.get();
 
 			auto& batch = (--contractEntry.batches().end())->second;
 
@@ -92,7 +88,7 @@ namespace catapult::observers {
 				}
 				else {
 					scRefund = Amount((automaticExecutionsInfo.AutomaticExecutionCallPayment - call.ExecutionWork).unwrap() * executorsNumber);
-					scRefund = Amount((automaticExecutionsInfo.AutomaticDownloadCallPayment - call.DownloadWork).unwrap() * executorsNumber);
+					streamingRefund = Amount((automaticExecutionsInfo.AutomaticDownloadCallPayment - call.DownloadWork).unwrap() * executorsNumber);
 					refundReceiver = contractCreator;
 					automaticExecutionsInfo.AutomatedExecutionsNumber--;
 				}
