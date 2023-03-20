@@ -45,6 +45,17 @@ namespace catapult::observers {
 				call.DownloadWork = downloadWork;
 				if (digest.Manual) {
 					call.Caller = requestedCallIt->Caller;
+
+					auto servicePaymentsReceiverKey = digest.Status == 0
+															  ? notification.ContractKey : requestedCallIt->Caller;
+					auto servicePaymentsReceiverAccountIt = accountCache.find(servicePaymentsReceiverKey);
+					auto& servicePaymentsReceiverAccountEntry = servicePaymentsReceiverAccountIt.get();
+
+					for (const auto& [mosaicId, amount] : requestedCallIt->ServicePayments) {
+						auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
+						servicePaymentsReceiverAccountEntry.Balances.credit(resolvedMosaicId, amount);
+					}
+
 					requestedCallIt++;
 				}
 				else {
@@ -78,16 +89,6 @@ namespace catapult::observers {
 					scRefund = Amount((requestedCall.ExecutionCallPayment - call.ExecutionWork).unwrap() * executorsNumber);
 					streamingRefund = Amount((requestedCall.DownloadCallPayment - call.DownloadWork).unwrap() * executorsNumber);
 					refundReceiver = call.Caller;
-
-					auto servicePaymentsReceiverKey = call.Status == 0 ? notification.ContractKey : call.Caller;
-					auto servicePaymentsReceiverAccountIt = accountCache.find(call.Caller);
-					auto& servicePaymentsReceiverAccountEntry = servicePaymentsReceiverAccountIt.get();
-
-					for (const auto& [mosaicId, amount]: requestedCallIt->ServicePayments)
-					{
-						auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
-						servicePaymentsReceiverAccountEntry.Balances.credit(resolvedMosaicId, amount);
-					}
 				}
 				else {
 					scRefund = Amount((automaticExecutionsInfo.AutomaticExecutionCallPayment - call.ExecutionWork).unwrap() * executorsNumber);
