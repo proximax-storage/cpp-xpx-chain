@@ -57,12 +57,12 @@ namespace catapult { namespace observers {
             // Arrange:
             Notification notification(Super_Contract_Key, proofs);
 
-//            const auto& scMosaicId = config::GetUnresolvedSuperContractMosaicId(context.observerContext().Config.Immutable);
-//            const auto& currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(context.observerContext().Config.Immutable);
-//            const auto& streamingMosaicId = config::GetUnresolvedStreamingMosaicId(context.observerContext().Config.Immutable);
-//            auto resolvedScMosaicId = context.observerContext().Resolvers.resolve(scMosaicId);
-//            auto resolvedCurrencyMosaicId = context.observerContext().Resolvers.resolve(currencyMosaicId);
-//            auto resolvedStreamingMosaicId = context.observerContext().Resolvers.resolve(streamingMosaicId);
+            const auto& scMosaicId = config::GetUnresolvedSuperContractMosaicId(context.observerContext().Config.Immutable);
+            const auto& currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(context.observerContext().Config.Immutable);
+            const auto& streamingMosaicId = config::GetUnresolvedStreamingMosaicId(context.observerContext().Config.Immutable);
+            auto resolvedScMosaicId = MosaicId(scMosaicId.unwrap());
+            auto resolvedCurrencyMosaicId = MosaicId(currencyMosaicId.unwrap());
+            auto resolvedStreamingMosaicId = MosaicId(streamingMosaicId.unwrap());
 
             auto pObserver = CreateProofOfExecutionObserver(Liquidity_Provider, Storage_External_Manager);
             auto& accountCache = context.cache().sub<cache::AccountStateCache>();
@@ -73,22 +73,19 @@ namespace catapult { namespace observers {
             for (const auto& item: values.InitialBcDrive.replicators()) {
                 accountCache.addAccount(item, Height(1));
             }
-            accountCache.addAccount(values.InitialScEntry.executionPaymentKey(), Height(1));
             bcDriveCache.insert(values.InitialBcDrive);
             superContractCache.insert(values.InitialScEntry);
 
-//            auto initScAmount = Amount(1000000000);
-//            auto initStreamingAmount = Amount(1000000000);
-//            test::AddAccountState(
-//                    accountCache,
-//                    values.InitialScEntry.executionPaymentKey(),
-//                    Height(1),
-//                    {
-//                        { resolvedScMosaicId, initScAmount },
-//                        { resolvedStreamingMosaicId, initStreamingAmount },
-//                    });
-//
-//            auto& executionPaymentAcc = accountCache.find(values.InitialScEntry.executionPaymentKey()).get();
+            auto initScAmount = Amount(1000000000);
+            auto initStreamingAmount = Amount(1000000000);
+            test::AddAccountState(
+                    accountCache,
+                    values.InitialScEntry.executionPaymentKey(),
+                    Height(1),
+                    {
+                        { resolvedScMosaicId, initScAmount },
+                        { resolvedStreamingMosaicId, initStreamingAmount },
+                    });
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
@@ -109,12 +106,14 @@ namespace catapult { namespace observers {
                           values.ExpectedBcDrive.usedSizeBytes());
             }
 
-//            for (const auto& [key, _ ]: proofs) {
-//                auto& acc = accountCache.find(key).get();
-//                EXPECT_TRUE(acc.Balances.get(resolvedCurrencyMosaicId) > Amount(0));
-//            }
-//            EXPECT_TRUE(executionPaymentAcc.Balances.get(resolvedScMosaicId) < initScAmount);
-//            EXPECT_TRUE(executionPaymentAcc.Balances.get(resolvedStreamingMosaicId) < initStreamingAmount);
+            for (const auto& [key, _ ]: proofs) {
+                auto& acc = accountCache.find(key).get();
+                EXPECT_TRUE(acc.Balances.get(resolvedCurrencyMosaicId) > Amount(0));
+            }
+
+            auto& executionPaymentAcc = accountCache.find(values.InitialScEntry.executionPaymentKey()).get();
+            EXPECT_TRUE(executionPaymentAcc.Balances.get(resolvedScMosaicId) < initScAmount);
+            EXPECT_TRUE(executionPaymentAcc.Balances.get(resolvedStreamingMosaicId) < initStreamingAmount);
         }
 	}
 
@@ -137,8 +136,8 @@ namespace catapult { namespace observers {
                             test::GenerateRandomByteArray<Hash256>(),
                             {},
                             0,
-                            Amount(0),
-                            Amount(0),
+                            Amount(10),
+                            Amount(10),
                         }
                     },
                 }
@@ -187,7 +186,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, Rollback) {
         // Arrange
-        ObserverTestContext context(NotifyMode::Rollback, Current_Height);
+        ObserverTestContext context(NotifyMode::Rollback, Current_Height, CreateConfig());
 
         CacheValues values;
         values.InitialScEntry = state::SuperContractEntry(Super_Contract_Key);

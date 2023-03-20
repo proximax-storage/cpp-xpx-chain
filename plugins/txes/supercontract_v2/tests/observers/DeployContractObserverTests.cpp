@@ -67,10 +67,10 @@ namespace catapult { namespace observers {
 
         struct CacheValues {
         public:
-            CacheValues() : InitialScEntry(Key()), DriveContractEntry(Key()) {}
+            CacheValues() : ScEntry(Key()), DriveContractEntry(Key()) {}
 
         public:
-            state::SuperContractEntry InitialScEntry;
+            state::SuperContractEntry ScEntry;
             state::DriveContractEntry DriveContractEntry;
         };
 
@@ -84,7 +84,7 @@ namespace catapult { namespace observers {
 
             // Populate cache.
             if (mode == NotifyMode::Rollback) {
-                superContractCache.insert(values.InitialScEntry);
+                superContractCache.insert(values.ScEntry);
                 driveCache.insert(values.DriveContractEntry);
             }
 
@@ -92,11 +92,11 @@ namespace catapult { namespace observers {
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
-            auto superContractCacheIter = superContractCache.find(values.InitialScEntry.key());
+            auto superContractCacheIter = superContractCache.find(values.ScEntry.key());
             const auto& actualScEntry = superContractCacheIter.get();
-            test::AssertEqualSuperContractData(values.InitialScEntry, actualScEntry);
+            test::AssertEqualSuperContractData(values.ScEntry, actualScEntry);
 
-            auto driveCacheIter = driveCache.find(values.InitialScEntry.driveKey());
+            auto driveCacheIter = driveCache.find(values.ScEntry.driveKey());
             const auto& actualDriveContractEntry = driveCacheIter.get();
             test::AssertEqualDriveContract(values.DriveContractEntry, actualDriveContractEntry);
         }
@@ -105,7 +105,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, Deploy_Commit) {
         // Arrange
         CacheValues values;
-        values.InitialScEntry = CreateSuperContractEntry();
+        values.ScEntry = CreateSuperContractEntry();
         values.DriveContractEntry = CreateDriveContractEntry();
 
 		// Assert
@@ -115,7 +115,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, Deploy_Rollback) {
         // Arrange
         CacheValues values;
-        values.InitialScEntry = CreateSuperContractEntry();
+        values.ScEntry = CreateSuperContractEntry();
         values.DriveContractEntry = CreateDriveContractEntry();
 
 		// Assert

@@ -224,7 +224,10 @@ namespace catapult { namespace test {
 	}
 
 	uint16_t DriveStateBrowserImpl::getOrderedReplicatorsCount(const catapult::cache::ReadOnlyCatapultCache& cache, const catapult::Key& driveKey) const {
-		return {};
+        const auto& driveCache = cache.template sub<cache::BcDriveCache>();
+        auto driveIter = driveCache.find(driveKey);
+        const auto& driveEntry = driveIter.get();
+        return driveEntry.replicatorCount();
 	}
 
     std::set<Key> DriveStateBrowserImpl::getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
