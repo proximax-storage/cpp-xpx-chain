@@ -65,8 +65,12 @@ namespace catapult { namespace validators {
 
 					if( networkConfig.AccountVersion < currentNetworkConfig.AccountVersion)
 						return Failure_NetworkConfig_AccountVersion_Less_Than_Current;
+					//TODO: Reconsider this definition to move to other plugin
+					if(networkConfig.DockStakeRewardInterval == BlockDuration(0)) {
+						return Failure_NetworkConfig_Interval_Must_Not_Be_Zero;
+					}
 
-					if(currentNetworkConfig.DockStakeRewardInterval != networkConfig.DockStakeRewardInterval && (height.unwrap()-1) % currentNetworkConfig.DockStakeRewardInterval .unwrap() == 0)
+					if(currentNetworkConfig.DockStakeRewardInterval != networkConfig.DockStakeRewardInterval && (height.unwrap()-1) % currentNetworkConfig.DockStakeRewardInterval.unwrap() != 0)
 						return Failure_NetworkConfig_Interval_Must_Change_After_Reward_Tier;
 
 					if(networkConfig.AccountVersion < networkConfig.MinimumAccountVersion)

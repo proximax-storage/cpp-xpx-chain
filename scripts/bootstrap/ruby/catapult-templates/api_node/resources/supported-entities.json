@@ -63,6 +63,11 @@
 		{
 			"name": "Network_Config",
 			"type": "16729",
+			"supportedVersions": [2]
+		},
+		{
+			"name": "Network_Config_Absolute_Height",
+			"type": "16985",
 			"supportedVersions": [1]
 		},
 		{
