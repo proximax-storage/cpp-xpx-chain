@@ -63,7 +63,7 @@ namespace catapult { namespace validators {
 
 			crypto::CurvePoint left = proofToVerify.T - previousT;
 			crypto::CurvePoint right = (proofToVerify.R - previousR) * crypto::CurvePoint::BasePoint();
-			for (uint i = verifyStartBatchId; i < contractEntry.batches().size(); i++) {
+			for (uint i = verifyStartBatchId; i < contractEntry.nextBatchId(); i++) {
 				const auto& verificationInfo = contractEntry.batches().at(i).PoExVerificationInformation;
 				crypto::Sha3_512_Builder hasher_h2;
 				Hash512 cHash;

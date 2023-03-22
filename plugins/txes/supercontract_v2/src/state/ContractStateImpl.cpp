@@ -111,8 +111,8 @@ namespace catapult { namespace state {
 		contractInfo.Executors = getExecutors(contractKey);
 		contractInfo.DeploymentBaseModificationId = contractEntry.deploymentBaseModificationId();
 
-		for (uint i = 0; i < contractEntry.batches().size(); i++) {
-			contractInfo.RecentBatches[i] = contractEntry.batches().at(i).PoExVerificationInformation;
+		for (const auto& [batchId, batch]: contractEntry.batches()) {
+			contractInfo.RecentBatches[batchId] = batch.PoExVerificationInformation;
 		}
 
 		const auto& automaticExecutionsInfo = contractEntry.automaticExecutionsInfo();
@@ -123,9 +123,10 @@ namespace catapult { namespace state {
 		contractInfo.AutomaticExecutionsEnabledSince = utils::automaticExecutionsEnabledSince(contractEntry, actualHeight, config);
 		contractInfo.AutomaticExecutionsNextBlockToCheck = automaticExecutionsInfo.AutomaticExecutionsNextBlockToCheck;
 		if (!contractEntry.batches().empty()) {
-			const auto& batch = (--contractEntry.batches().end())->second;
+			auto batchIt = --contractEntry.batches().end();
+			const auto& batch = batchIt->second;
 			PublishedBatchInfo lastBatch;
-			lastBatch.BatchIndex = contractEntry.batches().size();
+			lastBatch.BatchIndex = batchIt->first;
 			lastBatch.BatchSuccess = batch.Success;
 			lastBatch.DriveState = getDriveState(contractKey);
 			lastBatch.PoExVerificationInfo = lastBatch.PoExVerificationInfo;

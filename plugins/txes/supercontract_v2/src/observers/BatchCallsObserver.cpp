@@ -110,7 +110,7 @@ namespace catapult::observers {
 				automaticExecutionsInfo.AutomaticExecutionsPrepaidSince.reset();
 			}
 
-			if (contractEntry.batches().size() == 1) {
+			if (contractEntry.nextBatchId() == 1) {
 				if (automaticExecutionsInfo.AutomatedExecutionsNumber > 0) {
 					automaticExecutionsInfo.AutomaticExecutionsPrepaidSince = context.Height;
 				}
