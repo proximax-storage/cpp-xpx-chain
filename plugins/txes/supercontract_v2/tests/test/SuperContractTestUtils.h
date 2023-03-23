@@ -10,24 +10,25 @@
 #include "src/cache/SuperContractCacheStorage.h"
 #include "src/cache/DriveContractCache.h"
 #include "src/cache/DriveContractCacheStorage.h"
+#include "src/state/DriveContractEntry.h"
 #include "src/state/SuperContractEntry.h"
 #include "src/model/SuperContractEntityType.h"
 #include "src/model/EndBatchExecutionModel.h"
 #include "src/model/DeployContractTransaction.h"
-#include "src/state/DriveContractEntry.h"
-#include "src/state/SuperContractEntry.h"
 #include "catapult/model/SupercontractModel.h"
+#include "catapult/crypto/KeyPair.h"
+#include "catapult/crypto/PrivateKey.h"
+#include "catapult/crypto/Signer.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "plugins/txes/storage/src/state/DriveStateBrowserImpl.h"
-#include "plugins/txes/storage/src/cache/ReplicatorCache.h"
-#include "plugins/txes/storage/src/cache/ReplicatorCacheStorage.h"
 #include "plugins/txes/storage/src/cache/BcDriveCache.h"
 #include "plugins/txes/storage/src/cache/BcDriveCacheStorage.h"
-#include "plugins/txes/storage/tests/test/StorageTestUtils.h"
 #include "tests/test/nodeps/Random.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "catapult/cache_core/AccountStateCache.h"
+#include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -40,6 +41,19 @@ namespace catapult { namespace test {
 																 int batchCount,
 																 int completedCallCount,
 																 int releaseTransactionCount);
+
+    /// Creates a transaction.
+    template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateTransaction(model::EntityType type, size_t additionalSize = 0) {
+        uint32_t entitySize = sizeof(TTransaction) + additionalSize;
+        auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(entitySize);
+		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
+		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
+        pTransaction->Type = type;
+        pTransaction->Size = entitySize;
+
+        return pTransaction;
+    }
 
 	/// Creates a automatic executions payment transaction.
 	template<typename TTransaction>
@@ -186,6 +200,13 @@ namespace catapult { namespace test {
 			Key drive = test::GenerateRandomByteArray<Key>(),
 			Key contract = test::GenerateRandomByteArray<Key>());
 
+    /// Adds account state with \a publicKey and provided \a mosaics to \a accountStateCache at height \a height.
+    void AddAccountState(
+            cache::AccountStateCacheDelta& accountStateCache,
+            const Key& publicKey,
+            const Height& height = Height(1),
+            const std::vector<model::Mosaic>& mosaics = {});
+
 	void AssertEqualAutomaticExecutionsInfo(const state::AutomaticExecutionsInfo& entry1, const state::AutomaticExecutionsInfo& entry2);
 	void AssertEqualServicePayments(const std::vector<state::ServicePayment>& entry1, const std::vector<state::ServicePayment>& entry2);
 	void AssertEqualRequestedCalls(const std::deque<state::ContractCall>& entry1, const std::deque<state::ContractCall>& entry2);
@@ -201,14 +222,12 @@ namespace catapult { namespace test {
 			std::vector<size_t> cacheIds = {
 					cache::SuperContractCache::Id,
 					cache::DriveContractCache::Id,
-//					cache::ReplicatorCache::Id,
                     cache::BcDriveCache::Id};
 			auto maxId = std::max_element(cacheIds.begin(), cacheIds.end());
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(*maxId + 1);
 
 			subCaches[cache::SuperContractCache::Id] = MakeSubCachePlugin<cache::SuperContractCache, cache::SuperContractCacheStorage>(pConfigHolder);
 			subCaches[cache::DriveContractCache::Id] = MakeSubCachePlugin<cache::DriveContractCache, cache::DriveContractCacheStorage>(pConfigHolder);
-//            subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
             subCaches[cache::BcDriveCache::Id] = MakeSubCachePlugin<cache::BcDriveCache, cache::BcDriveCacheStorage>(pConfigHolder);
 
 			return subCaches;
@@ -239,5 +258,33 @@ namespace catapult { namespace test {
 		Hash256 getDriveState(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
 
 		Hash256 getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const override;
+	};
+
+    class LiquidityProviderExchangeObserverImpl : public observers::LiquidityProviderExchangeObserver {
+	public:
+		void creditMosaics(
+				observers::ObserverContext& context,
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
+				const UnresolvedMosaicId& unresolvedMosaicId,
+				const UnresolvedAmount& mosaicAmount) const override;
+		void debitMosaics(
+				observers::ObserverContext& context,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
+				const UnresolvedMosaicId& unresolvedMosaicId,
+				const UnresolvedAmount& mosaicAmount) const override;
+		void creditMosaics(
+				observers::ObserverContext& context,
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) const override;
+		void debitMosaics(
+				observers::ObserverContext& context,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) const override;
 	};
 }}

@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "tests/TestHarness.h"
 #include "SuperContractTestUtils.h"
 #include <catapult/cache/ReadOnlyCatapultCache.h>
 
@@ -62,7 +61,7 @@ namespace catapult { namespace test {
 		executorInfo.PoEx.T = curvePoint;
 		for(int i=0; i<executorCount; i++){
 			Key executor = test::GenerateRandomByteArray<Key>();
-			entry.executorsInfo()[executor] = executorInfo;  // executors info x3
+			entry.executorsInfo().at(executor) = executorInfo;  // executors info x3
 		}
 
 		// batches
@@ -79,7 +78,7 @@ namespace catapult { namespace test {
 			batch.CompletedCalls.push_back(completedCall);  // completed call x3
 		}
 		for(int i=0; i<batchCount; i++){
-			entry.batches()[i] = batch;  // batch x3
+			entry.batches().at(i) = batch;  // batch x3
 		}
 
 		// released transactions
@@ -223,6 +222,18 @@ namespace catapult { namespace test {
 		EXPECT_EQ(entry1.contractKey(), entry2.contractKey());
 	}
 
+    void AddAccountState(
+            cache::AccountStateCacheDelta& accountStateCache,
+            const Key& publicKey,
+            const Height& height,
+            const std::vector<model::Mosaic>& mosaics){
+        accountStateCache.addAccount(publicKey, height);
+        auto accountStateIter = accountStateCache.find(publicKey);
+        auto& accountState = accountStateIter.get();
+        for (auto& mosaic : mosaics)
+            accountState.Balances.credit(mosaic.MosaicId, mosaic.Amount);
+    }
+
 	uint16_t DriveStateBrowserImpl::getOrderedReplicatorsCount(const catapult::cache::ReadOnlyCatapultCache& cache, const catapult::Key& driveKey) const {
         const auto& driveCache = cache.template sub<cache::BcDriveCache>();
         auto driveIter = driveCache.find(driveKey);
@@ -247,5 +258,63 @@ namespace catapult { namespace test {
 
 	Hash256 DriveStateBrowserImpl::getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
 		return {};
+	}
+
+    void LiquidityProviderExchangeObserverImpl::creditMosaics(
+			observers::ObserverContext& context,
+			const Key& currencyDebtor,
+			const Key& mosaicCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		creditMosaics(context, currencyDebtor, mosaicCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::debitMosaics(
+			observers::ObserverContext& context,
+			const Key& mosaicDebtor,
+			const Key& currencyCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		debitMosaics(context, mosaicDebtor, currencyCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::creditMosaics(
+			observers::ObserverContext& context,
+			const Key& currencyDebtor,
+			const Key& mosaicCreditor,
+			const UnresolvedMosaicId& mosaicId,
+			const Amount& mosaicAmount) const {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto debtorAccountIter = accountStateCache.find(currencyDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
+		auto creditorAccountIter = accountStateCache.find(mosaicCreditor);
+		auto& creditorAccount = creditorAccountIter.get();
+
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto resolvedMosaicId = MosaicId(mosaicId.unwrap());
+
+		debtorAccount.Balances.debit(currencyMosaicId, mosaicAmount);
+		creditorAccount.Balances.credit(resolvedMosaicId, mosaicAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::debitMosaics(
+			observers::ObserverContext& context,
+			const Key& mosaicDebtor,
+			const Key& currencyCreditor,
+			const UnresolvedMosaicId& mosaicId,
+			const Amount& mosaicAmount) const {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto debtorAccountIter = accountStateCache.find(mosaicDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
+		auto creditorAccountIter = accountStateCache.find(currencyCreditor);
+		auto& creditorAccount = creditorAccountIter.get();
+
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto resolvedMosaicId = MosaicId(mosaicId.unwrap());
+
+		debtorAccount.Balances.debit(resolvedMosaicId, mosaicAmount);
+		creditorAccount.Balances.credit(currencyMosaicId, mosaicAmount);
 	}
 }}
