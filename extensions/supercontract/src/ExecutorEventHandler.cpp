@@ -26,10 +26,10 @@ namespace catapult::contract {
 			auto validationResult = validators::ValidationResult(status);
 
 			std::set<validators::ValidationResult> handledResults = {
-				validators::Failure_SuperContract_Invalid_Start_Batch_Id,
-				validators::Failure_SuperContract_Invalid_Batch_Proof,
-				validators::Failure_SuperContract_Not_Enough_Signatures,
-				validators::Failure_SuperContract_Is_Not_Executor
+				validators::Failure_SuperContract_v2_Invalid_Start_Batch_Id,
+				validators::Failure_SuperContract_v2_Invalid_Batch_Proof,
+				validators::Failure_SuperContract_v2_Not_Enough_Signatures,
+				validators::Failure_SuperContract_v2_Is_Not_Executor
 			};
 
 			if (handledResults.find(validationResult) != handledResults.end()) {

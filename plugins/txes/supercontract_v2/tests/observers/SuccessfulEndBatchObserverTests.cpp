@@ -84,9 +84,11 @@ namespace catapult { namespace observers {
         values.InitialScEntry.batches()[1] = {};
 
         values.ExpectedScEntry = values.InitialScEntry;
-        auto& batch = values.InitialScEntry.batches()[1];
-        batch.Success = false;
-        batch.PoExVerificationInformation.fromBytes(test::GenerateRandomByteArray<std::array<uint8_t, 32>>());
+        auto& batch = values.ExpectedScEntry.batches()[1];
+        batch.Success = true;
+        batch.PoExVerificationInformation.fromBytes(Verification_Information);
+
+		values.UpdateStorageState = true;
 
 		// Assert
 		RunTest(NotifyMode::Commit, values);
