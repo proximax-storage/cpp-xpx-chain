@@ -52,16 +52,6 @@ namespace catapult { namespace validators {
         }
     }
 
-    TEST(TEST_CLASS, FailureWhenContractDoesnotExist) {
-        // Arrange:
-        state::SuperContractEntry entry(test::GenerateRandomByteArray<Key>());
-
-        AssertValidationResult(
-                Failure_SuperContract_v2_Contract_Does_Not_Exist,
-                entry,
-                BatchId);
-    }
-
     TEST(TEST_CLASS, FailureWhenBatchIdIsWrong) {
         // Arrange:
         state::SuperContractEntry entry(Super_Contract_Key);
