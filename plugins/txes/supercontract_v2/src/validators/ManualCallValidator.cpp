@@ -8,9 +8,10 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ManualCallNotification<1>;
+    using Notification = model::ManualCallNotification<1>;
 
-    ValidationResult func(const Notification& notification, const ValidatorContext& context) {
+    DEFINE_STATEFUL_VALIDATOR(ManualCall, [](const Notification& notification, const ValidatorContext& context) {
+
         const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
 
         if (notification.FileName.size() > pluginConfig.MaxRowSize) {
@@ -41,11 +42,6 @@ namespace catapult { namespace validators {
         }
 
         return ValidationResult::Success;
-    }
-
-	DEFINE_STATEFUL_VALIDATOR(ManualCall, [](const Notification& notification, const ValidatorContext& context) {
-
-        return func(notification, context);
-	})
+    })
 
 }}

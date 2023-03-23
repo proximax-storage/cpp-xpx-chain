@@ -8,9 +8,10 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::AutomaticExecutionsReplenishmentNotification<1>;
+    using Notification = model::AutomaticExecutionsReplenishmentNotification<1>;
 
-    ValidationResult func(const Notification& notification, const ValidatorContext& context){
+    DEFINE_STATEFUL_VALIDATOR(AutomaticExecutionsReplenishment, [](const Notification& notification, const ValidatorContext& context) {
+
         const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 
         auto contractIt = contractCache.find(notification.ContractKey);
@@ -32,11 +33,6 @@ namespace catapult { namespace validators {
         }
 
         return ValidationResult::Success;
-    }
-
-	DEFINE_STATEFUL_VALIDATOR(AutomaticExecutionsReplenishment, [](const Notification& notification, const ValidatorContext& context) {
-
-		return func(notification, context);
-	})
+    })
 
 }}
