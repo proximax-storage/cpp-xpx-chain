@@ -21,7 +21,6 @@ namespace catapult { namespace observers {
 		using ObserverTestContext = test::ObserverTestContextT<test::SuperContractCacheFactory>;
 		using Notification = model::ContractDestroyNotification<1>;
 
-        const auto Storage_Mosaic_Id = MosaicId(1324);
 		const auto Current_Height = test::GenerateRandomValue<Height>();
         const auto Super_Contract_Key = test::GenerateRandomByteArray<Key>();
         const auto Drive_Key = test::GenerateRandomByteArray<Key>();
@@ -47,6 +46,13 @@ namespace catapult { namespace observers {
 			return Notification(Super_Contract_Key);
 		}
 
+        auto CreateConfig() {
+            test::MutableBlockchainConfiguration config;
+            config.Immutable.StorageMosaicId = test::GenerateRandomValue<MosaicId>();
+
+            return config.ToConst();
+        }
+
         struct CacheValues {
         public:
             CacheValues() :
@@ -63,13 +69,16 @@ namespace catapult { namespace observers {
 
         void RunTest(NotifyMode mode, const CacheValues& values) {
             // Arrange:
-            ObserverTestContext context(mode, Current_Height);
+            ObserverTestContext context(mode, Current_Height, CreateConfig());
             auto notification = CreateNotification();
             auto pObserver = CreateContractDestroyObserver(Storage_External_Manager);
             auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
             auto& driveContractCache = context.cache().sub<cache::DriveContractCache>();
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
             auto& accountCache = context.cache().sub<cache::AccountStateCache>();
+
+            const auto& storageMosaicId = config::GetUnresolvedStorageMosaicId(context.observerContext().Config.Immutable);
+            auto resolvedStorageMosaicId = MosaicId(storageMosaicId.unwrap());
 
             // Populate cache.
             state::BcDriveEntry bcDrive(values.InitialScEntry.driveKey());
@@ -79,10 +88,11 @@ namespace catapult { namespace observers {
             accountCache.addAccount(values.InitialScEntry.key(), Height(1));
             accountCache.addAccount(values.InitialScEntry.driveKey(), Height(1));
             accountCache.addAccount(values.InitialScEntry.assignee(), Height(1));
-            accountCache.addAccount(values.InitialScEntry.executionPaymentKey(), Height(1));
-
-            auto contractExecutionAccountEntry = accountCache.find(values.InitialScEntry.executionPaymentKey()).get();
-            contractExecutionAccountEntry.Balances.credit(Storage_Mosaic_Id,values.InitialContractExecutionBalances);
+            test::AddAccountState(
+                    accountCache,
+                    values.InitialScEntry.executionPaymentKey(),
+                    Height(1),
+                    { { resolvedStorageMosaicId, values.InitialContractExecutionBalances } });
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
@@ -101,10 +111,10 @@ namespace catapult { namespace observers {
             EXPECT_EQ(bcDriveEntry->ownerManagement(), state::OwnerManagement::ALLOWED);
 
             const auto executionPaymentAccountEntry = accountCache.find(values.InitialScEntry.executionPaymentKey()).get();
-            EXPECT_EQ(values.ExpectedContractExecutionBalances, executionPaymentAccountEntry.Balances.get(Storage_Mosaic_Id));
+            EXPECT_EQ(values.ExpectedContractExecutionBalances, executionPaymentAccountEntry.Balances.get(resolvedStorageMosaicId));
 
             const auto assigneeAccountEntry = accountCache.find(values.InitialScEntry.assignee()).get();
-            EXPECT_EQ(values.ExpectedAssignee, assigneeAccountEntry.Balances.get(Storage_Mosaic_Id));
+            EXPECT_EQ(values.ExpectedAssignee, assigneeAccountEntry.Balances.get(resolvedStorageMosaicId));
         }
 	}
 
