@@ -419,13 +419,6 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
-		// Filtering incorrect proposals.
-		const auto& format = m_formatSequences[message.ReplacedView];
-		if ( !format.count(message.ProposedSequence) && !format.empty() ) {	// TODO: format must contain empty sequence, or be empty?
-			CATAPULT_LOG(debug) << "[DBRB] PROPOSE: proposal is invalid.";
-			return;
-		}
-
 		// Every view in ProposedSequence must be more recent than the current view of the process.
 		const auto pLeastRecentView = message.ProposedSequence.maybeLeastRecent();
 		if ( !pLeastRecentView || m_currentView >= *pLeastRecentView ) {

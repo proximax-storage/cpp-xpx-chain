@@ -263,9 +263,6 @@ namespace catapult { namespace dbrb {
 		/// Map that maps views to the last converged sequence to replace those views.
 		std::map<View, Sequence> m_lastConvergedSequences;
 
-		/// Map that maps views to the sets of sequences that can be proposed.
-		std::map<View, std::set<Sequence>> m_formatSequences;
-
 		struct BroadcastData {
 			/// Payload allowed to be acknowledged. If empty, any payload can be acknowledged.
 			dbrb::Payload Payload;

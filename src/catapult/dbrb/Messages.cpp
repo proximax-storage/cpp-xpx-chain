@@ -323,9 +323,9 @@ namespace catapult { namespace dbrb {
 
 		auto replacedView = *Sequence.maybeLeastRecent();
 		auto convergedSequence = *Sequence::fromViews(convergedSequenceData);
-		auto leastRecentView = *convergedSequence.maybeLeastRecent();
+		auto mostRecentView = *convergedSequence.maybeMostRecent();
 
-		return InstallMessageData{ leastRecentView, convergedSequence, replacedView, ConvergedSignatures };
+		return InstallMessageData{ mostRecentView, convergedSequence, replacedView, ConvergedSignatures };
 	}
 
 	std::shared_ptr<MessagePacket> PrepareMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {

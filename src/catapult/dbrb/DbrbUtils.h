@@ -228,8 +228,8 @@ namespace catapult { namespace dbrb {
 
 	/// Struct that stores Install message data in unwrapped form.
 	struct InstallMessageData {
-		/// Least recent view.
-		View LeastRecentView;
+		/// Most recent view.
+		View MostRecentView;
 
 		/// Sequence that is converged on to replace the view.
 		Sequence ConvergedSequence;
