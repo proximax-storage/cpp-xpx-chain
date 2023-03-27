@@ -93,10 +93,11 @@ namespace catapult { namespace dbrb {
 
 			pThis->m_membershipState = MembershipState::Leaving;
 
-			// Disseminate a Reconfig message for every currently installed view...
-			for (const auto& view : pThis->m_installedViews) {
-				auto pMessage = std::make_shared<ReconfigMessage>(pThis->m_id, pThis->m_id, MembershipChange::Leave, view);
-				pThis->disseminate(pMessage, view.members());
+			// Disseminate a Reconfig message, if current view is installed...
+			if (pThis->m_currentViewIsInstalled) {
+				const auto& currentView = pThis->m_currentView;
+				auto pMessage = std::make_shared<ReconfigMessage>(pThis->m_id, pThis->m_id, MembershipChange::Leave, currentView);
+				pThis->disseminate(pMessage, currentView.members());
 			}
 
 			// ...and keep disseminating new Reconfig messages whenever a new view is installed.
@@ -110,16 +111,16 @@ namespace catapult { namespace dbrb {
 			if (!pThis)
 				return;
 
+			// TODO: fix view search in set.
+			if (!pThis->m_currentViewIsInstalled) {
+				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: Current view is not installed, aborting broadcast.";
+				return; // The process waits to install some view and then disseminates the prepare message.
+				// TODO: Can notify user about the reason why broadcast failed
+			}
+
 			if (!pThis->m_currentView.isMember(pThis->m_id)) {
 				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: not a member of the current view " << pThis->m_currentView << ", aborting broadcast.";
 				return;
-			}
-
-			// TODO: fix view search in set.
-			if (!pThis->m_installedViews.count(pThis->m_currentView)) {
-				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: Current view is not installed, aborting broadcast.";
-				return; // The process waits to install some view and then disseminates the prepare message.
-						// TODO: Can notify user about the reason why broadcast failed
 			}
 
 			auto pMessage = std::make_shared<PrepareMessage>(pThis->m_id, payload, pThis->m_currentView);
@@ -306,25 +307,20 @@ namespace catapult { namespace dbrb {
 		m_pendingChanges.merge(appendedChanges);
 		CATAPULT_LOG(debug) << "[DBRB] RECONFIG: Current pending changes: " << m_pendingChanges;
 
-		if (m_installedViews.count(m_currentView)) {
-			// If there is no proposed sequence to replace current view, create one.
-//			 if (!m_proposedSequences.count(m_currentView)) {
-				auto newView = m_currentView;
-				newView.merge(m_pendingChanges);
-				const std::vector<View> sequenceData{ newView };
+		if (!m_currentViewIsInstalled)
+			return;
 
-				m_proposedSequences[m_currentView] = Sequence::fromViews(sequenceData).value();
-				const auto& proposedSequence = m_proposedSequences.at(m_currentView);
-				CATAPULT_LOG(debug) << "[DBRB] RECONFIG: Proposed sequence to replace " << m_currentView << " is SET to " << proposedSequence;
+		auto newView = m_currentView;
+		newView.merge(m_pendingChanges);
+		const std::vector<View> sequenceData{ newView };
 
-				CATAPULT_LOG(debug) << "[DBRB] RECONFIG: Disseminating Propose message in the view " << m_currentView;
-				auto pMessage = std::make_shared<ProposeMessage>(m_id, proposedSequence, m_currentView);
-				disseminate(pMessage, m_currentView.members());
-//			} else {
-//				const auto& proposedSequence = m_proposedSequences.at(m_currentView);
-//				CATAPULT_LOG(debug) << "[DBRB] RECONFIG: Proposed sequence to replace " << m_currentView << " already exists (" << proposedSequence << ")";
-//			}
-		}
+		m_proposedSequences[m_currentView] = Sequence::fromViews(sequenceData).value();
+		const auto& proposedSequence = m_proposedSequences.at(m_currentView);
+		CATAPULT_LOG(debug) << "[DBRB] RECONFIG: Proposed sequence to replace " << m_currentView << " is SET to " << proposedSequence;
+
+		CATAPULT_LOG(debug) << "[DBRB] RECONFIG: Disseminating Propose message in the view " << m_currentView;
+		auto pMessage = std::make_shared<ProposeMessage>(m_id, proposedSequence, m_currentView);
+		disseminate(pMessage, m_currentView.members());
 	}
 
 	Signature DbrbProcess::sign(const Payload& payload) {
@@ -520,8 +516,7 @@ namespace catapult { namespace dbrb {
 
 		const auto& replacedView = pInstallMessageData->ReplacedView;
 		const auto& convergedSequence = pInstallMessageData->ConvergedSequence;
-		const auto& pMostRecentView = convergedSequence.maybeMostRecent();
-		const auto& mostRecentView = pMostRecentView.value();
+		const auto& mostRecentView = pInstallMessageData->MostRecentView;
 
 		if (replacedView.isMember(m_id)) {
 			if (m_currentView < mostRecentView)
@@ -602,8 +597,7 @@ namespace catapult { namespace dbrb {
 
 		const auto& stateUpdateMessages = m_quorumManager.StateUpdateMessages.at(m_currentInstallMessage->ReplacedView);
 		const auto& convergedSequence = m_currentInstallMessage->ConvergedSequence;
-		const auto& pMostRecentView = convergedSequence.maybeMostRecent();
-		const auto& mostRecentView = pMostRecentView.value();
+		const auto& mostRecentView = m_currentInstallMessage->MostRecentView;
 
 		// Updating pending changes.
 		View reconfigRequests;
@@ -613,8 +607,8 @@ namespace catapult { namespace dbrb {
 		reconfigRequests.difference(mostRecentView);
 		extendPendingChanges(reconfigRequests);
 
-		// Uninstalling the most recent view mentioned in the current Install message.
-		m_installedViews.erase(mostRecentView);
+		// Uninstalling current view.
+		m_currentViewIsInstalled = false;
 
 		// Updating state and payload-related fields of the process.
 		updateState(stateUpdateMessages);
@@ -640,7 +634,7 @@ namespace catapult { namespace dbrb {
 				auto pMessage = std::make_shared<ProposeMessage>(m_id, moreRecentSequence, m_currentView);
 				disseminate(pMessage, m_currentView.members());
 			} else {
-				m_installedViews.insert(m_currentView);
+				m_currentViewIsInstalled = true;
 
 				Sequence sequence;
 				sequence.tryAppend(m_currentInstallMessage->ReplacedView);
@@ -710,7 +704,7 @@ namespace catapult { namespace dbrb {
 		}
 
 		// Disseminating Commit message, if process' current view is installed.
-		if (m_installedViews.count(m_currentView)) {
+		if (m_currentViewIsInstalled) {
 			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Disseminating Commit message.";
 			auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, data.Certificate, data.CertificateView, m_currentView);
 			disseminate(pMessage, m_currentView.members());
@@ -822,8 +816,7 @@ namespace catapult { namespace dbrb {
 			CATAPULT_LOG(debug) << "[DBRB] Current view is now set to " << pThis->m_currentView;
 			if (pThis->m_currentView.isMember(pThis->m_id)) {
 				pThis->m_membershipState = MembershipState::Participating;
-				pThis->m_installedViews.insert(pThis->m_currentView);
-				CATAPULT_LOG(debug) << "[DBRB] number of installed views is " << pThis->m_installedViews.size();
+				pThis->m_currentViewIsInstalled = true;
 			} else if (pThis->m_currentView.hasChange(pThis->m_id, MembershipChange::Leave)) {
 				pThis->m_membershipState = MembershipState::Left;
 			}
@@ -838,9 +831,10 @@ namespace catapult { namespace dbrb {
 					auto pMessage = std::make_shared<ReconfigMessage>(pThis->m_id, pThis->m_id, MembershipChange::Join, pThis->m_currentView);
 					pThis->disseminate(pMessage, pThis->m_currentView.members());
 				} else if (pThis->m_membershipState == MembershipState::Leaving) {
-					for (const auto& view : pThis->m_installedViews) {
-						auto pMessage = std::make_shared<ReconfigMessage>(pThis->m_id, pThis->m_id, MembershipChange::Leave, view);
-						pThis->disseminate(pMessage, view.members());
+					if (pThis->m_currentViewIsInstalled) {
+						const auto& currentView = pThis->m_currentView;
+						auto pMessage = std::make_shared<ReconfigMessage>(pThis->m_id, pThis->m_id, MembershipChange::Leave, currentView);
+						pThis->disseminate(pMessage, currentView.members());
 					}
 				}
 			}

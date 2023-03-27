@@ -245,14 +245,14 @@ namespace catapult { namespace dbrb {
 		/// While set to true, no Prepare, Commit or Reconfig messages are processed.
 		bool m_limitedProcessing = false;
 
-		/// Needs to be set in order for \a onStateUpdateQuorumCollected to be triggered.
-		std::optional<InstallMessageData> m_currentInstallMessage;
-
-		/// Views installed by the process.
-		std::set<View> m_installedViews;
-
 		/// Most recent view known to the process.
 		View m_currentView;
+
+		/// Whether current view is installed by the process.
+		bool m_currentViewIsInstalled = true;
+
+		/// Needs to be set in order for \a onStateUpdateQuorumCollected to be triggered.
+		std::optional<InstallMessageData> m_currentInstallMessage;
 
 		/// List of pending changes (i.e., join or leave).
 		View m_pendingChanges;
