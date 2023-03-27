@@ -61,7 +61,7 @@ namespace catapult { namespace test {
 		executorInfo.PoEx.T = curvePoint;
 		for(int i=0; i<executorCount; i++){
 			Key executor = test::GenerateRandomByteArray<Key>();
-			entry.executorsInfo().at(executor) = executorInfo;  // executors info x3
+			entry.executorsInfo()[executor] = executorInfo;  // executors info x3
 		}
 
 		// batches
@@ -78,7 +78,7 @@ namespace catapult { namespace test {
 			batch.CompletedCalls.push_back(completedCall);  // completed call x3
 		}
 		for(int i=0; i<batchCount; i++){
-			entry.batches().at(i) = batch;  // batch x3
+			entry.batches()[i] = batch;  // batch x3
 		}
 
 		// released transactions

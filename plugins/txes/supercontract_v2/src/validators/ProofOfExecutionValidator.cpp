@@ -18,8 +18,7 @@ namespace catapult { namespace validators {
 		// For the moment we have already checked that the contract exists
 		const auto& contractEntry = contractIt.get();
 
-		for (const auto& [publicKey, proofToVerify]: notification.Proofs) {
-
+		for (const auto& [publicKey, proofToVerify] : notification.Proofs) {
 			const auto& executorsInfo = contractEntry.executorsInfo();
 			auto executorIt = executorsInfo.find(publicKey);
 

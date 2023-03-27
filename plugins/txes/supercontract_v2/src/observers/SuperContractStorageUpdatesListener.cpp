@@ -42,7 +42,8 @@ SuperContractStorageUpdatesListener::SuperContractStorageUpdatesListener(
         for (const auto& call : contractEntry.requestedCalls()) {
             auto callerAccountIt = accountCache.find(call.Caller);
             auto& callerAccountEntry = callerAccountIt.get();
-            for (const auto& [mosaicId, amount] : call.ServicePayments) {
+			// Copy here is intended
+            for (const auto [mosaicId, amount]: call.ServicePayments) {
                 auto resolvedMosaicId = context.Resolvers.resolve(mosaicId);
                 auto balance = contractAccountEntry.Balances.get(resolvedMosaicId);
                 if (balance >= amount) {
@@ -62,14 +63,16 @@ SuperContractStorageUpdatesListener::SuperContractStorageUpdatesListener(
 
         auto assigneeAccountIt = accountCache.find(contractEntry.assignee());
         auto& assigneeAccountEntry = assigneeAccountIt.get();
-        for (const auto& [mosaicId, amount] : contractAccountEntry.Balances) {
+		// Copy here is intended
+        for (const auto [mosaicId, amount]: contractAccountEntry.Balances) {
             contractAccountEntry.Balances.debit(mosaicId, amount);
             assigneeAccountEntry.Balances.credit(mosaicId, amount);
         }
 
         auto contractExecutionAccountIt = accountCache.find(contractEntry.executionPaymentKey());
         auto& contractExecutionAccountEntry = contractExecutionAccountIt.get();
-        for (const auto& [mosaicId, amount] : contractExecutionAccountEntry.Balances) {
+		// Copy here is intended
+        for (const auto [mosaicId, amount]: contractExecutionAccountEntry.Balances) {
             contractExecutionAccountEntry.Balances.debit(mosaicId, amount);
             assigneeAccountEntry.Balances.credit(mosaicId, amount);
         }

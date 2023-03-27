@@ -61,7 +61,7 @@ namespace catapult {
             return {alpha, alpha * crypto::CurvePoint::BasePoint()};
         }
 
-        crypto::Scalar AddToProof(uint64_t digest, const Key& key, crypto::Scalar x) {
+        std::pair<crypto::Scalar, crypto::CurvePoint> AddToProof(uint64_t digest, const Key& key, crypto::Scalar x) {
             auto [alpha, Y] = VerificationInfo(digest);
 
             auto Beta = crypto::CurvePoint::BasePoint();
@@ -73,7 +73,7 @@ namespace catapult {
             crypto::Scalar c_scalar(c.array());
 
             auto newX = x + c_scalar * alpha;
-            return newX;
+            return {newX, Y};
         }
 
         crypto::Scalar GenerateUniqueRandom(const utils::RawBuffer& dataBuffer, const Key& key) {
@@ -207,28 +207,35 @@ namespace catapult {
         uint32_t batchId = 1;
         state::SuperContractEntry entry(Super_Contract_Key);
 
-        // create batch
-        state::Batch batch;
-        batch.PoExVerificationInformation.fromBytes(test::GenerateRandomByteArray<std::array<uint8_t, 32>>());
-        entry.batches()[batchId] = batch;
-
         // create executor info
-        auto x = crypto::Scalar(test::GenerateRandomByteArray<std::array<uint8_t, 32>>());
-        auto proof = BuildProof(batchId, x, Executor);
+        auto [x, verificationInfo] = AddToProof(256, Executor, crypto::Scalar());
+        auto proof = BuildProof(batchId - 1, x, Executor);
 
         state::ProofOfExecution executorInfoPoEx;
-        executorInfoPoEx.StartBatchId = batchId;
+        executorInfoPoEx.StartBatchId = batchId - 1;
         executorInfoPoEx.T = proof.T;
         executorInfoPoEx.R = proof.R;
         state::ExecutorInfo executorInfo{batchId, executorInfoPoEx};
         entry.executorsInfo().insert({Executor, executorInfo});
 
         // create new proof
-        auto newX = AddToProof(123, Executor, x);
-        auto newProof = BuildProof(batchId, newX, Executor);
+        auto [newX, newVerificationInfo] = AddToProof(123, Executor, x);
+        auto newProof = BuildProof(batchId - 1, newX, Executor);
         std::map<Key, model::ProofOfExecution> proofs;
-        proofs.insert({Executor, proof});
+        proofs.insert({Executor, newProof});
 
-        AssertValidationResult(ValidationResult::Success, entry, proofs);
+        // create batch
+		{
+			state::Batch batch;
+			batch.PoExVerificationInformation = verificationInfo;
+			entry.batches()[batchId - 1] = batch;
+		}
+		{
+			state::Batch batch;
+			batch.PoExVerificationInformation = newVerificationInfo;
+			entry.batches()[batchId] = batch;
+		}
+
+		AssertValidationResult(ValidationResult::Success, entry, proofs);
     }
 }}
