@@ -80,7 +80,7 @@ namespace catapult { namespace validators {
 			auto pValidator = TTestTraits::Create();
 
 			// - create the notification
-			typename TTestTraits::Notification notification = TTestTraits::CreateNotification(transactionSigner, affectedMosaicId, model::MosaicRequirementAction::Set);
+			typename TTestTraits::Notification notification = TTestTraits::CreateNotification(transactionSigner, affectedMosaicId, MakeFlags(model::MosaicRequirementAction::Set, model::MosaicRequirementAction::VerifyOwner));
 
 			// - create the validator context
 			auto cache = test::MosaicCacheFactory::Create();

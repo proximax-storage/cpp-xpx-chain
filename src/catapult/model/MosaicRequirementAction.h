@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/utils/BitwiseEnum.h"
 #include <stdint.h>
 
 namespace catapult { namespace model {
@@ -26,9 +27,13 @@ namespace catapult { namespace model {
 	/// Account link transaction action.
 	enum class MosaicRequirementAction : uint8_t {
 		/// Mask represents set flags.
-		Set,
+		Set = 2,
 
 		/// Mask represents unset flags.
-		Unset
+		Unset = 1,
+
+		VerifyOwner = 4
 	};
+
+	MAKE_BITWISE_ENUM(MosaicRequirementAction)
 }}

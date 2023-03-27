@@ -24,6 +24,7 @@
 #include "src/model/MosaicRestrictionNotifications.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
+#include "catapult/model/MosaicRequirementAction.h"
 
 using namespace catapult::model;
 
@@ -38,7 +39,7 @@ namespace catapult { namespace plugins {
 			// don't raise AddressInteractionNotification between Signer and TargetAddress because mosaic owner always needs to
 			// be able to restrict or allow mosaic usage by *any* account
 
-			sub.notify(MosaicRequiredNotification<2>(transaction.Signer, transaction.MosaicId, MosaicRequirementAction::Set, Mosaic_Flags_Restrictable));
+			sub.notify(MosaicRequiredNotification<2>(transaction.Signer, transaction.MosaicId, MakeFlags(MosaicRequirementAction::Set, MosaicRequirementAction::VerifyOwner), Mosaic_Flags_Restrictable));
 			sub.notify(MosaicRestrictionRequiredNotification(transaction.MosaicId, transaction.RestrictionKey));
 			sub.notify(MosaicAddressRestrictionModificationPreviousValueNotification(
 					transaction.MosaicId,

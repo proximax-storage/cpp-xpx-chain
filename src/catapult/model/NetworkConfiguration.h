@@ -114,7 +114,7 @@ namespace catapult { namespace model {
 		Amount MaxHarvesterBalance;
 
 		/// Interval between each dock staking reward cycle.
-		BlockDuration DockStakeRewardInterval;
+		BlockDuration DockStakeRewardInterval = BlockDuration(1);
 
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;

@@ -42,7 +42,7 @@
 		return utils::to_underlying_type(value) && !(utils::to_underlying_type(value) & (utils::to_underlying_type(value) - 1)); \
 	}
 
-template<typename... TFlags>
-constexpr auto MakeFlags(TFlags... flags) {
-	return(... && flags);
+template<typename TFlag, typename... TFlags>
+constexpr TFlag MakeFlags(TFlag flag, TFlags... flags) {
+	return(flag | ... | flags);
 }

@@ -43,18 +43,24 @@ namespace catapult { namespace validators {
 			mosaicId = context.Resolvers.resolve(notification.UnresolvedMosaicId);
 
 		ActiveMosaicView::FindIterator mosaicIter;
-		auto result = view.tryGet(mosaicId, context.Height, notification.Signer, mosaicIter);
-		if (IsValidationResultFailure(result))
-			return result;
-
+		if(HasFlag(model::MosaicRequirementAction::VerifyOwner, notification.Action)) {
+			auto result = view.tryGet(mosaicId, context.Height, notification.Signer, mosaicIter);
+			if (IsValidationResultFailure(result))
+				return result;
+		}
+		else {
+			auto result = view.tryGet(mosaicId, context.Height, mosaicIter);
+			if (IsValidationResultFailure(result))
+				return result;
+		}
 		if (0 != notification.PropertyFlagMask) {
 			const auto& properties = mosaicIter.get().definition().properties();
 			for (auto i = 1u; i < utils::to_underlying_type(model::MosaicFlags::All); i <<= 1) {
 				if( 0 != (notification.PropertyFlagMask & i))
 				{
-					if(notification.Action == model::MosaicRequirementAction::Set && !properties.is(static_cast<model::MosaicFlags>(i)))
+					if(HasFlag(model::MosaicRequirementAction::Set, notification.Action) && !properties.is(static_cast<model::MosaicFlags>(i)))
 						return Failure_Mosaic_Required_Property_Flag_Unset;
-					else if(notification.Action == model::MosaicRequirementAction::Unset && properties.is(static_cast<model::MosaicFlags>(i)))
+					else if(HasFlag(model::MosaicRequirementAction::Unset, notification.Action) && properties.is(static_cast<model::MosaicFlags>(i)))
 						return Failure_Mosaic_Required_Property_Flag_Unset;
 				}
 			}

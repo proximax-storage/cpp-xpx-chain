@@ -37,7 +37,7 @@ namespace catapult { namespace plugins {
 						   NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 3:
-					sub.notify(MosaicRequiredNotification<2>(transaction.Signer, transaction.MosaicId, MosaicRequirementAction::Set));
+					sub.notify(MosaicRequiredNotification<2>(transaction.Signer, transaction.MosaicId, MakeFlags(MosaicRequirementAction::Set, MosaicRequirementAction::VerifyOwner)));
 					sub.notify(MosaicSupplyChangeNotification<2>(transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));
 					break;
 				case 2:
