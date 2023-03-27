@@ -1,4 +1,4 @@
 cmake_minimum_required(VERSION 3.2)
 
 catapult_define_extension_src(supercontract notification_handlers)
-target_link_libraries(catapult.supercontract executor Threads::Threads)
+target_link_libraries(catapult.supercontract sirius.contract.executor Threads::Threads)
