@@ -163,7 +163,7 @@ namespace catapult { namespace validators {
     				state::ActiveDataModification(
     						streamId, owner, test::GenerateRandomByteArray<Hash256>(),
 							expectedUploadSize, expectedUploadSize + 1,
-							std::string(folderNameBytes.begin(), folderNameBytes.end()), false)
+							std::string(folderNameBytes.begin(), folderNameBytes.end()), false, true)
     			});
     }
 

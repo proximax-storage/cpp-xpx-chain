@@ -90,6 +90,7 @@ namespace catapult { namespace state {
             test::Random(),
 			test::Random(),
 			std::string(folderNameBytes.begin(), folderNameBytes.end()),
+			test::RandomByte(),
 			test::RandomByte()
 		);
         auto entry = BcDriveEntry(Key());
@@ -121,7 +122,8 @@ namespace catapult { namespace state {
             test::Random(),
 			test::Random(),
 			std::string(folderNameBytes.begin(), folderNameBytes.end()),
-			true
+			true,
+			false
 		);
         CompletedDataModification completedDataModification {
             activeDataModification, DataModificationApprovalState::Approved, 0U };
