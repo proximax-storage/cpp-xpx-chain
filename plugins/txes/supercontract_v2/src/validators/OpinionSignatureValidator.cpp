@@ -17,7 +17,7 @@ namespace catapult { namespace validators {
 			std::vector<uint8_t> dataToVerify(notification.CommonData);
 			dataToVerify.insert(dataToVerify.end(), opinion.Data.begin(), opinion.Data.end());
 			if (!crypto::Verify(opinion.PublicKey, dataToVerify, opinion.Sign)) {
-				return Failure_SuperContract_Invalid_Signature;
+				return Failure_SuperContract_v2_Invalid_Signature;
 			};
 		}
 

@@ -14,7 +14,7 @@ namespace catapult { namespace validators {
 	DEFINE_STATEFUL_VALIDATOR(BatchCalls, [](const Notification& notification, const ValidatorContext& context) {
 
 		if (notification.Digests.empty()) {
-			return Failure_SuperContract_Empty_Batch;
+			return Failure_SuperContract_v2_Empty_Batch;
 		}
 
 		const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
@@ -34,42 +34,42 @@ namespace catapult { namespace validators {
 			const auto& payments = notification.PaymentOpinions[i];
 			if (digest.Manual) {
 				if (requestedCallIt == contractEntry.requestedCalls().end()) {
-					return Failure_SuperContract_Manual_Calls_Are_Not_Requested;
+					return Failure_SuperContract_v2_Manual_Calls_Are_Not_Requested;
 				}
 				if (digest.CallId != requestedCallIt->CallId) {
-					return Failure_SuperContract_Invalid_Call_Id;
+					return Failure_SuperContract_v2_Invalid_Call_Id;
 				}
 				for (const auto& payment: payments.ExecutionWork) {
 					if (payment > requestedCallIt->ExecutionCallPayment) {
-						return Failure_SuperContract_Execution_Work_Is_Too_Large;
+						return Failure_SuperContract_v2_Execution_Work_Is_Too_Large;
 					}
 				}
 				for (const auto& payment: payments.DownloadWork) {
 					if (payment > requestedCallIt->DownloadCallPayment) {
-						return Failure_SuperContract_Download_Work_Is_Too_Large;
+						return Failure_SuperContract_v2_Download_Work_Is_Too_Large;
 					}
 				}
 				requestedCallIt++;
 			}
 			else {
 				if (automaticExecutionsLeft == 0) {
-					return Failure_SuperContract_Automatic_Calls_Are_Not_Requested;
+					return Failure_SuperContract_v2_Automatic_Calls_Are_Not_Requested;
 				}
 				auto enabledSince =
 						utils::automaticExecutionsEnabledSince(contractEntry, context.Height, context.Config);
 
 				if (digest.Block < enabledSince) {
-					return Failure_SuperContract_Outdated_Automatic_Execution;
+					return Failure_SuperContract_v2_Outdated_Automatic_Execution;
 				}
 				
 				for (const auto& payment: payments.ExecutionWork) {
 					if (payment > automaticExecutionsInfo.AutomaticExecutionCallPayment) {
-						return Failure_SuperContract_Execution_Work_Is_Too_Large;
+						return Failure_SuperContract_v2_Execution_Work_Is_Too_Large;
 					}
 				}
 				for (const auto& payment: payments.DownloadWork) {
 					if (payment > automaticExecutionsInfo.AutomaticDownloadCallPayment) {
-						return Failure_SuperContract_Download_Work_Is_Too_Large;
+						return Failure_SuperContract_v2_Download_Work_Is_Too_Large;
 					}
 				}
 				automaticExecutionsLeft--;

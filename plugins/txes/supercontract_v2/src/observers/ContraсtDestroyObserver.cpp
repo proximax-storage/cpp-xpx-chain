@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <random>
 #include "Observers.h"
 #include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
 #include "src/catapult/cache/ReadOnlyCatapultCache.h"
@@ -30,7 +29,8 @@ namespace catapult::observers {
 
 			auto contractExecutionAccountIt = accountCache.find(contractEntry.executionPaymentKey());
 			auto& contractExecutionAccountEntry = contractExecutionAccountIt.get();
-			for (const auto& [mosaicId, amount] : contractExecutionAccountEntry.Balances) {
+			// Copy here is intended
+			for (const auto [mosaicId, amount] : contractExecutionAccountEntry.Balances) {
 				contractExecutionAccountEntry.Balances.debit(mosaicId, amount);
 				assigneeAccountEntry.Balances.credit(mosaicId, amount);
 			}

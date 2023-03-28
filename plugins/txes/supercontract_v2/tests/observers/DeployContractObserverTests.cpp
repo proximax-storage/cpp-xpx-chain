@@ -1,5 +1,5 @@
 /**
-*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Copyright 2023 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -64,44 +64,61 @@ namespace catapult { namespace observers {
 					Execution_Call_Payment,
 					Download_Call_Payment);
 		}
-	}
 
-	void RunTest(NotifyMode mode, const Height& currentHeight) {
-		// Arrange:
-		ObserverTestContext context(mode, Current_Height);
-		auto notification = CreateNotification();
-		auto pObserver = CreateDeployContractObserver(Drive_Browser);
-		auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
-		auto& driveCache = context.cache().sub<cache::DriveContractCache>();
+        struct CacheValues {
+        public:
+            CacheValues() : ScEntry(Key()), DriveContractEntry(Key()) {}
 
-		// Populate cache.
-		auto scEntry = CreateSuperContractEntry();
-		auto driveContractEntry = CreateDriveContractEntry();
-		if (mode == NotifyMode::Rollback) {
-			superContractCache.insert(scEntry);
-			driveCache.insert(driveContractEntry);
-		}
+        public:
+            state::SuperContractEntry ScEntry;
+            state::DriveContractEntry DriveContractEntry;
+        };
 
-		// Act:
-		test::ObserveNotification(*pObserver, notification, context);
+        void RunTest(NotifyMode mode, const CacheValues& values) {
+            // Arrange:
+            ObserverTestContext context(mode, Current_Height);
+            auto notification = CreateNotification();
+            auto pObserver = CreateDeployContractObserver(Drive_Browser);
+            auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
+            auto& driveCache = context.cache().sub<cache::DriveContractCache>();
 
-		// Assert: check the cache
-		auto superContractCacheIter = superContractCache.find(scEntry.key());
-		const auto& actualScEntry = superContractCacheIter.get();
-		test::AssertEqualSuperContractData(scEntry, actualScEntry);
+            // Populate cache.
+            if (mode == NotifyMode::Rollback) {
+                superContractCache.insert(values.ScEntry);
+                driveCache.insert(values.DriveContractEntry);
+            }
 
-		auto driveCacheIter = driveCache.find(scEntry.driveKey());
-		const auto& actualDriveContractEntry = driveCacheIter.get();
-		test::AssertEqualDriveContract(driveContractEntry, actualDriveContractEntry);
+            // Act:
+            test::ObserveNotification(*pObserver, notification, context);
+
+            // Assert: check the cache
+            auto superContractCacheIter = superContractCache.find(values.ScEntry.key());
+            const auto& actualScEntry = superContractCacheIter.get();
+            test::AssertEqualSuperContractData(values.ScEntry, actualScEntry);
+
+            auto driveCacheIter = driveCache.find(values.ScEntry.driveKey());
+            const auto& actualDriveContractEntry = driveCacheIter.get();
+            test::AssertEqualDriveContract(values.DriveContractEntry, actualDriveContractEntry);
+        }
 	}
 
 	TEST(TEST_CLASS, Deploy_Commit) {
+        // Arrange
+        CacheValues values;
+        values.ScEntry = CreateSuperContractEntry();
+        values.DriveContractEntry = CreateDriveContractEntry();
+
 		// Assert
-		RunTest(NotifyMode::Commit, Current_Height);
+		RunTest(NotifyMode::Commit, values);
 	}
 
 	TEST(TEST_CLASS, Deploy_Rollback) {
+        // Arrange
+        CacheValues values;
+        values.ScEntry = CreateSuperContractEntry();
+        values.DriveContractEntry = CreateDriveContractEntry();
+
 		// Assert
-		EXPECT_THROW(RunTest(NotifyMode::Rollback, Current_Height), catapult_runtime_error);
+		EXPECT_THROW(RunTest(NotifyMode::Rollback, values), catapult_runtime_error);
 	}
 }}

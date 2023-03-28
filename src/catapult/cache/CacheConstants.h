@@ -56,6 +56,7 @@ namespace catapult { namespace cache {
 		ExchangeSda,
 		SdaOfferGroup,
 		SuperContract_v2,
+        DriveContract,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

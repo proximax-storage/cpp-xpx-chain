@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <gtest/gtest.h>
 #include "SuperContractTestUtils.h"
 #include <catapult/cache/ReadOnlyCatapultCache.h>
 
@@ -126,6 +125,9 @@ namespace catapult { namespace test {
 
 	void AssertEqualServicePayments(const std::vector<state::ServicePayment>& entry1, const std::vector<state::ServicePayment>& entry2) {
 		ASSERT_EQ(entry1.size(), entry2.size());
+		if (entry1.empty())
+			return;
+
 		for (auto i = 0u; i < entry1.size(); i++) {
 			const auto& expectedPayment = entry1[i];
 			const auto& actualPayment = entry2[i];
@@ -136,6 +138,9 @@ namespace catapult { namespace test {
 
 	void AssertEqualExecutorsInfo(const std::map<Key, state::ExecutorInfo>& entry1, const std::map<Key, state::ExecutorInfo>& entry2) {
 		ASSERT_EQ(entry1.size(), entry2.size());
+		if (entry1.empty())
+			return;
+
 		for (const auto& it : entry1){
 			auto actualEntry = entry2.find(it.first);
 			ASSERT_TRUE(actualEntry != entry2.end());
@@ -147,19 +152,27 @@ namespace catapult { namespace test {
 		}
 	}
 
-	void AssertEqualBatches(const std::map<uint64_t, state::Batch>& entry1, const std::map<uint64_t, state::Batch>& entry2) {
-		ASSERT_EQ(entry1.size(), entry2.size());
-		for (const auto& it : entry1) {
-			auto actualEntry = entry2.find(it.first);
-			ASSERT_TRUE(actualEntry != entry2.end());
+	void AssertEqualBatches(const std::map<uint64_t, state::Batch>& expectedBatches, const std::map<uint64_t, state::Batch>& actualBatches) {
+		ASSERT_EQ(expectedBatches.size(), actualBatches.size());
+		if (expectedBatches.empty())
+			return;
+
+		for (const auto& it : expectedBatches) {
+			auto actualEntry = actualBatches.find(it.first);
+			ASSERT_TRUE(actualEntry != actualBatches.end());
 
 			EXPECT_EQ(it.second.Success, actualEntry->second.Success);
 			EXPECT_EQ(it.second.PoExVerificationInformation, actualEntry->second.PoExVerificationInformation);
 
-			ASSERT_EQ(it.second.CompletedCalls.size(), actualEntry->second.CompletedCalls.size());
-			for (auto i = 0u; i < entry1.size(); i++) {
-				const auto& expectedCall = it.second.CompletedCalls[i];
-				const auto& actualCall = actualEntry->second.CompletedCalls[i];
+            auto& expectedCompletedCalls = it.second.CompletedCalls;
+            auto& actualCompletedCalls = actualEntry->second.CompletedCalls;
+			ASSERT_EQ(expectedCompletedCalls.size(), actualCompletedCalls.size());
+			if (expectedCompletedCalls.empty())
+				continue;
+
+			for (auto i = 0u; i < expectedCompletedCalls.size(); i++) {
+				const auto& expectedCall = expectedCompletedCalls[i];
+				const auto& actualCall = actualCompletedCalls[i];
 				EXPECT_EQ(expectedCall.CallId, actualCall.CallId);
 				EXPECT_EQ(expectedCall.Caller, actualCall.Caller);
 				EXPECT_EQ(expectedCall.DownloadWork, actualCall.DownloadWork);
@@ -171,6 +184,9 @@ namespace catapult { namespace test {
 
 	void AssertEqualRequestedCalls(const std::deque<state::ContractCall>& entry1, const std::deque<state::ContractCall>& entry2) {
 		ASSERT_EQ(entry1.size(), entry2.size());
+		if (entry1.empty())
+			return;
+
 		for (auto i = 0u; i < entry1.size(); i++) {
 			const auto& expectedContractCall = entry1[i];
 			const auto& actualContractCall = entry2[i];
@@ -206,58 +222,99 @@ namespace catapult { namespace test {
 		EXPECT_EQ(entry1.contractKey(), entry2.contractKey());
 	}
 
-	uint16_t DriveStateBrowserImpl::getOrderedReplicatorsCount(
-			const catapult::cache::ReadOnlyCatapultCache& cache,
-			const catapult::Key& driveKey) const {
-//		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-//		auto driveIter = driveCache.find(driveKey);
-//		const auto& driveEntry = driveIter.get();
-//		return driveEntry.replicatorCount();
+    void AddAccountState(
+            cache::AccountStateCacheDelta& accountStateCache,
+            const Key& publicKey,
+            const Height& height,
+            const std::vector<model::Mosaic>& mosaics){
+        accountStateCache.addAccount(publicKey, height);
+        auto accountStateIter = accountStateCache.find(publicKey);
+        auto& accountState = accountStateIter.get();
+        for (auto& mosaic : mosaics)
+            accountState.Balances.credit(mosaic.MosaicId, mosaic.Amount);
+    }
 
-		return {};
+	uint16_t DriveStateBrowserImpl::getOrderedReplicatorsCount(const catapult::cache::ReadOnlyCatapultCache& cache, const catapult::Key& driveKey) const {
+        const auto& driveCache = cache.template sub<cache::BcDriveCache>();
+        auto driveIter = driveCache.find(driveKey);
+        const auto& driveEntry = driveIter.get();
+        return driveEntry.replicatorCount();
 	}
 
-	std::set<Key> DriveStateBrowserImpl::getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
-//		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-//		auto driveIter = driveCache.find(driveKey);
-//		const auto& driveEntry = driveIter.get();
-//		return driveEntry.replicators();
-
-		return {};
-	}
+    std::set<Key> DriveStateBrowserImpl::getReplicators(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
+        const auto& driveCache = cache.template sub<cache::BcDriveCache>();
+        auto driveIter = driveCache.find(driveKey);
+        const auto& driveEntry = driveIter.get();
+        return driveEntry.replicators();
+    }
 
 	std::set<Key> DriveStateBrowserImpl::getDrives(const cache::ReadOnlyCatapultCache &cache, const Key &replicatorKey) const {
-//		const auto& replicatorCache = cache.template sub<cache::ReplicatorCache>();
-//		auto replicatorIt = replicatorCache.find(replicatorKey);
-//		auto* pReplicatorEntry = replicatorIt.tryGet();
-//		if (!pReplicatorEntry) {
-//			return {};
-//		}
-//		std::set<Key> drives;
-//		for (const auto& [key, _]: pReplicatorEntry->drives()) {
-//			drives.insert(key);
-//		}
-//		return drives;
-
 		return {};
 	}
 
 	Hash256 DriveStateBrowserImpl::getDriveState(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
-//		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-//		auto driveIter = driveCache.find(driveKey);
-//		const auto& driveEntry = driveIter.get();
-//		return driveEntry.rootHash();
-
 		return {};
 	}
 
-	Hash256 DriveStateBrowserImpl::getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey)
-	const {
-//		const auto& driveCache = cache.template sub<cache::BcDriveCache>();
-//		auto driveIter = driveCache.find(driveKey);
-//		const auto& driveEntry = driveIter.get();
-//		return driveEntry.lastModificationId();
-
+	Hash256 DriveStateBrowserImpl::getLastModificationId(const cache::ReadOnlyCatapultCache& cache, const Key& driveKey) const {
 		return {};
+	}
+
+    void LiquidityProviderExchangeObserverImpl::creditMosaics(
+			observers::ObserverContext& context,
+			const Key& currencyDebtor,
+			const Key& mosaicCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		creditMosaics(context, currencyDebtor, mosaicCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::debitMosaics(
+			observers::ObserverContext& context,
+			const Key& mosaicDebtor,
+			const Key& currencyCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		debitMosaics(context, mosaicDebtor, currencyCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::creditMosaics(
+			observers::ObserverContext& context,
+			const Key& currencyDebtor,
+			const Key& mosaicCreditor,
+			const UnresolvedMosaicId& mosaicId,
+			const Amount& mosaicAmount) const {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto debtorAccountIter = accountStateCache.find(currencyDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
+		auto creditorAccountIter = accountStateCache.find(mosaicCreditor);
+		auto& creditorAccount = creditorAccountIter.get();
+
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto resolvedMosaicId = MosaicId(mosaicId.unwrap());
+
+		debtorAccount.Balances.debit(currencyMosaicId, mosaicAmount);
+		creditorAccount.Balances.credit(resolvedMosaicId, mosaicAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::debitMosaics(
+			observers::ObserverContext& context,
+			const Key& mosaicDebtor,
+			const Key& currencyCreditor,
+			const UnresolvedMosaicId& mosaicId,
+			const Amount& mosaicAmount) const {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto debtorAccountIter = accountStateCache.find(mosaicDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
+		auto creditorAccountIter = accountStateCache.find(currencyCreditor);
+		auto& creditorAccount = creditorAccountIter.get();
+
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto resolvedMosaicId = MosaicId(mosaicId.unwrap());
+
+		debtorAccount.Balances.debit(resolvedMosaicId, mosaicAmount);
+		creditorAccount.Balances.credit(currencyMosaicId, mosaicAmount);
 	}
 }}

@@ -8,20 +8,20 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::BatchExecutionSingleNotification<1>;
+    using Notification = model::BatchExecutionSingleNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(EndBatchExecutionSingle, [](const Notification& notification, const ValidatorContext& context) {
+    DEFINE_STATEFUL_VALIDATOR(EndBatchExecutionSingle, [](const Notification& notification, const ValidatorContext& context) {
 
-		const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
+        const auto& contractCache = context.Cache.sub<cache::SuperContractCache>();
 
-		auto contractIt = contractCache.find(notification.ContractKey);
-		const auto& contractEntry = contractIt.get();
+        auto contractIt = contractCache.find(notification.ContractKey);
+        const auto& contractEntry = contractIt.get();
 
-		if (notification.BatchId + 1 != contractEntry.nextBatchId()) {
-			return Failure_SuperContract_Invalid_Batch_Id;
-		}
+        if (notification.BatchId + 1 != contractEntry.nextBatchId()) {
+            return Failure_SuperContract_v2_Invalid_Batch_Id;
+        }
 
-		return ValidationResult::Success;
-	})
+        return ValidationResult::Success;
+    })
 
 }}

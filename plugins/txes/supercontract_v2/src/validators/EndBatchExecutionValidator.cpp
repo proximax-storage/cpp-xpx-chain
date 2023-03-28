@@ -18,7 +18,7 @@ namespace catapult { namespace validators {
 		const auto& contractEntry = contractIt.get();
 
 		if (notification.BatchId != contractEntry.nextBatchId()) {
-			return Failure_SuperContract_Invalid_Batch_Id;
+			return Failure_SuperContract_v2_Invalid_Batch_Id;
 		}
 
 		std::set<Key> cosigners;
@@ -27,11 +27,11 @@ namespace catapult { namespace validators {
 		}
 
 		if (cosigners.size() < notification.Cosigners.size()) {
-			return Failure_SuperContract_Duplicate_Cosigner;
+			return Failure_SuperContract_v2_Duplicate_Cosigner;
 		}
 
 		if (cosigners.size() <= 2 * contractEntry.executorsInfo().size() / 3) {
-			return Failure_SuperContract_Not_Enough_Signatures;
+			return Failure_SuperContract_v2_Not_Enough_Signatures;
 		}
 
 		return ValidationResult::Success;
