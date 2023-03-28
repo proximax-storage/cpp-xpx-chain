@@ -7,6 +7,7 @@
 #include "DbrbPlugin.h"
 #include "src/cache/ViewSequenceCache.h"
 #include "src/cache/ViewSequenceCacheStorage.h"
+#include "src/model/InstallMessageTransaction.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/InstallMessageTransactionPlugin.h"
 #include "src/state/DbrbViewFetcherImpl.h"
@@ -37,6 +38,9 @@ namespace catapult { namespace plugins {
 		});
 
 		manager.setDbrbViewFetcher(std::make_shared<state::DbrbViewFetcherImpl>());
+
+		auto pTransactionFeeCalculator = manager.transactionFeeCalculator();
+		pTransactionFeeCalculator->addUnlimitedFeeTransaction(model::InstallMessageTransaction::Entity_Type, model::InstallMessageTransaction::Current_Version);
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 		  	builder

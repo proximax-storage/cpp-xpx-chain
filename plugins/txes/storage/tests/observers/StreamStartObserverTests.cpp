@@ -59,9 +59,17 @@ namespace catapult { namespace observers {
 			return BcDriveValues(key, modification);
 		}
 
+		auto CreateConfig() {
+			test::MutableBlockchainConfiguration config;
+			auto pluginConfig = config::StorageConfiguration::Uninitialized();
+			pluginConfig.MinReplicatorCount = 3;
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return config.ToConst();
+		}
+
         void RunTest(NotifyMode mode, const BcDriveValues& values, const Height& currentHeight) {
             // Arrange:
-            ObserverTestContext context(mode, currentHeight);
+            ObserverTestContext context(mode, currentHeight, CreateConfig());
             Notification notification(
                 values.Active_Data_Modifications.begin()->Id,
                 values.Drive_Key, 
