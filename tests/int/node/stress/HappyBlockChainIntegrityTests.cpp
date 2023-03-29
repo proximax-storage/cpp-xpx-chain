@@ -83,6 +83,9 @@ namespace catapult { namespace local {
 			networkConfig.GreedDelta = 0.5;
 			networkConfig.GreedExponent = 2.0;
 			networkConfig.AccountVersion = accountVersion;
+			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
+			networkConfig.BlockTimeSmoothingFactor = 10'000;
+			networkConfig.MaxTransactionLifetime = utils::TimeSpan::FromHours(1);
 		}
 
 		void UpdateConfigurationForNode(config::BlockchainConfiguration& config, uint32_t id, uint32_t accountVersion) {
@@ -154,8 +157,8 @@ namespace catapult { namespace local {
 				auto recipientId = RandomByteClamped(Num_Accounts - 2) + 1u;
 				transferBuilder->addTransfer(0, recipientId, Amount(1'000'000));
 			}
-
-			UpdateBlockChainConfiguration(const_cast<model::NetworkConfiguration&>(holder->Config().Network), accountVersion);
+			//TODO: Re-Work this test to be able to mutate network configuration or custom generate a nemesis block.
+			//UpdateBlockChainConfiguration(const_cast<model::NetworkConfiguration&>(holder->Config().Network), accountVersion);
 			const cache::AccountStateCache& accountCache = cache.sub<cache::AccountStateCache>();
 			test::BlockChainBuilder builder(accounts, stateHashCalculator, holder, &accountCache, resourcesPath);
 			builder.setBlockTimeInterval(blockTimeInterval);
