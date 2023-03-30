@@ -124,8 +124,7 @@ namespace catapult { namespace fastfinality {
 				});
 
 				const auto& pluginManager = state.pluginManager();
-				auto pPacketHandlers = std::make_shared<ionet::ServerPacketHandlers>(config.Node.MaxPacketDataSize.bytes32());
-				pFsmShared->dbrbProcess()->registerPacketHandlers(*pPacketHandlers);
+				pFsmShared->dbrbProcess()->registerPacketHandlers(pFsmShared->packetHandlers());
 				std::weak_ptr<WeightedVotingFsm> pFsmWeak = pFsmShared;
 				pFsmShared->dbrbProcess()->setDeliverCallback([pFsmWeak, &pluginManager](const std::shared_ptr<ionet::Packet>& pPacket) {
 					TRY_GET_FSM()
@@ -168,10 +167,11 @@ namespace catapult { namespace fastfinality {
 
 				RegisterPullConfirmedBlockHandler(pFsmShared, state.packetHandlers());
 				RegisterPullRemoteNodeStateHandler(pFsmShared, state.packetHandlers(), pConfigHolder, blockElementGetter, lastBlockElementSupplier);
+				RegisterPullRemoteNodeStateHandler(pFsmShared, pFsmShared->packetHandlers(), pConfigHolder, blockElementGetter, lastBlockElementSupplier);
 				dbrb::RegisterPushNodesHandler(pFsmShared->dbrbProcess(), config.Immutable.NetworkIdentifier, state.packetHandlers());
 				dbrb::RegisterPullNodesHandler(pFsmShared->dbrbProcess(), state.packetHandlers());
 
-				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, *pPacketHandlers, locator.keyPair(), connectionSettings, 2u);
+				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, pFsmShared->packetHandlers(), locator.keyPair(), connectionSettings, 2u);
 				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, [&acceptor = *pReaders](
 					const auto& socketInfo,
 					const auto& callback) {

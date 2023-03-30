@@ -40,6 +40,7 @@ namespace catapult { namespace fastfinality {
 			, m_stopped(false)
 			, m_pDbrbProcess(std::move(pDbrbProcess))
 			, m_dbrbViewFetcher(dbrbViewFetcher)
+			, m_packetHandlers(config.Node.MaxPacketDataSize.bytes32())
 		{}
 
 	public:
@@ -116,10 +117,6 @@ namespace catapult { namespace fastfinality {
 			m_nodeWorkState = state;
 		}
 
-		auto& packetIoPickers() {
-			return m_packetIoPickers;
-		}
-
 		auto& mutex() {
 			return m_mutex;
 		}
@@ -132,6 +129,10 @@ namespace catapult { namespace fastfinality {
 			return m_dbrbViewFetcher;
 		}
 
+		auto& packetHandlers() {
+			return m_packetHandlers;
+		}
+
 	private:
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
 		boost::asio::system_timer m_timer;
@@ -142,9 +143,9 @@ namespace catapult { namespace fastfinality {
 		boost::asio::io_context::strand m_strand;
 		NodeWorkState m_nodeWorkState;
 		bool m_stopped;
-		net::PacketIoPickerContainer m_packetIoPickers;
 		mutable std::mutex m_mutex;
 		std::shared_ptr<dbrb::DbrbProcess> m_pDbrbProcess;
 		dbrb::DbrbViewFetcher& m_dbrbViewFetcher;
+		ionet::ServerPacketHandlers m_packetHandlers;
 	};
 }}
