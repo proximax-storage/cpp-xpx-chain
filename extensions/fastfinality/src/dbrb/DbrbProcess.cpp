@@ -546,6 +546,7 @@ namespace catapult { namespace dbrb {
 	}
 
 	void DbrbProcess::onPrepareMessageReceived(const PrepareMessage& message) {
+		CATAPULT_LOG(debug) << "[DBRB] PREPARE: received payload " << message.Payload->Type << " from " << message.Sender;
 		if (m_membershipState != MembershipState::Participating) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (node is not a participant).";
 			return;
@@ -576,7 +577,6 @@ namespace catapult { namespace dbrb {
 		data.Begin = utils::NetworkTime();
 
 		data.Sender = message.Sender;
-		CATAPULT_LOG(debug) << "[DBRB] PREPARE: No acknowledgeable payload is stored.";
 		data.Payload = message.Payload;
 		if (!m_state.Acknowledgeable.has_value()) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Setting acknowledgeable payload to one from the message.";
