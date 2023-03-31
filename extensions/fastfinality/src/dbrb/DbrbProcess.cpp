@@ -106,7 +106,9 @@ namespace catapult { namespace dbrb {
 	}
 
 	void DbrbProcess::broadcast(const Payload& payload) {
+		CATAPULT_LOG(debug) << "[DBRB] BROADCAST: payload " << payload->Type;
 		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), payload]() {
+			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: stranded broadcast call for payload " << payload->Type;
 			auto pThis = pThisWeak.lock();
 			if (!pThis)
 				return;
@@ -123,6 +125,7 @@ namespace catapult { namespace dbrb {
 				return;
 			}
 
+			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: sending payload " << payload->Type;
 			auto pMessage = std::make_shared<PrepareMessage>(pThis->m_id, payload, pThis->m_currentView);
 			pThis->disseminate(pMessage, pMessage->View.members());
 		});
@@ -567,16 +570,17 @@ namespace catapult { namespace dbrb {
 
 		auto payloadHash = CalculatePayloadHash(message.Payload);
 		auto& data = m_broadcastData[payloadHash];
-		if (data.Begin == Timestamp())
-			data.Begin = utils::NetworkTime();
+		if (data.Payload)
+			CATAPULT_THROW_RUNTIME_ERROR_2("duplicate prepare message", data.Payload, message.Sender)
 
-		if (!data.Payload) {
-			CATAPULT_LOG(debug) << "[DBRB] PREPARE: No acknowledgeable payload is stored.";
-			data.Payload = message.Payload;
-			if (!m_state.Acknowledgeable.has_value()) {
-				CATAPULT_LOG(debug) << "[DBRB] PREPARE: Setting acknowledgeable payload to one from the message.";
-				m_state.Acknowledgeable = message;
-			}
+		data.Begin = utils::NetworkTime();
+
+		data.Sender = message.Sender;
+		CATAPULT_LOG(debug) << "[DBRB] PREPARE: No acknowledgeable payload is stored.";
+		data.Payload = message.Payload;
+		if (!m_state.Acknowledgeable.has_value()) {
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Setting acknowledgeable payload to one from the message.";
+			m_state.Acknowledgeable = message;
 		}
 
 		CATAPULT_LOG(debug) << "[DBRB] PREPARE: Sending Acknowledged message to " << message.Sender << ".";
@@ -666,7 +670,7 @@ namespace catapult { namespace dbrb {
 	void DbrbProcess::onAcknowledgedMessageReceived(const AcknowledgedMessage& message) {
 		// Message sender must be a member of the view specified in the message.
 		if (!message.View.isMember(message.Sender)) {
-			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (sender is not in supplied view).";
+			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Aborting message processing (sender is not in supplied view).";
 			return;
 		}
 
@@ -676,9 +680,11 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
+		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: payload " << data.Payload->Type << " from " << data.Sender;
+
 		// Signature must be valid.
 		if (!verify(message.Sender, data.Payload, message.View, message.PayloadSignature)) {
-			CATAPULT_LOG(warning) << "[DBRB] ACKNOWLEDGED: message REJECTED: signature is not valid";
+			CATAPULT_LOG(warning) << "[DBRB] ACKNOWLEDGED: message with payload " << data.Payload->Type << " from " << data.Sender << " REJECTED: signature is not valid";
 			return;
 		}
 
@@ -689,12 +695,10 @@ namespace catapult { namespace dbrb {
 	}
 
 	void DbrbProcess::onAcknowledgedQuorumCollected(const AcknowledgedMessage& message) {
-		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Quorum collected in view " << message.View << ".";
-		// Replacing view associated with the certificate.
-		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Setting CertificateView to " << message.View << ".";
 
 		// Replacing certificate.
 		auto& data = m_broadcastData[message.PayloadHash];
+		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Quorum collected in view " << message.View << ". Payload " << data.Payload->Type << " from " << data.Sender;
 		data.CertificateView = message.View;
 		data.Certificate.clear();
 		const auto& acknowledgedSet = data.QuorumManager.AcknowledgedPayloads[message.View];
@@ -705,11 +709,11 @@ namespace catapult { namespace dbrb {
 
 		// Disseminating Commit message, if process' current view is installed.
 		if (m_currentViewIsInstalled) {
-			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Disseminating Commit message.";
+			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Disseminating Commit message with payload " << data.Payload->Type << " from " << data.Sender;
 			auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, data.Certificate, data.CertificateView, m_currentView);
 			disseminate(pMessage, m_currentView.members());
 		} else {
-			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Current view is not installed, Commit message is not disseminated.";
+			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Current view is not installed, Commit message with payload " << data.Payload->Type << " from " << data.Sender << " is not disseminated.";
 		}
 	}
 
@@ -731,10 +735,12 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
+		CATAPULT_LOG(debug) << "[DBRB] COMMIT: payload " << data.Payload->Type << " from " << data.Sender;
+
 		// Message certificate must be valid, i.e. all signatures in it must be valid.
 		for (const auto& [signer, signature] : message.Certificate) {
 			if (!verify(signer, data.Payload, message.CertificateView, signature)) {
-				CATAPULT_LOG(warning) << "[DBRB] COMMIT: message REJECTED: signature is not valid";
+				CATAPULT_LOG(warning) << "[DBRB] COMMIT: message with payload " << data.Payload->Type << " from " << data.Sender << " is REJECTED: signature is not valid";
 				return;
 			}
 		}
@@ -745,13 +751,13 @@ namespace catapult { namespace dbrb {
 			data.CommitMessageReceived = true;
 			m_state.Stored = message;
 
-			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Disseminating Commit message.";
+			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Disseminating Commit message with payload " << data.Payload->Type << " from " << data.Sender;
 			auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, message.Certificate, message.CertificateView, m_currentView);
 			disseminate(pMessage, m_currentView.members());
 		}
 
 		// Allow delivery for sender process.
-		CATAPULT_LOG(debug) << "[DBRB] COMMIT: Sending Deliver message to " << message.Sender << ".";
+		CATAPULT_LOG(debug) << "[DBRB] COMMIT: Sending Deliver message with payload " << data.Payload->Type << " from " << data.Sender << " to " << message.Sender;
 		auto pMessage = std::make_shared<DeliverMessage>(m_id, message.PayloadHash, m_currentView);
 		send(pMessage, message.Sender);
 	}
@@ -774,17 +780,19 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
+		CATAPULT_LOG(debug) << "[DBRB] DELIVER: payload " << data.Payload->Type << " from " << data.Sender;
+
 		bool quorumCollected = data.QuorumManager.update(message);
 		if (quorumCollected) {
-			onDeliverQuorumCollected(data.Payload);
+			onDeliverQuorumCollected(data.Payload, data.Sender);
 
-			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: operation took " << (utils::NetworkTime().unwrap() - data.Begin.unwrap()) << " ms";
+			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: operation took " << (utils::NetworkTime().unwrap() - data.Begin.unwrap()) << " ms to deliver " << data.Payload->Type << " from " << data.Sender;
 		}
 	}
 
-	void DbrbProcess::onDeliverQuorumCollected(const Payload& payload) {
+	void DbrbProcess::onDeliverQuorumCollected(const Payload& payload, const ProcessId& sender) {
 		if (payload) { // Should always be set.
-			CATAPULT_LOG(debug) << "[DBRB] DELIVER: delivering payload";
+			CATAPULT_LOG(debug) << "[DBRB] DELIVER: delivering payload " << payload->Type << " from " << sender;
 			m_deliverCallback(payload);
 		} else {
 			CATAPULT_LOG(error) << "[DBRB] DELIVER: NO PAYLOAD!!!";
@@ -816,6 +824,7 @@ namespace catapult { namespace dbrb {
 			CATAPULT_LOG(debug) << "[DBRB] Current view is now set to " << pThis->m_currentView;
 			if (pThis->m_currentView.isMember(pThis->m_id)) {
 				pThis->m_membershipState = MembershipState::Participating;
+				CATAPULT_LOG(debug) << "[DBRB] Current view is now installed";
 				pThis->m_currentViewIsInstalled = true;
 			} else if (pThis->m_currentView.hasChange(pThis->m_id, MembershipChange::Leave)) {
 				pThis->m_membershipState = MembershipState::Left;

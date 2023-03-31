@@ -264,6 +264,9 @@ namespace catapult { namespace dbrb {
 		std::map<View, Sequence> m_lastConvergedSequences;
 
 		struct BroadcastData {
+			/// The sender of the data.
+			ProcessId Sender;
+
 			/// Payload allowed to be acknowledged. If empty, any payload can be acknowledged.
 			dbrb::Payload Payload;
 
@@ -356,7 +359,7 @@ namespace catapult { namespace dbrb {
 		void onConvergedQuorumCollected(const ConvergedMessage&);
 		void onStateUpdateQuorumCollected();
 		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&);
-		void onDeliverQuorumCollected(const Payload&);
+		void onDeliverQuorumCollected(const Payload&, const ProcessId&);
 
 		void onViewInstalled(const View&);
 		void onLeaveAllowed();
