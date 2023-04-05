@@ -259,6 +259,7 @@ namespace catapult { namespace validators {
 		auto delta = cache.createDelta();
 		auto& driveDelta = delta.sub<cache::BcDriveCache>();
 		auto driveEntry = test::CreateBcDriveEntry();
+		driveEntry.activeDataModifications().begin()->ReadyForApproval = true;
 
 		std::vector<crypto::KeyPair> replicatorKeyPairs;
 		test::PopulateReplicatorKeyPairs(replicatorKeyPairs, Replicator_Count);

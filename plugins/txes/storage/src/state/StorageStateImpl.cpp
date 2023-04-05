@@ -26,9 +26,12 @@ namespace catapult { namespace state {
 					driveKey,
 					modification.DownloadDataCdi,
 					modification.ExpectedUploadSizeMegabytes,
-					modification.ActualUploadSizeMegabytes });
+					modification.ActualUploadSizeMegabytes,
+					modification.FolderName,
+					modification.ReadyForApproval,
+					modification.IsStream });
 
-            return Drive{
+			return Drive{
 				driveEntry.key(),
 				driveEntry.owner(),
 				driveEntry.rootHash(),
@@ -216,6 +219,9 @@ namespace catapult { namespace state {
 			completedModificationsIter->DownloadDataCdi,
 			completedModificationsIter->ExpectedUploadSizeMegabytes,
 			completedModificationsIter->ActualUploadSizeMegabytes,
+			completedModificationsIter->FolderName,
+			completedModificationsIter->ReadyForApproval,
+			completedModificationsIter->IsStream,
 			signers,
 		    driveEntry.usedSizeBytes()});
     }

@@ -39,7 +39,10 @@ namespace catapult { namespace storage {
 				.add(notification_handlers::CreatePrepareDriveHandler(pReplicatorService))
 				.add(notification_handlers::CreateReplicatorOffboardingHandler(pReplicatorService))
 				.add(notification_handlers::CreateReplicatorOnboardingHandler(pReplicatorService))
-				.add(notification_handlers::CreateVerificationHandler(pReplicatorService));
+				.add(notification_handlers::CreateVerificationHandler(pReplicatorService))
+				.add(notification_handlers::CreateStreamStartHandler(pReplicatorService))
+				.add(notification_handlers::CreateStreamFinishHandler(pReplicatorService))
+				.add(notification_handlers::CreateStreamPaymentHandler(pReplicatorService));
 
 			bootstrapper.subscriptionManager().addPostBlockCommitSubscriber(
 				CreateBlockStorageSubscription(bootstrapper, builder.build()));

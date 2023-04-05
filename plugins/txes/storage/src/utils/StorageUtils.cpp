@@ -150,6 +150,9 @@ namespace catapult { namespace utils {
 			const std::set<Key>& replicators,
 			observers::ObserverContext& context,
 			const std::unique_ptr<observers::LiquidityProviderExchangeObserver>& liquidityProvider) {
+		if (replicators.empty())
+			return;
+
 		auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
 		auto& accountCache = context.Cache.template sub<cache::AccountStateCache>();
 		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
@@ -161,10 +164,6 @@ namespace catapult { namespace utils {
 
 		auto voidStateIter = getVoidState(context);
 		auto& voidState = voidStateIter.get();
-
-		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
-		const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
-		const auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 
 		// Storage deposit equals to the drive size.
 		const auto storageDepositRefundAmount = Amount(driveEntry.size());

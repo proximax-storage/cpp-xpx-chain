@@ -27,6 +27,7 @@ namespace catapult { namespace state {
 			io::Write64(output, modification.ActualUploadSizeMegabytes);
 			io::Write16(output, (uint16_t) modification.FolderName.size());
 			io::Write8(output, modification.ReadyForApproval);
+			io::Write8(output, modification.IsStream);
 			auto pFolderName = (const uint8_t*) (modification.FolderName.c_str());
 			io::Write(output, utils::RawBuffer(pFolderName, modification.FolderName.size()));
 		}
@@ -155,10 +156,11 @@ namespace catapult { namespace state {
 			auto actualUploadSize = io::Read64(input);
 			auto folderNameSize = io::Read16(input);
 			auto readyForApproval = io::Read8(input);
+			auto isStream = io::Read8(input);
 			std::vector<uint8_t> folderNameBytes(folderNameSize);
 			io::Read(input, folderNameBytes);
 			std::string folderName(folderNameBytes.begin(), folderNameBytes.end());
-			return ActiveDataModification(id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folderName, readyForApproval);
+			return ActiveDataModification(id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folderName, readyForApproval, isStream);
 		}
 
 		void LoadActiveDataModifications(io::InputStream& input, ActiveDataModifications& activeDataModifications) {
