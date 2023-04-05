@@ -37,23 +37,6 @@ namespace catapult { namespace validators {
 		if (notification.Certificate.size() < replacedView.quorumSize())
 			return Failure_Dbrb_Signatures_Count_Insufficient;
 
-	  	// Check if all signatures are valid
-	  	dbrb::ConvergedMessage convergedMessage(dbrb::ProcessId(), convergedSequence, replacedView);
-		for (const auto& [processId, signature] : notification.Certificate) {
-			convergedMessage.Sender = processId;
-			CATAPULT_LOG(error) << "[DBRB] INSTALL TX: Formed Converged message from " << convergedMessage.Sender;
-			CATAPULT_LOG(debug) << "[DBRB] INSTALL TX: Signature = " << signature;
-			CATAPULT_LOG(debug) << "[DBRB] INSTALL TX: Replaced view = " << convergedMessage.ReplacedView;
-			CATAPULT_LOG(debug) << "[DBRB] INSTALL TX: Converged sequence = " << convergedMessage.ConvergedSequence;
-			const auto hash = dbrb::CalculateHash(convergedMessage.toNetworkPacket(nullptr)->buffers());
-			CATAPULT_LOG(debug) << "[DBRB] INSTALL TX: Hash = " << hash;
-
-			if (!crypto::Verify(processId, hash, signature))
-				return Failure_Dbrb_Invalid_Signature;
-
-			CATAPULT_LOG(warning) << "[DBRB] INSTALL TX: Verification passed.";
-		}
-
 		return ValidationResult::Success;
 	}));
 }}

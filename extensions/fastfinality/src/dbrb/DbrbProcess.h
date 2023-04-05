@@ -75,18 +75,6 @@ namespace catapult { namespace dbrb {
 		};
 
 	public:
-		/// Maps views to numbers of received ReconfigConfirm messages for those views.
-		std::map<QuorumKey, std::set<ProcessId>> ReconfigConfirmCounters;
-
-		/// Maps view-sequence pairs to numbers of received Proposed messages for those pairs.
-		std::map<QuorumKey, std::set<ProcessId>> ProposedCounters;
-
-		/// Maps view-sequence pairs to processes with their signatures that received Converged messages for those pairs.
-		std::map<QuorumKey, std::map<ProcessId, Signature>> ConvergedSignatures;
-
-		/// Maps views to received StateUpdate messages for those views.
-		std::map<QuorumKey, std::set<StateUpdateMessage>> StateUpdateMessages;
-
 		/// Maps views to sets of pairs of respective process IDs and payload hashes received from Acknowledged messages.
 		std::map<QuorumKey, std::set<std::pair<ProcessId, Hash256>>> AcknowledgedPayloads;
 
@@ -95,71 +83,6 @@ namespace catapult { namespace dbrb {
 
 		/// Overloaded methods for updating respective counters.
 		/// Returns whether the quorum has just been collected on this update.
-
-		bool update(const ReconfigConfirmMessage& message) {
-			return update(ReconfigConfirmCounters, message.View, message.Sender, message.View.quorumSize(), "RECONFIG CONFIRM");
-		};
-
-		bool update(const ProposeMessage& message) {
-			const auto keyPair = std::make_pair(message.ReplacedView, message.ProposedSequence);
-			return update(ProposedCounters, keyPair, message.Sender, message.ReplacedView.quorumSize(), "PROPOSE");
-		};
-
-		bool update(const ConvergedMessage& message) {
-			auto sequence = Sequence::fromViews({message.ReplacedView}).value();
-			sequence.tryAppend(message.ConvergedSequence);
-			const auto quorumKey = QuorumKey(sequence);
-
-			CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: Comparing " << quorumKey << " to every existing key in map:";
-			for (const auto& [key, _] : ConvergedSignatures)
-				CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: == " << key << " : " << (key == quorumKey);
-
-			auto& map = ConvergedSignatures[quorumKey];
-
-			CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: Map at (" << quorumKey << ") is:";
-			for (const auto& [sender, signature] : map)
-				CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: " << sender << " : " << signature;
-
-			if (map.count(message.Sender))
-				return false; // This process has already sent a Converged message; do nothing, quorum is NOT triggered on this message.
-
-			map[message.Sender] = message.Signature;
-			CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: Inserted " << message.Sender << " : " << map.at(message.Sender);
-
-			CATAPULT_LOG(warning) << "[DBRB] CONVERGED UPDATE: Current ConvergedSignatures map is:";
-			for (const auto& [sequence, value] : ConvergedSignatures) {
-				CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: (" << sequence << ") :";
-				for (const auto& [key, signature] : value)
-					CATAPULT_LOG(debug) << "[DBRB] CONVERGED UPDATE: - " << key << " : " << signature;
-			}
-
-			auto mapSize = map.size();
-			auto quorumSize = message.ReplacedView.quorumSize();
-			bool triggered = (mapSize == quorumSize);
-			CATAPULT_LOG(debug) << "[DBRB] CONVERGED: Quorum status is " << mapSize << "/" << quorumSize << (triggered ? " (TRIGGERED)" : " (NOT triggered)");
-
-			return triggered;
-		};
-
-		std::set<View> update(const StateUpdateMessage& message) {
-			std::set<View> triggeredViews;
-			for (auto& [quorumKey, messages] : StateUpdateMessages) {
-				const auto& view = quorumKey.Sequence.data().front();
-				if (view.isMember(message.Sender)) {
-					messages.insert(message);
-
-					auto messagesCount = messages.size();
-					auto quorumSize = view.quorumSize();
-					bool triggered = (messagesCount == view.quorumSize());
-					CATAPULT_LOG(debug) << "[DBRB] STATE-UPDATE: Quorum status is " << messagesCount << "/" << quorumSize << (triggered ? " (TRIGGERED)" : " (NOT triggered)");
-
-					if (triggered)
-						triggeredViews.insert(view);
-				}
-			}
-			return triggeredViews;
-		};
-
 		bool update(AcknowledgedMessage message) {
 			CATAPULT_LOG(debug) << "[DBRB] QUORUM: Received ACKNOWLEDGED message in view " << message.View << ".";
 			auto& set = AcknowledgedPayloads[message.View];
@@ -234,10 +157,6 @@ namespace catapult { namespace dbrb {
 		/// State of the process membership.
 		MembershipState m_membershipState = MembershipState::NotJoined;
 
-		/// Whether the process should keep disseminating Reconfig messages on discovery of new views.
-		/// Set to true only when joining or leaving the system.
-		bool m_disseminateReconfig = false;
-
 		/// Whether the process should keep disseminating Commit messages on installing new views.
 		/// Set to true only when leaving the system after an Install message.
 		bool m_disseminateCommit = false;
@@ -245,23 +164,8 @@ namespace catapult { namespace dbrb {
 		/// While set to true, no Prepare, Commit or Reconfig messages are processed.
 		bool m_limitedProcessing = false;
 
-		/// Most recent view known to the process.
+		/// Current view.
 		View m_currentView;
-
-		/// Whether current view is installed by the process.
-		bool m_currentViewIsInstalled = true;
-
-		/// Needs to be set in order for \a onStateUpdateQuorumCollected to be triggered.
-		std::optional<InstallMessageData> m_currentInstallMessage;
-
-		/// List of pending changes (i.e., join or leave).
-		View m_pendingChanges;
-
-		/// Map that maps views to proposed sequences to replace those views.
-		std::map<View, Sequence> m_proposedSequences;
-
-		/// Map that maps views to the last converged sequence to replace those views.
-		std::map<View, Sequence> m_lastConvergedSequences;
 
 		struct BroadcastData {
 			/// The sender of the data.
@@ -336,32 +240,17 @@ namespace catapult { namespace dbrb {
 		void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients);
 		void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient);
 
-		void prepareForStateUpdates(const InstallMessageData&);
-		void updateState(const std::set<StateUpdateMessage>&);
-		void extendPendingChanges(const View&);
 		Signature sign(const Payload&);
 		static bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
-		
-		void onReconfigMessageReceived(const ReconfigMessage&);
-		void onReconfigConfirmMessageReceived(const ReconfigConfirmMessage&);
-		void onProposeMessageReceived(const ProposeMessage&);
-		void onConvergedMessageReceived(const ConvergedMessage&);
-		void onInstallMessageReceived(const InstallMessage&);
 
 		void onPrepareMessageReceived(const PrepareMessage&);
-		void onStateUpdateMessageReceived(const StateUpdateMessage&);
 		void onAcknowledgedMessageReceived(const AcknowledgedMessage&);
 		void onCommitMessageReceived(const CommitMessage&);
 		void onDeliverMessageReceived(const DeliverMessage&);
 
-		void onReconfigConfirmQuorumCollected();
-		void onProposeQuorumCollected(const ProposeMessage&);
-		void onConvergedQuorumCollected(const ConvergedMessage&);
-		void onStateUpdateQuorumCollected();
 		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&);
 		void onDeliverQuorumCollected(const Payload&, const ProcessId&);
 
-		void onViewInstalled(const View&);
 		void onLeaveAllowed();
 		void onJoinComplete();
 		void onLeaveComplete();
