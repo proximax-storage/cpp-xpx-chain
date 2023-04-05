@@ -28,7 +28,7 @@ namespace catapult { namespace dbrb {
 		{}
 
     public:
-        Hash256 sendInstallMessageTransaction(InstallMessage& message);
+        //Hash256 sendInstallMessageTransaction(InstallMessage& message);
 
 	private:
         void send(std::shared_ptr<model::Transaction> pTransaction);

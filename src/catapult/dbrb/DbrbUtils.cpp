@@ -187,7 +187,7 @@ namespace catapult { namespace dbrb {
 	}
 
 	bool View::isMember(const ProcessId& processId) const {
-		return hasChange(processId, MembershipChange::Join);
+		return hasChange(processId, MembershipChange::Join) && !hasChange(processId, MembershipChange::Leave);
 	}
 
 	size_t View::quorumSize() const {
