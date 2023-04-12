@@ -78,8 +78,8 @@ namespace catapult { namespace contract {
 			proofs.emplace_back(proof);
 
 			//executorKeys
-			auto executorKey1 = sirius::contract::ExecutorKey({ 1 });
-			auto executorKey2 = sirius::contract::ExecutorKey({ 2 });
+			auto executorKey1 = sirius::contract::ExecutorKey(std::array<uint8_t, 32>{ 1 });
+			auto executorKey2 = sirius::contract::ExecutorKey(std::array<uint8_t, 32>{ 2 });
 			executorKeys.emplace_back(executorKey1);
 			executorKeys.emplace_back(executorKey2);
 
@@ -237,8 +237,8 @@ namespace catapult { namespace contract {
 			proofs.emplace_back(proof);
 
 			//executorKeys
-			auto executorKey1 = sirius::contract::ExecutorKey({ 1 });
-			auto executorKey2 = sirius::contract::ExecutorKey({ 2 });
+			auto executorKey1 = sirius::contract::ExecutorKey(std::array<uint8_t, 32>{ 1 });
+			auto executorKey2 = sirius::contract::ExecutorKey(std::array<uint8_t, 32>{ 2 });
 			executorKeys.emplace_back(executorKey1);
 			executorKeys.emplace_back(executorKey2);
 

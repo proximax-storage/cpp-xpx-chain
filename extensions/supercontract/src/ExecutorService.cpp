@@ -4,8 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#pragma GCC diagnostic error "-Wmissing-field-initializers"
-
 #include "ExecutorService.h"
 #include "TransactionStatusHandler.h"
 #include "StorageBlockchainBuilder.h"
@@ -21,6 +19,8 @@
 #include <virtualMachine/RPCVirtualMachineBuilder.h>
 #include "TransactionSender.h"
 #include "ContractLogger.h"
+#include <rpcExecutorServer/RPCExecutor.h>
+#include "StorageBlockchain.h"
 
 #include <map>
 
@@ -104,36 +104,50 @@ namespace catapult::contract {
 					m_config,
 					m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local));
 
-			auto pExecutorEventHandler =
-					std::make_shared<ExecutorEventHandler>(
-							m_keyPair, std::move(transactionSender), m_pTransactionStatusHandler);
+			auto pExecutorEventHandler = std::make_shared<ExecutorEventHandler>(
+					m_keyPair, std::move(transactionSender), m_pTransactionStatusHandler);
 
-			std::unique_ptr<ServiceBuilder<blockchain::Blockchain>> blockchainBuilder =
-					std::make_unique<StorageBlockchainBuilder>(m_contractState);
+			if (m_config.UseRPCExecutor) {
+				auto executor = std::make_unique<sirius::contract::rpcExecutorServer::RPCExecutor>(
+						pExecutorEventHandler,
+						std::make_shared<sirius::logging::Logger>(std::make_unique<ContractLogger>(), "executor"));
+				executor->start(
+						m_config.ExecutorRPCHost + ":" + m_config.ExecutorRPCPort,
+						std::make_unique<StorageBlockchain>(m_contractState),
+						keyPair,
+						m_config.StorageRPCHost + ":" + m_config.StorageRPCPort,
+						m_config.MessengerRPCHost + ":" + m_config.MessengerRPCPort,
+						m_config.VirtualMachineRPCHost + ":" + m_config.VirtualMachineRPCPort,
+						m_config.LogPath,
+						static_cast<uint8_t>(m_serviceState.config().Immutable.NetworkIdentifier));
+			} else {
+				std::unique_ptr<ServiceBuilder<blockchain::Blockchain>> blockchainBuilder =
+						std::make_unique<StorageBlockchainBuilder>(m_contractState);
 
-			std::unique_ptr<ServiceBuilder<storage::Storage>> storageBuilder =
-					std::make_unique<storage::RPCStorageBuilder>(
-							m_config.StorageRPCHost + ":" + m_config.StorageRPCPort);
+				std::unique_ptr<ServiceBuilder<storage::Storage>> storageBuilder =
+						std::make_unique<storage::RPCStorageBuilder>(
+								m_config.StorageRPCHost + ":" + m_config.StorageRPCPort);
 
-			std::unique_ptr<messenger::MessengerBuilder> messengerBuilder =
-					std::make_unique<messenger::RPCMessengerBuilder>(
-							m_config.MessengerRPCHost + ":" + m_config.MessengerRPCPort);
+				std::unique_ptr<messenger::MessengerBuilder> messengerBuilder =
+						std::make_unique<messenger::RPCMessengerBuilder>(
+								m_config.MessengerRPCHost + ":" + m_config.MessengerRPCPort);
 
-			std::unique_ptr<vm::VirtualMachineBuilder> vmBuilder = std::make_unique<vm::RPCVirtualMachineBuilder>(
-					m_config.VirtualMachineRPCHost + ":" + m_config.VirtualMachineRPCPort);
+				std::unique_ptr<vm::VirtualMachineBuilder> vmBuilder = std::make_unique<vm::RPCVirtualMachineBuilder>(
+						m_config.VirtualMachineRPCHost + ":" + m_config.VirtualMachineRPCPort);
 
-			sirius::contract::ExecutorConfig config;
-			config.setNetworkIdentifier(static_cast<uint8_t>(m_serviceState.config().Immutable.NetworkIdentifier));
+				sirius::contract::ExecutorConfig config;
+				config.setNetworkIdentifier(static_cast<uint8_t>(m_serviceState.config().Immutable.NetworkIdentifier));
 
-			m_pExecutor = sirius::contract::DefaultExecutorBuilder().build(
-					std::move(keyPair),
-					config,
-					pExecutorEventHandler,
-					std::move(vmBuilder),
-					std::move(storageBuilder),
-					std::move(blockchainBuilder),
-					std::move(messengerBuilder),
-					sirius::logging::Logger(std::make_unique<ContractLogger>(), "executor"));
+				m_pExecutor = sirius::contract::DefaultExecutorBuilder().build(
+						std::move(keyPair),
+						config,
+						pExecutorEventHandler,
+						std::move(vmBuilder),
+						std::move(storageBuilder),
+						std::move(blockchainBuilder),
+						std::move(messengerBuilder),
+						std::make_shared<sirius::logging::Logger>(std::make_unique<ContractLogger>(), "executor"));
+			}
 
 			pExecutorEventHandler->setExecutor(m_pExecutor);
 		}
@@ -391,11 +405,12 @@ namespace catapult::contract {
 
 	// region - replicator service
 
-	ExecutorService::ExecutorService(ExecutorConfiguration&& executorConfig,
-									 std::shared_ptr<TransactionStatusHandler> pTransactionStatusHandler)
+	ExecutorService::ExecutorService(
+			ExecutorConfiguration&& executorConfig,
+			std::shared_ptr<TransactionStatusHandler> pTransactionStatusHandler)
 		: m_keyPair(crypto::KeyPair::FromString(executorConfig.Key))
 		, m_config(std::move(executorConfig))
-		, m_pTransactionStatusHandler(std::move(pTransactionStatusHandler)){}
+		, m_pTransactionStatusHandler(std::move(pTransactionStatusHandler)) {}
 
 	ExecutorService::~ExecutorService() {
 		stop();

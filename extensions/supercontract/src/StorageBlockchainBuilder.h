@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <supercontract/ServiceBuilder.h>
+#include <common/ServiceBuilder.h>
 #include <blockchain/Blockchain.h>
 #include <catapult/state/ContractState.h>
 

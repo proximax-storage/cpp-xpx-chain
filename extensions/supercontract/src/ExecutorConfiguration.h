@@ -35,6 +35,14 @@ namespace catapult { namespace contract {
 
 		std::string VirtualMachineRPCPort;
 
+		bool UseRPCExecutor;
+
+		std::string ExecutorRPCHost;
+
+		std::string ExecutorRPCPort;
+
+		std::string LogPath;
+
 	private:
 		ExecutorConfiguration() = default;
 

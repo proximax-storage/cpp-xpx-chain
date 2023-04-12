@@ -29,6 +29,10 @@ namespace catapult { namespace contract {
 		LOAD_DB_PROPERTY(MessengerRPCPort);
 		LOAD_DB_PROPERTY(VirtualMachineRPCHost);
 		LOAD_DB_PROPERTY(VirtualMachineRPCPort);
+		LOAD_DB_PROPERTY(UseRPCExecutor);
+		LOAD_DB_PROPERTY(ExecutorRPCHost);
+		LOAD_DB_PROPERTY(ExecutorRPCPort);
+		LOAD_DB_PROPERTY(LogPath);
 
 #undef LOAD_DB_PROPERTY
 

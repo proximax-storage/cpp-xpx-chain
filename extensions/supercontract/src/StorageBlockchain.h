@@ -20,7 +20,7 @@ namespace catapult { namespace contract {
 
 	public:
 
-		StorageBlockchain(const state::ContractState& m_contractState);
+		StorageBlockchain(const state::ContractState& contractState);
 
 		void block(uint64_t height, std::shared_ptr<AsyncQueryCallback<Block>> callback) override;
 

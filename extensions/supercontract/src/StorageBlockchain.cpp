@@ -9,6 +9,9 @@
 
 namespace catapult { namespace contract {
 
+	StorageBlockchain::StorageBlockchain(const state::ContractState& contractState)
+		: m_contractState(contractState) {}
+
 	void StorageBlockchain::block(uint64_t height, std::shared_ptr<AsyncQueryCallback<Block>> callback) {
 		m_threadManager.execute([this, height, callback=std::move(callback)] {
 			auto storageBlock = m_contractState.getBlock(Height(height));
