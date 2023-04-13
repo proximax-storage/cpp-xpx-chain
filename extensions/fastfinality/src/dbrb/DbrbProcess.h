@@ -19,67 +19,12 @@ namespace catapult { namespace dbrb {
 
 	/// Struct that encapsulates all necessary quorum counters and their update methods.
 	struct QuorumManager {
-
-		struct QuorumKey {
-		public:
-			dbrb::Sequence Sequence;
-
-			QuorumKey(const dbrb::Sequence& sequence) {
-				Sequence = sequence;
-			};
-
-			QuorumKey(const dbrb::View& view) {
-				Sequence = dbrb::Sequence::fromViews({ view }).value();
-			};
-
-			QuorumKey(const std::pair<dbrb::View, dbrb::Sequence>& pair) {
-				Sequence = dbrb::Sequence::fromViews({ pair.first }).value();
-				bool appended = Sequence.tryAppend(pair.second);
-				if (!appended)
-					CATAPULT_LOG(warning) << "[DBRB] QUORUM: Quorum key was not formed correctly (failed to append " << pair.second << " to " << pair.first << ")";
-			};
-
-			bool operator<(const QuorumKey& other) const {
-				const auto& thisData = Sequence.data();
-				const auto& otherData = other.Sequence.data();
-
-				return std::lexicographical_compare(
-						thisData.begin(), thisData.end(),
-						otherData.begin(), otherData.end(),
-						[](const dbrb::View& a, const dbrb::View& b){
-							return std::lexicographical_compare(
-									a.Data.begin(), a.Data.end(),
-									b.Data.begin(), b.Data.end());
-						});
-			}
-
-			bool operator==(const QuorumKey& other) const {
-				return Sequence == other.Sequence;
-			}
-			bool operator==(const dbrb::Sequence& sequence) const {
-				return Sequence == sequence;
-			}
-			bool operator==(const dbrb::View& view) const {
-				return Sequence == dbrb::Sequence::fromViews({ view }).value();
-			}
-			bool operator==(const std::pair<dbrb::View, dbrb::Sequence>& pair) const {
-				auto sequence = dbrb::Sequence::fromViews({ pair.first }).value();
-				sequence.tryAppend(pair.second);
-				return Sequence == sequence;
-			}
-
-			friend std::ostream& operator<<(std::ostream& out, const QuorumKey& quorumKey) {
-				out << quorumKey.Sequence;
-				return out;
-			}
-		};
-
 	public:
 		/// Maps views to sets of pairs of respective process IDs and payload hashes received from Acknowledged messages.
-		std::map<QuorumKey, std::set<std::pair<ProcessId, Hash256>>> AcknowledgedPayloads;
+		std::map<View, std::set<std::pair<ProcessId, Hash256>>> AcknowledgedPayloads;
 
 		/// Maps views to sets of process IDs ready for delivery.
-		std::map<QuorumKey, std::set<ProcessId>> DeliveredProcesses;
+		std::map<View, std::set<ProcessId>> DeliveredProcesses;
 
 		/// Overloaded methods for updating respective counters.
 		/// Returns whether the quorum has just been collected on this update.
@@ -107,27 +52,6 @@ namespace catapult { namespace dbrb {
 				return false;
 			}
 		};
-
-	private:
-		/// Updates a counter in \a map at \a key.
-		/// Returns whether the quorum for \a referenceView has just been collected on this update.
-		template<typename TKey>
-		bool update(std::map<QuorumKey, std::set<ProcessId>>& map, const TKey& key, const ProcessId& id, size_t quorumSize, const std::string& name) {
-			const auto quorumKey = QuorumKey(key);
-
-			if (!map[quorumKey].insert(id).second) {
-				CATAPULT_LOG(warning) << "[DBRB] " << name << " QUORUM: Not updated (process ID already exists). Quorum status is " << map.at(key).size() << "/" << quorumSize << ".";
-				return false;
-			}
-
-			auto count = map.at(quorumKey).size();
-
-			// Quorum collection is triggered only once, when the counter EXACTLY hits the quorum size.
-			const auto triggered = (count == quorumSize);
-			CATAPULT_LOG(warning) << "[DBRB] " << name << " QUORUM: Quorum status is " << count << "/" << quorumSize << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
-
-			return triggered;
-		};
 	};
 
 	/// Class representing DBRB process.
@@ -150,9 +74,6 @@ namespace catapult { namespace dbrb {
 
 		/// This node.
 		SignedNode m_node;
-
-		/// Quorum manager.
-		QuorumManager m_quorumManager;
 
 		/// State of the process membership.
 		MembershipState m_membershipState = MembershipState::NotJoined;
@@ -191,12 +112,6 @@ namespace catapult { namespace dbrb {
 		};
 
 		std::map<Hash256, BroadcastData> m_broadcastData;
-
-		/// Whether there is any payload allowed to be acknowledged.
-		bool m_acknowledgeAllowed = true;
-
-		/// Whether process is allowed to leave the system.
-		bool m_canLeave = false;
 
 		/// State of the process.
 		ProcessState m_state;

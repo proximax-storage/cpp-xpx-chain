@@ -101,7 +101,7 @@ namespace catapult { namespace dbrb {
 			}
 
 			auto pMessage = std::make_shared<PrepareMessage>(pThis->m_id, payload, pThis->m_currentView);
-			pThis->disseminate(pMessage, pMessage->View.members());
+			pThis->disseminate(pMessage, pMessage->View.Data);
 		});
 	}
 
@@ -285,7 +285,7 @@ namespace catapult { namespace dbrb {
 		// Disseminating Commit message.
 		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Disseminating Commit message.";
 		auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, data.Certificate, data.CertificateView, m_currentView);
-		disseminate(pMessage, m_currentView.members());
+		disseminate(pMessage, m_currentView.Data);
 	}
 
 	void DbrbProcess::onCommitMessageReceived(const CommitMessage& message) {
@@ -322,7 +322,7 @@ namespace catapult { namespace dbrb {
 
 			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Disseminating Commit message.";
 			auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, message.Certificate, message.CertificateView, m_currentView);
-			disseminate(pMessage, m_currentView.members());
+			disseminate(pMessage, m_currentView.Data);
 		}
 
 		// Allow delivery for sender process.
@@ -383,7 +383,7 @@ namespace catapult { namespace dbrb {
 
 
 			std::set<ProcessId> ids;
-			for (const auto& [id, _] : viewData)
+			for (const auto& id : viewData)
 				ids.emplace(id);
 			pThis->m_nodeRetreiver.requestNodes(ids);
 
@@ -391,10 +391,10 @@ namespace catapult { namespace dbrb {
 			CATAPULT_LOG(debug) << "[DBRB] Current view is now set to " << pThis->m_currentView;
 			if (pThis->m_currentView.isMember(pThis->m_id)) {
 				pThis->m_membershipState = MembershipState::Participating;
-			} else if (pThis->m_currentView.hasChange(pThis->m_id, MembershipChange::Leave)) {
+			}
+			if (pThis->m_membershipState == MembershipState::Leaving && !pThis->m_currentView.isMember(pThis->m_id)) {
 				pThis->m_membershipState = MembershipState::Left;
 			}
-
 			if (pThis->m_membershipState == MembershipState::NotJoined) {
 				pThis->m_membershipState = MembershipState::Joining;
 			}
@@ -410,7 +410,6 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::onLeaveAllowed() {
 		CATAPULT_LOG(debug) << "[DBRB] LEAVE: Leave is now allowed.";
-		m_canLeave = true;
 		if (m_disseminateCommit)
 			onLeaveComplete();
 	}

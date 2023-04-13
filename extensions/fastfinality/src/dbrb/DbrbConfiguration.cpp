@@ -30,7 +30,7 @@ namespace catapult { namespace dbrb {
 
 		for (const auto& [key, enabled] : bootstrapProcesses) {
 			if (enabled)
-				config.BootstrapProcesses.emplace(crypto::ParseKey(key), MembershipChange::Join);
+				config.BootstrapProcesses.emplace(crypto::ParseKey(key));
 		}
 
 		utils::VerifyBagSizeLte(bag, 1 + bootstrapProcesses.size());
