@@ -371,7 +371,7 @@
 			"supportedVersions": [1]
 		},
 		{
-			"name": "dbrbViewInstall",
+			"name": "addDbrbProcess",
 			"type": "16748",
 			"supportedVersions": [1]
 		}

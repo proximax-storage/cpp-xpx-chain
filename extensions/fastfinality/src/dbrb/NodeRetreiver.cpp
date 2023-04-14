@@ -8,12 +8,20 @@
 #include "DbrbChainPackets.h"
 #include "catapult/api/RemoteRequestDispatcher.h"
 #include "catapult/net/PacketIoPickerContainer.h"
+#include "catapult/net/PacketWriters.h"
 #include "catapult/utils/TimeSpan.h"
 #include <thread>
 
 namespace catapult { namespace dbrb {
 
 	namespace {
+		constexpr utils::LogLevel MapToLogLevel(net::PeerConnectCode connectCode) {
+			if (connectCode == net::PeerConnectCode::Accepted)
+				return utils::LogLevel::Info;
+			else
+				return utils::LogLevel::Warning;
+		}
+
 		void BroadcastNodes(const std::vector<SignedNode>& nodes, const net::PacketIoPickerContainer& packetIoPickers) {
 			if (nodes.empty())
 				return;
@@ -53,9 +61,10 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	NodeRetreiver::NodeRetreiver(const net::PacketIoPickerContainer& packetIoPickers, model::NetworkIdentifier networkIdentifier)
+	NodeRetreiver::NodeRetreiver(const net::PacketIoPickerContainer& packetIoPickers, model::NetworkIdentifier networkIdentifier, std::weak_ptr<net::PacketWriters> pWriters)
 		: m_packetIoPickers(packetIoPickers)
 		, m_networkIdentifier(networkIdentifier)
+		, m_pWriters(std::move(pWriters))
 	{}
 
 	void NodeRetreiver::requestNodes(const std::set<ProcessId>& requestedIds) {
@@ -81,6 +90,15 @@ namespace catapult { namespace dbrb {
 				std::vector<SignedNode> nodes;
 				try {
 					nodes = dispatcher.dispatch(DbrbPullNodesTraits(m_networkIdentifier), ids).get();
+					for (auto& signedNode : nodes) {
+						auto& node = signedNode.Node;
+						if (node.endpoint().Host.empty() && node.identityKey() == packetIoPair.node().identityKey()) {
+							auto endpoint = ionet::NodeEndpoint{ packetIoPair.node().endpoint().Host, node.endpoint().Port };
+							CATAPULT_LOG(debug) << "[DBRB] auto detected host '" << endpoint.Host << "' for " << node.identityKey();
+							node = ionet::Node(node.identityKey(), endpoint, node.metadata());
+							break;
+						}
+					}
 				} catch (const std::exception& error) {
 					CATAPULT_LOG(error) << error.what();
 				}
@@ -100,13 +118,35 @@ namespace catapult { namespace dbrb {
 
 	void NodeRetreiver::addNodes(const std::vector<SignedNode>& nodes) {
 		std::lock_guard<std::mutex> guard(m_mutex);
-		for (const auto& node : nodes) {
-			const auto& id = node.Node.identityKey();
+		for (const auto& signedNode : nodes) {
+			const auto& id = signedNode.Node.identityKey();
 			auto iter = m_nodes.find(id);
-			if (iter != m_nodes.end() && iter->second.Signature == node.Signature)
+			if (iter != m_nodes.end() && iter->second.Signature == signedNode.Signature && iter->second.Node.endpoint().Host == signedNode.Node.endpoint().Host &&
+				iter->second.Node.endpoint().Port == signedNode.Node.endpoint().Port)
 				continue;
 
-			m_nodes[id] = node;
+			auto pWriters = m_pWriters.lock();
+			if (pWriters) {
+				bool notConnected = true;
+				auto identities = pWriters->identities();
+				for (const auto& identityKey : identities) {
+					if (signedNode.Node.identityKey() == identityKey) {
+						notConnected = false;
+						break;
+					}
+				}
+
+				if (notConnected) {
+					m_nodes[id] = signedNode;
+					CATAPULT_LOG(debug) << "[DBRB] Added node " << signedNode.Node;
+					if (!signedNode.Node.endpoint().Host.empty()) {
+						CATAPULT_LOG(debug) << "[DBRB] Connecting to " << signedNode.Node;
+						pWriters->connect(signedNode.Node, [node = signedNode.Node](const auto& result) {
+							CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[DBRB] connection attempt to " << node << " completed with " << result.Code;
+						});
+					}
+				}
+			}
 		}
 	}
 

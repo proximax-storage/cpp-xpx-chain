@@ -6,13 +6,13 @@
 
 #pragma once
 #include "mongo/src/mappers/MapperInclude.h"
-#include "plugins/txes/dbrb/src/state/ViewSequenceEntry.h"
+#include "plugins/txes/dbrb/src/state/DbrbProcessEntry.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 
 	/// Maps a view sequence \a entry to the corresponding db model value.
-	bsoncxx::document::value ToDbModel(const state::ViewSequenceEntry& entry);
+	bsoncxx::document::value ToDbModel(const state::DbrbProcessEntry& entry);
 
 	/// Maps a database \a document to the corresponding model value.
-	state::ViewSequenceEntry ToViewSequenceEntry(const bsoncxx::document::view& document);
+	state::DbrbProcessEntry ToDbrbProcessEntry(const bsoncxx::document::view& document);
 }}}

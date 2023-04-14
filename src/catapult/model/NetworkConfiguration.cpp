@@ -19,6 +19,7 @@
 **/
 
 #include "NetworkConfiguration.h"
+#include "catapult/crypto/KeyUtils.h"
 #include "catapult/utils/ConfigurationUtils.h"
 
 namespace catapult { namespace model {
@@ -109,6 +110,10 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeBaseTotalImportance);
 		config.CommitteeNotRunningContribution = 0.5;
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeNotRunningContribution);
+		config.DbrbRegistrationDuration = utils::TimeSpan::FromHours(24);
+		TRY_LOAD_CHAIN_PROPERTY(DbrbRegistrationDuration);
+		config.DbrbRegistrationGracePeriod = utils::TimeSpan::FromHours(1);
+		TRY_LOAD_CHAIN_PROPERTY(DbrbRegistrationGracePeriod);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 
@@ -125,6 +130,14 @@ namespace catapult { namespace model {
 			CheckPluginName(pluginName);
 			auto iter = config.Plugins.emplace(pluginName, utils::ExtractSectionAsBag(bag, section.c_str())).first;
 			numPluginProperties += iter->second.size();
+		}
+
+		auto dbrbBootstrapProcesses = bag.getAllOrdered<bool>("dbrb.bootstrap.processes");
+		for (const auto& [key, enabled] : dbrbBootstrapProcesses) {
+			if (enabled) {
+				auto processId = crypto::ParseKey(key);
+				config.DbrbBootstrapProcesses.emplace(processId);
+			}
 		}
 
 		return config;

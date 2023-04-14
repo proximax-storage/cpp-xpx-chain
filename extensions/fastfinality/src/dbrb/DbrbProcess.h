@@ -20,66 +20,12 @@ namespace catapult { namespace dbrb {
 	/// Struct that encapsulates all necessary quorum counters and their update methods.
 	struct QuorumManager {
 
-		struct QuorumKey {
-		public:
-			dbrb::Sequence Sequence;
-
-			QuorumKey(const dbrb::Sequence& sequence) {
-				Sequence = sequence;
-			};
-
-			QuorumKey(const dbrb::View& view) {
-				Sequence = dbrb::Sequence::fromViews({ view }).value();
-			};
-
-			QuorumKey(const std::pair<dbrb::View, dbrb::Sequence>& pair) {
-				Sequence = dbrb::Sequence::fromViews({ pair.first }).value();
-				bool appended = Sequence.tryAppend(pair.second);
-				if (!appended)
-					CATAPULT_LOG(warning) << "[DBRB] QUORUM: Quorum key was not formed correctly (failed to append " << pair.second << " to " << pair.first << ")";
-			};
-
-			bool operator<(const QuorumKey& other) const {
-				const auto& thisData = Sequence.data();
-				const auto& otherData = other.Sequence.data();
-
-				return std::lexicographical_compare(
-						thisData.begin(), thisData.end(),
-						otherData.begin(), otherData.end(),
-						[](const dbrb::View& a, const dbrb::View& b){
-							return std::lexicographical_compare(
-									a.Data.begin(), a.Data.end(),
-									b.Data.begin(), b.Data.end());
-						});
-			}
-
-			bool operator==(const QuorumKey& other) const {
-				return Sequence == other.Sequence;
-			}
-			bool operator==(const dbrb::Sequence& sequence) const {
-				return Sequence == sequence;
-			}
-			bool operator==(const dbrb::View& view) const {
-				return Sequence == dbrb::Sequence::fromViews({ view }).value();
-			}
-			bool operator==(const std::pair<dbrb::View, dbrb::Sequence>& pair) const {
-				auto sequence = dbrb::Sequence::fromViews({ pair.first }).value();
-				sequence.tryAppend(pair.second);
-				return Sequence == sequence;
-			}
-
-			friend std::ostream& operator<<(std::ostream& out, const QuorumKey& quorumKey) {
-				out << quorumKey.Sequence;
-				return out;
-			}
-		};
-
 	public:
 		/// Maps views to sets of pairs of respective process IDs and payload hashes received from Acknowledged messages.
-		std::map<QuorumKey, std::set<std::pair<ProcessId, Hash256>>> AcknowledgedPayloads;
+		std::map<View, std::set<std::pair<ProcessId, Hash256>>> AcknowledgedPayloads;
 
 		/// Maps views to sets of process IDs ready for delivery.
-		std::map<QuorumKey, std::set<ProcessId>> DeliveredProcesses;
+		std::map<View, std::set<ProcessId>> DeliveredProcesses;
 
 		/// Overloaded methods for updating respective counters.
 		/// Returns whether the quorum has just been collected on this update.
@@ -112,7 +58,7 @@ namespace catapult { namespace dbrb {
 		/// Updates a counter in \a map at \a key.
 		/// Returns whether the quorum for \a referenceView has just been collected on this update.
 		template<typename TKey>
-		bool update(std::map<QuorumKey, std::set<ProcessId>>& map, const TKey& key, const ProcessId& id, size_t quorumSize, const std::string& name) {
+		bool update(std::map<View, std::set<ProcessId>>& map, const TKey& key, const ProcessId& id, size_t quorumSize, const std::string& name) {
 			const auto quorumKey = QuorumKey(key);
 
 			if (!map[quorumKey].insert(id).second) {
@@ -137,12 +83,15 @@ namespace catapult { namespace dbrb {
 
 	public:
 		explicit DbrbProcess(
-			std::shared_ptr<net::PacketWriters> pWriters,
+			std::weak_ptr<net::PacketWriters> pWriters,
 			const net::PacketIoPickerContainer& packetIoPickers,
-			ionet::Node thisNode,
+			const ionet::Node& thisNode,
 			const crypto::KeyPair& keyPair,
-			std::shared_ptr<thread::IoThreadPool> pPool,
-			TransactionSender&& transactionSender);
+			const std::shared_ptr<thread::IoThreadPool>& pPool,
+			TransactionSender&& transactionSender,
+			const dbrb::DbrbViewFetcher& dbrbViewFetcher,
+			chain::TimeSupplier timeSupplier,
+			const supplier<Height>& chainHeightSupplier);
 
 	private:
 		/// Process identifier.
@@ -153,16 +102,6 @@ namespace catapult { namespace dbrb {
 
 		/// Quorum manager.
 		QuorumManager m_quorumManager;
-
-		/// State of the process membership.
-		MembershipState m_membershipState = MembershipState::NotJoined;
-
-		/// Whether the process should keep disseminating Commit messages on installing new views.
-		/// Set to true only when leaving the system after an Install message.
-		bool m_disseminateCommit = false;
-
-		/// While set to true, no Prepare, Commit or Reconfig messages are processed.
-		bool m_limitedProcessing = false;
 
 		/// Current view.
 		View m_currentView;
@@ -195,12 +134,6 @@ namespace catapult { namespace dbrb {
 
 		std::map<Hash256, BroadcastData> m_broadcastData;
 
-		/// Whether there is any payload allowed to be acknowledged.
-		bool m_acknowledgeAllowed = true;
-
-		/// Whether process is allowed to leave the system.
-		bool m_canLeave = false;
-
 		/// State of the process.
 		ProcessState m_state;
 
@@ -218,21 +151,24 @@ namespace catapult { namespace dbrb {
 
 		TransactionSender m_transactionSender;
 
-	public:
-		/// Request to leave the system.
-		void leave();
+		const dbrb::DbrbViewFetcher& m_dbrbViewFetcher;
 
+		chain::TimeSupplier m_timeSupplier;
+
+		Timestamp m_lastRegistrationTxTime;
+
+		supplier<Height> m_chainHeightSupplier;
+
+	public:
 		/// Broadcast arbitrary \c payload into the system.
 		void broadcast(const Payload&);
 
 		void processMessage(const Message& message);
 
-		void clearBroadcastData();
-
 	public:
 		void registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers);
 		void setDeliverCallback(const DeliverCallback& callback);
-		void onViewDiscovered(const ViewData&);
+		void updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 		NodeRetreiver& nodeRetreiver();
 
@@ -250,9 +186,5 @@ namespace catapult { namespace dbrb {
 
 		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&);
 		void onDeliverQuorumCollected(const Payload&, const ProcessId&);
-
-		void onLeaveAllowed();
-		void onJoinComplete();
-		void onLeaveComplete();
 	};
 }}

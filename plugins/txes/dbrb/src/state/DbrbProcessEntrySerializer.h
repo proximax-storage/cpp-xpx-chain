@@ -5,17 +5,17 @@
 **/
 
 #pragma once
-#include "MessageHashEntry.h"
+#include "DbrbProcessEntry.h"
 #include "catapult/io/Stream.h"
 
 namespace catapult { namespace state {
 
-	/// Policy for saving and loading message hash entry data.
-	struct MessageHashEntrySerializer {
+	/// Policy for saving and loading DBRB process entry data.
+	struct DbrbProcessEntrySerializer {
 		/// Saves \a entry to \a output.
-		static void Save(const MessageHashEntry& entry, io::OutputStream& output);
+		static void Save(const DbrbProcessEntry& entry, io::OutputStream& output);
 
 		/// Loads a single value from \a input.
-		static MessageHashEntry Load(io::InputStream& input);
+		static DbrbProcessEntry Load(io::InputStream& input);
 	};
 }}

@@ -20,9 +20,6 @@ namespace catapult { namespace dbrb {
 		/// Timeout for the transactions sent by the DBRB process.
 		utils::TimeSpan TransactionTimeout;
 
-		/// Public keys of the bootstrap processes.
-		ViewData BootstrapProcesses;
-
 	private:
 		DbrbConfiguration() = default;
 

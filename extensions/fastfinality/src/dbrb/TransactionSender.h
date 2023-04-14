@@ -18,26 +18,27 @@ namespace catapult { namespace dbrb {
         TransactionSender(
 				const crypto::KeyPair& keyPair,
 				const config::ImmutableConfiguration& immutableConfig,
-				DbrbConfiguration dbrbConfig,
+				const DbrbConfiguration& dbrbConfig,
 				handlers::TransactionRangeHandler transactionRangeHandler)
 			: m_keyPair(keyPair)
 			, m_networkIdentifier(immutableConfig.NetworkIdentifier)
 			, m_generationHash(immutableConfig.GenerationHash)
-			, m_dbrbConfig(std::move(dbrbConfig))
+			, m_transactionTimeout(dbrbConfig.TransactionTimeout.millis())
 			, m_transactionRangeHandler(std::move(transactionRangeHandler))
 		{}
 
     public:
-        //Hash256 sendInstallMessageTransaction(InstallMessage& message);
+        Hash256 sendAddDbrbProcessTransaction();
+		Timestamp transactionTimeout();
 
 	private:
-        void send(std::shared_ptr<model::Transaction> pTransaction);
+        void send(const std::shared_ptr<model::Transaction>& pTransaction);
 
     private:
 		const crypto::KeyPair& m_keyPair;
         model::NetworkIdentifier m_networkIdentifier;
         GenerationHash m_generationHash;
-		DbrbConfiguration m_dbrbConfig;
+		Timestamp m_transactionTimeout;
         handlers::TransactionRangeHandler m_transactionRangeHandler;
     };
 }}

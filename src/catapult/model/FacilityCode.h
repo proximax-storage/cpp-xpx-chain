@@ -96,6 +96,6 @@ namespace catapult { namespace model {
 		/// DBRB facility code.
 		Dbrb = 0x6C,
 		/// View sequence facility code.
-		ViewSequence = 0x6D,
+		DbrbView = 0x6D,
 	};
 }}

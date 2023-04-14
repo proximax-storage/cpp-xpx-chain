@@ -10,13 +10,16 @@
 #include <optional>
 #include <mutex>
 
-namespace catapult { namespace net { class PacketIoPickerContainer; }}
+namespace catapult { namespace net {
+	class PacketIoPickerContainer;
+	class PacketWriters;
+}}
 
 namespace catapult { namespace dbrb {
 
 	class NodeRetreiver {
 	public:
-		explicit NodeRetreiver(const net::PacketIoPickerContainer& packetIoPickers, model::NetworkIdentifier networkIdentifier);
+		explicit NodeRetreiver(const net::PacketIoPickerContainer& packetIoPickers, model::NetworkIdentifier networkIdentifier, std::weak_ptr<net::PacketWriters> pWriters);
 
 	public:
 		void requestNodes(const std::set<ProcessId>& requestedIds);
@@ -29,5 +32,6 @@ namespace catapult { namespace dbrb {
 		std::map<ProcessId, SignedNode> m_nodes;
 		model::NetworkIdentifier m_networkIdentifier;
 		mutable std::mutex m_mutex;
+		std::weak_ptr<net::PacketWriters> m_pWriters;
 	};
 }}

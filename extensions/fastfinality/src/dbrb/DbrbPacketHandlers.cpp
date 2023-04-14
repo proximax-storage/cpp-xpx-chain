@@ -15,12 +15,20 @@ namespace catapult { namespace dbrb {
 			const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
 			model::NetworkIdentifier networkIdentifier,
 			ionet::ServerPacketHandlers& handlers) {
-		handlers.registerHandler(ionet::PacketType::Dbrb_Push_Nodes, [pDbrbProcessWeak, networkIdentifier](const auto& packet, auto&) {
+		handlers.registerHandler(ionet::PacketType::Dbrb_Push_Nodes, [pDbrbProcessWeak, networkIdentifier](const auto& packet, auto& context) {
 			auto pDbrbProcessShared = pDbrbProcessWeak.lock();
 			if (!pDbrbProcessShared)
 				return;
 
 			std::vector<SignedNode> nodes = ReadNodesFromPacket<DbrbPushNodesPacket>(packet, networkIdentifier);
+			for (auto& node : nodes) {
+				if (node.Node.endpoint().Host.empty() && node.Node.identityKey() == context.key()) {
+					auto endpoint = ionet::NodeEndpoint{ context.host(), node.Node.endpoint().Port };
+					CATAPULT_LOG(debug) << "[DBRB] auto detected host '" << endpoint.Host << "' for " << node.Node.identityKey();
+					node.Node = ionet::Node(node.Node.identityKey(), endpoint, node.Node.metadata());
+					break;
+				}
+			}
 			pDbrbProcessShared->nodeRetreiver().addNodes(nodes);
 		});
 	}

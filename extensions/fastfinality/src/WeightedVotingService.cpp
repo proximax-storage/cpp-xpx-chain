@@ -114,13 +114,17 @@ namespace catapult { namespace fastfinality {
 
 				auto connectionSettings = extensions::GetConnectionSettings(config);
 				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
-				locator.registerService(Writers_Service_Name, pWriters);
+				locator.registerRootedService(Writers_Service_Name, pWriters);
 
 
 				auto pFsmShared = pServiceGroup->pushService([pWriters, &config, &keyPair = locator.keyPair(), &state, &dbrbConfig = m_dbrbConfig](const std::shared_ptr<thread::IoThreadPool>& pPool) {
 					dbrb::TransactionSender transactionSender(keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local));
-					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, state.packetIoPickers(), config::ToLocalDbrbNode(config), keyPair, pPool, std::move(transactionSender));
-					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess, state.pluginManager().dbrbViewFetcher());
+					auto chainHeightSupplier = [&storage = state.storage()]() {
+						return storage.view().chainHeight();
+					};
+					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, state.packetIoPickers(), config::ToLocalDbrbNode(config),
+						keyPair, pPool, std::move(transactionSender), state.pluginManager().dbrbViewFetcher(), state.timeSupplier(), chainHeightSupplier);
+					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess);
 				});
 
 				const auto& pluginManager = state.pluginManager();
@@ -190,8 +194,7 @@ namespace catapult { namespace fastfinality {
 					pConfigHolder,
 					lastBlockElementSupplier,
 					importanceGetter,
-					pluginManager.getCommitteeManager(),
-					m_dbrbConfig);
+					pluginManager.getCommitteeManager());
 				actions.ResetLocalChain = CreateDefaultResetLocalChainAction();
 				actions.DownloadBlocks = CreateDefaultDownloadBlocksAction(
 					pFsmShared,
@@ -207,9 +210,7 @@ namespace catapult { namespace fastfinality {
 				actions.SelectCommittee = CreateDefaultSelectCommitteeAction(
 					pFsmShared,
 					pluginManager.getCommitteeManager(),
-					pConfigHolder,
-					timeSupplier,
-					m_dbrbConfig);
+					pConfigHolder);
 				actions.ProposeBlock = CreateDefaultProposeBlockAction(
 					pFsmShared,
 					state.cache(),

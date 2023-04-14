@@ -12,8 +12,8 @@ namespace catapult { namespace model {
 
 #endif
 
-	/// Install message transaction.
-	DEFINE_TRANSACTION_TYPE(Dbrb, InstallMessage, 0x1);
+	/// Add DBRB process transaction.
+	DEFINE_TRANSACTION_TYPE(Dbrb, AddDbrbProcess, 0x1);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 	}}

@@ -1,6 +1,6 @@
 (function prepareDbrbCollections() {
-    db.createCollection('viewSequences');
-    db.viewSequences.createIndex({ 'viewSequence.hash': 1 }, { unique: true });
+    db.createCollection('dbrbProcesses');
+    db.dbrbProcesses.createIndex({ 'dbrbProcess.processId': 1 }, { unique: true });
 
-    db.viewSequences.getIndexes();
+    db.dbrbProcesses.getIndexes();
 })();

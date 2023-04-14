@@ -19,5 +19,5 @@ namespace catapult { namespace validators {
 		/// - replaced view from the notification equals to the most recent view stored in the cache
 		/// - there are enough signatures to form a quorum
 		/// - all signatures are valid
-		DECLARE_STATEFUL_VALIDATOR(InstallMessage, model::InstallMessageNotification<1>)();
+		DECLARE_STATEFUL_VALIDATOR(AddDbrbProcess, model::AddDbrbProcessNotification<1>)();
 }}

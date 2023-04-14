@@ -5,16 +5,16 @@
 **/
 
 #pragma once
-#include "ViewSequenceCacheTypes.h"
-#include "src/state/ViewSequenceEntrySerializer.h"
+#include "DbrbViewCacheTypes.h"
+#include "src/state/DbrbProcessEntrySerializer.h"
 #include "catapult/cache/CacheStorageInclude.h"
 
 namespace catapult { namespace cache {
 
-	/// Policy for saving and loading view sequence cache data.
-	struct ViewSequenceCacheStorage
-			: public CacheStorageForBasicInsertRemoveCache<ViewSequenceCacheDescriptor>
-			, public state::ViewSequenceEntrySerializer {
+	/// Policy for saving and loading DBRB view cache data.
+	struct DbrbViewCacheStorage
+			: public CacheStorageForBasicInsertRemoveCache<DbrbViewCacheDescriptor>
+			, public state::DbrbProcessEntrySerializer {
 		/// Loads \a entry into \a cacheDelta.
 		static void LoadInto(const ValueType& entry, DestinationType& cacheDelta);
 	};

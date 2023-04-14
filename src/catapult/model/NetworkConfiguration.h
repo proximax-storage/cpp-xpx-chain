@@ -21,6 +21,7 @@
 #pragma once
 #include "NetworkInfo.h"
 #include "PluginConfiguration.h"
+#include "catapult/dbrb/DbrbDefinitions.h"
 #include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/FileSize.h"
 #include "catapult/utils/MemoryUtils.h"
@@ -144,6 +145,15 @@ namespace catapult { namespace model {
 
 		/// Weight of the node in synchronization state during the approval stage of node synchronization.
 		double CommitteeNotRunningContribution;
+
+		/// Time period after registration when a network node is allowed to be a DBRB process.
+		utils::TimeSpan DbrbRegistrationDuration;
+
+		/// Grace period during which time a network node is expected to prolong its registration as a DBRB process.
+		utils::TimeSpan DbrbRegistrationGracePeriod;
+
+		/// Public keys of the DBRB bootstrap processes.
+		dbrb::ViewData DbrbBootstrapProcesses;
 
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;

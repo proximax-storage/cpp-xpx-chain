@@ -5,12 +5,12 @@
 **/
 
 #include "DbrbPlugin.h"
-#include "src/cache/ViewSequenceCache.h"
-#include "src/cache/ViewSequenceCacheStorage.h"
-#include "src/model/InstallMessageTransaction.h"
+#include "src/cache/DbrbViewCache.h"
+#include "src/cache/DbrbViewCacheSubCachePlugin.h"
+#include "src/cache/DbrbViewFetcherImpl.h"
+#include "src/model/AddDbrbProcessTransaction.h"
 #include "src/observers/Observers.h"
-#include "src/plugins/InstallMessageTransactionPlugin.h"
-#include "src/state/DbrbViewFetcherImpl.h"
+#include "src/plugins/AddDbrbProcessTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/CacheHandlers.h"
 
@@ -23,33 +23,34 @@ namespace catapult { namespace plugins {
 
 		const auto& pConfigHolder = manager.configHolder();
 		const auto& immutableConfig = manager.immutableConfig();
-		manager.addTransactionSupport(CreateInstallMessageTransactionPlugin());
+		manager.addTransactionSupport(CreateAddDbrbProcessTransactionPlugin());
 
-		manager.addCacheSupport<cache::ViewSequenceCacheStorage>(
-			std::make_unique<cache::ViewSequenceCache>(manager.cacheConfig(cache::ViewSequenceCache::Name), pConfigHolder));
+		auto pDbrbViewFetcher = std::make_shared<cache::DbrbViewFetcherImpl>();
+		manager.addCacheSupport(std::make_unique<cache::DbrbViewCacheSubCachePlugin>(manager.cacheConfig(cache::DbrbViewCache::Name), pConfigHolder, pDbrbViewFetcher));
 
-		using ViewSequenceCacheHandlersService = CacheHandlers<cache::ViewSequenceCacheDescriptor>;
-		ViewSequenceCacheHandlersService::Register<model::FacilityCode::ViewSequence>(manager);
+		using DbrbViewCacheHandlersService = CacheHandlers<cache::DbrbViewCacheDescriptor>;
+		DbrbViewCacheHandlersService::Register<model::FacilityCode::DbrbView>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("VIEW SEQ C"), [&cache]() {
-				return cache.sub<cache::ViewSequenceCache>().createView(cache.height())->size();
+			counters.emplace_back(utils::DiagnosticCounterId("DBRB VIEW C"), [&cache]() {
+				return cache.sub<cache::DbrbViewCache>().createView(cache.height())->size();
 			});
 		});
 
-		manager.setDbrbViewFetcher(std::make_shared<state::DbrbViewFetcherImpl>());
+		manager.setDbrbViewFetcher(pDbrbViewFetcher);
 
 		auto pTransactionFeeCalculator = manager.transactionFeeCalculator();
-		pTransactionFeeCalculator->addUnlimitedFeeTransaction(model::InstallMessageTransaction::Entity_Type, model::InstallMessageTransaction::Current_Version);
+		pTransactionFeeCalculator->addUnlimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, model::AddDbrbProcessTransaction::Current_Version);
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 		  	builder
-				.add(validators::CreateInstallMessageValidator());
+				.add(validators::CreateAddDbrbProcessValidator());
 		});
 
-		manager.addObserverHook([](auto& builder) {
+		manager.addObserverHook([pDbrbViewFetcher](auto& builder) {
 			builder
-				.add(observers::CreateInstallMessageObserver());
+				.add(observers::CreateAddDbrbProcessObserver())
+				.add(observers::CreateDbrbProcessPruningObserver(pDbrbViewFetcher));
 		});
 	}
 }}

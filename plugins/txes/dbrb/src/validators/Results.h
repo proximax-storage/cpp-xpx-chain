@@ -14,20 +14,8 @@ namespace catapult { namespace validators {
 /// Defines a DBRB validation result with \a DESCRIPTION and \a CODE.
 #define DEFINE_DBRB_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, Dbrb, DESCRIPTION, CODE, None)
 
-		/// View sequence is already in the cache.
-		DEFINE_DBRB_RESULT(View_Sequence_Already_Exists, 1);
-
-		/// Supplied sequence is too short.
-		DEFINE_DBRB_RESULT(View_Sequence_Size_Insufficient, 2);
-
-		/// Supplied replaced view is not the same as the most recent view stored in the cache.
-		DEFINE_DBRB_RESULT(Invalid_Replaced_View, 3);
-
-		/// There are not enough signatures to form a quorum.
-		DEFINE_DBRB_RESULT(Signatures_Count_Insufficient, 4);
-
-		/// Supplied signature is invalid.
-		DEFINE_DBRB_RESULT(Invalid_Signature, 5);
+		/// Registration attempt is too early, DBRB process is not yet expired.
+		DEFINE_DBRB_RESULT(Process_Not_Expired, 1);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 	}}

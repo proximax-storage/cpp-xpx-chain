@@ -45,7 +45,7 @@ namespace catapult { namespace dbrb {
 			std::memcpy(signature.data(), pBuffer, Signature_Size);
 			pBuffer += Signature_Size;
 
-			auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(pNetworkNode), pNetworkNode->Size } });
+			auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(pNetworkNode) + sizeof(uint32_t), sizeof(ionet::NetworkNode) - sizeof(uint32_t) - 2 * sizeof(uint8_t) } });
 			if (!crypto::Verify(pNetworkNode->IdentityKey, hash, signature)) {
 				CATAPULT_LOG(warning) << "invalid signature of node with public key" << pNetworkNode->IdentityKey;
 				continue;

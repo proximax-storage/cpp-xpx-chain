@@ -44,8 +44,7 @@ namespace catapult { namespace fastfinality {
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const model::BlockElementSupplier& lastBlockElementSupplier,
 		const std::function<uint64_t (const Key&)>& importanceGetter,
-		const chain::CommitteeManager& committeeManager,
-		const dbrb::DbrbConfiguration& dbrbConfig);
+		const chain::CommitteeManager& committeeManager);
 
 	action CreateDefaultResetLocalChainAction();
 
@@ -65,9 +64,7 @@ namespace catapult { namespace fastfinality {
 	action CreateDefaultSelectCommitteeAction(
 		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		chain::CommitteeManager& committeeManager,
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-		const chain::TimeSupplier& timeSupplier,
-		const dbrb::DbrbConfiguration& dbrbConfig);
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	action CreateDefaultProposeBlockAction(
 		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,

@@ -12,7 +12,5 @@ namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-		/// Creates an Install message transaction plugin.
-		PLUGIN_API
-		std::unique_ptr<model::TransactionPlugin> CreateInstallMessageTransactionPlugin();
+		PLUGIN_API std::unique_ptr<model::TransactionPlugin> CreateAddDbrbProcessTransactionPlugin();
 }}

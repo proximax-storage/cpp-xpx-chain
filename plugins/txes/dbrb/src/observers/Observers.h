@@ -8,12 +8,14 @@
 #include "catapult/observers/ObserverTypes.h"
 #include "src/config/DbrbConfiguration.h"
 #include "src/model/DbrbNotifications.h"
-#include "src/cache/ViewSequenceCache.h"
 
-namespace catapult { namespace state { class StorageState; }}
+namespace catapult { namespace cache { class DbrbViewFetcherImpl; }}
 
 namespace catapult { namespace observers {
 
-		/// Observes changes triggered by Install message notifications.
-		DECLARE_OBSERVER(InstallMessage, model::InstallMessageNotification<1>)();
+		/// Observes changes triggered by add DBRB process notifications.
+		DECLARE_OBSERVER(AddDbrbProcess, model::AddDbrbProcessNotification<1>)();
+
+		/// Observes changes triggered by block notifications.
+		DECLARE_OBSERVER(DbrbProcessPruning, model::BlockNotification<1>)(const std::shared_ptr<cache::DbrbViewFetcherImpl>& pDbrbViewFetcher);
 }}

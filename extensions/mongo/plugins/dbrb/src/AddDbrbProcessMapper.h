@@ -5,10 +5,10 @@
 **/
 
 #pragma once
-#include "mongo/src/CacheStorageInclude.h"
+#include "mongo/src/MongoTransactionPlugin.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 
-	/// Creates a mongo view sequence cache storage around \a database, \a bulkWriter and \a networkIdentifier.
-	DECLARE_MONGO_CACHE_STORAGE(ViewSequence);
+	/// Creates a mongo Install message transaction plugin.
+	PLUGIN_API std::unique_ptr<MongoTransactionPlugin> CreateAddDbrbProcessTransactionMongoPlugin();
 }}}

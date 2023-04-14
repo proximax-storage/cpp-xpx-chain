@@ -17,12 +17,12 @@ namespace catapult { namespace dbrb {
 
 	class MessageSender : public std::enable_shared_from_this<MessageSender> {
 	public:
-		explicit MessageSender(std::shared_ptr<net::PacketWriters> pWriters, NodeRetreiver& nodeRetreiver);
+		explicit MessageSender(std::weak_ptr<net::PacketWriters> pWriters, NodeRetreiver& nodeRetreiver);
 
 		void send(const std::shared_ptr<MessagePacket>& pPacket, const std::set<ProcessId>& recipients);
 
 	private:
-		std::shared_ptr<net::PacketWriters> m_pWriters;
+		std::weak_ptr<net::PacketWriters> m_pWriters;
 		NodeRetreiver& m_nodeRetreiver;
 		std::map<ProcessId, std::shared_ptr<ionet::NodePacketIoPair>> m_packetIoPairs;
 	};

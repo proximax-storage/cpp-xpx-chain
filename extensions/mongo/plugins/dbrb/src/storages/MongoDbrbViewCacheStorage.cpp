@@ -4,19 +4,19 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "MongoViewSequenceCacheStorage.h"
-#include "src/mappers/ViewSequenceEntryMapper.h"
+#include "MongoDbrbViewCacheStorage.h"
+#include "src/mappers/DbrbProcessEntryMapper.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
-#include "plugins/txes/dbrb/src/cache/ViewSequenceCache.h"
+#include "plugins/txes/dbrb/src/cache/DbrbViewCache.h"
 
 using namespace bsoncxx::builder::stream;
 
 namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
-		struct ViewSequenceCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::ViewSequenceCacheDescriptor> {
-			static constexpr const char* Collection_Name = "viewSequences";
-			static constexpr const char* Id_Property_Name = "viewSequence.hash";
+		struct DbrbViewCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::DbrbViewCacheDescriptor> {
+			static constexpr const char* Collection_Name = "dbrbProcesses";
+			static constexpr const char* Id_Property_Name = "dbrbProcess.processId";
 
 			static auto MapToMongoId(const KeyType& key) {
 				return mappers::ToBinary(key);
@@ -27,10 +27,10 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			static void Insert(CacheDeltaType& cache, const bsoncxx::document::view& document) {
-				cache.insert(ToViewSequenceEntry(document));
+				cache.insert(ToDbrbProcessEntry(document));
 			}
 		};
 	}
 
-	DEFINE_MONGO_FLAT_CACHE_STORAGE(ViewSequence, ViewSequenceCacheTraits)
+	DEFINE_MONGO_FLAT_CACHE_STORAGE(DbrbView, DbrbViewCacheTraits)
 }}}

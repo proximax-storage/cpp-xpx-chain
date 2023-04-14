@@ -20,6 +20,7 @@ namespace catapult { namespace dbrb {
 		}
 
 		net::PeerConnectResult Connect(net::PacketWriters& writers, const ionet::Node& node) {
+			CATAPULT_LOG(debug) << "[DBRB] Connecting to " << node;
 			auto pPromise = std::make_shared<std::promise<net::PeerConnectResult>>();
 			writers.connect(node, [pPromise, node](const net::PeerConnectResult& result) {
 				CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[DBRB] connection attempt to " << node << " completed with " << result.Code;
@@ -46,7 +47,7 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	MessageSender::MessageSender(std::shared_ptr<net::PacketWriters> pWriters, NodeRetreiver& nodeRetreiver)
+	MessageSender::MessageSender(std::weak_ptr<net::PacketWriters> pWriters, NodeRetreiver& nodeRetreiver)
 		: m_pWriters(std::move(pWriters))
 		, m_nodeRetreiver(nodeRetreiver)
 	{}
@@ -62,12 +63,17 @@ namespace catapult { namespace dbrb {
 				auto iter = m_packetIoPairs.find(node.identityKey());
 				if (iter != m_packetIoPairs.end()) {
 					pPacketIoPair = iter->second;
-				} else {
-					auto nodePacketIoPair = GetNodePacketIoPair(*m_pWriters, node);
-					if (nodePacketIoPair.io()) {
-						pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(nodePacketIoPair);
-						m_packetIoPairs.emplace(node.identityKey(), pPacketIoPair);
+				} else if (!node.endpoint().Host.empty()) {
+					auto pWriters = m_pWriters.lock();
+					if (pWriters) {
+						auto nodePacketIoPair = GetNodePacketIoPair(*pWriters, node);
+						if (nodePacketIoPair.io()) {
+							pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(nodePacketIoPair);
+							m_packetIoPairs.emplace(node.identityKey(), pPacketIoPair);
+						}
 					}
+				} else {
+					CATAPULT_LOG(debug) << "[DBRB] host is unknown, skipped sending " << *pPacket << " to " << node;
 				}
 
 				if (pPacketIoPair) {

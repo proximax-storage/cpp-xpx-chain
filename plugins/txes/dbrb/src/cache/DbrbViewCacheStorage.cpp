@@ -4,12 +4,12 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "ViewSequenceCacheStorage.h"
-#include "ViewSequenceCacheDelta.h"
+#include "DbrbViewCacheStorage.h"
+#include "DbrbViewCacheDelta.h"
 
 namespace catapult { namespace cache {
 
-	void ViewSequenceCacheStorage::LoadInto(const ValueType& entry, DestinationType& cacheDelta) {
+	void DbrbViewCacheStorage::LoadInto(const ValueType& entry, DestinationType& cacheDelta) {
 		cacheDelta.insert(entry);
 	}
 }}

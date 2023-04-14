@@ -34,13 +34,6 @@ namespace catapult { namespace fastfinality {
 		constexpr Hash256 StandardHash = {{1u}};
 		constexpr Hash256 NonStandardHash = {{2u}};
 
-		class MockDbrbViewFetcher : public dbrb::DbrbViewFetcher {
-		public:
-			dbrb::ViewData getLatestView() override {
-				return {};
-			}
-		};
-
 		class WeightedVotingSyncActionTestRunner : public std::enable_shared_from_this<WeightedVotingSyncActionTestRunner> {
 		public:
 			WeightedVotingSyncActionTestRunner(
@@ -50,7 +43,7 @@ namespace catapult { namespace fastfinality {
 					std::map<Key, uint64_t> importances,
 					uint8_t expectedAction)
 				: m_pPool(test::CreateStartedIoThreadPool())
-				, m_pFsm(std::make_shared<fastfinality::WeightedVotingFsm>(m_pPool, pConfigHolder->Config(), nullptr, m_dbrbViewFetcher))
+				, m_pFsm(std::make_shared<fastfinality::WeightedVotingFsm>(m_pPool, pConfigHolder->Config(), nullptr))
 				, m_states(std::move(states))
 				, m_pConfigHolder(pConfigHolder)
 				, m_pLastBlockElement(pLastBlockElement)
@@ -79,8 +72,7 @@ namespace catapult { namespace fastfinality {
 							pThis->m_pConfigHolder,
 								[pThis] { return pThis->m_pLastBlockElement; },
 								[pThis](const Key& key) -> uint64_t { return pThis->m_importances[key]; },
-							pThis->m_committeeManager,
-							dbrb::DbrbConfiguration::Uninitialized());
+							pThis->m_committeeManager);
 
 						defaultCheckLocalChainAction();
 					} else {
@@ -101,7 +93,6 @@ namespace catapult { namespace fastfinality {
 		private:
 			std::shared_ptr<thread::IoThreadPool> m_pPool;
 
-			MockDbrbViewFetcher m_dbrbViewFetcher;
 			std::shared_ptr<WeightedVotingFsm> m_pFsm;
 			std::vector<fastfinality::RemoteNodeState> m_states;
 			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;

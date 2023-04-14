@@ -4,17 +4,17 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "InstallMessageMapper.h"
+#include "AddDbrbProcessMapper.h"
 #include "mongo/src/MongoPluginManager.h"
-#include "storages/MongoViewSequenceCacheStorage.h"
+#include "storages/MongoDbrbViewCacheStorage.h"
 
 extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	// transaction support
-	manager.addTransactionSupport(catapult::mongo::plugins::CreateInstallMessageTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateAddDbrbProcessTransactionMongoPlugin());
 
 	// cache storage support
-	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoViewSequenceCacheStorage(
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDbrbViewCacheStorage(
 			manager.mongoContext(),
 			manager.configHolder()
 	));

@@ -10,34 +10,24 @@
 
 namespace catapult { namespace model {
 
-		/// Defines an Install message notification type.
-		DEFINE_NOTIFICATION_TYPE(All, Dbrb, Install_Message_v1, 0x0001);
+	DEFINE_NOTIFICATION_TYPE(All, Dbrb, AddDbrbProcess_v1, 0x0001);
 
-		/// Notification of an Install message.
-		template<VersionType version>
-		struct InstallMessageNotification;
+	template<VersionType version>
+	struct AddDbrbProcessNotification;
 
-		template<>
-		struct InstallMessageNotification<1> : public Notification {
-		public:
-			/// Matching notification type.
-			static constexpr auto Notification_Type = Dbrb_Install_Message_v1_Notification;
+	template<>
+	struct AddDbrbProcessNotification<1> : public Notification {
+	public:
+		static constexpr auto Notification_Type = Dbrb_AddDbrbProcess_v1_Notification;
 
-		public:
-			explicit InstallMessageNotification(const Hash256& messageHash, const uint8_t* pPayload)
-				: Notification(Notification_Type, sizeof(InstallMessageNotification<1>))
-				, MessageHash(messageHash)
-				, Sequence(dbrb::Read<dbrb::Sequence>(pPayload))
-				, Certificate(dbrb::Read<dbrb::CertificateType>(pPayload)) {}
+	public:
+		explicit AddDbrbProcessNotification(const dbrb::ProcessId& processId)
+			: Notification(Notification_Type, sizeof(AddDbrbProcessNotification<1>))
+			, ProcessId(processId)
+		{}
 
-		public:
-			/// Install message hash.
-			Hash256 MessageHash;
-
-			/// Converged sequence.
-			dbrb::Sequence Sequence;
-
-						/// Install message certificate.
-			dbrb::CertificateType Certificate;
-		};
+	public:
+		/// The ID of the process to add.
+		dbrb::ProcessId ProcessId;
+	};
 }}

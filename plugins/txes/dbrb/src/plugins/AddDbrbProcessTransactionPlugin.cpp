@@ -4,9 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "InstallMessageTransactionPlugin.h"
+#include "AddDbrbProcessTransactionPlugin.h"
 #include "src/model/DbrbNotifications.h"
-#include "src/model/InstallMessageTransaction.h"
+#include "src/model/AddDbrbProcessTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 
@@ -19,15 +19,15 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1: {
-				sub.notify(InstallMessageNotification<1>(transaction.MessageHash, transaction.PayloadPtr()));
+				sub.notify(AddDbrbProcessNotification<1>(transaction.Signer));
 				break;
 			}
 
 			default:
-				CATAPULT_LOG(debug) << "invalid version of InstallMessageTransaction: " << transaction.EntityVersion();
+				CATAPULT_LOG(debug) << "invalid version of AddDbrbProcessTransaction: " << transaction.EntityVersion();
 			}
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(InstallMessage, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(AddDbrbProcess, Default, Publish)
 }}

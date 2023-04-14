@@ -7,8 +7,8 @@
 #pragma once
 #include <random>
 #include "catapult/model/EntityBody.h"
-#include "src/cache/ViewSequenceCache.h"
-#include "src/cache/ViewSequenceCacheStorage.h"
+#include "src/cache/DbrbViewCache.h"
+#include "src/cache/DbrbViewCacheStorage.h"
 #include "src/model/DbrbEntityType.h"
 #include "src/model/DbrbNotifications.h"
 #include "tests/test/cache/CacheTestUtils.h"
@@ -21,23 +21,11 @@ namespace catapult { namespace test {
 	/// Generates random View with given \a length.
 	dbrb::View GenerateRandomView(const size_t& length = 4u);
 
-	/// Generates random Sequence with given \a initialView, \a length and \a maxStep.
-	dbrb::Sequence GenerateRandomSequence(
-		const dbrb::View& initialView = {},
-		const size_t& length = 3u,
-		const uint8_t& maxStep = 2u
-	);
-
     /// Creates test view sequence entry.
-    state::ViewSequenceEntry CreateViewSequenceEntry(
-		const Hash256& hash = test::GenerateRandomByteArray<Hash256>(),
-		const dbrb::Sequence& sequence = GenerateRandomSequence()
+    state::DbrbProcessEntry CreateDbrbProcessEntry(
+		const dbrb::ProcessId& processId = test::GenerateRandomByteArray<dbrb::ProcessId>(),
+		const Timestamp& expirationTime = test::GenerateRandomValue<Timestamp>()
     );
-
-	/// Creates test message hash entry.
-	state::MessageHashEntry CreateMessageHashEntry(
-		const Hash256& hash = test::GenerateRandomByteArray<Hash256>()
-	);
 
     /// Creates a transaction.
     template<typename TTransaction>
@@ -54,9 +42,7 @@ namespace catapult { namespace test {
 
     /// Creates an Install message transaction.
     template<typename TTransaction>
-    model::UniqueEntityPtr<TTransaction> CreateInstallMessageTransaction() {
-        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_InstallMessage);
-		pTransaction->MessageHash = test::GenerateRandomByteArray<Hash256>();
-        return pTransaction;
+    model::UniqueEntityPtr<TTransaction> CreateAddDbrbProcessTransaction() {
+        return CreateTransaction<TTransaction>(model::Entity_Type_AddDbrbProcess);
     }
 }}
