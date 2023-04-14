@@ -49,7 +49,7 @@ namespace catapult { namespace dbrb {
 
 	/// View of the system.
 	struct View {
-		/// Set of processes' membership changes in the system.
+		/// Set of IDs of current members of the view.
 		ViewData Data;
 
 		/// Check if \a processId is a member of this view.

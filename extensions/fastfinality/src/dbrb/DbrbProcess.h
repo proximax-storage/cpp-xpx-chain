@@ -19,7 +19,6 @@ namespace catapult { namespace dbrb {
 
 	/// Struct that encapsulates all necessary quorum counters and their update methods.
 	struct QuorumManager {
-
 	public:
 		/// Maps views to sets of pairs of respective process IDs and payload hashes received from Acknowledged messages.
 		std::map<View, std::set<std::pair<ProcessId, Hash256>>> AcknowledgedPayloads;
@@ -52,27 +51,6 @@ namespace catapult { namespace dbrb {
 			} else {
 				return false;
 			}
-		};
-
-	private:
-		/// Updates a counter in \a map at \a key.
-		/// Returns whether the quorum for \a referenceView has just been collected on this update.
-		template<typename TKey>
-		bool update(std::map<View, std::set<ProcessId>>& map, const TKey& key, const ProcessId& id, size_t quorumSize, const std::string& name) {
-			const auto quorumKey = QuorumKey(key);
-
-			if (!map[quorumKey].insert(id).second) {
-				CATAPULT_LOG(warning) << "[DBRB] " << name << " QUORUM: Not updated (process ID already exists). Quorum status is " << map.at(key).size() << "/" << quorumSize << ".";
-				return false;
-			}
-
-			auto count = map.at(quorumKey).size();
-
-			// Quorum collection is triggered only once, when the counter EXACTLY hits the quorum size.
-			const auto triggered = (count == quorumSize);
-			CATAPULT_LOG(warning) << "[DBRB] " << name << " QUORUM: Quorum status is " << count << "/" << quorumSize << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
-
-			return triggered;
 		};
 	};
 

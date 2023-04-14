@@ -24,9 +24,8 @@ namespace catapult { namespace dbrb {
 		auto size = utils::checked_cast<size_t, uint32_t>(view.Data.size());
 		*reinterpret_cast<uint32_t*>(pBuffer) = size;
 		pBuffer += sizeof(uint32_t);
-		for (const auto& id : view.Data) {
+		for (const auto& id : view.Data)
 			Write(pBuffer, id);
-		}
 	}
 
 	void Write(uint8_t*& pBuffer, const Payload& payload) {
