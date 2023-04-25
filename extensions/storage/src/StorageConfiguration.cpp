@@ -38,7 +38,7 @@ namespace catapult { namespace storage {
 
 #undef LOAD_DB_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 12);
+		utils::VerifyBagSizeLte(bag, 14);
 		return config;
 	}
 
