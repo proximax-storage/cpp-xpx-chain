@@ -88,6 +88,7 @@ RUN cd /catapult \
     catapult.mongo.plugins.property \
     catapult.mongo.plugins.service \
     catapult.mongo.plugins.storage \
+    catapult.mongo.plugins.streaming \
     catapult.mongo.plugins.supercontract \
     catapult.mongo.plugins.transfer \
     catapult.mongo.plugins.upgrade \
