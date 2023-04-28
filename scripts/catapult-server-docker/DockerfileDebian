@@ -118,7 +118,7 @@ RUN cd /catapult \
     catapult.plugins.streaming \
     catapult.plugins.supercontract \
     catapult.plugins.transfer \
-    catapult.plugins.upgrade \    
+    catapult.plugins.upgrade \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \
@@ -139,6 +139,18 @@ RUN cd /catapult \
     extension.transactionsink \
     extension.unbondedpruning \
     extension.zeromq \
+    torrent-sirius \
+    replicator-service \
+    api \
+    connection \
+    crypto \
+    drive \
+    sdk_external \
+    ionet \
+    model \
+    net \
+    nodediscovery \
+    utils \
     -j 4
 
 RUN cd /catapult/_build && make \
