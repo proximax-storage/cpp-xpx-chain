@@ -169,6 +169,28 @@ namespace catapult { namespace validators {
     			});
     }
 
+    TEST(TEST_CLASS, FailureWhenInvalidUploadSize) {
+    	// Arrange:
+    	Key driveKey = test::GenerateRandomByteArray<Key>();
+    	Key owner = test::GenerateRandomByteArray<Key>();
+    	Hash256 downloadDataCdi = test::GenerateRandomByteArray<Hash256>();
+    	uint64_t uploadSize = 0;
+
+    	auto entry = CreateDriveEntry(driveKey, owner);
+    	entry.activeDataModifications().emplace_back(state::ActiveDataModification (
+    			test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize
+    			));
+
+    	// Assert:
+    	AssertValidationResult(
+    			Failure_Storage_Modification_Invalid_Upload_Size,
+    			entry,
+    			driveKey,
+    			{ state::ActiveDataModification(
+    					test::GenerateRandomByteArray<Hash256>(), owner, downloadDataCdi, uploadSize)
+    			});
+    }
+
     TEST(TEST_CLASS, Success) {
         // Arrange:
         Key driveKey = test::GenerateRandomByteArray<Key>();
