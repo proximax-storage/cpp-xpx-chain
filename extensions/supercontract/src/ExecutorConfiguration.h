@@ -41,7 +41,7 @@ namespace catapult { namespace contract {
 
 		std::string ExecutorRPCPort;
 
-		std::string LogPath;
+		std::string ExecutorLogPath;
 
 	private:
 		ExecutorConfiguration() = default;

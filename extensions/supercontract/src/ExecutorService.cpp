@@ -118,7 +118,7 @@ namespace catapult::contract {
 						m_config.StorageRPCHost + ":" + m_config.StorageRPCPort,
 						m_config.MessengerRPCHost + ":" + m_config.MessengerRPCPort,
 						m_config.VirtualMachineRPCHost + ":" + m_config.VirtualMachineRPCPort,
-						m_config.LogPath,
+						m_config.ExecutorLogPath,
 						static_cast<uint8_t>(m_serviceState.config().Immutable.NetworkIdentifier));
 			} else {
 				std::unique_ptr<ServiceBuilder<blockchain::Blockchain>> blockchainBuilder =

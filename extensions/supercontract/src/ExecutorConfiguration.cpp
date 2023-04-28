@@ -32,11 +32,11 @@ namespace catapult { namespace contract {
 		LOAD_DB_PROPERTY(UseRPCExecutor);
 		LOAD_DB_PROPERTY(ExecutorRPCHost);
 		LOAD_DB_PROPERTY(ExecutorRPCPort);
-		LOAD_DB_PROPERTY(LogPath);
+		LOAD_DB_PROPERTY(ExecutorLogPath);
 
 #undef LOAD_DB_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 1);
+		utils::VerifyBagSizeLte(bag, 12);
 		return config;
 	}
 

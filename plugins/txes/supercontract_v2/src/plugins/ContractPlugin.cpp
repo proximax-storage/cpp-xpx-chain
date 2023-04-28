@@ -135,6 +135,9 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		manager.addCacheSupport<cache::DriveContractCacheStorage>(
+				std::make_unique<cache::DriveContractCache>(manager.cacheConfig(cache::DriveContractCache::Name), pConfigHolder));
+
 		using DriveContractCacheHandlersService = CacheHandlers<cache::DriveContractCacheDescriptor>;
 		DriveContractCacheHandlersService::Register<model::FacilityCode::DriveContract>(manager);
 
