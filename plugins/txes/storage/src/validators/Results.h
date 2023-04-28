@@ -190,6 +190,9 @@ namespace catapult { namespace validators {
 	// Modification not ready for approval
 	DEFINE_STORAGE_RESULT(Modification_Not_Ready_For_Approval, 58);
 
+	// Modification upload size is invalid
+	DEFINE_STORAGE_RESULT(Modification_Invalid_Upload_Size, 59);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif
