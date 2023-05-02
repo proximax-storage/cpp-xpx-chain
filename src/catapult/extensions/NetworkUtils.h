@@ -59,4 +59,24 @@ namespace catapult { namespace extensions {
 		UpdateAsyncTcpServerSettings(settings, config);
 		return serviceGroup.pushService(net::CreateAsyncTcpServer, endpoint, settings);
 	}
+
+	/// Boots a tcp server with \a serviceGroup on localhost \a port with connection \a config and \a acceptor.
+	/// Incoming connections are assumed to be associated with \a serviceId.
+	template<typename TAcceptor>
+	std::shared_ptr<net::AsyncTcpServer> BootServer(
+			thread::MultiServicePool::ServiceGroup& serviceGroup,
+			unsigned short port,
+			ionet::ServiceIdentifier serviceId,
+			const config::BlockchainConfiguration& config,
+			TAcceptor acceptor) {
+		auto endpoint = boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port);
+		auto settings = net::AsyncTcpServerSettings([acceptor, port, serviceId](const auto& socketInfo) {
+			acceptor(socketInfo, [port, serviceId](const auto& connectResult) {
+				CATAPULT_LOG(info) << "accept result to local node port " << port << ": " << connectResult.Code;
+			});
+		});
+
+		UpdateAsyncTcpServerSettings(settings, config);
+		return serviceGroup.pushService(net::CreateAsyncTcpServer, endpoint, settings);
+	}
 }}

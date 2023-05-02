@@ -17,7 +17,7 @@ namespace catapult { namespace cache {
 		io::Write32(output, 1);
 
 		const auto& delta = cacheDelta.sub<QueueCache>();
-		const auto& keys = delta.keys();
+		auto keys = delta.keys();
 		io::Write64(output, keys.size());
 		for (const auto& key : keys)
 			io::Write(output, key);
@@ -27,7 +27,6 @@ namespace catapult { namespace cache {
 
 	void QueueCacheSummaryCacheStorage::loadAll(io::InputStream& input, size_t) {
 		std::unordered_set<Key, utils::ArrayHasher<Key>> keys;
-		// TODO: remove this temporary workaround after mainnet upgrade to 0.8.0
 		if (!input.eof()) {
 			// read version
 			VersionType version = io::Read32(input);

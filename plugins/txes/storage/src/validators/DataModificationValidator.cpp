@@ -23,6 +23,9 @@ namespace catapult { namespace validators {
 		if (!pDriveEntry)
 			return Failure_Storage_Drive_Not_Found;
 
+		if (notification.UploadSizeMegabytes == 0)
+			return Failure_Storage_Modification_Invalid_Upload_Size;
+
 	  	// Check if modification size does not exceed free drive size
         auto uploadSize = utils::FileSize::FromMegabytes(notification.UploadSizeMegabytes).bytes();
         auto freeSize = utils::FileSize::FromMegabytes(pDriveEntry->size()).bytes() - pDriveEntry->usedSizeBytes();

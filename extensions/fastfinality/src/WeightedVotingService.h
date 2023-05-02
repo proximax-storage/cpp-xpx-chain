@@ -5,11 +5,12 @@
 **/
 
 #pragma once
+#include "dbrb/DbrbConfiguration.h"
 #include "catapult/extensions/ServiceRegistrar.h"
 #include "catapult/harvesting_core/HarvestingConfiguration.h"
 
 namespace catapult { namespace fastfinality {
 
 	/// Creates a registrar for a weighted voting service.
-	DECLARE_SERVICE_REGISTRAR(WeightedVoting)(const harvesting::HarvestingConfiguration& config);
+	DECLARE_SERVICE_REGISTRAR(WeightedVoting)(const harvesting::HarvestingConfiguration& harvestingConfig, const dbrb::DbrbConfiguration& dbrbConfig, std::string resourcesPath);
 }}

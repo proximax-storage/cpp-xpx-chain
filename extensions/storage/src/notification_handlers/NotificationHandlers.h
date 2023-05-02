@@ -43,4 +43,10 @@ namespace catapult { namespace notification_handlers {
 	DECLARE_HANDLER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(Verification, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
+	DECLARE_HANDLER(StreamStart, model::StreamStartNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
+	DECLARE_HANDLER(StreamFinish, model::StreamFinishNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
+	DECLARE_HANDLER(StreamPayment, model::StreamPaymentNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 }}

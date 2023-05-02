@@ -99,6 +99,7 @@ namespace catapult { namespace config {
 			// Assert:
 			EXPECT_EQ(7900u, config.Port);
 			EXPECT_EQ(7901u, config.ApiPort);
+			EXPECT_EQ(7903u, config.DbrbPort);
 			EXPECT_FALSE(config.ShouldAllowAddressReuse);
 			EXPECT_FALSE(config.ShouldUseSingleThreadPool);
 			EXPECT_TRUE(config.ShouldUseCacheDatabaseStorage);
@@ -207,7 +208,7 @@ namespace catapult { namespace config {
 
 		void AssertDefaultSupportedEntityVersions(const SupportedEntityVersions& config) {
 			// Assert:
-			EXPECT_EQ(71u, config.size());
+			EXPECT_EQ(72u, config.size());
 		}
 	}
 

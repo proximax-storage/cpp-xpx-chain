@@ -28,6 +28,7 @@
 #include "catapult/chain/CommitteeManager.h"
 #include "catapult/config/InflationConfiguration.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
+#include "catapult/dbrb/DbrbViewFetcher.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/model/ExtractorContext.h"
 #include "catapult/model/NotificationPublisher.h"
@@ -269,6 +270,16 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
+		// region dbrb
+
+		/// Sets a DBRB view fetcher.
+		void setDbrbViewFetcher(const std::shared_ptr<dbrb::DbrbViewFetcher>& pFetcher);
+
+		/// Gets DBRB view fetcher.
+		dbrb::DbrbViewFetcher& dbrbViewFetcher() const;
+
+		// endregion
+
 		// region storage
 
 		/// Sets a storage state.
@@ -358,6 +369,7 @@ namespace catapult { namespace plugins {
 		bool m_shouldEnableVerifiableState;
 
 		std::shared_ptr<chain::CommitteeManager> m_pCommitteeManager;
+		std::shared_ptr<dbrb::DbrbViewFetcher> m_pDbrbViewFetcher;
 		std::shared_ptr<state::StorageState> m_pStorageState;
 		std::shared_ptr<state::ContractState> m_pContractState;
 

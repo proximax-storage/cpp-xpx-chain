@@ -238,7 +238,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateFinishDownloadObserver())
 				.add(observers::CreateDownloadApprovalPaymentObserver(liquidityProviderObserver))
 				.add(observers::CreateDownloadChannelRefundObserver(liquidityProviderObserver))
-				.add(observers::CreateStreamStartObserver())
+				.add(observers::CreateStreamStartObserver(liquidityProviderObserver))
 				.add(observers::CreateStreamFinishObserver())
 				.add(observers::CreateStreamPaymentObserver())
 				.add(observers::CreateStartDriveVerificationObserver(state))

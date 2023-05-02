@@ -92,7 +92,8 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(FinishDownload, model::FinishDownloadNotification<1>)();
 
 	/// Observes changes triggered by stream start notifications.
-	DECLARE_OBSERVER(StreamStart, model::StreamStartNotification<1>)();
+	DECLARE_OBSERVER(StreamStart, model::StreamStartNotification<1>)
+	(const std::unique_ptr<LiquidityProviderExchangeObserver>&);
 
 	/// Observes changes triggered by stream finish notifications.
 	DECLARE_OBSERVER(StreamFinish, model::StreamFinishNotification<1>)();

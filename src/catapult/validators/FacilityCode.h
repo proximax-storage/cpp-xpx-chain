@@ -61,6 +61,7 @@ namespace catapult { namespace validators {
 		COPY_FACILITY_CODE(LiquidityProvider),
 		COPY_FACILITY_CODE(ExchangeSda),
 		COPY_FACILITY_CODE(SdaOfferGroup),
+		COPY_FACILITY_CODE(Dbrb),
 		COPY_FACILITY_CODE(SuperContract_v2),
 		COPY_FACILITY_CODE(DriveContract),
 

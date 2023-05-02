@@ -26,13 +26,13 @@
 //
 //	namespace {
 //		template<typename THandler, typename TAct>
-//		void RunPushHandlerTest(CommitteeStage& stage, THandler handlerFn, TAct actFunc) {
+//		void RunPushHandlerTest(CommitteeRound& round, THandler handlerFn, TAct actFunc) {
 //			// Arrange:
 //			std::shared_ptr<thread::IoThreadPool> pPool = test::CreateStartedIoThreadPool();
 //			auto config = test::CreateUninitializedBlockchainConfiguration();
 //			const_cast<utils::FileSize&>(config.Node.MaxPacketDataSize) = utils::FileSize::FromMegabytes(150);
 //			std::shared_ptr<WeightedVotingFsm> pFsm = std::make_shared<WeightedVotingFsm>(pPool, config);
-//			pFsm->committeeData().setCommitteeStage(stage);
+//			pFsm->committeeData().setCommitteeRound(round);
 //			ionet::ServerPacketHandlers handlers;
 //			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 //			plugins::PluginManager pluginManager(pConfigHolder, plugins::StorageConfiguration());
@@ -51,10 +51,10 @@
 //		template<typename TAssert>
 //		void RunPushProposedBlockHandlerTest(
 //				const std::shared_ptr<model::Block>& pBlock,
-//				CommitteeStage stage,
+//				CommitteeRound round,
 //				TAssert assertFunc) {
 //			RunPushHandlerTest(
-//					stage,
+//					round,
 //					[](auto pFsm, auto& handlers, auto* pluginManager) {
 //						RegisterPullProposedBlockHandler(pFsm, handlers, *pluginManager);
 //					},
@@ -77,7 +77,7 @@
 //		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //		RunPushProposedBlockHandlerTest(
 //				pBlock,
-//				CommitteeStage { 0u, CommitteePhase::Propose, utils::ToTimePoint(Timestamp()), 0u },
+//				CommitteeRound { 0u, CommitteePhase::Propose, utils::ToTimePoint(Timestamp()), 0u },
 //				[pBlock](auto pFsm, auto handlers) {
 //					// Assert:
 //					ASSERT_EQ(*pBlock, *pFsm->committeeData().proposedBlock());
@@ -89,7 +89,7 @@
 //		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //		RunPushProposedBlockHandlerTest(
 //				pBlock,
-//				CommitteeStage { 0u, CommitteePhase::None, utils::ToTimePoint(Timestamp()), 0u },
+//				CommitteeRound { 0u, CommitteePhase::None, utils::ToTimePoint(Timestamp()), 0u },
 //				[pBlock](auto pFsm, auto handlers) {
 //					// Assert:
 //					ASSERT_EQ(nullptr, pFsm->committeeData().proposedBlock());
@@ -102,7 +102,7 @@
 //		pBlock->Size *= 2;
 //		RunPushProposedBlockHandlerTest(
 //				pBlock,
-//				CommitteeStage { 0u, CommitteePhase::Propose, utils::ToTimePoint(Timestamp()), 0u },
+//				CommitteeRound { 0u, CommitteePhase::Propose, utils::ToTimePoint(Timestamp()), 0u },
 //				[pBlock](auto pFsm, auto handlers) {
 //					// Assert:
 //					ASSERT_EQ(nullptr, pFsm->committeeData().proposedBlock());
@@ -114,7 +114,7 @@
 //		auto pExistingBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //		RunPushProposedBlockHandlerTest(
 //				pExistingBlock,
-//				CommitteeStage { 0u, CommitteePhase::Propose, utils::ToTimePoint(Timestamp()), 0u },
+//				CommitteeRound { 0u, CommitteePhase::Propose, utils::ToTimePoint(Timestamp()), 0u },
 //				[pExistingBlock](auto pFsm, auto handlers) {
 //					auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //					auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(pBlock->Size);
@@ -135,10 +135,10 @@
 //		template<typename TAssert>
 //		void RunPushConfirmedBlockHandlerTest(
 //				const std::shared_ptr<model::Block>& pBlock,
-//				CommitteeStage stage,
+//				CommitteeRound round,
 //				TAssert assertFunc) {
 //			RunPushHandlerTest(
-//					stage,
+//					round,
 //					[](auto pFsm, auto& handlers, auto* pluginManager) {
 //						RegisterPullConfirmedBlockHandler(pFsm, handlers, *pluginManager);
 //					},
@@ -161,7 +161,7 @@
 //		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //		RunPushConfirmedBlockHandlerTest(
 //				pBlock,
-//				CommitteeStage { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
+//				CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
 //				[pBlock](auto pFsm, auto handlers) {
 //					// Assert:
 //					ASSERT_EQ(*pBlock, *pFsm->committeeData().confirmedBlock());
@@ -173,7 +173,7 @@
 //		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //		RunPushConfirmedBlockHandlerTest(
 //				pBlock,
-//				CommitteeStage { 0u, CommitteePhase::None, utils::ToTimePoint(Timestamp()), 0u },
+//				CommitteeRound { 0u, CommitteePhase::None, utils::ToTimePoint(Timestamp()), 0u },
 //				[pBlock](auto pFsm, auto handlers) {
 //					// Assert:
 //					ASSERT_EQ(nullptr, pFsm->committeeData().confirmedBlock());
@@ -186,7 +186,7 @@
 //		pBlock->Size *= 2;
 //		RunPushConfirmedBlockHandlerTest(
 //				pBlock,
-//				CommitteeStage { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
+//				CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
 //				[pBlock](auto pFsm, auto handlers) {
 //					// Assert:
 //					ASSERT_EQ(nullptr, pFsm->committeeData().confirmedBlock());
@@ -198,7 +198,7 @@
 //		auto pExistingBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //		RunPushConfirmedBlockHandlerTest(
 //				pExistingBlock,
-//				CommitteeStage { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
+//				CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
 //				[pExistingBlock](auto pFsm, auto handlers) {
 //					auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //					auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(pBlock->Size);
@@ -244,16 +244,16 @@
 //	}
 //
 //	TEST(TEST_CLASS, RegisterPushPrevoteMessageHandler_Success) {
-//		auto stage = CommitteeStage { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
+//		auto round = CommitteeRound { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
 //		auto pPacket = std::make_shared<PullPrevoteMessagesRequest>();
 //		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //
 //		RunPushVoteMessageHandlerTest(
 //				// Act func
-//				[&stage, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
-//					auto initStagePhase = stage.Phase;
-//					stage.Phase = CommitteePhase::Propose;
-//					pFsm->committeeData().setCommitteeStage(stage);
+//				[&round, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
+//					auto initPhase = round.Phase;
+//					round.Phase = CommitteePhase::Propose;
+//					pFsm->committeeData().setCommitteeRound(round);
 //
 //					RegisterPullProposedBlockHandler(pFsm, handlers, pluginManager);
 //					RegisterPullPrevoteMessagesHandler(pFsm, handlers);
@@ -264,8 +264,8 @@
 //					ionet::ServerPacketHandlerContext context({}, "");
 //					EXPECT_TRUE(handlers.process(*pBlockPacket, context));
 //
-//					stage.Phase = initStagePhase;
-//					pFsm->committeeData().setCommitteeStage(stage);
+//					round.Phase = initPhase;
+//					pFsm->committeeData().setCommitteeRound(round);
 //
 //					makePacketValid(pPacket, keyPair.publicKey(), pFsm->committeeData().proposedBlockHash());
 //					crypto::Sign(keyPair, CommitteeMessageDataBuffer(*pPacket), pPacket->MessageSignature);
@@ -281,13 +281,13 @@
 //	TEST(TEST_CLASS, RegisterPushPrevoteMessageHandler_BadPhase) {
 //		auto pPacket = std::make_shared<PullPrevoteMessagesRequest>();
 //		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
-//		auto stage = CommitteeStage { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
+//		auto round = CommitteeRound { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
 //
 //		RunPushVoteMessageHandlerTest(
 //				// Act func
-//				[&stage, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
-//					stage.Phase = CommitteePhase::Propose;
-//					pFsm->committeeData().setCommitteeStage(stage);
+//				[&round, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
+//					round.Phase = CommitteePhase::Propose;
+//					pFsm->committeeData().setCommitteeRound(round);
 //
 //					RegisterPullProposedBlockHandler(pFsm, handlers, pluginManager);
 //					RegisterPullPrevoteMessagesHandler(pFsm, handlers);
@@ -310,16 +310,16 @@
 //	}
 //
 //	TEST(TEST_CLASS, RegisterPushPrevoteMessageHandler_InvalidPacket) {
-//		auto stage = CommitteeStage { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
+//		auto round = CommitteeRound { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
 //		auto pPacket = std::make_shared<PullPrevoteMessagesRequest>();
 //		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //
 //		RunPushVoteMessageHandlerTest(
 //				// Act func
-//				[&stage, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
-//					auto initStagePhase = stage.Phase;
-//					stage.Phase = CommitteePhase::Propose;
-//					pFsm->committeeData().setCommitteeStage(stage);
+//				[&round, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
+//					auto initPhase = round.Phase;
+//					round.Phase = CommitteePhase::Propose;
+//					pFsm->committeeData().setCommitteeRound(round);
 //
 //					RegisterPullProposedBlockHandler(pFsm, handlers, pluginManager);
 //					RegisterPullPrevoteMessagesHandler(pFsm, handlers);
@@ -330,8 +330,8 @@
 //					ionet::ServerPacketHandlerContext context({}, "");
 //					EXPECT_TRUE(handlers.process(*pBlockPacket, context));
 //
-//					stage.Phase = initStagePhase;
-//					pFsm->committeeData().setCommitteeStage(stage);
+//					round.Phase = initPhase;
+//					pFsm->committeeData().setCommitteeRound(round);
 //
 //					makePacketValid(pPacket, keyPair.publicKey(), pFsm->committeeData().proposedBlockHash());
 //					pPacket->Size = 0;
@@ -346,20 +346,20 @@
 //	}
 //
 //	TEST(TEST_CLASS, RegisterPushPrevoteMessageHandler_AlreadyHasVote) {
-//		auto stage = CommitteeStage { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
+//		auto round = CommitteeRound { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
 //		auto pPacket = std::make_shared<PullPrevoteMessagesRequest>();
 //		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //
 //		RunPushVoteMessageHandlerTest(
 //				// Act func
-//				[&stage, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
+//				[&round, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
 //					auto pExistPacket = std::make_shared<PullPrevoteMessagesRequest>();
 //					pExistPacket->Message.BlockCosignature.Signer = keyPair.publicKey();
 //					pFsm->committeeData().addVote(std::move(pExistPacket));
 //
-//					auto initStagePhase = stage.Phase;
-//					stage.Phase = CommitteePhase::Propose;
-//					pFsm->committeeData().setCommitteeStage(stage);
+//					auto initPhase = round.Phase;
+//					round.Phase = CommitteePhase::Propose;
+//					pFsm->committeeData().setCommitteeRound(round);
 //
 //					RegisterPullProposedBlockHandler(pFsm, handlers, pluginManager);
 //					RegisterPullPrevoteMessagesHandler(pFsm, handlers);
@@ -370,8 +370,8 @@
 //					ionet::ServerPacketHandlerContext context({}, "");
 //					EXPECT_TRUE(handlers.process(*pBlockPacket, context));
 //
-//					stage.Phase = initStagePhase;
-//					pFsm->committeeData().setCommitteeStage(stage);
+//					round.Phase = initPhase;
+//					pFsm->committeeData().setCommitteeRound(round);
 //
 //					makePacketValid(pPacket, keyPair.publicKey(), pFsm->committeeData().proposedBlockHash());
 //					crypto::Sign(keyPair, CommitteeMessageDataBuffer(*pPacket), pPacket->MessageSignature);
@@ -387,14 +387,14 @@
 //	}
 //
 //	TEST(TEST_CLASS, RegisterPushPrevoteMessageHandler_NoProposedBlock) {
-//		auto stage = CommitteeStage { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
+//		auto round = CommitteeRound { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
 //		auto pPacket = std::make_shared<PullPrevoteMessagesRequest>();
 //		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //
 //		RunPushVoteMessageHandlerTest(
 //				// Act func
-//				[&stage, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
-//					pFsm->committeeData().setCommitteeStage(stage);
+//				[&round, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
+//					pFsm->committeeData().setCommitteeRound(round);
 //					RegisterPullPrevoteMessagesHandler(pFsm, handlers);
 //
 //					makePacketValid(pPacket, keyPair.publicKey(), pFsm->committeeData().proposedBlockHash());
@@ -410,19 +410,19 @@
 //	}
 //
 //	TEST(TEST_CLASS, RegisterPushPrevoteMessageHandler_BadBlockHash) {
-//		auto stage = CommitteeStage { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
+//		auto round = CommitteeRound { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
 //		auto pPacket = std::make_shared<PullPrevoteMessagesRequest>();
 //		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //
 //		RunPushVoteMessageHandlerTest(
 //				// Act func
-//				[&stage, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
+//				[&round, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
 //					RegisterPullProposedBlockHandler(pFsm, handlers, pluginManager);
 //					RegisterPullPrevoteMessagesHandler(pFsm, handlers);
 //
-//					auto initStagePhase = stage.Phase;
-//					stage.Phase = CommitteePhase::Propose;
-//					pFsm->committeeData().setCommitteeStage(stage);
+//					auto initPhase = round.Phase;
+//					round.Phase = CommitteePhase::Propose;
+//					pFsm->committeeData().setCommitteeRound(round);
 //
 //					crypto::Sign(
 //							keyPair, model::BlockDataBuffer((*pBlock)), pPacket->Message.BlockCosignature.Signature);
@@ -430,8 +430,8 @@
 //					ionet::ServerPacketHandlerContext context({}, "");
 //					EXPECT_TRUE(handlers.process(*pBlockPacket, context));
 //
-//					stage.Phase = initStagePhase;
-//					pFsm->committeeData().setCommitteeStage(stage);
+//					round.Phase = initPhase;
+//					pFsm->committeeData().setCommitteeRound(round);
 //
 //					makePacketValid(pPacket, keyPair.publicKey(), test::GenerateRandomByteArray<Hash256>());
 //					crypto::Sign(keyPair, CommitteeMessageDataBuffer(*pPacket), pPacket->MessageSignature);
@@ -445,20 +445,20 @@
 //	}
 //
 //	TEST(TEST_CLASS, RegisterPushPrevoteMessageHandler_BadMessageSignature) {
-//		auto stage = CommitteeStage { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
+//		auto round = CommitteeRound { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
 //		auto pPacket = std::make_shared<PullPrevoteMessagesRequest>();
 //		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //
 //		RunPushVoteMessageHandlerTest(
 //				// Act func
-//				[&stage, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
+//				[&round, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
 //					RegisterPullProposedBlockHandler(pFsm, handlers, pluginManager);
 //					RegisterPullPrevoteMessagesHandler(pFsm, handlers);
 //
-//					auto initStagePhase = stage.Phase;
-//					stage.Phase = CommitteePhase::Propose;
-//					pFsm->committeeData().setCommitteeStage(stage);
-//					stage.Phase = CommitteePhase::Commit;
+//					auto initPhase = round.Phase;
+//					round.Phase = CommitteePhase::Propose;
+//					pFsm->committeeData().setCommitteeRound(round);
+//					round.Phase = CommitteePhase::Commit;
 //
 //					crypto::Sign(
 //							keyPair, model::BlockDataBuffer((*pBlock)), pPacket->Message.BlockCosignature.Signature);
@@ -466,8 +466,8 @@
 //					ionet::ServerPacketHandlerContext context({}, "");
 //					EXPECT_TRUE(handlers.process(*pBlockPacket, context));
 //
-//					stage.Phase = initStagePhase;
-//					pFsm->committeeData().setCommitteeStage(stage);
+//					round.Phase = initPhase;
+//					pFsm->committeeData().setCommitteeRound(round);
 //
 //					makePacketValid(pPacket, keyPair.publicKey(), pFsm->committeeData().proposedBlockHash());
 //					EXPECT_TRUE(handlers.process(*pPacket, context));
@@ -480,26 +480,26 @@
 //	}
 //
 //	TEST(TEST_CLASS, RegisterPushPrevoteMessageHandler_BadBlockHeaderCosignature) {
-//		auto stage = CommitteeStage { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
+//		auto round = CommitteeRound { 0u, CommitteePhase::Prevote, utils::ToTimePoint(Timestamp()), 0u };
 //		auto pPacket = std::make_shared<PullPrevoteMessagesRequest>();
 //		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 //
 //		RunPushVoteMessageHandlerTest(
 //				// Act func
-//				[&stage, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
+//				[&round, pPacket, pBlock](const auto& keyPair, auto pFsm, auto handlers, auto& pluginManager) {
 //					RegisterPullProposedBlockHandler(pFsm, handlers, pluginManager);
 //					RegisterPullPrevoteMessagesHandler(pFsm, handlers);
 //
-//					auto initStagePhase = stage.Phase;
-//					stage.Phase = CommitteePhase::Propose;
-//					pFsm->committeeData().setCommitteeStage(stage);
+//					auto initPhase = round.Phase;
+//					round.Phase = CommitteePhase::Propose;
+//					pFsm->committeeData().setCommitteeRound(round);
 //
 //					auto pBlockPacket = createValidRequest(pBlock, ionet::PacketType::Pull_Proposed_Block);
 //					ionet::ServerPacketHandlerContext context({}, "");
 //					EXPECT_TRUE(handlers.process(*pBlockPacket, context));
 //
-//					stage.Phase = initStagePhase;
-//					pFsm->committeeData().setCommitteeStage(stage);
+//					round.Phase = initPhase;
+//					pFsm->committeeData().setCommitteeRound(round);
 //
 //					makePacketValid(pPacket, keyPair.publicKey(), pFsm->committeeData().proposedBlockHash());
 //					crypto::Sign(keyPair, CommitteeMessageDataBuffer(*pPacket), pPacket->MessageSignature);

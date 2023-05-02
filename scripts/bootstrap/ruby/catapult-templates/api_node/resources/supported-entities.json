@@ -371,6 +371,11 @@
 			"supportedVersions": [1]
 		},
 		{
+			"name": "addDbrbProcess",
+			"type": "16748",
+			"supportedVersions": [1]
+		},
+		{
 			"name": "deploy",
 			"type": "16748",
 			"supportedVersions": [1]

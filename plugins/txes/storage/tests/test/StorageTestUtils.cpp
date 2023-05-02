@@ -106,6 +106,7 @@ namespace catapult { namespace test {
 			auto folderNameBytes = test::GenerateRandomVector(512);
 			auto uploadSize = test::Random();
 			bool readyForApproval = test::RandomByte();
+			bool isStream = test::RandomByte();
 			entry.activeDataModifications().emplace_back(state::ActiveDataModification(
                 test::GenerateRandomByteArray<Hash256>(),   					/// Id of data modification.
 				key,                                        					/// Public key of the drive owner.
@@ -113,7 +114,8 @@ namespace catapult { namespace test {
 				uploadSize,                             						/// ExpectedUpload size of data.
 				uploadSize,														/// ActualUpload size of data.
 				std::string(folderNameBytes.begin(), folderNameBytes.end()),	/// FolderName (for stream)
-				readyForApproval												/// Flag whether modification can be approved
+				readyForApproval,												/// Flag whether modification can be approved
+				isStream
 			));
         }
 

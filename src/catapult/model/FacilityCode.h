@@ -93,6 +93,10 @@ namespace catapult { namespace model {
 		ExchangeSda = 0x6A,
 		/// SDA-SDA Offer Group facility code.
 		SdaOfferGroup = 0x6B,
+		/// DBRB facility code.
+		Dbrb = 0x6C,
+		/// View sequence facility code.
+		DbrbView = 0x6D,
 		/// SuperContract V2 facility code.
 		SuperContract_v2 = 0x6E,
 		/// DriveContractCache facility code.

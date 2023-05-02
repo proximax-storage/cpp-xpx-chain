@@ -204,6 +204,7 @@ namespace catapult { namespace local {
 				m_pBootstrapper->pool().shutdown();
 				saveStateToDisk();
 				m_pBootstrapper->configHolder()->SetPluginInitializer(nullptr);
+				m_pBootstrapper->configHolder()->ClearPluginConfigurations();
 			}
 
 		private:
