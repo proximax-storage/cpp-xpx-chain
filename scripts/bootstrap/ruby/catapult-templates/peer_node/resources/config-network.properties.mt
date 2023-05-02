@@ -216,5 +216,5 @@ offerSortPolicy = 1
 
 [plugin:catapult.plugins.supercontract_v2]
 
-enabled = false
+enabled = true
 minExecutorCount = 10
