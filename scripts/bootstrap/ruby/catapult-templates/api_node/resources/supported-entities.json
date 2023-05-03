@@ -376,11 +376,6 @@
 			"supportedVersions": [1]
 		},
 		{
-			"name": "deploy",
-			"type": "16748",
-			"supportedVersions": [1]
-		},
-		{
 			"name": "deployContract",
 			"type": "16750",
 			"supportedVersions": [1]
