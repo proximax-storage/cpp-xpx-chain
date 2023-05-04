@@ -225,6 +225,10 @@ namespace catapult::contract {
 		}
 
 		void automaticExecutionsBlockPublished(Height height) {
+			if (!m_pExecutor) {
+				return;
+			}
+
 			auto storageBlock = m_contractState.getBlock(height);
 
 			sirius::contract::blockchain::Block block;
