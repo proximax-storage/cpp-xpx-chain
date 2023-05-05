@@ -20,13 +20,13 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
 
-		auto verificationInterval = pluginConfig.VerificationInterval.seconds();
+		uint64_t verificationInterval = pluginConfig.VerificationInterval.seconds();
 
 		auto pLastBlockElement = state.lastBlockElementSupplier()();
 		auto lastBlockTimestamp = pLastBlockElement->Block.Timestamp;
-		auto blockGenerationTimeSeconds = (notification.Timestamp - lastBlockTimestamp).unwrap() / 1000;
+		uint64_t blockGenerationTimeSeconds = (notification.Timestamp - lastBlockTimestamp).unwrap() / 1000;
 
-		auto verificationFactor = std::max(verificationInterval / std::max(blockGenerationTimeSeconds, 1ul), 1ul);
+		uint64_t verificationFactor = std::max(verificationInterval / std::max(blockGenerationTimeSeconds, uint64_t(1)), uint64_t(1));
 
 		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
 
