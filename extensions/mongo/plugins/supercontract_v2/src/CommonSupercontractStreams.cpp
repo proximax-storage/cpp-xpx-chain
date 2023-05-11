@@ -29,9 +29,16 @@ namespace catapult { namespace mongo { namespace plugins {
 			uint16_t numServicePayments,
 			Amount executionCallPayment,
 			Amount downloadCallPayment) {
-		builder << "fileName" << ToBinary(pFileName, fileNameSize)
-				<< "functionName" << ToBinary(pFunctionName, functionNameSize)
-				<< "actualArguments" << ToBinary(pActualArguments, actualArgumentsSize);
+		if (fileNameSize) {
+			builder << "fileName" << ToBinary(pFileName, fileNameSize);
+		}
+		if (functionNameSize) {
+			builder << "functionName" << ToBinary(pFunctionName, functionNameSize);
+		}
+		if (actualArgumentsSize) {
+			builder << "actualArguments" << ToBinary(pActualArguments, actualArgumentsSize);
+		}
+
 		StreamServicePayments(builder, pServicePayments, numServicePayments);
 		builder << "executionCallPayment" << ToInt64(executionCallPayment)
 				<< "downloadCallPayment" << ToInt64(downloadCallPayment);
