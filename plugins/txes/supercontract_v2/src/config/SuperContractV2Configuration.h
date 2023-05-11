@@ -13,7 +13,7 @@ namespace catapult { namespace utils { class ConfigurationBag; } }
 namespace catapult { namespace config {
 
 	/// Super contract plugin configuration settings.
-	struct SuperContractConfiguration : public model::PluginConfiguration {
+	struct SuperContractV2Configuration : public model::PluginConfiguration {
 	public:
 		DEFINE_CONFIG_CONSTANTS(supercontract_v2)
 
@@ -36,13 +36,13 @@ namespace catapult { namespace config {
 		Height AutomaticExecutionsDeadline;
 
 	private:
-		SuperContractConfiguration() = default;
+		SuperContractV2Configuration() = default;
 
 	public:
 		/// Creates an uninitialized Super contract configuration.
-		static SuperContractConfiguration Uninitialized();
+		static SuperContractV2Configuration Uninitialized();
 
 		/// Loads an Super contract configuration from \a bag.
-		static SuperContractConfiguration LoadFromBag(const utils::ConfigurationBag& bag);
+		static SuperContractV2Configuration LoadFromBag(const utils::ConfigurationBag& bag);
 	};
 }}

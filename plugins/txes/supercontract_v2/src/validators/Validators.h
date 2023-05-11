@@ -16,7 +16,7 @@
 
 namespace catapult { namespace validators {
 
-	DECLARE_STATELESS_VALIDATOR(SuperContractPluginConfig, model::PluginConfigNotification<1>)();
+	DECLARE_STATELESS_VALIDATOR(SuperContractV2PluginConfig, model::PluginConfigNotification<1>)();
 
 	DECLARE_STATEFUL_VALIDATOR(ManualCall, model::ManualCallNotification<1>)();
 

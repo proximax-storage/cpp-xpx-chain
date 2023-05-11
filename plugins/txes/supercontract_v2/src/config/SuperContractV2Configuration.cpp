@@ -4,17 +4,17 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "SuperContractConfiguration.h"
+#include "SuperContractV2Configuration.h"
 #include "catapult/utils/ConfigurationUtils.h"
 
 namespace catapult { namespace config {
 
-	SuperContractConfiguration SuperContractConfiguration::Uninitialized() {
-		return SuperContractConfiguration();
+	SuperContractV2Configuration SuperContractV2Configuration::Uninitialized() {
+		return SuperContractV2Configuration();
 	}
 
-	SuperContractConfiguration SuperContractConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
-		SuperContractConfiguration config;
+	SuperContractV2Configuration SuperContractV2Configuration::LoadFromBag(const utils::ConfigurationBag& bag) {
+		SuperContractV2Configuration config;
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
 		LOAD_PROPERTY(Enabled);

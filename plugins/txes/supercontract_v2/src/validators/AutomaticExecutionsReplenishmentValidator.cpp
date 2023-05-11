@@ -25,7 +25,7 @@ namespace catapult { namespace validators {
             return Failure_SuperContract_v2_Deployment_In_Progress;
         }
 
-        const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
+        const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SuperContractV2Configuration>();
         if (static_cast<uint64_t>(pContractEntry->automaticExecutionsInfo().AutomatedExecutionsNumber) +
             notification.Number >
             pluginConfig.MaxAutoExecutions) {

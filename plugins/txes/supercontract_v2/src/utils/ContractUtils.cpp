@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <plugins/txes/supercontract_v2/src/config/SuperContractConfiguration.h>
+#include <plugins/txes/supercontract_v2/src/config/SuperContractV2Configuration.h>
 #include "ContractUtils.h"
 
 namespace catapult::utils {
@@ -19,7 +19,7 @@ namespace catapult::utils {
 		}
 		auto prepaidSince = *prepaidSinceOpt;
 
-		const auto& pluginConfig = config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
+		const auto& pluginConfig = config.Network.template GetPluginConfiguration<config::SuperContractV2Configuration>();
 		Height enabledLimit;
 		if (actualHeight > pluginConfig.AutomaticExecutionsDeadline) {
 			enabledLimit = actualHeight - pluginConfig.AutomaticExecutionsDeadline;

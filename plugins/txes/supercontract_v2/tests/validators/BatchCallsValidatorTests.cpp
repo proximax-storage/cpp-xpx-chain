@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
         auto CreateConfig() {
             test::MutableBlockchainConfiguration config;
-            auto pluginConfig = config::SuperContractConfiguration::Uninitialized();
+            auto pluginConfig = config::SuperContractV2Configuration::Uninitialized();
             pluginConfig.AutomaticExecutionsDeadline = AutomaticExecutionsDeadline;
             config.Network.SetPluginConfiguration(pluginConfig);
             return (config.ToConst());

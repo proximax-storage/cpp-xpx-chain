@@ -25,7 +25,7 @@ namespace catapult { namespace cache {
 			, public SuperContractCacheViewMixins::Iteration
 			, public SuperContractCacheViewMixins::ConstAccessor
 			, public SuperContractCacheViewMixins::PatriciaTreeView
-			, public SuperContractCacheViewMixins::ConfigBasedEnable<config::SuperContractConfiguration> {
+			, public SuperContractCacheViewMixins::ConfigBasedEnable<config::SuperContractV2Configuration> {
 	public:
 		using ReadOnlyView = SuperContractCacheTypes::CacheReadOnlyType;
 
@@ -37,7 +37,7 @@ namespace catapult { namespace cache {
 				, SuperContractCacheViewMixins::Iteration(superContractSets.Primary)
 				, SuperContractCacheViewMixins::ConstAccessor(superContractSets.Primary)
 				, SuperContractCacheViewMixins::PatriciaTreeView(superContractSets.PatriciaTree.get())
-				, SuperContractCacheViewMixins::ConfigBasedEnable<config::SuperContractConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
+				, SuperContractCacheViewMixins::ConfigBasedEnable<config::SuperContractV2Configuration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
 		{}
 	};
 

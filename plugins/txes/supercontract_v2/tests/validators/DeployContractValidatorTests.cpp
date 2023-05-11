@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
         auto CreateConfig() {
             test::MutableBlockchainConfiguration config;
-            auto pluginConfig = config::SuperContractConfiguration::Uninitialized();
+            auto pluginConfig = config::SuperContractV2Configuration::Uninitialized();
             pluginConfig.MaxRowSize = 50;
             pluginConfig.MaxExecutionPayment = 50;
             config.Network.SetPluginConfiguration(pluginConfig);
@@ -84,7 +84,7 @@ namespace catapult { namespace validators {
         // Arrange:
         state::DriveContractEntry entry(test::GenerateRandomByteArray<Key>());
 
-        const auto& pluginConfig = Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
+        const auto& pluginConfig = Config.Network.template GetPluginConfiguration<config::SuperContractV2Configuration>();
         auto fileName = test::GenerateRandomString(pluginConfig.MaxRowSize+1);
 
         // Assert:
@@ -102,7 +102,7 @@ namespace catapult { namespace validators {
         // Arrange:
         state::DriveContractEntry entry(test::GenerateRandomByteArray<Key>());
 
-        const auto& pluginConfig = Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
+        const auto& pluginConfig = Config.Network.template GetPluginConfiguration<config::SuperContractV2Configuration>();
         auto functionName = test::GenerateRandomString(pluginConfig.MaxRowSize+1);
         // Assert:
         AssertValidationResult(
@@ -119,7 +119,7 @@ namespace catapult { namespace validators {
         // Arrange:
         state::DriveContractEntry entry(test::GenerateRandomByteArray<Key>());
 
-        const auto& pluginConfig = Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
+        const auto& pluginConfig = Config.Network.template GetPluginConfiguration<config::SuperContractV2Configuration>();
         auto executionPayment = Amount(pluginConfig.MaxExecutionPayment+1);
         // Assert:
         AssertValidationResult(
@@ -136,7 +136,7 @@ namespace catapult { namespace validators {
 //        // Arrange:
 //        state::DriveContractEntry entry(test::GenerateRandomByteArray<Key>());
 //
-//        const auto& pluginConfig = Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
+//        const auto& pluginConfig = Config.Network.template GetPluginConfiguration<config::SuperContractV2Configuration>();
 //        auto downloadPayment = Amount(pluginConfig.MaxDownloadPayment+1);
 //        // Assert:
 //        AssertValidationResult(

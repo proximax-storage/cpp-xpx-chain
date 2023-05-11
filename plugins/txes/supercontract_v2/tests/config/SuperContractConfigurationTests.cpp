@@ -4,14 +4,14 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/config/SuperContractConfiguration.h"
+#include "src/config/SuperContractV2Configuration.h"
 #include "tests/test/nodeps/ConfigurationTestUtils.h"
 
 namespace catapult { namespace config {
 
 	namespace {
-		struct SuperContractConfigurationTraits {
-			using ConfigurationType = SuperContractConfiguration;
+		struct SuperContractV2ConfigurationTraits {
+			using ConfigurationType = SuperContractV2Configuration;
 
 			static utils::ConfigurationBag::ValuesContainer CreateProperties() {
 				return {
@@ -46,7 +46,7 @@ namespace catapult { namespace config {
 				return false;
 			}
 
-			static void AssertZero(const SuperContractConfiguration& config) {
+			static void AssertZero(const SuperContractV2Configuration& config) {
 				// Assert:
 				EXPECT_FALSE(config.Enabled);
 				EXPECT_EQ(0, config.MaxServicePaymentsSize);
@@ -56,7 +56,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(Height(0), config.AutomaticExecutionsDeadline);
 			}
 
-			static void AssertCustom(const SuperContractConfiguration& config) {
+			static void AssertCustom(const SuperContractV2Configuration& config) {
 				// Assert:
 				EXPECT_TRUE(config.Enabled);
 				EXPECT_EQ(512, config.MaxServicePaymentsSize);
@@ -68,5 +68,5 @@ namespace catapult { namespace config {
 		};
 	}
 
-	DEFINE_CONFIGURATION_TESTS(SuperContractConfigurationTests, SuperContract)
+	DEFINE_CONFIGURATION_TESTS(SuperContractV2ConfigurationTests, SuperContractV2)
 }}

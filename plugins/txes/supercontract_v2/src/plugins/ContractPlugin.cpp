@@ -51,7 +51,7 @@ namespace catapult { namespace plugins {
 
 	void RegisterContractSubsystem(PluginManager& manager) {
 		manager.addPluginInitializer([](auto& config) {
-			config.template InitPluginConfiguration<config::SuperContractConfiguration>();
+			config.template InitPluginConfiguration<config::SuperContractV2Configuration>();
 		});
 
 		const auto& pConfigHolder = manager.configHolder();
@@ -152,7 +152,7 @@ namespace catapult { namespace plugins {
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateSuperContractPluginConfigValidator());
+				.add(validators::CreateSuperContractV2PluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {

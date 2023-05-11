@@ -34,7 +34,7 @@ namespace catapult {
 
         auto CreateConfig() {
             test::MutableBlockchainConfiguration config;
-            auto pluginConfig = config::SuperContractConfiguration::Uninitialized();
+            auto pluginConfig = config::SuperContractV2Configuration::Uninitialized();
             pluginConfig.MaxRowSize = Max_Row;
             pluginConfig.MaxServicePaymentsSize = Max_Service_Payments;
             config.Network.SetPluginConfiguration(pluginConfig);

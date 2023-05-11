@@ -11,7 +11,7 @@
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
-#include "src/config/SuperContractConfiguration.h"
+#include "src/config/SuperContractV2Configuration.h"
 
 namespace catapult { namespace cache {
 
@@ -28,7 +28,7 @@ namespace catapult { namespace cache {
 		using ConstAccessor = PrimaryMixins::MutableAccessor;
 		using DeltaElements = PrimaryMixins::DeltaElements;
 		using BasicInsertRemove = PrimaryMixins::BasicInsertRemove;
-		using ConfigBasedEnable = PrimaryMixins::ConfigBasedEnable<config::SuperContractConfiguration>;
+		using ConfigBasedEnable = PrimaryMixins::ConfigBasedEnable<config::SuperContractV2Configuration>;
 	};
 
 	/// Basic delta on top of the drivecontract cache.

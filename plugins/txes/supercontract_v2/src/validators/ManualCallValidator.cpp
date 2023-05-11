@@ -12,7 +12,7 @@ namespace catapult { namespace validators {
 
     DEFINE_STATEFUL_VALIDATOR(ManualCall, [](const Notification& notification, const ValidatorContext& context) {
 
-        const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
+        const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SuperContractV2Configuration>();
 
         if (notification.FileName.size() > pluginConfig.MaxRowSize) {
             return Failure_SuperContract_v2_Max_Row_Size_Exceeded;
