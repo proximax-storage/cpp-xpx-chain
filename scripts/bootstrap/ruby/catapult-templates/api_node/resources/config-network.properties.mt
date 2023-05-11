@@ -234,3 +234,7 @@ enabled = true
 
 enabled = true
 minExecutorCount = 10
+maxRowSize = 100
+maxExecutionPayment = 10'000'000'000
+maxServicePaymentsSize = 5
+maxAutoExecutions = 5
