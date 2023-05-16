@@ -74,6 +74,9 @@ namespace catapult { namespace model {
 
 #define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "chain", #NAME, config.NAME)
 
+		config.Inflation = Amount(0);
+		TRY_LOAD_CHAIN_PROPERTY(Inflation);
+
 		config.EnableUnconfirmedTransactionMinFeeValidation = true;
 		TRY_LOAD_CHAIN_PROPERTY(EnableUnconfirmedTransactionMinFeeValidation);
 		config.EnableDeadlineValidation = true;

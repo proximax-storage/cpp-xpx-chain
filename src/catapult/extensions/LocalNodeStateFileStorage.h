@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/types.h"
+#include "catapult/model/NetworkConfiguration.h"
 
 namespace catapult {
 	namespace cache {
@@ -49,6 +50,8 @@ namespace catapult { namespace extensions {
 
 	/// Returns \c true if serialized state is present in \a directory.
 	bool HasSerializedState(const config::CatapultDirectory& directory);
+	/// Returns \c true if active network config file is present in \a directory.
+	bool HasActiveNetworkConfig(const config::CatapultDirectory& directory);
 
 	/// Loads catapult state into \a stateRef from \a directory given \a pluginManager.
 	StateHeights LoadStateFromDirectory(
@@ -56,6 +59,8 @@ namespace catapult { namespace extensions {
 			const LocalNodeStateRef& stateRef,
 			const plugins::PluginManager& pluginManager);
 
+	/// Retrieves last known height from supplemental data file.
+	const Height LoadLatestHeightFromDirectory(const config::CatapultDirectory& directory);
 	/// Serializes local node state.
 	class LocalNodeStateSerializer {
 	public:
@@ -68,6 +73,7 @@ namespace catapult { namespace extensions {
 
 		/// Saves state composed of \a cacheDelta, \a state, \a score and \a height using \a cacheStorages.
 		void save(
+				const cache::CatapultCache& cache,
 				const cache::CatapultCacheDelta& cacheDelta,
 				const std::vector<std::unique_ptr<const cache::CacheStorage>>& cacheStorages,
 				const state::CatapultState& state,
@@ -80,6 +86,11 @@ namespace catapult { namespace extensions {
 	private:
 		config::CatapultDirectory m_directory;
 	};
+	/// Loads the last active network configuration from a file.
+	const std::string LoadActiveNetworkConfigString(const config::CatapultDirectory& directory);
+
+	/// Loads the last active network configuration from a file
+	const model::NetworkConfiguration LoadActiveNetworkConfig(const config::CatapultDirectory& directory);
 
 	/// Serializes state composed of \a cache, \a state and \a score with checkpointing to \a dataDirectory given \a nodeConfig.
 	void SaveStateToDirectoryWithCheckpointing(

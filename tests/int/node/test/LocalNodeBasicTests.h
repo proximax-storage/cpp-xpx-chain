@@ -37,7 +37,12 @@ namespace catapult { namespace test {
 
 		static void AssertCanBootLocalNodeWithoutPeers() {
 			// Act: create the node with no peers (really it is a peer to itself)
-			TestContext context(NodeFlag::Custom_Peers, {});
+			TestContext context(NodeFlag::Custom_Peers, std::vector<ionet::Node>{},
+					[](auto& config) {
+
+					},
+					"",
+					"../seed/mijin-test-basic-extended");
 
 			context.waitForNumActiveReaders(0);
 			auto stats = context.stats();
@@ -62,7 +67,9 @@ namespace catapult { namespace test {
 				CreateNamedNode(keys[1], "bob"),
 				CreateNamedNode(keys[2], "charlie"),
 				CreateLocalPartnerNode()
-			});
+			},	[](auto& config) {},
+					"",
+					"../seed/mijin-test-basic-extended");
 
 			context.waitForNumActiveWriters(1);
 			auto stats = context.stats();
@@ -87,7 +94,9 @@ namespace catapult { namespace test {
 
 		static void AssertCanShutdownLocalNode() {
 			// Arrange:
-			TestContext context(NodeFlag::Regular);
+			TestContext context(NodeFlag::Regular, {}, [](auto& config) {},
+					"",
+					"../seed/mijin-test-basic-extended");
 
 			// Act:
 			context.localNode().shutdown();
@@ -102,7 +111,9 @@ namespace catapult { namespace test {
 
 		static void AssertLocalNodeSchedulesAllTasks() {
 			// Act:
-			TestContext context(NodeFlag::Regular);
+			TestContext context(NodeFlag::Regular, {}, [](auto& config) {},
+					"",
+					"../seed/mijin-test-basic-extended");
 
 			context.waitForNumScheduledTasks(TTraits::Num_Tasks);
 			auto stats = context.stats();
@@ -113,7 +124,9 @@ namespace catapult { namespace test {
 
 		static void AssertNodeSubscriberIsWiredUpToNodeContainer() {
 			// Arrange:
-			TestContext context(NodeFlag::Regular);
+			TestContext context(NodeFlag::Regular, {}, [](auto& config) {},
+					"",
+					"../seed/mijin-test-basic-extended");
 
 			auto key = GenerateRandomByteArray<Key>();
 			auto node = ionet::Node(key, ionet::NodeEndpoint(), ionet::NodeMetadata());
@@ -136,7 +149,9 @@ namespace catapult { namespace test {
 
 		static void AssertLocalNodeTriggersNemesisSubscribersAtHeightOne() {
 			// Arrange:
-			TestContext context(NodeFlag::Require_Explicit_Boot);
+			TestContext context(NodeFlag::Require_Explicit_Boot, {}, [](auto& config) {},
+					"",
+					"../seed/mijin-test-basic-extended");
 
 			// Act:
 			const mocks::MockBlockChangeSubscriber* pBlockChangeSubscriberRaw = nullptr;
@@ -161,7 +176,9 @@ namespace catapult { namespace test {
 
 		static void AssertLocalNodeDoesNotTriggerNemesisSubscribersAtHeightTwo() {
 			// Arrange: boot the local node initially
-			TestContext context(NodeFlag::Require_Explicit_Boot);
+			TestContext context(NodeFlag::Require_Explicit_Boot, {}, [](auto& config) {},
+					"",
+					"../seed/mijin-test-basic-extended");
 			context.boot();
 			context.reset();
 
@@ -191,7 +208,9 @@ namespace catapult { namespace test {
 
 		static void AssertLocalNodeCannotBootWhenCacheAndStorageHeightsAreInconsistent() {
 			// Arrange: boot with storage height (2) ahead of cache height (1)
-			TestContext context(NodeFlag::Require_Explicit_Boot);
+			TestContext context(NodeFlag::Require_Explicit_Boot, {}, [](auto& config) {},
+					"",
+					"../seed/mijin-test-basic-extended");
 			auto boot = [&context]() {
 				context.boot([](auto& bootstrapper) {
 					auto pBlock = GenerateBlockWithTransactions(0, Height(2));

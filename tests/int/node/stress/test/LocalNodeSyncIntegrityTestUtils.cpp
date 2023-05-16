@@ -53,7 +53,7 @@ namespace catapult { namespace test {
 			TempDirectoryGuard forceCleanResourcesDir(State_Hash_Directory);
 		}
 
-		return StateHashCalculator(prepareFreshDataDirectory(m_stateHashCalculationDir.name()));
+		return StateHashCalculator(prepareFreshDataDirectory(m_stateHashCalculationDir.name(), "../seed/mijin-test"));
 	}
 
 	// endregion

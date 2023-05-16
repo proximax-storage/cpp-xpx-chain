@@ -30,6 +30,19 @@
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "catapult/extensions/NemesisBlockLoader.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
+#include "plugins/txes/transfer/src/config/TransferConfiguration.h"
+#include "plugins/txes/namespace/src/config/NamespaceConfiguration.h"
+#include "plugins/txes/upgrade/src/config/BlockchainUpgradeConfiguration.h"
+#include "plugins/txes/mosaic/src/config/MosaicConfiguration.h"
+#include "plugins/txes/config/src/config/NetworkConfigConfiguration.h"
+#include "plugins/txes/service/src/config/ServiceConfiguration.h"
+#include "plugins/txes/exchange/src/config/ExchangeConfiguration.h"
+#include "plugins/txes/supercontract/src/config/SuperContractConfiguration.h"
+#include "plugins/txes/operation/src/config/OperationConfiguration.h"
+#include "plugins/txes/metadata_v2/src/config/MetadataConfiguration.h"
+#include "plugins/txes/committee/src/config/CommitteeConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -42,7 +55,8 @@ namespace catapult { namespace test {
 
 			// modify nemesis block and resign it
 			auto& nemesisBlock = const_cast<model::Block&>(pNemesisBlockElement->Block);
-			modify(nemesisBlock, *pNemesisBlockElement);
+			auto bundleConfig = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+			modify(nemesisBlock, *pNemesisBlockElement, bundleConfig);
 			extensions::BlockExtensions(GetNemesisGenerationHash()).signFullBlock(
 					crypto::KeyPair::FromString(Mijin_Test_Nemesis_Private_Key),
 					nemesisBlock);
@@ -75,7 +89,7 @@ namespace catapult { namespace test {
 
 	void SetNemesisReceiptsHash(const std::string& destination) {
 		// calculate the receipts hash (default nemesis block has zeroed receipts hash)
-		ModifyNemesis(destination, [](auto& nemesisBlock, const auto&) {
+		ModifyNemesis(destination,  [](auto& nemesisBlock, const auto&, const auto&) {
 			model::BlockStatementBuilder blockStatementBuilder;
 
 			// 1. add harvest fee receipt
@@ -113,8 +127,26 @@ namespace catapult { namespace test {
 
 	void SetNemesisStateHash(const std::string& destination, const config::BlockchainConfiguration& config) {
 		// calculate the state hash (default nemesis block has zeroed state hash)
-		ModifyNemesis(destination, [&config](auto& nemesisBlock, const auto& nemesisBlockElement) {
-			nemesisBlock.StateHash = CalculateNemesisStateHash(nemesisBlockElement, config);
+		ModifyNemesis(destination, [&config](auto& nemesisBlock, const auto& nemesisBlockElement, const auto& configPair) {
+			MutableBlockchainConfiguration mConfig;
+			mConfig.Immutable = config.Immutable;
+			mConfig.Node = config.Node;
+			mConfig.User = config.User;
+			mConfig.Extensions = config.Extensions;
+			mConfig.Logging = config.Logging;
+			mConfig.Network = std::get<0>(configPair);
+			mConfig.SupportedEntityVersions = std::get<1>(configPair);
+
+			// Preload plugin configuraitons for nemesis required plugins
+
+			mConfig.Network.template InitPluginConfiguration<config::TransferConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::MosaicConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::NamespaceConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::CommitteeConfiguration>();
+
+			nemesisBlock.StateHash = CalculateNemesisStateHash(nemesisBlockElement, mConfig.ToConst());
 		});
 	}
 }}

@@ -32,13 +32,16 @@ namespace catapult { namespace test {
 		}
 	}
 
-	void PrepareStorage(const std::string& destination) {
+	void PrepareStorage(const std::string& destination, std::string sourceDir) {
 #ifdef SIGNATURE_SCHEME_NIS1
-		constexpr auto Source_Directory = "../seed/mijin-test.nis1";
+		std::string Source_Directory = "../seed/mijin-test.nis1";
 #else
-		constexpr auto Source_Directory = "../seed/mijin-test";
+		std::string Source_Directory = "../seed/mijin-test";
 #endif
 
+		if(sourceDir != "") {
+			Source_Directory = sourceDir;
+		}
 		const std::string nemesisDirectory = "/00000";
 		const std::string nemesisFilename = nemesisDirectory + "/00001.dat";
 		boost::filesystem::create_directories(destination + nemesisDirectory);

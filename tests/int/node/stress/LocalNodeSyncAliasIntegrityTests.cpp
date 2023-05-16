@@ -178,8 +178,8 @@ namespace catapult { namespace local {
 			}
 
 			// - create two blocks with same aliases pointing to different accounts where (better) second block will yield better chain
-			auto pTailBlock1 = CreateBlockWithTwoAliasesAndTransfers(context, accounts, *pBuilder1, seedBlocks, CreateTimeSpan(60), 1, 2);
-			auto pTailBlock2 = CreateBlockWithTwoAliasesAndTransfers(context, accounts, *pBuilder1, seedBlocks, CreateTimeSpan(58), 2, 3);
+			auto pTailBlock1 = CreateBlockWithTwoAliasesAndTransfers(context, accounts, *pBuilder1, seedBlocks, CreateTimeSpan(16), 1, 2);
+			auto pTailBlock2 = CreateBlockWithTwoAliasesAndTransfers(context, accounts, *pBuilder1, seedBlocks, CreateTimeSpan(14), 2, 3);
 
 			// Act:
 			test::ExternalSourceConnection connection;

@@ -21,16 +21,21 @@
 #pragma once
 #include "sdk/src/extensions/MemoryBlockStorage.h"
 #include "catapult/io/BlockStorageCache.h"
+#include "tests/test/nodeps/Nemesis.h"
+#include "tests/test/core/BlockTestUtils.h"
 
 namespace catapult { namespace mocks {
 
 	/// A mock memory-based block storage that loads and saves blocks in memory.
 	class MockMemoryBlockStorage : public extensions::MemoryBlockStorage {
 	public:
+		MockMemoryBlockStorage();
 		~MockMemoryBlockStorage() override = default;
 
 		/// Creates a mock memory-based block storage.
-		MockMemoryBlockStorage();
+		template<typename BlockElementGenerator>
+		MockMemoryBlockStorage(BlockElementGenerator generator) : MemoryBlockStorage(generator())
+	{}
 	};
 
 	/// Creates a memory based block storage composed of \a numBlocks.
@@ -38,4 +43,9 @@ namespace catapult { namespace mocks {
 
 	/// Creates a memory based block storage cache composed of \a numBlocks.
 	std::unique_ptr<io::BlockStorageCache> CreateMemoryBlockStorageCache(uint32_t numBlocks);
+
+	template<typename TNemesisBlockType>
+	model::BlockElement CreateNemesisBlockElement(const TNemesisBlockType& data) {
+		return test::BlockToBlockElement(test::GetNemesisBlock(data), test::GetNemesisGenerationHash());
+	}
 }}

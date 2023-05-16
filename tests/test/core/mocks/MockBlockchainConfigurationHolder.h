@@ -21,9 +21,11 @@ namespace catapult { namespace config {
 		const BlockchainConfiguration& Config(const Height&) const override;
 		const BlockchainConfiguration& Config() const override;
 		const BlockchainConfiguration& ConfigAtHeightOrLatest(const Height&) const override;
+		model::InflationCalculator& GetCalculator();
 	};
 
 	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder();
 	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder(const model::NetworkConfiguration& config);
 	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder(const BlockchainConfiguration& config);
+	std::shared_ptr<MockBlockchainConfigurationHolder> CreateRealMockConfigurationHolder(const BlockchainConfiguration& config);
 }}

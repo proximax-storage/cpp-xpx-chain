@@ -287,7 +287,7 @@ namespace catapult { namespace local {
 				stateHashDirectory /= std::to_string(id);
 				boost::filesystem::create_directories(stateHashDirectory);
 
-				return test::StateHashCalculator(context.prepareFreshDataDirectory(stateHashDirectory.generic_string()));
+				return test::StateHashCalculator(context.prepareFreshDataDirectory(stateHashDirectory.generic_string(), "../seed/mijin-test"));
 			}
 
 		private:
@@ -320,7 +320,7 @@ namespace catapult { namespace local {
 					const_cast<config::NodeConfiguration&>(config.Node).OutgoingConnections.MaxConnections = 20;
 				};
 				auto postfix = "_" + std::to_string(i);
-				contexts.push_back(std::make_unique<NodeTestContext>(nodeFlag, peers, configTransform, postfix));
+				contexts.push_back(std::make_unique<NodeTestContext>(nodeFlag, peers, configTransform, postfix, "../seed/mijin-test"));
 
 				// - (re)schedule a few tasks and boot the node
 				auto& context = *contexts[i];
