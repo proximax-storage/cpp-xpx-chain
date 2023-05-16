@@ -79,7 +79,6 @@ namespace catapult { namespace observers {
 				test::MutableBlockchainConfiguration mutableConfig;
 				mutableConfig.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
 				mutableConfig.Network.ImportanceGrouping = 5;
-				mutableConfig.Inflation = config::InflationConfiguration::Uninitialized();
 				auto config = mutableConfig.ToConst();
 				RunSignerImportanceObserverTest(notifyMode, config::CreateMockConfigurationHolder(config), action);
 			}

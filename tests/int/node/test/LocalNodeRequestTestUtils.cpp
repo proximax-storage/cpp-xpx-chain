@@ -31,6 +31,7 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/RealTransactionFactory.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/nodeps/data/BasicExtendedNemesisMemoryBlockStorage_data.h"
 
 namespace catapult { namespace test {
 
@@ -77,7 +78,7 @@ namespace catapult { namespace test {
 			constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 			auto signer = GetNemesisAccountKeyPair();
 
-			mocks::MockMemoryBlockStorage storage;
+			mocks::MockMemoryBlockStorage storage([](){return mocks::CreateNemesisBlockElement(test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);});
 			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
 
 			model::PreviousBlockContext context(*pNemesisBlockElement);

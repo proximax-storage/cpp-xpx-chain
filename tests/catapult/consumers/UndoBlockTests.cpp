@@ -142,7 +142,7 @@ namespace catapult { namespace consumers {
 			observers::ObserverState state(delta, catapultState);
 
 			auto blockElement = test::BlockToBlockElement(*pBlock);
-			blockElement.SubCacheMerkleRoots = { Hash256() }; // trigger clear of account state cache
+			blockElement.SubCacheMerkleRoots = { Hash256(), Hash256() }; // trigger clear of account state cache
 
 			// - add an account so the cache is not empty
 			{
@@ -152,7 +152,7 @@ namespace catapult { namespace consumers {
 			}
 
 			// Sanity:
-			EXPECT_NE(Hash256(), delta.calculateStateHash(blockElement.Block.Height).SubCacheMerkleRoots[0]);
+			EXPECT_NE(Hash256(), delta.calculateStateHash(blockElement.Block.Height).SubCacheMerkleRoots[1]);
 
 			// Act:
 			action(blockElement, observer, state);
@@ -173,7 +173,7 @@ namespace catapult { namespace consumers {
 			AssertContexts(observer.contexts(), state, Height(10), observers::NotifyMode::Rollback);
 
 			// - the tree was not changed
-			EXPECT_NE(Hash256(), state.Cache.calculateStateHash(blockElement.Block.Height).SubCacheMerkleRoots[0]);
+			EXPECT_NE(Hash256(), state.Cache.calculateStateHash(blockElement.Block.Height).SubCacheMerkleRoots[1]);
 		});
 	}
 

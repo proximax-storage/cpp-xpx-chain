@@ -28,4 +28,9 @@ namespace catapult { namespace test {
 
 	/// Gets the nemesis block.
 	const model::Block& GetNemesisBlock();
+
+	template<typename TDataType>
+	const model::Block& GetNemesisBlock(const TDataType& nemesisBlockData) {
+		return reinterpret_cast<const model::Block&>(nemesisBlockData);
+	}
 }}

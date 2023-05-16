@@ -29,7 +29,7 @@ namespace catapult { namespace extensions {
 
 	ExtensionManager::ExtensionManager() {
 		std::string prefix = "catapult.";
-		for (const auto& name : { "coresystem", "plugins.signature" })
+		for (const auto& name : { "coresystem", "plugins.signature", "plugins.config" })
 			m_systemPluginNames.push_back(prefix + name);
 	}
 

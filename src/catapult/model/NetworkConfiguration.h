@@ -58,6 +58,9 @@ namespace catapult { namespace model {
 		/// Greed exponent parameter.
 		double GreedExponent;
 
+		/// Active inflation amount
+		Amount Inflation;
+
 		/// Number of blocks that should be treated as a group for importance purposes.
 		/// \note Importances will only be calculated at blocks that are multiples of this grouping number.
 		uint64_t ImportanceGrouping;

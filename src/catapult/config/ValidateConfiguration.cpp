@@ -42,18 +42,6 @@ namespace catapult { namespace config {
 				CATAPULT_THROW_VALIDATION_ERROR("HarvestBeneficiaryPercentage must not be greater than 100");
 		}
 
-		void ValidateConfiguration(
-				const model::NetworkConfiguration& networkConfig,
-				const config::ImmutableConfiguration& immutableConfig,
-				const config::InflationConfiguration& inflationConfig) {
-			auto totalInflation = inflationConfig.InflationCalculator.sumAll();
-			if (!totalInflation.second)
-				CATAPULT_THROW_VALIDATION_ERROR("total currency inflation could not be calculated");
-
-			auto totalCurrency = immutableConfig.InitialCurrencyAtomicUnits + totalInflation.first;
-			if (immutableConfig.InitialCurrencyAtomicUnits > totalCurrency || totalCurrency > networkConfig.MaxMosaicAtomicUnits)
-				CATAPULT_THROW_VALIDATION_ERROR("sum of InitialCurrencyAtomicUnits and inflation must not exceed MaxMosaicAtomicUnits");
-		}
 
 		void ValidateConfiguration(const NodeConfiguration& config) {
 			if (config.FeeInterestDenominator == 0)
@@ -67,7 +55,11 @@ namespace catapult { namespace config {
 	void ValidateConfiguration(const BlockchainConfiguration& config) {
 		ValidateConfiguration(config.User);
 		ValidateConfiguration(config.Network);
-		ValidateConfiguration(config.Network, config.Immutable, config.Inflation);
+		ValidateConfiguration(config.Node);
+	}
+
+	void ValidateLocalConfiguration(const BlockchainConfiguration& config) {
+		ValidateConfiguration(config.User);
 		ValidateConfiguration(config.Node);
 	}
 

@@ -22,6 +22,7 @@
 #include "catapult/model/EntityHasher.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/TestHarness.h"
+#include "tests/test/nodeps/data/BasicExtendedNemesisMemoryBlockStorage_data.h"
 
 namespace catapult { namespace test {
 
@@ -53,7 +54,7 @@ namespace catapult { namespace test {
 	}
 
 	void HashesFromApiTraits::VerifyResult(const ResultType& hashes) {
-		mocks::MockMemoryBlockStorage storage;
+		mocks::MockMemoryBlockStorage storage([](){return mocks::CreateNemesisBlockElement(test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);});
 		auto pBlock = storage.loadBlock(Height(1));
 		auto expectedHash = model::CalculateHash(*pBlock);
 
@@ -77,7 +78,7 @@ namespace catapult { namespace test {
 	void BlockAtApiTraits::VerifyResult(const ResultType& pBlock) {
 		ASSERT_TRUE(!!pBlock);
 
-		mocks::MockMemoryBlockStorage storage;
+		mocks::MockMemoryBlockStorage storage([](){return mocks::CreateNemesisBlockElement(test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);});
 		auto pExpectedBlock = storage.loadBlock(Height(1));
 		ASSERT_EQ(pExpectedBlock->Size, pBlock->Size);
 		EXPECT_EQ(*pExpectedBlock, *pBlock);
@@ -95,7 +96,7 @@ namespace catapult { namespace test {
 		// right now this test is very artificial, it might be improved when we'll be able to push block
 		ASSERT_TRUE(!!pBlock);
 
-		mocks::MockMemoryBlockStorage storage;
+		mocks::MockMemoryBlockStorage storage([](){return mocks::CreateNemesisBlockElement(test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);});
 		auto pExpectedBlock = storage.loadBlock(Height(1));
 		ASSERT_EQ(pExpectedBlock->Size, pBlock->Size);
 		EXPECT_EQ(*pExpectedBlock, *pBlock);

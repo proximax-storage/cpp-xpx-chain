@@ -57,7 +57,10 @@ namespace catapult { namespace cache {
 		/// Builds a catapult cache.
 		CatapultCache build() {
 			CATAPULT_LOG(debug) << "creating CatapultCache with " << m_subCaches.size() << " sub caches";
-			return CatapultCache(std::move(m_subCaches));
+			auto cache = CatapultCache(std::move(m_subCaches));
+			// Reset the subcache vector to allow for adding new subcaches.
+			m_subCaches = std::vector<std::unique_ptr<SubCachePlugin>>();
+			return cache;
 		}
 
 		/// Updates a catapult cache with newly added sub caches.

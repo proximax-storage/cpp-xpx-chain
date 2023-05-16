@@ -22,10 +22,9 @@ namespace catapult { namespace config {
 			LoggingConfiguration::Uninitialized(),
 			UserConfiguration::Uninitialized(),
 			ExtensionsConfiguration::Uninitialized(),
-			InflationConfiguration::Uninitialized(),
 			SupportedEntityVersions()
 		};
-
+		m_InflationCalculator = model::InflationCalculator();
 		m_configs.insert({ Height(0), config });
 	}
 
@@ -34,6 +33,7 @@ namespace catapult { namespace config {
 			, m_pluginInitializer([](auto&) {}){
 
 		m_configs.insert({ Height(0), config });
+		m_InflationCalculator = model::InflationCalculator();
 	}
 
 	BlockchainConfigurationHolder::BlockchainConfigurationHolder(const BlockchainConfiguration& config, cache::CatapultCache* pCache, const Height& height)
@@ -42,6 +42,9 @@ namespace catapult { namespace config {
 
 
 		m_configs.insert({ height, config });
+		m_InflationCalculator = model::InflationCalculator();
+		if(height != Height())
+			m_InflationCalculator.add(height, config.Network.Inflation);
 	}
 
 	boost::filesystem::path BlockchainConfigurationHolder::GetResourcesPath(int argc, const char** argv) {
@@ -100,6 +103,26 @@ namespace catapult { namespace config {
 			config.Network.ClearPluginConfigurations();
 	}
 
+	void BlockchainConfigurationHolder::InitializeNetworkConfiguration(const model::NetworkConfiguration& networkConfiguration, const config::SupportedEntityVersions& supportedEntities) {
+		if(m_configs.empty() || m_configs.size() > 1)
+			CATAPULT_THROW_RUNTIME_ERROR("Attempting to initialize configuration holder base config, but it's empty or has been initialized already.")
+		std::unique_lock lock(m_mutex);
+		const auto& baseConfig = m_configs.at(Height(0));
+		auto config = BlockchainConfiguration(
+			baseConfig.Immutable,
+			networkConfiguration,
+			baseConfig.Node,
+			baseConfig.Logging,
+			baseConfig.User,
+			baseConfig.Extensions,
+			supportedEntities,
+			Height(0),
+			nullptr
+		);
+		m_configs.erase(Height(0));
+		m_configs.insert({ Height(0), config });
+	}
+
 	void BlockchainConfigurationHolder::InsertConfig(const Height& height, const std::string& strConfig, const std::string& supportedVersion) {
 		std::unique_lock lock(m_mutex);
 
@@ -112,29 +135,39 @@ namespace catapult { namespace config {
 			config::SupportedEntityVersions supportedEntityVersions;
 			supportedEntityVersions = LoadSupportedEntityVersions(inputVersions);
 
-			const auto& baseConfig = m_configs.at(Height(0));
-			auto config = BlockchainConfiguration(
-					baseConfig.Immutable,
-					networkConfig,
-					baseConfig.Node,
-					baseConfig.Logging,
-					baseConfig.User,
-					baseConfig.Extensions,
-					baseConfig.Inflation,
-					supportedEntityVersions,
-					height,
-					LastConfigOrNull(height-Height(1))
-			);
+			InsertConfig(height, networkConfig, supportedEntityVersions);
 
-			m_configs.erase(height);
-			m_configs.insert({ height, config });
 		} catch (...) {
 			CATAPULT_THROW_INVALID_ARGUMENT_1("unable to insert to config holder at height", height);
 		}
 	}
 
+	void BlockchainConfigurationHolder::InsertConfig(const Height& height, const model::NetworkConfiguration& networkConfig, const config::SupportedEntityVersions& supportedEntities) {
+		const auto& baseConfig = m_configs.at(Height(0));
+		auto config = BlockchainConfiguration(
+				baseConfig.Immutable,
+				networkConfig,
+				baseConfig.Node,
+				baseConfig.Logging,
+				baseConfig.User,
+				baseConfig.Extensions,
+				supportedEntities,
+				height,
+				LastConfigOrNull(height-Height(1))
+		);
+
+		m_configs.erase(height);
+		m_configs.insert({ height, config });
+		if(height != Height() && config.Network.Inflation != m_InflationCalculator.getSpotAmount(height-Height(1)))
+			m_InflationCalculator.add(height, config.Network.Inflation);
+	}
+	const model::InflationCalculator& BlockchainConfigurationHolder::InflationCalculator() {
+		return m_InflationCalculator;
+	}
+
 	void BlockchainConfigurationHolder::RemoveConfig(const Height& height){
 		std::unique_lock lock(m_mutex);
+		m_InflationCalculator.remove(height);
 		m_configs.erase(height);
 	}
 }}

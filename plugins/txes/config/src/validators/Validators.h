@@ -27,4 +27,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid
 	DECLARE_STATELESS_VALIDATOR(NetworkConfigPluginConfig, model::PluginConfigNotification<1>)();
+
+	/// A validator implementation that applies block notifications and validates that:
+	/// - all required plugin modules are loaded
+	DECLARE_STATEFUL_VALIDATOR(PluginAvailable, model::BlockNotification<1>)(const plugins::PluginManager& manager);
 }}

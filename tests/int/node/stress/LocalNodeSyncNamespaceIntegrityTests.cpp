@@ -26,6 +26,7 @@
 #include "tests/int/node/stress/test/TransactionBuilderTransferCapability.h"
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
 #include "tests/TestHarness.h"
+#include "tests/test/nodeps/data/BasicExtendedNemesisMemoryBlockStorage_data.h"
 
 namespace catapult { namespace local {
 
@@ -43,31 +44,34 @@ namespace catapult { namespace local {
 			auto subCacheMerkleRoots = context.localNode().cache().createView().calculateStateHash().SubCacheMerkleRoots;
 			return subCacheMerkleRoots.empty() ? Hash256() : subCacheMerkleRoots[2]; // { Config, AccountState, *Namespace*, Mosaic }
 		}
-
 		template<typename TTestContext>
-		auto GenerateNetworkUpgrade(TTestContext& context,
-									const test::Accounts& accounts,
-									test::StateHashCalculator& stateHashCalculator,
-									test::ExternalSourceConnection& connection)
+		std::pair<BlockChainBuilder, std::shared_ptr<model::Block>> GenerateNetworkUpgrade(TTestContext& context,
+																						   const test::Accounts& accounts,
+																						   test::StateHashCalculator& stateHashCalculator,
+																						   test::ExternalSourceConnection& connection,
+																						   bool isV2 = false)
 		{
+
 			test::TransactionsBuilder transactionsBuilder(accounts);
 			auto networkConfigBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNetworkConfigCapability>();
-			auto configuration = context.resourcesDirectory() + "/config-network.properties";
-			std::string supportedEntities;
-			boost::filesystem::load_string_file(context.resourcesDirectory() + "/supported-entities.json", supportedEntities);
-			std::string content;
-			boost::filesystem::load_string_file(configuration, content);
+			mocks::MockMemoryBlockStorage storage([](){return mocks::CreateNemesisBlockElement(test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);});
+			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
+			auto configs = extensions::NemesisBlockLoader::ReadNetworkConfigurationAsStrings(pNemesisBlockElement);
+			std::string supportedEntities = std::get<1>(configs);
+			std::string content  = std::get<0>(configs);
+			if(isV2)
+				boost::algorithm::replace_first(content, "accountVersion = 1", "accountVersion = 2\nminimumAccountVersion = 1");
 			boost::algorithm::replace_first(content, "namespaceGracePeriodDuration = 0d", "namespaceGracePeriodDuration = 1h");
 			networkConfigBuilder->addNetworkConfigUpdate(content, supportedEntities, BlockDuration(1));
 			auto& cache = context.localNode().cache();
 			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
-
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 			auto pUpgradeBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 			test::PushEntity(connection, ionet::PacketType::Push_Block, pUpgradeBlock);
 			test::WaitForHeightAndElements(context, Height(2), 1, 1);
-			return std::make_pair(builder, std::move(pUpgradeBlock));
+			return std::make_pair(builder, pUpgradeBlock);
 		}
+
 		template<typename TTestContext>
 		void AssertBooted(const TTestContext& context, Height expectedHeight) {
 			// Assert:
@@ -189,7 +193,7 @@ namespace catapult { namespace local {
 			auto& cache = context.localNode().cache();
 			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 			test::TransactionsBuilder transactionsBuilder(accounts);
 			auto namespaceBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNamespaceCapability>();
 			namespaceBuilder->addNamespace(0, "foo", BlockDuration(10));
@@ -256,7 +260,7 @@ namespace catapult { namespace local {
 
 
 			test::ExternalSourceConnection connection;
-			auto builderNetworkPair = GenerateNetworkUpgrade(context, accounts, stateHashCalculator, connection);
+			auto builderNetworkPair = GenerateNetworkUpgrade(context, accounts, stateHashCalculator, connection, (accounts.cbegin()+1)->second == 2);
 			auto builder1 = builderNetworkPair.first.createChainedBuilder();
 			auto builderBlockPair = PrepareTwoRootNamespaces(builder1, Height(3), context, accounts, connection, stateHashCalculator, stateHashes);
 
@@ -407,7 +411,7 @@ namespace catapult { namespace local {
 			auto& cache = context.localNode().cache();
 			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 			test::TransactionsBuilder transactionsBuilder(accounts);
 			auto namespaceBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNamespaceCapability>();
 			namespaceBuilder->addNamespace(0, "foo", BlockDuration(12));
@@ -494,7 +498,7 @@ namespace catapult { namespace local {
 			{
 				auto stateHashCalculator = context.createStateHashCalculator();
 				test::ExternalSourceConnection connection;
-				auto builderNetworkPair = GenerateNetworkUpgrade(context, accounts, stateHashCalculator, connection);
+				auto builderNetworkPair = GenerateNetworkUpgrade(context, accounts, stateHashCalculator, connection, (accounts.cbegin()+1)->second == 2);
 				auto builder1 = builderNetworkPair.first.createChainedBuilder();
 				auto builderBlockPair = PrepareTwoRootNamespaces(builder1, Height(3), context, accounts, connection, stateHashCalculator, stateHashes);
 
@@ -517,7 +521,7 @@ namespace catapult { namespace local {
 			std::shared_ptr<model::Block> pExpiryBlock1;
 			{
 				auto stateHashCalculator = context.createStateHashCalculator();
-				test::SeedStateHashCalculator(stateHashCalculator, allBlocks);
+				test::SeedStateHashCalculator(stateHashCalculator, allBlocks, test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);
 
 				auto builder3 = pBuilder->createChainedBuilder(stateHashCalculator);
 				test::TransactionsBuilder transactionsBuilder(accounts);
@@ -530,7 +534,7 @@ namespace catapult { namespace local {
 			Blocks expiryBlocks2;
 			{
 				auto stateHashCalculator = context.createStateHashCalculator();
-				test::SeedStateHashCalculator(stateHashCalculator, allBlocks);
+				test::SeedStateHashCalculator(stateHashCalculator, allBlocks, test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);
 
 				auto builder3 = pBuilder->createChainedBuilder(stateHashCalculator);
 				builder3.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain

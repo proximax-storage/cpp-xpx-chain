@@ -31,6 +31,14 @@
 #include "tests/test/core/StorageTestUtils.h"
 #include "tests/test/nemesis/NemesisCompatibleConfiguration.h"
 #include "tests/test/nodeps/Filesystem.h"
+#include "catapult/extensions/NemesisBlockLoader.h"
+#include "plugins/txes/mosaic/src/config/MosaicConfiguration.h"
+#include "plugins/txes/transfer/src/config/TransferConfiguration.h"
+#include "plugins/txes/namespace/src/config/NamespaceConfiguration.h"
+#include "plugins/services/globalstore/src/config/GlobalStoreConfiguration.h"
+#include "plugins/txes/upgrade/src/config/BlockchainUpgradeConfiguration.h"
+#include "plugins/txes/lock_fund/src/config/LockFundConfiguration.h"
+#include "plugins/txes/config/src/config/NetworkConfigConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -51,12 +59,14 @@ namespace catapult { namespace test {
 	class LocalNodeTestContext {
 	public:
 		/// Creates a context around \a nodeFlag.
-		explicit LocalNodeTestContext(NodeFlag nodeFlag) : LocalNodeTestContext(nodeFlag, {})
+		explicit LocalNodeTestContext(NodeFlag nodeFlag,
+									  const std::string& seedDir = "") : LocalNodeTestContext(nodeFlag, std::vector<ionet::Node>{})
 		{}
 
 		/// Creates a context around \a nodeFlag with custom \a nodes.
-		LocalNodeTestContext(NodeFlag nodeFlag, const std::vector<ionet::Node>& nodes)
-				: LocalNodeTestContext(nodeFlag, nodes, [](const auto&) {}, "")
+		LocalNodeTestContext(NodeFlag nodeFlag, const std::vector<ionet::Node>& nodes,
+							 const std::string& seedDir = "")
+				: LocalNodeTestContext(nodeFlag, nodes, [](const auto&) {}, "", seedDir)
 		{}
 		~LocalNodeTestContext()
 		{
@@ -69,7 +79,8 @@ namespace catapult { namespace test {
 				NodeFlag nodeFlag,
 				const std::vector<ionet::Node>& nodes,
 				const consumer<config::BlockchainConfiguration&>& configTransform,
-				const std::string& tempDirPostfix)
+				const std::string& tempDirPostfix,
+				const std::string& seedDir= "")
 				: m_nodeFlag(nodeFlag)
 				, m_nodes(nodes)
 				, m_configTransform(configTransform)
@@ -78,17 +89,30 @@ namespace catapult { namespace test {
 				, m_localNodeHarvestingKeys(std::make_tuple(crypto::KeyPair::FromString("819F72066B17FFD71B8B4142C5AEAE4B997B0882ABDF2C263B02869382BD93A0", 1), test::GenerateVrfKeyPair()))
 				, m_tempDir("lntc" + tempDirPostfix)
 				, m_partnerTempDir("lntc_partner" + tempDirPostfix) {
-			if(HasFlag(NodeFlag::Auto_Harvest, nodeFlag)) initializeDataDirectory(m_tempDir.name(), &m_localNodeHarvestingKeys);
-			else initializeDataDirectory(m_tempDir.name());
+			if(HasFlag(NodeFlag::Auto_Harvest, nodeFlag)) initializeDataDirectory(m_tempDir.name(), seedDir, &m_localNodeHarvestingKeys);
+			else initializeDataDirectory(m_tempDir.name(), seedDir);
 
 
 
 			if (HasFlag(NodeFlag::With_Partner, nodeFlag)) {
-				initializeDataDirectory(m_partnerTempDir.name());
+				initializeDataDirectory(m_partnerTempDir.name(), seedDir);
 
 				// need to call configTransform first so that partner node loads all required transaction plugins
 				auto config = CreatePrototypicalBlockchainConfiguration(m_partnerTempDir.name());
 				m_configTransform(config);
+				auto conf = loadAssociatedNemesisBlock();
+				const_cast<model::NetworkConfiguration&>(config.Network) = std::get<0>(conf);
+				const_cast<config::SupportedEntityVersions&>(config.SupportedEntityVersions) = std::get<1>(conf);
+
+				// Preload plugin configuraitons for nemesis required plugins
+
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::TransferConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::MosaicConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NamespaceConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::LockFundConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::GlobalStoreConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NetworkConfigConfiguration>();
 				m_pLocalPartnerNode = BootLocalPartnerNode(std::move(config), m_partnerServerKeyPair, nodeFlag);
 			}
 
@@ -97,8 +121,8 @@ namespace catapult { namespace test {
 		}
 
 	private:
-		void initializeDataDirectory(const std::string& directory, std::tuple<crypto::KeyPair, crypto::KeyPair>* harvestKeys = nullptr) const {
-			PrepareStorage(directory);
+		void initializeDataDirectory(const std::string& directory, const std::string& seedDir, std::tuple<crypto::KeyPair, crypto::KeyPair>* harvestKeys = nullptr) const {
+			PrepareStorage(directory, seedDir);
 			PrepareConfiguration(directory, m_nodeFlag, harvestKeys);
 
 			auto config = CreatePrototypicalBlockchainConfiguration(directory);
@@ -106,6 +130,7 @@ namespace catapult { namespace test {
 
 			if (HasFlag(NodeFlag::Verify_Receipts, m_nodeFlag))
 				SetNemesisReceiptsHash(directory, config);
+
 
 			if (HasFlag(NodeFlag::Verify_State, m_nodeFlag))
 				SetNemesisStateHash(directory, config);
@@ -122,6 +147,15 @@ namespace catapult { namespace test {
 			return m_tempDir.name() + "/resources";
 		}
 
+		auto loadAssociatedNemesisBlock() const{
+			// load from file storage to allow successive modifications
+			io::FileBlockStorage storage(dataDirectory());
+			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
+
+			// modify nemesis block and resign it
+			auto& nemesisBlock = const_cast<model::Block&>(pNemesisBlockElement->Block);
+			return extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+		}
 		/// Gets the primary (first) local node.
 		local::LocalNode& localNode() const {
 			return *m_pLocalNode;
@@ -141,17 +175,31 @@ namespace catapult { namespace test {
 		}
 
 	public:
-		/// Creates a copy of the default blockchain configuration.
+		/// Creates a copy of the default blockchain configuration which will be overwritten.
 		config::BlockchainConfiguration createConfig() const {
-			return CreatePrototypicalBlockchainConfiguration(m_tempDir.name());
+			auto config = CreatePrototypicalBlockchainConfiguration(m_tempDir.name());
+			return config;
 		}
 
 		/// Prepares a fresh data \a directory and returns corresponding configuration.
-		config::BlockchainConfiguration prepareFreshDataDirectory(const std::string& directory) const {
-			initializeDataDirectory(directory);
-
+		config::BlockchainConfiguration prepareFreshDataDirectory(const std::string& directory, const std::string& seedDir) const {
+			initializeDataDirectory(directory, seedDir);
+			auto conf = loadAssociatedNemesisBlock();
 			auto config = CreatePrototypicalBlockchainConfiguration(directory);
 			prepareNetworkConfiguration(config);
+			const_cast<model::NetworkConfiguration&>(config.Network) = std::get<0>(conf);
+			const_cast<config::SupportedEntityVersions&>(config.SupportedEntityVersions) = std::get<1>(conf);
+
+			// Preload plugin configuraitons for nemesis required plugins
+
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::TransferConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::MosaicConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NamespaceConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::LockFundConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::GlobalStoreConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NetworkConfigConfiguration>();
+
 			return config;
 		}
 
@@ -214,6 +262,7 @@ namespace catapult { namespace test {
 		}
 
 	private:
+		/// Note: Network configuration is loaded from nemesis block.
 		void prepareNetworkConfiguration(config::BlockchainConfiguration& config) const {
 			PrepareNetworkConfiguration(config, TTraits::AddPluginExtensions, m_nodeFlag);
 			m_configTransform(config);

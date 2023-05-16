@@ -76,10 +76,10 @@ namespace catapult { namespace test {
 
 		/// Creates a new builder starting at this builder's terminal block with a different
 		/// state hash calculator (\a stateHashCalculator).
-		BlockChainBuilder createChainedBuilder(StateHashCalculator& stateHashCalculator) const;
+		BlockChainBuilder createChainedBuilder(StateHashCalculator& stateHashCalculator, const std::string& resourcesPath = "") const;
 
 		/// Creates a new builder with a different state hash calculator (\a stateHashCalculator) starting at the supplied \a block.
-		BlockChainBuilder createChainedBuilder(StateHashCalculator& stateHashCalculator, const model::Block& block) const;
+		BlockChainBuilder createChainedBuilder(StateHashCalculator& stateHashCalculator, const model::Block& block, const std::string& resourcesPath = "") const;
 
 	public:
 		/// Builds a single block with transactions from \a transactionsGenerator.

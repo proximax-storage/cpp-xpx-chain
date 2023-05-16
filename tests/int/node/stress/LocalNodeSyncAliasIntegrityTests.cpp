@@ -23,6 +23,7 @@
 #include "tests/int/node/stress/test/TransactionBuilderTransferCapability.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
+#include "tests/test/nodeps/data/BasicExtendedNemesisMemoryBlockStorage_data.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
@@ -71,7 +72,7 @@ namespace catapult { namespace local {
 			auto stateHashCalculator = context.createStateHashCalculator();
 			auto& cache = context.localNode().cache();
 			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 			auto pBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 
 			// Act:
@@ -108,7 +109,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanApplyAliasWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Namespace);
+		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashes = RunApplyAliasTest(context);
@@ -125,7 +126,7 @@ namespace catapult { namespace local {
 	namespace {
 		//Note: Currently unnecessary as V2 accounts never issue transactions in this test.
 		using test_types = ::testing::Types<
-				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V1 ACCOUNTS
+				//std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V1 ACCOUNTS
 				//std::pair<std::integral_constant<uint32_t,2>, std::integral_constant<uint32_t,2>>, //RUN THIS INSTEAD IF THE MIJIN TEST ACCOUNTS ARE V2 ACCOUNTS
 				std::pair<std::integral_constant<uint32_t,1>, std::integral_constant<uint32_t,1>>
 		>;
@@ -164,8 +165,8 @@ namespace catapult { namespace local {
 
 			// 3. create block
 			auto stateHashCalculator = context.createStateHashCalculator();
-			SeedStateHashCalculator(stateHashCalculator, seedBlocks);
-			auto builder2 = builder.createChainedBuilder(stateHashCalculator);
+			SeedStateHashCalculator(stateHashCalculator, seedBlocks, test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);
+			auto builder2 = builder.createChainedBuilder(stateHashCalculator, context.dataDirectory());
 			builder2.setBlockTimeInterval(blockTimeInterval);
 			return utils::UniqueToShared(builder2.asSingleBlock(transactionsBuilder));
 		}
@@ -190,7 +191,7 @@ namespace catapult { namespace local {
 				auto& cache = context.localNode().cache();
 				auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 
-				BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+				BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 				auto pBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 
 				test::ExternalSourceConnection connection;

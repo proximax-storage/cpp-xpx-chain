@@ -101,18 +101,18 @@ namespace catapult { namespace test {
 		return createChainedBuilder(*m_pStateHashCalculator);
 	}
 
-	BlockChainBuilder BlockChainBuilder::createChainedBuilder(StateHashCalculator& stateHashCalculator) const {
+	BlockChainBuilder BlockChainBuilder::createChainedBuilder(StateHashCalculator& stateHashCalculator, const std::string& resourcesPath) const {
 		// resources directory is not used when creating chained builder
-		auto builder = BlockChainBuilder(*m_pAccounts, stateHashCalculator, m_pConfigHolder, m_pAccountStateCache, "", true);
+		auto builder = BlockChainBuilder(*m_pAccounts, stateHashCalculator, m_pConfigHolder, m_pAccountStateCache, resourcesPath, true);
 		builder.m_pTailBlockElement = m_pTailBlockElement;
 		builder.m_pParentBlockElement = m_pTailBlockElement;
 		builder.m_difficulties = m_difficulties;
 		return builder;
 	}
 
-	BlockChainBuilder BlockChainBuilder::createChainedBuilder(StateHashCalculator& stateHashCalculator, const model::Block& block) const {
+	BlockChainBuilder BlockChainBuilder::createChainedBuilder(StateHashCalculator& stateHashCalculator, const model::Block& block, const std::string& resourcesPath) const {
 		// resources directory is not used when creating chained builder
-		auto builder = BlockChainBuilder(*m_pAccounts, stateHashCalculator, m_pConfigHolder, m_pAccountStateCache, "", true);
+		auto builder = BlockChainBuilder(*m_pAccounts, stateHashCalculator, m_pConfigHolder, m_pAccountStateCache, resourcesPath, true);
 		builder.m_pTailBlockElement = ToSharedBlockElement(m_pTailBlockElement->GenerationHash, block);
 		builder.m_pParentBlockElement = builder.m_pTailBlockElement;
 		builder.m_difficulties = m_difficulties;

@@ -33,21 +33,36 @@
 #include "tests/test/nodeps/TestConstants.h"
 #include "plugins/txes/lock_fund/src/model/LockFundTotalStakedReceipt.h"
 #include "plugins/txes/lock_fund/src/model/LockFundReceiptType.h"
+#include "catapult/extensions/NemesisBlockLoader.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
+#include "plugins/txes/transfer/src/config/TransferConfiguration.h"
+#include "plugins/txes/namespace/src/config/NamespaceConfiguration.h"
+#include "plugins/txes/lock_fund/src/config/LockFundConfiguration.h"
+#include "plugins/txes/upgrade/src/config/BlockchainUpgradeConfiguration.h"
+#include "plugins/txes/mosaic/src/config/MosaicConfiguration.h"
+#include "plugins/txes/config/src/config/NetworkConfigConfiguration.h"
+#include "plugins/services/globalstore/src/config/GlobalStoreConfiguration.h"
+#include "plugins/txes/service/src/config/ServiceConfiguration.h"
+#include "plugins/txes/exchange/src/config/ExchangeConfiguration.h"
+#include "plugins/txes/supercontract/src/config/SuperContractConfiguration.h"
+#include "plugins/txes/operation/src/config/OperationConfiguration.h"
+#include "plugins/txes/metadata_v2/src/config/MetadataConfiguration.h"
 
 namespace catapult { namespace test {
 
 	namespace {
 		template<typename TModify>
-		void ModifyNemesis(const std::string& destination, uint32_t accountVersion, TModify modify) {
+		void ModifyNemesis(const std::string& destination, TModify modify) {
 			// load from file storage to allow successive modifications
 			io::FileBlockStorage storage(destination);
 			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
 
 			// modify nemesis block and resign it
 			auto& nemesisBlock = const_cast<model::Block&>(pNemesisBlockElement->Block);
-			modify(nemesisBlock, *pNemesisBlockElement);
+			auto bundleConfig = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+			modify(nemesisBlock, *pNemesisBlockElement, bundleConfig);
 			extensions::BlockExtensions(GetNemesisGenerationHash()).signFullBlock(
-					crypto::KeyPair::FromString(Mijin_Test_Nemesis_Private_Key, accountVersion),
+					crypto::KeyPair::FromString(Mijin_Test_Nemesis_Private_Key, std::get<0>(bundleConfig).AccountVersion),
 					nemesisBlock);
 
 			// overwrite the nemesis file in destination
@@ -78,7 +93,7 @@ namespace catapult { namespace test {
 
 	void SetNemesisReceiptsHash(const std::string& destination, const config::BlockchainConfiguration& config) {
 		// calculate the receipts hash (default nemesis block has zeroed receipts hash)
-		ModifyNemesis(destination, config.Network.AccountVersion, [](auto& nemesisBlock, const auto&) {
+		ModifyNemesis(destination,  [](auto& nemesisBlock, const auto&, const auto&) {
 			model::BlockStatementBuilder blockStatementBuilder;
 
 			// 1. add harvest fee receipt
@@ -123,8 +138,27 @@ namespace catapult { namespace test {
 	}
 		void SetNemesisStateHash(const std::string& destination, const config::BlockchainConfiguration& config) {
 		// calculate the state hash (default nemesis block has zeroed state hash)
-		ModifyNemesis(destination, config.Network.AccountVersion, [&config](auto& nemesisBlock, const auto& nemesisBlockElement) {
-			nemesisBlock.StateHash = CalculateNemesisStateHash(nemesisBlockElement, config);
+		ModifyNemesis(destination, [&config](auto& nemesisBlock, const auto& nemesisBlockElement, const auto& configPair) {
+			MutableBlockchainConfiguration mConfig;
+			mConfig.Immutable = config.Immutable;
+			mConfig.Node = config.Node;
+			mConfig.User = config.User;
+			mConfig.Extensions = config.Extensions;
+			mConfig.Logging = config.Logging;
+			mConfig.Network = std::get<0>(configPair);
+			mConfig.SupportedEntityVersions = std::get<1>(configPair);
+
+			// Preload plugin configuraitons for nemesis required plugins
+
+			mConfig.Network.template InitPluginConfiguration<config::TransferConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::MosaicConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::NamespaceConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::LockFundConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::GlobalStoreConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
+
+			nemesisBlock.StateHash = CalculateNemesisStateHash(nemesisBlockElement, mConfig.ToConst());
 		});
 	}
 }}

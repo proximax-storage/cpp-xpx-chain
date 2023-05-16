@@ -51,10 +51,6 @@ namespace catapult { namespace plugins {
 		return m_storageConfig;
 	}
 
-	const config::InflationConfiguration& PluginManager::inflationConfig() const {
-		return m_pConfigHolder->Config().Inflation;
-	}
-
 	const config::ImmutableConfiguration& PluginManager::immutableConfig() const {
 		return m_pConfigHolder->Config().Immutable;
 	}

@@ -73,6 +73,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because ApplyHeightDelta is zero.
 	DEFINE_CATAPULT_CONFIG_RESULT(ApplyHeight_In_The_Past, 20);
 
+	/// Validation failed because ApplyHeightDelta is zero.
+	DEFINE_CATAPULT_CONFIG_RESULT(Required_Plugins_Not_Matching, 21);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

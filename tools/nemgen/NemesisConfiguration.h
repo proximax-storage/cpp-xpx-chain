@@ -73,6 +73,9 @@ namespace catapult { namespace tools { namespace nemgen {
 		/// Cpp file path.
 		std::string CppFile;
 
+		/// Cpp variable name.
+		std::string CppVariableName;
+
 		/// Binary destination directory.
 		std::string BinDirectory;
 

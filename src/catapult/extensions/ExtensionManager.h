@@ -30,6 +30,7 @@ namespace catapult { namespace cache { class CatapultCache; } }
 
 namespace catapult { namespace extensions {
 
+
 	/// A manager for registering extensions.
 	class ExtensionManager {
 	public:

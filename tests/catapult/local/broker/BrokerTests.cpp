@@ -26,6 +26,7 @@
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/MessageIngestionTestContext.h"
 #include "tests/TestHarness.h"
+#include "tests/test/core/StorageTestUtils.h"
 
 namespace catapult { namespace local {
 
@@ -42,6 +43,8 @@ namespace catapult { namespace local {
 	public:
 		void boot() {
 			auto config = test::CreatePrototypicalBlockchainConfiguration(dataDirectory().rootDir().str());
+			if (!boost::filesystem::exists(dataDirectory().rootDir().path() / "00000"))
+				test::PrepareStorage(dataDirectory().rootDir().str(), "../seed/mijin-test-basic");
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
 					pConfigHolder,

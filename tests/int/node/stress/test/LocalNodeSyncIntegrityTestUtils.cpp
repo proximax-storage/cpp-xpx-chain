@@ -33,9 +33,8 @@ namespace catapult { namespace test {
 	}
 
 	StateHashDisabledTestContext::StateHashDisabledTestContext(
-			NonNemesisTransactionPlugins additionalPlugins,
 			const consumer<config::BlockchainConfiguration&>& configTransform)
-			: PeerLocalNodeTestContext(NodeFlag::Regular, additionalPlugins, configTransform)
+			: PeerLocalNodeTestContext(NodeFlag::Regular, configTransform)
 	{}
 
 	StateHashCalculator StateHashDisabledTestContext::createStateHashCalculator() const {
@@ -43,9 +42,8 @@ namespace catapult { namespace test {
 	}
 
 	StateHashEnabledTestContext::StateHashEnabledTestContext(
-			NonNemesisTransactionPlugins additionalPlugins,
 			const consumer<config::BlockchainConfiguration&>& configTransform)
-			: PeerLocalNodeTestContext(NodeFlag::Verify_State, additionalPlugins, configTransform)
+			: PeerLocalNodeTestContext(NodeFlag::Verify_State, configTransform)
 			, m_stateHashCalculationDir(State_Hash_Directory) // isolated directory used for state hash calculation
 	{}
 
@@ -54,7 +52,7 @@ namespace catapult { namespace test {
 			TempDirectoryGuard forceCleanResourcesDir(State_Hash_Directory);
 		}
 
-		return StateHashCalculator(prepareFreshDataDirectory(m_stateHashCalculationDir.name()));
+		return StateHashCalculator(prepareFreshDataDirectory(m_stateHashCalculationDir.name(), "../seed/mijin-test-basic-extended"));
 	}
 
 	// endregion

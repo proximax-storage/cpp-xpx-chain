@@ -24,59 +24,18 @@
 
 namespace catapult { namespace test {
 
-	namespace {
-		void AddAdditionalPlugins(config::BlockchainConfiguration& config, NonNemesisTransactionPlugins additionalPlugins) {
-			auto& plugins = const_cast<model::NetworkConfiguration&>(config.Network).Plugins;
-			if (NonNemesisTransactionPlugins::Lock_Secret == additionalPlugins) {
-				plugins.emplace("catapult.plugins.locksecret", utils::ConfigurationBag({{
-					"",
-					{
-						{ "maxSecretLockDuration", "30d" },
-						{ "minProofSize", "1" },
-						{ "maxProofSize", "1000" }
-					}
-				}}));
-			}
-
-			if (NonNemesisTransactionPlugins::Property == additionalPlugins) {
-				plugins.emplace("catapult.plugins.property", utils::ConfigurationBag({{
-					"",
-					{
-						{ "maxPropertyValues", "10" },
-					}
-				}}));
-			}
-
-			if (NonNemesisTransactionPlugins::Namespace == additionalPlugins) {
-				plugins.emplace("catapult.plugins.namespace", utils::ConfigurationBag({{
-				  "",
-				  {
-						  { "maxNameSize", "64" },
-						  { "maxNamespaceDuration", "365d" },
-						  { "namespaceGracePeriodDuration", "0d" },
-						  { "reservedRootNamespaceNames", "xem, nem, user, account, org, com, biz, net, edu, mil, gov, info, prx, xpx, xarcade, xar, proximax, prc, storage" },
-						  { "namespaceRentalFeeSinkPublicKey", "3E82E1C1E4A75ADAA3CBA8C101C3CD31D9817A2EB966EB3B511FB2ED45B8E262" },
-						  { "rootNamespaceRentalFeePerBlock", "10'000'000'000" },
-						  { "childNamespaceRentalFee", "10'000'000'000" },
-						  { "maxChildNamespaces", "500" },
-				  }
-				}}));
-			}
-		}
-	}
 
 	PeerLocalNodeTestContext::PeerLocalNodeTestContext(
 			NodeFlag nodeFlag,
-			NonNemesisTransactionPlugins additionalPlugins,
 			const consumer<config::BlockchainConfiguration&>& configTransform)
 			: m_context(
 					nodeFlag | NodeFlag::With_Partner,
 					{ CreateLocalPartnerNode() },
-					[additionalPlugins, configTransform](auto& config) {
-						AddAdditionalPlugins(config, additionalPlugins);
+					[configTransform](auto& config) {
 						configTransform(config);
 					},
-					"")
+					"",
+				  "../seed/mijin-test-basic-extended")
 	{}
 
 	local::LocalNode& PeerLocalNodeTestContext::localNode() const {
@@ -112,8 +71,8 @@ namespace catapult { namespace test {
 		WaitForLocalNodeHeight(connection, height);
 	}
 
-	config::BlockchainConfiguration PeerLocalNodeTestContext::prepareFreshDataDirectory(const std::string& directory) const {
-		return m_context.prepareFreshDataDirectory(directory);
+	config::BlockchainConfiguration PeerLocalNodeTestContext::prepareFreshDataDirectory(const std::string& directory, const std::string& seedDir) const {
+		return m_context.prepareFreshDataDirectory(directory, seedDir);
 	}
 
 	void PeerLocalNodeTestContext::assertSingleReaderConnection() const {

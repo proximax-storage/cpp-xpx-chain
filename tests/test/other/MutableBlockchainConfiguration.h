@@ -34,7 +34,6 @@ namespace catapult { namespace test {
 				, Logging(config::LoggingConfiguration::Uninitialized())
 				, User(config::UserConfiguration::Uninitialized())
 				, Extensions(config::ExtensionsConfiguration::Uninitialized())
-				, Inflation(config::InflationConfiguration::Uninitialized())
 				, SupportedEntityVersions()
 				, ActivationHeight(Height(0))
 				, PreviousConfiguration(nullptr)
@@ -59,9 +58,6 @@ namespace catapult { namespace test {
 		/// Extensions configuration.
 		config::ExtensionsConfiguration Extensions;
 
-		/// Inflation configuration.
-		config::InflationConfiguration Inflation;
-
 		/// Supported entity versions.
 		config::SupportedEntityVersions SupportedEntityVersions;
 
@@ -81,7 +77,6 @@ namespace catapult { namespace test {
 					std::move(Logging),
 					std::move(User),
 					std::move(Extensions),
-					std::move(Inflation),
 					std::move(SupportedEntityVersions),
 					std::move(ActivationHeight),
 					std::move(PreviousConfiguration));

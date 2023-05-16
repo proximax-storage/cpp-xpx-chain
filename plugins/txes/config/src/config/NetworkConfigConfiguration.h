@@ -7,11 +7,14 @@
 #pragma once
 #include "catapult/model/PluginConfiguration.h"
 #include "catapult/utils/FileSize.h"
+#include "plugins/services/globalstore/src/state/GlobalKeyGenerator.h"
 #include <stdint.h>
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
 
 namespace catapult { namespace config {
+
+	constexpr auto InflationMap_GlobalKey = state::GenerateNewGlobalKeyFromLiteral("InflationMap");
 
 	/// Network config plugin configuration settings.
 	struct NetworkConfigConfiguration : public model::PluginConfiguration {

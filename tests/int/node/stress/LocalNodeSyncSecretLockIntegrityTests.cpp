@@ -24,6 +24,7 @@
 #include "tests/int/node/stress/test/TransactionBuilderTransferCapability.h"
 #include "tests/int/node/stress/test/TransactionBuilderSecretLockCapability.h"
 #include "tests/TestHarness.h"
+#include "tests/test/nodeps/data/BasicExtendedNemesisMemoryBlockStorage_data.h"
 
 namespace catapult { namespace local {
 
@@ -75,7 +76,7 @@ namespace catapult { namespace local {
 			auto& cache = context.localNode().cache();
 			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 			auto pSecretLockBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
 
 			// Act:
@@ -164,7 +165,7 @@ namespace catapult { namespace local {
 
 			Blocks createTailBlocks(utils::TimeSpan blockInterval, const consumer<test::TransactionsBuilder&>& addToBuilder) {
 				auto stateHashCalculator = m_context.createStateHashCalculator();
-				test::SeedStateHashCalculator(stateHashCalculator, m_allBlocks);
+				test::SeedStateHashCalculator(stateHashCalculator, m_allBlocks, test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);
 
 				test::TransactionsBuilder transactionsBuilder(m_accounts);
 				addToBuilder(transactionsBuilder);
@@ -218,7 +219,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanLockSecretLock) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunLockSecretLockTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -229,7 +230,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanLockSecretLockWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunLockSecretLockTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -283,7 +284,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanUnlockSecretLock) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunUnlockSecretLockTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -294,7 +295,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanUnlockSecretLockWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunUnlockSecretLockTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -342,7 +343,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanExpireSecretLock) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunExpireSecretLockTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -353,7 +354,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanExpireSecretLockWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunExpireSecretLockTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -408,7 +409,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanUnlockAndRollbackSecretLock) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunUnlockAndRollbackSecretLockTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -419,7 +420,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanUnlockAndRollbackSecretLockWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunUnlockAndRollbackSecretLockTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -484,7 +485,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanExpireAndRollbackSecretLock) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunExpireAndRollbackSecretLockTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -495,7 +496,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanExpireAndRollbackSecretLockWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunExpireAndRollbackSecretLockTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -513,7 +514,7 @@ namespace catapult { namespace local {
 		class SecretLockRollbackTestContext {
 		public:
 			SecretLockRollbackTestContext()
-					: m_context(test::NonNemesisTransactionPlugins::Lock_Secret, ConfigTransform)
+					: m_context(ConfigTransform)
 					, m_accounts(4, TRemainingAccountVersions, TDefaultAccountVersion)
 			{}
 
@@ -541,7 +542,7 @@ namespace catapult { namespace local {
 
 				{
 					auto stateHashCalculator = m_context.createStateHashCalculator();
-					test::SeedStateHashCalculator(stateHashCalculator, allBlocks);
+					test::SeedStateHashCalculator(stateHashCalculator, allBlocks, test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);
 					builder = builder.createChainedBuilder(stateHashCalculator);
 					builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(13));
 					auto betterBlocks = builder.asBlockChain(transactionsBuilder2);
@@ -561,7 +562,7 @@ namespace catapult { namespace local {
 
 				// - readd secret lock
 				auto stateHashCalculator2 = m_context.createStateHashCalculator();
-				test::SeedStateHashCalculator(stateHashCalculator2, allBlocks);
+				test::SeedStateHashCalculator(stateHashCalculator2, allBlocks, test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);
 				auto builder3 = builder.createChainedBuilder(stateHashCalculator2);
 
 				test::TransactionsBuilder transactionsBuilder3(m_accounts);
@@ -608,7 +609,7 @@ namespace catapult { namespace local {
 				auto& cache = m_context.localNode().cache();
 				auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 
-				BlockChainBuilder builder(m_accounts, stateHashCalculator, m_context.configHolder(), &accountStateCache);
+				BlockChainBuilder builder(m_accounts, stateHashCalculator, m_context.configHolder(), &accountStateCache, m_context.dataDirectory());
 				auto blocks = builder.asBlockChain(transactionsBuilder);
 				allBlocks.insert(allBlocks.cend(), blocks.cbegin(), blocks.cend());
 
@@ -630,7 +631,7 @@ namespace catapult { namespace local {
 					BlockChainBuilder::Blocks& allBlocks,
 					utils::TimeSpan blockTimeInterval = utils::TimeSpan::FromSeconds(15)) {
 				auto stateHashCalculator = m_context.createStateHashCalculator();
-				test::SeedStateHashCalculator(stateHashCalculator, allBlocks);
+				test::SeedStateHashCalculator(stateHashCalculator, allBlocks, test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);
 				auto tempBuilder = builder.createChainedBuilder(stateHashCalculator);
 				tempBuilder.setBlockTimeInterval(blockTimeInterval);
 				return tempBuilder.asBlockChain(transactionGenerator);
@@ -715,7 +716,7 @@ namespace catapult { namespace local {
 			auto& cache = context.localNode().cache();
 			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 			auto blocks = builder.asBlockChain(transactionsBuilder);
 
 			test::ExternalSourceConnection connection;
@@ -735,7 +736,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanLockAndUnlockSecretLock_SingleChainPart) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunLockAndUnlockSecretLockTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -746,7 +747,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncSecretLockIntegrityTests, CanLockAndUnlockSecretLockWithStateHashEnabled_SingleChainPart) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunLockAndUnlockSecretLockTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));

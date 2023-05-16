@@ -40,6 +40,15 @@
 #include "tests/test/other/mocks/MockBlockChangeSubscriber.h"
 #include "tests/test/other/mocks/MockBlockHeightCapturingNotificationObserver.h"
 #include "tests/TestHarness.h"
+#include "tests/test/core/mocks/MockMemoryBlockStorage.h"
+#include "tests/test/nodeps/data/BasicNemesisMemoryBlockStorage_data.h"
+#include "plugins/txes/mosaic/src/config/MosaicConfiguration.h"
+#include "plugins/txes/upgrade/src/config/BlockchainUpgradeConfiguration.h"
+#include "plugins/txes/lock_fund/src/config/LockFundConfiguration.h"
+#include "plugins/txes/namespace/src/config/NamespaceConfiguration.h"
+#include "plugins/services/globalstore/src/config/GlobalStoreConfiguration.h"
+#include "plugins/txes/config/src/config/NetworkConfigConfiguration.h"
+#include "plugins/txes/transfer/src/config/TransferConfiguration.h"
 
 namespace catapult { namespace local {
 
@@ -132,7 +141,7 @@ namespace catapult { namespace local {
 			auto supplementalData = CreateDeterministicSupplementalData();
 
 			// - seed with nemesis block, so that nemesis accounts have proper balances
-			test::LocalNodeTestState state(pluginManager.configHolder()->Config(), pluginManager.createCache());
+			test::LocalNodeTestState state(pluginManager.configHolder()->Config(), pluginManager.createCache(), test::Basic_MemoryBlockStorage_NemesisBlockData);
 			SeedCacheWithNemesis(state.ref(), pluginManager);
 			RandomSeedCache(state.ref().Cache, cacheHeight);
 
@@ -141,7 +150,7 @@ namespace catapult { namespace local {
 			if (shouldUseCacheDatabase) {
 				auto storages = const_cast<const cache::CatapultCache&>(state.ref().Cache).storages();
 				auto cacheDelta = state.ref().Cache.createDelta();
-				serializer.save(cacheDelta, storages, supplementalData.State, supplementalData.ChainScore, cacheHeight);
+				serializer.save(state.ref().Cache, cacheDelta, storages, supplementalData.State, supplementalData.ChainScore, cacheHeight);
 			} else {
 				serializer.save(state.ref().Cache, supplementalData.State, supplementalData.ChainScore);
 			}
@@ -233,7 +242,25 @@ namespace catapult { namespace local {
 
 				// seed the data directory at most once
 				if (!boost::filesystem::exists(dataDirectory().rootDir().path() / "00000"))
-					test::PrepareStorage(dataDirectory().rootDir().str());
+					test::PrepareStorage(dataDirectory().rootDir().str(), "../seed/mijin-test-basic");
+
+				// Update config with nemesis block configuration
+
+				mocks::MockMemoryBlockStorage storage([](){return mocks::CreateNemesisBlockElement(test::Basic_MemoryBlockStorage_NemesisBlockData);});
+				auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
+				auto configs = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+				const_cast<config::SupportedEntityVersions&>(config.SupportedEntityVersions) = std::get<1>(configs);
+				const_cast<model::NetworkConfiguration&>(config.Network) = std::get<0>(configs);
+
+				// PReload plugins
+
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::TransferConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::MosaicConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NamespaceConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::LockFundConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::GlobalStoreConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NetworkConfigConfiguration>();
 
 				// prepare storage
 				prepareSavedStorage(config);

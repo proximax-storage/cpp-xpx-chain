@@ -47,7 +47,6 @@ namespace catapult { namespace tools { namespace nemgen {
 			config::LoggingConfiguration::Uninitialized(),
 			config::UserConfiguration::Uninitialized(),
 			config::ExtensionsConfiguration::Uninitialized(),
-			config::InflationConfiguration::Uninitialized(),
 			config::SupportedEntityVersions()
 		};
 

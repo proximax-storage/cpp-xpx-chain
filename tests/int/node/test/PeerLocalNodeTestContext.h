@@ -23,28 +23,12 @@
 
 namespace catapult { namespace test {
 
-	/// Additional (non-nemesis) local node transaction plugins to register.
-	enum class NonNemesisTransactionPlugins {
-		/// No additional plugins.
-		None,
-
-		/// Lock secret plugin.
-		Lock_Secret,
-
-		/// Property plugin.
-		Property,
-
-		/// Namespace
-		Namespace
-	};
-
 	/// Test context for peer local node tests.
 	class PeerLocalNodeTestContext {
 	public:
 		/// Creates a context around \a nodeFlag, \a additionalPlugins and \a configTransform.
 		explicit PeerLocalNodeTestContext(
 				NodeFlag nodeFlag = NodeFlag::Regular,
-				NonNemesisTransactionPlugins additionalPlugins = NonNemesisTransactionPlugins::None,
 				const consumer<config::BlockchainConfiguration&>& configTransform = [](const auto&) {});
 
 	public:
@@ -73,7 +57,7 @@ namespace catapult { namespace test {
 		void waitForHeight(Height height) const;
 
 		/// Prepares a fresh data \a directory and returns corresponding configuration.
-		config::BlockchainConfiguration prepareFreshDataDirectory(const std::string& directory) const;
+		config::BlockchainConfiguration prepareFreshDataDirectory(const std::string& directory, const std::string& seedDir) const;
 
 	public:
 		/// Asserts that node has a single reader connection.

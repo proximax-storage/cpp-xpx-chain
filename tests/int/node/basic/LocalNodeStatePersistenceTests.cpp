@@ -36,7 +36,12 @@ namespace catapult { namespace local {
 			explicit TestContext(NodeFlag nodeFlag)
 					: test::LocalNodeTestContext<test::LocalNodePeerTraits>(
 							nodeFlag | NodeFlag::With_Partner,
-							{ test::CreateLocalPartnerNode() })
+							{ test::CreateLocalPartnerNode() },
+						  [](auto& config) {
+
+						  },
+						  "",
+						  "../seed/mijin-test-basic-extended")
 			{}
 		};
 
@@ -116,7 +121,8 @@ namespace catapult { namespace local {
 
 	// region boot failure
 
-	TEST(TEST_CLASS, ShutdownDoesNotSaveStateToDiskOnFailedBoot) {
+	/// Boot failure due to invalid network configuration can no longer happen, because config is loaded from nemesis which must have passed validation.
+	/*TEST(TEST_CLASS, ShutdownDoesNotSaveStateToDiskOnFailedBoot) {
 		// Arrange: create saved state
 		TestContext context(NodeFlag::Regular);
 		PushAndWaitForSecondBlock();
@@ -136,7 +142,7 @@ namespace catapult { namespace local {
 
 		// Assert: the config was not overwritten
 		EXPECT_EQ(Height(2), context.loadSavedStateChainHeight());
-	}
+	}*/
 
 	// endregion
 }}

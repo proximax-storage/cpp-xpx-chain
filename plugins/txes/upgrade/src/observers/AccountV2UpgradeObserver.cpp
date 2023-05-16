@@ -39,8 +39,9 @@ namespace {
 		newAccount.Balances.steal(originalAccount.Balances, newAccount);
 
 		newAccount.AccountType = originalAccount.AccountType;
-		newAccount.PublicKeyHeight = eventHeight;
-		newAccount.AddressHeight = eventHeight;
+		// Retain original account heights
+		newAccount.PublicKeyHeight = originalAccount.PublicKeyHeight;
+		newAccount.AddressHeight = originalAccount.AddressHeight;
 
 		originalAccount.AccountType = state::AccountType::Locked;
 	}

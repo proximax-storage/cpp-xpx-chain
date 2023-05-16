@@ -29,6 +29,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/TestHarness.h"
+#include "tests/test/nodeps/data/BasicExtendedNemesisMemoryBlockStorage_data.h"
 
 namespace catapult { namespace local {
 
@@ -106,13 +107,14 @@ namespace catapult { namespace local {
 																						   BlockChainBuilder& builder,
 																						   bool upgrade = false)
 		{
+
 			test::TransactionsBuilder transactionsBuilder(accounts);
 			auto networkConfigBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNetworkConfigCapability>();
-			auto configuration = context.resourcesDirectory() + "/config-network.properties";
-			std::string supportedEntities;
-			boost::filesystem::load_string_file(context.resourcesDirectory() + "/supported-entities.json", supportedEntities);
-			std::string content;
-			boost::filesystem::load_string_file(configuration, content);
+			mocks::MockMemoryBlockStorage storage([](){return mocks::CreateNemesisBlockElement(test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);});
+			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
+			auto configs = extensions::NemesisBlockLoader::ReadNetworkConfigurationAsStrings(pNemesisBlockElement);
+			std::string supportedEntities = std::get<1>(configs);
+			std::string content  = std::get<0>(configs);
 			if(upgrade) boost::algorithm::replace_first(content, "accountVersion = 1", "accountVersion = 2\nminimumAccountVersion = 1");
 			networkConfigBuilder->addNetworkConfigUpdate(content, supportedEntities, BlockDuration(1));
 
@@ -143,7 +145,7 @@ namespace catapult { namespace local {
 			auto stateHashCalculator = context.createStateHashCalculator();
 			auto& cache = context.localNode().cache();
 			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 
 			// - maybe upgrade network
 			auto networkUpgradePair = GenerateNetworkUpgrade(context,
@@ -246,7 +248,7 @@ namespace catapult { namespace local {
 				auto& cache = context.localNode().cache();
 				auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 
-				BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+				BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 
 				// - maybe upgrade network
 
@@ -318,7 +320,7 @@ namespace catapult { namespace local {
 			auto stateHashCalculator2 = context.createStateHashCalculator();
 			auto& cache = context.localNode().cache();
 			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
-			test::SeedStateHashCalculator(stateHashCalculator2, tempTracker->currentBlocks);
+			test::SeedStateHashCalculator(stateHashCalculator2, tempTracker->currentBlocks, test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);
 			auto builder = tempTracker->activeBuilder.createChainedBuilder(stateHashCalculator2);
 
 
@@ -404,7 +406,7 @@ namespace catapult { namespace local {
 			Blocks invalidBlocks;
 			{
 				auto stateHashCalculator = context.createStateHashCalculator();
-				test::SeedStateHashCalculator(stateHashCalculator, seedBlocks);
+				test::SeedStateHashCalculator(stateHashCalculator, seedBlocks, test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);
 
 				// - prepare invalid blocks
 				auto builder2 = pBuilder1->createChainedBuilder(stateHashCalculator);
@@ -414,7 +416,7 @@ namespace catapult { namespace local {
 			std::shared_ptr<model::Block> pTailBlock;
 			{
 				auto stateHashCalculator = context.createStateHashCalculator();
-				test::SeedStateHashCalculator(stateHashCalculator, seedBlocks);
+				test::SeedStateHashCalculator(stateHashCalculator, seedBlocks, test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);
 
 				// - prepare a transfer that can only attach to initial blocks
 				test::TransactionsBuilder transactionsBuilder(accounts);
@@ -561,7 +563,7 @@ namespace catapult { namespace local {
 				auto& cache = context.localNode().cache();
 				auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 
-				BlockChainBuilder builder2(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+				BlockChainBuilder builder2(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 
 				// - prepare invalid blocks
 				builder2.setBlockTimeInterval(utils::TimeSpan::FromSeconds(13)); // better block time will yield better chain
@@ -571,7 +573,7 @@ namespace catapult { namespace local {
 			std::shared_ptr<model::Block> pTailBlock;
 			{
 				auto stateHashCalculator = context.createStateHashCalculator();
-				test::SeedStateHashCalculator(stateHashCalculator, seedBlocks);
+				test::SeedStateHashCalculator(stateHashCalculator, seedBlocks, test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);
 
 				// - prepare a transfer that can only attach to initial blocks
 				test::TransactionsBuilder transactionsBuilder(accounts);

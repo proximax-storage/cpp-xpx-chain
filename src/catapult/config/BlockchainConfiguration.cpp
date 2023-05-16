@@ -48,7 +48,6 @@ namespace catapult { namespace config {
 			LoggingConfiguration loggingConfig,
 			UserConfiguration userConfig,
 			ExtensionsConfiguration extensionsConfig,
-			InflationConfiguration inflationConfig,
 			config::SupportedEntityVersions supportedEntityVersions,
 			Height activationHeight,
 			const BlockchainConfiguration* previousConfig)
@@ -58,7 +57,6 @@ namespace catapult { namespace config {
 			, Logging(std::move(loggingConfig))
 			, User(std::move(userConfig))
 			, Extensions(std::move(extensionsConfig))
-			, Inflation(std::move(inflationConfig))
 			, SupportedEntityVersions(std::move(supportedEntityVersions))
 			, ActivationHeight(activationHeight)
 			, PreviousConfiguration(previousConfig)
@@ -74,8 +72,20 @@ namespace catapult { namespace config {
 				LoadIniConfiguration<LoggingConfiguration>(resourcesPath / HostQualify("logging", extensionsHost)),
 				LoadIniConfiguration<UserConfiguration>(resourcesPath / Qualify("user")),
 				LoadIniConfiguration<ExtensionsConfiguration>(resourcesPath / HostQualify("extensions", extensionsHost)),
-				LoadIniConfiguration<InflationConfiguration>(resourcesPath / Qualify("inflation")),
 				LoadSupportedEntityVersions(resourcesPath / "supported-entities.json"));
+	}
+
+	BlockchainConfiguration BlockchainConfiguration::LoadLocalFromPath(
+			const boost::filesystem::path& resourcesPath,
+			const std::string& extensionsHost) {
+		return BlockchainConfiguration(
+				LoadIniConfiguration<ImmutableConfiguration>(resourcesPath / Qualify("immutable")),
+				model::NetworkConfiguration::Uninitialized(),
+				LoadIniConfiguration<NodeConfiguration>(resourcesPath / Qualify("node")),
+				LoadIniConfiguration<LoggingConfiguration>(resourcesPath / HostQualify("logging", extensionsHost)),
+				LoadIniConfiguration<UserConfiguration>(resourcesPath / Qualify("user")),
+				LoadIniConfiguration<ExtensionsConfiguration>(resourcesPath / HostQualify("extensions", extensionsHost)),
+				        config::SupportedEntityVersions());
 	}
 
 	BlockchainConfiguration BlockchainConfiguration::Uninitialized() {
@@ -86,7 +96,6 @@ namespace catapult { namespace config {
 			LoggingConfiguration::Uninitialized(),
 			UserConfiguration::Uninitialized(),
 			ExtensionsConfiguration::Uninitialized(),
-			InflationConfiguration::Uninitialized(),
 			config::SupportedEntityVersions()
 		);
 	}

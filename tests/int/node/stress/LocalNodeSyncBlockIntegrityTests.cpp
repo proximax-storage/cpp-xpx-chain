@@ -52,7 +52,7 @@ namespace catapult { namespace local {
 				auto& cache = context.localNode().cache();
 				auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 
-				BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+				BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 				builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
 				pUnsignedBlock = builder.asSingleBlock(transactionsBuilder);
 				test::FillWithRandomData(pUnsignedBlock->Signature);
@@ -69,7 +69,7 @@ namespace catapult { namespace local {
 				auto& cache = context.localNode().cache();
 				auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 
-				BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+				BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 				pSignedBlock = builder.asSingleBlock(transactionsBuilder);
 			}
 

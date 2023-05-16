@@ -27,6 +27,8 @@
 #include "tests/int/node/stress/test/TransactionBuilderPropertyCapability.h"
 #include "tests/TestHarness.h"
 #include "tests/test/nodeps/MijinConstants.h"
+#include "tests/test/nodeps/data/BasicExtendedNemesisMemoryBlockStorage_data.h"
+#include "src/catapult/extensions/NemesisBlockLoader.h"
 
 namespace catapult { namespace local {
 
@@ -42,7 +44,7 @@ namespace catapult { namespace local {
 
 		Hash256 GetComponentStateHash(const test::PeerLocalNodeTestContext& context) {
 			auto subCacheMerkleRoots = context.localNode().cache().createView().calculateStateHash().SubCacheMerkleRoots;
-			return subCacheMerkleRoots.empty() ? Hash256() : subCacheMerkleRoots[4]; // { Config, AccountState, Namespace, Mosaic, *Property* }
+			return subCacheMerkleRoots.empty() ? Hash256() : subCacheMerkleRoots[5]; // { // config, accountstate, locksecret, block diff, namespace, mosaic, secret lock, property, upgrade, levy, lockfund,globalstore }
 		}
 
 		void AssertPropertyCount(const local::LocalNode& localNode, size_t numExpectedProperties) {
@@ -56,13 +58,14 @@ namespace catapult { namespace local {
 									BlockChainBuilder& builder,
 									test::ExternalSourceConnection& connection)
 		{
+
 			test::TransactionsBuilder transactionsBuilder(accounts);
 			auto networkConfigBuilder = transactionsBuilder.template getCapability<test::TransactionBuilderNetworkConfigCapability>();
-			auto configuration = context.resourcesDirectory() + "/config-network.properties";
-			std::string supportedEntities;
-			boost::filesystem::load_string_file(context.resourcesDirectory() + "/supported-entities.json", supportedEntities);
-			std::string content;
-			boost::filesystem::load_string_file(configuration, content);
+			mocks::MockMemoryBlockStorage storage([](){return mocks::CreateNemesisBlockElement(test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);});
+			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
+			auto configs = extensions::NemesisBlockLoader::ReadNetworkConfigurationAsStrings(pNemesisBlockElement);
+			std::string supportedEntities = std::get<1>(configs);
+			std::string content  = std::get<0>(configs);
 			boost::algorithm::replace_first(content, "accountVersion = 1", "accountVersion = 2\nminimumAccountVersion = 1");
 			networkConfigBuilder->addNetworkConfigUpdate(content, supportedEntities, BlockDuration(1));
 			auto pUpgradeBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
@@ -92,7 +95,7 @@ namespace catapult { namespace local {
 			propertyBuilder->addAddressBlockProperty(2, 3);
 			auto& accountStateCache = context.localNode().cache().template sub<cache::AccountStateCache>();
 
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 
 
 			// Act:
@@ -155,7 +158,7 @@ namespace catapult { namespace local {
 
 			Blocks createTailBlocks(utils::TimeSpan blockInterval, const consumer<test::TransactionBuilderPropertyCapability&>& addToBuilder) {
 				auto stateHashCalculator = m_context.createStateHashCalculator();
-				test::SeedStateHashCalculator(stateHashCalculator, m_allBlocks);
+				test::SeedStateHashCalculator(stateHashCalculator, m_allBlocks, test::Extended_Basic_MemoryBlockStorage_NemesisBlockData);
 
 				test::TransactionsBuilder transactionsBuilder(m_accounts);
 				auto propertyBuilder = transactionsBuilder.getCapability<test::TransactionBuilderPropertyCapability>();
@@ -213,7 +216,7 @@ namespace catapult { namespace local {
 	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanAddProperty) {
 		// Arrange:
 		test::Accounts accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 4, TypeParam::second_type::value, TypeParam::first_type::value);
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property, [](const auto&) {});
+		test::StateHashDisabledTestContext context([](const auto&) {});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunAddPropertyTest<test::StateHashDisabledTestContext>(context, accounts));
@@ -225,7 +228,7 @@ namespace catapult { namespace local {
 	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanAddPropertyWithStateHashEnabled) {
 		// Arrange:
 		test::Accounts accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 4, TypeParam::second_type::value, TypeParam::first_type::value);
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property, [](config::BlockchainConfiguration& config) {
+		test::StateHashEnabledTestContext context([](config::BlockchainConfiguration& config) {
 		});
 
 		// Act + Assert:
@@ -237,7 +240,6 @@ namespace catapult { namespace local {
 
 		// - property cache merkle root is only nonzero when property is added
 		ASSERT_EQ(2u, stateHashesPair.second.size());
-		EXPECT_EQ(Hash256(), stateHashesPair.second[0]);
 		EXPECT_NE(Hash256(), stateHashesPair.second[1]);
 	}
 
@@ -276,7 +278,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanRemoveProperty) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property);
+		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunRemovePropertyTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -287,7 +289,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanRemovePropertyWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property);
+		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunRemovePropertyTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -329,7 +331,7 @@ namespace catapult { namespace local {
 			auto& cache = context.localNode().cache();
 			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 
-			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache);
+			BlockChainBuilder builder(accounts, stateHashCalculator, context.configHolder(), &accountStateCache, context.dataDirectory());
 			test::ExternalSourceConnection connection;
 			auto isV2 = (accounts.cbegin()+1)->second == 2;
 			if(isV2)
@@ -362,7 +364,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanAddAndRemoveProperty_SingleChainPart) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property);
+		test::StateHashDisabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunAddAndRemovePropertyTest<test::StateHashDisabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));
@@ -373,7 +375,7 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TYPED_TEST(LocalNodeSyncPropertyIntegrityTests, CanAddAndRemovePropertyWithStateHashEnabled_SingleChainPart) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property);
+		test::StateHashEnabledTestContext context;
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunAddAndRemovePropertyTest<test::StateHashEnabledTestContext, TypeParam::first_type::value, TypeParam::second_type::value>(context));

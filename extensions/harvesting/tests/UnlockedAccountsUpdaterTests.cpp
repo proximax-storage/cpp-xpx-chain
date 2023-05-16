@@ -261,8 +261,7 @@ namespace catapult { namespace harvesting {
 						config::NodeConfiguration::Uninitialized(),
 						config::LoggingConfiguration::Uninitialized(),
 						config::UserConfiguration::Uninitialized(),
-						config::ExtensionsConfiguration::Uninitialized(),
-						config::InflationConfiguration::Uninitialized());
+						config::ExtensionsConfiguration::Uninitialized());
 				return config;
 			}
 			static std::shared_ptr<config::BlockchainConfigurationHolder>  CreateBlockChainConfigurationHolder(const Height& height, cache::CatapultCache* cache, const config::BlockchainConfiguration& config) {

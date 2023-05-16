@@ -39,6 +39,8 @@ using namespace std::chrono_literals;
 		/// Get latest available config
 		virtual const BlockchainConfiguration& Config() const;
 
+		/// Initialize init configuration
+
 		/// Removes all plugin configs in all network configs.
 		void ClearPluginConfigurations() const;
 
@@ -49,13 +51,17 @@ using namespace std::chrono_literals;
 			m_pCache = pCache;
 		}
 
+		void InitializeNetworkConfiguration(const model::NetworkConfiguration& networkConfiguration, const config::SupportedEntityVersions& supportedEntities);
 		void SetPluginInitializer(const PluginInitializer& initializer) {
 			m_pluginInitializer = initializer;
 		}
 
 		void InsertConfig(const Height& height, const std::string& strConfig, const std::string& supportedVersion);
+
+		void InsertConfig(const Height& height, const model::NetworkConfiguration& networkConfig, const config::SupportedEntityVersions& supportedEntities);
 		void RemoveConfig(const Height& height);
 
+		const model::InflationCalculator& InflationCalculator();
 	private:
 		/// Must be used with a locked m_mutex
 		const BlockchainConfiguration* LastConfigOrNull(const Height& height) const;
@@ -64,6 +70,7 @@ using namespace std::chrono_literals;
 		std::map<Height, BlockchainConfiguration> m_configs;
 		cache::CatapultCache* m_pCache;
 		PluginInitializer m_pluginInitializer;
+		model::InflationCalculator m_InflationCalculator;
 		mutable std::shared_mutex m_mutex;
 	};
 }}

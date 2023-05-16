@@ -31,6 +31,7 @@
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/utils/IntegerMath.h"
+#include "plugins/txes/config/src/model/NetworkConfigTransaction.h"
 
 namespace catapult { namespace extensions {
 
@@ -189,6 +190,26 @@ namespace catapult { namespace extensions {
 
 		// 2. execute the nemesis block
 		execute(stateRef.ConfigHolder, *pNemesisBlockElement, stateRef.State, stateHashVerification, Verbosity::On);
+	}
+
+	const std::tuple<const model::NetworkConfiguration, const config::SupportedEntityVersions> NemesisBlockLoader::ReadNetworkConfiguration(const std::shared_ptr<const model::BlockElement> nemesisBlock) {
+		// 2. the network configuration is embedded in the penultimate transaction
+		auto networkConfigTransaction = nemesisBlock->Transactions.end()-2;
+		auto& transaction = static_cast<const model::NetworkConfigTransaction&>(networkConfigTransaction->Transaction);
+		auto nConfigString = std::string(reinterpret_cast<const char*>(transaction.BlockChainConfigPtr()), transaction.BlockChainConfigSize);
+		auto nSupportedVersionsString = std::string(reinterpret_cast<const char*>(transaction.SupportedEntityVersionsPtr()), transaction.SupportedEntityVersionsSize);
+		std::istringstream inputBlock(nConfigString);
+		std::istringstream inputVersions(nSupportedVersionsString);
+		return std::make_tuple(model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock)), config::LoadSupportedEntityVersions(inputVersions));
+	}
+
+	const std::tuple<const std::string, const std::string> NemesisBlockLoader::ReadNetworkConfigurationAsStrings(const std::shared_ptr<const model::BlockElement> nemesisBlock) {
+		// 2. the network configuration is embedded in the penultimate transaction
+		auto networkConfigTransaction = nemesisBlock->Transactions.end()-2;
+		auto& transaction = static_cast<const model::NetworkConfigTransaction&>(networkConfigTransaction->Transaction);
+		auto nConfigString = std::string(reinterpret_cast<const char*>(transaction.BlockChainConfigPtr()), transaction.BlockChainConfigSize);
+		auto nSupportedVersionsString = std::string(reinterpret_cast<const char*>(transaction.SupportedEntityVersionsPtr()), transaction.SupportedEntityVersionsSize);
+		return std::make_tuple(nConfigString, nSupportedVersionsString);
 	}
 
 	void NemesisBlockLoader::executeAndCommit(const LocalNodeStateRef& stateRef, StateHashVerification stateHashVerification) {
