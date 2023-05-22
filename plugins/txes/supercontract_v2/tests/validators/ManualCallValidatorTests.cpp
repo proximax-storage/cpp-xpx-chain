@@ -38,6 +38,11 @@ namespace catapult {
             pluginConfig.MaxRowSize = Max_Row;
             pluginConfig.MaxServicePaymentsSize = Max_Service_Payments;
             config.Network.SetPluginConfiguration(pluginConfig);
+
+			config.Immutable.StorageMosaicId = MosaicId(1);
+			config.Immutable.StreamingMosaicId = MosaicId(2);
+			config.Immutable.SuperContractMosaicId = MosaicId(3);
+
             return (config.ToConst());
         }
 
@@ -154,6 +159,21 @@ namespace catapult {
                 Function_Name,
                 Actual_Arguments,
                 Service_Payments);
+    }
+
+    TEST(TEST_CLASS, FailureWhenInvalidServicePaymentMosaic) {
+    	state::SuperContractEntry entry(Super_Contract_Key);
+
+    	std::vector<model::UnresolvedMosaic> servicePayments = { {UnresolvedMosaicId(1), Amount(2)} };
+
+    	AssertValidationResult(
+    			Failure_SuperContract_v2_Invalid_Service_Payment_Mosaic,
+    			entry,
+    			entry.key(),
+    			File_Name,
+    			Function_Name,
+    			Actual_Arguments,
+    			servicePayments);
     }
 
     TEST(TEST_CLASS, Success) {
