@@ -27,41 +27,41 @@ namespace catapult { namespace utils {
 	enum class SwapOperation : uint8_t { SWAP_OPERATION_LIST };
 #undef ENUM_VALUE
 
-/// Insertion operator for outputting \a value to \a out.
-std::ostream& operator<<(std::ostream& out, SwapOperation value);
+	/// Insertion operator for outputting \a value to \a out.
+	std::ostream& operator<<(std::ostream& out, SwapOperation value);
 
-/// Swap mosaics between \a sender and \a receiver.
-void SwapMosaics(
-		const Key& sender,
-		const Key& receiver,
-		const std::vector<model::UnresolvedMosaic>&,
-		model::NotificationSubscriber&,
-		const config::ImmutableConfiguration&,
-		SwapOperation);
+	/// Swap mosaics between \a sender and \a receiver.
+	void SwapMosaics(
+			const Key&,
+			const Key&,
+			const std::vector<model::UnresolvedMosaic>&,
+			model::NotificationSubscriber&,
+			const config::ImmutableConfiguration&,
+			SwapOperation);
 
-/// Swap unresolved amount of mosaics between \a sender and \a receiver.
-void SwapMosaics(
-		const Key& sender,
-		const Key& receiver,
-		const std::vector<std::pair<UnresolvedMosaicId, UnresolvedAmount>>&,
-		model::NotificationSubscriber&,
-		const config::ImmutableConfiguration&,
-		SwapOperation);
+	/// Swap unresolved amount of mosaics between \a sender and \a receiver.
+	void SwapMosaics(
+			const Key&,
+			const Key&,
+			const std::vector<std::pair<UnresolvedMosaicId, UnresolvedAmount>>&,
+			model::NotificationSubscriber&,
+			const config::ImmutableConfiguration&,
+			SwapOperation);
 
-/// Swap mosaics on the \a account.
-void SwapMosaics(
-		const Key& account,
-		const std::vector<model::UnresolvedMosaic>&,
-		model::NotificationSubscriber&,
-		const config::ImmutableConfiguration&,
-		SwapOperation);
+	/// Swap mosaics on the \a account.
+	void SwapMosaics(
+			const Key&,
+			const std::vector<model::UnresolvedMosaic>&,
+			model::NotificationSubscriber&,
+			const config::ImmutableConfiguration&,
+			SwapOperation);
 
-/// Swap unresolved amount of mosaics on the \a account.
-void SwapMosaics(
-		const Key& account,
-		const std::vector<std::pair<UnresolvedMosaicId, UnresolvedAmount>>&,
-		model::NotificationSubscriber&,
-		const config::ImmutableConfiguration&,
-		SwapOperation);
+	/// Swap unresolved amount of mosaics on the \a account.
+	void SwapMosaics(
+			const Key&,
+			const std::vector<std::pair<UnresolvedMosaicId, UnresolvedAmount>>&,
+			model::NotificationSubscriber&,
+			const config::ImmutableConfiguration&,
+			SwapOperation);
 
 }} // namespace catapult::utils
