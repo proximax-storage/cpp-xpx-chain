@@ -41,6 +41,8 @@ namespace catapult { namespace state {
 		RootNamespaceHistory(RootNamespaceHistory&& history) = default;
 
 	public:
+		RootNamespaceHistory& operator=(const RootNamespaceHistory& history);
+
 		RootNamespace& operator=(const RootNamespace& rhs) = delete;
 
 	public:

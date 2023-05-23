@@ -65,10 +65,15 @@ endfunction()
 ### add source directories
 add_subdirectory(external)
 
+if(NOT APPLE)
+	set(DO_NOT_SKIP_BUILD_TESTS TRUE)
+endif()
+
 # run catapult tests first
 add_subdirectory(src)
+if(DO_NOT_SKIP_BUILD_TESTS)
 add_subdirectory(tests)
-
+endif()
 # run other tests second
 add_subdirectory(sdk)
 add_subdirectory(plugins)
@@ -84,7 +89,9 @@ endif()
 add_subdirectory(tools)
 
 # Help programs
+if(DO_NOT_SKIP_BUILD_TESTS)
 add_subdirectory(spammer)
+endif()
 
 set(SIRIUS_GRPC_VERSION v1.49.1)
 add_subdirectory(cpp-xpx-storage-sdk)
