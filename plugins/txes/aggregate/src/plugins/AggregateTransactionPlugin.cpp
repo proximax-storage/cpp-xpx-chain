@@ -163,7 +163,7 @@ namespace catapult { namespace plugins {
 				const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
 
 				sub.notify(EntityNotification<1>(
-						subTransaction.Network(), subTransaction.Type, subTransaction.EntityVersion()));
+						subTransaction.Network(), subTransaction.Type, subTransaction.EntityVersion(), subTransaction.SignatureDerivationScheme()));
 
 				// - generic sub-transaction notification
 				sub.notify(AggregateEmbeddedTransactionNotification<1>(
@@ -239,7 +239,7 @@ namespace catapult { namespace plugins {
 				const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
 
 				sub.notify(EntityNotification<1>(
-						subTransaction.Network(), subTransaction.Type, subTransaction.EntityVersion()));
+						subTransaction.Network(), subTransaction.Type, subTransaction.EntityVersion(), subTransaction.SignatureDerivationScheme()));
 
 				// - generic sub-transaction notification
 				sub.notify(AggregateEmbeddedTransactionNotification<2>(

@@ -54,6 +54,10 @@ namespace catapult { namespace validators {
 	/// - the entity version is within supported range.
 	DECLARE_STATEFUL_VALIDATOR(EntityVersion, model::EntityNotification<1>)();
 
+	/// A validator implementation that applies to entity notifications and validates that:
+	/// - if required, the derivation scheme is included in the entity.
+	DECLARE_STATEFUL_VALIDATOR(DerivationSchemeSpecification, model::EntityNotification<1>)();
+
 	// endregion
 
 	// region Block

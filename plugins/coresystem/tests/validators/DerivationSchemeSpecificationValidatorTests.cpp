@@ -26,59 +26,58 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS EntityVersionValidatorTests
+#define TEST_CLASS DerivationSchemeSpecificationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(EntityVersion)
+	DEFINE_COMMON_VALIDATOR_TESTS(DerivationSchemeSpecification)
 
 	namespace {
 		constexpr uint8_t Min_Entity_Version = 55;
-		constexpr uint8_t Max_Entity_Version = 77;
 		constexpr auto Entity_Type = model::EntityType{1};
 
 		auto CreateBlockchainConfigurationHolder() {
 			auto pConfigHolder = config::CreateMockConfigurationHolder();
-			for (uint16_t i = Min_Entity_Version; i <= Max_Entity_Version; ++i)
-				const_cast<config::SupportedEntityVersions&>(pConfigHolder->Config().SupportedEntityVersions)[Entity_Type].emplace(i);
+			const_cast<config::SupportedEntityVersions&>(pConfigHolder->Config().SupportedEntityVersions)[Entity_Type].emplace(Min_Entity_Version);
 			return pConfigHolder;
 		}
 
-		void AssertValidationResult(ValidationResult expectedResult, uint8_t version) {
+		void AssertValidationResult(ValidationResult expectedResult, uint accountVersion, DerivationScheme derivationScheme) {
 			// Arrange:
 			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
 			auto pConfigHolder = CreateBlockchainConfigurationHolder();
+			const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).AccountVersion = accountVersion;
 			auto context = ValidatorContext(pConfigHolder->Config(), Height(123), Timestamp(8888), resolverContext, readOnlyCache);
-			model::EntityNotification<1> notification(model::NetworkIdentifier::Zero, Entity_Type, version, DerivationScheme::Unset);
-			auto pValidator = CreateEntityVersionValidator();
+			model::EntityNotification<1> notification(model::NetworkIdentifier::Zero, Entity_Type, Min_Entity_Version, derivationScheme);
+			auto pValidator = CreateDerivationSchemeSpecificationValidator();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, context);
 
 			// Assert:
-			EXPECT_EQ(expectedResult, result) << "entity version " << static_cast<uint16_t>(version);
+			EXPECT_EQ(expectedResult, result) << "account " << (accountVersion == 1u ? "default" : "active");
 		}
 	}
 
 	// region validation
 
-	TEST(TEST_CLASS, FailureWhenEntityHasVersionLowerThanMinVersion) {
+	TEST(TEST_CLASS, FailureWhenDerivationSchemeIsUnsetAndAccountVersionIsBeingUsed) {
 		// Assert:
-		for (uint8_t version = 0u; version < Min_Entity_Version; ++version)
-			AssertValidationResult(Failure_Core_Invalid_Version, version);
+		AssertValidationResult(Failure_Core_Derivation_Scheme_Unset, 2, DerivationScheme::Unset);
+
 	}
 
-	TEST(TEST_CLASS, FailureWhenEntityHasVersionGreaterThanMaxVersion) {
+	TEST(TEST_CLASS, SuccessWhenDerivationSchemeIsSetAndAccountVersionIsBeingUsed) {
 		// Assert:
-		for (uint8_t version = Max_Entity_Version + 1; 0 != version; ++version)
-			AssertValidationResult(Failure_Core_Invalid_Version, version);
+		AssertValidationResult(ValidationResult::Success, 2, DerivationScheme::Ed25519_Sha3);
+
 	}
 
-	TEST(TEST_CLASS, SuccessWhenEntityHasVersionWithinBounds) {
+	TEST(TEST_CLASS, SuccessWhenDerivationSchemeIsUnsetAndAccountVersionIsDefault) {
 		// Assert:
-		for (uint8_t version = Min_Entity_Version; version <= Max_Entity_Version; ++version)
-			AssertValidationResult(ValidationResult::Success, version);
+		AssertValidationResult(ValidationResult::Success, 1, DerivationScheme::Unset);
+
 	}
 
 	// endregion

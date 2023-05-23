@@ -102,7 +102,7 @@ namespace catapult { namespace model {
 					if (Key() != block.Beneficiary)
 						sub.notify(AccountPublicKeyNotification<1>(block.Beneficiary));
 
-					sub.notify(EntityNotification<1>(block.Network(), block.Type, block.EntityVersion()));
+					sub.notify(EntityNotification<1>(block.Network(), block.Type, block.EntityVersion(), block.SignatureDerivationScheme()));
 
 					// raise a block notification
 					auto blockTransactionsInfo = CalculateBlockTransactionsInfo(block);
@@ -143,7 +143,7 @@ namespace catapult { namespace model {
 				auto attributes = plugin.attributes(height);
 
 				// raise an entity notification
-				sub.notify(EntityNotification<1>(transaction.Network(), transaction.Type, transaction.EntityVersion()));
+				sub.notify(EntityNotification<1>(transaction.Network(), transaction.Type, transaction.EntityVersion(), transaction.SignatureDerivationScheme()));
 
 				// raise transaction notifications
 				auto fee = pBlockHeader ?

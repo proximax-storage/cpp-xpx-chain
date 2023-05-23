@@ -237,11 +237,13 @@ namespace catapult { namespace model {
 		EntityNotification(
 				model::NetworkIdentifier networkIdentifier,
 				model::EntityType entityType,
-                VersionType entityVersion)
+                VersionType entityVersion,
+				DerivationScheme derivationScheme)
 				: Notification(Notification_Type, sizeof(EntityNotification<1>))
 				, NetworkIdentifier(networkIdentifier)
 				, EntityType(entityType)
 				, EntityVersion(entityVersion)
+				, TransactionDerivationScheme(derivationScheme)
 		{}
 
 	public:
@@ -253,6 +255,9 @@ namespace catapult { namespace model {
 
 		/// Entity version.
         VersionType EntityVersion;
+
+		/// Derivation Scheme.
+		DerivationScheme TransactionDerivationScheme;
 	};
 
 	// endregion
