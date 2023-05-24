@@ -62,6 +62,7 @@ namespace catapult { namespace extensions {
 
 		std::vector<std::string> expectedValidatorNames{
 			"EntityVersionValidator",
+			"DerivationSchemeSpecificationValidator",
 			"DeadlineValidator",
 			"AddressValidator",
 			"BalanceTransferValidator",
