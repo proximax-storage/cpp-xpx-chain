@@ -34,14 +34,13 @@ namespace {
 	{
 		TransferSupplementalKeys(originalAccount, newAccount);
 		//Move balances
-
-		newAccount.Balances = state::AccountBalances(&newAccount);
-		newAccount.Balances.steal(originalAccount.Balances, newAccount);
-
-		newAccount.AccountType = originalAccount.AccountType;
 		// Retain original account heights
 		newAccount.PublicKeyHeight = originalAccount.PublicKeyHeight;
 		newAccount.AddressHeight = originalAccount.AddressHeight;
+
+		newAccount.Balances = state::AccountBalances(&newAccount);
+		newAccount.Balances.steal(originalAccount.Balances, newAccount);
+		newAccount.AccountType = originalAccount.AccountType;
 
 		originalAccount.AccountType = state::AccountType::Locked;
 	}
