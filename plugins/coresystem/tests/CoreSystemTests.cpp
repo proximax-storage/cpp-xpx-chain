@@ -67,6 +67,7 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
 					"EntityVersionValidator",
+					"DerivationSchemeSpecificationValidator",
 					"DeadlineValidator",
 					"AddressValidator",
 					"BalanceTransferValidator",
