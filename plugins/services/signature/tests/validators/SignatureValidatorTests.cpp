@@ -29,7 +29,8 @@ namespace catapult { namespace validators {
 
 	DEFINE_COMMON_VALIDATOR_TESTS(SignatureV1, GenerationHash())
 	DEFINE_COMMON_VALIDATOR_TESTS(SignatureV2, GenerationHash())
-
+	DEFINE_COMMON_VALIDATOR_TESTS(BlockSignatureV1, GenerationHash())
+	DEFINE_COMMON_VALIDATOR_TESTS(BlockSignatureV2, GenerationHash())
 
 #define TEST_CLASS SignatureValidatorTests
 
@@ -39,59 +40,97 @@ namespace catapult { namespace validators {
 		constexpr auto Block_Time = Timestamp(8888);
 		using ReplayProtectionMode = model::SignatureNotification<1>::ReplayProtectionMode;
 
+		template<bool IsBlock, uint32_t TSignatureNotificationVersion>
+		struct SignatureNotificationTypeResolver {
+			using Notification = model::SignatureNotification<TSignatureNotificationVersion>;
+			static auto CreateValidatorImpl(const GenerationHash& hash, std::integral_constant<uint32_t, 1>) {
+				return CreateSignatureV1Validator(hash);
+			}
+			static auto CreateValidatorImpl(const GenerationHash& hash, std::integral_constant<uint32_t, 2>) {
+				return CreateSignatureV2Validator(hash);
+			}
+
+			static auto CreateValidator(const GenerationHash& hash) {
+				return CreateValidatorImpl(hash, std::integral_constant<uint32_t, TSignatureNotificationVersion>{});
+			}
+		};
+
 		template<uint32_t TSignatureNotificationVersion>
-		void AssertValidationResult(
-				ValidationResult expectedResult,
-				const GenerationHash& generationHash,
-				const model::SignatureNotification<TSignatureNotificationVersion>& notification,
-				uint32_t minimumVersion = 1,
-				uint32_t activeVersion = 1);
+		struct SignatureNotificationTypeResolver<true, TSignatureNotificationVersion> {
+			using Notification = model::BlockSignatureNotification<TSignatureNotificationVersion>;
+			static auto CreateValidatorImpl(const GenerationHash& hash, std::integral_constant<uint32_t, 1>) {
+				return CreateBlockSignatureV1Validator(hash);
+			}
+			static auto CreateValidatorImpl(const GenerationHash& hash, std::integral_constant<uint32_t, 2>) {
+				return CreateBlockSignatureV2Validator(hash);
+			}
 
-		template<>
-		void AssertValidationResult<1>(
-				ValidationResult expectedResult,
-				const GenerationHash& generationHash,
-				const model::SignatureNotification<1>& notification,
-				uint32_t minimumVersion,
-				uint32_t activeVersion) {
-			// Arrange:
-			auto pValidator = CreateSignatureV1Validator(generationHash);
+			static auto CreateValidator(const GenerationHash& hash) {
+				return CreateValidatorImpl(hash, std::integral_constant<uint32_t, TSignatureNotificationVersion>{});
+			}
+		};
 
-			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+		template<bool IsBlock, uint32_t TSignatureNotificationVersion>
+		struct AssertValidationResult {
+			static void Assertion(
+					ValidationResult expectedResult,
+					const GenerationHash& generationHash,
+					const model::SignatureNotification<TSignatureNotificationVersion>& notification,
+					uint32_t minimumVersion = 1,
+					uint32_t activeVersion = 1);
+		};
 
-			// Assert:
-			EXPECT_EQ(expectedResult, result);
-		}
 
-		template<>
-		void AssertValidationResult<2>(
-				ValidationResult expectedResult,
-				const GenerationHash& generationHash,
-				const model::SignatureNotification<2>& notification,
-				uint32_t minimumVersion,
-				uint32_t activeVersion) {
-			// Arrange:
-			auto pValidator = CreateSignatureV2Validator(generationHash);
+		template<bool IsBlock>
+		struct AssertValidationResult<IsBlock, 1> {
+			static void Assertion(
+					ValidationResult expectedResult,
+					const GenerationHash& generationHash,
+					const typename SignatureNotificationTypeResolver<IsBlock, 1>::Notification& notification,
+					uint32_t minimumVersion = 1,
+					uint32_t activeVersion = 1) {
+				// Arrange:
+				auto pValidator = SignatureNotificationTypeResolver<IsBlock, 1>::CreateValidator(generationHash);
 
-			test::MutableBlockchainConfiguration mutableConfig;
-			mutableConfig.Network.MaxTransactionLifetime = Max_Transaction_Lifetime;
-			mutableConfig.Network.EnableDeadlineValidation = true;
-			mutableConfig.Network.AccountVersion = activeVersion;
-			mutableConfig.Network.MinimumAccountVersion = minimumVersion;
-			auto config = mutableConfig.ToConst();
-			auto cache = test::CreateEmptyCatapultCache(config);
-			auto cacheView = cache.createView();
-			auto readOnlyCache = cacheView.toReadOnly();
-			auto resolverContext = test::CreateResolverContextXor();
-			auto context = ValidatorContext(config, Height(123), Block_Time, resolverContext, readOnlyCache);
+				// Act:
+				auto result = test::ValidateNotification(*pValidator, notification);
 
-			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+				// Assert:
+				EXPECT_EQ(expectedResult, result);
+			}
+		};
 
-			// Assert:
-			EXPECT_EQ(expectedResult, result);
-		}
+		template<bool IsBlock>
+		struct AssertValidationResult<IsBlock, 2> {
+			static void Assertion(
+					ValidationResult expectedResult,
+					const GenerationHash& generationHash,
+					const typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification& notification,
+					uint32_t minimumVersion = 1,
+					uint32_t activeVersion = 1) {
+				// Arrange:
+				auto pValidator = SignatureNotificationTypeResolver<IsBlock, 2>::CreateValidator(generationHash);
+
+				test::MutableBlockchainConfiguration mutableConfig;
+				mutableConfig.Network.MaxTransactionLifetime = Max_Transaction_Lifetime;
+				mutableConfig.Network.EnableDeadlineValidation = true;
+				mutableConfig.Network.AccountVersion = activeVersion;
+				mutableConfig.Network.MinimumAccountVersion = minimumVersion;
+				auto config = mutableConfig.ToConst();
+				auto cache = test::CreateEmptyCatapultCache(config);
+				auto cacheView = cache.createView();
+				auto readOnlyCache = cacheView.toReadOnly();
+				auto resolverContext = test::CreateResolverContextXor();
+				auto context = ValidatorContext(config, Height(123), Block_Time, resolverContext, readOnlyCache);
+
+				// Act:
+				auto result = test::ValidateNotification(*pValidator, notification, context);
+
+				// Assert:
+				EXPECT_EQ(expectedResult, result);
+			}
+		};
+
 
 		template<uint32_t TSignerAccountVersion>
 		struct TestContext {
@@ -115,12 +154,20 @@ namespace catapult { namespace validators {
 		};
 	}
 
+#define SIGNATURE_BOTH_BLOCK_TYPES_TEST(TEST_NAME) \
+	template<bool IsBlock> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)();\
+	TEST(TEST_CLASS, TEST_NAME##BLOCK) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<true>(); } \
+	TEST(TEST_CLASS, TEST_NAME##NON_BLOCK) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<false>(); } \
+	template<bool IsBlock> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
 
 #define ALL_REPLAY_PROTECTION_MODES_TEST(TEST_NAME) \
-	template<ReplayProtectionMode Mode> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_ReplayProtectionEnabled) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ReplayProtectionMode::Enabled>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_ReplayProtectionDisabled) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ReplayProtectionMode::Disabled>(); } \
-	template<ReplayProtectionMode Mode> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+	template<bool IsBlock, ReplayProtectionMode Mode> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##BLOCK_ReplayProtectionEnabled) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<true, ReplayProtectionMode::Enabled>(); } \
+	TEST(TEST_CLASS, TEST_NAME##NON_BLOCK_ReplayProtectionEnabled) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<false, ReplayProtectionMode::Enabled>(); } \
+	TEST(TEST_CLASS, TEST_NAME##BLOCK_ReplayProtectionDisabled) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<true, ReplayProtectionMode::Disabled>(); } \
+	TEST(TEST_CLASS, TEST_NAME##NON_BLOCK_ReplayProtectionDisabled) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<false, ReplayProtectionMode::Disabled>(); } \
+	template<bool IsBlock, ReplayProtectionMode Mode> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	ALL_REPLAY_PROTECTION_MODES_TEST(SuccessWhenValidatingValidSignature) {
 
@@ -128,30 +175,30 @@ namespace catapult { namespace validators {
 		{
 			// Arrange:
 			TestContext<1> context(Mode);
-			model::SignatureNotification<1> notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, Mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 1>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, Mode);
 
 			// Assert:
-			AssertValidationResult<1>(ValidationResult::Success, context.GenerationHash, notification);
+			AssertValidationResult<IsBlock, 1>::Assertion(ValidationResult::Success, context.GenerationHash, notification);
 		}
 
 		// V1 account with V2 signature notification
 		{
 			// Arrange:
 			TestContext<1> context(Mode);
-			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, Mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, Mode);
 
 			// Assert:
-			AssertValidationResult<2>(ValidationResult::Success, context.GenerationHash, notification, 1, 2);
+			AssertValidationResult<IsBlock, 2>::Assertion(ValidationResult::Success, context.GenerationHash, notification, 1, 2);
 		}
 
 		// V2 account with V2 signature notification
 		{
 			// Arrange:
 			TestContext<2> context(Mode);
-			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, Mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, Mode);
 
 			// Assert:
-			AssertValidationResult<2>(ValidationResult::Success, context.GenerationHash, notification, 1, 2);
+			AssertValidationResult<IsBlock, 2>::Assertion(ValidationResult::Success, context.GenerationHash, notification, 1, 2);
 		}
 	}
 
@@ -160,36 +207,36 @@ namespace catapult { namespace validators {
 		{
 			// Arrange:
 			TestContext<1> context(Mode);
-			model::SignatureNotification<1> notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, Mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 1>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, Mode);
 
 			context.Signature[0] ^= 0xFF;
 
 			// Assert:
-			AssertValidationResult<1>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification);
+			AssertValidationResult<IsBlock, 1>::Assertion(validators::VerifiableFailureResolver<IsBlock, Failure_Signature_Block_Not_Verifiable, Failure_Signature_Not_Verifiable>::ValidationResult, context.GenerationHash, notification);
 		}
 
 		//V1 account with V2 signature notification
 		{
 			// Arrange:
 			TestContext<1> context(Mode);
-			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, Mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, Mode);
 
 			context.Signature[0] ^= 0xFF;
 
 			// Assert:
-			AssertValidationResult<2>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification, 1, 2);
+			AssertValidationResult<IsBlock, 2>::Assertion(validators::VerifiableFailureResolver<IsBlock, Failure_Signature_Block_Not_Verifiable, Failure_Signature_Not_Verifiable>::ValidationResult, context.GenerationHash, notification, 1, 2);
 		}
 
 		//V2 account with V2 signature notification
 		{
 			// Arrange:
 			TestContext<1> context(Mode);
-			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, Mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, Mode);
 
 			context.Signature[0] ^= 0xFF;
 
 			// Assert:
-			AssertValidationResult<2>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification, 1, 2);
+			AssertValidationResult<IsBlock, 2>::Assertion(validators::VerifiableFailureResolver<IsBlock, Failure_Signature_Block_Not_Verifiable, Failure_Signature_Not_Verifiable>::ValidationResult, context.GenerationHash, notification, 1, 2);
 		}
 	}
 
@@ -200,40 +247,40 @@ namespace catapult { namespace validators {
 		{
 			// Arrange:
 			TestContext<1> context(Mode);
-			model::SignatureNotification<1> notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, Mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 1>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, Mode);
 
 			context.DataBuffer[10] ^= 0xFF;
 
 			// Assert:
-			AssertValidationResult<1>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification);
+			AssertValidationResult<IsBlock, 1>::Assertion(validators::VerifiableFailureResolver<IsBlock, Failure_Signature_Block_Not_Verifiable, Failure_Signature_Not_Verifiable>::ValidationResult, context.GenerationHash, notification);
 		}
 
 		//V1 account with V2 signature notification
 		{
 			// Arrange:
 			TestContext<1> context(Mode);
-			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, Mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, Mode);
 
 			context.DataBuffer[10] ^= 0xFF;
 
 			// Assert:
-			AssertValidationResult<2>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification, 1, 2);
+			AssertValidationResult<IsBlock, 2>::Assertion(validators::VerifiableFailureResolver<IsBlock, Failure_Signature_Block_Not_Verifiable, Failure_Signature_Not_Verifiable>::ValidationResult, context.GenerationHash, notification, 1, 2);
 		}
 
 		//V2 account with V2 signature notification
 		{
 			// Arrange:
 			TestContext<1> context(Mode);
-			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, Mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, Mode);
 
 			context.DataBuffer[10] ^= 0xFF;
 
 			// Assert:
-			AssertValidationResult<2>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification, 1, 2);
+			AssertValidationResult<IsBlock, 2>::Assertion(validators::VerifiableFailureResolver<IsBlock, Failure_Signature_Block_Not_Verifiable, Failure_Signature_Not_Verifiable>::ValidationResult, context.GenerationHash, notification, 1, 2);
 		}
 	}
 
-	TEST(TEST_CLASS, FailureWhenGenerationHashIsAltered_ReplayProtectionEnabled) {
+	SIGNATURE_BOTH_BLOCK_TYPES_TEST(FailureWhenGenerationHashIsAltered_ReplayProtectionEnabled) {
 
 		auto mode = ReplayProtectionMode::Enabled;
 
@@ -241,40 +288,40 @@ namespace catapult { namespace validators {
 		{
 			// Arrange:
 			TestContext<1> context(mode);
-			model::SignatureNotification<1> notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 1>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, mode);
 
 			context.GenerationHash[2] ^= 0xFF;
 
 			// Assert:
-			AssertValidationResult<1>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification);
+			AssertValidationResult<IsBlock, 1>::Assertion(validators::VerifiableFailureResolver<IsBlock, Failure_Signature_Block_Not_Verifiable, Failure_Signature_Not_Verifiable>::ValidationResult, context.GenerationHash, notification);
 		}
 
 		//V1 account with V2 signature notification
 		{
 			// Arrange:
 			TestContext<1> context(mode);
-			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, mode);
 
 			context.GenerationHash[2] ^= 0xFF;
 
 			// Assert:
-			AssertValidationResult<2>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification, 1, 2);
+			AssertValidationResult<IsBlock, 2>::Assertion(validators::VerifiableFailureResolver<IsBlock, Failure_Signature_Block_Not_Verifiable, Failure_Signature_Not_Verifiable>::ValidationResult, context.GenerationHash, notification, 1, 2);
 		}
 
 		//V2 account with V2 signature notification
 		{
 			// Arrange:
 			TestContext<2> context(mode);
-			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, mode);
 
 			context.GenerationHash[2] ^= 0xFF;
 
 			// Assert:
-			AssertValidationResult<2>(Failure_Signature_Not_Verifiable, context.GenerationHash, notification, 1, 2);
+			AssertValidationResult<IsBlock, 2>::Assertion(validators::VerifiableFailureResolver<IsBlock, Failure_Signature_Block_Not_Verifiable, Failure_Signature_Not_Verifiable>::ValidationResult, context.GenerationHash, notification, 1, 2);
 		}
 	}
 
-	TEST(TEST_CLASS, SuccessWhenGenerationHashIsAltered_ReplayProtectionDisabled) {
+	SIGNATURE_BOTH_BLOCK_TYPES_TEST(SuccessWhenGenerationHashIsAltered_ReplayProtectionDisabled) {
 
 		auto mode = ReplayProtectionMode::Disabled;
 
@@ -282,40 +329,40 @@ namespace catapult { namespace validators {
 		{
 			// Arrange:
 			TestContext<1> context(mode);
-			model::SignatureNotification<1> notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 1>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, mode);
 
 			context.GenerationHash[2] ^= 0xFF;
 
 			// Assert:
-			AssertValidationResult<1>(ValidationResult::Success, context.GenerationHash, notification);
+			AssertValidationResult<IsBlock, 1>::Assertion(ValidationResult::Success, context.GenerationHash, notification);
 		}
 
 		//V1 account with V2 signature notification
 		{
 			// Arrange:
 			TestContext<1> context(mode);
-			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, mode);
 
 			context.GenerationHash[2] ^= 0xFF;
 
 			// Assert:
-			AssertValidationResult<2>(ValidationResult::Success, context.GenerationHash, notification, 1, 2);
+			AssertValidationResult<IsBlock, 2>::Assertion(ValidationResult::Success, context.GenerationHash, notification, 1, 2);
 		}
 
 		//V2 account with V2 signature notification
 		{
 			// Arrange:
 			TestContext<2> context(mode);
-			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, mode);
 
 			context.GenerationHash[2] ^= 0xFF;
 
 			// Assert:
-			AssertValidationResult<2>(ValidationResult::Success, context.GenerationHash, notification, 1, 2);
+			AssertValidationResult<IsBlock, 2>::Assertion(ValidationResult::Success, context.GenerationHash, notification, 1, 2);
 		}
 	}
 
-	TEST(TEST_CLASS, FailureWhenVersionHasBeenDeprecated) {
+	SIGNATURE_BOTH_BLOCK_TYPES_TEST(FailureWhenVersionHasBeenDeprecated) {
 
 		auto mode = ReplayProtectionMode::Disabled;
 
@@ -324,14 +371,14 @@ namespace catapult { namespace validators {
 		{
 			// Arrange:
 			TestContext<1> context(mode);
-			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, mode);
 
 			// Assert:
-			AssertValidationResult<2>(Failure_Signature_Invalid_Version, context.GenerationHash, notification, 2, 2);
+			AssertValidationResult<IsBlock, 2>::Assertion(validators::VerifiableFailureResolver<IsBlock, Failure_Signature_Block_Invalid_Version, Failure_Signature_Invalid_Version>::ValidationResult, context.GenerationHash, notification, 2, 2);
 		}
 	}
 
-	TEST(TEST_CLASS, SuccessWhenVersionHasNotBeenDeprecated) {
+	SIGNATURE_BOTH_BLOCK_TYPES_TEST(SuccessWhenVersionHasNotBeenDeprecated) {
 
 		auto mode = ReplayProtectionMode::Disabled;
 
@@ -340,10 +387,10 @@ namespace catapult { namespace validators {
 		{
 			// Arrange:
 			TestContext<1> context(mode);
-			model::SignatureNotification<2> notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, mode);
+			typename SignatureNotificationTypeResolver<IsBlock, 2>::Notification notification(context.SignerKeyPair.publicKey(), context.Signature, context.SignerKeyPair.derivationScheme(), context.DataBuffer, mode);
 
 			// Assert:
-			AssertValidationResult<2>(ValidationResult::Success, context.GenerationHash, notification, 1, 2);
+			AssertValidationResult<IsBlock, 2>::Assertion(ValidationResult::Success, context.GenerationHash, notification, 1, 2);
 		}
 	}
 }}

@@ -117,12 +117,12 @@ namespace catapult { namespace model {
 					{
 						case DerivationScheme::Unset: //unset: prior to merge
 						{
-							sub.notify(SignatureNotification<1>(block.Signer, block.Signature, blockData));
+							sub.notify(BlockSignatureNotification<1>(block.Signer, block.Signature, blockData));
 							break;
 						}
 						default:
 						{
-							sub.notify(SignatureNotification<2>(block.Signer, block.Signature, block.SignatureDerivationScheme(), blockData));
+							sub.notify(BlockSignatureNotification<2>(block.Signer, block.Signature, block.SignatureDerivationScheme(), blockData));
 						}
 					}
 					break;

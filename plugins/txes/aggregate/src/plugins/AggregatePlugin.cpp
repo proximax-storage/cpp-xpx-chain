@@ -53,11 +53,6 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateStrictAggregateCosignaturesV3Validator())
 				.add(validators::CreateAggregateTransactionTypeValidator());
 		});
-		auto configuration = std::bitset<validators::ValidatorRegistrationFlags_SIZE>();
-		configuration.set((size_t)validators::ValidatorRegistrationFlags::EnableOnPartialValidation, true);
-		manager.addConditionalStatefulValidatorHook(std::move(configuration), [](auto& builder) {
-			builder.add(validators::CreateAggregateTransactionTypeValidator());
-		});
 	}
 }}
 

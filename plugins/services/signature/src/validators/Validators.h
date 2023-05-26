@@ -31,4 +31,12 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to all signature notifications and validates that:
 	/// - signatures are valid given \a generationHash
 	DECLARE_STATEFUL_VALIDATOR(SignatureV2, model::SignatureNotification<2>)(const GenerationHash& generationHash);
+
+	/// A validator implementation that applies to all signature notifications and validates that:
+	/// - signatures are valid given \a generationHash
+	DECLARE_STATELESS_VALIDATOR(BlockSignatureV1, model::BlockSignatureNotification<1>)(const GenerationHash& generationHash);
+
+	/// A validator implementation that applies to all signature notifications and validates that:
+	/// - signatures are valid given \a generationHash
+	DECLARE_STATEFUL_VALIDATOR(BlockSignatureV2, model::BlockSignatureNotification<2>)(const GenerationHash& generationHash);
 }}

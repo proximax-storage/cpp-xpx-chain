@@ -198,7 +198,7 @@ namespace catapult { namespace plugins {
 	}
 
 	PluginManager::StatefulValidatorPointer PluginManager::createConditionalStatefulValidator(const validators::ValidatorEnabledPredicate& shouldEnable) const {
-		return createConditionalStatefulValidator([](auto) { return false; });
+		return createConditionalStatefulValidator(shouldEnable);
 	}
 
 	// endregion

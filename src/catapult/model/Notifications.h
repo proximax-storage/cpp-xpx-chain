@@ -522,6 +522,17 @@ namespace catapult { namespace model {
 		SignatureNotification<1>::ReplayProtectionMode DataReplayProtectionMode;
 	};
 
+	/// Notifies the presence of a signature.
+	template<VersionType TVersion>
+	struct BlockSignatureNotification;
+	template<>
+	struct BlockSignatureNotification<1> : SignatureNotification<1> {
+		using SignatureNotification<1>::SignatureNotification;
+	};
+	template<>
+	struct BlockSignatureNotification<2> : SignatureNotification<2> {
+		using SignatureNotification<2>::SignatureNotification;
+	};
 
 	// endregion
 

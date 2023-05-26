@@ -70,8 +70,10 @@ namespace catapult { namespace validators {
 	/// Validation failed because internal padding is nonzero.
 	DEFINE_CORE_RESULT(Nonzero_Internal_Padding, 27);
 
-	/// Validation failed because internal padding is nonzero.
+	/// Validation failed because derivation scheme was unset.
 	DEFINE_CORE_RESULT(Derivation_Scheme_Unset, 28);
+	/// Validation failed because derivation scheme was unset in a block.
+	DEFINE_CORE_RESULT(Block_Derivation_Scheme_Unset, 29);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

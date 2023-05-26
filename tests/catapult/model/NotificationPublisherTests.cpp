@@ -158,7 +158,18 @@ namespace catapult { namespace model {
 		test::FillWithRandomData(pBlock->Signature);
 
 		// Act:
-		PublishOne<SignatureNotification<1>>(*pBlock, [&block = *pBlock](const auto& notification) {
+		PublishOne<BlockSignatureNotification<1>>(*pBlock, [&block = *pBlock](const auto& notification) {
+			// Assert:
+			EXPECT_EQ(block.Signer, notification.Signer);
+			EXPECT_EQ(block.Signature, notification.Signature);
+			EXPECT_EQ(test::AsVoidPointer(&block.Version), test::AsVoidPointer(notification.Data.pData));
+			EXPECT_EQ(sizeof(BlockHeaderV4) - VerifiableEntity::Header_Size, notification.Data.Size);
+			EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
+		});
+
+		pBlock->SetSignatureDerivationScheme(DerivationScheme::Ed25519_Sha2); //Making sure block now supports version so we can test signature notification V2
+		// Act:
+		PublishOne<BlockSignatureNotification<2>>(*pBlock, [&block = *pBlock](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(block.Signer, notification.Signer);
 			EXPECT_EQ(block.Signature, notification.Signature);

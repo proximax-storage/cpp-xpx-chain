@@ -38,6 +38,8 @@
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/plugins/PluginManager.h"
 #include "UnlockedAccountsUpdater.h"
+#include "plugins/coresystem/src/validators/Results.h"
+#include "plugins/services/signature/src/validators/Results.h"
 
 namespace catapult { namespace harvesting {
 
@@ -128,7 +130,20 @@ namespace catapult { namespace harvesting {
 			const auto& pConfigHolder = state.pluginManager().configHolder();
 			const auto& utCache = state.utCache();
 			auto strategy = state.config().Node.TransactionSelectionStrategy;
-			auto executionConfig = extensions::CreateExecutionConfiguration(state.pluginManager());
+
+			/// Signature V2 and Derivation Scheme validators must be disabled as these would validate the unsigned, incomplete block if multiple account versions are used. True validation of these fields happens when block is sent to broker.
+			auto executionConfig = extensions::CreateExecutionConfiguration(state.pluginManager(), [](const plugins::PluginManager& manager) {
+				return manager.createStatefulValidator([](const validators::ValidationResult& result){
+					switch(result) {
+					case validators::Failure_Core_Block_Derivation_Scheme_Unset:
+					case validators::Failure_Signature_Block_Not_Verifiable:
+					case validators::Failure_Signature_Block_Invalid_Version:
+						return true;
+					default:
+						return false;
+					}
+				});
+			});
 			HarvestingUtFacadeFactory utFacadeFactory(cache, executionConfig);
 			auto pUnlockedAccounts = unlockedAccountsHolder.pUnlockedAccounts;
 			auto pUnlockedAccountsUpdater = unlockedAccountsHolder.pUnlockedAccountsUpdater;

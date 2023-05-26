@@ -103,4 +103,14 @@ namespace catapult { namespace validators {
 
 	/// Insertion operator for outputting \a result to \a out.
 	std::ostream& operator<<(std::ostream& out, ValidationResult result);
+
+	/// REsolves one result or the other depending on condition.
+	template<bool enable, ValidationResult EnabledResult, ValidationResult DisabledResult>
+	struct VerifiableFailureResolver {
+		static constexpr auto ValidationResult = EnabledResult;
+	};
+	template<ValidationResult EnabledResult, ValidationResult DisabledResult>
+	struct VerifiableFailureResolver<false, EnabledResult, DisabledResult> {
+		static constexpr auto ValidationResult = DisabledResult;
+	};
 }}

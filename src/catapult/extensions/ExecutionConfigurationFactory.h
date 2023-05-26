@@ -20,11 +20,14 @@
 
 #pragma once
 #include "catapult/chain/ExecutionConfiguration.h"
+#include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace plugins { class PluginManager; } }
 
 namespace catapult { namespace extensions {
 
 	/// Creates an execution configuration based on \a pluginManager.
-	chain::ExecutionConfiguration CreateExecutionConfiguration(const plugins::PluginManager& pluginManager);
+	chain::ExecutionConfiguration CreateExecutionConfiguration(const plugins::PluginManager& pluginManager, std::function<std::unique_ptr<const validators::AggregateNotificationValidatorT<model::Notification, const validators::ValidatorContext &>>(const plugins::PluginManager&)> statefulValidatorCreator = [](const plugins::PluginManager& manager) {
+		return 	manager.createStatefulValidator();
+	});
 }}

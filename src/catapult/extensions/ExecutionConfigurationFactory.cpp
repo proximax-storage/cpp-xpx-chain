@@ -24,7 +24,7 @@
 
 namespace catapult { namespace extensions {
 
-	chain::ExecutionConfiguration CreateExecutionConfiguration(const plugins::PluginManager& pluginManager) {
+	chain::ExecutionConfiguration CreateExecutionConfiguration(const plugins::PluginManager& pluginManager, std::function<std::unique_ptr<const validators::AggregateNotificationValidatorT<model::Notification, const validators::ValidatorContext &>>(const plugins::PluginManager&)> statefulValidatorCreator) {
 		chain::ExecutionConfiguration executionConfig;
 		executionConfig.NetworkIdentifier = pluginManager.immutableConfig().NetworkIdentifier;
 		executionConfig.MinFeeMultiplierSupplier = [&pluginManager](const Height& height) { return config::GetMinFeeMultiplier(pluginManager.configHolder()->Config(height)); };
@@ -33,7 +33,7 @@ namespace catapult { namespace extensions {
 		};
 
 		executionConfig.pObserver = pluginManager.createObserver();
-		executionConfig.pValidator = pluginManager.createStatefulValidator();
+		executionConfig.pValidator = statefulValidatorCreator(pluginManager);
 		executionConfig.pNotificationPublisher = pluginManager.createNotificationPublisher();
 		executionConfig.ResolverContextFactory = [&pluginManager](const auto& cache) {
 			return pluginManager.createResolverContext(cache);

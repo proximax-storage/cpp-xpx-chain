@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 		ValidationResult Validate(const Notification& notification, const ValidatorContext& context) {
 			const auto& networkConfig = context.Config.Network;
 			if(networkConfig.AccountVersion > 1 && notification.TransactionDerivationScheme == DerivationScheme::Unset)
-				return Failure_Core_Derivation_Scheme_Unset;
+				return ToBasicEntityType(notification.EntityType) == model::BasicEntityType::Block ? Failure_Core_Block_Derivation_Scheme_Unset : Failure_Core_Derivation_Scheme_Unset;
 			return ValidationResult::Success;
 		}
 	}
