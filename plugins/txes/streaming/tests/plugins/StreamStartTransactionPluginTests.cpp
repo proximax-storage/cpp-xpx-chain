@@ -15,6 +15,7 @@
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/StreamingTestUtils.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include <src/catapult/model/LiquidityProviderNotifications.h>
 
 using namespace catapult::model;
 
@@ -87,14 +88,13 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(6u, sub.numNotifications());
+		ASSERT_EQ(5u, sub.numNotifications());
 		auto i = 0u;
 		EXPECT_EQ(Storage_Drive_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Storage_Stream_Start_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Streaming_Stream_Start_Folder_Name_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Transfer_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(LiquidityProvider_Credit_Mosaic_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
 	// endregion
@@ -185,11 +185,11 @@ namespace catapult { namespace plugins {
 
 	// endregion
 
-	// region publish - balance debit notification
+	// region publish - credit mosaic notification
 
-	PLUGIN_TEST(CanPublishBalanceDebitNotification) {
+	PLUGIN_TEST(CanPublishCreditMosaicNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<BalanceDebitNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<CreditMosaicNotification<1>> sub;
 		const auto& config = CreateConfiguration();
 		auto pPlugin = TTraits::CreatePlugin(config);
 		auto pTransaction = CreateTransaction<TTraits>();
@@ -204,41 +204,11 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 
-		EXPECT_EQ(pTransaction->Signer, notification.Sender);
-		EXPECT_EQ(config.CurrencyMosaicId.unwrap(), notification.MosaicId.unwrap());
-		EXPECT_EQ(UnresolvedAmountType::StreamingWork, notification.Amount.Type);
-
-		auto pActualAmount = (model::StreamingWork *) notification.Amount.DataPtr;
-		EXPECT_EQ(pTransaction->DriveKey, pActualAmount->DriveKey);
-		EXPECT_EQ(pTransaction->ExpectedUploadSizeMegabytes, pActualAmount->UploadSize);
-	}
-
-	// endregion
-
-	// region publish - balance credit notification
-
-	PLUGIN_TEST(CanPublishBalanceCreditNotification) {
-		// Arrange:
-		mocks::MockTypedNotificationSubscriber<BalanceCreditNotification<1>> sub;
-		const auto& config = CreateConfiguration();
-		auto pPlugin = TTraits::CreatePlugin(config);
-		auto pTransaction = CreateTransaction<TTraits>();
-		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
-		auto driveAddress = extensions::CopyToUnresolvedAddress(
-				PublicKeyToAddress(pTransaction->DriveKey, config.NetworkIdentifier));
-
-		// Act:
-		test::PublishTransaction(*pPlugin, *pTransaction, sub);
-
-		// Assert:
-		ASSERT_EQ(1u, sub.numMatchingNotifications());
-		const auto& notification = sub.matchingNotifications()[0];
-
-		EXPECT_EQ(pTransaction->DriveKey, notification.Sender);
+		EXPECT_EQ(pTransaction->Signer, notification.CurrencyDebtor);
 		EXPECT_EQ(config.StreamingMosaicId.unwrap(), notification.MosaicId.unwrap());
-		EXPECT_EQ(UnresolvedAmountType::StreamingWork, notification.Amount.Type);
+		EXPECT_EQ(UnresolvedAmountType::StreamingWork, notification.MosaicAmount.Type);
 
-		auto pActualAmount = (model::StreamingWork *) notification.Amount.DataPtr;
+		auto pActualAmount = (model::StreamingWork *) notification.MosaicAmount.DataPtr;
 		EXPECT_EQ(pTransaction->DriveKey, pActualAmount->DriveKey);
 		EXPECT_EQ(pTransaction->ExpectedUploadSizeMegabytes, pActualAmount->UploadSize);
 	}

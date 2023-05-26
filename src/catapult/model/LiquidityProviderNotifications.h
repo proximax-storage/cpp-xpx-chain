@@ -29,13 +29,25 @@ namespace catapult { namespace model {
 				const Key& currencyDebtor,
 				const Key& mosaicCreditor,
 				const UnresolvedMosaicId& mosaicId,
-				const Amount& mosaicAmount)
+				const UnresolvedAmount& mosaicAmount)
 			: Notification(Notification_Type, sizeof(CreditMosaicNotification<1>))
 			, CurrencyDebtor(currencyDebtor)
 			, MosaicCreditor(mosaicCreditor)
 			, MosaicId(mosaicId)
 			, MosaicAmount(mosaicAmount)
 		{}
+
+		explicit CreditMosaicNotification(
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount)
+				: Notification(Notification_Type, sizeof(CreditMosaicNotification<1>))
+				, CurrencyDebtor(currencyDebtor)
+				, MosaicCreditor(mosaicCreditor)
+				, MosaicId(mosaicId)
+				, MosaicAmount { mosaicAmount.unwrap() }
+				{}
 
 	public:
 		Key CurrencyDebtor;
@@ -44,7 +56,7 @@ namespace catapult { namespace model {
 
 		UnresolvedMosaicId MosaicId;
 
-		Amount MosaicAmount;
+		UnresolvedAmount MosaicAmount;
 	};
 
 	template<VersionType version>
