@@ -202,8 +202,10 @@ namespace catapult { namespace dbrb {
 
 		auto payloadHash = CalculatePayloadHash(message.Payload);
 		auto& data = m_broadcastData[payloadHash];
-		if (data.Payload)
-			CATAPULT_THROW_RUNTIME_ERROR_2("duplicate prepare message", data.Payload, message.Sender)
+		if (data.Payload) {
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Duplicate Prepare message from " << message.Sender << ", payload hash: " << payloadHash;
+			return;
+		}
 
 		data.Begin = utils::NetworkTime();
 
