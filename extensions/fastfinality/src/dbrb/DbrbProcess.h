@@ -78,9 +78,6 @@ namespace catapult { namespace dbrb {
 		/// This node.
 		SignedNode m_node;
 
-		/// Quorum manager.
-		QuorumManager m_quorumManager;
-
 		/// Current view.
 		View m_currentView;
 
@@ -88,25 +85,27 @@ namespace catapult { namespace dbrb {
 			/// The sender of the data.
 			ProcessId Sender;
 
-			/// Payload allowed to be acknowledged. If empty, any payload can be acknowledged.
+			/// Payload that is being broadcasted.
 			dbrb::Payload Payload;
 
 			/// Map that maps views and process IDs to signatures received from respective Acknowledged messages.
 			std::map<std::pair<View, ProcessId>, Signature> Signatures;
 
-			/// Message certificate; map that maps process IDs to signatures received from them.
-			/// Empty when the process starts working.
+			/// Map that maps process IDs to signatures received from them.
+			/// Filled when Acknowledged quorum is collected.
 			CertificateType Certificate;
 
-			/// View in which message certificate was collected.
+			/// View associated with the Certificate.
+			/// Set when Acknowledged quorum is collected.
 			View CertificateView;
 
 			/// Quorum manager.
 			dbrb::QuorumManager QuorumManager;
 
-			/// Whether any commit message received.
+			/// Whether any commit message was received.
 			bool CommitMessageReceived = false;
 
+			/// Time when corresponding Prepare message was received.
 			Timestamp Begin;
 		};
 
