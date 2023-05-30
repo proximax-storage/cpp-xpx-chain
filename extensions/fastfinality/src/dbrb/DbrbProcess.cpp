@@ -211,10 +211,6 @@ namespace catapult { namespace dbrb {
 
 		data.Sender = message.Sender;
 		data.Payload = message.Payload;
-		if (!m_state.Acknowledgeable.has_value()) {
-			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Setting acknowledgeable payload to one from the message.";
-			m_state.Acknowledgeable = message;
-		}
 
 		CATAPULT_LOG(debug) << "[DBRB] PREPARE: Sending Acknowledged message to " << message.Sender << ".";
 		Signature payloadSignature = sign(message.Payload);
@@ -295,7 +291,6 @@ namespace catapult { namespace dbrb {
 		// and disseminate Commit message with updated view.
 		if (!data.CommitMessageReceived) {
 			data.CommitMessageReceived = true;
-			m_state.Stored = message;
 
 			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Disseminating Commit message with payload " << data.Payload->Type << " from " << data.Sender;
 			auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, message.Certificate, message.CertificateView, m_currentView);

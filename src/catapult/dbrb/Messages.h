@@ -160,17 +160,6 @@ namespace catapult { namespace dbrb {
 		View CurrentView;
 	};
 
-	struct ProcessState {
-		/// Prepare message with a payload that is allowed to be acknowledged, if any.
-		std::optional<PrepareMessage> Acknowledgeable;
-
-		/// A conflicting Prepare message, if any.
-		std::optional<PrepareMessage> Conflicting;
-
-		/// Stored Commit message, if any.
-		std::optional<CommitMessage> Stored;
-	};
-
 	struct DeliverMessage : Message {
 	public:
 		DeliverMessage() = delete;

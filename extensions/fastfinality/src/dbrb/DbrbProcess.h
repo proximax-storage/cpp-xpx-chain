@@ -112,9 +112,6 @@ namespace catapult { namespace dbrb {
 
 		std::map<Hash256, BroadcastData> m_broadcastData;
 
-		/// State of the process.
-		ProcessState m_state;
-
 		NetworkPacketConverter m_converter;
 
 		DeliverCallback m_deliverCallback;
