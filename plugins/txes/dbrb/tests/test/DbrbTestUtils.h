@@ -6,6 +6,7 @@
 
 #pragma once
 #include <random>
+#include "catapult/dbrb/View.h"
 #include "catapult/model/EntityBody.h"
 #include "src/cache/DbrbViewCache.h"
 #include "src/cache/DbrbViewCacheStorage.h"

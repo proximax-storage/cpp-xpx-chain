@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "DbrbUtils.h"
+#include "View.h"
 
 namespace catapult { namespace crypto { class KeyPair; }}
 
