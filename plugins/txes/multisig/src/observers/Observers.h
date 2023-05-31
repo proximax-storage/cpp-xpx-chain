@@ -36,5 +36,5 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by account V2 upgrade notifications and:
 	/// - replaces old account key with new one for the associated multisig accounts
-	DECLARE_OBSERVER(UpgradeCosignatory, model::AccountV2UpgradeNotification<1>)();
+	DECLARE_OBSERVER(UpgradeMultisig, model::AccountV2UpgradeNotification<1>)();
 }}

@@ -1,4 +1,4 @@
-PATH_TO_CATAPULT_SERVER="/home/nemesis/Documents/proximax/node/cpp-xpx-chain"
+PATH_TO_CATAPULT_SERVER="/home/nemesis/Documents/proximax/cpp-xpx-chain"
 PATH_TO_BOOTSTRAP=$PATH_TO_CATAPULT_SERVER/scripts/bootstrap
 
 

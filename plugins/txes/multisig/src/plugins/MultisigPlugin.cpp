@@ -102,7 +102,7 @@ namespace catapult { namespace plugins {
 			builder
 				.add(observers::CreateModifyMultisigCosignersObserver())
 				.add(observers::CreateModifyMultisigSettingsObserver())
-				.add(observers::CreateUpgradeCosignatoryObserver());
+				.add(observers::CreateUpgradeMultisigObserver());
 		});
 	}
 }}
