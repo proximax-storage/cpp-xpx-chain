@@ -5,6 +5,7 @@
 **/
 
 #include "BlockchainUpgradeMapper.h"
+#include "AccountV2UpgradeMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "storages/MongoBlockchainUpgradeCacheStorage.h"
 
