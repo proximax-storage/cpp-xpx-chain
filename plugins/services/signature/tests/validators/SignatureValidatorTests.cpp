@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 
 		const auto Max_Transaction_Lifetime = []() { return utils::TimeSpan::FromHours(2); }();
 		constexpr auto Block_Time = Timestamp(8888);
-		using ReplayProtectionMode = model::SignatureNotification<1>::ReplayProtectionMode;
+		using ReplayProtectionMode = model::Replay::ReplayProtectionMode;
 
 		template<bool IsBlock, uint32_t TSignatureNotificationVersion>
 		struct SignatureNotificationTypeResolver {

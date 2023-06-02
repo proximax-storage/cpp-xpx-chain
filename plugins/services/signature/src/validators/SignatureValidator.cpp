@@ -30,8 +30,8 @@ namespace catapult { namespace validators {
 
 
 
-		template<bool isBlock>
-		auto Validate(const model::SignatureNotification<2>& notification, const ValidatorContext& context, const GenerationHash& generationHash)
+		template<bool isBlock, typename TNotification>
+		auto Validate(const TNotification& notification, const ValidatorContext& context, const GenerationHash& generationHash)
 		{
 			const auto& cache = context.Cache.template sub<cache::AccountStateCache>();
 			auto account = cache::FindAccountStateByPublicKeyOrAddress(cache, notification.Signer);
@@ -47,7 +47,7 @@ namespace catapult { namespace validators {
 			{
 				return VerifiableFailureResolver<isBlock, Failure_Signature_Block_Invalid_Version, Failure_Signature_Invalid_Version>::ValidationResult;
 			}
-			auto isVerified = model::SignatureNotification<1>::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
+			auto isVerified = model::Replay::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
 									  ? crypto::SignatureFeatureSolver::Verify(notification.Signer, { generationHash, notification.Data }, notification.Signature, notification.DerivationScheme)
 									  : crypto::SignatureFeatureSolver::Verify(notification.Signer, {notification.Data}, notification.Signature, notification.DerivationScheme);
 
@@ -59,7 +59,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATELESS_VALIDATOR(SignatureV1, model::SignatureNotification<1>)(const GenerationHash& generationHash) {
 		return MAKE_STATELESS_VALIDATOR_WITH_TYPE(SignatureV1, model::SignatureNotification<1>, [generationHash](const auto& notification) {
 
-			auto isVerified = model::SignatureNotification<1>::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
+			auto isVerified = model::Replay::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
 					? crypto::SignatureFeatureSolver::Verify(notification.Signer, { generationHash, notification.Data }, notification.Signature, DerivationScheme::Ed25519_Sha3)
 					: crypto::SignatureFeatureSolver::Verify(notification.Signer, {notification.Data}, notification.Signature, DerivationScheme::Ed25519_Sha3);
 
@@ -69,7 +69,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATELESS_VALIDATOR(BlockSignatureV1, model::BlockSignatureNotification<1>)(const GenerationHash& generationHash) {
 		return MAKE_STATELESS_VALIDATOR_WITH_TYPE(BlockSignatureV1, model::BlockSignatureNotification<1>, [generationHash](const auto& notification) {
 
-			auto isVerified = model::SignatureNotification<1>::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
+			auto isVerified = model::Replay::ReplayProtectionMode::Enabled == notification.DataReplayProtectionMode
 									  ? crypto::SignatureFeatureSolver::Verify(notification.Signer, { generationHash, notification.Data }, notification.Signature, DerivationScheme::Ed25519_Sha3)
 									  : crypto::SignatureFeatureSolver::Verify(notification.Signer, {notification.Data}, notification.Signature, DerivationScheme::Ed25519_Sha3);
 

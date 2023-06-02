@@ -1,4 +1,12 @@
-PATH_TO_CATAPULT_SERVER="/home/nemesis/Documents/proximax/cpp-xpx-chain"
+#!/bin/sh
+
+if [ -z "$1" ]; then
+  echo "Usage: ./runCatapultServers.sh <path_to_catapult>"
+  exit 1
+fi
+
+PATH_TO_CATAPULT_SERVER="$1"
+
 PATH_TO_BOOTSTRAP=$PATH_TO_CATAPULT_SERVER/scripts/bootstrap
 
 

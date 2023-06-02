@@ -670,14 +670,14 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateDefaultNotificationPublisher) {
 		// Assert: 8 basic and 1 custom notifications should be raised
-		AssertCanCreateNotificationPublisher(8u + 1, [](const auto& manager) {
+		AssertCanCreateNotificationPublisher(9u + 1, [](const auto& manager) {
 			return manager.createNotificationPublisher();
 		});
 	}
 
 	TEST(TEST_CLASS, CanCreateCustomNotificationPublisher) {
 		// Assert: 8 basic notifications should be raised
-		AssertCanCreateNotificationPublisher(8u, [](const auto& manager) {
+		AssertCanCreateNotificationPublisher(9u, [](const auto& manager) {
 			return manager.createNotificationPublisher(model::PublicationMode::Basic);
 		});
 	}

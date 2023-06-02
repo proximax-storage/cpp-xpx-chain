@@ -16,7 +16,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			static constexpr auto RegisterSubsystem = RegisterMongoSubsystem;
 
 			static std::vector<model::EntityType> GetTransactionTypes() {
-				return { model::Entity_Type_Blockchain_Upgrade };
+				return { model::Entity_Type_Blockchain_Upgrade, model::Entity_Type_AccountV2_Upgrade };
 			}
 
 			static std::vector<model::ReceiptType> GetReceiptTypes() {

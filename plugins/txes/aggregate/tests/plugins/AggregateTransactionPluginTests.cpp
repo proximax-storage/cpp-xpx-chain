@@ -613,7 +613,7 @@ namespace {
 				EXPECT_EQ(Hash256_Size, notification.Data.Size) << message;
 
 				// - notifications should not have replay protection because they represent cosignatures
-				EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
+				EXPECT_EQ(Replay::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
 			}
 		}
 	}

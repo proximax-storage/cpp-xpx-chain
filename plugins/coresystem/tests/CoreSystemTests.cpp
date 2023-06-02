@@ -69,6 +69,7 @@ namespace catapult { namespace plugins {
 					"EntityVersionValidator",
 					"DerivationSchemeSpecificationValidator",
 					"DeadlineValidator",
+					"ValidSignerValidator",
 					"AddressValidator",
 					"BalanceTransferValidator",
 					"MaxTransactionsValidator",

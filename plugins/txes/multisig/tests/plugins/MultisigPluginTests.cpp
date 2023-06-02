@@ -91,11 +91,11 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetObserverNames() {
-				return { "ModifyMultisigCosignersObserver", "ModifyMultisigSettingsObserver", "UpgradeCosignatoryObserver" };
+				return { "ModifyMultisigCosignersObserver", "ModifyMultisigSettingsObserver", "UpgradeMultisigObserver" };
 			}
 
 			static std::vector<std::string> GetPermanentObserverNames() {
-				return { "ModifyMultisigCosignersObserver", "ModifyMultisigSettingsObserver", "UpgradeCosignatoryObserver" };
+				return { "ModifyMultisigCosignersObserver", "ModifyMultisigSettingsObserver", "UpgradeMultisigObserver" };
 			}
 		};
 	}

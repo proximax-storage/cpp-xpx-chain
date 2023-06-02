@@ -45,7 +45,7 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
-				return { "SignatureV2Validator", "BlockSignatureV2Validator" };
+				return { "BlockSignatureV2Validator", "SignatureV2Validator"  };
 			}
 		};
 	}

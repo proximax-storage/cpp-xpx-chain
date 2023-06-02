@@ -94,6 +94,8 @@ namespace catapult { namespace model {
 				auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, block.GetHeaderSize() - headerSize };
 				switch (block.EntityVersion()) {
 				case 4: {
+					// Before balance change notificaitons can be issued, signer must be validated
+					sub.notify(SignerNotification<1>(block.Signer));
 					sub.notify(BlockSignerImportanceNotification<1>(block.Signer));
 					[[fallthrough]];
 				}
@@ -151,6 +153,10 @@ namespace catapult { namespace model {
 					: transaction.MaxFee;
 				sub.notify(TransactionNotification<1>(transaction.Signer, hash, transaction.Type, transaction.Deadline));
 				sub.notify(TransactionDeadlineNotification<1>(transaction.Deadline, attributes.MaxLifetime));
+
+				// Before balance change notificaitons can be issued, signer must be validated
+				sub.notify(SignerNotification<1>(transaction.Signer));
+
 				sub.notify(TransactionFeeNotification<1>(transaction.Size, fee, transaction.MaxFee));
 				sub.notify(BalanceDebitNotification<1>(transaction.Signer, m_feeMosaicId, fee));
 
@@ -164,7 +170,7 @@ namespace catapult { namespace model {
 								transaction.Signer,
 								transaction.Signature,
 								plugin.dataBuffer(transaction),
-								SignatureNotification<1>::ReplayProtectionMode::Enabled));
+								Replay::ReplayProtectionMode::Enabled));
 						break;
 					}
 					default:
@@ -174,7 +180,7 @@ namespace catapult { namespace model {
 								transaction.Signature,
 								transaction.SignatureDerivationScheme(),
 								plugin.dataBuffer(transaction),
-								SignatureNotification<1>::ReplayProtectionMode::Enabled));
+								Replay::ReplayProtectionMode::Enabled));
 					}
 				}
 

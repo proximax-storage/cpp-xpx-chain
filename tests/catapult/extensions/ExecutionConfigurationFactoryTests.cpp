@@ -64,6 +64,7 @@ namespace catapult { namespace extensions {
 			"EntityVersionValidator",
 			"DerivationSchemeSpecificationValidator",
 			"DeadlineValidator",
+			"ValidSignerValidator",
 			"AddressValidator",
 			"BalanceTransferValidator",
 			"MaxTransactionsValidator",

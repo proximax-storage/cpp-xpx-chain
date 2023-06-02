@@ -105,7 +105,8 @@ namespace catapult { namespace plugins {
 //				.add(validators::CreateNemesisSinkV2Validator())
 				.add(validators::CreateEligibleHarvesterValidator())
 				.add(validators::CreateBalanceDebitValidator())
-				.add(validators::CreateBalanceTransferValidator());
+				.add(validators::CreateBalanceTransferValidator())
+				.add(validators::CreateValidSignerValidator());
 		});
 
 		manager.addObserverHook([pConfigHolder](auto& builder) {

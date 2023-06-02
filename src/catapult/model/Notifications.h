@@ -440,15 +440,62 @@ namespace catapult { namespace model {
 
 	// region signature
 
+	namespace Replay {
+		enum class ReplayProtectionMode { Enabled, Disabled };
+	}
+	template<typename TNotificationClass>
+	struct SignatureBase : public Notification {
+	public:
+		SignatureBase(
+				const Key& signer,
+				const RawSignature& signature,
+				const RawBuffer& data,
+				Replay::ReplayProtectionMode dataReplayProtectionMode = Replay::ReplayProtectionMode::Disabled)
+			: Notification(TNotificationClass::Notification_Type, sizeof(TNotificationClass))
+			, Signer(signer)
+			, Signature(signature)
+			, Data(data)
+			, DataReplayProtectionMode(dataReplayProtectionMode) {}
+	public:
+		/// Signer.
+		const Key& Signer;
+
+		/// Signature.
+		const catapult::RawSignature& Signature;
+
+		/// Signed data.
+		RawBuffer Data;
+
+		/// Replay protection mode applied to data.
+		Replay::ReplayProtectionMode DataReplayProtectionMode;
+	};
+
+	template<typename TNotificationClass>
+	struct SignatureBaseWithDerivationScheme : public SignatureBase<TNotificationClass> {
+
+	public:
+		/// Creates a signature notification around \a signer, \a signature and \a data with optional replay protection mode
+		/// (\a dataReplayProtectionMode) applied to data.
+		SignatureBaseWithDerivationScheme(
+				const Key& signer,
+				const RawSignature& signature,
+				const DerivationScheme derivationScheme,
+				const RawBuffer& data,
+				Replay::ReplayProtectionMode dataReplayProtectionMode = Replay::ReplayProtectionMode::Disabled)
+			: SignatureBase<TNotificationClass>(signer, signature, data, dataReplayProtectionMode)
+			, DerivationScheme(derivationScheme)
+		{}
+	public:
+		/// Signature version.
+		catapult::DerivationScheme DerivationScheme;
+	};
 	/// Notifies the presence of a signature.
 	template<VersionType TVersion>
 	struct SignatureNotification;
 
 	template<>
-	struct SignatureNotification<1> : public Notification {
-	public:
-		/// Replay protection modes.
-		enum class ReplayProtectionMode { Enabled, Disabled };
+	struct SignatureNotification<1> : public SignatureBase<SignatureNotification<1>> {
+
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Signature_v1_Notification;
@@ -456,34 +503,11 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a signature notification around \a signer, \a signature and \a data with optional replay protection mode
 		/// (\a dataReplayProtectionMode) applied to data.
-		SignatureNotification(
-				const Key& signer,
-				const RawSignature& signature,
-				const RawBuffer& data,
-				ReplayProtectionMode dataReplayProtectionMode = ReplayProtectionMode::Disabled)
-				: Notification(Notification_Type, sizeof(SignatureNotification<1>))
-				, Signer(signer)
-				, Signature(signature)
-				, Data(data)
-				, DataReplayProtectionMode(dataReplayProtectionMode)
-		{}
-
-	public:
-		/// Signer.
-		const Key& Signer;
-
-		/// Signature.
-		const catapult::RawSignature& Signature;
-
-		/// Signed data.
-		RawBuffer Data;
-
-		/// Replay protection mode applied to data.
-		ReplayProtectionMode DataReplayProtectionMode;
+		using SignatureBase<SignatureNotification<1>>::SignatureBase;
 	};
 
 	template<>
-	struct SignatureNotification<2> : public Notification {
+	struct SignatureNotification<2> : public SignatureBaseWithDerivationScheme<SignatureNotification<2>>   {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Signature_v2_Notification;
@@ -491,48 +515,39 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a signature notification around \a signer, \a signature and \a data with optional replay protection mode
 		/// (\a dataReplayProtectionMode) applied to data.
-		SignatureNotification(
-				const Key& signer,
-				const RawSignature& signature,
-				const DerivationScheme derivationScheme,
-				const RawBuffer& data,
-				SignatureNotification<1>::ReplayProtectionMode dataReplayProtectionMode = SignatureNotification<1>::ReplayProtectionMode::Disabled)
-				: Notification(Notification_Type, sizeof(SignatureNotification<1>))
-				, Signer(signer)
-				, DerivationScheme(derivationScheme)
-				, Signature(signature)
-				, Data(data)
-				, DataReplayProtectionMode(dataReplayProtectionMode)
-		{}
-
-	public:
-		/// Signer.
-		const Key& Signer;
-
-		/// Signature.
-		const catapult::RawSignature& Signature;
-
-		/// Signed data.
-		RawBuffer Data;
-
-		/// Signature version.
-		catapult::DerivationScheme DerivationScheme;
-
-		/// Replay protection mode applied to data.
-		SignatureNotification<1>::ReplayProtectionMode DataReplayProtectionMode;
+		using SignatureBaseWithDerivationScheme<SignatureNotification<2>>::SignatureBaseWithDerivationScheme;
 	};
+
 
 	/// Notifies the presence of a signature.
 	template<VersionType TVersion>
 	struct BlockSignatureNotification;
+
 	template<>
-	struct BlockSignatureNotification<1> : SignatureNotification<1> {
-		using SignatureNotification<1>::SignatureNotification;
+	struct BlockSignatureNotification<1> : public SignatureBase<BlockSignatureNotification<1>> {
+
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Signature_v1_Notification;
+
+	public:
+		/// Creates a signature notification around \a signer, \a signature and \a data with optional replay protection mode
+		/// (\a dataReplayProtectionMode) applied to data.
+		using SignatureBase<BlockSignatureNotification<1>>::SignatureBase;
 	};
+
 	template<>
-	struct BlockSignatureNotification<2> : SignatureNotification<2> {
-		using SignatureNotification<2>::SignatureNotification;
+	struct BlockSignatureNotification<2> : public SignatureBaseWithDerivationScheme<BlockSignatureNotification<2>>   {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Signature_v2_Notification;
+
+	public:
+		/// Creates a signature notification around \a signer, \a signature and \a data with optional replay protection mode
+		/// (\a dataReplayProtectionMode) applied to data.
+		using SignatureBaseWithDerivationScheme<BlockSignatureNotification<2>>::SignatureBaseWithDerivationScheme;
 	};
+
 
 	// endregion
 
@@ -584,6 +599,35 @@ namespace catapult { namespace model {
 
 	// endregion
 
+	// region signer
+
+	/// Notifies the presence of a signature.
+	template<VersionType TVersion>
+	struct SignerNotification;
+
+	template<>
+	struct SignerNotification<1> : public Notification {
+	public:
+
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Signer_v1_Notification;
+
+	public:
+		/// Creates a signature notification around \a signer, \a signature and \a data with optional replay protection mode
+		/// (\a dataReplayProtectionMode) applied to data.
+		SignerNotification(
+				const Key& signer)
+			: Notification(Notification_Type, sizeof(SignerNotification<1>))
+			, Signer(signer)
+		{}
+
+	public:
+		/// Signer.
+		const Key& Signer;
+	};
+
+	// endregion
 	// region mosaic required
 
 	/// Notification of a required mosaic.

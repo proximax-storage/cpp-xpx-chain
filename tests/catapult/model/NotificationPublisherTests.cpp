@@ -111,7 +111,7 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pBlock, [&block = *pBlock](const auto& sub) {
 			// Assert:
-			EXPECT_EQ(7u, sub.numNotifications());
+			EXPECT_EQ(8u, sub.numNotifications());
 			EXPECT_EQ(0u, sub.numAddresses());
 			EXPECT_EQ(2u, sub.numKeys());
 
@@ -129,7 +129,7 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pBlock, [&block = *pBlock](const auto& sub) {
 			// Assert:
-			EXPECT_EQ(6u, sub.numNotifications());
+			EXPECT_EQ(7u, sub.numNotifications());
 			EXPECT_EQ(0u, sub.numAddresses());
 			EXPECT_EQ(1u, sub.numKeys());
 
@@ -164,7 +164,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(block.Signature, notification.Signature);
 			EXPECT_EQ(test::AsVoidPointer(&block.Version), test::AsVoidPointer(notification.Data.pData));
 			EXPECT_EQ(sizeof(BlockHeaderV4) - VerifiableEntity::Header_Size, notification.Data.Size);
-			EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
+			EXPECT_EQ(Replay::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
 		});
 
 		pBlock->SetSignatureDerivationScheme(DerivationScheme::Ed25519_Sha2); //Making sure block now supports version so we can test signature notification V2
@@ -175,7 +175,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(block.Signature, notification.Signature);
 			EXPECT_EQ(test::AsVoidPointer(&block.Version), test::AsVoidPointer(notification.Data.pData));
 			EXPECT_EQ(sizeof(BlockHeaderV4) - VerifiableEntity::Header_Size, notification.Data.Size);
-			EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
+			EXPECT_EQ(Replay::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
 		});
 	}
 
@@ -249,14 +249,15 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pBlock, PublicationMode::Basic, [](const auto& sub) {
 			// Assert: no notifications were suppressed (blocks do not have custom notifications)
-			ASSERT_EQ(7u, sub.numNotifications());
+			ASSERT_EQ(8u, sub.numNotifications());
 			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[0]);
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
-		    EXPECT_EQ(Core_Block_Signer_Importance_v1_Notification, sub.notificationTypes()[2]);
-			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[3]);
-			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[4]);
-			EXPECT_EQ(Core_Block_v1_Notification, sub.notificationTypes()[5]);
-			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[6]);
+			EXPECT_EQ(Core_Signer_v1_Notification, sub.notificationTypes()[2]);
+		    EXPECT_EQ(Core_Block_Signer_Importance_v1_Notification, sub.notificationTypes()[3]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[4]);
+			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[5]);
+			EXPECT_EQ(Core_Block_v1_Notification, sub.notificationTypes()[6]);
+			EXPECT_EQ(Core_Block_Signature_v1_Notification, sub.notificationTypes()[7]);
 		});
 	}
 
@@ -336,7 +337,7 @@ namespace catapult { namespace model {
 			// - notice that mock plugin is configured with PluginOptionFlags::Custom_Buffers so dataBuffer() contains only data payload
 			EXPECT_EQ(test::AsVoidPointer(&transaction + 1), test::AsVoidPointer(notification.Data.pData));
 			EXPECT_EQ(12u, notification.Data.Size);
-			EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Enabled, notification.DataReplayProtectionMode);
+			EXPECT_EQ(Replay::ReplayProtectionMode::Enabled, notification.DataReplayProtectionMode);
 		});
 
 		pTransaction->SetSignatureDerivationScheme(DerivationScheme::Ed25519_Sha2); //Making sure transaction now supports version so we can test signature notification V2
@@ -350,7 +351,7 @@ namespace catapult { namespace model {
 		  // - notice that mock plugin is configured with PluginOptionFlags::Custom_Buffers so dataBuffer() contains only data payload
 		  EXPECT_EQ(test::AsVoidPointer(&transaction + 1), test::AsVoidPointer(notification.Data.pData));
 		  EXPECT_EQ(12u, notification.Data.Size);
-		  EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Enabled, notification.DataReplayProtectionMode);
+		  EXPECT_EQ(Replay::ReplayProtectionMode::Enabled, notification.DataReplayProtectionMode);
 		});
 	}
 
@@ -441,9 +442,9 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pTransaction, [&transaction = *pTransaction](const auto& sub) {
 			// Assert: 8 raised by NotificationPublisher, 8 raised by MockTransaction::publish (first is AccountPublicKeyNotification)
-			ASSERT_EQ(8u + 1 + 7, sub.numNotifications());
+			ASSERT_EQ(8u + 1 + 8, sub.numNotifications());
 
-			size_t startIndex = 9;
+			size_t startIndex = 10;
 			EXPECT_EQ(mocks::Mock_Observer_1_Notification, sub.notificationTypes()[startIndex]);
 			EXPECT_EQ(mocks::Mock_Validator_1_Notification, sub.notificationTypes()[startIndex + 1]);
 			EXPECT_EQ(mocks::Mock_All_1_Notification, sub.notificationTypes()[startIndex + 2]);
@@ -473,28 +474,30 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pTransaction, PublicationMode::Basic, [&transaction = *pTransaction](const auto& sub) {
 			// Assert: 8 raised by NotificationPublisher, none raised by MockTransaction::publish
-			ASSERT_EQ(8u, sub.numNotifications());
+			ASSERT_EQ(9u, sub.numNotifications());
 			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[0]);
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
 			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[2]);
 			EXPECT_EQ(Core_Transaction_v1_Notification, sub.notificationTypes()[3]);
 			EXPECT_EQ(Core_Transaction_Deadline_v1_Notification, sub.notificationTypes()[4]);
-			EXPECT_EQ(Core_Transaction_Fee_v1_Notification, sub.notificationTypes()[5]);
-			EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[6]);
-			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[7]);
+			EXPECT_EQ(Core_Signer_v1_Notification, sub.notificationTypes()[5]);
+			EXPECT_EQ(Core_Transaction_Fee_v1_Notification, sub.notificationTypes()[6]);
+			EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[7]);
+			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[8]);
 		});
 		pTransaction->SetSignatureDerivationScheme(DerivationScheme::Ed25519_Sha2); // SET VERSION TO NON ZERO SO IT SENDS V2 SIGNATURE NOTIFICATION
 		PublishAll(*pTransaction, PublicationMode::Basic, [&transaction = *pTransaction](const auto& sub) {
 		  // Assert: 8 raised by NotificationPublisher, none raised by MockTransaction::publish
-		  ASSERT_EQ(8u, sub.numNotifications());
+		  ASSERT_EQ(9u, sub.numNotifications());
 		  EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[0]);
 		  EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
 		  EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[2]);
 		  EXPECT_EQ(Core_Transaction_v1_Notification, sub.notificationTypes()[3]);
 		  EXPECT_EQ(Core_Transaction_Deadline_v1_Notification, sub.notificationTypes()[4]);
-		  EXPECT_EQ(Core_Transaction_Fee_v1_Notification, sub.notificationTypes()[5]);
-		  EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[6]);
-		  EXPECT_EQ(Core_Signature_v2_Notification, sub.notificationTypes()[7]);
+		  EXPECT_EQ(Core_Signer_v1_Notification, sub.notificationTypes()[5]);
+		  EXPECT_EQ(Core_Transaction_Fee_v1_Notification, sub.notificationTypes()[6]);
+		  EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[7]);
+		  EXPECT_EQ(Core_Signature_v2_Notification, sub.notificationTypes()[8]);
 		});
 	}
 

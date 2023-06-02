@@ -34,9 +34,14 @@ namespace catapult { namespace validators {
 	/// - the address is valid and targets the expected network (\a networkIdentifier)
 	DECLARE_STATEFUL_VALIDATOR(Address, model::AccountAddressNotification<1>)(model::NetworkIdentifier networkIdentifier);
 
+
 	// endregion
 
 	// region VerifiableEntity
+
+	/// A validator implementation that applies to entity notifications and validates that:
+	/// - signer is not a locked account.
+	DECLARE_STATEFUL_VALIDATOR(ValidSigner, model::SignerNotification<1>)();
 
 	/// A validator implementation that applies to all signature notifications and validates that:
 	/// - nemesis account signatures are not allowed after the nemesis block
