@@ -35,16 +35,12 @@
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/local/HostUtils.h"
 #include "catapult/utils/StackLogger.h"
+#include "catapult/extensions/NemesisBlockLoader.h"
+#include "plugins/txes/config/src/cache/NetworkConfigCache.h"
 
 namespace catapult { namespace local {
 
 	namespace {
-		std::unique_ptr<io::PrunableBlockStorage> CreateStagingBlockStorage(const config::CatapultDataDirectory& dataDirectory) {
-			auto stagingDirectory = dataDirectory.spoolDir("block_sync").str();
-			boost::filesystem::create_directory(stagingDirectory);
-			return std::make_unique<io::FileBlockStorage>(stagingDirectory, io::FileBlockStorageMode::None);
-		}
-
 		std::unique_ptr<subscribers::StateChangeSubscriber> CreateStateChangeSubscriber(
 				subscribers::SubscriptionManager& subscriptionManager,
 				const extensions::CacheHolder& cacheHolder,
@@ -93,16 +89,61 @@ namespace catapult { namespace local {
 
 		public:
 			void boot() {
-				CATAPULT_LOG(info) << "registering system plugins";
-				m_pluginModules = LoadAllPlugins(*m_pBootstrapper);
 
-				CATAPULT_LOG(debug) << "initializing cache";
+				/// Initially we start by loading system requirements
+				CATAPULT_LOG(info) << "registering system plugins";
+				m_pluginModules = LoadSystemPlugins(*m_pBootstrapper);
+
+				/// First we must determine if this is the first boot. If it is we must load nemesis block
+				auto isFirstBoot = IsStatePresent(m_dataDirectory);
+				std::unique_ptr<const model::NetworkConfiguration> initNetworkConfig;
+				std::unique_ptr<const config::SupportedEntityVersions> initSupportedEntities;
+				/// We must retrieve the configuration from the nemesis block
+				auto storageView = m_storage.view();
+				//This is the first boot, so we must load the nemesis block network configuration
+				const auto pNemesisBlockElement = storageView.loadBlockElement(Height(1));
+				auto bundleConfig = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+				initSupportedEntities = std::make_unique<const config::SupportedEntityVersions>(std::get<1>(bundleConfig));
+				if(isFirstBoot) {
+					/// We set base config as the one in nemesis block.
+					initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(std::get<0>(bundleConfig));
+				}
+				else {
+					auto stateDir = m_dataDirectory.dir("state");
+					/// We must retrieve the configuration from the active config file if available
+					/// At this point the configurations for the plugins are still uninitialized
+					if(extensions::HasActiveNetworkConfig(stateDir)) {
+						auto config = extensions::LoadActiveNetworkConfig(stateDir);
+						initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(config);
+					} else {
+						/// Not first boot but no config was saved yet, we just use the nemesis block configuration.
+						initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(std::get<0>(bundleConfig));
+					}
+				}
+
+				/// At this point we have managed to obtain the proper network configuration that we should boot up the chain with. We will load remaining plugins.
+				/// Initialize proper zero network config.
+				CATAPULT_LOG(debug) << "initializing network configuration from previous state";
+				m_pBootstrapper->configHolder()->InitializeNetworkConfiguration(*initNetworkConfig, *initSupportedEntities);
+
+				/// Load non system plugins
+				CATAPULT_LOG(debug) << "registering addon plugins";
+				auto addonPlugins = LoadConfigurablePlugins(*m_pBootstrapper);
+				m_pluginModules.insert(m_pluginModules.cend(), addonPlugins.begin(), addonPlugins.end());
+
+				/// We can now create the cache with all avaiolable plugins.
+
+				CATAPULT_LOG(debug) << "initializing addon plugins cache";
+				CATAPULT_LOG(debug) << "initializing system cache";
 				m_cacheHolder.cache() = m_pluginManager.createCache();
 				m_pluginManager.configHolder()->SetCache(&m_cacheHolder.cache());
 				if (m_pluginManager.isStorageStateSet())
 					m_pluginManager.storageState().setCache(&m_cacheHolder.cache());
 				if (m_pluginManager.isContractStateSet())
 					m_pluginManager.contractState().setCache(&m_cacheHolder.cache());
+
+				/// Finally we can build and run the plugin initializers to manipulate the config.
+
 				auto initializers = m_pluginManager.createPluginInitializer();
 				initializers(const_cast<model::NetworkConfiguration&>(m_pluginManager.configHolder()->Config().Network));
 				m_pluginManager.configHolder()->SetPluginInitializer(std::move(initializers));
@@ -111,7 +152,7 @@ namespace catapult { namespace local {
 				registerCounters();
 
 				utils::StackLogger stackLogger("booting local node", utils::LogLevel::Info);
-				auto isFirstBoot = executeAndNotifyNemesis();
+				if(isFirstBoot) executeAndNotifyNemesis();
 				loadStateFromDisk();
 
 				CATAPULT_LOG(debug) << "adding static nodes";
@@ -166,9 +207,6 @@ namespace catapult { namespace local {
 			}
 
 			bool executeAndNotifyNemesis() {
-				// only execute nemesis during first boot
-				if (extensions::HasSerializedState(m_dataDirectory.dir("state")))
-					return false;
 
 				NemesisBlockNotifier notifier(m_cacheHolder.cache(), m_storage, m_pluginManager);
 

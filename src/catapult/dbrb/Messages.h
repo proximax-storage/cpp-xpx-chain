@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "DbrbUtils.h"
+#include "View.h"
 
 namespace catapult { namespace crypto { class KeyPair; }}
 
@@ -158,17 +158,6 @@ namespace catapult { namespace dbrb {
 
 		/// Current view of the system from the perspective of Sender.
 		View CurrentView;
-	};
-
-	struct ProcessState {
-		/// Prepare message with a payload that is allowed to be acknowledged, if any.
-		std::optional<PrepareMessage> Acknowledgeable;
-
-		/// A conflicting Prepare message, if any.
-		std::optional<PrepareMessage> Conflicting;
-
-		/// Stored Commit message, if any.
-		std::optional<CommitMessage> Stored;
 	};
 
 	struct DeliverMessage : Message {

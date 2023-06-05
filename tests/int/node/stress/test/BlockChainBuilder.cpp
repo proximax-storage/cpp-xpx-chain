@@ -62,7 +62,7 @@ namespace catapult { namespace test {
 			bool isChained)
 			: m_pAccounts(&accounts)
 			, m_pStateHashCalculator(&stateHashCalculator)
-			, m_blockTimeInterval(utils::TimeSpan::FromSeconds(60))
+			, m_blockTimeInterval(utils::TimeSpan::FromSeconds(15))
 			, m_blockReceiptsHashCalculator([](const auto&) { return Hash256(); })
 			, m_config(config) {
 		if (isChained)
@@ -184,7 +184,7 @@ namespace catapult { namespace test {
 		auto pConfigHolder = config::CreateMockConfigurationHolder(m_config);
 		chain::BlockHitPredicate hitPredicate(pConfigHolder, [](const auto&, auto) {
 			// to simplfy tests, just return a constant importance
-			return Importance(8'999'999'998'000'000);
+			return Importance(409'090'909'000'000);
 		});
 
 		auto i = 0u;

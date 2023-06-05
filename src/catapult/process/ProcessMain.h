@@ -43,10 +43,14 @@ namespace catapult { namespace process {
 	/// \note Return value is a shared_ptr because unique_ptr of void is not allowed.
 	using CreateProcessHost = std::function<std::shared_ptr<void> (const std::shared_ptr<config::BlockchainConfigurationHolder>&, const crypto::KeyPair&)>;
 
+	/// Prototype for preparing and validating a host configuration.
+	/// \note Return value is a shared_ptr because unique_ptr of void is not allowed.
+	using CreateProcessHostConfig = std::function<std::shared_ptr<config::BlockchainConfigurationHolder> (const boost::filesystem::path&, const std::string&)>;
+
 	/// Main entry point for a catapult process named \a host with default process options.
 	/// \a argc commmand line arguments are accessible via \a argv.
 	/// \a createProcessHost creates the process host.
-	int ProcessMain(int argc, const char** argv, const std::string& host, const CreateProcessHost& createProcessHost);
+	int ProcessMain(int argc, const char** argv, const std::string& host, const CreateProcessHostConfig& createProcessConfig, const CreateProcessHost& createProcessHost);
 
 	/// Main entry point for a catapult process named \a host with specified process options (\a processOptions).
 	/// \a argc commmand line arguments are accessible via \a argv.
@@ -56,5 +60,6 @@ namespace catapult { namespace process {
 			const char** argv,
 			const std::string& host,
 			ProcessOptions processOptions,
+			const CreateProcessHostConfig& createProcessConfig,
 			const CreateProcessHost& createProcessHost);
 }}

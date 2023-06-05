@@ -146,18 +146,14 @@ namespace catapult { namespace dbrb {
 	}
 
 	Signature DbrbProcess::sign(const Payload& payload) {
-		// Signed message must contain information about:
-		// - payload of the message;
-		// - recipient process Q (current process) that received Prepare message from S;
-		// - Q's view at the moment of forming a signature;
-		// Hash calculated from concatenated information is signed.
+		// Forms a hash based on payload and current view and signs it.
 
-		uint32_t payloadSize = m_currentView.packedSize();
-		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(payloadSize);
+		uint32_t packetPayloadSize = m_currentView.packedSize();
+		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(packetPayloadSize);
 		auto pBuffer = pPacket->Data();
 		Write(pBuffer, m_currentView);
 
-		auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(payload.get()), payload->Size }, { pPacket->Data(), payloadSize } });
+		auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(payload.get()), payload->Size }, { pPacket->Data(), packetPayloadSize } });
 		Signature signature;
 		crypto::Sign(m_keyPair, hash, signature);
 
@@ -165,14 +161,14 @@ namespace catapult { namespace dbrb {
 	}
 
 	bool DbrbProcess::verify(const ProcessId& signer, const Payload& payload, const View& view, const Signature& signature) {
-		// Forms hash as described in DbrbProcess::sign and checks whether the signature is valid.
+		// Forms a hash based on payload and current view and checks whether the signature is valid.
 
-		uint32_t payloadSize = view.packedSize();
-		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(payloadSize);
+		uint32_t packetPayloadSize = view.packedSize();
+		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(packetPayloadSize);
 		auto pBuffer = pPacket->Data();
 		Write(pBuffer, view);
 
-		auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(payload.get()), payload->Size }, { pPacket->Data(), payloadSize } });
+		auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(payload.get()), payload->Size }, { pPacket->Data(), packetPayloadSize } });
 
 		bool res = crypto::Verify(signer, hash, signature);
 		return res;
@@ -202,17 +198,15 @@ namespace catapult { namespace dbrb {
 
 		auto payloadHash = CalculatePayloadHash(message.Payload);
 		auto& data = m_broadcastData[payloadHash];
-		if (data.Payload)
-			CATAPULT_THROW_RUNTIME_ERROR_2("duplicate prepare message", data.Payload, message.Sender)
+		if (data.Payload) {
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Duplicate Prepare message from " << message.Sender << ", payload hash: " << payloadHash;
+			return;
+		}
 
 		data.Begin = utils::NetworkTime();
 
 		data.Sender = message.Sender;
 		data.Payload = message.Payload;
-		if (!m_state.Acknowledgeable.has_value()) {
-			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Setting acknowledgeable payload to one from the message.";
-			m_state.Acknowledgeable = message;
-		}
 
 		CATAPULT_LOG(debug) << "[DBRB] PREPARE: Sending Acknowledged message to " << message.Sender << ".";
 		Signature payloadSignature = sign(message.Payload);
@@ -293,7 +287,6 @@ namespace catapult { namespace dbrb {
 		// and disseminate Commit message with updated view.
 		if (!data.CommitMessageReceived) {
 			data.CommitMessageReceived = true;
-			m_state.Stored = message;
 
 			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Disseminating Commit message with payload " << data.Payload->Type << " from " << data.Sender;
 			auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, message.Certificate, message.CertificateView, m_currentView);

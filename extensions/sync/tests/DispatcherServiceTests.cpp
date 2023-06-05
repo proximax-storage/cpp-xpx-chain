@@ -268,7 +268,7 @@ namespace catapult { namespace sync {
 
 			model::PreviousBlockContext context(*pNemesisBlockElement);
 			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
-			pBlock->Timestamp = context.Timestamp + Timestamp(61'000);
+			pBlock->Timestamp = context.Timestamp + Timestamp(16'000);
 			pBlock->Difficulty = chain::CalculateDifficulty(
 					testContext.testState().cache().sub<cache::BlockDifficultyCache>(),
 					state::BlockDifficultyInfo(*pBlock),
@@ -639,8 +639,8 @@ namespace catapult { namespace sync {
 			const auto& stateChangeSubscriber = context.testState().stateChangeSubscriber();
 			EXPECT_EQ(1u, stateChangeSubscriber.numScoreChanges());
 			EXPECT_EQ(1u, stateChangeSubscriber.numStateChanges());
-			// 18'156'244'167'036'960 = 2^64 / NEMESIS_BLOCK_DIFFICULTY * 61 / 60
-			EXPECT_EQ(model::ChainScore(18'156'244'167'036'960), stateChangeSubscriber.lastChainScore());
+			// 17'304'637'967'832'600 = 2^64 / (NEMESIS_BLOCK_DIFFICULTY * 16) / 15
+			EXPECT_EQ(model::ChainScore(17'304'637'967'832'600), stateChangeSubscriber.lastChainScore());
 
 			// - commit step index file was updated
 			AssertCommitStepFileUpdated(context);

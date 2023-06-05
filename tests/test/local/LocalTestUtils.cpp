@@ -236,13 +236,13 @@ namespace catapult { namespace test {
 		auto config = model::NetworkConfiguration::Uninitialized();
 		SetNetwork(config.Info);
 
-		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
-		config.BlockTimeSmoothingFactor = 10'000;
+		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
+		config.BlockTimeSmoothingFactor = 3'000;
 		config.MaxTransactionLifetime = utils::TimeSpan::FromHours(1);
 
 		config.ImportanceGrouping = 1;
 		config.MaxRollbackBlocks = 10;
-		config.MaxDifficultyBlocks = 60;
+		config.MaxDifficultyBlocks = 3;
 
 		config.MaxMosaicAtomicUnits = Amount(9'000'000'000'000'000);
 

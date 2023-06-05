@@ -22,6 +22,8 @@
 #include "catapult/plugins/PluginModule.h"
 #include "catapult/utils/ExceptionLogging.h"
 #include "catapult/exceptions.h"
+#include "catapult/extensions/LocalNodeStateFileStorage.h"
+#include "catapult/io/BlockStorage.h"
 #include <memory>
 #include <vector>
 
@@ -45,6 +47,14 @@ namespace catapult { namespace local {
 
 		return std::move(pHost);
 	}
+
+	std::unique_ptr<io::PrunableBlockStorage> CreateStagingBlockStorage(const config::CatapultDataDirectory& dataDirectory);
+
+	bool IsStatePresent(const config::CatapultDataDirectory& dataDirectory);
+
+	std::vector<plugins::PluginModule> LoadSystemPlugins(extensions::ProcessBootstrapper& bootstrapper);
+
+	std::vector<plugins::PluginModule> LoadConfigurablePlugins(extensions::ProcessBootstrapper& bootstrapper);
 
 	/// Loads all plugins using \a bootstrapper.
 	std::vector<plugins::PluginModule> LoadAllPlugins(extensions::ProcessBootstrapper& bootstrapper);

@@ -35,7 +35,6 @@ namespace catapult { namespace config {
 		const char* Resources_Path = "../resources";
 		const char* Config_Filenames[] = {
 			"config-extensions-server.properties",
-			"config-inflation.properties",
 			"config-logging-server.properties",
 			"config-immutable.properties",
 			"config-network.properties",
@@ -271,7 +270,6 @@ namespace catapult { namespace config {
 			"extension.nodediscovery", "extension.packetserver", "extension.pluginhandlers", "extension.sync",
 			"extension.timesync", "extension.transactionsink", "extension.unbondedpruning"
 		});
-		AssertDefaultInflationConfiguration(config.Inflation);
 		AssertDefaultSupportedEntityVersions(config.SupportedEntityVersions);
 	}
 
@@ -289,7 +287,6 @@ namespace catapult { namespace config {
 			"extension.addressextraction", "extension.mongo", "extension.zeromq",
 			"extension.hashcache"
 		});
-		AssertDefaultInflationConfiguration(config.Inflation);
 		AssertDefaultSupportedEntityVersions(config.SupportedEntityVersions);
 	}
 
@@ -304,7 +301,6 @@ namespace catapult { namespace config {
 		AssertDefaultLoggingConfiguration(config.Logging, "catapult_recovery%4N.log", utils::LogLevel::Debug);
 		AssertDefaultUserConfiguration(config.User);
 		AssertDefaultExtensionsConfiguration(config.Extensions, { "extension.hashcache" });
-		AssertDefaultInflationConfiguration(config.Inflation);
 		AssertDefaultSupportedEntityVersions(config.SupportedEntityVersions);
 	}
 

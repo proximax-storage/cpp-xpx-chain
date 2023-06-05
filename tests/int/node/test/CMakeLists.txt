@@ -8,4 +8,5 @@ target_link_libraries(${TARGET_NAME}
     tests.catapult.test.local
     catapult.plugins.config
     catapult.plugins.upgrade
-    catapult.plugins.committee)
+    catapult.plugins.committee
+    catapult.plugins.metadata_v2)

@@ -61,6 +61,8 @@ namespace catapult { namespace test {
 				bool isChained);
 
 	public:
+
+
 		/// Sets the time between blocks to \a blockTimeInterval.
 		void setBlockTimeInterval(utils::TimeSpan blockTimeInterval);
 

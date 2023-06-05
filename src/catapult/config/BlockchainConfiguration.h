@@ -45,8 +45,9 @@ namespace catapult { namespace config {
 				UserConfiguration userConfig,
 				ExtensionsConfiguration extensionsConfig,
 				InflationConfiguration inflationConfig,
-				SupportedEntityVersions supportedEntityVersions = config::SupportedEntityVersions());
-
+				SupportedEntityVersions supportedEntityVersions = config::SupportedEntityVersions(),
+				Height activationHeight = Height(),
+				const BlockchainConfiguration* previousConfig = nullptr);
 
 	public:
 		/// Immutable network configuration.
@@ -73,6 +74,12 @@ namespace catapult { namespace config {
 		/// Supported entity versions.
 		const config::SupportedEntityVersions SupportedEntityVersions;
 
+		/// Activation Height
+		const Height ActivationHeight;
+
+		/// Previous active configuration
+		const BlockchainConfiguration* PreviousConfiguration;
+
 	public:
 		/// Creates an uninitialized blockchain configuration.
 		static BlockchainConfiguration Uninitialized();
@@ -80,6 +87,10 @@ namespace catapult { namespace config {
 		/// Loads a blockchain configuration from \a resourcesPath given the specified extensions host (\a extensionsHost).
 		/// \note This function is expected to be called be before logging is enabled.
 		static BlockchainConfiguration LoadFromPath(const boost::filesystem::path& resourcesPath, const std::string& extensionsHost);
+
+		/// Loads a blockchain configuration from \a resourcesPath given the specified extensions host (\a extensionsHost).
+		/// \note This function is expected to be called be before logging is enabled. This function does not load network configuration or supported entities
+		static BlockchainConfiguration LoadLocalFromPath(const boost::filesystem::path& resourcesPath, const std::string& extensionsHost);
 	};
 
 	/// Extracts a node representing the local node from \a config.

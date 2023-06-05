@@ -118,8 +118,6 @@ namespace catapult { namespace plugins {
 		/// Gets the cache configuration for cache with \a name.
 		cache::CacheConfiguration cacheConfig(const std::string& name) const;
 
-		/// Gets the inflation configuration.
-		const config::InflationConfiguration& inflationConfig() const;
 
 		/// Gets the immutable network configuration.
 		const config::ImmutableConfiguration& immutableConfig() const;

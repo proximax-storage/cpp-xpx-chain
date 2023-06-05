@@ -35,6 +35,10 @@
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
+#include "tests/TestHarness.h"
+#include "plugins/txes/config/src/cache/NetworkConfigCache.h"
+#include "plugins/txes/config/src/cache/NetworkConfigCacheSubCachePlugin.h"
+#include "tests/test/cache/CacheTestUtils.h"
 
 namespace catapult { namespace extensions {
 
@@ -46,6 +50,52 @@ namespace catapult { namespace extensions {
 
 		constexpr size_t Account_Cache_Size = 123;
 		constexpr size_t Block_Cache_Size = 200;
+		constexpr size_t Network_Cache_Size = 100;
+
+
+		std::string networkConfigStr() {
+			return
+					"[network]\n"
+					"\n"
+					"publicKey = B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF\n"
+					"\n"
+					"[chain]\n"
+					"\n"
+					"blockGenerationTargetTime = 15s\n"
+					"blockTimeSmoothingFactor = 3000\n"
+					"\n"
+					"greedDelta = 0.5\n"
+					"greedExponent = 2\n"
+					"\n"
+					"importanceGrouping = 7\n"
+					"maxRollbackBlocks = 360\n"
+					"maxDifficultyBlocks = 3\n"
+					"\n"
+					"maxTransactionLifetime = 24h\n"
+					"maxBlockFutureTime = 10s\n"
+					"\n"
+					"maxMosaicAtomicUnits = 9'000'000'000'000'000\n"
+					"\n"
+					"totalChainImportance = 8'999'999'998'000'000\n"
+					"minHarvesterBalance = 1'000'000'000'000\n"
+					"harvestBeneficiaryPercentage = 10\n"
+					"\n"
+					"blockPruneInterval = 360\n"
+					"maxTransactionsPerBlock = 200'000\n\n";
+		}
+
+		std::string supportedVersionsStr() {
+			return
+					"{\n"
+					"\t\"entities\": [\n"
+					"\t\t{\n"
+					"\t\t\t\"name\": \"Block\",\n"
+					"\t\t\t\"type\": \"33091\",\n"
+					"\t\t\t\"supportedVersions\": [3]\n"
+					"\t\t}"
+					"\t]\n"
+					"}";
+		}
 
 		// region seed utils
 
@@ -72,6 +122,11 @@ namespace catapult { namespace extensions {
 				cacheDelta.insert(Height(i), Timestamp(2 * i + 1), Difficulty(3 * i + 1));
 		}
 
+		void PopulateNetworkConfigCache(cache::NetworkConfigCacheDelta& cacheDelta) {
+			cacheDelta.insert(state::NetworkConfigEntry(Height(199), networkConfigStr(), supportedVersionsStr()));
+		}
+
+
 		void RandomSeedCache(cache::CatapultCache& catapultCache) {
 			// Arrange: seed the cache with random data
 			{
@@ -85,6 +140,23 @@ namespace catapult { namespace extensions {
 			auto view = catapultCache.createView();
 			EXPECT_EQ(Account_Cache_Size, view.sub<cache::AccountStateCache>().size());
 			EXPECT_EQ(Block_Cache_Size, view.sub<cache::BlockDifficultyCache>().size());
+		}
+
+		void RandomSeedCacheWithConfig(cache::CatapultCache& catapultCache) {
+			// Arrange: seed the cache with random data
+			{
+				auto delta = catapultCache.createDelta();
+				PopulateAccountStateCache(delta.sub<cache::AccountStateCache>());
+				PopulateBlockDifficultyCache(delta.sub<cache::BlockDifficultyCache>());
+				PopulateNetworkConfigCache(delta.sub<cache::NetworkConfigCache>());
+				catapultCache.commit(Height(54321));
+			}
+
+			// Sanity: data was seeded
+			auto view = catapultCache.createView();
+			EXPECT_EQ(Account_Cache_Size, view.sub<cache::AccountStateCache>().size());
+			EXPECT_EQ(Block_Cache_Size, view.sub<cache::BlockDifficultyCache>().size());
+			EXPECT_EQ(1, view.sub<cache::NetworkConfigCache>().size());
 		}
 
 		cache::SupplementalData CreateDeterministicSupplementalData() {
@@ -111,7 +183,17 @@ namespace catapult { namespace extensions {
 
 			auto storages = const_cast<const cache::CatapultCache&>(cache).storages();
 			LocalNodeStateSerializer serializer(directory);
-			serializer.save(cache.createDelta(), storages, supplementalData.State, supplementalData.ChainScore, Height(54321));
+			serializer.save(cache, cache.createDelta(), storages, supplementalData.State, supplementalData.ChainScore, Height(54321));
+		}
+
+		void PrepareAndSaveCompleteWithConfigState(const config::CatapultDirectory& directory, cache::CatapultCache& cache) {
+			// Arrange:
+			auto supplementalData = CreateDeterministicSupplementalData();
+			RandomSeedCacheWithConfig(cache);
+
+			auto storages = const_cast<const cache::CatapultCache&>(cache).storages();
+			LocalNodeStateSerializer serializer(directory);
+			serializer.save(cache, cache.createDelta(), storages, supplementalData.State, supplementalData.ChainScore, Height(54321));
 		}
 
 		void AssertPreparedData(const StateHeights& heights, const LocalNodeStateRef& stateRef) {
@@ -258,8 +340,8 @@ namespace catapult { namespace extensions {
 			EXPECT_EQ(expectedView.sub<cache::AccountStateCache>().size(), actualView.sub<cache::AccountStateCache>().size());
 			EXPECT_EQ(expectedView.sub<cache::BlockDifficultyCache>().size(), actualView.sub<cache::BlockDifficultyCache>().size());
 
-			EXPECT_EQ(3u, test::CountFilesAndDirectories(stateDirectory.path()));
-			for (const auto* supplementalFilename : { "supplemental.dat", "AccountStateCache.dat", "BlockDifficultyCache.dat" })
+			EXPECT_EQ(4u, test::CountFilesAndDirectories(stateDirectory.path()));
+			for (const auto* supplementalFilename : { "supplemental.dat", "AccountStateCache.dat", "BlockDifficultyCache.dat", "NetworkConfigCache.dat" })
 				EXPECT_TRUE(boost::filesystem::exists(stateDirectory.file(supplementalFilename))) << supplementalFilename;
 		}
 	}
@@ -296,7 +378,8 @@ namespace catapult { namespace extensions {
 			options.HarvestingMosaicId = Harvesting_Mosaic_Id;
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches;
-			subCaches.push_back(nullptr);
+			auto networkCacheConfig = cache::CacheConfiguration(databaseDirectory + "/"+cache::NetworkConfigCache::Name, utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
+			subCaches.push_back(std::make_unique<cache::NetworkConfigCacheSubCachePlugin>(networkCacheConfig, pConfigHolder));
 			subCaches.push_back(std::make_unique<cache::AccountStateCacheSubCachePlugin>(cacheConfig, options));
 			subCaches.push_back(std::make_unique<cache::BlockDifficultyCacheSubCachePlugin>(pConfigHolder));
 			return cache::CatapultCache(std::move(subCaches));
@@ -335,8 +418,8 @@ namespace catapult { namespace extensions {
 			EXPECT_EQ(expectedView.sub<cache::AccountStateCache>().highValueAddresses(), actualAccountStateCache.highValueAddresses());
 			EXPECT_EQ(expectedView.sub<cache::BlockDifficultyCache>().size(), actualView.sub<cache::BlockDifficultyCache>().size());
 
-			EXPECT_EQ(3u, test::CountFilesAndDirectories(stateDirectory.path()));
-			for (const auto* supplementalFilename : { "supplemental.dat", "AccountStateCache_summary.dat", "BlockDifficultyCache.dat" })
+			EXPECT_EQ(4u, test::CountFilesAndDirectories(stateDirectory.path()));
+			for (const auto* supplementalFilename : { "supplemental.dat","NetworkConfigCache_summary.dat", "AccountStateCache_summary.dat", "BlockDifficultyCache.dat"})
 				EXPECT_TRUE(boost::filesystem::exists(stateDirectory.file(supplementalFilename))) << supplementalFilename;
 		}
 	}
@@ -350,6 +433,72 @@ namespace catapult { namespace extensions {
 		// Act + Assert:
 		RunSaveAndLoadSummaryStateTest(PrepareEmptyDirectory);
 	}
+
+	namespace {
+		template<typename TPrepare>
+		void RunSaveAndLoadNetworkConfigStateTest(TPrepare prepare) {
+			// Arrange: seed and save the cache state with rocks enabled
+			test::TempDirectoryGuard tempDir;
+			auto stateDirectory = config::CatapultDirectory(tempDir.name() + "/zstate");
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			auto originalCache = CreateCacheWithRealCoreSystemPlugins(tempDir.name() + "/db");
+
+			// - run additional preparation
+			prepare(stateDirectory);
+
+			// Act: save the state
+			PrepareAndSaveCompleteWithConfigState(stateDirectory, originalCache);
+
+			// Act: load the state
+			test::LocalNodeTestState loadedState(
+					networkConfig,
+					stateDirectory.str(),
+					CreateCacheWithRealCoreSystemPlugins(tempDir.name() + "/db2"));
+			auto pluginManager = test::CreatePluginManager();
+			auto config = LoadActiveNetworkConfigString(stateDirectory);
+
+			ASSERT_EQ(config, networkConfigStr());
+			// Assert:
+
+			auto stream = std::istringstream(networkConfigStr());
+			auto originalConfig = model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(stream));
+			auto finalConfig = LoadActiveNetworkConfig(stateDirectory);
+			ASSERT_EQ(originalConfig.Info.PublicKey, finalConfig.Info.PublicKey);
+			EXPECT_EQ(5u, test::CountFilesAndDirectories(stateDirectory.path()));
+			for (const auto* supplementalFilename : { "supplemental.dat", "activeconfig.dat", "NetworkConfigCache_summary.dat", "AccountStateCache_summary.dat", "BlockDifficultyCache.dat"})
+				EXPECT_TRUE(boost::filesystem::exists(stateDirectory.file(supplementalFilename))) << supplementalFilename;
+		}
+
+		template<typename TPrepare>
+		void WontLoadConfigIfOnlyNemesisConfigIsLoaded(TPrepare prepare) {
+			// Arrange: seed and save the cache state with rocks enabled
+			test::TempDirectoryGuard tempDir;
+			auto stateDirectory = config::CatapultDirectory(tempDir.name() + "/zstate");
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			auto originalCache = CreateCacheWithRealCoreSystemPlugins(tempDir.name() + "/db");
+
+			// - run additional preparation
+			prepare(stateDirectory);
+
+			// Act: save the state
+			PrepareAndSaveCompleteState(stateDirectory, originalCache);
+			// Assert:
+
+			EXPECT_EQ(4u, test::CountFilesAndDirectories(stateDirectory.path()));
+			EXPECT_FALSE(boost::filesystem::exists(stateDirectory.file("activeconfig.dat")));
+		}
+	}
+
+	TEST(TEST_CLASS, CanSaveAndLoadNetworkConfigIfItExists) {
+		// Act + Assert:
+		RunSaveAndLoadNetworkConfigStateTest(PrepareEmptyDirectory);
+	}
+
+	TEST(TEST_CLASS, DoesNotSaveAndLoadNetworkConfigIfItDoesNotExist) {
+		// Act + Assert:
+		RunSaveAndLoadNetworkConfigStateTest(PrepareEmptyDirectory);
+	}
+
 
 	// endregion
 

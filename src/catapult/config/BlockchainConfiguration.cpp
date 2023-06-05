@@ -48,7 +48,9 @@ namespace catapult { namespace config {
 			UserConfiguration userConfig,
 			ExtensionsConfiguration extensionsConfig,
 			InflationConfiguration inflationConfig,
-			config::SupportedEntityVersions supportedEntityVersions)
+			config::SupportedEntityVersions supportedEntityVersions,
+			Height activationHeight,
+			const BlockchainConfiguration* previousConfig)
 			: Immutable(std::move(immutableConfig))
 			, Network(std::move(networkConfig))
 			, Node(std::move(nodeConfig))
@@ -57,6 +59,8 @@ namespace catapult { namespace config {
 			, Extensions(std::move(extensionsConfig))
 			, Inflation(std::move(inflationConfig))
 			, SupportedEntityVersions(std::move(supportedEntityVersions))
+			, ActivationHeight(activationHeight)
+			, PreviousConfiguration(previousConfig)
 	{}
 
 	BlockchainConfiguration BlockchainConfiguration::LoadFromPath(
@@ -71,6 +75,20 @@ namespace catapult { namespace config {
 				LoadIniConfiguration<ExtensionsConfiguration>(resourcesPath / HostQualify("extensions", extensionsHost)),
 				LoadIniConfiguration<InflationConfiguration>(resourcesPath / Qualify("inflation")),
 				LoadSupportedEntityVersions(resourcesPath / "supported-entities.json"));
+	}
+
+	BlockchainConfiguration BlockchainConfiguration::LoadLocalFromPath(
+			const boost::filesystem::path& resourcesPath,
+			const std::string& extensionsHost) {
+		return BlockchainConfiguration(
+			LoadIniConfiguration<ImmutableConfiguration>(resourcesPath / Qualify("immutable")),
+			model::NetworkConfiguration::Uninitialized(),
+			LoadIniConfiguration<NodeConfiguration>(resourcesPath / Qualify("node")),
+			LoadIniConfiguration<LoggingConfiguration>(resourcesPath / HostQualify("logging", extensionsHost)),
+			LoadIniConfiguration<UserConfiguration>(resourcesPath / Qualify("user")),
+			LoadIniConfiguration<ExtensionsConfiguration>(resourcesPath / HostQualify("extensions", extensionsHost)),
+			LoadIniConfiguration<InflationConfiguration>(resourcesPath / Qualify("inflation")),
+			config::SupportedEntityVersions());
 	}
 
 	BlockchainConfiguration BlockchainConfiguration::Uninitialized() {

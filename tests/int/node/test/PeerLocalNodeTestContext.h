@@ -32,7 +32,10 @@ namespace catapult { namespace test {
 		Lock_Secret,
 
 		/// Property plugin.
-		Property
+		Property,
+
+		/// Namespace
+		Namespace
 	};
 
 	/// Test context for peer local node tests.
@@ -47,6 +50,11 @@ namespace catapult { namespace test {
 	public:
 		/// Gets the primary (first) local node.
 		local::LocalNode& localNode() const;
+
+		/// Retrieves the node configuration holder created after booting
+		std::shared_ptr<config::BlockchainConfigurationHolder> configHolder();
+
+		std::string resourcesDirectory() const;
 
 		/// Gets the data directory.
 		std::string dataDirectory() const;
@@ -65,7 +73,7 @@ namespace catapult { namespace test {
 		void waitForHeight(Height height) const;
 
 		/// Prepares a fresh data \a directory and returns corresponding configuration.
-		config::BlockchainConfiguration prepareFreshDataDirectory(const std::string& directory) const;
+		config::BlockchainConfiguration prepareFreshDataDirectory(const std::string& directory, const std::string& seedDir) const;
 
 	public:
 		/// Asserts that node has a single reader connection.

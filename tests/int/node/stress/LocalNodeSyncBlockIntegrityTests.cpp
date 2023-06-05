@@ -47,7 +47,7 @@ namespace catapult { namespace local {
 
 				auto stateHashCalculator = context.createStateHashCalculator();
 				BlockChainBuilder builder(accounts, stateHashCalculator);
-				builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
+				builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(15)); // better block time will yield better chain
 				pUnsignedBlock = builder.asSingleBlock(transactionsBuilder);
 				test::FillWithRandomData(pUnsignedBlock->Signature);
 			}

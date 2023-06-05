@@ -36,6 +36,8 @@ namespace catapult { namespace test {
 				, Extensions(config::ExtensionsConfiguration::Uninitialized())
 				, Inflation(config::InflationConfiguration::Uninitialized())
 				, SupportedEntityVersions()
+				, ActivationHeight(Height(0))
+				, PreviousConfiguration(nullptr)
 		{}
 
 	public:
@@ -63,6 +65,12 @@ namespace catapult { namespace test {
 		/// Supported entity versions.
 		config::SupportedEntityVersions SupportedEntityVersions;
 
+		/// Activation Height
+		Height ActivationHeight;
+
+		/// Previous active configuration
+		config::BlockchainConfiguration* PreviousConfiguration;
+
 	public:
 		/// Converts this mutable configuration to a const configuration.
 		config::BlockchainConfiguration ToConst() {
@@ -74,7 +82,9 @@ namespace catapult { namespace test {
 					std::move(User),
 					std::move(Extensions),
 					std::move(Inflation),
-					std::move(SupportedEntityVersions));
+					std::move(SupportedEntityVersions),
+					std::move(ActivationHeight),
+					std::move(PreviousConfiguration));
 		}
 	};
 }}

@@ -42,7 +42,7 @@ namespace catapult { namespace local {
 		}
 
 		Hash256 GetComponentStateHash(const test::PeerLocalNodeTestContext& context) {
-			return GetComponentStateHash(context, 4); // { Config, AccountState, Namespace, Mosaic, *SecretLock* }
+			return GetComponentStateHash(context, 7); // { Config, AccountState, Namespace, Metadata, Mosaic, Multisig, HashLock, *SecretLock* }
 		}
 
 		struct SecretLockTuple {
@@ -237,7 +237,7 @@ namespace catapult { namespace local {
 			auto secretProof = facade.pushSecretLockAndTransferBlocks(numEmptyBlocks);
 
 			// - prepare blocks that will unlock the secret
-			auto nextBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(60), [&secretProof](auto& transactionsBuilder) {
+			auto nextBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(15), [&secretProof](auto& transactionsBuilder) {
 				transactionsBuilder.addSecretProof(2, 3, secretProof);
 			});
 
@@ -295,7 +295,7 @@ namespace catapult { namespace local {
 			facade.pushSecretLockAndTransferBlocks(numEmptyBlocks);
 
 			// - prepare blocks that will cause the secret to expire
-			auto nextBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(60), [](auto& transactionsBuilder) {
+			auto nextBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(15), [](auto& transactionsBuilder) {
 				transactionsBuilder.addTransfer(0, 1, Amount(1));
 			});
 
@@ -353,10 +353,10 @@ namespace catapult { namespace local {
 			auto secretProof = facade.pushSecretLockAndTransferBlocks(numEmptyBlocks);
 
 			// - prepare two sets of blocks one of which will unlock secret (better block time will yield better chain)
-			auto worseBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(60), [&secretProof](auto& transactionsBuilder) {
+			auto worseBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(15), [&secretProof](auto& transactionsBuilder) {
 				transactionsBuilder.addSecretProof(2, 3, secretProof);
 			});
-			auto betterBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(58), [](auto& transactionsBuilder) {
+			auto betterBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(12), [](auto& transactionsBuilder) {
 				transactionsBuilder.addTransfer(0, 1, Amount(1));
 				transactionsBuilder.addTransfer(0, 1, Amount(1));
 			});
@@ -427,10 +427,10 @@ namespace catapult { namespace local {
 			facade.pushSecretLockAndTransferBlocks(numEmptyBlocks);
 
 			// - prepare two sets of blocks that will trigger expiry (better block time will yield better chain)
-			auto worseBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(60), [](auto& transactionsBuilder) {
+			auto worseBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(15), [](auto& transactionsBuilder) {
 				transactionsBuilder.addTransfer(0, 1, Amount(1));
 			});
-			auto betterBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(58), [](auto& transactionsBuilder) {
+			auto betterBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(12), [](auto& transactionsBuilder) {
 				transactionsBuilder.addTransfer(0, 1, Amount(1));
 				transactionsBuilder.addTransfer(0, 1, Amount(1));
 			});
@@ -514,8 +514,8 @@ namespace catapult { namespace local {
 				{
 					auto stateHashCalculator = m_context.createStateHashCalculator();
 					test::SeedStateHashCalculator(stateHashCalculator, allBlocks);
-					builder = builder.createChainedBuilder(stateHashCalculator, *allBlocks.back());
-					builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58));
+					builder = builder.createChainedBuilder(stateHashCalculator);
+					builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(14));
 					auto betterBlocks = builder.asBlockChain(transactionsBuilder2);
 					allBlocks.push_back(betterBlocks[0]);
 
@@ -534,7 +534,7 @@ namespace catapult { namespace local {
 				// - readd secret lock
 				auto stateHashCalculator2 = m_context.createStateHashCalculator();
 				test::SeedStateHashCalculator(stateHashCalculator2, allBlocks);
-				auto builder3 = builder.createChainedBuilder(stateHashCalculator2, *allBlocks.back());
+				auto builder3 = builder.createChainedBuilder(stateHashCalculator2);
 
 				test::SecretLockTransactionsBuilder transactionsBuilder3(m_accounts);
 				transactionsBuilder3.addSecretLock(2, 3, Amount(100'000), Lock_Duration, secretProof);
@@ -595,7 +595,7 @@ namespace catapult { namespace local {
 					test::SecretLockTransactionsBuilder& transactionGenerator,
 					BlockChainBuilder& builder,
 					BlockChainBuilder::Blocks& allBlocks,
-					utils::TimeSpan blockTimeInterval = utils::TimeSpan::FromSeconds(60)) {
+					utils::TimeSpan blockTimeInterval = utils::TimeSpan::FromSeconds(15)) {
 				auto stateHashCalculator = m_context.createStateHashCalculator();
 				test::SeedStateHashCalculator(stateHashCalculator, allBlocks);
 				auto tempBuilder = builder.createChainedBuilder(stateHashCalculator);
