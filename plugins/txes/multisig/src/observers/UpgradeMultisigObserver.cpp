@@ -45,6 +45,7 @@ namespace catapult { namespace observers {
 				}
 				/// If account is multisig we transfer the cosignatories.
 				if(!entry.cosignatories().empty()) {
+					auto& originalAccount = multisigCache.find(notification.Signer).get();
 					MultisigAccountFacade multisigAccountFacadeOld(multisigCache, notification.Signer);
 					MultisigAccountFacade multisigAccountFacadeNew(multisigCache, notification.NewAccountPublicKey);
 					for(auto account : entry.cosignatories())
@@ -52,6 +53,9 @@ namespace catapult { namespace observers {
 						multisigAccountFacadeOld.removeCosignatory(account);
 						multisigAccountFacadeNew.addCosignatory(account);
 					}
+					auto& newAccount = multisigCache.find(notification.NewAccountPublicKey).get();
+					newAccount.setMinApproval(originalAccount.minApproval());
+					newAccount.setMinRemoval(originalAccount.minRemoval());
 				}
 			}
 			else
@@ -69,6 +73,7 @@ namespace catapult { namespace observers {
 				}
 				/// If account is multisig we transfer the cosignatories.
 				if(!entry.cosignatories().empty()) {
+					auto& originalAccount = multisigCache.find(notification.NewAccountPublicKey).get();
 					MultisigAccountFacade multisigAccountFacadeOld(multisigCache, notification.NewAccountPublicKey);
 					MultisigAccountFacade multisigAccountFacadeNew(multisigCache, notification.Signer);
 					for(auto account : entry.cosignatories())
@@ -76,6 +81,9 @@ namespace catapult { namespace observers {
 						multisigAccountFacadeOld.removeCosignatory(account);
 						multisigAccountFacadeNew.addCosignatory(account);
 					}
+					auto& newAccount = multisigCache.find(notification.Signer).get();
+					newAccount.setMinApproval(originalAccount.minApproval());
+					newAccount.setMinRemoval(originalAccount.minRemoval());
 				}
 			}
 		}
