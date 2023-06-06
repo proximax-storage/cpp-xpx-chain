@@ -63,6 +63,15 @@ namespace catapult { namespace observers {
 					LinkMultisigWithCosignatory(m_multisigCache, multisigAccountKey, cosignatoryKey);
 			}
 
+			void setMinRemovalApproval(const Key& multisigAccountKey, uint minRemoval, uint minApproval) {
+				ASSERT_TRUE(m_multisigCache.contains(multisigAccountKey)) << "cache is missing account " << multisigAccountKey;
+
+				auto& multisigEntry = m_multisigCache.find(multisigAccountKey).get();
+
+				multisigEntry.setMinRemoval(minRemoval);
+				multisigEntry.setMinApproval(minApproval);
+			}
+
 		public:
 			void assertAccountsAreNotInMultisigCache(const std::vector<Key>& accountKeys) const {
 				for (const auto& accountKey : accountKeys)
@@ -83,6 +92,14 @@ namespace catapult { namespace observers {
 
 				auto& multisigEntry = m_multisigCache.find(accountKey).get();
 				assertAccountsInSet(multisigAccountKeys, multisigEntry.multisigAccounts());
+			}
+
+			void assertMultisigMinimumRequirements(const Key& accountKey, uint minRemoval, uint minApproval) {
+				ASSERT_TRUE(m_multisigCache.contains(accountKey)) << "cache is missing account " << accountKey;
+
+				auto& multisigEntry = m_multisigCache.find(accountKey).get();
+				ASSERT_EQ(multisigEntry.minRemoval(), minRemoval);
+				ASSERT_EQ(multisigEntry.minApproval(), minApproval);
 			}
 
 		private:
@@ -192,6 +209,17 @@ namespace catapult { namespace observers {
 							AssertMultisigTestResults(cacheFacade, keys, finalUnknownAccounts, finalMultisigAccounts);
 						});
 			}
+
+			template<typename TInit, typename TValidate>
+			static void RunMultisigTestWithCustomInitAndValidate(
+					const Notification& notification, TInit initFunc, TValidate validateFunc) {
+
+				RunTest(
+						notification,
+						ObserverTestContext(NotifyMode::Commit, Height(777)),
+						initFunc,
+						validateFunc);
+			}
 		};
 
 		struct RollbackTraits {
@@ -213,6 +241,16 @@ namespace catapult { namespace observers {
 						[&keys, &initialUnknownAccounts, &initialMultisigAccounts](const auto& cacheFacade) {
 							AssertMultisigTestResults(cacheFacade, keys, initialUnknownAccounts, initialMultisigAccounts);
 						});
+			}
+			template<typename TInit, typename TValidate>
+			static void RunMultisigTestWithCustomInitAndValidate(
+					const Notification& notification, TInit initFunc, TValidate validateFunc) {
+
+				RunTest(
+						notification,
+						ObserverTestContext(NotifyMode::Rollback, Height(777)),
+						initFunc,
+						validateFunc);
 			}
 		};
 	}
@@ -258,6 +296,49 @@ namespace catapult { namespace observers {
 		// Act + Assert:
 		TTraits::RunMultisigTest(keys, {4}, {{0, {5,6,7}}, {1, {0,2,3}}}, notification, {0}, {{4, {5,6,7}}, {1, {4,2,3}}});
 	}
+
+	TEST(TEST_CLASS, CanUpgradeMultisigVerifyConfigCommit) {
+		// Arrange:
+		/*
+		 * 0 original account
+		 * 5,6,7 cosigners of original account
+		 * 1 multisig account whose 0 is a cosigner of
+		 * 2,3 other cosigners of 1
+		 * 4 new account
+		 */
+		auto keys = test::GenerateKeys(5);
+		auto notification = CreateNotification(keys[0], keys[1]);
+
+		// Act + Assert:
+		CommitTraits::RunMultisigTestWithCustomInitAndValidate(notification, [&keys](auto& cacheFacade) {
+			cacheFacade.linkMultisigEntryWithCosignatories(keys[0], IdsToKeys(keys, { 2,3,4 }));
+			cacheFacade.setMinRemovalApproval(keys[0], 3, 3);
+		}, [&keys](auto& cacheFacade) {
+			cacheFacade.assertMultisigMinimumRequirements(keys[1], 3, 3);
+		});
+	}
+
+	TEST(TEST_CLASS, CanUpgradeMultisigVerifyConfigRollback) {
+		// Arrange:
+		/*
+		 * 0 original account
+		 * 5,6,7 cosigners of original account
+		 * 1 multisig account whose 0 is a cosigner of
+		 * 2,3 other cosigners of 1
+		 * 4 new account
+		 */
+		auto keys = test::GenerateKeys(5);
+		auto notification = CreateNotification(keys[0], keys[1]);
+
+		// Act + Assert:
+		RollbackTraits::RunMultisigTestWithCustomInitAndValidate(notification, [&keys](auto& cacheFacade) {
+					cacheFacade.linkMultisigEntryWithCosignatories(keys[1], IdsToKeys(keys, { 2,3,4 }));
+					cacheFacade.setMinRemovalApproval(keys[1], 3, 3);
+				}, [&keys](auto& cacheFacade) {
+					cacheFacade.assertMultisigMinimumRequirements(keys[0], 3, 3);
+				});
+	}
+
 
 	// endregion
 }}
