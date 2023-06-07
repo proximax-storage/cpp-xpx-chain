@@ -40,7 +40,7 @@ namespace catapult { namespace extensions {
 		EXPECT_TRUE(!!config.pNotificationPublisher);
 		EXPECT_TRUE(!!config.ResolverContextFactory);
 
-		// - notice that only observers and validators registered in CreateDefaultPluginManagerWithRealPlugins are present
+		// - notice that only observers and valdators registered in CreateDefaultPluginManagerWithRealPlugins are present
 		std::vector<std::string> expectedObserverNames{
 			"AccountPublicKeyObserver",
 			"SourceChangeObserver",
@@ -63,6 +63,7 @@ namespace catapult { namespace extensions {
 		std::vector<std::string> expectedValidatorNames{
 			"EntityVersionValidator",
 			"DerivationSchemeSpecificationValidator",
+			"AddressInteractionViabilityValidator",
 			"DeadlineValidator",
 			"ValidSignerValidator",
 			"AddressValidator",

@@ -68,6 +68,7 @@ namespace catapult { namespace plugins {
 				return {
 					"EntityVersionValidator",
 					"DerivationSchemeSpecificationValidator",
+					"AddressInteractionViabilityValidator",
 					"DeadlineValidator",
 					"ValidSignerValidator",
 					"AddressValidator",

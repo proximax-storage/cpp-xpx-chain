@@ -106,7 +106,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateEligibleHarvesterValidator())
 				.add(validators::CreateBalanceDebitValidator())
 				.add(validators::CreateBalanceTransferValidator())
-				.add(validators::CreateValidSignerValidator());
+				.add(validators::CreateValidSignerValidator())
+				.add(validators::CreateAddressInteractionViabilityValidator());
 		});
 
 		manager.addObserverHook([pConfigHolder](auto& builder) {

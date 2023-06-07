@@ -104,6 +104,12 @@ namespace catapult { namespace validators {
 
 	// endregion
 
+	// region Interactions
+	/// A validator implementation that applies to all account interactions that validates that:
+	/// - participants are not locked accounts
+	DECLARE_STATEFUL_VALIDATOR(AddressInteractionViability, model::AddressInteractionNotification<1>)();
+	// endregion
+
 	// region Other
 
 	/// Validator that applies to all internal padding notifications and validates that:

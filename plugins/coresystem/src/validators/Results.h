@@ -77,6 +77,10 @@ namespace catapult { namespace validators {
 
 	/// Validation failed because derivation scheme was unset in a block.
 	DEFINE_CORE_RESULT(Signer_Is_Locked, 30);
+	
+	/// Validation failed because derivation scheme was unset in a block.
+	DEFINE_CORE_RESULT(Participant_Is_Locked, 31);
+
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
