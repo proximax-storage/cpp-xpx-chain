@@ -10,9 +10,11 @@
 namespace catapult { namespace mocks {
 	class MockCommitteeManager : public chain::CommitteeManager {
 	public:
-		MockCommitteeManager() {
+		MockCommitteeManager() : MockCommitteeManager(test::GenerateRandomByteArray<Key>()) {}
+
+		MockCommitteeManager(const Key& accountKey) {
 			m_committee = chain::Committee(0);
-			m_committee.BlockProposer = test::GenerateRandomByteArray<Key>();
+			m_committee.BlockProposer = accountKey;
 		}
 
 	public:
