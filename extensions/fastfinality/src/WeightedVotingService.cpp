@@ -114,15 +114,15 @@ namespace catapult { namespace fastfinality {
 
 				auto connectionSettings = extensions::GetConnectionSettings(config);
 				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
-				locator.registerRootedService(Writers_Service_Name, pWriters);
+				locator.registerService(Writers_Service_Name, pWriters);
 
 
-				auto pFsmShared = pServiceGroup->pushService([pWriters, &config, &keyPair = locator.keyPair(), &state, &dbrbConfig = m_dbrbConfig](const std::shared_ptr<thread::IoThreadPool>& pPool) {
+				auto pFsmShared = pServiceGroup->pushService([pWritersWeak = std::weak_ptr<net::PacketWriters>(pWriters), &config, &keyPair = locator.keyPair(), &state, &dbrbConfig = m_dbrbConfig](const std::shared_ptr<thread::IoThreadPool>& pPool) {
 					dbrb::TransactionSender transactionSender(keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local));
 					auto chainHeightSupplier = [&storage = state.storage()]() {
 						return storage.view().chainHeight();
 					};
-					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, state.packetIoPickers(), config::ToLocalDbrbNode(config),
+					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWritersWeak, state.packetIoPickers(), config::ToLocalDbrbNode(config),
 						keyPair, pPool, std::move(transactionSender), state.pluginManager().dbrbViewFetcher(), state.timeSupplier(), chainHeightSupplier);
 					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess);
 				});
