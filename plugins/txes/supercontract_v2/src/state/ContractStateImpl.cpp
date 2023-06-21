@@ -57,7 +57,7 @@ namespace catapult { namespace state {
 		std::set<Key> contracts;
 		for (const auto& drive : drives) {
 			auto driveContractIt = pDriveContractCacheView->find(drive);
-			const auto& pDriveContractEntry = driveContractIt.tryGet();
+			const auto* pDriveContractEntry = driveContractIt.tryGet();
 			if (pDriveContractEntry) {
 				contracts.insert(pDriveContractEntry->contractKey());
 			}
@@ -152,6 +152,8 @@ namespace catapult { namespace state {
 			}
 			contractInfo.ManualCalls.push_back(std::move(callInfo));
 		}
+
+		return contractInfo;
 	}
 	Height ContractStateImpl::getAutomaticExecutionsNextBlockToCheck(const Key& contractKey) const {
 		auto pSuperContractCacheView = getCacheView<cache::SuperContractCache>();

@@ -32,6 +32,8 @@ namespace catapult { namespace plugins {
 					auto contractKey = Key(txHash.array());
 					sub.notify(AccountPublicKeyNotification<1>(contractKey));
 
+					sub.notify(AccountPublicKeyNotification<1>(transaction.Assignee));
+
 					Hash256 paymentHash;
 					crypto::Sha3_256_Builder sha3;
 					sha3.update({contractKey, config.GenerationHash});

@@ -229,14 +229,6 @@ namespace catapult::contract {
 				return;
 			}
 
-			auto storageBlock = m_contractState.getBlock(height);
-
-			sirius::contract::blockchain::Block block;
-			block.m_blockHash = storageBlock->EntityHash.array();
-			block.m_blockTime = storageBlock->Block.Timestamp.unwrap();
-
-			m_pExecutor->addBlockInfo(height.unwrap(), std::move(block));
-
 			for (const auto& [contractKey, addedAt] : m_alreadyAddedContracts) {
 				if (addedAt < height) {
 					m_pExecutor->addBlock(contractKey.array(), height.unwrap());
@@ -345,6 +337,7 @@ namespace catapult::contract {
 				// heights in manual call always do not exceed @height
 				while (manualCallsIt != manualCalls.end() && manualCallsIt->BlockHeight == currentBlock) {
 					addManualCall(contractKey, *manualCallsIt);
+					manualCallsIt++;
 				}
 				m_pExecutor->addBlock(contractKey.array(), currentBlock.unwrap());
 				currentBlock = currentBlock + Height(1);
@@ -389,6 +382,8 @@ namespace catapult::contract {
 			for (const auto& v : values) {
 				res.insert(v.array());
 			}
+
+			return res;
 		}
 
 	private:
