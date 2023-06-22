@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/catapult/model/BlockUtils.cpp"
 #include "src/catapult/extensions/NetworkUtils.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
 #include "fastfinality/src/WeightedVotingFsm.h"
@@ -18,6 +17,7 @@
 #include "tests/test/net/mocks/MockPacketWriters.h"
 #include "fastfinality/src/utils/WeightedVotingUtils.h"
 #include "catapult/crypto/Signer.h"
+#include "catapult/model/BlockUtils.h"
 
 namespace catapult { namespace fastfinality {
 
@@ -263,7 +263,7 @@ namespace catapult { namespace fastfinality {
 						pMessage->BlockHash = committeeData.proposedBlockHash();
 						pMessage->BlockCosignature.Signer = keyPair.publicKey();
 						crypto::Sign(keyPair, CommitteeMessageDataBuffer(*pMessage), pMessage->MessageSignature);
-						crypto::Sign(keyPair, model::BlockDataBuffer(*pBlock), pMessage->BlockCosignature.Signature);
+						model::CosignBlockHeader(keyPair, *pBlock, pMessage->BlockCosignature.Signature);
 						const auto& signer = pMessage->BlockCosignature.Signer;
 
 						arrange(committeeData, pMessage);
@@ -371,3 +371,4 @@ namespace catapult { namespace fastfinality {
 	}
 
 	// endregion
+}}
