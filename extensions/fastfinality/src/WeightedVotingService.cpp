@@ -25,6 +25,7 @@ namespace catapult { namespace fastfinality {
 	namespace {
 		constexpr auto Writers_Service_Name = "weightedvoting.writers";
 		constexpr auto Readers_Service_Name = "weightedvoting.readers";
+		constexpr auto Fsm_Service_Name = "weightedvoting.fsm";
 		constexpr auto Service_Id = ionet::ServiceIdentifier(0x54654144);
 
 		std::shared_ptr<harvesting::UnlockedAccounts> CreateUnlockedAccounts(const harvesting::HarvestingConfiguration& config) {
@@ -126,6 +127,7 @@ namespace catapult { namespace fastfinality {
 						keyPair, pPool, std::move(transactionSender), state.pluginManager().dbrbViewFetcher(), state.timeSupplier(), chainHeightSupplier);
 					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess);
 				});
+				locator.registerService(Fsm_Service_Name, pFsmShared);
 
 				const auto& pluginManager = state.pluginManager();
 				pFsmShared->dbrbProcess()->registerPacketHandlers(pFsmShared->packetHandlers());
