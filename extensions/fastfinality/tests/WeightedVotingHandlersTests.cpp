@@ -23,6 +23,16 @@ namespace catapult { namespace fastfinality {
 
 #define TEST_CLASS TimeSyncHandlersTests
 
+	const auto SignerKeyPair = crypto::KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
+
+	auto createValidPrevoteMessagesRequest(const std::shared_ptr<model::Block>& pBlock) {
+		auto pPacket = ionet::CreateSharedPacket<PushPrevoteMessagesRequest>(pBlock->Size);
+		pPacket->MessageCount = 1;
+		std::memcpy(static_cast<void*>(pPacket.get() + 1), pBlock.get(), pBlock->Size);
+
+		return pPacket;
+	}
+
 	auto createValidRequest(const std::shared_ptr<model::Block>& pBlock, ionet::PacketType packetType) {
 		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(pBlock->Size);
 		pPacket->Type = packetType;
@@ -50,7 +60,7 @@ namespace catapult { namespace fastfinality {
 
 			TestContext context;
 			auto& pluginManager = context.testState().pluginManager();
-			pluginManager.setCommitteeManager(std::make_shared<mocks::MockCommitteeManager>());
+			pluginManager.setCommitteeManager(std::make_shared<mocks::MockCommitteeManager>(SignerKeyPair.publicKey()));
 			pluginManager.setDbrbViewFetcher(std::make_shared<mocks::MockDbrbViewFetcher>());
 
 			const auto& storage = context.testState().state().storage();
@@ -84,94 +94,112 @@ namespace catapult { namespace fastfinality {
 	// region PushProposedBlock
 
 	namespace {
-		template<typename TRearrange>
-		void RunPushProposedBlockTest(
-				const std::shared_ptr<model::Block>& pBlock,
-				CommitteeRound round,
-				TRearrange rearrange) {
+		template<typename TModify, typename TAssert>
+		void RunPushProposedBlockTest(CommitteeRound round, TModify modifyFunc, TAssert assertFunc) {
 			RunPushHandlerTest(
 					round,
 					[](auto pFsm, auto& handlers, auto& context) {},
-					[pBlock, rearrange](auto pFsm, auto& handlers, auto& context) {
-						// Arrange
+					[modifyFunc, assertFunc](auto pFsm, auto& handlers, auto& context) {
+						// Arrange:
+						auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 						auto& pluginManager = context.testState().pluginManager();
 						auto& committee = pluginManager.getCommitteeManager().committee();
 						pBlock->Signer = committee.BlockProposer;
+						model::SignBlockHeader(SignerKeyPair, *pBlock);
 
+						auto& committeeData = pFsm->committeeData();
 						auto packetType = ionet::PacketType::Pull_Confirmed_Block;
 						auto pPacket = createValidRequest(pBlock, packetType);
-						auto& committeeData = pFsm->committeeData();
 
-						rearrange(pPacket, committeeData);
+						modifyFunc(pBlock, pPacket, committeeData);
 
 						// Act:
 						PushProposedBlock(pFsm, pluginManager, *pPacket);
 
 						// Assert:
-
+                        assertFunc(pBlock, committeeData.proposedBlock());
 					});
 		}
 	}
 
-	TEST(TEST_CLASS, PushProposedBlock_InvalidPacket) {
+	TEST(TEST_CLASS, PushProposedBlock_Success) {
 		// Arrange:
 		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 		RunPushProposedBlockTest(
-				pBlock,
 				CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
-				[pBlock](auto pPacket, auto& committeeData){
-					auto pFakePacket = ionet::CreateSharedPacket<ionet::Packet>(pBlock->Size);
-					pFakePacket->Type = pPacket->Type;
-					pPacket.swap(pFakePacket);
-				}
+				[](auto pBlock, auto pPacket, auto& committeeData){},
+                [](auto sentBlock, auto proposedBlock){
+                    ASSERT_EQ(*proposedBlock, *sentBlock);
+                }
+		);
+	}
+
+	TEST(TEST_CLASS, PushProposedBlock_InvalidPacket) {
+		// Arrange:
+		RunPushProposedBlockTest(
+				CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
+				[](auto pBlock, auto pPacket, auto& committeeData){
+					pPacket->Size /= 2;
+				},
+                [](auto sentBlock, auto proposedBlock){
+                    ASSERT_TRUE(proposedBlock == nullptr);
+                }
 		);
 	}
 
 	TEST(TEST_CLASS, PushProposedBlock_ExistProposal) {
 		// Arrange:
-		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 		RunPushProposedBlockTest(
-				pBlock,
 				CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
-				[pBlock](auto pPacket, auto& committeeData){
-					committeeData.setProposedBlock(pBlock);
-				}
+				[](auto pBlock, auto pPacket, auto& committeeData){
+					auto pFakeBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
+					committeeData.setProposedBlock(pFakeBlock);
+				},
+                [](auto sentBlock, auto proposedBlock){
+                    ASSERT_NE(*sentBlock, *proposedBlock);
+                }
 		);
 	}
 
 	TEST(TEST_CLASS, PushProposedBlock_BadSigner) {
 		// Arrange:
-		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 		RunPushProposedBlockTest(
-				pBlock,
 				CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
-				[pBlock](auto pPacket, auto& committeeData){
+				[](auto pBlock, auto pPacket, auto& committeeData){
 					pBlock->Signer = test::GenerateRandomByteArray<Key>();
-				}
+					std::memcpy(static_cast<void*>(pPacket.get() + 1), pBlock.get(), pBlock->Size);
+				},
+                [](auto sentBlock, auto proposedBlock){
+                    ASSERT_TRUE(proposedBlock == nullptr);
+                }
 		);
 	}
 
-//	TEST(TEST_CLASS, PushProposedBlock_InvalidRound) {
-//		// Arrange:
-//		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
-//		RunPushProposedBlockTest(
-//				pBlock,
-//				CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
-//				[pBlock](auto pPacket, auto& committeeData){
-//					pBlock->Signer = test::GenerateRandomByteArray<Key>();
-//				}
-//		);
-//	}
-
-	TEST(TEST_CLASS, PushProposedBlock_InvalidRound) {
+	TEST(TEST_CLASS, PushProposedBlock_BadRound) {
 		// Arrange:
-		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 		RunPushProposedBlockTest(
-				pBlock,
 				CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
-				[pBlock](auto pPacket, auto& committeeData){
-					pBlock->Signer = test::GenerateRandomByteArray<Key>();
-				}
+				[](auto pBlock, auto pPacket, auto& committeeData){
+					pBlock->setRound(6);
+					std::memcpy(static_cast<void*>(pPacket.get() + 1), pBlock.get(), pBlock->Size);
+				},
+                [](auto sentBlock, auto proposedBlock){
+                    ASSERT_TRUE(proposedBlock == nullptr);
+                }
+		);
+	}
+
+	TEST(TEST_CLASS, PushProposedBlock_BlockHeaderSignature) {
+		// Arrange:
+		RunPushProposedBlockTest(
+				CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
+				[](auto pBlock, auto pPacket, auto& committeeData){
+					pBlock->Signature = test::GenerateRandomByteArray<Signature>();
+					std::memcpy(static_cast<void*>(pPacket.get() + 1), pBlock.get(), pBlock->Size);
+				},
+                [](auto sentBlock, auto proposedBlock){
+                    ASSERT_TRUE(proposedBlock == nullptr);
+                }
 		);
 	}
 
@@ -243,7 +271,6 @@ namespace catapult { namespace fastfinality {
 	namespace {
 		template<typename TArrange>
 		void RunPushVoteMessagesHandlerTest(
-				const std::shared_ptr<model::Block>& pBlock,
 				CommitteeRound round,
 				ionet::PacketType packetType,
 				bool existBlock,
@@ -252,18 +279,24 @@ namespace catapult { namespace fastfinality {
 			RunPushHandlerTest(
 					round,
 					[](auto pFsm, auto& handlers, auto& context) {},
-					[pBlock, existBlock, packetType, shouldHaveVote, arrange](auto pFsm, auto& handlers, auto& context) {
+					[existBlock, packetType, shouldHaveVote, arrange](auto pFsm, auto& handlers, auto& context) {
 						// Arrange
 						const crypto::KeyPair keyPair = crypto::KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
+						const crypto::KeyPair cosigKeyPair = crypto::KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
+						auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
+						model::SignBlockHeader(keyPair, *pBlock);
+						catapult::Signature blockCosignature;
+						model::CosignBlockHeader(cosigKeyPair, *pBlock, blockCosignature);
 
-						auto pPacket = createValidRequest(pBlock, packetType);
-						auto* pMessage = reinterpret_cast<CommitteeMessage*>(pPacket.get() + 1);
 						auto& committeeData = pFsm->committeeData();
 						committeeData.setProposedBlock(pBlock);
+
+						auto pPacket = createValidPrevoteMessagesRequest(pBlock);
+						auto* pMessage = reinterpret_cast<CommitteeMessage*>(pPacket.get() + 1);
 						pMessage->BlockHash = committeeData.proposedBlockHash();
-						pMessage->BlockCosignature.Signer = keyPair.publicKey();
-						crypto::Sign(keyPair, CommitteeMessageDataBuffer(*pMessage), pMessage->MessageSignature);
-						model::CosignBlockHeader(keyPair, *pBlock, pMessage->BlockCosignature.Signature);
+						pMessage->BlockCosignature.Signer = cosigKeyPair.publicKey();
+						pMessage->BlockCosignature.Signature = blockCosignature;
+						crypto::Sign(cosigKeyPair, CommitteeMessageDataBuffer(*pMessage), pMessage->MessageSignature);
 						const auto& signer = pMessage->BlockCosignature.Signer;
 
 						arrange(committeeData, pMessage);
@@ -281,11 +314,20 @@ namespace catapult { namespace fastfinality {
 		}
 	}
 
+	TEST(TEST_CLASS, PushVoteMessagesHandler_Success) {
+		// Arrange:
+		RunPushVoteMessagesHandlerTest(
+				CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
+				ionet::PacketType::Push_Prevote_Messages,
+				true,
+				true,
+				[](auto& committeeData, auto* pMessage){}
+		);
+	}
+
 	TEST(TEST_CLASS, PushVoteMessagesHandler_AlreadyHasVote) {
 		// Arrange:
-		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 		RunPushVoteMessagesHandlerTest(
-			pBlock,
 			CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
 			ionet::PacketType::Push_Prevote_Messages,
 			true,
@@ -298,9 +340,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, PushVoteMessagesHandler_NoProposedBlock) {
 		// Arrange:
-		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 		RunPushVoteMessagesHandlerTest(
-			pBlock,
 			CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
 			ionet::PacketType::Push_Prevote_Messages,
 			true,
@@ -313,9 +353,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, PushVoteMessagesHandler_BadMessageBlockHash) {
 		// Arrange:
-		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 		RunPushVoteMessagesHandlerTest(
-			pBlock,
 			CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
 			ionet::PacketType::Push_Prevote_Messages,
 			true,
@@ -329,9 +367,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, PushVoteMessagesHandler_BadMessageSignature) {
 		// Arrange:
-		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
 		RunPushVoteMessagesHandlerTest(
-			pBlock,
 			CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
 			ionet::PacketType::Push_Prevote_Messages,
 			true,
@@ -339,34 +375,6 @@ namespace catapult { namespace fastfinality {
 			[](auto& committeeData, auto* pMessage){
 					pMessage->BlockCosignature.Signer = test::GenerateRandomArray<Key_Size>();
 			}
-		);
-	}
-
-	TEST(TEST_CLASS, PushVoteMessagesHandler_BadCosignature) {
-		// Arrange:
-		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
-		RunPushVoteMessagesHandlerTest(
-			pBlock,
-			CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
-			ionet::PacketType::Push_Prevote_Messages,
-			true,
-			false,
-			[](auto& committeeData, auto* pMessage){
-					pMessage->BlockCosignature.Signer = test::GenerateRandomArray<Key_Size>();
-			}
-		);
-	}
-
-	TEST(TEST_CLASS, PushVoteMessagesHandler_Success) {
-		// Arrange:
-		auto pBlock = utils::UniqueToShared(test::GenerateEmptyRandomBlock());
-		RunPushVoteMessagesHandlerTest(
-			pBlock,
-			CommitteeRound { 0u, CommitteePhase::Commit, utils::ToTimePoint(Timestamp()), 0u },
-			ionet::PacketType::Push_Prevote_Messages,
-			true,
-			false,
-			[](auto& committeeData, auto* pMessage){}
 		);
 	}
 
