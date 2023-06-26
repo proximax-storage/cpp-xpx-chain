@@ -11,6 +11,8 @@
 #include "tests/test/core/mocks/MockDbrbViewFetcher.h"
 #include "tests/test/local/NetworkTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
+#include "tests/test/core/ThreadPoolTestUtils.h"
+#include "fastfinality/src/WeightedVotingFsm.h"
 
 namespace catapult { namespace fastfinality {
 
@@ -21,7 +23,7 @@ namespace catapult { namespace fastfinality {
 		constexpr auto Writers_Counter_Name = "WV WRITERS";
 		constexpr auto Writers_Service_Name = "weightedvoting.writers";
 		constexpr auto Readers_Service_Name = "weightedvoting.readers";
-		constexpr unsigned int Port_Diff = 3u;
+		constexpr auto Fsm_Service_Name = "weightedvoting.fsm";
 
 		struct WeightedVotingServiceTraits {
 			static constexpr auto CreateRegistrar = CreateWeightedVotingServiceRegistrar;
@@ -55,13 +57,37 @@ namespace catapult { namespace fastfinality {
 		boot(context);
 
 		// Assert:
-		EXPECT_EQ(2u, context.locator().numServices());
+		EXPECT_EQ(3u, context.locator().numServices());
 		EXPECT_EQ(2u, context.locator().counters().size());
 
 		EXPECT_TRUE(!!context.locator().service<net::PacketReaders>(Readers_Service_Name));
 		EXPECT_TRUE(!!context.locator().service<net::PacketWriters>(Writers_Service_Name));
+		EXPECT_TRUE(!!context.locator().service<net::PacketWriters>(Fsm_Service_Name));
 		EXPECT_EQ(0u, context.counter(Readers_Counter_Name));
 		EXPECT_EQ(0u, context.counter(Writers_Counter_Name));
+
+		auto packetTypes = std::vector<ionet::PacketType>{
+			ionet::PacketType::Pull_Confirmed_Block,
+			ionet::PacketType::Pull_Remote_Node_State,
+			ionet::PacketType::Dbrb_Push_Nodes,
+			ionet::PacketType::Dbrb_Pull_Nodes,
+		};
+		for (const auto& item : packetTypes) {
+			EXPECT_TRUE(context.testState().state().packetHandlers().canProcess(item));
+		}
+
+		auto pFsmService = context.locator().service<WeightedVotingFsm>(Fsm_Service_Name);
+		auto dbrbPacketTypes = std::vector<ionet::PacketType>{
+			ionet::PacketType::Dbrb_Prepare_Message,
+			ionet::PacketType::Dbrb_Acknowledged_Message,
+			ionet::PacketType::Dbrb_Commit_Message,
+			ionet::PacketType::Dbrb_Deliver_Message,
+		};
+		for (const auto& item : dbrbPacketTypes) {
+			EXPECT_TRUE(pFsmService->packetHandlers().canProcess(item));
+		}
+
+		EXPECT_TRUE(pFsmService->dbrbProcess() != nullptr);
 	}
 
 	TEST(TEST_CLASS, CanShutdownService) {
@@ -73,13 +99,17 @@ namespace catapult { namespace fastfinality {
 		context.shutdown();
 
 		// Assert:
-		EXPECT_EQ(2u, context.locator().numServices());
+		EXPECT_EQ(3u, context.locator().numServices());
 		EXPECT_EQ(2u, context.locator().counters().size());
 
 		EXPECT_FALSE(!!context.locator().service<net::PacketReaders>(Readers_Service_Name));
 		EXPECT_FALSE(!!context.locator().service<net::PacketWriters>(Writers_Service_Name));
+		EXPECT_FALSE(!!context.locator().service<net::PacketWriters>(Fsm_Service_Name));
 		EXPECT_EQ(static_cast<uint64_t>(extensions::ServiceLocator::Sentinel_Counter_Value), context.counter(Readers_Counter_Name));
 		EXPECT_EQ(static_cast<uint64_t>(extensions::ServiceLocator::Sentinel_Counter_Value), context.counter(Writers_Counter_Name));
+
+		auto pFsmService = context.locator().service<WeightedVotingFsm>(Fsm_Service_Name);
+		EXPECT_TRUE(pFsmService->dbrbProcess() == nullptr);
 	}
 
 	// endregion
@@ -96,7 +126,8 @@ namespace catapult { namespace fastfinality {
 //		auto pIo = test::ConnectToLocalHost(pPool->ioContext(), test::GetLocalHostPort() + Port_Diff, context.publicKey());
 //
 //		// Assert: a single connection was accepted
-//		EXPECT_EQ(1u, context.counter(Counter_Name));
+//		EXPECT_EQ(1u, context.counter(Readers_Counter_Name));
+//		EXPECT_EQ(1u, context.counter(Writers_Counter_Name));
 //	}
 
 	// endregion
